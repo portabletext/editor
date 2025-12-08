@@ -1,4 +1,3 @@
-import {clone, omit} from 'lodash'
 import applyPatch from './applyPatch'
 import type {JSONValue, Patch} from './types'
 
@@ -6,7 +5,7 @@ export function applyPatchToObject(
   value: {[key: string]: JSONValue},
   patch: Patch,
 ): {[key: string]: JSONValue} | undefined {
-  const nextValue = clone(value)
+  const nextValue = {...value}
 
   if (patch.path.length === 0) {
     // its directed to me
@@ -37,7 +36,8 @@ export function applyPatchToObject(
   }
 
   if (tail.length === 0 && patch.type === 'unset') {
-    return omit(nextValue, head)
+    const {[head]: _, ...rest} = nextValue
+    return rest
   }
 
   if (!(head in nextValue) && tail.length > 0) {

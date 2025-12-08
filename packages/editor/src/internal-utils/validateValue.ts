@@ -5,7 +5,6 @@ import type {
   PortableTextSpan,
   PortableTextTextBlock,
 } from '@sanity/types'
-import {flatten, isPlainObject, uniq} from 'lodash'
 import type {EditorSchema} from '../editor/editor-schema'
 import type {InvalidValueResolution} from '../types/editor'
 
@@ -58,7 +57,7 @@ export function validateValue(
   if (
     value.some((blk: PortableTextBlock, index: number): boolean => {
       // Is the block an object?
-      if (!isPlainObject(blk)) {
+      if (typeof blk !== 'object' || blk === null) {
         resolution = {
           patches: [unset([index])],
           description: `Block must be an object, got ${String(blk)}`,
@@ -225,21 +224,23 @@ export function validateValue(
           return true
         }
 
-        const allUsedMarks = uniq(
-          flatten(
+        const allUsedMarks = [
+          ...new Set(
             textBlock.children
               .filter((child) => isSpan({schema: types}, child))
-              .map((cld) => cld.marks || []),
+              .flatMap((cld) => cld.marks || []),
           ),
-        )
+        ]
 
         // Test that all markDefs are in use (remove orphaned markDefs)
         if (Array.isArray(blk.markDefs) && blk.markDefs.length > 0) {
-          const unusedMarkDefs: string[] = uniq(
-            blk.markDefs
-              .map((def) => def._key)
-              .filter((key) => !allUsedMarks.includes(key)),
-          )
+          const unusedMarkDefs: string[] = [
+            ...new Set(
+              blk.markDefs
+                .map((def) => def._key)
+                .filter((key) => !allUsedMarks.includes(key)),
+            ),
+          ]
           if (unusedMarkDefs.length > 0) {
             resolution = {
               autoResolve: true,
@@ -316,7 +317,7 @@ export function validateValue(
         // Test every child
         if (
           textBlock.children.some((child, cIndex: number) => {
-            if (!isPlainObject(child)) {
+            if (typeof child !== 'object' || child === null) {
               resolution = {
                 patches: [unset([{_key: blk._key}, 'children', cIndex])],
                 description: `Child at index '${cIndex}' in block with key '${blk._key}' is not an object.`,

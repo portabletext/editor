@@ -46,13 +46,11 @@
   "dependencies": {
     "@portabletext/schema": "workspace:^",
     "@sanity/schema": "^4.20.3",
-    "@sanity/types": "^4.20.3",
-    "lodash.startcase": "^4.4.0"
+    "@sanity/types": "^4.20.3"
   },
   "devDependencies": {
     "@sanity/pkg-utils": "^10.1.2",
     "@sanity/tsconfig": "^2.0.0",
-    "@types/lodash.startcase": "^4.4.9",
     "typescript": "catalog:",
     "vitest": "^4.0.14"
   },

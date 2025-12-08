@@ -1,5 +1,4 @@
 import {isSpan} from '@portabletext/schema'
-import {isEqual} from 'lodash'
 import {
   Editor,
   Element,
@@ -11,6 +10,7 @@ import {
 } from 'slate'
 import {DOMEditor} from 'slate-dom'
 import {createPlaceholderBlock} from '../internal-utils/create-placeholder-block'
+import {isEqualChildren, isEqualMarks} from '../internal-utils/equality'
 import {getFocusBlock, getFocusChild} from '../internal-utils/slate-utils'
 import {toSlateRange} from '../internal-utils/to-slate-range'
 import {toSlateBlock} from '../internal-utils/values'
@@ -303,7 +303,7 @@ export function insertBlock(options: {
               return mark
             }) ?? []
 
-          if (!isEqual(child.marks, marks)) {
+          if (!isEqualMarks(child.marks, marks)) {
             return {
               ...child,
               _key: endBlockChildKeys.includes(child._key)
@@ -337,7 +337,7 @@ export function insertBlock(options: {
 
       // If the children have changed, we need to create a new block with
       // the adjusted children
-      const adjustedBlock = !isEqual(block.children, adjustedChildren)
+      const adjustedBlock = !isEqualChildren(block.children, adjustedChildren)
         ? {
             ...block,
             children: adjustedChildren as Descendant[],

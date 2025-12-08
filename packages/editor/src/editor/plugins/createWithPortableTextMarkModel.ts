@@ -4,14 +4,17 @@
  *
  */
 
-import {isTextBlock} from '@portabletext/schema'
-import type {PortableTextObject, PortableTextSpan} from '@sanity/types'
-import {isEqual, uniq} from 'lodash'
+import {
+  isTextBlock,
+  type PortableTextObject,
+  type PortableTextSpan,
+} from '@portabletext/schema'
 import {Editor, Element, Node, Path, Range, Text, Transforms} from 'slate'
 import {isRedoing} from '../../history/slate-plugin.redoing'
 import {isUndoing} from '../../history/slate-plugin.undoing'
 import {createPlaceholderBlock} from '../../internal-utils/create-placeholder-block'
 import {debugWithName} from '../../internal-utils/debug'
+import {isEqualMarkDefs} from '../../internal-utils/equality'
 import {getNextSpan, getPreviousSpan} from '../../internal-utils/sibling-utils'
 import type {BehaviorOperationImplementation} from '../../operations/behavior.operations'
 import {getActiveDecorators} from '../../selectors/selector.get-active-decorators'
@@ -265,7 +268,7 @@ export function createWithPortableTextMarkModel(
             )
           })
         })
-        if (node.markDefs && !isEqual(newMarkDefs, node.markDefs)) {
+        if (node.markDefs && !isEqualMarkDefs(newMarkDefs, node.markDefs)) {
           debug('Removing markDef not in use')
           withNormalizeNode(editor, () => {
             Transforms.setNodes(
@@ -459,7 +462,14 @@ export function createWithPortableTextMarkModel(
         if (editor.isTextBlock(targetBlock)) {
           const oldDefs =
             (Array.isArray(targetBlock.markDefs) && targetBlock.markDefs) || []
-          const newMarkDefs = uniq([...oldDefs, ...op.properties.markDefs])
+          const newMarkDefs = [
+            ...new Map(
+              [...oldDefs, ...op.properties.markDefs].map((def) => [
+                def._key,
+                def,
+              ]),
+            ).values(),
+          ]
 
           debug(`Copying markDefs over to merged block`, op)
           Transforms.setNodes(

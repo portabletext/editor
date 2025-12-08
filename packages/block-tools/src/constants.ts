@@ -1,5 +1,3 @@
-import {uniq} from 'lodash'
-
 export interface PartialBlock {
   _type: string
   markDefs: string[]
@@ -91,14 +89,16 @@ export const ELEMENT_MAP = {
   ...HTML_MISC_TAGS,
 }
 
-export const DEFAULT_SUPPORTED_STYLES = uniq(
-  Object.values(ELEMENT_MAP)
-    .filter((tag): tag is PartialBlock => 'style' in tag)
-    .map((tag) => tag.style),
-)
+export const DEFAULT_SUPPORTED_STYLES = [
+  ...new Set(
+    Object.values(ELEMENT_MAP)
+      .filter((tag): tag is PartialBlock => 'style' in tag)
+      .map((tag) => tag.style),
+  ),
+]
 
-export const DEFAULT_SUPPORTED_DECORATORS = uniq(
-  Object.values(HTML_DECORATOR_TAGS),
-)
+export const DEFAULT_SUPPORTED_DECORATORS = [
+  ...new Set(Object.values(HTML_DECORATOR_TAGS)),
+]
 
 export const DEFAULT_SUPPORTED_ANNOTATIONS = ['link']

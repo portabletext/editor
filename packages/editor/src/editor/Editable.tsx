@@ -1,5 +1,4 @@
 import {useActorRef, useSelector} from '@xstate/react'
-import {noop} from 'lodash'
 import {
   forwardRef,
   useCallback,
@@ -1010,3 +1009,7 @@ export const PortableTextEditable = forwardRef<
 })
 
 PortableTextEditable.displayName = 'ForwardRef(PortableTextEditable)'
+
+function noop() {
+  return undefined
+}

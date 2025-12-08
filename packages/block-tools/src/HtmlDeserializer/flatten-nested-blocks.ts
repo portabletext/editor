@@ -7,7 +7,7 @@ import {
   type PortableTextSpan,
   type PortableTextTextBlock,
 } from '@portabletext/schema'
-import {isEqual} from 'lodash'
+import {isDeepEqual} from '../equality'
 import {
   isArbitraryTypedObject,
   type ArbitraryTypedObject,
@@ -42,7 +42,7 @@ export function flattenNestedBlocks(
         if (
           splitChildren.length === 1 &&
           splitChildren[0].type === 'children' &&
-          isEqual(splitChildren[0].children, block.children)
+          isDeepEqual(splitChildren[0].children, block.children)
         ) {
           return [block]
         }

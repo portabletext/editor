@@ -5,7 +5,6 @@ import {
   type PortableTextObject,
 } from '@portabletext/schema'
 import {vercelStegaClean} from '@vercel/stega'
-import {flatten} from 'lodash'
 import type {
   ArbitraryTypedObject,
   DeserializerRule,
@@ -103,9 +102,9 @@ export default class HtmlDeserializer {
           block.markDefs = block.markDefs || []
           block.markDefs = block.markDefs.concat(
             this._markDefs.filter((def) => {
-              return flatten(
-                block.children.map((child) => child.marks || []),
-              ).includes(def._key)
+              return block.children
+                .flatMap((child) => child.marks || [])
+                .includes(def._key)
             }),
           )
         })

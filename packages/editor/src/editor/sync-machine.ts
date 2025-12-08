@@ -1,8 +1,13 @@
 import type {Patch} from '@portabletext/patches'
-import {isSpan} from '@portabletext/schema'
-import type {PortableTextBlock} from '@sanity/types'
-import {isEqual} from 'lodash'
-import {deleteText, Editor, Transforms, type Descendant, type Node} from 'slate'
+import {isSpan, type PortableTextBlock} from '@portabletext/schema'
+import {
+  deleteText,
+  Editor,
+  Text,
+  Transforms,
+  type Descendant,
+  type Node,
+} from 'slate'
 import type {ActorRefFrom} from 'xstate'
 import {
   and,
@@ -18,6 +23,11 @@ import {
 } from 'xstate'
 import {pluginWithoutHistory} from '../history/slate-plugin.without-history'
 import {debugWithName} from '../internal-utils/debug'
+import {
+  isEqualBlocks,
+  isEqualChild,
+  isEqualValues,
+} from '../internal-utils/equality'
 import {validateValue} from '../internal-utils/validateValue'
 import {toSlateBlock, VOID_CHILD_KEY} from '../internal-utils/values'
 import type {PickFromUnion} from '../type-utils'
@@ -196,7 +206,11 @@ export const syncMachine = setup({
       return context.pendingValue !== event.value
     },
     'pending value equals previous value': ({context}) => {
-      return isEqual(context.pendingValue, context.previousValue)
+      return isEqualValues(
+        {schema: context.schema},
+        context.pendingValue,
+        context.previousValue,
+      )
     },
   },
   actors: {
@@ -700,7 +714,7 @@ function syncBlock({
     }
   }
 
-  if (isEqual(block, oldBlock)) {
+  if (isEqualBlocks(context, block, oldBlock)) {
     // Nothing to sync, skipping the block
     return {
       blockChanged: false,
@@ -884,12 +898,13 @@ function updateBlock({
     }
 
     slateBlock.children.forEach((currentBlockChild, currentBlockChildIndex) => {
-      const oldBlockChild = oldBlock.children[currentBlockChildIndex]
-      const isChildChanged = !isEqual(currentBlockChild, oldBlockChild)
-      const isTextChanged = !isEqual(
-        currentBlockChild.text,
-        oldBlockChild?.text,
-      )
+      const oldBlockChild = oldBlock.children.at(currentBlockChildIndex)
+      const isChildChanged =
+        oldBlockChild && !isEqualChild(currentBlockChild, oldBlockChild)
+      const isTextChanged =
+        oldBlockChild &&
+        Text.isText(oldBlockChild) &&
+        currentBlockChild.text !== oldBlockChild.text
       const path = [index, currentBlockChildIndex]
 
       if (isChildChanged) {

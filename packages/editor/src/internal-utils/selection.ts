@@ -1,6 +1,6 @@
 import type {Path, PortableTextBlock} from '@sanity/types'
-import {isEqual} from 'lodash'
 import type {EditorSelection, EditorSelectionPoint} from '../types/editor'
+import {isKeyedSegment} from '../utils'
 
 export function normalizePoint(
   point: EditorSelectionPoint,
@@ -63,11 +63,19 @@ export function normalizeSelection(
   const {anchor, focus} = selection
   if (
     anchor &&
-    value.find((blk) => isEqual({_key: blk._key}, anchor.path[0]))
+    value.find(
+      (blk) =>
+        isKeyedSegment(anchor.path[0]) && blk._key === anchor.path[0]._key,
+    )
   ) {
     newAnchor = normalizePoint(anchor, value)
   }
-  if (focus && value.find((blk) => isEqual({_key: blk._key}, focus.path[0]))) {
+  if (
+    focus &&
+    value.find(
+      (blk) => isKeyedSegment(focus.path[0]) && blk._key === focus.path[0]._key,
+    )
+  ) {
     newFocus = normalizePoint(focus, value)
   }
   if (newAnchor && newFocus) {

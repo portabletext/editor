@@ -1,4 +1,3 @@
-import {isEqual} from 'lodash'
 import {
   Element,
   Path,
@@ -15,6 +14,7 @@ import {
   type AnyEventObject,
   type CallbackLogicFunction,
 } from 'xstate'
+import {isDeepEqual} from '../internal-utils/equality'
 import {moveRangeByOperation} from '../internal-utils/move-range-by-operation'
 import {slateRangeToSelection} from '../internal-utils/slate-utils'
 import {toSlateRange} from '../internal-utils/to-slate-range'
@@ -267,7 +267,10 @@ export const rangeDecorationsMachine = setup({
         }),
       )
 
-      const different = !isEqual(existingRangeDecorations, newRangeDecorations)
+      const different = !isDeepEqual(
+        existingRangeDecorations,
+        newRangeDecorations,
+      )
 
       return different
     },

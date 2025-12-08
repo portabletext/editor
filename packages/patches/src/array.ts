@@ -1,14 +1,20 @@
-import {findIndex} from 'lodash'
 import applyPatch from './applyPatch'
 import insert from './arrayInsert'
-import type {JSONValue, Patch, PathSegment} from './types'
+import type {JSONValue, KeyedSegment, Patch, PathSegment} from './types'
+
+function isKeyedSegment(segment: unknown): segment is KeyedSegment {
+  return typeof segment === 'object' && segment !== null && '_key' in segment
+}
 
 function findTargetIndex(array: any[], pathSegment: PathSegment | undefined) {
   if (typeof pathSegment === 'number') {
     return pathSegment
   }
-  const index = findIndex(array, pathSegment)
-  return index === -1 ? false : index
+  if (isKeyedSegment(pathSegment)) {
+    const index = array.findIndex((item) => item._key === pathSegment._key)
+    return index === -1 ? false : index
+  }
+  return false
 }
 
 export function applyPatchToArray(

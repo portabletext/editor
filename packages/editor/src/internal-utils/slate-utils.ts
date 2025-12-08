@@ -292,7 +292,7 @@ function elementToBlock({
   schema: EditorSchema
   element: Element
 }) {
-  return fromSlateBlock(element, schema.block.name)
+  return fromSlateBlock({schema}, element, schema.block.name)
 }
 
 function isBlockElement(
