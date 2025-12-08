@@ -77,7 +77,7 @@
     },
     {
       "description": "Group Cucumber packages",
-      "matchPackageNames": ["/cucumber/"],
+      "matchPackageNames": ["@cucumber/*"],
       "groupName": "cucumber"
     },
     {
