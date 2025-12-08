@@ -8,10 +8,18 @@
  * - The `global` variable is the global scope in Node.js
  */
 function getGlobalScope() {
-  if (typeof globalThis !== 'undefined') return globalThis
-  if (typeof window !== 'undefined') return window
-  if (typeof self !== 'undefined') return self
-  if (typeof global !== 'undefined') return global
+  if (typeof globalThis !== 'undefined') {
+    return globalThis
+  }
+  if (typeof window !== 'undefined') {
+    return window
+  }
+  if (typeof self !== 'undefined') {
+    return self
+  }
+  if (typeof global !== 'undefined') {
+    return global
+  }
 
   throw new Error('@portabletext/editor: could not locate global scope')
 }

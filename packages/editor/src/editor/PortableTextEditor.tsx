@@ -599,7 +599,9 @@ export class PortableTextEditor extends Component<
   }
 
   static isObjectPath = (_editor: PortableTextEditor, path: Path): boolean => {
-    if (!path || !Array.isArray(path)) return false
+    if (!path || !Array.isArray(path)) {
+      return false
+    }
     const isChildObjectEditPath = path.length > 3 && path[1] === 'children'
     const isBlockObjectEditPath = path.length > 1 && path[1] !== 'children'
     return isBlockObjectEditPath || isChildObjectEditPath
