@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.3.1
+
+### Patch Changes
+
+- [#1972](https://github.com/portabletext/editor/pull/1972) [`8facc13`](https://github.com/portabletext/editor/commit/8facc139f0ae1411e7383b4eddf168a5fae1fca9) Thanks [@christianhg](https://github.com/christianhg)! - fix: wrap unsafe Slate code in try...catch
+
 ## 3.3.0
 
 ### Minor Changes
