@@ -551,4 +551,71 @@ describe('event.update value', () => {
       ])
     })
   })
+
+  test('Scenario: Updating span with reordered marks', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        decorators: [{name: 'strong'}, {name: 'em'}],
+      }),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {
+              _type: 'span',
+              _key: spanKey,
+              text: 'foo',
+              marks: ['strong', 'em'],
+            },
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    editor.send({
+      type: 'update value',
+      value: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {
+              _type: 'span',
+              _key: spanKey,
+              text: 'foo',
+              marks: ['em', 'strong'],
+            },
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {
+              _type: 'span',
+              _key: spanKey,
+              text: 'foo',
+              marks: ['em', 'strong'],
+            },
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+  })
 })
