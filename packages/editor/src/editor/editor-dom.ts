@@ -4,7 +4,7 @@ import type {BehaviorEvent} from '../behaviors/behavior.types.event'
 import {toSlateRange} from '../internal-utils/to-slate-range'
 import {getSelectionEndBlock, getSelectionStartBlock} from '../selectors'
 import type {PickFromUnion} from '../type-utils'
-import type {PortableTextSlateEditor} from '../types/editor'
+import type {PortableTextSlateEditor} from '../types/slate-editor'
 import type {EditorSnapshot} from './editor-snapshot'
 
 export type EditorDom = {

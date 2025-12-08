@@ -1,7 +1,7 @@
 import {useSelector} from '@xstate/react'
 import type {Editor} from '../editor'
 import {slateRangeToSelection} from '../internal-utils/slate-utils'
-import type {PortableTextSlateEditor} from '../types/editor'
+import type {PortableTextSlateEditor} from '../types/slate-editor'
 import type {InternalEditor} from './create-editor'
 import type {EditorActor} from './editor-machine'
 import type {EditorSnapshot} from './editor-snapshot'

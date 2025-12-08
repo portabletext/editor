@@ -1,6 +1,6 @@
 import type {BaseOperation, Editor, Node, NodeEntry} from 'slate'
 import {pluginHistory} from '../../history/slate-plugin.history'
-import type {PortableTextSlateEditor} from '../../types/editor'
+import type {PortableTextSlateEditor} from '../../types/slate-editor'
 import type {EditorActor} from '../editor-machine'
 import type {RelayActor} from '../relay-machine'
 import {createWithEventListeners} from './create-with-event-listeners'

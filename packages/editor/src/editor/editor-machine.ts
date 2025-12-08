@@ -25,8 +25,8 @@ import type {NamespaceEvent, OmitFromUnion} from '../type-utils'
 import type {
   EditorSelection,
   PortableTextMemberSchemaTypes,
-  PortableTextSlateEditor,
 } from '../types/editor'
+import type {PortableTextSlateEditor} from '../types/slate-editor'
 import type {EditorSchema} from './editor-schema'
 import {createEditorSnapshot} from './editor-snapshot'
 import type {

@@ -14,7 +14,8 @@ import {createPlaceholderBlock} from '../internal-utils/create-placeholder-block
 import {getFocusBlock, getFocusChild} from '../internal-utils/slate-utils'
 import {toSlateRange} from '../internal-utils/to-slate-range'
 import {toSlateBlock} from '../internal-utils/values'
-import type {EditorSelection, PortableTextSlateEditor} from '../types/editor'
+import type {EditorSelection} from '../types/editor'
+import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {parseBlock} from '../utils/parse-blocks'
 import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
 import type {

@@ -12,7 +12,7 @@ import {
 import {DOMEditor} from 'slate-dom'
 import {toSlateRange} from '../internal-utils/to-slate-range'
 import {VOID_CHILD_KEY} from '../internal-utils/values'
-import type {PortableTextSlateEditor} from '../types/editor'
+import type {PortableTextSlateEditor} from '../types/slate-editor'
 import type {BehaviorOperationImplementation} from './behavior.operations'
 
 export const deleteOperationImplementation: BehaviorOperationImplementation<

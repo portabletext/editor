@@ -6,7 +6,6 @@ import type {
   PortableTextObject,
 } from '@sanity/types'
 import {Editor, Range, Text, Transforms} from 'slate'
-import type {DOMNode} from 'slate-dom'
 import {ReactEditor} from 'slate-react'
 import {
   isListItemActive,
@@ -24,8 +23,8 @@ import type {
   EditableAPI,
   EditableAPIDeleteOptions,
   EditorSelection,
-  PortableTextSlateEditor,
 } from '../../types/editor'
+import type {PortableTextSlateEditor} from '../../types/slate-editor'
 import {
   getBlockKeyFromSelectionPoint,
   getChildKeyFromSelectionPoint,
@@ -290,8 +289,8 @@ export function createEditableAPI(
     },
     findDOMNode: (
       element: PortableTextBlock | PortableTextChild,
-    ): DOMNode | undefined => {
-      let node: DOMNode | undefined
+    ): Node | undefined => {
+      let node: Node | undefined
       try {
         const [item] = Array.from(
           Editor.nodes(editor, {

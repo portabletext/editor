@@ -6,7 +6,7 @@ import {withoutNormalizingConditional} from '../editor/without-normalizing-condi
 import {clearUndoStepId, createUndoStepId} from '../history/undo-step'
 import {debugWithName} from '../internal-utils/debug'
 import {performOperation} from '../operations/behavior.operations'
-import type {PortableTextSlateEditor} from '../types/editor'
+import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {abstractBehaviors} from './behavior.abstract'
 import type {BehaviorAction} from './behavior.types.action'
 import type {Behavior} from './behavior.types.behavior'

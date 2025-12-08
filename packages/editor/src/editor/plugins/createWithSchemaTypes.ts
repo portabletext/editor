@@ -6,7 +6,7 @@ import type {
 } from '@sanity/types'
 import {Editor, Transforms, type Element} from 'slate'
 import {debugWithName} from '../../internal-utils/debug'
-import type {PortableTextSlateEditor} from '../../types/editor'
+import type {PortableTextSlateEditor} from '../../types/slate-editor'
 import {isListBlock} from '../../utils/parse-blocks'
 import type {EditorActor} from '../editor-machine'
 import {withNormalizeNode} from '../with-normalizing-node'
