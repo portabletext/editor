@@ -25,7 +25,9 @@ export const DefaultBlockquoteRenderer: PortableTextBlockRenderer = ({
 }) => {
   // Prefix each line with "> " for proper blockquote formatting
   // This handles multi-line content and preserves empty lines
-  if (!children) return '>'
+  if (!children) {
+    return '>'
+  }
 
   return children
     .split('\n')

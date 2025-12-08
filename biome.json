@@ -47,6 +47,7 @@
       "style": {
         "useConst": "error",
         "noNonNullAssertion": "off",
+        "useBlockStatements": "error",
         "useImportType": "error",
         "noUnusedTemplateLiteral": "off",
         "noUselessElse": "off"

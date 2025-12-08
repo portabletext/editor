@@ -64,8 +64,9 @@ export function createWithPatches({
           withoutPatching(editor, () => {
             pluginWithoutHistory(editor, () => {
               for (const patch of patches) {
-                if (debug.enabled)
+                if (debug.enabled) {
                   debug(`Handling remote patch ${JSON.stringify(patch)}`)
+                }
 
                 try {
                   changed = applyPatch(editor, patch)
@@ -125,11 +126,12 @@ export function createWithPatches({
       )
 
       if (!isPatching(editor)) {
-        if (debugVerbose && debug.enabled)
+        if (debugVerbose && debug.enabled) {
           debug(
             `Editor is not producing patch for operation ${operation.type}`,
             operation,
           )
+        }
         return editor
       }
 

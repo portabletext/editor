@@ -145,7 +145,9 @@ function applyOperationToPortableTextImmutable(
 
     case 'insert_text': {
       const {path, offset, text} = operation
-      if (text.length === 0) return root
+      if (text.length === 0) {
+        return root
+      }
 
       const span = getSpan(context, root, path)
       if (!span) {

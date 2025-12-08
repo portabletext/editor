@@ -663,8 +663,9 @@ function syncBlock({
       context.keyGenerator,
     )
 
-    if (debug.enabled)
+    if (debug.enabled) {
       debug('Validating and inserting new block in the end of the value', block)
+    }
 
     if (validation.valid || validation.resolution?.autoResolve) {
       const slateBlock = toSlateBlock(block, {
@@ -740,7 +741,9 @@ function syncBlock({
 
   if (validation.valid || validation.resolution?.autoResolve) {
     if (oldBlock._key === block._key) {
-      if (debug.enabled) debug('Updating block', oldBlock, block)
+      if (debug.enabled) {
+        debug('Updating block', oldBlock, block)
+      }
 
       Editor.withoutNormalizing(slateEditor, () => {
         withRemoteChanges(slateEditor, () => {
@@ -756,7 +759,9 @@ function syncBlock({
         })
       })
     } else {
-      if (debug.enabled) debug('Replacing block', oldBlock, block)
+      if (debug.enabled) {
+        debug('Replacing block', oldBlock, block)
+      }
 
       Editor.withoutNormalizing(slateEditor, () => {
         withRemoteChanges(slateEditor, () => {

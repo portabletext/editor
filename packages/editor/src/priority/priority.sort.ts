@@ -47,7 +47,9 @@ export function sortByPriority<
 
   // Helper function to add an edge to the graph
   function addEdge(fromId: string, toId: string) {
-    if (!graph.has(fromId) || !graph.has(toId)) return
+    if (!graph.has(fromId) || !graph.has(toId)) {
+      return
+    }
     graph.get(fromId)?.add(toId)
     inDegree.set(toId, (inDegree.get(toId) ?? 0) + 1)
   }
