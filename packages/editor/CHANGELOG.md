@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.2.6
+
+### Patch Changes
+
+- [#1965](https://github.com/portabletext/editor/pull/1965) [`9d7229a`](https://github.com/portabletext/editor/commit/9d7229acd78fb5a115a2b1c6fe34f208d2a013c0) Thanks [@christianhg](https://github.com/christianhg)! - fix(perf): remove `immer`
+
 ## 3.2.5
 
 ### Patch Changes
