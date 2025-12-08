@@ -6,10 +6,10 @@ import {
   DIFF_INSERT,
   parsePatch,
 } from '@sanity/diff-match-patch'
-import {isEqual} from 'lodash'
 import type {Descendant, Operation} from 'slate'
 import {debugWithName} from '../internal-utils/debug'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
+import {isKeyedSegment} from '../utils'
 
 const debug = debugWithName('transformOperation')
 const debugVerbose = debug.enabled && false
@@ -36,8 +36,9 @@ export function transformOperation(
   const transformedOperation = {...operation}
 
   if (patch.type === 'insert' && patch.path.length === 1) {
-    const insertBlockIndex = (snapshot || []).findIndex((blk) =>
-      isEqual({_key: blk._key}, patch.path[0]),
+    const pathSegment = patch.path[0]
+    const insertBlockIndex = (snapshot || []).findIndex(
+      (blk) => isKeyedSegment(pathSegment) && blk._key === pathSegment._key,
     )
     debug(
       `Adjusting block path (+${patch.items.length}) for '${transformedOperation.type}' operation and patch '${patch.type}'`,
@@ -52,8 +53,9 @@ export function transformOperation(
   }
 
   if (patch.type === 'unset' && patch.path.length === 1) {
-    const unsetBlockIndex = (previousSnapshot || []).findIndex((blk) =>
-      isEqual({_key: blk._key}, patch.path[0]),
+    const pathSegment = patch.path[0]
+    const unsetBlockIndex = (previousSnapshot || []).findIndex(
+      (blk) => isKeyedSegment(pathSegment) && blk._key === pathSegment._key,
     )
     // If this operation is targeting the same block that got removed, return empty
     if (
@@ -86,9 +88,11 @@ export function transformOperation(
       editor,
       transformedOperation,
     )
+    const pathSegment = patch.path[0]
     if (
       !operationTargetBlock ||
-      !isEqual({_key: operationTargetBlock._key}, patch.path[0])
+      !isKeyedSegment(pathSegment) ||
+      operationTargetBlock._key !== pathSegment._key
     ) {
       return [transformedOperation]
     }

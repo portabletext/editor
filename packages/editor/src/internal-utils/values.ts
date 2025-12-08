@@ -4,20 +4,21 @@ import type {
   PortableTextObject,
   PortableTextTextBlock,
 } from '@sanity/types'
-import {isEqual} from 'lodash'
 import {Element, Text, type Descendant} from 'slate'
 import type {EditorSchema} from '../editor/editor-schema'
+import {isEqualBlocks, isEqualValues} from './equality'
 
 export const EMPTY_MARKDEFS: PortableTextObject[] = []
 
 export const VOID_CHILD_KEY = 'void-child'
 
 function keepObjectEquality(
+  context: {schema: EditorSchema},
   object: PortableTextBlock | PortableTextChild,
   keyMap: Record<string, PortableTextBlock | PortableTextChild>,
 ) {
   const value = keyMap[object._key]
-  if (value && isEqual(object, value)) {
+  if (value && isEqualBlocks(context, object, value)) {
     return value
   }
   keyMap[object._key] = object
@@ -61,6 +62,7 @@ export function toSlateBlock(
         hasInlines = true
 
         return keepObjectEquality(
+          {schema: schemaTypes},
           {
             _type: childType,
             _key: childKey,
@@ -95,12 +97,14 @@ export function toSlateBlock(
     }
 
     return keepObjectEquality(
+      {schema: schemaTypes},
       {_type, _key, ...rest, children},
       keyMap,
     ) as Descendant
   }
 
   return keepObjectEquality(
+    {schema: schemaTypes},
     {
       _type,
       _key,
@@ -119,6 +123,7 @@ export function toSlateBlock(
 }
 
 export function fromSlateBlock(
+  context: {schema: EditorSchema},
   block: Descendant,
   textBlockType: string,
   keyMap: Record<string, PortableTextBlock | PortableTextChild> = {},
@@ -147,6 +152,7 @@ export function fromSlateBlock(
           ...rest
         } = child
         return keepObjectEquality(
+          context,
           {...rest, ...v, _key: k as string, _type: t as string},
           keyMap,
         )
@@ -157,12 +163,14 @@ export function fromSlateBlock(
       return block as PortableTextBlock // Original object
     }
     return keepObjectEquality(
+      context,
       {...block, children, _key, _type},
       keyMap,
     ) as PortableTextBlock
   }
   const blockValue = 'value' in block && block.value
   return keepObjectEquality(
+    context,
     {_key, _type, ...(typeof blockValue === 'object' ? blockValue : {})},
     keyMap,
   ) as PortableTextBlock
@@ -258,7 +266,7 @@ export function isEqualToEmptyEditor(
     return false
   }
 
-  if (isEqual(initialValue, [firstBlock])) {
+  if (isEqualValues({schema: schemaTypes}, initialValue, [firstBlock])) {
     return false
   }
 

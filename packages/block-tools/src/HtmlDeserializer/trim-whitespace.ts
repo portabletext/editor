@@ -4,7 +4,7 @@ import {
   type PortableTextTextBlock,
   type Schema,
 } from '@portabletext/schema'
-import {isEqual} from 'lodash'
+import {isEqualMarks} from '../equality'
 import type {TypedObject, WhiteSpacePasteMode} from '../types'
 import {isMinimalSpan} from './helpers'
 
@@ -122,14 +122,16 @@ function trimTextBlockWhitespace(
 
     if (
       prevChild &&
-      isEqual(prevChild.marks, child.marks) &&
+      Array.isArray(prevChild.marks) &&
+      isEqualMarks(prevChild.marks, child.marks) &&
       isWhiteSpaceChar(child.text)
     ) {
       prevChild.text += ' '
       block.children.splice(index, 1)
     } else if (
       nextChild &&
-      isEqual(nextChild.marks, child.marks) &&
+      Array.isArray(nextChild.marks) &&
+      isEqualMarks(nextChild.marks, child.marks) &&
       isWhiteSpaceChar(child.text)
     ) {
       nextChild.text = ` ${nextChild.text}`

@@ -1,4 +1,3 @@
-import {flatten} from 'lodash'
 import {Editor, Transforms} from 'slate'
 import {debugWithName} from '../internal-utils/debug'
 import type {BehaviorOperationImplementation} from '../operations/behavior.operations'
@@ -28,15 +27,13 @@ export const historyRedoOperationImplementation: BehaviorOperationImplementation
       )
       let transformedOperations = step.operations
       otherPatches.forEach((item) => {
-        transformedOperations = flatten(
-          transformedOperations.map((op) =>
-            transformOperation(
-              editor,
-              item.patch,
-              op,
-              item.snapshot,
-              item.previousSnapshot,
-            ),
+        transformedOperations = transformedOperations.flatMap((op) =>
+          transformOperation(
+            editor,
+            item.patch,
+            op,
+            item.snapshot,
+            item.previousSnapshot,
           ),
         )
       })

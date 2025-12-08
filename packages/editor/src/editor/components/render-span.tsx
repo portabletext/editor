@@ -1,6 +1,5 @@
 import {isTextBlock} from '@portabletext/schema'
 import {useSelector} from '@xstate/react'
-import {uniq} from 'lodash'
 import {useContext, useMemo, useRef, type ReactElement} from 'react'
 import {useSlateStatic, type RenderLeafProps} from 'slate-react'
 import {getFocusSpan} from '../../selectors/selector.get-focus-span'
@@ -109,11 +108,13 @@ export function RenderSpan(props: RenderSpanProps) {
     .getSnapshot()
     .context.schema.decorators.map((decorator) => decorator.name)
 
-  const decorators = uniq(
-    (props.leaf.marks ?? []).filter((mark) =>
-      decoratorSchemaTypes.includes(mark),
+  const decorators = [
+    ...new Set(
+      (props.leaf.marks ?? []).filter((mark) =>
+        decoratorSchemaTypes.includes(mark),
+      ),
     ),
-  )
+  ]
 
   const annotationMarkDefs = (props.leaf.marks ?? []).flatMap((mark) => {
     if (decoratorSchemaTypes.includes(mark)) {

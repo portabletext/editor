@@ -52,15 +52,13 @@
   "dependencies": {
     "@portabletext/sanity-bridge": "workspace:^",
     "@portabletext/schema": "workspace:^",
-    "@sanity/types": "^4.20.3",
-    "lodash": "^4.17.21"
+    "@sanity/types": "^4.20.3"
   },
   "devDependencies": {
     "@portabletext/test": "workspace:^",
     "@sanity/pkg-utils": "^10.1.2",
     "@sanity/schema": "^4.20.3",
     "@types/jsdom": "^27.0.0",
-    "@types/lodash": "^4.17.20",
     "@vercel/stega": "1.0.0",
     "@vitest/coverage-v8": "^4.0.14",
     "jsdom": "^27.0.0",

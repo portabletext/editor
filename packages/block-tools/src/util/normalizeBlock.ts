@@ -4,7 +4,7 @@ import {
   type PortableTextSpan,
   type PortableTextTextBlock,
 } from '@portabletext/schema'
-import {isEqual} from 'lodash'
+import {isEqualMarks} from '../equality'
 import type {TypedObject} from '../types'
 import {keyGenerator} from './randomKey'
 
@@ -117,7 +117,7 @@ export function normalizeBlock(
           previousChild &&
           isSpan({schema}, child) &&
           isSpan({schema}, previousChild) &&
-          isEqual(previousChild.marks, child.marks)
+          isEqualMarks(previousChild.marks, child.marks)
         ) {
           if (
             lastChild &&

@@ -1,8 +1,8 @@
 import {isSpan, isTextBlock} from '@portabletext/schema'
-import {isEqual} from 'lodash'
 import {Editor, Element, Node, Path, Transforms} from 'slate'
 import {isRedoing} from '../../history/slate-plugin.redoing'
 import {isUndoing} from '../../history/slate-plugin.undoing'
+import {isEqualMarks} from '../../internal-utils/equality'
 import type {PortableTextSlateEditor} from '../../types/slate-editor'
 import type {EditorActor} from '../editor-machine'
 import {withNormalizeNode} from '../with-normalizing-node'
@@ -150,7 +150,7 @@ export function createWithObjectKeys(editorActor: EditorActor) {
                 return mark
               }) ?? []
 
-            if (!isEqual(child.marks, marks)) {
+            if (!isEqualMarks(child.marks, marks)) {
               Transforms.setNodes(
                 editor,
                 {

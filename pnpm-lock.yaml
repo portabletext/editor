@@ -414,9 +414,6 @@ importers:
       '@sanity/types':
         specifier: ^4.20.3
         version: 4.20.3(@types/react@19.2.7)(debug@4.4.3)
-      lodash:
-        specifier: ^4.17.21
-        version: 4.17.21
     devDependencies:
       '@portabletext/test':
         specifier: workspace:^
@@ -430,9 +427,6 @@ importers:
       '@types/jsdom':
         specifier: ^27.0.0
         version: 27.0.0
-      '@types/lodash':
-        specifier: ^4.17.20
-        version: 4.17.21
       '@vercel/stega':
         specifier: 1.0.0
         version: 1.0.0
@@ -481,12 +475,6 @@ importers:
       debug:
         specifier: ^4.4.3
         version: 4.4.3
-      lodash:
-        specifier: ^4.17.21
-        version: 4.17.21
-      lodash.startcase:
-        specifier: ^4.4.0
-        version: 4.4.0
       react-compiler-runtime:
         specifier: ^1.0.0
         version: 1.0.0(react@19.2.1)
@@ -518,12 +506,6 @@ importers:
       '@types/debug':
         specifier: ^4.1.12
         version: 4.1.12
-      '@types/lodash':
-        specifier: ^4.17.20
-        version: 4.17.21
-      '@types/lodash.startcase':
-        specifier: ^4.4.9
-        version: 4.4.9
       '@types/node':
         specifier: ^20
         version: 20.19.25
@@ -642,9 +624,6 @@ importers:
       '@sanity/diff-match-patch':
         specifier: ^3.2.0
         version: 3.2.0
-      lodash:
-        specifier: ^4.17.21
-        version: 4.17.21
     devDependencies:
       '@sanity/pkg-utils':
         specifier: ^10.1.2
@@ -652,9 +631,6 @@ importers:
       '@sanity/tsconfig':
         specifier: ^2.0.0
         version: 2.0.0
-      '@types/lodash':
-        specifier: ^4.17.20
-        version: 4.17.21
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
@@ -1113,9 +1089,6 @@ importers:
       '@sanity/types':
         specifier: ^4.20.3
         version: 4.20.3(@types/react@19.2.7)(debug@4.4.3)
-      lodash.startcase:
-        specifier: ^4.4.0
-        version: 4.4.0
     devDependencies:
       '@sanity/pkg-utils':
         specifier: ^10.1.2
@@ -1123,9 +1096,6 @@ importers:
       '@sanity/tsconfig':
         specifier: ^2.0.0
         version: 2.0.0
-      '@types/lodash.startcase':
-        specifier: ^4.4.9
-        version: 4.4.9
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
@@ -4248,9 +4218,6 @@ packages:
 
   '@types/lodash-es@4.17.12':
     resolution: {integrity: sha512-0NgftHUcV4v34VhXm8QBSftKVXtbkBG3ViCjs6+eJ5a6y6Mi/jiFGPc1sC7QK+9BFhWrURE3EOggmWaSxL9OzQ==}
-
-  '@types/lodash.startcase@4.4.9':
-    resolution: {integrity: sha512-C0M4DlN1pnn2vEEhLHkTHxiRZ+3GlTegpoAEHHGXnuJkSOXyJMHGiSc+SLRzBlFZWHsBkixe6FqvEAEU04g14g==}
 
   '@types/lodash@4.17.21':
     resolution: {integrity: sha512-FOvQ0YPD5NOfPgMzJihoT+Za5pdkDJWcbpuj1DjaKZIr/gxodQjY/uWEFlTNqW2ugXHUiL8lRQgw63dzKHZdeQ==}
@@ -11537,10 +11504,6 @@ snapshots:
   '@types/linkify-it@5.0.0': {}
 
   '@types/lodash-es@4.17.12':
-    dependencies:
-      '@types/lodash': 4.17.21
-
-  '@types/lodash.startcase@4.4.9':
     dependencies:
       '@types/lodash': 4.17.21
 

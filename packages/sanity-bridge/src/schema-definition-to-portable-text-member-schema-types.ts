@@ -7,12 +7,12 @@ import {
   isObjectSchemaType,
   type ObjectSchemaType,
 } from '@sanity/types'
-import startCase from 'lodash.startcase'
 import {keyGenerator} from './key-generator'
 import {
   createPortableTextMemberSchemaTypes,
   type PortableTextMemberSchemaTypes,
 } from './portable-text-member-schema-types'
+import {startCase} from './start-case'
 
 const temporaryImageBlockObjectName = `tmp-${keyGenerator()}-image`
 const temporaryUrlBlockObjectName = `tmp-${keyGenerator()}-url`
