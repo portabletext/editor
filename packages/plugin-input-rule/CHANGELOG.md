@@ -1,5 +1,12 @@
 # @portabletext/plugin-input-rule
 
+## 1.0.20
+
+### Patch Changes
+
+- Updated dependencies [[`4d5f86f`](https://github.com/portabletext/editor/commit/4d5f86feb57512bbdf3ec85af92864297b5b6965)]:
+  - @portabletext/editor@3.3.0
+
 ## 1.0.19
 
 ### Patch Changes
