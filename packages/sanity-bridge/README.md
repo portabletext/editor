@@ -8,12 +8,6 @@ A TypeScript library for converting between Sanity schemas and Portable Text sch
 npm install @portabletext/sanity-bridge
 ```
 
-**Peer Dependencies:**
-
-```bash
-npm install @sanity/schema @sanity/types
-```
-
 ## Usage
 
 ### Convert Sanity Schema to Portable Text Schema
