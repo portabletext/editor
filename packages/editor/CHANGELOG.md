@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.3.5
+
+### Patch Changes
+
+- [#1986](https://github.com/portabletext/editor/pull/1986) [`7ddb2c8`](https://github.com/portabletext/editor/commit/7ddb2c83b8421cc62bf6e8398ff965621db2e541) Thanks [@christianhg](https://github.com/christianhg)! - fix: revert slate bundling
+
 ## 3.3.4
 
 ### Patch Changes
