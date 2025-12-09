@@ -135,8 +135,8 @@
   },
   "peerDependencies": {
     "@portabletext/sanity-bridge": "workspace:^1.2.10",
-    "@sanity/schema": "^4.20.3",
-    "@sanity/types": "^4.20.3",
+    "@sanity/schema": "^4.20.3 || ^5.0.0-0",
+    "@sanity/types": "^4.20.3 || ^5.0.0-0",
     "react": "^18.3 || ^19",
     "rxjs": "^7.8.2"
   },

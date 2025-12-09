@@ -58,8 +58,8 @@
     "vitest": "^4.0.14"
   },
   "peerDependencies": {
-    "@sanity/schema": "^4.20.3",
-    "@sanity/types": "^4.20.3"
+    "@sanity/schema": "^4.20.3 || ^5.0.0-0",
+    "@sanity/types": "^4.20.3 || ^5.0.0-0"
   },
   "engines": {
     "node": ">=20.19 <22 || >=22.12"
