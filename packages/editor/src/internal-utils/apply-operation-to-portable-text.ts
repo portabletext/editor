@@ -168,6 +168,13 @@ function applyOperationToPortableTextImmutable(
 
     case 'merge_node': {
       const {path} = operation
+
+      const lastPathIndex = path.at(-1)
+
+      if (lastPathIndex === 0) {
+        return root
+      }
+
       const node = getNode(context, root, path)
       const prevPath = Path.previous(path)
       const prev = getNode(context, root, prevPath)
