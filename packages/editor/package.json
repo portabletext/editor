@@ -97,6 +97,9 @@
     "lodash": "^4.17.21",
     "lodash.startcase": "^4.4.0",
     "react-compiler-runtime": "^1.0.0",
+    "slate": "^0.120.0",
+    "slate-dom": "^0.119.0",
+    "slate-react": "^0.120.0",
     "xstate": "^5.24.0"
   },
   "devDependencies": {
@@ -123,9 +126,6 @@
     "react": "^19.2.1",
     "react-dom": "^19.2.1",
     "rxjs": "^7.8.2",
-    "slate": "^0.120.0",
-    "slate-dom": "^0.119.0",
-    "slate-react": "^0.120.0",
     "typescript": "catalog:",
     "typescript-eslint": "^8.48.0",
     "vite": "^7.1.12",
