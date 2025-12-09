@@ -1,5 +1,22 @@
 # Changelog
 
+## 3.3.3
+
+### Patch Changes
+
+- [#1981](https://github.com/portabletext/editor/pull/1981) [`23e9930`](https://github.com/portabletext/editor/commit/23e993070ead298cde133970746cb41f3fa571d6) Thanks [@stipsan](https://github.com/stipsan)! - Move `@sanity/schema` to a regular dependency instead of a peer
+
+- [#1981](https://github.com/portabletext/editor/pull/1981) [`23e9930`](https://github.com/portabletext/editor/commit/23e993070ead298cde133970746cb41f3fa571d6) Thanks [@stipsan](https://github.com/stipsan)! - Move `@sanity/types` to a regular dependency instead of a peer
+
+- [#1983](https://github.com/portabletext/editor/pull/1983) [`c3c41b1`](https://github.com/portabletext/editor/commit/c3c41b1f6f468b87a1040fdc3f2eac2e7a618dde) Thanks [@stipsan](https://github.com/stipsan)! - Fixes an issue with `DOMNode` not being defined in generated dts
+
+- [#1981](https://github.com/portabletext/editor/pull/1981) [`23e9930`](https://github.com/portabletext/editor/commit/23e993070ead298cde133970746cb41f3fa571d6) Thanks [@stipsan](https://github.com/stipsan)! - Use relative `^` semver for react compiler deps
+
+- Updated dependencies [[`23e9930`](https://github.com/portabletext/editor/commit/23e993070ead298cde133970746cb41f3fa571d6), [`23e9930`](https://github.com/portabletext/editor/commit/23e993070ead298cde133970746cb41f3fa571d6), [`23e9930`](https://github.com/portabletext/editor/commit/23e993070ead298cde133970746cb41f3fa571d6)]:
+  - @portabletext/sanity-bridge@1.2.11
+  - @portabletext/block-tools@4.1.8
+  - @portabletext/markdown@1.0.3
+
 ## 3.3.2
 
 ### Patch Changes
