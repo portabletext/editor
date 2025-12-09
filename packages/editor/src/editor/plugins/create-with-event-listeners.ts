@@ -1,5 +1,8 @@
-import {Editor, Node, Text} from 'slate'
-import {slateRangeToSelection} from '../../internal-utils/slate-utils'
+import {Editor, Node, Point, Range, Text} from 'slate'
+import {
+  slatePointToSelectionPoint,
+  slateRangeToSelection,
+} from '../../internal-utils/slate-utils'
 import {performOperation} from '../../operations/behavior.operations'
 import type {EditorActor} from '../editor-machine'
 import {isNormalizingNode} from '../with-normalizing-node'
@@ -7,7 +10,7 @@ import {isPerformingBehaviorOperation} from '../with-performing-behavior-operati
 
 export function createWithEventListeners(editorActor: EditorActor) {
   return function withEventListeners(editor: Editor) {
-    const {delete: editorDelete, insertNodes, select} = editor
+    const {delete: editorDelete, insertNodes, select, setSelection} = editor
 
     editor.delete = (options) => {
       if (isPerformingBehaviorOperation(editor)) {
@@ -219,6 +222,11 @@ export function createWithEventListeners(editorActor: EditorActor) {
         return
       }
 
+      if (editor.selection) {
+        select(location)
+        return
+      }
+
       const range = Editor.range(editor, location)
 
       editorActor.send({
@@ -230,6 +238,78 @@ export function createWithEventListeners(editorActor: EditorActor) {
             editor,
             range,
           }),
+        },
+        editor,
+      })
+
+      return
+    }
+
+    editor.setSelection = (partialRange) => {
+      if (isPerformingBehaviorOperation(editor)) {
+        setSelection(partialRange)
+        return
+      }
+
+      const anchor = partialRange.anchor
+        ? slatePointToSelectionPoint({
+            schema: editorActor.getSnapshot().context.schema,
+            editor,
+            point: partialRange.anchor,
+          })
+        : undefined
+      const focus = partialRange.focus
+        ? slatePointToSelectionPoint({
+            schema: editorActor.getSnapshot().context.schema,
+            editor,
+            point: partialRange.focus,
+          })
+        : undefined
+
+      const backward = editor.selection
+        ? Range.isBackward({
+            anchor: partialRange.anchor ?? editor.selection.anchor,
+            focus: partialRange.focus ?? editor.selection.focus,
+          })
+        : partialRange.anchor && partialRange.focus
+          ? Range.isBackward({
+              anchor: partialRange.anchor,
+              focus: partialRange.focus,
+            })
+          : undefined
+
+      if (editor.selection) {
+        const newAnchor = partialRange.anchor ?? editor.selection.anchor
+        const newFocus = partialRange.focus ?? editor.selection.focus
+
+        if (
+          Point.equals(newAnchor, editor.selection.anchor) &&
+          Point.equals(newFocus, editor.selection.focus)
+        ) {
+          // To avoid double `select` events, we call `setSelection` directly
+          // if the selection wouldn't actually change.
+          setSelection(partialRange)
+          return
+        }
+      }
+
+      if (!anchor || !focus) {
+        // In the unlikely event that either the anchor or the focus is
+        // undefined, we call `setSelection` directly. This is because the
+        // `select` event expects a complete selection.
+        setSelection(partialRange)
+        return
+      }
+
+      editorActor.send({
+        type: 'behavior event',
+        behaviorEvent: {
+          type: 'select',
+          at: {
+            anchor,
+            focus,
+            backward,
+          },
         },
         editor,
       })
