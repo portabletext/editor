@@ -1,5 +1,15 @@
 # Changelog
 
+## 3.3.2
+
+### Patch Changes
+
+- [#1975](https://github.com/portabletext/editor/pull/1975) [`41320f7`](https://github.com/portabletext/editor/commit/41320f74b08c0be78a1de7ddb59e1c84cc09e0b9) Thanks [@christianhg](https://github.com/christianhg)! - Bundle Slate packages to prevent version conflicts
+
+  Slate packages (`slate`, `slate-dom`, `slate-react`) are now bundled into the `@portabletext/editor` output instead of being external dependencies. This prevents issues when multiple versions of `@portabletext/editor` exist in the same application, where shared `slate-dom` instances could cause WeakMap and state conflicts.
+
+- [#1977](https://github.com/portabletext/editor/pull/1977) [`83c6c09`](https://github.com/portabletext/editor/commit/83c6c098d0dfc06d37b7dae0a4164e1487316586) Thanks [@christianhg](https://github.com/christianhg)! - fix: avoid throwing error when attempting to merge node into nonexistent sibling
+
 ## 3.3.1
 
 ### Patch Changes
