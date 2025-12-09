@@ -54,7 +54,7 @@
   },
   "dependencies": {
     "@portabletext/plugin-input-rule": "workspace:^",
-    "react-compiler-runtime": "1.0.0"
+    "react-compiler-runtime": "^1.0.0"
   },
   "devDependencies": {
     "@portabletext/editor": "workspace:^",
@@ -65,10 +65,10 @@
     "@vitejs/plugin-react": "^5.0.4",
     "@vitest/browser": "^4.0.14",
     "@vitest/browser-playwright": "^4.0.14",
-    "babel-plugin-react-compiler": "1.0.0",
+    "babel-plugin-react-compiler": "^1.0.0",
     "eslint": "^9.39.1",
     "eslint-formatter-gha": "^1.6.0",
-    "eslint-plugin-react-hooks": "7.0.1",
+    "eslint-plugin-react-hooks": "^7.0.1",
     "racejar": "workspace:*",
     "react": "^19.2.1",
     "typescript": "catalog:",
