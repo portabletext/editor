@@ -1,7 +1,14 @@
 import type {PortableTextSpan} from '@sanity/types'
-import {Editor, Element, Node, Range, type Path, type Point} from 'slate'
+import {
+  Editor,
+  Element,
+  Node,
+  Range,
+  type Point,
+  type Path as SlatePath,
+} from 'slate'
 import type {EditorSchema} from '../editor/editor-schema'
-import type {EditorSelection} from '../types/editor'
+import type {EditorSelection, EditorSelectionPoint} from '../types/editor'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {fromSlateBlock} from './values'
 
@@ -32,7 +39,7 @@ export function getAnchorBlock({
   editor,
 }: {
   editor: PortableTextSlateEditor
-}): [node: Node, path: Path] | [undefined, undefined] {
+}): [node: Node, path: SlatePath] | [undefined, undefined] {
   if (!editor.selection) {
     return [undefined, undefined]
   }
@@ -53,7 +60,7 @@ export function getFocusBlock({
   editor,
 }: {
   editor: PortableTextSlateEditor
-}): [node: Node, path: Path] | [undefined, undefined] {
+}): [node: Node, path: SlatePath] | [undefined, undefined] {
   if (!editor.selection) {
     return [undefined, undefined]
   }
@@ -74,7 +81,7 @@ export function getFocusSpan({
   editor,
 }: {
   editor: PortableTextSlateEditor
-}): [node: PortableTextSpan, path: Path] | [undefined, undefined] {
+}): [node: PortableTextSpan, path: SlatePath] | [undefined, undefined] {
   if (!editor.selection) {
     return [undefined, undefined]
   }
@@ -109,7 +116,7 @@ export function getSelectionStartBlock({
   editor,
 }: {
   editor: PortableTextSlateEditor
-}): [node: Node, path: Path] | [undefined, undefined] {
+}): [node: Node, path: SlatePath] | [undefined, undefined] {
   if (!editor.selection) {
     return [undefined, undefined]
   }
@@ -123,7 +130,7 @@ export function getSelectionEndBlock({
   editor,
 }: {
   editor: PortableTextSlateEditor
-}): [node: Node, path: Path] | [undefined, undefined] {
+}): [node: Node, path: SlatePath] | [undefined, undefined] {
   if (!editor.selection) {
     return [undefined, undefined]
   }
@@ -139,7 +146,7 @@ export function getPointBlock({
 }: {
   editor: PortableTextSlateEditor
   point: Point
-}): [node: Node, path: Path] | [undefined, undefined] {
+}): [node: Node, path: SlatePath] | [undefined, undefined] {
   try {
     const [block] = Editor.node(editor, point.path.slice(0, 1)) ?? [
       undefined,
@@ -155,7 +162,7 @@ export function getFocusChild({
   editor,
 }: {
   editor: PortableTextSlateEditor
-}): [node: Node, path: Path] | [undefined, undefined] {
+}): [node: Node, path: SlatePath] | [undefined, undefined] {
   const [focusBlock, focusBlockPath] = getFocusBlock({editor})
   const childIndex = editor.selection?.focus.path.at(1)
 
@@ -180,7 +187,7 @@ function getPointChild({
 }: {
   editor: PortableTextSlateEditor
   point: Point
-}): [node: Node, path: Path] | [undefined, undefined] {
+}): [node: Node, path: SlatePath] | [undefined, undefined] {
   const [block, blockPath] = getPointBlock({editor, point})
   const childIndex = point.path.at(1)
 
@@ -203,7 +210,7 @@ export function getFirstBlock({
   editor,
 }: {
   editor: PortableTextSlateEditor
-}): [node: Node, path: Path] | [undefined, undefined] {
+}): [node: Node, path: SlatePath] | [undefined, undefined] {
   if (editor.children.length === 0) {
     return [undefined, undefined]
   }
@@ -224,7 +231,7 @@ export function getLastBlock({
   editor,
 }: {
   editor: PortableTextSlateEditor
-}): [node: Node, path: Path] | [undefined, undefined] {
+}): [node: Node, path: SlatePath] | [undefined, undefined] {
   if (editor.children.length === 0) {
     return [undefined, undefined]
   }
@@ -414,4 +421,43 @@ export function slateRangeToSelection({
   }
 
   return selection
+}
+
+export function slatePointToSelectionPoint({
+  schema,
+  editor,
+  point,
+}: {
+  schema: EditorSchema
+  editor: PortableTextSlateEditor
+  point: Point
+}): EditorSelectionPoint | undefined {
+  const [block] = getPointBlock({
+    editor,
+    point,
+  })
+
+  if (!block) {
+    return undefined
+  }
+
+  const [child] =
+    block._type === schema.block.name
+      ? getPointChild({
+          editor,
+          point,
+        })
+      : [undefined, undefined]
+
+  if (child) {
+    return {
+      path: [{_key: block._key}, 'children', {_key: child._key}],
+      offset: point.offset,
+    }
+  }
+
+  return {
+    path: [{_key: block._key}],
+    offset: point.offset,
+  }
 }

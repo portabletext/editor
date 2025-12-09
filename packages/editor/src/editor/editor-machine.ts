@@ -1,6 +1,7 @@
 import type {Patch} from '@portabletext/patches'
 import type {PortableTextBlock} from '@sanity/types'
 import {Transforms} from 'slate'
+import {EDITOR_TO_PENDING_SELECTION} from 'slate-dom'
 import {ReactEditor} from 'slate-react'
 import {
   assertEvent,
@@ -282,16 +283,26 @@ export const editorMachine = setup({
       }
     },
     'handle focus': ({context}) => {
-      if (!context.slateEditor) {
+      const slateEditor = context.slateEditor
+
+      if (!slateEditor) {
         console.error('No Slate editor found to focus')
         return
       }
 
       try {
-        const currentSelection = context.slateEditor.selection
-        ReactEditor.focus(context.slateEditor)
+        const currentSelection = slateEditor.selection
+
+        ReactEditor.focus(slateEditor)
+
         if (currentSelection) {
-          Transforms.select(context.slateEditor, currentSelection)
+          Transforms.select(slateEditor, currentSelection)
+
+          // Tell Slate to use this selection for DOM sync
+          EDITOR_TO_PENDING_SELECTION.set(slateEditor, slateEditor.selection)
+
+          // Trigger the DOM sync
+          slateEditor.onChange()
         }
       } catch (error) {
         console.error(new Error(`Failed to focus editor: ${error.message}`))
