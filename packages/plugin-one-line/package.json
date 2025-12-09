@@ -46,15 +46,15 @@
     "prepublishOnly": "turbo run build"
   },
   "dependencies": {
-    "react-compiler-runtime": "1.0.0"
+    "react-compiler-runtime": "^1.0.0"
   },
   "devDependencies": {
     "@portabletext/editor": "workspace:^",
     "@sanity/tsconfig": "^1.0.0",
     "@types/react": "^19.2.7",
-    "babel-plugin-react-compiler": "1.0.0",
+    "babel-plugin-react-compiler": "^1.0.0",
     "eslint": "^9.39.1",
-    "eslint-plugin-react-hooks": "7.0.1",
+    "eslint-plugin-react-hooks": "^7.0.1",
     "react": "^19.2.1",
     "typescript": "catalog:",
     "typescript-eslint": "^8.48.0"
