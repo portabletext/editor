@@ -411,6 +411,9 @@ importers:
       '@portabletext/schema':
         specifier: workspace:^
         version: link:../schema
+      '@sanity/types':
+        specifier: ^4.20.3
+        version: 4.20.3(@types/react@19.2.7)(debug@4.4.3)
       lodash:
         specifier: ^4.17.21
         version: 4.17.21
@@ -422,9 +425,6 @@ importers:
         specifier: ^10.1.1
         version: 10.1.1(@types/babel__core@7.20.5)(@types/node@20.19.25)(babel-plugin-react-compiler@1.0.0)(debug@4.4.3)(typescript@5.9.3)
       '@sanity/schema':
-        specifier: ^4.20.3
-        version: 4.20.3(@types/react@19.2.7)(debug@4.4.3)
-      '@sanity/types':
         specifier: ^4.20.3
         version: 4.20.3(@types/react@19.2.7)(debug@4.4.3)
       '@types/jsdom':
@@ -469,6 +469,9 @@ importers:
       '@portabletext/to-html':
         specifier: ^4.0.1
         version: 4.0.1
+      '@sanity/types':
+        specifier: ^4.20.3
+        version: 4.20.3(@types/react@19.2.7)(debug@4.4.3)
       '@xstate/react':
         specifier: ^6.0.0
         version: 6.0.0(@types/react@19.2.7)(react@19.2.1)(xstate@5.24.0)
@@ -501,9 +504,6 @@ importers:
         specifier: ^10.1.1
         version: 10.1.1(@types/babel__core@7.20.5)(@types/node@20.19.25)(babel-plugin-react-compiler@1.0.0)(debug@4.4.3)(typescript@5.9.3)
       '@sanity/schema':
-        specifier: ^4.20.3
-        version: 4.20.3(@types/react@19.2.7)(debug@4.4.3)
-      '@sanity/types':
         specifier: ^4.20.3
         version: 4.20.3(@types/react@19.2.7)(debug@4.4.3)
       '@types/debug':
@@ -1107,6 +1107,9 @@ importers:
       '@portabletext/schema':
         specifier: workspace:^
         version: link:../schema
+      '@sanity/types':
+        specifier: ^4.20.3
+        version: 4.20.3(@types/react@19.2.7)(debug@4.4.3)
       lodash.startcase:
         specifier: ^4.4.0
         version: 4.4.0
@@ -1120,9 +1123,6 @@ importers:
       '@sanity/tsconfig':
         specifier: ^1.0.0
         version: 1.0.0
-      '@sanity/types':
-        specifier: ^4.20.3
-        version: 4.20.3(@types/react@19.2.7)(debug@4.4.3)
       '@types/lodash.startcase':
         specifier: ^4.4.9
         version: 4.4.9
@@ -1149,6 +1149,10 @@ importers:
         version: 4.0.14(@types/node@20.19.25)(@vitest/browser-playwright@4.0.14)(jiti@2.6.1)(jsdom@27.2.0)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.2)
 
   packages/test:
+    dependencies:
+      '@sanity/types':
+        specifier: ^4.20.3
+        version: 4.20.3(@types/react@19.2.7)(debug@4.4.3)
     devDependencies:
       '@portabletext/schema':
         specifier: workspace:^
@@ -1159,9 +1163,6 @@ importers:
       '@sanity/tsconfig':
         specifier: ^1.0.0
         version: 1.0.0
-      '@sanity/types':
-        specifier: ^4.5.0
-        version: 4.20.3(@types/react@19.2.7)(debug@4.4.3)
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
