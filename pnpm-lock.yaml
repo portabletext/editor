@@ -619,8 +619,8 @@ importers:
         specifier: workspace:^
         version: link:../test
       '@portabletext/types':
-        specifier: ^3.0.0
-        version: 3.0.0
+        specifier: ^3.0.1
+        version: 3.0.1
       '@sanity/pkg-utils':
         specifier: ^10.1.1
         version: 10.1.1(@types/babel__core@7.20.5)(@types/node@20.19.25)(babel-plugin-react-compiler@1.0.0)(debug@4.4.3)(typescript@5.9.3)
@@ -2649,8 +2649,8 @@ packages:
     resolution: {integrity: sha512-Jj/QIy3vzZCNcxiUGM7KjGhUhyVjch+9pOzotWRARPNe07R6nbF/cRsKL70q5Xizf+6PVtFYwks4CSXKInC+wg==}
     engines: {node: '>=20.19 <22 || >=22.12'}
 
-  '@portabletext/types@3.0.0':
-    resolution: {integrity: sha512-7U8+bFcnguNtXr4rwMDj0EvJJDRzLaaof2mQqCjUcqxuuJpAppFaATZgrKmPI1uBgtFMi4unk1nIaOOmLHrX8Q==}
+  '@portabletext/types@3.0.1':
+    resolution: {integrity: sha512-Axessc2mZ6tjbD2qIZdTZIEfBtzJBe/1pzKF372cUar6ccUCfgXU4vaKgIbqB33mB6rI75omx9rrm+SgR4rIAA==}
     engines: {node: '>=20.19 <22 || >=22.12'}
 
   '@radix-ui/primitive@1.1.3':
@@ -9373,19 +9373,19 @@ snapshots:
   '@portabletext/react@5.0.0(react@19.2.1)':
     dependencies:
       '@portabletext/toolkit': 4.0.0
-      '@portabletext/types': 3.0.0
+      '@portabletext/types': 3.0.1
       react: 19.2.1
 
   '@portabletext/to-html@4.0.1':
     dependencies:
       '@portabletext/toolkit': 4.0.0
-      '@portabletext/types': 3.0.0
+      '@portabletext/types': 3.0.1
 
   '@portabletext/toolkit@4.0.0':
     dependencies:
-      '@portabletext/types': 3.0.0
+      '@portabletext/types': 3.0.1
 
-  '@portabletext/types@3.0.0': {}
+  '@portabletext/types@3.0.1': {}
 
   '@radix-ui/primitive@1.1.3': {}
 

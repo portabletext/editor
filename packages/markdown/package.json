@@ -52,7 +52,7 @@
   },
   "devDependencies": {
     "@portabletext/test": "workspace:^",
-    "@portabletext/types": "^3.0.0",
+    "@portabletext/types": "^3.0.1",
     "@sanity/pkg-utils": "^10.1.1",
     "@sanity/tsconfig": "^1.0.0",
     "@types/markdown-it": "^14.1.2",
