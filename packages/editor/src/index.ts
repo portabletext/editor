@@ -96,12 +96,3 @@ export type {
 } from './types/editor'
 export type {HotkeyOptions} from './types/options'
 export type {AnnotationPath, BlockPath, ChildPath} from './types/paths'
-
-// Fixes an issue where slate aliased types from (https://github.com/ianstormtaylor/slate/blob/eae2474124949a4e2239568876663ce201357ac6/packages/slate-dom/src/utils/dom.ts#L5-L15)
-// does not make it into the generated dts.
-declare global {
-  type DOMNode = typeof globalThis.Node
-  type DOMRange = typeof globalThis.Range
-  type DOMSelection = typeof globalThis.Selection
-  type DOMStaticRange = typeof globalThis.StaticRange
-}
