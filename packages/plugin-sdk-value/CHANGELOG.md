@@ -1,5 +1,14 @@
 # Changelog
 
+## 3.0.23
+
+### Patch Changes
+
+- [#1981](https://github.com/portabletext/editor/pull/1981) [`23e9930`](https://github.com/portabletext/editor/commit/23e993070ead298cde133970746cb41f3fa571d6) Thanks [@stipsan](https://github.com/stipsan)! - Use relative `^` semver for react compiler deps
+
+- Updated dependencies [[`23e9930`](https://github.com/portabletext/editor/commit/23e993070ead298cde133970746cb41f3fa571d6), [`23e9930`](https://github.com/portabletext/editor/commit/23e993070ead298cde133970746cb41f3fa571d6), [`c3c41b1`](https://github.com/portabletext/editor/commit/c3c41b1f6f468b87a1040fdc3f2eac2e7a618dde), [`23e9930`](https://github.com/portabletext/editor/commit/23e993070ead298cde133970746cb41f3fa571d6)]:
+  - @portabletext/editor@3.3.3
+
 ## 3.0.22
 
 ### Patch Changes
