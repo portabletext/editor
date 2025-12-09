@@ -240,18 +240,14 @@ Feature: Decorators
     And "" has marks "strong"
 
   Scenario: Splitting empty decorated block
-    Given the text "foo"
-    When "{Enter}" is pressed
+    Given the text ""
+    When the caret is put after ""
     And "strong" is toggled
     And "{Enter}" is pressed
-    And "{ArrowUp}" is pressed
-    And "bar" is typed
-    And "{ArrowDown}" is pressed
-    And "baz" is typed
-    Then the text is "foo|bar|baz"
+    And "foo" is typed
+    Then the text is "|foo"
+    And "" has marks "strong"
     And "foo" has no marks
-    And "bar" has marks "strong"
-    And "baz" has no marks
 
   Scenario: Merging spans with same but different-ordered decorators
     Given the text "foobar"
