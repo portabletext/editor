@@ -1,5 +1,19 @@
 # Changelog
 
+## 3.3.4
+
+### Patch Changes
+
+- [#1984](https://github.com/portabletext/editor/pull/1984) [`56168e5`](https://github.com/portabletext/editor/commit/56168e5a84f38bbb1ab9f2d85c8d5745b15e22da) Thanks [@stipsan](https://github.com/stipsan)! - Stop publishing src folder to npm
+
+- Updated dependencies [[`56168e5`](https://github.com/portabletext/editor/commit/56168e5a84f38bbb1ab9f2d85c8d5745b15e22da)]:
+  - @portabletext/keyboard-shortcuts@2.1.1
+  - @portabletext/sanity-bridge@1.2.12
+  - @portabletext/block-tools@4.1.9
+  - @portabletext/markdown@1.0.4
+  - @portabletext/patches@2.0.1
+  - @portabletext/schema@2.0.1
+
 ## 3.3.3
 
 ### Patch Changes
