@@ -490,6 +490,15 @@ importers:
       react-compiler-runtime:
         specifier: ^1.0.0
         version: 1.0.0(react@19.2.1)
+      slate:
+        specifier: ^0.120.0
+        version: 0.120.0
+      slate-dom:
+        specifier: ^0.119.0
+        version: 0.119.0(slate@0.120.0)
+      slate-react:
+        specifier: ^0.120.0
+        version: 0.120.0(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(slate-dom@0.119.0(slate@0.120.0))(slate@0.120.0)
       xstate:
         specifier: ^5.24.0
         version: 5.24.0
@@ -563,15 +572,6 @@ importers:
       rxjs:
         specifier: ^7.8.2
         version: 7.8.2
-      slate:
-        specifier: ^0.120.0
-        version: 0.120.0
-      slate-dom:
-        specifier: ^0.119.0
-        version: 0.119.0(slate@0.120.0)
-      slate-react:
-        specifier: ^0.120.0
-        version: 0.120.0(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(slate-dom@0.119.0(slate@0.120.0))(slate@0.120.0)
       typescript:
         specifier: 'catalog:'
         version: 5.9.3

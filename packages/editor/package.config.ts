@@ -6,7 +6,32 @@ export default defineConfig({
   },
   dist: 'lib',
   extract: {
-    enabled: false, // due to incompatibility with slate-dom and bundling dts
+    customTags: [
+      {
+        name: 'hidden',
+        allowMultiple: true,
+        syntaxKind: 'block',
+      },
+      {
+        name: 'todo',
+        allowMultiple: true,
+        syntaxKind: 'block',
+      },
+      {
+        name: 'group',
+        allowMultiple: true,
+        syntaxKind: 'block',
+      },
+      {
+        name: 'groupDescription',
+        allowMultiple: true,
+        syntaxKind: 'block',
+      },
+    ],
+    rules: {
+      // Disable rules for now
+      'ae-incompatible-release-tags': 'off',
+    },
   },
   rollup: {
     optimizeLodash: true,
