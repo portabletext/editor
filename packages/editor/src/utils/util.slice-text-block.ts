@@ -1,5 +1,8 @@
-import {isSpan, type PortableTextTextBlock} from '@portabletext/schema'
-import type {PortableTextChild} from '@sanity/types'
+import {
+  isSpan,
+  type PortableTextChild,
+  type PortableTextTextBlock,
+} from '@portabletext/schema'
 import type {EditorContext} from '../editor/editor-snapshot'
 import {getSelectionEndPoint} from './util.get-selection-end-point'
 import {getSelectionStartPoint} from './util.get-selection-start-point'

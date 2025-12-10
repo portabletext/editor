@@ -1,11 +1,11 @@
 export type {Patch} from '@portabletext/patches'
 export type {
   PortableTextBlock,
+  PortableTextChild,
   PortableTextObject,
   PortableTextSpan,
   PortableTextTextBlock,
 } from '@portabletext/schema'
-export type {PortableTextChild} from '@sanity/types'
 export type {Editor, EditorConfig, EditorEvent} from './editor'
 export {PortableTextEditable} from './editor/Editable'
 export type {PortableTextEditableProps} from './editor/Editable'

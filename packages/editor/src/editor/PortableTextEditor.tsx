@@ -1,10 +1,9 @@
-import type {PortableTextBlock, PortableTextObject} from '@portabletext/schema'
 import type {
-  ArrayDefinition,
-  ArraySchemaType,
-  Path,
+  PortableTextBlock,
   PortableTextChild,
-} from '@sanity/types'
+  PortableTextObject,
+} from '@portabletext/schema'
+import type {ArrayDefinition, ArraySchemaType, Path} from '@sanity/types'
 import {
   Component,
   useEffect,

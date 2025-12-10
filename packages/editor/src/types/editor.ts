@@ -1,6 +1,7 @@
 import type {Patch} from '@portabletext/patches'
 import type {
   PortableTextBlock,
+  PortableTextChild,
   PortableTextObject,
   PortableTextTextBlock,
   TypedObject,
@@ -12,7 +13,6 @@ import type {
   BlockStyleDefinition,
   ObjectSchemaType,
   Path,
-  PortableTextChild,
 } from '@sanity/types'
 import type {
   ClipboardEvent,
