@@ -101,3 +101,16 @@ export interface PortableTextObject {
   _key: string
   [other: string]: unknown
 }
+
+/**
+ * @public
+ */
+export type PortableTextChild = PortableTextSpan | PortableTextObject
+
+/**
+ * @public
+ */
+export interface PortableTextListBlock extends PortableTextTextBlock {
+  listItem: string
+  level: number
+}
