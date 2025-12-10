@@ -23,6 +23,8 @@ export type {
 export {isSpan, isTextBlock, isTypedObject} from './types'
 export type {
   PortableTextBlock,
+  PortableTextChild,
+  PortableTextListBlock,
   PortableTextObject,
   PortableTextSpan,
   PortableTextTextBlock,
