@@ -1,5 +1,51 @@
 # Changelog
 
+## 3.3.6
+
+### Patch Changes
+
+- [#1980](https://github.com/portabletext/editor/pull/1980) [`77aa97a`](https://github.com/portabletext/editor/commit/77aa97a7c5901557c162be52ea3d48c3ff9105ce) Thanks [@christianhg](https://github.com/christianhg)! - fix: prevent duplicate `'select'` events
+
+  ### What changed
+
+  **Behavior events** (intercepted via `defineBehavior({on: 'select', ...})`) are now only emitted for **actionable** selection changes - ones you can actually intercept and modify.
+
+  **Emitted events** (subscribed via `EventListenerPlugin` or `editor.on('selection', ...)`) continue to fire for all selection changes.
+
+  ### Why
+
+  Previously, a single arrow key press could emit two `'select'` behavior events:
+  1. The behavior handling the key raises `'select'`
+  2. The browser's DOM selection change triggers another `'select'`
+
+  This made it difficult to reliably intercept selection changes.
+
+  ### What this means for you
+  - **`'select'` behavior events** now only fire for:
+    - Initial editor focus (click, tab into editor)
+    - Arrow key navigation
+    - Programmatic selection via `editor.send({type: 'select', ...})`
+    - Behaviors that raise `'select'`
+  - **`'select'` behavior events** no longer fire for:
+    - Cursor movement after typing (implicit, already happened)
+    - Cursor movement after delete/backspace (implicit, already happened)
+  - **To track ALL selection changes** (including implicit ones), use:
+    ```tsx
+    <EventListenerPlugin
+      on={(event) => {
+        if (event.type === 'selection') {
+          console.log('Selection changed:', event.selection)
+        }
+      }}
+    />
+    ```
+    Or: `editor.on('selection', (event) => { ... })`
+
+- [#1993](https://github.com/portabletext/editor/pull/1993) [`cf0572b`](https://github.com/portabletext/editor/commit/cf0572b93b5179b74239418a6df671530a4cf865) Thanks [@stipsan](https://github.com/stipsan)! - upgrade `@portabletext/*` to latest major
+
+- Updated dependencies [[`cf0572b`](https://github.com/portabletext/editor/commit/cf0572b93b5179b74239418a6df671530a4cf865)]:
+  - @portabletext/markdown@1.0.5
+
 ## 3.3.5
 
 ### Patch Changes

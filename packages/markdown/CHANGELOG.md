@@ -1,5 +1,11 @@
 # @portabletext/markdown
 
+## 1.0.5
+
+### Patch Changes
+
+- [#1993](https://github.com/portabletext/editor/pull/1993) [`cf0572b`](https://github.com/portabletext/editor/commit/cf0572b93b5179b74239418a6df671530a4cf865) Thanks [@stipsan](https://github.com/stipsan)! - upgrade `@portabletext/*` to latest major
+
 ## 1.0.4
 
 ### Patch Changes
