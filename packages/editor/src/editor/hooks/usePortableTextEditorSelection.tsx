@@ -9,7 +9,9 @@ import {EditorActorContext} from '../editor-actor-context'
  */
 export const usePortableTextEditorSelection = (): EditorSelection => {
   const editorActor = useContext(EditorActorContext)
-  const [selection, setSelection] = useState<EditorSelection>(null)
+  const [selection, setSelection] = useState<EditorSelection>(
+    editorActor.getSnapshot().context.selection,
+  )
 
   useEffect(() => {
     const subscription = editorActor.on('selection', (event) => {
