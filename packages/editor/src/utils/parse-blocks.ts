@@ -2,12 +2,12 @@ import {
   isSpan,
   isTextBlock,
   type PortableTextBlock,
+  type PortableTextListBlock,
   type PortableTextObject,
   type PortableTextSpan,
   type PortableTextTextBlock,
   type TypedObject,
 } from '@portabletext/schema'
-import type {PortableTextListBlock} from '@sanity/types'
 import type {EditorSchema} from '../editor/editor-schema'
 import type {EditorContext} from '../editor/editor-snapshot'
 import {isRecord, isTypedObject} from './asserters'

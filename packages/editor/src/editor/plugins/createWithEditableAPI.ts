@@ -1,9 +1,10 @@
 import {
   isTextBlock,
   type PortableTextBlock,
+  type PortableTextChild,
   type PortableTextObject,
 } from '@portabletext/schema'
-import type {Path, PortableTextChild} from '@sanity/types'
+import type {Path} from '@sanity/types'
 import {Editor, Range, Text, Transforms} from 'slate'
 import {ReactEditor} from 'slate-react'
 import {

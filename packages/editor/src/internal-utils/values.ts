@@ -1,9 +1,9 @@
 import type {
   PortableTextBlock,
+  PortableTextChild,
   PortableTextObject,
   PortableTextTextBlock,
 } from '@portabletext/schema'
-import type {PortableTextChild} from '@sanity/types'
 import {Element, Text, type Descendant} from 'slate'
 import type {EditorSchema} from '../editor/editor-schema'
 import {isEqualBlocks, isEqualValues} from './equality'

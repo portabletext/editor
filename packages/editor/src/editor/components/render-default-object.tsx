@@ -1,5 +1,4 @@
-import type {PortableTextObject} from '@portabletext/schema'
-import type {PortableTextChild} from '@sanity/types'
+import type {PortableTextChild, PortableTextObject} from '@portabletext/schema'
 
 export function RenderDefaultBlockObject(props: {
   blockObject: PortableTextObject
