@@ -7,6 +7,10 @@ import type {
   TypedObject,
 } from '@portabletext/types'
 
+type LooseRecord<K extends string, V> = Record<string, V> & {
+  [P in K]?: V // autocompleted keys
+}
+
 /**
  * Generic type for portable text renderers that takes blocks/inline blocks
  *
@@ -83,7 +87,7 @@ export interface PortableTextRenderers {
    * Can also be set to a single renderer function, which would handle block styles of _any_ type.
    */
   block:
-    | Record<PortableTextBlockStyle, PortableTextBlockRenderer | undefined>
+    | LooseRecord<PortableTextBlockStyle, PortableTextBlockRenderer | undefined>
     | PortableTextBlockRenderer
 
   /**
@@ -95,7 +99,10 @@ export interface PortableTextRenderers {
    * Can also be set to a single renderer function, which would handle list items of _any_ type.
    */
   listItem:
-    | Record<PortableTextListItemType, PortableTextListItemRenderer | undefined>
+    | LooseRecord<
+        PortableTextListItemType,
+        PortableTextListItemRenderer | undefined
+      >
     | PortableTextListItemRenderer
 
   /**
