@@ -1,5 +1,5 @@
 import type {Patch} from '@portabletext/patches'
-import type {PortableTextBlock} from '@sanity/types'
+import type {PortableTextBlock} from '@portabletext/schema'
 import type {FocusEvent} from 'react'
 import {assign, emit, setup, type ActorRefFrom} from 'xstate'
 import type {EditorSelection, InvalidValueResolution} from '../types/editor'

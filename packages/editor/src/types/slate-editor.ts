@@ -1,9 +1,9 @@
 import type {
   PortableTextBlock,
-  PortableTextListBlock,
   PortableTextSpan,
   PortableTextTextBlock,
-} from '@sanity/types'
+} from '@portabletext/schema'
+import type {PortableTextListBlock} from '@sanity/types'
 import type {KeyboardEvent} from 'react'
 import type {Descendant, Operation as SlateOperation} from 'slate'
 import type {ReactEditor} from 'slate-react'

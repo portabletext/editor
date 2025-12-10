@@ -1,5 +1,4 @@
-import {isTextBlock} from '@portabletext/schema'
-import type {PortableTextTextBlock} from '@sanity/types'
+import {isTextBlock, type PortableTextTextBlock} from '@portabletext/schema'
 import type {EditorContext} from '../editor/editor-snapshot'
 import {parseBlock} from './parse-blocks'
 

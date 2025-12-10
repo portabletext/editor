@@ -1,5 +1,4 @@
-import {isTextBlock} from '@portabletext/schema'
-import type {PortableTextBlock} from '@sanity/types'
+import {isTextBlock, type PortableTextBlock} from '@portabletext/schema'
 import type {EditorContext} from '../editor/editor-snapshot'
 import {isSelectionCollapsed} from './util.is-selection-collapsed'
 import {getChildKeyFromSelectionPoint} from './util.selection-point'

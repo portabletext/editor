@@ -1,10 +1,9 @@
+import type {PortableTextBlock, PortableTextObject} from '@portabletext/schema'
 import type {
   ArrayDefinition,
   ArraySchemaType,
   Path,
-  PortableTextBlock,
   PortableTextChild,
-  PortableTextObject,
 } from '@sanity/types'
 import {
   Component,

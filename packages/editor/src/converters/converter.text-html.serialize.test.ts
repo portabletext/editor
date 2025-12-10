@@ -2,9 +2,10 @@ import {compileSchemaDefinitionToPortableTextMemberSchemaTypes} from '@portablet
 import {
   compileSchema,
   defineSchema,
+  type PortableTextBlock,
+  type PortableTextTextBlock,
   type SchemaDefinition,
 } from '@portabletext/schema'
-import type {PortableTextBlock, PortableTextTextBlock} from '@sanity/types'
 import {describe, expect, test} from 'vitest'
 import {createTestSnapshot} from '../internal-utils/create-test-snapshot'
 import type {EditorSelection} from '../types/editor'

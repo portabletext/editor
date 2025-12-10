@@ -1,4 +1,4 @@
-import type {PortableTextBlock} from '@sanity/types'
+import type {PortableTextBlock} from '@portabletext/schema'
 
 export function getBlockKeys(value: Array<PortableTextBlock> | undefined) {
   if (!value) {

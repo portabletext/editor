@@ -1,4 +1,4 @@
-import type {PortableTextBlock} from '@sanity/types'
+import type {PortableTextBlock} from '@portabletext/schema'
 import type {EditorSnapshot} from '../editor/editor-snapshot'
 import type {MIMEType} from '../internal-utils/mime-type'
 import type {PickFromUnion} from '../type-utils'

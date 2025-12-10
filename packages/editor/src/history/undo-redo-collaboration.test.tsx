@@ -1,5 +1,5 @@
+import type {PortableTextBlock} from '@portabletext/schema'
 import {getTersePt} from '@portabletext/test'
-import type {PortableTextBlock} from '@sanity/types'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {

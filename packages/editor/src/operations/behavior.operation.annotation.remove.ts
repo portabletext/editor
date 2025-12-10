@@ -1,4 +1,4 @@
-import type {PortableTextSpan} from '@sanity/types'
+import type {PortableTextSpan} from '@portabletext/schema'
 import {Editor, Node, Path, Range, Transforms} from 'slate'
 import type {BehaviorOperationImplementation} from './behavior.operations'
 

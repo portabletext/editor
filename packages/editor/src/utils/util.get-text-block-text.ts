@@ -1,4 +1,4 @@
-import type {PortableTextTextBlock} from '@sanity/types'
+import type {PortableTextTextBlock} from '@portabletext/schema'
 
 /**
  * @public

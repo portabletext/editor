@@ -1,5 +1,8 @@
-import {compileSchema, defineSchema} from '@portabletext/schema'
-import type {PortableTextBlock} from '@sanity/types'
+import {
+  compileSchema,
+  defineSchema,
+  type PortableTextBlock,
+} from '@portabletext/schema'
 import {expect, test} from 'vitest'
 import {createTestSnapshot} from '../internal-utils/create-test-snapshot'
 import type {EditorSelection} from '../types/editor'

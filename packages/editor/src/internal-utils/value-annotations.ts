@@ -1,5 +1,4 @@
-import {isSpan, isTextBlock} from '@portabletext/schema'
-import type {PortableTextBlock} from '@sanity/types'
+import {isSpan, isTextBlock, type PortableTextBlock} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
 
 export function getValueAnnotations(

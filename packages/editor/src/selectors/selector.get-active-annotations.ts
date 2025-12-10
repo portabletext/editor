@@ -1,5 +1,4 @@
-import {isTextBlock} from '@portabletext/schema'
-import type {PortableTextObject} from '@sanity/types'
+import {isTextBlock, type PortableTextObject} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
 import {getMarkState} from './selector.get-mark-state'
 import {getSelectedBlocks} from './selector.get-selected-blocks'

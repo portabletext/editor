@@ -1,4 +1,5 @@
-import type {Path, PortableTextBlock} from '@sanity/types'
+import type {PortableTextBlock} from '@portabletext/schema'
+import type {Path} from '@sanity/types'
 import type {EditorSelection, EditorSelectionPoint} from '../types/editor'
 import {isKeyedSegment} from '../utils'
 

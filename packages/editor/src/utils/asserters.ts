@@ -1,4 +1,4 @@
-import type {TypedObject} from '@sanity/types'
+import type {TypedObject} from '@portabletext/schema'
 
 export function isTypedObject(object: unknown): object is TypedObject {
   return isRecord(object) && typeof object._type === 'string'

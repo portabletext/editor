@@ -1,4 +1,4 @@
-import type {PortableTextSpan} from '@sanity/types'
+import type {PortableTextSpan} from '@portabletext/schema'
 import {
   Editor,
   Element,

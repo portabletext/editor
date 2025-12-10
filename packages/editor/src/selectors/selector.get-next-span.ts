@@ -1,5 +1,5 @@
-import {isSpan, isTextBlock} from '@portabletext/schema'
-import type {KeyedSegment, PortableTextSpan} from '@sanity/types'
+import {isSpan, isTextBlock, type PortableTextSpan} from '@portabletext/schema'
+import type {KeyedSegment} from '@sanity/types'
 import type {EditorSelector} from '../editor/editor-selector'
 import {getChildKeyFromSelectionPoint} from '../utils/util.selection-point'
 import {getSelectionEndBlock} from './selector.get-selection-end-block'

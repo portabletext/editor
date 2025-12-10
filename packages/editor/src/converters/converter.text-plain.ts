@@ -1,6 +1,5 @@
 import {htmlToBlocks} from '@portabletext/block-tools'
-import {isTextBlock} from '@portabletext/schema'
-import type {PortableTextBlock} from '@sanity/types'
+import {isTextBlock, type PortableTextBlock} from '@portabletext/schema'
 import {getSelectedValue} from '../selectors/selector.get-selected-value'
 import type {PortableTextMemberSchemaTypes} from '../types/editor'
 import {parseBlock} from '../utils/parse-blocks'

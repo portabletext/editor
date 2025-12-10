@@ -1,5 +1,8 @@
-import {compileSchema, defineSchema} from '@portabletext/schema'
-import type {PortableTextBlock} from '@sanity/types'
+import {
+  compileSchema,
+  defineSchema,
+  type PortableTextBlock,
+} from '@portabletext/schema'
 import {describe, expect, test} from 'vitest'
 import {defaultKeyGenerator} from '../utils/key-generator'
 import {buildIndexMaps} from './build-index-maps'

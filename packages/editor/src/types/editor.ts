@@ -1,16 +1,18 @@
 import type {Patch} from '@portabletext/patches'
 import type {
+  PortableTextBlock,
+  PortableTextObject,
+  PortableTextTextBlock,
+  TypedObject,
+} from '@portabletext/schema'
+import type {
   ArraySchemaType,
   BlockDecoratorDefinition,
   BlockListDefinition,
   BlockStyleDefinition,
   ObjectSchemaType,
   Path,
-  PortableTextBlock,
   PortableTextChild,
-  PortableTextObject,
-  PortableTextTextBlock,
-  TypedObject,
 } from '@sanity/types'
 import type {
   ClipboardEvent,

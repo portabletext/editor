@@ -1,10 +1,11 @@
 import {insert, set, setIfMissing, unset} from '@portabletext/patches'
-import {isSpan, isTextBlock} from '@portabletext/schema'
-import type {
-  PortableTextBlock,
-  PortableTextSpan,
-  PortableTextTextBlock,
-} from '@sanity/types'
+import {
+  isSpan,
+  isTextBlock,
+  type PortableTextBlock,
+  type PortableTextSpan,
+  type PortableTextTextBlock,
+} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
 import type {InvalidValueResolution} from '../types/editor'
 

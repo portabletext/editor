@@ -1,4 +1,4 @@
-import type {PortableTextObject, PortableTextSpan} from '@sanity/types'
+import type {PortableTextObject, PortableTextSpan} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
 import type {ChildPath} from '../types/paths'
 import {getChildKeyFromSelectionPoint} from '../utils/util.selection-point'

@@ -1,5 +1,5 @@
 import type {Patch} from '@portabletext/patches'
-import type {PortableTextBlock} from '@sanity/types'
+import type {PortableTextBlock} from '@portabletext/schema'
 import {Editor} from 'slate'
 import type {ActorRefFrom} from 'xstate'
 import {
