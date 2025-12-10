@@ -1,7 +1,8 @@
 import {isSpan} from '@portabletext/schema'
-import {isKeySegment, type PortableTextObject} from '@sanity/types'
+import type {PortableTextObject} from '@sanity/types'
 import type {EditorSelector} from '../editor/editor-selector'
 import type {ChildPath} from '../types/paths'
+import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import {getFocusTextBlock} from './selector.get-focus-text-block'
 import {getSelectionEndPoint} from './selector.get-selection-end-point'
 
@@ -18,7 +19,7 @@ export const getNextInlineObject: EditorSelector<
   const focusTextBlock = getFocusTextBlock(snapshot)
   const selectionEndPoint = getSelectionEndPoint(snapshot)
   const selectionEndPointChildKey =
-    selectionEndPoint && isKeySegment(selectionEndPoint.path[2])
+    selectionEndPoint && isKeyedSegment(selectionEndPoint.path[2])
       ? selectionEndPoint.path[2]._key
       : undefined
 
