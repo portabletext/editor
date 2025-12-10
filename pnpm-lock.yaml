@@ -34,7 +34,7 @@ importers:
         specifier: ^0.5.1
         version: 0.5.2
       '@changesets/cli':
-        specifier: ^2.29.7
+        specifier: ^2.29.8
         version: 2.29.8(@types/node@20.19.25)
       '@ianvs/prettier-plugin-sort-imports':
         specifier: ^4.7.0
