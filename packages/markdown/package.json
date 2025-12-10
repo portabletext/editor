@@ -53,7 +53,7 @@
   "devDependencies": {
     "@portabletext/test": "workspace:^",
     "@portabletext/types": "^4.0.0",
-    "@sanity/pkg-utils": "^10.1.1",
+    "@sanity/pkg-utils": "^10.1.2",
     "@sanity/tsconfig": "^1.0.0",
     "@types/markdown-it": "^14.1.2",
     "typescript": "catalog:",
