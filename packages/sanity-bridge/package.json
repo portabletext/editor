@@ -50,7 +50,7 @@
     "lodash.startcase": "^4.4.0"
   },
   "devDependencies": {
-    "@sanity/pkg-utils": "^10.1.1",
+    "@sanity/pkg-utils": "^10.1.2",
     "@sanity/tsconfig": "^1.0.0",
     "@types/lodash.startcase": "^4.4.9",
     "typescript": "catalog:",
