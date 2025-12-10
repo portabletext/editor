@@ -74,7 +74,7 @@
     "babel-plugin-react-compiler": "^1.0.0",
     "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^7.0.1",
-    "playwright": "^1.56.1",
+    "playwright": "^1.57.0",
     "react": "^19.2.1",
     "react-dom": "^19.2.1",
     "react-error-boundary": "^6.0.0",

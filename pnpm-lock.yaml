@@ -40,7 +40,7 @@ importers:
         specifier: ^4.7.0
         version: 4.7.0(prettier@3.7.4)
       '@playwright/test':
-        specifier: ^1.56.1
+        specifier: ^1.57.0
         version: 1.57.0
       '@sanity/prettier-config':
         specifier: ^3.0.0
@@ -989,7 +989,7 @@ importers:
         specifier: ^7.0.1
         version: 7.0.1(eslint@9.39.1(jiti@2.6.1))
       playwright:
-        specifier: ^1.56.1
+        specifier: ^1.57.0
         version: 1.57.0
       react:
         specifier: ^19.2.1
@@ -1087,7 +1087,7 @@ importers:
         specifier: ^30.2.0
         version: 30.2.0
       '@playwright/test':
-        specifier: ^1.56.1
+        specifier: ^1.57.0
         version: 1.57.0
       '@sanity/pkg-utils':
         specifier: ^10.1.2
