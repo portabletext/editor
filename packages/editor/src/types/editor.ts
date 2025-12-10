@@ -12,7 +12,6 @@ import type {
   BlockListDefinition,
   BlockStyleDefinition,
   ObjectSchemaType,
-  Path,
 } from '@sanity/types'
 import type {
   ClipboardEvent,
@@ -25,7 +24,7 @@ import type {
 import type {Observable, Subject} from 'rxjs'
 import type {PortableTextEditableProps} from '../editor/Editable'
 import type {PortableTextEditor} from '../editor/PortableTextEditor'
-import type {BlockPath} from './paths'
+import type {BlockPath, Path} from './paths'
 
 /** @beta */
 export interface EditableAPIDeleteOptions {

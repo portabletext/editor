@@ -14,7 +14,6 @@ import {
   type PortableTextSpan,
   type PortableTextTextBlock,
 } from '@portabletext/schema'
-import type {Path} from '@sanity/types'
 import {
   Element,
   Text,
@@ -29,6 +28,7 @@ import {
   type SplitNodeOperation,
 } from 'slate'
 import type {EditorSchema} from '../editor/editor-schema'
+import type {Path} from '../types/paths'
 import {fromSlateBlock} from './values'
 
 export function insertTextPatch(

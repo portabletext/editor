@@ -1,4 +1,32 @@
-import type {Path} from '@sanity/types'
+/**
+ * A segment in a path that identifies an element by its `_key` property.
+ * @public
+ */
+export interface KeyedSegment {
+  _key: string
+}
+
+/**
+ * A tuple representing a range selection, e.g., `[0, 5]` or `['', 3]`.
+ * @public
+ */
+export type IndexTuple = [number | '', number | '']
+
+/**
+ * A single segment in a path. Can be:
+ * - A string (property name)
+ * - A number (array index)
+ * - A KeyedSegment (object with `_key`)
+ * - An IndexTuple (range selection)
+ * @public
+ */
+export type PathSegment = string | number | KeyedSegment | IndexTuple
+
+/**
+ * A path is an array of path segments that describes a location in a document.
+ * @public
+ */
+export type Path = PathSegment[]
 
 /**
  * @public

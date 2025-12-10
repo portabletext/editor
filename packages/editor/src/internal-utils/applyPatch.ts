@@ -16,10 +16,10 @@ import {
   makeDiff,
   parsePatch,
 } from '@sanity/diff-match-patch'
-import type {Path} from '@sanity/types'
 import {Editor, Element, Node, Text, Transforms, type Descendant} from 'slate'
 import type {EditorContext} from '../editor/editor-snapshot'
 import {KEY_TO_SLATE_ELEMENT} from '../editor/weakMaps'
+import type {Path} from '../types/paths'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import {isEqualToEmptyEditor, toSlateBlock} from './values'
