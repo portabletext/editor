@@ -18,7 +18,6 @@ import {
 } from '@sanity/diff-match-patch'
 import {Editor, Element, Node, Text, Transforms, type Descendant} from 'slate'
 import type {EditorContext} from '../editor/editor-snapshot'
-import {KEY_TO_SLATE_ELEMENT} from '../editor/weakMaps'
 import type {Path} from '../types/paths'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
@@ -131,11 +130,7 @@ function insertPatch(
   if (!block) {
     if (patch.path.length === 1 && patch.path[0] === 0) {
       const blocksToInsert = patch.items.map((item) =>
-        toSlateBlock(
-          item as PortableTextBlock,
-          {schemaTypes: context.schema},
-          KEY_TO_SLATE_ELEMENT.get(editor),
-        ),
+        toSlateBlock(item as PortableTextBlock, {schemaTypes: context.schema}),
       )
 
       Transforms.insertNodes(editor, blocksToInsert, {
@@ -156,11 +151,7 @@ function insertPatch(
   if (patch.path.length === 1) {
     const {items, position} = patch
     const blocksToInsert = items.map((item) =>
-      toSlateBlock(
-        item as PortableTextBlock,
-        {schemaTypes: context.schema},
-        KEY_TO_SLATE_ELEMENT.get(editor),
-      ),
+      toSlateBlock(item as PortableTextBlock, {schemaTypes: context.schema}),
     )
     const targetBlockIndex = block.index
     const normalizedIdx =
@@ -203,7 +194,6 @@ function insertPatch(
   const childrenToInsert = toSlateBlock(
     {...block.node, children: items as PortableTextChild[]},
     {schemaTypes: context.schema},
-    KEY_TO_SLATE_ELEMENT.get(editor),
   )
   const normalizedIdx =
     position === 'after' ? targetChild.index + 1 : targetChild.index
