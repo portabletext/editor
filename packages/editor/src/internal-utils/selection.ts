@@ -1,6 +1,6 @@
 import type {PortableTextBlock} from '@portabletext/schema'
-import type {Path} from '@sanity/types'
 import type {EditorSelection, EditorSelectionPoint} from '../types/editor'
+import type {Path} from '../types/paths'
 import {isKeyedSegment} from '../utils'
 
 export function normalizePoint(

@@ -1,4 +1,4 @@
-import type {KeyedSegment} from '@sanity/types'
+import type {KeyedSegment} from '../types/paths'
 
 /**
  * @public

@@ -4,7 +4,6 @@ import {
   type PortableTextChild,
   type PortableTextObject,
 } from '@portabletext/schema'
-import type {Path} from '@sanity/types'
 import {Editor, Range, Text, Transforms} from 'slate'
 import {ReactEditor} from 'slate-react'
 import {
@@ -24,6 +23,7 @@ import type {
   EditableAPIDeleteOptions,
   EditorSelection,
 } from '../../types/editor'
+import type {Path} from '../../types/paths'
 import type {PortableTextSlateEditor} from '../../types/slate-editor'
 import {
   getBlockKeyFromSelectionPoint,
