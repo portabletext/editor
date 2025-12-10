@@ -1,8 +1,7 @@
+import {defineSchema, type PortableTextTextBlock} from '@portabletext/schema'
 import {getTersePt} from '@portabletext/test'
-import type {PortableTextTextBlock} from '@sanity/types'
 import {describe, expect, test} from 'vitest'
 import {userEvent} from 'vitest/browser'
-import {defineSchema} from '../src'
 import {getTextMarks} from '../src/internal-utils/text-marks'
 import {
   getSelectionBeforeText,

@@ -1,6 +1,5 @@
 import {htmlToBlocks} from '@portabletext/block-tools'
-import {defineSchema} from '@portabletext/schema'
-import type {PortableTextObject} from '@sanity/types'
+import {defineSchema, type PortableTextObject} from '@portabletext/schema'
 import {expect, test, vi} from 'vitest'
 import {effect, execute, raise} from '../src/behaviors/behavior.types.action'
 import {defineBehavior} from '../src/behaviors/behavior.types.behavior'

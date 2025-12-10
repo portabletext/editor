@@ -1,6 +1,10 @@
-import {compileSchema, isSpan, isTextBlock} from '@portabletext/schema'
+import {
+  compileSchema,
+  isSpan,
+  isTextBlock,
+  type PortableTextBlock,
+} from '@portabletext/schema'
 import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
-import type {PortableTextBlock} from '@sanity/types'
 import {createRef, useState, type ReactNode, type RefObject} from 'react'
 import {describe, expect, it, test, vi} from 'vitest'
 import {render} from 'vitest-browser-react'
