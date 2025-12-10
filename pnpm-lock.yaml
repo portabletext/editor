@@ -31,7 +31,7 @@ importers:
         specifier: 2.3.8
         version: 2.3.8
       '@changesets/changelog-github':
-        specifier: ^0.5.1
+        specifier: ^0.5.2
         version: 0.5.2
       '@changesets/cli':
         specifier: ^2.29.8
