@@ -1,10 +1,11 @@
-import {compileSchema, defineSchema} from '@portabletext/schema'
+import {
+  compileSchema,
+  defineSchema,
+  type PortableTextObject,
+  type PortableTextSpan,
+  type PortableTextTextBlock,
+} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
-import type {
-  PortableTextObject,
-  PortableTextSpan,
-  PortableTextTextBlock,
-} from '@sanity/types'
 import {describe, expect, test} from 'vitest'
 import {sliceTextBlock} from './util.slice-text-block'
 

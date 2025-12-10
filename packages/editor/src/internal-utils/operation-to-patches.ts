@@ -7,8 +7,14 @@ import {
   type InsertPosition,
   type Patch,
 } from '@portabletext/patches'
-import {isSpan, isTextBlock, type PortableTextBlock} from '@portabletext/schema'
-import type {Path, PortableTextSpan, PortableTextTextBlock} from '@sanity/types'
+import {
+  isSpan,
+  isTextBlock,
+  type PortableTextBlock,
+  type PortableTextSpan,
+  type PortableTextTextBlock,
+} from '@portabletext/schema'
+import type {Path} from '@sanity/types'
 import {
   Element,
   Text,

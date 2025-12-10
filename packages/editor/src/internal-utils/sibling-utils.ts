@@ -1,4 +1,4 @@
-import type {PortableTextSpan} from '@sanity/types'
+import type {PortableTextSpan} from '@portabletext/schema'
 import {Node, Path} from 'slate'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 

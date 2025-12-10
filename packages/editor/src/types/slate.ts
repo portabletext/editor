@@ -1,4 +1,7 @@
-import type {PortableTextSpan, PortableTextTextBlock} from '@sanity/types'
+import type {
+  PortableTextSpan,
+  PortableTextTextBlock,
+} from '@portabletext/schema'
 import type {BaseEditor, Descendant} from 'slate'
 import type {ReactEditor} from 'slate-react'
 import type {PortableTextSlateEditor} from './slate-editor'

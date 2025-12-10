@@ -1,6 +1,9 @@
-import {defineSchema, type SchemaDefinition} from '@portabletext/schema'
+import {
+  defineSchema,
+  type PortableTextBlock,
+  type SchemaDefinition,
+} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
-import type {PortableTextBlock} from '@sanity/types'
 import React from 'react'
 import {expect, vi} from 'vitest'
 import {render} from 'vitest-browser-react'

@@ -1,5 +1,4 @@
-import {isTextBlock} from '@portabletext/schema'
-import type {PortableTextTextBlock} from '@sanity/types'
+import {isTextBlock, type PortableTextTextBlock} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
 import type {BlockPath} from '../types/paths'
 import {getFocusBlock} from './selector.get-focus-block'

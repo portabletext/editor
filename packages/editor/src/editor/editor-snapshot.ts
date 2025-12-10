@@ -1,4 +1,4 @@
-import type {PortableTextBlock} from '@sanity/types'
+import type {PortableTextBlock} from '@portabletext/schema'
 import type {Converter} from '../converters/converter.types'
 import {slateRangeToSelection} from '../internal-utils/slate-utils'
 import type {EditorSelection} from '../types/editor'

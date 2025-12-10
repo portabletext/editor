@@ -3,8 +3,8 @@ import {
   compileSchema,
   defineSchema,
   type PortableTextBlock,
+  type PortableTextTextBlock,
 } from '@portabletext/schema'
-import type {PortableTextTextBlock} from '@sanity/types'
 import {createEditor, type Descendant} from 'slate'
 import {beforeEach, describe, expect, it, test} from 'vitest'
 import {createActor} from 'xstate'

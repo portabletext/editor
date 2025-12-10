@@ -1,5 +1,9 @@
-import {isSpan, isTextBlock} from '@portabletext/schema'
-import type {PortableTextObject, PortableTextSpan} from '@sanity/types'
+import {
+  isSpan,
+  isTextBlock,
+  type PortableTextObject,
+  type PortableTextSpan,
+} from '@portabletext/schema'
 import type {Path, Range} from 'slate'
 import type {EditorContext, EditorSnapshot} from '../editor/editor-snapshot'
 import type {EditorSelectionPoint} from '../types/editor'

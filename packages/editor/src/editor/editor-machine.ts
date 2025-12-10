@@ -1,5 +1,5 @@
 import type {Patch} from '@portabletext/patches'
-import type {PortableTextBlock} from '@sanity/types'
+import type {PortableTextBlock} from '@portabletext/schema'
 import {Transforms} from 'slate'
 import {EDITOR_TO_PENDING_SELECTION} from 'slate-dom'
 import {ReactEditor} from 'slate-react'

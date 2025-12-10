@@ -1,9 +1,10 @@
-import {isSpan, isTextBlock} from '@portabletext/schema'
-import type {
-  PortableTextListBlock,
-  PortableTextSpan,
-  PortableTextTextBlock,
-} from '@sanity/types'
+import {
+  isSpan,
+  isTextBlock,
+  type PortableTextSpan,
+  type PortableTextTextBlock,
+} from '@portabletext/schema'
+import type {PortableTextListBlock} from '@sanity/types'
 import {Editor, Transforms, type Element} from 'slate'
 import {debugWithName} from '../../internal-utils/debug'
 import type {PortableTextSlateEditor} from '../../types/slate-editor'

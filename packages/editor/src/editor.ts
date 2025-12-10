@@ -1,9 +1,5 @@
-import type {SchemaDefinition} from '@portabletext/schema'
-import type {
-  ArrayDefinition,
-  ArraySchemaType,
-  PortableTextBlock,
-} from '@sanity/types'
+import type {PortableTextBlock, SchemaDefinition} from '@portabletext/schema'
+import type {ArrayDefinition, ArraySchemaType} from '@sanity/types'
 import type {ActorRef, EventObject, Snapshot} from 'xstate'
 import type {Behavior} from './behaviors/behavior.types.behavior'
 import type {ExternalBehaviorEvent} from './behaviors/behavior.types.event'

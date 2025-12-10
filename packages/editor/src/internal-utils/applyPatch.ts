@@ -6,6 +6,7 @@ import {
   type SetPatch,
   type UnsetPatch,
 } from '@portabletext/patches'
+import type {PortableTextBlock} from '@portabletext/schema'
 import {
   cleanupEfficiency,
   DIFF_DELETE,
@@ -15,7 +16,7 @@ import {
   makeDiff,
   parsePatch,
 } from '@sanity/diff-match-patch'
-import type {Path, PortableTextBlock, PortableTextChild} from '@sanity/types'
+import type {Path, PortableTextChild} from '@sanity/types'
 import {Editor, Element, Node, Text, Transforms, type Descendant} from 'slate'
 import type {EditorContext} from '../editor/editor-snapshot'
 import {KEY_TO_SLATE_ELEMENT} from '../editor/weakMaps'

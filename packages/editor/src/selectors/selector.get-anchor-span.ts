@@ -1,5 +1,4 @@
-import {isSpan} from '@portabletext/schema'
-import type {PortableTextSpan} from '@sanity/types'
+import {isSpan, type PortableTextSpan} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
 import type {ChildPath} from '../types/paths'
 import {getAnchorChild} from './selector.get-anchor-child'

@@ -1,6 +1,9 @@
-import {compileSchema, defineSchema} from '@portabletext/schema'
+import {
+  compileSchema,
+  defineSchema,
+  type PortableTextBlock,
+} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
-import type {PortableTextBlock} from '@sanity/types'
 import {describe, expect, test} from 'vitest'
 import {blockOffsetToSpanSelectionPoint} from './util.block-offset'
 

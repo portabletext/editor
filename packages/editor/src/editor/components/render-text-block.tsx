@@ -1,4 +1,4 @@
-import type {PortableTextTextBlock} from '@sanity/types'
+import type {PortableTextTextBlock} from '@portabletext/schema'
 import {useRef, useState, type ReactElement} from 'react'
 import {Range, type Element as SlateElement} from 'slate'
 import {
