@@ -61,7 +61,7 @@
     "@sanity/schema": "^4.20.3",
     "@types/jsdom": "^27.0.0",
     "@types/lodash": "^4.17.20",
-    "@vercel/stega": "0.1.2",
+    "@vercel/stega": "1.0.0",
     "@vitest/coverage-v8": "^4.0.14",
     "jsdom": "^27.0.0",
     "typescript": "catalog:",
