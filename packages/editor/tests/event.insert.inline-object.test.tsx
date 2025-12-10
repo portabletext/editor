@@ -1,6 +1,5 @@
-import {defineSchema} from '@portabletext/schema'
+import {defineSchema, type PortableTextTextBlock} from '@portabletext/schema'
 import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
-import type {PortableTextTextBlock} from '@sanity/types'
 import {describe, expect, test, vi} from 'vitest'
 import {page, userEvent} from 'vitest/browser'
 import type {EditorEmittedEvent} from '../src'

@@ -7,13 +7,6 @@ import type {
   TypedObject,
 } from '@portabletext/schema'
 import type {
-  ArraySchemaType,
-  BlockDecoratorDefinition,
-  BlockListDefinition,
-  BlockStyleDefinition,
-  ObjectSchemaType,
-} from '@sanity/types'
-import type {
   ClipboardEvent,
   FocusEvent,
   JSX,
@@ -25,6 +18,13 @@ import type {Observable, Subject} from 'rxjs'
 import type {PortableTextEditableProps} from '../editor/Editable'
 import type {PortableTextEditor} from '../editor/PortableTextEditor'
 import type {BlockPath, Path} from './paths'
+import type {
+  ArraySchemaType,
+  BlockDecoratorDefinition,
+  BlockListDefinition,
+  BlockStyleDefinition,
+  ObjectSchemaType,
+} from './sanity-types'
 
 /** @beta */
 export interface EditableAPIDeleteOptions {

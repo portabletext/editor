@@ -3,7 +3,6 @@ import type {
   PortableTextChild,
   PortableTextObject,
 } from '@portabletext/schema'
-import type {ArrayDefinition, ArraySchemaType} from '@sanity/types'
 import {
   Component,
   useEffect,
@@ -25,6 +24,7 @@ import type {
   PortableTextMemberSchemaTypes,
 } from '../types/editor'
 import type {Path} from '../types/paths'
+import type {ArrayDefinition, ArraySchemaType} from '../types/sanity-types'
 import {createInternalEditor, type InternalEditor} from './create-editor'
 import {EditorActorContext} from './editor-actor-context'
 import type {EditorActor} from './editor-machine'

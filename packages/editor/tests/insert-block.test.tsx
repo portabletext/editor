@@ -1,5 +1,4 @@
-import {defineSchema} from '@portabletext/schema'
-import type {PortableTextBlock} from '@sanity/types'
+import {defineSchema, type PortableTextBlock} from '@portabletext/schema'
 import {createRef, type RefObject} from 'react'
 import {describe, expect, test, vi} from 'vitest'
 import {PortableTextEditor} from '../src/editor/PortableTextEditor'

@@ -1,0 +1,17 @@
+{
+  "extends": "//",
+  "linter": {
+    "rules": {
+      "style": {
+        "noRestrictedImports": {
+          "level": "error",
+          "options": {
+            "paths": {
+              "@sanity/types": "Import from 'types/sanity-types' instead to maintain visibility over @sanity/types usage."
+            }
+          }
+        }
+      }
+    }
+  }
+}
