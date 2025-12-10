@@ -7,7 +7,6 @@ import type {PortableTextSlateEditor} from '../types/slate-editor'
 import type {EditorActor} from './editor-machine'
 import {withPlugins} from './plugins/with-plugins'
 import type {RelayActor} from './relay-machine'
-import {KEY_TO_SLATE_ELEMENT} from './weakMaps'
 
 const debug = debugWithName('setup')
 
@@ -41,8 +40,6 @@ export function createSlateEditor(config: SlateEditorConfig): SlateEditor {
     relayActor: config.relayActor,
     subscriptions: config.subscriptions,
   })
-
-  KEY_TO_SLATE_ELEMENT.set(instance, {})
 
   buildIndexMaps(
     {

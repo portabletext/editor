@@ -287,13 +287,7 @@ export function insertNodePatch(
     if (targetKey) {
       return [
         insert(
-          [
-            fromSlateBlock(
-              {schema},
-              operation.node as Descendant,
-              schema.block.name,
-            ),
-          ],
+          [fromSlateBlock(operation.node as Descendant, schema.block.name)],
           position,
           [{_key: targetKey}],
         ),
@@ -302,13 +296,7 @@ export function insertNodePatch(
     return [
       setIfMissing(beforeValue, []),
       insert(
-        [
-          fromSlateBlock(
-            {schema},
-            operation.node as Descendant,
-            schema.block.name,
-          ),
-        ],
+        [fromSlateBlock(operation.node as Descendant, schema.block.name)],
         'before',
         [operation.path[0]],
       ),
@@ -379,7 +367,6 @@ export function splitNodePatch(
     const oldBlock = beforeValue[operation.path[0]]
     if (isTextBlock({schema}, oldBlock)) {
       const targetValue = fromSlateBlock(
-        {schema},
         children[operation.path[0] + 1],
         schema.block.name,
       )
@@ -399,7 +386,6 @@ export function splitNodePatch(
     if (isSpan({schema}, splitSpan)) {
       const targetSpans = (
         fromSlateBlock(
-          {schema},
           {
             ...splitBlock,
             children: splitBlock.children.slice(
@@ -484,7 +470,6 @@ export function mergeNodePatch(
   if (operation.path.length === 1) {
     if (block?._key) {
       const newBlock = fromSlateBlock(
-        {schema},
         children[operation.path[0] - 1],
         schema.block.name,
       )
