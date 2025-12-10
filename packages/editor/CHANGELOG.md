@@ -1,5 +1,25 @@
 # Changelog
 
+## 3.3.7
+
+### Patch Changes
+
+- [#1969](https://github.com/portabletext/editor/pull/1969) [`4931b87`](https://github.com/portabletext/editor/commit/4931b87a595b0876db72e5e58650af5047d58754) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove `lodash` dependency
+  1. Simple `lodash` usages like `uniq` and `flatten` have been replaced with
+     vanilla alternatives.
+  2. Many cases of `isEqual` have been replaced by new domain-specific equality
+     functions.
+  3. Remaining, generic deep equality checks have been replaced by a copy/pasted
+     version of `remeda`s `isDeepEqual`.
+
+  This reduces bundle size and dependency surface while improving type-safety and
+  maintainability.
+
+- Updated dependencies [[`4931b87`](https://github.com/portabletext/editor/commit/4931b87a595b0876db72e5e58650af5047d58754)]:
+  - @portabletext/sanity-bridge@1.2.13
+  - @portabletext/block-tools@4.1.10
+  - @portabletext/patches@2.0.2
+
 ## 3.3.6
 
 ### Patch Changes
