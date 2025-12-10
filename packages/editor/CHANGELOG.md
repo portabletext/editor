@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.3.8
+
+### Patch Changes
+
+- [#2011](https://github.com/portabletext/editor/pull/2011) [`38b9bba`](https://github.com/portabletext/editor/commit/38b9bba925598e5444abb47a8bf20f1a2e625cc7) Thanks [@christianhg](https://github.com/christianhg)! - fix: ensure `usePortableTextEditorSelection` returns an initial selection
+
 ## 3.3.7
 
 ### Patch Changes
