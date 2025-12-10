@@ -51,7 +51,7 @@
   },
   "devDependencies": {
     "@sanity/pkg-utils": "^10.1.2",
-    "@sanity/tsconfig": "^1.0.0",
+    "@sanity/tsconfig": "^2.0.0",
     "@types/lodash": "^4.17.20",
     "typescript": "catalog:",
     "vitest": "^4.0.14"
