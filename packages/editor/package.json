@@ -89,7 +89,7 @@
     "@portabletext/markdown": "workspace:^",
     "@portabletext/patches": "workspace:^",
     "@portabletext/schema": "workspace:^",
-    "@portabletext/to-html": "^4.0.1",
+    "@portabletext/to-html": "^5.0.0",
     "@sanity/schema": "^4.20.3",
     "@sanity/types": "^4.20.3",
     "@xstate/react": "^6.0.0",
