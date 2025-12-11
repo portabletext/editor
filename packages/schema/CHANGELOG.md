@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.1.0
+
+### Minor Changes
+
+- [#2009](https://github.com/portabletext/editor/pull/2009) [`c2c566d`](https://github.com/portabletext/editor/commit/c2c566ddf3a47dcf3a089cce8375679942b920f8) Thanks [@christianhg](https://github.com/christianhg)! - feat: export `PortableTextChild` and `PortableTextListBlock`
+
 ## 2.0.1
 
 ### Patch Changes
