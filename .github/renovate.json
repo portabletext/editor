@@ -28,7 +28,7 @@
     {
       "matchFileNames": ["packages/editor/package.json"],
       "matchDepTypes": ["devDependencies"],
-      "matchPackageNames": ["@sanity/schema", "@sanity/types", "react", "rxjs"],
+      "matchPackageNames": ["react", "rxjs"],
       "rangeStrategy": "bump",
       "semanticCommitType": "fix"
     },
