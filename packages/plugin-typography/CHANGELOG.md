@@ -1,5 +1,13 @@
 # @portabletext/plugin-typography
 
+## 4.0.31
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @portabletext/editor@3.3.11
+  - @portabletext/plugin-input-rule@1.0.31
+
 ## 4.0.30
 
 ### Patch Changes
