@@ -1,56 +1,60 @@
 import {describe, expect, test} from 'vitest'
-import {escapeAltAndLinkText, escapeTitle, unescapeAltText} from './escape'
+import {
+  escapeImageAndLinkText,
+  escapeImageAndLinkTitle,
+  unescapeImageAndLinkText,
+} from './escape'
 
-describe(escapeAltAndLinkText.name, () => {
+describe(escapeImageAndLinkText.name, () => {
   test('escapes brackets', () => {
-    expect(escapeAltAndLinkText('a[b]c')).toBe('a\\[b\\]c')
+    expect(escapeImageAndLinkText('a[b]c')).toBe('a\\[b\\]c')
   })
 
   test('escapes backslash', () => {
-    expect(escapeAltAndLinkText('a\\b')).toBe('a\\\\b')
+    expect(escapeImageAndLinkText('a\\b')).toBe('a\\\\b')
   })
 
   test('escapes backslash before bracket', () => {
-    expect(escapeAltAndLinkText('a\\]b')).toBe('a\\\\\\]b')
+    expect(escapeImageAndLinkText('a\\]b')).toBe('a\\\\\\]b')
   })
 
   test('leaves other characters unchanged', () => {
-    expect(escapeAltAndLinkText('hello world!')).toBe('hello world!')
+    expect(escapeImageAndLinkText('hello world!')).toBe('hello world!')
   })
 })
 
-describe(unescapeAltText.name, () => {
+describe(unescapeImageAndLinkText.name, () => {
   test('unescapes brackets', () => {
-    expect(unescapeAltText('a\\[b\\]c')).toBe('a[b]c')
+    expect(unescapeImageAndLinkText('a\\[b\\]c')).toBe('a[b]c')
   })
 
   test('unescapes backslash', () => {
-    expect(unescapeAltText('a\\\\b')).toBe('a\\b')
+    expect(unescapeImageAndLinkText('a\\\\b')).toBe('a\\b')
   })
 
   test('unescapes all ASCII punctuation', () => {
-    expect(unescapeAltText('\\!\\#\\*')).toBe('!#*')
+    expect(unescapeImageAndLinkText('\\!\\#\\*')).toBe('!#*')
   })
 
   test('leaves non-escaped characters unchanged', () => {
-    expect(unescapeAltText('hello world')).toBe('hello world')
+    expect(unescapeImageAndLinkText('hello world')).toBe('hello world')
   })
 
   test('leaves backslash before non-punctuation unchanged', () => {
-    expect(unescapeAltText('a\\bc')).toBe('a\\bc')
+    expect(unescapeImageAndLinkText('a\\bc')).toBe('a\\bc')
   })
 })
 
-describe(escapeTitle.name, () => {
+describe(escapeImageAndLinkTitle.name, () => {
   test('escapes double quotes', () => {
-    expect(escapeTitle('My "Cool" Page')).toBe('My \\"Cool\\" Page')
+    expect(escapeImageAndLinkTitle('My "Cool" Page')).toBe('My \\"Cool\\" Page')
   })
 
   test('escapes backslash', () => {
-    expect(escapeTitle('path\\to\\file')).toBe('path\\\\to\\\\file')
+    expect(escapeImageAndLinkTitle('path\\to\\file')).toBe('path\\\\to\\\\file')
   })
 
   test('leaves other characters unchanged', () => {
-    expect(escapeTitle('Hello World!')).toBe('Hello World!')
+    expect(escapeImageAndLinkTitle('Hello World!')).toBe('Hello World!')
   })
 })

@@ -1,20 +1,20 @@
 /**
- * Escapes special characters in link texts and image alt texts.
+ * Escapes special characters in image alt texts and link texts.
  */
-export function escapeAltAndLinkText(text: string): string {
+export function escapeImageAndLinkText(text: string): string {
   return text.replace(/([[\]\\])/g, '\\$1')
 }
 
 /**
- * Unescapes special characters in image alt texts.
+ * Unescapes special characters in image alt texts and link texts.
  */
-export function unescapeAltText(text: string): string {
+export function unescapeImageAndLinkText(text: string): string {
   return text.replace(/\\([!"#$%&'()*+,\-./:;<=>?@[\\\]^_`{|}~])/g, '$1')
 }
 
 /**
- * Escapes special characters in link/image titles (the part inside quotes).
+ * Escapes special characters in image/link titles (the part inside quotes).
  */
-export function escapeTitle(text: string): string {
+export function escapeImageAndLinkTitle(text: string): string {
   return text.replace(/([\\"])/g, '\\$1')
 }
