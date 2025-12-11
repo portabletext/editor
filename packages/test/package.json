@@ -45,9 +45,6 @@
     "test:unit:watch": "vitest watch"
   },
   "browserslist": "extends @sanity/browserslist-config",
-  "dependencies": {
-    "@sanity/types": "^4.20.3"
-  },
   "devDependencies": {
     "@portabletext/schema": "workspace:^",
     "@sanity/pkg-utils": "^9.0.0",
