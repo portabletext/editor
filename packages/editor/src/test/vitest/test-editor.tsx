@@ -18,6 +18,7 @@ import type {EditorEmittedEvent} from '../../editor/relay-machine'
 import {EventListenerPlugin} from '../../plugins'
 import {EditorRefPlugin} from '../../plugins/plugin.editor-ref'
 import type {Context} from './step-context'
+import './test-editor.css'
 
 type CreateTestEditorOptions = {
   initialValue?: Array<PortableTextBlock>
