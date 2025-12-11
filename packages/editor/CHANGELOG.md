@@ -1,5 +1,21 @@
 # Changelog
 
+## 3.3.12
+
+### Patch Changes
+
+- [#2009](https://github.com/portabletext/editor/pull/2009) [`f2ea700`](https://github.com/portabletext/editor/commit/f2ea700de5e4a3d2129a3c81d0add089d0248ef3) Thanks [@christianhg](https://github.com/christianhg)! - fix: avoid depending on `@sanity/types` `Path` and `KeyedSegment`
+
+- [#2009](https://github.com/portabletext/editor/pull/2009) [`944eb12`](https://github.com/portabletext/editor/commit/944eb12c5994e0ecefcf17d546067beee8a586db) Thanks [@christianhg](https://github.com/christianhg)! - fix: import/export `PortableTextChild` and `PortableTextListBlock` from `@portabletext/schema`
+
+- [#2009](https://github.com/portabletext/editor/pull/2009) [`61b1135`](https://github.com/portabletext/editor/commit/61b1135e43c960fcc892c9523d62b2eb73b6bd00) Thanks [@christianhg](https://github.com/christianhg)! - fix: avoid `@sanity/types` imports/exports where possible
+
+- Updated dependencies [[`c2c566d`](https://github.com/portabletext/editor/commit/c2c566ddf3a47dcf3a089cce8375679942b920f8)]:
+  - @portabletext/schema@2.1.0
+  - @portabletext/block-tools@4.1.11
+  - @portabletext/markdown@1.0.7
+  - @portabletext/sanity-bridge@1.2.14
+
 ## 3.3.11
 
 ### Patch Changes

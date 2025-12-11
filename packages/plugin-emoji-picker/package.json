@@ -1,6 +1,6 @@
 {
   "name": "@portabletext/plugin-emoji-picker",
-  "version": "3.0.31",
+  "version": "3.0.32",
   "description": "Easily configure an Emoji Picker for the Portable Text Editor",
   "keywords": [
     "portabletext",
@@ -78,7 +78,7 @@
     "vitest": "^4.0.14"
   },
   "peerDependencies": {
-    "@portabletext/editor": "workspace:^3.3.11",
+    "@portabletext/editor": "workspace:^3.3.12",
     "react": "^18.3 || ^19"
   },
   "engines": {
