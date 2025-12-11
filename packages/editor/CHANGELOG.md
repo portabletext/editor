@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.3.10
+
+### Patch Changes
+
+- [#2017](https://github.com/portabletext/editor/pull/2017) [`8774227`](https://github.com/portabletext/editor/commit/8774227099edf58ac73894a159961528ff68ec95) Thanks [@christianhg](https://github.com/christianhg)! - fix: move `@sanity/types` back as regular dependency
+
 ## 3.3.9
 
 ### Patch Changes
