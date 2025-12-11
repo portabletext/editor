@@ -1,3 +1,8 @@
+export {
+  escapeImageAndLinkText,
+  escapeImageAndLinkTitle,
+  unescapeImageAndLinkText,
+} from './escape'
 export {portableTextToMarkdown} from './from-portable-text/portable-text-to-markdown'
 export {
   DefaultBlockSpacingRenderer,
@@ -5,6 +10,14 @@ export {
 } from './from-portable-text/renderers/block-spacing'
 export {DefaultHardBreakRenderer} from './from-portable-text/renderers/hard-break'
 export {DefaultListItemRenderer} from './from-portable-text/renderers/list-item'
+export {
+  DefaultCodeRenderer,
+  DefaultEmRenderer,
+  DefaultLinkRenderer,
+  DefaultStrikeThroughRenderer,
+  DefaultStrongRenderer,
+  DefaultUnderlineRenderer,
+} from './from-portable-text/renderers/marks'
 export {
   DefaultBlockquoteRenderer,
   DefaultH1Renderer,
@@ -15,14 +28,6 @@ export {
   DefaultH6Renderer,
   DefaultNormalRenderer,
 } from './from-portable-text/renderers/style'
-export {
-  DefaultCodeRenderer,
-  DefaultEmRenderer,
-  DefaultLinkRenderer,
-  DefaultStrikeThroughRenderer,
-  DefaultStrongRenderer,
-  DefaultUnderlineRenderer,
-} from './from-portable-text/renderers/marks'
 export {
   DefaultCodeBlockRenderer,
   DefaultHorizontalRuleRenderer,
