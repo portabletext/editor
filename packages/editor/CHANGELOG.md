@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.3.9
+
+### Patch Changes
+
+- [#2015](https://github.com/portabletext/editor/pull/2015) [`0e45606`](https://github.com/portabletext/editor/commit/0e4560697a88b9d39fbfb5ad3340df62d97f1042) Thanks [@christianhg](https://github.com/christianhg)! - fix: move `@sanity/types` to `devDependencies`
+
+- [#2015](https://github.com/portabletext/editor/pull/2015) [`5a7ae86`](https://github.com/portabletext/editor/commit/5a7ae8626920ba36bb731d6605a1f068a3c2f325) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove `@sanity/types` runtime dependency
+
 ## 3.3.8
 
 ### Patch Changes
