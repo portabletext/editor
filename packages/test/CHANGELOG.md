@@ -1,5 +1,11 @@
 # @portabletext/test
 
+## 1.0.3
+
+### Patch Changes
+
+- [#2024](https://github.com/portabletext/editor/pull/2024) [`2ca1d79`](https://github.com/portabletext/editor/commit/2ca1d7922e75f2f046b99cc96b432dd1b0d98431) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove unused `@sanity/types` dependency
+
 ## 1.0.2
 
 ### Patch Changes
