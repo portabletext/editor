@@ -918,6 +918,90 @@ describe(markdownToPortableText.name, () => {
         },
       ])
     })
+
+    test('link with escaped bracket in text', () => {
+      const keyGenerator = createTestKeyGenerator()
+      expect(
+        markdownToPortableText('foo [b\\[ar](https://example.com) baz', {
+          keyGenerator,
+        }),
+      ).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          children: [
+            {
+              _type: 'span',
+              _key: 'k1',
+              text: 'foo ',
+              marks: [],
+            },
+            {
+              _type: 'span',
+              _key: 'k3',
+              text: 'b[ar',
+              marks: ['k2'],
+            },
+            {
+              _type: 'span',
+              _key: 'k4',
+              text: ' baz',
+              marks: [],
+            },
+          ],
+          markDefs: [
+            {
+              _key: 'k2',
+              _type: 'link',
+              href: 'https://example.com',
+            },
+          ],
+          style: 'normal',
+        },
+      ])
+    })
+  })
+
+  test('link with escaped backslash in text', () => {
+    const keyGenerator = createTestKeyGenerator()
+    expect(
+      markdownToPortableText('foo [b\\\\ar](https://example.com) baz', {
+        keyGenerator,
+      }),
+    ).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        children: [
+          {
+            _type: 'span',
+            _key: 'k1',
+            text: 'foo ',
+            marks: [],
+          },
+          {
+            _type: 'span',
+            _key: 'k3',
+            text: 'b\\ar',
+            marks: ['k2'],
+          },
+          {
+            _type: 'span',
+            _key: 'k4',
+            text: ' baz',
+            marks: [],
+          },
+        ],
+        markDefs: [
+          {
+            _key: 'k2',
+            _type: 'link',
+            href: 'https://example.com',
+          },
+        ],
+        style: 'normal',
+      },
+    ])
   })
 
   describe('lists', () => {
@@ -1614,6 +1698,22 @@ describe(markdownToPortableText.name, () => {
           children: [{_type: 'span', _key: 'k4', text: ' baz', marks: []}],
           markDefs: [],
           style: 'normal',
+        },
+      ])
+    })
+
+    test('image with escaped bracket in alt text', () => {
+      const keyGenerator = createTestKeyGenerator()
+      expect(
+        markdownToPortableText('![b\\[ar](https://example.com/image.png)', {
+          keyGenerator,
+        }),
+      ).toEqual([
+        {
+          _type: 'image',
+          _key: 'k1',
+          src: 'https://example.com/image.png',
+          alt: 'b[ar',
         },
       ])
     })

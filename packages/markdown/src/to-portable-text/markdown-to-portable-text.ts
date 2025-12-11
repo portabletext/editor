@@ -28,6 +28,7 @@ import {
   h6StyleDefinition,
   normalStyleDefinition,
 } from '../default-schema'
+import {unescapeAltText} from '../escape'
 import {defaultKeyGenerator} from '../key-generator'
 import {
   buildAnnotationMatcher,
@@ -886,7 +887,7 @@ export function markdownToPortableText(
 
           const src =
             imageToken.attrs?.find(([name]) => name === 'src')?.at(1) || ''
-          const alt = imageToken.content || ''
+          const alt = unescapeAltText(imageToken.content || '')
           const title =
             imageToken.attrs?.find(([name]) => name === 'title')?.at(1) ||
             undefined
@@ -1095,7 +1096,7 @@ export function markdownToPortableText(
             case 'image': {
               const src =
                 childToken.attrs?.find(([name]) => name === 'src')?.at(1) || ''
-              const alt = childToken.content || ''
+              const alt = unescapeAltText(childToken.content || '')
 
               // Try to create an inline image first
               const inlineImageObject = consolidatedOptions.types.image({

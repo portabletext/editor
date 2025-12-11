@@ -1,4 +1,5 @@
 import type {TypedObject} from '@portabletext/types'
+import {escapeAltAndLinkText, escapeTitle} from '../../escape'
 import type {PortableTextMarkRenderer} from '../types'
 
 /**
@@ -60,11 +61,11 @@ export const DefaultLinkRenderer: PortableTextMarkRenderer<DefaultLink> = ({
       const encodedHref = href.replace(/["<>() ]/g, (char) => {
         return `%${char.charCodeAt(0).toString(16).toUpperCase()}`
       })
-      return `[${children}](${encodedHref})`
+      return `[${escapeAltAndLinkText(children)}](${encodedHref})`
     }
 
     // For normal URLs, don't encode parentheses - Markdown handles balanced parens fine
-    return `[${children}](${href}${title ? ` "${title}"` : ''})`
+    return `[${escapeAltAndLinkText(children)}](${href}${title ? ` "${escapeTitle(title)}"` : ''})`
   }
 
   // Return children without link when URL is unsafe

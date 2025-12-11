@@ -1,4 +1,5 @@
 import type {PortableTextBlock} from '@portabletext/types'
+import {escapeAltAndLinkText, escapeTitle} from '../../escape'
 import type {PortableTextTypeRenderer} from '../types'
 
 /**
@@ -38,8 +39,8 @@ export const DefaultImageRenderer: PortableTextTypeRenderer<{
   alt: string | undefined
   title: string | undefined
 }> = ({value}) => {
-  const alt = value.alt ?? ''
-  const title = value.title ? ` "${value.title}"` : ''
+  const alt = escapeAltAndLinkText(value.alt ?? '')
+  const title = value.title ? ` "${escapeTitle(value.title)}"` : ''
   return `![${alt}](${value.src}${title})`
 }
 

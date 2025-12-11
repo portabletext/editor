@@ -9,6 +9,7 @@ import {portableTextToMarkdown} from './from-portable-text/portable-text-to-mark
 import {DefaultListItemRenderer} from './from-portable-text/renderers/list-item'
 import {
   DefaultCodeBlockRenderer,
+  DefaultImageRenderer,
   DefaultTableRenderer,
 } from './from-portable-text/renderers/type'
 import {markdownToPortableText} from './to-portable-text/markdown-to-portable-text'
@@ -154,6 +155,180 @@ describe(portableTextToMarkdown.name, () => {
       const markdown = 'foo [bar](https://example.com "Link Title") baz'
       const portableText = markdownToPortableText(markdown)
       expect(portableTextToMarkdown(portableText)).toBe(markdown)
+    })
+
+    test('with quote in title', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const linkKey = keyGenerator()
+      const portableText = [
+        {
+          _key: keyGenerator(),
+          _type: 'block',
+          children: [
+            {
+              _key: keyGenerator(),
+              _type: 'span',
+              text: 'click here',
+              marks: [linkKey],
+            },
+          ],
+          style: 'normal',
+          markDefs: [
+            {
+              _key: linkKey,
+              _type: 'link',
+              href: 'https://example.com',
+              title: 'My "Cool" Page',
+            },
+          ],
+        },
+      ]
+      expect(portableTextToMarkdown(portableText)).toBe(
+        '[click here](https://example.com "My \\"Cool\\" Page")',
+      )
+    })
+
+    test('escaped link', () => {
+      const markdownIn = 'foo [b\\[ar](https://example.com) baz'
+      const markdownOut = 'foo [b\\[ar](https://example.com) baz'
+      const portableText = markdownToPortableText(markdownIn)
+      expect(portableTextToMarkdown(portableText)).toBe(markdownOut)
+    })
+
+    test('link with bracket in text', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const linkKey = keyGenerator()
+      const portableText = [
+        {
+          _key: keyGenerator(),
+          _type: 'block',
+          children: [
+            {
+              _key: keyGenerator(),
+              _type: 'span',
+              text: 'foo ',
+              marks: [],
+            },
+            {
+              _key: keyGenerator(),
+              _type: 'span',
+              text: 'b[ar',
+              marks: [linkKey],
+            },
+            {
+              _key: keyGenerator(),
+              _type: 'span',
+              text: ' baz',
+              marks: [],
+            },
+          ],
+          style: 'normal',
+          markDefs: [
+            {
+              _key: linkKey,
+              _type: 'link',
+              href: 'https://example.com',
+            },
+          ],
+        },
+      ]
+      expect(portableTextToMarkdown(portableText)).toBe(
+        'foo [b\\[ar](https://example.com) baz',
+      )
+    })
+
+    test('link with bracket in text and link', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const linkKey = keyGenerator()
+      const portableText = [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'normal',
+          children: [
+            {
+              _type: 'span',
+              _key: keyGenerator(),
+              text: 'foo ',
+              marks: [],
+            },
+            {
+              _type: 'span',
+              _key: keyGenerator(),
+              text: 'b[ar',
+              marks: [linkKey],
+            },
+            {
+              _type: 'span',
+              _key: keyGenerator(),
+              text: ' baz',
+              marks: [],
+            },
+          ],
+          markDefs: [
+            {
+              _key: linkKey,
+              _type: 'link',
+              href: 'https://en.wikipedia.org/wiki/Antenna_(radio)',
+            },
+          ],
+        },
+      ]
+      expect(portableTextToMarkdown(portableText)).toBe(
+        'foo [b\\[ar](https://en.wikipedia.org/wiki/Antenna_(radio)) baz',
+      )
+    })
+
+    test('link with backslash in text', () => {
+      const markdownIn = 'foo [b\\ar](https://example.com) baz'
+      const markdownOut = 'foo [b\\\\ar](https://example.com) baz'
+      const portableText = markdownToPortableText(markdownIn)
+      expect(portableTextToMarkdown(portableText)).toBe(markdownOut)
+    })
+
+    test('link with backslash before bracket in text', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const linkKey = keyGenerator()
+      const portableText = [
+        {
+          _key: keyGenerator(),
+          _type: 'block',
+          children: [
+            {
+              _key: keyGenerator(),
+              _type: 'span',
+              text: 'foo ',
+              marks: [],
+            },
+            {
+              _key: keyGenerator(),
+              _type: 'span',
+              text: 'b\\]ar',
+              marks: [linkKey],
+            },
+            {
+              _key: keyGenerator(),
+              _type: 'span',
+              text: ' baz',
+              marks: [],
+            },
+          ],
+          style: 'normal',
+          markDefs: [
+            {
+              _key: linkKey,
+              _type: 'link',
+              href: 'https://example.com',
+            },
+          ],
+        },
+      ]
+      // Should produce: click [a\\\]b](https://example.com) here
+      // But currently produces: click [a\\]b](https://example.com) here
+      // which parses as link text "a\" with "b](..." outside the link
+      expect(portableTextToMarkdown(portableText)).toBe(
+        'foo [b\\\\\\]ar](https://example.com) baz',
+      )
     })
   })
 
@@ -531,6 +706,118 @@ describe(portableTextToMarkdown.name, () => {
         schema: compileSchema(defineSchema({})),
       })
       expect(portableTextToMarkdown(portableText)).toBe(markdownIn)
+    })
+
+    test('image with brackets in alt text', () => {
+      const portableText = [
+        {
+          _type: 'image',
+          _key: 'img1',
+          src: 'https://example.com/image.png',
+          alt: 'photo [1]',
+        },
+      ]
+      expect(
+        portableTextToMarkdown(portableText, {
+          types: {
+            image: DefaultImageRenderer,
+          },
+        }),
+      ).toBe('![photo \\[1\\]](https://example.com/image.png)')
+    })
+
+    test('image with backslashes in alt text', () => {
+      const portableText = [
+        {
+          _type: 'image',
+          _key: 'img1',
+          src: 'https://example.com/image.png',
+          alt: 'path\\to\\file',
+        },
+      ]
+      expect(
+        portableTextToMarkdown(portableText, {
+          types: {
+            image: DefaultImageRenderer,
+          },
+        }),
+      ).toBe('![path\\\\to\\\\file](https://example.com/image.png)')
+    })
+
+    test('image with backslash before bracket in alt text', () => {
+      const portableText = [
+        {
+          _type: 'image',
+          _key: 'img1',
+          src: 'https://example.com/image.png',
+          alt: 'a\\]b',
+        },
+      ]
+      expect(
+        portableTextToMarkdown(portableText, {
+          types: {
+            image: DefaultImageRenderer,
+          },
+        }),
+      ).toBe('![a\\\\\\]b](https://example.com/image.png)')
+    })
+
+    test('image with backslash in title', () => {
+      const portableText = [
+        {
+          _type: 'image',
+          _key: 'img1',
+          src: 'https://example.com/image.png',
+          alt: 'example image',
+          title: 'example\\image',
+        },
+      ]
+      expect(
+        portableTextToMarkdown(portableText, {
+          types: {
+            image: DefaultImageRenderer,
+          },
+        }),
+      ).toBe(
+        '![example image](https://example.com/image.png "example\\\\image")',
+      )
+    })
+
+    test('image with backslash in title roundtrip', () => {
+      const markdown =
+        '![example image](https://example.com/image.png "example\\\\image")'
+      const portableText = markdownToPortableText(markdown)
+      expect(
+        portableTextToMarkdown(portableText, {
+          types: {
+            image: DefaultImageRenderer,
+          },
+        }),
+      ).toBe(markdown)
+    })
+
+    test('image with escaped bracket in alt text roundtrip', () => {
+      const markdown = '![photo \\[1\\]](https://example.com/image.png)'
+      const portableText = markdownToPortableText(markdown)
+      expect(
+        portableTextToMarkdown(portableText, {
+          types: {
+            image: DefaultImageRenderer,
+          },
+        }),
+      ).toBe(markdown)
+    })
+
+    test('image with escaped backslash in alt text roundtrip', () => {
+      const markdown = '![path\\\\to\\\\file](https://example.com/image.png)'
+      const portableText = markdownToPortableText(markdown)
+      expect(
+        portableTextToMarkdown(portableText, {
+          types: {
+            image: DefaultImageRenderer,
+          },
+        }),
+      ).toBe(markdown)
     })
   })
 
