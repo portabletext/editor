@@ -45,6 +45,9 @@ export function createApplyPatch(
         case 'set':
           changed = setPatch(editor, patch)
           break
+        case 'setIfMissing':
+          changed = setIfMissingPatch(editor, patch)
+          break
         case 'diffMatchPatch':
           changed = diffMatchPatch(editor, patch)
           break
