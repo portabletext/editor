@@ -1119,10 +1119,6 @@ importers:
         version: 4.0.14(@types/node@20.19.25)(@vitest/browser-playwright@4.0.14)(jiti@2.6.1)(jsdom@27.2.0)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.2)
 
   packages/test:
-    dependencies:
-      '@sanity/types':
-        specifier: ^4.20.3
-        version: 4.20.3(@types/react@19.2.7)(debug@4.4.3)
     devDependencies:
       '@portabletext/schema':
         specifier: workspace:^
@@ -11137,7 +11133,7 @@ snapshots:
       chokidar: 5.0.0
       esbuild: 0.27.1
       find-config: 1.0.0
-      get-latest-version: 5.1.0(debug@4.4.3)
+      get-latest-version: 5.1.0
       git-url-parse: 16.1.0
       globby: 16.0.0
       jsonc-parser: 3.3.1
@@ -12848,6 +12844,8 @@ snapshots:
 
   flattie@1.1.1: {}
 
+  follow-redirects@1.15.11: {}
+
   follow-redirects@1.15.11(debug@4.4.3):
     optionalDependencies:
       debug: 4.4.3
@@ -12903,6 +12901,17 @@ snapshots:
 
   get-east-asian-width@1.4.0: {}
 
+  get-it@8.6.10:
+    dependencies:
+      '@types/follow-redirects': 1.14.4
+      decompress-response: 7.0.0
+      follow-redirects: 1.15.11
+      is-retry-allowed: 2.2.0
+      through2: 4.0.2
+      tunnel-agent: 0.6.0
+    transitivePeerDependencies:
+      - debug
+
   get-it@8.6.10(debug@4.4.3):
     dependencies:
       '@types/follow-redirects': 1.14.4
@@ -12911,6 +12920,15 @@ snapshots:
       is-retry-allowed: 2.2.0
       through2: 4.0.2
       tunnel-agent: 0.6.0
+    transitivePeerDependencies:
+      - debug
+
+  get-latest-version@5.1.0:
+    dependencies:
+      get-it: 8.6.10
+      registry-auth-token: 5.1.0
+      registry-url: 5.1.0
+      semver: 7.7.3
     transitivePeerDependencies:
       - debug
 
