@@ -69,7 +69,7 @@
     "eslint-formatter-gha": "^1.6.0",
     "eslint-plugin-react-hooks": "^7.0.1",
     "racejar": "workspace:*",
-    "react": "^19.2.1",
+    "react": "^19.2.3",
     "typescript": "catalog:",
     "typescript-eslint": "^8.48.0",
     "vitest": "^4.0.14"
