@@ -1,7 +1,6 @@
 import {slateRangeToSelection} from '../../internal-utils/slate-utils'
 import type {PortableTextSlateEditor} from '../../types/slate-editor'
 import type {EditorActor} from '../editor-machine'
-import {SLATE_TO_PORTABLE_TEXT_RANGE} from '../weakMaps'
 
 export function pluginUpdateSelection({
   editor,
@@ -12,14 +11,10 @@ export function pluginUpdateSelection({
 }) {
   const updateSelection = () => {
     if (editor.selection) {
-      const existingSelection = SLATE_TO_PORTABLE_TEXT_RANGE.get(
-        editor.selection,
-      )
-
-      if (existingSelection) {
+      if (editor.selection === editor.lastSlateSelection) {
         editorActor.send({
           type: 'update selection',
-          selection: existingSelection,
+          selection: editor.lastSelection,
         })
       } else {
         const selection = slateRangeToSelection({
@@ -28,7 +23,8 @@ export function pluginUpdateSelection({
           range: editor.selection,
         })
 
-        SLATE_TO_PORTABLE_TEXT_RANGE.set(editor.selection, selection)
+        editor.lastSlateSelection = editor.selection
+        editor.lastSelection = selection
 
         editorActor.send({type: 'update selection', selection})
       }

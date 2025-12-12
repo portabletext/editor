@@ -1,21 +1,14 @@
-import type {Editor} from 'slate'
-
-const IS_PERFORMING_OPERATION: WeakMap<Editor, boolean | undefined> =
-  new WeakMap()
+import type {PortableTextSlateEditor} from '../types/slate-editor'
 
 export function withPerformingBehaviorOperation(
-  editor: Editor,
+  editor: PortableTextSlateEditor,
   fn: () => void,
 ) {
-  const prev = IS_PERFORMING_OPERATION.get(editor)
+  const prev = editor.isPerformingBehaviorOperation
 
-  IS_PERFORMING_OPERATION.set(editor, true)
+  editor.isPerformingBehaviorOperation = true
 
   fn()
 
-  IS_PERFORMING_OPERATION.set(editor, prev)
-}
-
-export function isPerformingBehaviorOperation(editor: Editor) {
-  return IS_PERFORMING_OPERATION.get(editor) ?? false
+  editor.isPerformingBehaviorOperation = prev
 }

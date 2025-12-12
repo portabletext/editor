@@ -35,7 +35,6 @@ import type {
   MutationEvent,
   PatchEvent,
 } from './relay-machine'
-import {isNormalizingNode} from './with-normalizing-node'
 
 export * from 'xstate/guards'
 
@@ -376,7 +375,7 @@ export const editorMachine = setup({
         return false
       }
 
-      return isNormalizingNode(context.slateEditor)
+      return context.slateEditor.isNormalizingNode
     },
   },
 }).createMachine({

@@ -1,12 +1,9 @@
 import {isSpan, isTextBlock} from '@portabletext/schema'
 import {Editor, Element, Node, Path, Transforms} from 'slate'
-import {isRedoing} from '../../history/slate-plugin.redoing'
-import {isUndoing} from '../../history/slate-plugin.undoing'
 import {isEqualMarks} from '../../internal-utils/equality'
 import type {PortableTextSlateEditor} from '../../types/slate-editor'
 import type {EditorActor} from '../editor-machine'
 import {withNormalizeNode} from '../with-normalizing-node'
-import {isChangingRemotely} from '../withChanges'
 
 /**
  * This plugin makes sure that every new node in the editor get a new _key prop when created
@@ -26,7 +23,7 @@ export function createWithObjectKeys(editorActor: EditorActor) {
        * We don't want to run any side effects when the editor is processing
        * remote changes.
        */
-      if (isChangingRemotely(editor)) {
+      if (editor.isProcessingRemoteChanges) {
         apply(operation)
         return
       }
@@ -35,7 +32,7 @@ export function createWithObjectKeys(editorActor: EditorActor) {
        * We don't want to run any side effects when the editor is undoing or
        * redoing operations.
        */
-      if (isUndoing(editor) || isRedoing(editor)) {
+      if (editor.isUndoing || editor.isRedoing) {
         apply(operation)
         return
       }

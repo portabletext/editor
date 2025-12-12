@@ -1,12 +1,8 @@
 import {Editor, Transforms} from 'slate'
 import {debugWithName} from '../internal-utils/debug'
 import type {BehaviorOperationImplementation} from '../operations/behavior.operations'
-import {getRemotePatches} from './remote-patches'
-import {pluginRedoing, setIsRedoing} from './slate-plugin.redoing'
-import {
-  pluginWithoutHistory,
-  setWithHistory,
-} from './slate-plugin.without-history'
+import {pluginRedoing} from './slate-plugin.redoing'
+import {pluginWithoutHistory} from './slate-plugin.without-history'
 import {transformOperation} from './transform-operation'
 
 const debug = debugWithName('behavior.operation.history.redo')
@@ -16,13 +12,12 @@ export const historyRedoOperationImplementation: BehaviorOperationImplementation
 > = ({operation}) => {
   const editor = operation.editor
   const {redos} = editor.history
-  const remotePatches = getRemotePatches(editor)
 
   if (redos.length > 0) {
     const step = redos[redos.length - 1]
     debug('Redoing', step)
     if (step.operations.length > 0) {
-      const otherPatches = remotePatches.filter(
+      const otherPatches = editor.remotePatches.filter(
         (item) => item.time >= step.timestamp,
       )
       let transformedOperations = step.operations
@@ -49,11 +44,11 @@ export const historyRedoOperationImplementation: BehaviorOperationImplementation
         })
       } catch (err) {
         debug('Could not perform redo step', err)
-        remotePatches.splice(0, remotePatches.length)
+        editor.remotePatches.splice(0, editor.remotePatches.length)
         Transforms.deselect(editor)
         editor.history = {undos: [], redos: []}
-        setWithHistory(editor, true)
-        setIsRedoing(editor, false)
+        editor.withHistory = true
+        editor.isRedoing = false
         editor.onChange()
         return
       }

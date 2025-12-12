@@ -3,10 +3,10 @@ import type {EditorSchema} from '../editor/editor-schema'
 import type {EditorSnapshot} from '../editor/editor-snapshot'
 import {withPerformingBehaviorOperation} from '../editor/with-performing-behavior-operation'
 import {withoutNormalizingConditional} from '../editor/without-normalizing-conditional'
-import {clearUndoStepId, createUndoStepId} from '../history/undo-step'
 import {debugWithName} from '../internal-utils/debug'
 import {performOperation} from '../operations/behavior.operations'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
+import {defaultKeyGenerator} from '../utils/key-generator'
 import {abstractBehaviors} from './behavior.abstract'
 import type {BehaviorAction} from './behavior.types.action'
 import type {Behavior} from './behavior.types.behavior'
@@ -61,7 +61,7 @@ export function performEvent({
   ) => void
 }) {
   if (mode === 'send' && !isNativeBehaviorEvent(event)) {
-    createUndoStepId(editor)
+    editor.undoStepId = defaultKeyGenerator()
   }
 
   debug(`(${mode}:${eventCategory(event)})`, JSON.stringify(event, null, 2))
@@ -110,7 +110,7 @@ export function performEvent({
     nativeEvent?.preventDefault()
 
     if (mode === 'send') {
-      clearUndoStepId(editor)
+      editor.undoStepId = undefined
     }
 
     withPerformingBehaviorOperation(editor, () => {
@@ -211,7 +211,7 @@ export function performEvent({
 
       if (actionSetIndex > 0) {
         // Since there are multiple action sets
-        createUndoStepId(editor)
+        editor.undoStepId = defaultKeyGenerator()
 
         undoStepCreated = true
       }
@@ -224,7 +224,7 @@ export function performEvent({
         // we set up a new undo step.
         // All actions performed recursively from now will be squashed into this
         // undo step
-        createUndoStepId(editor)
+        editor.undoStepId = defaultKeyGenerator()
 
         undoStepCreated = true
       }
@@ -321,7 +321,7 @@ export function performEvent({
       )
 
       if (undoStepCreated) {
-        clearUndoStepId(editor)
+        editor.undoStepId = undefined
       }
     }
 
@@ -332,7 +332,7 @@ export function performEvent({
     nativeEvent?.preventDefault()
 
     if (mode === 'send') {
-      clearUndoStepId(editor)
+      editor.undoStepId = undefined
     }
 
     withPerformingBehaviorOperation(editor, () => {

@@ -1,23 +1,5 @@
-import {Path, type Editor, type Operation} from 'slate'
-import {isNormalizingNode} from '../editor/with-normalizing-node'
-import {defaultKeyGenerator} from '../utils/key-generator'
-
-const CURRENT_UNDO_STEP_ID: WeakMap<Editor, {undoStepId: string} | undefined> =
-  new WeakMap()
-
-export function getCurrentUndoStepId(editor: Editor) {
-  return CURRENT_UNDO_STEP_ID.get(editor)?.undoStepId
-}
-
-export function createUndoStepId(editor: Editor) {
-  CURRENT_UNDO_STEP_ID.set(editor, {
-    undoStepId: defaultKeyGenerator(),
-  })
-}
-
-export function clearUndoStepId(editor: Editor) {
-  CURRENT_UNDO_STEP_ID.set(editor, undefined)
-}
+import {Path, type Operation} from 'slate'
+import type {PortableTextSlateEditor} from '../types/slate-editor'
 
 type UndoStep = {
   operations: Array<Operation>
@@ -33,7 +15,7 @@ export function createUndoSteps({
 }: {
   steps: Array<UndoStep>
   op: Operation
-  editor: Editor
+  editor: PortableTextSlateEditor
   currentUndoStepId: string | undefined
   previousUndoStepId: string | undefined
 }): Array<UndoStep> {
@@ -46,7 +28,7 @@ export function createUndoSteps({
   if (editor.operations.length > 0) {
     // The editor has operations in progress
 
-    if (currentUndoStepId === previousUndoStepId || isNormalizingNode(editor)) {
+    if (currentUndoStepId === previousUndoStepId || editor.isNormalizingNode) {
       return mergeIntoLastStep(steps, lastStep, op)
     }
 
@@ -110,7 +92,7 @@ export function createUndoSteps({
 function createNewStep(
   steps: Array<UndoStep>,
   op: Operation,
-  editor: Editor,
+  editor: PortableTextSlateEditor,
 ): Array<UndoStep> {
   const operations =
     editor.selection === null

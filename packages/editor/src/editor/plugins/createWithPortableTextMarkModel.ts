@@ -10,8 +10,6 @@ import {
   type PortableTextSpan,
 } from '@portabletext/schema'
 import {Editor, Element, Node, Path, Range, Text, Transforms} from 'slate'
-import {isRedoing} from '../../history/slate-plugin.redoing'
-import {isUndoing} from '../../history/slate-plugin.undoing'
 import {createPlaceholderBlock} from '../../internal-utils/create-placeholder-block'
 import {debugWithName} from '../../internal-utils/debug'
 import {isEqualMarkDefs} from '../../internal-utils/equality'
@@ -22,7 +20,6 @@ import type {PortableTextSlateEditor} from '../../types/slate-editor'
 import type {EditorActor} from '../editor-machine'
 import {getEditorSnapshot} from '../editor-selector'
 import {withNormalizeNode} from '../with-normalizing-node'
-import {isChangingRemotely} from '../withChanges'
 import {withoutPatching} from '../withoutPatching'
 
 const debug = debugWithName('plugin:withPortableTextMarkModel')
@@ -293,7 +290,7 @@ export function createWithPortableTextMarkModel(
        * We don't want to run any side effects when the editor is processing
        * remote changes.
        */
-      if (isChangingRemotely(editor)) {
+      if (editor.isProcessingRemoteChanges) {
         apply(op)
         return
       }
@@ -302,7 +299,7 @@ export function createWithPortableTextMarkModel(
        * We don't want to run any side effects when the editor is undoing or
        * redoing operations.
        */
-      if (isUndoing(editor) || isRedoing(editor)) {
+      if (editor.isUndoing || editor.isRedoing) {
         apply(op)
         return
       }

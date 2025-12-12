@@ -5,15 +5,13 @@ import {
 } from '../../internal-utils/slate-utils'
 import {performOperation} from '../../operations/behavior.operations'
 import type {EditorActor} from '../editor-machine'
-import {isNormalizingNode} from '../with-normalizing-node'
-import {isPerformingBehaviorOperation} from '../with-performing-behavior-operation'
 
 export function createWithEventListeners(editorActor: EditorActor) {
   return function withEventListeners(editor: Editor) {
     const {delete: editorDelete, insertNodes, select, setSelection} = editor
 
     editor.delete = (options) => {
-      if (isPerformingBehaviorOperation(editor)) {
+      if (editor.isPerformingBehaviorOperation) {
         editorDelete(options)
         return
       }
@@ -52,7 +50,7 @@ export function createWithEventListeners(editorActor: EditorActor) {
     }
 
     editor.deleteBackward = (unit) => {
-      if (isPerformingBehaviorOperation(editor)) {
+      if (editor.isPerformingBehaviorOperation) {
         console.error('Unexpected call to .deleteBackward(...)')
         return
       }
@@ -69,7 +67,7 @@ export function createWithEventListeners(editorActor: EditorActor) {
     }
 
     editor.deleteForward = (unit) => {
-      if (isPerformingBehaviorOperation(editor)) {
+      if (editor.isPerformingBehaviorOperation) {
         console.error('Unexpected call to .deleteForward(...)')
         return
       }
@@ -86,7 +84,7 @@ export function createWithEventListeners(editorActor: EditorActor) {
     }
 
     editor.insertBreak = () => {
-      if (isPerformingBehaviorOperation(editor)) {
+      if (editor.isPerformingBehaviorOperation) {
         console.error('Unexpected call to .insertBreak(...)')
         return
       }
@@ -102,7 +100,7 @@ export function createWithEventListeners(editorActor: EditorActor) {
     }
 
     editor.insertData = (dataTransfer) => {
-      if (isPerformingBehaviorOperation(editor)) {
+      if (editor.isPerformingBehaviorOperation) {
         console.error('Unexpected call to .insertData(...)')
         return
       }
@@ -120,7 +118,7 @@ export function createWithEventListeners(editorActor: EditorActor) {
     }
 
     editor.insertNodes = (nodes, options) => {
-      if (isNormalizingNode(editor)) {
+      if (editor.isNormalizingNode) {
         const normalizedNodes = (Node.isNode(nodes) ? [nodes] : nodes).map(
           (node) => {
             if (!Text.isText(node)) {
@@ -147,7 +145,7 @@ export function createWithEventListeners(editorActor: EditorActor) {
     }
 
     editor.insertSoftBreak = () => {
-      if (isPerformingBehaviorOperation(editor)) {
+      if (editor.isPerformingBehaviorOperation) {
         performOperation({
           context: {
             keyGenerator: editorActor.getSnapshot().context.keyGenerator,
@@ -169,7 +167,7 @@ export function createWithEventListeners(editorActor: EditorActor) {
     }
 
     editor.insertText = (text) => {
-      if (isPerformingBehaviorOperation(editor)) {
+      if (editor.isPerformingBehaviorOperation) {
         performOperation({
           context: {
             keyGenerator: editorActor.getSnapshot().context.keyGenerator,
@@ -192,7 +190,7 @@ export function createWithEventListeners(editorActor: EditorActor) {
     }
 
     editor.redo = () => {
-      if (isPerformingBehaviorOperation(editor)) {
+      if (editor.isPerformingBehaviorOperation) {
         performOperation({
           context: {
             keyGenerator: editorActor.getSnapshot().context.keyGenerator,
@@ -217,7 +215,7 @@ export function createWithEventListeners(editorActor: EditorActor) {
     }
 
     editor.select = (location) => {
-      if (isPerformingBehaviorOperation(editor)) {
+      if (editor.isPerformingBehaviorOperation) {
         select(location)
         return
       }
@@ -246,7 +244,7 @@ export function createWithEventListeners(editorActor: EditorActor) {
     }
 
     editor.setSelection = (partialRange) => {
-      if (isPerformingBehaviorOperation(editor)) {
+      if (editor.isPerformingBehaviorOperation) {
         setSelection(partialRange)
         return
       }
@@ -322,7 +320,7 @@ export function createWithEventListeners(editorActor: EditorActor) {
     }
 
     editor.undo = () => {
-      if (isPerformingBehaviorOperation(editor)) {
+      if (editor.isPerformingBehaviorOperation) {
         performOperation({
           context: {
             keyGenerator: editorActor.getSnapshot().context.keyGenerator,
