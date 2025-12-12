@@ -1,5 +1,5 @@
 import {isTextBlock} from '@portabletext/schema'
-import {defaultKeyboardShortcuts} from '../keyboard-shortcuts/default-keyboard-shortcuts'
+import {defaultKeyboardShortcuts} from '../editor/default-keyboard-shortcuts'
 import {getFocusBlockObject} from '../selectors/selector.get-focus-block-object'
 import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
 import {getNextBlock} from '../selectors/selector.get-next-block'

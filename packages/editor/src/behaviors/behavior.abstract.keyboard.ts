@@ -1,6 +1,6 @@
 import {createKeyboardShortcut} from '@portabletext/keyboard-shortcuts'
 import {isTextBlock} from '@portabletext/schema'
-import {defaultKeyboardShortcuts} from '../keyboard-shortcuts/default-keyboard-shortcuts'
+import {defaultKeyboardShortcuts} from '../editor/default-keyboard-shortcuts'
 import {getFocusBlock} from '../selectors/selector.get-focus-block'
 import {getFocusInlineObject} from '../selectors/selector.get-focus-inline-object'
 import {getPreviousBlock} from '../selectors/selector.get-previous-block'
