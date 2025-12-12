@@ -34,7 +34,7 @@ import type {PickFromUnion} from '../type-utils'
 import type {InvalidValueResolution} from '../types/editor'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import type {EditorSchema} from './editor-schema'
-import {isChangingRemotely, withRemoteChanges} from './withChanges'
+import {withRemoteChanges} from './withChanges'
 import {withoutPatching} from './withoutPatching'
 
 const debug = debugWithName('sync machine')
@@ -179,7 +179,7 @@ export const syncMachine = setup({
     'initial value synced': ({context}) => context.initialValueSynced,
     'is busy': ({context}) => {
       const isProcessingLocalChanges = context.isProcessingLocalChanges
-      const isChanging = isChangingRemotely(context.slateEditor) ?? false
+      const isChanging = context.slateEditor.isProcessingRemoteChanges ?? false
       const isBusy = isProcessingLocalChanges || isChanging
 
       debug('isBusy', {isBusy, isProcessingLocalChanges, isChanging})

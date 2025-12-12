@@ -6,14 +6,9 @@
 import type {PortableTextBlock} from '@portabletext/schema'
 import type {Operation} from 'slate'
 import type {EditorActor} from '../editor/editor-machine'
-import {isChangingRemotely} from '../editor/withChanges'
 import {debugWithName} from '../internal-utils/debug'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
-import {getRemotePatches} from './remote-patches'
-import {isRedoing} from './slate-plugin.redoing'
-import {isUndoing} from './slate-plugin.undoing'
-import {isWithHistory, setWithHistory} from './slate-plugin.without-history'
-import {createUndoSteps, getCurrentUndoStepId} from './undo-step'
+import {createUndoSteps} from './undo-step'
 
 const debug = debugWithName('plugin:history')
 
@@ -27,9 +22,8 @@ export function pluginHistory({
   subscriptions: Array<() => () => void>
 }): (editor: PortableTextSlateEditor) => PortableTextSlateEditor {
   return (editor: PortableTextSlateEditor) => {
-    const remotePatches = getRemotePatches(editor)
     let previousSnapshot: Array<PortableTextBlock> | undefined = editor.value
-    let previousUndoStepId = getCurrentUndoStepId(editor)
+    let previousUndoStepId = editor.undoStepId
 
     subscriptions.push(() => {
       const subscription = editorActor.on('patches', ({patches, snapshot}) => {
@@ -50,13 +44,13 @@ export function pluginHistory({
             )
 
             editor.history = {undos: [], redos: []}
-            remotePatches.splice(0, remotePatches.length)
-            setWithHistory(editor, true)
+            editor.remotePatches.splice(0, editor.remotePatches.length)
+            editor.withHistory = true
             reset = true
             return
           }
 
-          remotePatches.push({
+          editor.remotePatches.push({
             patch,
             time: new Date(),
             snapshot,
@@ -72,8 +66,6 @@ export function pluginHistory({
       }
     })
 
-    editor.history = {undos: [], redos: []}
-
     const {apply} = editor
 
     editor.apply = (op: Operation) => {
@@ -86,7 +78,7 @@ export function pluginHistory({
        * We don't want to run any side effects when the editor is processing
        * remote changes.
        */
-      if (isChangingRemotely(editor)) {
+      if (editor.isProcessingRemoteChanges) {
         apply(op)
         return
       }
@@ -95,13 +87,13 @@ export function pluginHistory({
        * We don't want to run any side effects when the editor is undoing or
        * redoing operations.
        */
-      if (isUndoing(editor) || isRedoing(editor)) {
+      if (editor.isUndoing || editor.isRedoing) {
         apply(op)
         return
       }
 
-      const withHistory = isWithHistory(editor)
-      const currentUndoStepId = getCurrentUndoStepId(editor)
+      const withHistory = editor.withHistory
+      const currentUndoStepId = editor.undoStepId
 
       if (!withHistory) {
         // If we are bypassing saving undo steps, then we can just move along.

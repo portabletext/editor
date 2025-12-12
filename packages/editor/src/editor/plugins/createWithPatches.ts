@@ -2,7 +2,6 @@ import {insert, setIfMissing, unset, type Patch} from '@portabletext/patches'
 import type {PortableTextBlock} from '@portabletext/schema'
 import {Editor, type Operation} from 'slate'
 import {pluginWithoutHistory} from '../../history/slate-plugin.without-history'
-import {getCurrentUndoStepId} from '../../history/undo-step'
 import {createApplyPatch} from '../../internal-utils/applyPatch'
 import {debugWithName} from '../../internal-utils/debug'
 import {
@@ -19,9 +18,8 @@ import {isEqualToEmptyEditor} from '../../internal-utils/values'
 import type {PortableTextSlateEditor} from '../../types/slate-editor'
 import type {EditorActor} from '../editor-machine'
 import type {RelayActor} from '../relay-machine'
-import {IS_PROCESSING_REMOTE_CHANGES} from '../weakMaps'
 import {withRemoteChanges} from '../withChanges'
-import {isPatching, PATCHING, withoutPatching} from '../withoutPatching'
+import {withoutPatching} from '../withoutPatching'
 
 const debug = debugWithName('plugin:withPatches')
 const debugVerbose = false
@@ -44,8 +42,6 @@ export function createWithPatches({
   const applyPatch = createApplyPatch(editorActor.getSnapshot().context)
 
   return function withPatches(editor: PortableTextSlateEditor) {
-    IS_PROCESSING_REMOTE_CHANGES.set(editor, false)
-    PATCHING.set(editor, true)
     previousValue = [...editor.value]
 
     const {apply} = editor
@@ -125,7 +121,7 @@ export function createWithPatches({
         editorActor.getSnapshot().context.schema,
       )
 
-      if (!isPatching(editor)) {
+      if (!editor.isPatching) {
         if (debugVerbose && debug.enabled) {
           debug(
             `Editor is not producing patch for operation ${operation.type}`,
@@ -260,7 +256,7 @@ export function createWithPatches({
           editorActor.send({
             type: 'internal.patch',
             patch: {...patch, origin: 'local'},
-            operationId: getCurrentUndoStepId(editor),
+            operationId: editor.undoStepId,
             value: editor.value,
           })
         }

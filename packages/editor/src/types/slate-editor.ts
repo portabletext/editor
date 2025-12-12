@@ -1,3 +1,4 @@
+import type {Patch} from '@portabletext/patches'
 import type {
   PortableTextBlock,
   PortableTextListBlock,
@@ -5,9 +6,10 @@ import type {
   PortableTextTextBlock,
 } from '@portabletext/schema'
 import type {KeyboardEvent} from 'react'
-import type {Descendant, Operation as SlateOperation} from 'slate'
+import type {Descendant, Range, Operation as SlateOperation} from 'slate'
 import type {ReactEditor} from 'slate-react'
 import type {DecoratedRange} from '../editor/range-decorations-machine'
+import type {EditorSelection} from './editor'
 
 type HistoryItem = {
   operations: SlateOperation[]
@@ -19,19 +21,40 @@ interface History {
   undos: HistoryItem[]
 }
 
+export type RemotePatch = {
+  patch: Patch
+  time: Date
+  snapshot: PortableTextBlock[] | undefined
+  previousSnapshot: PortableTextBlock[] | undefined
+}
+
 export interface PortableTextSlateEditor extends ReactEditor {
   _key: 'editor'
   _type: 'editor'
+
   createPlaceholderBlock: () => Descendant
-  history: History
   isTextBlock: (value: unknown) => value is PortableTextTextBlock
   isTextSpan: (value: unknown) => value is PortableTextSpan
   isListBlock: (value: unknown) => value is PortableTextListBlock
-  value: Array<PortableTextBlock>
+
   decoratedRanges: Array<DecoratedRange>
   decoratorState: Record<string, boolean | undefined>
   blockIndexMap: Map<string, number>
+  history: History
+  lastSelection: EditorSelection
+  lastSlateSelection: Range | null
   listIndexMap: Map<string, number>
+  remotePatches: Array<RemotePatch>
+  undoStepId: string | undefined
+  value: Array<PortableTextBlock>
+
+  isNormalizingNode: boolean
+  isPatching: boolean
+  isPerformingBehaviorOperation: boolean
+  isProcessingRemoteChanges: boolean
+  isRedoing: boolean
+  isUndoing: boolean
+  withHistory: boolean
 
   /**
    * Use hotkeys

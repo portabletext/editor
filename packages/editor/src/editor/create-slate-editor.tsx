@@ -29,11 +29,25 @@ export function createSlateEditor(config: SlateEditorConfig): SlateEditor {
   )
 
   const editor = createEditor()
+
   editor.decoratedRanges = []
   editor.decoratorState = {}
-  editor.value = [placeholderBlock]
   editor.blockIndexMap = new Map<string, number>()
+  editor.history = {undos: [], redos: []}
+  editor.lastSelection = null
+  editor.lastSlateSelection = null
   editor.listIndexMap = new Map<string, number>()
+  editor.remotePatches = []
+  editor.undoStepId = undefined
+  editor.value = [placeholderBlock]
+
+  editor.isNormalizingNode = false
+  editor.isPatching = true
+  editor.isPerformingBehaviorOperation = false
+  editor.isProcessingRemoteChanges = false
+  editor.isRedoing = false
+  editor.isUndoing = false
+  editor.withHistory = true
 
   const instance = withPlugins(withReact(editor), {
     editorActor: config.editorActor,

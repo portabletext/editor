@@ -1,23 +1,14 @@
-import type {Editor} from 'slate'
+import type {PortableTextSlateEditor} from '../types/slate-editor'
 
-const WITH_HISTORY = new WeakMap<Editor, boolean | undefined>()
+export function pluginWithoutHistory(
+  editor: PortableTextSlateEditor,
+  fn: () => void,
+): void {
+  const prev = editor.withHistory
 
-export function isWithHistory(editor: Editor): boolean {
-  const withHistory = WITH_HISTORY.get(editor)
-
-  return withHistory ?? true
-}
-
-export function pluginWithoutHistory(editor: Editor, fn: () => void): void {
-  const withHistory = isWithHistory(editor)
-
-  WITH_HISTORY.set(editor, false)
+  editor.withHistory = false
 
   fn()
 
-  WITH_HISTORY.set(editor, withHistory)
-}
-
-export function setWithHistory(editor: Editor, withHistory: boolean): void {
-  WITH_HISTORY.set(editor, withHistory)
+  editor.withHistory = prev
 }

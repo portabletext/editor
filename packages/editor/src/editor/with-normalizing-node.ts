@@ -1,14 +1,11 @@
-import type {Editor} from 'slate'
+import type {PortableTextSlateEditor} from '../types/slate-editor'
 
-const IS_NORMALIZING_NODE: WeakMap<Editor, boolean | undefined> = new WeakMap()
-
-export function withNormalizeNode(editor: Editor, fn: () => void) {
-  const prev = IS_NORMALIZING_NODE.get(editor)
-  IS_NORMALIZING_NODE.set(editor, true)
+export function withNormalizeNode(
+  editor: PortableTextSlateEditor,
+  fn: () => void,
+) {
+  const prev = editor.isNormalizingNode
+  editor.isNormalizingNode = true
   fn()
-  IS_NORMALIZING_NODE.set(editor, prev)
-}
-
-export function isNormalizingNode(editor: Editor) {
-  return IS_NORMALIZING_NODE.get(editor) ?? false
+  editor.isNormalizingNode = prev
 }

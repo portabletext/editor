@@ -31,7 +31,6 @@ import {
 } from '../../utils/util.selection-point'
 import type {EditorActor} from '../editor-machine'
 import {getEditorSnapshot} from '../editor-selector'
-import {SLATE_TO_PORTABLE_TEXT_RANGE} from '../weakMaps'
 
 export function createEditableAPI(
   editor: PortableTextSlateEditor,
@@ -457,20 +456,24 @@ export function createEditableAPI(
       })
     },
     getSelection: (): EditorSelection | null => {
-      let ptRange: EditorSelection = null
-      if (editor.selection) {
-        const existing = SLATE_TO_PORTABLE_TEXT_RANGE.get(editor.selection)
-        if (existing) {
-          return existing
-        }
-        ptRange = slateRangeToSelection({
-          schema: editorActor.getSnapshot().context.schema,
-          editor,
-          range: editor.selection,
-        })
-        SLATE_TO_PORTABLE_TEXT_RANGE.set(editor.selection, ptRange)
+      if (!editor.selection) {
+        return null
       }
-      return ptRange
+
+      if (editor.selection === editor.lastSlateSelection) {
+        return editor.lastSelection
+      }
+
+      const selection = slateRangeToSelection({
+        schema: editorActor.getSnapshot().context.schema,
+        editor,
+        range: editor.selection,
+      })
+
+      editor.lastSlateSelection = editor.selection
+      editor.lastSelection = selection
+
+      return selection
     },
     getValue: () => {
       return editor.value
