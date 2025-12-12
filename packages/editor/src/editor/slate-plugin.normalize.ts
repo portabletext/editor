@@ -1,9 +1,3 @@
-/**
- *
- * This plugin will change Slate's default marks model (every prop is a mark) with the Portable Text model (marks is an array of strings on prop .marks).
- *
- */
-
 import type {PortableTextObject, PortableTextSpan} from '@portabletext/schema'
 import {Editor, Node, Path, Range, Text, Transforms} from 'slate'
 import {createPlaceholderBlock} from '../internal-utils/create-placeholder-block'
@@ -16,19 +10,21 @@ import {withoutPatching} from './withoutPatching'
 
 const debug = debugWithName('plugin:withPortableTextMarkModel')
 
-export function createWithPortableTextMarkModel(
+export function createWithNormalize(
   editorActor: EditorActor,
 ): (editor: PortableTextSlateEditor) => PortableTextSlateEditor {
-  return function withPortableTextMarkModel(editor: PortableTextSlateEditor) {
+  return function withNormalize(editor: PortableTextSlateEditor) {
     const {apply, normalizeNode} = editor
     const defaultStyle = editorActor
       .getSnapshot()
       .context.schema.styles.at(0)?.name
 
-    // Extend Slate's default normalization. Merge spans with same set of .marks when doing merge_node operations, and clean up markDefs / marks
     editor.normalizeNode = (nodeEntry) => {
       const [node, path] = nodeEntry
 
+      /**
+       * Add a placeholder block when the editor is empty
+       */
       if (Editor.isEditor(node) && node.children.length === 0) {
         withoutPatching(editor, () => {
           withNormalizeNode(editor, () => {
@@ -41,6 +37,9 @@ export function createWithPortableTextMarkModel(
         })
       }
 
+      /**
+       * Merge spans with same set of .marks when doing merge_node operations
+       */
       if (editor.isTextBlock(node)) {
         const children = Node.children(editor, path)
 
