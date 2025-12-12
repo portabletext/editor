@@ -1,4 +1,4 @@
-import {defaultKeyboardShortcuts} from '../keyboard-shortcuts/default-keyboard-shortcuts'
+import {defaultKeyboardShortcuts} from '../editor/default-keyboard-shortcuts'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
