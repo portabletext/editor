@@ -1,6 +1,6 @@
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
-import {createTestEditor} from '../test/vitest'
+import {createTestEditor} from '../src/test/vitest'
 
 describe('Feature: History (Preserving Keys)', () => {
   const keyGenerator = createTestKeyGenerator()

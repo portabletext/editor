@@ -1,5 +1,4 @@
 import type {BaseOperation, Editor, Node, NodeEntry} from 'slate'
-import {pluginHistory} from '../history/slate-plugin.history'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {createWithEventListeners} from './create-with-event-listeners'
 import {createWithObjectKeys} from './createWithObjectKeys'
@@ -8,6 +7,7 @@ import {createWithPortableTextMarkModel} from './createWithPortableTextMarkModel
 import {createWithSchemaTypes} from './createWithSchemaTypes'
 import type {EditorActor} from './editor-machine'
 import type {RelayActor} from './relay-machine'
+import {pluginHistory} from './slate-plugin.history'
 import {pluginUpdateSelection} from './slate-plugin.update-selection'
 import {pluginUpdateValue} from './slate-plugin.update-value'
 

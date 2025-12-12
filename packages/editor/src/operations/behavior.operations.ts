@@ -4,8 +4,6 @@ import type {
   SyntheticBehaviorEvent,
 } from '../behaviors/behavior.types.event'
 import type {EditorContext} from '../editor/editor-snapshot'
-import {historyRedoOperationImplementation} from '../history/behavior.operation.history.redo'
-import {historyUndoOperationImplementation} from '../history/behavior.operation.history.undo'
 import type {OmitFromUnion, PickFromUnion} from '../type-utils'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {addAnnotationOperationImplementation} from './behavior.operation.annotation.add'
@@ -17,6 +15,8 @@ import {childUnsetOperationImplementation} from './behavior.operation.child.unse
 import {decoratorAddOperationImplementation} from './behavior.operation.decorator.add'
 import {decoratorRemoveOperationImplementation} from './behavior.operation.decorator.remove'
 import {deleteOperationImplementation} from './behavior.operation.delete'
+import {historyRedoOperationImplementation} from './behavior.operation.history.redo'
+import {historyUndoOperationImplementation} from './behavior.operation.history.undo'
 import {insertBlockOperationImplementation} from './behavior.operation.insert.block'
 import {insertChildOperationImplementation} from './behavior.operation.insert.child'
 import {insertTextOperationImplementation} from './behavior.operation.insert.text'

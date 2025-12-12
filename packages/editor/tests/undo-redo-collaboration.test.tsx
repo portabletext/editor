@@ -5,8 +5,8 @@ import {userEvent} from 'vitest/browser'
 import {
   getSelectionAfterText,
   getSelectionBeforeText,
-} from '../internal-utils/text-selection'
-import {createTestEditors} from '../test/vitest'
+} from '../src/internal-utils/text-selection'
+import {createTestEditors} from '../src/test/vitest'
 
 function createInitialValue(text: string): Array<PortableTextBlock> {
   return [

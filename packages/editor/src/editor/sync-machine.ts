@@ -21,7 +21,6 @@ import {
   type AnyEventObject,
   type CallbackLogicFunction,
 } from 'xstate'
-import {pluginWithoutHistory} from '../history/slate-plugin.without-history'
 import {debugWithName} from '../internal-utils/debug'
 import {
   isEqualBlocks,
@@ -34,6 +33,7 @@ import type {PickFromUnion} from '../type-utils'
 import type {InvalidValueResolution} from '../types/editor'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import type {EditorSchema} from './editor-schema'
+import {pluginWithoutHistory} from './slate-plugin.without-history'
 import {withRemoteChanges} from './withChanges'
 import {withoutPatching} from './withoutPatching'
 

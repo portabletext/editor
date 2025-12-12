@@ -5,9 +5,9 @@
 
 import type {PortableTextBlock} from '@portabletext/schema'
 import type {Operation} from 'slate'
-import type {EditorActor} from '../editor/editor-machine'
 import {debugWithName} from '../internal-utils/debug'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
+import type {EditorActor} from './editor-machine'
 import {createUndoSteps} from './undo-step'
 
 const debug = debugWithName('plugin:history')

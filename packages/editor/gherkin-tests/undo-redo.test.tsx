@@ -1,12 +1,16 @@
+import {defineSchema} from '@portabletext/schema'
 import {Before} from 'racejar'
 import {Feature} from 'racejar/vitest'
-import {defineSchema} from '..'
-import {defineBehavior, forward, raise} from '../behaviors'
-import {BehaviorPlugin} from '../plugins/plugin.behavior'
-import {getFocusTextBlock, isSelectionExpanded} from '../selectors'
-import {parameterTypes} from '../test'
-import {createTestEditor, stepDefinitions, type Context} from '../test/vitest'
-import undoRedoFeature from './undo-redo.feature?raw'
+import undoRedoFeature from '../gherkin-spec/undo-redo.feature?raw'
+import {defineBehavior, forward, raise} from '../src/behaviors'
+import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
+import {getFocusTextBlock, isSelectionExpanded} from '../src/selectors'
+import {parameterTypes} from '../src/test'
+import {
+  createTestEditor,
+  stepDefinitions,
+  type Context,
+} from '../src/test/vitest'
 
 Feature({
   featureText: undoRedoFeature,
