@@ -9,6 +9,8 @@
 
 # Code style
 
+- Avoid code comments unless they explain **why** a piece of code is needed
 - Place helper functions below main functions
 - Only use type casting as a last resort
 - Use backticks when referencing code in comments and other text
+- Don't use one-character variable names
