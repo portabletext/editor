@@ -11,3 +11,4 @@
 
 - Place helper functions below main functions
 - Only use type casting as a last resort
+- Use backticks when referencing code in comments and other text
