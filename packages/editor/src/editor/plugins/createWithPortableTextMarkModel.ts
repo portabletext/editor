@@ -4,21 +4,14 @@
  *
  */
 
-import {
-  isTextBlock,
-  type PortableTextObject,
-  type PortableTextSpan,
-} from '@portabletext/schema'
+import type {PortableTextObject, PortableTextSpan} from '@portabletext/schema'
 import {Editor, Element, Node, Path, Range, Text, Transforms} from 'slate'
 import {createPlaceholderBlock} from '../../internal-utils/create-placeholder-block'
 import {debugWithName} from '../../internal-utils/debug'
 import {isEqualMarkDefs} from '../../internal-utils/equality'
-import {getNextSpan, getPreviousSpan} from '../../internal-utils/sibling-utils'
 import type {BehaviorOperationImplementation} from '../../operations/behavior.operations'
-import {getActiveDecorators} from '../../selectors/selector.get-active-decorators'
 import type {PortableTextSlateEditor} from '../../types/slate-editor'
 import type {EditorActor} from '../editor-machine'
-import {getEditorSnapshot} from '../editor-selector'
 import {withNormalizeNode} from '../with-normalizing-node'
 import {withoutPatching} from '../withoutPatching'
 
@@ -29,9 +22,6 @@ export function createWithPortableTextMarkModel(
 ): (editor: PortableTextSlateEditor) => PortableTextSlateEditor {
   return function withPortableTextMarkModel(editor: PortableTextSlateEditor) {
     const {apply, normalizeNode} = editor
-    const decorators = editorActor
-      .getSnapshot()
-      .context.schema.decorators.map((t) => t.name)
     const defaultStyle = editorActor
       .getSnapshot()
       .context.schema.styles.at(0)?.name
@@ -366,78 +356,6 @@ export function createWithPortableTextMarkModel(
         } else {
           // In any other case, we want to clear the decorator state.
           editor.decoratorState = {}
-        }
-      }
-
-      if (op.type === 'remove_text') {
-        const {selection} = editor
-
-        if (selection && Range.isExpanded(selection)) {
-          const [block, blockPath] = Editor.node(editor, selection, {
-            depth: 1,
-          })
-          const [span, spanPath] =
-            Array.from(
-              Editor.nodes(editor, {
-                mode: 'lowest',
-                at: {path: op.path, offset: op.offset},
-                match: (n) => editor.isTextSpan(n),
-                voids: false,
-              }),
-            )[0] ?? ([undefined, undefined] as const)
-
-          if (
-            span &&
-            block &&
-            isTextBlock(editorActor.getSnapshot().context, block)
-          ) {
-            const markDefs = block.markDefs ?? []
-            const marks = span.marks ?? []
-            const spanHasAnnotations = marks.some((mark) =>
-              markDefs.find((markDef) => markDef._key === mark),
-            )
-            const deletingFromTheEnd =
-              op.offset + op.text.length === span.text.length
-            const deletingAllText = op.offset === 0 && deletingFromTheEnd
-
-            const previousSpan = getPreviousSpan({editor, blockPath, spanPath})
-            const nextSpan = getNextSpan({editor, blockPath, spanPath})
-
-            const previousSpanHasSameAnnotation = previousSpan
-              ? previousSpan.marks?.some(
-                  (mark) => !decorators.includes(mark) && marks.includes(mark),
-                )
-              : false
-            const nextSpanHasSameAnnotation = nextSpan
-              ? nextSpan.marks?.some(
-                  (mark) => !decorators.includes(mark) && marks.includes(mark),
-                )
-              : false
-
-            if (
-              spanHasAnnotations &&
-              deletingAllText &&
-              !previousSpanHasSameAnnotation &&
-              !nextSpanHasSameAnnotation
-            ) {
-              const snapshot = getEditorSnapshot({
-                editorActorSnapshot: editorActor.getSnapshot(),
-                slateEditorInstance: editor,
-              })
-
-              Editor.withoutNormalizing(editor, () => {
-                apply(op)
-                Transforms.setNodes(
-                  editor,
-                  {marks: getActiveDecorators(snapshot)},
-                  {at: op.path},
-                )
-              })
-
-              editor.onChange()
-              return
-            }
-          }
         }
       }
 
