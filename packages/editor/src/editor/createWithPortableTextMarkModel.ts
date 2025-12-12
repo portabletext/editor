@@ -6,13 +6,13 @@
 
 import type {PortableTextObject, PortableTextSpan} from '@portabletext/schema'
 import {Editor, Node, Path, Range, Text, Transforms} from 'slate'
-import {createPlaceholderBlock} from '../../internal-utils/create-placeholder-block'
-import {debugWithName} from '../../internal-utils/debug'
-import {isEqualMarkDefs} from '../../internal-utils/equality'
-import type {PortableTextSlateEditor} from '../../types/slate-editor'
-import type {EditorActor} from '../editor-machine'
-import {withNormalizeNode} from '../with-normalizing-node'
-import {withoutPatching} from '../withoutPatching'
+import {createPlaceholderBlock} from '../internal-utils/create-placeholder-block'
+import {debugWithName} from '../internal-utils/debug'
+import {isEqualMarkDefs} from '../internal-utils/equality'
+import type {PortableTextSlateEditor} from '../types/slate-editor'
+import type {EditorActor} from './editor-machine'
+import {withNormalizeNode} from './with-normalizing-node'
+import {withoutPatching} from './withoutPatching'
 
 const debug = debugWithName('plugin:withPortableTextMarkModel')
 

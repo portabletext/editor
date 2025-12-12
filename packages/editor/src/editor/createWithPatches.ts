@@ -1,9 +1,9 @@
 import {insert, setIfMissing, unset, type Patch} from '@portabletext/patches'
 import type {PortableTextBlock} from '@portabletext/schema'
 import {Editor, type Operation} from 'slate'
-import {pluginWithoutHistory} from '../../history/slate-plugin.without-history'
-import {createApplyPatch} from '../../internal-utils/applyPatch'
-import {debugWithName} from '../../internal-utils/debug'
+import {pluginWithoutHistory} from '../history/slate-plugin.without-history'
+import {createApplyPatch} from '../internal-utils/applyPatch'
+import {debugWithName} from '../internal-utils/debug'
 import {
   insertNodePatch,
   insertTextPatch,
@@ -13,13 +13,13 @@ import {
   removeTextPatch,
   setNodePatch,
   splitNodePatch,
-} from '../../internal-utils/operation-to-patches'
-import {isEqualToEmptyEditor} from '../../internal-utils/values'
-import type {PortableTextSlateEditor} from '../../types/slate-editor'
-import type {EditorActor} from '../editor-machine'
-import type {RelayActor} from '../relay-machine'
-import {withRemoteChanges} from '../withChanges'
-import {withoutPatching} from '../withoutPatching'
+} from '../internal-utils/operation-to-patches'
+import {isEqualToEmptyEditor} from '../internal-utils/values'
+import type {PortableTextSlateEditor} from '../types/slate-editor'
+import type {EditorActor} from './editor-machine'
+import type {RelayActor} from './relay-machine'
+import {withRemoteChanges} from './withChanges'
+import {withoutPatching} from './withoutPatching'
 
 const debug = debugWithName('plugin:withPatches')
 const debugVerbose = false

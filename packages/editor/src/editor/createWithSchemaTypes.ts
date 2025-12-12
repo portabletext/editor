@@ -6,11 +6,11 @@ import {
   type PortableTextTextBlock,
 } from '@portabletext/schema'
 import {Editor, Transforms, type Element} from 'slate'
-import {debugWithName} from '../../internal-utils/debug'
-import type {PortableTextSlateEditor} from '../../types/slate-editor'
-import {isListBlock} from '../../utils/parse-blocks'
-import type {EditorActor} from '../editor-machine'
-import {withNormalizeNode} from '../with-normalizing-node'
+import {debugWithName} from '../internal-utils/debug'
+import type {PortableTextSlateEditor} from '../types/slate-editor'
+import {isListBlock} from '../utils/parse-blocks'
+import type {EditorActor} from './editor-machine'
+import {withNormalizeNode} from './with-normalizing-node'
 
 const debug = debugWithName('plugin:withSchemaTypes')
 /**

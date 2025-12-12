@@ -1,11 +1,11 @@
 import type {KeyboardEvent} from 'react'
 import type {ReactEditor} from 'slate-react'
-import {debugWithName} from '../../internal-utils/debug'
-import {isHotkey} from '../../internal-utils/is-hotkey'
-import type {HotkeyOptions} from '../../types/options'
-import type {PortableTextSlateEditor} from '../../types/slate-editor'
-import type {EditorActor} from '../editor-machine'
-import type {PortableTextEditor} from '../PortableTextEditor'
+import {debugWithName} from '../internal-utils/debug'
+import {isHotkey} from '../internal-utils/is-hotkey'
+import type {HotkeyOptions} from '../types/options'
+import type {PortableTextSlateEditor} from '../types/slate-editor'
+import type {EditorActor} from './editor-machine'
+import type {PortableTextEditor} from './PortableTextEditor'
 
 const debug = debugWithName('plugin:withHotKeys')
 
