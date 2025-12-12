@@ -6,7 +6,7 @@ import {
   useSlateSelector,
   type RenderElementProps,
 } from 'slate-react'
-import type {EventPositionBlock} from '../../internal-utils/event-position'
+import type {EventPositionBlock} from '../internal-utils/event-position'
 import type {
   BlockListItemRenderProps,
   BlockRenderProps,
@@ -15,7 +15,7 @@ import type {
   RenderBlockFunction,
   RenderListItemFunction,
   RenderStyleFunction,
-} from '../../types/editor'
+} from '../types/editor'
 import {DropIndicator} from './render.drop-indicator'
 import {useCoreBlockElementBehaviors} from './use-core-block-element-behaviors'
 

@@ -6,13 +6,13 @@ import {
   useSlateSelector,
   type RenderElementProps,
 } from 'slate-react'
-import type {EventPositionBlock} from '../../internal-utils/event-position'
+import type {EventPositionBlock} from '../internal-utils/event-position'
 import type {
   BlockRenderProps,
   PortableTextMemberSchemaTypes,
   RenderBlockFunction,
-} from '../../types/editor'
-import type {EditorSchema} from '../editor-schema'
+} from '../types/editor'
+import type {EditorSchema} from './editor-schema'
 import {RenderDefaultBlockObject} from './render.default-object'
 import {DropIndicator} from './render.drop-indicator'
 import {useCoreBlockElementBehaviors} from './use-core-block-element-behaviors'

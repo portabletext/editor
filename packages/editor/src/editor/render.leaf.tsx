@@ -8,8 +8,8 @@ import type {
   RenderChildFunction,
   RenderDecoratorFunction,
   RenderPlaceholderFunction,
-} from '../../types/editor'
-import {EditorActorContext} from '../editor-actor-context'
+} from '../types/editor'
+import {EditorActorContext} from './editor-actor-context'
 import {RenderSpan} from './render.span'
 
 const PLACEHOLDER_STYLE: CSSProperties = {

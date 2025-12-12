@@ -1,6 +1,6 @@
 import React from 'react'
-import {usePortableTextEditor} from '../editor/hooks/usePortableTextEditor'
 import type {PortableTextEditor} from '../editor/PortableTextEditor'
+import {usePortableTextEditor} from '../editor/usePortableTextEditor'
 
 export const InternalPortableTextEditorRefPlugin =
   React.forwardRef<PortableTextEditor | null>((_, ref) => {

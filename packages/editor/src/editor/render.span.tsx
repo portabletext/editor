@@ -2,9 +2,9 @@ import {isTextBlock} from '@portabletext/schema'
 import {useSelector} from '@xstate/react'
 import {useContext, useMemo, useRef, type ReactElement} from 'react'
 import {useSlateStatic, type RenderLeafProps} from 'slate-react'
-import {getFocusSpan} from '../../selectors/selector.get-focus-span'
-import {isOverlappingSelection} from '../../selectors/selector.is-overlapping-selection'
-import {isSelectionCollapsed} from '../../selectors/selector.is-selection-collapsed'
+import {getFocusSpan} from '../selectors/selector.get-focus-span'
+import {isOverlappingSelection} from '../selectors/selector.is-overlapping-selection'
+import {isSelectionCollapsed} from '../selectors/selector.is-selection-collapsed'
 import type {
   BlockAnnotationRenderProps,
   BlockChildRenderProps,
@@ -13,9 +13,9 @@ import type {
   RenderAnnotationFunction,
   RenderChildFunction,
   RenderDecoratorFunction,
-} from '../../types/editor'
-import {EditorActorContext} from '../editor-actor-context'
-import {getEditorSnapshot} from '../editor-selector'
+} from '../types/editor'
+import {EditorActorContext} from './editor-actor-context'
+import {getEditorSnapshot} from './editor-selector'
 
 export interface RenderSpanProps extends RenderLeafProps {
   children: ReactElement<any>

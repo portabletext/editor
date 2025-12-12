@@ -7,13 +7,13 @@ import {
   useSlateStatic,
   type RenderElementProps,
 } from 'slate-react'
-import {getPointBlock} from '../../internal-utils/slate-utils'
+import {getPointBlock} from '../internal-utils/slate-utils'
 import type {
   BlockChildRenderProps,
   PortableTextMemberSchemaTypes,
   RenderChildFunction,
-} from '../../types/editor'
-import type {EditorSchema} from '../editor-schema'
+} from '../types/editor'
+import type {EditorSchema} from './editor-schema'
 import {RenderDefaultInlineObject} from './render.default-object'
 
 export function RenderInlineObject(props: {

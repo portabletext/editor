@@ -8,8 +8,8 @@ import type {
   RenderChildFunction,
   RenderListItemFunction,
   RenderStyleFunction,
-} from '../../types/editor'
-import {EditorActorContext} from '../editor-actor-context'
+} from '../types/editor'
+import {EditorActorContext} from './editor-actor-context'
 import {RenderBlockObject} from './render.block-object'
 import {RenderInlineObject} from './render.inline-object'
 import {RenderTextBlock} from './render.text-block'

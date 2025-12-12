@@ -1,6 +1,6 @@
 import {startTransition, useContext, useEffect, useState} from 'react'
-import type {EditorSelection} from '../../types/editor'
-import {EditorActorContext} from '../editor-actor-context'
+import type {EditorSelection} from '../types/editor'
+import {EditorActorContext} from './editor-actor-context'
 
 /**
  * @deprecated Use `useEditorSelector` to get the current editor selection.
