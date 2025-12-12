@@ -2,9 +2,9 @@ import {Editor, Node, Point, Range, Text} from 'slate'
 import {
   slatePointToSelectionPoint,
   slateRangeToSelection,
-} from '../../internal-utils/slate-utils'
-import {performOperation} from '../../operations/behavior.operations'
-import type {EditorActor} from '../editor-machine'
+} from '../internal-utils/slate-utils'
+import {performOperation} from '../operations/behavior.operations'
+import type {EditorActor} from './editor-machine'
 
 export function createWithEventListeners(editorActor: EditorActor) {
   return function withEventListeners(editor: Editor) {

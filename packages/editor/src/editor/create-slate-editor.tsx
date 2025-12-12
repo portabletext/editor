@@ -5,8 +5,8 @@ import {createPlaceholderBlock} from '../internal-utils/create-placeholder-block
 import {debugWithName} from '../internal-utils/debug'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import type {EditorActor} from './editor-machine'
-import {withPlugins} from './plugins/with-plugins'
 import type {RelayActor} from './relay-machine'
+import {withPlugins} from './with-plugins'
 
 const debug = debugWithName('setup')
 

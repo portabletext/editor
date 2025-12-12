@@ -1,6 +1,6 @@
-import {slateRangeToSelection} from '../../internal-utils/slate-utils'
-import type {PortableTextSlateEditor} from '../../types/slate-editor'
-import type {EditorActor} from '../editor-machine'
+import {slateRangeToSelection} from '../internal-utils/slate-utils'
+import type {PortableTextSlateEditor} from '../types/slate-editor'
+import type {EditorActor} from './editor-machine'
 
 export function pluginUpdateSelection({
   editor,

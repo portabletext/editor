@@ -1,9 +1,9 @@
 import {isSpan, isTextBlock} from '@portabletext/schema'
 import {Editor, Element, Node, Path, Transforms} from 'slate'
-import {isEqualMarks} from '../../internal-utils/equality'
-import type {PortableTextSlateEditor} from '../../types/slate-editor'
-import type {EditorActor} from '../editor-machine'
-import {withNormalizeNode} from '../with-normalizing-node'
+import {isEqualMarks} from '../internal-utils/equality'
+import type {PortableTextSlateEditor} from '../types/slate-editor'
+import type {EditorActor} from './editor-machine'
+import {withNormalizeNode} from './with-normalizing-node'
 
 /**
  * This plugin makes sure that every new node in the editor get a new _key prop when created
