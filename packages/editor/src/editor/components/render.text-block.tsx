@@ -16,7 +16,7 @@ import type {
   RenderListItemFunction,
   RenderStyleFunction,
 } from '../../types/editor'
-import {DropIndicator} from './drop-indicator'
+import {DropIndicator} from './render.drop-indicator'
 import {useCoreBlockElementBehaviors} from './use-core-block-element-behaviors'
 
 export function RenderTextBlock(props: {
