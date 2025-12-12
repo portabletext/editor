@@ -10,27 +10,27 @@ import {
   isListItemActive,
   isStyleActive,
   slateRangeToSelection,
-} from '../../internal-utils/slate-utils'
-import {toSlateRange} from '../../internal-utils/to-slate-range'
-import {getActiveAnnotationsMarks} from '../../selectors/selector.get-active-annotation-marks'
-import {getActiveDecorators} from '../../selectors/selector.get-active-decorators'
-import {getFocusBlock} from '../../selectors/selector.get-focus-block'
-import {getFocusSpan} from '../../selectors/selector.get-focus-span'
-import {getSelectedValue} from '../../selectors/selector.get-selected-value'
-import {isActiveAnnotation} from '../../selectors/selector.is-active-annotation'
+} from '../internal-utils/slate-utils'
+import {toSlateRange} from '../internal-utils/to-slate-range'
+import {getActiveAnnotationsMarks} from '../selectors/selector.get-active-annotation-marks'
+import {getActiveDecorators} from '../selectors/selector.get-active-decorators'
+import {getFocusBlock} from '../selectors/selector.get-focus-block'
+import {getFocusSpan} from '../selectors/selector.get-focus-span'
+import {getSelectedValue} from '../selectors/selector.get-selected-value'
+import {isActiveAnnotation} from '../selectors/selector.is-active-annotation'
 import type {
   EditableAPI,
   EditableAPIDeleteOptions,
   EditorSelection,
-} from '../../types/editor'
-import type {Path} from '../../types/paths'
-import type {PortableTextSlateEditor} from '../../types/slate-editor'
+} from '../types/editor'
+import type {Path} from '../types/paths'
+import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {
   getBlockKeyFromSelectionPoint,
   getChildKeyFromSelectionPoint,
-} from '../../utils/util.selection-point'
-import type {EditorActor} from '../editor-machine'
-import {getEditorSnapshot} from '../editor-selector'
+} from '../utils/util.selection-point'
+import type {EditorActor} from './editor-machine'
+import {getEditorSnapshot} from './editor-selector'
 
 export function createEditableAPI(
   editor: PortableTextSlateEditor,

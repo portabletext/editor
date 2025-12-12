@@ -1,9 +1,9 @@
 import {Editor, Transforms} from 'slate'
+import {pluginRedoing} from '../editor/slate-plugin.redoing'
+import {pluginWithoutHistory} from '../editor/slate-plugin.without-history'
 import {debugWithName} from '../internal-utils/debug'
-import type {BehaviorOperationImplementation} from '../operations/behavior.operations'
-import {pluginRedoing} from './slate-plugin.redoing'
-import {pluginWithoutHistory} from './slate-plugin.without-history'
-import {transformOperation} from './transform-operation'
+import {transformOperation} from '../internal-utils/transform-operation'
+import type {BehaviorOperationImplementation} from './behavior.operations'
 
 const debug = debugWithName('behavior.operation.history.redo')
 

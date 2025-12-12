@@ -46,9 +46,9 @@ import {RenderLeaf} from './components/render-leaf'
 import {RenderText, type RenderTextProps} from './components/render-text'
 import {EditorActorContext} from './editor-actor-context'
 import {usePortableTextEditor} from './hooks/usePortableTextEditor'
-import {createWithHotkeys} from './plugins/createWithHotKeys'
 import {rangeDecorationsMachine} from './range-decorations-machine'
 import {RelayActorContext} from './relay-actor-context'
+import {createWithHotkeys} from './slate-plugin.hotkeys'
 import {validateSelectionMachine} from './validate-selection-machine'
 
 const debug = debugWithName('component:Editable')

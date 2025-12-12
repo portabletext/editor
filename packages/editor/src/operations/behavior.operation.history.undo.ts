@@ -1,9 +1,9 @@
 import {Editor, Operation, Transforms} from 'slate'
+import {pluginUndoing} from '../editor/slate-plugin.undoing'
+import {pluginWithoutHistory} from '../editor/slate-plugin.without-history'
 import {debugWithName} from '../internal-utils/debug'
-import type {BehaviorOperationImplementation} from '../operations/behavior.operations'
-import {pluginUndoing} from './slate-plugin.undoing'
-import {pluginWithoutHistory} from './slate-plugin.without-history'
-import {transformOperation} from './transform-operation'
+import {transformOperation} from '../internal-utils/transform-operation'
+import type {BehaviorOperationImplementation} from './behavior.operations'
 
 const debug = debugWithName('behavior.operation.history.undo')
 

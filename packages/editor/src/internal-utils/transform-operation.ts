@@ -7,9 +7,9 @@ import {
   parsePatch,
 } from '@sanity/diff-match-patch'
 import type {Descendant, Operation} from 'slate'
-import {debugWithName} from '../internal-utils/debug'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {isKeyedSegment} from '../utils'
+import {debugWithName} from './debug'
 
 const debug = debugWithName('transformOperation')
 const debugVerbose = debug.enabled && false
