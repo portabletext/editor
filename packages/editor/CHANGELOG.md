@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.3.13
+
+### Patch Changes
+
+- [#2027](https://github.com/portabletext/editor/pull/2027) [`f61c9d2`](https://github.com/portabletext/editor/commit/f61c9d2f24bf8cb4cf313dfe762b192bd68bf11b) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update react monorepo to ^19.2.3
+
+- [#2013](https://github.com/portabletext/editor/pull/2013) [`23ed760`](https://github.com/portabletext/editor/commit/23ed76034c5b7ceada84f6dd5ad7193e5f611136) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove unused `KEY_TO_SLATE_ELEMENT` WeakMap
+
 ## 3.3.12
 
 ### Patch Changes
