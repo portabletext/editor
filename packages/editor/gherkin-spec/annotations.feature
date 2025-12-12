@@ -123,12 +123,20 @@ Feature: Annotations
       | after "o b" |
       | after "ba"  |
 
-  Scenario: Writing on top of annotation
+  Scenario Outline: Writing on top of annotation
     Given the text "foo bar baz"
     And a "comment" "c1" around "bar"
-    When "removed" is typed
-    Then the text is "foo removed baz"
-    And "foo removed baz" has no marks
+    When <selection>
+    And "removed" is typed
+    Then the text is <new text>
+    And "removed" has no marks
+
+    Examples:
+      | selection                   | new text             |
+      | "bar" is selected           | "foo removed baz"    |
+      | "bar" is selected backwards | "foo removed baz"    |
+      | "ar" is selected            | "foo ,b,removed baz" |
+      | "ar" is selected backwards  | "foo ,b,removed baz" |
 
   Scenario: Writing inside an annotation
     Given the text "foo baz"

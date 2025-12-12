@@ -56,15 +56,17 @@ Feature: Annotations Overlapping Decorators
     Given the text "foo bar baz"
     And a "link" "l1" around <annotated>
     And "strong" around <decorated>
-    When <selected> is selected
+    When <selection>
     And "removed" is typed
     Then the text is <new text>
     And "removed" has marks <marks>
 
     Examples:
-      | annotated     | decorated | selected | new text            | marks       |
-      | "bar"         | "bar"     | "bar"    | "foo ,removed, baz" | "strong"    |
-      | "foo bar baz" | "bar"     | "bar"    | "foo ,removed, baz" | "l1,strong" |
+      | annotated     | decorated | selection                   | new text            | marks       |
+      | "bar"         | "bar"     | "bar" is selected           | "foo ,removed, baz" | "strong"    |
+      | "bar"         | "bar"     | "bar" is selected backwards | "foo ,removed, baz" | "strong"    |
+      | "foo bar baz" | "bar"     | "bar" is selected           | "foo ,removed, baz" | "l1,strong" |
+      | "foo bar baz" | "bar"     | "bar" is selected backwards | "foo ,removed, baz" | "l1,strong" |
 
   Scenario: Splitting block before a decorated annotation
     Given the text "bar"
