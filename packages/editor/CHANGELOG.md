@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.3.14
+
+### Patch Changes
+
+- [#2028](https://github.com/portabletext/editor/pull/2028) [`1dde866`](https://github.com/portabletext/editor/commit/1dde8666e528f934c7f1a1c6fe3ed94e1927b306) Thanks [@christianhg](https://github.com/christianhg)! - fix: replace WeakMaps with direct editor properties
+
+- [#2030](https://github.com/portabletext/editor/pull/2030) [`61620f4`](https://github.com/portabletext/editor/commit/61620f483098c035167b54cdef6bcddbc1eacf4d) Thanks [@christianhg](https://github.com/christianhg)! - fix: refactor internal annotation behavior into a Behavior
+
 ## 3.3.13
 
 ### Patch Changes
