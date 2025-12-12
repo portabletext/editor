@@ -23,9 +23,6 @@ export default defineConfig({
       'ae-incompatible-release-tags': 'off',
     },
   },
-  rollup: {
-    optimizeLodash: true,
-  },
   tsconfig: 'tsconfig.dist.json',
   strictOptions: {
     noImplicitBrowsersList: 'off',
