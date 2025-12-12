@@ -41,14 +41,14 @@ import type {
 import type {HotkeyOptions} from '../types/options'
 import {isEmptyTextBlock} from '../utils'
 import {parseBlocks} from '../utils/parse-blocks'
-import {RenderElement} from './components/render.element'
-import {RenderLeaf} from './components/render.leaf'
-import {RenderText, type RenderTextProps} from './components/render.text'
 import {EditorActorContext} from './editor-actor-context'
-import {usePortableTextEditor} from './hooks/usePortableTextEditor'
 import {rangeDecorationsMachine} from './range-decorations-machine'
 import {RelayActorContext} from './relay-actor-context'
+import {RenderElement} from './render.element'
+import {RenderLeaf} from './render.leaf'
+import {RenderText, type RenderTextProps} from './render.text'
 import {createWithHotkeys} from './slate-plugin.hotkeys'
+import {usePortableTextEditor} from './usePortableTextEditor'
 import {validateSelectionMachine} from './validate-selection-machine'
 
 const debug = debugWithName('component:Editable')

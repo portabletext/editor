@@ -1,5 +1,5 @@
 import {useEffect} from 'react'
-import {usePortableTextEditor} from '../editor/hooks/usePortableTextEditor'
+import {usePortableTextEditor} from '../editor/usePortableTextEditor'
 import type {EditorChange} from '../types/editor'
 
 export function InternalChange$Plugin(props: {

@@ -1,7 +1,7 @@
 import {useContext, useEffect} from 'react'
-import {createCoreBlockElementBehaviorsConfig} from '../../behaviors/behavior.core.block-element'
-import type {EventPositionBlock} from '../../internal-utils/event-position'
-import {EditorActorContext} from '../editor-actor-context'
+import {createCoreBlockElementBehaviorsConfig} from '../behaviors/behavior.core.block-element'
+import type {EventPositionBlock} from '../internal-utils/event-position'
+import {EditorActorContext} from './editor-actor-context'
 
 export function useCoreBlockElementBehaviors({
   key,

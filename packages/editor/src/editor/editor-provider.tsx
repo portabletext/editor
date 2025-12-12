@@ -7,12 +7,12 @@ import {createInternalEditor} from './create-editor'
 import {EditorActorContext} from './editor-actor-context'
 import {EditorContext} from './editor-context'
 import {eventToChange} from './event-to-change'
-import {PortableTextEditorContext} from './hooks/usePortableTextEditor'
 import {
   PortableTextEditor,
   type PortableTextEditorProps,
 } from './PortableTextEditor'
 import {RelayActorContext} from './relay-actor-context'
+import {PortableTextEditorContext} from './usePortableTextEditor'
 
 /**
  * @public

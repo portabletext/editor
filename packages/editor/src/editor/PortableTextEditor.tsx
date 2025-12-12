@@ -29,11 +29,11 @@ import {createInternalEditor, type InternalEditor} from './create-editor'
 import {EditorActorContext} from './editor-actor-context'
 import type {EditorActor} from './editor-machine'
 import {eventToChange} from './event-to-change'
-import {PortableTextEditorContext} from './hooks/usePortableTextEditor'
 import type {MutationActor} from './mutation-machine'
 import {RelayActorContext} from './relay-actor-context'
 import type {RelayActor} from './relay-machine'
 import type {SyncActor} from './sync-machine'
+import {PortableTextEditorContext} from './usePortableTextEditor'
 
 const debug = debugWithName('component:PortableTextEditor')
 
