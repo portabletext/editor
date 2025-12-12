@@ -2,6 +2,11 @@ import {isTextBlock} from '@portabletext/schema'
 import {useSelector} from '@xstate/react'
 import {useContext, useMemo, useRef, type ReactElement} from 'react'
 import {useSlateStatic, type RenderLeafProps} from 'slate-react'
+import {
+  findMatchingRenderer,
+  useAllRenderers,
+  useRenderers,
+} from '../renderers/use-renderer'
 import {getFocusSpan} from '../selectors/selector.get-focus-span'
 import {isOverlappingSelection} from '../selectors/selector.is-overlapping-selection'
 import {isSelectionCollapsed} from '../selectors/selector.is-selection-collapsed'
@@ -104,6 +109,17 @@ export function RenderSpan(props: RenderSpanProps) {
     [block, props.leaf._key],
   )
 
+  // Get registered renderers
+  const registeredRenderers = useAllRenderers()
+  const spanRenderers = useRenderers('inline', 'span')
+
+  // Lazy snapshot getter - only compute when guards need it
+  const getSnapshot = () =>
+    getEditorSnapshot({
+      editorActorSnapshot: editorActor.getSnapshot(),
+      slateEditorInstance: slateEditor,
+    })
+
   const decoratorSchemaTypes = editorActor
     .getSnapshot()
     .context.schema.decorators.map((decorator) => decorator.name)
@@ -134,8 +150,35 @@ export function RenderSpan(props: RenderSpanProps) {
 
   /**
    * Support `renderDecorator` render function for each Decorator
+   * Registered renderers take priority
    */
   for (const mark of decorators) {
+    // Check for registered decorator renderer first (with guard evaluation)
+    const decoratorRenderers = registeredRenderers.filter(
+      (config) =>
+        config.renderer.type === 'decorator' && config.renderer.name === mark,
+    )
+    const decoratorMatch = findMatchingRenderer(
+      decoratorRenderers,
+      mark,
+      getSnapshot,
+    )
+
+    if (decoratorMatch) {
+      const currentChildren = children
+      const renderDefault = () => currentChildren
+      children = decoratorMatch.renderer.renderer.render(
+        {
+          node: mark,
+          children,
+          renderDefault,
+        },
+        decoratorMatch.guardResponse,
+      )
+      continue
+    }
+
+    // Fall back to renderDecorator prop
     const legacyDecoratorSchemaType = legacySchema.decorators.find(
       (dec) => dec.value === mark,
     )
@@ -160,8 +203,40 @@ export function RenderSpan(props: RenderSpanProps) {
 
   /**
    * Support `renderAnnotation` render function for each Annotation
+   * Registered renderers take priority
    */
   for (const annotationMarkDef of annotationMarkDefs) {
+    // Check for registered annotation renderer first (with guard evaluation)
+    const annotationRenderers = registeredRenderers.filter(
+      (config) =>
+        config.renderer.type === 'annotation' &&
+        config.renderer.name === annotationMarkDef._type,
+    )
+    const annotationMatch = findMatchingRenderer(
+      annotationRenderers,
+      annotationMarkDef,
+      getSnapshot,
+    )
+
+    if (annotationMatch) {
+      const currentChildren = children
+      const renderDefault = () => currentChildren
+      children = (
+        <span ref={spanRef}>
+          {annotationMatch.renderer.renderer.render(
+            {
+              node: annotationMarkDef,
+              children,
+              renderDefault,
+            },
+            annotationMatch.guardResponse,
+          )}
+        </span>
+      )
+      continue
+    }
+
+    // Fall back to renderAnnotation prop
     const legacyAnnotationSchemaType = legacySchema.annotations.find(
       (t) => t.name === annotationMarkDef._type,
     )
@@ -188,6 +263,46 @@ export function RenderSpan(props: RenderSpanProps) {
         children = <span ref={spanRef}>{children}</span>
       }
     }
+  }
+
+  /**
+   * Support registered span renderer (type: 'inline', name: 'span')
+   * This takes priority over the legacy renderChild prop
+   */
+  const spanNode = {
+    _key: props.leaf._key,
+    _type: 'span' as const,
+    text: props.leaf.text,
+    marks: props.leaf.marks ?? [],
+  }
+
+  // Find matching span renderer (first whose guard passes)
+  const spanMatch = findMatchingRenderer(spanRenderers, spanNode, getSnapshot)
+
+  if (spanMatch) {
+    const currentChildren = children
+    const renderDefault = () => (
+      <span {...props.attributes} ref={spanRef}>
+        {currentChildren}
+      </span>
+    )
+
+    const renderHidden = () => (
+      <span {...props.attributes} style={{display: 'none'}}>
+        {props.children}
+      </span>
+    )
+
+    return spanMatch.renderer.renderer.render(
+      {
+        attributes: props.attributes,
+        children: currentChildren,
+        node: spanNode,
+        renderDefault,
+        renderHidden,
+      },
+      spanMatch.guardResponse,
+    )
   }
 
   /**

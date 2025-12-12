@@ -22,6 +22,7 @@ import type {Converter} from '../converters/converter.types'
 import {debugWithName} from '../internal-utils/debug'
 import type {EventPosition} from '../internal-utils/event-position'
 import {sortByPriority} from '../priority/priority.sort'
+import {getRendererKey, type RendererConfig} from '../renderers/renderer.types'
 import type {NamespaceEvent, OmitFromUnion} from '../type-utils'
 import type {
   EditorSelection,
@@ -81,6 +82,14 @@ export type InternalEditorEvent =
   | {
       type: 'remove behavior'
       behaviorConfig: BehaviorConfig
+    }
+  | {
+      type: 'add renderer'
+      rendererConfig: RendererConfig
+    }
+  | {
+      type: 'remove renderer'
+      rendererConfig: RendererConfig
     }
   | {
       type: 'blur'
@@ -185,6 +194,7 @@ export const editorMachine = setup({
       keyGenerator: () => string
       pendingEvents: Array<InternalPatchEvent | MutationEvent>
       pendingIncomingPatchesEvents: Array<PatchesEvent>
+      renderers: Map<string, RendererConfig[]>
       schema: EditorSchema
       initialReadOnly: boolean
       selection: EditorSelection
@@ -223,6 +233,44 @@ export const editorMachine = setup({
         context.behaviors.delete(event.behaviorConfig)
 
         return new Set([...context.behaviors])
+      },
+    }),
+    'add renderer to context': assign({
+      renderers: ({context, event}) => {
+        assertEvent(event, 'add renderer')
+
+        const key = getRendererKey(
+          event.rendererConfig.renderer.type,
+          event.rendererConfig.renderer.name,
+        )
+
+        const newRenderers = new Map(context.renderers)
+        const existing = newRenderers.get(key) ?? []
+        // Add to the array - renderers are evaluated in order, first match wins
+        newRenderers.set(key, [...existing, event.rendererConfig])
+        return newRenderers
+      },
+    }),
+    'remove renderer from context': assign({
+      renderers: ({context, event}) => {
+        assertEvent(event, 'remove renderer')
+
+        const key = getRendererKey(
+          event.rendererConfig.renderer.type,
+          event.rendererConfig.renderer.name,
+        )
+
+        const newRenderers = new Map(context.renderers)
+        const existing = newRenderers.get(key)
+        if (existing) {
+          const filtered = existing.filter((r) => r !== event.rendererConfig)
+          if (filtered.length === 0) {
+            newRenderers.delete(key)
+          } else {
+            newRenderers.set(key, filtered)
+          }
+        }
+        return newRenderers
       },
     }),
     'add slate editor to context': assign({
@@ -388,6 +436,7 @@ export const editorMachine = setup({
     keyGenerator: input.keyGenerator,
     pendingEvents: [],
     pendingIncomingPatchesEvents: [],
+    renderers: new Map<string, RendererConfig[]>(),
     schema: input.schema,
     selection: null,
     initialReadOnly: input.readOnly ?? false,
@@ -396,6 +445,8 @@ export const editorMachine = setup({
   on: {
     'add behavior': {actions: 'add behavior to context'},
     'remove behavior': {actions: 'remove behavior from context'},
+    'add renderer': {actions: 'add renderer to context'},
+    'remove renderer': {actions: 'remove renderer from context'},
     'add slate editor': {actions: 'add slate editor to context'},
     'update selection': {
       actions: [
