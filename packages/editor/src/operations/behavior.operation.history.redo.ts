@@ -1,21 +1,21 @@
-import {Editor, Operation, Transforms} from 'slate'
+import {Editor, Transforms} from 'slate'
+import {pluginRedoing} from '../editor/slate-plugin.redoing'
+import {pluginWithoutHistory} from '../editor/slate-plugin.without-history'
 import {debugWithName} from '../internal-utils/debug'
+import {transformOperation} from '../internal-utils/transform-operation'
 import type {BehaviorOperationImplementation} from '../operations/behavior.operations'
-import {pluginUndoing} from './slate-plugin.undoing'
-import {pluginWithoutHistory} from './slate-plugin.without-history'
-import {transformOperation} from './transform-operation'
 
-const debug = debugWithName('behavior.operation.history.undo')
+const debug = debugWithName('behavior.operation.history.redo')
 
-export const historyUndoOperationImplementation: BehaviorOperationImplementation<
-  'history.undo'
+export const historyRedoOperationImplementation: BehaviorOperationImplementation<
+  'history.redo'
 > = ({operation}) => {
   const editor = operation.editor
-  const {undos} = editor.history
+  const {redos} = editor.history
 
-  if (undos.length > 0) {
-    const step = undos[undos.length - 1]
-    debug('Undoing', step)
+  if (redos.length > 0) {
+    const step = redos[redos.length - 1]
+    debug('Redoing', step)
     if (step.operations.length > 0) {
       const otherPatches = editor.remotePatches.filter(
         (item) => item.time >= step.timestamp,
@@ -32,32 +32,28 @@ export const historyUndoOperationImplementation: BehaviorOperationImplementation
           ),
         )
       })
-      const reversedOperations = transformedOperations
-        .map(Operation.inverse)
-        .reverse()
-
       try {
         Editor.withoutNormalizing(editor, () => {
-          pluginUndoing(editor, () => {
+          pluginRedoing(editor, () => {
             pluginWithoutHistory(editor, () => {
-              reversedOperations.forEach((op) => {
+              transformedOperations.forEach((op) => {
                 editor.apply(op)
               })
             })
           })
         })
       } catch (err) {
-        debug('Could not perform undo step', err)
+        debug('Could not perform redo step', err)
         editor.remotePatches.splice(0, editor.remotePatches.length)
         Transforms.deselect(editor)
         editor.history = {undos: [], redos: []}
         editor.withHistory = true
-        editor.isUndoing = false
+        editor.isRedoing = false
         editor.onChange()
         return
       }
-      editor.history.redos.push(step)
-      editor.history.undos.pop()
+      editor.history.undos.push(step)
+      editor.history.redos.pop()
     }
   }
 }
