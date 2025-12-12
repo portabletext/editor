@@ -4,7 +4,6 @@ import type {
   SyntheticBehaviorEvent,
 } from '../behaviors/behavior.types.event'
 import type {EditorContext} from '../editor/editor-snapshot'
-import {removeDecoratorOperationImplementation} from '../editor/plugins/createWithPortableTextMarkModel'
 import {historyRedoOperationImplementation} from '../history/behavior.operation.history.redo'
 import {historyUndoOperationImplementation} from '../history/behavior.operation.history.undo'
 import type {OmitFromUnion, PickFromUnion} from '../type-utils'
@@ -16,6 +15,7 @@ import {blockUnsetOperationImplementation} from './behavior.operation.block.unse
 import {childSetOperationImplementation} from './behavior.operation.child.set'
 import {childUnsetOperationImplementation} from './behavior.operation.child.unset'
 import {decoratorAddOperationImplementation} from './behavior.operation.decorator.add'
+import {decoratorRemoveOperationImplementation} from './behavior.operation.decorator.remove'
 import {deleteOperationImplementation} from './behavior.operation.delete'
 import {insertBlockOperationImplementation} from './behavior.operation.insert.block'
 import {insertChildOperationImplementation} from './behavior.operation.insert.child'
@@ -60,7 +60,7 @@ const behaviorOperationImplementations: BehaviorOperationImplementations = {
   'child.set': childSetOperationImplementation,
   'child.unset': childUnsetOperationImplementation,
   'decorator.add': decoratorAddOperationImplementation,
-  'decorator.remove': removeDecoratorOperationImplementation,
+  'decorator.remove': decoratorRemoveOperationImplementation,
   'delete': deleteOperationImplementation,
   'history.redo': historyRedoOperationImplementation,
   'history.undo': historyUndoOperationImplementation,
