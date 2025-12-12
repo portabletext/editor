@@ -17,11 +17,7 @@ const debug = debugWithName('plugin:withSchemaTypes')
  * This plugin makes sure that schema types are recognized properly by Slate as blocks, voids, inlines
  *
  */
-export function createWithSchemaTypes({
-  editorActor,
-}: {
-  editorActor: EditorActor
-}) {
+export function createWithSchema({editorActor}: {editorActor: EditorActor}) {
   return function withSchemaTypes(
     editor: PortableTextSlateEditor,
   ): PortableTextSlateEditor {

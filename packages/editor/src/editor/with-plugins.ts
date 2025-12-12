@@ -1,13 +1,13 @@
 import type {BaseOperation, Editor, Node, NodeEntry} from 'slate'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {createWithEventListeners} from './create-with-event-listeners'
-import {createWithObjectKeys} from './createWithObjectKeys'
-import {createWithPatches} from './createWithPatches'
-import {createWithPortableTextMarkModel} from './createWithPortableTextMarkModel'
-import {createWithSchemaTypes} from './createWithSchemaTypes'
 import type {EditorActor} from './editor-machine'
 import type {RelayActor} from './relay-machine'
 import {pluginHistory} from './slate-plugin.history'
+import {createWithNormalize} from './slate-plugin.normalize'
+import {createWithObjectKeys} from './slate-plugin.object-keys'
+import {createWithPatches} from './slate-plugin.patches'
+import {createWithSchema} from './slate-plugin.schema'
 import {pluginUpdateSelection} from './slate-plugin.update-selection'
 import {pluginUpdateValue} from './slate-plugin.update-value'
 
@@ -30,7 +30,7 @@ export const withPlugins = <T extends Editor>(
   const e = editor as T & PortableTextSlateEditor
   const {editorActor, relayActor} = options
   const withObjectKeys = createWithObjectKeys(editorActor)
-  const withSchemaTypes = createWithSchemaTypes({
+  const withSchema = createWithSchema({
     editorActor,
   })
   const withPatches = createWithPatches({
@@ -42,15 +42,15 @@ export const withPlugins = <T extends Editor>(
     editorActor,
     subscriptions: options.subscriptions,
   })
-  const withPortableTextMarkModel = createWithPortableTextMarkModel(editorActor)
+  const withNormalize = createWithNormalize(editorActor)
 
   const withEventListeners = createWithEventListeners(editorActor)
 
   // Ordering is important here, selection dealing last, data manipulation in the middle and core model stuff first.
   return withEventListeners(
-    withSchemaTypes(
+    withSchema(
       withObjectKeys(
-        withPortableTextMarkModel(
+        withNormalize(
           withUndoRedo(
             withPatches(
               pluginUpdateValue(
