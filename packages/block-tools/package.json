@@ -52,12 +52,12 @@
   "dependencies": {
     "@portabletext/sanity-bridge": "workspace:^",
     "@portabletext/schema": "workspace:^",
-    "@sanity/types": "^4.20.3"
+    "@sanity/types": "^4.21.1"
   },
   "devDependencies": {
     "@portabletext/test": "workspace:^",
     "@sanity/pkg-utils": "^10.1.2",
-    "@sanity/schema": "^4.20.3",
+    "@sanity/schema": "^4.21.1",
     "@types/jsdom": "^27.0.0",
     "@vercel/stega": "1.0.0",
     "@vitest/coverage-v8": "^4.0.14",
