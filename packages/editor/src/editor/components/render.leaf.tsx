@@ -10,7 +10,7 @@ import type {
   RenderPlaceholderFunction,
 } from '../../types/editor'
 import {EditorActorContext} from '../editor-actor-context'
-import {RenderSpan} from './render-span'
+import {RenderSpan} from './render.span'
 
 const PLACEHOLDER_STYLE: CSSProperties = {
   position: 'absolute',

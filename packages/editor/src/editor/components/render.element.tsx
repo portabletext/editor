@@ -10,9 +10,9 @@ import type {
   RenderStyleFunction,
 } from '../../types/editor'
 import {EditorActorContext} from '../editor-actor-context'
-import {RenderBlockObject} from './render-block-object'
-import {RenderInlineObject} from './render-inline-object'
-import {RenderTextBlock} from './render-text-block'
+import {RenderBlockObject} from './render.block-object'
+import {RenderInlineObject} from './render.inline-object'
+import {RenderTextBlock} from './render.text-block'
 
 export function RenderElement(props: {
   attributes: RenderElementProps['attributes']

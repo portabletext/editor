@@ -14,7 +14,7 @@ import type {
   RenderChildFunction,
 } from '../../types/editor'
 import type {EditorSchema} from '../editor-schema'
-import {RenderDefaultInlineObject} from './render-default-object'
+import {RenderDefaultInlineObject} from './render.default-object'
 
 export function RenderInlineObject(props: {
   attributes: RenderElementProps['attributes']

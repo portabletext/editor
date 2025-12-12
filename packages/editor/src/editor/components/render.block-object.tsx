@@ -13,8 +13,8 @@ import type {
   RenderBlockFunction,
 } from '../../types/editor'
 import type {EditorSchema} from '../editor-schema'
-import {DropIndicator} from './drop-indicator'
-import {RenderDefaultBlockObject} from './render-default-object'
+import {RenderDefaultBlockObject} from './render.default-object'
+import {DropIndicator} from './render.drop-indicator'
 import {useCoreBlockElementBehaviors} from './use-core-block-element-behaviors'
 
 export function RenderBlockObject(props: {
