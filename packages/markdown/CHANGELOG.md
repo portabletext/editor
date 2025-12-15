@@ -1,5 +1,15 @@
 # @portabletext/markdown
 
+## 1.0.8
+
+### Patch Changes
+
+- [#2035](https://github.com/portabletext/editor/pull/2035) [`ccedf45`](https://github.com/portabletext/editor/commit/ccedf450c0d8ca03b9eb7599ab137c79736ac9a4) Thanks [@christianhg](https://github.com/christianhg)! - fix: handle block elements inside list items
+
+  Block elements (code blocks, images, HRs, blockquotes) in list items
+  now correctly split output and preserve surrounding content. Also
+  fixes code block fallback when not defined in schema.
+
 ## 1.0.7
 
 ### Patch Changes

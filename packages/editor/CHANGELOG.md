@@ -1,5 +1,24 @@
 # Changelog
 
+## 3.3.14
+
+### Patch Changes
+
+- [#2028](https://github.com/portabletext/editor/pull/2028) [`1dde866`](https://github.com/portabletext/editor/commit/1dde8666e528f934c7f1a1c6fe3ed94e1927b306) Thanks [@christianhg](https://github.com/christianhg)! - fix: replace WeakMaps with direct editor properties
+
+- [#2034](https://github.com/portabletext/editor/pull/2034) [`2f411d3`](https://github.com/portabletext/editor/commit/2f411d309dadc379e0cc08c6a7f9eaae2ceba950) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove redundant Core `insert.break` Behavior
+
+- [#2034](https://github.com/portabletext/editor/pull/2034) [`80d9a45`](https://github.com/portabletext/editor/commit/80d9a45e0c7ee5549dae92162113c888df57e01c) Thanks [@christianhg](https://github.com/christianhg)! - fix: avoid passing selection to `delete` when selection is implicit
+
+- [#2033](https://github.com/portabletext/editor/pull/2033) [`6c358bd`](https://github.com/portabletext/editor/commit/6c358bde844b2cd47cf4eac44de53eb984a787a4) Thanks [@christianhg](https://github.com/christianhg)! - fix: preserve formatting during text replacement in Safari
+
+  Fixed an issue where text formatting (bold, italic, etc.) was lost when Safari performed text replacements such as autocorrect or spelling fixes.
+
+- [#2030](https://github.com/portabletext/editor/pull/2030) [`61620f4`](https://github.com/portabletext/editor/commit/61620f483098c035167b54cdef6bcddbc1eacf4d) Thanks [@christianhg](https://github.com/christianhg)! - fix: refactor internal annotation behavior into a Behavior
+
+- Updated dependencies [[`ccedf45`](https://github.com/portabletext/editor/commit/ccedf450c0d8ca03b9eb7599ab137c79736ac9a4)]:
+  - @portabletext/markdown@1.0.8
+
 ## 3.3.13
 
 ### Patch Changes
