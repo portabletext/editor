@@ -310,6 +310,21 @@ export function markdownToPortableText(
     }
 
     if (!currentBlock) {
+      const style =
+        currentBlockquoteStyle ??
+        consolidatedOptions.block.normal({
+          context: {schema: consolidatedOptions.schema},
+        })
+
+      if (!style) {
+        console.warn('No default style found, using "normal"')
+        startBlock('normal')
+      } else {
+        startBlock(style)
+      }
+    }
+
+    if (!currentBlock) {
       throw new Error('Expected current block')
     }
 
@@ -369,8 +384,17 @@ export function markdownToPortableText(
     switch (token.type) {
       // Paragraphs
       case 'paragraph_open': {
-        // Skip creating a new block if we're inside a list item (the list item is the block)
+        // If we're in a list item but have no current block (e.g., after a code block),
+        // we need to create a new list item block
         if (inListItem) {
+          if (!currentBlock) {
+            const listType = currentListStack.at(-1)
+
+            if (listType) {
+              ensureListBlock(listType)
+            }
+          }
+
           break
         }
 
@@ -438,6 +462,9 @@ export function markdownToPortableText(
 
       // Blockquote
       case 'blockquote_open': {
+        // Flush any current block before entering blockquote
+        flushBlock()
+
         // Set the blockquote style for paragraphs inside the blockquote
         const style =
           consolidatedOptions.block.blockquote({
@@ -451,6 +478,8 @@ export function markdownToPortableText(
         break
       }
       case 'blockquote_close': {
+        // Flush any blockquote content before exiting
+        flushBlock()
         currentBlockquoteStyle = null
         break
       }
@@ -547,32 +576,20 @@ export function markdownToPortableText(
         })
 
         if (!codeObject) {
-          // For fallback to text block, check if it's multi-line
-          const hasMultipleLines = code.includes('\n')
+          // Code block not in schema, fall back to text block
+          const style = consolidatedOptions.block.normal({
+            context: {schema: consolidatedOptions.schema},
+          })
 
-          if (hasMultipleLines) {
-            // Multi-line code without definition should still be a code object
-            portableText.push({
-              _type: 'code',
-              _key: consolidatedOptions.keyGenerator(),
-              code,
-            })
+          if (!style) {
+            console.warn('No default style found, using "normal"')
+            startBlock('normal')
           } else {
-            // Single-line code becomes a text block
-            const style = consolidatedOptions.block.normal({
-              context: {schema: consolidatedOptions.schema},
-            })
-
-            if (!style) {
-              console.warn('No default style found, using "normal"')
-              startBlock('normal')
-            } else {
-              startBlock(style)
-            }
-
-            addSpan(code)
+            startBlock(style)
           }
 
+          addSpan(code)
+          flushBlock()
           break
         }
 
@@ -675,31 +692,20 @@ export function markdownToPortableText(
         })
 
         if (!codeObject) {
-          // For fallback to text block, check if it's multi-line
-          const hasMultipleLines = code.includes('\n')
+          // Code block not in schema, fall back to text block
+          const style = consolidatedOptions.block.normal({
+            context: {schema: consolidatedOptions.schema},
+          })
 
-          if (hasMultipleLines) {
-            // Multi-line code without definition should still be a code object
-            portableText.push({
-              _type: 'code',
-              _key: consolidatedOptions.keyGenerator(),
-              code,
-            })
+          if (!style) {
+            console.warn('No default style found, using "normal"')
+            startBlock('normal')
           } else {
-            // Single-line code becomes a text block
-            const style = consolidatedOptions.block.normal({
-              context: {schema: consolidatedOptions.schema},
-            })
-
-            if (!style) {
-              console.warn('No default style found, using "normal"')
-              startBlock('normal')
-            } else {
-              startBlock(style)
-            }
-
-            addSpan(code)
+            startBlock(style)
           }
+
+          addSpan(code)
+          flushBlock()
         } else {
           portableText.push(codeObject)
         }
@@ -912,14 +918,63 @@ export function markdownToPortableText(
                 )
               }
             } else {
-              // Discard the empty paragraph block that was created by paragraph_open
-              currentBlock = null
-              currentMarkDefs = []
+              // If the current block has content, flush it before adding the block image
+              // Otherwise, discard the empty block that was created by paragraph_open
+              const hasContent =
+                currentBlock &&
+                'children' in currentBlock &&
+                (currentBlock as PortableTextTextBlock).children.length > 0
+
+              if (hasContent) {
+                flushBlock()
+              } else {
+                currentBlock = null
+                currentMarkDefs = []
+              }
               portableText.push(blockImageObject)
             }
             break
           }
 
+          // Block image not supported, try inline image as fallback
+          const inlineImageObject = consolidatedOptions.types.image({
+            context: {
+              schema: consolidatedOptions.schema,
+              keyGenerator: consolidatedOptions.keyGenerator,
+            },
+            value: {src, alt, title},
+            isInline: true,
+          })
+
+          if (inlineImageObject) {
+            // Ensure we have a block to add the inline image to
+            if (!currentBlock) {
+              if (inListItem) {
+                const listType = currentListStack.at(-1)
+
+                if (listType) {
+                  ensureListBlock(listType)
+                }
+              } else {
+                const style = consolidatedOptions.block.normal({
+                  context: {schema: consolidatedOptions.schema},
+                })
+
+                if (style) {
+                  startBlock(style)
+                }
+              }
+            }
+
+            if (currentBlock && 'children' in currentBlock) {
+              ;(currentBlock as PortableTextTextBlock).children.push(
+                inlineImageObject as PortableTextObject,
+              )
+            }
+            break
+          }
+
+          // Neither block nor inline image supported, fall back to text
           addSpan(`![${alt}](${src})`)
           break
         }

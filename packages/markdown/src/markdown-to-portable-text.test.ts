@@ -1341,6 +1341,1058 @@ describe(markdownToPortableText.name, () => {
         ])
       })
     })
+
+    describe('with code block', () => {
+      const markdown = [
+        '1. foo',
+        '',
+        '       const foo = "bar"',
+        '',
+        '    bar',
+      ].join('\n')
+
+      test('default definition', () => {
+        const keyGenerator = createTestKeyGenerator()
+        expect(markdownToPortableText(markdown, {keyGenerator})).toEqual([
+          {
+            _key: 'k0',
+            _type: 'block',
+            children: [
+              {
+                _key: 'k1',
+                _type: 'span',
+                text: 'foo',
+                marks: [],
+              },
+            ],
+            markDefs: [],
+            style: 'normal',
+            listItem: 'number',
+            level: 1,
+          },
+          {
+            _key: 'k2',
+            _type: 'code',
+            code: 'const foo = "bar"',
+          },
+          {
+            _key: 'k3',
+            _type: 'block',
+            children: [{_type: 'span', _key: 'k4', text: 'bar', marks: []}],
+            markDefs: [],
+            style: 'normal',
+            listItem: 'number',
+            level: 1,
+          },
+        ])
+      })
+
+      test('no code block definition', () => {
+        const keyGenerator = createTestKeyGenerator()
+        expect(
+          markdownToPortableText(markdown, {
+            keyGenerator,
+            schema: compileSchema(defineSchema({lists: [{name: 'number'}]})),
+          }),
+        ).toEqual([
+          {
+            _key: 'k0',
+            _type: 'block',
+            children: [
+              {
+                _key: 'k1',
+                _type: 'span',
+                text: 'foo',
+                marks: [],
+              },
+            ],
+            markDefs: [],
+            style: 'normal',
+            listItem: 'number',
+            level: 1,
+          },
+          {
+            _key: 'k2',
+            _type: 'block',
+            children: [
+              {
+                _key: 'k3',
+                _type: 'span',
+                text: 'const foo = "bar"',
+                marks: [],
+              },
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _key: 'k4',
+            _type: 'block',
+            children: [{_type: 'span', _key: 'k5', text: 'bar', marks: []}],
+            markDefs: [],
+            style: 'normal',
+            listItem: 'number',
+            level: 1,
+          },
+        ])
+      })
+    })
+
+    describe('with multiline code block', () => {
+      const markdown = [
+        '3. Dump everything in the pot and follow',
+        '   this algorithm:',
+        '',
+        '       find wooden spoon',
+        '       uncover pot',
+        '       stir',
+        '       cover pot',
+        '       balance wooden spoon precariously on pot handle',
+        '       wait 10 minutes',
+        '       goto first step (or shut off burner when done)',
+        '',
+        '   Do not bump wooden spoon or it will fall.',
+      ].join('\n')
+
+      test('default definition', () => {
+        const keyGenerator = createTestKeyGenerator()
+        expect(markdownToPortableText(markdown, {keyGenerator})).toEqual([
+          {
+            _key: 'k0',
+            _type: 'block',
+            children: [
+              {
+                _key: 'k1',
+                _type: 'span',
+                text: 'Dump everything in the pot and follow\nthis algorithm:',
+                marks: [],
+              },
+            ],
+            markDefs: [],
+            style: 'normal',
+            listItem: 'number',
+            level: 1,
+          },
+          {
+            _key: 'k2',
+            _type: 'code',
+            code: 'find wooden spoon\nuncover pot\nstir\ncover pot\nbalance wooden spoon precariously on pot handle\nwait 10 minutes\ngoto first step (or shut off burner when done)',
+          },
+          {
+            _key: 'k3',
+            _type: 'block',
+            children: [
+              {
+                _key: 'k4',
+                _type: 'span',
+                text: 'Do not bump wooden spoon or it will fall.',
+                marks: [],
+              },
+            ],
+            markDefs: [],
+            style: 'normal',
+            listItem: 'number',
+            level: 1,
+          },
+        ])
+      })
+
+      test('no code block definition', () => {
+        const keyGenerator = createTestKeyGenerator()
+        expect(
+          markdownToPortableText(markdown, {
+            keyGenerator,
+            schema: compileSchema(defineSchema({lists: [{name: 'number'}]})),
+          }),
+        ).toEqual([
+          {
+            _key: 'k0',
+            _type: 'block',
+            children: [
+              {
+                _key: 'k1',
+                _type: 'span',
+                text: 'Dump everything in the pot and follow\nthis algorithm:',
+                marks: [],
+              },
+            ],
+            markDefs: [],
+            style: 'normal',
+            listItem: 'number',
+            level: 1,
+          },
+          {
+            _key: 'k2',
+            _type: 'block',
+            children: [
+              {
+                _key: 'k3',
+                _type: 'span',
+                text: 'find wooden spoon\nuncover pot\nstir\ncover pot\nbalance wooden spoon precariously on pot handle\nwait 10 minutes\ngoto first step (or shut off burner when done)',
+                marks: [],
+              },
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _key: 'k4',
+            _type: 'block',
+            children: [
+              {
+                _key: 'k5',
+                _type: 'span',
+                text: 'Do not bump wooden spoon or it will fall.',
+                marks: [],
+              },
+            ],
+            markDefs: [],
+            style: 'normal',
+            listItem: 'number',
+            level: 1,
+          },
+        ])
+      })
+    })
+
+    describe('with fenced code block', () => {
+      const markdown = [
+        '1. foo',
+        '',
+        '    ```js',
+        '    const foo = "bar"',
+        '    ```',
+        '',
+        '    bar',
+      ].join('\n')
+
+      test('default definition', () => {
+        const keyGenerator = createTestKeyGenerator()
+        expect(markdownToPortableText(markdown, {keyGenerator})).toEqual([
+          {
+            _key: 'k0',
+            _type: 'block',
+            children: [{_key: 'k1', _type: 'span', text: 'foo', marks: []}],
+            markDefs: [],
+            style: 'normal',
+            listItem: 'number',
+            level: 1,
+          },
+          {
+            _key: 'k2',
+            _type: 'code',
+            code: 'const foo = "bar"',
+            language: 'js',
+          },
+          {
+            _key: 'k3',
+            _type: 'block',
+            children: [{_type: 'span', _key: 'k4', text: 'bar', marks: []}],
+            markDefs: [],
+            style: 'normal',
+            listItem: 'number',
+            level: 1,
+          },
+        ])
+      })
+
+      test('no code block definition', () => {
+        const keyGenerator = createTestKeyGenerator()
+        expect(
+          markdownToPortableText(markdown, {
+            keyGenerator,
+            schema: compileSchema(defineSchema({lists: [{name: 'number'}]})),
+          }),
+        ).toEqual([
+          {
+            _key: 'k0',
+            _type: 'block',
+            children: [{_key: 'k1', _type: 'span', text: 'foo', marks: []}],
+            markDefs: [],
+            style: 'normal',
+            listItem: 'number',
+            level: 1,
+          },
+          {
+            _key: 'k2',
+            _type: 'block',
+            children: [
+              {_key: 'k3', _type: 'span', text: 'const foo = "bar"', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _key: 'k4',
+            _type: 'block',
+            children: [{_type: 'span', _key: 'k5', text: 'bar', marks: []}],
+            markDefs: [],
+            style: 'normal',
+            listItem: 'number',
+            level: 1,
+          },
+        ])
+      })
+    })
+
+    describe('with multiline fenced code block', () => {
+      const markdown = [
+        '1. foo',
+        '',
+        '    ```js',
+        '    line1',
+        '    line2',
+        '    line3',
+        '    ```',
+        '',
+        '    bar',
+      ].join('\n')
+
+      test('default definition', () => {
+        const keyGenerator = createTestKeyGenerator()
+        expect(markdownToPortableText(markdown, {keyGenerator})).toEqual([
+          {
+            _key: 'k0',
+            _type: 'block',
+            children: [{_key: 'k1', _type: 'span', text: 'foo', marks: []}],
+            markDefs: [],
+            style: 'normal',
+            listItem: 'number',
+            level: 1,
+          },
+          {
+            _key: 'k2',
+            _type: 'code',
+            code: 'line1\nline2\nline3',
+            language: 'js',
+          },
+          {
+            _key: 'k3',
+            _type: 'block',
+            children: [{_type: 'span', _key: 'k4', text: 'bar', marks: []}],
+            markDefs: [],
+            style: 'normal',
+            listItem: 'number',
+            level: 1,
+          },
+        ])
+      })
+
+      test('no code block definition', () => {
+        const keyGenerator = createTestKeyGenerator()
+        expect(
+          markdownToPortableText(markdown, {
+            keyGenerator,
+            schema: compileSchema(defineSchema({lists: [{name: 'number'}]})),
+          }),
+        ).toEqual([
+          {
+            _key: 'k0',
+            _type: 'block',
+            children: [{_key: 'k1', _type: 'span', text: 'foo', marks: []}],
+            markDefs: [],
+            style: 'normal',
+            listItem: 'number',
+            level: 1,
+          },
+          {
+            _key: 'k2',
+            _type: 'block',
+            children: [
+              {
+                _key: 'k3',
+                _type: 'span',
+                text: 'line1\nline2\nline3',
+                marks: [],
+              },
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _key: 'k4',
+            _type: 'block',
+            children: [{_type: 'span', _key: 'k5', text: 'bar', marks: []}],
+            markDefs: [],
+            style: 'normal',
+            listItem: 'number',
+            level: 1,
+          },
+        ])
+      })
+    })
+
+    describe('with block image', () => {
+      const markdown = [
+        '1. foo',
+        '',
+        '    ![alt](https://example.com/image.png)',
+        '',
+        '    bar',
+      ].join('\n')
+
+      test('default definition', () => {
+        const keyGenerator = createTestKeyGenerator()
+        expect(markdownToPortableText(markdown, {keyGenerator})).toEqual([
+          {
+            _key: 'k0',
+            _type: 'block',
+            children: [{_key: 'k1', _type: 'span', text: 'foo', marks: []}],
+            markDefs: [],
+            style: 'normal',
+            listItem: 'number',
+            level: 1,
+          },
+          {
+            _key: 'k2',
+            _type: 'image',
+            src: 'https://example.com/image.png',
+            alt: 'alt',
+          },
+          {
+            _key: 'k3',
+            _type: 'block',
+            children: [{_type: 'span', _key: 'k4', text: 'bar', marks: []}],
+            markDefs: [],
+            style: 'normal',
+            listItem: 'number',
+            level: 1,
+          },
+        ])
+      })
+
+      test('only inline image definition', () => {
+        const keyGenerator = createTestKeyGenerator()
+        expect(
+          markdownToPortableText(markdown, {
+            schema: compileSchema(
+              defineSchema({
+                inlineObjects: [
+                  {
+                    name: 'image',
+                    fields: [
+                      {name: 'src', type: 'string'},
+                      {name: 'alt', type: 'string'},
+                    ],
+                  },
+                ],
+                lists: [{name: 'number'}],
+              }),
+            ),
+            keyGenerator,
+          }),
+        ).toEqual([
+          {
+            _key: 'k0',
+            _type: 'block',
+            children: [
+              {_key: 'k1', _type: 'span', text: 'foo', marks: []},
+              {
+                _key: 'k2',
+                _type: 'image',
+                src: 'https://example.com/image.png',
+                alt: 'alt',
+              },
+              {_key: 'k3', _type: 'span', text: 'bar', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+            listItem: 'number',
+            level: 1,
+          },
+        ])
+      })
+
+      test('only inline image definition and no list definition', () => {
+        const keyGenerator = createTestKeyGenerator()
+        expect(
+          markdownToPortableText(markdown, {
+            schema: compileSchema(
+              defineSchema({
+                inlineObjects: [
+                  {
+                    name: 'image',
+                    fields: [
+                      {name: 'src', type: 'string'},
+                      {name: 'alt', type: 'string'},
+                    ],
+                  },
+                ],
+              }),
+            ),
+            keyGenerator,
+          }),
+        ).toEqual([
+          {
+            _key: 'k0',
+            _type: 'block',
+            children: [
+              {_key: 'k1', _type: 'span', text: 'foo', marks: []},
+              {
+                _key: 'k2',
+                _type: 'image',
+                src: 'https://example.com/image.png',
+                alt: 'alt',
+              },
+              {_key: 'k3', _type: 'span', text: 'bar', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ])
+      })
+
+      test('no image definition', () => {
+        const keyGenerator = createTestKeyGenerator()
+        expect(
+          markdownToPortableText(markdown, {
+            schema: compileSchema(
+              defineSchema({
+                lists: [{name: 'number'}],
+              }),
+            ),
+            keyGenerator,
+          }),
+        ).toEqual([
+          {
+            _key: 'k0',
+            _type: 'block',
+            children: [
+              {
+                _key: 'k1',
+                _type: 'span',
+                text: 'foo![alt](https://example.com/image.png)bar',
+                marks: [],
+              },
+            ],
+            markDefs: [],
+            style: 'normal',
+            listItem: 'number',
+            level: 1,
+          },
+        ])
+      })
+    })
+
+    describe('with horizontal rule', () => {
+      const markdown = ['1. foo', '', '    ---', '', '    bar'].join('\n')
+
+      test('default definition', () => {
+        const keyGenerator = createTestKeyGenerator()
+        expect(markdownToPortableText(markdown, {keyGenerator})).toEqual([
+          {
+            _key: 'k0',
+            _type: 'block',
+            children: [{_key: 'k1', _type: 'span', text: 'foo', marks: []}],
+            markDefs: [],
+            style: 'normal',
+            listItem: 'number',
+            level: 1,
+          },
+          {
+            _key: 'k2',
+            _type: 'horizontal-rule',
+          },
+          {
+            _key: 'k3',
+            _type: 'block',
+            children: [{_type: 'span', _key: 'k4', text: 'bar', marks: []}],
+            markDefs: [],
+            style: 'normal',
+            listItem: 'number',
+            level: 1,
+          },
+        ])
+      })
+
+      test('no horizontal rule definition', () => {
+        const keyGenerator = createTestKeyGenerator()
+        expect(
+          markdownToPortableText(markdown, {
+            keyGenerator,
+            schema: compileSchema(
+              defineSchema({
+                lists: [{name: 'number'}],
+              }),
+            ),
+          }),
+        ).toEqual([
+          {
+            _key: 'k0',
+            _type: 'block',
+            children: [{_key: 'k1', _type: 'span', text: 'foo', marks: []}],
+            markDefs: [],
+            style: 'normal',
+            listItem: 'number',
+            level: 1,
+          },
+          {
+            _key: 'k2',
+            _type: 'block',
+            children: [{_type: 'span', _key: 'k3', text: '---', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _key: 'k4',
+            _type: 'block',
+            children: [{_type: 'span', _key: 'k5', text: 'bar', marks: []}],
+            markDefs: [],
+            style: 'normal',
+            listItem: 'number',
+            level: 1,
+          },
+        ])
+      })
+
+      test('no horizontal rule definition and no list definition', () => {
+        const keyGenerator = createTestKeyGenerator()
+        expect(
+          markdownToPortableText(markdown, {
+            keyGenerator,
+            schema: compileSchema(defineSchema({})),
+          }),
+        ).toEqual([
+          {
+            _key: 'k0',
+            _type: 'block',
+            children: [{_key: 'k1', _type: 'span', text: 'foo', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _key: 'k2',
+            _type: 'block',
+            children: [{_type: 'span', _key: 'k3', text: '---', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _key: 'k4',
+            _type: 'block',
+            children: [{_type: 'span', _key: 'k5', text: 'bar', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ])
+      })
+    })
+
+    test('with multiple block elements', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const markdown = [
+        '1. foo',
+        '',
+        '    ```js',
+        '    const x = 1',
+        '    ```',
+        '',
+        '    ![alt](https://example.com/image.png)',
+        '',
+        '    bar',
+      ].join('\n')
+
+      expect(markdownToPortableText(markdown, {keyGenerator})).toEqual([
+        {
+          _key: 'k0',
+          _type: 'block',
+          children: [{_key: 'k1', _type: 'span', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+          listItem: 'number',
+          level: 1,
+        },
+        {
+          _key: 'k2',
+          _type: 'code',
+          code: 'const x = 1',
+          language: 'js',
+        },
+        {
+          _key: 'k4',
+          _type: 'image',
+          src: 'https://example.com/image.png',
+          alt: 'alt',
+        },
+        {
+          _key: 'k5',
+          _type: 'block',
+          children: [{_type: 'span', _key: 'k6', text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+          listItem: 'number',
+          level: 1,
+        },
+      ])
+    })
+
+    test('nested list with block element', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const markdown = [
+        '1. parent',
+        '    - nested',
+        '',
+        '        ```js',
+        '        const x = 1',
+        '        ```',
+        '',
+        '        after code',
+      ].join('\n')
+
+      expect(markdownToPortableText(markdown, {keyGenerator})).toEqual([
+        {
+          _key: 'k0',
+          _type: 'block',
+          children: [{_key: 'k1', _type: 'span', text: 'parent', marks: []}],
+          markDefs: [],
+          style: 'normal',
+          listItem: 'number',
+          level: 1,
+        },
+        {
+          _key: 'k2',
+          _type: 'block',
+          children: [{_key: 'k3', _type: 'span', text: 'nested', marks: []}],
+          markDefs: [],
+          style: 'normal',
+          listItem: 'bullet',
+          level: 2,
+        },
+        {
+          _key: 'k4',
+          _type: 'code',
+          code: 'const x = 1',
+          language: 'js',
+        },
+        {
+          _key: 'k5',
+          _type: 'block',
+          children: [
+            {_type: 'span', _key: 'k6', text: 'after code', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+          listItem: 'bullet',
+          level: 2,
+        },
+      ])
+    })
+
+    describe('with html block', () => {
+      const markdown = [
+        '1. foo',
+        '',
+        '    <div>html content</div>',
+        '',
+        '    bar',
+      ].join('\n')
+
+      test('default definition', () => {
+        const keyGenerator = createTestKeyGenerator()
+
+        expect(markdownToPortableText(markdown, {keyGenerator})).toEqual([
+          {
+            _key: 'k0',
+            _type: 'block',
+            children: [{_key: 'k1', _type: 'span', text: 'foo', marks: []}],
+            markDefs: [],
+            style: 'normal',
+            listItem: 'number',
+            level: 1,
+          },
+          {
+            _key: 'k2',
+            _type: 'html',
+            html: '<div>html content</div>',
+          },
+          {
+            _key: 'k3',
+            _type: 'block',
+            children: [{_type: 'span', _key: 'k4', text: 'bar', marks: []}],
+            markDefs: [],
+            style: 'normal',
+            listItem: 'number',
+            level: 1,
+          },
+        ])
+      })
+
+      test('no html block definition', () => {
+        const keyGenerator = createTestKeyGenerator()
+        expect(
+          markdownToPortableText(markdown, {
+            keyGenerator,
+            schema: compileSchema(
+              defineSchema({
+                lists: [{name: 'number'}],
+              }),
+            ),
+          }),
+        ).toEqual([
+          {
+            _key: 'k0',
+            _type: 'block',
+            children: [
+              {
+                _key: 'k1',
+                _type: 'span',
+                text: 'foo',
+                marks: [],
+              },
+            ],
+            markDefs: [],
+            style: 'normal',
+            listItem: 'number',
+            level: 1,
+          },
+          {
+            _key: 'k2',
+            _type: 'block',
+            children: [
+              {
+                _type: 'span',
+                _key: 'k3',
+                text: '<div>html content</div>',
+                marks: [],
+              },
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _key: 'k4',
+            _type: 'block',
+            children: [{_type: 'span', _key: 'k5', text: 'bar', marks: []}],
+            markDefs: [],
+            style: 'normal',
+            listItem: 'number',
+            level: 1,
+          },
+        ])
+      })
+    })
+
+    test('block element at start of list item', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const markdown = [
+        '1. x',
+        '',
+        '    ```js',
+        '    const foo = "bar"',
+        '    ```',
+        '',
+        '    after',
+        '',
+        '2. second',
+      ].join('\n')
+
+      expect(markdownToPortableText(markdown, {keyGenerator})).toEqual([
+        {
+          _key: 'k0',
+          _type: 'block',
+          children: [{_key: 'k1', _type: 'span', text: 'x', marks: []}],
+          markDefs: [],
+          style: 'normal',
+          listItem: 'number',
+          level: 1,
+        },
+        {
+          _key: 'k2',
+          _type: 'code',
+          code: 'const foo = "bar"',
+          language: 'js',
+        },
+        {
+          _key: 'k3',
+          _type: 'block',
+          children: [{_type: 'span', _key: 'k4', text: 'after', marks: []}],
+          markDefs: [],
+          style: 'normal',
+          listItem: 'number',
+          level: 1,
+        },
+        {
+          _key: 'k5',
+          _type: 'block',
+          children: [{_type: 'span', _key: 'k6', text: 'second', marks: []}],
+          markDefs: [],
+          style: 'normal',
+          listItem: 'number',
+          level: 1,
+        },
+      ])
+    })
+
+    test('block element at end of list item', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const markdown = [
+        '1. before',
+        '',
+        '    ```js',
+        '    const foo = "bar"',
+        '    ```',
+      ].join('\n')
+
+      expect(markdownToPortableText(markdown, {keyGenerator})).toEqual([
+        {
+          _key: 'k0',
+          _type: 'block',
+          children: [{_key: 'k1', _type: 'span', text: 'before', marks: []}],
+          markDefs: [],
+          style: 'normal',
+          listItem: 'number',
+          level: 1,
+        },
+        {
+          _key: 'k2',
+          _type: 'code',
+          code: 'const foo = "bar"',
+          language: 'js',
+        },
+      ])
+    })
+
+    test('with blockquote', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const markdown = ['1. foo', '', '    > quoted text', '', '    bar'].join(
+        '\n',
+      )
+
+      expect(markdownToPortableText(markdown, {keyGenerator})).toEqual([
+        {
+          _key: 'k0',
+          _type: 'block',
+          children: [{_key: 'k1', _type: 'span', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+          listItem: 'number',
+          level: 1,
+        },
+        {
+          _key: 'k2',
+          _type: 'block',
+          children: [
+            {_type: 'span', _key: 'k3', text: 'quoted text', marks: []},
+          ],
+          markDefs: [],
+          style: 'blockquote',
+          listItem: 'number',
+          level: 1,
+        },
+        {
+          _key: 'k4',
+          _type: 'block',
+          children: [{_type: 'span', _key: 'k5', text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+          listItem: 'number',
+          level: 1,
+        },
+      ])
+    })
+
+    test('blockquote followed by code block', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const markdown = [
+        '1. foo',
+        '',
+        '    > quoted',
+        '',
+        '    ```js',
+        '    const x = 1',
+        '    ```',
+        '',
+        '    bar',
+      ].join('\n')
+
+      expect(markdownToPortableText(markdown, {keyGenerator})).toEqual([
+        {
+          _key: 'k0',
+          _type: 'block',
+          children: [{_key: 'k1', _type: 'span', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+          listItem: 'number',
+          level: 1,
+        },
+        {
+          _key: 'k2',
+          _type: 'block',
+          children: [{_type: 'span', _key: 'k3', text: 'quoted', marks: []}],
+          markDefs: [],
+          style: 'blockquote',
+          listItem: 'number',
+          level: 1,
+        },
+        {
+          _key: 'k4',
+          _type: 'code',
+          code: 'const x = 1',
+          language: 'js',
+        },
+        {
+          _key: 'k5',
+          _type: 'block',
+          children: [{_type: 'span', _key: 'k6', text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+          listItem: 'number',
+          level: 1,
+        },
+      ])
+    })
+
+    test('consecutive blockquotes', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const markdown = [
+        '1. foo',
+        '',
+        '    > quote 1',
+        '',
+        '    > quote 2',
+        '',
+        '    bar',
+      ].join('\n')
+
+      expect(markdownToPortableText(markdown, {keyGenerator})).toEqual([
+        {
+          _key: 'k0',
+          _type: 'block',
+          children: [{_key: 'k1', _type: 'span', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+          listItem: 'number',
+          level: 1,
+        },
+        {
+          _key: 'k2',
+          _type: 'block',
+          children: [{_type: 'span', _key: 'k3', text: 'quote 1', marks: []}],
+          markDefs: [],
+          style: 'blockquote',
+          listItem: 'number',
+          level: 1,
+        },
+        {
+          _key: 'k4',
+          _type: 'block',
+          children: [{_type: 'span', _key: 'k5', text: 'quote 2', marks: []}],
+          markDefs: [],
+          style: 'blockquote',
+          listItem: 'number',
+          level: 1,
+        },
+        {
+          _key: 'k6',
+          _type: 'block',
+          children: [{_type: 'span', _key: 'k7', text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+          listItem: 'number',
+          level: 1,
+        },
+      ])
+    })
   })
 
   /*********************
@@ -1918,9 +2970,18 @@ describe(markdownToPortableText.name, () => {
           }),
         ).toEqual([
           {
-            _type: 'code',
             _key: 'k0',
-            code: `const foo = 'bar'\nconst bar = 'baz'`,
+            _type: 'block',
+            children: [
+              {
+                _key: 'k1',
+                _type: 'span',
+                text: `const foo = 'bar'\nconst bar = 'baz'`,
+                marks: [],
+              },
+            ],
+            markDefs: [],
+            style: 'normal',
           },
         ])
       })
