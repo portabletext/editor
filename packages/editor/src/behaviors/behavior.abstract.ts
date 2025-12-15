@@ -5,6 +5,7 @@ import {abstractAnnotationBehaviors} from './behavior.abstract.annotation'
 import {abstractDecoratorBehaviors} from './behavior.abstract.decorator'
 import {abstractDeleteBehaviors} from './behavior.abstract.delete'
 import {abstractDeserializeBehaviors} from './behavior.abstract.deserialize'
+import {abstractInputBehaviors} from './behavior.abstract.input'
 import {abstractInsertBehaviors} from './behavior.abstract.insert'
 import {abstractKeyboardBehaviors} from './behavior.abstract.keyboard'
 import {abstractListItemBehaviors} from './behavior.abstract.list-item'
@@ -113,21 +114,11 @@ export const abstractBehaviors = [
       ],
     ],
   }),
-  defineBehavior({
-    on: 'input.*',
-    actions: [
-      ({event}) => [
-        raise({
-          type: 'deserialize',
-          originEvent: event,
-        }),
-      ],
-    ],
-  }),
   ...abstractAnnotationBehaviors,
   ...abstractDecoratorBehaviors,
   ...abstractDeleteBehaviors,
   ...abstractDeserializeBehaviors,
+  ...abstractInputBehaviors,
   ...abstractInsertBehaviors,
   ...abstractKeyboardBehaviors,
   ...abstractListItemBehaviors,
