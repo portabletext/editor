@@ -35,7 +35,6 @@ export const coreBehaviorsConfig = [
   coreListBehaviors.inheritListProperties,
   coreInsertBreakBehaviors.breakingAtTheEndOfTextBlock,
   coreInsertBreakBehaviors.breakingAtTheStartOfTextBlock,
-  coreInsertBreakBehaviors.breakingEntireDocument,
   coreInsertBreakBehaviors.breakingEntireBlocks,
   coreInsertBreakBehaviors.breakingInlineObject,
 ].map((behavior) => ({

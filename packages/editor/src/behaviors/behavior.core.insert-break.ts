@@ -1,8 +1,6 @@
-import {getFirstBlock} from '../selectors/selector.get-first-block'
 import {getFocusInlineObject} from '../selectors/selector.get-focus-inline-object'
 import {getFocusSpan} from '../selectors/selector.get-focus-span'
 import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
-import {getLastBlock} from '../selectors/selector.get-last-block'
 import {getSelectedBlocks} from '../selectors/selector.get-selected-blocks'
 import {getSelectionEndBlock} from '../selectors/selector.get-selection-end-block'
 import {getSelectionStartBlock} from '../selectors/selector.get-selection-start-block'
@@ -126,56 +124,6 @@ const breakingAtTheStartOfTextBlock = defineBehavior({
   ],
 })
 
-const breakingEntireDocument = defineBehavior({
-  on: 'insert.break',
-  guard: ({snapshot}) => {
-    if (!snapshot.context.selection) {
-      return false
-    }
-
-    if (!isSelectionExpanded(snapshot)) {
-      return false
-    }
-
-    const firstBlock = getFirstBlock(snapshot)
-    const lastBlock = getLastBlock(snapshot)
-
-    if (!firstBlock || !lastBlock) {
-      return false
-    }
-
-    const firstBlockStartPoint = getBlockStartPoint({
-      context: snapshot.context,
-      block: firstBlock,
-    })
-    const selectionStartPoint = getSelectionStartPoint(
-      snapshot.context.selection,
-    )
-    const lastBlockEndPoint = getBlockEndPoint({
-      context: snapshot.context,
-      block: lastBlock,
-    })
-    const selectionEndPoint = getSelectionEndPoint(snapshot.context.selection)
-
-    if (
-      isEqualSelectionPoints(firstBlockStartPoint, selectionStartPoint) &&
-      isEqualSelectionPoints(lastBlockEndPoint, selectionEndPoint)
-    ) {
-      return {selection: snapshot.context.selection}
-    }
-
-    return false
-  },
-  actions: [
-    (_, {selection}) => [
-      raise({
-        type: 'delete',
-        at: selection,
-      }),
-    ],
-  ],
-})
-
 const breakingEntireBlocks = defineBehavior({
   on: 'insert.break',
   guard: ({snapshot}) => {
@@ -260,7 +208,6 @@ const breakingInlineObject = defineBehavior({
 export const coreInsertBreakBehaviors = {
   breakingAtTheEndOfTextBlock,
   breakingAtTheStartOfTextBlock,
-  breakingEntireDocument,
   breakingEntireBlocks,
   breakingInlineObject,
 }
