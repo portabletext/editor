@@ -14,7 +14,7 @@ import {abstractSelectBehaviors} from './behavior.abstract.select'
 import {abstractSerializeBehaviors} from './behavior.abstract.serialize'
 import {abstractSplitBehaviors} from './behavior.abstract.split'
 import {abstractStyleBehaviors} from './behavior.abstract.style'
-import {raise} from './behavior.types.action'
+import {forward, raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
 export const abstractBehaviors = [
@@ -51,22 +51,15 @@ export const abstractBehaviors = [
   }),
   defineBehavior({
     on: 'clipboard.cut',
-    guard: ({snapshot}) => {
-      return snapshot.context.selection
-        ? {
-            selection: snapshot.context.selection,
-          }
-        : false
-    },
+    guard: ({snapshot}) => snapshot.context.selection,
     actions: [
-      ({event}, {selection}) => [
+      ({event}) => [
         raise({
           type: 'serialize',
           originEvent: event,
         }),
         raise({
           type: 'delete',
-          at: selection,
         }),
       ],
     ],
@@ -85,21 +78,13 @@ export const abstractBehaviors = [
 
   defineBehavior({
     on: 'clipboard.paste',
-    guard: ({snapshot}) => {
-      return snapshot.context.selection && isSelectionExpanded(snapshot)
-        ? {selection: snapshot.context.selection}
-        : false
-    },
+    guard: ({snapshot}) => isSelectionExpanded(snapshot),
     actions: [
-      ({event}, {selection}) => [
+      ({event}) => [
         raise({
           type: 'delete',
-          at: selection,
         }),
-        raise({
-          type: 'deserialize',
-          originEvent: event,
-        }),
+        forward(event),
       ],
     ],
   }),
