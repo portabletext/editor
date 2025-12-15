@@ -25,6 +25,10 @@ export default defineConfig({
         __dirname,
         '../../packages/keyboard-shortcuts/src',
       ),
+      '@portabletext/markdown': path.resolve(
+        __dirname,
+        '../../packages/markdown/src',
+      ),
       '@portabletext/patches': path.resolve(
         __dirname,
         '../../packages/patches/src',
