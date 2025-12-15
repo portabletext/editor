@@ -84,6 +84,33 @@ export const abstractDeserializeBehaviors = [
       ],
     ],
   }),
+
+  defineBehavior({
+    on: 'deserialize.data',
+    guard: ({event}) => {
+      if (event.mimeType !== 'text/html') {
+        return false
+      }
+
+      const plainText =
+        event.originEvent.originEvent.dataTransfer.getData('text/plain')
+
+      if (event.data !== plainText) {
+        return false
+      }
+
+      // When text/html equals text/plain, the content isn't actually HTML
+      // markup. It's potentially browsers (like Safari) sending plain text in
+      // both fields.
+      return {
+        type: 'deserialize.data' as const,
+        mimeType: 'text/plain' as const,
+        data: plainText,
+        originEvent: event.originEvent,
+      }
+    },
+    actions: [(_, deserializeDataEvent) => [raise(deserializeDataEvent)]],
+  }),
   defineBehavior({
     on: 'deserialize.data',
     guard: ({snapshot, event}) => {
@@ -125,7 +152,7 @@ export const abstractDeserializeBehaviors = [
       if (
         focusTextBlock &&
         event.mimeType === 'text/plain' &&
-        event.originEvent.type === 'clipboard.paste'
+        event.originEvent.type !== 'drag.drop'
       ) {
         const activeDecorators = getActiveDecorators(snapshot)
         const activeAnnotations = getActiveAnnotations(snapshot)
