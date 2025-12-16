@@ -1,5 +1,12 @@
 # Changelog
 
+## 3.0.36
+
+### Patch Changes
+
+- Updated dependencies [[`c70001b`](https://github.com/portabletext/editor/commit/c70001ba2db6183e2ed43afcc6632a78d6f009b4)]:
+  - @portabletext/editor@3.3.16
+
 ## 3.0.35
 
 ### Patch Changes

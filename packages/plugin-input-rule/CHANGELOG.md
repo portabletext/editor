@@ -1,5 +1,14 @@
 # @portabletext/plugin-input-rule
 
+## 1.0.36
+
+### Patch Changes
+
+- [#2041](https://github.com/portabletext/editor/pull/2041) [`c70001b`](https://github.com/portabletext/editor/commit/c70001ba2db6183e2ed43afcc6632a78d6f009b4) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update dependency xstate to ^5.25.0
+
+- Updated dependencies [[`c70001b`](https://github.com/portabletext/editor/commit/c70001ba2db6183e2ed43afcc6632a78d6f009b4)]:
+  - @portabletext/editor@3.3.16
+
 ## 1.0.35
 
 ### Patch Changes
