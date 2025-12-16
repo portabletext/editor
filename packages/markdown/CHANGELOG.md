@@ -1,5 +1,29 @@
 # @portabletext/markdown
 
+## 1.1.0
+
+### Minor Changes
+
+- [#2037](https://github.com/portabletext/editor/pull/2037) [`9292b9a`](https://github.com/portabletext/editor/commit/9292b9ad69d63e43f91600e16b2ed84012449e89) Thanks [@christianhg](https://github.com/christianhg)! - feat: enable typographic transformations
+
+  When converting Markdown to Portable Text, typographic transformations are now applied:
+  - Straight quotes (`"` and `'`) become curly quotes (`"`, `"`, `'`, `'`)
+  - `---` becomes an em-dash (`—`)
+  - `--` becomes an en-dash (`–`)
+  - `...` becomes an ellipsis (`…`)
+
+  **Before:**
+
+  ```md
+  He said "it's all in chapters 12--14"... That's right---all of it.
+  ```
+
+  Would produce text: `He said "it's all in chapters 12--14"... That's right---all of it.`
+
+  **After:**
+
+  Produces text: `He said "it's all in chapters 12–14"… That's right—all of it.`
+
 ## 1.0.8
 
 ### Patch Changes
