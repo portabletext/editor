@@ -20,7 +20,7 @@ Visit [https://portabletext.org](https://portabletext.org) for more information,
 
 You can use **bold text**, _italic text_, `inline code`, and even ~~strikethrough~~ text. The parser handles **_nested formatting_** gracefully, including **_bold and italic_** combined.
 
-Here's some `code with **bold inside**` and **text with `code inside`** to test edge cases.
+Here’s some `code with **bold inside**` and **text with `code inside`** to test edge cases.
 
 ### Links and Images
 
@@ -28,7 +28,7 @@ Reference-style links work too! Check out this [example link](https://portablete
 
 ![A beautiful diagram](https://example.com/diagram.png "Markdown to PT Flow")
 
-Here's an inline image in text: ![icon](https://example.com/icon.png) followed by more text.
+Here’s an inline image in text: ![icon](https://example.com/icon.png) followed by more text.
 
 ### Code Blocks
 
@@ -94,7 +94,7 @@ Nested blockquotes are supported:
 
 ### Tables
 
-Here's a comparison of different content formats:
+Here’s a comparison of different content formats:
 
 | Format | Structured | Portable | Query-able |
 | --- | --- | --- | --- |
@@ -148,7 +148,7 @@ You can also have **bold with `code`** and _italic with `code`_ and even `code w
 
 ### Links with Formatting
 
-Here's a [**bold link**](https://example.com) and an [_italic link_](https://example.com) and even a [`code link`](https://example.com).
+Here’s a [**bold link**](https://example.com) and an [_italic link_](https://example.com) and even a [`code link`](https://example.com).
 
 ### Complex List Items
 
