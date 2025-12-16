@@ -1,5 +1,17 @@
 # @portabletext/plugin-typography
 
+## 5.0.0
+
+### Major Changes
+
+- [#2043](https://github.com/portabletext/editor/pull/2043) [`6af9559`](https://github.com/portabletext/editor/commit/6af9559d273b85113d9eba92ca85d6322a581764) Thanks [@stipsan](https://github.com/stipsan)! - Require React 19.2 or later
+
+### Patch Changes
+
+- Updated dependencies [[`bfd5fad`](https://github.com/portabletext/editor/commit/bfd5fad25679bfc553c7c45779940d227a177813), [`6af9559`](https://github.com/portabletext/editor/commit/6af9559d273b85113d9eba92ca85d6322a581764), [`6af9559`](https://github.com/portabletext/editor/commit/6af9559d273b85113d9eba92ca85d6322a581764)]:
+  - @portabletext/editor@4.0.0
+  - @portabletext/plugin-input-rule@2.0.0
+
 ## 4.0.36
 
 ### Patch Changes

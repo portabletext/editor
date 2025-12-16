@@ -1,5 +1,17 @@
 # Changelog
 
+## 5.0.0
+
+### Major Changes
+
+- [#2043](https://github.com/portabletext/editor/pull/2043) [`6af9559`](https://github.com/portabletext/editor/commit/6af9559d273b85113d9eba92ca85d6322a581764) Thanks [@stipsan](https://github.com/stipsan)! - Require v5 of sanity studio dependencies
+
+### Patch Changes
+
+- Updated dependencies [[`6af9559`](https://github.com/portabletext/editor/commit/6af9559d273b85113d9eba92ca85d6322a581764), [`6af9559`](https://github.com/portabletext/editor/commit/6af9559d273b85113d9eba92ca85d6322a581764)]:
+  - @portabletext/schema@2.1.1
+  - @portabletext/sanity-bridge@2.0.0
+
 ## 4.1.11
 
 ### Patch Changes
