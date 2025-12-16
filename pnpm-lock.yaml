@@ -640,9 +640,6 @@ importers:
       '@xstate/react':
         specifier: ^6.0.0
         version: 6.0.0(@types/react@19.2.7)(react@19.2.3)(xstate@5.25.0)
-      react-compiler-runtime:
-        specifier: ^1.0.0
-        version: 1.0.0(react@19.2.3)
       remeda:
         specifier: ^2.32.0
         version: 2.32.0
@@ -692,11 +689,8 @@ importers:
       '@xstate/react':
         specifier: ^6.0.0
         version: 6.0.0(@types/react@19.2.7)(react@19.2.3)(xstate@5.25.0)
-      react-compiler-runtime:
-        specifier: ^1.0.0
-        version: 1.0.0(react@19.2.3)
       xstate:
-        specifier: ^5.25.0
+        specifier: ^5.24.0
         version: 5.25.0
     devDependencies:
       '@portabletext/editor':
@@ -706,7 +700,7 @@ importers:
         specifier: workspace:*
         version: link:../schema
       '@sanity/pkg-utils':
-        specifier: ^10.1.2
+        specifier: ^10.2.1
         version: 10.2.1(@types/babel__core@7.20.5)(@types/node@20.19.25)(babel-plugin-react-compiler@1.0.0)(debug@4.4.3)(typescript@5.9.3)
       '@sanity/tsconfig':
         specifier: ^2.0.0
@@ -756,11 +750,8 @@ importers:
       '@xstate/react':
         specifier: ^6.0.0
         version: 6.0.0(@types/react@19.2.7)(react@19.2.3)(xstate@5.25.0)
-      react-compiler-runtime:
-        specifier: ^1.0.0
-        version: 1.0.0(react@19.2.3)
       xstate:
-        specifier: ^5.25.0
+        specifier: ^5.24.0
         version: 5.25.0
     devDependencies:
       '@portabletext/editor':
@@ -770,7 +761,7 @@ importers:
         specifier: workspace:*
         version: link:../schema
       '@sanity/pkg-utils':
-        specifier: ^10.1.2
+        specifier: ^10.2.1
         version: 10.2.1(@types/babel__core@7.20.5)(@types/node@20.19.25)(babel-plugin-react-compiler@1.0.0)(debug@4.4.3)(typescript@5.9.3)
       '@sanity/tsconfig':
         specifier: ^2.0.0
@@ -823,9 +814,6 @@ importers:
       '@portabletext/plugin-input-rule':
         specifier: workspace:^
         version: link:../plugin-input-rule
-      react-compiler-runtime:
-        specifier: ^1.0.0
-        version: 1.0.0(react@19.2.3)
     devDependencies:
       '@portabletext/editor':
         specifier: workspace:*
@@ -871,10 +859,6 @@ importers:
         version: 4.0.14(@types/node@20.19.25)(@vitest/browser-playwright@4.0.14)(jiti@2.6.1)(jsdom@27.2.0)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.2)
 
   packages/plugin-one-line:
-    dependencies:
-      react-compiler-runtime:
-        specifier: ^1.0.0
-        version: 1.0.0(react@19.2.3)
     devDependencies:
       '@portabletext/editor':
         specifier: workspace:*
@@ -964,9 +948,6 @@ importers:
       '@portabletext/plugin-input-rule':
         specifier: workspace:^
         version: link:../plugin-input-rule
-      react-compiler-runtime:
-        specifier: ^1.0.0
-        version: 1.0.0(react@19.2.3)
     devDependencies:
       '@portabletext/editor':
         specifier: workspace:*
@@ -975,7 +956,7 @@ importers:
         specifier: workspace:^
         version: link:../schema
       '@sanity/pkg-utils':
-        specifier: ^10.1.2
+        specifier: ^10.2.1
         version: 10.2.1(@types/babel__core@7.20.5)(@types/node@20.19.25)(babel-plugin-react-compiler@1.0.0)(debug@4.4.3)(typescript@5.9.3)
       '@sanity/tsconfig':
         specifier: ^2.0.0
@@ -1117,18 +1098,15 @@ importers:
       '@xstate/react':
         specifier: ^6.0.0
         version: 6.0.0(@types/react@19.2.7)(react@19.2.3)(xstate@5.25.0)
-      react-compiler-runtime:
-        specifier: ^1.0.0
-        version: 1.0.0(react@19.2.3)
       xstate:
-        specifier: ^5.25.0
+        specifier: ^5.24.0
         version: 5.25.0
     devDependencies:
       '@portabletext/editor':
         specifier: workspace:*
         version: link:../editor
       '@sanity/pkg-utils':
-        specifier: ^10.1.2
+        specifier: ^10.2.1
         version: 10.2.1(@types/babel__core@7.20.5)(@types/node@20.19.25)(babel-plugin-react-compiler@1.0.0)(debug@4.4.3)(typescript@5.9.3)
       '@sanity/tsconfig':
         specifier: ^2.0.0
@@ -6647,11 +6625,6 @@ packages:
     peerDependencies:
       react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0-rc.1
       react-dom: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0-rc.1
-
-  react-compiler-runtime@1.0.0:
-    resolution: {integrity: sha512-rRfjYv66HlG8896yPUDONgKzG5BxZD1nV9U6rkm+7VCuvQc903C4MjcoZR4zPw53IKSOX9wMQVpA1IAbRtzQ7w==}
-    peerDependencies:
-      react: ^17.0.0 || ^18.0.0 || ^19.0.0 || ^0.0.0-experimental
 
   react-compiler-runtime@19.1.0-rc.2:
     resolution: {integrity: sha512-852AwyIsbWJ5o1LkQVAZsVK3iLjMxOfKZuxqeGd/RfD+j1GqHb6j3DSHLtpu4HhFbQHsP2DzxjJyKR6luv4D8w==}
@@ -14705,10 +14678,6 @@ snapshots:
       '@react-types/shared': 3.32.1(react@19.2.3)
       react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)
-
-  react-compiler-runtime@1.0.0(react@19.2.3):
-    dependencies:
-      react: 19.2.3
 
   react-compiler-runtime@19.1.0-rc.2(react@19.2.3):
     dependencies:

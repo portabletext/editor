@@ -44,9 +44,6 @@
     "lint:fix": "biome lint --write .",
     "prepublishOnly": "turbo run build"
   },
-  "dependencies": {
-    "react-compiler-runtime": "^1.0.0"
-  },
   "devDependencies": {
     "@portabletext/editor": "workspace:^",
     "@sanity/tsconfig": "^2.0.0",
@@ -60,9 +57,15 @@
   },
   "peerDependencies": {
     "@portabletext/editor": "workspace:^",
-    "react": "^18.3 || ^19"
+    "react": "^19.2"
   },
   "engines": {
     "node": ">=20.19 <22 || >=22.12"
+  },
+  "publishConfig": {
+    "exports": {
+      ".": "./dist/index.js",
+      "./package.json": "./package.json"
+    }
   }
 }
