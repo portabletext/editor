@@ -1,5 +1,19 @@
 # Changelog
 
+## 5.0.0
+
+### Major Changes
+
+- [#2043](https://github.com/portabletext/editor/pull/2043) [`6af9559`](https://github.com/portabletext/editor/commit/6af9559d273b85113d9eba92ca85d6322a581764) Thanks [@stipsan](https://github.com/stipsan)! - Require React 19.2 or later
+
+### Patch Changes
+
+- [#2045](https://github.com/portabletext/editor/pull/2045) [`bfd5fad`](https://github.com/portabletext/editor/commit/bfd5fad25679bfc553c7c45779940d227a177813) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update dependency react to ^19.2.3
+
+- Updated dependencies [[`bfd5fad`](https://github.com/portabletext/editor/commit/bfd5fad25679bfc553c7c45779940d227a177813), [`6af9559`](https://github.com/portabletext/editor/commit/6af9559d273b85113d9eba92ca85d6322a581764), [`6af9559`](https://github.com/portabletext/editor/commit/6af9559d273b85113d9eba92ca85d6322a581764), [`6af9559`](https://github.com/portabletext/editor/commit/6af9559d273b85113d9eba92ca85d6322a581764)]:
+  - @portabletext/editor@4.0.0
+  - @portabletext/keyboard-shortcuts@2.1.2
+
 ## 4.0.36
 
 ### Patch Changes

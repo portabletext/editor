@@ -1,5 +1,25 @@
 # Changelog
 
+## 4.0.0
+
+### Major Changes
+
+- [#2043](https://github.com/portabletext/editor/pull/2043) [`6af9559`](https://github.com/portabletext/editor/commit/6af9559d273b85113d9eba92ca85d6322a581764) Thanks [@stipsan](https://github.com/stipsan)! - Require React 19.2 or later
+
+- [#2043](https://github.com/portabletext/editor/pull/2043) [`6af9559`](https://github.com/portabletext/editor/commit/6af9559d273b85113d9eba92ca85d6322a581764) Thanks [@stipsan](https://github.com/stipsan)! - Require v5 of sanity studio dependencies
+
+### Patch Changes
+
+- [#2045](https://github.com/portabletext/editor/pull/2045) [`bfd5fad`](https://github.com/portabletext/editor/commit/bfd5fad25679bfc553c7c45779940d227a177813) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update dependency react to ^19.2.3
+
+- Updated dependencies [[`6af9559`](https://github.com/portabletext/editor/commit/6af9559d273b85113d9eba92ca85d6322a581764), [`6af9559`](https://github.com/portabletext/editor/commit/6af9559d273b85113d9eba92ca85d6322a581764)]:
+  - @portabletext/keyboard-shortcuts@2.1.2
+  - @portabletext/markdown@1.1.1
+  - @portabletext/patches@2.0.3
+  - @portabletext/schema@2.1.1
+  - @portabletext/sanity-bridge@2.0.0
+  - @portabletext/block-tools@5.0.0
+
 ## 3.3.16
 
 ### Patch Changes

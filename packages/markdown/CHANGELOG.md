@@ -1,5 +1,14 @@
 # @portabletext/markdown
 
+## 1.1.1
+
+### Patch Changes
+
+- [#2043](https://github.com/portabletext/editor/pull/2043) [`6af9559`](https://github.com/portabletext/editor/commit/6af9559d273b85113d9eba92ca85d6322a581764) Thanks [@stipsan](https://github.com/stipsan)! - Implement `publishConfig.exports`
+
+- Updated dependencies [[`6af9559`](https://github.com/portabletext/editor/commit/6af9559d273b85113d9eba92ca85d6322a581764)]:
+  - @portabletext/schema@2.1.1
+
 ## 1.1.0
 
 ### Minor Changes
