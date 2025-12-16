@@ -55,13 +55,12 @@
     "@portabletext/keyboard-shortcuts": "workspace:^",
     "@portabletext/plugin-input-rule": "workspace:^",
     "@xstate/react": "^6.0.0",
-    "react-compiler-runtime": "^1.0.0",
     "xstate": "^5.25.0"
   },
   "devDependencies": {
     "@portabletext/editor": "workspace:*",
     "@portabletext/schema": "workspace:*",
-    "@sanity/pkg-utils": "^10.1.2",
+    "@sanity/pkg-utils": "^10.2.1",
     "@sanity/tsconfig": "^2.0.0",
     "@types/react": "^19.2.7",
     "@vitejs/plugin-react": "^5.1.1",
@@ -79,12 +78,15 @@
   },
   "peerDependencies": {
     "@portabletext/editor": "workspace:^3.3.16",
-    "react": "^18.3 || ^19"
+    "react": "^19.2"
   },
   "engines": {
     "node": ">=20.19 <22 || >=22.12"
   },
   "publishConfig": {
-    "access": "public"
+    "exports": {
+      ".": "./dist/index.js",
+      "./package.json": "./package.json"
+    }
   }
 }

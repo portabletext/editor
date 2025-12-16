@@ -45,11 +45,11 @@
   },
   "dependencies": {
     "@portabletext/schema": "workspace:^",
-    "@sanity/schema": "^4.22.0",
-    "@sanity/types": "^4.22.0"
+    "@sanity/schema": "^5.0.0",
+    "@sanity/types": "^5.0.0"
   },
   "devDependencies": {
-    "@sanity/pkg-utils": "^10.1.2",
+    "@sanity/pkg-utils": "^10.2.1",
     "@sanity/tsconfig": "^2.0.0",
     "typescript": "catalog:",
     "vitest": "^4.0.14"
@@ -58,6 +58,9 @@
     "node": ">=20.19 <22 || >=22.12"
   },
   "publishConfig": {
-    "access": "public"
+    "exports": {
+      ".": "./dist/index.js",
+      "./package.json": "./package.json"
+    }
   }
 }

@@ -53,8 +53,7 @@
   },
   "dependencies": {
     "@portabletext/plugin-character-pair-decorator": "workspace:^",
-    "@portabletext/plugin-input-rule": "workspace:^",
-    "react-compiler-runtime": "^1.0.0"
+    "@portabletext/plugin-input-rule": "workspace:^"
   },
   "devDependencies": {
     "@portabletext/editor": "workspace:^",
@@ -74,9 +73,15 @@
   },
   "peerDependencies": {
     "@portabletext/editor": "workspace:^",
-    "react": "^18.3 || ^19"
+    "react": "^19.2"
   },
   "engines": {
     "node": ">=20.19 <22 || >=22.12"
+  },
+  "publishConfig": {
+    "exports": {
+      ".": "./dist/index.js",
+      "./package.json": "./package.json"
+    }
   }
 }
