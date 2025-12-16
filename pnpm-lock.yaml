@@ -573,8 +573,8 @@ importers:
         specifier: ^10.2.1
         version: 10.2.1(@types/babel__core@7.20.5)(@types/node@20.19.25)(babel-plugin-react-compiler@1.0.0)(debug@4.4.3)(typescript@5.9.3)
       '@sanity/tsconfig':
-        specifier: ^2.0.0
-        version: 2.0.0
+        specifier: ^2.1.0
+        version: 2.1.0
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
@@ -604,8 +604,8 @@ importers:
         specifier: ^10.2.1
         version: 10.2.1(@types/babel__core@7.20.5)(@types/node@20.19.25)(babel-plugin-react-compiler@1.0.0)(debug@4.4.3)(typescript@5.9.3)
       '@sanity/tsconfig':
-        specifier: ^2.0.0
-        version: 2.0.0
+        specifier: ^2.1.0
+        version: 2.1.0
       '@types/markdown-it':
         specifier: ^14.1.2
         version: 14.1.2
@@ -626,8 +626,8 @@ importers:
         specifier: ^10.2.1
         version: 10.2.1(@types/babel__core@7.20.5)(@types/node@20.19.25)(babel-plugin-react-compiler@1.0.0)(debug@4.4.3)(typescript@5.9.3)
       '@sanity/tsconfig':
-        specifier: ^2.0.0
-        version: 2.0.0
+        specifier: ^2.1.0
+        version: 2.1.0
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
@@ -651,8 +651,8 @@ importers:
         specifier: workspace:*
         version: link:../editor
       '@sanity/tsconfig':
-        specifier: ^2.0.0
-        version: 2.0.0
+        specifier: ^2.1.0
+        version: 2.1.0
       '@types/react':
         specifier: ^19.2.7
         version: 19.2.7
@@ -703,8 +703,8 @@ importers:
         specifier: ^10.2.1
         version: 10.2.1(@types/babel__core@7.20.5)(@types/node@20.19.25)(babel-plugin-react-compiler@1.0.0)(debug@4.4.3)(typescript@5.9.3)
       '@sanity/tsconfig':
-        specifier: ^2.0.0
-        version: 2.0.0
+        specifier: ^2.1.0
+        version: 2.1.0
       '@types/react':
         specifier: ^19.2.7
         version: 19.2.7
@@ -764,8 +764,8 @@ importers:
         specifier: ^10.2.1
         version: 10.2.1(@types/babel__core@7.20.5)(@types/node@20.19.25)(babel-plugin-react-compiler@1.0.0)(debug@4.4.3)(typescript@5.9.3)
       '@sanity/tsconfig':
-        specifier: ^2.0.0
-        version: 2.0.0
+        specifier: ^2.1.0
+        version: 2.1.0
       '@types/react':
         specifier: ^19.2.7
         version: 19.2.7
@@ -819,8 +819,8 @@ importers:
         specifier: workspace:*
         version: link:../editor
       '@sanity/tsconfig':
-        specifier: ^2.0.0
-        version: 2.0.0
+        specifier: ^2.1.0
+        version: 2.1.0
       '@types/react':
         specifier: ^19.2.7
         version: 19.2.7
@@ -864,8 +864,8 @@ importers:
         specifier: workspace:*
         version: link:../editor
       '@sanity/tsconfig':
-        specifier: ^2.0.0
-        version: 2.0.0
+        specifier: ^2.1.0
+        version: 2.1.0
       '@types/react':
         specifier: ^19.2.7
         version: 19.2.7
@@ -910,8 +910,8 @@ importers:
         specifier: ^2.1.2
         version: 2.3.1(@types/react@19.2.7)(immer@11.0.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(use-sync-external-store@1.6.0(react@19.2.3))
       '@sanity/tsconfig':
-        specifier: ^2.0.0
-        version: 2.0.0
+        specifier: ^2.1.0
+        version: 2.1.0
       '@sanity/types':
         specifier: ^5.0.0
         version: 5.0.0(@types/react@19.2.7)(debug@4.4.3)
@@ -959,8 +959,8 @@ importers:
         specifier: ^10.2.1
         version: 10.2.1(@types/babel__core@7.20.5)(@types/node@20.19.25)(babel-plugin-react-compiler@1.0.0)(debug@4.4.3)(typescript@5.9.3)
       '@sanity/tsconfig':
-        specifier: ^2.0.0
-        version: 2.0.0
+        specifier: ^2.1.0
+        version: 2.1.0
       '@types/react':
         specifier: ^19.2.7
         version: 19.2.7
@@ -1023,8 +1023,8 @@ importers:
         specifier: ^10.2.1
         version: 10.2.1(@types/babel__core@7.20.5)(@types/node@20.19.25)(babel-plugin-react-compiler@1.0.0)(debug@4.4.3)(typescript@5.9.3)
       '@sanity/tsconfig':
-        specifier: ^2.0.0
-        version: 2.0.0
+        specifier: ^2.1.0
+        version: 2.1.0
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
@@ -1048,8 +1048,8 @@ importers:
         specifier: ^10.2.1
         version: 10.2.1(@types/babel__core@7.20.5)(@types/node@20.19.25)(babel-plugin-react-compiler@1.0.0)(debug@4.4.3)(typescript@5.9.3)
       '@sanity/tsconfig':
-        specifier: ^2.0.0
-        version: 2.0.0
+        specifier: ^2.1.0
+        version: 2.1.0
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
@@ -1063,8 +1063,8 @@ importers:
         specifier: ^10.2.1
         version: 10.2.1(@types/babel__core@7.20.5)(@types/node@20.19.25)(babel-plugin-react-compiler@1.0.0)(debug@4.4.3)(typescript@5.9.3)
       '@sanity/tsconfig':
-        specifier: ^2.0.0
-        version: 2.0.0
+        specifier: ^2.1.0
+        version: 2.1.0
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
@@ -1109,8 +1109,8 @@ importers:
         specifier: ^10.2.1
         version: 10.2.1(@types/babel__core@7.20.5)(@types/node@20.19.25)(babel-plugin-react-compiler@1.0.0)(debug@4.4.3)(typescript@5.9.3)
       '@sanity/tsconfig':
-        specifier: ^2.0.0
-        version: 2.0.0
+        specifier: ^2.1.0
+        version: 2.1.0
       '@types/react':
         specifier: ^19.2.7
         version: 19.2.7
@@ -3912,8 +3912,8 @@ packages:
   '@sanity/tsconfig@1.0.0':
     resolution: {integrity: sha512-GZBLxyURcWJhUVsIGpsW9teVtXlszqvF4Yij6m2/hmmeV4SAkhI91/nYBeBVPx2mFJdCvNmtVwu0WcPq0JmU+A==}
 
-  '@sanity/tsconfig@2.0.0':
-    resolution: {integrity: sha512-t3VkUo8Sz4g6TjffUTDXzDCghs+MelX+lTJHNPK+Htjrcv/+VJSfHZhp4Zi4GuKjmdd3VzCtFb37S7R42qpppw==}
+  '@sanity/tsconfig@2.1.0':
+    resolution: {integrity: sha512-Cnz0EycMsfeILkxL/gYzzfPs511OzP3sjQxU4XkDtujdiFAc+bteMYXi4/SJ83m98cXLum63HbHDk+he6AbbIA==}
 
   '@sanity/types@3.99.0':
     resolution: {integrity: sha512-a766U9VSoyOSWq+RZz9wsEo/Nnn+inDkEcdGu+rHFuygdepullB/RZpF2MxNsfUMCSPnajgG1Tm9lhwbSmlySA==}
@@ -11159,7 +11159,7 @@ snapshots:
 
   '@sanity/tsconfig@1.0.0': {}
 
-  '@sanity/tsconfig@2.0.0': {}
+  '@sanity/tsconfig@2.1.0': {}
 
   '@sanity/types@3.99.0(@types/react@19.2.7)':
     dependencies:
