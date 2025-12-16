@@ -233,7 +233,7 @@ export function markdownToPortableText(
   const md = markdownit({
     html: true,
     linkify: true,
-    typographer: false,
+    typographer: true,
   }).enable(['strikethrough', 'table'])
 
   const tokens = md.parse(markdown, {})
