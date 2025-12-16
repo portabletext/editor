@@ -52,12 +52,12 @@
   "dependencies": {
     "@portabletext/sanity-bridge": "workspace:^",
     "@portabletext/schema": "workspace:^",
-    "@sanity/types": "^4.22.0"
+    "@sanity/types": "^5.0.0"
   },
   "devDependencies": {
     "@portabletext/test": "workspace:^",
-    "@sanity/pkg-utils": "^10.1.2",
-    "@sanity/schema": "^4.22.0",
+    "@sanity/pkg-utils": "^10.2.1",
+    "@sanity/schema": "^5.0.0",
     "@types/jsdom": "^27.0.0",
     "@vercel/stega": "1.0.0",
     "@vitest/coverage-v8": "^4.0.14",
@@ -69,6 +69,10 @@
     "node": ">=20.19 <22 || >=22.12"
   },
   "publishConfig": {
-    "access": "public"
+    "exports": {
+      ".": "./lib/index.js",
+      "./rules": "./lib/rules/index.js",
+      "./package.json": "./package.json"
+    }
   }
 }

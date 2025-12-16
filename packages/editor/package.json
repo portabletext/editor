@@ -90,21 +90,20 @@
     "@portabletext/patches": "workspace:^",
     "@portabletext/schema": "workspace:^",
     "@portabletext/to-html": "^5.0.0",
-    "@sanity/schema": "^4.22.0",
-    "@sanity/types": "^4.22.0",
+    "@sanity/schema": "^5.0.0",
+    "@sanity/types": "^5.0.0",
     "@xstate/react": "^6.0.0",
     "debug": "^4.4.3",
-    "react-compiler-runtime": "^1.0.0",
     "slate": "^0.120.0",
     "slate-dom": "^0.119.0",
     "slate-react": "^0.120.0",
-    "xstate": "^5.25.0"
+    "xstate": "^5.24.0"
   },
   "devDependencies": {
     "@portabletext/sanity-bridge": "workspace:*",
     "@portabletext/test": "workspace:^",
     "@sanity/diff-match-patch": "^3.2.0",
-    "@sanity/pkg-utils": "^10.1.2",
+    "@sanity/pkg-utils": "^10.2.1",
     "@types/debug": "^4.1.12",
     "@types/node": "^20",
     "@types/react": "^19.2.7",
@@ -130,13 +129,22 @@
   },
   "peerDependencies": {
     "@portabletext/sanity-bridge": "workspace:^1.2.14",
-    "react": "^18.3 || ^19",
+    "react": "^19.2",
     "rxjs": "^7.8.2"
   },
   "engines": {
     "node": ">=20.19 <22 || >=22.12"
   },
   "publishConfig": {
-    "access": "public"
+    "exports": {
+      ".": "./lib/index.js",
+      "./behaviors": "./lib/behaviors/index.js",
+      "./plugins": "./lib/plugins/index.js",
+      "./selectors": "./lib/selectors/index.js",
+      "./test": "./src/test/_exports/index.ts",
+      "./test/vitest": "./src/test/vitest/_exports/index.ts",
+      "./utils": "./lib/utils/index.js",
+      "./package.json": "./package.json"
+    }
   }
 }
