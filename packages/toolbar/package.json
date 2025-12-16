@@ -62,7 +62,7 @@
   },
   "peerDependencies": {
     "@portabletext/editor": "workspace:^3.3.16",
-    "react": "^19.2"
+    "react": "^19.2.3"
   },
   "engines": {
     "node": ">=20.19 <22 || >=22.12"
