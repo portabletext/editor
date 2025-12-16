@@ -1,5 +1,12 @@
 # Changelog
 
+## 4.0.35
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @portabletext/editor@3.3.15
+
 ## 4.0.34
 
 ### Patch Changes

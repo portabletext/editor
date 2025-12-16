@@ -1,5 +1,12 @@
 # Changelog
 
+## 3.3.15
+
+### Patch Changes
+
+- Updated dependencies [[`9292b9a`](https://github.com/portabletext/editor/commit/9292b9ad69d63e43f91600e16b2ed84012449e89)]:
+  - @portabletext/markdown@1.1.0
+
 ## 3.3.14
 
 ### Patch Changes
