@@ -8,3 +8,4 @@ apps/docs/src/content/docs/api
 packages/block-tools/test/**/*.html
 .changeset/*.md
 packages/markdown/src/example-document.out.md
+packages/markdown/src/example-document.advanced.out.md
