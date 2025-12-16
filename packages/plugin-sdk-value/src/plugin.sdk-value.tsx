@@ -61,7 +61,7 @@ function isKeyPath(node: ExprNode): node is PathNode {
   return node.segment.name === '_key'
 }
 
-function arrayifyPath(pathExpr: string): Path {
+export function arrayifyPath(pathExpr: string): Path {
   const node = parsePath(pathExpr)
   if (!node) {
     return []
@@ -104,7 +104,7 @@ function arrayifyPath(pathExpr: string): Path {
   })
 }
 
-function convertPatches(patches: SanityPatchOperations[]): PtePatch[] {
+export function convertPatches(patches: SanityPatchOperations[]): PtePatch[] {
   return patches.flatMap((p) => {
     return Object.entries(p).flatMap(([type, values]): PtePatch[] => {
       const origin = 'remote'

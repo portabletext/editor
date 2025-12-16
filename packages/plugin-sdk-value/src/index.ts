@@ -1,1 +1,1 @@
-export * from './plugin.sdk-value'
+export {SDKValuePlugin} from './plugin.sdk-value'
