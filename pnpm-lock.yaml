@@ -485,7 +485,7 @@ importers:
         specifier: ^0.120.0
         version: 0.120.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(slate-dom@0.119.0(slate@0.120.0))(slate@0.120.0)
       xstate:
-        specifier: ^5.24.0
+        specifier: ^5.25.0
         version: 5.25.0
     devDependencies:
       '@portabletext/sanity-bridge':
@@ -690,7 +690,7 @@ importers:
         specifier: ^6.0.0
         version: 6.0.0(@types/react@19.2.7)(react@19.2.3)(xstate@5.25.0)
       xstate:
-        specifier: ^5.24.0
+        specifier: ^5.25.0
         version: 5.25.0
     devDependencies:
       '@portabletext/editor':
@@ -751,7 +751,7 @@ importers:
         specifier: ^6.0.0
         version: 6.0.0(@types/react@19.2.7)(react@19.2.3)(xstate@5.25.0)
       xstate:
-        specifier: ^5.24.0
+        specifier: ^5.25.0
         version: 5.25.0
     devDependencies:
       '@portabletext/editor':
@@ -1099,7 +1099,7 @@ importers:
         specifier: ^6.0.0
         version: 6.0.0(@types/react@19.2.7)(react@19.2.3)(xstate@5.25.0)
       xstate:
-        specifier: ^5.24.0
+        specifier: ^5.25.0
         version: 5.25.0
     devDependencies:
       '@portabletext/editor':
