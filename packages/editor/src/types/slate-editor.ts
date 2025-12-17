@@ -48,6 +48,7 @@ export interface PortableTextSlateEditor extends ReactEditor {
   undoStepId: string | undefined
   value: Array<PortableTextBlock>
 
+  isDeferringMutations: boolean
   isNormalizingNode: boolean
   isPatching: boolean
   isPerformingBehaviorOperation: boolean

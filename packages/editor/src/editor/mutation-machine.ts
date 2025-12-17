@@ -66,9 +66,6 @@ export const mutationMachine = setup({
     },
     emitted: {} as
       | {
-          type: 'has pending mutations'
-        }
-      | {
           type: 'mutation'
           patches: Array<Patch>
           snapshot: Array<PortableTextBlock> | undefined
@@ -84,7 +81,9 @@ export const mutationMachine = setup({
       assertEvent(event, 'patch')
       return {type: 'patch' as const, patch: event.patch}
     }),
-    'emit has pending mutations': emit({type: 'has pending mutations'}),
+    'set is deferring mutations': ({context}) => {
+      context.slateEditor.isDeferringMutations = true
+    },
     'emit mutations': enqueueActions(({context, enqueue}) => {
       for (const bulk of context.pendingMutations) {
         enqueue.emit({
@@ -93,6 +92,7 @@ export const mutationMachine = setup({
           snapshot: bulk.value,
         })
       }
+      context.slateEditor.isDeferringMutations = false
     }),
     'clear pending mutations': assign({
       pendingMutations: [],
@@ -269,11 +269,19 @@ export const mutationMachine = setup({
             patch: [
               {
                 guard: 'is read-only',
-                actions: ['defer patch', 'defer mutation'],
+                actions: [
+                  'set is deferring mutations',
+                  'defer patch',
+                  'defer mutation',
+                ],
                 target: 'has pending mutations',
               },
               {
-                actions: ['emit patch', 'defer mutation'],
+                actions: [
+                  'set is deferring mutations',
+                  'emit patch',
+                  'defer mutation',
+                ],
                 target: 'has pending mutations',
               },
             ],
@@ -284,7 +292,6 @@ export const mutationMachine = setup({
             () => {
               debug('entry: mutations->has pending mutations')
             },
-            'emit has pending mutations',
           ],
           exit: [
             () => {
