@@ -48,7 +48,7 @@ import {RenderElement} from './render.element'
 import {RenderLeaf} from './render.leaf'
 import {RenderText, type RenderTextProps} from './render.text'
 import {createWithHotkeys} from './slate-plugin.hotkeys'
-import {useDropPosition} from './use-core-block-element-behaviors'
+import {useDropPosition} from './use-drop-position'
 import {usePortableTextEditor} from './usePortableTextEditor'
 import {validateSelectionMachine} from './validate-selection-machine'
 

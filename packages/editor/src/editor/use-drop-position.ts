@@ -2,7 +2,7 @@ import {useContext, useEffect, useState} from 'react'
 import {
   createDropPositionBehaviorsConfig,
   type DropPosition,
-} from '../behaviors/behavior.core.block-element'
+} from '../behaviors/behavior.core.drop-position'
 import {EditorActorContext} from './editor-actor-context'
 
 export function useDropPosition(): DropPosition | undefined {
