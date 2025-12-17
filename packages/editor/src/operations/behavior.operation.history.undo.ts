@@ -1,13 +1,10 @@
 import {Editor, Operation, Transforms} from 'slate'
 import {pluginUndoing} from '../editor/slate-plugin.undoing'
 import {pluginWithoutHistory} from '../editor/slate-plugin.without-history'
-import {debugWithName} from '../internal-utils/debug'
 import {transformOperation} from '../internal-utils/transform-operation'
-import type {BehaviorOperationImplementation} from '../operations/behavior.operations'
+import type {OperationImplementation} from './operation.types'
 
-const debug = debugWithName('behavior.operation.history.undo')
-
-export const historyUndoOperationImplementation: BehaviorOperationImplementation<
+export const historyUndoOperationImplementation: OperationImplementation<
   'history.undo'
 > = ({operation}) => {
   const editor = operation.editor
@@ -15,7 +12,7 @@ export const historyUndoOperationImplementation: BehaviorOperationImplementation
 
   if (undos.length > 0) {
     const step = undos[undos.length - 1]
-    debug('Undoing', step)
+
     if (step.operations.length > 0) {
       const otherPatches = editor.remotePatches.filter(
         (item) => item.time >= step.timestamp,
@@ -47,7 +44,10 @@ export const historyUndoOperationImplementation: BehaviorOperationImplementation
           })
         })
       } catch (err) {
-        debug('Could not perform undo step', err)
+        console.error(
+          `Could not perform 'history.undo' operation: ${err.message}`,
+        )
+
         editor.remotePatches.splice(0, editor.remotePatches.length)
         Transforms.deselect(editor)
         editor.history = {undos: [], redos: []}

@@ -1,8 +1,8 @@
 import {Editor, Element, Transforms} from 'slate'
 import {toSlateRange} from '../internal-utils/to-slate-range'
-import type {BehaviorOperationImplementation} from './behavior.operations'
+import type {OperationImplementation} from './operation.types'
 
-export const childSetOperationImplementation: BehaviorOperationImplementation<
+export const childSetOperationImplementation: OperationImplementation<
   'child.set'
 > = ({context, operation}) => {
   const location = toSlateRange({

@@ -1,11 +1,4 @@
 import {Editor} from 'slate'
-import type {
-  AbstractBehaviorEventType,
-  SyntheticBehaviorEvent,
-} from '../behaviors/behavior.types.event'
-import type {EditorContext} from '../editor/editor-snapshot'
-import type {OmitFromUnion, PickFromUnion} from '../type-utils'
-import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {addAnnotationOperationImplementation} from './behavior.operation.annotation.add'
 import {removeAnnotationOperationImplementation} from './behavior.operation.annotation.remove'
 import {blockSetOperationImplementation} from './behavior.operation.block.set'
@@ -24,35 +17,13 @@ import {moveBackwardOperationImplementation} from './behavior.operation.move.bac
 import {moveBlockOperationImplementation} from './behavior.operation.move.block'
 import {moveForwardOperationImplementation} from './behavior.operation.move.forward'
 import {selectOperationImplementation} from './behavior.operation.select'
+import type {
+  Operation,
+  OperationContext,
+  OperationImplementations,
+} from './operation.types'
 
-export type BehaviorOperationImplementationContext = Pick<
-  EditorContext,
-  'keyGenerator' | 'schema'
->
-
-export type BehaviorOperationImplementation<
-  TBehaviorOperationType extends BehaviorOperation['type'],
-> = ({
-  context,
-  operation,
-}: {
-  context: BehaviorOperationImplementationContext
-  operation: PickFromUnion<BehaviorOperation, 'type', TBehaviorOperationType>
-}) => void
-
-type BehaviorOperation = OmitFromUnion<
-  SyntheticBehaviorEvent,
-  'type',
-  AbstractBehaviorEventType
-> & {
-  editor: PortableTextSlateEditor
-}
-
-type BehaviorOperationImplementations = {
-  [TBehaviorOperationType in BehaviorOperation['type']]: BehaviorOperationImplementation<TBehaviorOperationType>
-}
-
-const behaviorOperationImplementations: BehaviorOperationImplementations = {
+const operationImplementations: OperationImplementations = {
   'annotation.add': addAnnotationOperationImplementation,
   'annotation.remove': removeAnnotationOperationImplementation,
   'block.set': blockSetOperationImplementation,
@@ -77,135 +48,135 @@ export function performOperation({
   context,
   operation,
 }: {
-  context: BehaviorOperationImplementationContext
-  operation: BehaviorOperation
+  context: OperationContext
+  operation: Operation
 }) {
   Editor.withoutNormalizing(operation.editor, () => {
     try {
       switch (operation.type) {
         case 'annotation.add': {
-          behaviorOperationImplementations['annotation.add']({
+          operationImplementations['annotation.add']({
             context,
-            operation: operation,
+            operation,
           })
           break
         }
         case 'annotation.remove': {
-          behaviorOperationImplementations['annotation.remove']({
+          operationImplementations['annotation.remove']({
             context,
-            operation: operation,
+            operation,
           })
           break
         }
         case 'block.set': {
-          behaviorOperationImplementations['block.set']({
+          operationImplementations['block.set']({
             context,
-            operation: operation,
+            operation,
           })
           break
         }
         case 'block.unset': {
-          behaviorOperationImplementations['block.unset']({
+          operationImplementations['block.unset']({
             context,
-            operation: operation,
+            operation,
           })
           break
         }
         case 'child.set': {
-          behaviorOperationImplementations['child.set']({
+          operationImplementations['child.set']({
             context,
-            operation: operation,
+            operation,
           })
           break
         }
         case 'child.unset': {
-          behaviorOperationImplementations['child.unset']({
+          operationImplementations['child.unset']({
             context,
-            operation: operation,
+            operation,
           })
           break
         }
         case 'decorator.add': {
-          behaviorOperationImplementations['decorator.add']({
+          operationImplementations['decorator.add']({
             context,
             operation: operation,
           })
           break
         }
         case 'decorator.remove': {
-          behaviorOperationImplementations['decorator.remove']({
+          operationImplementations['decorator.remove']({
             context,
-            operation: operation,
+            operation,
           })
           break
         }
         case 'delete': {
-          behaviorOperationImplementations.delete({
+          operationImplementations.delete({
             context,
-            operation: operation,
+            operation,
           })
           break
         }
         case 'history.redo': {
-          behaviorOperationImplementations['history.redo']({
+          operationImplementations['history.redo']({
             context,
-            operation: operation,
+            operation,
           })
           break
         }
         case 'history.undo': {
-          behaviorOperationImplementations['history.undo']({
+          operationImplementations['history.undo']({
             context,
-            operation: operation,
+            operation,
           })
           break
         }
         case 'insert.block': {
-          behaviorOperationImplementations['insert.block']({
+          operationImplementations['insert.block']({
             context,
-            operation: operation,
+            operation,
           })
           break
         }
         case 'insert.child': {
-          behaviorOperationImplementations['insert.child']({
+          operationImplementations['insert.child']({
             context,
-            operation: operation,
+            operation,
           })
           break
         }
         case 'insert.text': {
-          behaviorOperationImplementations['insert.text']({
+          operationImplementations['insert.text']({
             context,
-            operation: operation,
+            operation,
           })
           break
         }
         case 'move.backward': {
-          behaviorOperationImplementations['move.backward']({
+          operationImplementations['move.backward']({
             context,
-            operation: operation,
+            operation,
           })
           break
         }
         case 'move.block': {
-          behaviorOperationImplementations['move.block']({
+          operationImplementations['move.block']({
             context,
-            operation: operation,
+            operation,
           })
           break
         }
         case 'move.forward': {
-          behaviorOperationImplementations['move.forward']({
+          operationImplementations['move.forward']({
             context,
-            operation: operation,
+            operation,
           })
           break
         }
         default: {
-          behaviorOperationImplementations.select({
+          operationImplementations.select({
             context,
-            operation: operation,
+            operation,
           })
           break
         }

@@ -13,9 +13,9 @@ import {DOMEditor} from 'slate-dom'
 import {toSlateRange} from '../internal-utils/to-slate-range'
 import {VOID_CHILD_KEY} from '../internal-utils/values'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
-import type {BehaviorOperationImplementation} from './behavior.operations'
+import type {OperationImplementation} from './operation.types'
 
-export const deleteOperationImplementation: BehaviorOperationImplementation<
+export const deleteOperationImplementation: OperationImplementation<
   'delete'
 > = ({context, operation}) => {
   const at = operation.at

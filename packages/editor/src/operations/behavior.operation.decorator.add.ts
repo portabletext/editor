@@ -1,8 +1,8 @@
 import {Editor, Range, Text, Transforms} from 'slate'
 import {toSlateRange} from '../internal-utils/to-slate-range'
-import type {BehaviorOperationImplementation} from './behavior.operations'
+import type {OperationImplementation} from './operation.types'
 
-export const decoratorAddOperationImplementation: BehaviorOperationImplementation<
+export const decoratorAddOperationImplementation: OperationImplementation<
   'decorator.add'
 > = ({context, operation}) => {
   const editor = operation.editor

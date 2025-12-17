@@ -1,7 +1,7 @@
 import {Editor, Element, Range, Text, Transforms} from 'slate'
-import type {BehaviorOperationImplementation} from './behavior.operations'
+import type {OperationImplementation} from './operation.types'
 
-export const decoratorRemoveOperationImplementation: BehaviorOperationImplementation<
+export const decoratorRemoveOperationImplementation: OperationImplementation<
   'decorator.remove'
 > = ({operation}) => {
   const editor = operation.editor

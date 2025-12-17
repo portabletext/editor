@@ -1,8 +1,8 @@
 import {Editor, Node, Range, Text, Transforms} from 'slate'
 import {parseAnnotation} from '../utils/parse-blocks'
-import type {BehaviorOperationImplementation} from './behavior.operations'
+import type {OperationImplementation} from './operation.types'
 
-export const addAnnotationOperationImplementation: BehaviorOperationImplementation<
+export const addAnnotationOperationImplementation: OperationImplementation<
   'annotation.add'
 > = ({context, operation}) => {
   const parsedAnnotation = parseAnnotation({

@@ -4,9 +4,9 @@ import {EDITOR_TO_PENDING_SELECTION} from 'slate-dom'
 import {getFocusBlock, getFocusSpan} from '../internal-utils/slate-utils'
 import {VOID_CHILD_KEY} from '../internal-utils/values'
 import {parseInlineObject, parseSpan} from '../utils/parse-blocks'
-import type {BehaviorOperationImplementation} from './behavior.operations'
+import type {OperationImplementation} from './operation.types'
 
-export const insertChildOperationImplementation: BehaviorOperationImplementation<
+export const insertChildOperationImplementation: OperationImplementation<
   'insert.child'
 > = ({context, operation}) => {
   const focus = operation.editor.selection?.focus

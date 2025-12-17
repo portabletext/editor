@@ -18,12 +18,9 @@ import type {EditorSelection} from '../types/editor'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {parseBlock} from '../utils/parse-blocks'
 import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
-import type {
-  BehaviorOperationImplementation,
-  BehaviorOperationImplementationContext,
-} from './behavior.operations'
+import type {OperationContext, OperationImplementation} from './operation.types'
 
-export const insertBlockOperationImplementation: BehaviorOperationImplementation<
+export const insertBlockOperationImplementation: OperationImplementation<
   'insert.block'
 > = ({context, operation}) => {
   const parsedBlock = parseBlock({
@@ -53,7 +50,7 @@ export const insertBlockOperationImplementation: BehaviorOperationImplementation
 }
 
 export function insertBlock(options: {
-  context: BehaviorOperationImplementationContext
+  context: OperationContext
   block: Descendant
   placement: 'auto' | 'after' | 'before'
   select: 'start' | 'end' | 'none'
