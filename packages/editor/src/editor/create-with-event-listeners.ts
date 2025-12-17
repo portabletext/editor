@@ -3,7 +3,6 @@ import {
   slatePointToSelectionPoint,
   slateRangeToSelection,
 } from '../internal-utils/slate-utils'
-import {performOperation} from '../operations/behavior.operations'
 import type {EditorActor} from './editor-machine'
 
 export function createWithEventListeners(editorActor: EditorActor) {
@@ -146,13 +145,7 @@ export function createWithEventListeners(editorActor: EditorActor) {
 
     editor.insertSoftBreak = () => {
       if (editor.isPerformingBehaviorOperation) {
-        performOperation({
-          context: {
-            keyGenerator: editorActor.getSnapshot().context.keyGenerator,
-            schema: editorActor.getSnapshot().context.schema,
-          },
-          operation: {type: 'insert.text', text: '\n', editor},
-        })
+        console.error('Unexpected call to .insertSoftBreak(...)')
         return
       }
 
@@ -168,13 +161,7 @@ export function createWithEventListeners(editorActor: EditorActor) {
 
     editor.insertText = (text) => {
       if (editor.isPerformingBehaviorOperation) {
-        performOperation({
-          context: {
-            keyGenerator: editorActor.getSnapshot().context.keyGenerator,
-            schema: editorActor.getSnapshot().context.schema,
-          },
-          operation: {type: 'insert.text', text, editor},
-        })
+        console.error('Unexpected call to .insertText(...)')
         return
       }
 
@@ -191,16 +178,7 @@ export function createWithEventListeners(editorActor: EditorActor) {
 
     editor.redo = () => {
       if (editor.isPerformingBehaviorOperation) {
-        performOperation({
-          context: {
-            keyGenerator: editorActor.getSnapshot().context.keyGenerator,
-            schema: editorActor.getSnapshot().context.schema,
-          },
-          operation: {
-            type: 'history.redo',
-            editor,
-          },
-        })
+        console.error('Unexpected call to .redo(...)')
         return
       }
 
@@ -321,16 +299,7 @@ export function createWithEventListeners(editorActor: EditorActor) {
 
     editor.undo = () => {
       if (editor.isPerformingBehaviorOperation) {
-        performOperation({
-          context: {
-            keyGenerator: editorActor.getSnapshot().context.keyGenerator,
-            schema: editorActor.getSnapshot().context.schema,
-          },
-          operation: {
-            type: 'history.undo',
-            editor,
-          },
-        })
+        console.error('Unexpected call to .undo(...)')
         return
       }
 
