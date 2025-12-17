@@ -3,6 +3,7 @@ import {useSelector} from '@xstate/react'
 import {useContext, type ReactElement} from 'react'
 import type {Element as SlateElement} from 'slate'
 import {useSlateStatic, type RenderElementProps} from 'slate-react'
+import type {DropPosition} from '../behaviors/behavior.core.block-element'
 import type {
   RenderBlockFunction,
   RenderChildFunction,
@@ -17,6 +18,7 @@ import {RenderTextBlock} from './render.text-block'
 export function RenderElement(props: {
   attributes: RenderElementProps['attributes']
   children: ReactElement
+  dropPosition?: DropPosition
   element: SlateElement
   readOnly: boolean
   renderBlock?: RenderBlockFunction
@@ -58,6 +60,11 @@ export function RenderElement(props: {
     return (
       <RenderTextBlock
         attributes={props.attributes}
+        dropPosition={
+          props.dropPosition?.blockKey === props.element._key
+            ? props.dropPosition.positionBlock
+            : undefined
+        }
         element={props.element}
         legacySchema={legacySchema}
         readOnly={props.readOnly}
@@ -76,6 +83,11 @@ export function RenderElement(props: {
     <RenderBlockObject
       attributes={props.attributes}
       blockObject={block}
+      dropPosition={
+        props.dropPosition?.blockKey === props.element._key
+          ? props.dropPosition.positionBlock
+          : undefined
+      }
       element={props.element}
       legacySchema={legacySchema}
       readOnly={props.readOnly}

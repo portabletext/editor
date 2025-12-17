@@ -1,3 +1,4 @@
+import type {Dispatch, SetStateAction} from 'react'
 import type {EventPositionBlock} from '../internal-utils/event-position'
 import {corePriority} from '../priority/priority.core'
 import {createEditorPriority} from '../priority/priority.types'
@@ -8,14 +9,15 @@ import {isSelectingEntireBlocks} from '../selectors/selector.is-selecting-entire
 import {forward} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
-export function createCoreBlockElementBehaviorsConfig({
-  key,
-  onSetDragPositionBlock,
+export type DropPosition = {
+  blockKey: string
+  positionBlock: EventPositionBlock
+}
+
+export function createDropPositionBehaviorsConfig({
+  setDropPosition,
 }: {
-  key: string
-  onSetDragPositionBlock: (
-    eventPositionBlock: EventPositionBlock | undefined,
-  ) => void
+  setDropPosition: Dispatch<SetStateAction<DropPosition | undefined>>
 }) {
   return [
     {
@@ -30,7 +32,7 @@ export function createCoreBlockElementBehaviorsConfig({
             },
           })
 
-          if (!dropFocusBlock || dropFocusBlock.node._key !== key) {
+          if (!dropFocusBlock) {
             return false
           }
 
@@ -54,7 +56,10 @@ export function createCoreBlockElementBehaviorsConfig({
           })
 
           if (
-            draggedBlocks.some((draggedBlock) => draggedBlock.node._key === key)
+            draggedBlocks.some(
+              (draggedBlock) =>
+                draggedBlock.node._key === dropFocusBlock.node._key,
+            )
           ) {
             return false
           }
@@ -67,14 +72,21 @@ export function createCoreBlockElementBehaviorsConfig({
             },
           })
 
-          return draggingEntireBlocks
+          if (!draggingEntireBlocks) {
+            return false
+          }
+
+          return {dropFocusBlock}
         },
         actions: [
-          ({event}) => [
+          ({event}, {dropFocusBlock}) => [
             {
               type: 'effect',
               effect: () => {
-                onSetDragPositionBlock(event.position.block)
+                setDropPosition({
+                  blockKey: dropFocusBlock.node._key,
+                  positionBlock: event.position.block,
+                })
               },
             },
           ],
@@ -98,7 +110,7 @@ export function createCoreBlockElementBehaviorsConfig({
             {
               type: 'effect',
               effect: () => {
-                onSetDragPositionBlock(undefined)
+                setDropPosition(undefined)
               },
             },
             forward(event),

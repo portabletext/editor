@@ -1,23 +1,17 @@
-import {useContext, useEffect} from 'react'
-import {createCoreBlockElementBehaviorsConfig} from '../behaviors/behavior.core.block-element'
-import type {EventPositionBlock} from '../internal-utils/event-position'
+import {useContext, useEffect, useState} from 'react'
+import {
+  createDropPositionBehaviorsConfig,
+  type DropPosition,
+} from '../behaviors/behavior.core.block-element'
 import {EditorActorContext} from './editor-actor-context'
 
-export function useCoreBlockElementBehaviors({
-  key,
-  onSetDragPositionBlock,
-}: {
-  key: string
-  onSetDragPositionBlock: (
-    eventPositionBlock: EventPositionBlock | undefined,
-  ) => void
-}) {
+export function useDropPosition(): DropPosition | undefined {
   const editorActor = useContext(EditorActorContext)
+  const [dropPosition, setDropPosition] = useState<DropPosition | undefined>()
 
   useEffect(() => {
-    const behaviorConfigs = createCoreBlockElementBehaviorsConfig({
-      key,
-      onSetDragPositionBlock,
+    const behaviorConfigs = createDropPositionBehaviorsConfig({
+      setDropPosition,
     })
 
     for (const behaviorConfig of behaviorConfigs) {
@@ -35,5 +29,7 @@ export function useCoreBlockElementBehaviors({
         })
       }
     }
-  }, [editorActor, key, onSetDragPositionBlock])
+  }, [editorActor, setDropPosition])
+
+  return dropPosition
 }
