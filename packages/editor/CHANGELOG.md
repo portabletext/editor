@@ -1,5 +1,13 @@
 # Changelog
 
+## 4.0.1
+
+### Patch Changes
+
+- [#2048](https://github.com/portabletext/editor/pull/2048) [`2f801bd`](https://github.com/portabletext/editor/commit/2f801bd608ef9d69f93c5e0906d28d8c8c59f10b) Thanks [@christianhg](https://github.com/christianhg)! - fix: drag and drop performance issue with long documents
+
+  Refactored drop indicator state management from per-block Behaviors to editor-level Behaviors. Previously, each block registered its own drag Behaviors, causing O(N) Behavior evaluations and state updates per drag event. Now there are only 2 Behaviors regardless of document size, eliminating the performance bottleneck when dragging blocks in long documents.
+
 ## 4.0.0
 
 ### Major Changes
