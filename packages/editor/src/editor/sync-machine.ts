@@ -665,9 +665,10 @@ function syncBlock({
   slateEditor: PortableTextSlateEditor
   value: Array<PortableTextBlock>
 }) {
-  const oldBlock = slateEditor.children.at(index)
+  const oldSlateBlock = slateEditor.children.at(index)
+  const oldBlock = slateEditor.value.at(index)
 
-  if (!oldBlock) {
+  if (!oldSlateBlock || !oldBlock) {
     // Insert the new block
     const validation = validateValue(
       [block],
@@ -763,7 +764,7 @@ function syncBlock({
             updateBlock({
               context,
               slateEditor,
-              oldBlock,
+              oldSlateBlock,
               block,
               index,
             })
@@ -850,7 +851,7 @@ function replaceBlock({
 function updateBlock({
   context,
   slateEditor,
-  oldBlock,
+  oldSlateBlock,
   block,
   index,
 }: {
@@ -861,7 +862,7 @@ function updateBlock({
     schema: EditorSchema
   }
   slateEditor: PortableTextSlateEditor
-  oldBlock: Descendant
+  oldSlateBlock: Descendant
   block: PortableTextBlock
   index: number
 }) {
@@ -877,9 +878,9 @@ function updateBlock({
   // Text block's need to have their children updated as well (setNode does not target a node's children)
   if (
     slateEditor.isTextBlock(slateBlock) &&
-    slateEditor.isTextBlock(oldBlock)
+    slateEditor.isTextBlock(oldSlateBlock)
   ) {
-    const oldBlockChildrenLength = oldBlock.children.length
+    const oldBlockChildrenLength = oldSlateBlock.children.length
     if (slateBlock.children.length < oldBlockChildrenLength) {
       // Remove any children that have become superfluous
       Array.from(
@@ -898,7 +899,7 @@ function updateBlock({
     }
 
     slateBlock.children.forEach((currentBlockChild, currentBlockChildIndex) => {
-      const oldBlockChild = oldBlock.children.at(currentBlockChildIndex)
+      const oldBlockChild = oldSlateBlock.children.at(currentBlockChildIndex)
       const isChildChanged =
         oldBlockChild && !isEqualChild(currentBlockChild, oldBlockChild)
       const isTextChanged =
