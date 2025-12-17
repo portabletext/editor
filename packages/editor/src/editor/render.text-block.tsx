@@ -1,12 +1,12 @@
 import type {PortableTextTextBlock} from '@portabletext/schema'
-import {useRef, useState, type ReactElement} from 'react'
+import {useRef, type ReactElement} from 'react'
 import {Range, type Element as SlateElement} from 'slate'
 import {
   useSelected,
   useSlateSelector,
   type RenderElementProps,
 } from 'slate-react'
-import type {EventPositionBlock} from '../internal-utils/event-position'
+import type {DropPosition} from '../behaviors/behavior.core.block-element'
 import type {
   BlockListItemRenderProps,
   BlockRenderProps,
@@ -17,11 +17,11 @@ import type {
   RenderStyleFunction,
 } from '../types/editor'
 import {DropIndicator} from './render.drop-indicator'
-import {useCoreBlockElementBehaviors} from './use-core-block-element-behaviors'
 
 export function RenderTextBlock(props: {
   attributes: RenderElementProps['attributes']
   children: ReactElement
+  dropPosition?: DropPosition['positionBlock']
   element: SlateElement
   legacySchema: PortableTextMemberSchemaTypes
   readOnly: boolean
@@ -31,8 +31,6 @@ export function RenderTextBlock(props: {
   spellCheck?: boolean
   textBlock: PortableTextTextBlock
 }) {
-  const [dragPositionBlock, setDragPositionBlock] =
-    useState<EventPositionBlock>()
   const blockRef = useRef<HTMLDivElement>(null)
 
   const selected = useSelected()
@@ -42,11 +40,6 @@ export function RenderTextBlock(props: {
       editor.selection !== null &&
       Range.isCollapsed(editor.selection),
   )
-
-  useCoreBlockElementBehaviors({
-    key: props.element._key,
-    onSetDragPositionBlock: setDragPositionBlock,
-  })
 
   const listIndex = useSlateSelector((editor) =>
     editor.listIndexMap.get(props.textBlock._key),
@@ -154,7 +147,7 @@ export function RenderTextBlock(props: {
           }
         : {})}
     >
-      {dragPositionBlock === 'start' ? <DropIndicator /> : null}
+      {props.dropPosition === 'start' ? <DropIndicator /> : null}
       <div ref={blockRef}>
         {props.renderBlock ? (
           <RenderBlock
@@ -176,7 +169,7 @@ export function RenderTextBlock(props: {
           children
         )}
       </div>
-      {dragPositionBlock === 'end' ? <DropIndicator /> : null}
+      {props.dropPosition === 'end' ? <DropIndicator /> : null}
     </div>
   )
 }

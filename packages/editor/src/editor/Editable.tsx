@@ -48,6 +48,7 @@ import {RenderElement} from './render.element'
 import {RenderLeaf} from './render.leaf'
 import {RenderText, type RenderTextProps} from './render.text'
 import {createWithHotkeys} from './slate-plugin.hotkeys'
+import {useDropPosition} from './use-core-block-element-behaviors'
 import {usePortableTextEditor} from './usePortableTextEditor'
 import {validateSelectionMachine} from './validate-selection-machine'
 
@@ -160,6 +161,7 @@ export const PortableTextEditable = forwardRef<
     rangeDecorationsActor,
     (s) => s.context.decorate?.fn,
   )
+  const dropPosition = useDropPosition()
 
   useEffect(() => {
     rangeDecorationsActor.send({
@@ -196,6 +198,7 @@ export const PortableTextEditable = forwardRef<
     (eProps: RenderElementProps) => (
       <RenderElement
         {...eProps}
+        dropPosition={dropPosition}
         readOnly={readOnly}
         renderBlock={renderBlock}
         renderChild={renderChild}
@@ -205,6 +208,7 @@ export const PortableTextEditable = forwardRef<
       />
     ),
     [
+      dropPosition,
       spellCheck,
       readOnly,
       renderBlock,

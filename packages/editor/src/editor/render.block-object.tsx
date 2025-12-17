@@ -1,12 +1,12 @@
 import type {PortableTextObject} from '@portabletext/schema'
-import {useRef, useState, type ReactElement} from 'react'
+import {useRef, type ReactElement} from 'react'
 import {Range, type Element as SlateElement} from 'slate'
 import {
   useSelected,
   useSlateSelector,
   type RenderElementProps,
 } from 'slate-react'
-import type {EventPositionBlock} from '../internal-utils/event-position'
+import type {DropPosition} from '../behaviors/behavior.core.block-element'
 import type {
   BlockRenderProps,
   PortableTextMemberSchemaTypes,
@@ -15,11 +15,11 @@ import type {
 import type {EditorSchema} from './editor-schema'
 import {RenderDefaultBlockObject} from './render.default-object'
 import {DropIndicator} from './render.drop-indicator'
-import {useCoreBlockElementBehaviors} from './use-core-block-element-behaviors'
 
 export function RenderBlockObject(props: {
   attributes: RenderElementProps['attributes']
   blockObject: PortableTextObject | undefined
+  dropPosition?: DropPosition['positionBlock']
   children: ReactElement
   element: SlateElement
   legacySchema: PortableTextMemberSchemaTypes
@@ -27,8 +27,6 @@ export function RenderBlockObject(props: {
   renderBlock?: RenderBlockFunction
   schema: EditorSchema
 }) {
-  const [dragPositionBlock, setDragPositionBlock] =
-    useState<EventPositionBlock>()
   const blockObjectRef = useRef<HTMLDivElement>(null)
   const selected = useSelected()
   const focused = useSlateSelector(
@@ -37,11 +35,6 @@ export function RenderBlockObject(props: {
       editor.selection !== null &&
       Range.isCollapsed(editor.selection),
   )
-
-  useCoreBlockElementBehaviors({
-    key: props.element._key,
-    onSetDragPositionBlock: setDragPositionBlock,
-  })
 
   const legacySchemaType = props.legacySchema.blockObjects.find(
     (schemaType) => schemaType.name === props.element._type,
@@ -66,7 +59,7 @@ export function RenderBlockObject(props: {
       data-block-name={props.element._type}
       data-block-type="object"
     >
-      {dragPositionBlock === 'start' ? <DropIndicator /> : null}
+      {props.dropPosition === 'start' ? <DropIndicator /> : null}
       {props.children}
       <div
         ref={blockObjectRef}
@@ -90,7 +83,7 @@ export function RenderBlockObject(props: {
           <RenderDefaultBlockObject blockObject={blockObject} />
         )}
       </div>
-      {dragPositionBlock === 'end' ? <DropIndicator /> : null}
+      {props.dropPosition === 'end' ? <DropIndicator /> : null}
     </div>
   )
 }
