@@ -550,12 +550,12 @@ async function updateValue({
       return
     }
 
-    if (hadSelection && !slateEditor.selection) {
-      Transforms.select(slateEditor, {
-        anchor: {path: [0, 0], offset: 0},
-        focus: {path: [0, 0], offset: 0},
-      })
-
+    if (
+      hadSelection &&
+      !slateEditor.selection &&
+      slateEditor.children.length > 0
+    ) {
+      Transforms.select(slateEditor, Editor.start(slateEditor, []))
       slateEditor.onChange()
     }
 
