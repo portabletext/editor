@@ -19,7 +19,8 @@ import {
   type ExternalBehaviorEvent,
 } from './behavior.types.event'
 
-const debug = debugWithName('behaviors:event')
+const debugEvent = debugWithName('behaviors:event')
+const debugOperation = debugWithName('operation')
 
 function eventCategory(event: BehaviorEvent) {
   return isNativeBehaviorEvent(event)
@@ -64,7 +65,10 @@ export function performEvent({
     editor.undoStepId = defaultKeyGenerator()
   }
 
-  debug(`(${mode}:${eventCategory(event)})`, JSON.stringify(event, null, 2))
+  debugEvent(
+    `(${mode}:${eventCategory(event)})`,
+    JSON.stringify(event, null, 2),
+  )
 
   const eventBehaviors = [
     ...remainingEventBehaviors,
@@ -114,7 +118,7 @@ export function performEvent({
     }
 
     withPerformingBehaviorOperation(editor, () => {
-      debug(`(execute:${eventCategory(event)})`, JSON.stringify(event, null, 2))
+      debugOperation(JSON.stringify(event, null, 2))
 
       performOperation({
         context: {
@@ -336,7 +340,7 @@ export function performEvent({
     }
 
     withPerformingBehaviorOperation(editor, () => {
-      debug(`(execute:${eventCategory(event)})`, JSON.stringify(event, null, 2))
+      debugOperation(JSON.stringify(event, null, 2))
 
       performOperation({
         context: {keyGenerator, schema},
