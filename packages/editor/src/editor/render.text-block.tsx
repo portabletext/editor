@@ -6,7 +6,7 @@ import {
   useSlateSelector,
   type RenderElementProps,
 } from 'slate-react'
-import type {DropPosition} from '../behaviors/behavior.core.block-element'
+import type {DropPosition} from '../behaviors/behavior.core.drop-position'
 import type {
   BlockListItemRenderProps,
   BlockRenderProps,
