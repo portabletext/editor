@@ -687,4 +687,89 @@ describe('event.update value', () => {
       ])
     })
   })
+
+  test('Scenario: Removing children from a block that is not the first block', async () => {
+    const keyGenerator = createTestKeyGenerator()
+
+    const block1Key = keyGenerator()
+    const span1Key = keyGenerator()
+    const block2Key = keyGenerator()
+    const span2Key = keyGenerator()
+    const stockTickerKey = keyGenerator()
+    const span3Key = keyGenerator()
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        inlineObjects: [{name: 'stock-ticker'}],
+      }),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: block1Key,
+          children: [{_type: 'span', _key: span1Key, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: block2Key,
+          children: [
+            {_type: 'span', _key: span2Key, text: 'bar', marks: []},
+            {_type: 'stock-ticker', _key: stockTickerKey},
+            {_type: 'span', _key: span3Key, text: 'baz', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toHaveLength(2)
+    })
+
+    editor.send({
+      type: 'update value',
+      value: [
+        {
+          _type: 'block',
+          _key: block1Key,
+          children: [{_type: 'span', _key: span1Key, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: block2Key,
+          children: [
+            {_type: 'span', _key: span2Key, text: 'foobar', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: block1Key,
+          children: [{_type: 'span', _key: span1Key, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: block2Key,
+          children: [
+            {_type: 'span', _key: span2Key, text: 'foobar', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+  })
 })
