@@ -618,4 +618,73 @@ describe('event.update value', () => {
       ])
     })
   })
+
+  test('Scenario: Syncing the same block object is a noop', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const imageKey = keyGenerator()
+    const emittedEvents: Array<EditorEmittedEvent> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {name: 'image', fields: [{name: 'src', type: 'string'}]},
+        ],
+      }),
+      initialValue: [
+        {_type: 'image', _key: imageKey, src: 'https://example.com/image.jpg'},
+      ],
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            emittedEvents.push(event)
+          }}
+        />
+      ),
+    })
+
+    await vi.waitFor(() => {
+      expect(emittedEvents).toEqual([
+        {
+          type: 'value changed',
+          value: [
+            {
+              _type: 'image',
+              _key: imageKey,
+              src: 'https://example.com/image.jpg',
+            },
+          ],
+        },
+        {type: 'ready'},
+      ])
+    })
+
+    editor.send({
+      type: 'update value',
+      value: [
+        {_type: 'image', _key: imageKey, src: 'https://example.com/image.jpg'},
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {_type: 'image', _key: imageKey, src: 'https://example.com/image.jpg'},
+      ])
+    })
+
+    await vi.waitFor(() => {
+      expect(emittedEvents).toEqual([
+        {
+          type: 'value changed',
+          value: [
+            {
+              _type: 'image',
+              _key: imageKey,
+              src: 'https://example.com/image.jpg',
+            },
+          ],
+        },
+        {type: 'ready'},
+      ])
+    })
+  })
 })
