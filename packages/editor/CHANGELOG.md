@@ -1,5 +1,23 @@
 # Changelog
 
+## 4.0.2
+
+### Patch Changes
+
+- [#2051](https://github.com/portabletext/editor/pull/2051) [`82732ce`](https://github.com/portabletext/editor/commit/82732ce54dfff42e13458e13697caeb21f36fcbd) Thanks [@christianhg](https://github.com/christianhg)! - fix(value sync): compare Portable Text blocks, not Slate blocks
+
+- [#2051](https://github.com/portabletext/editor/pull/2051) [`58ea2a8`](https://github.com/portabletext/editor/commit/58ea2a84b481dd473ca2762d2c19efb2008e3bba) Thanks [@christianhg](https://github.com/christianhg)! - fix: make sure the editor has children before selecting start
+
+- [#2053](https://github.com/portabletext/editor/pull/2053) [`8db1e94`](https://github.com/portabletext/editor/commit/8db1e947bb331c056f8501ae666c9b6edb9f8f9c) Thanks [@christianhg](https://github.com/christianhg)! - fix(value sync): problem with removing children from block
+
+- [#2051](https://github.com/portabletext/editor/pull/2051) [`a399271`](https://github.com/portabletext/editor/commit/a399271da57164c5c160720c071544af71c7061a) Thanks [@christianhg](https://github.com/christianhg)! - fix: introduce internal `isDeferringMutations` flag
+
+- [#2050](https://github.com/portabletext/editor/pull/2050) [`4e5d9df`](https://github.com/portabletext/editor/commit/4e5d9df31b7ad7043178069b9f1d3a02e526d4bd) Thanks [@christianhg](https://github.com/christianhg)! - fix(debug): give operations their own namespace
+
+- [#2050](https://github.com/portabletext/editor/pull/2050) [`d3ee31d`](https://github.com/portabletext/editor/commit/d3ee31d38ac86be91cef8156ad9e7eaaac33aa72) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove assumption that operations can be performed recursively
+
+- [#2051](https://github.com/portabletext/editor/pull/2051) [`b575621`](https://github.com/portabletext/editor/commit/b575621ae5f4c528816e25f00c192b2b24b1e8a6) Thanks [@christianhg](https://github.com/christianhg)! - fix(value sync): use deep equality to prevent infinite sync loops
+
 ## 4.0.1
 
 ### Patch Changes
