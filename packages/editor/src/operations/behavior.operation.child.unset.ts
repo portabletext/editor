@@ -1,9 +1,9 @@
 import {applyAll} from '@portabletext/patches'
 import {isTextBlock} from '@portabletext/schema'
 import {Editor, Element, Transforms} from 'slate'
-import type {BehaviorOperationImplementation} from './behavior.operations'
+import type {OperationImplementation} from './operation.types'
 
-export const childUnsetOperationImplementation: BehaviorOperationImplementation<
+export const childUnsetOperationImplementation: OperationImplementation<
   'child.unset'
 > = ({context, operation}) => {
   const blockKey = operation.at[0]._key

@@ -1,8 +1,8 @@
 import type {PortableTextSpan} from '@portabletext/schema'
 import {Editor, Node, Path, Range, Transforms} from 'slate'
-import type {BehaviorOperationImplementation} from './behavior.operations'
+import type {OperationImplementation} from './operation.types'
 
-export const removeAnnotationOperationImplementation: BehaviorOperationImplementation<
+export const removeAnnotationOperationImplementation: OperationImplementation<
   'annotation.remove'
 > = ({operation}) => {
   const editor = operation.editor

@@ -1,7 +1,7 @@
 import {Transforms} from 'slate'
-import type {BehaviorOperationImplementation} from './behavior.operations'
+import type {OperationImplementation} from './operation.types'
 
-export const moveBackwardOperationImplementation: BehaviorOperationImplementation<
+export const moveBackwardOperationImplementation: OperationImplementation<
   'move.backward'
 > = ({operation}) => {
   Transforms.move(operation.editor, {

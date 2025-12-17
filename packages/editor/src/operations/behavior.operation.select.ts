@@ -1,9 +1,9 @@
 import {Transforms} from 'slate'
 import {IS_FOCUSED, IS_READ_ONLY} from 'slate-dom'
 import {toSlateRange} from '../internal-utils/to-slate-range'
-import type {BehaviorOperationImplementation} from './behavior.operations'
+import type {OperationImplementation} from './operation.types'
 
-export const selectOperationImplementation: BehaviorOperationImplementation<
+export const selectOperationImplementation: OperationImplementation<
   'select'
 > = ({context, operation}) => {
   const newSelection = toSlateRange({

@@ -1,8 +1,8 @@
 import {Transforms} from 'slate'
 import {getBlockKeyFromSelectionPoint} from '../utils/util.selection-point'
-import type {BehaviorOperationImplementation} from './behavior.operations'
+import type {OperationImplementation} from './operation.types'
 
-export const moveBlockOperationImplementation: BehaviorOperationImplementation<
+export const moveBlockOperationImplementation: OperationImplementation<
   'move.block'
 > = ({operation}) => {
   const originKey = getBlockKeyFromSelectionPoint({

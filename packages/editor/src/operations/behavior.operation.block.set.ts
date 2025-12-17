@@ -2,9 +2,9 @@ import {applyAll, set} from '@portabletext/patches'
 import {isTextBlock} from '@portabletext/schema'
 import {Transforms, type Node} from 'slate'
 import {parseMarkDefs} from '../utils/parse-blocks'
-import type {BehaviorOperationImplementation} from './behavior.operations'
+import type {OperationImplementation} from './operation.types'
 
-export const blockSetOperationImplementation: BehaviorOperationImplementation<
+export const blockSetOperationImplementation: OperationImplementation<
   'block.set'
 > = ({context, operation}) => {
   const blockIndex = operation.editor.blockIndexMap.get(operation.at[0]._key)
