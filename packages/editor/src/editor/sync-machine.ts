@@ -190,13 +190,34 @@ export const syncMachine = setup({
       )
     },
     'is new value': ({context, event}) => {
-      return (
-        event.type === 'update value' && context.previousValue !== event.value
+      if (event.type !== 'update value') {
+        return false
+      }
+
+      if (context.previousValue === event.value) {
+        return false
+      }
+
+      return !isEqualValues(
+        {schema: context.schema},
+        context.previousValue,
+        event.value,
       )
     },
     'value changed while syncing': ({context, event}) => {
-      assertEvent(event, 'done syncing')
-      return context.pendingValue !== event.value
+      if (event.type !== 'done syncing') {
+        return false
+      }
+
+      if (context.pendingValue === event.value) {
+        return false
+      }
+
+      return !isEqualValues(
+        {schema: context.schema},
+        context.pendingValue,
+        event.value,
+      )
     },
     'pending value equals previous value': ({context}) => {
       return isEqualValues(
