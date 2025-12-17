@@ -103,7 +103,6 @@ export const syncMachine = setup({
     context: {} as {
       initialValue: Array<PortableTextBlock> | undefined
       initialValueSynced: boolean
-      isProcessingLocalChanges: boolean
       keyGenerator: () => string
       schema: EditorSchema
       readOnly: boolean
@@ -119,12 +118,6 @@ export const syncMachine = setup({
       slateEditor: PortableTextSlateEditor
     },
     events: {} as
-      | {
-          type: 'has pending mutations'
-        }
-      | {
-          type: 'mutation'
-        }
       | {
           type: 'update value'
           value: Array<PortableTextBlock> | undefined
@@ -178,11 +171,11 @@ export const syncMachine = setup({
   guards: {
     'initial value synced': ({context}) => context.initialValueSynced,
     'is busy': ({context}) => {
-      const isProcessingLocalChanges = context.isProcessingLocalChanges
+      const isDeferringMutations = context.slateEditor.isDeferringMutations
       const isChanging = context.slateEditor.isProcessingRemoteChanges ?? false
-      const isBusy = isProcessingLocalChanges || isChanging
+      const isBusy = isDeferringMutations || isChanging
 
-      debug('isBusy', {isBusy, isProcessingLocalChanges, isChanging})
+      debug('isBusy', {isBusy, isDeferringMutations, isChanging})
 
       return isBusy
     },
@@ -221,7 +214,6 @@ export const syncMachine = setup({
   context: ({input}) => ({
     initialValue: input.initialValue,
     initialValueSynced: false,
-    isProcessingLocalChanges: false,
     keyGenerator: input.keyGenerator,
     schema: input.schema,
     readOnly: input.readOnly,
@@ -235,16 +227,6 @@ export const syncMachine = setup({
     }),
   ],
   on: {
-    'has pending mutations': {
-      actions: assign({
-        isProcessingLocalChanges: true,
-      }),
-    },
-    'mutation': {
-      actions: assign({
-        isProcessingLocalChanges: false,
-      }),
-    },
     'update readOnly': {
       actions: ['assign readOnly'],
     },

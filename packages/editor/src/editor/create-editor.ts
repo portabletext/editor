@@ -228,11 +228,7 @@ function createActors(config: {
 
   config.subscriptions.push(() => {
     const subscription = mutationActor.on('*', (event) => {
-      if (event.type === 'has pending mutations') {
-        syncActor.send({type: 'has pending mutations'})
-      }
       if (event.type === 'mutation') {
-        syncActor.send({type: 'mutation'})
         config.editorActor.send({
           type: 'mutation',
           patches: event.patches,
