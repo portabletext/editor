@@ -884,12 +884,13 @@ function updateBlock({
     slateEditor.isTextBlock(oldSlateBlock)
   ) {
     const oldBlockChildrenLength = oldSlateBlock.children.length
+
     if (slateBlock.children.length < oldBlockChildrenLength) {
       // Remove any children that have become superfluous
       Array.from(
         Array(oldBlockChildrenLength - slateBlock.children.length),
-      ).forEach((_, index) => {
-        const childIndex = oldBlockChildrenLength - 1 - index
+      ).forEach((_, i) => {
+        const childIndex = oldBlockChildrenLength - 1 - i
 
         if (childIndex > 0) {
           debug('Removing child')
