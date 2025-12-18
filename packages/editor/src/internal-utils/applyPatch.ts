@@ -3,6 +3,7 @@ import {
   type DiffMatchPatch,
   type InsertPatch,
   type Patch,
+  type SetIfMissingPatch,
   type SetPatch,
   type UnsetPatch,
 } from '@portabletext/patches'
@@ -43,6 +44,9 @@ export function createApplyPatch(
           changed = unsetPatch(editor, patch)
           break
         case 'set':
+          changed = setPatch(editor, patch)
+          break
+        case 'setIfMissing':
           changed = setPatch(editor, patch)
           break
         case 'diffMatchPatch':
@@ -208,8 +212,12 @@ function insertPatch(
   return true
 }
 
-function setPatch(editor: PortableTextSlateEditor, patch: SetPatch) {
+function setPatch(
+  editor: PortableTextSlateEditor,
+  patch: SetPatch | SetIfMissingPatch,
+) {
   let value = patch.value
+
   if (typeof patch.path[3] === 'string') {
     value = {}
     value[patch.path[3]] = patch.value
@@ -289,6 +297,10 @@ function setPatch(editor: PortableTextSlateEditor, patch: SetPatch) {
   if (isTextBlock && child) {
     if (Text.isText(child.node)) {
       if (Text.isText(value)) {
+        if (patch.type === 'setIfMissing') {
+          return false
+        }
+
         const oldText = child.node.text
         const newText = value.text
         if (oldText !== newText) {
