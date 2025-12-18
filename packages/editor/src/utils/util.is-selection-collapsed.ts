@@ -1,4 +1,5 @@
 import type {EditorSelection} from '../types/editor'
+import {isEqualPaths} from './util.is-equal-paths'
 
 /**
  * @public
@@ -9,8 +10,7 @@ export function isSelectionCollapsed(selection: EditorSelection) {
   }
 
   return (
-    JSON.stringify(selection.anchor.path) ===
-      JSON.stringify(selection.focus.path) &&
+    isEqualPaths(selection.anchor.path, selection.focus.path) &&
     selection.anchor.offset === selection.focus.offset
   )
 }
