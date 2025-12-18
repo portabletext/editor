@@ -47,6 +47,7 @@ import {RelayActorContext} from './relay-actor-context'
 import {RenderElement} from './render.element'
 import {RenderLeaf} from './render.leaf'
 import {RenderText, type RenderTextProps} from './render.text'
+import {SelectionStateProvider} from './selection-state-context'
 import {createWithHotkeys} from './slate-plugin.hotkeys'
 import {useDropPosition} from './use-drop-position'
 import {usePortableTextEditor} from './usePortableTextEditor'
@@ -977,38 +978,40 @@ export const PortableTextEditable = forwardRef<
   }
 
   return hasInvalidValue ? null : (
-    <SlateEditable
-      {...restProps}
-      ref={callbackRef}
-      data-read-only={readOnly}
-      autoFocus={false}
-      className={restProps.className || 'pt-editable'}
-      decorate={decorate}
-      onBlur={handleOnBlur}
-      onCopy={handleCopy}
-      onCut={handleCut}
-      onClick={handleClick}
-      onDOMBeforeInput={handleOnBeforeInput}
-      onDragStart={handleDragStart}
-      onDrag={handleDrag}
-      onDragEnd={handleDragEnd}
-      onDragEnter={handleDragEnter}
-      onDragOver={handleDragOver}
-      onDrop={handleDrop}
-      onDragLeave={handleDragLeave}
-      onFocus={handleOnFocus}
-      onKeyDown={handleKeyDown}
-      onKeyUp={handleKeyUp}
-      onPaste={handlePaste}
-      readOnly={readOnly}
-      // We have implemented our own placeholder logic with decorations.
-      // This 'renderPlaceholder' should not be used.
-      renderPlaceholder={undefined}
-      renderElement={renderElement}
-      renderLeaf={renderLeaf}
-      renderText={renderText}
-      scrollSelectionIntoView={scrollSelectionIntoViewToSlate}
-    />
+    <SelectionStateProvider>
+      <SlateEditable
+        {...restProps}
+        ref={callbackRef}
+        data-read-only={readOnly}
+        autoFocus={false}
+        className={restProps.className || 'pt-editable'}
+        decorate={decorate}
+        onBlur={handleOnBlur}
+        onCopy={handleCopy}
+        onCut={handleCut}
+        onClick={handleClick}
+        onDOMBeforeInput={handleOnBeforeInput}
+        onDragStart={handleDragStart}
+        onDrag={handleDrag}
+        onDragEnd={handleDragEnd}
+        onDragEnter={handleDragEnter}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+        onDragLeave={handleDragLeave}
+        onFocus={handleOnFocus}
+        onKeyDown={handleKeyDown}
+        onKeyUp={handleKeyUp}
+        onPaste={handlePaste}
+        readOnly={readOnly}
+        // We have implemented our own placeholder logic with decorations.
+        // This 'renderPlaceholder' should not be used.
+        renderPlaceholder={undefined}
+        renderElement={renderElement}
+        renderLeaf={renderLeaf}
+        renderText={renderText}
+        scrollSelectionIntoView={scrollSelectionIntoViewToSlate}
+      />
+    </SelectionStateProvider>
   )
 })
 

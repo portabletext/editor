@@ -1,21 +1,16 @@
-import {isTextBlock} from '@portabletext/schema'
 import {useSelector} from '@xstate/react'
 import {useContext, useMemo, useRef, type ReactElement} from 'react'
 import {useSlateStatic, type RenderLeafProps} from 'slate-react'
-import {getFocusSpan} from '../selectors/selector.get-focus-span'
-import {isOverlappingSelection} from '../selectors/selector.is-overlapping-selection'
-import {isSelectionCollapsed} from '../selectors/selector.is-selection-collapsed'
 import type {
   BlockAnnotationRenderProps,
   BlockChildRenderProps,
   BlockDecoratorRenderProps,
-  EditorSelection,
   RenderAnnotationFunction,
   RenderChildFunction,
   RenderDecoratorFunction,
 } from '../types/editor'
 import {EditorActorContext} from './editor-actor-context'
-import {getEditorSnapshot} from './editor-selector'
+import {SelectionStateContext} from './selection-state-context'
 
 export interface RenderSpanProps extends RenderLeafProps {
   children: ReactElement<any>
@@ -33,65 +28,9 @@ export function RenderSpan(props: RenderSpanProps) {
   )
   const spanRef = useRef<HTMLElement>(null)
 
-  /**
-   * A span is considered focused if the selection is collapsed and the caret
-   * is inside the span.
-   */
-  const focused = useSelector(editorActor, (editorActorSnapshot) => {
-    const snapshot = getEditorSnapshot({
-      editorActorSnapshot,
-      slateEditorInstance: slateEditor,
-    })
-
-    if (!snapshot.context.selection) {
-      return false
-    }
-
-    if (!isSelectionCollapsed(snapshot)) {
-      return false
-    }
-
-    const focusedSpan = getFocusSpan(snapshot)
-
-    if (!focusedSpan) {
-      return false
-    }
-
-    return focusedSpan.node._key === props.leaf._key
-  })
-
-  /**
-   * A span is considered selected if editor selection is overlapping with the
-   * span selection points.
-   */
-  const selected = useSelector(editorActor, (editorActorSnapshot) => {
-    const snapshot = getEditorSnapshot({
-      editorActorSnapshot,
-      slateEditorInstance: slateEditor,
-    })
-
-    if (!snapshot.context.selection) {
-      return false
-    }
-
-    const parent = props.children.props.parent
-    const block =
-      parent && isTextBlock(snapshot.context, parent) ? parent : undefined
-    const spanSelection: EditorSelection = block
-      ? {
-          anchor: {
-            path: [{_key: block._key}, 'children', {_key: props.leaf._key}],
-            offset: 0,
-          },
-          focus: {
-            path: [{_key: block._key}, 'children', {_key: props.leaf._key}],
-            offset: props.leaf.text.length,
-          },
-        }
-      : null
-
-    return isOverlappingSelection(spanSelection)(snapshot)
-  })
+  const selectionState = useContext(SelectionStateContext)
+  const focused = selectionState.focusedChildKey === props.leaf._key
+  const selected = selectionState.selectedChildKeys.has(props.leaf._key)
 
   const parent = props.children.props.parent
   const block = parent && slateEditor.isTextBlock(parent) ? parent : undefined

@@ -1,11 +1,7 @@
 import type {PortableTextTextBlock} from '@portabletext/schema'
-import {useRef, type ReactElement} from 'react'
-import {Range, type Element as SlateElement} from 'slate'
-import {
-  useSelected,
-  useSlateSelector,
-  type RenderElementProps,
-} from 'slate-react'
+import {useContext, useRef, type ReactElement} from 'react'
+import type {Element as SlateElement} from 'slate'
+import {useSlateSelector, type RenderElementProps} from 'slate-react'
 import type {DropPosition} from '../behaviors/behavior.core.drop-position'
 import type {
   BlockListItemRenderProps,
@@ -17,6 +13,7 @@ import type {
   RenderStyleFunction,
 } from '../types/editor'
 import {DropIndicator} from './render.drop-indicator'
+import {SelectionStateContext} from './selection-state-context'
 
 export function RenderTextBlock(props: {
   attributes: RenderElementProps['attributes']
@@ -33,13 +30,9 @@ export function RenderTextBlock(props: {
 }) {
   const blockRef = useRef<HTMLDivElement>(null)
 
-  const selected = useSelected()
-  const focused = useSlateSelector(
-    (editor) =>
-      selected &&
-      editor.selection !== null &&
-      Range.isCollapsed(editor.selection),
-  )
+  const {selectedBlockKeys, focusedBlockKey} = useContext(SelectionStateContext)
+  const selected = selectedBlockKeys.has(props.textBlock._key)
+  const focused = focusedBlockKey === props.textBlock._key
 
   const listIndex = useSlateSelector((editor) =>
     editor.listIndexMap.get(props.textBlock._key),
