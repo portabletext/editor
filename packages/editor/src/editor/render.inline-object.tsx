@@ -1,12 +1,7 @@
-import {useRef, type ReactElement} from 'react'
-import {Range, type Element as SlateElement} from 'slate'
+import {useContext, useRef, type ReactElement} from 'react'
+import type {Element as SlateElement} from 'slate'
 import {DOMEditor} from 'slate-dom'
-import {
-  useSelected,
-  useSlateSelector,
-  useSlateStatic,
-  type RenderElementProps,
-} from 'slate-react'
+import {useSlateStatic, type RenderElementProps} from 'slate-react'
 import {getPointBlock} from '../internal-utils/slate-utils'
 import type {
   BlockChildRenderProps,
@@ -15,6 +10,7 @@ import type {
 } from '../types/editor'
 import type {EditorSchema} from './editor-schema'
 import {RenderDefaultInlineObject} from './render.default-object'
+import {SelectionStateContext} from './selection-state-context'
 
 export function RenderInlineObject(props: {
   attributes: RenderElementProps['attributes']
@@ -27,13 +23,10 @@ export function RenderInlineObject(props: {
 }) {
   const inlineObjectRef = useRef<HTMLElement>(null)
   const slateEditor = useSlateStatic()
-  const selected = useSelected()
-  const focused = useSlateSelector(
-    (editor) =>
-      selected &&
-      editor.selection !== null &&
-      Range.isCollapsed(editor.selection),
-  )
+
+  const {selectedChildKeys, focusedChildKey} = useContext(SelectionStateContext)
+  const selected = selectedChildKeys.has(props.element._key)
+  const focused = focusedChildKey === props.element._key
 
   const legacySchemaType = props.legacySchema.inlineObjects.find(
     (inlineObject) => inlineObject.name === props.element._type,

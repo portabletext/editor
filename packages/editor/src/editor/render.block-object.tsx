@@ -1,11 +1,7 @@
 import type {PortableTextObject} from '@portabletext/schema'
-import {useRef, type ReactElement} from 'react'
-import {Range, type Element as SlateElement} from 'slate'
-import {
-  useSelected,
-  useSlateSelector,
-  type RenderElementProps,
-} from 'slate-react'
+import {useContext, useRef, type ReactElement} from 'react'
+import type {Element as SlateElement} from 'slate'
+import type {RenderElementProps} from 'slate-react'
 import type {DropPosition} from '../behaviors/behavior.core.drop-position'
 import type {
   BlockRenderProps,
@@ -15,6 +11,7 @@ import type {
 import type {EditorSchema} from './editor-schema'
 import {RenderDefaultBlockObject} from './render.default-object'
 import {DropIndicator} from './render.drop-indicator'
+import {SelectionStateContext} from './selection-state-context'
 
 export function RenderBlockObject(props: {
   attributes: RenderElementProps['attributes']
@@ -28,13 +25,10 @@ export function RenderBlockObject(props: {
   schema: EditorSchema
 }) {
   const blockObjectRef = useRef<HTMLDivElement>(null)
-  const selected = useSelected()
-  const focused = useSlateSelector(
-    (editor) =>
-      selected &&
-      editor.selection !== null &&
-      Range.isCollapsed(editor.selection),
-  )
+
+  const {selectedBlockKeys, focusedBlockKey} = useContext(SelectionStateContext)
+  const selected = selectedBlockKeys.has(props.element._key)
+  const focused = focusedBlockKey === props.element._key
 
   const legacySchemaType = props.legacySchema.blockObjects.find(
     (schemaType) => schemaType.name === props.element._type,
