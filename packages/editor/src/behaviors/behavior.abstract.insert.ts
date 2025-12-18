@@ -1,3 +1,5 @@
+import {isTextBlock} from '@portabletext/schema'
+import type {EditorSelector} from '../editor/editor-selector'
 import {isSelectionExpanded} from '../selectors'
 import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
 import {getLastBlock} from '../selectors/selector.get-last-block'
@@ -8,6 +10,22 @@ import {isEqualSelectionPoints} from '../utils/util.is-equal-selection-points'
 import {sliceTextBlock} from '../utils/util.slice-text-block'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
+
+function getUniqueBlockKey(
+  blockKey: string | undefined,
+): EditorSelector<string> {
+  return (snapshot) => {
+    if (!blockKey) {
+      return snapshot.context.keyGenerator()
+    }
+
+    if (snapshot.blockIndexMap.has(blockKey)) {
+      return snapshot.context.keyGenerator()
+    }
+
+    return blockKey
+  }
+}
 
 export const abstractInsertBehaviors = [
   defineBehavior({
@@ -40,10 +58,12 @@ export const abstractInsertBehaviors = [
         return false
       }
 
-      const firstBlockKey =
-        event.blocks.at(0)?._key ?? snapshot.context.keyGenerator()
-      const lastBlockKey =
-        event.blocks.at(-1)?._key ?? snapshot.context.keyGenerator()
+      const firstBlockKey = getUniqueBlockKey(event.blocks.at(0)?._key)(
+        snapshot,
+      )
+      const lastBlockKey = getUniqueBlockKey(event.blocks.at(-1)?._key)(
+        snapshot,
+      )
 
       return {firstBlockKey, lastBlockKey}
     },
@@ -52,7 +72,18 @@ export const abstractInsertBehaviors = [
         ...event.blocks.map((block, index) =>
           raise({
             type: 'insert.block',
-            block,
+            block:
+              index === 0
+                ? {
+                    ...block,
+                    _key: firstBlockKey,
+                  }
+                : index === event.blocks.length - 1
+                  ? {
+                      ...block,
+                      _key: lastBlockKey,
+                    }
+                  : block,
             placement: index === 0 ? 'before' : 'after',
             select: index !== event.blocks.length - 1 ? 'end' : 'none',
           }),
@@ -89,10 +120,12 @@ export const abstractInsertBehaviors = [
         return false
       }
 
-      const firstBlockKey =
-        event.blocks.at(0)?._key ?? snapshot.context.keyGenerator()
-      const lastBlockKey =
-        event.blocks.at(-1)?._key ?? snapshot.context.keyGenerator()
+      const firstBlockKey = getUniqueBlockKey(event.blocks.at(0)?._key)(
+        snapshot,
+      )
+      const lastBlockKey = getUniqueBlockKey(event.blocks.at(-1)?._key)(
+        snapshot,
+      )
 
       return {firstBlockKey, lastBlockKey}
     },
@@ -101,7 +134,18 @@ export const abstractInsertBehaviors = [
         ...event.blocks.map((block, index) =>
           raise({
             type: 'insert.block',
-            block,
+            block:
+              index === 0
+                ? {
+                    ...block,
+                    _key: firstBlockKey,
+                  }
+                : index === event.blocks.length - 1
+                  ? {
+                      ...block,
+                      _key: lastBlockKey,
+                    }
+                  : block,
             placement: 'after',
             select: index !== event.blocks.length - 1 ? 'end' : 'none',
           }),
@@ -148,10 +192,12 @@ export const abstractInsertBehaviors = [
         return false
       }
 
-      const firstBlockKey =
-        event.blocks.at(0)?._key ?? snapshot.context.keyGenerator()
-      const lastBlockKey =
-        event.blocks.at(-1)?._key ?? snapshot.context.keyGenerator()
+      const firstBlockKey = getUniqueBlockKey(event.blocks.at(0)?._key)(
+        snapshot,
+      )
+      const lastBlockKey = getUniqueBlockKey(event.blocks.at(-1)?._key)(
+        snapshot,
+      )
 
       return {focusTextBlock, firstBlockKey, lastBlockKey}
     },
@@ -160,12 +206,23 @@ export const abstractInsertBehaviors = [
         ...event.blocks.map((block, index) =>
           raise({
             type: 'insert.block',
-            block,
+            block:
+              index === 0
+                ? {
+                    ...block,
+                    _key: firstBlockKey,
+                  }
+                : index === event.blocks.length - 1
+                  ? {
+                      ...block,
+                      _key: lastBlockKey,
+                    }
+                  : block,
             placement: index === 0 ? 'auto' : 'after',
             select: index !== event.blocks.length - 1 ? 'end' : 'none',
           }),
         ),
-        ...(event.select === 'none' || event.select === 'start'
+        ...(event.select === 'none'
           ? [
               raise({
                 type: 'select.block',
@@ -173,13 +230,21 @@ export const abstractInsertBehaviors = [
                 select: 'start',
               }),
             ]
-          : [
-              raise({
-                type: 'select.block',
-                at: [{_key: lastBlockKey}],
-                select: 'end',
-              }),
-            ]),
+          : event.select === 'start'
+            ? [
+                raise({
+                  type: 'select.block',
+                  at: [{_key: firstBlockKey}],
+                  select: 'start',
+                }),
+              ]
+            : [
+                raise({
+                  type: 'select.block',
+                  at: [{_key: lastBlockKey}],
+                  select: 'end',
+                }),
+              ]),
       ],
     ],
   }),
@@ -214,26 +279,39 @@ export const abstractInsertBehaviors = [
         },
         block: focusTextBlock.node,
       })
-      const firstBlockKey =
-        event.blocks.at(0)?._key ?? snapshot.context.keyGenerator()
+      const firstBlockKey = getUniqueBlockKey(event.blocks.at(0)?._key)(
+        snapshot,
+      )
+      const lastBlockKey = getUniqueBlockKey(event.blocks.at(-1)?._key)(
+        snapshot,
+      )
+
+      const isFirstBlockTextBlock = isTextBlock(
+        snapshot.context,
+        event.blocks.at(0),
+      )
 
       return {
         firstBlockKey,
+        lastBlockKey,
         focusBlockStartPoint,
         focusBlockEndPoint,
         focusTextBlockAfter,
         selection: snapshot.context.selection,
+        isFirstBlockTextBlock,
       }
     },
     actions: [
       (
-        {event},
+        {snapshot, event},
         {
           focusBlockEndPoint,
           focusTextBlockAfter,
           selection,
           firstBlockKey,
+          lastBlockKey,
           focusBlockStartPoint,
+          isFirstBlockTextBlock,
         },
       ) => [
         ...event.blocks.flatMap((block, index) =>
@@ -252,7 +330,10 @@ export const abstractInsertBehaviors = [
                     ]),
                 raise({
                   type: 'insert.block',
-                  block,
+                  block: {
+                    ...block,
+                    _key: firstBlockKey,
+                  },
                   placement: 'auto',
                   select: 'end',
                 }),
@@ -261,16 +342,23 @@ export const abstractInsertBehaviors = [
               ? [
                   raise({
                     type: 'insert.block',
-                    block,
+                    block: {
+                      ...block,
+                      _key: lastBlockKey,
+                    },
                     placement: 'after',
                     select: 'end',
                   }),
-                  raise({
-                    type: 'insert.block',
-                    block: focusTextBlockAfter,
-                    placement: 'auto',
-                    select: event.select === 'end' ? 'none' : 'end',
-                  }),
+                  ...(!isEmptyTextBlock(snapshot.context, focusTextBlockAfter)
+                    ? [
+                        raise({
+                          type: 'insert.block',
+                          block: focusTextBlockAfter,
+                          placement: 'auto',
+                          select: event.select === 'end' ? 'none' : 'end',
+                        }),
+                      ]
+                    : []),
                 ]
               : [
                   raise({
@@ -290,7 +378,8 @@ export const abstractInsertBehaviors = [
             ]
           : event.select === 'start'
             ? [
-                isEqualSelectionPoints(selection.focus, focusBlockStartPoint)
+                isEqualSelectionPoints(selection.focus, focusBlockStartPoint) ||
+                !isFirstBlockTextBlock
                   ? raise({
                       type: 'select.block',
                       at: [{_key: firstBlockKey}],
@@ -310,17 +399,68 @@ export const abstractInsertBehaviors = [
   }),
   defineBehavior({
     on: 'insert.blocks',
-    guard: ({event}) => event.placement === 'auto',
+    guard: ({snapshot, event}) => {
+      if (event.placement !== 'auto') {
+        return false
+      }
+
+      const selection = snapshot.context.selection
+      const firstBlockKey = getUniqueBlockKey(event.blocks.at(0)?._key)(
+        snapshot,
+      )
+      const lastBlockKey = getUniqueBlockKey(event.blocks.at(-1)?._key)(
+        snapshot,
+      )
+
+      return {firstBlockKey, lastBlockKey, selection}
+    },
     actions: [
-      ({event}) =>
-        event.blocks.map((block, index) =>
+      ({event}, {firstBlockKey, lastBlockKey, selection}) => [
+        ...event.blocks.map((block, index) =>
           raise({
             type: 'insert.block',
-            block,
+            block:
+              index === 0
+                ? {
+                    ...block,
+                    _key: firstBlockKey,
+                  }
+                : index === event.blocks.length - 1
+                  ? {
+                      ...block,
+                      _key: lastBlockKey,
+                    }
+                  : block,
             placement: index === 0 ? 'auto' : 'after',
-            select: event.select ?? 'end',
+            select:
+              index !== event.blocks.length - 1
+                ? 'end'
+                : (event.select ?? 'end'),
           }),
         ),
+        ...(event.select === 'none'
+          ? [
+              raise({
+                type: 'select',
+                at: selection,
+              }),
+            ]
+          : event.select === 'start'
+            ? [
+                raise({
+                  type: 'select.block',
+                  at: [{_key: firstBlockKey}],
+                  select: 'start',
+                }),
+              ]
+            : [
+                raise({
+                  type: 'select.block',
+                  at: [{_key: lastBlockKey}],
+                  select: 'end',
+                }),
+              ]),
+      ],
     ],
   }),
   defineBehavior({
