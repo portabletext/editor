@@ -404,6 +404,71 @@ describe(applyPatch.name, () => {
     })
   })
 
+  describe('`setIfMissing`', () => {
+    describe('block object property', () => {
+      test('missing value', () => {
+        expect(
+          applyPatch([image1], {
+            type: 'setIfMissing',
+            path: [0, 'alt'],
+            value: 'Sanity.io is a headless CMS',
+          }),
+        ).toEqual([{...image1, alt: 'Sanity.io is a headless CMS'}])
+      })
+
+      test('existing value', () => {
+        expect(
+          applyPatch([image1], {
+            type: 'setIfMissing',
+            path: [0, 'src'],
+            value: 'https://example.com/image-a.png',
+          }),
+        ).toEqual([image1])
+      })
+
+      test('`undefined` value', () => {
+        expect(
+          applyPatch(
+            [
+              {
+                ...image1,
+                alt: undefined,
+              },
+            ],
+            {
+              type: 'setIfMissing',
+              path: [0, 'alt'],
+              value: 'Sanity.io is a headless CMS',
+            },
+          ),
+        ).toEqual([
+          {
+            ...image1,
+            alt: 'Sanity.io is a headless CMS',
+          },
+        ])
+      })
+
+      test('`null` value', () => {
+        expect(
+          applyPatch(
+            [
+              {
+                ...image1,
+                alt: null,
+              },
+            ],
+            {
+              type: 'setIfMissing',
+              path: [0, 'alt'],
+              value: 'Sanity.io is a headless CMS',
+            },
+          ),
+        ).toEqual([{...image1, alt: null}])
+      })
+    })
+  })
+
   describe('`unset`', () => {
     test('root', () => {
       expect(
