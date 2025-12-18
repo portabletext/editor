@@ -1,5 +1,11 @@
 # Changelog
 
+## 4.0.3
+
+### Patch Changes
+
+- [#2055](https://github.com/portabletext/editor/pull/2055) [`563bd6a`](https://github.com/portabletext/editor/commit/563bd6a109055428060498dc5bd7f8b39141f482) Thanks [@christianhg](https://github.com/christianhg)! - fix(`insert.blocks`): issue with inserting blocks with duplicate keys
+
 ## 4.0.2
 
 ### Patch Changes
