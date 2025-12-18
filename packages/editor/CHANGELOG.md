@@ -1,5 +1,33 @@
 # Changelog
 
+## 4.1.0
+
+### Minor Changes
+
+- [#2059](https://github.com/portabletext/editor/pull/2059) [`9e49556`](https://github.com/portabletext/editor/commit/9e495566240c73534bfc80ed93926314292eb5d4) Thanks [@christianhg](https://github.com/christianhg)! - feat(`patches`): support `setIfMissing` patches
+
+  `setIfMissing` is like `set`, except existing keys will be preserved and not overwritten:
+
+  ```ts
+  editor.send({
+    type: 'patches',
+    patches: [
+      {
+        type: 'setIfMissing',
+        origin: 'remote',
+        path: [{_key: 'block-key'}, 'level'],
+        value: 1,
+      },
+    ],
+    // Snapshot not important
+    snapshot: undefined,
+  })
+  ```
+
+### Patch Changes
+
+- [#2057](https://github.com/portabletext/editor/pull/2057) [`df0f265`](https://github.com/portabletext/editor/commit/df0f26503be65074377603bcb5e2ee079fddab42) Thanks [@christianhg](https://github.com/christianhg)! - fix(`patches`): remove unreachable code
+
 ## 4.0.3
 
 ### Patch Changes
