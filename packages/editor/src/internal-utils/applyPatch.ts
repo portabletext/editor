@@ -372,41 +372,6 @@ function setPatch(editor: PortableTextSlateEditor, patch: SetPatch) {
     }
 
     return true
-  } else if (Element.isElement(block.node) && patch.path.length === 1) {
-    const {children, ...nextRest} = value as unknown as PortableTextBlock
-    const {children: _prevChildren, ...prevRest} = block.node || {
-      children: undefined,
-    }
-
-    // Set any block properties
-    editor.apply({
-      type: 'set_node',
-      path: [block.index],
-      properties: {...prevRest},
-      newProperties: nextRest,
-    })
-
-    // Replace the children in the block
-    // Note that children must be explicitly inserted, and can't be set with set_node
-    const blockNode = block.node
-
-    blockNode.children.forEach((child, childIndex) => {
-      editor.apply({
-        type: 'remove_node',
-        path: [block.index, blockNode.children.length - 1 - childIndex],
-        node: child,
-      })
-    })
-
-    if (Array.isArray(children)) {
-      children.forEach((child, childIndex) => {
-        editor.apply({
-          type: 'insert_node',
-          path: [block.index, childIndex],
-          node: child,
-        })
-      })
-    }
   } else if (block && 'value' in block.node) {
     if (patch.path.length > 1 && patch.path[1] !== 'children') {
       const newVal = applyAll(block.node.value, [
