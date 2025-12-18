@@ -1,10 +1,13 @@
-import type {EditorSelection} from '../types/editor'
-import {isEqualSelectionPoints} from '../utils/util.is-equal-selection-points'
+import type {EditorSelection, EditorSelectionPoint} from '../types/editor'
+import {
+  getSelectionEndPoint,
+  getSelectionStartPoint,
+  isEqualSelectionPoints,
+} from '../utils'
+import {comparePoints} from '../utils/util.compare-points'
+import {getBlockKeyFromSelectionPoint} from '../utils/util.selection-point'
 import type {EditorSelector} from './../editor/editor-selector'
-import {getSelectionEndPoint} from './selector.get-selection-end-point'
-import {getSelectionStartPoint} from './selector.get-selection-start-point'
-import {isPointAfterSelection} from './selector.is-point-after-selection'
-import {isPointBeforeSelection} from './selector.is-point-before-selection'
+import type {EditorSnapshot} from './../editor/editor-snapshot'
 
 /**
  * @public
@@ -13,169 +16,221 @@ export function isOverlappingSelection(
   selection: EditorSelection,
 ): EditorSelector<boolean> {
   return (snapshot) => {
-    if (!selection || !snapshot.context.selection) {
+    const editorSelection = snapshot.context.selection
+
+    if (!selection || !editorSelection) {
       return false
     }
 
-    const selectionStartPoint = getSelectionStartPoint({
-      ...snapshot,
-      context: {
-        ...snapshot.context,
-        selection,
-      },
-    })
-    const selectionEndPoint = getSelectionEndPoint({
-      ...snapshot,
-      context: {
-        ...snapshot.context,
-        selection,
-      },
-    })
+    const selectionStart = getSelectionStartPoint(selection)
+    const selectionEnd = getSelectionEndPoint(selection)
+    const editorSelectionStart = getSelectionStartPoint(editorSelection)
+    const editorSelectionEnd = getSelectionEndPoint(editorSelection)
 
-    const originalSelectionStartPoint = getSelectionStartPoint(snapshot)
-    const originalSelectionEndPoint = getSelectionEndPoint(snapshot)
+    const selectionStartBlockKey = getBlockKeyFromSelectionPoint(selectionStart)
+    const selectionEndBlockKey = getBlockKeyFromSelectionPoint(selectionEnd)
+    const editorSelectionStartBlockKey =
+      getBlockKeyFromSelectionPoint(editorSelectionStart)
+    const editorSelectionEndBlockKey =
+      getBlockKeyFromSelectionPoint(editorSelectionEnd)
 
     if (
-      !selectionStartPoint ||
-      !selectionEndPoint ||
-      !originalSelectionStartPoint ||
-      !originalSelectionEndPoint
+      !selectionStartBlockKey ||
+      !selectionEndBlockKey ||
+      !editorSelectionStartBlockKey ||
+      !editorSelectionEndBlockKey
     ) {
       return false
     }
 
-    const startPointEqualToOriginalStartPoint = isEqualSelectionPoints(
-      selectionStartPoint,
-      originalSelectionStartPoint,
+    const selectionStartBlockIndex = snapshot.blockIndexMap.get(
+      selectionStartBlockKey,
     )
-    const endPointEqualToOriginalEndPoint = isEqualSelectionPoints(
-      selectionEndPoint,
-      originalSelectionEndPoint,
+    const selectionEndBlockIndex =
+      snapshot.blockIndexMap.get(selectionEndBlockKey)
+    const editorSelectionStartBlockIndex = snapshot.blockIndexMap.get(
+      editorSelectionStartBlockKey,
     )
-
-    if (
-      startPointEqualToOriginalStartPoint &&
-      endPointEqualToOriginalEndPoint
-    ) {
-      return true
-    }
-
-    const startPointBeforeSelection =
-      isPointBeforeSelection(selectionStartPoint)(snapshot)
-    const startPointAfterSelection =
-      isPointAfterSelection(selectionStartPoint)(snapshot)
-    const endPointBeforeSelection =
-      isPointBeforeSelection(selectionEndPoint)(snapshot)
-    const endPointAfterSelection =
-      isPointAfterSelection(selectionEndPoint)(snapshot)
-
-    const originalStartPointBeforeStartPoint = isPointBeforeSelection(
-      originalSelectionStartPoint,
-    )({
-      ...snapshot,
-      context: {
-        ...snapshot.context,
-        selection: {
-          anchor: selectionStartPoint,
-          focus: selectionStartPoint,
-        },
-      },
-    })
-    const originalStartPointAfterStartPoint = isPointAfterSelection(
-      originalSelectionStartPoint,
-    )({
-      ...snapshot,
-      context: {
-        ...snapshot.context,
-        selection: {
-          anchor: selectionStartPoint,
-          focus: selectionStartPoint,
-        },
-      },
-    })
-
-    const originalEndPointBeforeEndPoint = isPointBeforeSelection(
-      originalSelectionEndPoint,
-    )({
-      ...snapshot,
-      context: {
-        ...snapshot.context,
-        selection: {
-          anchor: selectionEndPoint,
-          focus: selectionEndPoint,
-        },
-      },
-    })
-    const originalEndPointAfterEndPoint = isPointAfterSelection(
-      originalSelectionEndPoint,
-    )({
-      ...snapshot,
-      context: {
-        ...snapshot.context,
-        selection: {
-          anchor: selectionEndPoint,
-          focus: selectionEndPoint,
-        },
-      },
-    })
-
-    const startPointEqualToOriginalEndPoint = isEqualSelectionPoints(
-      selectionStartPoint,
-      originalSelectionEndPoint,
-    )
-    const endPointEqualToOriginalStartPoint = isEqualSelectionPoints(
-      selectionEndPoint,
-      originalSelectionStartPoint,
+    const editorSelectionEndBlockIndex = snapshot.blockIndexMap.get(
+      editorSelectionEndBlockKey,
     )
 
-    // If all checks fail then we can deduce that the selection does not exist
-    // and there doesn't overlap with the snapshot selection
     if (
-      !endPointEqualToOriginalStartPoint &&
-      !startPointEqualToOriginalEndPoint &&
-      !originalStartPointBeforeStartPoint &&
-      !originalStartPointAfterStartPoint &&
-      !originalEndPointBeforeEndPoint &&
-      !originalEndPointAfterEndPoint
+      selectionStartBlockIndex === undefined ||
+      selectionEndBlockIndex === undefined ||
+      editorSelectionStartBlockIndex === undefined ||
+      editorSelectionEndBlockIndex === undefined
     ) {
       return false
     }
 
-    if (endPointBeforeSelection && !endPointEqualToOriginalStartPoint) {
+    const [selectionMinBlockIndex, selectionMaxBlockIndex] =
+      selectionStartBlockIndex <= selectionEndBlockIndex
+        ? [selectionStartBlockIndex, selectionEndBlockIndex]
+        : [selectionEndBlockIndex, selectionStartBlockIndex]
+    const [editorSelectionMinBlockIndex, editorSelectionMaxBlockIndex] =
+      editorSelectionStartBlockIndex <= editorSelectionEndBlockIndex
+        ? [editorSelectionStartBlockIndex, editorSelectionEndBlockIndex]
+        : [editorSelectionEndBlockIndex, editorSelectionStartBlockIndex]
+
+    if (selectionMaxBlockIndex < editorSelectionMinBlockIndex) {
       return false
     }
 
-    if (startPointAfterSelection && !startPointEqualToOriginalEndPoint) {
+    if (selectionMinBlockIndex > editorSelectionMaxBlockIndex) {
       return false
     }
 
-    if (
-      !originalStartPointBeforeStartPoint &&
-      originalStartPointAfterStartPoint &&
-      !originalEndPointBeforeEndPoint &&
-      originalEndPointAfterEndPoint
-    ) {
-      return !endPointEqualToOriginalStartPoint
-    }
+    return hasPointLevelOverlap(
+      snapshot,
+      selectionStart,
+      selectionEnd,
+      editorSelectionStart,
+      editorSelectionEnd,
+    )
+  }
+}
 
-    if (
-      originalStartPointBeforeStartPoint &&
-      !originalStartPointAfterStartPoint &&
-      originalEndPointBeforeEndPoint &&
-      !originalEndPointAfterEndPoint
-    ) {
-      return !startPointEqualToOriginalEndPoint
-    }
+/**
+ * Check if selections overlap at the point level.
+ * Called after confirming block ranges overlap.
+ */
+function hasPointLevelOverlap(
+  snapshot: EditorSnapshot,
+  selectionStart: EditorSelectionPoint,
+  selectionEnd: EditorSelectionPoint,
+  editorSelectionStart: EditorSelectionPoint,
+  editorSelectionEnd: EditorSelectionPoint,
+): boolean {
+  // Check for exact equality first
+  if (
+    isEqualSelectionPoints(selectionStart, editorSelectionStart) &&
+    isEqualSelectionPoints(selectionEnd, editorSelectionEnd)
+  ) {
+    return true
+  }
 
-    if (
-      !startPointAfterSelection ||
-      !startPointBeforeSelection ||
-      !endPointAfterSelection ||
-      !endPointBeforeSelection
-    ) {
-      return true
-    }
+  // Compare selection start against editor selection bounds
+  const selectionStartVsEditorSelectionStart = comparePoints(
+    snapshot,
+    selectionStart,
+    editorSelectionStart,
+  )
+  const selectionStartVsEditorSelectionEnd = comparePoints(
+    snapshot,
+    selectionStart,
+    editorSelectionEnd,
+  )
 
+  // Compare selection end against editor selection bounds
+  const selectionEndVsEditorSelectionStart = comparePoints(
+    snapshot,
+    selectionEnd,
+    editorSelectionStart,
+  )
+  const selectionEndVsEditorSelectionEnd = comparePoints(
+    snapshot,
+    selectionEnd,
+    editorSelectionEnd,
+  )
+
+  // Compare editor selection bounds against selection bounds
+  const editorSelectionStartVsSelectionStart = comparePoints(
+    snapshot,
+    editorSelectionStart,
+    selectionStart,
+  )
+  const editorSelectionEndVsSelectionEnd = comparePoints(
+    snapshot,
+    editorSelectionEnd,
+    selectionEnd,
+  )
+
+  // Derive boolean flags
+  const selectionStartBeforeEditorSelectionStart =
+    selectionStartVsEditorSelectionStart === -1
+  const selectionStartAfterEditorSelectionEnd =
+    selectionStartVsEditorSelectionEnd === 1
+  const selectionEndBeforeEditorSelectionStart =
+    selectionEndVsEditorSelectionStart === -1
+  const selectionEndAfterEditorSelectionEnd =
+    selectionEndVsEditorSelectionEnd === 1
+
+  const editorSelectionStartBeforeSelectionStart =
+    editorSelectionStartVsSelectionStart === -1
+  const editorSelectionStartAfterSelectionStart =
+    editorSelectionStartVsSelectionStart === 1
+  const editorSelectionEndBeforeSelectionEnd =
+    editorSelectionEndVsSelectionEnd === -1
+  const editorSelectionEndAfterSelectionEnd =
+    editorSelectionEndVsSelectionEnd === 1
+
+  const selectionStartEqualEditorSelectionEnd = isEqualSelectionPoints(
+    selectionStart,
+    editorSelectionEnd,
+  )
+  const selectionEndEqualEditorSelectionStart = isEqualSelectionPoints(
+    selectionEnd,
+    editorSelectionStart,
+  )
+
+  // If all relative position checks fail, selections don't overlap
+  if (
+    !selectionEndEqualEditorSelectionStart &&
+    !selectionStartEqualEditorSelectionEnd &&
+    !editorSelectionStartBeforeSelectionStart &&
+    !editorSelectionStartAfterSelectionStart &&
+    !editorSelectionEndBeforeSelectionEnd &&
+    !editorSelectionEndAfterSelectionEnd
+  ) {
     return false
   }
+
+  // Selection ends before editor selection starts
+  if (
+    selectionEndBeforeEditorSelectionStart &&
+    !selectionEndEqualEditorSelectionStart
+  ) {
+    return false
+  }
+
+  // Selection starts after editor selection ends
+  if (
+    selectionStartAfterEditorSelectionEnd &&
+    !selectionStartEqualEditorSelectionEnd
+  ) {
+    return false
+  }
+
+  // Editor selection is entirely after the input selection start
+  if (
+    !editorSelectionStartBeforeSelectionStart &&
+    editorSelectionStartAfterSelectionStart &&
+    !editorSelectionEndBeforeSelectionEnd &&
+    editorSelectionEndAfterSelectionEnd
+  ) {
+    return !selectionEndEqualEditorSelectionStart
+  }
+
+  // Editor selection is entirely before the input selection end
+  if (
+    editorSelectionStartBeforeSelectionStart &&
+    !editorSelectionStartAfterSelectionStart &&
+    editorSelectionEndBeforeSelectionEnd &&
+    !editorSelectionEndAfterSelectionEnd
+  ) {
+    return !selectionStartEqualEditorSelectionEnd
+  }
+
+  // If any of these conditions is false, there's overlap
+  if (
+    !selectionStartAfterEditorSelectionEnd ||
+    !selectionStartBeforeEditorSelectionStart ||
+    !selectionEndAfterEditorSelectionEnd ||
+    !selectionEndBeforeEditorSelectionStart
+  ) {
+    return true
+  }
+
+  return false
 }
