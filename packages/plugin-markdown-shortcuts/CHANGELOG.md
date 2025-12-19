@@ -1,5 +1,14 @@
 # Changelog
 
+## 5.0.5
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @portabletext/editor@4.1.1
+  - @portabletext/plugin-character-pair-decorator@5.0.5
+  - @portabletext/plugin-input-rule@2.0.5
+
 ## 5.0.4
 
 ### Patch Changes
