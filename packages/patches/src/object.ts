@@ -21,6 +21,18 @@ export function applyPatchToObject(
       throw new Error('Cannot set value of an object to a non-object')
     }
 
+    if (patch.type === 'setIfMissing') {
+      if (
+        typeof patch.value === 'object' &&
+        patch.value !== null &&
+        !Array.isArray(patch.value)
+      ) {
+        return value
+      }
+
+      throw new Error('Cannot setIfMissing value of an object to a non-object')
+    }
+
     if (patch.type === 'unset') {
       return undefined
     }
