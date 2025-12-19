@@ -467,6 +467,59 @@ describe(applyPatch.name, () => {
         ).toEqual([{...image1, alt: null}])
       })
     })
+
+    describe('existing object property', () => {
+      test('existing empty object', () => {
+        const object = {
+          _type: 'image',
+          _key: 'k0',
+          _analysis: {},
+        }
+
+        expect(
+          applyPatch(object, {
+            type: 'setIfMissing',
+            path: ['_analysis'],
+            value: {status: 'pending'},
+          }),
+        ).toEqual(object)
+      })
+
+      test('existing object with values', () => {
+        const object = {
+          _type: 'image',
+          _key: 'k0',
+          _analysis: {
+            createdAt: '2025-08-21T07:22:46.357Z',
+          },
+        }
+
+        expect(
+          applyPatch(object, {
+            type: 'setIfMissing',
+            path: ['_analysis'],
+            value: {},
+          }),
+        ).toEqual(object)
+      })
+
+      test('nested in array with keyed path', () => {
+        const blockWithAnalysis = {
+          _type: 'block',
+          _key: 'block-1',
+          _analysis: {},
+          children: [],
+        }
+
+        expect(
+          applyPatch([blockWithAnalysis], {
+            type: 'setIfMissing',
+            path: [{_key: 'block-1'}, '_analysis'],
+            value: {},
+          }),
+        ).toEqual([blockWithAnalysis])
+      })
+    })
   })
 
   describe('`unset`', () => {
