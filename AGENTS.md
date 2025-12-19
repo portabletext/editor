@@ -15,4 +15,4 @@
 - Only use type casting as a last resort
 - Use backticks when referencing code in comments and other text
 - Don't use one-character variable names
-- Use full, easily-undertood variable names
+- Use full, easily-understood variable names
