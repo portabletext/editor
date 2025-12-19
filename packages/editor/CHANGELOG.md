@@ -1,5 +1,28 @@
 # Changelog
 
+## 4.1.2
+
+### Patch Changes
+
+- [#2066](https://github.com/portabletext/editor/pull/2066) [`25806bb`](https://github.com/portabletext/editor/commit/25806bbb09d7327aca59efad85d5fa9a2a965ce4) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove `useSlateSelector` usage
+
+- [#2064](https://github.com/portabletext/editor/pull/2064) [`f082dd1`](https://github.com/portabletext/editor/commit/f082dd1945758a5099901acf5ed91dd9906864dc) Thanks [@christianhg](https://github.com/christianhg)! - fix: replace `JSON.stringify` usage with proper `isEqualPaths` util
+
+- [#2066](https://github.com/portabletext/editor/pull/2066) [`c486169`](https://github.com/portabletext/editor/commit/c4861691bf018a4e87ebdf059a50baaeb5a9a484) Thanks [@christianhg](https://github.com/christianhg)! - fix: optimize internal logic that calculates `focused` and `selected` states
+
+  Before this change, each rendered block and child subscribed individually to
+  selection state using Slate's selector system. When deleting large selections,
+  hundreds of these subscriptions would clean up synchronously during React's
+  commit phase, blocking the main thread and causing the editor to freeze for
+  several seconds.
+
+  Now, selection state is computed once in a shared context and components
+  perform simple O(1) lookups. This eliminates per-component subscription
+  overhead and makes bulk deletions near-instant, even for documents with
+  hundreds of blocks.
+
+- [#2064](https://github.com/portabletext/editor/pull/2064) [`a880f48`](https://github.com/portabletext/editor/commit/a880f48ab2aa340c88b9eadc5bc1b3a3d86745c8) Thanks [@christianhg](https://github.com/christianhg)! - fix(selectors): optimize `isOverlappingSelection`
+
 ## 4.1.1
 
 ### Patch Changes
