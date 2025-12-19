@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.0.4
+
+### Patch Changes
+
+- [#2062](https://github.com/portabletext/editor/pull/2062) [`70aef20`](https://github.com/portabletext/editor/commit/70aef20670920d3f659c6858d1664c3679533f92) Thanks [@christianhg](https://github.com/christianhg)! - fix: handle `setIfMissing` patch type on existing objects
+
+  Previously, applying a `setIfMissing` patch to an existing object would throw
+  an error. Now it correctly returns the existing object unchanged.
+
 ## 2.0.3
 
 ### Patch Changes
