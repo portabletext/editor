@@ -8,7 +8,6 @@ import {
   Transforms,
   type Descendant,
 } from 'slate'
-import {DOMEditor} from 'slate-dom'
 import {createPlaceholderBlock} from '../internal-utils/create-placeholder-block'
 import {isEqualChildren, isEqualMarks} from '../internal-utils/equality'
 import {getFocusBlock, getFocusChild} from '../internal-utils/slate-utils'
@@ -97,10 +96,6 @@ export function insertBlock(options: {
 
   if (!startBlock || !startBlockPath || !endBlock || !endBlockPath) {
     throw new Error('Unable to insert block without a start and end block')
-  }
-
-  if (!editor.selection && select !== 'none') {
-    DOMEditor.focus(editor)
   }
 
   if (!at) {
