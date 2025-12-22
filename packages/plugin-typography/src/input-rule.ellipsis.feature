@@ -79,7 +79,8 @@ Feature: Ellipsis Input Rule
 
   Scenario Outline: Smart undo aborted after text changes
     Given the text <text>
-    When <inserted text> is inserted
+    When the editor is focused
+    And <inserted text> is inserted
     And <new text> is typed
     And "{Backspace}" is pressed
     Then the text is <final text>
