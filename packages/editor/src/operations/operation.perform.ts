@@ -51,7 +51,7 @@ export function performOperation({
   context: OperationContext
   operation: Operation
 }) {
-  Editor.withoutNormalizing(operation.editor, () => {
+  const perform = () => {
     try {
       switch (operation.type) {
         case 'annotation.add': {
@@ -184,9 +184,15 @@ export function performOperation({
     } catch (error) {
       console.error(
         new Error(
-          `Executing "${operation.type}" failed due to: ${error.message}`,
+          `Performing "${operation.type}" failed due to: ${error.message}`,
         ),
       )
     }
-  })
+  }
+
+  if (Editor.isNormalizing(operation.editor)) {
+    Editor.withoutNormalizing(operation.editor, perform)
+  } else {
+    perform()
+  }
 }
