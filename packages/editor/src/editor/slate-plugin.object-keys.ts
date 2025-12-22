@@ -3,6 +3,7 @@ import {Editor, Element, Node, Path, Transforms} from 'slate'
 import {isEqualMarks} from '../internal-utils/equality'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import type {EditorActor} from './editor-machine'
+import type {EditorContext, EditorSnapshot} from './editor-snapshot'
 import {withNormalizeNode} from './with-normalizing-node'
 
 /**
@@ -10,6 +11,8 @@ import {withNormalizeNode} from './with-normalizing-node'
  *
  */
 export function createWithObjectKeys(editorActor: EditorActor) {
+  const context = editorActor.getSnapshot().context
+
   return function withKeys(
     editor: PortableTextSlateEditor,
   ): PortableTextSlateEditor {
@@ -38,19 +41,30 @@ export function createWithObjectKeys(editorActor: EditorActor) {
       }
 
       if (operation.type === 'split_node') {
-        const existingKeys = [...Node.descendants(editor)].map(
-          ([node]) => node._key,
-        )
+        const _key =
+          operation.properties._key &&
+          keyExistsAtPath(
+            {
+              blockIndexMap: editor.blockIndexMap,
+              context: {
+                schema: context.schema,
+                value: editor.value,
+              },
+            },
+            operation.path,
+            operation.properties._key,
+          )
+            ? undefined
+            : operation.properties._key
 
         apply({
           ...operation,
           properties: {
             ...operation.properties,
             _key:
-              operation.properties._key === undefined ||
-              existingKeys.includes(operation.properties._key)
+              _key === undefined
                 ? editorActor.getSnapshot().context.keyGenerator()
-                : operation.properties._key,
+                : _key,
           },
         })
 
@@ -59,19 +73,30 @@ export function createWithObjectKeys(editorActor: EditorActor) {
 
       if (operation.type === 'insert_node') {
         if (!Editor.isEditor(operation.node)) {
-          const existingKeys = [...Node.descendants(editor)].map(
-            ([node]) => node._key,
-          )
+          const _key =
+            operation.node._key &&
+            keyExistsAtPath(
+              {
+                blockIndexMap: editor.blockIndexMap,
+                context: {
+                  schema: context.schema,
+                  value: editor.value,
+                },
+              },
+              operation.path,
+              operation.node._key,
+            )
+              ? undefined
+              : operation.node._key
 
           apply({
             ...operation,
             node: {
               ...operation.node,
               _key:
-                operation.node._key === undefined ||
-                existingKeys.includes(operation.node._key)
+                _key === undefined
                   ? editorActor.getSnapshot().context.keyGenerator()
-                  : operation.node._key,
+                  : _key,
             },
           })
 
@@ -283,4 +308,36 @@ export function createWithObjectKeys(editorActor: EditorActor) {
 
     return editor
   }
+}
+
+function keyExistsAtPath(
+  snapshot: Pick<EditorSnapshot, 'blockIndexMap'> & {
+    context: Pick<EditorContext, 'schema' | 'value'>
+  },
+  path: Path,
+  key: string,
+): boolean {
+  if (path.length === 1) {
+    return snapshot.blockIndexMap.has(key)
+  }
+
+  if (path.length > 2) {
+    return false
+  }
+
+  const parentBlockIndex = path.at(0)
+  const parentBlock =
+    parentBlockIndex !== undefined
+      ? snapshot.context.value.at(parentBlockIndex)
+      : undefined
+
+  if (!parentBlock) {
+    return false
+  }
+
+  if (!isTextBlock(snapshot.context, parentBlock)) {
+    return false
+  }
+
+  return parentBlock.children.some((child) => child._key === key)
 }
