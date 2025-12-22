@@ -7,7 +7,7 @@ import {debugWithName} from '../internal-utils/debug'
 import {performOperation} from '../operations/operation.perform'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {defaultKeyGenerator} from '../utils/key-generator'
-import {abstractBehaviors} from './behavior.abstract'
+import {getEventBehaviors, type BehaviorIndex} from './behavior.index'
 import type {BehaviorAction} from './behavior.types.action'
 import type {Behavior} from './behavior.types.behavior'
 import {
@@ -34,8 +34,9 @@ function eventCategory(event: BehaviorEvent) {
 
 export function performEvent({
   mode,
-  behaviors,
-  remainingEventBehaviors,
+  behaviorIndex,
+  abstractBehaviorIndex,
+  forwardFromBehaviors,
   event,
   editor,
   keyGenerator,
@@ -45,8 +46,9 @@ export function performEvent({
   sendBack,
 }: {
   mode: 'send' | 'raise' | 'execute' | 'forward'
-  behaviors: Array<Behavior>
-  remainingEventBehaviors: Array<Behavior>
+  behaviorIndex: BehaviorIndex
+  abstractBehaviorIndex: BehaviorIndex
+  forwardFromBehaviors?: Array<Behavior>
   event: BehaviorEvent
   editor: PortableTextSlateEditor
   keyGenerator: () => string
@@ -70,45 +72,13 @@ export function performEvent({
     JSON.stringify(event, null, 2),
   )
 
-  const eventBehaviors = [
-    ...remainingEventBehaviors,
-    ...abstractBehaviors,
-  ].filter((behavior) => {
-    // Catches all events
-    if (behavior.on === '*') {
-      return true
-    }
-
-    const [listenedNamespace] =
-      behavior.on.includes('*') && behavior.on.includes('.')
-        ? behavior.on.split('.')
-        : [undefined]
-    const [eventNamespace] = event.type.includes('.')
-      ? event.type.split('.')
-      : [undefined]
-
-    // Handles scenarios like a Behavior listening for `select.*` and the event
-    // `select.block` is fired.
-    if (
-      listenedNamespace !== undefined &&
-      eventNamespace !== undefined &&
-      listenedNamespace === eventNamespace
-    ) {
-      return true
-    }
-
-    // Handles scenarios like a Behavior listening for `select.*` and the event
-    // `select` is fired.
-    if (
-      listenedNamespace !== undefined &&
-      eventNamespace === undefined &&
-      listenedNamespace === event.type
-    ) {
-      return true
-    }
-
-    return behavior.on === event.type
-  })
+  const eventBehaviors =
+    mode === 'forward' && forwardFromBehaviors
+      ? forwardFromBehaviors
+      : getEventBehaviors(
+          mode === 'execute' ? abstractBehaviorIndex : behaviorIndex,
+          event.type,
+        )
 
   if (eventBehaviors.length === 0 && isSyntheticBehaviorEvent(event)) {
     nativeEvent?.preventDefault()
@@ -270,14 +240,15 @@ export function performEvent({
             }
 
             if (action.type === 'forward') {
-              const remainingEventBehaviors = eventBehaviors.slice(
+              const remainingBehaviors = eventBehaviors.slice(
                 eventBehaviorIndex + 1,
               )
 
               performEvent({
                 mode: mode === 'execute' ? 'execute' : 'forward',
-                behaviors,
-                remainingEventBehaviors: remainingEventBehaviors,
+                behaviorIndex,
+                abstractBehaviorIndex,
+                forwardFromBehaviors: remainingBehaviors,
                 event: action.event,
                 editor,
                 keyGenerator,
@@ -293,9 +264,8 @@ export function performEvent({
             if (action.type === 'raise') {
               performEvent({
                 mode: mode === 'execute' ? 'execute' : 'raise',
-                behaviors,
-                remainingEventBehaviors:
-                  mode === 'execute' ? remainingEventBehaviors : behaviors,
+                behaviorIndex,
+                abstractBehaviorIndex,
                 event: action.event,
                 editor,
                 keyGenerator,
@@ -310,8 +280,8 @@ export function performEvent({
 
             performEvent({
               mode: 'execute',
-              behaviors,
-              remainingEventBehaviors: [],
+              behaviorIndex,
+              abstractBehaviorIndex,
               event: action.event,
               editor,
               keyGenerator,
