@@ -11,8 +11,13 @@ import {
   setup,
   type ActorRefFrom,
 } from 'xstate'
+import {abstractBehaviors} from '../behaviors/behavior.abstract'
 import type {BehaviorConfig} from '../behaviors/behavior.config'
 import {coreBehaviorsConfig} from '../behaviors/behavior.core'
+import {
+  buildBehaviorIndex,
+  type BehaviorIndex,
+} from '../behaviors/behavior.index'
 import {performEvent} from '../behaviors/behavior.perform-event'
 import type {
   BehaviorEvent,
@@ -177,7 +182,9 @@ export const editorMachine = setup({
   types: {
     context: {} as {
       behaviors: Set<BehaviorConfig>
-      behaviorsSorted: boolean
+      behaviorIndex: BehaviorIndex
+      abstractBehaviorIndex: BehaviorIndex
+      behaviorsIndexed: boolean
       converters: Set<Converter>
       getLegacySchema: () => PortableTextMemberSchemaTypes
       keyGenerator: () => string
@@ -212,7 +219,7 @@ export const editorMachine = setup({
 
         return new Set([...context.behaviors, event.behaviorConfig])
       },
-      behaviorsSorted: false,
+      behaviorsIndexed: false,
     }),
     'remove behavior from context': assign({
       behaviors: ({context, event}) => {
@@ -222,6 +229,7 @@ export const editorMachine = setup({
 
         return new Set([...context.behaviors])
       },
+      behaviorsIndexed: false,
     }),
     'add slate editor to context': assign({
       slateEditor: ({context, event}) => {
@@ -309,14 +317,10 @@ export const editorMachine = setup({
       assertEvent(event, ['behavior event'])
 
       try {
-        const behaviors = [...context.behaviors.values()].map(
-          (config) => config.behavior,
-        )
-
         performEvent({
           mode: 'send',
-          behaviors,
-          remainingEventBehaviors: behaviors,
+          behaviorIndex: context.behaviorIndex,
+          abstractBehaviorIndex: context.abstractBehaviorIndex,
           event: event.behaviorEvent,
           editor: event.editor,
           keyGenerator: context.keyGenerator,
@@ -352,12 +356,22 @@ export const editorMachine = setup({
         )
       }
     },
-    'sort behaviors': assign({
-      behaviors: ({context}) =>
-        !context.behaviorsSorted
-          ? new Set(sortByPriority([...context.behaviors.values()]))
-          : context.behaviors,
-      behaviorsSorted: true,
+    'index behaviors': assign(({context}) => {
+      if (context.behaviorsIndexed) {
+        return {}
+      }
+
+      const sortedConfigs = sortByPriority([...context.behaviors.values()])
+      const allBehaviors = [
+        ...sortedConfigs.map((config) => config.behavior),
+        ...abstractBehaviors,
+      ]
+
+      return {
+        behaviorIndex: buildBehaviorIndex(allBehaviors),
+        abstractBehaviorIndex: buildBehaviorIndex(abstractBehaviors),
+        behaviorsIndexed: true,
+      }
     }),
   },
   guards: {
@@ -380,7 +394,12 @@ export const editorMachine = setup({
   id: 'editor',
   context: ({input}) => ({
     behaviors: new Set(coreBehaviorsConfig),
-    behaviorsSorted: false,
+    behaviorIndex: buildBehaviorIndex([
+      ...coreBehaviorsConfig.map((config) => config.behavior),
+      ...abstractBehaviors,
+    ]),
+    abstractBehaviorIndex: buildBehaviorIndex(abstractBehaviors),
+    behaviorsIndexed: false,
     converters: new Set(input.converters ?? []),
     getLegacySchema: input.getLegacySchema,
     keyGenerator: input.keyGenerator,
@@ -414,7 +433,7 @@ export const editorMachine = setup({
           initial: 'determine initial edit mode',
           on: {
             'behavior event': {
-              actions: ['sort behaviors', 'handle behavior event'],
+              actions: ['index behaviors', 'handle behavior event'],
               guard: ({event}) =>
                 event.behaviorEvent.type === 'clipboard.copy' ||
                 event.behaviorEvent.type === 'mouse.click' ||
@@ -481,7 +500,7 @@ export const editorMachine = setup({
               actions: ['emit read only'],
             },
             'behavior event': {
-              actions: ['sort behaviors', 'handle behavior event'],
+              actions: ['index behaviors', 'handle behavior event'],
             },
             'blur': {
               actions: 'handle blur',
