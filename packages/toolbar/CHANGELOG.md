@@ -1,5 +1,12 @@
 # Changelog
 
+## 5.0.7
+
+### Patch Changes
+
+- Updated dependencies [[`793c8a0`](https://github.com/portabletext/editor/commit/793c8a0a0ca99eb79e2e99ec3da44bd4a5e219c5), [`56587f5`](https://github.com/portabletext/editor/commit/56587f5a2645bd1238de743946f2661ba199b744)]:
+  - @portabletext/editor@4.1.3
+
 ## 5.0.6
 
 ### Patch Changes
