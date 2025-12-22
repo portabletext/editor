@@ -25,7 +25,8 @@ Feature: Ellipsis Input Rule
   Scenario: Inserting ellipsis inside a decorator
     Given the text "foo.."
     And "strong" around "foo.."
-    When the caret is put after "foo.."
+    When the editor is focused
+    And the caret is put after "foo.."
     And "." is typed
     Then the text is "foo…"
     And "foo…" has marks "strong"
@@ -33,7 +34,8 @@ Feature: Ellipsis Input Rule
   Scenario: Inserting ellipsis at the edge of a decorator
     Given the text "foo.."
     And "strong" around "foo"
-    When the caret is put after "foo.."
+    When the editor is focused
+    And the caret is put after "foo.."
     And "." is typed
     Then the text is "foo,…"
     And "foo" has marks "strong"
@@ -42,7 +44,8 @@ Feature: Ellipsis Input Rule
   Scenario: Inserting ellipsis inside an annotation
     Given the text "foo.."
     And a "link" "l1" around "foo.."
-    When the caret is put after "foo.."
+    When the editor is focused
+    And the caret is put after "foo.."
     And "." is typed
     Then the text is "foo…"
     And "foo…" has marks "l1"
@@ -50,7 +53,8 @@ Feature: Ellipsis Input Rule
   Scenario: Inserting ellipsis at the edge of an annotation
     Given the text "foo.."
     And a "link" "l1" around "foo"
-    When the caret is put after "foo.."
+    When the editor is focused
+    And the caret is put after "foo.."
     And "." is typed
     Then the text is "foo,…"
     And "foo" has marks "l1"
@@ -58,7 +62,8 @@ Feature: Ellipsis Input Rule
 
   Scenario Outline: Smart undo with Backspace
     Given the text <text>
-    When <inserted text> is inserted
+    When the editor is focused
+    And <inserted text> is inserted
     And "{Backspace}" is pressed
     Then the text is <new text>
 
@@ -85,7 +90,8 @@ Feature: Ellipsis Input Rule
 
   Scenario Outline: Smart undo aborted after selection changes
     Given the text <text>
-    When <inserted text> is inserted
+    When the editor is focused
+    And <inserted text> is inserted
     And "{ArrowLeft}" is pressed
     And "{Backspace}" is pressed
     Then the text is <final text>

@@ -5,7 +5,8 @@ Feature: Insert Break
 
   Scenario Outline: Breaking text block
     Given the text "foo"
-    When the caret is put <position>
+    When the editor is focused
+    And the caret is put <position>
     And "{Enter}" is pressed
     And "bar" is typed
     Then the text is <text>
@@ -19,7 +20,8 @@ Feature: Insert Break
 
   Scenario Outline: Breaking second text block
     Given the text "foo|bar"
-    When the caret is put <position>
+    When the editor is focused
+    And the caret is put <position>
     And "{Enter}" is pressed
     And "baz" is typed
     Then the text is <text>
@@ -36,7 +38,8 @@ Feature: Insert Break
 
   Scenario: Breaking before inline object
     Given the text "foo,{stock-ticker},bar"
-    When the caret is put after "foo"
+    When the editor is focused
+    And the caret is put after "foo"
     And "{Enter}" is pressed
     And "baz" is typed
     Then the text is "foo|baz,{stock-ticker},bar"
@@ -44,7 +47,8 @@ Feature: Insert Break
 
   Scenario: Pressing Enter when selecting the entire content
     Given the text "foo|{image}|bar"
-    When everything is selected
+    When the editor is focused
+    And everything is selected
     And "{Enter}" is pressed
     Then the text is ""
     When undo is performed
@@ -52,7 +56,8 @@ Feature: Insert Break
 
   Scenario: Pressing Enter on a block object
     Given the text "foo|{image}"
-    When the caret is put after "foo"
+    When the editor is focused
+    And the caret is put after "foo"
     And "{ArrowRight}" is pressed
     And "{Enter}" is pressed
     Then the text is "foo|{image}|"

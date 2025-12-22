@@ -8,8 +8,9 @@ Feature: Removing Blocks
     Given the text "foo" in block "b1"
     And the text "bar" in block "b2"
     And the text "baz" in block "b3"
-    When the caret is put before "bar"
-    And "Delete" is pressed 4 times
+    When the editor is focused
+    And the caret is put before "bar"
+    And "{Delete}" is pressed 4 times
     Then the text is "foo|baz"
     And "foo" is in block "b1"
     And "baz" is in block "b3"
@@ -18,8 +19,9 @@ Feature: Removing Blocks
     Given the text "foo" in block "b1"
     And the text "bar" in block "b2"
     And the text "baz" in block "b3"
-    When the caret is put after "bar"
-    And "Backspace" is pressed 4 times
+    When the editor is focused
+    And the caret is put after "bar"
+    And "{Backspace}" is pressed 4 times
     Then the text is "foo|baz"
     And "foo" is in block "b1"
     And "baz" is in block "b3"

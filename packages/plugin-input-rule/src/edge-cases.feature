@@ -5,7 +5,8 @@ Feature: Edge Cases
 
   Scenario Outline: Longer Transform
     Given the text <text>
-    When <inserted text> is inserted
+    When the editor is focused
+    And <inserted text> is inserted
     And "new" is typed
     Then the text is <new text>
 
@@ -20,7 +21,8 @@ Feature: Edge Cases
 
   Scenario Outline: End String Rule
     Given the text <text>
-    When <inserted text> is inserted
+    When the editor is focused
+    And <inserted text> is inserted
     And "new" is typed
     Then the text is <new text>
 
@@ -36,7 +38,8 @@ Feature: Edge Cases
 
   Scenario Outline: Non-Global Rule
     Given the text <text>
-    When <inserted text> is inserted
+    When the editor is focused
+    And <inserted text> is inserted
     And "new" is typed
     Then the text is <new text>
 
@@ -52,7 +55,8 @@ Feature: Edge Cases
 
   Scenario Outline: Writing after Multiple Groups Rule
     Given the text <text>
-    When <inserted text> is inserted
+    When the editor is focused
+    And <inserted text> is inserted
     And "new" is typed
     Then the text is <new text>
 
@@ -66,7 +70,8 @@ Feature: Edge Cases
 
   Scenario Outline: Replacing 'a' and 'c'
     Given the text <text>
-    When <inserted text> is inserted
+    When the editor is focused
+    And <inserted text> is inserted
     And "new" is typed
     Then the text is <new text>
 
@@ -77,7 +82,8 @@ Feature: Edge Cases
 
   Scenario Outline: Undoing Multiple Groups Rule
     Given the text <text>
-    When <inserted text> is inserted
+    When the editor is focused
+    And <inserted text> is inserted
     Then the text is <before undo>
     When undo is performed
     Then the text is <after undo>
@@ -91,6 +97,7 @@ Feature: Edge Cases
       | ""      | "xfyxoyxoy"   | "zfzzozzoz" | "xfyxoyxoy" |
 
   Scenario Outline: Preserving inline objects
+    When the editor is focused
     Given the text <text>
     When <inserted text> is inserted
     And "new" is typed
@@ -105,19 +112,22 @@ Feature: Edge Cases
 
   Scenario: Preserving adjoining inline object and placing caret correctly
     Given the text "(c,{stock-ticker},"
-    When the caret is put after "c"
+    When the editor is focused
+    And the caret is put after "c"
     And ")new" is typed
     Then the text is "©new,{stock-ticker},"
 
   Scenario: Preserving adjoining inline object and placing caret correctly
     Given the text "#,{stock-ticker},"
-    When the caret is put after "#"
+    When the editor is focused
+    And the caret is put after "#"
     And " new" is typed
     Then the text is "new,{stock-ticker},"
 
   Scenario Outline: H1 rule
     Given the text <text>
-    When the caret is put <position>
+    When the editor is focused
+    And the caret is put <position>
     And <key> is pressed
     And "# " is inserted
     And "new" is typed
@@ -139,7 +149,8 @@ Feature: Edge Cases
 
   Scenario Outline: Better H2 rule
     Given the text <text>
-    When the caret is put <position>
+    When the editor is focused
+    And the caret is put <position>
     And <key> is pressed
     And "## " is inserted
     And "new" is typed
@@ -158,7 +169,8 @@ Feature: Edge Cases
 
   Scenario Outline: Unmatched Groups Rule
     Given the text <text>
-    When the caret is put <position>
+    When the editor is focused
+    And the caret is put <position>
     And <inserted text> is inserted
     And "new" is typed
     Then the text is <new text>
@@ -169,7 +181,8 @@ Feature: Edge Cases
 
   Scenario Outline: Expanded selection
     Given the text <text>
-    When <selection> is selected
+    When the editor is focused
+    And <selection> is selected
     And <inserted text> is inserted
     And "new" is typed
     Then the text is <new text>
@@ -183,7 +196,8 @@ Feature: Edge Cases
 
   Scenario Outline: Undo after transform on expanded selection
     Given the text <text>
-    When <selection> is selected
+    When the editor is focused
+    And <selection> is selected
     And <inserted text> is inserted
     Then the text is <before undo>
     When undo is performed

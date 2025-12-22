@@ -14,7 +14,8 @@ Feature: Emoji Picker
 
   Scenario Outline: Is only triggered when an initial colon is typed
     Given the text <text>
-    When the caret is put <position>
+    When the editor is focused
+    And the caret is put <position>
     And <inserted text> is inserted
     Then the text is <final text>
     And the keyword is <keyword>
@@ -110,7 +111,8 @@ Feature: Emoji Picker
 
   Scenario Outline: Inserting longer trigger text
     Given the text <text>
-    When <inserted text> is inserted
+    When the editor is focused
+    And <inserted text> is inserted
     And <new text> is typed
     Then the text is <final text>
 
@@ -124,7 +126,8 @@ Feature: Emoji Picker
   Scenario Outline: Matching inside decorator
     Given the text <text>
     And "strong" around <decorated>
-    When the caret is put <position>
+    When the editor is focused
+    And the caret is put <position>
     And <keyword> is typed
     Then the text is <final text>
 
@@ -136,7 +139,8 @@ Feature: Emoji Picker
   Scenario Outline: Triggering at the edge of decorator
     Given the text "foo bar baz"
     And "strong" around "bar"
-    When the caret is put <position>
+    When the editor is focused
+    And the caret is put <position>
     And ":j" is typed
     Then the keyword is "j"
 
@@ -150,7 +154,8 @@ Feature: Emoji Picker
   Scenario Outline: Matching at the edge of decorator
     Given the text "foo bar baz"
     And "strong" around "bar"
-    When the caret is put <position>
+    When the editor is focused
+    And the caret is put <position>
     And ":joy:" is typed
     Then the text is <final text>
 
@@ -164,7 +169,8 @@ Feature: Emoji Picker
   Scenario Outline: Matching inside annotation
     Given the text <text>
     And a "link" "l1" around <annotated>
-    When the caret is put <position>
+    When the editor is focused
+    And the caret is put <position>
     And <keyword> is typed
     Then the text is <final text>
 
@@ -176,7 +182,8 @@ Feature: Emoji Picker
   Scenario Outline: Triggering at the edge of an annotation
     Given the text "foo bar baz"
     And a "link" "l1" around "bar"
-    When the caret is put <position>
+    When the editor is focused
+    And the caret is put <position>
     And ":j" is typed
     Then the keyword is "j"
 
@@ -190,7 +197,8 @@ Feature: Emoji Picker
   Scenario Outline: Matching at the edge of an annotation
     Given the text "foo bar baz"
     And a "link" "l1" around "bar"
-    When the caret is put <position>
+    When the editor is focused
+    And the caret is put <position>
     And ":joy:" is typed
     Then the text is <final text>
 
@@ -216,7 +224,8 @@ Feature: Emoji Picker
 
   Scenario Outline: Navigating away from the keyword
     Given the text <text>
-    When the caret is put <position>
+    When the editor is focused
+    And the caret is put <position>
     And <keyword> is typed
     And <button> is pressed
     And "{Enter}" is pressed
@@ -251,7 +260,8 @@ Feature: Emoji Picker
 
   Scenario: Narrowing keyword by deletion
     Given the text "foo"
-    When the caret is put after "fo"
+    When the editor is focused
+    And the caret is put after "fo"
     And <inserted text> is inserted
     And "{ArrowLeft}" is pressed
     And "{Backspace}" is pressed

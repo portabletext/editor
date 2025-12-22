@@ -5,31 +5,36 @@ Feature: Lists
 
   Scenario: Clearing list item on Enter
     Given the text ">#:foo|>#:"
-    When the caret is put after ""
+    When the editor is focused
+    And the caret is put after ""
     And "{Enter}" is pressed
     And "bar" is typed
     Then the text is ">#:foo|bar"
 
   Scenario: Indenting list item on Tab
     Given the text ">#:foo|>#:"
-    When the caret is put after ""
+    When the editor is focused
+    And the caret is put after ""
     And "{Tab}" is pressed
     And "bar" is typed
     Then the text is ">#:foo|>>#:bar"
 
   Scenario: Unindenting list item on Shift+Tab
     Given the text ">#:foo|>>#:bar"
-    When the caret is put before "bar"
+    When the editor is focused
+    And the caret is put before "bar"
     And "{Shift>}{Tab}{/Shift}" is pressed
     Then the text is ">#:foo|>#:bar"
 
   Scenario: Pressing Delete in an empty list item
     Given the text ">#:f|h1:bar"
-    When the caret is put before "f"
+    When the editor is focused
+    And the caret is put before "f"
     And "{Delete}" is pressed 2 times
     Then the text is ">#h1:bar"
 
   Scenario Outline: Pressing Backspace after an empty list item
+    When the editor is focused
     Given the text <text>
     When the caret is put <caret position>
     And "{Backspace}" is pressed
@@ -153,7 +158,8 @@ Feature: Lists
 
   Scenario Outline: Deleting list
     Given the text <text>
-    When <selection> is selected
+    When the editor is focused
+    And <selection> is selected
     And "{Backspace}" is pressed
     Then the text is <new text>
 
@@ -166,7 +172,8 @@ Feature: Lists
 
   Scenario: Undo after deleting list
     Given the text ">#:foo|>>#:bar"
-    When "fooba" is selected
+    When the editor is focused
+    And "fooba" is selected
     And "{Backspace}" is pressed
     Then the text is ">#:r"
     When undo is performed

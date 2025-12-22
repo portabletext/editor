@@ -6,9 +6,10 @@ Feature: Decorators
 
   Scenario Outline: Inserting text at the edge of a decorator
     Given the text <text>
-    When <decorated> is selected
+    When the editor is focused
+    And <decorated> is selected
     And "strong" is toggled
-    When the caret is put <position>
+    And the caret is put <position>
     And "new" is typed
     Then the text is <new text>
 
@@ -24,7 +25,8 @@ Feature: Decorators
   Scenario Outline: Toggling decorator at the edge of a decorator
     Given the text <text>
     And "em" around <decorated>
-    When the caret is put <position>
+    When the editor is focused
+    And the caret is put <position>
     And "strong" is toggled
     And "new" is typed
     Then the text is <new text>
@@ -41,9 +43,10 @@ Feature: Decorators
 
   Scenario: Writing on top of a decorator
     Given the text "foo bar baz"
-    When "bar" is selected
+    When the editor is focused
+    And "bar" is selected
     And "strong" is toggled
-    When "removed" is typed
+    And "removed" is typed
     Then the text is "foo ,removed, baz"
     And "removed" has marks "strong"
 
@@ -65,7 +68,8 @@ Feature: Decorators
 
   Scenario: Toggling bold inside italic as you write
     Given the text ""
-    When the caret is put after ""
+    When the editor is focused
+    And the caret is put after ""
     And "em" is toggled
     And "foo " is typed
     And "strong" is toggled
@@ -79,7 +83,8 @@ Feature: Decorators
 
   Scenario: Toggling decorator mid-text and navigating left to clear it
     Given the text "foo"
-    When "strong" is toggled
+    When the editor is focused
+    And "strong" is toggled
     And "{ArrowLeft}" is pressed
     And "{ArrowRight}" is pressed
     And "bar" is typed
@@ -88,8 +93,9 @@ Feature: Decorators
 
   Scenario: Deleting marked text and writing again, marked
     Given the text ""
-    When the caret is put after ""
-    When "strong" is toggled
+    When the editor is focused
+    And the caret is put after ""
+    And "strong" is toggled
     And "foo" is typed
     And "{Backspace}" is pressed 3 times
     And "bar" is typed
@@ -97,7 +103,8 @@ Feature: Decorators
 
   Scenario Outline: Deleting expanded selection ending in a decorator
     Given the text <text>
-    When "bar" is selected
+    When the editor is focused
+    And "bar" is selected
     And "strong" is toggled
     And "foobar" is selected <direction>
     And <button> is pressed
@@ -118,7 +125,8 @@ Feature: Decorators
 
   Scenario Outline: Deleting expanded selection starting in a decorator
     Given the text <text>
-    When "foo" is selected
+    When the editor is focused
+    And "foo" is selected
     And "strong" is toggled
     And "foobar" is selected <direction>
     And <button> is pressed
@@ -139,7 +147,8 @@ Feature: Decorators
 
   Scenario: Deleting expanded selection with decorator toggled on
     Given the text "foo|bar"
-    When the caret is put after "bar"
+    When the editor is focused
+    And the caret is put after "bar"
     And "strong" is toggled
     And "foobar" is selected
     And "{Backspace}" is pressed
@@ -149,7 +158,8 @@ Feature: Decorators
 
   Scenario: Adding bold across an empty block and typing in the same
     Given the text "foo"
-    When "{Enter}" is pressed 2 times
+    When the editor is focused
+    And "{Enter}" is pressed 2 times
     And "bar" is typed
     And "foobar" is selected
     And "strong" is toggled
@@ -160,7 +170,8 @@ Feature: Decorators
 
   Scenario: Toggling bold across an empty block
     Given the text "foo"
-    When "{Enter}" is pressed 2 times
+    When the editor is focused
+    And "{Enter}" is pressed 2 times
     And "bar" is typed
     Then the text is "foo||bar"
     When "ooba" is selected
@@ -208,7 +219,8 @@ Feature: Decorators
   Scenario: Splitting block before decorator
     Given the text "foo"
     And "strong" around "foo"
-    When the caret is put before "foo"
+    When the editor is focused
+    And the caret is put before "foo"
     And "{Enter}" is pressed
     And "{ArrowUp}" is pressed
     And "bar" is typed
@@ -219,7 +231,8 @@ Feature: Decorators
   Scenario Outline: Splitting block at the edge of decorator
     Given the text "foo bar baz"
     And "strong" around "bar"
-    When the caret is put <position>
+    When the editor is focused
+    And the caret is put <position>
     And "{Enter}" is pressed
     Then the text is <new text>
     And the caret is <new position>
@@ -233,7 +246,8 @@ Feature: Decorators
 
   Scenario: Toggling decorators in empty block
     Given the text ""
-    When "foo" is typed
+    When the editor is focused
+    And "foo" is typed
     And "{Backspace}" is pressed 3 times
     And "strong" is toggled
     Then the text is ""
@@ -241,7 +255,8 @@ Feature: Decorators
 
   Scenario: Splitting empty decorated block
     Given the text ""
-    When the caret is put after ""
+    When the editor is focused
+    And the caret is put after ""
     And "strong" is toggled
     And "{Enter}" is pressed
     And "foo" is typed

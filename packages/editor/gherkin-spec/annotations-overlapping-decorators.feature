@@ -8,7 +8,8 @@ Feature: Annotations Overlapping Decorators
     Given the text <text>
     And a "link" "l1" around <annotated>
     And "strong" around <decorated>
-    When the caret is put <position>
+    When the editor is focused
+    And the caret is put <position>
     And "new" is typed
     Then the text is <new text>
 
@@ -33,7 +34,8 @@ Feature: Annotations Overlapping Decorators
     Given the text <text>
     And a "link" "l1" around <annotated>
     And "strong" around <decorated>
-    When the caret is put <position>
+    When the editor is focused
+    And the caret is put <position>
     # This one is tricky since it requires the editor to know up-front that
     # typing at the current position shouldn't produce bold text (since the
     # strong decorator is contained within the adjoining annotation).
@@ -53,6 +55,7 @@ Feature: Annotations Overlapping Decorators
       | "foo bar baz" | "bar"     | "bar"     | before " baz" | "foo ,bar,new, baz" | "strong" |
 
   Scenario Outline: Writing on top of a decorated annotation
+    When the editor is focused
     Given the text "foo bar baz"
     And a "link" "l1" around <annotated>
     And "strong" around <decorated>
@@ -72,7 +75,8 @@ Feature: Annotations Overlapping Decorators
     Given the text "bar"
     And a "link" "l1" around "bar"
     And "strong" around "bar"
-    When the caret is put before "bar"
+    When the editor is focused
+    And the caret is put before "bar"
     And "{Enter}" is pressed
     And "{ArrowUp}" is pressed
     And "foo" is typed
@@ -84,7 +88,8 @@ Feature: Annotations Overlapping Decorators
     Given the text "bar"
     And a "link" "l1" around "bar"
     And "strong" around "bar"
-    When the caret is put after "bar"
+    When the editor is focused
+    And the caret is put after "bar"
     And "{Enter}" is pressed
     And "baz" is typed
     Then the text is "bar|baz"
@@ -95,7 +100,8 @@ Feature: Annotations Overlapping Decorators
     Given the text "foobar"
     And a "link" "l1" around "bar"
     And "strong" around "bar"
-    When the caret is put after "bar"
+    When the editor is focused
+    And the caret is put after "bar"
     And "{Enter}" is pressed
     And "baz" is typed
     Then the text is "foo,bar|baz"

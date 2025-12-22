@@ -6,7 +6,8 @@ Feature: Annotations Across Blocks
 
   Scenario: Adding annotation across blocks
     Given the text ""
-    When "foo" is typed
+    When the editor is focused
+    And "foo" is typed
     And "{Enter}" is pressed
     And "bar" is typed
     And "foobar" is selected
@@ -16,7 +17,8 @@ Feature: Annotations Across Blocks
 
   Scenario: Adding annotation across blocks (backwards selection)
     Given the text ""
-    When "foo" is typed
+    When the editor is focused
+    And "foo" is typed
     And "{Enter}" is pressed
     And "bar" is typed
     And "foobar" is selected backwards
@@ -25,8 +27,9 @@ Feature: Annotations Across Blocks
     And "bar" has marks "l2"
 
   Scenario: Adding annotation across an image
-    Given the text "foo|{image}"
-    When "{Enter}" is pressed
+    When the editor is focused
+    And "foo|{image}" is inserted at "auto" and selected at the "end"
+    And "{Enter}" is pressed
     And "bar" is typed
     And "foobar" is selected
     And "link" "l1,l2" is toggled
@@ -35,8 +38,9 @@ Feature: Annotations Across Blocks
     And "foo|{image}|bar" is selected
 
   Scenario: Adding annotation across an image (backwards selection)
-    Given the text "foo|{image}"
-    When "{Enter}" is pressed
+    When the editor is focused
+    And "foo|{image}" is inserted at "auto" and selected at the "end"
+    And "{Enter}" is pressed
     And "bar" is typed
     And "foobar" is selected backwards
     And "link" "l1,l2" is toggled
@@ -47,7 +51,8 @@ Feature: Annotations Across Blocks
   Scenario: Splitting an annotation across blocks
     Given the text "foobar"
     And a "link" "l1" around "foobar"
-    When the caret is put after "foo"
+    When the editor is focused
+    And the caret is put after "foo"
     And "{Enter}" is pressed
     Then the text is "foo|bar"
     And "foo" has marks "l1"
@@ -56,7 +61,8 @@ Feature: Annotations Across Blocks
   Scenario: Splitting an annotation across blocks using a selection
     Given the text "foo bar baz"
     And a "link" "l1" around "foo bar baz"
-    When "bar" is selected
+    When the editor is focused
+    And "bar" is selected
     And "{Enter}" is pressed
     Then the text is "foo | baz"
     And "foo " has marks "l1"
@@ -66,7 +72,8 @@ Feature: Annotations Across Blocks
     Given the text "foo bar baz"
     And a "link" "l1" around "foo bar baz"
     And "strong" around "bar"
-    When the caret is put after "foo"
+    When the editor is focused
+    And the caret is put after "foo"
     And "{Enter}" is pressed
     Then the text is "foo| ,bar, baz"
     And "foo" has marks "l1"
@@ -77,7 +84,8 @@ Feature: Annotations Across Blocks
   Scenario: Splitting text after annotation doesn't touch the annotation
     Given the text "foo bar baz"
     And a "link" "l1" around "foo"
-    When the caret is put after "bar"
+    When the editor is focused
+    And the caret is put after "bar"
     And "{Enter}" is pressed
     Then the text is "foo, bar| baz"
     And "foo" has marks "l1"
@@ -88,7 +96,8 @@ Feature: Annotations Across Blocks
   Scenario: Splitting and merging an annotation across blocks
     Given the text "foobar"
     And a "link" "l1" around "foobar"
-    When the caret is put after "foo"
+    When the editor is focused
+    And the caret is put after "foo"
     And "{Enter}" is pressed
     And "{Backspace}" is pressed
     Then the text is "foo,bar"
@@ -111,7 +120,8 @@ Feature: Annotations Across Blocks
   Scenario: Splitting block before annotation
     Given the text "foo"
     And a "link" "l1" around "foo"
-    When the caret is put before "foo"
+    When the editor is focused
+    And the caret is put before "foo"
     And "{Enter}" is pressed
     Then the text is "|foo"
     And "" has no marks
@@ -120,7 +130,8 @@ Feature: Annotations Across Blocks
   Scenario: Splitting block after annotation
     Given the text "foo"
     And a "link" "l1" around "foo"
-    When the caret is put after "foo"
+    When the editor is focused
+    And the caret is put after "foo"
     And "{Enter}" is pressed
     Then the text is "foo|"
     And "foo" has marks "l1"
@@ -128,7 +139,8 @@ Feature: Annotations Across Blocks
 
   Scenario: Merging blocks with annotations
     Given the text "foo"
-    When "{Enter}" is pressed
+    When the editor is focused
+    And "{Enter}" is pressed
     And "bar" is typed
     And "foo" is selected
     And "link" "l1" is toggled

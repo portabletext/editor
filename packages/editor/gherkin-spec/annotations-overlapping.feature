@@ -8,7 +8,8 @@ Feature: Overlapping Annotations
     Given the text <text>
     And a "link" "l1" around <link>
     And a "comment" "c1" around <comment>
-    When the caret is put <position>
+    When the editor is focused
+    And the caret is put <position>
     And "new" is typed
     Then the text is <new text>
 

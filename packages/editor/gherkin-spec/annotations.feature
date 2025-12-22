@@ -15,7 +15,8 @@ Feature: Annotations
   Scenario: Inserting text after an annotation
     Given the text "foo"
     And a "link" "l1" around "foo"
-    When the caret is put after "foo"
+    When the editor is focused
+    And the caret is put after "foo"
     And "bar" is typed
     Then "foo" has marks "l1"
     And "bar" has no marks
@@ -124,6 +125,7 @@ Feature: Annotations
       | after "ba"  |
 
   Scenario Outline: Writing on top of annotation
+    When the editor is focused
     Given the text "foo bar baz"
     And a "comment" "c1" around "bar"
     When <selection>
@@ -141,7 +143,8 @@ Feature: Annotations
   Scenario: Writing inside an annotation
     Given the text "foo baz"
     And a "link" "l1" around "foo baz"
-    When the caret is put after "foo"
+    When the editor is focused
+    And the caret is put after "foo"
     And " bar" is typed
     Then the text is "foo bar baz"
     And "foo bar baz" has marks "l1"
@@ -149,7 +152,8 @@ Feature: Annotations
   Scenario Outline: Inserting text at the edge of an annotation
     Given the text <text>
     And a "link" "l1" around <annotated>
-    When the caret is put <position>
+    When the editor is focused
+    And the caret is put <position>
     And "new" is typed
     Then the text is <new text>
 
@@ -166,7 +170,8 @@ Feature: Annotations
     Given the text "foobar"
     And a "link" "l1" around "foo"
     And a "link" "l2" around "bar"
-    When the caret is put after "foo"
+    When the editor is focused
+    And the caret is put after "foo"
     And "n" is typed
     Then the text is "foo,n,bar"
 
@@ -184,7 +189,8 @@ Feature: Annotations
   Scenario Outline: Toggling decorator at the edge of an annotation
     Given the text <text>
     And a "link" "l1" around <annotated>
-    When the caret is put <position>
+    When the editor is focused
+    And the caret is put <position>
     And "strong" is toggled
     And "new" is typed
     Then the text is <new text>

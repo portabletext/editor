@@ -5,7 +5,8 @@ Feature: Delete
 
   Scenario Outline: Deleting word
     Given the text <text>
-    When the caret is put <position>
+    When the editor is focused
+    And the caret is put <position>
     And <shortcut> is pressed
     Then the text is <final text>
 
@@ -20,7 +21,8 @@ Feature: Delete
 
   Scenario Outline: Deleting code points in complex scripts
     Given the text <text>
-    When the caret is put after <text>
+    When the editor is focused
+    And the caret is put after <text>
     And "{Backspace}" is pressed
     Then the text is <final text>
 

@@ -15,7 +15,8 @@ Feature: Comment Annotations Plugin
 
   Scenario: Writing after bold text with comment within a larger comment
     Given the text "foo bar baz"
-    And "strong" around "bar"
+    When the editor is focused
+    Given "strong" around "bar"
     And a "comment" "c1" around "bar"
     And a "comment" "c2" around "foo bar baz"
     When the caret is put after "bar"
