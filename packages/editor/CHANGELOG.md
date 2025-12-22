@@ -1,5 +1,13 @@
 # Changelog
 
+## 4.1.3
+
+### Patch Changes
+
+- [#2070](https://github.com/portabletext/editor/pull/2070) [`793c8a0`](https://github.com/portabletext/editor/commit/793c8a0a0ca99eb79e2e99ec3da44bd4a5e219c5) Thanks [@christianhg](https://github.com/christianhg)! - fix: avoid redundant nested calls to skip normalization
+
+- [#2067](https://github.com/portabletext/editor/pull/2067) [`56587f5`](https://github.com/portabletext/editor/commit/56587f5a2645bd1238de743946f2661ba199b744) Thanks [@christianhg](https://github.com/christianhg)! - fix: make unique key checks faster
+
 ## 4.1.2
 
 ### Patch Changes
