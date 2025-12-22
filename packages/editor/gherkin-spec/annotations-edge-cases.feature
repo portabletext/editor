@@ -8,14 +8,16 @@ Feature: Annotations Edge Cases
     Given the text "foo bar baz"
     And "em" around "foo bar baz"
     And a "comment" "c1" around "bar"
-    When "foo bar baz" is selected
+    When the editor is focused
+    And "foo bar baz" is selected
     And "{Backspace}" is pressed
     Then "" has marks "em"
 
   Scenario: Deleting half of annotated text
     Given the text "foo bar baz"
     And a "comment" "c1" around "foo bar baz"
-    When " baz" is selected
+    When the editor is focused
+    And " baz" is selected
     And "{Backspace}" is pressed
     Then the text is "foo bar"
     And "foo bar" has marks "c1"
@@ -23,14 +25,16 @@ Feature: Annotations Edge Cases
   Scenario: Deleting annotation in the middle of text
     Given the text "foo bar baz"
     And a "comment" "c1" around "bar"
-    When "bar " is selected
+    When the editor is focused
+    And "bar " is selected
     And "{Backspace}" is pressed
     Then the text is "foo baz"
     And "foo baz" has no marks
 
   Scenario: Deleting across annotated blocks
     Given the text ""
-    When "foo" is typed
+    When the editor is focused
+    And "foo" is typed
     And "{Enter}" is pressed
     And "bar" is typed
     And "foo" is selected

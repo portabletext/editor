@@ -5,14 +5,16 @@ Feature: Undo/Redo
 
   Scenario: Undoing writing two words
     Given the text ""
-    When "foo" is typed
+    When the editor is focused
+    And "foo" is typed
     And " bar" is typed
     And undo is performed
     Then the text is "foo"
 
   Scenario: Selection change does not affect the undo stack
     Given the text ""
-    When "foo" is typed
+    When the editor is focused
+    And "foo" is typed
     And "{ArrowLeft}" is pressed
     And "bar" is typed
     Then the text is "fobaro"
@@ -30,7 +32,8 @@ Feature: Undo/Redo
   Scenario: Undoing the deletion of the last char of annotated text
     Given the text "foo"
     And a "comment" "c1" around "foo"
-    When "{ArrowRight}" is pressed
+    When the editor is focused
+    And "{ArrowRight}" is pressed
     And "{Backspace}" is pressed
     And undo is performed
     Then the text is "foo"
@@ -39,7 +42,8 @@ Feature: Undo/Redo
   Scenario: Redoing the deletion of the last char of annotated text
     Given the text "foo"
     And a "comment" "c1" around "foo"
-    When "{ArrowRight}" is pressed
+    When the editor is focused
+    And "{ArrowRight}" is pressed
     And "{Backspace}" is pressed
     And undo is performed
     When redo is performed
@@ -49,7 +53,8 @@ Feature: Undo/Redo
   Scenario: Undoing inserting text after annotated text
     Given the text "foo"
     And a "comment" "c1" around "foo"
-    When "{ArrowRight}" is pressed
+    When the editor is focused
+    And "{ArrowRight}" is pressed
     And "{Space}" is pressed
     Then the text is "foo, "
     And "foo" has marks "c1"
@@ -61,7 +66,8 @@ Feature: Undo/Redo
   Scenario: Undoing and redoing inserting text after annotated text
     Given the text "foo"
     And a "comment" "c1" around "foo"
-    When "{ArrowRight}" is pressed
+    When the editor is focused
+    And "{ArrowRight}" is pressed
     And "{Space}" is pressed
     And undo is performed
     Then the text is "foo"
@@ -74,7 +80,8 @@ Feature: Undo/Redo
   Scenario: Undoing the deletion of block with annotation at the end
     Given the text "foo bar"
     And a "comment" "c1" around "bar"
-    When "foo bar" is selected
+    When the editor is focused
+    And "foo bar" is selected
     And "{Backspace}" is pressed
     And undo is performed
     Then the text is "foo ,bar"
@@ -83,14 +90,16 @@ Feature: Undo/Redo
   Scenario: Undoing deletion of annotated block
     Given the text "foo"
     And a "comment" "c1" around "foo"
-    When "{Backspace}" is pressed
+    When the editor is focused
+    And "{Backspace}" is pressed
     And undo is performed
     Then the text is "foo"
     And "foo" has marks "c1"
 
   Scenario: Undoing annotation across text blocks
     Given the text "foo"
-    When "{Enter}" is pressed
+    When the editor is focused
+    And "{Enter}" is pressed
     And "bar" is typed
     And "foobar" is selected
     And "link" is toggled
@@ -101,14 +110,16 @@ Feature: Undo/Redo
 
   Scenario: Undoing action step
     Given the text "-"
-    When ">" is typed
+    When the editor is focused
+    And ">" is typed
     Then the text is "→"
     When undo is performed
     Then the text is "->"
 
   Scenario: Consecutive undo after selection change
     Given the text "-"
-    When ">" is typed
+    When the editor is focused
+    And ">" is typed
     And undo is performed
     And "{ArrowLeft}" is pressed
     And undo is performed

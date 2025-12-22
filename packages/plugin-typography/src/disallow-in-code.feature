@@ -3,7 +3,8 @@ Feature: Disallow in code
   Scenario Outline: Decorated text
     Given the text <text>
     And "code" around <decorated>
-    When the caret is put <position>
+    When the editor is focused
+    And the caret is put <position>
     And "->" is typed
     Then the text is <new text>
 
@@ -17,14 +18,16 @@ Feature: Disallow in code
   Scenario Outline: Partially decorated text
     Given the text "foo bar2x baz"
     And "code" around "bar2x"
-    When the caret is put after "bar2x"
+    When the editor is focused
+    And the caret is put after "bar2x"
     And "2" is typed
     Then the text is "foo ,bar2x2, baz"
 
   Scenario Outline: Partially decorated text with decorator toggled off
     Given the text <text>
     And "code" around <decorated>
-    When the caret is put <position>
+    When the editor is focused
+    And the caret is put <position>
     And "code" is toggled
     And <inserted text> is typed
     Then the text is <new text>
@@ -39,7 +42,8 @@ Feature: Disallow in code
     Given the text "foo bar baz"
     And <decorator> around "bar"
     And a "link" "l1" around "bar"
-    When the caret is put <position>
+    When the editor is focused
+    And the caret is put <position>
     And "->" is typed
     Then the text is <new text>
 

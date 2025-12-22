@@ -12,7 +12,8 @@ Feature: Multiplication Input Rule
 
   Scenario Outline: Inserting multiplication sign and writing afterwards
     Given the text <text>
-    When <inserted text> is inserted
+    When the editor is focused
+    And <inserted text> is inserted
     And "new" is typed
     Then the text is <new text>
 

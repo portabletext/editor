@@ -5,7 +5,8 @@ Feature: Smart Quotes Input Rule
 
   Scenario Outline: Typing turns double quotes into smart quotes
     Given the text <text>
-    When <inserted text> is typed
+    When the editor is focused
+    And <inserted text> is typed
     Then the text is <new text>
 
     Examples:

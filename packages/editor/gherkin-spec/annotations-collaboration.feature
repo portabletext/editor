@@ -5,7 +5,8 @@ Feature: Annotations Collaboration
     And a global keymap
 
   Scenario: Editor B inserts text after Editor A's half-deleted annotation
-    When "foo" is typed
+    When the editor is focused
+    And "foo" is typed
     And "foo" is selected
     And "comment" "c1" is toggled
     And the caret is put after "foo"

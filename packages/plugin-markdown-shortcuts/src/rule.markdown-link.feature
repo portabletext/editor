@@ -5,7 +5,8 @@ Feature: Markdown Link Rule
 
   Scenario Outline: Transform markdown Link into annotation
     Given the text <text>
-    When <inserted text> is inserted
+    When the editor is focused
+    And <inserted text> is inserted
     And "new" is typed
     Then the text is <new text>
     And <annotated> has <marks>
@@ -20,7 +21,8 @@ Feature: Markdown Link Rule
   Scenario: Preserving decorator in link text
     Given the text "[foo](bar"
     And "strong" around "foo"
-    When ")" is inserted
+    When the editor is focused
+    And ")" is inserted
     And "new" is typed
     Then the text is "foo,new"
     And "foo" has marks "strong,k6"
@@ -29,7 +31,8 @@ Feature: Markdown Link Rule
     Given the text "[foo](bar"
     And "strong" around "foo"
     And "em" around "oo"
-    When ")" is inserted
+    When the editor is focused
+    And ")" is inserted
     And "new" is typed
     Then the text is "f,oo,new"
     And "f" has marks "strong,k7"
@@ -38,7 +41,8 @@ Feature: Markdown Link Rule
   Scenario: Overwriting other links
     Given the text "[foo](bar"
     And a "link" "l1" around "foo"
-    When the caret is put after "bar"
+    When the editor is focused
+    And the caret is put after "bar"
     And ")" is inserted
     And "new" is typed
     Then the text is "foo,new"
@@ -48,7 +52,8 @@ Feature: Markdown Link Rule
     Given the text "[foo](bar"
     And a "link" "l1" around "foo"
     And a "comment" "c1" around "foo"
-    When the caret is put after "bar"
+    When the editor is focused
+    And the caret is put after "bar"
     And ")" is inserted
     And "new" is typed
     Then the text is "foo,new"

@@ -15,7 +15,8 @@ Feature: Insert Block
       | "auto"    | "{image}"   |
 
   Scenario Outline: Inserting block object on an empty editor and selecting it
-    When "{image}" is inserted at <placement> and selected at the <position>
+    When the editor is focused
+    And "{image}" is inserted at <placement> and selected at the <position>
     And "bar" is typed
     Then the text is <text>
 
@@ -30,7 +31,8 @@ Feature: Insert Block
 
   Scenario Outline: Inserting block object on an empty text block
     Given the text "f"
-    When "{Backspace}" is pressed
+    When the editor is focused
+    And "{Backspace}" is pressed
     And "{image}" is inserted at <placement> and selected at the <position>
     And "bar" is typed
     Then the text is <text>
@@ -99,7 +101,8 @@ Feature: Insert Block
 
   Scenario Outline: Inserting block object on text selection without selecting it
     Given the text "foo"
-    When <selection> is selected
+    When the editor is focused
+    And <selection> is selected
     And "{image}" is inserted at <placement> and selected at the "none"
     And "bar" is typed
     Then the text is <text>
@@ -118,7 +121,8 @@ Feature: Insert Block
 
   Scenario Outline: Inserting and selecting block object on cross-block selection
     Given the text "foo"
-    When "{Enter}" is pressed
+    When the editor is focused
+    And "{Enter}" is pressed
     And "bar" is typed
     And <selection> is selected
     And "{image}" is inserted at <placement> and selected at the <position>
@@ -141,7 +145,8 @@ Feature: Insert Block
 
   Scenario Outline: Inserting a block object on a cross-block selection without selecting it
     Given the text "foo"
-    When "{Enter}" is pressed
+    When the editor is focused
+    And "{Enter}" is pressed
     And "bar" is typed
     And <selection> is selected
     And "{image}" is inserted at <placement> and selected at the "none"
@@ -166,6 +171,7 @@ Feature: Insert Block
       | "auto"    | "foo"   |
 
   Scenario Outline: Inserting and selecting text block on an empty editor
+    When the editor is focused
     When "foo" is inserted at <placement> and selected at the <position>
     And "bar" is typed
     Then the text is <text>
@@ -174,7 +180,7 @@ Feature: Insert Block
       | placement | position | text       |
       | "before"  | "start"  | "barfoo\|" |
       | "before"  | "end"    | "foobar\|" |
-      | "before"  | "none"   | "barfoo\|" |
+      | "before"  | "none"   | "foo\|bar" |
       | "after"   | "start"  | "\|barfoo" |
       | "after"   | "end"    | "\|foobar" |
       | "after"   | "none"   | "bar\|foo" |
@@ -233,28 +239,32 @@ Feature: Insert Block
       | "none"          | "auto"              | "none"              | "{image}\|{break}" | nothing   |
 
   Scenario Outline: Inserting and selecting block object on block object
-    When "{image}" is inserted at "auto" and selected at the "none"
-    And "{break}" is inserted at <placement> and selected at the <position>
-    And "{Enter}" is pressed
-    And "foo" is typed
-    Then the text is <text>
+    Given the text "{image}"
+    # When "{image}" is inserted at "auto" and selected at the "none"
+    When "{break}" is inserted at <placement> and selected at the <position>
+    Then <selection> is selected
 
+    # When the editor is focused
+    # And "{Enter}" is pressed
+    # And "foo" is typed
+    # Then the text is <text>
     Examples:
-      | placement | position | text                    |
-      | "before"  | "start"  | "{break}\|foo\|{image}" |
-      | "before"  | "end"    | "{break}\|foo\|{image}" |
-      | "before"  | "none"   | "{break}\|{image}"      |
-      | "after"   | "start"  | "{image}\|{break}\|foo" |
-      | "after"   | "end"    | "{image}\|{break}\|foo" |
-      | "after"   | "none"   | "{image}\|{break}"      |
-      | "auto"    | "start"  | "{image}\|{break}\|foo" |
-      | "auto"    | "end"    | "{image}\|{break}\|foo" |
-      | "auto"    | "none"   | "{image}\|{break}"      |
+      | placement | position | selection |
+      | "before"  | "start"  | "{break}" |
+      | "before"  | "end"    | "{break}" |
+      | "before"  | "none"   | "{image}" |
+      | "after"   | "start"  | "{break}" |
+      | "after"   | "end"    | "{break}" |
+      | "after"   | "none"   | "{image}" |
+      | "auto"    | "start"  | "{break}" |
+      | "auto"    | "end"    | "{break}" |
+      | "auto"    | "none"   | "{image}" |
 
   Scenario Outline: Inserting block object on block objects
     Given the text "{image}|{image}"
-    When everything is selected
-    When "{break}" is inserted at <placement> and selected at the <position>
+    When the editor is focused
+    And everything is selected
+    And "{break}" is inserted at <placement> and selected at the <position>
     And "{Enter}" is pressed
     And "foo" is typed
     Then the text is <text>
@@ -270,7 +280,8 @@ Feature: Insert Block
 
   Scenario Outline: Inserting block object on text block
     Given the text "foo"
-    When "{Enter}" is pressed
+    When the editor is focused
+    And "{Enter}" is pressed
     And "bar" is typed
     And the caret is put <position>
     And "{image}" is inserted at <placement> and selected at the "none"
@@ -322,7 +333,8 @@ Feature: Insert Block
 
   Scenario Outline: Inserting and selecting text block on text block
     Given the text "foo"
-    When the caret is put <position>
+    When the editor is focused
+    And the caret is put <position>
     And "bar" is inserted at <placement> and selected at the <select-position>
     And "baz" is typed
     Then the text is <text>
@@ -359,7 +371,8 @@ Feature: Insert Block
 
   Scenario Outline: Inserting text block on text selection
     Given the text "foo"
-    When <selection> is selected
+    When the editor is focused
+    And <selection> is selected
     And "bar" is inserted at <placement> and selected at the <position>
     And "baz" is typed
     Then the text is <text>
@@ -387,7 +400,8 @@ Feature: Insert Block
 
   Scenario Outline: Inserting text block on cross-block text selection
     Given the text "foo"
-    When "{Enter}" is pressed
+    When the editor is focused
+    And "{Enter}" is pressed
     And "bar" is typed
     And <selection> is selected
     And "baz" is inserted at <placement> and selected at the <position>

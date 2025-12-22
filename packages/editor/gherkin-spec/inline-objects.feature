@@ -7,7 +7,8 @@ Feature: Inline Objects
 
   Scenario: Writing after inserting an inline object
     Given the text ""
-    When "foo" is typed
+    When the editor is focused
+    And "foo" is typed
     And a "stock-ticker" is inserted
     And "{ArrowRight}" is pressed
     And "bar" is typed
@@ -15,13 +16,15 @@ Feature: Inline Objects
 
   Scenario: Pressing Delete before an inline object
     Given the text "foo,{stock-ticker},"
-    When the caret is put after "foo"
+    When the editor is focused
+    And the caret is put after "foo"
     And "{Delete}" is pressed
     Then the text is "foo"
 
   Scenario: Pressing Backspace after an inline object
     Given the text "foo,{stock-ticker},"
-    When "{Backspace}" is pressed
+    When the editor is focused
+    And "{Backspace}" is pressed
     Then the caret is after "foo"
 
   Scenario: Adding a decorator across an inline object
