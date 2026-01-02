@@ -1,5 +1,15 @@
 # Changelog
 
+## 4.1.4
+
+### Patch Changes
+
+- [#2072](https://github.com/portabletext/editor/pull/2072) [`cbad0f7`](https://github.com/portabletext/editor/commit/cbad0f7b9500fc2eddedd122d1be3256b2cbeb89) Thanks [@christianhg](https://github.com/christianhg)! - fix: avoid focusing editor in `insert.block` operation
+
+  This makes sure `insert.block` is only responsible for inserting the block at
+  the right position and handling the internal selection. Giving the browser DOM
+  focus to the editor is an entirely different concern.
+
 ## 4.1.3
 
 ### Patch Changes
