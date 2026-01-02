@@ -1,5 +1,26 @@
 # Changelog
 
+## 4.2.0
+
+### Minor Changes
+
+- [#2086](https://github.com/portabletext/editor/pull/2086) [`2209a45`](https://github.com/portabletext/editor/commit/2209a45ed7dce684f7460537d3663ef3a7201c09) Thanks [@christianhg](https://github.com/christianhg)! - feat(`insert.blocks`): support optional `at` property
+
+### Patch Changes
+
+- [#2082](https://github.com/portabletext/editor/pull/2082) [`eb23bfe`](https://github.com/portabletext/editor/commit/eb23bfed827103450317516f46b022b741207f3e) Thanks [@christianhg](https://github.com/christianhg)! - fix(`insert.blocks`): avoid intermediate selections for placement `'auto'`
+
+- [#2084](https://github.com/portabletext/editor/pull/2084) [`d4d7c11`](https://github.com/portabletext/editor/commit/d4d7c11bd4c765438ce3e92e0e9d91efc61adce0) Thanks [@christianhg](https://github.com/christianhg)! - fix(`insert.blocks`): avoid intermediate selections for placement `'before'`
+
+- [#2084](https://github.com/portabletext/editor/pull/2084) [`2aaf043`](https://github.com/portabletext/editor/commit/2aaf0438c04266b4f1c565c04eae175adf4d30b0) Thanks [@christianhg](https://github.com/christianhg)! - fix(`insert.blocks`): avoid intermediate selections for placement `'after'`
+
+- [#2086](https://github.com/portabletext/editor/pull/2086) [`7787d93`](https://github.com/portabletext/editor/commit/7787d9334792c100e234320209b0fa654c356958) Thanks [@christianhg](https://github.com/christianhg)! - fix(`insert.block`): insert position when inserting on block object using `at`
+
+- [#2086](https://github.com/portabletext/editor/pull/2086) [`f677a35`](https://github.com/portabletext/editor/commit/f677a35debb33491ae32f07456fa859bd6233871) Thanks [@christianhg](https://github.com/christianhg)! - fix(`insert.blocks`): block object on empty text block is deselected when `select: 'none'`
+
+- Updated dependencies [[`0a7a4cc`](https://github.com/portabletext/editor/commit/0a7a4cc5e4624f60abd919d39b9015c191cc10eb)]:
+  - @portabletext/markdown@1.1.2
+
 ## 4.1.5
 
 ### Patch Changes
