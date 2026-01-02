@@ -358,9 +358,12 @@ export function insertBlock(options: {
       }
     } else {
       if (!editor.isTextBlock(endBlock)) {
-        Transforms.insertNodes(editor, [block], {select: false})
-
         const nextPath = [endBlockPath[0] + 1]
+
+        Transforms.insertNodes(editor, [block], {
+          select: false,
+          at: nextPath,
+        })
 
         if (select === 'start') {
           Transforms.select(editor, Editor.start(editor, nextPath))
