@@ -198,6 +198,12 @@ export const stepDefinitions = [
   When(
     '{string} is typed in Editor B',
     async (context: Context, text: string) => {
+      if (!context.editorB.getSnapshot().context.selection) {
+        // Avoid browser compatibility issue. Seems like Chromium and Firefox
+        // will happily type even if there is no selection. But WebKit will not.
+        return
+      }
+
       await userEvent.type(context.locatorB, text)
     },
   ),
