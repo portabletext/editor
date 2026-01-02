@@ -186,6 +186,7 @@ export const abstractInsertBehaviors = [
       )
 
       return {
+        focusTextBlock,
         focusBlockStartPoint,
         focusBlockEndPoint,
         focusTextBlockAfter,
@@ -198,6 +199,7 @@ export const abstractInsertBehaviors = [
       (
         {snapshot, event},
         {
+          focusTextBlock,
           focusBlockEndPoint,
           focusTextBlockAfter,
           at,
@@ -206,6 +208,7 @@ export const abstractInsertBehaviors = [
           originalSelection,
         },
       ) => {
+        let previousBlockKey: string | undefined
         let firstBlockKey: string | undefined
         const actions: Array<BehaviorAction> = []
 
@@ -227,7 +230,19 @@ export const abstractInsertBehaviors = [
             }
 
             const key = getUniqueBlockKey(block._key)(snapshot)
-            firstBlockKey = key
+
+            const deletingEndToEnd = isEqualSelectionPoints(
+              at.focus,
+              focusBlockStartPoint,
+            )
+
+            if (isTextBlock(snapshot.context, block) && !deletingEndToEnd) {
+              firstBlockKey = focusTextBlock.node._key
+              previousBlockKey = focusTextBlock.node._key
+            } else {
+              firstBlockKey = key
+              previousBlockKey = key
+            }
 
             actions.push(
               raise({
@@ -249,20 +264,36 @@ export const abstractInsertBehaviors = [
                 block,
                 placement: 'after',
                 select: 'end',
+                at: previousBlockKey
+                  ? {
+                      anchor: {path: [{_key: previousBlockKey}], offset: 0},
+                      focus: {path: [{_key: previousBlockKey}], offset: 0},
+                    }
+                  : undefined,
               }),
             )
 
             continue
           }
 
+          const key = getUniqueBlockKey(block._key)(snapshot)
+
           actions.push(
             raise({
               type: 'insert.block',
-              block,
+              block: key !== block._key ? {...block, _key: key} : block,
               placement: 'after',
-              select: 'end',
+              select: previousBlockKey ? 'none' : 'end',
+              at: previousBlockKey
+                ? {
+                    anchor: {path: [{_key: previousBlockKey}], offset: 0},
+                    focus: {path: [{_key: previousBlockKey}], offset: 0},
+                  }
+                : undefined,
             }),
           )
+
+          previousBlockKey = key
         }
 
         if (!isEmptyTextBlock(snapshot.context, focusTextBlockAfter)) {
