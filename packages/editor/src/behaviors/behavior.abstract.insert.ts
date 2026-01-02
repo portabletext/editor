@@ -8,7 +8,7 @@ import {getBlockStartPoint} from '../utils/util.get-block-start-point'
 import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
 import {isEqualSelectionPoints} from '../utils/util.is-equal-selection-points'
 import {sliceTextBlock} from '../utils/util.slice-text-block'
-import {raise} from './behavior.types.action'
+import {raise, type BehaviorAction} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
 function getUniqueBlockKey(
@@ -51,68 +51,77 @@ export const abstractInsertBehaviors = [
       ],
     ],
   }),
+
   defineBehavior({
     on: 'insert.blocks',
-    guard: ({snapshot, event}) => {
-      if (event.placement !== 'before') {
-        return false
-      }
-
-      const firstBlockKey = getUniqueBlockKey(event.blocks.at(0)?._key)(
-        snapshot,
-      )
-      const lastBlockKey = getUniqueBlockKey(event.blocks.at(-1)?._key)(
-        snapshot,
-      )
-
-      return {firstBlockKey, lastBlockKey}
-    },
+    guard: ({event}) => event.placement === 'before',
     actions: [
-      ({snapshot, event}, {firstBlockKey, lastBlockKey}) => [
-        ...event.blocks.map((block, index) =>
-          raise({
-            type: 'insert.block',
-            block:
-              index === 0
+      ({snapshot, event}) => {
+        let firstBlockKey: string | undefined
+        let lastBlockKey: string | undefined
+        let previousBlockKey: string | undefined
+        const actions: Array<BehaviorAction> = []
+
+        let index = -1
+        for (const block of event.blocks) {
+          index++
+          const key = getUniqueBlockKey(block._key)(snapshot)
+
+          if (index === 0) {
+            firstBlockKey = key
+          }
+
+          if (index === event.blocks.length - 1) {
+            lastBlockKey = key
+          }
+
+          actions.push(
+            raise({
+              type: 'insert.block',
+              block: key !== block._key ? {...block, _key: key} : block,
+              placement: index === 0 ? 'before' : 'after',
+              select: 'none',
+              ...(previousBlockKey
                 ? {
-                    ...block,
-                    _key: firstBlockKey,
+                    at: {
+                      anchor: {path: [{_key: previousBlockKey}], offset: 0},
+                      focus: {path: [{_key: previousBlockKey}], offset: 0},
+                    },
                   }
-                : index === event.blocks.length - 1
-                  ? {
-                      ...block,
-                      _key: lastBlockKey,
-                    }
-                  : block,
-            placement: index === 0 ? 'before' : 'after',
-            select: index !== event.blocks.length - 1 ? 'end' : 'none',
-          }),
-        ),
-        ...(event.select === 'none'
-          ? [
-              raise({
-                type: 'select',
-                at: snapshot.context.selection,
-              }),
-            ]
-          : event.select === 'start'
-            ? [
-                raise({
-                  type: 'select.block',
-                  at: [{_key: firstBlockKey}],
-                  select: 'start',
-                }),
-              ]
-            : [
-                raise({
-                  type: 'select.block',
-                  at: [{_key: lastBlockKey}],
-                  select: 'end',
-                }),
-              ]),
-      ],
+                : {}),
+            }),
+          )
+
+          previousBlockKey = key
+        }
+
+        const select = event.select ?? 'end'
+
+        if (select === 'start' && firstBlockKey) {
+          actions.push(
+            raise({
+              type: 'select.block',
+              at: [{_key: firstBlockKey}],
+              select: 'start',
+            }),
+          )
+        }
+
+        if (select === 'end' && lastBlockKey) {
+          actions.push(
+            raise({
+              type: 'select.block',
+              at: [{_key: lastBlockKey}],
+              select: 'end',
+            }),
+          )
+        }
+
+        return actions
+      },
     ],
   }),
+
   defineBehavior({
     on: 'insert.blocks',
     guard: ({snapshot, event}) => {
