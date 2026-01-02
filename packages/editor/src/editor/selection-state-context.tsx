@@ -1,7 +1,7 @@
 import {useSelector} from '@xstate/react'
 import {createContext, useContext} from 'react'
 import {useSlateStatic} from 'slate-react'
-import {getFocusSpan} from '../selectors/selector.get-focus-span'
+import {getFocusChild} from '../selectors'
 import {getSelectedChildren} from '../selectors/selector.get-selected-children'
 import {getSelectionEndPoint} from '../selectors/selector.get-selection-end-point'
 import {getSelectionStartPoint} from '../selectors/selector.get-selection-start-point'
@@ -77,8 +77,8 @@ export function SelectionStateProvider({
       let focusedChildKey: string | undefined
 
       if (isCollapsed) {
-        const focusSpan = getFocusSpan(snapshot)
-        focusedChildKey = focusSpan?.node._key
+        const focusChild = getFocusChild(snapshot)
+        focusedChildKey = focusChild?.node._key
       }
 
       const selectedChildren = getSelectedChildren()(snapshot)
