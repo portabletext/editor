@@ -22,7 +22,6 @@ import {
 } from '../../utils/parse-blocks'
 import {spanSelectionPointToBlockOffset} from '../../utils/util.block-offset'
 import {reverseSelection} from '../../utils/util.reverse-selection'
-import {selectionPointToBlockOffset} from '../../utils/util.selection-point-to-block-offset'
 import type {Parameter} from '../gherkin-parameter-types'
 import type {Context} from './step-context'
 
@@ -338,7 +337,6 @@ export const stepDefinitions = [
           context.editor.getSnapshot().context,
           text,
         )
-        expect(selection).not.toBeNull()
 
         context.editor.send({
           type: 'select',
@@ -359,7 +357,6 @@ export const stepDefinitions = [
           context.editorB.getSnapshot().context,
           text,
         )
-        expect(selection).not.toBeNull()
 
         context.editorB.send({
           type: 'select',
@@ -380,7 +377,7 @@ export const stepDefinitions = [
           context.editor.getSnapshot().context,
           text,
         )
-        expect(selection).not.toBeNull()
+
         expect(context.editor.getSnapshot().context.selection).toEqual(
           selection,
         )
@@ -395,8 +392,6 @@ export const stepDefinitions = [
           context.editor.getSnapshot().context,
           text,
         )
-
-        expect(selection).not.toBeNull()
 
         context.editor.send({
           type: 'select',
@@ -418,8 +413,6 @@ export const stepDefinitions = [
           text,
         )
 
-        expect(selection).not.toBeNull()
-
         context.editorB.send({
           type: 'select',
           at: selection,
@@ -439,7 +432,7 @@ export const stepDefinitions = [
           context.editor.getSnapshot().context,
           text,
         )
-        expect(selection).not.toBeNull()
+
         expect(context.editor.getSnapshot().context.selection).toEqual(
           selection,
         )
@@ -477,7 +470,6 @@ export const stepDefinitions = [
         context.editor.getSnapshot().context,
         text,
       )
-      expect(selection).not.toBeNull()
 
       context.editor.send({
         type: 'select',
@@ -497,7 +489,6 @@ export const stepDefinitions = [
           context.editor.getSnapshot().context,
           text,
         )
-        expect(selection).not.toBeNull()
 
         context.editor.send({
           type: 'select',
@@ -514,7 +505,6 @@ export const stepDefinitions = [
         const selection = reverseSelection(
           getTextSelection(context.editor.getSnapshot().context, text),
         )
-        expect(selection).not.toBeNull()
 
         context.editor.send({
           type: 'select',
@@ -637,7 +627,6 @@ export const stepDefinitions = [
           context.editor.getSnapshot().context,
           text,
         )
-        expect(selection).not.toBeNull()
 
         context.editor.send({
           type: 'select',
@@ -779,34 +768,11 @@ export const stepDefinitions = [
           context.editor.getSnapshot().context,
           text,
         )
-        const anchorOffset = selection
-          ? selectionPointToBlockOffset({
-              context: {
-                schema: context.editor.getSnapshot().context.schema,
-                value: context.editor.getSnapshot().context.value,
-              },
-              selectionPoint: selection.anchor,
-            })
-          : undefined
-        const focusOffset = selection
-          ? selectionPointToBlockOffset({
-              context: {
-                schema: context.editor.getSnapshot().context.schema,
-                value: context.editor.getSnapshot().context.value,
-              },
-              selectionPoint: selection.focus,
-            })
-          : undefined
-        expect(anchorOffset).toBeDefined()
-        expect(focusOffset).toBeDefined()
 
         context.editor.send({
           type: 'decorator.toggle',
           decorator,
-          at: {
-            anchor: anchorOffset!,
-            focus: focusOffset!,
-          },
+          at: selection,
         })
       })
     },

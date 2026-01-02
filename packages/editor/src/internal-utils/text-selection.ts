@@ -5,10 +5,15 @@ import {collapseSelection} from './collapse-selection'
 import {splitString} from './split-string'
 import {stringOverlap} from './string-overlap'
 
+/**
+ * Throw an error if the selection cannot be found.
+ *
+ * Only to be used in tests.
+ */
 export function getTextSelection(
   context: Pick<EditorContext, 'schema' | 'value'>,
   text: string,
-): EditorSelection {
+): NonNullable<EditorSelection> {
   let anchor: EditorSelectionPoint | undefined
   let focus: EditorSelectionPoint | undefined
 
@@ -106,16 +111,26 @@ export function getTextSelection(
   }
 }
 
+/**
+ * Throw an error if the selection cannot be found.
+ *
+ * Only to be used in tests.
+ */
 export function getSelectionBeforeText(
   context: Pick<EditorContext, 'schema' | 'value'>,
   text: string,
-): EditorSelection {
+): NonNullable<EditorSelection> {
   return collapseSelection(getTextSelection(context, text), 'start')
 }
 
+/**
+ * Throw an error if the selection cannot be found.
+ *
+ * Only to be used in tests.
+ */
 export function getSelectionAfterText(
   context: Pick<EditorContext, 'schema' | 'value'>,
   text: string,
-): EditorSelection {
+): NonNullable<EditorSelection> {
   return collapseSelection(getTextSelection(context, text), 'end')
 }
