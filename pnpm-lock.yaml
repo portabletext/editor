@@ -461,8 +461,8 @@ importers:
         specifier: workspace:^
         version: link:../schema
       '@portabletext/to-html':
-        specifier: ^5.0.0
-        version: 5.0.0
+        specifier: ^5.0.1
+        version: 5.0.1
       '@sanity/schema':
         specifier: ^5.1.0
         version: 5.1.0(@types/react@19.2.7)(debug@4.4.3)
@@ -2561,8 +2561,8 @@ packages:
     peerDependencies:
       react: ^18.2 || ^19
 
-  '@portabletext/to-html@5.0.0':
-    resolution: {integrity: sha512-XNr/yCS1yvcfx/rsGz82yxGtdBjqXcB0SFU5ci10M/o6BxexNTMPnLshopJgDxLQ1y0kLQBiYHUN+vbQtKqcKA==}
+  '@portabletext/to-html@5.0.1':
+    resolution: {integrity: sha512-cLaxxEoe3e8Py/t+hZEw2+sOIWPCpO9fyruUlRdZMQ65IkdyFaJEJlXkpNDqwV0+BO2GVJqaQVM5T6MeGdt8Xg==}
     engines: {node: '>=20.19 <22 || >=22.12'}
 
   '@portabletext/toolkit@5.0.1':
@@ -9363,7 +9363,7 @@ snapshots:
       '@portabletext/types': 4.0.1
       react: 19.2.3
 
-  '@portabletext/to-html@5.0.0':
+  '@portabletext/to-html@5.0.1':
     dependencies:
       '@portabletext/toolkit': 5.0.1
       '@portabletext/types': 4.0.1
