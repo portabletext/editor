@@ -17,7 +17,7 @@ Feature: Insert Blocks
       | "after"   | "none"    | "baz\|foo\|bar" |
       | "after"   | "start"   | "\|bazfoo\|bar" |
       | "after"   | "end"     | "\|foo\|barbaz" |
-      | "auto"    | "none"    | "bazfoo\|bar"   |
+      | "auto"    | "none"    | "foo\|bar"      |
       | "auto"    | "start"   | "bazfoo\|bar"   |
 
   Scenario Outline: Inserting block objects an empty editor

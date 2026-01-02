@@ -76,6 +76,7 @@ describe('event.insert.blocks', () => {
         | 'block object'
       placement: InsertPlacement
       select: 'start' | 'end' | 'none'
+      useAtProp?: boolean
     }) {
       const keyGenerator = createTestKeyGenerator()
       const imageAKey = keyGenerator()
@@ -121,7 +122,6 @@ describe('event.insert.blocks', () => {
         initialValue: [imageA, imageB, block],
       })
 
-      await userEvent.click(locator)
       const initialSelection =
         options.target === 'empty text' || options.target === 'text-start'
           ? {
@@ -171,20 +171,27 @@ describe('event.insert.blocks', () => {
                   backward: false,
                 }
 
-      editor.send({
-        type: 'select',
-        at: initialSelection,
-      })
+      if (!options.useAtProp) {
+        await userEvent.click(locator)
 
-      await vi.waitFor(() => {
-        expect(editor.getSnapshot().context.selection).toEqual(initialSelection)
-      })
+        editor.send({
+          type: 'select',
+          at: initialSelection,
+        })
+
+        await vi.waitFor(() => {
+          expect(editor.getSnapshot().context.selection).toEqual(
+            initialSelection,
+          )
+        })
+      }
 
       editor.send({
         type: 'insert.blocks',
         blocks: [imageA, imageB],
         placement: options.placement,
         select: options.select,
+        ...(options.useAtProp ? {at: initialSelection} : {}),
       })
 
       return {editor, imageA, imageB, block, initialSelection}
@@ -195,6 +202,44 @@ describe('event.insert.blocks', () => {
         target: 'empty text',
         placement: 'auto',
         select: 'end',
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          imageA,
+          imageB,
+          // Inserting the same images again will generate new _keys to avoid
+          // conflicts
+          {
+            ...imageA,
+            _key: 'k6',
+          },
+          {
+            ...imageB,
+            _key: 'k7',
+          },
+        ])
+
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {
+            path: [{_key: 'k7'}],
+            offset: 0,
+          },
+          focus: {
+            path: [{_key: 'k7'}],
+            offset: 0,
+          },
+          backward: false,
+        })
+      })
+    })
+
+    test('target: empty text, placement: auto, select: end, useAtProp: true', async () => {
+      const {editor, imageA, imageB} = await createTest({
+        target: 'empty text',
+        placement: 'auto',
+        select: 'end',
+        useAtProp: true,
       })
 
       await vi.waitFor(() => {
@@ -264,6 +309,44 @@ describe('event.insert.blocks', () => {
       })
     })
 
+    test('target: empty text, placement: auto, select: start, useAtProp: true', async () => {
+      const {editor, imageA, imageB} = await createTest({
+        target: 'empty text',
+        placement: 'auto',
+        select: 'start',
+        useAtProp: true,
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          imageA,
+          imageB,
+          // Inserting the same images again will generate new _keys to avoid
+          // conflicts
+          {
+            ...imageA,
+            _key: 'k6',
+          },
+          {
+            ...imageB,
+            _key: 'k7',
+          },
+        ])
+
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {
+            path: [{_key: 'k6'}],
+            offset: 0,
+          },
+          focus: {
+            path: [{_key: 'k6'}],
+            offset: 0,
+          },
+          backward: false,
+        })
+      })
+    })
+
     test('target: empty text, placement: auto, select: none', async () => {
       const {editor, imageA, imageB} = await createTest({
         target: 'empty text',
@@ -301,11 +384,78 @@ describe('event.insert.blocks', () => {
       })
     })
 
+    test('target: empty text, placement: auto, select: none, useAtProp: true', async () => {
+      const {editor, imageA, imageB} = await createTest({
+        target: 'empty text',
+        placement: 'auto',
+        select: 'none',
+        useAtProp: true,
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          imageA,
+          imageB,
+          // Inserting the same images again will generate new _keys to avoid
+          // conflicts
+          {
+            ...imageA,
+            _key: 'k6',
+          },
+          {
+            ...imageB,
+            _key: 'k7',
+          },
+        ])
+
+        expect(editor.getSnapshot().context.selection).toBeNull()
+      })
+    })
+
     test('target: empty text, placement: before, select: end', async () => {
       const {editor, imageA, imageB, block} = await createTest({
         target: 'empty text',
         placement: 'before',
         select: 'end',
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          imageA,
+          imageB,
+          // Inserting the same images again will generate new _keys to avoid
+          // conflicts
+          {
+            ...imageA,
+            _key: 'k6',
+          },
+          {
+            ...imageB,
+            _key: 'k7',
+          },
+          block,
+        ])
+
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {
+            path: [{_key: 'k7'}],
+            offset: 0,
+          },
+          focus: {
+            path: [{_key: 'k7'}],
+            offset: 0,
+          },
+          backward: false,
+        })
+      })
+    })
+
+    test('target: empty text, placement: before, select: end, useAtProp: true', async () => {
+      const {editor, imageA, imageB, block} = await createTest({
+        target: 'empty text',
+        placement: 'before',
+        select: 'end',
+        useAtProp: true,
       })
 
       await vi.waitFor(() => {
@@ -377,6 +527,45 @@ describe('event.insert.blocks', () => {
       })
     })
 
+    test('target: empty text, placement: before, select: start, useAtProp: true', async () => {
+      const {editor, imageA, imageB, block} = await createTest({
+        target: 'empty text',
+        placement: 'before',
+        select: 'start',
+        useAtProp: true,
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          imageA,
+          imageB,
+          // Inserting the same images again will generate new _keys to avoid
+          // conflicts
+          {
+            ...imageA,
+            _key: 'k6',
+          },
+          {
+            ...imageB,
+            _key: 'k7',
+          },
+          block,
+        ])
+
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {
+            path: [{_key: 'k6'}],
+            offset: 0,
+          },
+          focus: {
+            path: [{_key: 'k6'}],
+            offset: 0,
+          },
+          backward: false,
+        })
+      })
+    })
+
     test('target: empty text, placement: before, select: none', async () => {
       const {editor, imageA, imageB, block, initialSelection} =
         await createTest({
@@ -406,11 +595,79 @@ describe('event.insert.blocks', () => {
       })
     })
 
+    test('target: empty text, placement: before, select: none, useAtProp: true', async () => {
+      const {editor, imageA, imageB, block} = await createTest({
+        target: 'empty text',
+        placement: 'before',
+        select: 'none',
+        useAtProp: true,
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          imageA,
+          imageB,
+          // Inserting the same images again will generate new _keys to avoid
+          // conflicts
+          {
+            ...imageA,
+            _key: 'k6',
+          },
+          {
+            ...imageB,
+            _key: 'k7',
+          },
+          block,
+        ])
+
+        expect(editor.getSnapshot().context.selection).toBeNull()
+      })
+    })
+
     test('target: empty text, placement: after, select: end', async () => {
       const {editor, imageA, imageB, block} = await createTest({
         target: 'empty text',
         placement: 'after',
         select: 'end',
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          imageA,
+          imageB,
+          block,
+          // Inserting the same images again will generate new _keys to avoid
+          // conflicts
+          {
+            ...imageA,
+            _key: 'k6',
+          },
+          {
+            ...imageB,
+            _key: 'k7',
+          },
+        ])
+
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {
+            path: [{_key: 'k7'}],
+            offset: 0,
+          },
+          focus: {
+            path: [{_key: 'k7'}],
+            offset: 0,
+          },
+          backward: false,
+        })
+      })
+    })
+
+    test('target: empty text, placement: after, select: end, useAtProp: true', async () => {
+      const {editor, imageA, imageB, block} = await createTest({
+        target: 'empty text',
+        placement: 'after',
+        select: 'end',
+        useAtProp: true,
       })
 
       await vi.waitFor(() => {
@@ -482,6 +739,45 @@ describe('event.insert.blocks', () => {
       })
     })
 
+    test('target: empty text, placement: after, select: start, useAtProp: true', async () => {
+      const {editor, imageA, imageB, block} = await createTest({
+        target: 'empty text',
+        placement: 'after',
+        select: 'start',
+        useAtProp: true,
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          imageA,
+          imageB,
+          block,
+          // Inserting the same images again will generate new _keys to avoid
+          // conflicts
+          {
+            ...imageA,
+            _key: 'k6',
+          },
+          {
+            ...imageB,
+            _key: 'k7',
+          },
+        ])
+
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {
+            path: [{_key: 'k6'}],
+            offset: 0,
+          },
+          focus: {
+            path: [{_key: 'k6'}],
+            offset: 0,
+          },
+          backward: false,
+        })
+      })
+    })
+
     test('target: empty text, placement: after, select: none', async () => {
       const {editor, imageA, imageB, block, initialSelection} =
         await createTest({
@@ -511,11 +807,79 @@ describe('event.insert.blocks', () => {
       })
     })
 
+    test('target: empty text, placement: after, select: none, useAtProp: true', async () => {
+      const {editor, imageA, imageB, block} = await createTest({
+        target: 'empty text',
+        placement: 'after',
+        select: 'none',
+        useAtProp: true,
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          imageA,
+          imageB,
+          block,
+          // Inserting the same images again will generate new _keys to avoid
+          // conflicts
+          {
+            ...imageA,
+            _key: 'k6',
+          },
+          {
+            ...imageB,
+            _key: 'k7',
+          },
+        ])
+
+        expect(editor.getSnapshot().context.selection).toBeNull()
+      })
+    })
+
     test('target: block object, placement: auto, select: end', async () => {
       const {editor, imageA, imageB, block} = await createTest({
         target: 'block object',
         placement: 'auto',
         select: 'end',
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          imageA,
+          // Inserting the same images again will generate new _keys to avoid
+          // conflicts
+          {
+            ...imageA,
+            _key: 'k6',
+          },
+          {
+            ...imageB,
+            _key: 'k7',
+          },
+          imageB,
+          block,
+        ])
+
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {
+            path: [{_key: 'k7'}],
+            offset: 0,
+          },
+          focus: {
+            path: [{_key: 'k7'}],
+            offset: 0,
+          },
+          backward: false,
+        })
+      })
+    })
+
+    test('target: block object, placement: auto, select: end, useAtProp: true', async () => {
+      const {editor, imageA, imageB, block} = await createTest({
+        target: 'block object',
+        placement: 'auto',
+        select: 'end',
+        useAtProp: true,
       })
 
       await vi.waitFor(() => {
@@ -587,6 +951,45 @@ describe('event.insert.blocks', () => {
       })
     })
 
+    test('target: block object, placement: auto, select: start, useAtProp: true', async () => {
+      const {editor, imageA, imageB, block} = await createTest({
+        target: 'block object',
+        placement: 'auto',
+        select: 'start',
+        useAtProp: true,
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          imageA,
+          // Inserting the same images again will generate new _keys to avoid
+          // conflicts
+          {
+            ...imageA,
+            _key: 'k6',
+          },
+          {
+            ...imageB,
+            _key: 'k7',
+          },
+          imageB,
+          block,
+        ])
+
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {
+            path: [{_key: 'k6'}],
+            offset: 0,
+          },
+          focus: {
+            path: [{_key: 'k6'}],
+            offset: 0,
+          },
+          backward: false,
+        })
+      })
+    })
+
     test('target: block object, placement: auto, select: none', async () => {
       const {editor, imageA, imageB, block} = await createTest({
         target: 'block object',
@@ -625,11 +1028,79 @@ describe('event.insert.blocks', () => {
       })
     })
 
+    test('target: block object, placement: auto, select: none, useAtProp: true', async () => {
+      const {editor, imageA, imageB, block} = await createTest({
+        target: 'block object',
+        placement: 'auto',
+        select: 'none',
+        useAtProp: true,
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          imageA,
+          // Inserting the same images again will generate new _keys to avoid
+          // conflicts
+          {
+            ...imageA,
+            _key: 'k6',
+          },
+          {
+            ...imageB,
+            _key: 'k7',
+          },
+          imageB,
+          block,
+        ])
+
+        expect(editor.getSnapshot().context.selection).toBeNull()
+      })
+    })
+
     test('target: block object, placement: before, select: end', async () => {
       const {editor, imageA, imageB, block} = await createTest({
         target: 'block object',
         placement: 'before',
         select: 'end',
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          // Inserting the same images again will generate new _keys to avoid
+          // conflicts
+          {
+            ...imageA,
+            _key: 'k6',
+          },
+          {
+            ...imageB,
+            _key: 'k7',
+          },
+          imageA,
+          imageB,
+          block,
+        ])
+
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {
+            path: [{_key: 'k7'}],
+            offset: 0,
+          },
+          focus: {
+            path: [{_key: 'k7'}],
+            offset: 0,
+          },
+          backward: false,
+        })
+      })
+    })
+
+    test('target: block object, placement: before, select: end, useAtProp: true', async () => {
+      const {editor, imageA, imageB, block} = await createTest({
+        target: 'block object',
+        placement: 'before',
+        select: 'end',
+        useAtProp: true,
       })
 
       await vi.waitFor(() => {
@@ -701,6 +1172,45 @@ describe('event.insert.blocks', () => {
       })
     })
 
+    test('target: block object, placement: before, select: start, useAtProp: true', async () => {
+      const {editor, imageA, imageB, block} = await createTest({
+        target: 'block object',
+        placement: 'before',
+        select: 'start',
+        useAtProp: true,
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          // Inserting the same images again will generate new _keys to avoid
+          // conflicts
+          {
+            ...imageA,
+            _key: 'k6',
+          },
+          {
+            ...imageB,
+            _key: 'k7',
+          },
+          imageA,
+          imageB,
+          block,
+        ])
+
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {
+            path: [{_key: 'k6'}],
+            offset: 0,
+          },
+          focus: {
+            path: [{_key: 'k6'}],
+            offset: 0,
+          },
+          backward: false,
+        })
+      })
+    })
+
     test('target: block object, placement: before, select: none', async () => {
       const {editor, imageA, imageB, block} = await createTest({
         target: 'block object',
@@ -739,11 +1249,79 @@ describe('event.insert.blocks', () => {
       })
     })
 
+    test('target: block object, placement: before, select: none, useAtProp: true', async () => {
+      const {editor, imageA, imageB, block} = await createTest({
+        target: 'block object',
+        placement: 'before',
+        select: 'none',
+        useAtProp: true,
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          // Inserting the same images again will generate new _keys to avoid
+          // conflicts
+          {
+            ...imageA,
+            _key: 'k6',
+          },
+          {
+            ...imageB,
+            _key: 'k7',
+          },
+          imageA,
+          imageB,
+          block,
+        ])
+
+        expect(editor.getSnapshot().context.selection).toBeNull()
+      })
+    })
+
     test('target: block object, placement: after, select: end', async () => {
       const {editor, imageA, imageB, block} = await createTest({
         target: 'block object',
         placement: 'after',
         select: 'end',
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          imageA,
+          // Inserting the same images again will generate new _keys to avoid
+          // conflicts
+          {
+            ...imageA,
+            _key: 'k6',
+          },
+          {
+            ...imageB,
+            _key: 'k7',
+          },
+          imageB,
+          block,
+        ])
+
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {
+            path: [{_key: 'k7'}],
+            offset: 0,
+          },
+          focus: {
+            path: [{_key: 'k7'}],
+            offset: 0,
+          },
+          backward: false,
+        })
+      })
+    })
+
+    test('target: block object, placement: after, select: end, useAtProp: true', async () => {
+      const {editor, imageA, imageB, block} = await createTest({
+        target: 'block object',
+        placement: 'after',
+        select: 'end',
+        useAtProp: true,
       })
 
       await vi.waitFor(() => {
@@ -815,6 +1393,45 @@ describe('event.insert.blocks', () => {
       })
     })
 
+    test('target: block object, placement: after, select: start, useAtProp: true', async () => {
+      const {editor, imageA, imageB, block} = await createTest({
+        target: 'block object',
+        placement: 'after',
+        select: 'start',
+        useAtProp: true,
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          imageA,
+          // Inserting the same images again will generate new _keys to avoid
+          // conflicts
+          {
+            ...imageA,
+            _key: 'k6',
+          },
+          {
+            ...imageB,
+            _key: 'k7',
+          },
+          imageB,
+          block,
+        ])
+
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {
+            path: [{_key: 'k6'}],
+            offset: 0,
+          },
+          focus: {
+            path: [{_key: 'k6'}],
+            offset: 0,
+          },
+          backward: false,
+        })
+      })
+    })
+
     test('target: block object, placement: after, select: none', async () => {
       const {editor, imageA, imageB, block} = await createTest({
         target: 'block object',
@@ -853,11 +1470,79 @@ describe('event.insert.blocks', () => {
       })
     })
 
+    test('target: block object, placement: after, select: none, useAtProp: true', async () => {
+      const {editor, imageA, imageB, block} = await createTest({
+        target: 'block object',
+        placement: 'after',
+        select: 'none',
+        useAtProp: true,
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          imageA,
+          // Inserting the same images again will generate new _keys to avoid
+          // conflicts
+          {
+            ...imageA,
+            _key: 'k6',
+          },
+          {
+            ...imageB,
+            _key: 'k7',
+          },
+          imageB,
+          block,
+        ])
+
+        expect(editor.getSnapshot().context.selection).toBeNull()
+      })
+    })
+
     test('target: text-start, placement: auto, select: end', async () => {
       const {editor, imageA, imageB, block} = await createTest({
         target: 'text-start',
         placement: 'auto',
         select: 'end',
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          imageA,
+          imageB,
+          // Inserting the same images again will generate new _keys to avoid
+          // conflicts
+          {
+            ...imageA,
+            _key: 'k6',
+          },
+          {
+            ...imageB,
+            _key: 'k7',
+          },
+          block,
+        ])
+
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {
+            path: [{_key: 'k7'}],
+            offset: 0,
+          },
+          focus: {
+            path: [{_key: 'k7'}],
+            offset: 0,
+          },
+          backward: false,
+        })
+      })
+    })
+
+    test('target: text-start, placement: auto, select: end, useAtProp: true', async () => {
+      const {editor, imageA, imageB, block} = await createTest({
+        target: 'text-start',
+        placement: 'auto',
+        select: 'end',
+        useAtProp: true,
       })
 
       await vi.waitFor(() => {
@@ -929,6 +1614,45 @@ describe('event.insert.blocks', () => {
       })
     })
 
+    test('target: text-start, placement: auto, select: start, useAtProp: true', async () => {
+      const {editor, imageA, imageB, block} = await createTest({
+        target: 'text-start',
+        placement: 'auto',
+        select: 'start',
+        useAtProp: true,
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          imageA,
+          imageB,
+          // Inserting the same images again will generate new _keys to avoid
+          // conflicts
+          {
+            ...imageA,
+            _key: 'k6',
+          },
+          {
+            ...imageB,
+            _key: 'k7',
+          },
+          block,
+        ])
+
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {
+            path: [{_key: 'k6'}],
+            offset: 0,
+          },
+          focus: {
+            path: [{_key: 'k6'}],
+            offset: 0,
+          },
+          backward: false,
+        })
+      })
+    })
+
     test('target: text-start, placement: auto, select: none', async () => {
       const {editor, imageA, imageB, block, initialSelection} =
         await createTest({
@@ -958,11 +1682,79 @@ describe('event.insert.blocks', () => {
       })
     })
 
+    test('target: text-start, placement: auto, select: none, useAtProp: true', async () => {
+      const {editor, imageA, imageB, block} = await createTest({
+        target: 'text-start',
+        placement: 'auto',
+        select: 'none',
+        useAtProp: true,
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          imageA,
+          imageB,
+          // Inserting the same images again will generate new _keys to avoid
+          // conflicts
+          {
+            ...imageA,
+            _key: 'k6',
+          },
+          {
+            ...imageB,
+            _key: 'k7',
+          },
+          block,
+        ])
+
+        expect(editor.getSnapshot().context.selection).toBeNull()
+      })
+    })
+
     test('target: text-end, placement: auto, select: end', async () => {
       const {editor, imageA, imageB, block} = await createTest({
         target: 'text-end',
         placement: 'auto',
         select: 'end',
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          imageA,
+          imageB,
+          block,
+          // Inserting the same images again will generate new _keys to avoid
+          // conflicts
+          {
+            ...imageA,
+            _key: 'k6',
+          },
+          {
+            ...imageB,
+            _key: 'k7',
+          },
+        ])
+
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {
+            path: [{_key: 'k7'}],
+            offset: 0,
+          },
+          focus: {
+            path: [{_key: 'k7'}],
+            offset: 0,
+          },
+          backward: false,
+        })
+      })
+    })
+
+    test('target: text-end, placement: auto, select: end, useAtProp: true', async () => {
+      const {editor, imageA, imageB, block} = await createTest({
+        target: 'text-end',
+        placement: 'auto',
+        select: 'end',
+        useAtProp: true,
       })
 
       await vi.waitFor(() => {
@@ -1034,6 +1826,45 @@ describe('event.insert.blocks', () => {
       })
     })
 
+    test('target: text-end, placement: auto, select: start, useAtProp: true', async () => {
+      const {editor, imageA, imageB, block} = await createTest({
+        target: 'text-end',
+        placement: 'auto',
+        select: 'start',
+        useAtProp: true,
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          imageA,
+          imageB,
+          block,
+          // Inserting the same images again will generate new _keys to avoid
+          // conflicts
+          {
+            ...imageA,
+            _key: 'k6',
+          },
+          {
+            ...imageB,
+            _key: 'k7',
+          },
+        ])
+
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {
+            path: [{_key: 'k6'}],
+            offset: 0,
+          },
+          focus: {
+            path: [{_key: 'k6'}],
+            offset: 0,
+          },
+          backward: false,
+        })
+      })
+    })
+
     test('target: text-end, placement: auto, select: none', async () => {
       const {editor, imageA, imageB, block, initialSelection} =
         await createTest({
@@ -1063,11 +1894,97 @@ describe('event.insert.blocks', () => {
       })
     })
 
+    test('target: text-end, placement: auto, select: none, useAtProp: true', async () => {
+      const {editor, imageA, imageB, block} = await createTest({
+        target: 'text-end',
+        placement: 'auto',
+        select: 'none',
+        useAtProp: true,
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          imageA,
+          imageB,
+          block,
+          // Inserting the same images again will generate new _keys to avoid
+          // conflicts
+          {
+            ...imageA,
+            _key: 'k6',
+          },
+          {
+            ...imageB,
+            _key: 'k7',
+          },
+        ])
+
+        expect(editor.getSnapshot().context.selection).toBeNull()
+      })
+    })
+
     test('target: text-mid, placement: auto, select: end', async () => {
       const {editor, imageA, imageB, block} = await createTest({
         target: 'text-mid',
         placement: 'auto',
         select: 'end',
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          imageA,
+          imageB,
+          {
+            ...block,
+            children: [
+              {
+                ...block.children[0],
+                text: 'foo',
+              },
+            ],
+          },
+          // Inserting the same images again will generate new _keys to avoid
+          // conflicts
+          {
+            ...imageA,
+            _key: 'k6',
+          },
+          {
+            ...imageB,
+            _key: 'k7',
+          },
+          {
+            ...block,
+            _key: 'k8',
+            children: [
+              {
+                ...block.children[0],
+                text: 'bar',
+              },
+            ],
+          },
+        ])
+
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {
+            path: [{_key: 'k7'}],
+            offset: 0,
+          },
+          focus: {
+            path: [{_key: 'k7'}],
+            offset: 0,
+          },
+          backward: false,
+        })
+      })
+    })
+
+    test('target: text-mid, placement: auto, select: end, useAtProp: true', async () => {
+      const {editor, imageA, imageB, block} = await createTest({
+        target: 'text-mid',
+        placement: 'auto',
+        select: 'end',
+        useAtProp: true,
       })
 
       await vi.waitFor(() => {
@@ -1175,6 +2092,63 @@ describe('event.insert.blocks', () => {
       })
     })
 
+    test('target: text-mid, placement: auto, select: start, useAtProp: true', async () => {
+      const {editor, imageA, imageB, block} = await createTest({
+        target: 'text-mid',
+        placement: 'auto',
+        select: 'start',
+        useAtProp: true,
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          imageA,
+          imageB,
+          {
+            ...block,
+            children: [
+              {
+                ...block.children[0],
+                text: 'foo',
+              },
+            ],
+          },
+          // Inserting the same images again will generate new _keys to avoid
+          // conflicts
+          {
+            ...imageA,
+            _key: 'k6',
+          },
+          {
+            ...imageB,
+            _key: 'k7',
+          },
+          {
+            ...block,
+            _key: 'k8',
+            children: [
+              {
+                ...block.children[0],
+                text: 'bar',
+              },
+            ],
+          },
+        ])
+
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {
+            path: [{_key: 'k6'}],
+            offset: 0,
+          },
+          focus: {
+            path: [{_key: 'k6'}],
+            offset: 0,
+          },
+          backward: false,
+        })
+      })
+    })
+
     test('target: text-mid, placement: auto, select: none', async () => {
       const {editor, imageA, imageB, block, initialSelection} =
         await createTest({
@@ -1219,6 +2193,53 @@ describe('event.insert.blocks', () => {
         ])
 
         expect(editor.getSnapshot().context.selection).toEqual(initialSelection)
+      })
+    })
+
+    test('target: text-mid, placement: auto, select: none, useAtProp: true', async () => {
+      const {editor, imageA, imageB, block} = await createTest({
+        target: 'text-mid',
+        placement: 'auto',
+        select: 'none',
+        useAtProp: true,
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          imageA,
+          imageB,
+          {
+            ...block,
+            children: [
+              {
+                ...block.children[0],
+                text: 'foo',
+              },
+            ],
+          },
+          // Inserting the same images again will generate new _keys to avoid
+          // conflicts
+          {
+            ...imageA,
+            _key: 'k6',
+          },
+          {
+            ...imageB,
+            _key: 'k7',
+          },
+          {
+            ...block,
+            _key: 'k8',
+            children: [
+              {
+                ...block.children[0],
+                text: 'bar',
+              },
+            ],
+          },
+        ])
+
+        expect(editor.getSnapshot().context.selection).toBeNull()
       })
     })
   })
