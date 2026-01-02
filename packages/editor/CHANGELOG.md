@@ -1,5 +1,13 @@
 # Changelog
 
+## 4.1.5
+
+### Patch Changes
+
+- [#2077](https://github.com/portabletext/editor/pull/2077) [`6e5f39e`](https://github.com/portabletext/editor/commit/6e5f39e7a4104298feaadf0a05fc41424adf8b24) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update dependency @portabletext/to-html to ^5.0.1
+
+- [#2083](https://github.com/portabletext/editor/pull/2083) [`ee2f480`](https://github.com/portabletext/editor/commit/ee2f480c4f0d162dc5c590c6f5a2665864a40d6e) Thanks [@christianhg](https://github.com/christianhg)! - fix: correctly calculate inline object `focused` state
+
 ## 4.1.4
 
 ### Patch Changes
