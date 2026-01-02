@@ -29,13 +29,15 @@ Feature: Emoji Picker
       | ":joy" | after ":joy" | ":"           | ":joy:"    | ""      |
 
   Scenario: Undo after direct hit
-    When ":joy:" is typed
+    When the editor is focused
+    And ":joy:" is typed
     Then the text is "😂"
     When undo is performed
     Then the text is ":joy:"
 
   Scenario: Picking direct hit after undo
-    When ":joy:" is typed
+    When the editor is focused
+    And ":joy:" is typed
     And undo is performed
     And "{Backspace}" is pressed
     And ":" is typed
@@ -44,20 +46,23 @@ Feature: Emoji Picker
     And the matches are ""
 
   Scenario: Picking wrong direct hit
-    When ":jo:" is typed
+    When the editor is focused
+    And ":jo:" is typed
     Then the text is ":jo:"
     And the keyword is "jo"
     And the matches are "😂,😹,🕹️"
 
   Scenario: Colon after wrong direct hit
-    When ":jo:" is typed
+    When the editor is focused
+    And ":jo:" is typed
     And ":" is typed
     Then the text is ":jo::"
     And the keyword is "jo:"
     And the matches are ""
 
   Scenario: Picking wrong direct hit after undoing direct hit
-    When ":joy:" is typed
+    When the editor is focused
+    And ":joy:" is typed
     And undo is performed
     And "{Backspace}{Backspace}" is pressed
     And ":" is typed
@@ -66,45 +71,53 @@ Feature: Emoji Picker
     And the matches are ""
 
   Scenario: Two consecutive direct hits
-    When ":joy:" is typed
+    When the editor is focused
+    And ":joy:" is typed
     And ":joy_cat:" is typed
     Then the text is "😂😹"
 
   Scenario: Picking the closest hit with Enter
-    When ":joy" is typed
+    When the editor is focused
+    And ":joy" is typed
     And "{Enter}" is pressed
     Then the text is "😂"
 
   Scenario: Picking the closest hit with Tab
-    When ":joy" is typed
+    When the editor is focused
+    And ":joy" is typed
     And "{Tab}" is pressed
     Then the text is "😂"
 
   Scenario: Navigating down the list
-    When ":joy" is typed
+    When the editor is focused
+    And ":joy" is typed
     And "{ArrowDown}" is pressed
     And "{Enter}" is pressed
     Then the text is "😹"
 
   Scenario: Aborting on Escape
-    When ":joy" is typed
+    When the editor is focused
+    And ":joy" is typed
     And "{Escape}" is pressed
     And "{Enter}" is pressed
     Then the text is ":joy|"
 
   Scenario: Aborting and forwarding Enter if there is no keyword
-    When ":" is typed
+    When the editor is focused
+    And ":" is typed
     And "{Enter}" is pressed
     Then the text is ":|"
 
   Scenario: Aborting Enter if there are no matches
-    When ":asdf" is typed
+    When the editor is focused
+    And ":asdf" is typed
     And "{Enter}" is pressed
     Then the text is ":asdf"
     And the keyword is ""
 
   Scenario: Backspacing to narrow search
-    When ":joy" is typed
+    When the editor is focused
+    And ":joy" is typed
     And "{Backspace}" is pressed
     And "{Enter}" is pressed
     Then the text is "😂"

@@ -61,7 +61,8 @@ Feature: Smart Quotes Input Rule
     Then the text is "“‘sorry’ you say?” she asked"
 
   Scenario Outline: Contractions
-    When <text> is typed
+    When the editor is focused
+    And <text> is typed
     Then the text is <new text>
 
     Examples:
