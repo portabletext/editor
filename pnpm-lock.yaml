@@ -598,7 +598,7 @@ importers:
         specifier: workspace:^
         version: link:../test
       '@portabletext/types':
-        specifier: ^4.0.0
+        specifier: ^4.0.1
         version: 4.0.1
       '@sanity/pkg-utils':
         specifier: ^10.2.1
