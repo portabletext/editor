@@ -492,10 +492,6 @@ describe('event.select', () => {
 
                   const at = getSelectionBeforeText(snapshot.context, 'oo')
 
-                  if (!at) {
-                    return false
-                  }
-
                   return {at}
                 },
                 actions: [
@@ -530,7 +526,6 @@ describe('event.select', () => {
         'oo',
       )
 
-      expect(selection).not.toBeNull()
       expect(editor.getSnapshot().context.selection).toEqual(selection)
 
       expect(selectEvents).toEqual([

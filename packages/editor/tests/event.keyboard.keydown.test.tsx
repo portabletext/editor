@@ -101,7 +101,7 @@ describe('event.keyboard.keydown', () => {
         editor.getSnapshot().context,
         'foo',
       )
-      expect(selection).not.toBeNull()
+
       expect(editor.getSnapshot().context.selection).toEqual(selection)
     })
 
@@ -112,7 +112,7 @@ describe('event.keyboard.keydown', () => {
         editor.getSnapshot().context,
         'bar',
       )
-      expect(selection).not.toBeNull()
+
       expect(editor.getSnapshot().context.selection).toEqual(selection)
     })
 
@@ -183,7 +183,7 @@ describe('event.keyboard.keydown', () => {
         editor.getSnapshot().context,
         'foo',
       )
-      expect(selection).not.toBeNull()
+
       expect(editor.getSnapshot().context.selection).toEqual(selection)
     })
 
@@ -194,7 +194,7 @@ describe('event.keyboard.keydown', () => {
         editor.getSnapshot().context,
         'bar',
       )
-      expect(selection).not.toBeNull()
+
       expect(editor.getSnapshot().context.selection).toEqual(selection)
     })
 
