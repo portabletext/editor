@@ -370,17 +370,7 @@ describe('event.insert.blocks', () => {
           },
         ])
 
-        expect(editor.getSnapshot().context.selection).toEqual({
-          anchor: {
-            path: [{_key: 'k6'}],
-            offset: 0,
-          },
-          focus: {
-            path: [{_key: 'k6'}],
-            offset: 0,
-          },
-          backward: false,
-        })
+        expect(editor.getSnapshot().context.selection).toBeNull()
       })
     })
 
