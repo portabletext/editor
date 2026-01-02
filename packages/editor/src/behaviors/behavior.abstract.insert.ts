@@ -54,7 +54,8 @@ export const abstractInsertBehaviors = [
 
   defineBehavior({
     on: 'insert.blocks',
-    guard: ({event}) => event.placement === 'before',
+    guard: ({event}) =>
+      event.placement === 'before' || event.placement === 'after',
     actions: [
       ({snapshot, event}) => {
         let firstBlockKey: string | undefined
@@ -79,7 +80,12 @@ export const abstractInsertBehaviors = [
             raise({
               type: 'insert.block',
               block: key !== block._key ? {...block, _key: key} : block,
-              placement: index === 0 ? 'before' : 'after',
+              placement:
+                event.placement === 'after'
+                  ? 'after'
+                  : index === 0
+                    ? 'before'
+                    : 'after',
               select: 'none',
               ...(previousBlockKey
                 ? {
@@ -122,68 +128,6 @@ export const abstractInsertBehaviors = [
     ],
   }),
 
-  defineBehavior({
-    on: 'insert.blocks',
-    guard: ({snapshot, event}) => {
-      if (event.placement !== 'after') {
-        return false
-      }
-
-      const firstBlockKey = getUniqueBlockKey(event.blocks.at(0)?._key)(
-        snapshot,
-      )
-      const lastBlockKey = getUniqueBlockKey(event.blocks.at(-1)?._key)(
-        snapshot,
-      )
-
-      return {firstBlockKey, lastBlockKey}
-    },
-    actions: [
-      ({snapshot, event}, {firstBlockKey, lastBlockKey}) => [
-        ...event.blocks.map((block, index) =>
-          raise({
-            type: 'insert.block',
-            block:
-              index === 0
-                ? {
-                    ...block,
-                    _key: firstBlockKey,
-                  }
-                : index === event.blocks.length - 1
-                  ? {
-                      ...block,
-                      _key: lastBlockKey,
-                    }
-                  : block,
-            placement: 'after',
-            select: index !== event.blocks.length - 1 ? 'end' : 'none',
-          }),
-        ),
-        ...(event.select === 'none'
-          ? [
-              raise({
-                type: 'select',
-                at: snapshot.context.selection,
-              }),
-            ]
-          : event.select === 'start'
-            ? [
-                raise({
-                  type: 'select.block',
-                  at: [{_key: firstBlockKey}],
-                  select: 'start',
-                }),
-              ]
-            : [
-                raise({
-                  type: 'select.block',
-                  at: [{_key: lastBlockKey}],
-                  select: 'end',
-                }),
-              ]),
-      ],
-    ],
-  }),
   defineBehavior({
     on: 'insert.blocks',
     guard: ({snapshot, event}) => {
