@@ -179,12 +179,6 @@ export const abstractInsertBehaviors = [
         },
         block: focusTextBlock.node,
       })
-      const firstBlockKey = getUniqueBlockKey(event.blocks.at(0)?._key)(
-        snapshot,
-      )
-      const lastBlockKey = getUniqueBlockKey(event.blocks.at(-1)?._key)(
-        snapshot,
-      )
 
       const isFirstBlockTextBlock = isTextBlock(
         snapshot.context,
@@ -192,8 +186,6 @@ export const abstractInsertBehaviors = [
       )
 
       return {
-        firstBlockKey,
-        lastBlockKey,
         focusBlockStartPoint,
         focusBlockEndPoint,
         focusTextBlockAfter,
@@ -209,97 +201,121 @@ export const abstractInsertBehaviors = [
           focusBlockEndPoint,
           focusTextBlockAfter,
           at,
-          firstBlockKey,
-          lastBlockKey,
           focusBlockStartPoint,
           isFirstBlockTextBlock,
           originalSelection,
         },
-      ) => [
-        ...event.blocks.flatMap((block, index) =>
-          index === 0
-            ? [
-                ...(isEqualSelectionPoints(at.focus, focusBlockEndPoint)
-                  ? []
-                  : [
-                      raise({
-                        type: 'delete',
-                        at: {
-                          anchor: at.focus,
-                          focus: focusBlockEndPoint,
-                        },
-                      }),
-                    ]),
+      ) => {
+        let firstBlockKey: string | undefined
+        const actions: Array<BehaviorAction> = []
+
+        let index = -1
+        for (const block of event.blocks) {
+          index++
+
+          if (index === 0) {
+            if (!isEqualSelectionPoints(at.focus, focusBlockEndPoint)) {
+              actions.push(
                 raise({
-                  type: 'insert.block',
-                  block: {
-                    ...block,
-                    _key: firstBlockKey,
+                  type: 'delete',
+                  at: {
+                    anchor: at.focus,
+                    focus: focusBlockEndPoint,
                   },
-                  placement: 'auto',
-                  select: 'end',
-                  ...(event.at ? {at: event.at} : {}),
                 }),
-              ]
-            : index === event.blocks.length - 1
-              ? [
-                  raise({
-                    type: 'insert.block',
-                    block: {
-                      ...block,
-                      _key: lastBlockKey,
-                    },
-                    placement: 'after',
-                    select: 'end',
-                  }),
-                  ...(!isEmptyTextBlock(snapshot.context, focusTextBlockAfter)
-                    ? [
-                        raise({
-                          type: 'insert.block',
-                          block: focusTextBlockAfter,
-                          placement: 'auto',
-                          select: event.select === 'end' ? 'none' : 'end',
-                        }),
-                      ]
-                    : []),
-                ]
-              : [
-                  raise({
-                    type: 'insert.block',
-                    block,
-                    placement: 'after',
-                    select: 'end',
-                  }),
-                ],
-        ),
-        ...(event.select === 'none'
-          ? [
+              )
+            }
+
+            const key = getUniqueBlockKey(block._key)(snapshot)
+            firstBlockKey = key
+
+            actions.push(
+              raise({
+                type: 'insert.block',
+                block: key !== block._key ? {...block, _key: key} : block,
+                placement: 'auto',
+                select: 'end',
+                ...(event.at ? {at: event.at} : {}),
+              }),
+            )
+
+            continue
+          }
+
+          if (index === event.blocks.length - 1) {
+            actions.push(
+              raise({
+                type: 'insert.block',
+                block,
+                placement: 'after',
+                select: 'end',
+              }),
+            )
+
+            continue
+          }
+
+          actions.push(
+            raise({
+              type: 'insert.block',
+              block,
+              placement: 'after',
+              select: 'end',
+            }),
+          )
+        }
+
+        if (!isEmptyTextBlock(snapshot.context, focusTextBlockAfter)) {
+          actions.push(
+            raise({
+              type: 'insert.block',
+              block: focusTextBlockAfter,
+              placement: 'auto',
+              select: event.select === 'end' ? 'none' : 'end',
+            }),
+          )
+        }
+
+        if (event.select === 'none') {
+          actions.push(
+            raise({
+              type: 'select',
+              at: originalSelection,
+            }),
+          )
+        }
+
+        if (event.select === 'start') {
+          if (
+            (isEqualSelectionPoints(at.focus, focusBlockStartPoint) ||
+              !isFirstBlockTextBlock) &&
+            firstBlockKey
+          ) {
+            actions.push(
+              raise({
+                type: 'select.block',
+                at: [{_key: firstBlockKey}],
+                select: 'start',
+              }),
+            )
+          } else {
+            actions.push(
               raise({
                 type: 'select',
-                at: originalSelection,
+                at: {
+                  anchor: at.focus,
+                  focus: at.focus,
+                },
               }),
-            ]
-          : event.select === 'start'
-            ? [
-                isEqualSelectionPoints(at.focus, focusBlockStartPoint) ||
-                !isFirstBlockTextBlock
-                  ? raise({
-                      type: 'select.block',
-                      at: [{_key: firstBlockKey}],
-                      select: 'start',
-                    })
-                  : raise({
-                      type: 'select',
-                      at: {
-                        anchor: at.focus,
-                        focus: at.focus,
-                      },
-                    }),
-              ]
-            : []),
-      ],
+            )
+          }
+        }
+
+        return actions
+      },
     ],
   }),
+
   defineBehavior({
     on: 'insert.blocks',
     guard: ({snapshot, event}) => {
