@@ -1,6 +1,6 @@
 import type {Patch} from '@portabletext/patches'
 import {defineSchema} from '@portabletext/schema'
-import {getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {execute} from '../src/behaviors/behavior.types.action'
 import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
@@ -597,6 +597,70 @@ describe('event.insert.block', () => {
           type: 'set',
           path: [{_key: 'k2'}, 'markDefs'],
           value: [],
+        },
+      ])
+    })
+  })
+
+  test('Scenario: Inserting block after block object using at prop', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const imageAKey = keyGenerator()
+    const imageBKey = keyGenerator()
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {name: 'image', fields: [{name: 'src', type: 'string'}]},
+        ],
+      }),
+      initialValue: [
+        {
+          _key: imageAKey,
+          _type: 'image',
+          src: 'https://example.com/image-a.jpg',
+        },
+        {
+          _key: imageBKey,
+          _type: 'image',
+          src: 'https://example.com/image-b.jpg',
+        },
+      ],
+    })
+
+    const imageCKey = keyGenerator()
+
+    editor.send({
+      type: 'insert.block',
+      block: {
+        _key: imageCKey,
+        _type: 'image',
+        src: 'https://example.com/image-c.jpg',
+      },
+      placement: 'auto',
+      select: 'none',
+      at: {
+        anchor: {path: [{_key: imageAKey}], offset: 0},
+        focus: {path: [{_key: imageAKey}], offset: 0},
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: imageAKey,
+          _type: 'image',
+          src: 'https://example.com/image-a.jpg',
+        },
+        {
+          _key: imageCKey,
+          _type: 'image',
+          src: 'https://example.com/image-c.jpg',
+        },
+        {
+          _key: imageBKey,
+          _type: 'image',
+          src: 'https://example.com/image-b.jpg',
         },
       ])
     })
