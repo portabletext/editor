@@ -10,7 +10,7 @@ import {beforeEach, describe, expect, it, test} from 'vitest'
 import {createActor} from 'xstate'
 import {editorMachine} from '../editor/editor-machine'
 import {relayMachine} from '../editor/relay-machine'
-import {plugins} from '../editor/with-plugins'
+import {plugins} from '../slate-plugins/slate-plugins'
 import {defaultKeyGenerator} from '../utils/key-generator'
 import {
   insertNodePatch,

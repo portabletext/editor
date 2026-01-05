@@ -3,10 +3,10 @@ import {withReact} from 'slate-react'
 import {buildIndexMaps} from '../internal-utils/build-index-maps'
 import {createPlaceholderBlock} from '../internal-utils/create-placeholder-block'
 import {debugWithName} from '../internal-utils/debug'
+import {plugins} from '../slate-plugins/slate-plugins'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import type {EditorActor} from './editor-machine'
 import type {RelayActor} from './relay-machine'
-import {plugins} from './with-plugins'
 
 const debug = debugWithName('setup')
 
