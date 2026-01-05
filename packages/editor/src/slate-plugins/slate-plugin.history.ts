@@ -5,23 +5,23 @@
 
 import type {PortableTextBlock} from '@portabletext/schema'
 import type {Operation} from 'slate'
+import type {EditorActor} from '../editor/editor-machine'
+import {createUndoSteps} from '../editor/undo-step'
 import {debugWithName} from '../internal-utils/debug'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
-import type {EditorActor} from './editor-machine'
-import {createUndoSteps} from './undo-step'
 
 const debug = debugWithName('plugin:history')
 
 const UNDO_STEP_LIMIT = 1000
 
-export function pluginHistory({
+export function createHistoryPlugin({
   editorActor,
   subscriptions,
 }: {
   editorActor: EditorActor
   subscriptions: Array<() => () => void>
 }): (editor: PortableTextSlateEditor) => PortableTextSlateEditor {
-  return (editor: PortableTextSlateEditor) => {
+  return function historyPlugin(editor: PortableTextSlateEditor) {
     let previousSnapshot: Array<PortableTextBlock> | undefined = editor.value
     let previousUndoStepId = editor.undoStepId
 

@@ -1,19 +1,19 @@
 import {isSpan, isTextBlock} from '@portabletext/schema'
 import {Editor, Element, Node, Path, Transforms} from 'slate'
+import type {EditorActor} from '../editor/editor-machine'
+import type {EditorContext, EditorSnapshot} from '../editor/editor-snapshot'
 import {isEqualMarks} from '../internal-utils/equality'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
-import type {EditorActor} from './editor-machine'
-import type {EditorContext, EditorSnapshot} from './editor-snapshot'
-import {withNormalizeNode} from './with-normalizing-node'
+import {withNormalizeNode} from './slate-plugin.normalize-node'
 
 /**
  * This plugin makes sure that every new node in the editor get a new _key prop when created
  *
  */
-export function createWithObjectKeys(editorActor: EditorActor) {
+export function createUniqueKeysPlugin(editorActor: EditorActor) {
   const context = editorActor.getSnapshot().context
 
-  return function withKeys(
+  return function uniqueKeysPlugin(
     editor: PortableTextSlateEditor,
   ): PortableTextSlateEditor {
     const {apply, normalizeNode} = editor

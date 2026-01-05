@@ -1,9 +1,9 @@
+import type {EditorContext} from '../editor/editor-snapshot'
 import {applyOperationToPortableText} from '../internal-utils/apply-operation-to-portable-text'
 import {buildIndexMaps} from '../internal-utils/build-index-maps'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
-import type {EditorContext} from './editor-snapshot'
 
-export function pluginUpdateValue(
+export function updateValuePlugin(
   context: Pick<EditorContext, 'keyGenerator' | 'schema'>,
   editor: PortableTextSlateEditor,
 ) {

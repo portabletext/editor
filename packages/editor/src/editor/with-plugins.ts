@@ -1,15 +1,15 @@
 import type {BaseOperation, Editor, Node, NodeEntry} from 'slate'
+import {createBehaviorApiPlugin} from '../slate-plugins/slate-plugin.behavior-api'
+import {createHistoryPlugin} from '../slate-plugins/slate-plugin.history'
+import {createNormalizationPlugin} from '../slate-plugins/slate-plugin.normalization'
+import {createPatchesPlugin} from '../slate-plugins/slate-plugin.patches'
+import {createSchemaPlugin} from '../slate-plugins/slate-plugin.schema'
+import {createUniqueKeysPlugin} from '../slate-plugins/slate-plugin.unique-keys'
+import {updateSelectionPlugin} from '../slate-plugins/slate-plugin.update-selection'
+import {updateValuePlugin} from '../slate-plugins/slate-plugin.update-value'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
-import {createWithEventListeners} from './create-with-event-listeners'
 import type {EditorActor} from './editor-machine'
 import type {RelayActor} from './relay-machine'
-import {pluginHistory} from './slate-plugin.history'
-import {createWithNormalize} from './slate-plugin.normalize'
-import {createWithObjectKeys} from './slate-plugin.object-keys'
-import {createWithPatches} from './slate-plugin.patches'
-import {createWithSchema} from './slate-plugin.schema'
-import {pluginUpdateSelection} from './slate-plugin.update-selection'
-import {pluginUpdateValue} from './slate-plugin.update-value'
 
 export interface OriginalEditorFunctions {
   apply: (operation: BaseOperation) => void
@@ -23,39 +23,38 @@ type PluginsOptions = {
   subscriptions: Array<() => () => void>
 }
 
-export const withPlugins = <T extends Editor>(
+export const plugins = <T extends Editor>(
   editor: T,
   options: PluginsOptions,
 ): PortableTextSlateEditor => {
   const e = editor as T & PortableTextSlateEditor
   const {editorActor, relayActor} = options
-  const withObjectKeys = createWithObjectKeys(editorActor)
-  const withSchema = createWithSchema({
+  const uniqueKeysPlugin = createUniqueKeysPlugin(editorActor)
+  const schemaPlugin = createSchemaPlugin({
     editorActor,
   })
-  const withPatches = createWithPatches({
+  const patchesPlugin = createPatchesPlugin({
     editorActor,
     relayActor,
     subscriptions: options.subscriptions,
   })
-  const withUndoRedo = pluginHistory({
+  const historyPlugin = createHistoryPlugin({
     editorActor,
     subscriptions: options.subscriptions,
   })
-  const withNormalize = createWithNormalize(editorActor)
-
-  const withEventListeners = createWithEventListeners(editorActor)
+  const normalizationPlugin = createNormalizationPlugin(editorActor)
+  const behaviorApiPlugin = createBehaviorApiPlugin(editorActor)
 
   // Ordering is important here, selection dealing last, data manipulation in the middle and core model stuff first.
-  return withEventListeners(
-    withSchema(
-      withObjectKeys(
-        withNormalize(
-          withUndoRedo(
-            withPatches(
-              pluginUpdateValue(
+  return behaviorApiPlugin(
+    schemaPlugin(
+      uniqueKeysPlugin(
+        normalizationPlugin(
+          historyPlugin(
+            patchesPlugin(
+              updateValuePlugin(
                 editorActor.getSnapshot().context,
-                pluginUpdateSelection({
+                updateSelectionPlugin({
                   editorActor,
                   editor: e,
                 }),

@@ -1,7 +1,7 @@
 import {Editor, Transforms} from 'slate'
-import {pluginRedoing} from '../editor/slate-plugin.redoing'
-import {pluginWithoutHistory} from '../editor/slate-plugin.without-history'
 import {transformOperation} from '../internal-utils/transform-operation'
+import {pluginRedoing} from '../slate-plugins/slate-plugin.redoing'
+import {pluginWithoutHistory} from '../slate-plugins/slate-plugin.without-history'
 import type {OperationImplementation} from './operation.types'
 
 export const historyRedoOperationImplementation: OperationImplementation<
