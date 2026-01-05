@@ -5,7 +5,7 @@ import type {
   PortableTextSpan,
   PortableTextTextBlock,
 } from '@portabletext/schema'
-import type {Descendant, Range, Operation as SlateOperation} from 'slate'
+import type {Range, Operation as SlateOperation} from 'slate'
 import type {ReactEditor} from 'slate-react'
 import type {DecoratedRange} from '../editor/range-decorations-machine'
 import type {EditorSelection} from './editor'
@@ -31,7 +31,6 @@ export interface PortableTextSlateEditor extends ReactEditor {
   _key: 'editor'
   _type: 'editor'
 
-  createPlaceholderBlock: () => Descendant
   isTextBlock: (value: unknown) => value is PortableTextTextBlock
   isTextSpan: (value: unknown) => value is PortableTextSpan
   isListBlock: (value: unknown) => value is PortableTextListBlock
