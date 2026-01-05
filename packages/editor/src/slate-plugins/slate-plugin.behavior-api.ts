@@ -1,12 +1,12 @@
 import {Editor, Node, Point, Range, Text} from 'slate'
+import type {EditorActor} from '../editor/editor-machine'
 import {
   slatePointToSelectionPoint,
   slateRangeToSelection,
 } from '../internal-utils/slate-utils'
-import type {EditorActor} from './editor-machine'
 
-export function createWithEventListeners(editorActor: EditorActor) {
-  return function withEventListeners(editor: Editor) {
+export function createBehaviorApiPlugin(editorActor: EditorActor) {
+  return function behaviorApiPlugin(editor: Editor) {
     const {delete: editorDelete, insertNodes, select, setSelection} = editor
 
     editor.delete = (options) => {

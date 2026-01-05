@@ -1,7 +1,7 @@
 import {Editor, Operation, Transforms} from 'slate'
-import {pluginUndoing} from '../editor/slate-plugin.undoing'
-import {pluginWithoutHistory} from '../editor/slate-plugin.without-history'
 import {transformOperation} from '../internal-utils/transform-operation'
+import {pluginUndoing} from '../slate-plugins/slate-plugin.undoing'
+import {pluginWithoutHistory} from '../slate-plugins/slate-plugin.without-history'
 import type {OperationImplementation} from './operation.types'
 
 export const historyUndoOperationImplementation: OperationImplementation<

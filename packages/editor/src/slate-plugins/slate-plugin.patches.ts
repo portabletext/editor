@@ -1,6 +1,8 @@
 import {insert, setIfMissing, unset, type Patch} from '@portabletext/patches'
 import type {PortableTextBlock} from '@portabletext/schema'
 import {Editor, type Operation} from 'slate'
+import type {EditorActor} from '../editor/editor-machine'
+import type {RelayActor} from '../editor/relay-machine'
 import {createApplyPatch} from '../internal-utils/applyPatch'
 import {debugWithName} from '../internal-utils/debug'
 import {
@@ -15,11 +17,9 @@ import {
 } from '../internal-utils/operation-to-patches'
 import {isEqualToEmptyEditor} from '../internal-utils/values'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
-import type {EditorActor} from './editor-machine'
-import type {RelayActor} from './relay-machine'
+import {withRemoteChanges} from './slate-plugin.remote-changes'
 import {pluginWithoutHistory} from './slate-plugin.without-history'
-import {withRemoteChanges} from './withChanges'
-import {withoutPatching} from './withoutPatching'
+import {withoutPatching} from './slate-plugin.without-patching'
 
 const debug = debugWithName('plugin:withPatches')
 const debugVerbose = false
@@ -30,7 +30,7 @@ interface Options {
   subscriptions: Array<() => () => void>
 }
 
-export function createWithPatches({
+export function createPatchesPlugin({
   editorActor,
   relayActor,
   subscriptions,
@@ -41,7 +41,7 @@ export function createWithPatches({
 
   const applyPatch = createApplyPatch(editorActor.getSnapshot().context)
 
-  return function withPatches(editor: PortableTextSlateEditor) {
+  return function patchesPlugin(editor: PortableTextSlateEditor) {
     previousValue = [...editor.value]
 
     const {apply} = editor

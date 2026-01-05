@@ -1,11 +1,11 @@
 import type {KeyboardEvent} from 'react'
 import type {ReactEditor} from 'slate-react'
+import type {EditorActor} from '../editor/editor-machine'
+import type {PortableTextEditor} from '../editor/PortableTextEditor'
 import {debugWithName} from '../internal-utils/debug'
 import {isHotkey} from '../internal-utils/is-hotkey'
 import type {HotkeyOptions} from '../types/options'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
-import type {EditorActor} from './editor-machine'
-import type {PortableTextEditor} from './PortableTextEditor'
 
 const debug = debugWithName('plugin:withHotKeys')
 
@@ -13,14 +13,15 @@ const debug = debugWithName('plugin:withHotKeys')
  * This plugin takes care of all hotkeys in the editor
  *
  */
-export function createWithHotkeys(
+export function createHotkeysPlugin(
   editorActor: EditorActor,
   portableTextEditor: PortableTextEditor,
   hotkeysFromOptions?: HotkeyOptions,
 ): (editor: PortableTextSlateEditor & ReactEditor) => any {
   const reservedHotkeys = ['enter', 'tab', 'shift', 'delete', 'end']
   const activeHotkeys = hotkeysFromOptions ?? {}
-  return function withHotKeys(editor: PortableTextSlateEditor & ReactEditor) {
+
+  return function hotkeysPlugin(editor: PortableTextSlateEditor & ReactEditor) {
     editor.pteWithHotKeys = (event: KeyboardEvent<HTMLDivElement>): void => {
       // Wire up custom marks hotkeys
       Object.keys(activeHotkeys).forEach((cat) => {

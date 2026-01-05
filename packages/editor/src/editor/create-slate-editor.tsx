@@ -6,7 +6,7 @@ import {debugWithName} from '../internal-utils/debug'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import type {EditorActor} from './editor-machine'
 import type {RelayActor} from './relay-machine'
-import {withPlugins} from './with-plugins'
+import {plugins} from './with-plugins'
 
 const debug = debugWithName('setup')
 
@@ -50,7 +50,7 @@ export function createSlateEditor(config: SlateEditorConfig): SlateEditor {
   editor.isUndoing = false
   editor.withHistory = true
 
-  const instance = withPlugins(withReact(editor), {
+  const instance = plugins(withReact(editor), {
     editorActor: config.editorActor,
     relayActor: config.relayActor,
     subscriptions: config.subscriptions,

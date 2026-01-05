@@ -29,13 +29,13 @@ import {
 } from '../internal-utils/equality'
 import {validateValue} from '../internal-utils/validateValue'
 import {toSlateBlock, VOID_CHILD_KEY} from '../internal-utils/values'
+import {withRemoteChanges} from '../slate-plugins/slate-plugin.remote-changes'
+import {pluginWithoutHistory} from '../slate-plugins/slate-plugin.without-history'
+import {withoutPatching} from '../slate-plugins/slate-plugin.without-patching'
 import type {PickFromUnion} from '../type-utils'
 import type {InvalidValueResolution} from '../types/editor'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import type {EditorSchema} from './editor-schema'
-import {pluginWithoutHistory} from './slate-plugin.without-history'
-import {withRemoteChanges} from './withChanges'
-import {withoutPatching} from './withoutPatching'
 
 const debug = debugWithName('sync machine')
 

@@ -24,6 +24,7 @@ import {getEventPosition} from '../internal-utils/event-position'
 import {normalizeSelection} from '../internal-utils/selection'
 import {slateRangeToSelection} from '../internal-utils/slate-utils'
 import {toSlateRange} from '../internal-utils/to-slate-range'
+import {createHotkeysPlugin} from '../slate-plugins/slate-plugin.hotkeys'
 import type {
   EditorSelection,
   OnCopyFn,
@@ -48,7 +49,6 @@ import {RenderElement} from './render.element'
 import {RenderLeaf} from './render.leaf'
 import {RenderText, type RenderTextProps} from './render.text'
 import {SelectionStateProvider} from './selection-state-context'
-import {createWithHotkeys} from './slate-plugin.hotkeys'
 import {useDropPosition} from './use-drop-position'
 import {usePortableTextEditor} from './usePortableTextEditor'
 import {validateSelectionMachine} from './validate-selection-machine'
@@ -186,13 +186,14 @@ export const PortableTextEditable = forwardRef<
     if (readOnly) {
       return slateEditor
     }
-    const withHotKeys = createWithHotkeys(
+
+    const hotkeysPlugin = createHotkeysPlugin(
       editorActor,
       portableTextEditor,
       hotkeys,
     )
 
-    return withHotKeys(slateEditor)
+    return hotkeysPlugin(slateEditor)
   }, [editorActor, hotkeys, portableTextEditor, readOnly, slateEditor])
 
   const renderElement = useCallback(

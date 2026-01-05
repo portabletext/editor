@@ -1,19 +1,19 @@
 import type {PortableTextObject, PortableTextSpan} from '@portabletext/schema'
 import {Editor, Node, Path, Range, Text, Transforms} from 'slate'
+import type {EditorActor} from '../editor/editor-machine'
 import {createPlaceholderBlock} from '../internal-utils/create-placeholder-block'
 import {debugWithName} from '../internal-utils/debug'
 import {isEqualMarkDefs} from '../internal-utils/equality'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
-import type {EditorActor} from './editor-machine'
-import {withNormalizeNode} from './with-normalizing-node'
-import {withoutPatching} from './withoutPatching'
+import {withNormalizeNode} from './slate-plugin.normalize-node'
+import {withoutPatching} from './slate-plugin.without-patching'
 
 const debug = debugWithName('plugin:withPortableTextMarkModel')
 
-export function createWithNormalize(
+export function createNormalizationPlugin(
   editorActor: EditorActor,
 ): (editor: PortableTextSlateEditor) => PortableTextSlateEditor {
-  return function withNormalize(editor: PortableTextSlateEditor) {
+  return function normalizationPlugin(editor: PortableTextSlateEditor) {
     const {apply, normalizeNode} = editor
     const defaultStyle = editorActor
       .getSnapshot()

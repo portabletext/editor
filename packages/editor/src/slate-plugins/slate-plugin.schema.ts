@@ -6,19 +6,19 @@ import {
   type PortableTextTextBlock,
 } from '@portabletext/schema'
 import {Editor, Transforms, type Element} from 'slate'
+import type {EditorActor} from '../editor/editor-machine'
 import {debugWithName} from '../internal-utils/debug'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {isListBlock} from '../utils/parse-blocks'
-import type {EditorActor} from './editor-machine'
-import {withNormalizeNode} from './with-normalizing-node'
+import {withNormalizeNode} from './slate-plugin.normalize-node'
 
 const debug = debugWithName('plugin:withSchemaTypes')
 /**
  * This plugin makes sure that schema types are recognized properly by Slate as blocks, voids, inlines
  *
  */
-export function createWithSchema({editorActor}: {editorActor: EditorActor}) {
-  return function withSchemaTypes(
+export function createSchemaPlugin({editorActor}: {editorActor: EditorActor}) {
+  return function schemaPlugin(
     editor: PortableTextSlateEditor,
   ): PortableTextSlateEditor {
     editor.isTextBlock = (value: unknown): value is PortableTextTextBlock => {
