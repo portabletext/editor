@@ -11,7 +11,6 @@ import {
 } from 'react'
 import {Subject} from 'rxjs'
 import {Slate} from 'slate-react'
-import {debugWithName} from '../internal-utils/debug'
 import {stopActor} from '../internal-utils/stop-actor'
 import type {
   AddedAnnotationPaths,
@@ -34,8 +33,6 @@ import {RelayActorContext} from './relay-actor-context'
 import type {RelayActor} from './relay-machine'
 import type {SyncActor} from './sync-machine'
 import {PortableTextEditorContext} from './usePortableTextEditor'
-
-const debug = debugWithName('component:PortableTextEditor')
 
 /**
  * Props for the PortableTextEditor component
@@ -345,7 +342,6 @@ export class PortableTextEditor extends Component<
    * ```
    */
   static blur = (editor: PortableTextEditor): void => {
-    debug('Host blurred')
     editor.editable?.blur()
   }
 
@@ -392,7 +388,6 @@ export class PortableTextEditor extends Component<
    * ```
    */
   static focus = (editor: PortableTextEditor): void => {
-    debug('Host requesting focus')
     editor.editable?.focus()
   }
 
@@ -547,7 +542,6 @@ export class PortableTextEditor extends Component<
     type: TSchemaType,
     value?: {[prop: string]: unknown},
   ): Path | undefined => {
-    debug(`Host inserting child`)
     return editor.editable?.insertChild(type, value)
   }
 
@@ -626,7 +620,6 @@ export class PortableTextEditor extends Component<
     editor: PortableTextEditor,
     selection: EditorSelection | null,
   ) => {
-    debug(`Host setting selection`, selection)
     editor.editable?.select(selection)
   }
 
@@ -665,7 +658,6 @@ export class PortableTextEditor extends Component<
     editor: PortableTextEditor,
     blockStyle: string,
   ) => {
-    debug(`Host is toggling block style`)
     return editor.editable?.toggleBlockStyle(blockStyle)
   }
 
@@ -698,7 +690,6 @@ export class PortableTextEditor extends Component<
    * ```
    */
   static toggleMark = (editor: PortableTextEditor, mark: string): void => {
-    debug(`Host toggling mark`, mark)
     editor.editable?.toggleMark(mark)
   }
 
@@ -730,7 +721,6 @@ export class PortableTextEditor extends Component<
    * ```
    */
   static undo = (editor: PortableTextEditor): void => {
-    debug('Host undoing')
     editor.editable?.undo()
   }
 
@@ -746,7 +736,6 @@ export class PortableTextEditor extends Component<
    * ```
    */
   static redo = (editor: PortableTextEditor): void => {
-    debug('Host redoing')
     editor.editable?.redo()
   }
 

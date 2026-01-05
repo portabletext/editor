@@ -9,10 +9,7 @@ import {
 import type {Descendant, Operation} from 'slate'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {isKeyedSegment} from '../utils'
-import {debugWithName} from './debug'
-
-const debug = debugWithName('transformOperation')
-const debugVerbose = debug.enabled && false
+import {debug} from './debug'
 
 /**
  * This will adjust the operation paths and offsets according to the
@@ -25,14 +22,6 @@ export function transformOperation(
   snapshot: PortableTextBlock[] | undefined,
   previousSnapshot: PortableTextBlock[] | undefined,
 ): Operation[] {
-  if (debugVerbose) {
-    debug(
-      `Adjusting '${operation.type}' operation paths for '${patch.type}' patch`,
-    )
-    debug(`Operation ${JSON.stringify(operation)}`)
-    debug(`Patch ${JSON.stringify(patch)}`)
-  }
-
   const transformedOperation = {...operation}
 
   if (patch.type === 'insert' && patch.path.length === 1) {
@@ -40,7 +29,7 @@ export function transformOperation(
     const insertBlockIndex = (snapshot || []).findIndex(
       (blk) => isKeyedSegment(pathSegment) && blk._key === pathSegment._key,
     )
-    debug(
+    debug.history(
       `Adjusting block path (+${patch.items.length}) for '${transformedOperation.type}' operation and patch '${patch.type}'`,
     )
     return [
@@ -63,21 +52,15 @@ export function transformOperation(
       Array.isArray(transformedOperation.path) &&
       transformedOperation.path[0] === unsetBlockIndex
     ) {
-      debug('Skipping transformation that targeted removed block')
+      debug.history('Skipping transformation that targeted removed block')
       return []
-    }
-    if (debugVerbose) {
-      debug(`Selection ${JSON.stringify(editor.selection)}`)
-      debug(
-        `Adjusting block path (-1) for '${transformedOperation.type}' operation and patch '${patch.type}'`,
-      )
     }
     return [adjustBlockPath(transformedOperation, -1, unsetBlockIndex)]
   }
 
   // Someone reset the whole value
   if (patch.type === 'unset' && patch.path.length === 0) {
-    debug(
+    debug.history(
       `Adjusting selection for unset everything patch and ${operation.type} operation`,
     )
     return []

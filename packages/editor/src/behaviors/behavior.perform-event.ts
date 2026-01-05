@@ -1,7 +1,7 @@
 import {createEditorDom} from '../editor/editor-dom'
 import type {EditorSchema} from '../editor/editor-schema'
 import type {EditorSnapshot} from '../editor/editor-snapshot'
-import {debugWithName} from '../internal-utils/debug'
+import {debug} from '../internal-utils/debug'
 import {performOperation} from '../operations/operation.perform'
 import {withPerformingBehaviorOperation} from '../slate-plugins/slate-plugin.performing-behavior-operation'
 import {withoutNormalizingConditional} from '../slate-plugins/slate-plugin.without-normalizing-conditional'
@@ -18,9 +18,6 @@ import {
   type BehaviorEvent,
   type ExternalBehaviorEvent,
 } from './behavior.types.event'
-
-const debugEvent = debugWithName('behaviors:event')
-const debugOperation = debugWithName('operation')
 
 function eventCategory(event: BehaviorEvent) {
   return isNativeBehaviorEvent(event)
@@ -65,7 +62,7 @@ export function performEvent({
     editor.undoStepId = defaultKeyGenerator()
   }
 
-  debugEvent(
+  debug.behaviors(
     `(${mode}:${eventCategory(event)})`,
     JSON.stringify(event, null, 2),
   )
@@ -118,7 +115,7 @@ export function performEvent({
     }
 
     withPerformingBehaviorOperation(editor, () => {
-      debugOperation(JSON.stringify(event, null, 2))
+      debug.operation(JSON.stringify(event, null, 2))
 
       performOperation({
         context: {
@@ -340,7 +337,7 @@ export function performEvent({
     }
 
     withPerformingBehaviorOperation(editor, () => {
-      debugOperation(JSON.stringify(event, null, 2))
+      debug.operation(JSON.stringify(event, null, 2))
 
       performOperation({
         context: {keyGenerator, schema},

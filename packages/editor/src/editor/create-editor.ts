@@ -7,7 +7,7 @@ import {compileSchema} from '@portabletext/schema'
 import {createActor} from 'xstate'
 import {createCoreConverters} from '../converters/converters.core'
 import type {Editor, EditorConfig} from '../editor'
-import {debugWithName} from '../internal-utils/debug'
+import {debug} from '../internal-utils/debug'
 import {compileType} from '../internal-utils/schema'
 import {corePriority} from '../priority/priority.core'
 import {createEditorPriority} from '../priority/priority.types'
@@ -23,8 +23,6 @@ import {getEditorSnapshot} from './editor-selector'
 import {mutationMachine, type MutationActor} from './mutation-machine'
 import {relayMachine, type RelayActor} from './relay-machine'
 import {syncMachine, type SyncActor} from './sync-machine'
-
-const debug = debugWithName('setup')
 
 export type InternalEditor = Editor & {
   _internal: {
@@ -44,7 +42,7 @@ export function createInternalEditor(config: EditorConfig): {
   editor: InternalEditor
   subscriptions: Array<() => () => void>
 } {
-  debug('Creating new Editor instance')
+  debug.setup('creating new editor instance')
 
   const subscriptions: Array<() => () => void> = []
   const editorActor = createActor(editorMachine, {
@@ -202,7 +200,7 @@ function createActors(config: {
   mutationActor: MutationActor
   syncActor: SyncActor
 } {
-  debug('Creating new Actors')
+  debug.setup('creating new actors')
 
   const mutationActor = createActor(mutationMachine, {
     input: {

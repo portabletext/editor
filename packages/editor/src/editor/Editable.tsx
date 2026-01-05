@@ -19,7 +19,7 @@ import {
   type RenderElementProps,
   type RenderLeafProps,
 } from 'slate-react'
-import {debugWithName} from '../internal-utils/debug'
+import {debug} from '../internal-utils/debug'
 import {getEventPosition} from '../internal-utils/event-position'
 import {normalizeSelection} from '../internal-utils/selection'
 import {slateRangeToSelection} from '../internal-utils/slate-utils'
@@ -52,8 +52,6 @@ import {SelectionStateProvider} from './selection-state-context'
 import {useDropPosition} from './use-drop-position'
 import {usePortableTextEditor} from './usePortableTextEditor'
 import {validateSelectionMachine} from './validate-selection-machine'
-
-const debug = debugWithName('component:Editable')
 
 /**
  * @public
@@ -233,13 +231,13 @@ export const PortableTextEditable = forwardRef<
 
   const restoreSelectionFromProps = useCallback(() => {
     if (propsSelection) {
-      debug(`Selection from props ${JSON.stringify(propsSelection)}`)
+      debug.selection(`Selection from props ${JSON.stringify(propsSelection)}`)
       const normalizedSelection = normalizeSelection(
         propsSelection,
         slateEditor.value,
       )
       if (normalizedSelection !== null) {
-        debug(
+        debug.selection(
           `Normalized selection from props ${JSON.stringify(normalizedSelection)}`,
         )
         const slateRange = toSlateRange({
@@ -408,10 +406,15 @@ export const PortableTextEditable = forwardRef<
 
         Promise.resolve(onPasteResult)
           .then((result) => {
-            debug('Custom paste function from client resolved', result)
+            debug.behaviors(
+              'Custom paste function from client resolved',
+              result,
+            )
 
             if (!result || !result.insert) {
-              debug('No result from custom paste handler, pasting normally')
+              debug.behaviors(
+                'No result from custom paste handler, pasting normally',
+              )
 
               const selection = editorActor.getSnapshot().context.selection
               const position = selection ? {selection} : undefined
@@ -497,7 +500,7 @@ export const PortableTextEditable = forwardRef<
         })
       }
 
-      debug('No result from custom paste handler, pasting normally')
+      debug.behaviors('No result from custom paste handler, pasting normally')
     },
     [editorActor, onPaste, portableTextEditor, relayActor, slateEditor],
   )

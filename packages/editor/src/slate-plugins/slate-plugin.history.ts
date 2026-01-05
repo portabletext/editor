@@ -7,10 +7,7 @@ import type {PortableTextBlock} from '@portabletext/schema'
 import type {Operation} from 'slate'
 import type {EditorActor} from '../editor/editor-machine'
 import {createUndoSteps} from '../editor/undo-step'
-import {debugWithName} from '../internal-utils/debug'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
-
-const debug = debugWithName('plugin:history')
 
 const UNDO_STEP_LIMIT = 1000
 
@@ -39,10 +36,6 @@ export function createHistoryPlugin({
           }
 
           if (patch.type === 'unset' && patch.path.length === 0) {
-            debug(
-              'Someone else cleared the content, resetting undo/redo history',
-            )
-
             editor.history = {undos: [], redos: []}
             editor.remotePatches.splice(0, editor.remotePatches.length)
             editor.withHistory = true

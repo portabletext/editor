@@ -1,6 +1,7 @@
 import type {EditorContext} from '../editor/editor-snapshot'
 import {applyOperationToPortableText} from '../internal-utils/apply-operation-to-portable-text'
 import {buildIndexMaps} from '../internal-utils/build-index-maps'
+import {debug} from '../internal-utils/debug'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 
 export function updateValuePlugin(
@@ -10,6 +11,12 @@ export function updateValuePlugin(
   const {apply} = editor
 
   editor.apply = (operation) => {
+    if (editor.isNormalizingNode) {
+      debug.normalization(
+        `(slate operation)\n${JSON.stringify(operation, null, 2)}`,
+      )
+    }
+
     if (operation.type === 'set_selection') {
       apply(operation)
       return

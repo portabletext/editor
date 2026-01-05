@@ -1,10 +1,8 @@
 import {Editor, Transforms} from 'slate'
 import {ReactEditor} from 'slate-react'
 import {setup} from 'xstate'
-import {debugWithName} from '../internal-utils/debug'
+import {debug} from '../internal-utils/debug'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
-
-const debug = debugWithName('validate selection machine')
 
 const validateSelectionSetup = setup({
   types: {
@@ -130,14 +128,14 @@ function validateSelection(
       newDOMRange.startOffset !== existingDOMRange.startOffset ||
       newDOMRange.endOffset !== existingDOMRange.endOffset
     ) {
-      debug('DOM range out of sync, validating selection')
+      debug.selection('DOM range out of sync, validating selection')
       // Remove all ranges temporary
       domSelection?.removeAllRanges()
       // Set the correct range
       domSelection.addRange(newDOMRange)
     }
   } catch {
-    debug(`Could not resolve selection, selecting top document`)
+    debug.selection(`Could not resolve selection, selecting top document`)
     // Deselect the editor
     Transforms.deselect(slateEditor)
     // Select top document if there is a top block to select

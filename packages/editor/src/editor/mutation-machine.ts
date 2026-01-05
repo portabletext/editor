@@ -14,12 +14,10 @@ import {
   setup,
   type AnyEventObject,
 } from 'xstate'
-import {debugWithName} from '../internal-utils/debug'
+import {debug} from '../internal-utils/debug'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import type {EditorSchema} from './editor-schema'
 import type {PatchEvent} from './relay-machine'
-
-const debug = debugWithName('mutation-machine')
 
 export type MutationActor = ActorRefFrom<typeof mutationMachine>
 
@@ -211,13 +209,13 @@ export const mutationMachine = setup({
         idle: {
           entry: [
             () => {
-              debug('entry: typing->idle')
+              debug.mutation('entry: typing->idle')
             },
           ],
           exit: [
             () => {
-              debug('exit: typing->idle')
-              debug('entry: typing->typing')
+              debug.mutation('exit: typing->idle')
+              debug.mutation('entry: typing->typing')
             },
           ],
           on: {
@@ -233,7 +231,7 @@ export const mutationMachine = setup({
               actions: [
                 raise({type: 'emit changes'}),
                 () => {
-                  debug('exit: typing->typing')
+                  debug.mutation('exit: typing->typing')
                 },
               ],
             },
@@ -257,12 +255,12 @@ export const mutationMachine = setup({
         'idle': {
           entry: [
             () => {
-              debug('entry: mutations->idle')
+              debug.mutation('entry: mutations->idle')
             },
           ],
           exit: [
             () => {
-              debug('exit: mutations->idle')
+              debug.mutation('exit: mutations->idle')
             },
           ],
           on: {
@@ -290,12 +288,12 @@ export const mutationMachine = setup({
         'has pending mutations': {
           entry: [
             () => {
-              debug('entry: mutations->has pending mutations')
+              debug.mutation('entry: mutations->has pending mutations')
             },
           ],
           exit: [
             () => {
-              debug('exit: mutations->has pending mutations')
+              debug.mutation('exit: mutations->has pending mutations')
             },
           ],
           invoke: {

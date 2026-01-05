@@ -1,12 +1,24 @@
-import debug from 'debug'
+import rawDebug from 'debug'
 
-const rootName = 'sanity-pte:'
+const rootName = 'pte:'
 
-export default debug(rootName)
-export function debugWithName(name: string): debug.Debugger {
+function createDebugger(name: string): rawDebug.Debugger {
   const namespace = `${rootName}${name}`
-  if (debug && debug.enabled(namespace)) {
-    return debug(namespace)
+  if (rawDebug && rawDebug.enabled(namespace)) {
+    return rawDebug(namespace)
   }
-  return debug(rootName)
+  return rawDebug(rootName)
+}
+
+export const debug = {
+  behaviors: createDebugger('behaviors'),
+  history: createDebugger('history'),
+  mutation: createDebugger('mutation'),
+  normalization: createDebugger('normalization'),
+  operation: createDebugger('operation'),
+  selection: createDebugger('selection'),
+  setup: createDebugger('setup'),
+  state: createDebugger('state'),
+  syncValue: createDebugger('sync:value'),
+  syncPatch: createDebugger('sync:patch'),
 }
