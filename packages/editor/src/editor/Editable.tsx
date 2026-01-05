@@ -24,7 +24,7 @@ import {getEventPosition} from '../internal-utils/event-position'
 import {normalizeSelection} from '../internal-utils/selection'
 import {slateRangeToSelection} from '../internal-utils/slate-utils'
 import {toSlateRange} from '../internal-utils/to-slate-range'
-import {createHotkeysPlugin} from '../slate-plugins/slate-plugin.hotkeys'
+import {performHotkey} from '../slate-plugins/slate-plugin.hotkeys'
 import type {
   EditorSelection,
   OnCopyFn,
@@ -177,24 +177,6 @@ export const PortableTextEditable = forwardRef<
       rangeDecorations: rangeDecorations ?? [],
     })
   }, [rangeDecorationsActor, rangeDecorations])
-
-  // Output a minimal React editor inside Editable when in readOnly mode.
-  // NOTE: make sure all the plugins used here can be safely run over again at any point.
-  // There will be a problem if they redefine editor methods and then calling the original method within themselves.
-  useMemo(() => {
-    // React/UI-specific plugins
-    if (readOnly) {
-      return slateEditor
-    }
-
-    const hotkeysPlugin = createHotkeysPlugin(
-      editorActor,
-      portableTextEditor,
-      hotkeys,
-    )
-
-    return hotkeysPlugin(slateEditor)
-  }, [editorActor, hotkeys, portableTextEditor, readOnly, slateEditor])
 
   const renderElement = useCallback(
     (eProps: RenderElementProps) => (
@@ -602,9 +584,17 @@ export const PortableTextEditable = forwardRef<
       if (props.onKeyDown) {
         props.onKeyDown(event)
       }
+
       if (!event.isDefaultPrevented()) {
-        slateEditor.pteWithHotKeys(event)
+        performHotkey({
+          editorActor,
+          editor: slateEditor,
+          portableTextEditor,
+          hotkeys: hotkeys ?? {},
+          event,
+        })
       }
+
       if (!event.isDefaultPrevented()) {
         editorActor.send({
           type: 'behavior event',
@@ -624,7 +614,7 @@ export const PortableTextEditable = forwardRef<
         })
       }
     },
-    [props, editorActor, slateEditor],
+    [props, hotkeys, editorActor, portableTextEditor, slateEditor],
   )
 
   const handleKeyUp = useCallback(
