@@ -2,13 +2,11 @@ import type {PortableTextObject, PortableTextSpan} from '@portabletext/schema'
 import {Editor, Node, Path, Range, Text, Transforms} from 'slate'
 import type {EditorActor} from '../editor/editor-machine'
 import {createPlaceholderBlock} from '../internal-utils/create-placeholder-block'
-import {debugWithName} from '../internal-utils/debug'
+import {debug} from '../internal-utils/debug'
 import {isEqualMarkDefs} from '../internal-utils/equality'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {withNormalizeNode} from './slate-plugin.normalize-node'
 import {withoutPatching} from './slate-plugin.without-patching'
-
-const debug = debugWithName('plugin:withPortableTextMarkModel')
 
 export function createNormalizationPlugin(
   editorActor: EditorActor,
@@ -52,11 +50,7 @@ export function createNormalizationPlugin(
             child.marks?.every((mark) => nextNode.marks?.includes(mark)) &&
             nextNode.marks?.every((mark) => child.marks?.includes(mark))
           ) {
-            debug(
-              'Merging spans',
-              JSON.stringify(child, null, 2),
-              JSON.stringify(nextNode, null, 2),
-            )
+            debug.normalization('merging spans with same marks')
             withNormalizeNode(editor, () => {
               Transforms.mergeNodes(editor, {
                 at: [childPath[0], childPath[1] + 1],
@@ -72,7 +66,7 @@ export function createNormalizationPlugin(
        * Add missing .markDefs to block nodes
        */
       if (editor.isTextBlock(node) && !Array.isArray(node.markDefs)) {
-        debug('Adding .markDefs to block node')
+        debug.normalization('adding .markDefs to block node')
         withNormalizeNode(editor, () => {
           Transforms.setNodes(editor, {markDefs: []}, {at: path})
         })
@@ -87,7 +81,7 @@ export function createNormalizationPlugin(
         editor.isTextBlock(node) &&
         typeof node.style === 'undefined'
       ) {
-        debug('Adding .style to block node')
+        debug.normalization('adding .style to block node')
 
         withNormalizeNode(editor, () => {
           Transforms.setNodes(editor, {style: defaultStyle}, {at: path})
@@ -99,7 +93,7 @@ export function createNormalizationPlugin(
        * Add missing .marks to span nodes
        */
       if (editor.isTextSpan(node) && !Array.isArray(node.marks)) {
-        debug('Adding .marks to span node')
+        debug.normalization('Adding .marks to span node')
         withNormalizeNode(editor, () => {
           Transforms.setNodes(editor, {marks: []}, {at: path})
         })
@@ -121,7 +115,7 @@ export function createNormalizationPlugin(
 
         if (editor.isTextBlock(block)) {
           if (node.text === '' && annotations && annotations.length > 0) {
-            debug('Removing annotations from empty span node')
+            debug.normalization('removing annotations from empty span node')
             withNormalizeNode(editor, () => {
               Transforms.setNodes(
                 editor,
@@ -157,7 +151,9 @@ export function createNormalizationPlugin(
             })
 
             if (orphanedAnnotations.length > 0) {
-              debug('Removing orphaned annotations from span node')
+              debug.normalization(
+                'removing orphaned annotations from span node',
+              )
               withNormalizeNode(editor, () => {
                 Transforms.setNodes(
                   editor,
@@ -195,7 +191,7 @@ export function createNormalizationPlugin(
           })
 
           if (orphanedAnnotations.length > 0) {
-            debug('Removing orphaned annotations from span node')
+            debug.normalization('removing orphaned annotations from span node')
             withNormalizeNode(editor, () => {
               Transforms.setNodes(
                 editor,
@@ -226,7 +222,7 @@ export function createNormalizationPlugin(
         }
 
         if (markDefs.length !== newMarkDefs.length) {
-          debug('Removing duplicate markDefs')
+          debug.normalization('removing duplicate markDefs')
           withNormalizeNode(editor, () => {
             Transforms.setNodes(editor, {markDefs: newMarkDefs}, {at: path})
           })
@@ -254,7 +250,7 @@ export function createNormalizationPlugin(
           })
         })
         if (node.markDefs && !isEqualMarkDefs(newMarkDefs, node.markDefs)) {
-          debug('Removing markDef not in use')
+          debug.normalization('removing markDef not in use')
           withNormalizeNode(editor, () => {
             Transforms.setNodes(
               editor,
@@ -384,7 +380,7 @@ export function createNormalizationPlugin(
             ).values(),
           ]
 
-          debug(`Copying markDefs over to merged block`, op)
+          debug.normalization(`copying markDefs over to merged block`, op)
           Transforms.setNodes(
             editor,
             {markDefs: newMarkDefs},

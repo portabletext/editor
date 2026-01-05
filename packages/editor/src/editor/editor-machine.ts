@@ -19,7 +19,7 @@ import type {
   ExternalBehaviorEvent,
 } from '../behaviors/behavior.types.event'
 import type {Converter} from '../converters/converter.types'
-import {debugWithName} from '../internal-utils/debug'
+import {debug} from '../internal-utils/debug'
 import type {EventPosition} from '../internal-utils/event-position'
 import {sortByPriority} from '../priority/priority.sort'
 import type {NamespaceEvent, OmitFromUnion} from '../type-utils'
@@ -37,8 +37,6 @@ import type {
 } from './relay-machine'
 
 export * from 'xstate/guards'
-
-const debug = debugWithName('editor machine')
 
 /**
  * @public
@@ -430,14 +428,14 @@ export const editorMachine = setup({
             'determine initial edit mode': {
               entry: [
                 () => {
-                  debug(
+                  debug.state(
                     'entry: edit mode->read only->determine initial edit mode',
                   )
                 },
               ],
               exit: [
                 () => {
-                  debug(
+                  debug.state(
                     'exit: edit mode->read only->determine initial edit mode',
                   )
                 },
@@ -457,12 +455,12 @@ export const editorMachine = setup({
             'read only': {
               entry: [
                 () => {
-                  debug('entry: edit mode->read only->read only')
+                  debug.state('entry: edit mode->read only->read only')
                 },
               ],
               exit: [
                 () => {
-                  debug('exit: edit mode->read only->read only')
+                  debug.state('exit: edit mode->read only->read only')
                 },
               ],
               on: {
@@ -498,12 +496,12 @@ export const editorMachine = setup({
             'idle': {
               entry: [
                 () => {
-                  debug('entry: edit mode->editable->idle')
+                  debug.state('entry: edit mode->editable->idle')
                 },
               ],
               exit: [
                 () => {
-                  debug('exit: edit mode->editable-idle')
+                  debug.state('exit: edit mode->editable-idle')
                 },
               ],
               on: {
@@ -525,14 +523,14 @@ export const editorMachine = setup({
                 'checking if busy': {
                   entry: [
                     () => {
-                      debug(
+                      debug.state(
                         'entry: edit mode->editable->focusing->checking if busy',
                       )
                     },
                   ],
                   exit: [
                     () => {
-                      debug(
+                      debug.state(
                         'exit: edit mode->editable->focusing->checking if busy',
                       )
                     },
@@ -551,12 +549,12 @@ export const editorMachine = setup({
                 'busy': {
                   entry: [
                     () => {
-                      debug('entry: edit mode->editable->focusing-busy')
+                      debug.state('entry: edit mode->editable->focusing-busy')
                     },
                   ],
                   exit: [
                     () => {
-                      debug('exit: edit mode->editable->focusing->busy')
+                      debug.state('exit: edit mode->editable->focusing->busy')
                     },
                   ],
                   after: {
@@ -570,12 +568,12 @@ export const editorMachine = setup({
             'dragging internally': {
               entry: [
                 () => {
-                  debug('entry: edit mode->editable->dragging internally')
+                  debug.state('entry: edit mode->editable->dragging internally')
                 },
               ],
               exit: [
                 () => {
-                  debug('exit: edit mode->editable->dragging internally')
+                  debug.state('exit: edit mode->editable->dragging internally')
                 },
                 ({context}) => {
                   if (context.dragGhost) {
@@ -611,12 +609,12 @@ export const editorMachine = setup({
         'setting up': {
           entry: [
             () => {
-              debug('entry: setup->setting up')
+              debug.state('entry: setup->setting up')
             },
           ],
           exit: [
             () => {
-              debug('exit: setup->setting up')
+              debug.state('exit: setup->setting up')
             },
             'emit ready',
             'emit pending incoming patches',
@@ -646,12 +644,12 @@ export const editorMachine = setup({
                 'idle': {
                   entry: [
                     () => {
-                      debug('entry: setup->set up->value sync->idle')
+                      debug.state('entry: setup->set up->value sync->idle')
                     },
                   ],
                   exit: [
                     () => {
-                      debug('exit: setup->set up->value sync->idle')
+                      debug.state('exit: setup->set up->value sync->idle')
                     },
                   ],
                   on: {
@@ -666,12 +664,16 @@ export const editorMachine = setup({
                 'syncing value': {
                   entry: [
                     () => {
-                      debug('entry: setup->set up->value sync->syncing value')
+                      debug.state(
+                        'entry: setup->set up->value sync->syncing value',
+                      )
                     },
                   ],
                   exit: [
                     () => {
-                      debug('exit: setup->set up->value sync->syncing value')
+                      debug.state(
+                        'exit: setup->set up->value sync->syncing value',
+                      )
                     },
                     'emit pending incoming patches',
                     'clear pending incoming patches',
@@ -696,12 +698,16 @@ export const editorMachine = setup({
                     idle: {
                       entry: [
                         () => {
-                          debug('entry: setup->set up->writing->pristine->idle')
+                          debug.state(
+                            'entry: setup->set up->writing->pristine->idle',
+                          )
                         },
                       ],
                       exit: [
                         () => {
-                          debug('exit: setup->set up->writing->pristine->idle')
+                          debug.state(
+                            'exit: setup->set up->writing->pristine->idle',
+                          )
                         },
                       ],
                       on: {
@@ -732,14 +738,14 @@ export const editorMachine = setup({
                 dirty: {
                   entry: [
                     () => {
-                      debug('entry: setup->set up->writing->dirty')
+                      debug.state('entry: setup->set up->writing->dirty')
                     },
                     'emit pending events',
                     'clear pending events',
                   ],
                   exit: [
                     () => {
-                      debug('exit: setup->set up->writing->dirty')
+                      debug.state('exit: setup->set up->writing->dirty')
                     },
                   ],
                   on: {

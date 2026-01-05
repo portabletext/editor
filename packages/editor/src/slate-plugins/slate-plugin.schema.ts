@@ -7,12 +7,11 @@ import {
 } from '@portabletext/schema'
 import {Editor, Transforms, type Element} from 'slate'
 import type {EditorActor} from '../editor/editor-machine'
-import {debugWithName} from '../internal-utils/debug'
+import {debug} from '../internal-utils/debug'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {isListBlock} from '../utils/parse-blocks'
 import {withNormalizeNode} from './slate-plugin.normalize-node'
 
-const debug = debugWithName('plugin:withSchemaTypes')
 /**
  * This plugin makes sure that schema types are recognized properly by Slate as blocks, voids, inlines
  *
@@ -81,7 +80,7 @@ export function createSchemaPlugin({editorActor}: {editorActor: EditorActor}) {
 
       // If text block children node is missing _type, set it to the span type
       if (node._type === undefined && path.length === 2) {
-        debug('Setting span type on text node without a type')
+        debug.normalization('Setting span type on text node without a type')
         const span = node as PortableTextSpan
         const key =
           span._key || editorActor.getSnapshot().context.keyGenerator()
@@ -101,7 +100,7 @@ export function createSchemaPlugin({editorActor}: {editorActor: EditorActor}) {
 
       // catches cases when the children are missing keys but excludes it when the normalize is running the node as the editor object
       if (node._key === undefined && (path.length === 1 || path.length === 2)) {
-        debug('Setting missing key on child node without a key')
+        debug.normalization('Setting missing key on child node without a key')
         const key = editorActor.getSnapshot().context.keyGenerator()
         withNormalizeNode(editor, () => {
           Transforms.setNodes(editor, {_key: key}, {at: path})

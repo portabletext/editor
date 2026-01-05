@@ -4,7 +4,7 @@ import {Editor, type Operation} from 'slate'
 import type {EditorActor} from '../editor/editor-machine'
 import type {RelayActor} from '../editor/relay-machine'
 import {createApplyPatch} from '../internal-utils/applyPatch'
-import {debugWithName} from '../internal-utils/debug'
+import {debug} from '../internal-utils/debug'
 import {
   insertNodePatch,
   insertTextPatch,
@@ -20,9 +20,6 @@ import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {withRemoteChanges} from './slate-plugin.remote-changes'
 import {pluginWithoutHistory} from './slate-plugin.without-history'
 import {withoutPatching} from './slate-plugin.without-patching'
-
-const debug = debugWithName('plugin:withPatches')
-const debugVerbose = false
 
 interface Options {
   editorActor: EditorActor
@@ -60,12 +57,18 @@ export function createPatchesPlugin({
           withoutPatching(editor, () => {
             pluginWithoutHistory(editor, () => {
               for (const patch of patches) {
-                if (debug.enabled) {
-                  debug(`Handling remote patch ${JSON.stringify(patch)}`)
-                }
-
                 try {
                   changed = applyPatch(editor, patch)
+
+                  if (changed) {
+                    debug.syncPatch(
+                      `(applied) ${JSON.stringify(patch, null, 2)}`,
+                    )
+                  } else {
+                    debug.syncPatch(
+                      `(ignored) ${JSON.stringify(patch, null, 2)}`,
+                    )
+                  }
                 } catch (error) {
                   console.error(
                     `Applying patch ${JSON.stringify(patch)} failed due to: ${error.message}`,
@@ -92,10 +95,10 @@ export function createPatchesPlugin({
     }
 
     subscriptions.push(() => {
-      debug('Subscribing to remote patches')
+      debug.syncPatch('subscribing to remote patches')
       const sub = editorActor.on('patches', handlePatches)
       return () => {
-        debug('Unsubscribing to remote patches')
+        debug.syncPatch('unsubscribing to remote patches')
         sub.unsubscribe()
       }
     })
@@ -122,12 +125,6 @@ export function createPatchesPlugin({
       )
 
       if (!editor.isPatching) {
-        if (debugVerbose && debug.enabled) {
-          debug(
-            `Editor is not producing patch for operation ${operation.type}`,
-            operation,
-          )
-        }
         return editor
       }
 

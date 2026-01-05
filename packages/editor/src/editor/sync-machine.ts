@@ -21,7 +21,7 @@ import {
   type AnyEventObject,
   type CallbackLogicFunction,
 } from 'xstate'
-import {debugWithName} from '../internal-utils/debug'
+import {debug} from '../internal-utils/debug'
 import {
   isEqualBlocks,
   isEqualChild,
@@ -36,8 +36,6 @@ import type {PickFromUnion} from '../type-utils'
 import type {InvalidValueResolution} from '../types/editor'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import type {EditorSchema} from './editor-schema'
-
-const debug = debugWithName('sync machine')
 
 type SyncValueEvent =
   | {
@@ -171,11 +169,18 @@ export const syncMachine = setup({
   guards: {
     'initial value synced': ({context}) => context.initialValueSynced,
     'is busy': ({context}) => {
-      const isDeferringMutations = context.slateEditor.isDeferringMutations
-      const isChanging = context.slateEditor.isProcessingRemoteChanges ?? false
-      const isBusy = isDeferringMutations || isChanging
+      const isBusy =
+        context.slateEditor.isDeferringMutations ||
+        context.slateEditor.isProcessingRemoteChanges
 
-      debug('isBusy', {isBusy, isDeferringMutations, isChanging})
+      debug.syncValue(
+        JSON.stringify({
+          isBusy,
+          isDeferringMutations: context.slateEditor.isDeferringMutations,
+          isProcessingRemoteChanges:
+            context.slateEditor.isProcessingRemoteChanges,
+        }),
+      )
 
       return isBusy
     },
@@ -257,12 +262,12 @@ export const syncMachine = setup({
     idle: {
       entry: [
         () => {
-          debug('entry: syncing->idle')
+          debug.syncValue('entry: syncing->idle')
         },
       ],
       exit: [
         () => {
-          debug('exit: syncing->idle')
+          debug.syncValue('exit: syncing->idle')
         },
       ],
       on: {
@@ -293,7 +298,9 @@ export const syncMachine = setup({
             guard: not('initial value synced'),
             actions: [
               () => {
-                debug('no new value – setting initial value as synced')
+                debug.syncValue(
+                  'no new value – setting initial value as synced',
+                )
               },
               'assign initial value synced',
               'emit done syncing value',
@@ -302,7 +309,7 @@ export const syncMachine = setup({
           {
             actions: [
               () => {
-                debug('no new value and initial value already synced')
+                debug.syncValue('no new value and initial value already synced')
               },
             ],
           },
@@ -312,12 +319,12 @@ export const syncMachine = setup({
     busy: {
       entry: [
         () => {
-          debug('entry: syncing->busy')
+          debug.syncValue('entry: syncing->busy')
         },
       ],
       exit: [
         () => {
-          debug('exit: syncing->busy')
+          debug.syncValue('exit: syncing->busy')
         },
       ],
       after: {
@@ -328,7 +335,7 @@ export const syncMachine = setup({
             reenter: true,
             actions: [
               () => {
-                debug('reenter: syncing->busy')
+                debug.syncValue('reenter: syncing->busy')
               },
             ],
           },
@@ -349,13 +356,13 @@ export const syncMachine = setup({
     syncing: {
       entry: [
         () => {
-          debug('entry: syncing->syncing')
+          debug.syncValue('entry: syncing->syncing')
         },
         'emit syncing value',
       ],
       exit: [
         () => {
-          debug('exit: syncing->syncing')
+          debug.syncValue('exit: syncing->syncing')
         },
         'emit done syncing value',
       ],
@@ -436,8 +443,6 @@ async function updateValue({
   const hadSelection = !!slateEditor.selection
 
   if (!value || value.length === 0) {
-    debug('Value is empty')
-
     clearEditor({
       slateEditor,
       doneSyncing,
@@ -524,7 +529,7 @@ async function updateValue({
   }
 
   if (!isValid) {
-    debug('Invalid value, returning')
+    debug.syncValue('Invalid value, returning')
 
     doneSyncing = true
 
@@ -534,7 +539,8 @@ async function updateValue({
   }
 
   if (isChanged) {
-    debug('Server value changed, syncing editor')
+    debug.syncValue('remote value changed, syncing local value')
+
     try {
       slateEditor.onChange()
     } catch (err) {
@@ -564,7 +570,7 @@ async function updateValue({
 
     sendBack({type: 'value changed', value})
   } else {
-    debug('Server value and editor value is equal, no need to sync.')
+    debug.syncValue('remote value and local value are equal, no need to sync')
   }
 
   doneSyncing = true
@@ -679,9 +685,10 @@ function syncBlock({
       context.keyGenerator,
     )
 
-    if (debug.enabled) {
-      debug('Validating and inserting new block in the end of the value', block)
-    }
+    debug.syncValue(
+      'Validating and inserting new block in the end of the value',
+      block,
+    )
 
     if (validation.valid || validation.resolution?.autoResolve) {
       const slateBlock = toSlateBlock(block, {
@@ -704,7 +711,7 @@ function syncBlock({
       }
     }
 
-    debug('Invalid', validation)
+    debug.syncValue('Invalid', validation)
 
     sendBack({
       type: 'invalid value',
@@ -757,9 +764,7 @@ function syncBlock({
 
   if (validation.valid || validation.resolution?.autoResolve) {
     if (oldBlock._key === block._key) {
-      if (debug.enabled) {
-        debug('Updating block', oldBlock, block)
-      }
+      debug.syncValue('Updating block', oldBlock, block)
 
       Editor.withoutNormalizing(slateEditor, () => {
         withRemoteChanges(slateEditor, () => {
@@ -775,9 +780,7 @@ function syncBlock({
         })
       })
     } else {
-      if (debug.enabled) {
-        debug('Replacing block', oldBlock, block)
-      }
+      debug.syncValue('Replacing block', oldBlock, block)
 
       Editor.withoutNormalizing(slateEditor, () => {
         withRemoteChanges(slateEditor, () => {
@@ -893,7 +896,7 @@ function updateBlock({
         const childIndex = oldBlockChildrenLength - 1 - i
 
         if (childIndex > 0) {
-          debug('Removing child')
+          debug.syncValue('Removing child')
 
           Transforms.removeNodes(slateEditor, {
             at: [index, childIndex],
@@ -915,7 +918,11 @@ function updateBlock({
       if (isChildChanged) {
         // Update if this is the same child
         if (currentBlockChild._key === oldBlockChild?._key) {
-          debug('Updating changed child', currentBlockChild, oldBlockChild)
+          debug.syncValue(
+            'Updating changed child',
+            currentBlockChild,
+            oldBlockChild,
+          )
 
           Transforms.setNodes(slateEditor, currentBlockChild as Partial<Node>, {
             at: path,
@@ -942,7 +949,10 @@ function updateBlock({
             slateEditor.onChange()
           } else if (!isSpanNode) {
             // If it's a inline block, also update the void text node key
-            debug('Updating changed inline object child', currentBlockChild)
+            debug.syncValue(
+              'Updating changed inline object child',
+              currentBlockChild,
+            )
 
             Transforms.setNodes(
               slateEditor,
@@ -955,7 +965,7 @@ function updateBlock({
           }
         } else if (oldBlockChild) {
           // Replace the child if _key's are different
-          debug('Replacing child', currentBlockChild)
+          debug.syncValue('Replacing child', currentBlockChild)
 
           Transforms.removeNodes(slateEditor, {
             at: [index, currentBlockChildIndex],
@@ -967,7 +977,7 @@ function updateBlock({
           slateEditor.onChange()
         } else if (!oldBlockChild) {
           // Insert it if it didn't exist before
-          debug('Inserting new child', currentBlockChild)
+          debug.syncValue('Inserting new child', currentBlockChild)
 
           Transforms.insertNodes(slateEditor, currentBlockChild as Node, {
             at: [index, currentBlockChildIndex],

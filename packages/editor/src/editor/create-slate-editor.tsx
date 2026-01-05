@@ -2,13 +2,11 @@ import {createEditor, type Descendant} from 'slate'
 import {withReact} from 'slate-react'
 import {buildIndexMaps} from '../internal-utils/build-index-maps'
 import {createPlaceholderBlock} from '../internal-utils/create-placeholder-block'
-import {debugWithName} from '../internal-utils/debug'
+import {debug} from '../internal-utils/debug'
 import {plugins} from '../slate-plugins/slate-plugins'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import type {EditorActor} from './editor-machine'
 import type {RelayActor} from './relay-machine'
-
-const debug = debugWithName('setup')
 
 type SlateEditorConfig = {
   editorActor: EditorActor
@@ -22,7 +20,7 @@ export type SlateEditor = {
 }
 
 export function createSlateEditor(config: SlateEditorConfig): SlateEditor {
-  debug('Creating new Slate editor instance')
+  debug.setup('creating new slate editor instance')
 
   const placeholderBlock = createPlaceholderBlock(
     config.editorActor.getSnapshot().context,

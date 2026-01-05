@@ -1,12 +1,9 @@
 import type {KeyboardEvent} from 'react'
 import type {Editor} from 'slate'
-import {debugWithName} from '../internal-utils/debug'
 import {isHotkey} from '../internal-utils/is-hotkey'
 import type {HotkeyOptions} from '../types/options'
 import type {EditorActor} from './editor-machine'
 import type {PortableTextEditor} from './PortableTextEditor'
-
-const debug = debugWithName('plugin:withHotKeys')
 
 const reservedHotkeys = ['enter', 'tab', 'shift', 'delete', 'end']
 
@@ -45,7 +42,6 @@ export function performHotkey({
 
           if (possibleMark) {
             const mark = possibleMark[hotkey]
-            debug(`HotKey ${hotkey} to toggle ${mark}`)
 
             editorActor.send({
               type: 'behavior event',
