@@ -62,8 +62,6 @@ Feature: Block Objects
   Scenario: Pressing Backspace in an empty paragraph after an image
     When the editor is focused
     And "foo|{image}" is inserted at "auto" and selected at the "end"
-    # Given the text "foo|{image}"
-    # When the editor is focused
     And "{Enter}" is pressed
     And "{Backspace}" is pressed
     Then the text is "foo|{image}"
