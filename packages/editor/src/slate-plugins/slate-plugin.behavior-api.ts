@@ -10,7 +10,7 @@ export function createBehaviorApiPlugin(editorActor: EditorActor) {
     const {delete: editorDelete, insertNodes, select, setSelection} = editor
 
     editor.delete = (options) => {
-      if (editor.isPerformingBehaviorOperation) {
+      if (editor.isNormalizingNode || editor.isPerformingBehaviorOperation) {
         editorDelete(options)
         return
       }
@@ -49,7 +49,7 @@ export function createBehaviorApiPlugin(editorActor: EditorActor) {
     }
 
     editor.deleteBackward = (unit) => {
-      if (editor.isPerformingBehaviorOperation) {
+      if (editor.isNormalizingNode || editor.isPerformingBehaviorOperation) {
         console.error('Unexpected call to .deleteBackward(...)')
         return
       }
@@ -66,7 +66,7 @@ export function createBehaviorApiPlugin(editorActor: EditorActor) {
     }
 
     editor.deleteForward = (unit) => {
-      if (editor.isPerformingBehaviorOperation) {
+      if (editor.isNormalizingNode || editor.isPerformingBehaviorOperation) {
         console.error('Unexpected call to .deleteForward(...)')
         return
       }
@@ -83,7 +83,7 @@ export function createBehaviorApiPlugin(editorActor: EditorActor) {
     }
 
     editor.insertBreak = () => {
-      if (editor.isPerformingBehaviorOperation) {
+      if (editor.isNormalizingNode || editor.isPerformingBehaviorOperation) {
         console.error('Unexpected call to .insertBreak(...)')
         return
       }
@@ -99,7 +99,7 @@ export function createBehaviorApiPlugin(editorActor: EditorActor) {
     }
 
     editor.insertData = (dataTransfer) => {
-      if (editor.isPerformingBehaviorOperation) {
+      if (editor.isNormalizingNode || editor.isPerformingBehaviorOperation) {
         console.error('Unexpected call to .insertData(...)')
         return
       }
@@ -144,7 +144,7 @@ export function createBehaviorApiPlugin(editorActor: EditorActor) {
     }
 
     editor.insertSoftBreak = () => {
-      if (editor.isPerformingBehaviorOperation) {
+      if (editor.isNormalizingNode || editor.isPerformingBehaviorOperation) {
         console.error('Unexpected call to .insertSoftBreak(...)')
         return
       }
@@ -160,7 +160,7 @@ export function createBehaviorApiPlugin(editorActor: EditorActor) {
     }
 
     editor.insertText = (text) => {
-      if (editor.isPerformingBehaviorOperation) {
+      if (editor.isNormalizingNode || editor.isPerformingBehaviorOperation) {
         console.error('Unexpected call to .insertText(...)')
         return
       }
@@ -177,7 +177,7 @@ export function createBehaviorApiPlugin(editorActor: EditorActor) {
     }
 
     editor.redo = () => {
-      if (editor.isPerformingBehaviorOperation) {
+      if (editor.isNormalizingNode || editor.isPerformingBehaviorOperation) {
         console.error('Unexpected call to .redo(...)')
         return
       }
@@ -193,7 +193,7 @@ export function createBehaviorApiPlugin(editorActor: EditorActor) {
     }
 
     editor.select = (location) => {
-      if (editor.isPerformingBehaviorOperation) {
+      if (editor.isNormalizingNode || editor.isPerformingBehaviorOperation) {
         select(location)
         return
       }
@@ -222,7 +222,7 @@ export function createBehaviorApiPlugin(editorActor: EditorActor) {
     }
 
     editor.setSelection = (partialRange) => {
-      if (editor.isPerformingBehaviorOperation) {
+      if (editor.isNormalizingNode || editor.isPerformingBehaviorOperation) {
         setSelection(partialRange)
         return
       }
@@ -298,7 +298,7 @@ export function createBehaviorApiPlugin(editorActor: EditorActor) {
     }
 
     editor.undo = () => {
-      if (editor.isPerformingBehaviorOperation) {
+      if (editor.isNormalizingNode || editor.isPerformingBehaviorOperation) {
         console.error('Unexpected call to .undo(...)')
         return
       }
