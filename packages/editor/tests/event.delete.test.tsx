@@ -3,9 +3,16 @@ import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {
+  defineBehavior,
+  effect,
+  forward,
+  type BehaviorEvent,
+} from '../src/behaviors'
+import {
   getSelectionAfterText,
   getSelectionBeforeText,
 } from '../src/internal-utils/text-selection'
+import {BehaviorPlugin} from '../src/plugins'
 import {createTestEditor} from '../src/test/vitest'
 
 describe('event.delete', () => {
@@ -852,88 +859,148 @@ describe('event.delete', () => {
         })
       })
     })
+
+    test('Scenario: Deleting block object', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const imageKey = keyGenerator()
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: defineSchema({
+          blockObjects: [{name: 'image'}],
+        }),
+        initialValue: [
+          {
+            _type: 'image',
+            _key: imageKey,
+          },
+        ],
+      })
+
+      editor.send({
+        type: 'delete',
+        at: {
+          anchor: {path: [{_key: imageKey}], offset: 0},
+          focus: {path: [{_key: imageKey}], offset: 0},
+        },
+        unit: 'child',
+      })
+
+      await vi.waitFor(() => {
+        expect(getTersePt(editor.getSnapshot().context)).toEqual(['{image}'])
+      })
+    })
+
+    test('Scenario: Deleting across block object', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const fooBlockKey = keyGenerator()
+      const fooSpanKey = keyGenerator()
+      const barBlockKey = keyGenerator()
+      const barSpanKey = keyGenerator()
+      const imageKey = keyGenerator()
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: defineSchema({
+          blockObjects: [{name: 'image'}],
+        }),
+        initialValue: [
+          {
+            _type: 'block',
+            _key: fooBlockKey,
+            children: [{_type: 'span', _key: fooSpanKey, text: 'foo'}],
+          },
+          {
+            _type: 'image',
+            _key: imageKey,
+          },
+          {
+            _type: 'block',
+            _key: barBlockKey,
+            children: [{_type: 'span', _key: barSpanKey, text: 'bar'}],
+          },
+        ],
+      })
+
+      editor.send({
+        type: 'delete',
+        at: {
+          anchor: {
+            path: [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}],
+            offset: 1,
+          },
+          focus: {
+            path: [{_key: barBlockKey}, 'children', {_key: barSpanKey}],
+            offset: 2,
+          },
+        },
+        unit: 'child',
+      })
+
+      await vi.waitFor(() => {
+        expect(getTersePt(editor.getSnapshot().context)).toEqual([
+          '',
+          '{image}',
+          '',
+        ])
+      })
+    })
   })
 
-  test('Scenario: Deleting block object', async () => {
+  test('Scenario: Deleting lonely block object', async () => {
+    const behaviorEvents: Array<BehaviorEvent> = []
     const keyGenerator = createTestKeyGenerator()
     const imageKey = keyGenerator()
+    // Given a lonely block object
+    const initialValue = [
+      {
+        _type: 'image',
+        _key: imageKey,
+      },
+    ]
     const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition: defineSchema({
         blockObjects: [{name: 'image'}],
       }),
-      initialValue: [
-        {
-          _type: 'image',
-          _key: imageKey,
-        },
-      ],
+      initialValue,
+      children: (
+        <BehaviorPlugin
+          behaviors={[
+            defineBehavior({
+              on: '*',
+              actions: [
+                ({event}) => [
+                  effect(() => {
+                    behaviorEvents.push(event)
+                  }),
+                  forward(event),
+                ],
+              ],
+            }),
+          ]}
+        />
+      ),
     })
 
+    // When the object is deleted
     editor.send({
       type: 'delete',
       at: {
         anchor: {path: [{_key: imageKey}], offset: 0},
         focus: {path: [{_key: imageKey}], offset: 0},
       },
-      unit: 'child',
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['{image}'])
-    })
-  })
-
-  test('Scenario: Deleting across block object', async () => {
-    const keyGenerator = createTestKeyGenerator()
-    const fooBlockKey = keyGenerator()
-    const fooSpanKey = keyGenerator()
-    const barBlockKey = keyGenerator()
-    const barSpanKey = keyGenerator()
-    const imageKey = keyGenerator()
-    const {editor} = await createTestEditor({
-      keyGenerator,
-      schemaDefinition: defineSchema({
-        blockObjects: [{name: 'image'}],
-      }),
-      initialValue: [
+      // Then a placeholder block is silently inserted
+      expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
+      expect(behaviorEvents).toEqual([
         {
-          _type: 'block',
-          _key: fooBlockKey,
-          children: [{_type: 'span', _key: fooSpanKey, text: 'foo'}],
+          type: 'delete',
+          at: {
+            anchor: {path: [{_key: imageKey}], offset: 0},
+            focus: {path: [{_key: imageKey}], offset: 0},
+          },
         },
-        {
-          _type: 'image',
-          _key: imageKey,
-        },
-        {
-          _type: 'block',
-          _key: barBlockKey,
-          children: [{_type: 'span', _key: barSpanKey, text: 'bar'}],
-        },
-      ],
-    })
-
-    editor.send({
-      type: 'delete',
-      at: {
-        anchor: {
-          path: [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}],
-          offset: 1,
-        },
-        focus: {
-          path: [{_key: barBlockKey}, 'children', {_key: barSpanKey}],
-          offset: 2,
-        },
-      },
-      unit: 'child',
-    })
-
-    await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        '',
-        '{image}',
-        '',
       ])
     })
   })
