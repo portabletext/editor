@@ -1,5 +1,19 @@
 # Changelog
 
+## 4.2.1
+
+### Patch Changes
+
+- [#2088](https://github.com/portabletext/editor/pull/2088) [`fbffddf`](https://github.com/portabletext/editor/commit/fbffddfea67f3a8ab79d5619b54f58a54898d8ac) Thanks [@christianhg](https://github.com/christianhg)! - fix: rework debug logging
+  - Root namespace has been changed from `sanity-pte` to `pte`.
+  - Namespaces have been normalized and centralized.
+  - Redundant debug logs have been removed.
+  - Unused, verbose debug logs have been removed.
+
+- [#2069](https://github.com/portabletext/editor/pull/2069) [`2e9feaf`](https://github.com/portabletext/editor/commit/2e9feafc563905cad14b108b70446d11ef297909) Thanks [@christianhg](https://github.com/christianhg)! - fix: make event Behavior matching faster
+
+- [#2088](https://github.com/portabletext/editor/pull/2088) [`6695425`](https://github.com/portabletext/editor/commit/6695425d4bc11f41c355fc0b01d82917e4c57051) Thanks [@christianhg](https://github.com/christianhg)! - fix: don't trigger Behaviors while normalizing
+
 ## 4.2.0
 
 ### Minor Changes
