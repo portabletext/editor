@@ -24,7 +24,6 @@ import {getEventPosition} from '../internal-utils/event-position'
 import {normalizeSelection} from '../internal-utils/selection'
 import {slateRangeToSelection} from '../internal-utils/slate-utils'
 import {toSlateRange} from '../internal-utils/to-slate-range'
-import {performHotkey} from '../slate-plugins/slate-plugin.hotkeys'
 import type {
   EditorSelection,
   OnCopyFn,
@@ -43,6 +42,7 @@ import type {HotkeyOptions} from '../types/options'
 import {isEmptyTextBlock} from '../utils'
 import {parseBlocks} from '../utils/parse-blocks'
 import {EditorActorContext} from './editor-actor-context'
+import {performHotkey} from './perform-hotkey'
 import {rangeDecorationsMachine} from './range-decorations-machine'
 import {RelayActorContext} from './relay-actor-context'
 import {RenderElement} from './render.element'
