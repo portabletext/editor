@@ -5,7 +5,6 @@ import type {
   PortableTextSpan,
   PortableTextTextBlock,
 } from '@portabletext/schema'
-import type {KeyboardEvent} from 'react'
 import type {Descendant, Range, Operation as SlateOperation} from 'slate'
 import type {ReactEditor} from 'slate-react'
 import type {DecoratedRange} from '../editor/range-decorations-machine'
@@ -56,11 +55,6 @@ export interface PortableTextSlateEditor extends ReactEditor {
   isRedoing: boolean
   isUndoing: boolean
   withHistory: boolean
-
-  /**
-   * Use hotkeys
-   */
-  pteWithHotKeys: (event: KeyboardEvent<HTMLDivElement>) => void
 
   /**
    * Undo
