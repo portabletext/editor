@@ -60,10 +60,10 @@
     "@sanity/schema": "^5.1.0",
     "@types/jsdom": "^27.0.0",
     "@vercel/stega": "1.0.0",
-    "@vitest/coverage-v8": "^4.0.15",
+    "@vitest/coverage-v8": "^4.0.16",
     "jsdom": "^27.0.0",
     "typescript": "catalog:",
-    "vitest": "^4.0.15"
+    "vitest": "^4.0.16"
   },
   "engines": {
     "node": ">=20.19 <22 || >=22.12"
