@@ -468,7 +468,7 @@ describe('Behavior API', () => {
   })
 
   test('Scenario: `effect` can be used to `send` a `focus` event', async () => {
-    const focusedBlurredEvents: Array<EditorEmittedEvent> = []
+    const focusedBlurredEvents: Array<EditorEmittedEvent['type']> = []
     let resolveEditorBlurred: () => void
     const editorBlurredPromise = new Promise<void>((resolve) => {
       resolveEditorBlurred = resolve
@@ -480,12 +480,12 @@ describe('Behavior API', () => {
           <EventListenerPlugin
             on={(event) => {
               if (event.type === 'focused') {
-                focusedBlurredEvents.push(event)
+                focusedBlurredEvents.push(event.type)
               }
 
               if (event.type === 'blurred') {
                 resolveEditorBlurred()
-                focusedBlurredEvents.push(event)
+                focusedBlurredEvents.push(event.type)
               }
             }}
           />
@@ -511,9 +511,7 @@ describe('Behavior API', () => {
     await userEvent.click(locator)
 
     await vi.waitFor(() => {
-      expect(focusedBlurredEvents.slice(0, 1)).toEqual([
-        expect.objectContaining({type: 'focused'}),
-      ])
+      expect(focusedBlurredEvents.slice(0, 1)).toEqual(['focused'])
     })
 
     editor.send({type: 'custom.focus'})
@@ -522,15 +520,12 @@ describe('Behavior API', () => {
     await editorBlurredPromise
 
     await vi.waitFor(() => {
-      expect(focusedBlurredEvents.slice(1, 3)).toEqual([
-        expect.objectContaining({type: 'blurred'}),
-        expect.objectContaining({type: 'focused'}),
-      ])
+      expect(focusedBlurredEvents.slice(1, 3)).toEqual(['blurred', 'focused'])
     })
   })
 
   test('Scenario: `effect` can be used to `send` a `blur` event', async () => {
-    const focusedBlurredEvents: Array<EditorEmittedEvent> = []
+    const focusedBlurredEvents: Array<EditorEmittedEvent['type']> = []
 
     const {locator} = await createTestEditor({
       children: (
@@ -538,7 +533,7 @@ describe('Behavior API', () => {
           <EventListenerPlugin
             on={(event) => {
               if (event.type === 'focused' || event.type === 'blurred') {
-                focusedBlurredEvents.push(event)
+                focusedBlurredEvents.push(event.type)
               }
             }}
           />
@@ -566,17 +561,13 @@ describe('Behavior API', () => {
     await userEvent.click(locator)
 
     await vi.waitFor(() => {
-      expect(focusedBlurredEvents.slice(0, 1)).toEqual([
-        expect.objectContaining({type: 'focused'}),
-      ])
+      expect(focusedBlurredEvents.slice(0, 1)).toEqual(['focused'])
     })
 
     await userEvent.type(locator, 'a')
 
     await vi.waitFor(() => {
-      expect(focusedBlurredEvents.slice(1)).toEqual([
-        expect.objectContaining({type: 'blurred'}),
-      ])
+      expect(focusedBlurredEvents.slice(1)).toEqual(['blurred'])
     })
   })
 
