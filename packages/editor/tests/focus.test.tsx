@@ -8,7 +8,7 @@ import {createTestEditor} from '../src/test/vitest'
 describe('focus', () => {
   test('Scenario: Focusing on an empty editor', async () => {
     const keyGenerator = createTestKeyGenerator()
-    const focusEvents: Array<EditorEmittedEvent> = []
+    const focusEvents: Array<EditorEmittedEvent['type']> = []
 
     const {editor, locator} = await createTestEditor({
       keyGenerator,
@@ -20,7 +20,7 @@ describe('focus', () => {
           <EventListenerPlugin
             on={(event) => {
               if (event.type === 'focused' || event.type === 'blurred') {
-                focusEvents.push(event)
+                focusEvents.push(event.type)
               }
             }}
           />
@@ -34,11 +34,7 @@ describe('focus', () => {
     await userEvent.click(locator)
 
     await vi.waitFor(() => {
-      expect(focusEvents).toEqual([
-        expect.objectContaining({
-          type: 'focused',
-        }),
-      ])
+      expect(focusEvents).toEqual(['focused'])
     })
 
     await vi.waitFor(() => {
@@ -51,18 +47,12 @@ describe('focus', () => {
 
     await userEvent.click(toolbarLocator)
 
-    expect(focusEvents.slice(1)).toEqual([
-      expect.objectContaining({
-        type: 'blurred',
-      }),
-    ])
+    expect(focusEvents.slice(1)).toEqual(['blurred'])
 
     await userEvent.click(locator)
 
     await vi.waitFor(() => {
-      expect(focusEvents.slice(2)).toEqual([
-        expect.objectContaining({type: 'focused'}),
-      ])
+      expect(focusEvents.slice(2)).toEqual(['focused'])
     })
 
     await vi.waitFor(() => {
@@ -76,7 +66,7 @@ describe('focus', () => {
 
   test('Scenario: Focusing on a non-empty editor', async () => {
     const keyGenerator = createTestKeyGenerator()
-    const focusEvents: Array<EditorEmittedEvent> = []
+    const focusEvents: Array<EditorEmittedEvent['type']> = []
     const fooBlockKey = keyGenerator()
     const fooSpanKey = keyGenerator()
     const barBlockKey = keyGenerator()
@@ -123,7 +113,7 @@ describe('focus', () => {
           <EventListenerPlugin
             on={(event) => {
               if (event.type === 'focused' || event.type === 'blurred') {
-                focusEvents.push(event)
+                focusEvents.push(event.type)
               }
             }}
           />
@@ -139,11 +129,7 @@ describe('focus', () => {
     await userEvent.click(barSpanLocator)
 
     await vi.waitFor(() => {
-      expect(focusEvents).toEqual([
-        expect.objectContaining({
-          type: 'focused',
-        }),
-      ])
+      expect(focusEvents).toEqual(['focused'])
     })
 
     await vi.waitFor(() => {
@@ -163,19 +149,13 @@ describe('focus', () => {
     await userEvent.click(toolbarLocator)
 
     await vi.waitFor(() => {
-      expect(focusEvents.slice(1)).toEqual([
-        expect.objectContaining({
-          type: 'blurred',
-        }),
-      ])
+      expect(focusEvents.slice(1)).toEqual(['blurred'])
     })
 
     await userEvent.click(barSpanLocator)
 
     await vi.waitFor(() => {
-      expect(focusEvents.slice(2)).toEqual([
-        expect.objectContaining({type: 'focused'}),
-      ])
+      expect(focusEvents.slice(2)).toEqual(['focused'])
     })
 
     await vi.waitFor(() => {
