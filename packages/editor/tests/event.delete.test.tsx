@@ -945,6 +945,48 @@ describe('event.delete', () => {
     })
   })
 
+  test('Scenario: Delete backward uses at location instead of selection', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', _key: 's1', text: 'foo'}],
+        },
+        {
+          _type: 'block',
+          _key: 'b2',
+          children: [{_type: 'span', _key: 's2', text: 'bar'}],
+        },
+      ],
+    })
+
+    await userEvent.click(locator)
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 3},
+        focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 3},
+      },
+    })
+
+    editor.send({
+      type: 'delete',
+      direction: 'backward',
+      at: {
+        anchor: {path: [{_key: 'b2'}, 'children', {_key: 's2'}], offset: 0},
+        focus: {path: [{_key: 'b2'}, 'children', {_key: 's2'}], offset: 0},
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foobar'])
+    })
+  })
+
   test('Scenario: Deleting lonely block object', async () => {
     const behaviorEvents: Array<BehaviorEvent> = []
     const keyGenerator = createTestKeyGenerator()

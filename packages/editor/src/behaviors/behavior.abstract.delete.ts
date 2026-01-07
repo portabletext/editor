@@ -34,14 +34,28 @@ export const abstractDeleteBehaviors = [
         return false
       }
 
-      const previousBlock = getPreviousBlock(snapshot)
-      const focusTextBlock = getFocusTextBlock(snapshot)
+      const at = event.at ?? snapshot.context.selection
+
+      if (!at) {
+        return false
+      }
+
+      const adjustedSnapshot = {
+        ...snapshot,
+        context: {
+          ...snapshot.context,
+          selection: at,
+        },
+      }
+
+      const previousBlock = getPreviousBlock(adjustedSnapshot)
+      const focusTextBlock = getFocusTextBlock(adjustedSnapshot)
 
       if (!previousBlock || !focusTextBlock) {
         return false
       }
 
-      if (!isAtTheStartOfBlock(focusTextBlock)(snapshot)) {
+      if (!isAtTheStartOfBlock(focusTextBlock)(adjustedSnapshot)) {
         return false
       }
 
@@ -159,14 +173,28 @@ export const abstractDeleteBehaviors = [
         return false
       }
 
-      const nextBlock = getNextBlock(snapshot)
-      const focusTextBlock = getFocusTextBlock(snapshot)
+      const at = event.at ?? snapshot.context.selection
+
+      if (!at) {
+        return false
+      }
+
+      const adjustedSnapshot = {
+        ...snapshot,
+        context: {
+          ...snapshot.context,
+          selection: at,
+        },
+      }
+
+      const nextBlock = getNextBlock(adjustedSnapshot)
+      const focusTextBlock = getFocusTextBlock(adjustedSnapshot)
 
       if (!nextBlock || !focusTextBlock) {
         return false
       }
 
-      if (!isAtTheEndOfBlock(focusTextBlock)(snapshot)) {
+      if (!isAtTheEndOfBlock(focusTextBlock)(adjustedSnapshot)) {
         return false
       }
 
