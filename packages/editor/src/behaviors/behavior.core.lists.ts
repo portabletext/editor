@@ -477,7 +477,15 @@ const unindentListOnShiftTab = defineBehavior({
 const inheritListLevel = defineBehavior({
   on: 'insert.blocks',
   guard: ({snapshot, event}) => {
-    const focusListBlock = getFocusListBlock(snapshot)
+    const adjustedSnapshot = {
+      ...snapshot,
+      context: {
+        ...snapshot.context,
+        selection: event.at ?? snapshot.context.selection,
+      },
+    }
+
+    const focusListBlock = getFocusListBlock(adjustedSnapshot)
 
     if (!focusListBlock) {
       return false
@@ -553,7 +561,15 @@ const inheritListLevel = defineBehavior({
 const inheritListItem = defineBehavior({
   on: 'insert.blocks',
   guard: ({snapshot, event}) => {
-    const focusListBlock = getFocusListBlock(snapshot)
+    const adjustedSnapshot = {
+      ...snapshot,
+      context: {
+        ...snapshot.context,
+        selection: event.at ?? snapshot.context.selection,
+      },
+    }
+
+    const focusListBlock = getFocusListBlock(adjustedSnapshot)
 
     if (!focusListBlock) {
       return false
@@ -647,7 +663,15 @@ const inheritListProperties = defineBehavior({
       return false
     }
 
-    const focusListBlock = getFocusListBlock(snapshot)
+    const adjustedSnapshot = {
+      ...snapshot,
+      context: {
+        ...snapshot.context,
+        selection: event.at ?? snapshot.context.selection,
+      },
+    }
+
+    const focusListBlock = getFocusListBlock(adjustedSnapshot)
 
     if (!focusListBlock) {
       return false
