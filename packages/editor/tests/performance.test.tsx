@@ -5,6 +5,33 @@ import {createTestEditor} from '../src/test/vitest'
 import type {PortableTextSlateEditor} from '../src/types/slate-editor'
 
 describe('Performance', () => {
+  test('Baseline: inserting 1000 blocks', async () => {
+    const {editor, locator} = await createTestEditor()
+
+    const start = performance.now()
+
+    editor.send({
+      type: 'insert.blocks',
+      blocks: Array.from({length: 1000}, (_, i) => ({
+        _type: 'block',
+        children: [{_type: 'span', text: `b${i}`, marks: []}],
+        markDefs: [],
+        style: 'normal',
+      })),
+      placement: 'auto',
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value.length).toBe(1000)
+
+      expect(locator.getByText('b999')).toBeInTheDocument()
+    })
+
+    const duration = performance.now() - start
+
+    console.warn(`Inserted 1000 blocks in ${duration.toFixed(2)}ms`)
+  })
+
   test('onChange is batched', async () => {
     const slateEditorRef = React.createRef<PortableTextSlateEditor>()
     let onChangeCount = 0
