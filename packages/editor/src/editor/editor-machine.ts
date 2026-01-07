@@ -34,7 +34,6 @@ import type {
 } from '../types/editor'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import type {EditorSchema} from './editor-schema'
-import {createEditorSnapshot} from './editor-snapshot'
 import type {
   EditorEmittedEvent,
   MutationEvent,
@@ -323,16 +322,10 @@ export const editorMachine = setup({
           abstractBehaviorIndex: context.abstractBehaviorIndex,
           event: event.behaviorEvent,
           editor: event.editor,
+          converters: [...context.converters],
           keyGenerator: context.keyGenerator,
           schema: context.schema,
-          getSnapshot: () =>
-            createEditorSnapshot({
-              converters: [...context.converters],
-              editor: event.editor,
-              keyGenerator: context.keyGenerator,
-              readOnly: self.getSnapshot().matches({'edit mode': 'read only'}),
-              schema: context.schema,
-            }),
+          readOnly: self.getSnapshot().matches({'edit mode': 'read only'}),
           nativeEvent: event.nativeEvent,
           sendBack: (eventSentBack) => {
             if (eventSentBack.type === 'set drag ghost') {
