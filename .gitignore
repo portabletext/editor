@@ -3,6 +3,7 @@ __screenshots__
 dist
 node_modules
 *.tgz
+.claude/settings.local.json
 .vercel
 .env*.local
 .eslintcache
