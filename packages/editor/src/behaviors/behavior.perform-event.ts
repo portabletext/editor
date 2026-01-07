@@ -1,6 +1,7 @@
+import type {Converter} from '../converters/converter.types'
 import {createEditorDom} from '../editor/editor-dom'
 import type {EditorSchema} from '../editor/editor-schema'
-import type {EditorSnapshot} from '../editor/editor-snapshot'
+import {createEditorSnapshot} from '../editor/editor-snapshot'
 import {debug} from '../internal-utils/debug'
 import {performOperation} from '../operations/operation.perform'
 import {withPerformingBehaviorOperation} from '../slate-plugins/slate-plugin.performing-behavior-operation'
@@ -36,9 +37,10 @@ export function performEvent({
   forwardFromBehaviors,
   event,
   editor,
+  converters,
   keyGenerator,
+  readOnly,
   schema,
-  getSnapshot,
   nativeEvent,
   sendBack,
 }: {
@@ -48,9 +50,10 @@ export function performEvent({
   forwardFromBehaviors?: Array<Behavior>
   event: BehaviorEvent
   editor: PortableTextSlateEditor
+  converters: Array<Converter>
   keyGenerator: () => string
+  readOnly: boolean
   schema: EditorSchema
-  getSnapshot: () => EditorSnapshot
   nativeEvent:
     | {
         preventDefault: () => void
@@ -106,7 +109,13 @@ export function performEvent({
     return
   }
 
-  const guardSnapshot = getSnapshot()
+  const guardSnapshot = createEditorSnapshot({
+    converters,
+    editor,
+    keyGenerator,
+    readOnly,
+    schema,
+  })
 
   let nativeEventPrevented = false
   let defaultBehaviorOverwritten = false
@@ -150,7 +159,13 @@ export function performEvent({
     for (const actionSet of eventBehavior.actions) {
       actionSetIndex++
 
-      const actionsSnapshot = getSnapshot()
+      const actionsSnapshot = createEditorSnapshot({
+        converters,
+        editor,
+        keyGenerator,
+        readOnly,
+        schema,
+      })
 
       let actions: Array<BehaviorAction> = []
 
@@ -250,9 +265,10 @@ export function performEvent({
                 forwardFromBehaviors: remainingBehaviors,
                 event: action.event,
                 editor,
+                converters,
                 keyGenerator,
+                readOnly,
                 schema,
-                getSnapshot,
                 nativeEvent,
                 sendBack,
               })
@@ -267,9 +283,10 @@ export function performEvent({
                 abstractBehaviorIndex,
                 event: action.event,
                 editor,
+                converters,
                 keyGenerator,
+                readOnly,
                 schema,
-                getSnapshot,
                 nativeEvent,
                 sendBack,
               })
@@ -283,9 +300,10 @@ export function performEvent({
               abstractBehaviorIndex,
               event: action.event,
               editor,
+              converters,
               keyGenerator,
+              readOnly,
               schema,
-              getSnapshot,
               nativeEvent: undefined,
               sendBack,
             })
