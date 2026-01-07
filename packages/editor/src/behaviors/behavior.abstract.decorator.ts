@@ -5,27 +5,51 @@ import {defineBehavior} from './behavior.types.behavior'
 export const abstractDecoratorBehaviors = [
   defineBehavior({
     on: 'decorator.toggle',
-    guard: ({snapshot, event}) => isActiveDecorator(event.decorator)(snapshot),
+    guard: ({snapshot, event}) => {
+      const at = event.at ?? snapshot.context.selection
+
+      if (!at) {
+        return false
+      }
+
+      const adjustedSnapshot = {
+        ...snapshot,
+        context: {
+          ...snapshot.context,
+          selection: at,
+        },
+      }
+
+      return isActiveDecorator(event.decorator)(adjustedSnapshot)
+    },
     actions: [
       ({event}) => [
-        raise({type: 'decorator.remove', decorator: event.decorator}),
+        raise({
+          type: 'decorator.remove',
+          decorator: event.decorator,
+          at: event.at,
+        }),
       ],
     ],
   }),
   defineBehavior({
     on: 'decorator.toggle',
     guard: ({snapshot, event}) => {
-      if (event.at) {
-        return !isActiveDecorator(event.decorator)({
-          ...snapshot,
-          context: {
-            ...snapshot.context,
-            selection: event.at,
-          },
-        })
+      const at = event.at ?? snapshot.context.selection
+
+      if (!at) {
+        return false
       }
 
-      return !isActiveDecorator(event.decorator)(snapshot)
+      const adjustedSnapshot = {
+        ...snapshot,
+        context: {
+          ...snapshot.context,
+          selection: at,
+        },
+      }
+
+      return !isActiveDecorator(event.decorator)(adjustedSnapshot)
     },
     actions: [
       ({event}) => [

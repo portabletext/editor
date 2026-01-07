@@ -1,25 +1,39 @@
 import {Editor, Element, Range, Text, Transforms} from 'slate'
+import {toSlateRange} from '../internal-utils/to-slate-range'
 import type {OperationImplementation} from './operation.types'
 
 export const decoratorRemoveOperationImplementation: OperationImplementation<
   'decorator.remove'
-> = ({operation}) => {
+> = ({context, operation}) => {
   const editor = operation.editor
   const mark = operation.decorator
-  const {selection} = editor
+  const at = operation.at
+    ? toSlateRange({
+        context: {
+          schema: context.schema,
+          value: operation.editor.value,
+          selection: operation.at,
+        },
+        blockIndexMap: operation.editor.blockIndexMap,
+      })
+    : editor.selection
 
-  if (selection) {
-    if (Range.isExpanded(selection)) {
-      // Split if needed
+  if (at) {
+    if (Range.isExpanded(at)) {
+      const rangeRef = Editor.rangeRef(editor, at, {affinity: 'inward'})
+
       Transforms.setNodes(
         editor,
         {},
-        {match: Text.isText, split: true, hanging: true},
+        {at, match: Text.isText, split: true, hanging: true},
       )
-      if (editor.selection) {
+
+      const updatedAt = rangeRef.unref()
+
+      if (updatedAt) {
         const splitTextNodes = [
           ...Editor.nodes(editor, {
-            at: editor.selection,
+            at: updatedAt,
             match: Text.isText,
           }),
         ]
@@ -40,7 +54,7 @@ export const decoratorRemoveOperationImplementation: OperationImplementation<
         })
       }
     } else {
-      const [block, blockPath] = Editor.node(editor, selection, {
+      const [block, blockPath] = Editor.node(editor, at, {
         depth: 1,
       })
       const lonelyEmptySpan =

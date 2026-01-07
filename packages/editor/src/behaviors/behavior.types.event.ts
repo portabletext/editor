@@ -134,6 +134,7 @@ export type SyntheticBehaviorEvent =
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'decorator.remove'>
       decorator: string
+      at?: NonNullable<EditorSelection>
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'delete'>
