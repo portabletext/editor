@@ -602,6 +602,339 @@ describe('event.insert.block', () => {
     })
   })
 
+  test('Scenario: Inserting text block into empty heading replaces it', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const headingKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        styles: [{name: 'normal'}, {name: 'h1'}],
+      }),
+      initialValue: [
+        {
+          _key: headingKey,
+          _type: 'block',
+          style: 'h1',
+          children: [
+            {_key: keyGenerator(), _type: 'span', text: '', marks: []},
+          ],
+          markDefs: [],
+        },
+      ],
+    })
+
+    const block = {
+      _key: keyGenerator(),
+      _type: 'block',
+      children: [{_key: keyGenerator(), _type: 'span', text: 'foo', marks: []}],
+      style: 'normal',
+      markDefs: [],
+    }
+
+    editor.send({
+      type: 'insert.block',
+      block,
+      placement: 'auto',
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([block])
+    })
+  })
+
+  test('Scenario: Inserting text block into empty blockquote replaces it', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        styles: [{name: 'normal'}, {name: 'blockquote'}],
+      }),
+      initialValue: [
+        {
+          _key: keyGenerator(),
+          _type: 'block',
+          style: 'blockquote',
+          children: [
+            {_key: keyGenerator(), _type: 'span', text: '', marks: []},
+          ],
+          markDefs: [],
+        },
+      ],
+    })
+
+    const block = {
+      _key: keyGenerator(),
+      _type: 'block',
+      style: 'normal',
+      children: [
+        {
+          _key: keyGenerator(),
+          _type: 'span',
+          text: 'foo',
+          marks: [],
+        },
+      ],
+      markDefs: [],
+    }
+
+    editor.send({
+      type: 'insert.block',
+      block,
+      placement: 'auto',
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([block])
+    })
+  })
+
+  describe('empty list item replacement', () => {
+    test('without selection, without `at` - list properties NOT inherited', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: defineSchema({
+          lists: [{name: 'bullet'}, {name: 'number'}],
+        }),
+        initialValue: [
+          {
+            _key: keyGenerator(),
+            _type: 'block',
+            style: 'normal',
+            children: [
+              {_key: keyGenerator(), _type: 'span', text: '', marks: []},
+            ],
+            markDefs: [],
+            listItem: 'bullet',
+            level: 1,
+          },
+        ],
+      })
+
+      const block = {
+        _key: keyGenerator(),
+        _type: 'block',
+        style: 'normal',
+        children: [
+          {
+            _key: keyGenerator(),
+            _type: 'span',
+            text: 'foo',
+            marks: [],
+          },
+        ],
+        markDefs: [],
+      }
+      editor.send({
+        type: 'insert.block',
+        block,
+        placement: 'auto',
+      })
+
+      await vi.waitFor(() => {
+        // No selection or `at` means inheritListProperties behavior doesn't fire
+        expect(editor.getSnapshot().context.value).toEqual([block])
+      })
+    })
+
+    test('with selection, without `at` - list properties inherited', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const listBlockKey = keyGenerator()
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: defineSchema({
+          lists: [{name: 'bullet'}],
+        }),
+        initialValue: [
+          {
+            _key: listBlockKey,
+            _type: 'block',
+            style: 'normal',
+            children: [
+              {_key: keyGenerator(), _type: 'span', text: '', marks: []},
+            ],
+            markDefs: [],
+            listItem: 'bullet',
+            level: 1,
+          },
+        ],
+      })
+
+      const block = {
+        _key: keyGenerator(),
+        _type: 'block',
+        style: 'normal',
+        children: [
+          {_key: keyGenerator(), _type: 'span', text: 'foo', marks: []},
+        ],
+        markDefs: [],
+      }
+
+      editor.send({
+        type: 'select',
+        at: {
+          anchor: {path: [{_key: listBlockKey}], offset: 0},
+          focus: {path: [{_key: listBlockKey}], offset: 0},
+        },
+      })
+
+      editor.send({
+        type: 'insert.block',
+        block,
+        placement: 'auto',
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          {
+            ...block,
+            level: 1,
+            listItem: 'bullet',
+          },
+        ])
+      })
+    })
+
+    test('without selection, with `at` - list properties inherited', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const listBlockKey = keyGenerator()
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: defineSchema({
+          styles: [{name: 'normal'}, {name: 'h1'}],
+          lists: [{name: 'bullet'}],
+        }),
+        initialValue: [
+          {
+            _key: listBlockKey,
+            _type: 'block',
+            style: 'normal',
+            children: [
+              {_key: keyGenerator(), _type: 'span', text: '', marks: []},
+            ],
+            markDefs: [],
+            listItem: 'bullet',
+            level: 1,
+          },
+        ],
+      })
+
+      const block = {
+        _key: keyGenerator(),
+        _type: 'block',
+        style: 'h1',
+        children: [
+          {_key: keyGenerator(), _type: 'span', text: 'foo', marks: []},
+        ],
+        markDefs: [],
+      }
+
+      editor.send({
+        type: 'insert.block',
+        block,
+        placement: 'auto',
+        at: {
+          anchor: {path: [{_key: listBlockKey}], offset: 0},
+          focus: {path: [{_key: listBlockKey}], offset: 0},
+        },
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          {
+            ...block,
+            level: 1,
+            listItem: 'bullet',
+          },
+        ])
+      })
+    })
+
+    test('with selection, with `at` - `at` takes precedence', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const listBlockKey = keyGenerator()
+      const normalBlockKey = keyGenerator()
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: defineSchema({
+          lists: [{name: 'bullet'}],
+        }),
+        initialValue: [
+          {
+            _key: listBlockKey,
+            _type: 'block',
+            style: 'normal',
+            children: [
+              {_key: keyGenerator(), _type: 'span', text: '', marks: []},
+            ],
+            markDefs: [],
+            listItem: 'bullet',
+            level: 1,
+          },
+          {
+            _key: normalBlockKey,
+            _type: 'block',
+            style: 'normal',
+            children: [
+              {_key: keyGenerator(), _type: 'span', text: '', marks: []},
+            ],
+            markDefs: [],
+          },
+        ],
+      })
+
+      const block = {
+        _key: keyGenerator(),
+        _type: 'block',
+        style: 'normal',
+        children: [
+          {_key: keyGenerator(), _type: 'span', text: 'foo', marks: []},
+        ],
+        markDefs: [],
+      }
+
+      // Selection is on normal block (no list properties)
+      editor.send({
+        type: 'select',
+        at: {
+          anchor: {path: [{_key: normalBlockKey}], offset: 0},
+          focus: {path: [{_key: normalBlockKey}], offset: 0},
+        },
+      })
+
+      // But `at` points to list block
+      editor.send({
+        type: 'insert.block',
+        block,
+        placement: 'auto',
+        at: {
+          anchor: {path: [{_key: listBlockKey}], offset: 0},
+          focus: {path: [{_key: listBlockKey}], offset: 0},
+        },
+      })
+
+      await vi.waitFor(() => {
+        // `at` takes precedence, so list properties are inherited from list block
+        expect(editor.getSnapshot().context.value).toEqual([
+          {
+            ...block,
+            level: 1,
+            listItem: 'bullet',
+          },
+          {
+            _key: normalBlockKey,
+            _type: 'block',
+            style: 'normal',
+            children: [
+              {_key: expect.any(String), _type: 'span', text: '', marks: []},
+            ],
+            markDefs: [],
+          },
+        ])
+      })
+    })
+  })
+
   test('Scenario: Inserting block after block object using at prop', async () => {
     const keyGenerator = createTestKeyGenerator()
     const imageAKey = keyGenerator()
