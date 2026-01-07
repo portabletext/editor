@@ -1,9 +1,12 @@
+import {isTextBlock} from '@portabletext/schema'
 import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {defineSchema} from '../src'
-import type {InsertPlacement} from '../src/behaviors'
+import {defineBehavior, type InsertPlacement} from '../src/behaviors'
+import {BehaviorPlugin} from '../src/plugins'
 import {createTestEditor} from '../src/test/vitest'
+import {getTextBlockText} from '../src/utils'
 
 describe('event.insert.blocks', () => {
   test('Scenario: Inserting text block with lonely inline object', async () => {
@@ -2231,6 +2234,69 @@ describe('event.insert.blocks', () => {
 
         expect(editor.getSnapshot().context.selection).toBeNull()
       })
+    })
+  })
+
+  test('Scenario: aborting `insert.block` of a specific block', async () => {
+    const {editor} = await createTestEditor({
+      children: (
+        <BehaviorPlugin
+          behaviors={[
+            defineBehavior({
+              on: 'insert.block',
+              guard: ({snapshot, event}) => {
+                if (!isTextBlock(snapshot.context, event.block)) {
+                  return false
+                }
+
+                const text = getTextBlockText(event.block)
+
+                return text === 'bar'
+              },
+
+              actions: [],
+            }),
+          ]}
+        />
+      ),
+    })
+
+    editor.send({
+      type: 'insert.blocks',
+      blocks: [
+        {
+          _type: 'block',
+          children: [
+            {
+              _type: 'span',
+              text: 'foo',
+            },
+          ],
+        },
+        {
+          _type: 'block',
+          children: [
+            {
+              _type: 'span',
+              text: 'bar',
+            },
+          ],
+        },
+        {
+          _type: 'block',
+          children: [
+            {
+              _type: 'span',
+              text: 'baz',
+            },
+          ],
+        },
+      ],
+      placement: 'auto',
+    })
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo', 'baz'])
     })
   })
 })
