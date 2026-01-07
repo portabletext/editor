@@ -99,7 +99,9 @@ export function performEvent({
       })
     })
 
-    editor.onChange()
+    if (mode === 'send') {
+      editor.onChange()
+    }
 
     return
   }
@@ -318,8 +320,14 @@ export function performEvent({
       })
     })
 
-    editor.onChange()
+    if (mode === 'send') {
+      editor.onChange()
+    }
   } else if (nativeEventPrevented) {
     nativeEvent?.preventDefault()
+
+    if (mode === 'send') {
+      editor.onChange()
+    }
   }
 }

@@ -876,16 +876,6 @@ describe('event.select', () => {
       ])
 
       expect(selectionEvents).toEqual([
-        // Initial selection
-        {
-          type: 'selection',
-          selection: {
-            anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 0},
-            focus: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 0},
-            backward: false,
-          },
-        },
-        // After 'foo'
         {
           type: 'selection',
           selection: {
