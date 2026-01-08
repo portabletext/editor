@@ -5,10 +5,12 @@
       "Bash(cat:*)",
       "Bash(grep:*)",
       "Bash(pnpm build:*)",
-      "Bash(pnpm check:*)",
+      "Bash(pnpm check:types)",
+      "Bash(pnpm check:lint)",
       "Bash(pnpm test:*)",
       "Bash(pnpm vitest:*)",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Edit(*)"
     ],
     "deny": ["Bash(git:*)"]
   }
