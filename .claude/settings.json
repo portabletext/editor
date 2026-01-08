@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git stash:*)",
+      "Bash(cat:*)",
+      "Bash(grep:*)",
+      "Bash(pnpm build:*)",
+      "Bash(pnpm check:*)",
+      "Bash(pnpm test:*)",
+      "Bash(pnpm vitest:*)",
+      "WebFetch(domain:github.com)"
+    ],
+    "deny": ["Bash(git:*)"]
+  }
+}
