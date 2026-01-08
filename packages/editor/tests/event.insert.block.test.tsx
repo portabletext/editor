@@ -366,11 +366,11 @@ describe('event.insert.block', () => {
     await vi.waitFor(() => {
       expect(editor.getSnapshot().context.value).toEqual([
         {
-          _key: 'k6',
+          _key: 'k4',
           _type: 'block',
           children: [
             {
-              _key: 'k7',
+              _key: 'k5',
               _type: 'span',
               marks: [],
               text: 'bar',
@@ -392,11 +392,11 @@ describe('event.insert.block', () => {
     await vi.waitFor(() => {
       expect(editor.getSnapshot().context.value).toEqual([
         {
-          _key: 'k10',
+          _key: 'k6',
           _type: 'block',
           children: [
             {
-              _key: 'k11',
+              _key: 'k7',
               _type: 'span',
               marks: [],
               text: 'baz',
