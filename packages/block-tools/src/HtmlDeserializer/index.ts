@@ -96,18 +96,18 @@ export default class HtmlDeserializer {
     )
 
     if (this._markDefs.length > 0) {
-      blocks
-        .filter((block) => isTextBlock({schema: this.schema}, block))
-        .forEach((block) => {
-          block.markDefs = block.markDefs || []
-          block.markDefs = block.markDefs.concat(
-            this._markDefs.filter((def) => {
-              return block.children
-                .flatMap((child) => child.marks || [])
-                .includes(def._key)
-            }),
-          )
-        })
+      for (const block of blocks.filter((block) =>
+        isTextBlock({schema: this.schema}, block),
+      )) {
+        block.markDefs = block.markDefs || []
+        block.markDefs = block.markDefs.concat(
+          this._markDefs.filter((def) => {
+            return block.children
+              .flatMap((child) => child.marks || [])
+              .includes(def._key)
+          }),
+        )
+      }
     }
 
     return blocks.map((block) => {
@@ -126,9 +126,9 @@ export default class HtmlDeserializer {
    */
   deserializeElements = (elements: Node[] = []): TypedObject[] => {
     let nodes: TypedObject[] = []
-    elements.forEach((element) => {
+    for (const element of elements) {
       nodes = nodes.concat(this.deserializeElement(element))
-    })
+    }
     return nodes
   }
 
@@ -220,14 +220,15 @@ export default class HtmlDeserializer {
         isMinimalBlock(ret) &&
         ret.style === 'blockquote'
       ) {
-        ret.children.forEach((child, index) => {
+        for (let index = 0; index < ret.children.length; index++) {
+          const child = ret.children[index]
           if (isMinimalSpan(child) && child.text === '\r') {
             child.text = '\n'
             if (index === 0 || index === ret.children.length - 1) {
               ret.children.splice(index, 1)
             }
           }
-        })
+        }
       }
       break
     }

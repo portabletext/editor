@@ -319,8 +319,8 @@ export function createEditableAPI(
         })
         for (const [span, path] of spans) {
           const [block] = Editor.node(editor, path, {depth: 1})
-          if (editor.isTextBlock(block)) {
-            block.markDefs?.forEach((def) => {
+          if (editor.isTextBlock(block) && block.markDefs) {
+            for (const def of block.markDefs) {
               if (
                 Text.isText(span) &&
                 span.marks &&
@@ -329,7 +329,7 @@ export function createEditableAPI(
               ) {
                 activeAnnotations.push(def)
               }
-            })
+            }
           }
         }
         return activeAnnotations

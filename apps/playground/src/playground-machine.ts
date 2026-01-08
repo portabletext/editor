@@ -274,7 +274,7 @@ export const playgroundMachine = setup({
   actions: {
     'broadcast patches': ({context, event}) => {
       assertEvent(event, 'editor.mutation')
-      context.editors.forEach((editor) => {
+      for (const editor of context.editors) {
         editor.send({
           type: 'patches',
           patches: event.patches.map((patch) => ({
@@ -283,7 +283,7 @@ export const playgroundMachine = setup({
           })),
           snapshot: event.value,
         })
-      })
+      }
     },
     'update value': assign({
       value: ({event}) => {
@@ -294,12 +294,12 @@ export const playgroundMachine = setup({
     'broadcast value': ({context}) => {
       const value = context.value
       if (value !== null) {
-        context.editors.forEach((editor) => {
+        for (const editor of context.editors) {
           editor.send({
             type: 'value',
             value,
           })
-        })
+        }
       }
     },
     'add editor to context': assign({

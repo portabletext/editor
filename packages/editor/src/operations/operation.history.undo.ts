@@ -18,7 +18,7 @@ export const historyUndoOperationImplementation: OperationImplementation<
         (item) => item.time >= step.timestamp,
       )
       let transformedOperations = step.operations
-      otherPatches.forEach((item) => {
+      for (const item of otherPatches) {
         transformedOperations = transformedOperations.flatMap((op) =>
           transformOperation(
             editor,
@@ -28,7 +28,7 @@ export const historyUndoOperationImplementation: OperationImplementation<
             item.previousSnapshot,
           ),
         )
-      })
+      }
       const reversedOperations = transformedOperations
         .map(Operation.inverse)
         .reverse()
@@ -37,9 +37,9 @@ export const historyUndoOperationImplementation: OperationImplementation<
         Editor.withoutNormalizing(editor, () => {
           pluginUndoing(editor, () => {
             pluginWithoutHistory(editor, () => {
-              reversedOperations.forEach((op) => {
+              for (const op of reversedOperations) {
                 editor.apply(op)
-              })
+              }
             })
           })
         })

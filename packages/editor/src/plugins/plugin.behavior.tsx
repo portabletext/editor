@@ -14,9 +14,9 @@ export function BehaviorPlugin(props: {behaviors: Array<Behavior>}) {
     )
 
     return () => {
-      unregisterBehaviors.forEach((unregister) => {
+      for (const unregister of unregisterBehaviors) {
         unregister()
-      })
+      }
     }
   }, [editor, props.behaviors])
 

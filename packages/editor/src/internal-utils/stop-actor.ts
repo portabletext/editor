@@ -12,9 +12,9 @@ const forEachActor = (
   callback(actorRef)
   const children = actorRef.getSnapshot().children
   if (children) {
-    Object.values(children).forEach((child) => {
+    for (const child of Object.values(children)) {
       forEachActor(child as AnyActorRef, callback)
-    })
+    }
   }
 }
 
@@ -36,8 +36,8 @@ export function stopActor(actorRef: AnyActorRef) {
 
   actorRef.stop()
   ;(actorRef.system as any)._snapshot = systemSnapshot
-  persistedSnapshots.forEach(([ref, snapshot]) => {
+  for (const [ref, snapshot] of persistedSnapshots) {
     ;(ref as any)._processingStatus = 0
     ;(ref as any)._snapshot = snapshot
-  })
+  }
 }

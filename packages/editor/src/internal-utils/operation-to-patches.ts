@@ -373,10 +373,10 @@ export function splitNodePatch(
       if (targetValue) {
         patches.push(insert([targetValue], 'after', [{_key: splitBlock._key}]))
         const spansToUnset = oldBlock.children.slice(operation.position)
-        spansToUnset.forEach((span) => {
+        for (const span of spansToUnset) {
           const path = [{_key: oldBlock._key}, 'children', {_key: span._key}]
           patches.push(unset(path))
-        })
+        }
       }
     }
     return patches

@@ -9,9 +9,9 @@ import type {BlockTestFn} from './types'
 
 describe('HtmlDeserializer', () => {
   const tests = fs.readdirSync(__dirname)
-  tests.forEach((test) => {
+  for (const test of tests) {
     if (test[0] === '.' || path.extname(test).length > 0) {
-      return
+      continue
     }
     it(test, async () => {
       const dir = path.resolve(__dirname, test)
@@ -30,5 +30,5 @@ describe('HtmlDeserializer', () => {
       // console.log(JSON.stringify(output, null, 2))
       assert.deepStrictEqual(output, expected)
     })
-  })
+  }
 })

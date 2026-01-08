@@ -68,10 +68,11 @@ export function TextFileDeserializerPlugin() {
       }),
     ]
 
-    return () =>
-      unregisterBehaviors.forEach((unregisterBehavior) => {
+    return () => {
+      for (const unregisterBehavior of unregisterBehaviors) {
         unregisterBehavior()
-      })
+      }
+    }
   }, [editor])
 
   return null

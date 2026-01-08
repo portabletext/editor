@@ -37,7 +37,7 @@ export const decoratorRemoveOperationImplementation: OperationImplementation<
             match: Text.isText,
           }),
         ]
-        splitTextNodes.forEach(([node, path]) => {
+        for (const [node, path] of splitTextNodes) {
           const block = editor.children[path[0]]
           if (Element.isElement(block) && block.children.includes(node)) {
             Transforms.setNodes(
@@ -51,7 +51,7 @@ export const decoratorRemoveOperationImplementation: OperationImplementation<
               {at: path},
             )
           }
-        })
+        }
       }
     } else {
       const [block, blockPath] = Editor.node(editor, at, {

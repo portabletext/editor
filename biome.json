@@ -18,7 +18,7 @@
         "useKeyWithClickEvents": "off"
       },
       "complexity": {
-        "noForEach": "off",
+        "noForEach": "error",
         "noUselessEscapeInRegex": "error",
         "noUselessFragments": "off",
         "useOptionalChain": "off"

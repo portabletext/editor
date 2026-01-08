@@ -686,9 +686,10 @@ export const stepDefinitions = [
         )
       }
 
-      keyKeys.forEach((keyKey, index) => {
+      for (let index = 0; index < keyKeys.length; index++) {
+        const keyKey = keyKeys[index]
         context.keyMap?.set(keyKey, newAnnotationKeys[index])
-      })
+      }
     },
   ),
   When(
@@ -750,9 +751,10 @@ export const stepDefinitions = [
         )
       }
 
-      keyKeys.forEach((keyKey, index) => {
+      for (let index = 0; index < keyKeys.length; index++) {
+        const keyKey = keyKeys[index]
         context.keyMap?.set(keyKey, newAnnotationKeys[index])
-      })
+      }
     },
   ),
   Then(

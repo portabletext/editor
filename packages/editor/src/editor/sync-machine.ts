@@ -609,11 +609,11 @@ function clearEditor({
 
           const childrenLength = slateEditor.children.length
 
-          slateEditor.children.forEach((_, index) => {
+          for (let index = 0; index < childrenLength; index++) {
             Transforms.removeNodes(slateEditor, {
               at: [childrenLength - 1 - index],
             })
-          })
+          }
         })
       })
     })
@@ -756,9 +756,9 @@ function syncBlock({
       console.warn(
         `${validation.resolution.action} for block with _key '${validationValue[0]._key}'. ${validation.resolution?.description}`,
       )
-      validation.resolution.patches.forEach((patch) => {
+      for (const patch of validation.resolution.patches) {
         sendBack({type: 'patch', patch})
-      })
+      }
     }
   }
 
@@ -890,9 +890,11 @@ function updateBlock({
 
     if (slateBlock.children.length < oldBlockChildrenLength) {
       // Remove any children that have become superfluous
-      Array.from(
-        Array(oldBlockChildrenLength - slateBlock.children.length),
-      ).forEach((_, i) => {
+      for (
+        let i = 0;
+        i < oldBlockChildrenLength - slateBlock.children.length;
+        i++
+      ) {
         const childIndex = oldBlockChildrenLength - 1 - i
 
         if (childIndex > 0) {
@@ -902,10 +904,15 @@ function updateBlock({
             at: [index, childIndex],
           })
         }
-      })
+      }
     }
 
-    slateBlock.children.forEach((currentBlockChild, currentBlockChildIndex) => {
+    for (
+      let currentBlockChildIndex = 0;
+      currentBlockChildIndex < slateBlock.children.length;
+      currentBlockChildIndex++
+    ) {
+      const currentBlockChild = slateBlock.children[currentBlockChildIndex]
       const oldBlockChild = oldSlateBlock.children.at(currentBlockChildIndex)
       const isChildChanged =
         oldBlockChild && !isEqualChild(currentBlockChild, oldBlockChild)
@@ -986,6 +993,6 @@ function updateBlock({
           slateEditor.onChange()
         }
       }
-    })
+    }
   }
 }

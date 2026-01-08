@@ -18,7 +18,7 @@ export const historyRedoOperationImplementation: OperationImplementation<
         (item) => item.time >= step.timestamp,
       )
       let transformedOperations = step.operations
-      otherPatches.forEach((item) => {
+      for (const item of otherPatches) {
         transformedOperations = transformedOperations.flatMap((op) =>
           transformOperation(
             editor,
@@ -28,14 +28,14 @@ export const historyRedoOperationImplementation: OperationImplementation<
             item.previousSnapshot,
           ),
         )
-      })
+      }
       try {
         Editor.withoutNormalizing(editor, () => {
           pluginRedoing(editor, () => {
             pluginWithoutHistory(editor, () => {
-              transformedOperations.forEach((op) => {
+              for (const op of transformedOperations) {
                 editor.apply(op)
-              })
+              }
             })
           })
         })

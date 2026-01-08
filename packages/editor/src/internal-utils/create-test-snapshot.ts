@@ -16,9 +16,12 @@ export function createTestSnapshot(snapshot: {
   }
   const blockIndexMap = new Map<string, number>()
 
-  snapshot.context?.value?.forEach((block, index) => {
-    blockIndexMap.set(block._key, index)
-  })
+  if (snapshot.context?.value) {
+    for (let index = 0; index < snapshot.context.value.length; index++) {
+      const block = snapshot.context.value[index]
+      blockIndexMap.set(block._key, index)
+    }
+  }
 
   return {
     blockIndexMap,

@@ -79,11 +79,11 @@ export function preprocessWord(html: string, doc: Document): Document {
     const parentElement = doc.createElement(tags[0])
     let parent = parentElement
     let child = parentElement
-    tags.slice(1).forEach((tag) => {
+    for (const tag of tags.slice(1)) {
       child = doc.createElement(tag)
       parent.appendChild(child)
       parent = child
-    })
+    }
     child.appendChild(text)
     mappedElm?.parentNode?.replaceChild(parentElement, mappedElm)
   }

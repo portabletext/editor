@@ -80,9 +80,10 @@ export function createHTMLRules(
 
         const children: HTMLElement[] = []
 
-        el.childNodes.forEach((node, index) => {
+        for (let index = 0; index < el.childNodes.length; index++) {
+          const node = el.childNodes[index]
           if (!el.ownerDocument) {
-            return
+            continue
           }
 
           if (
@@ -105,9 +106,9 @@ export function createHTMLRules(
               span.appendChild(el.ownerDocument.createTextNode('\r'))
             }
 
-            node.childNodes.forEach((cn) => {
+            for (const cn of node.childNodes) {
               span.appendChild(cn.cloneNode(true))
-            })
+            }
 
             if (index !== el.childNodes.length) {
               // Only append line break if this is not the last child
@@ -118,7 +119,7 @@ export function createHTMLRules(
           } else {
             children.push(node as HTMLElement)
           }
-        })
+        }
 
         return {
           _type: 'block',

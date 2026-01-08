@@ -29,7 +29,7 @@ export function performHotkey({
     return
   }
 
-  Object.keys(hotkeys).forEach((cat) => {
+  for (const cat of Object.keys(hotkeys)) {
     if (cat === 'marks') {
       for (const hotkey in hotkeys[cat]) {
         if (reservedHotkeys.includes(hotkey)) {
@@ -72,5 +72,5 @@ export function performHotkey({
         }
       }
     }
-  })
+  }
 }

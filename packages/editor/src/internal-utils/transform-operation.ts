@@ -80,11 +80,12 @@ export function transformOperation(
       return [transformedOperation]
     }
     const diffPatches = parsePatch(patch.value)
-    diffPatches.forEach((diffPatch) => {
+    for (const diffPatch of diffPatches) {
       let adjustOffsetBy = 0
       let changedOffset = diffPatch.utf8Start1
       const {diffs} = diffPatch
-      diffs.forEach((diff, index) => {
+      for (let index = 0; index < diffs.length; index++) {
+        const diff = diffs[index]
         const [diffType, text] = diff
         if (diffType === DIFF_INSERT) {
           adjustOffsetBy += text.length
@@ -98,7 +99,7 @@ export function transformOperation(
             changedOffset += text.length
           }
         }
-      })
+      }
       // Adjust accordingly if someone inserted text in the same node before us
       if (transformedOperation.type === 'insert_text') {
         if (changedOffset < transformedOperation.offset) {
@@ -130,11 +131,11 @@ export function transformOperation(
           : undefined
         if ((currentFocus && currentAnchor) || (newFocus && newAnchor)) {
           const points = [currentFocus, currentAnchor, newFocus, newAnchor]
-          points.forEach((point) => {
+          for (const point of points) {
             if (point && changedOffset < point.offset) {
               point.offset += adjustOffsetBy
             }
-          })
+          }
           if (currentFocus && currentAnchor) {
             transformedOperation.properties = {
               focus: currentFocus,
@@ -149,7 +150,7 @@ export function transformOperation(
           }
         }
       }
-    })
+    }
     return [transformedOperation]
   }
   return [transformedOperation]
@@ -191,7 +192,7 @@ function adjustBlockPath(
       : undefined
     if ((currentFocus && currentAnchor) || (newFocus && newAnchor)) {
       const points = [currentFocus, currentAnchor, newFocus, newAnchor]
-      points.forEach((point) => {
+      for (const point of points) {
         if (
           point &&
           point.path[0] >= blockIndex + level &&
@@ -199,7 +200,7 @@ function adjustBlockPath(
         ) {
           point.path = [point.path[0] + level, ...point.path.slice(1)]
         }
-      })
+      }
       if (currentFocus && currentAnchor) {
         transformedOperation.properties = {
           focus: currentFocus,

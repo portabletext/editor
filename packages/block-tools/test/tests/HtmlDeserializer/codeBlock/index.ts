@@ -20,9 +20,9 @@ const rules: DeserializerRule[] = [
           ? code.childNodes
           : el.childNodes
       let text = ''
-      childNodes.forEach((node) => {
+      for (const node of childNodes) {
         text += node.textContent
-      })
+      }
       return block({
         _type: 'code',
         text: text,
