@@ -1,5 +1,19 @@
 # Changelog
 
+## 4.2.2
+
+### Patch Changes
+
+- [#2092](https://github.com/portabletext/editor/pull/2092) [`bdf8fa8`](https://github.com/portabletext/editor/commit/bdf8fa833c50e54c2e422752d4c852eaae486b49) Thanks [@christianhg](https://github.com/christianhg)! - fix(perf): batch internal calls to `onChange`
+
+- [#2095](https://github.com/portabletext/editor/pull/2095) [`dc06360`](https://github.com/portabletext/editor/commit/dc063604ed3ab7e769da61e9c784cef92bf5b4bc) Thanks [@christianhg](https://github.com/christianhg)! - fix(`insert.block`): handle `at` prop consistently
+
+- [#2095](https://github.com/portabletext/editor/pull/2095) [`89c0f59`](https://github.com/portabletext/editor/commit/89c0f59603c05514fe64f5972caf92ae163c2b75) Thanks [@christianhg](https://github.com/christianhg)! - fix(`decorator.*`): handle `at` prop consistently
+
+- [#2096](https://github.com/portabletext/editor/pull/2096) [`f65f991`](https://github.com/portabletext/editor/commit/f65f99124cac3b7cdbfd7ec594218b5f6bbaa940) Thanks [@christianhg](https://github.com/christianhg)! - fix: simplify internal `insert.block` operation
+
+- [#2095](https://github.com/portabletext/editor/pull/2095) [`cdaab46`](https://github.com/portabletext/editor/commit/cdaab461425787405946ad1be608972471802fe0) Thanks [@christianhg](https://github.com/christianhg)! - fix(`delete`): handle `at` prop consistently
+
 ## 4.2.1
 
 ### Patch Changes
