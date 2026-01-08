@@ -173,42 +173,8 @@ export function parseTextBlock({
         ]
 
   const normalizedChildren = options.normalize
-    ? // Ensure that inline objects re surrounded by spans
-      children.reduce<Array<PortableTextObject | PortableTextSpan>>(
-        (normalizedChildren, child, index) => {
-          if (isSpan(context, child)) {
-            return [...normalizedChildren, child]
-          }
-
-          const previousChild = normalizedChildren.at(-1)
-
-          if (!previousChild || !isSpan(context, previousChild)) {
-            return [
-              ...normalizedChildren,
-              {
-                _key: context.keyGenerator(),
-                _type: context.schema.span.name,
-                text: '',
-                marks: [],
-              },
-              child,
-              ...(index === children.length - 1
-                ? [
-                    {
-                      _key: context.keyGenerator(),
-                      _type: context.schema.span.name,
-                      text: '',
-                      marks: [],
-                    },
-                  ]
-                : []),
-            ]
-          }
-
-          return [...normalizedChildren, child]
-        },
-        [],
-      )
+    ? // Ensure that inline objects are surrounded by spans
+      normalizeChildrenWithSpans(context, children)
     : children
 
   const parsedBlock: PortableTextTextBlock = {
@@ -502,4 +468,47 @@ function parseObject({
       typeof object._key === 'string' ? object._key : context.keyGenerator(),
     ...values,
   }
+}
+
+function normalizeChildrenWithSpans(
+  context: Pick<EditorContext, 'keyGenerator' | 'schema'>,
+  children: Array<PortableTextObject | PortableTextSpan>,
+): Array<PortableTextObject | PortableTextSpan> {
+  const normalizedChildren: Array<PortableTextObject | PortableTextSpan> = []
+
+  for (let index = 0; index < children.length; index++) {
+    const child = children[index]
+
+    if (isSpan(context, child)) {
+      normalizedChildren.push(child)
+      continue
+    }
+
+    // Non-span child (inline object)
+    const previousChild = normalizedChildren.at(-1)
+
+    if (!previousChild || !isSpan(context, previousChild)) {
+      // Add an empty span before the inline object
+      normalizedChildren.push({
+        _key: context.keyGenerator(),
+        _type: context.schema.span.name,
+        text: '',
+        marks: [],
+      })
+    }
+
+    normalizedChildren.push(child)
+
+    // Add an empty span after the last inline object
+    if (index === children.length - 1) {
+      normalizedChildren.push({
+        _key: context.keyGenerator(),
+        _type: context.schema.span.name,
+        text: '',
+        marks: [],
+      })
+    }
+  }
+
+  return normalizedChildren
 }

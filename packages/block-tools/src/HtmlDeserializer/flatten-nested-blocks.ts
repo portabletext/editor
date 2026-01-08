@@ -99,75 +99,58 @@ type BlockContainer = {
   block: ArbitraryTypedObject
 }
 
+type ChildSlice =
+  | {
+      type: 'children'
+      children: Array<PortableTextSpan | PortableTextObject>
+    }
+  | {type: 'block object'; block: PortableTextObject}
+  | {type: 'block'; block: PortableTextBlock}
+
 function getSplitChildren(
   context: {schema: Schema},
   block: PortableTextTextBlock,
-) {
-  return block.children.reduce(
-    (slices, child) => {
-      const knownInlineObject = context.schema.inlineObjects.some(
-        (inlineObject) => inlineObject.name === child._type,
-      )
-      const knownBlockObject = context.schema.blockObjects.some(
-        (blockObject) => blockObject.name === child._type,
-      )
+): Array<ChildSlice> {
+  const slices: Array<ChildSlice> = []
 
-      const lastSlice = slices.pop()
+  for (const child of block.children) {
+    const knownInlineObject = context.schema.inlineObjects.some(
+      (inlineObject) => inlineObject.name === child._type,
+    )
+    const knownBlockObject = context.schema.blockObjects.some(
+      (blockObject) => blockObject.name === child._type,
+    )
 
-      if (!isSpan(context, child) && !knownInlineObject) {
-        if (knownBlockObject) {
-          return [
-            ...slices,
-            ...(lastSlice ? [lastSlice] : []),
-            {type: 'block object' as const, block: child},
-          ]
-        }
+    if (!isSpan(context, child) && !knownInlineObject) {
+      if (knownBlockObject) {
+        slices.push({type: 'block object' as const, block: child})
+        continue
       }
+    }
 
-      if (child._type === '__block') {
-        return [
-          ...slices,
-          ...(lastSlice ? [lastSlice] : []),
-          {
-            type: 'block object' as const,
-            block: (child as any).block,
-          },
-        ]
-      }
+    if (child._type === '__block') {
+      slices.push({
+        type: 'block object' as const,
+        block: (child as any).block,
+      })
+      continue
+    }
 
-      if (child._type === 'block') {
-        return [
-          ...slices,
-          ...(lastSlice ? [lastSlice] : []),
-          {type: 'block' as const, block: child},
-        ]
-      }
+    if (child._type === 'block') {
+      slices.push({type: 'block' as const, block: child})
+      continue
+    }
 
-      if (lastSlice) {
-        if (lastSlice.type === 'children') {
-          return [
-            ...slices,
-            {
-              type: 'children' as const,
-              children: [...lastSlice.children, child],
-            },
-          ]
-        }
-      }
+    const lastSlice = slices[slices.length - 1]
 
-      return [
-        ...slices,
-        ...(lastSlice ? [lastSlice] : []),
-        {type: 'children' as const, children: [child]},
-      ]
-    },
-    [] as Array<
-      | {
-          type: 'children'
-          children: Array<PortableTextSpan | PortableTextObject>
-        }
-      | {type: 'block object'; block: PortableTextObject}
-      | {type: 'block'; block: PortableTextBlock}
-    >,
-  )
+    if (lastSlice && lastSlice.type === 'children') {
+      // Append to existing children slice
+      lastSlice.children.push(child)
+    } else {
+      // Create new children slice
+      slices.push({type: 'children' as const, children: [child]})
+    }
+  }
+
+  return slices
 }
