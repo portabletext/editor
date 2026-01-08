@@ -1,13 +1,31 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git stash:*)",
       "Bash(cat:*)",
+      "Bash(cp:*)",
+      "Bash(echo:*)",
+      "Bash(find:*)",
       "Bash(grep:*)",
+      "Bash(ls:*)",
+      "Bash(mv:*)",
+      "Bash(npx:*)",
+      "Bash(pnpm:*)",
+      "Bash(trash:*)",
+
+      "Bash(git diff:*)",
+      "Bash(git stash:*)",
+
       "Bash(pnpm build:*)",
-      "Bash(pnpm check:*)",
+      "Bash(pnpm check:lint)",
+      "Bash(pnpm check:types)",
       "Bash(pnpm test:*)",
       "Bash(pnpm vitest:*)",
+
+      "Edit(*)",
+      "Write(*)",
+      "MultiEdit(*)",
+      "NotebookEdit(*)",
+
       "WebFetch(domain:github.com)"
     ],
     "deny": ["Bash(git:*)"]
