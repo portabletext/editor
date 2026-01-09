@@ -12,8 +12,10 @@ Reference docs for the behavior API.
 Options Object
 
 - on (string): Internal editor event
-- guard (function or boolean): function accepts `snapshot` and `event`, returns boolean
-- actions (array): function accepts `snapshot` and `event`, returns array of actions
+- guard (function or boolean): function accepts `snapshot`, `event`, and `dom`, returns boolean or guard response
+- actions (array): function accepts `snapshot`, `event`, `dom`, and guard response, returns array of actions
+
+The `dom` parameter provides access to DOM-related utilities like `dom.findDOMNode()` for accessing the underlying DOM elements.
 
 ### Example
 
@@ -21,7 +23,11 @@ Options Object
 const noLowerCaseA = defineBehavior({
   on: 'insert.text',
   guard: ({snapshot, event}) => event.text === 'a',
-  actions: [({snapshot, event}) => [{type: 'insert.text', text: 'A'}]],
+  actions: [
+    ({snapshot, event}) => [
+      {type: 'execute', event: {type: 'insert.text', text: 'A'}},
+    ],
+  ],
 })
 ```
 

@@ -20,25 +20,31 @@ Each hook accepts an individual schema item and returns a `send` method and a `s
 For example, a button can use `useDecoratorButton` to create interactive buttons for decorators. The hook accepts details about the decorator, provided by the `useToolbarSchema` hook.
 
 ```tsx
-import { type ToolbarDecoratorSchemaType, useDecoratorButton, useToolbarSchema} from '@portabletext/toolbar'
+import {
+  useDecoratorButton,
+  useToolbarSchema,
+  type ToolbarDecoratorSchemaType,
+} from '@portabletext/toolbar'
 
 const DecoratorButton = (props: {schemaType: ToolbarDecoratorSchemaType}) => {
   const decoratorButton = useDecoratorButton(props)
   return (
     <button
-      onClick{() => decoratorButton.send({type: 'toggle'})}
-      className={decoratorButton.snapshot.matches({enabled: 'active'}) ? 'active' : ''}
+      onClick={() => decoratorButton.send({type: 'toggle'})}
+      className={
+        decoratorButton.snapshot.matches({enabled: 'active'}) ? 'active' : ''
+      }
     >
-    {props.schemaType.name}
+      {props.schemaType.name}
     </button>
   )
 }
 
-function ToolbarPlugin(){
+function ToolbarPlugin() {
   const toolbarSchema = useToolbarSchema()
   return (
     <div>
-      {toolBarSchema.decorators?.map((decorator)=>(
+      {toolBarSchema.decorators?.map((decorator) => (
         <DecoratorButton key={decorator.name} schemaType={decorator} />
       ))}
     </div>
@@ -62,7 +68,7 @@ function App() {
 }
 ```
 
-### The `userEditor` hook
+### The `useEditor` hook
 
 The toolbar library is more closely linked to parts of the PTE—like decorators, styles, and annotations—but you can also access editor state without the context of individual schema items with `useEditor`.
 
@@ -229,6 +235,27 @@ function ToolbarPlugin() {
   )
 }
 ```
+
+## Additional toolbar hooks
+
+The `@portabletext/toolbar` package provides several additional hooks for building toolbar components:
+
+**Button hooks:**
+
+- `useDecoratorButton` - Create buttons for toggling decorators (bold, italic, etc.)
+- `useStyleSelector` - Create style selectors/dropdowns
+- `useListButton` - Create buttons for list formatting
+- `useAnnotationButton` - Create buttons for annotations (links, etc.)
+- `useBlockObjectButton` - Create buttons for inserting block objects
+- `useInlineObjectButton` - Create buttons for inserting inline objects
+
+**Popover hooks:**
+
+- `useAnnotationPopover` - Manage popovers for annotation editing (e.g., link URL input)
+- `useBlockObjectPopover` - Manage popovers for block object editing
+- `useInlineObjectPopover` - Manage popovers for inline object editing
+
+Each hook returns a `send` method for dispatching events and a `snapshot` for reading state.
 
 ## Use selectors to reflect editor state
 
