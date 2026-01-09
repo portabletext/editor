@@ -20,7 +20,8 @@ export const decoratorAddOperationImplementation: OperationImplementation<
     : operation.editor.selection
 
   if (!at) {
-    throw new Error('Unable to add decorator without a selection')
+    // Unable to add decorator without a selection
+    return
   }
 
   if (Range.isExpanded(at)) {
