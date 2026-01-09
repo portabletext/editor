@@ -147,16 +147,43 @@ const autoCloseParens = defineBehavior({
 
 ## Emoji Picker
 
-Using a factory to create behaviors, a state machine, and custom components results in an emoji picker that triggers when you insert `:`.
+An emoji picker that triggers when you insert `:` is available as a separate plugin package.
 
 ![Emoji picker in Portable Text Editor](../../../assets/emoji-picker.png)
 
 Test it out in the [Playground](https://playground.portabletext.org).
 
-- [View the behavior source](https://github.com/portabletext/editor/blob/main/packages/editor/src/behaviors/behavior.emoji-picker.ts).
-- [View the editor source](https://github.com/portabletext/editor/blob/main/apps/playground/src/editor.tsx).
+Install the package:
 
-You can leverage the behavior by importing `createEmojiPickerBehaviors` from `@portabletext/editor/behaviors`. See the editor source above for a usage example.
+```bash
+npm install @portabletext/plugin-emoji-picker
+```
+
+Use the `useEmojiPicker` hook to handle the state and logic:
+
+```tsx
+import {
+  createMatchEmojis,
+  useEmojiPicker,
+} from '@portabletext/plugin-emoji-picker'
+
+const matchEmojis = createMatchEmojis({
+  emojis: {
+    '😂': ['joy', 'laugh'],
+    '😹': ['joy_cat'],
+  },
+})
+
+function EmojiPickerComponent() {
+  const {keyword, matches, selectedIndex, onDismiss, onNavigateTo, onSelect} =
+    useEmojiPicker({matchEmojis})
+
+  // Render your emoji picker UI using these values
+}
+```
+
+- [View the plugin source](https://github.com/portabletext/editor/tree/main/packages/plugin-emoji-picker).
+- [View the playground editor source](https://github.com/portabletext/editor/blob/main/apps/playground/src/editor.tsx).
 
 ## Raise events
 

@@ -13,7 +13,10 @@ The following props can be passed to the `PortableTextEditable` component:
 - `renderBlock`: For block objects (e.g., images, embeds).
 - `renderChild`: For inline objects (e.g., custom emoji, stock symbols).
 - `renderDecorator`: For decorators (e.g., strong, italic, emphasis text).
-- `renderStyle`: For core text block types (e.g., normal, h1, h2, h3, blockquote)
+- `renderStyle`: For core text block types (e.g., normal, h1, h2, h3, blockquote).
+- `renderListItem`: For list item styling (e.g., bullet, numbered lists).
+- `renderPlaceholder`: For custom placeholder text when the editor is empty.
+- `rangeDecorations`: For highlighting specific ranges of text (e.g., search results, comments).
 
 All the different render functions passed to `PortableTextEditable` can be defined as stand-alone React components.
 
@@ -113,6 +116,51 @@ function isStockTicker(
 ): props is PortableTextChild & {symbol: string} {
   return 'symbol' in props
 }
+
+// List items
+const renderListItem: RenderListItemFunction = (props) => {
+  return <>{props.children}</>
+}
+```
+
+:::note
+List items in Portable Text don't nest like HTML lists. The `renderListItem` function wraps the content, but visual nesting is achieved through CSS. See the [example CSS](https://github.com/portabletext/editor/blob/main/examples/basic/src/editor.css) for list styling patterns.
+:::
+
+## Placeholder text
+
+Use `renderPlaceholder` to display custom placeholder text when the editor is empty:
+
+```tsx
+<PortableTextEditable
+  renderPlaceholder={() => <span style={{color: '#999'}}>Start typing...</span>}
+  // ... other props
+/>
+```
+
+## Range decorations
+
+Use `rangeDecorations` to highlight specific ranges of text. This is useful for features like search highlighting, comments, or collaborative cursors:
+
+```tsx
+import type {RangeDecoration} from '@portabletext/editor'
+
+const decorations: RangeDecoration[] = [
+  {
+    selection: {
+      anchor: {path: [{_key: 'block1'}, 'children', {_key: 'span1'}], offset: 0},
+      focus: {path: [{_key: 'block1'}, 'children', {_key: 'span1'}], offset: 5},
+    },
+    component: ({children}) => (
+      <span style={{backgroundColor: 'yellow'}}>{children}</span>
+    ),
+  },
+]
+
+<PortableTextEditable
+  rangeDecorations={decorations}
+  // ... other props
+/>
 ```
 
 You can apply styles, libraries like Tailwind, or use custom react components within the rendering functions.
