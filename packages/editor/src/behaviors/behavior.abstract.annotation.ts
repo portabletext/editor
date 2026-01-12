@@ -56,21 +56,59 @@ export const abstractAnnotationBehaviors = [
   }),
   defineBehavior({
     on: 'annotation.toggle',
-    guard: ({snapshot, event}) =>
-      isActiveAnnotation(event.annotation.name)(snapshot),
+    guard: ({snapshot, event}) => {
+      const at = event.at ?? snapshot.context.selection
+
+      if (!at) {
+        return false
+      }
+
+      const adjustedSnapshot = {
+        ...snapshot,
+        context: {
+          ...snapshot.context,
+          selection: at,
+        },
+      }
+
+      return isActiveAnnotation(event.annotation.name)(adjustedSnapshot)
+    },
     actions: [
       ({event}) => [
-        raise({type: 'annotation.remove', annotation: event.annotation}),
+        raise({
+          type: 'annotation.remove',
+          annotation: event.annotation,
+          at: event.at,
+        }),
       ],
     ],
   }),
   defineBehavior({
     on: 'annotation.toggle',
-    guard: ({snapshot, event}) =>
-      !isActiveAnnotation(event.annotation.name)(snapshot),
+    guard: ({snapshot, event}) => {
+      const at = event.at ?? snapshot.context.selection
+
+      if (!at) {
+        return false
+      }
+
+      const adjustedSnapshot = {
+        ...snapshot,
+        context: {
+          ...snapshot.context,
+          selection: at,
+        },
+      }
+
+      return !isActiveAnnotation(event.annotation.name)(adjustedSnapshot)
+    },
     actions: [
       ({event}) => [
-        raise({type: 'annotation.add', annotation: event.annotation}),
+        raise({
+          type: 'annotation.add',
+          annotation: event.annotation,
+          at: event.at,
+        }),
       ],
     ],
   }),

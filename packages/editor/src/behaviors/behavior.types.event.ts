@@ -99,12 +99,14 @@ export type SyntheticBehaviorEvent =
         _key?: string
         value: {[prop: string]: unknown}
       }
+      at?: NonNullable<EditorSelection>
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'annotation.remove'>
       annotation: {
         name: string
       }
+      at?: NonNullable<EditorSelection>
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'block.set'>
@@ -262,6 +264,7 @@ type AbstractBehaviorEvent =
         name: string
         value: {[prop: string]: unknown}
       }
+      at?: NonNullable<EditorSelection>
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'decorator.toggle'>

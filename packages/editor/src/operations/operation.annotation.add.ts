@@ -1,4 +1,5 @@
 import {Editor, Node, Range, Text, Transforms} from 'slate'
+import {toSlateRange} from '../internal-utils/to-slate-range'
 import {parseAnnotation} from '../utils/parse-blocks'
 import type {OperationImplementation} from './operation.types'
 
@@ -23,14 +24,30 @@ export const addAnnotationOperationImplementation: OperationImplementation<
 
   const editor = operation.editor
 
-  if (!editor.selection || Range.isCollapsed(editor.selection)) {
+  const at = operation.at
+    ? toSlateRange({
+        context: {
+          schema: context.schema,
+          value: operation.editor.value,
+          selection: operation.at,
+        },
+        blockIndexMap: operation.editor.blockIndexMap,
+      })
+    : null
+
+  const effectiveSelection = at ?? editor.selection
+
+  if (!effectiveSelection || Range.isCollapsed(effectiveSelection)) {
     return
   }
 
+  // Track the range across mutations when `at` is explicitly provided
+  const rangeRef = at ? Editor.rangeRef(editor, at, {affinity: 'inward'}) : null
+
   const selectedBlocks = Editor.nodes(editor, {
-    at: editor.selection,
+    at: effectiveSelection,
     match: (node) => editor.isTextBlock(node),
-    reverse: Range.isBackward(editor.selection),
+    reverse: Range.isBackward(effectiveSelection),
   })
 
   let blockIndex = 0
@@ -44,7 +61,6 @@ export const addAnnotationOperationImplementation: OperationImplementation<
       continue
     }
 
-    // Make sure we don't generate more keys than needed
     const annotationKey =
       blockIndex === 0 ? parsedAnnotation._key : context.keyGenerator()
     const markDefs = block.markDefs ?? []
@@ -70,16 +86,25 @@ export const addAnnotationOperationImplementation: OperationImplementation<
       )
     }
 
-    Transforms.setNodes(editor, {}, {match: Text.isText, split: true})
+    // When `at` is explicitly provided, use it for the split
+    // Otherwise, use the editor's current selection (original behavior)
+    if (at) {
+      Transforms.setNodes(editor, {}, {match: Text.isText, split: true, at})
+    } else {
+      Transforms.setNodes(editor, {}, {match: Text.isText, split: true})
+    }
 
     const children = Node.children(editor, blockPath)
+
+    // Use the tracked range (updated after splits) or fall back to editor.selection
+    const selectionRange = rangeRef?.current ?? editor.selection
 
     for (const [span, path] of children) {
       if (!editor.isTextSpan(span)) {
         continue
       }
 
-      if (!Range.includes(editor.selection, path)) {
+      if (!selectionRange || !Range.includes(selectionRange, path)) {
         continue
       }
 
@@ -96,4 +121,7 @@ export const addAnnotationOperationImplementation: OperationImplementation<
 
     blockIndex++
   }
+
+  // Clean up the range ref
+  rangeRef?.unref()
 }
