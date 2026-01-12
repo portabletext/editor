@@ -15,19 +15,33 @@ import {defineBehavior} from './behavior.types.behavior'
 
 const addAnnotationOnCollapsedSelection = defineBehavior({
   on: 'annotation.add',
-  guard: ({snapshot}) => {
-    if (!isSelectionCollapsed(snapshot)) {
+  guard: ({snapshot, event}) => {
+    const at = event.at ?? snapshot.context.selection
+
+    if (!at) {
       return false
     }
 
-    const caretWordSelection = getCaretWordSelection(snapshot)
+    const adjustedSnapshot = {
+      ...snapshot,
+      context: {
+        ...snapshot.context,
+        selection: at,
+      },
+    }
+
+    if (!isSelectionCollapsed(adjustedSnapshot)) {
+      return false
+    }
+
+    const caretWordSelection = getCaretWordSelection(adjustedSnapshot)
 
     if (
       !caretWordSelection ||
       !isSelectionExpanded({
-        ...snapshot,
+        ...adjustedSnapshot,
         context: {
-          ...snapshot.context,
+          ...adjustedSnapshot.context,
           selection: caretWordSelection,
         },
       })
@@ -53,12 +67,33 @@ const preventOverlappingAnnotations = defineBehavior({
   // Given an `annotation.add` event
   on: 'annotation.add',
   // When the annotation is active in the selection
-  guard: ({snapshot, event}) =>
-    isActiveAnnotation(event.annotation.name, {mode: 'partial'})(snapshot),
+  guard: ({snapshot, event}) => {
+    const at = event.at ?? snapshot.context.selection
+
+    if (!at) {
+      return false
+    }
+
+    const adjustedSnapshot = {
+      ...snapshot,
+      context: {
+        ...snapshot.context,
+        selection: at,
+      },
+    }
+
+    return isActiveAnnotation(event.annotation.name, {mode: 'partial'})(
+      adjustedSnapshot,
+    )
+  },
   // Then the existing annotation is removed
   actions: [
     ({event}) => [
-      raise({type: 'annotation.remove', annotation: event.annotation}),
+      raise({
+        type: 'annotation.remove',
+        annotation: event.annotation,
+        at: event.at,
+      }),
       raise(event),
     ],
   ],
