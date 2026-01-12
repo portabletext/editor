@@ -69,6 +69,10 @@ export default defineConfig({
             'src/history',
           ],
           environment: 'jsdom',
+          typecheck: {
+            enabled: true,
+            include: ['src/**/*.test-d.ts'],
+          },
         },
       },
     ],
