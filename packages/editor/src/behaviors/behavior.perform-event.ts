@@ -8,7 +8,7 @@ import {withPerformingBehaviorOperation} from '../slate-plugins/slate-plugin.per
 import {withoutNormalizingConditional} from '../slate-plugins/slate-plugin.without-normalizing-conditional'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {defaultKeyGenerator} from '../utils/key-generator'
-import {getEventBehaviors, type BehaviorIndex} from './behavior.index'
+import {abstractBehaviors} from './behavior.abstract'
 import type {BehaviorAction} from './behavior.types.action'
 import type {Behavior} from './behavior.types.behavior'
 import {
@@ -32,9 +32,8 @@ function eventCategory(event: BehaviorEvent) {
 
 export function performEvent({
   mode,
-  behaviorIndex,
-  abstractBehaviorIndex,
-  forwardFromBehaviors,
+  behaviors,
+  remainingEventBehaviors,
   event,
   editor,
   converters,
@@ -45,9 +44,8 @@ export function performEvent({
   sendBack,
 }: {
   mode: 'send' | 'raise' | 'execute' | 'forward'
-  behaviorIndex: BehaviorIndex
-  abstractBehaviorIndex: BehaviorIndex
-  forwardFromBehaviors?: Array<Behavior>
+  behaviors: Array<Behavior>
+  remainingEventBehaviors: Array<Behavior>
   event: BehaviorEvent
   editor: PortableTextSlateEditor
   converters: Array<Converter>
@@ -72,13 +70,45 @@ export function performEvent({
     JSON.stringify(event, null, 2),
   )
 
-  const eventBehaviors =
-    mode === 'forward' && forwardFromBehaviors
-      ? forwardFromBehaviors
-      : getEventBehaviors(
-          mode === 'execute' ? abstractBehaviorIndex : behaviorIndex,
-          event.type,
-        )
+  const eventBehaviors = [
+    ...remainingEventBehaviors,
+    ...abstractBehaviors,
+  ].filter((behavior) => {
+    // Catches all events
+    if (behavior.on === '*') {
+      return true
+    }
+
+    const [listenedNamespace] =
+      behavior.on.includes('*') && behavior.on.includes('.')
+        ? behavior.on.split('.')
+        : [undefined]
+    const [eventNamespace] = event.type.includes('.')
+      ? event.type.split('.')
+      : [undefined]
+
+    // Handles scenarios like a Behavior listening for `select.*` and the event
+    // `select.block` is fired.
+    if (
+      listenedNamespace !== undefined &&
+      eventNamespace !== undefined &&
+      listenedNamespace === eventNamespace
+    ) {
+      return true
+    }
+
+    // Handles scenarios like a Behavior listening for `select.*` and the event
+    // `select` is fired.
+    if (
+      listenedNamespace !== undefined &&
+      eventNamespace === undefined &&
+      listenedNamespace === event.type
+    ) {
+      return true
+    }
+
+    return behavior.on === event.type
+  })
 
   if (eventBehaviors.length === 0 && isSyntheticBehaviorEvent(event)) {
     nativeEvent?.preventDefault()
@@ -254,15 +284,14 @@ export function performEvent({
             }
 
             if (action.type === 'forward') {
-              const remainingBehaviors = eventBehaviors.slice(
+              const remainingEventBehaviors = eventBehaviors.slice(
                 eventBehaviorIndex + 1,
               )
 
               performEvent({
                 mode: mode === 'execute' ? 'execute' : 'forward',
-                behaviorIndex,
-                abstractBehaviorIndex,
-                forwardFromBehaviors: remainingBehaviors,
+                behaviors,
+                remainingEventBehaviors: remainingEventBehaviors,
                 event: action.event,
                 editor,
                 converters,
@@ -279,8 +308,9 @@ export function performEvent({
             if (action.type === 'raise') {
               performEvent({
                 mode: mode === 'execute' ? 'execute' : 'raise',
-                behaviorIndex,
-                abstractBehaviorIndex,
+                behaviors,
+                remainingEventBehaviors:
+                  mode === 'execute' ? remainingEventBehaviors : behaviors,
                 event: action.event,
                 editor,
                 converters,
@@ -296,8 +326,8 @@ export function performEvent({
 
             performEvent({
               mode: 'execute',
-              behaviorIndex,
-              abstractBehaviorIndex,
+              behaviors,
+              remainingEventBehaviors: [],
               event: action.event,
               editor,
               converters,
