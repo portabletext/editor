@@ -1,5 +1,11 @@
 # Changelog
 
+## 4.2.4
+
+### Patch Changes
+
+- [#2105](https://github.com/portabletext/editor/pull/2105) [`72e96e8`](https://github.com/portabletext/editor/commit/72e96e88579a88ccf7fdab141653a529c8f6e44b) Thanks [@christianhg](https://github.com/christianhg)! - fix: revert Behavior optimisations that broke `forward`
+
 ## 4.2.3
 
 ### Patch Changes
