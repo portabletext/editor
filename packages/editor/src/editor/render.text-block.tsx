@@ -1,7 +1,7 @@
 import type {PortableTextTextBlock} from '@portabletext/schema'
 import {useContext, useRef, type ReactElement} from 'react'
 import type {Element as SlateElement} from 'slate'
-import {useSlateStatic, type RenderElementProps} from 'slate-react'
+import {useSlateSelector, type RenderElementProps} from 'slate-react'
 import type {DropPosition} from '../behaviors/behavior.core.drop-position'
 import type {
   BlockListItemRenderProps,
@@ -33,9 +33,9 @@ export function RenderTextBlock(props: {
   const {selectedBlockKeys, focusedBlockKey} = useContext(SelectionStateContext)
   const selected = selectedBlockKeys.has(props.textBlock._key)
   const focused = focusedBlockKey === props.textBlock._key
-
-  const slateEditor = useSlateStatic()
-  const listIndex = slateEditor.listIndexMap.get(props.textBlock._key)
+  const listIndex = useSlateSelector((editor) =>
+    editor.listIndexMap.get(props.textBlock._key),
+  )
 
   let children = props.children
 
