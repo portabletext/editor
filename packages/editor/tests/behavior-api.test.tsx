@@ -1,7 +1,7 @@
 import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
-import type {EditorEmittedEvent} from '../src'
+import {defineSchema, type EditorEmittedEvent} from '../src'
 import type {BehaviorEvent} from '../src/behaviors'
 import {
   effect,
@@ -709,5 +709,111 @@ describe('Behavior API', () => {
     })
 
     expect(insertTextEvents).toEqual(['insert.text', 'insert.text'])
+  })
+
+  describe('`forward`', () => {
+    test('Scenario: `forward` of a different event type', async () => {
+      const {editor} = await createTestEditor({
+        children: (
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior({
+                on: 'clipboard.paste',
+                actions: [
+                  ({event}) => {
+                    const text =
+                      event.originEvent.dataTransfer?.getData('text/plain')
+                    return text
+                      ? [forward({type: 'insert.text', text: text.trim()})]
+                      : []
+                  },
+                ],
+              }),
+            ]}
+          />
+        ),
+      })
+
+      const dataTransfer = new DataTransfer()
+      dataTransfer.setData('text/plain', ' foo ')
+
+      editor.send({
+        type: 'clipboard.paste',
+        originEvent: {dataTransfer},
+        position: {
+          selection: editor.getSnapshot().context.selection!,
+        },
+      })
+
+      await vi.waitFor(() => {
+        expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo'])
+      })
+    })
+
+    test('Scenario: cross-type `forward` does not trigger user-defined Behaviors', async () => {
+      const {editor, locator} = await createTestEditor({
+        schemaDefinition: defineSchema({
+          decorators: [{name: 'strong'}],
+        }),
+        children: (
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior({
+                on: 'clipboard.paste',
+                actions: [
+                  ({event}) => {
+                    const text =
+                      event.originEvent.dataTransfer?.getData('text/plain')
+                    return text
+                      ? [forward({type: 'insert.text', text: text.trim()})]
+                      : []
+                  },
+                ],
+              }),
+              defineBehavior({
+                on: 'insert.text',
+                actions: [
+                  ({event}) => [
+                    raise({
+                      type: 'insert.child',
+                      child: {
+                        _type: 'span',
+                        text: event.text,
+                        marks: ['strong'],
+                      },
+                    }),
+                  ],
+                ],
+              }),
+            ]}
+          />
+        ),
+      })
+
+      await userEvent.click(locator)
+
+      const dataTransfer = new DataTransfer()
+      dataTransfer.setData('text/plain', ' foo ')
+
+      editor.send({
+        type: 'clipboard.paste',
+        originEvent: {dataTransfer},
+        position: {
+          selection: editor.getSnapshot().context.selection!,
+        },
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          {
+            _type: 'block',
+            _key: 'k0',
+            children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ])
+      })
+    })
   })
 })
