@@ -1,5 +1,13 @@
 # Changelog
 
+## 4.2.3
+
+### Patch Changes
+
+- [#2098](https://github.com/portabletext/editor/pull/2098) [`d6a04e8`](https://github.com/portabletext/editor/commit/d6a04e8328e8410220391c9bf56b8f2a969a20ab) Thanks [@christianhg](https://github.com/christianhg)! - fix(`decorator.add`): silently return if no selection is found
+
+- [#2104](https://github.com/portabletext/editor/pull/2104) [`6d7adef`](https://github.com/portabletext/editor/commit/6d7adef5c716b279fa1f35454c537cf9c79502e2) Thanks [@christianhg](https://github.com/christianhg)! - fix: make sure `data-list-index` is properly rendered
+
 ## 4.2.2
 
 ### Patch Changes
