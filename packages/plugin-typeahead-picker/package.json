@@ -1,0 +1,97 @@
+{
+  "name": "@portabletext/plugin-typeahead-picker",
+  "version": "1.0.0",
+  "description": "Generic typeahead picker infrastructure for the Portable Text Editor",
+  "keywords": [
+    "portabletext",
+    "plugin",
+    "typeahead",
+    "picker",
+    "autocomplete"
+  ],
+  "homepage": "https://www.portabletext.org/",
+  "bugs": {
+    "url": "https://github.com/portabletext/editor/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/portabletext/editor.git",
+    "directory": "packages/plugin-typeahead-picker"
+  },
+  "license": "MIT",
+  "author": "Sanity.io <hello@sanity.io>",
+  "sideEffects": false,
+  "type": "module",
+  "exports": {
+    ".": {
+      "source": "./src/index.ts",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "pkg-utils build --strict --check --clean",
+    "check:lint": "biome lint .",
+    "check:react-compiler": "eslint --cache .",
+    "check:types": "tsc",
+    "check:types:watch": "tsc --watch",
+    "clean": "del .turbo && del lib && del node_modules",
+    "dev": "pkg-utils watch",
+    "lint:fix": "biome lint --write .",
+    "prepublishOnly": "turbo run build",
+    "test": "vitest --run",
+    "test:browser": "vitest --run --project browser",
+    "test:browser:chromium": "vitest run --project \"browser (chromium)\"",
+    "test:browser:chromium:watch": "vitest watch --project \"browser (chromium)\"",
+    "test:browser:firefox": "vitest run --project \"browser (firefox)\"",
+    "test:browser:firefox:watch": "vitest watch --project \"browser (firefox)\"",
+    "test:browser:webkit": "vitest run --project \"browser (webkit)\"",
+    "test:browser:webkit:watch": "vitest watch --project \"browser (webkit)\"",
+    "test:unit": "vitest --run --project unit",
+    "test:unit:watch": "vitest --project unit",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@portabletext/keyboard-shortcuts": "workspace:^",
+    "@portabletext/plugin-input-rule": "workspace:^",
+    "@xstate/react": "^6.0.0",
+    "xstate": "^5.25.0"
+  },
+  "devDependencies": {
+    "@portabletext/editor": "workspace:*",
+    "@portabletext/schema": "workspace:*",
+    "@sanity/pkg-utils": "^10.2.1",
+    "@sanity/tsconfig": "^2.1.0",
+    "@types/react": "^19.2.7",
+    "@vitejs/plugin-react": "^5.1.1",
+    "@vitest/browser": "^4.0.16",
+    "@vitest/browser-playwright": "^4.0.16",
+    "babel-plugin-react-compiler": "^1.0.0",
+    "eslint": "^9.39.1",
+    "eslint-formatter-gha": "^1.6.0",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "racejar": "workspace:*",
+    "react": "^19.2.3",
+    "typescript": "catalog:",
+    "typescript-eslint": "^8.48.0",
+    "vitest": "^4.0.16"
+  },
+  "peerDependencies": {
+    "@portabletext/editor": "workspace:^4.2.4",
+    "react": "^19.2"
+  },
+  "engines": {
+    "node": ">=20.19 <22 || >=22.12"
+  },
+  "publishConfig": {
+    "exports": {
+      ".": "./dist/index.js",
+      "./package.json": "./package.json"
+    }
+  }
+}
