@@ -7,7 +7,7 @@
 <h1>Portable Text Editor</h1>
 </div>
 
-> The official editor for editing [Portable Text](https://github.com/portabletext/portabletext) – the JSON based rich text specification for modern content editing platforms.
+> The official editor for editing [Portable Text](https://github.com/portabletext/portabletext) – the JSON based rich text specification for modern content editing platforms.
 
 ## Get started with the Portable Text Editor
 
@@ -20,7 +20,7 @@ In order to set up an editor you'll need to:
 - Write render functions to style and display each element type in the editor.
 - Render the editor.
 
-Check out [example application](/examples/basic/src/App.tsx) in this repo for a basic implementation of the editor. Most of the source code from this example app can also be found in the instructions below.
+Check out the [Portable Text Playground](../../apps/playground/) for a comprehensive example of the editor in action.
 
 ### Add the library to your project
 
@@ -358,101 +358,27 @@ The Behavior API is a new way of interfacing with the Portable Text Editor. It a
 
 Learn more about the [Behaviors](https://www.portabletext.org/concepts/behavior/) and how to [create your own behaviors](https://www.portabletext.org/guides/create-behavior/) in the documentation.
 
+## Related Packages
+
+[`@portabletext/toolbar`](../toolbar/) provides React hooks for building toolbars and related UI components.
+
+### Plugins
+
+Extend the editor with [official plugins](../../#editor-plugins).
+
 ## End-User Experience
 
-In order to provide a robust and consistent end-user experience, the editor is backed by an elaborate E2E test suite generated from a [human-readable Gherkin spec](/packages/editor/gherkin-spec/).
+In order to provide a robust and consistent end-user experience, the editor is backed by an elaborate E2E test suite generated from a [human-readable Gherkin spec](./gherkin-spec/).
 
 ## Development
 
-### Develop Together with Sanity Studio
+### Develop with Sanity Studio
 
-1. Run `pnpm build:editor` to make sure it builds correctly
-2. Now run `pnpm dev:editor` to run it in dev mode
-3. In another terminal, open your local version of the [sanity](https://github.com/sanity-io/sanity) monorepo
-4. `cd` into the `sanity` package and run `pnpm link <relative path to the **editor** package in this repo>`
-
-Now, you should be able to run `pnpm dev:test-studio` in the `sanity` repo to test Studio with a locally running Portable Text Editor.
-
-## Available plugins
-
-### `@portabletext/plugin-character-pair-decorator`
-
-> ✨ Automatically match a pair of characters and decorate the text in between
-
-- 💻 [`./packages/plugin-character-pair-decorator`](./packages/plugin-character-pair-decorator/)
-- 📦 [@portabletext/plugin-character-pair-decorator](https://www.npmjs.com/package/@portabletext/plugin-character-pair-decorator)
-
-### `@portabletext/plugin-emoji-picker`
-
-> ⚡️ Easily configure an Emoji Picker for the Portable Text Editor
-
-- 💻 [`./packages/plugin-emoji-picker`](./packages/plugin-emoji-picker/)
-- 📦 [@portabletext/plugin-emoji-picker](https://www.npmjs.com/package/@portabletext/plugin-emoji-picker)
-
-### `@portabletext/plugin-input-rule`
-
-> 🪄 Easily configure input rules in the Portable Text Editor
-
-- 💻 [`./packages/plugin-input-rule`](./packages/plugin-input-rule/)
-- 📦 [@portabletext/plugin-input-rule](https://www.npmjs.com/package/@portabletext/plugin-input-rule)
-
-### `@portabletext/plugin-markdown-shortcuts`
-
-> ⬇️ Adds helpful Markdown shortcuts to the editor
-
-- 💻 [`./packages/plugin-markdown-shortcuts`](./packages/plugin-markdown-shortcuts/)
-- 📦 [@portabletext/plugin-markdown-shortcuts](https://www.npmjs.com/package/@portabletext/plugin-markdown-shortcuts)
-
-### `@portabletext/plugin-one-line`
-
-> 🤏 Restricts the Portable Text Editor to a single line
-
-- 💻 [`./packages/plugin-one-line`](./packages/plugin-one-line/)
-- 📦 [@portabletext/plugin-one-line](https://www.npmjs.com/package/@portabletext/plugin-one-line)
-
-### `@portabletext/plugin-sdk-value`
-
-> 🔗 Connects a Portable Text Editor with a Sanity document using the SDK
-
-- 💻 [`./packages/plugin-sdk-value`](./packages/plugin-sdk-value/)
-- 📦 [@portabletext/plugin-sdk-value](https://www.npmjs.com/package/@portabletext/plugin-sdk-value)
-
-### `@portabletext/plugin-typography`
-
-> 🔁 Automatically transform text to typographic variants
-
-- 💻 [`./packages/plugin-typography`](./packages/plugin-typography/)
-- 📦 [@portabletext/plugin-typography](https://www.npmjs.com/package/@portabletext/plugin-typography)
-
-## Other Libraries
-
-This monorepo also contains additional libraries that can be used with the Portable Text Editor:
-
-### `@portabletext/markdown`
-
-> Convert Portable Text to Markdown and back again
-
-- 💻 [./packages/markdown](./packages/markdown/)
-- 📦 [@portabletext/markdown](https://www.npmjs.com/package/@portabletext/markdown)
-
-### `@portabletext/keyboard-shortcuts`
-
-> A TypeScript library for creating platform-aware keyboard shortcuts with automatic detection of Apple vs non-Apple platforms.
-
-- 💻 [./packages/keyboard-shortcuts](./packages/keyboard-shortcuts/)
-- 📦 [@portabletext/keyboard-shortcuts](https://www.npmjs.com/package/@portabletext/keyboard-shortcuts)
-
-### `@portabletext/test`
-
-> Testing utilities for the Portable Text Editor
-
-- 💻 [./packages/test](./packages/test/)
-- 📦 [@portabletext/test](https://www.npmjs.com/package/@portabletext/test)
-
-### `@portabletext/toolbar`
-
-> Powered by [Behaviors](https://www.portabletext.org/concepts/behavior/) and [State Machines](https://stately.ai/docs/xstate), `@portabletext/toolbar` is a collection of robust React hooks for building toolbars and related UI components
-> for the Portable Text editor.
-
-- 💻 [./packages/toolbar](./packages/toolbar/)
-- 📦 [@portabletext/toolbar](https://www.npmjs.com/package/@portabletext/toolbar)
+1. Run `pnpm build:editor` to build the editor
+2. Run `pnpm dev:editor` to start dev mode
+3. In the [sanity](https://github.com/sanity-io/sanity) monorepo, link the editor package:
+   ```sh
+   cd packages/sanity
+   pnpm link <path-to-this-repo>/packages/editor
+   ```
+4. Run `pnpm dev:test-studio` in the sanity repo
