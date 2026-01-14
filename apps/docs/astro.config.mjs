@@ -22,6 +22,9 @@ export default defineConfig({
     react(),
     starlight({
       title: 'Portable Text Editor',
+      components: {
+        PageTitle: './src/components/overrides/page-title.astro',
+      },
       customCss: ['./src/styles/globals.css'],
       editLink: {
         baseUrl: 'https://github.com/portabletext/editor/tree/main/apps/docs/',
