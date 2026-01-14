@@ -21,6 +21,7 @@ import {
   type MarkState,
 } from '@portabletext/editor/selectors'
 import {
+  isEqualPaths,
   isEqualSelectionPoints,
   isSelectionCollapsed,
 } from '@portabletext/editor/utils'
@@ -745,10 +746,7 @@ export const emojiPickerMachine = setup({
           },
         })
 
-        if (
-          JSON.stringify(focusSpan.path) !==
-          JSON.stringify(context.focusSpan.path)
-        ) {
+        if (!isEqualPaths(focusSpan.path, context.focusSpan.path)) {
           if (
             nextSpan &&
             context.focusSpan.textAfter.length === 0 &&
