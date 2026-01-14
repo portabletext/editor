@@ -8,26 +8,22 @@
 }
 
 [data-list-item] {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1.5rem 1fr;
   gap: 0.5rem;
 }
 [data-list-item]::before {
   text-align: right;
-  width: 1.5rem;
 }
 
-[data-list-item='number'] {
-  align-items: baseline;
-}
 [data-list-item='number']::before {
+  align-self: baseline;
   font-size: 0.9rem;
   font-variant-numeric: tabular-nums;
 }
 
-[data-list-item='bullet'] {
-  align-items: center;
-}
 [data-list-item='bullet']::before {
+  align-self: center;
   font-size: 0.4rem;
 }
 
@@ -153,6 +149,46 @@
 [data-list-item='bullet'][data-level='6']::before,
 [data-list-item='bullet'][data-level='9']::before {
   content: '■';
+}
+
+/**
+ * Blockquote styling for list items
+ * Move the border-left to the outer wrapper so it includes the bullet
+ */
+[data-list-item][data-style='blockquote'] {
+  border-left: 4px solid #e5e7eb;
+}
+
+[data-theme='dark'] [data-list-item][data-style='blockquote'] {
+  border-left-color: #4b5563;
+}
+
+[data-list-item][data-style='blockquote'] blockquote {
+  border-left: none;
+  padding-left: 0;
+}
+
+/**
+ * Padding for blockquote list items at each level
+ * These need higher specificity than the level-only rules
+ */
+[data-list-item][data-style='blockquote'][data-level='1'] {
+  padding-left: 0.5rem;
+}
+[data-list-item][data-style='blockquote'][data-level='2'] {
+  padding-left: calc(0.5rem + var(--list-padding));
+}
+[data-list-item][data-style='blockquote'][data-level='3'] {
+  padding-left: calc(0.5rem + var(--list-padding) * 2);
+}
+[data-list-item][data-style='blockquote'][data-level='4'] {
+  padding-left: calc(0.5rem + var(--list-padding) * 3);
+}
+[data-list-item][data-style='blockquote'][data-level='5'] {
+  padding-left: calc(0.5rem + var(--list-padding) * 4);
+}
+[data-list-item][data-style='blockquote'][data-level='6'] {
+  padding-left: calc(0.5rem + var(--list-padding) * 5);
 }
 
 /**
