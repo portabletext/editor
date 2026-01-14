@@ -1,6 +1,9 @@
 import type {Path} from '../types/paths'
 import {isKeyedSegment} from './util.is-keyed-segment'
 
+/**
+ * @public
+ */
 export function isEqualPaths(a: Path, b: Path): boolean {
   if (a.length !== b.length) {
     return false
