@@ -143,16 +143,16 @@ export function parseTextBlock({
   }
 
   const _key =
-    typeof block._key === 'string' ? block._key : context.keyGenerator()
+    typeof block['_key'] === 'string' ? block['_key'] : context.keyGenerator()
 
   const {markDefs, markDefKeyMap} = parseMarkDefs({
     context,
-    markDefs: block.markDefs,
+    markDefs: block['markDefs'],
     options,
   })
 
-  const unparsedChildren: Array<unknown> = Array.isArray(block.children)
-    ? block.children
+  const unparsedChildren: Array<unknown> = Array.isArray(block['children'])
+    ? block['children']
     : []
 
   const parsedChildren = unparsedChildren
@@ -218,28 +218,28 @@ export function parseTextBlock({
     ...customFields,
   }
 
-  if (typeof block.markDefs === 'object' && block.markDefs !== null) {
+  if (typeof block['markDefs'] === 'object' && block['markDefs'] !== null) {
     parsedBlock.markDefs = options.removeUnusedMarkDefs
       ? markDefs.filter((markDef) => marks.includes(markDef._key))
       : markDefs
   }
 
   if (
-    typeof block.style === 'string' &&
-    context.schema.styles.find((style) => style.name === block.style)
+    typeof block['style'] === 'string' &&
+    context.schema.styles.find((style) => style.name === block['style'])
   ) {
-    parsedBlock.style = block.style
+    parsedBlock.style = block['style']
   }
 
   if (
-    typeof block.listItem === 'string' &&
-    context.schema.lists.find((list) => list.name === block.listItem)
+    typeof block['listItem'] === 'string' &&
+    context.schema.lists.find((list) => list.name === block['listItem'])
   ) {
-    parsedBlock.listItem = block.listItem
+    parsedBlock.listItem = block['listItem']
   }
 
-  if (typeof block.level === 'number') {
-    parsedBlock.level = block.level
+  if (typeof block['level'] === 'number') {
+    parsedBlock.level = block['level']
   }
 
   return parsedBlock
@@ -275,7 +275,7 @@ export function parseMarkDefs({
       return []
     }
 
-    if (typeof markDef._key !== 'string') {
+    if (typeof markDef['_key'] !== 'string') {
       // If the `markDef` doesn't have a `_key` then we don't know what spans
       // it belongs to and therefore we have to discard it.
       return []
@@ -294,7 +294,7 @@ export function parseMarkDefs({
       return []
     }
 
-    markDefKeyMap.set(markDef._key, parsedAnnotation._key)
+    markDefKeyMap.set(markDef['_key'], parsedAnnotation._key)
 
     return [parsedAnnotation]
   })
@@ -350,8 +350,8 @@ export function parseSpan({
     }
   }
 
-  const unparsedMarks: Array<unknown> = Array.isArray(span.marks)
-    ? span.marks
+  const unparsedMarks: Array<unknown> = Array.isArray(span['marks'])
+    ? span['marks']
     : []
   const marks = unparsedMarks.flatMap((mark) => {
     if (typeof mark !== 'string') {
@@ -374,19 +374,21 @@ export function parseSpan({
   })
 
   if (
-    typeof span._type === 'string' &&
-    span._type !== context.schema.span.name
+    typeof span['_type'] === 'string' &&
+    span['_type'] !== context.schema.span.name
   ) {
     return undefined
   }
 
-  if (typeof span._type !== 'string') {
-    if (typeof span.text === 'string') {
+  if (typeof span['_type'] !== 'string') {
+    if (typeof span['text'] === 'string') {
       return {
         _type: context.schema.span.name as 'span',
         _key:
-          typeof span._key === 'string' ? span._key : context.keyGenerator(),
-        text: span.text,
+          typeof span['_key'] === 'string'
+            ? span['_key']
+            : context.keyGenerator(),
+        text: span['text'],
         marks,
         ...(options.validateFields ? {} : customFields),
       }
@@ -397,8 +399,9 @@ export function parseSpan({
 
   return {
     _type: context.schema.span.name as 'span',
-    _key: typeof span._key === 'string' ? span._key : context.keyGenerator(),
-    text: typeof span.text === 'string' ? span.text : '',
+    _key:
+      typeof span['_key'] === 'string' ? span['_key'] : context.keyGenerator(),
+    text: typeof span['text'] === 'string' ? span['text'] : '',
     marks,
     ...(options.validateFields ? {} : customFields),
   }
@@ -499,7 +502,9 @@ function parseObject({
   return {
     _type: context.schemaType.name,
     _key:
-      typeof object._key === 'string' ? object._key : context.keyGenerator(),
+      typeof object['_key'] === 'string'
+        ? object['_key']
+        : context.keyGenerator(),
     ...values,
   }
 }

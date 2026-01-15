@@ -184,7 +184,7 @@ export function performOperation({
     } catch (error) {
       console.error(
         new Error(
-          `Performing "${operation.type}" failed due to: ${error.message}`,
+          `Performing "${operation.type}" failed due to: ${error instanceof Error ? error.message : error}`,
         ),
       )
     }

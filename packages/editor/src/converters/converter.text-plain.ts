@@ -121,5 +121,8 @@ const entityMap: Record<string, string> = {
 }
 
 function escapeHtml(str: string) {
-  return String(str).replace(/[&<>"'`=/]/g, (s: string) => entityMap[s])
+  return String(str).replace(
+    /[&<>"'`=/]/g,
+    (s: string) => entityMap[s as keyof typeof entityMap] ?? s,
+  )
 }

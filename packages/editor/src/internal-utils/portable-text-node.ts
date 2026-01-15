@@ -151,7 +151,7 @@ export function getNode<TEditorSchema extends EditorSchema>(
       return undefined
     }
 
-    const child = block.children.at(path[1])
+    const child = block.children.at(path[1]!)
 
     if (!child) {
       return undefined
@@ -159,6 +159,8 @@ export function getNode<TEditorSchema extends EditorSchema>(
 
     return child
   }
+
+  return undefined
 }
 
 export function getSpan<TEditorSchema extends EditorSchema>(

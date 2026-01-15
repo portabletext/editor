@@ -733,7 +733,14 @@ function syncBlock({
     }
   }
 
-  const validationValue = [value[index]]
+  const blockToValidate = value[index]
+  if (!blockToValidate) {
+    return {
+      blockChanged: false,
+      blockValid: true,
+    }
+  }
+  const validationValue = [blockToValidate]
   const validation = validateValue(
     validationValue,
     context.schema,
@@ -754,7 +761,7 @@ function syncBlock({
     ) {
       // Give a console warning about the fact that it did an auto resolution
       console.warn(
-        `${validation.resolution.action} for block with _key '${validationValue[0]._key}'. ${validation.resolution?.description}`,
+        `${validation.resolution.action} for block with _key '${blockToValidate._key}'. ${validation.resolution?.description}`,
       )
       validation.resolution.patches.forEach((patch) => {
         sendBack({type: 'patch', patch})

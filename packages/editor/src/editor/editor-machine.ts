@@ -275,7 +275,11 @@ export const editorMachine = setup({
       try {
         ReactEditor.blur(event.editor)
       } catch (error) {
-        console.error(new Error(`Failed to blur editor: ${error.message}`))
+        console.error(
+          new Error(
+            `Failed to blur editor: ${error instanceof Error ? error.message : error}`,
+          ),
+        )
       }
     },
     'handle focus': ({context}) => {
@@ -301,7 +305,11 @@ export const editorMachine = setup({
           slateEditor.onChange()
         }
       } catch (error) {
-        console.error(new Error(`Failed to focus editor: ${error.message}`))
+        console.error(
+          new Error(
+            `Failed to focus editor: ${error instanceof Error ? error.message : error}`,
+          ),
+        )
       }
     },
     'handle behavior event': ({context, event, self}) => {
@@ -340,7 +348,7 @@ export const editorMachine = setup({
       } catch (error) {
         console.error(
           new Error(
-            `Raising "${event.behaviorEvent.type}" failed due to: ${error.message}`,
+            `Raising "${event.behaviorEvent.type}" failed due to: ${error instanceof Error ? error.message : error}`,
           ),
         )
       }
@@ -577,7 +585,7 @@ export const editorMachine = setup({
                     } catch (error) {
                       console.error(
                         new Error(
-                          `Removing the drag ghost failed due to: ${error.message}`,
+                          `Removing the drag ghost failed due to: ${error instanceof Error ? error.message : error}`,
                         ),
                       )
                     }

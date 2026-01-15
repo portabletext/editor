@@ -25,7 +25,7 @@ export function isAtTheBeginningOfBlock({
   const focusSpanKey = getChildKeyFromSelectionPoint(context.selection.focus)
 
   return (
-    focusSpanKey === block.children[0]._key &&
+    focusSpanKey === block.children[0]?._key &&
     context.selection.focus.offset === 0
   )
 }

@@ -297,7 +297,9 @@ export function createEditableAPI(
             match: (n) => n._key === element._key,
           }) || [],
         )[0] || [undefined]
-        node = ReactEditor.toDOMNode(editor, item)
+        if (item) {
+          node = ReactEditor.toDOMNode(editor, item)
+        }
       } catch {
         // Nothing
       }
@@ -419,6 +421,8 @@ export function createEditableAPI(
           spanPath,
         }
       }
+
+      return undefined
     },
     delete: (
       selection: EditorSelection,

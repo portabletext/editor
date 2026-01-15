@@ -460,7 +460,7 @@ type PendingImageBlock = {
 function isPendingImageBlock(
   block: PortableTextObject,
 ): block is PendingImageBlock {
-  return block._type === 'image' && block._src !== undefined
+  return block._type === 'image' && block['_src'] !== undefined
 }
 
 type ImageResult =

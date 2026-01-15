@@ -68,7 +68,7 @@ const unindentListOnBackspace = defineBehavior({
     }
 
     const atTheBeginningOfBLock =
-      focusTextBlock.node.children[0]._key === focusSpan.node._key &&
+      focusTextBlock.node.children[0]?._key === focusSpan.node._key &&
       snapshot.context.selection?.focus.offset === 0
 
     if (

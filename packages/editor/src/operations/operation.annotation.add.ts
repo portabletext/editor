@@ -57,7 +57,7 @@ export const addAnnotationOperationImplementation: OperationImplementation<
       continue
     }
 
-    if (block.children.length === 1 && block.children[0].text === '') {
+    if (block.children.length === 1 && block.children[0]?.text === '') {
       continue
     }
 

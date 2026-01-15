@@ -963,6 +963,8 @@ export const PortableTextEditable = forwardRef<
           mutationObserver.disconnect()
         }
       }
+
+      return undefined
     },
     [forwardedRef, validateSelectionActor],
   )

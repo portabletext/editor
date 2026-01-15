@@ -477,7 +477,7 @@ describe('event.child.unset', () => {
           ...initialValue[0],
           children: [
             {
-              ...initialValue[0].children[0],
+              ...initialValue[0]!.children[0],
             },
             {
               // _type can't be unset
@@ -487,7 +487,7 @@ describe('event.child.unset', () => {
               url: 'https://www.sanity.io/logo.svg',
             },
             {
-              ...initialValue[0].children[2],
+              ...initialValue[0]!.children[2],
             },
           ],
         },

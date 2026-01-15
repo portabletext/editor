@@ -246,17 +246,17 @@ function findCurrentLineRange(
   if (
     rangesAreOnSameLine(
       editor,
-      Editor.range(editor, positions[left]),
+      Editor.range(editor, positions[left]!),
       parentRangeBoundary,
     )
   ) {
-    return Editor.range(editor, positions[left], parentRangeBoundary)
+    return Editor.range(editor, positions[left]!, parentRangeBoundary)
   }
 
   if (positions.length < 2) {
     return Editor.range(
       editor,
-      positions[positions.length - 1],
+      positions[positions.length - 1]!,
       parentRangeBoundary,
     )
   }
@@ -265,7 +265,7 @@ function findCurrentLineRange(
     if (
       rangesAreOnSameLine(
         editor,
-        Editor.range(editor, positions[middle]),
+        Editor.range(editor, positions[middle]!),
         parentRangeBoundary,
       )
     ) {
@@ -277,7 +277,7 @@ function findCurrentLineRange(
     middle = Math.floor((left + right) / 2)
   }
 
-  return Editor.range(editor, positions[left], parentRangeBoundary)
+  return Editor.range(editor, positions[left]!, parentRangeBoundary)
 }
 
 function rangesAreOnSameLine(editor: DOMEditor, range1: Range, range2: Range) {

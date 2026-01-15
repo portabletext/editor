@@ -43,14 +43,16 @@ export function performHotkey({
           if (possibleMark) {
             const mark = possibleMark[hotkey]
 
-            editorActor.send({
-              type: 'behavior event',
-              behaviorEvent: {
-                type: 'decorator.toggle',
-                decorator: mark,
-              },
-              editor,
-            })
+            if (mark) {
+              editorActor.send({
+                type: 'behavior event',
+                behaviorEvent: {
+                  type: 'decorator.toggle',
+                  decorator: mark,
+                },
+                editor,
+              })
+            }
           }
         }
       }
@@ -67,7 +69,9 @@ export function performHotkey({
 
           if (possibleCommand) {
             const command = possibleCommand[hotkey]
-            command(event, portableTextEditor)
+            if (command) {
+              command(event, portableTextEditor)
+            }
           }
         }
       }

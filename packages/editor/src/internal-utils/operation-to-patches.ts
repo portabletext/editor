@@ -38,15 +38,15 @@ export function insertTextPatch(
   beforeValue: Array<PortableTextBlock>,
 ): Array<Patch> {
   const block =
-    isTextBlock({schema}, children[operation.path[0]]) &&
-    children[operation.path[0]]
+    isTextBlock({schema}, children[operation.path[0]!]) &&
+    children[operation.path[0]!]
   if (!block) {
     throw new Error('Could not find block')
   }
   const textChild =
     isTextBlock({schema}, block) &&
-    isSpan({schema}, block.children[operation.path[1]]) &&
-    (block.children[operation.path[1]] as PortableTextSpan)
+    isSpan({schema}, block.children[operation.path[1]!]) &&
+    (block.children[operation.path[1]!] as PortableTextSpan)
   if (!textChild) {
     throw new Error('Could not find child')
   }
@@ -56,9 +56,9 @@ export function insertTextPatch(
     {_key: textChild._key},
     'text',
   ]
-  const prevBlock = beforeValue[operation.path[0]]
+  const prevBlock = beforeValue[operation.path[0]!]
   const prevChild =
-    isTextBlock({schema}, prevBlock) && prevBlock.children[operation.path[1]]
+    isTextBlock({schema}, prevBlock) && prevBlock.children[operation.path[1]!]
   const prevText = isSpan({schema}, prevChild) ? prevChild.text : ''
   const patch = diffMatchPatch(prevText, textChild.text, path)
   return patch.value.length ? [patch] : []
@@ -70,12 +70,12 @@ export function removeTextPatch(
   operation: RemoveTextOperation,
   beforeValue: Array<PortableTextBlock>,
 ): Array<Patch> {
-  const block = children[operation.path[0]]
+  const block = children[operation.path[0]!]
   if (!block) {
     throw new Error('Could not find block')
   }
   const child =
-    (isTextBlock({schema}, block) && block.children[operation.path[1]]) ||
+    (isTextBlock({schema}, block) && block.children[operation.path[1]!]) ||
     undefined
   const textChild: PortableTextSpan | undefined = isSpan({schema}, child)
     ? child
@@ -92,10 +92,10 @@ export function removeTextPatch(
     {_key: textChild._key},
     'text',
   ]
-  const beforeBlock = beforeValue[operation.path[0]]
+  const beforeBlock = beforeValue[operation.path[0]!]
   const prevTextChild =
     isTextBlock({schema}, beforeBlock) &&
-    beforeBlock.children[operation.path[1]]
+    beforeBlock.children[operation.path[1]!]
   const prevText = isSpan({schema}, prevTextChild) && prevTextChild.text
   const patch = diffMatchPatch(prevText || '', textChild.text, path)
   return patch.value ? [patch] : []
@@ -174,9 +174,9 @@ export function setNodePatch(
       return patches
     }
   } else if (operation.path.length === 2) {
-    const block = children[operation.path[0]]
+    const block = children[operation.path[0]!]
     if (isTextBlock({schema}, block)) {
-      const child = block.children[operation.path[1]]
+      const child = block.children[operation.path[1]!]
       if (child) {
         const blockKey = block._key
         const childKey = child._key
@@ -279,10 +279,10 @@ export function insertNodePatch(
   operation: InsertNodeOperation,
   beforeValue: Array<PortableTextBlock>,
 ): Array<Patch> {
-  const block = beforeValue[operation.path[0]]
+  const block = beforeValue[operation.path[0]!]
   if (operation.path.length === 1) {
     const position = operation.path[0] === 0 ? 'before' : 'after'
-    const beforeBlock = beforeValue[operation.path[0] - 1]
+    const beforeBlock = beforeValue[operation.path[0]! - 1]
     const targetKey = operation.path[0] === 0 ? block?._key : beforeBlock?._key
     if (targetKey) {
       return [
@@ -298,25 +298,25 @@ export function insertNodePatch(
       insert(
         [fromSlateBlock(operation.node as Descendant, schema.block.name)],
         'before',
-        [operation.path[0]],
+        [operation.path[0]!],
       ),
     ]
   } else if (
     isTextBlock({schema}, block) &&
     operation.path.length === 2 &&
-    children[operation.path[0]]
+    children[operation.path[0]!]
   ) {
     const position =
-      block.children.length === 0 || !block.children[operation.path[1] - 1]
+      block.children.length === 0 || !block.children[operation.path[1]! - 1]
         ? 'before'
         : 'after'
     const path =
-      block.children.length <= 1 || !block.children[operation.path[1] - 1]
+      block.children.length <= 1 || !block.children[operation.path[1]! - 1]
         ? [{_key: block._key}, 'children', 0]
         : [
             {_key: block._key},
             'children',
-            {_key: block.children[operation.path[1] - 1]._key},
+            {_key: block.children[operation.path[1]! - 1]!._key},
           ]
 
     if (Text.isText(operation.node)) {
@@ -355,7 +355,7 @@ export function splitNodePatch(
   beforeValue: Array<PortableTextBlock>,
 ): Array<Patch> {
   const patches: Patch[] = []
-  const splitBlock = children[operation.path[0]]
+  const splitBlock = children[operation.path[0]!]
   if (!isTextBlock({schema}, splitBlock)) {
     throw new Error(
       `Block with path ${JSON.stringify(
@@ -364,12 +364,13 @@ export function splitNodePatch(
     )
   }
   if (operation.path.length === 1) {
-    const oldBlock = beforeValue[operation.path[0]]
+    const oldBlock = beforeValue[operation.path[0]!]
     if (isTextBlock({schema}, oldBlock)) {
-      const targetValue = fromSlateBlock(
-        children[operation.path[0] + 1],
-        schema.block.name,
-      )
+      const nextBlock = children[operation.path[0]! + 1]
+      if (!nextBlock) {
+        return patches
+      }
+      const targetValue = fromSlateBlock(nextBlock, schema.block.name)
       if (targetValue) {
         patches.push(insert([targetValue], 'after', [{_key: splitBlock._key}]))
         const spansToUnset = oldBlock.children.slice(operation.position)
@@ -382,15 +383,15 @@ export function splitNodePatch(
     return patches
   }
   if (operation.path.length === 2) {
-    const splitSpan = splitBlock.children[operation.path[1]]
+    const splitSpan = splitBlock.children[operation.path[1]!]
     if (isSpan({schema}, splitSpan)) {
       const targetSpans = (
         fromSlateBlock(
           {
             ...splitBlock,
             children: splitBlock.children.slice(
-              operation.path[1] + 1,
-              operation.path[1] + 2,
+              operation.path[1]! + 1,
+              operation.path[1]! + 2,
             ),
           } as Descendant,
           schema.block.name,
@@ -423,7 +424,7 @@ export function removeNodePatch(
   beforeValue: Array<PortableTextBlock>,
   operation: RemoveNodeOperation,
 ): Array<Patch> {
-  const block = beforeValue[operation.path[0]]
+  const block = beforeValue[operation.path[0]!]
   if (operation.path.length === 1) {
     // Remove a single block
     if (block && block._key) {
@@ -431,7 +432,7 @@ export function removeNodePatch(
     }
     throw new Error('Block not found')
   } else if (isTextBlock({schema}, block) && operation.path.length === 2) {
-    const spanToRemove = block.children[operation.path[1]]
+    const spanToRemove = block.children[operation.path[1]!]
 
     if (spanToRemove) {
       const spansMatchingKey = block.children.filter(
@@ -464,15 +465,16 @@ export function mergeNodePatch(
 ): Array<Patch> {
   const patches: Patch[] = []
 
-  const block = beforeValue[operation.path[0]]
-  const updatedBlock = children[operation.path[0]]
+  const block = beforeValue[operation.path[0]!]
+  const updatedBlock = children[operation.path[0]!]
 
   if (operation.path.length === 1) {
     if (block?._key) {
-      const newBlock = fromSlateBlock(
-        children[operation.path[0] - 1],
-        schema.block.name,
-      )
+      const prevBlock = children[operation.path[0]! - 1]
+      if (!prevBlock) {
+        throw new Error('Previous block not found!')
+      }
+      const newBlock = fromSlateBlock(prevBlock, schema.block.name)
       patches.push(set(newBlock, [{_key: newBlock._key}]))
       patches.push(unset([{_key: block._key}]))
     } else {
@@ -484,14 +486,14 @@ export function mergeNodePatch(
     operation.path.length === 2
   ) {
     const updatedSpan =
-      updatedBlock.children[operation.path[1] - 1] &&
-      isSpan({schema}, updatedBlock.children[operation.path[1] - 1])
-        ? updatedBlock.children[operation.path[1] - 1]
+      updatedBlock.children[operation.path[1]! - 1] &&
+      isSpan({schema}, updatedBlock.children[operation.path[1]! - 1])
+        ? updatedBlock.children[operation.path[1]! - 1]
         : undefined
     const removedSpan =
-      block.children[operation.path[1]] &&
-      isSpan({schema}, block.children[operation.path[1]])
-        ? block.children[operation.path[1]]
+      block.children[operation.path[1]!] &&
+      isSpan({schema}, block.children[operation.path[1]!])
+        ? block.children[operation.path[1]!]
         : undefined
 
     if (updatedSpan) {
@@ -542,16 +544,16 @@ export function moveNodePatch(
   operation: MoveNodeOperation,
 ): Array<Patch> {
   const patches: Patch[] = []
-  const block = beforeValue[operation.path[0]]
-  const targetBlock = beforeValue[operation.newPath[0]]
+  const block = beforeValue[operation.path[0]!]
+  const targetBlock = beforeValue[operation.newPath[0]!]
 
-  if (!targetBlock) {
+  if (!targetBlock || !block) {
     return patches
   }
 
   if (operation.path.length === 1) {
     const position: InsertPosition =
-      operation.path[0] > operation.newPath[0] ? 'before' : 'after'
+      operation.path[0]! > operation.newPath[0]! ? 'before' : 'after'
     patches.push(unset([{_key: block._key}]))
     patches.push(insert([block], position, [{_key: targetBlock._key}]))
   } else if (
@@ -559,11 +561,16 @@ export function moveNodePatch(
     isTextBlock({schema}, block) &&
     isTextBlock({schema}, targetBlock)
   ) {
-    const child = block.children[operation.path[1]]
-    const targetChild = targetBlock.children[operation.newPath[1]]
+    const child = block.children[operation.path[1]!]
+    const targetChild = targetBlock.children[operation.newPath[1]!]
     const position =
-      operation.newPath[1] === targetBlock.children.length ? 'after' : 'before'
-    const childToInsert = block.children[operation.path[1]]
+      operation.newPath[1]! === targetBlock.children.length ? 'after' : 'before'
+    const childToInsert = block.children[operation.path[1]!]
+
+    if (!child || !targetChild || !childToInsert) {
+      return patches
+    }
+
     patches.push(unset([{_key: block._key}, 'children', {_key: child._key}]))
     patches.push(
       insert([childToInsert], position, [

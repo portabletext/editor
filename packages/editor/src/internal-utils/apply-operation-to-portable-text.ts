@@ -48,7 +48,7 @@ function applyOperationToPortableTextImmutable(
     case 'insert_node': {
       const {path, node: insertedNode} = operation
       const parent = getParent(context, root, path)
-      const index = path[path.length - 1]
+      const index = path[path.length - 1]!
 
       if (!parent) {
         return root
@@ -72,8 +72,8 @@ function applyOperationToPortableTextImmutable(
                 return {
                   _key: child._key,
                   _type: child._type,
-                  ...('value' in child && typeof child.value === 'object'
-                    ? child.value
+                  ...('value' in child && typeof child['value'] === 'object'
+                    ? child['value']
                     : {}),
                 }
               }
@@ -108,7 +108,7 @@ function applyOperationToPortableTextImmutable(
 
       if (path.length === 2) {
         // Inserting children into blocks
-        const blockIndex = path[0]
+        const blockIndex = path[0]!
 
         if (!isTextBlockNode(context, parent)) {
           // Only text blocks can have children
@@ -154,8 +154,8 @@ function applyOperationToPortableTextImmutable(
         return root
       }
 
-      const blockIndex = path[0]
-      const childIndex = path[1]
+      const blockIndex = path[0]!
+      const childIndex = path[1]!
       const before = span.text.slice(0, offset)
       const after = span.text.slice(offset)
       const newSpan = {...span, text: before + text + after}
@@ -184,11 +184,11 @@ function applyOperationToPortableTextImmutable(
         return root
       }
 
-      const index = path[path.length - 1]
+      const index = path[path.length - 1]!
 
       if (isPartialSpanNode(node) && isPartialSpanNode(prev)) {
         // Merging spans
-        const blockIndex = path[0]
+        const blockIndex = path[0]!
         const newPrev = {...prev, text: prev.text + node.text}
 
         return updateTextBlockAtIndex(context, root, blockIndex, (block) => {
@@ -229,7 +229,7 @@ function applyOperationToPortableTextImmutable(
 
       const node = getNode(context, root, path)
       const parent = getParent(context, root, path)
-      const index = path[path.length - 1]
+      const index = path[path.length - 1]!
 
       if (!node || !parent) {
         return root
@@ -246,7 +246,7 @@ function applyOperationToPortableTextImmutable(
         }
       } else if (path.length === 2) {
         // Removing child from block
-        const blockIndex = path[0]
+        const blockIndex = path[0]!
         newRoot = updateTextBlockAtIndex(
           context,
           root,
@@ -267,7 +267,7 @@ function applyOperationToPortableTextImmutable(
       // transform `op.path` to ascertain what the `newPath` would be after
       // the operation was applied.
       const truePath = Path.transform(path, operation)!
-      const newIndex = truePath[truePath.length - 1]
+      const newIndex = truePath[truePath.length - 1]!
 
       if (truePath.length === 1) {
         // Inserting block at root
@@ -279,7 +279,7 @@ function applyOperationToPortableTextImmutable(
 
       if (truePath.length === 2) {
         // Inserting child into block
-        const newBlockIndex = truePath[0]
+        const newBlockIndex = truePath[0]!
         const newParent = newRoot.children[newBlockIndex]
 
         if (!newParent || !isTextBlockNode(context, newParent)) {
@@ -302,7 +302,7 @@ function applyOperationToPortableTextImmutable(
 
     case 'remove_node': {
       const {path} = operation
-      const index = path[path.length - 1]
+      const index = path[path.length - 1]!
       const parent = getParent(context, root, path)
 
       if (!parent) {
@@ -319,7 +319,7 @@ function applyOperationToPortableTextImmutable(
 
       if (path.length === 2) {
         // Removing child from block
-        const blockIndex = path[0]
+        const blockIndex = path[0]!
         return updateTextBlockAtIndex(context, root, blockIndex, (block) => ({
           ...block,
           children: removeChildren(block.children, index),
@@ -342,8 +342,8 @@ function applyOperationToPortableTextImmutable(
         return root
       }
 
-      const blockIndex = path[0]
-      const childIndex = path[1]
+      const blockIndex = path[0]!
+      const childIndex = path[1]!
       const before = span.text.slice(0, offset)
       const after = span.text.slice(offset + text.length)
       const newSpan = {...span, text: before + after}
@@ -424,14 +424,14 @@ function applyOperationToPortableTextImmutable(
         if (path.length === 1) {
           return {
             ...root,
-            children: replaceChild(root.children, path[0], newNode),
+            children: replaceChild(root.children, path[0]!, newNode),
           }
         }
 
         if (path.length === 2) {
-          return updateTextBlockAtIndex(context, root, path[0], (block) => ({
+          return updateTextBlockAtIndex(context, root, path[0]!, (block) => ({
             ...block,
-            children: replaceChild(block.children, path[1], newNode),
+            children: replaceChild(block.children, path[1]!, newNode),
           }))
         }
 
@@ -464,7 +464,7 @@ function applyOperationToPortableTextImmutable(
 
         return {
           ...root,
-          children: replaceChild(root.children, path[0], newNode),
+          children: replaceChild(root.children, path[0]!, newNode),
         }
       }
 
@@ -492,9 +492,9 @@ function applyOperationToPortableTextImmutable(
           }
         }
 
-        return updateTextBlockAtIndex(context, root, path[0], (block) => ({
+        return updateTextBlockAtIndex(context, root, path[0]!, (block) => ({
           ...block,
-          children: replaceChild(block.children, path[1], newNode),
+          children: replaceChild(block.children, path[1]!, newNode),
         }))
       }
 
@@ -509,7 +509,7 @@ function applyOperationToPortableTextImmutable(
       }
 
       const parent = getParent(context, root, path)
-      const index = path[path.length - 1]
+      const index = path[path.length - 1]!
 
       if (!parent) {
         return root
@@ -550,7 +550,7 @@ function applyOperationToPortableTextImmutable(
           return root
         }
 
-        const blockIndex = path[0]
+        const blockIndex = path[0]!
         const before = node.text.slice(0, position)
         const after = node.text.slice(position)
         const updatedSpanNode = {...node, text: before}

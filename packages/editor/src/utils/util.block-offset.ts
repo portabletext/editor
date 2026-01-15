@@ -133,4 +133,6 @@ export function spanSelectionPointToBlockOffset({
       offset += child.text.length
     }
   }
+
+  return undefined
 }

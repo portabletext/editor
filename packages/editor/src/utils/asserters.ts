@@ -1,7 +1,7 @@
 import type {TypedObject} from '@portabletext/schema'
 
 export function isTypedObject(object: unknown): object is TypedObject {
-  return isRecord(object) && typeof object._type === 'string'
+  return isRecord(object) && typeof object['_type'] === 'string'
 }
 
 export function isRecord(value: unknown): value is Record<string, unknown> {

@@ -1,12 +1,8 @@
 {
-  "$schema": "https://json.schemastore.org/tsconfig",
-  "extends": "./tsconfig.base.json",
-  "include": ["./src", "./gherkin-tests", "./tests"],
+  "extends": "./tsconfig.settings.json",
   "compilerOptions": {
-    "rootDir": ".",
-    "outDir": "./lib",
-
-    "isolatedModules": false,
     "types": ["@vitest/browser-playwright"]
-  }
+  },
+  "include": ["./src", "./gherkin-tests", "./tests"],
+  "exclude": ["dist", "node_modules"]
 }

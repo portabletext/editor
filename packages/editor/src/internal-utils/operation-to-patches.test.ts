@@ -332,7 +332,7 @@ describe('operationToPatches', () => {
   })
 
   it('produce correct insert text patch', () => {
-    ;(editor.children[0] as PortableTextTextBlock).children[2].text = '1'
+    ;(editor.children[0] as PortableTextTextBlock).children[2]!.text = '1'
     editor.onChange()
     expect(
       insertTextPatch(
@@ -370,7 +370,7 @@ describe('operationToPatches', () => {
 
   it('produces correct remove text patch', () => {
     const before = createDefaultValue()
-    ;(before[0] as PortableTextTextBlock).children[2].text = '1'
+    ;(before[0] as PortableTextTextBlock).children[2]!.text = '1'
     expect(
       removeTextPatch(
         editorActor.getSnapshot().context.schema,
@@ -448,7 +448,7 @@ describe('operationToPatches', () => {
       removeNodePatch(editorActor.getSnapshot().context.schema, val, {
         type: 'remove_node',
         path: [0],
-        node: children[0],
+        node: children[0]!,
       }),
     ).toMatchInlineSnapshot(`
       [
@@ -474,7 +474,7 @@ describe('operationToPatches', () => {
     })
     const block = editor.children[0] as PortableTextTextBlock
     block.children = block.children.splice(0, 3)
-    block.children[2].text = '1234'
+    block.children[2]!.text = '1234'
     editor.onChange()
     expect(
       mergeNodePatch(

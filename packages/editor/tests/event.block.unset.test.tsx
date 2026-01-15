@@ -178,7 +178,7 @@ describe('event.block.unset', () => {
           href: 'https://www.sanity.io',
         },
       ])
-      expect(editor.getSnapshot().context.value[0]._key).not.toEqual(
+      expect(editor.getSnapshot().context.value[0]!._key).not.toEqual(
         urlBlockKey,
       )
       expect(patches.slice(4)).toEqual([set('k3', [0, '_key'])])
