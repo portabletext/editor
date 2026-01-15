@@ -55,7 +55,10 @@ function updateRangeDecorations({
   details: RangeDecorationOnMovedDetails
 }) {
   return rangeDecorations?.flatMap((rangeDecoration) => {
-    if (rangeDecoration.payload?.id === details.rangeDecoration.payload?.id) {
+    if (
+      rangeDecoration.payload?.['id'] ===
+      details.rangeDecoration.payload?.['id']
+    ) {
       if (!details.newSelection) {
         return []
       }

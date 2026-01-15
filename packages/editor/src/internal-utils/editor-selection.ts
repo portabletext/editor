@@ -10,12 +10,17 @@ export function getEditorSelection(
   const firstBlock = context.value[0]
   const lastBlock = context.value[context.value.length - 1]
 
+  if (!firstBlock || !lastBlock) {
+    throw new Error('No blocks found')
+  }
+
   if (isTextBlock(context, firstBlock)) {
+    const firstChild = firstBlock.children[0]
     anchor = {
       path: [
         {_key: firstBlock._key},
         'children',
-        {_key: firstBlock.children[0]._key},
+        {_key: firstChild?._key ?? ''},
       ],
       offset: 0,
     }

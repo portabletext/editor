@@ -17,8 +17,9 @@ export function getBlockStartPoint({
   }
 }): EditorSelectionPoint {
   if (isTextBlock(context, block.node)) {
+    const firstChild = block.node.children[0]
     return {
-      path: [...block.path, 'children', {_key: block.node.children[0]._key}],
+      path: [...block.path, 'children', {_key: firstChild?._key ?? ''}],
       offset: 0,
     }
   }

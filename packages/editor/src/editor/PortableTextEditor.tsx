@@ -159,7 +159,7 @@ export class PortableTextEditor extends Component<
     this.editable = this.editor._internal.editable
   }
 
-  componentDidMount(): void {
+  override componentDidMount(): void {
     if (!this.actors) {
       return
     }
@@ -190,7 +190,7 @@ export class PortableTextEditor extends Component<
     this.actors.syncActor.start()
   }
 
-  componentDidUpdate(prevProps: PortableTextEditorProps) {
+  override componentDidUpdate(prevProps: PortableTextEditorProps) {
     // Set up the schema type lookup table again if the source schema type changes
     if (
       !this.props.editor &&
@@ -224,7 +224,7 @@ export class PortableTextEditor extends Component<
     }
   }
 
-  componentWillUnmount(): void {
+  override componentWillUnmount(): void {
     for (const unsubscribe of this.unsubscribers) {
       unsubscribe()
     }
@@ -244,7 +244,7 @@ export class PortableTextEditor extends Component<
     }
   }
 
-  render() {
+  override render() {
     const legacyPatches = !this.props.editor
       ? (this.props.incomingPatches$ ?? this.props.patches$)
       : undefined

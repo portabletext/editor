@@ -104,7 +104,7 @@ describe(converterTextHtml.serialize.name, () => {
               path: [
                 {_key: decoratedParagraph._key},
                 'children',
-                {_key: decoratedParagraph.children[0]._key},
+                {_key: decoratedParagraph.children[0]!._key},
               ],
               offset: 0,
             },
@@ -112,7 +112,7 @@ describe(converterTextHtml.serialize.name, () => {
               path: [
                 {_key: decoratedParagraph._key},
                 'children',
-                {_key: decoratedParagraph.children[2]._key},
+                {_key: decoratedParagraph.children[2]!._key},
               ],
               offset: 4,
             },
@@ -159,7 +159,7 @@ describe(converterTextHtml.serialize.name, () => {
             path: [
               {_key: paragraphWithInlineBlock._key},
               'children',
-              {_key: paragraphWithInlineBlock.children[0]._key},
+              {_key: paragraphWithInlineBlock.children[0]!._key},
             ],
             offset: 0,
           },
@@ -167,7 +167,7 @@ describe(converterTextHtml.serialize.name, () => {
             path: [
               {_key: paragraphWithInlineBlock._key},
               'children',
-              {_key: paragraphWithInlineBlock.children[2]._key},
+              {_key: paragraphWithInlineBlock.children[2]!._key},
             ],
             offset: 4,
           },

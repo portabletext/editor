@@ -113,7 +113,7 @@ describe('event.mutation', () => {
     await new Promise((resolve) => setTimeout(resolve, 250))
 
     expect(mutations).toHaveLength(2)
-    expect(mutations[0].value).toEqual([
+    expect(mutations[0]!.value).toEqual([
       {
         _type: 'block',
         _key: 'k0',
@@ -122,7 +122,7 @@ describe('event.mutation', () => {
         style: 'normal',
       },
     ])
-    expect(mutations[1].value).toEqual([
+    expect(mutations[1]!.value).toEqual([
       {
         _type: 'block',
         _key: 'k0',

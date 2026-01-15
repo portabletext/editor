@@ -46,4 +46,6 @@ export function eventToChange(
       return event
     }
   }
+
+  return undefined
 }

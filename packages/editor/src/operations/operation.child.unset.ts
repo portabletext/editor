@@ -65,7 +65,7 @@ export const childUnsetOperationImplementation: OperationImplementation<
       }
 
       if (prop === '_key') {
-        newNode._key = context.keyGenerator()
+        newNode['_key'] = context.keyGenerator()
         continue
       }
 

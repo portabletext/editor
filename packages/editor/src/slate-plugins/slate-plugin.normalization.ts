@@ -42,7 +42,7 @@ export function createNormalizationPlugin(
         const children = Node.children(editor, path)
 
         for (const [child, childPath] of children) {
-          const nextNode = node.children[childPath[1] + 1]
+          const nextNode = node.children[childPath[1]! + 1]
 
           if (
             editor.isTextSpan(child) &&
@@ -53,7 +53,7 @@ export function createNormalizationPlugin(
             debug.normalization('merging spans with same marks')
             withNormalizeNode(editor, () => {
               Transforms.mergeNodes(editor, {
-                at: [childPath[0], childPath[1] + 1],
+                at: [childPath[0]!, childPath[1]! + 1],
                 voids: true,
               })
             })
@@ -328,7 +328,7 @@ export function createNormalizationPlugin(
               newFocusSpan &&
               op.newProperties.focus.path[0] === op.properties.focus.path[0] &&
               op.newProperties.focus.path[1] ===
-                op.properties.focus.path[1] + 1 &&
+                op.properties.focus.path[1]! + 1 &&
               focusSpan.text.length === op.properties.focus.offset &&
               op.newProperties.focus.offset === 0
             const movedToPreviousSpan =
@@ -336,7 +336,7 @@ export function createNormalizationPlugin(
               newFocusSpan &&
               op.newProperties.focus.path[0] === op.properties.focus.path[0] &&
               op.newProperties.focus.path[1] ===
-                op.properties.focus.path[1] - 1 &&
+                op.properties.focus.path[1]! - 1 &&
               op.properties.focus.offset === 0 &&
               newFocusSpan.text.length === op.newProperties.focus.offset
 
@@ -364,9 +364,9 @@ export function createNormalizationPlugin(
           editorActor.getSnapshot().context.schema.block.name &&
         Array.isArray(op.properties.markDefs) &&
         op.properties.markDefs.length > 0 &&
-        op.path[0] - 1 >= 0
+        op.path[0]! - 1 >= 0
       ) {
-        const [targetBlock, targetPath] = Editor.node(editor, [op.path[0] - 1])
+        const [targetBlock, targetPath] = Editor.node(editor, [op.path[0]! - 1])
 
         if (editor.isTextBlock(targetBlock)) {
           const oldDefs =

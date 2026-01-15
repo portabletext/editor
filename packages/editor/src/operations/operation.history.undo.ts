@@ -11,7 +11,7 @@ export const historyUndoOperationImplementation: OperationImplementation<
   const {undos} = editor.history
 
   if (undos.length > 0) {
-    const step = undos[undos.length - 1]
+    const step = undos[undos.length - 1]!
 
     if (step.operations.length > 0) {
       const otherPatches = editor.remotePatches.filter(
@@ -45,7 +45,7 @@ export const historyUndoOperationImplementation: OperationImplementation<
         })
       } catch (err) {
         console.error(
-          `Could not perform 'history.undo' operation: ${err.message}`,
+          `Could not perform 'history.undo' operation: ${err instanceof Error ? err.message : err}`,
         )
 
         editor.remotePatches.splice(0, editor.remotePatches.length)

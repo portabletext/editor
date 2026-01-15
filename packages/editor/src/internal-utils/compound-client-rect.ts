@@ -17,7 +17,7 @@ export function getCompoundClientRect(nodes: Array<Node>): DOMRect {
   let bottom = firstRect.bottom
 
   for (let i = 1; i < elements.length; i++) {
-    const rect = elements[i].getBoundingClientRect()
+    const rect = elements[i]!.getBoundingClientRect()
     left = Math.min(left, rect.left)
     top = Math.min(top, rect.top)
     right = Math.max(right, rect.right)

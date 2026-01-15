@@ -105,9 +105,9 @@ export function createUniqueKeysPlugin(editorActor: EditorActor) {
       }
 
       if (operation.type === 'merge_node') {
-        const index = operation.path[operation.path.length - 1]
+        const index = operation.path[operation.path.length - 1]!
         const prevPath = Path.previous(operation.path)
-        const prevIndex = prevPath[prevPath.length - 1]
+        const prevIndex = prevPath[prevPath.length - 1]!
 
         if (operation.path.length !== 1 || prevPath.length !== 1) {
           apply(operation)

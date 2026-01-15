@@ -42,7 +42,7 @@ export const decoratorRemoveOperationImplementation: OperationImplementation<
         }),
       ]
       splitTextNodes.forEach(([node, path]) => {
-        const block = editor.children[path[0]]
+        const block = editor.children[path[0]!]
         if (Element.isElement(block) && block.children.includes(node)) {
           Transforms.setNodes(
             editor,

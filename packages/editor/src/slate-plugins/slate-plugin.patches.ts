@@ -71,7 +71,7 @@ export function createPatchesPlugin({
                   }
                 } catch (error) {
                   console.error(
-                    `Applying patch ${JSON.stringify(patch)} failed due to: ${error.message}`,
+                    `Applying patch ${JSON.stringify(patch)} failed due to: ${error instanceof Error ? error.message : error}`,
                   )
                 }
               }

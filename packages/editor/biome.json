@@ -2,6 +2,9 @@
   "extends": "//",
   "linter": {
     "rules": {
+      "complexity": {
+        "useLiteralKeys": "off"
+      },
       "style": {
         "noRestrictedImports": {
           "level": "error",

@@ -11,7 +11,7 @@ export const historyRedoOperationImplementation: OperationImplementation<
   const {redos} = editor.history
 
   if (redos.length > 0) {
-    const step = redos[redos.length - 1]
+    const step = redos[redos.length - 1]!
 
     if (step.operations.length > 0) {
       const otherPatches = editor.remotePatches.filter(
@@ -41,7 +41,7 @@ export const historyRedoOperationImplementation: OperationImplementation<
         })
       } catch (err) {
         console.error(
-          `Could not perform 'history.redo' operation: ${err.message}`,
+          `Could not perform 'history.redo' operation: ${err instanceof Error ? err.message : err}`,
         )
 
         editor.remotePatches.splice(0, editor.remotePatches.length)

@@ -77,14 +77,14 @@ describe('event.child.set', () => {
         {
           ...initialValue[0],
           children: [
-            ...initialValue[0].children.slice(0, 1),
+            ...initialValue[0]!.children.slice(0, 1),
             {
               _type: 'image',
               _key: newImageKey,
               url: 'https://www.sanity.io/logo.svg',
               alt: 'Sanity Logo',
             },
-            ...initialValue[0].children.slice(2),
+            ...initialValue[0]!.children.slice(2),
           ],
         },
       ])
@@ -178,12 +178,12 @@ describe('event.child.set', () => {
         {
           ...initialValue[0],
           children: [
-            ...initialValue[0].children.slice(0, 1),
+            ...initialValue[0]!.children.slice(0, 1),
             {
-              ...initialValue[0].children[1],
+              ...initialValue[0]!.children[1],
               alive: true,
             },
-            ...initialValue[0].children.slice(2),
+            ...initialValue[0]!.children.slice(2),
           ],
         },
       ])
@@ -385,7 +385,7 @@ describe('event.child.set', () => {
           ...initialValue[0],
           children: [
             {
-              ...initialValue[0].children[0],
+              ...initialValue[0]!.children[0],
               _key: newSpanKey,
               text: 'Hello, world!',
               marks: ['strong'],

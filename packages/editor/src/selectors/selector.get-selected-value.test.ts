@@ -121,7 +121,7 @@ describe(getSelectedValue.name, () => {
                 path: [
                   {_key: b1._key},
                   'children',
-                  {_key: b1.children[0]._key},
+                  {_key: b1.children[0]!._key},
                 ],
                 offset: 0,
               },
@@ -129,7 +129,7 @@ describe(getSelectedValue.name, () => {
                 path: [
                   {_key: b1._key},
                   'children',
-                  {_key: b1.children[0]._key},
+                  {_key: b1.children[0]!._key},
                 ],
                 offset: 3,
               },
@@ -157,7 +157,7 @@ describe(getSelectedValue.name, () => {
                 path: [
                   {_key: b1._key},
                   'children',
-                  {_key: b1.children[0]._key},
+                  {_key: b1.children[0]!._key},
                 ],
                 offset: 1,
               },
@@ -165,7 +165,7 @@ describe(getSelectedValue.name, () => {
                 path: [
                   {_key: b1._key},
                   'children',
-                  {_key: b1.children[0]._key},
+                  {_key: b1.children[0]!._key},
                 ],
                 offset: 2,
               },
@@ -225,7 +225,7 @@ describe(getSelectedValue.name, () => {
                 path: [
                   {_key: b3._key},
                   'children',
-                  {_key: b3.children[0]._key},
+                  {_key: b3.children[0]!._key},
                 ],
                 offset: 3,
               },
@@ -248,7 +248,7 @@ describe(getSelectedValue.name, () => {
                 path: [
                   {_key: b1._key},
                   'children',
-                  {_key: b1.children[0]._key},
+                  {_key: b1.children[0]!._key},
                 ],
                 offset: 3,
               },
@@ -287,7 +287,7 @@ describe(getSelectedValue.name, () => {
                 path: [
                   {_key: b1._key},
                   'children',
-                  {_key: b1.children[0]._key},
+                  {_key: b1.children[0]!._key},
                 ],
                 offset: 0,
               },
@@ -295,7 +295,7 @@ describe(getSelectedValue.name, () => {
                 path: [
                   {_key: b3._key},
                   'children',
-                  {_key: b3.children[0]._key},
+                  {_key: b3.children[0]!._key},
                 ],
                 offset: 3,
               },
@@ -318,7 +318,7 @@ describe(getSelectedValue.name, () => {
                 path: [
                   {_key: b3._key},
                   'children',
-                  {_key: b3.children[0]._key},
+                  {_key: b3.children[0]!._key},
                 ],
                 offset: 2,
               },
@@ -326,7 +326,7 @@ describe(getSelectedValue.name, () => {
                 path: [
                   {_key: b4._key},
                   'children',
-                  {_key: b4.children[0]._key},
+                  {_key: b4.children[0]!._key},
                 ],
                 offset: 1,
               },
@@ -368,7 +368,7 @@ describe(getSelectedValue.name, () => {
                 path: [
                   {_key: b3._key},
                   'children',
-                  {_key: b3.children[0]._key},
+                  {_key: b3.children[0]!._key},
                 ],
                 offset: 2,
               },
@@ -376,7 +376,7 @@ describe(getSelectedValue.name, () => {
                 path: [
                   {_key: b4._key},
                   'children',
-                  {_key: b4.children[0]._key},
+                  {_key: b4.children[0]!._key},
                 ],
                 offset: 4,
               },
@@ -417,7 +417,7 @@ describe(getSelectedValue.name, () => {
                 path: [
                   {_key: b4._key},
                   'children',
-                  {_key: b4.children[1]._key},
+                  {_key: b4.children[1]!._key},
                 ],
                 offset: 0,
               },
@@ -425,7 +425,7 @@ describe(getSelectedValue.name, () => {
                 path: [
                   {_key: b4._key},
                   'children',
-                  {_key: b4.children[2]._key},
+                  {_key: b4.children[2]!._key},
                 ],
                 offset: 4,
               },
@@ -453,7 +453,7 @@ describe(getSelectedValue.name, () => {
                 path: [
                   {_key: b4._key},
                   'children',
-                  {_key: b4.children[0]._key},
+                  {_key: b4.children[0]!._key},
                 ],
                 offset: 0,
               },
@@ -461,7 +461,7 @@ describe(getSelectedValue.name, () => {
                 path: [
                   {_key: b4._key},
                   'children',
-                  {_key: b4.children[1]._key},
+                  {_key: b4.children[1]!._key},
                 ],
                 offset: 0,
               },
@@ -489,7 +489,7 @@ describe(getSelectedValue.name, () => {
                 path: [
                   {_key: b4._key},
                   'children',
-                  {_key: b4.children[1]._key},
+                  {_key: b4.children[1]!._key},
                 ],
                 offset: 0,
               },
@@ -497,7 +497,7 @@ describe(getSelectedValue.name, () => {
                 path: [
                   {_key: b4._key},
                   'children',
-                  {_key: b4.children[1]._key},
+                  {_key: b4.children[1]!._key},
                 ],
                 offset: 0,
               },

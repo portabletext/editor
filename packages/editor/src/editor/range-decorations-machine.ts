@@ -364,12 +364,13 @@ function createDecorate(
 ) {
   return function decorate([node, path]: NodeEntry): Array<BaseRange> {
     const defaultStyle = schema.styles.at(0)?.name
+    const firstBlock = slateEditor.value[0]
     const editorOnlyContainsEmptyParagraph =
       slateEditor.value.length === 1 &&
-      isEmptyTextBlock({schema}, slateEditor.value[0]) &&
-      (!slateEditor.value[0].style ||
-        slateEditor.value[0].style === defaultStyle) &&
-      !slateEditor.value[0].listItem
+      firstBlock &&
+      isEmptyTextBlock({schema}, firstBlock) &&
+      (!firstBlock.style || firstBlock.style === defaultStyle) &&
+      !firstBlock.listItem
 
     if (editorOnlyContainsEmptyParagraph) {
       return [

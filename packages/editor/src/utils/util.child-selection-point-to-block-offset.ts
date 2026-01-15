@@ -48,4 +48,6 @@ export function childSelectionPointToBlockOffset({
       }
     }
   }
+
+  return undefined
 }

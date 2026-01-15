@@ -7,7 +7,7 @@ export function createPlaceholderBlock(
   return {
     _type: context.schema.block.name,
     _key: context.keyGenerator(),
-    style: context.schema.styles[0].name ?? 'normal',
+    style: context.schema.styles[0]?.name ?? 'normal',
     markDefs: [],
     children: [
       {

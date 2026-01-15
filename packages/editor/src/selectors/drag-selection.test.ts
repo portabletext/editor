@@ -27,13 +27,13 @@ describe(getDragSelection.name, () => {
       },
     ],
   }
-  const fooPath = [{_key: foo._key}, 'children', {_key: foo.children[0]._key}]
+  const fooPath = [{_key: foo._key}, 'children', {_key: foo.children[0]!._key}]
   const stockTickerPath = [
     {_key: foo._key},
     'children',
-    {_key: foo.children[1]._key},
+    {_key: foo.children[1]!._key},
   ]
-  const barPath = [{_key: foo._key}, 'children', {_key: foo.children[2]._key}]
+  const barPath = [{_key: foo._key}, 'children', {_key: foo.children[2]!._key}]
   const baz = {
     _key: keyGenerator(),
     _type: 'block',
@@ -45,7 +45,7 @@ describe(getDragSelection.name, () => {
       },
     ],
   }
-  const bazPath = [{_key: baz._key}, 'children', {_key: baz.children[0]._key}]
+  const bazPath = [{_key: baz._key}, 'children', {_key: baz.children[0]!._key}]
   const image = {
     _key: keyGenerator(),
     _type: 'image',

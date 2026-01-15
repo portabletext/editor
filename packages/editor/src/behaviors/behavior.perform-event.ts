@@ -167,7 +167,7 @@ export function performEvent({
     } catch (error) {
       console.error(
         new Error(
-          `Evaluating guard for "${event.type}" failed due to: ${error.message}`,
+          `Evaluating guard for "${event.type}" failed due to: ${error instanceof Error ? error.message : error}`,
         ),
       )
     }
@@ -211,7 +211,7 @@ export function performEvent({
       } catch (error) {
         console.error(
           new Error(
-            `Evaluating actions for "${event.type}" failed due to: ${error.message}`,
+            `Evaluating actions for "${event.type}" failed due to: ${error instanceof Error ? error.message : error}`,
           ),
         )
       }
@@ -275,7 +275,7 @@ export function performEvent({
               } catch (error) {
                 console.error(
                   new Error(
-                    `Executing effect as a result of "${event.type}" failed due to: ${error.message}`,
+                    `Executing effect as a result of "${event.type}" failed due to: ${error instanceof Error ? error.message : error}`,
                   ),
                 )
               }

@@ -167,7 +167,7 @@ export const mutationMachine = setup({
         () => {
           sendBack({type: 'emit changes'})
         },
-        process.env.NODE_ENV === 'test' ? 250 : 1000,
+        __TEST__ ? 250 : 1000,
       )
 
       return () => {
