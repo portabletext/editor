@@ -17,6 +17,8 @@ export type EditorFeatureFlags = {
   htmlDeserializerPlugin: boolean
   textFileDeserializerPlugin: boolean
   emojiPickerPlugin: boolean
+  mentionPickerPlugin: boolean
+  slashCommandPlugin: boolean
   codeEditorPlugin: boolean
   linkPlugin: boolean
   oneLinePlugin: boolean
@@ -30,6 +32,8 @@ export const defaultEditorFeatureFlags: EditorFeatureFlags = {
   htmlDeserializerPlugin: true,
   textFileDeserializerPlugin: false,
   emojiPickerPlugin: true,
+  mentionPickerPlugin: true,
+  slashCommandPlugin: true,
   codeEditorPlugin: false,
   linkPlugin: false,
   oneLinePlugin: false,

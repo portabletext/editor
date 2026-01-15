@@ -26,6 +26,7 @@
     "@portabletext/plugin-input-rule": "workspace:*",
     "@portabletext/plugin-markdown-shortcuts": "workspace:*",
     "@portabletext/plugin-one-line": "workspace:*",
+    "@portabletext/plugin-typeahead-picker": "workspace:*",
     "@portabletext/plugin-typography": "workspace:*",
     "@portabletext/toolbar": "workspace:*",
     "@xstate/react": "^6.0.0",

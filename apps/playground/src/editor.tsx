@@ -25,6 +25,7 @@ import {
 import {useSelector} from '@xstate/react'
 import {
   ActivityIcon,
+  AtSignIcon,
   BugIcon,
   LinkIcon,
   PencilIcon,
@@ -40,12 +41,14 @@ import {
   EditorFeatureFlagsContext,
   PlaygroundFeatureFlagsContext,
 } from './feature-flags'
+import {MentionPickerPlugin} from './mention-picker'
 import type {EditorActorRef} from './playground-machine'
 import {
   CommentAnnotationSchema,
   ImageSchema,
   InlineImageSchema,
   LinkAnnotationSchema,
+  MentionSchema,
   playgroundSchemaDefinition,
   StockTickerSchema,
 } from './playground-schema-definition'
@@ -64,6 +67,7 @@ import {Spinner} from './primitives/spinner'
 import {Switch} from './primitives/switch'
 import {Tooltip} from './primitives/tooltip'
 import {RangeDecorationButton} from './range-decoration-button'
+import {SlashCommandPickerPlugin} from './slash-command-picker'
 import {PortableTextToolbar} from './toolbar/portable-text-toolbar'
 
 const editorStyle = tv({
@@ -167,6 +171,10 @@ export function Editor(props: {
               </PortableTextToolbar>
             ) : null}
             {featureFlags.emojiPickerPlugin ? <EmojiPickerPlugin /> : null}
+            {featureFlags.mentionPickerPlugin ? <MentionPickerPlugin /> : null}
+            {featureFlags.slashCommandPlugin ? (
+              <SlashCommandPickerPlugin />
+            ) : null}
             {featureFlags.codeEditorPlugin ? <CodeEditorPlugin /> : null}
             {featureFlags.linkPlugin ? <LinkPlugin /> : null}
             {featureFlags.imageDeserializerPlugin ? (
@@ -402,6 +410,18 @@ const stockTickerStyle = tv({
   },
 })
 
+const mentionStyle = tv({
+  base: 'inline-flex items-center gap-0.5 bg-blue-100 text-blue-800 rounded px-1 text-sm',
+  variants: {
+    selected: {
+      true: 'ring-2 ring-blue-300',
+    },
+    focused: {
+      true: 'bg-blue-200',
+    },
+  },
+})
+
 const inlineImageStyle = tv({
   base: 'max-w-35 grid grid-cols-[auto_1fr] items-start gap-1 border-2 border-gray-300 rounded text-sm',
   variants: {
@@ -427,6 +447,22 @@ const renderChild: RenderChildFunction = (props) => {
       >
         <ActivityIcon className="size-3 shrink-0" />
         {stockTicker.value.symbol}
+      </span>
+    )
+  }
+
+  const mention = MentionSchema.safeParse(props).data
+
+  if (mention) {
+    return (
+      <span
+        className={mentionStyle({
+          selected: props.selected,
+          focused: props.focused,
+        })}
+      >
+        <AtSignIcon className="size-3" />
+        {mention.value.username}
       </span>
     )
   }

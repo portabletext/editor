@@ -198,6 +198,9 @@ importers:
       '@portabletext/plugin-one-line':
         specifier: workspace:*
         version: link:../../packages/plugin-one-line
+      '@portabletext/plugin-typeahead-picker':
+        specifier: workspace:*
+        version: link:../../packages/plugin-typeahead-picker
       '@portabletext/plugin-typography':
         specifier: workspace:*
         version: link:../../packages/plugin-typography
