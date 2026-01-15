@@ -167,7 +167,7 @@ export const mutationMachine = setup({
         () => {
           sendBack({type: 'emit changes'})
         },
-        __TEST__ ? 250 : 1000,
+        typeof __TEST__ !== 'undefined' && __TEST__ ? 250 : 1000,
       )
 
       return () => {
