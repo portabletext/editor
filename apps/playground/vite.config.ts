@@ -49,6 +49,10 @@ export default defineConfig({
         __dirname,
         '../../packages/plugin-one-line/src',
       ),
+      '@portabletext/plugin-typeahead-picker': path.resolve(
+        __dirname,
+        '../../packages/plugin-typeahead-picker/src',
+      ),
       '@portabletext/plugin-typography': path.resolve(
         __dirname,
         '../../packages/plugin-typography/src',

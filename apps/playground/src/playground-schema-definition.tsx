@@ -116,6 +116,15 @@ export const playgroundSchemaDefinition = defineSchema({
         {name: 'alt', title: 'Alt text', type: 'string'},
       ],
     },
+    {
+      title: 'Mention',
+      name: 'mention',
+      fields: [
+        {name: 'userId', title: 'User ID', type: 'string'},
+        {name: 'name', title: 'Name', type: 'string'},
+        {name: 'username', title: 'Username', type: 'string'},
+      ],
+    },
   ],
 })
 
@@ -163,5 +172,16 @@ export const StockTickerSchema = z.object({
   }),
   value: z.object({
     symbol: z.string(),
+  }),
+})
+
+export const MentionSchema = z.object({
+  schemaType: z.object({
+    name: z.literal('mention'),
+  }),
+  value: z.object({
+    userId: z.string(),
+    name: z.string(),
+    username: z.string(),
   }),
 })

@@ -118,6 +118,32 @@ export function DebugMenu(props: {
       </Toolbar>
       <Toolbar>
         <Switch
+          isSelected={featureFlags.mentionPickerPlugin}
+          onChange={() => {
+            props.editorRef.send({
+              type: 'toggle feature flag',
+              flag: 'mentionPickerPlugin',
+            })
+          }}
+        >
+          Mention picker plugin
+        </Switch>
+      </Toolbar>
+      <Toolbar>
+        <Switch
+          isSelected={featureFlags.slashCommandPlugin}
+          onChange={() => {
+            props.editorRef.send({
+              type: 'toggle feature flag',
+              flag: 'slashCommandPlugin',
+            })
+          }}
+        >
+          Slash command picker plugin
+        </Switch>
+      </Toolbar>
+      <Toolbar>
+        <Switch
           isSelected={featureFlags.codeEditorPlugin}
           onChange={() => {
             props.editorRef.send({

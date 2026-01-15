@@ -14,6 +14,7 @@
     "build:playground": "turbo build --filter=playground...",
     "build:plugin-emoji-picker": "turbo build --filter=@portabletext/plugin-emoji-picker...",
     "build:plugin-input-rule": "turbo build --filter=@portabletext/plugin-input-rule...",
+    "build:plugin-typeahead-picker": "turbo build --filter=@portabletext/plugin-typeahead-picker...",
     "build:sanity-bridge": "turbo build --filter=@portabletext/sanity-bridge...",
     "build:schema": "turbo build --filter=@portabletext/schema...",
     "build:toolbar": "turbo build --filter=@portabletext/toolbar...",
