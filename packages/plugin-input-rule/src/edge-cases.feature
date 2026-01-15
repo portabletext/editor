@@ -219,3 +219,12 @@ Feature: Edge Cases
     Given the text ""
     When "1*2*3" is inserted
     Then the text is "1×2×3"
+
+  Scenario: Backspace after typing following input rule should delete character
+    Given the text ""
+    When "->" is typed
+    Then the text is "→"
+    When "foo" is typed
+    Then the text is "→foo"
+    When "{Backspace}" is pressed
+    Then the text is "→fo"

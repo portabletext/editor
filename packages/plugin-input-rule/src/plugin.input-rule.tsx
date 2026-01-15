@@ -310,32 +310,22 @@ const selectionListenerCallback: CallbackLogicFunction<
   InputRuleMachineEvent,
   {editor: Editor}
 > = ({sendBack, input}) => {
-  const unregister = input.editor.registerBehavior({
-    behavior: defineBehavior({
-      on: 'select',
-      guard: ({snapshot, event}) => {
-        const blockOffsets = getBlockOffsets({
-          ...snapshot,
-          context: {
-            ...snapshot.context,
-            selection: event.at,
-          },
-        })
-
-        return {blockOffsets}
+  // Listen for the emitted 'selection' event which fires after ANY cursor
+  // movement (typing, clicking, pasting, etc.) - not just explicit 'select'
+  // behavior events.
+  const subscription = input.editor.on('selection', (event) => {
+    const blockOffsets = getBlockOffsets({
+      ...input.editor.getSnapshot(),
+      context: {
+        ...input.editor.getSnapshot().context,
+        selection: event.selection,
       },
-      actions: [
-        ({event}, {blockOffsets}) => [
-          effect(() => {
-            sendBack({type: 'selection changed', blockOffsets})
-          }),
-          forward(event),
-        ],
-      ],
-    }),
+    })
+
+    sendBack({type: 'selection changed', blockOffsets})
   })
 
-  return unregister
+  return () => subscription.unsubscribe()
 }
 
 const inputRuleSetup = setup({
