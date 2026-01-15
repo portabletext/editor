@@ -17,6 +17,7 @@
     "test:unit:watch": "vitest"
   },
   "dependencies": {
+    "@floating-ui/react-dom": "^2.1.6",
     "@portabletext/block-tools": "workspace:*",
     "@portabletext/editor": "workspace:*",
     "@portabletext/keyboard-shortcuts": "workspace:*",
@@ -29,6 +30,7 @@
     "@portabletext/toolbar": "workspace:*",
     "@xstate/react": "^6.0.0",
     "emojilib": "^4.0.2",
+    "fuse.js": "^7.1.0",
     "lucide-react": "^0.536.0",
     "react": "^19.2.3",
     "react-aria-components": "^1.11.0",
