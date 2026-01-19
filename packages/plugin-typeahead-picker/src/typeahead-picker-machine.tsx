@@ -501,6 +501,15 @@ function createInputRules<TMatch extends object>(
           return false
         }
 
+        const textAfterInsertion = event.textBefore + event.textInserted
+        const textAfterMatch = textAfterInsertion.slice(
+          lastMatch.targetOffsets.focus.offset,
+        )
+
+        if (textAfterMatch.length > 0) {
+          return false
+        }
+
         return {
           ...triggerState,
           lastMatch,
