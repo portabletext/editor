@@ -70,6 +70,8 @@ const emojis: Record<string, Array<string>> = {
   '⁉️': ['!?'],
   '‼️': ['!!'],
   '😊': [':)'],
+  '🐕': ['dog'],
+  '🐩': ['dog'],
 }
 
 const matchEmojis = createMatchEmojis({emojis})

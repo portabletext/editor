@@ -12,6 +12,13 @@ Feature: Emoji Picker
       | ":jo"        | "y:"          | "😂"       |
       | ":joy"       | ":"           | "😂"       |
 
+  Scenario: Picking direct hit with multiple exact matches
+    When the editor is focused
+    And ":dog" is typed
+    Then the matches are "🐕,🐩"
+    When ":" is typed
+    Then the text is "🐕"
+
   Scenario Outline: Is only triggered when an initial colon is typed
     Given the text <text>
     When the editor is focused
