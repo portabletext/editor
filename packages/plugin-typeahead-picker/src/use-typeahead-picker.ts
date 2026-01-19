@@ -63,7 +63,7 @@ export function useTypeaheadPicker<TMatch extends object>(
       matches: (state: TypeaheadPickerState) => actorSnapshot.matches(state),
       context: {
         keyword: actorSnapshot.context.keyword,
-        matches: actorSnapshot.context.matches as Array<TMatch>,
+        matches: actorSnapshot.context.matches as ReadonlyArray<TMatch>,
         selectedIndex: actorSnapshot.context.selectedIndex,
         error: actorSnapshot.context.error,
       },
