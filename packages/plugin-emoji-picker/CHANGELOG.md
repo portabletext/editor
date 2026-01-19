@@ -1,5 +1,15 @@
 # @portabletext/plugin-emoji-picker
 
+## 4.0.15
+
+### Patch Changes
+
+- [#2113](https://github.com/portabletext/editor/pull/2113) [`5fc5c8a`](https://github.com/portabletext/editor/commit/5fc5c8a3ef2460f1d8ec1d05e561ec3d0abd955c) Thanks [@christianhg](https://github.com/christianhg)! - fix: use `isEqualPaths` for path comparison
+
+- Updated dependencies [[`dd5e621`](https://github.com/portabletext/editor/commit/dd5e621856680b6eacb36903200413e2e27b57e3), [`ff20d55`](https://github.com/portabletext/editor/commit/ff20d55c80a913769f620a0ae0537e934a0b3219), [`cbfca02`](https://github.com/portabletext/editor/commit/cbfca02465e2936aad57ebb8c331c58ea44c33f7)]:
+  - @portabletext/editor@4.3.0
+  - @portabletext/plugin-input-rule@2.0.15
+
 ## 4.0.14
 
 ### Patch Changes
