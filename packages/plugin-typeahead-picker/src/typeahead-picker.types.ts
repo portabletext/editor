@@ -53,7 +53,7 @@ export type AutoCompleteMatch = {
  */
 export type GetMatches<TMatch extends object> = (context: {
   keyword: string
-}) => Array<TMatch> | Promise<Array<TMatch>>
+}) => ReadonlyArray<TMatch> | Promise<ReadonlyArray<TMatch>>
 
 /**
  * Event passed to typeahead select action sets.
@@ -233,7 +233,7 @@ export type TypeaheadPickerContext<TMatch> = {
   /** The extracted keyword from the trigger pattern (e.g., `joy` from `:joy`) */
   keyword: string
   /** The current list of matches returned by `getMatches` */
-  matches: Array<TMatch>
+  matches: ReadonlyArray<TMatch>
   /** Index of the currently selected match (for keyboard navigation and highlighting) */
   selectedIndex: number
   /** Error from `getMatches` if it threw, otherwise `undefined` */

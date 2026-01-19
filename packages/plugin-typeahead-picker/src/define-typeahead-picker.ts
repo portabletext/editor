@@ -20,28 +20,28 @@ type SyncConfigWithoutAutoComplete<TMatch extends object> =
   BaseConfigWithoutAutoComplete<TMatch> & {
     mode?: 'sync'
     debounceMs?: number
-    getMatches: (context: {keyword: string}) => Array<TMatch>
+    getMatches: (context: {keyword: string}) => ReadonlyArray<TMatch>
   }
 
 type SyncConfigWithAutoComplete<TMatch extends AutoCompleteMatch> =
   BaseConfigWithAutoComplete<TMatch> & {
     mode?: 'sync'
     debounceMs?: number
-    getMatches: (context: {keyword: string}) => Array<TMatch>
+    getMatches: (context: {keyword: string}) => ReadonlyArray<TMatch>
   }
 
 type AsyncConfigWithoutAutoComplete<TMatch extends object> =
   BaseConfigWithoutAutoComplete<TMatch> & {
     mode: 'async'
     debounceMs?: number
-    getMatches: (context: {keyword: string}) => Promise<Array<TMatch>>
+    getMatches: (context: {keyword: string}) => Promise<ReadonlyArray<TMatch>>
   }
 
 type AsyncConfigWithAutoComplete<TMatch extends AutoCompleteMatch> =
   BaseConfigWithAutoComplete<TMatch> & {
     mode: 'async'
     debounceMs?: number
-    getMatches: (context: {keyword: string}) => Promise<Array<TMatch>>
+    getMatches: (context: {keyword: string}) => Promise<ReadonlyArray<TMatch>>
   }
 
 /**
