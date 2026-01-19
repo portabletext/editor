@@ -1,5 +1,12 @@
 # Changelog
 
+## 4.0.15
+
+### Patch Changes
+
+- Updated dependencies [[`dd5e621`](https://github.com/portabletext/editor/commit/dd5e621856680b6eacb36903200413e2e27b57e3), [`ff20d55`](https://github.com/portabletext/editor/commit/ff20d55c80a913769f620a0ae0537e934a0b3219)]:
+  - @portabletext/editor@4.3.0
+
 ## 4.0.14
 
 ### Patch Changes

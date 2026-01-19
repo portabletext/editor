@@ -1,5 +1,13 @@
 # Changelog
 
+## 4.3.0
+
+### Minor Changes
+
+- [#2103](https://github.com/portabletext/editor/pull/2103) [`dd5e621`](https://github.com/portabletext/editor/commit/dd5e621856680b6eacb36903200413e2e27b57e3) Thanks [@christianhg](https://github.com/christianhg)! - feat(`annotation.*`): support `at` property
+
+- [#2113](https://github.com/portabletext/editor/pull/2113) [`ff20d55`](https://github.com/portabletext/editor/commit/ff20d55c80a913769f620a0ae0537e934a0b3219) Thanks [@christianhg](https://github.com/christianhg)! - feat(utils): export `isEqualPaths`
+
 ## 4.2.4
 
 ### Patch Changes
