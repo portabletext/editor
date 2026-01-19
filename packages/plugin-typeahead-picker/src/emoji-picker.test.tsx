@@ -72,6 +72,7 @@ const emojis: Record<string, Array<string>> = {
   '‼️': ['!!'],
   '😊': [':)'],
   '🐕': ['dog'],
+  '🐩': ['dog'],
 }
 
 export type EmojiMatch =

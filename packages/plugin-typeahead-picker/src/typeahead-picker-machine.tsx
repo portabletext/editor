@@ -1147,7 +1147,7 @@ export function createTypeaheadPickerMachine<TMatch extends object>() {
         }
 
         const match = params.exact
-          ? getExactMatch(context.matches)
+          ? getFirstExactMatch(context.matches)
           : context.matches[context.selectedIndex]
 
         if (!match) {
@@ -1197,7 +1197,7 @@ export function createTypeaheadPickerMachine<TMatch extends object>() {
         ) {
           return false
         }
-        return hasExactlyOneExactMatch(context.matches)
+        return hasAtLeastOneExactMatch(context.matches)
       },
       'has matches': ({context}) => context.matches.length > 0,
       'no matches': ({context}) => context.matches.length === 0,
@@ -1256,7 +1256,7 @@ export function createTypeaheadPickerMachine<TMatch extends object>() {
             onDone: [
               {
                 guard: ({event}) =>
-                  hasExactlyOneExactMatch(event.output.matches),
+                  hasAtLeastOneExactMatch(event.output.matches),
                 target: 'idle',
                 actions: [
                   assign({matches: ({event}) => event.output.matches}),
@@ -1519,29 +1519,25 @@ export function createTypeaheadPickerMachine<TMatch extends object>() {
 }
 
 /**
- * Check if matches contain exactly one exact match.
+ * Check if matches contain at least one exact match.
  */
-function hasExactlyOneExactMatch<TMatch extends object>(
+function hasAtLeastOneExactMatch<TMatch extends object>(
   matches: ReadonlyArray<TMatch>,
 ): boolean {
-  return (
-    matches.filter(
-      (match) =>
-        (match as unknown as AutoCompleteMatch | undefined)?.type === 'exact',
-    ).length === 1
+  return matches.some(
+    (match) =>
+      (match as unknown as AutoCompleteMatch | undefined)?.type === 'exact',
   )
 }
 
 /**
- * Get the single exact match from matches, if there is exactly one.
+ * Get the first exact match from matches.
  */
-function getExactMatch<TMatch extends object>(
+function getFirstExactMatch<TMatch extends object>(
   matches: ReadonlyArray<TMatch>,
 ): TMatch | undefined {
-  const exactMatches = matches.filter(
+  return matches.find(
     (match) =>
       (match as unknown as AutoCompleteMatch | undefined)?.type === 'exact',
   )
-
-  return exactMatches.length === 1 ? exactMatches[0] : undefined
 }

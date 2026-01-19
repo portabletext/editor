@@ -217,7 +217,7 @@ describe('autoCompleteWith edge cases', () => {
     })
   })
 
-  test('does not auto-complete with multiple exact matches', async () => {
+  test('auto-completes with first exact match when multiple exact matches exist', async () => {
     const picker = createPicker({
       pattern: /:(\w*)/,
       autoCompleteWith: ':',
@@ -237,7 +237,8 @@ describe('autoCompleteWith edge cases', () => {
     await userEvent.type(locator, ':test:')
 
     await vi.waitFor(() => {
-      expect(stateLocator.element().textContent).toEqual('active')
+      expect(stateLocator.element().textContent).toEqual('idle')
+      expect(locator.element().textContent).toContain('test1')
     })
   })
 
