@@ -39,6 +39,15 @@ Feature: Emoji Picker
     Then the text is "foo:🐕"
     And the keyword is ""
 
+  Scenario: Toggling trigger, deleting it and toggling it again
+    When the editor is focused
+    And ":d" is typed
+    And "{Backspace}{Backspace}" is pressed
+    And ":d" is typed
+    Then the text is ":d"
+    And the keyword is "d"
+    And the matches are "🐕,🐩"
+
   Scenario Outline: Is only triggered when an initial colon is typed
     Given the text <text>
     When the editor is focused
