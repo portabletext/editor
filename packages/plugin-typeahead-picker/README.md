@@ -47,7 +47,7 @@ const emojiPicker = defineTypeaheadPicker<EmojiMatch>({
   ],
 })
 
-function EmojiPicker() {
+function EmojiPickerPlugin() {
   // Activate the picker and get its current state
   const picker = useTypeaheadPicker(emojiPicker)
 
@@ -85,7 +85,7 @@ function MyEditor() {
   return (
     <EditorProvider /* ...config */>
       <PortableTextEditable />
-      <EmojiPicker />
+      <EmojiPickerPlugin />
     </EditorProvider>
   )
 }
@@ -298,7 +298,7 @@ When users type quickly, earlier slow requests may complete after later fast req
 If `getMatches` throws or rejects, the error is captured in `snapshot.context.error`. The picker transitions to `'no matches'` state and continues to function.
 
 ```tsx
-function EmojiPicker() {
+function EmojiPickerPlugin() {
   const picker = useTypeaheadPicker(emojiPicker)
   const {error} = picker.snapshot.context
 
