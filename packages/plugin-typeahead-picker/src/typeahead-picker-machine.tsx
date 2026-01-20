@@ -37,7 +37,7 @@ import {
   type AnyEventObject,
   type CallbackLogicFunction,
 } from 'xstate'
-import {extractKeywordFromPattern} from './extract-keyword'
+import {extractKeyword} from './extract-keyword'
 import type {
   AutoCompleteMatch,
   TypeaheadPickerDefinition,
@@ -48,28 +48,37 @@ function escapeRegExp(str: string): string {
 }
 
 /**
- * Normalize a RegExp by stripping user-provided flags.
- *
- * The input rule system always uses 'gd' flags internally, ignoring any
- * user-provided flags. We normalize patterns to match this behavior and
- * ensure consistency across all pattern usage in the picker.
+ * Build the trigger pattern from the definition.
  */
-function normalizePattern(pattern: RegExp): RegExp {
-  return new RegExp(pattern.source)
+function buildTriggerPattern<TMatch extends object>(
+  definition: TypeaheadPickerDefinition<TMatch>,
+): RegExp {
+  return new RegExp(definition.trigger.source)
 }
 
 /**
- * Build the complete pattern by appending autoCompleteWith to the base pattern.
+ * Build the partial pattern (trigger + keyword) from the definition.
+ */
+function buildPartialPattern<TMatch extends object>(
+  definition: TypeaheadPickerDefinition<TMatch>,
+): RegExp {
+  return new RegExp(definition.trigger.source + definition.keyword.source)
+}
+
+/**
+ * Build the complete pattern (trigger + keyword + delimiter) from the definition.
  */
 function buildCompletePattern<TMatch extends object>(
   definition: TypeaheadPickerDefinition<TMatch>,
 ): RegExp | undefined {
-  if (!definition.autoCompleteWith) {
+  if (!definition.delimiter) {
     return undefined
   }
 
-  const autoCompleteWith = escapeRegExp(definition.autoCompleteWith)
-  return new RegExp(`${definition.pattern.source}${autoCompleteWith}`)
+  const escapedDelimiter = escapeRegExp(definition.delimiter)
+  return new RegExp(
+    definition.trigger.source + definition.keyword.source + escapedDelimiter,
+  )
 }
 
 const arrowUpShortcut = createKeyboardShortcut({
@@ -304,6 +313,7 @@ function createKeywordFoundEvent(payload: {
 type TypeaheadPickerMachineContext<TMatch extends object> = {
   editor: Editor
   definition: TypeaheadPickerDefinition<TMatch>
+  triggerPattern: RegExp
   partialPattern: RegExp
   completePattern: RegExp | undefined
   matches: ReadonlyArray<TMatch>
@@ -360,29 +370,54 @@ function createInputRules<TMatch extends object>(
 ) {
   const rules: Array<ReturnType<typeof defineInputRule<TriggerPayload>>> = []
 
-  const partialPattern = definition.pattern
+  const triggerPattern = buildTriggerPattern(definition)
+  const partialPattern = buildPartialPattern(definition)
   const completePattern = buildCompletePattern(definition)
 
   if (completePattern) {
-    const completeTriggerRule = defineInputRule<TriggerPayload>({
+    const completeRule = defineInputRule<TriggerPayload>({
       on: completePattern,
       guard: ({snapshot, event}) => {
         const lastMatch = event.matches.at(-1)
 
-        if (!lastMatch) {
+        if (lastMatch === undefined) {
           return false
         }
 
-        // If the match starts before the insertion point, check if the inserted
-        // text itself matches the pattern (same fix as partial trigger rule).
-        const matchStartsBeforeInsertion =
-          lastMatch.targetOffsets.anchor.offset < event.textBefore.length
-
-        if (matchStartsBeforeInsertion) {
+        if (lastMatch.targetOffsets.anchor.offset < event.textBefore.length) {
+          // Match starts before insertion. Check if the inserted text itself
+          // matches the complete pattern (e.g., inserting `:dog:` after `foo:`).
           const insertedMatch = event.textInserted.match(completePattern)
 
-          if (!insertedMatch || insertedMatch.index !== 0) {
+          if (insertedMatch === null || insertedMatch.index !== 0) {
             return false
+          }
+
+          const triggerState = getTriggerState(snapshot)
+
+          if (!triggerState) {
+            return false
+          }
+
+          return {
+            ...triggerState,
+            lastMatch: {
+              ...lastMatch,
+              text: event.textInserted,
+              targetOffsets: {
+                ...lastMatch.targetOffsets,
+                anchor: {
+                  ...lastMatch.targetOffsets.anchor,
+                  offset: event.textBefore.length,
+                },
+              },
+            },
+            extractedKeyword: extractKeyword(
+              event.textInserted,
+              triggerPattern,
+              definition.delimiter,
+              completePattern,
+            ),
           }
         }
 
@@ -392,39 +427,14 @@ function createInputRules<TMatch extends object>(
           return false
         }
 
-        const textAfterInsertion = event.textBefore + event.textInserted
-        const matchFocusOffset = matchStartsBeforeInsertion
-          ? event.textBefore.length + event.textInserted.length
-          : lastMatch.targetOffsets.focus.offset
-        const textAfterMatch = textAfterInsertion.slice(matchFocusOffset)
-
-        if (textAfterMatch.length > 0) {
-          return false
-        }
-
-        const matchText = matchStartsBeforeInsertion
-          ? event.textInserted
-          : lastMatch.text
-
         return {
           ...triggerState,
-          lastMatch: matchStartsBeforeInsertion
-            ? {
-                ...lastMatch,
-                text: event.textInserted,
-                targetOffsets: {
-                  ...lastMatch.targetOffsets,
-                  anchor: {
-                    ...lastMatch.targetOffsets.anchor,
-                    offset: event.textBefore.length,
-                  },
-                },
-              }
-            : lastMatch,
-          extractedKeyword: extractKeywordFromPattern(
-            matchText,
-            partialPattern,
-            definition.autoCompleteWith,
+          lastMatch,
+          extractedKeyword: extractKeyword(
+            lastMatch.text,
+            triggerPattern,
+            definition.delimiter,
+            completePattern,
           ),
         }
       },
@@ -439,30 +449,64 @@ function createInputRules<TMatch extends object>(
       ],
     })
 
-    rules.push(completeTriggerRule)
+    rules.push(completeRule)
   }
 
-  const partialTriggerRule = defineInputRule<TriggerPayload>({
+  const partialRule = defineInputRule<TriggerPayload>({
     on: partialPattern,
     guard: ({snapshot, event}) => {
       const lastMatch = event.matches.at(-1)
 
-      if (!lastMatch) {
+      if (lastMatch === undefined) {
         return false
       }
 
-      // If the match starts before the insertion point, check if the inserted
-      // text itself matches the pattern. This handles the case where user types
-      // a trigger character after an existing trigger character (e.g., typing
-      // ":" after "foo:" to get "foo::").
-      const matchStartsBeforeInsertion =
-        lastMatch.targetOffsets.anchor.offset < event.textBefore.length
-
-      if (matchStartsBeforeInsertion) {
+      if (lastMatch.targetOffsets.anchor.offset < event.textBefore.length) {
+        // Match starts before insertion. Check if the inserted text itself
+        // matches the partial pattern (e.g., inserting `:dog` after `foo:`).
         const insertedMatch = event.textInserted.match(partialPattern)
 
-        if (!insertedMatch || insertedMatch.index !== 0) {
+        if (insertedMatch === null || insertedMatch.index !== 0) {
           return false
+        }
+
+        // Don't match if this is actually a complete pattern
+        if (completePattern) {
+          const completeMatch = event.textInserted.match(completePattern)
+
+          if (
+            completeMatch !== null &&
+            completeMatch.index === 0 &&
+            completeMatch[0] === event.textInserted
+          ) {
+            return false
+          }
+        }
+
+        const triggerState = getTriggerState(snapshot)
+
+        if (!triggerState) {
+          return false
+        }
+
+        return {
+          ...triggerState,
+          lastMatch: {
+            ...lastMatch,
+            text: event.textInserted,
+            targetOffsets: {
+              ...lastMatch.targetOffsets,
+              anchor: {
+                ...lastMatch.targetOffsets.anchor,
+                offset: event.textBefore.length,
+              },
+            },
+          },
+          extractedKeyword: extractKeyword(
+            event.textInserted,
+            triggerPattern,
+            definition.delimiter,
+          ),
         }
       }
 
@@ -472,43 +516,13 @@ function createInputRules<TMatch extends object>(
         return false
       }
 
-      if (completePattern) {
-        const fullText = triggerState.focusSpan.node.text
-        const matchOffset = matchStartsBeforeInsertion
-          ? event.textBefore.length
-          : lastMatch.targetOffsets.anchor.offset
-        const textFromMatchStart = fullText.slice(matchOffset)
-        const completeMatch = textFromMatchStart.match(completePattern)
-
-        if (completeMatch && completeMatch.index === 0) {
-          return false
-        }
-      }
-
-      // If match started before insertion, use inserted text for keyword extraction
-      const matchText = matchStartsBeforeInsertion
-        ? event.textInserted
-        : lastMatch.text
-
       return {
         ...triggerState,
-        lastMatch: matchStartsBeforeInsertion
-          ? {
-              ...lastMatch,
-              text: event.textInserted,
-              targetOffsets: {
-                ...lastMatch.targetOffsets,
-                anchor: {
-                  ...lastMatch.targetOffsets.anchor,
-                  offset: event.textBefore.length,
-                },
-              },
-            }
-          : lastMatch,
-        extractedKeyword: extractKeywordFromPattern(
-          matchText,
-          partialPattern,
-          definition.autoCompleteWith,
+        lastMatch,
+        extractedKeyword: extractKeyword(
+          lastMatch.text,
+          triggerPattern,
+          definition.delimiter,
         ),
       }
     },
@@ -523,7 +537,45 @@ function createInputRules<TMatch extends object>(
     ],
   })
 
-  rules.push(partialTriggerRule)
+  rules.push(partialRule)
+
+  const triggerRule = defineInputRule<TriggerPayload>({
+    on: triggerPattern,
+    guard: ({snapshot, event}) => {
+      const lastMatch = event.matches.at(-1)
+
+      if (lastMatch === undefined) {
+        return false
+      }
+
+      if (event.textInserted !== lastMatch.text) {
+        return false
+      }
+
+      const triggerState = getTriggerState(snapshot)
+
+      if (!triggerState) {
+        return false
+      }
+
+      return {
+        ...triggerState,
+        lastMatch,
+        extractedKeyword: '',
+      }
+    },
+    actions: [
+      ({snapshot}, payload) =>
+        createTriggerActions({
+          snapshot,
+          payload,
+          keywordState: 'partial',
+          pickerId: definition._id,
+        }),
+    ],
+  })
+
+  rules.push(triggerRule)
 
   return rules
 }
@@ -1054,10 +1106,11 @@ export function createTypeaheadPickerMachine<TMatch extends object>() {
           return {}
         }
 
-        const keyword = extractKeywordFromPattern(
+        const keyword = extractKeyword(
           context.patternText,
-          context.definition.pattern,
-          context.definition.autoCompleteWith,
+          context.triggerPattern,
+          context.definition.delimiter,
+          context.completePattern,
         )
 
         if (keyword === context.keyword) {
@@ -1179,6 +1232,17 @@ export function createTypeaheadPickerMachine<TMatch extends object>() {
           return false
         }
 
+        // Check if trigger pattern matches entire text (just the trigger, no keyword yet)
+        const triggerMatch = context.patternText.match(context.triggerPattern)
+
+        if (
+          triggerMatch &&
+          triggerMatch.index === 0 &&
+          triggerMatch[0] === context.patternText
+        ) {
+          return false
+        }
+
         // Check partial pattern matches entire text
         const partialMatch = context.patternText.match(context.partialPattern)
 
@@ -1241,7 +1305,8 @@ export function createTypeaheadPickerMachine<TMatch extends object>() {
     context: ({input}) => ({
       editor: input.editor,
       definition: input.definition,
-      partialPattern: normalizePattern(input.definition.pattern),
+      triggerPattern: buildTriggerPattern(input.definition),
+      partialPattern: buildPartialPattern(input.definition),
       completePattern: buildCompletePattern(input.definition),
       matches: [],
       selectedIndex: 0,

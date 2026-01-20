@@ -4,41 +4,43 @@ import type {
   TypeaheadSelectActionSet,
 } from './typeahead-picker.types'
 
-type BaseConfigWithoutAutoComplete<TMatch extends object> = {
-  pattern: RegExp
-  autoCompleteWith?: undefined
+type BaseConfigWithoutDelimiter<TMatch extends object> = {
+  trigger: RegExp
+  keyword: RegExp
+  delimiter?: undefined
   actions: Array<TypeaheadSelectActionSet<TMatch>>
 }
 
-type BaseConfigWithAutoComplete<TMatch extends AutoCompleteMatch> = {
-  pattern: RegExp
-  autoCompleteWith: string
+type BaseConfigWithDelimiter<TMatch extends AutoCompleteMatch> = {
+  trigger: RegExp
+  keyword: RegExp
+  delimiter: string
   actions: Array<TypeaheadSelectActionSet<TMatch>>
 }
 
-type SyncConfigWithoutAutoComplete<TMatch extends object> =
-  BaseConfigWithoutAutoComplete<TMatch> & {
+type SyncConfigWithoutDelimiter<TMatch extends object> =
+  BaseConfigWithoutDelimiter<TMatch> & {
     mode?: 'sync'
     debounceMs?: number
     getMatches: (context: {keyword: string}) => ReadonlyArray<TMatch>
   }
 
-type SyncConfigWithAutoComplete<TMatch extends AutoCompleteMatch> =
-  BaseConfigWithAutoComplete<TMatch> & {
+type SyncConfigWithDelimiter<TMatch extends AutoCompleteMatch> =
+  BaseConfigWithDelimiter<TMatch> & {
     mode?: 'sync'
     debounceMs?: number
     getMatches: (context: {keyword: string}) => ReadonlyArray<TMatch>
   }
 
-type AsyncConfigWithoutAutoComplete<TMatch extends object> =
-  BaseConfigWithoutAutoComplete<TMatch> & {
+type AsyncConfigWithoutDelimiter<TMatch extends object> =
+  BaseConfigWithoutDelimiter<TMatch> & {
     mode: 'async'
     debounceMs?: number
     getMatches: (context: {keyword: string}) => Promise<ReadonlyArray<TMatch>>
   }
 
-type AsyncConfigWithAutoComplete<TMatch extends AutoCompleteMatch> =
-  BaseConfigWithAutoComplete<TMatch> & {
+type AsyncConfigWithDelimiter<TMatch extends AutoCompleteMatch> =
+  BaseConfigWithDelimiter<TMatch> & {
     mode: 'async'
     debounceMs?: number
     getMatches: (context: {keyword: string}) => Promise<ReadonlyArray<TMatch>>
@@ -50,13 +52,11 @@ type AsyncConfigWithAutoComplete<TMatch extends AutoCompleteMatch> =
  * @example Emoji picker with auto-complete
  * ```ts
  * const emojiPicker = defineTypeaheadPicker({
- *   pattern: /:(\S*)/,
- *   autoCompleteWith: ':',
+ *   trigger: /:/,
+ *   keyword: /[\S]+/,
+ *   delimiter: ':',
  *   getMatches: ({keyword}) => searchEmojis(keyword),
- *   actions: [({event}) => [
- *     raise({type: 'delete', at: event.patternSelection}),
- *     raise({type: 'insert.text', text: event.match.emoji}),
- *   ]],
+ *   actions: [insertEmojiAction],
  * })
  * ```
  *
@@ -64,52 +64,48 @@ type AsyncConfigWithAutoComplete<TMatch extends AutoCompleteMatch> =
  * ```ts
  * const mentionPicker = defineTypeaheadPicker({
  *   mode: 'async',
- *   pattern: /@(\w*)/,
+ *   trigger: /@/,
+ *   keyword: /[\w]+/,
  *   debounceMs: 200,
  *   getMatches: async ({keyword}) => api.searchUsers(keyword),
- *   actions: [({event}) => [
- *     raise({type: 'delete', at: event.patternSelection}),
- *     raise({type: 'insert.text', text: event.match.name}),
- *   ]],
+ *   actions: [insertMentionAction],
  * })
  * ```
  *
  * @example Slash commands at start of block
  * ```ts
  * const slashCommandPicker = defineTypeaheadPicker({
- *   pattern: /^\/(\w*)/,  // ^ anchors to start of block
+ *   trigger: /^\//,
+ *   keyword: /[\w]+/,
  *   getMatches: ({keyword}) => filterCommands(keyword),
- *   actions: [({event}) => [
- *     raise({type: 'delete', at: event.patternSelection}),
- *     raise(event.match.action),
- *   ]],
+ *   actions: [executeCommandAction],
  * })
  * ```
  *
  * @public
  */
 export function defineTypeaheadPicker<TMatch extends object>(
-  config: SyncConfigWithoutAutoComplete<TMatch>,
+  config: SyncConfigWithoutDelimiter<TMatch>,
 ): TypeaheadPickerDefinition<TMatch>
 /** @public */
 export function defineTypeaheadPicker<TMatch extends AutoCompleteMatch>(
-  config: SyncConfigWithAutoComplete<TMatch>,
+  config: SyncConfigWithDelimiter<TMatch>,
 ): TypeaheadPickerDefinition<TMatch>
 /** @public */
 export function defineTypeaheadPicker<TMatch extends object>(
-  config: AsyncConfigWithoutAutoComplete<TMatch>,
+  config: AsyncConfigWithoutDelimiter<TMatch>,
 ): TypeaheadPickerDefinition<TMatch>
 /** @public */
 export function defineTypeaheadPicker<TMatch extends AutoCompleteMatch>(
-  config: AsyncConfigWithAutoComplete<TMatch>,
+  config: AsyncConfigWithDelimiter<TMatch>,
 ): TypeaheadPickerDefinition<TMatch>
 /** @public */
 export function defineTypeaheadPicker<TMatch extends object>(
   config:
-    | SyncConfigWithoutAutoComplete<TMatch>
-    | SyncConfigWithAutoComplete<TMatch & AutoCompleteMatch>
-    | AsyncConfigWithoutAutoComplete<TMatch>
-    | AsyncConfigWithAutoComplete<TMatch & AutoCompleteMatch>,
+    | SyncConfigWithoutDelimiter<TMatch>
+    | SyncConfigWithDelimiter<TMatch & AutoCompleteMatch>
+    | AsyncConfigWithoutDelimiter<TMatch>
+    | AsyncConfigWithDelimiter<TMatch & AutoCompleteMatch>,
 ): TypeaheadPickerDefinition<TMatch> {
   return {
     ...config,

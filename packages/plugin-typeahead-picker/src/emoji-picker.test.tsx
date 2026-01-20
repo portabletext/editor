@@ -92,8 +92,9 @@ export type EmojiMatch =
     }
 
 const emojiPicker = defineTypeaheadPicker<EmojiMatch>({
-  pattern: /:(\S*)/,
-  autoCompleteWith: ':',
+  trigger: /:/,
+  keyword: /[\S]+/,
+  delimiter: ':',
   getMatches: createMatchEmojis({emojis}),
   actions: [
     ({event}) => [

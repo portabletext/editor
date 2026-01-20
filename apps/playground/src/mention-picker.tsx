@@ -118,7 +118,8 @@ async function matchUsers({
 
 const mentionPicker = defineTypeaheadPicker<MentionMatch>({
   mode: 'async',
-  pattern: /@(\w*)/,
+  trigger: /@/,
+  keyword: /\w*/,
   debounceMs: 50,
   getMatches: matchUsers,
   actions: [

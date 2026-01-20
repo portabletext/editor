@@ -113,7 +113,8 @@ type MentionMatch = {
 
 const mentionPicker = defineTypeaheadPicker<MentionMatch>({
   mode: 'async',
-  pattern: /@(\w*)/,
+  trigger: /@/,
+  keyword: /\w*/,
   getMatches: createMatchUsers({users}),
   actions: [
     ({event}) => [
@@ -205,7 +206,8 @@ describe('Error handling', () => {
 
     const failingPicker = defineTypeaheadPicker<MentionMatch>({
       mode: 'async',
-      pattern: /@(\w*)/,
+      trigger: /@/,
+      keyword: /\w*/,
       getMatches: async () => {
         await new Promise((resolve) => setTimeout(resolve, 10))
         throw testError
@@ -266,7 +268,8 @@ describe('Error handling', () => {
 
     const failingPicker = defineTypeaheadPicker<MentionMatch>({
       mode: 'async',
-      pattern: /@(\w*)/,
+      trigger: /@/,
+      keyword: /\w*/,
       getMatches: async () => {
         await new Promise((resolve) => setTimeout(resolve, 10))
         throw testError
@@ -333,7 +336,8 @@ describe('Race condition handling', () => {
 
     const racePicker = defineTypeaheadPicker<MentionMatch>({
       mode: 'async',
-      pattern: /@(\w*)/,
+      trigger: /@/,
+      keyword: /\w*/,
       getMatches: async ({keyword}) => {
         requestOrder.push(keyword)
 
@@ -416,7 +420,8 @@ describe('Debouncing', () => {
 
     const debouncedPicker = defineTypeaheadPicker<MentionMatch>({
       mode: 'async',
-      pattern: /@(\w*)/,
+      trigger: /@/,
+      keyword: /\w*/,
       debounceMs: 300,
       getMatches: async ({keyword}) => {
         callCount++

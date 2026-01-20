@@ -41,7 +41,8 @@ function matchCommands({keyword}: {keyword: string}): Array<SlashCommandMatch> {
 }
 
 const slashCommandPicker = defineTypeaheadPicker<SlashCommandMatch>({
-  pattern: /^\/(\w*)/,
+  trigger: /^\//,
+  keyword: /\w*/,
   getMatches: matchCommands,
   actions: [
     ({event}) => [
