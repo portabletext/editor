@@ -14,7 +14,7 @@ import {
   type AutoCompleteMatch,
 } from '@portabletext/plugin-typeahead-picker'
 
-// With `autoCompleteWith` configured, matches must include `type: 'exact' | 'partial'`
+// With `delimiter` configured, matches must include `type: 'exact' | 'partial'`
 // for auto-completion to work. Use `AutoCompleteMatch` as the base type.
 type EmojiMatch = AutoCompleteMatch & {
   key: string
@@ -23,13 +23,15 @@ type EmojiMatch = AutoCompleteMatch & {
 }
 
 const emojiPicker = defineTypeaheadPicker<EmojiMatch>({
-  // Pattern to match trigger + keyword. The capture group (\S*) becomes the keyword.
-  // This matches `:` followed by any non-whitespace characters.
-  pattern: /:(\S*)/,
+  // Trigger pattern - activates the picker when typed
+  trigger: /:/,
 
-  // Optional autoCompleteWith enables auto-completion.
+  // Keyword pattern - matches characters after the trigger
+  keyword: /\S*/,
+
+  // Optional delimiter enables auto-completion.
   // Typing `:joy:` will auto-insert if "joy" is an exact match.
-  autoCompleteWith: ':',
+  delimiter: ':',
 
   // Return matches for the keyword. Can be sync or async (with mode: 'async').
   getMatches: ({keyword}) => searchEmojis(keyword),
@@ -80,14 +82,14 @@ function EmojiPicker() {
 
 ## How It Works
 
-The picker activates when users type text matching the `pattern` (e.g., `:smile` or `@john`).
+The picker activates when users type the `trigger` pattern (e.g., `:` or `@`). The `keyword` pattern then matches characters typed after the trigger.
 
 - **Keyboard shortcuts are built-in**:
   - `Enter` or `Tab` inserts the selected match
   - `↑` / `↓` navigate through matches
   - `Esc` dismisses the picker
 - **Mouse interactions are opt-in**: Use `send({type: 'navigate to', index})` and `send({type: 'select'})` to enable hover and click
-- **Auto-completion**: With `autoCompleteWith` configured, typing the delimiter after an exact match auto-inserts it (e.g., `:joy:` auto-inserts the emoji)
+- **Auto-completion**: With `delimiter` configured, typing the delimiter after an exact match auto-inserts it (e.g., `:joy:` auto-inserts the emoji)
 
 ## Examples
 
@@ -95,8 +97,9 @@ The picker activates when users type text matching the `pattern` (e.g., `:smile`
 
 ```ts
 const emojiPicker = defineTypeaheadPicker<EmojiMatch>({
-  pattern: /:(\S*)/,
-  autoCompleteWith: ':',
+  trigger: /:/,
+  keyword: /\S*/,
+  delimiter: ':',
   getMatches: ({keyword}) => searchEmojis(keyword),
   actions: [
     ({event}) => [
@@ -112,11 +115,12 @@ const emojiPicker = defineTypeaheadPicker<EmojiMatch>({
 ### Mention picker (async with debounce)
 
 ```ts
-// Without `autoCompleteWith`, the `type` field is not required on matches.
+// Without `delimiter`, the `type` field is not required on matches.
 // MentionMatch can just be: { id: string; name: string }
 const mentionPicker = defineTypeaheadPicker<MentionMatch>({
   mode: 'async',
-  pattern: /@(\w*)/,
+  trigger: /@/,
+  keyword: /\w*/,
   debounceMs: 200,
   getMatches: async ({keyword}) => api.searchUsers(keyword),
   actions: [
@@ -136,9 +140,10 @@ const mentionPicker = defineTypeaheadPicker<MentionMatch>({
 ### Slash command picker (start of block only)
 
 ```ts
-// Without `autoCompleteWith`, the `type` field is not required on matches.
+// Without `delimiter`, the `type` field is not required on matches.
 const commandPicker = defineTypeaheadPicker<CommandMatch>({
-  pattern: /^\/(\w*)/, // ^ anchors to start of block
+  trigger: /^\//, // ^ anchors to start of block
+  keyword: /\w*/,
   getMatches: ({keyword}) => searchCommands(keyword),
   actions: [
     ({event}) => {
@@ -173,73 +178,52 @@ Creates a picker definition to pass to `useTypeaheadPicker`.
 
 **Config:**
 
-| Property           | Type                                   | Description                                                                                                                                                                    |
-| ------------------ | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `pattern`          | `RegExp`                               | Pattern for matching trigger + keyword. Use a capture group for the keyword (e.g., `/:(\S*)/`, `/@(\w*)/`). Can include position anchors like `^` for start-of-block triggers. |
-| `autoCompleteWith` | `string?`                              | Optional delimiter that triggers auto-completion (e.g., `:` for `:joy:`)                                                                                                       |
-| `mode`             | `'sync' \| 'async'`                    | Whether `getMatches` returns synchronously or a Promise (default: `'sync'`)                                                                                                    |
-| `debounceMs`       | `number?`                              | Delay in ms before calling `getMatches`. Useful for both async (API calls) and sync (expensive local search) modes. (default: `0`)                                             |
-| `getMatches`       | `(ctx: {keyword: string}) => TMatch[]` | Function that returns matches for the keyword                                                                                                                                  |
-| `actions`          | `Array<TypeaheadSelectActionSet>`      | Actions to execute when a match is selected                                                                                                                                    |
+| Property     | Type                                   | Description                                                                                                                             |
+| ------------ | -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `trigger`    | `RegExp`                               | Pattern that activates the picker. Can include `^` for start-of-block triggers. Must be single-character (e.g., `/:/`, `/@/`, `/^\//`). |
+| `keyword`    | `RegExp`                               | Pattern matching characters after the trigger (e.g., `/\S*/`, `/\w*/`).                                                                 |
+| `delimiter`  | `string?`                              | Optional delimiter that triggers auto-completion (e.g., `':'` for `:joy:`)                                                              |
+| `mode`       | `'sync' \| 'async'`                    | Whether `getMatches` returns synchronously or a Promise (default: `'sync'`)                                                             |
+| `debounceMs` | `number?`                              | Delay in ms before calling `getMatches`. Useful for both async (API calls) and sync (expensive local search) modes. (default: `0`)      |
+| `getMatches` | `(ctx: {keyword: string}) => TMatch[]` | Function that returns matches for the keyword                                                                                           |
+| `actions`    | `Array<TypeaheadSelectActionSet>`      | Actions to execute when a match is selected                                                                                             |
 
-**Pattern rules:**
+**Trigger pattern rules:**
 
-- If pattern has capture groups: keyword = first capture group
-- If no capture group: keyword = entire match
+- Must be a single-character trigger (e.g., `:`, `@`, `/`)
+- Multi-character triggers (e.g., `##`) are not supported
 - Position anchors (`^`) allow start-of-block constraints
-- Regex flags are ignored (the picker normalizes patterns internally)
 
 **How triggering works:**
 
-The picker activates the moment a trigger character is typed - not later when more text matches. This is the key to understanding pattern requirements:
+The picker activates the moment a trigger character is typed. After activation, the keyword is tracked via editor selection changes.
 
 ```
-User types `:` → Pattern /:(\S*)/ matches → Picker activates with keyword ""
+User types `:` → Trigger matches → Picker activates with keyword ""
 User types `j` → Keyword updates to "j" (via selection tracking)
 User types `o` → Keyword updates to "jo"
 User types `y` → Keyword updates to "joy"
 ```
 
-The pattern must match **immediately when the trigger is typed**. After activation, the keyword is tracked via editor selection changes, not by re-running the pattern.
+**Trigger compatibility summary:**
 
-**Why some patterns don't work:**
+| Trigger | Example input | Works? | Why                              |
+| ------- | ------------- | ------ | -------------------------------- |
+| `/:/`   | `:joy`        | ✅     | Single-char trigger              |
+| `/@/`   | `@john`       | ✅     | Single-char trigger              |
+| `/^\//` | `/cmd`        | ✅     | Single-char with position anchor |
+| `/##/`  | `##tag`       | ❌     | Multi-char triggers unsupported  |
 
-Multi-character triggers like `##` fail because the picker can only activate on the character you just typed:
+**delimiter requirements:**
 
-```
-User types `#` → Pattern /##(\w*)/ doesn't match yet → Nothing happens
-User types `#` → Pattern matches "##", but the first # was already there
-                 Picker only activates on newly typed triggers, not existing text
-```
+When using `delimiter`, the delimiter character must be included in the keyword's character class, otherwise typing it dismisses the picker:
 
-Same issue with patterns requiring specific characters mid-keyword like `/:(\w*)-(\w*)/`:
-
-```
-User types `:foo` → Pattern doesn't match yet (needs a `-`)
-User types `-`    → Pattern matches `:foo-`, but `:foo` was already there
-                    Picker only activates on newly typed triggers
-```
-
-**Pattern compatibility summary:**
-
-| Pattern          | Example input | Works? | Why                               |
-| ---------------- | ------------- | ------ | --------------------------------- |
-| `/:(\S*)/`       | `:joy`        | ✅     | `:` alone triggers, keyword grows |
-| `/@(\w*)/`       | `@john`       | ✅     | `@` alone triggers, keyword grows |
-| `/^\/(\w*)/`     | `/cmd`        | ✅     | `/` at block start triggers       |
-| `/##(\w*)/`      | `##tag`       | ❌     | `#` alone doesn't match pattern   |
-| `/:(\w*)-(\w*)/` | `:a-b`        | ❌     | `:` alone doesn't match pattern   |
-
-**autoCompleteWith requirements:**
-
-When using `autoCompleteWith`, the delimiter character must be included in the keyword's character class, otherwise typing it dismisses the picker:
-
-| Pattern    | autoCompleteWith | Example  | Works? | Why                                                 |
-| ---------- | ---------------- | -------- | ------ | --------------------------------------------------- |
-| `/:(\S*)/` | `:`              | `:joy:`  | ✅     | `\S` matches `:`, cursor stays in match             |
-| `/:(\w*)/` | `:`              | `:joy:`  | ✅     | Cursor at match boundary, still valid               |
-| `/#(\w*)/` | `#`              | `#tag#`  | ✅     | Cursor at match boundary, still valid               |
-| `/#(\w*)/` | `##`             | `#tag##` | ❌     | First `#` moves cursor past match, picker dismisses |
+| keyword | delimiter | Example  | Works? | Why                                                 |
+| ------- | --------- | -------- | ------ | --------------------------------------------------- |
+| `/\S*/` | `:`       | `:joy:`  | ✅     | `\S` matches `:`, cursor stays in match             |
+| `/\w*/` | `:`       | `:joy:`  | ✅     | Cursor at match boundary, still valid               |
+| `/\w*/` | `#`       | `#tag#`  | ✅     | Cursor at match boundary, still valid               |
+| `/\w*/` | `##`      | `#tag##` | ❌     | First `#` moves cursor past match, picker dismisses |
 
 ### `useTypeaheadPicker(definition)`
 
@@ -250,7 +234,7 @@ React hook that activates a picker and returns its state.
 | Property                         | Description                                                                                                  |
 | -------------------------------- | ------------------------------------------------------------------------------------------------------------ |
 | `snapshot.matches(state)`        | Check picker state: `'idle'`, `{active: 'loading'}`, `{active: 'no matches'}`, `{active: 'showing matches'}` |
-| `snapshot.context.keyword`       | The current keyword (extracted from capture group)                                                           |
+| `snapshot.context.keyword`       | The current keyword                                                                                          |
 | `snapshot.context.matches`       | Array of matches from `getMatches`                                                                           |
 | `snapshot.context.selectedIndex` | Index of the currently selected match                                                                        |
 | `send(event)`                    | Dispatch events: `{type: 'select'}`, `{type: 'dismiss'}`, `{type: 'navigate to', index}`                     |
@@ -326,7 +310,8 @@ Action functions receive more than just the event. The full payload includes acc
 
 ```tsx
 const commandPicker = defineTypeaheadPicker<CommandMatch>({
-  pattern: /^\/(\w*)/,
+  trigger: /^\//,
+  keyword: /\w*/,
   getMatches: ({keyword}) => searchCommands(keyword),
   actions: [
     ({event, snapshot}) => {
@@ -388,7 +373,8 @@ Choose debounce values based on your data source:
 ```tsx
 // Local data - no debounce needed
 const emojiPicker = defineTypeaheadPicker({
-  pattern: /:(\S*)/,
+  trigger: /:/,
+  keyword: /\S*/,
   getMatches: ({keyword}) => filterEmojis(keyword), // Fast local filter
   // ...
 })
@@ -397,7 +383,8 @@ const emojiPicker = defineTypeaheadPicker({
 const mentionPicker = defineTypeaheadPicker({
   mode: 'async',
   debounceMs: 200,
-  pattern: /@(\w*)/,
+  trigger: /@/,
+  keyword: /\w*/,
   getMatches: async ({keyword}) => api.searchUsers(keyword),
   // ...
 })
@@ -460,17 +447,17 @@ The following keyboard shortcuts are handled automatically by the picker:
 
 ### Picker doesn't activate
 
-- **Check pattern**: Ensure your regex has a capture group for the keyword: `/:(\S*)/` not `/:\S*/`
-- **Check position anchors**: `^` means start of block, not start of line. `hello /command` won't match `/^\/(\w*)/`
+- **Check trigger**: Must be a single-character trigger (e.g., `/:/`, `/@/`)
+- **Check position anchors**: `^` means start of block, not start of line. `hello /command` won't match `/^\//`
 - **Check for conflicts**: Only one picker can be active at a time
-- **Avoid multi-character triggers**: Patterns like `/##(\w*)/` don't work because the picker only activates on newly typed triggers, not existing text
+- **Avoid multi-character triggers**: Triggers like `/##/` don't work because the picker only activates on newly typed single characters
 
 ### Auto-completion doesn't work
 
-- **Check `autoCompleteWith`**: Must be set (e.g., `autoCompleteWith: ':'`)
+- **Check `delimiter`**: Must be set (e.g., `delimiter: ':'`)
 - **Check match type**: Matches must include `type: 'exact' | 'partial'`
 - **Check for exact match**: Auto-completion only triggers when exactly one match has `type: 'exact'`
-- **Check character class**: The keyword character class must match the `autoCompleteWith` character. Use `\S*` (matches any non-whitespace including `:`) rather than `\w*` (only matches word characters) when `autoCompleteWith: ':'`
+- **Check keyword pattern**: The keyword pattern must allow the delimiter character at the boundary. Use `\S*` (matches any non-whitespace) when `delimiter: ':'`
 
 ### Stale matches appear
 

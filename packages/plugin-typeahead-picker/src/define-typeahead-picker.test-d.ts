@@ -16,7 +16,8 @@ describe(defineTypeaheadPicker.name, () => {
   describe('with type parameter', () => {
     test('accepts sync getMatches when mode is omitted', () => {
       defineTypeaheadPicker<TestMatch>({
-        pattern: /:(\w*)/,
+        trigger: /:/,
+        keyword: /\w*/,
         getMatches: () => [],
         actions: [],
       })
@@ -25,7 +26,8 @@ describe(defineTypeaheadPicker.name, () => {
     test('accepts sync getMatches when mode is sync', () => {
       defineTypeaheadPicker<TestMatch>({
         mode: 'sync',
-        pattern: /:(\w*)/,
+        trigger: /:/,
+        keyword: /\w*/,
         getMatches: () => [],
         actions: [],
       })
@@ -34,7 +36,8 @@ describe(defineTypeaheadPicker.name, () => {
     test('accepts async getMatches when mode is async', () => {
       defineTypeaheadPicker<TestMatch>({
         mode: 'async',
-        pattern: /@(\w*)/,
+        trigger: /@/,
+        keyword: /\w*/,
         getMatches: async () => [],
         actions: [],
       })
@@ -43,7 +46,8 @@ describe(defineTypeaheadPicker.name, () => {
     test('rejects async getMatches when mode is omitted', () => {
       // @ts-expect-error - async function not allowed when mode is omitted (sync)
       defineTypeaheadPicker<TestMatch>({
-        pattern: /:(\w*)/,
+        trigger: /:/,
+        keyword: /\w*/,
         getMatches: async () => [],
         actions: [],
       })
@@ -53,7 +57,8 @@ describe(defineTypeaheadPicker.name, () => {
       // @ts-expect-error - async function not allowed when mode is sync
       defineTypeaheadPicker<TestMatch>({
         mode: 'sync',
-        pattern: /:(\w*)/,
+        trigger: /:/,
+        keyword: /\w*/,
         getMatches: async () => [],
         actions: [],
       })
@@ -63,7 +68,8 @@ describe(defineTypeaheadPicker.name, () => {
       // @ts-expect-error - sync function not allowed when mode is async
       defineTypeaheadPicker<TestMatch>({
         mode: 'async',
-        pattern: /@(\w*)/,
+        trigger: /@/,
+        keyword: /\w*/,
         getMatches: () => [],
         actions: [],
       })
@@ -73,7 +79,8 @@ describe(defineTypeaheadPicker.name, () => {
   describe('without type parameter', () => {
     test('accepts sync getMatches when mode is omitted', () => {
       defineTypeaheadPicker({
-        pattern: /:(\w*)/,
+        trigger: /:/,
+        keyword: /\w*/,
         getMatches: () => [],
         actions: [],
       })
@@ -81,64 +88,71 @@ describe(defineTypeaheadPicker.name, () => {
   })
 
   describe('conditional type field requirement', () => {
-    test('accepts match without type field when autoCompleteWith is not configured', () => {
+    test('accepts match without type field when delimiter is not configured', () => {
       defineTypeaheadPicker<TestMatch>({
-        pattern: /@(\w*)/,
+        trigger: /@/,
+        keyword: /\w*/,
         getMatches: () => [{key: '1', label: 'Test'}],
         actions: [],
       })
     })
 
-    test('accepts match without type field when autoCompleteWith is undefined', () => {
+    test('accepts match without type field when delimiter is undefined', () => {
       defineTypeaheadPicker<TestMatch>({
-        pattern: /@(\w*)/,
-        autoCompleteWith: undefined,
+        trigger: /@/,
+        keyword: /\w*/,
+        delimiter: undefined,
         getMatches: () => [{key: '1', label: 'Test'}],
         actions: [],
       })
     })
 
-    test('accepts match with type field when autoCompleteWith is configured', () => {
+    test('accepts match with type field when delimiter is configured', () => {
       defineTypeaheadPicker<TestAutoCompleteMatch>({
-        pattern: /:(\w*)/,
-        autoCompleteWith: ':',
+        trigger: /:/,
+        keyword: /\w*/,
+        delimiter: ':',
         getMatches: () => [{key: '1', label: 'Test', type: 'partial'}],
         actions: [],
       })
     })
 
-    test('rejects match without type field when autoCompleteWith is configured', () => {
+    test('rejects match without type field when delimiter is configured', () => {
       defineTypeaheadPicker<TestMatch>({
-        pattern: /:(\w*)/,
-        // @ts-expect-error - autoCompleteWith requires AutoCompleteMatch which has type field
-        autoCompleteWith: ':',
+        trigger: /:/,
+        keyword: /\w*/,
+        // @ts-expect-error - delimiter requires AutoCompleteMatch which has type field
+        delimiter: ':',
         getMatches: () => [{key: '1', label: 'Test'}],
         actions: [],
       })
     })
 
-    test('allows optional type field on matches without autoCompleteWith', () => {
+    test('allows optional type field on matches without delimiter', () => {
       defineTypeaheadPicker<TestAutoCompleteMatch>({
-        pattern: /@(\w*)/,
+        trigger: /@/,
+        keyword: /\w*/,
         getMatches: () => [{key: '1', label: 'Test', type: 'exact'}],
         actions: [],
       })
     })
 
-    test('accepts async match without type field when autoCompleteWith is not configured', () => {
+    test('accepts async match without type field when delimiter is not configured', () => {
       defineTypeaheadPicker<TestMatch>({
         mode: 'async',
-        pattern: /@(\w*)/,
+        trigger: /@/,
+        keyword: /\w*/,
         getMatches: async () => [{key: '1', label: 'Test'}],
         actions: [],
       })
     })
 
-    test('accepts async match with type field when autoCompleteWith is configured', () => {
+    test('accepts async match with type field when delimiter is configured', () => {
       defineTypeaheadPicker<TestAutoCompleteMatch>({
         mode: 'async',
-        pattern: /:(\w*)/,
-        autoCompleteWith: ':',
+        trigger: /:/,
+        keyword: /\w*/,
+        delimiter: ':',
         getMatches: async (): Promise<Array<TestAutoCompleteMatch>> => [
           {key: '1', label: 'Test', type: 'partial'},
         ],
@@ -146,12 +160,13 @@ describe(defineTypeaheadPicker.name, () => {
       })
     })
 
-    test('rejects async match without type field when autoCompleteWith is configured', () => {
+    test('rejects async match without type field when delimiter is configured', () => {
       defineTypeaheadPicker<TestMatch>({
         mode: 'async',
-        pattern: /:(\w*)/,
-        // @ts-expect-error - autoCompleteWith requires AutoCompleteMatch which has type field
-        autoCompleteWith: ':',
+        trigger: /:/,
+        keyword: /\w*/,
+        // @ts-expect-error - delimiter requires AutoCompleteMatch which has type field
+        delimiter: ':',
         getMatches: async () => [{key: '1', label: 'Test'}],
         actions: [],
       })

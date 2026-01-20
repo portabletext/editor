@@ -16,8 +16,9 @@ type AutoCompleteTestMatch = TestMatch & {
 }
 
 function createPicker(config: {
-  pattern: RegExp
-  autoCompleteWith?: string
+  trigger: RegExp
+  keyword: RegExp
+  delimiter?: string
   getMatches?: (ctx: {keyword: string}) => TestMatch[] | AutoCompleteTestMatch[]
 }) {
   const defaultGetMatches = ({keyword}: {keyword: string}) => {
@@ -25,10 +26,11 @@ function createPicker(config: {
     return [{key: '1', value: keyword ? `match-${keyword}` : 'empty-match'}]
   }
 
-  if (config.autoCompleteWith) {
+  if (config.delimiter) {
     return defineTypeaheadPicker<AutoCompleteTestMatch>({
-      pattern: config.pattern,
-      autoCompleteWith: config.autoCompleteWith,
+      trigger: config.trigger,
+      keyword: config.keyword,
+      delimiter: config.delimiter,
       getMatches:
         (config.getMatches as (ctx: {
           keyword: string
@@ -53,7 +55,8 @@ function createPicker(config: {
   }
 
   return defineTypeaheadPicker<TestMatch>({
-    pattern: config.pattern,
+    trigger: config.trigger,
+    keyword: config.keyword,
     getMatches:
       (config.getMatches as (ctx: {keyword: string}) => TestMatch[]) ??
       defaultGetMatches,
@@ -102,7 +105,7 @@ async function setupTest(picker: ReturnType<typeof createPicker>) {
 
 describe('Pattern variations', () => {
   test('^ anchor triggers only at start of block', async () => {
-    const picker = createPicker({pattern: /^\/(\w*)/})
+    const picker = createPicker({trigger: /^\//, keyword: /\w*/})
     const {locator, keywordLocator, stateLocator} = await setupTest(picker)
 
     await userEvent.click(locator)
@@ -115,7 +118,7 @@ describe('Pattern variations', () => {
   })
 
   test('^ anchor does not trigger mid-text', async () => {
-    const picker = createPicker({pattern: /^\/(\w*)/})
+    const picker = createPicker({trigger: /^\//, keyword: /\w*/})
     const {locator, keywordLocator, stateLocator} = await setupTest(picker)
 
     await userEvent.click(locator)
@@ -127,20 +130,8 @@ describe('Pattern variations', () => {
     expect(stateLocator.element().textContent).toEqual('idle')
   })
 
-  test('pattern without capture group uses full match as keyword', async () => {
-    const picker = createPicker({pattern: /:\w*/})
-    const {locator, keywordLocator} = await setupTest(picker)
-
-    await userEvent.click(locator)
-    await userEvent.type(locator, ':test')
-
-    await vi.waitFor(() => {
-      expect(keywordLocator.element().textContent).toEqual(':test')
-    })
-  })
-
-  test('pattern with capture group extracts keyword', async () => {
-    const picker = createPicker({pattern: /:(\w*)/})
+  test('trigger + keyword extracts keyword correctly', async () => {
+    const picker = createPicker({trigger: /:/, keyword: /\w*/})
     const {locator, keywordLocator} = await setupTest(picker)
 
     await userEvent.click(locator)
@@ -151,23 +142,8 @@ describe('Pattern variations', () => {
     })
   })
 
-  test('pattern with multiple capture groups - picker never activates', async () => {
-    // Patterns requiring specific characters mid-keyword (like `-`) don't
-    // trigger because the pattern doesn't match until the full text is present,
-    // and the picker only activates on newly typed triggers, not existing text.
-    const picker = createPicker({pattern: /:(\w*)-(\w*)/})
-    const {locator, stateLocator} = await setupTest(picker)
-
-    await userEvent.click(locator)
-    await userEvent.type(locator, ':foo-bar')
-
-    await vi.waitFor(() => {
-      expect(stateLocator.element().textContent).toEqual('idle')
-    })
-  })
-
   test('different trigger characters work', async () => {
-    const picker = createPicker({pattern: /@(\w*)/})
+    const picker = createPicker({trigger: /@/, keyword: /\w*/})
     const {locator, keywordLocator, stateLocator} = await setupTest(picker)
 
     await userEvent.click(locator)
@@ -179,11 +155,12 @@ describe('Pattern variations', () => {
     expect(stateLocator.element().textContent).toEqual('active')
   })
 
-  test('multi-character trigger - picker never activates', async () => {
-    // Multi-character triggers like ## don't work because the picker only
-    // activates on newly typed triggers, not existing text. When typing the
-    // second #, the first # is already there, so activation is rejected.
-    const picker = createPicker({pattern: /##(\w*)/})
+  test('multi-character triggers are not supported', async () => {
+    // Multi-character triggers don't work reliably because:
+    // 1. Typing character-by-character: the trigger rule requires textInserted === lastMatch.text
+    // 2. Android composition: partial rule rejects when match starts before insertion point
+    // Use single-character triggers for reliable behavior.
+    const picker = createPicker({trigger: /##/, keyword: /\w*/})
     const {locator, stateLocator} = await setupTest(picker)
 
     await userEvent.click(locator)
@@ -195,11 +172,12 @@ describe('Pattern variations', () => {
   })
 })
 
-describe('autoCompleteWith edge cases', () => {
+describe('delimiter edge cases', () => {
   test('auto-completes with single exact match', async () => {
     const picker = createPicker({
-      pattern: /:(\w*)/,
-      autoCompleteWith: ':',
+      trigger: /:/,
+      keyword: /\w*/,
+      delimiter: ':',
       getMatches: ({keyword}) => {
         if (keyword === 'joy') {
           return [{key: '1', value: '😂', type: 'exact'}]
@@ -219,8 +197,9 @@ describe('autoCompleteWith edge cases', () => {
 
   test('auto-completes with first exact match when multiple exact matches exist', async () => {
     const picker = createPicker({
-      pattern: /:(\w*)/,
-      autoCompleteWith: ':',
+      trigger: /:/,
+      keyword: /\w*/,
+      delimiter: ':',
       getMatches: ({keyword}) => {
         if (keyword === 'test') {
           return [
@@ -244,8 +223,9 @@ describe('autoCompleteWith edge cases', () => {
 
   test('does not auto-complete with only partial matches', async () => {
     const picker = createPicker({
-      pattern: /:(\w*)/,
-      autoCompleteWith: ':',
+      trigger: /:/,
+      keyword: /\w*/,
+      delimiter: ':',
       getMatches: ({keyword}) => {
         if (keyword === 'jo') {
           return [{key: '1', value: 'joy', type: 'partial'}]
@@ -263,22 +243,23 @@ describe('autoCompleteWith edge cases', () => {
     })
   })
 
-  test('multi-character autoCompleteWith - picker dismisses on first delimiter char', async () => {
-    // Multi-character autoCompleteWith doesn't work when the keyword character
+  test('multi-character delimiter - picker dismisses on first delimiter char', async () => {
+    // Multi-character delimiter doesn't work when the keyword character
     // class doesn't match the delimiter character.
     //
-    // Example: pattern `/#(\w*)/` with autoCompleteWith `##`
+    // Example: trigger `/#/`, keyword `/\w*/` with delimiter `##`
     // When typing `#test#`:
     // - Pattern matches `#test` (because \w* stops at #)
     // - Cursor is at offset 6, but match ends at offset 5
     // - validateFocusSpan dismisses picker because cursor > matchEnd
     //
-    // Single-char autoCompleteWith works because patterns like `/:(\S*)/`
+    // Single-char delimiter works because patterns like trigger `/:/`, keyword `/\S*/`
     // include the delimiter in the match (\S matches :), so cursor stays
     // within the match boundary.
     const picker = createPicker({
-      pattern: /#(\w*)/,
-      autoCompleteWith: '##',
+      trigger: /#/,
+      keyword: /\w*/,
+      delimiter: '##',
       getMatches: ({keyword}) => {
         if (keyword === 'test') {
           return [{key: '1', value: 'result', type: 'exact'}]
@@ -303,10 +284,11 @@ describe('autoCompleteWith edge cases', () => {
     })
   })
 
-  test('regex special character in autoCompleteWith is escaped', async () => {
+  test('regex special character in delimiter is escaped', async () => {
     const picker = createPicker({
-      pattern: /:(\w*)/,
-      autoCompleteWith: '.',
+      trigger: /:/,
+      keyword: /\w*/,
+      delimiter: '.',
       getMatches: ({keyword}) => {
         if (keyword === 'test') {
           return [{key: '1', value: 'result', type: 'exact'}]
@@ -324,12 +306,13 @@ describe('autoCompleteWith edge cases', () => {
     })
   })
 
-  test('same character for trigger and autoCompleteWith', async () => {
-    // When trigger and autoCompleteWith are the same, typing :: results in
-    // an empty keyword (the capture group \w* matches empty string)
+  test('same character for trigger and delimiter', async () => {
+    // When trigger and delimiter are the same, typing :: results in
+    // an empty keyword (the keyword pattern \w* matches empty string)
     const picker = createPicker({
-      pattern: /:(\w*)/,
-      autoCompleteWith: ':',
+      trigger: /:/,
+      keyword: /\w*/,
+      delimiter: ':',
       getMatches: () => [{key: '1', value: 'result', type: 'partial'}],
     })
     const {locator, keywordLocator, stateLocator} = await setupTest(picker)
@@ -345,11 +328,12 @@ describe('autoCompleteWith edge cases', () => {
   })
 })
 
-describe('Pattern character class behavior', () => {
+describe('Keyword pattern character class behavior', () => {
   test('\\w* stops at non-word characters', async () => {
     const picker = createPicker({
-      pattern: /:(\w*)/,
-      autoCompleteWith: ':',
+      trigger: /:/,
+      keyword: /\w*/,
+      delimiter: ':',
     })
     const {locator, keywordLocator} = await setupTest(picker)
 
@@ -361,14 +345,14 @@ describe('Pattern character class behavior', () => {
     })
   })
 
-  test('\\S* with autoCompleteWith - works via backtracking and stripping', async () => {
+  test('\\S* with delimiter - strips delimiter from keyword', async () => {
     // \S* includes the delimiter character, but this still works because:
-    // 1. Complete pattern /:(\S*):/ matches via regex backtracking (capture = "test")
-    // 2. extractKeywordFromPattern strips autoCompleteWith before matching
+    // extractKeyword strips the delimiter from the end of the pattern text
     // So the keyword is correctly "test", not "test:".
     const picker = createPicker({
-      pattern: /:(\S*)/,
-      autoCompleteWith: ':',
+      trigger: /:/,
+      keyword: /\S*/,
+      delimiter: ':',
     })
     const {locator, keywordLocator} = await setupTest(picker)
 
@@ -381,7 +365,7 @@ describe('Pattern character class behavior', () => {
   })
 
   test('custom character class [a-z] works', async () => {
-    const picker = createPicker({pattern: /:([a-z]*)/})
+    const picker = createPicker({trigger: /:/, keyword: /[a-z]*/})
     const {locator, keywordLocator} = await setupTest(picker)
 
     await userEvent.click(locator)
@@ -393,9 +377,9 @@ describe('Pattern character class behavior', () => {
   })
 
   test('custom character class stops at excluded chars and dismisses', async () => {
-    // When typing characters outside the pattern's character class,
+    // When typing characters outside the keyword's character class,
     // the picker dismisses because cursor moves past the match
-    const picker = createPicker({pattern: /:([a-z]*)/})
+    const picker = createPicker({trigger: /:/, keyword: /[a-z]*/})
     const {locator, keywordLocator, stateLocator} = await setupTest(picker)
 
     await userEvent.click(locator)
@@ -417,7 +401,7 @@ describe('Pattern character class behavior', () => {
 
 describe('Flags are normalized (ignored)', () => {
   test('case-insensitive flag has no effect on trigger', async () => {
-    const picker = createPicker({pattern: /:([A-Z]*)/i})
+    const picker = createPicker({trigger: /:/i, keyword: /[A-Z]*/i})
     const {locator, keywordLocator, stateLocator} = await setupTest(picker)
 
     await userEvent.click(locator)
@@ -429,8 +413,8 @@ describe('Flags are normalized (ignored)', () => {
     expect(keywordLocator.element().textContent).toEqual('')
   })
 
-  test('uppercase pattern requires uppercase input', async () => {
-    const picker = createPicker({pattern: /:([A-Z]*)/})
+  test('uppercase keyword pattern requires uppercase input', async () => {
+    const picker = createPicker({trigger: /:/, keyword: /[A-Z]*/})
     const {locator, keywordLocator, stateLocator} = await setupTest(picker)
 
     await userEvent.click(locator)

@@ -46,8 +46,9 @@ function matchEmojis({keyword}: {keyword: string}): Array<EmojiMatch> {
 }
 
 const emojiPicker = defineTypeaheadPicker<EmojiMatch>({
-  pattern: /:(\w*)/,
-  autoCompleteWith: ':',
+  trigger: /:/,
+  keyword: /\S*/,
+  delimiter: ':',
   getMatches: matchEmojis,
   actions: [
     ({event}) => [
@@ -176,7 +177,8 @@ describe('TypeaheadSelectEvent', () => {
     let receivedKeyword: string | undefined
 
     const testPicker = defineTypeaheadPicker<SyncMatch>({
-      pattern: /:(\w*)/,
+      trigger: /:/,
+      keyword: /\w*/,
       getMatches: () => [{key: '1', name: 'test'}],
       actions: [
         ({event}) => {
@@ -240,8 +242,9 @@ describe('Error handling in checking complete state', () => {
 
     const failingPicker = defineTypeaheadPicker<EmojiMatch>({
       mode: 'async',
-      pattern: /:(\w*)/,
-      autoCompleteWith: ':',
+      trigger: /:/,
+      keyword: /\S*/,
+      delimiter: ':',
       getMatches: async () => {
         await new Promise((resolve) => setTimeout(resolve, 10))
         throw testError
@@ -304,7 +307,8 @@ describe('Sync mode debouncing', () => {
     let callCount = 0
 
     const debouncedSyncPicker = defineTypeaheadPicker<SyncMatch>({
-      pattern: /:(\w*)/,
+      trigger: /:/,
+      keyword: /\w*/,
       debounceMs: 300,
       getMatches: ({keyword}) => {
         callCount++

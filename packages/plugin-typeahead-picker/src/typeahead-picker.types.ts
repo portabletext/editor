@@ -3,18 +3,18 @@ import type {BehaviorActionSet} from '@portabletext/editor/behaviors'
 
 /**
  * Match type for pickers with auto-completion support.
- * Use this when `autoCompleteWith` is configured.
+ * Use this when `delimiter` is configured.
  *
  * The `type` property indicates how well the match corresponds to the keyword:
  * - `'exact'` - The keyword matches this item exactly (e.g., keyword `joy` matches emoji `:joy:`)
  * - `'partial'` - The keyword partially matches this item (e.g., keyword `jo` matches `:joy:`)
  *
- * When `autoCompleteWith` is configured and there's exactly one `'exact'` match,
+ * When `delimiter` is configured and there's exactly one `'exact'` match,
  * the picker will auto-insert that match.
  *
  * @example
  * ```ts
- * // With autoCompleteWith - type field required for auto-completion
+ * // With delimiter - type field required for auto-completion
  * type EmojiMatch = AutoCompleteMatch & {
  *   key: string
  *   emoji: string
@@ -93,33 +93,31 @@ export type TypeaheadSelectActionSet<TMatch> = BehaviorActionSet<
 
 type TypeaheadPickerDefinitionBase<TMatch extends object> = {
   /**
-   * RegExp pattern for matching trigger + keyword.
+   * Pattern that activates the picker.
+   * Can include positional anchors like `^` for start-of-block triggers.
    *
-   * If pattern has capture groups: keyword = first capture group (additional groups ignored).
-   * If no capture group: keyword = entire match.
-   *
-   * Can include position anchors like `^` for start-of-block triggers.
-   *
-   * @example
-   * ```ts
-   * // Emoji picker - `:` trigger anywhere
-   * pattern: /:(\S*)/
-   *
-   * // Slash commands - `/` only at start of block
-   * pattern: /^\/(\w*)/
-   *
-   * // Mentions - `@` trigger anywhere
-   * pattern: /@(\w*)/
-   * ```
+   * @example `/:/` for emoji
+   * @example `/@/` for mentions
+   * @example `/^\//` for slash commands (start of block only)
    */
-  pattern: RegExp
+  trigger: RegExp
 
   /**
-   * Optional delimiter that triggers auto-completion.
-   * When typed after a keyword with exactly one exact match, that match auto-inserts.
+   * Pattern matching the keyword portion (after trigger, before delimiter).
+   * The entire match is used as the keyword.
+   *
+   * @example `/[\S]+/` for emoji (any non-whitespace)
+   * @example `/[\w]+/` for mentions (word characters only)
+   */
+  keyword: RegExp
+
+  /**
+   * Character that triggers auto-completion.
+   * Typing this after a keyword with exactly one exact match auto-inserts it.
+   *
    * @example `':'` - typing `:joy:` auto-inserts the joy emoji
    */
-  autoCompleteWith?: string
+  delimiter?: string
 
   /**
    * Actions to execute when a match is selected.
@@ -138,8 +136,9 @@ type TypeaheadPickerDefinitionBase<TMatch extends object> = {
  * @example
  * ```ts
  * const emojiPicker = defineTypeaheadPicker({
- *   pattern: /:(\S*)/,
- *   autoCompleteWith: ':',
+ *   trigger: /:/,
+ *   keyword: /[\S]+/,
+ *   delimiter: ':',
  *   getMatches: ({keyword}) => searchEmojis(keyword),
  *   actions: [insertEmojiAction],
  * })
