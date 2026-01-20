@@ -355,26 +355,6 @@ function extractPatternTextFromFocusSpan(focusSpan: FocusSpanData): string {
   return focusSpan.node.text
 }
 
-/**
- * Extract keyword from input rule match using groupMatches when available.
- * Falls back to extractKeywordFromPattern for patterns without capture groups
- * or when the capture group is empty (which can happen with patterns like
- * `/:(\S*):/` matching `::` where the capture group matches empty string).
- */
-function extractKeywordFromMatch(
-  match: InputRuleMatch,
-  pattern: RegExp,
-  autoCompleteWith?: string,
-): string {
-  const firstGroupMatch = match.groupMatches[0]
-
-  if (firstGroupMatch && firstGroupMatch.text.length > 0) {
-    return firstGroupMatch.text
-  }
-
-  return extractKeywordFromPattern(match.text, pattern, autoCompleteWith)
-}
-
 function createInputRules<TMatch extends object>(
   definition: TypeaheadPickerDefinition<TMatch>,
 ) {
@@ -393,8 +373,17 @@ function createInputRules<TMatch extends object>(
           return false
         }
 
-        if (lastMatch.targetOffsets.anchor.offset < event.textBefore.length) {
-          return false
+        // If the match starts before the insertion point, check if the inserted
+        // text itself matches the pattern (same fix as partial trigger rule).
+        const matchStartsBeforeInsertion =
+          lastMatch.targetOffsets.anchor.offset < event.textBefore.length
+
+        if (matchStartsBeforeInsertion) {
+          const insertedMatch = event.textInserted.match(completePattern)
+
+          if (!insertedMatch || insertedMatch.index !== 0) {
+            return false
+          }
         }
 
         const triggerState = getTriggerState(snapshot)
@@ -404,19 +393,36 @@ function createInputRules<TMatch extends object>(
         }
 
         const textAfterInsertion = event.textBefore + event.textInserted
-        const textAfterMatch = textAfterInsertion.slice(
-          lastMatch.targetOffsets.focus.offset,
-        )
+        const matchFocusOffset = matchStartsBeforeInsertion
+          ? event.textBefore.length + event.textInserted.length
+          : lastMatch.targetOffsets.focus.offset
+        const textAfterMatch = textAfterInsertion.slice(matchFocusOffset)
 
         if (textAfterMatch.length > 0) {
           return false
         }
 
+        const matchText = matchStartsBeforeInsertion
+          ? event.textInserted
+          : lastMatch.text
+
         return {
           ...triggerState,
-          lastMatch,
-          extractedKeyword: extractKeywordFromMatch(
-            lastMatch,
+          lastMatch: matchStartsBeforeInsertion
+            ? {
+                ...lastMatch,
+                text: event.textInserted,
+                targetOffsets: {
+                  ...lastMatch.targetOffsets,
+                  anchor: {
+                    ...lastMatch.targetOffsets.anchor,
+                    offset: event.textBefore.length,
+                  },
+                },
+              }
+            : lastMatch,
+          extractedKeyword: extractKeywordFromPattern(
+            matchText,
             partialPattern,
             definition.autoCompleteWith,
           ),
