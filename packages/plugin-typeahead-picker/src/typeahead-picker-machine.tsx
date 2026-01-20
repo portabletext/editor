@@ -445,8 +445,19 @@ function createInputRules<TMatch extends object>(
         return false
       }
 
-      if (lastMatch.targetOffsets.anchor.offset < event.textBefore.length) {
-        return false
+      // If the match starts before the insertion point, check if the inserted
+      // text itself matches the pattern. This handles the case where user types
+      // a trigger character after an existing trigger character (e.g., typing
+      // ":" after "foo:" to get "foo::").
+      const matchStartsBeforeInsertion =
+        lastMatch.targetOffsets.anchor.offset < event.textBefore.length
+
+      if (matchStartsBeforeInsertion) {
+        const insertedMatch = event.textInserted.match(partialPattern)
+
+        if (!insertedMatch || insertedMatch.index !== 0) {
+          return false
+        }
       }
 
       const triggerState = getTriggerState(snapshot)
@@ -457,9 +468,10 @@ function createInputRules<TMatch extends object>(
 
       if (completePattern) {
         const fullText = triggerState.focusSpan.node.text
-        const textFromMatchStart = fullText.slice(
-          lastMatch.targetOffsets.anchor.offset,
-        )
+        const matchOffset = matchStartsBeforeInsertion
+          ? event.textBefore.length
+          : lastMatch.targetOffsets.anchor.offset
+        const textFromMatchStart = fullText.slice(matchOffset)
         const completeMatch = textFromMatchStart.match(completePattern)
 
         if (completeMatch && completeMatch.index === 0) {
@@ -467,11 +479,28 @@ function createInputRules<TMatch extends object>(
         }
       }
 
+      // If match started before insertion, use inserted text for keyword extraction
+      const matchText = matchStartsBeforeInsertion
+        ? event.textInserted
+        : lastMatch.text
+
       return {
         ...triggerState,
-        lastMatch,
-        extractedKeyword: extractKeywordFromMatch(
-          lastMatch,
+        lastMatch: matchStartsBeforeInsertion
+          ? {
+              ...lastMatch,
+              text: event.textInserted,
+              targetOffsets: {
+                ...lastMatch.targetOffsets,
+                anchor: {
+                  ...lastMatch.targetOffsets.anchor,
+                  offset: event.textBefore.length,
+                },
+              },
+            }
+          : lastMatch,
+        extractedKeyword: extractKeywordFromPattern(
+          matchText,
           partialPattern,
           definition.autoCompleteWith,
         ),
