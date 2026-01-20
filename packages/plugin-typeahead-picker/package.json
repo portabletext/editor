@@ -1,6 +1,6 @@
 {
   "name": "@portabletext/plugin-typeahead-picker",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Generic typeahead picker infrastructure for the Portable Text Editor",
   "keywords": [
     "portabletext",
