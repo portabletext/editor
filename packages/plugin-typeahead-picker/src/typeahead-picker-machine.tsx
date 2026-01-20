@@ -1229,7 +1229,7 @@ export function createTypeaheadPickerMachine<TMatch extends object>() {
       'no focus span': ({context}) => !context.focusSpan,
       'invalid pattern': ({context}) => {
         if (!context.patternText) {
-          return false
+          return true
         }
 
         // Check if trigger pattern matches entire text (just the trigger, no keyword yet)
