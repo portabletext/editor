@@ -67,6 +67,7 @@ function buildCompletePattern<TMatch extends object>(
   if (!definition.autoCompleteWith) {
     return undefined
   }
+
   const autoCompleteWith = escapeRegExp(definition.autoCompleteWith)
   return new RegExp(`${definition.pattern.source}${autoCompleteWith}`)
 }
@@ -308,9 +309,9 @@ type TypeaheadPickerMachineContext<TMatch extends object> = {
   matches: ReadonlyArray<TMatch>
   selectedIndex: number
   focusSpan: FocusSpanData | undefined
-  fullMatch: string
+  patternText: string
   keyword: string
-  loadingFullMatch: string
+  requestedKeyword: string
   error: Error | undefined
   isLoading: boolean
 }
@@ -333,126 +334,25 @@ type TriggerPayload = ReturnType<typeof getTriggerState> & {
 }
 
 /**
- * Extract the full match (trigger + keyword) from focus span data.
+ * Extract the pattern text (trigger + keyword) from focus span data.
  */
-function extractFullMatchFromFocusSpan(focusSpan: FocusSpanData): string {
+function extractPatternTextFromFocusSpan(focusSpan: FocusSpanData): string {
   if (focusSpan.textBefore.length > 0 && focusSpan.textAfter.length > 0) {
     return focusSpan.node.text.slice(
       focusSpan.textBefore.length,
       -focusSpan.textAfter.length,
     )
   }
+
   if (focusSpan.textBefore.length > 0) {
     return focusSpan.node.text.slice(focusSpan.textBefore.length)
   }
+
   if (focusSpan.textAfter.length > 0) {
     return focusSpan.node.text.slice(0, -focusSpan.textAfter.length)
   }
+
   return focusSpan.node.text
-}
-
-/**
- * Validate and update focus span based on current editor state.
- * Returns updated focus span or undefined if invalid.
- */
-function validateFocusSpan(
-  currentFocusSpan: FocusSpanData,
-  editor: Editor,
-  partialPattern: RegExp,
-  completePattern: RegExp | undefined,
-): FocusSpanData | undefined {
-  const snapshot = editor.getSnapshot()
-  const focusSpan = getFocusSpan(snapshot)
-
-  if (!snapshot.context.selection || !focusSpan) {
-    return undefined
-  }
-
-  const nextSpan = getNextSpan({
-    ...snapshot,
-    context: {
-      ...snapshot.context,
-      selection: {
-        anchor: {path: currentFocusSpan.path, offset: 0},
-        focus: {path: currentFocusSpan.path, offset: 0},
-      },
-    },
-  })
-
-  if (!isEqualPaths(focusSpan.path, currentFocusSpan.path)) {
-    if (
-      nextSpan &&
-      currentFocusSpan.textAfter.length === 0 &&
-      snapshot.context.selection.focus.offset === 0 &&
-      isSelectionCollapsed(snapshot)
-    ) {
-      return currentFocusSpan
-    }
-
-    return undefined
-  }
-
-  if (!focusSpan.node.text.startsWith(currentFocusSpan.textBefore)) {
-    return undefined
-  }
-
-  if (!focusSpan.node.text.endsWith(currentFocusSpan.textAfter)) {
-    return undefined
-  }
-
-  const keywordAnchor = {
-    path: focusSpan.path,
-    offset: currentFocusSpan.textBefore.length,
-  }
-  const keywordFocus = {
-    path: focusSpan.path,
-    offset: focusSpan.node.text.length - currentFocusSpan.textAfter.length,
-  }
-
-  const selectionIsBeforeKeyword =
-    isPointAfterSelection(keywordAnchor)(snapshot)
-  const selectionIsAfterKeyword = isPointBeforeSelection(keywordFocus)(snapshot)
-
-  if (selectionIsBeforeKeyword || selectionIsAfterKeyword) {
-    return undefined
-  }
-
-  const keywordText = focusSpan.node.text.slice(
-    currentFocusSpan.textBefore.length,
-    currentFocusSpan.textAfter.length > 0
-      ? -currentFocusSpan.textAfter.length
-      : undefined,
-  )
-  const patternMatch = keywordText.match(partialPattern)
-
-  if (!patternMatch || patternMatch.index !== 0) {
-    return undefined
-  }
-
-  let matchEnd = currentFocusSpan.textBefore.length + patternMatch[0].length
-
-  if (completePattern) {
-    const completeMatch = keywordText.match(completePattern)
-
-    if (
-      completeMatch &&
-      completeMatch.index === 0 &&
-      completeMatch[0] === keywordText
-    ) {
-      matchEnd = currentFocusSpan.textBefore.length + completeMatch[0].length
-    }
-  }
-
-  if (snapshot.context.selection.focus.offset > matchEnd) {
-    return undefined
-  }
-
-  return {
-    node: focusSpan.node,
-    path: focusSpan.path,
-    textBefore: currentFocusSpan.textBefore,
-    textAfter: currentFocusSpan.textAfter,
-  }
 }
 
 /**
@@ -467,9 +367,11 @@ function extractKeywordFromMatch(
   autoCompleteWith?: string,
 ): string {
   const firstGroupMatch = match.groupMatches[0]
+
   if (firstGroupMatch && firstGroupMatch.text.length > 0) {
     return firstGroupMatch.text
   }
+
   return extractKeywordFromPattern(match.text, pattern, autoCompleteWith)
 }
 
@@ -558,8 +460,8 @@ function createInputRules<TMatch extends object>(
         const textFromMatchStart = fullText.slice(
           lastMatch.targetOffsets.anchor.offset,
         )
-
         const completeMatch = textFromMatchStart.match(completePattern)
+
         if (completeMatch && completeMatch.index === 0) {
           return false
         }
@@ -766,7 +668,7 @@ const submitListenerCallback = <TMatch extends object>(): CallbackLogicFunction<
           guard: ({event}) =>
             (enterShortcut.guard(event.originEvent) ||
               tabShortcut.guard(event.originEvent)) &&
-            context.fullMatch.length === 1,
+            context.patternText.length === 1,
           actions: [
             ({event}) => [
               forward(event),
@@ -783,7 +685,7 @@ const submitListenerCallback = <TMatch extends object>(): CallbackLogicFunction<
           guard: ({event}) =>
             (enterShortcut.guard(event.originEvent) ||
               tabShortcut.guard(event.originEvent)) &&
-            context.fullMatch.length > 1 &&
+            context.patternText.length > 1 &&
             context.matches.length === 0,
           actions: [
             () => [
@@ -825,6 +727,7 @@ const textInsertionListenerCallback = <
           if (!context.focusSpan) {
             return false
           }
+
           if (!snapshot.context.selection) {
             return false
           }
@@ -994,7 +897,7 @@ export function createTypeaheadPickerMachine<TMatch extends object>() {
         }
 
         const focusSpan = event.focusSpan
-        const fullMatch = extractFullMatchFromFocusSpan(focusSpan)
+        const patternText = extractPatternTextFromFocusSpan(focusSpan)
         const keyword = event.extractedKeyword
 
         if (
@@ -1003,7 +906,7 @@ export function createTypeaheadPickerMachine<TMatch extends object>() {
         ) {
           return {
             focusSpan,
-            fullMatch,
+            patternText,
             keyword,
             isLoading: true,
             selectedIndex: 0,
@@ -1016,81 +919,140 @@ export function createTypeaheadPickerMachine<TMatch extends object>() {
 
         return {
           focusSpan,
-          fullMatch,
+          patternText,
           keyword,
           matches,
-          loadingFullMatch: fullMatch,
+          requestedKeyword: keyword,
           isLoading: false,
           selectedIndex: 0,
         }
       }),
-      'handle selection changed': assign(({context}) => {
+      'update focus span': assign({
+        focusSpan: ({context}) => {
+          if (!context.focusSpan) {
+            return context.focusSpan
+          }
+
+          const snapshot = context.editor.getSnapshot()
+          const focusSpan = getFocusSpan(snapshot)
+
+          if (!snapshot.context.selection || !focusSpan) {
+            return undefined
+          }
+
+          const nextSpan = getNextSpan({
+            ...snapshot,
+            context: {
+              ...snapshot.context,
+              selection: {
+                anchor: {path: context.focusSpan.path, offset: 0},
+                focus: {path: context.focusSpan.path, offset: 0},
+              },
+            },
+          })
+
+          if (!isEqualPaths(focusSpan.path, context.focusSpan.path)) {
+            if (
+              nextSpan &&
+              context.focusSpan.textAfter.length === 0 &&
+              snapshot.context.selection.focus.offset === 0 &&
+              isSelectionCollapsed(snapshot)
+            ) {
+              // This is an edge case where the caret is moved from the end of
+              // the focus span to the start of the next span.
+              return context.focusSpan
+            }
+
+            return undefined
+          }
+
+          if (!focusSpan.node.text.startsWith(context.focusSpan.textBefore)) {
+            return undefined
+          }
+
+          if (!focusSpan.node.text.endsWith(context.focusSpan.textAfter)) {
+            return undefined
+          }
+
+          const keywordAnchor = {
+            path: focusSpan.path,
+            offset: context.focusSpan.textBefore.length,
+          }
+          const keywordFocus = {
+            path: focusSpan.path,
+            offset:
+              focusSpan.node.text.length - context.focusSpan.textAfter.length,
+          }
+
+          const selectionIsBeforeKeyword =
+            isPointAfterSelection(keywordAnchor)(snapshot)
+          const selectionIsAfterKeyword =
+            isPointBeforeSelection(keywordFocus)(snapshot)
+
+          if (selectionIsBeforeKeyword || selectionIsAfterKeyword) {
+            return undefined
+          }
+
+          return {
+            node: focusSpan.node,
+            path: focusSpan.path,
+            textBefore: context.focusSpan.textBefore,
+            textAfter: context.focusSpan.textAfter,
+          }
+        },
+      }),
+      'update pattern text': assign(({context}) => {
         if (!context.focusSpan) {
-          return {
-            focusSpan: undefined,
-            fullMatch: '',
-            keyword: '',
-            matches: [],
-            selectedIndex: 0,
-            isLoading: false,
-          }
+          return {}
         }
 
-        const updatedFocusSpan = validateFocusSpan(
-          context.focusSpan,
-          context.editor,
-          context.partialPattern,
-          context.completePattern,
-        )
+        const patternText = extractPatternTextFromFocusSpan(context.focusSpan)
 
-        if (!updatedFocusSpan) {
-          return {
-            focusSpan: undefined,
-            fullMatch: '',
-            keyword: '',
-            matches: [],
-            selectedIndex: 0,
-            isLoading: false,
-          }
+        if (patternText === context.patternText) {
+          return {}
         }
 
-        const fullMatch = extractFullMatchFromFocusSpan(updatedFocusSpan)
-
-        if (fullMatch === context.fullMatch) {
-          return {focusSpan: updatedFocusSpan}
+        return {patternText, selectedIndex: 0}
+      }),
+      'update keyword': assign(({context}) => {
+        if (!context.focusSpan || !context.patternText) {
+          return {}
         }
 
         const keyword = extractKeywordFromPattern(
-          fullMatch,
+          context.patternText,
           context.definition.pattern,
           context.definition.autoCompleteWith,
         )
+
+        if (keyword === context.keyword) {
+          return {}
+        }
+
+        return {keyword}
+      }),
+      'update matches': assign(({context}) => {
+        if (!context.focusSpan || !context.patternText) {
+          return {}
+        }
 
         if (
           context.definition.mode === 'async' ||
           context.definition.debounceMs
         ) {
           return {
-            focusSpan: updatedFocusSpan,
-            fullMatch,
-            keyword,
-            selectedIndex: 0,
             isLoading:
-              context.isLoading || context.loadingFullMatch !== fullMatch,
+              context.isLoading || context.requestedKeyword !== context.keyword,
           }
         }
 
         const matches = context.definition.getMatches({
-          keyword,
+          keyword: context.keyword,
         }) as Array<TMatch>
 
         return {
-          focusSpan: updatedFocusSpan,
-          fullMatch,
-          keyword,
           matches,
-          loadingFullMatch: fullMatch,
-          selectedIndex: 0,
+          requestedKeyword: context.keyword,
           isLoading: false,
         }
       }),
@@ -1102,21 +1064,21 @@ export function createTypeaheadPickerMachine<TMatch extends object>() {
         ).output
 
         if (output.keyword !== context.keyword) {
-          return {isLoading: context.fullMatch !== context.loadingFullMatch}
+          return {isLoading: context.keyword !== context.requestedKeyword}
         }
 
         return {
           matches: output.matches,
-          isLoading: context.fullMatch !== context.loadingFullMatch,
+          isLoading: context.keyword !== context.requestedKeyword,
         }
       }),
       'reset': assign({
-        fullMatch: '',
+        patternText: '',
         keyword: '',
         matches: [],
         selectedIndex: 0,
         isLoading: false,
-        loadingFullMatch: '',
+        requestedKeyword: '',
         focusSpan: undefined,
         error: undefined,
       }),
@@ -1177,12 +1139,46 @@ export function createTypeaheadPickerMachine<TMatch extends object>() {
     },
     guards: {
       'no focus span': ({context}) => !context.focusSpan,
+      'invalid pattern': ({context}) => {
+        if (!context.patternText) {
+          return false
+        }
+
+        // Check partial pattern matches entire text
+        const partialMatch = context.patternText.match(context.partialPattern)
+
+        if (
+          partialMatch &&
+          partialMatch.index === 0 &&
+          partialMatch[0] === context.patternText
+        ) {
+          return false
+        }
+
+        // Check complete pattern matches entire text (if configured)
+        if (context.completePattern) {
+          const completeMatch = context.patternText.match(
+            context.completePattern,
+          )
+
+          if (
+            completeMatch &&
+            completeMatch.index === 0 &&
+            completeMatch[0] === context.patternText
+          ) {
+            return false
+          }
+        }
+
+        return true
+      },
       'no debounce': ({context}) =>
         !context.definition.debounceMs || context.definition.debounceMs === 0,
       'is complete keyword': ({context}) => {
         if (!context.completePattern || !context.focusSpan) {
           return false
         }
+
         const fullKeywordText = context.focusSpan.node.text.slice(
           context.focusSpan.textBefore.length,
           context.focusSpan.textAfter.length > 0
@@ -1190,6 +1186,7 @@ export function createTypeaheadPickerMachine<TMatch extends object>() {
             : undefined,
         )
         const completeMatch = fullKeywordText.match(context.completePattern)
+
         if (
           !completeMatch ||
           completeMatch.index !== 0 ||
@@ -1197,6 +1194,7 @@ export function createTypeaheadPickerMachine<TMatch extends object>() {
         ) {
           return false
         }
+
         return hasAtLeastOneExactMatch(context.matches)
       },
       'has matches': ({context}) => context.matches.length > 0,
@@ -1213,9 +1211,9 @@ export function createTypeaheadPickerMachine<TMatch extends object>() {
       matches: [],
       selectedIndex: 0,
       focusSpan: undefined,
-      fullMatch: '',
+      patternText: '',
       keyword: '',
-      loadingFullMatch: '',
+      requestedKeyword: '',
       error: undefined,
       isLoading: false,
     }),
@@ -1306,7 +1304,10 @@ export function createTypeaheadPickerMachine<TMatch extends object>() {
           },
           'selection changed': {
             actions: [
-              'handle selection changed',
+              'update focus span',
+              'update pattern text',
+              'update keyword',
+              'update matches',
               'update submit listener context',
               'update text insertion listener context',
             ],
@@ -1315,6 +1316,10 @@ export function createTypeaheadPickerMachine<TMatch extends object>() {
         always: [
           {
             guard: 'no focus span',
+            target: 'idle',
+          },
+          {
+            guard: 'invalid pattern',
             target: 'idle',
           },
           {
@@ -1341,9 +1346,7 @@ export function createTypeaheadPickerMachine<TMatch extends object>() {
             ],
           },
           'loading': {
-            entry: [
-              assign({loadingFullMatch: ({context}) => context.fullMatch}),
-            ],
+            entry: [assign({requestedKeyword: ({context}) => context.keyword})],
             initial: 'debouncing',
             states: {
               debouncing: {
@@ -1366,14 +1369,14 @@ export function createTypeaheadPickerMachine<TMatch extends object>() {
                         if (event.output.keyword !== context.keyword) {
                           return {
                             isLoading:
-                              context.fullMatch !== context.loadingFullMatch,
+                              context.patternText !== context.requestedKeyword,
                           }
                         }
 
                         return {
                           matches: event.output.matches,
                           isLoading:
-                            context.fullMatch !== context.loadingFullMatch,
+                            context.keyword !== context.requestedKeyword,
                         }
                       }),
                     ],
@@ -1401,7 +1404,9 @@ export function createTypeaheadPickerMachine<TMatch extends object>() {
               },
               loading: {
                 entry: [
-                  assign({loadingFullMatch: ({context}) => context.fullMatch}),
+                  assign({
+                    requestedKeyword: ({context}) => context.keyword,
+                  }),
                 ],
                 initial: 'debouncing',
                 states: {
@@ -1481,7 +1486,9 @@ export function createTypeaheadPickerMachine<TMatch extends object>() {
               },
               loading: {
                 entry: [
-                  assign({loadingFullMatch: ({context}) => context.fullMatch}),
+                  assign({
+                    requestedKeyword: ({context}) => context.keyword,
+                  }),
                 ],
                 initial: 'debouncing',
                 states: {
