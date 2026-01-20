@@ -7,6 +7,7 @@
 The `useTypeaheadPicker` hook provides the state and logic needed to build typeahead pickers (emoji pickers, mention pickers, slash commands, etc.) for the Portable Text Editor. It manages keyword matching, keyboard navigation, and triggering of actions, but is not concerned with the UI, how the picker is rendered, or how it's positioned in the document.
 
 ```tsx
+import {EditorProvider, PortableTextEditable} from '@portabletext/editor'
 import {raise} from '@portabletext/editor/behaviors'
 import {
   defineTypeaheadPicker,
@@ -78,7 +79,19 @@ function EmojiPicker() {
     </ul>
   )
 }
+
+// Render the picker inside EditorProvider, alongside PortableTextEditable
+function MyEditor() {
+  return (
+    <EditorProvider /* ...config */>
+      <PortableTextEditable />
+      <EmojiPicker />
+    </EditorProvider>
+  )
+}
 ```
+
+The picker component must be rendered inside `EditorProvider` to access the editor context. Position it as a sibling to `PortableTextEditable` - you'll handle the visual positioning (popover, dropdown, etc.) separately with CSS or a positioning library.
 
 ## How It Works
 
