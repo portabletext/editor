@@ -19,6 +19,16 @@ Feature: Emoji Picker
     When ":" is typed
     Then the text is "🐕"
 
+  Scenario: Triggering after a trigger character
+    When the editor is focused
+    And ":" is typed
+    And "{ArrowLeft}" is pressed
+    And "foo" is typed
+    And "{ArrowRight}" is pressed
+    And ":dog" is typed
+    Then the keyword is "dog"
+    And the matches are "🐕,🐩"
+
   Scenario Outline: Is only triggered when an initial colon is typed
     Given the text <text>
     When the editor is focused
