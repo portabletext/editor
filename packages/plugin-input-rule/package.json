@@ -56,7 +56,7 @@
     "xstate": "^5.25.0"
   },
   "devDependencies": {
-    "@portabletext/editor": "workspace:*",
+    "@portabletext/editor": "workspace:^",
     "@portabletext/schema": "workspace:*",
     "@sanity/pkg-utils": "^10.2.1",
     "@sanity/tsconfig": "^2.1.0",
