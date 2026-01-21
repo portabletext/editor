@@ -48,7 +48,7 @@
     "xstate": "^5.25.0"
   },
   "devDependencies": {
-    "@portabletext/editor": "workspace:*",
+    "@portabletext/editor": "workspace:^",
     "@sanity/pkg-utils": "^10.2.1",
     "@sanity/tsconfig": "^2.1.0",
     "@types/react": "^19.2.7",
