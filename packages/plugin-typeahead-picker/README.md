@@ -229,14 +229,13 @@ User types `y` → Keyword updates to "joy"
 
 **delimiter requirements:**
 
-When using `delimiter`, the delimiter character must be included in the keyword's character class, otherwise typing it dismisses the picker:
+Single-character delimiters work regardless of whether the character is included in the keyword pattern. Multi-character delimiters are not supported.
 
-| keyword | delimiter | Example  | Works? | Why                                                 |
-| ------- | --------- | -------- | ------ | --------------------------------------------------- |
-| `/\S*/` | `:`       | `:joy:`  | ✅     | `\S` matches `:`, cursor stays in match             |
-| `/\w*/` | `:`       | `:joy:`  | ✅     | Cursor at match boundary, still valid               |
-| `/\w*/` | `#`       | `#tag#`  | ✅     | Cursor at match boundary, still valid               |
-| `/\w*/` | `##`      | `#tag##` | ❌     | First `#` moves cursor past match, picker dismisses |
+| keyword | delimiter | Example  | Works? | Why                                     |
+| ------- | --------- | -------- | ------ | --------------------------------------- |
+| `/\S*/` | `:`       | `:joy:`  | ✅     | `\S` matches `:`, keyword becomes `joy` |
+| `/\w*/` | `:`       | `:joy:`  | ✅     | `\w` stops at `:`, keyword is `joy`     |
+| `/\w*/` | `##`      | `#tag##` | ❌     | Multi-char delimiter not supported      |
 
 ### `useTypeaheadPicker(definition)`
 
