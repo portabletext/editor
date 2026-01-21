@@ -11,6 +11,19 @@ export const defaultSchema = defineSchema({
     {name: 'blockquote'},
   ],
   lists: [{name: 'bullet'}, {name: 'number'}],
-  inlineObjects: [{name: 'stock-ticker'}],
-  blockObjects: [{name: 'image'}],
+  inlineObjects: [
+    {
+      name: 'stock-ticker',
+      fields: [{name: 'symbol', type: 'string'}],
+    },
+  ],
+  blockObjects: [
+    {
+      name: 'image',
+      fields: [
+        {name: 'src', type: 'string'},
+        {name: 'alt', type: 'string'},
+      ],
+    },
+  ],
 })
