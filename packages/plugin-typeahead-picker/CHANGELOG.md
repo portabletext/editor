@@ -1,5 +1,15 @@
 # @portabletext/plugin-typeahead-picker
 
+## 2.0.1
+
+### Patch Changes
+
+- [#2128](https://github.com/portabletext/editor/pull/2128) [`dfca3ae`](https://github.com/portabletext/editor/commit/dfca3ae8d060f610ee009617b3d92d41962024bf) Thanks [@christianhg](https://github.com/christianhg)! - fix: use correct @portabletext/editor peer dep version range
+
+- Updated dependencies [[`427ccce`](https://github.com/portabletext/editor/commit/427cccef816c9b6af520123bfeb56b91738a7012), [`dfca3ae`](https://github.com/portabletext/editor/commit/dfca3ae8d060f610ee009617b3d92d41962024bf)]:
+  - @portabletext/editor@4.3.1
+  - @portabletext/plugin-input-rule@2.0.16
+
 ## 2.0.0
 
 ### Major Changes

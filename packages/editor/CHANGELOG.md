@@ -1,5 +1,11 @@
 # Changelog
 
+## 4.3.1
+
+### Patch Changes
+
+- [#2126](https://github.com/portabletext/editor/pull/2126) [`427ccce`](https://github.com/portabletext/editor/commit/427cccef816c9b6af520123bfeb56b91738a7012) Thanks [@christianhg](https://github.com/christianhg)! - fix: use `process.env['NODE_ENV'] === 'test'` instead of `__TEST__`
+
 ## 4.3.0
 
 ### Minor Changes
