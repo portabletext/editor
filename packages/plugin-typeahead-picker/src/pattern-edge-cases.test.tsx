@@ -243,6 +243,49 @@ describe('delimiter edge cases', () => {
     })
   })
 
+  test('delimiter works even when not in keyword character class', async () => {
+    // The delimiter does not need to be in the keyword pattern's character class.
+    // When the delimiter is typed:
+    // - If there's an exact match → auto-complete
+    // - If no exact match → picker stays active (in 'no matches' or 'showing matches' state)
+    const picker = createPicker({
+      trigger: /:/,
+      keyword: /\w*/, // \w does NOT include ':'
+      delimiter: ':',
+      getMatches: ({keyword}) => {
+        if (keyword === 'joy') {
+          return [{key: '1', value: '😂', type: 'exact'}]
+        }
+        return [] // No matches for other keywords
+      },
+    })
+    const {locator, stateLocator} = await setupTest(picker)
+
+    // Case 1: exact match - should auto-complete
+    await userEvent.click(locator)
+    await userEvent.type(locator, ':joy:')
+
+    await vi.waitFor(() => {
+      expect(locator.element().textContent).toContain('😂')
+      expect(stateLocator.element().textContent).toEqual('idle')
+    })
+
+    // Case 2: no matches - should stay active (in 'no matches' state)
+    await userEvent.type(locator, ':xyz:')
+
+    await vi.waitFor(() => {
+      expect(stateLocator.element().textContent).toEqual('active')
+    })
+
+    // Case 3: typing another : after no match - what happens?
+    await userEvent.type(locator, ':')
+
+    await vi.waitFor(() => {
+      // Cursor moves outside partial pattern bounds, picker dismisses
+      expect(stateLocator.element().textContent).toEqual('idle')
+    })
+  })
+
   test('multi-character delimiter - picker dismisses on first delimiter char', async () => {
     // Multi-character delimiter doesn't work when the keyword character
     // class doesn't match the delimiter character.
