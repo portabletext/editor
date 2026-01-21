@@ -167,7 +167,8 @@ export const mutationMachine = setup({
         () => {
           sendBack({type: 'emit changes'})
         },
-        typeof __TEST__ !== 'undefined' && __TEST__ ? 250 : 1000,
+        // @ts-expect-error - dot notation required for Vite to replace at build time
+        process.env.NODE_ENV === 'test' ? 250 : 1000,
       )
 
       return () => {

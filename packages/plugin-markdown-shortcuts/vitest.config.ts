@@ -6,9 +6,6 @@ export default defineConfig({
   test: {
     projects: [
       {
-        define: {
-          __TEST__: 'true',
-        },
         plugins: [
           react({
             babel: {plugins: [['babel-plugin-react-compiler', {target: '19'}]]},
