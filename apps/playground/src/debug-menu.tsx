@@ -1,9 +1,7 @@
 import {useEditor} from '@portabletext/editor'
 import {useSelector} from '@xstate/react'
-import {CopyIcon, TrashIcon} from 'lucide-react'
+import {TrashIcon} from 'lucide-react'
 import {TooltipTrigger} from 'react-aria-components'
-import {reverse} from 'remeda'
-import {EditorPatchesPreview} from './editor-patches-preview'
 import type {EditorActorRef} from './playground-machine'
 import {Button} from './primitives/button'
 import {Container} from './primitives/container'
@@ -22,10 +20,7 @@ export function DebugMenu(props: {
     props.editorRef,
     (s) => s.context.featureFlags,
   )
-  const showingPatchesPreview = useSelector(props.editorRef, (s) =>
-    s.matches({'patches preview': 'shown'}),
-  )
-  const showingSelectionPreivew = useSelector(props.editorRef, (s) =>
+  const showingSelectionPreview = useSelector(props.editorRef, (s) =>
     s.matches({'selection preview': 'shown'}),
   )
   const showingValuePreview = useSelector(props.editorRef, (s) =>
@@ -36,9 +31,6 @@ export function DebugMenu(props: {
   )
   const valueSubscriptionActive = useSelector(props.editorRef, (s) =>
     s.matches({'value subscription': 'active'}),
-  )
-  const patchesReceived = useSelector(props.editorRef, (s) =>
-    reverse(s.context.patchesReceived),
   )
 
   return (
@@ -224,44 +216,7 @@ export function DebugMenu(props: {
       <Separator orientation="horizontal" />
       <Toolbar>
         <Switch
-          isSelected={showingPatchesPreview}
-          onChange={() => {
-            props.editorRef.send({type: 'toggle patches preview'})
-          }}
-        >
-          Patches
-        </Switch>
-        <TooltipTrigger>
-          <Button
-            size="sm"
-            variant="destructive"
-            onPress={() => {
-              props.editorRef.send({type: 'clear stored patches'})
-            }}
-          >
-            <TrashIcon className="size-3" />
-          </Button>
-          <Tooltip>Clear patches</Tooltip>
-        </TooltipTrigger>
-        <TooltipTrigger>
-          <Button
-            size="sm"
-            variant="secondary"
-            onPress={() => {
-              props.editorRef.send({type: 'copy patches'})
-            }}
-          >
-            <CopyIcon className="size-3" />
-          </Button>
-          <Tooltip>Copy</Tooltip>
-        </TooltipTrigger>
-      </Toolbar>
-      {showingPatchesPreview ? (
-        <EditorPatchesPreview patches={patchesReceived} />
-      ) : null}
-      <Toolbar>
-        <Switch
-          isSelected={showingSelectionPreivew}
+          isSelected={showingSelectionPreview}
           onChange={() => {
             props.editorRef.send({type: 'toggle selection preview'})
           }}
@@ -269,7 +224,7 @@ export function DebugMenu(props: {
           Selection
         </Switch>
       </Toolbar>
-      {showingSelectionPreivew ? (
+      {showingSelectionPreview ? (
         <SelectionPreview editorId={props.editorRef.id} />
       ) : null}
       <Toolbar>

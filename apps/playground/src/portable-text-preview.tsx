@@ -1,9 +1,13 @@
 import {useActorRef, useSelector} from '@xstate/react'
+import {CheckIcon, CopyIcon} from 'lucide-react'
 import {useEffect} from 'react'
+import {TooltipTrigger} from 'react-aria-components'
 import {highlightMachine} from './highlight-json-machine'
 import type {PlaygroundActorRef} from './playground-machine'
+import {Button} from './primitives/button'
 import {Container} from './primitives/container'
 import {Spinner} from './primitives/spinner'
+import {Tooltip} from './primitives/tooltip'
 
 export function PortableTextPreview(props: {
   playgroundRef: PlaygroundActorRef
@@ -20,6 +24,9 @@ export function PortableTextPreview(props: {
     highlightRef,
     (s) => s.context.highlightedCode,
   )
+  const isCopied = useSelector(props.playgroundRef, (s) =>
+    s.matches({'copying value': 'copied'}),
+  )
 
   useEffect(() => {
     props.playgroundRef.subscribe((s) => {
@@ -31,7 +38,24 @@ export function PortableTextPreview(props: {
   }, [props.playgroundRef, highlightRef])
 
   return (
-    <>
+    <div className="relative">
+      <TooltipTrigger>
+        <Button
+          variant="secondary"
+          size="sm"
+          className="absolute top-2 right-2 z-10"
+          onPress={() => {
+            props.playgroundRef.send({type: 'copy value'})
+          }}
+        >
+          {isCopied ? (
+            <CheckIcon className="size-3 text-green-600 dark:text-green-400" />
+          ) : (
+            <CopyIcon className="size-3" />
+          )}
+        </Button>
+        <Tooltip>{isCopied ? 'Copied!' : 'Copy to clipboard'}</Tooltip>
+      </TooltipTrigger>
       {highlightedPortableText ? (
         <Container
           variant="ghost"
@@ -41,6 +65,6 @@ export function PortableTextPreview(props: {
       ) : (
         <Spinner />
       )}
-    </>
+    </div>
   )
 }

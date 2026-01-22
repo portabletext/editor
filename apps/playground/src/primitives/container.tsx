@@ -3,7 +3,7 @@ import {twMerge} from 'tailwind-merge'
 import {tv} from 'tailwind-variants'
 
 export const container = tv({
-  base: 'bg-white',
+  base: 'bg-white dark:bg-gray-800',
   variants: {
     variant: {
       default: 'p-2 rounded-md shadow-sm',

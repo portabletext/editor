@@ -15,6 +15,11 @@
 [data-list-item]::before {
   text-align: right;
   grid-column: 1;
+  color: var(--tw-prose-bullets, currentColor);
+}
+
+:where(.dark) [data-list-item]::before {
+  color: #9ca3af;
 }
 
 [data-list-item='number'] {

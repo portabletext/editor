@@ -5,7 +5,7 @@ import {
 import {tv} from 'tailwind-variants'
 
 const styles = tv({
-  base: 'bg-gray-300 text-gray-300',
+  base: 'bg-gray-300 dark:bg-gray-600 text-gray-300 dark:text-gray-600',
   variants: {
     orientation: {
       horizontal: 'h-px w-full',

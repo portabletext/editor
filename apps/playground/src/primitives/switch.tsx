@@ -15,11 +15,12 @@ const track = tv({
   base: 'flex h-4 w-7 px-px items-center shrink-0 cursor-default rounded-full transition duration-200 ease-in-out shadow-inner border border-transparent',
   variants: {
     isSelected: {
-      false: 'bg-gray-400 group-pressed:bg-gray-500',
-      true: 'bg-gray-700 forced-colors:!bg-[Highlight] group-pressed:bg-gray-800',
+      false:
+        'bg-gray-300 dark:bg-gray-600 group-pressed:bg-gray-400 dark:group-pressed:bg-gray-500',
+      true: 'bg-blue-600 dark:bg-blue-500 forced-colors:!bg-[Highlight] group-pressed:bg-blue-700 dark:group-pressed:bg-blue-400',
     },
     isDisabled: {
-      true: 'bg-gray-200 forced-colors:group-selected:!bg-[GrayText] forced-colors:border-[GrayText]',
+      true: 'bg-gray-200 dark:bg-gray-700 forced-colors:group-selected:!bg-[GrayText] forced-colors:border-[GrayText]',
     },
   },
 })
@@ -43,7 +44,7 @@ export function Switch({children, ...props}: SwitchProps) {
       {...props}
       className={composeTailwindRenderProps(
         props.className,
-        'group flex gap-2 items-center text-gray-800 disabled:text-gray-300 forced-colors:disabled:text-[GrayText] text-sm transition py-[3px]',
+        'group flex gap-2 items-center text-gray-800 dark:text-gray-200 disabled:text-gray-300 dark:disabled:text-gray-600 forced-colors:disabled:text-[GrayText] text-sm transition py-[3px]',
       )}
     >
       {(renderProps) => (

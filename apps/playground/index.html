@@ -1,13 +1,29 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/pte.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Portable Text Playground</title>
     <link rel="stylesheet" href="/src/index.css" />
+    <script>
+      ;(() => {
+        const stored = localStorage.getItem('pte-theme-mode')
+        const mode =
+          stored === 'light' || stored === 'dark' || stored === 'system'
+            ? stored
+            : 'system'
+        const isDark =
+          mode === 'dark' ||
+          (mode === 'system' &&
+            window.matchMedia('(prefers-color-scheme: dark)').matches)
+        if (isDark) {
+          document.documentElement.classList.add('dark')
+        }
+      })()
+    </script>
   </head>
-  <body class="bg-gray-50">
+  <body class="bg-gray-50 dark:bg-gray-900 transition-colors">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

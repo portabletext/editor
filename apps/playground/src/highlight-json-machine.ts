@@ -14,12 +14,28 @@ function formatJson(json: string) {
 }
 
 function highlightJson(json: string, variant: 'default' | 'ghost') {
+  const lightBg =
+    variant === 'default' ? 'var(--color-white)' : 'var(--color-gray-50)'
+  const darkBg =
+    variant === 'default' ? 'var(--color-gray-800)' : 'var(--color-gray-900)'
+
   return codeToHtml(json, {
     lang: 'json',
-    theme: 'github-light',
+    themes: {
+      light: 'github-light',
+      dark: 'github-dark',
+    },
+    defaultColor: false,
+    cssVariablePrefix: '--shiki-',
     colorReplacements: {
-      '#fff':
-        variant === 'default' ? 'var(--color-white)' : 'var(--color-gray-50)',
+      'github-light': {
+        '#fff': lightBg,
+        '#24292e': 'var(--color-gray-900)',
+      },
+      'github-dark': {
+        '#24292e': darkBg,
+        '#e1e4e8': 'var(--color-gray-100)',
+      },
     },
   })
 }
