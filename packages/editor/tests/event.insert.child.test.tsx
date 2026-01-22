@@ -302,6 +302,12 @@ describe('event.insert.child', () => {
       expect(patches).toEqual([
         {
           origin: 'local',
+          type: 'setIfMissing',
+          path: [{_key: blockKey}, 'children'],
+          value: [],
+        },
+        {
+          origin: 'local',
           type: 'insert',
           path: [{_key: blockKey}, 'children', 0],
           position: 'after',
@@ -312,6 +318,12 @@ describe('event.insert.child', () => {
               symbol: 'AAPL',
             },
           ],
+        },
+        {
+          origin: 'local',
+          type: 'setIfMissing',
+          path: [{_key: blockKey}, 'children'],
+          value: [],
         },
         {
           origin: 'local',
