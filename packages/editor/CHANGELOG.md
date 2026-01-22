@@ -1,5 +1,11 @@
 # Changelog
 
+## 4.3.2
+
+### Patch Changes
+
+- [#2131](https://github.com/portabletext/editor/pull/2131) [`cdd34ea`](https://github.com/portabletext/editor/commit/cdd34eae96da4fdcc3b6c3272e0e89b88c410252) Thanks [@christianhg](https://github.com/christianhg)! - fix(value sync): problem with adding children to text blocks
+
 ## 4.3.1
 
 ### Patch Changes
