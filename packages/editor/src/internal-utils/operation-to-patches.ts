@@ -314,6 +314,9 @@ export function insertNodePatch(
       node._type = 'span'
       node.marks = []
     }
+
+    // Defensive setIfMissing to ensure children array exists before inserting
+    const setIfMissingPatch = setIfMissing([], [{_key: block._key}, 'children'])
     const blk = fromSlateValue(
       [
         {
@@ -326,6 +329,7 @@ export function insertNodePatch(
     )[0] as PortableTextTextBlock
     const child = blk.children[0]
     return [
+      setIfMissingPatch,
       insert([child], position, [
         {_key: block._key},
         'children',
@@ -389,6 +393,8 @@ export function splitNodePatch(
         )[0] as PortableTextTextBlock
       ).children
 
+      // Defensive setIfMissing to ensure children array exists before inserting
+      patches.push(setIfMissing([], [{_key: splitBlock._key}, 'children']))
       patches.push(
         insert(targetSpans, 'after', [
           {_key: splitBlock._key},
@@ -563,6 +569,8 @@ export function moveNodePatch(
       fromSlateValue([block], schema.block.name)[0] as PortableTextTextBlock
     ).children[operation.path[1]]
     patches.push(unset([{_key: block._key}, 'children', {_key: child._key}]))
+    // Defensive setIfMissing to ensure children array exists before inserting
+    patches.push(setIfMissing([], [{_key: targetBlock._key}, 'children']))
     patches.push(
       insert([childToInsert], position, [
         {_key: targetBlock._key},

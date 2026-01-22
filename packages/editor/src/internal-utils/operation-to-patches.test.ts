@@ -142,6 +142,16 @@ describe('operationToPatches', () => {
     ).toMatchInlineSnapshot(`
       [
         {
+          "path": [
+            {
+              "_key": "1f2e64b47787",
+            },
+            "children",
+          ],
+          "type": "setIfMissing",
+          "value": [],
+        },
+        {
           "items": [
             {
               "_key": "773866318fa8",
@@ -285,6 +295,16 @@ describe('operationToPatches', () => {
       ),
     ).toMatchInlineSnapshot(`
       [
+        {
+          "path": [
+            {
+              "_key": "1f2e64b47787",
+            },
+            "children",
+          ],
+          "type": "setIfMissing",
+          "value": [],
+        },
         {
           "items": [
             {

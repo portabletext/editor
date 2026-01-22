@@ -365,6 +365,12 @@ describe('Feature: Self-solving', () => {
       expect(patches).toEqual([
         {
           origin: 'local',
+          type: 'setIfMissing',
+          path: [{_key: blockKey}, 'children'],
+          value: [],
+        },
+        {
+          origin: 'local',
           type: 'insert',
           path: [{_key: blockKey}, 'children', 0],
           position: 'after',
