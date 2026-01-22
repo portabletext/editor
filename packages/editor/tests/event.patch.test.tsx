@@ -1,4 +1,5 @@
 import {
+  applyAll,
   diffMatchPatch,
   insert,
   set,
@@ -6,7 +7,7 @@ import {
   unset,
   type Patch,
 } from '@portabletext/patches'
-import {defineSchema} from '@portabletext/schema'
+import {defineSchema, type PortableTextBlock} from '@portabletext/schema'
 import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
@@ -491,6 +492,144 @@ describe('event.patch', () => {
             'text',
           ]),
         ])
+      })
+    })
+  })
+
+  describe('applying patches to remote value', () => {
+    describe('remote value: []', () => {
+      test('Scenario: Typing into empty editor', async () => {
+        let remoteValue: PortableTextBlock[] = []
+
+        const {editor, locator} = await createTestEditor({
+          children: (
+            <EventListenerPlugin
+              on={(event) => {
+                if (event.type === 'patch') {
+                  const {origin: _, ...patch} = event.patch
+                  remoteValue = applyAll(remoteValue, [patch])
+                }
+              }}
+            />
+          ),
+        })
+
+        await userEvent.click(locator)
+        await userEvent.type(locator, 'hello')
+
+        await vi.waitFor(() => {
+          expect(editor.getSnapshot().context.value).toEqual(remoteValue)
+          expect(getTersePt(editor.getSnapshot().context)).toEqual(['hello'])
+        })
+      })
+
+      test('Scenario: Pasting into empty editor', async () => {
+        let remoteValue: PortableTextBlock[] = []
+
+        const {editor, locator} = await createTestEditor({
+          children: (
+            <EventListenerPlugin
+              on={(event) => {
+                if (event.type === 'patch') {
+                  const {origin: _, ...patch} = event.patch
+                  remoteValue = applyAll(remoteValue, [patch])
+                }
+              }}
+            />
+          ),
+        })
+
+        await userEvent.click(locator)
+
+        await vi.waitFor(() => {
+          expect(editor.getSnapshot().context.selection).not.toBeNull()
+        })
+
+        const dataTransfer = new DataTransfer()
+        dataTransfer.setData('text/plain', 'hello world')
+
+        editor.send({
+          type: 'clipboard.paste',
+          originEvent: {dataTransfer},
+          position: {
+            selection: editor.getSnapshot().context.selection!,
+          },
+        })
+
+        await vi.waitFor(() => {
+          expect(editor.getSnapshot().context.value).toEqual(remoteValue)
+          expect(getTersePt(editor.getSnapshot().context)).toEqual([
+            'hello world',
+          ])
+        })
+      })
+    })
+
+    describe('remote value: undefined', () => {
+      test('Scenario: Typing into empty editor', async () => {
+        let remoteValue: PortableTextBlock[] | undefined = undefined
+
+        const {editor, locator} = await createTestEditor({
+          children: (
+            <EventListenerPlugin
+              on={(event) => {
+                if (event.type === 'patch') {
+                  const {origin: _, ...patch} = event.patch
+                  remoteValue = applyAll(remoteValue, [patch])
+                }
+              }}
+            />
+          ),
+        })
+
+        await userEvent.click(locator)
+        await userEvent.type(locator, 'hello')
+
+        await vi.waitFor(() => {
+          expect(editor.getSnapshot().context.value).toEqual(remoteValue)
+          expect(getTersePt(editor.getSnapshot().context)).toEqual(['hello'])
+        })
+      })
+
+      test('Scenario: Pasting into empty editor', async () => {
+        let remoteValue: PortableTextBlock[] | undefined = undefined
+
+        const {editor, locator} = await createTestEditor({
+          children: (
+            <EventListenerPlugin
+              on={(event) => {
+                if (event.type === 'patch') {
+                  const {origin: _, ...patch} = event.patch
+                  remoteValue = applyAll(remoteValue, [patch])
+                }
+              }}
+            />
+          ),
+        })
+
+        await userEvent.click(locator)
+
+        await vi.waitFor(() => {
+          expect(editor.getSnapshot().context.selection).not.toBeNull()
+        })
+
+        const dataTransfer = new DataTransfer()
+        dataTransfer.setData('text/plain', 'hello world')
+
+        editor.send({
+          type: 'clipboard.paste',
+          originEvent: {dataTransfer},
+          position: {
+            selection: editor.getSnapshot().context.selection!,
+          },
+        })
+
+        await vi.waitFor(() => {
+          expect(editor.getSnapshot().context.value).toEqual(remoteValue)
+          expect(getTersePt(editor.getSnapshot().context)).toEqual([
+            'hello world',
+          ])
+        })
       })
     })
   })

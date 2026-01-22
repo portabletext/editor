@@ -16,6 +16,7 @@ import {
   insertNodePatch,
   insertTextPatch,
   mergeNodePatch,
+  moveNodePatch,
   removeNodePatch,
   removeTextPatch,
   splitNodePatch,
@@ -163,44 +164,52 @@ describe('operationToPatches', () => {
 
         createDefaultValue(),
       ),
-    ).toMatchInlineSnapshot(`
-      [
-        {
-          "items": [
-            {
-              "_key": "773866318fa8",
-              "_type": "someObject",
-              "title": "The Object",
-            },
-          ],
-          "path": [
-            {
-              "_key": "1f2e64b47787",
-            },
-            "children",
-            {
-              "_key": "c130395c640c",
-            },
-          ],
-          "position": "after",
-          "type": "insert",
-        },
-        {
-          "path": [
-            {
-              "_key": "1f2e64b47787",
-            },
-            "children",
-            {
-              "_key": "c130395c640c",
-            },
-            "text",
-          ],
-          "type": "set",
-          "value": "",
-        },
-      ]
-    `)
+    ).toEqual([
+      {
+        path: [
+          {
+            _key: '1f2e64b47787',
+          },
+          'children',
+        ],
+        type: 'setIfMissing',
+        value: [],
+      },
+      {
+        items: [
+          {
+            _key: '773866318fa8',
+            _type: 'someObject',
+            title: 'The Object',
+          },
+        ],
+        path: [
+          {
+            _key: '1f2e64b47787',
+          },
+          'children',
+          {
+            _key: 'c130395c640c',
+          },
+        ],
+        position: 'after',
+        type: 'insert',
+      },
+      {
+        path: [
+          {
+            _key: '1f2e64b47787',
+          },
+          'children',
+          {
+            _key: 'c130395c640c',
+          },
+          'text',
+        ],
+        type: 'set',
+        value: '',
+      },
+    ])
   })
 
   it('produce correct insert block patch', () => {
@@ -308,6 +317,11 @@ describe('operationToPatches', () => {
         createDefaultValue(),
       ),
     ).toEqual([
+      {
+        type: 'setIfMissing',
+        path: [{_key: '1f2e64b47787'}, 'children'],
+        value: [],
+      },
       {
         items: [
           {
@@ -518,5 +532,175 @@ describe('operationToPatches', () => {
         },
       ]
     `)
+  })
+})
+
+describe('defensive setIfMissing patches', () => {
+  beforeEach(() => {
+    editor.children = createDefaultChildren()
+    editor.onChange()
+  })
+
+  describe(insertNodePatch.name, () => {
+    test('includes setIfMissing before inserting a span into children', () => {
+      const patches = insertNodePatch(
+        schema,
+        editor.children,
+        {
+          type: 'insert_node',
+          path: [0, 3],
+          node: {
+            _type: 'span',
+            _key: 'new-span',
+            text: 'hello',
+            marks: [],
+          },
+        },
+        createDefaultValue(),
+      )
+
+      expect(patches).toEqual([
+        {
+          type: 'setIfMissing',
+          path: [{_key: '1f2e64b47787'}, 'children'],
+          value: [],
+        },
+        {
+          type: 'insert',
+          items: [{_type: 'span', _key: 'new-span', text: 'hello', marks: []}],
+          path: [{_key: '1f2e64b47787'}, 'children', {_key: 'fd9b4a4e6c0b'}],
+          position: 'after',
+        },
+      ])
+    })
+
+    test('includes setIfMissing before inserting an inline object into children', () => {
+      const patches = insertNodePatch(
+        schema,
+        editor.children,
+        {
+          type: 'insert_node',
+          path: [0, 3],
+          node: {
+            _type: 'someObject',
+            _key: 'new-object',
+            value: {title: 'New Object'},
+            __inline: true,
+            children: [{_key: '1', _type: 'span', text: '', marks: []}],
+          },
+        },
+        createDefaultValue(),
+      )
+
+      expect(patches).toEqual([
+        {
+          type: 'setIfMissing',
+          path: [{_key: '1f2e64b47787'}, 'children'],
+          value: [],
+        },
+        {
+          type: 'insert',
+          items: [
+            {_key: 'new-object', _type: 'someObject', title: 'New Object'},
+          ],
+          path: [{_key: '1f2e64b47787'}, 'children', {_key: 'fd9b4a4e6c0b'}],
+          position: 'after',
+        },
+      ])
+    })
+  })
+
+  describe(splitNodePatch.name, () => {
+    test('includes setIfMissing before inserting spans after split', () => {
+      const patches = splitNodePatch(
+        schema,
+        editor.children,
+        {
+          type: 'split_node',
+          path: [0, 0],
+          position: 0,
+          properties: {_type: 'span', _key: 'c130395c640c', marks: []},
+        },
+        createDefaultValue(),
+      )
+
+      expect(patches).toEqual([
+        {
+          type: 'setIfMissing',
+          path: [{_key: '1f2e64b47787'}, 'children'],
+          value: [],
+        },
+        {
+          type: 'insert',
+          items: [
+            {
+              _key: '773866318fa8',
+              _type: 'someObject',
+              title: 'The Object',
+            },
+          ],
+          path: [{_key: '1f2e64b47787'}, 'children', {_key: 'c130395c640c'}],
+          position: 'after',
+        },
+        {
+          type: 'set',
+          path: [
+            {_key: '1f2e64b47787'},
+            'children',
+            {_key: 'c130395c640c'},
+            'text',
+          ],
+          value: '',
+        },
+      ])
+    })
+  })
+
+  describe(moveNodePatch.name, () => {
+    test('includes setIfMissing before inserting child after move', () => {
+      const twoBlockValue = [
+        {
+          _type: 'block',
+          _key: 'block1',
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {_type: 'span', _key: 'span1', text: 'first', marks: []},
+            {_type: 'span', _key: 'span2', text: 'second', marks: []},
+          ],
+        },
+        {
+          _type: 'block',
+          _key: 'block2',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'span3', text: 'third', marks: []}],
+        },
+      ]
+
+      const patches = moveNodePatch(schema, twoBlockValue, {
+        type: 'move_node',
+        path: [0, 1],
+        newPath: [1, 0],
+      })
+
+      expect(patches).toEqual([
+        {
+          type: 'unset',
+          path: [{_key: 'block1'}, 'children', {_key: 'span2'}],
+        },
+        {
+          type: 'setIfMissing',
+          path: [{_key: 'block2'}, 'children'],
+          value: [],
+        },
+        {
+          type: 'insert',
+          items: [{_type: 'span', _key: 'span2', text: 'second', marks: []}],
+          path: [{_key: 'block2'}, 'children', {_key: 'span3'}],
+          position: 'before',
+        },
+      ])
+    })
   })
 })
