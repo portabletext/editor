@@ -106,7 +106,7 @@ export function EmojiListBox(props: {
 }) {
   if (props.matches.length === 0) {
     return (
-      <div className="p-2 flex align-middle gap-2">
+      <div className="p-2 flex align-middle gap-2 text-gray-700 dark:text-gray-200">
         No results found{' '}
         <Button size="sm" variant="secondary" onPress={props.onDismiss}>
           Dismiss
@@ -152,13 +152,17 @@ function EmojiListItem(props: {
     <li
       ref={ref}
       className={`px-2 py-1 cursor-pointer rounded ${
-        props.selected ? 'bg-blue-100' : 'hover:bg-gray-100'
+        props.selected
+          ? 'bg-blue-100 dark:bg-blue-900/50'
+          : 'hover:bg-gray-100 dark:hover:bg-gray-700'
       }`}
       onMouseEnter={props.onMouseEnter}
       onClick={props.onSelect}
     >
       <span className="mr-2">{props.match.emoji}</span>
-      <span className="text-gray-500">:{props.match.keyword}:</span>
+      <span className="text-gray-500 dark:text-gray-400">
+        :{props.match.keyword}:
+      </span>
     </li>
   )
 }

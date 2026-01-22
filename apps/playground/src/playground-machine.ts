@@ -239,6 +239,13 @@ const editorMachine = setup({
   },
 })
 
+export type GlobalPatchEntry = {
+  id: string
+  editorId: string
+  patches: Array<Patch>
+  timestamp: number
+}
+
 export type PlaygroundActorRef = ActorRefFrom<typeof playgroundMachine>
 
 export const playgroundMachine = setup({
@@ -249,6 +256,7 @@ export const playgroundMachine = setup({
       featureFlags: PlaygroundFeatureFlags
       value: Array<PortableTextBlock> | undefined
       rangeDecorations: Array<RangeDecoration>
+      patchFeed: Array<GlobalPatchEntry>
     },
     events: {} as
       | {type: 'add editor'}
@@ -258,6 +266,10 @@ export const playgroundMachine = setup({
         >)
       | {type: 'editor.remove'; editorId: EditorActorRef['id']}
       | {type: 'toggle value'}
+      | {type: 'toggle patches'}
+      | {type: 'clear patches'}
+      | {type: 'copy value'}
+      | {type: 'copy patches'}
       | {type: 'editor.add range decoration'; rangeDecoration: RangeDecoration}
       | {
           type: 'editor.move range decoration'
@@ -290,6 +302,23 @@ export const playgroundMachine = setup({
         assertEvent(event, 'editor.mutation')
         return event.value
       },
+    }),
+    'add to patch feed': assign({
+      patchFeed: ({context, event}) => {
+        assertEvent(event, 'editor.mutation')
+        return [
+          {
+            id: keyGenerator(),
+            editorId: event.editorId,
+            patches: event.patches,
+            timestamp: Date.now(),
+          },
+          ...context.patchFeed,
+        ]
+      },
+    }),
+    'clear patch feed': assign({
+      patchFeed: [],
     }),
     'broadcast value': ({context}) => {
       const value = context.value
@@ -371,6 +400,7 @@ export const playgroundMachine = setup({
   },
   actors: {
     'editor machine': editorMachine,
+    'copy text to clipboard': copyToTextClipboardActor,
   },
 }).createMachine({
   id: 'playground',
@@ -380,6 +410,7 @@ export const playgroundMachine = setup({
     value: [],
     rangeDecorations: [],
     editors: [],
+    patchFeed: [],
   }),
   on: {
     'add editor': {
@@ -389,7 +420,15 @@ export const playgroundMachine = setup({
       actions: ['stop editor', 'remove editor from context'],
     },
     'editor.mutation': {
-      actions: ['broadcast patches', 'update value', 'broadcast value'],
+      actions: [
+        'broadcast patches',
+        'update value',
+        'broadcast value',
+        'add to patch feed',
+      ],
+    },
+    'clear patches': {
+      actions: ['clear patch feed'],
     },
     'editor.add range decoration': {
       actions: ['add range decoration'],
@@ -407,9 +446,81 @@ export const playgroundMachine = setup({
     },
   },
   entry: [raise({type: 'add editor'})],
-  initial: 'value shown',
+  type: 'parallel',
   states: {
-    'value shown': {on: {'toggle value': {target: 'value hidden'}}},
-    'value hidden': {on: {'toggle value': {target: 'value shown'}}},
+    'value visibility': {
+      initial: 'shown',
+      states: {
+        shown: {on: {'toggle value': {target: 'hidden'}}},
+        hidden: {on: {'toggle value': {target: 'shown'}}},
+      },
+    },
+    'patches visibility': {
+      initial: 'shown',
+      states: {
+        shown: {on: {'toggle patches': {target: 'hidden'}}},
+        hidden: {on: {'toggle patches': {target: 'shown'}}},
+      },
+    },
+    'copying value': {
+      initial: 'idle',
+      states: {
+        idle: {
+          on: {
+            'copy value': {target: 'copying'},
+          },
+        },
+        copying: {
+          invoke: {
+            src: 'copy text to clipboard',
+            input: ({context}) => ({
+              text: JSON.stringify(context.value, null, 2),
+            }),
+            onDone: {
+              target: 'copied',
+            },
+            onError: {
+              target: 'idle',
+              actions: [({event}) => console.error(event)],
+            },
+          },
+        },
+        copied: {
+          after: {
+            2000: {target: 'idle'},
+          },
+        },
+      },
+    },
+    'copying patches': {
+      initial: 'idle',
+      states: {
+        idle: {
+          on: {
+            'copy patches': {target: 'copying'},
+          },
+        },
+        copying: {
+          invoke: {
+            src: 'copy text to clipboard',
+            input: ({context}) => ({
+              text: JSON.stringify(context.patchFeed, null, 2),
+            }),
+            onDone: {
+              target: 'copied',
+            },
+            onError: {
+              target: 'idle',
+              actions: [({event}) => console.error(event)],
+            },
+          },
+        },
+        copied: {
+          after: {
+            2000: {target: 'idle'},
+          },
+        },
+      },
+    },
   },
 })

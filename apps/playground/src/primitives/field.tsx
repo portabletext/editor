@@ -20,7 +20,7 @@ export function Label(props: LabelProps) {
     <RACLabel
       {...props}
       className={twMerge(
-        'text-xs text-gray-500 font-medium cursor-default w-fit',
+        'text-xs text-gray-500 dark:text-gray-400 font-medium cursor-default w-fit',
         props.className,
       )}
     />
@@ -32,7 +32,10 @@ export function Description(props: TextProps) {
     <Text
       {...props}
       slot="description"
-      className={twMerge('text-sm text-gray-600', props.className)}
+      className={twMerge(
+        'text-sm text-gray-600 dark:text-gray-400',
+        props.className,
+      )}
     />
   )
 }
@@ -52,21 +55,22 @@ export function FieldError(props: FieldErrorProps) {
 export const fieldBorderStyles = tv({
   variants: {
     isFocusWithin: {
-      false: 'border-gray-300 forced-colors:border-[ButtonBorder]',
-      true: 'border-gray-600 forced-colors:border-[Highlight]',
+      false:
+        'border-gray-300 dark:border-gray-600 forced-colors:border-[ButtonBorder]',
+      true: 'border-gray-600 dark:border-gray-400 forced-colors:border-[Highlight]',
     },
     isInvalid: {
       true: 'border-red-600 forced-colors:border-[Mark]',
     },
     isDisabled: {
-      true: 'border-gray-200 forced-colors:border-[GrayText]',
+      true: 'border-gray-200 dark:border-gray-700 forced-colors:border-[GrayText]',
     },
   },
 })
 
 export const fieldGroupStyles = tv({
   extend: focusRing,
-  base: 'group flex items-center h-9 bg-white forced-colors:bg-[Field] border-2 rounded-lg overflow-hidden',
+  base: 'group flex items-center h-9 bg-white dark:bg-gray-800 forced-colors:bg-[Field] border-2 rounded-lg overflow-hidden',
   variants: fieldBorderStyles.variants,
 })
 
@@ -87,7 +91,7 @@ export function Input(props: InputProps) {
       {...props}
       className={composeTailwindRenderProps(
         props.className,
-        'px-2 py-1.5 border border-gray-300 rounded-md flex-1 min-w-0 outline outline-0 bg-white text-sm text-gray-800 disabled:text-gray-200',
+        'px-2 py-1.5 border border-gray-300 dark:border-gray-600 rounded-md flex-1 min-w-0 outline outline-0 bg-white dark:bg-gray-800 text-sm text-gray-800 dark:text-gray-200 disabled:text-gray-200 dark:disabled:text-gray-600',
       )}
     />
   )

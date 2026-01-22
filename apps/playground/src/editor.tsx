@@ -281,36 +281,42 @@ function EditorEventListener(props: {
 
 const renderAnnotation: RenderAnnotationFunction = (props) => {
   if (CommentAnnotationSchema.safeParse(props).success) {
-    return <span className="bg-yellow-300">{props.children}</span>
+    return (
+      <span className="bg-yellow-300 dark:bg-yellow-700">{props.children}</span>
+    )
   }
 
   if (LinkAnnotationSchema.safeParse(props).success) {
-    return <span className="text-blue-800 underline">{props.children}</span>
+    return (
+      <span className="text-blue-800 dark:text-blue-400 underline">
+        {props.children}
+      </span>
+    )
   }
 
   return props.children
 }
 
 const breakStyle = tv({
-  base: 'my-1 p-1 flex items-center justify-center gap-1 border-2 border-gray-300 rounded',
+  base: 'my-1 p-1 flex items-center justify-center gap-1 border-2 border-gray-300 dark:border-gray-600 rounded',
   variants: {
     selected: {
-      true: 'border-blue-300',
+      true: 'border-blue-300 dark:border-blue-600',
     },
     focused: {
-      true: 'bg-blue-50',
+      true: 'bg-blue-50 dark:bg-blue-900/30',
     },
   },
 })
 
 const imageStyle = tv({
-  base: 'grid grid-cols-[auto_1fr] my-1 items-start gap-1 border-2 border-gray-300 rounded text-sm',
+  base: 'grid grid-cols-[auto_1fr] my-1 items-start gap-1 border-2 border-gray-300 dark:border-gray-600 rounded text-sm',
   variants: {
     selected: {
-      true: 'border-blue-300',
+      true: 'border-blue-300 dark:border-blue-600',
     },
     focused: {
-      true: 'bg-blue-50',
+      true: 'bg-blue-50 dark:bg-blue-900/30',
     },
   },
 })
@@ -345,7 +351,7 @@ const RenderBlock = (props: BlockRenderProps) => {
           focused: props.focused,
         })}
       >
-        <div className="bg-gray-200 size-20 overflow-clip flex items-center justify-center">
+        <div className="bg-gray-200 dark:bg-gray-700 size-20 overflow-clip flex items-center justify-center">
           <img
             className="object-scale-down max-w-full"
             src={image.value.src}
@@ -368,7 +374,9 @@ const RenderBlock = (props: BlockRenderProps) => {
           </div>
           <div className="flex items-center gap-1">
             <PencilIcon className="size-3 shrink-0" />
-            <span className="text-xs text-slate-500">{image.value.alt}</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400">
+              {image.value.alt}
+            </span>
           </div>
         </div>
       </div>
@@ -382,7 +390,7 @@ const RenderBlock = (props: BlockRenderProps) => {
         <div
           contentEditable={false}
           draggable={!readOnly}
-          className={`absolute top-0 -left-3 bottom-0 w-1.5 bg-slate-300 rounded cursor-grab`}
+          className={`absolute top-0 -left-3 bottom-0 w-1.5 bg-slate-300 dark:bg-slate-600 rounded cursor-grab`}
         >
           <span />
         </div>
@@ -399,37 +407,37 @@ const renderDecorator: RenderDecoratorFunction = (props) => {
 }
 
 const stockTickerStyle = tv({
-  base: 'max-w-30 inline-flex items-center gap-1 border-2 border-gray-300 rounded px-1 font-mono text-xs',
+  base: 'max-w-30 inline-flex items-center gap-1 border-2 border-gray-300 dark:border-gray-600 rounded px-1 font-mono text-xs',
   variants: {
     selected: {
-      true: 'border-blue-300',
+      true: 'border-blue-300 dark:border-blue-600',
     },
     focused: {
-      true: 'bg-blue-50',
+      true: 'bg-blue-100 dark:bg-blue-800/60',
     },
   },
 })
 
 const mentionStyle = tv({
-  base: 'inline-flex items-center gap-0.5 bg-blue-100 text-blue-800 rounded px-1 text-sm',
+  base: 'inline-flex items-center gap-0.5 bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300 rounded px-1 text-sm',
   variants: {
     selected: {
-      true: 'ring-2 ring-blue-300',
+      true: 'ring-2 ring-blue-300 dark:ring-blue-600',
     },
     focused: {
-      true: 'bg-blue-200',
+      true: 'bg-blue-200 dark:bg-blue-700/70',
     },
   },
 })
 
 const inlineImageStyle = tv({
-  base: 'max-w-35 grid grid-cols-[auto_1fr] items-start gap-1 border-2 border-gray-300 rounded text-sm',
+  base: 'max-w-35 grid grid-cols-[auto_1fr] items-start gap-1 border-2 border-gray-300 dark:border-gray-600 rounded text-sm',
   variants: {
     selected: {
-      true: 'border-blue-300',
+      true: 'border-blue-300 dark:border-blue-600',
     },
     focused: {
-      true: 'bg-blue-50',
+      true: 'bg-blue-100 dark:bg-blue-800/60',
     },
   },
 })
@@ -477,7 +485,7 @@ const renderChild: RenderChildFunction = (props) => {
           focused: props.focused,
         })}
       >
-        <span className="bg-gray-200 size-5 overflow-clip flex items-center justify-center">
+        <span className="bg-gray-200 dark:bg-gray-700 size-5 overflow-clip flex items-center justify-center">
           <img
             className="object-scale-down max-w-full"
             src={image.value.src}
@@ -499,7 +507,9 @@ const renderListItem: RenderListItemFunction = (props) => {
 }
 
 const renderPlaceholder: RenderPlaceholderFunction = () => (
-  <span className="text-slate-400 px-2">Type something</span>
+  <span className="text-slate-400 dark:text-slate-500 px-2">
+    Type something
+  </span>
 )
 
 const renderStyle: RenderStyleFunction = (props) => {
@@ -559,7 +569,7 @@ const styleMap: Map<string, (props: BlockStyleRenderProps) => JSX.Element> =
     [
       'blockquote',
       (props) => (
-        <blockquote className="my-1 pl-2 py-1 border-slate-300 border-l-4">
+        <blockquote className="my-1 pl-2 py-1 border-slate-300 dark:border-slate-600 border-l-4">
           {props.children}
         </blockquote>
       ),
