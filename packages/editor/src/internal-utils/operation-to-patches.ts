@@ -319,8 +319,11 @@ export function insertNodePatch(
             {_key: block.children[operation.path[1]! - 1]!._key},
           ]
 
+    // Defensive setIfMissing to ensure children array exists before inserting
+    const setIfMissingPatch = setIfMissing([], [{_key: block._key}, 'children'])
+
     if (Text.isText(operation.node)) {
-      return [insert([operation.node], position, path)]
+      return [setIfMissingPatch, insert([operation.node], position, path)]
     }
 
     const _type = operation.node._type
@@ -331,6 +334,7 @@ export function insertNodePatch(
         : ({} satisfies Record<string, unknown>)
 
     return [
+      setIfMissingPatch,
       insert(
         [
           {
@@ -398,6 +402,8 @@ export function splitNodePatch(
         ) as PortableTextTextBlock
       ).children
 
+      // Defensive setIfMissing to ensure children array exists before inserting
+      patches.push(setIfMissing([], [{_key: splitBlock._key}, 'children']))
       patches.push(
         insert(targetSpans, 'after', [
           {_key: splitBlock._key},
@@ -572,6 +578,8 @@ export function moveNodePatch(
     }
 
     patches.push(unset([{_key: block._key}, 'children', {_key: child._key}]))
+    // Defensive setIfMissing to ensure children array exists before inserting
+    patches.push(setIfMissing([], [{_key: targetBlock._key}, 'children']))
     patches.push(
       insert([childToInsert], position, [
         {_key: targetBlock._key},
