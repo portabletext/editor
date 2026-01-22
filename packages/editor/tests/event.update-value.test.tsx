@@ -618,4 +618,69 @@ describe('event.update value', () => {
       ])
     })
   })
+
+  test('Scenario: Changing and adding text block children', async () => {
+    const keyGenerator = createTestKeyGenerator()
+
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const emptySpanKey = keyGenerator()
+    const stockTickerKey = keyGenerator()
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        inlineObjects: [{name: 'stock-ticker'}],
+      }),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {
+              _type: 'span',
+              _key: spanKey,
+              text: 'Hello (NYSE:AAPL)',
+              marks: [],
+            },
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    editor.send({
+      type: 'update value',
+      value: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {_type: 'span', _key: spanKey, text: 'Hello ', marks: []},
+            {_type: 'stock-ticker', _key: stockTickerKey, symbol: 'NYSE:AAPL'},
+            {_type: 'span', _key: emptySpanKey, text: '', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {_type: 'span', _key: spanKey, text: 'Hello ', marks: []},
+            {_type: 'stock-ticker', _key: stockTickerKey, symbol: 'NYSE:AAPL'},
+            {_type: 'span', _key: emptySpanKey, text: '', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+  })
 })

@@ -900,7 +900,7 @@ function updateBlock({
     slateBlock.children.forEach((currentBlockChild, currentBlockChildIndex) => {
       const oldBlockChild = oldBlock.children.at(currentBlockChildIndex)
       const isChildChanged =
-        oldBlockChild && !isEqualChild(currentBlockChild, oldBlockChild)
+        !oldBlockChild || !isEqualChild(currentBlockChild, oldBlockChild)
       const isTextChanged =
         oldBlockChild &&
         Text.isText(oldBlockChild) &&
