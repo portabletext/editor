@@ -382,7 +382,7 @@ importers:
         version: link:../schema
       '@sanity/types':
         specifier: ^5.9.0
-        version: 5.9.0(@types/react@19.2.14)(debug@4.4.3)
+        version: 5.9.0(@types/react@19.2.14)
     devDependencies:
       '@portabletext/test':
         specifier: workspace:^
@@ -392,7 +392,7 @@ importers:
         version: 10.2.1(@types/babel__core@7.20.5)(@types/node@20.19.25)(babel-plugin-react-compiler@1.0.0)(debug@4.4.3)(typescript@5.9.3)
       '@sanity/schema':
         specifier: ^5.9.0
-        version: 5.9.0(@types/react@19.2.14)(debug@4.4.3)
+        version: 5.9.0(@types/react@19.2.14)
       '@types/jsdom':
         specifier: ^27.0.0
         version: 27.0.0
@@ -429,18 +429,15 @@ importers:
       '@portabletext/patches':
         specifier: workspace:*
         version: link:../patches
+      '@portabletext/sanity-bridge':
+        specifier: workspace:^2.0.2
+        version: link:../sanity-bridge
       '@portabletext/schema':
         specifier: workspace:^
         version: link:../schema
       '@portabletext/to-html':
         specifier: ^5.0.1
         version: 5.0.1
-      '@sanity/schema':
-        specifier: ^5.9.0
-        version: 5.9.0(@types/react@19.2.14)(debug@4.4.3)
-      '@sanity/types':
-        specifier: ^5.9.0
-        version: 5.9.0(@types/react@19.2.14)(debug@4.4.3)
       '@xstate/react':
         specifier: ^6.0.0
         version: 6.0.0(@types/react@19.2.14)(react@19.2.3)(xstate@5.25.0)
@@ -457,9 +454,6 @@ importers:
         specifier: ^5.25.0
         version: 5.25.0
     devDependencies:
-      '@portabletext/sanity-bridge':
-        specifier: workspace:*
-        version: link:../sanity-bridge
       '@portabletext/test':
         specifier: workspace:^
         version: link:../test
@@ -937,7 +931,7 @@ importers:
         version: link:../test
       '@sanity/schema':
         specifier: ^5.9.0
-        version: 5.9.0(@types/react@19.2.14)(debug@4.4.3)
+        version: 5.9.0(@types/react@19.2.14)
       '@sanity/sdk-react':
         specifier: ^2.1.2
         version: 2.3.1(@types/react@19.2.14)(immer@11.0.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(use-sync-external-store@1.6.0(react@19.2.3))
@@ -946,7 +940,7 @@ importers:
         version: 2.1.0
       '@sanity/types':
         specifier: ^5.9.0
-        version: 5.9.0(@types/react@19.2.14)(debug@4.4.3)
+        version: 5.9.0(@types/react@19.2.14)
       '@types/react':
         specifier: ^19.2.8
         version: 19.2.14
@@ -1156,10 +1150,10 @@ importers:
         version: link:../schema
       '@sanity/schema':
         specifier: ^5.9.0
-        version: 5.9.0(@types/react@19.2.14)(debug@4.4.3)
+        version: 5.9.0(@types/react@19.2.14)
       '@sanity/types':
         specifier: ^5.9.0
-        version: 5.9.0(@types/react@19.2.14)(debug@4.4.3)
+        version: 5.9.0(@types/react@19.2.14)
     devDependencies:
       '@sanity/pkg-utils':
         specifier: ^10.2.1
@@ -11425,7 +11419,7 @@ snapshots:
 
   '@sanity/browserslist-config@1.0.5': {}
 
-  '@sanity/client@7.14.1(debug@4.4.3)':
+  '@sanity/client@7.14.1':
     dependencies:
       '@sanity/eventsource': 5.0.2
       get-it: 8.7.0(debug@4.4.3)
@@ -11475,7 +11469,7 @@ snapshots:
 
   '@sanity/mutate@0.12.6':
     dependencies:
-      '@sanity/client': 7.14.1(debug@4.4.3)
+      '@sanity/client': 7.14.1
       '@sanity/diff-match-patch': 3.2.0
       '@sanity/uuid': 3.0.2
       hotscript: 1.0.13
@@ -11618,11 +11612,11 @@ snapshots:
       prettier: 3.7.4
       prettier-plugin-packagejson: 2.5.20(prettier@3.7.4)
 
-  '@sanity/schema@5.9.0(@types/react@19.2.14)(debug@4.4.3)':
+  '@sanity/schema@5.9.0(@types/react@19.2.14)':
     dependencies:
       '@sanity/descriptors': 1.3.0
       '@sanity/generate-help-url': 4.0.0
-      '@sanity/types': 5.9.0(@types/react@19.2.14)(debug@4.4.3)
+      '@sanity/types': 5.9.0(@types/react@19.2.14)
       arrify: 2.0.1
       groq-js: 1.26.0
       humanize-list: 1.0.1
@@ -11636,7 +11630,7 @@ snapshots:
 
   '@sanity/sdk-react@2.3.1(@types/react@19.2.14)(immer@11.0.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(use-sync-external-store@1.6.0(react@19.2.3))':
     dependencies:
-      '@sanity/client': 7.14.1(debug@4.4.3)
+      '@sanity/client': 7.14.1
       '@sanity/message-protocol': 0.12.0
       '@sanity/sdk': 2.3.1(@types/react@19.2.14)(immer@11.0.1)(react@19.2.3)(use-sync-external-store@1.6.0(react@19.2.3))
       '@sanity/types': 3.99.0(@types/react@19.2.14)
@@ -11658,7 +11652,7 @@ snapshots:
   '@sanity/sdk@2.3.1(@types/react@19.2.14)(immer@11.0.1)(react@19.2.3)(use-sync-external-store@1.6.0(react@19.2.3))':
     dependencies:
       '@sanity/bifur-client': 0.4.1
-      '@sanity/client': 7.14.1(debug@4.4.3)
+      '@sanity/client': 7.14.1
       '@sanity/comlink': 3.1.1
       '@sanity/diff-match-patch': 3.2.0
       '@sanity/diff-patch': 6.0.0
@@ -11686,15 +11680,15 @@ snapshots:
 
   '@sanity/types@3.99.0(@types/react@19.2.14)':
     dependencies:
-      '@sanity/client': 7.14.1(debug@4.4.3)
+      '@sanity/client': 7.14.1
       '@sanity/media-library-types': 1.2.0
       '@types/react': 19.2.14
     transitivePeerDependencies:
       - debug
 
-  '@sanity/types@5.9.0(@types/react@19.2.14)(debug@4.4.3)':
+  '@sanity/types@5.9.0(@types/react@19.2.14)':
     dependencies:
-      '@sanity/client': 7.14.1(debug@4.4.3)
+      '@sanity/client': 7.14.1
       '@sanity/media-library-types': 1.2.0
       '@types/react': 19.2.14
     transitivePeerDependencies:

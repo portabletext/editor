@@ -1,14 +1,8 @@
-import {
-  compileSchemaDefinitionToPortableTextMemberSchemaTypes,
-  createPortableTextMemberSchemaTypes,
-  portableTextMemberSchemaTypesToSchema,
-} from '@portabletext/sanity-bridge'
 import {compileSchema} from '@portabletext/schema'
 import {createActor} from 'xstate'
-import {createCoreConverters} from '../converters/converters.core'
+import {coreConverters} from '../converters/converters.core'
 import type {Editor, EditorConfig} from '../editor'
 import {debug} from '../internal-utils/debug'
-import {compileType} from '../internal-utils/schema'
 import {corePriority} from '../priority/priority.core'
 import {createEditorPriority} from '../priority/priority.types'
 import type {EditableAPI} from '../types/editor'
@@ -159,36 +153,15 @@ export function createInternalEditor(config: EditorConfig): {
 }
 
 function editorConfigToMachineInput(config: EditorConfig) {
-  const {legacySchema, schema} = compileSchemasFromEditorConfig(config)
+  const schema = compileSchema(config.schemaDefinition)
 
   return {
-    converters: createCoreConverters(legacySchema),
-    getLegacySchema: () => legacySchema,
+    converters: coreConverters,
     keyGenerator: config.keyGenerator ?? defaultKeyGenerator,
     readOnly: config.readOnly,
     schema,
     initialValue: config.initialValue,
   } as const
-}
-
-function compileSchemasFromEditorConfig(config: EditorConfig) {
-  const legacySchema = config.schemaDefinition
-    ? compileSchemaDefinitionToPortableTextMemberSchemaTypes(
-        config.schemaDefinition,
-      )
-    : createPortableTextMemberSchemaTypes(
-        config.schema.hasOwnProperty('jsonType')
-          ? config.schema
-          : compileType(config.schema),
-      )
-  const schema = config.schemaDefinition
-    ? compileSchema(config.schemaDefinition)
-    : portableTextMemberSchemaTypesToSchema(legacySchema)
-
-  return {
-    legacySchema,
-    schema,
-  }
 }
 
 function createActors(config: {

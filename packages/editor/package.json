@@ -91,8 +91,6 @@
     "@portabletext/patches": "workspace:^",
     "@portabletext/schema": "workspace:^",
     "@portabletext/to-html": "^5.0.1",
-    "@sanity/schema": "^5.9.0",
-    "@sanity/types": "^5.9.0",
     "@xstate/react": "^6.0.0",
     "debug": "^4.4.3",
     "is-hotkey": "^0.2.0",
@@ -100,7 +98,6 @@
     "xstate": "^5.25.0"
   },
   "devDependencies": {
-    "@portabletext/sanity-bridge": "workspace:*",
     "@portabletext/test": "workspace:^",
     "@sanity/diff-match-patch": "^3.2.0",
     "@sanity/pkg-utils": "^10.2.1",
