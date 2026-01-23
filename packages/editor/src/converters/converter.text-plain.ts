@@ -1,113 +1,106 @@
 import {htmlToBlocks} from '@portabletext/block-tools'
-import {isTextBlock, type PortableTextBlock} from '@portabletext/schema'
+import {isTextBlock} from '@portabletext/schema'
 import {getSelectedValue} from '../selectors/selector.get-selected-value'
-import type {PortableTextMemberSchemaTypes} from '../types/editor'
 import {parseBlock} from '../utils/parse-blocks'
 import {defineConverter} from './converter.types'
 
-export function createConverterTextPlain(
-  legacySchema: PortableTextMemberSchemaTypes,
-) {
-  return defineConverter({
-    mimeType: 'text/plain',
-    serialize: ({snapshot, event}) => {
-      const selection = snapshot.context.selection
+export const converterTextPlain = defineConverter({
+  mimeType: 'text/plain',
+  serialize: ({snapshot, event}) => {
+    const selection = snapshot.context.selection
 
-      if (!selection) {
-        return {
-          type: 'serialization.failure',
-          mimeType: 'text/plain',
-          originEvent: event.originEvent,
-          reason: 'No selection',
-        }
-      }
-
-      const blocks = getSelectedValue(snapshot)
-
-      const data = blocks
-        .map((block) => {
-          if (isTextBlock(snapshot.context, block)) {
-            return block.children
-              .map((child) => {
-                if (child._type === snapshot.context.schema.span.name) {
-                  return child.text
-                }
-
-                return event.originEvent === 'drag.dragstart'
-                  ? `[${
-                      snapshot.context.schema.inlineObjects.find(
-                        (inlineObjectType) =>
-                          inlineObjectType.name === child._type,
-                      )?.title ?? 'Object'
-                    }]`
-                  : ''
-              })
-              .join('')
-          }
-
-          return event.originEvent === 'drag.dragstart'
-            ? `[${
-                snapshot.context.schema.blockObjects.find(
-                  (blockObjectType) => blockObjectType.name === block._type,
-                )?.title ?? 'Object'
-              }]`
-            : ''
-        })
-        .filter((block) => block !== '')
-        .join('\n\n')
-
+    if (!selection) {
       return {
-        type: 'serialization.success',
-        data,
+        type: 'serialization.failure',
         mimeType: 'text/plain',
         originEvent: event.originEvent,
+        reason: 'No selection',
       }
-    },
-    deserialize: ({snapshot, event}) => {
-      const html = escapeHtml(event.data)
-        .split(/\n{2,}/)
-        .map((line) =>
-          line
-            ? `<p>${line.replace(/(?:\r\n|\r|\n)/g, '<br/>')}</p>`
-            : '<p></p>',
-        )
-        .join('')
+    }
 
-      const textToHtml = `<html><body>${html}</body></html>`
+    const blocks = getSelectedValue(snapshot)
 
-      const blocks = htmlToBlocks(textToHtml, legacySchema.portableText, {
-        keyGenerator: snapshot.context.keyGenerator,
-      }) as Array<PortableTextBlock>
+    const data = blocks
+      .map((block) => {
+        if (isTextBlock(snapshot.context, block)) {
+          return block.children
+            .map((child) => {
+              if (child._type === snapshot.context.schema.span.name) {
+                return child.text
+              }
 
-      const parsedBlocks = blocks.flatMap((block) => {
-        const parsedBlock = parseBlock({
-          context: snapshot.context,
-          block,
-          options: {
-            normalize: false,
-            removeUnusedMarkDefs: true,
-            validateFields: false,
-          },
-        })
-        return parsedBlock ? [parsedBlock] : []
-      })
-
-      if (parsedBlocks.length === 0) {
-        return {
-          type: 'deserialization.failure',
-          mimeType: 'text/plain',
-          reason: 'No blocks deserialized',
+              return event.originEvent === 'drag.dragstart'
+                ? `[${
+                    snapshot.context.schema.inlineObjects.find(
+                      (inlineObjectType) =>
+                        inlineObjectType.name === child._type,
+                    )?.title ?? 'Object'
+                  }]`
+                : ''
+            })
+            .join('')
         }
-      }
 
+        return event.originEvent === 'drag.dragstart'
+          ? `[${
+              snapshot.context.schema.blockObjects.find(
+                (blockObjectType) => blockObjectType.name === block._type,
+              )?.title ?? 'Object'
+            }]`
+          : ''
+      })
+      .filter((block) => block !== '')
+      .join('\n\n')
+
+    return {
+      type: 'serialization.success',
+      data,
+      mimeType: 'text/plain',
+      originEvent: event.originEvent,
+    }
+  },
+  deserialize: ({snapshot, event}) => {
+    const html = escapeHtml(event.data)
+      .split(/\n{2,}/)
+      .map((line) =>
+        line ? `<p>${line.replace(/(?:\r\n|\r|\n)/g, '<br/>')}</p>` : '<p></p>',
+      )
+      .join('')
+
+    const textToHtml = `<html><body>${html}</body></html>`
+
+    const blocks = htmlToBlocks(textToHtml, snapshot.context.schema, {
+      keyGenerator: snapshot.context.keyGenerator,
+    })
+
+    const parsedBlocks = blocks.flatMap((block) => {
+      const parsedBlock = parseBlock({
+        context: snapshot.context,
+        block,
+        options: {
+          normalize: false,
+          removeUnusedMarkDefs: true,
+          validateFields: false,
+        },
+      })
+      return parsedBlock ? [parsedBlock] : []
+    })
+
+    if (parsedBlocks.length === 0) {
       return {
-        type: 'deserialization.success',
-        data: parsedBlocks,
+        type: 'deserialization.failure',
         mimeType: 'text/plain',
+        reason: 'No blocks deserialized',
       }
-    },
-  })
-}
+    }
+
+    return {
+      type: 'deserialization.success',
+      data: parsedBlocks,
+      mimeType: 'text/plain',
+    }
+  },
+})
 
 const entityMap: Record<string, string> = {
   '&': '&amp;',
