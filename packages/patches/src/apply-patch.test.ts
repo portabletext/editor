@@ -1,6 +1,7 @@
 import {makeDiff, makePatches, stringifyPatches} from '@sanity/diff-match-patch'
 import {describe, expect, test} from 'vitest'
-import applyPatch from './applyPatch'
+import applyPatch, {applyAll} from './applyPatch'
+import {insert, setIfMissing} from './patches'
 
 describe(applyPatch.name, () => {
   const keyGenerator = createTestKeyGenerator()
@@ -580,6 +581,32 @@ describe(applyPatch.name, () => {
           },
         ])
       })
+    })
+  })
+})
+
+describe(applyAll.name, () => {
+  describe('applying patches to undefined', () => {
+    test('setIfMissing on undefined returns the value', () => {
+      expect(applyAll(undefined, [setIfMissing([], [])])).toEqual([])
+    })
+
+    test('sequence of setIfMissing and insert on undefined', () => {
+      const block = {
+        _key: 'k0',
+        _type: 'block',
+        children: [{_key: 'k1', _type: 'span', text: ''}],
+      }
+
+      const patches = [setIfMissing([], []), insert([block], 'before', [0])]
+
+      expect(applyAll(undefined, patches)).toEqual([block])
+    })
+  })
+
+  describe('applying patches to null', () => {
+    test('setIfMissing on null does NOT apply (null is a valid value)', () => {
+      expect(applyAll(null, [setIfMissing([], [])])).toEqual(null)
     })
   })
 })
