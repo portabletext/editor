@@ -3,11 +3,7 @@ import {useContext, useRef, type ReactElement} from 'react'
 import type {DropPosition} from '../behaviors/behavior.core.drop-position'
 import type {Element as SlateElement} from '../slate'
 import type {RenderElementProps} from '../slate-react'
-import type {
-  BlockRenderProps,
-  PortableTextMemberSchemaTypes,
-  RenderBlockFunction,
-} from '../types/editor'
+import type {BlockRenderProps, RenderBlockFunction} from '../types/editor'
 import type {EditorSchema} from './editor-schema'
 import {RenderDefaultBlockObject} from './render.default-object'
 import {DropIndicator} from './render.drop-indicator'
@@ -19,7 +15,6 @@ export function RenderBlockObject(props: {
   dropPosition?: DropPosition['positionBlock']
   children: ReactElement
   element: SlateElement
-  legacySchema: PortableTextMemberSchemaTypes
   readOnly: boolean
   renderBlock?: RenderBlockFunction
   schema: EditorSchema
@@ -30,11 +25,11 @@ export function RenderBlockObject(props: {
   const selected = selectedBlockKeys.has(props.element._key)
   const focused = focusedBlockKey === props.element._key
 
-  const legacySchemaType = props.legacySchema.blockObjects.find(
+  const blockObjectSchemaType = props.schema.blockObjects.find(
     (schemaType) => schemaType.name === props.element._type,
   )
 
-  if (!legacySchemaType) {
+  if (!blockObjectSchemaType) {
     console.error(
       `Unable to find Block Object "${props.element._type}" in Schema`,
     )
@@ -60,15 +55,14 @@ export function RenderBlockObject(props: {
         contentEditable={false}
         draggable={!props.readOnly}
       >
-        {props.renderBlock && legacySchemaType ? (
+        {props.renderBlock && blockObjectSchemaType ? (
           <RenderBlock
             renderBlock={props.renderBlock}
             editorElementRef={blockObjectRef}
             focused={focused}
             path={[{_key: props.element._key}]}
-            schemaType={legacySchemaType}
+            schemaType={blockObjectSchemaType}
             selected={selected}
-            type={legacySchemaType}
             value={blockObject}
           >
             <RenderDefaultBlockObject blockObject={blockObject} />
@@ -90,7 +84,6 @@ function RenderBlock({
   path,
   schemaType,
   selected,
-  type,
   value,
 }: {
   renderBlock: RenderBlockFunction
@@ -102,7 +95,6 @@ function RenderBlock({
     path,
     schemaType,
     selected,
-    type,
     value,
   })
 }
