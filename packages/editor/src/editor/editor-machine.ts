@@ -23,10 +23,7 @@ import {debug} from '../internal-utils/debug'
 import type {EventPosition} from '../internal-utils/event-position'
 import {sortByPriority} from '../priority/priority.sort'
 import type {NamespaceEvent, OmitFromUnion} from '../type-utils'
-import type {
-  EditorSelection,
-  PortableTextMemberSchemaTypes,
-} from '../types/editor'
+import type {EditorSelection} from '../types/editor'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import type {EditorSchema} from './editor-schema'
 import type {
@@ -178,7 +175,6 @@ export const editorMachine = setup({
       behaviors: Set<BehaviorConfig>
       behaviorsSorted: boolean
       converters: Set<Converter>
-      getLegacySchema: () => PortableTextMemberSchemaTypes
       keyGenerator: () => string
       pendingEvents: Array<InternalPatchEvent | MutationEvent>
       pendingIncomingPatchesEvents: Array<PatchesEvent>
@@ -196,7 +192,6 @@ export const editorMachine = setup({
     emitted: {} as InternalEditorEmittedEvent,
     input: {} as {
       converters?: Array<Converter>
-      getLegacySchema: () => PortableTextMemberSchemaTypes
       keyGenerator: () => string
       readOnly?: boolean
       schema: EditorSchema
@@ -383,7 +378,6 @@ export const editorMachine = setup({
     behaviors: new Set(coreBehaviorsConfig),
     behaviorsSorted: false,
     converters: new Set(input.converters ?? []),
-    getLegacySchema: input.getLegacySchema,
     keyGenerator: input.keyGenerator,
     pendingEvents: [],
     pendingIncomingPatchesEvents: [],
