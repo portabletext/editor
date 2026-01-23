@@ -1,5 +1,11 @@
 # Changelog
 
+## 4.3.3
+
+### Patch Changes
+
+- [#2133](https://github.com/portabletext/editor/pull/2133) [`c98cbb8`](https://github.com/portabletext/editor/commit/c98cbb806f0887e98a38b5bdfeb2d6f44d9ccc60) Thanks [@christianhg](https://github.com/christianhg)! - fix: produce defensive `setIfMissing` patches before manipulating children
+
 ## 4.3.2
 
 ### Patch Changes
