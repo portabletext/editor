@@ -45,8 +45,8 @@
   },
   "dependencies": {
     "@portabletext/schema": "workspace:^",
-    "@sanity/schema": "^5.3.1",
-    "@sanity/types": "^5.3.1"
+    "@sanity/schema": "^5.6.0",
+    "@sanity/types": "^5.6.0"
   },
   "devDependencies": {
     "@sanity/pkg-utils": "^10.2.1",
