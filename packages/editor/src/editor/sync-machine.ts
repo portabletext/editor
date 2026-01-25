@@ -770,7 +770,7 @@ function syncBlock({
   }
 
   if (validation.valid || validation.resolution?.autoResolve) {
-    if (oldBlock._key === block._key) {
+    if (oldBlock._key === block._key && oldBlock._type === block._type) {
       debug.syncValue('Updating block', oldBlock, block)
 
       Editor.withoutNormalizing(slateEditor, () => {
