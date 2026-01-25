@@ -676,6 +676,72 @@ describe('event.update value', () => {
     })
   })
 
+  test('Scenario: Changing child type from span to inline object (same key)', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const childKey = keyGenerator()
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        inlineObjects: [
+          {name: 'stock-ticker', fields: [{name: 'symbol', type: 'string'}]},
+        ],
+      }),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: childKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: childKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+
+    editor.send({
+      type: 'update value',
+      value: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'stock-ticker', _key: childKey, symbol: 'AAPL'}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    // Slate normalizes inline objects by adding empty spans around them
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {_type: 'span', _key: 'k4', text: '', marks: []},
+            {_type: 'stock-ticker', _key: childKey, symbol: 'AAPL'},
+            {_type: 'span', _key: 'k5', text: '', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+  })
+
   test('Scenario: Changing and adding text block children', async () => {
     const keyGenerator = createTestKeyGenerator()
 
