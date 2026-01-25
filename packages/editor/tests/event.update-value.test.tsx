@@ -619,6 +619,63 @@ describe('event.update value', () => {
     })
   })
 
+  test('Scenario: Changing block type from text to block object (same key)', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {name: 'image', fields: [{name: 'src', type: 'string'}]},
+        ],
+      }),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+
+    editor.send({
+      type: 'update value',
+      value: [
+        {
+          _type: 'image',
+          _key: blockKey,
+          src: 'https://example.com/image.jpg',
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'image',
+          _key: blockKey,
+          src: 'https://example.com/image.jpg',
+        },
+      ])
+    })
+  })
+
   test('Scenario: Changing and adding text block children', async () => {
     const keyGenerator = createTestKeyGenerator()
 
