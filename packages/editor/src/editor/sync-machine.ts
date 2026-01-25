@@ -923,8 +923,11 @@ function updateBlock({
       const path = [index, currentBlockChildIndex]
 
       if (isChildChanged) {
-        // Update if this is the same child
-        if (currentBlockChild._key === oldBlockChild?._key) {
+        // Update if this is the same child (same key and type)
+        if (
+          currentBlockChild._key === oldBlockChild?._key &&
+          currentBlockChild._type === oldBlockChild?._type
+        ) {
           debug.syncValue(
             'Updating changed child',
             currentBlockChild,
@@ -971,7 +974,6 @@ function updateBlock({
             )
           }
         } else if (oldBlockChild) {
-          // Replace the child if _key's are different
           debug.syncValue('Replacing child', currentBlockChild)
 
           Transforms.removeNodes(slateEditor, {
