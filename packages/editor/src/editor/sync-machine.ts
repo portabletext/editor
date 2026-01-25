@@ -757,8 +757,10 @@ function syncBlock({
   }
 
   if (validation.valid || validation.resolution?.autoResolve) {
-    if (oldBlock._key === block._key) {
-      if (debug.enabled) debug('Updating block', oldBlock, block)
+    if (oldBlock._key === block._key && oldBlock._type === block._type) {
+      if (debug.enabled) {
+        debug('Updating block', oldBlock, block)
+      }
 
       Editor.withoutNormalizing(slateEditor, () => {
         withRemoteChanges(slateEditor, () => {
