@@ -29,7 +29,7 @@ const styles = tv({
 })
 
 const chevronStyles = tv({
-  base: 'w-4 h-4',
+  base: 'size-4',
   variants: {
     isDisabled: {
       false: 'text-gray-600 dark:text-gray-400',

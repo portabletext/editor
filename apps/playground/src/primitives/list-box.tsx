@@ -11,23 +11,19 @@ import {
 import {tv} from 'tailwind-variants'
 
 export const dropdownItemStyles = tv({
-  base: 'group flex items-center gap-4 cursor-default select-none py-1 pl-2 pr-0.5 rounded-lg outline outline-0 text-xs forced-color-adjust-none',
+  base: 'group flex items-center gap-2 cursor-default select-none py-1.5 px-2 rounded outline outline-0 text-sm forced-color-adjust-none',
   variants: {
     isDisabled: {
       false: 'text-gray-900 dark:text-gray-100',
       true: 'text-gray-300 dark:text-gray-600 forced-colors:text-[GrayText]',
     },
     isFocused: {
-      true: 'bg-blue-600 text-white forced-colors:bg-[Highlight] forced-colors:text-[HighlightText]',
+      true: 'bg-gray-100 dark:bg-gray-700 forced-colors:bg-[Highlight] forced-colors:text-[HighlightText]',
+    },
+    isHovered: {
+      true: 'bg-gray-50 dark:bg-gray-700/50',
     },
   },
-  compoundVariants: [
-    {
-      isFocused: false,
-      isOpen: true,
-      className: 'bg-gray-100 dark:bg-gray-700',
-    },
-  ],
 })
 
 export function DropdownItem(props: ListBoxItemProps) {
@@ -46,7 +42,7 @@ export function DropdownItem(props: ListBoxItemProps) {
             {children}
           </span>
           <span className="flex items-center w-5">
-            {isSelected && <Check className="w-4 h-4" />}
+            {isSelected && <Check className="size-4" />}
           </span>
         </>
       ))}

@@ -1,24 +1,13 @@
-import {useSelector} from '@xstate/react'
-import {
-  ActivityIcon,
-  ChevronRightIcon,
-  CopyIcon,
-  InfoIcon,
-  TrashIcon,
-} from 'lucide-react'
+import {ActivityIcon, ChevronRightIcon} from 'lucide-react'
 import {useState} from 'react'
-import {TooltipTrigger} from 'react-aria-components'
 import {tv} from 'tailwind-variants'
-import type {GlobalPatchEntry, PlaygroundActorRef} from './playground-machine'
-import {Button} from './primitives/button'
-import {Container} from './primitives/container'
-import {Tooltip} from './primitives/tooltip'
+import type {GlobalPatchEntry} from './playground-machine'
 
 const patchCardStyle = tv({
-  base: 'w-full text-left p-2 rounded-md border transition-colors cursor-pointer hover:border-gray-300 dark:hover:border-gray-600',
+  base: 'w-full text-left p-2 rounded-md border transition-colors duration-150 cursor-pointer hover:border-gray-300 dark:hover:border-gray-600',
   variants: {
     isNew: {
-      true: 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800 hover:border-emerald-300 dark:hover:border-emerald-700',
+      true: 'bg-emerald-50 dark:bg-emerald-900/30 border-emerald-200 dark:border-emerald-800 hover:border-emerald-300 dark:hover:border-emerald-700',
       false:
         'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700',
     },
@@ -45,70 +34,10 @@ const editorBadgeStyle = tv({
   variants: {
     isNew: {
       true: 'bg-emerald-100 dark:bg-emerald-800/50 text-emerald-700 dark:text-emerald-300',
-      false:
-        'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300',
+      false: 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300',
     },
   },
 })
-
-export function GlobalPatchesPanel(props: {playgroundRef: PlaygroundActorRef}) {
-  const patchFeed = useSelector(props.playgroundRef, (s) => s.context.patchFeed)
-  const editorCount = useSelector(
-    props.playgroundRef,
-    (s) => s.context.editors.length,
-  )
-
-  return (
-    <Container className="flex flex-col gap-2">
-      <div className="flex items-center justify-between">
-        <span className="flex items-center gap-1 text-sm font-medium text-gray-700 dark:text-gray-300">
-          Patches
-          <TooltipTrigger delay={0}>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="p-0 size-4 min-w-0"
-              aria-label="Info"
-            >
-              <InfoIcon className="size-3 text-gray-400 dark:text-gray-500" />
-            </Button>
-            <Tooltip>
-              Real-time feed of patches emitted by the editor. Patches describe
-              changes to the Portable Text value.
-            </Tooltip>
-          </TooltipTrigger>
-        </span>
-        <div className="flex items-center gap-1">
-          <TooltipTrigger>
-            <Button
-              size="sm"
-              variant="secondary"
-              onPress={() => {
-                props.playgroundRef.send({type: 'copy patches'})
-              }}
-            >
-              <CopyIcon className="size-3" />
-            </Button>
-            <Tooltip>Copy patches</Tooltip>
-          </TooltipTrigger>
-          <TooltipTrigger>
-            <Button
-              size="sm"
-              variant="destructive"
-              onPress={() => {
-                props.playgroundRef.send({type: 'clear patches'})
-              }}
-            >
-              <TrashIcon className="size-3" />
-            </Button>
-            <Tooltip>Clear patches</Tooltip>
-          </TooltipTrigger>
-        </div>
-      </div>
-      <PatchFeedList entries={patchFeed} showEditorLabel={editorCount > 1} />
-    </Container>
-  )
-}
 
 type FlattenedPatch = {
   id: string
@@ -138,7 +67,7 @@ function flattenPatches(
   )
 }
 
-function PatchFeedList(props: {
+export function PatchesList(props: {
   entries: Array<GlobalPatchEntry>
   showEditorLabel: boolean
 }) {
@@ -146,9 +75,9 @@ function PatchFeedList(props: {
 
   if (flatPatches.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-8 text-center">
-        <ActivityIcon className="size-8 text-gray-300 dark:text-gray-600 mb-2" />
-        <p className="text-sm text-gray-500 dark:text-gray-400">
+      <div className="flex flex-col items-center justify-center h-full text-center gap-2">
+        <ActivityIcon className="size-8 text-gray-300 dark:text-gray-600" />
+        <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">
           No patches yet
         </p>
         <p className="text-xs text-gray-400 dark:text-gray-500">
@@ -159,7 +88,7 @@ function PatchFeedList(props: {
   }
 
   return (
-    <div className="flex flex-col gap-1.5 overflow-y-auto">
+    <div className="flex flex-col gap-2 h-full overflow-y-auto">
       {flatPatches.map((item) => (
         <PatchCard
           key={item.id}
@@ -197,7 +126,7 @@ function PatchCard(props: {item: FlattenedPatch; showEditorLabel: boolean}) {
     >
       <div className="flex items-center gap-1.5">
         <ChevronRightIcon
-          className={`size-3 text-gray-400 dark:text-gray-500 shrink-0 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+          className={`size-3 text-gray-400 dark:text-gray-500 shrink-0 transition-transform duration-150 ${isExpanded ? 'rotate-90' : ''}`}
         />
         {showEditorLabel && (
           <span className={editorBadgeStyle({isNew: item.isNew})}>

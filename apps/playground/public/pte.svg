@@ -1,4 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="339.35 6.8 218.47 226.2" fill="black">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="339.35 6.8 218.47 226.2">
+  <style>
+    path, polygon { fill: black; }
+    @media (prefers-color-scheme: dark) {
+      path, polygon { fill: white; }
+    }
+  </style>
   <polygon
     points="392.19 78.45 392.13 100.75 372.19 89.24 371.9 189.21 358.91 181.71 359.19 81.74 339.35 70.28 339.42 47.98 392.19 78.45" />
   <polygon

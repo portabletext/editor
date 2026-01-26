@@ -10,7 +10,7 @@ export function Icon(props: {
   return isValidElement(IconComponent) ? (
     IconComponent
   ) : isValidElementType(IconComponent) ? (
-    <IconComponent className="w-4 h-4" />
+    <IconComponent className="size-4" />
   ) : (
     props.fallback
   )

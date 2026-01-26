@@ -6,7 +6,8 @@ export const container = tv({
   base: 'bg-white dark:bg-gray-800',
   variants: {
     variant: {
-      default: 'p-2 rounded-md shadow-sm',
+      default:
+        'p-3 rounded-md shadow-sm border border-gray-200 dark:border-gray-700',
       ghost: '',
     },
   },

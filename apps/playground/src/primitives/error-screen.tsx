@@ -7,7 +7,7 @@ export function ErrorScreen(props: {
   dismiss: () => void
 }) {
   return (
-    <div className="flex-1 bg-red-100 border border-red-200 text-red-900 flex flex-col gap-2 p-2">
+    <div className="flex-1 bg-red-100 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-900 dark:text-red-200 flex flex-col gap-2 p-2">
       <div className="font-medium">
         The <code className="font-bold">{props.area}</code> crashed!
       </div>

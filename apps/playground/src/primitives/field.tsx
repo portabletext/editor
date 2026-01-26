@@ -56,8 +56,8 @@ export const fieldBorderStyles = tv({
   variants: {
     isFocusWithin: {
       false:
-        'border-gray-300 dark:border-gray-600 forced-colors:border-[ButtonBorder]',
-      true: 'border-gray-600 dark:border-gray-400 forced-colors:border-[Highlight]',
+        'border-gray-200 dark:border-gray-700 forced-colors:border-[ButtonBorder]',
+      true: 'border-blue-600 dark:border-blue-500 forced-colors:border-[Highlight]',
     },
     isInvalid: {
       true: 'border-red-600 forced-colors:border-[Mark]',
@@ -91,7 +91,7 @@ export function Input(props: InputProps) {
       {...props}
       className={composeTailwindRenderProps(
         props.className,
-        'px-2 py-1.5 border border-gray-300 dark:border-gray-600 rounded-md flex-1 min-w-0 outline outline-0 bg-white dark:bg-gray-800 text-sm text-gray-800 dark:text-gray-200 disabled:text-gray-200 dark:disabled:text-gray-600',
+        'px-2 py-1.5 border border-gray-200 dark:border-gray-700 rounded-md flex-1 min-w-0 outline outline-0 bg-white dark:bg-gray-800 text-sm text-gray-800 dark:text-gray-200 disabled:text-gray-200 dark:disabled:text-gray-600 focus:border-blue-600 dark:focus:border-blue-500',
       )}
     />
   )
