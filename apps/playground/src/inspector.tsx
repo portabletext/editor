@@ -1,0 +1,197 @@
+import {useActorRef, useSelector} from '@xstate/react'
+import {
+  ActivityIcon,
+  CheckIcon,
+  CopyIcon,
+  FileJsonIcon,
+  TrashIcon,
+} from 'lucide-react'
+import {useEffect, useState} from 'react'
+import {TooltipTrigger, type Key} from 'react-aria-components'
+import {highlightMachine} from './highlight-json-machine'
+import {PatchesList} from './patches-list'
+import type {PlaygroundActorRef} from './playground-machine'
+import {Button} from './primitives/button'
+import {Container} from './primitives/container'
+import {Spinner} from './primitives/spinner'
+import {Tab, TabList, TabPanel, Tabs} from './primitives/tabs'
+import {Tooltip} from './primitives/tooltip'
+
+type TabId = 'output' | 'patches'
+
+export function Inspector(props: {playgroundRef: PlaygroundActorRef}) {
+  const [activeTab, setActiveTab] = useState<TabId>('output')
+
+  const handleTabChange = (key: Key) => {
+    setActiveTab(key as TabId)
+  }
+
+  return (
+    <Tabs
+      selectedKey={activeTab}
+      onSelectionChange={handleTabChange}
+      className="flex flex-col h-full min-h-0"
+    >
+      <div className="flex items-center justify-between mb-2 flex-shrink-0">
+        <TabList>
+          <Tab id="output">
+            <span className="flex items-center gap-1.5">
+              <FileJsonIcon className="size-3" />
+              Portable Text
+            </span>
+          </Tab>
+          <Tab id="patches">
+            <span className="flex items-center gap-1.5">
+              <ActivityIcon className="size-3" />
+              Patches
+            </span>
+          </Tab>
+        </TabList>
+        <TabActions activeTab={activeTab} playgroundRef={props.playgroundRef} />
+      </div>
+
+      <TabPanel id="output" className="flex-1 min-h-0">
+        <Container className="h-full overflow-clip">
+          <OutputPanel playgroundRef={props.playgroundRef} />
+        </Container>
+      </TabPanel>
+
+      <TabPanel id="patches" className="flex-1 min-h-0">
+        <Container className="h-full overflow-clip">
+          <PatchesPanel playgroundRef={props.playgroundRef} />
+        </Container>
+      </TabPanel>
+    </Tabs>
+  )
+}
+
+function TabActions(props: {
+  activeTab: TabId
+  playgroundRef: PlaygroundActorRef
+}) {
+  const {activeTab, playgroundRef} = props
+  const isCopied = useSelector(playgroundRef, (s) =>
+    s.matches({'copying value': 'copied'}),
+  )
+  const isCopyingPatches = useSelector(playgroundRef, (s) =>
+    s.matches({'copying patches': 'copied'}),
+  )
+
+  if (activeTab === 'output') {
+    return (
+      <TooltipTrigger>
+        <Button
+          variant="ghost"
+          size="sm"
+          onPress={() => playgroundRef.send({type: 'copy value'})}
+        >
+          {isCopied ? (
+            <CheckIcon className="size-3 text-green-600 dark:text-green-400" />
+          ) : (
+            <CopyIcon className="size-3" />
+          )}
+        </Button>
+        <Tooltip>{isCopied ? 'Copied!' : 'Copy to clipboard'}</Tooltip>
+      </TooltipTrigger>
+    )
+  }
+
+  if (activeTab === 'patches') {
+    return (
+      <div className="flex items-center gap-1">
+        <TooltipTrigger>
+          <Button
+            variant="ghost"
+            size="sm"
+            onPress={() => playgroundRef.send({type: 'copy patches'})}
+          >
+            {isCopyingPatches ? (
+              <CheckIcon className="size-3 text-green-600 dark:text-green-400" />
+            ) : (
+              <CopyIcon className="size-3" />
+            )}
+          </Button>
+          <Tooltip>{isCopyingPatches ? 'Copied!' : 'Copy patches'}</Tooltip>
+        </TooltipTrigger>
+        <TooltipTrigger>
+          <Button
+            variant="ghost"
+            size="sm"
+            onPress={() => playgroundRef.send({type: 'clear patches'})}
+          >
+            <TrashIcon className="size-3" />
+          </Button>
+          <Tooltip>Clear patches</Tooltip>
+        </TooltipTrigger>
+      </div>
+    )
+  }
+
+  return null
+}
+
+function OutputPanel(props: {playgroundRef: PlaygroundActorRef}) {
+  const value = useSelector(
+    props.playgroundRef,
+    (s) => s.context.patchDerivedValue,
+  )
+  const highlightRef = useActorRef(highlightMachine, {
+    input: {
+      code: JSON.stringify(value ?? null),
+      variant: 'default',
+    },
+  })
+  const highlightedCode = useSelector(
+    highlightRef,
+    (s) => s.context.highlightedCode,
+  )
+
+  useEffect(() => {
+    const subscription = props.playgroundRef.subscribe((s) => {
+      highlightRef.send({
+        type: 'update code',
+        code: JSON.stringify(s.context.patchDerivedValue ?? null),
+      })
+    })
+    return () => subscription.unsubscribe()
+  }, [props.playgroundRef, highlightRef])
+
+  if (!highlightedCode) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <Spinner />
+      </div>
+    )
+  }
+
+  if (!value || value.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full text-center gap-2">
+        <FileJsonIcon className="size-8 text-gray-300 dark:text-gray-600" />
+        <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">
+          No content yet
+        </p>
+        <p className="text-xs text-gray-400 dark:text-gray-500">
+          Start typing to see the output
+        </p>
+      </div>
+    )
+  }
+
+  return (
+    <div
+      className="h-full overflow-y-auto [&>pre]:max-h-none"
+      dangerouslySetInnerHTML={{__html: highlightedCode}}
+    />
+  )
+}
+
+function PatchesPanel(props: {playgroundRef: PlaygroundActorRef}) {
+  const patchFeed = useSelector(props.playgroundRef, (s) => s.context.patchFeed)
+  const editorCount = useSelector(
+    props.playgroundRef,
+    (s) => s.context.editors.length,
+  )
+
+  return <PatchesList entries={patchFeed} showEditorLabel={editorCount > 1} />
+}

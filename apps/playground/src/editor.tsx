@@ -22,25 +22,32 @@ import {
   createDecoratorGuard,
   TypographyPlugin,
 } from '@portabletext/plugin-typography'
-import {useSelector} from '@xstate/react'
+import {useActorRef, useSelector} from '@xstate/react'
 import {
   ActivityIcon,
   AtSignIcon,
-  BugIcon,
+  BracesIcon,
+  CheckIcon,
+  CopyIcon,
+  FileJsonIcon,
   LinkIcon,
+  MousePointerIcon,
   PencilIcon,
+  PencilOffIcon,
   SeparatorHorizontalIcon,
+  XIcon,
 } from 'lucide-react'
 import {useContext, useEffect, useState, type JSX} from 'react'
 import {TooltipTrigger} from 'react-aria-components'
 import {tv} from 'tailwind-variants'
-import {DebugMenu} from './debug-menu'
 import './editor.css'
+import {EditorSettingsPopover} from './editor-settings-popover'
 import {EmojiPickerPlugin} from './emoji-picker'
 import {
   EditorFeatureFlagsContext,
   PlaygroundFeatureFlagsContext,
 } from './feature-flags'
+import {highlightMachine} from './highlight-json-machine'
 import {MentionPickerPlugin} from './mention-picker'
 import type {EditorActorRef} from './playground-machine'
 import {
@@ -62,23 +69,12 @@ import {Button} from './primitives/button'
 import {Container} from './primitives/container'
 import {ErrorBoundary} from './primitives/error-boundary'
 import {ErrorScreen} from './primitives/error-screen'
-import {Separator} from './primitives/separator'
 import {Spinner} from './primitives/spinner'
-import {Switch} from './primitives/switch'
+import {ToggleButton} from './primitives/toggle-button'
 import {Tooltip} from './primitives/tooltip'
 import {RangeDecorationButton} from './range-decoration-button'
 import {SlashCommandPickerPlugin} from './slash-command-picker'
 import {PortableTextToolbar} from './toolbar/portable-text-toolbar'
-
-const editorStyle = tv({
-  base: 'grid gap-2 items-start',
-  variants: {
-    debugModeEnabled: {
-      true: 'grid-cols-1 md:grid-cols-2',
-      false: 'grid-cols-1',
-    },
-  },
-})
 
 export function Editor(props: {
   editorRef: EditorActorRef
@@ -89,9 +85,6 @@ export function Editor(props: {
     props.editorRef,
     (s) => s.context.keyGenerator,
   )
-  const debugModeEnabled = useSelector(props.editorRef, (s) =>
-    s.matches({'debug mode': 'shown'}),
-  )
   const [loading, setLoading] = useState(false)
   const [readOnly, setReadOnly] = useState(false)
   const playgroundFeatureFlags = useContext(PlaygroundFeatureFlagsContext)
@@ -101,10 +94,7 @@ export function Editor(props: {
   )
 
   return (
-    <div
-      data-testid={props.editorRef.id}
-      className={editorStyle({debugModeEnabled})}
-    >
+    <div data-testid={props.editorRef.id}>
       <ErrorBoundary
         fallbackProps={{area: 'PortableTextEditor'}}
         fallback={ErrorScreen}
@@ -139,8 +129,8 @@ export function Editor(props: {
               }
             }}
           />
-          <Container className="flex flex-col gap-4 overflow-clip">
-            {playgroundFeatureFlags.toolbar ? (
+          {playgroundFeatureFlags.toolbar ? (
+            <div className="mb-2">
               <PortableTextToolbar>
                 <RangeDecorationButton
                   onAddRangeDecoration={(rangeDecoration) => {
@@ -156,20 +146,10 @@ export function Editor(props: {
                     })
                   }}
                 />
-                <Separator orientation="vertical" />
-                <TooltipTrigger>
-                  <Switch
-                    isSelected={debugModeEnabled}
-                    onChange={() => {
-                      props.editorRef.send({type: 'toggle debug mode'})
-                    }}
-                  >
-                    <BugIcon className="size-4" />
-                  </Switch>
-                  <Tooltip>Toggle debug mode</Tooltip>
-                </TooltipTrigger>
               </PortableTextToolbar>
-            ) : null}
+            </div>
+          ) : null}
+          <Container className="flex flex-col overflow-clip">
             {featureFlags.emojiPickerPlugin ? <EmojiPickerPlugin /> : null}
             {featureFlags.mentionPickerPlugin ? <MentionPickerPlugin /> : null}
             {featureFlags.slashCommandPlugin ? (
@@ -191,16 +171,14 @@ export function Editor(props: {
             ) : null}
             {featureFlags.oneLinePlugin ? <OneLinePlugin /> : null}
             {featureFlags.typographyPlugin ? (
-              <>
-                <TypographyPlugin
-                  guard={createDecoratorGuard({
-                    decorators: ({context}) =>
-                      context.schema.decorators.flatMap((decorator) =>
-                        decorator.name === 'code' ? [] : [decorator.name],
-                      ),
-                  })}
-                />
-              </>
+              <TypographyPlugin
+                guard={createDecoratorGuard({
+                  decorators: ({context}) =>
+                    context.schema.decorators.flatMap((decorator) =>
+                      decorator.name === 'code' ? [] : [decorator.name],
+                    ),
+                })}
+              />
             ) : null}
             <div className="flex gap-2 items-center">
               <ErrorBoundary
@@ -224,10 +202,8 @@ export function Editor(props: {
               </ErrorBoundary>
               {loading ? <Spinner /> : null}
             </div>
+            <EditorFooter editorRef={props.editorRef} readOnly={readOnly} />
           </Container>
-          {debugModeEnabled ? (
-            <DebugMenu editorRef={props.editorRef} readOnly={readOnly} />
-          ) : null}
         </EditorProvider>
       </ErrorBoundary>
     </div>
@@ -351,7 +327,7 @@ const RenderBlock = (props: BlockRenderProps) => {
           focused: props.focused,
         })}
       >
-        <div className="bg-gray-200 dark:bg-gray-700 size-20 overflow-clip flex items-center justify-center">
+        <div className="bg-gray-100 dark:bg-gray-700 size-20 overflow-clip flex items-center justify-center">
           <img
             className="object-scale-down max-w-full"
             src={image.value.src}
@@ -374,7 +350,7 @@ const RenderBlock = (props: BlockRenderProps) => {
           </div>
           <div className="flex items-center gap-1">
             <PencilIcon className="size-3 shrink-0" />
-            <span className="text-xs text-slate-500 dark:text-slate-400">
+            <span className="text-xs text-gray-500 dark:text-gray-400">
               {image.value.alt}
             </span>
           </div>
@@ -386,11 +362,11 @@ const RenderBlock = (props: BlockRenderProps) => {
   if (props.level === undefined && enableDragHandles) {
     // Don't render drag handle on other levels right now since the styling is off
     return (
-      <div className="me-1 relative hover:bg-red">
+      <div className="me-1 relative">
         <div
           contentEditable={false}
           draggable={!readOnly}
-          className={`absolute top-0 -left-3 bottom-0 w-1.5 bg-slate-300 dark:bg-slate-600 rounded cursor-grab`}
+          className="absolute top-0 -left-3 bottom-0 w-1.5 bg-gray-300 dark:bg-gray-600 rounded cursor-grab"
         >
           <span />
         </div>
@@ -485,7 +461,7 @@ const renderChild: RenderChildFunction = (props) => {
           focused: props.focused,
         })}
       >
-        <span className="bg-gray-200 dark:bg-gray-700 size-5 overflow-clip flex items-center justify-center">
+        <span className="bg-gray-100 dark:bg-gray-700 size-5 overflow-clip flex items-center justify-center">
           <img
             className="object-scale-down max-w-full"
             src={image.value.src}
@@ -507,9 +483,7 @@ const renderListItem: RenderListItemFunction = (props) => {
 }
 
 const renderPlaceholder: RenderPlaceholderFunction = () => (
-  <span className="text-slate-400 dark:text-slate-500 px-2">
-    Type something
-  </span>
+  <span className="text-gray-400 dark:text-gray-500 px-2">Type something</span>
 )
 
 const renderStyle: RenderStyleFunction = (props) => {
@@ -569,9 +543,181 @@ const styleMap: Map<string, (props: BlockStyleRenderProps) => JSX.Element> =
     [
       'blockquote',
       (props) => (
-        <blockquote className="my-1 pl-2 py-1 border-slate-300 dark:border-slate-600 border-l-4">
+        <blockquote className="my-1 pl-2 py-1 border-gray-300 dark:border-gray-600 border-l-4">
           {props.children}
         </blockquote>
       ),
     ],
   ])
+
+function EditorFooter(props: {editorRef: EditorActorRef; readOnly: boolean}) {
+  const editor = useEditor()
+  const patchesActive = useSelector(props.editorRef, (s) =>
+    s.matches({'patch subscription': 'active'}),
+  )
+  const valueActive = useSelector(props.editorRef, (s) =>
+    s.matches({'value subscription': 'active'}),
+  )
+  const selection = useEditorSelector(editor, (s) => s.context.selection)
+  const value = useEditorSelector(editor, (s) => s.context.value)
+  const [showSelection, setShowSelection] = useState(false)
+  const [showValue, setShowValue] = useState(false)
+
+  const isExpanded = showSelection || showValue
+
+  return (
+    <div className={isExpanded ? 'pt-3 space-y-2' : 'pt-1'}>
+      <div className="flex items-center gap-3">
+        <span className="text-xs font-mono text-gray-400 dark:text-gray-500">
+          {props.editorRef.id}
+        </span>
+        <div className="flex items-center gap-0.5">
+          <EditorSettingsPopover editorRef={props.editorRef} />
+          <TooltipTrigger>
+            <ToggleButton
+              variant="ghost"
+              size="sm"
+              isSelected={showSelection}
+              onChange={setShowSelection}
+            >
+              <MousePointerIcon className="size-3" />
+            </ToggleButton>
+            <Tooltip>
+              {showSelection ? 'Hide selection' : 'Show selection'}
+            </Tooltip>
+          </TooltipTrigger>
+          <TooltipTrigger>
+            <ToggleButton
+              variant="ghost"
+              size="sm"
+              isSelected={showValue}
+              onChange={setShowValue}
+            >
+              <BracesIcon className="size-3" />
+            </ToggleButton>
+            <Tooltip>{showValue ? 'Hide value' : 'Show value'}</Tooltip>
+          </TooltipTrigger>
+        </div>
+        <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
+        <div className="flex items-center gap-0.5">
+          <TooltipTrigger>
+            <ToggleButton
+              variant="ghost"
+              size="sm"
+              isSelected={!props.readOnly}
+              onChange={() =>
+                editor.send({
+                  type: 'update readOnly',
+                  readOnly: !props.readOnly,
+                })
+              }
+            >
+              {props.readOnly ? (
+                <PencilOffIcon className="size-3" />
+              ) : (
+                <PencilIcon className="size-3" />
+              )}
+            </ToggleButton>
+            <Tooltip>{props.readOnly ? 'Read-only' : 'Editable'}</Tooltip>
+          </TooltipTrigger>
+          <TooltipTrigger>
+            <ToggleButton
+              variant="ghost"
+              size="sm"
+              isSelected={patchesActive}
+              onChange={() =>
+                props.editorRef.send({type: 'toggle patch subscription'})
+              }
+            >
+              <ActivityIcon className="size-3" />
+            </ToggleButton>
+            <Tooltip>
+              {patchesActive ? 'Receiving patches' : 'Not receiving patches'}
+            </Tooltip>
+          </TooltipTrigger>
+          <TooltipTrigger>
+            <ToggleButton
+              variant="ghost"
+              size="sm"
+              isSelected={valueActive}
+              onChange={() =>
+                props.editorRef.send({type: 'toggle value subscription'})
+              }
+            >
+              <FileJsonIcon className="size-3" />
+            </ToggleButton>
+            <Tooltip>
+              {valueActive
+                ? 'Receiving value updates'
+                : 'Not receiving value updates'}
+            </Tooltip>
+          </TooltipTrigger>
+          <TooltipTrigger>
+            <Button
+              variant="ghost"
+              size="sm"
+              onPress={() => props.editorRef.send({type: 'remove'})}
+            >
+              <XIcon className="size-3" />
+            </Button>
+            <Tooltip>Remove editor</Tooltip>
+          </TooltipTrigger>
+        </div>
+      </div>
+      {isExpanded && (
+        <div
+          className={`grid gap-2 ${showSelection && showValue ? 'grid-cols-2' : 'grid-cols-1'}`}
+        >
+          {showSelection && <JsonPane label="Selection" data={selection} />}
+          {showValue && <JsonPane label="Value" data={value} />}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function JsonPane(props: {label: string; data: unknown}) {
+  const [copied, setCopied] = useState(false)
+  const json = JSON.stringify(props.data ?? null)
+  const highlightRef = useActorRef(highlightMachine, {
+    input: {code: json, variant: 'ghost'},
+  })
+  const highlightedCode = useSelector(
+    highlightRef,
+    (s) => s.context.highlightedCode,
+  )
+
+  useEffect(() => {
+    highlightRef.send({type: 'update code', code: json})
+  }, [json, highlightRef])
+
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(JSON.stringify(props.data, null, 2))
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1500)
+  }
+
+  return (
+    <div className="rounded bg-gray-50 dark:bg-gray-900 overflow-hidden">
+      <div className="flex items-center justify-between px-2 py-1 border-b border-gray-200 dark:border-gray-700">
+        <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
+          {props.label}
+        </span>
+        <TooltipTrigger>
+          <Button variant="ghost" size="sm" onPress={handleCopy}>
+            {copied ? (
+              <CheckIcon className="size-3 text-green-600 dark:text-green-400" />
+            ) : (
+              <CopyIcon className="size-3" />
+            )}
+          </Button>
+          <Tooltip>{copied ? 'Copied!' : 'Copy'}</Tooltip>
+        </TooltipTrigger>
+      </div>
+      <div
+        className="max-h-48 overflow-auto text-xs [&>pre]:p-2 [&>pre]:m-0"
+        dangerouslySetInnerHTML={{__html: highlightedCode ?? ''}}
+      />
+    </div>
+  )
+}

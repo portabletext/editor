@@ -6,7 +6,7 @@ import {
   type RangeDecoration,
   type RangeDecorationOnMovedDetails,
 } from '@portabletext/editor'
-import type {Patch} from '@portabletext/patches'
+import {applyAll, type Patch} from '@portabletext/patches'
 import {
   assertEvent,
   assign,
@@ -41,7 +41,9 @@ const editorMachine = setup({
   types: {
     context: {} as {
       value: Array<PortableTextBlock> | undefined
-      patchesReceived: Array<Patch & {new: boolean; id: string}>
+      patchesReceived: Array<
+        Patch & {new: boolean; id: string; timestamp: number}
+      >
       keyGenerator: () => string
       featureFlags: EditorFeatureFlags
     },
@@ -72,12 +74,14 @@ const editorMachine = setup({
     'store patches received': assign({
       patchesReceived: ({context, event}) => {
         assertEvent(event, 'patches')
+        const timestamp = Date.now()
         return [
           ...context.patchesReceived.map((patch) => ({...patch, new: false})),
           ...event.patches.map((patch) => ({
             ...patch,
             new: true,
             id: keyGenerator(),
+            timestamp,
           })),
         ]
       },
@@ -255,6 +259,7 @@ export const playgroundMachine = setup({
       editors: Array<EditorActorRef>
       featureFlags: PlaygroundFeatureFlags
       value: Array<PortableTextBlock> | undefined
+      patchDerivedValue: Array<PortableTextBlock> | undefined
       rangeDecorations: Array<RangeDecoration>
       patchFeed: Array<GlobalPatchEntry>
     },
@@ -267,6 +272,7 @@ export const playgroundMachine = setup({
       | {type: 'editor.remove'; editorId: EditorActorRef['id']}
       | {type: 'toggle value'}
       | {type: 'toggle patches'}
+      | {type: 'toggle inspector'}
       | {type: 'clear patches'}
       | {type: 'copy value'}
       | {type: 'copy patches'}
@@ -301,6 +307,12 @@ export const playgroundMachine = setup({
       value: ({event}) => {
         assertEvent(event, 'editor.mutation')
         return event.value
+      },
+    }),
+    'update patch-derived value': assign({
+      patchDerivedValue: ({context, event}) => {
+        assertEvent(event, 'editor.mutation')
+        return applyAll(context.patchDerivedValue ?? [], event.patches)
       },
     }),
     'add to patch feed': assign({
@@ -407,7 +419,8 @@ export const playgroundMachine = setup({
   context: ({input}) => ({
     editorIdGenerator: input.editorIdGenerator,
     featureFlags: defaultPlaygroundFeatureFlags,
-    value: [],
+    value: undefined,
+    patchDerivedValue: undefined,
     rangeDecorations: [],
     editors: [],
     patchFeed: [],
@@ -423,6 +436,7 @@ export const playgroundMachine = setup({
       actions: [
         'broadcast patches',
         'update value',
+        'update patch-derived value',
         'broadcast value',
         'add to patch feed',
       ],
@@ -445,7 +459,7 @@ export const playgroundMachine = setup({
       }),
     },
   },
-  entry: [raise({type: 'add editor'})],
+  entry: [raise({type: 'add editor'}), raise({type: 'add editor'})],
   type: 'parallel',
   states: {
     'value visibility': {
@@ -456,10 +470,17 @@ export const playgroundMachine = setup({
       },
     },
     'patches visibility': {
-      initial: 'shown',
+      initial: 'hidden',
       states: {
         shown: {on: {'toggle patches': {target: 'hidden'}}},
         hidden: {on: {'toggle patches': {target: 'shown'}}},
+      },
+    },
+    'inspector visibility': {
+      initial: 'shown',
+      states: {
+        shown: {on: {'toggle inspector': {target: 'hidden'}}},
+        hidden: {on: {'toggle inspector': {target: 'shown'}}},
       },
     },
     'copying value': {
@@ -474,7 +495,7 @@ export const playgroundMachine = setup({
           invoke: {
             src: 'copy text to clipboard',
             input: ({context}) => ({
-              text: JSON.stringify(context.value, null, 2),
+              text: JSON.stringify(context.patchDerivedValue, null, 2),
             }),
             onDone: {
               target: 'copied',

@@ -6,7 +6,7 @@ import {
 import {tv} from 'tailwind-variants'
 
 const styles = tv({
-  base: 'flex gap-2 flex-wrap',
+  base: 'flex items-center gap-1 flex-wrap',
 })
 
 export function Toolbar(props: ToolbarProps) {

@@ -55,7 +55,7 @@ export function HistoryButtons() {
     <Group aria-label="History">
       <ButtonTooltip label="Undo" shortcutKeys={historyShortcuts.undo.keys}>
         <Button
-          variant="secondary"
+          variant="ghost"
           size="sm"
           isDisabled={snapshot.matches('disabled')}
           onPress={() => {
@@ -67,7 +67,7 @@ export function HistoryButtons() {
       </ButtonTooltip>
       <ButtonTooltip label="Redo" shortcutKeys={historyShortcuts.redo.keys}>
         <Button
-          variant="secondary"
+          variant="ghost"
           size="sm"
           isDisabled={snapshot.matches('disabled')}
           onPress={() => {

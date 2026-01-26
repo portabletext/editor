@@ -1,12 +1,19 @@
+import {useSelector} from '@xstate/react'
 import {
   BookOpenIcon,
   GithubIcon,
   MonitorIcon,
   MoonIcon,
+  PanelRightIcon,
+  PlusIcon,
   SunIcon,
+  WrenchIcon,
 } from 'lucide-react'
-import {Link, TooltipTrigger} from 'react-aria-components'
-import {Button} from './primitives/button'
+import {TooltipTrigger} from 'react-aria-components'
+import type {PlaygroundActorRef} from './playground-machine'
+import {Button, LinkButton} from './primitives/button'
+import {Separator} from './primitives/separator'
+import {Switch} from './primitives/switch'
 import {Tooltip} from './primitives/tooltip'
 import {useTheme, type ThemeMode} from './theme-context'
 
@@ -50,45 +57,98 @@ function ThemeToggle() {
   )
 }
 
-export function Header() {
-  return (
-    <header className="flex items-center justify-between px-3 py-2 border-b border-gray-200 dark:border-gray-800">
-      <a
-        href="https://www.portabletext.org"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="flex items-center gap-2 text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
-      >
-        <img src="/pte.svg" alt="" className="size-5 dark:invert" />
-        <span className="text-sm font-medium">Portable Text Editor</span>
-      </a>
+export function Header(props: {playgroundRef: PlaygroundActorRef}) {
+  const showInspector = useSelector(props.playgroundRef, (s) =>
+    s.matches({'inspector visibility': 'shown'}),
+  )
+  const playgroundFeatureFlags = useSelector(
+    props.playgroundRef,
+    (s) => s.context.featureFlags,
+  )
 
-      <nav className="flex items-center gap-1">
+  return (
+    <header className="flex items-center justify-between px-3 md:px-4 py-2 border-b border-gray-200 dark:border-gray-700 gap-2">
+      <div className="flex items-center gap-2">
+        <a
+          href="https://www.portabletext.org"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-2 text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-gray-100 transition-colors duration-150 shrink-0"
+        >
+          <img src="/pte.svg" alt="" className="size-5 shrink-0" />
+          <span className="text-sm font-medium hidden sm:inline">
+            Portable Text Editor
+          </span>
+        </a>
+        <Separator orientation="vertical" className="h-5 hidden sm:block" />
         <TooltipTrigger>
-          <Link
-            href="https://www.portabletext.org"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="p-1.5 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
-            aria-label="Docs"
+          <Button
+            size="sm"
+            variant="secondary"
+            onPress={() => {
+              props.playgroundRef.send({type: 'add editor'})
+            }}
           >
-            <BookOpenIcon className="size-4" />
-          </Link>
-          <Tooltip>Docs</Tooltip>
+            <PlusIcon className="size-4" />
+            <span className="hidden sm:inline">Add editor</span>
+          </Button>
+          <Tooltip className="sm:hidden">Add editor</Tooltip>
         </TooltipTrigger>
-        <TooltipTrigger>
-          <Link
-            href="https://github.com/portabletext/editor"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="p-1.5 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
-            aria-label="GitHub"
+      </div>
+
+      <nav className="flex items-center gap-2">
+        <div className="flex items-center gap-2">
+          <Switch
+            isSelected={playgroundFeatureFlags.toolbar}
+            onChange={() => {
+              props.playgroundRef.send({
+                type: 'toggle feature flag',
+                flag: 'toolbar',
+              })
+            }}
           >
-            <GithubIcon className="size-4" />
-          </Link>
-          <Tooltip>GitHub</Tooltip>
-        </TooltipTrigger>
-        <ThemeToggle />
+            <WrenchIcon className="size-4" />
+            <span className="hidden sm:inline">Toolbar</span>
+          </Switch>
+          <Switch
+            isSelected={showInspector}
+            onChange={() => {
+              props.playgroundRef.send({type: 'toggle inspector'})
+            }}
+          >
+            <PanelRightIcon className="size-4" />
+            <span className="hidden sm:inline">Inspector</span>
+          </Switch>
+        </div>
+        <Separator orientation="vertical" className="h-5 hidden sm:block" />
+        <div className="flex items-center gap-1">
+          <TooltipTrigger>
+            <LinkButton
+              variant="ghost"
+              size="sm"
+              className="hidden sm:inline-flex"
+              aria-label="Docs"
+              href="https://www.portabletext.org"
+              target="_blank"
+            >
+              <BookOpenIcon className="size-4" />
+            </LinkButton>
+            <Tooltip>Docs</Tooltip>
+          </TooltipTrigger>
+          <TooltipTrigger>
+            <LinkButton
+              variant="ghost"
+              size="sm"
+              aria-label="GitHub"
+              href="https://github.com/portabletext/editor"
+              target="_blank"
+            >
+              <GithubIcon className="size-4" />
+            </LinkButton>
+            <Tooltip>GitHub</Tooltip>
+          </TooltipTrigger>
+          <ThemeToggle />
+        </div>
       </nav>
     </header>
   )

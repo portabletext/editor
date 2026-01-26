@@ -373,8 +373,8 @@ function CommandListItem(props: {
       ref={ref}
       className={`px-2 py-1.5 cursor-pointer rounded flex items-center gap-2 ${
         props.selected
-          ? 'bg-blue-100 dark:bg-blue-900/50'
-          : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+          ? 'bg-gray-100 dark:bg-gray-700'
+          : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'
       }`}
       onMouseEnter={props.onMouseEnter}
       onClick={props.onSelect}

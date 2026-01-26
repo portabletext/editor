@@ -14,7 +14,7 @@ export function App() {
 
   return (
     <div className="flex flex-col min-h-screen overflow-x-hidden">
-      <Header />
+      <Header playgroundRef={playgroundRef} />
       <main className="flex-1 flex flex-col min-w-0">
         <Editors playgroundRef={playgroundRef} />
       </main>

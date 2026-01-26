@@ -10,6 +10,7 @@ export function StyleButton(props: {
   schemaTypes: ReadonlyArray<ToolbarStyleSchemaType>
 }) {
   const styleSelector = useStyleSelector(props)
+  const activeStyle = styleSelector.snapshot.context.activeStyle ?? 'normal'
 
   return (
     <TooltipTrigger>
@@ -17,7 +18,7 @@ export function StyleButton(props: {
         isDisabled={styleSelector.snapshot.matches('disabled')}
         placeholder="Select style"
         aria-label="Style"
-        selectedKey={styleSelector.snapshot.context.activeStyle ?? null}
+        selectedKey={activeStyle}
         onSelectionChange={(style) => {
           if (typeof style === 'string') {
             styleSelector.send({type: 'toggle', style})

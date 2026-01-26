@@ -44,7 +44,7 @@ export function Switch({children, ...props}: SwitchProps) {
       {...props}
       className={composeTailwindRenderProps(
         props.className,
-        'group flex gap-2 items-center text-gray-800 dark:text-gray-200 disabled:text-gray-300 dark:disabled:text-gray-600 forced-colors:disabled:text-[GrayText] text-sm transition py-[3px]',
+        'group flex gap-2 items-center text-gray-800 dark:text-gray-200 disabled:text-gray-300 dark:disabled:text-gray-600 forced-colors:disabled:text-[GrayText] text-sm transition',
       )}
     >
       {(renderProps) => (

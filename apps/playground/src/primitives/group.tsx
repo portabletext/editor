@@ -6,7 +6,7 @@ import {
 import {tv} from 'tailwind-variants'
 
 const styles = tv({
-  base: 'contents',
+  base: 'flex items-center gap-0.5',
 })
 
 export function Group(props: GroupProps) {

@@ -3,9 +3,11 @@ import {
   ToggleButton as RACToggleButton,
   type ToggleButtonProps,
 } from 'react-aria-components'
-import {button} from './button'
+import {button, type ButtonProps} from './button'
 
-export function ToggleButton(props: ToggleButtonProps & {size?: 'sm'}) {
+export function ToggleButton(
+  props: ToggleButtonProps & {size?: 'sm'; variant?: ButtonProps['variant']},
+) {
   return (
     <RACToggleButton
       {...props}
@@ -14,7 +16,7 @@ export function ToggleButton(props: ToggleButtonProps & {size?: 'sm'}) {
           ...renderProps,
           size: props.size,
           className,
-          variant: 'secondary',
+          variant: props.variant ?? 'secondary',
         }),
       )}
     />
