@@ -1039,4 +1039,102 @@ describe('event.update value', () => {
       ])
     })
   })
+
+  test('Scenario: Selection restoration when block type changes', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanAKey = keyGenerator()
+    const spanBKey = keyGenerator()
+    const spanCKey = keyGenerator()
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [{name: 'image'}],
+        decorators: [{name: 'strong'}, {name: 'em'}],
+      }),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {_type: 'span', _key: spanAKey, text: 'A', marks: ['strong']},
+            {_type: 'span', _key: spanBKey, text: 'B', marks: ['em']},
+            {_type: 'span', _key: spanCKey, text: 'C', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {_type: 'span', _key: spanAKey, text: 'A', marks: ['strong']},
+            {_type: 'span', _key: spanBKey, text: 'B', marks: ['em']},
+            {_type: 'span', _key: spanCKey, text: 'C', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: spanCKey}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: spanCKey}],
+          offset: 1,
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: spanCKey}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: spanCKey}],
+          offset: 1,
+        },
+        backward: false,
+      })
+    })
+
+    editor.send({
+      type: 'update value',
+      value: [
+        {
+          _type: 'image',
+          _key: blockKey,
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'image',
+          _key: blockKey,
+        },
+      ])
+
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {path: [{_key: blockKey}], offset: 0},
+        focus: {path: [{_key: blockKey}], offset: 0},
+        backward: false,
+      })
+    })
+  })
 })
