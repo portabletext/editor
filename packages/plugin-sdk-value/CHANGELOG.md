@@ -1,5 +1,12 @@
 # Changelog
 
+## 4.0.20
+
+### Patch Changes
+
+- Updated dependencies [[`ddb324f`](https://github.com/portabletext/editor/commit/ddb324f3294ed961092ad580d69c6c629f6a47d1), [`39b8b21`](https://github.com/portabletext/editor/commit/39b8b21dea18651d8c7e306ea6953b95d9648bb8)]:
+  - @portabletext/editor@4.3.5
+
 ## 4.0.19
 
 ### Patch Changes

@@ -1,5 +1,13 @@
 # Changelog
 
+## 4.3.5
+
+### Patch Changes
+
+- [#2142](https://github.com/portabletext/editor/pull/2142) [`ddb324f`](https://github.com/portabletext/editor/commit/ddb324f3294ed961092ad580d69c6c629f6a47d1) Thanks [@christianhg](https://github.com/christianhg)! - fix: don't treat text block with `markDefs` as placeholder
+
+- [#2142](https://github.com/portabletext/editor/pull/2142) [`39b8b21`](https://github.com/portabletext/editor/commit/39b8b21dea18651d8c7e306ea6953b95d9648bb8) Thanks [@christianhg](https://github.com/christianhg)! - fix: avoid redunant `set` patch after merging spans
+
 ## 4.3.4
 
 ### Patch Changes
