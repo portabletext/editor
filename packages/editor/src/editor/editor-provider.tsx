@@ -7,10 +7,7 @@ import {createInternalEditor} from './create-editor'
 import {EditorActorContext} from './editor-actor-context'
 import {EditorContext} from './editor-context'
 import {eventToChange} from './event-to-change'
-import {
-  PortableTextEditor,
-  type PortableTextEditorProps,
-} from './PortableTextEditor'
+import {PortableTextEditor} from './PortableTextEditor'
 import {RelayActorContext} from './relay-actor-context'
 import {PortableTextEditorContext} from './usePortableTextEditor'
 
@@ -45,7 +42,7 @@ export function EditorProvider(props: EditorProviderProps) {
     const internalEditor = createInternalEditor(props.initialConfig)
     const portableTextEditor = new PortableTextEditor({
       editor: internalEditor.editor,
-    } as unknown as PortableTextEditorProps)
+    })
 
     return {internalEditor, portableTextEditor}
   })
