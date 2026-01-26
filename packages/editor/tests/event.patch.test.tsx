@@ -695,7 +695,6 @@ describe('event.patch', () => {
           'text',
         ]),
         set([], [{_key: blockKey}, 'children', {_key: span2Key}, 'marks']),
-        set('', [{_key: blockKey}, 'children', {_key: span1Key}, 'text']),
         unset([{_key: blockKey}, 'children', {_key: span2Key}]),
         set([], [{_key: blockKey}, 'markDefs']),
         unset([]),

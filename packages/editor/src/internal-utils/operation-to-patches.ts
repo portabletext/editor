@@ -508,14 +508,18 @@ export function mergeNodePatch(
       )
 
       if (spansMatchingKey.length === 1) {
-        patches.push(
-          set(updatedSpan.text, [
-            {_key: block._key},
-            'children',
-            {_key: updatedSpan._key},
-            'text',
-          ]),
-        )
+        const prevSpan = spansMatchingKey[0]
+
+        if (isSpan({schema}, prevSpan) && prevSpan.text !== updatedSpan.text) {
+          patches.push(
+            set(updatedSpan.text, [
+              {_key: block._key},
+              'children',
+              {_key: updatedSpan._key},
+              'text',
+            ]),
+          )
+        }
       } else {
         console.warn(
           `Multiple spans have \`_key\` ${updatedSpan._key}. It's ambiguous which one to update.`,
