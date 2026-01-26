@@ -680,7 +680,10 @@ function syncBlock({
             }
           }
           if (validation.valid || validation.resolution?.autoResolve) {
-            if (oldBlock._key === currentBlock._key) {
+            if (
+              oldBlock._key === currentBlock._key &&
+              oldBlock._type === currentBlock._type
+            ) {
               if (debug.enabled) debug('Updating block', oldBlock, currentBlock)
               _updateBlock(
                 slateEditor,
