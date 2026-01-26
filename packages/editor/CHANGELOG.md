@@ -1,5 +1,13 @@
 # Changelog
 
+## 4.3.4
+
+### Patch Changes
+
+- [#2137](https://github.com/portabletext/editor/pull/2137) [`644f895`](https://github.com/portabletext/editor/commit/644f8957344bb62c017d86505795281a9f5f54f4) Thanks [@christianhg](https://github.com/christianhg)! - fix(value sync): replace block when type changes during value sync
+
+- [#2137](https://github.com/portabletext/editor/pull/2137) [`78dfe5e`](https://github.com/portabletext/editor/commit/78dfe5ee8a485b75bd9bc38dc3c023cf9bda7da8) Thanks [@christianhg](https://github.com/christianhg)! - fix(value sync): replace child when type changes during value sync
+
 ## 4.3.3
 
 ### Patch Changes
