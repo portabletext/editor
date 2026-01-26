@@ -633,4 +633,73 @@ describe('event.patch', () => {
       })
     })
   })
+
+  test('Scenario: Deleting all text with annotation', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const patches: Array<Patch> = []
+    const blockKey = keyGenerator()
+    const span1Key = keyGenerator()
+    const span2Key = keyGenerator()
+    const linkKey = keyGenerator()
+
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        annotations: [{name: 'link', fields: [{name: 'href', type: 'string'}]}],
+      }),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {_type: 'span', _key: span1Key, text: 'foo', marks: []},
+            {_type: 'span', _key: span2Key, text: 'bar', marks: [linkKey]},
+          ],
+          markDefs: [
+            {_key: linkKey, _type: 'link', href: 'https://example.com'},
+          ],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patches.push(event.patch)
+            }
+          }}
+        />
+      ),
+    })
+
+    await userEvent.click(locator)
+    await userEvent.keyboard('{ControlOrMeta>}{A}{/ControlOrMeta}')
+    await userEvent.keyboard('{Delete}')
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
+    })
+
+    expect(patches).toEqual(
+      [
+        diffMatchPatch('foo', '', [
+          {_key: blockKey},
+          'children',
+          {_key: span1Key},
+          'text',
+        ]),
+        diffMatchPatch('bar', '', [
+          {_key: blockKey},
+          'children',
+          {_key: span2Key},
+          'text',
+        ]),
+        set([], [{_key: blockKey}, 'children', {_key: span2Key}, 'marks']),
+        set('', [{_key: blockKey}, 'children', {_key: span1Key}, 'text']),
+        unset([{_key: blockKey}, 'children', {_key: span2Key}]),
+        set([], [{_key: blockKey}, 'markDefs']),
+        unset([]),
+      ].map((patch) => ({...patch, origin: 'local'})),
+    )
+  })
 })
