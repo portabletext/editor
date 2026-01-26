@@ -960,4 +960,83 @@ describe('event.update value', () => {
       ])
     })
   })
+
+  test('Scenario: Reordering children within a block (same keys, different positions)', async () => {
+    const keyGenerator = createTestKeyGenerator()
+
+    const blockKey = keyGenerator()
+    const spanAKey = keyGenerator()
+    const spanBKey = keyGenerator()
+    const spanCKey = keyGenerator()
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        decorators: [{name: 'strong'}, {name: 'em'}],
+      }),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {_type: 'span', _key: spanAKey, text: 'A', marks: ['strong']},
+            {_type: 'span', _key: spanBKey, text: 'B', marks: ['em']},
+            {_type: 'span', _key: spanCKey, text: 'C', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {_type: 'span', _key: spanAKey, text: 'A', marks: ['strong']},
+            {_type: 'span', _key: spanBKey, text: 'B', marks: ['em']},
+            {_type: 'span', _key: spanCKey, text: 'C', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+
+    // Reorder children: [A(strong), B(em), C] -> [C, A(strong), B(em)]
+    editor.send({
+      type: 'update value',
+      value: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {_type: 'span', _key: spanCKey, text: 'C', marks: []},
+            {_type: 'span', _key: spanAKey, text: 'A', marks: ['strong']},
+            {_type: 'span', _key: spanBKey, text: 'B', marks: ['em']},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {_type: 'span', _key: spanCKey, text: 'C', marks: []},
+            {_type: 'span', _key: spanAKey, text: 'A', marks: ['strong']},
+            {_type: 'span', _key: spanBKey, text: 'B', marks: ['em']},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+  })
 })
