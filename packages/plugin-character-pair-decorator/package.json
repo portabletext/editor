@@ -1,6 +1,6 @@
 {
   "name": "@portabletext/plugin-character-pair-decorator",
-  "version": "5.0.19",
+  "version": "5.0.20",
   "description": "Automatically match a pair of characters and decorate the text in between",
   "keywords": [
     "portabletext",
