@@ -213,6 +213,15 @@ export function isEqualToEmptyEditor(
     return false
   }
 
+  // Must have empty markDefs (or no markDefs)
+  if (
+    'markDefs' in firstBlock &&
+    Array.isArray(firstBlock.markDefs) &&
+    firstBlock.markDefs.length > 0
+  ) {
+    return false
+  }
+
   if (
     Object.keys(firstBlock).some(
       (key) =>
