@@ -27,7 +27,6 @@
       "NotebookEdit(*)",
 
       "WebFetch(domain:github.com)"
-    ],
-    "deny": ["Bash(git:*)"]
+    ]
   }
 }
