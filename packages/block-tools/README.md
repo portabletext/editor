@@ -1,6 +1,6 @@
 # `@portabletext/block-tools`
 
-> Various tools for processing Portable Text.
+> Convert HTML to Portable Text with built-in support for Google Docs, Word, and Notion.
 
 **NOTE:** To use `@portabletext/block-tools` in a Node.js script, you will need to provide a `parseHtml` method - generally using `JSDOM`. [Read more](#jsdom-example).
 
@@ -78,7 +78,7 @@ A compiled version of the block content schema type.
 
 The deserializer will respect the schema when deserializing the HTML elements to blocks.
 
-It only supports a subset of HTML tags. Any HTML tag not in the block-tools [whitelist](https://github.com/sanity-io/sanity/blob/243b4a5686a1293a8a977574a5cabc768ec01725/packages/%40sanity/block-tools/src/constants.ts#L24-L78) will be deserialized to normal blocks/spans.
+It only supports a subset of HTML tags. Any HTML tag not in the block-tools [whitelist](https://github.com/portabletext/editor/blob/main/packages/block-tools/src/constants.ts) will be deserialized to normal blocks/spans.
 
 For instance, if the schema doesn't allow H2 styles, all H2 HTML elements will be output like this:
 
