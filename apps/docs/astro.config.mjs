@@ -13,8 +13,6 @@ const [selectorsTypeDoc, selectorsTypeDocSidebar] =
 const [toolbarTypeDoc, toolbarTypeDocSidebar] = createStarlightTypeDocPlugin()
 const [keyboardShortcutsTypeDoc, keyboardShortcutsTypeDocSidebar] =
   createStarlightTypeDocPlugin()
-const [blockToolsTypeDoc, blockToolsTypeDocSidebar] =
-  createStarlightTypeDocPlugin()
 const tsconfig = '../../packages/editor/tsconfig.typedoc.json'
 
 // https://astro.build/config
@@ -118,13 +116,6 @@ export default defineConfig({
                 {...keyboardShortcutsTypeDocSidebar, badge: 'Generated'},
               ],
             },
-            {
-              label: 'Block Tools',
-              items: [
-                {label: 'Overview', slug: 'reference/block-tools'},
-                {...blockToolsTypeDocSidebar, badge: 'Generated'},
-              ],
-            },
           ],
         },
         {
@@ -216,18 +207,6 @@ export default defineConfig({
             collapsed: true,
           },
           tsconfig: '../../packages/keyboard-shortcuts/tsconfig.json',
-        }),
-        blockToolsTypeDoc({
-          entryPoints: ['../../packages/block-tools/src/index.ts'],
-          output: 'api/block-tools',
-          typeDoc: {
-            excludeReferences: true,
-            skipErrorChecking: true,
-          },
-          sidebar: {
-            collapsed: true,
-          },
-          tsconfig: '../../packages/block-tools/tsconfig.json',
         }),
         ...(process.env.CHECK_LINKS ? [starlightLinksValidator()] : []),
       ],
