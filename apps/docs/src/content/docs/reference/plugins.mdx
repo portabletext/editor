@@ -5,6 +5,8 @@ prev: false
 next: false
 ---
 
+import {CardGrid, LinkCard} from '@astrojs/starlight/components'
+
 Plugins are React components placed inside the `EditorProvider`, and are primarily used to register [Behaviors](/concepts/behavior/) ad-hoc in the Editor using the `editor.registerBehavior(...)` API:
 
 ```tsx
@@ -40,3 +42,48 @@ function LogTextPlugin() {
   return null
 }
 ```
+
+## Available Plugins
+
+<CardGrid>
+  <LinkCard
+    title="@portabletext/plugin-character-pair-decorator"
+    description="Automatically match a pair of characters and decorate the text in between."
+    href="https://github.com/portabletext/editor/tree/main/packages/plugin-character-pair-decorator"
+  />
+  <LinkCard
+    title="@portabletext/plugin-emoji-picker"
+    description="Easily configure an Emoji Picker for the Portable Text Editor."
+    href="https://github.com/portabletext/editor/tree/main/packages/plugin-emoji-picker"
+  />
+  <LinkCard
+    title="@portabletext/plugin-input-rule"
+    description="Easily configure Input Rules in the Portable Text Editor."
+    href="https://github.com/portabletext/editor/tree/main/packages/plugin-input-rule"
+  />
+  <LinkCard
+    title="@portabletext/plugin-markdown-shortcuts"
+    description="Adds helpful Markdown shortcuts to the editor."
+    href="https://github.com/portabletext/editor/tree/main/packages/plugin-markdown-shortcuts"
+  />
+  <LinkCard
+    title="@portabletext/plugin-one-line"
+    description="Restricts the Portable Text Editor to a single line."
+    href="https://github.com/portabletext/editor/tree/main/packages/plugin-one-line"
+  />
+  <LinkCard
+    title="@portabletext/plugin-sdk-value"
+    description="Connects a Portable Text Editor with a Sanity document using the SDK."
+    href="https://github.com/portabletext/editor/tree/main/packages/plugin-sdk-value"
+  />
+  <LinkCard
+    title="@portabletext/plugin-typeahead-picker"
+    description="Generic typeahead picker infrastructure for the Portable Text Editor."
+    href="https://github.com/portabletext/editor/tree/main/packages/plugin-typeahead-picker"
+  />
+  <LinkCard
+    title="@portabletext/plugin-typography"
+    description="Automatically transform text to typographic variants."
+    href="https://github.com/portabletext/editor/tree/main/packages/plugin-typography"
+  />
+</CardGrid>
