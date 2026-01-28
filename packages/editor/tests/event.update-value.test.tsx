@@ -1040,6 +1040,86 @@ describe('event.update value', () => {
     })
   })
 
+  test('Scenario: Updating inline object value (same key)', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const span1Key = keyGenerator()
+    const stockTickerKey = keyGenerator()
+    const span2Key = keyGenerator()
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        inlineObjects: [
+          {name: 'stock-ticker', fields: [{name: 'symbol', type: 'string'}]},
+        ],
+      }),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {_type: 'span', _key: span1Key, text: 'Price: ', marks: []},
+            {_type: 'stock-ticker', _key: stockTickerKey, symbol: 'AAPL'},
+            {_type: 'span', _key: span2Key, text: '', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {_type: 'span', _key: span1Key, text: 'Price: ', marks: []},
+            {_type: 'stock-ticker', _key: stockTickerKey, symbol: 'AAPL'},
+            {_type: 'span', _key: span2Key, text: '', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+
+    // Update the inline object's value (same key and type)
+    editor.send({
+      type: 'update value',
+      value: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {_type: 'span', _key: span1Key, text: 'Price: ', marks: []},
+            {_type: 'stock-ticker', _key: stockTickerKey, symbol: 'GOOG'},
+            {_type: 'span', _key: span2Key, text: '', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {_type: 'span', _key: span1Key, text: 'Price: ', marks: []},
+            {_type: 'stock-ticker', _key: stockTickerKey, symbol: 'GOOG'},
+            {_type: 'span', _key: span2Key, text: '', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+  })
+
   test('Scenario: Selection restoration when block type changes', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
