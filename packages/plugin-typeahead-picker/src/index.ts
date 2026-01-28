@@ -10,4 +10,6 @@ export type {
   TypeaheadPickerState,
   TypeaheadSelectActionSet,
   TypeaheadSelectEvent,
+  TypeaheadTriggerEvent,
+  TypeaheadTriggerGuard,
 } from './typeahead-picker.types'

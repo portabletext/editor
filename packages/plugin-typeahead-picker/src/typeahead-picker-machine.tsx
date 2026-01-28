@@ -581,6 +581,36 @@ function createInputRules<TMatch extends object>(
   return rules
 }
 
+function createTriggerGuard<TMatch extends object>(
+  definition: TypeaheadPickerDefinition<TMatch>,
+) {
+  return ({
+    event,
+    snapshot,
+    dom,
+  }: {
+    event: TriggerFoundEvent | KeywordFoundEvent
+    snapshot: EditorSnapshot
+    dom: Parameters<NonNullable<typeof definition.guard>>[0]['dom']
+  }): true | false => {
+    if (event.pickerId !== definition._id) {
+      return false
+    }
+
+    if (!definition.guard) {
+      return true
+    }
+
+    return definition.guard({
+      snapshot,
+      dom,
+      event: {
+        type: 'custom.typeahead trigger found',
+      },
+    })
+  }
+}
+
 const triggerListenerCallback = <
   TMatch extends object,
 >(): CallbackLogicFunction<
@@ -590,6 +620,7 @@ const triggerListenerCallback = <
 > => {
   return ({sendBack, input}) => {
     const rules = createInputRules(input.definition)
+    const triggerGuard = createTriggerGuard(input.definition)
 
     const unregisterBehaviors = [
       input.editor.registerBehavior({
@@ -598,7 +629,7 @@ const triggerListenerCallback = <
       input.editor.registerBehavior({
         behavior: defineBehavior<KeywordFoundEvent, KeywordFoundEvent['type']>({
           on: 'custom.typeahead keyword found',
-          guard: ({event}) => event.pickerId === input.definition._id,
+          guard: triggerGuard,
           actions: [
             ({event}) => [
               effect(() => {
@@ -611,7 +642,7 @@ const triggerListenerCallback = <
       input.editor.registerBehavior({
         behavior: defineBehavior<TriggerFoundEvent, TriggerFoundEvent['type']>({
           on: 'custom.typeahead trigger found',
-          guard: ({event}) => event.pickerId === input.definition._id,
+          guard: triggerGuard,
           actions: [
             ({event}) => [
               effect(() => {

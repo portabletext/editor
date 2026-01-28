@@ -1,5 +1,8 @@
 import type {EditorSelection} from '@portabletext/editor'
-import type {BehaviorActionSet} from '@portabletext/editor/behaviors'
+import type {
+  BehaviorActionSet,
+  BehaviorGuard,
+} from '@portabletext/editor/behaviors'
 
 /**
  * Match type for pickers with auto-completion support.
@@ -91,6 +94,36 @@ export type TypeaheadSelectActionSet<TMatch> = BehaviorActionSet<
   true
 >
 
+/**
+ * Event passed to the trigger guard when the picker is about to activate.
+ *
+ * @public
+ */
+export type TypeaheadTriggerEvent = {
+  type: 'custom.typeahead trigger found'
+}
+
+/**
+ * Guard function that runs at trigger time to conditionally prevent the picker
+ * from activating. Has the same signature as a behavior guard.
+ *
+ * Return `false` to block activation, or `true` to allow it.
+ *
+ * @example
+ * ```ts
+ * guard: ({snapshot, event, dom}) => {
+ *   // Block activation if another picker is open
+ *   if (anotherPickerIsOpen()) return false
+ *
+ *   // Allow activation
+ *   return true
+ * }
+ * ```
+ *
+ * @public
+ */
+export type TypeaheadTriggerGuard = BehaviorGuard<TypeaheadTriggerEvent, true>
+
 type TypeaheadPickerDefinitionBase<TMatch extends object> = {
   /**
    * Pattern that activates the picker.
@@ -118,6 +151,15 @@ type TypeaheadPickerDefinitionBase<TMatch extends object> = {
    * @example `':'` - typing `:joy:` auto-inserts the joy emoji
    */
   delimiter?: string
+
+  /**
+   * Guard function that runs at trigger time to conditionally prevent the picker
+   * from activating.
+   * Return `false` to block activation, or `true` to allow it.
+   *
+   * @see {@link TypeaheadTriggerGuard}
+   */
+  guard?: TypeaheadTriggerGuard
 
   /**
    * Actions to execute when a match is selected.

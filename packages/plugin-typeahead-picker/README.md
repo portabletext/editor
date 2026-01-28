@@ -183,6 +183,41 @@ const commandPicker = defineTypeaheadPicker<CommandMatch>({
 
 `/heading` shows matching commands, but only when `/` is at the start of a block. Text like `hello /heading` will NOT trigger the picker.
 
+### Picker with guard
+
+Use `guard` to conditionally prevent the picker from activating. The guard runs at trigger time (when the trigger character is typed) and has the same signature as a behavior guard, receiving `snapshot`, `event`, and `dom`.
+
+```ts
+const emojiPicker = defineTypeaheadPicker<EmojiMatch>({
+  trigger: /:/,
+  keyword: /\S*/,
+  delimiter: ':',
+  getMatches: ({keyword}) => searchEmojis(keyword),
+
+  // Guard runs when `:` is typed - return false to block activation
+  guard: ({snapshot, event, dom}) => {
+    // Don't activate if another UI element is open
+    if (isDialogOpen()) {
+      return false
+    }
+
+    return true
+  },
+
+  actions: [
+    ({event}) => [
+      raise({type: 'delete', at: event.patternSelection}),
+      raise({type: 'insert.text', text: event.match.emoji}),
+    ],
+  ],
+})
+```
+
+The guard is useful for:
+
+- Avoiding conflicts when another picker or dialog is already open
+- Checking editor state or mode before allowing the picker
+
 ## API Reference
 
 ### `defineTypeaheadPicker(config)`
@@ -196,6 +231,7 @@ Creates a picker definition to pass to `useTypeaheadPicker`.
 | `trigger`    | `RegExp`                               | Pattern that activates the picker. Can include `^` for start-of-block triggers. Must be single-character (e.g., `/:/`, `/@/`, `/^\//`). |
 | `keyword`    | `RegExp`                               | Pattern matching characters after the trigger (e.g., `/\S*/`, `/\w*/`).                                                                 |
 | `delimiter`  | `string?`                              | Optional delimiter that triggers auto-completion (e.g., `':'` for `:joy:`)                                                              |
+| `guard`      | `TypeaheadTriggerGuard?`               | Optional guard that runs at trigger time to conditionally prevent activation                                                            |
 | `mode`       | `'sync' \| 'async'`                    | Whether `getMatches` returns synchronously or a Promise (default: `'sync'`)                                                             |
 | `debounceMs` | `number?`                              | Delay in ms before calling `getMatches`. Useful for both async (API calls) and sync (expensive local search) modes. (default: `0`)      |
 | `getMatches` | `(ctx: {keyword: string}) => TMatch[]` | Function that returns matches for the keyword                                                                                           |
@@ -463,6 +499,7 @@ The following keyboard shortcuts are handled automatically by the picker:
 - **Check position anchors**: `^` means start of block, not start of line. `hello /command` won't match `/^\//`
 - **Check for conflicts**: Only one picker can be active at a time
 - **Avoid multi-character triggers**: Triggers like `/##/` don't work because the picker only activates on newly typed single characters
+- **Check guard**: If you have a `guard` configured, ensure it's returning `true` when activation should be allowed
 
 ### Auto-completion doesn't work
 
