@@ -1,5 +1,11 @@
 # @portabletext/plugin-typeahead-picker
 
+## 3.0.0
+
+### Major Changes
+
+- [#2148](https://github.com/portabletext/editor/pull/2148) [`03710e3`](https://github.com/portabletext/editor/commit/03710e30a9dad1ae99303a5729b3dd9afd0dacd4) Thanks [@christianhg](https://github.com/christianhg)! - feat!: rename `actions` to `onSelect` and add optional `onDismiss`
+
 ## 2.1.0
 
 ### Minor Changes
