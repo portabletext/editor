@@ -10,7 +10,6 @@ import {
   effect,
   forward,
   raise,
-  type BehaviorAction,
 } from '@portabletext/editor/behaviors'
 import {
   getFocusSpan,
@@ -331,7 +330,7 @@ type TypeaheadPickerMachineEvent<TMatch extends object> =
   | TriggerFoundEvent
   | KeywordFoundEvent
   | {type: 'selection changed'}
-  | {type: 'dismiss'}
+  | {type: 'close'}
   | {type: 'navigate down'}
   | {type: 'navigate up'}
   | {type: 'navigate to'; index: number}
@@ -663,21 +662,57 @@ const triggerListenerCallback = <
 }
 
 const escapeListenerCallback = <TMatch extends object>(): CallbackLogicFunction<
-  AnyEventObject,
+  {type: 'context changed'; context: TypeaheadPickerMachineContext<TMatch>},
   TypeaheadPickerMachineEvent<TMatch>,
-  {editor: Editor}
+  {context: TypeaheadPickerMachineContext<TMatch>}
 > => {
-  return ({sendBack, input}) => {
-    return input.editor.registerBehavior({
+  return ({sendBack, input, receive}) => {
+    let context = input.context
+
+    receive((event) => {
+      context = event.context
+    })
+
+    return input.context.editor.registerBehavior({
       behavior: defineBehavior({
         on: 'keyboard.keydown',
         guard: ({event}) => escapeShortcut.guard(event.originEvent),
         actions: [
-          () => [
-            effect(() => {
-              sendBack({type: 'dismiss'})
-            }),
-          ],
+          ({snapshot, dom}) => {
+            if (!context.focusSpan || !context.definition.onDismiss) {
+              return [effect(() => sendBack({type: 'close'}))]
+            }
+
+            const patternSelection = {
+              anchor: {
+                path: context.focusSpan.path,
+                offset: context.focusSpan.textBefore.length,
+              },
+              focus: {
+                path: context.focusSpan.path,
+                offset:
+                  context.focusSpan.node.text.length -
+                  context.focusSpan.textAfter.length,
+              },
+            }
+
+            const dismissActions = context.definition.onDismiss.flatMap(
+              (actionSet) =>
+                actionSet(
+                  {
+                    snapshot,
+                    dom,
+                    event: {
+                      type: 'custom.typeahead dismiss',
+                      patternSelection,
+                    },
+                  },
+                  true,
+                ),
+            )
+
+            return [...dismissActions, effect(() => sendBack({type: 'close'}))]
+          },
         ],
       }),
     })
@@ -743,6 +778,71 @@ const selectionListenerCallback = <
   }
 }
 
+type DismissEvent = {
+  type: 'custom.typeahead dismiss'
+  pickerId: symbol
+}
+
+const dismissListenerCallback = <
+  TMatch extends object,
+>(): CallbackLogicFunction<
+  {type: 'context changed'; context: TypeaheadPickerMachineContext<TMatch>},
+  TypeaheadPickerMachineEvent<TMatch>,
+  {context: TypeaheadPickerMachineContext<TMatch>}
+> => {
+  return ({sendBack, input, receive}) => {
+    let context = input.context
+
+    receive((event) => {
+      context = event.context
+    })
+
+    return input.context.editor.registerBehavior({
+      behavior: defineBehavior<DismissEvent, DismissEvent['type']>({
+        on: 'custom.typeahead dismiss',
+        guard: ({event}) => event.pickerId === context.definition._id,
+        actions: [
+          ({snapshot, dom}) => {
+            if (!context.focusSpan || !context.definition.onDismiss) {
+              return [effect(() => sendBack({type: 'close'}))]
+            }
+
+            const patternSelection = {
+              anchor: {
+                path: context.focusSpan.path,
+                offset: context.focusSpan.textBefore.length,
+              },
+              focus: {
+                path: context.focusSpan.path,
+                offset:
+                  context.focusSpan.node.text.length -
+                  context.focusSpan.textAfter.length,
+              },
+            }
+
+            const dismissActions = context.definition.onDismiss.flatMap(
+              (actionSet) =>
+                actionSet(
+                  {
+                    snapshot,
+                    dom,
+                    event: {
+                      type: 'custom.typeahead dismiss',
+                      patternSelection,
+                    },
+                  },
+                  true,
+                ),
+            )
+
+            return [...dismissActions, effect(() => sendBack({type: 'close'}))]
+          },
+        ],
+      }),
+    })
+  }
+}
+
 const submitListenerCallback = <TMatch extends object>(): CallbackLogicFunction<
   {type: 'context changed'; context: TypeaheadPickerMachineContext<TMatch>},
   TypeaheadPickerMachineEvent<TMatch>,
@@ -792,7 +892,7 @@ const submitListenerCallback = <TMatch extends object>(): CallbackLogicFunction<
             ({event}) => [
               forward(event),
               effect(() => {
-                sendBack({type: 'dismiss'})
+                sendBack({type: 'close'})
               }),
             ],
           ],
@@ -807,11 +907,44 @@ const submitListenerCallback = <TMatch extends object>(): CallbackLogicFunction<
             context.patternText.length > 1 &&
             context.matches.length === 0,
           actions: [
-            () => [
-              effect(() => {
-                sendBack({type: 'dismiss'})
-              }),
-            ],
+            ({snapshot, dom}) => {
+              if (!context.focusSpan || !context.definition.onDismiss) {
+                return [effect(() => sendBack({type: 'close'}))]
+              }
+
+              const patternSelection = {
+                anchor: {
+                  path: context.focusSpan.path,
+                  offset: context.focusSpan.textBefore.length,
+                },
+                focus: {
+                  path: context.focusSpan.path,
+                  offset:
+                    context.focusSpan.node.text.length -
+                    context.focusSpan.textAfter.length,
+                },
+              }
+
+              const dismissActions = context.definition.onDismiss.flatMap(
+                (actionSet) =>
+                  actionSet(
+                    {
+                      snapshot,
+                      dom,
+                      event: {
+                        type: 'custom.typeahead dismiss',
+                        patternSelection,
+                      },
+                    },
+                    true,
+                  ),
+              )
+
+              return [
+                ...dismissActions,
+                effect(() => sendBack({type: 'close'})),
+              ]
+            },
           ],
         }),
       }),
@@ -865,7 +998,7 @@ const textInsertionListenerCallback = <
           ({event}) => [
             forward(event),
             effect(() => {
-              sendBack({type: 'dismiss'})
+              sendBack({type: 'close'})
             }),
           ],
         ],
@@ -909,33 +1042,29 @@ const selectMatchListenerCallback = <
               },
             }
 
-            const allActions: Array<BehaviorAction> = [
-              effect(() => {
-                sendBack({type: 'dismiss'})
-              }),
-            ]
-
-            for (const actionSet of input.context.definition.actions) {
-              const actions = actionSet(
-                {
-                  snapshot,
-                  dom,
-                  event: {
-                    type: 'custom.typeahead select',
-                    match: event.match,
-                    keyword: event.keyword,
-                    patternSelection,
+            const selectActions = input.context.definition.onSelect.flatMap(
+              (actionSet) =>
+                actionSet(
+                  {
+                    snapshot,
+                    dom,
+                    event: {
+                      type: 'custom.typeahead select',
+                      match: event.match,
+                      keyword: event.keyword,
+                      patternSelection,
+                    },
                   },
-                },
-                true,
-              )
+                  true,
+                ),
+            )
 
-              for (const action of actions) {
-                allActions.push(action)
-              }
-            }
-
-            return allActions
+            return [
+              effect(() => {
+                sendBack({type: 'close'})
+              }),
+              ...selectActions,
+            ]
           },
         ],
       }),
@@ -968,6 +1097,7 @@ export function createTypeaheadPickerMachine<TMatch extends object>() {
       'select match listener': fromCallback(
         selectMatchListenerCallback<TMatch>(),
       ),
+      'dismiss listener': fromCallback(dismissListenerCallback<TMatch>()),
       'get matches': fromPromise(
         async ({
           input,
@@ -1023,133 +1153,115 @@ export function createTypeaheadPickerMachine<TMatch extends object>() {
           selectedIndex: 0,
         }
       }),
-      'update focus span': assign({
-        focusSpan: ({context}) => {
-          if (!context.focusSpan) {
-            return context.focusSpan
-          }
-
-          const snapshot = context.editor.getSnapshot()
-          const focusSpan = getFocusSpan(snapshot)
-
-          if (!snapshot.context.selection || !focusSpan) {
-            return undefined
-          }
-
-          const nextSpan = getNextSpan({
-            ...snapshot,
-            context: {
-              ...snapshot.context,
-              selection: {
-                anchor: {path: context.focusSpan.path, offset: 0},
-                focus: {path: context.focusSpan.path, offset: 0},
-              },
-            },
-          })
-
-          if (!isEqualPaths(focusSpan.path, context.focusSpan.path)) {
-            if (
-              nextSpan &&
-              context.focusSpan.textAfter.length === 0 &&
-              snapshot.context.selection.focus.offset === 0 &&
-              isSelectionCollapsed(snapshot)
-            ) {
-              // This is an edge case where the caret is moved from the end of
-              // the focus span to the start of the next span.
-              return context.focusSpan
-            }
-
-            return undefined
-          }
-
-          if (!focusSpan.node.text.startsWith(context.focusSpan.textBefore)) {
-            return undefined
-          }
-
-          if (!focusSpan.node.text.endsWith(context.focusSpan.textAfter)) {
-            return undefined
-          }
-
-          const keywordAnchor = {
-            path: focusSpan.path,
-            offset: context.focusSpan.textBefore.length,
-          }
-          const keywordFocus = {
-            path: focusSpan.path,
-            offset:
-              focusSpan.node.text.length - context.focusSpan.textAfter.length,
-          }
-
-          const selectionIsBeforeKeyword =
-            isPointAfterSelection(keywordAnchor)(snapshot)
-          const selectionIsAfterKeyword =
-            isPointBeforeSelection(keywordFocus)(snapshot)
-
-          if (selectionIsBeforeKeyword || selectionIsAfterKeyword) {
-            return undefined
-          }
-
-          return {
-            node: focusSpan.node,
-            path: focusSpan.path,
-            textBefore: context.focusSpan.textBefore,
-            textAfter: context.focusSpan.textAfter,
-          }
-        },
-      }),
-      'update pattern text': assign(({context}) => {
+      'handle selection changed': assign(({context}) => {
         if (!context.focusSpan) {
-          return {}
+          return {focusSpan: undefined}
         }
 
-        const patternText = extractPatternTextFromFocusSpan(context.focusSpan)
+        const snapshot = context.editor.getSnapshot()
+        const currentFocusSpan = getFocusSpan(snapshot)
 
-        if (patternText === context.patternText) {
-          return {}
+        if (!snapshot.context.selection || !currentFocusSpan) {
+          return {focusSpan: undefined}
         }
 
-        return {patternText, selectedIndex: 0}
-      }),
-      'update keyword': assign(({context}) => {
-        if (!context.focusSpan || !context.patternText) {
-          return {}
+        const nextSpan = getNextSpan({
+          ...snapshot,
+          context: {
+            ...snapshot.context,
+            selection: {
+              anchor: {path: context.focusSpan.path, offset: 0},
+              focus: {path: context.focusSpan.path, offset: 0},
+            },
+          },
+        })
+
+        if (!isEqualPaths(currentFocusSpan.path, context.focusSpan.path)) {
+          if (
+            nextSpan &&
+            context.focusSpan.textAfter.length === 0 &&
+            snapshot.context.selection.focus.offset === 0 &&
+            isSelectionCollapsed(snapshot)
+          ) {
+            // Edge case: caret moved from end of focus span to start of next span
+            return {}
+          }
+          return {focusSpan: undefined}
         }
+
+        if (
+          !currentFocusSpan.node.text.startsWith(context.focusSpan.textBefore)
+        ) {
+          return {focusSpan: undefined}
+        }
+
+        if (!currentFocusSpan.node.text.endsWith(context.focusSpan.textAfter)) {
+          return {focusSpan: undefined}
+        }
+
+        const keywordAnchor = {
+          path: currentFocusSpan.path,
+          offset: context.focusSpan.textBefore.length,
+        }
+        const keywordFocus = {
+          path: currentFocusSpan.path,
+          offset:
+            currentFocusSpan.node.text.length -
+            context.focusSpan.textAfter.length,
+        }
+
+        const selectionIsBeforeKeyword =
+          isPointAfterSelection(keywordAnchor)(snapshot)
+        const selectionIsAfterKeyword =
+          isPointBeforeSelection(keywordFocus)(snapshot)
+
+        if (selectionIsBeforeKeyword || selectionIsAfterKeyword) {
+          return {focusSpan: undefined}
+        }
+
+        const focusSpan = {
+          node: currentFocusSpan.node,
+          path: currentFocusSpan.path,
+          textBefore: context.focusSpan.textBefore,
+          textAfter: context.focusSpan.textAfter,
+        }
+
+        const patternText = extractPatternTextFromFocusSpan(focusSpan)
 
         const keyword = extractKeyword(
-          context.patternText,
+          patternText,
           context.triggerPattern,
           context.definition.delimiter,
           context.completePattern,
         )
-
-        if (keyword === context.keyword) {
-          return {}
-        }
-
-        return {keyword}
-      }),
-      'update matches': assign(({context}) => {
-        if (!context.focusSpan || !context.patternText) {
-          return {}
-        }
 
         if (
           context.definition.mode === 'async' ||
           context.definition.debounceMs
         ) {
           return {
+            focusSpan,
+            patternText,
+            keyword,
+            selectedIndex:
+              patternText !== context.patternText ? 0 : context.selectedIndex,
             isLoading:
-              context.isLoading || context.requestedKeyword !== context.keyword,
+              context.isLoading || context.requestedKeyword !== keyword,
           }
         }
 
         const matches = context.definition.getMatches({
-          keyword: context.keyword,
+          keyword,
         }) as Array<TMatch>
 
         return {
+          focusSpan,
+          patternText,
+          keyword,
           matches,
-          requestedKeyword: context.keyword,
+          requestedKeyword: keyword,
+          selectedIndex:
+            patternText !== context.patternText ? 0 : context.selectedIndex,
           isLoading: false,
         }
       }),
@@ -1227,6 +1339,14 @@ export function createTypeaheadPickerMachine<TMatch extends object>() {
       ),
       'update text insertion listener context': sendTo(
         'text insertion listener',
+        ({context}) => ({type: 'context changed', context}),
+      ),
+      'update escape listener context': sendTo(
+        'escape listener',
+        ({context}) => ({type: 'context changed', context}),
+      ),
+      'update request dismiss listener context': sendTo(
+        'dismiss listener',
         ({context}) => ({type: 'context changed', context}),
       ),
       'handle error': assign({
@@ -1390,7 +1510,8 @@ export function createTypeaheadPickerMachine<TMatch extends object>() {
           },
           {
             src: 'escape listener',
-            input: ({context}) => ({editor: context.editor}),
+            id: 'escape listener',
+            input: ({context}) => ({context}),
           },
           {
             src: 'selection listener',
@@ -1406,19 +1527,23 @@ export function createTypeaheadPickerMachine<TMatch extends object>() {
             id: 'text insertion listener',
             input: ({context}) => ({context}),
           },
+          {
+            src: 'dismiss listener',
+            id: 'dismiss listener',
+            input: ({context}) => ({context}),
+          },
         ],
         on: {
-          'dismiss': {
+          'close': {
             target: 'idle',
           },
           'selection changed': {
             actions: [
-              'update focus span',
-              'update pattern text',
-              'update keyword',
-              'update matches',
+              'handle selection changed',
               'update submit listener context',
               'update text insertion listener context',
+              'update escape listener context',
+              'update request dismiss listener context',
             ],
           },
         },

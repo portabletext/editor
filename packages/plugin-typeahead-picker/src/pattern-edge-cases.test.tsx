@@ -45,7 +45,7 @@ function createPicker(config: {
             },
           ]
         }),
-      actions: [
+      onSelect: [
         ({event}) => [
           raise({type: 'delete', at: event.patternSelection}),
           raise({type: 'insert.text', text: event.match.value}),
@@ -60,7 +60,7 @@ function createPicker(config: {
     getMatches:
       (config.getMatches as (ctx: {keyword: string}) => TestMatch[]) ??
       defaultGetMatches,
-    actions: [
+    onSelect: [
       ({event}) => [
         raise({type: 'delete', at: event.patternSelection}),
         raise({type: 'insert.text', text: event.match.value}),

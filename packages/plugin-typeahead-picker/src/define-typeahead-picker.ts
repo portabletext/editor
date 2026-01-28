@@ -1,5 +1,6 @@
 import type {
   AutoCompleteMatch,
+  TypeaheadDismissActionSet,
   TypeaheadPickerDefinition,
   TypeaheadSelectActionSet,
   TypeaheadTriggerGuard,
@@ -28,10 +29,15 @@ type BaseConfigWithoutDelimiter<TMatch extends object> = {
    */
   guard?: TypeaheadTriggerGuard
   /**
-   * Actions to execute when a match is selected.
-   * Typically deletes the trigger text and inserts the selected content.
+   * Called when a match is selected.
+   * Returns behavior actions to execute (e.g., delete trigger text, insert content).
    */
-  actions: Array<TypeaheadSelectActionSet<TMatch>>
+  onSelect: TypeaheadSelectActionSet<TMatch>[]
+  /**
+   * Called when the picker is dismissed.
+   * Returns behavior actions to execute (optional cleanup).
+   */
+  onDismiss?: TypeaheadDismissActionSet[]
 }
 
 type BaseConfigWithDelimiter<TMatch extends AutoCompleteMatch> = {
@@ -63,10 +69,15 @@ type BaseConfigWithDelimiter<TMatch extends AutoCompleteMatch> = {
    */
   guard?: TypeaheadTriggerGuard
   /**
-   * Actions to execute when a match is selected.
-   * Typically deletes the trigger text and inserts the selected content.
+   * Called when a match is selected.
+   * Returns behavior actions to execute (e.g., delete trigger text, insert content).
    */
-  actions: Array<TypeaheadSelectActionSet<TMatch>>
+  onSelect: TypeaheadSelectActionSet<TMatch>[]
+  /**
+   * Called when the picker is dismissed.
+   * Returns behavior actions to execute (optional cleanup).
+   */
+  onDismiss?: TypeaheadDismissActionSet[]
 }
 
 type SyncConfigWithoutDelimiter<TMatch extends object> =
@@ -157,7 +168,12 @@ type AsyncConfigWithDelimiter<TMatch extends AutoCompleteMatch> =
  *   keyword: /[\S]+/,
  *   delimiter: ':',
  *   getMatches: ({keyword}) => searchEmojis(keyword),
- *   actions: [insertEmojiAction],
+ *   onSelect: [
+ *     ({event}) => [
+ *       raise({type: 'delete', at: event.patternSelection}),
+ *       raise({type: 'insert.text', text: event.match.emoji}),
+ *     ],
+ *   ],
  * })
  * ```
  *
@@ -169,17 +185,12 @@ type AsyncConfigWithDelimiter<TMatch extends AutoCompleteMatch> =
  *   keyword: /[\w]+/,
  *   debounceMs: 200,
  *   getMatches: async ({keyword}) => api.searchUsers(keyword),
- *   actions: [insertMentionAction],
- * })
- * ```
- *
- * @example Slash commands at start of block
- * ```ts
- * const slashCommandPicker = defineTypeaheadPicker({
- *   trigger: /^\//,
- *   keyword: /[\w]+/,
- *   getMatches: ({keyword}) => filterCommands(keyword),
- *   actions: [executeCommandAction],
+ *   onSelect: [
+ *     ({event}) => [
+ *       raise({type: 'delete', at: event.patternSelection}),
+ *       raise({type: 'insert.inline object', inlineObject: {_type: 'mention', userId: event.match.id}}),
+ *     ],
+ *   ],
  * })
  * ```
  *
@@ -189,15 +200,16 @@ type AsyncConfigWithDelimiter<TMatch extends AutoCompleteMatch> =
  *   trigger: /:/,
  *   keyword: /[\S]+/,
  *   getMatches: ({keyword}) => searchEmojis(keyword),
- *   guard: ({snapshot}) => {
- *     // Return false to prevent picker from activating
+ *   guard: ({snapshot, event, dom}) => {
  *     if (anotherPickerIsOpen()) return false
  *     return true
  *   },
- *   actions: [({event}) => [
- *     raise({type: 'delete', at: event.patternSelection}),
- *     raise({type: 'insert.text', text: event.match.emoji}),
- *   ]],
+ *   onSelect: [
+ *     ({event}) => [
+ *       raise({type: 'delete', at: event.patternSelection}),
+ *       raise({type: 'insert.text', text: event.match.emoji}),
+ *     ],
+ *   ],
  * })
  * ```
  *

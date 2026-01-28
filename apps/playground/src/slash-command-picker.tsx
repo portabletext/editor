@@ -138,7 +138,7 @@ const slashCommandPicker = defineTypeaheadPicker<CommandMatch>({
   trigger: /^\//,
   keyword: /\w*/,
   getMatches: matchCommands,
-  actions: [
+  onSelect: [
     ({event, snapshot}) => {
       const deletePattern = [
         raise({type: 'delete', at: event.patternSelection}),

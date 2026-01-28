@@ -69,7 +69,14 @@ export function useTypeaheadPicker<TMatch extends object>(
       },
     },
     send: (event: TypeaheadPickerEvent) => {
-      send(event)
+      if (event.type === 'dismiss') {
+        editor.send({
+          type: 'custom.typeahead dismiss',
+          pickerId: definition._id,
+        })
+      } else {
+        send(event)
+      }
     },
   }
 }

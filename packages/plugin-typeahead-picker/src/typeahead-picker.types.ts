@@ -59,7 +59,7 @@ export type GetMatches<TMatch extends object> = (context: {
 }) => ReadonlyArray<TMatch> | Promise<ReadonlyArray<TMatch>>
 
 /**
- * Event passed to typeahead select action sets.
+ * Event passed to `onSelect` when a match is selected.
  *
  * @public
  */
@@ -74,23 +74,35 @@ export type TypeaheadSelectEvent<TMatch> = {
 }
 
 /**
- * Action function that runs when a match is selected.
- * Returns an array of behavior actions to execute (e.g., delete trigger text, insert content).
+ * Event passed to `onDismiss` when the picker is dismissed.
  *
- * @example
- * ```ts
- * const insertEmoji: TypeaheadSelectActionSet<EmojiMatch> = (
- *   {event},
- * ) => [
- *   raise({type: 'delete', at: event.patternSelection}),
- *   raise({type: 'insert.text', text: event.match.emoji}),
- * ]
- * ```
+ * @public
+ */
+export type TypeaheadDismissEvent = {
+  type: 'custom.typeahead dismiss'
+  /** Selection range covering the full pattern match (e.g., `@john`) for cleanup */
+  patternSelection: NonNullable<EditorSelection>
+}
+
+/**
+ * Action set that runs when a match is selected.
+ * Returns an array of behavior actions to execute (e.g., delete trigger text, insert content).
  *
  * @public
  */
 export type TypeaheadSelectActionSet<TMatch> = BehaviorActionSet<
   TypeaheadSelectEvent<TMatch>,
+  true
+>
+
+/**
+ * Action set that runs when the picker is dismissed.
+ * Returns an array of behavior actions to execute (optional cleanup).
+ *
+ * @public
+ */
+export type TypeaheadDismissActionSet = BehaviorActionSet<
+  TypeaheadDismissEvent,
   true
 >
 
@@ -162,12 +174,26 @@ type TypeaheadPickerDefinitionBase<TMatch extends object> = {
   guard?: TypeaheadTriggerGuard
 
   /**
-   * Actions to execute when a match is selected.
-   * Typically deletes the trigger text and inserts the selected content.
+   * Called when a match is selected.
+   * Returns behavior actions to execute (e.g., delete trigger text, insert content).
    *
-   * @see {@link TypeaheadSelectActionSet}
+   * @example
+   * ```ts
+   * onSelect: [
+   *   ({event}) => [
+   *     raise({type: 'delete', at: event.patternSelection}),
+   *     raise({type: 'insert.text', text: event.match.emoji}),
+   *   ],
+   * ]
+   * ```
    */
-  actions: Array<TypeaheadSelectActionSet<TMatch>>
+  onSelect: TypeaheadSelectActionSet<TMatch>[]
+
+  /**
+   * Called when the picker is dismissed (Escape, cursor movement, etc.).
+   * Returns behavior actions to execute (optional cleanup).
+   */
+  onDismiss?: TypeaheadDismissActionSet[]
 }
 
 /**
@@ -182,7 +208,12 @@ type TypeaheadPickerDefinitionBase<TMatch extends object> = {
  *   keyword: /[\S]+/,
  *   delimiter: ':',
  *   getMatches: ({keyword}) => searchEmojis(keyword),
- *   actions: [insertEmojiAction],
+ *   onSelect: [
+ *     ({event}) => [
+ *       raise({type: 'delete', at: event.patternSelection}),
+ *       raise({type: 'insert.text', text: event.match.emoji}),
+ *     ],
+ *   ],
  * })
  * ```
  *

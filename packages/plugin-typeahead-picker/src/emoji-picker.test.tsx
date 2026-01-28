@@ -96,7 +96,7 @@ const emojiPicker = defineTypeaheadPicker<EmojiMatch>({
   keyword: /[\S]+/,
   delimiter: ':',
   getMatches: createMatchEmojis({emojis}),
-  actions: [
+  onSelect: [
     ({event}) => [
       raise({type: 'delete', at: event.patternSelection}),
       raise({type: 'insert.text', text: event.match.emoji}),
