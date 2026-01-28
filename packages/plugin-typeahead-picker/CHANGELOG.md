@@ -1,5 +1,17 @@
 # @portabletext/plugin-typeahead-picker
 
+## 2.1.0
+
+### Minor Changes
+
+- [#2149](https://github.com/portabletext/editor/pull/2149) [`1723ba9`](https://github.com/portabletext/editor/commit/1723ba9bc6166e07b681ebe845db104b8058acdc) Thanks [@christianhg](https://github.com/christianhg)! - feat: allow using a `guard` to prevent picker from triggering
+
+### Patch Changes
+
+- [#2149](https://github.com/portabletext/editor/pull/2149) [`e1da054`](https://github.com/portabletext/editor/commit/e1da0544302dc56fa6feb8437f62a3ec41bad019) Thanks [@christianhg](https://github.com/christianhg)! - fix: rename `'typeahead.select'` to `'custom.typeahead select'`
+
+- [#2149](https://github.com/portabletext/editor/pull/2149) [`99886cc`](https://github.com/portabletext/editor/commit/99886cccb6774da6df152b7f96deed7fec7ca101) Thanks [@christianhg](https://github.com/christianhg)! - fix: avoid unnecessary trailing `'select'` event
+
 ## 2.0.6
 
 ### Patch Changes
