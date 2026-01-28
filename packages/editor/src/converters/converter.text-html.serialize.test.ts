@@ -1,4 +1,3 @@
-import {compileSchemaDefinitionToPortableTextMemberSchemaTypes} from '@portabletext/sanity-bridge'
 import {
   compileSchema,
   defineSchema,
@@ -9,7 +8,7 @@ import {
 import {describe, expect, test} from 'vitest'
 import {createTestSnapshot} from '../internal-utils/create-test-snapshot'
 import type {EditorSelection} from '../types/editor'
-import {createConverterTextHtml} from './converter.text-html'
+import {converterTextHtml} from './converter.text-html'
 
 const decoratedParagraph: PortableTextTextBlock = {
   _key: 'k0',
@@ -76,22 +75,22 @@ const paragraphWithInlineBlock: PortableTextTextBlock = {
   ],
 }
 
-function createSnapshot(schema: SchemaDefinition, selection: EditorSelection) {
+function createSnapshot(
+  schemaDefinition: SchemaDefinition,
+  selection: EditorSelection,
+) {
+  const schema = compileSchema(schemaDefinition)
   return createTestSnapshot({
     context: {
       converters: [],
-      schema: compileSchema(schema),
+      schema,
       selection,
       value: [decoratedParagraph, image, b2, paragraphWithInlineBlock],
     },
   })
 }
 
-const converterTextHtml = createConverterTextHtml(
-  compileSchemaDefinitionToPortableTextMemberSchemaTypes(defineSchema({})),
-)
-
-describe(converterTextHtml.serialize.name, () => {
+describe(converterTextHtml.mimeType, () => {
   test('paragraph with decorators', () => {
     expect(
       converterTextHtml.serialize({
@@ -183,15 +182,16 @@ describe(converterTextHtml.serialize.name, () => {
   })
 
   test('lists', () => {
+    const schema = compileSchema(
+      defineSchema({
+        lists: [{name: 'bullet'}, {name: 'number'}],
+      }),
+    )
     expect(
       converterTextHtml.serialize({
         snapshot: createTestSnapshot({
           context: {
-            schema: compileSchema(
-              defineSchema({
-                lists: [{name: 'bullet'}, {name: 'number'}],
-              }),
-            ),
+            schema,
             converters: [],
             value: [
               {

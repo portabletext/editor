@@ -75,7 +75,6 @@ export type {
   PasteData,
   PatchChange,
   PatchObservable,
-  PortableTextMemberSchemaTypes,
   RangeDecoration,
   RangeDecorationOnMovedDetails,
   ReadyChange,

@@ -6,7 +6,6 @@ import type {EditorDom} from './editor/editor-dom'
 import type {ExternalEditorEvent} from './editor/editor-machine'
 import type {EditorSnapshot} from './editor/editor-snapshot'
 import type {EditorEmittedEvent} from './editor/relay-machine'
-import type {ArrayDefinition, ArraySchemaType} from './types/sanity-types'
 
 /**
  * @public
@@ -18,16 +17,8 @@ export type EditorConfig = {
   keyGenerator?: () => string
   readOnly?: boolean
   initialValue?: Array<PortableTextBlock>
-} & (
-  | {
-      schemaDefinition: SchemaDefinition
-      schema?: undefined
-    }
-  | {
-      schemaDefinition?: undefined
-      schema: ArraySchemaType<PortableTextBlock> | ArrayDefinition
-    }
-)
+  schemaDefinition: SchemaDefinition
+}
 
 /**
  * @public
