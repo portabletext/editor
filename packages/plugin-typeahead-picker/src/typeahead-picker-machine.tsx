@@ -10,6 +10,7 @@ import {
   effect,
   forward,
   raise,
+  type BehaviorAction,
 } from '@portabletext/editor/behaviors'
 import {
   getFocusSpan,
@@ -877,9 +878,7 @@ const insertMatchListenerCallback = <
               },
             }
 
-            const allActions: Array<
-              ReturnType<typeof raise> | ReturnType<typeof effect>
-            > = [
+            const allActions: Array<BehaviorAction> = [
               effect(() => {
                 sendBack({type: 'dismiss'})
               }),
@@ -899,32 +898,11 @@ const insertMatchListenerCallback = <
                 },
                 true,
               )
+
               for (const action of actions) {
-                allActions.push(
-                  action as
-                    | ReturnType<typeof raise>
-                    | ReturnType<typeof effect>,
-                )
+                allActions.push(action)
               }
             }
-
-            // Dispatch a select event after all actions complete to exit
-            // input-rule's "input rule applied" state. We use queueMicrotask
-            // to ensure this runs after the cursor has moved to its final position.
-            allActions.push(
-              effect(() => {
-                queueMicrotask(() => {
-                  const currentSelection =
-                    input.context.editor.getSnapshot().context.selection
-                  if (currentSelection) {
-                    input.context.editor.send({
-                      type: 'select',
-                      at: currentSelection,
-                    })
-                  }
-                })
-              }),
-            )
 
             return allActions
           },
