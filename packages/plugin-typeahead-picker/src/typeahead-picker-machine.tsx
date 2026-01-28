@@ -851,7 +851,7 @@ type InsertMatchEvent<TMatch extends object> = {
   pickerId: symbol
 }
 
-const insertMatchListenerCallback = <
+const selectMatchListenerCallback = <
   TMatch extends object,
 >(): CallbackLogicFunction<
   AnyEventObject,
@@ -861,7 +861,7 @@ const insertMatchListenerCallback = <
   return ({sendBack, input}) => {
     return input.context.editor.registerBehavior({
       behavior: defineBehavior<InsertMatchEvent<TMatch>>({
-        on: 'custom.typeahead insert match',
+        on: 'custom.typeahead select match',
         guard: ({event}) => event.pickerId === input.context.definition._id,
         actions: [
           ({event, snapshot, dom}) => {
@@ -934,8 +934,8 @@ export function createTypeaheadPickerMachine<TMatch extends object>() {
       'text insertion listener': fromCallback(
         textInsertionListenerCallback<TMatch>(),
       ),
-      'insert match listener': fromCallback(
-        insertMatchListenerCallback<TMatch>(),
+      'select match listener': fromCallback(
+        selectMatchListenerCallback<TMatch>(),
       ),
       'get matches': fromPromise(
         async ({
@@ -1169,7 +1169,7 @@ export function createTypeaheadPickerMachine<TMatch extends object>() {
           selectedIndex: (context.selectedIndex + 1) % context.matches.length,
         }
       }),
-      'insert match': ({context}, params: {exact?: boolean}) => {
+      'select match': ({context}, params: {exact?: boolean}) => {
         if (!context.focusSpan) {
           return
         }
@@ -1183,7 +1183,7 @@ export function createTypeaheadPickerMachine<TMatch extends object>() {
         }
 
         context.editor.send({
-          type: 'custom.typeahead insert match',
+          type: 'custom.typeahead select match',
           match,
           focusSpan: context.focusSpan,
           keyword: context.keyword,
@@ -1320,7 +1320,7 @@ export function createTypeaheadPickerMachine<TMatch extends object>() {
       'checking complete': {
         invoke: [
           {
-            src: 'insert match listener',
+            src: 'select match listener',
             input: ({context}) => ({context}),
           },
           {
@@ -1336,7 +1336,7 @@ export function createTypeaheadPickerMachine<TMatch extends object>() {
                 target: 'idle',
                 actions: [
                   assign({matches: ({event}) => event.output.matches}),
-                  {type: 'insert match', params: {exact: true}},
+                  {type: 'select match', params: {exact: true}},
                 ],
               },
               {
@@ -1354,7 +1354,7 @@ export function createTypeaheadPickerMachine<TMatch extends object>() {
       'active': {
         invoke: [
           {
-            src: 'insert match listener',
+            src: 'select match listener',
             input: ({context}) => ({context}),
           },
           {
@@ -1402,7 +1402,7 @@ export function createTypeaheadPickerMachine<TMatch extends object>() {
           },
           {
             guard: 'is complete keyword',
-            actions: [{type: 'insert match', params: {exact: false}}],
+            actions: [{type: 'select match', params: {exact: false}}],
             target: 'idle',
           },
         ],
@@ -1554,7 +1554,7 @@ export function createTypeaheadPickerMachine<TMatch extends object>() {
               },
               'select': {
                 target: '#typeahead picker.idle',
-                actions: [{type: 'insert match', params: {exact: false}}],
+                actions: [{type: 'select match', params: {exact: false}}],
               },
             },
             initial: 'idle',
