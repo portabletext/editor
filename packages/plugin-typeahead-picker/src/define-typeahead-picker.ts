@@ -2,6 +2,7 @@ import type {
   AutoCompleteMatch,
   TypeaheadPickerDefinition,
   TypeaheadSelectActionSet,
+  TypeaheadTriggerGuard,
 } from './typeahead-picker.types'
 
 type BaseConfigWithoutDelimiter<TMatch extends object> = {
@@ -21,6 +22,11 @@ type BaseConfigWithoutDelimiter<TMatch extends object> = {
    */
   keyword: RegExp
   delimiter?: undefined
+  /**
+   * Guard function that runs at trigger time to conditionally prevent activation.
+   * Return `false` to block activation, or `true` to allow it.
+   */
+  guard?: TypeaheadTriggerGuard
   /**
    * Actions to execute when a match is selected.
    * Typically deletes the trigger text and inserts the selected content.
@@ -51,6 +57,11 @@ type BaseConfigWithDelimiter<TMatch extends AutoCompleteMatch> = {
    * @example `':'` - typing `:joy:` auto-inserts the joy emoji
    */
   delimiter: string
+  /**
+   * Guard function that runs at trigger time to conditionally prevent activation.
+   * Return `false` to block activation, or `true` to allow it.
+   */
+  guard?: TypeaheadTriggerGuard
   /**
    * Actions to execute when a match is selected.
    * Typically deletes the trigger text and inserts the selected content.
@@ -169,6 +180,24 @@ type AsyncConfigWithDelimiter<TMatch extends AutoCompleteMatch> =
  *   keyword: /[\w]+/,
  *   getMatches: ({keyword}) => filterCommands(keyword),
  *   actions: [executeCommandAction],
+ * })
+ * ```
+ *
+ * @example Picker with guard (runs at trigger time)
+ * ```ts
+ * const emojiPicker = defineTypeaheadPicker({
+ *   trigger: /:/,
+ *   keyword: /[\S]+/,
+ *   getMatches: ({keyword}) => searchEmojis(keyword),
+ *   guard: ({snapshot}) => {
+ *     // Return false to prevent picker from activating
+ *     if (anotherPickerIsOpen()) return false
+ *     return true
+ *   },
+ *   actions: [({event}) => [
+ *     raise({type: 'delete', at: event.patternSelection}),
+ *     raise({type: 'insert.text', text: event.match.emoji}),
+ *   ]],
  * })
  * ```
  *
