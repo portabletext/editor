@@ -1,5 +1,11 @@
 # Changelog
 
+## 5.0.1
+
+### Patch Changes
+
+- [#2144](https://github.com/portabletext/editor/pull/2144) [`e695d2b`](https://github.com/portabletext/editor/commit/e695d2b66706074961bfcdcae900ca1438bb30a0) Thanks [@christianhg](https://github.com/christianhg)! - docs: update description
+
 ## 5.0.0
 
 ### Major Changes
