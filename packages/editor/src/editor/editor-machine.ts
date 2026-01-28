@@ -28,6 +28,7 @@ import type {
   PortableTextMemberSchemaTypes,
 } from '../types/editor'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
+import {pathsOverlap} from '../utils/util.paths-overlap'
 import type {EditorSchema} from './editor-schema'
 import type {
   EditorEmittedEvent,
@@ -252,6 +253,28 @@ export const editorMachine = setup({
     }),
     'emit ready': emit({type: 'ready'}),
     'clear pending events': assign({
+      pendingEvents: [],
+    }),
+    'discard conflicting pending patches': assign({
+      pendingEvents: ({context, event}) => {
+        if (event.type !== 'patches') {
+          return context.pendingEvents
+        }
+
+        const incomingPaths = event.patches.map((patch) => patch.path)
+
+        return context.pendingEvents.filter((pendingEvent) => {
+          if (pendingEvent.type !== 'internal.patch') {
+            return true
+          }
+
+          return !incomingPaths.some((incomingPath) =>
+            pathsOverlap(pendingEvent.patch.path, incomingPath),
+          )
+        })
+      },
+    }),
+    'discard all pending events': assign({
       pendingEvents: [],
     }),
     'defer incoming patches': assign({
@@ -732,6 +755,12 @@ export const editorMachine = setup({
                             target: '#editor.setup.set up.writing.dirty',
                           },
                         ],
+                        'patches': {
+                          actions: 'discard conflicting pending patches',
+                        },
+                        'syncing value': {
+                          actions: 'discard all pending events',
+                        },
                       },
                     },
                   },

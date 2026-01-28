@@ -200,6 +200,112 @@ describe('Collaborative editing', () => {
       ])
     })
 
+    test('Scenario: Value sync discards local held-back patches', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const blockKey = keyGenerator()
+      const spanKey = keyGenerator()
+      const emittedPatches: Array<Patch> = []
+
+      const {editor, locator} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: defineSchema({}),
+        initialValue: [
+          {
+            _type: 'block',
+            _key: blockKey,
+            children: [{_key: spanKey, _type: 'span', text: 'foo'}],
+          },
+        ],
+        children: (
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                const {origin: _, ...patch} = event.patch
+                emittedPatches.push(patch)
+              }
+            }}
+          />
+        ),
+      })
+
+      expect(emittedPatches).toEqual([])
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          {
+            _type: 'block',
+            _key: blockKey,
+            children: [{_key: spanKey, _type: 'span', text: 'foo', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ])
+      })
+
+      editor.send({
+        type: 'update value',
+        value: [
+          {
+            _type: 'block',
+            _key: blockKey,
+            children: [{_key: spanKey, _type: 'span', text: 'bar'}],
+            style: 'normal',
+          },
+        ],
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          {
+            _type: 'block',
+            _key: blockKey,
+            children: [{_key: spanKey, _type: 'span', text: 'bar', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ])
+      })
+
+      await whenTheCaretIsPutAfter({editor, locator}, 'bar')
+
+      await userEvent.type(locator, 'baz')
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          {
+            _type: 'block',
+            _key: blockKey,
+            children: [
+              {_key: spanKey, _type: 'span', text: 'barbaz', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ])
+      })
+
+      expect(emittedPatches).toEqual([
+        diffMatchPatch('bar', 'barb', [
+          {_key: blockKey},
+          'children',
+          {_key: spanKey},
+          'text',
+        ]),
+        diffMatchPatch('barb', 'barba', [
+          {_key: blockKey},
+          'children',
+          {_key: spanKey},
+          'text',
+        ]),
+        diffMatchPatch('barba', 'barbaz', [
+          {_key: blockKey},
+          'children',
+          {_key: spanKey},
+          'text',
+        ]),
+      ])
+    })
+
     test('Scenario: Remote patches on unrelated path do not discard local patches', async () => {
       /**
        * This test verifies that local held-back patches are NOT discarded
