@@ -921,7 +921,7 @@ const selectMatchListenerCallback = <
                   snapshot,
                   dom,
                   event: {
-                    type: 'typeahead.select',
+                    type: 'custom.typeahead select',
                     match: event.match,
                     keyword: event.keyword,
                     patternSelection,

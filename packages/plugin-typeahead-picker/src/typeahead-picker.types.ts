@@ -64,7 +64,7 @@ export type GetMatches<TMatch extends object> = (context: {
  * @public
  */
 export type TypeaheadSelectEvent<TMatch> = {
-  type: 'typeahead.select'
+  type: 'custom.typeahead select'
   /** The match that was selected */
   match: TMatch
   /** The extracted keyword (e.g., `joy` from `:joy`) */
