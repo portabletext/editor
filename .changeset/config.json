@@ -8,7 +8,7 @@
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": ["docs", "playground", "example-basic", "example-legacy"],
+  "ignore": ["docs", "playground", "example-basic"],
   "___experimentalUnsafeOptions_WILL_CHANGE_IN_PATCH": {
     "updateInternalDependents": "always",
     "onlyUpdatePeerDependentsWhenOutOfRange": true

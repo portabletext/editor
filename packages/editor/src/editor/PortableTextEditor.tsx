@@ -3,107 +3,36 @@ import type {
   PortableTextChild,
   PortableTextObject,
 } from '@portabletext/schema'
-import {
-  Component,
-  useEffect,
-  type MutableRefObject,
-  type PropsWithChildren,
-} from 'react'
 import {Subject} from 'rxjs'
-import {Slate} from 'slate-react'
-import {stopActor} from '../internal-utils/stop-actor'
 import type {
   AddedAnnotationPaths,
   EditableAPI,
   EditableAPIDeleteOptions,
-  EditorChange,
   EditorChanges,
   EditorSelection,
-  PatchObservable,
   PortableTextMemberSchemaTypes,
 } from '../types/editor'
 import type {Path} from '../types/paths'
-import type {ArrayDefinition, ArraySchemaType} from '../types/sanity-types'
-import {createInternalEditor, type InternalEditor} from './create-editor'
-import {EditorActorContext} from './editor-actor-context'
-import type {EditorActor} from './editor-machine'
-import {eventToChange} from './event-to-change'
-import type {MutationActor} from './mutation-machine'
-import {RelayActorContext} from './relay-actor-context'
-import type {RelayActor} from './relay-machine'
-import type {SyncActor} from './sync-machine'
-import {PortableTextEditorContext} from './usePortableTextEditor'
+import type {InternalEditor} from './create-editor'
 
 /**
- * Props for the PortableTextEditor component
+ * @public
+ * @deprecated Use `useEditor()` instead
  *
- * @public
- * @deprecated Use `EditorProvider` instead
+ * ```
+ * import {useEditor} from '@portabletext/editor'
+ *
+ * // Get the editor instance
+ * const editor = useEditor()
+ *
+ * // Send events to the editor
+ * editor.send(...)
+ *
+ * // Derive state from the editor
+ * const state = useEditorSelector(editor, snapshot => ...)
+ * ```
  */
-export type PortableTextEditorProps<
-  TEditor extends InternalEditor | undefined = undefined,
-> = PropsWithChildren<
-  TEditor extends InternalEditor
-    ? {
-        /**
-         * @internal
-         */
-        editor: TEditor
-      }
-    : {
-        editor?: undefined
-
-        /**
-         * Function that gets called when the editor changes the value
-         */
-        onChange: (change: EditorChange) => void
-
-        /**
-         * Schema type for the portable text field
-         */
-        schemaType: ArraySchemaType<PortableTextBlock> | ArrayDefinition
-
-        /**
-         * Function used to generate keys for array items (`_key`)
-         */
-        keyGenerator?: () => string
-
-        /**
-         * Observable of local and remote patches for the edited value.
-         */
-        patches$?: PatchObservable
-
-        /**
-         * Backward compatibility (renamed to patches$).
-         */
-        incomingPatches$?: PatchObservable
-
-        /**
-         * Whether or not the editor should be in read-only mode
-         */
-        readOnly?: boolean
-
-        /**
-         * The current value of the portable text field
-         */
-        value?: PortableTextBlock[]
-
-        /**
-         * A ref to the editor instance
-         */
-        editorRef?: MutableRefObject<PortableTextEditor | null>
-      }
->
-
-/**
- * The main Portable Text Editor component.
- * @public
- * @deprecated Use `EditorProvider` instead
- */
-export class PortableTextEditor extends Component<
-  PortableTextEditorProps<InternalEditor | undefined>
-> {
-  public static displayName = 'PortableTextEditor'
+export class PortableTextEditor {
   /**
    * An observable of all the editor changes.
    */
@@ -121,120 +50,12 @@ export class PortableTextEditor extends Component<
    */
   private editable: EditableAPI
 
-  private actors?: {
-    editorActor: EditorActor
-    mutationActor: MutationActor
-    relayActor: RelayActor
-    syncActor: SyncActor
-  }
-
-  private subscriptions: Array<() => () => void> = []
-  private unsubscribers: Array<() => void> = []
-
-  constructor(props: PortableTextEditorProps) {
-    super(props)
-
-    if (props.editor) {
-      this.editor = props.editor as InternalEditor
-      this.schemaTypes = this.editor._internal.editorActor
-        .getSnapshot()
-        .context.getLegacySchema()
-    } else {
-      const {actors, editor, subscriptions} = createInternalEditor({
-        initialValue: props.value,
-        keyGenerator: props.keyGenerator,
-        readOnly: props.readOnly,
-        schema: props.schemaType,
-      })
-
-      this.subscriptions = subscriptions
-      this.actors = actors
-
-      this.editor = editor
-      this.schemaTypes = actors.editorActor
-        .getSnapshot()
-        .context.getLegacySchema()
-    }
-
-    this.editable = this.editor._internal.editable
-  }
-
-  override componentDidMount(): void {
-    if (!this.actors) {
-      return
-    }
-
-    for (const subscription of this.subscriptions) {
-      this.unsubscribers.push(subscription())
-    }
-
-    const relayActorSubscription = this.actors.relayActor.on('*', (event) => {
-      const change = eventToChange(event)
-
-      if (!change) {
-        return
-      }
-
-      if (!this.props.editor) {
-        this.props.onChange(change)
-      }
-
-      this.change$.next(change)
-    })
-
-    this.unsubscribers.push(relayActorSubscription.unsubscribe)
-
-    this.actors.editorActor.start()
-    this.actors.mutationActor.start()
-    this.actors.relayActor.start()
-    this.actors.syncActor.start()
-  }
-
-  override componentDidUpdate(prevProps: PortableTextEditorProps) {
-    // Set up the schema type lookup table again if the source schema type changes
-    if (
-      !this.props.editor &&
-      !prevProps.editor &&
-      this.props.schemaType !== prevProps.schemaType
-    ) {
-      console.warn('Updating schema type is no longer supported')
-    }
-
-    if (!this.props.editor && !prevProps.editor) {
-      if (this.props.readOnly !== prevProps.readOnly) {
-        this.editor._internal.editorActor.send({
-          type: 'update readOnly',
-          readOnly: this.props.readOnly ?? false,
-        })
-      }
-
-      if (this.props.value !== prevProps.value) {
-        this.editor.send({
-          type: 'update value',
-          value: this.props.value,
-        })
-      }
-
-      if (
-        this.props.editorRef !== prevProps.editorRef &&
-        this.props.editorRef
-      ) {
-        this.props.editorRef.current = this
-      }
-    }
-  }
-
-  override componentWillUnmount(): void {
-    for (const unsubscribe of this.unsubscribers) {
-      unsubscribe()
-    }
-
-    if (this.actors) {
-      stopActor(this.actors.editorActor)
-      stopActor(this.actors.mutationActor)
-      stopActor(this.actors.relayActor)
-      stopActor(this.actors.syncActor)
-    }
+  constructor(config: {editor: InternalEditor}) {
+    this.editor = config.editor
+    this.schemaTypes = config.editor._internal.editorActor
+      .getSnapshot()
+      .context.getLegacySchema()
+    this.editable = config.editor._internal.editable
   }
 
   public setEditable = (editable: EditableAPI) => {
@@ -242,35 +63,6 @@ export class PortableTextEditor extends Component<
       ...this.editor._internal.editable,
       ...editable,
     }
-  }
-
-  override render() {
-    const legacyPatches = !this.props.editor
-      ? (this.props.incomingPatches$ ?? this.props.patches$)
-      : undefined
-
-    return (
-      <>
-        {legacyPatches ? (
-          <RoutePatchesObservableToEditorActor
-            editorActor={this.editor._internal.editorActor}
-            patches$={legacyPatches}
-          />
-        ) : null}
-        <EditorActorContext.Provider value={this.editor._internal.editorActor}>
-          <RelayActorContext.Provider value={this.actors!.relayActor}>
-            <Slate
-              editor={this.editor._internal.slateEditor.instance}
-              initialValue={this.editor._internal.slateEditor.initialValue}
-            >
-              <PortableTextEditorContext.Provider value={this}>
-                {this.props.children}
-              </PortableTextEditorContext.Provider>
-            </Slate>
-          </RelayActorContext.Provider>
-        </EditorActorContext.Provider>
-      </>
-    )
   }
 
   /**
@@ -756,24 +548,4 @@ export class PortableTextEditor extends Component<
   ) => {
     return editor.editable?.isSelectionsOverlapping(selectionA, selectionB)
   }
-}
-
-function RoutePatchesObservableToEditorActor(props: {
-  editorActor: EditorActor
-  patches$: PatchObservable
-}) {
-  useEffect(() => {
-    const subscription = props.patches$.subscribe((payload) => {
-      props.editorActor.send({
-        type: 'patches',
-        ...payload,
-      })
-    })
-
-    return () => {
-      subscription.unsubscribe()
-    }
-  }, [props.editorActor, props.patches$])
-
-  return null
 }
