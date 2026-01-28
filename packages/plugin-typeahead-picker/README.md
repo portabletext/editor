@@ -37,9 +37,9 @@ const emojiPicker = defineTypeaheadPicker<EmojiMatch>({
   // Return matches for the keyword. Can be sync or async (with mode: 'async').
   getMatches: ({keyword}) => searchEmojis(keyword),
 
-  // Actions to execute when a match is selected (Enter/Tab or click).
+  // Action to execute when a match is selected (Enter/Tab or click).
   // Receives the event containing the selected match and pattern selection.
-  actions: [
+  onSelect: [
     ({event}) => [
       raise({type: 'delete', at: event.patternSelection}), // Delete `:joy`
       raise({type: 'insert.text', text: event.match.emoji}), // Insert 😂
@@ -114,7 +114,7 @@ const emojiPicker = defineTypeaheadPicker<EmojiMatch>({
   keyword: /\S*/,
   delimiter: ':',
   getMatches: ({keyword}) => searchEmojis(keyword),
-  actions: [
+  onSelect: [
     ({event}) => [
       raise({type: 'delete', at: event.patternSelection}),
       raise({type: 'insert.text', text: event.match.emoji}),
@@ -136,7 +136,7 @@ const mentionPicker = defineTypeaheadPicker<MentionMatch>({
   keyword: /\w*/,
   debounceMs: 200,
   getMatches: async ({keyword}) => api.searchUsers(keyword),
-  actions: [
+  onSelect: [
     ({event}) => [
       raise({type: 'delete', at: event.patternSelection}),
       raise({
@@ -158,7 +158,7 @@ const commandPicker = defineTypeaheadPicker<CommandMatch>({
   trigger: /^\//, // ^ anchors to start of block
   keyword: /\w*/,
   getMatches: ({keyword}) => searchCommands(keyword),
-  actions: [
+  onSelect: [
     ({event}) => {
       switch (event.match.command) {
         case 'h1':
@@ -204,7 +204,7 @@ const emojiPicker = defineTypeaheadPicker<EmojiMatch>({
     return true
   },
 
-  actions: [
+  onSelect: [
     ({event}) => [
       raise({type: 'delete', at: event.patternSelection}),
       raise({type: 'insert.text', text: event.match.emoji}),
@@ -235,7 +235,8 @@ Creates a picker definition to pass to `useTypeaheadPicker`.
 | `mode`       | `'sync' \| 'async'`                    | Whether `getMatches` returns synchronously or a Promise (default: `'sync'`)                                                             |
 | `debounceMs` | `number?`                              | Delay in ms before calling `getMatches`. Useful for both async (API calls) and sync (expensive local search) modes. (default: `0`)      |
 | `getMatches` | `(ctx: {keyword: string}) => TMatch[]` | Function that returns matches for the keyword                                                                                           |
-| `actions`    | `Array<TypeaheadSelectActionSet>`      | Actions to execute when a match is selected                                                                                             |
+| `onSelect`   | `TypeaheadSelectActionSet[]`           | Action sets to execute when a match is selected                                                                                         |
+| `onDismiss`  | `TypeaheadDismissActionSet[]?`         | Optional action sets to execute when the picker is dismissed                                                                            |
 
 **Trigger pattern rules:**
 
@@ -352,16 +353,59 @@ function EmojiPickerPlugin() {
 
 The error is cleared when the picker returns to idle (e.g., via Escape or cursor movement).
 
-## Advanced Actions
+## onDismiss
 
-Action functions receive more than just the event. The full payload includes access to the editor snapshot, which is useful for generating keys, accessing the schema, or reading the current editor state.
+The optional `onDismiss` callback runs when the picker is dismissed via Escape. This is useful for cleaning up the typed trigger and keyword text.
+
+```ts
+const mentionPicker = defineTypeaheadPicker<MentionMatch>({
+  trigger: /@/,
+  keyword: /\w*/,
+  getMatches: ({keyword}) => searchUsers(keyword),
+  onSelect: [
+    ({event}) => [
+      raise({type: 'delete', at: event.patternSelection}),
+      raise({type: 'insert.text', text: `@${event.match.name}`}),
+    ],
+  ],
+  // Delete the typed text when user presses Escape
+  onDismiss: [
+    ({event}) => [raise({type: 'delete', at: event.patternSelection})],
+  ],
+})
+```
+
+Without `onDismiss`, pressing Escape leaves the typed text in place (e.g., `@john` remains in the editor). With `onDismiss` configured to delete the pattern, the text is removed.
+
+**onDismiss payload:**
+
+| Property                 | Description                                                    |
+| ------------------------ | -------------------------------------------------------------- |
+| `event.patternSelection` | Selection range covering the trigger + keyword (e.g., `@john`) |
+| `snapshot`               | Current editor snapshot                                        |
+
+Note: `onDismiss` is called when the user actively dismisses the picker:
+
+- Pressing Escape
+- Pressing Enter/Tab when there are no matches
+- Programmatically via `picker.send({type: 'dismiss'})`
+
+It is NOT called when:
+
+- The user selects a match (Enter/Tab/click with a match selected)
+- The picker is dismissed due to cursor movement
+- The picker is dismissed due to invalid pattern (e.g., typing a space)
+
+## Advanced onSelect
+
+The `onSelect` callback receives more than just the event. The full payload includes access to the editor snapshot, which is useful for generating keys, accessing the schema, or reading the current editor state.
 
 ```tsx
 const commandPicker = defineTypeaheadPicker<CommandMatch>({
   trigger: /^\//,
   keyword: /\w*/,
   getMatches: ({keyword}) => searchCommands(keyword),
-  actions: [
+  onSelect: [
     ({event, snapshot}) => {
       // Access schema to check for block object fields
       const blockObjectSchema = snapshot.context.schema.blockObjects.find(
@@ -383,7 +427,7 @@ const commandPicker = defineTypeaheadPicker<CommandMatch>({
 })
 ```
 
-**Action payload:**
+**onSelect payload:**
 
 | Property   | Description                                                                   |
 | ---------- | ----------------------------------------------------------------------------- |
@@ -515,14 +559,12 @@ The following keyboard shortcuts are handled automatically by the picker:
 
 ### Focus issues after selection
 
-- Ensure your actions include focus restoration if needed:
+- Ensure your onSelect includes focus restoration if needed:
   ```tsx
-  actions: [
+  onSelect: [
     ({event}) => [
       raise({type: 'delete', at: event.patternSelection}),
       raise({type: 'insert.text', text: event.match.emoji}),
-    ],
-    () => [
       effect(({send}) => {
         send({type: 'focus'})
       }),

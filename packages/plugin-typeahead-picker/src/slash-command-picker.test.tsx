@@ -44,7 +44,7 @@ const slashCommandPicker = defineTypeaheadPicker<SlashCommandMatch>({
   trigger: /^\//,
   keyword: /\w*/,
   getMatches: matchCommands,
-  actions: [
+  onSelect: [
     ({event}) => [
       raise({type: 'delete', at: event.patternSelection}),
       raise({type: 'style.toggle', style: event.match.style}),

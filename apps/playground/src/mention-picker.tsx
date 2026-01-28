@@ -122,7 +122,7 @@ const mentionPicker = defineTypeaheadPicker<MentionMatch>({
   keyword: /\w*/,
   debounceMs: 50,
   getMatches: matchUsers,
-  actions: [
+  onSelect: [
     ({event, snapshot}) => [
       raise({type: 'delete', at: event.patternSelection}),
       raise({
@@ -147,6 +147,9 @@ const mentionPicker = defineTypeaheadPicker<MentionMatch>({
         send({type: 'focus'})
       }),
     ],
+  ],
+  onDismiss: [
+    ({event}) => [raise({type: 'delete', at: event.patternSelection})],
   ],
 })
 

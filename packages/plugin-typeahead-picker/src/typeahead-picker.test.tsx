@@ -50,7 +50,7 @@ const emojiPicker = defineTypeaheadPicker<EmojiMatch>({
   keyword: /\S*/,
   delimiter: ':',
   getMatches: matchEmojis,
-  actions: [
+  onSelect: [
     ({event}) => [
       raise({type: 'delete', at: event.patternSelection}),
       raise({type: 'insert.text', text: event.match.emoji}),
@@ -180,7 +180,7 @@ describe('TypeaheadSelectEvent', () => {
       trigger: /:/,
       keyword: /\w*/,
       getMatches: () => [{key: '1', name: 'test'}],
-      actions: [
+      onSelect: [
         ({event}) => {
           receivedKeyword = event.keyword
           return [raise({type: 'delete', at: event.patternSelection})]
@@ -249,7 +249,7 @@ describe('Error handling in checking complete state', () => {
         await new Promise((resolve) => setTimeout(resolve, 10))
         throw testError
       },
-      actions: [
+      onSelect: [
         ({event}) => [
           raise({type: 'delete', at: event.patternSelection}),
           raise({type: 'insert.text', text: event.match.emoji}),
@@ -314,7 +314,7 @@ describe('Sync mode debouncing', () => {
         callCount++
         return [{key: '1', name: `Result for ${keyword}`}]
       },
-      actions: [
+      onSelect: [
         ({event}) => [
           raise({type: 'delete', at: event.patternSelection}),
           raise({type: 'insert.text', text: event.match.name}),

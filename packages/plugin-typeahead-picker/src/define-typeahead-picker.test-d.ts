@@ -19,7 +19,7 @@ describe(defineTypeaheadPicker.name, () => {
         trigger: /:/,
         keyword: /\w*/,
         getMatches: () => [],
-        actions: [],
+        onSelect: [() => []],
       })
     })
 
@@ -29,7 +29,7 @@ describe(defineTypeaheadPicker.name, () => {
         trigger: /:/,
         keyword: /\w*/,
         getMatches: () => [],
-        actions: [],
+        onSelect: [() => []],
       })
     })
 
@@ -39,7 +39,7 @@ describe(defineTypeaheadPicker.name, () => {
         trigger: /@/,
         keyword: /\w*/,
         getMatches: async () => [],
-        actions: [],
+        onSelect: [() => []],
       })
     })
 
@@ -49,7 +49,7 @@ describe(defineTypeaheadPicker.name, () => {
         trigger: /:/,
         keyword: /\w*/,
         getMatches: async () => [],
-        actions: [],
+        onSelect: [() => []],
       })
     })
 
@@ -60,7 +60,7 @@ describe(defineTypeaheadPicker.name, () => {
         trigger: /:/,
         keyword: /\w*/,
         getMatches: async () => [],
-        actions: [],
+        onSelect: [() => []],
       })
     })
 
@@ -71,7 +71,7 @@ describe(defineTypeaheadPicker.name, () => {
         trigger: /@/,
         keyword: /\w*/,
         getMatches: () => [],
-        actions: [],
+        onSelect: [() => []],
       })
     })
   })
@@ -82,7 +82,7 @@ describe(defineTypeaheadPicker.name, () => {
         trigger: /:/,
         keyword: /\w*/,
         getMatches: () => [],
-        actions: [],
+        onSelect: [() => []],
       })
     })
   })
@@ -93,7 +93,7 @@ describe(defineTypeaheadPicker.name, () => {
         trigger: /@/,
         keyword: /\w*/,
         getMatches: () => [{key: '1', label: 'Test'}],
-        actions: [],
+        onSelect: [() => []],
       })
     })
 
@@ -103,7 +103,7 @@ describe(defineTypeaheadPicker.name, () => {
         keyword: /\w*/,
         delimiter: undefined,
         getMatches: () => [{key: '1', label: 'Test'}],
-        actions: [],
+        onSelect: [() => []],
       })
     })
 
@@ -113,7 +113,7 @@ describe(defineTypeaheadPicker.name, () => {
         keyword: /\w*/,
         delimiter: ':',
         getMatches: () => [{key: '1', label: 'Test', type: 'partial'}],
-        actions: [],
+        onSelect: [() => []],
       })
     })
 
@@ -124,7 +124,7 @@ describe(defineTypeaheadPicker.name, () => {
         // @ts-expect-error - delimiter requires AutoCompleteMatch which has type field
         delimiter: ':',
         getMatches: () => [{key: '1', label: 'Test'}],
-        actions: [],
+        onSelect: [() => []],
       })
     })
 
@@ -133,7 +133,7 @@ describe(defineTypeaheadPicker.name, () => {
         trigger: /@/,
         keyword: /\w*/,
         getMatches: () => [{key: '1', label: 'Test', type: 'exact'}],
-        actions: [],
+        onSelect: [() => []],
       })
     })
 
@@ -143,7 +143,7 @@ describe(defineTypeaheadPicker.name, () => {
         trigger: /@/,
         keyword: /\w*/,
         getMatches: async () => [{key: '1', label: 'Test'}],
-        actions: [],
+        onSelect: [() => []],
       })
     })
 
@@ -156,7 +156,7 @@ describe(defineTypeaheadPicker.name, () => {
         getMatches: async (): Promise<Array<TestAutoCompleteMatch>> => [
           {key: '1', label: 'Test', type: 'partial'},
         ],
-        actions: [],
+        onSelect: [() => []],
       })
     })
 
@@ -168,7 +168,7 @@ describe(defineTypeaheadPicker.name, () => {
         // @ts-expect-error - delimiter requires AutoCompleteMatch which has type field
         delimiter: ':',
         getMatches: async () => [{key: '1', label: 'Test'}],
-        actions: [],
+        onSelect: [() => []],
       })
     })
   })

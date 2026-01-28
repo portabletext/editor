@@ -116,7 +116,7 @@ const mentionPicker = defineTypeaheadPicker<MentionMatch>({
   trigger: /@/,
   keyword: /\w*/,
   getMatches: createMatchUsers({users}),
-  actions: [
+  onSelect: [
     ({event}) => [
       raise({type: 'delete', at: event.patternSelection}),
       raise({type: 'insert.text', text: event.match.name}),
@@ -212,7 +212,7 @@ describe('Error handling', () => {
         await new Promise((resolve) => setTimeout(resolve, 10))
         throw testError
       },
-      actions: [
+      onSelect: [
         ({event}) => [
           raise({type: 'delete', at: event.patternSelection}),
           raise({type: 'insert.text', text: event.match.name}),
@@ -274,7 +274,7 @@ describe('Error handling', () => {
         await new Promise((resolve) => setTimeout(resolve, 10))
         throw testError
       },
-      actions: [
+      onSelect: [
         ({event}) => [
           raise({type: 'delete', at: event.patternSelection}),
           raise({type: 'insert.text', text: event.match.name}),
@@ -350,7 +350,7 @@ describe('Race condition handling', () => {
         responseOrder.push(keyword)
         return [{key: 'ab1', name: 'Fast Result AB', username: 'ab'}]
       },
-      actions: [
+      onSelect: [
         ({event}) => [
           raise({type: 'delete', at: event.patternSelection}),
           raise({type: 'insert.text', text: event.match.name}),
@@ -429,7 +429,7 @@ describe('Debouncing', () => {
         await new Promise((resolve) => setTimeout(resolve, 10))
         return [{key: '1', name: `Result for ${keyword}`, username: keyword}]
       },
-      actions: [
+      onSelect: [
         ({event}) => [
           raise({type: 'delete', at: event.patternSelection}),
           raise({type: 'insert.text', text: event.match.name}),

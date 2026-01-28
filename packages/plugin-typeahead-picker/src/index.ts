@@ -3,6 +3,8 @@ export {useTypeaheadPicker} from './use-typeahead-picker'
 export type {
   AutoCompleteMatch,
   GetMatches,
+  TypeaheadDismissActionSet,
+  TypeaheadDismissEvent,
   TypeaheadPicker,
   TypeaheadPickerContext,
   TypeaheadPickerDefinition,

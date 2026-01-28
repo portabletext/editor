@@ -58,7 +58,7 @@ const guardedEmojiPicker = defineTypeaheadPicker<EmojiMatch>({
   delimiter: ':',
   guard: ({snapshot: _snapshot, event: _event, dom: _dom}) => guardShouldAllow,
   getMatches: matchEmojis,
-  actions: [
+  onSelect: [
     ({event}) => [
       raise({type: 'delete', at: event.patternSelection}),
       raise({type: 'insert.text', text: event.match.emoji}),
