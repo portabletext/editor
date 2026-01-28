@@ -1,4 +1,5 @@
 .turbo
+.vscode
 __screenshots__
 dist
 node_modules
