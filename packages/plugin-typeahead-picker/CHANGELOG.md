@@ -1,5 +1,11 @@
 # @portabletext/plugin-typeahead-picker
 
+## 3.0.1
+
+### Patch Changes
+
+- [#2152](https://github.com/portabletext/editor/pull/2152) [`8a08145`](https://github.com/portabletext/editor/commit/8a08145c6fc2e322457ee5b722f66115113d55a6) Thanks [@christianhg](https://github.com/christianhg)! - fix: use string ID rather than Symbol
+
 ## 3.0.0
 
 ### Major Changes
