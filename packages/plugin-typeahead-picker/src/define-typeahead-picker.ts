@@ -1,3 +1,4 @@
+import {keyGenerator} from '@portabletext/editor'
 import type {
   AutoCompleteMatch,
   TypeaheadDismissActionSet,
@@ -240,6 +241,6 @@ export function defineTypeaheadPicker<TMatch extends object>(
 ): TypeaheadPickerDefinition<TMatch> {
   return {
     ...config,
-    _id: Symbol('typeahead-picker'),
+    _id: keyGenerator(),
   } as TypeaheadPickerDefinition<TMatch>
 }

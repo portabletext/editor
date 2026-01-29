@@ -164,7 +164,7 @@ function createTriggerActions({
   snapshot: EditorSnapshot
   payload: TriggerPayload
   keywordState: 'partial' | 'complete'
-  pickerId: symbol
+  pickerId: string
 }) {
   if (payload.markState.state === 'unchanged') {
     const textBeforeMatch = payload.focusSpanTextBefore.slice(
@@ -278,13 +278,13 @@ type TriggerFoundEvent = {
   type: 'custom.typeahead trigger found'
   focusSpan: FocusSpanData
   extractedKeyword: string
-  pickerId: symbol
+  pickerId: string
 }
 
 function createTriggerFoundEvent(payload: {
   focusSpan: FocusSpanData
   extractedKeyword: string
-  pickerId: symbol
+  pickerId: string
 }): TriggerFoundEvent {
   return {
     type: 'custom.typeahead trigger found',
@@ -296,13 +296,13 @@ type KeywordFoundEvent = {
   type: 'custom.typeahead keyword found'
   focusSpan: FocusSpanData
   extractedKeyword: string
-  pickerId: symbol
+  pickerId: string
 }
 
 function createKeywordFoundEvent(payload: {
   focusSpan: FocusSpanData
   extractedKeyword: string
-  pickerId: symbol
+  pickerId: string
 }): KeywordFoundEvent {
   return {
     type: 'custom.typeahead keyword found',
@@ -780,7 +780,7 @@ const selectionListenerCallback = <
 
 type DismissEvent = {
   type: 'custom.typeahead dismiss'
-  pickerId: symbol
+  pickerId: string
 }
 
 const dismissListenerCallback = <
@@ -1012,7 +1012,7 @@ type InsertMatchEvent<TMatch extends object> = {
   match: TMatch
   focusSpan: FocusSpanData
   keyword: string
-  pickerId: symbol
+  pickerId: string
 }
 
 const selectMatchListenerCallback = <
