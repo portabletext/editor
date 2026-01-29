@@ -1025,6 +1025,50 @@ describe('event.patches', () => {
     })
   })
 
+  test('Scenario: `unset` `listItem` and `level`', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      initialValue: [
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [{_key: spanKey, _type: 'span', text: 'foo', marks: []}],
+          style: 'normal',
+          markDefs: [],
+          listItem: 'bullet',
+          level: 1,
+        },
+      ],
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        lists: [{name: 'bullet'}],
+      }),
+    })
+
+    editor.send({
+      type: 'patches',
+      patches: [
+        {type: 'unset', origin: 'remote', path: [{_key: blockKey}, 'listItem']},
+        {type: 'unset', origin: 'remote', path: [{_key: blockKey}, 'level']},
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      return expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [{_key: spanKey, _type: 'span', text: 'foo', marks: []}],
+          style: 'normal',
+          markDefs: [],
+        },
+      ])
+    })
+  })
+
   test('Scenario: Inserting inline object', async () => {
     const {editor, editorB} = await createTestEditors({
       schemaDefinition: defineSchema({
