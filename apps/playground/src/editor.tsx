@@ -18,6 +18,7 @@ import {
 } from '@portabletext/editor'
 import {MarkdownShortcutsPlugin} from '@portabletext/plugin-markdown-shortcuts'
 import {OneLinePlugin} from '@portabletext/plugin-one-line'
+import {PasteLinkPlugin} from '@portabletext/plugin-paste-link'
 import {
   createDecoratorGuard,
   TypographyPlugin,
@@ -62,7 +63,6 @@ import {
 import {CodeEditorPlugin} from './plugins/plugin.code-editor'
 import {HtmlDeserializerPlugin} from './plugins/plugin.html-deserializer'
 import {ImageDeserializerPlugin} from './plugins/plugin.image-deserializer'
-import {LinkPlugin} from './plugins/plugin.link'
 import {markdownShortcutsPluginProps} from './plugins/plugin.markdown'
 import {TextFileDeserializerPlugin} from './plugins/plugin.text-file-deserializer'
 import {Button} from './primitives/button'
@@ -156,7 +156,7 @@ export function Editor(props: {
               <SlashCommandPickerPlugin />
             ) : null}
             {featureFlags.codeEditorPlugin ? <CodeEditorPlugin /> : null}
-            {featureFlags.linkPlugin ? <LinkPlugin /> : null}
+            {featureFlags.linkPlugin ? <PasteLinkPlugin /> : null}
             {featureFlags.imageDeserializerPlugin ? (
               <ImageDeserializerPlugin />
             ) : null}

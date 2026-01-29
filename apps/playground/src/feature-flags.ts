@@ -35,7 +35,7 @@ export const defaultEditorFeatureFlags: EditorFeatureFlags = {
   mentionPickerPlugin: true,
   slashCommandPlugin: true,
   codeEditorPlugin: false,
-  linkPlugin: false,
+  linkPlugin: true,
   oneLinePlugin: false,
   markdownPlugin: true,
   typographyPlugin: true,
