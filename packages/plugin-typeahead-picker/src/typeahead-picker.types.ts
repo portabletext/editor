@@ -222,7 +222,7 @@ type TypeaheadPickerDefinitionBase<TMatch extends object> = {
 export type TypeaheadPickerDefinition<TMatch extends object = object> =
   TypeaheadPickerDefinitionBase<TMatch> & {
     /** @internal Unique identifier for this picker definition */
-    readonly _id: symbol
+    readonly _id: string
 
     /**
      * Whether `getMatches` returns synchronously or asynchronously.
