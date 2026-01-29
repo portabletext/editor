@@ -546,6 +546,28 @@ function unsetPatch(editor: PortableTextSlateEditor, patch: UnsetPatch) {
       return true
     }
 
+    if (editor.isTextBlock(block.node)) {
+      const propPath = patch.path.slice(1)
+      const propEntry = propPath.at(0)
+      const reservedProps = ['_key', '_type', 'children']
+
+      if (propEntry === undefined) {
+        return false
+      }
+
+      if (typeof propEntry !== 'string') {
+        return false
+      }
+
+      if (reservedProps.includes(propEntry)) {
+        return false
+      }
+
+      Transforms.unsetNodes(editor, [propEntry], {at: [block.index]})
+
+      return true
+    }
+
     return false
   }
 
