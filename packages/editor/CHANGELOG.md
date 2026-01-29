@@ -1,5 +1,11 @@
 # Changelog
 
+## 4.3.7
+
+### Patch Changes
+
+- [#2155](https://github.com/portabletext/editor/pull/2155) [`ed5e0a0`](https://github.com/portabletext/editor/commit/ed5e0a06523ff4a46579156e0093c778f0478f94) Thanks [@christianhg](https://github.com/christianhg)! - fix: allow `unset` patches to target text blocks
+
 ## 4.3.6
 
 ### Patch Changes
