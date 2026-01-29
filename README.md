@@ -26,6 +26,7 @@ For documentation and guides, visit [portabletext.org](https://www.portabletext.
 | [`@portabletext/plugin-input-rule`](./packages/plugin-input-rule/)                             | Easily configure Input Rules in the Portable Text Editor                  |
 | [`@portabletext/plugin-markdown-shortcuts`](./packages/plugin-markdown-shortcuts/)             | Adds helpful Markdown shortcuts to the editor                             |
 | [`@portabletext/plugin-one-line`](./packages/plugin-one-line/)                                 | Restricts the Portable Text Editor to a single line                       |
+| [`@portabletext/plugin-paste-link`](./packages/plugin-paste-link/)                             | Allows pasting links in the Portable Text Editor                          |
 | [`@portabletext/plugin-typeahead-picker`](./packages/plugin-typeahead-picker/)                 | Generic typeahead picker infrastructure (emoji, mentions, slash commands) |
 | [`@portabletext/plugin-sdk-value`](./packages/plugin-sdk-value/)                               | Connects a Portable Text Editor with a Sanity document using the SDK      |
 | [`@portabletext/plugin-typography`](./packages/plugin-typography/)                             | Automatically transform text to typographic variants                      |
