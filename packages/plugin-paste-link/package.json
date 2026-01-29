@@ -78,6 +78,7 @@
     "node": ">=20.19 <22 || >=22.12"
   },
   "publishConfig": {
+    "access": "public",
     "exports": {
       ".": "./dist/index.js",
       "./package.json": "./package.json"
