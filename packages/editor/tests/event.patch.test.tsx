@@ -567,7 +567,7 @@ describe('event.patch', () => {
 
     describe('remote value: undefined', () => {
       test('Scenario: Typing into empty editor', async () => {
-        let remoteValue: PortableTextBlock[] | undefined = undefined
+        let remoteValue: PortableTextBlock[] | undefined
 
         const {editor, locator} = await createTestEditor({
           children: (
@@ -592,7 +592,7 @@ describe('event.patch', () => {
       })
 
       test('Scenario: Pasting into empty editor', async () => {
-        let remoteValue: PortableTextBlock[] | undefined = undefined
+        let remoteValue: PortableTextBlock[] | undefined
 
         const {editor, locator} = await createTestEditor({
           children: (
