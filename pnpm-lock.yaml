@@ -295,9 +295,6 @@ importers:
       vite:
         specifier: ^7.3.1
         version: 7.3.1(@types/node@20.19.25)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.2)
-      vitest:
-        specifier: ^4.0.16
-        version: 4.0.16(@types/node@20.19.25)(@vitest/browser-playwright@4.0.16)(jiti@2.6.1)(jsdom@27.2.0)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.2)
 
   examples/basic:
     dependencies:
