@@ -6,6 +6,7 @@ import {
   type RangeDecoration,
   type RangeDecorationOnMovedDetails,
 } from '@portabletext/editor'
+import {portableTextToMarkdown} from '@portabletext/markdown'
 import {applyAll, type Patch} from '@portabletext/patches'
 import {
   assertEvent,
@@ -25,6 +26,7 @@ import {
   type PlaygroundFeatureFlags,
 } from './feature-flags'
 import {createKeyGenerator} from './key-generator'
+import {markdownOptions} from './previews/markdown-options'
 
 const copyToTextClipboardActor = fromPromise(
   ({input}: {input: {text: string}}) => {
@@ -276,6 +278,7 @@ export const playgroundMachine = setup({
       | {type: 'clear patches'}
       | {type: 'copy value'}
       | {type: 'copy patches'}
+      | {type: 'copy markdown'}
       | {type: 'editor.add range decoration'; rangeDecoration: RangeDecoration}
       | {
           type: 'editor.move range decoration'
@@ -526,6 +529,41 @@ export const playgroundMachine = setup({
             src: 'copy text to clipboard',
             input: ({context}) => ({
               text: JSON.stringify(context.patchFeed, null, 2),
+            }),
+            onDone: {
+              target: 'copied',
+            },
+            onError: {
+              target: 'idle',
+              actions: [({event}) => console.error(event)],
+            },
+          },
+        },
+        copied: {
+          after: {
+            2000: {target: 'idle'},
+          },
+        },
+      },
+    },
+    'copying markdown': {
+      initial: 'idle',
+      states: {
+        idle: {
+          on: {
+            'copy markdown': {target: 'copying'},
+          },
+        },
+        copying: {
+          invoke: {
+            src: 'copy text to clipboard',
+            input: ({context}) => ({
+              text: context.patchDerivedValue
+                ? portableTextToMarkdown(
+                    context.patchDerivedValue,
+                    markdownOptions,
+                  )
+                : '',
             }),
             onDone: {
               target: 'copied',
