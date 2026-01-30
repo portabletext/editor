@@ -1,4 +1,4 @@
-import {ActivityIcon, ChevronRightIcon} from 'lucide-react'
+import {ChevronRightIcon, HistoryIcon} from 'lucide-react'
 import {useState} from 'react'
 import {tv} from 'tailwind-variants'
 import type {GlobalPatchEntry} from './playground-machine'
@@ -76,7 +76,7 @@ export function PatchesList(props: {
   if (flatPatches.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-center gap-2">
-        <ActivityIcon className="size-8 text-gray-300 dark:text-gray-600" />
+        <HistoryIcon className="size-8 text-gray-300 dark:text-gray-600" />
         <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">
           No patches yet
         </p>

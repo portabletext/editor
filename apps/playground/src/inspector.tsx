@@ -1,23 +1,20 @@
 import {useActorRef, useSelector} from '@xstate/react'
-import {
-  ActivityIcon,
-  CheckIcon,
-  CopyIcon,
-  FileJsonIcon,
-  TrashIcon,
-} from 'lucide-react'
+import {CheckIcon, CopyIcon, HistoryIcon, TrashIcon} from 'lucide-react'
 import {useEffect, useState} from 'react'
 import {TooltipTrigger, type Key} from 'react-aria-components'
 import {highlightMachine} from './highlight-json-machine'
+import {MarkdownLogo, PortableTextLogo, ReactLogo} from './logos'
 import {PatchesList} from './patches-list'
 import type {PlaygroundActorRef} from './playground-machine'
+import {MarkdownPreview} from './previews/markdown-preview'
+import {ReactPreview} from './previews/react-preview'
 import {Button} from './primitives/button'
 import {Container} from './primitives/container'
 import {Spinner} from './primitives/spinner'
 import {Tab, TabList, TabPanel, Tabs} from './primitives/tabs'
 import {Tooltip} from './primitives/tooltip'
 
-type TabId = 'output' | 'patches'
+type TabId = 'output' | 'patches' | 'react-preview' | 'markdown-preview'
 
 export function Inspector(props: {playgroundRef: PlaygroundActorRef}) {
   const [activeTab, setActiveTab] = useState<TabId>('output')
@@ -36,14 +33,26 @@ export function Inspector(props: {playgroundRef: PlaygroundActorRef}) {
         <TabList>
           <Tab id="output">
             <span className="flex items-center gap-1.5">
-              <FileJsonIcon className="size-3" />
-              Portable Text
+              <PortableTextLogo className="size-3" />
+              <span className="hidden sm:inline">Portable Text</span>
             </span>
           </Tab>
           <Tab id="patches">
             <span className="flex items-center gap-1.5">
-              <ActivityIcon className="size-3" />
-              Patches
+              <HistoryIcon className="size-3" />
+              <span className="hidden sm:inline">Patches</span>
+            </span>
+          </Tab>
+          <Tab id="react-preview">
+            <span className="flex items-center gap-1.5">
+              <ReactLogo className="size-3" />
+              <span className="hidden sm:inline">React</span>
+            </span>
+          </Tab>
+          <Tab id="markdown-preview">
+            <span className="flex items-center gap-1.5">
+              <MarkdownLogo className="size-3" />
+              <span className="hidden sm:inline">Markdown</span>
             </span>
           </Tab>
         </TabList>
@@ -61,6 +70,18 @@ export function Inspector(props: {playgroundRef: PlaygroundActorRef}) {
           <PatchesPanel playgroundRef={props.playgroundRef} />
         </Container>
       </TabPanel>
+
+      <TabPanel id="react-preview" className="flex-1 min-h-0">
+        <Container className="h-full overflow-clip">
+          <ReactPreview playgroundRef={props.playgroundRef} />
+        </Container>
+      </TabPanel>
+
+      <TabPanel id="markdown-preview" className="flex-1 min-h-0">
+        <Container className="h-full overflow-clip">
+          <MarkdownPreview playgroundRef={props.playgroundRef} />
+        </Container>
+      </TabPanel>
     </Tabs>
   )
 }
@@ -75,6 +96,9 @@ function TabActions(props: {
   )
   const isCopyingPatches = useSelector(playgroundRef, (s) =>
     s.matches({'copying patches': 'copied'}),
+  )
+  const isCopyingMarkdown = useSelector(playgroundRef, (s) =>
+    s.matches({'copying markdown': 'copied'}),
   )
 
   if (activeTab === 'output') {
@@ -127,6 +151,25 @@ function TabActions(props: {
     )
   }
 
+  if (activeTab === 'markdown-preview') {
+    return (
+      <TooltipTrigger>
+        <Button
+          variant="ghost"
+          size="sm"
+          onPress={() => playgroundRef.send({type: 'copy markdown'})}
+        >
+          {isCopyingMarkdown ? (
+            <CheckIcon className="size-3 text-green-600 dark:text-green-400" />
+          ) : (
+            <CopyIcon className="size-3" />
+          )}
+        </Button>
+        <Tooltip>{isCopyingMarkdown ? 'Copied!' : 'Copy markdown'}</Tooltip>
+      </TooltipTrigger>
+    )
+  }
+
   return null
 }
 
@@ -167,7 +210,7 @@ function OutputPanel(props: {playgroundRef: PlaygroundActorRef}) {
   if (!value || value.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-center gap-2">
-        <FileJsonIcon className="size-8 text-gray-300 dark:text-gray-600" />
+        <PortableTextLogo className="size-8 text-gray-300 dark:text-gray-600" />
         <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">
           No content yet
         </p>
