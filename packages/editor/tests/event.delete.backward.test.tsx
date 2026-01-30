@@ -95,7 +95,8 @@ describe('event.delete.backward', () => {
       expect(foreignValue).toEqual(expectedValue)
       expect(patches.slice(1)).toEqual([
         setIfMissing([], []),
-        insert(
+        // Uses atomic set for empty→non-empty transition to handle null field values
+        set(
           [
             {
               _type: 'block',
@@ -105,8 +106,7 @@ describe('event.delete.backward', () => {
               style: 'normal',
             },
           ],
-          'before',
-          [0],
+          [],
         ),
         set('bar', [{_key: 'k3'}, 'foo']),
       ])

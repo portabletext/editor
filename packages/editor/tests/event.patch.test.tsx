@@ -216,12 +216,12 @@ describe('event.patch', () => {
           type: 'setIfMissing',
           value: [],
         },
+        // Uses atomic set for empty→non-empty transition to handle null field values
         {
           origin: 'local',
-          path: [0],
-          type: 'insert',
-          position: 'before',
-          items: [
+          path: [],
+          type: 'set',
+          value: [
             {
               _key: 'k0',
               _type: 'block',
@@ -293,7 +293,8 @@ describe('event.patch', () => {
 
         expect(patches).toEqual([
           setIfMissing([], []),
-          insert(
+          // Uses atomic set for empty→non-empty transition to handle null field values
+          set(
             [
               {
                 _type: 'block',
@@ -303,8 +304,7 @@ describe('event.patch', () => {
                 style: 'normal',
               },
             ],
-            'before',
-            [0],
+            [],
           ),
           diffMatchPatch('', 'f', [
             {_key: 'k0'},
@@ -355,7 +355,8 @@ describe('event.patch', () => {
 
         expect(patches.slice(5)).toEqual([
           setIfMissing([], []),
-          insert(
+          // Uses atomic set for empty→non-empty transition to handle null field values
+          set(
             [
               {
                 _type: 'block',
@@ -365,8 +366,7 @@ describe('event.patch', () => {
                 style: 'normal',
               },
             ],
-            'before',
-            [0],
+            [],
           ),
           diffMatchPatch('', 'f', [
             {_key: 'k0'},
@@ -423,7 +423,8 @@ describe('event.patch', () => {
 
         expect(patches).toEqual([
           setIfMissing([], []),
-          insert(
+          // Uses atomic set for empty→non-empty transition to handle null field values
+          set(
             [
               {
                 _type: 'block',
@@ -433,8 +434,7 @@ describe('event.patch', () => {
                 style: 'normal',
               },
             ],
-            'before',
-            [0],
+            [],
           ),
           set('bar', [{_key: 'k0'}, 'foo']),
           diffMatchPatch('', 'f', [
