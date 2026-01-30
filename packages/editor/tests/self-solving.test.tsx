@@ -211,12 +211,12 @@ describe('Feature: Self-solving', () => {
           path: [],
           value: [],
         },
+        // Uses atomic set for empty→non-empty transition to handle null field values
         {
           origin: 'local',
-          type: 'insert',
-          path: [0],
-          position: 'before',
-          items: [
+          type: 'set',
+          path: [],
+          value: [
             {
               ...initialValue[0],
               style: 'normal',
@@ -321,12 +321,12 @@ describe('Feature: Self-solving', () => {
           path: [],
           value: [],
         },
+        // Uses atomic set for empty→non-empty transition to handle null field values
         {
           origin: 'local',
-          type: 'insert',
-          path: [0],
-          position: 'before',
-          items: [
+          type: 'set',
+          path: [],
+          value: [
             {
               _key: 'k0',
               _type: 'block',

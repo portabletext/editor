@@ -65,7 +65,8 @@ describe('event.block.unset', () => {
 
       expect(patches).toEqual([
         setIfMissing([], []),
-        insert(
+        // Uses atomic set for empty→non-empty transition to handle null field values
+        set(
           [
             {
               _key: 'k0',
@@ -75,8 +76,7 @@ describe('event.block.unset', () => {
               style: 'normal',
             },
           ],
-          'before',
-          [0],
+          [],
         ),
         insert(
           [
@@ -137,7 +137,8 @@ describe('event.block.unset', () => {
       ])
       expect(patches).toEqual([
         setIfMissing([], []),
-        insert(
+        // Uses atomic set for empty→non-empty transition to handle null field values
+        set(
           [
             {
               _key: 'k0',
@@ -147,8 +148,7 @@ describe('event.block.unset', () => {
               style: 'normal',
             },
           ],
-          'before',
-          [0],
+          [],
         ),
         insert(
           [
@@ -243,7 +243,8 @@ describe('event.block.unset', () => {
 
       expect(patches).toEqual([
         setIfMissing([], []),
-        insert(
+        // Uses atomic set for empty→non-empty transition to handle null field values
+        set(
           [
             {
               _key: 'k0',
@@ -253,8 +254,7 @@ describe('event.block.unset', () => {
               style: 'normal',
             },
           ],
-          'before',
-          [0],
+          [],
         ),
         insert(
           [
@@ -390,7 +390,8 @@ describe('event.block.unset', () => {
       ])
       expect(patches).toEqual([
         setIfMissing([], []),
-        insert(
+        // Uses atomic set for empty→non-empty transition to handle null field values
+        set(
           [
             {
               _key: 'k0',
@@ -400,8 +401,7 @@ describe('event.block.unset', () => {
               markDefs: [],
             },
           ],
-          'before',
-          [0],
+          [],
         ),
         insert(
           [

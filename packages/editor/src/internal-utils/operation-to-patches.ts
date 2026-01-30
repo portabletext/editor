@@ -293,12 +293,13 @@ export function insertNodePatch(
         ),
       ]
     }
+    // When inserting into an empty array (no targetKey), use atomic set instead of
+    // setIfMissing + insert. This handles the case where the field value is null
+    // (not just undefined or []), since setIfMissing treats null as "present".
     return [
-      setIfMissing(beforeValue, []),
-      insert(
+      set(
         [fromSlateBlock(operation.node as Descendant, schema.block.name)],
-        'before',
-        [operation.path[0]!],
+        [],
       ),
     ]
   } else if (

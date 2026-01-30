@@ -1,7 +1,6 @@
 import {
   applyAll,
   diffMatchPatch,
-  insert,
   set,
   setIfMissing,
   unset,
@@ -400,9 +399,11 @@ describe(createPlaceholderBlock.name, () => {
 
       expect(editor.getSnapshot().context.value).toEqual(expectedValue)
       expect(foreignValue).toEqual(expectedValue)
+      // When transitioning from empty to non-empty, we use atomic set
+      // instead of setIfMissing + insert to handle null field values
       expect(patches).toEqual([
         setIfMissing([], []),
-        insert(
+        set(
           [
             {
               _type: 'block',
@@ -412,8 +413,7 @@ describe(createPlaceholderBlock.name, () => {
               style: 'normal',
             },
           ],
-          'before',
-          [0],
+          [],
         ),
         diffMatchPatch('', 'f', [
           {_key: 'k3'},
@@ -490,9 +490,11 @@ describe(createPlaceholderBlock.name, () => {
       ]
       expect(editor.getSnapshot().context.value).toEqual(expectedValue)
       expect(foreignValue).toEqual(expectedValue)
+      // When transitioning from empty to non-empty, we use atomic set
+      // instead of setIfMissing + insert to handle null field values
       expect(patches).toEqual([
         setIfMissing([], []),
-        insert(
+        set(
           [
             {
               _type: 'block',
@@ -502,8 +504,7 @@ describe(createPlaceholderBlock.name, () => {
               style: 'normal',
             },
           ],
-          'before',
-          [0],
+          [],
         ),
         diffMatchPatch('', 'f', [
           {_key: 'k3'},
@@ -543,11 +544,13 @@ describe(createPlaceholderBlock.name, () => {
         },
       ])
 
+      // When transitioning from empty to non-empty, we use atomic set
+      // instead of setIfMissing + insert to handle null field values
       expect(patches).toEqual([
         // The editor is set up
         setIfMissing([], []),
-        // A placeholder block is inserted
-        insert(
+        // A placeholder block is set atomically
+        set(
           [
             {
               _type: 'block',
@@ -557,8 +560,7 @@ describe(createPlaceholderBlock.name, () => {
               style: 'normal',
             },
           ],
-          'before',
-          [0],
+          [],
         ),
         // The text is added
         diffMatchPatch('', 'f', [
@@ -609,9 +611,11 @@ describe(createPlaceholderBlock.name, () => {
         },
       ])
 
+      // When transitioning from empty to non-empty, we use atomic set
+      // instead of setIfMissing + insert to handle null field values
       expect(patches.slice(5)).toEqual([
         setIfMissing([], []),
-        insert(
+        set(
           [
             {
               _type: 'block',
@@ -621,8 +625,7 @@ describe(createPlaceholderBlock.name, () => {
               style: 'normal',
             },
           ],
-          'before',
-          [0],
+          [],
         ),
         diffMatchPatch('', 'f', [
           {_key: 'k0'},
@@ -671,9 +674,11 @@ describe(createPlaceholderBlock.name, () => {
       ]
       expect(editor.getSnapshot().context.value).toEqual(expectedValue)
       expect(foreignValue).toEqual(expectedValue)
+      // When transitioning from empty to non-empty, we use atomic set
+      // instead of setIfMissing + insert to handle null field values
       expect(patches).toEqual([
         setIfMissing([], []),
-        insert(
+        set(
           [
             {
               _type: 'block',
@@ -683,8 +688,7 @@ describe(createPlaceholderBlock.name, () => {
               style: 'normal',
             },
           ],
-          'before',
-          [0],
+          [],
         ),
         diffMatchPatch('', 'f', [
           {_key: 'k0'},
@@ -719,6 +723,8 @@ describe(createPlaceholderBlock.name, () => {
       expect(editor.getSnapshot().context.value).toEqual(expectedValue)
       expect(foreignValue, 'Unexpected foreign value').toEqual(expectedValue)
 
+      // When transitioning from empty to non-empty, we use atomic set
+      // instead of setIfMissing + insert to handle null field values
       expect(patches.slice(3)).toEqual([
         diffMatchPatch('f', '', [
           {_key: 'k0'},
@@ -728,7 +734,7 @@ describe(createPlaceholderBlock.name, () => {
         ]),
         unset([]),
         setIfMissing([], []),
-        insert(
+        set(
           [
             {
               _type: 'block',
@@ -738,8 +744,7 @@ describe(createPlaceholderBlock.name, () => {
               style: 'normal',
             },
           ],
-          'before',
-          [0],
+          [],
         ),
         set('bar', [{_key: 'k0'}, 'foo']),
       ])
@@ -818,11 +823,13 @@ describe(createPlaceholderBlock.name, () => {
       expect(editor.getSnapshot().context.value).toEqual(expectedValue)
       expect(foreignValue).toEqual(expectedValue)
 
+      // When transitioning from empty to non-empty, we use atomic set
+      // instead of setIfMissing + insert to handle null field values
       expect(patches.slice(1)).toEqual([
         // The editor is reset
         setIfMissing([], []),
-        // A placeholder block is inserted
-        insert(
+        // A placeholder block is set atomically
+        set(
           [
             {
               _type: 'block',
@@ -832,8 +839,7 @@ describe(createPlaceholderBlock.name, () => {
               style: 'normal',
             },
           ],
-          'before',
-          [0],
+          [],
         ),
         // The text is added
         diffMatchPatch('', 'f', [

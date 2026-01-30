@@ -30,9 +30,10 @@ describe('change$', () => {
         type: 'patch',
         patch: expect.objectContaining({type: 'setIfMissing'}),
       }),
+      // Uses atomic set for empty→non-empty transition to handle null field values
       expect.objectContaining({
         type: 'patch',
-        patch: expect.objectContaining({type: 'insert'}),
+        patch: expect.objectContaining({type: 'set'}),
       }),
       expect.objectContaining({
         type: 'patch',
