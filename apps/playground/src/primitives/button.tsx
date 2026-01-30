@@ -20,7 +20,7 @@ export interface LinkButtonProps extends RACLinkProps {
 
 export const button = tv({
   extend: focusRing,
-  base: 'inline-flex items-center justify-center gap-1.5 px-4 py-2 text-sm text-center transition-all duration-150 rounded-md cursor-default font-medium',
+  base: 'inline-flex shrink-0 items-center justify-center gap-1.5 px-4 py-2 text-sm text-center transition-all duration-150 rounded-md cursor-default font-medium',
   variants: {
     variant: {
       ghost:
