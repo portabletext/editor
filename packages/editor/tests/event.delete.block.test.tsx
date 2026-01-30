@@ -1,6 +1,5 @@
 import {
   applyAll,
-  insert,
   set,
   setIfMissing,
   unset,
