@@ -34,11 +34,10 @@ describe('event.patches', () => {
       expect(onEditorEvent).toHaveBeenCalledWith({
         type: 'patch',
         patch: {
-          type: 'insert',
+          type: 'set',
           origin: 'local',
-          path: [0],
-          position: 'before',
-          items: [
+          path: [],
+          value: [
             {
               _type: 'block',
               _key: 'ea-k0',
@@ -101,11 +100,10 @@ describe('event.patches', () => {
       expect(onEditorEvent).toHaveBeenCalledWith({
         type: 'patch',
         patch: {
-          type: 'insert',
+          type: 'set',
           origin: 'local',
-          path: [0],
-          position: 'before',
-          items: [
+          path: [],
+          value: [
             {
               _type: 'block',
               _key: 'ea-k0',
