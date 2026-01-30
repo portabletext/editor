@@ -148,9 +148,6 @@ const mentionPicker = defineTypeaheadPicker<MentionMatch>({
       }),
     ],
   ],
-  onDismiss: [
-    ({event}) => [raise({type: 'delete', at: event.patternSelection})],
-  ],
 })
 
 export function MentionPickerPlugin() {
