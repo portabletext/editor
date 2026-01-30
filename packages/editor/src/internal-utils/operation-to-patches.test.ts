@@ -85,7 +85,11 @@ const createDefaultValue = () =>
   ] as Array<PortableTextBlock>
 
 describe(insertNodePatch.name, () => {
-  test('Scenario: Inserting block object on empty editor', () => {
+  test('Scenario: Inserting block object on empty editor uses atomic set', () => {
+    // When inserting into an empty array (beforeValue = []), we use atomic `set`
+    // instead of `setIfMissing + insert`. This handles the case where the field
+    // value is null (not just undefined or []), since setIfMissing treats null
+    // as "present" and would be a no-op.
     expect(
       insertNodePatch(
         compileSchema(defineSchema({blockObjects: [{name: 'image'}]})),
@@ -126,19 +130,13 @@ describe(insertNodePatch.name, () => {
     ).toEqual([
       {
         path: [],
-        type: 'setIfMissing',
-        value: [],
-      },
-      {
-        path: [0],
-        type: 'insert',
-        items: [
+        type: 'set',
+        value: [
           {
             _key: 'k2',
             _type: 'image',
           },
         ],
-        position: 'before',
       },
     ])
   })
@@ -252,7 +250,9 @@ describe('operationToPatches', () => {
     `)
   })
 
-  it('produce correct insert block patch with an empty editor', () => {
+  it('produce correct insert block patch with an empty editor (uses atomic set)', () => {
+    // When inserting into an empty array, we use atomic `set` instead of
+    // `setIfMissing + insert` to handle null field values correctly.
     editor.children = []
     editor.onChange()
     expect(
@@ -277,21 +277,13 @@ describe('operationToPatches', () => {
       [
         {
           "path": [],
-          "type": "setIfMissing",
-          "value": [],
-        },
-        {
-          "items": [
+          "type": "set",
+          "value": [
             {
               "_key": "c130395c640c",
               "_type": "someObject",
             },
           ],
-          "path": [
-            0,
-          ],
-          "position": "before",
-          "type": "insert",
         },
       ]
     `)
