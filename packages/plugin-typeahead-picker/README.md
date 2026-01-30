@@ -355,27 +355,9 @@ The error is cleared when the picker returns to idle (e.g., via Escape or cursor
 
 ## onDismiss
 
-The optional `onDismiss` callback runs when the picker is dismissed via Escape. This is useful for cleaning up the typed trigger and keyword text.
+The optional `onDismiss` callback runs when the picker is dismissed (Escape, Enter/Tab with no matches, or programmatically). Without `onDismiss`, dismissing simply closes the picker and leaves the typed text in place.
 
-```ts
-const mentionPicker = defineTypeaheadPicker<MentionMatch>({
-  trigger: /@/,
-  keyword: /\w*/,
-  getMatches: ({keyword}) => searchUsers(keyword),
-  onSelect: [
-    ({event}) => [
-      raise({type: 'delete', at: event.patternSelection}),
-      raise({type: 'insert.text', text: `@${event.match.name}`}),
-    ],
-  ],
-  // Delete the typed text when user presses Escape
-  onDismiss: [
-    ({event}) => [raise({type: 'delete', at: event.patternSelection})],
-  ],
-})
-```
-
-Without `onDismiss`, pressing Escape leaves the typed text in place (e.g., `@john` remains in the editor). With `onDismiss` configured to delete the pattern, the text is removed.
+For most pickers, you should **not** use `onDismiss` to delete text. If a user types `@` and dismisses, they likely wanted to type a literal `@`.
 
 **onDismiss payload:**
 
@@ -383,18 +365,6 @@ Without `onDismiss`, pressing Escape leaves the typed text in place (e.g., `@joh
 | ------------------------ | -------------------------------------------------------------- |
 | `event.patternSelection` | Selection range covering the trigger + keyword (e.g., `@john`) |
 | `snapshot`               | Current editor snapshot                                        |
-
-Note: `onDismiss` is called when the user actively dismisses the picker:
-
-- Pressing Escape
-- Pressing Enter/Tab when there are no matches
-- Programmatically via `picker.send({type: 'dismiss'})`
-
-It is NOT called when:
-
-- The user selects a match (Enter/Tab/click with a match selected)
-- The picker is dismissed due to cursor movement
-- The picker is dismissed due to invalid pattern (e.g., typing a space)
 
 ## Advanced onSelect
 
