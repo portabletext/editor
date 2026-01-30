@@ -1,6 +1,5 @@
 import {
   applyAll,
-  insert,
   set,
   setIfMissing,
   unset,
@@ -741,7 +740,7 @@ describe('event.patches', () => {
       expect(foreignValue).toEqual(expectedValue)
       expect(patches).toEqual([
         setIfMissing([], []),
-        insert(
+        set(
           [
             {
               _key: 'k2',
@@ -751,8 +750,7 @@ describe('event.patches', () => {
               style: 'normal',
             },
           ],
-          'before',
-          [0],
+          [],
         ),
         set('bar', [{_key: 'k2'}, 'foo']),
       ])
