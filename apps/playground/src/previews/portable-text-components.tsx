@@ -32,13 +32,15 @@ export const portableTextComponents: Partial<PortableTextReactComponents> = {
     'strong': ({children}) => <strong className="font-bold">{children}</strong>,
     'em': ({children}) => <em className="italic">{children}</em>,
     'code': ({children}) => (
-      <code className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 font-mono text-sm">
+      <code className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-pink-600 dark:text-pink-400 font-mono text-sm">
         {children}
       </code>
     ),
     'underline': ({children}) => <span className="underline">{children}</span>,
     'strike-through': ({children}) => (
-      <del className="line-through">{children}</del>
+      <del className="line-through text-gray-500 dark:text-gray-400">
+        {children}
+      </del>
     ),
     'subscript': ({children}) => <sub>{children}</sub>,
     'superscript': ({children}) => <sup>{children}</sup>,
@@ -67,31 +69,47 @@ export const portableTextComponents: Partial<PortableTextReactComponents> = {
     }) => (
       <mark
         title={value?.text}
-        className="bg-yellow-200 dark:bg-yellow-800 px-0.5 rounded cursor-help"
+        className="bg-yellow-200 dark:bg-yellow-900/50 text-yellow-900 dark:text-yellow-200 px-0.5 rounded cursor-help"
       >
         {children}
       </mark>
     ),
   },
   block: {
-    normal: ({children}) => <p className="mb-4 last:mb-0">{children}</p>,
+    normal: ({children}) => (
+      <p className="mb-4 last:mb-0 text-gray-900 dark:text-gray-100">
+        {children}
+      </p>
+    ),
     h1: ({children}) => (
-      <h1 className="text-3xl font-bold mb-4 mt-6 first:mt-0">{children}</h1>
+      <h1 className="text-3xl font-bold mb-4 mt-6 first:mt-0 text-gray-900 dark:text-gray-100">
+        {children}
+      </h1>
     ),
     h2: ({children}) => (
-      <h2 className="text-2xl font-bold mb-3 mt-5 first:mt-0">{children}</h2>
+      <h2 className="text-2xl font-bold mb-3 mt-5 first:mt-0 text-gray-900 dark:text-gray-100">
+        {children}
+      </h2>
     ),
     h3: ({children}) => (
-      <h3 className="text-xl font-bold mb-3 mt-4 first:mt-0">{children}</h3>
+      <h3 className="text-xl font-bold mb-3 mt-4 first:mt-0 text-gray-900 dark:text-gray-100">
+        {children}
+      </h3>
     ),
     h4: ({children}) => (
-      <h4 className="text-lg font-bold mb-2 mt-4 first:mt-0">{children}</h4>
+      <h4 className="text-lg font-bold mb-2 mt-4 first:mt-0 text-gray-900 dark:text-gray-100">
+        {children}
+      </h4>
     ),
     h5: ({children}) => (
-      <h5 className="text-base font-bold mb-2 mt-3 first:mt-0">{children}</h5>
+      <h5 className="text-base font-bold mb-2 mt-3 first:mt-0 text-gray-900 dark:text-gray-100">
+        {children}
+      </h5>
     ),
     h6: ({children}) => (
-      <h6 className="text-sm font-bold mb-2 mt-3 first:mt-0">{children}</h6>
+      <h6 className="text-sm font-bold mb-2 mt-3 first:mt-0 text-gray-900 dark:text-gray-100">
+        {children}
+      </h6>
     ),
     blockquote: ({children}) => (
       <blockquote className="border-l-4 border-gray-300 dark:border-gray-600 pl-4 italic my-4 text-gray-600 dark:text-gray-400">
@@ -100,9 +118,15 @@ export const portableTextComponents: Partial<PortableTextReactComponents> = {
     ),
   },
   list: {
-    bullet: ({children}) => <ul className="list-disc pl-6 mb-4">{children}</ul>,
+    bullet: ({children}) => (
+      <ul className="list-disc pl-6 mb-4 text-gray-900 dark:text-gray-100 [&_ul]:list-[circle] [&_ul_ul]:list-[square] [&_ul_ul_ul]:list-disc [&_ul_ul_ul_ul]:list-[circle] [&_ul_ul_ul_ul_ul]:list-[square]">
+        {children}
+      </ul>
+    ),
     number: ({children}) => (
-      <ol className="list-decimal pl-6 mb-4">{children}</ol>
+      <ol className="list-decimal pl-6 mb-4 text-gray-900 dark:text-gray-100 [&_ol]:list-[lower-alpha] [&_ol_ol]:list-[lower-roman] [&_ol_ol_ol]:list-decimal [&_ol_ol_ol_ol]:list-[lower-alpha] [&_ol_ol_ol_ol_ol]:list-[lower-roman]">
+        {children}
+      </ol>
     ),
   },
 }

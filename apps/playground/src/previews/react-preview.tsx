@@ -26,9 +26,7 @@ export function ReactPreview(props: {playgroundRef: PlaygroundActorRef}) {
 
   return (
     <div className="h-full overflow-y-auto p-4">
-      <div className="prose prose-sm dark:prose-invert max-w-none">
-        <PortableText value={value} components={portableTextComponents} />
-      </div>
+      <PortableText value={value} components={portableTextComponents} />
     </div>
   )
 }
