@@ -147,8 +147,9 @@ describe('event.patch', () => {
       [
         // Initial setting up patch
         setIfMissing([], []),
-        // Inserting placeholder block
-        insert(
+        // Inserting placeholder block - uses atomic set for empty→non-empty transition
+        // to handle null field values (setIfMissing treats null as "present")
+        set(
           [
             {
               _type: 'block',
@@ -158,8 +159,7 @@ describe('event.patch', () => {
               style: 'normal',
             },
           ],
-          'before',
-          [0],
+          [],
         ),
         // Inserting new empty paragraph before placeholder
         insert([emptyParagraph], 'before', [{_key: 'k0'}]),
@@ -171,7 +171,8 @@ describe('event.patch', () => {
         // Initial setting up patch
         setIfMissing([], []),
         // Inserting the empty paragraph which can now be considered the placeholder
-        insert([emptyParagraph], 'before', [0]),
+        // Uses atomic set for empty→non-empty transition to handle null field values
+        set([emptyParagraph], []),
         // Inserting the h1
         insert([h1], 'after', [{_key: emptyParagraph._key}]),
       ].map((patch) => ({...patch, origin: 'local'})),
