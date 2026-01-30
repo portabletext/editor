@@ -232,7 +232,7 @@ importers:
         specifier: workspace:*
         version: link:../../packages/plugin-typography
       '@portabletext/react':
-        specifier: ^3.2.2
+        specifier: ^3.2.4
         version: 3.2.4(react@19.2.3)
       '@portabletext/toolbar':
         specifier: workspace:*
