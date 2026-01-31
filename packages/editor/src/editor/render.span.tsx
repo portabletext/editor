@@ -1,3 +1,4 @@
+import type {InlineObjectSchemaType} from '@portabletext/schema'
 import {useSelector} from '@xstate/react'
 import {useContext, useMemo, useRef, type ReactElement} from 'react'
 import {useSlateStatic, type RenderLeafProps} from 'slate-react'
@@ -23,10 +24,12 @@ export interface RenderSpanProps extends RenderLeafProps {
 export function RenderSpan(props: RenderSpanProps) {
   const slateEditor = useSlateStatic()
   const editorActor = useContext(EditorActorContext)
-  const legacySchema = useSelector(editorActor, (s) =>
-    s.context.getLegacySchema(),
-  )
+  const schema = useSelector(editorActor, (s) => s.context.schema)
   const spanRef = useRef<HTMLElement>(null)
+  const schemaType = {
+    name: schema.span.name,
+    fields: [],
+  } satisfies InlineObjectSchemaType
 
   const selectionState = useContext(SelectionStateContext)
   const focused = selectionState.focusedChildKey === props.leaf._key
@@ -75,11 +78,11 @@ export function RenderSpan(props: RenderSpanProps) {
    * Support `renderDecorator` render function for each Decorator
    */
   for (const mark of decorators) {
-    const legacyDecoratorSchemaType = legacySchema.decorators.find(
-      (dec) => dec.value === mark,
+    const decoratorSchemaType = schema.decorators.find(
+      (dec) => dec.name === mark,
     )
 
-    if (path && legacyDecoratorSchemaType && props.renderDecorator) {
+    if (path && decoratorSchemaType && props.renderDecorator) {
       children = (
         <RenderDecorator
           renderDecorator={props.renderDecorator}
@@ -87,9 +90,8 @@ export function RenderSpan(props: RenderSpanProps) {
           focused={focused}
           path={path}
           selected={selected}
-          schemaType={legacyDecoratorSchemaType}
+          schemaType={decoratorSchemaType}
           value={mark}
-          type={legacyDecoratorSchemaType}
         >
           {children}
         </RenderDecorator>
@@ -101,10 +103,10 @@ export function RenderSpan(props: RenderSpanProps) {
    * Support `renderAnnotation` render function for each Annotation
    */
   for (const annotationMarkDef of annotationMarkDefs) {
-    const legacyAnnotationSchemaType = legacySchema.annotations.find(
+    const annotationSchemaType = schema.annotations.find(
       (t) => t.name === annotationMarkDef._type,
     )
-    if (legacyAnnotationSchemaType) {
+    if (annotationSchemaType) {
       if (block && path && props.renderAnnotation) {
         children = (
           <span ref={spanRef}>
@@ -115,9 +117,8 @@ export function RenderSpan(props: RenderSpanProps) {
               focused={focused}
               path={path}
               selected={selected}
-              schemaType={legacyAnnotationSchemaType}
+              schemaType={annotationSchemaType}
               value={annotationMarkDef}
-              type={legacyAnnotationSchemaType}
             >
               {children}
             </RenderAnnotation>
@@ -145,10 +146,9 @@ export function RenderSpan(props: RenderSpanProps) {
           editorElementRef={spanRef}
           focused={focused}
           path={path}
-          schemaType={legacySchema.span}
+          schemaType={schemaType}
           selected={selected}
           value={child}
-          type={legacySchema.span}
         >
           {children}
         </RenderChild>
@@ -173,7 +173,6 @@ function RenderAnnotation({
   schemaType,
   selected,
   value,
-  type,
 }: {
   renderAnnotation: RenderAnnotationFunction
 } & BlockAnnotationRenderProps) {
@@ -186,7 +185,6 @@ function RenderAnnotation({
     schemaType,
     selected,
     value,
-    type,
   })
 }
 
@@ -199,7 +197,6 @@ function RenderDecorator({
   schemaType,
   selected,
   value,
-  type,
 }: {
   renderDecorator: RenderDecoratorFunction
 } & BlockDecoratorRenderProps) {
@@ -211,7 +208,6 @@ function RenderDecorator({
     schemaType,
     selected,
     value,
-    type,
   })
 }
 
@@ -225,7 +221,6 @@ function RenderChild({
   schemaType,
   selected,
   value,
-  type,
 }: {
   renderChild: RenderChildFunction
 } & BlockChildRenderProps) {
@@ -238,6 +233,5 @@ function RenderChild({
     schemaType,
     selected,
     value,
-    type,
   })
 }

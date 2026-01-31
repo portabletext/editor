@@ -2,6 +2,8 @@ import type {
   PortableTextBlock,
   PortableTextChild,
   PortableTextObject,
+  Schema,
+  SchemaDefinition,
 } from '@portabletext/schema'
 import {
   Component,
@@ -20,10 +22,8 @@ import type {
   EditorChanges,
   EditorSelection,
   PatchObservable,
-  PortableTextMemberSchemaTypes,
 } from '../types/editor'
 import type {Path} from '../types/paths'
-import type {ArrayDefinition, ArraySchemaType} from '../types/sanity-types'
 import {createInternalEditor, type InternalEditor} from './create-editor'
 import {EditorActorContext} from './editor-actor-context'
 import type {EditorActor} from './editor-machine'
@@ -61,7 +61,7 @@ export type PortableTextEditorProps<
         /**
          * Schema type for the portable text field
          */
-        schemaType: ArraySchemaType<PortableTextBlock> | ArrayDefinition
+        schemaType: SchemaDefinition
 
         /**
          * Function used to generate keys for array items (`_key`)
@@ -111,7 +111,7 @@ export class PortableTextEditor extends Component<
   /**
    * A lookup table for all the relevant schema types for this portable text type.
    */
-  public schemaTypes: PortableTextMemberSchemaTypes
+  public schemaTypes: Schema
   /**
    * The editor instance
    */
@@ -136,24 +136,21 @@ export class PortableTextEditor extends Component<
 
     if (props.editor) {
       this.editor = props.editor as InternalEditor
-      this.schemaTypes = this.editor._internal.editorActor
-        .getSnapshot()
-        .context.getLegacySchema()
+      this.schemaTypes =
+        this.editor._internal.editorActor.getSnapshot().context.schema
     } else {
       const {actors, editor, subscriptions} = createInternalEditor({
         initialValue: props.value,
         keyGenerator: props.keyGenerator,
         readOnly: props.readOnly,
-        schema: props.schemaType,
+        schemaDefinition: props.schemaType,
       })
 
       this.subscriptions = subscriptions
       this.actors = actors
 
       this.editor = editor
-      this.schemaTypes = actors.editorActor
-        .getSnapshot()
-        .context.getLegacySchema()
+      this.schemaTypes = actors.editorActor.getSnapshot().context.schema
     }
 
     this.editable = this.editor._internal.editable

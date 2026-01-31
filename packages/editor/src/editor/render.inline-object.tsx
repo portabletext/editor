@@ -3,11 +3,7 @@ import type {Element as SlateElement} from 'slate'
 import {DOMEditor} from 'slate-dom'
 import {useSlateStatic, type RenderElementProps} from 'slate-react'
 import {getPointBlock} from '../internal-utils/slate-utils'
-import type {
-  BlockChildRenderProps,
-  PortableTextMemberSchemaTypes,
-  RenderChildFunction,
-} from '../types/editor'
+import type {BlockChildRenderProps, RenderChildFunction} from '../types/editor'
 import type {EditorSchema} from './editor-schema'
 import {RenderDefaultInlineObject} from './render.default-object'
 import {SelectionStateContext} from './selection-state-context'
@@ -16,7 +12,6 @@ export function RenderInlineObject(props: {
   attributes: RenderElementProps['attributes']
   children: ReactElement
   element: SlateElement
-  legacySchema: PortableTextMemberSchemaTypes
   readOnly: boolean
   renderChild?: RenderChildFunction
   schema: EditorSchema
@@ -28,11 +23,11 @@ export function RenderInlineObject(props: {
   const selected = selectedChildKeys.has(props.element._key)
   const focused = focusedChildKey === props.element._key
 
-  const legacySchemaType = props.legacySchema.inlineObjects.find(
-    (inlineObject) => inlineObject.name === props.element._type,
+  const inlineObjectSchemaType = props.schema.inlineObjects.find(
+    (schemaType) => schemaType.name === props.element._type,
   )
 
-  if (!legacySchemaType) {
+  if (!inlineObjectSchemaType) {
     console.error(
       `Unable to find Inline Object "${props.element._type}" in Schema`,
     )
@@ -72,7 +67,7 @@ export function RenderInlineObject(props: {
     >
       {props.children}
       <span ref={inlineObjectRef} style={{display: 'inline-block'}}>
-        {props.renderChild && block && legacySchemaType ? (
+        {props.renderChild && block && inlineObjectSchemaType ? (
           <RenderChild
             renderChild={props.renderChild}
             annotations={[]}
@@ -80,9 +75,8 @@ export function RenderInlineObject(props: {
             selected={selected}
             focused={focused}
             path={[{_key: block._key}, 'children', {_key: props.element._key}]}
-            schemaType={legacySchemaType}
+            schemaType={inlineObjectSchemaType}
             value={inlineObject}
-            type={legacySchemaType}
           >
             <RenderDefaultInlineObject inlineObject={inlineObject} />
           </RenderChild>
@@ -104,7 +98,6 @@ function RenderChild({
   schemaType,
   selected,
   value,
-  type,
 }: {
   renderChild: RenderChildFunction
 } & BlockChildRenderProps) {
@@ -117,6 +110,5 @@ function RenderChild({
     schemaType,
     selected,
     value,
-    type,
   })
 }

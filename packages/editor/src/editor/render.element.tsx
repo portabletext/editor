@@ -29,9 +29,6 @@ export function RenderElement(props: {
 }) {
   const editorActor = useContext(EditorActorContext)
   const schema = useSelector(editorActor, (s) => s.context.schema)
-  const legacySchema = useSelector(editorActor, (s) =>
-    s.context.getLegacySchema(),
-  )
   const slateStatic = useSlateStatic()
 
   const isInline =
@@ -42,7 +39,6 @@ export function RenderElement(props: {
       <RenderInlineObject
         attributes={props.attributes}
         element={props.element}
-        legacySchema={legacySchema}
         readOnly={props.readOnly}
         renderChild={props.renderChild}
         schema={schema}
@@ -66,11 +62,11 @@ export function RenderElement(props: {
             : undefined
         }
         element={props.element}
-        legacySchema={legacySchema}
         readOnly={props.readOnly}
         renderBlock={props.renderBlock}
         renderListItem={props.renderListItem}
         renderStyle={props.renderStyle}
+        schema={schema}
         spellCheck={props.spellCheck}
         textBlock={block}
       >
@@ -89,7 +85,6 @@ export function RenderElement(props: {
           : undefined
       }
       element={props.element}
-      legacySchema={legacySchema}
       readOnly={props.readOnly}
       renderBlock={props.renderBlock}
       schema={schema}
