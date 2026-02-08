@@ -1,5 +1,14 @@
 # Changelog
 
+## 4.3.8
+
+### Patch Changes
+
+- [#2168](https://github.com/portabletext/editor/pull/2168) [`9e5cab1`](https://github.com/portabletext/editor/commit/9e5cab1d73b1bdfa011bc69654d1476a42a2fd94) Thanks [@christianhg](https://github.com/christianhg)! - fix: prevent misidentifying objects with 'text' field as spans
+
+  This issue caused updates to object fields named 'text' to end up in a nested
+  `value` object on the object itself.
+
 ## 4.3.7
 
 ### Patch Changes
