@@ -1261,6 +1261,74 @@ describe('event.patches', () => {
     })
   })
 
+  test('Scenario: `set`ing "text" field on inline object', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const span1Key = keyGenerator()
+    const mentionKey = keyGenerator()
+    const span2Key = keyGenerator()
+    const initialValue = [
+      {
+        _key: blockKey,
+        _type: 'block',
+        children: [
+          {_type: 'span', _key: span1Key, text: '', marks: []},
+          {
+            _type: 'mention',
+            _key: mentionKey,
+            text: 'John Doe',
+          },
+          {
+            _type: 'span',
+            _key: span2Key,
+            text: '',
+            marks: [],
+          },
+        ],
+        markDefs: [],
+        style: 'normal',
+      },
+    ]
+
+    const {editor} = await createTestEditor({
+      initialValue,
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        inlineObjects: [
+          {name: 'mention', fields: [{name: 'text', type: 'string'}]},
+        ],
+      }),
+    })
+
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'set',
+          path: [{_key: blockKey}, 'children', {_key: mentionKey}, 'text'],
+          value: 'Jane Doe',
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      return expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [
+            {_type: 'span', _key: span1Key, text: '', marks: []},
+            {_type: 'mention', _key: mentionKey, text: 'Jane Doe'},
+            {_type: 'span', _key: span2Key, text: '', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+  })
+
   test('Scenario: `unset` inline object properties', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
