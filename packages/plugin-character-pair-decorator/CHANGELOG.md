@@ -1,5 +1,12 @@
 # Changelog
 
+## 5.0.23
+
+### Patch Changes
+
+- Updated dependencies [[`9e5cab1`](https://github.com/portabletext/editor/commit/9e5cab1d73b1bdfa011bc69654d1476a42a2fd94)]:
+  - @portabletext/editor@4.3.8
+
 ## 5.0.22
 
 ### Patch Changes
