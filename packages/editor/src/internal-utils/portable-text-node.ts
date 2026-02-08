@@ -79,13 +79,23 @@ export type PartialSpanNode = {
   [other: string]: unknown
 }
 
-export function isPartialSpanNode(node: unknown): node is PartialSpanNode {
-  return (
-    typeof node === 'object' &&
-    node !== null &&
-    'text' in node &&
-    typeof node.text === 'string'
-  )
+export function isPartialSpanNode(
+  context: {schema: EditorSchema},
+  node: unknown,
+): node is PartialSpanNode {
+  if (typeof node !== 'object' || node === null) {
+    return false
+  }
+
+  if (!('text' in node) || typeof node.text !== 'string') {
+    return false
+  }
+
+  if ('_type' in node && node._type !== context.schema.span.name) {
+    return false
+  }
+
+  return true
 }
 
 //////////
@@ -104,7 +114,7 @@ export function isObjectNode(
     !isEditorNode(node) &&
     !isTextBlockNode(context, node) &&
     !isSpanNode(context, node) &&
-    !isPartialSpanNode(node)
+    !isPartialSpanNode(context, node)
   )
 }
 

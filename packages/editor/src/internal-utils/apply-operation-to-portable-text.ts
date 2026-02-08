@@ -117,7 +117,7 @@ function applyOperationToPortableTextImmutable(
 
         let newChild: SpanNode<EditorSchema> | ObjectNode | undefined
 
-        if (isPartialSpanNode(insertedNode)) {
+        if (isPartialSpanNode(context, insertedNode)) {
           // Text nodes can be inserted as is
           newChild = insertedNode
         } else if ('__inline' in insertedNode) {
@@ -186,7 +186,10 @@ function applyOperationToPortableTextImmutable(
 
       const index = path[path.length - 1]
 
-      if (isPartialSpanNode(node) && isPartialSpanNode(prev)) {
+      if (
+        isPartialSpanNode(context, node) &&
+        isPartialSpanNode(context, prev)
+      ) {
         // Merging spans
         const blockIndex = path[0]
         const newPrev = {...prev, text: prev.text + node.text}
@@ -468,7 +471,7 @@ function applyOperationToPortableTextImmutable(
         }
       }
 
-      if (isPartialSpanNode(node)) {
+      if (isPartialSpanNode(context, node)) {
         const newNode = {...node}
 
         for (const key in newProperties) {

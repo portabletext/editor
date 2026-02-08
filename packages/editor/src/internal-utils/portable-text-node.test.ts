@@ -6,36 +6,42 @@ const schema = compileSchema(defineSchema({}))
 
 describe(isPartialSpanNode.name, () => {
   test('object with only text property', () => {
-    expect(isPartialSpanNode({text: 'Hello'})).toBe(true)
+    expect(isPartialSpanNode({schema}, {text: 'Hello'})).toBe(true)
   })
 
   test('non-objects', () => {
-    expect(isPartialSpanNode(null)).toBe(false)
-    expect(isPartialSpanNode(undefined)).toBe(false)
-    expect(isPartialSpanNode('text')).toBe(false)
-    expect(isPartialSpanNode(123)).toBe(false)
+    expect(isPartialSpanNode({schema}, null)).toBe(false)
+    expect(isPartialSpanNode({schema}, undefined)).toBe(false)
+    expect(isPartialSpanNode({schema}, 'text')).toBe(false)
+    expect(isPartialSpanNode({schema}, 123)).toBe(false)
   })
 
   test('text is not a string', () => {
-    expect(isPartialSpanNode({text: 123})).toBe(false)
-    expect(isPartialSpanNode({text: null})).toBe(false)
-    expect(isPartialSpanNode({text: undefined})).toBe(false)
+    expect(isPartialSpanNode({schema}, {text: 123})).toBe(false)
+    expect(isPartialSpanNode({schema}, {text: null})).toBe(false)
+    expect(isPartialSpanNode({schema}, {text: undefined})).toBe(false)
   })
 
   test('inline object with text field and _type', () => {
     expect(
-      isPartialSpanNode({_type: 'mention', _key: 'abc123', text: 'John Doe'}),
+      isPartialSpanNode(
+        {schema},
+        {_type: 'mention', _key: 'abc123', text: 'John Doe'},
+      ),
     ).toBe(false)
   })
 
   test('block object with text field and _type', () => {
     expect(
-      isPartialSpanNode({
-        _type: 'quote',
-        _key: 'abc123',
-        text: 'Hello world',
-        source: 'Anonymous',
-      }),
+      isPartialSpanNode(
+        {schema},
+        {
+          _type: 'quote',
+          _key: 'abc123',
+          text: 'Hello world',
+          source: 'Anonymous',
+        },
+      ),
     ).toBe(false)
   })
 })
