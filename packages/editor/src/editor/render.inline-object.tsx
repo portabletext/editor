@@ -8,6 +8,7 @@ import type {
   PortableTextMemberSchemaTypes,
   RenderChildFunction,
 } from '../types/editor'
+import {serializePath} from '../utils/util.serialize-path'
 import type {EditorSchema} from './editor-schema'
 import {RenderDefaultInlineObject} from './render.default-object'
 import {SelectionStateContext} from './selection-state-context'
@@ -24,10 +25,6 @@ export function RenderInlineObject(props: {
   const inlineObjectRef = useRef<HTMLElement>(null)
   const slateEditor = useSlateStatic()
 
-  const {selectedChildKeys, focusedChildKey} = useContext(SelectionStateContext)
-  const selected = selectedChildKeys.has(props.element._key)
-  const focused = focusedChildKey === props.element._key
-
   const legacySchemaType = props.legacySchema.inlineObjects.find(
     (inlineObject) => inlineObject.name === props.element._type,
   )
@@ -38,11 +35,11 @@ export function RenderInlineObject(props: {
     )
   }
 
-  const path = DOMEditor.findPath(slateEditor, props.element)
+  const slatePath = DOMEditor.findPath(slateEditor, props.element)
   const [block] = getPointBlock({
     editor: slateEditor,
     point: {
-      path,
+      path: slatePath,
       offset: 0,
     },
   })
@@ -52,6 +49,19 @@ export function RenderInlineObject(props: {
       `Unable to find parent block of inline object ${props.element._key}`,
     )
   }
+
+  const path = block
+    ? [{_key: block._key}, 'children', {_key: props.element._key}]
+    : undefined
+
+  const selectionState = useContext(SelectionStateContext)
+  const serializedPath = path ? serializePath(path) : undefined
+  const selected = serializedPath
+    ? selectionState.selectedChildPaths.has(serializedPath)
+    : false
+  const focused = serializedPath
+    ? selectionState.focusedChildPath === serializedPath
+    : false
 
   const inlineObject = {
     _key: props.element._key,
@@ -72,14 +82,14 @@ export function RenderInlineObject(props: {
     >
       {props.children}
       <span ref={inlineObjectRef} style={{display: 'inline-block'}}>
-        {props.renderChild && block && legacySchemaType ? (
+        {props.renderChild && path && legacySchemaType ? (
           <RenderChild
             renderChild={props.renderChild}
             annotations={[]}
             editorElementRef={inlineObjectRef}
             selected={selected}
             focused={focused}
-            path={[{_key: block._key}, 'children', {_key: props.element._key}]}
+            path={path}
             schemaType={legacySchemaType}
             value={inlineObject}
             type={legacySchemaType}
