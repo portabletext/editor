@@ -46,6 +46,28 @@ export interface SplitContext {
   newSpanKey: string
 }
 
+/**
+ * Context passed during a merge operation to help RangeDecorator
+ * recompute decoration positions correctly.
+ *
+ * During a forward-delete merge (Delete at end of block 1) or
+ * backward-delete merge (Backspace at start of block 2), the
+ * second block is deleted and its content is re-inserted into
+ * the first block. This context helps track that relationship.
+ */
+export interface MergeContext {
+  /** The _key of the block being deleted (block whose content is moving) */
+  deletedBlockKey: string
+  /** The _key of the block receiving the content */
+  targetBlockKey: string
+  /** The text length of the target block before merge (insertion offset) */
+  targetBlockTextLength: number
+  /** The index of the deleted block at the time context was created */
+  deletedBlockIndex: number
+  /** The index of the target block at the time context was created */
+  targetBlockIndex: number
+}
+
 export interface PortableTextSlateEditor extends ReactEditor {
   _key: 'editor'
   _type: 'editor'
@@ -71,6 +93,13 @@ export interface PortableTextSlateEditor extends ReactEditor {
    * Used by RangeDecorator to correctly recompute decoration positions.
    */
   splitContext: SplitContext | null
+
+  /**
+   * Context for the current merge operation.
+   * Set before delete+insert operations, cleared after.
+   * Used by RangeDecorator to correctly recompute decoration positions.
+   */
+  mergeContext: MergeContext | null
 
   isDeferringMutations: boolean
   isNormalizingNode: boolean

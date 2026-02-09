@@ -8,8 +8,24 @@ import {isAtTheStartOfBlock} from '../selectors/selector.is-at-the-start-of-bloc
 import {getBlockEndPoint} from '../utils/util.get-block-end-point'
 import {getBlockStartPoint} from '../utils/util.get-block-start-point'
 import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
-import {raise} from './behavior.types.action'
+import {effect, raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
+
+/**
+ * Calculate the total text length of a text block by summing all span text lengths.
+ */
+function getTextBlockLength(
+  context: {schema: {span: {name: string}}},
+  block: {children: Array<{_type: string; text?: string}>},
+): number {
+  const spanTypeName = context.schema.span.name
+  return block.children.reduce((total, child) => {
+    if (child._type === spanTypeName && typeof child.text === 'string') {
+      return total + child.text.length
+    }
+    return total
+  }, 0)
+}
 
 export const abstractDeleteBehaviors = [
   defineBehavior({
@@ -68,10 +84,42 @@ export const abstractDeleteBehaviors = [
         return false
       }
 
-      return {previousBlockEndPoint, focusTextBlock}
+      // Prepare merge context data for decoration tracking
+      // Block indices will be computed in the effect where we have access to slateEditor
+      const mergeContextData = {
+        deletedBlockKey: focusTextBlock.node._key,
+        targetBlockKey: previousBlock.node._key,
+        targetBlockTextLength: getTextBlockLength(
+          snapshot.context,
+          previousBlock.node,
+        ),
+      }
+
+      return {previousBlockEndPoint, focusTextBlock, mergeContextData}
     },
     actions: [
-      (_, {previousBlockEndPoint, focusTextBlock}) => [
+      (_, {previousBlockEndPoint, focusTextBlock, mergeContextData}) => [
+        effect(({slateEditor}) => {
+          // Look up block indices while blocks still exist (before operations are applied)
+          const deletedBlockIndex = slateEditor.blockIndexMap.get(
+            mergeContextData.deletedBlockKey,
+          )
+          const targetBlockIndex = slateEditor.blockIndexMap.get(
+            mergeContextData.targetBlockKey,
+          )
+
+          // Only set merge context if we can find both blocks
+          if (
+            deletedBlockIndex !== undefined &&
+            targetBlockIndex !== undefined
+          ) {
+            slateEditor.mergeContext = {
+              ...mergeContextData,
+              deletedBlockIndex,
+              targetBlockIndex,
+            }
+          }
+        }),
         raise({
           type: 'delete.block',
           at: focusTextBlock.path,
@@ -88,6 +136,9 @@ export const abstractDeleteBehaviors = [
           block: focusTextBlock.node,
           placement: 'auto',
           select: 'start',
+        }),
+        effect(({slateEditor}) => {
+          slateEditor.mergeContext = null
         }),
       ],
     ],
@@ -202,10 +253,43 @@ export const abstractDeleteBehaviors = [
         return false
       }
 
-      return {nextBlock}
+      // Prepare merge context data for decoration tracking
+      // For forward delete: focusTextBlock is target, nextBlock is being deleted
+      // Block indices will be computed in the effect where we have access to slateEditor
+      const mergeContextData = {
+        deletedBlockKey: nextBlock.node._key,
+        targetBlockKey: focusTextBlock.node._key,
+        targetBlockTextLength: getTextBlockLength(
+          snapshot.context,
+          focusTextBlock.node,
+        ),
+      }
+
+      return {nextBlock, mergeContextData}
     },
     actions: [
-      (_, {nextBlock}) => [
+      (_, {nextBlock, mergeContextData}) => [
+        effect(({slateEditor}) => {
+          // Look up block indices while blocks still exist (before operations are applied)
+          const deletedBlockIndex = slateEditor.blockIndexMap.get(
+            mergeContextData.deletedBlockKey,
+          )
+          const targetBlockIndex = slateEditor.blockIndexMap.get(
+            mergeContextData.targetBlockKey,
+          )
+
+          // Only set merge context if we can find both blocks
+          if (
+            deletedBlockIndex !== undefined &&
+            targetBlockIndex !== undefined
+          ) {
+            slateEditor.mergeContext = {
+              ...mergeContextData,
+              deletedBlockIndex,
+              targetBlockIndex,
+            }
+          }
+        }),
         raise({
           type: 'delete.block',
           at: nextBlock.path,
@@ -215,6 +299,9 @@ export const abstractDeleteBehaviors = [
           block: nextBlock.node,
           placement: 'auto',
           select: 'none',
+        }),
+        effect(({slateEditor}) => {
+          slateEditor.mergeContext = null
         }),
       ],
     ],

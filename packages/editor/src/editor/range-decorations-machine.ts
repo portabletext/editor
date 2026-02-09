@@ -15,7 +15,10 @@ import {
   type CallbackLogicFunction,
 } from 'xstate'
 import {isDeepEqual} from '../internal-utils/equality'
-import {moveRangeBySplitAwareOperation} from '../internal-utils/move-range-by-operation'
+import {
+  moveRangeByMergeAwareOperation,
+  moveRangeBySplitAwareOperation,
+} from '../internal-utils/move-range-by-operation'
 import {slateRangeToSelection} from '../internal-utils/slate-utils'
 import {toSlateRange} from '../internal-utils/to-slate-range'
 import type {RangeDecoration} from '../types/editor'
@@ -31,11 +34,22 @@ const slateOperationCallback: CallbackLogicFunction<
   const originalApply = input.slateEditor.apply
 
   input.slateEditor.apply = (op) => {
+    // Apply the operation first, THEN notify the decoration machine.
+    // This is critical because:
+    // 1. moveRangeBySplitAwareOperation may return ranges pointing to new blocks
+    // 2. slateRangeToSelection needs to look up blocks by path index
+    // 3. If we notify before apply, the new block doesn't exist yet
+    // 4. This causes slateRangeToSelection to return null (decoration invalidated)
+    originalApply(op)
+
+    // Process all non-selection operations for decoration tracking.
+    // Note: We previously skipped remote patches to avoid re-processing decorations
+    // that were already transformed locally. However, this broke multi-editor scenarios
+    // where Editor B needs to update its decorations when patches arrive from Editor A.
+    // The timing fix (apply before sendBack) handles the local split case correctly.
     if (op.type !== 'set_selection') {
       sendBack({type: 'slate operation', operation: op})
     }
-
-    originalApply(op)
   }
 
   return () => {
@@ -160,7 +174,7 @@ export const rangeDecorationsMachine = setup({
       }
 
       const rangeDecorationState: Array<DecoratedRange> = []
-      const {splitContext} = context.slateEditor
+      const {splitContext, mergeContext} = context.slateEditor
 
       // Get the original block index if we're in a split context
       const originalBlockIndex = splitContext
@@ -177,24 +191,23 @@ export const rangeDecorationsMachine = setup({
           : undefined
       }
 
+      // Get block indices from merge context (stored at context creation time,
+      // before operations were applied)
+      const deletedBlockIndex = mergeContext?.deletedBlockIndex
+      const targetBlockIndex = mergeContext?.targetBlockIndex
+
       for (const decoratedRange of context.slateEditor.decoratedRanges) {
-        // During a split, use the cached slate range instead of re-computing from
-        // EditorSelection. This is critical because:
-        // 1. toSlateRange clamps offsets to text length
-        // 2. By the time we process the operation, text may have been removed
-        // 3. We need the original offsets to correctly place decorations in the new block
-        const slateRange: Range | null = splitContext
-          ? Range.isRange(decoratedRange)
-            ? {anchor: decoratedRange.anchor, focus: decoratedRange.focus}
-            : null
-          : toSlateRange({
-              context: {
-                schema: context.schema,
-                value: context.slateEditor.value,
-                selection: decoratedRange.rangeDecoration.selection,
-              },
-              blockIndexMap: context.slateEditor.blockIndexMap,
-            })
+        // Always use the cached Slate Range from decoratedRange instead of
+        // re-computing from EditorSelection. This is critical because:
+        // 1. toSlateRange looks up blocks by _key, but after merge/remove operations
+        //    the block may no longer exist in the blockIndexMap
+        // 2. The cached Slate Range uses indices which can be correctly transformed
+        //    by Slate's Point.transform for any operation type (split, merge, etc.)
+        // 3. For splits, we need original offsets before remove_text clamping
+        // 4. For merges, we need the indices before the block is removed
+        const slateRange: Range | null = Range.isRange(decoratedRange)
+          ? {anchor: decoratedRange.anchor, focus: decoratedRange.focus}
+          : null
 
         if (!Range.isRange(slateRange)) {
           decoratedRange.rangeDecoration.onMoved?.({
@@ -207,14 +220,25 @@ export const rangeDecorationsMachine = setup({
 
         let newRange: BaseRange | null | undefined
 
-        // Use split-aware transformation when split context is available
-        newRange = moveRangeBySplitAwareOperation(
+        // First try merge-aware transformation
+        newRange = moveRangeByMergeAwareOperation(
           slateRange,
           event.operation,
-          splitContext,
-          originalBlockIndex,
-          getNewBlockIndex,
+          mergeContext,
+          deletedBlockIndex,
+          targetBlockIndex,
         )
+
+        // If merge-aware returned undefined, try split-aware transformation
+        if (newRange === undefined) {
+          newRange = moveRangeBySplitAwareOperation(
+            slateRange,
+            event.operation,
+            splitContext,
+            originalBlockIndex,
+            getNewBlockIndex,
+          )
+        }
 
         if (
           (newRange && newRange !== slateRange) ||
@@ -238,14 +262,15 @@ export const rangeDecorationsMachine = setup({
         // If the newRange is null, it means that the range is not valid anymore and should be removed
         // If it's undefined, it means that the slateRange is still valid and should be kept
         if (newRange !== null) {
+          const rangeToUse = newRange || slateRange
           rangeDecorationState.push({
-            ...(newRange || slateRange),
+            ...rangeToUse,
             rangeDecoration: {
               ...decoratedRange.rangeDecoration,
               selection: slateRangeToSelection({
                 schema: context.schema,
                 editor: context.slateEditor,
-                range: newRange,
+                range: rangeToUse,
               }),
             },
           })

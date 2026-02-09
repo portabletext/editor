@@ -40,6 +40,7 @@ export function createSlateEditor(config: SlateEditorConfig): SlateEditor {
   editor.value = [placeholderBlock]
 
   editor.splitContext = null
+  editor.mergeContext = null
 
   editor.isDeferringMutations = false
   editor.isNormalizingNode = false
