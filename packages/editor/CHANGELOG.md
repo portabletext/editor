@@ -1,5 +1,11 @@
 # Changelog
 
+## 4.3.9
+
+### Patch Changes
+
+- [#2172](https://github.com/portabletext/editor/pull/2172) [`b700377`](https://github.com/portabletext/editor/commit/b7003778bfff174842f264c392d4bb7641e02001) Thanks [@christianhg](https://github.com/christianhg)! - fix: incorrect `focused`/`selected` state for children with duplicate keys
+
 ## 4.3.8
 
 ### Patch Changes
