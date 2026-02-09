@@ -178,14 +178,23 @@ export const rangeDecorationsMachine = setup({
       }
 
       for (const decoratedRange of context.slateEditor.decoratedRanges) {
-        const slateRange = toSlateRange({
-          context: {
-            schema: context.schema,
-            value: context.slateEditor.value,
-            selection: decoratedRange.rangeDecoration.selection,
-          },
-          blockIndexMap: context.slateEditor.blockIndexMap,
-        })
+        // During a split, use the cached slate range instead of re-computing from
+        // EditorSelection. This is critical because:
+        // 1. toSlateRange clamps offsets to text length
+        // 2. By the time we process the operation, text may have been removed
+        // 3. We need the original offsets to correctly place decorations in the new block
+        const slateRange: Range | null = splitContext
+          ? Range.isRange(decoratedRange)
+            ? {anchor: decoratedRange.anchor, focus: decoratedRange.focus}
+            : null
+          : toSlateRange({
+              context: {
+                schema: context.schema,
+                value: context.slateEditor.value,
+                selection: decoratedRange.rangeDecoration.selection,
+              },
+              blockIndexMap: context.slateEditor.blockIndexMap,
+            })
 
         if (!Range.isRange(slateRange)) {
           decoratedRange.rangeDecoration.onMoved?.({
