@@ -1,5 +1,11 @@
 import {useActorRef, useSelector} from '@xstate/react'
-import {CheckIcon, CopyIcon, HistoryIcon, TrashIcon} from 'lucide-react'
+import {
+  CheckIcon,
+  CopyIcon,
+  HistoryIcon,
+  TextCursorIcon,
+  TrashIcon,
+} from 'lucide-react'
 import {useEffect, useState} from 'react'
 import {TooltipTrigger, type Key} from 'react-aria-components'
 import {highlightMachine} from './highlight-json-machine'
@@ -13,8 +19,14 @@ import {Container} from './primitives/container'
 import {Spinner} from './primitives/spinner'
 import {Tab, TabList, TabPanel, Tabs} from './primitives/tabs'
 import {Tooltip} from './primitives/tooltip'
+import {RangeDecorationDebugger} from './range-decoration-debugger'
 
-type TabId = 'output' | 'patches' | 'react-preview' | 'markdown-preview'
+type TabId =
+  | 'output'
+  | 'patches'
+  | 'decorations'
+  | 'react-preview'
+  | 'markdown-preview'
 
 export function Inspector(props: {playgroundRef: PlaygroundActorRef}) {
   const [activeTab, setActiveTab] = useState<TabId>('output')
@@ -43,6 +55,12 @@ export function Inspector(props: {playgroundRef: PlaygroundActorRef}) {
               <span className="hidden sm:inline">Patches</span>
             </span>
           </Tab>
+          <Tab id="decorations">
+            <span className="flex items-center gap-1.5">
+              <TextCursorIcon className="size-3" />
+              <span className="hidden sm:inline">Decorations</span>
+            </span>
+          </Tab>
           <Tab id="react-preview">
             <span className="flex items-center gap-1.5">
               <ReactLogo className="size-3" />
@@ -68,6 +86,12 @@ export function Inspector(props: {playgroundRef: PlaygroundActorRef}) {
       <TabPanel id="patches" className="flex-1 min-h-0">
         <Container className="h-full overflow-clip">
           <PatchesPanel playgroundRef={props.playgroundRef} />
+        </Container>
+      </TabPanel>
+
+      <TabPanel id="decorations" className="flex-1 min-h-0">
+        <Container className="h-full overflow-clip">
+          <RangeDecorationDebugger playgroundRef={props.playgroundRef} />
         </Container>
       </TabPanel>
 
