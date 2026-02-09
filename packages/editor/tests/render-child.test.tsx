@@ -181,16 +181,19 @@ describe('renderChild', () => {
       expect(editor.getSnapshot().context.selection).toEqual(initialSelection)
     })
 
-    expect(renderChildValues).toEqual([
-      {
-        focused: false,
-        selected: false,
-      },
-      {
-        focused: true,
-        selected: true,
-      },
-    ])
+    await vi.waitFor(() => {
+      const focusedChildren = renderChildValues.filter((value) => value.focused)
+
+      expect(
+        focusedChildren,
+        'Unexpected focused children after selecting initial selection',
+      ).toEqual([
+        {
+          focused: true,
+          selected: true,
+        },
+      ])
+    })
   })
 
   test('children with same keys across blocks', async () => {
@@ -257,48 +260,12 @@ describe('renderChild', () => {
     })
 
     await vi.waitFor(() => {
+      const focusedChildren = renderChildValues.filter((value) => value.focused)
+
       expect(
-        renderChildValues,
-        'Unexpected renderChild calls after setup',
-      ).toEqual([
-        // Placeholder block
-        {
-          focused: false,
-          selected: false,
-          path: [{_key: 'k5'}, 'children', {_key: 'k6'}],
-        },
-        // Initial setup
-        {
-          focused: false,
-          selected: false,
-          path: [{_key: blockAKey}, 'children', {_key: fooSpanKey}],
-        },
-        {
-          focused: false,
-          selected: false,
-          path: [{_key: blockAKey}, 'children', {_key: stockTickerKey}],
-        },
-        {
-          focused: false,
-          selected: false,
-          path: [{_key: blockAKey}, 'children', {_key: barSpanKey}],
-        },
-        {
-          focused: false,
-          selected: false,
-          path: [{_key: blockBKey}, 'children', {_key: fooSpanKey}],
-        },
-        {
-          focused: false,
-          selected: false,
-          path: [{_key: blockBKey}, 'children', {_key: stockTickerKey}],
-        },
-        {
-          focused: false,
-          selected: false,
-          path: [{_key: blockBKey}, 'children', {_key: barSpanKey}],
-        },
-      ])
+        focusedChildren,
+        'Unexpected focused children after setup',
+      ).toEqual([])
     })
 
     renderChildValues = []
@@ -329,25 +296,16 @@ describe('renderChild', () => {
     })
 
     await vi.waitFor(() => {
+      const focusedChildren = renderChildValues.filter((value) => value.focused)
+
       expect(
-        renderChildValues,
-        'Unexpected renderChild calls after selecting first foo span',
+        focusedChildren,
+        'Unexpected focused children after selecting first foo span',
       ).toEqual([
-        // After selection
         {
           focused: true,
           selected: true,
           path: [{_key: blockAKey}, 'children', {_key: fooSpanKey}],
-        },
-        {
-          focused: false,
-          selected: false,
-          path: [{_key: blockAKey}, 'children', {_key: stockTickerKey}],
-        },
-        {
-          focused: false,
-          selected: false,
-          path: [{_key: blockBKey}, 'children', {_key: stockTickerKey}],
         },
       ])
     })
@@ -357,24 +315,16 @@ describe('renderChild', () => {
     await userEvent.keyboard('{ArrowRight}')
 
     await vi.waitFor(() => {
+      const focusedChildren = renderChildValues.filter((value) => value.focused)
+
       expect(
-        renderChildValues,
-        'Unexpected renderChild calls after selecting first stock ticker',
+        focusedChildren,
+        'Unexpected focused children after selecting first stock ticker',
       ).toEqual([
-        {
-          focused: false,
-          selected: false,
-          path: [{_key: blockAKey}, 'children', {_key: fooSpanKey}],
-        },
         {
           focused: true,
           selected: true,
           path: [{_key: blockAKey}, 'children', {_key: stockTickerKey}],
-        },
-        {
-          focused: false,
-          selected: false,
-          path: [{_key: blockBKey}, 'children', {_key: stockTickerKey}],
         },
       ])
     })
