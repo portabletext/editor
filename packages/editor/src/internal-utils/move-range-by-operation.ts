@@ -1,5 +1,8 @@
-import {Point, type Operation, type Range} from 'slate'
+import {Point, type Node, type Operation, type Range} from 'slate'
 import type {SplitContext} from '../types/slate-editor'
+
+// Mock node for insert_node operations - only path matters for Point.transform
+const mockNode = {children: []} as unknown as Node
 
 export function moveRangeByOperation(
   range: Range,
@@ -122,7 +125,7 @@ function adjustPointAfterSplit(
       Point.transform(point, {
         type: 'insert_node',
         path: [newBlockIndex],
-        node: {children: []},
+        node: mockNode,
       }) ?? point
     )
   }
@@ -136,7 +139,7 @@ function adjustPointAfterSplit(
       Point.transform(point, {
         type: 'insert_node',
         path: [newBlockIndex],
-        node: {children: []},
+        node: mockNode,
       }) ?? point
     )
   }
