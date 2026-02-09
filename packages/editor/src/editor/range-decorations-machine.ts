@@ -339,6 +339,11 @@ export const rangeDecorationsMachine = setup({
         } else if (suppressCallback) {
           // During remote batch: keep the decoration alive with its last known range.
           // Reconciliation will re-resolve from EditorSelection keys after the batch.
+          // If the block was deleted (remote merge/split), toSlateRange won't find
+          // the key and returns null → onMoved fires with newSelection: null.
+          // If the block still exists, toSlateRange resolves correctly.
+          // Either way, the stale cached range here is harmless — it's never
+          // exposed to the consumer or used for rendering.
           rangeDecorationState.push(decoratedRange)
         }
       }
