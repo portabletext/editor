@@ -9,6 +9,7 @@ import type {
   RenderChildFunction,
   RenderDecoratorFunction,
 } from '../types/editor'
+import {serializePath} from '../utils/util.serialize-path'
 import {EditorActorContext} from './editor-actor-context'
 import {SelectionStateContext} from './selection-state-context'
 
@@ -28,10 +29,6 @@ export function RenderSpan(props: RenderSpanProps) {
   )
   const spanRef = useRef<HTMLElement>(null)
 
-  const selectionState = useContext(SelectionStateContext)
-  const focused = selectionState.focusedChildKey === props.leaf._key
-  const selected = selectionState.selectedChildKeys.has(props.leaf._key)
-
   const parent = props.children.props.parent
   const block = parent && slateEditor.isTextBlock(parent) ? parent : undefined
 
@@ -42,6 +39,15 @@ export function RenderSpan(props: RenderSpanProps) {
         : undefined,
     [block, props.leaf._key],
   )
+
+  const selectionState = useContext(SelectionStateContext)
+  const serializedPath = path ? serializePath(path) : undefined
+  const focused = serializedPath
+    ? selectionState.focusedChildPath === serializedPath
+    : false
+  const selected = serializedPath
+    ? selectionState.selectedChildPaths.has(serializedPath)
+    : false
 
   const decoratorSchemaTypes = editorActor
     .getSnapshot()

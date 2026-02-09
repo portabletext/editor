@@ -7,6 +7,7 @@ import {getSelectionEndPoint} from '../selectors/selector.get-selection-end-poin
 import {getSelectionStartPoint} from '../selectors/selector.get-selection-start-point'
 import {isSelectionCollapsed} from '../selectors/selector.is-selection-collapsed'
 import {getBlockKeyFromSelectionPoint} from '../utils/util.selection-point'
+import {serializePath} from '../utils/util.serialize-path'
 import {EditorActorContext} from './editor-actor-context'
 import {getEditorSnapshot} from './editor-selector'
 
@@ -15,16 +16,16 @@ import {getEditorSnapshot} from './editor-selector'
  */
 type SelectionState = {
   /**
-   * The _key of the child (span or inline object) that has the caret (when
-   * selection is collapsed). `undefined` if selection is expanded or there is
-   * no selection.
+   * Serialized path of the child (span or inline object) that has the caret
+   * (when selection is collapsed). Format: "blockKey.children.childKey".
+   * `undefined` if selection is expanded or there is no selection.
    */
-  focusedChildKey: string | undefined
+  focusedChildPath: string | undefined
   /**
-   * Set of child _keys (spans and inline objects) that are within the current
-   * selection.
+   * Set of serialized child paths (spans and inline objects) that are within
+   * the current selection. Format: "blockKey.children.childKey".
    */
-  selectedChildKeys: Set<string>
+  selectedChildPaths: Set<string>
   /**
    * The _key of the block that has the caret (when selection is collapsed).
    * `undefined` if selection is expanded or there is no selection.
@@ -39,8 +40,8 @@ type SelectionState = {
 const emptySet = new Set<string>()
 
 const defaultSelectionState: SelectionState = {
-  focusedChildKey: undefined,
-  selectedChildKeys: emptySet,
+  focusedChildPath: undefined,
+  selectedChildPaths: emptySet,
   focusedBlockKey: undefined,
   selectedBlockKeys: emptySet,
 }
@@ -74,26 +75,28 @@ export function SelectionStateProvider({
 
       const isCollapsed = isSelectionCollapsed(snapshot)
 
-      let focusedChildKey: string | undefined
+      let focusedChildPath: string | undefined
 
       if (isCollapsed) {
         const focusChild = getFocusChild(snapshot)
-        focusedChildKey = focusChild?.node._key
+        if (focusChild) {
+          focusedChildPath = serializePath(focusChild.path)
+        }
       }
 
       const selectedChildren = getSelectedChildren()(snapshot)
-      let selectedChildKeys =
+      let selectedChildPaths =
         selectedChildren.length > 0
-          ? new Set(selectedChildren.map((child) => child.node._key))
+          ? new Set(selectedChildren.map((child) => serializePath(child.path)))
           : emptySet
 
       if (
         isCollapsed &&
-        focusedChildKey &&
-        !selectedChildKeys.has(focusedChildKey)
+        focusedChildPath &&
+        !selectedChildPaths.has(focusedChildPath)
       ) {
-        selectedChildKeys = new Set(selectedChildKeys)
-        selectedChildKeys.add(focusedChildKey)
+        selectedChildPaths = new Set(selectedChildPaths)
+        selectedChildPaths.add(focusedChildPath)
       }
 
       const startPoint = getSelectionStartPoint(snapshot)
@@ -127,26 +130,26 @@ export function SelectionStateProvider({
       const focusedBlockKey = isCollapsed ? startBlockKey : undefined
 
       return {
-        focusedChildKey,
-        selectedChildKeys:
-          selectedChildKeys.size > 0 ? selectedChildKeys : emptySet,
+        focusedChildPath,
+        selectedChildPaths:
+          selectedChildPaths.size > 0 ? selectedChildPaths : emptySet,
         focusedBlockKey,
         selectedBlockKeys:
           selectedBlockKeys.size > 0 ? selectedBlockKeys : emptySet,
       }
     },
     (prev, next) => {
-      if (prev.focusedChildKey !== next.focusedChildKey) {
+      if (prev.focusedChildPath !== next.focusedChildPath) {
         return false
       }
 
-      if (prev.selectedChildKeys !== next.selectedChildKeys) {
-        if (prev.selectedChildKeys.size !== next.selectedChildKeys.size) {
+      if (prev.selectedChildPaths !== next.selectedChildPaths) {
+        if (prev.selectedChildPaths.size !== next.selectedChildPaths.size) {
           return false
         }
 
-        for (const key of prev.selectedChildKeys) {
-          if (!next.selectedChildKeys.has(key)) {
+        for (const path of prev.selectedChildPaths) {
+          if (!next.selectedChildPaths.has(path)) {
             return false
           }
         }
