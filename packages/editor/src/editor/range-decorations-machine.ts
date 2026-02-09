@@ -21,7 +21,7 @@ import {
 } from '../internal-utils/move-range-by-operation'
 import {slateRangeToSelection} from '../internal-utils/slate-utils'
 import {toSlateRange} from '../internal-utils/to-slate-range'
-import type {RangeDecoration} from '../types/editor'
+import type {EditorSelection, RangeDecoration} from '../types/editor'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {isEmptyTextBlock} from '../utils'
 import type {EditorSchema} from './editor-schema'
@@ -65,15 +65,18 @@ const slateOperationCallback: CallbackLogicFunction<
     // operations can sneak in between the remote batch and reconciliation.
     if (isRemoteBatch && !pendingReconciliation) {
       pendingReconciliation = true
-      // Snapshot pre-batch ranges for diffing at reconciliation time
-      const snapshot = new Map<RangeDecoration, Range | null>()
+      // Snapshot pre-batch state for diffing at reconciliation time
+      const snapshot = new Map<
+        RangeDecoration,
+        {range: Range | null; selection: EditorSelection}
+      >()
       for (const dr of input.slateEditor.decoratedRanges) {
-        snapshot.set(
-          dr.rangeDecoration,
-          Range.isRange(dr)
+        snapshot.set(dr.rangeDecoration, {
+          range: Range.isRange(dr)
             ? {anchor: {...dr.anchor}, focus: {...dr.focus}}
             : null,
-        )
+          selection: dr.rangeDecoration.selection,
+        })
       }
       input.slateEditor.preBatchDecorationRanges = snapshot
     }
@@ -169,6 +172,7 @@ export const rangeDecorationsMachine = setup({
 
         if (!Range.isRange(slateRange)) {
           rangeDecoration.onMoved?.({
+            previousSelection: rangeDecoration.selection,
             newSelection: null,
             rangeDecoration,
             origin: 'local',
@@ -203,6 +207,7 @@ export const rangeDecorationsMachine = setup({
 
         if (!Range.isRange(slateRange)) {
           rangeDecoration.onMoved?.({
+            previousSelection: rangeDecoration.selection,
             newSelection: null,
             rangeDecoration,
             origin: 'local',
@@ -264,6 +269,7 @@ export const rangeDecorationsMachine = setup({
         if (!Range.isRange(slateRange)) {
           if (!suppressCallback) {
             decoratedRange.rangeDecoration.onMoved?.({
+              previousSelection: decoratedRange.rangeDecoration.selection,
               newSelection: null,
               rangeDecoration: decoratedRange.rangeDecoration,
               origin: 'local',
@@ -310,6 +316,7 @@ export const rangeDecorationsMachine = setup({
             : null
 
           decoratedRange.rangeDecoration.onMoved?.({
+            previousSelection: decoratedRange.rangeDecoration.selection,
             newSelection: newRangeSelection,
             rangeDecoration: decoratedRange.rangeDecoration,
             origin: 'local',
@@ -325,16 +332,16 @@ export const rangeDecorationsMachine = setup({
         // reconciliation handler will re-resolve it after the batch completes.
         if (newRange !== null) {
           const rangeToUse = newRange || slateRange
+          // Update selection in place to preserve object identity for
+          // the pre-batch snapshot Map lookup during reconciliation.
+          decoratedRange.rangeDecoration.selection = slateRangeToSelection({
+            schema: context.schema,
+            editor: context.slateEditor,
+            range: rangeToUse,
+          })
           rangeDecorationState.push({
             ...rangeToUse,
-            rangeDecoration: {
-              ...decoratedRange.rangeDecoration,
-              selection: slateRangeToSelection({
-                schema: context.schema,
-                editor: context.slateEditor,
-                range: rangeToUse,
-              }),
-            },
+            rangeDecoration: decoratedRange.rangeDecoration,
           })
         } else if (suppressCallback) {
           // During remote batch: keep the decoration alive with its last known range.
@@ -378,16 +385,43 @@ export const rangeDecorationsMachine = setup({
           blockIndexMap: context.slateEditor.blockIndexMap,
         })
 
-        const previousRange = preRanges.get(rangeDecoration) ?? null
+        const preBatch = preRanges.get(rangeDecoration)
+        const previousRange = preBatch?.range ?? null
+        const previousSelection = preBatch?.selection ?? null
 
         if (!Range.isRange(freshSlateRange)) {
           // Decoration can no longer be resolved in the document
           if (previousRange !== null) {
-            rangeDecoration.onMoved?.({
+            const consumerSelection = rangeDecoration.onMoved?.({
+              previousSelection,
               newSelection: null,
               rangeDecoration,
               origin: 'remote',
             })
+
+            // If the consumer returned an EditorSelection, use it to
+            // keep the decoration alive (e.g. re-resolved from W3C annotation)
+            if (consumerSelection) {
+              const consumerSlateRange = toSlateRange({
+                context: {
+                  schema: context.schema,
+                  value: context.slateEditor.value,
+                  selection: consumerSelection,
+                },
+                blockIndexMap: context.slateEditor.blockIndexMap,
+              })
+
+              if (Range.isRange(consumerSlateRange)) {
+                rangeDecorationState.push({
+                  ...consumerSlateRange,
+                  rangeDecoration: {
+                    ...rangeDecoration,
+                    selection: consumerSelection,
+                  },
+                })
+                continue
+              }
+            }
           }
           continue
         }
@@ -396,30 +430,59 @@ export const rangeDecorationsMachine = setup({
         const changed =
           !previousRange || !Range.equals(previousRange, freshSlateRange)
 
+        let selectionComputed = false
+        let finalSelection: EditorSelection = null
+        let finalSlateRange = freshSlateRange
+
         if (changed) {
-          const newSelection = slateRangeToSelection({
+          finalSelection = slateRangeToSelection({
             schema: context.schema,
             editor: context.slateEditor,
             range: freshSlateRange,
           })
+          selectionComputed = true
 
-          rangeDecoration.onMoved?.({
-            newSelection,
+          const consumerSelection = rangeDecoration.onMoved?.({
+            previousSelection,
+            newSelection: finalSelection,
             rangeDecoration,
             origin: 'remote',
           })
+
+          // If the consumer returned an EditorSelection, use it instead
+          // of the auto-resolved one (e.g. re-resolved from W3C annotation)
+          if (consumerSelection) {
+            const consumerSlateRange = toSlateRange({
+              context: {
+                schema: context.schema,
+                value: context.slateEditor.value,
+                selection: consumerSelection,
+              },
+              blockIndexMap: context.slateEditor.blockIndexMap,
+            })
+
+            if (Range.isRange(consumerSlateRange)) {
+              finalSelection = consumerSelection
+              finalSlateRange = consumerSlateRange
+            }
+          }
         }
 
-        // Update cached range to the fresh resolved value
+        // Lazy-compute: only run slateRangeToSelection for unchanged decorations
+        if (!selectionComputed) {
+          finalSelection = slateRangeToSelection({
+            schema: context.schema,
+            editor: context.slateEditor,
+            range: freshSlateRange,
+          })
+        }
+
+        // Update cached range to the final resolved value
         rangeDecorationState.push({
-          ...freshSlateRange,
+          ...finalSlateRange,
           rangeDecoration: {
             ...rangeDecoration,
-            selection: slateRangeToSelection({
-              schema: context.schema,
-              editor: context.slateEditor,
-              range: freshSlateRange,
-            }),
+            selection: finalSelection,
           },
         })
       }

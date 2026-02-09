@@ -83,12 +83,17 @@ export interface PortableTextSlateEditor extends ReactEditor {
 
   decoratedRanges: Array<DecoratedRange>
   /**
-   * Snapshot of decoration ranges taken before a remote batch starts.
+   * Snapshot of decoration state taken before a remote batch starts.
    * Used by the reconciliation handler to diff pre-batch vs post-batch
    * and fire a single onMoved callback per changed decoration.
+   * Stores both the Slate Range (for change detection) and the
+   * EditorSelection (for previousSelection in onMoved callbacks).
    * Managed by the apply interceptor in range-decorations-machine.
    */
-  preBatchDecorationRanges: Map<RangeDecoration, Range | null>
+  preBatchDecorationRanges: Map<
+    RangeDecoration,
+    {range: Range | null; selection: EditorSelection}
+  >
   decoratorState: Record<string, boolean | undefined>
   blockIndexMap: Map<string, number>
   history: History

@@ -11,6 +11,7 @@ import {type ReactNode} from 'react'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {
+  type EditorSelection,
   type Patch,
   type PortableTextBlock,
   type RangeDecoration,
@@ -2307,5 +2308,271 @@ describe('RangeDecorations: Multi-PTE Sync', () => {
       const decorations = locator.getByTestId('range-decoration')
       return expect.element(decorations).toBeInTheDocument()
     })
+  })
+})
+
+describe('RangeDecorations: onMoved Return Value', () => {
+  test('Consumer can override decoration selection via onMoved return value', async () => {
+    // Editor B has a decoration on "dolly" (offset 6-11)
+    // Editor A types "AAA " at the beginning → remote patches sync to Editor B
+    // onMoved fires with auto-shifted selection for "dolly" (offset 10-15)
+    // Consumer returns a DIFFERENT selection covering the full text
+    // The decoration machine should use the consumer's selection
+
+    const onMovedSpyB = vi.fn()
+
+    // The consumer-provided selection: cover the entire span text
+    // After "AAA " is typed, the text is "AAA hello dolly" (15 chars)
+    // Consumer wants to highlight "AAA hello dolly" (offset 0-15)
+    const makeFullRangeSelection = (): EditorSelection => ({
+      anchor: {
+        path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+        offset: 0,
+      },
+      focus: {
+        path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+        offset: 15,
+      },
+    })
+
+    let rangeDecorationsB: Array<RangeDecoration> = [
+      {
+        component: RangeDecorationComponent,
+        payload: {id: 'dec1'},
+        selection: {
+          anchor: {
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            offset: 6, // start of "dolly"
+          },
+          focus: {
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            offset: 11, // end of "dolly"
+          },
+        },
+        onMoved: (details) => {
+          onMovedSpyB(details)
+          // Return a different selection — simulates W3C annotation re-resolve
+          const overrideSelection = makeFullRangeSelection()
+          rangeDecorationsB = rangeDecorationsB.map((d) =>
+            d.payload?.['id'] === 'dec1'
+              ? {...d, selection: overrideSelection}
+              : d,
+          )
+          return overrideSelection
+        },
+      },
+    ]
+
+    const {editor, locator, editorB, locatorB} = await createTestEditors({
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', _key: 's1', text: 'hello dolly'}],
+          markDefs: [],
+        },
+      ],
+      editableProps: {rangeDecorations: rangeDecorationsB},
+    })
+
+    // Wait for both editors to be ready
+    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+    await vi.waitFor(() => expect.element(locatorB).toBeInTheDocument())
+
+    // Verify initial decoration in Editor B on "dolly"
+    await vi.waitFor(() =>
+      expect
+        .element(locatorB.getByTestId('range-decoration'))
+        .toHaveTextContent('dolly'),
+    )
+
+    // Type in Editor A at the beginning
+    await userEvent.click(locator)
+    editor.send({type: 'focus'})
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 0,
+        },
+      },
+    })
+
+    await userEvent.type(locator, 'AAA ')
+
+    // Wait for sync to complete
+    await vi.waitFor(() => {
+      const terseA = getTersePt(editor.getSnapshot().context)
+      const terseB = getTersePt(editorB.getSnapshot().context)
+      expect(terseA[0]).toContain('AAA')
+      expect(terseB[0]).toContain('AAA')
+    })
+
+    // onMoved should have been called
+    expect(onMovedSpyB).toHaveBeenCalled()
+
+    // onMoved should have been called with origin: 'remote'
+    const allCalls = onMovedSpyB.mock.calls.map(
+      (c: RangeDecorationOnMovedDetails[]) => c[0],
+    ) as RangeDecorationOnMovedDetails[]
+    const remoteCalls = allCalls.filter((d) => d.origin === 'remote')
+    expect(remoteCalls.length).toBeGreaterThan(0)
+
+    // The very first onMoved call should carry the original "dolly" range
+    // as previousSelection (offset 6-11 before any edits shifted it)
+    const firstCall = allCalls[0]!
+    expect(firstCall.previousSelection).not.toBeNull()
+    expect(firstCall.previousSelection!.anchor.offset).toBe(6)
+    expect(firstCall.previousSelection!.focus.offset).toBe(11)
+
+    // Each subsequent call's previousSelection should match the prior call's newSelection
+    for (let i = 1; i < allCalls.length; i++) {
+      const prev = allCalls[i - 1]!
+      const curr = allCalls[i]!
+      if (prev.newSelection && curr.previousSelection) {
+        expect(curr.previousSelection.anchor.offset).toBe(
+          prev.newSelection.anchor.offset,
+        )
+      }
+    }
+
+    // The last call should have a valid newSelection
+    expect(allCalls[allCalls.length - 1]!.newSelection).not.toBeNull()
+
+    // CRITICAL: The decoration should now cover the FULL text "AAA hello dolly"
+    // because the consumer returned a selection covering offset 0-15,
+    // NOT just "dolly" at offset 10-15
+    await vi.waitFor(() =>
+      expect
+        .element(locatorB.getByTestId('range-decoration'))
+        .toHaveTextContent('AAA hello dolly'),
+    )
+  })
+
+  test('onMoved does NOT fire for decoration unaffected by remote batch', async () => {
+    // Two blocks, two decorations (one per block).
+    // Editor A types in block 1 → remote patches sync to Editor B.
+    // Only decoration A (block 1) should fire onMoved.
+    // Decoration B (block 2) should NOT fire — it wasn't affected.
+    // This verifies the pre-batch snapshot diff correctly identifies
+    // unchanged decorations (catches Map identity bugs).
+
+    const onMovedSpyA = vi.fn()
+    const onMovedSpyB = vi.fn()
+
+    let rangeDecorationsB: Array<RangeDecoration> = [
+      {
+        component: RangeDecorationComponent,
+        payload: {id: 'decA'},
+        selection: {
+          anchor: {
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            offset: 6,
+          },
+          focus: {
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            offset: 11, // "world" in block 1
+          },
+        },
+        onMoved: (details) => {
+          onMovedSpyA(details)
+          rangeDecorationsB = updateRangeDecorations({
+            rangeDecorations: rangeDecorationsB,
+            details,
+          })
+        },
+      },
+      {
+        component: RangeDecorationComponent,
+        payload: {id: 'decB'},
+        selection: {
+          anchor: {
+            path: [{_key: 'b2'}, 'children', {_key: 's2'}],
+            offset: 0,
+          },
+          focus: {
+            path: [{_key: 'b2'}, 'children', {_key: 's2'}],
+            offset: 7, // "goodbye" in block 2
+          },
+        },
+        onMoved: (details) => {
+          onMovedSpyB(details)
+          rangeDecorationsB = updateRangeDecorations({
+            rangeDecorations: rangeDecorationsB,
+            details,
+          })
+        },
+      },
+    ]
+
+    const {editor, locator, editorB, locatorB} = await createTestEditors({
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', _key: 's1', text: 'Hello world'}],
+          markDefs: [],
+        },
+        {
+          _type: 'block',
+          _key: 'b2',
+          children: [{_type: 'span', _key: 's2', text: 'goodbye moon'}],
+          markDefs: [],
+        },
+      ],
+      editableProps: {rangeDecorations: rangeDecorationsB},
+    })
+
+    // Wait for both editors
+    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+    await vi.waitFor(() => expect.element(locatorB).toBeInTheDocument())
+
+    // Verify both decorations render
+    const decorationEls = locatorB.getByTestId('range-decoration')
+    await vi.waitFor(() =>
+      expect.element(decorationEls.first()).toBeInTheDocument(),
+    )
+
+    // Reset spies after initial setup
+    onMovedSpyA.mockClear()
+    onMovedSpyB.mockClear()
+
+    // Type in Editor A at the beginning of block 1 only
+    await userEvent.click(locator)
+    editor.send({type: 'focus'})
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 0,
+        },
+      },
+    })
+
+    await userEvent.type(locator, 'ZZ ')
+
+    // Wait for sync
+    await vi.waitFor(() => {
+      const terseB = getTersePt(editorB.getSnapshot().context)
+      expect(terseB[0]).toContain('ZZ')
+    })
+
+    // Decoration A (block 1) SHOULD have fired — text before it shifted
+    expect(onMovedSpyA).toHaveBeenCalled()
+
+    // CRITICAL: Decoration B (block 2) should NOT have fired —
+    // nothing in block 2 changed, so the pre-batch snapshot diff
+    // should identify it as unchanged.
+    expect(onMovedSpyB).not.toHaveBeenCalled()
   })
 })
