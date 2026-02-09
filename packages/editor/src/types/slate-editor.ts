@@ -8,7 +8,7 @@ import type {
 import type {Range, Operation as SlateOperation} from 'slate'
 import type {ReactEditor} from 'slate-react'
 import type {DecoratedRange} from '../editor/range-decorations-machine'
-import type {EditorSelection} from './editor'
+import type {EditorSelection, RangeDecoration} from './editor'
 // Side-effect import to ensure Slate module augmentation is included
 import './slate'
 
@@ -82,6 +82,13 @@ export interface PortableTextSlateEditor extends ReactEditor {
   isListBlock: (value: unknown) => value is PortableTextListBlock
 
   decoratedRanges: Array<DecoratedRange>
+  /**
+   * Snapshot of decoration ranges taken before a remote batch starts.
+   * Used by the reconciliation handler to diff pre-batch vs post-batch
+   * and fire a single onMoved callback per changed decoration.
+   * Managed by the apply interceptor in range-decorations-machine.
+   */
+  preBatchDecorationRanges: Map<RangeDecoration, Range | null>
   decoratorState: Record<string, boolean | undefined>
   blockIndexMap: Map<string, number>
   history: History

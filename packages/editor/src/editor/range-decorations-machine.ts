@@ -28,10 +28,17 @@ import type {EditorSchema} from './editor-schema'
 
 const slateOperationCallback: CallbackLogicFunction<
   AnyEventObject,
-  {type: 'slate operation'; operation: Operation},
+  | {type: 'slate operation'; operation: Operation; suppressCallback: boolean}
+  | {type: 'reconcile decorations'},
   {slateEditor: PortableTextSlateEditor}
 > = ({input, sendBack}) => {
   const originalApply = input.slateEditor.apply
+
+  // Tracks whether we're in a remote batch. Set on first remote op, cleared
+  // when the microtask fires. Stays true through normalization ops that follow
+  // the remote batch (they're consequences of remote changes, not local edits).
+  let pendingReconciliation = false
+  let microtaskScheduled = false
 
   input.slateEditor.apply = (op) => {
     // Apply the operation first, THEN notify the decoration machine.
@@ -42,13 +49,53 @@ const slateOperationCallback: CallbackLogicFunction<
     // 4. This causes slateRangeToSelection to return null (decoration invalidated)
     originalApply(op)
 
-    // Process all non-selection operations for decoration tracking.
-    // Note: We previously skipped remote patches to avoid re-processing decorations
-    // that were already transformed locally. However, this broke multi-editor scenarios
-    // where Editor B needs to update its decorations when patches arrive from Editor A.
-    // The timing fix (apply before sendBack) handles the local split case correctly.
-    if (op.type !== 'set_selection') {
-      sendBack({type: 'slate operation', operation: op})
+    if (op.type === 'set_selection') {
+      return
+    }
+
+    const isRemoteBatch =
+      input.slateEditor.isProcessingRemoteChanges || pendingReconciliation
+
+    // On first remote op, snapshot current decoration ranges and schedule
+    // a microtask to fire batched onMoved callbacks after the batch completes.
+    //
+    // Timing guarantee: withRemoteChanges() is synchronous, and normalize()
+    // + onChange() run synchronously after it. The JS event loop processes
+    // microtasks before the next task (user input events), so no real local
+    // operations can sneak in between the remote batch and reconciliation.
+    if (isRemoteBatch && !pendingReconciliation) {
+      pendingReconciliation = true
+      // Snapshot pre-batch ranges for diffing at reconciliation time
+      const snapshot = new Map<RangeDecoration, Range | null>()
+      for (const dr of input.slateEditor.decoratedRanges) {
+        snapshot.set(
+          dr.rangeDecoration,
+          Range.isRange(dr)
+            ? {anchor: {...dr.anchor}, focus: {...dr.focus}}
+            : null,
+        )
+      }
+      input.slateEditor.preBatchDecorationRanges = snapshot
+    }
+
+    // Always send the operation — Point.transform handles offset shifts
+    // correctly for same-span operations. During remote batches, the
+    // suppressCallback flag tells the handler to skip onMoved calls.
+    sendBack({
+      type: 'slate operation',
+      operation: op,
+      suppressCallback: isRemoteBatch,
+    })
+
+    // Schedule microtask once per batch. Fires after all synchronous code
+    // (remote ops + normalization + onChange) completes.
+    if (isRemoteBatch && !microtaskScheduled) {
+      microtaskScheduled = true
+      Promise.resolve().then(() => {
+        pendingReconciliation = false
+        microtaskScheduled = false
+        sendBack({type: 'reconcile decorations'})
+      })
     }
   }
 
@@ -87,6 +134,10 @@ export const rangeDecorationsMachine = setup({
       | {
           type: 'slate operation'
           operation: Operation
+          suppressCallback?: boolean
+        }
+      | {
+          type: 'reconcile decorations'
         }
       | {
           type: 'update read only'
@@ -175,6 +226,7 @@ export const rangeDecorationsMachine = setup({
 
       const rangeDecorationState: Array<DecoratedRange> = []
       const {splitContext, mergeContext} = context.slateEditor
+      const suppressCallback = event.suppressCallback === true
 
       // Get the original block index if we're in a split context
       const originalBlockIndex = splitContext
@@ -210,11 +262,13 @@ export const rangeDecorationsMachine = setup({
           : null
 
         if (!Range.isRange(slateRange)) {
-          decoratedRange.rangeDecoration.onMoved?.({
-            newSelection: null,
-            rangeDecoration: decoratedRange.rangeDecoration,
-            origin: 'local',
-          })
+          if (!suppressCallback) {
+            decoratedRange.rangeDecoration.onMoved?.({
+              newSelection: null,
+              rangeDecoration: decoratedRange.rangeDecoration,
+              origin: 'local',
+            })
+          }
           continue
         }
 
@@ -240,9 +294,12 @@ export const rangeDecorationsMachine = setup({
           )
         }
 
+        // Fire onMoved for local ops only. Remote ops batch callbacks
+        // into a single 'reconcile decorations' event after the batch.
         if (
-          (newRange && newRange !== slateRange) ||
-          (newRange === null && slateRange)
+          !suppressCallback &&
+          ((newRange && newRange !== slateRange) ||
+            (newRange === null && slateRange))
         ) {
           const newRangeSelection = newRange
             ? slateRangeToSelection({
@@ -261,6 +318,11 @@ export const rangeDecorationsMachine = setup({
 
         // If the newRange is null, it means that the range is not valid anymore and should be removed
         // If it's undefined, it means that the slateRange is still valid and should be kept
+        //
+        // During remote batches (suppressCallback), DON'T drop decorations on null.
+        // Point.transform can return null for intermediate ops even though the final
+        // state is valid. Keep the decoration with its last known range — the
+        // reconciliation handler will re-resolve it after the batch completes.
         if (newRange !== null) {
           const rangeToUse = newRange || slateRange
           rangeDecorationState.push({
@@ -274,7 +336,87 @@ export const rangeDecorationsMachine = setup({
               }),
             },
           })
+        } else if (suppressCallback) {
+          // During remote batch: keep the decoration alive with its last known range.
+          // Reconciliation will re-resolve from EditorSelection keys after the batch.
+          rangeDecorationState.push(decoratedRange)
         }
+      }
+
+      context.slateEditor.decoratedRanges = rangeDecorationState
+    },
+    'reconcile range decorations': ({context}) => {
+      // After a remote batch (+ normalization), re-resolve all decorations
+      // from their EditorSelection keys and fire a single onMoved callback
+      // per decoration that changed.
+      //
+      // We re-resolve from keys (not cached ranges) because:
+      // 1. Point.transform may have returned null for intermediate ops,
+      //    leaving some decorations with stale cached ranges
+      // 2. Key-based resolution against the final document state gives
+      //    the correct clamped position (Option A: truncate + notify)
+      const preRanges = context.slateEditor.preBatchDecorationRanges
+      context.slateEditor.preBatchDecorationRanges = new Map()
+
+      const rangeDecorationState: Array<DecoratedRange> = []
+
+      for (const decoratedRange of context.slateEditor.decoratedRanges) {
+        const {rangeDecoration} = decoratedRange
+
+        // Re-resolve from EditorSelection keys against current document
+        const freshSlateRange = toSlateRange({
+          context: {
+            schema: context.schema,
+            value: context.slateEditor.value,
+            selection: rangeDecoration.selection,
+          },
+          blockIndexMap: context.slateEditor.blockIndexMap,
+        })
+
+        const previousRange = preRanges.get(rangeDecoration) ?? null
+
+        if (!Range.isRange(freshSlateRange)) {
+          // Decoration can no longer be resolved in the document
+          if (previousRange !== null) {
+            rangeDecoration.onMoved?.({
+              newSelection: null,
+              rangeDecoration,
+              origin: 'remote',
+            })
+          }
+          continue
+        }
+
+        // Detect if the range changed during the batch
+        const changed =
+          !previousRange || !Range.equals(previousRange, freshSlateRange)
+
+        if (changed) {
+          const newSelection = slateRangeToSelection({
+            schema: context.schema,
+            editor: context.slateEditor,
+            range: freshSlateRange,
+          })
+
+          rangeDecoration.onMoved?.({
+            newSelection,
+            rangeDecoration,
+            origin: 'remote',
+          })
+        }
+
+        // Update cached range to the fresh resolved value
+        rangeDecorationState.push({
+          ...freshSlateRange,
+          rangeDecoration: {
+            ...rangeDecoration,
+            selection: slateRangeToSelection({
+              schema: context.schema,
+              editor: context.slateEditor,
+              range: freshSlateRange,
+            }),
+          },
+        })
       }
 
       context.slateEditor.decoratedRanges = rangeDecorationState
@@ -403,10 +545,20 @@ export const rangeDecorationsMachine = setup({
               target: 'moving range decorations',
               guard: and(['has range decorations', 'not read only']),
             },
+            'reconcile decorations': {
+              target: 'reconciling range decorations',
+              guard: 'has range decorations',
+            },
           },
         },
         'moving range decorations': {
           entry: ['move range decorations'],
+          always: {
+            target: 'idle',
+          },
+        },
+        'reconciling range decorations': {
+          entry: ['reconcile range decorations', 'update decorate'],
           always: {
             target: 'idle',
           },
