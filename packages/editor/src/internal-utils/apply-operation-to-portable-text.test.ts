@@ -172,4 +172,95 @@ describe(applyOperationToPortableText.name, () => {
       },
     ])
   })
+
+  test('updating block object with a field named "text"', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const k0 = keyGenerator()
+
+    expect(
+      applyOperationToPortableText(
+        createContext(),
+        [
+          {
+            _type: 'quote',
+            _key: k0,
+            text: 'h',
+          },
+        ],
+        {
+          type: 'set_node',
+          path: [0],
+          properties: {
+            value: {text: 'h'},
+          },
+          newProperties: {
+            value: {text: 'hello'},
+          },
+        },
+      ),
+    ).toEqual([
+      {
+        _type: 'quote',
+        _key: k0,
+        text: 'hello',
+      },
+    ])
+  })
+
+  test('updating inline object with a field named "text"', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const k0 = keyGenerator()
+    const k1 = keyGenerator()
+    const k2 = keyGenerator()
+    const k3 = keyGenerator()
+
+    expect(
+      applyOperationToPortableText(
+        createContext(),
+        [
+          {
+            _key: k0,
+            _type: 'block',
+            children: [
+              {
+                _key: k1,
+                _type: 'span',
+                text: '',
+              },
+              {
+                _key: k2,
+                _type: 'mention',
+                text: 'J',
+              },
+              {
+                _key: k3,
+                _type: 'span',
+                text: '',
+              },
+            ],
+          },
+        ],
+        {
+          type: 'set_node',
+          path: [0, 1],
+          properties: {
+            value: {text: 'J'},
+          },
+          newProperties: {
+            value: {text: 'John Doe'},
+          },
+        },
+      ),
+    ).toEqual([
+      {
+        _type: 'block',
+        _key: k0,
+        children: [
+          {_type: 'span', _key: k1, text: ''},
+          {_type: 'mention', _key: k2, text: 'John Doe'},
+          {_type: 'span', _key: k3, text: ''},
+        ],
+      },
+    ])
+  })
 })

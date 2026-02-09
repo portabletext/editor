@@ -395,4 +395,81 @@ describe('event.child.set', () => {
       ])
     })
   })
+
+  test('Scenario: Setting "text" field on inline object', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const mentionKey = keyGenerator()
+    const initialValue = [
+      {
+        _type: 'block',
+        _key: blockKey,
+        children: [
+          {
+            _type: 'span',
+            _key: keyGenerator(),
+            text: '',
+            marks: [],
+          },
+          {
+            _type: 'mention',
+            _key: mentionKey,
+            text: 'J',
+          },
+          {
+            _type: 'span',
+            _key: keyGenerator(),
+            text: '',
+            marks: [],
+          },
+        ],
+        style: 'normal',
+        markDefs: [],
+      },
+    ]
+
+    const {editor} = await createTestEditor({
+      initialValue,
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        inlineObjects: [
+          {
+            name: 'mention',
+            fields: [{name: 'text', type: 'string'}],
+          },
+        ],
+      }),
+    })
+
+    await vi.waitFor(() => {
+      return expect(getTersePt(editor.getSnapshot().context)).toEqual([
+        ',{mention},',
+      ])
+    })
+
+    editor.send({
+      type: 'child.set',
+      at: [{_key: blockKey}, 'children', {_key: mentionKey}],
+      props: {
+        text: 'John Doe',
+      },
+    })
+
+    await vi.waitFor(() => {
+      return expect(editor.getSnapshot().context.value).toEqual([
+        {
+          ...initialValue[0],
+          children: [
+            initialValue[0]!.children[0],
+            {
+              _type: 'mention',
+              _key: mentionKey,
+              text: 'John Doe',
+            },
+            initialValue[0]!.children[2],
+          ],
+        },
+      ])
+    })
+  })
 })
