@@ -93,6 +93,7 @@ export const abstractDeleteBehaviors = [
           snapshot.context,
           previousBlock.node,
         ),
+        targetOriginalChildCount: previousBlock.node.children.length,
       }
 
       return {previousBlockEndPoint, focusTextBlock, mergeContextData}
@@ -263,6 +264,7 @@ export const abstractDeleteBehaviors = [
           snapshot.context,
           focusTextBlock.node,
         ),
+        targetOriginalChildCount: focusTextBlock.node.children.length,
       }
 
       return {nextBlock, mergeContextData}

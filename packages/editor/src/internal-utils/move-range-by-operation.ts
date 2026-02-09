@@ -249,6 +249,7 @@ export function moveRangeByMergeAwareOperation(
               deletedBlockIndex,
               targetBlockIndex,
               insertedChildIndex,
+              mergeContext.targetOriginalChildCount,
             )
           : range.anchor
         const newFocus = focusOnDeleted
@@ -257,6 +258,7 @@ export function moveRangeByMergeAwareOperation(
               deletedBlockIndex,
               targetBlockIndex,
               insertedChildIndex,
+              mergeContext.targetOriginalChildCount,
             )
           : range.focus
 
@@ -280,53 +282,48 @@ export function moveRangeByMergeAwareOperation(
 /**
  * Adjust a point after a merge operation.
  *
- * When a block is merged into another:
- * - Points on the deleted block need to move to the target block
- * - The child index in the target block is: original child index + number of children
- *   that were already in target block
- * - The offset within the child stays the same
+ * When a block is merged into another, children from the deleted block are
+ * inserted sequentially into the target block. Child 0 from the deleted block
+ * goes to index targetOriginalChildCount + 0, child 1 to
+ * targetOriginalChildCount + 1, etc.
+ *
+ * Since insert_node events fire for each child individually, we check whether
+ * the current insert_node corresponds to the child this point is on. If so,
+ * we update the point's path. If not, we return unchanged — the correct
+ * insert_node will come in a subsequent operation.
  *
  * @param point - The point to adjust
  * @param deletedBlockIndex - Index of the deleted block
  * @param targetBlockIndex - Index of the target block
  * @param insertedChildIndex - The index where the child was inserted in target
+ * @param targetOriginalChildCount - Number of children in target before merge
  */
 function adjustPointAfterMerge(
   point: Point,
   deletedBlockIndex: number,
   targetBlockIndex: number,
   insertedChildIndex: number,
+  targetOriginalChildCount: number,
 ): Point {
   // Only adjust points on the deleted block
   if (point.path[0] !== deletedBlockIndex) {
     return point
   }
 
-  // The child at path[1] from the deleted block is now at insertedChildIndex
-  // in the target block. If the point was on the first child (index 0) of deleted
-  // block and that child is now at insertedChildIndex in target, the new path is
-  // [targetBlockIndex, insertedChildIndex]
   const originalChildIndex = point.path[1] ?? 0
 
-  // The inserted child index tells us where THIS particular child ended up.
-  // However, since children are inserted one at a time, we need to compute
-  // the final position based on the original child index.
-  // If target had N children and we're inserting deleted block's children,
-  // child 0 goes to position N, child 1 goes to position N+1, etc.
-  // For now, we can use the insertedChildIndex directly since it's the actual position.
+  // Child N from the deleted block is inserted at targetOriginalChildCount + N
+  // in the target block. Check if this insert_node is for our child.
+  const expectedInsertIndex = targetOriginalChildCount + originalChildIndex
 
-  // Actually, since insert_node events come for each child, we need to track
-  // which child is being inserted. For simplicity, if the point's child index
-  // matches what's being inserted, we update it.
-  if (originalChildIndex === 0) {
-    // This is the first child of the deleted block, which is being inserted
+  if (insertedChildIndex === expectedInsertIndex) {
     return {
       path: [targetBlockIndex, insertedChildIndex],
       offset: point.offset,
     }
   }
 
-  // For other children, they'll be inserted in subsequent operations
-  // Return unchanged for now - it will be updated when its insert_node fires
+  // Not this child's insert_node yet — return unchanged, will be updated
+  // when the correct insert_node fires
   return point
 }

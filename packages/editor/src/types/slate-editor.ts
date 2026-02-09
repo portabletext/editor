@@ -66,6 +66,11 @@ export interface MergeContext {
   deletedBlockIndex: number
   /** The index of the target block at the time context was created */
   targetBlockIndex: number
+  /** The number of children in the target block before merge.
+   *  Used to compute correct insertion indices for multi-child blocks
+   *  (e.g., blocks with bold/italic spans). Child N from the deleted block
+   *  ends up at index targetOriginalChildCount + N in the target block. */
+  targetOriginalChildCount: number
 }
 
 export interface PortableTextSlateEditor extends ReactEditor {

@@ -699,6 +699,103 @@ describe('RangeDecorations: Block Merge Operations', () => {
         .toHaveTextContent('Hello'),
     )
   })
+
+  test('Scenario 2.3: Backspace merge with multi-span block and decoration on second child', async () => {
+    // Regression test: blocks with bold/italic text have multiple children (spans).
+    // The decoration is on the second child ("world") of the deleted block.
+    // adjustPointAfterMerge must correctly map child index 1 to
+    // targetOriginalChildCount + 1 in the target block.
+    const onMovedSpy = vi.fn()
+    let rangeDecorations: Array<RangeDecoration> = [
+      {
+        component: RangeDecorationComponent,
+        payload: {id: 'dec1'},
+        selection: {
+          anchor: {
+            path: [{_key: 'b2'}, 'children', {_key: 's2b'}],
+            offset: 0, // start of "world" (second span, child index 1)
+          },
+          focus: {
+            path: [{_key: 'b2'}, 'children', {_key: 's2b'}],
+            offset: 5, // end of "world"
+          },
+        },
+        onMoved: (details) => {
+          onMovedSpy(details)
+          rangeDecorations = updateRangeDecorations({rangeDecorations, details})
+        },
+      },
+    ]
+
+    const {editor, locator, rerender} = await createTestEditor({
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', _key: 's1', text: 'Hello'}],
+          markDefs: [],
+        },
+        {
+          _type: 'block',
+          _key: 'b2',
+          children: [
+            {_type: 'span', _key: 's2a', text: 'brave '},
+            {_type: 'span', _key: 's2b', text: 'world', marks: ['em']},
+          ],
+          markDefs: [],
+        },
+      ],
+      editableProps: {rangeDecorations},
+      schemaDefinition: {
+        decorators: [{name: 'em'}, {name: 'strong'}],
+      },
+    })
+
+    // Verify initial decoration on "world"
+    await vi.waitFor(() =>
+      expect
+        .element(locator.getByTestId('range-decoration'))
+        .toHaveTextContent('world'),
+    )
+
+    // Position cursor at start of second block and backspace to merge
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: 'b2'}, 'children', {_key: 's2a'}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: 'b2'}, 'children', {_key: 's2a'}],
+          offset: 0,
+        },
+      },
+    })
+    editor.send({type: 'delete', direction: 'backward'})
+
+    // Wait for merge
+    await vi.waitFor(() => {
+      const terse = getTersePt(editor.getSnapshot().context)
+      expect(terse.length).toBe(1)
+    })
+
+    // onMoved should be called with new position
+    expect(onMovedSpy).toHaveBeenCalled()
+
+    // Re-render
+    await rerender({
+      initialValue: editor.getSnapshot().context.value,
+      editableProps: {rangeDecorations},
+    })
+
+    // Decoration should still highlight "world" after merge
+    await vi.waitFor(() =>
+      expect
+        .element(locator.getByTestId('range-decoration'))
+        .toHaveTextContent('world'),
+    )
+  })
 })
 
 describe('RangeDecorations: Paste Operations', () => {
