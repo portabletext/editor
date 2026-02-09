@@ -39,6 +39,8 @@ export function createSlateEditor(config: SlateEditorConfig): SlateEditor {
   editor.undoStepId = undefined
   editor.value = [placeholderBlock]
 
+  editor.splitContext = null
+
   editor.isDeferringMutations = false
   editor.isNormalizingNode = false
   editor.isPatching = true

@@ -1,6 +1,7 @@
 import type {EditorDom} from '../editor/editor-dom'
 import type {EditorSnapshot} from '../editor/editor-snapshot'
 import type {PickFromUnion} from '../type-utils'
+import type {PortableTextSlateEditor} from '../types/slate-editor'
 import type {
   CustomBehaviorEvent,
   ExternalBehaviorEvent,
@@ -50,6 +51,15 @@ export type BehaviorAction =
          * ```
          */
         send: (event: ExternalBehaviorEvent) => void
+        /**
+         * The underlying Slate editor instance.
+         *
+         * Use this sparingly and only for setting transient state like
+         * `splitContext` that coordinates between behaviors and other systems.
+         *
+         * @internal
+         */
+        slateEditor: PortableTextSlateEditor
       }) => void
     }
 

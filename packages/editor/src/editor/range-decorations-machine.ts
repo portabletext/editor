@@ -15,7 +15,7 @@ import {
   type CallbackLogicFunction,
 } from 'xstate'
 import {isDeepEqual} from '../internal-utils/equality'
-import {moveRangeByOperation} from '../internal-utils/move-range-by-operation'
+import {moveRangeBySplitAwareOperation} from '../internal-utils/move-range-by-operation'
 import {slateRangeToSelection} from '../internal-utils/slate-utils'
 import {toSlateRange} from '../internal-utils/to-slate-range'
 import type {RangeDecoration} from '../types/editor'
@@ -160,6 +160,22 @@ export const rangeDecorationsMachine = setup({
       }
 
       const rangeDecorationState: Array<DecoratedRange> = []
+      const {splitContext} = context.slateEditor
+
+      // Get the original block index if we're in a split context
+      const originalBlockIndex = splitContext
+        ? context.slateEditor.blockIndexMap.get(splitContext.originalBlockKey)
+        : undefined
+
+      // Function to compute the new block index
+      // During a split, the new block is inserted right after the original
+      const getNewBlockIndex = () => {
+        if (!splitContext) return undefined
+        // After the split, the new block is at originalBlockIndex + 1
+        return originalBlockIndex !== undefined
+          ? originalBlockIndex + 1
+          : undefined
+      }
 
       for (const decoratedRange of context.slateEditor.decoratedRanges) {
         const slateRange = toSlateRange({
@@ -182,7 +198,15 @@ export const rangeDecorationsMachine = setup({
 
         let newRange: BaseRange | null | undefined
 
-        newRange = moveRangeByOperation(slateRange, event.operation)
+        // Use split-aware transformation when split context is available
+        newRange = moveRangeBySplitAwareOperation(
+          slateRange,
+          event.operation,
+          splitContext,
+          originalBlockIndex,
+          getNewBlockIndex,
+        )
+
         if (
           (newRange && newRange !== slateRange) ||
           (newRange === null && slateRange)

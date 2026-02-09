@@ -29,6 +29,23 @@ export type RemotePatch = {
   previousSnapshot: PortableTextBlock[] | undefined
 }
 
+/**
+ * Context passed during a split operation to help RangeDecorator
+ * recompute decoration positions correctly.
+ */
+export interface SplitContext {
+  /** The offset in the original block where the split occurs */
+  splitOffset: number
+  /** The _key of the block being split */
+  originalBlockKey: string
+  /** The _key of the new block created after the split */
+  newBlockKey: string
+  /** The _key of the original span (child) being split */
+  originalSpanKey: string
+  /** The _key of the new span in the new block (may be same or different) */
+  newSpanKey: string
+}
+
 export interface PortableTextSlateEditor extends ReactEditor {
   _key: 'editor'
   _type: 'editor'
@@ -47,6 +64,13 @@ export interface PortableTextSlateEditor extends ReactEditor {
   remotePatches: Array<RemotePatch>
   undoStepId: string | undefined
   value: Array<PortableTextBlock>
+
+  /**
+   * Context for the current split operation.
+   * Set before delete+insert operations, cleared after.
+   * Used by RangeDecorator to correctly recompute decoration positions.
+   */
+  splitContext: SplitContext | null
 
   isDeferringMutations: boolean
   isNormalizingNode: boolean

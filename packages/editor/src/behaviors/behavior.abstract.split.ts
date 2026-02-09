@@ -1,7 +1,8 @@
-import {isTextBlock} from '@portabletext/schema'
+import {isSpan, isTextBlock} from '@portabletext/schema'
 import {isSelectionExpanded} from '../selectors'
 import {getFocusBlockObject} from '../selectors/selector.get-focus-block-object'
 import {getFocusInlineObject} from '../selectors/selector.get-focus-inline-object'
+import {getFocusSpan} from '../selectors/selector.get-focus-span'
 import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
 import {getSelectionEndBlock} from '../selectors/selector.get-selection-end-block'
 import {getSelectionStartBlock} from '../selectors/selector.get-selection-start-block'
@@ -13,7 +14,7 @@ import {getSelectionEndPoint} from '../utils/util.get-selection-end-point'
 import {getSelectionStartPoint} from '../utils/util.get-selection-start-point'
 import {isSelectionCollapsed} from '../utils/util.is-selection-collapsed'
 import {sliceTextBlock} from '../utils/util.slice-text-block'
-import {raise} from './behavior.types.action'
+import {effect, raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
 export const abstractSplitBehaviors = [
@@ -140,29 +141,73 @@ export const abstractSplitBehaviors = [
         return false
       }
 
+      // Gather information for splitContext to help RangeDecorator
+      // track decorations across the split operation
+      const originalBlockKey = focusTextBlock.node._key
+      const newBlockKey = newTextBlock._key
+
+      // Find the span being split using the selector
+      const focusSpan = getFocusSpan(snapshot)
+      const originalSpanKey = focusSpan?.node._key
+      const splitOffset = selectionStartPoint?.offset ?? 0
+
+      // Find the first span in the new block (this is the continuation of the split span)
+      const firstNewSpan = isTextBlock(snapshot.context, newTextBlock)
+        ? newTextBlock.children.find((child) => isSpan(snapshot.context, child))
+        : undefined
+      const newSpanKey = firstNewSpan?._key
+
       return {
         newTextBlock,
         newTextBlockSelection,
+        splitContext:
+          originalBlockKey && newBlockKey && originalSpanKey && newSpanKey
+            ? {
+                splitOffset,
+                originalBlockKey,
+                newBlockKey,
+                originalSpanKey,
+                newSpanKey,
+              }
+            : null,
       }
     },
     actions: [
-      (_, {newTextBlock, newTextBlockSelection}) =>
+      (_, {newTextBlock, newTextBlockSelection, splitContext}) =>
         isSelectionCollapsed(newTextBlockSelection)
           ? [
+              // When splitting at the end, no delete is needed.
+              // Set context (overwrites any stale context from failed previous splits),
+              // insert block, then clear context.
+              effect(({slateEditor}) => {
+                slateEditor.splitContext = splitContext
+              }),
               raise({
                 type: 'insert.block',
                 block: newTextBlock,
                 placement: 'after',
                 select: 'start',
               }),
+              effect(({slateEditor}) => {
+                slateEditor.splitContext = null
+              }),
             ]
           : [
+              // When splitting in the middle, we delete then insert.
+              // Set context before the delete+insert sequence
+              // (overwrites any stale context from failed previous splits).
+              effect(({slateEditor}) => {
+                slateEditor.splitContext = splitContext
+              }),
               raise({type: 'delete', at: newTextBlockSelection}),
               raise({
                 type: 'insert.block',
                 block: newTextBlock,
                 placement: 'after',
                 select: 'start',
+              }),
+              effect(({slateEditor}) => {
+                slateEditor.splitContext = null
               }),
             ],
     ],
