@@ -107,7 +107,7 @@ function applyOperationToPortableTextDraft(
           break
         }
 
-        if (isPartialSpanNode(insertedNode)) {
+        if (isPartialSpanNode(context, insertedNode)) {
           // Text nodes can be inserted as is
 
           parent.children.splice(index, 0, insertedNode)
@@ -161,7 +161,10 @@ function applyOperationToPortableTextDraft(
 
       const index = path[path.length - 1]
 
-      if (isPartialSpanNode(node) && isPartialSpanNode(prev)) {
+      if (
+        isPartialSpanNode(context, node) &&
+        isPartialSpanNode(context, prev)
+      ) {
         prev.text += node.text
       } else if (
         isTextBlockNode(context, node) &&
@@ -342,7 +345,7 @@ function applyOperationToPortableTextDraft(
         break
       }
 
-      if (isPartialSpanNode(node)) {
+      if (isPartialSpanNode(context, node)) {
         for (const key in newProperties) {
           if (key === 'text') {
             break
