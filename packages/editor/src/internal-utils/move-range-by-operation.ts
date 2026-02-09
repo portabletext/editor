@@ -29,12 +29,16 @@ export function moveRangeByOperation(
  * Without split context, Point.transform clamps decorations at the deletion
  * boundary, losing their position relative to the moved text.
  *
- * With split context, we detect when a range's endpoint was in the deleted
- * region and proactively compute where it will end up in the new block.
+ * With split context, we:
+ * - During remove_text: Return the range UNCHANGED. This preserves the original
+ *   offsets so we can correctly compute positions in the new block.
+ * - During insert_node: Use original offsets to determine which points should
+ *   move to the new block and at what offset.
  *
  * @param range - The range to transform
  * @param operation - The Slate operation being applied
  * @param splitContext - Context about the split operation (if any)
+ * @param originalBlockIndex - Index of the block being split
  * @param getNewBlockIndex - Function to get the index where the new block will be inserted
  * @returns The transformed range, or null if the range should be removed
  */
@@ -50,30 +54,35 @@ export function moveRangeBySplitAwareOperation(
     return moveRangeByOperation(range, operation)
   }
 
-  // During remove_text in a split, intercept and handle specially
+  // During remove_text in a split, DON'T transform - keep original offsets.
+  // We need the original offsets to correctly compute positions in the new block.
   if (operation.type === 'remove_text') {
-    // Check if the operation is on the block being split
     if (operation.path[0] === originalBlockIndex) {
-      // Transform both anchor and focus considering the split
-      const newAnchor = transformPointForSplit(
-        range.anchor,
-        operation,
-        splitContext,
-        originalBlockIndex,
-        getNewBlockIndex,
-      )
-      const newFocus = transformPointForSplit(
-        range.focus,
-        operation,
-        splitContext,
-        originalBlockIndex,
-        getNewBlockIndex,
-      )
+      // Return the range unchanged - preserve original offsets for insert_node
+      return range
+    }
+  }
 
-      // If either point is null, the range is invalid
-      if (newAnchor === null || newFocus === null) {
-        return null
-      }
+  // During insert_node for the new block, compute the correct positions
+  // using the original (un-clamped) offsets.
+  if (operation.type === 'insert_node') {
+    const newBlockIndex = getNewBlockIndex()
+
+    // Check if this is the insert for the new split block
+    if (newBlockIndex !== undefined && operation.path[0] === newBlockIndex) {
+      // Transform points using original offsets
+      const newAnchor = adjustPointAfterSplit(
+        range.anchor,
+        splitContext,
+        originalBlockIndex,
+        newBlockIndex,
+      )
+      const newFocus = adjustPointAfterSplit(
+        range.focus,
+        splitContext,
+        originalBlockIndex,
+        newBlockIndex,
+      )
 
       // If nothing changed, return original range
       if (
@@ -87,64 +96,56 @@ export function moveRangeBySplitAwareOperation(
     }
   }
 
-  // During insert_node for the new block, adjust paths of ranges that
-  // were already moved to the new block position
-  if (operation.type === 'insert_node') {
-    const newBlockIndex = getNewBlockIndex()
-    if (newBlockIndex !== undefined && operation.path[0] === newBlockIndex) {
-      // Ranges that were pre-transformed to the new block position
-      // don't need further adjustment - they're already pointing
-      // to where the content will be
-      return range
-    }
-  }
-
   // Default: use normal transformation
   return moveRangeByOperation(range, operation)
 }
 
 /**
- * Transform a point during a split's remove_text operation.
+ * Adjust a point after a split operation, using original (un-clamped) offsets.
  *
- * If the point is at or after the split offset in the original block,
- * it will move to the new block at an adjusted offset.
- *
- * Otherwise, use normal Point.transform behavior.
+ * Since we skip transformation during remove_text, we have the original offsets
+ * and can correctly determine:
+ * - Points before splitOffset: stay in original block (at same offset)
+ * - Points at splitOffset: stay in original block at splitOffset
+ * - Points after splitOffset: move to new block at (offset - splitOffset)
  */
-function transformPointForSplit(
+function adjustPointAfterSplit(
   point: Point,
-  operation: Extract<Operation, {type: 'remove_text'}>,
   splitContext: SplitContext,
   originalBlockIndex: number,
-  getNewBlockIndex: () => number | undefined,
-): Point | null {
-  // Only handle points on the original block
+  newBlockIndex: number,
+): Point {
+  // Only adjust points on the original block
   if (point.path[0] !== originalBlockIndex) {
-    // Use normal transformation for other blocks
-    return Point.transform(point, operation)
+    // Point is on a different block - just apply the insert_node path shift
+    return (
+      Point.transform(point, {
+        type: 'insert_node',
+        path: [newBlockIndex],
+        node: {children: []},
+      }) ?? point
+    )
   }
 
-  // Check if point is in the region being split (strictly after split offset)
-  // The split offset is where the text deletion starts.
-  // Points at exactly the split offset stay in the original block —
-  // they mark a position in the existing text, not the new content.
-  if (point.offset > splitContext.splitOffset) {
-    const newBlockIndex = getNewBlockIndex()
+  const {splitOffset} = splitContext
 
-    if (newBlockIndex === undefined) {
-      // Can't determine new block position - fall back to normal transform
-      return Point.transform(point, operation)
-    }
-
-    // Move point to the new block
-    // The new offset is relative to the start of the new block
-    return {
-      path: [newBlockIndex, point.path[1] ?? 0],
-      offset: point.offset - splitContext.splitOffset,
-    }
+  // Point is before or at the split offset - stays in original block
+  if (point.offset <= splitOffset) {
+    // Apply path shift from insert_node (blocks after original get shifted)
+    return (
+      Point.transform(point, {
+        type: 'insert_node',
+        path: [newBlockIndex],
+        node: {children: []},
+      }) ?? point
+    )
   }
 
-  // Point is before the split - use normal transformation
-  // (which should leave it unchanged since it's before the deletion)
-  return Point.transform(point, operation)
+  // Point is after split offset - moves to new block
+  // The new offset is (original offset - split offset)
+  // Example: split at 11, point at 25 -> new offset is 14
+  return {
+    path: [newBlockIndex, point.path[1] ?? 0],
+    offset: point.offset - splitOffset,
+  }
 }
