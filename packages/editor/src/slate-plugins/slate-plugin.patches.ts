@@ -1,4 +1,4 @@
-import {insert, setIfMissing, unset, type Patch} from '@portabletext/patches'
+import {set, setIfMissing, unset, type Patch} from '@portabletext/patches'
 import type {PortableTextBlock} from '@portabletext/schema'
 import {Editor, type Operation} from 'slate'
 import type {EditorActor} from '../editor/editor-machine'
@@ -128,13 +128,16 @@ export function createPatchesPlugin({
         return editor
       }
 
-      // If the editor was empty and now isn't, insert the placeholder into it.
       if (
         editorWasEmpty &&
         !editorIsEmpty &&
         operation.type !== 'set_selection'
       ) {
-        patches.push(insert(previousValue, 'before', [0]))
+        // If the editor was empty and now isn't, set the value atomically.
+        // Using `set` instead of `insert` handles the case where the field is
+        // null (not just undefined or []), since `setIfMissing` treats null as
+        // "present".
+        patches.push(set(previousValue, []))
       }
 
       switch (operation.type) {

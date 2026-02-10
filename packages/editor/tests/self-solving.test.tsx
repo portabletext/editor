@@ -213,10 +213,9 @@ describe('Feature: Self-solving', () => {
         },
         {
           origin: 'local',
-          type: 'insert',
-          path: [0],
-          position: 'before',
-          items: [
+          type: 'set',
+          path: [],
+          value: [
             {
               ...initialValue[0],
               style: 'normal',
@@ -323,10 +322,9 @@ describe('Feature: Self-solving', () => {
         },
         {
           origin: 'local',
-          type: 'insert',
-          path: [0],
-          position: 'before',
-          items: [
+          type: 'set',
+          path: [],
+          value: [
             {
               _key: 'k0',
               _type: 'block',
