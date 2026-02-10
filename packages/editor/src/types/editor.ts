@@ -502,6 +502,11 @@ export interface RangeDecoration {
    */
   onMoved?: (details: RangeDecorationOnMovedDetails) => EditorSelection | void
   /**
+   * Stable identifier for matching to external data (e.g., annotation/comment ID).
+   * Set by the consumer — PTE preserves it and passes it through in onMoved details.
+   */
+  id?: string
+  /**
    * A custom payload that can be set on the range decoration
    */
   payload?: Record<string, unknown>

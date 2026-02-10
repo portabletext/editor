@@ -12,6 +12,8 @@ import {TooltipTrigger} from 'react-aria-components'
 import {Button} from './primitives/button'
 import {Tooltip} from './primitives/tooltip'
 
+let nextDecorationId = 1
+
 /**
  * Extract the plain text covered by a selection from the editor value.
  */
@@ -140,6 +142,7 @@ export function RangeDecorationButton(props: {
     const originalText = getSelectedText(value, selection)
 
     props.onAddRangeDecoration({
+      id: `decoration-${nextDecorationId++}`,
       component: RangeComponent,
       selection,
       payload: {originalText},
