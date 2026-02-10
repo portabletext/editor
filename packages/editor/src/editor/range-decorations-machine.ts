@@ -332,13 +332,17 @@ export const rangeDecorationsMachine = setup({
         // reconciliation handler will re-resolve it after the batch completes.
         if (newRange !== null) {
           const rangeToUse = newRange || slateRange
-          // Update selection in place to preserve object identity for
-          // the pre-batch snapshot Map lookup during reconciliation.
-          decoratedRange.rangeDecoration.selection = slateRangeToSelection({
-            schema: context.schema,
-            editor: context.slateEditor,
-            range: rangeToUse,
-          })
+          // Only update selection for local ops. During remote batches,
+          // preserve the original selection for reconciliation to re-resolve
+          // from. Point.transform may produce wrong intermediate results
+          // without splitContext/mergeContext (e.g. paste-restructure ops).
+          if (!suppressCallback) {
+            decoratedRange.rangeDecoration.selection = slateRangeToSelection({
+              schema: context.schema,
+              editor: context.slateEditor,
+              range: rangeToUse,
+            })
+          }
           rangeDecorationState.push({
             ...rangeToUse,
             rangeDecoration: decoratedRange.rangeDecoration,
@@ -375,19 +379,26 @@ export const rangeDecorationsMachine = setup({
       for (const decoratedRange of context.slateEditor.decoratedRanges) {
         const {rangeDecoration} = decoratedRange
 
+        // Use the PRE-BATCH selection for re-resolution, not the current one.
+        // During remote batches, we no longer mutate rangeDecoration.selection
+        // (Change 1), so it should still be the original. But even if it were
+        // mutated by some other path, the pre-batch snapshot is the authoritative
+        // source for what the selection was before remote ops arrived.
+        const preBatch = preRanges.get(rangeDecoration)
+        const previousRange = preBatch?.range ?? null
+        const previousSelection = preBatch?.selection ?? null
+        const selectionForResolution =
+          previousSelection ?? rangeDecoration.selection
+
         // Re-resolve from EditorSelection keys against current document
         const freshSlateRange = toSlateRange({
           context: {
             schema: context.schema,
             value: context.slateEditor.value,
-            selection: rangeDecoration.selection,
+            selection: selectionForResolution,
           },
           blockIndexMap: context.slateEditor.blockIndexMap,
         })
-
-        const preBatch = preRanges.get(rangeDecoration)
-        const previousRange = preBatch?.range ?? null
-        const previousSelection = preBatch?.selection ?? null
 
         if (!Range.isRange(freshSlateRange)) {
           // Decoration can no longer be resolved in the document

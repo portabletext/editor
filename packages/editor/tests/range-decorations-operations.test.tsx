@@ -2303,10 +2303,109 @@ describe('RangeDecorations: Multi-PTE Sync', () => {
       // For this test, we expect the decoration to span both blocks or be adjusted
     }
 
-    // The decoration should still be visible (may be in first block only now)
+    // The decoration should still be visible (may span both blocks after split)
     await vi.waitFor(() => {
       const decorations = locator.getByTestId('range-decoration')
-      return expect.element(decorations).toBeInTheDocument()
+      return expect.element(decorations.first()).toBeInTheDocument()
+    })
+  })
+
+  test('Remote split does not corrupt decoration selection for reconciliation', async () => {
+    // Josef's repro: decoration on full text "hello friend"
+    // Editor B splits at offset 6 → remote patches arrive at Editor A
+    // WITHOUT splitContext, Point.transform corrupts the selection during batch
+    // Bug: reconciliation re-resolves from corrupted selection → decoration lost
+    // Fix: reconciliation uses pre-batch snapshot → decoration survives (truncated)
+
+    const onMovedSpyA = vi.fn()
+    let rangeDecorationsA: Array<RangeDecoration> = [
+      {
+        component: RangeDecorationComponent,
+        payload: {id: 'dec1'},
+        selection: {
+          anchor: {
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            offset: 0,
+          },
+          focus: {
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            offset: 12, // end of "hello friend"
+          },
+        },
+        onMoved: (details) => {
+          onMovedSpyA(details)
+          rangeDecorationsA = updateRangeDecorations({
+            rangeDecorations: rangeDecorationsA,
+            details,
+          })
+        },
+      },
+    ]
+
+    const {editor, locator, editorB, locatorB} = await createTestEditors({
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', _key: 's1', text: 'hello friend'}],
+          markDefs: [],
+        },
+      ],
+      editableProps: {rangeDecorations: rangeDecorationsA},
+    })
+
+    // Wait for both editors
+    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+    await vi.waitFor(() => expect.element(locatorB).toBeInTheDocument())
+
+    // Verify decoration in Editor A on "hello friend"
+    await vi.waitFor(() =>
+      expect
+        .element(locator.getByTestId('range-decoration'))
+        .toHaveTextContent('hello friend'),
+    )
+
+    // Split in Editor B at offset 6 (between "hello " and "friend")
+    await userEvent.click(locatorB)
+    editorB.send({type: 'focus'})
+    editorB.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 6,
+        },
+        focus: {
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 6,
+        },
+      },
+    })
+
+    await userEvent.keyboard('{Enter}')
+
+    // Wait for sync - both editors should have 2 blocks
+    await vi.waitFor(() => {
+      const terseA = getTersePt(editor.getSnapshot().context)
+      const terseB = getTersePt(editorB.getSnapshot().context)
+      expect(terseA.length).toBe(2)
+      expect(terseB.length).toBe(2)
+    })
+
+    // CRITICAL: onMoved should have fired with a non-null newSelection
+    // Before the fix, reconciliation re-resolved from corrupted selection → null
+    // After the fix, reconciliation uses pre-batch snapshot → valid selection
+    const lastCall =
+      onMovedSpyA.mock.calls[onMovedSpyA.mock.calls.length - 1]?.[0]
+    expect(lastCall).toBeDefined()
+    expect(lastCall.newSelection).not.toBeNull()
+    expect(lastCall.origin).toBe('remote')
+
+    // The decoration should still be visible in Editor A
+    // The decoration spans both blocks, so there are multiple range-decoration elements
+    await vi.waitFor(() => {
+      const decorations = locator.getByTestId('range-decoration')
+      return expect.element(decorations.first()).toBeInTheDocument()
     })
   })
 })
