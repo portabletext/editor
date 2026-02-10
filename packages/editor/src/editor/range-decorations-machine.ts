@@ -437,21 +437,23 @@ export const rangeDecorationsMachine = setup({
           continue
         }
 
-        // Detect if the range changed during the batch
+        // Detect if the range changed during the batch.
+        // "Changed" means toSlateRange re-resolved to a DIFFERENT position than
+        // the pre-batch snapshot — indicating a structural change (split, merge,
+        // paste-restructure, block deletion, etc.).
         const changed =
           !previousRange || !Range.equals(previousRange, freshSlateRange)
 
-        let selectionComputed = false
-        let finalSelection: EditorSelection = null
-        let finalSlateRange = freshSlateRange
-
         if (changed) {
-          finalSelection = slateRangeToSelection({
+          // Structural change: use toSlateRange's re-resolved position.
+          // Point.transform may have produced wrong results without
+          // splitContext/mergeContext, so freshSlateRange is authoritative.
+          let finalSelection = slateRangeToSelection({
             schema: context.schema,
             editor: context.slateEditor,
             range: freshSlateRange,
           })
-          selectionComputed = true
+          let finalSlateRange = freshSlateRange
 
           const consumerSelection = rangeDecoration.onMoved?.({
             previousSelection,
@@ -477,25 +479,34 @@ export const rangeDecorationsMachine = setup({
               finalSlateRange = consumerSlateRange
             }
           }
-        }
 
-        // Lazy-compute: only run slateRangeToSelection for unchanged decorations
-        if (!selectionComputed) {
-          finalSelection = slateRangeToSelection({
+          rangeDecorationState.push({
+            ...finalSlateRange,
+            rangeDecoration: {
+              ...rangeDecoration,
+              selection: finalSelection,
+            },
+          })
+        } else {
+          // No structural change: Point.transform correctly tracked offset
+          // shifts during the batch (e.g. text insertions in the same span).
+          // toSlateRange re-resolved to the same position as pre-batch because
+          // it uses the original offsets literally (just clamped to text.length).
+          // Trust Point.transform's cached Slate range — it has the correct
+          // shifted offsets. Compute selection from it to keep in sync.
+          const cachedSelection = slateRangeToSelection({
             schema: context.schema,
             editor: context.slateEditor,
-            range: freshSlateRange,
+            range: decoratedRange,
+          })
+          rangeDecorationState.push({
+            ...decoratedRange,
+            rangeDecoration: {
+              ...rangeDecoration,
+              selection: cachedSelection,
+            },
           })
         }
-
-        // Update cached range to the final resolved value
-        rangeDecorationState.push({
-          ...finalSlateRange,
-          rangeDecoration: {
-            ...rangeDecoration,
-            selection: finalSelection,
-          },
-        })
       }
 
       context.slateEditor.decoratedRanges = rangeDecorationState

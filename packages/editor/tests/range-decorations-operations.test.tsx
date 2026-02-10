@@ -2117,9 +2117,13 @@ describe('RangeDecorations: Multi-PTE Sync', () => {
   test('Decoration in Editor B survives when Editor A types before it', async () => {
     // Both editors start with same content
     // Editor B has a decoration on "world"
-    // Editor A types at beginning
+    // Editor A types at beginning — has NO decorations (independent from B)
     // Patches sync to Editor B as remote
     // Decoration in B should still highlight "world"
+    //
+    // IMPORTANT: Editor A must NOT share the same decoration objects as Editor B.
+    // If they share, Editor A's local onMoved updates the selection before
+    // Editor B's reconciliation runs, masking bugs in the reconciliation path.
 
     const onMovedSpyB = vi.fn()
     let rangeDecorationsB: Array<RangeDecoration> = [
@@ -2155,7 +2159,8 @@ describe('RangeDecorations: Multi-PTE Sync', () => {
           markDefs: [],
         },
       ],
-      editableProps: {rangeDecorations: rangeDecorationsB},
+      editableProps: {}, // Editor A: no decorations
+      editablePropsB: {rangeDecorations: rangeDecorationsB}, // Editor B: own decorations
     })
 
     // Wait for both editors to be ready
