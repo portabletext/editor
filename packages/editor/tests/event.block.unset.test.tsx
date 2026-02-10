@@ -65,7 +65,7 @@ describe('event.block.unset', () => {
 
       expect(patches).toEqual([
         setIfMissing([], []),
-        insert(
+        set(
           [
             {
               _key: 'k0',
@@ -75,8 +75,7 @@ describe('event.block.unset', () => {
               style: 'normal',
             },
           ],
-          'before',
-          [0],
+          [],
         ),
         insert(
           [
@@ -137,7 +136,7 @@ describe('event.block.unset', () => {
       ])
       expect(patches).toEqual([
         setIfMissing([], []),
-        insert(
+        set(
           [
             {
               _key: 'k0',
@@ -147,8 +146,7 @@ describe('event.block.unset', () => {
               style: 'normal',
             },
           ],
-          'before',
-          [0],
+          [],
         ),
         insert(
           [
@@ -243,7 +241,7 @@ describe('event.block.unset', () => {
 
       expect(patches).toEqual([
         setIfMissing([], []),
-        insert(
+        set(
           [
             {
               _key: 'k0',
@@ -253,8 +251,7 @@ describe('event.block.unset', () => {
               style: 'normal',
             },
           ],
-          'before',
-          [0],
+          [],
         ),
         insert(
           [
@@ -390,7 +387,7 @@ describe('event.block.unset', () => {
       ])
       expect(patches).toEqual([
         setIfMissing([], []),
-        insert(
+        set(
           [
             {
               _key: 'k0',
@@ -400,8 +397,7 @@ describe('event.block.unset', () => {
               markDefs: [],
             },
           ],
-          'before',
-          [0],
+          [],
         ),
         insert(
           [

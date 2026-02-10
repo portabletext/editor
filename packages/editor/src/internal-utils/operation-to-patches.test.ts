@@ -126,19 +126,13 @@ describe(insertNodePatch.name, () => {
     ).toEqual([
       {
         path: [],
-        type: 'setIfMissing',
-        value: [],
-      },
-      {
-        path: [0],
-        type: 'insert',
-        items: [
+        type: 'set',
+        value: [
           {
             _key: 'k2',
             _type: 'image',
           },
         ],
-        position: 'before',
       },
     ])
   })
@@ -277,21 +271,13 @@ describe('operationToPatches', () => {
       [
         {
           "path": [],
-          "type": "setIfMissing",
-          "value": [],
-        },
-        {
-          "items": [
+          "type": "set",
+          "value": [
             {
               "_key": "c130395c640c",
               "_type": "someObject",
             },
           ],
-          "path": [
-            0,
-          ],
-          "position": "before",
-          "type": "insert",
         },
       ]
     `)

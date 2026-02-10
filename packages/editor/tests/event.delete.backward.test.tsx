@@ -1,6 +1,5 @@
 import {
   applyAll,
-  insert,
   set,
   setIfMissing,
   unset,
@@ -95,7 +94,7 @@ describe('event.delete.backward', () => {
       expect(foreignValue).toEqual(expectedValue)
       expect(patches.slice(1)).toEqual([
         setIfMissing([], []),
-        insert(
+        set(
           [
             {
               _type: 'block',
@@ -105,8 +104,7 @@ describe('event.delete.backward', () => {
               style: 'normal',
             },
           ],
-          'before',
-          [0],
+          [],
         ),
         set('bar', [{_key: 'k3'}, 'foo']),
       ])

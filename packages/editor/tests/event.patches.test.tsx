@@ -1,6 +1,5 @@
 import {
   applyAll,
-  insert,
   set,
   setIfMissing,
   unset,
@@ -34,11 +33,10 @@ describe('event.patches', () => {
       expect(onEditorEvent).toHaveBeenCalledWith({
         type: 'patch',
         patch: {
-          type: 'insert',
+          type: 'set',
           origin: 'local',
-          path: [0],
-          position: 'before',
-          items: [
+          path: [],
+          value: [
             {
               _type: 'block',
               _key: 'ea-k0',
@@ -101,11 +99,10 @@ describe('event.patches', () => {
       expect(onEditorEvent).toHaveBeenCalledWith({
         type: 'patch',
         patch: {
-          type: 'insert',
+          type: 'set',
           origin: 'local',
-          path: [0],
-          position: 'before',
-          items: [
+          path: [],
+          value: [
             {
               _type: 'block',
               _key: 'ea-k0',
@@ -191,11 +188,10 @@ describe('event.patches', () => {
       expect(onEditorEvent).toHaveBeenCalledWith({
         type: 'patch',
         patch: {
-          type: 'insert',
+          type: 'set',
           origin: 'local',
-          path: [0],
-          position: 'before',
-          items: [
+          path: [],
+          value: [
             {
               _type: 'block',
               _key: 'ea-k0',
@@ -743,7 +739,7 @@ describe('event.patches', () => {
       expect(foreignValue).toEqual(expectedValue)
       expect(patches).toEqual([
         setIfMissing([], []),
-        insert(
+        set(
           [
             {
               _key: 'k2',
@@ -753,8 +749,7 @@ describe('event.patches', () => {
               style: 'normal',
             },
           ],
-          'before',
-          [0],
+          [],
         ),
         set('bar', [{_key: 'k2'}, 'foo']),
       ])
