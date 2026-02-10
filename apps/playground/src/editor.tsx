@@ -36,6 +36,7 @@ import {
   PencilIcon,
   PencilOffIcon,
   SeparatorHorizontalIcon,
+  WandSparklesIcon,
   XIcon,
 } from 'lucide-react'
 import {useContext, useEffect, useState, type JSX} from 'react'
@@ -79,6 +80,8 @@ import {PortableTextToolbar} from './toolbar/portable-text-toolbar'
 export function Editor(props: {
   editorRef: EditorActorRef
   rangeDecorations: RangeDecoration[]
+  remoteFixUp: boolean
+  onToggleRemoteFixUp: () => void
 }) {
   const value = useSelector(props.editorRef, (s) => s.context.value)
   const keyGenerator = useSelector(
@@ -145,6 +148,7 @@ export function Editor(props: {
                       details,
                     })
                   }}
+                  remoteFixUp={props.remoteFixUp}
                 />
               </PortableTextToolbar>
             </div>
@@ -202,7 +206,12 @@ export function Editor(props: {
               </ErrorBoundary>
               {loading ? <Spinner /> : null}
             </div>
-            <EditorFooter editorRef={props.editorRef} readOnly={readOnly} />
+            <EditorFooter
+              editorRef={props.editorRef}
+              readOnly={readOnly}
+              remoteFixUp={props.remoteFixUp}
+              onToggleRemoteFixUp={props.onToggleRemoteFixUp}
+            />
           </Container>
         </EditorProvider>
       </ErrorBoundary>
@@ -550,7 +559,12 @@ const styleMap: Map<string, (props: BlockStyleRenderProps) => JSX.Element> =
     ],
   ])
 
-function EditorFooter(props: {editorRef: EditorActorRef; readOnly: boolean}) {
+function EditorFooter(props: {
+  editorRef: EditorActorRef
+  readOnly: boolean
+  remoteFixUp: boolean
+  onToggleRemoteFixUp: () => void
+}) {
   const editor = useEditor()
   const patchesActive = useSelector(props.editorRef, (s) =>
     s.matches({'patch subscription': 'active'}),
@@ -596,6 +610,21 @@ function EditorFooter(props: {editorRef: EditorActorRef; readOnly: boolean}) {
               <BracesIcon className="size-3" />
             </ToggleButton>
             <Tooltip>{showValue ? 'Hide value' : 'Show value'}</Tooltip>
+          </TooltipTrigger>
+          <TooltipTrigger>
+            <ToggleButton
+              variant="ghost"
+              size="sm"
+              isSelected={props.remoteFixUp}
+              onChange={props.onToggleRemoteFixUp}
+            >
+              <WandSparklesIcon className="size-3" />
+            </ToggleButton>
+            <Tooltip>
+              {props.remoteFixUp
+                ? 'Remote fix-up ON — decorations re-resolve after remote edits'
+                : 'Remote fix-up OFF — decorations accept truncated positions'}
+            </Tooltip>
           </TooltipTrigger>
         </div>
         <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
