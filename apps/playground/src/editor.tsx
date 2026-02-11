@@ -377,24 +377,18 @@ const RenderBlock = (props: BlockRenderProps) => {
     )
   }
 
-  // Phantom caret demo: wraps each block with empty contentEditable={false} elements
-  // that create spurious caret positions at block boundaries.
-  // The key is that these elements are IN THE DOCUMENT FLOW (not position:absolute).
-  // Use arrow keys to navigate — you'll hit invisible caret positions at the red bars.
+  // Phantom caret demo: replicates the exact structure that caused phantom carets.
+  // An empty contentEditable={false} div overlays the entire paragraph.
+  // This creates spurious caret positions at block boundaries.
   if (props.level === undefined && enablePhantomCaretDemo) {
     return (
-      <div className="flex items-start my-1">
-        {/* Empty contentEditable={false} IN FLOW - creates phantom caret position */}
+      <div className="relative my-1">
+        {/* Empty contentEditable={false} overlay - no children, covers entire block */}
         <div
           contentEditable={false}
-          className="w-1 self-stretch bg-red-400 dark:bg-red-600 rounded shrink-0"
+          className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-[100vw] bg-red-400/10 dark:bg-red-600/10 pointer-events-none"
         />
-        <div className="flex-1 mx-1">{children}</div>
-        {/* Another empty one on the right side */}
-        <div
-          contentEditable={false}
-          className="w-1 self-stretch bg-orange-400 dark:bg-orange-600 rounded shrink-0"
-        />
+        {children}
       </div>
     )
   }
