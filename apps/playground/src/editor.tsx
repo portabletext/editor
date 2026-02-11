@@ -378,16 +378,19 @@ const RenderBlock = (props: BlockRenderProps) => {
   }
 
   // Phantom caret demo: replicates the exact structure that caused phantom carets.
-  // An empty contentEditable={false} div overlays the entire paragraph.
-  // This creates spurious caret positions at block boundaries.
+  // A contentEditable={false} element with an empty <span /> child.
+  // The span was originally added to give Slate a "selectable target" for cut events,
+  // but it also creates phantom caret positions at block boundaries.
   if (props.level === undefined && enablePhantomCaretDemo) {
     return (
       <div className="relative my-1">
-        {/* Empty contentEditable={false} overlay - no children, covers entire block */}
+        {/* contentEditable={false} with empty span - the span creates phantom carets */}
         <div
           contentEditable={false}
           className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-[100vw] bg-red-400/10 dark:bg-red-600/10 pointer-events-none"
-        />
+        >
+          <span />
+        </div>
         {children}
       </div>
     )
