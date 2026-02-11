@@ -379,29 +379,22 @@ const RenderBlock = (props: BlockRenderProps) => {
 
   // Phantom caret demo: wraps each block with empty contentEditable={false} elements
   // that create spurious caret positions at block boundaries.
-  // Click near the colored bars to see phantom carets appear where they shouldn't.
+  // The key is that these elements are IN THE DOCUMENT FLOW (not position:absolute).
+  // Use arrow keys to navigate — you'll hit invisible caret positions at the red bars.
   if (props.level === undefined && enablePhantomCaretDemo) {
     return (
-      <div className="relative my-1">
-        {/* Empty contentEditable={false} before text - creates phantom caret position */}
+      <div className="flex items-start my-1">
+        {/* Empty contentEditable={false} IN FLOW - creates phantom caret position */}
         <div
           contentEditable={false}
-          className="absolute -left-6 top-0 bottom-0 w-1 bg-red-400 dark:bg-red-600 rounded"
-          title="Empty contentEditable={false} - click near here to see phantom caret"
-        >
-          <span />
-        </div>
+          className="w-1 self-stretch bg-red-400 dark:bg-red-600 rounded shrink-0"
+        />
+        <div className="flex-1 mx-1">{children}</div>
         {/* Another empty one on the right side */}
         <div
           contentEditable={false}
-          className="absolute -right-6 top-0 bottom-0 w-1 bg-orange-400 dark:bg-orange-600 rounded"
-          title="Empty contentEditable={false} - click near here to see phantom caret"
-        >
-          <span />
-        </div>
-        <div className="px-1 border-l-2 border-r-2 border-dashed border-red-300 dark:border-red-700">
-          {children}
-        </div>
+          className="w-1 self-stretch bg-orange-400 dark:bg-orange-600 rounded shrink-0"
+        />
       </div>
     )
   }
