@@ -298,7 +298,9 @@ const imageStyle = tv({
 })
 
 const RenderBlock = (props: BlockRenderProps) => {
-  const enableDragHandles = useContext(EditorFeatureFlagsContext).dragHandles
+  const featureFlags = useContext(EditorFeatureFlagsContext)
+  const enableDragHandles = featureFlags.dragHandles
+  const enablePhantomCaretDemo = featureFlags.phantomCaretDemo
   const editor = useEditor()
   const readOnly = useEditorSelector(editor, (s) => s.context.readOnly)
 
@@ -371,6 +373,35 @@ const RenderBlock = (props: BlockRenderProps) => {
           <span />
         </div>
         <div>{children}</div>
+      </div>
+    )
+  }
+
+  // Phantom caret demo: wraps each block with empty contentEditable={false} elements
+  // that create spurious caret positions at block boundaries.
+  // Click near the colored bars to see phantom carets appear where they shouldn't.
+  if (props.level === undefined && enablePhantomCaretDemo) {
+    return (
+      <div className="relative my-1">
+        {/* Empty contentEditable={false} before text - creates phantom caret position */}
+        <div
+          contentEditable={false}
+          className="absolute -left-6 top-0 bottom-0 w-1 bg-red-400 dark:bg-red-600 rounded"
+          title="Empty contentEditable={false} - click near here to see phantom caret"
+        >
+          <span />
+        </div>
+        {/* Another empty one on the right side */}
+        <div
+          contentEditable={false}
+          className="absolute -right-6 top-0 bottom-0 w-1 bg-orange-400 dark:bg-orange-600 rounded"
+          title="Empty contentEditable={false} - click near here to see phantom caret"
+        >
+          <span />
+        </div>
+        <div className="px-1 border-l-2 border-r-2 border-dashed border-red-300 dark:border-red-700">
+          {children}
+        </div>
       </div>
     )
   }

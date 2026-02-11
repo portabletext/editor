@@ -13,6 +13,7 @@ export const PlaygroundFeatureFlagsContext =
 
 export type EditorFeatureFlags = {
   dragHandles: boolean
+  phantomCaretDemo: boolean
   imageDeserializerPlugin: boolean
   htmlDeserializerPlugin: boolean
   textFileDeserializerPlugin: boolean
@@ -28,6 +29,7 @@ export type EditorFeatureFlags = {
 
 export const defaultEditorFeatureFlags: EditorFeatureFlags = {
   dragHandles: false,
+  phantomCaretDemo: false,
   imageDeserializerPlugin: false,
   htmlDeserializerPlugin: true,
   textFileDeserializerPlugin: false,

@@ -35,6 +35,11 @@ export function EditorSettingsPopover(props: {editorRef: EditorActorRef}) {
               isSelected={featureFlags.dragHandles}
               onChange={() => toggleFlag('dragHandles')}
             />
+            <FeatureSwitch
+              label="Phantom caret demo"
+              isSelected={featureFlags.phantomCaretDemo}
+              onChange={() => toggleFlag('phantomCaretDemo')}
+            />
           </Section>
 
           <Separator orientation="horizontal" />
