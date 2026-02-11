@@ -1,4 +1,4 @@
-import {useContext, useRef, type ReactElement} from 'react'
+import {useCallback, useContext, useRef, type ReactElement} from 'react'
 import type {Element as SlateElement} from 'slate'
 import {DOMEditor} from 'slate-dom'
 import {useSlateStatic, type RenderElementProps} from 'slate-react'
@@ -24,6 +24,16 @@ export function RenderInlineObject(props: {
 }) {
   const inlineObjectRef = useRef<HTMLElement>(null)
   const slateEditor = useSlateStatic()
+  const slateRef = props.attributes.ref
+  const mergedRef = useCallback(
+    (node: HTMLElement | null) => {
+      inlineObjectRef.current = node
+      if (typeof slateRef === 'function') {
+        slateRef(node)
+      }
+    },
+    [slateRef],
+  )
 
   const legacySchemaType = props.legacySchema.inlineObjects.find(
     (inlineObject) => inlineObject.name === props.element._type,
@@ -74,6 +84,7 @@ export function RenderInlineObject(props: {
   return (
     <span
       {...props.attributes}
+      ref={mergedRef}
       draggable={!props.readOnly}
       className="pt-inline-object"
       data-child-key={inlineObject._key}
@@ -81,25 +92,23 @@ export function RenderInlineObject(props: {
       data-child-type="object"
     >
       {props.children}
-      <span ref={inlineObjectRef} style={{display: 'inline-block'}}>
-        {props.renderChild && path && legacySchemaType ? (
-          <RenderChild
-            renderChild={props.renderChild}
-            annotations={[]}
-            editorElementRef={inlineObjectRef}
-            selected={selected}
-            focused={focused}
-            path={path}
-            schemaType={legacySchemaType}
-            value={inlineObject}
-            type={legacySchemaType}
-          >
-            <RenderDefaultInlineObject inlineObject={inlineObject} />
-          </RenderChild>
-        ) : (
+      {props.renderChild && path && legacySchemaType ? (
+        <RenderChild
+          renderChild={props.renderChild}
+          annotations={[]}
+          editorElementRef={inlineObjectRef}
+          selected={selected}
+          focused={focused}
+          path={path}
+          schemaType={legacySchemaType}
+          value={inlineObject}
+          type={legacySchemaType}
+        >
           <RenderDefaultInlineObject inlineObject={inlineObject} />
-        )}
-      </span>
+        </RenderChild>
+      ) : (
+        <RenderDefaultInlineObject inlineObject={inlineObject} />
+      )}
     </span>
   )
 }

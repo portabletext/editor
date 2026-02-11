@@ -13,9 +13,11 @@ export function RenderDefaultBlockObject(props: {
 export function RenderDefaultInlineObject(props: {
   inlineObject: PortableTextObject | PortableTextChild
 }) {
+  // Render as text content directly (no wrapper span) to match Slate's void pattern
+  // This allows clicks on the visible content to register properly
   return (
-    <span style={{userSelect: 'none'}}>
+    <>
       [{props.inlineObject._type}: {props.inlineObject._key}]
-    </span>
+    </>
   )
 }
