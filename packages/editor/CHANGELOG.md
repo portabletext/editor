@@ -1,5 +1,11 @@
 # Changelog
 
+## 4.3.10
+
+### Patch Changes
+
+- [#2177](https://github.com/portabletext/editor/pull/2177) [`3900875`](https://github.com/portabletext/editor/commit/3900875d6cefc6b66e0b0282eda1216ae8ede67c) Thanks [@christianhg](https://github.com/christianhg)! - fix: allow copying inline object
+
 ## 4.3.9
 
 ### Patch Changes
