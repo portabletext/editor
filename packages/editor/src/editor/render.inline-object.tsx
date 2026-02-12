@@ -74,14 +74,17 @@ export function RenderInlineObject(props: {
   return (
     <span
       {...props.attributes}
-      draggable={!props.readOnly}
       className="pt-inline-object"
       data-child-key={inlineObject._key}
       data-child-name={inlineObject._type}
       data-child-type="object"
     >
       {props.children}
-      <span ref={inlineObjectRef} style={{display: 'inline-block'}}>
+      <span
+        ref={inlineObjectRef}
+        style={{display: 'inline-block'}}
+        draggable={!props.readOnly}
+      >
         {props.renderChild && path && legacySchemaType ? (
           <RenderChild
             renderChild={props.renderChild}
