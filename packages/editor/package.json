@@ -94,9 +94,9 @@
     "@sanity/types": "^5.9.0",
     "@xstate/react": "^6.0.0",
     "debug": "^4.4.3",
-    "slate": "^0.120.0",
-    "slate-dom": "^0.119.0",
-    "slate-react": "^0.120.0",
+    "slate": "^0.123.0",
+    "slate-dom": "^0.123.0",
+    "slate-react": "^0.123.0",
     "xstate": "^5.25.0"
   },
   "devDependencies": {
