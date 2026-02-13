@@ -232,8 +232,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/plugin-typography
       '@portabletext/react':
-        specifier: ^3.2.4
-        version: 3.2.4(react@19.2.3)
+        specifier: ^6.0.2
+        version: 6.0.2(react@19.2.3)
       '@portabletext/toolbar':
         specifier: workspace:*
         version: link:../../packages/toolbar
@@ -2709,12 +2709,6 @@ packages:
   '@polka/url@1.0.0-next.29':
     resolution: {integrity: sha512-wwQAWhWSuHaag8c4q/KN/vCoeOJYshAIvMQwD4GpSb3OiZklFfvAgmj0VCBBImRpuF/aFgIRzllXlVX93Jevww==}
 
-  '@portabletext/react@3.2.4':
-    resolution: {integrity: sha512-Gq0BaIBw6PMXnN1M9clG7vOa952O4F+CTfANLH/NaxiH5eI1sOx3IoGoGLnPPUTxCKq3F380gz4ycz6WzMtu0Q==}
-    engines: {node: ^14.13.1 || >=16.0.0}
-    peerDependencies:
-      react: ^17 || ^18 || >=19.0.0-0
-
   '@portabletext/react@6.0.2':
     resolution: {integrity: sha512-qE3/Fg8PqzGzZ6+lxVXKPDqthJTRG3T1R0R6wrUCVAYeC5e0JtXWwhOiWa0daLG9TEOwn2SUeB2SuWxQlTq+5g==}
     engines: {node: '>=20.19 <22 || >=22.12'}
@@ -2725,17 +2719,9 @@ packages:
     resolution: {integrity: sha512-cLaxxEoe3e8Py/t+hZEw2+sOIWPCpO9fyruUlRdZMQ65IkdyFaJEJlXkpNDqwV0+BO2GVJqaQVM5T6MeGdt8Xg==}
     engines: {node: '>=20.19 <22 || >=22.12'}
 
-  '@portabletext/toolkit@2.0.18':
-    resolution: {integrity: sha512-m3v2WwKQTNNk5BFZlUuPuCW0Zi6iDSpwrium4Ej5L2FHDXhFuwAyEMPXDrvwPvqjES/oJzcwmdKLMhYa44T9BQ==}
-    engines: {node: ^14.13.1 || >=16.0.0}
-
   '@portabletext/toolkit@5.0.1':
     resolution: {integrity: sha512-qcwnWd15J2Ziwi0YfWHRx+DRqp87cPb+EBcYuEbDW0ChZwwxCdfIjDazzFpQeXnqhJn8own1c8UB3iHB61DiWg==}
     engines: {node: '>=20.19 <22 || >=22.12'}
-
-  '@portabletext/types@2.0.15':
-    resolution: {integrity: sha512-2e6i2gSQsrA/5OL5Gm4/9bxB9MNO73Fa47zj+0mT93xkoQUCGCWX5fZh1YBJ86hszaRYlqvqG08oULxvvPPp/Q==}
-    engines: {node: ^14.13.1 || >=16.0.0 || >=18.0.0}
 
   '@portabletext/types@4.0.1':
     resolution: {integrity: sha512-L8PZjVjmdKpW+82c1oNqGMqCOtQD2xORqJfr6Is7X5XXbz38eLYY79IM/1ok+Esf/iGOPtEYORdcf0ETmsWYew==}
@@ -9710,12 +9696,6 @@ snapshots:
 
   '@polka/url@1.0.0-next.29': {}
 
-  '@portabletext/react@3.2.4(react@19.2.3)':
-    dependencies:
-      '@portabletext/toolkit': 2.0.18
-      '@portabletext/types': 2.0.15
-      react: 19.2.3
-
   '@portabletext/react@6.0.2(react@19.2.3)':
     dependencies:
       '@portabletext/toolkit': 5.0.1
@@ -9727,15 +9707,9 @@ snapshots:
       '@portabletext/toolkit': 5.0.1
       '@portabletext/types': 4.0.1
 
-  '@portabletext/toolkit@2.0.18':
-    dependencies:
-      '@portabletext/types': 2.0.15
-
   '@portabletext/toolkit@5.0.1':
     dependencies:
       '@portabletext/types': 4.0.1
-
-  '@portabletext/types@2.0.15': {}
 
   '@portabletext/types@4.0.1': {}
 
