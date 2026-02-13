@@ -25,21 +25,24 @@ export const getSelectedBlocks: EditorSelector<
     return selectedBlocks
   }
 
-  const startBlockIndex = snapshot.blockIndexMap.get(startKey)
-  const endBlockIndex = snapshot.blockIndexMap.get(endKey)
+  const startEntry = snapshot.blockIndexMap.get(startKey)
+  const endEntry = snapshot.blockIndexMap.get(endKey)
 
-  if (startBlockIndex === undefined || endBlockIndex === undefined) {
+  if (startEntry === undefined || endEntry === undefined) {
     return selectedBlocks
   }
 
   const slicedValue = snapshot.context.value.slice(
-    startBlockIndex,
-    endBlockIndex + 1,
+    startEntry.index,
+    endEntry.index + 1,
   )
 
   for (const block of slicedValue) {
+    const blockEntry = snapshot.blockIndexMap.get(block._key)
+    const path = blockEntry?.path ?? [{_key: block._key}]
+
     if (block._key === startKey) {
-      selectedBlocks.push({node: block, path: [{_key: block._key}]})
+      selectedBlocks.push({node: block, path})
 
       if (startKey === endKey) {
         break
@@ -48,12 +51,12 @@ export const getSelectedBlocks: EditorSelector<
     }
 
     if (block._key === endKey) {
-      selectedBlocks.push({node: block, path: [{_key: block._key}]})
+      selectedBlocks.push({node: block, path})
       break
     }
 
     if (selectedBlocks.length > 0) {
-      selectedBlocks.push({node: block, path: [{_key: block._key}]})
+      selectedBlocks.push({node: block, path})
     }
   }
 

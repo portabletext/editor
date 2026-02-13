@@ -26,14 +26,14 @@ export const getSelectedValue: EditorSelector<Array<PortableTextBlock>> = (
     return []
   }
 
-  const startBlockIndex = snapshot.blockIndexMap.get(startBlockKey)
-  const endBlockIndex = snapshot.blockIndexMap.get(endBlockKey)
+  const startEntry = snapshot.blockIndexMap.get(startBlockKey)
+  const endEntry = snapshot.blockIndexMap.get(endBlockKey)
 
-  if (startBlockIndex === undefined || endBlockIndex === undefined) {
+  if (startEntry === undefined || endEntry === undefined) {
     return []
   }
 
-  const startBlock = snapshot.context.value.at(startBlockIndex)
+  const startBlock = snapshot.context.value.at(startEntry.index)
   const slicedStartBlock = startBlock
     ? sliceBlocks({
         context: snapshot.context,
@@ -41,11 +41,11 @@ export const getSelectedValue: EditorSelector<Array<PortableTextBlock>> = (
       }).at(0)
     : undefined
 
-  if (startBlockIndex === endBlockIndex) {
+  if (startEntry.index === endEntry.index) {
     return slicedStartBlock ? [slicedStartBlock] : []
   }
 
-  const endBlock = snapshot.context.value.at(endBlockIndex)
+  const endBlock = snapshot.context.value.at(endEntry.index)
   const slicedEndBlock = endBlock
     ? sliceBlocks({
         context: snapshot.context,
@@ -54,8 +54,8 @@ export const getSelectedValue: EditorSelector<Array<PortableTextBlock>> = (
     : undefined
 
   const middleBlocks = snapshot.context.value.slice(
-    startBlockIndex + 1,
-    endBlockIndex,
+    startEntry.index + 1,
+    endEntry.index,
   )
 
   return [
