@@ -3,6 +3,7 @@ import type {EditorContext} from '../editor/editor-snapshot'
 import type {BlockOffset} from '../types/block-offset'
 import type {EditorSelectionPoint} from '../types/editor'
 import type {ChildPath} from '../types/paths'
+import {getBlockKeyFromPath} from './util.path-helpers'
 import {
   getBlockKeyFromSelectionPoint,
   getChildKeyFromSelectionPoint,
@@ -25,7 +26,7 @@ export function blockOffsetToSpanSelectionPoint({
   let skippedInlineObject = false
 
   for (const block of context.value) {
-    if (block._key !== blockOffset.path[0]._key) {
+    if (block._key !== getBlockKeyFromPath(blockOffset.path)) {
       continue
     }
 

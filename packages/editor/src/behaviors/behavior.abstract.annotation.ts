@@ -1,5 +1,6 @@
 import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
 import {isActiveAnnotation} from '../selectors/selector.is-active-annotation'
+import {getAnnotationKeyFromPath} from '../utils/util.path-helpers'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
@@ -7,8 +8,11 @@ export const abstractAnnotationBehaviors = [
   defineBehavior({
     on: 'annotation.set',
     guard: ({snapshot, event}) => {
-      const blockKey = event.at[0]._key
-      const markDefKey = event.at[2]._key
+      // Extract block path (everything before 'markDefs') and annotation key (last segment)
+      const markDefsIndex = event.at.indexOf('markDefs')
+      const blockPath =
+        markDefsIndex > 0 ? event.at.slice(0, markDefsIndex) : [event.at[0]]
+      const markDefKey = getAnnotationKeyFromPath(event.at)
 
       const block = getFocusTextBlock({
         ...snapshot,
@@ -16,11 +20,11 @@ export const abstractAnnotationBehaviors = [
           ...snapshot.context,
           selection: {
             anchor: {
-              path: [{_key: blockKey}],
+              path: blockPath as Array<{_key: string}>,
               offset: 0,
             },
             focus: {
-              path: [{_key: blockKey}],
+              path: blockPath as Array<{_key: string}>,
               offset: 0,
             },
           },
@@ -42,13 +46,13 @@ export const abstractAnnotationBehaviors = [
         return markDef
       })
 
-      return {blockKey, updatedMarkDefs}
+      return {blockPath: blockPath as Array<{_key: string}>, updatedMarkDefs}
     },
     actions: [
-      (_, {blockKey, updatedMarkDefs}) => [
+      (_, {blockPath, updatedMarkDefs}) => [
         raise({
           type: 'block.set',
-          at: [{_key: blockKey}],
+          at: blockPath,
           props: {markDefs: updatedMarkDefs},
         }),
       ],
