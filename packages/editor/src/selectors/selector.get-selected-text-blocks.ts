@@ -29,22 +29,25 @@ export const getSelectedTextBlocks: EditorSelector<
     return selectedTextBlocks
   }
 
-  const startBlockIndex = snapshot.blockIndexMap.get(startBlockKey)
-  const endBlockIndex = snapshot.blockIndexMap.get(endBlockKey)
+  const startEntry = snapshot.blockIndexMap.get(startBlockKey)
+  const endEntry = snapshot.blockIndexMap.get(endBlockKey)
 
-  if (startBlockIndex === undefined || endBlockIndex === undefined) {
+  if (startEntry === undefined || endEntry === undefined) {
     return selectedTextBlocks
   }
 
   const slicedValue = snapshot.context.value.slice(
-    startBlockIndex,
-    endBlockIndex + 1,
+    startEntry.index,
+    endEntry.index + 1,
   )
 
   for (const block of slicedValue) {
+    const blockEntry = snapshot.blockIndexMap.get(block._key)
+    const path = blockEntry?.path ?? [{_key: block._key}]
+
     if (block._key === startBlockKey) {
       if (isTextBlock(snapshot.context, block)) {
-        selectedTextBlocks.push({node: block, path: [{_key: block._key}]})
+        selectedTextBlocks.push({node: block, path})
       }
 
       if (startBlockKey === endBlockKey) {
@@ -55,7 +58,7 @@ export const getSelectedTextBlocks: EditorSelector<
 
     if (block._key === endBlockKey) {
       if (isTextBlock(snapshot.context, block)) {
-        selectedTextBlocks.push({node: block, path: [{_key: block._key}]})
+        selectedTextBlocks.push({node: block, path})
       }
 
       break
@@ -63,7 +66,7 @@ export const getSelectedTextBlocks: EditorSelector<
 
     if (selectedTextBlocks.length > 0) {
       if (isTextBlock(snapshot.context, block)) {
-        selectedTextBlocks.push({node: block, path: [{_key: block._key}]})
+        selectedTextBlocks.push({node: block, path})
       }
     }
   }

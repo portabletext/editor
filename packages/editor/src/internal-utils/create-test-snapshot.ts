@@ -1,6 +1,7 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import type {EditorSnapshot} from '../editor/editor-snapshot'
+import type {BlockPath} from '../types/paths'
 
 export function createTestSnapshot(snapshot: {
   context?: Partial<EditorSnapshot['context']>
@@ -14,10 +15,10 @@ export function createTestSnapshot(snapshot: {
     value: snapshot.context?.value ?? [],
     selection: snapshot.context?.selection ?? null,
   }
-  const blockIndexMap = new Map<string, number>()
+  const blockIndexMap = new Map<string, {path: BlockPath; index: number}>()
 
   snapshot.context?.value?.forEach((block, index) => {
-    blockIndexMap.set(block._key, index)
+    blockIndexMap.set(block._key, {path: [{_key: block._key}], index})
   })
 
   return {

@@ -111,16 +111,16 @@ export function SelectionStateProvider({
       let selectedBlockKeys: Set<string> = emptySet
 
       if (startBlockKey && endBlockKey) {
-        const startBlockIndex = snapshot.blockIndexMap.get(startBlockKey)
-        const endBlockIndex = snapshot.blockIndexMap.get(endBlockKey)
+        const startEntry = snapshot.blockIndexMap.get(startBlockKey)
+        const endEntry = snapshot.blockIndexMap.get(endBlockKey)
 
-        if (startBlockIndex !== undefined && endBlockIndex !== undefined) {
-          const minIndex = Math.min(startBlockIndex, endBlockIndex)
-          const maxIndex = Math.max(startBlockIndex, endBlockIndex)
+        if (startEntry !== undefined && endEntry !== undefined) {
+          const minIndex = Math.min(startEntry.index, endEntry.index)
+          const maxIndex = Math.max(startEntry.index, endEntry.index)
           selectedBlockKeys = new Set<string>()
 
-          for (const [key, index] of snapshot.blockIndexMap) {
-            if (index >= minIndex && index <= maxIndex) {
+          for (const [key, entry] of snapshot.blockIndexMap) {
+            if (entry.index >= minIndex && entry.index <= maxIndex) {
               selectedBlockKeys.add(key)
             }
           }

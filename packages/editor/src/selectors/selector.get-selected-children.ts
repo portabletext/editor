@@ -44,16 +44,16 @@ export function getSelectedChildren<
       return []
     }
 
-    const startBlockIndex = snapshot.blockIndexMap.get(startBlockKey)
-    const endBlockIndex = snapshot.blockIndexMap.get(endBlockKey)
+    const startEntry = snapshot.blockIndexMap.get(startBlockKey)
+    const endEntry = snapshot.blockIndexMap.get(endBlockKey)
 
-    if (startBlockIndex === undefined || endBlockIndex === undefined) {
+    if (startEntry === undefined || endEntry === undefined) {
       return []
     }
 
     const selectedChildren: Array<SelectedChild<TChild>> = []
-    const minBlockIndex = Math.min(startBlockIndex, endBlockIndex)
-    const maxBlockIndex = Math.max(startBlockIndex, endBlockIndex)
+    const minBlockIndex = Math.min(startEntry.index, endEntry.index)
+    const maxBlockIndex = Math.max(startEntry.index, endEntry.index)
     const blocks = snapshot.context.value.slice(
       minBlockIndex,
       maxBlockIndex + 1,
@@ -78,7 +78,13 @@ export function getSelectedChildren<
           if (!filter || filter(child)) {
             selectedChildren.push({
               node: child as TChild,
-              path: [{_key: block._key}, 'children', {_key: child._key}],
+              path: [
+                ...(snapshot.blockIndexMap.get(block._key)?.path ?? [
+                  {_key: block._key},
+                ]),
+                'children',
+                {_key: child._key},
+              ],
             })
           }
         }

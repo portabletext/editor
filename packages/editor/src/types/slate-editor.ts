@@ -9,6 +9,7 @@ import type {Range, Operation as SlateOperation} from 'slate'
 import type {ReactEditor} from 'slate-react'
 import type {DecoratedRange} from '../editor/range-decorations-machine'
 import type {EditorSelection} from './editor'
+import type {BlockPath} from './paths'
 // Side-effect import to ensure Slate module augmentation is included
 import './slate'
 
@@ -39,7 +40,7 @@ export interface PortableTextSlateEditor extends ReactEditor {
 
   decoratedRanges: Array<DecoratedRange>
   decoratorState: Record<string, boolean | undefined>
-  blockIndexMap: Map<string, number>
+  blockIndexMap: Map<string, {path: BlockPath; index: number}>
   history: History
   lastSelection: EditorSelection
   lastSlateSelection: Range | null

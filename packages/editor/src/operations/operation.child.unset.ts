@@ -1,20 +1,32 @@
 import {applyAll} from '@portabletext/patches'
 import {isTextBlock} from '@portabletext/schema'
 import {Editor, Element, Transforms} from 'slate'
+import {getChildKeyFromPath} from '../utils/util.path-helpers'
 import type {OperationImplementation} from './operation.types'
 
 export const childUnsetOperationImplementation: OperationImplementation<
   'child.unset'
 > = ({context, operation}) => {
-  const blockKey = operation.at[0]._key
-  const blockIndex = operation.editor.blockIndexMap.get(blockKey)
+  // Extract block key from the ChildPath (everything before 'children')
+  const childrenIndex = operation.at.indexOf('children')
+  const blockKeySegment =
+    childrenIndex > 0 ? operation.at[childrenIndex - 1] : operation.at[0]
+  const blockKey =
+    typeof blockKeySegment === 'object' && '_key' in blockKeySegment
+      ? blockKeySegment._key
+      : undefined
+  const entry = blockKey
+    ? operation.editor.blockIndexMap.get(blockKey)
+    : undefined
 
-  if (blockIndex === undefined) {
-    throw new Error(`Unable to find block index for block key ${blockKey}`)
+  if (entry === undefined) {
+    throw new Error(
+      `Unable to find block index for block at ${JSON.stringify(operation.at)}`,
+    )
   }
 
-  const block =
-    blockIndex !== undefined ? operation.editor.value.at(blockIndex) : undefined
+  const blockIndex = entry.index
+  const block = operation.editor.value.at(blockIndex)
 
   if (!block) {
     throw new Error(`Unable to find block at ${JSON.stringify(operation.at)}`)
@@ -24,7 +36,7 @@ export const childUnsetOperationImplementation: OperationImplementation<
     throw new Error(`Block ${JSON.stringify(blockKey)} is not a text block`)
   }
 
-  const childKey = operation.at[2]._key
+  const childKey = getChildKeyFromPath(operation.at)
 
   if (!childKey) {
     throw new Error(
@@ -40,7 +52,7 @@ export const childUnsetOperationImplementation: OperationImplementation<
     throw new Error(`Unable to find child at ${JSON.stringify(operation.at)}`)
   }
 
-  const childEntry = Editor.node(operation.editor, [blockIndex, childIndex], {
+  const childEntry = Editor.node(operation.editor, [entry.index, childIndex], {
     depth: 2,
   })
   const child = childEntry?.[0]

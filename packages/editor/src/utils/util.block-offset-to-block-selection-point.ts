@@ -1,6 +1,7 @@
 import type {EditorContext} from '../editor/editor-snapshot'
 import type {BlockOffset} from '../types/block-offset'
 import type {EditorSelectionPoint} from '../types/editor'
+import {getBlockKeyFromPath} from './util.path-helpers'
 
 /**
  * @public
@@ -12,12 +13,13 @@ export function blockOffsetToBlockSelectionPoint({
   context: Pick<EditorContext, 'value'>
   blockOffset: BlockOffset
 }): EditorSelectionPoint | undefined {
+  const blockKey = getBlockKeyFromPath(blockOffset.path)
   let selectionPoint: EditorSelectionPoint | undefined
 
   for (const block of context.value) {
-    if (block._key === blockOffset.path[0]._key) {
+    if (block._key === blockKey) {
       selectionPoint = {
-        path: [{_key: block._key}],
+        path: blockOffset.path,
         offset: blockOffset.offset,
       }
       break

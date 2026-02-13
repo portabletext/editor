@@ -1,5 +1,6 @@
 import {isTextBlock} from '@portabletext/schema'
 import type {EditorContext} from '../editor/editor-snapshot'
+import type {BlockPath} from '../types/paths'
 
 // Maps for each list type, keeping track of the current list count for each
 // level.
@@ -14,7 +15,7 @@ export function buildIndexMaps(
     blockIndexMap,
     listIndexMap,
   }: {
-    blockIndexMap: Map<string, number>
+    blockIndexMap: Map<string, {path: BlockPath; index: number}>
     listIndexMap: Map<string, number>
   },
 ): void {
@@ -36,7 +37,10 @@ export function buildIndexMaps(
       continue
     }
 
-    blockIndexMap.set(block._key, blockIndex)
+    blockIndexMap.set(block._key, {
+      path: [{_key: block._key}],
+      index: blockIndex,
+    })
 
     // Clear the state if we encounter a non-text block
     if (!isTextBlock(context, block)) {

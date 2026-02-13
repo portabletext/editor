@@ -1,6 +1,6 @@
 import {isSpan, isTextBlock, type PortableTextSpan} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
-import type {KeyedSegment} from '../types/paths'
+import type {ChildPath} from '../types/paths'
 import {getChildKeyFromSelectionPoint} from '../utils/util.selection-point'
 import {getSelectionStartBlock} from './selector.get-selection-start-block'
 import {getSelectionStartPoint} from './selector.get-selection-start-point'
@@ -11,7 +11,7 @@ import {getSelectionStartPoint} from './selector.get-selection-start-point'
 export const getPreviousSpan: EditorSelector<
   | {
       node: PortableTextSpan
-      path: [KeyedSegment, 'children', KeyedSegment]
+      path: ChildPath
     }
   | undefined
 > = (snapshot) => {
@@ -32,7 +32,7 @@ export const getPreviousSpan: EditorSelector<
   let previousSpan:
     | {
         node: PortableTextSpan
-        path: [KeyedSegment, 'children', KeyedSegment]
+        path: ChildPath
       }
     | undefined
 

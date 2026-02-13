@@ -128,7 +128,14 @@ const stripAnnotationsOnFullSpanDeletion = defineBehavior({
       return false
     }
 
-    if (startChild.path[2]._key !== endChild.path[2]._key) {
+    // Compare child keys — the child key is the last segment of a ChildPath
+    const startChildKey = (
+      startChild.path[startChild.path.length - 1] as {_key: string}
+    )._key
+    const endChildKey = (
+      endChild.path[endChild.path.length - 1] as {_key: string}
+    )._key
+    if (startChildKey !== endChildKey) {
       return false
     }
 
