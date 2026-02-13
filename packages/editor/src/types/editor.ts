@@ -20,7 +20,6 @@ import type {
   ReactElement,
   RefObject,
 } from 'react'
-import type {Observable, Subject} from 'rxjs'
 import type {PortableTextEditableProps} from '../editor/Editable'
 import type {EditorSchema} from '../editor/editor-schema'
 import type {PortableTextEditor} from '../editor/PortableTextEditor'
@@ -288,11 +287,6 @@ export type EditorChange =
   | UnsetChange
   | ValueChange
 
-/**
- * @beta
- */
-export type EditorChanges = Subject<EditorChange>
-
 /** @beta */
 export type OnPasteResult =
   | {
@@ -329,12 +323,6 @@ export type OnBeforeInputFn = (event: InputEvent) => void
 export type OnCopyFn = (
   event: ClipboardEvent<HTMLDivElement | HTMLSpanElement>,
 ) => undefined | unknown
-
-/** @beta */
-export type PatchObservable = Observable<{
-  patches: Patch[]
-  snapshot: PortableTextBlock[] | undefined
-}>
 
 /** @beta */
 export interface BlockRenderProps {

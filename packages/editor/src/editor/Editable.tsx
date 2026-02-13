@@ -251,7 +251,7 @@ export const PortableTextEditable = forwardRef<
         if (slateRange) {
           Transforms.select(slateEditor, slateRange)
           // Output selection here in those cases where the editor selection was the same, and there are no set_selection operations made.
-          // The selection is usually automatically emitted to change$ by the withPortableTextSelections plugin whenever there is a set_selection operation applied.
+          // The selection is usually automatically emitted by the withPortableTextSelections plugin whenever there is a set_selection operation applied.
           if (!slateEditor.operations.some((o) => o.type === 'set_selection')) {
             editorActor.send({
               type: 'update selection',
