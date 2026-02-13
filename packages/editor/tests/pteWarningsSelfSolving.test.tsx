@@ -2,7 +2,7 @@ import type {PortableTextBlock} from '@portabletext/schema'
 import {createRef, type RefObject} from 'react'
 import {describe, expect, it, vi} from 'vitest'
 import {PortableTextEditor} from '../src/editor/PortableTextEditor'
-import {InternalChange$Plugin} from '../src/plugins/plugin.internal.change-ref'
+import {InternalEditorChangePlugin} from '../src/plugins/plugin.internal.editor-change-ref'
 import {InternalPortableTextEditorRefPlugin} from '../src/plugins/plugin.internal.portable-text-editor-ref'
 import {createTestEditor} from '../src/test/vitest'
 
@@ -30,7 +30,7 @@ describe('when PTE would display warnings, instead it self solves', () => {
     await createTestEditor({
       children: (
         <>
-          <InternalChange$Plugin onChange={onChange} />
+          <InternalEditorChangePlugin onChange={onChange} />
           <InternalPortableTextEditorRefPlugin ref={editorRef} />
         </>
       ),
@@ -91,7 +91,7 @@ describe('when PTE would display warnings, instead it self solves', () => {
     await createTestEditor({
       children: (
         <>
-          <InternalChange$Plugin onChange={onChange} />
+          <InternalEditorChangePlugin onChange={onChange} />
           <InternalPortableTextEditorRefPlugin ref={editorRef} />
         </>
       ),
@@ -151,7 +151,7 @@ describe('when PTE would display warnings, instead it self solves', () => {
     await createTestEditor({
       children: (
         <>
-          <InternalChange$Plugin onChange={onChange} />
+          <InternalEditorChangePlugin onChange={onChange} />
           <InternalPortableTextEditorRefPlugin ref={editorRef} />
         </>
       ),
@@ -226,7 +226,7 @@ describe('when PTE would display warnings, instead it self solves', () => {
     await createTestEditor({
       children: (
         <>
-          <InternalChange$Plugin onChange={onChange} />
+          <InternalEditorChangePlugin onChange={onChange} />
           <InternalPortableTextEditorRefPlugin ref={editorRef} />
         </>
       ),
@@ -293,7 +293,7 @@ describe('when PTE would display warnings, instead it self solves', () => {
     await createTestEditor({
       children: (
         <>
-          <InternalChange$Plugin onChange={onChange} />
+          <InternalEditorChangePlugin onChange={onChange} />
           <InternalPortableTextEditorRefPlugin ref={editorRef} />
         </>
       ),
@@ -337,7 +337,7 @@ describe('when PTE would display warnings, instead it self solves', () => {
     await createTestEditor({
       children: (
         <>
-          <InternalChange$Plugin onChange={onChange} />
+          <InternalEditorChangePlugin onChange={onChange} />
           <InternalPortableTextEditorRefPlugin ref={editorRef} />
         </>
       ),
@@ -372,7 +372,7 @@ describe('when PTE would display warnings, instead it self solves', () => {
     await createTestEditor({
       children: (
         <>
-          <InternalChange$Plugin onChange={onChange} />
+          <InternalEditorChangePlugin onChange={onChange} />
           <InternalPortableTextEditorRefPlugin ref={editorRef} />
         </>
       ),

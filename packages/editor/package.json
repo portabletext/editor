@@ -119,7 +119,6 @@
     "racejar": "workspace:*",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
-    "rxjs": "^7.8.2",
     "typescript": "catalog:",
     "typescript-eslint": "^8.48.0",
     "vite": "^7.3.1",
@@ -128,8 +127,7 @@
   },
   "peerDependencies": {
     "@portabletext/sanity-bridge": "workspace:^2.0.2",
-    "react": "^19.2.3",
-    "rxjs": "^7.8.2"
+    "react": "^19.2.3"
   },
   "engines": {
     "node": ">=20.19 <22 || >=22.12"

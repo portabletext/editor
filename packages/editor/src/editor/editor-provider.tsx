@@ -6,7 +6,6 @@ import {Slate} from '../slate-react'
 import {createInternalEditor} from './create-editor'
 import {EditorActorContext} from './editor-actor-context'
 import {EditorContext} from './editor-context'
-import {eventToChange} from './event-to-change'
 import {PortableTextEditor} from './PortableTextEditor'
 import {RelayActorContext} from './relay-actor-context'
 import {PortableTextEditorContext} from './usePortableTextEditor'
@@ -54,18 +53,6 @@ export function EditorProvider(props: EditorProviderProps) {
       unsubscribers.push(subscription())
     }
 
-    const relayActorSubscription = internalEditor.actors.relayActor.on(
-      '*',
-      (event) => {
-        const change = eventToChange(event)
-
-        if (change) {
-          portableTextEditor.change$.next(change)
-        }
-      },
-    )
-    unsubscribers.push(relayActorSubscription.unsubscribe)
-
     internalEditor.actors.editorActor.start()
     internalEditor.actors.editorActor.send({
       type: 'add slate editor',
@@ -85,7 +72,7 @@ export function EditorProvider(props: EditorProviderProps) {
       stopActor(internalEditor.actors.relayActor)
       stopActor(internalEditor.actors.syncActor)
     }
-  }, [internalEditor, portableTextEditor])
+  }, [internalEditor])
 
   return (
     <EditorContext.Provider value={internalEditor.editor}>
