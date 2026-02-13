@@ -1,12 +1,14 @@
 import {applyAll, set, unset} from '@portabletext/patches'
 import {isTextBlock} from '@portabletext/schema'
 import {Transforms, type Node} from 'slate'
+import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import type {OperationImplementation} from './operation.types'
 
 export const blockUnsetOperationImplementation: OperationImplementation<
   'block.unset'
 > = ({context, operation}) => {
-  const blockKey = operation.at[operation.at.length - 1]?._key
+  const lastSegment = operation.at[operation.at.length - 1]
+  const blockKey = isKeyedSegment(lastSegment) ? lastSegment._key : undefined
   const entry = blockKey
     ? operation.editor.blockIndexMap.get(blockKey)
     : undefined

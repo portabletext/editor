@@ -2,12 +2,18 @@ import type {AnnotationPath, BlockPath, ChildPath} from '../types/paths'
 import {isKeyedSegment} from './util.is-keyed-segment'
 
 /**
- * Get the block key from a BlockPath (last segment).
- * For top-level blocks this is path[0]._key.
- * For nested blocks this is the last keyed segment.
+ * Get the block key from a BlockPath (last keyed segment).
+ * For top-level blocks: `[{_key: 'abc'}]` → `'abc'`
+ * For nested blocks: `[{_key: 'container'}, 'rows', 0, {_key: 'child'}]` → `'child'`
+ *
+ * Returns undefined if the path is empty or the last segment isn't keyed.
  */
-export function getBlockKeyFromPath(path: BlockPath): string {
-  return path[path.length - 1]!._key
+export function getBlockKeyFromPath(path: BlockPath): string | undefined {
+  const lastSegment = path[path.length - 1]
+  if (isKeyedSegment(lastSegment)) {
+    return lastSegment._key
+  }
+  return undefined
 }
 
 /**

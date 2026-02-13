@@ -29,31 +29,33 @@ export type PathSegment = string | number | KeyedSegment | IndexTuple
 export type Path = PathSegment[]
 
 /**
- * A path to a block in the document. Variable-length to support nested
- * containers — each segment identifies a block by `_key` at that depth.
+ * A path to a block in the document. Alias for `Path` — preserves semantic
+ * meaning in selector return types and behavior events.
  *
- * Examples:
+ * With containers, block paths include field name segments:
  * - Top-level block: `[{_key: 'abc'}]`
- * - Nested block: `[{_key: 'container'}, {_key: 'child'}]`
+ * - Nested block: `[{_key: 'container'}, 'rows', 0, 'cells', 1, 'content', {_key: 'child'}]`
  *
  * @public
  */
-export type BlockPath = Array<{_key: string}>
+export type BlockPath = Path
 
 /**
- * Type guard for BlockPath. A valid block path has at least one keyed segment
- * and all segments are keyed.
+ * Type guard for BlockPath. A valid block path has at least one segment
+ * and ends with a keyed segment (identifying the block).
  * @public
  */
 export function isBlockPath(path: Path): path is BlockPath {
+  if (path.length < 1) {
+    return false
+  }
+
+  const lastSegment = path[path.length - 1]
+
   return (
-    path.length >= 1 &&
-    path.every(
-      (segment) =>
-        isRecord(segment) &&
-        '_key' in segment &&
-        typeof segment._key === 'string',
-    )
+    isRecord(lastSegment) &&
+    '_key' in lastSegment &&
+    typeof lastSegment._key === 'string'
   )
 }
 
@@ -65,10 +67,10 @@ function isRecord(value: unknown): value is Record<string, unknown> {
  * A path to an annotation (markDef) within a block.
  * @public
  */
-export type AnnotationPath = [...BlockPath, 'markDefs', {_key: string}]
+export type AnnotationPath = [...Path, 'markDefs', {_key: string}]
 
 /**
  * A path to a child (span or inline object) within a block.
  * @public
  */
-export type ChildPath = [...BlockPath, 'children', {_key: string}]
+export type ChildPath = [...Path, 'children', {_key: string}]
