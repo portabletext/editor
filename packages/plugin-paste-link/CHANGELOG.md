@@ -1,5 +1,12 @@
 # @portabletext/plugin-paste-link
 
+## 2.0.0
+
+### Patch Changes
+
+- Updated dependencies [[`aadc179`](https://github.com/portabletext/editor/commit/aadc179d1a1181fb52af5905d9be9360b804ab81)]:
+  - @portabletext/editor@5.0.0
+
 ## 1.0.4
 
 ### Patch Changes
