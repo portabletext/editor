@@ -17,6 +17,8 @@ minimumReleaseAgeExclude:
   - 'react'
   - 'react-dom'
   - 'react-is'
+  # Renovate security update: markdown-it@14.1.1
+  - markdown-it@14.1.1
 
 trustPolicy: no-downgrade
 
