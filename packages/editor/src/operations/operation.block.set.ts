@@ -7,14 +7,18 @@ import type {OperationImplementation} from './operation.types'
 export const blockSetOperationImplementation: OperationImplementation<
   'block.set'
 > = ({context, operation}) => {
-  const blockIndex = operation.editor.blockIndexMap.get(operation.at[0]._key)
+  const blockKey = operation.at[operation.at.length - 1]?._key
+  const entry = blockKey
+    ? operation.editor.blockIndexMap.get(blockKey)
+    : undefined
 
-  if (blockIndex === undefined) {
+  if (entry === undefined) {
     throw new Error(
       `Unable to find block index for block at ${JSON.stringify(operation.at)}`,
     )
   }
 
+  const blockIndex = entry.index
   const slateBlock = operation.editor.children.at(blockIndex)
 
   if (!slateBlock) {

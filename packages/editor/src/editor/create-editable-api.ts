@@ -258,13 +258,13 @@ export function createEditableAPI(
         return [undefined, undefined]
       }
 
-      const blockIndex = editor.blockIndexMap.get(blockKey)
+      const blockEntry = editor.blockIndexMap.get(blockKey)
 
-      if (blockIndex === undefined) {
+      if (blockEntry === undefined) {
         return [undefined, undefined]
       }
 
-      const block = editor.value.at(blockIndex)
+      const block = editor.value.at(blockEntry.index)
 
       if (!block) {
         return [undefined, undefined]

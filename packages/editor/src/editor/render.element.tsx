@@ -52,9 +52,11 @@ export function RenderElement(props: {
     )
   }
 
-  const blockIndex = slateStatic.blockIndexMap.get(props.element._key)
+  const blockEntry = slateStatic.blockIndexMap.get(props.element._key)
   const block =
-    blockIndex !== undefined ? slateStatic.value.at(blockIndex) : undefined
+    blockEntry !== undefined
+      ? slateStatic.value.at(blockEntry.index)
+      : undefined
 
   if (isTextBlock({schema}, block)) {
     return (

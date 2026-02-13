@@ -84,12 +84,13 @@ export function toSlateSelectionPoint(
     return undefined
   }
 
-  const blockIndex = snapshot.blockIndexMap.get(blockKey)
+  const blockEntry = snapshot.blockIndexMap.get(blockKey)
 
-  if (blockIndex === undefined) {
+  if (blockEntry === undefined) {
     return undefined
   }
 
+  const blockIndex = blockEntry.index
   const block = snapshot.context.value.at(blockIndex)
 
   if (!block) {

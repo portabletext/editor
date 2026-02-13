@@ -30,7 +30,7 @@ export function createSlateEditor(config: SlateEditorConfig): SlateEditor {
 
   editor.decoratedRanges = []
   editor.decoratorState = {}
-  editor.blockIndexMap = new Map<string, number>()
+  editor.blockIndexMap = new Map()
   editor.history = {undos: [], redos: []}
   editor.lastSelection = null
   editor.lastSlateSelection = null
