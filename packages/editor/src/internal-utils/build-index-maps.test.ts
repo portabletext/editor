@@ -4,8 +4,14 @@ import {
   type PortableTextBlock,
 } from '@portabletext/schema'
 import {describe, expect, test} from 'vitest'
+import type {BlockPath} from '../types/paths'
 import {defaultKeyGenerator} from '../utils/key-generator'
 import {buildIndexMaps} from './build-index-maps'
+
+/** Helper to create the expected dual-store entry */
+function entry(key: string, index: number): {path: BlockPath; index: number} {
+  return {path: [{_key: key}], index}
+}
 
 function blockObject(_key: string, name: string) {
   return {
@@ -47,7 +53,7 @@ const schema = compileSchema(
 )
 
 describe(buildIndexMaps.name, () => {
-  const blockIndexMap = new Map<string, number>()
+  const blockIndexMap = new Map<string, {path: BlockPath; index: number}>()
   const listIndexMap = new Map<string, number>()
 
   test('empty', () => {
@@ -64,7 +70,7 @@ describe(buildIndexMaps.name, () => {
       {schema, value: [textBlock('k0', {listItem: 'number', level: 1})]},
       {blockIndexMap, listIndexMap},
     )
-    expect(blockIndexMap).toEqual(new Map([['k0', 0]]))
+    expect(blockIndexMap).toEqual(new Map([['k0', entry('k0', 0)]]))
     expect(listIndexMap).toEqual(new Map([['k0', 1]]))
   })
 
@@ -76,7 +82,7 @@ describe(buildIndexMaps.name, () => {
       {schema, value: [textBlock('k0', {listItem: 'number', level: 2})]},
       {blockIndexMap, listIndexMap},
     )
-    expect(blockIndexMap).toEqual(new Map([['k0', 0]]))
+    expect(blockIndexMap).toEqual(new Map([['k0', entry('k0', 0)]]))
     expect(listIndexMap).toEqual(new Map([['k0', 1]]))
   })
 
@@ -103,11 +109,11 @@ describe(buildIndexMaps.name, () => {
     )
     expect(blockIndexMap).toEqual(
       new Map([
-        ['k0', 0],
-        ['k1', 1],
-        ['k2', 2],
-        ['k3', 3],
-        ['k4', 4],
+        ['k0', entry('k0', 0)],
+        ['k1', entry('k1', 1)],
+        ['k2', entry('k2', 2)],
+        ['k3', entry('k3', 3)],
+        ['k4', entry('k4', 4)],
       ]),
     )
     expect(listIndexMap).toEqual(
@@ -143,11 +149,11 @@ describe(buildIndexMaps.name, () => {
     )
     expect(blockIndexMap).toEqual(
       new Map([
-        ['k0', 0],
-        ['k1', 1],
-        ['k2', 2],
-        ['k3', 3],
-        ['k4', 4],
+        ['k0', entry('k0', 0)],
+        ['k1', entry('k1', 1)],
+        ['k2', entry('k2', 2)],
+        ['k3', entry('k3', 3)],
+        ['k4', entry('k4', 4)],
       ]),
     )
     expect(listIndexMap).toEqual(
@@ -179,9 +185,9 @@ describe(buildIndexMaps.name, () => {
     )
     expect(blockIndexMap).toEqual(
       new Map([
-        ['k0', 0],
-        ['k1', 1],
-        ['k2', 2],
+        ['k0', entry('k0', 0)],
+        ['k1', entry('k1', 1)],
+        ['k2', entry('k2', 2)],
       ]),
     )
     expect(listIndexMap).toEqual(
@@ -307,10 +313,10 @@ describe(buildIndexMaps.name, () => {
     )
     expect(blockIndexMap).toEqual(
       new Map([
-        ['k0', 0],
-        ['k1', 1],
-        ['k2', 2],
-        ['k3', 3],
+        ['k0', entry('k0', 0)],
+        ['k1', entry('k1', 1)],
+        ['k2', entry('k2', 2)],
+        ['k3', entry('k3', 3)],
       ]),
     )
     expect(listIndexMap).toEqual(
@@ -342,9 +348,9 @@ describe(buildIndexMaps.name, () => {
     )
     expect(blockIndexMap).toEqual(
       new Map([
-        ['k0', 0],
-        ['k1', 1],
-        ['k2', 2],
+        ['k0', entry('k0', 0)],
+        ['k1', entry('k1', 1)],
+        ['k2', entry('k2', 2)],
       ]),
     )
     expect(listIndexMap).toEqual(
@@ -387,15 +393,15 @@ describe(buildIndexMaps.name, () => {
     )
     expect(blockIndexMap).toEqual(
       new Map([
-        ['k0', 0],
-        ['k1', 1],
-        ['k2', 2],
-        ['k3', 3],
-        ['k4', 4],
-        ['k5', 5],
-        ['k6', 6],
-        ['k7', 7],
-        ['k8', 8],
+        ['k0', entry('k0', 0)],
+        ['k1', entry('k1', 1)],
+        ['k2', entry('k2', 2)],
+        ['k3', entry('k3', 3)],
+        ['k4', entry('k4', 4)],
+        ['k5', entry('k5', 5)],
+        ['k6', entry('k6', 6)],
+        ['k7', entry('k7', 7)],
+        ['k8', entry('k8', 8)],
       ]),
     )
     expect(listIndexMap).toEqual(

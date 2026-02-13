@@ -2,6 +2,7 @@ import type {PortableTextBlock} from '@portabletext/schema'
 import type {Converter} from '../converters/converter.types'
 import {slateRangeToSelection} from '../internal-utils/slate-utils'
 import type {EditorSelection} from '../types/editor'
+import type {BlockPath} from '../types/paths'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import type {EditorSchema} from './editor-schema'
 
@@ -22,7 +23,7 @@ export type EditorContext = {
  */
 export type EditorSnapshot = {
   context: EditorContext
-  blockIndexMap: Map<string, number>
+  blockIndexMap: Map<string, {path: BlockPath; index: number}>
   /**
    * @beta
    * Subject to change
