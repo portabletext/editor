@@ -3,12 +3,10 @@ import type {
   PortableTextChild,
   PortableTextObject,
 } from '@portabletext/schema'
-import {Subject} from 'rxjs'
 import type {
   AddedAnnotationPaths,
   EditableAPI,
   EditableAPIDeleteOptions,
-  EditorChanges,
   EditorSelection,
   PortableTextMemberSchemaTypes,
 } from '../types/editor'
@@ -33,10 +31,6 @@ import type {InternalEditor} from './create-editor'
  * ```
  */
 export class PortableTextEditor {
-  /**
-   * An observable of all the editor changes.
-   */
-  public change$: EditorChanges = new Subject()
   /**
    * A lookup table for all the relevant schema types for this portable text type.
    */
