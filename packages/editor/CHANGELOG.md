@@ -1,5 +1,38 @@
 # Changelog
 
+## 5.0.0
+
+### Major Changes
+
+- [#2140](https://github.com/portabletext/editor/pull/2140) [`aadc179`](https://github.com/portabletext/editor/commit/aadc179d1a1181fb52af5905d9be9360b804ab81) Thanks [@christianhg](https://github.com/christianhg)! - feat!: remove `PortableTextEditor` React component
+
+  ## Migration
+
+  If you were using `PortableTextEditor` as a React component, switch to `EditorProvider`:
+
+  ```diff
+  - import {PortableTextEditor} from '@portabletext/editor'
+  + import {EditorProvider} from '@portabletext/editor'
+
+  - <PortableTextEditor
+  -   schemaType={schemaType}
+  -   value={value}
+  -   onChange={handleChange}
+  -   patches$={patches$}
+  - >
+  + <EditorProvider
+  +   initialConfig={{
+  +     schemaDefinition: defineSchema({...}),
+  +     initialValue: value,
+  +   }}
+  + >
+      <PortableTextEditable />
+  - </PortableTextEditor>
+  + </EditorProvider>
+  ```
+
+  The `PortableTextEditorProps` type export has also been removed.
+
 ## 4.3.10
 
 ### Patch Changes
