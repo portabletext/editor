@@ -25,7 +25,7 @@ import {
 } from '../src/internal-utils/text-selection'
 import {EditorRefPlugin} from '../src/plugins/plugin.editor-ref'
 import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
-import {InternalChange$Plugin} from '../src/plugins/plugin.internal.change-ref'
+import {InternalEditorChangePlugin} from '../src/plugins/plugin.internal.editor-change-ref'
 import {InternalPortableTextEditorRefPlugin} from '../src/plugins/plugin.internal.portable-text-editor-ref'
 import {createTestEditor} from '../src/test/vitest'
 import {
@@ -311,7 +311,7 @@ describe('RangeDecorations', () => {
     const {rerender} = await createTestEditor({
       children: (
         <>
-          <InternalChange$Plugin onChange={onChange} />
+          <InternalEditorChangePlugin onChange={onChange} />
           <InternalPortableTextEditorRefPlugin ref={editorRef} />
         </>
       ),
@@ -337,7 +337,7 @@ describe('RangeDecorations', () => {
     await rerender({
       children: (
         <>
-          <InternalChange$Plugin onChange={onChange} />
+          <InternalEditorChangePlugin onChange={onChange} />
           <InternalPortableTextEditorRefPlugin ref={editorRef} />
         </>
       ),
@@ -363,7 +363,7 @@ describe('RangeDecorations', () => {
     await rerender({
       children: (
         <>
-          <InternalChange$Plugin onChange={onChange} />
+          <InternalEditorChangePlugin onChange={onChange} />
           <InternalPortableTextEditorRefPlugin ref={editorRef} />
         </>
       ),
@@ -391,7 +391,7 @@ describe('RangeDecorations', () => {
     await rerender({
       children: (
         <>
-          <InternalChange$Plugin onChange={onChange} />
+          <InternalEditorChangePlugin onChange={onChange} />
           <InternalPortableTextEditorRefPlugin ref={editorRef} />
         </>
       ),
@@ -421,7 +421,7 @@ describe('RangeDecorations', () => {
     await rerender({
       children: (
         <>
-          <InternalChange$Plugin onChange={onChange} />
+          <InternalEditorChangePlugin onChange={onChange} />
           <InternalPortableTextEditorRefPlugin ref={editorRef} />
         </>
       ),
@@ -451,7 +451,7 @@ describe('RangeDecorations', () => {
     await rerender({
       children: (
         <>
-          <InternalChange$Plugin onChange={onChange} />
+          <InternalEditorChangePlugin onChange={onChange} />
           <InternalPortableTextEditorRefPlugin ref={editorRef} />
         </>
       ),
@@ -481,7 +481,7 @@ describe('RangeDecorations', () => {
     await rerender({
       children: (
         <>
-          <InternalChange$Plugin onChange={onChange} />
+          <InternalEditorChangePlugin onChange={onChange} />
           <InternalPortableTextEditorRefPlugin ref={editorRef} />
         </>
       ),
