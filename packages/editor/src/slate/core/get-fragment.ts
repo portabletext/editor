@@ -1,5 +1,5 @@
-import {Editor, Node} from '../interfaces'
-import {WithEditorFirstArg} from '../utils'
+import {Node, type Editor} from '../interfaces'
+import type {WithEditorFirstArg} from '../utils'
 
 export const getFragment: WithEditorFirstArg<Editor['getFragment']> = (
   editor,

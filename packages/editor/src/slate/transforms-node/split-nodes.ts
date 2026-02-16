@@ -2,11 +2,11 @@ import {Editor} from '../interfaces/editor'
 import {Element} from '../interfaces/element'
 import {Node} from '../interfaces/node'
 import {Path} from '../interfaces/path'
-import {Point} from '../interfaces/point'
-import {PointRef} from '../interfaces/point-ref'
+import type {Point} from '../interfaces/point'
+import type {PointRef} from '../interfaces/point-ref'
 import {Range} from '../interfaces/range'
 import {Transforms} from '../interfaces/transforms'
-import {NodeTransforms} from '../interfaces/transforms/node'
+import type {NodeTransforms} from '../interfaces/transforms/node'
 
 /**
  * Convert a range into a point by deleting it's content.
@@ -75,7 +75,7 @@ export const splitNodes: NodeTransforms['splitNodes'] = (
           let after = Editor.after(editor, voidPath)
 
           if (!after) {
-            const text = {text: ''}
+            const text = {text: ''} as Node
             const afterPath = Path.next(voidPath)
             Transforms.insertNodes(editor, text, {at: afterPath, voids})
             after = Editor.point(editor, afterPath)!
@@ -94,7 +94,7 @@ export const splitNodes: NodeTransforms['splitNodes'] = (
       const depth = at.path.length - height
       const [, highestPath] = highest
       const lowestPath = at.path.slice(0, depth)
-      let position = height === 0 ? at.offset : at.path[depth] + nudge
+      let position = height === 0 ? at.offset : at.path[depth]! + nudge
 
       for (const [node, path] of Editor.levels(editor, {
         at: lowestPath,
@@ -125,7 +125,7 @@ export const splitNodes: NodeTransforms['splitNodes'] = (
           })
         }
 
-        position = path[path.length - 1] + (split || isEnd ? 1 : 0)
+        position = path[path.length - 1]! + (split || isEnd ? 1 : 0)
       }
 
       if (options.at == null) {

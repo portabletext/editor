@@ -1,4 +1,13 @@
-import {Editor, Element, Node, Operation, Path, Point, Range, Text} from 'slate'
+import {
+  Editor,
+  Element,
+  Node,
+  Path,
+  Point,
+  Range,
+  Text,
+  type Operation,
+} from '../../slate'
 import {EDITOR_TO_PENDING_DIFFS} from './weak-maps'
 
 export type StringDiff = {

@@ -1,4 +1,4 @@
-import {EditorInterface} from '../interfaces/editor'
+import type {EditorInterface} from '../interfaces/editor'
 import {PATH_REFS} from '../utils/weak-maps'
 
 export const pathRefs: EditorInterface['pathRefs'] = (editor) => {

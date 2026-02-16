@@ -1,4 +1,4 @@
-import {Editor, EditorInterface} from '../interfaces/editor'
+import {Editor, type EditorInterface} from '../interfaces/editor'
 import {Element} from '../interfaces/element'
 
 export const hasBlocks: EditorInterface['hasBlocks'] = (editor, element) => {

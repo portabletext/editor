@@ -1,7 +1,7 @@
-import {Editor, EditorInterface, Element, Text} from '../interfaces'
+import {Editor, Element, Text, type EditorInterface} from '../interfaces'
 
 export const shouldMergeNodesRemovePrevNode: EditorInterface['shouldMergeNodesRemovePrevNode'] =
-  (editor, [prevNode, prevPath], [curNode, curNodePath]) => {
+  (editor, [prevNode, prevPath], [_curNode, _curNodePath]) => {
     // If the target node that we're merging with is empty, remove it instead
     // of merging the two. This is a common rich text editor behavior to
     // prevent losing formatting when deleting entire nodes when you have a

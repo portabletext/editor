@@ -1,4 +1,4 @@
-import {Path, type Operation} from 'slate'
+import {Path, type Operation} from '../slate'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 
 type UndoStep = {

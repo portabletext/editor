@@ -1,9 +1,9 @@
-import {Editor, Node, Point, Range, Text} from 'slate'
 import type {EditorActor} from '../editor/editor-machine'
 import {
   slatePointToSelectionPoint,
   slateRangeToSelection,
 } from '../internal-utils/slate-utils'
+import {Editor, Node, Point, Range, Text} from '../slate'
 
 export function createBehaviorApiPlugin(editorActor: EditorActor) {
   return function behaviorApiPlugin(editor: Editor) {

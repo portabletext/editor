@@ -1,6 +1,6 @@
-import {RefObject} from 'react'
-import {isTrackedMutation} from 'slate-dom'
-import {ReactEditor} from '../../plugin/react-editor'
+import type {RefObject} from 'react'
+import {isTrackedMutation} from '../../../slate-dom'
+import type {Editor} from '../../../slate/interfaces/editor'
 
 export type RestoreDOMManager = {
   registerMutations: (mutations: MutationRecord[]) => void
@@ -9,7 +9,7 @@ export type RestoreDOMManager = {
 }
 
 export const createRestoreDomManager = (
-  editor: ReactEditor,
+  editor: Editor,
   receivedUserInput: RefObject<boolean>,
 ): RestoreDOMManager => {
   let bufferedMutations: MutationRecord[] = []

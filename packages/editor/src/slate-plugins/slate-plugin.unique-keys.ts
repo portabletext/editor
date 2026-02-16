@@ -1,8 +1,8 @@
 import {isSpan, isTextBlock} from '@portabletext/schema'
-import {Editor, Element, Node, Path, Transforms} from 'slate'
 import type {EditorActor} from '../editor/editor-machine'
 import type {EditorContext, EditorSnapshot} from '../editor/editor-snapshot'
 import {isEqualMarks} from '../internal-utils/equality'
+import {Editor, Element, Node, Path, Transforms} from '../slate'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {withNormalizeNode} from './slate-plugin.normalize-node'
 

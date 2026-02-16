@@ -1,4 +1,4 @@
-import {EditorInterface} from '../interfaces/editor'
+import type {EditorInterface} from '../interfaces/editor'
 import {Range} from '../interfaces/range'
 import {Transforms} from '../interfaces/transforms'
 

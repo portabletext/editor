@@ -1,10 +1,10 @@
-import {Editor} from '../interfaces/editor'
+import type {Editor} from '../interfaces/editor'
 
 export type OmitFirstArg<F> = F extends (x: any, ...args: infer P) => infer R
   ? (...args: P) => R
   : never
 
-export type OmitFirstArgWithSpecificGeneric<F, TSpecific> = F extends (
+export type OmitFirstArgWithSpecificGeneric<F, _TSpecific> = F extends (
   x: any,
   ...args: infer P
 ) => infer R

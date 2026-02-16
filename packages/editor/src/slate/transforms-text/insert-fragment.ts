@@ -1,11 +1,11 @@
 import {Editor} from '../interfaces/editor'
 import {Element} from '../interfaces/element'
-import {Descendant, Node, NodeEntry} from '../interfaces/node'
+import {Node, type Descendant, type NodeEntry} from '../interfaces/node'
 import {Path} from '../interfaces/path'
 import {Range} from '../interfaces/range'
 import {Text} from '../interfaces/text'
 import {Transforms} from '../interfaces/transforms'
-import {TextTransforms} from '../interfaces/transforms/text'
+import type {TextTransforms} from '../interfaces/transforms/text'
 import {getDefaultInsertLocation} from '../utils'
 
 export const insertFragment: TextTransforms['insertFragment'] = (
@@ -77,8 +77,8 @@ export const insertFragment: TextTransforms['insertFragment'] = (
     const isBlockStart = Editor.isStart(editor, at, blockPath)
     const isBlockEnd = Editor.isEnd(editor, at, blockPath)
     const isBlockEmpty = isBlockStart && isBlockEnd
-    const [, firstLeafPath] = Node.first({children: fragment}, [])
-    const [, lastLeafPath] = Node.last({children: fragment}, [])
+    const [, firstLeafPath] = Node.first({children: fragment} as Node, [])
+    const [, lastLeafPath] = Node.last({children: fragment} as Node, [])
 
     // For each node in the fragment, determine what level of wrapping should
     // be kept. At minimum, all text nodes will be inserted, but if
@@ -140,10 +140,9 @@ export const insertFragment: TextTransforms['insertFragment'] = (
     // empty.
     const ends: Descendant[] = []
 
-    for (const entry of Node.nodes(
-      {children: fragment},
-      {pass: shouldInsert},
-    )) {
+    for (const entry of Node.nodes({children: fragment} as Node, {
+      pass: shouldInsert,
+    })) {
       const [node, path] = entry
 
       // If we encounter a block that does not contain the first leaf, we're no
@@ -169,12 +168,14 @@ export const insertFragment: TextTransforms['insertFragment'] = (
       }
     }
 
-    const [inlineMatch] = Editor.nodes(editor, {
-      at,
-      match: (n) => Text.isText(n) || Editor.isInline(editor, n),
-      mode: 'highest',
-      voids,
-    })!
+    const inlineMatch = Array.from(
+      Editor.nodes(editor, {
+        at,
+        match: (n) => Text.isText(n) || Editor.isInline(editor, n),
+        mode: 'highest',
+        voids,
+      }),
+    )[0]!
 
     const [, inlinePath] = inlineMatch
     const isInlineStart = Editor.isStart(editor, at, inlinePath)
@@ -244,7 +245,7 @@ export const insertFragment: TextTransforms['insertFragment'] = (
     })
 
     if (!options.at) {
-      let path
+      let path: Path | undefined
 
       if (ends.length > 0 && endRef.current) {
         path = Path.previous(endRef.current)

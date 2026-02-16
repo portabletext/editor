@@ -14,6 +14,7 @@ import {
   type PortableTextSpan,
   type PortableTextTextBlock,
 } from '@portabletext/schema'
+import type {EditorSchema} from '../editor/editor-schema'
 import {
   Element,
   Text,
@@ -26,8 +27,7 @@ import {
   type RemoveTextOperation,
   type SetNodeOperation,
   type SplitNodeOperation,
-} from 'slate'
-import type {EditorSchema} from '../editor/editor-schema'
+} from '../slate'
 import type {Path} from '../types/paths'
 import {fromSlateBlock} from './values'
 

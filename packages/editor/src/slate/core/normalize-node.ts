@@ -1,9 +1,9 @@
 import {Editor} from '../interfaces/editor'
 import {Element} from '../interfaces/element'
-import {Descendant, Node} from '../interfaces/node'
+import {Node, type Descendant} from '../interfaces/node'
 import {Text} from '../interfaces/text'
 import {Transforms} from '../interfaces/transforms'
-import {WithEditorFirstArg} from '../utils/types'
+import type {WithEditorFirstArg} from '../utils/types'
 
 export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   editor,
@@ -19,7 +19,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
 
   // Ensure that block and inline nodes have at least one text child.
   if (Element.isElement(node) && node.children.length === 0) {
-    const child = {text: ''}
+    const child = {text: ''} as Node
     Transforms.insertNodes(editor, child, {
       at: path.concat(0),
       voids: true,
@@ -33,8 +33,8 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
     : Element.isElement(node) &&
       (editor.isInline(node) ||
         node.children.length === 0 ||
-        Text.isText(node.children[0]) ||
-        editor.isInline(node.children[0]))
+        Text.isText(node.children[0]!) ||
+        editor.isInline(node.children[0]!))
 
   // Since we'll be applying operations while iterating, keep track of an
   // index that accounts for any added/removed nodes.
@@ -42,7 +42,9 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
 
   for (let i = 0; i < node.children.length; i++, n++) {
     const currentNode = Node.get(editor, path)
-    if (Text.isText(currentNode)) continue
+    if (Text.isText(currentNode)) {
+      continue
+    }
     const child = currentNode.children[n] as Descendant
     const prev = currentNode.children[n - 1] as Descendant
     const isLast = i === node.children.length - 1
@@ -71,14 +73,14 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
       // Ensure that inline nodes are surrounded by text nodes.
       if (editor.isInline(child)) {
         if (prev == null || !Text.isText(prev)) {
-          const newChild = {text: ''}
+          const newChild = {text: ''} as Node
           Transforms.insertNodes(editor, newChild, {
             at: path.concat(n),
             voids: true,
           })
           n++
         } else if (isLast) {
-          const newChild = {text: ''}
+          const newChild = {text: ''} as Node
           Transforms.insertNodes(editor, newChild, {
             at: path.concat(n + 1),
             voids: true,

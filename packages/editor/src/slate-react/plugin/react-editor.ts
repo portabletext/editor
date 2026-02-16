@@ -1,5 +1,5 @@
-import {Ancestor} from 'slate'
-import {DOMEditor, type DOMEditorInterface} from 'slate-dom'
+import type {Ancestor} from '../../slate'
+import {DOMEditor, type DOMEditorInterface} from '../../slate-dom'
 
 /**
  * A React and DOM-specific version of the `Editor` interface.

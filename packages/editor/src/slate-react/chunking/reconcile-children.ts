@@ -1,7 +1,7 @@
-import {Descendant, Editor} from 'slate'
+import type {Descendant, Editor} from '../../slate'
 import {ChildrenHelper} from './children-helper'
-import {ChunkTreeHelper, ChunkTreeHelperOptions} from './chunk-tree-helper'
-import {ChunkLeaf, ChunkTree} from './types'
+import {ChunkTreeHelper, type ChunkTreeHelperOptions} from './chunk-tree-helper'
+import type {ChunkLeaf, ChunkTree} from './types'
 
 export interface ReconcileOptions extends ChunkTreeHelperOptions {
   chunkTree: ChunkTree
@@ -42,6 +42,7 @@ export const reconcileChildren = (
   // node. Each leaf from the tree is compared to the current node in the
   // children array to determine whether nodes have been inserted, removed or
   // updated.
+  // biome-ignore lint/suspicious/noAssignInExpressions: Slate upstream pattern — assignment in while condition
   while ((treeLeaf = chunkTreeHelper.readLeaf())) {
     // Check where the tree node appears in the children array. In the most
     // common case (where no insertions or removals have occurred), this will be

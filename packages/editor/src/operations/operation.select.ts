@@ -1,6 +1,6 @@
-import {Transforms} from 'slate'
-import {IS_FOCUSED, IS_READ_ONLY} from 'slate-dom'
 import {toSlateRange} from '../internal-utils/to-slate-range'
+import {Transforms} from '../slate'
+import {IS_FOCUSED, IS_READ_ONLY} from '../slate-dom'
 import type {OperationImplementation} from './operation.types'
 
 export const selectOperationImplementation: OperationImplementation<

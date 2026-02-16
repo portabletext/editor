@@ -5,9 +5,9 @@ import {
   type PortableTextSpan,
   type PortableTextTextBlock,
 } from '@portabletext/schema'
-import {Editor, Transforms, type Element} from 'slate'
 import type {EditorActor} from '../editor/editor-machine'
 import {debug} from '../internal-utils/debug'
+import {Editor, Transforms, type Element} from '../slate'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {isListBlock} from '../utils/parse-blocks'
 import {withNormalizeNode} from './slate-plugin.normalize-node'

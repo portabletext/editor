@@ -1,11 +1,11 @@
-import {Point} from '../interfaces'
+import type {Point} from '../interfaces'
 import {Editor} from '../interfaces/editor'
 import {Element} from '../interfaces/element'
 import {Path} from '../interfaces/path'
 import {Range} from '../interfaces/range'
 import {Text} from '../interfaces/text'
 import {Transforms} from '../interfaces/transforms'
-import {NodeTransforms} from '../interfaces/transforms/node'
+import type {NodeTransforms} from '../interfaces/transforms/node'
 import {matchPath} from '../utils/match-path'
 
 export const wrapNodes: NodeTransforms['wrapNodes'] = (
@@ -95,8 +95,8 @@ export const wrapNodes: NodeTransforms['wrapNodes'] = (
       )
 
       if (matches.length > 0) {
-        const [first] = matches
-        const last = matches[matches.length - 1]
+        const first = matches[0]!
+        const last = matches[matches.length - 1]!
         const [, firstPath] = first
         const [, lastPath] = last
 

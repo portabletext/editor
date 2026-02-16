@@ -1,12 +1,4 @@
 import {
-  Element,
-  Path,
-  Range,
-  type BaseRange,
-  type NodeEntry,
-  type Operation,
-} from 'slate'
-import {
   and,
   assign,
   fromCallback,
@@ -18,6 +10,14 @@ import {isDeepEqual} from '../internal-utils/equality'
 import {moveRangeByOperation} from '../internal-utils/move-range-by-operation'
 import {slateRangeToSelection} from '../internal-utils/slate-utils'
 import {toSlateRange} from '../internal-utils/to-slate-range'
+import {
+  Element,
+  Path,
+  Range,
+  type BaseRange,
+  type NodeEntry,
+  type Operation,
+} from '../slate'
 import type {RangeDecoration} from '../types/editor'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {isEmptyTextBlock} from '../utils'

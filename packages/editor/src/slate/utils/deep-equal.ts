@@ -18,12 +18,18 @@ export const isDeepEqual = (
     const a = node[key]
     const b = another[key]
     if (Array.isArray(a) && Array.isArray(b)) {
-      if (a.length !== b.length) return false
+      if (a.length !== b.length) {
+        return false
+      }
       for (let i = 0; i < a.length; i++) {
-        if (a[i] !== b[i]) return false
+        if (a[i] !== b[i]) {
+          return false
+        }
       }
     } else if (isObject(a) && isObject(b)) {
-      if (!isDeepEqual(a, b)) return false
+      if (!isDeepEqual(a, b)) {
+        return false
+      }
     } else if (a !== b) {
       return false
     }

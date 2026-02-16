@@ -2,7 +2,7 @@
  * Utilities for single-line deletion
  */
 
-import {Editor, Range} from 'slate'
+import {Editor, Range} from '../../slate'
 import {DOMEditor} from '../plugin/dom-editor'
 
 const doRectsIntersect = (rect: DOMRect, compareRect: DOMRect) => {
@@ -11,7 +11,7 @@ const doRectsIntersect = (rect: DOMRect, compareRect: DOMRect) => {
   return rect.top <= middle && rect.bottom >= middle
 }
 
-const areRangesSameLine = (editor: DOMEditor, range1: Range, range2: Range) => {
+const areRangesSameLine = (editor: Editor, range1: Range, range2: Range) => {
   const rect1 = DOMEditor.toDOMRange(editor, range1).getBoundingClientRect()
   const rect2 = DOMEditor.toDOMRange(editor, range2).getBoundingClientRect()
 
@@ -27,7 +27,7 @@ const areRangesSameLine = (editor: DOMEditor, range1: Range, range2: Range) => {
  * @returns {Range} A valid portion of the parentRange which is one a single line
  */
 export const findCurrentLineRange = (
-  editor: DOMEditor,
+  editor: Editor,
   parentRange: Range,
 ): Range => {
   const parentRangeBoundary = Editor.range(editor, Range.end(parentRange))
@@ -40,17 +40,17 @@ export const findCurrentLineRange = (
   if (
     areRangesSameLine(
       editor,
-      Editor.range(editor, positions[left]),
+      Editor.range(editor, positions[left]!),
       parentRangeBoundary,
     )
   ) {
-    return Editor.range(editor, positions[left], parentRangeBoundary)
+    return Editor.range(editor, positions[left]!, parentRangeBoundary)
   }
 
   if (positions.length < 2) {
     return Editor.range(
       editor,
-      positions[positions.length - 1],
+      positions[positions.length - 1]!,
       parentRangeBoundary,
     )
   }
@@ -59,7 +59,7 @@ export const findCurrentLineRange = (
     if (
       areRangesSameLine(
         editor,
-        Editor.range(editor, positions[middle]),
+        Editor.range(editor, positions[middle]!),
         parentRangeBoundary,
       )
     ) {
@@ -71,5 +71,5 @@ export const findCurrentLineRange = (
     middle = Math.floor((left + right) / 2)
   }
 
-  return Editor.range(editor, positions[left], parentRangeBoundary)
+  return Editor.range(editor, positions[left]!, parentRangeBoundary)
 }

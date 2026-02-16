@@ -1,3 +1,4 @@
+import type {Editor} from '../../slate'
 import {DOMEditor} from '../plugin/dom-editor'
 
 /**
@@ -7,22 +8,25 @@ import {DOMEditor} from '../plugin/dom-editor'
 // COMPAT: This is required to prevent TypeScript aliases from doing some very
 // weird things for Slate's types with the same name as globals. (2019/11/27)
 // https://github.com/microsoft/TypeScript/issues/35002
-import DOMNode = globalThis.Node
-import DOMComment = globalThis.Comment
-import DOMElement = globalThis.Element
-import DOMText = globalThis.Text
-import DOMRange = globalThis.Range
-import DOMSelection = globalThis.Selection
-import DOMStaticRange = globalThis.StaticRange
+type DOMNode = globalThis.Node
+type DOMComment = globalThis.Comment
+type DOMElement = globalThis.Element
+// DOMText is used as a value (instanceof) in dom-editor.ts, so we need both
+// the type alias and a const reference to the global constructor.
+type DOMText = globalThis.Text
+const DOMText = globalThis.Text
+type DOMRange = globalThis.Range
+type DOMSelection = globalThis.Selection
+type DOMStaticRange = globalThis.StaticRange
 
 export {
-  DOMNode,
-  DOMComment,
-  DOMElement,
+  type DOMNode,
+  type DOMComment,
+  type DOMElement,
   DOMText,
-  DOMRange,
-  DOMSelection,
-  DOMStaticRange,
+  type DOMRange,
+  type DOMSelection,
+  type DOMStaticRange,
 }
 
 declare global {
@@ -160,7 +164,7 @@ export const getEditableChildAndIndex = (
   direction: 'forward' | 'backward',
 ): [DOMNode, number] => {
   const {childNodes} = parent
-  let child = childNodes[index]
+  let child: ChildNode | undefined = childNodes[index]
   let i = index
   let triedForward = false
   let triedBackward = false
@@ -195,7 +199,7 @@ export const getEditableChildAndIndex = (
     i += direction === 'forward' ? 1 : -1
   }
 
-  return [child, index]
+  return [child!, index]
 }
 
 /**
@@ -279,7 +283,7 @@ export const getClipboardData = (
  * Get the dom selection from Shadow Root if possible, otherwise from the document
  */
 export const getSelection = (root: Document | ShadowRoot): Selection | null => {
-  if (root.getSelection != null) {
+  if ('getSelection' in root && typeof root.getSelection === 'function') {
     return root.getSelection()
   }
   return document.getSelection()
@@ -290,7 +294,7 @@ export const getSelection = (root: Document | ShadowRoot): Selection | null => {
  */
 
 export const isTrackedMutation = (
-  editor: DOMEditor,
+  editor: Editor,
   mutation: MutationRecord,
   batch: MutationRecord[],
 ): boolean => {
@@ -316,6 +320,8 @@ export const isTrackedMutation = (
         return true
       }
     }
+
+    return false
   })
 
   if (!parentMutation || parentMutation === mutation) {
@@ -344,8 +350,7 @@ export const getActiveElement = () => {
  */
 export const isBefore = (node: DOMNode, otherNode: DOMNode): boolean =>
   Boolean(
-    node.compareDocumentPosition(otherNode) &
-    DOMNode.DOCUMENT_POSITION_PRECEDING,
+    node.compareDocumentPosition(otherNode) & Node.DOCUMENT_POSITION_PRECEDING,
   )
 
 /**
@@ -353,8 +358,7 @@ export const isBefore = (node: DOMNode, otherNode: DOMNode): boolean =>
  */
 export const isAfter = (node: DOMNode, otherNode: DOMNode): boolean =>
   Boolean(
-    node.compareDocumentPosition(otherNode) &
-    DOMNode.DOCUMENT_POSITION_FOLLOWING,
+    node.compareDocumentPosition(otherNode) & Node.DOCUMENT_POSITION_FOLLOWING,
   )
 
 /**

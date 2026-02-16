@@ -1,11 +1,10 @@
 import {
-  Ancestor,
-  Descendant,
-  Editor,
-  ExtendedType,
   isObject,
   Node,
-  Path,
+  type Ancestor,
+  type Descendant,
+  type ExtendedType,
+  type Path,
 } from '..'
 
 /**
@@ -77,11 +76,15 @@ const isElement = (
   value: any,
   {deep = false}: ElementIsElementOptions = {},
 ): value is Element => {
-  if (!isObject(value)) return false
+  if (!isObject(value)) {
+    return false
+  }
 
   // PERF: No need to use the full Editor.isEditor here
   const isEditor = typeof value.apply === 'function'
-  if (isEditor) return false
+  if (isEditor) {
+    return false
+  }
 
   const isChildrenValid = deep
     ? Node.isNodeList(value.children)
@@ -121,7 +124,7 @@ export const Element: ElementInterface = {
     elementKey: string = 'type',
   ): value is T => {
     return (
-      isElement(value) && value[<keyof Descendant>elementKey] === elementVal
+      isElement(value) && value[elementKey as keyof Descendant] === elementVal
     )
   },
 
@@ -131,7 +134,7 @@ export const Element: ElementInterface = {
         continue
       }
 
-      if (element[<keyof Descendant>key] !== props[<keyof Descendant>key]) {
+      if (element[key as keyof Descendant] !== props[key as keyof Descendant]) {
         return false
       }
     }

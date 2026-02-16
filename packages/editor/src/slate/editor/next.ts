@@ -1,5 +1,5 @@
-import {Editor, EditorInterface} from '../interfaces/editor'
-import {Span} from '../interfaces/location'
+import {Editor, type EditorInterface} from '../interfaces/editor'
+import type {Span} from '../interfaces/location'
 import {Path} from '../interfaces/path'
 
 export const next: EditorInterface['next'] = (editor, options = {}) => {
@@ -12,7 +12,9 @@ export const next: EditorInterface['next'] = (editor, options = {}) => {
 
   const pointAfterLocation = Editor.after(editor, at, {voids})
 
-  if (!pointAfterLocation) return
+  if (!pointAfterLocation) {
+    return
+  }
 
   const [, to] = Editor.last(editor, [])
 

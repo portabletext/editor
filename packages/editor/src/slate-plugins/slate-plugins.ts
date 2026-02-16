@@ -1,6 +1,6 @@
-import type {BaseOperation, Editor, Node, NodeEntry} from 'slate'
 import type {EditorActor} from '../editor/editor-machine'
 import type {RelayActor} from '../editor/relay-machine'
+import type {BaseOperation, Editor, Node, NodeEntry} from '../slate'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {createBehaviorApiPlugin} from './slate-plugin.behavior-api'
 import {createHistoryPlugin} from './slate-plugin.history'

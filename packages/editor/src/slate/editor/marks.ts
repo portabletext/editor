@@ -1,12 +1,12 @@
-import {Point} from '../interfaces'
-import {Editor, EditorInterface} from '../interfaces/editor'
+import type {Point} from '../interfaces'
+import {Editor, type EditorInterface} from '../interfaces/editor'
 import {Element} from '../interfaces/element'
-import {NodeEntry} from '../interfaces/node'
+import type {NodeEntry} from '../interfaces/node'
 import {Path} from '../interfaces/path'
 import {Range} from '../interfaces/range'
 import {Text} from '../interfaces/text'
 
-export const marks: EditorInterface['marks'] = (editor, options = {}) => {
+export const marks: EditorInterface['marks'] = (editor, _options = {}) => {
   const {marks, selection} = editor
 
   if (!selection) {
@@ -45,10 +45,10 @@ export const marks: EditorInterface['marks'] = (editor, options = {}) => {
 
     if (match) {
       const [node] = match as NodeEntry<Text>
-      const {text, ...rest} = node
+      const {text: _text, ...rest} = node
       return rest
     } else {
-      return {}
+      return {} as ReturnType<EditorInterface['marks']> & {}
     }
   }
 
@@ -80,6 +80,6 @@ export const marks: EditorInterface['marks'] = (editor, options = {}) => {
     }
   }
 
-  const {text, ...rest} = node
+  const {text: _text2, ...rest} = node
   return rest
 }

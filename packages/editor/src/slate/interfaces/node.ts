@@ -1,6 +1,6 @@
 import {Editor, Path, Range, Scrubber, Text} from '..'
 import {modifyChildren, modifyLeaf, removeChildren} from '../utils/modify'
-import {Element, ElementEntry} from './element'
+import {Element, type ElementEntry} from './element'
 
 /**
  * The `Node` union type represents all of the different types of nodes that
@@ -330,11 +330,11 @@ export const Node: NodeInterface = {
 
   extractProps(node: Node): NodeProps {
     if (Element.isAncestor(node)) {
-      const {children, ...properties} = node
+      const {children: _children, ...properties} = node
 
       return properties
     } else {
-      const {text, ...properties} = node
+      const {text: _text, ...properties} = node
 
       return properties
     }
@@ -348,7 +348,7 @@ export const Node: NodeInterface = {
       if (Text.isText(n) || n.children.length === 0) {
         break
       } else {
-        n = n.children[0]
+        n = n.children[0]! as Node
         p.push(0)
       }
     }
@@ -357,7 +357,7 @@ export const Node: NodeInterface = {
   },
 
   fragment<T extends Ancestor = Editor>(root: T, range: Range): T['children'] {
-    const newRoot = {children: root.children}
+    const newRoot: Ancestor = {children: root.children} as Ancestor
 
     const [start, end] = Range.edges(range)
     const nodeEntries = Node.nodes(newRoot, {
@@ -367,7 +367,7 @@ export const Node: NodeInterface = {
 
     for (const [, path] of nodeEntries) {
       if (!Range.includes(range, path)) {
-        const index = path[path.length - 1]
+        const index = path[path.length - 1]!
 
         modifyChildren(newRoot, Path.parent(path), (children) =>
           removeChildren(children, index, 1),
@@ -408,13 +408,13 @@ export const Node: NodeInterface = {
     let node = root
 
     for (let i = 0; i < path.length; i++) {
-      const p = path[i]
+      const p = path[i]!
 
       if (Text.isText(node) || !node.children[p]) {
         return
       }
 
-      node = node.children[p]
+      node = node.children[p]! as Node
     }
 
     return node
@@ -424,13 +424,13 @@ export const Node: NodeInterface = {
     let node = root
 
     for (let i = 0; i < path.length; i++) {
-      const p = path[i]
+      const p = path[i]!
 
       if (Text.isText(node) || !node.children[p]) {
         return false
       }
 
-      node = node.children[p]
+      node = node.children[p]! as Node
     }
 
     return true
@@ -462,7 +462,7 @@ export const Node: NodeInterface = {
         break
       } else {
         const i = n.children.length - 1
-        n = n.children[i]
+        n = n.children[i]! as Node
         p.push(i)
       }
     }
@@ -536,7 +536,7 @@ export const Node: NodeInterface = {
         let nextIndex = reverse ? n.children.length - 1 : 0
 
         if (Path.isAncestor(p, from)) {
-          nextIndex = from[p.length]
+          nextIndex = from[p.length]!
         }
 
         p = p.concat(nextIndex)

@@ -1,5 +1,12 @@
-import {ExtendedType, isObject, Operation, Path, Point, PointEntry} from '..'
-import {RangeDirection} from '../types/types'
+import {
+  isObject,
+  Path,
+  Point,
+  type ExtendedType,
+  type Operation,
+  type PointEntry,
+} from '..'
+import type {RangeDirection} from '../types/types'
 
 /**
  * `Range` objects are a set of points that refer to a specific span of a Slate
@@ -165,7 +172,7 @@ export const Range: RangeInterface = {
   },
 
   intersection(range: Range, another: Range): Range | null {
-    const {anchor, focus, ...rest} = range
+    const {anchor: _anchor, focus: _focus, ...rest} = range
     const [s1, e1] = Range.edges(range)
     const [s2, e2] = Range.edges(another)
     const start = Point.isBefore(s1, s2) ? s2 : s1

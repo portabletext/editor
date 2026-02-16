@@ -1,4 +1,4 @@
-import {EditorInterface} from '../interfaces/editor'
+import type {EditorInterface} from '../interfaces/editor'
 import {Node} from '../interfaces/node'
 import {Path} from '../interfaces/path'
 import {Range} from '../interfaces/range'
@@ -8,7 +8,7 @@ export const point: EditorInterface['point'] = (editor, at, options = {}) => {
   const {edge = 'start'} = options
 
   if (Path.isPath(at)) {
-    let path
+    let path: Path
 
     if (edge === 'end') {
       const [, lastPath] = Node.last(editor, at)

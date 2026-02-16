@@ -1,5 +1,12 @@
-import {Editor, Location, Node, Path, Range, Transforms} from '../../index'
-import {TextUnit} from '../../types/types'
+import {
+  Editor,
+  Path,
+  Range,
+  Transforms,
+  type Location,
+  type Node,
+} from '../../index'
+import type {TextUnit} from '../../types/types'
 import {getDefaultInsertLocation} from '../../utils'
 
 export interface TextDeleteOptions {
@@ -99,8 +106,9 @@ export const TextTransforms: TextTransforms = {
       }
 
       const {path, offset} = at
-      if (text.length > 0)
+      if (text.length > 0) {
         editor.apply({type: 'insert_text', path, offset, text})
+      }
     })
   },
 }

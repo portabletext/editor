@@ -1,36 +1,32 @@
-import getDirection from 'direction'
 import debounce from 'lodash/debounce'
 import throttle from 'lodash/throttle'
 import React, {
-  ForwardedRef,
   forwardRef,
-  JSX,
   useCallback,
   useEffect,
   useMemo,
   useReducer,
   useRef,
   useState,
+  type ForwardedRef,
+  type JSX,
 } from 'react'
 import scrollIntoView from 'scroll-into-view-if-needed'
 import {
-  DecoratedRange,
   Editor,
   Element,
-  LeafPosition,
   Node,
-  NodeEntry,
   Path,
   Range,
   Text,
   Transforms,
-} from 'slate'
+  type DecoratedRange,
+  type LeafPosition,
+  type NodeEntry,
+} from '../../slate'
 import {
   CAN_USE_DOM,
   containsShadowAware,
-  DOMElement,
-  DOMRange,
-  DOMText,
   EDITOR_TO_ELEMENT,
   EDITOR_TO_FORCE_RENDER,
   EDITOR_TO_PENDING_INSERTION_MARKS,
@@ -62,8 +58,11 @@ import {
   NODE_TO_ELEMENT,
   PLACEHOLDER_SYMBOL,
   TRIPLE_CLICK,
-} from 'slate-dom'
-import {AndroidInputManager} from '../hooks/android-input-manager/android-input-manager'
+  type DOMElement,
+  type DOMRange,
+  type DOMText,
+} from '../../slate-dom'
+import type {AndroidInputManager} from '../hooks/android-input-manager/android-input-manager'
 import {useAndroidInputManager} from '../hooks/android-input-manager/use-android-input-manager'
 import useChildren from '../hooks/use-children'
 import {ComposingContext} from '../hooks/use-composing'
@@ -74,6 +73,7 @@ import {useSlate} from '../hooks/use-slate'
 import {useFlushDeferredSelectorsOnRender} from '../hooks/use-slate-selector'
 import {useTrackUserInput} from '../hooks/use-track-user-input'
 import {ReactEditor} from '../plugin/react-editor'
+import getDirection from '../utils/direction'
 import {RestoreDOM} from './restore-dom/restore-dom'
 
 type DeferredOperation = () => void
@@ -241,7 +241,7 @@ export const Editable = forwardRef(
      */
     const androidInputManagerRef = useRef<
       AndroidInputManager | null | undefined
-    >()
+    >(undefined)
 
     // Listen on the native `selectionchange` event to be able to update any time
     // the selection changes. This is required because React's `onSelect` is leaky
@@ -338,14 +338,15 @@ export const Editable = forwardRef(
     )
 
     androidInputManagerRef.current = useAndroidInputManager({
-      node: ref,
+      node: ref as React.RefObject<HTMLElement>,
       onDOMSelectionChange,
       scheduleOnDOMSelectionChange,
     })
 
     useIsomorphicLayoutEffect(() => {
       // Update element-related weak maps with the DOM element ref.
-      let window
+      let window: Window | null = null
+      // biome-ignore lint/suspicious/noAssignInExpressions: Slate upstream pattern — assignment in condition
       if (ref.current && (window = getDefaultView(ref.current))) {
         EDITOR_TO_WINDOW.set(editor, window)
         EDITOR_TO_ELEMENT.set(editor, ref.current)
@@ -378,7 +379,7 @@ export const Editable = forwardRef(
 
         // Get anchorNode and focusNode
         const focusNode = domSelection.focusNode
-        let anchorNode
+        let anchorNode: globalThis.Node | null = null
 
         // COMPAT: In firefox the normal selection way does not work
         // (https://github.com/ianstormtaylor/slate/pull/5486#issue-1820720223)
@@ -457,7 +458,7 @@ export const Editable = forwardRef(
 
         try {
           newDomRange = selection && ReactEditor.toDOMRange(editor, selection)
-        } catch (e) {
+        } catch (_e) {
           // Ignore, dom and state might be out of sync
         }
 
@@ -511,7 +512,7 @@ export const Editable = forwardRef(
               el.focus()
 
               setDomSelection(forceChange)
-            } catch (e) {
+            } catch (_e) {
               // Ignore, dom and state might be out of sync
             }
           }
@@ -552,7 +553,7 @@ export const Editable = forwardRef(
 
         if (processing?.current && IS_WEBKIT && root instanceof ShadowRoot) {
           const ranges = event.getTargetRanges()
-          const range = ranges[0]
+          const range = ranges[0]!
 
           const newRange = new window.Range()
 
@@ -865,7 +866,6 @@ export const Editable = forwardRef(
           NODE_TO_ELEMENT.delete(editor)
 
           if (ref.current && HAS_BEFORE_INPUT_SUPPORT) {
-            // @ts-ignore The `beforeinput` event isn't recognized.
             ref.current.removeEventListener('beforeinput', onDOMBeforeInput)
           }
         } else {
@@ -874,7 +874,6 @@ export const Editable = forwardRef(
           // real `beforeinput` events sadly... (2019/11/04)
           // https://github.com/facebook/react/issues/11211
           if (HAS_BEFORE_INPUT_SUPPORT) {
-            // @ts-ignore The `beforeinput` event isn't recognized.
             node.addEventListener('beforeinput', onDOMBeforeInput)
           }
         }
@@ -966,7 +965,7 @@ export const Editable = forwardRef(
         onPlaceholderResize: placeHolderResizeHandler,
         anchor: start,
         focus: start,
-      })
+      } as any)
     }
 
     const {marks} = editor
@@ -975,7 +974,7 @@ export const Editable = forwardRef(
     if (editor.selection && Range.isCollapsed(editor.selection) && marks) {
       const {anchor} = editor.selection
       const leaf = Node.leaf(editor, anchor.path)
-      const {text, ...rest} = leaf
+      const {text: _text, ...rest} = leaf
 
       // While marks isn't a 'complete' text, we can still use loose Text.equals
       // here which only compares marks anyway.
@@ -1086,7 +1085,7 @@ export const Editable = forwardRef(
                     if (
                       !HAS_BEFORE_INPUT_SUPPORT &&
                       !readOnly &&
-                      !isEventHandled(event, attributes.onBeforeInput) &&
+                      !isEventHandled(event as any, attributes.onBeforeInput) &&
                       ReactEditor.hasSelectableTarget(editor, event.target)
                     ) {
                       event.preventDefault()
@@ -1100,7 +1099,7 @@ export const Editable = forwardRef(
                 )}
                 onInput={useCallback(
                   (event: React.FormEvent<HTMLDivElement>) => {
-                    if (isEventHandled(event, attributes.onInput)) {
+                    if (isEventHandled(event as any, attributes.onInput)) {
                       return
                     }
 
@@ -1313,7 +1312,7 @@ export const Editable = forwardRef(
                         // Ensure we insert text with the marks the user was actually seeing
                         if (placeholderMarks !== undefined) {
                           EDITOR_TO_USER_MARKS.set(editor, editor.marks)
-                          editor.marks = placeholderMarks
+                          editor.marks = placeholderMarks as typeof editor.marks
                         }
 
                         Editor.insertText(editor, event.data)
@@ -1321,7 +1320,7 @@ export const Editable = forwardRef(
                         const userMarks = EDITOR_TO_USER_MARKS.get(editor)
                         EDITOR_TO_USER_MARKS.delete(editor)
                         if (userMarks !== undefined) {
-                          editor.marks = userMarks
+                          editor.marks = userMarks as typeof editor.marks
                         }
                       }
                     }
@@ -1584,8 +1583,8 @@ export const Editable = forwardRef(
                       const {selection} = editor
                       const element =
                         editor.children[
-                          selection !== null ? selection.focus.path[0] : 0
-                        ]
+                          selection !== null ? selection.focus.path[0]! : 0
+                        ]!
                       const isRTL = getDirection(Node.string(element)) === 'rtl'
 
                       // COMPAT: Since we prevent the default behavior on

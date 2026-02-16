@@ -1,6 +1,11 @@
-import getDirection from 'direction'
-import React, {JSX, useCallback} from 'react'
-import {DecoratedRange, Editor, Node, Element as SlateElement} from 'slate'
+import React, {useCallback, type JSX} from 'react'
+import {ReactEditor, useReadOnly, useSlateStatic} from '..'
+import {
+  Editor,
+  Node,
+  type DecoratedRange,
+  type Element as SlateElement,
+} from '../../slate'
 import {
   EDITOR_TO_KEY_TO_ELEMENT,
   ELEMENT_TO_NODE,
@@ -8,11 +13,11 @@ import {
   NODE_TO_ELEMENT,
   NODE_TO_INDEX,
   NODE_TO_PARENT,
-} from 'slate-dom'
-import {ReactEditor, useReadOnly, useSlateStatic} from '..'
+} from '../../slate-dom'
 import useChildren from '../hooks/use-children'
 import {useDecorations} from '../hooks/use-decorations'
-import {
+import getDirection from '../utils/direction'
+import type {
   RenderChunkProps,
   RenderElementProps,
   RenderLeafProps,
@@ -115,7 +120,8 @@ const Element = (props: {
     }
 
     const Tag = isInline ? 'span' : 'div'
-    const [[text]] = Node.texts(element)
+    const [textEntry] = Node.texts(element)
+    const [text] = textEntry!
 
     children = (
       <Tag

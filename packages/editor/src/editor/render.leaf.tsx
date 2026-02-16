@@ -1,7 +1,7 @@
 import {useSelector} from '@xstate/react'
 import {useContext, type CSSProperties} from 'react'
-import type {Text} from 'slate'
-import type {RenderLeafProps} from 'slate-react'
+import type {Text} from '../slate'
+import type {RenderLeafProps} from '../slate-react'
 import type {
   RangeDecoration,
   RenderAnnotationFunction,

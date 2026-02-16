@@ -1,4 +1,4 @@
-import {SelectionTransforms} from '../interfaces/transforms/selection'
+import type {SelectionTransforms} from '../interfaces/transforms/selection'
 
 export const deselect: SelectionTransforms['deselect'] = (editor) => {
   const {selection} = editor

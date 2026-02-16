@@ -1,5 +1,5 @@
-import {Editor, EditorInterface} from '../interfaces/editor'
-import {Span} from '../interfaces/location'
+import {Editor, type EditorInterface} from '../interfaces/editor'
+import type {Span} from '../interfaces/location'
 import {Path} from '../interfaces/path'
 
 export const previous: EditorInterface['previous'] = (editor, options = {}) => {

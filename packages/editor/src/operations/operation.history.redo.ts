@@ -1,5 +1,5 @@
-import {Editor, Transforms} from 'slate'
 import {transformOperation} from '../internal-utils/transform-operation'
+import {Editor, Transforms} from '../slate'
 import {pluginRedoing} from '../slate-plugins/slate-plugin.redoing'
 import {pluginWithoutHistory} from '../slate-plugins/slate-plugin.without-history'
 import type {OperationImplementation} from './operation.types'
