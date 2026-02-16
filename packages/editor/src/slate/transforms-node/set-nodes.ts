@@ -1,10 +1,10 @@
 import {Editor} from '../interfaces/editor'
 import {Element} from '../interfaces/element'
-import {Node} from '../interfaces/node'
+import type {Node} from '../interfaces/node'
 import {Path} from '../interfaces/path'
 import {Range} from '../interfaces/range'
 import {Transforms} from '../interfaces/transforms'
-import {NodeTransforms} from '../interfaces/transforms/node'
+import type {NodeTransforms} from '../interfaces/transforms/node'
 import {matchPath} from '../utils/match-path'
 
 export const setNodes: NodeTransforms['setNodes'] = (
@@ -96,21 +96,24 @@ export const setNodes: NodeTransforms['setNodes'] = (
           continue
         }
 
-        if (compare(props[<keyof Node>k], node[<keyof Node>k])) {
+        if (compare((props as any)[k], (node as any)[k])) {
           hasChanges = true
           // Omit new properties from the old properties list
-          if (node.hasOwnProperty(k))
-            properties[<keyof Node>k] = node[<keyof Node>k]
+          if (node.hasOwnProperty(k)) {
+            ;(properties as any)[k] = (node as any)[k]
+          }
           // Omit properties that have been removed from the new properties list
           if (merge) {
-            if (props[<keyof Node>k] != null)
-              newProperties[<keyof Node>k] = merge(
-                node[<keyof Node>k],
-                props[<keyof Node>k],
+            if ((props as any)[k] != null) {
+              ;(newProperties as any)[k] = merge(
+                (node as any)[k],
+                (props as any)[k],
               )
+            }
           } else {
-            if (props[<keyof Node>k] != null)
-              newProperties[<keyof Node>k] = props[<keyof Node>k]
+            if ((props as any)[k] != null) {
+              ;(newProperties as any)[k] = (props as any)[k]
+            }
           }
         }
       }

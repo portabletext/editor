@@ -2,7 +2,7 @@ import {Editor} from '../interfaces/editor'
 import {Element} from '../interfaces/element'
 import {Path} from '../interfaces/path'
 import {Range} from '../interfaces/range'
-import {NodeTransforms} from '../interfaces/transforms/node'
+import type {NodeTransforms} from '../interfaces/transforms/node'
 import {matchPath} from '../utils/match-path'
 
 export const removeNodes: NodeTransforms['removeNodes'] = (

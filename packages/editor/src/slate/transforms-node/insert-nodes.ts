@@ -1,6 +1,6 @@
 import {batchDirtyPaths} from '../core/batch-dirty-paths'
 import {updateDirtyPaths} from '../core/update-dirty-paths'
-import {BaseInsertNodeOperation} from '../interfaces'
+import type {BaseInsertNodeOperation} from '../interfaces'
 import {Editor} from '../interfaces/editor'
 import {Element} from '../interfaces/element'
 import {Node} from '../interfaces/node'
@@ -9,7 +9,7 @@ import {Point} from '../interfaces/point'
 import {Range} from '../interfaces/range'
 import {Text} from '../interfaces/text'
 import {Transforms} from '../interfaces/transforms'
-import {NodeTransforms} from '../interfaces/transforms/node'
+import type {NodeTransforms} from '../interfaces/transforms/node'
 import {getDefaultInsertLocation} from '../utils'
 
 export const insertNodes: NodeTransforms['insertNodes'] = (
@@ -34,7 +34,7 @@ export const insertNodes: NodeTransforms['insertNodes'] = (
       return
     }
 
-    const [node] = nodes
+    const node = nodes[0]!
 
     if (!at) {
       at = getDefaultInsertLocation(editor)
@@ -93,7 +93,7 @@ export const insertNodes: NodeTransforms['insertNodes'] = (
     }
 
     const parentPath = Path.parent(at)
-    let index = at[at.length - 1]
+    let index = at[at.length - 1]!
 
     if (!voids && Editor.void(editor, {at: parentPath})) {
       return

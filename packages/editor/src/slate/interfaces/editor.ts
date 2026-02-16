@@ -1,4 +1,4 @@
-import {
+import type {
   Ancestor,
   Descendant,
   Element,
@@ -18,7 +18,7 @@ import {
   Transforms,
 } from '..'
 import {isEditor} from '../editor/is-editor'
-import {
+import type {
   LeafEdge,
   MaximizeMode,
   RangeDirection,
@@ -27,9 +27,9 @@ import {
   TextUnit,
   TextUnitAdjustment,
 } from '../types/types'
-import {OmitFirstArg} from '../utils/types'
-import {NodeInsertNodesOptions} from './transforms/node'
-import {
+import type {OmitFirstArg} from '../utils/types'
+import type {NodeInsertNodesOptions} from './transforms/node'
+import type {
   TextInsertFragmentOptions,
   TextInsertTextOptions,
 } from './transforms/text'

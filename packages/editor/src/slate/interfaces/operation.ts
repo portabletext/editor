@@ -1,4 +1,4 @@
-import {ExtendedType, isObject, Node, Path, Range} from '..'
+import {isObject, Node, Path, Range, type ExtendedType} from '..'
 
 export type BaseInsertNodeOperation = {
   type: 'insert_node'

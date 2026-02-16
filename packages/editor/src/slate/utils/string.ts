@@ -25,7 +25,9 @@ export const getCharacterDistance = (str: string, isRTL = false): number => {
 
   for (const char of codepoints) {
     const code = char.codePointAt(0)
-    if (!code) break
+    if (!code) {
+      break
+    }
 
     const type = getCodepointType(char, code)
     ;[left, right] = isLTR ? [right, type] : [type, left]
@@ -39,7 +41,9 @@ export const getCharacterDistance = (str: string, isRTL = false): number => {
       } else {
         gb11 = endsWithEmojiZWJ(str.substring(0, str.length - distance))
       }
-      if (!gb11) break
+      if (!gb11) {
+        break
+      }
     }
 
     if (
@@ -57,7 +61,9 @@ export const getCharacterDistance = (str: string, isRTL = false): number => {
           )
         }
       }
-      if (!gb12Or13) break
+      if (!gb12Or13) {
+        break
+      }
     }
 
     if (
@@ -204,21 +210,22 @@ const isLowSurrogate = (charCode: number) => {
   return charCode >= 0xdc00 && charCode <= 0xdfff
 }
 
-enum CodepointType {
-  None = 0,
-  Extend = 1 << 0,
-  ZWJ = 1 << 1,
-  RI = 1 << 2,
-  Prepend = 1 << 3,
-  SpacingMark = 1 << 4,
-  L = 1 << 5,
-  V = 1 << 6,
-  T = 1 << 7,
-  LV = 1 << 8,
-  LVT = 1 << 9,
-  ExtPict = 1 << 10,
-  Any = 1 << 11,
-}
+const CodepointType = {
+  None: 0,
+  Extend: 1 << 0,
+  ZWJ: 1 << 1,
+  RI: 1 << 2,
+  Prepend: 1 << 3,
+  SpacingMark: 1 << 4,
+  L: 1 << 5,
+  V: 1 << 6,
+  T: 1 << 7,
+  LV: 1 << 8,
+  LVT: 1 << 9,
+  ExtPict: 1 << 10,
+  Any: 1 << 11,
+} as const
+type CodepointType = (typeof CodepointType)[keyof typeof CodepointType]
 
 const reExtend = /^[\p{Gr_Ext}\p{EMod}]$/u
 const rePrepend =

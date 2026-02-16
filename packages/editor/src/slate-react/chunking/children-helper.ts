@@ -1,7 +1,7 @@
-import {Descendant, Editor} from 'slate'
-import {Key} from 'slate-dom'
+import type {Descendant, Editor} from '../../slate'
+import type {Key} from '../../slate-dom'
 import {ReactEditor} from '../plugin/react-editor'
-import {ChunkLeaf} from './types'
+import type {ChunkLeaf} from './types'
 
 /**
  * Traverse an array of children, providing helpers useful for reconciling the
@@ -38,7 +38,7 @@ export class ChildrenHelper {
     // PERF: If only one child was requested (the most common case), use array
     // indexing instead of slice
     if (n === 1) {
-      return [this.children[this.pointerIndex++]]
+      return [this.children[this.pointerIndex++]!]
     }
 
     const slicedChildren = this.remaining(n)
@@ -85,12 +85,16 @@ export class ChildrenHelper {
    */
   public lookAhead(node: Descendant, key: Key) {
     const elementResult = this.children.indexOf(node, this.pointerIndex)
-    if (elementResult > -1) return elementResult - this.pointerIndex
+    if (elementResult > -1) {
+      return elementResult - this.pointerIndex
+    }
 
     for (let i = this.pointerIndex; i < this.children.length; i++) {
-      const candidateNode = this.children[i]
+      const candidateNode = this.children[i]!
       const candidateKey = this.findKey(candidateNode, i)
-      if (candidateKey === key) return i - this.pointerIndex
+      if (candidateKey === key) {
+        return i - this.pointerIndex
+      }
     }
 
     return -1
@@ -114,7 +118,9 @@ export class ChildrenHelper {
    */
   private findKey(node: Descendant, index: number): Key {
     const cachedKey = this.cachedKeys[index]
-    if (cachedKey) return cachedKey
+    if (cachedKey) {
+      return cachedKey
+    }
     const key = ReactEditor.findKey(this.editor, node)
     this.cachedKeys[index] = key
     return key

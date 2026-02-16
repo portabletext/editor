@@ -1,4 +1,4 @@
-import {Transforms} from 'slate'
+import {Transforms} from '../slate'
 import type {OperationImplementation} from './operation.types'
 
 export const insertTextOperationImplementation: OperationImplementation<

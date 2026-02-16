@@ -1,6 +1,14 @@
 import {createContext, useCallback, useContext, useMemo, useRef} from 'react'
-import {DecoratedRange, Descendant, NodeEntry, Text} from 'slate'
-import {isElementDecorationsEqual, isTextDecorationsEqual} from 'slate-dom'
+import {
+  Text,
+  type DecoratedRange,
+  type Descendant,
+  type NodeEntry,
+} from '../../slate'
+import {
+  isElementDecorationsEqual,
+  isTextDecorationsEqual,
+} from '../../slate-dom'
 import {ReactEditor} from '../plugin/react-editor'
 import {useGenericSelector} from './use-generic-selector'
 import {useIsomorphicLayoutEffect} from './use-isomorphic-layout-effect'
@@ -58,7 +66,9 @@ export const useDecorateContext = (
 
   useIsomorphicLayoutEffect(() => {
     latestDecorate.current = decorateProp
-    eventListeners.current.forEach((listener) => listener())
+    eventListeners.current.forEach((listener) => {
+      listener()
+    })
   }, [decorateProp])
 
   const decorate = useCallback(

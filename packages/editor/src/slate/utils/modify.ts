@@ -1,11 +1,11 @@
 import {
-  Ancestor,
-  Descendant,
-  Element,
   Node,
-  Path,
   Scrubber,
   Text,
+  type Ancestor,
+  type Descendant,
+  type Element,
+  type Path,
 } from '../interfaces'
 
 export const insertChildren = <T>(

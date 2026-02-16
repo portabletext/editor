@@ -1,6 +1,6 @@
 import {Editor} from '../interfaces/editor'
-import {Node} from '../interfaces/node'
-import {Path} from '../interfaces/path'
+import type {Node} from '../interfaces/node'
+import type {Path} from '../interfaces/path'
 
 export const matchPath = (
   editor: Editor,

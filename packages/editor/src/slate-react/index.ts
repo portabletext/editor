@@ -1,10 +1,10 @@
 // Components
 export {
   Editable,
-  RenderElementProps,
-  RenderChunkProps,
-  RenderLeafProps,
-  RenderPlaceholderProps,
+  type RenderElementProps,
+  type RenderChunkProps,
+  type RenderLeafProps,
+  type RenderPlaceholderProps,
   DefaultPlaceholder,
   defaultScrollSelectionIntoView,
 } from './components/editable'
@@ -31,4 +31,4 @@ export {ReactEditor} from './plugin/react-editor'
 export {withReact} from './plugin/with-react'
 
 // Utils
-export {NODE_TO_INDEX, NODE_TO_PARENT} from 'slate-dom'
+export {NODE_TO_INDEX, NODE_TO_PARENT} from '../slate-dom'

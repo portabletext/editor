@@ -1,4 +1,4 @@
-import {Ancestor, DecoratedRange, Editor, Range} from 'slate'
+import {Editor, Range, type Ancestor, type DecoratedRange} from '../../slate'
 import {DOMEditor} from '../plugin/dom-editor'
 import {PLACEHOLDER_SYMBOL} from './weak-maps'
 
@@ -12,11 +12,11 @@ export const shallowCompare = (
   )
 
 const isDecorationFlagsEqual = (range: Range, other: Range) => {
-  const {anchor: rangeAnchor, focus: rangeFocus, ...rangeOwnProps} = range
-  const {anchor: otherAnchor, focus: otherFocus, ...otherOwnProps} = other
+  const {anchor: _rangeAnchor, focus: _rangeFocus, ...rangeOwnProps} = range
+  const {anchor: _otherAnchor, focus: _otherFocus, ...otherOwnProps} = other
 
   return (
-    range[PLACEHOLDER_SYMBOL] === other[PLACEHOLDER_SYMBOL] &&
+    (range as any)[PLACEHOLDER_SYMBOL] === (other as any)[PLACEHOLDER_SYMBOL] &&
     shallowCompare(rangeOwnProps, otherOwnProps)
   )
 }
@@ -46,8 +46,8 @@ export const isElementDecorationsEqual = (
   }
 
   for (let i = 0; i < list.length; i++) {
-    const range = list[i]
-    const other = another[i]
+    const range = list[i]!
+    const other = another[i]!
 
     if (!Range.equals(range, other) || !isDecorationFlagsEqual(range, other)) {
       return false
@@ -82,8 +82,8 @@ export const isTextDecorationsEqual = (
   }
 
   for (let i = 0; i < list.length; i++) {
-    const range = list[i]
-    const other = another[i]
+    const range = list[i]!
+    const other = another[i]!
 
     // compare only offsets because paths doesn't matter for text
     if (
@@ -128,7 +128,9 @@ export const splitDecorationsByChild = (
 
   const getChildRange = (index: number) => {
     const cachedRange = cachedChildRanges[index]
-    if (cachedRange) return cachedRange
+    if (cachedRange) {
+      return cachedRange
+    }
     const childRange = Editor.range(editor, [...path, index])
     cachedChildRanges[index] = childRange
     return childRange
@@ -136,19 +138,25 @@ export const splitDecorationsByChild = (
 
   for (const decoration of decorations) {
     const decorationRange = Range.intersection(ancestorRange, decoration)
-    if (!decorationRange) continue
+    if (!decorationRange) {
+      continue
+    }
 
     const [startPoint, endPoint] = Range.edges(decorationRange)
-    const startIndex = startPoint.path[level]
-    const endIndex = endPoint.path[level]
+    const startIndex = startPoint.path[level]!
+    const endIndex = endPoint.path[level]!
 
     for (let i = startIndex; i <= endIndex; i++) {
       const ds = decorationsByChild[i]
-      if (!ds) continue
+      if (!ds) {
+        continue
+      }
 
       const childRange = getChildRange(i)
       const childDecorationRange = Range.intersection(childRange, decoration)
-      if (!childDecorationRange) continue
+      if (!childDecorationRange) {
+        continue
+      }
 
       ds.push({
         ...decoration,

@@ -1,9 +1,9 @@
 import {Editor} from '../interfaces/editor'
 import {Element} from '../interfaces/element'
-import {Ancestor, NodeEntry} from '../interfaces/node'
+import type {Ancestor, NodeEntry} from '../interfaces/node'
 import {Path} from '../interfaces/path'
 import {Transforms} from '../interfaces/transforms'
-import {NodeTransforms} from '../interfaces/transforms/node'
+import type {NodeTransforms} from '../interfaces/transforms/node'
 import {matchPath} from '../utils/match-path'
 
 export const liftNodes: NodeTransforms['liftNodes'] = (

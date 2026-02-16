@@ -1,4 +1,4 @@
-import {
+import type {
   InsertNodeOperation,
   MergeNodeOperation,
   MoveNodeOperation,
@@ -6,7 +6,7 @@ import {
   RemoveNodeOperation,
   SplitNodeOperation,
 } from '..'
-import {TextDirection} from '../types/types'
+import type {TextDirection} from '../types/types'
 
 /**
  * `Path` arrays are a list of indexes that describe a node's exact position in
@@ -196,8 +196,8 @@ export const Path: PathInterface = {
     const common: Path = []
 
     for (let i = 0; i < path.length && i < another.length; i++) {
-      const av = path[i]
-      const bv = another[i]
+      const av = path[i]!
+      const bv = another[i]!
 
       if (av !== bv) {
         break
@@ -213,8 +213,12 @@ export const Path: PathInterface = {
     const min = Math.min(path.length, another.length)
 
     for (let i = 0; i < min; i++) {
-      if (path[i] < another[i]) return -1
-      if (path[i] > another[i]) return 1
+      if (path[i]! < another[i]!) {
+        return -1
+      }
+      if (path[i]! > another[i]!) {
+        return 1
+      }
     }
 
     return 0
@@ -224,8 +228,8 @@ export const Path: PathInterface = {
     const i = path.length - 1
     const as = path.slice(0, i)
     const bs = another.slice(0, i)
-    const av = path[i]
-    const bv = another[i]
+    const av = path[i]!
+    const bv = another[i]!
     return Path.equals(as, bs) && av > bv
   },
 
@@ -240,19 +244,19 @@ export const Path: PathInterface = {
     const i = path.length - 1
     const as = path.slice(0, i)
     const bs = another.slice(0, i)
-    const av = path[i]
-    const bv = another[i]
+    const av = path[i]!
+    const bv = another[i]!
     return Path.equals(as, bs) && av < bv
   },
 
   equals(path: Path, another: Path): boolean {
     return (
-      path.length === another.length && path.every((n, i) => n === another[i])
+      path.length === another.length && path.every((n, i) => n === another[i]!)
     )
   },
 
   hasPrevious(path: Path): boolean {
-    return path[path.length - 1] > 0
+    return path[path.length - 1]! > 0
   },
 
   isAfter(path: Path, another: Path): boolean {
@@ -328,7 +332,7 @@ export const Path: PathInterface = {
       )
     }
 
-    const last = path[path.length - 1]
+    const last = path[path.length - 1]!
     return path.slice(0, -1).concat(last + 1)
   },
 
@@ -367,7 +371,7 @@ export const Path: PathInterface = {
       )
     }
 
-    const last = path[path.length - 1]
+    const last = path[path.length - 1]!
 
     if (last <= 0) {
       throw new Error(
@@ -393,7 +397,9 @@ export const Path: PathInterface = {
     operation: Operation,
     options: PathTransformOptions = {},
   ): Path | null {
-    if (!path) return null
+    if (!path) {
+      return null
+    }
 
     // PERF: use destructing instead of immer
     const p = [...path]
@@ -413,7 +419,7 @@ export const Path: PathInterface = {
           Path.endsBefore(op, p) ||
           Path.isAncestor(op, p)
         ) {
-          p[op.length - 1] += 1
+          p[op.length - 1] = p[op.length - 1]! + 1
         }
 
         break
@@ -425,7 +431,7 @@ export const Path: PathInterface = {
         if (Path.equals(op, p) || Path.isAncestor(op, p)) {
           return null
         } else if (Path.endsBefore(op, p)) {
-          p[op.length - 1] -= 1
+          p[op.length - 1] = p[op.length - 1]! - 1
         }
 
         break
@@ -435,10 +441,10 @@ export const Path: PathInterface = {
         const {path: op, position} = operation
 
         if (Path.equals(op, p) || Path.endsBefore(op, p)) {
-          p[op.length - 1] -= 1
+          p[op.length - 1] = p[op.length - 1]! - 1
         } else if (Path.isAncestor(op, p)) {
-          p[op.length - 1] -= 1
-          p[op.length] += position
+          p[op.length - 1] = p[op.length - 1]! - 1
+          p[op.length] = p[op.length]! + position
         }
 
         break
@@ -449,17 +455,17 @@ export const Path: PathInterface = {
 
         if (Path.equals(op, p)) {
           if (affinity === 'forward') {
-            p[p.length - 1] += 1
+            p[p.length - 1] = p[p.length - 1]! + 1
           } else if (affinity === 'backward') {
             // Nothing, because it still refers to the right path.
           } else {
             return null
           }
         } else if (Path.endsBefore(op, p)) {
-          p[op.length - 1] += 1
-        } else if (Path.isAncestor(op, p) && path[op.length] >= position) {
-          p[op.length - 1] += 1
-          p[op.length] -= position
+          p[op.length - 1] = p[op.length - 1]! + 1
+        } else if (Path.isAncestor(op, p) && path[op.length]! >= position) {
+          p[op.length - 1] = p[op.length - 1]! + 1
+          p[op.length] = p[op.length]! - position
         }
 
         break
@@ -477,7 +483,7 @@ export const Path: PathInterface = {
           const copy = onp.slice()
 
           if (Path.endsBefore(op, onp) && op.length < onp.length) {
-            copy[op.length - 1] -= 1
+            copy[op.length - 1] = copy[op.length - 1]! - 1
           }
 
           return copy.concat(p.slice(op.length))
@@ -486,9 +492,9 @@ export const Path: PathInterface = {
           (Path.isAncestor(onp, p) || Path.equals(onp, p))
         ) {
           if (Path.endsBefore(op, p)) {
-            p[op.length - 1] -= 1
+            p[op.length - 1] = p[op.length - 1]! - 1
           } else {
-            p[op.length - 1] += 1
+            p[op.length - 1] = p[op.length - 1]! + 1
           }
         } else if (
           Path.endsBefore(onp, p) ||
@@ -496,16 +502,16 @@ export const Path: PathInterface = {
           Path.isAncestor(onp, p)
         ) {
           if (Path.endsBefore(op, p)) {
-            p[op.length - 1] -= 1
+            p[op.length - 1] = p[op.length - 1]! - 1
           }
 
-          p[onp.length - 1] += 1
+          p[onp.length - 1] = p[onp.length - 1]! + 1
         } else if (Path.endsBefore(op, p)) {
           if (Path.equals(onp, p)) {
-            p[onp.length - 1] += 1
+            p[onp.length - 1] = p[onp.length - 1]! + 1
           }
 
-          p[op.length - 1] -= 1
+          p[op.length - 1] = p[op.length - 1]! - 1
         }
 
         break

@@ -1,5 +1,5 @@
 import React from 'react'
-import {useSlateStatic} from 'slate-react'
+import {useSlateStatic} from '../slate-react'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 
 export const InternalSlateEditorRefPlugin =

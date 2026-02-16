@@ -1,5 +1,5 @@
-import type {InsertTextOperation, Range} from 'slate'
 import {describe, expect, it} from 'vitest'
+import type {InsertTextOperation, Range} from '../../slate'
 import {moveRangeByOperation} from '../move-range-by-operation'
 
 describe('moveRangeByOperation', () => {

@@ -1,8 +1,8 @@
 import type {PortableTextTextBlock} from '@portabletext/schema'
 import {useContext, useRef, type ReactElement} from 'react'
-import type {Element as SlateElement} from 'slate'
-import {useSlateSelector, type RenderElementProps} from 'slate-react'
 import type {DropPosition} from '../behaviors/behavior.core.drop-position'
+import type {Element as SlateElement} from '../slate'
+import {useSlateSelector, type RenderElementProps} from '../slate-react'
 import type {
   BlockListItemRenderProps,
   BlockRenderProps,

@@ -1,11 +1,11 @@
 import {Editor} from '../interfaces/editor'
 import {Element} from '../interfaces/element'
-import {NodeEntry} from '../interfaces/node'
+import type {NodeEntry} from '../interfaces/node'
 import {Path} from '../interfaces/path'
 import {Point} from '../interfaces/point'
 import {Range} from '../interfaces/range'
 import {Transforms} from '../interfaces/transforms'
-import {TextTransforms} from '../interfaces/transforms/text'
+import type {TextTransforms} from '../interfaces/transforms/text'
 
 export const deleteText: TextTransforms['delete'] = (editor, options = {}) => {
   Editor.withoutNormalizing(editor, () => {
@@ -147,7 +147,9 @@ export const deleteText: TextTransforms['delete'] = (editor, options = {}) => {
       .reverse()
       .map((r) => r.unref())
       .filter((r): r is Path => r !== null)
-      .forEach((p) => Transforms.removeNodes(editor, {at: p, voids}))
+      .forEach((p) => {
+        Transforms.removeNodes(editor, {at: p, voids})
+      })
 
     if (!endNonEditable) {
       const point = endRef.current!
