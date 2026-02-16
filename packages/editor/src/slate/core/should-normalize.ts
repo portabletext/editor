@@ -1,8 +1,8 @@
-import {Editor} from '../interfaces/editor'
-import {WithEditorFirstArg} from '../utils/types'
+import type {Editor} from '../interfaces/editor'
+import type {WithEditorFirstArg} from '../utils/types'
 
 export const shouldNormalize: WithEditorFirstArg<Editor['shouldNormalize']> = (
-  editor,
+  _editor,
   {iteration, initialDirtyPathsLength},
 ) => {
   const maxIterations = initialDirtyPathsLength * 42 // HACK: better way?

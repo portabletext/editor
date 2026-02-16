@@ -1,8 +1,8 @@
 import {isTextBlock} from '@portabletext/schema'
-import {Transforms} from 'slate'
-import {EDITOR_TO_PENDING_SELECTION} from 'slate-dom'
 import {getFocusBlock, getFocusSpan} from '../internal-utils/slate-utils'
 import {VOID_CHILD_KEY} from '../internal-utils/values'
+import {Transforms} from '../slate'
+import {EDITOR_TO_PENDING_SELECTION} from '../slate-dom'
 import {parseInlineObject, parseSpan} from '../utils/parse-blocks'
 import type {OperationImplementation} from './operation.types'
 

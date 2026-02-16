@@ -1,5 +1,5 @@
 import {isObject, Range} from '..'
-import {ExtendedType} from '../types/custom-types'
+import type {ExtendedType} from '../types/custom-types'
 import {isDeepEqual} from '../utils/deep-equal'
 
 /**
@@ -80,7 +80,7 @@ export const Text: TextInterface = {
     const {loose = false} = options
 
     function omitText(obj: Record<any, any>) {
-      const {text, ...rest} = obj
+      const {text: _text, ...rest} = obj
 
       return rest
     }
@@ -111,7 +111,7 @@ export const Text: TextInterface = {
 
       if (
         !text.hasOwnProperty(key) ||
-        text[<keyof Text>key] !== props[<keyof Text>key]
+        text[key as keyof Text] !== props[key as keyof Text]
       ) {
         return false
       }
@@ -127,7 +127,12 @@ export const Text: TextInterface = {
     let leaves: {leaf: Text; position?: LeafPosition}[] = [{leaf: {...node}}]
 
     for (const dec of decorations) {
-      const {anchor, focus, merge: mergeDecoration, ...rest} = dec
+      const {
+        anchor: _anchor,
+        focus: _focus,
+        merge: mergeDecoration,
+        ...rest
+      } = dec
       const [start, end] = Range.edges(dec)
       const next = []
       let leafEnd = 0
@@ -163,8 +168,8 @@ export const Text: TextInterface = {
         // and add the range to the middle intersecting section. Do the end
         // split first since we don't need to update the offset that way.
         let middle = leaf
-        let before
-        let after
+        let before: {leaf: Text} | undefined
+        let after: {leaf: Text} | undefined
 
         if (decorationEnd < leafEnd) {
           const off = decorationEnd - leafStart
@@ -201,8 +206,12 @@ export const Text: TextInterface = {
         const end = start + item.leaf.text.length
         const position: LeafPosition = {start, end}
 
-        if (index === 0) position.isFirst = true
-        if (index === leaves.length - 1) position.isLast = true
+        if (index === 0) {
+          position.isFirst = true
+        }
+        if (index === leaves.length - 1) {
+          position.isLast = true
+        }
 
         item.position = position
         currentOffset = end

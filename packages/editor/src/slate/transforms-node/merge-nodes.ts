@@ -1,12 +1,12 @@
 import {Editor} from '../interfaces/editor'
 import {Element} from '../interfaces/element'
-import {Node} from '../interfaces/node'
+import type {Node} from '../interfaces/node'
 import {Path} from '../interfaces/path'
 import {Range} from '../interfaces/range'
 import {Scrubber} from '../interfaces/scrubber'
 import {Text} from '../interfaces/text'
 import {Transforms} from '../interfaces/transforms'
-import {NodeTransforms} from '../interfaces/transforms/node'
+import type {NodeTransforms} from '../interfaces/transforms/node'
 
 const hasSingleChildNest = (editor: Editor, node: Node): boolean => {
   if (Element.isElement(node)) {
@@ -14,7 +14,7 @@ const hasSingleChildNest = (editor: Editor, node: Node): boolean => {
     if (Editor.isVoid(editor, node)) {
       return true
     } else if (element.children.length === 1) {
-      return hasSingleChildNest(editor, element.children[0])
+      return hasSingleChildNest(editor, element.children[0]!)
     } else {
       return false
     }
@@ -95,17 +95,17 @@ export const mergeNodes: NodeTransforms['mergeNodes'] = (
     })
 
     const emptyRef = emptyAncestor && Editor.pathRef(editor, emptyAncestor[1])
-    let properties
-    let position
+    let properties: Partial<Node>
+    let position: number
 
     // Ensure that the nodes are equivalent, and figure out what the position
     // and extra properties of the merge will be.
     if (Text.isText(node) && Text.isText(prevNode)) {
-      const {text, ...rest} = node
+      const {text: _text, ...rest} = node
       position = prevNode.text.length
       properties = rest as Partial<Text>
     } else if (Element.isElement(node) && Element.isElement(prevNode)) {
-      const {children, ...rest} = node
+      const {children: _children, ...rest} = node
       position = prevNode.children.length
       properties = rest as Partial<Element>
     } else {

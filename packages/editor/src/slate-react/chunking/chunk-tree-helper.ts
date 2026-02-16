@@ -1,6 +1,6 @@
-import {Path} from 'slate'
-import {Key} from 'slate-dom'
-import {
+import {Path} from '../../slate'
+import {Key} from '../../slate-dom'
+import type {
   Chunk,
   ChunkAncestor,
   ChunkDescendant,
@@ -101,7 +101,9 @@ export class ChunkTreeHelper {
    */
   public readLeaf(): ChunkLeaf | null {
     // istanbul ignore next
-    if (this.reachedEnd) return null
+    if (this.reachedEnd) {
+      return null
+    }
 
     // Get the next sibling or aunt node
     while (true) {
@@ -179,7 +181,9 @@ export class ChunkTreeHelper {
    */
   public insertAfter(leaves: ChunkLeaf[]) {
     // istanbul ignore next
-    if (leaves.length === 0) return
+    if (leaves.length === 0) {
+      return
+    }
 
     let beforeDepth = 0
     let afterDepth = 0
@@ -202,7 +206,9 @@ export class ChunkTreeHelper {
       beforeDepth++
     }
 
-    if (leaves.length === 0) return
+    if (leaves.length === 0) {
+      return
+    }
 
     // Save the pointer so that we can come back here after inserting leaves
     // into the starts of subsequent blocks
@@ -313,14 +319,16 @@ export class ChunkTreeHelper {
       return null
     }
 
-    return this.pointerSiblings[this.pointerIndex]
+    return this.pointerSiblings[this.pointerIndex] ?? null
   }
 
   /**
    * Cached getter for the current node
    */
   private get pointerNode(): ChunkDescendant | null {
-    if (this.cachedPointerNode !== undefined) return this.cachedPointerNode
+    if (this.cachedPointerNode !== undefined) {
+      return this.cachedPointerNode
+    }
     const pointerNode = this.getPointerNode()
     this.cachedPointerNode = pointerNode
     return pointerNode
@@ -351,7 +359,9 @@ export class ChunkTreeHelper {
    * Save the current pointer to be restored later
    */
   private savePointer(): SavedPointer {
-    if (this.atStart) return 'start'
+    if (this.atStart) {
+      return 'start'
+    }
 
     // istanbul ignore next
     if (!this.pointerNode) {
@@ -470,19 +480,25 @@ export class ChunkTreeHelper {
    * plus the number of nodes being inserted, or the minimum depth if larger
    */
   private rawInsertAfter(leaves: ChunkLeaf[], minDepth: number) {
-    if (leaves.length === 0) return
+    if (leaves.length === 0) {
+      return
+    }
 
     const groupIntoChunks = (
       leaves: ChunkLeaf[],
       parent: ChunkAncestor,
       perChunk: number,
     ): ChunkDescendant[] => {
-      if (perChunk === 1) return leaves
+      if (perChunk === 1) {
+        return leaves
+      }
       const chunks: Chunk[] = []
 
       for (let i = 0; i < this.chunkSize; i++) {
         const chunkNodes = leaves.slice(i * perChunk, (i + 1) * perChunk)
-        if (chunkNodes.length === 0) break
+        if (chunkNodes.length === 0) {
+          break
+        }
 
         const chunk: Chunk = {
           type: 'chunk',
@@ -513,7 +529,7 @@ export class ChunkTreeHelper {
 
     // A depth of 0 means no chunking
     const depth = Math.max(depthForTotal, minDepth)
-    const perTopLevelChunk = Math.pow(this.chunkSize, depth)
+    const perTopLevelChunk = this.chunkSize ** depth
 
     const chunks = groupIntoChunks(leaves, this.pointerChunk, perTopLevelChunk)
     this.pointerSiblings.splice(this.pointerIndex + 1, 0, ...chunks)
@@ -528,7 +544,9 @@ export class ChunkTreeHelper {
    */
   // istanbul ignore next
   private validateState() {
-    if (!this.debug) return
+    if (!this.debug) {
+      return
+    }
 
     const validateDescendant = (node: ChunkDescendant) => {
       if (node.type === 'chunk') {

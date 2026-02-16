@@ -11,19 +11,19 @@ import {
   type KeyboardEvent,
   type TextareaHTMLAttributes,
 } from 'react'
-import {Editor, Transforms, type Text} from 'slate'
+import {debug} from '../internal-utils/debug'
+import {getEventPosition} from '../internal-utils/event-position'
+import {normalizeSelection} from '../internal-utils/selection'
+import {slateRangeToSelection} from '../internal-utils/slate-utils'
+import {toSlateRange} from '../internal-utils/to-slate-range'
+import {Editor, Transforms, type Text} from '../slate'
 import {
   ReactEditor,
   Editable as SlateEditable,
   useSlate,
   type RenderElementProps,
   type RenderLeafProps,
-} from 'slate-react'
-import {debug} from '../internal-utils/debug'
-import {getEventPosition} from '../internal-utils/event-position'
-import {normalizeSelection} from '../internal-utils/selection'
-import {slateRangeToSelection} from '../internal-utils/slate-utils'
-import {toSlateRange} from '../internal-utils/to-slate-range'
+} from '../slate-react'
 import type {
   EditorSelection,
   OnCopyFn,

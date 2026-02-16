@@ -1,14 +1,14 @@
-import React, {forwardRef, memo, useRef, useState} from 'react'
-import {Editor, Element, Node, Path, Text} from 'slate'
-import {IS_ANDROID, MARK_PLACEHOLDER_SYMBOL} from 'slate-dom'
+import {forwardRef, memo, useRef, useState} from 'react'
 import {ReactEditor, useSlateStatic} from '..'
+import {Editor, Node, Path, type Element, type Text} from '../../slate'
+import {IS_ANDROID, MARK_PLACEHOLDER_SYMBOL} from '../../slate-dom'
 import {useIsomorphicLayoutEffect} from '../hooks/use-isomorphic-layout-effect'
 
 /**
  * Leaf content strings.
  */
 
-const String = (props: {
+const SlateString = (props: {
   isLast: boolean
   leaf: Text
   parent: Element
@@ -18,7 +18,7 @@ const String = (props: {
   const editor = useSlateStatic()
   const path = ReactEditor.findPath(editor, text)
   const parentPath = Path.parent(path)
-  const isMarkPlaceholder = Boolean(leaf[MARK_PLACEHOLDER_SYMBOL])
+  const isMarkPlaceholder = Boolean((leaf as any)[MARK_PLACEHOLDER_SYMBOL])
 
   // COMPAT: Render text inside void nodes with a zero-width space.
   // So the node can contain selection but the text is not visible.
@@ -141,4 +141,4 @@ export const ZeroWidthString = (props: {
   )
 }
 
-export default String
+export default SlateString

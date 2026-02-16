@@ -1,4 +1,4 @@
-import {Editor, EditorInterface} from '../interfaces/editor'
+import {Editor, type EditorInterface} from '../interfaces/editor'
 import {Range} from '../interfaces/range'
 
 export const range: EditorInterface['range'] = (editor, at, to) => {

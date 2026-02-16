@@ -3,7 +3,15 @@ import {globalIgnores} from 'eslint/config'
 import tseslint from 'typescript-eslint'
 
 export default tseslint.config([
-  globalIgnores(['coverage', 'dist', 'lib', '**/__tests__/**']),
+  globalIgnores([
+    'coverage',
+    'dist',
+    'lib',
+    '**/__tests__/**',
+    'src/slate/**',
+    'src/slate-dom/**',
+    'src/slate-react/**',
+  ]),
   reactHooks.configs.flat.recommended,
   {
     files: ['src/**/*.{cjs,mjs,js,jsx,ts,tsx}'],

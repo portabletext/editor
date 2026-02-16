@@ -1,23 +1,5 @@
-import {BaseRange, BaseText} from 'slate'
-import {DOMEditor} from './plugin/dom-editor'
-
-declare module 'slate' {
-  interface CustomTypes {
-    Editor: DOMEditor
-    Text: BaseText & {
-      placeholder?: string
-      onPlaceholderResize?: (node: HTMLElement | null) => void
-      // FIXME: is unknown correct here?
-      [key: string]: unknown
-    }
-    Range: BaseRange & {
-      placeholder?: string
-      onPlaceholderResize?: (node: HTMLElement | null) => void
-      // FIXME: is unknown correct here?
-      [key: string]: unknown
-    }
-  }
-}
+// CustomTypes augmentation removed — PTE's types/slate.ts is the source of truth.
+// Slate-dom's placeholder/resize props are handled through PTE's own type system.
 
 declare global {
   interface Window {
@@ -41,5 +23,3 @@ declare global {
     getRootNode(options?: GetRootNodeOptions): Document | ShadowRoot
   }
 }
-
-export {}

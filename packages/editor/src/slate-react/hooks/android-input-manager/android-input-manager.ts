@@ -1,5 +1,13 @@
-import {DebouncedFunc} from 'lodash'
-import {Editor, Node, Path, Point, Range, Text, Transforms} from 'slate'
+import type {DebouncedFunc} from 'lodash'
+import {
+  Editor,
+  Node,
+  Path,
+  Point,
+  Range,
+  Text,
+  Transforms,
+} from '../../../slate'
 import {
   applyStringDiff,
   EDITOR_TO_FORCE_RENDER,
@@ -17,11 +25,11 @@ import {
   normalizePoint,
   normalizeRange,
   normalizeStringDiff,
-  StringDiff,
   targetRange,
-  TextDiff,
   verifyDiffState,
-} from 'slate-dom'
+  type StringDiff,
+  type TextDiff,
+} from '../../../slate-dom'
 import {ReactEditor} from '../../plugin/react-editor'
 
 export type Action = {at?: Point | Range; run: () => void}
@@ -41,7 +49,7 @@ const isDataTransfer = (value: any): value is DataTransfer =>
   value?.constructor.name === 'DataTransfer'
 
 export type CreateAndroidInputManagerOptions = {
-  editor: ReactEditor
+  editor: Editor
 
   scheduleOnDOMSelectionChange: DebouncedFunc<() => void>
   onDOMSelectionChange: DebouncedFunc<() => void>
@@ -140,6 +148,7 @@ export function createAndroidInputManager({
 
     if (!flushing) {
       flushing = true
+      // biome-ignore lint/suspicious/noAssignInExpressions: Slate upstream pattern
       setTimeout(() => (flushing = false))
     }
 
@@ -161,12 +170,13 @@ export function createAndroidInputManager({
     let scheduleSelectionChange = hasPendingDiffs()
 
     let diff: TextDiff | undefined
+    // biome-ignore lint/suspicious/noAssignInExpressions: Slate upstream pattern
     while ((diff = EDITOR_TO_PENDING_DIFFS.get(editor)?.[0])) {
       const pendingMarks = EDITOR_TO_PENDING_INSERTION_MARKS.get(editor)
 
       if (pendingMarks !== undefined) {
         EDITOR_TO_PENDING_INSERTION_MARKS.delete(editor)
-        editor.marks = pendingMarks
+        editor.marks = pendingMarks as typeof editor.marks
       }
 
       if (pendingMarks && insertPositionHint === false) {
@@ -189,6 +199,7 @@ export function createAndroidInputManager({
       // pending ranges.
       EDITOR_TO_PENDING_DIFFS.set(
         editor,
+        // biome-ignore lint/suspicious/noNonNullAssertedOptionalChain: Slate upstream pattern — diffs guaranteed to exist in loop
         EDITOR_TO_PENDING_DIFFS.get(editor)?.filter(({id}) => id !== diff!.id)!,
       )
 
@@ -238,7 +249,7 @@ export function createAndroidInputManager({
     const userMarks = EDITOR_TO_USER_MARKS.get(editor)
     EDITOR_TO_USER_MARKS.delete(editor)
     if (userMarks !== undefined) {
-      editor.marks = userMarks
+      editor.marks = userMarks as typeof editor.marks
       editor.onChange()
     }
   }
@@ -303,7 +314,7 @@ export function createAndroidInputManager({
       return
     }
 
-    const merged = mergeStringDiffs(target.text, pendingDiffs[idx].diff, diff)
+    const merged = mergeStringDiffs(target.text, pendingDiffs[idx]!.diff, diff)
     if (!merged) {
       pendingDiffs.splice(idx, 1)
       updatePlaceholderVisibility()
@@ -311,7 +322,7 @@ export function createAndroidInputManager({
     }
 
     pendingDiffs[idx] = {
-      ...pendingDiffs[idx],
+      ...pendingDiffs[idx]!,
       diff: merged,
     }
   }

@@ -1,6 +1,6 @@
 import {Point} from '../interfaces/point'
-import {Range} from '../interfaces/range'
-import {SelectionTransforms} from '../interfaces/transforms/selection'
+import type {Range} from '../interfaces/range'
+import type {SelectionTransforms} from '../interfaces/transforms/selection'
 
 export const setSelection: SelectionTransforms['setSelection'] = (
   editor,
@@ -24,10 +24,10 @@ export const setSelection: SelectionTransforms['setSelection'] = (
         !Point.equals(props.focus, selection.focus)) ||
       (k !== 'anchor' &&
         k !== 'focus' &&
-        props[<keyof Range>k] !== selection[<keyof Range>k])
+        props[k as keyof Range] !== selection[k as keyof Range])
     ) {
-      oldProps[<keyof Range>k] = selection[<keyof Range>k]
-      newProps[<keyof Range>k] = props[<keyof Range>k]
+      oldProps[k as keyof Range] = selection[k as keyof Range]
+      newProps[k as keyof Range] = props[k as keyof Range]
     }
   }
 

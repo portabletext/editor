@@ -1,4 +1,4 @@
-import {Editor, Location} from '../interfaces'
+import {Editor, type Location} from '../interfaces'
 
 /**
  * Get the default location to insert content into the editor.

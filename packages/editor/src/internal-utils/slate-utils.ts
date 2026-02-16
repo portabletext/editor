@@ -1,4 +1,5 @@
 import type {PortableTextSpan} from '@portabletext/schema'
+import type {EditorSchema} from '../editor/editor-schema'
 import {
   Editor,
   Element,
@@ -6,8 +7,7 @@ import {
   Range,
   type Point,
   type Path as SlatePath,
-} from 'slate'
-import type {EditorSchema} from '../editor/editor-schema'
+} from '../slate'
 import type {EditorSelection, EditorSelectionPoint} from '../types/editor'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {fromSlateBlock} from './values'

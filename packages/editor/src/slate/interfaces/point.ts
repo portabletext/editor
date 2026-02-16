@@ -1,5 +1,5 @@
-import {ExtendedType, isObject, Operation, Path} from '..'
-import {TextDirection} from '../types/types'
+import {isObject, Path, type ExtendedType, type Operation} from '..'
+import type {TextDirection} from '../types/types'
 
 /**
  * `Point` objects refer to a specific location in a text node in a Slate
@@ -62,8 +62,12 @@ export const Point: PointInterface = {
     const result = Path.compare(point.path, another.path)
 
     if (result === 0) {
-      if (point.offset < another.offset) return -1
-      if (point.offset > another.offset) return 1
+      if (point.offset < another.offset) {
+        return -1
+      }
+      if (point.offset > another.offset) {
+        return 1
+      }
       return 0
     }
 

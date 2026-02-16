@@ -1,5 +1,5 @@
 import type {PortableTextSpan} from '@portabletext/schema'
-import {Node, Path} from 'slate'
+import {Node, Path} from '../slate'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 
 export function getPreviousSpan({

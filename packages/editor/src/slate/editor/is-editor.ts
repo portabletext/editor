@@ -1,4 +1,4 @@
-import {Editor, EditorInterface} from '../interfaces/editor'
+import type {Editor, EditorInterface} from '../interfaces/editor'
 import {Node} from '../interfaces/node'
 import {Operation} from '../interfaces/operation'
 import {Range} from '../interfaces/range'

@@ -1,5 +1,5 @@
 import {createContext, useCallback, useContext, useMemo, useRef} from 'react'
-import {Editor} from 'slate'
+import type {Editor} from '../../slate'
 import {useGenericSelector} from './use-generic-selector'
 import {useIsomorphicLayoutEffect} from './use-isomorphic-layout-effect'
 import {useSlateStatic} from './use-slate-static'
@@ -85,11 +85,15 @@ export function useSelectorContext() {
   const deferredEventListeners = useRef(new Set<Callback>())
 
   const onChange = useCallback(() => {
-    eventListeners.current.forEach((listener) => listener())
+    eventListeners.current.forEach((listener) => {
+      listener()
+    })
   }, [])
 
   const flushDeferred = useCallback(() => {
-    deferredEventListeners.current.forEach((listener) => listener())
+    deferredEventListeners.current.forEach((listener) => {
+      listener()
+    })
     deferredEventListeners.current.clear()
   }, [])
 

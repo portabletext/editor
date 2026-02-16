@@ -1,6 +1,6 @@
 import {applyAll, set} from '@portabletext/patches'
 import {isTextBlock} from '@portabletext/schema'
-import {Transforms, type Node} from 'slate'
+import {Transforms, type Node} from '../slate'
 import {parseMarkDefs} from '../utils/parse-blocks'
 import type {OperationImplementation} from './operation.types'
 

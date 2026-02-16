@@ -1,12 +1,12 @@
-import React, {Fragment} from 'react'
-import {Element} from 'slate'
-import {Key} from 'slate-dom'
-import {
+import React, {Fragment, type JSX} from 'react'
+import type {Element} from '../../slate'
+import type {Key} from '../../slate-dom'
+import type {
   Chunk as TChunk,
   ChunkAncestor as TChunkAncestor,
   ChunkTree as TChunkTree,
 } from '../chunking'
-import {RenderChunkProps} from './editable'
+import type {RenderChunkProps} from './editable'
 
 const defaultRenderChunk = ({children}: RenderChunkProps) => children
 

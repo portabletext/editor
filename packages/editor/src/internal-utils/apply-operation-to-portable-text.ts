@@ -1,7 +1,7 @@
 import type {PortableTextBlock} from '@portabletext/schema'
-import {Element, Path, type Node, type Operation} from 'slate'
 import type {EditorSchema} from '../editor/editor-schema'
 import type {EditorContext} from '../editor/editor-snapshot'
+import {Element, Path, type Node, type Operation} from '../slate'
 import type {OmitFromUnion} from '../type-utils'
 import {
   getBlock,

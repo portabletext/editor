@@ -2,7 +2,7 @@ import {Editor} from '../interfaces/editor'
 import {Range} from '../interfaces/range'
 import {Scrubber} from '../interfaces/scrubber'
 import {Transforms} from '../interfaces/transforms'
-import {SelectionTransforms} from '../interfaces/transforms/selection'
+import type {SelectionTransforms} from '../interfaces/transforms/selection'
 
 export const select: SelectionTransforms['select'] = (editor, target) => {
   const {selection} = editor

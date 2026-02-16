@@ -1,5 +1,5 @@
-import {Editor, Element, Range, Text, Transforms} from 'slate'
 import {toSlateRange} from '../internal-utils/to-slate-range'
+import {Editor, Element, Range, Text, Transforms} from '../slate'
 import type {OperationImplementation} from './operation.types'
 
 export const decoratorRemoveOperationImplementation: OperationImplementation<

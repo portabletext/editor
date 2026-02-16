@@ -1,4 +1,4 @@
-import {RefObject, useEffect, useState} from 'react'
+import {useEffect, useState, type RefObject} from 'react'
 import {useIsomorphicLayoutEffect} from './use-isomorphic-layout-effect'
 
 export function useMutationObserver(

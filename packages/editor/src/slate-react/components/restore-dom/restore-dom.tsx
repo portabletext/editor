@@ -1,13 +1,16 @@
-import React, {
+import {
   Component,
-  ComponentType,
-  ContextType,
-  ReactNode,
-  RefObject,
+  type ComponentType,
+  type ContextType,
+  type ReactNode,
+  type RefObject,
 } from 'react'
-import {IS_ANDROID} from 'slate-dom'
+import {IS_ANDROID} from '../../../slate-dom'
 import {EditorContext} from '../../hooks/use-slate-static'
-import {createRestoreDomManager, RestoreDOMManager} from './restore-dom-manager'
+import {
+  createRestoreDomManager,
+  type RestoreDOMManager,
+} from './restore-dom-manager'
 
 const MUTATION_OBSERVER_CONFIG: MutationObserverInit = {
   subtree: true,
@@ -19,14 +22,14 @@ const MUTATION_OBSERVER_CONFIG: MutationObserverInit = {
 type RestoreDOMProps = {
   children?: ReactNode
   receivedUserInput: RefObject<boolean>
-  node: RefObject<HTMLDivElement>
+  node: RefObject<HTMLDivElement | null>
 }
 
 // We have to use a class component here since we rely on `getSnapshotBeforeUpdate` which has no FC equivalent
 // to run code synchronously immediately before react commits the component update to the DOM.
 class RestoreDOMComponent extends Component<RestoreDOMProps> {
-  static contextType = EditorContext
-  context: ContextType<typeof EditorContext> = null
+  static override contextType = EditorContext
+  override context: ContextType<typeof EditorContext> = null
 
   private manager: RestoreDOMManager | null = null
   private mutationObserver: MutationObserver | null = null
@@ -40,7 +43,7 @@ class RestoreDOMComponent extends Component<RestoreDOMProps> {
     this.mutationObserver?.observe(node.current, MUTATION_OBSERVER_CONFIG)
   }
 
-  componentDidMount() {
+  override componentDidMount() {
     const {receivedUserInput} = this.props
     const editor = this.context!
 
@@ -50,7 +53,7 @@ class RestoreDOMComponent extends Component<RestoreDOMProps> {
     this.observe()
   }
 
-  getSnapshotBeforeUpdate() {
+  override getSnapshotBeforeUpdate() {
     const pendingMutations = this.mutationObserver?.takeRecords()
     if (pendingMutations?.length) {
       this.manager?.registerMutations(pendingMutations)
@@ -62,16 +65,16 @@ class RestoreDOMComponent extends Component<RestoreDOMProps> {
     return null
   }
 
-  componentDidUpdate() {
+  override componentDidUpdate() {
     this.manager?.clear()
     this.observe()
   }
 
-  componentWillUnmount() {
+  override componentWillUnmount() {
     this.mutationObserver?.disconnect()
   }
 
-  render() {
+  override render() {
     return this.props.children
   }
 }

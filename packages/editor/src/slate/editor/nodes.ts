@@ -1,7 +1,7 @@
-import {Editor, EditorNodesOptions} from '../interfaces/editor'
+import {Editor, type EditorNodesOptions} from '../interfaces/editor'
 import {Element} from '../interfaces/element'
 import {Span} from '../interfaces/location'
-import {Node, NodeEntry} from '../interfaces/node'
+import {Node, type NodeEntry} from '../interfaces/node'
 import {Path} from '../interfaces/path'
 import {Text} from '../interfaces/text'
 
@@ -27,8 +27,8 @@ export function* nodes<T extends Node>(
     return
   }
 
-  let from
-  let to
+  let from: Path
+  let to: Path
 
   if (Span.isSpan(at)) {
     from = at[0]
@@ -45,13 +45,18 @@ export function* nodes<T extends Node>(
     from,
     to,
     pass: ([node, path]) => {
-      if (pass && pass([node, path])) return true
-      if (!Element.isElement(node)) return false
+      if (pass && pass([node, path])) {
+        return true
+      }
+      if (!Element.isElement(node)) {
+        return false
+      }
       if (
         !voids &&
         (Editor.isVoid(editor, node) || Editor.isElementReadOnly(editor, node))
-      )
+      ) {
         return true
+      }
 
       return false
     },

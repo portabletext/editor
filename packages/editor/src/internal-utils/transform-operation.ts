@@ -6,7 +6,7 @@ import {
   DIFF_INSERT,
   parsePatch,
 } from '@sanity/diff-match-patch'
-import type {Descendant, Operation} from 'slate'
+import type {Descendant, Operation} from '../slate'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {isKeyedSegment} from '../utils'
 import {debug} from './debug'

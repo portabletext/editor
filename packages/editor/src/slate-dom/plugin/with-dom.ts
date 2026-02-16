@@ -1,23 +1,22 @@
 import {
-  BaseEditor,
   Editor,
   Element,
   Node,
-  Operation,
   Path,
-  PathRef,
   Point,
   Range,
   Transforms,
-} from 'slate'
+  type Operation,
+  type PathRef,
+} from '../../slate'
 import {
-  TextDiff,
   transformPendingPoint,
   transformPendingRange,
   transformTextDiff,
+  type TextDiff,
 } from '../utils/diff-text'
 import {getPlainText, getSlateFragmentAttribute, isDOMText} from '../utils/dom'
-import {Key} from '../utils/key'
+import type {Key} from '../utils/key'
 import {findCurrentLineRange} from '../utils/lines'
 import {
   EDITOR_TO_KEY_TO_ELEMENT,
@@ -43,7 +42,7 @@ import {DOMEditor} from './dom-editor'
  * See https://docs.slatejs.org/concepts/11-typescript to learn how.
  */
 
-export const withDOM = <T extends BaseEditor>(
+export const withDOM = <T extends Editor>(
   editor: T,
   clipboardFormatKey = 'x-slate-fragment',
 ): T & DOMEditor => {

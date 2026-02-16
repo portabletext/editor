@@ -1,6 +1,6 @@
 import type {PortableTextSpan} from '@portabletext/schema'
-import {Editor, Node, Path, Range, Transforms} from 'slate'
 import {toSlateRange} from '../internal-utils/to-slate-range'
+import {Editor, Node, Path, Range, Transforms} from '../slate'
 import type {OperationImplementation} from './operation.types'
 
 export const removeAnnotationOperationImplementation: OperationImplementation<

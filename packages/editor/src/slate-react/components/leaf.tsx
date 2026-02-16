@@ -1,22 +1,22 @@
 import {ResizeObserver as ResizeObserverPolyfill} from '@juggle/resize-observer'
 import React, {
-  JSX,
-  MutableRefObject,
   useCallback,
   useEffect,
   useRef,
   useState,
+  type JSX,
+  type MutableRefObject,
 } from 'react'
-import {Element, LeafPosition, Text} from 'slate'
+import {Text, type Element, type LeafPosition} from '../../slate'
 import {
   EDITOR_TO_PLACEHOLDER_ELEMENT,
   IS_ANDROID,
   IS_WEBKIT,
   PLACEHOLDER_SYMBOL,
-} from 'slate-dom'
+} from '../../slate-dom'
 import {useSlateStatic} from '../hooks/use-slate-static'
-import {RenderLeafProps, RenderPlaceholderProps} from './editable'
-import String from './string'
+import type {RenderLeafProps, RenderPlaceholderProps} from './editable'
+import SlateString from './string'
 
 // Delay the placeholder on Android to prevent the keyboard from closing.
 // (https://github.com/ianstormtaylor/slate/pull/5368)
@@ -82,7 +82,7 @@ const Leaf = (props: {
 
       if (placeholderEl == null) {
         EDITOR_TO_PLACEHOLDER_ELEMENT.delete(editor)
-        leaf.onPlaceholderResize?.(null)
+        ;(leaf as any).onPlaceholderResize?.(null)
       } else {
         EDITOR_TO_PLACEHOLDER_ELEMENT.set(editor, placeholderEl)
 
@@ -90,7 +90,7 @@ const Leaf = (props: {
           // Create a new observer and observe the placeholder element.
           const ResizeObserver = window.ResizeObserver || ResizeObserverPolyfill
           placeholderResizeObserver.current = new ResizeObserver(() => {
-            leaf.onPlaceholderResize?.(placeholderEl)
+            ;(leaf as any).onPlaceholderResize?.(placeholderEl)
           })
         }
         placeholderResizeObserver.current.observe(placeholderEl)
@@ -101,10 +101,10 @@ const Leaf = (props: {
   )
 
   let children = (
-    <String isLast={isLast} leaf={leaf} parent={parent} text={text} />
+    <SlateString isLast={isLast} leaf={leaf} parent={parent} text={text} />
   )
 
-  const leafIsPlaceholder = Boolean(leaf[PLACEHOLDER_SYMBOL])
+  const leafIsPlaceholder = Boolean((leaf as any)[PLACEHOLDER_SYMBOL])
   useEffect(() => {
     if (leafIsPlaceholder) {
       if (!showPlaceholderTimeoutRef.current) {
@@ -123,7 +123,7 @@ const Leaf = (props: {
 
   if (leafIsPlaceholder && showPlaceholder) {
     const placeholderProps: RenderPlaceholderProps = {
-      children: leaf.placeholder,
+      children: (leaf as any).placeholder,
       attributes: {
         'data-slate-placeholder': true,
         'style': {
@@ -178,7 +178,8 @@ const MemoizedLeaf = React.memo(Leaf, (prev, next) => {
     next.renderPlaceholder === prev.renderPlaceholder &&
     next.text === prev.text &&
     Text.equals(next.leaf, prev.leaf) &&
-    next.leaf[PLACEHOLDER_SYMBOL] === prev.leaf[PLACEHOLDER_SYMBOL]
+    (next.leaf as any)[PLACEHOLDER_SYMBOL] ===
+      (prev.leaf as any)[PLACEHOLDER_SYMBOL]
   )
 })
 

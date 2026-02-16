@@ -1,7 +1,7 @@
 import {Editor} from '../interfaces/editor'
 import {Element} from '../interfaces/element'
 import {Path} from '../interfaces/path'
-import {NodeTransforms} from '../interfaces/transforms/node'
+import type {NodeTransforms} from '../interfaces/transforms/node'
 import {matchPath} from '../utils/match-path'
 
 export const moveNodes: NodeTransforms['moveNodes'] = (editor, options) => {
