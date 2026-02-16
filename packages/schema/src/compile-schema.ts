@@ -1,5 +1,36 @@
 import type {SchemaDefinition} from './define-schema'
-import type {FieldDefinition, Schema} from './schema'
+import type {
+  FieldDefinition,
+  ObjectOfDefinition,
+  OfDefinition,
+  Schema,
+} from './schema'
+
+function compileOfMember(member: OfDefinition): OfDefinition {
+  if (member.type === 'block') {
+    // BlockOfDefinition — pass through as-is
+    return member
+  }
+  // ObjectOfDefinition — recursively compile nested fields
+  return compileObjectOfMember(member)
+}
+
+function compileObjectOfMember(member: ObjectOfDefinition): ObjectOfDefinition {
+  if (member.fields) {
+    return {...member, fields: member.fields.map(compileField)}
+  }
+  return member
+}
+
+function compileField(field: FieldDefinition): FieldDefinition {
+  if (field.of) {
+    return {
+      ...field,
+      of: field.of.map(compileOfMember),
+    }
+  }
+  return field
+}
 
 /**
  * @public
@@ -54,15 +85,19 @@ export function compileSchema(definition: SchemaDefinition): Schema {
     })),
     annotations: (definition.annotations ?? []).map((annotation) => ({
       ...annotation,
-      fields: annotation.fields ?? [],
+      fields: annotation.fields?.map(compileField) ?? [],
     })),
     blockObjects: (definition.blockObjects ?? []).map((blockObject) => ({
       ...blockObject,
-      fields: blockObject.fields ?? [],
+      fields: blockObject.fields?.map(compileField) ?? [],
     })),
     inlineObjects: (definition.inlineObjects ?? []).map((inlineObject) => ({
       ...inlineObject,
-      fields: inlineObject.fields ?? [],
+      fields: inlineObject.fields?.map(compileField) ?? [],
+    })),
+    nestedBlocks: (definition.nestedBlocks ?? []).map((nestedBlock) => ({
+      ...nestedBlock,
+      fields: nestedBlock.fields?.map(compileField) ?? [],
     })),
   }
 }
