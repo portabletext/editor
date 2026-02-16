@@ -5,7 +5,7 @@ export interface ScrubberInterface {
   stringify(value: any): string
 }
 
-let _scrubber: Scrubber | undefined = undefined
+let _scrubber: Scrubber | undefined
 
 /**
  * This interface implements a stringify() function, which is used by Slate
@@ -15,7 +15,7 @@ let _scrubber: Scrubber | undefined = undefined
  *
  * For example, to prevent the cleartext logging of 'text' fields within Nodes:
  *
- *    import { Scrubber } from 'slate';
+ *    import { Scrubber } from '../../slate';
  *    Scrubber.setScrubber((key, val) => {
  *      if (key === 'text') return '...scrubbed...'
  *      return val

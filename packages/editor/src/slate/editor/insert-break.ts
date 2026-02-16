@@ -1,4 +1,4 @@
-import {EditorInterface} from '../interfaces/editor'
+import type {EditorInterface} from '../interfaces/editor'
 import {Transforms} from '../interfaces/transforms'
 
 export const insertBreak: EditorInterface['insertBreak'] = (editor) => {

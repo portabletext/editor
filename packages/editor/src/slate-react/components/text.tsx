@@ -1,14 +1,14 @@
-import React, {useCallback, useRef} from 'react'
-import {DecoratedRange, Element, Text as SlateText} from 'slate'
+import React, {useCallback, useRef, type JSX} from 'react'
+import {ReactEditor, useSlateStatic} from '..'
+import {Text as SlateText, type DecoratedRange, type Element} from '../../slate'
 import {
   EDITOR_TO_KEY_TO_ELEMENT,
   ELEMENT_TO_NODE,
   isTextDecorationsEqual,
   NODE_TO_ELEMENT,
-} from 'slate-dom'
-import {ReactEditor, useSlateStatic} from '..'
+} from '../../slate-dom'
 import {useDecorations} from '../hooks/use-decorations'
-import {
+import type {
   RenderLeafProps,
   RenderPlaceholderProps,
   RenderTextProps,
@@ -48,7 +48,7 @@ const Text = (props: {
   const children = []
 
   for (let i = 0; i < decoratedLeaves.length; i++) {
-    const {leaf, position} = decoratedLeaves[i]
+    const {leaf, position} = decoratedLeaves[i]!
 
     children.push(
       <Leaf

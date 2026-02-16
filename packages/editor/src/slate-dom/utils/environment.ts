@@ -2,7 +2,7 @@ export const IS_IOS =
   typeof navigator !== 'undefined' &&
   typeof window !== 'undefined' &&
   /iPad|iPhone|iPod/.test(navigator.userAgent) &&
-  !window.MSStream
+  !(window as any).MSStream
 
 export const IS_APPLE =
   typeof navigator !== 'undefined' && /Mac OS X/.test(navigator.userAgent)
@@ -66,9 +66,10 @@ export const CAN_USE_DOM = !!(
 export const IS_SAFARI_LEGACY =
   typeof navigator !== 'undefined' &&
   /Safari/.test(navigator.userAgent) &&
-  /Version\/(\d+)/.test(navigator.userAgent) &&
-  (navigator.userAgent.match(/Version\/(\d+)/)?.[1]
-    ? parseInt(navigator.userAgent.match(/Version\/(\d+)/)?.[1]!, 10) < 17
+  /Version\/(\\d+)/.test(navigator.userAgent) &&
+  (navigator.userAgent.match(/Version\/(\\d+)/)?.[1]
+    ? // biome-ignore lint/suspicious/noNonNullAssertedOptionalChain: Slate upstream — regex match guaranteed by outer test
+      parseInt(navigator.userAgent.match(/Version\/(\\d+)/)?.[1]!, 10) < 17
     : false)
 
 // COMPAT: Firefox/Edge Legacy don't support the `beforeinput` event
@@ -79,5 +80,4 @@ export const HAS_BEFORE_INPUT_SUPPORT =
   // globalThis is undefined in older browsers
   typeof globalThis !== 'undefined' &&
   globalThis.InputEvent &&
-  // @ts-ignore The `getTargetRanges` property isn't recognized.
   typeof globalThis.InputEvent.prototype.getTargetRanges === 'function'

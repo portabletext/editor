@@ -1,4 +1,4 @@
-import {BaseSelection, Range} from 'slate'
+import {Range, type BaseSelection} from '../../slate'
 import {useSlateSelector} from './use-slate-selector'
 
 /**
@@ -10,7 +10,11 @@ export const useSlateSelection = () => {
 }
 
 const isSelectionEqual = (a: BaseSelection, b: BaseSelection) => {
-  if (!a && !b) return true
-  if (!a || !b) return false
+  if (!a && !b) {
+    return true
+  }
+  if (!a || !b) {
+    return false
+  }
   return Range.equals(a, b)
 }

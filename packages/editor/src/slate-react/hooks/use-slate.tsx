@@ -1,5 +1,5 @@
-import {MutableRefObject, useContext, useMemo, useReducer} from 'react'
-import {Editor} from 'slate'
+import {useContext, useMemo, useReducer, type MutableRefObject} from 'react'
+import type {Editor} from '../../slate'
 import {useIsomorphicLayoutEffect} from './use-isomorphic-layout-effect'
 import {SlateSelectorContext} from './use-slate-selector'
 import {useSlateStatic} from './use-slate-static'

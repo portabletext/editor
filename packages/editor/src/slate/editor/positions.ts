@@ -1,7 +1,7 @@
-import {Editor, EditorPositionsOptions} from '../interfaces/editor'
+import {Editor, type EditorPositionsOptions} from '../interfaces/editor'
 import {Element} from '../interfaces/element'
 import {Path} from '../interfaces/path'
-import {Point} from '../interfaces/point'
+import type {Point} from '../interfaces/point'
 import {Range} from '../interfaces/range'
 import {Text} from '../interfaces/text'
 import {
@@ -110,7 +110,9 @@ export function* positions(
       // Inline element nodes are ignored as they don't themselves
       // contribute to `blockText` or `leafText` - their parent and
       // children do.
-      if (editor.isInline(node)) continue
+      if (editor.isInline(node)) {
+        continue
+      }
 
       // Block element node - set `blockText` to its text content.
       if (Editor.hasInlines(editor, node)) {
@@ -172,7 +174,9 @@ export function* positions(
         // and if blockText is exhausted, break to get another block node,
         // otherwise advance blockText forward by the new `distance`.
         if (distance === 0) {
-          if (blockText === '') break
+          if (blockText === '') {
+            break
+          }
           distance = calcDistance(blockText, unit, reverse)
           // Split the string at the previously found distance and use the
           // remaining string for the next iteration.

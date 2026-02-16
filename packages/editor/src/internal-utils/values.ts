@@ -3,8 +3,8 @@ import type {
   PortableTextObject,
   PortableTextTextBlock,
 } from '@portabletext/schema'
-import {Element, Text, type Descendant} from 'slate'
 import type {EditorSchema} from '../editor/editor-schema'
+import {Element, Text, type Descendant} from '../slate'
 import {isEqualValues} from './equality'
 
 export const EMPTY_MARKDEFS: PortableTextObject[] = []

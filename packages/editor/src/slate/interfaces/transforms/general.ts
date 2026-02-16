@@ -1,16 +1,16 @@
 import {
-  Descendant,
-  Editor,
-  Element,
   Node,
-  NodeEntry,
-  Operation,
   Path,
   Point,
   Range,
   Scrubber,
-  Selection,
   Text,
+  type Descendant,
+  type Editor,
+  type Element,
+  type NodeEntry,
+  type Operation,
+  type Selection,
 } from '../../index'
 import {
   insertChildren,
@@ -38,7 +38,7 @@ export const GeneralTransforms: GeneralTransforms = {
         const {path, node} = op
 
         modifyChildren(editor, Path.parent(path), (children) => {
-          const index = path[path.length - 1]
+          const index = path[path.length - 1]!
 
           if (index > children.length) {
             throw new Error(
@@ -55,7 +55,9 @@ export const GeneralTransforms: GeneralTransforms = {
 
       case 'insert_text': {
         const {path, offset, text} = op
-        if (text.length === 0) break
+        if (text.length === 0) {
+          break
+        }
 
         modifyLeaf(editor, path, (node) => {
           const before = node.text.slice(0, offset)
@@ -73,19 +75,22 @@ export const GeneralTransforms: GeneralTransforms = {
 
       case 'merge_node': {
         const {path} = op
-        const index = path[path.length - 1]
+        const index = path[path.length - 1]!
         const prevPath = Path.previous(path)
-        const prevIndex = prevPath[prevPath.length - 1]
+        const prevIndex = prevPath[prevPath.length - 1]!
 
         modifyChildren(editor, Path.parent(path), (children) => {
-          const node = children[index]
-          const prev = children[prevIndex]
+          const node = children[index]!
+          const prev = children[prevIndex]!
           let newNode: Descendant
 
           if (Text.isText(node) && Text.isText(prev)) {
-            newNode = {...prev, text: prev.text + node.text}
+            newNode = {...prev, text: prev.text + node.text} as Descendant
           } else if (!Text.isText(node) && !Text.isText(prev)) {
-            newNode = {...prev, children: prev.children.concat(node.children)}
+            newNode = {
+              ...prev,
+              children: prev.children.concat(node.children),
+            } as Descendant
           } else {
             throw new Error(
               `Cannot apply a "merge_node" operation at path [${path}] to nodes of different interfaces: ${Scrubber.stringify(
@@ -103,7 +108,7 @@ export const GeneralTransforms: GeneralTransforms = {
 
       case 'move_node': {
         const {path, newPath} = op
-        const index = path[path.length - 1]
+        const index = path[path.length - 1]!
 
         if (Path.isAncestor(path, newPath)) {
           throw new Error(
@@ -124,7 +129,7 @@ export const GeneralTransforms: GeneralTransforms = {
         // transform `op.path` to ascertain what the `newPath` would be after
         // the operation was applied.
         const truePath = Path.transform(path, op)!
-        const newIndex = truePath[truePath.length - 1]
+        const newIndex = truePath[truePath.length - 1]!
 
         modifyChildren(editor, Path.parent(truePath), (children) =>
           insertChildren(children, newIndex, node),
@@ -136,7 +141,7 @@ export const GeneralTransforms: GeneralTransforms = {
 
       case 'remove_node': {
         const {path} = op
-        const index = path[path.length - 1]
+        const index = path[path.length - 1]!
 
         modifyChildren(editor, Path.parent(path), (children) =>
           removeChildren(children, index, 1),
@@ -198,7 +203,9 @@ export const GeneralTransforms: GeneralTransforms = {
 
       case 'remove_text': {
         const {path, offset, text} = op
-        if (text.length === 0) break
+        if (text.length === 0) {
+          break
+        }
 
         modifyLeaf(editor, path, (node) => {
           const before = node.text.slice(0, offset)
@@ -229,19 +236,19 @@ export const GeneralTransforms: GeneralTransforms = {
               throw new Error(`Cannot set the "${key}" property of nodes!`)
             }
 
-            const value = newProperties[<keyof Node>key]
+            const value = newProperties[key as keyof Node]
 
             if (value == null) {
-              delete newNode[<keyof Node>key]
+              delete newNode[key as keyof Node]
             } else {
-              newNode[<keyof Node>key] = value
+              newNode[key as keyof Node] = value
             }
           }
 
           // properties that were previously defined, but are now missing, must be deleted
           for (const key in properties) {
             if (!newProperties.hasOwnProperty(key)) {
-              delete newNode[<keyof Node>key]
+              delete newNode[key as keyof Node]
             }
           }
 
@@ -275,16 +282,16 @@ export const GeneralTransforms: GeneralTransforms = {
         const selection = {...editor.selection}
 
         for (const key in newProperties) {
-          const value = newProperties[<keyof Range>key]
+          const value = newProperties[key as keyof Range]
 
           if (value == null) {
             if (key === 'anchor' || key === 'focus') {
               throw new Error(`Cannot remove the "${key}" selection property`)
             }
 
-            delete selection[<keyof Range>key]
+            delete selection[key as keyof Range]
           } else {
-            selection[<keyof Range>key] = value
+            selection[key as keyof Range] = value
           }
         }
 
@@ -295,7 +302,7 @@ export const GeneralTransforms: GeneralTransforms = {
 
       case 'split_node': {
         const {path, position, properties} = op
-        const index = path[path.length - 1]
+        const index = path[path.length - 1]!
 
         if (path.length === 0) {
           throw new Error(
@@ -304,7 +311,7 @@ export const GeneralTransforms: GeneralTransforms = {
         }
 
         modifyChildren(editor, Path.parent(path), (children) => {
-          const node = children[index]
+          const node = children[index]!
           let newNode: Descendant
           let nextNode: Descendant
 
@@ -314,22 +321,22 @@ export const GeneralTransforms: GeneralTransforms = {
             newNode = {
               ...node,
               text: before,
-            }
+            } as Descendant
             nextNode = {
               ...(properties as Partial<Text>),
               text: after,
-            }
+            } as Descendant
           } else {
             const before = node.children.slice(0, position)
             const after = node.children.slice(position)
             newNode = {
               ...node,
               children: before,
-            }
+            } as Descendant
             nextNode = {
               ...(properties as Partial<Element>),
               children: after,
-            }
+            } as Descendant
           }
 
           return replaceChildren(children, index, 1, newNode, nextNode)

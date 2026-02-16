@@ -1,6 +1,5 @@
 import type {Patch} from '@portabletext/patches'
 import type {PortableTextBlock} from '@portabletext/schema'
-import {Editor} from 'slate'
 import type {ActorRefFrom} from 'xstate'
 import {
   and,
@@ -15,6 +14,7 @@ import {
   type AnyEventObject,
 } from 'xstate'
 import {debug} from '../internal-utils/debug'
+import {Editor} from '../slate'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import type {EditorSchema} from './editor-schema'
 import type {PatchEvent} from './relay-machine'

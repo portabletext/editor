@@ -1,6 +1,12 @@
 import React, {useCallback, useEffect, useState} from 'react'
-import {Descendant, Editor, Node, Operation, Scrubber, Selection} from 'slate'
-import {EDITOR_TO_ON_CHANGE} from 'slate-dom'
+import {
+  Editor,
+  Node,
+  Scrubber,
+  type Descendant,
+  type Selection,
+} from '../../slate'
+import {EDITOR_TO_ON_CHANGE} from '../../slate-dom'
 import {FocusedContext} from '../hooks/use-focused'
 import {useIsomorphicLayoutEffect} from '../hooks/use-isomorphic-layout-effect'
 import {
@@ -17,7 +23,7 @@ import {REACT_MAJOR_VERSION} from '../utils/environment'
  */
 
 export const Slate = (props: {
-  editor: ReactEditor
+  editor: Editor
   initialValue: Descendant[]
   children: React.ReactNode
   onChange?: (value: Descendant[]) => void

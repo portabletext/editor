@@ -1,4 +1,4 @@
-import type {Editable} from 'slate-react'
+import type {Editable} from '../slate-react'
 
 export type RenderTextProps = Parameters<
   NonNullable<React.ComponentProps<typeof Editable>['renderText']>

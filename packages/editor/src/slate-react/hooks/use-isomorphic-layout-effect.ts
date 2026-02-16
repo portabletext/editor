@@ -1,5 +1,5 @@
 import {useEffect, useLayoutEffect} from 'react'
-import {CAN_USE_DOM} from 'slate-dom'
+import {CAN_USE_DOM} from '../../slate-dom'
 
 /**
  * Prevent warning on SSR by falling back to useEffect when DOM isn't available

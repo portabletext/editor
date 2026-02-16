@@ -1,7 +1,7 @@
 import {Editor} from '../interfaces/editor'
 import {Range} from '../interfaces/range'
 import {Transforms} from '../interfaces/transforms'
-import {SelectionTransforms} from '../interfaces/transforms/selection'
+import type {SelectionTransforms} from '../interfaces/transforms/selection'
 
 export const move: SelectionTransforms['move'] = (editor, options = {}) => {
   const {selection} = editor

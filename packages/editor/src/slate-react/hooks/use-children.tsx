@@ -1,16 +1,22 @@
-import React, {useCallback, useRef} from 'react'
-import {Ancestor, DecoratedRange, Editor, Element, Text} from 'slate'
+import {useCallback, useRef, type JSX} from 'react'
+import {
+  Editor,
+  Element,
+  Text,
+  type Ancestor,
+  type DecoratedRange,
+} from '../../slate'
 import {
   IS_NODE_MAP_DIRTY,
   isElementDecorationsEqual,
-  Key,
   NODE_TO_INDEX,
   NODE_TO_PARENT,
   splitDecorationsByChild,
-} from 'slate-dom'
+  type Key,
+} from '../../slate-dom'
 import {getChunkTreeForNode} from '../chunking'
 import ChunkTree from '../components/chunk-tree'
-import {
+import type {
   RenderChunkProps,
   RenderElementProps,
   RenderLeafProps,
@@ -46,7 +52,7 @@ const useChildren = (props: {
     renderLeaf,
   } = props
   const editor = useSlateStatic()
-  IS_NODE_MAP_DIRTY.set(editor as ReactEditor, false)
+  IS_NODE_MAP_DIRTY.set(editor as any, false)
 
   const isEditor = Editor.isEditor(node)
   const isBlock = !isEditor && Element.isElement(node) && !editor.isInline(node)
@@ -77,7 +83,7 @@ const useChildren = (props: {
       return (
         <ElementContext.Provider key={`provider-${key.id}`} value={n}>
           <ElementComponent
-            decorations={decorationsByChild[i]}
+            decorations={decorationsByChild[i] ?? []}
             element={n}
             key={key.id}
             renderElement={renderElement}
@@ -105,7 +111,7 @@ const useChildren = (props: {
 
     return (
       <TextComponent
-        decorations={decorationsByChild[i]}
+        decorations={decorationsByChild[i] ?? []}
         key={key.id}
         isLast={i === node.children.length - 1}
         parent={node}
@@ -173,13 +179,13 @@ const useDecorationsByChild = (
   mutableDecorationsByChild.length = decorationsByChild.length
 
   for (let i = 0; i < decorationsByChild.length; i++) {
-    const decorations = decorationsByChild[i]
+    const decorations = decorationsByChild[i]!
 
     const previousDecorations: DecoratedRange[] | null =
       mutableDecorationsByChild[i] ?? null
 
     if (!isElementDecorationsEqual(previousDecorations, decorations)) {
-      mutableDecorationsByChild[i] = decorations
+      mutableDecorationsByChild[i] = decorations!
       childrenToRedecorate.push(i)
     }
   }

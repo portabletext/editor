@@ -1,6 +1,6 @@
 import {applyAll, set, unset} from '@portabletext/patches'
 import {isTextBlock} from '@portabletext/schema'
-import {Transforms, type Node} from 'slate'
+import {Transforms, type Node} from '../slate'
 import type {OperationImplementation} from './operation.types'
 
 export const blockUnsetOperationImplementation: OperationImplementation<

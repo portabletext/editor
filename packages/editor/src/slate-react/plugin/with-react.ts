@@ -1,6 +1,6 @@
 import ReactDOM from 'react-dom'
-import {BaseEditor, Node} from 'slate'
-import {EDITOR_TO_PENDING_SELECTION, IS_ANDROID, withDOM} from 'slate-dom'
+import {Node, type Editor} from '../../slate'
+import {EDITOR_TO_PENDING_SELECTION, IS_ANDROID, withDOM} from '../../slate-dom'
 import {getChunkTreeForNode} from '../chunking'
 import {REACT_MAJOR_VERSION} from '../utils/environment'
 import {ReactEditor} from './react-editor'
@@ -13,7 +13,7 @@ import {ReactEditor} from './react-editor'
  *
  * See https://docs.slatejs.org/concepts/11-typescript to learn how.
  */
-export const withReact = <T extends BaseEditor>(
+export const withReact = <T extends Editor>(
   editor: T,
   clipboardFormatKey = 'x-slate-fragment',
 ): T & ReactEditor => {

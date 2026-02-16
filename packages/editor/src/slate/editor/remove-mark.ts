@@ -1,6 +1,6 @@
-import {Editor, EditorInterface} from '../interfaces/editor'
-import {Node} from '../interfaces/node'
-import {Path} from '../interfaces/path'
+import {Editor, type EditorInterface} from '../interfaces/editor'
+import type {Node} from '../interfaces/node'
+import type {Path} from '../interfaces/path'
 import {Range} from '../interfaces/range'
 import {Text} from '../interfaces/text'
 import {Transforms} from '../interfaces/transforms'
@@ -14,7 +14,7 @@ export const removeMark: EditorInterface['removeMark'] = (editor, key) => {
       if (!Text.isText(node)) {
         return false // marks can only be applied to text
       }
-      const [parentNode, parentPath] = Editor.parent(editor, path)
+      const [parentNode, _parentPath] = Editor.parent(editor, path)
       return !editor.isVoid(parentNode) || editor.markableVoid(parentNode)
     }
     const expandedSelection = Range.isExpanded(selection)
@@ -35,8 +35,8 @@ export const removeMark: EditorInterface['removeMark'] = (editor, key) => {
       })
     } else {
       const marks = {...(Editor.marks(editor) || {})}
-      delete marks[<keyof Node>key]
-      editor.marks = marks
+      delete marks[key as keyof Node]
+      editor.marks = marks as typeof editor.marks
       if (!FLUSHING.get(editor)) {
         editor.onChange()
       }
