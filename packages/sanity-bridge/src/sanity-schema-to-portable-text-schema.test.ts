@@ -113,6 +113,7 @@ describe(sanitySchemaToPortableTextSchema.name, () => {
       },
     ],
     blockObjects: [],
+    nestedBlocks: [],
     inlineObjects: [],
   }
 
@@ -302,5 +303,79 @@ describe(sanitySchemaToPortableTextSchema.name, () => {
         ],
       },
     ])
+  })
+})
+
+describe('nested blocks', () => {
+  test('table schema with nested block content', () => {
+    const tableCellType = defineType({
+      name: 'tableCell',
+      type: 'object',
+      fields: [
+        defineField({
+          name: 'content',
+          type: 'array',
+          of: [{type: 'block'}],
+        }),
+        defineField({
+          name: 'colspan',
+          type: 'number',
+        }),
+      ],
+    })
+    const tableRowType = defineType({
+      name: 'tableRow',
+      type: 'object',
+      fields: [
+        defineField({
+          name: 'cells',
+          type: 'array',
+          of: [{type: 'tableCell'}],
+        }),
+      ],
+    })
+    const tableType = defineType({
+      name: 'table',
+      type: 'object',
+      fields: [
+        defineField({
+          name: 'rows',
+          type: 'array',
+          of: [{type: 'tableRow'}],
+        }),
+      ],
+    })
+    const portableTextType = defineType({
+      type: 'array',
+      name: 'body',
+      of: [{type: 'block', name: 'block'}, {type: 'table'}],
+    })
+
+    const sanitySchema = SanitySchema.compile({
+      types: [portableTextType, tableType, tableRowType, tableCellType],
+    })
+
+    const schema = sanitySchemaToPortableTextSchema(sanitySchema.get('body'))
+
+    // Table should be a block object
+    expect(schema.blockObjects.map((bo) => bo.name)).toContain('table')
+
+    // tableCell should be detected as a nested block (it contains array-of-blocks)
+    expect(schema.nestedBlocks.map((nb) => nb.name)).toContain('tableCell')
+
+    // tableCell should have content and colspan fields
+    const tableCell = schema.nestedBlocks.find((nb) => nb.name === 'tableCell')
+    expect(tableCell).toBeDefined()
+    expect(tableCell!.fields.map((f) => f.name)).toContain('content')
+    expect(tableCell!.fields.map((f) => f.name)).toContain('colspan')
+
+    // The content field should have of with a block type
+    const contentField = tableCell!.fields.find((f) => f.name === 'content')
+    expect(contentField).toBeDefined()
+    expect(contentField!.type).toBe('array')
+    if (contentField!.type === 'array') {
+      expect(contentField!.of).toBeDefined()
+      expect(contentField!.of?.some((m) => m.type === 'block')).toBe(true)
+    }
   })
 })

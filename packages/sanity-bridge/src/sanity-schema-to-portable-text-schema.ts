@@ -1,4 +1,4 @@
-import type {Schema} from '@portabletext/schema'
+import type {FieldDefinition, OfDefinition, Schema} from '@portabletext/schema'
 import {Schema as SanitySchema} from '@sanity/schema'
 import {builtinTypes} from '@sanity/schema/_internal'
 import type {
@@ -120,31 +120,128 @@ function sanitySchemaTypeToSchema(
     annotations: annotations.map((annotation) => ({
       name: annotation.name,
       title: annotation.title,
-      fields: annotation.fields.map((field) => ({
-        name: field.name,
-        type: field.type.jsonType,
-        title: field.type.title,
-      })),
+      fields: annotation.fields.map(sanityFieldToSchemaField),
     })),
     blockObjects: blockObjectTypes.map((blockObject) => ({
       name: blockObject.name,
       title: blockObject.title,
-      fields: blockObject.fields.map((field) => ({
-        name: field.name,
-        type: field.type.jsonType,
-        title: field.type.title,
-      })),
+      fields: blockObject.fields.map(sanityFieldToSchemaField),
     })),
     inlineObjects: inlineObjectTypes.map((inlineObject) => ({
       name: inlineObject.name,
       title: inlineObject.title,
-      fields: inlineObject.fields.map((field) => ({
-        name: field.name,
-        type: field.type.jsonType,
-        title: field.type.title,
-      })),
+      fields: inlineObject.fields.map(sanityFieldToSchemaField),
     })),
+    nestedBlocks: collectNestedBlockTypes(blockObjectTypes).map(
+      (nestedBlock) => ({
+        name: nestedBlock.name,
+        fields: nestedBlock.fields.map(sanityFieldToSchemaField),
+      }),
+    ),
   }
+}
+
+function safeGetOf(schemaType: SchemaType): readonly SchemaType[] | undefined {
+  try {
+    if (schemaType.jsonType === 'array') {
+      const arrayOf = (schemaType as ArraySchemaType).of
+      return Array.isArray(arrayOf) ? arrayOf : undefined
+    }
+  } catch {
+    // Sanity schema getters can throw -- ignore
+  }
+  return undefined
+}
+
+function sanityFieldToSchemaField(field: {
+  name: string
+  type: SchemaType
+}): FieldDefinition {
+  if (field.type.jsonType === 'array') {
+    const ofMembers = safeGetOf(field.type)
+    return {
+      name: field.name,
+      type: 'array',
+      ...(field.type.title ? {title: field.type.title} : {}),
+      of: ofMembers ? ofMembers.map(sanityOfMemberToOfDefinition) : [],
+    }
+  }
+
+  return {
+    name: field.name,
+    type: field.type.jsonType,
+    ...(field.type.title ? {title: field.type.title} : {}),
+  }
+}
+
+function sanityOfMemberToOfDefinition(memberType: SchemaType): OfDefinition {
+  if (findBlockType(memberType)) {
+    return {type: 'block'}
+  }
+
+  const result: OfDefinition = {
+    type: memberType.name,
+    name: memberType.name,
+    ...(memberType.title ? {title: memberType.title} : {}),
+  }
+
+  if (
+    memberType.jsonType === 'object' &&
+    'fields' in memberType &&
+    Array.isArray((memberType as ObjectSchemaType).fields)
+  ) {
+    return {
+      ...result,
+      fields: (memberType as ObjectSchemaType).fields.map(
+        sanityFieldToSchemaField,
+      ),
+    }
+  }
+
+  return result
+}
+
+function collectNestedBlockTypes(
+  objectTypes: Array<ObjectSchemaType>,
+): Array<ObjectSchemaType> {
+  const nestedBlocks: Array<ObjectSchemaType> = []
+  const seen = new Set<string>()
+
+  function walkObjectType(objectType: ObjectSchemaType) {
+    if (seen.has(objectType.name)) {
+      return
+    }
+    seen.add(objectType.name)
+
+    for (const field of objectType.fields ?? []) {
+      const ofMembers = safeGetOf(field.type)
+      if (ofMembers) {
+        for (const memberType of ofMembers) {
+          if (findBlockType(memberType)) {
+            if (!nestedBlocks.some((nb) => nb.name === objectType.name)) {
+              nestedBlocks.push(objectType)
+            }
+          } else if (
+            memberType.jsonType === 'object' &&
+            memberType.name !== objectType.name
+          ) {
+            walkObjectType(memberType as ObjectSchemaType)
+          }
+        }
+      } else if (
+        field.type.jsonType === 'object' &&
+        field.type.name !== objectType.name
+      ) {
+        walkObjectType(field.type as ObjectSchemaType)
+      }
+    }
+  }
+
+  for (const objectType of objectTypes) {
+    walkObjectType(objectType)
+  }
+
+  return nestedBlocks
 }
 
 function resolveEnabledStyles(blockType: ObjectSchemaType) {
