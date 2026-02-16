@@ -315,6 +315,7 @@ describe(compileSchemaDefinitionToPortableTextMemberSchemaTypes.name, () => {
         },
       ],
       inlineObjects: [],
+      nestedBlocks: [],
       span: {
         name: 'span',
       },

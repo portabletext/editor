@@ -20,6 +20,7 @@ export type PortableTextMemberSchemaTypes = {
   blockObjects: ObjectSchemaType[]
   decorators: BlockDecoratorDefinition[]
   inlineObjects: ObjectSchemaType[]
+  nestedBlocks: ObjectSchemaType[]
   portableText: ArraySchemaType<PortableTextBlock>
   span: ObjectSchemaType
   styles: BlockStyleDefinition[]
@@ -67,6 +68,10 @@ export function createPortableTextMemberSchemaTypes(
   const blockObjectTypes = (portableTextType.of?.filter(
     (field) => field.name !== blockType.name,
   ) || []) as ObjectSchemaType[]
+
+  // Walk block object fields to find nested block types
+  const nestedBlockTypes = collectNestedBlockTypes(blockObjectTypes)
+
   return {
     styles: resolveEnabledStyles(blockType),
     decorators: resolveEnabledDecorators(spanType),
@@ -76,8 +81,73 @@ export function createPortableTextMemberSchemaTypes(
     portableText: portableTextType,
     inlineObjects: inlineObjectTypes,
     blockObjects: blockObjectTypes,
+    nestedBlocks: nestedBlockTypes,
     annotations: (spanType as SpanSchemaType).annotations,
   }
+}
+
+/**
+ * Safely get the `of` array from a schema type, returning undefined if
+ * the type doesn't have one or if accessing it throws (Sanity schema
+ * getters can throw on certain types).
+ */
+function safeGetOf(schemaType: SchemaType): readonly SchemaType[] | undefined {
+  try {
+    if (schemaType.jsonType === 'array') {
+      const arrayOf = (schemaType as ArraySchemaType).of
+      return Array.isArray(arrayOf) ? arrayOf : undefined
+    }
+  } catch {
+    // Sanity schema getters can throw — ignore
+  }
+  return undefined
+}
+
+/**
+ * Walk object types recursively to find objects that contain an array field
+ * whose `of` includes a block type. Those objects are "nested blocks" —
+ * they contain their own PTE content.
+ */
+function collectNestedBlockTypes(
+  objectTypes: ObjectSchemaType[],
+): ObjectSchemaType[] {
+  const nestedBlocks: ObjectSchemaType[] = []
+  const seen = new Set<string>()
+
+  function walkObjectType(objectType: ObjectSchemaType) {
+    if (seen.has(objectType.name)) return
+    seen.add(objectType.name)
+
+    for (const field of objectType.fields ?? []) {
+      const ofMembers = safeGetOf(field.type)
+      if (ofMembers) {
+        for (const memberType of ofMembers) {
+          if (findBlockType(memberType)) {
+            // This object has an array-of-blocks field — it's a nested block
+            if (!nestedBlocks.some((nb) => nb.name === objectType.name)) {
+              nestedBlocks.push(objectType)
+            }
+          } else if (
+            memberType.jsonType === 'object' &&
+            memberType.name !== objectType.name
+          ) {
+            walkObjectType(memberType as ObjectSchemaType)
+          }
+        }
+      } else if (
+        field.type.jsonType === 'object' &&
+        field.type.name !== objectType.name
+      ) {
+        walkObjectType(field.type as ObjectSchemaType)
+      }
+    }
+  }
+
+  for (const objectType of objectTypes) {
+    walkObjectType(objectType)
+  }
+
+  return nestedBlocks
 }
 
 function resolveEnabledStyles(blockType: ObjectSchemaType) {
