@@ -14,6 +14,7 @@ export type SchemaDefinition = {
   annotations?: ReadonlyArray<AnnotationDefinition>
   blockObjects?: ReadonlyArray<BlockObjectDefinition>
   inlineObjects?: ReadonlyArray<InlineObjectDefinition>
+  nestedBlocks?: ReadonlyArray<BlockObjectDefinition>
 }
 
 /**
