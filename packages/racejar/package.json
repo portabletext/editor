@@ -69,12 +69,12 @@
     "@sanity/pkg-utils": "^10.2.1",
     "@sanity/tsconfig": "^2.1.0",
     "typescript": "catalog:",
-    "vitest": "^4.0.16"
+    "vitest": "^4.0.18"
   },
   "peerDependencies": {
     "@jest/globals": "^30.2.0",
     "@playwright/test": "^1.57.0",
-    "vitest": "^4.0.16"
+    "vitest": "^4.0.18"
   },
   "engines": {
     "node": ">=20.19 <22 || >=22.12"

@@ -57,7 +57,7 @@
     "@sanity/tsconfig": "^2.1.0",
     "@types/markdown-it": "^14.1.2",
     "typescript": "catalog:",
-    "vitest": "^4.0.16"
+    "vitest": "^4.0.18"
   },
   "engines": {
     "node": ">=20.19 <22 || >=22.12"

@@ -69,7 +69,7 @@
     "react-dom": "^19.2.3",
     "typescript": "catalog:",
     "typescript-eslint": "^8.48.0",
-    "vitest": "^4.0.16"
+    "vitest": "^4.0.18"
   },
   "peerDependencies": {
     "@portabletext/editor": "workspace:^",
