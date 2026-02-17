@@ -5,6 +5,7 @@ import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
 import {getNextBlock} from '../selectors/selector.get-next-block'
 import {getPreviousBlock} from '../selectors/selector.get-previous-block'
 import {isSelectionCollapsed} from '../selectors/selector.is-selection-collapsed'
+import {isListBlock} from '../utils/parse-blocks'
 import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
@@ -208,6 +209,10 @@ const deletingEmptyTextBlockAfterBlockObject = defineBehavior({
     const previousBlock = getPreviousBlock(snapshot)
 
     if (!focusTextBlock || !selectionCollapsed || !previousBlock) {
+      return false
+    }
+
+    if (isListBlock(snapshot.context, focusTextBlock.node)) {
       return false
     }
 
