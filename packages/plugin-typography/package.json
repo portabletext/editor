@@ -61,8 +61,8 @@
     "@sanity/tsconfig": "^2.1.0",
     "@types/react": "^19.2.7",
     "@vitejs/plugin-react": "^5.1.1",
-    "@vitest/browser": "^4.0.16",
-    "@vitest/browser-playwright": "^4.0.16",
+    "@vitest/browser": "^4.0.18",
+    "@vitest/browser-playwright": "^4.0.18",
     "babel-plugin-react-compiler": "^1.0.0",
     "eslint": "^9.39.1",
     "eslint-formatter-gha": "^1.6.0",
@@ -71,7 +71,7 @@
     "react": "^19.2.3",
     "typescript": "catalog:",
     "typescript-eslint": "^8.48.0",
-    "vitest": "^4.0.16"
+    "vitest": "^4.0.18"
   },
   "peerDependencies": {
     "@portabletext/editor": "workspace:^5.0.3",
