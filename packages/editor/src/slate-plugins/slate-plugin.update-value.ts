@@ -1,5 +1,6 @@
 import type {EditorContext} from '../editor/editor-snapshot'
 import {applyOperationToPortableText} from '../internal-utils/apply-operation-to-portable-text'
+import {updateBlockMap} from '../internal-utils/block-map'
 import {buildIndexMaps} from '../internal-utils/build-index-maps'
 import {debug} from '../internal-utils/debug'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
@@ -29,8 +30,9 @@ export function updateValuePlugin(
     )
 
     if (operation.type === 'insert_text' || operation.type === 'remove_text') {
-      // Inserting and removing text has no effect on index maps so there is
-      // no need to rebuild those.
+      // Inserting and removing text has no effect on index maps or the
+      // block map (text operations are no-ops for both).
+      updateBlockMap({value: editor.value}, editor.blockMap, operation)
       apply(operation)
       return
     }
@@ -45,6 +47,8 @@ export function updateValuePlugin(
         listIndexMap: editor.listIndexMap,
       },
     )
+
+    updateBlockMap({value: editor.value}, editor.blockMap, operation)
 
     apply(operation)
   }

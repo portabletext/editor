@@ -1,7 +1,15 @@
+import type {PortableTextBlock} from '@portabletext/schema'
 import {compileSchema, defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
+import {buildBlockMap, type BlockMap} from './block-map'
 import {toSlateRange} from './to-slate-range'
+
+function makeBlockMap(value: Array<PortableTextBlock>): BlockMap {
+  const blockMap: BlockMap = new Map()
+  buildBlockMap({value}, blockMap)
+  return blockMap
+}
 
 describe(toSlateRange.name, () => {
   const schema = compileSchema(
@@ -17,31 +25,33 @@ describe(toSlateRange.name, () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
 
+    const value: Array<PortableTextBlock> = [
+      {
+        _key: blockKey,
+        _type: 'block',
+        children: [
+          {
+            _key: keyGenerator(),
+            _type: 'span',
+            text: 'foo',
+          },
+          {
+            _key: keyGenerator(),
+            _type: 'stock-ticker',
+          },
+          {
+            _key: keyGenerator(),
+            _type: 'span',
+            text: 'bar',
+          },
+        ],
+      },
+    ]
+
     const range = toSlateRange({
       context: {
         schema,
-        value: [
-          {
-            _key: blockKey,
-            _type: 'block',
-            children: [
-              {
-                _key: keyGenerator(),
-                _type: 'span',
-                text: 'foo',
-              },
-              {
-                _key: keyGenerator(),
-                _type: 'stock-ticker',
-              },
-              {
-                _key: keyGenerator(),
-                _type: 'span',
-                text: 'bar',
-              },
-            ],
-          },
-        ],
+        value,
         selection: {
           anchor: {
             path: [{_key: blockKey}],
@@ -55,7 +65,7 @@ describe(toSlateRange.name, () => {
           },
         },
       },
-      blockIndexMap: new Map([[blockKey, 0]]),
+      blockMap: makeBlockMap(value),
     })
 
     expect(range).toEqual({
@@ -68,31 +78,33 @@ describe(toSlateRange.name, () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
 
+    const value: Array<PortableTextBlock> = [
+      {
+        _key: blockKey,
+        _type: 'block',
+        children: [
+          {
+            _key: keyGenerator(),
+            _type: 'span',
+            text: "'",
+          },
+          {
+            _key: keyGenerator(),
+            _type: 'stock-ticker',
+          },
+          {
+            _key: keyGenerator(),
+            _type: 'span',
+            text: "foo'",
+          },
+        ],
+      },
+    ]
+
     const range = toSlateRange({
       context: {
         schema,
-        value: [
-          {
-            _key: blockKey,
-            _type: 'block',
-            children: [
-              {
-                _key: keyGenerator(),
-                _type: 'span',
-                text: "'",
-              },
-              {
-                _key: keyGenerator(),
-                _type: 'stock-ticker',
-              },
-              {
-                _key: keyGenerator(),
-                _type: 'span',
-                text: "foo'",
-              },
-            ],
-          },
-        ],
+        value,
         selection: {
           anchor: {
             path: [{_key: blockKey}],
@@ -104,7 +116,7 @@ describe(toSlateRange.name, () => {
           },
         },
       },
-      blockIndexMap: new Map([[blockKey, 0]]),
+      blockMap: makeBlockMap(value),
     })
 
     expect(range).toEqual({
@@ -117,15 +129,17 @@ describe(toSlateRange.name, () => {
     const keyGenerator = createTestKeyGenerator()
     const blockObjectKey = keyGenerator()
 
+    const value: Array<PortableTextBlock> = [
+      {
+        _key: blockObjectKey,
+        _type: 'image',
+      },
+    ]
+
     const range = toSlateRange({
       context: {
         schema,
-        value: [
-          {
-            _key: blockObjectKey,
-            _type: 'image',
-          },
-        ],
+        value,
         selection: {
           anchor: {
             path: [{_key: blockObjectKey}],
@@ -137,7 +151,7 @@ describe(toSlateRange.name, () => {
           },
         },
       },
-      blockIndexMap: new Map([[blockObjectKey, 0]]),
+      blockMap: makeBlockMap(value),
     })
 
     expect(range).toEqual({
@@ -152,22 +166,24 @@ describe(toSlateRange.name, () => {
     const blockKey = keyGenerator()
     const removedChildKey = keyGenerator()
 
+    const value: Array<PortableTextBlock> = [
+      {
+        _key: blockKey,
+        _type: 'block',
+        children: [
+          {
+            _key: keyGenerator(),
+            _type: 'span',
+            text: 'foobar',
+          },
+        ],
+      },
+    ]
+
     const range = toSlateRange({
       context: {
         schema,
-        value: [
-          {
-            _key: blockKey,
-            _type: 'block',
-            children: [
-              {
-                _key: keyGenerator(),
-                _type: 'span',
-                text: 'foobar',
-              },
-            ],
-          },
-        ],
+        value,
         selection: {
           anchor: {
             path: [{_key: blockKey}, 'children', {_key: removedChildKey}],
@@ -179,7 +195,7 @@ describe(toSlateRange.name, () => {
           },
         },
       },
-      blockIndexMap: new Map([[blockKey, 0]]),
+      blockMap: makeBlockMap(value),
     })
 
     expect(range).toEqual({
@@ -193,22 +209,24 @@ describe(toSlateRange.name, () => {
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
 
+    const value: Array<PortableTextBlock> = [
+      {
+        _key: blockKey,
+        _type: 'block',
+        children: [
+          {
+            _key: spanKey,
+            _type: 'span',
+            text: 'foo',
+          },
+        ],
+      },
+    ]
+
     const range = toSlateRange({
       context: {
         schema,
-        value: [
-          {
-            _key: blockKey,
-            _type: 'block',
-            children: [
-              {
-                _key: spanKey,
-                _type: 'span',
-                text: 'foo',
-              },
-            ],
-          },
-        ],
+        value,
         selection: {
           anchor: {
             path: [{_key: blockKey}, 'children', {_key: spanKey}],
@@ -220,7 +238,7 @@ describe(toSlateRange.name, () => {
           },
         },
       },
-      blockIndexMap: new Map([[blockKey, 0]]),
+      blockMap: makeBlockMap(value),
     })
 
     expect(range).toEqual({
@@ -234,28 +252,30 @@ describe(toSlateRange.name, () => {
     const blockKey = keyGenerator()
     const inlineObjectKey = keyGenerator()
 
+    const value: Array<PortableTextBlock> = [
+      {
+        _key: blockKey,
+        _type: 'block',
+        children: [
+          {_key: keyGenerator(), _type: 'span', text: 'foo'},
+          {
+            _key: inlineObjectKey,
+            _type: 'stock-ticker',
+            symbol: 'AAPL',
+          },
+          {
+            _key: keyGenerator(),
+            _type: 'span',
+            text: 'bar',
+          },
+        ],
+      },
+    ]
+
     const range = toSlateRange({
       context: {
         schema,
-        value: [
-          {
-            _key: blockKey,
-            _type: 'block',
-            children: [
-              {_key: keyGenerator(), _type: 'span', text: 'foo'},
-              {
-                _key: inlineObjectKey,
-                _type: 'stock-ticker',
-                symbol: 'AAPL',
-              },
-              {
-                _key: keyGenerator(),
-                _type: 'span',
-                text: 'bar',
-              },
-            ],
-          },
-        ],
+        value,
         selection: {
           anchor: {
             path: [{_key: blockKey}, 'children', {_key: inlineObjectKey}],
@@ -267,7 +287,7 @@ describe(toSlateRange.name, () => {
           },
         },
       },
-      blockIndexMap: new Map([[blockKey, 0]]),
+      blockMap: makeBlockMap(value),
     })
 
     expect(range).toEqual({

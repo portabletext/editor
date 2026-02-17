@@ -1,5 +1,6 @@
 import {createEditor, type Descendant} from 'slate'
 import {withReact} from 'slate-react'
+import {buildBlockMap} from '../internal-utils/block-map'
 import {buildIndexMaps} from '../internal-utils/build-index-maps'
 import {createPlaceholderBlock} from '../internal-utils/create-placeholder-block'
 import {debug} from '../internal-utils/debug'
@@ -30,6 +31,7 @@ export function createSlateEditor(config: SlateEditorConfig): SlateEditor {
 
   editor.decoratedRanges = []
   editor.decoratorState = {}
+  editor.blockMap = new Map()
   editor.blockIndexMap = new Map<string, number>()
   editor.history = {undos: [], redos: []}
   editor.lastSelection = null
@@ -64,6 +66,8 @@ export function createSlateEditor(config: SlateEditorConfig): SlateEditor {
       listIndexMap: instance.listIndexMap,
     },
   )
+
+  buildBlockMap({value: instance.value}, instance.blockMap)
 
   const slateEditor: SlateEditor = {
     instance,

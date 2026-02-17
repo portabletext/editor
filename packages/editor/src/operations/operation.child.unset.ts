@@ -7,14 +7,14 @@ export const childUnsetOperationImplementation: OperationImplementation<
   'child.unset'
 > = ({context, operation}) => {
   const blockKey = operation.at[0]._key
-  const blockIndex = operation.editor.blockIndexMap.get(blockKey)
+  const blockEntry = operation.editor.blockMap.get(blockKey)
 
-  if (blockIndex === undefined) {
-    throw new Error(`Unable to find block index for block key ${blockKey}`)
+  if (!blockEntry) {
+    throw new Error(`Unable to find block entry for block key ${blockKey}`)
   }
 
-  const block =
-    blockIndex !== undefined ? operation.editor.value.at(blockIndex) : undefined
+  const blockIndex = blockEntry.index
+  const block = operation.editor.value[blockIndex]
 
   if (!block) {
     throw new Error(`Unable to find block at ${JSON.stringify(operation.at)}`)

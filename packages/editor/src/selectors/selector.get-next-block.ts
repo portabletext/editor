@@ -15,15 +15,16 @@ export const getNextBlock: EditorSelector<
     return undefined
   }
 
-  const index = snapshot.blockIndexMap.get(selectionEndBlock.node._key)
+  const entry = snapshot.blockMap.get(selectionEndBlock.node._key)
 
-  if (index === undefined || index === snapshot.context.value.length - 1) {
+  if (!entry || entry.next === null) {
     return undefined
   }
 
-  const nextBlock = snapshot.context.value.at(index + 1)
-
-  return nextBlock
-    ? {node: nextBlock, path: [{_key: nextBlock._key}]}
+  const nextEntry = snapshot.blockMap.get(entry.next)
+  const nextNode = nextEntry
+    ? snapshot.context.value[nextEntry.index]
     : undefined
+
+  return nextNode ? {node: nextNode, path: [{_key: nextNode._key}]} : undefined
 }

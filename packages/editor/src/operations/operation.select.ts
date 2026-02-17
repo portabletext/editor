@@ -12,7 +12,7 @@ export const selectOperationImplementation: OperationImplementation<
       value: operation.editor.value,
       selection: operation.at,
     },
-    blockIndexMap: operation.editor.blockIndexMap,
+    blockMap: operation.editor.blockMap,
   })
 
   if (newSelection) {

@@ -29,43 +29,36 @@ export const getSelectedTextBlocks: EditorSelector<
     return selectedTextBlocks
   }
 
-  const startBlockIndex = snapshot.blockIndexMap.get(startBlockKey)
-  const endBlockIndex = snapshot.blockIndexMap.get(endBlockKey)
+  const startEntry = snapshot.blockMap.get(startBlockKey)
 
-  if (startBlockIndex === undefined || endBlockIndex === undefined) {
+  if (!startEntry) {
     return selectedTextBlocks
   }
 
-  const slicedValue = snapshot.context.value.slice(
-    startBlockIndex,
-    endBlockIndex + 1,
-  )
+  // Walk the linked list from start to end
+  let currentKey: string | null = startBlockKey
 
-  for (const block of slicedValue) {
-    if (block._key === startBlockKey) {
-      if (isTextBlock(snapshot.context, block)) {
-        selectedTextBlocks.push({node: block, path: [{_key: block._key}]})
-      }
+  while (currentKey !== null) {
+    const entry = snapshot.blockMap.get(currentKey)
 
-      if (startBlockKey === endBlockKey) {
-        break
-      }
-      continue
-    }
-
-    if (block._key === endBlockKey) {
-      if (isTextBlock(snapshot.context, block)) {
-        selectedTextBlocks.push({node: block, path: [{_key: block._key}]})
-      }
-
+    if (!entry) {
       break
     }
 
-    if (selectedTextBlocks.length > 0) {
-      if (isTextBlock(snapshot.context, block)) {
-        selectedTextBlocks.push({node: block, path: [{_key: block._key}]})
-      }
+    const node = snapshot.context.value[entry.index]
+
+    if (node && isTextBlock(snapshot.context, node)) {
+      selectedTextBlocks.push({
+        node,
+        path: [{_key: node._key}],
+      })
     }
+
+    if (currentKey === endBlockKey) {
+      break
+    }
+
+    currentKey = entry.next
   }
 
   return selectedTextBlocks

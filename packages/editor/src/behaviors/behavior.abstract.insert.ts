@@ -19,7 +19,7 @@ function getUniqueBlockKey(
       return snapshot.context.keyGenerator()
     }
 
-    if (snapshot.blockIndexMap.has(blockKey)) {
+    if (snapshot.blockMap.has(blockKey)) {
       return snapshot.context.keyGenerator()
     }
 

@@ -14,7 +14,7 @@ export const childSetOperationImplementation: OperationImplementation<
         focus: {path: operation.at, offset: 0},
       },
     },
-    blockIndexMap: operation.editor.blockIndexMap,
+    blockMap: operation.editor.blockMap,
   })
 
   if (!location) {

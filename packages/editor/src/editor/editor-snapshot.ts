@@ -1,5 +1,6 @@
 import type {PortableTextBlock} from '@portabletext/schema'
 import type {Converter} from '../converters/converter.types'
+import type {BlockMap} from '../internal-utils/block-map'
 import {slateRangeToSelection} from '../internal-utils/slate-utils'
 import type {EditorSelection} from '../types/editor'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
@@ -22,6 +23,8 @@ export type EditorContext = {
  */
 export type EditorSnapshot = {
   context: EditorContext
+  blockMap: BlockMap
+  /** @deprecated Use `blockMap` instead */
   blockIndexMap: Map<string, number>
   /**
    * @beta
@@ -61,6 +64,7 @@ export function createEditorSnapshot({
   } satisfies EditorContext
 
   return {
+    blockMap: editor.blockMap,
     blockIndexMap: editor.blockIndexMap,
     context,
     decoratorState: editor.decoratorState,
