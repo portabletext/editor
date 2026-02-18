@@ -1,4 +1,5 @@
 import {useState, type RefObject} from 'react'
+import type {EditorActor} from '../../../editor/editor-machine'
 import {EDITOR_TO_SCHEDULE_FLUSH, IS_ANDROID} from '../../../slate-dom'
 import {useIsMounted} from '../use-is-mounted'
 import {useMutationObserver} from '../use-mutation-observer'
@@ -9,10 +10,11 @@ import {
 } from './android-input-manager'
 
 type UseAndroidInputManagerOptions = {
+  editorActor: EditorActor
   node: RefObject<HTMLElement>
 } & Omit<
   CreateAndroidInputManagerOptions,
-  'editor' | 'onUserInput' | 'receivedUserInput'
+  'editor' | 'editorActor' | 'onUserInput' | 'receivedUserInput'
 >
 
 const MUTATION_OBSERVER_CONFIG: MutationObserverInit = {
@@ -23,7 +25,7 @@ const MUTATION_OBSERVER_CONFIG: MutationObserverInit = {
 
 export const useAndroidInputManager = !IS_ANDROID
   ? () => null
-  : ({node, ...options}: UseAndroidInputManagerOptions) => {
+  : ({editorActor, node, ...options}: UseAndroidInputManagerOptions) => {
       if (!IS_ANDROID) {
         return null
       }
@@ -37,6 +39,7 @@ export const useAndroidInputManager = !IS_ANDROID
       const [inputManager] = useState(() =>
         createAndroidInputManager({
           editor,
+          editorActor,
           ...options,
         }),
       )

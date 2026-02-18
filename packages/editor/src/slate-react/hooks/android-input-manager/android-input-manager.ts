@@ -1,3 +1,4 @@
+import type {EditorActor} from '../../../editor/editor-machine'
 import {
   Editor,
   Node,
@@ -50,6 +51,7 @@ const isDataTransfer = (value: any): value is DataTransfer =>
 
 export type CreateAndroidInputManagerOptions = {
   editor: Editor
+  editorActor: EditorActor
 
   scheduleOnDOMSelectionChange: DebouncedFunc<() => void>
   onDOMSelectionChange: DebouncedFunc<() => void>
@@ -78,6 +80,7 @@ export type AndroidInputManager = {
 
 export function createAndroidInputManager({
   editor,
+  editorActor,
   scheduleOnDOMSelectionChange,
   onDOMSelectionChange,
 }: CreateAndroidInputManagerOptions): AndroidInputManager {
@@ -190,9 +193,17 @@ export function createAndroidInputManager({
       }
 
       if (diff.diff.text) {
-        Editor.insertText(editor, diff.diff.text)
+        editorActor.send({
+          type: 'behavior event',
+          behaviorEvent: {type: 'insert.text', text: diff.diff.text},
+          editor,
+        })
       } else {
-        Editor.deleteFragment(editor)
+        editorActor.send({
+          type: 'behavior event',
+          behaviorEvent: {type: 'delete', direction: 'forward'},
+          editor,
+        })
       }
 
       // Remove diff only after we have applied it to account for it when transforming
@@ -470,7 +481,12 @@ export function createAndroidInputManager({
         }
 
         return scheduleAction(
-          () => Editor.deleteFragment(editor, {direction}),
+          () =>
+            editorActor.send({
+              type: 'behavior event',
+              behaviorEvent: {type: 'delete', direction},
+              editor,
+            }),
           {at: targetRange},
         )
       }
@@ -480,9 +496,15 @@ export function createAndroidInputManager({
       case 'deleteByComposition':
       case 'deleteByCut':
       case 'deleteByDrag': {
-        return scheduleAction(() => Editor.deleteFragment(editor), {
-          at: targetRange,
-        })
+        return scheduleAction(
+          () =>
+            editorActor.send({
+              type: 'behavior event',
+              behaviorEvent: {type: 'delete', direction: 'forward'},
+              editor,
+            }),
+          {at: targetRange},
+        )
       }
 
       case 'deleteContent':
@@ -500,9 +522,15 @@ export function createAndroidInputManager({
           }
         }
 
-        return scheduleAction(() => Editor.deleteForward(editor), {
-          at: targetRange,
-        })
+        return scheduleAction(
+          () =>
+            editorActor.send({
+              type: 'behavior event',
+              behaviorEvent: {type: 'delete.forward', unit: 'character'},
+              editor,
+            }),
+          {at: targetRange},
+        )
       }
 
       case 'deleteContentBackward': {
@@ -528,16 +556,30 @@ export function createAndroidInputManager({
           })
         }
 
-        return scheduleAction(() => Editor.deleteBackward(editor), {
-          at: targetRange,
-        })
+        return scheduleAction(
+          () =>
+            editorActor.send({
+              type: 'behavior event',
+              behaviorEvent: {type: 'delete.backward', unit: 'character'},
+              editor,
+            }),
+          {at: targetRange},
+        )
       }
 
       case 'deleteEntireSoftLine': {
         return scheduleAction(
           () => {
-            Editor.deleteBackward(editor, {unit: 'line'})
-            Editor.deleteForward(editor, {unit: 'line'})
+            editorActor.send({
+              type: 'behavior event',
+              behaviorEvent: {type: 'delete.backward', unit: 'line'},
+              editor,
+            })
+            editorActor.send({
+              type: 'behavior event',
+              behaviorEvent: {type: 'delete.forward', unit: 'line'},
+              editor,
+            })
           },
           {at: targetRange},
         )
@@ -545,56 +587,98 @@ export function createAndroidInputManager({
 
       case 'deleteHardLineBackward': {
         return scheduleAction(
-          () => Editor.deleteBackward(editor, {unit: 'block'}),
+          () =>
+            editorActor.send({
+              type: 'behavior event',
+              behaviorEvent: {type: 'delete.backward', unit: 'block'},
+              editor,
+            }),
           {at: targetRange},
         )
       }
 
       case 'deleteSoftLineBackward': {
         return scheduleAction(
-          () => Editor.deleteBackward(editor, {unit: 'line'}),
+          () =>
+            editorActor.send({
+              type: 'behavior event',
+              behaviorEvent: {type: 'delete.backward', unit: 'line'},
+              editor,
+            }),
           {at: targetRange},
         )
       }
 
       case 'deleteHardLineForward': {
         return scheduleAction(
-          () => Editor.deleteForward(editor, {unit: 'block'}),
+          () =>
+            editorActor.send({
+              type: 'behavior event',
+              behaviorEvent: {type: 'delete.forward', unit: 'block'},
+              editor,
+            }),
           {at: targetRange},
         )
       }
 
       case 'deleteSoftLineForward': {
         return scheduleAction(
-          () => Editor.deleteForward(editor, {unit: 'line'}),
+          () =>
+            editorActor.send({
+              type: 'behavior event',
+              behaviorEvent: {type: 'delete.forward', unit: 'line'},
+              editor,
+            }),
           {at: targetRange},
         )
       }
 
       case 'deleteWordBackward': {
         return scheduleAction(
-          () => Editor.deleteBackward(editor, {unit: 'word'}),
+          () =>
+            editorActor.send({
+              type: 'behavior event',
+              behaviorEvent: {type: 'delete.backward', unit: 'word'},
+              editor,
+            }),
           {at: targetRange},
         )
       }
 
       case 'deleteWordForward': {
         return scheduleAction(
-          () => Editor.deleteForward(editor, {unit: 'word'}),
+          () =>
+            editorActor.send({
+              type: 'behavior event',
+              behaviorEvent: {type: 'delete.forward', unit: 'word'},
+              editor,
+            }),
           {at: targetRange},
         )
       }
 
       case 'insertLineBreak': {
-        return scheduleAction(() => Editor.insertSoftBreak(editor), {
-          at: targetRange,
-        })
+        return scheduleAction(
+          () =>
+            editorActor.send({
+              type: 'behavior event',
+              behaviorEvent: {type: 'insert.soft break'},
+              editor,
+            }),
+          {at: targetRange},
+        )
       }
 
       case 'insertParagraph': {
-        return scheduleAction(() => Editor.insertBreak(editor), {
-          at: targetRange,
-        })
+        return scheduleAction(
+          () =>
+            editorActor.send({
+              type: 'behavior event',
+              behaviorEvent: {type: 'insert.break'},
+              editor,
+            }),
+          {at: targetRange},
+        )
       }
       case 'insertCompositionText':
       case 'deleteCompositionText':
@@ -605,9 +689,18 @@ export function createAndroidInputManager({
       case 'insertReplacementText':
       case 'insertText': {
         if (isDataTransfer(data)) {
-          return scheduleAction(() => ReactEditor.insertData(editor, data), {
-            at: targetRange,
-          })
+          return scheduleAction(
+            () =>
+              editorActor.send({
+                type: 'behavior event',
+                behaviorEvent: {
+                  type: 'input.*',
+                  originEvent: {dataTransfer: data},
+                },
+                editor,
+              }),
+            {at: targetRange},
+          )
         }
 
         let text = data ?? ''
@@ -633,10 +726,18 @@ export function createAndroidInputManager({
               const parts = text.split('\n')
               parts.forEach((line, i) => {
                 if (line) {
-                  Editor.insertText(editor, line)
+                  editorActor.send({
+                    type: 'behavior event',
+                    behaviorEvent: {type: 'insert.text', text: line},
+                    editor,
+                  })
                 }
                 if (i !== parts.length - 1) {
-                  Editor.insertSoftBreak(editor)
+                  editorActor.send({
+                    type: 'behavior event',
+                    behaviorEvent: {type: 'insert.soft break'},
+                    editor,
+                  })
                 }
               })
             },
@@ -722,9 +823,15 @@ export function createAndroidInputManager({
           }
         }
 
-        return scheduleAction(() => Editor.insertText(editor, text), {
-          at: targetRange,
-        })
+        return scheduleAction(
+          () =>
+            editorActor.send({
+              type: 'behavior event',
+              behaviorEvent: {type: 'insert.text', text},
+              editor,
+            }),
+          {at: targetRange},
+        )
       }
     }
   }
