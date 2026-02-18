@@ -238,8 +238,10 @@ export const stepDefinitions = [
       const previousSelection = context.editor.getSnapshot().context.selection
       await userEvent.keyboard(button)
 
-      // Small delay to allow the browser to process the event
-      await new Promise((resolve) => setTimeout(resolve, 50))
+      // Delay to allow the browser to process the event.
+      // Firefox needs more time than Chromium to process keyboard events
+      // through the beforeinput -> DOM mutation -> Slate operation pipeline.
+      await new Promise((resolve) => setTimeout(resolve, 100))
 
       await vi.waitFor(() => {
         const currentSelection = context.editor.getSnapshot().context.selection
@@ -256,8 +258,7 @@ export const stepDefinitions = [
       const previousSelection = context.editorB.getSnapshot().context.selection
       await userEvent.keyboard(button)
 
-      // Small delay to allow the browser to process the event
-      await new Promise((resolve) => setTimeout(resolve, 50))
+      await new Promise((resolve) => setTimeout(resolve, 100))
 
       await vi.waitFor(() => {
         const currentSelection = context.editorB.getSnapshot().context.selection
@@ -275,7 +276,7 @@ export const stepDefinitions = [
         const previousSelection = context.editor.getSnapshot().context.selection
         await userEvent.keyboard(button)
 
-        await new Promise((resolve) => setTimeout(resolve, 50))
+        await new Promise((resolve) => setTimeout(resolve, 100))
 
         await vi.waitFor(() => {
           const currentSelection =
@@ -296,8 +297,7 @@ export const stepDefinitions = [
           context.editorB.getSnapshot().context.selection
         await userEvent.keyboard(button)
 
-        // Small delay to allow the browser to process the event
-        await new Promise((resolve) => setTimeout(resolve, 50))
+        await new Promise((resolve) => setTimeout(resolve, 100))
 
         await vi.waitFor(() => {
           const currentSelection =
@@ -325,8 +325,7 @@ export const stepDefinitions = [
       const previousSelection = context.editor.getSnapshot().context.selection
       await userEvent.keyboard(shortcuts[shortcut])
 
-      // Small delay to allow the browser to process the event
-      await new Promise((resolve) => setTimeout(resolve, 50))
+      await new Promise((resolve) => setTimeout(resolve, 100))
 
       await vi.waitFor(() => {
         const currentSelection = context.editor.getSnapshot().context.selection
