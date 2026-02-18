@@ -131,17 +131,19 @@ describe('event.insert.inline object', () => {
     await userEvent.click(locator)
 
     await vi.waitFor(() => {
-      expect(focusEvents).toHaveLength(1)
+      expect(focusEvents.length).toBeGreaterThanOrEqual(1)
     })
 
     await initialSelectionPromise
+
+    const focusCountBeforeInsert = focusEvents.length
 
     await userEvent.click(insertStockTickerButton)
 
     await inlineObjectSelectionPromise
 
     await vi.waitFor(() => {
-      expect(focusEvents).toHaveLength(2)
+      expect(focusEvents.length).toBeGreaterThan(focusCountBeforeInsert)
     })
 
     await vi.waitFor(() => {

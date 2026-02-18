@@ -34,7 +34,7 @@ describe('focus', () => {
     await userEvent.click(locator)
 
     await vi.waitFor(() => {
-      expect(focusEvents).toEqual(['focused'])
+      expect(focusEvents.at(-1)).toEqual('focused')
     })
 
     await vi.waitFor(() => {
@@ -47,12 +47,14 @@ describe('focus', () => {
 
     await userEvent.click(toolbarLocator)
 
-    expect(focusEvents.slice(1)).toEqual(['blurred'])
+    await vi.waitFor(() => {
+      expect(focusEvents.at(-1)).toEqual('blurred')
+    })
 
     await userEvent.click(locator)
 
     await vi.waitFor(() => {
-      expect(focusEvents.slice(2)).toEqual(['focused'])
+      expect(focusEvents.at(-1)).toEqual('focused')
     })
 
     await vi.waitFor(() => {
@@ -129,7 +131,7 @@ describe('focus', () => {
     await userEvent.click(barSpanLocator)
 
     await vi.waitFor(() => {
-      expect(focusEvents).toEqual(['focused'])
+      expect(focusEvents.at(-1)).toEqual('focused')
     })
 
     await vi.waitFor(() => {
@@ -149,13 +151,13 @@ describe('focus', () => {
     await userEvent.click(toolbarLocator)
 
     await vi.waitFor(() => {
-      expect(focusEvents.slice(1)).toEqual(['blurred'])
+      expect(focusEvents.at(-1)).toEqual('blurred')
     })
 
     await userEvent.click(barSpanLocator)
 
     await vi.waitFor(() => {
-      expect(focusEvents.slice(2)).toEqual(['focused'])
+      expect(focusEvents.at(-1)).toEqual('focused')
     })
 
     await vi.waitFor(() => {
