@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.0.1
+
+### Patch Changes
+
+- [#2198](https://github.com/portabletext/editor/pull/2198) [`5f1b1fb`](https://github.com/portabletext/editor/commit/5f1b1fb44152f6fc9f674a917916d57fdf0496a7) Thanks [@christianhg](https://github.com/christianhg)! - fix: deduplicate shared block/inline object names in schema compilation
+
+  When a type name appears in both `blockObjects` and `inlineObjects` of a `SchemaDefinition`, `compileSchemaDefinitionToPortableTextMemberSchemaTypes` would pass duplicate type names to `SanitySchema.compile()`, causing a "Duplicate type name added to schema" error. This generalizes the existing temporary-name pattern (previously only handling `image` and `url`) to dynamically detect and rename any shared names before compilation, then map them back afterward.
+
 ## 2.0.0
 
 ### Major Changes
