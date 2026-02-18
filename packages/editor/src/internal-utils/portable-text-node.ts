@@ -135,14 +135,11 @@ export function getBlock<TEditorSchema extends EditorSchema>(
 }
 
 /**
- * A "node" can either be
- * 1. The root (path length is 0)
- * 2. A block (path length is 1)
- * 3. A span (path length is 2)
- * 4. Or an inline object (path length is 2)
+ * Walk the tree to find the node at the given path.
+ * Supports arbitrary depth for nested blocks (containers).
  */
 export function getNode<TEditorSchema extends EditorSchema>(
-  context: {schema: TEditorSchema},
+  _context: {schema: TEditorSchema},
   root: EditorNode<TEditorSchema>,
   path: Path,
 ): PortableTextNode<TEditorSchema> | undefined {
@@ -150,27 +147,22 @@ export function getNode<TEditorSchema extends EditorSchema>(
     return root
   }
 
-  if (path.length === 1) {
-    return getBlock(root, path)
-  }
+  // biome-ignore lint/suspicious/noExplicitAny: walking a heterogeneous tree
+  let current: any = root
 
-  if (path.length === 2) {
-    const block = getBlock(root, path.slice(0, 1))
-
-    if (!block || !isTextBlockNode(context, block)) {
+  for (const index of path) {
+    if (
+      !current ||
+      !('children' in current) ||
+      !Array.isArray(current.children)
+    ) {
       return undefined
     }
 
-    const child = block.children.at(path[1]!)
-
-    if (!child) {
-      return undefined
-    }
-
-    return child
+    current = current.children[index]
   }
 
-  return undefined
+  return current as PortableTextNode<TEditorSchema> | undefined
 }
 
 export function getSpan<TEditorSchema extends EditorSchema>(
@@ -188,7 +180,8 @@ export function getSpan<TEditorSchema extends EditorSchema>(
 }
 
 /**
- * A parent can either be the root or a text block
+ * Get the parent node for the given path.
+ * Supports arbitrary depth for nested blocks (containers).
  */
 export function getParent<TEditorSchema extends EditorSchema>(
   context: {schema: TEditorSchema},
@@ -200,22 +193,5 @@ export function getParent<TEditorSchema extends EditorSchema>(
   }
 
   const parentPath = path.slice(0, -1)
-
-  if (parentPath.length === 0) {
-    return root
-  }
-
-  const blockIndex = parentPath.at(0)
-
-  if (blockIndex === undefined || parentPath.length !== 1) {
-    return undefined
-  }
-
-  const block = root.children.at(blockIndex)
-
-  if (block && isTextBlockNode(context, block)) {
-    return block
-  }
-
-  return undefined
+  return getNode(context, root, parentPath)
 }
