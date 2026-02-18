@@ -1,5 +1,18 @@
 # Changelog
 
+## 5.0.1
+
+### Patch Changes
+
+- [#2197](https://github.com/portabletext/editor/pull/2197) [`0155283`](https://github.com/portabletext/editor/commit/0155283c5b398f5678222acfdf7da7229a6fe0a6) Thanks [@christianhg](https://github.com/christianhg)! - fix: wrong selection after deleting expanded selection
+
+- [#2189](https://github.com/portabletext/editor/pull/2189) [`921d03c`](https://github.com/portabletext/editor/commit/921d03c3d42b80949b25940d85cbc913dcc91f18) Thanks [@christianhg](https://github.com/christianhg)! - fix: allow clearing list on backspace before block object
+
+  In previous versions, pressing Backspace in an empty list item before a block object would incorrectly remove the entire text block and focus the block object. Now, the list properties are correctly cleared and the text block is preserved.
+
+- Updated dependencies [[`c47fd7c`](https://github.com/portabletext/editor/commit/c47fd7c4478cdb5b2acfe2f681d7cb146a0996a5)]:
+  - @portabletext/markdown@1.1.3
+
 ## 5.0.0
 
 ### Major Changes
