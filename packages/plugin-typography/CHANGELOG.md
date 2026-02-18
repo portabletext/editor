@@ -1,5 +1,13 @@
 # @portabletext/plugin-typography
 
+## 6.0.3
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @portabletext/editor@5.0.3
+  - @portabletext/plugin-input-rule@3.0.3
+
 ## 6.0.2
 
 ### Patch Changes

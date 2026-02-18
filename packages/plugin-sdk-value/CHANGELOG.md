@@ -1,5 +1,12 @@
 # Changelog
 
+## 5.0.3
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @portabletext/editor@5.0.3
+
 ## 5.0.2
 
 ### Patch Changes
