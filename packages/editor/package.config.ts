@@ -24,6 +24,12 @@ export default defineConfig({
     noImplicitSideEffects: 'error',
   },
   babel: {reactCompiler: true},
-  reactCompilerOptions: {target: '19'},
+  reactCompilerOptions: {
+    target: '19',
+    sources: (filename: string) =>
+      !filename.includes('/src/slate/') &&
+      !filename.includes('/src/slate-dom/') &&
+      !filename.includes('/src/slate-react/'),
+  },
   dts: 'rolldown',
 })
