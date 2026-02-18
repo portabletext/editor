@@ -4,6 +4,68 @@ import {portableTextMemberSchemaTypesToSchema} from './portable-text-member-sche
 import {compileSchemaDefinitionToPortableTextMemberSchemaTypes} from './schema-definition-to-portable-text-member-schema-types'
 
 describe(compileSchemaDefinitionToPortableTextMemberSchemaTypes.name, () => {
+  test('handles type appearing in both blockObjects and inlineObjects', () => {
+    const schema: Schema = {
+      annotations: [],
+      block: {name: 'block'},
+      blockObjects: [
+        {
+          name: 'test',
+          fields: [{name: 'title', type: 'string', title: 'Title'}],
+          title: 'Test',
+        },
+      ],
+      decorators: [],
+      inlineObjects: [
+        {
+          name: 'test',
+          fields: [{name: 'title', type: 'string', title: 'Title'}],
+          title: 'Test',
+        },
+      ],
+      span: {name: 'span'},
+      styles: [{name: 'normal', title: 'Normal', value: 'normal'}],
+      lists: [],
+    }
+
+    expect(
+      portableTextMemberSchemaTypesToSchema(
+        compileSchemaDefinitionToPortableTextMemberSchemaTypes(schema),
+      ),
+    ).toEqual(schema)
+  })
+
+  test('back and forth with shared blockObject and inlineObject names', () => {
+    const schema: Schema = {
+      annotations: [],
+      block: {name: 'block'},
+      blockObjects: [
+        {
+          name: 'myObject',
+          fields: [{name: 'value', type: 'string', title: 'Value'}],
+          title: 'My Object',
+        },
+      ],
+      decorators: [{name: 'strong', title: 'Bold', value: 'strong'}],
+      inlineObjects: [
+        {
+          name: 'myObject',
+          fields: [{name: 'value', type: 'string', title: 'Value'}],
+          title: 'My Object',
+        },
+      ],
+      span: {name: 'span'},
+      styles: [{name: 'normal', title: 'Normal', value: 'normal'}],
+      lists: [],
+    }
+
+    expect(
+      portableTextMemberSchemaTypesToSchema(
+        compileSchemaDefinitionToPortableTextMemberSchemaTypes(schema),
+      ),
+    ).toEqual(schema)
+  })
+
   test("image object doesn't get Sanity-specific fields", () => {
     expect(
       compileSchemaDefinitionToPortableTextMemberSchemaTypes({
