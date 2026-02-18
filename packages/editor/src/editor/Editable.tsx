@@ -978,6 +978,7 @@ export const PortableTextEditable = forwardRef<
       <SlateEditable
         {...restProps}
         ref={callbackRef}
+        editorActor={editorActor}
         data-read-only={readOnly}
         autoFocus={false}
         className={restProps.className || 'pt-editable'}
