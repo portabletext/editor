@@ -202,6 +202,17 @@ export const deleteOperationImplementation: OperationImplementation<
       })
     }
 
+    if (startRef.current) {
+      operation.editor.apply({
+        type: 'set_selection',
+        properties: operation.editor.selection,
+        newProperties: {
+          anchor: startRef.current,
+          focus: startRef.current,
+        },
+      })
+    }
+
     return
   }
 
