@@ -10,6 +10,7 @@ import React, {
   type JSX,
 } from 'react'
 import scrollIntoView from 'scroll-into-view-if-needed'
+import type {EditorActor} from '../../editor/editor-machine'
 import {
   Editor,
   Element,
@@ -148,6 +149,7 @@ export interface RenderTextProps {
 
 export type EditableProps = {
   decorate?: (entry: NodeEntry) => DecoratedRange[]
+  editorActor: EditorActor
   onDOMBeforeInput?: (event: InputEvent) => void
   placeholder?: string
   readOnly?: boolean
@@ -176,6 +178,7 @@ export const Editable = forwardRef(
     const {
       autoFocus,
       decorate = defaultDecorate,
+      editorActor,
       onDOMBeforeInput: propsOnDOMBeforeInput,
       placeholder,
       readOnly = false,
@@ -337,6 +340,7 @@ export const Editable = forwardRef(
     )
 
     androidInputManagerRef.current = useAndroidInputManager({
+      editorActor,
       node: ref as React.RefObject<HTMLElement>,
       onDOMSelectionChange,
       scheduleOnDOMSelectionChange,
@@ -726,7 +730,11 @@ export const Editable = forwardRef(
             type.startsWith('delete')
           ) {
             const direction = type.endsWith('Backward') ? 'backward' : 'forward'
-            Editor.deleteFragment(editor, {direction})
+            editorActor.send({
+              type: 'behavior event',
+              behaviorEvent: {type: 'delete', direction},
+              editor,
+            })
             return
           }
 
@@ -734,63 +742,115 @@ export const Editable = forwardRef(
             case 'deleteByComposition':
             case 'deleteByCut':
             case 'deleteByDrag': {
-              Editor.deleteFragment(editor)
+              editorActor.send({
+                type: 'behavior event',
+                behaviorEvent: {type: 'delete', direction: 'forward'},
+                editor,
+              })
               break
             }
 
             case 'deleteContent':
             case 'deleteContentForward': {
-              Editor.deleteForward(editor)
+              editorActor.send({
+                type: 'behavior event',
+                behaviorEvent: {type: 'delete.forward', unit: 'character'},
+                editor,
+              })
               break
             }
 
             case 'deleteContentBackward': {
-              Editor.deleteBackward(editor)
+              editorActor.send({
+                type: 'behavior event',
+                behaviorEvent: {type: 'delete.backward', unit: 'character'},
+                editor,
+              })
               break
             }
 
             case 'deleteEntireSoftLine': {
-              Editor.deleteBackward(editor, {unit: 'line'})
-              Editor.deleteForward(editor, {unit: 'line'})
+              editorActor.send({
+                type: 'behavior event',
+                behaviorEvent: {type: 'delete.backward', unit: 'line'},
+                editor,
+              })
+              editorActor.send({
+                type: 'behavior event',
+                behaviorEvent: {type: 'delete.forward', unit: 'line'},
+                editor,
+              })
               break
             }
 
             case 'deleteHardLineBackward': {
-              Editor.deleteBackward(editor, {unit: 'block'})
+              editorActor.send({
+                type: 'behavior event',
+                behaviorEvent: {type: 'delete.backward', unit: 'block'},
+                editor,
+              })
               break
             }
 
             case 'deleteSoftLineBackward': {
-              Editor.deleteBackward(editor, {unit: 'line'})
+              editorActor.send({
+                type: 'behavior event',
+                behaviorEvent: {type: 'delete.backward', unit: 'line'},
+                editor,
+              })
               break
             }
 
             case 'deleteHardLineForward': {
-              Editor.deleteForward(editor, {unit: 'block'})
+              editorActor.send({
+                type: 'behavior event',
+                behaviorEvent: {type: 'delete.forward', unit: 'block'},
+                editor,
+              })
               break
             }
 
             case 'deleteSoftLineForward': {
-              Editor.deleteForward(editor, {unit: 'line'})
+              editorActor.send({
+                type: 'behavior event',
+                behaviorEvent: {type: 'delete.forward', unit: 'line'},
+                editor,
+              })
               break
             }
 
             case 'deleteWordBackward': {
-              Editor.deleteBackward(editor, {unit: 'word'})
+              editorActor.send({
+                type: 'behavior event',
+                behaviorEvent: {type: 'delete.backward', unit: 'word'},
+                editor,
+              })
               break
             }
 
             case 'deleteWordForward': {
-              Editor.deleteForward(editor, {unit: 'word'})
+              editorActor.send({
+                type: 'behavior event',
+                behaviorEvent: {type: 'delete.forward', unit: 'word'},
+                editor,
+              })
               break
             }
 
             case 'insertLineBreak':
-              Editor.insertSoftBreak(editor)
+              editorActor.send({
+                type: 'behavior event',
+                behaviorEvent: {type: 'insert.soft break'},
+                editor,
+              })
               break
 
             case 'insertParagraph': {
-              Editor.insertBreak(editor)
+              editorActor.send({
+                type: 'behavior event',
+                behaviorEvent: {type: 'insert.break'},
+                editor,
+              })
               break
             }
 
@@ -816,16 +876,31 @@ export const Editable = forwardRef(
               // programmatic access of paste events coming from external windows
               // like cypress where cy.window does not work realibly
               if (data?.constructor.name === 'DataTransfer') {
-                ReactEditor.insertData(editor, data)
+                editorActor.send({
+                  type: 'behavior event',
+                  behaviorEvent: {
+                    type: 'input.*',
+                    originEvent: {dataTransfer: data},
+                  },
+                  editor,
+                })
               } else if (typeof data === 'string') {
                 // Only insertText operations use the native functionality, for now.
                 // Potentially expand to single character deletes, as well.
                 if (native) {
                   deferredOperations.current.push(() =>
-                    Editor.insertText(editor, data),
+                    editorActor.send({
+                      type: 'behavior event',
+                      behaviorEvent: {type: 'insert.text', text: data},
+                      editor,
+                    }),
                   )
                 } else {
-                  Editor.insertText(editor, data)
+                  editorActor.send({
+                    type: 'behavior event',
+                    behaviorEvent: {type: 'insert.text', text: data},
+                    editor,
+                  })
                 }
               }
 
@@ -847,6 +922,7 @@ export const Editable = forwardRef(
       },
       [
         editor,
+        editorActor,
         onDOMSelectionChange,
         onUserInput,
         propsOnDOMBeforeInput,
@@ -1090,11 +1166,15 @@ export const Editable = forwardRef(
                       event.preventDefault()
                       if (!ReactEditor.isComposing(editor)) {
                         const text = (event as any).data as string
-                        Editor.insertText(editor, text)
+                        editorActor.send({
+                          type: 'behavior event',
+                          behaviorEvent: {type: 'insert.text', text},
+                          editor,
+                        })
                       }
                     }
                   },
-                  [attributes.onBeforeInput, editor, readOnly],
+                  [attributes.onBeforeInput, editor, editorActor, readOnly],
                 )}
                 onInput={useCallback(
                   (event: React.FormEvent<HTMLDivElement>) => {
@@ -1314,7 +1394,14 @@ export const Editable = forwardRef(
                           editor.marks = placeholderMarks as typeof editor.marks
                         }
 
-                        Editor.insertText(editor, event.data)
+                        editorActor.send({
+                          type: 'behavior event',
+                          behaviorEvent: {
+                            type: 'insert.text',
+                            text: event.data,
+                          },
+                          editor,
+                        })
 
                         const userMarks = EDITOR_TO_USER_MARKS.get(editor)
                         EDITOR_TO_USER_MARKS.delete(editor)
@@ -1324,7 +1411,7 @@ export const Editable = forwardRef(
                       }
                     }
                   },
-                  [attributes.onCompositionEnd, editor],
+                  [attributes.onCompositionEnd, editor, editorActor],
                 )}
                 onCompositionUpdate={useCallback(
                   (event: React.CompositionEvent<HTMLDivElement>) => {
@@ -1362,12 +1449,16 @@ export const Editable = forwardRef(
 
                       const {selection} = editor
                       if (selection && Range.isExpanded(selection)) {
-                        Editor.deleteFragment(editor)
+                        editorActor.send({
+                          type: 'behavior event',
+                          behaviorEvent: {type: 'delete', direction: 'forward'},
+                          editor,
+                        })
                         return
                       }
                     }
                   },
-                  [attributes.onCompositionStart, editor],
+                  [attributes.onCompositionStart, editor, editorActor],
                 )}
                 onCopy={useCallback(
                   (event: React.ClipboardEvent<HTMLDivElement>) => {
@@ -1404,7 +1495,14 @@ export const Editable = forwardRef(
 
                       if (selection) {
                         if (Range.isExpanded(selection)) {
-                          Editor.deleteFragment(editor)
+                          editorActor.send({
+                            type: 'behavior event',
+                            behaviorEvent: {
+                              type: 'delete',
+                              direction: 'forward',
+                            },
+                            editor,
+                          })
                         } else {
                           const node = Node.parent(
                             editor,
@@ -1417,7 +1515,7 @@ export const Editable = forwardRef(
                       }
                     }
                   },
-                  [readOnly, editor, attributes.onCut],
+                  [readOnly, editor, editorActor, attributes.onCut],
                 )}
                 onDragOver={useCallback(
                   (event: React.DragEvent<HTMLDivElement>) => {
@@ -1502,7 +1600,14 @@ export const Editable = forwardRef(
                         }
                       }
 
-                      ReactEditor.insertData(editor, data)
+                      editorActor.send({
+                        type: 'behavior event',
+                        behaviorEvent: {
+                          type: 'input.*',
+                          originEvent: {dataTransfer: data},
+                        },
+                        editor,
+                      })
 
                       // When dragging from another source into the editor, it's possible
                       // that the current editor does not have focus.
@@ -1511,7 +1616,7 @@ export const Editable = forwardRef(
                       }
                     }
                   },
-                  [readOnly, editor, attributes.onDrop, state],
+                  [readOnly, editor, editorActor, attributes.onDrop, state],
                 )}
                 onDragEnd={useCallback(
                   (event: React.DragEvent<HTMLDivElement>) => {
@@ -1722,13 +1827,21 @@ export const Editable = forwardRef(
 
                         if (Hotkeys.isSoftBreak(nativeEvent)) {
                           event.preventDefault()
-                          Editor.insertSoftBreak(editor)
+                          editorActor.send({
+                            type: 'behavior event',
+                            behaviorEvent: {type: 'insert.soft break'},
+                            editor,
+                          })
                           return
                         }
 
                         if (Hotkeys.isSplitBlock(nativeEvent)) {
                           event.preventDefault()
-                          Editor.insertBreak(editor)
+                          editorActor.send({
+                            type: 'behavior event',
+                            behaviorEvent: {type: 'insert.break'},
+                            editor,
+                          })
                           return
                         }
 
@@ -1736,11 +1849,23 @@ export const Editable = forwardRef(
                           event.preventDefault()
 
                           if (selection && Range.isExpanded(selection)) {
-                            Editor.deleteFragment(editor, {
-                              direction: 'backward',
+                            editorActor.send({
+                              type: 'behavior event',
+                              behaviorEvent: {
+                                type: 'delete',
+                                direction: 'backward',
+                              },
+                              editor,
                             })
                           } else {
-                            Editor.deleteBackward(editor)
+                            editorActor.send({
+                              type: 'behavior event',
+                              behaviorEvent: {
+                                type: 'delete.backward',
+                                unit: 'character',
+                              },
+                              editor,
+                            })
                           }
 
                           return
@@ -1750,11 +1875,23 @@ export const Editable = forwardRef(
                           event.preventDefault()
 
                           if (selection && Range.isExpanded(selection)) {
-                            Editor.deleteFragment(editor, {
-                              direction: 'forward',
+                            editorActor.send({
+                              type: 'behavior event',
+                              behaviorEvent: {
+                                type: 'delete',
+                                direction: 'forward',
+                              },
+                              editor,
                             })
                           } else {
-                            Editor.deleteForward(editor)
+                            editorActor.send({
+                              type: 'behavior event',
+                              behaviorEvent: {
+                                type: 'delete.forward',
+                                unit: 'character',
+                              },
+                              editor,
+                            })
                           }
 
                           return
@@ -1764,11 +1901,23 @@ export const Editable = forwardRef(
                           event.preventDefault()
 
                           if (selection && Range.isExpanded(selection)) {
-                            Editor.deleteFragment(editor, {
-                              direction: 'backward',
+                            editorActor.send({
+                              type: 'behavior event',
+                              behaviorEvent: {
+                                type: 'delete',
+                                direction: 'backward',
+                              },
+                              editor,
                             })
                           } else {
-                            Editor.deleteBackward(editor, {unit: 'line'})
+                            editorActor.send({
+                              type: 'behavior event',
+                              behaviorEvent: {
+                                type: 'delete.backward',
+                                unit: 'line',
+                              },
+                              editor,
+                            })
                           }
 
                           return
@@ -1778,11 +1927,23 @@ export const Editable = forwardRef(
                           event.preventDefault()
 
                           if (selection && Range.isExpanded(selection)) {
-                            Editor.deleteFragment(editor, {
-                              direction: 'forward',
+                            editorActor.send({
+                              type: 'behavior event',
+                              behaviorEvent: {
+                                type: 'delete',
+                                direction: 'forward',
+                              },
+                              editor,
                             })
                           } else {
-                            Editor.deleteForward(editor, {unit: 'line'})
+                            editorActor.send({
+                              type: 'behavior event',
+                              behaviorEvent: {
+                                type: 'delete.forward',
+                                unit: 'line',
+                              },
+                              editor,
+                            })
                           }
 
                           return
@@ -1792,11 +1953,23 @@ export const Editable = forwardRef(
                           event.preventDefault()
 
                           if (selection && Range.isExpanded(selection)) {
-                            Editor.deleteFragment(editor, {
-                              direction: 'backward',
+                            editorActor.send({
+                              type: 'behavior event',
+                              behaviorEvent: {
+                                type: 'delete',
+                                direction: 'backward',
+                              },
+                              editor,
                             })
                           } else {
-                            Editor.deleteBackward(editor, {unit: 'word'})
+                            editorActor.send({
+                              type: 'behavior event',
+                              behaviorEvent: {
+                                type: 'delete.backward',
+                                unit: 'word',
+                              },
+                              editor,
+                            })
                           }
 
                           return
@@ -1806,11 +1979,23 @@ export const Editable = forwardRef(
                           event.preventDefault()
 
                           if (selection && Range.isExpanded(selection)) {
-                            Editor.deleteFragment(editor, {
-                              direction: 'forward',
+                            editorActor.send({
+                              type: 'behavior event',
+                              behaviorEvent: {
+                                type: 'delete',
+                                direction: 'forward',
+                              },
+                              editor,
                             })
                           } else {
-                            Editor.deleteForward(editor, {unit: 'word'})
+                            editorActor.send({
+                              type: 'behavior event',
+                              behaviorEvent: {
+                                type: 'delete.forward',
+                                unit: 'word',
+                              },
+                              editor,
+                            })
                           }
 
                           return
@@ -1837,7 +2022,14 @@ export const Editable = forwardRef(
                                 Editor.isBlock(editor, currentNode))
                             ) {
                               event.preventDefault()
-                              Editor.deleteBackward(editor, {unit: 'block'})
+                              editorActor.send({
+                                type: 'behavior event',
+                                behaviorEvent: {
+                                  type: 'delete.backward',
+                                  unit: 'block',
+                                },
+                                editor,
+                              })
 
                               return
                             }
@@ -1846,7 +2038,7 @@ export const Editable = forwardRef(
                       }
                     }
                   },
-                  [readOnly, editor, attributes.onKeyDown],
+                  [readOnly, editor, editorActor, attributes.onKeyDown],
                 )}
                 onPaste={useCallback(
                   (event: React.ClipboardEvent<HTMLDivElement>) => {
@@ -1868,11 +2060,18 @@ export const Editable = forwardRef(
                         IS_WEBKIT
                       ) {
                         event.preventDefault()
-                        ReactEditor.insertData(editor, event.clipboardData)
+                        editorActor.send({
+                          type: 'behavior event',
+                          behaviorEvent: {
+                            type: 'input.*',
+                            originEvent: {dataTransfer: event.clipboardData},
+                          },
+                          editor,
+                        })
                       }
                     }
                   },
-                  [readOnly, editor, attributes.onPaste],
+                  [readOnly, editor, editorActor, attributes.onPaste],
                 )}
               >
                 <Children
