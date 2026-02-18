@@ -1,5 +1,13 @@
 # Changelog
 
+## 5.0.3
+
+### Patch Changes
+
+- Updated dependencies [[`6133f84`](https://github.com/portabletext/editor/commit/6133f8489e7d1d01a0b469c3bc1e9c0e2f9084f4), [`d095284`](https://github.com/portabletext/editor/commit/d095284d59ce0a3f1d4faf8836d9c9ddde817a46)]:
+  - @portabletext/block-tools@5.0.3
+  - @portabletext/sanity-bridge@2.0.2
+
 ## 5.0.2
 
 ### Patch Changes
