@@ -196,15 +196,14 @@ export function createHTMLRules(
       deserialize(el, next, block) {
         const tag = tagName(el)
         const listItem = tag ? HTML_LIST_ITEM_TAGS[tag] : undefined
-        const parentTag = tagName(el.parentNode) || ''
-        if (
-          !listItem ||
-          !el.parentNode ||
-          !HTML_LIST_CONTAINER_TAGS[parentTag]
-        ) {
+        if (!listItem) {
           return undefined
         }
-        const enabledListItem = resolveListItem(schema, parentTag)
+        // Fall back to 'ul' when the list item has no list container parent
+        // (e.g. orphan <li> elements without a <ul> or <ol> wrapper).
+        const parentTag = tagName(el.parentNode) || ''
+        const listTag = HTML_LIST_CONTAINER_TAGS[parentTag] ? parentTag : 'ul'
+        const enabledListItem = resolveListItem(schema, listTag)
         // If the list item style is not supported, return a new default block
         if (!enabledListItem) {
           return block({_type: 'block', children: next(el.childNodes)})
