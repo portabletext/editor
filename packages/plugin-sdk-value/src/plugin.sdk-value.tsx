@@ -169,9 +169,9 @@ export function SDKValuePlugin(props: SDKValuePluginProps) {
 
     let isLocalWrite = false
 
-    const editorSubscription = editor.on('patch', () => {
+    const editorSubscription = editor.on('mutation', (event) => {
       isLocalWrite = true
-      setSdkValue(getEditorValue())
+      setSdkValue(event.value ?? getEditorValue())
       isLocalWrite = false
     })
     const unsubscribeToEditorChanges = () => editorSubscription.unsubscribe()
