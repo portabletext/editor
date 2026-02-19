@@ -223,7 +223,7 @@ Feature: Decorators
     And the caret is put before "foo"
     And "{Enter}" is pressed
     And "{ArrowUp}" is pressed
-    And "bar" is typed
+    And "bar" is inserted
     Then the text is "bar|foo"
     And "bar" has marks "strong"
     And "foo" has marks "strong"
