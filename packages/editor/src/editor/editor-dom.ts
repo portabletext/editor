@@ -39,7 +39,7 @@ export function createEditorDom(
     getBlockNodes: (snapshot) => getBlockNodes(slateEditor, snapshot),
     getChildNodes: (snapshot) => getChildNodes(slateEditor, snapshot),
     getEditorElement: () => getEditorElement(slateEditor),
-    getSelectionRect: (snapshot) => getSelectionRect(snapshot),
+    getSelectionRect: (snapshot) => getSelectionRect(slateEditor, snapshot),
     getStartBlockElement: (snapshot) =>
       getStartBlockElement(slateEditor, snapshot),
     getEndBlockElement: (snapshot) => getEndBlockElement(slateEditor, snapshot),
@@ -117,20 +117,20 @@ function getEditorElement(slateEditor: PortableTextSlateEditor) {
   }
 }
 
-function getSelectionRect(snapshot: EditorSnapshot) {
-  if (!snapshot.context.selection) {
+function getSelectionRect(
+  slateEditor: PortableTextSlateEditor,
+  snapshot: EditorSnapshot,
+) {
+  const slateRange = toSlateRange(snapshot)
+
+  if (!slateRange) {
     return null
   }
 
   try {
-    const selection = window.getSelection()
+    const domRange = DOMEditor.toDOMRange(slateEditor, slateRange)
 
-    if (!selection) {
-      return null
-    }
-
-    const range = selection.getRangeAt(0)
-    return range.getBoundingClientRect()
+    return domRange.getBoundingClientRect()
   } catch {
     return null
   }
