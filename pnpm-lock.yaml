@@ -935,6 +935,9 @@ importers:
       '@types/react':
         specifier: ^19.2.8
         version: 19.2.14
+      '@types/react-dom':
+        specifier: ^19.2.3
+        version: 19.2.3(@types/react@19.2.14)
       babel-plugin-react-compiler:
         specifier: ^1.0.0
         version: 1.0.0
@@ -944,6 +947,9 @@ importers:
       eslint-plugin-react-hooks:
         specifier: ^7.0.1
         version: 7.0.1(eslint@9.39.1(jiti@2.6.1))
+      jsdom:
+        specifier: ^27.2.0
+        version: 27.2.0
       react:
         specifier: ^19.2.3
         version: 19.2.3

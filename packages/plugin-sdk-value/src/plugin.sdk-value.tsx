@@ -167,11 +167,19 @@ export function SDKValuePlugin(props: SDKValuePluginProps) {
     const {getCurrent: getSdkValue, subscribe: onSdkValueChange} =
       getDocumentState<PortableTextBlock[]>(instance, props)
 
-    const editorSubscription = editor.on('patch', () =>
-      setSdkValue(getEditorValue()),
-    )
+    let isLocalWrite = false
+
+    const editorSubscription = editor.on('patch', () => {
+      isLocalWrite = true
+      setSdkValue(getEditorValue())
+      isLocalWrite = false
+    })
     const unsubscribeToEditorChanges = () => editorSubscription.unsubscribe()
     const unsubscribeToSdkChanges = onSdkValueChange(() => {
+      if (isLocalWrite) {
+        return
+      }
+
       const snapshot = getEditorValue()
       const patches = convertPatches(diffValue(snapshot, getSdkValue()))
 
