@@ -7,6 +7,7 @@ import {defineBehavior} from './behavior.types.behavior'
 
 export const abstractSelectBehaviors = [
   defineBehavior({
+    name: 'selectBlockEnd',
     on: 'select.block',
     guard: ({snapshot, event}) => {
       if (event.select !== 'end') {
@@ -54,6 +55,7 @@ export const abstractSelectBehaviors = [
     ],
   }),
   defineBehavior({
+    name: 'selectBlock',
     on: 'select.block',
     actions: [
       ({event}) => [
@@ -74,6 +76,7 @@ export const abstractSelectBehaviors = [
     ],
   }),
   defineBehavior({
+    name: 'selectPreviousBlock',
     on: 'select.previous block',
     guard: ({snapshot}) => {
       const previousBlock = getPreviousBlock(snapshot)
@@ -95,6 +98,7 @@ export const abstractSelectBehaviors = [
     ],
   }),
   defineBehavior({
+    name: 'selectNextBlock',
     on: 'select.next block',
     guard: ({snapshot}) => {
       const nextBlock = getNextBlock(snapshot)

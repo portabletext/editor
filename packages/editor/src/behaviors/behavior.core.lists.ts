@@ -22,6 +22,7 @@ import {defineBehavior} from './behavior.types.behavior'
 const MAX_LIST_LEVEL = 10
 
 const clearListOnBackspace = defineBehavior({
+  name: 'clearListOnBackspace',
   on: 'delete.backward',
   guard: ({snapshot}) => {
     const focusTextBlock = getFocusTextBlock(snapshot)
@@ -57,6 +58,7 @@ const clearListOnBackspace = defineBehavior({
 })
 
 const unindentListOnBackspace = defineBehavior({
+  name: 'unindentListOnBackspace',
   on: 'delete.backward',
   guard: ({snapshot}) => {
     const selectionCollapsed = isSelectionCollapsed(snapshot)
@@ -98,6 +100,7 @@ const unindentListOnBackspace = defineBehavior({
  * properties.
  */
 const mergeTextIntoListOnDelete = defineBehavior({
+  name: 'mergeTextIntoListOnDelete',
   on: 'delete.forward',
   guard: ({snapshot}) => {
     const focusListBlock = getFocusListBlock(snapshot)
@@ -139,6 +142,7 @@ const mergeTextIntoListOnDelete = defineBehavior({
  * properties.
  */
 const mergeTextIntoListOnBackspace = defineBehavior({
+  name: 'mergeTextIntoListOnBackspace',
   on: 'delete.backward',
   guard: ({snapshot}) => {
     const focusTextBlock = getFocusTextBlock(snapshot)
@@ -202,6 +206,7 @@ const mergeTextIntoListOnBackspace = defineBehavior({
  * default behavior would be to preserve the last item.
  */
 const deletingListFromStart = defineBehavior({
+  name: 'deletingListFromStart',
   on: 'delete',
   guard: ({snapshot, event}) => {
     const at = event.at ?? snapshot.context.selection
@@ -348,6 +353,7 @@ const deletingListFromStart = defineBehavior({
  * default. Instead, the list properties should be cleared.
  */
 const clearListOnEnter = defineBehavior({
+  name: 'clearListOnEnter',
   on: 'insert.break',
   guard: ({snapshot}) => {
     const selectionCollapsed = isSelectionCollapsed(snapshot)
@@ -378,6 +384,7 @@ const clearListOnEnter = defineBehavior({
  * Hitting Tab should indent the list item.
  */
 const indentListOnTab = defineBehavior({
+  name: 'indentListOnTab',
   on: 'keyboard.keydown',
   guard: ({snapshot, event}) => {
     const isTab = defaultKeyboardShortcuts.tab.guard(event.originEvent)
@@ -425,6 +432,7 @@ const indentListOnTab = defineBehavior({
  * Hitting Shift+Tab should unindent the list item.
  */
 const unindentListOnShiftTab = defineBehavior({
+  name: 'unindentListOnShiftTab',
   on: 'keyboard.keydown',
   guard: ({snapshot, event}) => {
     const isShiftTab = defaultKeyboardShortcuts.shiftTab.guard(
@@ -475,6 +483,7 @@ const unindentListOnShiftTab = defineBehavior({
  * inserted. The entire list tree is adjusted to match the new level.
  */
 const inheritListLevel = defineBehavior({
+  name: 'inheritListLevel',
   on: 'insert.blocks',
   guard: ({snapshot, event}) => {
     const adjustedSnapshot = {
@@ -559,6 +568,7 @@ const inheritListLevel = defineBehavior({
  * it's inserted.
  */
 const inheritListItem = defineBehavior({
+  name: 'inheritListItem',
   on: 'insert.blocks',
   guard: ({snapshot, event}) => {
     const adjustedSnapshot = {
@@ -649,6 +659,7 @@ const inheritListItem = defineBehavior({
  * item where it's inserted.
  */
 const inheritListProperties = defineBehavior({
+  name: 'inheritListProperties',
   on: 'insert.block',
   guard: ({snapshot, event}) => {
     if (event.placement !== 'auto') {

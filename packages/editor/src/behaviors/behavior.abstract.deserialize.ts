@@ -52,6 +52,7 @@ function getFirstAvailableData({
 
 export const abstractDeserializeBehaviors = [
   defineBehavior({
+    name: 'deserializeAvailableData',
     on: 'deserialize',
     guard: ({event}) => {
       const availableData = getFirstAvailableData({
@@ -72,6 +73,7 @@ export const abstractDeserializeBehaviors = [
     actions: [(_, deserializeEvent) => [raise(deserializeEvent)]],
   }),
   defineBehavior({
+    name: 'deserializeFallback',
     on: 'deserialize',
     actions: [
       ({event}) => [
@@ -86,6 +88,7 @@ export const abstractDeserializeBehaviors = [
   }),
 
   defineBehavior({
+    name: 'deserializeHtmlToPortableText',
     on: 'deserialize.data',
     guard: ({event}) => {
       if (event.mimeType !== 'text/html') {
@@ -112,6 +115,7 @@ export const abstractDeserializeBehaviors = [
     actions: [(_, deserializeDataEvent) => [raise(deserializeDataEvent)]],
   }),
   defineBehavior({
+    name: 'deserializeDataWithConverter',
     on: 'deserialize.data',
     guard: ({snapshot, event}) => {
       const converter = snapshot.context.converters.find(
@@ -145,6 +149,7 @@ export const abstractDeserializeBehaviors = [
    * formatting from the text it's pasted into.
    */
   defineBehavior({
+    name: 'deserializationInheritFormatting',
     on: 'deserialization.success',
     guard: ({snapshot, event}) => {
       const focusTextBlock = getFocusTextBlock(snapshot)
@@ -205,6 +210,7 @@ export const abstractDeserializeBehaviors = [
     ],
   }),
   defineBehavior({
+    name: 'deserializationInsertBlocks',
     on: 'deserialization.success',
     actions: [
       ({event}) => [
@@ -217,6 +223,7 @@ export const abstractDeserializeBehaviors = [
     ],
   }),
   defineBehavior({
+    name: 'deserializationFailureFallback',
     on: 'deserialization.failure',
     guard: ({event}) => {
       if (event.mimeType === '*/*') {
@@ -242,6 +249,7 @@ export const abstractDeserializeBehaviors = [
     actions: [(_, deserializeDataEvent) => [raise(deserializeDataEvent)]],
   }),
   defineBehavior({
+    name: 'deserializationFailureInsertText',
     on: 'deserialization.failure',
     actions: [
       ({event}) => [

@@ -4,6 +4,7 @@ import {defineBehavior} from './behavior.types.behavior'
 
 export const abstractDecoratorBehaviors = [
   defineBehavior({
+    name: 'decoratorToggleRemove',
     on: 'decorator.toggle',
     guard: ({snapshot, event}) => {
       const at = event.at ?? snapshot.context.selection
@@ -33,6 +34,7 @@ export const abstractDecoratorBehaviors = [
     ],
   }),
   defineBehavior({
+    name: 'decoratorToggleAdd',
     on: 'decorator.toggle',
     guard: ({snapshot, event}) => {
       const at = event.at ?? snapshot.context.selection

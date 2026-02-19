@@ -46,6 +46,7 @@ const keyboardShortcutRemove = fromCallback<
 
   return input.editor.registerBehavior({
     behavior: defineBehavior({
+      name: `toolbar:annotationRemoveShortcut:${input.schemaType.name}`,
       on: 'keyboard.keydown',
       guard: ({event}) => shortcut.guard(event.originEvent),
       actions: [
@@ -78,6 +79,7 @@ const keyboardShortcutShowInsertDialog = fromCallback<
 
   return input.editor.registerBehavior({
     behavior: defineBehavior({
+      name: `toolbar:annotationAddShortcut:${input.schemaType.name}`,
       on: 'keyboard.keydown',
       guard: ({event}) => shortcut.guard(event.originEvent),
       actions: [

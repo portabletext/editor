@@ -17,6 +17,7 @@ export function useMutuallyExclusiveDecorator(props: {
 
     return editor.registerBehavior({
       behavior: defineBehavior({
+        name: `toolbar:mutuallyExclusiveDecorator:${props.schemaType.name}`,
         on: 'decorator.add',
         guard: ({event}) => event.decorator === props.schemaType.name,
         actions: [
