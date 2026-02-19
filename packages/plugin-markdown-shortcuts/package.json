@@ -1,6 +1,6 @@
 {
   "name": "@portabletext/plugin-markdown-shortcuts",
-  "version": "6.0.3",
+  "version": "6.0.4",
   "description": "Adds helpful Markdown shortcuts to the editor",
   "keywords": [
     "portabletext",

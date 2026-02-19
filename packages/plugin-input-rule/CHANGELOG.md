@@ -1,5 +1,14 @@
 # @portabletext/plugin-input-rule
 
+## 3.0.4
+
+### Patch Changes
+
+- [#2219](https://github.com/portabletext/editor/pull/2219) [`8945679`](https://github.com/portabletext/editor/commit/8945679eeb6c325458fdc1eebe9dba98a8a8f480) Thanks [@christianhg](https://github.com/christianhg)! - fix: smart undo with Backspace now works after input rules that produce inline objects
+
+- Updated dependencies [[`a3eb985`](https://github.com/portabletext/editor/commit/a3eb985d2fe074ac5a62b53acc50d9f4f1cbddcb)]:
+  - @portabletext/editor@5.0.4
+
 ## 3.0.3
 
 ### Patch Changes
