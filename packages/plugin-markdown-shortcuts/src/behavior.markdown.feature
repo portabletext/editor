@@ -99,6 +99,19 @@ Feature: Markdown Behaviors
       | "h5"  |
       | "h6"  |
 
+  Scenario: Unordered list clear-on-enter works on second cycle
+    Given the text "-"
+    When the editor is focused
+    And "{Space}" is pressed
+    Then the text is ">-:"
+    When "{Enter}" is pressed
+    Then the text is ""
+    When "-" is typed
+    And "{Space}" is pressed
+    Then the text is ">-:"
+    When "{Enter}" is pressed
+    Then the text is ""
+
   Scenario Outline: Clear style on Backspace in empty block
     Given the text "foo"
     When the editor is focused
