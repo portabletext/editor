@@ -1,4 +1,9 @@
-import {useEditor, type BlockOffset, type Editor} from '@portabletext/editor'
+import {
+  useEditor,
+  type BlockOffset,
+  type Editor,
+  type EditorSelection,
+} from '@portabletext/editor'
 import {
   defineBehavior,
   effect,
@@ -11,7 +16,10 @@ import {
   getBlockTextBefore,
   getFocusBlock,
 } from '@portabletext/editor/selectors'
-import {isSelectionCollapsed} from '@portabletext/editor/utils'
+import {
+  isEqualSelections,
+  isSelectionCollapsed,
+} from '@portabletext/editor/utils'
 import {useActorRef} from '@xstate/react'
 import {
   fromCallback,
@@ -29,8 +37,10 @@ export function defineInputRuleBehavior(config: {
   rules: Array<InputRule<any>>
   onApply?: ({
     endOffsets,
+    endSelection,
   }: {
     endOffsets: {start: BlockOffset; end: BlockOffset} | undefined
+    endSelection: EditorSelection
   }) => void
 }) {
   return defineBehavior({
@@ -217,7 +227,10 @@ export function defineInputRuleBehavior(config: {
         effect(() => {
           const blockOffsets = getBlockOffsets(snapshot)
 
-          config.onApply?.({endOffsets: blockOffsets})
+          config.onApply?.({
+            endOffsets: blockOffsets,
+            endSelection: snapshot.context.selection,
+          })
         }),
       ],
     ],
@@ -256,11 +269,13 @@ type InputRuleMachineEvent =
   | {
       type: 'input rule raised'
       endOffsets: {start: BlockOffset; end: BlockOffset} | undefined
+      endSelection: EditorSelection
     }
   | {type: 'history.undo raised'}
   | {
       type: 'selection changed'
       blockOffsets: {start: BlockOffset; end: BlockOffset} | undefined
+      selection: EditorSelection
     }
 
 const inputRuleListenerCallback: CallbackLogicFunction<
@@ -274,8 +289,8 @@ const inputRuleListenerCallback: CallbackLogicFunction<
   const unregister = input.editor.registerBehavior({
     behavior: defineInputRuleBehavior({
       rules: input.rules,
-      onApply: ({endOffsets}) => {
-        sendBack({type: 'input rule raised', endOffsets})
+      onApply: ({endOffsets, endSelection}) => {
+        sendBack({type: 'input rule raised', endOffsets, endSelection})
       },
     }),
   })
@@ -322,7 +337,11 @@ const selectionListenerCallback: CallbackLogicFunction<
       },
     })
 
-    sendBack({type: 'selection changed', blockOffsets})
+    sendBack({
+      type: 'selection changed',
+      blockOffsets,
+      selection: event.selection,
+    })
   })
 
   return () => subscription.unsubscribe()
@@ -334,6 +353,7 @@ const inputRuleSetup = setup({
       editor: Editor
       rules: Array<InputRule>
       endOffsets: {start: BlockOffset; end: BlockOffset} | undefined
+      endSelection: EditorSelection
     },
     input: {} as {
       editor: Editor
@@ -347,32 +367,43 @@ const inputRuleSetup = setup({
     'selection listener': fromCallback(selectionListenerCallback),
   },
   guards: {
-    'block offset changed': ({context, event}) => {
+    'selection changed': ({context, event}) => {
       if (event.type !== 'selection changed') {
         return false
       }
 
-      if (!event.blockOffsets || !context.endOffsets) {
-        return true
+      // When block offsets are available for both the end state and the
+      // current selection, compare them. Block offsets normalize away
+      // span-level differences (e.g. cursor at the same position but in a
+      // different span after normalization).
+      if (event.blockOffsets && context.endOffsets) {
+        const startChanged =
+          context.endOffsets.start.path[0]._key !==
+            event.blockOffsets.start.path[0]._key ||
+          context.endOffsets.start.offset !== event.blockOffsets.start.offset
+        const endChanged =
+          context.endOffsets.end.path[0]._key !==
+            event.blockOffsets.end.path[0]._key ||
+          context.endOffsets.end.offset !== event.blockOffsets.end.offset
+
+        return startChanged || endChanged
       }
 
-      const startChanged =
-        context.endOffsets.start.path[0]._key !==
-          event.blockOffsets.start.path[0]._key ||
-        context.endOffsets.start.offset !== event.blockOffsets.start.offset
-      const endChanged =
-        context.endOffsets.end.path[0]._key !==
-          event.blockOffsets.end.path[0]._key ||
-        context.endOffsets.end.offset !== event.blockOffsets.end.offset
-
-      return startChanged || endChanged
+      // Block offsets can't be computed when the cursor is on an inline
+      // object (e.g. after a stock ticker rule inserts one). Fall back to
+      // comparing the raw selections.
+      return !isEqualSelections(context.endSelection, event.selection)
     },
   },
 })
 
-const assignEndOffsets = inputRuleSetup.assign({
+const assignEndState = inputRuleSetup.assign({
   endOffsets: ({context, event}) =>
     event.type === 'input rule raised' ? event.endOffsets : context.endOffsets,
+  endSelection: ({context, event}) =>
+    event.type === 'input rule raised'
+      ? event.endSelection
+      : context.endSelection,
 })
 
 const inputRuleMachine = inputRuleSetup.createMachine({
@@ -381,6 +412,7 @@ const inputRuleMachine = inputRuleSetup.createMachine({
     editor: input.editor,
     rules: input.rules,
     endOffsets: undefined,
+    endSelection: null,
   }),
   initial: 'idle',
   invoke: {
@@ -393,7 +425,7 @@ const inputRuleMachine = inputRuleSetup.createMachine({
   on: {
     'input rule raised': {
       target: '.input rule applied',
-      actions: assignEndOffsets,
+      actions: assignEndState,
     },
   },
   states: {
@@ -412,7 +444,7 @@ const inputRuleMachine = inputRuleSetup.createMachine({
       on: {
         'selection changed': {
           target: 'idle',
-          guard: 'block offset changed',
+          guard: 'selection changed',
         },
         'history.undo raised': {
           target: 'idle',
