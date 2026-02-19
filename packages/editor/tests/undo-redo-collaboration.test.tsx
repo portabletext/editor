@@ -351,7 +351,7 @@ describe('Undo/Redo Collaboration (hand-coded)', () => {
       expect(editorB.getSnapshot().context.selection).toEqual(selectionB)
     })
 
-    await userEvent.type(locatorB, middle)
+    editorB.send({type: 'insert.text', text: middle})
 
     await vi.waitFor(() => {
       expect(getTersePt(editor.getSnapshot().context)).toEqual([
