@@ -170,24 +170,50 @@ export function SDKValuePlugin(props: SDKValuePluginProps) {
       getDocumentState<PortableTextBlock[]>(instance, handle)
 
     let isLocalWrite = false
+    let hasPendingWrites = false
+    let pendingSync = false
 
-    const editorSubscription = editor.on('mutation', (event) => {
-      isLocalWrite = true
-      setSdkValue(event.value ?? getEditorValue())
-      isLocalWrite = false
-    })
-    const unsubscribeToEditorChanges = () => editorSubscription.unsubscribe()
-    const unsubscribeToSdkChanges = onSdkValueChange(() => {
-      if (isLocalWrite) {
-        return
-      }
-
+    function applySync() {
       const snapshot = getEditorValue()
       const patches = convertPatches(diffValue(snapshot, getSdkValue()))
 
       if (patches.length) {
         editor.send({type: 'patches', patches, snapshot})
       }
+    }
+
+    const patchSubscription = editor.on('patch', () => {
+      hasPendingWrites = true
+    })
+
+    const mutationSubscription = editor.on('mutation', (event) => {
+      isLocalWrite = true
+      setSdkValue(event.value ?? getEditorValue())
+      isLocalWrite = false
+      hasPendingWrites = false
+
+      if (pendingSync) {
+        pendingSync = false
+        queueMicrotask(applySync)
+      }
+    })
+
+    const unsubscribeToEditorChanges = () => {
+      patchSubscription.unsubscribe()
+      mutationSubscription.unsubscribe()
+    }
+
+    const unsubscribeToSdkChanges = onSdkValueChange(() => {
+      if (isLocalWrite) {
+        return
+      }
+
+      if (hasPendingWrites) {
+        pendingSync = true
+        return
+      }
+
+      applySync()
     })
 
     // update initial value
