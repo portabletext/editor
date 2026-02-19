@@ -3,7 +3,7 @@ import {
   slatePointToSelectionPoint,
   slateRangeToSelection,
 } from '../internal-utils/slate-utils'
-import {Editor, Node, Point, Range, Text} from '../slate'
+import {Editor, Point, Range, Text, type Node} from '../slate'
 
 export function createBehaviorApiPlugin(editorActor: EditorActor) {
   return function behaviorApiPlugin(editor: Editor) {
@@ -118,25 +118,46 @@ export function createBehaviorApiPlugin(editorActor: EditorActor) {
 
     editor.insertNodes = (nodes, options) => {
       if (editor.isNormalizingNode) {
-        const normalizedNodes = (Node.isNode(nodes) ? [nodes] : nodes).map(
-          (node) => {
-            if (!Text.isText(node)) {
-              return node
-            }
+        // Slate's normalization creates bare text nodes ({text: ''})
+        // without _type or marks. Promote them to proper spans before
+        // they reach Transforms.insertNodes, which checks Node.isNode.
+        const promoted: Array<Node> = []
 
-            if (typeof node._type !== 'string') {
-              return {
+        for (const node of Array.isArray(nodes) ? nodes : [nodes]) {
+          if (Text.isText(node)) {
+            const record = node as unknown as Record<string, unknown>
+            const needsType = typeof record['_type'] !== 'string'
+
+            if (needsType) {
+              promoted.push({
                 ...(node as Node),
                 _type: editorActor.getSnapshot().context.schema.span.name,
-              }
+              })
+              continue
             }
+          } else {
+            const record = node as Record<string, unknown>
+            if (
+              typeof record['text'] === 'string' &&
+              !Array.isArray(record['marks'])
+            ) {
+              // Bare text node without marks — promote to span
+              promoted.push({
+                ...record,
+                _type:
+                  typeof record['_type'] === 'string'
+                    ? record['_type']
+                    : editorActor.getSnapshot().context.schema.span.name,
+                marks: [],
+              } as unknown as Node)
+              continue
+            }
+          }
 
-            return node
-          },
-        ) as Array<Node>
+          promoted.push(node)
+        }
 
-        insertNodes(normalizedNodes, options)
-
+        insertNodes(promoted, options)
         return
       }
 

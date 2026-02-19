@@ -38,7 +38,7 @@ export const getChunkTreeForNode = (
   if (options.reconcile) {
     reconcileChildren(editor, {
       chunkTree,
-      children: node.children,
+      children: node.children ?? [],
       ...options.reconcile,
     })
   }

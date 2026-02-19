@@ -4,6 +4,7 @@ import {debug} from '../internal-utils/debug'
 import {createEditor, type Descendant} from '../slate'
 import {plugins} from '../slate-plugins/slate-plugins'
 import {withReact} from '../slate-react'
+import {setSpanTypeName} from '../slate/span-type-config'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import type {EditorActor} from './editor-machine'
 import type {RelayActor} from './relay-machine'
@@ -22,9 +23,10 @@ export type SlateEditor = {
 export function createSlateEditor(config: SlateEditorConfig): SlateEditor {
   debug.setup('creating new slate editor instance')
 
-  const placeholderBlock = createPlaceholderBlock(
-    config.editorActor.getSnapshot().context,
-  )
+  const context = config.editorActor.getSnapshot().context
+  setSpanTypeName(context.schema.span.name)
+
+  const placeholderBlock = createPlaceholderBlock(context)
 
   const editor = createEditor()
 
@@ -56,7 +58,7 @@ export function createSlateEditor(config: SlateEditorConfig): SlateEditor {
 
   buildIndexMaps(
     {
-      schema: config.editorActor.getSnapshot().context.schema,
+      schema: context.schema,
       value: instance.value,
     },
     {

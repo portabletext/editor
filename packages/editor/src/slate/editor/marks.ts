@@ -54,6 +54,12 @@ export const marks: EditorInterface['marks'] = (editor, _options = {}) => {
 
   const {path} = anchor
 
+  // Childless void elements have no text leaf — return empty marks
+  const anchorNode = Editor.node(editor, path)[0]
+  if (Element.isElement(anchorNode) && editor.isVoid(anchorNode)) {
+    return {} as ReturnType<EditorInterface['marks']> & {}
+  }
+
   let [node] = Editor.leaf(editor, path)
 
   if (anchor.offset === 0) {

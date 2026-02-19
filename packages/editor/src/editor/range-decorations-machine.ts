@@ -393,7 +393,11 @@ function createDecorate(
       return []
     }
 
-    if (!Element.isElement(node) || node.children.length === 0) {
+    if (
+      !Element.isElement(node) ||
+      !node.children ||
+      node.children.length === 0
+    ) {
       return []
     }
 
@@ -403,11 +407,13 @@ function createDecorate(
       return []
     }
 
+    const children = node.children
+
     return slateEditor.decoratedRanges.filter((decoratedRange) => {
       // Special case in order to only return one decoration for collapsed ranges
       if (Range.isCollapsed(decoratedRange)) {
         // Collapsed ranges should only be decorated if they are on a block child level (length 2)
-        return node.children.some(
+        return children.some(
           (_, childIndex) =>
             Path.equals(decoratedRange.anchor.path, [blockIndex, childIndex]) &&
             Path.equals(decoratedRange.focus.path, [blockIndex, childIndex]),

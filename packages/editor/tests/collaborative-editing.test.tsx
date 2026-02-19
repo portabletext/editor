@@ -827,14 +827,9 @@ describe('Collaborative editing', () => {
         ])
       })
 
-      // Should include the deferred marks normalization patch (unrelated child)
-      // plus the typing patch
+      // toSlateBlock guarantees marks: [] on all spans, so no normalization
+      // patch is needed. Only the typing patch should be emitted.
       expect(emittedPatches).toEqual([
-        {
-          type: 'set',
-          path: [{_key: blockKey}, 'children', {_key: span1Key}, 'marks'],
-          value: [],
-        },
         diffMatchPatch('Price: ', 'Price: x', [
           {_key: blockKey},
           'children',
@@ -1188,15 +1183,10 @@ describe('Collaborative editing', () => {
         ])
       })
 
-      // Should include markDefs and marks patches, but NOT the style patch
-      // Note: marks patch comes before markDefs because normalization processes
-      // spans before block-level properties
+      // Should include markDefs patch, but NOT the style patch (conflicting).
+      // marks normalization is no longer needed because toSlateBlock guarantees
+      // marks: [] on all spans.
       expect(emittedPatches).toEqual([
-        {
-          type: 'set',
-          path: [{_key: blockKey}, 'children', {_key: spanKey}, 'marks'],
-          value: [],
-        },
         {
           type: 'set',
           path: [{_key: blockKey}, 'markDefs'],

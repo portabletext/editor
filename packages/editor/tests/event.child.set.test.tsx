@@ -189,6 +189,9 @@ describe('event.child.set', () => {
       ])
     })
 
+    // Only the changed property emits a patch. Unchanged properties
+    // (abilities) are not re-emitted since properties are stored directly
+    // on the node (no value wrapper).
     await vi.waitFor(() => {
       expect(patches).toEqual([
         {
@@ -196,15 +199,6 @@ describe('event.child.set', () => {
           path: [{_key: blockKey}, 'children', {_key: cellKey}, 'alive'],
           type: 'set',
           value: true,
-        },
-        {
-          origin: 'local',
-          path: [{_key: blockKey}, 'children', {_key: cellKey}, 'abilities'],
-          type: 'set',
-          value: {
-            fly: true,
-            swim: false,
-          },
         },
       ])
     })
@@ -301,6 +295,9 @@ describe('event.child.set', () => {
       ])
     })
 
+    // Only the changed property (_key) emits a patch. Unchanged properties
+    // (alive, abilities) are not re-emitted since properties are stored
+    // directly on the node (no value wrapper).
     await vi.waitFor(() => {
       return expect(patches).toEqual([
         {
@@ -308,26 +305,6 @@ describe('event.child.set', () => {
           path: [{_key: blockKey}, 'children', 1, '_key'],
           type: 'set',
           value: 'new-cell-key',
-        },
-        {
-          origin: 'local',
-          path: [{_key: blockKey}, 'children', {_key: 'new-cell-key'}, 'alive'],
-          type: 'set',
-          value: false,
-        },
-        {
-          origin: 'local',
-          path: [
-            {_key: blockKey},
-            'children',
-            {_key: 'new-cell-key'},
-            'abilities',
-          ],
-          type: 'set',
-          value: {
-            fly: true,
-            swim: false,
-          },
         },
       ])
     })

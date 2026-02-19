@@ -89,7 +89,7 @@ export const GeneralTransforms: GeneralTransforms = {
           } else if (!Text.isText(node) && !Text.isText(prev)) {
             newNode = {
               ...prev,
-              children: prev.children.concat(node.children),
+              children: (prev.children ?? []).concat(node.children ?? []),
             } as Descendant
           } else {
             throw new Error(
@@ -327,8 +327,8 @@ export const GeneralTransforms: GeneralTransforms = {
               text: after,
             } as Descendant
           } else {
-            const before = node.children.slice(0, position)
-            const after = node.children.slice(position)
+            const before = (node.children ?? []).slice(0, position)
+            const after = (node.children ?? []).slice(position)
             newNode = {
               ...node,
               children: before,

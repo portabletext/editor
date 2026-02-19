@@ -194,8 +194,10 @@ describe('event.block.set', () => {
           description: 'Sanity is a headless CMS',
         },
       ])
+      // Only the changed property (description) emits a patch. Unchanged
+      // properties (href) are not re-emitted since properties are stored
+      // directly on the node (no value wrapper).
       expect(patches.slice(4)).toEqual([
-        set('https://www.sanity.io', [{_key: urlBlockKey}, 'href']),
         set('Sanity is a headless CMS', [{_key: urlBlockKey}, 'description']),
       ])
     })

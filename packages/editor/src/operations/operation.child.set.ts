@@ -1,5 +1,5 @@
 import {toSlateRange} from '../internal-utils/to-slate-range'
-import {Editor, Element, Transforms} from '../slate'
+import {Editor, Element, Transforms, type Descendant} from '../slate'
 import type {OperationImplementation} from './operation.types'
 
 export const childSetOperationImplementation: OperationImplementation<
@@ -75,28 +75,51 @@ export const childSetOperationImplementation: OperationImplementation<
       )
     }
 
-    const value =
-      'value' in child && typeof child.value === 'object' ? child.value : {}
     const {_type, _key, ...rest} = operation.props
+    const filteredProps: Record<string, unknown> = {}
+
+    if (typeof _key === 'string') {
+      filteredProps['_key'] = _key
+    }
 
     for (const prop in rest) {
-      if (!definition.fields.some((field) => field.name === prop)) {
-        delete rest[prop]
+      if (definition.fields.some((field) => field.name === prop)) {
+        filteredProps[prop] = rest[prop]
       }
     }
 
-    Transforms.setNodes(
-      operation.editor,
-      {
-        ...child,
-        _key: typeof _key === 'string' ? _key : child._key,
-        value: {
-          ...value,
-          ...rest,
-        },
-      },
-      {at: childPath},
-    )
+    // Slate's set_node rejects 'text' and 'children' in newProperties,
+    // but inline objects can have user-defined fields with those names.
+    // Split into set_node-safe props and text/children props.
+    const safeProps: Record<string, unknown> = {}
+    const unsafeProps: Record<string, unknown> = {}
+
+    for (const key in filteredProps) {
+      if (key === 'text' || key === 'children') {
+        unsafeProps[key] = filteredProps[key]
+      } else {
+        safeProps[key] = filteredProps[key]
+      }
+    }
+
+    if (Object.keys(safeProps).length > 0) {
+      Transforms.setNodes(operation.editor, safeProps, {at: childPath})
+    }
+
+    if (Object.keys(unsafeProps).length > 0) {
+      // Use remove_node + insert_node to replace the entire node
+      const newNode = {...(child as Record<string, unknown>), ...unsafeProps}
+      operation.editor.apply({
+        type: 'remove_node',
+        path: childPath,
+        node: child as Descendant,
+      })
+      operation.editor.apply({
+        type: 'insert_node',
+        path: childPath,
+        node: newNode as unknown as Descendant,
+      })
+    }
 
     return
   }

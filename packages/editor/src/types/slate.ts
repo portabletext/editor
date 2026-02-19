@@ -9,9 +9,8 @@ import type {PortableTextSlateEditor} from './slate-editor'
 export interface VoidElement {
   _type: string
   _key: string
-  children: Descendant[]
-  __inline: boolean
-  value: Record<string, unknown>
+  children?: Descendant[]
+  [key: string]: unknown
 }
 
 export interface SlateTextBlock extends Omit<

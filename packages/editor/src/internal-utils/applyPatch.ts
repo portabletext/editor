@@ -29,7 +29,35 @@ import {
 import type {Path} from '../types/paths'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
+import {isDeepEqual} from './equality'
 import {isEqualToEmptyEditor, toSlateBlock} from './values'
+
+/**
+ * Compute the new value for a property after applying a patch.
+ * Uses `applyAll` to handle nested paths and `setIfMissing` semantics.
+ * Returns `undefined` if the value didn't change (noop).
+ */
+function computeNewPropertyValue(
+  currentNode: Record<string, unknown>,
+  propEntry: string,
+  patch: SetPatch | SetIfMissingPatch,
+  pathOffset: number,
+): {oldValue: unknown; newValue: unknown} | undefined {
+  const oldValue = currentNode[propEntry]
+  const subPatch = {
+    ...patch,
+    path: patch.path.slice(pathOffset),
+  }
+  const updated = applyAll({[propEntry]: oldValue}, [subPatch])
+  const newValue = (updated as Record<string, unknown>)[propEntry]
+
+  // Check if the value actually changed
+  if (isDeepEqual(oldValue, newValue)) {
+    return undefined
+  }
+
+  return {oldValue, newValue}
+}
 
 /**
  * Creates a function that can apply a patch onto a PortableTextSlateEditor.
@@ -210,7 +238,11 @@ function insertPatch(
     position === 'after' ? targetChild.index + 1 : targetChild.index
   const childInsertPath = [block.index, normalizedIdx]
 
-  if (childrenToInsert && Element.isElement(childrenToInsert)) {
+  if (
+    childrenToInsert &&
+    Element.isElement(childrenToInsert) &&
+    childrenToInsert.children
+  ) {
     Transforms.insertNodes(editor, childrenToInsert.children, {
       at: childInsertPath,
     })
@@ -261,9 +293,11 @@ function setPatch(
       }
 
       // Insert the new children
-      Transforms.insertNodes(editor, updatedBlock.children, {
-        at: [block.index, 0],
-      })
+      if (updatedBlock.children) {
+        Transforms.insertNodes(editor, updatedBlock.children, {
+          at: [block.index, 0],
+        })
+      }
 
       // Restore the selection
       if (previousSelection) {
@@ -284,16 +318,24 @@ function setPatch(
   }
 
   if (isTextBlock && patch.path[1] !== 'children') {
-    const updatedBlock = applyAll(block.node, [
-      {
-        ...patch,
-        path: patch.path.slice(1),
-      },
-    ])
+    const propEntry = patch.path[1]
+    if (typeof propEntry === 'string') {
+      const result = computeNewPropertyValue(
+        block.node as Record<string, unknown>,
+        propEntry,
+        patch,
+        1,
+      )
 
-    Transforms.setNodes(editor, updatedBlock as Partial<Node>, {
-      at: [block.index],
-    })
+      if (result) {
+        editor.apply({
+          type: 'set_node',
+          path: [block.index],
+          properties: {[propEntry]: result.oldValue},
+          newProperties: {[propEntry]: result.newValue},
+        })
+      }
+    }
 
     return true
   }
@@ -303,13 +345,18 @@ function setPatch(
   // If this is targeting a text block child
   if (isTextBlock && child) {
     if (Text.isText(child.node)) {
-      if (Text.isText(value)) {
+      if (
+        typeof value === 'object' &&
+        value !== null &&
+        'text' in value &&
+        typeof (value as Record<string, unknown>)['text'] === 'string'
+      ) {
         if (patch.type === 'setIfMissing') {
           return false
         }
 
         const oldText = child.node.text
-        const newText = value.text
+        const newText = (value as Record<string, unknown>)['text'] as string
         if (oldText !== newText) {
           editor.apply({
             type: 'remove_text',
@@ -334,77 +381,136 @@ function setPatch(
         const propEntry = propPath.at(0)
         const reservedProps = ['_key', '_type', 'text']
 
-        if (propEntry === undefined) {
+        if (typeof propEntry !== 'string') {
           return false
         }
 
-        if (
-          typeof propEntry === 'string' &&
-          reservedProps.includes(propEntry)
-        ) {
+        if (reservedProps.includes(propEntry)) {
           return false
         }
 
-        const newNode = applyAll(child.node, [
-          {
-            ...patch,
-            path: propPath,
-          },
-        ])
+        const result = computeNewPropertyValue(
+          child.node as unknown as Record<string, unknown>,
+          propEntry,
+          patch,
+          3,
+        )
 
-        Transforms.setNodes(editor, newNode, {at: [block.index, child.index]})
+        if (result) {
+          editor.apply({
+            type: 'set_node',
+            path: [block.index, child.index],
+            properties: {[propEntry]: result.oldValue},
+            newProperties: {[propEntry]: result.newValue},
+          })
+        }
       }
     } else {
       // Setting inline object property
 
       const propPath = patch.path.slice(3)
-      const reservedProps = ['_key', '_type', 'children', '__inline']
+      const reservedProps = ['_key', '_type', 'children']
       const propEntry = propPath.at(0)
 
-      if (propEntry === undefined) {
+      if (typeof propEntry !== 'string') {
         return false
       }
 
-      if (typeof propEntry === 'string' && reservedProps.includes(propEntry)) {
+      if (reservedProps.includes(propEntry)) {
         return false
       }
 
-      // If the child is an inline object, we need to apply the patch to the
-      // `value` property object.
-      const value =
-        'value' in child.node && typeof child.node.value === 'object'
-          ? child.node.value
-          : {}
-
-      const newValue = applyAll(value, [
-        {
-          ...patch,
-          path: patch.path.slice(3),
-        },
-      ])
-
-      Transforms.setNodes(
-        editor,
-        {...child.node, value: newValue},
-        {at: [block.index, child.index]},
+      // Set the property directly on the inline object node.
+      const result = computeNewPropertyValue(
+        child.node as Record<string, unknown>,
+        propEntry,
+        patch,
+        3,
       )
+
+      if (result) {
+        // Slate's set_node rejects 'text' and 'children' in newProperties,
+        // but inline objects can have user-defined fields with those names.
+        // Use remove_node + insert_node to replace the entire node.
+        if (propEntry === 'text' || propEntry === 'children') {
+          const childPath = [block.index, child.index]
+          const newNode = {
+            ...(child.node as Record<string, unknown>),
+            [propEntry]: result.newValue,
+          }
+          editor.apply({
+            type: 'remove_node',
+            path: childPath,
+            node: child.node as Descendant,
+          })
+          editor.apply({
+            type: 'insert_node',
+            path: childPath,
+            node: newNode as unknown as Descendant,
+          })
+        } else {
+          editor.apply({
+            type: 'set_node',
+            path: [block.index, child.index],
+            properties: {[propEntry]: result.oldValue},
+            newProperties: {[propEntry]: result.newValue},
+          })
+        }
+      }
     }
 
     return true
-  } else if (block && 'value' in block.node) {
-    if (patch.path.length > 1 && patch.path[1] !== 'children') {
-      const newVal = applyAll(block.node.value, [
-        {
-          ...patch,
-          path: patch.path.slice(1),
-        },
-      ])
-
-      Transforms.setNodes(
-        editor,
-        {...block.node, value: newVal},
-        {at: [block.index]},
+  } else if (
+    block &&
+    Element.isElement(block.node) &&
+    !editor.isTextBlock(block.node)
+  ) {
+    // Block object: set property directly on the node.
+    // We use editor.apply instead of Transforms.setNodes because
+    // setNodes skips 'text' and 'children' properties, but block
+    // objects can have user-defined fields with those names.
+    const propEntry = patch.path[1]
+    if (
+      patch.path.length > 1 &&
+      typeof propEntry === 'string' &&
+      propEntry !== '_type' &&
+      propEntry !== '_key'
+    ) {
+      const result = computeNewPropertyValue(
+        block.node as Record<string, unknown>,
+        propEntry,
+        patch,
+        1,
       )
+
+      if (result) {
+        // Slate's set_node rejects 'text' and 'children' in newProperties,
+        // but block objects can have user-defined fields with those names.
+        if (propEntry === 'text' || propEntry === 'children') {
+          const blockPath = [block.index]
+          const newNode = {
+            ...(block.node as Record<string, unknown>),
+            [propEntry]: result.newValue,
+          }
+          editor.apply({
+            type: 'remove_node',
+            path: blockPath,
+            node: block.node as Descendant,
+          })
+          editor.apply({
+            type: 'insert_node',
+            path: blockPath,
+            node: newNode as unknown as Descendant,
+          })
+        } else {
+          editor.apply({
+            type: 'set_node',
+            path: [block.index],
+            properties: {[propEntry]: result.oldValue},
+            newProperties: {[propEntry]: result.newValue},
+          })
+        }
+      }
     } else {
       return false
     }
@@ -458,36 +564,37 @@ function unsetPatch(editor: PortableTextSlateEditor, patch: UnsetPatch) {
 
     const propPath = patch.path.slice(3)
     const propEntry = propPath.at(0)
-    const reservedProps = ['_key', '_type', 'children', '__inline']
+    const reservedProps = ['_key', '_type', 'children']
 
-    if (propEntry === undefined) {
+    if (typeof propEntry !== 'string') {
       return false
     }
 
-    if (typeof propEntry === 'string' && reservedProps.includes(propEntry)) {
-      // All custom properties are stored on the `value` property object.
-      // If you try to unset any of the other top-level properties it's a
-      // no-op.
+    if (reservedProps.includes(propEntry)) {
       return false
     }
 
-    const value =
-      'value' in child.node && typeof child.node.value === 'object'
-        ? child.node.value
-        : {}
-
-    const newValue = applyAll(value, [
-      {
-        ...patch,
-        path: patch.path.slice(3),
-      },
+    // Use applyAll to handle nested unset paths
+    const oldValue = (child.node as Record<string, unknown>)[propEntry]
+    const newNode = applyAll({[propEntry]: oldValue}, [
+      {...patch, path: propPath},
     ])
+    const newValue = (newNode as Record<string, unknown>)[propEntry]
 
-    Transforms.setNodes(
-      editor,
-      {...child.node, value: newValue},
-      {at: [block.index, child.index]},
-    )
+    if (newValue === undefined) {
+      // Top-level unset: remove the property entirely
+      Transforms.unsetNodes(editor, [propEntry], {
+        at: [block.index, child.index],
+      })
+    } else {
+      // Nested unset: update the property value
+      editor.apply({
+        type: 'set_node',
+        path: [block.index, child.index],
+        properties: {[propEntry]: oldValue},
+        newProperties: {[propEntry]: newValue},
+      })
+    }
 
     return true
   }
@@ -536,19 +643,36 @@ function unsetPatch(editor: PortableTextSlateEditor, patch: UnsetPatch) {
   }
 
   if (!child) {
-    if ('value' in block.node) {
-      const newVal = applyAll(block.node.value, [
-        {
-          ...patch,
-          path: patch.path.slice(1),
-        },
-      ])
+    if (Element.isElement(block.node) && !editor.isTextBlock(block.node)) {
+      // Block object: unset properties
+      const propPath = patch.path.slice(1)
+      const propEntry = propPath.at(0)
 
-      Transforms.setNodes(
-        editor,
-        {...block.node, value: newVal},
-        {at: [block.index]},
-      )
+      if (
+        typeof propEntry === 'string' &&
+        propEntry !== '_type' &&
+        propEntry !== '_key'
+      ) {
+        // Use applyAll to handle nested unset paths (e.g., ['_map', 'foo'])
+        const oldValue = (block.node as Record<string, unknown>)[propEntry]
+        const newNode = applyAll({[propEntry]: oldValue}, [
+          {...patch, path: propPath},
+        ])
+        const newValue = (newNode as Record<string, unknown>)[propEntry]
+
+        if (newValue === undefined) {
+          // Top-level unset: remove the property entirely
+          Transforms.unsetNodes(editor, [propEntry], {at: [block.index]})
+        } else {
+          // Nested unset: update the property value
+          editor.apply({
+            type: 'set_node',
+            path: [block.index],
+            properties: {[propEntry]: oldValue},
+            newProperties: {[propEntry]: newValue},
+          })
+        }
+      }
 
       return true
     }
@@ -618,7 +742,7 @@ function findBlockChild(
 
   let childIndex = -1
 
-  const child = blockNode.children.find((node, index: number) => {
+  const child = (blockNode.children ?? []).find((node, index: number) => {
     const isMatch = isKeyedSegment(path[2])
       ? node._key === path[2]._key
       : index === path[2]

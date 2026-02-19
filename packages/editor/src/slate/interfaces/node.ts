@@ -253,7 +253,7 @@ export const Node: NodeInterface = {
       )
     }
 
-    const c = root.children[index] as Descendant
+    const c = root.children?.[index] as Descendant
 
     if (c == null) {
       throw new Error(
@@ -273,7 +273,7 @@ export const Node: NodeInterface = {
   ): Generator<NodeEntry<Descendant>, void, undefined> {
     const {reverse = false} = options
     const ancestor = Node.ancestor(root, path)
-    const {children} = ancestor
+    const children = ancestor.children ?? []
     let index = reverse ? children.length - 1 : 0
 
     while (reverse ? index >= 0 : index < children.length) {
@@ -329,12 +329,12 @@ export const Node: NodeInterface = {
   },
 
   extractProps(node: Node): NodeProps {
-    if (Element.isAncestor(node)) {
-      const {children: _children, ...properties} = node
+    if (Text.isText(node)) {
+      const {text: _text, ...properties} = node
 
       return properties
     } else {
-      const {text: _text, ...properties} = node
+      const {children: _children, ...properties} = node
 
       return properties
     }
@@ -345,7 +345,7 @@ export const Node: NodeInterface = {
     let n = Node.get(root, p)
 
     while (n) {
-      if (Text.isText(n) || n.children.length === 0) {
+      if (Text.isText(n) || !n.children || n.children.length === 0) {
         break
       } else {
         n = n.children[0]! as Node
@@ -410,7 +410,7 @@ export const Node: NodeInterface = {
     for (let i = 0; i < path.length; i++) {
       const p = path[i]!
 
-      if (Text.isText(node) || !node.children[p]) {
+      if (Text.isText(node) || !node.children?.[p]) {
         return
       }
 
@@ -426,7 +426,7 @@ export const Node: NodeInterface = {
     for (let i = 0; i < path.length; i++) {
       const p = path[i]!
 
-      if (Text.isText(node) || !node.children[p]) {
+      if (Text.isText(node) || !node.children?.[p]) {
         return false
       }
 
@@ -458,7 +458,7 @@ export const Node: NodeInterface = {
     let n = Node.get(root, p)
 
     while (n) {
-      if (Text.isText(n) || n.children.length === 0) {
+      if (Text.isText(n) || !n.children || n.children.length === 0) {
         break
       } else {
         const i = n.children.length - 1
@@ -529,6 +529,7 @@ export const Node: NodeInterface = {
       if (
         !visited.has(n) &&
         !Text.isText(n) &&
+        n.children &&
         n.children.length !== 0 &&
         (pass == null || pass([n, p]) === false)
       ) {
@@ -592,7 +593,7 @@ export const Node: NodeInterface = {
     if (Text.isText(node)) {
       return node.text
     } else {
-      return node.children.map(Node.string).join('')
+      return (node.children ?? []).map(Node.string).join('')
     }
   },
 

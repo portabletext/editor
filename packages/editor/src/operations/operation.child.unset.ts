@@ -1,4 +1,3 @@
-import {applyAll} from '@portabletext/patches'
 import {isTextBlock} from '@portabletext/schema'
 import {Editor, Element, Transforms} from '../slate'
 import type {OperationImplementation} from './operation.types'
@@ -69,6 +68,12 @@ export const childUnsetOperationImplementation: OperationImplementation<
         continue
       }
 
+      if (prop === 'marks') {
+        // Unsetting marks resets to empty array (marks is structural)
+        newNode['marks'] = []
+        continue
+      }
+
       newNode[prop] = null
     }
 
@@ -87,25 +92,19 @@ export const childUnsetOperationImplementation: OperationImplementation<
   }
 
   if (Element.isElement(child)) {
-    const value =
-      'value' in child && typeof child.value === 'object' ? child.value : {}
-    const patches = operation.props.map((prop) => ({
-      type: 'unset' as const,
-      path: [prop],
-    }))
-    const newValue = applyAll(value, patches)
-
-    Transforms.setNodes(
-      operation.editor,
-      {
-        ...child,
-        _key: operation.props.includes('_key')
-          ? context.keyGenerator()
-          : child._key,
-        value: newValue,
-      },
-      {at: childPath},
+    const propsToRemove = operation.props.filter(
+      (prop) => prop !== '_type' && prop !== '_key',
     )
+
+    Transforms.unsetNodes(operation.editor, propsToRemove, {at: childPath})
+
+    if (operation.props.includes('_key')) {
+      Transforms.setNodes(
+        operation.editor,
+        {_key: context.keyGenerator()},
+        {at: childPath},
+      )
+    }
 
     return
   }

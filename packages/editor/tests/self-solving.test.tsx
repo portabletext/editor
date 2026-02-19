@@ -36,12 +36,6 @@ describe('Feature: Self-solving', () => {
         style: 'normal',
       },
     ]
-    const spanPatch: Patch = {
-      type: 'set',
-      path: [{_key: blockKey}, 'children', {_key: spanKey}, 'marks'],
-      value: [],
-      origin: 'local',
-    }
     const blockPatch: Patch = {
       type: 'set',
       path: [{_key: blockKey}, 'markDefs'],
@@ -98,16 +92,17 @@ describe('Feature: Self-solving', () => {
       decorator: 'strong',
     })
 
+    // toSlateBlock guarantees marks: [] on all spans, so no marks
+    // normalization patch is emitted. Only markDefs and strong patches.
     await vi.waitFor(() => {
       expect(patchEvents).toEqual([
-        {type: 'patch', patch: spanPatch},
         {type: 'patch', patch: blockPatch},
         {type: 'patch', patch: strongPatch},
       ])
       expect(mutationEvents).toEqual([
         {
           type: 'mutation',
-          patches: [spanPatch, blockPatch],
+          patches: [blockPatch],
           value: [
             {
               _key: blockKey,

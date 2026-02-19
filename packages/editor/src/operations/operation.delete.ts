@@ -1,13 +1,14 @@
 import {isSpan, isTextBlock} from '@portabletext/schema'
 import {toSlateRange} from '../internal-utils/to-slate-range'
-import {VOID_CHILD_KEY} from '../internal-utils/values'
 import {
   deleteText,
   Editor,
   Element,
+  Node,
   Path,
   Point,
   Range,
+  Text,
   Transforms,
   type NodeEntry,
 } from '../slate'
@@ -58,8 +59,8 @@ export const deleteOperationImplementation: OperationImplementation<
     Transforms.removeNodes(operation.editor, {
       at,
       match: (node) =>
-        (isSpan(context, node) && node._key !== VOID_CHILD_KEY) ||
-        ('__inline' in node && node.__inline === true),
+        isSpan(context, node) ||
+        (Element.isElement(node) && operation.editor.isInline(node as Element)),
     })
 
     return
@@ -163,9 +164,9 @@ export const deleteOperationImplementation: OperationImplementation<
   ) {
     if (!startNonEditable) {
       const point = startRef.current!
-      const [node] = Editor.leaf(operation.editor, point)
+      const node = Node.get(operation.editor, point.path)
 
-      if (node.text.length > 0) {
+      if (Text.isText(node) && node.text.length > 0) {
         operation.editor.apply({
           type: 'remove_text',
           path: point.path,
@@ -185,13 +186,16 @@ export const deleteOperationImplementation: OperationImplementation<
 
     if (!endNonEditable) {
       const point = endRef.current!
-      const [node] = Editor.leaf(operation.editor, point)
-      const {path} = point
-      const offset = 0
-      const text = node.text.slice(offset, end.offset)
+      const node = Node.get(operation.editor, point.path)
 
-      if (text.length > 0) {
-        operation.editor.apply({type: 'remove_text', path, offset, text})
+      if (Text.isText(node)) {
+        const {path} = point
+        const offset = 0
+        const text = node.text.slice(offset, end.offset)
+
+        if (text.length > 0) {
+          operation.editor.apply({type: 'remove_text', path, offset, text})
+        }
       }
     }
 
