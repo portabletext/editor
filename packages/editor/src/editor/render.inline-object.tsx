@@ -1,8 +1,8 @@
 import {useContext, useRef, type ReactElement} from 'react'
-import type {Element as SlateElement} from 'slate'
-import {DOMEditor} from 'slate-dom'
-import {useSlateStatic, type RenderElementProps} from 'slate-react'
 import {getPointBlock} from '../internal-utils/slate-utils'
+import type {Element as SlateElement} from '../slate'
+import {DOMEditor} from '../slate-dom'
+import {useSlateStatic, type RenderElementProps} from '../slate-react'
 import type {
   BlockChildRenderProps,
   PortableTextMemberSchemaTypes,

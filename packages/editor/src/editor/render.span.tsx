@@ -1,6 +1,6 @@
 import {useSelector} from '@xstate/react'
 import {useContext, useMemo, useRef, type ReactElement} from 'react'
-import {useSlateStatic, type RenderLeafProps} from 'slate-react'
+import {useSlateStatic, type RenderLeafProps} from '../slate-react'
 import type {
   BlockAnnotationRenderProps,
   BlockChildRenderProps,

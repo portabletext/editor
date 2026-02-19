@@ -1,6 +1,5 @@
 import {insert, setIfMissing, unset, type Patch} from '@portabletext/patches'
 import type {PortableTextBlock} from '@portabletext/schema'
-import {Editor, type Operation} from 'slate'
 import type {EditorActor} from '../editor/editor-machine'
 import type {RelayActor} from '../editor/relay-machine'
 import {createApplyPatch} from '../internal-utils/applyPatch'
@@ -16,6 +15,7 @@ import {
   splitNodePatch,
 } from '../internal-utils/operation-to-patches'
 import {isEqualToEmptyEditor} from '../internal-utils/values'
+import {Editor, type Operation} from '../slate'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {withRemoteChanges} from './slate-plugin.remote-changes'
 import {pluginWithoutHistory} from './slate-plugin.without-history'

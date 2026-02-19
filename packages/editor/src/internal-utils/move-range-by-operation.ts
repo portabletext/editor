@@ -1,4 +1,4 @@
-import {Point, type Operation, type Range} from 'slate'
+import {Point, type Operation, type Range} from '../slate'
 
 export function moveRangeByOperation(
   range: Range,

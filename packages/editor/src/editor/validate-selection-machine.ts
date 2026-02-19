@@ -1,7 +1,7 @@
-import {Editor, Transforms} from 'slate'
-import {ReactEditor} from 'slate-react'
 import {setup} from 'xstate'
 import {debug} from '../internal-utils/debug'
+import {Editor, Transforms} from '../slate'
+import {ReactEditor} from '../slate-react'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 
 const validateSelectionSetup = setup({

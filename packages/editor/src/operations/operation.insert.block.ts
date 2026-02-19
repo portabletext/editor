@@ -1,4 +1,8 @@
 import {isSpan} from '@portabletext/schema'
+import {isEqualChildren, isEqualMarks} from '../internal-utils/equality'
+import {getFocusChild} from '../internal-utils/slate-utils'
+import {toSlateRange} from '../internal-utils/to-slate-range'
+import {toSlateBlock} from '../internal-utils/values'
 import {
   Editor,
   Element,
@@ -8,11 +12,7 @@ import {
   Range,
   Text,
   type Descendant,
-} from 'slate'
-import {isEqualChildren, isEqualMarks} from '../internal-utils/equality'
-import {getFocusChild} from '../internal-utils/slate-utils'
-import {toSlateRange} from '../internal-utils/to-slate-range'
-import {toSlateBlock} from '../internal-utils/values'
+} from '../slate'
 import type {EditorSelection} from '../types/editor'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {parseBlock} from '../utils/parse-blocks'

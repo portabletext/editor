@@ -1,8 +1,5 @@
 import type {Patch} from '@portabletext/patches'
 import type {PortableTextBlock} from '@portabletext/schema'
-import {Transforms} from 'slate'
-import {EDITOR_TO_PENDING_SELECTION} from 'slate-dom'
-import {ReactEditor} from 'slate-react'
 import {
   assertEvent,
   assign,
@@ -22,6 +19,9 @@ import type {Converter} from '../converters/converter.types'
 import {debug} from '../internal-utils/debug'
 import type {EventPosition} from '../internal-utils/event-position'
 import {sortByPriority} from '../priority/priority.sort'
+import {Transforms} from '../slate'
+import {EDITOR_TO_PENDING_SELECTION} from '../slate-dom'
+import {ReactEditor} from '../slate-react'
 import type {NamespaceEvent, OmitFromUnion} from '../type-utils'
 import type {
   EditorSelection,

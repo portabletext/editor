@@ -1,4 +1,4 @@
-import {Transforms} from 'slate'
+import {Transforms} from '../slate'
 import {getBlockKeyFromSelectionPoint} from '../utils/util.selection-point'
 import type {OperationImplementation} from './operation.types'
 
