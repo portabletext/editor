@@ -15,8 +15,10 @@ let sdkSubscriber: (() => void) | null = null
 // The value the editor holds. Read by getEditorValue (editor.getSnapshot).
 let editorValue: PortableTextBlock[] = []
 
-// Listeners registered via editor.on('patch', ...).
-const patchListeners: Array<() => void> = []
+// Listeners registered via editor.on('mutation', ...).
+const mutationListeners: Array<
+  (event: {patches: unknown[]; value: PortableTextBlock[] | undefined}) => void
+> = []
 
 // Spy for editor.send
 const editorSend = vi.fn()
@@ -34,9 +36,9 @@ const mockSetSdkValue = vi.fn((value: PortableTextBlock[]) => {
 vi.mock('@portabletext/editor', () => ({
   useEditor: () => ({
     getSnapshot: () => ({context: {value: editorValue}}),
-    on: (event: string, callback: () => void) => {
-      if (event === 'patch') {
-        patchListeners.push(callback)
+    on: (event: string, callback: (...args: Array<unknown>) => void) => {
+      if (event === 'mutation') {
+        mutationListeners.push(callback as (typeof mutationListeners)[number])
       }
       return {unsubscribe: () => {}}
     },
@@ -91,9 +93,9 @@ async function renderPlugin() {
   })
 }
 
-function firePatchEvent() {
-  for (const listener of patchListeners) {
-    listener()
+function fireMutationEvent(value: PortableTextBlock[] | undefined) {
+  for (const listener of mutationListeners) {
+    listener({patches: [], value})
   }
 }
 
@@ -111,7 +113,7 @@ afterEach(() => {
   sdkSubscriber = null
   sdkStoreValue = []
   editorValue = []
-  patchListeners.length = 0
+  mutationListeners.length = 0
   vi.clearAllMocks()
 })
 
@@ -151,8 +153,8 @@ describe('SDKValuePlugin echo suppression', () => {
       sdkSubscriber?.()
     })
 
-    // Fire the patch event (simulates editor emitting a patch after local edit)
-    firePatchEvent()
+    // Fire the mutation event (simulates editor emitting a mutation after local edit)
+    fireMutationEvent(editorValue)
 
     // The echo callback should NOT send patches back to the editor.
     // This is a local edit — the editor already has the correct value.
@@ -202,7 +204,7 @@ describe('SDKValuePlugin echo suppression', () => {
       sdkSubscriber?.()
     })
 
-    firePatchEvent()
+    fireMutationEvent(editorValue)
 
     // No divergence, so diffValue produces []. No patches sent.
     // This passes today — the echo is harmless when values match.
