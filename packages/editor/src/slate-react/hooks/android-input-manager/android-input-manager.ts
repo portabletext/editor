@@ -1,4 +1,3 @@
-import type {DebouncedFunc} from 'lodash'
 import {
   Editor,
   Node,
@@ -31,6 +30,7 @@ import {
   type TextDiff,
 } from '../../../slate-dom'
 import {ReactEditor} from '../../plugin/react-editor'
+import type {DebouncedFunc} from '../../utils/debounce'
 
 export type Action = {at?: Point | Range; run: () => void}
 

@@ -1,5 +1,3 @@
-import debounce from 'lodash/debounce'
-import throttle from 'lodash/throttle'
 import React, {
   forwardRef,
   useCallback,
@@ -73,6 +71,7 @@ import {useSlate} from '../hooks/use-slate'
 import {useFlushDeferredSelectorsOnRender} from '../hooks/use-slate-selector'
 import {useTrackUserInput} from '../hooks/use-track-user-input'
 import {ReactEditor} from '../plugin/react-editor'
+import {debounce, throttle} from '../utils/debounce'
 import getDirection from '../utils/direction'
 import {RestoreDOM} from './restore-dom/restore-dom'
 
