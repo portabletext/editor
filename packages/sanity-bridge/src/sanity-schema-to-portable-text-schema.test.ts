@@ -8,10 +8,7 @@ import {
   type ArrayDefinition,
 } from '@sanity/types'
 import {describe, expect, test} from 'vitest'
-import {createPortableTextMemberSchemaTypes} from './portable-text-member-schema-types'
-import {portableTextMemberSchemaTypesToSchema} from './portable-text-member-schema-types-to-schema'
 import {sanitySchemaToPortableTextSchema} from './sanity-schema-to-portable-text-schema'
-import {compileSchemaDefinitionToPortableTextMemberSchemaTypes} from './schema-definition-to-portable-text-member-schema-types'
 
 describe(sanitySchemaToPortableTextSchema.name, () => {
   const defaultSchema: Schema = {
@@ -244,7 +241,7 @@ describe(sanitySchemaToPortableTextSchema.name, () => {
     })
   })
 
-  test('compiled back and forth', () => {
+  test('compiled schema with custom block and inline objects', () => {
     const imageType = defineType({
       name: 'custom image',
       type: 'object',
@@ -277,23 +274,33 @@ describe(sanitySchemaToPortableTextSchema.name, () => {
       types: [portableTextType, imageType, stockTickerType],
     })
 
-    const portableTextMemberSchemaTypesFromSanitySchema =
-      createPortableTextMemberSchemaTypes(sanitySchema.get('body'))
+    const schema = sanitySchemaToPortableTextSchema(sanitySchema.get('body'))
 
-    const portableTextSchema = sanitySchemaToPortableTextSchema(
-      sanitySchema.get('body'),
-    )
-    const portableTextMemberSchemaTypesFromPortableTextSchema =
-      compileSchemaDefinitionToPortableTextMemberSchemaTypes(portableTextSchema)
-
-    expect(
-      portableTextMemberSchemaTypesToSchema(
-        portableTextMemberSchemaTypesFromPortableTextSchema,
-      ),
-    ).toEqual(
-      portableTextMemberSchemaTypesToSchema(
-        portableTextMemberSchemaTypesFromSanitySchema,
-      ),
-    )
+    expect(schema.blockObjects).toEqual([
+      {
+        name: 'custom image',
+        title: 'Custom Image',
+        fields: [
+          {
+            name: 'url',
+            title: 'Url',
+            type: 'string',
+          },
+        ],
+      },
+    ])
+    expect(schema.inlineObjects).toEqual([
+      {
+        name: 'stock ticker',
+        title: 'Stock Ticker',
+        fields: [
+          {
+            name: 'symbol',
+            title: 'Symbol',
+            type: 'string',
+          },
+        ],
+      },
+    ])
   })
 })
