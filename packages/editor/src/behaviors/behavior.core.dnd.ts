@@ -14,6 +14,7 @@ export const coreDndBehaviors = [
    * 3. Forwards the dragstart event
    */
   defineBehavior({
+    name: 'dragStart',
     on: 'drag.dragstart',
     guard: ({snapshot, dom, event}) => {
       const dragSelection = getDragSelection({
@@ -178,6 +179,7 @@ export const coreDndBehaviors = [
    * text.
    */
   defineBehavior({
+    name: 'dragOverOrigin',
     on: 'drag.dragover',
     guard: ({snapshot, event}) => {
       const dragOrigin = event.dragOrigin
@@ -201,6 +203,7 @@ export const coreDndBehaviors = [
    * cancelled.
    */
   defineBehavior({
+    name: 'dropOnOrigin',
     on: 'drag.drop',
     guard: ({snapshot, event}) => {
       const dragOrigin = event.dragOrigin
@@ -223,6 +226,7 @@ export const coreDndBehaviors = [
    * without creating a new selection.
    */
   defineBehavior({
+    name: 'dropWithDragOrigin',
     on: 'drag.drop',
     guard: ({event}) => event.dragOrigin !== undefined,
     actions: [
@@ -238,6 +242,7 @@ export const coreDndBehaviors = [
    * Otherwise, we should to create a new selection.
    */
   defineBehavior({
+    name: 'dropWithoutDragOrigin',
     on: 'drag.drop',
     actions: [
       ({event}) => [
@@ -258,6 +263,7 @@ export const coreDndBehaviors = [
    * internal dragging.
    */
   defineBehavior({
+    name: 'moveBlocksOnDrop',
     on: 'deserialization.success',
     guard: ({snapshot, event}) => {
       if (

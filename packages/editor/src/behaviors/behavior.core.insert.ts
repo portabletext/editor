@@ -7,6 +7,7 @@ import {defineBehavior} from './behavior.types.behavior'
 
 export const coreInsertBehaviors = [
   defineBehavior({
+    name: 'insertTextWithMarks',
     on: 'insert.text',
     guard: ({snapshot}) => {
       const focusSpan = getFocusSpan(snapshot)

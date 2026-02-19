@@ -3,6 +3,7 @@ import {defineBehavior} from './behavior.types.behavior'
 
 export const abstractSerializeBehaviors = [
   defineBehavior({
+    name: 'serializeRaise',
     on: 'serialize',
     actions: [
       ({event}) => [
@@ -35,6 +36,7 @@ export const abstractSerializeBehaviors = [
     ],
   }),
   defineBehavior({
+    name: 'serializeDataWithConverter',
     on: 'serialize.data',
     guard: ({snapshot, event}) => {
       const converter = snapshot.context.converters.find(
@@ -63,6 +65,7 @@ export const abstractSerializeBehaviors = [
     ],
   }),
   defineBehavior({
+    name: 'serializationSuccess',
     on: 'serialization.success',
     actions: [
       ({event}) => [
@@ -79,6 +82,7 @@ export const abstractSerializeBehaviors = [
     ],
   }),
   defineBehavior({
+    name: 'serializationFailure',
     on: 'serialization.failure',
     actions: [
       ({event}) => [

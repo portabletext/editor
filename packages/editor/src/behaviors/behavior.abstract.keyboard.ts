@@ -30,6 +30,7 @@ export const abstractKeyboardBehaviors = [
    * Behavior adjusts that.
    */
   defineBehavior({
+    name: 'backspaceOnInlineObject',
     on: 'keyboard.keydown',
     guard: ({snapshot, event}) =>
       defaultKeyboardShortcuts.backspace.guard(event.originEvent) &&
@@ -44,6 +45,7 @@ export const abstractKeyboardBehaviors = [
    * Behavior adjusts that.
    */
   defineBehavior({
+    name: 'deleteOnInlineObject',
     on: 'keyboard.keydown',
     guard: ({snapshot, event}) =>
       defaultKeyboardShortcuts.delete.guard(event.originEvent) &&
@@ -53,6 +55,7 @@ export const abstractKeyboardBehaviors = [
   }),
 
   defineBehavior({
+    name: 'deleteWordBackward',
     on: 'keyboard.keydown',
     guard: ({event}) =>
       defaultKeyboardShortcuts.deleteWord.backward.guard(event.originEvent),
@@ -60,6 +63,7 @@ export const abstractKeyboardBehaviors = [
   }),
 
   defineBehavior({
+    name: 'deleteWordForward',
     on: 'keyboard.keydown',
     guard: ({event}) =>
       defaultKeyboardShortcuts.deleteWord.forward.guard(event.originEvent),
@@ -71,6 +75,7 @@ export const abstractKeyboardBehaviors = [
    * object.
    */
   defineBehavior({
+    name: 'enterOnInlineObject',
     on: 'keyboard.keydown',
     guard: ({snapshot, event}) =>
       defaultKeyboardShortcuts.break.guard(event.originEvent) &&
@@ -84,6 +89,7 @@ export const abstractKeyboardBehaviors = [
    * `raise` an `insert.break` event manually.
    */
   defineBehavior({
+    name: 'firefoxEnterCollapse',
     on: 'keyboard.keydown',
     guard: ({snapshot, event}) =>
       defaultKeyboardShortcuts.break.guard(event.originEvent) &&
@@ -97,6 +103,7 @@ export const abstractKeyboardBehaviors = [
    * that `keyboard.keydown` event beforehand and raise an `insert.soft break` manually.
    */
   defineBehavior({
+    name: 'shiftEnterSoftBreak',
     on: 'keyboard.keydown',
     guard: ({event}) =>
       defaultKeyboardShortcuts.lineBreak.guard(event.originEvent),
@@ -107,6 +114,7 @@ export const abstractKeyboardBehaviors = [
    * Manual handling of undo shortcuts.
    */
   defineBehavior({
+    name: 'undoShortcut',
     on: 'keyboard.keydown',
     guard: ({event}) =>
       defaultKeyboardShortcuts.history.undo.guard(event.originEvent),
@@ -117,6 +125,7 @@ export const abstractKeyboardBehaviors = [
    * Manual handling of redo shortcuts.
    */
   defineBehavior({
+    name: 'redoShortcut',
     on: 'keyboard.keydown',
     guard: ({event}) =>
       defaultKeyboardShortcuts.history.redo.guard(event.originEvent),
@@ -128,6 +137,7 @@ export const abstractKeyboardBehaviors = [
    * onto an empty text block.
    */
   defineBehavior({
+    name: 'shiftLeftReduceSelection',
     on: 'keyboard.keydown',
     guard: ({snapshot, event}) => {
       if (!snapshot.context.selection || !shiftLeft.guard(event.originEvent)) {

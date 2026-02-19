@@ -18,6 +18,7 @@ export function useMutuallyExclusiveAnnotation(props: {
 
     return editor.registerBehavior({
       behavior: defineBehavior({
+        name: `toolbar:mutuallyExclusiveAnnotation:${props.schemaType.name}`,
         on: 'annotation.add',
         guard: ({snapshot, event}) => {
           if (event.annotation.name !== props.schemaType.name) {

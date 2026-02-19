@@ -29,6 +29,7 @@ function getUniqueBlockKey(
 
 export const abstractInsertBehaviors = [
   defineBehavior({
+    name: 'insertBlocksSingleTextBlock',
     on: 'insert.blocks',
     guard: ({event}) => {
       const onlyBlock =
@@ -54,6 +55,7 @@ export const abstractInsertBehaviors = [
   }),
 
   defineBehavior({
+    name: 'insertBlocksBeforeOrAfter',
     on: 'insert.blocks',
     guard: ({event}) =>
       event.placement === 'before' || event.placement === 'after',
@@ -132,6 +134,7 @@ export const abstractInsertBehaviors = [
   }),
 
   defineBehavior({
+    name: 'insertBlocksAutoOnBlockObject',
     on: 'insert.blocks',
     guard: ({snapshot, event}) => {
       if (event.placement !== 'auto') {
@@ -348,6 +351,7 @@ export const abstractInsertBehaviors = [
   }),
 
   defineBehavior({
+    name: 'insertBlocksAutoOnTextBlock',
     on: 'insert.blocks',
     guard: ({snapshot, event}) => {
       if (event.placement !== 'auto') {
@@ -430,10 +434,12 @@ export const abstractInsertBehaviors = [
     ],
   }),
   defineBehavior({
+    name: 'insertBreakSplit',
     on: 'insert.break',
     actions: [() => [raise({type: 'split'})]],
   }),
   defineBehavior({
+    name: 'insertChildOnEmptyEditor',
     on: 'insert.child',
     guard: ({snapshot}) => {
       const lastBlock = getLastBlock(snapshot)
@@ -467,6 +473,7 @@ export const abstractInsertBehaviors = [
     ],
   }),
   defineBehavior({
+    name: 'insertChildOnTextBlock',
     on: 'insert.child',
     guard: ({snapshot}) => {
       const focusTextBlock = getFocusTextBlock(snapshot)
@@ -495,6 +502,7 @@ export const abstractInsertBehaviors = [
     ],
   }),
   defineBehavior({
+    name: 'insertInlineObject',
     on: 'insert.inline object',
     actions: [
       ({event}) => [
@@ -509,10 +517,12 @@ export const abstractInsertBehaviors = [
     ],
   }),
   defineBehavior({
+    name: 'insertSoftBreak',
     on: 'insert.soft break',
     actions: [() => [raise({type: 'insert.text', text: '\n'})]],
   }),
   defineBehavior({
+    name: 'insertSpanOnEmptyEditor',
     on: 'insert.span',
     guard: ({snapshot}) => !getFocusTextBlock(snapshot),
     actions: [
@@ -537,6 +547,7 @@ export const abstractInsertBehaviors = [
     ],
   }),
   defineBehavior({
+    name: 'insertSpanOnTextBlock',
     on: 'insert.span',
     guard: ({snapshot, event}) => {
       const focusTextBlock = getFocusTextBlock(snapshot)
@@ -585,6 +596,7 @@ export const abstractInsertBehaviors = [
    * insert the text.
    */
   defineBehavior({
+    name: 'insertTextDeleteExpandedSelection',
     on: 'insert.text',
     guard: ({snapshot}) => {
       return isSelectionExpanded(snapshot)
@@ -597,6 +609,7 @@ export const abstractInsertBehaviors = [
    * we insert the text.
    */
   defineBehavior({
+    name: 'insertTextSelectEnd',
     on: 'insert.text',
     guard: ({snapshot}) => {
       if (snapshot.context.selection) {

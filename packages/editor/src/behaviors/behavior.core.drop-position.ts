@@ -22,6 +22,7 @@ export function createDropPositionBehaviorsConfig({
   return [
     {
       behavior: defineBehavior({
+        name: 'updateDropPosition',
         on: 'drag.dragover',
         guard: ({snapshot, event}) => {
           const dropFocusBlock = getFocusBlock({
@@ -101,6 +102,7 @@ export function createDropPositionBehaviorsConfig({
     },
     {
       behavior: defineBehavior({
+        name: 'clearDropPosition',
         on: 'drag.*',
         guard: ({event}) => {
           return event.type !== 'drag.dragover'

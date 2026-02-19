@@ -17,6 +17,7 @@ import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
 const breakingAtTheEndOfTextBlock = defineBehavior({
+  name: 'breakingAtTheEndOfTextBlock',
   on: 'insert.break',
   guard: ({snapshot}) => {
     const focusTextBlock = getFocusTextBlock(snapshot)
@@ -62,6 +63,7 @@ const breakingAtTheEndOfTextBlock = defineBehavior({
 })
 
 const breakingAtTheStartOfTextBlock = defineBehavior({
+  name: 'breakingAtTheStartOfTextBlock',
   on: 'insert.break',
   guard: ({snapshot}) => {
     const focusTextBlock = getFocusTextBlock(snapshot)
@@ -125,6 +127,7 @@ const breakingAtTheStartOfTextBlock = defineBehavior({
 })
 
 const breakingEntireBlocks = defineBehavior({
+  name: 'breakingEntireBlocks',
   on: 'insert.break',
   guard: ({snapshot}) => {
     if (!snapshot.context.selection) {
@@ -193,6 +196,7 @@ const breakingEntireBlocks = defineBehavior({
 })
 
 const breakingInlineObject = defineBehavior({
+  name: 'breakingInlineObject',
   on: 'insert.break',
   guard: ({snapshot}) => {
     const selectionCollapsed = isSelectionCollapsed(snapshot)

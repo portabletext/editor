@@ -14,6 +14,7 @@ import {forward, raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
 const addAnnotationOnCollapsedSelection = defineBehavior({
+  name: 'addAnnotationOnCollapsedSelection',
   on: 'annotation.add',
   guard: ({snapshot, event}) => {
     const at = event.at ?? snapshot.context.selection
@@ -64,6 +65,7 @@ const addAnnotationOnCollapsedSelection = defineBehavior({
  * that annotations of the same type are mutually exclusive.
  */
 const preventOverlappingAnnotations = defineBehavior({
+  name: 'preventOverlappingAnnotations',
   // Given an `annotation.add` event
   on: 'annotation.add',
   // When the annotation is active in the selection
@@ -105,6 +107,7 @@ const preventOverlappingAnnotations = defineBehavior({
  * them from being preserved upon writing again.
  */
 const stripAnnotationsOnFullSpanDeletion = defineBehavior({
+  name: 'stripAnnotationsOnFullSpanDeletion',
   on: 'delete',
   guard: ({snapshot, event}) => {
     const effectiveSnapshot = {

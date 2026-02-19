@@ -5,6 +5,7 @@ import {defineBehavior} from './behavior.types.behavior'
 
 export const abstractStyleBehaviors = [
   defineBehavior({
+    name: 'styleAdd',
     on: 'style.add',
     guard: ({snapshot}) => {
       const selectedTextBlocks = getSelectedTextBlocks(snapshot)
@@ -25,6 +26,7 @@ export const abstractStyleBehaviors = [
     ],
   }),
   defineBehavior({
+    name: 'styleRemove',
     on: 'style.remove',
     guard: ({snapshot}) => {
       const selectedTextBlocks = getSelectedTextBlocks(snapshot)
@@ -43,11 +45,13 @@ export const abstractStyleBehaviors = [
     ],
   }),
   defineBehavior({
+    name: 'styleToggleRemove',
     on: 'style.toggle',
     guard: ({snapshot, event}) => isActiveStyle(event.style)(snapshot),
     actions: [({event}) => [raise({type: 'style.remove', style: event.style})]],
   }),
   defineBehavior({
+    name: 'styleToggleAdd',
     on: 'style.toggle',
     guard: ({snapshot, event}) => !isActiveStyle(event.style)(snapshot),
     actions: [({event}) => [raise({type: 'style.add', style: event.style})]],

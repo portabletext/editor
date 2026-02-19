@@ -19,6 +19,7 @@ import {defineBehavior} from './behavior.types.behavior'
 
 export const abstractBehaviors = [
   defineBehavior({
+    name: 'copyOnCollapsedSelection',
     on: 'clipboard.copy',
     guard: ({snapshot}) => {
       const focusSpan = getFocusSpan(snapshot)
@@ -29,6 +30,7 @@ export const abstractBehaviors = [
     actions: [],
   }),
   defineBehavior({
+    name: 'copySerialize',
     on: 'clipboard.copy',
     actions: [
       ({event}) => [
@@ -40,6 +42,7 @@ export const abstractBehaviors = [
     ],
   }),
   defineBehavior({
+    name: 'cutOnCollapsedSelection',
     on: 'clipboard.cut',
     guard: ({snapshot}) => {
       const focusSpan = getFocusSpan(snapshot)
@@ -50,6 +53,7 @@ export const abstractBehaviors = [
     actions: [],
   }),
   defineBehavior({
+    name: 'cutSerializeAndDelete',
     on: 'clipboard.cut',
     guard: ({snapshot}) => snapshot.context.selection,
     actions: [
@@ -65,6 +69,7 @@ export const abstractBehaviors = [
     ],
   }),
   defineBehavior({
+    name: 'dragStartSerialize',
     on: 'drag.dragstart',
     actions: [
       ({event}) => [
@@ -77,6 +82,7 @@ export const abstractBehaviors = [
   }),
 
   defineBehavior({
+    name: 'pasteDeleteExpandedSelection',
     on: 'clipboard.paste',
     guard: ({snapshot}) => isSelectionExpanded(snapshot),
     actions: [
@@ -89,6 +95,7 @@ export const abstractBehaviors = [
     ],
   }),
   defineBehavior({
+    name: 'pasteDeserialize',
     on: 'clipboard.paste',
     actions: [
       ({event}) => [

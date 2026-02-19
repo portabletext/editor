@@ -21,6 +21,7 @@ export const abstractSplitBehaviors = [
    * You can't split an inline object.
    */
   defineBehavior({
+    name: 'splitOnInlineObject',
     on: 'split',
     guard: ({snapshot}) =>
       isSelectionCollapsed(snapshot.context.selection) &&
@@ -32,6 +33,7 @@ export const abstractSplitBehaviors = [
    * You can't split a block object.
    */
   defineBehavior({
+    name: 'splitOnBlockObject',
     on: 'split',
     guard: ({snapshot}) =>
       isSelectionCollapsed(snapshot.context.selection) &&
@@ -40,6 +42,7 @@ export const abstractSplitBehaviors = [
   }),
 
   defineBehavior({
+    name: 'splitExpandedAcrossBlocks',
     on: 'split',
     guard: ({snapshot}) => {
       const selection = snapshot.context.selection
@@ -86,6 +89,7 @@ export const abstractSplitBehaviors = [
   }),
 
   defineBehavior({
+    name: 'splitExpandedWithinBlock',
     on: 'split',
     guard: ({snapshot}) => {
       return isSelectionExpanded(snapshot)
@@ -94,6 +98,7 @@ export const abstractSplitBehaviors = [
   }),
 
   defineBehavior({
+    name: 'splitCollapsed',
     on: 'split',
     guard: ({snapshot}) => {
       const selection = snapshot.context.selection
