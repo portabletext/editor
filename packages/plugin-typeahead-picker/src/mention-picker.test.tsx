@@ -418,11 +418,13 @@ describe('Debouncing', () => {
     const callTimestamps: number[] = []
     const startTime = Date.now()
 
+    // Use a large debounce window so that even Firefox's slower
+    // character-by-character userEvent.type stays within a single window.
     const debouncedPicker = defineTypeaheadPicker<MentionMatch>({
       mode: 'async',
       trigger: /@/,
       keyword: /\w*/,
-      debounceMs: 300,
+      debounceMs: 1000,
       getMatches: async ({keyword}) => {
         callCount++
         callTimestamps.push(Date.now() - startTime)
@@ -473,14 +475,14 @@ describe('Debouncing', () => {
     })
 
     // Wait for debounce + fetch time
-    await new Promise((resolve) => setTimeout(resolve, 400))
+    await new Promise((resolve) => setTimeout(resolve, 1200))
 
     // Should have results for the final keyword
     await vi.waitFor(() => {
       expect(matchesLocator.element().textContent).toEqual('Result for abc')
     })
 
-    // With 300ms debouncing, rapid typing should result in fewer calls
+    // With 1000ms debouncing, rapid typing should result in fewer calls
     // than the 3 characters typed (a, ab, abc)
     expect(callCount).toBeLessThan(3)
   })

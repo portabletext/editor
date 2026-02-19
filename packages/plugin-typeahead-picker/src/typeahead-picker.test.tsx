@@ -306,10 +306,12 @@ describe('Sync mode debouncing', () => {
   test('delays getMatches calls when debounceMs is configured in sync mode', async () => {
     let callCount = 0
 
+    // Use a large debounce window so that even Firefox's slower
+    // character-by-character userEvent.type stays within a single window.
     const debouncedSyncPicker = defineTypeaheadPicker<SyncMatch>({
       trigger: /:/,
       keyword: /\w*/,
-      debounceMs: 300,
+      debounceMs: 1000,
       getMatches: ({keyword}) => {
         callCount++
         return [{key: '1', name: `Result for ${keyword}`}]
@@ -359,14 +361,14 @@ describe('Sync mode debouncing', () => {
     })
 
     // Wait for debounce time
-    await new Promise((resolve) => setTimeout(resolve, 400))
+    await new Promise((resolve) => setTimeout(resolve, 1200))
 
     // Should have results for the final keyword
     await vi.waitFor(() => {
       expect(matchesLocator.element().textContent).toEqual('Result for abc')
     })
 
-    // With 300ms debouncing, rapid typing should result in fewer calls
+    // With 1000ms debouncing, rapid typing should result in fewer calls
     // than the 3 characters typed (a, ab, abc)
     expect(callCount).toBeLessThan(3)
   })
