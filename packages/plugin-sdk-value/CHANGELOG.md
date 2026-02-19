@@ -1,5 +1,26 @@
 # Changelog
 
+## 5.0.4
+
+### Patch Changes
+
+- [#2209](https://github.com/portabletext/editor/pull/2209) [`f5dc492`](https://github.com/portabletext/editor/commit/f5dc49272e293ec94511d49ed76d995863d58dba) Thanks [@christianhg](https://github.com/christianhg)! - fix: suppress echo callback on local writes in SDKValuePlugin
+
+  Add a local-write flag to prevent the SDK change subscriber from
+  sending spurious patches back to the editor after a local edit.
+  The entire chain from setSdkValue to onSdkValueChange is synchronous,
+  so the flag reliably distinguishes local writes from remote changes.
+
+- [#2209](https://github.com/portabletext/editor/pull/2209) [`600f87a`](https://github.com/portabletext/editor/commit/600f87a17666a06468454552c824531cbcd1972c) Thanks [@christianhg](https://github.com/christianhg)! - fix: switch SDKValuePlugin from patch to mutation event
+
+  Switch from `editor.on('patch')` to `editor.on('mutation')` to reduce
+  SDK store updates from N-per-keystroke to 1-per-action. The mutation
+  event batches patches by operation and debounces during typing (250ms).
+  It also includes the editor value, avoiding an extra snapshot read.
+
+- Updated dependencies [[`a3eb985`](https://github.com/portabletext/editor/commit/a3eb985d2fe074ac5a62b53acc50d9f4f1cbddcb)]:
+  - @portabletext/editor@5.0.4
+
 ## 5.0.3
 
 ### Patch Changes
