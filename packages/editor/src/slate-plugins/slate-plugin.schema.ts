@@ -27,6 +27,22 @@ export function createSchemaPlugin({editorActor}: {editorActor: EditorActor}) {
         text: '',
         marks: [],
       }) as unknown as Node
+    editor.isText = (value: any): value is import('../slate').Text => {
+      if (!value || typeof value !== 'object') {
+        return false
+      }
+      const spanName = editorActor.getSnapshot().context.schema.span.name
+      return typeof value.text === 'string' && value._type === spanName
+    }
+    editor.isElement = (value: any): value is Element => {
+      if (!value || typeof value !== 'object') {
+        return false
+      }
+      if (typeof value.apply === 'function') {
+        return false
+      }
+      return typeof value._type === 'string' && !editor.isText(value)
+    }
     editor.isTextBlock = (value: unknown): value is PortableTextTextBlock => {
       if (Editor.isEditor(value)) {
         return false

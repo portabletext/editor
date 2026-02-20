@@ -50,6 +50,13 @@ export interface BaseEditor {
 
   apply: (operation: Operation) => void
   createTextNode: () => Node
+
+  // Node identity. Schema-driven — overridden by the schema plugin to check
+  // _type against schema.span.name. Vanilla Slate defaults use structural
+  // checks (typeof text === 'string' for isText, Array.isArray(children) for
+  // isElement).
+  isText: (value: any) => value is Text
+  isElement: (value: any) => value is Element
   getDirtyPaths: (operation: Operation) => Path[]
   getFragment: () => Descendant[]
   isElementReadOnly: (element: Element) => boolean

@@ -8,10 +8,13 @@ import {
   insertNode,
   insertSoftBreak,
   insertText,
+  isObject,
   normalizeNode,
   removeMark,
   shouldNormalize,
   type Editor,
+  type Element,
+  type Text,
 } from './'
 import {apply} from './core'
 import {
@@ -102,6 +105,18 @@ export const createEditor = (): Editor => {
     selection: null,
     marks: null,
     createTextNode: () => ({text: ''}) as any,
+    isText: (value: any): value is Text => {
+      return isObject(value) && typeof value.text === 'string'
+    },
+    isElement: (value: any): value is Element => {
+      if (!isObject(value)) {
+        return false
+      }
+      if (typeof value.apply === 'function') {
+        return false
+      }
+      return Array.isArray(value.children)
+    },
     isElementReadOnly: () => false,
     isInline: () => false,
     isSelectable: () => true,

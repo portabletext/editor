@@ -3,6 +3,13 @@ import {modifyChildren, modifyLeaf, removeChildren} from '../utils/modify'
 import {Element, type ElementEntry} from './element'
 
 /**
+ * Structural check: does this node have children to traverse into?
+ * Used by Node.* methods for tree traversal. Does NOT imply type identity.
+ */
+const hasChildren = (node: any): node is {children: any[]} =>
+  Array.isArray(node?.children)
+
+/**
  * The `Node` union type represents all of the different types of nodes that
  * occur in a Slate document tree.
  */
@@ -223,9 +230,9 @@ export const Node: NodeInterface = {
   ancestor(root: Node, path: Path): Ancestor {
     const node = Node.get(root, path)
 
-    if (Text.isText(node)) {
+    if (!hasChildren(node)) {
       throw new Error(
-        `Cannot get the ancestor node at path [${path}] because it refers to a text node instead: ${Scrubber.stringify(
+        `Cannot get the ancestor node at path [${path}] because it refers to a leaf node: ${Scrubber.stringify(
           node,
         )}`,
       )
@@ -247,9 +254,9 @@ export const Node: NodeInterface = {
   },
 
   child(root: Node, index: number): Descendant {
-    if (Text.isText(root)) {
+    if (!hasChildren(root)) {
       throw new Error(
-        `Cannot get the child of a text node: ${Scrubber.stringify(root)}`,
+        `Cannot get the child of a leaf node: ${Scrubber.stringify(root)}`,
       )
     }
 
@@ -322,14 +329,14 @@ export const Node: NodeInterface = {
     options: NodeElementsOptions = {},
   ): Generator<ElementEntry, void, undefined> {
     for (const [node, path] of Node.nodes(root, options)) {
-      if (Element.isElement(node)) {
+      if (hasChildren(node)) {
         yield [node, path]
       }
     }
   },
 
   extractProps(node: Node): NodeProps {
-    if (Element.isAncestor(node)) {
+    if (hasChildren(node)) {
       const {children: _children, ...properties} = node
 
       return properties
@@ -345,7 +352,7 @@ export const Node: NodeInterface = {
     let n = Node.get(root, p)
 
     while (n) {
-      if (Text.isText(n) || n.children.length === 0) {
+      if (!hasChildren(n) || n.children.length === 0) {
         break
       } else {
         n = n.children[0]! as Node
@@ -410,7 +417,7 @@ export const Node: NodeInterface = {
     for (let i = 0; i < path.length; i++) {
       const p = path[i]!
 
-      if (Text.isText(node) || !node.children[p]) {
+      if (!hasChildren(node) || !node.children[p]) {
         return
       }
 
@@ -426,7 +433,7 @@ export const Node: NodeInterface = {
     for (let i = 0; i < path.length; i++) {
       const p = path[i]!
 
-      if (Text.isText(node) || !node.children[p]) {
+      if (!hasChildren(node) || !node.children[p]) {
         return false
       }
 
@@ -437,11 +444,24 @@ export const Node: NodeInterface = {
   },
 
   isNode(value: any, {deep = false}: NodeIsNodeOptions = {}): value is Node {
-    return (
-      Text.isText(value) ||
-      Element.isElement(value, {deep}) ||
-      Editor.isEditor(value, {deep})
-    )
+    if (!value || typeof value !== 'object') {
+      return false
+    }
+    if (Editor.isEditor(value, {deep})) {
+      return true
+    }
+    // Structural: has _type (Element or Text in PT) or has children
+    // (vanilla Slate Element) or has text (vanilla Slate Text)
+    if (typeof value._type === 'string') {
+      return true
+    }
+    if (hasChildren(value)) {
+      return true
+    }
+    if (typeof value.text === 'string') {
+      return true
+    }
+    return false
   },
 
   isNodeList(
@@ -458,7 +478,7 @@ export const Node: NodeInterface = {
     let n = Node.get(root, p)
 
     while (n) {
-      if (Text.isText(n) || n.children.length === 0) {
+      if (!hasChildren(n) || n.children.length === 0) {
         break
       } else {
         const i = n.children.length - 1
@@ -473,7 +493,7 @@ export const Node: NodeInterface = {
   leaf(root: Node, path: Path): Text {
     const node = Node.get(root, path)
 
-    if (!Text.isText(node)) {
+    if (hasChildren(node)) {
       throw new Error(
         `Cannot get the leaf node at path [${path}] because it refers to a non-leaf node: ${Scrubber.stringify(
           node,
@@ -481,7 +501,7 @@ export const Node: NodeInterface = {
       )
     }
 
-    return node
+    return node as Text
   },
 
   *levels(
@@ -497,12 +517,12 @@ export const Node: NodeInterface = {
 
   matches(node: Node, props: Partial<Node>): boolean {
     return (
-      (Element.isElement(node) &&
+      (hasChildren(node) &&
         Element.isElementProps(props) &&
         Element.matches(node, props)) ||
-      (Text.isText(node) &&
+      (typeof (node as any).text === 'string' &&
         Text.isTextProps(props) &&
-        Text.matches(node, props))
+        Text.matches(node as Text, props))
     )
   },
 
@@ -528,7 +548,7 @@ export const Node: NodeInterface = {
       // If we're allowed to go downward and we haven't descended yet, do.
       if (
         !visited.has(n) &&
-        !Text.isText(n) &&
+        hasChildren(n) &&
         n.children.length !== 0 &&
         (pass == null || pass([n, p]) === false)
       ) {
@@ -579,7 +599,7 @@ export const Node: NodeInterface = {
     const parentPath = Path.parent(path)
     const p = Node.get(root, parentPath)
 
-    if (Text.isText(p)) {
+    if (!hasChildren(p)) {
       throw new Error(
         `Cannot get the parent of path [${path}] because it does not exist in the root.`,
       )
@@ -589,10 +609,12 @@ export const Node: NodeInterface = {
   },
 
   string(node: Node): string {
-    if (Text.isText(node)) {
-      return node.text
-    } else {
+    if (typeof (node as any).text === 'string') {
+      return (node as any).text
+    } else if (hasChildren(node)) {
       return node.children.map(Node.string).join('')
+    } else {
+      return ''
     }
   },
 
@@ -601,8 +623,8 @@ export const Node: NodeInterface = {
     options: NodeTextsOptions = {},
   ): Generator<NodeEntry<Text>, void, undefined> {
     for (const [node, path] of Node.nodes(root, options)) {
-      if (Text.isText(node)) {
-        yield [node, path]
+      if (typeof (node as any).text === 'string' && !hasChildren(node)) {
+        yield [node as Text, path]
       }
     }
   },
