@@ -53,6 +53,13 @@ export function createSlateEditor(config: SlateEditorConfig): SlateEditor {
     subscriptions: config.subscriptions,
   })
 
+  const initialValue = [placeholderBlock]
+
+  // Set children before building index maps so the initial render has
+  // correct blockIndexMap entries. The <Slate> component will also set
+  // editor.children = initialValue, but buildIndexMaps needs it now.
+  instance.children = initialValue as any
+
   buildIndexMaps(
     {
       schema: context.schema,
@@ -66,7 +73,7 @@ export function createSlateEditor(config: SlateEditorConfig): SlateEditor {
 
   const slateEditor: SlateEditor = {
     instance,
-    initialValue: [placeholderBlock],
+    initialValue,
   }
 
   return slateEditor
