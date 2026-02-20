@@ -1,4 +1,5 @@
 import {
+  Element,
   Node,
   Path,
   Point,
@@ -7,7 +8,6 @@ import {
   Text,
   type Descendant,
   type Editor,
-  type Element,
   type NodeEntry,
   type Operation,
   type Selection,
@@ -26,6 +26,40 @@ export interface GeneralTransforms {
    * Transform the editor by an operation.
    */
   transform: (editor: Editor, op: Operation) => void
+}
+
+/**
+ * If a point's path lands inside a childless void element (e.g. [0,0] where
+ * children[0] is a block object with no children), truncate to the void's path.
+ * This can happen when selection is restored from undo/redo, remote patches,
+ * or the sync machine.
+ */
+function correctPointForVoid(editor: Editor, point: Point): Point {
+  if (point.path.length > 1 && !Node.has(editor, point.path)) {
+    const parentPath = point.path.slice(0, -1)
+    if (Node.has(editor, parentPath)) {
+      const parent = Node.get(editor, parentPath)
+      if (Element.isElement(parent) && editor.isVoid(parent)) {
+        return {path: parentPath, offset: 0}
+      }
+    }
+  }
+  return point
+}
+
+function correctSelectionForVoids(
+  editor: Editor,
+  selection: Selection,
+): Selection {
+  if (!selection) {
+    return selection
+  }
+  const anchor = correctPointForVoid(editor, selection.anchor)
+  const focus = correctPointForVoid(editor, selection.focus)
+  if (anchor !== selection.anchor || focus !== selection.focus) {
+    return {...selection, anchor, focus}
+  }
+  return selection
 }
 
 // eslint-disable-next-line no-redeclare
@@ -275,7 +309,9 @@ export const GeneralTransforms: GeneralTransforms = {
             )
           }
 
-          editor.selection = {...newProperties}
+          editor.selection = correctSelectionForVoids(editor, {
+            ...newProperties,
+          })
           break
         }
 
@@ -295,7 +331,7 @@ export const GeneralTransforms: GeneralTransforms = {
           }
         }
 
-        editor.selection = selection
+        editor.selection = correctSelectionForVoids(editor, selection)
 
         break
       }
