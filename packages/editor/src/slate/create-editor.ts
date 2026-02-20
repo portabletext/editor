@@ -101,6 +101,7 @@ export const createEditor = (): Editor => {
     operations: [],
     selection: null,
     marks: null,
+    createTextNode: () => ({text: ''}) as any,
     isElementReadOnly: () => false,
     isInline: () => false,
     isSelectable: () => true,

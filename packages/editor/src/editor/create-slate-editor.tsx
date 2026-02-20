@@ -22,9 +22,9 @@ export type SlateEditor = {
 export function createSlateEditor(config: SlateEditorConfig): SlateEditor {
   debug.setup('creating new slate editor instance')
 
-  const placeholderBlock = createPlaceholderBlock(
-    config.editorActor.getSnapshot().context,
-  )
+  const context = config.editorActor.getSnapshot().context
+
+  const placeholderBlock = createPlaceholderBlock(context)
 
   const editor = createEditor()
 
@@ -56,7 +56,7 @@ export function createSlateEditor(config: SlateEditorConfig): SlateEditor {
 
   buildIndexMaps(
     {
-      schema: config.editorActor.getSnapshot().context.schema,
+      schema: context.schema,
       value: instance.value,
     },
     {
