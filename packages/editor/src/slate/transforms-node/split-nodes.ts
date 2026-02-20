@@ -75,7 +75,7 @@ export const splitNodes: NodeTransforms['splitNodes'] = (
           let after = Editor.after(editor, voidPath)
 
           if (!after) {
-            const text = {text: ''} as Node
+            const text = editor.createTextNode()
             const afterPath = Path.next(voidPath)
             Transforms.insertNodes(editor, text, {at: afterPath, voids})
             after = Editor.point(editor, afterPath)!
