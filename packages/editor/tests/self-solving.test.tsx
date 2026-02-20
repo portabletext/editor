@@ -17,7 +17,7 @@ import {EventListenerPlugin} from '../src/plugins'
 import {createTestEditor} from '../src/test/vitest'
 
 describe('Feature: Self-solving', () => {
-  test('Scenario: Missing .markDefs and .marks are added after the editor is made dirty', async () => {
+  test('Scenario: Missing .markDefs is added after the editor is made dirty', async () => {
     const schemaDefinition = defineSchema({decorators: [{name: 'strong'}]})
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
@@ -36,12 +36,7 @@ describe('Feature: Self-solving', () => {
         style: 'normal',
       },
     ]
-    const spanPatch: Patch = {
-      type: 'set',
-      path: [{_key: blockKey}, 'children', {_key: spanKey}, 'marks'],
-      value: [],
-      origin: 'local',
-    }
+    // marks: [] is added by toSlateBlock during sync (no deferred patch needed)
     const blockPatch: Patch = {
       type: 'set',
       path: [{_key: blockKey}, 'markDefs'],
@@ -100,14 +95,13 @@ describe('Feature: Self-solving', () => {
 
     await vi.waitFor(() => {
       expect(patchEvents).toEqual([
-        {type: 'patch', patch: spanPatch},
         {type: 'patch', patch: blockPatch},
         {type: 'patch', patch: strongPatch},
       ])
       expect(mutationEvents).toEqual([
         {
           type: 'mutation',
-          patches: [spanPatch, blockPatch],
+          patches: [blockPatch],
           value: [
             {
               _key: blockKey,

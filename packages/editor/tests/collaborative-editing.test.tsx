@@ -311,11 +311,11 @@ describe('Collaborative editing', () => {
        * This test verifies that local held-back patches are NOT discarded
        * when remote patches arrive on unrelated paths:
        * 1. Editor A loads with initial value missing `marks` on a span
-       * 2. Editor A normalizes and adds marks: [], but defers the patch
-       * 3. Editor B changes the `text` property (unrelated to marks)
-       * 4. Editor A receives the text patch
-       * 5. Editor A user starts typing
-       * 6. Editor A should emit BOTH the deferred marks patch AND the typing patches
+       *    (toSlateBlock adds marks: [] during sync, no deferred patch)
+       * 2. Editor B changes the `text` property
+       * 3. Editor A receives the text patch
+       * 4. Editor A user starts typing
+       * 5. Editor A should emit the typing patch
        */
       const keyGenerator = createTestKeyGenerator()
       const blockKey = keyGenerator()
@@ -416,14 +416,9 @@ describe('Collaborative editing', () => {
         ])
       })
 
-      // Should include the deferred marks normalization patch (unrelated path)
-      // plus the typing patch
+      // marks: [] is added by toSlateBlock during sync (no deferred patch).
+      // Only the typing patch is emitted.
       expect(emittedPatches).toEqual([
-        {
-          type: 'set',
-          path: [{_key: blockKey}, 'children', {_key: spanKey}, 'marks'],
-          value: [],
-        },
         diffMatchPatch('hello', 'hello!', [
           {_key: blockKey},
           'children',
@@ -705,14 +700,14 @@ describe('Collaborative editing', () => {
 
     test('Scenario: Remote patches on inline object do not conflict with sibling span normalization', async () => {
       /**
-       * This test verifies that normalization patches on one child don't conflict
-       * with remote patches on a different child (sibling inline object):
+       * This test verifies that remote patches on a sibling inline object
+       * don't interfere with local typing:
        * 1. Editor A loads with block containing: span (missing marks), inline object, span
-       * 2. Editor A normalizes and adds marks: [] to first span, defers the patch
-       * 3. Editor B updates the inline object's property
-       * 4. Editor A receives the patch
-       * 5. Editor A user starts typing
-       * 6. Editor A SHOULD emit the deferred marks patch (different child, no conflict)
+       *    (toSlateBlock adds marks: [] during sync, no deferred patch)
+       * 2. Editor B updates the inline object's property
+       * 3. Editor A receives the patch
+       * 4. Editor A user starts typing
+       * 5. Editor A should emit the typing patch
        */
       const keyGenerator = createTestKeyGenerator()
       const blockKey = keyGenerator()
@@ -827,14 +822,9 @@ describe('Collaborative editing', () => {
         ])
       })
 
-      // Should include the deferred marks normalization patch (unrelated child)
-      // plus the typing patch
+      // marks: [] is added by toSlateBlock during sync (no deferred patch).
+      // Only the typing patch is emitted.
       expect(emittedPatches).toEqual([
-        {
-          type: 'set',
-          path: [{_key: blockKey}, 'children', {_key: span1Key}, 'marks'],
-          value: [],
-        },
         diffMatchPatch('Price: ', 'Price: x', [
           {_key: blockKey},
           'children',
@@ -1188,15 +1178,9 @@ describe('Collaborative editing', () => {
         ])
       })
 
-      // Should include markDefs and marks patches, but NOT the style patch
-      // Note: marks patch comes before markDefs because normalization processes
-      // spans before block-level properties
+      // Should include markDefs patch, but NOT the style patch (conflicted).
+      // marks: [] is added by toSlateBlock during sync (no deferred patch).
       expect(emittedPatches).toEqual([
-        {
-          type: 'set',
-          path: [{_key: blockKey}, 'children', {_key: spanKey}, 'marks'],
-          value: [],
-        },
         {
           type: 'set',
           path: [{_key: blockKey}, 'markDefs'],
@@ -1340,13 +1324,13 @@ describe('Collaborative editing', () => {
     test('Scenario: Remote patches on different blocks do not conflict', async () => {
       /**
        * This test verifies that remote patches on one block do not affect
-       * pending normalization patches on a different block:
+       * local typing on a different block:
        * 1. Editor A loads with two blocks, first block missing marks
-       * 2. Editor A normalizes first block, defers the patch
-       * 3. Editor B updates the second block's text
-       * 4. Editor A receives the patch
-       * 5. Editor A user starts typing in first block
-       * 6. Editor A SHOULD emit the deferred marks patch (different block)
+       *    (toSlateBlock adds marks: [] during sync, no deferred patch)
+       * 2. Editor B updates the second block's text
+       * 3. Editor A receives the patch
+       * 4. Editor A user starts typing in first block
+       * 5. Editor A should emit the typing patch
        */
       const keyGenerator = createTestKeyGenerator()
       const block1Key = keyGenerator()
@@ -1485,14 +1469,9 @@ describe('Collaborative editing', () => {
         ])
       })
 
-      // Should include the deferred marks patch (different block)
-      // plus the typing patch
+      // marks: [] is added by toSlateBlock during sync (no deferred patch).
+      // Only the typing patch is emitted.
       expect(emittedPatches).toEqual([
-        {
-          type: 'set',
-          path: [{_key: block1Key}, 'children', {_key: span1Key}, 'marks'],
-          value: [],
-        },
         diffMatchPatch('first', 'first!', [
           {_key: block1Key},
           'children',
