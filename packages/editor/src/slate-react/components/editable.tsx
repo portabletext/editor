@@ -327,7 +327,7 @@ export const Editable = forwardRef(
               Transforms.deselect(editor)
             }
           }
-        }, 100),
+        }, 0),
       [editor, readOnly, state],
     )
 
@@ -906,7 +906,7 @@ export const Editable = forwardRef(
         if (targetTagName === 'INPUT' || targetTagName === 'TEXTAREA') {
           return
         }
-        scheduleOnDOMSelectionChange()
+        onDOMSelectionChange()
       }
 
       // Attach a native DOM event handler for `selectionchange`, because React's
@@ -933,7 +933,7 @@ export const Editable = forwardRef(
         window.document.removeEventListener('dragend', stoppedDragging)
         window.document.removeEventListener('drop', stoppedDragging)
       }
-    }, [scheduleOnDOMSelectionChange, state])
+    }, [onDOMSelectionChange, state])
 
     const decorations = decorate([editor, []])
     const decorateContext = useDecorateContext(decorate)
