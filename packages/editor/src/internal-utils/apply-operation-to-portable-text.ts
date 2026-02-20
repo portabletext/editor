@@ -385,7 +385,7 @@ function applyOperationToPortableTextImmutable(
         const newNode = {...node}
 
         for (const key in newProperties) {
-          if (key === 'value') {
+          if (key === 'value' || key === 'children') {
             continue
           }
 
@@ -399,7 +399,7 @@ function applyOperationToPortableTextImmutable(
         }
 
         for (const key in properties) {
-          if (key === 'value') {
+          if (key === 'value' || key === 'children') {
             continue
           }
 
