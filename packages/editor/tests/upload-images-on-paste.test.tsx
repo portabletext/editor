@@ -1,4 +1,4 @@
-import {htmlToBlocks} from '@portabletext/block-tools'
+import {htmlToPortableText} from '@portabletext/html'
 import {defineSchema, type PortableTextObject} from '@portabletext/schema'
 import {expect, test, vi} from 'vitest'
 import {effect, execute, raise} from '../src/behaviors/behavior.types.action'
@@ -186,7 +186,8 @@ test('Scenario: Uploading images embedded in HTML', async () => {
                 return false
               }
 
-              const blocks = htmlToBlocks(event.data, snapshot.context.schema, {
+              const blocks = htmlToPortableText(event.data, {
+                schema: snapshot.context.schema,
                 keyGenerator: snapshot.context.keyGenerator,
                 matchers: {
                   image: ({context, props}) => {
@@ -359,7 +360,8 @@ test('Scenario: Pasting image files that exist both in HTML and as a file', asyn
         return false
       }
 
-      const blocks = htmlToBlocks(event.data, snapshot.context.schema, {
+      const blocks = htmlToPortableText(event.data, {
+        schema: snapshot.context.schema,
         keyGenerator: snapshot.context.keyGenerator,
         matchers: {
           image: ({context, props}) => {

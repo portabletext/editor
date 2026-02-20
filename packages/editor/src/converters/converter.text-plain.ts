@@ -1,4 +1,4 @@
-import {htmlToBlocks} from '@portabletext/block-tools'
+import {htmlToPortableText} from '@portabletext/html'
 import {isTextBlock, type PortableTextBlock} from '@portabletext/schema'
 import {getSelectedValue} from '../selectors/selector.get-selected-value'
 import type {PortableTextMemberSchemaTypes} from '../types/editor'
@@ -6,7 +6,7 @@ import {parseBlock} from '../utils/parse-blocks'
 import {defineConverter} from './converter.types'
 
 export function createConverterTextPlain(
-  legacySchema: PortableTextMemberSchemaTypes,
+  _legacySchema: PortableTextMemberSchemaTypes,
 ) {
   return defineConverter({
     mimeType: 'text/plain',
@@ -75,7 +75,8 @@ export function createConverterTextPlain(
 
       const textToHtml = `<html><body>${html}</body></html>`
 
-      const blocks = htmlToBlocks(textToHtml, legacySchema.portableText, {
+      const blocks = htmlToPortableText(textToHtml, {
+        schema: snapshot.context.schema,
         keyGenerator: snapshot.context.keyGenerator,
       }) as Array<PortableTextBlock>
 
