@@ -250,14 +250,20 @@ function setPatch(
       // Check if children structure is unchanged (same keys, same order)
       const sameKeys =
         oldChildren.length === newChildren.length &&
-        oldChildren.every((c, i) => c._key === newChildren[i]?._key)
+        oldChildren.every(
+          (child, index) => child._key === newChildren[index]?._key,
+        )
 
       if (sameKeys) {
         // Children structure unchanged. Update individual children that differ
         // instead of removing and re-inserting all of them.
-        for (let i = 0; i < newChildren.length; i++) {
-          const oldChild = oldChildren[i]
-          const newChild = newChildren[i]
+        for (
+          let childIndex = 0;
+          childIndex < newChildren.length;
+          childIndex++
+        ) {
+          const oldChild = oldChildren[childIndex]
+          const newChild = newChildren[childIndex]
 
           if (!oldChild || !newChild) {
             continue
@@ -271,13 +277,13 @@ function setPatch(
             if (oldChild.text !== newChild.text) {
               editor.apply({
                 type: 'remove_text',
-                path: [block.index, i],
+                path: [block.index, childIndex],
                 offset: 0,
                 text: oldChild.text,
               })
               editor.apply({
                 type: 'insert_text',
-                path: [block.index, i],
+                path: [block.index, childIndex],
                 offset: 0,
                 text: newChild.text,
               })
@@ -285,11 +291,13 @@ function setPatch(
 
             // Update non-text properties (marks, etc.)
             Transforms.setNodes(editor, newChild, {
-              at: [block.index, i],
+              at: [block.index, childIndex],
             })
           } else if (!Text.isText(newChild)) {
             // Inline object: update if changed
-            Transforms.setNodes(editor, newChild, {at: [block.index, i]})
+            Transforms.setNodes(editor, newChild, {
+              at: [block.index, childIndex],
+            })
           }
         }
       } else {
@@ -298,7 +306,7 @@ function setPatch(
         const previousSelection = editor.selection
 
         // Remove the previous children
-        for (const [_, childPath] of Editor.nodes(editor, {
+        for (const [_node, childPath] of Editor.nodes(editor, {
           at: [block.index],
           reverse: true,
           mode: 'lowest',
