@@ -7,7 +7,7 @@ import {
 } from '@portabletext/schema'
 import type {EditorActor} from '../editor/editor-machine'
 import {debug} from '../internal-utils/debug'
-import {Editor, Transforms, type Element} from '../slate'
+import {Editor, Transforms, type Element, type Node} from '../slate'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {isListBlock} from '../utils/parse-blocks'
 import {withNormalizeNode} from './slate-plugin.normalize-node'
@@ -20,6 +20,13 @@ export function createSchemaPlugin({editorActor}: {editorActor: EditorActor}) {
   return function schemaPlugin(
     editor: PortableTextSlateEditor,
   ): PortableTextSlateEditor {
+    editor.createTextNode = () =>
+      ({
+        _type: editorActor.getSnapshot().context.schema.span.name,
+        _key: editorActor.getSnapshot().context.keyGenerator(),
+        text: '',
+        marks: [],
+      }) as unknown as Node
     editor.isTextBlock = (value: unknown): value is PortableTextTextBlock => {
       if (Editor.isEditor(value)) {
         return false

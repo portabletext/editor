@@ -49,6 +49,7 @@ export interface BaseEditor {
   // Overrideable core methods.
 
   apply: (operation: Operation) => void
+  createTextNode: () => Node
   getDirtyPaths: (operation: Operation) => Path[]
   getFragment: () => Descendant[]
   isElementReadOnly: (element: Element) => boolean
