@@ -15,19 +15,18 @@ import {
   type PortableTextTextBlock,
 } from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
-import {
-  Element,
-  Text,
-  type Descendant,
-  type InsertNodeOperation,
-  type InsertTextOperation,
-  type MergeNodeOperation,
-  type MoveNodeOperation,
-  type RemoveNodeOperation,
-  type RemoveTextOperation,
-  type SetNodeOperation,
-  type SplitNodeOperation,
+import type {
+  Descendant,
+  InsertNodeOperation,
+  InsertTextOperation,
+  MergeNodeOperation,
+  MoveNodeOperation,
+  RemoveNodeOperation,
+  RemoveTextOperation,
+  SetNodeOperation,
+  SplitNodeOperation,
 } from '../slate'
+import type {PortableTextSlateEditor} from '../types/slate-editor'
 import type {Path} from '../types/paths'
 import {fromSlateBlock} from './values'
 
@@ -102,6 +101,7 @@ export function removeTextPatch(
 }
 
 export function setNodePatch(
+  editor: PortableTextSlateEditor,
   schema: EditorSchema,
   children: Descendant[],
   operation: SetNodeOperation,
@@ -182,7 +182,7 @@ export function setNodePatch(
         const childKey = child._key
         const patches: Patch[] = []
 
-        if (Element.isElement(child)) {
+        if (editor.isElement(child)) {
           // The child is an inline object. This needs to be treated
           // differently since all custom properties are stored on a `value`
           // object.
@@ -274,6 +274,7 @@ export function setNodePatch(
 }
 
 export function insertNodePatch(
+  editor: PortableTextSlateEditor,
   schema: EditorSchema,
   children: Descendant[],
   operation: InsertNodeOperation,
@@ -322,7 +323,7 @@ export function insertNodePatch(
     // Defensive setIfMissing to ensure children array exists before inserting
     const setIfMissingPatch = setIfMissing([], [{_key: block._key}, 'children'])
 
-    if (Text.isText(operation.node)) {
+    if (editor.isText(operation.node)) {
       return [setIfMissingPatch, insert([operation.node], position, path)]
     }
 

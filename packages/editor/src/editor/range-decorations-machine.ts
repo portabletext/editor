@@ -11,7 +11,6 @@ import {moveRangeByOperation} from '../internal-utils/move-range-by-operation'
 import {slateRangeToSelection} from '../internal-utils/slate-utils'
 import {toSlateRange} from '../internal-utils/to-slate-range'
 import {
-  Element,
   Path,
   Range,
   type BaseRange,
@@ -393,7 +392,7 @@ function createDecorate(
       return []
     }
 
-    if (!Element.isElement(node) || node.children.length === 0) {
+    if (!slateEditor.isElement(node) || node.children.length === 0) {
       return []
     }
 

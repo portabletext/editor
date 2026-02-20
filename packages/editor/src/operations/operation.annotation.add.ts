@@ -1,5 +1,5 @@
 import {toSlateRange} from '../internal-utils/to-slate-range'
-import {Editor, Node, Range, Text, Transforms} from '../slate'
+import {Editor, Node, Range, Transforms} from '../slate'
 import {parseAnnotation} from '../utils/parse-blocks'
 import type {OperationImplementation} from './operation.types'
 
@@ -89,9 +89,17 @@ export const addAnnotationOperationImplementation: OperationImplementation<
     // When `at` is explicitly provided, use it for the split
     // Otherwise, use the editor's current selection (original behavior)
     if (at) {
-      Transforms.setNodes(editor, {}, {match: Text.isText, split: true, at})
+      Transforms.setNodes(
+        editor,
+        {},
+        {match: (n) => editor.isText(n), split: true, at},
+      )
     } else {
-      Transforms.setNodes(editor, {}, {match: Text.isText, split: true})
+      Transforms.setNodes(
+        editor,
+        {},
+        {match: (n) => editor.isText(n), split: true},
+      )
     }
 
     const children = Node.children(editor, blockPath)

@@ -1,5 +1,5 @@
 import {toSlateRange} from '../internal-utils/to-slate-range'
-import {Editor, Element, Transforms} from '../slate'
+import {Editor, Transforms} from '../slate'
 import type {OperationImplementation} from './operation.types'
 
 export const childSetOperationImplementation: OperationImplementation<
@@ -64,7 +64,7 @@ export const childSetOperationImplementation: OperationImplementation<
     return
   }
 
-  if (Element.isElement(child)) {
+  if (operation.editor.isElement(child)) {
     const definition = context.schema.inlineObjects.find(
       (definition) => definition.name === child._type,
     )

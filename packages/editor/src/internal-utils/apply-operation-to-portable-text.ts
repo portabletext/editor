@@ -1,7 +1,7 @@
 import type {PortableTextBlock} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
 import type {EditorContext} from '../editor/editor-snapshot'
-import {Element, Path, type Node, type Operation} from '../slate'
+import {Path, type Node, type Operation} from '../slate'
 import type {OmitFromUnion} from '../type-utils'
 import {
   getBlock,
@@ -88,7 +88,10 @@ function applyOperationToPortableTextImmutable(
           }
         }
 
-        if (Element.isElement(insertedNode) && !('__inline' in insertedNode)) {
+        if (
+          Array.isArray((insertedNode as any).children) &&
+          !('__inline' in insertedNode)
+        ) {
           // Void blocks have to have their `value` spread onto the block
           const newBlock = {
             _key: insertedNode._key,

@@ -4,7 +4,6 @@ import {VOID_CHILD_KEY} from '../internal-utils/values'
 import {
   deleteText,
   Editor,
-  Element,
   Path,
   Point,
   Range,
@@ -67,7 +66,9 @@ export const deleteOperationImplementation: OperationImplementation<
 
   if (operation.direction === 'backward' && operation.unit === 'line') {
     const parentBlockEntry = Editor.above(operation.editor, {
-      match: (n) => Element.isElement(n) && Editor.isBlock(operation.editor, n),
+      match: (n) =>
+        operation.editor.isElement(n) &&
+        Editor.isBlock(operation.editor, n),
       at,
     })
 
@@ -104,12 +105,14 @@ export const deleteOperationImplementation: OperationImplementation<
   }
 
   const startBlock = Editor.above(operation.editor, {
-    match: (n) => Element.isElement(n) && Editor.isBlock(operation.editor, n),
+    match: (n) =>
+      operation.editor.isElement(n) && Editor.isBlock(operation.editor, n),
     at: start,
     voids: false,
   })
   const endBlock = Editor.above(operation.editor, {
-    match: (n) => Element.isElement(n) && Editor.isBlock(operation.editor, n),
+    match: (n) =>
+      operation.editor.isElement(n) && Editor.isBlock(operation.editor, n),
     at: end,
     voids: false,
   })
@@ -133,7 +136,7 @@ export const deleteOperationImplementation: OperationImplementation<
     }
 
     if (
-      (Element.isElement(node) &&
+      (operation.editor.isElement(node) &&
         (Editor.isVoid(operation.editor, node) ||
           Editor.isElementReadOnly(operation.editor, node))) ||
       (!Path.isCommon(path, start.path) && !Path.isCommon(path, end.path))

@@ -1,6 +1,6 @@
 import {applyAll} from '@portabletext/patches'
 import {isTextBlock} from '@portabletext/schema'
-import {Editor, Element, Transforms} from '../slate'
+import {Editor, Transforms} from '../slate'
 import type {OperationImplementation} from './operation.types'
 
 export const childUnsetOperationImplementation: OperationImplementation<
@@ -86,7 +86,7 @@ export const childUnsetOperationImplementation: OperationImplementation<
     return
   }
 
-  if (Element.isElement(child)) {
+  if (operation.editor.isElement(child)) {
     const value =
       'value' in child && typeof child.value === 'object' ? child.value : {}
     const patches = operation.props.map((prop) => ({

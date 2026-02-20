@@ -88,6 +88,7 @@ describe(insertNodePatch.name, () => {
   test('Scenario: Inserting block object on empty editor', () => {
     expect(
       insertNodePatch(
+        editor,
         compileSchema(defineSchema({blockObjects: [{name: 'image'}]})),
         [
           {
@@ -215,6 +216,7 @@ describe('operationToPatches', () => {
   it('produce correct insert block patch', () => {
     expect(
       insertNodePatch(
+        editor,
         schema,
         editor.children,
         {
@@ -257,6 +259,7 @@ describe('operationToPatches', () => {
     editor.onChange()
     expect(
       insertNodePatch(
+        editor,
         schema,
         editor.children,
         {
@@ -300,6 +303,7 @@ describe('operationToPatches', () => {
   test('produce correct insert child patch', () => {
     expect(
       insertNodePatch(
+        editor,
         schema,
         editor.children,
         {
@@ -544,6 +548,7 @@ describe('defensive setIfMissing patches', () => {
   describe(insertNodePatch.name, () => {
     test('includes setIfMissing before inserting a span into children', () => {
       const patches = insertNodePatch(
+        editor,
         schema,
         editor.children,
         {
@@ -576,6 +581,7 @@ describe('defensive setIfMissing patches', () => {
 
     test('includes setIfMissing before inserting an inline object into children', () => {
       const patches = insertNodePatch(
+        editor,
         schema,
         editor.children,
         {

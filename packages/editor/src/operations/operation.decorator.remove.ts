@@ -1,5 +1,5 @@
 import {toSlateRange} from '../internal-utils/to-slate-range'
-import {Editor, Element, Range, Text, Transforms} from '../slate'
+import {Editor, Range, Transforms} from '../slate'
 import type {OperationImplementation} from './operation.types'
 
 export const decoratorRemoveOperationImplementation: OperationImplementation<
@@ -29,7 +29,7 @@ export const decoratorRemoveOperationImplementation: OperationImplementation<
     Transforms.setNodes(
       editor,
       {},
-      {at, match: Text.isText, split: true, hanging: true},
+      {at, match: (n) => editor.isText(n), split: true, hanging: true},
     )
 
     const updatedAt = rangeRef.unref()
@@ -38,12 +38,12 @@ export const decoratorRemoveOperationImplementation: OperationImplementation<
       const splitTextNodes = [
         ...Editor.nodes(editor, {
           at: updatedAt,
-          match: Text.isText,
+          match: (n) => editor.isText(n),
         }),
       ]
       splitTextNodes.forEach(([node, path]) => {
         const block = editor.children[path[0]!]
-        if (Element.isElement(block) && block.children.includes(node)) {
+        if (editor.isElement(block) && block.children.includes(node)) {
           Transforms.setNodes(
             editor,
             {

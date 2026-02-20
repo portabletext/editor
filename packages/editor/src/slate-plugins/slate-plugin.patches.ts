@@ -185,6 +185,7 @@ export function createPatchesPlugin({
           patches = [
             ...patches,
             ...insertNodePatch(
+              editor,
               editorActor.getSnapshot().context.schema,
               editor.children,
               operation,
@@ -196,6 +197,7 @@ export function createPatchesPlugin({
           patches = [
             ...patches,
             ...setNodePatch(
+              editor,
               editorActor.getSnapshot().context.schema,
               editor.children,
               operation,

@@ -24,7 +24,6 @@ import {toSlateBlock, VOID_CHILD_KEY} from '../internal-utils/values'
 import {
   deleteText,
   Editor,
-  Text,
   Transforms,
   type Descendant,
   type Node,
@@ -918,7 +917,7 @@ function updateBlock({
         !oldBlockChild || !isEqualChild(currentBlockChild, oldBlockChild)
       const isTextChanged =
         oldBlockChild &&
-        Text.isText(oldBlockChild) &&
+        slateEditor.isText(oldBlockChild) &&
         currentBlockChild.text !== oldBlockChild.text
       const path = [index, currentBlockChildIndex]
 

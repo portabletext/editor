@@ -20,9 +20,7 @@ import {
 import type {EditorContext} from '../editor/editor-snapshot'
 import {
   Editor,
-  Element,
   Node,
-  Text,
   Transforms,
   type Descendant,
 } from '../slate'
@@ -71,7 +69,7 @@ export function createApplyPatch(
 function diffMatchPatch(
   editor: Pick<
     PortableTextSlateEditor,
-    'children' | 'isTextBlock' | 'apply' | 'selection' | 'onChange'
+    'children' | 'isTextBlock' | 'isText' | 'isElement' | 'apply' | 'selection' | 'onChange'
   >,
   patch: DiffMatchPatch,
 ): boolean {
@@ -94,7 +92,7 @@ function diffMatchPatch(
     patch.path[1] === 'children' &&
     patch.path[3] === 'text'
 
-  if (!isSpanTextDiffMatchPatch || !Text.isText(child.node)) {
+  if (!isSpanTextDiffMatchPatch || !editor.isText(child.node)) {
     return false
   }
 
@@ -210,7 +208,7 @@ function insertPatch(
     position === 'after' ? targetChild.index + 1 : targetChild.index
   const childInsertPath = [block.index, normalizedIdx]
 
-  if (childrenToInsert && Element.isElement(childrenToInsert)) {
+  if (childrenToInsert && editor.isElement(childrenToInsert)) {
     Transforms.insertNodes(editor, childrenToInsert.children, {
       at: childInsertPath,
     })
@@ -246,7 +244,7 @@ function setPatch(
       },
     ])
 
-    if (editor.isTextBlock(block.node) && Element.isElement(updatedBlock)) {
+    if (editor.isTextBlock(block.node) && editor.isElement(updatedBlock)) {
       Transforms.setNodes(editor, updatedBlock, {at: [block.index]})
 
       const previousSelection = editor.selection
@@ -302,8 +300,8 @@ function setPatch(
 
   // If this is targeting a text block child
   if (isTextBlock && child) {
-    if (Text.isText(child.node)) {
-      if (Text.isText(value)) {
+    if (editor.isText(child.node)) {
+      if (value && typeof value === 'object' && typeof (value as any).text === 'string') {
         if (patch.type === 'setIfMissing') {
           return false
         }
@@ -453,7 +451,7 @@ function unsetPatch(editor: PortableTextSlateEditor, patch: UnsetPatch) {
     }
   }
 
-  if (child && !Text.isText(child.node)) {
+  if (child && !editor.isText(child.node)) {
     // Unsetting inline object property
 
     const propPath = patch.path.slice(3)
@@ -492,7 +490,7 @@ function unsetPatch(editor: PortableTextSlateEditor, patch: UnsetPatch) {
     return true
   }
 
-  if (child && Text.isText(child.node)) {
+  if (child && editor.isText(child.node)) {
     const propPath = patch.path.slice(3)
     const propEntry = propPath.at(0)
     const reservedProps = ['_key', '_type']
@@ -612,13 +610,19 @@ function findBlockChild(
 ): {node: Descendant; index: number} | undefined {
   const blockNode = block.node
 
-  if (!Element.isElement(blockNode) || path[1] !== 'children') {
+  if (
+    !Array.isArray((blockNode as any).children) ||
+    path[1] !== 'children'
+  ) {
     return undefined
   }
 
+  const children = (blockNode as unknown as {children: Array<Descendant>})
+    .children
+
   let childIndex = -1
 
-  const child = blockNode.children.find((node, index: number) => {
+  const child = children.find((node: Descendant, index: number) => {
     const isMatch = isKeyedSegment(path[2])
       ? node._key === path[2]._key
       : index === path[2]
