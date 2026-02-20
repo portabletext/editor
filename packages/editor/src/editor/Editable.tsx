@@ -1,3 +1,4 @@
+import type {PortableTextBlock} from '@portabletext/schema'
 import {useActorRef, useSelector} from '@xstate/react'
 import {
   forwardRef,
@@ -234,7 +235,7 @@ export const PortableTextEditable = forwardRef<
       debug.selection(`Selection from props ${JSON.stringify(propsSelection)}`)
       const normalizedSelection = normalizeSelection(
         propsSelection,
-        slateEditor.value,
+        slateEditor.children as Array<PortableTextBlock>,
       )
       if (normalizedSelection !== null) {
         debug.selection(
@@ -243,7 +244,7 @@ export const PortableTextEditable = forwardRef<
         const slateRange = toSlateRange({
           context: {
             schema: editorActor.getSnapshot().context.schema,
-            value: slateEditor.value,
+            value: slateEditor.children as Array<PortableTextBlock>,
             selection: normalizedSelection,
           },
           blockIndexMap: slateEditor.blockIndexMap,
@@ -382,7 +383,7 @@ export const PortableTextEditable = forwardRef<
   // Handle incoming pasting events in the editor
   const handlePaste = useCallback(
     (event: ClipboardEvent<HTMLDivElement>): Promise<void> | void => {
-      const value = slateEditor.value
+      const value = slateEditor.children as Array<PortableTextBlock>
       const ptRange = slateEditor.selection
         ? slateRangeToSelection({
             schema: editorActor.getSnapshot().context.schema,
@@ -519,7 +520,7 @@ export const PortableTextEditable = forwardRef<
           slateEditor.children.length === 1 &&
           isEmptyTextBlock(
             editorActor.getSnapshot().context,
-            slateEditor.value.at(0),
+            (slateEditor.children as Array<PortableTextBlock>).at(0),
           )
         ) {
           Transforms.select(slateEditor, Editor.start(slateEditor, []))

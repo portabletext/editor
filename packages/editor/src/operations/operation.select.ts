@@ -1,3 +1,4 @@
+import type {PortableTextBlock} from '@portabletext/schema'
 import {toSlateRange} from '../internal-utils/to-slate-range'
 import {Transforms} from '../slate'
 import {IS_FOCUSED, IS_READ_ONLY} from '../slate-dom'
@@ -9,7 +10,7 @@ export const selectOperationImplementation: OperationImplementation<
   const newSelection = toSlateRange({
     context: {
       schema: context.schema,
-      value: operation.editor.value,
+      value: operation.editor.children as Array<PortableTextBlock>,
       selection: operation.at,
     },
     blockIndexMap: operation.editor.blockIndexMap,

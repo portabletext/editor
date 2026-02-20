@@ -1,5 +1,5 @@
+import type {PortableTextBlock} from '@portabletext/schema'
 import type {EditorContext} from '../editor/editor-snapshot'
-import {applyOperationToPortableText} from '../internal-utils/apply-operation-to-portable-text'
 import {buildIndexMaps} from '../internal-utils/build-index-maps'
 import {debug} from '../internal-utils/debug'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
@@ -22,31 +22,25 @@ export function updateValuePlugin(
       return
     }
 
-    editor.value = applyOperationToPortableText(
-      context,
-      editor.value,
-      operation,
-    )
+    // Apply the operation first — editor.children IS the PT value
+    apply(operation)
 
     if (operation.type === 'insert_text' || operation.type === 'remove_text') {
       // Inserting and removing text has no effect on index maps so there is
       // no need to rebuild those.
-      apply(operation)
       return
     }
 
     buildIndexMaps(
       {
         schema: context.schema,
-        value: editor.value,
+        value: editor.children as Array<PortableTextBlock>,
       },
       {
         blockIndexMap: editor.blockIndexMap,
         listIndexMap: editor.listIndexMap,
       },
     )
-
-    apply(operation)
   }
 
   return editor

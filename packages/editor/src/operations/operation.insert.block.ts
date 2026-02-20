@@ -1,4 +1,4 @@
-import {isSpan} from '@portabletext/schema'
+import {isSpan, type PortableTextBlock} from '@portabletext/schema'
 import {isEqualChildren, isEqualMarks} from '../internal-utils/equality'
 import {getFocusChild} from '../internal-utils/slate-utils'
 import {toSlateRange} from '../internal-utils/to-slate-range'
@@ -61,7 +61,7 @@ export function insertBlock(options: {
     ? toSlateRange({
         context: {
           schema: context.schema,
-          value: editor.value,
+          value: editor.children as Array<PortableTextBlock>,
           selection: options.at,
         },
         blockIndexMap: editor.blockIndexMap,
@@ -549,7 +549,7 @@ export function insertBlock(options: {
 
       // Remove nodes after start
       const blockNode = Node.get(editor, endBlockPath) as Element
-      for (let i = blockNode.children.length - 1; i > start.path[1]!; i--) {
+      for (let i = (blockNode.children?.length ?? 0) - 1; i > start.path[1]!; i--) {
         removeNodeAt(editor, [...endBlockPath, i])
       }
 
@@ -637,7 +637,7 @@ export function insertBlock(options: {
         const blockToSplit = Node.get(editor, blockPath)
 
         if (
-          splitAtIndex < (blockToSplit as Element).children.length &&
+          splitAtIndex < ((blockToSplit as Element).children?.length ?? 0) &&
           editor.isElement(blockToSplit)
         ) {
           // Get the properties to preserve in the split
@@ -892,7 +892,7 @@ function deleteCrossBlockRange(
 
     // Remove remaining nodes in start block
     const startBlock = Node.get(editor, startBlockPath) as Element
-    for (let i = startBlock.children.length - 1; i > start.path[1]!; i--) {
+    for (let i = (startBlock.children?.length ?? 0) - 1; i > start.path[1]!; i--) {
       removeNodeAt(editor, [...startBlockPath, i])
     }
   }

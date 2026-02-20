@@ -1,3 +1,4 @@
+import type {PortableTextBlock} from '@portabletext/schema'
 import {buildIndexMaps} from '../internal-utils/build-index-maps'
 import {createPlaceholderBlock} from '../internal-utils/create-placeholder-block'
 import {debug} from '../internal-utils/debug'
@@ -37,7 +38,6 @@ export function createSlateEditor(config: SlateEditorConfig): SlateEditor {
   editor.listIndexMap = new Map<string, number>()
   editor.remotePatches = []
   editor.undoStepId = undefined
-  editor.value = [placeholderBlock]
 
   editor.isDeferringMutations = false
   editor.isNormalizingNode = false
@@ -57,7 +57,7 @@ export function createSlateEditor(config: SlateEditorConfig): SlateEditor {
   buildIndexMaps(
     {
       schema: context.schema,
-      value: instance.value,
+      value: instance.children as Array<PortableTextBlock>,
     },
     {
       blockIndexMap: instance.blockIndexMap,

@@ -271,7 +271,7 @@ export function getNodeBlock({
       at: [],
       match: (n) =>
         isBlockElement({editor, schema}, n) &&
-        n.children.some((child) => child._key === node._key),
+        n.children?.some((child) => child._key === node._key) === true,
     }),
   )
     .at(0)

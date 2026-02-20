@@ -168,7 +168,7 @@ function insertPatch(
 
     const editorWasEmptyBefore = isEqualToEmptyEditor(
       context.initialValue,
-      editor.value,
+      editor.children as Array<PortableTextBlock>,
       context.schema,
     )
 
@@ -208,7 +208,7 @@ function insertPatch(
     position === 'after' ? targetChild.index + 1 : targetChild.index
   const childInsertPath = [block.index, normalizedIdx]
 
-  if (childrenToInsert && editor.isElement(childrenToInsert)) {
+  if (childrenToInsert && editor.isElement(childrenToInsert) && childrenToInsert.children) {
     Transforms.insertNodes(editor, childrenToInsert.children, {
       at: childInsertPath,
     })
@@ -259,9 +259,11 @@ function setPatch(
       }
 
       // Insert the new children
-      Transforms.insertNodes(editor, updatedBlock.children, {
-        at: [block.index, 0],
-      })
+      if (updatedBlock.children) {
+        Transforms.insertNodes(editor, updatedBlock.children, {
+          at: [block.index, 0],
+        })
+      }
 
       // Restore the selection
       if (previousSelection) {
@@ -307,7 +309,7 @@ function setPatch(
         }
 
         const oldText = child.node.text
-        const newText = value.text
+        const newText = (value as any).text as string
         if (oldText !== newText) {
           editor.apply({
             type: 'remove_text',
@@ -370,8 +372,8 @@ function setPatch(
       // If the child is an inline object, we need to apply the patch to the
       // `value` property object.
       const value =
-        'value' in child.node && typeof child.node.value === 'object'
-          ? child.node.value
+        'value' in child.node && typeof child.node['value'] === 'object'
+          ? child.node['value']
           : {}
 
       const newValue = applyAll(value, [
@@ -391,7 +393,7 @@ function setPatch(
     return true
   } else if (block && 'value' in block.node) {
     if (patch.path.length > 1 && patch.path[1] !== 'children') {
-      const newVal = applyAll(block.node.value, [
+      const newVal = applyAll(block.node['value'], [
         {
           ...patch,
           path: patch.path.slice(1),
@@ -470,8 +472,8 @@ function unsetPatch(editor: PortableTextSlateEditor, patch: UnsetPatch) {
     }
 
     const value =
-      'value' in child.node && typeof child.node.value === 'object'
-        ? child.node.value
+      'value' in child.node && typeof child.node['value'] === 'object'
+        ? child.node['value']
         : {}
 
     const newValue = applyAll(value, [
@@ -535,7 +537,7 @@ function unsetPatch(editor: PortableTextSlateEditor, patch: UnsetPatch) {
 
   if (!child) {
     if ('value' in block.node) {
-      const newVal = applyAll(block.node.value, [
+      const newVal = applyAll(block.node['value'], [
         {
           ...patch,
           path: patch.path.slice(1),

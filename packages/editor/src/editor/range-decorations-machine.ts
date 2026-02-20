@@ -1,3 +1,4 @@
+import type {PortableTextBlock} from '@portabletext/schema'
 import {
   and,
   assign,
@@ -95,7 +96,7 @@ export const rangeDecorationsMachine = setup({
         const slateRange = toSlateRange({
           context: {
             schema: context.schema,
-            value: context.slateEditor.value,
+            value: context.slateEditor.children as Array<PortableTextBlock>,
             selection: rangeDecoration.selection,
           },
           blockIndexMap: context.slateEditor.blockIndexMap,
@@ -129,7 +130,7 @@ export const rangeDecorationsMachine = setup({
         const slateRange = toSlateRange({
           context: {
             schema: context.schema,
-            value: context.slateEditor.value,
+            value: context.slateEditor.children as Array<PortableTextBlock>,
             selection: rangeDecoration.selection,
           },
           blockIndexMap: context.slateEditor.blockIndexMap,
@@ -164,7 +165,7 @@ export const rangeDecorationsMachine = setup({
         const slateRange = toSlateRange({
           context: {
             schema: context.schema,
-            value: context.slateEditor.value,
+            value: context.slateEditor.children as Array<PortableTextBlock>,
             selection: decoratedRange.rangeDecoration.selection,
           },
           blockIndexMap: context.slateEditor.blockIndexMap,
@@ -363,9 +364,9 @@ function createDecorate(
 ) {
   return function decorate([node, path]: NodeEntry): Array<BaseRange> {
     const defaultStyle = schema.styles.at(0)?.name
-    const firstBlock = slateEditor.value[0]
+    const firstBlock = slateEditor.children[0] as PortableTextBlock
     const editorOnlyContainsEmptyParagraph =
-      slateEditor.value.length === 1 &&
+      slateEditor.children.length === 1 &&
       firstBlock &&
       isEmptyTextBlock({schema}, firstBlock) &&
       (!firstBlock.style || firstBlock.style === defaultStyle) &&
@@ -392,7 +393,7 @@ function createDecorate(
       return []
     }
 
-    if (!slateEditor.isElement(node) || node.children.length === 0) {
+    if (!slateEditor.isElement(node) || !node.children?.length) {
       return []
     }
 
@@ -406,7 +407,7 @@ function createDecorate(
       // Special case in order to only return one decoration for collapsed ranges
       if (Range.isCollapsed(decoratedRange)) {
         // Collapsed ranges should only be decorated if they are on a block child level (length 2)
-        return node.children.some(
+        return (node.children ?? []).some(
           (_, childIndex) =>
             Path.equals(decoratedRange.anchor.path, [blockIndex, childIndex]) &&
             Path.equals(decoratedRange.focus.path, [blockIndex, childIndex]),

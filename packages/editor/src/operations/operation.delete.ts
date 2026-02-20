@@ -1,6 +1,6 @@
-import {isSpan, isTextBlock} from '@portabletext/schema'
+import {isSpan, isTextBlock, type PortableTextBlock} from '@portabletext/schema'
 import {toSlateRange} from '../internal-utils/to-slate-range'
-import {VOID_CHILD_KEY} from '../internal-utils/values'
+
 import {
   deleteText,
   Editor,
@@ -21,7 +21,7 @@ export const deleteOperationImplementation: OperationImplementation<
     ? toSlateRange({
         context: {
           schema: context.schema,
-          value: operation.editor.value,
+          value: operation.editor.children as Array<PortableTextBlock>,
           selection: operation.at,
         },
         blockIndexMap: operation.editor.blockIndexMap,
@@ -57,8 +57,9 @@ export const deleteOperationImplementation: OperationImplementation<
     Transforms.removeNodes(operation.editor, {
       at,
       match: (node) =>
-        (isSpan(context, node) && node._key !== VOID_CHILD_KEY) ||
-        ('__inline' in node && node.__inline === true),
+        isSpan(context, node) ||
+        (operation.editor.isElement(node) &&
+          operation.editor.isInline(node)),
     })
 
     return

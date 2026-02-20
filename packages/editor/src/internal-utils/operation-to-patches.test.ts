@@ -38,7 +38,7 @@ const editorActor = createActor(editorMachine, {
 const relayActor = createActor(relayMachine)
 
 const e = createEditor()
-e.value = []
+e.children = []
 const editor = plugins(e, {
   editorActor,
   relayActor,

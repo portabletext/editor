@@ -20,7 +20,7 @@ import {
   isEqualValues,
 } from '../internal-utils/equality'
 import {validateValue} from '../internal-utils/validateValue'
-import {toSlateBlock, VOID_CHILD_KEY} from '../internal-utils/values'
+import {toSlateBlock} from '../internal-utils/values'
 import {
   deleteText,
   Editor,
@@ -674,7 +674,7 @@ function syncBlock({
   value: Array<PortableTextBlock>
 }) {
   const oldSlateBlock = slateEditor.children.at(index)
-  const oldBlock = slateEditor.value.at(index)
+  const oldBlock = oldSlateBlock as PortableTextBlock | undefined
 
   if (!oldSlateBlock || !oldBlock) {
     // Insert the new block
@@ -956,21 +956,6 @@ function updateBlock({
             })
 
             slateEditor.onChange()
-          } else if (!isSpanNode) {
-            // If it's a inline block, also update the void text node key
-            debug.syncValue(
-              'Updating changed inline object child',
-              currentBlockChild,
-            )
-
-            Transforms.setNodes(
-              slateEditor,
-              {_key: VOID_CHILD_KEY},
-              {
-                at: [...path, 0],
-                voids: true,
-              },
-            )
           }
         } else if (oldBlockChild) {
           debug.syncValue('Replacing child', currentBlockChild)

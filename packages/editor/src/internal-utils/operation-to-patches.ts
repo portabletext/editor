@@ -147,8 +147,8 @@ export function setNodePatch(
 
       const newValue =
         'value' in operation.newProperties &&
-        typeof operation.newProperties.value === 'object'
-          ? (operation.newProperties.value as Record<string, unknown>)
+        typeof operation.newProperties['value'] === 'object'
+          ? (operation.newProperties['value'] as Record<string, unknown>)
           : ({} satisfies Record<string, unknown>)
 
       const keys = Object.keys(newValue)
@@ -161,8 +161,8 @@ export function setNodePatch(
 
       const value =
         'value' in operation.properties &&
-        typeof operation.properties.value === 'object'
-          ? (operation.properties.value as Record<string, unknown>)
+        typeof operation.properties['value'] === 'object'
+          ? (operation.properties['value'] as Record<string, unknown>)
           : ({} satisfies Record<string, unknown>)
 
       for (const key of Object.keys(value)) {
@@ -202,8 +202,8 @@ export function setNodePatch(
 
           const properties =
             'value' in operation.newProperties &&
-            typeof operation.newProperties.value === 'object'
-              ? (operation.newProperties.value as Record<string, unknown>)
+            typeof operation.newProperties['value'] === 'object'
+              ? (operation.newProperties['value'] as Record<string, unknown>)
               : ({} satisfies Record<string, unknown>)
 
           const keys = Object.keys(properties)
@@ -330,8 +330,8 @@ export function insertNodePatch(
     const _type = operation.node._type
     const _key = operation.node._key
     const value =
-      'value' in operation.node && typeof operation.node.value === 'object'
-        ? operation.node.value
+      'value' in operation.node && typeof operation.node['value'] === 'object'
+        ? operation.node['value']
         : ({} satisfies Record<string, unknown>)
 
     return [

@@ -97,8 +97,8 @@ function applyOperationToPortableTextImmutable(
             _key: insertedNode._key,
             _type: insertedNode._type,
             ...('value' in insertedNode &&
-            typeof insertedNode.value === 'object'
-              ? insertedNode.value
+            typeof insertedNode['value'] === 'object'
+              ? insertedNode['value']
               : {}),
           }
 
@@ -129,8 +129,8 @@ function applyOperationToPortableTextImmutable(
             _key: insertedNode._key,
             _type: insertedNode._type,
             ...('value' in insertedNode &&
-            typeof insertedNode.value === 'object'
-              ? insertedNode.value
+            typeof insertedNode['value'] === 'object'
+              ? insertedNode['value']
               : {}),
           }
         } else {
@@ -375,13 +375,13 @@ function applyOperationToPortableTextImmutable(
 
       if (isObjectNode(context, node)) {
         const valueBefore = (
-          'value' in properties && typeof properties.value === 'object'
-            ? properties.value
+          'value' in properties && typeof properties['value'] === 'object'
+            ? properties['value']
             : {}
         ) as Partial<Node>
         const valueAfter = (
-          'value' in newProperties && typeof newProperties.value === 'object'
-            ? newProperties.value
+          'value' in newProperties && typeof newProperties['value'] === 'object'
+            ? newProperties['value']
             : {}
         ) as Partial<Node>
 

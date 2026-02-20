@@ -3,7 +3,7 @@ import {
   createPortableTextMemberSchemaTypes,
   portableTextMemberSchemaTypesToSchema,
 } from '@portabletext/sanity-bridge'
-import {compileSchema} from '@portabletext/schema'
+import {compileSchema, type PortableTextBlock} from '@portabletext/schema'
 import {createActor} from 'xstate'
 import {createCoreConverters} from '../converters/converters.core'
 import type {Editor, EditorConfig} from '../editor'
@@ -259,7 +259,7 @@ function createActors(config: {
           config.editorActor.send({
             ...event,
             type: 'internal.patch',
-            value: config.slateEditor.value,
+            value: config.slateEditor.children as Array<PortableTextBlock>,
           })
           break
 

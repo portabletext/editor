@@ -33,13 +33,13 @@ export function createPatchesPlugin({
   subscriptions,
 }: Options): (editor: PortableTextSlateEditor) => PortableTextSlateEditor {
   // The previous editor value are needed to figure out the _key of deleted nodes
-  // The editor.value would no longer contain that information if the node is already deleted.
+  // The editor.children would no longer contain that information if the node is already deleted.
   let previousValue: PortableTextBlock[]
 
   const applyPatch = createApplyPatch(editorActor.getSnapshot().context)
 
   return function patchesPlugin(editor: PortableTextSlateEditor) {
-    previousValue = [...editor.value]
+    previousValue = [...editor.children as Array<PortableTextBlock>]
 
     const {apply} = editor
     let bufferedPatches: Patch[] = []
@@ -107,7 +107,7 @@ export function createPatchesPlugin({
       let patches: Patch[] = []
 
       // Update previous children here before we apply
-      previousValue = editor.value
+      previousValue = editor.children as Array<PortableTextBlock>
 
       const editorWasEmpty = isEqualToEmptyEditor(
         editorActor.getSnapshot().context.initialValue,
@@ -120,7 +120,7 @@ export function createPatchesPlugin({
 
       const editorIsEmpty = isEqualToEmptyEditor(
         editorActor.getSnapshot().context.initialValue,
-        editor.value,
+        editor.children as Array<PortableTextBlock>,
         editorActor.getSnapshot().context.schema,
       )
 
@@ -256,7 +256,7 @@ export function createPatchesPlugin({
             type: 'internal.patch',
             patch: {...patch, origin: 'local'},
             operationId: editor.undoStepId,
-            value: editor.value,
+            value: editor.children as Array<PortableTextBlock>,
           })
         }
       }

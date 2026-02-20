@@ -1,3 +1,4 @@
+import type {PortableTextBlock} from '@portabletext/schema'
 import {toSlateRange} from '../internal-utils/to-slate-range'
 import {Editor, Range, Transforms} from '../slate'
 import type {OperationImplementation} from './operation.types'
@@ -11,7 +12,7 @@ export const decoratorRemoveOperationImplementation: OperationImplementation<
     ? toSlateRange({
         context: {
           schema: context.schema,
-          value: operation.editor.value,
+          value: operation.editor.children as Array<PortableTextBlock>,
           selection: operation.at,
         },
         blockIndexMap: operation.editor.blockIndexMap,
@@ -43,7 +44,7 @@ export const decoratorRemoveOperationImplementation: OperationImplementation<
       ]
       splitTextNodes.forEach(([node, path]) => {
         const block = editor.children[path[0]!]
-        if (editor.isElement(block) && block.children.includes(node)) {
+        if (editor.isElement(block) && block.children?.includes(node)) {
           Transforms.setNodes(
             editor,
             {

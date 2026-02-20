@@ -20,16 +20,17 @@ export function toSlateBlock(
 
   if (isPortableText) {
     const textBlock = block as PortableTextTextBlock
-    let hasInlines = false
+    let hasChanges = false
     const hasMissingMarkDefs = typeof textBlock.markDefs === 'undefined'
     const hasMissingChildren = typeof textBlock.children === 'undefined'
 
     const children = (textBlock.children || []).map((child) => {
       const {_type: childType, _key: childKey, ...childProps} = child
-      const propKeys = Object.keys(childProps)
 
       if (childType === undefined) {
+        const propKeys = Object.keys(childProps)
         if (propKeys.length === 1 && propKeys.at(0) === 'text') {
+          hasChanges = true
           return {
             _key: childKey,
             _type: schemaTypes.span.name,
@@ -39,26 +40,22 @@ export function toSlateBlock(
       }
 
       if (childType !== schemaTypes.span.name) {
-        // Return 'slate' version of inline object where the actual
-        // value is stored in the `value` property.
-        // In slate, inline objects are represented as regular
-        // children with actual text node in order to be able to
-        // be selected the same way as the rest of the (text) content.
-        hasInlines = true
-
+        // Inline object: return directly as PT-shaped node (no children, value, or __inline)
+        hasChanges = true
         return {
           _type: childType,
           _key: childKey,
-          children: [
-            {
-              _key: VOID_CHILD_KEY,
-              _type: schemaTypes.span.name,
-              text: '',
-              marks: [],
-            },
-          ],
-          value: childProps,
-          __inline: true,
+          ...childProps,
+        }
+      }
+
+      // Span: ensure marks is always present and text exists
+      if (!child.marks || typeof child.text !== 'string') {
+        hasChanges = true
+        return {
+          ...child,
+          marks: child.marks ?? [],
+          text: typeof child.text === 'string' ? child.text : '',
         }
       }
 
@@ -66,74 +63,30 @@ export function toSlateBlock(
       return child
     })
 
-    // Return original block
+    // Return original block if nothing changed
     if (
+      !hasChanges &&
       !hasMissingMarkDefs &&
       !hasMissingChildren &&
-      !hasInlines &&
       Array.isArray((block as any).children)
     ) {
-      // Original object
       return block as unknown as Descendant
     }
 
     return {_type, _key, ...rest, children} as Descendant
   }
 
-  return {
-    _type,
-    _key,
-    children: [
-      {
-        _key: VOID_CHILD_KEY,
-        _type: 'span',
-        text: '',
-        marks: [],
-      },
-    ],
-    value: rest,
-  } as Descendant
+  // Block object: return directly as PT-shaped node (no children, value wrapper)
+  return {_type, _key, ...rest} as Descendant
 }
 
-export function fromSlateBlock(block: Descendant, textBlockType: string) {
+export function fromSlateBlock(block: Descendant, _textBlockType: string) {
   const {_key, _type} = block
   if (!_key || !_type) {
     throw new Error('Not a valid block')
   }
-  if (
-    _type === textBlockType &&
-    'children' in block &&
-    Array.isArray(block.children) &&
-    _key
-  ) {
-    let hasInlines = false
-    const children = block.children.map((child) => {
-      const {_type: _cType} = child
-      if ('value' in child && _cType !== 'span') {
-        hasInlines = true
-        const {
-          value: v,
-          _key: k,
-          _type: t,
-          __inline: _i,
-          children: _c,
-          ...rest
-        } = child
-        return {...rest, ...v, _key: k as string, _type: t as string}
-      }
-      return child
-    })
-    if (!hasInlines) {
-      return block as PortableTextBlock // Original object
-    }
-    return {...block, children, _key, _type} as PortableTextBlock
-  }
-  const blockValue = 'value' in block && block.value
-  return {
-    _key,
-    _type,
-    ...(typeof blockValue === 'object' ? blockValue : {}),
-  } as PortableTextBlock
+  // The tree is already PT-shaped — return as-is
+  return block as PortableTextBlock
 }
 
 export function isEqualToEmptyEditor(

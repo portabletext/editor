@@ -124,7 +124,7 @@ export function createEditableAPI(
       const slateSelection = toSlateRange({
         context: {
           schema: editorActor.getSnapshot().context.schema,
-          value: editor.value,
+          value: editor.children as Array<PortableTextBlock>,
           selection,
         },
         blockIndexMap: editor.blockIndexMap,
@@ -149,7 +149,7 @@ export function createEditableAPI(
         return undefined
       }
 
-      return editor.value.at(focusBlockIndex)
+      return editor.children.at(focusBlockIndex) as PortableTextBlock | undefined
     },
     focusChild: (): PortableTextChild | undefined => {
       if (!editor.selection) {
@@ -161,7 +161,7 @@ export function createEditableAPI(
 
       const block =
         focusBlockIndex !== undefined
-          ? editor.value.at(focusBlockIndex)
+          ? editor.children.at(focusBlockIndex)
           : undefined
 
       if (!block) {
@@ -173,7 +173,7 @@ export function createEditableAPI(
           return undefined
         }
 
-        return block.children.at(focusChildIndex)
+        return block.children.at(focusChildIndex) as PortableTextChild | undefined
       }
 
       return undefined
@@ -264,7 +264,7 @@ export function createEditableAPI(
         return [undefined, undefined]
       }
 
-      const block = editor.value.at(blockIndex)
+      const block = editor.children.at(blockIndex) as PortableTextBlock | undefined
 
       if (!block) {
         return [undefined, undefined]
@@ -480,7 +480,7 @@ export function createEditableAPI(
       return selection
     },
     getValue: () => {
-      return editor.value
+      return editor.children as Array<PortableTextBlock>
     },
     isCollapsedSelection: () => {
       return !!editor.selection && Range.isCollapsed(editor.selection)
@@ -508,7 +508,7 @@ export function createEditableAPI(
       const rangeA = toSlateRange({
         context: {
           schema: editorActor.getSnapshot().context.schema,
-          value: editor.value,
+          value: editor.children as Array<PortableTextBlock>,
           selection: selectionA,
         },
         blockIndexMap: editor.blockIndexMap,
@@ -516,7 +516,7 @@ export function createEditableAPI(
       const rangeB = toSlateRange({
         context: {
           schema: editorActor.getSnapshot().context.schema,
-          value: editor.value,
+          value: editor.children as Array<PortableTextBlock>,
           selection: selectionB,
         },
         blockIndexMap: editor.blockIndexMap,
