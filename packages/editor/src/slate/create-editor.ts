@@ -1,3 +1,4 @@
+import type {EditorSchema} from '../editor/editor-schema'
 import {
   addMark,
   deleteFragment,
@@ -12,6 +13,7 @@ import {
   removeMark,
   shouldNormalize,
   type Editor,
+  type Text,
 } from './'
 import {apply} from './core'
 import {
@@ -94,13 +96,23 @@ import {deleteText} from './transforms-text'
  * delegates because the object doesn't satisfy `Editor` until after plugin
  * application. This file gets rewritten in the PT-native fork (Step 3).
  */
-export const createEditor = (): Editor => {
+export const createEditor = (context: {
+  schema: EditorSchema
+  keyGenerator: () => string
+}): Editor => {
   /* eslint-disable @typescript-eslint/no-explicit-any */
   const e: any = {
     children: [],
     operations: [],
     selection: null,
     marks: null,
+    createSpan: () =>
+      ({
+        _type: context.schema.span.name,
+        _key: context.keyGenerator(),
+        text: '',
+        marks: [],
+      }) as Text,
     isElementReadOnly: () => false,
     isInline: () => false,
     isSelectable: () => true,

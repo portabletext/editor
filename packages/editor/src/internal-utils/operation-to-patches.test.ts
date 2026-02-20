@@ -37,7 +37,10 @@ const editorActor = createActor(editorMachine, {
 })
 const relayActor = createActor(relayMachine)
 
-const e = createEditor()
+const e = createEditor({
+  schema,
+  keyGenerator: defaultKeyGenerator,
+})
 e.value = []
 const editor = plugins(e, {
   editorActor,
