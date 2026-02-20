@@ -1,9 +1,15 @@
 import type {Patch} from '@portabletext/patches'
 import type {
+  AnnotationSchemaType,
+  BlockObjectSchemaType,
+  DecoratorSchemaType,
+  InlineObjectSchemaType,
+  ListSchemaType,
   PortableTextBlock,
   PortableTextChild,
   PortableTextObject,
   PortableTextTextBlock,
+  StyleSchemaType,
   TypedObject,
 } from '@portabletext/schema'
 import type {
@@ -16,15 +22,9 @@ import type {
 } from 'react'
 import type {Observable, Subject} from 'rxjs'
 import type {PortableTextEditableProps} from '../editor/Editable'
+import type {EditorSchema} from '../editor/editor-schema'
 import type {PortableTextEditor} from '../editor/PortableTextEditor'
 import type {BlockPath, Path} from './paths'
-import type {
-  ArraySchemaType,
-  BlockDecoratorDefinition,
-  BlockListDefinition,
-  BlockStyleDefinition,
-  ObjectSchemaType,
-} from './sanity-types'
 
 /** @beta */
 export interface EditableAPIDeleteOptions {
@@ -310,7 +310,7 @@ export type OnPasteResultOrPromise = OnPasteResult | Promise<OnPasteResult>
 export interface PasteData {
   event: ClipboardEvent
   path: Path
-  schemaTypes: PortableTextMemberSchemaTypes
+  schemaTypes: EditorSchema
   value: PortableTextBlock[] | undefined
 }
 
@@ -346,9 +346,7 @@ export interface BlockRenderProps {
   path: BlockPath
   selected: boolean
   style?: string
-  schemaType: ObjectSchemaType
-  /** @deprecated Use `schemaType` instead */
-  type: ObjectSchemaType
+  schemaType: BlockObjectSchemaType
   value: PortableTextBlock
 }
 
@@ -360,9 +358,7 @@ export interface BlockChildRenderProps {
   focused: boolean
   path: Path
   selected: boolean
-  schemaType: ObjectSchemaType
-  /** @deprecated Use `schemaType` instead */
-  type: ObjectSchemaType
+  schemaType: InlineObjectSchemaType
   value: PortableTextChild
 }
 
@@ -373,10 +369,8 @@ export interface BlockAnnotationRenderProps {
   editorElementRef: RefObject<HTMLElement | null>
   focused: boolean
   path: Path
-  schemaType: ObjectSchemaType
+  schemaType: AnnotationSchemaType
   selected: boolean
-  /** @deprecated Use `schemaType` instead */
-  type: ObjectSchemaType
   value: PortableTextObject
 }
 /** @beta */
@@ -385,10 +379,8 @@ export interface BlockDecoratorRenderProps {
   editorElementRef: RefObject<HTMLElement | null>
   focused: boolean
   path: Path
-  schemaType: BlockDecoratorDefinition
+  schemaType: DecoratorSchemaType
   selected: boolean
-  /** @deprecated Use `schemaType` instead */
-  type: BlockDecoratorDefinition
   value: string
 }
 /** @beta */
@@ -399,7 +391,7 @@ export interface BlockListItemRenderProps {
   focused: boolean
   level: number
   path: Path
-  schemaType: BlockListDefinition
+  schemaType: ListSchemaType
   selected: boolean
   value: string
 }
@@ -434,7 +426,7 @@ export interface BlockStyleRenderProps {
   focused: boolean
   path: Path
   selected: boolean
-  schemaType: BlockStyleDefinition
+  schemaType: StyleSchemaType
   value: string
 }
 
@@ -494,17 +486,4 @@ export interface RangeDecoration {
    * A custom payload that can be set on the range decoration
    */
   payload?: Record<string, unknown>
-}
-
-/** @beta */
-export type PortableTextMemberSchemaTypes = {
-  annotations: (ObjectSchemaType & {i18nTitleKey?: string})[]
-  block: ObjectSchemaType
-  blockObjects: ObjectSchemaType[]
-  decorators: BlockDecoratorDefinition[]
-  inlineObjects: ObjectSchemaType[]
-  portableText: ArraySchemaType<PortableTextBlock>
-  span: ObjectSchemaType
-  styles: BlockStyleDefinition[]
-  lists: BlockListDefinition[]
 }

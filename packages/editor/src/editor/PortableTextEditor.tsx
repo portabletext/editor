@@ -2,6 +2,7 @@ import type {
   PortableTextBlock,
   PortableTextChild,
   PortableTextObject,
+  Schema,
 } from '@portabletext/schema'
 import {Subject} from 'rxjs'
 import type {
@@ -10,7 +11,6 @@ import type {
   EditableAPIDeleteOptions,
   EditorChanges,
   EditorSelection,
-  PortableTextMemberSchemaTypes,
 } from '../types/editor'
 import type {Path} from '../types/paths'
 import type {InternalEditor} from './create-editor'
@@ -40,7 +40,7 @@ export class PortableTextEditor {
   /**
    * A lookup table for all the relevant schema types for this portable text type.
    */
-  public schemaTypes: PortableTextMemberSchemaTypes
+  public schemaTypes: Schema
   /**
    * The editor instance
    */
@@ -52,9 +52,8 @@ export class PortableTextEditor {
 
   constructor(config: {editor: InternalEditor}) {
     this.editor = config.editor
-    this.schemaTypes = config.editor._internal.editorActor
-      .getSnapshot()
-      .context.getLegacySchema()
+    this.schemaTypes =
+      config.editor._internal.editorActor.getSnapshot().context.schema
     this.editable = config.editor._internal.editable
   }
 
