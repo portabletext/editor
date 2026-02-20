@@ -297,6 +297,7 @@ function setPatch(
         // Fall back to remove/insert but validate selection before restoring.
         const previousSelection = editor.selection
 
+        // Remove the previous children
         for (const [_, childPath] of Editor.nodes(editor, {
           at: [block.index],
           reverse: true,
@@ -305,10 +306,12 @@ function setPatch(
           Transforms.removeNodes(editor, {at: childPath})
         }
 
+        // Insert the new children
         Transforms.insertNodes(editor, newChildren, {
           at: [block.index, 0],
         })
 
+        // Restore the selection if paths are still valid after the swap
         if (previousSelection) {
           const anchorValid = Node.has(editor, previousSelection.anchor.path)
           const focusValid = Node.has(editor, previousSelection.focus.path)
