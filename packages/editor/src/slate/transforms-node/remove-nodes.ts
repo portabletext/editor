@@ -1,5 +1,4 @@
 import {Editor} from '../interfaces/editor'
-import {Element} from '../interfaces/element'
 import {Path} from '../interfaces/path'
 import {Range} from '../interfaces/range'
 import type {NodeTransforms} from '../interfaces/transforms/node'
@@ -20,7 +19,7 @@ export const removeNodes: NodeTransforms['removeNodes'] = (
     if (match == null) {
       match = Path.isPath(at)
         ? matchPath(editor, at)
-        : (n) => Element.isElement(n) && Editor.isBlock(editor, n)
+        : (n) => editor.isElement(n) && Editor.isBlock(editor, n)
     }
 
     if (!hanging && Range.isRange(at)) {

@@ -2,9 +2,9 @@ import type {PortableTextSpan} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
 import {
   Editor,
-  Element,
   Node,
   Range,
+  type Element,
   type Point,
   type Path as SlatePath,
 } from '../slate'
@@ -271,13 +271,13 @@ export function getNodeBlock({
       at: [],
       match: (n) =>
         isBlockElement({editor, schema}, n) &&
-        n.children.some((child) => child._key === node._key),
+        n.children?.some((child) => child._key === node._key) === true,
     }),
   )
     .at(0)
     ?.at(0)
 
-  return Element.isElement(parent)
+  return editor.isElement(parent)
     ? elementToBlock({
         schema,
         element: parent,
@@ -300,7 +300,7 @@ function isBlockElement(
   node: Node,
 ): node is Element {
   return (
-    Element.isElement(node) &&
+    editor.isElement(node) &&
     !editor.isInline(node) &&
     (schema.block.name === node._type ||
       schema.blockObjects.some(

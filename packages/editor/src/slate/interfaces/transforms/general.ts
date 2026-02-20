@@ -4,13 +4,13 @@ import {
   Point,
   Range,
   Scrubber,
-  Text,
   type Descendant,
   type Editor,
   type Element,
   type NodeEntry,
   type Operation,
   type Selection,
+  type Text,
 } from '../../index'
 import {
   insertChildren,
@@ -26,6 +26,40 @@ export interface GeneralTransforms {
    * Transform the editor by an operation.
    */
   transform: (editor: Editor, op: Operation) => void
+}
+
+/**
+ * If a point's path lands inside a childless void element (e.g. [0,0] where
+ * children[0] is a block object with no children), truncate to the void's path.
+ * This can happen when selection is restored from undo/redo, remote patches,
+ * or the sync machine.
+ */
+function correctPointForVoid(editor: Editor, point: Point): Point {
+  if (point.path.length > 1 && !Node.has(editor, point.path)) {
+    const parentPath = point.path.slice(0, -1)
+    if (Node.has(editor, parentPath)) {
+      const parent = Node.get(editor, parentPath)
+      if (editor.isElement(parent) && editor.isVoid(parent)) {
+        return {path: parentPath, offset: 0}
+      }
+    }
+  }
+  return point
+}
+
+function correctSelectionForVoids(
+  editor: Editor,
+  selection: Selection,
+): Selection {
+  if (!selection) {
+    return selection
+  }
+  const anchor = correctPointForVoid(editor, selection.anchor)
+  const focus = correctPointForVoid(editor, selection.focus)
+  if (anchor !== selection.anchor || focus !== selection.focus) {
+    return {...selection, anchor, focus}
+  }
+  return selection
 }
 
 // eslint-disable-next-line no-redeclare
@@ -84,12 +118,12 @@ export const GeneralTransforms: GeneralTransforms = {
           const prev = children[prevIndex]!
           let newNode: Descendant
 
-          if (Text.isText(node) && Text.isText(prev)) {
+          if (editor.isText(node) && editor.isText(prev)) {
             newNode = {...prev, text: prev.text + node.text} as Descendant
-          } else if (!Text.isText(node) && !Text.isText(prev)) {
+          } else if (!editor.isText(node) && !editor.isText(prev)) {
             newNode = {
               ...prev,
-              children: prev.children.concat(node.children),
+              children: (prev.children ?? []).concat(node.children ?? []),
             } as Descendant
           } else {
             throw new Error(
@@ -232,8 +266,20 @@ export const GeneralTransforms: GeneralTransforms = {
           const newNode = {...node}
 
           for (const key in newProperties) {
-            if (key === 'children' || key === 'text') {
-              throw new Error(`Cannot set the "${key}" property of nodes!`)
+            if (key === 'text' && editor.isText(node)) {
+              throw new Error(
+                `Cannot set the "text" property of text nodes! Use insert_text or remove_text instead.`,
+              )
+            }
+
+            if (
+              key === 'children' &&
+              editor.isElement(node) &&
+              !editor.isVoid(node)
+            ) {
+              throw new Error(
+                `Cannot set the "children" property of non-void elements!`,
+              )
             }
 
             const value = newProperties[key as keyof Node]
@@ -275,7 +321,9 @@ export const GeneralTransforms: GeneralTransforms = {
             )
           }
 
-          editor.selection = {...newProperties}
+          editor.selection = correctSelectionForVoids(editor, {
+            ...newProperties,
+          })
           break
         }
 
@@ -295,7 +343,7 @@ export const GeneralTransforms: GeneralTransforms = {
           }
         }
 
-        editor.selection = selection
+        editor.selection = correctSelectionForVoids(editor, selection)
 
         break
       }
@@ -315,7 +363,7 @@ export const GeneralTransforms: GeneralTransforms = {
           let newNode: Descendant
           let nextNode: Descendant
 
-          if (Text.isText(node)) {
+          if (editor.isText(node)) {
             const before = node.text.slice(0, position)
             const after = node.text.slice(position)
             newNode = {
@@ -327,8 +375,8 @@ export const GeneralTransforms: GeneralTransforms = {
               text: after,
             } as Descendant
           } else {
-            const before = node.children.slice(0, position)
-            const after = node.children.slice(position)
+            const before = (node.children ?? []).slice(0, position)
+            const after = (node.children ?? []).slice(position)
             newNode = {
               ...node,
               children: before,

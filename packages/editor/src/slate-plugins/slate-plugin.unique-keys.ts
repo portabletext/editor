@@ -2,7 +2,7 @@ import {isSpan, isTextBlock} from '@portabletext/schema'
 import type {EditorActor} from '../editor/editor-machine'
 import type {EditorContext, EditorSnapshot} from '../editor/editor-snapshot'
 import {isEqualMarks} from '../internal-utils/equality'
-import {Editor, Element, Node, Path, Transforms} from '../slate'
+import {Editor, Node, Path, Transforms} from '../slate'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {withNormalizeNode} from './slate-plugin.normalize-node'
 
@@ -48,7 +48,7 @@ export function createUniqueKeysPlugin(editorActor: EditorActor) {
               blockIndexMap: editor.blockIndexMap,
               context: {
                 schema: context.schema,
-                value: editor.value,
+                value: editor.children,
               },
             },
             operation.path,
@@ -80,7 +80,7 @@ export function createUniqueKeysPlugin(editorActor: EditorActor) {
                 blockIndexMap: editor.blockIndexMap,
                 context: {
                   schema: context.schema,
-                  value: editor.value,
+                  value: editor.children,
                 },
               },
               operation.path,
@@ -114,8 +114,8 @@ export function createUniqueKeysPlugin(editorActor: EditorActor) {
           return
         }
 
-        const block = editor.value.at(index)
-        const previousBlock = editor.value.at(prevIndex)
+        const block = editor.children.at(index)
+        const previousBlock = editor.children.at(prevIndex)
 
         if (!block || !previousBlock) {
           apply(operation)
@@ -217,7 +217,7 @@ export function createUniqueKeysPlugin(editorActor: EditorActor) {
     editor.normalizeNode = (entry) => {
       const [node, path] = entry
 
-      if (Element.isElement(node)) {
+      if (editor.isElement(node)) {
         const [parent] = Editor.parent(editor, path)
 
         if (parent && Editor.isEditor(parent)) {
@@ -254,7 +254,7 @@ export function createUniqueKeysPlugin(editorActor: EditorActor) {
       }
 
       if (
-        Element.isElement(node) &&
+        editor.isElement(node) &&
         node._type === editorActor.getSnapshot().context.schema.block.name
       ) {
         // Set key on block itself

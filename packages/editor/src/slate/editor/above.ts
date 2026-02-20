@@ -1,5 +1,7 @@
 import {Range} from '../interfaces'
 import {Editor, type EditorInterface} from '../interfaces/editor'
+import {Element} from '../interfaces/element'
+import {Node} from '../interfaces/node'
 import {Path} from '../interfaces/path'
 
 export const above: EditorInterface['above'] = (editor, options = {}) => {
@@ -17,7 +19,14 @@ export const above: EditorInterface['above'] = (editor, options = {}) => {
     if (path.length === 0) {
       return
     }
-    path = Path.parent(path)
+
+    // For childless void elements, the path points to the element itself
+    // (not a text leaf inside it). Don't go to parent in that case, since
+    // the void element should be a candidate match.
+    const node = Node.get(editor, path)
+    if (!(Element.isElement(node) && editor.isVoid(node))) {
+      path = Path.parent(path)
+    }
   }
 
   const reverse = mode === 'lowest'

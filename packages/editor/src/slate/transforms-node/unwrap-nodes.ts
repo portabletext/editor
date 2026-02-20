@@ -21,7 +21,7 @@ export const unwrapNodes: NodeTransforms['unwrapNodes'] = (
     if (match == null) {
       match = Path.isPath(at)
         ? matchPath(editor, at)
-        : (n) => Element.isElement(n) && Editor.isBlock(editor, n)
+        : (n) => editor.isElement(n) && Editor.isBlock(editor, n)
     }
 
     if (Path.isPath(at)) {
@@ -49,7 +49,8 @@ export const unwrapNodes: NodeTransforms['unwrapNodes'] = (
 
       Transforms.liftNodes(editor, {
         at: range,
-        match: (n) => Element.isAncestor(node) && node.children.includes(n),
+        match: (n) =>
+          Element.isAncestor(node) && (node.children ?? []).includes(n),
         voids,
       })
     }

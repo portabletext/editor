@@ -56,7 +56,7 @@ export const Slate = (props: {
       )
     }
 
-    editor.children = initialValue
+    editor.children = initialValue as any
     Object.assign(editor, rest)
   })
 

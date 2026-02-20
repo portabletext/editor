@@ -45,12 +45,17 @@ export const modifyDescendant = <N extends Descendant>(
 
     modifiedNode = {
       ...ancestorNode,
-      children: replaceChildren(ancestorNode.children, index, 1, modifiedNode),
+      children: replaceChildren(
+        ancestorNode.children ?? [],
+        index,
+        1,
+        modifiedNode,
+      ),
     }
   }
 
   const index = slicedPath.pop()!
-  root.children = replaceChildren(root.children, index, 1, modifiedNode)
+  root.children = replaceChildren(root.children ?? [], index, 1, modifiedNode)
 }
 
 /**
@@ -62,7 +67,7 @@ export const modifyChildren = (
   f: (children: Descendant[]) => Descendant[],
 ) => {
   if (path.length === 0) {
-    root.children = f(root.children)
+    root.children = f(root.children ?? [])
   } else {
     modifyDescendant<Element>(root, path, (node) => {
       if (Text.isText(node)) {
@@ -73,7 +78,7 @@ export const modifyChildren = (
         )
       }
 
-      return {...node, children: f(node.children)}
+      return {...node, children: f(node.children ?? [])}
     })
   }
 }

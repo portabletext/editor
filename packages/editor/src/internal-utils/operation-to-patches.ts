@@ -15,20 +15,19 @@ import {
   type PortableTextTextBlock,
 } from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
-import {
-  Element,
-  Text,
-  type Descendant,
-  type InsertNodeOperation,
-  type InsertTextOperation,
-  type MergeNodeOperation,
-  type MoveNodeOperation,
-  type RemoveNodeOperation,
-  type RemoveTextOperation,
-  type SetNodeOperation,
-  type SplitNodeOperation,
+import type {
+  Descendant,
+  InsertNodeOperation,
+  InsertTextOperation,
+  MergeNodeOperation,
+  MoveNodeOperation,
+  RemoveNodeOperation,
+  RemoveTextOperation,
+  SetNodeOperation,
+  SplitNodeOperation,
 } from '../slate'
 import type {Path} from '../types/paths'
+import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {fromSlateBlock} from './values'
 
 export function insertTextPatch(
@@ -102,6 +101,7 @@ export function removeTextPatch(
 }
 
 export function setNodePatch(
+  editor: PortableTextSlateEditor,
   schema: EditorSchema,
   children: Descendant[],
   operation: SetNodeOperation,
@@ -145,28 +145,21 @@ export function setNodePatch(
         patches.push(set(_key, [blockIndex, '_key']))
       }
 
-      const newValue =
-        'value' in operation.newProperties &&
-        typeof operation.newProperties.value === 'object'
-          ? (operation.newProperties.value as Record<string, unknown>)
-          : ({} satisfies Record<string, unknown>)
-
-      const keys = Object.keys(newValue)
-
-      for (const key of keys) {
-        const value = newValue[key]
-
+      // Properties live directly on the node now (no value wrapper)
+      // Read directly from operation.newProperties/operation.properties
+      for (const key of Object.keys(operation.newProperties)) {
+        if (key === '_key' || key === '_type' || key === 'children') {
+          continue
+        }
+        const value = (operation.newProperties as Record<string, unknown>)[key]
         patches.push(set(value, [{_key: block._key}, key]))
       }
 
-      const value =
-        'value' in operation.properties &&
-        typeof operation.properties.value === 'object'
-          ? (operation.properties.value as Record<string, unknown>)
-          : ({} satisfies Record<string, unknown>)
-
-      for (const key of Object.keys(value)) {
-        if (!(key in newValue)) {
+      for (const key of Object.keys(operation.properties)) {
+        if (key === '_key' || key === '_type' || key === 'children') {
+          continue
+        }
+        if (!(key in operation.newProperties)) {
           patches.push(unset([{_key: block._key}, key]))
         }
       }
@@ -182,38 +175,37 @@ export function setNodePatch(
         const childKey = child._key
         const patches: Patch[] = []
 
-        if (Element.isElement(child)) {
-          // The child is an inline object. This needs to be treated
-          // differently since all custom properties are stored on a `value`
-          // object.
+        if (editor.isElement(child)) {
+          // The child is an inline object. Properties live directly on the node.
 
-          const _key = operation.newProperties._key
+          for (const key of Object.keys(operation.newProperties)) {
+            if (key === '_type' || key === 'children') {
+              continue
+            }
 
-          if (_key !== undefined) {
-            patches.push(
-              set(_key, [
-                {_key: blockKey},
-                'children',
-                block.children.indexOf(child),
-                '_key',
-              ]),
-            )
-          }
+            const value = (operation.newProperties as Record<string, unknown>)[
+              key
+            ]
 
-          const properties =
-            'value' in operation.newProperties &&
-            typeof operation.newProperties.value === 'object'
-              ? (operation.newProperties.value as Record<string, unknown>)
-              : ({} satisfies Record<string, unknown>)
-
-          const keys = Object.keys(properties)
-
-          for (const key of keys) {
-            const value = properties[key]
-
-            patches.push(
-              set(value, [{_key: blockKey}, 'children', {_key: childKey}, key]),
-            )
+            if (key === '_key') {
+              patches.push(
+                set(value, [
+                  {_key: blockKey},
+                  'children',
+                  block.children.indexOf(child),
+                  '_key',
+                ]),
+              )
+            } else {
+              patches.push(
+                set(value, [
+                  {_key: blockKey},
+                  'children',
+                  {_key: childKey},
+                  key,
+                ]),
+              )
+            }
           }
 
           return patches
@@ -274,6 +266,7 @@ export function setNodePatch(
 }
 
 export function insertNodePatch(
+  editor: PortableTextSlateEditor,
   schema: EditorSchema,
   children: Descendant[],
   operation: InsertNodeOperation,
@@ -322,31 +315,18 @@ export function insertNodePatch(
     // Defensive setIfMissing to ensure children array exists before inserting
     const setIfMissingPatch = setIfMissing([], [{_key: block._key}, 'children'])
 
-    if (Text.isText(operation.node)) {
+    if (editor.isText(operation.node)) {
       return [setIfMissingPatch, insert([operation.node], position, path)]
     }
 
-    const _type = operation.node._type
-    const _key = operation.node._key
-    const value =
-      'value' in operation.node && typeof operation.node.value === 'object'
-        ? operation.node.value
-        : ({} satisfies Record<string, unknown>)
+    // Properties live directly on the node (no value wrapper)
+    // Strip children key (if present from transient states)
+    const {children: _c, ...nodeProps} = operation.node as Record<
+      string,
+      unknown
+    >
 
-    return [
-      setIfMissingPatch,
-      insert(
-        [
-          {
-            _type,
-            _key,
-            ...value,
-          },
-        ],
-        position,
-        path,
-      ),
-    ]
+    return [setIfMissingPatch, insert([nodeProps], position, path)]
   }
 
   return []

@@ -259,7 +259,7 @@ function createActors(config: {
           config.editorActor.send({
             ...event,
             type: 'internal.patch',
-            value: config.slateEditor.value,
+            value: config.slateEditor.children,
           })
           break
 

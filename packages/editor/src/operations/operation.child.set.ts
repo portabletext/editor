@@ -1,5 +1,5 @@
 import {toSlateRange} from '../internal-utils/to-slate-range'
-import {Editor, Element, Transforms} from '../slate'
+import {Editor, Transforms} from '../slate'
 import type {OperationImplementation} from './operation.types'
 
 export const childSetOperationImplementation: OperationImplementation<
@@ -8,7 +8,7 @@ export const childSetOperationImplementation: OperationImplementation<
   const location = toSlateRange({
     context: {
       schema: context.schema,
-      value: operation.editor.value,
+      value: operation.editor.children,
       selection: {
         anchor: {path: operation.at, offset: 0},
         focus: {path: operation.at, offset: 0},
@@ -34,14 +34,10 @@ export const childSetOperationImplementation: OperationImplementation<
   if (operation.editor.isTextSpan(child)) {
     const {_type, text, ...rest} = operation.props
 
-    Transforms.setNodes(
-      operation.editor,
-      {
-        ...child,
-        ...rest,
-      },
-      {at: childPath},
-    )
+    // Pass only delta props to setNodes (not the full object spread)
+    if (Object.keys(rest).length > 0) {
+      Transforms.setNodes(operation.editor, rest, {at: childPath})
+    }
 
     if (typeof text === 'string') {
       if (child.text !== text) {
@@ -64,7 +60,7 @@ export const childSetOperationImplementation: OperationImplementation<
     return
   }
 
-  if (Element.isElement(child)) {
+  if (operation.editor.isElement(child)) {
     const definition = context.schema.inlineObjects.find(
       (definition) => definition.name === child._type,
     )
@@ -75,28 +71,48 @@ export const childSetOperationImplementation: OperationImplementation<
       )
     }
 
-    const value =
-      'value' in child && typeof child.value === 'object' ? child.value : {}
     const {_type, _key, ...rest} = operation.props
 
+    // Filter to valid fields only
     for (const prop in rest) {
       if (!definition.fields.some((field) => field.name === prop)) {
         delete rest[prop]
       }
     }
 
-    Transforms.setNodes(
-      operation.editor,
-      {
-        ...child,
-        _key: typeof _key === 'string' ? _key : child._key,
-        value: {
-          ...value,
-          ...rest,
-        },
-      },
-      {at: childPath},
-    )
+    // Properties live directly on the node now (no value wrapper)
+    // Split into safe props (through setNodes) and unsafe props
+    // (text/children — Slate rejects these in set_node)
+    const safeProps: Record<string, unknown> = {}
+    const unsafeProps: Record<string, unknown> = {}
+
+    if (typeof _key === 'string') {
+      safeProps['_key'] = _key
+    }
+
+    for (const [key, val] of Object.entries(rest)) {
+      if (key === 'text' || key === 'children') {
+        unsafeProps[key] = val
+      } else {
+        safeProps[key] = val
+      }
+    }
+
+    if (Object.keys(safeProps).length > 0) {
+      Transforms.setNodes(operation.editor, safeProps, {at: childPath})
+    }
+
+    // For unsafe props, use remove_node + insert_node
+    if (Object.keys(unsafeProps).length > 0) {
+      const currentChild = Editor.node(operation.editor, childPath)?.[0]
+      if (currentChild) {
+        const updatedChild = {...currentChild, ...unsafeProps}
+        Transforms.removeNodes(operation.editor, {at: childPath})
+        Transforms.insertNodes(operation.editor, updatedChild, {
+          at: childPath,
+        })
+      }
+    }
 
     return
   }

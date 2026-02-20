@@ -7,7 +7,7 @@ import {
 } from '@portabletext/schema'
 import type {EditorActor} from '../editor/editor-machine'
 import {debug} from '../internal-utils/debug'
-import {Editor, Transforms, type Element} from '../slate'
+import {Editor, Transforms, type Element, type Node} from '../slate'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {isListBlock} from '../utils/parse-blocks'
 import {withNormalizeNode} from './slate-plugin.normalize-node'
@@ -20,6 +20,29 @@ export function createSchemaPlugin({editorActor}: {editorActor: EditorActor}) {
   return function schemaPlugin(
     editor: PortableTextSlateEditor,
   ): PortableTextSlateEditor {
+    editor.createTextNode = () =>
+      ({
+        _type: editorActor.getSnapshot().context.schema.span.name,
+        _key: editorActor.getSnapshot().context.keyGenerator(),
+        text: '',
+        marks: [],
+      }) as unknown as Node
+    editor.isText = (value: any): value is import('../slate').Text => {
+      if (!value || typeof value !== 'object') {
+        return false
+      }
+      const spanName = editorActor.getSnapshot().context.schema.span.name
+      return typeof value.text === 'string' && value._type === spanName
+    }
+    editor.isElement = (value: any): value is Element => {
+      if (!value || typeof value !== 'object') {
+        return false
+      }
+      if (typeof value.apply === 'function') {
+        return false
+      }
+      return typeof value._type === 'string' && !editor.isText(value)
+    }
     editor.isTextBlock = (value: unknown): value is PortableTextTextBlock => {
       if (Editor.isEditor(value)) {
         return false
@@ -66,11 +89,23 @@ export function createSchemaPlugin({editorActor}: {editorActor: EditorActor}) {
       const inlineSchemaTypes = editorActor
         .getSnapshot()
         .context.schema.inlineObjects.map((obj) => obj.name)
-      return (
-        inlineSchemaTypes.includes(element._type) &&
-        '__inline' in element &&
-        element.__inline === true
-      )
+
+      if (!inlineSchemaTypes.includes(element._type)) {
+        return false
+      }
+
+      // For dual-position types (in both blockObjects and inlineObjects),
+      // check position: block-level elements are direct children of the editor,
+      // inline elements are grandchildren (inside a text block).
+      const blockSchemaTypes = editorActor
+        .getSnapshot()
+        .context.schema.blockObjects.map((obj) => obj.name)
+
+      if (blockSchemaTypes.includes(element._type)) {
+        return !editor.children.includes(element as any)
+      }
+
+      return true
     }
 
     // Extend Slate's default normalization

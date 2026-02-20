@@ -3,7 +3,7 @@ import type {EditorActor} from '../editor/editor-machine'
 import {createPlaceholderBlock} from '../internal-utils/create-placeholder-block'
 import {debug} from '../internal-utils/debug'
 import {isEqualMarkDefs} from '../internal-utils/equality'
-import {Editor, Node, Path, Range, Text, Transforms} from '../slate'
+import {Editor, Node, Path, Range, Transforms} from '../slate'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {withNormalizeNode} from './slate-plugin.normalize-node'
 import {withoutPatching} from './slate-plugin.without-patching'
@@ -243,7 +243,7 @@ export function createNormalizationPlugin(
         const newMarkDefs = (node.markDefs || []).filter((def) => {
           return node.children.find((child) => {
             return (
-              Text.isText(child) &&
+              editor.isText(child) &&
               Array.isArray(child.marks) &&
               child.marks.includes(def._key)
             )

@@ -1,4 +1,3 @@
-import {applyAll, set} from '@portabletext/patches'
 import {isTextBlock} from '@portabletext/schema'
 import {Transforms, type Node} from '../slate'
 import {parseMarkDefs} from '../utils/parse-blocks'
@@ -76,7 +75,12 @@ export const blockSetOperationImplementation: OperationImplementation<
     const schemaDefinition = context.schema.blockObjects.find(
       (definition) => definition.name === slateBlock._type,
     )
-    const filteredProps: Record<string, unknown> = {}
+
+    // Properties live directly on the node now (no value wrapper)
+    // Split into safe props (through setNodes) and unsafe props
+    // (text/children — Slate rejects these in set_node)
+    const safeProps: Record<string, unknown> = {}
+    const unsafeProps: Record<string, unknown> = {}
 
     for (const key of Object.keys(operation.props)) {
       if (key === '_type') {
@@ -84,21 +88,37 @@ export const blockSetOperationImplementation: OperationImplementation<
       }
 
       if (key === '_key') {
-        filteredProps[key] = operation.props[key]
+        safeProps[key] = operation.props[key]
         continue
       }
 
-      if (schemaDefinition?.fields.some((field) => field.name === key)) {
-        filteredProps[key] = operation.props[key]
+      if (!schemaDefinition?.fields.some((field) => field.name === key)) {
+        continue
+      }
+
+      if (key === 'text' || key === 'children') {
+        unsafeProps[key] = operation.props[key]
+      } else {
+        safeProps[key] = operation.props[key]
       }
     }
 
-    const patches = Object.entries(filteredProps).map(([key, value]) =>
-      key === '_key' ? set(value, ['_key']) : set(value, ['value', key]),
-    )
+    if (Object.keys(safeProps).length > 0) {
+      Transforms.setNodes(operation.editor, safeProps as Partial<Node>, {
+        at: [blockIndex],
+      })
+    }
 
-    const updatedSlateBlock = applyAll(slateBlock, patches) as Partial<Node>
-
-    Transforms.setNodes(operation.editor, updatedSlateBlock, {at: [blockIndex]})
+    // For unsafe props (text/children), use remove_node + insert_node
+    if (Object.keys(unsafeProps).length > 0) {
+      const currentBlock = operation.editor.children.at(blockIndex)
+      if (currentBlock) {
+        const updatedBlock = {...currentBlock, ...unsafeProps}
+        Transforms.removeNodes(operation.editor, {at: [blockIndex]})
+        Transforms.insertNodes(operation.editor, updatedBlock, {
+          at: [blockIndex],
+        })
+      }
+    }
   }
 }

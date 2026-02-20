@@ -1,7 +1,6 @@
 import type {Editor} from '../interfaces/editor'
 import {Node} from '../interfaces/node'
 import {Path} from '../interfaces/path'
-import {Text} from '../interfaces/text'
 import type {WithEditorFirstArg} from '../utils/types'
 
 /**
@@ -22,7 +21,7 @@ export const getDirtyPaths: WithEditorFirstArg<Editor['getDirtyPaths']> = (
     case 'insert_node': {
       const {node, path} = op
       const levels = Path.levels(path)
-      const descendants = Text.isText(node)
+      const descendants = !Array.isArray((node as any).children)
         ? []
         : Array.from(Node.nodes(node), ([, p]) => path.concat(p))
 

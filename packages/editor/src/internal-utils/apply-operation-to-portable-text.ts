@@ -1,7 +1,7 @@
 import type {PortableTextBlock} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
 import type {EditorContext} from '../editor/editor-snapshot'
-import {Element, Path, type Node, type Operation} from '../slate'
+import {Path, type Node, type Operation} from '../slate'
 import type {OmitFromUnion} from '../type-utils'
 import {
   getBlock,
@@ -32,7 +32,7 @@ export function applyOperationToPortableText(
       root,
       operation,
     )
-    return newRoot.children as Array<PortableTextBlock>
+    return newRoot.children as any
   } catch (e) {
     console.error(e)
     return value
@@ -88,14 +88,17 @@ function applyOperationToPortableTextImmutable(
           }
         }
 
-        if (Element.isElement(insertedNode) && !('__inline' in insertedNode)) {
+        if (
+          Array.isArray((insertedNode as any).children) &&
+          !('__inline' in insertedNode)
+        ) {
           // Void blocks have to have their `value` spread onto the block
           const newBlock = {
             _key: insertedNode._key,
             _type: insertedNode._type,
             ...('value' in insertedNode &&
-            typeof insertedNode.value === 'object'
-              ? insertedNode.value
+            typeof insertedNode['value'] === 'object'
+              ? insertedNode['value']
               : {}),
           }
 
@@ -126,8 +129,8 @@ function applyOperationToPortableTextImmutable(
             _key: insertedNode._key,
             _type: insertedNode._type,
             ...('value' in insertedNode &&
-            typeof insertedNode.value === 'object'
-              ? insertedNode.value
+            typeof insertedNode['value'] === 'object'
+              ? insertedNode['value']
               : {}),
           }
         } else {
@@ -372,20 +375,20 @@ function applyOperationToPortableTextImmutable(
 
       if (isObjectNode(context, node)) {
         const valueBefore = (
-          'value' in properties && typeof properties.value === 'object'
-            ? properties.value
+          'value' in properties && typeof properties['value'] === 'object'
+            ? properties['value']
             : {}
         ) as Partial<Node>
         const valueAfter = (
-          'value' in newProperties && typeof newProperties.value === 'object'
-            ? newProperties.value
+          'value' in newProperties && typeof newProperties['value'] === 'object'
+            ? newProperties['value']
             : {}
         ) as Partial<Node>
 
         const newNode = {...node}
 
         for (const key in newProperties) {
-          if (key === 'value') {
+          if (key === 'value' || key === 'children') {
             continue
           }
 
@@ -399,7 +402,7 @@ function applyOperationToPortableTextImmutable(
         }
 
         for (const key in properties) {
-          if (key === 'value') {
+          if (key === 'value' || key === 'children') {
             continue
           }
 

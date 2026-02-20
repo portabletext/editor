@@ -5,13 +5,13 @@ import {toSlateRange} from '../internal-utils/to-slate-range'
 import {toSlateBlock} from '../internal-utils/values'
 import {
   Editor,
-  Element,
   Node,
   Path,
   Point,
   Range,
-  Text,
   type Descendant,
+  type Element,
+  type Text,
 } from '../slate'
 import type {EditorSelection} from '../types/editor'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
@@ -61,7 +61,7 @@ export function insertBlock(options: {
     ? toSlateRange({
         context: {
           schema: context.schema,
-          value: editor.value,
+          value: editor.children,
           selection: options.at,
         },
         blockIndexMap: editor.blockIndexMap,
@@ -84,7 +84,7 @@ export function insertBlock(options: {
       at: start,
       mode: 'lowest',
       match: (node, path) =>
-        Element.isElement(node) && path.length <= start.path.length,
+        editor.isElement(node) && path.length <= start.path.length,
     }),
   ).at(0) ?? [undefined, undefined]
   let [endBlock, endBlockPath] = Array.from(
@@ -92,7 +92,7 @@ export function insertBlock(options: {
       at: end,
       mode: 'lowest',
       match: (node, path) =>
-        Element.isElement(node) && path.length <= end.path.length,
+        editor.isElement(node) && path.length <= end.path.length,
     }),
   ).at(0) ?? [undefined, undefined]
 
@@ -140,7 +140,7 @@ export function insertBlock(options: {
     const startBlock = Node.get(editor, [start.path[0]!])
     const startOfBlock = Editor.start(editor, [start.path[0]!])
     const isAtStartOfBlock =
-      Element.isElement(startBlock) && Point.equals(start, startOfBlock)
+      editor.isElement(startBlock) && Point.equals(start, startOfBlock)
 
     // Delete the expanded range
     deleteExpandedRange(editor, at)
@@ -189,7 +189,7 @@ export function insertBlock(options: {
       try {
         const potentiallyEmptyBlock = Node.get(editor, emptyBlockPath)
         if (
-          Element.isElement(potentiallyEmptyBlock) &&
+          editor.isElement(potentiallyEmptyBlock) &&
           isEmptyTextBlock(context, potentiallyEmptyBlock)
         ) {
           editor.apply({
@@ -322,11 +322,11 @@ export function insertBlock(options: {
         Editor.nodes(editor, {
           at: Editor.end(editor, []),
           mode: 'lowest',
-          match: (node, path) => Element.isElement(node) && path.length === 1,
+          match: (node, path) => editor.isElement(node) && path.length === 1,
         }),
       ).at(-1) ?? [undefined, undefined]
 
-      if (newEndBlock && newEndBlockPath && Element.isElement(newEndBlock)) {
+      if (newEndBlock && newEndBlockPath && editor.isElement(newEndBlock)) {
         endBlock = newEndBlock
         endBlockPath = newEndBlockPath
       }
@@ -401,7 +401,7 @@ export function insertBlock(options: {
     // Carry over the markDefs from the incoming block to the end block
     const endBlockNode = Node.get(editor, endBlockPath)
 
-    if (Element.isElement(endBlockNode) && editor.isTextBlock(endBlockNode)) {
+    if (editor.isElement(endBlockNode) && editor.isTextBlock(endBlockNode)) {
       const properties: Partial<Element> = {
         markDefs: endBlockNode.markDefs,
       }
@@ -549,7 +549,11 @@ export function insertBlock(options: {
 
       // Remove nodes after start
       const blockNode = Node.get(editor, endBlockPath) as Element
-      for (let i = blockNode.children.length - 1; i > start.path[1]!; i--) {
+      for (
+        let i = (blockNode.children?.length ?? 0) - 1;
+        i > start.path[1]!;
+        i--
+      ) {
         removeNodeAt(editor, [...endBlockPath, i])
       }
 
@@ -581,7 +585,7 @@ export function insertBlock(options: {
       if (editor.isTextBlock(block)) {
         // Inserting text block: split the text node and insert fragment
         const nodeToSplit = Node.get(editor, startPoint.path)
-        if (Text.isText(nodeToSplit)) {
+        if (editor.isText(nodeToSplit)) {
           const {text: _, ...properties} = nodeToSplit
           editor.apply({
             type: 'split_node',
@@ -616,7 +620,7 @@ export function insertBlock(options: {
         // Split text node first
         const textNode = Node.get(editor, currentPath)
         if (
-          Text.isText(textNode) &&
+          editor.isText(textNode) &&
           currentOffset > 0 &&
           currentOffset < textNode.text.length
         ) {
@@ -637,8 +641,8 @@ export function insertBlock(options: {
         const blockToSplit = Node.get(editor, blockPath)
 
         if (
-          splitAtIndex < (blockToSplit as Element).children.length &&
-          Element.isElement(blockToSplit)
+          splitAtIndex < ((blockToSplit as Element).children?.length ?? 0) &&
+          editor.isElement(blockToSplit)
         ) {
           // Get the properties to preserve in the split
           const {children: _, ...blockProperties} = blockToSplit
@@ -855,7 +859,7 @@ function deleteSameBlockRange(
   // Merge adjacent text nodes
   const startNodeAfter = Node.get(editor, start.path)
   const endNodeAfter = Node.get(editor, newEndPath)
-  if (Text.isText(startNodeAfter) && Text.isText(endNodeAfter)) {
+  if (editor.isText(startNodeAfter) && editor.isText(endNodeAfter)) {
     const {text: _, ...properties} = endNodeAfter
     editor.apply({
       type: 'merge_node',
@@ -892,7 +896,11 @@ function deleteCrossBlockRange(
 
     // Remove remaining nodes in start block
     const startBlock = Node.get(editor, startBlockPath) as Element
-    for (let i = startBlock.children.length - 1; i > start.path[1]!; i--) {
+    for (
+      let i = (startBlock.children?.length ?? 0) - 1;
+      i > start.path[1]!;
+      i--
+    ) {
       removeNodeAt(editor, [...startBlockPath, i])
     }
   }
@@ -962,7 +970,7 @@ function insertTextBlockFragment(
   block: Descendant,
   at: Point,
 ) {
-  if (!Element.isElement(block) || !editor.isTextBlock(block)) {
+  if (!editor.isElement(block) || !editor.isTextBlock(block)) {
     return
   }
 
@@ -970,7 +978,7 @@ function insertTextBlockFragment(
   if (at.offset > 0) {
     const textNode = Node.get(editor, at.path)
 
-    if (Text.isText(textNode)) {
+    if (editor.isText(textNode)) {
       const {text: _, ...properties} = textNode
 
       editor.apply({

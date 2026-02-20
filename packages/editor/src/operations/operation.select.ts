@@ -9,7 +9,7 @@ export const selectOperationImplementation: OperationImplementation<
   const newSelection = toSlateRange({
     context: {
       schema: context.schema,
-      value: operation.editor.value,
+      value: operation.editor.children,
       selection: operation.at,
     },
     blockIndexMap: operation.editor.blockIndexMap,

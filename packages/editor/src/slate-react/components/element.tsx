@@ -5,6 +5,7 @@ import {
   Node,
   type DecoratedRange,
   type Element as SlateElement,
+  type Text as SlateText,
 } from '../../slate'
 import {
   EDITOR_TO_KEY_TO_ELEMENT,
@@ -120,8 +121,9 @@ const Element = (props: {
     }
 
     const Tag = isInline ? 'span' : 'div'
-    const [textEntry] = Node.texts(element)
-    const [text] = textEntry!
+    // Synthesize a virtual text node for rendering. Childless void elements
+    // have no text children — this exists only in the rendering layer.
+    const text: SlateText = {text: ''} as SlateText
 
     children = (
       <Tag

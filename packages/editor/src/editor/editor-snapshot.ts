@@ -57,7 +57,7 @@ export function createEditorSnapshot({
     readOnly,
     schema,
     selection,
-    value: editor.value,
+    value: editor.children,
   } satisfies EditorContext
 
   return {

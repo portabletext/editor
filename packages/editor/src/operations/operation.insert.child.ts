@@ -1,6 +1,5 @@
 import {isTextBlock} from '@portabletext/schema'
 import {getFocusBlock, getFocusSpan} from '../internal-utils/slate-utils'
-import {VOID_CHILD_KEY} from '../internal-utils/values'
 import {Transforms} from '../slate'
 import {EDITOR_TO_PENDING_SELECTION} from '../slate-dom'
 import {parseInlineObject, parseSpan} from '../utils/parse-blocks'
@@ -72,54 +71,19 @@ export const insertChildOperationImplementation: OperationImplementation<
   })
 
   if (inlineObject) {
-    const {_key, _type, ...rest} = inlineObject
-
+    // Insert inline object directly as PT-shaped node (no children/value/__inline)
     const [focusSpan] = getFocusSpan({editor: operation.editor})
 
     if (focusSpan) {
-      Transforms.insertNodes(
-        operation.editor,
-        {
-          _key,
-          _type,
-          children: [
-            {
-              _key: VOID_CHILD_KEY,
-              _type: 'span',
-              text: '',
-              marks: [],
-            },
-          ],
-          value: rest,
-          __inline: true,
-        },
-        {
-          at: focus,
-          select: true,
-        },
-      )
+      Transforms.insertNodes(operation.editor, inlineObject, {
+        at: focus,
+        select: true,
+      })
     } else {
-      Transforms.insertNodes(
-        operation.editor,
-        {
-          _key,
-          _type,
-          children: [
-            {
-              _key: VOID_CHILD_KEY,
-              _type: 'span',
-              text: '',
-              marks: [],
-            },
-          ],
-          value: rest,
-          __inline: true,
-        },
-        {
-          at: [focusBlockIndex, focusChildIndex + 1],
-          select: true,
-        },
-      )
+      Transforms.insertNodes(operation.editor, inlineObject, {
+        at: [focusBlockIndex, focusChildIndex + 1],
+        select: true,
+      })
     }
 
     return

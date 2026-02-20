@@ -194,8 +194,9 @@ describe('event.block.set', () => {
           description: 'Sanity is a headless CMS',
         },
       ])
+      // Only the changed property emits a patch — href was already set
+      // during insert, so no patch needed for it.
       expect(patches.slice(4)).toEqual([
-        set('https://www.sanity.io', [{_key: urlBlockKey}, 'href']),
         set('Sanity is a headless CMS', [{_key: urlBlockKey}, 'description']),
       ])
     })

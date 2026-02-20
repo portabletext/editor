@@ -1,5 +1,5 @@
 import {Editor} from '../interfaces/editor'
-import {Element} from '../interfaces/element'
+import type {Element} from '../interfaces/element'
 import {Node, type Descendant} from '../interfaces/node'
 import {Text} from '../interfaces/text'
 import {Transforms} from '../interfaces/transforms'
@@ -13,13 +13,18 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   const [node, path] = entry
 
   // There are no core normalizations for text nodes.
-  if (Text.isText(node)) {
+  if (editor.isText(node)) {
+    return
+  }
+
+  // Void elements have no children to normalize.
+  if (editor.isElement(node) && editor.isVoid(node)) {
     return
   }
 
   // Ensure that block and inline nodes have at least one text child.
-  if (Element.isElement(node) && node.children.length === 0) {
-    const child = {text: ''} as Node
+  if (editor.isElement(node) && node.children!.length === 0) {
+    const child = editor.createTextNode()
     Transforms.insertNodes(editor, child, {
       at: path.concat(0),
       voids: true,
@@ -30,26 +35,27 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   // Determine whether the node should have block or inline children.
   const shouldHaveInlines = Editor.isEditor(node)
     ? false
-    : Element.isElement(node) &&
+    : editor.isElement(node) &&
       (editor.isInline(node) ||
-        node.children.length === 0 ||
-        Text.isText(node.children[0]!) ||
-        editor.isInline(node.children[0]!))
+        node.children!.length === 0 ||
+        editor.isText(node.children![0]!) ||
+        editor.isInline(node.children![0]!))
 
   // Since we'll be applying operations while iterating, keep track of an
   // index that accounts for any added/removed nodes.
   let n = 0
 
-  for (let i = 0; i < node.children.length; i++, n++) {
+  for (let i = 0; i < node.children!.length; i++, n++) {
     const currentNode = Node.get(editor, path)
-    if (Text.isText(currentNode)) {
+    if (editor.isText(currentNode)) {
       continue
     }
-    const child = currentNode.children[n] as Descendant
-    const prev = currentNode.children[n - 1] as Descendant
-    const isLast = i === node.children.length - 1
+    const child = currentNode.children![n] as Descendant
+    const prev = currentNode.children![n - 1] as Descendant
+    const isLast = i === node.children!.length - 1
     const isInlineOrText =
-      Text.isText(child) || (Element.isElement(child) && editor.isInline(child))
+      editor.isText(child) ||
+      (editor.isElement(child) && editor.isInline(child))
 
     // Only allow block nodes in the top-level children and parent blocks
     // that only contain block nodes. Similarly, only allow inline nodes in
@@ -69,18 +75,18 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
         Transforms.unwrapNodes(editor, {at: path.concat(n), voids: true})
       }
       n--
-    } else if (Element.isElement(child)) {
+    } else if (editor.isElement(child)) {
       // Ensure that inline nodes are surrounded by text nodes.
       if (editor.isInline(child)) {
-        if (prev == null || !Text.isText(prev)) {
-          const newChild = {text: ''} as Node
+        if (prev == null || !editor.isText(prev)) {
+          const newChild = editor.createTextNode()
           Transforms.insertNodes(editor, newChild, {
             at: path.concat(n),
             voids: true,
           })
           n++
         } else if (isLast) {
-          const newChild = {text: ''} as Node
+          const newChild = editor.createTextNode()
           Transforms.insertNodes(editor, newChild, {
             at: path.concat(n + 1),
             voids: true,
@@ -97,13 +103,17 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
       // To prevent slate from breaking, we can add the `children` field,
       // and now that it is valid, we can to many more operations easily,
       // such as extend normalizers to fix erronous structure.
-      if (!Text.isText(child) && !('children' in child)) {
+      if (
+        !editor.isText(child) &&
+        !('children' in child) &&
+        !(editor.isElement(child) && editor.isVoid(child))
+      ) {
         const elementChild = child as Element
         elementChild.children = []
       }
 
       // Merge adjacent text nodes that are empty or match.
-      if (prev != null && Text.isText(prev)) {
+      if (prev != null && editor.isText(prev)) {
         if (Text.equals(child, prev, {loose: true})) {
           Transforms.mergeNodes(editor, {at: path.concat(n), voids: true})
           n--

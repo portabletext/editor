@@ -2,7 +2,6 @@ import {compileSchemaDefinitionToPortableTextMemberSchemaTypes} from '@portablet
 import {
   compileSchema,
   defineSchema,
-  type PortableTextBlock,
   type PortableTextTextBlock,
 } from '@portabletext/schema'
 import {beforeEach, describe, expect, it, test} from 'vitest'
@@ -38,7 +37,7 @@ const editorActor = createActor(editorMachine, {
 const relayActor = createActor(relayMachine)
 
 const e = createEditor()
-e.value = []
+e.children = []
 const editor = plugins(e, {
   editorActor,
   relayActor,
@@ -57,51 +56,40 @@ const createDefaultChildren = () =>
         {
           _key: '773866318fa8',
           _type: 'someObject',
-          value: {title: 'The Object'},
-          __inline: true,
-          children: [{_type: 'span', _key: 'bogus', text: '', marks: []}],
+          title: 'The Object',
         },
         {_type: 'span', _key: 'fd9b4a4e6c0b', text: '', marks: []},
       ],
     },
   ] satisfies Array<Descendant>
-const createDefaultValue = () =>
-  [
-    {
-      _type: 'block',
-      _key: '1f2e64b47787',
-      style: 'normal',
-      markDefs: [],
-      children: [
-        {_type: 'span', _key: 'c130395c640c', text: '', marks: []},
-        {
-          _key: '773866318fa8',
-          _type: 'someObject',
-          value: {title: 'The Object'},
-        },
-        {_type: 'span', _key: 'fd9b4a4e6c0b', text: '', marks: []},
-      ],
-    },
-  ] as Array<PortableTextBlock>
+const createDefaultValue = () => [
+  {
+    _type: 'block',
+    _key: '1f2e64b47787',
+    style: 'normal',
+    markDefs: [],
+    children: [
+      {_type: 'span', _key: 'c130395c640c', text: '', marks: []},
+      {
+        _key: '773866318fa8',
+        _type: 'someObject',
+        title: 'The Object',
+      },
+      {_type: 'span', _key: 'fd9b4a4e6c0b', text: '', marks: []},
+    ],
+  },
+]
 
 describe(insertNodePatch.name, () => {
   test('Scenario: Inserting block object on empty editor', () => {
     expect(
       insertNodePatch(
+        editor,
         compileSchema(defineSchema({blockObjects: [{name: 'image'}]})),
         [
           {
             _key: 'k2',
             _type: 'image',
-            children: [
-              {
-                _key: 'void-child',
-                _type: 'span',
-                marks: [],
-                text: '',
-              },
-            ],
-            value: {},
           },
         ],
         {
@@ -110,15 +98,6 @@ describe(insertNodePatch.name, () => {
           node: {
             _key: 'k2',
             _type: 'image',
-            children: [
-              {
-                _key: 'void-child',
-                _type: 'span',
-                marks: [],
-                text: '',
-              },
-            ],
-            value: {},
           },
         },
         [],
@@ -215,6 +194,7 @@ describe('operationToPatches', () => {
   it('produce correct insert block patch', () => {
     expect(
       insertNodePatch(
+        editor,
         schema,
         editor.children,
         {
@@ -223,9 +203,7 @@ describe('operationToPatches', () => {
           node: {
             _type: 'someObject',
             _key: 'c130395c640c',
-            value: {title: 'The Object'},
-            __inline: false,
-            children: [{_key: '1', _type: 'span', text: '', marks: []}],
+            title: 'The Object',
           },
         },
         createDefaultValue(),
@@ -257,6 +235,7 @@ describe('operationToPatches', () => {
     editor.onChange()
     expect(
       insertNodePatch(
+        editor,
         schema,
         editor.children,
         {
@@ -265,9 +244,6 @@ describe('operationToPatches', () => {
           node: {
             _type: 'someObject',
             _key: 'c130395c640c',
-            value: {},
-            __inline: false,
-            children: [{_key: '1', _type: 'span', text: '', marks: []}],
           },
         },
 
@@ -300,6 +276,7 @@ describe('operationToPatches', () => {
   test('produce correct insert child patch', () => {
     expect(
       insertNodePatch(
+        editor,
         schema,
         editor.children,
         {
@@ -308,9 +285,7 @@ describe('operationToPatches', () => {
           node: {
             _type: 'someObject',
             _key: 'c130395c640c',
-            value: {title: 'The Object'},
-            __inline: true,
-            children: [{_key: '1', _type: 'span', text: '', marks: []}],
+            title: 'The Object',
           },
         },
 
@@ -431,9 +406,7 @@ describe('operationToPatches', () => {
           node: {
             _key: '773866318fa8',
             _type: 'someObject',
-            value: {title: 'The object'},
-            __inline: true,
-            children: [{_type: 'span', _key: 'bogus', text: '', marks: []}],
+            title: 'The object',
           },
         },
       ),
@@ -544,6 +517,7 @@ describe('defensive setIfMissing patches', () => {
   describe(insertNodePatch.name, () => {
     test('includes setIfMissing before inserting a span into children', () => {
       const patches = insertNodePatch(
+        editor,
         schema,
         editor.children,
         {
@@ -576,6 +550,7 @@ describe('defensive setIfMissing patches', () => {
 
     test('includes setIfMissing before inserting an inline object into children', () => {
       const patches = insertNodePatch(
+        editor,
         schema,
         editor.children,
         {
@@ -584,9 +559,7 @@ describe('defensive setIfMissing patches', () => {
           node: {
             _type: 'someObject',
             _key: 'new-object',
-            value: {title: 'New Object'},
-            __inline: true,
-            children: [{_key: '1', _type: 'span', text: '', marks: []}],
+            title: 'New Object',
           },
         },
         createDefaultValue(),

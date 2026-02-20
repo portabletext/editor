@@ -2,12 +2,10 @@ import {batchDirtyPaths} from '../core/batch-dirty-paths'
 import {updateDirtyPaths} from '../core/update-dirty-paths'
 import type {BaseInsertNodeOperation} from '../interfaces'
 import {Editor} from '../interfaces/editor'
-import {Element} from '../interfaces/element'
 import {Node} from '../interfaces/node'
 import {Path} from '../interfaces/path'
 import {Point} from '../interfaces/point'
 import {Range} from '../interfaces/range'
-import {Text} from '../interfaces/text'
 import {Transforms} from '../interfaces/transforms'
 import type {NodeTransforms} from '../interfaces/transforms/node'
 import {getDefaultInsertLocation} from '../utils'
@@ -64,12 +62,12 @@ export const insertNodes: NodeTransforms['insertNodes'] = (
 
     if (Point.isPoint(at)) {
       if (match == null) {
-        if (Text.isText(node)) {
-          match = (n) => Text.isText(n)
+        if (editor.isText(node)) {
+          match = (n) => editor.isText(n)
         } else if (editor.isInline(node)) {
-          match = (n) => Text.isText(n) || Editor.isInline(editor, n)
+          match = (n) => editor.isText(n) || Editor.isInline(editor, n)
         } else {
-          match = (n) => Element.isElement(n) && Editor.isBlock(editor, n)
+          match = (n) => editor.isElement(n) && Editor.isBlock(editor, n)
         }
       }
 
@@ -120,7 +118,7 @@ export const insertNodes: NodeTransforms['insertNodes'] = (
             at = Path.next(at as Path)
 
             batchedOps.push(op)
-            if (Text.isText(node)) {
+            if (editor.isText(node)) {
               newDirtyPaths.push(path)
             } else {
               newDirtyPaths.push(

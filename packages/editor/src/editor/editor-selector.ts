@@ -82,7 +82,7 @@ export function getEditorSnapshot({
       readOnly: editorActorSnapshot.matches({'edit mode': 'read only'}),
       schema: editorActorSnapshot.context.schema,
       selection,
-      value: slateEditorInstance.value,
+      value: slateEditorInstance.children,
     },
     decoratorState: slateEditorInstance.decoratorState,
   }

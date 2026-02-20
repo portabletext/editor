@@ -22,9 +22,9 @@ export type SlateEditor = {
 export function createSlateEditor(config: SlateEditorConfig): SlateEditor {
   debug.setup('creating new slate editor instance')
 
-  const placeholderBlock = createPlaceholderBlock(
-    config.editorActor.getSnapshot().context,
-  )
+  const context = config.editorActor.getSnapshot().context
+
+  const placeholderBlock = createPlaceholderBlock(context)
 
   const editor = createEditor()
 
@@ -37,7 +37,6 @@ export function createSlateEditor(config: SlateEditorConfig): SlateEditor {
   editor.listIndexMap = new Map<string, number>()
   editor.remotePatches = []
   editor.undoStepId = undefined
-  editor.value = [placeholderBlock]
 
   editor.isDeferringMutations = false
   editor.isNormalizingNode = false
@@ -54,10 +53,17 @@ export function createSlateEditor(config: SlateEditorConfig): SlateEditor {
     subscriptions: config.subscriptions,
   })
 
+  const initialValue = [placeholderBlock]
+
+  // Set children before building index maps so the initial render has
+  // correct blockIndexMap entries. The <Slate> component will also set
+  // editor.children = initialValue, but buildIndexMaps needs it now.
+  instance.children = initialValue as any
+
   buildIndexMaps(
     {
-      schema: config.editorActor.getSnapshot().context.schema,
-      value: instance.value,
+      schema: context.schema,
+      value: instance.children,
     },
     {
       blockIndexMap: instance.blockIndexMap,
@@ -67,7 +73,7 @@ export function createSlateEditor(config: SlateEditorConfig): SlateEditor {
 
   const slateEditor: SlateEditor = {
     instance,
-    initialValue: [placeholderBlock],
+    initialValue,
   }
 
   return slateEditor

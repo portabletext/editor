@@ -2,7 +2,6 @@ import {Editor, type EditorInterface} from '../interfaces/editor'
 import type {Node} from '../interfaces/node'
 import type {Path} from '../interfaces/path'
 import {Range} from '../interfaces/range'
-import {Text} from '../interfaces/text'
 import {Transforms} from '../interfaces/transforms'
 import {FLUSHING} from '../utils/weak-maps'
 
@@ -11,7 +10,7 @@ export const addMark: EditorInterface['addMark'] = (editor, key, value) => {
 
   if (selection) {
     const match = (node: Node, path: Path) => {
-      if (!Text.isText(node)) {
+      if (!editor.isText(node)) {
         return false // marks can only be applied to text
       }
       const [parentNode, _parentPath] = Editor.parent(editor, path)

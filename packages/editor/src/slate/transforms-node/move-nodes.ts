@@ -1,5 +1,4 @@
 import {Editor} from '../interfaces/editor'
-import {Element} from '../interfaces/element'
 import {Path} from '../interfaces/path'
 import type {NodeTransforms} from '../interfaces/transforms/node'
 import {matchPath} from '../utils/match-path'
@@ -16,7 +15,7 @@ export const moveNodes: NodeTransforms['moveNodes'] = (editor, options) => {
     if (match == null) {
       match = Path.isPath(at)
         ? matchPath(editor, at)
-        : (n) => Element.isElement(n) && Editor.isBlock(editor, n)
+        : (n) => editor.isElement(n) && Editor.isBlock(editor, n)
     }
 
     const toRef = Editor.pathRef(editor, to)

@@ -1,6 +1,5 @@
-import {applyAll} from '@portabletext/patches'
 import {isTextBlock} from '@portabletext/schema'
-import {Editor, Element, Transforms} from '../slate'
+import {Editor, Transforms} from '../slate'
 import type {OperationImplementation} from './operation.types'
 
 export const childUnsetOperationImplementation: OperationImplementation<
@@ -14,7 +13,9 @@ export const childUnsetOperationImplementation: OperationImplementation<
   }
 
   const block =
-    blockIndex !== undefined ? operation.editor.value.at(blockIndex) : undefined
+    blockIndex !== undefined
+      ? operation.editor.children.at(blockIndex)
+      : undefined
 
   if (!block) {
     throw new Error(`Unable to find block at ${JSON.stringify(operation.at)}`)
@@ -86,26 +87,24 @@ export const childUnsetOperationImplementation: OperationImplementation<
     return
   }
 
-  if (Element.isElement(child)) {
-    const value =
-      'value' in child && typeof child.value === 'object' ? child.value : {}
-    const patches = operation.props.map((prop) => ({
-      type: 'unset' as const,
-      path: [prop],
-    }))
-    const newValue = applyAll(value, patches)
-
-    Transforms.setNodes(
-      operation.editor,
-      {
-        ...child,
-        _key: operation.props.includes('_key')
-          ? context.keyGenerator()
-          : child._key,
-        value: newValue,
-      },
-      {at: childPath},
+  if (operation.editor.isElement(child)) {
+    // Properties live directly on the node now (no value wrapper)
+    // Use Transforms.unsetNodes for top-level properties
+    const propsToUnset = operation.props.filter(
+      (prop) => prop !== '_type' && prop !== '_key',
     )
+
+    if (propsToUnset.length > 0) {
+      Transforms.unsetNodes(operation.editor, propsToUnset, {at: childPath})
+    }
+
+    if (operation.props.includes('_key')) {
+      Transforms.setNodes(
+        operation.editor,
+        {_key: context.keyGenerator()},
+        {at: childPath},
+      )
+    }
 
     return
   }

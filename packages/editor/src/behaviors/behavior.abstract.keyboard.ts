@@ -2,6 +2,7 @@ import {createKeyboardShortcut} from '@portabletext/keyboard-shortcuts'
 import {isTextBlock} from '@portabletext/schema'
 import {defaultKeyboardShortcuts} from '../editor/default-keyboard-shortcuts'
 import {getFocusBlock} from '../selectors/selector.get-focus-block'
+import {getFocusBlockObject} from '../selectors/selector.get-focus-block-object'
 import {getFocusInlineObject} from '../selectors/selector.get-focus-inline-object'
 import {getPreviousBlock} from '../selectors/selector.get-previous-block'
 import {isSelectionCollapsed} from '../selectors/selector.is-selection-collapsed'
@@ -49,6 +50,32 @@ export const abstractKeyboardBehaviors = [
       defaultKeyboardShortcuts.delete.guard(event.originEvent) &&
       isSelectionCollapsed(snapshot) &&
       getFocusInlineObject(snapshot),
+    actions: [() => [raise({type: 'delete.forward', unit: 'character'})]],
+  }),
+
+  /**
+   * When Backspace is pressed on a block object, raise a `delete.backward`
+   * event. With childless voids, some browsers (WebKit) don't fire
+   * `beforeinput` on contentEditable=false elements, so the keydown
+   * handler must initiate the delete.
+   */
+  defineBehavior({
+    on: 'keyboard.keydown',
+    guard: ({snapshot, event}) =>
+      defaultKeyboardShortcuts.backspace.guard(event.originEvent) &&
+      getFocusBlockObject(snapshot),
+    actions: [() => [raise({type: 'delete.backward', unit: 'character'})]],
+  }),
+
+  /**
+   * When Delete is pressed on a block object, raise a `delete.forward`
+   * event. Same rationale as above.
+   */
+  defineBehavior({
+    on: 'keyboard.keydown',
+    guard: ({snapshot, event}) =>
+      defaultKeyboardShortcuts.delete.guard(event.originEvent) &&
+      getFocusBlockObject(snapshot),
     actions: [() => [raise({type: 'delete.forward', unit: 'character'})]],
   }),
 

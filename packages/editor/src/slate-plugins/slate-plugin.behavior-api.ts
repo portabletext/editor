@@ -3,7 +3,7 @@ import {
   slatePointToSelectionPoint,
   slateRangeToSelection,
 } from '../internal-utils/slate-utils'
-import {Editor, Node, Point, Range, Text} from '../slate'
+import {Editor, Node, Point, Range} from '../slate'
 
 export function createBehaviorApiPlugin(editorActor: EditorActor) {
   return function behaviorApiPlugin(editor: Editor) {
@@ -120,7 +120,7 @@ export function createBehaviorApiPlugin(editorActor: EditorActor) {
       if (editor.isNormalizingNode) {
         const normalizedNodes = (Node.isNode(nodes) ? [nodes] : nodes).map(
           (node) => {
-            if (!Text.isText(node)) {
+            if (!editor.isText(node)) {
               return node
             }
 

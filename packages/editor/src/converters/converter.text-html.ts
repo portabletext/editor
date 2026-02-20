@@ -1,5 +1,4 @@
 import {htmlToBlocks} from '@portabletext/block-tools'
-import type {PortableTextBlock} from '@portabletext/schema'
 import {toHTML} from '@portabletext/to-html'
 import {getSelectedValue} from '../selectors/selector.get-selected-value'
 import type {PortableTextMemberSchemaTypes} from '../types/editor'
@@ -54,7 +53,7 @@ export function createConverterTextHtml(
         keyGenerator: snapshot.context.keyGenerator,
         unstable_whitespaceOnPasteMode:
           legacySchema.block.options.unstable_whitespaceOnPasteMode,
-      }) as Array<PortableTextBlock>
+      })
 
       const parsedBlocks = blocks.flatMap((block) => {
         const parsedBlock = parseBlock({

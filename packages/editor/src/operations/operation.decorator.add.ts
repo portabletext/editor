@@ -1,5 +1,5 @@
 import {toSlateRange} from '../internal-utils/to-slate-range'
-import {Editor, Range, Text, Transforms} from '../slate'
+import {Editor, Range, Transforms} from '../slate'
 import type {OperationImplementation} from './operation.types'
 
 export const decoratorAddOperationImplementation: OperationImplementation<
@@ -12,7 +12,7 @@ export const decoratorAddOperationImplementation: OperationImplementation<
     ? toSlateRange({
         context: {
           schema: context.schema,
-          value: operation.editor.value,
+          value: operation.editor.children,
           selection: operation.at,
         },
         blockIndexMap: operation.editor.blockIndexMap,
@@ -32,7 +32,7 @@ export const decoratorAddOperationImplementation: OperationImplementation<
 
     Transforms.splitNodes(editor, {
       at: end,
-      match: Text.isText,
+      match: (n) => editor.isText(n),
       mode: 'lowest',
       voids: false,
       always: !endAtEndOfNode,
@@ -42,7 +42,7 @@ export const decoratorAddOperationImplementation: OperationImplementation<
 
     Transforms.splitNodes(editor, {
       at: start,
-      match: Text.isText,
+      match: (n) => editor.isText(n),
       mode: 'lowest',
       voids: false,
       always: !startAtStartOfNode,
@@ -61,7 +61,7 @@ export const decoratorAddOperationImplementation: OperationImplementation<
     // Use new selection to find nodes to decorate
     const splitTextNodes = Editor.nodes(editor, {
       at,
-      match: Text.isText,
+      match: (n) => editor.isText(n),
     })
 
     for (const [node, path] of splitTextNodes) {
@@ -74,7 +74,7 @@ export const decoratorAddOperationImplementation: OperationImplementation<
       Transforms.setNodes(
         editor,
         {marks},
-        {at: path, match: Text.isText, split: true, hanging: true},
+        {at: path, match: (n) => editor.isText(n), split: true, hanging: true},
       )
     }
   } else {

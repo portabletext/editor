@@ -1,6 +1,5 @@
 import type {EditorInterface} from '../interfaces/editor'
-import {Text} from '../interfaces/text'
 
-export const hasTexts: EditorInterface['hasTexts'] = (_editor, element) => {
-  return element.children.every((n) => Text.isText(n))
+export const hasTexts: EditorInterface['hasTexts'] = (editor, element) => {
+  return (element.children ?? []).every((n) => editor.isText(n))
 }
