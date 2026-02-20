@@ -157,15 +157,17 @@ export function convertPatches(patches: SanityPatchOperations[]): PtePatch[] {
  * @public
  */
 export function SDKValuePlugin(props: SDKValuePluginProps) {
+  const {documentId, documentType, path} = props
   // NOTE: the real `useEditDocument` suspends until the document is loaded into the SDK store
   const setSdkValue = useEditDocument(props)
   const instance = useSanityInstance(props)
   const editor = useEditor()
 
   useEffect(() => {
+    const handle = {documentId, documentType, path}
     const getEditorValue = () => editor.getSnapshot().context.value
     const {getCurrent: getSdkValue, subscribe: onSdkValueChange} =
-      getDocumentState<PortableTextBlock[]>(instance, props)
+      getDocumentState<PortableTextBlock[]>(instance, handle)
 
     let isLocalWrite = false
 
@@ -195,7 +197,7 @@ export function SDKValuePlugin(props: SDKValuePluginProps) {
       unsubscribeToEditorChanges()
       unsubscribeToSdkChanges()
     }
-  }, [editor, instance, props, setSdkValue])
+  }, [editor, instance, documentId, documentType, path, setSdkValue])
 
   return null
 }
