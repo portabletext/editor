@@ -3,6 +3,7 @@ import {Element} from '../interfaces/element'
 import type {Node} from '../interfaces/node'
 import {Path} from '../interfaces/path'
 import {Range} from '../interfaces/range'
+import {Text} from '../interfaces/text'
 import {Transforms} from '../interfaces/transforms'
 import type {NodeTransforms} from '../interfaces/transforms/node'
 import {matchPath} from '../utils/match-path'
@@ -92,7 +93,15 @@ export const setNodes: NodeTransforms['setNodes'] = (
       let hasChanges = false
 
       for (const k in props) {
-        if (k === 'children' || k === 'text') {
+        if (k === 'text' && Text.isText(node)) {
+          continue
+        }
+
+        if (
+          k === 'children' &&
+          Element.isElement(node) &&
+          !Editor.isVoid(editor, node)
+        ) {
           continue
         }
 

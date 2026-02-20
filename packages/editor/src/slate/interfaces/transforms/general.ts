@@ -1,4 +1,6 @@
 import {
+  Editor,
+  Element,
   Node,
   Path,
   Point,
@@ -6,8 +8,6 @@ import {
   Scrubber,
   Text,
   type Descendant,
-  type Editor,
-  type Element,
   type NodeEntry,
   type Operation,
   type Selection,
@@ -232,8 +232,20 @@ export const GeneralTransforms: GeneralTransforms = {
           const newNode = {...node}
 
           for (const key in newProperties) {
-            if (key === 'children' || key === 'text') {
-              throw new Error(`Cannot set the "${key}" property of nodes!`)
+            if (key === 'text' && Text.isText(node)) {
+              throw new Error(
+                `Cannot set the "text" property of text nodes! Use insert_text or remove_text instead.`,
+              )
+            }
+
+            if (
+              key === 'children' &&
+              Element.isElement(node) &&
+              !Editor.isVoid(editor, node)
+            ) {
+              throw new Error(
+                `Cannot set the "children" property of non-void elements!`,
+              )
             }
 
             const value = newProperties[key as keyof Node]
