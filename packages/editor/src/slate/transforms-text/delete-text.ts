@@ -1,10 +1,8 @@
 import {Editor} from '../interfaces/editor'
-import {Element} from '../interfaces/element'
 import {Node, type NodeEntry} from '../interfaces/node'
 import {Path} from '../interfaces/path'
 import {Point} from '../interfaces/point'
 import {Range} from '../interfaces/range'
-import {Text} from '../interfaces/text'
 import {Transforms} from '../interfaces/transforms'
 import type {TextTransforms} from '../interfaces/transforms/text'
 
@@ -64,12 +62,12 @@ export const deleteText: TextTransforms['delete'] = (editor, options = {}) => {
 
     let [start, end] = Range.edges(at)
     const startBlock = Editor.above(editor, {
-      match: (n) => Element.isElement(n) && Editor.isBlock(editor, n),
+      match: (n) => editor.isElement(n) && Editor.isBlock(editor, n),
       at: start,
       voids,
     })
     const endBlock = Editor.above(editor, {
-      match: (n) => Element.isElement(n) && Editor.isBlock(editor, n),
+      match: (n) => editor.isElement(n) && Editor.isBlock(editor, n),
       at: end,
       voids,
     })
@@ -116,7 +114,7 @@ export const deleteText: TextTransforms['delete'] = (editor, options = {}) => {
 
       if (
         (!voids &&
-          Element.isElement(node) &&
+          editor.isElement(node) &&
           (Editor.isVoid(editor, node) ||
             Editor.isElementReadOnly(editor, node))) ||
         (!Path.isCommon(path, start.path) && !Path.isCommon(path, end.path))
@@ -136,7 +134,7 @@ export const deleteText: TextTransforms['delete'] = (editor, options = {}) => {
       const point = startRef.current!
       const node = Node.get(editor, point.path)
 
-      if (Text.isText(node)) {
+      if (editor.isText(node)) {
         const {path} = point
         const {offset} = start
         const text = node.text.slice(offset)
@@ -159,7 +157,7 @@ export const deleteText: TextTransforms['delete'] = (editor, options = {}) => {
       const point = endRef.current!
       const node = Node.get(editor, point.path)
 
-      if (Text.isText(node)) {
+      if (editor.isText(node)) {
         const {path} = point
         const offset = isSingleText ? start.offset : 0
         const text = node.text.slice(offset, end.offset)

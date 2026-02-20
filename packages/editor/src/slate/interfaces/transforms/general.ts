@@ -1,16 +1,16 @@
 import {
-  Element,
   Node,
   Path,
   Point,
   Range,
   Scrubber,
-  Text,
   type Descendant,
   type Editor,
+  type Element,
   type NodeEntry,
   type Operation,
   type Selection,
+  type Text,
 } from '../../index'
 import {
   insertChildren,
@@ -39,7 +39,7 @@ function correctPointForVoid(editor: Editor, point: Point): Point {
     const parentPath = point.path.slice(0, -1)
     if (Node.has(editor, parentPath)) {
       const parent = Node.get(editor, parentPath)
-      if (Element.isElement(parent) && editor.isVoid(parent)) {
+      if (editor.isElement(parent) && editor.isVoid(parent)) {
         return {path: parentPath, offset: 0}
       }
     }
@@ -118,9 +118,9 @@ export const GeneralTransforms: GeneralTransforms = {
           const prev = children[prevIndex]!
           let newNode: Descendant
 
-          if (Text.isText(node) && Text.isText(prev)) {
+          if (editor.isText(node) && editor.isText(prev)) {
             newNode = {...prev, text: prev.text + node.text} as Descendant
-          } else if (!Text.isText(node) && !Text.isText(prev)) {
+          } else if (!editor.isText(node) && !editor.isText(prev)) {
             newNode = {
               ...prev,
               children: (prev.children ?? []).concat(node.children ?? []),
@@ -351,7 +351,7 @@ export const GeneralTransforms: GeneralTransforms = {
           let newNode: Descendant
           let nextNode: Descendant
 
-          if (Text.isText(node)) {
+          if (editor.isText(node)) {
             const before = node.text.slice(0, position)
             const after = node.text.slice(position)
             newNode = {

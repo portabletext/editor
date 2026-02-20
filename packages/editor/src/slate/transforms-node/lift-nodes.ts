@@ -1,5 +1,4 @@
 import {Editor} from '../interfaces/editor'
-import {Element} from '../interfaces/element'
 import type {Ancestor, NodeEntry} from '../interfaces/node'
 import {Path} from '../interfaces/path'
 import {Transforms} from '../interfaces/transforms'
@@ -17,7 +16,7 @@ export const liftNodes: NodeTransforms['liftNodes'] = (
     if (match == null) {
       match = Path.isPath(at)
         ? matchPath(editor, at)
-        : (n) => Element.isElement(n) && Editor.isBlock(editor, n)
+        : (n) => editor.isElement(n) && Editor.isBlock(editor, n)
     }
 
     if (!at) {

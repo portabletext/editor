@@ -1,5 +1,4 @@
 import {Editor, type EditorInterface} from '../interfaces/editor'
-import {Element} from '../interfaces/element'
 import {Node} from '../interfaces/node'
 import type {Path} from '../interfaces/path'
 import {DIRTY_PATH_KEYS, DIRTY_PATHS} from '../utils/weak-maps'
@@ -58,7 +57,7 @@ export const normalize: EditorInterface['normalize'] = (
           by definition adding children to an empty node can't cause other paths to change.
         */
         if (
-          Element.isElement(node) &&
+          editor.isElement(node) &&
           !editor.isVoid(node) &&
           node.children?.length === 0
         ) {
