@@ -1,6 +1,5 @@
 import {
   Editor,
-  Element,
   Range,
   Scrubber,
   Transforms,
@@ -316,7 +315,7 @@ export const DOMEditor: DOMEditorInterface = {
     // If the drop target is inside a void node, move it into either the
     // next or previous node, depending on which side the `x` and `y`
     // coordinates are closest to.
-    if (Element.isElement(node) && Editor.isVoid(editor, node)) {
+    if (editor.isElement(node) && Editor.isVoid(editor, node)) {
       const rect = target.getBoundingClientRect()
       const isPrev = editor.isInline(node)
         ? x - rect.left < rect.left + rect.width - x
@@ -540,7 +539,7 @@ export const DOMEditor: DOMEditorInterface = {
     const slateNode =
       DOMEditor.hasTarget(editor, target) &&
       DOMEditor.toSlateNode(editor, target)
-    return Element.isElement(slateNode) && Editor.isVoid(editor, slateNode)
+    return editor.isElement(slateNode) && Editor.isVoid(editor, slateNode)
   },
 
   setFragmentData: (editor, data, originEvent) =>

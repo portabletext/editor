@@ -4,7 +4,7 @@ import type {
   PortableTextTextBlock,
 } from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
-import {Element, Text, type Descendant} from '../slate'
+import type {Descendant} from '../slate'
 import {isEqualValues} from './equality'
 
 export const EMPTY_MARKDEFS: PortableTextObject[] = []
@@ -71,10 +71,10 @@ export function toSlateBlock(
       !hasMissingMarkDefs &&
       !hasMissingChildren &&
       !hasInlines &&
-      Element.isElement(block)
+      Array.isArray((block as any).children)
     ) {
       // Original object
-      return block
+      return block as unknown as Descendant
     }
 
     return {_type, _key, ...rest, children} as Descendant
@@ -156,7 +156,7 @@ export function isEqualToEmptyEditor(
     return true
   }
 
-  if (!Element.isElement(firstBlock)) {
+  if (!Array.isArray((firstBlock as any).children)) {
     return false
   }
 
@@ -194,7 +194,7 @@ export function isEqualToEmptyEditor(
     return false
   }
 
-  if (!Text.isText(firstChild)) {
+  if (typeof (firstChild as any).text !== 'string') {
     return false
   }
 

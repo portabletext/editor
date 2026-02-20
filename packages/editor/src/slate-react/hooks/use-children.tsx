@@ -1,10 +1,10 @@
 import {useCallback, useRef, type JSX} from 'react'
 import {
   Editor,
-  Element,
-  Text,
   type Ancestor,
   type DecoratedRange,
+  type Element,
+  type Text,
 } from '../../slate'
 import {
   IS_NODE_MAP_DIRTY,
@@ -55,7 +55,7 @@ const useChildren = (props: {
   IS_NODE_MAP_DIRTY.set(editor as any, false)
 
   const isEditor = Editor.isEditor(node)
-  const isBlock = !isEditor && Element.isElement(node) && !editor.isInline(node)
+  const isBlock = !isEditor && editor.isElement(node) && !editor.isInline(node)
   const isLeafBlock = isBlock && Editor.hasInlines(editor, node)
   const chunkSize = isLeafBlock ? null : editor.getChunkSize(node)
   const chunking = !!chunkSize
@@ -125,7 +125,9 @@ const useChildren = (props: {
 
   if (!chunking) {
     return node.children.map((n, i) =>
-      Text.isText(n) ? renderTextComponent(n, i) : renderElementComponent(n, i),
+      editor.isText(n)
+        ? renderTextComponent(n, i)
+        : renderElementComponent(n, i),
     )
   }
 

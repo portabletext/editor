@@ -1,12 +1,4 @@
-import {
-  Editor,
-  Node,
-  Path,
-  Point,
-  Range,
-  Text,
-  Transforms,
-} from '../../../slate'
+import {Editor, Node, Path, Point, Range, Transforms} from '../../../slate'
 import {
   applyStringDiff,
   EDITOR_TO_FORCE_RENDER,
@@ -414,7 +406,7 @@ export function createAndroidInputManager({
         if (leaf.text.length === start.offset && end.offset === 0) {
           const next = Editor.next(editor, {
             at: start.path,
-            match: Text.isText,
+            match: editor.isText,
           })
           if (next && Path.equals(next[1], end.path)) {
             // when deleting a linebreak, targetRange will span across the break (ie start in the node before and end in the node after)

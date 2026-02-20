@@ -1,10 +1,5 @@
 import {createContext, useCallback, useContext, useMemo, useRef} from 'react'
-import {
-  Text,
-  type DecoratedRange,
-  type Descendant,
-  type NodeEntry,
-} from '../../slate'
+import type {DecoratedRange, Descendant, NodeEntry} from '../../slate'
 import {
   isElementDecorationsEqual,
   isTextDecorationsEqual,
@@ -39,7 +34,7 @@ export const useDecorations = (
     return decorate([node, path])
   }
 
-  const equalityFn = Text.isText(node)
+  const equalityFn = editor.isText(node)
     ? isTextDecorationsEqual
     : isElementDecorationsEqual
 

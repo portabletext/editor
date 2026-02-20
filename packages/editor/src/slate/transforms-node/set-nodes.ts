@@ -1,9 +1,7 @@
 import {Editor} from '../interfaces/editor'
-import {Element} from '../interfaces/element'
 import type {Node} from '../interfaces/node'
 import {Path} from '../interfaces/path'
 import {Range} from '../interfaces/range'
-import {Text} from '../interfaces/text'
 import {Transforms} from '../interfaces/transforms'
 import type {NodeTransforms} from '../interfaces/transforms/node'
 import {matchPath} from '../utils/match-path'
@@ -29,7 +27,7 @@ export const setNodes: NodeTransforms['setNodes'] = (
     if (match == null) {
       match = Path.isPath(at)
         ? matchPath(editor, at)
-        : (n) => Element.isElement(n) && Editor.isBlock(editor, n)
+        : (n) => editor.isElement(n) && Editor.isBlock(editor, n)
     }
 
     if (!hanging && Range.isRange(at)) {
@@ -93,13 +91,13 @@ export const setNodes: NodeTransforms['setNodes'] = (
       let hasChanges = false
 
       for (const k in props) {
-        if (k === 'text' && Text.isText(node)) {
+        if (k === 'text' && editor.isText(node)) {
           continue
         }
 
         if (
           k === 'children' &&
-          Element.isElement(node) &&
+          editor.isElement(node) &&
           !Editor.isVoid(editor, node)
         ) {
           continue

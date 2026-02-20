@@ -1,9 +1,7 @@
 import {Editor, type EditorNodesOptions} from '../interfaces/editor'
-import {Element} from '../interfaces/element'
 import {Span} from '../interfaces/location'
 import {Node, type NodeEntry} from '../interfaces/node'
 import {Path} from '../interfaces/path'
-import {Text} from '../interfaces/text'
 
 export function* nodes<T extends Node>(
   editor: Editor,
@@ -48,7 +46,7 @@ export function* nodes<T extends Node>(
       if (pass && pass([node, path])) {
         return true
       }
-      if (!Element.isElement(node)) {
+      if (!editor.isElement(node)) {
         return false
       }
       if (
@@ -77,7 +75,7 @@ export function* nodes<T extends Node>(
       // If we've arrived at a leaf text node that is not lower than the last
       // hit, then we've found a branch that doesn't include a match, which
       // means the match is not universal.
-      if (universal && !isLower && Text.isText(node)) {
+      if (universal && !isLower && editor.isText(node)) {
         return
       } else {
         continue

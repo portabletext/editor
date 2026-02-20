@@ -1,8 +1,6 @@
 import {Editor, type EditorInterface} from '../interfaces/editor'
-import {Element} from '../interfaces/element'
 import {Path} from '../interfaces/path'
 import {Range} from '../interfaces/range'
-import {Text} from '../interfaces/text'
 
 export const unhangRange: EditorInterface['unhangRange'] = (
   editor,
@@ -24,7 +22,7 @@ export const unhangRange: EditorInterface['unhangRange'] = (
 
   const endBlock = Editor.above(editor, {
     at: end,
-    match: (n) => Element.isElement(n) && Editor.isBlock(editor, n),
+    match: (n) => editor.isElement(n) && Editor.isBlock(editor, n),
     voids,
   })
   const blockPath = endBlock ? endBlock[1] : []
@@ -34,7 +32,7 @@ export const unhangRange: EditorInterface['unhangRange'] = (
 
   for (const [node, path] of Editor.nodes(editor, {
     at: before,
-    match: Text.isText,
+    match: editor.isText,
     reverse: true,
     voids,
   })) {

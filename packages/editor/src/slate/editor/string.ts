@@ -1,7 +1,6 @@
 import {Editor, type EditorInterface} from '../interfaces/editor'
 import {Path} from '../interfaces/path'
 import {Range} from '../interfaces/range'
-import {Text} from '../interfaces/text'
 
 export const string: EditorInterface['string'] = (editor, at, options = {}) => {
   const {voids = false} = options
@@ -11,7 +10,7 @@ export const string: EditorInterface['string'] = (editor, at, options = {}) => {
 
   for (const [node, path] of Editor.nodes(editor, {
     at: range,
-    match: Text.isText,
+    match: editor.isText,
     voids,
   })) {
     let t = node.text

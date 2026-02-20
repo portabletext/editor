@@ -1,10 +1,9 @@
 import type {Point} from '../interfaces'
 import {Editor, type EditorInterface} from '../interfaces/editor'
-import {Element} from '../interfaces/element'
 import type {NodeEntry} from '../interfaces/node'
 import {Path} from '../interfaces/path'
 import {Range} from '../interfaces/range'
-import {Text} from '../interfaces/text'
+import type {Text} from '../interfaces/text'
 
 export const marks: EditorInterface['marks'] = (editor, _options = {}) => {
   const {marks, selection} = editor
@@ -36,7 +35,7 @@ export const marks: EditorInterface['marks'] = (editor, _options = {}) => {
     }
 
     const [match] = Editor.nodes(editor, {
-      match: Text.isText,
+      match: editor.isText,
       at: {
         anchor,
         focus,
@@ -57,16 +56,16 @@ export const marks: EditorInterface['marks'] = (editor, _options = {}) => {
   let [node] = Editor.leaf(editor, path)
 
   if (anchor.offset === 0) {
-    const prev = Editor.previous(editor, {at: path, match: Text.isText})
+    const prev = Editor.previous(editor, {at: path, match: editor.isText})
     const markedVoid = Editor.above(editor, {
       match: (n) =>
-        Element.isElement(n) &&
+        editor.isElement(n) &&
         Editor.isVoid(editor, n) &&
         editor.markableVoid(n),
     })
     if (!markedVoid) {
       const block = Editor.above(editor, {
-        match: (n) => Element.isElement(n) && Editor.isBlock(editor, n),
+        match: (n) => editor.isElement(n) && Editor.isBlock(editor, n),
       })
 
       if (prev && block) {

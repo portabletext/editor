@@ -1,5 +1,4 @@
 import {Editor, type EditorInterface} from '../interfaces/editor'
-import {Element} from '../interfaces/element'
 
 export const elementReadOnly: EditorInterface['elementReadOnly'] = (
   editor,
@@ -7,6 +6,6 @@ export const elementReadOnly: EditorInterface['elementReadOnly'] = (
 ) => {
   return Editor.above(editor, {
     ...options,
-    match: (n) => Element.isElement(n) && Editor.isElementReadOnly(editor, n),
+    match: (n) => editor.isElement(n) && Editor.isElementReadOnly(editor, n),
   })
 }

@@ -1,16 +1,16 @@
 import {
   Editor,
-  Element,
   Node,
   Path,
   Point,
   Range,
   Scrubber,
-  Text,
   type Descendant,
+  type Element,
   type NodeEntry,
   type Operation,
   type Selection,
+  type Text,
 } from '../../index'
 import {
   insertChildren,
@@ -84,9 +84,9 @@ export const GeneralTransforms: GeneralTransforms = {
           const prev = children[prevIndex]!
           let newNode: Descendant
 
-          if (Text.isText(node) && Text.isText(prev)) {
+          if (editor.isText(node) && editor.isText(prev)) {
             newNode = {...prev, text: prev.text + node.text} as Descendant
-          } else if (!Text.isText(node) && !Text.isText(prev)) {
+          } else if (!editor.isText(node) && !editor.isText(prev)) {
             newNode = {
               ...prev,
               children: prev.children.concat(node.children),
@@ -232,7 +232,7 @@ export const GeneralTransforms: GeneralTransforms = {
           const newNode = {...node}
 
           for (const key in newProperties) {
-            if (key === 'text' && Text.isText(node)) {
+            if (key === 'text' && editor.isText(node)) {
               throw new Error(
                 `Cannot set the "text" property of text nodes! Use insert_text or remove_text instead.`,
               )
@@ -240,7 +240,7 @@ export const GeneralTransforms: GeneralTransforms = {
 
             if (
               key === 'children' &&
-              Element.isElement(node) &&
+              editor.isElement(node) &&
               !Editor.isVoid(editor, node)
             ) {
               throw new Error(
@@ -327,7 +327,7 @@ export const GeneralTransforms: GeneralTransforms = {
           let newNode: Descendant
           let nextNode: Descendant
 
-          if (Text.isText(node)) {
+          if (editor.isText(node)) {
             const before = node.text.slice(0, position)
             const after = node.text.slice(position)
             newNode = {
