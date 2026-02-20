@@ -190,21 +190,14 @@ describe('event.child.set', () => {
     })
 
     await vi.waitFor(() => {
+      // Only the changed property emits a patch — abilities was already
+      // set from the initial value, so no patch needed for it.
       expect(patches).toEqual([
         {
           origin: 'local',
           path: [{_key: blockKey}, 'children', {_key: cellKey}, 'alive'],
           type: 'set',
           value: true,
-        },
-        {
-          origin: 'local',
-          path: [{_key: blockKey}, 'children', {_key: cellKey}, 'abilities'],
-          type: 'set',
-          value: {
-            fly: true,
-            swim: false,
-          },
         },
       ])
     })
@@ -302,32 +295,14 @@ describe('event.child.set', () => {
     })
 
     await vi.waitFor(() => {
+      // Only the _key change emits a patch — alive and abilities were
+      // already set from the initial value, so no patches needed for them.
       return expect(patches).toEqual([
         {
           origin: 'local',
           path: [{_key: blockKey}, 'children', 1, '_key'],
           type: 'set',
           value: 'new-cell-key',
-        },
-        {
-          origin: 'local',
-          path: [{_key: blockKey}, 'children', {_key: 'new-cell-key'}, 'alive'],
-          type: 'set',
-          value: false,
-        },
-        {
-          origin: 'local',
-          path: [
-            {_key: blockKey},
-            'children',
-            {_key: 'new-cell-key'},
-            'abilities',
-          ],
-          type: 'set',
-          value: {
-            fly: true,
-            swim: false,
-          },
         },
       ])
     })

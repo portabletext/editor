@@ -534,6 +534,26 @@ function unsetPatch(editor: PortableTextSlateEditor, patch: UnsetPatch) {
         (property) => !newKeys.includes(property),
       )
 
+      // For nested unsets (e.g., _map.foo), the top-level key still exists
+      // but with modified content. Use setNodes to update changed properties.
+      const changedProperties: Record<string, unknown> = {}
+      for (const key of newKeys) {
+        if (
+          key !== '_key' &&
+          key !== '_type' &&
+          key !== 'children' &&
+          (newNode as any)[key] !== (block.node as any)[key]
+        ) {
+          changedProperties[key] = (newNode as any)[key]
+        }
+      }
+
+      if (Object.keys(changedProperties).length > 0) {
+        Transforms.setNodes(editor, changedProperties as any, {
+          at: [block.index],
+        })
+      }
+
       if (removedProperties.length > 0) {
         Transforms.unsetNodes(editor, removedProperties, {
           at: [block.index],
