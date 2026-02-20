@@ -500,9 +500,12 @@ export function createAndroidInputManager({
       case 'deleteContentForward': {
         const {anchor} = targetRange
         if (canStoreDiff && Range.isCollapsed(targetRange)) {
-          const deleteTargetNode = Node.get(editor, anchor.path)
+          const deleteTargetNode = Node.has(editor, anchor.path)
+            ? Node.get(editor, anchor.path)
+            : undefined
 
           if (
+            deleteTargetNode &&
             Text.isText(deleteTargetNode) &&
             anchor.offset < deleteTargetNode.text.length
           ) {

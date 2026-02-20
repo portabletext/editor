@@ -972,10 +972,12 @@ export const Editable = forwardRef(
 
     if (editor.selection && Range.isCollapsed(editor.selection) && marks) {
       const {anchor} = editor.selection
-      const anchorNode = Node.get(editor, anchor.path)
+      const anchorNode = Node.has(editor, anchor.path)
+        ? Node.get(editor, anchor.path)
+        : undefined
 
       // Childless void elements have no text leaf — skip mark placeholders
-      if (Text.isText(anchorNode)) {
+      if (anchorNode && Text.isText(anchorNode)) {
         const leaf = anchorNode
         const {text: _text, ...rest} = leaf
 
@@ -1007,10 +1009,12 @@ export const Editable = forwardRef(
         const {selection} = editor
         if (selection) {
           const {anchor} = selection
-          const anchorNode = Node.get(editor, anchor.path)
+          const anchorNode = Node.has(editor, anchor.path)
+            ? Node.get(editor, anchor.path)
+            : undefined
 
           // Childless void elements have no text leaf — skip mark handling
-          if (Text.isText(anchorNode)) {
+          if (anchorNode && Text.isText(anchorNode)) {
             // While marks isn't a 'complete' text, we can still use loose Text.equals
             // here which only compares marks anyway.
             if (
