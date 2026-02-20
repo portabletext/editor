@@ -1,0 +1,6 @@
+{
+  "extends": "//",
+  "linter": {
+    "includes": ["!**/*.html"]
+  }
+}

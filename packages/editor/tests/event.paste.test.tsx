@@ -1,8 +1,8 @@
 import {
-  htmlToBlocks,
+  htmlToPortableText,
   type ImageSchemaMatcher,
   type SchemaMatchers,
-} from '@portabletext/block-tools'
+} from '@portabletext/html'
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
@@ -203,7 +203,8 @@ describe('event.clipboard.paste', () => {
             return false
           }
 
-          const blocks = htmlToBlocks(event.data, snapshot.context.schema, {
+          const blocks = htmlToPortableText(event.data, {
+            schema: snapshot.context.schema,
             keyGenerator: snapshot.context.keyGenerator,
             matchers,
           })

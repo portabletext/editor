@@ -84,7 +84,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@portabletext/block-tools": "workspace:^",
+    "@portabletext/html": "workspace:^",
     "@portabletext/keyboard-shortcuts": "workspace:^",
     "@portabletext/markdown": "workspace:^",
     "@portabletext/patches": "workspace:^",
