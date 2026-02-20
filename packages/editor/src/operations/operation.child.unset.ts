@@ -13,7 +13,9 @@ export const childUnsetOperationImplementation: OperationImplementation<
   }
 
   const block =
-    blockIndex !== undefined ? operation.editor.children.at(blockIndex) : undefined
+    blockIndex !== undefined
+      ? operation.editor.children.at(blockIndex)
+      : undefined
 
   if (!block) {
     throw new Error(`Unable to find block at ${JSON.stringify(operation.at)}`)

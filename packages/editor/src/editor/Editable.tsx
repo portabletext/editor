@@ -519,7 +519,7 @@ export const PortableTextEditable = forwardRef<
           slateEditor.children.length === 1 &&
           isEmptyTextBlock(
             editorActor.getSnapshot().context,
-            (slateEditor.children).at(0),
+            slateEditor.children.at(0),
           )
         ) {
           Transforms.select(slateEditor, Editor.start(slateEditor, []))

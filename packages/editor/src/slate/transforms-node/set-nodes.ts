@@ -93,7 +93,15 @@ export const setNodes: NodeTransforms['setNodes'] = (
       let hasChanges = false
 
       for (const k in props) {
-        if (k === 'children' || k === 'text') {
+        if (k === 'text' && editor.isText(node)) {
+          continue
+        }
+
+        if (
+          k === 'children' &&
+          editor.isElement(node) &&
+          !Editor.isVoid(editor, node)
+        ) {
           continue
         }
 

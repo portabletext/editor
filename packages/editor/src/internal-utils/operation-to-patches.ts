@@ -26,8 +26,8 @@ import type {
   SetNodeOperation,
   SplitNodeOperation,
 } from '../slate'
-import type {PortableTextSlateEditor} from '../types/slate-editor'
 import type {Path} from '../types/paths'
+import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {fromSlateBlock} from './values'
 
 export function insertTextPatch(
@@ -326,10 +326,7 @@ export function insertNodePatch(
       unknown
     >
 
-    return [
-      setIfMissingPatch,
-      insert([nodeProps], position, path),
-    ]
+    return [setIfMissingPatch, insert([nodeProps], position, path)]
   }
 
   return []

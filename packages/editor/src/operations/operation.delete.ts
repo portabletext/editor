@@ -1,6 +1,5 @@
 import {isSpan, isTextBlock} from '@portabletext/schema'
 import {toSlateRange} from '../internal-utils/to-slate-range'
-
 import {
   deleteText,
   Editor,
@@ -58,8 +57,7 @@ export const deleteOperationImplementation: OperationImplementation<
       at,
       match: (node) =>
         isSpan(context, node) ||
-        (operation.editor.isElement(node) &&
-          operation.editor.isInline(node)),
+        (operation.editor.isElement(node) && operation.editor.isInline(node)),
     })
 
     return
@@ -68,8 +66,7 @@ export const deleteOperationImplementation: OperationImplementation<
   if (operation.direction === 'backward' && operation.unit === 'line') {
     const parentBlockEntry = Editor.above(operation.editor, {
       match: (n) =>
-        operation.editor.isElement(n) &&
-        Editor.isBlock(operation.editor, n),
+        operation.editor.isElement(n) && Editor.isBlock(operation.editor, n),
       at,
     })
 

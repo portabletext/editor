@@ -266,8 +266,20 @@ export const GeneralTransforms: GeneralTransforms = {
           const newNode = {...node}
 
           for (const key in newProperties) {
-            if (key === 'children' || key === 'text') {
-              throw new Error(`Cannot set the "${key}" property of nodes!`)
+            if (key === 'text' && editor.isText(node)) {
+              throw new Error(
+                `Cannot set the "text" property of text nodes! Use insert_text or remove_text instead.`,
+              )
+            }
+
+            if (
+              key === 'children' &&
+              editor.isElement(node) &&
+              !editor.isVoid(node)
+            ) {
+              throw new Error(
+                `Cannot set the "children" property of non-void elements!`,
+              )
             }
 
             const value = newProperties[key as keyof Node]

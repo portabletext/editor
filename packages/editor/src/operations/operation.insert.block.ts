@@ -549,7 +549,11 @@ export function insertBlock(options: {
 
       // Remove nodes after start
       const blockNode = Node.get(editor, endBlockPath) as Element
-      for (let i = (blockNode.children?.length ?? 0) - 1; i > start.path[1]!; i--) {
+      for (
+        let i = (blockNode.children?.length ?? 0) - 1;
+        i > start.path[1]!;
+        i--
+      ) {
         removeNodeAt(editor, [...endBlockPath, i])
       }
 
@@ -892,7 +896,11 @@ function deleteCrossBlockRange(
 
     // Remove remaining nodes in start block
     const startBlock = Node.get(editor, startBlockPath) as Element
-    for (let i = (startBlock.children?.length ?? 0) - 1; i > start.path[1]!; i--) {
+    for (
+      let i = (startBlock.children?.length ?? 0) - 1;
+      i > start.path[1]!;
+      i--
+    ) {
       removeNodeAt(editor, [...startBlockPath, i])
     }
   }

@@ -173,7 +173,9 @@ export function createEditableAPI(
           return undefined
         }
 
-        return block.children.at(focusChildIndex) as PortableTextChild | undefined
+        return block.children.at(focusChildIndex) as
+          | PortableTextChild
+          | undefined
       }
 
       return undefined

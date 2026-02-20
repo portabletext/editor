@@ -62,24 +62,23 @@ const createDefaultChildren = () =>
       ],
     },
   ] satisfies Array<Descendant>
-const createDefaultValue = () =>
-  [
-    {
-      _type: 'block',
-      _key: '1f2e64b47787',
-      style: 'normal',
-      markDefs: [],
-      children: [
-        {_type: 'span', _key: 'c130395c640c', text: '', marks: []},
-        {
-          _key: '773866318fa8',
-          _type: 'someObject',
-          title: 'The Object',
-        },
-        {_type: 'span', _key: 'fd9b4a4e6c0b', text: '', marks: []},
-      ],
-    },
-  ]
+const createDefaultValue = () => [
+  {
+    _type: 'block',
+    _key: '1f2e64b47787',
+    style: 'normal',
+    markDefs: [],
+    children: [
+      {_type: 'span', _key: 'c130395c640c', text: '', marks: []},
+      {
+        _key: '773866318fa8',
+        _type: 'someObject',
+        title: 'The Object',
+      },
+      {_type: 'span', _key: 'fd9b4a4e6c0b', text: '', marks: []},
+    ],
+  },
+]
 
 describe(insertNodePatch.name, () => {
   test('Scenario: Inserting block object on empty editor', () => {

@@ -18,12 +18,7 @@ import {
   parsePatch,
 } from '@sanity/diff-match-patch'
 import type {EditorContext} from '../editor/editor-snapshot'
-import {
-  Editor,
-  Node,
-  Transforms,
-  type Descendant,
-} from '../slate'
+import {Editor, Node, Transforms, type Descendant} from '../slate'
 import type {Path} from '../types/paths'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
@@ -69,7 +64,13 @@ export function createApplyPatch(
 function diffMatchPatch(
   editor: Pick<
     PortableTextSlateEditor,
-    'children' | 'isTextBlock' | 'isText' | 'isElement' | 'apply' | 'selection' | 'onChange'
+    | 'children'
+    | 'isTextBlock'
+    | 'isText'
+    | 'isElement'
+    | 'apply'
+    | 'selection'
+    | 'onChange'
   >,
   patch: DiffMatchPatch,
 ): boolean {
@@ -208,7 +209,11 @@ function insertPatch(
     position === 'after' ? targetChild.index + 1 : targetChild.index
   const childInsertPath = [block.index, normalizedIdx]
 
-  if (childrenToInsert && editor.isElement(childrenToInsert) && childrenToInsert.children) {
+  if (
+    childrenToInsert &&
+    editor.isElement(childrenToInsert) &&
+    childrenToInsert.children
+  ) {
     Transforms.insertNodes(editor, childrenToInsert.children, {
       at: childInsertPath,
     })
@@ -303,7 +308,11 @@ function setPatch(
   // If this is targeting a text block child
   if (isTextBlock && child) {
     if (editor.isText(child.node)) {
-      if (value && typeof value === 'object' && typeof (value as any).text === 'string') {
+      if (
+        value &&
+        typeof value === 'object' &&
+        typeof (value as any).text === 'string'
+      ) {
         if (patch.type === 'setIfMissing') {
           return false
         }
@@ -622,10 +631,7 @@ function findBlockChild(
 ): {node: Descendant; index: number} | undefined {
   const blockNode = block.node
 
-  if (
-    !Array.isArray((blockNode as any).children) ||
-    path[1] !== 'children'
-  ) {
+  if (!Array.isArray((blockNode as any).children) || path[1] !== 'children') {
     return undefined
   }
 
