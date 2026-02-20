@@ -1,11 +1,11 @@
 import {
   Node,
   Scrubber,
+  Text,
   type Ancestor,
   type Descendant,
   type Element,
   type Path,
-  type Text,
 } from '../interfaces'
 
 export const insertChildren = <T>(
@@ -45,12 +45,17 @@ export const modifyDescendant = <N extends Descendant>(
 
     modifiedNode = {
       ...ancestorNode,
-      children: replaceChildren(ancestorNode.children, index, 1, modifiedNode),
+      children: replaceChildren(
+        ancestorNode.children ?? [],
+        index,
+        1,
+        modifiedNode,
+      ),
     }
   }
 
   const index = slicedPath.pop()!
-  root.children = replaceChildren(root.children, index, 1, modifiedNode)
+  root.children = replaceChildren(root.children ?? [], index, 1, modifiedNode)
 }
 
 /**
@@ -62,10 +67,10 @@ export const modifyChildren = (
   f: (children: Descendant[]) => Descendant[],
 ) => {
   if (path.length === 0) {
-    root.children = f(root.children)
+    root.children = f(root.children ?? [])
   } else {
     modifyDescendant<Element>(root, path, (node) => {
-      if (!Array.isArray(node.children)) {
+      if (Text.isText(node)) {
         throw new Error(
           `Cannot get the element at path [${path}] because it refers to a leaf node: ${Scrubber.stringify(
             node,
@@ -73,7 +78,7 @@ export const modifyChildren = (
         )
       }
 
-      return {...node, children: f(node.children)}
+      return {...node, children: f(node.children ?? [])}
     })
   }
 }
@@ -87,7 +92,7 @@ export const modifyLeaf = (
   f: (leaf: Text) => Text,
 ) =>
   modifyDescendant(root, path, (node) => {
-    if (Array.isArray((node as any).children)) {
+    if (!Text.isText(node)) {
       throw new Error(
         `Cannot get the leaf node at path [${path}] because it refers to a non-leaf node: ${Scrubber.stringify(
           node,
@@ -95,5 +100,5 @@ export const modifyLeaf = (
       )
     }
 
-    return f(node as Text)
+    return f(node)
   })

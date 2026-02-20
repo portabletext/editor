@@ -1,16 +1,16 @@
 import {
-  Editor,
   Node,
   Path,
   Point,
   Range,
   Scrubber,
+  Text,
   type Descendant,
+  type Editor,
   type Element,
   type NodeEntry,
   type Operation,
   type Selection,
-  type Text,
 } from '../../index'
 import {
   insertChildren,
@@ -84,12 +84,12 @@ export const GeneralTransforms: GeneralTransforms = {
           const prev = children[prevIndex]!
           let newNode: Descendant
 
-          if (editor.isText(node) && editor.isText(prev)) {
+          if (Text.isText(node) && Text.isText(prev)) {
             newNode = {...prev, text: prev.text + node.text} as Descendant
-          } else if (!editor.isText(node) && !editor.isText(prev)) {
+          } else if (!Text.isText(node) && !Text.isText(prev)) {
             newNode = {
               ...prev,
-              children: prev.children.concat(node.children),
+              children: (prev.children ?? []).concat(node.children ?? []),
             } as Descendant
           } else {
             throw new Error(
@@ -232,20 +232,8 @@ export const GeneralTransforms: GeneralTransforms = {
           const newNode = {...node}
 
           for (const key in newProperties) {
-            if (key === 'text' && editor.isText(node)) {
-              throw new Error(
-                `Cannot set the "text" property of text nodes! Use insert_text or remove_text instead.`,
-              )
-            }
-
-            if (
-              key === 'children' &&
-              editor.isElement(node) &&
-              !Editor.isVoid(editor, node)
-            ) {
-              throw new Error(
-                `Cannot set the "children" property of non-void elements!`,
-              )
+            if (key === 'children' || key === 'text') {
+              throw new Error(`Cannot set the "${key}" property of nodes!`)
             }
 
             const value = newProperties[key as keyof Node]
@@ -327,7 +315,7 @@ export const GeneralTransforms: GeneralTransforms = {
           let newNode: Descendant
           let nextNode: Descendant
 
-          if (editor.isText(node)) {
+          if (Text.isText(node)) {
             const before = node.text.slice(0, position)
             const after = node.text.slice(position)
             newNode = {
@@ -339,8 +327,8 @@ export const GeneralTransforms: GeneralTransforms = {
               text: after,
             } as Descendant
           } else {
-            const before = node.children.slice(0, position)
-            const after = node.children.slice(position)
+            const before = (node.children ?? []).slice(0, position)
+            const after = (node.children ?? []).slice(position)
             newNode = {
               ...node,
               children: before,

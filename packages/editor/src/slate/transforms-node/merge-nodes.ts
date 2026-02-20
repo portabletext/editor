@@ -1,19 +1,19 @@
 import {Editor} from '../interfaces/editor'
-import type {Element} from '../interfaces/element'
+import {Element} from '../interfaces/element'
 import type {Node} from '../interfaces/node'
 import {Path} from '../interfaces/path'
 import {Range} from '../interfaces/range'
 import {Scrubber} from '../interfaces/scrubber'
-import type {Text} from '../interfaces/text'
+import {Text} from '../interfaces/text'
 import {Transforms} from '../interfaces/transforms'
 import type {NodeTransforms} from '../interfaces/transforms/node'
 
 const hasSingleChildNest = (editor: Editor, node: Node): boolean => {
-  if (editor.isElement(node)) {
+  if (Element.isElement(node)) {
     const element = node as Element
     if (Editor.isVoid(editor, node)) {
       return true
-    } else if (element.children.length === 1) {
+    } else if (element.children && element.children.length === 1) {
       return hasSingleChildNest(editor, element.children[0]!)
     } else {
       return false
@@ -40,9 +40,9 @@ export const mergeNodes: NodeTransforms['mergeNodes'] = (
     if (match == null) {
       if (Path.isPath(at)) {
         const [parent] = Editor.parent(editor, at)
-        match = (n) => parent.children.includes(n)
+        match = (n) => (parent.children ?? []).includes(n)
       } else {
-        match = (n) => editor.isElement(n) && Editor.isBlock(editor, n)
+        match = (n) => Element.isElement(n) && Editor.isBlock(editor, n)
       }
     }
 
@@ -100,13 +100,13 @@ export const mergeNodes: NodeTransforms['mergeNodes'] = (
 
     // Ensure that the nodes are equivalent, and figure out what the position
     // and extra properties of the merge will be.
-    if (editor.isText(node) && editor.isText(prevNode)) {
+    if (Text.isText(node) && Text.isText(prevNode)) {
       const {text: _text, ...rest} = node
       position = prevNode.text.length
       properties = rest as Partial<Text>
-    } else if (editor.isElement(node) && editor.isElement(prevNode)) {
+    } else if (Element.isElement(node) && Element.isElement(prevNode)) {
       const {children: _children, ...rest} = node
-      position = prevNode.children.length
+      position = prevNode.children?.length ?? 0
       properties = rest as Partial<Element>
     } else {
       throw new Error(

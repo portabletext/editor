@@ -1,4 +1,12 @@
-import {Editor, Node, Path, Point, Range, Transforms} from '../../../slate'
+import {
+  Editor,
+  Node,
+  Path,
+  Point,
+  Range,
+  Text,
+  Transforms,
+} from '../../../slate'
 import {
   applyStringDiff,
   EDITOR_TO_FORCE_RENDER,
@@ -292,7 +300,11 @@ export function createAndroidInputManager({
     const pendingDiffs = EDITOR_TO_PENDING_DIFFS.get(editor) ?? []
     EDITOR_TO_PENDING_DIFFS.set(editor, pendingDiffs)
 
-    const target = Node.leaf(editor, path)
+    const targetNode = Node.get(editor, path)
+    if (!Text.isText(targetNode)) {
+      return
+    }
+    const target = targetNode
     const idx = pendingDiffs.findIndex((change) =>
       Path.equals(change.path, path),
     )
@@ -400,13 +412,20 @@ export function createAndroidInputManager({
     if (type.startsWith('delete')) {
       const direction = type.endsWith('Backward') ? 'backward' : 'forward'
       let [start, end] = Range.edges(targetRange)
-      let [leaf, path] = Editor.leaf(editor, start.path)
+      const startNode = Editor.node(editor, start.path)[0]
+
+      // Childless void elements have no text leaf — skip diff storage
+      if (!Text.isText(startNode)) {
+        return
+      }
+
+      let [leaf, path] = [startNode, start.path] as [Text, Path]
 
       if (Range.isExpanded(targetRange)) {
         if (leaf.text.length === start.offset && end.offset === 0) {
           const next = Editor.next(editor, {
             at: start.path,
-            match: editor.isText,
+            match: Text.isText,
           })
           if (next && Path.equals(next[1], end.path)) {
             // when deleting a linebreak, targetRange will span across the break (ie start in the node before and end in the node after)
@@ -481,9 +500,12 @@ export function createAndroidInputManager({
       case 'deleteContentForward': {
         const {anchor} = targetRange
         if (canStoreDiff && Range.isCollapsed(targetRange)) {
-          const targetNode = Node.leaf(editor, anchor.path)
+          const deleteTargetNode = Node.get(editor, anchor.path)
 
-          if (anchor.offset < targetNode.text.length) {
+          if (
+            Text.isText(deleteTargetNode) &&
+            anchor.offset < deleteTargetNode.text.length
+          ) {
             return storeDiff(anchor.path, {
               text: '',
               start: anchor.offset,

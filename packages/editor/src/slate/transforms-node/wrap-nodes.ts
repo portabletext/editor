@@ -3,6 +3,7 @@ import {Editor} from '../interfaces/editor'
 import {Element} from '../interfaces/element'
 import {Path} from '../interfaces/path'
 import {Range} from '../interfaces/range'
+import {Text} from '../interfaces/text'
 import {Transforms} from '../interfaces/transforms'
 import type {NodeTransforms} from '../interfaces/transforms/node'
 import {matchPath} from '../utils/match-path'
@@ -25,10 +26,9 @@ export const wrapNodes: NodeTransforms['wrapNodes'] = (
         match = matchPath(editor, at)
       } else if (editor.isInline(element)) {
         match = (n) =>
-          (editor.isElement(n) && Editor.isInline(editor, n)) ||
-          editor.isText(n)
+          (Element.isElement(n) && Editor.isInline(editor, n)) || Text.isText(n)
       } else {
-        match = (n) => editor.isElement(n) && Editor.isBlock(editor, n)
+        match = (n) => Element.isElement(n) && Editor.isBlock(editor, n)
       }
     }
 
@@ -44,7 +44,7 @@ export const wrapNodes: NodeTransforms['wrapNodes'] = (
       const isAtBlockEdge = (point: Point) => {
         const blockAbove = Editor.above(editor, {
           at: point,
-          match: (n) => editor.isElement(n) && Editor.isBlock(editor, n),
+          match: (n) => Element.isElement(n) && Editor.isBlock(editor, n),
         })
         return blockAbove && Editor.isEdge(editor, point, blockAbove[1])
       }
@@ -74,7 +74,7 @@ export const wrapNodes: NodeTransforms['wrapNodes'] = (
       Editor.nodes(editor, {
         at,
         match: editor.isInline(element)
-          ? (n) => editor.isElement(n) && Editor.isBlock(editor, n)
+          ? (n) => Element.isElement(n) && Editor.isBlock(editor, n)
           : (n) => Editor.isEditor(n),
         mode: 'lowest',
         voids,
@@ -120,7 +120,8 @@ export const wrapNodes: NodeTransforms['wrapNodes'] = (
         Transforms.moveNodes(editor, {
           at: range,
           match: (n) =>
-            Element.isAncestor(commonNode) && commonNode.children.includes(n),
+            Element.isAncestor(commonNode) &&
+            (commonNode.children ?? []).includes(n),
           to: wrapperPath.concat(0),
           voids,
         })

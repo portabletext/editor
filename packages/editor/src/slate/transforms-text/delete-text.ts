@@ -1,8 +1,10 @@
 import {Editor} from '../interfaces/editor'
-import type {NodeEntry} from '../interfaces/node'
+import {Element} from '../interfaces/element'
+import {Node, type NodeEntry} from '../interfaces/node'
 import {Path} from '../interfaces/path'
 import {Point} from '../interfaces/point'
 import {Range} from '../interfaces/range'
+import {Text} from '../interfaces/text'
 import {Transforms} from '../interfaces/transforms'
 import type {TextTransforms} from '../interfaces/transforms/text'
 
@@ -62,12 +64,12 @@ export const deleteText: TextTransforms['delete'] = (editor, options = {}) => {
 
     let [start, end] = Range.edges(at)
     const startBlock = Editor.above(editor, {
-      match: (n) => editor.isElement(n) && Editor.isBlock(editor, n),
+      match: (n) => Element.isElement(n) && Editor.isBlock(editor, n),
       at: start,
       voids,
     })
     const endBlock = Editor.above(editor, {
-      match: (n) => editor.isElement(n) && Editor.isBlock(editor, n),
+      match: (n) => Element.isElement(n) && Editor.isBlock(editor, n),
       at: end,
       voids,
     })
@@ -114,7 +116,7 @@ export const deleteText: TextTransforms['delete'] = (editor, options = {}) => {
 
       if (
         (!voids &&
-          editor.isElement(node) &&
+          Element.isElement(node) &&
           (Editor.isVoid(editor, node) ||
             Editor.isElementReadOnly(editor, node))) ||
         (!Path.isCommon(path, start.path) && !Path.isCommon(path, end.path))
@@ -132,13 +134,16 @@ export const deleteText: TextTransforms['delete'] = (editor, options = {}) => {
 
     if (!isSingleText && !startNonEditable) {
       const point = startRef.current!
-      const [node] = Editor.leaf(editor, point)
-      const {path} = point
-      const {offset} = start
-      const text = node.text.slice(offset)
-      if (text.length > 0) {
-        editor.apply({type: 'remove_text', path, offset, text})
-        removedText = text
+      const node = Node.get(editor, point.path)
+
+      if (Text.isText(node)) {
+        const {path} = point
+        const {offset} = start
+        const text = node.text.slice(offset)
+        if (text.length > 0) {
+          editor.apply({type: 'remove_text', path, offset, text})
+          removedText = text
+        }
       }
     }
 
@@ -152,13 +157,16 @@ export const deleteText: TextTransforms['delete'] = (editor, options = {}) => {
 
     if (!endNonEditable) {
       const point = endRef.current!
-      const [node] = Editor.leaf(editor, point)
-      const {path} = point
-      const offset = isSingleText ? start.offset : 0
-      const text = node.text.slice(offset, end.offset)
-      if (text.length > 0) {
-        editor.apply({type: 'remove_text', path, offset, text})
-        removedText = text
+      const node = Node.get(editor, point.path)
+
+      if (Text.isText(node)) {
+        const {path} = point
+        const offset = isSingleText ? start.offset : 0
+        const text = node.text.slice(offset, end.offset)
+        if (text.length > 0) {
+          editor.apply({type: 'remove_text', path, offset, text})
+          removedText = text
+        }
       }
     }
 

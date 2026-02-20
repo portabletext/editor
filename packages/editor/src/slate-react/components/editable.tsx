@@ -12,13 +12,13 @@ import React, {
 import scrollIntoView from 'scroll-into-view-if-needed'
 import {
   Editor,
+  Element,
   Node,
   Path,
   Range,
   Text,
   Transforms,
   type DecoratedRange,
-  type Element,
   type LeafPosition,
   type NodeEntry,
 } from '../../slate'
@@ -575,7 +575,7 @@ export const Editable = forwardRef(
 
         if (
           !readOnly &&
-          ReactEditor.hasEditableTarget(editor, event.target) &&
+          ReactEditor.hasSelectableTarget(editor, event.target) &&
           !isDOMEventHandled(event, propsOnDOMBeforeInput)
         ) {
           // COMPAT: BeforeInput events aren't cancelable on android, so we have to handle them differently using the android input manager.
@@ -666,7 +666,7 @@ export const Editable = forwardRef(
                 const block = Editor.above(editor, {
                   at: anchor.path,
                   match: (n) =>
-                    editor.isElement(n) && Editor.isBlock(editor, n),
+                    Element.isElement(n) && Editor.isBlock(editor, n),
                 })
 
                 if (block && Node.string(block[0]).includes('\t')) {
@@ -972,26 +972,31 @@ export const Editable = forwardRef(
 
     if (editor.selection && Range.isCollapsed(editor.selection) && marks) {
       const {anchor} = editor.selection
-      const leaf = Node.leaf(editor, anchor.path)
-      const {text: _text, ...rest} = leaf
+      const anchorNode = Node.get(editor, anchor.path)
 
-      // While marks isn't a 'complete' text, we can still use loose Text.equals
-      // here which only compares marks anyway.
-      if (!Text.equals(leaf, marks as Text, {loose: true})) {
-        state.hasMarkPlaceholder = true
+      // Childless void elements have no text leaf — skip mark placeholders
+      if (Text.isText(anchorNode)) {
+        const leaf = anchorNode
+        const {text: _text, ...rest} = leaf
 
-        const unset = Object.fromEntries(
-          Object.keys(rest).map((mark) => [mark, null]),
-        )
+        // While marks isn't a 'complete' text, we can still use loose Text.equals
+        // here which only compares marks anyway.
+        if (!Text.equals(leaf, marks as Text, {loose: true})) {
+          state.hasMarkPlaceholder = true
 
-        decorations.push({
-          [MARK_PLACEHOLDER_SYMBOL]: true,
-          ...unset,
-          ...marks,
+          const unset = Object.fromEntries(
+            Object.keys(rest).map((mark) => [mark, null]),
+          )
 
-          anchor,
-          focus: anchor,
-        })
+          decorations.push({
+            [MARK_PLACEHOLDER_SYMBOL]: true,
+            ...unset,
+            ...marks,
+
+            anchor,
+            focus: anchor,
+          })
+        }
       }
     }
 
@@ -1002,13 +1007,19 @@ export const Editable = forwardRef(
         const {selection} = editor
         if (selection) {
           const {anchor} = selection
-          const text = Node.leaf(editor, anchor.path)
+          const anchorNode = Node.get(editor, anchor.path)
 
-          // While marks isn't a 'complete' text, we can still use loose Text.equals
-          // here which only compares marks anyway.
-          if (marks && !Text.equals(text, marks as Text, {loose: true})) {
-            EDITOR_TO_PENDING_INSERTION_MARKS.set(editor, marks)
-            return
+          // Childless void elements have no text leaf — skip mark handling
+          if (Text.isText(anchorNode)) {
+            // While marks isn't a 'complete' text, we can still use loose Text.equals
+            // here which only compares marks anyway.
+            if (
+              marks &&
+              !Text.equals(anchorNode, marks as Text, {loose: true})
+            ) {
+              EDITOR_TO_PENDING_INSERTION_MARKS.set(editor, marks)
+              return
+            }
           }
         }
 
@@ -1181,7 +1192,7 @@ export const Editable = forwardRef(
                         relatedTarget,
                       )
 
-                      if (editor.isElement(node) && !editor.isVoid(node)) {
+                      if (Element.isElement(node) && !editor.isVoid(node)) {
                         return
                       }
                     }
@@ -1229,13 +1240,13 @@ export const Editable = forwardRef(
                         let blockPath = path
                         if (
                           !(
-                            editor.isElement(node) &&
+                            Element.isElement(node) &&
                             Editor.isBlock(editor, node)
                           )
                         ) {
                           const block = Editor.above(editor, {
                             match: (n) =>
-                              editor.isElement(n) && Editor.isBlock(editor, n),
+                              Element.isElement(n) && Editor.isBlock(editor, n),
                             at: path,
                           })
 
@@ -1431,7 +1442,7 @@ export const Editable = forwardRef(
                       const node = ReactEditor.toSlateNode(editor, event.target)
 
                       if (
-                        editor.isElement(node) &&
+                        Element.isElement(node) &&
                         Editor.isVoid(editor, node)
                       ) {
                         event.preventDefault()
@@ -1450,7 +1461,7 @@ export const Editable = forwardRef(
                       const node = ReactEditor.toSlateNode(editor, event.target)
                       const path = ReactEditor.findPath(editor, node)
                       const voidMatch =
-                        (editor.isElement(node) &&
+                        (Element.isElement(node) &&
                           Editor.isVoid(editor, node)) ||
                         Editor.void(editor, {at: path, voids: true})
 
@@ -1531,7 +1542,7 @@ export const Editable = forwardRef(
                     if (
                       !readOnly &&
                       !state.isUpdatingSelection &&
-                      ReactEditor.hasEditableTarget(editor, event.target) &&
+                      ReactEditor.hasSelectableTarget(editor, event.target) &&
                       !isEventHandled(event, attributes.onFocus)
                     ) {
                       const el = ReactEditor.toDOMNode(editor, editor)
@@ -1555,7 +1566,7 @@ export const Editable = forwardRef(
                   (event: React.KeyboardEvent<HTMLDivElement>) => {
                     if (
                       !readOnly &&
-                      ReactEditor.hasEditableTarget(editor, event.target)
+                      ReactEditor.hasSelectableTarget(editor, event.target)
                     ) {
                       androidInputManagerRef.current?.handleKeyDown(event)
 
@@ -1831,7 +1842,7 @@ export const Editable = forwardRef(
                             )
 
                             if (
-                              editor.isElement(currentNode) &&
+                              Element.isElement(currentNode) &&
                               Editor.isVoid(editor, currentNode) &&
                               (Editor.isInline(editor, currentNode) ||
                                 Editor.isBlock(editor, currentNode))
@@ -1852,7 +1863,7 @@ export const Editable = forwardRef(
                   (event: React.ClipboardEvent<HTMLDivElement>) => {
                     if (
                       !readOnly &&
-                      ReactEditor.hasEditableTarget(editor, event.target) &&
+                      ReactEditor.hasSelectableTarget(editor, event.target) &&
                       !isEventHandled(event, attributes.onPaste)
                     ) {
                       // COMPAT: Certain browsers don't support the `beforeinput` event, so we

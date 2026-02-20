@@ -3,13 +3,6 @@ import {modifyChildren, modifyLeaf, removeChildren} from '../utils/modify'
 import {Element, type ElementEntry} from './element'
 
 /**
- * Structural check: does this node have children to traverse into?
- * Used by Node.* methods for tree traversal. Does NOT imply type identity.
- */
-const hasChildren = (node: any): node is {children: any[]} =>
-  Array.isArray(node?.children)
-
-/**
  * The `Node` union type represents all of the different types of nodes that
  * occur in a Slate document tree.
  */
@@ -230,9 +223,9 @@ export const Node: NodeInterface = {
   ancestor(root: Node, path: Path): Ancestor {
     const node = Node.get(root, path)
 
-    if (!hasChildren(node)) {
+    if (Text.isText(node)) {
       throw new Error(
-        `Cannot get the ancestor node at path [${path}] because it refers to a leaf node: ${Scrubber.stringify(
+        `Cannot get the ancestor node at path [${path}] because it refers to a text node instead: ${Scrubber.stringify(
           node,
         )}`,
       )
@@ -254,13 +247,13 @@ export const Node: NodeInterface = {
   },
 
   child(root: Node, index: number): Descendant {
-    if (!hasChildren(root)) {
+    if (Text.isText(root)) {
       throw new Error(
-        `Cannot get the child of a leaf node: ${Scrubber.stringify(root)}`,
+        `Cannot get the child of a text node: ${Scrubber.stringify(root)}`,
       )
     }
 
-    const c = root.children[index] as Descendant
+    const c = root.children?.[index] as Descendant
 
     if (c == null) {
       throw new Error(
@@ -280,7 +273,7 @@ export const Node: NodeInterface = {
   ): Generator<NodeEntry<Descendant>, void, undefined> {
     const {reverse = false} = options
     const ancestor = Node.ancestor(root, path)
-    const {children} = ancestor
+    const children = ancestor.children ?? []
     let index = reverse ? children.length - 1 : 0
 
     while (reverse ? index >= 0 : index < children.length) {
@@ -329,19 +322,19 @@ export const Node: NodeInterface = {
     options: NodeElementsOptions = {},
   ): Generator<ElementEntry, void, undefined> {
     for (const [node, path] of Node.nodes(root, options)) {
-      if (hasChildren(node)) {
+      if (Element.isElement(node)) {
         yield [node, path]
       }
     }
   },
 
   extractProps(node: Node): NodeProps {
-    if (hasChildren(node)) {
-      const {children: _children, ...properties} = node
+    if (Text.isText(node)) {
+      const {text: _text, ...properties} = node
 
       return properties
     } else {
-      const {text: _text, ...properties} = node
+      const {children: _children, ...properties} = node
 
       return properties
     }
@@ -352,7 +345,7 @@ export const Node: NodeInterface = {
     let n = Node.get(root, p)
 
     while (n) {
-      if (!hasChildren(n) || n.children.length === 0) {
+      if (Text.isText(n) || !n.children || n.children.length === 0) {
         break
       } else {
         n = n.children[0]! as Node
@@ -417,7 +410,7 @@ export const Node: NodeInterface = {
     for (let i = 0; i < path.length; i++) {
       const p = path[i]!
 
-      if (!hasChildren(node) || !node.children[p]) {
+      if (Text.isText(node) || !node.children?.[p]) {
         return
       }
 
@@ -433,7 +426,7 @@ export const Node: NodeInterface = {
     for (let i = 0; i < path.length; i++) {
       const p = path[i]!
 
-      if (!hasChildren(node) || !node.children[p]) {
+      if (Text.isText(node) || !node.children?.[p]) {
         return false
       }
 
@@ -444,24 +437,11 @@ export const Node: NodeInterface = {
   },
 
   isNode(value: any, {deep = false}: NodeIsNodeOptions = {}): value is Node {
-    if (!value || typeof value !== 'object') {
-      return false
-    }
-    if (Editor.isEditor(value, {deep})) {
-      return true
-    }
-    // Structural: has _type (Element or Text in PT) or has children
-    // (vanilla Slate Element) or has text (vanilla Slate Text)
-    if (typeof value._type === 'string') {
-      return true
-    }
-    if (hasChildren(value)) {
-      return true
-    }
-    if (typeof value.text === 'string') {
-      return true
-    }
-    return false
+    return (
+      Text.isText(value) ||
+      Element.isElement(value, {deep}) ||
+      Editor.isEditor(value, {deep})
+    )
   },
 
   isNodeList(
@@ -478,7 +458,7 @@ export const Node: NodeInterface = {
     let n = Node.get(root, p)
 
     while (n) {
-      if (!hasChildren(n) || n.children.length === 0) {
+      if (Text.isText(n) || !n.children || n.children.length === 0) {
         break
       } else {
         const i = n.children.length - 1
@@ -493,7 +473,7 @@ export const Node: NodeInterface = {
   leaf(root: Node, path: Path): Text {
     const node = Node.get(root, path)
 
-    if (hasChildren(node)) {
+    if (!Text.isText(node)) {
       throw new Error(
         `Cannot get the leaf node at path [${path}] because it refers to a non-leaf node: ${Scrubber.stringify(
           node,
@@ -501,7 +481,7 @@ export const Node: NodeInterface = {
       )
     }
 
-    return node as Text
+    return node
   },
 
   *levels(
@@ -517,12 +497,12 @@ export const Node: NodeInterface = {
 
   matches(node: Node, props: Partial<Node>): boolean {
     return (
-      (hasChildren(node) &&
+      (Element.isElement(node) &&
         Element.isElementProps(props) &&
         Element.matches(node, props)) ||
-      (typeof (node as any).text === 'string' &&
+      (Text.isText(node) &&
         Text.isTextProps(props) &&
-        Text.matches(node as Text, props))
+        Text.matches(node, props))
     )
   },
 
@@ -548,7 +528,8 @@ export const Node: NodeInterface = {
       // If we're allowed to go downward and we haven't descended yet, do.
       if (
         !visited.has(n) &&
-        hasChildren(n) &&
+        !Text.isText(n) &&
+        n.children &&
         n.children.length !== 0 &&
         (pass == null || pass([n, p]) === false)
       ) {
@@ -599,7 +580,7 @@ export const Node: NodeInterface = {
     const parentPath = Path.parent(path)
     const p = Node.get(root, parentPath)
 
-    if (!hasChildren(p)) {
+    if (Text.isText(p)) {
       throw new Error(
         `Cannot get the parent of path [${path}] because it does not exist in the root.`,
       )
@@ -609,12 +590,10 @@ export const Node: NodeInterface = {
   },
 
   string(node: Node): string {
-    if (typeof (node as any).text === 'string') {
-      return (node as any).text
-    } else if (hasChildren(node)) {
-      return node.children.map(Node.string).join('')
+    if (Text.isText(node)) {
+      return node.text
     } else {
-      return ''
+      return (node.children ?? []).map(Node.string).join('')
     }
   },
 
@@ -623,8 +602,8 @@ export const Node: NodeInterface = {
     options: NodeTextsOptions = {},
   ): Generator<NodeEntry<Text>, void, undefined> {
     for (const [node, path] of Node.nodes(root, options)) {
-      if (typeof (node as any).text === 'string' && !hasChildren(node)) {
-        yield [node as Text, path]
+      if (Text.isText(node)) {
+        yield [node, path]
       }
     }
   },

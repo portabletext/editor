@@ -1,7 +1,9 @@
 import type {EditorInterface} from '../interfaces/editor'
+import {Element} from '../interfaces/element'
 import {Node} from '../interfaces/node'
 import {Path} from '../interfaces/path'
 import {Range} from '../interfaces/range'
+import {Text} from '../interfaces/text'
 
 export const point: EditorInterface['point'] = (editor, at, options = {}) => {
   const {edge = 'start'} = options
@@ -19,7 +21,12 @@ export const point: EditorInterface['point'] = (editor, at, options = {}) => {
 
     const node = Node.get(editor, path)
 
-    if (!editor.isText(node)) {
+    // Childless void elements are atomic — return a point at the void's path
+    if (Element.isElement(node) && editor.isVoid(node)) {
+      return {path, offset: 0}
+    }
+
+    if (!Text.isText(node)) {
       throw new Error(
         `Cannot get the ${edge} point in the node at path [${at}] because it has no ${edge} text node.`,
       )

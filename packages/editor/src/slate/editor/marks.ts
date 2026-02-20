@@ -1,9 +1,10 @@
 import type {Point} from '../interfaces'
 import {Editor, type EditorInterface} from '../interfaces/editor'
+import {Element} from '../interfaces/element'
 import type {NodeEntry} from '../interfaces/node'
 import {Path} from '../interfaces/path'
 import {Range} from '../interfaces/range'
-import type {Text} from '../interfaces/text'
+import {Text} from '../interfaces/text'
 
 export const marks: EditorInterface['marks'] = (editor, _options = {}) => {
   const {marks, selection} = editor
@@ -35,7 +36,7 @@ export const marks: EditorInterface['marks'] = (editor, _options = {}) => {
     }
 
     const [match] = Editor.nodes(editor, {
-      match: editor.isText,
+      match: Text.isText,
       at: {
         anchor,
         focus,
@@ -53,19 +54,25 @@ export const marks: EditorInterface['marks'] = (editor, _options = {}) => {
 
   const {path} = anchor
 
+  // Childless void elements have no text leaf — return empty marks
+  const anchorNode = Editor.node(editor, path)[0]
+  if (Element.isElement(anchorNode) && editor.isVoid(anchorNode)) {
+    return {} as ReturnType<EditorInterface['marks']> & {}
+  }
+
   let [node] = Editor.leaf(editor, path)
 
   if (anchor.offset === 0) {
-    const prev = Editor.previous(editor, {at: path, match: editor.isText})
+    const prev = Editor.previous(editor, {at: path, match: Text.isText})
     const markedVoid = Editor.above(editor, {
       match: (n) =>
-        editor.isElement(n) &&
+        Element.isElement(n) &&
         Editor.isVoid(editor, n) &&
         editor.markableVoid(n),
     })
     if (!markedVoid) {
       const block = Editor.above(editor, {
-        match: (n) => editor.isElement(n) && Editor.isBlock(editor, n),
+        match: (n) => Element.isElement(n) && Editor.isBlock(editor, n),
       })
 
       if (prev && block) {

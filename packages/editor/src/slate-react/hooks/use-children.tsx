@@ -1,9 +1,9 @@
 import {useCallback, useRef, type JSX} from 'react'
 import {
   Editor,
+  Element,
   type Ancestor,
   type DecoratedRange,
-  type Element,
   type Text,
 } from '../../slate'
 import {
@@ -55,7 +55,7 @@ const useChildren = (props: {
   IS_NODE_MAP_DIRTY.set(editor as any, false)
 
   const isEditor = Editor.isEditor(node)
-  const isBlock = !isEditor && editor.isElement(node) && !editor.isInline(node)
+  const isBlock = !isEditor && Element.isElement(node) && !editor.isInline(node)
   const isLeafBlock = isBlock && Editor.hasInlines(editor, node)
   const chunkSize = isLeafBlock ? null : editor.getChunkSize(node)
   const chunking = !!chunkSize
@@ -70,7 +70,7 @@ const useChildren = (props: {
   // PERF: If chunking is enabled, this is done while traversing the chunk tree
   // instead to eliminate unnecessary weak map operations.
   if (!chunking) {
-    node.children.forEach((n, i) => {
+    ;(node.children ?? []).forEach((n, i) => {
       NODE_TO_INDEX.set(n, i)
       NODE_TO_PARENT.set(n, node)
     })
@@ -113,7 +113,7 @@ const useChildren = (props: {
       <TextComponent
         decorations={decorationsByChild[i] ?? []}
         key={key.id}
-        isLast={i === node.children.length - 1}
+        isLast={i === (node.children?.length ?? 0) - 1}
         parent={node}
         renderPlaceholder={renderPlaceholder}
         renderLeaf={renderLeaf}
@@ -124,7 +124,7 @@ const useChildren = (props: {
   }
 
   if (!chunking) {
-    return node.children.map((n, i) =>
+    return (node.children ?? []).map((n, i) =>
       editor.isText(n)
         ? renderTextComponent(n, i)
         : renderElementComponent(n, i),

@@ -111,10 +111,8 @@ export const splitDecorationsByChild = (
   node: Ancestor,
   decorations: DecoratedRange[],
 ): DecoratedRange[][] => {
-  const decorationsByChild = Array.from(
-    node.children,
-    (): DecoratedRange[] => [],
-  )
+  const children = node.children ?? []
+  const decorationsByChild = Array.from(children, (): DecoratedRange[] => [])
 
   if (decorations.length === 0) {
     return decorationsByChild
@@ -124,7 +122,7 @@ export const splitDecorationsByChild = (
   const level = path.length
   const ancestorRange = Editor.range(editor, path)
 
-  const cachedChildRanges = new Array<Range | undefined>(node.children.length)
+  const cachedChildRanges = new Array<Range | undefined>(children.length)
 
   const getChildRange = (index: number) => {
     const cachedRange = cachedChildRanges[index]

@@ -1,10 +1,11 @@
 import {
   Editor,
+  Element,
+  Node,
   Range,
   Scrubber,
   Transforms,
   type BaseEditor,
-  type Node,
   type Path,
   type Point,
 } from '../../slate'
@@ -315,7 +316,7 @@ export const DOMEditor: DOMEditorInterface = {
     // If the drop target is inside a void node, move it into either the
     // next or previous node, depending on which side the `x` and `y`
     // coordinates are closest to.
-    if (editor.isElement(node) && Editor.isVoid(editor, node)) {
+    if (Element.isElement(node) && Editor.isVoid(editor, node)) {
       const rect = target.getBoundingClientRect()
       const isPrev = editor.isInline(node)
         ? x - rect.left < rect.left + rect.width - x
@@ -539,7 +540,7 @@ export const DOMEditor: DOMEditorInterface = {
     const slateNode =
       DOMEditor.hasTarget(editor, target) &&
       DOMEditor.toSlateNode(editor, target)
-    return editor.isElement(slateNode) && Editor.isVoid(editor, slateNode)
+    return Element.isElement(slateNode) && Editor.isVoid(editor, slateNode)
   },
 
   setFragmentData: (editor, data, originEvent) =>
@@ -905,6 +906,20 @@ export const DOMEditor: DOMEditorInterface = {
     // first, and then afterwards for the correct `element`. (2017/03/03)
     const slateNode = DOMEditor.toSlateNode(editor, textNode!)
     const path = DOMEditor.findPath(editor, slateNode)
+
+    // For childless void elements, the virtual text node produces a path
+    // like [blockIndex, 0] but the Slate tree has no child there. Truncate
+    // to the void element's path.
+    if (path.length > 1) {
+      const parentPath = path.slice(0, -1)
+      const parentNode = Node.get(editor, parentPath)
+      if (Element.isElement(parentNode) && editor.isVoid(parentNode)) {
+        return {path: parentPath, offset: 0} as T extends true
+          ? Point | null
+          : Point
+      }
+    }
+
     return {path, offset} as T extends true ? Point | null : Point
   },
 

@@ -1,7 +1,9 @@
 import {Editor} from '../interfaces/editor'
+import {Element} from '../interfaces/element'
 import type {Node} from '../interfaces/node'
 import {Path} from '../interfaces/path'
 import {Range} from '../interfaces/range'
+import {Text} from '../interfaces/text'
 import {Transforms} from '../interfaces/transforms'
 import type {NodeTransforms} from '../interfaces/transforms/node'
 import {matchPath} from '../utils/match-path'
@@ -27,7 +29,7 @@ export const setNodes: NodeTransforms['setNodes'] = (
     if (match == null) {
       match = Path.isPath(at)
         ? matchPath(editor, at)
-        : (n) => editor.isElement(n) && Editor.isBlock(editor, n)
+        : (n) => Element.isElement(n) && Editor.isBlock(editor, n)
     }
 
     if (!hanging && Range.isRange(at)) {
@@ -35,9 +37,11 @@ export const setNodes: NodeTransforms['setNodes'] = (
     }
 
     if (split && Range.isRange(at)) {
+      const anchorNode = Editor.node(editor, at.anchor)[0]
       if (
         Range.isCollapsed(at) &&
-        Editor.leaf(editor, at.anchor)[0].text.length > 0
+        Text.isText(anchorNode) &&
+        anchorNode.text.length > 0
       ) {
         // If the range is collapsed in a non-empty node and 'split' is true, there's nothing to
         // set that won't get normalized away
@@ -91,15 +95,7 @@ export const setNodes: NodeTransforms['setNodes'] = (
       let hasChanges = false
 
       for (const k in props) {
-        if (k === 'text' && editor.isText(node)) {
-          continue
-        }
-
-        if (
-          k === 'children' &&
-          editor.isElement(node) &&
-          !Editor.isVoid(editor, node)
-        ) {
+        if (k === 'children' || k === 'text') {
           continue
         }
 

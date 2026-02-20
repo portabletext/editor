@@ -31,7 +31,7 @@ const SlateString = (props: {
   // to support expected plain text.
   if (
     leaf.text === '' &&
-    parent.children[parent.children.length - 1] === text &&
+    parent.children?.[parent.children.length - 1] === text &&
     !editor.isInline(parent) &&
     Editor.string(editor, parentPath) === ''
   ) {
