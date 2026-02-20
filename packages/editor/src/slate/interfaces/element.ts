@@ -1,6 +1,7 @@
 import {
   isObject,
   Node,
+  Text,
   type Ancestor,
   type Descendant,
   type ExtendedType,
@@ -14,7 +15,7 @@ import {
  */
 
 export interface BaseElement {
-  children: Descendant[]
+  children?: Descendant[]
 }
 
 export type Element = ExtendedType<'Element', BaseElement>
@@ -74,7 +75,7 @@ export interface ElementInterface {
  */
 const isElement = (
   value: any,
-  {deep = false}: ElementIsElementOptions = {},
+  _options?: ElementIsElementOptions,
 ): value is Element => {
   if (!isObject(value)) {
     return false
@@ -86,11 +87,11 @@ const isElement = (
     return false
   }
 
-  const isChildrenValid = deep
-    ? Node.isNodeList(value.children)
-    : Array.isArray(value.children)
-
-  return isChildrenValid
+  // An Element is any object with a _type string that's not the Editor
+  // and not a Text node (span). Spans have _type equal to the configured
+  // span type name, so we exclude them to maintain Slate's Element vs
+  // Text mutual exclusion.
+  return typeof value._type === 'string' && !Text.isText(value)
 }
 
 // eslint-disable-next-line no-redeclare
@@ -115,7 +116,9 @@ export const Element: ElementInterface = {
   },
 
   isElementProps(props: any): props is Partial<Element> {
-    return (props as Partial<Element>).children !== undefined
+    return (
+      isObject(props) && typeof props._type === 'string' && !Text.isText(props)
+    )
   },
 
   isElementType: <T extends Element>(

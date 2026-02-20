@@ -141,8 +141,8 @@ describe(toSlateRange.name, () => {
     })
 
     expect(range).toEqual({
-      anchor: {path: [0, 0], offset: 0},
-      focus: {path: [0, 0], offset: 0},
+      anchor: {path: [0], offset: 0},
+      focus: {path: [0], offset: 0},
     })
   })
 
@@ -271,8 +271,8 @@ describe(toSlateRange.name, () => {
     })
 
     expect(range).toEqual({
-      anchor: {path: [0, 1, 0], offset: 0},
-      focus: {path: [0, 1, 0], offset: 0},
+      anchor: {path: [0, 1], offset: 0},
+      focus: {path: [0, 1], offset: 0},
     })
   })
 })

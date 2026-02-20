@@ -17,8 +17,13 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
     return
   }
 
+  // Void elements have no children to normalize.
+  if (Element.isElement(node) && editor.isVoid(node)) {
+    return
+  }
+
   // Ensure that block and inline nodes have at least one text child.
-  if (Element.isElement(node) && node.children.length === 0) {
+  if (Element.isElement(node) && node.children!.length === 0) {
     const child = {text: ''} as Node
     Transforms.insertNodes(editor, child, {
       at: path.concat(0),
@@ -32,22 +37,22 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
     ? false
     : Element.isElement(node) &&
       (editor.isInline(node) ||
-        node.children.length === 0 ||
-        Text.isText(node.children[0]!) ||
-        editor.isInline(node.children[0]!))
+        node.children!.length === 0 ||
+        Text.isText(node.children![0]!) ||
+        editor.isInline(node.children![0]!))
 
   // Since we'll be applying operations while iterating, keep track of an
   // index that accounts for any added/removed nodes.
   let n = 0
 
-  for (let i = 0; i < node.children.length; i++, n++) {
+  for (let i = 0; i < node.children!.length; i++, n++) {
     const currentNode = Node.get(editor, path)
     if (Text.isText(currentNode)) {
       continue
     }
-    const child = currentNode.children[n] as Descendant
-    const prev = currentNode.children[n - 1] as Descendant
-    const isLast = i === node.children.length - 1
+    const child = currentNode.children![n] as Descendant
+    const prev = currentNode.children![n - 1] as Descendant
+    const isLast = i === node.children!.length - 1
     const isInlineOrText =
       Text.isText(child) || (Element.isElement(child) && editor.isInline(child))
 
@@ -97,7 +102,11 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
       // To prevent slate from breaking, we can add the `children` field,
       // and now that it is valid, we can to many more operations easily,
       // such as extend normalizers to fix erronous structure.
-      if (!Text.isText(child) && !('children' in child)) {
+      if (
+        !Text.isText(child) &&
+        !('children' in child) &&
+        !(Element.isElement(child) && editor.isVoid(child))
+      ) {
         const elementChild = child as Element
         elementChild.children = []
       }

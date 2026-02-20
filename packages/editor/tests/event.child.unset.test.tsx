@@ -56,14 +56,10 @@ describe('event.child.unset', () => {
       props: ['marks'],
     })
 
+    // marks is structural: unsetting resets to [] directly (no unset + re-add)
     await vi.waitFor(() => {
       expect(getTersePt(editor.getSnapshot().context)).toEqual(['Hello'])
       expect(patches).toEqual([
-        {
-          origin: 'local',
-          type: 'unset',
-          path: [{_key: blockKey}, 'children', {_key: spanKey}, 'marks'],
-        },
         {
           origin: 'local',
           type: 'set',
@@ -334,6 +330,7 @@ describe('event.child.unset', () => {
           markDefs: [],
         },
       ])
+      // marks is structural: unsetting resets to [] directly (set, not unset)
       expect(patches.slice(1)).toEqual([
         {
           origin: 'local',
@@ -343,8 +340,9 @@ describe('event.child.unset', () => {
         },
         {
           origin: 'local',
-          type: 'unset',
+          type: 'set',
           path: [{_key: blockKey}, 'children', {_key: 'k4'}, 'marks'],
+          value: [],
         },
         {
           origin: 'local',
@@ -358,20 +356,6 @@ describe('event.child.unset', () => {
           type: 'unset',
           path: [],
         },
-        // Prepending a setIfMissing patch to ensure the editor is not empty
-        {
-          origin: 'local',
-          type: 'setIfMissing',
-          path: [],
-          value: [],
-        },
-        // This patch goes nowhere, but that's okay
-        {
-          origin: 'local',
-          type: 'set',
-          path: [{_key: blockKey}, 'children', {_key: 'k4'}, 'marks'],
-          value: [],
-        },
       ])
     })
 
@@ -381,7 +365,7 @@ describe('event.child.unset', () => {
 
     await vi.waitFor(() => {
       expect(getTersePt(editor.getSnapshot().context)).toEqual(['f'])
-      expect(patches.slice(7)).toEqual([
+      expect(patches.slice(5)).toEqual([
         {
           origin: 'local',
           type: 'setIfMissing',

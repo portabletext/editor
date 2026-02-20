@@ -34,8 +34,9 @@ export function RenderElement(props: {
   )
   const slateStatic = useSlateStatic()
 
-  const isInline =
-    '__inline' in props.element && props.element.__inline === true
+  const isInline = schema.inlineObjects.some(
+    (obj) => obj.name === props.element._type,
+  )
 
   if (isInline) {
     return (

@@ -1,4 +1,5 @@
 import type {EditorInterface} from '../interfaces/editor'
+import {Element} from '../interfaces/element'
 import {Node} from '../interfaces/node'
 import {Path} from '../interfaces/path'
 import {Range} from '../interfaces/range'
@@ -19,6 +20,11 @@ export const point: EditorInterface['point'] = (editor, at, options = {}) => {
     }
 
     const node = Node.get(editor, path)
+
+    // Childless void elements are atomic — return a point at the void's path
+    if (Element.isElement(node) && editor.isVoid(node)) {
+      return {path, offset: 0}
+    }
 
     if (!Text.isText(node)) {
       throw new Error(

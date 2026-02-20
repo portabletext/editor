@@ -1,4 +1,5 @@
 import {isObject, Range} from '..'
+import {getSpanTypeName} from '../span-type-config'
 import type {ExtendedType} from '../types/custom-types'
 import {isDeepEqual} from '../utils/deep-equal'
 
@@ -92,7 +93,11 @@ export const Text: TextInterface = {
   },
 
   isText(value: any): value is Text {
-    return isObject(value) && typeof value.text === 'string'
+    return (
+      isObject(value) &&
+      typeof value.text === 'string' &&
+      value._type === getSpanTypeName()
+    )
   },
 
   isTextList(value: any): value is Text[] {

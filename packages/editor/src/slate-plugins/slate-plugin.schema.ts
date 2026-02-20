@@ -66,11 +66,20 @@ export function createSchemaPlugin({editorActor}: {editorActor: EditorActor}) {
       const inlineSchemaTypes = editorActor
         .getSnapshot()
         .context.schema.inlineObjects.map((obj) => obj.name)
-      return (
-        inlineSchemaTypes.includes(element._type) &&
-        '__inline' in element &&
-        element.__inline === true
-      )
+      if (!inlineSchemaTypes.includes(element._type)) {
+        return false
+      }
+      // If the type is also a block object, we need to check position.
+      // Block-level elements are direct children of the editor.
+      // Inline elements are children of text blocks (grandchildren of editor).
+      const blockSchemaTypes = editorActor
+        .getSnapshot()
+        .context.schema.blockObjects.map((obj) => obj.name)
+      if (blockSchemaTypes.includes(element._type)) {
+        // Dual-type: only inline if NOT a direct child of the editor
+        return !editor.children.includes(element as any)
+      }
+      return true
     }
 
     // Extend Slate's default normalization

@@ -98,7 +98,7 @@ export function toSlateSelectionPoint(
 
   if (!isTextBlock(snapshot.context, block)) {
     return {
-      path: [blockIndex, 0],
+      path: [blockIndex],
       offset: 0,
     }
   }
@@ -149,7 +149,7 @@ export function toSlateSelectionPoint(
       if (isSpan(snapshot.context, child)) {
         childPath = [childIndex]
       } else {
-        childPath = [childIndex, 0]
+        childPath = [childIndex]
         offset = 0
       }
       break

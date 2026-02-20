@@ -1,6 +1,5 @@
-import {applyAll, set} from '@portabletext/patches'
 import {isTextBlock} from '@portabletext/schema'
-import {Transforms, type Node} from '../slate'
+import {Transforms, type Descendant} from '../slate'
 import {parseMarkDefs} from '../utils/parse-blocks'
 import type {OperationImplementation} from './operation.types'
 
@@ -93,12 +92,38 @@ export const blockSetOperationImplementation: OperationImplementation<
       }
     }
 
-    const patches = Object.entries(filteredProps).map(([key, value]) =>
-      key === '_key' ? set(value, ['_key']) : set(value, ['value', key]),
-    )
+    // Slate's set_node rejects 'text' and 'children' in newProperties,
+    // but block objects can have user-defined fields with those names.
+    const safeProps: Record<string, unknown> = {}
+    const unsafeProps: Record<string, unknown> = {}
 
-    const updatedSlateBlock = applyAll(slateBlock, patches) as Partial<Node>
+    for (const key in filteredProps) {
+      if (key === 'text' || key === 'children') {
+        unsafeProps[key] = filteredProps[key]
+      } else {
+        safeProps[key] = filteredProps[key]
+      }
+    }
 
-    Transforms.setNodes(operation.editor, updatedSlateBlock, {at: [blockIndex]})
+    if (Object.keys(safeProps).length > 0) {
+      Transforms.setNodes(operation.editor, safeProps, {at: [blockIndex]})
+    }
+
+    if (Object.keys(unsafeProps).length > 0) {
+      const newNode = {
+        ...(slateBlock as Record<string, unknown>),
+        ...unsafeProps,
+      }
+      operation.editor.apply({
+        type: 'remove_node',
+        path: [blockIndex],
+        node: slateBlock as Descendant,
+      })
+      operation.editor.apply({
+        type: 'insert_node',
+        path: [blockIndex],
+        node: newNode as unknown as Descendant,
+      })
+    }
   }
 }

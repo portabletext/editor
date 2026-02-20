@@ -120,7 +120,8 @@ export const wrapNodes: NodeTransforms['wrapNodes'] = (
         Transforms.moveNodes(editor, {
           at: range,
           match: (n) =>
-            Element.isAncestor(commonNode) && commonNode.children.includes(n),
+            Element.isAncestor(commonNode) &&
+            (commonNode.children ?? []).includes(n),
           to: wrapperPath.concat(0),
           voids,
         })

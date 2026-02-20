@@ -1,6 +1,5 @@
-import {applyAll, set, unset} from '@portabletext/patches'
 import {isTextBlock} from '@portabletext/schema'
-import {Transforms, type Node} from '../slate'
+import {Transforms} from '../slate'
 import type {OperationImplementation} from './operation.types'
 
 export const blockUnsetOperationImplementation: OperationImplementation<
@@ -40,15 +39,17 @@ export const blockUnsetOperationImplementation: OperationImplementation<
     return
   }
 
-  const patches = operation.props.flatMap((key) =>
-    key === '_type'
-      ? []
-      : key === '_key'
-        ? set(context.keyGenerator(), ['_key'])
-        : unset(['value', key]),
+  const propsToRemove = operation.props.filter(
+    (prop) => prop !== '_type' && prop !== '_key',
   )
 
-  const updatedSlateBlock = applyAll(slateBlock, patches) as Partial<Node>
+  Transforms.unsetNodes(operation.editor, propsToRemove, {at: [blockIndex]})
 
-  Transforms.setNodes(operation.editor, updatedSlateBlock, {at: [blockIndex]})
+  if (operation.props.includes('_key')) {
+    Transforms.setNodes(
+      operation.editor,
+      {_key: context.keyGenerator()},
+      {at: [blockIndex]},
+    )
+  }
 }

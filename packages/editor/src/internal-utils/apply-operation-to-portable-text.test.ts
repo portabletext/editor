@@ -2,7 +2,6 @@ import {compileSchema, defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
 import {applyOperationToPortableText} from './apply-operation-to-portable-text'
-import {VOID_CHILD_KEY} from './values'
 
 function createContext() {
   const keyGenerator = createTestKeyGenerator()
@@ -120,8 +119,7 @@ describe(applyOperationToPortableText.name, () => {
             node: {
               _type: 'image',
               _key: k2,
-              children: [{text: '', _key: VOID_CHILD_KEY, _type: 'span'}],
-              value: {src: 'https://example.com/image.jpg'},
+              src: 'https://example.com/image.jpg',
             },
           },
         ),
@@ -194,9 +192,7 @@ describe(applyOperationToPortableText.name, () => {
             node: {
               _type: 'stock-ticker',
               _key: k2,
-              __inline: true,
-              children: [{text: '', _key: VOID_CHILD_KEY, _type: 'span'}],
-              value: {symbol: 'AAPL'},
+              symbol: 'AAPL',
             },
           },
         ),
@@ -568,8 +564,6 @@ describe(applyOperationToPortableText.name, () => {
       const k0 = keyGenerator()
       const k1 = keyGenerator()
       const k2 = keyGenerator()
-      const voidChild = keyGenerator()
-
       expect(
         applyOperationToPortableText(
           createContext(),
@@ -591,8 +585,7 @@ describe(applyOperationToPortableText.name, () => {
             node: {
               _type: 'image',
               _key: k2,
-              children: [{_type: 'span', _key: voidChild, text: ''}],
-              value: {src: 'https://example.com/image.jpg'},
+              src: 'https://example.com/image.jpg',
             },
           },
         ),
@@ -611,7 +604,6 @@ describe(applyOperationToPortableText.name, () => {
       const k1 = keyGenerator()
       const k2 = keyGenerator()
       const k3 = keyGenerator()
-      const voidChild = keyGenerator()
 
       expect(
         applyOperationToPortableText(
@@ -633,9 +625,7 @@ describe(applyOperationToPortableText.name, () => {
             node: {
               _type: 'stock-ticker',
               _key: k2,
-              __inline: true,
-              children: [{_type: 'span', _key: voidChild, text: ''}],
-              value: {symbol: 'AAPL'},
+              symbol: 'AAPL',
             },
           },
         ),
@@ -1289,7 +1279,7 @@ describe(applyOperationToPortableText.name, () => {
             path: [0],
             properties: {},
             newProperties: {
-              value: {src: 'https://example.com/image.jpg'},
+              src: 'https://example.com/image.jpg',
             },
           },
         ),
@@ -1320,13 +1310,11 @@ describe(applyOperationToPortableText.name, () => {
             type: 'set_node',
             path: [0],
             properties: {
-              value: {src: 'https://example.com/image.jpg'},
+              src: 'https://example.com/image.jpg',
             },
             newProperties: {
-              value: {
-                src: 'https://example.com/image.jpg',
-                alt: 'An image',
-              },
+              src: 'https://example.com/image.jpg',
+              alt: 'An image',
             },
           },
         ),
@@ -1352,11 +1340,9 @@ describe(applyOperationToPortableText.name, () => {
             type: 'set_node',
             path: [0],
             properties: {
-              value: {
-                alt: 'An image',
-              },
+              alt: 'An image',
             },
-            newProperties: {value: {}},
+            newProperties: {alt: undefined},
           },
         ),
       ).toEqual([{_type: 'image', _key: k0}])
@@ -1430,9 +1416,7 @@ describe(applyOperationToPortableText.name, () => {
             path: [0, 1],
             properties: {},
             newProperties: {
-              value: {
-                symbol: 'AAPL',
-              },
+              symbol: 'AAPL',
             },
           },
         ),
@@ -1639,10 +1623,10 @@ describe(applyOperationToPortableText.name, () => {
             type: 'set_node',
             path: [0],
             properties: {
-              value: {text: 'h'},
+              text: 'h',
             },
             newProperties: {
-              value: {text: 'hello'},
+              text: 'hello',
             },
           },
         ),
@@ -1692,10 +1676,10 @@ describe(applyOperationToPortableText.name, () => {
             type: 'set_node',
             path: [0, 1],
             properties: {
-              value: {text: 'J'},
+              text: 'J',
             },
             newProperties: {
-              value: {text: 'John Doe'},
+              text: 'John Doe',
             },
           },
         ),

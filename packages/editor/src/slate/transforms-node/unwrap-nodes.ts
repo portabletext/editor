@@ -49,7 +49,8 @@ export const unwrapNodes: NodeTransforms['unwrapNodes'] = (
 
       Transforms.liftNodes(editor, {
         at: range,
-        match: (n) => Element.isAncestor(node) && node.children.includes(n),
+        match: (n) =>
+          Element.isAncestor(node) && (node.children ?? []).includes(n),
         voids,
       })
     }

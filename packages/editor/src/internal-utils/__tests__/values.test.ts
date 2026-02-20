@@ -5,7 +5,7 @@ import {toSlateBlock} from '../values'
 const schemaTypes = compileSchema(defineSchema({}))
 
 describe(toSlateBlock.name, () => {
-  it('given type is custom with no custom properties, should include an empty text property in children and an empty value', () => {
+  it('given type is custom with no custom properties, should be a childless void element', () => {
     const result = toSlateBlock(
       {
         _type: 'image',
@@ -14,15 +14,9 @@ describe(toSlateBlock.name, () => {
       {schemaTypes},
     )
 
-    expect(result).toMatchObject({
+    expect(result).toEqual({
       _key: '123',
       _type: 'image',
-      children: [
-        {
-          text: '',
-        },
-      ],
-      value: {},
     })
   })
 
@@ -49,6 +43,7 @@ describe(toSlateBlock.name, () => {
           _key: '1231',
           _type: 'span',
           text: '123',
+          marks: [],
         },
       ],
     })
@@ -85,23 +80,13 @@ describe(toSlateBlock.name, () => {
           _key: '1231',
           _type: 'span',
           text: '123',
+          marks: [],
         },
         {
-          __inline: true,
           _key: '1232',
           _type: 'image',
-          children: [
-            {
-              _key: 'void-child',
-              _type: 'span',
-              marks: [],
-              text: '',
-            },
-          ],
-          value: {
-            asset: {
-              _ref: 'ref-123',
-            },
+          asset: {
+            _ref: 'ref-123',
           },
         },
       ],

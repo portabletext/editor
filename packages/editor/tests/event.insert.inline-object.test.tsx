@@ -46,7 +46,7 @@ describe('event.insert.inline object', () => {
         (editor.getSnapshot().context.value![0] as PortableTextTextBlock)
           .children[1]!,
       ),
-    ).toEqual(['_key', '_type'])
+    ).toEqual(['_type', '_key'])
   })
 
   test('Scenario: Inserting and focusing inline object', async () => {

@@ -34,35 +34,27 @@ export function toSlateBlock(
             _key: childKey,
             _type: schemaTypes.span.name,
             text: childProps.text,
+            marks: [],
           }
         }
       }
 
       if (childType !== schemaTypes.span.name) {
-        // Return 'slate' version of inline object where the actual
-        // value is stored in the `value` property.
-        // In slate, inline objects are represented as regular
-        // children with actual text node in order to be able to
-        // be selected the same way as the rest of the (text) content.
+        // Inline objects are childless void elements.
         hasInlines = true
 
         return {
           _type: childType,
           _key: childKey,
-          children: [
-            {
-              _key: VOID_CHILD_KEY,
-              _type: schemaTypes.span.name,
-              text: '',
-              marks: [],
-            },
-          ],
-          value: childProps,
-          __inline: true,
+          ...childProps,
         }
       }
 
-      // Original child object (span)
+      // Span: ensure marks is always present
+      if (!Array.isArray(child.marks)) {
+        return {...child, marks: child.marks ?? []}
+      }
+
       return child
     })
 
@@ -80,18 +72,11 @@ export function toSlateBlock(
     return {_type, _key, ...rest, children} as Descendant
   }
 
+  // Block objects (images, etc.) are childless void elements.
   return {
     _type,
     _key,
-    children: [
-      {
-        _key: VOID_CHILD_KEY,
-        _type: 'span',
-        text: '',
-        marks: [],
-      },
-    ],
-    value: rest,
+    ...rest,
   } as Descendant
 }
 
@@ -106,34 +91,11 @@ export function fromSlateBlock(block: Descendant, textBlockType: string) {
     Array.isArray(block.children) &&
     _key
   ) {
-    let hasInlines = false
-    const children = block.children.map((child) => {
-      const {_type: _cType} = child
-      if ('value' in child && _cType !== 'span') {
-        hasInlines = true
-        const {
-          value: v,
-          _key: k,
-          _type: t,
-          __inline: _i,
-          children: _c,
-          ...rest
-        } = child
-        return {...rest, ...v, _key: k as string, _type: t as string}
-      }
-      return child
-    })
-    if (!hasInlines) {
-      return block as PortableTextBlock // Original object
-    }
-    return {...block, children, _key, _type} as PortableTextBlock
+    // Text block: inline objects are already childless, return as-is
+    return block as PortableTextBlock
   }
-  const blockValue = 'value' in block && block.value
-  return {
-    _key,
-    _type,
-    ...(typeof blockValue === 'object' ? blockValue : {}),
-  } as PortableTextBlock
+  // Block object: already childless, return as-is
+  return block as unknown as PortableTextBlock
 }
 
 export function isEqualToEmptyEditor(

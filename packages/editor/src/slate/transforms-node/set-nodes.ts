@@ -3,6 +3,7 @@ import {Element} from '../interfaces/element'
 import type {Node} from '../interfaces/node'
 import {Path} from '../interfaces/path'
 import {Range} from '../interfaces/range'
+import {Text} from '../interfaces/text'
 import {Transforms} from '../interfaces/transforms'
 import type {NodeTransforms} from '../interfaces/transforms/node'
 import {matchPath} from '../utils/match-path'
@@ -36,9 +37,11 @@ export const setNodes: NodeTransforms['setNodes'] = (
     }
 
     if (split && Range.isRange(at)) {
+      const anchorNode = Editor.node(editor, at.anchor)[0]
       if (
         Range.isCollapsed(at) &&
-        Editor.leaf(editor, at.anchor)[0].text.length > 0
+        Text.isText(anchorNode) &&
+        anchorNode.text.length > 0
       ) {
         // If the range is collapsed in a non-empty node and 'split' is true, there's nothing to
         // set that won't get normalized away

@@ -13,7 +13,7 @@ const hasSingleChildNest = (editor: Editor, node: Node): boolean => {
     const element = node as Element
     if (Editor.isVoid(editor, node)) {
       return true
-    } else if (element.children.length === 1) {
+    } else if (element.children && element.children.length === 1) {
       return hasSingleChildNest(editor, element.children[0]!)
     } else {
       return false
@@ -40,7 +40,7 @@ export const mergeNodes: NodeTransforms['mergeNodes'] = (
     if (match == null) {
       if (Path.isPath(at)) {
         const [parent] = Editor.parent(editor, at)
-        match = (n) => parent.children.includes(n)
+        match = (n) => (parent.children ?? []).includes(n)
       } else {
         match = (n) => Element.isElement(n) && Editor.isBlock(editor, n)
       }
@@ -106,7 +106,7 @@ export const mergeNodes: NodeTransforms['mergeNodes'] = (
       properties = rest as Partial<Text>
     } else if (Element.isElement(node) && Element.isElement(prevNode)) {
       const {children: _children, ...rest} = node
-      position = prevNode.children.length
+      position = prevNode.children?.length ?? 0
       properties = rest as Partial<Element>
     } else {
       throw new Error(

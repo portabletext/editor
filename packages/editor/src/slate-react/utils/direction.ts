@@ -9,8 +9,8 @@ const ltrRange =
   '\u00F8-\u02B8\u0300-\u0590\u0800-\u1FFF\u200E\u2C00-\uFB1C' +
   '\uFE00-\uFE6F\uFEFD-\uFFFF'
 
-const rtl = new RegExp('^[^' + ltrRange + ']*[' + rtlRange + ']')
-const ltr = new RegExp('^[^' + rtlRange + ']*[' + ltrRange + ']')
+const rtl = new RegExp(`^[^${ltrRange}]*[${rtlRange}]`)
+const ltr = new RegExp(`^[^${rtlRange}]*[${ltrRange}]`)
 
 export default function getDirection(value: string): 'rtl' | 'ltr' | 'neutral' {
   const source = String(value || '')

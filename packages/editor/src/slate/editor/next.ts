@@ -27,7 +27,7 @@ export const next: EditorInterface['next'] = (editor, options = {}) => {
   if (match == null) {
     if (Path.isPath(at)) {
       const [parent] = Editor.parent(editor, at)
-      match = (n) => parent.children.includes(n)
+      match = (n) => parent.children?.includes(n) ?? false
     } else {
       match = () => true
     }

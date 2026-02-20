@@ -1,7 +1,7 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
-import {toSlateBlock, VOID_CHILD_KEY} from './values'
+import {toSlateBlock} from './values'
 
 describe(toSlateBlock.name, () => {
   describe('text block', () => {
@@ -30,6 +30,7 @@ describe(toSlateBlock.name, () => {
               _key: spanKey,
               _type: 'span',
               text: 'foo',
+              marks: [],
             },
           ],
         })
@@ -59,6 +60,7 @@ describe(toSlateBlock.name, () => {
               _key: spanKey,
               _type: 'span',
               text: 'foo',
+              marks: [],
             },
           ],
         })
@@ -87,16 +89,7 @@ describe(toSlateBlock.name, () => {
             {
               _key: spanKey,
               _type: 'stock-ticker',
-              children: [
-                {
-                  _key: VOID_CHILD_KEY,
-                  _type: 'span',
-                  text: '',
-                  marks: [],
-                },
-              ],
-              value: {text: 'foo'},
-              __inline: true,
+              text: 'foo',
             },
           ],
         })
@@ -129,20 +122,9 @@ describe(toSlateBlock.name, () => {
           _key: blockKey,
           children: [
             {
-              __inline: true,
               _key: stockTickerKey,
               _type: 'stock-ticker',
-              children: [
-                {
-                  _key: VOID_CHILD_KEY,
-                  _type: 'span',
-                  text: '',
-                  marks: [],
-                },
-              ],
-              value: {
-                symbol: 'AAPL',
-              },
+              symbol: 'AAPL',
             },
           ],
         })
@@ -171,20 +153,9 @@ describe(toSlateBlock.name, () => {
           _key: blockKey,
           children: [
             {
-              __inline: true,
               _key: stockTickerKey,
               _type: 'stock-ticker',
-              children: [
-                {
-                  _key: VOID_CHILD_KEY,
-                  _type: 'span',
-                  text: '',
-                  marks: [],
-                },
-              ],
-              value: {
-                symbol: 'AAPL',
-              },
+              symbol: 'AAPL',
             },
           ],
         })
@@ -217,20 +188,9 @@ describe(toSlateBlock.name, () => {
           _key: blockKey,
           children: [
             {
-              __inline: true,
               _key: stockTickerKey,
               _type: 'stock-ticker',
-              children: [
-                {
-                  _key: VOID_CHILD_KEY,
-                  _type: 'span',
-                  text: '',
-                  marks: [],
-                },
-              ],
-              value: {
-                text: 'foo',
-              },
+              text: 'foo',
             },
           ],
         })
@@ -259,20 +219,9 @@ describe(toSlateBlock.name, () => {
           _key: blockKey,
           children: [
             {
-              __inline: true,
               _key: stockTickerKey,
               _type: 'stock-ticker',
-              children: [
-                {
-                  _key: VOID_CHILD_KEY,
-                  _type: 'span',
-                  text: '',
-                  marks: [],
-                },
-              ],
-              value: {
-                text: 'foo',
-              },
+              text: 'foo',
             },
           ],
         })

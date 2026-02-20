@@ -334,15 +334,10 @@ describe('event.insert.child', () => {
             {
               _key: 'k5',
               _type: 'span',
+              marks: [],
               text: '',
             },
           ],
-        },
-        {
-          origin: 'local',
-          type: 'set',
-          path: [{_key: blockKey}, 'children', {_key: 'k5'}, 'marks'],
-          value: [],
         },
       ])
     })
