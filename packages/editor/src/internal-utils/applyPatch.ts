@@ -22,6 +22,7 @@ import type {EditorContext} from '../editor/editor-snapshot'
 import type {Path} from '../types/paths'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
+import {isEqualChild} from './equality'
 import {isEqualToEmptyEditor, toSlateBlock} from './values'
 
 /**
@@ -240,30 +241,94 @@ function setPatch(
     ])
 
     if (editor.isTextBlock(block.node) && Element.isElement(updatedBlock)) {
+      // Update block-level properties (style, markDefs, etc.)
       Transforms.setNodes(editor, updatedBlock, {at: [block.index]})
 
-      const previousSelection = editor.selection
+      const oldChildren = block.node.children
+      const newChildren = updatedBlock.children
 
-      // Remove the previous children
-      for (const [_, childPath] of Editor.nodes(editor, {
-        at: [block.index],
-        reverse: true,
-        mode: 'lowest',
-      })) {
-        Transforms.removeNodes(editor, {at: childPath})
-      }
+      // Check if children structure is unchanged (same keys, same order)
+      const sameKeys =
+        oldChildren.length === newChildren.length &&
+        oldChildren.every(
+          (child, index) => child._key === newChildren[index]?._key,
+        )
 
-      // Insert the new children
-      Transforms.insertNodes(editor, updatedBlock.children, {
-        at: [block.index, 0],
-      })
+      if (sameKeys) {
+        // Children structure unchanged. Update individual children that differ
+        // instead of removing and re-inserting all of them.
+        for (
+          let childIndex = 0;
+          childIndex < newChildren.length;
+          childIndex++
+        ) {
+          const oldChild = oldChildren[childIndex]
+          const newChild = newChildren[childIndex]
 
-      // Restore the selection
-      if (previousSelection) {
-        // Update the selection on the editor object
-        Transforms.setSelection(editor, previousSelection)
-        // Actively select the previous selection
-        Transforms.select(editor, previousSelection)
+          if (!oldChild || !newChild) {
+            continue
+          }
+
+          if (isEqualChild(oldChild, newChild)) {
+            continue
+          }
+
+          if (Text.isText(oldChild) && Text.isText(newChild)) {
+            if (oldChild.text !== newChild.text) {
+              editor.apply({
+                type: 'remove_text',
+                path: [block.index, childIndex],
+                offset: 0,
+                text: oldChild.text,
+              })
+              editor.apply({
+                type: 'insert_text',
+                path: [block.index, childIndex],
+                offset: 0,
+                text: newChild.text,
+              })
+            }
+
+            // Update non-text properties (marks, etc.)
+            Transforms.setNodes(editor, newChild, {
+              at: [block.index, childIndex],
+            })
+          } else if (!Text.isText(newChild)) {
+            // Inline object: update if changed
+            Transforms.setNodes(editor, newChild, {
+              at: [block.index, childIndex],
+            })
+          }
+        }
+      } else {
+        // Children structure changed (adds, removes, or reorders).
+        // Fall back to remove/insert but validate selection before restoring.
+        const previousSelection = editor.selection
+
+        // Remove the previous children
+        for (const [_node, childPath] of Editor.nodes(editor, {
+          at: [block.index],
+          reverse: true,
+          mode: 'lowest',
+        })) {
+          Transforms.removeNodes(editor, {at: childPath})
+        }
+
+        // Insert the new children
+        Transforms.insertNodes(editor, newChildren, {
+          at: [block.index, 0],
+        })
+
+        // Restore the selection if paths are still valid after the swap
+        if (previousSelection) {
+          const anchorValid = Node.has(editor, previousSelection.anchor.path)
+          const focusValid = Node.has(editor, previousSelection.focus.path)
+
+          if (anchorValid && focusValid) {
+            Transforms.setSelection(editor, previousSelection)
+            Transforms.select(editor, previousSelection)
+          }
+        }
       }
 
       return true
