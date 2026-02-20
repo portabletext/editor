@@ -75,6 +75,7 @@ export function getEditorSnapshot({
     : null
 
   return {
+    blockMap: slateEditorInstance.blockMap,
     blockIndexMap: slateEditorInstance.blockIndexMap,
     context: {
       converters: [...editorActorSnapshot.context.converters],

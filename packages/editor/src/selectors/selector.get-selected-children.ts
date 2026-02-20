@@ -44,25 +44,43 @@ export function getSelectedChildren<
       return []
     }
 
-    const startBlockIndex = snapshot.blockIndexMap.get(startBlockKey)
-    const endBlockIndex = snapshot.blockIndexMap.get(endBlockKey)
+    const startEntry = snapshot.blockMap.get(startBlockKey)
+    const endEntry = snapshot.blockMap.get(endBlockKey)
 
-    if (startBlockIndex === undefined || endBlockIndex === undefined) {
+    if (!startEntry || !endEntry) {
       return []
     }
 
     const selectedChildren: Array<SelectedChild<TChild>> = []
-    const minBlockIndex = Math.min(startBlockIndex, endBlockIndex)
-    const maxBlockIndex = Math.max(startBlockIndex, endBlockIndex)
-    const blocks = snapshot.context.value.slice(
-      minBlockIndex,
-      maxBlockIndex + 1,
-    )
 
+    // Collect blocks from start to end by walking the linked list
+    // We need to handle forward and backward selections
+    const startIndex = startEntry.index
+    const endIndex = endEntry.index
+    const minKey = startIndex <= endIndex ? startBlockKey : endBlockKey
+    const maxKey = startIndex <= endIndex ? endBlockKey : startBlockKey
+
+    let currentKey: string | null = minKey
     let startChildFound = false
 
-    for (const block of blocks) {
+    while (currentKey !== null) {
+      const entry = snapshot.blockMap.get(currentKey)
+
+      if (!entry) {
+        break
+      }
+
+      const block = snapshot.context.value[entry.index]
+
+      if (!block) {
+        break
+      }
+
       if (!isTextBlock(snapshot.context, block)) {
+        if (currentKey === maxKey) {
+          break
+        }
+        currentKey = entry.next
         continue
       }
 
@@ -127,6 +145,12 @@ export function getSelectedChildren<
       if (isStartBlock) {
         startChildFound = true
       }
+
+      if (currentKey === maxKey) {
+        break
+      }
+
+      currentKey = entry.next
     }
 
     return selectedChildren

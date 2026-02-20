@@ -26,37 +26,52 @@ export const getSelectedValue: EditorSelector<Array<PortableTextBlock>> = (
     return []
   }
 
-  const startBlockIndex = snapshot.blockIndexMap.get(startBlockKey)
-  const endBlockIndex = snapshot.blockIndexMap.get(endBlockKey)
+  const startEntry = snapshot.blockMap.get(startBlockKey)
+  const endEntry = snapshot.blockMap.get(endBlockKey)
 
-  if (startBlockIndex === undefined || endBlockIndex === undefined) {
+  if (!startEntry || !endEntry) {
     return []
   }
 
-  const startBlock = snapshot.context.value.at(startBlockIndex)
-  const slicedStartBlock = startBlock
-    ? sliceBlocks({
-        context: snapshot.context,
-        blocks: [startBlock],
-      }).at(0)
-    : undefined
+  const startNode = snapshot.context.value[startEntry.index]
+  const endNode = snapshot.context.value[endEntry.index]
 
-  if (startBlockIndex === endBlockIndex) {
+  if (!startNode || !endNode) {
+    return []
+  }
+
+  const slicedStartBlock = sliceBlocks({
+    context: snapshot.context,
+    blocks: [startNode],
+  }).at(0)
+
+  if (startBlockKey === endBlockKey) {
     return slicedStartBlock ? [slicedStartBlock] : []
   }
 
-  const endBlock = snapshot.context.value.at(endBlockIndex)
-  const slicedEndBlock = endBlock
-    ? sliceBlocks({
-        context: snapshot.context,
-        blocks: [endBlock],
-      }).at(0)
-    : undefined
+  const slicedEndBlock = sliceBlocks({
+    context: snapshot.context,
+    blocks: [endNode],
+  }).at(0)
 
-  const middleBlocks = snapshot.context.value.slice(
-    startBlockIndex + 1,
-    endBlockIndex,
-  )
+  // Collect middle blocks by walking the linked list
+  const middleBlocks: Array<PortableTextBlock> = []
+  let currentKey = startEntry.next
+
+  while (currentKey !== null && currentKey !== endBlockKey) {
+    const entry = snapshot.blockMap.get(currentKey)
+
+    if (!entry) {
+      break
+    }
+
+    const node = snapshot.context.value[entry.index]
+
+    if (node) {
+      middleBlocks.push(node)
+    }
+    currentKey = entry.next
+  }
 
   return [
     ...(slicedStartBlock ? [slicedStartBlock] : []),

@@ -14,10 +14,10 @@ export const moveBlockOperationImplementation: OperationImplementation<
     throw new Error('Failed to get block key from selection point')
   }
 
-  const originBlockIndex = operation.editor.blockIndexMap.get(originKey)
+  const originEntry = operation.editor.blockMap.get(originKey)
 
-  if (originBlockIndex === undefined) {
-    throw new Error('Failed to get block index from block key')
+  if (!originEntry) {
+    throw new Error('Failed to get block entry from block key')
   }
 
   const destinationKey = getBlockKeyFromSelectionPoint({
@@ -29,16 +29,15 @@ export const moveBlockOperationImplementation: OperationImplementation<
     throw new Error('Failed to get block key from selection point')
   }
 
-  const destinationBlockIndex =
-    operation.editor.blockIndexMap.get(destinationKey)
+  const destinationEntry = operation.editor.blockMap.get(destinationKey)
 
-  if (destinationBlockIndex === undefined) {
-    throw new Error('Failed to get block index from block key')
+  if (!destinationEntry) {
+    throw new Error('Failed to get block entry from block key')
   }
 
   Transforms.moveNodes(operation.editor, {
-    at: [originBlockIndex],
-    to: [destinationBlockIndex],
+    at: [originEntry.index],
+    to: [destinationEntry.index],
     mode: 'highest',
   })
 }

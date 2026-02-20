@@ -25,36 +25,35 @@ export const getSelectedBlocks: EditorSelector<
     return selectedBlocks
   }
 
-  const startBlockIndex = snapshot.blockIndexMap.get(startKey)
-  const endBlockIndex = snapshot.blockIndexMap.get(endKey)
+  const startEntry = snapshot.blockMap.get(startKey)
 
-  if (startBlockIndex === undefined || endBlockIndex === undefined) {
+  if (!startEntry) {
     return selectedBlocks
   }
 
-  const slicedValue = snapshot.context.value.slice(
-    startBlockIndex,
-    endBlockIndex + 1,
-  )
+  // Walk the linked list from start to end
+  let currentKey: string | null = startKey
 
-  for (const block of slicedValue) {
-    if (block._key === startKey) {
-      selectedBlocks.push({node: block, path: [{_key: block._key}]})
+  while (currentKey !== null) {
+    const entry = snapshot.blockMap.get(currentKey)
 
-      if (startKey === endKey) {
-        break
-      }
-      continue
-    }
-
-    if (block._key === endKey) {
-      selectedBlocks.push({node: block, path: [{_key: block._key}]})
+    if (!entry) {
       break
     }
 
-    if (selectedBlocks.length > 0) {
-      selectedBlocks.push({node: block, path: [{_key: block._key}]})
+    const node = snapshot.context.value[entry.index]
+
+    if (!node) {
+      break
     }
+
+    selectedBlocks.push({node, path: [{_key: node._key}]})
+
+    if (currentKey === endKey) {
+      break
+    }
+
+    currentKey = entry.next
   }
 
   return selectedBlocks

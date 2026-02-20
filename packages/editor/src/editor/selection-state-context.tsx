@@ -111,18 +111,33 @@ export function SelectionStateProvider({
       let selectedBlockKeys: Set<string> = emptySet
 
       if (startBlockKey && endBlockKey) {
-        const startBlockIndex = snapshot.blockIndexMap.get(startBlockKey)
-        const endBlockIndex = snapshot.blockIndexMap.get(endBlockKey)
+        const startEntry = snapshot.blockMap.get(startBlockKey)
+        const endEntry = snapshot.blockMap.get(endBlockKey)
 
-        if (startBlockIndex !== undefined && endBlockIndex !== undefined) {
-          const minIndex = Math.min(startBlockIndex, endBlockIndex)
-          const maxIndex = Math.max(startBlockIndex, endBlockIndex)
+        if (startEntry && endEntry) {
+          // Determine which key comes first in document order
+          const minKey =
+            startEntry.index <= endEntry.index ? startBlockKey : endBlockKey
+          const maxKey =
+            startEntry.index <= endEntry.index ? endBlockKey : startBlockKey
           selectedBlockKeys = new Set<string>()
 
-          for (const [key, index] of snapshot.blockIndexMap) {
-            if (index >= minIndex && index <= maxIndex) {
-              selectedBlockKeys.add(key)
+          let currentKey: string | null = minKey
+
+          while (currentKey !== null) {
+            selectedBlockKeys.add(currentKey)
+
+            if (currentKey === maxKey) {
+              break
             }
+
+            const entry = snapshot.blockMap.get(currentKey)
+
+            if (!entry) {
+              break
+            }
+
+            currentKey = entry.next
           }
         }
       }

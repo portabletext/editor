@@ -15,7 +15,7 @@ export const decoratorAddOperationImplementation: OperationImplementation<
           value: operation.editor.value,
           selection: operation.at,
         },
-        blockIndexMap: operation.editor.blockIndexMap,
+        blockMap: operation.editor.blockMap,
       })
     : operation.editor.selection
 

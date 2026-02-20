@@ -64,7 +64,7 @@ export function insertBlock(options: {
           value: editor.value,
           selection: options.at,
         },
-        blockIndexMap: editor.blockIndexMap,
+        blockMap: editor.blockMap,
       })
     : editor.selection
 

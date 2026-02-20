@@ -15,15 +15,16 @@ export const getPreviousBlock: EditorSelector<
     return undefined
   }
 
-  const index = snapshot.blockIndexMap.get(selectionStartBlock.node._key)
+  const entry = snapshot.blockMap.get(selectionStartBlock.node._key)
 
-  if (index === undefined || index === 0) {
+  if (!entry || entry.prev === null) {
     return undefined
   }
 
-  const previousBlock = snapshot.context.value.at(index - 1)
-
-  return previousBlock
-    ? {node: previousBlock, path: [{_key: previousBlock._key}]}
+  const prevEntry = snapshot.blockMap.get(entry.prev)
+  const prevNode = prevEntry
+    ? snapshot.context.value[prevEntry.index]
     : undefined
+
+  return prevNode ? {node: prevNode, path: [{_key: prevNode._key}]} : undefined
 }

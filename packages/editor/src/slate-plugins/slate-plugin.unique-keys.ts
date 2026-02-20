@@ -45,7 +45,7 @@ export function createUniqueKeysPlugin(editorActor: EditorActor) {
           operation.properties._key &&
           keyExistsAtPath(
             {
-              blockIndexMap: editor.blockIndexMap,
+              blockMap: editor.blockMap,
               context: {
                 schema: context.schema,
                 value: editor.value,
@@ -77,7 +77,7 @@ export function createUniqueKeysPlugin(editorActor: EditorActor) {
             operation.node._key &&
             keyExistsAtPath(
               {
-                blockIndexMap: editor.blockIndexMap,
+                blockMap: editor.blockMap,
                 context: {
                   schema: context.schema,
                   value: editor.value,
@@ -311,14 +311,14 @@ export function createUniqueKeysPlugin(editorActor: EditorActor) {
 }
 
 function keyExistsAtPath(
-  snapshot: Pick<EditorSnapshot, 'blockIndexMap'> & {
+  snapshot: Pick<EditorSnapshot, 'blockMap'> & {
     context: Pick<EditorContext, 'schema' | 'value'>
   },
   path: Path,
   key: string,
 ): boolean {
   if (path.length === 1) {
-    return snapshot.blockIndexMap.has(key)
+    return snapshot.blockMap.has(key)
   }
 
   if (path.length > 2) {

@@ -43,26 +43,28 @@ export function isOverlappingSelection(
       return false
     }
 
-    const selectionStartBlockIndex = snapshot.blockIndexMap.get(
-      selectionStartBlockKey,
-    )
-    const selectionEndBlockIndex =
-      snapshot.blockIndexMap.get(selectionEndBlockKey)
-    const editorSelectionStartBlockIndex = snapshot.blockIndexMap.get(
+    const selectionStartEntry = snapshot.blockMap.get(selectionStartBlockKey)
+    const selectionEndEntry = snapshot.blockMap.get(selectionEndBlockKey)
+    const editorSelectionStartEntry = snapshot.blockMap.get(
       editorSelectionStartBlockKey,
     )
-    const editorSelectionEndBlockIndex = snapshot.blockIndexMap.get(
+    const editorSelectionEndEntry = snapshot.blockMap.get(
       editorSelectionEndBlockKey,
     )
 
     if (
-      selectionStartBlockIndex === undefined ||
-      selectionEndBlockIndex === undefined ||
-      editorSelectionStartBlockIndex === undefined ||
-      editorSelectionEndBlockIndex === undefined
+      !selectionStartEntry ||
+      !selectionEndEntry ||
+      !editorSelectionStartEntry ||
+      !editorSelectionEndEntry
     ) {
       return false
     }
+
+    const selectionStartBlockIndex = selectionStartEntry.index
+    const selectionEndBlockIndex = selectionEndEntry.index
+    const editorSelectionStartBlockIndex = editorSelectionStartEntry.index
+    const editorSelectionEndBlockIndex = editorSelectionEndEntry.index
 
     const [selectionMinBlockIndex, selectionMaxBlockIndex] =
       selectionStartBlockIndex <= selectionEndBlockIndex

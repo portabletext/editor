@@ -29,29 +29,29 @@ export function comparePoints(
     throw new Error(`Cannot compare points: no block key found for ${pointB}`)
   }
 
-  const blockIndexA = snapshot.blockIndexMap.get(blockKeyA)
-  const blockIndexB = snapshot.blockIndexMap.get(blockKeyB)
+  const entryA = snapshot.blockMap.get(blockKeyA)
+  const entryB = snapshot.blockMap.get(blockKeyB)
 
-  if (blockIndexA === undefined) {
+  if (!entryA) {
     throw new Error(`Cannot compare points: block "${blockKeyA}" not found`)
   }
 
-  if (blockIndexB === undefined) {
+  if (!entryB) {
     throw new Error(`Cannot compare points: block "${blockKeyB}" not found`)
   }
 
-  if (blockIndexA < blockIndexB) {
+  if (entryA.index < entryB.index) {
     return -1
   }
 
-  if (blockIndexA > blockIndexB) {
+  if (entryA.index > entryB.index) {
     return 1
   }
 
   // Same block - need to compare at child level
-  const block = snapshot.context.value.at(blockIndexA)
+  const blockA = snapshot.context.value[entryA.index]
 
-  if (!block || !isTextBlock(snapshot.context, block)) {
+  if (!blockA || !isTextBlock(snapshot.context, blockA)) {
     // Block objects - same block means equal position
     return 0
   }
@@ -71,8 +71,8 @@ export function comparePoints(
   let childIndexA: number | undefined
   let childIndexB: number | undefined
 
-  for (let i = 0; i < block.children.length; i++) {
-    const child = block.children.at(i)
+  for (let i = 0; i < blockA.children.length; i++) {
+    const child = blockA.children.at(i)
 
     if (!child) {
       continue

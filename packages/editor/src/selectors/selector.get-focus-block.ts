@@ -14,10 +14,9 @@ export const getFocusBlock: EditorSelector<
   }
 
   const key = getBlockKeyFromSelectionPoint(snapshot.context.selection.focus)
-  const index = key ? snapshot.blockIndexMap.get(key) : undefined
+  const entry = key ? snapshot.blockMap.get(key) : undefined
 
-  const node =
-    index !== undefined ? snapshot.context.value.at(index) : undefined
+  const node = entry ? snapshot.context.value[entry.index] : undefined
 
-  return node && key ? {node, path: [{_key: key}]} : undefined
+  return node ? {node, path: [{_key: key!}]} : undefined
 }
