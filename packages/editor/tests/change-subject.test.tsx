@@ -32,7 +32,7 @@ describe('change$', () => {
       }),
       expect.objectContaining({
         type: 'patch',
-        patch: expect.objectContaining({type: 'insert'}),
+        patch: expect.objectContaining({type: 'set'}),
       }),
       expect.objectContaining({
         type: 'patch',

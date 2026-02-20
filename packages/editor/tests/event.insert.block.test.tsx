@@ -457,10 +457,9 @@ describe('event.insert.block', () => {
         },
         {
           origin: 'local',
-          path: [0],
-          type: 'insert',
-          position: 'before',
-          items: [
+          path: [],
+          type: 'set',
+          value: [
             {
               _type: 'block',
               _key: 'k0',
@@ -554,10 +553,9 @@ describe('event.insert.block', () => {
         },
         {
           origin: 'local',
-          path: [0],
-          type: 'insert',
-          position: 'before',
-          items: [
+          path: [],
+          type: 'set',
+          value: [
             {
               _type: 'block',
               _key: 'k0',

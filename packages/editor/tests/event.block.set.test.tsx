@@ -51,7 +51,7 @@ describe('event.block.set', () => {
       ])
       expect(patches).toEqual([
         setIfMissing([], []),
-        insert(
+        set(
           [
             {
               _key: 'k0',
@@ -61,8 +61,7 @@ describe('event.block.set', () => {
               style: 'normal',
             },
           ],
-          'before',
-          [0],
+          [],
         ),
         insert(
           [
@@ -149,7 +148,7 @@ describe('event.block.set', () => {
       ])
       expect(patches).toEqual([
         setIfMissing([], []),
-        insert(
+        set(
           [
             {
               _key: 'k0',
@@ -159,8 +158,7 @@ describe('event.block.set', () => {
               style: 'normal',
             },
           ],
-          'before',
-          [0],
+          [],
         ),
         insert(
           [
@@ -411,7 +409,7 @@ describe('event.block.set', () => {
       ])
       expect(patches).toEqual([
         setIfMissing([], []),
-        insert(
+        set(
           [
             {
               _key: 'k0',
@@ -421,8 +419,7 @@ describe('event.block.set', () => {
               style: 'normal',
             },
           ],
-          'before',
-          [0],
+          [],
         ),
         insert(
           [
@@ -471,7 +468,7 @@ describe('event.block.set', () => {
 
       expect(patches.slice(7)).toEqual([
         setIfMissing([], []),
-        insert(
+        set(
           [
             {
               _key: textBlockKey,
@@ -488,8 +485,7 @@ describe('event.block.set', () => {
               style: 'normal',
             },
           ],
-          'before',
-          [0],
+          [],
         ),
         set('h1', [{_key: textBlockKey}, 'style']),
       ])
@@ -678,7 +674,7 @@ describe('event.block.set', () => {
 
       expect(patches).toEqual([
         setIfMissing([], []),
-        insert(
+        set(
           [
             {
               _key: 'k0',
@@ -688,8 +684,7 @@ describe('event.block.set', () => {
               style: 'normal',
             },
           ],
-          'before',
-          [0],
+          [],
         ),
         set('bar', [{_key: 'k0'}, 'foo']),
       ])

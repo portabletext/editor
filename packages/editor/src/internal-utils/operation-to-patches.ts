@@ -280,10 +280,12 @@ export function insertNodePatch(
   beforeValue: Array<PortableTextBlock>,
 ): Array<Patch> {
   const block = beforeValue[operation.path[0]!]
+
   if (operation.path.length === 1) {
     const position = operation.path[0] === 0 ? 'before' : 'after'
     const beforeBlock = beforeValue[operation.path[0]! - 1]
     const targetKey = operation.path[0] === 0 ? block?._key : beforeBlock?._key
+
     if (targetKey) {
       return [
         insert(
@@ -293,12 +295,15 @@ export function insertNodePatch(
         ),
       ]
     }
+
+    // When inserting into an empty array (no targetKey), use `set` instead of
+    // `setIfMissing` + `insert`. This handles the case where the field value is
+    // null (not just undefined or []), since `setIfMissing` treats null as
+    // "present".
     return [
-      setIfMissing(beforeValue, []),
-      insert(
+      set(
         [fromSlateBlock(operation.node as Descendant, schema.block.name)],
-        'before',
-        [operation.path[0]!],
+        [],
       ),
     ]
   } else if (

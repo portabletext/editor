@@ -1,7 +1,6 @@
 import {
   applyAll,
   diffMatchPatch,
-  insert,
   set,
   setIfMissing,
   unset,
@@ -402,7 +401,7 @@ describe(createPlaceholderBlock.name, () => {
       expect(foreignValue).toEqual(expectedValue)
       expect(patches).toEqual([
         setIfMissing([], []),
-        insert(
+        set(
           [
             {
               _type: 'block',
@@ -412,8 +411,7 @@ describe(createPlaceholderBlock.name, () => {
               style: 'normal',
             },
           ],
-          'before',
-          [0],
+          [],
         ),
         diffMatchPatch('', 'f', [
           {_key: 'k3'},
@@ -492,7 +490,7 @@ describe(createPlaceholderBlock.name, () => {
       expect(foreignValue).toEqual(expectedValue)
       expect(patches).toEqual([
         setIfMissing([], []),
-        insert(
+        set(
           [
             {
               _type: 'block',
@@ -502,8 +500,7 @@ describe(createPlaceholderBlock.name, () => {
               style: 'normal',
             },
           ],
-          'before',
-          [0],
+          [],
         ),
         diffMatchPatch('', 'f', [
           {_key: 'k3'},
@@ -547,7 +544,7 @@ describe(createPlaceholderBlock.name, () => {
         // The editor is set up
         setIfMissing([], []),
         // A placeholder block is inserted
-        insert(
+        set(
           [
             {
               _type: 'block',
@@ -557,8 +554,7 @@ describe(createPlaceholderBlock.name, () => {
               style: 'normal',
             },
           ],
-          'before',
-          [0],
+          [],
         ),
         // The text is added
         diffMatchPatch('', 'f', [
@@ -611,7 +607,7 @@ describe(createPlaceholderBlock.name, () => {
 
       expect(patches.slice(5)).toEqual([
         setIfMissing([], []),
-        insert(
+        set(
           [
             {
               _type: 'block',
@@ -621,8 +617,7 @@ describe(createPlaceholderBlock.name, () => {
               style: 'normal',
             },
           ],
-          'before',
-          [0],
+          [],
         ),
         diffMatchPatch('', 'f', [
           {_key: 'k0'},
@@ -673,7 +668,7 @@ describe(createPlaceholderBlock.name, () => {
       expect(foreignValue).toEqual(expectedValue)
       expect(patches).toEqual([
         setIfMissing([], []),
-        insert(
+        set(
           [
             {
               _type: 'block',
@@ -683,8 +678,7 @@ describe(createPlaceholderBlock.name, () => {
               style: 'normal',
             },
           ],
-          'before',
-          [0],
+          [],
         ),
         diffMatchPatch('', 'f', [
           {_key: 'k0'},
@@ -728,7 +722,7 @@ describe(createPlaceholderBlock.name, () => {
         ]),
         unset([]),
         setIfMissing([], []),
-        insert(
+        set(
           [
             {
               _type: 'block',
@@ -738,8 +732,7 @@ describe(createPlaceholderBlock.name, () => {
               style: 'normal',
             },
           ],
-          'before',
-          [0],
+          [],
         ),
         set('bar', [{_key: 'k0'}, 'foo']),
       ])
@@ -822,7 +815,7 @@ describe(createPlaceholderBlock.name, () => {
         // The editor is reset
         setIfMissing([], []),
         // A placeholder block is inserted
-        insert(
+        set(
           [
             {
               _type: 'block',
@@ -832,8 +825,7 @@ describe(createPlaceholderBlock.name, () => {
               style: 'normal',
             },
           ],
-          'before',
-          [0],
+          [],
         ),
         // The text is added
         diffMatchPatch('', 'f', [

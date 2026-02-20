@@ -390,10 +390,9 @@ describe('event.child.unset', () => {
         },
         {
           origin: 'local',
-          type: 'insert',
-          path: [0],
-          position: 'before',
-          items: [
+          type: 'set',
+          path: [],
+          value: [
             {
               _key: blockKey,
               _type: 'block',
