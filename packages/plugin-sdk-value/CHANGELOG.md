@@ -1,5 +1,13 @@
 # Changelog
 
+## 5.0.5
+
+### Patch Changes
+
+- [#2227](https://github.com/portabletext/editor/pull/2227) [`687bbbf`](https://github.com/portabletext/editor/commit/687bbbf3d49731de0db755bc5d88d0892fca7bc6) Thanks [@christianhg](https://github.com/christianhg)! - Fix `useEffect` dependency array in `SDKValuePlugin` — destructure `props` into primitive values (`documentId`, `documentType`, `path`) to prevent subscriptions from being torn down and re-created on every parent re-render.
+
+- [#2220](https://github.com/portabletext/editor/pull/2220) [`a5875fe`](https://github.com/portabletext/editor/commit/a5875feeacbee46ca3227c72f36a4524bee5acfc) Thanks [@christianhg](https://github.com/christianhg)! - fix: defer SDK sync when editor has pending writes
+
 ## 5.0.4
 
 ### Patch Changes
