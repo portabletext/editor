@@ -1,7 +1,10 @@
 import {useEditor} from '@portabletext/editor'
-import {useActorRef, useSelector} from '@xstate/react'
+import {raise} from '@portabletext/editor/behaviors'
+import {
+  defineTypeaheadPicker,
+  useTypeaheadPicker,
+} from '@portabletext/plugin-typeahead-picker'
 import {useCallback} from 'react'
-import {emojiPickerMachine} from './emoji-picker-machine'
 import type {BaseEmojiMatch, MatchEmojis} from './match-emojis'
 
 /**
@@ -142,44 +145,41 @@ export function useEmojiPicker<
   TEmojiMatch extends BaseEmojiMatch = BaseEmojiMatch,
 >(props: EmojiPickerProps<TEmojiMatch>): EmojiPicker<TEmojiMatch> {
   const editor = useEditor()
-  const emojiPickerActor = useActorRef(emojiPickerMachine, {
-    input: {editor, matchEmojis: props.matchEmojis},
-  })
-  const keyword = useSelector(emojiPickerActor, (snapshot) => {
-    const rawKeyword = snapshot.context.keyword.startsWith(':')
-      ? snapshot.context.keyword.slice(1)
-      : snapshot.context.keyword
-    return rawKeyword.length > 1 && rawKeyword.endsWith(':')
-      ? rawKeyword.slice(0, -1)
-      : rawKeyword
-  })
-  const matches = useSelector(
-    emojiPickerActor,
-    (snapshot) => snapshot.context.matches as ReadonlyArray<TEmojiMatch>,
-  )
-  const selectedIndex = useSelector(
-    emojiPickerActor,
-    (snapshot) => snapshot.context.selectedIndex,
+  const picker = useTypeaheadPicker(
+    defineTypeaheadPicker<TEmojiMatch>({
+      trigger: /:/,
+      keyword: /[\S]+/,
+      delimiter: ':',
+      getMatches: ({keyword}) => props.matchEmojis({keyword}),
+      actions: [
+        ({event}) => [
+          raise({type: 'delete', at: event.patternSelection}),
+          raise({type: 'insert.text', text: event.match.emoji}),
+        ],
+      ],
+    }),
   )
 
   const onDismiss = useCallback(() => {
-    emojiPickerActor.send({type: 'dismiss'})
-  }, [emojiPickerActor])
+    picker.send({type: 'dismiss'})
+  }, [picker])
+
   const onNavigateTo = useCallback(
     (index: number) => {
-      emojiPickerActor.send({type: 'navigate to', index})
+      picker.send({type: 'navigate to', index})
     },
-    [emojiPickerActor],
+    [picker],
   )
+
   const onSelect = useCallback(() => {
-    emojiPickerActor.send({type: 'insert selected match'})
+    picker.send({type: 'select'})
     editor.send({type: 'focus'})
-  }, [emojiPickerActor, editor])
+  }, [picker, editor])
 
   return {
-    keyword,
-    matches,
-    selectedIndex,
+    keyword: picker.snapshot.context.keyword,
+    matches: picker.snapshot.context.matches,
+    selectedIndex: picker.snapshot.context.selectedIndex,
     onDismiss,
     onNavigateTo,
     onSelect,
