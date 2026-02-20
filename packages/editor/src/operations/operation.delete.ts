@@ -1,4 +1,4 @@
-import {isSpan, isTextBlock, type PortableTextBlock} from '@portabletext/schema'
+import {isSpan, isTextBlock} from '@portabletext/schema'
 import {toSlateRange} from '../internal-utils/to-slate-range'
 
 import {
@@ -21,7 +21,7 @@ export const deleteOperationImplementation: OperationImplementation<
     ? toSlateRange({
         context: {
           schema: context.schema,
-          value: operation.editor.children as Array<PortableTextBlock>,
+          value: operation.editor.children,
           selection: operation.at,
         },
         blockIndexMap: operation.editor.blockIndexMap,

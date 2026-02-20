@@ -1,4 +1,4 @@
-import {isTextBlock, type PortableTextBlock} from '@portabletext/schema'
+import {isTextBlock, type PortableTextObject} from '@portabletext/schema'
 import {useSelector} from '@xstate/react'
 import {useContext, type ReactElement} from 'react'
 import type {DropPosition} from '../behaviors/behavior.core.drop-position'
@@ -54,9 +54,8 @@ export function RenderElement(props: {
   }
 
   const blockIndex = slateStatic.blockIndexMap.get(props.element._key)
-  const block = (
+  const block =
     blockIndex !== undefined ? slateStatic.children.at(blockIndex) : undefined
-  ) as PortableTextBlock | undefined
 
   if (isTextBlock({schema}, block)) {
     return (
@@ -84,7 +83,7 @@ export function RenderElement(props: {
   return (
     <RenderBlockObject
       attributes={props.attributes}
-      blockObject={block}
+      blockObject={block as PortableTextObject | undefined}
       dropPosition={
         props.dropPosition?.blockKey === props.element._key
           ? props.dropPosition.positionBlock

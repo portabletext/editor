@@ -1,4 +1,4 @@
-import {isSpan, type PortableTextBlock} from '@portabletext/schema'
+import {isSpan} from '@portabletext/schema'
 import {isEqualChildren, isEqualMarks} from '../internal-utils/equality'
 import {getFocusChild} from '../internal-utils/slate-utils'
 import {toSlateRange} from '../internal-utils/to-slate-range'
@@ -61,7 +61,7 @@ export function insertBlock(options: {
     ? toSlateRange({
         context: {
           schema: context.schema,
-          value: editor.children as Array<PortableTextBlock>,
+          value: editor.children,
           selection: options.at,
         },
         blockIndexMap: editor.blockIndexMap,

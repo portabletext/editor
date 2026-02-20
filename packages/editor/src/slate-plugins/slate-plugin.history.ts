@@ -19,7 +19,7 @@ export function createHistoryPlugin({
   subscriptions: Array<() => () => void>
 }): (editor: PortableTextSlateEditor) => PortableTextSlateEditor {
   return function historyPlugin(editor: PortableTextSlateEditor) {
-    let previousSnapshot: Array<PortableTextBlock> | undefined = editor.children as Array<PortableTextBlock>
+    let previousSnapshot: Array<PortableTextBlock> | undefined = editor.children
     let previousUndoStepId = editor.undoStepId
 
     subscriptions.push(() => {

@@ -1,4 +1,4 @@
-import {isSpan, isTextBlock, type PortableTextBlock} from '@portabletext/schema'
+import {isSpan, isTextBlock} from '@portabletext/schema'
 import type {EditorActor} from '../editor/editor-machine'
 import type {EditorContext, EditorSnapshot} from '../editor/editor-snapshot'
 import {isEqualMarks} from '../internal-utils/equality'
@@ -48,7 +48,7 @@ export function createUniqueKeysPlugin(editorActor: EditorActor) {
               blockIndexMap: editor.blockIndexMap,
               context: {
                 schema: context.schema,
-                value: editor.children as Array<PortableTextBlock>,
+                value: editor.children,
               },
             },
             operation.path,
@@ -80,7 +80,7 @@ export function createUniqueKeysPlugin(editorActor: EditorActor) {
                 blockIndexMap: editor.blockIndexMap,
                 context: {
                   schema: context.schema,
-                  value: editor.children as Array<PortableTextBlock>,
+                  value: editor.children,
                 },
               },
               operation.path,

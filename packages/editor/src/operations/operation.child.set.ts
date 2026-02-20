@@ -1,4 +1,3 @@
-import type {PortableTextBlock} from '@portabletext/schema'
 import {toSlateRange} from '../internal-utils/to-slate-range'
 import {Editor, Transforms} from '../slate'
 import type {OperationImplementation} from './operation.types'
@@ -9,7 +8,7 @@ export const childSetOperationImplementation: OperationImplementation<
   const location = toSlateRange({
     context: {
       schema: context.schema,
-      value: operation.editor.children as Array<PortableTextBlock>,
+      value: operation.editor.children,
       selection: {
         anchor: {path: operation.at, offset: 0},
         focus: {path: operation.at, offset: 0},

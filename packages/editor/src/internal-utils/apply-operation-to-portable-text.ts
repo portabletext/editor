@@ -32,7 +32,7 @@ export function applyOperationToPortableText(
       root,
       operation,
     )
-    return newRoot.children as Array<PortableTextBlock>
+    return newRoot.children as any
   } catch (e) {
     console.error(e)
     return value

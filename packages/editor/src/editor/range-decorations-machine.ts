@@ -1,4 +1,3 @@
-import type {PortableTextBlock} from '@portabletext/schema'
 import {
   and,
   assign,
@@ -96,7 +95,7 @@ export const rangeDecorationsMachine = setup({
         const slateRange = toSlateRange({
           context: {
             schema: context.schema,
-            value: context.slateEditor.children as Array<PortableTextBlock>,
+            value: context.slateEditor.children,
             selection: rangeDecoration.selection,
           },
           blockIndexMap: context.slateEditor.blockIndexMap,
@@ -130,7 +129,7 @@ export const rangeDecorationsMachine = setup({
         const slateRange = toSlateRange({
           context: {
             schema: context.schema,
-            value: context.slateEditor.children as Array<PortableTextBlock>,
+            value: context.slateEditor.children,
             selection: rangeDecoration.selection,
           },
           blockIndexMap: context.slateEditor.blockIndexMap,
@@ -165,7 +164,7 @@ export const rangeDecorationsMachine = setup({
         const slateRange = toSlateRange({
           context: {
             schema: context.schema,
-            value: context.slateEditor.children as Array<PortableTextBlock>,
+            value: context.slateEditor.children,
             selection: decoratedRange.rangeDecoration.selection,
           },
           blockIndexMap: context.slateEditor.blockIndexMap,
@@ -364,7 +363,7 @@ function createDecorate(
 ) {
   return function decorate([node, path]: NodeEntry): Array<BaseRange> {
     const defaultStyle = schema.styles.at(0)?.name
-    const firstBlock = slateEditor.children[0] as PortableTextBlock
+    const firstBlock = slateEditor.children[0]
     const editorOnlyContainsEmptyParagraph =
       slateEditor.children.length === 1 &&
       firstBlock &&

@@ -33,6 +33,9 @@ export interface PortableTextSlateEditor extends ReactEditor {
   _key: 'editor'
   _type: 'editor'
 
+  // Override children to be PT-typed (editor.children IS the PT value)
+  children: Array<PortableTextBlock>
+
   isTextBlock: (value: unknown) => value is PortableTextTextBlock
   isTextSpan: (value: unknown) => value is PortableTextSpan
   isListBlock: (value: unknown) => value is PortableTextListBlock

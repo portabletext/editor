@@ -168,7 +168,7 @@ function insertPatch(
 
     const editorWasEmptyBefore = isEqualToEmptyEditor(
       context.initialValue,
-      editor.children as Array<PortableTextBlock>,
+      editor.children,
       context.schema,
     )
 

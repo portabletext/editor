@@ -2,7 +2,6 @@ import {compileSchemaDefinitionToPortableTextMemberSchemaTypes} from '@portablet
 import {
   compileSchema,
   defineSchema,
-  type PortableTextBlock,
   type PortableTextTextBlock,
 } from '@portabletext/schema'
 import {beforeEach, describe, expect, it, test} from 'vitest'
@@ -82,7 +81,7 @@ const createDefaultValue = () =>
         {_type: 'span', _key: 'fd9b4a4e6c0b', text: '', marks: []},
       ],
     },
-  ] as Array<PortableTextBlock>
+  ]
 
 describe(insertNodePatch.name, () => {
   test('Scenario: Inserting block object on empty editor', () => {

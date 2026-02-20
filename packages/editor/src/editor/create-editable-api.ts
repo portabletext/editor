@@ -124,7 +124,7 @@ export function createEditableAPI(
       const slateSelection = toSlateRange({
         context: {
           schema: editorActor.getSnapshot().context.schema,
-          value: editor.children as Array<PortableTextBlock>,
+          value: editor.children,
           selection,
         },
         blockIndexMap: editor.blockIndexMap,
@@ -149,7 +149,7 @@ export function createEditableAPI(
         return undefined
       }
 
-      return editor.children.at(focusBlockIndex) as PortableTextBlock | undefined
+      return editor.children.at(focusBlockIndex)
     },
     focusChild: (): PortableTextChild | undefined => {
       if (!editor.selection) {
@@ -264,7 +264,7 @@ export function createEditableAPI(
         return [undefined, undefined]
       }
 
-      const block = editor.children.at(blockIndex) as PortableTextBlock | undefined
+      const block = editor.children.at(blockIndex)
 
       if (!block) {
         return [undefined, undefined]
@@ -480,7 +480,7 @@ export function createEditableAPI(
       return selection
     },
     getValue: () => {
-      return editor.children as Array<PortableTextBlock>
+      return editor.children
     },
     isCollapsedSelection: () => {
       return !!editor.selection && Range.isCollapsed(editor.selection)
@@ -508,7 +508,7 @@ export function createEditableAPI(
       const rangeA = toSlateRange({
         context: {
           schema: editorActor.getSnapshot().context.schema,
-          value: editor.children as Array<PortableTextBlock>,
+          value: editor.children,
           selection: selectionA,
         },
         blockIndexMap: editor.blockIndexMap,
@@ -516,7 +516,7 @@ export function createEditableAPI(
       const rangeB = toSlateRange({
         context: {
           schema: editorActor.getSnapshot().context.schema,
-          value: editor.children as Array<PortableTextBlock>,
+          value: editor.children,
           selection: selectionB,
         },
         blockIndexMap: editor.blockIndexMap,

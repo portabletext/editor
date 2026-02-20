@@ -674,7 +674,7 @@ function syncBlock({
   value: Array<PortableTextBlock>
 }) {
   const oldSlateBlock = slateEditor.children.at(index)
-  const oldBlock = oldSlateBlock as PortableTextBlock | undefined
+  const oldBlock = oldSlateBlock
 
   if (!oldSlateBlock || !oldBlock) {
     // Insert the new block
