@@ -170,6 +170,7 @@ export type SyntheticBehaviorEvent =
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'insert.text'>
       text: string
+      at?: NonNullable<EditorSelection>
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'move.backward'>
