@@ -1,0 +1,34 @@
+{
+  "name": "markdown-editor",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -b && vite build",
+    "check:lint": "biome lint .",
+    "check:react-compiler": "eslint --cache .",
+    "check:types": "tsc --noEmit --pretty --project tsconfig.app.json",
+    "clean": "del .turbo && del dist && del node_modules",
+    "dev": "vite",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@portabletext/editor": "workspace:*",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.1.16",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.1.1",
+    "babel-plugin-react-compiler": "^1.0.0",
+    "eslint": "^9.39.1",
+    "eslint-formatter-gha": "^1.6.0",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "tailwindcss": "^4.1.16",
+    "typescript": "catalog:",
+    "typescript-eslint": "^8.48.0",
+    "vite": "^7.3.1"
+  }
+}
