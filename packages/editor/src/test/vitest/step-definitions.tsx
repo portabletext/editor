@@ -210,6 +210,33 @@ export const stepDefinitions = [
   When('{string} is inserted', (context: Context, text: string) => {
     context.editor.send({type: 'insert.text', text})
   }),
+  When(
+    '{string} is inserted after {string}',
+    (context: Context, text: string, afterText: string) => {
+      const at = getSelectionAfterText(
+        context.editor.getSnapshot().context,
+        afterText,
+      )
+      context.editor.send({type: 'insert.text', text, at})
+    },
+  ),
+  When(
+    '{string} is inserted before {string}',
+    (context: Context, text: string, beforeText: string) => {
+      const at = getSelectionBeforeText(
+        context.editor.getSnapshot().context,
+        beforeText,
+      )
+      context.editor.send({type: 'insert.text', text, at})
+    },
+  ),
+  When(
+    '{string} is inserted over {string}',
+    (context: Context, text: string, atText: string) => {
+      const at = getTextSelection(context.editor.getSnapshot().context, atText)
+      context.editor.send({type: 'insert.text', text, at})
+    },
+  ),
   Then(
     '{terse-pt} is in block {key}',
     (context: Context, text: Array<string>, key: string) => {

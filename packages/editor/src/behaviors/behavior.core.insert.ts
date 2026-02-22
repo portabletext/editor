@@ -6,9 +6,21 @@ import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
 export const coreInsertBehaviors = [
+  /**
+   * When the user has toggled pending marks (decorators/annotations), convert
+   * `insert.text` to `insert.child` with those marks applied.
+   *
+   * Skipped when `at` is provided because pending marks are relative to the
+   * current selection, not the `at` target. The inserted text will inherit
+   * marks from the surrounding context at the `at` location instead.
+   */
   defineBehavior({
     on: 'insert.text',
-    guard: ({snapshot}) => {
+    guard: ({snapshot, event}) => {
+      if (event.at) {
+        return false
+      }
+
       const focusSpan = getFocusSpan(snapshot)
 
       if (!focusSpan) {

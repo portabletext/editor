@@ -1,5 +1,6 @@
 import {isTextBlock} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
+import {collapseSelection} from '../internal-utils/collapse-selection'
 import {isSelectionExpanded} from '../selectors'
 import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
 import {getLastBlock} from '../selectors/selector.get-last-block'
@@ -586,20 +587,37 @@ export const abstractInsertBehaviors = [
    */
   defineBehavior({
     on: 'insert.text',
-    guard: ({snapshot}) => {
-      return isSelectionExpanded(snapshot)
+    guard: ({snapshot, event}) => {
+      const at = event.at ?? snapshot.context.selection
+
+      if (!at) {
+        return false
+      }
+
+      return isSelectionExpanded({
+        ...snapshot,
+        context: {...snapshot.context, selection: at},
+      })
     },
-    actions: [({event}) => [raise({type: 'delete'}), raise(event)]],
+    actions: [
+      ({event}) => [
+        raise({type: 'delete', ...(event.at ? {at: event.at} : {})}),
+        raise({
+          ...event,
+          ...(event.at ? {at: collapseSelection(event.at, 'start')} : {}),
+        }),
+      ],
+    ],
   }),
 
   /**
-   * If there's no selection, then we select the end of the editor before we
-   * we insert the text.
+   * If there's no selection and no `at`, then we select the end of the editor
+   * before we insert the text.
    */
   defineBehavior({
     on: 'insert.text',
-    guard: ({snapshot}) => {
-      if (snapshot.context.selection) {
+    guard: ({snapshot, event}) => {
+      if (event.at ?? snapshot.context.selection) {
         return false
       }
 
