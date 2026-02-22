@@ -323,4 +323,41 @@ describe('event.insert.text', () => {
       expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo'])
     })
   })
+
+  test('Scenario: Inserting text at a specific position', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'helloworld'}],
+        },
+      ],
+    })
+
+    await userEvent.click(locator)
+
+    editor.send({
+      type: 'insert.text',
+      text: ' ',
+      at: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 5,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 5,
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['hello world'])
+    })
+  })
 })
