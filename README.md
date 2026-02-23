@@ -9,6 +9,13 @@ This monorepo contains the official [Portable Text](https://github.com/portablet
 
 For documentation and guides, visit [portabletext.org](https://www.portabletext.org/).
 
+Or try the editor in the [Portable Text Playground](https://playground.portabletext.org/).
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset=".github/assets/playground-dark.png">
+  <img alt="Portable Text Playground" src=".github/assets/playground-light.png">
+</picture>
+
 ## Core
 
 | Package                                        | Description                                                    |

@@ -1,4 +1,6 @@
 import {isSpan, isTextBlock} from '@portabletext/schema'
+import {toSlateRange} from '../internal-utils/to-slate-range'
+import {VOID_CHILD_KEY} from '../internal-utils/values'
 import {
   deleteText,
   Editor,
@@ -8,10 +10,8 @@ import {
   Range,
   Transforms,
   type NodeEntry,
-} from 'slate'
-import {DOMEditor} from 'slate-dom'
-import {toSlateRange} from '../internal-utils/to-slate-range'
-import {VOID_CHILD_KEY} from '../internal-utils/values'
+} from '../slate'
+import {DOMEditor} from '../slate-dom'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import type {OperationImplementation} from './operation.types'
 
@@ -202,6 +202,17 @@ export const deleteOperationImplementation: OperationImplementation<
       })
     }
 
+    if (startRef.current) {
+      operation.editor.apply({
+        type: 'set_selection',
+        properties: operation.editor.selection,
+        newProperties: {
+          anchor: startRef.current,
+          focus: startRef.current,
+        },
+      })
+    }
+
     return
   }
 
@@ -280,7 +291,7 @@ function findCurrentLineRange(
   return Editor.range(editor, positions[left]!, parentRangeBoundary)
 }
 
-function rangesAreOnSameLine(editor: DOMEditor, range1: Range, range2: Range) {
+function rangesAreOnSameLine(editor: Editor, range1: Range, range2: Range) {
   const rect1 = DOMEditor.toDOMRange(editor, range1).getBoundingClientRect()
   const rect2 = DOMEditor.toDOMRange(editor, range2).getBoundingClientRect()
 

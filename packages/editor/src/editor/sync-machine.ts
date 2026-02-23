@@ -1,13 +1,5 @@
 import type {Patch} from '@portabletext/patches'
 import {isSpan, type PortableTextBlock} from '@portabletext/schema'
-import {
-  deleteText,
-  Editor,
-  Text,
-  Transforms,
-  type Descendant,
-  type Node,
-} from 'slate'
 import type {ActorRefFrom} from 'xstate'
 import {
   and,
@@ -29,6 +21,14 @@ import {
 } from '../internal-utils/equality'
 import {validateValue} from '../internal-utils/validateValue'
 import {toSlateBlock, VOID_CHILD_KEY} from '../internal-utils/values'
+import {
+  deleteText,
+  Editor,
+  Text,
+  Transforms,
+  type Descendant,
+  type Node,
+} from '../slate'
 import {withRemoteChanges} from '../slate-plugins/slate-plugin.remote-changes'
 import {pluginWithoutHistory} from '../slate-plugins/slate-plugin.without-history'
 import {withoutPatching} from '../slate-plugins/slate-plugin.without-patching'

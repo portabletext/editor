@@ -8,7 +8,7 @@ Feature: Insert Break
     When the editor is focused
     And the caret is put <position>
     And "{Enter}" is pressed
-    And "bar" is typed
+    And "bar" is inserted
     Then the text is <text>
     And the caret is <new position>
 
@@ -23,7 +23,7 @@ Feature: Insert Break
     When the editor is focused
     And the caret is put <position>
     And "{Enter}" is pressed
-    And "baz" is typed
+    And "baz" is inserted
     Then the text is <text>
     And the caret is <new position>
     When undo is performed
@@ -41,7 +41,7 @@ Feature: Insert Break
     When the editor is focused
     And the caret is put after "foo"
     And "{Enter}" is pressed
-    And "baz" is typed
+    And "baz" is inserted
     Then the text is "foo|baz,{stock-ticker},bar"
     And the caret is after "baz"
 

@@ -1,12 +1,6 @@
 import type {SchemaDefinition} from '@portabletext/schema'
 import {Schema as SanitySchema} from '@sanity/schema'
-import {
-  defineField,
-  defineType,
-  isArraySchemaType,
-  isObjectSchemaType,
-  type ObjectSchemaType,
-} from '@sanity/types'
+import {defineField, defineType} from '@sanity/types'
 import {keyGenerator} from './key-generator'
 import {
   createPortableTextMemberSchemaTypes,
@@ -14,35 +8,16 @@ import {
 } from './portable-text-member-schema-types'
 import {startCase} from './start-case'
 
-const temporaryImageBlockObjectName = `tmp-${keyGenerator()}-image`
-const temporaryUrlBlockObjectName = `tmp-${keyGenerator()}-url`
-const temporaryImageInlineObjectName = `tmp-${keyGenerator()}-image`
-const temporaryUrlInlineObjectName = `tmp-${keyGenerator()}-url`
-
-const temporaryBlockObjectNames: Record<string, string> = {
-  image: temporaryImageBlockObjectName,
-  url: temporaryUrlBlockObjectName,
-}
-
-const temporaryInlineObjectNames: Record<string, string> = {
-  image: temporaryImageInlineObjectName,
-  url: temporaryUrlInlineObjectName,
-}
-
-const blockObjectNames: Record<string, string> = {
-  [temporaryImageBlockObjectName]: 'image',
-  [temporaryUrlBlockObjectName]: 'url',
-}
-
-const inlineObjectNames: Record<string, string> = {
-  [temporaryImageInlineObjectName]: 'image',
-  [temporaryUrlInlineObjectName]: 'url',
-}
-
 const defaultObjectTitles: Record<string, string> = {
   image: 'Image',
   url: 'URL',
 }
+
+/**
+ * Names that conflict with Sanity's built-in schema types and need temporary
+ * names during `SanitySchema.compile` to avoid getting default fields added.
+ */
+const sanityBuiltinNames = new Set(['file', 'geopoint', 'image', 'slug', 'url'])
 
 /**
  * @public
@@ -52,49 +27,82 @@ const defaultObjectTitles: Record<string, string> = {
 export function compileSchemaDefinitionToPortableTextMemberSchemaTypes(
   definition?: SchemaDefinition,
 ): PortableTextMemberSchemaTypes {
-  const blockObjects =
-    definition?.blockObjects?.map((blockObject) =>
-      defineType({
-        type: 'object',
-        // Very naive way to work around `SanitySchema.compile` adding default
-        // fields to objects with certain names.
-        name: temporaryBlockObjectNames[blockObject.name] ?? blockObject.name,
-        title:
-          blockObject.title === undefined
-            ? // This avoids the default title which is a title case of the object name
-              defaultObjectTitles[blockObject.name]
-            : blockObject.title,
-        fields:
-          blockObject.fields?.map((field) => ({
-            name: field.name,
-            type: field.type,
-            title: field.title ?? startCase(field.name),
-          })) ?? [],
-      }),
-    ) ?? []
+  const blockObjectDefs = definition?.blockObjects ?? []
+  const inlineObjectDefs = definition?.inlineObjects ?? []
 
-  const inlineObjects =
-    definition?.inlineObjects?.map((inlineObject) =>
-      defineType({
-        type: 'object',
-        // Very naive way to work around `SanitySchema.compile` adding default
-        // fields to objects with certain names.
-        name:
-          temporaryInlineObjectNames[inlineObject.name] ?? inlineObject.name,
+  // Collect names that appear in both blockObjects and inlineObjects, or that
+  // conflict with Sanity built-in types. These need temporary names so that
+  // `SanitySchema.compile` doesn't see duplicate type registrations.
+  const blockObjectNameSet = new Set(
+    blockObjectDefs.map((blockObject) => blockObject.name),
+  )
+  const inlineObjectNameSet = new Set(
+    inlineObjectDefs.map((inlineObject) => inlineObject.name),
+  )
 
-        title:
-          inlineObject.title === undefined
-            ? // This avoids the default title which is a title case of the object name
-              defaultObjectTitles[inlineObject.name]
-            : inlineObject.title,
-        fields:
-          inlineObject.fields?.map((field) => ({
-            name: field.name,
-            type: field.type,
-            title: field.title ?? startCase(field.name),
-          })) ?? [],
-      }),
-    ) ?? []
+  const temporaryBlockObjectNames: Record<string, string> = {}
+  const temporaryInlineObjectNames: Record<string, string> = {}
+  const blockObjectNames: Record<string, string> = {}
+  const inlineObjectNames: Record<string, string> = {}
+
+  for (const name of blockObjectNameSet) {
+    if (sanityBuiltinNames.has(name) || inlineObjectNameSet.has(name)) {
+      const tmpName = `tmp-${keyGenerator()}-${name}`
+      temporaryBlockObjectNames[name] = tmpName
+      blockObjectNames[tmpName] = name
+    }
+  }
+
+  for (const name of inlineObjectNameSet) {
+    if (sanityBuiltinNames.has(name) || blockObjectNameSet.has(name)) {
+      const tmpName = `tmp-${keyGenerator()}-${name}`
+      temporaryInlineObjectNames[name] = tmpName
+      inlineObjectNames[tmpName] = name
+    }
+  }
+
+  const blockObjects = blockObjectDefs.map((blockObject) =>
+    defineType({
+      type: 'object',
+      // Use temporary names to work around `SanitySchema.compile` adding
+      // default fields to objects with certain names, and to avoid duplicate
+      // type names when a type appears in both blockObjects and inlineObjects.
+      name: temporaryBlockObjectNames[blockObject.name] ?? blockObject.name,
+      title:
+        blockObject.title === undefined
+          ? // This avoids the default title which is a title case of the object name
+            defaultObjectTitles[blockObject.name]
+          : blockObject.title,
+      fields:
+        blockObject.fields?.map((field) => ({
+          name: field.name,
+          type: field.type,
+          title: field.title ?? startCase(field.name),
+        })) ?? [],
+    }),
+  )
+
+  const inlineObjects = inlineObjectDefs.map((inlineObject) =>
+    defineType({
+      type: 'object',
+      // Use temporary names to work around `SanitySchema.compile` adding
+      // default fields to objects with certain names, and to avoid duplicate
+      // type names when a type appears in both blockObjects and inlineObjects.
+      name: temporaryInlineObjectNames[inlineObject.name] ?? inlineObject.name,
+
+      title:
+        inlineObject.title === undefined
+          ? // This avoids the default title which is a title case of the object name
+            defaultObjectTitles[inlineObject.name]
+          : inlineObject.title,
+      fields:
+        inlineObject.fields?.map((field) => ({
+          name: field.name,
+          type: field.type,
+          title: field.title ?? startCase(field.name),
+        })) ?? [],
+    }),
+  )
 
   const portableTextSchema = defineField({
     type: 'array',
@@ -144,57 +152,28 @@ export function compileSchemaDefinitionToPortableTextMemberSchemaTypes(
 
   const pteSchema = createPortableTextMemberSchemaTypes(schema)
 
-  return {
-    ...pteSchema,
-    portableText: {
-      ...pteSchema.portableText,
-      of: pteSchema.portableText.of.map((schemaType) => {
-        if (!isObjectSchemaType(schemaType)) {
-          return schemaType
-        }
+  // Restore original names on blockObjects and inlineObjects.
+  // These are shared references with portableText.of, so mutating them
+  // also restores names in the portableText array type's nested structure.
+  for (const blockObject of pteSchema.blockObjects) {
+    const originalName = blockObjectNames[blockObject.name]
+    if (originalName !== undefined) {
+      blockObject.name = originalName
+      if (blockObject.type) {
+        blockObject.type = {...blockObject.type, name: originalName}
+      }
+    }
+  }
 
-        const nameMapping = blockObjectNames[schemaType.name]
+  for (const inlineObject of pteSchema.inlineObjects) {
+    const originalName = inlineObjectNames[inlineObject.name]
+    if (originalName !== undefined) {
+      inlineObject.name = originalName
+      if (inlineObject.type) {
+        inlineObject.type = {...inlineObject.type, name: originalName}
+      }
+    }
+  }
 
-        schemaType.name = nameMapping ?? schemaType.name
-
-        for (const field of schemaType.fields) {
-          if (field.name !== 'children' || !isArraySchemaType(field.type)) {
-            continue
-          }
-
-          for (const ofSchemaType of field.type.of) {
-            const nameMapping = inlineObjectNames[ofSchemaType.name]
-
-            if (!nameMapping) {
-              continue
-            }
-
-            ofSchemaType.name = nameMapping
-          }
-        }
-
-        return schemaType
-      }),
-    },
-    blockObjects: pteSchema.blockObjects.map((blockObject) =>
-      blockObjectNames[blockObject.name] !== undefined
-        ? ({
-            ...blockObject,
-            name: blockObjectNames[blockObject.name],
-            type: {
-              ...blockObject.type,
-              name: blockObjectNames[blockObject.name],
-            },
-          } as ObjectSchemaType)
-        : blockObject,
-    ),
-    inlineObjects: pteSchema.inlineObjects.map((inlineObject) =>
-      inlineObjectNames[inlineObject.name] !== undefined
-        ? ({
-            ...inlineObject,
-            name: inlineObjectNames[inlineObject.name],
-          } as ObjectSchemaType)
-        : inlineObject,
-    ),
-  } satisfies PortableTextMemberSchemaTypes
+  return pteSchema
 }

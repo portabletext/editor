@@ -1,5 +1,25 @@
 # Changelog
 
+## 5.0.3
+
+### Patch Changes
+
+- [#2204](https://github.com/portabletext/editor/pull/2204) [`6133f84`](https://github.com/portabletext/editor/commit/6133f8489e7d1d01a0b469c3bc1e9c0e2f9084f4) Thanks [@christianhg](https://github.com/christianhg)! - fix: preserve whitespace in inline spans and handle orphan list items
+
+  Fixes two `htmlToBlocks` bugs:
+  - A space inside an inline `<span>` element (e.g. `a<span> </span>b`) is now preserved instead of being dropped. The whitespace text node rule now checks the parent element's siblings when the text node is the sole child of a `<span>`.
+  - Orphan `<li>` elements without a `<ul>` or `<ol>` parent are now treated as bullet list items instead of being silently dropped.
+
+- Updated dependencies [[`d095284`](https://github.com/portabletext/editor/commit/d095284d59ce0a3f1d4faf8836d9c9ddde817a46)]:
+  - @portabletext/sanity-bridge@2.0.2
+
+## 5.0.2
+
+### Patch Changes
+
+- Updated dependencies [[`5f1b1fb`](https://github.com/portabletext/editor/commit/5f1b1fb44152f6fc9f674a917916d57fdf0496a7)]:
+  - @portabletext/sanity-bridge@2.0.1
+
 ## 5.0.1
 
 ### Patch Changes

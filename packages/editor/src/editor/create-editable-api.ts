@@ -4,8 +4,6 @@ import {
   type PortableTextChild,
   type PortableTextObject,
 } from '@portabletext/schema'
-import {Editor, Range, Text, Transforms} from 'slate'
-import {ReactEditor} from 'slate-react'
 import {
   isListItemActive,
   isStyleActive,
@@ -18,6 +16,8 @@ import {getFocusBlock} from '../selectors/selector.get-focus-block'
 import {getFocusSpan} from '../selectors/selector.get-focus-span'
 import {getSelectedValue} from '../selectors/selector.get-selected-value'
 import {isActiveAnnotation} from '../selectors/selector.is-active-annotation'
+import {Editor, Range, Text, Transforms} from '../slate'
+import {ReactEditor} from '../slate-react'
 import type {
   EditableAPI,
   EditableAPIDeleteOptions,

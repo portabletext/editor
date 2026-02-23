@@ -1,5 +1,68 @@
 # Changelog
 
+## 6.0.5
+
+### Patch Changes
+
+- Updated dependencies [[`9840585`](https://github.com/portabletext/editor/commit/9840585b286929ff095cd2ebf3b1ead8b47a0edf)]:
+  - @portabletext/editor@5.1.0
+  - @portabletext/plugin-character-pair-decorator@6.0.5
+  - @portabletext/plugin-input-rule@3.0.5
+
+## 6.0.4
+
+### Patch Changes
+
+- Updated dependencies [[`a3eb985`](https://github.com/portabletext/editor/commit/a3eb985d2fe074ac5a62b53acc50d9f4f1cbddcb), [`8945679`](https://github.com/portabletext/editor/commit/8945679eeb6c325458fdc1eebe9dba98a8a8f480)]:
+  - @portabletext/editor@5.0.4
+  - @portabletext/plugin-input-rule@3.0.4
+  - @portabletext/plugin-character-pair-decorator@6.0.4
+
+## 6.0.3
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @portabletext/editor@5.0.3
+  - @portabletext/plugin-character-pair-decorator@6.0.3
+  - @portabletext/plugin-input-rule@3.0.3
+
+## 6.0.2
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @portabletext/editor@5.0.2
+  - @portabletext/plugin-character-pair-decorator@6.0.2
+  - @portabletext/plugin-input-rule@3.0.2
+
+## 6.0.1
+
+### Patch Changes
+
+- Updated dependencies [[`0155283`](https://github.com/portabletext/editor/commit/0155283c5b398f5678222acfdf7da7229a6fe0a6), [`921d03c`](https://github.com/portabletext/editor/commit/921d03c3d42b80949b25940d85cbc913dcc91f18)]:
+  - @portabletext/editor@5.0.1
+  - @portabletext/plugin-input-rule@3.0.1
+  - @portabletext/plugin-character-pair-decorator@6.0.1
+
+## 6.0.0
+
+### Patch Changes
+
+- Updated dependencies [[`aadc179`](https://github.com/portabletext/editor/commit/aadc179d1a1181fb52af5905d9be9360b804ab81)]:
+  - @portabletext/editor@5.0.0
+  - @portabletext/plugin-character-pair-decorator@6.0.0
+  - @portabletext/plugin-input-rule@3.0.0
+
+## 5.0.25
+
+### Patch Changes
+
+- Updated dependencies [[`3900875`](https://github.com/portabletext/editor/commit/3900875d6cefc6b66e0b0282eda1216ae8ede67c)]:
+  - @portabletext/editor@4.3.10
+  - @portabletext/plugin-character-pair-decorator@5.0.25
+  - @portabletext/plugin-input-rule@2.0.25
+
 ## 5.0.24
 
 ### Patch Changes

@@ -496,6 +496,92 @@ describe('event.block.set', () => {
     })
   })
 
+  test('Scenario: Undoing `set` of text block property', async () => {
+    let patches: Array<Patch> = []
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        block: {fields: [{name: '_map', type: 'object'}]},
+      }),
+      initialValue: [
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [{_key: spanKey, _type: 'span', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'mutation') {
+              for (const patch of event.patches) {
+                const {origin: _, ...rawPatch} = patch
+                patches.push(rawPatch)
+              }
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({
+      type: 'block.set',
+      at: [{_key: blockKey}],
+      props: {
+        _map: {
+          typePath: 'title',
+          documentPath: 'title',
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [{_key: spanKey, _type: 'span', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+          _map: {
+            typePath: 'title',
+            documentPath: 'title',
+          },
+        },
+      ])
+
+      expect(patches).toEqual([
+        set({typePath: 'title', documentPath: 'title'}, [
+          {_key: blockKey},
+          '_map',
+        ]),
+      ])
+    })
+
+    patches = []
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [{_key: spanKey, _type: 'span', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+
+      expect(patches).toEqual([unset([{_key: blockKey}, '_map'])])
+    })
+  })
+
   test("Scenario: Text blocks don't accept undefined custom props", async () => {
     const keyGenerator = createTestKeyGenerator()
     const {editor} = await createTestEditor({

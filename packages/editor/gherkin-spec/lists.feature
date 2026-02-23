@@ -33,6 +33,20 @@ Feature: Lists
     And "{Delete}" is pressed 2 times
     Then the text is ">#h1:bar"
 
+  Scenario: Pressing Backspace in an empty list item
+    Given the text ">#:"
+    When the editor is focused
+    And the caret is put after ""
+    And "{Backspace}" is pressed
+    Then the text is ""
+
+  Scenario: Pressing Backspace in an empty list item after a block object
+    Given the text "{image}|>#:"
+    When the editor is focused
+    And the caret is put after ""
+    And "{Backspace}" is pressed
+    Then the text is "{image}|"
+
   Scenario Outline: Pressing Backspace after an empty list item
     When the editor is focused
     Given the text <text>

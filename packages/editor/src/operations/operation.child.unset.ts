@@ -1,6 +1,6 @@
 import {applyAll} from '@portabletext/patches'
 import {isTextBlock} from '@portabletext/schema'
-import {Editor, Element, Transforms} from 'slate'
+import {Editor, Element, Transforms} from '../slate'
 import type {OperationImplementation} from './operation.types'
 
 export const childUnsetOperationImplementation: OperationImplementation<

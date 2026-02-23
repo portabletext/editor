@@ -1,5 +1,6 @@
 import {
   useEditor,
+  type Editor,
   type PortableTextBlock,
   type Patch as PtePatch,
 } from '@portabletext/editor'
@@ -23,11 +24,8 @@ import {
   useSanityInstance,
   type DocumentHandle,
 } from '@sanity/sdk-react'
-import {useEffect} from 'react'
-
-interface SDKValuePluginProps extends DocumentHandle {
-  path: string
-}
+import {useActorRef} from '@xstate/react'
+import {fromCallback, setup, type AnyEventObject} from 'xstate'
 
 type InsertPatch = Required<Pick<SanityPatchOperations, 'insert'>>
 
@@ -153,41 +151,224 @@ export function convertPatches(patches: SanityPatchOperations[]): PtePatch[] {
     })
   })
 }
+
+function applySync({
+  editor,
+  getRemoteValue,
+}: {
+  editor: Editor
+  getRemoteValue: () => PortableTextBlock[] | null | undefined
+}) {
+  const remoteValue = getRemoteValue()
+
+  if (!remoteValue) {
+    return
+  }
+
+  const snapshot = editor.getSnapshot().context.value
+  const patches = convertPatches(diffValue(snapshot, remoteValue))
+
+  if (patches.length) {
+    editor.send({type: 'patches', patches, snapshot})
+  }
+}
+
+const listenToEditor = fromCallback<AnyEventObject, {editor: Editor}>(
+  ({sendBack, input}) => {
+    const patchSubscription = input.editor.on('patch', () => {
+      sendBack({type: 'patch emitted'})
+    })
+
+    const mutationSubscription = input.editor.on('mutation', (event) => {
+      sendBack({type: 'mutation flushed', value: event.value})
+    })
+
+    return () => {
+      patchSubscription.unsubscribe()
+      mutationSubscription.unsubscribe()
+    }
+  },
+)
+
+const listenToRemote = fromCallback<
+  AnyEventObject,
+  {onRemoteValueChange: ValueSyncConfig['onRemoteValueChange']}
+>(({sendBack, input}) => {
+  return input.onRemoteValueChange(() => {
+    sendBack({type: 'remote value changed'})
+  })
+})
+
+const valueSyncMachine = setup({
+  types: {
+    context: {} as {
+      editor: Editor
+      getRemoteValue: ValueSyncConfig['getRemoteValue']
+      onRemoteValueChange: ValueSyncConfig['onRemoteValueChange']
+    },
+    input: {} as {
+      editor: Editor
+      getRemoteValue: ValueSyncConfig['getRemoteValue']
+      onRemoteValueChange: ValueSyncConfig['onRemoteValueChange']
+    },
+    events: {} as
+      | {type: 'patch emitted'}
+      | {type: 'mutation flushed'; value: PortableTextBlock[] | undefined}
+      | {type: 'remote value changed'},
+  },
+  actions: {
+    'send initial value': ({context}) => {
+      context.editor.send({
+        type: 'update value',
+        value: context.getRemoteValue() ?? [],
+      })
+    },
+    'push to remote': () => {
+      throw new Error('push to remote must be provided via .provide()')
+    },
+    'apply sync': ({context}) => {
+      applySync({
+        editor: context.editor,
+        getRemoteValue: context.getRemoteValue,
+      })
+    },
+    'defer then apply sync': ({context}) => {
+      queueMicrotask(() => {
+        applySync({
+          editor: context.editor,
+          getRemoteValue: context.getRemoteValue,
+        })
+      })
+    },
+  },
+  actors: {
+    'listen to editor': listenToEditor,
+    'listen to remote': listenToRemote,
+  },
+}).createMachine({
+  id: 'value sync',
+  context: ({input}) => ({
+    editor: input.editor,
+    getRemoteValue: input.getRemoteValue,
+    onRemoteValueChange: input.onRemoteValueChange,
+  }),
+  entry: ['send initial value'],
+  invoke: [
+    {
+      src: 'listen to editor',
+      input: ({context}) => ({editor: context.editor}),
+    },
+    {
+      src: 'listen to remote',
+      input: ({context}) => ({
+        onRemoteValueChange: context.onRemoteValueChange,
+      }),
+    },
+  ],
+  initial: 'idle',
+  states: {
+    'idle': {
+      on: {
+        'patch emitted': {
+          target: 'local write',
+        },
+        'remote value changed': {
+          actions: ['apply sync'],
+        },
+      },
+    },
+    'local write': {
+      on: {
+        'patch emitted': {},
+        'mutation flushed': {
+          target: 'pushing to remote',
+          actions: ['push to remote'],
+        },
+        'remote value changed': {
+          target: 'pending sync',
+        },
+      },
+    },
+    'pushing to remote': {
+      on: {
+        'patch emitted': {
+          target: 'local write',
+        },
+        'remote value changed': {
+          target: 'idle',
+        },
+      },
+    },
+    'pending sync': {
+      on: {
+        'patch emitted': {},
+        'mutation flushed': {
+          target: 'pushing to remote',
+          actions: ['push to remote', 'defer then apply sync'],
+        },
+        'remote value changed': {},
+      },
+    },
+  },
+})
+
+interface SDKValuePluginProps extends DocumentHandle {
+  path: string
+}
+
 /**
  * @public
  */
 export function SDKValuePlugin(props: SDKValuePluginProps) {
-  // NOTE: the real `useEditDocument` suspends until the document is loaded into the SDK store
+  const {documentId, documentType, path} = props
   const setSdkValue = useEditDocument(props)
   const instance = useSanityInstance(props)
+
+  const handle = {documentId, documentType, path}
+  const {getCurrent, subscribe} = getDocumentState<PortableTextBlock[]>(
+    instance,
+    handle,
+  )
+
+  return (
+    <ValueSyncPlugin
+      getRemoteValue={getCurrent}
+      pushValue={setSdkValue}
+      onRemoteValueChange={subscribe}
+    />
+  )
+}
+
+type ValueSyncConfig = {
+  getRemoteValue: () => PortableTextBlock[] | null | undefined
+  pushValue: (value: PortableTextBlock[]) => void
+  onRemoteValueChange: (callback: () => void) => () => void
+}
+
+export function ValueSyncPlugin(props: ValueSyncConfig) {
+  const {getRemoteValue, pushValue, onRemoteValueChange} = props
   const editor = useEditor()
 
-  useEffect(() => {
-    const getEditorValue = () => editor.getSnapshot().context.value
-    const {getCurrent: getSdkValue, subscribe: onSdkValueChange} =
-      getDocumentState<PortableTextBlock[]>(instance, props)
+  useActorRef(
+    valueSyncMachine.provide({
+      actions: {
+        'push to remote': ({context, event}) => {
+          if (event.type !== 'mutation flushed') {
+            return
+          }
 
-    const editorSubscription = editor.on('patch', () =>
-      setSdkValue(getEditorValue()),
-    )
-    const unsubscribeToEditorChanges = () => editorSubscription.unsubscribe()
-    const unsubscribeToSdkChanges = onSdkValueChange(() => {
-      const snapshot = getEditorValue()
-      const patches = convertPatches(diffValue(snapshot, getSdkValue()))
-
-      if (patches.length) {
-        editor.send({type: 'patches', patches, snapshot})
-      }
-    })
-
-    // update initial value
-    editor.send({type: 'update value', value: getSdkValue() ?? []})
-
-    return () => {
-      unsubscribeToEditorChanges()
-      unsubscribeToSdkChanges()
-    }
-  }, [editor, instance, props, setSdkValue])
+          pushValue(event.value ?? context.editor.getSnapshot().context.value)
+        },
+      },
+    }),
+    {
+      input: {
+        editor,
+        getRemoteValue,
+        onRemoteValueChange,
+      },
+    },
+  )
 
   return null
 }

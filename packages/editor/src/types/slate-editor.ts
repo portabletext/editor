@@ -5,9 +5,9 @@ import type {
   PortableTextSpan,
   PortableTextTextBlock,
 } from '@portabletext/schema'
-import type {Range, Operation as SlateOperation} from 'slate'
-import type {ReactEditor} from 'slate-react'
 import type {DecoratedRange} from '../editor/range-decorations-machine'
+import type {Range, Operation as SlateOperation} from '../slate'
+import type {ReactEditor} from '../slate-react'
 import type {EditorSelection, RangeDecoration} from './editor'
 // Side-effect import to ensure Slate module augmentation is included
 import './slate'

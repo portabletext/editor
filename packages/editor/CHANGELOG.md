@@ -1,5 +1,91 @@
 # Changelog
 
+## 5.1.0
+
+### Minor Changes
+
+- [#2188](https://github.com/portabletext/editor/pull/2188) [`9840585`](https://github.com/portabletext/editor/commit/9840585b286929ff095cd2ebf3b1ead8b47a0edf) Thanks [@christianhg](https://github.com/christianhg)! - feat: internalize Slate
+
+  The Slate framework (`slate`, `slate-dom`, and `slate-react`) is now vendored directly into the package source. This removes the external Slate dependencies entirely.
+
+  Why: Slate's public API constrains how we can evolve the editor's internal data model and operation handling. By owning the code, we can make targeted changes to normalization, node identity, and rendering without waiting for upstream changes or working around limitations.
+
+  This change comes with no public API changes and the editor's external behavior is unchanged as well.
+
+## 5.0.4
+
+### Patch Changes
+
+- [#2215](https://github.com/portabletext/editor/pull/2215) [`a3eb985`](https://github.com/portabletext/editor/commit/a3eb985d2fe074ac5a62b53acc50d9f4f1cbddcb) Thanks [@christianhg](https://github.com/christianhg)! - fix: give core behaviors unique priority IDs to preserve order through re-sorts
+
+## 5.0.3
+
+### Patch Changes
+
+- Updated dependencies [[`6133f84`](https://github.com/portabletext/editor/commit/6133f8489e7d1d01a0b469c3bc1e9c0e2f9084f4), [`d095284`](https://github.com/portabletext/editor/commit/d095284d59ce0a3f1d4faf8836d9c9ddde817a46)]:
+  - @portabletext/block-tools@5.0.3
+  - @portabletext/sanity-bridge@2.0.2
+
+## 5.0.2
+
+### Patch Changes
+
+- Updated dependencies [[`5f1b1fb`](https://github.com/portabletext/editor/commit/5f1b1fb44152f6fc9f674a917916d57fdf0496a7)]:
+  - @portabletext/sanity-bridge@2.0.1
+  - @portabletext/block-tools@5.0.2
+
+## 5.0.1
+
+### Patch Changes
+
+- [#2197](https://github.com/portabletext/editor/pull/2197) [`0155283`](https://github.com/portabletext/editor/commit/0155283c5b398f5678222acfdf7da7229a6fe0a6) Thanks [@christianhg](https://github.com/christianhg)! - fix: wrong selection after deleting expanded selection
+
+- [#2189](https://github.com/portabletext/editor/pull/2189) [`921d03c`](https://github.com/portabletext/editor/commit/921d03c3d42b80949b25940d85cbc913dcc91f18) Thanks [@christianhg](https://github.com/christianhg)! - fix: allow clearing list on backspace before block object
+
+  In previous versions, pressing Backspace in an empty list item before a block object would incorrectly remove the entire text block and focus the block object. Now, the list properties are correctly cleared and the text block is preserved.
+
+- Updated dependencies [[`c47fd7c`](https://github.com/portabletext/editor/commit/c47fd7c4478cdb5b2acfe2f681d7cb146a0996a5)]:
+  - @portabletext/markdown@1.1.3
+
+## 5.0.0
+
+### Major Changes
+
+- [#2140](https://github.com/portabletext/editor/pull/2140) [`aadc179`](https://github.com/portabletext/editor/commit/aadc179d1a1181fb52af5905d9be9360b804ab81) Thanks [@christianhg](https://github.com/christianhg)! - feat!: remove `PortableTextEditor` React component
+
+  ## Migration
+
+  If you were using `PortableTextEditor` as a React component, switch to `EditorProvider`:
+
+  ```diff
+  - import {PortableTextEditor} from '@portabletext/editor'
+  + import {EditorProvider} from '@portabletext/editor'
+
+  - <PortableTextEditor
+  -   schemaType={schemaType}
+  -   value={value}
+  -   onChange={handleChange}
+  -   patches$={patches$}
+  - >
+  + <EditorProvider
+  +   initialConfig={{
+  +     schemaDefinition: defineSchema({...}),
+  +     initialValue: value,
+  +   }}
+  + >
+      <PortableTextEditable />
+  - </PortableTextEditor>
+  + </EditorProvider>
+  ```
+
+  The `PortableTextEditorProps` type export has also been removed.
+
+## 4.3.10
+
+### Patch Changes
+
+- [#2177](https://github.com/portabletext/editor/pull/2177) [`3900875`](https://github.com/portabletext/editor/commit/3900875d6cefc6b66e0b0282eda1216ae8ede67c) Thanks [@christianhg](https://github.com/christianhg)! - fix: allow copying inline object
+
 ## 4.3.9
 
 ### Patch Changes

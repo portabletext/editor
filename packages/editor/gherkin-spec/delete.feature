@@ -3,6 +3,19 @@ Feature: Delete
   Background:
     Given one editor
 
+  Scenario Outline: Deleting expanded selection
+    Given the text <text>
+    When the editor is focused
+    And <selection> is selected
+    And "{Delete}" is pressed
+    And "new" is typed
+    Then the text is <new text>
+
+    Examples:
+      | text            | selection | new text   |
+      | "foo\|bar"      | "foo"     | "new\|bar" |
+      | "foo\|bar\|baz" | "foobar"  | "new\|baz" |
+
   Scenario Outline: Deleting word
     Given the text <text>
     When the editor is focused

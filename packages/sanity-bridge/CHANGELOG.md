@@ -1,5 +1,25 @@
 # Changelog
 
+## 2.0.2
+
+### Patch Changes
+
+- [#2205](https://github.com/portabletext/editor/pull/2205) [`d095284`](https://github.com/portabletext/editor/commit/d095284d59ce0a3f1d4faf8836d9c9ddde817a46) Thanks [@christianhg](https://github.com/christianhg)! - fix: harden schema compilation against built-in name collisions and restore inline object type names
+
+  Adds `file`, `slug`, and `geopoint` to the set of Sanity built-in names that need temporary names during `SanitySchema.compile()`. Without this, schemas using these names as block or inline objects get extra fields injected by the Sanity schema compiler.
+
+  Fixes inline object `type.name` restoration for shared and built-in names. Previously only `inlineObject.name` was restored from the temporary name, leaving `inlineObject.type.name` with the `tmp-` prefix.
+
+  Simplifies the name restoration pass to mutate shared references directly instead of mapping over `portableText.of` separately.
+
+## 2.0.1
+
+### Patch Changes
+
+- [#2198](https://github.com/portabletext/editor/pull/2198) [`5f1b1fb`](https://github.com/portabletext/editor/commit/5f1b1fb44152f6fc9f674a917916d57fdf0496a7) Thanks [@christianhg](https://github.com/christianhg)! - fix: deduplicate shared block/inline object names in schema compilation
+
+  When a type name appears in both `blockObjects` and `inlineObjects` of a `SchemaDefinition`, `compileSchemaDefinitionToPortableTextMemberSchemaTypes` would pass duplicate type names to `SanitySchema.compile()`, causing a "Duplicate type name added to schema" error. This generalizes the existing temporary-name pattern (previously only handling `image` and `url`) to dynamically detect and rename any shared names before compilation, then map them back afterward.
+
 ## 2.0.0
 
 ### Major Changes

@@ -15,14 +15,33 @@ export const whitespaceTextNodeRule: DeserializerRule = {
 }
 
 function isWhitespaceTextNode(node: Node) {
-  const isValidWhiteSpace =
+  const isWhitespaceOnly =
     node.nodeType === 3 &&
     (node.textContent || '').replace(/[\r\n]/g, ' ').replace(/\s\s+/g, ' ') ===
-      ' ' &&
+      ' '
+
+  const hasSiblingContext =
     node.nextSibling &&
     node.nextSibling.nodeType !== 3 &&
     node.previousSibling &&
     node.previousSibling.nodeType !== 3
+
+  // When a whitespace text node is the sole child of an inline element (e.g.
+  // <span> </span>), check the parent element's siblings instead. The parent
+  // must have non-text siblings on both sides (matching the same pattern as
+  // the direct sibling check above).
+  const parentIsInline = node.parentNode && tagName(node.parentNode) === 'span'
+  const hasParentSiblingContext =
+    parentIsInline &&
+    !node.nextSibling &&
+    !node.previousSibling &&
+    node.parentNode!.previousSibling &&
+    node.parentNode!.previousSibling.nodeType !== 3 &&
+    node.parentNode!.nextSibling &&
+    node.parentNode!.nextSibling.nodeType !== 3
+
+  const isValidWhiteSpace =
+    isWhitespaceOnly && (hasSiblingContext || hasParentSiblingContext)
 
   return (
     (isValidWhiteSpace || node.textContent !== ' ') &&

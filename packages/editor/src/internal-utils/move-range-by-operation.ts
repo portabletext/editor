@@ -1,4 +1,4 @@
-import {Point, type Node, type Operation, type Range} from 'slate'
+import {Point, type Node, type Operation, type Range} from '../slate'
 import type {MergeContext, SplitContext} from '../types/slate-editor'
 
 // Mock node for insert_node operations - only path matters for Point.transform

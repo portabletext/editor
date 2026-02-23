@@ -1,6 +1,6 @@
 {
   "name": "@portabletext/plugin-sdk-value",
-  "version": "4.0.24",
+  "version": "5.0.7",
   "description": "Synchronizes the Portable Text Editor value with the Sanity SDK, allowing for two-way editing.",
   "keywords": [
     "portabletext",
@@ -46,30 +46,47 @@
     "dev": "pkg-utils watch",
     "lint:fix": "biome lint --write .",
     "prepublishOnly": "turbo run build",
+    "test:browser": "vitest --run --project browser",
+    "test:browser:chromium": "vitest --run --project \"browser (chromium)\"",
+    "test:browser:chromium:watch": "vitest --project \"browser (chromium)\"",
+    "test:browser:firefox": "vitest --run --project \"browser (firefox)\"",
+    "test:browser:firefox:watch": "vitest --project \"browser (firefox)\"",
+    "test:browser:webkit": "vitest --run --project \"browser (webkit)\"",
+    "test:browser:webkit:watch": "vitest --project \"browser (webkit)\"",
     "test:unit": "vitest --run --project unit",
     "test:unit:watch": "vitest --project unit",
     "test:watch": "vitest"
   },
   "dependencies": {
     "@sanity/diff-patch": "^6.0.0",
-    "@sanity/json-match": "^1.0.5"
+    "@sanity/json-match": "^1.0.5",
+    "@xstate/react": "^6.0.0",
+    "xstate": "^5.25.0"
   },
   "devDependencies": {
     "@portabletext/editor": "workspace:^",
     "@portabletext/patches": "workspace:^",
-    "@sanity/schema": "^5.6.0",
+    "@portabletext/schema": "workspace:^",
+    "@portabletext/test": "workspace:^",
+    "@sanity/schema": "^5.9.0",
     "@sanity/sdk-react": "^2.1.2",
     "@sanity/tsconfig": "^2.1.0",
-    "@sanity/types": "^5.6.0",
+    "@sanity/types": "^5.9.0",
     "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.1.4",
+    "@vitest/browser": "^4.0.18",
+    "@vitest/browser-playwright": "^4.0.18",
     "babel-plugin-react-compiler": "^1.0.0",
     "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^7.0.1",
+    "jsdom": "^27.2.0",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "typescript": "catalog:",
     "typescript-eslint": "^8.48.0",
-    "vitest": "^4.0.16"
+    "vitest": "^4.0.18",
+    "vitest-browser-react": "^2.0.5"
   },
   "peerDependencies": {
     "@portabletext/editor": "workspace:^",

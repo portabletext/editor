@@ -16,6 +16,12 @@ export default defineConfig({
         plugins: [
           react({
             babel: {plugins: [['babel-plugin-react-compiler', {target: '19'}]]},
+            exclude: [
+              /\/node_modules\//,
+              /\/src\/slate\//,
+              /\/src\/slate-dom\//,
+              /\/src\/slate-react\//,
+            ],
           }),
         ],
         test: {
@@ -48,6 +54,12 @@ export default defineConfig({
         plugins: [
           react({
             babel: {plugins: [['babel-plugin-react-compiler', {target: '19'}]]},
+            exclude: [
+              /\/node_modules\//,
+              /\/src\/slate\//,
+              /\/src\/slate-dom\//,
+              /\/src\/slate-react\//,
+            ],
           }),
         ],
         test: {

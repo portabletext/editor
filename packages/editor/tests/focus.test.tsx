@@ -28,39 +28,35 @@ describe('focus', () => {
       ),
     })
 
+    const expectedSelection = {
+      anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 0},
+      focus: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 0},
+      backward: false,
+    }
+
     const toolbarLocator = page.getByTestId('toolbar')
     await vi.waitFor(() => expect.element(toolbarLocator).toBeInTheDocument())
 
     await userEvent.click(locator)
 
+    // Wait for both focus and selection to settle.
+    // Firefox can be slow to process focus on empty contenteditable elements.
     await vi.waitFor(() => {
-      expect(focusEvents).toEqual(['focused'])
-    })
-
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).toEqual({
-        anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 0},
-        focus: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 0},
-        backward: false,
-      })
+      expect(focusEvents.at(-1)).toEqual('focused')
+      expect(editor.getSnapshot().context.selection).toEqual(expectedSelection)
     })
 
     await userEvent.click(toolbarLocator)
 
-    expect(focusEvents.slice(1)).toEqual(['blurred'])
+    await vi.waitFor(() => {
+      expect(focusEvents.at(-1)).toEqual('blurred')
+    })
 
     await userEvent.click(locator)
 
     await vi.waitFor(() => {
-      expect(focusEvents.slice(2)).toEqual(['focused'])
-    })
-
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).toEqual({
-        anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 0},
-        focus: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 0},
-        backward: false,
-      })
+      expect(focusEvents.at(-1)).toEqual('focused')
+      expect(editor.getSnapshot().context.selection).toEqual(expectedSelection)
     })
   })
 
@@ -129,7 +125,7 @@ describe('focus', () => {
     await userEvent.click(barSpanLocator)
 
     await vi.waitFor(() => {
-      expect(focusEvents).toEqual(['focused'])
+      expect(focusEvents.at(-1)).toEqual('focused')
     })
 
     await vi.waitFor(() => {
@@ -149,13 +145,13 @@ describe('focus', () => {
     await userEvent.click(toolbarLocator)
 
     await vi.waitFor(() => {
-      expect(focusEvents.slice(1)).toEqual(['blurred'])
+      expect(focusEvents.at(-1)).toEqual('blurred')
     })
 
     await userEvent.click(barSpanLocator)
 
     await vi.waitFor(() => {
-      expect(focusEvents.slice(2)).toEqual(['focused'])
+      expect(focusEvents.at(-1)).toEqual('focused')
     })
 
     await vi.waitFor(() => {

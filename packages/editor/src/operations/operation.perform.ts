@@ -1,4 +1,4 @@
-import {Editor} from 'slate'
+import {Editor} from '../slate'
 import {addAnnotationOperationImplementation} from './operation.annotation.add'
 import {removeAnnotationOperationImplementation} from './operation.annotation.remove'
 import {blockSetOperationImplementation} from './operation.block.set'

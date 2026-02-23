@@ -1,6 +1,6 @@
 {
   "name": "@portabletext/sanity-bridge",
-  "version": "2.0.0",
+  "version": "2.0.2",
   "description": "Convert a Sanity Schema to a Portable Text Schema",
   "keywords": [
     "sanity",
@@ -45,14 +45,14 @@
   },
   "dependencies": {
     "@portabletext/schema": "workspace:^",
-    "@sanity/schema": "^5.6.0",
-    "@sanity/types": "^5.6.0"
+    "@sanity/schema": "^5.9.0",
+    "@sanity/types": "^5.9.0"
   },
   "devDependencies": {
     "@sanity/pkg-utils": "^10.2.1",
     "@sanity/tsconfig": "^2.1.0",
     "typescript": "catalog:",
-    "vitest": "^4.0.16"
+    "vitest": "^4.0.18"
   },
   "engines": {
     "node": ">=20.19 <22 || >=22.12"

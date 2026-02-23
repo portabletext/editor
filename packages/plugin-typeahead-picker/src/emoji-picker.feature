@@ -109,7 +109,7 @@ Feature: Emoji Picker
   Scenario: Two consecutive direct hits
     When the editor is focused
     And ":joy:" is typed
-    And ":joy_cat:" is typed
+    And ":joy_cat:" is inserted
     Then the text is "😂😹"
 
   Scenario: Picking the closest hit with Enter

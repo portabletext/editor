@@ -1,5 +1,84 @@
 # Changelog
 
+## 5.0.7
+
+### Patch Changes
+
+- Updated dependencies [[`9840585`](https://github.com/portabletext/editor/commit/9840585b286929ff095cd2ebf3b1ead8b47a0edf)]:
+  - @portabletext/editor@5.1.0
+
+## 5.0.6
+
+### Patch Changes
+
+- [#2232](https://github.com/portabletext/editor/pull/2232) [`438b860`](https://github.com/portabletext/editor/commit/438b860db51dcd76b33e6710cd13530a119931ab) Thanks [@christianhg](https://github.com/christianhg)! - fix: replace boolean flags with XState machine
+
+  The plugin used boolean flags (`isLocalWrite`, `hasPendingWrites`, `pendingSync`) to coordinate sync between the editor and the SDK store. These flags were fragile: the `useEffect` that managed them re-ran whenever `setSdkValue` changed reference (every parent render), sending stale update value events that caused data loss during rapid typing.
+
+## 5.0.5
+
+### Patch Changes
+
+- [#2227](https://github.com/portabletext/editor/pull/2227) [`687bbbf`](https://github.com/portabletext/editor/commit/687bbbf3d49731de0db755bc5d88d0892fca7bc6) Thanks [@christianhg](https://github.com/christianhg)! - Fix `useEffect` dependency array in `SDKValuePlugin` — destructure `props` into primitive values (`documentId`, `documentType`, `path`) to prevent subscriptions from being torn down and re-created on every parent re-render.
+
+- [#2220](https://github.com/portabletext/editor/pull/2220) [`a5875fe`](https://github.com/portabletext/editor/commit/a5875feeacbee46ca3227c72f36a4524bee5acfc) Thanks [@christianhg](https://github.com/christianhg)! - fix: defer SDK sync when editor has pending writes
+
+## 5.0.4
+
+### Patch Changes
+
+- [#2209](https://github.com/portabletext/editor/pull/2209) [`f5dc492`](https://github.com/portabletext/editor/commit/f5dc49272e293ec94511d49ed76d995863d58dba) Thanks [@christianhg](https://github.com/christianhg)! - fix: suppress echo callback on local writes in SDKValuePlugin
+
+  Add a local-write flag to prevent the SDK change subscriber from
+  sending spurious patches back to the editor after a local edit.
+  The entire chain from setSdkValue to onSdkValueChange is synchronous,
+  so the flag reliably distinguishes local writes from remote changes.
+
+- [#2209](https://github.com/portabletext/editor/pull/2209) [`600f87a`](https://github.com/portabletext/editor/commit/600f87a17666a06468454552c824531cbcd1972c) Thanks [@christianhg](https://github.com/christianhg)! - fix: switch SDKValuePlugin from patch to mutation event
+
+  Switch from `editor.on('patch')` to `editor.on('mutation')` to reduce
+  SDK store updates from N-per-keystroke to 1-per-action. The mutation
+  event batches patches by operation and debounces during typing (250ms).
+  It also includes the editor value, avoiding an extra snapshot read.
+
+- Updated dependencies [[`a3eb985`](https://github.com/portabletext/editor/commit/a3eb985d2fe074ac5a62b53acc50d9f4f1cbddcb)]:
+  - @portabletext/editor@5.0.4
+
+## 5.0.3
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @portabletext/editor@5.0.3
+
+## 5.0.2
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @portabletext/editor@5.0.2
+
+## 5.0.1
+
+### Patch Changes
+
+- Updated dependencies [[`0155283`](https://github.com/portabletext/editor/commit/0155283c5b398f5678222acfdf7da7229a6fe0a6), [`921d03c`](https://github.com/portabletext/editor/commit/921d03c3d42b80949b25940d85cbc913dcc91f18)]:
+  - @portabletext/editor@5.0.1
+
+## 5.0.0
+
+### Patch Changes
+
+- Updated dependencies [[`aadc179`](https://github.com/portabletext/editor/commit/aadc179d1a1181fb52af5905d9be9360b804ab81)]:
+  - @portabletext/editor@5.0.0
+
+## 4.0.25
+
+### Patch Changes
+
+- Updated dependencies [[`3900875`](https://github.com/portabletext/editor/commit/3900875d6cefc6b66e0b0282eda1216ae8ede67c)]:
+  - @portabletext/editor@4.3.10
+
 ## 4.0.24
 
 ### Patch Changes

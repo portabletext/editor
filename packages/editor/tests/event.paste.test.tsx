@@ -323,4 +323,94 @@ describe('event.clipboard.paste', () => {
       })
     })
   })
+
+  test('Scenario: Copy/pasting expanded selection', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const fooBlockKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const barBlockKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+    const bazBlockKey = keyGenerator()
+    const bazSpanKey = keyGenerator()
+    const fizzBlockKey = keyGenerator()
+    const fizzSpanKey = keyGenerator()
+    const initialValue = [
+      {
+        _key: fooBlockKey,
+        _type: 'block',
+        children: [{_key: fooSpanKey, _type: 'span', text: 'foo', marks: []}],
+        style: 'normal',
+        markDefs: [],
+      },
+      {
+        _key: barBlockKey,
+        _type: 'block',
+        children: [{_key: barSpanKey, _type: 'span', text: 'bar', marks: []}],
+        style: 'normal',
+        markDefs: [],
+      },
+      {
+        _key: bazBlockKey,
+        _type: 'block',
+        children: [{_key: bazSpanKey, _type: 'span', text: 'baz', marks: []}],
+        style: 'normal',
+        markDefs: [],
+      },
+      {
+        _key: fizzBlockKey,
+        _type: 'block',
+        children: [{_key: fizzSpanKey, _type: 'span', text: 'fizz', marks: []}],
+        style: 'normal',
+        markDefs: [],
+      },
+    ]
+
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      initialValue,
+    })
+
+    await userEvent.click(locator)
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: barBlockKey}, 'children', {_key: barSpanKey}],
+          offset: 3,
+        },
+      },
+    })
+
+    const dataTransfer = new DataTransfer()
+
+    editor.send({
+      type: 'clipboard.copy',
+      originEvent: {dataTransfer},
+      position: {
+        selection: editor.getSnapshot().context.selection!,
+      },
+    })
+
+    editor.send({
+      type: 'clipboard.paste',
+      originEvent: {dataTransfer},
+      position: {
+        selection: editor.getSnapshot().context.selection!,
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context!)).toEqual([
+        'foo',
+        'bar',
+        'baz',
+        'fizz',
+      ])
+    })
+  })
 })

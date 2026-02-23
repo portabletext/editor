@@ -1,0 +1,29 @@
+import {Editor, type EditorInterface} from '../interfaces/editor'
+import type {BasePoint} from '../interfaces/point'
+
+export const before: EditorInterface['before'] = (editor, at, options = {}) => {
+  const anchor = Editor.start(editor, [])
+  const focus = Editor.point(editor, at, {edge: 'start'})
+  const range = {anchor, focus}
+  const {distance = 1} = options
+  let d = 0
+  let target: BasePoint | undefined
+
+  for (const p of Editor.positions(editor, {
+    ...options,
+    at: range,
+    reverse: true,
+  })) {
+    if (d > distance) {
+      break
+    }
+
+    if (d !== 0) {
+      target = p
+    }
+
+    d++
+  }
+
+  return target
+}

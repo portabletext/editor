@@ -17,8 +17,15 @@ import {
   makeDiff,
   parsePatch,
 } from '@sanity/diff-match-patch'
-import {Editor, Element, Node, Text, Transforms, type Descendant} from 'slate'
 import type {EditorContext} from '../editor/editor-snapshot'
+import {
+  Editor,
+  Element,
+  Node,
+  Text,
+  Transforms,
+  type Descendant,
+} from '../slate'
 import type {Path} from '../types/paths'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
