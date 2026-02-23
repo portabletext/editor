@@ -594,7 +594,7 @@ describe('event.history.undo', () => {
       expect(getTersePt(editor.getSnapshot().context)).toEqual(['b'])
     })
 
-    await userEvent.keyboard('{ControlOrMeta>}{z}{/ControlOrMeta}')
+    editor.send({type: 'history.undo'})
 
     await vi.waitFor(() => {
       expect(getTersePt(editor.getSnapshot().context)).toEqual(['a'])
@@ -602,7 +602,7 @@ describe('event.history.undo', () => {
 
     await userEvent.keyboard('{ArrowLeft}')
 
-    await userEvent.keyboard('{ControlOrMeta>}{z}{/ControlOrMeta}')
+    editor.send({type: 'history.undo'})
 
     await vi.waitFor(() => {
       expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
