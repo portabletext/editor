@@ -93,7 +93,6 @@
     "@portabletext/to-html": "^5.0.1",
     "@xstate/react": "^6.0.0",
     "debug": "^4.4.3",
-    "is-hotkey": "^0.2.0",
     "scroll-into-view-if-needed": "^3.1.0",
     "xstate": "^5.25.0"
   },
@@ -103,7 +102,6 @@
     "@sanity/pkg-utils": "^10.2.1",
     "@sanity/tsconfig": "^2.1.0",
     "@types/debug": "^4.1.12",
-    "@types/is-hotkey": "^0.1.10",
     "@types/node": "^20",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
