@@ -7,7 +7,17 @@ import {defineConfig} from 'vite'
 export default defineConfig({
   plugins: [
     react({
-      babel: {plugins: [['babel-plugin-react-compiler', {target: '19'}]]},
+      babel: (id) => {
+        const isVendoredSlate =
+          id.includes('/src/slate/') ||
+          id.includes('/src/slate-dom/') ||
+          id.includes('/src/slate-react/')
+        return {
+          plugins: isVendoredSlate
+            ? []
+            : [['babel-plugin-react-compiler', {target: '19'}]],
+        }
+      },
     }),
     tailwindcss(),
   ],
