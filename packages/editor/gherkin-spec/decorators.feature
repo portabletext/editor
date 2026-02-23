@@ -66,6 +66,17 @@ Feature: Decorators
     Then the text is "foo bar baz"
     And "foo bar baz" has marks "em"
 
+  Scenario: Toggling bold as you write
+    Given the text ""
+    When the editor is focused
+    And the caret is put after ""
+    And "foo" is typed
+    And "strong" is toggled
+    And "bar" is typed
+    Then the text is "foo,bar"
+    And "foo" has no marks
+    And "bar" has marks "strong"
+
   Scenario: Toggling bold inside italic as you write
     Given the text ""
     When the editor is focused
