@@ -1,103 +1,223 @@
-import {isHotkey} from 'is-hotkey'
-import {IS_APPLE} from './environment'
+import {createKeyboardShortcut} from '@portabletext/keyboard-shortcuts'
 
-/**
- * Hotkey mappings for each platform.
- */
+// generic: mod+b
+const bold = createKeyboardShortcut({
+  default: [{key: 'B', ctrl: true, meta: false, alt: false, shift: false}],
+  apple: [{key: 'B', ctrl: false, meta: true, alt: false, shift: false}],
+})
 
-const HOTKEYS = {
-  bold: 'mod+b',
-  compose: ['down', 'left', 'right', 'up', 'backspace', 'enter'],
-  moveBackward: 'left',
-  moveForward: 'right',
-  moveWordBackward: 'ctrl+left',
-  moveWordForward: 'ctrl+right',
-  deleteBackward: 'shift?+backspace',
-  deleteForward: 'shift?+delete',
-  extendBackward: 'shift+left',
-  extendForward: 'shift+right',
-  italic: 'mod+i',
-  insertSoftBreak: 'shift+enter',
-  splitBlock: 'enter',
-  undo: 'mod+z',
+// generic: down, left, right, up, backspace, enter
+const compose = {
+  guard: (event: KeyboardEvent) => {
+    const key = event.key.toLowerCase()
+    return (
+      key === 'arrowdown' ||
+      key === 'arrowleft' ||
+      key === 'arrowright' ||
+      key === 'arrowup' ||
+      key === 'backspace' ||
+      key === 'enter'
+    )
+  },
 }
 
-const APPLE_HOTKEYS = {
-  moveLineBackward: 'opt+up',
-  moveLineForward: 'opt+down',
-  moveWordBackward: 'opt+left',
-  moveWordForward: 'opt+right',
-  deleteBackward: ['ctrl+backspace', 'ctrl+h'],
-  deleteForward: ['ctrl+delete', 'ctrl+d'],
-  deleteLineBackward: 'cmd+shift?+backspace',
-  deleteLineForward: ['cmd+shift?+delete', 'ctrl+k'],
-  deleteWordBackward: 'opt+shift?+backspace',
-  deleteWordForward: 'opt+shift?+delete',
-  extendLineBackward: 'opt+shift+up',
-  extendLineForward: 'opt+shift+down',
-  redo: 'cmd+shift+z',
-  transposeCharacter: 'ctrl+t',
-}
+// generic: left
+const moveBackward = createKeyboardShortcut({
+  default: [{key: 'ArrowLeft'}],
+})
 
-const WINDOWS_HOTKEYS = {
-  deleteWordBackward: 'ctrl+shift?+backspace',
-  deleteWordForward: 'ctrl+shift?+delete',
-  redo: ['ctrl+y', 'ctrl+shift+z'],
-}
+// generic: right
+const moveForward = createKeyboardShortcut({
+  default: [{key: 'ArrowRight'}],
+})
 
-/**
- * Create a platform-aware hotkey checker.
- */
+// generic: ctrl+left, apple: opt+left
+const moveWordBackward = createKeyboardShortcut({
+  default: [{key: 'ArrowLeft', ctrl: true}],
+  apple: [
+    {key: 'ArrowLeft', ctrl: true},
+    {key: 'ArrowLeft', alt: true},
+  ],
+})
 
-const create = (key: string) => {
-  const generic = HOTKEYS[key as keyof typeof HOTKEYS]
-  const apple = APPLE_HOTKEYS[key as keyof typeof APPLE_HOTKEYS]
-  const windows = WINDOWS_HOTKEYS[key as keyof typeof WINDOWS_HOTKEYS]
-  const isGeneric = generic && isHotkey(generic)
-  const isApple = apple && isHotkey(apple)
-  const isWindows = windows && isHotkey(windows)
+// generic: ctrl+right, apple: opt+right
+const moveWordForward = createKeyboardShortcut({
+  default: [{key: 'ArrowRight', ctrl: true}],
+  apple: [
+    {key: 'ArrowRight', ctrl: true},
+    {key: 'ArrowRight', alt: true},
+  ],
+})
 
-  return (event: KeyboardEvent) => {
-    if (isGeneric && isGeneric(event)) {
-      return true
-    }
-    if (IS_APPLE && isApple && isApple(event)) {
-      return true
-    }
-    if (!IS_APPLE && isWindows && isWindows(event)) {
-      return true
-    }
-    return false
-  }
-}
+// generic: shift?+backspace, apple: ctrl+backspace, ctrl+h
+const deleteBackward = createKeyboardShortcut({
+  default: [
+    {key: 'Backspace', ctrl: false, meta: false, alt: false},
+    {key: 'Backspace', shift: true, ctrl: false, meta: false, alt: false},
+  ],
+  apple: [
+    {key: 'Backspace', ctrl: false, meta: false, alt: false},
+    {key: 'Backspace', shift: true, ctrl: false, meta: false, alt: false},
+    {key: 'Backspace', ctrl: true},
+    {key: 'h', ctrl: true},
+  ],
+})
+
+// generic: shift?+delete, apple: ctrl+delete, ctrl+d
+const deleteForward = createKeyboardShortcut({
+  default: [
+    {key: 'Delete', ctrl: false, meta: false, alt: false},
+    {key: 'Delete', shift: true, ctrl: false, meta: false, alt: false},
+  ],
+  apple: [
+    {key: 'Delete', ctrl: false, meta: false, alt: false},
+    {key: 'Delete', shift: true, ctrl: false, meta: false, alt: false},
+    {key: 'Delete', ctrl: true},
+    {key: 'd', ctrl: true},
+  ],
+})
+
+// generic: shift+left
+const extendBackward = createKeyboardShortcut({
+  default: [{key: 'ArrowLeft', shift: true}],
+})
+
+// generic: shift+right
+const extendForward = createKeyboardShortcut({
+  default: [{key: 'ArrowRight', shift: true}],
+})
+
+// generic: mod+i
+const italic = createKeyboardShortcut({
+  default: [{key: 'I', ctrl: true, meta: false, alt: false, shift: false}],
+  apple: [{key: 'I', ctrl: false, meta: true, alt: false, shift: false}],
+})
+
+// generic: shift+enter
+const insertSoftBreak = createKeyboardShortcut({
+  default: [{key: 'Enter', shift: true}],
+})
+
+// generic: enter
+const splitBlock = createKeyboardShortcut({
+  default: [{key: 'Enter', shift: false, ctrl: false, meta: false, alt: false}],
+})
+
+// generic: mod+z
+const undo = createKeyboardShortcut({
+  default: [{key: 'Z', ctrl: true, meta: false, alt: false, shift: false}],
+  apple: [{key: 'Z', ctrl: false, meta: true, alt: false, shift: false}],
+})
+
+// apple only: opt+up
+const moveLineBackward = createKeyboardShortcut({
+  default: [],
+  apple: [{key: 'ArrowUp', alt: true}],
+})
+
+// apple only: opt+down
+const moveLineForward = createKeyboardShortcut({
+  default: [],
+  apple: [{key: 'ArrowDown', alt: true}],
+})
+
+// apple only: cmd+shift?+backspace
+const deleteLineBackward = createKeyboardShortcut({
+  default: [],
+  apple: [
+    {key: 'Backspace', meta: true},
+    {key: 'Backspace', meta: true, shift: true},
+  ],
+})
+
+// apple only: cmd+shift?+delete, ctrl+k
+const deleteLineForward = createKeyboardShortcut({
+  default: [],
+  apple: [
+    {key: 'Delete', meta: true},
+    {key: 'Delete', meta: true, shift: true},
+    {key: 'k', ctrl: true},
+  ],
+})
+
+// generic: (none), apple: opt+shift?+backspace, windows: ctrl+shift?+backspace
+const deleteWordBackward = createKeyboardShortcut({
+  default: [
+    {key: 'Backspace', ctrl: true},
+    {key: 'Backspace', ctrl: true, shift: true},
+  ],
+  apple: [
+    {key: 'Backspace', alt: true},
+    {key: 'Backspace', alt: true, shift: true},
+  ],
+})
+
+// generic: (none), apple: opt+shift?+delete, windows: ctrl+shift?+delete
+const deleteWordForward = createKeyboardShortcut({
+  default: [
+    {key: 'Delete', ctrl: true},
+    {key: 'Delete', ctrl: true, shift: true},
+  ],
+  apple: [
+    {key: 'Delete', alt: true},
+    {key: 'Delete', alt: true, shift: true},
+  ],
+})
+
+// apple only: opt+shift+up
+const extendLineBackward = createKeyboardShortcut({
+  default: [],
+  apple: [{key: 'ArrowUp', alt: true, shift: true}],
+})
+
+// apple only: opt+shift+down
+const extendLineForward = createKeyboardShortcut({
+  default: [],
+  apple: [{key: 'ArrowDown', alt: true, shift: true}],
+})
+
+// apple: cmd+shift+z, windows: ctrl+y, ctrl+shift+z
+const redo = createKeyboardShortcut({
+  default: [
+    {key: 'Y', ctrl: true, meta: false, alt: false, shift: false},
+    {key: 'Z', ctrl: true, meta: false, alt: false, shift: true},
+  ],
+  apple: [{key: 'Z', ctrl: false, meta: true, alt: false, shift: true}],
+})
+
+// apple only: ctrl+t
+const transposeCharacter = createKeyboardShortcut({
+  default: [],
+  apple: [{key: 't', ctrl: true}],
+})
 
 /**
  * Hotkeys.
  */
 
 export default {
-  isBold: create('bold'),
-  isCompose: create('compose'),
-  isMoveBackward: create('moveBackward'),
-  isMoveForward: create('moveForward'),
-  isDeleteBackward: create('deleteBackward'),
-  isDeleteForward: create('deleteForward'),
-  isDeleteLineBackward: create('deleteLineBackward'),
-  isDeleteLineForward: create('deleteLineForward'),
-  isDeleteWordBackward: create('deleteWordBackward'),
-  isDeleteWordForward: create('deleteWordForward'),
-  isExtendBackward: create('extendBackward'),
-  isExtendForward: create('extendForward'),
-  isExtendLineBackward: create('extendLineBackward'),
-  isExtendLineForward: create('extendLineForward'),
-  isItalic: create('italic'),
-  isMoveLineBackward: create('moveLineBackward'),
-  isMoveLineForward: create('moveLineForward'),
-  isMoveWordBackward: create('moveWordBackward'),
-  isMoveWordForward: create('moveWordForward'),
-  isRedo: create('redo'),
-  isSoftBreak: create('insertSoftBreak'),
-  isSplitBlock: create('splitBlock'),
-  isTransposeCharacter: create('transposeCharacter'),
-  isUndo: create('undo'),
+  isBold: bold.guard,
+  isCompose: compose.guard,
+  isMoveBackward: moveBackward.guard,
+  isMoveForward: moveForward.guard,
+  isDeleteBackward: deleteBackward.guard,
+  isDeleteForward: deleteForward.guard,
+  isDeleteLineBackward: deleteLineBackward.guard,
+  isDeleteLineForward: deleteLineForward.guard,
+  isDeleteWordBackward: deleteWordBackward.guard,
+  isDeleteWordForward: deleteWordForward.guard,
+  isExtendBackward: extendBackward.guard,
+  isExtendForward: extendForward.guard,
+  isExtendLineBackward: extendLineBackward.guard,
+  isExtendLineForward: extendLineForward.guard,
+  isItalic: italic.guard,
+  isMoveLineBackward: moveLineBackward.guard,
+  isMoveLineForward: moveLineForward.guard,
+  isMoveWordBackward: moveWordBackward.guard,
+  isMoveWordForward: moveWordForward.guard,
+  isRedo: redo.guard,
+  isSoftBreak: insertSoftBreak.guard,
+  isSplitBlock: splitBlock.guard,
+  isTransposeCharacter: transposeCharacter.guard,
+  isUndo: undo.guard,
 }
