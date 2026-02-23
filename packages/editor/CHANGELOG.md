@@ -1,5 +1,11 @@
 # Changelog
 
+## 5.1.1
+
+### Patch Changes
+
+- [#2223](https://github.com/portabletext/editor/pull/2223) [`837aab4`](https://github.com/portabletext/editor/commit/837aab4fa86dd32b4cf59b81a0a1ee53aab525aa) Thanks [@christianhg](https://github.com/christianhg)! - fix: produce valid Portable Text spans during internal text node creation
+
 ## 5.1.0
 
 ### Minor Changes
