@@ -609,6 +609,87 @@ describe('event.history.undo', () => {
     })
   })
 
+  test('Scenario: Forwarding `insert.text` preserves undo batching', async () => {
+    const {editor, locator} = await createTestEditor({
+      children: (
+        <BehaviorPlugin
+          behaviors={[
+            defineBehavior({
+              on: 'insert.text',
+              guard: ({snapshot}) => {
+                const focusBlock = getFocusBlock(snapshot)
+
+                if (!focusBlock) {
+                  return false
+                }
+
+                return {focusBlock}
+              },
+              actions: [({event}) => [forward(event)], () => []],
+            }),
+          ]}
+        />
+      ),
+    })
+
+    await userEvent.type(locator, 'hello')
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['hello'])
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
+    })
+  })
+
+  test('Scenario: Forwarding `insert.text` with side effect preserves undo batching', async () => {
+    const sideEffectLog: Array<string> = []
+
+    const {editor, locator} = await createTestEditor({
+      children: (
+        <BehaviorPlugin
+          behaviors={[
+            defineBehavior({
+              on: 'insert.text',
+              guard: ({snapshot}) => {
+                const focusBlock = getFocusBlock(snapshot)
+
+                if (!focusBlock) {
+                  return false
+                }
+
+                return {focusBlock}
+              },
+              actions: [
+                ({event}) => [forward(event)],
+                () => {
+                  sideEffectLog.push('observed')
+                  return []
+                },
+              ],
+            }),
+          ]}
+        />
+      ),
+    })
+
+    await userEvent.type(locator, 'hello')
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['hello'])
+      expect(sideEffectLog).toHaveLength(5)
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
+    })
+  })
+
   test('Scenario: Undo after sending `select` after ended Behavior', async () => {
     const {editor, locator} = await createTestEditor({
       children: (
