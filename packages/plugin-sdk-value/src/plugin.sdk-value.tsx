@@ -23,14 +23,9 @@ import {
   useEditDocument,
   useSanityInstance,
   type DocumentHandle,
-  type SanityInstance,
 } from '@sanity/sdk-react'
 import {useActorRef} from '@xstate/react'
 import {fromCallback, setup, type AnyEventObject} from 'xstate'
-
-interface SDKValuePluginProps extends DocumentHandle {
-  path: string
-}
 
 type InsertPatch = Required<Pick<SanityPatchOperations, 'insert'>>
 
@@ -159,19 +154,19 @@ export function convertPatches(patches: SanityPatchOperations[]): PtePatch[] {
 
 function applySync({
   editor,
-  getSdkValue,
+  getRemoteValue,
 }: {
   editor: Editor
-  getSdkValue: () => PortableTextBlock[] | null | undefined
+  getRemoteValue: () => PortableTextBlock[] | null | undefined
 }) {
-  const sdkValue = getSdkValue()
+  const remoteValue = getRemoteValue()
 
-  if (!sdkValue) {
+  if (!remoteValue) {
     return
   }
 
   const snapshot = editor.getSnapshot().context.value
-  const patches = convertPatches(diffValue(snapshot, sdkValue))
+  const patches = convertPatches(diffValue(snapshot, remoteValue))
 
   if (patches.length) {
     editor.send({type: 'patches', patches, snapshot})
@@ -195,84 +190,68 @@ const listenToEditor = fromCallback<AnyEventObject, {editor: Editor}>(
   },
 )
 
-const listenToSdk = fromCallback<
+const listenToRemote = fromCallback<
   AnyEventObject,
-  {instance: SanityInstance; handle: DocumentHandle & {path: string}}
+  {onRemoteValueChange: ValueSyncConfig['onRemoteValueChange']}
 >(({sendBack, input}) => {
-  const {subscribe: onSdkValueChange} = getDocumentState<PortableTextBlock[]>(
-    input.instance,
-    input.handle,
-  )
-
-  const unsubscribe = onSdkValueChange(() => {
-    sendBack({type: 'sdk value changed'})
+  return input.onRemoteValueChange(() => {
+    sendBack({type: 'remote value changed'})
   })
-
-  return () => unsubscribe()
 })
 
-const sdkValueMachine = setup({
+const valueSyncMachine = setup({
   types: {
     context: {} as {
       editor: Editor
-      instance: SanityInstance
-      handle: DocumentHandle & {path: string}
-      getSdkValue: () => PortableTextBlock[] | null | undefined
+      getRemoteValue: ValueSyncConfig['getRemoteValue']
+      onRemoteValueChange: ValueSyncConfig['onRemoteValueChange']
     },
     input: {} as {
       editor: Editor
-      instance: SanityInstance
-      handle: DocumentHandle & {path: string}
+      getRemoteValue: ValueSyncConfig['getRemoteValue']
+      onRemoteValueChange: ValueSyncConfig['onRemoteValueChange']
     },
     events: {} as
       | {type: 'patch emitted'}
       | {type: 'mutation flushed'; value: PortableTextBlock[] | undefined}
-      | {type: 'sdk value changed'},
+      | {type: 'remote value changed'},
   },
   actions: {
     'send initial value': ({context}) => {
       context.editor.send({
         type: 'update value',
-        value: context.getSdkValue() ?? [],
+        value: context.getRemoteValue() ?? [],
       })
     },
-    'push to sdk': () => {
-      throw new Error('push to sdk must be provided via .provide()')
+    'push to remote': () => {
+      throw new Error('push to remote must be provided via .provide()')
     },
     'apply sync': ({context}) => {
       applySync({
         editor: context.editor,
-        getSdkValue: context.getSdkValue,
+        getRemoteValue: context.getRemoteValue,
       })
     },
     'defer then apply sync': ({context}) => {
       queueMicrotask(() => {
         applySync({
           editor: context.editor,
-          getSdkValue: context.getSdkValue,
+          getRemoteValue: context.getRemoteValue,
         })
       })
     },
   },
   actors: {
     'listen to editor': listenToEditor,
-    'listen to sdk': listenToSdk,
+    'listen to remote': listenToRemote,
   },
 }).createMachine({
-  id: 'sdk value',
-  context: ({input}) => {
-    const {getCurrent: getSdkValue} = getDocumentState<PortableTextBlock[]>(
-      input.instance,
-      input.handle,
-    )
-
-    return {
-      editor: input.editor,
-      instance: input.instance,
-      handle: input.handle,
-      getSdkValue,
-    }
-  },
+  id: 'value sync',
+  context: ({input}) => ({
+    editor: input.editor,
+    getRemoteValue: input.getRemoteValue,
+    onRemoteValueChange: input.onRemoteValueChange,
+  }),
   entry: ['send initial value'],
   invoke: [
     {
@@ -280,10 +259,9 @@ const sdkValueMachine = setup({
       input: ({context}) => ({editor: context.editor}),
     },
     {
-      src: 'listen to sdk',
+      src: 'listen to remote',
       input: ({context}) => ({
-        instance: context.instance,
-        handle: context.handle,
+        onRemoteValueChange: context.onRemoteValueChange,
       }),
     },
   ],
@@ -294,7 +272,7 @@ const sdkValueMachine = setup({
         'patch emitted': {
           target: 'local write',
         },
-        'sdk value changed': {
+        'remote value changed': {
           actions: ['apply sync'],
         },
       },
@@ -303,20 +281,20 @@ const sdkValueMachine = setup({
       on: {
         'patch emitted': {},
         'mutation flushed': {
-          target: 'pushing to sdk',
-          actions: ['push to sdk'],
+          target: 'pushing to remote',
+          actions: ['push to remote'],
         },
-        'sdk value changed': {
+        'remote value changed': {
           target: 'pending sync',
         },
       },
     },
-    'pushing to sdk': {
+    'pushing to remote': {
       on: {
         'patch emitted': {
           target: 'local write',
         },
-        'sdk value changed': {
+        'remote value changed': {
           target: 'idle',
         },
       },
@@ -325,14 +303,18 @@ const sdkValueMachine = setup({
       on: {
         'patch emitted': {},
         'mutation flushed': {
-          target: 'pushing to sdk',
-          actions: ['push to sdk', 'defer then apply sync'],
+          target: 'pushing to remote',
+          actions: ['push to remote', 'defer then apply sync'],
         },
-        'sdk value changed': {},
+        'remote value changed': {},
       },
     },
   },
 })
+
+interface SDKValuePluginProps extends DocumentHandle {
+  path: string
+}
 
 /**
  * @public
@@ -341,25 +323,49 @@ export function SDKValuePlugin(props: SDKValuePluginProps) {
   const {documentId, documentType, path} = props
   const setSdkValue = useEditDocument(props)
   const instance = useSanityInstance(props)
+
+  const handle = {documentId, documentType, path}
+  const {getCurrent, subscribe} = getDocumentState<PortableTextBlock[]>(
+    instance,
+    handle,
+  )
+
+  return (
+    <ValueSyncPlugin
+      getRemoteValue={getCurrent}
+      pushValue={setSdkValue}
+      onRemoteValueChange={subscribe}
+    />
+  )
+}
+
+type ValueSyncConfig = {
+  getRemoteValue: () => PortableTextBlock[] | null | undefined
+  pushValue: (value: PortableTextBlock[]) => void
+  onRemoteValueChange: (callback: () => void) => () => void
+}
+
+export function ValueSyncPlugin(props: ValueSyncConfig) {
+  const {getRemoteValue, pushValue, onRemoteValueChange} = props
   const editor = useEditor()
 
   useActorRef(
-    sdkValueMachine.provide({
+    valueSyncMachine.provide({
       actions: {
-        'push to sdk': ({context, event}) => {
+        'push to remote': ({context, event}) => {
           if (event.type !== 'mutation flushed') {
             return
           }
 
-          setSdkValue(event.value ?? context.editor.getSnapshot().context.value)
+          pushValue(event.value ?? context.editor.getSnapshot().context.value)
         },
       },
     }),
     {
       input: {
         editor,
-        instance,
-        handle: {documentId, documentType, path},
+        getRemoteValue,
+        onRemoteValueChange,
       },
     },
   )
