@@ -52,7 +52,9 @@
   },
   "dependencies": {
     "@sanity/diff-patch": "^6.0.0",
-    "@sanity/json-match": "^1.0.5"
+    "@sanity/json-match": "^1.0.5",
+    "@xstate/react": "^6.0.0",
+    "xstate": "^5.25.0"
   },
   "devDependencies": {
     "@portabletext/editor": "workspace:^",
