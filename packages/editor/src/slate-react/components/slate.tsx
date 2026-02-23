@@ -116,7 +116,7 @@ export const Slate = (props: {
         document.removeEventListener('blur', fn, true)
       }
     }
-  }, [])
+  }, [editor])
 
   return (
     <SlateSelectorContext.Provider value={selectorContext}>
