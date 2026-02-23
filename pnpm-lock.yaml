@@ -913,6 +913,12 @@ importers:
       '@sanity/json-match':
         specifier: ^1.0.5
         version: 1.0.5
+      '@xstate/react':
+        specifier: ^6.0.0
+        version: 6.0.0(@types/react@19.2.14)(react@19.2.3)(xstate@5.25.0)
+      xstate:
+        specifier: ^5.25.0
+        version: 5.25.0
     devDependencies:
       '@portabletext/editor':
         specifier: workspace:*
