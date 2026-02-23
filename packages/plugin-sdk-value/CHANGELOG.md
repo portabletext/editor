@@ -1,5 +1,13 @@
 # Changelog
 
+## 5.0.6
+
+### Patch Changes
+
+- [#2232](https://github.com/portabletext/editor/pull/2232) [`438b860`](https://github.com/portabletext/editor/commit/438b860db51dcd76b33e6710cd13530a119931ab) Thanks [@christianhg](https://github.com/christianhg)! - fix: replace boolean flags with XState machine
+
+  The plugin used boolean flags (`isLocalWrite`, `hasPendingWrites`, `pendingSync`) to coordinate sync between the editor and the SDK store. These flags were fragile: the `useEffect` that managed them re-ran whenever `setSdkValue` changed reference (every parent render), sending stale update value events that caused data loss during rapid typing.
+
 ## 5.0.5
 
 ### Patch Changes
