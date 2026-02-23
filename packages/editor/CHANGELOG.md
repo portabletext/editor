@@ -1,5 +1,17 @@
 # Changelog
 
+## 5.1.0
+
+### Minor Changes
+
+- [#2188](https://github.com/portabletext/editor/pull/2188) [`9840585`](https://github.com/portabletext/editor/commit/9840585b286929ff095cd2ebf3b1ead8b47a0edf) Thanks [@christianhg](https://github.com/christianhg)! - feat: internalize Slate
+
+  The Slate framework (`slate`, `slate-dom`, and `slate-react`) is now vendored directly into the package source. This removes the external Slate dependencies entirely.
+
+  Why: Slate's public API constrains how we can evolve the editor's internal data model and operation handling. By owning the code, we can make targeted changes to normalization, node identity, and rendering without waiting for upstream changes or working around limitations.
+
+  This change comes with no public API changes and the editor's external behavior is unchanged as well.
+
 ## 5.0.4
 
 ### Patch Changes
