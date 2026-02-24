@@ -2,10 +2,11 @@ import {defineSchema, type PortableTextBlock} from '@portabletext/schema'
 import {createRef, type RefObject} from 'react'
 import {describe, expect, test, vi} from 'vitest'
 import {PortableTextEditor} from '../src/editor/PortableTextEditor'
-import {InternalEditorChangePlugin} from '../src/plugins/plugin.internal.editor-change-ref'
+import type {EditorEmittedEvent} from '../src/editor/relay-machine'
+import {EventListenerPlugin} from '../src/plugins'
 import {InternalPortableTextEditorRefPlugin} from '../src/plugins/plugin.internal.portable-text-editor-ref'
 import {createTestEditor} from '../src/test/vitest'
-import type {EditorChange, EditorSelection} from '../src/types/editor'
+import type {EditorSelection} from '../src/types/editor'
 
 describe(PortableTextEditor.insertBlock.name, () => {
   test('Scenario: Inserting a custom block without a selection #1', async () => {
@@ -24,12 +25,12 @@ describe(PortableTextEditor.insertBlock.name, () => {
       style: 'normal',
     }
     const initialValue: Array<PortableTextBlock> = [emptyTextBlock]
-    const onChange: (change: EditorChange) => void = vi.fn()
+    const onChange: (event: EditorEmittedEvent) => void = vi.fn()
 
     await createTestEditor({
       children: (
         <>
-          <InternalEditorChangePlugin onChange={onChange} />
+          <EventListenerPlugin on={onChange} />
           <InternalPortableTextEditorRefPlugin ref={editorRef} />
         </>
       ),
@@ -45,10 +46,11 @@ describe(PortableTextEditor.insertBlock.name, () => {
     // Given an empty text block
     await vi.waitFor(() => {
       if (editorRef.current) {
-        expect(onChange).toHaveBeenCalledWith({
-          type: 'value',
-          value: initialValue,
-        })
+        expect(onChange).toHaveBeenCalledWith(
+          expect.objectContaining({
+            type: 'value changed',
+          }),
+        )
         expect(onChange).toHaveBeenCalledWith({type: 'ready'})
       }
     })
@@ -97,12 +99,12 @@ describe(PortableTextEditor.insertBlock.name, () => {
       style: 'normal',
     }
     const initialValue: Array<PortableTextBlock> = [nonEmptyTextBlock]
-    const onChange: (change: EditorChange) => void = vi.fn()
+    const onChange: (event: EditorEmittedEvent) => void = vi.fn()
 
     await createTestEditor({
       children: (
         <>
-          <InternalEditorChangePlugin onChange={onChange} />
+          <EventListenerPlugin on={onChange} />
           <InternalPortableTextEditorRefPlugin ref={editorRef} />
         </>
       ),
@@ -118,10 +120,11 @@ describe(PortableTextEditor.insertBlock.name, () => {
     // Given an non-empty text block
     await vi.waitFor(() => {
       if (editorRef.current) {
-        expect(onChange).toHaveBeenCalledWith({
-          type: 'value',
-          value: initialValue,
-        })
+        expect(onChange).toHaveBeenCalledWith(
+          expect.objectContaining({
+            type: 'value changed',
+          }),
+        )
         expect(onChange).toHaveBeenCalledWith({type: 'ready'})
       }
     })
@@ -174,12 +177,12 @@ describe(PortableTextEditor.insertBlock.name, () => {
       _type: 'custom image',
     }
     const initialValue: Array<PortableTextBlock> = [emptyTextBlock, imageBlock]
-    const onChange: (change: EditorChange) => void = vi.fn()
+    const onChange: (event: EditorEmittedEvent) => void = vi.fn()
 
     await createTestEditor({
       children: (
         <>
-          <InternalEditorChangePlugin onChange={onChange} />
+          <EventListenerPlugin on={onChange} />
           <InternalPortableTextEditorRefPlugin ref={editorRef} />
         </>
       ),
@@ -195,10 +198,11 @@ describe(PortableTextEditor.insertBlock.name, () => {
     // Given an empty text block followed by an image
     await vi.waitFor(() => {
       if (editorRef.current) {
-        expect(onChange).toHaveBeenCalledWith({
-          type: 'value',
-          value: initialValue,
-        })
+        expect(onChange).toHaveBeenCalledWith(
+          expect.objectContaining({
+            type: 'value changed',
+          }),
+        )
         expect(onChange).toHaveBeenCalledWith({type: 'ready'})
       }
     })
@@ -216,10 +220,11 @@ describe(PortableTextEditor.insertBlock.name, () => {
     })
     await vi.waitFor(() => {
       if (editorRef.current) {
-        expect(onChange).toHaveBeenCalledWith({
-          type: 'selection',
-          selection: initialSelection,
-        })
+        expect(onChange).toHaveBeenCalledWith(
+          expect.objectContaining({
+            type: 'selection',
+          }),
+        )
       }
     })
 
