@@ -1,5 +1,104 @@
 # Changelog
 
+## 6.0.0
+
+### Major Changes
+
+- [#2184](https://github.com/portabletext/editor/pull/2184) [`79b69a5`](https://github.com/portabletext/editor/commit/79b69a5cd7f5a19d4393453b993611916ab86a95) Thanks [@christianhg](https://github.com/christianhg)! - feat!: remove `change$` observable and `rxjs` dependency
+
+  The `PortableTextEditor.change$` observable isn't used internally anymore. It's
+  purely a legacy public API that allows consumers to read editor changes/events
+  through an Observable rather than through the ordinary subscription API. This
+  does not justify declaring `rxjs` as a peer dependency of PTE and therefore
+  this commit removes the `change$` Observable along with the `rxjs` dependency.
+
+  BREAKING CHANGES:
+  - Removed `PortableTextEditor.change$` property
+  - Removed `EditorChanges` type export (`Subject<EditorChange>`)
+  - Removed `PatchObservable` type export (`Observable<...>`)
+  - Removed `rxjs` from peerDependencies
+
+  Migration: Replace `change$.subscribe()` with `editor.on()` or
+  `<EventListenerPlugin on={...} />`. Every active `EditorChange` type
+  has a 1:1 equivalent in the new event API.
+
+  What's preserved:
+  - `PortableTextEditor` class (separate deprecation path)
+  - All static methods and `schemaTypes` property
+
+  ### Migration
+
+  Replace `change$.subscribe()` with `editor.on()` or `<EventListenerPlugin>`:
+
+  **Before (rxjs):**
+
+  ```tsx
+  import {usePortableTextEditor} from '@portabletext/editor'
+
+  const editor = usePortableTextEditor()
+
+  useEffect(() => {
+    const sub = editor.change$.subscribe((change) => {
+      if (change.type === 'mutation') {
+        // ...
+      }
+    })
+    return () => sub.unsubscribe()
+  }, [editor])
+  ```
+
+  **After (editor.on):**
+
+  ```tsx
+  import {useEditor} from '@portabletext/editor'
+
+  const editor = useEditor()
+
+  useEffect(() => {
+    const unsubscribe = editor.on('mutation', (event) => {
+      // ...
+    })
+    return unsubscribe
+  }, [editor])
+  ```
+
+  **After (EventListenerPlugin):**
+
+  ```tsx
+  import {EventListenerPlugin} from '@portabletext/editor/plugins'
+
+  ;<EventListenerPlugin
+    on={(event) => {
+      if (event.type === 'mutation') {
+        // ...
+      }
+    }}
+  />
+  ```
+
+  Every active `EditorChange` type has a 1:1 equivalent in the new event API. See the [event listener documentation](https://www.portabletext.org/reference/event-listener-plugin/) for details.
+
+- [#2244](https://github.com/portabletext/editor/pull/2244) [`5a3e8bf`](https://github.com/portabletext/editor/commit/5a3e8bf33d9591b9cfbf310e37ae95f736862942) Thanks [@christianhg](https://github.com/christianhg)! - feat!: remove `EditorChange` type
+
+  The `EditorChange` type and its variant types (`BlurChange`, `ConnectionChange`, `LoadingChange`, `MutationChange`) have been removed. `EditorChange` was the event type emitted by the removed `PortableTextEditor` React component and consumed by the `onChange` callback on the `PortableTextEditor` class.
+
+  Use `editor.on()` instead: `editor.on('value changed', ...)`, `editor.on('focused', ...)`, `editor.on('blurred', ...)`, `editor.on('selection', ...)`.
+
+- [#2136](https://github.com/portabletext/editor/pull/2136) [`2f8d366`](https://github.com/portabletext/editor/commit/2f8d36694ddad97a5b1ca910ffc7f7e60937c642) Thanks [@christianhg](https://github.com/christianhg)! - feat!: remove `@sanity/*` dependencies
+
+  BREAKING CHANGES:
+  - `EditorConfig` no longer accepts `schema` — use `schemaDefinition` instead
+  - `PortableTextMemberSchemaTypes` removed from exports (available from `@portabletext/sanity-bridge`)
+  - `PasteData.schemaTypes` type changed from `PortableTextMemberSchemaTypes` to `EditorSchema`
+  - Render prop `schemaType` fields now use PTE schema types (`BlockObjectSchemaType`, `InlineObjectSchemaType`, `AnnotationSchemaType`, `DecoratorSchemaType`, `ListSchemaType`, `StyleSchemaType`) instead of Sanity types (`ObjectSchemaType`, `BlockDecoratorDefinition`, `BlockListDefinition`, `BlockStyleDefinition`)
+  - Deprecated `type` prop removed from `BlockRenderProps`, `BlockChildRenderProps`, `BlockAnnotationRenderProps`, and `BlockDecoratorRenderProps`
+
+- [#2245](https://github.com/portabletext/editor/pull/2245) [`3ce0561`](https://github.com/portabletext/editor/commit/3ce056153812bf75c3d95a452417f1f7e45f352e) Thanks [@christianhg](https://github.com/christianhg)! - feat!: remove `EditableAPI` and `OnBeforeInputFn` type exports
+
+  `EditableAPI` is an internal interface backing the `PortableTextEditor` static methods, never intended for public use. It was accidentally exported to fix typedoc resolution. `OnBeforeInputFn` was the callback type for the `onBeforeInput` prop, which has since been removed.
+
+  The static methods on `PortableTextEditor` still work as before. Only the type exports are removed.
+
 ## 5.1.1
 
 ### Patch Changes
