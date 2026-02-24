@@ -374,6 +374,9 @@ importers:
 
   packages/block-tools:
     dependencies:
+      '@portabletext/html':
+        specifier: workspace:^
+        version: link:../html
       '@portabletext/sanity-bridge':
         specifier: workspace:^
         version: link:../sanity-bridge
@@ -384,9 +387,6 @@ importers:
         specifier: ^5.9.0
         version: 5.9.0(@types/react@19.2.14)
     devDependencies:
-      '@portabletext/test':
-        specifier: workspace:^
-        version: link:../test
       '@sanity/pkg-utils':
         specifier: ^10.2.1
         version: 10.2.1(@types/babel__core@7.20.5)(@types/node@20.19.25)(babel-plugin-react-compiler@1.0.0)(debug@4.4.3)(typescript@5.9.3)
@@ -396,12 +396,6 @@ importers:
       '@types/jsdom':
         specifier: ^27.0.0
         version: 27.0.0
-      '@vercel/stega':
-        specifier: 1.0.0
-        version: 1.0.0
-      '@vitest/coverage-v8':
-        specifier: ^4.0.18
-        version: 4.0.18(@vitest/browser@4.0.18(vite@7.3.1(@types/node@20.19.25)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.2))(vitest@4.0.18))(vitest@4.0.18)
       jsdom:
         specifier: ^27.0.0
         version: 27.2.0
@@ -417,9 +411,9 @@ importers:
       '@juggle/resize-observer':
         specifier: ^3.4.0
         version: 3.4.0
-      '@portabletext/block-tools':
-        specifier: workspace:*
-        version: link:../block-tools
+      '@portabletext/html':
+        specifier: workspace:^
+        version: link:../html
       '@portabletext/keyboard-shortcuts':
         specifier: workspace:^
         version: link:../keyboard-shortcuts
@@ -532,6 +526,40 @@ importers:
       vitest-browser-react:
         specifier: ^2.0.5
         version: 2.0.5(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(vitest@4.0.18)
+
+  packages/html:
+    dependencies:
+      '@portabletext/schema':
+        specifier: workspace:^
+        version: link:../schema
+      '@vercel/stega':
+        specifier: 1.0.0
+        version: 1.0.0
+    devDependencies:
+      '@portabletext/test':
+        specifier: workspace:^
+        version: link:../test
+      '@sanity/pkg-utils':
+        specifier: ^10.2.1
+        version: 10.2.1(@types/babel__core@7.20.5)(@types/node@20.19.25)(babel-plugin-react-compiler@1.0.0)(debug@4.4.3)(typescript@5.9.3)
+      '@sanity/tsconfig':
+        specifier: ^2.1.0
+        version: 2.1.0
+      '@types/jsdom':
+        specifier: ^27.0.0
+        version: 27.0.0
+      '@vitest/coverage-v8':
+        specifier: ^4.0.18
+        version: 4.0.18(@vitest/browser@4.0.18(vite@7.3.1(@types/node@20.19.25)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.2))(vitest@4.0.18))(vitest@4.0.18)
+      jsdom:
+        specifier: ^27.0.0
+        version: 27.2.0
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+      vitest:
+        specifier: ^4.0.18
+        version: 4.0.18(@types/node@20.19.25)(@vitest/browser-playwright@4.0.18)(jiti@2.6.1)(jsdom@27.2.0)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.2)
 
   packages/keyboard-shortcuts:
     devDependencies:

@@ -27,10 +27,19 @@ export default defineConfig({
         __dirname,
         '../../packages/editor/src',
       ),
+      '@portabletext/block-tools/rules': path.resolve(
+        __dirname,
+        '../../packages/block-tools/src/rules/_exports/index.ts',
+      ),
       '@portabletext/block-tools': path.resolve(
         __dirname,
         '../../packages/block-tools/src',
       ),
+      '@portabletext/html/rules': path.resolve(
+        __dirname,
+        '../../packages/html/src/rules/_exports/index.ts',
+      ),
+      '@portabletext/html': path.resolve(__dirname, '../../packages/html/src'),
       '@portabletext/keyboard-shortcuts': path.resolve(
         __dirname,
         '../../packages/keyboard-shortcuts/src',

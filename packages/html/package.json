@@ -1,19 +1,19 @@
 {
-  "name": "@portabletext/block-tools",
-  "version": "5.0.3",
-  "description": "Legacy adapter for @portabletext/html — use @portabletext/html directly for new projects",
+  "name": "@portabletext/html",
+  "version": "1.0.0",
+  "description": "Convert HTML to Portable Text with built-in support for Google Docs, Word, and Notion",
   "keywords": [
     "portable-text",
-    "block-tools"
+    "html"
   ],
-  "homepage": "https://www.sanity.io/",
+  "homepage": "https://portabletext.org",
   "bugs": {
     "url": "https://github.com/portabletext/editor/issues"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/portabletext/editor.git",
-    "directory": "packages/block-tools"
+    "directory": "packages/html"
   },
   "license": "MIT",
   "author": "Sanity.io <hello@sanity.io>",
@@ -22,25 +22,25 @@
   "exports": {
     ".": {
       "source": "./src/index.ts",
-      "default": "./lib/index.js"
+      "default": "./dist/index.js"
     },
     "./rules": {
       "source": "./src/rules/_exports/index.ts",
-      "default": "./lib/rules/index.js"
+      "default": "./dist/rules/index.js"
     },
     "./package.json": "./package.json"
   },
-  "main": "./lib/index.js",
-  "types": "./lib/index.d.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "files": [
-    "lib"
+    "dist"
   ],
   "scripts": {
     "build": "pkg-utils build --strict --check --clean",
     "check:lint": "biome lint .",
     "check:types": "tsc",
     "check:types:watch": "tsc --watch",
-    "clean": "del .turbo && del lib && del node_modules",
+    "clean": "del .turbo && del dist && del node_modules",
     "dev": "pkg-utils watch",
     "lint:fix": "biome lint --write .",
     "prepublishOnly": "turbo run build",
@@ -50,15 +50,15 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@portabletext/html": "workspace:^",
-    "@portabletext/sanity-bridge": "workspace:^",
     "@portabletext/schema": "workspace:^",
-    "@sanity/types": "^5.9.0"
+    "@vercel/stega": "1.0.0"
   },
   "devDependencies": {
+    "@portabletext/test": "workspace:^",
     "@sanity/pkg-utils": "^10.2.1",
-    "@sanity/schema": "^5.9.0",
+    "@sanity/tsconfig": "^2.1.0",
     "@types/jsdom": "^27.0.0",
+    "@vitest/coverage-v8": "^4.0.18",
     "jsdom": "^27.0.0",
     "typescript": "catalog:",
     "vitest": "^4.0.18"
@@ -68,8 +68,8 @@
   },
   "publishConfig": {
     "exports": {
-      ".": "./lib/index.js",
-      "./rules": "./lib/rules/index.js",
+      ".": "./dist/index.js",
+      "./rules": "./dist/rules/index.js",
       "./package.json": "./package.json"
     }
   }
