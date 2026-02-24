@@ -2,7 +2,7 @@ import {createRef, type RefObject} from 'react'
 import {describe, expect, it, vi} from 'vitest'
 import {defineSchema} from '../src'
 import {PortableTextEditor} from '../src/editor/PortableTextEditor'
-import {InternalEditorChangePlugin} from '../src/plugins/plugin.internal.editor-change-ref'
+import {EventListenerPlugin} from '../src/plugins'
 import {InternalPortableTextEditorRefPlugin} from '../src/plugins/plugin.internal.portable-text-editor-ref'
 import {createTestEditor} from '../src/test/vitest'
 
@@ -29,7 +29,7 @@ describe('values: normalization', () => {
     await createTestEditor({
       children: (
         <>
-          <InternalEditorChangePlugin onChange={onChange} />
+          <EventListenerPlugin on={onChange} />
           <InternalPortableTextEditorRefPlugin ref={editorRef} />
         </>
       ),
@@ -40,7 +40,7 @@ describe('values: normalization', () => {
     await vi.waitFor(() => {
       if (editorRef.current) {
         expect(onChange).toHaveBeenCalledWith({
-          type: 'value',
+          type: 'value changed',
           value: initialValue,
         })
         expect(onChange).toHaveBeenCalledWith({type: 'ready'})

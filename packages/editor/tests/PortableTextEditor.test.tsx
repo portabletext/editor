@@ -3,7 +3,7 @@ import {createRef, type RefObject} from 'react'
 import {describe, expect, it, vi} from 'vitest'
 import type {EditorSelection} from '../src'
 import {PortableTextEditor} from '../src/editor/PortableTextEditor'
-import {InternalEditorChangePlugin} from '../src/plugins/plugin.internal.editor-change-ref'
+import {EventListenerPlugin} from '../src/plugins'
 import {InternalPortableTextEditorRefPlugin} from '../src/plugins/plugin.internal.portable-text-editor-ref'
 import {createTestEditor} from '../src/test/vitest'
 
@@ -24,7 +24,7 @@ describe('initialization', () => {
     const {locator} = await createTestEditor({
       children: (
         <>
-          <InternalEditorChangePlugin onChange={onChange} />
+          <EventListenerPlugin on={onChange} />
           <InternalPortableTextEditorRefPlugin ref={editorRef} />
         </>
       ),
@@ -46,7 +46,7 @@ describe('initialization', () => {
     await createTestEditor({
       children: (
         <>
-          <InternalEditorChangePlugin onChange={onChange} />
+          <EventListenerPlugin on={onChange} />
           <InternalPortableTextEditorRefPlugin ref={editorRef} />
         </>
       ),
@@ -56,7 +56,7 @@ describe('initialization', () => {
     const normalizedEditorValue = [{...initialValue[0], style: 'normal'}]
     await vi.waitFor(() => {
       expect(onChange).toHaveBeenCalledWith({
-        type: 'value',
+        type: 'value changed',
         value: initialValue,
       })
     })
@@ -80,7 +80,7 @@ describe('initialization', () => {
     await createTestEditor({
       children: (
         <>
-          <InternalEditorChangePlugin onChange={onChange} />
+          <EventListenerPlugin on={onChange} />
           <InternalPortableTextEditorRefPlugin ref={editorRef} />
         </>
       ),
@@ -91,7 +91,7 @@ describe('initialization', () => {
     await vi.waitFor(() => {
       if (editorRef.current) {
         expect(onChange).toHaveBeenCalledWith({
-          type: 'value',
+          type: 'value changed',
           value: initialValue,
         })
         expect(onChange).toHaveBeenCalledWith({type: 'ready'})
@@ -121,7 +121,7 @@ describe('initialization', () => {
     await createTestEditor({
       children: (
         <>
-          <InternalEditorChangePlugin onChange={onChange} />
+          <EventListenerPlugin on={onChange} />
           <InternalPortableTextEditorRefPlugin ref={editorRef} />
         </>
       ),
@@ -132,7 +132,7 @@ describe('initialization', () => {
     await vi.waitFor(() => {
       if (editorRef.current) {
         expect(onChange).toHaveBeenCalledWith({
-          type: 'value',
+          type: 'value changed',
           value: initialValue,
         })
         expect(onChange).toHaveBeenCalledWith({type: 'ready'})
@@ -166,7 +166,7 @@ describe('initialization', () => {
     await createTestEditor({
       children: (
         <>
-          <InternalEditorChangePlugin onChange={onChange} />
+          <EventListenerPlugin on={onChange} />
           <InternalPortableTextEditorRefPlugin ref={editorRef} />
         </>
       ),
@@ -177,7 +177,7 @@ describe('initialization', () => {
     await vi.waitFor(() => {
       if (editorRef.current) {
         expect(onChange).not.toHaveBeenCalledWith({
-          type: 'invalidValue',
+          type: 'invalid value',
           value: initialValue,
           resolution: {
             action: 'Unset the value',
@@ -193,7 +193,7 @@ describe('initialization', () => {
           },
         })
         expect(onChange).toHaveBeenCalledWith({
-          type: 'value',
+          type: 'value changed',
           value: initialValue,
         })
         expect(onChange).toHaveBeenCalledWith({type: 'ready'})
@@ -211,7 +211,7 @@ describe('initialization', () => {
     const {editor} = await createTestEditor({
       children: (
         <>
-          <InternalEditorChangePlugin onChange={onChange} />
+          <EventListenerPlugin on={onChange} />
         </>
       ),
       initialValue: value,
@@ -220,7 +220,7 @@ describe('initialization', () => {
 
     await vi.waitFor(() => {
       expect(onChange).not.toHaveBeenCalledWith({
-        type: 'invalidValue',
+        type: 'invalid value',
         value,
         resolution: {
           action: 'Unset the value',
@@ -235,7 +235,7 @@ describe('initialization', () => {
           ],
         },
       })
-      expect(onChange).toHaveBeenCalledWith({type: 'value', value})
+      expect(onChange).toHaveBeenCalledWith({type: 'value changed', value})
     })
     value = [{_type: 'banana', _key: '123'}]
 
@@ -243,7 +243,7 @@ describe('initialization', () => {
 
     await vi.waitFor(() => {
       expect(onChange).toHaveBeenCalledWith({
-        type: 'invalidValue',
+        type: 'invalid value',
         value,
         resolution: {
           action: 'Remove the block',
@@ -289,7 +289,7 @@ describe('initialization', () => {
     await createTestEditor({
       children: (
         <>
-          <InternalEditorChangePlugin onChange={onChange} />
+          <EventListenerPlugin on={onChange} />
           <InternalPortableTextEditorRefPlugin ref={editorRef} />
         </>
       ),
@@ -300,7 +300,7 @@ describe('initialization', () => {
     await vi.waitFor(() => {
       if (editorRef.current) {
         expect(onChange).toHaveBeenCalledWith({
-          type: 'invalidValue',
+          type: 'invalid value',
           value: initialValue,
           resolution: {
             action: 'Write an empty text property to the object',
@@ -353,7 +353,7 @@ describe('initialization', () => {
       }
     })
     expect(onChange).not.toHaveBeenCalledWith({
-      type: 'value',
+      type: 'value changed',
       value: initialValue,
     })
     expect(onChange).toHaveBeenCalledWith({type: 'ready'})

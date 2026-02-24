@@ -23,9 +23,8 @@ import {
   getSelectionAfterText,
   getSelectionBeforeText,
 } from '../src/internal-utils/text-selection'
+import {EventListenerPlugin} from '../src/plugins'
 import {EditorRefPlugin} from '../src/plugins/plugin.editor-ref'
-import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
-import {InternalEditorChangePlugin} from '../src/plugins/plugin.internal.editor-change-ref'
 import {InternalPortableTextEditorRefPlugin} from '../src/plugins/plugin.internal.portable-text-editor-ref'
 import {createTestEditor} from '../src/test/vitest'
 import {
@@ -311,7 +310,7 @@ describe('RangeDecorations', () => {
     const {rerender} = await createTestEditor({
       children: (
         <>
-          <InternalEditorChangePlugin onChange={onChange} />
+          <EventListenerPlugin on={onChange} />
           <InternalPortableTextEditorRefPlugin ref={editorRef} />
         </>
       ),
@@ -322,7 +321,7 @@ describe('RangeDecorations', () => {
     await vi.waitFor(() => {
       if (editorRef.current) {
         expect(onChange).toHaveBeenCalledWith({
-          type: 'value',
+          type: 'value changed',
           value,
         })
         expect(onChange).toHaveBeenCalledWith({type: 'ready'})
@@ -337,7 +336,7 @@ describe('RangeDecorations', () => {
     await rerender({
       children: (
         <>
-          <InternalEditorChangePlugin onChange={onChange} />
+          <EventListenerPlugin on={onChange} />
           <InternalPortableTextEditorRefPlugin ref={editorRef} />
         </>
       ),
@@ -363,7 +362,7 @@ describe('RangeDecorations', () => {
     await rerender({
       children: (
         <>
-          <InternalEditorChangePlugin onChange={onChange} />
+          <EventListenerPlugin on={onChange} />
           <InternalPortableTextEditorRefPlugin ref={editorRef} />
         </>
       ),
@@ -391,7 +390,7 @@ describe('RangeDecorations', () => {
     await rerender({
       children: (
         <>
-          <InternalEditorChangePlugin onChange={onChange} />
+          <EventListenerPlugin on={onChange} />
           <InternalPortableTextEditorRefPlugin ref={editorRef} />
         </>
       ),
@@ -421,7 +420,7 @@ describe('RangeDecorations', () => {
     await rerender({
       children: (
         <>
-          <InternalEditorChangePlugin onChange={onChange} />
+          <EventListenerPlugin on={onChange} />
           <InternalPortableTextEditorRefPlugin ref={editorRef} />
         </>
       ),
@@ -451,7 +450,7 @@ describe('RangeDecorations', () => {
     await rerender({
       children: (
         <>
-          <InternalEditorChangePlugin onChange={onChange} />
+          <EventListenerPlugin on={onChange} />
           <InternalPortableTextEditorRefPlugin ref={editorRef} />
         </>
       ),
@@ -481,7 +480,7 @@ describe('RangeDecorations', () => {
     await rerender({
       children: (
         <>
-          <InternalEditorChangePlugin onChange={onChange} />
+          <EventListenerPlugin on={onChange} />
           <InternalPortableTextEditorRefPlugin ref={editorRef} />
         </>
       ),
