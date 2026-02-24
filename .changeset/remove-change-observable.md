@@ -21,7 +21,6 @@ Migration: Replace `change$.subscribe()` with `editor.on()` or
 has a 1:1 equivalent in the new event API.
 
 What's preserved:
-- `EditorChange` type (still used by sanity's `onEditorChange` prop)
 - `PortableTextEditor` class (separate deprecation path)
 - All static methods and `schemaTypes` property
 
