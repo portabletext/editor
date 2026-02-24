@@ -2,7 +2,12 @@ import {defineSchema} from '@portabletext/schema'
 import {getTersePt} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
-import {execute, forward, raise} from '../src/behaviors/behavior.types.action'
+import {
+  effect,
+  execute,
+  forward,
+  raise,
+} from '../src/behaviors/behavior.types.action'
 import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
 import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
 import {getFirstBlock, getFocusBlock} from '../src/selectors'
@@ -665,10 +670,11 @@ describe('event.history.undo', () => {
               },
               actions: [
                 ({event}) => [forward(event)],
-                () => {
-                  sideEffectLog.push('observed')
-                  return []
-                },
+                () => [
+                  effect(() => {
+                    sideEffectLog.push('observed')
+                  }),
+                ],
               ],
             }),
           ]}
@@ -687,6 +693,58 @@ describe('event.history.undo', () => {
 
     await vi.waitFor(() => {
       expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
+    })
+  })
+
+  test('Scenario: Forwarding `insert.text` with `raise` preserves undo batching', async () => {
+    const {editor, locator} = await createTestEditor({
+      children: (
+        <BehaviorPlugin
+          behaviors={[
+            defineBehavior({
+              on: 'insert.text',
+              guard: ({event, snapshot}) => {
+                if (event.text === '!') {
+                  return false
+                }
+
+                const focusBlock = getFocusBlock(snapshot)
+
+                if (!focusBlock) {
+                  return false
+                }
+
+                return {focusBlock}
+              },
+              actions: [
+                ({event}) => [forward(event)],
+                () => [raise({type: 'insert.text', text: '!'})],
+              ],
+            }),
+          ]}
+        />
+      ),
+    })
+
+    await userEvent.type(locator, 'hi')
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['h!i!'])
+    })
+
+    // First undo reverts the second raise ('!' after 'i')
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['h!i'])
+    })
+
+    // Second undo reverts the forwarded 'i' and the first raise ('!' after 'h')
+    // These merge because the raise's insert_text is adjacent to the forward's
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['h'])
     })
   })
 
