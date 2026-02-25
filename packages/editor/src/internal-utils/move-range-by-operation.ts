@@ -180,16 +180,21 @@ function adjustPointAfterSplit(
  * even though the text is about to be re-inserted.
  *
  * With merge context, we:
- * - During remove_node: Return the range UNCHANGED if it's on the deleted block.
- *   This preserves the original positions so we can correctly map them.
+ * - During remove_node: Preserve points on the deleted block unchanged while
+ *   letting Point.transform shift other points normally. This produces a "mixed"
+ *   range that avoids both invalidation and stale-path issues.
  * - During insert_node: Adjust points that were on the deleted block to their
- *   new positions in the target block.
+ *   new positions in the target block. Uses pre-computed flags (from the
+ *   remove_node phase) to avoid false positives from path collisions.
  *
  * @param range - The range to transform
  * @param operation - The Slate operation being applied
  * @param mergeContext - Context about the merge operation (if any)
  * @param deletedBlockIndex - Index of the block being deleted
  * @param targetBlockIndex - Index of the block receiving the content
+ * @param mergeDeletedBlockFlags - Pre-computed flags indicating which points
+ *   were on the deleted block before remove_node shifted paths. When provided,
+ *   these are used instead of the stale `path[0] === deletedBlockIndex` check.
  * @returns The transformed range, or null if the range should be removed
  */
 export function moveRangeByMergeAwareOperation(
@@ -198,6 +203,7 @@ export function moveRangeByMergeAwareOperation(
   mergeContext: MergeContext | null,
   deletedBlockIndex: number | undefined,
   targetBlockIndex: number | undefined,
+  mergeDeletedBlockFlags?: {anchor: boolean; focus: boolean} | null,
 ): Range | null | undefined {
   // If no merge context, return undefined to signal caller should use default behavior
   if (
@@ -210,19 +216,33 @@ export function moveRangeByMergeAwareOperation(
 
   // During remove_node for the deleted block, DON'T invalidate decorations on it.
   // We need to preserve the positions so we can map them after re-insertion.
+  // For points NOT on the deleted block, apply Point.transform normally so their
+  // paths stay correct. This "mixed" approach avoids stale-index collisions where
+  // a shifted point at `deletedBlockIndex` is later mistaken for a deleted-block point.
   if (operation.type === 'remove_node') {
-    // Check if this removes the deleted block
     if (
       operation.path.length === 1 &&
       operation.path[0] === deletedBlockIndex
     ) {
-      // Check if the range has any points on the deleted block
       const anchorOnDeleted = range.anchor.path[0] === deletedBlockIndex
       const focusOnDeleted = range.focus.path[0] === deletedBlockIndex
 
       if (anchorOnDeleted || focusOnDeleted) {
-        // Return the range unchanged - we'll adjust positions during insert_node
-        return range
+        const newAnchor = anchorOnDeleted
+          ? range.anchor
+          : (Point.transform(range.anchor, operation) ?? range.anchor)
+        const newFocus = focusOnDeleted
+          ? range.focus
+          : (Point.transform(range.focus, operation) ?? range.focus)
+
+        if (
+          Point.equals(newAnchor, range.anchor) &&
+          Point.equals(newFocus, range.focus)
+        ) {
+          return range
+        }
+
+        return {anchor: newAnchor, focus: newFocus}
       }
     }
   }
@@ -230,19 +250,25 @@ export function moveRangeByMergeAwareOperation(
   // During insert_node for the merged children, adjust points from the deleted block
   // to their new positions in the target block.
   if (operation.type === 'insert_node') {
-    // Children are inserted into the target block at positions like [targetBlockIndex, N]
-    // where N is the child index in the target block
     const insertedChildIndex = operation.path[1]
     if (
       operation.path.length === 2 &&
       operation.path[0] === targetBlockIndex &&
       insertedChildIndex !== undefined
     ) {
-      const anchorOnDeleted = range.anchor.path[0] === deletedBlockIndex
-      const focusOnDeleted = range.focus.path[0] === deletedBlockIndex
+      // Use pre-computed flags when available to avoid false positives.
+      // After remove_node, Point.transform shifts paths > deletedBlockIndex
+      // down by 1, so a point originally at deletedBlockIndex+1 now sits at
+      // deletedBlockIndex — colliding with preserved deleted-block points.
+      // The flags were computed BEFORE remove_node, so they're authoritative.
+      const anchorOnDeleted =
+        mergeDeletedBlockFlags?.anchor ??
+        range.anchor.path[0] === deletedBlockIndex
+      const focusOnDeleted =
+        mergeDeletedBlockFlags?.focus ??
+        range.focus.path[0] === deletedBlockIndex
 
       if (anchorOnDeleted || focusOnDeleted) {
-        // Transform points from the deleted block to the target block
         const newAnchor = anchorOnDeleted
           ? adjustPointAfterMerge(
               range.anchor,
@@ -262,7 +288,6 @@ export function moveRangeByMergeAwareOperation(
             )
           : range.focus
 
-        // If nothing changed, return original range
         if (
           Point.equals(newAnchor, range.anchor) &&
           Point.equals(newFocus, range.focus)

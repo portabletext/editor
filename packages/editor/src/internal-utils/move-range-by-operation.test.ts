@@ -1,7 +1,8 @@
 import type {Node, Operation, Range} from 'slate'
 import {describe, expect, it} from 'vitest'
-import type {SplitContext} from '../types/slate-editor'
+import type {MergeContext, SplitContext} from '../types/slate-editor'
 import {
+  moveRangeByMergeAwareOperation,
   moveRangeByOperation,
   moveRangeBySplitAwareOperation,
 } from './move-range-by-operation'
@@ -355,6 +356,282 @@ describe('moveRangeBySplitAwareOperation', () => {
       expect(range).toEqual({
         anchor: {path: [0, 0], offset: 0}, // start of "hello dolly"
         focus: {path: [1, 0], offset: 14}, // end of " this is louis"
+      })
+    })
+  })
+})
+
+describe('moveRangeByMergeAwareOperation', () => {
+  // Blocks: A(0), B(1), C(2), D(3)
+  // Merge C into B (backspace at start of C):
+  //   deletedBlockIndex=2, targetBlockIndex=1, targetOriginalChildCount=1
+
+  const mergeContext: MergeContext = {
+    deletedBlockKey: 'block-c',
+    targetBlockKey: 'block-b',
+    targetBlockTextLength: 20,
+    deletedBlockIndex: 2,
+    targetBlockIndex: 1,
+    targetOriginalChildCount: 1,
+  }
+
+  describe('without merge context', () => {
+    it('returns undefined to signal default behavior', () => {
+      const range: Range = {
+        anchor: {path: [0, 0], offset: 0},
+        focus: {path: [3, 0], offset: 5},
+      }
+      const operation: Operation = {
+        type: 'remove_node',
+        path: [2],
+        node: mockNode,
+      }
+
+      const result = moveRangeByMergeAwareOperation(
+        range,
+        operation,
+        null,
+        undefined,
+        undefined,
+      )
+
+      expect(result).toBeUndefined()
+    })
+  })
+
+  describe('during remove_node', () => {
+    it('preserves points on deleted block, transforms others (mixed range)', () => {
+      // Anchor on deleted block, focus after it
+      const range: Range = {
+        anchor: {path: [2, 0], offset: 3},
+        focus: {path: [3, 0], offset: 5},
+      }
+      const operation: Operation = {
+        type: 'remove_node',
+        path: [2],
+        node: mockNode,
+      }
+
+      const result = moveRangeByMergeAwareOperation(
+        range,
+        operation,
+        mergeContext,
+        2,
+        1,
+      )
+
+      expect(result).toEqual({
+        anchor: {path: [2, 0], offset: 3}, // preserved (on deleted block)
+        focus: {path: [2, 0], offset: 5}, // shifted from [3,0] to [2,0] by Point.transform
+      })
+    })
+
+    it('preserves both points when both are on deleted block', () => {
+      const range: Range = {
+        anchor: {path: [2, 0], offset: 0},
+        focus: {path: [2, 0], offset: 10},
+      }
+      const operation: Operation = {
+        type: 'remove_node',
+        path: [2],
+        node: mockNode,
+      }
+
+      const result = moveRangeByMergeAwareOperation(
+        range,
+        operation,
+        mergeContext,
+        2,
+        1,
+      )
+
+      expect(result).toBe(range)
+    })
+
+    it('returns undefined when neither point is on deleted block', () => {
+      // Range spanning across the deleted block: A(0) → D(3)
+      const range: Range = {
+        anchor: {path: [0, 0], offset: 5},
+        focus: {path: [3, 0], offset: 5},
+      }
+      const operation: Operation = {
+        type: 'remove_node',
+        path: [2],
+        node: mockNode,
+      }
+
+      const result = moveRangeByMergeAwareOperation(
+        range,
+        operation,
+        mergeContext,
+        2,
+        1,
+      )
+
+      // Falls through to default behavior (Point.transform)
+      expect(result).toBeUndefined()
+    })
+  })
+
+  describe('during insert_node with flags', () => {
+    it('does NOT adjust points that collided with deletedBlockIndex after shift', () => {
+      // After remove_node at [2], focus shifted from [3,0] to [2,0].
+      // Without flags, path[0]===2===deletedBlockIndex would be a false positive.
+      const range: Range = {
+        anchor: {path: [0, 0], offset: 5},
+        focus: {path: [2, 0], offset: 5}, // shifted here by Point.transform
+      }
+      const operation: Operation = {
+        type: 'insert_node',
+        path: [1, 1],
+        node: mockNode,
+      }
+      const flags = {anchor: false, focus: false}
+
+      const result = moveRangeByMergeAwareOperation(
+        range,
+        operation,
+        mergeContext,
+        2,
+        1,
+        flags,
+      )
+
+      // flags say neither was on deleted → returns undefined → default behavior
+      expect(result).toBeUndefined()
+    })
+
+    it('adjusts point genuinely on deleted block using flags', () => {
+      // Anchor is on deleted block (preserved during remove_node), focus shifted
+      const range: Range = {
+        anchor: {path: [2, 0], offset: 3},
+        focus: {path: [2, 0], offset: 5}, // shifted from [3,0] to [2,0]
+      }
+      const operation: Operation = {
+        type: 'insert_node',
+        path: [1, 1],
+        node: mockNode,
+      }
+      const flags = {anchor: true, focus: false}
+
+      const result = moveRangeByMergeAwareOperation(
+        range,
+        operation,
+        mergeContext,
+        2,
+        1,
+        flags,
+      )
+
+      // Only anchor (genuinely on deleted) gets adjusted
+      expect(result).toEqual({
+        anchor: {path: [1, 1], offset: 3}, // moved to target block
+        focus: {path: [2, 0], offset: 5}, // NOT adjusted (flags.focus=false)
+      })
+    })
+  })
+
+  describe('full merge sequence: cross-block decoration', () => {
+    it('correctly handles decoration spanning across the merge point', () => {
+      // Decoration: anchor in A(0), focus in D(3)
+      // Merge C(2) into B(1) via backspace
+      let range: Range = {
+        anchor: {path: [0, 0], offset: 5},
+        focus: {path: [3, 0], offset: 10},
+      }
+      const flags = {anchor: false, focus: false}
+
+      // Step 1: remove_node at [2] (delete block C)
+      const removeOp: Operation = {
+        type: 'remove_node',
+        path: [2],
+        node: mockNode,
+      }
+      let result = moveRangeByMergeAwareOperation(
+        range,
+        removeOp,
+        mergeContext,
+        2,
+        1,
+        flags,
+      )
+      // Neither point on deleted → returns undefined → use Point.transform
+      expect(result).toBeUndefined()
+
+      // Simulate what Point.transform does: shifts focus from [3] to [2]
+      range = {
+        anchor: {path: [0, 0], offset: 5},
+        focus: {path: [2, 0], offset: 10},
+      }
+
+      // Step 2: insert_node at [1, 1] (insert C's child into B)
+      const insertOp: Operation = {
+        type: 'insert_node',
+        path: [1, 1],
+        node: mockNode,
+      }
+      result = moveRangeByMergeAwareOperation(
+        range,
+        insertOp,
+        mergeContext,
+        2,
+        1,
+        flags,
+      )
+      // flags say neither was on deleted → returns undefined → default behavior
+      expect(result).toBeUndefined()
+
+      // Final state: anchor [0,0] offset 5, focus [2,0] offset 10
+      // Block D is now at index 2 — correct!
+      expect(range).toEqual({
+        anchor: {path: [0, 0], offset: 5},
+        focus: {path: [2, 0], offset: 10},
+      })
+    })
+
+    it('correctly handles decoration on the deleted block', () => {
+      // Decoration entirely on C(2)
+      let range: Range = {
+        anchor: {path: [2, 0], offset: 0},
+        focus: {path: [2, 0], offset: 10},
+      }
+      const flags = {anchor: true, focus: true}
+
+      // Step 1: remove_node at [2]
+      const removeOp: Operation = {
+        type: 'remove_node',
+        path: [2],
+        node: mockNode,
+      }
+      const result1 = moveRangeByMergeAwareOperation(
+        range,
+        removeOp,
+        mergeContext,
+        2,
+        1,
+        flags,
+      )
+      // Both on deleted → range preserved unchanged
+      expect(result1).toBe(range)
+
+      // Step 2: insert_node at [1, 1]
+      const insertOp: Operation = {
+        type: 'insert_node',
+        path: [1, 1],
+        node: mockNode,
+      }
+      const result2 = moveRangeByMergeAwareOperation(
+        range,
+        insertOp,
+        mergeContext,
+        2,
+        1,
+        flags,
+      )
+      // Both adjusted to target block
+      expect(result2).toEqual({
+        anchor: {path: [1, 1], offset: 0},
+        focus: {path: [1, 1], offset: 10},
       })
     })
   })

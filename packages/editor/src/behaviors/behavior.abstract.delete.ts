@@ -140,6 +140,7 @@ export const abstractDeleteBehaviors = [
         }),
         effect(({slateEditor}) => {
           slateEditor.mergeContext = null
+          slateEditor.mergeDeletedBlockFlags = null
         }),
       ],
     ],
@@ -304,6 +305,7 @@ export const abstractDeleteBehaviors = [
         }),
         effect(({slateEditor}) => {
           slateEditor.mergeContext = null
+          slateEditor.mergeDeletedBlockFlags = null
         }),
       ],
     ],

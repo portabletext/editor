@@ -2680,3 +2680,171 @@ describe('RangeDecorations: onMoved Return Value', () => {
     expect(onMovedSpyB).not.toHaveBeenCalled()
   })
 })
+
+describe('RangeDecorations: Split then Merge (cross-block)', () => {
+  test('Decoration spanning 3 blocks survives split-then-merge of middle block', async () => {
+    // Repro: decoration spans blocks b1→b2→b3.
+    // Split b2 in the middle → works correctly (4 blocks, decoration spans all 4).
+    // Merge the split halves back → BUG: decoration breaks / splits.
+    //
+    // Root cause: after remove_node for the deleted half, Point.transform
+    // shifts the focus path to collide with deletedBlockIndex. The insert_node
+    // handler then mistakenly treats the focus as being on the deleted block.
+
+    const onMovedSpy = vi.fn()
+    let rangeDecorations: Array<RangeDecoration> = [
+      {
+        component: RangeDecorationComponent,
+        payload: {id: 'dec1'},
+        selection: {
+          anchor: {
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            offset: 3,
+          },
+          focus: {
+            path: [{_key: 'b3'}, 'children', {_key: 's3'}],
+            offset: 5,
+          },
+        },
+        onMoved: (details) => {
+          onMovedSpy(details)
+          rangeDecorations = updateRangeDecorations({rangeDecorations, details})
+        },
+      },
+    ]
+
+    const {editor, locator, rerender} = await createTestEditor({
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', _key: 's1', text: 'First block'}],
+          markDefs: [],
+        },
+        {
+          _type: 'block',
+          _key: 'b2',
+          children: [{_type: 'span', _key: 's2', text: 'Middle block content'}],
+          markDefs: [],
+        },
+        {
+          _type: 'block',
+          _key: 'b3',
+          children: [{_type: 'span', _key: 's3', text: 'Third block'}],
+          markDefs: [],
+        },
+      ],
+      editableProps: {rangeDecorations},
+    })
+
+    // Verify initial state: 3 blocks, decoration renders
+    await vi.waitFor(() => {
+      const terse = getTersePt(editor.getSnapshot().context)
+      expect(terse.length).toBe(3)
+    })
+    const initialDecorations = locator.getByTestId('range-decoration')
+    await vi.waitFor(async () => {
+      const count = await initialDecorations.all()
+      expect(count.length).toBeGreaterThanOrEqual(1)
+    })
+
+    // Split the middle block at offset 7 (after "Middle ")
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: 'b2'}, 'children', {_key: 's2'}],
+          offset: 7,
+        },
+        focus: {
+          path: [{_key: 'b2'}, 'children', {_key: 's2'}],
+          offset: 7,
+        },
+      },
+    })
+    editor.send({type: 'insert.break'})
+
+    // Wait for split: 4 blocks
+    await vi.waitFor(() => {
+      const terse = getTersePt(editor.getSnapshot().context)
+      expect(terse.length).toBe(4)
+    })
+
+    expect(getTersePt(editor.getSnapshot().context)).toEqual([
+      'First block',
+      'Middle ',
+      'block content',
+      'Third block',
+    ])
+
+    // Re-render with updated decorations after split
+    await rerender({
+      initialValue: editor.getSnapshot().context.value,
+      editableProps: {rangeDecorations},
+    })
+
+    // Decoration should still be visible after split
+    await vi.waitFor(async () => {
+      const count = await locator.getByTestId('range-decoration').all()
+      expect(count.length).toBeGreaterThanOrEqual(1)
+    })
+
+    // Clear spy to track merge-specific calls
+    onMovedSpy.mockClear()
+
+    // Now merge the split halves back: backspace at start of block index 2
+    // ("block content") to merge into block index 1 ("Middle ")
+    const value = editor.getSnapshot().context.value!
+    const block2Key = value[2]!._key
+    const block2Children = (value[2] as {children: Array<{_key: string}>})
+      .children
+    const span2Key = block2Children[0]!._key
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: block2Key}, 'children', {_key: span2Key}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: block2Key}, 'children', {_key: span2Key}],
+          offset: 0,
+        },
+      },
+    })
+    editor.send({type: 'delete', direction: 'backward'})
+
+    // Wait for merge: back to 3 blocks
+    await vi.waitFor(() => {
+      const terse = getTersePt(editor.getSnapshot().context)
+      expect(terse.length).toBe(3)
+    })
+
+    expect(getTersePt(editor.getSnapshot().context)).toEqual([
+      'First block',
+      'Middle block content',
+      'Third block',
+    ])
+
+    // CRITICAL: The decoration should NOT be split or invalidated.
+    // onMoved should fire with a valid newSelection (not null).
+    if (onMovedSpy.mock.calls.length > 0) {
+      const lastCall =
+        onMovedSpy.mock.calls[onMovedSpy.mock.calls.length - 1]?.[0]
+      expect(lastCall?.newSelection).not.toBeNull()
+    }
+
+    // Re-render with updated decorations
+    await rerender({
+      initialValue: editor.getSnapshot().context.value,
+      editableProps: {rangeDecorations},
+    })
+
+    // The decoration should still span across all 3 blocks
+    await vi.waitFor(async () => {
+      const count = await locator.getByTestId('range-decoration').all()
+      expect(count.length).toBeGreaterThanOrEqual(1)
+    })
+  })
+})

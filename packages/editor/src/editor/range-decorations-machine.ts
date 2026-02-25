@@ -253,6 +253,32 @@ export const rangeDecorationsMachine = setup({
       const deletedBlockIndex = mergeContext?.deletedBlockIndex
       const targetBlockIndex = mergeContext?.targetBlockIndex
 
+      // During remove_node for the deleted block, compute which decoration
+      // points are on it BEFORE Point.transform shifts paths. These flags
+      // are stored on the editor and consumed during insert_node to avoid
+      // false positives from stale-index collisions.
+      if (
+        mergeContext &&
+        deletedBlockIndex !== undefined &&
+        event.operation.type === 'remove_node' &&
+        event.operation.path.length === 1 &&
+        event.operation.path[0] === deletedBlockIndex
+      ) {
+        const flags = new Map<
+          RangeDecoration,
+          {anchor: boolean; focus: boolean}
+        >()
+        for (const dr of context.slateEditor.decoratedRanges) {
+          if (Range.isRange(dr)) {
+            flags.set(dr.rangeDecoration, {
+              anchor: dr.anchor.path[0] === deletedBlockIndex,
+              focus: dr.focus.path[0] === deletedBlockIndex,
+            })
+          }
+        }
+        context.slateEditor.mergeDeletedBlockFlags = flags
+      }
+
       for (const decoratedRange of context.slateEditor.decoratedRanges) {
         // Always use the cached Slate Range from decoratedRange instead of
         // re-computing from EditorSelection. This is critical because:
@@ -281,12 +307,17 @@ export const rangeDecorationsMachine = setup({
         let newRange: BaseRange | null | undefined
 
         // First try merge-aware transformation
+        const mergeFlags =
+          context.slateEditor.mergeDeletedBlockFlags?.get(
+            decoratedRange.rangeDecoration,
+          ) ?? null
         newRange = moveRangeByMergeAwareOperation(
           slateRange,
           event.operation,
           mergeContext,
           deletedBlockIndex,
           targetBlockIndex,
+          mergeFlags,
         )
 
         // If merge-aware returned undefined, try split-aware transformation

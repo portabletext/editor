@@ -45,6 +45,7 @@ export function createSlateEditor(config: SlateEditorConfig): SlateEditor {
 
   editor.splitContext = null
   editor.mergeContext = null
+  editor.mergeDeletedBlockFlags = null
 
   editor.isDeferringMutations = false
   editor.isNormalizingNode = false

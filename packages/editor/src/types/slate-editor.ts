@@ -118,6 +118,17 @@ export interface PortableTextSlateEditor extends ReactEditor {
    */
   mergeContext: MergeContext | null
 
+  /**
+   * Tracks which decoration points were on the deleted block BEFORE
+   * `remove_node` shifts paths. Computed during `remove_node` and consumed
+   * during `insert_node` to avoid stale-index collisions where a shifted
+   * point coincidentally lands at `deletedBlockIndex`.
+   */
+  mergeDeletedBlockFlags: Map<
+    RangeDecoration,
+    {anchor: boolean; focus: boolean}
+  > | null
+
   isDeferringMutations: boolean
   isNormalizingNode: boolean
   isPatching: boolean
