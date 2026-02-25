@@ -141,9 +141,10 @@ export function RangeDecorationButton(props: {
     // Capture the text under the selection at creation time
     const originalText = getSelectedText(value, selection)
 
+    const decorationId = nextDecorationId++
     props.onAddRangeDecoration({
-      id: `decoration-${nextDecorationId++}`,
-      component: RangeComponent,
+      id: `decoration-${decorationId}`,
+      component: createRangeComponent(decorationId),
       selection,
       payload: {originalText},
       onMoved: (details) => {
@@ -190,10 +191,20 @@ export function RangeDecorationButton(props: {
   )
 }
 
-function RangeComponent(props: React.PropsWithChildren<unknown>) {
-  return (
-    <span className="bg-green-200 border border-green-600">
-      {props.children}
-    </span>
-  )
+const RANGE_COLORS = [
+  'bg-green-200 border-green-600 dark:bg-green-900/50 dark:border-green-400',
+  'bg-blue-200 border-blue-600 dark:bg-blue-900/50 dark:border-blue-400',
+  'bg-purple-200 border-purple-600 dark:bg-purple-900/50 dark:border-purple-400',
+  'bg-amber-200 border-amber-600 dark:bg-amber-900/50 dark:border-amber-400',
+  'bg-pink-200 border-pink-600 dark:bg-pink-900/50 dark:border-pink-400',
+  'bg-cyan-200 border-cyan-600 dark:bg-cyan-900/50 dark:border-cyan-400',
+  'bg-red-200 border-red-600 dark:bg-red-900/50 dark:border-red-400',
+  'bg-teal-200 border-teal-600 dark:bg-teal-900/50 dark:border-teal-400',
+]
+
+function createRangeComponent(colorIndex: number) {
+  const color = RANGE_COLORS[colorIndex % RANGE_COLORS.length]
+  return function RangeComponent(props: React.PropsWithChildren<unknown>) {
+    return <span className={`border ${color}`}>{props.children}</span>
+  }
 }
