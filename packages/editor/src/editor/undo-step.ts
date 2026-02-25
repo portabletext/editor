@@ -59,28 +59,41 @@ export function createUndoSteps({
   // each keystroke and each gets a fresh undoStepId).
   // Look past non-text ops (like set_node from decorator operations)
   // to find the last insert_text or remove_text op in the previous step.
+  // Don't group if the previous step contains a user-initiated selection
+  // change (set_selection that wasn't part of a behavior operation).
   if (op.type === 'insert_text' || op.type === 'remove_text') {
-    const lastTextOp = findLastTextOp(lastStep.operations)
+    // Check if the previous step has a standalone set_selection at the end
+    // that indicates a user-initiated cursor move (not from a behavior).
+    // A behavior step looks like: [set_selection, insert_text, set_node, ...]
+    // A user selection step looks like: [..., set_selection] (trailing)
+    const hasUserSelectionChange =
+      lastStep.operations.length > 0 &&
+      lastStep.operations.at(-1)?.type === 'set_selection' &&
+      previousUndoStepId !== currentUndoStepId
 
-    if (
-      lastTextOp &&
-      op.type === 'insert_text' &&
-      lastTextOp.type === 'insert_text' &&
-      op.offset === lastTextOp.offset + lastTextOp.text.length &&
-      Path.equals(op.path, lastTextOp.path) &&
-      op.text !== ' '
-    ) {
-      return mergeIntoLastStep(steps, lastStep, op)
-    }
+    if (!hasUserSelectionChange) {
+      const lastTextOp = findLastTextOp(lastStep.operations)
 
-    if (
-      lastTextOp &&
-      op.type === 'remove_text' &&
-      lastTextOp.type === 'remove_text' &&
-      op.offset + op.text.length === lastTextOp.offset &&
-      Path.equals(op.path, lastTextOp.path)
-    ) {
-      return mergeIntoLastStep(steps, lastStep, op)
+      if (
+        lastTextOp &&
+        op.type === 'insert_text' &&
+        lastTextOp.type === 'insert_text' &&
+        op.offset === lastTextOp.offset + lastTextOp.text.length &&
+        Path.equals(op.path, lastTextOp.path) &&
+        op.text !== ' '
+      ) {
+        return mergeIntoLastStep(steps, lastStep, op)
+      }
+
+      if (
+        lastTextOp &&
+        op.type === 'remove_text' &&
+        lastTextOp.type === 'remove_text' &&
+        op.offset + op.text.length === lastTextOp.offset &&
+        Path.equals(op.path, lastTextOp.path)
+      ) {
+        return mergeIntoLastStep(steps, lastStep, op)
+      }
     }
   }
 
