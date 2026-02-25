@@ -3,8 +3,10 @@ export {
   execute,
   forward,
   raise,
+  reconcile,
   type BehaviorAction,
   type BehaviorActionSet,
+  type ReconcileCallback,
 } from './behavior.types.action'
 export {defineBehavior, type Behavior} from './behavior.types.behavior'
 export type {

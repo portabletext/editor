@@ -9,6 +9,22 @@ import type {
 } from './behavior.types.event'
 
 /**
+ * Callback for the `reconcile` action.
+ *
+ * Receives a fresh snapshot reflecting the editor state after all preceding
+ * actions in the same action set have been processed. Returns an array of
+ * actions that will be executed in the same undo step.
+ *
+ * @beta
+ */
+export type ReconcileCallback = (payload: {
+  snapshot: EditorSnapshot
+}) => Array<
+  | PickFromUnion<BehaviorAction, 'type', 'raise'>
+  | PickFromUnion<BehaviorAction, 'type', 'execute'>
+>
+
+/**
  * @beta
  */
 export type BehaviorAction =
@@ -51,6 +67,10 @@ export type BehaviorAction =
          */
         send: (event: ExternalBehaviorEvent) => void
       }) => void
+    }
+  | {
+      type: 'reconcile'
+      reconcile: ReconcileCallback
     }
 
 /**
@@ -204,6 +224,44 @@ export function effect(
   effect: PickFromUnion<BehaviorAction, 'type', 'effect'>['effect'],
 ): PickFromUnion<BehaviorAction, 'type', 'effect'> {
   return {type: 'effect', effect}
+}
+
+/**
+ * Reads a fresh snapshot after preceding actions and returns correction actions.
+ *
+ * Use `reconcile` when you need to inspect the editor state after a `forward`
+ * or other action has been processed, and then apply corrections based on the
+ * actual result. The corrections are applied in the same undo step as the
+ * preceding actions.
+ *
+ * The callback receives a fresh snapshot reflecting the current editor state
+ * and must return an array of `raise` or `execute` actions.
+ *
+ * @example
+ * ```ts
+ * // Forward text insertion, then fix marks based on actual state
+ * defineBehavior({
+ *   on: 'insert.text',
+ *   actions: [
+ *     ({event}) => [
+ *       forward(event),
+ *       reconcile(({snapshot}) => {
+ *         const block = selectors.getFocusTextBlock(snapshot)
+ *         if (!block) return []
+ *         // Compute corrections based on actual post-forward state
+ *         return [raise({type: 'decorator.add', decorator: 'strong', at: range})]
+ *       }),
+ *     ],
+ *   ],
+ * })
+ * ```
+ *
+ * @beta
+ */
+export function reconcile(
+  reconcile: ReconcileCallback,
+): PickFromUnion<BehaviorAction, 'type', 'reconcile'> {
+  return {type: 'reconcile', reconcile}
 }
 
 /**

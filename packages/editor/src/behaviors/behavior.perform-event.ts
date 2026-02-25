@@ -6,6 +6,7 @@ import {debug} from '../internal-utils/debug'
 import {performOperation} from '../operations/operation.perform'
 import {withPerformingBehaviorOperation} from '../slate-plugins/slate-plugin.performing-behavior-operation'
 import {withoutNormalizingConditional} from '../slate-plugins/slate-plugin.without-normalizing-conditional'
+import type {PickFromUnion} from '../type-utils'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {defaultKeyGenerator} from '../utils/key-generator'
 import {abstractBehaviors} from './behavior.abstract'
@@ -222,7 +223,10 @@ export function performEvent({
 
       nativeEventPrevented =
         actions.some(
-          (action) => action.type === 'raise' || action.type === 'execute',
+          (action) =>
+            action.type === 'raise' ||
+            action.type === 'execute' ||
+            action.type === 'reconcile',
         ) || !actions.some((action) => action.type === 'forward')
 
       let undoStepCreated = false
@@ -278,6 +282,68 @@ export function performEvent({
                     `Executing effect as a result of "${event.type}" failed due to: ${error instanceof Error ? error.message : error}`,
                   ),
                 )
+              }
+
+              continue
+            }
+
+            if (action.type === 'reconcile') {
+              const reconcileSnapshot = createEditorSnapshot({
+                converters,
+                editor,
+                keyGenerator,
+                readOnly,
+                schema,
+              })
+
+              let reconcileActions: Array<
+                | PickFromUnion<BehaviorAction, 'type', 'raise'>
+                | PickFromUnion<BehaviorAction, 'type', 'execute'>
+              > = []
+
+              try {
+                reconcileActions = action.reconcile({
+                  snapshot: reconcileSnapshot,
+                })
+              } catch (error) {
+                console.error(
+                  new Error(
+                    `Executing reconcile as a result of "${event.type}" failed due to: ${error instanceof Error ? error.message : error}`,
+                  ),
+                )
+              }
+
+              for (const reconcileAction of reconcileActions) {
+                if (reconcileAction.type === 'raise') {
+                  performEvent({
+                    mode: mode === 'execute' ? 'execute' : 'raise',
+                    behaviors,
+                    remainingEventBehaviors:
+                      mode === 'execute' ? remainingEventBehaviors : behaviors,
+                    event: reconcileAction.event,
+                    editor,
+                    converters,
+                    keyGenerator,
+                    readOnly,
+                    schema,
+                    nativeEvent,
+                    sendBack,
+                  })
+                } else {
+                  performEvent({
+                    mode: 'execute',
+                    behaviors,
+                    remainingEventBehaviors: [],
+                    event: reconcileAction.event,
+                    editor,
+                    converters,
+                    keyGenerator,
+                    readOnly,
+                    schema,
+                    nativeEvent: undefined,
+                    sendBack,
+                  })
+                }
               }
 
               continue
