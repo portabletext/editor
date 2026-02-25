@@ -54,32 +54,39 @@ export function createUndoSteps({
     return mergeIntoLastStep(steps, lastStep, op)
   }
 
-  // Handle case when both IDs are undefined
-  if (currentUndoStepId === undefined && previousUndoStepId === undefined) {
-    if (op.type === 'set_selection') {
-      return mergeIntoLastStep(steps, lastStep, op)
-    }
-
-    const lastOp = lastStep.operations.at(-1)
+  // Check for consecutive text operations that should be grouped,
+  // even when undoStepIds differ (e.g., when behaviors intercept
+  // each keystroke and each gets a fresh undoStepId).
+  // Look past non-text ops (like set_node from decorator operations)
+  // to find the last insert_text or remove_text op in the previous step.
+  if (op.type === 'insert_text' || op.type === 'remove_text') {
+    const lastTextOp = findLastTextOp(lastStep.operations)
 
     if (
-      lastOp &&
+      lastTextOp &&
       op.type === 'insert_text' &&
-      lastOp.type === 'insert_text' &&
-      op.offset === lastOp.offset + lastOp.text.length &&
-      Path.equals(op.path, lastOp.path) &&
+      lastTextOp.type === 'insert_text' &&
+      op.offset === lastTextOp.offset + lastTextOp.text.length &&
+      Path.equals(op.path, lastTextOp.path) &&
       op.text !== ' '
     ) {
       return mergeIntoLastStep(steps, lastStep, op)
     }
 
     if (
-      lastOp &&
+      lastTextOp &&
       op.type === 'remove_text' &&
-      lastOp.type === 'remove_text' &&
-      op.offset + op.text.length === lastOp.offset &&
-      Path.equals(op.path, lastOp.path)
+      lastTextOp.type === 'remove_text' &&
+      op.offset + op.text.length === lastTextOp.offset &&
+      Path.equals(op.path, lastTextOp.path)
     ) {
+      return mergeIntoLastStep(steps, lastStep, op)
+    }
+  }
+
+  // Handle case when both IDs are undefined
+  if (currentUndoStepId === undefined && previousUndoStepId === undefined) {
+    if (op.type === 'set_selection') {
       return mergeIntoLastStep(steps, lastStep, op)
     }
 
@@ -127,4 +134,24 @@ function mergeIntoLastStep(
       operations: [...lastStep.operations, op],
     },
   ]
+}
+
+/**
+ * Find the last insert_text or remove_text operation in a list of operations.
+ * Skips past non-text ops like set_node (from decorator operations),
+ * split_node, set_selection, etc.
+ */
+function findLastTextOp(
+  operations: Array<Operation>,
+): (Operation & {type: 'insert_text' | 'remove_text'}) | undefined {
+  for (let i = operations.length - 1; i >= 0; i--) {
+    const op = operations[i]
+    if (
+      op !== undefined &&
+      (op.type === 'insert_text' || op.type === 'remove_text')
+    ) {
+      return op as Operation & {type: 'insert_text' | 'remove_text'}
+    }
+  }
+  return undefined
 }
