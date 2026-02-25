@@ -43,6 +43,40 @@ const schemaDefinition = defineSchema({
   ],
 })
 
+async function pressButton(editor: Context['editor'], button: string) {
+  const previousSnapshot = editor.getSnapshot()
+  const previousValue = previousSnapshot.context.value
+  const previousSelection = previousSnapshot.context.selection
+  await userEvent.keyboard(button)
+
+  // Wait for the key press to be processed. Polls until either value
+  // or selection changes (deep equality for selection since PTE creates
+  // new selection objects on every snapshot). Falls back to a fixed
+  // delay for keys consumed by plugins without changing editor state
+  // (e.g. ArrowDown in an emoji picker).
+  const deadline = Date.now() + 500
+  while (Date.now() < deadline) {
+    await new Promise((resolve) => setTimeout(resolve, 50))
+    const {value, selection} = editor.getSnapshot().context
+
+    const valueChanged = value !== previousValue
+    const selectionChanged =
+      JSON.stringify(selection) !== JSON.stringify(previousSelection)
+
+    if (valueChanged || selectionChanged) {
+      // State changed, but the browser may not have finished reconciling
+      // the DOM yet. After structural changes (e.g. Enter splitting a
+      // block), Firefox needs time to re-render and update the native
+      // selection before the next key press can target the correct DOM
+      // node. Wait for two animation frames to let React commit and the
+      // browser paint.
+      await new Promise((resolve) => requestAnimationFrame(resolve))
+      await new Promise((resolve) => requestAnimationFrame(resolve))
+      return
+    }
+  }
+}
+
 /**
  * @internal
  */
@@ -235,57 +269,20 @@ export const stepDefinitions = [
   When(
     '{button} is pressed',
     async (context: Context, button: Parameter['button']) => {
-      const previousSelection = context.editor.getSnapshot().context.selection
-      await userEvent.keyboard(button)
-
-      // Delay to allow the browser to process the event.
-      // Firefox needs more time than Chromium to process keyboard events
-      // through the beforeinput -> DOM mutation -> Slate operation pipeline.
-      await new Promise((resolve) => setTimeout(resolve, 100))
-
-      await vi.waitFor(() => {
-        const currentSelection = context.editor.getSnapshot().context.selection
-
-        if (currentSelection) {
-          expect(currentSelection).not.toBe(previousSelection)
-        }
-      })
+      await pressButton(context.editor, button)
     },
   ),
   When(
     '{button} is pressed in Editor B',
     async (context: Context, button: Parameter['button']) => {
-      const previousSelection = context.editorB.getSnapshot().context.selection
-      await userEvent.keyboard(button)
-
-      await new Promise((resolve) => setTimeout(resolve, 100))
-
-      await vi.waitFor(() => {
-        const currentSelection = context.editorB.getSnapshot().context.selection
-
-        if (currentSelection) {
-          expect(currentSelection).not.toBe(previousSelection)
-        }
-      })
+      await pressButton(context.editorB, button)
     },
   ),
   When(
     '{button} is pressed {int} times',
     async (context: Context, button: Parameter['button'], times: number) => {
       for (let i = 0; i < times; i++) {
-        const previousSelection = context.editor.getSnapshot().context.selection
-        await userEvent.keyboard(button)
-
-        await new Promise((resolve) => setTimeout(resolve, 100))
-
-        await vi.waitFor(() => {
-          const currentSelection =
-            context.editor.getSnapshot().context.selection
-
-          if (currentSelection) {
-            expect(currentSelection).not.toBe(previousSelection)
-          }
-        })
+        await pressButton(context.editor, button)
       }
     },
   ),
@@ -293,20 +290,7 @@ export const stepDefinitions = [
     '{button} is pressed {int} times in Editor B',
     async (context: Context, button: Parameter['button'], times: number) => {
       for (let i = 0; i < times; i++) {
-        const previousSelection =
-          context.editorB.getSnapshot().context.selection
-        await userEvent.keyboard(button)
-
-        await new Promise((resolve) => setTimeout(resolve, 100))
-
-        await vi.waitFor(() => {
-          const currentSelection =
-            context.editorB.getSnapshot().context.selection
-
-          if (currentSelection) {
-            expect(currentSelection).not.toBe(previousSelection)
-          }
-        })
+        await pressButton(context.editorB, button)
       }
     },
   ),

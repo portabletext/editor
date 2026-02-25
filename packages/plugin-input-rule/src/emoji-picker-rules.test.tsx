@@ -116,8 +116,14 @@ Feature({
     Then(
       'the keyword is {string}',
       async (context: Context & {keywordLocator: Locator}, keyword: string) => {
-        await vi.waitFor(() =>
-          expect(context.keywordLocator.element().textContent).toEqual(keyword),
+        await vi.waitFor(
+          () =>
+            expect(context.keywordLocator.element().textContent).toEqual(
+              keyword,
+            ),
+          // WebKit needs more time to process characters through the input
+          // rule pipeline and subsequent React state updates.
+          {timeout: 3000},
         )
       },
     ),
