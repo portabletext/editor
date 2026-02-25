@@ -62,11 +62,14 @@ export function moveRangeBySplitAwareOperation(
     return moveRangeByOperation(range, operation)
   }
 
-  // During remove_text in a split, DON'T transform - keep original offsets.
-  // We need the original offsets to correctly compute positions in the new block.
-  if (operation.type === 'remove_text') {
+  // During remove_text or remove_node (child span) in a split, DON'T
+  // transform — keep original offsets so adjustPointAfterSplit can correctly
+  // remap when the new block's insert_node arrives.
+  if (
+    operation.type === 'remove_text' ||
+    (operation.type === 'remove_node' && operation.path.length > 1)
+  ) {
     if (operation.path[0] === originalBlockIndex) {
-      // Return the range unchanged - preserve original offsets for insert_node
       return range
     }
   }
@@ -113,13 +116,16 @@ export function moveRangeBySplitAwareOperation(
 /**
  * Adjust a point after a split operation, using original (un-clamped) offsets.
  *
- * Since we skip transformation during remove_text, we have the original offsets
- * and can correctly determine:
- * - Points before splitOffset: stay in original block (at same offset)
- * - Points after splitOffset: move to new block at (offset - splitOffset)
- * - Points AT splitOffset: depends on role:
- *   - anchor: moves to new block at offset 0 (the text it starts decorating moved)
- *   - focus: stays in original block (the text it ends decorating is before the split)
+ * When a block is split, children at or after the split span move to the new
+ * block. The comparison uses both the child (span) index AND the offset within
+ * the span to decide if the point stays or moves:
+ *
+ * 1. Point in an earlier child than the split child: stays in original block
+ * 2. Point in a later child than the split child: moves to new block
+ * 3. Point in the same child as the split:
+ *    - offset < splitOffset: stays
+ *    - offset > splitOffset: moves (new offset = offset - splitOffset)
+ *    - offset === splitOffset: anchor moves, focus stays
  */
 function adjustPointAfterSplit(
   point: Point,
@@ -128,9 +134,7 @@ function adjustPointAfterSplit(
   newBlockIndex: number,
   role: 'anchor' | 'focus',
 ): Point {
-  // Only adjust points on the original block
   if (point.path[0] !== originalBlockIndex) {
-    // Point is on a different block - just apply the insert_node path shift
     return (
       Point.transform(point, {
         type: 'insert_node',
@@ -140,17 +144,16 @@ function adjustPointAfterSplit(
     )
   }
 
-  const {splitOffset} = splitContext
+  const {splitOffset, splitChildIndex} = splitContext
+  const pointChildIndex = point.path[1] ?? 0
 
-  // Point is before the split offset - stays in original block.
-  // Points AT the split offset depend on role:
-  // - focus at splitOffset: stays (decoration ends at the split boundary)
-  // - anchor at splitOffset: moves to new block (decoration starts at text that moved)
-  if (
-    point.offset < splitOffset ||
-    (point.offset === splitOffset && role === 'focus')
-  ) {
-    // Apply path shift from insert_node (blocks after original get shifted)
+  const staysInOriginal =
+    pointChildIndex < splitChildIndex ||
+    (pointChildIndex === splitChildIndex &&
+      (point.offset < splitOffset ||
+        (point.offset === splitOffset && role === 'focus')))
+
+  if (staysInOriginal) {
     return (
       Point.transform(point, {
         type: 'insert_node',
@@ -160,12 +163,17 @@ function adjustPointAfterSplit(
     )
   }
 
-  // Point is after split offset - moves to new block
-  // The new offset is (original offset - split offset)
-  // Example: split at 11, point at 25 -> new offset is 14
+  if (pointChildIndex === splitChildIndex) {
+    return {
+      path: [newBlockIndex, point.path[1] ?? 0],
+      offset: point.offset - splitOffset,
+    }
+  }
+
+  // Point is in a child after the split child — moves to new block, offset unchanged
   return {
     path: [newBlockIndex, point.path[1] ?? 0],
-    offset: point.offset - splitOffset,
+    offset: point.offset,
   }
 }
 

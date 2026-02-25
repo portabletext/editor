@@ -36,6 +36,8 @@ export type RemotePatch = {
 export interface SplitContext {
   /** The offset in the original block where the split occurs */
   splitOffset: number
+  /** The child index of the span being split */
+  splitChildIndex: number
   /** The _key of the block being split */
   originalBlockKey: string
   /** The _key of the new block created after the split */

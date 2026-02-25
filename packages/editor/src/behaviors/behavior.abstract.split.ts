@@ -151,6 +151,12 @@ export const abstractSplitBehaviors = [
       const originalSpanKey = focusSpan?.node._key
       const splitOffset = selectionStartPoint?.offset ?? 0
 
+      const splitChildIndex = focusSpan
+        ? focusTextBlock.node.children.findIndex(
+            (child) => child._key === focusSpan.node._key,
+          )
+        : -1
+
       // Find the first span in the new block (this is the continuation of the split span)
       const firstNewSpan = isTextBlock(snapshot.context, newTextBlock)
         ? newTextBlock.children.find((child) => isSpan(snapshot.context, child))
@@ -164,6 +170,7 @@ export const abstractSplitBehaviors = [
           originalBlockKey && newBlockKey && originalSpanKey && newSpanKey
             ? {
                 splitOffset,
+                splitChildIndex,
                 originalBlockKey,
                 newBlockKey,
                 originalSpanKey,

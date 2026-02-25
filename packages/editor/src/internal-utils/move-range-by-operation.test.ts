@@ -57,6 +57,7 @@ describe('moveRangeBySplitAwareOperation', () => {
 
   const splitContext: SplitContext = {
     splitOffset: 11,
+    splitChildIndex: 0,
     originalBlockKey: 'block-0',
     newBlockKey: 'block-1',
     originalSpanKey: 'span-0',
@@ -357,6 +358,80 @@ describe('moveRangeBySplitAwareOperation', () => {
         anchor: {path: [0, 0], offset: 0}, // start of "hello dolly"
         focus: {path: [1, 0], offset: 14}, // end of " this is louis"
       })
+    })
+  })
+
+  describe('multi-span block (deferred normalization)', () => {
+    // Block 2 has 3 spans due to deferred normalization:
+    //   span 0: "nning aiming to" (15 chars)
+    //   span 1: "Tok we'll do something" (22 chars)  <-- split here
+    //   span 2: " add more" (9 chars)
+    // Decoration: anchor [0,0,0], focus [2,2,9]
+    const multiSpanSplitContext: SplitContext = {
+      splitOffset: 22,
+      splitChildIndex: 1,
+      originalBlockKey: 'block-2',
+      newBlockKey: 'block-3',
+      originalSpanKey: 'span-1',
+      newSpanKey: 'span-new',
+    }
+    const blockIndex = 2
+
+    it('focus in later span moves to new block', () => {
+      const range: Range = {
+        anchor: {path: [0, 0], offset: 0},
+        focus: {path: [2, 2], offset: 9},
+      }
+
+      const result = moveRangeBySplitAwareOperation(
+        range,
+        {type: 'insert_node', path: [3], node: mockNode},
+        multiSpanSplitContext,
+        blockIndex,
+        () => 3,
+      )
+
+      expect(result).toEqual({
+        anchor: {path: [0, 0], offset: 0},
+        focus: {path: [3, 2], offset: 9},
+      })
+    })
+
+    it('focus in earlier span stays in original block', () => {
+      const range: Range = {
+        anchor: {path: [0, 0], offset: 0},
+        focus: {path: [2, 0], offset: 10},
+      }
+
+      const result = moveRangeBySplitAwareOperation(
+        range,
+        {type: 'insert_node', path: [3], node: mockNode},
+        multiSpanSplitContext,
+        blockIndex,
+        () => 3,
+      )
+
+      expect(result).toEqual({
+        anchor: {path: [0, 0], offset: 0},
+        focus: {path: [2, 0], offset: 10},
+      })
+    })
+
+    it('remove_node for child span within block is preserved', () => {
+      const range: Range = {
+        anchor: {path: [0, 0], offset: 0},
+        focus: {path: [2, 2], offset: 9},
+      }
+
+      const result = moveRangeBySplitAwareOperation(
+        range,
+        {type: 'remove_node', path: [2, 2], node: mockNode},
+        multiSpanSplitContext,
+        blockIndex,
+        () => 3,
+      )
+
+      expect(result).toBe(range)
     })
   })
 })

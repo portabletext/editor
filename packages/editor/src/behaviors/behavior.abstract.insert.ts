@@ -210,14 +210,44 @@ export const abstractInsertBehaviors = [
       ) => {
         let previousBlockKey: string | undefined
         let firstBlockKey: string | undefined
+        let lastPastedBlockKey: string | undefined
         const actions: Array<BehaviorAction> = []
+
+        const hasMultipleBlocks = event.blocks.length > 1
+        const cursorNotAtEnd = !isEqualSelectionPoints(
+          at.focus,
+          focusBlockEndPoint,
+        )
+        const cursorAtStart = isEqualSelectionPoints(
+          at.focus,
+          focusBlockStartPoint,
+        )
+        // For multi-block paste in a text block, split at cursor instead of
+        // delete-then-reinsert. This preserves range decoration endpoints via
+        // splitContext (for the split) and mergeContext (for the tail merge).
+        // Cursor-at-start is excluded: no text precedes the cursor so
+        // the original delete-then-reinsert path handles it correctly.
+        const needsSplit = hasMultipleBlocks && cursorNotAtEnd && !cursorAtStart
+
+        if (needsSplit) {
+          actions.push(raise({type: 'select', at}))
+          actions.push(raise({type: 'insert.break'}))
+          // insert.break moves selection to the split-off block.
+          // Restore it so insertBlock merges text into the correct block.
+          actions.push(
+            raise({
+              type: 'select',
+              at: {anchor: at.focus, focus: at.focus},
+            }),
+          )
+        }
 
         let index = -1
         for (const block of event.blocks) {
           index++
 
           if (index === 0) {
-            if (!isEqualSelectionPoints(at.focus, focusBlockEndPoint)) {
+            if (!needsSplit && cursorNotAtEnd) {
               actions.push(
                 raise({
                   type: 'delete',
@@ -250,7 +280,14 @@ export const abstractInsertBehaviors = [
                 block: key !== block._key ? {...block, _key: key} : block,
                 placement: 'auto',
                 select: 'end',
-                ...(event.at ? {at: event.at} : {}),
+                // After insert.break, editor selection moved to the split-off
+                // block. Use the original cursor position to target the focus
+                // block instead.
+                ...(needsSplit
+                  ? {at: {anchor: at.focus, focus: at.focus}}
+                  : event.at
+                    ? {at: event.at}
+                    : {}),
               }),
             )
 
@@ -258,10 +295,14 @@ export const abstractInsertBehaviors = [
           }
 
           if (index === event.blocks.length - 1) {
+            const lastKey = getUniqueBlockKey(block._key)(snapshot)
+            lastPastedBlockKey = lastKey
+
             actions.push(
               raise({
                 type: 'insert.block',
-                block,
+                block:
+                  lastKey !== block._key ? {...block, _key: lastKey} : block,
                 placement: 'after',
                 select: 'end',
                 at: previousBlockKey
@@ -296,7 +337,27 @@ export const abstractInsertBehaviors = [
           previousBlockKey = key
         }
 
-        if (!isEmptyTextBlock(snapshot.context, focusTextBlockAfter)) {
+        if (needsSplit) {
+          // Merge the split-off tail block into the last pasted block via
+          // delete.forward, which sets mergeContext for decoration tracking.
+          // Only merge when the last pasted block is a text block (non-text
+          // blocks can't merge, so the tail stays as a separate block).
+          const lastBlock = event.blocks.at(-1)
+          const isLastBlockText = lastBlock
+            ? isTextBlock(snapshot.context, lastBlock)
+            : false
+
+          if (isLastBlockText && lastPastedBlockKey) {
+            actions.push(
+              raise({
+                type: 'select.block',
+                at: [{_key: lastPastedBlockKey}],
+                select: 'end',
+              }),
+            )
+            actions.push(raise({type: 'delete.forward', unit: 'character'}))
+          }
+        } else if (!isEmptyTextBlock(snapshot.context, focusTextBlockAfter)) {
           actions.push(
             raise({
               type: 'insert.block',
