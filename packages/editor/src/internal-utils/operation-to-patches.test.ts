@@ -1,4 +1,3 @@
-import {compileSchemaDefinitionToPortableTextMemberSchemaTypes} from '@portabletext/sanity-bridge'
 import {
   compileSchema,
   defineSchema,
@@ -26,18 +25,18 @@ const schemaDefinition = defineSchema({
   inlineObjects: [{name: 'someObject'}],
 })
 const schema = compileSchema(schemaDefinition)
-const legacySchema =
-  compileSchemaDefinitionToPortableTextMemberSchemaTypes(schemaDefinition)
 const editorActor = createActor(editorMachine, {
   input: {
     schema,
     keyGenerator: defaultKeyGenerator,
-    getLegacySchema: () => legacySchema,
   },
 })
 const relayActor = createActor(relayMachine)
 
-const e = createEditor()
+const e = createEditor({
+  schema,
+  keyGenerator: defaultKeyGenerator,
+})
 e.value = []
 const editor = plugins(e, {
   editorActor,

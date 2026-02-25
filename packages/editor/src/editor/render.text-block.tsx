@@ -1,4 +1,7 @@
-import type {PortableTextTextBlock} from '@portabletext/schema'
+import type {
+  BlockObjectSchemaType,
+  PortableTextTextBlock,
+} from '@portabletext/schema'
 import {useContext, useRef, type ReactElement} from 'react'
 import type {DropPosition} from '../behaviors/behavior.core.drop-position'
 import type {Element as SlateElement} from '../slate'
@@ -7,11 +10,11 @@ import type {
   BlockListItemRenderProps,
   BlockRenderProps,
   BlockStyleRenderProps,
-  PortableTextMemberSchemaTypes,
   RenderBlockFunction,
   RenderListItemFunction,
   RenderStyleFunction,
 } from '../types/editor'
+import type {EditorSchema} from './editor-schema'
 import {DropIndicator} from './render.drop-indicator'
 import {SelectionStateContext} from './selection-state-context'
 
@@ -20,16 +23,19 @@ export function RenderTextBlock(props: {
   children: ReactElement
   dropPosition?: DropPosition['positionBlock']
   element: SlateElement
-  legacySchema: PortableTextMemberSchemaTypes
   readOnly: boolean
   renderBlock?: RenderBlockFunction
   renderListItem?: RenderListItemFunction
   renderStyle?: RenderStyleFunction
+  schema: EditorSchema
   spellCheck?: boolean
   textBlock: PortableTextTextBlock
 }) {
   const blockRef = useRef<HTMLDivElement>(null)
-
+  const schemaType = {
+    name: props.schema.block.name,
+    fields: props.schema.block.fields ?? [],
+  } satisfies BlockObjectSchemaType
   const {selectedBlockKeys, focusedBlockKey} = useContext(SelectionStateContext)
   const selected = selectedBlockKeys.has(props.textBlock._key)
   const focused = focusedBlockKey === props.textBlock._key
@@ -40,14 +46,14 @@ export function RenderTextBlock(props: {
   let children = props.children
 
   if (props.renderStyle && props.textBlock.style) {
-    const legacyStyleSchemaType =
+    const styleSchemaType =
       props.textBlock.style !== undefined
-        ? props.legacySchema.styles.find(
+        ? props.schema.styles.find(
             (style) => style.value === props.textBlock.style,
           )
         : undefined
 
-    if (legacyStyleSchemaType) {
+    if (styleSchemaType) {
       children = (
         <RenderStyle
           renderStyle={props.renderStyle}
@@ -55,7 +61,7 @@ export function RenderTextBlock(props: {
           editorElementRef={blockRef}
           focused={focused}
           path={[{_key: props.textBlock._key}]}
-          schemaType={legacyStyleSchemaType}
+          schemaType={styleSchemaType}
           selected={selected}
           value={props.textBlock.style}
         >
@@ -70,11 +76,11 @@ export function RenderTextBlock(props: {
   }
 
   if (props.renderListItem && props.textBlock.listItem) {
-    const legacyListItemSchemaType = props.legacySchema.lists.find(
+    const listItemSchemaType = props.schema.lists.find(
       (list) => list.value === props.textBlock.listItem,
     )
 
-    if (legacyListItemSchemaType) {
+    if (listItemSchemaType) {
       children = (
         <RenderListItem
           renderListItem={props.renderListItem}
@@ -85,7 +91,7 @@ export function RenderTextBlock(props: {
           path={[{_key: props.textBlock._key}]}
           selected={selected}
           value={props.textBlock.listItem}
-          schemaType={legacyListItemSchemaType}
+          schemaType={listItemSchemaType}
         >
           {children}
         </RenderListItem>
@@ -150,9 +156,8 @@ export function RenderTextBlock(props: {
             listItem={props.textBlock.listItem}
             path={[{_key: props.textBlock._key}]}
             selected={selected}
-            schemaType={props.legacySchema.block}
+            schemaType={schemaType}
             style={props.textBlock.style}
-            type={props.legacySchema.block}
             value={props.textBlock}
           >
             {children}
@@ -177,7 +182,6 @@ function RenderBlock({
   selected,
   style,
   schemaType,
-  type,
   value,
 }: {
   renderBlock: RenderBlockFunction
@@ -192,7 +196,6 @@ function RenderBlock({
     selected,
     style,
     schemaType,
-    type,
     value,
   })
 }

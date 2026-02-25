@@ -1,30 +1,28 @@
 import type {Patch} from '@portabletext/patches'
 import type {
+  AnnotationSchemaType,
+  BlockObjectSchemaType,
+  DecoratorSchemaType,
+  InlineObjectSchemaType,
+  ListSchemaType,
   PortableTextBlock,
   PortableTextChild,
   PortableTextObject,
   PortableTextTextBlock,
+  StyleSchemaType,
   TypedObject,
 } from '@portabletext/schema'
 import type {
   ClipboardEvent,
-  FocusEvent,
   JSX,
   PropsWithChildren,
   ReactElement,
   RefObject,
 } from 'react'
-import type {Observable, Subject} from 'rxjs'
 import type {PortableTextEditableProps} from '../editor/Editable'
+import type {EditorSchema} from '../editor/editor-schema'
 import type {PortableTextEditor} from '../editor/PortableTextEditor'
 import type {BlockPath, Path} from './paths'
-import type {
-  ArraySchemaType,
-  BlockDecoratorDefinition,
-  BlockListDefinition,
-  BlockStyleDefinition,
-  ObjectSchemaType,
-} from './sanity-types'
 
 /** @beta */
 export interface EditableAPIDeleteOptions {
@@ -115,95 +113,6 @@ export type EditorSelection = {
 } | null
 
 /**
- * The editor has mutated it's content.
- * @beta */
-export type MutationChange = {
-  type: 'mutation'
-  patches: Patch[]
-  snapshot: PortableTextBlock[] | undefined
-}
-
-/**
- * The editor has produced a patch
- * @beta */
-export type PatchChange = {
-  type: 'patch'
-  patch: Patch
-}
-
-/**
- * The editor has received a new (props) value
- * @beta */
-export type ValueChange = {
-  type: 'value'
-  value: PortableTextBlock[] | undefined
-}
-
-/**
- * The editor has a new selection
- * @beta */
-export type SelectionChange = {
-  type: 'selection'
-  selection: EditorSelection
-}
-
-/**
- * The editor received focus
- * @beta */
-export type FocusChange = {
-  type: 'focus'
-  event: FocusEvent<HTMLDivElement, Element>
-}
-
-/**
- * @beta
- * @deprecated Use `'patch'` changes instead
- */
-export type UnsetChange = {
-  type: 'unset'
-  previousValue: PortableTextBlock[]
-}
-
-/**
- * The editor blurred
- * @beta */
-export type BlurChange = {
-  type: 'blur'
-  event: FocusEvent<HTMLDivElement, Element>
-}
-
-/**
- * The editor is currently loading something
- * Could be used to show a spinner etc.
- * @beta
- * @deprecated Will be removed in the next major version
- */
-export type LoadingChange = {
-  type: 'loading'
-  isLoading: boolean
-}
-
-/**
- * The editor content is ready to be edited by the user
- * @beta */
-export type ReadyChange = {
-  type: 'ready'
-}
-
-/**
- * The editor produced an error
- * @beta
- * @deprecated The change is no longer emitted
- * */
-export type ErrorChange = {
-  type: 'error'
-  name: string // short computer readable name
-  level: 'warning' | 'error'
-  description: string
-  data?: unknown
-}
-
-/**
  * The editor has invalid data in the value that can be resolved by the user
  * @beta */
 export type InvalidValueResolution = {
@@ -227,72 +136,6 @@ export type InvalidValueResolution = {
   }
 }
 
-/**
- * The editor has an invalid value
- * @beta */
-export type InvalidValue = {
-  type: 'invalidValue'
-  resolution: InvalidValueResolution | null
-  value: PortableTextBlock[] | undefined
-}
-
-/**
- * The editor performed a undo history step
- * @beta
- * @deprecated The change is no longer emitted
- *  */
-export type UndoChange = {
-  type: 'undo'
-  patches: Patch[]
-  timestamp: Date
-}
-
-/**
- * The editor performed redo history step
- * @beta
- * @deprecated The change is no longer emitted
- *  */
-export type RedoChange = {
-  type: 'redo'
-  patches: Patch[]
-  timestamp: Date
-}
-
-/**
- * The editor was either connected or disconnected to the network
- * To show out of sync warnings etc when in collaborative mode.
- * @beta
- * @deprecated The change is no longer emitted
- *  */
-export type ConnectionChange = {
-  type: 'connection'
-  value: 'online' | 'offline'
-}
-
-/**
- * When the editor changes, it will emit a change item describing the change
- * @beta */
-export type EditorChange =
-  | BlurChange
-  | ConnectionChange
-  | ErrorChange
-  | FocusChange
-  | InvalidValue
-  | LoadingChange
-  | MutationChange
-  | PatchChange
-  | ReadyChange
-  | RedoChange
-  | SelectionChange
-  | UndoChange
-  | UnsetChange
-  | ValueChange
-
-/**
- * @beta
- */
-export type EditorChanges = Subject<EditorChange>
-
 /** @beta */
 export type OnPasteResult =
   | {
@@ -310,7 +153,7 @@ export type OnPasteResultOrPromise = OnPasteResult | Promise<OnPasteResult>
 export interface PasteData {
   event: ClipboardEvent
   path: Path
-  schemaTypes: PortableTextMemberSchemaTypes
+  schemaTypes: EditorSchema
   value: PortableTextBlock[] | undefined
 }
 
@@ -323,18 +166,9 @@ export interface PasteData {
 export type OnPasteFn = (data: PasteData) => OnPasteResultOrPromise
 
 /** @beta */
-export type OnBeforeInputFn = (event: InputEvent) => void
-
-/** @beta */
 export type OnCopyFn = (
   event: ClipboardEvent<HTMLDivElement | HTMLSpanElement>,
 ) => undefined | unknown
-
-/** @beta */
-export type PatchObservable = Observable<{
-  patches: Patch[]
-  snapshot: PortableTextBlock[] | undefined
-}>
 
 /** @beta */
 export interface BlockRenderProps {
@@ -346,9 +180,7 @@ export interface BlockRenderProps {
   path: BlockPath
   selected: boolean
   style?: string
-  schemaType: ObjectSchemaType
-  /** @deprecated Use `schemaType` instead */
-  type: ObjectSchemaType
+  schemaType: BlockObjectSchemaType
   value: PortableTextBlock
 }
 
@@ -360,9 +192,7 @@ export interface BlockChildRenderProps {
   focused: boolean
   path: Path
   selected: boolean
-  schemaType: ObjectSchemaType
-  /** @deprecated Use `schemaType` instead */
-  type: ObjectSchemaType
+  schemaType: InlineObjectSchemaType
   value: PortableTextChild
 }
 
@@ -373,10 +203,8 @@ export interface BlockAnnotationRenderProps {
   editorElementRef: RefObject<HTMLElement | null>
   focused: boolean
   path: Path
-  schemaType: ObjectSchemaType
+  schemaType: AnnotationSchemaType
   selected: boolean
-  /** @deprecated Use `schemaType` instead */
-  type: ObjectSchemaType
   value: PortableTextObject
 }
 /** @beta */
@@ -385,10 +213,8 @@ export interface BlockDecoratorRenderProps {
   editorElementRef: RefObject<HTMLElement | null>
   focused: boolean
   path: Path
-  schemaType: BlockDecoratorDefinition
+  schemaType: DecoratorSchemaType
   selected: boolean
-  /** @deprecated Use `schemaType` instead */
-  type: BlockDecoratorDefinition
   value: string
 }
 /** @beta */
@@ -399,7 +225,7 @@ export interface BlockListItemRenderProps {
   focused: boolean
   level: number
   path: Path
-  schemaType: BlockListDefinition
+  schemaType: ListSchemaType
   selected: boolean
   value: string
 }
@@ -434,7 +260,7 @@ export interface BlockStyleRenderProps {
   focused: boolean
   path: Path
   selected: boolean
-  schemaType: BlockStyleDefinition
+  schemaType: StyleSchemaType
   value: string
 }
 
@@ -510,17 +336,4 @@ export interface RangeDecoration {
    * A custom payload that can be set on the range decoration
    */
   payload?: Record<string, unknown>
-}
-
-/** @beta */
-export type PortableTextMemberSchemaTypes = {
-  annotations: (ObjectSchemaType & {i18nTitleKey?: string})[]
-  block: ObjectSchemaType
-  blockObjects: ObjectSchemaType[]
-  decorators: BlockDecoratorDefinition[]
-  inlineObjects: ObjectSchemaType[]
-  portableText: ArraySchemaType<PortableTextBlock>
-  span: ObjectSchemaType
-  styles: BlockStyleDefinition[]
-  lists: BlockListDefinition[]
 }

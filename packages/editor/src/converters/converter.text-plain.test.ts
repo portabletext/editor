@@ -1,4 +1,3 @@
-import {compileSchemaDefinitionToPortableTextMemberSchemaTypes} from '@portabletext/sanity-bridge'
 import {
   compileSchema,
   defineSchema,
@@ -9,7 +8,7 @@ import {
 import {expect, test} from 'vitest'
 import {createTestSnapshot} from '../internal-utils/create-test-snapshot'
 import type {EditorSelection} from '../types/editor'
-import {createConverterTextPlain} from './converter.text-plain'
+import {converterTextPlain} from './converter.text-plain'
 
 const b1: PortableTextTextBlock = {
   _type: 'block',
@@ -67,31 +66,28 @@ const b4: PortableTextTextBlock = {
 }
 
 function createSnapshot({
-  schema,
+  schemaDefinition,
   selection,
 }: {
-  schema: SchemaDefinition
+  schemaDefinition: SchemaDefinition
   selection: EditorSelection
 }) {
+  const schema = compileSchema(schemaDefinition)
   return createTestSnapshot({
     context: {
       converters: [],
-      schema: compileSchema(schema),
+      schema,
       selection,
       value: [b1, b2, b3, b4],
     },
   })
 }
 
-const converterTextPlain = createConverterTextPlain(
-  compileSchemaDefinitionToPortableTextMemberSchemaTypes(defineSchema({})),
-)
-
-test(converterTextPlain.serialize.name, () => {
+test(converterTextPlain.mimeType, () => {
   expect(
     converterTextPlain.serialize({
       snapshot: createSnapshot({
-        schema: defineSchema({}),
+        schemaDefinition: defineSchema({}),
         selection: {
           anchor: {
             path: [{_key: b3._key}, 'children', {_key: b3.children[0]!._key}],
@@ -115,7 +111,7 @@ test(converterTextPlain.serialize.name, () => {
   expect(
     converterTextPlain.serialize({
       snapshot: createSnapshot({
-        schema: defineSchema({}),
+        schemaDefinition: defineSchema({}),
         selection: {
           anchor: {
             path: [{_key: b1._key}, 'children', {_key: b1.children[0]!._key}],
@@ -139,7 +135,7 @@ test(converterTextPlain.serialize.name, () => {
   expect(
     converterTextPlain.serialize({
       snapshot: createSnapshot({
-        schema: defineSchema({}),
+        schemaDefinition: defineSchema({}),
         selection: {
           anchor: {
             path: [{_key: b2._key}],
@@ -163,7 +159,7 @@ test(converterTextPlain.serialize.name, () => {
   expect(
     converterTextPlain.serialize({
       snapshot: createSnapshot({
-        schema: defineSchema({
+        schemaDefinition: defineSchema({
           blockObjects: [
             {
               name: 'image',
@@ -193,7 +189,7 @@ test(converterTextPlain.serialize.name, () => {
   expect(
     converterTextPlain.serialize({
       snapshot: createSnapshot({
-        schema: defineSchema({}),
+        schemaDefinition: defineSchema({}),
         selection: {
           anchor: {
             path: [{_key: b4._key}, 'children', {_key: b4.children[0]!._key}],
@@ -217,7 +213,7 @@ test(converterTextPlain.serialize.name, () => {
   expect(
     converterTextPlain.serialize({
       snapshot: createSnapshot({
-        schema: defineSchema({
+        schemaDefinition: defineSchema({
           inlineObjects: [
             {
               name: 'stock-ticker',

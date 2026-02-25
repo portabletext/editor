@@ -1,6 +1,6 @@
 {
   "name": "@portabletext/editor",
-  "version": "5.1.0",
+  "version": "6.0.0",
   "description": "Portable Text Editor made in React",
   "keywords": [
     "sanity",
@@ -91,22 +91,17 @@
     "@portabletext/patches": "workspace:^",
     "@portabletext/schema": "workspace:^",
     "@portabletext/to-html": "^5.0.1",
-    "@sanity/schema": "^5.9.0",
-    "@sanity/types": "^5.9.0",
     "@xstate/react": "^6.0.0",
     "debug": "^4.4.3",
-    "is-hotkey": "^0.2.0",
     "scroll-into-view-if-needed": "^3.1.0",
     "xstate": "^5.25.0"
   },
   "devDependencies": {
-    "@portabletext/sanity-bridge": "workspace:*",
     "@portabletext/test": "workspace:^",
     "@sanity/diff-match-patch": "^3.2.0",
     "@sanity/pkg-utils": "^10.2.1",
     "@sanity/tsconfig": "^2.1.0",
     "@types/debug": "^4.1.12",
-    "@types/is-hotkey": "^0.1.10",
     "@types/node": "^20",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
@@ -122,7 +117,6 @@
     "racejar": "workspace:*",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
-    "rxjs": "^7.8.2",
     "typescript": "catalog:",
     "typescript-eslint": "^8.48.0",
     "vite": "^7.3.1",
@@ -131,8 +125,7 @@
   },
   "peerDependencies": {
     "@portabletext/sanity-bridge": "workspace:^2.0.2",
-    "react": "^19.2.3",
-    "rxjs": "^7.8.2"
+    "react": "^19.2.3"
   },
   "engines": {
     "node": ">=20.19 <22 || >=22.12"

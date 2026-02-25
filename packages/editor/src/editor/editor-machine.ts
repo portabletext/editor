@@ -23,10 +23,7 @@ import {Transforms} from '../slate'
 import {EDITOR_TO_PENDING_SELECTION} from '../slate-dom'
 import {ReactEditor} from '../slate-react'
 import type {NamespaceEvent, OmitFromUnion} from '../type-utils'
-import type {
-  EditorSelection,
-  PortableTextMemberSchemaTypes,
-} from '../types/editor'
+import type {EditorSelection} from '../types/editor'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {pathsOverlap} from '../utils/util.paths-overlap'
 import type {EditorSchema} from './editor-schema'
@@ -179,7 +176,6 @@ export const editorMachine = setup({
       behaviors: Set<BehaviorConfig>
       behaviorsSorted: boolean
       converters: Set<Converter>
-      getLegacySchema: () => PortableTextMemberSchemaTypes
       keyGenerator: () => string
       pendingEvents: Array<InternalPatchEvent | MutationEvent>
       pendingIncomingPatchesEvents: Array<PatchesEvent>
@@ -197,7 +193,6 @@ export const editorMachine = setup({
     emitted: {} as InternalEditorEmittedEvent,
     input: {} as {
       converters?: Array<Converter>
-      getLegacySchema: () => PortableTextMemberSchemaTypes
       keyGenerator: () => string
       readOnly?: boolean
       schema: EditorSchema
@@ -406,7 +401,6 @@ export const editorMachine = setup({
     behaviors: new Set(coreBehaviorsConfig),
     behaviorsSorted: false,
     converters: new Set(input.converters ?? []),
-    getLegacySchema: input.getLegacySchema,
     keyGenerator: input.keyGenerator,
     pendingEvents: [],
     pendingIncomingPatchesEvents: [],

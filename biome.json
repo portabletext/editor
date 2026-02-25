@@ -50,7 +50,8 @@
         "useBlockStatements": "error",
         "useImportType": "error",
         "noUnusedTemplateLiteral": "off",
-        "noUselessElse": "off"
+        "noUselessElse": "off",
+        "useTemplate": "error"
       }
     }
   },

@@ -1,5 +1,19 @@
 # Changelog
 
+## 6.0.0
+
+### Patch Changes
+
+- Updated dependencies [[`79b69a5`](https://github.com/portabletext/editor/commit/79b69a5cd7f5a19d4393453b993611916ab86a95), [`5a3e8bf`](https://github.com/portabletext/editor/commit/5a3e8bf33d9591b9cfbf310e37ae95f736862942), [`2f8d366`](https://github.com/portabletext/editor/commit/2f8d36694ddad97a5b1ca910ffc7f7e60937c642), [`3ce0561`](https://github.com/portabletext/editor/commit/3ce056153812bf75c3d95a452417f1f7e45f352e)]:
+  - @portabletext/editor@6.0.0
+
+## 5.0.6
+
+### Patch Changes
+
+- Updated dependencies [[`837aab4`](https://github.com/portabletext/editor/commit/837aab4fa86dd32b4cf59b81a0a1ee53aab525aa)]:
+  - @portabletext/editor@5.1.1
+
 ## 5.0.5
 
 ### Patch Changes
