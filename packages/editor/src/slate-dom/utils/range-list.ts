@@ -1,6 +1,6 @@
 import {Editor, Range, type Ancestor, type DecoratedRange} from '../../slate'
 import {DOMEditor} from '../plugin/dom-editor'
-import {PLACEHOLDER_SYMBOL} from './weak-maps'
+import {PLACEHOLDER_SYMBOL} from './symbols'
 
 export const shallowCompare = (
   obj1: {[key: string]: unknown},

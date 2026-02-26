@@ -24,6 +24,7 @@ export const withReact = <T extends Editor>(
   const {onChange, apply, insertText} = e
 
   e.getChunkSize = () => null
+  e.keyToChunkTree = new WeakMap()
 
   if (IS_ANDROID) {
     e.insertText = (text, options) => {

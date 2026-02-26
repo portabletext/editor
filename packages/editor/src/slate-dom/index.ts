@@ -64,13 +64,6 @@ export {
   splitDecorationsByChild,
 } from './utils/range-list'
 
-export {
-  ELEMENT_TO_NODE,
-  MARK_PLACEHOLDER_SYMBOL,
-  NODE_TO_ELEMENT,
-  NODE_TO_INDEX,
-  NODE_TO_KEY,
-  NODE_TO_PARENT,
-  PLACEHOLDER_SYMBOL,
-  type Action,
-} from './utils/weak-maps'
+export {MARK_PLACEHOLDER_SYMBOL, PLACEHOLDER_SYMBOL} from './utils/symbols'
+
+export type {Action} from './plugin/dom-editor'

@@ -1,10 +1,6 @@
 import type {Ancestor, Editor} from '../../slate'
-import type {Key} from '../../slate-dom'
 import {ReactEditor} from '../plugin/react-editor'
 import {reconcileChildren, type ReconcileOptions} from './reconcile-children'
-import type {ChunkTree} from './types'
-
-export const KEY_TO_CHUNK_TREE = new WeakMap<Key, ChunkTree>()
 
 /**
  * Get or create the chunk tree for a Slate node
@@ -22,7 +18,7 @@ export const getChunkTreeForNode = (
   } = {},
 ) => {
   const key = ReactEditor.findKey(editor, node)
-  let chunkTree = KEY_TO_CHUNK_TREE.get(key)
+  let chunkTree = editor.keyToChunkTree.get(key)
 
   if (!chunkTree) {
     chunkTree = {
@@ -32,7 +28,7 @@ export const getChunkTreeForNode = (
       children: [],
     }
 
-    KEY_TO_CHUNK_TREE.set(key, chunkTree)
+    editor.keyToChunkTree.set(key, chunkTree)
   }
 
   if (options.reconcile) {

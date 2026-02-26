@@ -6,13 +6,7 @@ import {
   type DecoratedRange,
   type Element as SlateElement,
 } from '../../slate'
-import {
-  ELEMENT_TO_NODE,
-  isElementDecorationsEqual,
-  NODE_TO_ELEMENT,
-  NODE_TO_INDEX,
-  NODE_TO_PARENT,
-} from '../../slate-dom'
+import {isElementDecorationsEqual} from '../../slate-dom'
 import useChildren from '../hooks/use-children'
 import {useDecorations} from '../hooks/use-decorations'
 import getDirection from '../utils/direction'
@@ -61,11 +55,11 @@ const Element = (props: {
       // Update element-related editor maps with the DOM element ref.
       if (ref) {
         editor.keyToElement?.set(key, ref)
-        NODE_TO_ELEMENT.set(element, ref)
-        ELEMENT_TO_NODE.set(ref, element)
+        editor.nodeToElement.set(element, ref)
+        editor.elementToNode.set(ref, element)
       } else {
         editor.keyToElement?.delete(key)
-        NODE_TO_ELEMENT.delete(element)
+        editor.nodeToElement.delete(element)
       }
     },
     [editor, key, element],
@@ -141,8 +135,8 @@ const Element = (props: {
       </Tag>
     )
 
-    NODE_TO_INDEX.set(text, 0)
-    NODE_TO_PARENT.set(text, element)
+    editor.nodeToIndex.set(text, 0)
+    editor.nodeToParent.set(text, element)
   }
 
   return renderElement({attributes, children, element})

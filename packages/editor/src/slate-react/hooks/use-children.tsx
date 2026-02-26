@@ -8,8 +8,6 @@ import {
 } from '../../slate'
 import {
   isElementDecorationsEqual,
-  NODE_TO_INDEX,
-  NODE_TO_PARENT,
   splitDecorationsByChild,
   type Key,
 } from '../../slate-dom'
@@ -70,8 +68,8 @@ const useChildren = (props: {
   // instead to eliminate unnecessary map operations.
   if (!chunking) {
     node.children.forEach((n, i) => {
-      NODE_TO_INDEX.set(n, i)
-      NODE_TO_PARENT.set(n, node)
+      editor.nodeToIndex.set(n, i)
+      editor.nodeToParent.set(n, node)
     })
   }
 
@@ -133,15 +131,15 @@ const useChildren = (props: {
       chunkSize,
       rerenderChildren: childrenToRedecorate,
       onInsert: (n, i) => {
-        NODE_TO_INDEX.set(n, i)
-        NODE_TO_PARENT.set(n, node)
+        editor.nodeToIndex.set(n, i)
+        editor.nodeToParent.set(n, node)
       },
       onUpdate: (n, i) => {
-        NODE_TO_INDEX.set(n, i)
-        NODE_TO_PARENT.set(n, node)
+        editor.nodeToIndex.set(n, i)
+        editor.nodeToParent.set(n, node)
       },
       onIndexChange: (n, i) => {
-        NODE_TO_INDEX.set(n, i)
+        editor.nodeToIndex.set(n, i)
       },
     },
   })
