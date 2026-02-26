@@ -2,7 +2,6 @@ import React, {useCallback, useRef, type JSX} from 'react'
 import {ReactEditor, useSlateStatic} from '..'
 import {Text as SlateText, type DecoratedRange, type Element} from '../../slate'
 import {
-  EDITOR_TO_KEY_TO_ELEMENT,
   ELEMENT_TO_NODE,
   isTextDecorationsEqual,
   NODE_TO_ELEMENT,
@@ -64,16 +63,15 @@ const Text = (props: {
     )
   }
 
-  // Update element-related weak maps with the DOM element ref.
+  // Update element-related editor maps with the DOM element ref.
   const callbackRef = useCallback(
     (span: HTMLSpanElement | null) => {
-      const KEY_TO_ELEMENT = EDITOR_TO_KEY_TO_ELEMENT.get(editor)
       if (span) {
-        KEY_TO_ELEMENT?.set(key, span)
+        editor.keyToElement?.set(key, span)
         NODE_TO_ELEMENT.set(text, span)
         ELEMENT_TO_NODE.set(span, text)
       } else {
-        KEY_TO_ELEMENT?.delete(key)
+        editor.keyToElement?.delete(key)
         NODE_TO_ELEMENT.delete(text)
         if (ref.current) {
           ELEMENT_TO_NODE.delete(ref.current)

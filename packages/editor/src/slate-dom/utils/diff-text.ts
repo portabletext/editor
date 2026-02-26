@@ -8,7 +8,6 @@ import {
   Text,
   type Operation,
 } from '../../slate'
-import {EDITOR_TO_PENDING_DIFFS} from './weak-maps'
 
 export type StringDiff = {
   start: number
@@ -223,7 +222,7 @@ export function transformPendingPoint(
   point: Point,
   op: Operation,
 ): Point | null {
-  const pendingDiffs = EDITOR_TO_PENDING_DIFFS.get(editor)
+  const pendingDiffs = editor.pendingDiffs
   const textDiff = pendingDiffs?.find(({path}) => Path.equals(path, point.path))
 
   if (!textDiff || point.offset <= textDiff.diff.start) {

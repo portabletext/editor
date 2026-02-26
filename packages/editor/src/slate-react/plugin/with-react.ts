@@ -1,6 +1,6 @@
 import ReactDOM from 'react-dom'
 import {Node, type Editor} from '../../slate'
-import {EDITOR_TO_PENDING_SELECTION, IS_ANDROID, withDOM} from '../../slate-dom'
+import {IS_ANDROID, withDOM} from '../../slate-dom'
 import {getChunkTreeForNode} from '../chunking'
 import {REACT_MAJOR_VERSION} from '../utils/environment'
 import {ReactEditor} from './react-editor'
@@ -33,7 +33,7 @@ export const withReact = <T extends Editor>(
       // However, this selection change is only executed after the ⁠insertText function.
       // As a result, the already obsolete selection is applied, leading to incorrect
       // final cursor position.
-      EDITOR_TO_PENDING_SELECTION.delete(e)
+      e.pendingSelection = null
 
       return insertText(text, options)
     }

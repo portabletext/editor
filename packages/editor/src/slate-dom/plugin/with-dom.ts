@@ -16,16 +16,7 @@ import {
 } from '../utils/diff-text'
 import {getPlainText, getSlateFragmentAttribute, isDOMText} from '../utils/dom'
 import type {Key} from '../utils/key'
-import {
-  EDITOR_TO_KEY_TO_ELEMENT,
-  EDITOR_TO_ON_CHANGE,
-  EDITOR_TO_PENDING_ACTION,
-  EDITOR_TO_PENDING_DIFFS,
-  EDITOR_TO_PENDING_SELECTION,
-  EDITOR_TO_USER_SELECTION,
-  IS_NODE_MAP_DIRTY,
-  NODE_TO_KEY,
-} from '../utils/weak-maps'
+import {NODE_TO_KEY} from '../utils/weak-maps'
 import {DOMEditor} from './dom-editor'
 
 /**
@@ -44,9 +35,25 @@ export const withDOM = <T extends Editor>(
   const e = editor as T & DOMEditor
   const {apply, onChange} = e
 
-  // The WeakMap which maps a key to a specific HTMLElement must be scoped to the editor instance to
-  // avoid collisions between editors in the DOM that share the same value.
-  EDITOR_TO_KEY_TO_ELEMENT.set(e, new WeakMap())
+  // Initialize DOMEditor state properties
+  e.isNodeMapDirty = false
+  e.domWindow = null
+  e.domElement = null
+  e.domPlaceholder = ''
+  e.domPlaceholderElement = null
+  e.keyToElement = new WeakMap()
+  e.readOnly = false
+  e.focused = false
+  e.composing = false
+  e.userSelection = null
+  e.onContextChange = null
+  e.scheduleFlush = null
+  e.pendingInsertionMarks = null
+  e.userMarks = null
+  e.pendingDiffs = []
+  e.pendingAction = null
+  e.pendingSelection = null
+  e.forceRender = null
 
   // This attempts to reset the NODE_TO_KEY entry to the correct value
   // as apply() changes the object reference and hence invalidates the NODE_TO_KEY entry
@@ -54,30 +61,27 @@ export const withDOM = <T extends Editor>(
     const matches: [Path, Key][] = []
     const pathRefMatches: [PathRef, Key][] = []
 
-    const pendingDiffs = EDITOR_TO_PENDING_DIFFS.get(e)
+    const pendingDiffs = e.pendingDiffs
     if (pendingDiffs?.length) {
       const transformed = pendingDiffs
         .map((textDiff) => transformTextDiff(textDiff, op))
         .filter(Boolean) as TextDiff[]
 
-      EDITOR_TO_PENDING_DIFFS.set(e, transformed)
+      e.pendingDiffs = transformed
     }
 
-    const pendingSelection = EDITOR_TO_PENDING_SELECTION.get(e)
+    const pendingSelection = e.pendingSelection
     if (pendingSelection) {
-      EDITOR_TO_PENDING_SELECTION.set(
-        e,
-        transformPendingRange(e, pendingSelection, op),
-      )
+      e.pendingSelection = transformPendingRange(e, pendingSelection, op)
     }
 
-    const pendingAction = EDITOR_TO_PENDING_ACTION.get(e)
+    const pendingAction = e.pendingAction
     if (pendingAction?.at) {
       const at = Point.isPoint(pendingAction?.at)
         ? transformPendingPoint(e, pendingAction.at, op)
         : transformPendingRange(e, pendingAction.at, op)
 
-      EDITOR_TO_PENDING_ACTION.set(e, at ? {...pendingAction, at} : null)
+      e.pendingAction = at ? {...pendingAction, at} : null
     }
 
     switch (op.type) {
@@ -91,8 +95,8 @@ export const withDOM = <T extends Editor>(
 
       case 'set_selection': {
         // Selection was manually set, don't restore the user selection after the change.
-        EDITOR_TO_USER_SELECTION.get(e)?.unref()
-        EDITOR_TO_USER_SELECTION.delete(e)
+        e.userSelection?.unref()
+        e.userSelection = null
         break
       }
 
@@ -146,7 +150,7 @@ export const withDOM = <T extends Editor>(
       case 'set_selection': {
         // FIXME: Rename to something like IS_DOM_EDITOR_DESYNCED
         // to better reflect reality, see #5792
-        IS_NODE_MAP_DIRTY.set(e, true)
+        e.isNodeMapDirty = true
       }
     }
 
@@ -295,7 +299,7 @@ export const withDOM = <T extends Editor>(
   }
 
   e.onChange = (options) => {
-    const onContextChange = EDITOR_TO_ON_CHANGE.get(e)
+    const onContextChange = e.onContextChange
 
     if (onContextChange) {
       onContextChange(options)

@@ -6,7 +6,6 @@ import {
   type Descendant,
   type Selection,
 } from '../../slate'
-import {EDITOR_TO_ON_CHANGE} from '../../slate-dom'
 import {FocusedContext} from '../hooks/use-focused'
 import {useIsomorphicLayoutEffect} from '../hooks/use-isomorphic-layout-effect'
 import {
@@ -83,10 +82,10 @@ export const Slate = (props: {
   }, [editor, handleSelectorChange, onChange, onSelectionChange, onValueChange])
 
   useEffect(() => {
-    EDITOR_TO_ON_CHANGE.set(editor, onContextChange)
+    editor.onContextChange = onContextChange
 
     return () => {
-      EDITOR_TO_ON_CHANGE.set(editor, () => {})
+      editor.onContextChange = () => {}
     }
   }, [editor, onContextChange])
 

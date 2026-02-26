@@ -1,6 +1,6 @@
 import {useState, type RefObject} from 'react'
 import type {EditorActor} from '../../../editor/editor-machine'
-import {EDITOR_TO_SCHEDULE_FLUSH, IS_ANDROID} from '../../../slate-dom'
+import {IS_ANDROID} from '../../../slate-dom'
 import {useIsMounted} from '../use-is-mounted'
 import {useMutationObserver} from '../use-mutation-observer'
 import {useSlateStatic} from '../use-slate-static'
@@ -50,8 +50,7 @@ export const useAndroidInputManager = !IS_ANDROID
         inputManager.handleDomMutations,
         MUTATION_OBSERVER_CONFIG,
       )
-
-      EDITOR_TO_SCHEDULE_FLUSH.set(editor, inputManager.scheduleFlush)
+      editor.scheduleFlush = inputManager.scheduleFlush
       if (isMounted) {
         inputManager.flush()
       }

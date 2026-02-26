@@ -26,12 +26,6 @@ import {
 import {
   CAN_USE_DOM,
   containsShadowAware,
-  EDITOR_TO_ELEMENT,
-  EDITOR_TO_FORCE_RENDER,
-  EDITOR_TO_PENDING_INSERTION_MARKS,
-  EDITOR_TO_USER_MARKS,
-  EDITOR_TO_USER_SELECTION,
-  EDITOR_TO_WINDOW,
   ELEMENT_TO_NODE,
   getActiveElement,
   getDefaultView,
@@ -40,13 +34,9 @@ import {
   Hotkeys,
   IS_ANDROID,
   IS_CHROME,
-  IS_COMPOSING,
   IS_FIREFOX,
   IS_FIREFOX_LEGACY,
-  IS_FOCUSED,
   IS_IOS,
-  IS_NODE_MAP_DIRTY,
-  IS_READ_ONLY,
   IS_UC_MOBILE,
   IS_WEBKIT,
   IS_WECHATBROWSER,
@@ -206,10 +196,10 @@ export const Editable = forwardRef(
     const {onUserInput, receivedUserInput} = useTrackUserInput()
 
     const [, forceRender] = useReducer((s) => s + 1, 0)
-    EDITOR_TO_FORCE_RENDER.set(editor, forceRender)
+    editor.forceRender = forceRender
 
     // Update internal state on each render.
-    IS_READ_ONLY.set(editor, readOnly)
+    editor.readOnly = readOnly
 
     // Keep track of some state for the event handler logic.
     const state = useMemo(
@@ -253,7 +243,7 @@ export const Editable = forwardRef(
     const onDOMSelectionChange = useMemo(
       () =>
         throttle(() => {
-          if (IS_NODE_MAP_DIRTY.get(editor)) {
+          if (editor.isNodeMapDirty) {
             onDOMSelectionChange()
             return
           }
@@ -289,9 +279,9 @@ export const Editable = forwardRef(
 
             if (activeElement === el) {
               state.latestElement = activeElement
-              IS_FOCUSED.set(editor, true)
+              editor.focused = true
             } else {
-              IS_FOCUSED.delete(editor)
+              editor.focused = false
             }
 
             if (!domSelection) {
@@ -347,12 +337,12 @@ export const Editable = forwardRef(
     })
 
     useIsomorphicLayoutEffect(() => {
-      // Update element-related weak maps with the DOM element ref.
+      // Update element-related editor maps with the DOM element ref.
       let window: Window | null = null
       // biome-ignore lint/suspicious/noAssignInExpressions: Slate upstream pattern — assignment in condition
       if (ref.current && (window = getDefaultView(ref.current))) {
-        EDITOR_TO_WINDOW.set(editor, window)
-        EDITOR_TO_ELEMENT.set(editor, ref.current)
+        editor.domWindow = window
+        editor.domElement = ref.current
         NODE_TO_ELEMENT.set(editor, ref.current)
         ELEMENT_TO_NODE.set(ref.current, editor)
       } else {
@@ -402,7 +392,7 @@ export const Editable = forwardRef(
         }
 
         // verify that the dom selection is in the editor
-        const editorElement = EDITOR_TO_ELEMENT.get(editor)!
+        const editorElement = editor.domElement!
         let hasDomSelectionInEditor = false
         if (
           containsShadowAware(editorElement, anchorNode) &&
@@ -631,7 +621,7 @@ export const Editable = forwardRef(
             }
 
             // If the NODE_MAP is dirty, we can't trust the selection anchor (eg ReactEditor.toDOMPoint)
-            if (!IS_NODE_MAP_DIRTY.get(editor)) {
+            if (!editor.isNodeMapDirty) {
               // Chrome also has issues correctly editing the end of anchor elements: https://bugs.chromium.org/p/chromium/issues/detail?id=1259100
               // Therefore we don't allow native events to insert text at the end of anchor nodes.
               const {anchor} = selection
@@ -685,7 +675,7 @@ export const Editable = forwardRef(
           // If the NODE_MAP is dirty, we can't trust the selection anchor (eg ReactEditor.toDOMPoint via ReactEditor.toSlateRange)
           if (
             (!type.startsWith('delete') || type.startsWith('deleteBy')) &&
-            !IS_NODE_MAP_DIRTY.get(editor)
+            !editor.isNodeMapDirty
           ) {
             const [targetRange] = (event as any).getTargetRanges()
 
@@ -706,7 +696,7 @@ export const Editable = forwardRef(
                 Transforms.select(editor, range)
 
                 if (selectionRef) {
-                  EDITOR_TO_USER_SELECTION.set(editor, selectionRef)
+                  editor.userSelection = selectionRef
                 }
               }
             }
@@ -868,7 +858,7 @@ export const Editable = forwardRef(
                 // https://www.w3.org/TR/input-events-2/
                 if (ReactEditor.isComposing(editor)) {
                   setIsComposing(false)
-                  IS_COMPOSING.set(editor, false)
+                  editor.composing = false
                 }
               }
 
@@ -909,8 +899,8 @@ export const Editable = forwardRef(
           }
 
           // Restore the actual user section if nothing manually set it.
-          const toRestore = EDITOR_TO_USER_SELECTION.get(editor)?.unref()
-          EDITOR_TO_USER_SELECTION.delete(editor)
+          const toRestore = editor.userSelection?.unref()
+          editor.userSelection = null
 
           if (
             toRestore &&
@@ -936,8 +926,7 @@ export const Editable = forwardRef(
         if (node == null) {
           onDOMSelectionChange.cancel()
           scheduleOnDOMSelectionChange.cancel()
-
-          EDITOR_TO_ELEMENT.delete(editor)
+          editor.domElement = null
           NODE_TO_ELEMENT.delete(editor)
 
           if (ref.current && HAS_BEFORE_INPUT_SUPPORT) {
@@ -1083,12 +1072,12 @@ export const Editable = forwardRef(
           // While marks isn't a 'complete' text, we can still use loose Text.equals
           // here which only compares marks anyway.
           if (marks && !Text.equals(text, marks as Text, {loose: true})) {
-            EDITOR_TO_PENDING_INSERTION_MARKS.set(editor, marks)
+            editor.pendingInsertionMarks = marks
             return
           }
         }
 
-        EDITOR_TO_PENDING_INSERTION_MARKS.delete(editor)
+        editor.pendingInsertionMarks = null
       })
     })
 
@@ -1274,7 +1263,7 @@ export const Editable = forwardRef(
                       domSelection?.removeAllRanges()
                     }
 
-                    IS_FOCUSED.delete(editor)
+                    editor.focused = false
                   },
                   [
                     readOnly,
@@ -1357,7 +1346,7 @@ export const Editable = forwardRef(
                       if (ReactEditor.isComposing(editor)) {
                         Promise.resolve().then(() => {
                           setIsComposing(false)
-                          IS_COMPOSING.set(editor, false)
+                          editor.composing = false
                         })
                       }
 
@@ -1384,13 +1373,12 @@ export const Editable = forwardRef(
                         !IS_UC_MOBILE &&
                         event.data
                       ) {
-                        const placeholderMarks =
-                          EDITOR_TO_PENDING_INSERTION_MARKS.get(editor)
-                        EDITOR_TO_PENDING_INSERTION_MARKS.delete(editor)
+                        const placeholderMarks = editor.pendingInsertionMarks
+                        editor.pendingInsertionMarks = null
 
                         // Ensure we insert text with the marks the user was actually seeing
                         if (placeholderMarks !== undefined) {
-                          EDITOR_TO_USER_MARKS.set(editor, editor.marks)
+                          editor.userMarks = editor.marks
                           editor.marks = placeholderMarks as typeof editor.marks
                         }
 
@@ -1403,8 +1391,8 @@ export const Editable = forwardRef(
                           editor,
                         })
 
-                        const userMarks = EDITOR_TO_USER_MARKS.get(editor)
-                        EDITOR_TO_USER_MARKS.delete(editor)
+                        const userMarks = editor.userMarks
+                        editor.userMarks = null
                         if (userMarks !== undefined) {
                           editor.marks = userMarks as typeof editor.marks
                         }
@@ -1422,7 +1410,7 @@ export const Editable = forwardRef(
                     ) {
                       if (!ReactEditor.isComposing(editor)) {
                         setIsComposing(true)
-                        IS_COMPOSING.set(editor, true)
+                        editor.composing = true
                       }
                     }
                   },
@@ -1651,7 +1639,7 @@ export const Editable = forwardRef(
                         return
                       }
 
-                      IS_FOCUSED.set(editor, true)
+                      editor.focused = true
                     }
                   },
                   [readOnly, state, editor, attributes.onFocus],
@@ -1673,7 +1661,7 @@ export const Editable = forwardRef(
                         ReactEditor.isComposing(editor) &&
                         nativeEvent.isComposing === false
                       ) {
-                        IS_COMPOSING.set(editor, false)
+                        editor.composing = false
                         setIsComposing(false)
                       }
 
