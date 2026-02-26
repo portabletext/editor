@@ -3,6 +3,7 @@ import {Editor} from './editor'
 import {PlaygroundFeatureFlagsContext} from './feature-flags'
 import {Inspector} from './inspector'
 import type {PlaygroundActorRef} from './playground-machine'
+import {YjsProvider} from './yjs-plugin'
 
 export function Editors(props: {playgroundRef: PlaygroundActorRef}) {
   const showInspector = useSelector(props.playgroundRef, (s) =>
@@ -29,13 +30,15 @@ export function Editors(props: {playgroundRef: PlaygroundActorRef}) {
           <PlaygroundFeatureFlagsContext.Provider
             value={playgroundFeatureFlags}
           >
-            {editors.map((editor) => (
-              <Editor
-                key={editor.id}
-                editorRef={editor}
-                rangeDecorations={rangeDecorations}
-              />
-            ))}
+            <YjsProvider>
+              {editors.map((editor) => (
+                <Editor
+                  key={editor.id}
+                  editorRef={editor}
+                  rangeDecorations={rangeDecorations}
+                />
+              ))}
+            </YjsProvider>
           </PlaygroundFeatureFlagsContext.Provider>
         </div>
         {showInspector ? (

@@ -75,6 +75,7 @@ import {Tooltip} from './primitives/tooltip'
 import {RangeDecorationButton} from './range-decoration-button'
 import {SlashCommandPickerPlugin} from './slash-command-picker'
 import {PortableTextToolbar} from './toolbar/portable-text-toolbar'
+import {PlaygroundYjsPlugin} from './yjs-plugin'
 
 export function Editor(props: {
   editorRef: EditorActorRef
@@ -108,6 +109,7 @@ export function Editor(props: {
             schemaDefinition: playgroundSchemaDefinition,
           }}
         >
+          <PlaygroundYjsPlugin enabled={playgroundFeatureFlags.yjsMode} />
           <EditorEventListener
             editorRef={props.editorRef}
             value={value}

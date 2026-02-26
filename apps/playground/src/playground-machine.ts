@@ -296,6 +296,11 @@ export const playgroundMachine = setup({
     'broadcast patches': ({context, event}) => {
       assertEvent(event, 'editor.mutation')
       context.editors.forEach((editor) => {
+        // In Yjs mode, only send patches to the originating editor (for the
+        // inspector). Yjs handles sync between editors.
+        if (context.featureFlags.yjsMode && event.editorId !== editor.id) {
+          return
+        }
         editor.send({
           type: 'patches',
           patches: event.patches.map((patch) => ({
@@ -336,6 +341,8 @@ export const playgroundMachine = setup({
       patchFeed: [],
     }),
     'broadcast value': ({context}) => {
+      // In Yjs mode, don't broadcast value updates — Yjs handles sync
+      if (context.featureFlags.yjsMode) return
       const value = context.value
       if (value !== null) {
         context.editors.forEach((editor) => {
