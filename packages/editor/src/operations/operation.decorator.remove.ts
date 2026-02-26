@@ -1,5 +1,6 @@
+import {applySetNode} from '../internal-utils/apply-set-node'
 import {toSlateRange} from '../internal-utils/to-slate-range'
-import {Editor, Element, Range, Text, Transforms} from '../slate'
+import {Editor, Element, Node, Range, Text} from '../slate'
 import type {OperationImplementation} from './operation.types'
 
 export const decoratorRemoveOperationImplementation: OperationImplementation<
@@ -26,11 +27,35 @@ export const decoratorRemoveOperationImplementation: OperationImplementation<
   if (Range.isExpanded(at)) {
     const rangeRef = Editor.rangeRef(editor, at, {affinity: 'inward'})
 
-    Transforms.setNodes(
-      editor,
-      {},
-      {at, match: Text.isText, split: true, hanging: true},
-    )
+    // Split text nodes at range boundaries (equivalent to setNodes with split:true and empty props)
+    if (
+      !(
+        Range.isCollapsed(at) &&
+        Editor.leaf(editor, at.anchor)[0].text.length > 0
+      )
+    ) {
+      const [start, end] = Range.edges(at)
+      const endAtEndOfNode = Editor.isEnd(editor, end, end.path)
+      if (!endAtEndOfNode || !Editor.isEdge(editor, end, end.path)) {
+        const [endNode] = Editor.node(editor, end.path)
+        editor.apply({
+          type: 'split_node',
+          path: end.path,
+          position: end.offset,
+          properties: Node.extractProps(endNode),
+        })
+      }
+      const startAtStartOfNode = Editor.isStart(editor, start, start.path)
+      if (!startAtStartOfNode || !Editor.isEdge(editor, start, start.path)) {
+        const [startNode] = Editor.node(editor, start.path)
+        editor.apply({
+          type: 'split_node',
+          path: start.path,
+          position: start.offset,
+          properties: Node.extractProps(startNode),
+        })
+      }
+    }
 
     const updatedAt = rangeRef.unref()
 
@@ -44,7 +69,7 @@ export const decoratorRemoveOperationImplementation: OperationImplementation<
       splitTextNodes.forEach(([node, path]) => {
         const block = editor.children[path[0]!]
         if (Element.isElement(block) && block.children.includes(node)) {
-          Transforms.setNodes(
+          applySetNode(
             editor,
             {
               marks: (Array.isArray(node.marks) ? node.marks : []).filter(
@@ -52,7 +77,7 @@ export const decoratorRemoveOperationImplementation: OperationImplementation<
               ),
               _type: 'span',
             },
-            {at: path},
+            path,
           )
         }
       })
@@ -75,16 +100,12 @@ export const decoratorRemoveOperationImplementation: OperationImplementation<
         (existingMark) => existingMark !== mark,
       )
 
-      Transforms.setNodes(
-        editor,
-        {
-          marks: existingMarksWithoutDecorator,
-        },
-        {
-          at: blockPath,
-          match: (node) => editor.isTextSpan(node),
-        },
-      )
+      for (const [, spanPath] of Editor.nodes(editor, {
+        at: blockPath,
+        match: (node) => editor.isTextSpan(node),
+      })) {
+        applySetNode(editor, {marks: existingMarksWithoutDecorator}, spanPath)
+      }
     } else {
       editor.decoratorState[mark] = false
     }

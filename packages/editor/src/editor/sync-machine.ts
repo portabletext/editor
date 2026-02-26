@@ -13,6 +13,8 @@ import {
   type AnyEventObject,
   type CallbackLogicFunction,
 } from 'xstate'
+import {applyDeselect, applySelect} from '../internal-utils/apply-selection'
+import {applySetNode} from '../internal-utils/apply-set-node'
 import {debug} from '../internal-utils/debug'
 import {
   isEqualBlocks,
@@ -21,14 +23,7 @@ import {
 } from '../internal-utils/equality'
 import {validateValue} from '../internal-utils/validateValue'
 import {toSlateBlock, VOID_CHILD_KEY} from '../internal-utils/values'
-import {
-  deleteText,
-  Editor,
-  Text,
-  Transforms,
-  type Descendant,
-  type Node,
-} from '../slate'
+import {deleteText, Editor, Node, Text, type Descendant} from '../slate'
 import {withRemoteChanges} from '../slate-plugins/slate-plugin.remote-changes'
 import {pluginWithoutHistory} from '../slate-plugins/slate-plugin.without-history'
 import {withoutPatching} from '../slate-plugins/slate-plugin.without-patching'
@@ -564,7 +559,7 @@ async function updateValue({
       !slateEditor.selection &&
       slateEditor.children.length > 0
     ) {
-      Transforms.select(slateEditor, Editor.start(slateEditor, []))
+      applySelect(slateEditor, Editor.start(slateEditor, []))
       slateEditor.onChange()
     }
 
@@ -610,8 +605,12 @@ function clearEditor({
           const childrenLength = slateEditor.children.length
 
           slateEditor.children.forEach((_, index) => {
-            Transforms.removeNodes(slateEditor, {
-              at: [childrenLength - 1 - index],
+            const removePath = [childrenLength - 1 - index]
+            const [removeNode] = Editor.node(slateEditor, removePath)
+            slateEditor.apply({
+              type: 'remove_node',
+              path: removePath,
+              node: removeNode,
             })
           })
         })
@@ -640,8 +639,11 @@ function removeExtraBlocks({
 
         if (value.length < childrenLength) {
           for (let i = childrenLength - 1; i > value.length - 1; i--) {
-            Transforms.removeNodes(slateEditor, {
-              at: [i],
+            const [removeNode] = Editor.node(slateEditor, [i])
+            slateEditor.apply({
+              type: 'remove_node',
+              path: [i],
+              node: removeNode,
             })
           }
 
@@ -698,8 +700,10 @@ function syncBlock({
       Editor.withoutNormalizing(slateEditor, () => {
         withRemoteChanges(slateEditor, () => {
           withoutPatching(slateEditor, () => {
-            Transforms.insertNodes(slateEditor, slateBlock, {
-              at: [index],
+            slateEditor.apply({
+              type: 'insert_node',
+              path: [index],
+              node: slateBlock,
             })
           })
         })
@@ -848,16 +852,21 @@ function replaceBlock({
     currentSelection && currentSelection.focus.path[0] === index
 
   if (selectionFocusOnBlock) {
-    Transforms.deselect(slateEditor)
+    applyDeselect(slateEditor)
   }
 
-  Transforms.removeNodes(slateEditor, {at: [index]})
-  Transforms.insertNodes(slateEditor, slateBlock, {at: [index]})
+  const [oldNode] = Editor.node(slateEditor, [index])
+  slateEditor.apply({type: 'remove_node', path: [index], node: oldNode})
+  slateEditor.apply({type: 'insert_node', path: [index], node: slateBlock})
 
   slateEditor.onChange()
 
-  if (selectionFocusOnBlock) {
-    Transforms.select(slateEditor, currentSelection)
+  if (
+    selectionFocusOnBlock &&
+    Node.has(slateEditor, currentSelection.anchor.path) &&
+    Node.has(slateEditor, currentSelection.focus.path)
+  ) {
+    applySelect(slateEditor, currentSelection)
   }
 }
 
@@ -884,9 +893,9 @@ function updateBlock({
   })
 
   // Update the root props on the block
-  Transforms.setNodes(slateEditor, slateBlock as Partial<Node>, {
-    at: [index],
-  })
+  applySetNode(slateEditor, slateBlock as unknown as Record<string, unknown>, [
+    index,
+  ])
 
   // Text block's need to have their children updated as well (setNode does not target a node's children)
   if (
@@ -905,8 +914,11 @@ function updateBlock({
         if (childIndex > 0) {
           debug.syncValue('Removing child')
 
-          Transforms.removeNodes(slateEditor, {
-            at: [index, childIndex],
+          const [childNode] = Editor.node(slateEditor, [index, childIndex])
+          slateEditor.apply({
+            type: 'remove_node',
+            path: [index, childIndex],
+            node: childNode,
           })
         }
       })
@@ -934,9 +946,11 @@ function updateBlock({
             oldBlockChild,
           )
 
-          Transforms.setNodes(slateEditor, currentBlockChild as Partial<Node>, {
-            at: path,
-          })
+          applySetNode(
+            slateEditor,
+            currentBlockChild as unknown as Record<string, unknown>,
+            path,
+          )
 
           const isSpanNode =
             isSpan({schema: context.schema}, currentBlockChild) &&
@@ -952,8 +966,11 @@ function updateBlock({
               })
             }
 
-            Transforms.insertText(slateEditor, currentBlockChild.text, {
-              at: path,
+            slateEditor.apply({
+              type: 'insert_text',
+              path,
+              offset: 0,
+              text: currentBlockChild.text,
             })
 
             slateEditor.onChange()
@@ -964,23 +981,24 @@ function updateBlock({
               currentBlockChild,
             )
 
-            Transforms.setNodes(
-              slateEditor,
-              {_key: VOID_CHILD_KEY},
-              {
-                at: [...path, 0],
-                voids: true,
-              },
-            )
+            applySetNode(slateEditor, {_key: VOID_CHILD_KEY}, [...path, 0])
           }
         } else if (oldBlockChild) {
           debug.syncValue('Replacing child', currentBlockChild)
 
-          Transforms.removeNodes(slateEditor, {
-            at: [index, currentBlockChildIndex],
+          const [oldChild] = Editor.node(slateEditor, [
+            index,
+            currentBlockChildIndex,
+          ])
+          slateEditor.apply({
+            type: 'remove_node',
+            path: [index, currentBlockChildIndex],
+            node: oldChild,
           })
-          Transforms.insertNodes(slateEditor, currentBlockChild as Node, {
-            at: [index, currentBlockChildIndex],
+          slateEditor.apply({
+            type: 'insert_node',
+            path: [index, currentBlockChildIndex],
+            node: currentBlockChild as Node,
           })
 
           slateEditor.onChange()
@@ -988,8 +1006,10 @@ function updateBlock({
           // Insert it if it didn't exist before
           debug.syncValue('Inserting new child', currentBlockChild)
 
-          Transforms.insertNodes(slateEditor, currentBlockChild as Node, {
-            at: [index, currentBlockChildIndex],
+          slateEditor.apply({
+            type: 'insert_node',
+            path: [index, currentBlockChildIndex],
+            node: currentBlockChild as Node,
           })
 
           slateEditor.onChange()
