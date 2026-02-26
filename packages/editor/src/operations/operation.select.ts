@@ -1,6 +1,5 @@
 import {applyDeselect, applySelect} from '../internal-utils/apply-selection'
 import {toSlateRange} from '../internal-utils/to-slate-range'
-
 import type {OperationImplementation} from './operation.types'
 
 export const selectOperationImplementation: OperationImplementation<
