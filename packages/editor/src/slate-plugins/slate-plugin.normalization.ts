@@ -1,9 +1,11 @@
 import type {PortableTextObject, PortableTextSpan} from '@portabletext/schema'
 import type {EditorActor} from '../editor/editor-machine'
+import {applyInsertNodeAtPath} from '../internal-utils/apply-insert-node'
+import {applySetNode} from '../internal-utils/apply-set-node'
 import {createPlaceholderBlock} from '../internal-utils/create-placeholder-block'
 import {debug} from '../internal-utils/debug'
 import {isEqualMarkDefs} from '../internal-utils/equality'
-import {Editor, Node, Path, Range, Text, Transforms} from '../slate'
+import {Editor, Node, Path, Range, Text} from '../slate'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {withNormalizeNode} from './slate-plugin.normalize-node'
 import {withoutPatching} from './slate-plugin.without-patching'
@@ -26,10 +28,11 @@ export function createNormalizationPlugin(
       if (Editor.isEditor(node) && node.children.length === 0) {
         withoutPatching(editor, () => {
           withNormalizeNode(editor, () => {
-            Transforms.insertNodes(
+            applyInsertNodeAtPath(
               editor,
               createPlaceholderBlock(editorActor.getSnapshot().context),
-              {at: [0], select: true},
+              [0],
+              {select: true},
             )
           })
         })
@@ -52,9 +55,13 @@ export function createNormalizationPlugin(
           ) {
             debug.normalization('merging spans with same marks')
             withNormalizeNode(editor, () => {
-              Transforms.mergeNodes(editor, {
-                at: [childPath[0]!, childPath[1]! + 1],
-                voids: true,
+              const mergePath = [childPath[0]!, childPath[1]! + 1]
+              const {text: _text, ...properties} = nextNode
+              editor.apply({
+                type: 'merge_node',
+                path: mergePath,
+                position: child.text.length,
+                properties,
               })
             })
             return
@@ -68,7 +75,7 @@ export function createNormalizationPlugin(
       if (editor.isTextBlock(node) && !Array.isArray(node.markDefs)) {
         debug.normalization('adding .markDefs to block node')
         withNormalizeNode(editor, () => {
-          Transforms.setNodes(editor, {markDefs: []}, {at: path})
+          applySetNode(editor, {markDefs: []}, path)
         })
         return
       }
@@ -84,7 +91,7 @@ export function createNormalizationPlugin(
         debug.normalization('adding .style to block node')
 
         withNormalizeNode(editor, () => {
-          Transforms.setNodes(editor, {style: defaultStyle}, {at: path})
+          applySetNode(editor, {style: defaultStyle}, path)
         })
         return
       }
@@ -95,7 +102,7 @@ export function createNormalizationPlugin(
       if (editor.isTextSpan(node) && !Array.isArray(node.marks)) {
         debug.normalization('Adding .marks to span node')
         withNormalizeNode(editor, () => {
-          Transforms.setNodes(editor, {marks: []}, {at: path})
+          applySetNode(editor, {marks: []}, path)
         })
         return
       }
@@ -117,14 +124,14 @@ export function createNormalizationPlugin(
           if (node.text === '' && annotations && annotations.length > 0) {
             debug.normalization('removing annotations from empty span node')
             withNormalizeNode(editor, () => {
-              Transforms.setNodes(
+              applySetNode(
                 editor,
                 {
                   marks: node.marks?.filter((mark) =>
                     decorators.includes(mark),
                   ),
                 },
-                {at: path},
+                path,
               )
             })
             return
@@ -155,14 +162,14 @@ export function createNormalizationPlugin(
                 'removing orphaned annotations from span node',
               )
               withNormalizeNode(editor, () => {
-                Transforms.setNodes(
+                applySetNode(
                   editor,
                   {
                     marks: marks.filter(
                       (mark) => !orphanedAnnotations.includes(mark),
                     ),
                   },
-                  {at: childPath},
+                  childPath,
                 )
               })
               return
@@ -193,14 +200,14 @@ export function createNormalizationPlugin(
           if (orphanedAnnotations.length > 0) {
             debug.normalization('removing orphaned annotations from span node')
             withNormalizeNode(editor, () => {
-              Transforms.setNodes(
+              applySetNode(
                 editor,
                 {
                   marks: marks.filter(
                     (mark) => !orphanedAnnotations.includes(mark),
                   ),
                 },
-                {at: path},
+                path,
               )
             })
             return
@@ -224,7 +231,7 @@ export function createNormalizationPlugin(
         if (markDefs.length !== newMarkDefs.length) {
           debug.normalization('removing duplicate markDefs')
           withNormalizeNode(editor, () => {
-            Transforms.setNodes(editor, {markDefs: newMarkDefs}, {at: path})
+            applySetNode(editor, {markDefs: newMarkDefs}, path)
           })
           return
         }
@@ -252,12 +259,12 @@ export function createNormalizationPlugin(
         if (node.markDefs && !isEqualMarkDefs(newMarkDefs, node.markDefs)) {
           debug.normalization('removing markDef not in use')
           withNormalizeNode(editor, () => {
-            Transforms.setNodes(
+            applySetNode(
               editor,
               {
                 markDefs: newMarkDefs,
               },
-              {at: path},
+              path,
             )
           })
           return
@@ -381,11 +388,7 @@ export function createNormalizationPlugin(
           ]
 
           debug.normalization(`copying markDefs over to merged block`, op)
-          Transforms.setNodes(
-            editor,
-            {markDefs: newMarkDefs},
-            {at: targetPath, voids: false},
-          )
+          applySetNode(editor, {markDefs: newMarkDefs}, targetPath)
           apply(op)
           return
         }

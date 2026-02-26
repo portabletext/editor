@@ -1,8 +1,9 @@
 import {isSpan, isTextBlock} from '@portabletext/schema'
 import type {EditorActor} from '../editor/editor-machine'
 import type {EditorContext, EditorSnapshot} from '../editor/editor-snapshot'
+import {applySetNode} from '../internal-utils/apply-set-node'
 import {isEqualMarks} from '../internal-utils/equality'
-import {Editor, Element, Node, Path, Transforms} from '../slate'
+import {Editor, Element, Node, Path} from '../slate'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {withNormalizeNode} from './slate-plugin.normalize-node'
 
@@ -173,27 +174,15 @@ export function createUniqueKeysPlugin(editorActor: EditorActor) {
               }) ?? []
 
             if (!isEqualMarks(child.marks, marks)) {
-              Transforms.setNodes(
-                editor,
-                {
-                  marks,
-                },
-                {
-                  at: [index, childIndex],
-                },
-              )
+              applySetNode(editor, {marks}, [index, childIndex])
             }
           }
 
           if (previousBlockChildKeys.includes(child._key)) {
-            Transforms.setNodes(
+            applySetNode(
               editor,
-              {
-                _key: editorActor.getSnapshot().context.keyGenerator(),
-              },
-              {
-                at: [index, childIndex],
-              },
+              {_key: editorActor.getSnapshot().context.keyGenerator()},
+              [index, childIndex],
             )
           }
           childIndex++
@@ -230,7 +219,7 @@ export function createUniqueKeysPlugin(editorActor: EditorActor) {
               blockKeys.add(_key)
 
               withNormalizeNode(editor, () => {
-                Transforms.setNodes(editor, {_key}, {at: path})
+                applySetNode(editor, {_key}, path)
               })
 
               return
@@ -242,7 +231,7 @@ export function createUniqueKeysPlugin(editorActor: EditorActor) {
               blockKeys.add(_key)
 
               withNormalizeNode(editor, () => {
-                Transforms.setNodes(editor, {_key}, {at: path})
+                applySetNode(editor, {_key}, path)
               })
 
               return
@@ -260,10 +249,10 @@ export function createUniqueKeysPlugin(editorActor: EditorActor) {
         // Set key on block itself
         if (!node._key) {
           withNormalizeNode(editor, () => {
-            Transforms.setNodes(
+            applySetNode(
               editor,
               {_key: editorActor.getSnapshot().context.keyGenerator()},
-              {at: path},
+              path,
             )
           })
           return
@@ -279,7 +268,7 @@ export function createUniqueKeysPlugin(editorActor: EditorActor) {
             childKeys.add(_key)
 
             withNormalizeNode(editor, () => {
-              Transforms.setNodes(editor, {_key}, {at: childPath})
+              applySetNode(editor, {_key}, childPath)
             })
 
             return
@@ -291,7 +280,7 @@ export function createUniqueKeysPlugin(editorActor: EditorActor) {
             childKeys.add(_key)
 
             withNormalizeNode(editor, () => {
-              Transforms.setNodes(editor, {_key}, {at: childPath})
+              applySetNode(editor, {_key}, childPath)
             })
 
             return
