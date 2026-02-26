@@ -43,6 +43,11 @@ export interface BaseEditor {
   selection: Selection
   operations: Operation[]
   marks: EditorMarks | null
+  dirtyPaths: Path[]
+  dirtyPathKeys: Set<string>
+  flushing: boolean
+  normalizing: boolean
+  batchingDirtyPaths: boolean
 
   // Overrideable core methods.
 
@@ -149,17 +154,17 @@ export interface BaseEditor {
   parent: OmitFirstArg<typeof Editor.parent>
   path: OmitFirstArg<typeof Editor.path>
   pathRef: OmitFirstArg<typeof Editor.pathRef>
-  pathRefs: OmitFirstArg<typeof Editor.pathRefs>
+  pathRefs: Set<PathRef>
   point: OmitFirstArg<typeof Editor.point>
   pointRef: OmitFirstArg<typeof Editor.pointRef>
-  pointRefs: OmitFirstArg<typeof Editor.pointRefs>
+  pointRefs: Set<PointRef>
   positions: OmitFirstArg<typeof Editor.positions>
   previous: <T extends Node>(
     options?: EditorPreviousOptions<T>,
   ) => NodeEntry<T> | undefined
   range: OmitFirstArg<typeof Editor.range>
   rangeRef: OmitFirstArg<typeof Editor.rangeRef>
-  rangeRefs: OmitFirstArg<typeof Editor.rangeRefs>
+  rangeRefs: Set<RangeRef>
   start: OmitFirstArg<typeof Editor.start>
   string: OmitFirstArg<typeof Editor.string>
   unhangRange: OmitFirstArg<typeof Editor.unhangRange>
@@ -811,7 +816,7 @@ export const Editor: EditorInterface = {
   },
 
   pathRefs(editor) {
-    return editor.pathRefs()
+    return editor.pathRefs
   },
 
   point(editor, at, options) {
@@ -823,7 +828,7 @@ export const Editor: EditorInterface = {
   },
 
   pointRefs(editor) {
-    return editor.pointRefs()
+    return editor.pointRefs
   },
 
   positions(editor, options) {
@@ -843,7 +848,7 @@ export const Editor: EditorInterface = {
   },
 
   rangeRefs(editor) {
-    return editor.rangeRefs()
+    return editor.rangeRefs
   },
 
   setNormalizing(editor, isNormalizing) {

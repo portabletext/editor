@@ -5,7 +5,6 @@ import {PointRef} from '../interfaces/point-ref'
 import {RangeRef} from '../interfaces/range-ref'
 import {Transforms} from '../interfaces/transforms'
 import type {WithEditorFirstArg} from '../utils/types'
-import {FLUSHING} from '../utils/weak-maps'
 import {isBatchingDirtyPaths} from './batch-dirty-paths'
 import {updateDirtyPaths} from './update-dirty-paths'
 
@@ -41,11 +40,11 @@ export const apply: WithEditorFirstArg<Editor['apply']> = (editor, op) => {
     editor.marks = null
   }
 
-  if (!FLUSHING.get(editor)) {
-    FLUSHING.set(editor, true)
+  if (!editor.flushing) {
+    editor.flushing = true
 
     Promise.resolve().then(() => {
-      FLUSHING.set(editor, false)
+      editor.flushing = false
       editor.onChange({operation: op})
       editor.operations = []
     })

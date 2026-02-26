@@ -2,10 +2,8 @@
 
 import type {Editor} from '../interfaces/editor'
 
-const BATCHING_DIRTY_PATHS: WeakMap<Editor, boolean> = new WeakMap()
-
 export const isBatchingDirtyPaths = (editor: Editor) => {
-  return BATCHING_DIRTY_PATHS.get(editor) || false
+  return editor.batchingDirtyPaths
 }
 
 export const batchDirtyPaths = (
@@ -13,12 +11,12 @@ export const batchDirtyPaths = (
   fn: () => void,
   update: () => void,
 ) => {
-  const value = BATCHING_DIRTY_PATHS.get(editor) || false
-  BATCHING_DIRTY_PATHS.set(editor, true)
+  const value = editor.batchingDirtyPaths
+  editor.batchingDirtyPaths = true
   try {
     fn()
     update()
   } finally {
-    BATCHING_DIRTY_PATHS.set(editor, value)
+    editor.batchingDirtyPaths = value
   }
 }
