@@ -1,5 +1,14 @@
 # Changelog
 
+## 7.0.1
+
+### Patch Changes
+
+- Updated dependencies [[`da6e04f`](https://github.com/portabletext/editor/commit/da6e04f3685de0ecab1bee38c941d5cdd3cd1aac), [`a4b0b48`](https://github.com/portabletext/editor/commit/a4b0b484e865a83174d27196112c619ffd9b1605), [`9e768b1`](https://github.com/portabletext/editor/commit/9e768b1d88446d89bbfc9dd7d0e54ba3d7d09765), [`d28c017`](https://github.com/portabletext/editor/commit/d28c017bec5a064cd3402b9a99a3358f693c4238), [`c3b7905`](https://github.com/portabletext/editor/commit/c3b79057c4992409dde5646d86d3b7c5d3db26a3), [`e9bcda3`](https://github.com/portabletext/editor/commit/e9bcda385fb8217fddffe039325a9d338a51adec), [`80c7378`](https://github.com/portabletext/editor/commit/80c73781a0d45fce376083a810f16b1438c9d94f), [`77a10ce`](https://github.com/portabletext/editor/commit/77a10ced03fe211bd912b520e7fb469985fec1af), [`018857f`](https://github.com/portabletext/editor/commit/018857fc34d9d600d4a45c06b1b62926759e4164), [`398adef`](https://github.com/portabletext/editor/commit/398adefc035c177dafd0b16d7dbdcd8de6f86fde), [`7d5b051`](https://github.com/portabletext/editor/commit/7d5b051a4a310b798b62ba78b6fea0a11351ed48)]:
+  - @portabletext/editor@6.0.1
+  - @portabletext/plugin-character-pair-decorator@7.0.1
+  - @portabletext/plugin-input-rule@4.0.1
+
 ## 7.0.0
 
 ### Patch Changes

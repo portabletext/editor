@@ -1,5 +1,43 @@
 # Changelog
 
+## 6.0.1
+
+### Patch Changes
+
+- [#2200](https://github.com/portabletext/editor/pull/2200) [`da6e04f`](https://github.com/portabletext/editor/commit/da6e04f3685de0ecab1bee38c941d5cdd3cd1aac) Thanks [@christianhg](https://github.com/christianhg)! - fix: bypass editor methods for DOM input events
+
+  DOM input events now route directly to the behavior system instead of going through Editor methods first. This moves event handling closer to the source, giving more control over how input is processed.
+
+- [#2256](https://github.com/portabletext/editor/pull/2256) [`a4b0b48`](https://github.com/portabletext/editor/commit/a4b0b484e865a83174d27196112c619ffd9b1605) Thanks [@christianhg](https://github.com/christianhg)! - Remove unused internal Slate editor methods (edges, first, fragment, hasBlocks, hasTexts, isEmpty, last). These are internal to the Slate layer and not part of the public PTE API.
+
+- [#2241](https://github.com/portabletext/editor/pull/2241) [`9e768b1`](https://github.com/portabletext/editor/commit/9e768b1d88446d89bbfc9dd7d0e54ba3d7d09765) Thanks [@christianhg](https://github.com/christianhg)! - fix: add editor to focus listener effect dependency array
+
+- [#2241](https://github.com/portabletext/editor/pull/2241) [`d28c017`](https://github.com/portabletext/editor/commit/d28c017bec5a064cd3402b9a99a3358f693c4238) Thanks [@christianhg](https://github.com/christianhg)! - fix(perf): optimize normalizeNode with split loops and element refetching
+
+- [#2252](https://github.com/portabletext/editor/pull/2252) [`c3b7905`](https://github.com/portabletext/editor/commit/c3b79057c4992409dde5646d86d3b7c5d3db26a3) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove unused internal Editor methods
+
+  Removed internal Editor methods that were superseded by the behavior system: `addMark`, `removeMark`, `deleteBackward`, `deleteForward`, `deleteFragment`, `insertSoftBreak`, `insertNode`, and `Transforms.setPoint`. These were never part of the public API.
+
+- [#2239](https://github.com/portabletext/editor/pull/2239) [`e9bcda3`](https://github.com/portabletext/editor/commit/e9bcda385fb8217fddffe039325a9d338a51adec) Thanks [@christianhg](https://github.com/christianhg)! - fix: replace is-hotkey with @portabletext/keyboard-shortcuts. is-hotkey doesn't ship ESM.
+
+- [#2255](https://github.com/portabletext/editor/pull/2255) [`80c7378`](https://github.com/portabletext/editor/commit/80c73781a0d45fce376083a810f16b1438c9d94f) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove remaining WeakMaps, move state onto editor object
+
+  WeakMaps are an upstream Slate pattern for supporting multiple editor instances sharing a module scope. Since PTE owns the editor lifecycle, storing state directly on the editor object is simpler and easier to debug.
+
+- [#2253](https://github.com/portabletext/editor/pull/2253) [`77a10ce`](https://github.com/portabletext/editor/commit/77a10ced03fe211bd912b520e7fb469985fec1af) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove WeakMaps from Slate core, move state onto editor object
+
+  WeakMaps are an upstream Slate pattern for supporting multiple editor instances sharing a module scope. Since PTE owns the editor lifecycle, storing state directly on the editor object is simpler and easier to debug.
+
+- [#2254](https://github.com/portabletext/editor/pull/2254) [`018857f`](https://github.com/portabletext/editor/commit/018857fc34d9d600d4a45c06b1b62926759e4164) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove Editor-keyed WeakMaps from slate-dom, move state onto DOMEditor
+
+  WeakMaps are an upstream Slate pattern for supporting multiple editor instances sharing a module scope. Since PTE owns the editor lifecycle, storing state directly on the editor object is simpler and easier to debug.
+
+- [#2251](https://github.com/portabletext/editor/pull/2251) [`398adef`](https://github.com/portabletext/editor/commit/398adefc035c177dafd0b16d7dbdcd8de6f86fde) Thanks [@christianhg](https://github.com/christianhg)! - fix: replace `Transforms` calls with raw operations in editor internals
+
+  Replaced all `Transforms.*` calls in PTE source code with raw `editor.apply()` operations or direct `editor.*` method calls. This is an internal refactor with no behavior change. Helper utilities (`applySelect`, `applyDeselect`, `applySetNode`, `applyInsertNodeAtPath`, `applyInsertNodeAtPoint`, `applyMove`) extracted to `internal-utils/`.
+
+- [#2241](https://github.com/portabletext/editor/pull/2241) [`7d5b051`](https://github.com/portabletext/editor/commit/7d5b051a4a310b798b62ba78b6fea0a11351ed48) Thanks [@christianhg](https://github.com/christianhg)! - fix: respect suppressThrow in toSlatePoint findPath calls
+
 ## 6.0.0
 
 ### Major Changes
