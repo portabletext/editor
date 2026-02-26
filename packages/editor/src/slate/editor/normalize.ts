@@ -2,7 +2,6 @@ import {Editor, type EditorInterface} from '../interfaces/editor'
 import {Element} from '../interfaces/element'
 import {Node} from '../interfaces/node'
 import type {Path} from '../interfaces/path'
-import {DIRTY_PATH_KEYS, DIRTY_PATHS} from '../utils/weak-maps'
 
 export const normalize: EditorInterface['normalize'] = (
   editor,
@@ -10,11 +9,11 @@ export const normalize: EditorInterface['normalize'] = (
 ) => {
   const {force = false, operation} = options
   const getDirtyPaths = (editor: Editor) => {
-    return DIRTY_PATHS.get(editor) || []
+    return editor.dirtyPaths
   }
 
   const getDirtyPathKeys = (editor: Editor) => {
-    return DIRTY_PATH_KEYS.get(editor) || new Set()
+    return editor.dirtyPathKeys
   }
 
   const popDirtyPath = (editor: Editor): Path => {
@@ -31,8 +30,8 @@ export const normalize: EditorInterface['normalize'] = (
   if (force) {
     const allPaths = Array.from(Node.nodes(editor), ([, p]) => p)
     const allPathKeys = new Set(allPaths.map((p) => p.join(',')))
-    DIRTY_PATHS.set(editor, allPaths)
-    DIRTY_PATH_KEYS.set(editor, allPathKeys)
+    editor.dirtyPaths = allPaths
+    editor.dirtyPathKeys = allPathKeys
   }
 
   if (getDirtyPaths(editor).length === 0) {

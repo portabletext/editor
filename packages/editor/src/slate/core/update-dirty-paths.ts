@@ -1,6 +1,5 @@
 import type {Editor} from '../interfaces/editor'
 import type {Path} from '../interfaces/path'
-import {DIRTY_PATH_KEYS, DIRTY_PATHS} from '../utils/weak-maps'
 
 /**
  * update editor dirty paths
@@ -13,8 +12,8 @@ export function updateDirtyPaths(
   newDirtyPaths: Path[],
   transform?: (p: Path) => Path | null,
 ) {
-  const oldDirtyPaths = DIRTY_PATHS.get(editor) || []
-  const oldDirtyPathKeys = DIRTY_PATH_KEYS.get(editor) || new Set()
+  const oldDirtyPaths = editor.dirtyPaths
+  const oldDirtyPathKeys = editor.dirtyPathKeys
   let dirtyPaths: Path[]
   let dirtyPathKeys: Set<string>
 
@@ -45,6 +44,6 @@ export function updateDirtyPaths(
     add(path)
   }
 
-  DIRTY_PATHS.set(editor, dirtyPaths)
-  DIRTY_PATH_KEYS.set(editor, dirtyPathKeys)
+  editor.dirtyPaths = dirtyPaths
+  editor.dirtyPathKeys = dirtyPathKeys
 }
