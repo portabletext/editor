@@ -121,25 +121,18 @@ export interface BaseEditor {
   ) => NodeEntry<T> | undefined
   after: OmitFirstArg<typeof Editor.after>
   before: OmitFirstArg<typeof Editor.before>
-  edges: OmitFirstArg<typeof Editor.edges>
   elementReadOnly: OmitFirstArg<typeof Editor.elementReadOnly>
   end: OmitFirstArg<typeof Editor.end>
-  first: OmitFirstArg<typeof Editor.first>
-  fragment: OmitFirstArg<typeof Editor.fragment>
   getMarks: OmitFirstArg<typeof Editor.marks>
-  hasBlocks: OmitFirstArg<typeof Editor.hasBlocks>
   hasInlines: OmitFirstArg<typeof Editor.hasInlines>
   hasPath: OmitFirstArg<typeof Editor.hasPath>
-  hasTexts: OmitFirstArg<typeof Editor.hasTexts>
   isBlock: OmitFirstArg<typeof Editor.isBlock>
   isEdge: OmitFirstArg<typeof Editor.isEdge>
-  isEmpty: OmitFirstArg<typeof Editor.isEmpty>
   isEnd: OmitFirstArg<typeof Editor.isEnd>
   isInline: OmitFirstArg<typeof Editor.isInline>
   isNormalizing: OmitFirstArg<typeof Editor.isNormalizing>
   isStart: OmitFirstArg<typeof Editor.isStart>
   isVoid: OmitFirstArg<typeof Editor.isVoid>
-  last: OmitFirstArg<typeof Editor.last>
   leaf: OmitFirstArg<typeof Editor.leaf>
   levels: <T extends Node>(
     options?: EditorLevelsOptions<T>,
@@ -332,11 +325,6 @@ export interface EditorInterface {
   ) => Point | undefined
 
   /**
-   * Get the start and end points of a location.
-   */
-  edges: (editor: Editor, at: Location) => [Point, Point]
-
-  /**
    * Match a read-only element in the current branch of the editor.
    */
   elementReadOnly: (
@@ -350,31 +338,11 @@ export interface EditorInterface {
   end: (editor: Editor, at: Location) => Point
 
   /**
-   * Get the first node at a location.
-   */
-  first: (editor: Editor, at: Location) => NodeEntry
-
-  /**
-   * Get the fragment at a location.
-   */
-  fragment: (editor: Editor, at: Location) => Descendant[]
-
-  /**
-   * Check if a node has block children.
-   */
-  hasBlocks: (editor: Editor, element: Element) => boolean
-
-  /**
    * Check if a node has inline and text children.
    */
   hasInlines: (editor: Editor, element: Element) => boolean
 
   hasPath: (editor: Editor, path: Path) => boolean
-
-  /**
-   * Check if a node has text children.
-   */
-  hasTexts: (editor: Editor, element: Element) => boolean
 
   /**
    * Insert a block break at the current selection.
@@ -424,11 +392,6 @@ export interface EditorInterface {
   isElementReadOnly: (editor: Editor, element: Element) => boolean
 
   /**
-   * Check if an element is empty, accounting for void nodes.
-   */
-  isEmpty: (editor: Editor, element: Element) => boolean
-
-  /**
    * Check if a point is the end point of a location.
    */
   isEnd: (editor: Editor, point: Point, at: Location) => boolean
@@ -457,11 +420,6 @@ export interface EditorInterface {
    * Check if a value is a void `Element` object.
    */
   isVoid: (editor: Editor, value: Element) => boolean
-
-  /**
-   * Get the last node at a location.
-   */
-  last: (editor: Editor, at: Location) => NodeEntry
 
   /**
    * Get the leaf text node at a location.
@@ -676,10 +634,6 @@ export const Editor: EditorInterface = {
     return editor.before(at, options)
   },
 
-  edges(editor, at) {
-    return editor.edges(at)
-  },
-
   elementReadOnly(editor: Editor, options: EditorElementReadOnlyOptions = {}) {
     return editor.elementReadOnly(options)
   },
@@ -688,28 +642,12 @@ export const Editor: EditorInterface = {
     return editor.end(at)
   },
 
-  first(editor, at) {
-    return editor.first(at)
-  },
-
-  fragment(editor, at) {
-    return editor.fragment(at)
-  },
-
-  hasBlocks(editor, element) {
-    return editor.hasBlocks(element)
-  },
-
   hasInlines(editor, element) {
     return editor.hasInlines(element)
   },
 
   hasPath(editor, path) {
     return editor.hasPath(path)
-  },
-
-  hasTexts(editor, element) {
-    return editor.hasTexts(element)
   },
 
   insertBreak(editor) {
@@ -740,10 +678,6 @@ export const Editor: EditorInterface = {
     return editor.isElementReadOnly(element)
   },
 
-  isEmpty(editor, element) {
-    return editor.isEmpty(element)
-  },
-
   isEnd(editor, point, at) {
     return editor.isEnd(point, at)
   },
@@ -766,10 +700,6 @@ export const Editor: EditorInterface = {
 
   isVoid(editor, value) {
     return editor.isVoid(value)
-  },
-
-  last(editor, at) {
-    return editor.last(at)
   },
 
   leaf(editor, at, options) {
