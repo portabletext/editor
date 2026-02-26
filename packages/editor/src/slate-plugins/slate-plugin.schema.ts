@@ -6,8 +6,9 @@ import {
   type PortableTextTextBlock,
 } from '@portabletext/schema'
 import type {EditorActor} from '../editor/editor-machine'
+import {applySetNode} from '../internal-utils/apply-set-node'
 import {debug} from '../internal-utils/debug'
-import {Editor, Transforms, type Element} from '../slate'
+import {Editor, type Element} from '../slate'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {isListBlock} from '../utils/parse-blocks'
 import {withNormalizeNode} from './slate-plugin.normalize-node'
@@ -85,14 +86,14 @@ export function createSchemaPlugin({editorActor}: {editorActor: EditorActor}) {
         const key =
           span._key || editorActor.getSnapshot().context.keyGenerator()
         withNormalizeNode(editor, () => {
-          Transforms.setNodes(
+          applySetNode(
             editor,
             {
               ...span,
               _type: editorActor.getSnapshot().context.schema.span.name,
               _key: key,
             },
-            {at: path},
+            path,
           )
         })
         return
@@ -103,7 +104,7 @@ export function createSchemaPlugin({editorActor}: {editorActor: EditorActor}) {
         debug.normalization('Setting missing key on child node without a key')
         const key = editorActor.getSnapshot().context.keyGenerator()
         withNormalizeNode(editor, () => {
-          Transforms.setNodes(editor, {_key: key}, {at: path})
+          applySetNode(editor, {_key: key}, path)
         })
         return
       }

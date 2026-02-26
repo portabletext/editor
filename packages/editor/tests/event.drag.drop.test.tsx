@@ -116,7 +116,7 @@ describe('event.drag.drop', () => {
           children: [
             {_key: fooKey, _type: 'span', text: 'foobar', marks: []},
             {_key: stockTicketKey, _type: 'stock-ticker', symbol: 'AAPL'},
-            {_key: 'k8', _type: 'span', text: '', marks: []},
+            {_key: 'k7', _type: 'span', text: '', marks: []},
           ],
           markDefs: [],
           style: 'normal',
