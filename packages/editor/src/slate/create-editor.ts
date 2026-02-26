@@ -1,16 +1,11 @@
 import type {EditorSchema} from '../editor/editor-schema'
 import {
-  addMark,
-  deleteFragment,
   getDirtyPaths,
   getFragment,
   insertBreak,
   insertFragment,
-  insertNode,
-  insertSoftBreak,
   insertText,
   normalizeNode,
-  removeMark,
   shouldNormalize,
   type Editor,
   type Text,
@@ -20,8 +15,6 @@ import {
   above,
   after,
   before,
-  deleteBackward,
-  deleteForward,
   edges,
   elementReadOnly,
   end,
@@ -82,7 +75,6 @@ import {
   deselect,
   move,
   select,
-  setPoint,
   setSelection,
 } from './transforms-selection'
 import {deleteText} from './transforms-text'
@@ -124,18 +116,11 @@ export const createEditor = (context: {
     apply: (...args: any[]) => (apply as any)(e, ...args),
 
     // Editor
-    addMark: (...args: any[]) => (addMark as any)(e, ...args),
-    deleteBackward: (...args: any[]) => (deleteBackward as any)(e, ...args),
-    deleteForward: (...args: any[]) => (deleteForward as any)(e, ...args),
-    deleteFragment: (...args: any[]) => (deleteFragment as any)(e, ...args),
     getFragment: (...args: any[]) => (getFragment as any)(e, ...args),
     insertBreak: (...args: any[]) => (insertBreak as any)(e, ...args),
-    insertSoftBreak: (...args: any[]) => (insertSoftBreak as any)(e, ...args),
     insertFragment: (...args: any[]) => (insertFragment as any)(e, ...args),
-    insertNode: (...args: any[]) => (insertNode as any)(e, ...args),
     insertText: (...args: any[]) => (insertText as any)(e, ...args),
     normalizeNode: (...args: any[]) => (normalizeNode as any)(e, ...args),
-    removeMark: (...args: any[]) => (removeMark as any)(e, ...args),
     getDirtyPaths: (...args: any[]) => (getDirtyPaths as any)(e, ...args),
     shouldNormalize: (...args: any[]) => (shouldNormalize as any)(e, ...args),
 
@@ -190,7 +175,6 @@ export const createEditor = (context: {
     select: (...args: any[]) => (select as any)(e, ...args),
     setNodes: (...args: any[]) => (setNodes as any)(e, ...args),
     setNormalizing: (...args: any[]) => (setNormalizing as any)(e, ...args),
-    setPoint: (...args: any[]) => (setPoint as any)(e, ...args),
     setSelection: (...args: any[]) => (setSelection as any)(e, ...args),
     splitNodes: (...args: any[]) => (splitNodes as any)(e, ...args),
     start: (...args: any[]) => (start as any)(e, ...args),

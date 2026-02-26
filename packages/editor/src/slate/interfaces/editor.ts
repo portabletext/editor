@@ -24,11 +24,9 @@ import type {
   RangeDirection,
   SelectionMode,
   TextDirection,
-  TextUnit,
   TextUnitAdjustment,
 } from '../types/types'
 import type {OmitFirstArg} from '../utils/types'
-import type {NodeInsertNodesOptions} from './transforms/node'
 import type {
   TextInsertFragmentOptions,
   TextInsertTextOptions,
@@ -76,25 +74,18 @@ export interface BaseEditor {
 
   // Overrideable core transforms.
 
-  addMark: OmitFirstArg<typeof Editor.addMark>
   collapse: OmitFirstArg<typeof Transforms.collapse>
   delete: OmitFirstArg<typeof Transforms.delete>
-  deleteBackward: (unit: TextUnit) => void
-  deleteForward: (unit: TextUnit) => void
-  deleteFragment: OmitFirstArg<typeof Editor.deleteFragment>
   deselect: OmitFirstArg<typeof Transforms.deselect>
   insertBreak: OmitFirstArg<typeof Editor.insertBreak>
   insertFragment: OmitFirstArg<typeof Transforms.insertFragment>
-  insertNode: OmitFirstArg<typeof Editor.insertNode>
   insertNodes: OmitFirstArg<typeof Transforms.insertNodes>
-  insertSoftBreak: OmitFirstArg<typeof Editor.insertSoftBreak>
   insertText: OmitFirstArg<typeof Transforms.insertText>
   liftNodes: OmitFirstArg<typeof Transforms.liftNodes>
   mergeNodes: OmitFirstArg<typeof Transforms.mergeNodes>
   move: OmitFirstArg<typeof Transforms.move>
   moveNodes: OmitFirstArg<typeof Transforms.moveNodes>
   normalize: OmitFirstArg<typeof Editor.normalize>
-  removeMark: OmitFirstArg<typeof Editor.removeMark>
   removeNodes: OmitFirstArg<typeof Transforms.removeNodes>
   select: OmitFirstArg<typeof Transforms.select>
   setNodes: <T extends Node>(
@@ -111,7 +102,6 @@ export interface BaseEditor {
     },
   ) => void
   setNormalizing: OmitFirstArg<typeof Editor.setNormalizing>
-  setPoint: OmitFirstArg<typeof Transforms.setPoint>
   setSelection: OmitFirstArg<typeof Transforms.setSelection>
   splitNodes: OmitFirstArg<typeof Transforms.splitNodes>
   unsetNodes: OmitFirstArg<typeof Transforms.unsetNodes>
@@ -206,18 +196,10 @@ export interface EditorBeforeOptions {
   voids?: boolean
 }
 
-export interface EditorDirectedDeletionOptions {
-  unit?: TextUnit
-}
-
 export interface EditorElementReadOnlyOptions {
   at?: Location
   mode?: MaximizeMode
   voids?: boolean
-}
-
-export interface EditorFragmentDeletionOptions {
-  direction?: TextDirection
 }
 
 export interface EditorIsEditorOptions {
@@ -327,14 +309,6 @@ export interface EditorInterface {
   ) => NodeEntry<T> | undefined
 
   /**
-   * Add a custom property to the leaf text nodes in the current selection.
-   *
-   * If the selection is currently collapsed, the marks will be added to the
-   * `editor.marks` property instead, and applied when text is inserted next.
-   */
-  addMark: (editor: Editor, key: string, value: any) => void
-
-  /**
    * Get the point after a location.
    */
   after: (
@@ -351,30 +325,6 @@ export interface EditorInterface {
     at: Location,
     options?: EditorBeforeOptions,
   ) => Point | undefined
-
-  /**
-   * Delete content in the editor backward from the current selection.
-   */
-  deleteBackward: (
-    editor: Editor,
-    options?: EditorDirectedDeletionOptions,
-  ) => void
-
-  /**
-   * Delete content in the editor forward from the current selection.
-   */
-  deleteForward: (
-    editor: Editor,
-    options?: EditorDirectedDeletionOptions,
-  ) => void
-
-  /**
-   * Delete the content in the current selection.
-   */
-  deleteFragment: (
-    editor: Editor,
-    options?: EditorFragmentDeletionOptions,
-  ) => void
 
   /**
    * Get the start and end points of a location.
@@ -437,23 +387,6 @@ export interface EditorInterface {
     fragment: Node[],
     options?: TextInsertFragmentOptions,
   ) => void
-
-  /**
-   * Atomically inserts `nodes`
-   * at the specified location or (if not defined) the current selection or (if not defined) the end of the document.
-   */
-  insertNode: <T extends Node>(
-    editor: Editor,
-    node: Node,
-    options?: NodeInsertNodesOptions<T>,
-  ) => void
-
-  /**
-   * Insert a soft break at the current selection.
-   *
-   * If the selection is currently expanded, it will be deleted first.
-   */
-  insertSoftBreak: (editor: Editor) => void
 
   /**
    * Insert a string of text
@@ -668,15 +601,6 @@ export interface EditorInterface {
   rangeRefs: (editor: Editor) => Set<RangeRef>
 
   /**
-   * Remove a custom property from all of the leaf text nodes in the current
-   * selection.
-   *
-   * If the selection is currently collapsed, the removal will be stored on
-   * `editor.marks` and applied to the text inserted next.
-   */
-  removeMark: (editor: Editor, key: string) => void
-
-  /**
    * Manually set if the editor should currently be normalizing.
    *
    * Note: Using this incorrectly can leave the editor in an invalid state.
@@ -739,30 +663,12 @@ export const Editor: EditorInterface = {
     return editor.above(options)
   },
 
-  addMark(editor, key, value) {
-    editor.addMark(key, value)
-  },
-
   after(editor, at, options) {
     return editor.after(at, options)
   },
 
   before(editor, at, options) {
     return editor.before(at, options)
-  },
-
-  deleteBackward(editor, options = {}) {
-    const {unit = 'character'} = options
-    editor.deleteBackward(unit)
-  },
-
-  deleteForward(editor, options = {}) {
-    const {unit = 'character'} = options
-    editor.deleteForward(unit)
-  },
-
-  deleteFragment(editor, options) {
-    editor.deleteFragment(options)
   },
 
   edges(editor, at) {
@@ -807,14 +713,6 @@ export const Editor: EditorInterface = {
 
   insertFragment(editor, fragment, options) {
     editor.insertFragment(fragment, options)
-  },
-
-  insertNode(editor, node) {
-    editor.insertNode(node)
-  },
-
-  insertSoftBreak(editor) {
-    editor.insertSoftBreak()
   },
 
   insertText(editor, text) {
@@ -946,10 +844,6 @@ export const Editor: EditorInterface = {
 
   rangeRefs(editor) {
     return editor.rangeRefs()
-  },
-
-  removeMark(editor, key) {
-    editor.removeMark(key)
   },
 
   setNormalizing(editor, isNormalizing) {
