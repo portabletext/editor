@@ -1,6 +1,5 @@
 import {
   Editor,
-  Element,
   Node,
   Path,
   Point,
@@ -17,16 +16,12 @@ import {
 } from '../utils/diff-text'
 import {getPlainText, getSlateFragmentAttribute, isDOMText} from '../utils/dom'
 import type {Key} from '../utils/key'
-import {findCurrentLineRange} from '../utils/lines'
 import {
   EDITOR_TO_KEY_TO_ELEMENT,
   EDITOR_TO_ON_CHANGE,
   EDITOR_TO_PENDING_ACTION,
   EDITOR_TO_PENDING_DIFFS,
-  EDITOR_TO_PENDING_INSERTION_MARKS,
   EDITOR_TO_PENDING_SELECTION,
-  EDITOR_TO_SCHEDULE_FLUSH,
-  EDITOR_TO_USER_MARKS,
   EDITOR_TO_USER_SELECTION,
   IS_NODE_MAP_DIRTY,
   NODE_TO_KEY,
@@ -47,71 +42,11 @@ export const withDOM = <T extends Editor>(
   clipboardFormatKey = 'x-slate-fragment',
 ): T & DOMEditor => {
   const e = editor as T & DOMEditor
-  const {apply, onChange, deleteBackward, addMark, removeMark} = e
+  const {apply, onChange} = e
 
   // The WeakMap which maps a key to a specific HTMLElement must be scoped to the editor instance to
   // avoid collisions between editors in the DOM that share the same value.
   EDITOR_TO_KEY_TO_ELEMENT.set(e, new WeakMap())
-
-  e.addMark = (key, value) => {
-    EDITOR_TO_SCHEDULE_FLUSH.get(e)?.()
-
-    if (
-      !EDITOR_TO_PENDING_INSERTION_MARKS.get(e) &&
-      EDITOR_TO_PENDING_DIFFS.get(e)?.length
-    ) {
-      // Ensure the current pending diffs originating from changes before the addMark
-      // are applied with the current formatting
-      EDITOR_TO_PENDING_INSERTION_MARKS.set(e, null)
-    }
-
-    EDITOR_TO_USER_MARKS.delete(e)
-
-    addMark(key, value)
-  }
-
-  e.removeMark = (key) => {
-    if (
-      !EDITOR_TO_PENDING_INSERTION_MARKS.get(e) &&
-      EDITOR_TO_PENDING_DIFFS.get(e)?.length
-    ) {
-      // Ensure the current pending diffs originating from changes before the addMark
-      // are applied with the current formatting
-      EDITOR_TO_PENDING_INSERTION_MARKS.set(e, null)
-    }
-
-    EDITOR_TO_USER_MARKS.delete(e)
-
-    removeMark(key)
-  }
-
-  e.deleteBackward = (unit) => {
-    if (unit !== 'line') {
-      return deleteBackward(unit)
-    }
-
-    if (e.selection && Range.isCollapsed(e.selection)) {
-      const parentBlockEntry = Editor.above(e, {
-        match: (n) => Element.isElement(n) && Editor.isBlock(e, n),
-        at: e.selection,
-      })
-
-      if (parentBlockEntry) {
-        const [, parentBlockPath] = parentBlockEntry
-        const parentElementRange = Editor.range(
-          e,
-          parentBlockPath,
-          e.selection.anchor,
-        )
-
-        const currentLineRange = findCurrentLineRange(e, parentElementRange)
-
-        if (!Range.isCollapsed(currentLineRange)) {
-          Transforms.delete(e, {at: currentLineRange})
-        }
-      }
-    }
-  }
 
   // This attempts to reset the NODE_TO_KEY entry to the correct value
   // as apply() changes the object reference and hence invalidates the NODE_TO_KEY entry

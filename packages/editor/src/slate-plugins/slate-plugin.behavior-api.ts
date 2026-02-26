@@ -48,40 +48,6 @@ export function createBehaviorApiPlugin(editorActor: EditorActor) {
       }
     }
 
-    editor.deleteBackward = (unit) => {
-      if (editor.isNormalizingNode || editor.isPerformingBehaviorOperation) {
-        console.error('Unexpected call to .deleteBackward(...)')
-        return
-      }
-
-      editorActor.send({
-        type: 'behavior event',
-        behaviorEvent: {
-          type: 'delete.backward',
-          unit,
-        },
-        editor,
-      })
-      return
-    }
-
-    editor.deleteForward = (unit) => {
-      if (editor.isNormalizingNode || editor.isPerformingBehaviorOperation) {
-        console.error('Unexpected call to .deleteForward(...)')
-        return
-      }
-
-      editorActor.send({
-        type: 'behavior event',
-        behaviorEvent: {
-          type: 'delete.forward',
-          unit,
-        },
-        editor,
-      })
-      return
-    }
-
     editor.insertBreak = () => {
       if (editor.isNormalizingNode || editor.isPerformingBehaviorOperation) {
         console.error('Unexpected call to .insertBreak(...)')
@@ -141,22 +107,6 @@ export function createBehaviorApiPlugin(editorActor: EditorActor) {
       }
 
       insertNodes(nodes, options)
-    }
-
-    editor.insertSoftBreak = () => {
-      if (editor.isNormalizingNode || editor.isPerformingBehaviorOperation) {
-        console.error('Unexpected call to .insertSoftBreak(...)')
-        return
-      }
-
-      editorActor.send({
-        type: 'behavior event',
-        behaviorEvent: {
-          type: 'insert.soft break',
-        },
-        editor,
-      })
-      return
     }
 
     editor.insertText = (text) => {

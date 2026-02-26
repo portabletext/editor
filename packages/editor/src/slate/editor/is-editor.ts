@@ -13,13 +13,9 @@ export const isEditor: EditorInterface['isEditor'] = (
   }
 
   const isEditor =
-    typeof value.addMark === 'function' &&
     typeof value.apply === 'function' &&
-    typeof value.deleteFragment === 'function' &&
     typeof value.insertBreak === 'function' &&
-    typeof value.insertSoftBreak === 'function' &&
     typeof value.insertFragment === 'function' &&
-    typeof value.insertNode === 'function' &&
     typeof value.insertText === 'function' &&
     typeof value.isElementReadOnly === 'function' &&
     typeof value.isInline === 'function' &&
@@ -27,7 +23,6 @@ export const isEditor: EditorInterface['isEditor'] = (
     typeof value.isVoid === 'function' &&
     typeof value.normalizeNode === 'function' &&
     typeof value.onChange === 'function' &&
-    typeof value.removeMark === 'function' &&
     typeof value.getDirtyPaths === 'function' &&
     (value.marks === null || isObject(value.marks)) &&
     (value.selection === null || Range.isRange(value.selection)) &&
