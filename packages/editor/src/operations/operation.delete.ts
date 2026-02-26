@@ -8,7 +8,6 @@ import {
   Path,
   Point,
   Range,
-  Transforms,
   type NodeEntry,
 } from '../slate'
 import {DOMEditor} from '../slate-dom'
@@ -43,24 +42,46 @@ export const deleteOperationImplementation: OperationImplementation<
       throw new Error('Failed to get start or end block index')
     }
 
-    Transforms.removeNodes(operation.editor, {
-      at: {
-        anchor: {path: [startBlockIndex], offset: 0},
-        focus: {path: [endBlockIndex], offset: 0},
-      },
+    const removeRange = {
+      anchor: {path: [startBlockIndex], offset: 0},
+      focus: {path: [endBlockIndex], offset: 0},
+    }
+    const blockMatches = Editor.nodes(operation.editor, {
+      at: removeRange,
+      match: (n) => Element.isElement(n) && Editor.isBlock(operation.editor, n),
       mode: 'highest',
     })
+    const blockPathRefs = Array.from(blockMatches, ([, p]) =>
+      Editor.pathRef(operation.editor, p),
+    )
+    for (const pathRef of blockPathRefs) {
+      const path = pathRef.unref()!
+      if (path) {
+        const [node] = Editor.node(operation.editor, path)
+        operation.editor.apply({type: 'remove_node', path, node})
+      }
+    }
 
     return
   }
 
   if (operation.unit === 'child') {
-    Transforms.removeNodes(operation.editor, {
+    const childMatches = Editor.nodes(operation.editor, {
       at,
       match: (node) =>
         (isSpan(context, node) && node._key !== VOID_CHILD_KEY) ||
         ('__inline' in node && node.__inline === true),
     })
+    const childPathRefs = Array.from(childMatches, ([, p]) =>
+      Editor.pathRef(operation.editor, p),
+    )
+    for (const pathRef of childPathRefs) {
+      const path = pathRef.unref()!
+      if (path) {
+        const [node] = Editor.node(operation.editor, path)
+        operation.editor.apply({type: 'remove_node', path, node})
+      }
+    }
 
     return
   }
@@ -85,7 +106,7 @@ export const deleteOperationImplementation: OperationImplementation<
       )
 
       if (!Range.isCollapsed(currentLineRange)) {
-        Transforms.delete(operation.editor, {at: currentLineRange})
+        deleteText(operation.editor, {at: currentLineRange})
         return
       }
     }
@@ -179,7 +200,8 @@ export const deleteOperationImplementation: OperationImplementation<
       const path = pathRef.unref()
 
       if (path) {
-        Transforms.removeNodes(operation.editor, {at: path, voids: false})
+        const [nodeAtPath] = Editor.node(operation.editor, path)
+        operation.editor.apply({type: 'remove_node', path, node: nodeAtPath})
       }
     }
 
@@ -196,10 +218,25 @@ export const deleteOperationImplementation: OperationImplementation<
     }
 
     if (endRef.current && startRef.current) {
-      Transforms.removeNodes(operation.editor, {
+      const endBlockMatches = Editor.nodes(operation.editor, {
         at: endRef.current,
-        voids: false,
+        match: (n) =>
+          Element.isElement(n) && Editor.isBlock(operation.editor, n),
       })
+      const endBlockPathRefs = Array.from(endBlockMatches, ([, p]) =>
+        Editor.pathRef(operation.editor, p),
+      )
+      for (const pathRef of endBlockPathRefs) {
+        const endPath = pathRef.unref()!
+        if (endPath) {
+          const [endNode] = Editor.node(operation.editor, endPath)
+          operation.editor.apply({
+            type: 'remove_node',
+            path: endPath,
+            node: endNode,
+          })
+        }
+      }
     }
 
     if (startRef.current) {

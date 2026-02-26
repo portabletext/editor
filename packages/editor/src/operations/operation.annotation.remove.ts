@@ -1,6 +1,8 @@
 import type {PortableTextSpan} from '@portabletext/schema'
+import {applySelect} from '../internal-utils/apply-selection'
+import {applySetNode} from '../internal-utils/apply-set-node'
 import {toSlateRange} from '../internal-utils/to-slate-range'
-import {Editor, Node, Path, Range, Transforms} from '../slate'
+import {Editor, Node, Path, Range} from '../slate'
 import type {OperationImplementation} from './operation.types'
 
 export const removeAnnotationOperationImplementation: OperationImplementation<
@@ -106,12 +108,12 @@ export const removeAnnotationOperationImplementation: OperationImplementation<
       [selectedChild, selectedChildPath] as const,
       ...nextSpansWithSameAnnotation,
     ]) {
-      Transforms.setNodes(
+      applySetNode(
         editor,
         {
           marks: child.marks?.filter((mark) => mark !== annotationToRemove),
         },
-        {at: childPath},
+        childPath,
       )
     }
   } else {
@@ -120,29 +122,48 @@ export const removeAnnotationOperationImplementation: OperationImplementation<
       ? Editor.rangeRef(editor, at, {affinity: 'inward'})
       : null
 
-    // When `at` is explicitly provided, use it for the split
-    // Otherwise, use the editor's current selection (original behavior)
-    if (at) {
-      Transforms.setNodes(
-        editor,
-        {},
-        {
-          match: (node) => editor.isTextSpan(node),
-          split: true,
-          hanging: true,
-          at,
-        },
-      )
-    } else {
-      Transforms.setNodes(
-        editor,
-        {},
-        {
-          match: (node) => editor.isTextSpan(node),
-          split: true,
-          hanging: true,
-        },
-      )
+    // Split text nodes at range boundaries
+    const splitRange = at ?? editor.selection
+    if (splitRange && Range.isRange(splitRange)) {
+      if (
+        !(
+          Range.isCollapsed(splitRange) &&
+          Editor.leaf(editor, splitRange.anchor)[0].text.length > 0
+        )
+      ) {
+        const splitRangeRef = Editor.rangeRef(editor, splitRange, {
+          affinity: 'inward',
+        })
+        const [splitStart, splitEnd] = Range.edges(splitRange)
+        const endAtEnd = Editor.isEnd(editor, splitEnd, splitEnd.path)
+        if (!endAtEnd || !Editor.isEdge(editor, splitEnd, splitEnd.path)) {
+          const [endNode] = Editor.node(editor, splitEnd.path)
+          editor.apply({
+            type: 'split_node',
+            path: splitEnd.path,
+            position: splitEnd.offset,
+            properties: Node.extractProps(endNode),
+          })
+        }
+        const startAtStart = Editor.isStart(editor, splitStart, splitStart.path)
+        if (
+          !startAtStart ||
+          !Editor.isEdge(editor, splitStart, splitStart.path)
+        ) {
+          const [startNode] = Editor.node(editor, splitStart.path)
+          editor.apply({
+            type: 'split_node',
+            path: splitStart.path,
+            position: splitStart.offset,
+            properties: Node.extractProps(startNode),
+          })
+        }
+        // Update selection if using editor.selection (not explicit `at`)
+        const updatedSplitRange = splitRangeRef.unref()
+        if (!at && updatedSplitRange) {
+          applySelect(editor, updatedSplitRange)
+        }
+      }
     }
 
     const blocks = Editor.nodes(editor, {
@@ -173,13 +194,7 @@ export const removeAnnotationOperationImplementation: OperationImplementation<
         })
 
         if (marksWithoutAnnotation.length !== marks.length) {
-          Transforms.setNodes(
-            editor,
-            {
-              marks: marksWithoutAnnotation,
-            },
-            {at: childPath},
-          )
+          applySetNode(editor, {marks: marksWithoutAnnotation}, childPath)
         }
       }
     }
