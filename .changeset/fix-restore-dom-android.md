@@ -2,8 +2,15 @@
 '@portabletext/editor': patch
 ---
 
-fix: catch DOM errors in `restoreDOM` on Android
+fix: prevent Android crash when `rangeDecorations` change during input
 
-`RestoreDOMManager.restoreDOM()` can throw when the DOM has been modified by a React render (e.g., `rangeDecoration` updates) between the original mutation and the restore attempt. This is expected on Android where the IME mutates the DOM before JavaScript can intercept. The editor self-heals on the next render cycle, so these errors are safe to suppress.
+`RestoreDOMManager` can crash on Android when the DOM has been restructured by React (e.g., `rangeDecoration` wrapper elements added/removed) between the original IME mutation and the restore attempt.
+
+Two fixes:
+
+1. Wrap `insertBefore` and `removeChild` in `restoreDOM()` with try-catch so individual node restorations can fail gracefully.
+2. Wrap `getSnapshotBeforeUpdate` in `RestoreDOMComponent` with try-catch so any unexpected error during the restore phase doesn't crash the React tree.
+
+In both cases, the editor self-heals on the next render cycle.
 
 Fixes #2257
