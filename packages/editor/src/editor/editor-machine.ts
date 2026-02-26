@@ -19,7 +19,7 @@ import type {Converter} from '../converters/converter.types'
 import {debug} from '../internal-utils/debug'
 import type {EventPosition} from '../internal-utils/event-position'
 import {sortByPriority} from '../priority/priority.sort'
-import {Transforms} from '../slate'
+
 import {ReactEditor} from '../slate-react'
 import type {NamespaceEvent, OmitFromUnion} from '../type-utils'
 import type {EditorSelection} from '../types/editor'
@@ -313,7 +313,7 @@ export const editorMachine = setup({
         ReactEditor.focus(slateEditor)
 
         if (currentSelection) {
-          Transforms.select(slateEditor, currentSelection)
+          slateEditor.select(currentSelection)
 
           // Tell Slate to use this selection for DOM sync
           slateEditor.pendingSelection = slateEditor.selection

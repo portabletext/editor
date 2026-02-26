@@ -1,6 +1,7 @@
 import {applyAll, set} from '@portabletext/patches'
 import {isTextBlock} from '@portabletext/schema'
-import {Transforms, type Node} from '../slate'
+import {applySetNode} from '../internal-utils/apply-set-node'
+import type {Node} from '../slate'
 import {parseMarkDefs} from '../utils/parse-blocks'
 import type {OperationImplementation} from './operation.types'
 
@@ -71,7 +72,7 @@ export const blockSetOperationImplementation: OperationImplementation<
       }
     }
 
-    Transforms.setNodes(operation.editor, filteredProps, {at: [blockIndex]})
+    applySetNode(operation.editor, filteredProps, [blockIndex])
   } else {
     const schemaDefinition = context.schema.blockObjects.find(
       (definition) => definition.name === slateBlock._type,
@@ -99,6 +100,10 @@ export const blockSetOperationImplementation: OperationImplementation<
 
     const updatedSlateBlock = applyAll(slateBlock, patches) as Partial<Node>
 
-    Transforms.setNodes(operation.editor, updatedSlateBlock, {at: [blockIndex]})
+    applySetNode(
+      operation.editor,
+      updatedSlateBlock as Record<string, unknown>,
+      [blockIndex],
+    )
   }
 }

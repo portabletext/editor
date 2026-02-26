@@ -1,5 +1,6 @@
+import {applyDeselect} from '../internal-utils/apply-selection'
 import {transformOperation} from '../internal-utils/transform-operation'
-import {Editor, Transforms} from '../slate'
+import {Editor} from '../slate'
 import {pluginRedoing} from '../slate-plugins/slate-plugin.redoing'
 import {pluginWithoutHistory} from '../slate-plugins/slate-plugin.without-history'
 import type {OperationImplementation} from './operation.types'
@@ -45,7 +46,7 @@ export const historyRedoOperationImplementation: OperationImplementation<
         )
 
         editor.remotePatches.splice(0, editor.remotePatches.length)
-        Transforms.deselect(editor)
+        applyDeselect(editor)
         editor.history = {undos: [], redos: []}
         editor.withHistory = true
         editor.isRedoing = false

@@ -1,10 +1,10 @@
-import {Transforms} from '../slate'
+import {applyMove} from '../internal-utils/apply-move'
 import type {OperationImplementation} from './operation.types'
 
 export const moveForwardOperationImplementation: OperationImplementation<
   'move.forward'
 > = ({operation}) => {
-  Transforms.move(operation.editor, {
+  applyMove(operation.editor, {
     unit: 'character',
     distance: operation.distance,
   })

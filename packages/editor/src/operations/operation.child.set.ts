@@ -1,5 +1,6 @@
+import {applySetNode} from '../internal-utils/apply-set-node'
 import {toSlateRange} from '../internal-utils/to-slate-range'
-import {Editor, Element, Transforms} from '../slate'
+import {Editor, Element} from '../slate'
 import type {OperationImplementation} from './operation.types'
 
 export const childSetOperationImplementation: OperationImplementation<
@@ -34,13 +35,13 @@ export const childSetOperationImplementation: OperationImplementation<
   if (operation.editor.isTextSpan(child)) {
     const {_type, text, ...rest} = operation.props
 
-    Transforms.setNodes(
+    applySetNode(
       operation.editor,
       {
         ...child,
         ...rest,
       },
-      {at: childPath},
+      childPath,
     )
 
     if (typeof text === 'string') {
@@ -85,7 +86,7 @@ export const childSetOperationImplementation: OperationImplementation<
       }
     }
 
-    Transforms.setNodes(
+    applySetNode(
       operation.editor,
       {
         ...child,
@@ -95,7 +96,7 @@ export const childSetOperationImplementation: OperationImplementation<
           ...rest,
         },
       },
-      {at: childPath},
+      childPath,
     )
 
     return

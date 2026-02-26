@@ -1,6 +1,7 @@
 import {applyAll} from '@portabletext/patches'
 import {isTextBlock} from '@portabletext/schema'
-import {Editor, Element, Transforms} from '../slate'
+import {applySetNode} from '../internal-utils/apply-set-node'
+import {Editor, Element} from '../slate'
 import type {OperationImplementation} from './operation.types'
 
 export const childUnsetOperationImplementation: OperationImplementation<
@@ -72,7 +73,7 @@ export const childUnsetOperationImplementation: OperationImplementation<
       newNode[prop] = null
     }
 
-    Transforms.setNodes(operation.editor, newNode, {at: childPath})
+    applySetNode(operation.editor, newNode, childPath)
 
     if (operation.props.includes('text')) {
       operation.editor.apply({
@@ -95,7 +96,7 @@ export const childUnsetOperationImplementation: OperationImplementation<
     }))
     const newValue = applyAll(value, patches)
 
-    Transforms.setNodes(
+    applySetNode(
       operation.editor,
       {
         ...child,
@@ -104,7 +105,7 @@ export const childUnsetOperationImplementation: OperationImplementation<
           : child._key,
         value: newValue,
       },
-      {at: childPath},
+      childPath,
     )
 
     return

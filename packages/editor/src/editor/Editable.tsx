@@ -16,7 +16,7 @@ import {getEventPosition} from '../internal-utils/event-position'
 import {normalizeSelection} from '../internal-utils/selection'
 import {slateRangeToSelection} from '../internal-utils/slate-utils'
 import {toSlateRange} from '../internal-utils/to-slate-range'
-import {Editor, Transforms, type Text} from '../slate'
+import {Editor, type Text} from '../slate'
 import {
   ReactEditor,
   Editable as SlateEditable,
@@ -249,7 +249,7 @@ export const PortableTextEditable = forwardRef<
           blockIndexMap: slateEditor.blockIndexMap,
         })
         if (slateRange) {
-          Transforms.select(slateEditor, slateRange)
+          slateEditor.select(slateRange)
           // Output selection here in those cases where the editor selection was the same, and there are no set_selection operations made.
           // The selection is usually automatically emitted by the withPortableTextSelections plugin whenever there is a set_selection operation applied.
           if (!slateEditor.operations.some((o) => o.type === 'set_selection')) {
@@ -522,7 +522,7 @@ export const PortableTextEditable = forwardRef<
             slateEditor.value.at(0),
           )
         ) {
-          Transforms.select(slateEditor, Editor.start(slateEditor, []))
+          slateEditor.select(Editor.start(slateEditor, []))
           slateEditor.onChange()
         }
       }

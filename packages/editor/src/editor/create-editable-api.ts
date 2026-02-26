@@ -16,7 +16,7 @@ import {getFocusBlock} from '../selectors/selector.get-focus-block'
 import {getFocusSpan} from '../selectors/selector.get-focus-span'
 import {getSelectedValue} from '../selectors/selector.get-selected-value'
 import {isActiveAnnotation} from '../selectors/selector.is-active-annotation'
-import {Editor, Range, Text, Transforms} from '../slate'
+import {Editor, Range, Text} from '../slate'
 import {ReactEditor} from '../slate-react'
 import type {
   EditableAPI,
@@ -121,22 +121,14 @@ export function createEditableAPI(
       })
     },
     select: (selection: EditorSelection): void => {
-      const slateSelection = toSlateRange({
-        context: {
-          schema: editorActor.getSnapshot().context.schema,
-          value: editor.value,
-          selection,
+      editorActor.send({
+        type: 'behavior event',
+        behaviorEvent: {
+          type: 'select',
+          at: selection,
         },
-        blockIndexMap: editor.blockIndexMap,
+        editor,
       })
-
-      if (slateSelection) {
-        Transforms.select(editor, slateSelection)
-      } else {
-        Transforms.deselect(editor)
-      }
-
-      editor.onChange()
     },
     focusBlock: (): PortableTextBlock | undefined => {
       if (!editor.selection) {
