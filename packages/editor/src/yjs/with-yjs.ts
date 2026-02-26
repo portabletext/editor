@@ -96,14 +96,14 @@ export function withYjs(
     }
 
     withRemoteChanges(editor, () => {
-      Editor.withoutNormalizing(editor, () => {
-        withoutPatching(editor, () => {
-          pluginWithoutHistory(editor, () => {
+      withoutPatching(editor, () => {
+        pluginWithoutHistory(editor, () => {
+          Editor.withoutNormalizing(editor, () => {
             applyYjsEvents(sharedRoot, editor, events as Y.YEvent<Y.XmlText>[])
           })
+          editor.normalize()
         })
       })
-      editor.normalize()
     })
 
     editor.apply = originalApply
@@ -139,9 +139,9 @@ export function withYjs(
       const element = yTextToSlateElement(sharedRoot)
       isApplyingRemoteChanges = true
       withRemoteChanges(editor, () => {
-        Editor.withoutNormalizing(editor, () => {
-          withoutPatching(editor, () => {
-            pluginWithoutHistory(editor, () => {
+        withoutPatching(editor, () => {
+          pluginWithoutHistory(editor, () => {
+            Editor.withoutNormalizing(editor, () => {
               // Replace all Slate children with Y.Doc content
               for (let i = editor.children.length - 1; i >= 0; i--) {
                 const child = editor.children[i]
@@ -164,9 +164,9 @@ export function withYjs(
                 }
               }
             })
+            editor.normalize()
           })
         })
-        editor.normalize()
       })
       isApplyingRemoteChanges = false
     } else if (editor.children.length > 0 && yDoc) {
