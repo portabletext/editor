@@ -26,7 +26,6 @@ import {
 import {
   CAN_USE_DOM,
   containsShadowAware,
-  ELEMENT_TO_NODE,
   getActiveElement,
   getDefaultView,
   getSelection,
@@ -44,7 +43,6 @@ import {
   isDOMNode,
   isPlainTextOnlyPaste,
   MARK_PLACEHOLDER_SYMBOL,
-  NODE_TO_ELEMENT,
   PLACEHOLDER_SYMBOL,
   TRIPLE_CLICK,
   type DOMElement,
@@ -343,10 +341,10 @@ export const Editable = forwardRef(
       if (ref.current && (window = getDefaultView(ref.current))) {
         editor.domWindow = window
         editor.domElement = ref.current
-        NODE_TO_ELEMENT.set(editor, ref.current)
-        ELEMENT_TO_NODE.set(ref.current, editor)
+        editor.nodeToElement.set(editor, ref.current)
+        editor.elementToNode.set(ref.current, editor)
       } else {
-        NODE_TO_ELEMENT.delete(editor)
+        editor.nodeToElement.delete(editor)
       }
 
       // Make sure the DOM selection state is in sync.
@@ -927,7 +925,7 @@ export const Editable = forwardRef(
           onDOMSelectionChange.cancel()
           scheduleOnDOMSelectionChange.cancel()
           editor.domElement = null
-          NODE_TO_ELEMENT.delete(editor)
+          editor.nodeToElement.delete(editor)
 
           if (ref.current && HAS_BEFORE_INPUT_SUPPORT) {
             ref.current.removeEventListener('beforeinput', onDOMBeforeInput)

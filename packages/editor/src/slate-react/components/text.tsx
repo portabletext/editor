@@ -1,11 +1,7 @@
 import React, {useCallback, useRef, type JSX} from 'react'
 import {ReactEditor, useSlateStatic} from '..'
 import {Text as SlateText, type DecoratedRange, type Element} from '../../slate'
-import {
-  ELEMENT_TO_NODE,
-  isTextDecorationsEqual,
-  NODE_TO_ELEMENT,
-} from '../../slate-dom'
+import {isTextDecorationsEqual} from '../../slate-dom'
 import {useDecorations} from '../hooks/use-decorations'
 import type {
   RenderLeafProps,
@@ -68,13 +64,13 @@ const Text = (props: {
     (span: HTMLSpanElement | null) => {
       if (span) {
         editor.keyToElement?.set(key, span)
-        NODE_TO_ELEMENT.set(text, span)
-        ELEMENT_TO_NODE.set(span, text)
+        editor.nodeToElement.set(text, span)
+        editor.elementToNode.set(span, text)
       } else {
         editor.keyToElement?.delete(key)
-        NODE_TO_ELEMENT.delete(text)
+        editor.nodeToElement.delete(text)
         if (ref.current) {
-          ELEMENT_TO_NODE.delete(ref.current)
+          editor.elementToNode.delete(ref.current)
         }
       }
       ref.current = span

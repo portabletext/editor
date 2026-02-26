@@ -16,7 +16,6 @@ import {
 } from '../utils/diff-text'
 import {getPlainText, getSlateFragmentAttribute, isDOMText} from '../utils/dom'
 import type {Key} from '../utils/key'
-import {NODE_TO_KEY} from '../utils/weak-maps'
 import {DOMEditor} from './dom-editor'
 
 /**
@@ -42,6 +41,12 @@ export const withDOM = <T extends Editor>(
   e.domPlaceholder = ''
   e.domPlaceholderElement = null
   e.keyToElement = new WeakMap()
+  e.nodeToIndex = new WeakMap()
+  e.nodeToParent = new WeakMap()
+  e.elementToNode = new WeakMap()
+  e.nodeToElement = new WeakMap()
+  e.nodeToKey = new WeakMap()
+  e.changeVersion = {current: 0}
   e.readOnly = false
   e.focused = false
   e.composing = false
@@ -55,8 +60,8 @@ export const withDOM = <T extends Editor>(
   e.pendingSelection = null
   e.forceRender = null
 
-  // This attempts to reset the NODE_TO_KEY entry to the correct value
-  // as apply() changes the object reference and hence invalidates the NODE_TO_KEY entry
+  // This attempts to reset the nodeToKey entry to the correct value
+  // as apply() changes the object reference and hence invalidates the nodeToKey entry
   e.apply = (op: Operation) => {
     const matches: [Path, Key][] = []
     const pathRefMatches: [PathRef, Key][] = []
@@ -156,13 +161,13 @@ export const withDOM = <T extends Editor>(
 
     for (const [path, key] of matches) {
       const [node] = Editor.node(e, path)
-      NODE_TO_KEY.set(node, key)
+      e.nodeToKey.set(node, key)
     }
 
     for (const [pathRef, key] of pathRefMatches) {
       if (pathRef.current) {
         const [node] = Editor.node(e, pathRef.current)
-        NODE_TO_KEY.set(node, key)
+        e.nodeToKey.set(node, key)
       }
 
       pathRef.unref()

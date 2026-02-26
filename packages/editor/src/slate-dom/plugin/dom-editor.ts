@@ -1,9 +1,11 @@
+import type {MutableRefObject} from 'react'
 import {
   Editor,
   Element,
   Range,
   Scrubber,
   Transforms,
+  type Ancestor,
   type BaseEditor,
   type Node,
   type Operation,
@@ -34,13 +36,8 @@ import {
 } from '../utils/dom'
 import {IS_ANDROID, IS_CHROME, IS_FIREFOX} from '../utils/environment'
 import {Key} from '../utils/key'
-import {
-  ELEMENT_TO_NODE,
-  NODE_TO_INDEX,
-  NODE_TO_KEY,
-  NODE_TO_PARENT,
-  type Action,
-} from '../utils/weak-maps'
+
+export type Action = {at?: Point | Range; run: () => void}
 
 /**
  * A DOM-specific version of the `Editor` interface.
@@ -72,6 +69,12 @@ export interface DOMEditor extends BaseEditor {
   domPlaceholder: string
   domPlaceholderElement: HTMLElement | null
   keyToElement: WeakMap<Key, HTMLElement>
+  nodeToIndex: WeakMap<Node, number>
+  nodeToParent: WeakMap<Node, Ancestor>
+  elementToNode: WeakMap<HTMLElement, Node>
+  nodeToElement: WeakMap<Node, HTMLElement>
+  nodeToKey: WeakMap<Node, Key>
+  changeVersion: MutableRefObject<number>
   readOnly: boolean
   focused: boolean
   composing: boolean
@@ -379,23 +382,23 @@ export const DOMEditor: DOMEditorInterface = {
     return range
   },
 
-  findKey: (_editor, node) => {
-    let key = NODE_TO_KEY.get(node)
+  findKey: (editor, node) => {
+    let key = editor.nodeToKey.get(node)
 
     if (!key) {
       key = new Key()
-      NODE_TO_KEY.set(node, key)
+      editor.nodeToKey.set(node, key)
     }
 
     return key
   },
 
-  findPath: (_editor, node) => {
+  findPath: (editor, node) => {
     const path: Path = []
     let child = node
 
     while (true) {
-      const parent = NODE_TO_PARENT.get(child)
+      const parent = editor.nodeToParent.get(child)
 
       if (parent == null) {
         if (Editor.isEditor(child)) {
@@ -405,7 +408,7 @@ export const DOMEditor: DOMEditorInterface = {
         }
       }
 
-      const i = NODE_TO_INDEX.get(child)
+      const i = editor.nodeToIndex.get(child)
 
       if (i == null) {
         break
@@ -677,14 +680,14 @@ export const DOMEditor: DOMEditorInterface = {
     return domRange
   },
 
-  toSlateNode: (_editor, domNode) => {
+  toSlateNode: (editor, domNode) => {
     let domEl = isDOMElement(domNode) ? domNode : domNode.parentElement
 
     if (domEl && !domEl.hasAttribute('data-slate-node')) {
       domEl = domEl.closest(`[data-slate-node]`)
     }
 
-    const node = domEl ? ELEMENT_TO_NODE.get(domEl as HTMLElement) : null
+    const node = domEl ? editor.elementToNode.get(domEl as HTMLElement) : null
 
     if (!node) {
       throw new Error(`Cannot resolve a Slate node from DOM node: ${domEl}`)

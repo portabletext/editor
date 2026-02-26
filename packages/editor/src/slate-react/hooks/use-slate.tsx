@@ -1,4 +1,4 @@
-import {useContext, useMemo, useReducer, type MutableRefObject} from 'react'
+import {useContext, useMemo, useReducer} from 'react'
 import type {Editor} from '../../slate'
 import {useIsomorphicLayoutEffect} from './use-isomorphic-layout-effect'
 import {SlateSelectorContext} from './use-slate-selector'
@@ -26,23 +26,14 @@ export const useSlate = (): Editor => {
   return useSlateStatic()
 }
 
-const EDITOR_TO_V = new WeakMap<Editor, MutableRefObject<number>>()
-
-const getEditorVersionRef = (editor: Editor): MutableRefObject<number> => {
-  let v = EDITOR_TO_V.get(editor)
-
-  if (v) {
-    return v
-  }
-
-  v = {current: 0}
-  EDITOR_TO_V.set(editor, v)
+const getEditorVersionRef = (editor: Editor) => {
+  const v = editor.changeVersion
 
   // Register the `onChange` handler exactly once per editor
   const {onChange} = editor
 
   editor.onChange = (options) => {
-    v!.current++
+    v.current++
     onChange(options)
   }
 
