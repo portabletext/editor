@@ -287,7 +287,8 @@ export const playgroundMachine = setup({
       | {
           type: 'toggle feature flag'
           flag: keyof PlaygroundFeatureFlags
-        },
+        }
+      | {type: 'set yjs latency'; latency: number},
     input: {} as {
       editorIdGenerator: Generator<string, string>
     },
@@ -465,6 +466,14 @@ export const playgroundMachine = setup({
         featureFlags: ({context, event}) => ({
           ...context.featureFlags,
           [event.flag]: !context.featureFlags[event.flag],
+        }),
+      }),
+    },
+    'set yjs latency': {
+      actions: assign({
+        featureFlags: ({context, event}) => ({
+          ...context.featureFlags,
+          yjsLatency: event.latency,
         }),
       }),
     },

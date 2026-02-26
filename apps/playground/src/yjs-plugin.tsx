@@ -6,6 +6,7 @@ import {
 } from '@portabletext/editor/yjs'
 import {createContext, useContext, useEffect, useRef, useState} from 'react'
 import * as Y from 'yjs'
+import {useLatencySharedRoot} from './yjs-latency-provider'
 import {useYjsOperationLog} from './yjs-operation-log'
 
 export const YjsContext = createContext<Y.XmlText | null>(null)
@@ -36,10 +37,21 @@ function getSlateEditor(
   return internal?.slateEditor?.instance ?? null
 }
 
-export function PlaygroundYjsPlugin({enabled}: {enabled: boolean}) {
+export function PlaygroundYjsPlugin({
+  enabled,
+  editorIndex,
+  useLatency,
+}: {
+  enabled: boolean
+  editorIndex: number
+  useLatency: boolean
+}) {
   const editor = useEditor()
-  const sharedRoot = useContext(YjsContext)
+  const sharedRootFromContext = useContext(YjsContext)
+  const latencySharedRoot = useLatencySharedRoot(editorIndex)
+  const sharedRoot = useLatency ? latencySharedRoot : sharedRootFromContext
   const yjsEditorRef = useRef<YjsEditor | null>(null)
+  const currentSharedRootRef = useRef<Y.XmlText | null>(null)
   const {addEntry} = useYjsOperationLog()
   const addEntryRef = useRef(addEntry)
   addEntryRef.current = addEntry
@@ -49,6 +61,13 @@ export function PlaygroundYjsPlugin({enabled}: {enabled: boolean}) {
 
     const slateEditor = getSlateEditor(editor)
     if (!slateEditor) return
+
+    // If the shared root changed (e.g. toggling latency mode), disconnect the
+    // old editor and create a new one
+    if (yjsEditorRef.current && currentSharedRootRef.current !== sharedRoot) {
+      yjsEditorRef.current.disconnect()
+      yjsEditorRef.current = null
+    }
 
     if (!yjsEditorRef.current) {
       const onOperation = (entry: YjsOperationEntry) => {
@@ -61,6 +80,7 @@ export function PlaygroundYjsPlugin({enabled}: {enabled: boolean}) {
         onOperation,
       }) as unknown as YjsEditor
       yjsEditorRef.current = yjsEditor
+      currentSharedRootRef.current = sharedRoot
     }
 
     if (enabled) {

@@ -79,6 +79,7 @@ import {PlaygroundYjsPlugin} from './yjs-plugin'
 
 export function Editor(props: {
   editorRef: EditorActorRef
+  editorIndex: number
   rangeDecorations: RangeDecoration[]
 }) {
   const value = useSelector(props.editorRef, (s) => s.context.value)
@@ -109,7 +110,11 @@ export function Editor(props: {
             schemaDefinition: playgroundSchemaDefinition,
           }}
         >
-          <PlaygroundYjsPlugin enabled={playgroundFeatureFlags.yjsMode} />
+          <PlaygroundYjsPlugin
+            enabled={playgroundFeatureFlags.yjsMode}
+            editorIndex={props.editorIndex}
+            useLatency={playgroundFeatureFlags.yjsLatency > 0}
+          />
           <EditorEventListener
             editorRef={props.editorRef}
             value={value}
