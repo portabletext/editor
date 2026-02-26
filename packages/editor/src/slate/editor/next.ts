@@ -16,7 +16,7 @@ export const next: EditorInterface['next'] = (editor, options = {}) => {
     return
   }
 
-  const [, to] = Editor.last(editor, [])
+  const [, to] = Editor.node(editor, Editor.path(editor, [], {edge: 'end'}))
 
   const span: Span = [pointAfterLocation.path, to]
 

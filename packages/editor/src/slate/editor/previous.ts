@@ -16,7 +16,7 @@ export const previous: EditorInterface['previous'] = (editor, options = {}) => {
     return
   }
 
-  const [, to] = Editor.first(editor, [])
+  const [, to] = Editor.node(editor, Editor.path(editor, [], {edge: 'start'}))
 
   // The search location is from the start of the document to the path of
   // the point before the location passed in
