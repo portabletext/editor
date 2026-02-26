@@ -1,5 +1,5 @@
 import {defineSchema} from '@portabletext/schema'
-import {getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {execute, forward, raise} from '../src/behaviors/behavior.types.action'
@@ -667,6 +667,129 @@ describe('event.history.undo', () => {
 
     await vi.waitFor(() => {
       expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
+    })
+  })
+
+  test('Scenario: Undoing decorator add across a range', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const spanKey = keyGenerator()
+    const blockKey = keyGenerator()
+    const initialValue = [
+      {
+        _type: 'block',
+        _key: blockKey,
+        children: [{_type: 'span', _key: spanKey, text: 'foobar', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ]
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({decorators: [{name: 'strong'}]}),
+      initialValue,
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(initialValue)
+    })
+
+    // Select "oob" (offset 1 to 4)
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 1,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 4,
+        },
+      },
+    })
+
+    editor.send({
+      type: 'decorator.add',
+      decorator: 'strong',
+    })
+
+    // After adding: "f" + "oob" (strong) + "ar" — three spans
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['f,oob,ar'])
+    })
+
+    editor.send({type: 'history.undo'})
+
+    // After undo: back to original value
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(initialValue)
+    })
+  })
+
+  test('Scenario: Undoing annotation add across a range', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const spanKey = keyGenerator()
+    const blockKey = keyGenerator()
+    const initialValue = [
+      {
+        _type: 'block',
+        _key: blockKey,
+        children: [{_type: 'span', _key: spanKey, text: 'foobar', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ]
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        decorators: [{name: 'strong'}],
+        annotations: [{name: 'link'}],
+      }),
+      initialValue,
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(initialValue)
+    })
+
+    // Select "oob" (offset 1 to 4)
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 1,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 4,
+        },
+      },
+    })
+
+    const annotationKey = keyGenerator()
+
+    editor.send({
+      type: 'annotation.add',
+      annotation: {
+        name: 'link',
+        _key: annotationKey,
+        value: {href: 'https://example.com'},
+      },
+    })
+
+    // After adding: "f" + "oob" (link) + "ar" — three spans
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['f,oob,ar'])
+    })
+
+    editor.send({type: 'history.undo'})
+
+    // After undo: back to original value
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(initialValue)
     })
   })
 })
