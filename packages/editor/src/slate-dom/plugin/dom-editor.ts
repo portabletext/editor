@@ -6,8 +6,11 @@ import {
   Transforms,
   type BaseEditor,
   type Node,
+  type Operation,
   type Path,
   type Point,
+  type RangeRef,
+  type Text,
 } from '../../slate'
 import type {TextDiff} from '../utils/diff-text'
 import {
@@ -32,18 +35,11 @@ import {
 import {IS_ANDROID, IS_CHROME, IS_FIREFOX} from '../utils/environment'
 import {Key} from '../utils/key'
 import {
-  EDITOR_TO_ELEMENT,
-  EDITOR_TO_KEY_TO_ELEMENT,
-  EDITOR_TO_PENDING_DIFFS,
-  EDITOR_TO_SCHEDULE_FLUSH,
-  EDITOR_TO_WINDOW,
   ELEMENT_TO_NODE,
-  IS_COMPOSING,
-  IS_FOCUSED,
-  IS_READ_ONLY,
   NODE_TO_INDEX,
   NODE_TO_KEY,
   NODE_TO_PARENT,
+  type Action,
 } from '../utils/weak-maps'
 
 /**
@@ -69,6 +65,25 @@ export interface DOMEditor extends BaseEditor {
     data: DataTransfer,
     originEvent?: 'drag' | 'copy' | 'cut',
   ) => void
+
+  isNodeMapDirty: boolean
+  domWindow: Window | null
+  domElement: HTMLElement | null
+  domPlaceholder: string
+  domPlaceholderElement: HTMLElement | null
+  keyToElement: WeakMap<Key, HTMLElement>
+  readOnly: boolean
+  focused: boolean
+  composing: boolean
+  userSelection: RangeRef | null
+  onContextChange: ((options?: {operation?: Operation}) => void) | null
+  scheduleFlush: (() => void) | null
+  pendingInsertionMarks: Partial<Text> | null
+  userMarks: Partial<Text> | null
+  pendingDiffs: TextDiff[]
+  pendingAction: Action | null
+  pendingSelection: Range | null
+  forceRender: (() => void) | null
 }
 
 export interface DOMEditorInterface {
@@ -258,16 +273,16 @@ export interface DOMEditorInterface {
 
 // eslint-disable-next-line no-redeclare
 export const DOMEditor: DOMEditorInterface = {
-  androidPendingDiffs: (editor) => EDITOR_TO_PENDING_DIFFS.get(editor),
+  androidPendingDiffs: (editor) => editor.pendingDiffs,
 
   androidScheduleFlush: (editor) => {
-    EDITOR_TO_SCHEDULE_FLUSH.get(editor)?.()
+    editor.scheduleFlush?.()
   },
 
   blur: (editor) => {
     const el = DOMEditor.toDOMNode(editor, editor)
     const root = DOMEditor.findDocumentOrShadowRoot(editor)
-    IS_FOCUSED.set(editor, false)
+    editor.focused = false
 
     if (root.activeElement === el) {
       el.blur()
@@ -407,13 +422,13 @@ export const DOMEditor: DOMEditorInterface = {
 
   focus: (editor, options = {retries: 5}) => {
     // Return if already focused
-    if (IS_FOCUSED.get(editor)) {
+    if (editor.focused) {
       return
     }
 
     // Return if no dom node is associated with the editor, which means the editor is not yet mounted
     // or has been unmounted. This can happen especially, while retrying to focus the editor.
-    if (!EDITOR_TO_ELEMENT.get(editor)) {
+    if (!editor.domElement) {
       return
     }
 
@@ -448,13 +463,13 @@ export const DOMEditor: DOMEditorInterface = {
       }
       // IS_FOCUSED should be set before calling el.focus() to ensure that
       // FocusedContext is updated to the correct value
-      IS_FOCUSED.set(editor, true)
+      editor.focused = true
       el.focus({preventScroll: true})
     }
   },
 
   getWindow: (editor) => {
-    const window = EDITOR_TO_WINDOW.get(editor)
+    const window = editor.domWindow
     if (!window) {
       throw new Error('Unable to find a host window element for this editor')
     }
@@ -525,15 +540,15 @@ export const DOMEditor: DOMEditorInterface = {
   insertTextData: (editor, data) => editor.insertTextData(data),
 
   isComposing: (editor) => {
-    return !!IS_COMPOSING.get(editor)
+    return !!editor.composing
   },
 
-  isFocused: (editor) => !!IS_FOCUSED.get(editor),
+  isFocused: (editor) => !!editor.focused,
 
-  isReadOnly: (editor) => !!IS_READ_ONLY.get(editor),
+  isReadOnly: (editor) => !!editor.readOnly,
 
   isTargetInsideNonReadonlyVoid: (editor, target) => {
-    if (IS_READ_ONLY.get(editor)) {
+    if (editor.readOnly) {
       return false
     }
 
@@ -547,10 +562,9 @@ export const DOMEditor: DOMEditorInterface = {
     editor.setFragmentData(data, originEvent),
 
   toDOMNode: (editor, node) => {
-    const KEY_TO_ELEMENT = EDITOR_TO_KEY_TO_ELEMENT.get(editor)
     const domNode = Editor.isEditor(node)
-      ? EDITOR_TO_ELEMENT.get(editor)
-      : KEY_TO_ELEMENT?.get(DOMEditor.findKey(editor, node))
+      ? editor.domElement
+      : editor.keyToElement?.get(DOMEditor.findKey(editor, node))
 
     if (!domNode) {
       throw new Error(

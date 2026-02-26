@@ -7,7 +7,6 @@ import {
   type DecoratedRange,
 } from '../../slate'
 import {
-  IS_NODE_MAP_DIRTY,
   isElementDecorationsEqual,
   NODE_TO_INDEX,
   NODE_TO_PARENT,
@@ -52,7 +51,7 @@ const useChildren = (props: {
     renderLeaf,
   } = props
   const editor = useSlateStatic()
-  IS_NODE_MAP_DIRTY.set(editor as any, false)
+  editor.isNodeMapDirty = false
 
   const isEditor = Editor.isEditor(node)
   const isBlock = !isEditor && Element.isElement(node) && !editor.isInline(node)
@@ -68,7 +67,7 @@ const useChildren = (props: {
 
   // Update the index and parent of each child.
   // PERF: If chunking is enabled, this is done while traversing the chunk tree
-  // instead to eliminate unnecessary weak map operations.
+  // instead to eliminate unnecessary map operations.
   if (!chunking) {
     node.children.forEach((n, i) => {
       NODE_TO_INDEX.set(n, i)

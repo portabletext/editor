@@ -1,6 +1,5 @@
 import {toSlateRange} from '../internal-utils/to-slate-range'
 import {Transforms} from '../slate'
-import {IS_FOCUSED, IS_READ_ONLY} from '../slate-dom'
 import type {OperationImplementation} from './operation.types'
 
 export const selectOperationImplementation: OperationImplementation<
@@ -21,7 +20,7 @@ export const selectOperationImplementation: OperationImplementation<
     Transforms.deselect(operation.editor)
   }
 
-  if (IS_FOCUSED.get(operation.editor) && IS_READ_ONLY.get(operation.editor)) {
-    IS_FOCUSED.set(operation.editor, false)
+  if (operation.editor.focused && operation.editor.readOnly) {
+    operation.editor.focused = false
   }
 }

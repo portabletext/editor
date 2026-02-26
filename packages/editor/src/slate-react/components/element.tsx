@@ -7,7 +7,6 @@ import {
   type Element as SlateElement,
 } from '../../slate'
 import {
-  EDITOR_TO_KEY_TO_ELEMENT,
   ELEMENT_TO_NODE,
   isElementDecorationsEqual,
   NODE_TO_ELEMENT,
@@ -59,14 +58,13 @@ const Element = (props: {
   const key = ReactEditor.findKey(editor, element)
   const ref = useCallback(
     (ref: HTMLElement | null) => {
-      // Update element-related weak maps with the DOM element ref.
-      const KEY_TO_ELEMENT = EDITOR_TO_KEY_TO_ELEMENT.get(editor)
+      // Update element-related editor maps with the DOM element ref.
       if (ref) {
-        KEY_TO_ELEMENT?.set(key, ref)
+        editor.keyToElement?.set(key, ref)
         NODE_TO_ELEMENT.set(element, ref)
         ELEMENT_TO_NODE.set(ref, element)
       } else {
-        KEY_TO_ELEMENT?.delete(key)
+        editor.keyToElement?.delete(key)
         NODE_TO_ELEMENT.delete(element)
       }
     },

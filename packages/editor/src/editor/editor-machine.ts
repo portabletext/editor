@@ -20,7 +20,6 @@ import {debug} from '../internal-utils/debug'
 import type {EventPosition} from '../internal-utils/event-position'
 import {sortByPriority} from '../priority/priority.sort'
 import {Transforms} from '../slate'
-import {EDITOR_TO_PENDING_SELECTION} from '../slate-dom'
 import {ReactEditor} from '../slate-react'
 import type {NamespaceEvent, OmitFromUnion} from '../type-utils'
 import type {EditorSelection} from '../types/editor'
@@ -317,7 +316,7 @@ export const editorMachine = setup({
           Transforms.select(slateEditor, currentSelection)
 
           // Tell Slate to use this selection for DOM sync
-          EDITOR_TO_PENDING_SELECTION.set(slateEditor, slateEditor.selection)
+          slateEditor.pendingSelection = slateEditor.selection
 
           // Trigger the DOM sync
           slateEditor.onChange()

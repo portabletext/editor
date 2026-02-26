@@ -10,15 +10,6 @@ import {
 } from '../../../slate'
 import {
   applyStringDiff,
-  EDITOR_TO_FORCE_RENDER,
-  EDITOR_TO_PENDING_ACTION,
-  EDITOR_TO_PENDING_DIFFS,
-  EDITOR_TO_PENDING_INSERTION_MARKS,
-  EDITOR_TO_PENDING_SELECTION,
-  EDITOR_TO_PLACEHOLDER_ELEMENT,
-  EDITOR_TO_USER_MARKS,
-  IS_COMPOSING,
-  IS_NODE_MAP_DIRTY,
   isDOMSelection,
   isTrackedMutation,
   mergeStringDiffs,
@@ -93,8 +84,8 @@ export function createAndroidInputManager({
   let insertPositionHint: StringDiff | null | false = false
 
   const applyPendingSelection = () => {
-    const pendingSelection = EDITOR_TO_PENDING_SELECTION.get(editor)
-    EDITOR_TO_PENDING_SELECTION.delete(editor)
+    const pendingSelection = editor.pendingSelection
+    editor.pendingSelection = null
 
     if (pendingSelection) {
       const {selection} = editor
@@ -109,8 +100,8 @@ export function createAndroidInputManager({
   }
 
   const performAction = () => {
-    const action = EDITOR_TO_PENDING_ACTION.get(editor)
-    EDITOR_TO_PENDING_ACTION.delete(editor)
+    const action = editor.pendingAction
+    editor.pendingAction = null
     if (!action) {
       return
     }
@@ -162,23 +153,19 @@ export function createAndroidInputManager({
     const selectionRef =
       editor.selection &&
       Editor.rangeRef(editor, editor.selection, {affinity: 'forward'})
-    EDITOR_TO_USER_MARKS.set(editor, editor.marks)
+    editor.userMarks = editor.marks
 
-    debug(
-      'flush',
-      EDITOR_TO_PENDING_ACTION.get(editor),
-      EDITOR_TO_PENDING_DIFFS.get(editor),
-    )
+    debug('flush', editor.pendingAction, editor.pendingDiffs)
 
     let scheduleSelectionChange = hasPendingDiffs()
 
     let diff: TextDiff | undefined
     // biome-ignore lint/suspicious/noAssignInExpressions: Slate upstream pattern
-    while ((diff = EDITOR_TO_PENDING_DIFFS.get(editor)?.[0])) {
-      const pendingMarks = EDITOR_TO_PENDING_INSERTION_MARKS.get(editor)
+    while ((diff = editor.pendingDiffs?.[0])) {
+      const pendingMarks = editor.pendingInsertionMarks
 
       if (pendingMarks !== undefined) {
-        EDITOR_TO_PENDING_INSERTION_MARKS.delete(editor)
+        editor.pendingInsertionMarks = null
         editor.marks = pendingMarks as typeof editor.marks
       }
 
@@ -208,22 +195,21 @@ export function createAndroidInputManager({
 
       // Remove diff only after we have applied it to account for it when transforming
       // pending ranges.
-      EDITOR_TO_PENDING_DIFFS.set(
-        editor,
-        // biome-ignore lint/suspicious/noNonNullAssertedOptionalChain: Slate upstream pattern — diffs guaranteed to exist in loop
-        EDITOR_TO_PENDING_DIFFS.get(editor)?.filter(({id}) => id !== diff!.id)!,
-      )
+      // biome-ignore lint/suspicious/noNonNullAssertedOptionalChain: Slate upstream pattern — diffs guaranteed to exist in loop
+      editor.pendingDiffs = editor.pendingDiffs?.filter(
+        ({id}) => id !== diff!.id,
+      )!
 
       if (!verifyDiffState(editor, diff)) {
         debug('invalid diff state')
         scheduleSelectionChange = false
-        EDITOR_TO_PENDING_ACTION.delete(editor)
-        EDITOR_TO_USER_MARKS.delete(editor)
+        editor.pendingAction = null
+        editor.userMarks = null
         flushing = 'action'
 
         // Ensure we don't restore the pending user (dom) selection
         // since the document and dom state do not match.
-        EDITOR_TO_PENDING_SELECTION.delete(editor)
+        editor.pendingSelection = null
         scheduleOnDOMSelectionChange.cancel()
         onDOMSelectionChange.cancel()
         selectionRef?.unref()
@@ -233,7 +219,7 @@ export function createAndroidInputManager({
     const selection = selectionRef?.unref()
     if (
       selection &&
-      !EDITOR_TO_PENDING_SELECTION.get(editor) &&
+      !editor.pendingSelection &&
       (!editor.selection || !Range.equals(selection, editor.selection))
     ) {
       Transforms.select(editor, selection)
@@ -257,8 +243,8 @@ export function createAndroidInputManager({
 
     applyPendingSelection()
 
-    const userMarks = EDITOR_TO_USER_MARKS.get(editor)
-    EDITOR_TO_USER_MARKS.delete(editor)
+    const userMarks = editor.userMarks
+    editor.userMarks = null
     if (userMarks !== undefined) {
       editor.marks = userMarks as typeof editor.marks
       editor.onChange()
@@ -273,7 +259,7 @@ export function createAndroidInputManager({
     }
 
     compositionEndTimeoutId = setTimeout(() => {
-      IS_COMPOSING.set(editor, false)
+      editor.composing = false
       flush()
     }, RESOLVE_DELAY)
   }
@@ -283,7 +269,7 @@ export function createAndroidInputManager({
   ) => {
     debug('composition start')
 
-    IS_COMPOSING.set(editor, true)
+    editor.composing = true
 
     if (compositionEndTimeoutId) {
       clearTimeout(compositionEndTimeoutId)
@@ -292,7 +278,7 @@ export function createAndroidInputManager({
   }
 
   const updatePlaceholderVisibility = (forceHide = false) => {
-    const placeholderElement = EDITOR_TO_PLACEHOLDER_ELEMENT.get(editor)
+    const placeholderElement = editor.domPlaceholderElement
     if (!placeholderElement) {
       return
     }
@@ -308,8 +294,7 @@ export function createAndroidInputManager({
   const storeDiff = (path: Path, diff: StringDiff) => {
     debug('storeDiff', path, diff)
 
-    const pendingDiffs = EDITOR_TO_PENDING_DIFFS.get(editor) ?? []
-    EDITOR_TO_PENDING_DIFFS.set(editor, pendingDiffs)
+    const pendingDiffs = editor.pendingDiffs
 
     const target = Node.leaf(editor, path)
     const idx = pendingDiffs.findIndex((change) =>
@@ -345,7 +330,7 @@ export function createAndroidInputManager({
     insertPositionHint = false
     debug('scheduleAction', {at, run})
 
-    EDITOR_TO_PENDING_SELECTION.delete(editor)
+    editor.pendingSelection = null
     scheduleOnDOMSelectionChange.cancel()
     onDOMSelectionChange.cancel()
 
@@ -353,7 +338,7 @@ export function createAndroidInputManager({
       flush()
     }
 
-    EDITOR_TO_PENDING_ACTION.set(editor, {at, run})
+    editor.pendingAction = {at, run}
 
     // COMPAT: When deleting before a non-contenteditable element chrome only fires a beforeinput,
     // (no input) and doesn't perform any dom mutations. Without a flush timeout we would never flush
@@ -367,7 +352,7 @@ export function createAndroidInputManager({
       flushTimeoutId = null
     }
 
-    if (IS_NODE_MAP_DIRTY.get(editor)) {
+    if (editor.isNodeMapDirty) {
       return
     }
 
@@ -448,7 +433,7 @@ export function createAndroidInputManager({
         start: start.offset,
         end: end.offset,
       }
-      const pendingDiffs = EDITOR_TO_PENDING_DIFFS.get(editor)
+      const pendingDiffs = editor.pendingDiffs
       const relevantPendingDiffs = pendingDiffs?.find((change) =>
         Path.equals(change.path, path),
       )
@@ -707,7 +692,7 @@ export function createAndroidInputManager({
 
         // COMPAT: If we are writing inside a placeholder, the ime inserts the text inside
         // the placeholder itself and thus includes the zero-width space inside edit events.
-        if (EDITOR_TO_PENDING_INSERTION_MARKS.get(editor)) {
+        if (editor.pendingInsertionMarks) {
           text = text.replace('\uFEFF', '')
         }
 
@@ -837,11 +822,11 @@ export function createAndroidInputManager({
   }
 
   const hasPendingAction = () => {
-    return !!EDITOR_TO_PENDING_ACTION.get(editor)
+    return !!editor.pendingAction
   }
 
   const hasPendingDiffs = () => {
-    return !!EDITOR_TO_PENDING_DIFFS.get(editor)?.length
+    return !!editor.pendingDiffs?.length
   }
 
   const hasPendingChanges = () => {
@@ -853,7 +838,7 @@ export function createAndroidInputManager({
   }
 
   const handleUserSelect = (range: Range | null) => {
-    EDITOR_TO_PENDING_SELECTION.set(editor, range)
+    editor.pendingSelection = range
 
     if (flushTimeoutId) {
       clearTimeout(flushTimeoutId)
@@ -920,7 +905,7 @@ export function createAndroidInputManager({
     ) {
       // Cause a re-render to restore the dom state if we encounter tracked mutations without
       // a corresponding pending action.
-      EDITOR_TO_FORCE_RENDER.get(editor)?.()
+      editor.forceRender?.()
     }
   }
 

@@ -8,12 +8,7 @@ import React, {
   type MutableRefObject,
 } from 'react'
 import {Text, type Element, type LeafPosition} from '../../slate'
-import {
-  EDITOR_TO_PLACEHOLDER_ELEMENT,
-  IS_ANDROID,
-  IS_WEBKIT,
-  PLACEHOLDER_SYMBOL,
-} from '../../slate-dom'
+import {IS_ANDROID, IS_WEBKIT, PLACEHOLDER_SYMBOL} from '../../slate-dom'
 import {useSlateStatic} from '../hooks/use-slate-static'
 import type {RenderLeafProps, RenderPlaceholderProps} from './editable'
 import SlateString from './string'
@@ -81,10 +76,10 @@ const Leaf = (props: {
       )
 
       if (placeholderEl == null) {
-        EDITOR_TO_PLACEHOLDER_ELEMENT.delete(editor)
+        editor.domPlaceholderElement = null
         ;(leaf as any).onPlaceholderResize?.(null)
       } else {
-        EDITOR_TO_PLACEHOLDER_ELEMENT.set(editor, placeholderEl)
+        editor.domPlaceholderElement = placeholderEl
 
         if (!placeholderResizeObserver.current) {
           // Create a new observer and observe the placeholder element.
