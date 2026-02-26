@@ -61,6 +61,14 @@ export function withYjs(
         applySlateOp(sharedRoot, {children: doc} as Node, op)
       }
     }, localOrigin)
+
+    if (config.onOperation) {
+      config.onOperation({
+        direction: 'local-to-yjs',
+        operations: ops.map(({op}) => op),
+        timestamp: Date.now(),
+      })
+    }
   }
 
   function handleYjsObserve(
@@ -80,6 +88,12 @@ export function withYjs(
     flushBufferedOps()
 
     isApplyingRemoteChanges = true
+    const remoteOps: Operation[] = []
+    const originalApply = editor.apply
+    editor.apply = (op: Operation) => {
+      remoteOps.push(op)
+      originalApply(op)
+    }
 
     withRemoteChanges(editor, () => {
       Editor.withoutNormalizing(editor, () => {
@@ -92,7 +106,16 @@ export function withYjs(
       editor.normalize()
     })
 
+    editor.apply = originalApply
     isApplyingRemoteChanges = false
+
+    if (config.onOperation && remoteOps.length > 0) {
+      config.onOperation({
+        direction: 'yjs-to-slate',
+        operations: remoteOps,
+        timestamp: Date.now(),
+      })
+    }
 
     editor.onChange()
   }

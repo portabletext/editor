@@ -6,5 +6,10 @@ export {
   slateNodesToYDoc,
   yTextToSlateElement,
 } from './convert'
-export type {YjsEditor, YjsEditorConfig} from './types'
+export type {
+  YjsEditor,
+  YjsEditorConfig,
+  YjsOperationDirection,
+  YjsOperationEntry,
+} from './types'
 export {withYjs} from './with-yjs'

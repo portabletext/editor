@@ -1,9 +1,14 @@
 import {useEditor} from '@portabletext/editor'
-import {withYjs, type YjsEditor} from '@portabletext/editor/yjs'
+import {
+  withYjs,
+  type YjsEditor,
+  type YjsOperationEntry,
+} from '@portabletext/editor/yjs'
 import {createContext, useContext, useEffect, useRef, useState} from 'react'
 import * as Y from 'yjs'
+import {useYjsOperationLog} from './yjs-operation-log'
 
-const YjsContext = createContext<Y.XmlText | null>(null)
+export const YjsContext = createContext<Y.XmlText | null>(null)
 
 export function YjsProvider({children}: {children: React.ReactNode}) {
   const [yDoc] = useState(() => new Y.Doc())
@@ -35,6 +40,9 @@ export function PlaygroundYjsPlugin({enabled}: {enabled: boolean}) {
   const editor = useEditor()
   const sharedRoot = useContext(YjsContext)
   const yjsEditorRef = useRef<YjsEditor | null>(null)
+  const {addEntry} = useYjsOperationLog()
+  const addEntryRef = useRef(addEntry)
+  addEntryRef.current = addEntry
 
   useEffect(() => {
     if (!sharedRoot) return
@@ -43,9 +51,14 @@ export function PlaygroundYjsPlugin({enabled}: {enabled: boolean}) {
     if (!slateEditor) return
 
     if (!yjsEditorRef.current) {
+      const onOperation = (entry: YjsOperationEntry) => {
+        addEntryRef.current(entry)
+      }
+
       const yjsEditor = withYjs(slateEditor, {
         sharedRoot,
         localOrigin: Symbol('playground-local'),
+        onOperation,
       }) as unknown as YjsEditor
       yjsEditorRef.current = yjsEditor
     }

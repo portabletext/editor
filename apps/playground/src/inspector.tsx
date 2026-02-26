@@ -1,7 +1,15 @@
 import {useActorRef, useSelector} from '@xstate/react'
-import {CheckIcon, CopyIcon, HistoryIcon, TrashIcon} from 'lucide-react'
-import {useEffect, useState} from 'react'
+import {
+  CheckIcon,
+  CopyIcon,
+  GitBranchIcon,
+  HistoryIcon,
+  NetworkIcon,
+  TrashIcon,
+} from 'lucide-react'
+import {useContext, useEffect, useState} from 'react'
 import {TooltipTrigger, type Key} from 'react-aria-components'
+import {PlaygroundFeatureFlagsContext} from './feature-flags'
 import {highlightMachine} from './highlight-json-machine'
 import {MarkdownLogo, PortableTextLogo, ReactLogo} from './logos'
 import {PatchesList} from './patches-list'
@@ -13,11 +21,20 @@ import {Container} from './primitives/container'
 import {Spinner} from './primitives/spinner'
 import {Tab, TabList, TabPanel, Tabs} from './primitives/tabs'
 import {Tooltip} from './primitives/tooltip'
+import {YjsOperationLog} from './yjs-operation-log'
+import {YjsTreeViewer} from './yjs-tree-viewer'
 
-type TabId = 'output' | 'patches' | 'react-preview' | 'markdown-preview'
+type TabId =
+  | 'output'
+  | 'patches'
+  | 'react-preview'
+  | 'markdown-preview'
+  | 'yjs-tree'
+  | 'yjs-ops'
 
 export function Inspector(props: {playgroundRef: PlaygroundActorRef}) {
   const [activeTab, setActiveTab] = useState<TabId>('output')
+  const featureFlags = useContext(PlaygroundFeatureFlagsContext)
 
   const handleTabChange = (key: Key) => {
     setActiveTab(key as TabId)
@@ -55,6 +72,22 @@ export function Inspector(props: {playgroundRef: PlaygroundActorRef}) {
               <span className="hidden sm:inline">Markdown</span>
             </span>
           </Tab>
+          {featureFlags.yjsMode ? (
+            <Tab id="yjs-tree">
+              <span className="flex items-center gap-1.5">
+                <GitBranchIcon className="size-3" />
+                <span className="hidden sm:inline">Y.Doc</span>
+              </span>
+            </Tab>
+          ) : null}
+          {featureFlags.yjsMode ? (
+            <Tab id="yjs-ops">
+              <span className="flex items-center gap-1.5">
+                <NetworkIcon className="size-3" />
+                <span className="hidden sm:inline">Ops</span>
+              </span>
+            </Tab>
+          ) : null}
         </TabList>
         <TabActions activeTab={activeTab} playgroundRef={props.playgroundRef} />
       </div>
@@ -82,6 +115,22 @@ export function Inspector(props: {playgroundRef: PlaygroundActorRef}) {
           <MarkdownPreview playgroundRef={props.playgroundRef} />
         </Container>
       </TabPanel>
+
+      {featureFlags.yjsMode ? (
+        <TabPanel id="yjs-tree" className="flex-1 min-h-0">
+          <Container className="h-full overflow-clip">
+            <YjsTreeViewer />
+          </Container>
+        </TabPanel>
+      ) : null}
+
+      {featureFlags.yjsMode ? (
+        <TabPanel id="yjs-ops" className="flex-1 min-h-0">
+          <Container className="h-full overflow-clip">
+            <YjsOperationLog />
+          </Container>
+        </TabPanel>
+      ) : null}
     </Tabs>
   )
 }
