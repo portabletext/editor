@@ -138,6 +138,72 @@ describe('slateElementToYText / yTextToSlateElement roundtrip', () => {
     expect((result as any).value).toEqual({src: 'image.png'})
   })
 
+  test('block with mixed text and inline object roundtrips', () => {
+    const block = {
+      _type: 'block',
+      _key: 'b1',
+      style: 'normal',
+      markDefs: [],
+      children: [
+        {_key: 's1', _type: 'span', text: 'before ', marks: []},
+        {
+          _type: 'stock-ticker',
+          _key: 'st1',
+          __inline: true,
+          value: {symbol: 'AAPL'},
+          children: [{_key: 'void-child', _type: 'span', text: '', marks: []}],
+        },
+        {_key: 's2', _type: 'span', text: ' after', marks: []},
+      ],
+    } as unknown as Descendant
+
+    const yDoc = slateNodesToYDoc([block])
+    const sharedRoot = getSharedRoot(yDoc)
+    const delta = sharedRoot.toDelta() as Array<{insert: Y.XmlText}>
+    const result = yTextToSlateElement(delta[0]!.insert)
+
+    expect(result.children).toHaveLength(3)
+    expect(result.children[0]).toEqual({
+      _key: 's1',
+      _type: 'span',
+      text: 'before ',
+      marks: [],
+    })
+    const inlineChild = result.children[1] as any
+    expect(inlineChild._type).toBe('stock-ticker')
+    expect(inlineChild._key).toBe('st1')
+    expect(inlineChild.__inline).toBe(true)
+    expect(inlineChild.value).toEqual({symbol: 'AAPL'})
+    // Yjs ignores zero-length text inserts, so the void child loses its
+    // attributes and comes back as a plain `{text: ''}` placeholder
+    expect(inlineChild.children).toEqual([{text: ''}])
+    expect(result.children[2]).toEqual({
+      _key: 's2',
+      _type: 'span',
+      text: ' after',
+      marks: [],
+    })
+  })
+
+  test('list block with listItem and level roundtrips', () => {
+    const block = {
+      _type: 'block',
+      _key: 'b1',
+      style: 'normal',
+      markDefs: [],
+      listItem: 'bullet',
+      level: 1,
+      children: [{_key: 's1', _type: 'span', text: 'list item', marks: []}],
+    } as unknown as Descendant
+
+    const yDoc = slateNodesToYDoc([block])
+    const sharedRoot = getSharedRoot(yDoc)
+    const delta = sharedRoot.toDelta() as Array<{insert: Y.XmlText}>
+    const result = yTextToSlateElement(delta[0]!.insert)
+
+    expect(result).toEqual(block)
+  })
+
   test('empty Y.XmlText gets a child', () => {
     const yDoc = new Y.Doc()
     const root = yDoc.get('test', Y.XmlText) as Y.XmlText

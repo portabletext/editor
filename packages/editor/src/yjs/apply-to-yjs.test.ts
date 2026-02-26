@@ -92,6 +92,96 @@ describe('set_node', () => {
     expect((blockElement as Record<string, unknown>).style).toBe('h1')
   })
 
+  test('changes style from h1 to normal', () => {
+    const blocks: Descendant[] = [
+      {
+        _type: 'block',
+        _key: 'b1',
+        style: 'h1',
+        markDefs: [],
+        children: [{_key: 's1', _type: 'span', text: 'heading', marks: []}],
+      },
+    ] as unknown as Descendant[]
+
+    const yDoc = slateNodesToYDoc(blocks)
+    const sharedRoot = getSharedRoot(yDoc)
+    const slateDoc = {children: blocks} as unknown as Node
+
+    applySlateOp(sharedRoot, slateDoc, {
+      type: 'set_node',
+      path: [0],
+      properties: {style: 'h1'},
+      newProperties: {style: 'normal'},
+    })
+
+    const delta = sharedRoot.toDelta() as Array<{insert: Y.XmlText}>
+    const blockElement = yTextToSlateElement(delta[0]!.insert)
+    expect((blockElement as Record<string, unknown>).style).toBe('normal')
+  })
+
+  test('changes style to blockquote', () => {
+    const {sharedRoot, blocks} = createDocWithBlock('quote text')
+    const slateDoc = {children: blocks} as unknown as Node
+
+    applySlateOp(sharedRoot, slateDoc, {
+      type: 'set_node',
+      path: [0],
+      properties: {style: 'normal'},
+      newProperties: {style: 'blockquote'},
+    })
+
+    const delta = sharedRoot.toDelta() as Array<{insert: Y.XmlText}>
+    const blockElement = yTextToSlateElement(delta[0]!.insert)
+    expect((blockElement as Record<string, unknown>).style).toBe('blockquote')
+  })
+
+  test('adds listItem and level', () => {
+    const {sharedRoot, blocks} = createDocWithBlock('list item')
+    const slateDoc = {children: blocks} as unknown as Node
+
+    applySlateOp(sharedRoot, slateDoc, {
+      type: 'set_node',
+      path: [0],
+      properties: {},
+      newProperties: {listItem: 'bullet', level: 1},
+    })
+
+    const delta = sharedRoot.toDelta() as Array<{insert: Y.XmlText}>
+    const blockElement = yTextToSlateElement(delta[0]!.insert)
+    expect((blockElement as Record<string, unknown>).listItem).toBe('bullet')
+    expect((blockElement as Record<string, unknown>).level).toBe(1)
+  })
+
+  test('removes listItem', () => {
+    const blocks: Descendant[] = [
+      {
+        _type: 'block',
+        _key: 'b1',
+        style: 'normal',
+        markDefs: [],
+        listItem: 'bullet',
+        level: 1,
+        children: [{_key: 's1', _type: 'span', text: 'item', marks: []}],
+      },
+    ] as unknown as Descendant[]
+
+    const yDoc = slateNodesToYDoc(blocks)
+    const sharedRoot = getSharedRoot(yDoc)
+    const slateDoc = {children: blocks} as unknown as Node
+
+    applySlateOp(sharedRoot, slateDoc, {
+      type: 'set_node',
+      path: [0],
+      properties: {listItem: 'bullet', level: 1},
+      newProperties: {listItem: undefined, level: undefined},
+    })
+
+    const delta = sharedRoot.toDelta() as Array<{insert: Y.XmlText}>
+    const blockElement = yTextToSlateElement(delta[0]!.insert)
+    expect((blockElement as Record<string, unknown>).listItem).toBeUndefined()
+    expect((blockElement as Record<string, unknown>).level).toBeUndefined()
+  })
+
   test('adds marks to text node', () => {
     const {sharedRoot, blocks} = createDocWithBlock('hello')
     const slateDoc = {children: blocks} as unknown as Node
@@ -290,5 +380,116 @@ describe('insert_node', () => {
     const block2 = yTextToSlateElement(delta[1]!.insert)
     const block2Text = block2.children.map((child: any) => child.text).join('')
     expect(block2Text).toBe('world')
+  })
+
+  test('inserts inline element inside a block', () => {
+    const blocks: Descendant[] = [
+      {
+        _type: 'block',
+        _key: 'b1',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_key: 's1', _type: 'span', text: 'before', marks: []},
+          {_key: 's2', _type: 'span', text: 'after', marks: []},
+        ],
+      },
+    ] as unknown as Descendant[]
+
+    const yDoc = slateNodesToYDoc(blocks)
+    const sharedRoot = getSharedRoot(yDoc)
+    const slateDoc = {children: blocks} as unknown as Node
+
+    const inlineObj = {
+      _type: 'stock-ticker',
+      _key: 'st1',
+      __inline: true,
+      value: {symbol: 'AAPL'},
+      children: [{_key: 'void-child', _type: 'span', text: '', marks: []}],
+    } as unknown as Descendant
+
+    applySlateOp(sharedRoot, slateDoc, {
+      type: 'insert_node',
+      path: [0, 1],
+      node: inlineObj,
+    })
+
+    const rootDelta = sharedRoot.toDelta() as Array<{insert: Y.XmlText}>
+    const block = yTextToSlateElement(rootDelta[0]!.insert)
+
+    expect(block.children).toHaveLength(3)
+    expect((block.children[0] as any).text).toBe('before')
+    expect((block.children[1] as any)._type).toBe('stock-ticker')
+    expect((block.children[1] as any).value).toEqual({symbol: 'AAPL'})
+    expect((block.children[2] as any).text).toBe('after')
+  })
+
+  test('inserts image block at root', () => {
+    const {sharedRoot, blocks} = createDocWithBlock('hello')
+    const slateDoc = {children: blocks} as unknown as Node
+
+    const imageBlock = {
+      _type: 'image',
+      _key: 'img1',
+      __inline: false,
+      value: {src: 'test.png'},
+      children: [{_key: 'void-child', _type: 'span', text: '', marks: []}],
+    } as unknown as Descendant
+
+    applySlateOp(sharedRoot, slateDoc, {
+      type: 'insert_node',
+      path: [1],
+      node: imageBlock,
+    })
+
+    const delta = sharedRoot.toDelta() as Array<{insert: Y.XmlText}>
+    expect(delta).toHaveLength(2)
+
+    const img = yTextToSlateElement(delta[1]!.insert)
+    expect(img._type).toBe('image')
+    expect((img as any).value).toEqual({src: 'test.png'})
+  })
+})
+
+describe('remove_node (inline)', () => {
+  test('removes inline element from block', () => {
+    const blocks: Descendant[] = [
+      {
+        _type: 'block',
+        _key: 'b1',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_key: 's1', _type: 'span', text: 'before', marks: []},
+          {
+            _type: 'stock-ticker',
+            _key: 'st1',
+            __inline: true,
+            value: {symbol: 'AAPL'},
+            children: [
+              {_key: 'void-child', _type: 'span', text: '', marks: []},
+            ],
+          },
+          {_key: 's2', _type: 'span', text: 'after', marks: []},
+        ],
+      },
+    ] as unknown as Descendant[]
+
+    const yDoc = slateNodesToYDoc(blocks)
+    const sharedRoot = getSharedRoot(yDoc)
+    const slateDoc = {children: blocks} as unknown as Node
+
+    applySlateOp(sharedRoot, slateDoc, {
+      type: 'remove_node',
+      path: [0, 1],
+      node: (blocks[0] as any).children[1],
+    })
+
+    const rootDelta = sharedRoot.toDelta() as Array<{insert: Y.XmlText}>
+    const block = yTextToSlateElement(rootDelta[0]!.insert)
+
+    expect(block.children).toHaveLength(2)
+    expect((block.children[0] as any).text).toBe('before')
+    expect((block.children[1] as any).text).toBe('after')
   })
 })

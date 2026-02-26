@@ -34,3 +34,19 @@ Feature: Yjs Collaboration
     And the caret is put after "world" in Editor B
     And "B" is typed in Editor B
     Then the text is "helloA worldB"
+
+  Scenario: Concurrent typing in different blocks
+    Given the text "foo|bar"
+    When the caret is put after "foo"
+    And "A" is typed
+    And the caret is put after "bar" in Editor B
+    And "B" is typed in Editor B
+    Then the text is "fooA|barB"
+
+  Scenario: One editor types while the other presses Enter
+    Given the text "hello world"
+    When the caret is put after "hello"
+    And "{Enter}" is pressed
+    And the caret is put after "world" in Editor B
+    And "!" is typed in Editor B
+    Then the text is "hello|world!"
