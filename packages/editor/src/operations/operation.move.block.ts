@@ -1,4 +1,3 @@
-import {Transforms} from '../slate'
 import {getBlockKeyFromSelectionPoint} from '../utils/util.selection-point'
 import type {OperationImplementation} from './operation.types'
 
@@ -36,9 +35,9 @@ export const moveBlockOperationImplementation: OperationImplementation<
     throw new Error('Failed to get block index from block key')
   }
 
-  Transforms.moveNodes(operation.editor, {
-    at: [originBlockIndex],
-    to: [destinationBlockIndex],
-    mode: 'highest',
+  operation.editor.apply({
+    type: 'move_node',
+    path: [originBlockIndex],
+    newPath: [destinationBlockIndex],
   })
 }
