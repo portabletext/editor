@@ -1495,16 +1495,6 @@ describe('event.patches', () => {
             'children',
           ],
         },
-        {
-          type: 'unset',
-          origin: 'remote',
-          path: [
-            {_key: blockKey},
-            'children',
-            {_key: stockTickerKey},
-            '__inline',
-          ],
-        },
       ],
       snapshot: undefined,
     })

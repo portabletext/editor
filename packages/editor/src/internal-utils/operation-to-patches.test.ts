@@ -56,8 +56,7 @@ const createDefaultChildren = () =>
         {
           _key: '773866318fa8',
           _type: 'someObject',
-          value: {title: 'The Object'},
-          __inline: true,
+          title: 'The Object',
           children: [{_type: 'span', _key: 'bogus', text: '', marks: []}],
         },
         {_type: 'span', _key: 'fd9b4a4e6c0b', text: '', marks: []},
@@ -76,7 +75,7 @@ const createDefaultValue = () =>
         {
           _key: '773866318fa8',
           _type: 'someObject',
-          value: {title: 'The Object'},
+          title: 'The Object',
         },
         {_type: 'span', _key: 'fd9b4a4e6c0b', text: '', marks: []},
       ],
@@ -100,7 +99,6 @@ describe(insertNodePatch.name, () => {
                 text: '',
               },
             ],
-            value: {},
           },
         ],
         {
@@ -117,7 +115,6 @@ describe(insertNodePatch.name, () => {
                 text: '',
               },
             ],
-            value: {},
           },
         },
         [],
@@ -222,8 +219,7 @@ describe('operationToPatches', () => {
           node: {
             _type: 'someObject',
             _key: 'c130395c640c',
-            value: {title: 'The Object'},
-            __inline: false,
+            title: 'The Object',
             children: [{_key: '1', _type: 'span', text: '', marks: []}],
           },
         },
@@ -264,8 +260,6 @@ describe('operationToPatches', () => {
           node: {
             _type: 'someObject',
             _key: 'c130395c640c',
-            value: {},
-            __inline: false,
             children: [{_key: '1', _type: 'span', text: '', marks: []}],
           },
         },
@@ -307,8 +301,7 @@ describe('operationToPatches', () => {
           node: {
             _type: 'someObject',
             _key: 'c130395c640c',
-            value: {title: 'The Object'},
-            __inline: true,
+            title: 'The Object',
             children: [{_key: '1', _type: 'span', text: '', marks: []}],
           },
         },
@@ -430,8 +423,7 @@ describe('operationToPatches', () => {
           node: {
             _key: '773866318fa8',
             _type: 'someObject',
-            value: {title: 'The object'},
-            __inline: true,
+            title: 'The object',
             children: [{_type: 'span', _key: 'bogus', text: '', marks: []}],
           },
         },
@@ -583,8 +575,7 @@ describe('defensive setIfMissing patches', () => {
           node: {
             _type: 'someObject',
             _key: 'new-object',
-            value: {title: 'New Object'},
-            __inline: true,
+            title: 'New Object',
             children: [{_key: '1', _type: 'span', text: '', marks: []}],
           },
         },

@@ -1,7 +1,4 @@
-import {applyAll, set, unset} from '@portabletext/patches'
-import {isTextBlock} from '@portabletext/schema'
 import {applySetNode} from '../internal-utils/apply-set-node'
-import type {Node} from '../slate'
 import type {OperationImplementation} from './operation.types'
 
 export const blockUnsetOperationImplementation: OperationImplementation<
@@ -23,37 +20,20 @@ export const blockUnsetOperationImplementation: OperationImplementation<
     throw new Error(`Unable to find block at ${JSON.stringify(operation.at)}`)
   }
 
-  if (isTextBlock(context, slateBlock)) {
-    const propsToRemove = operation.props.filter(
-      (prop) => prop !== '_type' && prop !== '_key' && prop !== 'children',
-    )
-
-    const unsetProps: Record<string, null> = {}
-    for (const prop of propsToRemove) {
-      unsetProps[prop] = null
-    }
-    applySetNode(operation.editor, unsetProps, [blockIndex])
-
-    if (operation.props.includes('_key')) {
-      applySetNode(operation.editor, {_key: context.keyGenerator()}, [
-        blockIndex,
-      ])
-    }
-
-    return
-  }
-
-  const patches = operation.props.flatMap((key) =>
-    key === '_type'
-      ? []
-      : key === '_key'
-        ? set(context.keyGenerator(), ['_key'])
-        : unset(['value', key]),
+  const propsToRemove = operation.props.filter(
+    (prop) => prop !== '_type' && prop !== '_key' && prop !== 'children',
   )
 
-  const updatedSlateBlock = applyAll(slateBlock, patches) as Partial<Node>
+  const unsetProps: Record<string, null> = {}
+  for (const prop of propsToRemove) {
+    unsetProps[prop] = null
+  }
 
-  applySetNode(operation.editor, updatedSlateBlock as Record<string, unknown>, [
-    blockIndex,
-  ])
+  if (Object.keys(unsetProps).length > 0) {
+    applySetNode(operation.editor, unsetProps, [blockIndex])
+  }
+
+  if (operation.props.includes('_key')) {
+    applySetNode(operation.editor, {_key: context.keyGenerator()}, [blockIndex])
+  }
 }

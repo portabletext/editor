@@ -64,14 +64,29 @@ export function createSchemaPlugin({editorActor}: {editorActor: EditorActor}) {
         return false
       }
 
-      const inlineSchemaTypes = editorActor
+      const isInlineType = editorActor
         .getSnapshot()
         .context.schema.inlineObjects.map((obj) => obj.name)
-      return (
-        inlineSchemaTypes.includes(element._type) &&
-        '__inline' in element &&
-        element.__inline === true
-      )
+        .includes(element._type)
+
+      if (!isInlineType) {
+        return false
+      }
+
+      const isAlsoBlockType = editorActor
+        .getSnapshot()
+        .context.schema.blockObjects.map((obj) => obj.name)
+        .includes(element._type)
+
+      if (isAlsoBlockType) {
+        for (const child of editor.children) {
+          if (child === element) {
+            return false
+          }
+        }
+      }
+
+      return true
     }
 
     // Extend Slate's default normalization

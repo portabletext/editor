@@ -95,7 +95,7 @@ export const blockSetOperationImplementation: OperationImplementation<
     }
 
     const patches = Object.entries(filteredProps).map(([key, value]) =>
-      key === '_key' ? set(value, ['_key']) : set(value, ['value', key]),
+      set(value, [key]),
     )
 
     const updatedSlateBlock = applyAll(slateBlock, patches) as Partial<Node>

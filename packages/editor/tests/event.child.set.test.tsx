@@ -197,15 +197,6 @@ describe('event.child.set', () => {
           type: 'set',
           value: true,
         },
-        {
-          origin: 'local',
-          path: [{_key: blockKey}, 'children', {_key: cellKey}, 'abilities'],
-          type: 'set',
-          value: {
-            fly: true,
-            swim: false,
-          },
-        },
       ])
     })
   })
@@ -308,26 +299,6 @@ describe('event.child.set', () => {
           path: [{_key: blockKey}, 'children', 1, '_key'],
           type: 'set',
           value: 'new-cell-key',
-        },
-        {
-          origin: 'local',
-          path: [{_key: blockKey}, 'children', {_key: 'new-cell-key'}, 'alive'],
-          type: 'set',
-          value: false,
-        },
-        {
-          origin: 'local',
-          path: [
-            {_key: blockKey},
-            'children',
-            {_key: 'new-cell-key'},
-            'abilities',
-          ],
-          type: 'set',
-          value: {
-            fly: true,
-            swim: false,
-          },
         },
       ])
     })

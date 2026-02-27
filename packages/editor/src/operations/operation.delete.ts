@@ -1,6 +1,5 @@
 import {isSpan, isTextBlock} from '@portabletext/schema'
 import {toSlateRange} from '../internal-utils/to-slate-range'
-import {VOID_CHILD_KEY} from '../internal-utils/values'
 import {
   deleteText,
   Editor,
@@ -66,11 +65,16 @@ export const deleteOperationImplementation: OperationImplementation<
   }
 
   if (operation.unit === 'child') {
+    const inlineObjectTypeNames = context.schema.inlineObjects.map(
+      (obj) => obj.name,
+    )
     const childMatches = Editor.nodes(operation.editor, {
       at,
       match: (node) =>
-        (isSpan(context, node) && node._key !== VOID_CHILD_KEY) ||
-        ('__inline' in node && node.__inline === true),
+        isSpan(context, node) ||
+        ('_type' in node &&
+          typeof node._type === 'string' &&
+          inlineObjectTypeNames.includes(node._type)),
     })
     const childPathRefs = Array.from(childMatches, ([, p]) =>
       Editor.pathRef(operation.editor, p),

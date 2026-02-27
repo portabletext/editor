@@ -92,7 +92,11 @@ export const Text: TextInterface = {
   },
 
   isText(value: any): value is Text {
-    return isObject(value) && typeof value.text === 'string'
+    return (
+      isObject(value) &&
+      typeof value.text === 'string' &&
+      !Array.isArray(value.children)
+    )
   },
 
   isTextList(value: any): value is Text[] {

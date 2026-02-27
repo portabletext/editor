@@ -230,9 +230,14 @@ export const GeneralTransforms: GeneralTransforms = {
 
         modifyDescendant(editor, path, (node) => {
           const newNode = {...node}
+          const isElement = 'children' in node && Array.isArray(node.children)
 
           for (const key in newProperties) {
-            if (key === 'children' || key === 'text') {
+            if (key === 'children') {
+              throw new Error(`Cannot set the "${key}" property of nodes!`)
+            }
+
+            if (key === 'text' && !isElement) {
               throw new Error(`Cannot set the "${key}" property of nodes!`)
             }
 
