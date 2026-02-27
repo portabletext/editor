@@ -79,10 +79,6 @@ export default defineConfig({
         __dirname,
         '../../packages/schema/src',
       ),
-      '@portabletext/sanity-bridge': path.resolve(
-        __dirname,
-        '../../packages/sanity-bridge/src',
-      ),
     },
   },
 })
