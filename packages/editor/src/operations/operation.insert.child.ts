@@ -84,8 +84,7 @@ export const insertChildOperationImplementation: OperationImplementation<
           marks: [],
         },
       ],
-      value: rest,
-      __inline: true,
+      ...rest,
     } as unknown as Node
 
     const [focusSpan] = getFocusSpan({editor: operation.editor})

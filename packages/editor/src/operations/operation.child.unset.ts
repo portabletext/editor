@@ -88,22 +88,19 @@ export const childUnsetOperationImplementation: OperationImplementation<
   }
 
   if (Element.isElement(child)) {
-    const value =
-      'value' in child && typeof child.value === 'object' ? child.value : {}
     const patches = operation.props.map((prop) => ({
       type: 'unset' as const,
       path: [prop],
     }))
-    const newValue = applyAll(value, patches)
+    const newChild = applyAll(child, patches)
 
     applySetNode(
       operation.editor,
       {
-        ...child,
+        ...(newChild as unknown as Record<string, unknown>),
         _key: operation.props.includes('_key')
           ? context.keyGenerator()
           : child._key,
-        value: newValue,
       },
       childPath,
     )

@@ -64,14 +64,10 @@ export function createSchemaPlugin({editorActor}: {editorActor: EditorActor}) {
         return false
       }
 
-      const inlineSchemaTypes = editorActor
+      return editorActor
         .getSnapshot()
         .context.schema.inlineObjects.map((obj) => obj.name)
-      return (
-        inlineSchemaTypes.includes(element._type) &&
-        '__inline' in element &&
-        element.__inline === true
-      )
+        .includes(element._type)
     }
 
     // Extend Slate's default normalization
