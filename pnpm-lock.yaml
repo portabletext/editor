@@ -429,9 +429,6 @@ importers:
       '@portabletext/patches':
         specifier: workspace:*
         version: link:../patches
-      '@portabletext/sanity-bridge':
-        specifier: workspace:^2.0.2
-        version: link:../sanity-bridge
       '@portabletext/schema':
         specifier: workspace:^
         version: link:../schema

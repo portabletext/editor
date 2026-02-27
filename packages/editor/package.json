@@ -124,7 +124,6 @@
     "vitest-browser-react": "^2.0.5"
   },
   "peerDependencies": {
-    "@portabletext/sanity-bridge": "workspace:^2.0.2",
     "react": "^19.2.3"
   },
   "engines": {
