@@ -1,9 +1,11 @@
+import {
+  htmlToPortableText,
+  type HtmlToPortableTextOptions,
+  type TypedObject,
+} from '@portabletext/html'
 import {sanitySchemaToPortableTextSchema} from '@portabletext/sanity-bridge'
 import type {Schema} from '@portabletext/schema'
 import type {ArraySchemaType} from '@sanity/types'
-import HtmlDeserializer from './HtmlDeserializer'
-import type {HtmlDeserializerOptions, TypedObject} from './types'
-import {normalizeBlock} from './util/normalizeBlock'
 
 /**
  * Convert HTML to blocks respecting the block content type's schema
@@ -13,37 +15,74 @@ import {normalizeBlock} from './util/normalizeBlock'
  * @param options - Options for deserializing HTML to blocks
  * @returns Array of blocks
  * @public
+ * @deprecated Use `htmlToPortableText` from `@portabletext/html` instead
  */
 export function htmlToBlocks(
   html: string,
   schemaType: ArraySchemaType | Schema,
-  options: HtmlDeserializerOptions = {},
+  options: HtmlToBlocksOptions = {},
 ) {
   const schema = isSanitySchema(schemaType)
     ? sanitySchemaToPortableTextSchema(schemaType)
     : schemaType
-
-  const deserializer = new HtmlDeserializer(schema, options)
-  return deserializer
-    .deserialize(html)
-    .map((block) => normalizeBlock(block, {keyGenerator: options.keyGenerator}))
+  const {unstable_whitespaceOnPasteMode, ...rest} = options
+  return htmlToPortableText(html, {
+    ...rest,
+    schema,
+    whitespace: unstable_whitespaceOnPasteMode,
+  })
 }
 
-export type {ImageSchemaMatcher, SchemaMatchers} from './schema-matchers'
-export type {ArbitraryTypedObject, DeserializerRule, HtmlParser} from './types'
-export type {
-  PortableTextBlock,
-  PortableTextObject,
-  PortableTextSpan,
-  PortableTextTextBlock,
-} from '@portabletext/schema'
-export type {BlockNormalizationOptions} from './util/normalizeBlock'
-export {randomKey} from './util/randomKey'
-export {normalizeBlock}
-export type {HtmlDeserializerOptions, TypedObject}
+/**
+ * @public
+ * @deprecated Use `HtmlToPortableTextOptions` from `@portabletext/html` instead
+ */
+export interface HtmlToBlocksOptions extends Omit<
+  HtmlToPortableTextOptions,
+  'schema' | 'whitespace'
+> {
+  unstable_whitespaceOnPasteMode?: 'preserve' | 'remove' | 'normalize'
+}
 
 function isSanitySchema(
   schema: ArraySchemaType | Schema,
 ): schema is ArraySchemaType {
   return schema.hasOwnProperty('jsonType')
+}
+
+// Re-export from @portabletext/html
+export {defaultSchema, htmlToPortableText} from '@portabletext/html'
+export type {
+  HtmlToPortableTextOptions,
+  ImageSchemaMatcher,
+  SchemaMatchers,
+  TypedObject,
+} from '@portabletext/html'
+
+export interface ArbitraryTypedObject extends TypedObject {
+  [key: string]: unknown
+}
+
+export type HtmlParser = (html: string) => Document
+
+export type WhiteSpacePasteMode = 'preserve' | 'remove' | 'normalize'
+
+export interface HtmlDeserializerOptions {
+  keyGenerator?: () => string
+  rules?: DeserializerRule[]
+  parseHtml?: HtmlParser
+  whitespace?: WhiteSpacePasteMode
+}
+
+export interface DeserializerRule {
+  deserialize: (
+    el: Node,
+    next: (
+      elements: Node | Node[] | NodeList,
+    ) => TypedObject | TypedObject[] | undefined,
+    createBlock: (props: ArbitraryTypedObject) => {
+      _type: string
+      block: ArbitraryTypedObject
+    },
+  ) => TypedObject | TypedObject[] | undefined
 }

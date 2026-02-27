@@ -1,5 +1,5 @@
-import {htmlToBlocks} from '@portabletext/block-tools'
-import {isTextBlock} from '@portabletext/schema'
+import {htmlToPortableText} from '@portabletext/html'
+import {isTextBlock, type PortableTextBlock} from '@portabletext/schema'
 import {getSelectedValue} from '../selectors/selector.get-selected-value'
 import {parseBlock} from '../utils/parse-blocks'
 import {defineConverter} from './converter.types'
@@ -69,9 +69,10 @@ export const converterTextPlain = defineConverter({
 
     const textToHtml = `<html><body>${html}</body></html>`
 
-    const blocks = htmlToBlocks(textToHtml, snapshot.context.schema, {
+    const blocks = htmlToPortableText(textToHtml, {
+      schema: snapshot.context.schema,
       keyGenerator: snapshot.context.keyGenerator,
-    })
+    }) as Array<PortableTextBlock>
 
     const parsedBlocks = blocks.flatMap((block) => {
       const parsedBlock = parseBlock({
