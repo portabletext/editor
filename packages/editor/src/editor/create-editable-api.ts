@@ -250,7 +250,7 @@ export function createEditableAPI(
         return [undefined, undefined]
       }
 
-      const blockIndex = editor.blockPathMap.getIndex(blockKey)
+      const blockIndex = editor.blockPathMap.getIndex([blockKey])
 
       if (blockIndex === undefined) {
         return [undefined, undefined]

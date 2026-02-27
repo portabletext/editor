@@ -8,9 +8,9 @@ import type {OperationImplementation} from './operation.types'
 export const blockSetOperationImplementation: OperationImplementation<
   'block.set'
 > = ({context, operation}) => {
-  const blockIndex = operation.editor.blockPathMap.getIndex(
+  const blockIndex = operation.editor.blockPathMap.getIndex([
     operation.at[0]._key,
-  )
+  ])
 
   if (blockIndex === undefined) {
     throw new Error(

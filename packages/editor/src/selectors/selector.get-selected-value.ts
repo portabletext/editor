@@ -26,8 +26,8 @@ export const getSelectedValue: EditorSelector<Array<PortableTextBlock>> = (
     return []
   }
 
-  const startBlockIndex = snapshot.blockPathMap.getIndex(startBlockKey)
-  const endBlockIndex = snapshot.blockPathMap.getIndex(endBlockKey)
+  const startBlockIndex = snapshot.blockPathMap.getIndex([startBlockKey])
+  const endBlockIndex = snapshot.blockPathMap.getIndex([endBlockKey])
 
   if (startBlockIndex === undefined || endBlockIndex === undefined) {
     return []

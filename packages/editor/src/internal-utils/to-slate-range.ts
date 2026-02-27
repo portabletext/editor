@@ -84,7 +84,7 @@ export function toSlateSelectionPoint(
     return undefined
   }
 
-  const blockIndex = snapshot.blockPathMap.getIndex(blockKey)
+  const blockIndex = snapshot.blockPathMap.getIndex([blockKey])
 
   if (blockIndex === undefined) {
     return undefined

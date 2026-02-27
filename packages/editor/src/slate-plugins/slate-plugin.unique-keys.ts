@@ -307,7 +307,7 @@ function keyExistsAtPath(
   key: string,
 ): boolean {
   if (path.length === 1) {
-    return snapshot.blockPathMap.has(key)
+    return snapshot.blockPathMap.has([key])
   }
 
   if (path.length > 2) {

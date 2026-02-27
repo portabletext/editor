@@ -15,7 +15,7 @@ export const getNextBlock: EditorSelector<
     return undefined
   }
 
-  const index = snapshot.blockPathMap.getIndex(selectionEndBlock.node._key)
+  const index = snapshot.blockPathMap.getIndex([selectionEndBlock.node._key])
 
   if (index === undefined || index === snapshot.context.value.length - 1) {
     return undefined
