@@ -1,0 +1,5 @@
+{
+  "extends": "./tsconfig.settings",
+  "include": ["**/*.ts"],
+  "exclude": ["dist", "./node_modules"]
+}
