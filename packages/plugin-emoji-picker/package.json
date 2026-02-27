@@ -54,6 +54,7 @@
   "dependencies": {
     "@portabletext/keyboard-shortcuts": "workspace:^",
     "@portabletext/plugin-input-rule": "workspace:^",
+    "@portabletext/plugin-typeahead-picker": "workspace:^",
     "@xstate/react": "^6.0.0",
     "xstate": "^5.25.0"
   },
