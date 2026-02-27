@@ -1,5 +1,5 @@
 import type {EditorInterface} from '../interfaces/editor'
-import {Transforms} from '../interfaces/transforms'
+import {insertTextTransform} from '../transforms-text/insert-text'
 
 export const insertText: EditorInterface['insertText'] = (
   editor,
@@ -11,12 +11,12 @@ export const insertText: EditorInterface['insertText'] = (
   if (selection) {
     if (marks) {
       const node = {text, ...marks}
-      Transforms.insertNodes(editor, node, {
+      editor.insertNodes(node, {
         at: options.at,
         voids: options.voids,
       })
     } else {
-      Transforms.insertText(editor, text, options)
+      insertTextTransform(editor, text, options)
     }
 
     editor.marks = null

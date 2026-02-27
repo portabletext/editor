@@ -2,7 +2,6 @@ import {Editor} from '../interfaces/editor'
 import {Element} from '../interfaces/element'
 import type {Ancestor, NodeEntry} from '../interfaces/node'
 import {Path} from '../interfaces/path'
-import {Transforms} from '../interfaces/transforms'
 import type {NodeTransforms} from '../interfaces/transforms/node'
 import {matchPath} from '../utils/match-path'
 
@@ -43,18 +42,18 @@ export const liftNodes: NodeTransforms['liftNodes'] = (
 
       if (length === 1) {
         const toPath = Path.next(parentPath)
-        Transforms.moveNodes(editor, {at: path, to: toPath, voids})
-        Transforms.removeNodes(editor, {at: parentPath, voids})
+        editor.moveNodes({at: path, to: toPath, voids})
+        editor.removeNodes({at: parentPath, voids})
       } else if (index === 0) {
-        Transforms.moveNodes(editor, {at: path, to: parentPath, voids})
+        editor.moveNodes({at: path, to: parentPath, voids})
       } else if (index === length - 1) {
         const toPath = Path.next(parentPath)
-        Transforms.moveNodes(editor, {at: path, to: toPath, voids})
+        editor.moveNodes({at: path, to: toPath, voids})
       } else {
         const splitPath = Path.next(path)
         const toPath = Path.next(parentPath)
-        Transforms.splitNodes(editor, {at: splitPath, voids})
-        Transforms.moveNodes(editor, {at: path, to: toPath, voids})
+        editor.splitNodes({at: splitPath, voids})
+        editor.moveNodes({at: path, to: toPath, voids})
       }
     }
   })

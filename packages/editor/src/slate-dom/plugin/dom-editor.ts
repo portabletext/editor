@@ -4,7 +4,6 @@ import {
   Element,
   Range,
   Scrubber,
-  Transforms,
   type Ancestor,
   type BaseEditor,
   type Node,
@@ -302,7 +301,7 @@ export const DOMEditor: DOMEditorInterface = {
     }
 
     if (selection) {
-      Transforms.deselect(editor)
+      editor.deselect()
     }
   },
 
@@ -462,7 +461,7 @@ export const DOMEditor: DOMEditorInterface = {
       }
       // Create a new selection in the top of the document if missing
       if (!editor.selection) {
-        Transforms.select(editor, Editor.start(editor, []))
+        editor.select(Editor.start(editor, []))
       }
       // IS_FOCUSED should be set before calling el.focus() to ensure that
       // FocusedContext is updated to the correct value

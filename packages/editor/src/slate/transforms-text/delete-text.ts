@@ -4,8 +4,8 @@ import type {NodeEntry} from '../interfaces/node'
 import {Path} from '../interfaces/path'
 import {Point} from '../interfaces/point'
 import {Range} from '../interfaces/range'
-import {Transforms} from '../interfaces/transforms'
 import type {TextTransforms} from '../interfaces/transforms/text'
+import {insertTextTransform} from './insert-text'
 
 export const deleteText: TextTransforms['delete'] = (editor, options = {}) => {
   Editor.withoutNormalizing(editor, () => {
@@ -44,7 +44,7 @@ export const deleteText: TextTransforms['delete'] = (editor, options = {}) => {
     }
 
     if (Path.isPath(at)) {
-      Transforms.removeNodes(editor, {at, voids})
+      editor.removeNodes({at, voids})
       return
     }
 
@@ -148,7 +148,7 @@ export const deleteText: TextTransforms['delete'] = (editor, options = {}) => {
       .map((r) => r.unref())
       .filter((r): r is Path => r !== null)
       .forEach((p) => {
-        Transforms.removeNodes(editor, {at: p, voids})
+        editor.removeNodes({at: p, voids})
       })
 
     if (!endNonEditable) {
@@ -164,7 +164,7 @@ export const deleteText: TextTransforms['delete'] = (editor, options = {}) => {
     }
 
     if (!isSingleText && isAcrossBlocks && endRef.current && startRef.current) {
-      Transforms.mergeNodes(editor, {
+      editor.mergeNodes({
         at: endRef.current,
         hanging: true,
         voids,
@@ -193,7 +193,7 @@ export const deleteText: TextTransforms['delete'] = (editor, options = {}) => {
         /[\u0980-\u09FF\u0E00-\u0E7F\u1000-\u109F\u0900-\u097F\u1780-\u17FF\u0D00-\u0D7F\u0B00-\u0B7F\u0A00-\u0A7F\u0B80-\u0BFF\u0C00-\u0C7F]+/,
       )
     ) {
-      Transforms.insertText(
+      insertTextTransform(
         editor,
         removedText.slice(0, removedText.length - distance),
       )
@@ -204,7 +204,7 @@ export const deleteText: TextTransforms['delete'] = (editor, options = {}) => {
     const point = reverse ? startUnref || endUnref : endUnref || startUnref
 
     if (options.at == null && point) {
-      Transforms.select(editor, point)
+      editor.select(point)
     }
   })
 }

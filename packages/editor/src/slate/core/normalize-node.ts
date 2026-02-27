@@ -3,7 +3,6 @@ import {Element} from '../interfaces/element'
 import {Node, type Ancestor, type Descendant} from '../interfaces/node'
 import type {Path} from '../interfaces/path'
 import {Text} from '../interfaces/text'
-import {Transforms} from '../interfaces/transforms'
 import type {WithEditorFirstArg} from '../utils/types'
 
 export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
@@ -37,7 +36,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   // Ensure that elements have at least one child.
   if (element !== editor && element.children.length === 0) {
     const child = editor.createSpan()
-    Transforms.insertNodes(editor, child, {at: path.concat(0), voids: true})
+    editor.insertNodes(child, {at: path.concat(0), voids: true})
     element = Node.get(editor, path) as Element
   }
 
@@ -64,21 +63,21 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
         if (prev != null && Text.isText(prev)) {
           // Merge adjacent text nodes that are empty or match.
           if (child.text === '') {
-            Transforms.removeNodes(editor, {
+            editor.removeNodes({
               at: path.concat(n),
               voids: true,
             })
             element = Node.get(editor, path) as Element
             n--
           } else if (prev.text === '') {
-            Transforms.removeNodes(editor, {
+            editor.removeNodes({
               at: path.concat(n - 1),
               voids: true,
             })
             element = Node.get(editor, path) as Element
             n--
           } else if (Text.equals(child, prev, {loose: true})) {
-            Transforms.mergeNodes(editor, {at: path.concat(n), voids: true})
+            editor.mergeNodes({at: path.concat(n), voids: true})
             element = Node.get(editor, path) as Element
             n--
           }
@@ -88,7 +87,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
           // Ensure that inline nodes are surrounded by text nodes.
           if (prev == null || !Text.isText(prev)) {
             const newChild = editor.createSpan()
-            Transforms.insertNodes(editor, newChild, {
+            editor.insertNodes(newChild, {
               at: path.concat(n),
               voids: true,
             })
@@ -97,7 +96,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
           }
           if (n === element.children.length - 1) {
             const newChild = editor.createSpan()
-            Transforms.insertNodes(editor, newChild, {
+            editor.insertNodes(newChild, {
               at: path.concat(n + 1),
               voids: true,
             })
@@ -107,7 +106,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
         } else {
           // Allow only inline nodes to be in other inline nodes, or in
           // parent blocks that only contain inlines and text.
-          Transforms.unwrapNodes(editor, {at: path.concat(n), voids: true})
+          editor.unwrapNodes({at: path.concat(n), voids: true})
           element = Node.get(editor, path) as Element
           n--
         }
@@ -123,12 +122,12 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
       // that only contain block nodes.
       if (Text.isText(child) || editor.isInline(child)) {
         if (options?.fallbackElement) {
-          Transforms.wrapNodes(editor, options.fallbackElement(), {
+          editor.wrapNodes(options.fallbackElement(), {
             at: path.concat(n),
             voids: true,
           })
         } else {
-          Transforms.removeNodes(editor, {at: path.concat(n), voids: true})
+          editor.removeNodes({at: path.concat(n), voids: true})
         }
         element = Node.get(editor, path) as Ancestor
         n--

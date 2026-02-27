@@ -1,6 +1,5 @@
 import {Editor} from '../interfaces/editor'
 import {Range} from '../interfaces/range'
-import {Transforms} from '../interfaces/transforms'
 import type {SelectionTransforms} from '../interfaces/transforms/selection'
 
 export const move: SelectionTransforms['move'] = (editor, options = {}) => {
@@ -44,5 +43,5 @@ export const move: SelectionTransforms['move'] = (editor, options = {}) => {
     }
   }
 
-  Transforms.setSelection(editor, props)
+  editor.setSelection(props)
 }

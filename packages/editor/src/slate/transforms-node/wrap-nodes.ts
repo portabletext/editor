@@ -4,7 +4,6 @@ import {Element} from '../interfaces/element'
 import {Path} from '../interfaces/path'
 import {Range} from '../interfaces/range'
 import {Text} from '../interfaces/text'
-import {Transforms} from '../interfaces/transforms'
 import type {NodeTransforms} from '../interfaces/transforms/node'
 import {matchPath} from '../utils/match-path'
 
@@ -49,14 +48,14 @@ export const wrapNodes: NodeTransforms['wrapNodes'] = (
         return blockAbove && Editor.isEdge(editor, point, blockAbove[1])
       }
 
-      Transforms.splitNodes(editor, {
+      editor.splitNodes({
         at: end,
         match,
         voids,
         always: !isAtBlockEdge(end),
       })
 
-      Transforms.splitNodes(editor, {
+      editor.splitNodes({
         at: start,
         match,
         voids,
@@ -66,7 +65,7 @@ export const wrapNodes: NodeTransforms['wrapNodes'] = (
       at = rangeRef.unref()!
 
       if (options.at == null) {
-        Transforms.select(editor, at)
+        editor.select(at)
       }
     }
 
@@ -115,9 +114,9 @@ export const wrapNodes: NodeTransforms['wrapNodes'] = (
         const depth = commonPath.length + 1
         const wrapperPath = Path.next(lastPath.slice(0, depth))
         const wrapper = {...element, children: []}
-        Transforms.insertNodes(editor, wrapper, {at: wrapperPath, voids})
+        editor.insertNodes(wrapper, {at: wrapperPath, voids})
 
-        Transforms.moveNodes(editor, {
+        editor.moveNodes({
           at: range,
           match: (n) =>
             Element.isAncestor(commonNode) && commonNode.children.includes(n),

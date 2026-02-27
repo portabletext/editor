@@ -3,7 +3,6 @@ import {Element} from '../interfaces/element'
 import type {Node} from '../interfaces/node'
 import {Path} from '../interfaces/path'
 import {Range} from '../interfaces/range'
-import {Transforms} from '../interfaces/transforms'
 import type {NodeTransforms} from '../interfaces/transforms/node'
 import {matchPath} from '../utils/match-path'
 
@@ -48,7 +47,7 @@ export const setNodes: NodeTransforms['setNodes'] = (
       const [start, end] = Range.edges(at)
       const splitMode = mode === 'lowest' ? 'lowest' : 'highest'
       const endAtEndOfNode = Editor.isEnd(editor, end, end.path)
-      Transforms.splitNodes(editor, {
+      editor.splitNodes({
         at: end,
         match,
         mode: splitMode,
@@ -56,7 +55,7 @@ export const setNodes: NodeTransforms['setNodes'] = (
         always: !endAtEndOfNode,
       })
       const startAtStartOfNode = Editor.isStart(editor, start, start.path)
-      Transforms.splitNodes(editor, {
+      editor.splitNodes({
         at: start,
         match,
         mode: splitMode,
@@ -66,7 +65,7 @@ export const setNodes: NodeTransforms['setNodes'] = (
       at = rangeRef.unref()!
 
       if (options.at == null) {
-        Transforms.select(editor, at)
+        editor.select(at)
       }
     }
 

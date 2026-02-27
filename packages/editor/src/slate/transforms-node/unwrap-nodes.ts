@@ -2,7 +2,6 @@ import {Editor} from '../interfaces/editor'
 import {Element} from '../interfaces/element'
 import {Path} from '../interfaces/path'
 import {Range} from '../interfaces/range'
-import {Transforms} from '../interfaces/transforms'
 import type {NodeTransforms} from '../interfaces/transforms/node'
 import {matchPath} from '../utils/match-path'
 
@@ -47,7 +46,7 @@ export const unwrapNodes: NodeTransforms['unwrapNodes'] = (
         range = Range.intersection(rangeRef.current!, range)!
       }
 
-      Transforms.liftNodes(editor, {
+      editor.liftNodes({
         at: range,
         match: (n) => Element.isAncestor(node) && node.children.includes(n),
         voids,

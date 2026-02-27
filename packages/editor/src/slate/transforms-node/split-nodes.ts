@@ -5,7 +5,6 @@ import {Path} from '../interfaces/path'
 import type {Point} from '../interfaces/point'
 import type {PointRef} from '../interfaces/point-ref'
 import {Range} from '../interfaces/range'
-import {Transforms} from '../interfaces/transforms'
 import type {NodeTransforms} from '../interfaces/transforms/node'
 
 /**
@@ -17,7 +16,7 @@ const deleteRange = (editor: Editor, range: Range): Point | null => {
   } else {
     const [, end] = Range.edges(range)
     const pointRef = Editor.pointRef(editor, end)
-    Transforms.delete(editor, {at: range})
+    editor.delete({at: range})
     return pointRef.unref()
   }
 }
@@ -77,7 +76,7 @@ export const splitNodes: NodeTransforms['splitNodes'] = (
           if (!after) {
             const text = editor.createSpan()
             const afterPath = Path.next(voidPath)
-            Transforms.insertNodes(editor, text, {at: afterPath, voids})
+            editor.insertNodes(text, {at: afterPath, voids})
             after = Editor.point(editor, afterPath)!
           }
 
@@ -130,7 +129,7 @@ export const splitNodes: NodeTransforms['splitNodes'] = (
 
       if (options.at == null) {
         const point = afterRef.current || Editor.end(editor, [])
-        Transforms.select(editor, point)
+        editor.select(point)
       }
     } finally {
       beforeRef.unref()

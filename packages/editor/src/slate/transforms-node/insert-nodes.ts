@@ -8,7 +8,6 @@ import {Path} from '../interfaces/path'
 import {Point} from '../interfaces/point'
 import {Range} from '../interfaces/range'
 import {Text} from '../interfaces/text'
-import {Transforms} from '../interfaces/transforms'
 import type {NodeTransforms} from '../interfaces/transforms/node'
 import {getDefaultInsertLocation} from '../utils'
 
@@ -57,7 +56,7 @@ export const insertNodes: NodeTransforms['insertNodes'] = (
       } else {
         const [, end] = Range.edges(at)
         const pointRef = Editor.pointRef(editor, end)
-        Transforms.delete(editor, {at})
+        editor.delete({at})
         at = pointRef.unref()!
       }
     }
@@ -84,7 +83,7 @@ export const insertNodes: NodeTransforms['insertNodes'] = (
         const [, matchPath] = entry
         const pathRef = Editor.pathRef(editor, matchPath)
         const isAtEnd = Editor.isEnd(editor, at, matchPath)
-        Transforms.splitNodes(editor, {at, match, mode, voids})
+        editor.splitNodes({at, match, mode, voids})
         const path = pathRef.unref()!
         at = isAtEnd ? Path.next(path) : path
       } else {
@@ -160,7 +159,7 @@ export const insertNodes: NodeTransforms['insertNodes'] = (
       const point = Editor.end(editor, at)
 
       if (point) {
-        Transforms.select(editor, point)
+        editor.select(point)
       }
     }
   })

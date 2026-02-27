@@ -3,9 +3,9 @@ import {Path} from '../interfaces/path'
 import {PathRef} from '../interfaces/path-ref'
 import {PointRef} from '../interfaces/point-ref'
 import {RangeRef} from '../interfaces/range-ref'
-import {Transforms} from '../interfaces/transforms'
 import type {WithEditorFirstArg} from '../utils/types'
 import {isBatchingDirtyPaths} from './batch-dirty-paths'
+import {transformOp} from './transform-op'
 import {updateDirtyPaths} from './update-dirty-paths'
 
 export const apply: WithEditorFirstArg<Editor['apply']> = (editor, op) => {
@@ -29,7 +29,7 @@ export const apply: WithEditorFirstArg<Editor['apply']> = (editor, op) => {
     updateDirtyPaths(editor, editor.getDirtyPaths(op), transform)
   }
 
-  Transforms.transform(editor, op)
+  transformOp(editor, op)
   editor.operations.push(op)
   Editor.normalize(editor, {
     operation: op,

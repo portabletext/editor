@@ -5,7 +5,6 @@ import {Path} from '../interfaces/path'
 import {Range} from '../interfaces/range'
 import {Scrubber} from '../interfaces/scrubber'
 import {Text} from '../interfaces/text'
-import {Transforms} from '../interfaces/transforms'
 import type {NodeTransforms} from '../interfaces/transforms/node'
 
 const hasSingleChildNest = (editor: Editor, node: Node): boolean => {
@@ -56,11 +55,11 @@ export const mergeNodes: NodeTransforms['mergeNodes'] = (
       } else {
         const [, end] = Range.edges(at)
         const pointRef = Editor.pointRef(editor, end)
-        Transforms.delete(editor, {at})
+        editor.delete({at})
         at = pointRef.unref()!
 
         if (options.at == null) {
-          Transforms.select(editor, at)
+          editor.select(at)
         }
       }
     }
@@ -119,17 +118,17 @@ export const mergeNodes: NodeTransforms['mergeNodes'] = (
     // If the node isn't already the next sibling of the previous node, move
     // it so that it is before merging.
     if (!isPreviousSibling) {
-      Transforms.moveNodes(editor, {at: path, to: newPath, voids})
+      editor.moveNodes({at: path, to: newPath, voids})
     }
 
     // If there was going to be an empty ancestor of the node that was merged,
     // we remove it from the tree.
     if (emptyRef) {
-      Transforms.removeNodes(editor, {at: emptyRef.current!, voids})
+      editor.removeNodes({at: emptyRef.current!, voids})
     }
 
     if (Editor.shouldMergeNodesRemovePrevNode(editor, prev, current)) {
-      Transforms.removeNodes(editor, {at: prevPath, voids})
+      editor.removeNodes({at: prevPath, voids})
     } else {
       editor.apply({
         type: 'merge_node',

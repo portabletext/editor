@@ -4,7 +4,6 @@ import {
   Path,
   Point,
   Range,
-  Transforms,
   type Operation,
   type PathRef,
 } from '../../slate'
@@ -292,7 +291,7 @@ export const withDOM = <T extends Editor>(
 
       for (const line of lines) {
         if (split) {
-          Transforms.splitNodes(e, {always: true})
+          e.splitNodes({always: true})
         }
 
         e.insertText(line)

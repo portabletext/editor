@@ -15,19 +15,23 @@ import type {
   RangeRef,
   Span,
   Text,
-  Transforms,
 } from '..'
 import {isEditor} from '../editor/is-editor'
 import type {
   LeafEdge,
   MaximizeMode,
+  MoveUnit,
   RangeDirection,
+  RangeMode,
+  SelectionEdge,
   SelectionMode,
   TextDirection,
   TextUnitAdjustment,
 } from '../types/types'
 import type {OmitFirstArg} from '../utils/types'
+import type {NodeInsertNodesOptions} from './transforms/node'
 import type {
+  TextDeleteOptions,
   TextInsertFragmentOptions,
   TextInsertTextOptions,
 } from './transforms/text'
@@ -79,20 +83,54 @@ export interface BaseEditor {
 
   // Overrideable core transforms.
 
-  collapse: OmitFirstArg<typeof Transforms.collapse>
-  delete: OmitFirstArg<typeof Transforms.delete>
-  deselect: OmitFirstArg<typeof Transforms.deselect>
-  insertBreak: OmitFirstArg<typeof Editor.insertBreak>
-  insertFragment: OmitFirstArg<typeof Transforms.insertFragment>
-  insertNodes: OmitFirstArg<typeof Transforms.insertNodes>
-  insertText: OmitFirstArg<typeof Transforms.insertText>
-  liftNodes: OmitFirstArg<typeof Transforms.liftNodes>
-  mergeNodes: OmitFirstArg<typeof Transforms.mergeNodes>
-  move: OmitFirstArg<typeof Transforms.move>
-  moveNodes: OmitFirstArg<typeof Transforms.moveNodes>
-  normalize: OmitFirstArg<typeof Editor.normalize>
-  removeNodes: OmitFirstArg<typeof Transforms.removeNodes>
-  select: OmitFirstArg<typeof Transforms.select>
+  collapse: (options?: {edge?: SelectionEdge}) => void
+  delete: (options?: TextDeleteOptions) => void
+  deselect: () => void
+  insertBreak: () => void
+  insertFragment: (
+    fragment: Node[],
+    options?: TextInsertFragmentOptions,
+  ) => void
+  insertNodes: <T extends Node>(
+    nodes: Node | Node[],
+    options?: NodeInsertNodesOptions<T>,
+  ) => void
+  insertText: (text: string, options?: TextInsertTextOptions) => void
+  liftNodes: <T extends Node>(options?: {
+    at?: Location
+    match?: NodeMatch<T>
+    mode?: MaximizeMode
+    voids?: boolean
+  }) => void
+  mergeNodes: <T extends Node>(options?: {
+    at?: Location
+    match?: NodeMatch<T>
+    mode?: RangeMode
+    hanging?: boolean
+    voids?: boolean
+  }) => void
+  move: (options?: {
+    distance?: number
+    unit?: MoveUnit
+    reverse?: boolean
+    edge?: SelectionEdge
+  }) => void
+  moveNodes: <T extends Node>(options: {
+    at?: Location
+    match?: NodeMatch<T>
+    mode?: MaximizeMode
+    to: Path
+    voids?: boolean
+  }) => void
+  normalize: (options?: EditorNormalizeOptions) => void
+  removeNodes: <T extends Node>(options?: {
+    at?: Location
+    match?: NodeMatch<T>
+    mode?: RangeMode
+    hanging?: boolean
+    voids?: boolean
+  }) => void
+  select: (target: Location) => void
   setNodes: <T extends Node>(
     props: Partial<T>,
     options?: {
@@ -106,13 +144,45 @@ export interface BaseEditor {
       merge?: PropsMerge
     },
   ) => void
-  setNormalizing: OmitFirstArg<typeof Editor.setNormalizing>
-  setSelection: OmitFirstArg<typeof Transforms.setSelection>
-  splitNodes: OmitFirstArg<typeof Transforms.splitNodes>
-  unsetNodes: OmitFirstArg<typeof Transforms.unsetNodes>
-  unwrapNodes: OmitFirstArg<typeof Transforms.unwrapNodes>
-  withoutNormalizing: OmitFirstArg<typeof Editor.withoutNormalizing>
-  wrapNodes: OmitFirstArg<typeof Transforms.wrapNodes>
+  setNormalizing: (isNormalizing: boolean) => void
+  setSelection: (props: Partial<Range>) => void
+  splitNodes: <T extends Node>(options?: {
+    at?: Location
+    match?: NodeMatch<T>
+    mode?: RangeMode
+    always?: boolean
+    height?: number
+    voids?: boolean
+  }) => void
+  unsetNodes: <T extends Node>(
+    props: string | string[],
+    options?: {
+      at?: Location
+      match?: NodeMatch<T>
+      mode?: MaximizeMode
+      hanging?: boolean
+      split?: boolean
+      voids?: boolean
+    },
+  ) => void
+  unwrapNodes: <T extends Node>(options?: {
+    at?: Location
+    match?: NodeMatch<T>
+    mode?: MaximizeMode
+    split?: boolean
+    voids?: boolean
+  }) => void
+  withoutNormalizing: (fn: () => void) => void
+  wrapNodes: <T extends Node>(
+    element: Element,
+    options?: {
+      at?: Location
+      match?: NodeMatch<T>
+      mode?: MaximizeMode
+      split?: boolean
+      voids?: boolean
+    },
+  ) => void
 
   // Overrideable core queries.
 

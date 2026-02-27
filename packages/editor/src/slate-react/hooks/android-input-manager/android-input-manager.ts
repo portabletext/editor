@@ -1,13 +1,5 @@
 import type {EditorActor} from '../../../editor/editor-machine'
-import {
-  Editor,
-  Node,
-  Path,
-  Point,
-  Range,
-  Text,
-  Transforms,
-} from '../../../slate'
+import {Editor, Node, Path, Point, Range, Text} from '../../../slate'
 import {
   applyStringDiff,
   isDOMSelection,
@@ -94,7 +86,7 @@ export function createAndroidInputManager({
       debug('apply pending selection', pendingSelection, normalized)
 
       if (normalized && (!selection || !Range.equals(normalized, selection))) {
-        Transforms.select(editor, normalized)
+        editor.select(normalized)
       }
     }
   }
@@ -117,7 +109,7 @@ export function createAndroidInputManager({
 
       const targetRange = Editor.range(editor, target)
       if (!editor.selection || !Range.equals(editor.selection, targetRange)) {
-        Transforms.select(editor, target)
+        editor.select(target)
       }
     }
 
@@ -176,7 +168,7 @@ export function createAndroidInputManager({
 
       const range = targetRange(diff)
       if (!editor.selection || !Range.equals(editor.selection, range)) {
-        Transforms.select(editor, range)
+        editor.select(range)
       }
 
       if (diff.diff.text) {
@@ -222,7 +214,7 @@ export function createAndroidInputManager({
       !editor.pendingSelection &&
       (!editor.selection || !Range.equals(selection, editor.selection))
     ) {
-      Transforms.select(editor, selection)
+      editor.select(selection)
     }
 
     if (hasPendingAction()) {
@@ -796,7 +788,7 @@ export function createAndroidInputManager({
 
               scheduleAction(
                 () => {
-                  Transforms.select(editor, {
+                  editor.select({
                     anchor: newPoint,
                     focus: newPoint,
                   })

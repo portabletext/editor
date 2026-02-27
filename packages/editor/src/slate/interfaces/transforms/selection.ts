@@ -38,22 +38,3 @@ export interface SelectionTransforms {
    */
   setSelection: (editor: Editor, props: Partial<Range>) => void
 }
-
-// eslint-disable-next-line no-redeclare
-export const SelectionTransforms: SelectionTransforms = {
-  collapse(editor, options) {
-    editor.collapse(options)
-  },
-  deselect(editor) {
-    editor.deselect()
-  },
-  move(editor, options) {
-    editor.move(options)
-  },
-  select(editor, target) {
-    editor.select(target)
-  },
-  setSelection(editor, props) {
-    editor.setSelection(props)
-  },
-}

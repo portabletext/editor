@@ -1,4 +1,3 @@
-import {Transforms} from '../interfaces/transforms'
 import type {NodeTransforms} from '../interfaces/transforms/node'
 
 export const unsetNodes: NodeTransforms['unsetNodes'] = (
@@ -16,5 +15,5 @@ export const unsetNodes: NodeTransforms['unsetNodes'] = (
     obj[key] = null
   }
 
-  Transforms.setNodes(editor, obj, options)
+  editor.setNodes(obj, options)
 }

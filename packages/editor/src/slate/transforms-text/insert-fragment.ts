@@ -4,7 +4,6 @@ import {Node, type Descendant, type NodeEntry} from '../interfaces/node'
 import {Path} from '../interfaces/path'
 import {Range} from '../interfaces/range'
 import {Text} from '../interfaces/text'
-import {Transforms} from '../interfaces/transforms'
 import type {TextTransforms} from '../interfaces/transforms/text'
 import {getDefaultInsertLocation} from '../utils'
 
@@ -36,7 +35,7 @@ export const insertFragment: TextTransforms['insertFragment'] = (
         }
 
         const pointRef = Editor.pointRef(editor, end)
-        Transforms.delete(editor, {at})
+        editor.delete({at})
         at = pointRef.unref()!
       }
     } else if (Path.isPath(at)) {
@@ -195,7 +194,7 @@ export const insertFragment: TextTransforms['insertFragment'] = (
     // destination block.
     const splitBlock = ends.length > 0
 
-    Transforms.splitNodes(editor, {
+    editor.splitNodes({
       at,
       match: (n) =>
         splitBlock
@@ -216,7 +215,7 @@ export const insertFragment: TextTransforms['insertFragment'] = (
         : inlinePath,
     )
 
-    Transforms.insertNodes(editor, starts, {
+    editor.insertNodes(starts, {
       at: startRef.current!,
       match: (n) => Text.isText(n) || Editor.isInline(editor, n),
       mode: 'highest',
@@ -225,10 +224,10 @@ export const insertFragment: TextTransforms['insertFragment'] = (
     })
 
     if (isBlockEmpty && !starts.length && middles.length && !ends.length) {
-      Transforms.delete(editor, {at: blockPath, voids})
+      editor.delete({at: blockPath, voids})
     }
 
-    Transforms.insertNodes(editor, middles, {
+    editor.insertNodes(middles, {
       at: middleRef.current!,
       match: (n) => Element.isElement(n) && Editor.isBlock(editor, n),
       mode: 'lowest',
@@ -236,7 +235,7 @@ export const insertFragment: TextTransforms['insertFragment'] = (
       batchDirty,
     })
 
-    Transforms.insertNodes(editor, ends, {
+    editor.insertNodes(ends, {
       at: endRef.current!,
       match: (n) => Text.isText(n) || Editor.isInline(editor, n),
       mode: 'highest',
@@ -257,7 +256,7 @@ export const insertFragment: TextTransforms['insertFragment'] = (
 
       if (path) {
         const end = Editor.end(editor, path)
-        Transforms.select(editor, end)
+        editor.select(end)
       }
     }
 
