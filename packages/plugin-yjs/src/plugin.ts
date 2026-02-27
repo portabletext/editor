@@ -18,25 +18,16 @@ export function createYjsPlugin(config: YjsPluginConfig): YjsPluginInstance {
     // 1. Subscribe to local mutations → push to Y.Doc
     const mutationSub = editor.on('mutation', (event) => {
       if (isApplyingRemote) {
-        console.log(`[yjs:${localOrigin}] skipping remote mutation`)
         return
       }
 
       const localPatches = event.patches.filter((p) => p.origin === 'local')
-      console.log(
-        `[yjs:${localOrigin}] mutation: ${event.patches.length} patches, ${localPatches.length} local`,
-      )
       if (localPatches.length === 0) {
         return
       }
 
       yDoc.transact(() => {
         for (const patch of localPatches) {
-          console.log(
-            `[yjs:${localOrigin}] applying patch to Y.Doc:`,
-            patch.type,
-            JSON.stringify(patch.path),
-          )
           applyPatchToYDoc(patch, blocksMap, orderArray)
         }
       }, localOrigin)
@@ -51,17 +42,7 @@ export function createYjsPlugin(config: YjsPluginConfig): YjsPluginInstance {
         return
       }
 
-      console.log(
-        `[yjs:${localOrigin}] Y.Doc change from origin:`,
-        transaction.origin,
-        'events:',
-        events.length,
-      )
       const patches = yEventsToPatches(events, blocksMap, orderArray)
-      console.log(
-        `[yjs:${localOrigin}] translated to ${patches.length} patches:`,
-        patches.map((p) => p.type),
-      )
       if (patches.length === 0) {
         return
       }
@@ -95,9 +76,6 @@ export function createYjsPlugin(config: YjsPluginConfig): YjsPluginInstance {
 
   // Initialize: sync current editor value to Y.Doc if Y.Doc is empty
   function syncInitialState(value: Array<any> | undefined) {
-    console.log(
-      `[yjs:${localOrigin}] syncInitialState: value=${value?.length ?? 0} blocks, orderArray=${orderArray.length}`,
-    )
     if (!value || value.length === 0) {
       return
     }
