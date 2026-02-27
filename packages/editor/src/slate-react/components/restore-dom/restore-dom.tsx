@@ -54,13 +54,22 @@ class RestoreDOMComponent extends Component<RestoreDOMProps> {
   }
 
   override getSnapshotBeforeUpdate() {
-    const pendingMutations = this.mutationObserver?.takeRecords()
-    if (pendingMutations?.length) {
-      this.manager?.registerMutations(pendingMutations)
-    }
+    try {
+      const pendingMutations = this.mutationObserver?.takeRecords()
+      if (pendingMutations?.length) {
+        this.manager?.registerMutations(pendingMutations)
+      }
 
-    this.mutationObserver?.disconnect()
-    this.manager?.restoreDOM()
+      this.mutationObserver?.disconnect()
+      this.manager?.restoreDOM()
+    } catch {
+      // On Android, the IME can mutate the DOM in ways that make
+      // restoration impossible (e.g., when rangeDecorations cause React
+      // to restructure wrapper elements between the mutation and the
+      // restore). Silently skip — the editor will reconcile to the
+      // correct state on the next render cycle.
+      this.manager?.clear()
+    }
 
     return null
   }

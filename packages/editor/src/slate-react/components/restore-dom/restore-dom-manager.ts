@@ -40,11 +40,24 @@ export const createRestoreDomManager = (
         }
 
         mutation.removedNodes.forEach((node) => {
-          mutation.target.insertBefore(node, mutation.nextSibling)
+          try {
+            mutation.target.insertBefore(node, mutation.nextSibling)
+          } catch {
+            // The DOM may have been modified by a React render (e.g.,
+            // rangeDecoration updates) between the mutation and the
+            // restore. This is expected on Android where the IME mutates
+            // the DOM before JavaScript can intercept. The editor
+            // self-heals on the next render cycle.
+          }
         })
 
         mutation.addedNodes.forEach((node) => {
-          mutation.target.removeChild(node)
+          try {
+            mutation.target.removeChild(node)
+          } catch {
+            // Same as above — the node may have already been removed
+            // by React before we could undo the mutation.
+          }
         })
       })
 
