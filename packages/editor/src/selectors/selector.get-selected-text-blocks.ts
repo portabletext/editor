@@ -29,8 +29,8 @@ export const getSelectedTextBlocks: EditorSelector<
     return selectedTextBlocks
   }
 
-  const startBlockIndex = snapshot.blockIndexMap.get(startBlockKey)
-  const endBlockIndex = snapshot.blockIndexMap.get(endBlockKey)
+  const startBlockIndex = snapshot.blockPathMap.getIndex([startBlockKey])
+  const endBlockIndex = snapshot.blockPathMap.getIndex([endBlockKey])
 
   if (startBlockIndex === undefined || endBlockIndex === undefined) {
     return selectedTextBlocks

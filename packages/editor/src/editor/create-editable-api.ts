@@ -250,7 +250,7 @@ export function createEditableAPI(
         return [undefined, undefined]
       }
 
-      const blockIndex = editor.blockIndexMap.get(blockKey)
+      const blockIndex = editor.blockPathMap.getIndex([blockKey])
 
       if (blockIndex === undefined) {
         return [undefined, undefined]
@@ -503,7 +503,7 @@ export function createEditableAPI(
           value: editor.value,
           selection: selectionA,
         },
-        blockIndexMap: editor.blockIndexMap,
+        blockPathMap: editor.blockPathMap,
       })
       const rangeB = toSlateRange({
         context: {
@@ -511,7 +511,7 @@ export function createEditableAPI(
           value: editor.value,
           selection: selectionB,
         },
-        blockIndexMap: editor.blockIndexMap,
+        blockPathMap: editor.blockPathMap,
       })
 
       // Make sure the ranges are valid

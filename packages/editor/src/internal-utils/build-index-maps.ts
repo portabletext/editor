@@ -11,14 +11,11 @@ const levelIndexMaps = new Map<string, Map<number, number>>()
 export function buildIndexMaps(
   context: Pick<EditorContext, 'schema' | 'value'>,
   {
-    blockIndexMap,
     listIndexMap,
   }: {
-    blockIndexMap: Map<string, number>
     listIndexMap: Map<string, number>
   },
 ): void {
-  blockIndexMap.clear()
   listIndexMap.clear()
   levelIndexMaps.clear()
 
@@ -35,8 +32,6 @@ export function buildIndexMaps(
     if (block === undefined) {
       continue
     }
-
-    blockIndexMap.set(block._key, blockIndex)
 
     // Clear the state if we encounter a non-text block
     if (!isTextBlock(context, block)) {

@@ -11,7 +11,7 @@ export const selectOperationImplementation: OperationImplementation<
       value: operation.editor.value,
       selection: operation.at,
     },
-    blockIndexMap: operation.editor.blockIndexMap,
+    blockPathMap: operation.editor.blockPathMap,
   })
 
   if (newSelection) {

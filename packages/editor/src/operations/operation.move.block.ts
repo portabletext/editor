@@ -13,7 +13,7 @@ export const moveBlockOperationImplementation: OperationImplementation<
     throw new Error('Failed to get block key from selection point')
   }
 
-  const originBlockIndex = operation.editor.blockIndexMap.get(originKey)
+  const originBlockIndex = operation.editor.blockPathMap.getIndex([originKey])
 
   if (originBlockIndex === undefined) {
     throw new Error('Failed to get block index from block key')
@@ -28,8 +28,9 @@ export const moveBlockOperationImplementation: OperationImplementation<
     throw new Error('Failed to get block key from selection point')
   }
 
-  const destinationBlockIndex =
-    operation.editor.blockIndexMap.get(destinationKey)
+  const destinationBlockIndex = operation.editor.blockPathMap.getIndex([
+    destinationKey,
+  ])
 
   if (destinationBlockIndex === undefined) {
     throw new Error('Failed to get block index from block key')

@@ -1,6 +1,7 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
+import {InternalBlockPathMap} from './block-path-map'
 import {toSlateRange} from './to-slate-range'
 
 describe(toSlateRange.name, () => {
@@ -55,7 +56,7 @@ describe(toSlateRange.name, () => {
           },
         },
       },
-      blockIndexMap: new Map([[blockKey, 0]]),
+      blockPathMap: createBlockPathMap([[blockKey, 0]]),
     })
 
     expect(range).toEqual({
@@ -104,7 +105,7 @@ describe(toSlateRange.name, () => {
           },
         },
       },
-      blockIndexMap: new Map([[blockKey, 0]]),
+      blockPathMap: createBlockPathMap([[blockKey, 0]]),
     })
 
     expect(range).toEqual({
@@ -137,7 +138,7 @@ describe(toSlateRange.name, () => {
           },
         },
       },
-      blockIndexMap: new Map([[blockObjectKey, 0]]),
+      blockPathMap: createBlockPathMap([[blockObjectKey, 0]]),
     })
 
     expect(range).toEqual({
@@ -179,7 +180,7 @@ describe(toSlateRange.name, () => {
           },
         },
       },
-      blockIndexMap: new Map([[blockKey, 0]]),
+      blockPathMap: createBlockPathMap([[blockKey, 0]]),
     })
 
     expect(range).toEqual({
@@ -220,7 +221,7 @@ describe(toSlateRange.name, () => {
           },
         },
       },
-      blockIndexMap: new Map([[blockKey, 0]]),
+      blockPathMap: createBlockPathMap([[blockKey, 0]]),
     })
 
     expect(range).toEqual({
@@ -267,7 +268,7 @@ describe(toSlateRange.name, () => {
           },
         },
       },
-      blockIndexMap: new Map([[blockKey, 0]]),
+      blockPathMap: createBlockPathMap([[blockKey, 0]]),
     })
 
     expect(range).toEqual({
@@ -276,3 +277,16 @@ describe(toSlateRange.name, () => {
     })
   })
 })
+
+function createBlockPathMap(
+  entries: Array<[string, number]>,
+): InternalBlockPathMap {
+  const map = new InternalBlockPathMap()
+  const maxIndex = Math.max(...entries.map(([, i]) => i))
+  const value = new Array(maxIndex + 1)
+  for (const [key, index] of entries) {
+    value[index] = {_key: key, _type: 'block', children: []}
+  }
+  map.rebuild(value)
+  return map
+}

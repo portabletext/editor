@@ -41,10 +41,11 @@ export function updateValuePlugin(
         value: editor.value,
       },
       {
-        blockIndexMap: editor.blockIndexMap,
         listIndexMap: editor.listIndexMap,
       },
     )
+
+    editor.blockPathMap.applyOperation(operation)
 
     apply(operation)
   }

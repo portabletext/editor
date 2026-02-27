@@ -29,8 +29,8 @@ export function comparePoints(
     throw new Error(`Cannot compare points: no block key found for ${pointB}`)
   }
 
-  const blockIndexA = snapshot.blockIndexMap.get(blockKeyA)
-  const blockIndexB = snapshot.blockIndexMap.get(blockKeyB)
+  const blockIndexA = snapshot.blockPathMap.getIndex([blockKeyA])
+  const blockIndexB = snapshot.blockPathMap.getIndex([blockKeyB])
 
   if (blockIndexA === undefined) {
     throw new Error(`Cannot compare points: block "${blockKeyA}" not found`)

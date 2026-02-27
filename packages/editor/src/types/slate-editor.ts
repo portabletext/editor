@@ -6,6 +6,7 @@ import type {
   PortableTextTextBlock,
 } from '@portabletext/schema'
 import type {DecoratedRange} from '../editor/range-decorations-machine'
+import type {InternalBlockPathMap} from '../internal-utils/block-path-map'
 import type {Range, Operation as SlateOperation} from '../slate'
 import type {ReactEditor} from '../slate-react'
 import type {EditorSelection} from './editor'
@@ -39,7 +40,7 @@ export interface PortableTextSlateEditor extends ReactEditor {
 
   decoratedRanges: Array<DecoratedRange>
   decoratorState: Record<string, boolean | undefined>
-  blockIndexMap: Map<string, number>
+  blockPathMap: InternalBlockPathMap
   history: History
   lastSelection: EditorSelection
   lastSlateSelection: Range | null

@@ -17,7 +17,7 @@ import {
 export function toSlateRange(
   snapshot: {
     context: Pick<EditorContext, 'schema' | 'value' | 'selection'>
-  } & Pick<EditorSnapshot, 'blockIndexMap'>,
+  } & Pick<EditorSnapshot, 'blockPathMap'>,
 ): Range | null {
   if (!snapshot.context.selection) {
     return null
@@ -69,7 +69,7 @@ export function toSlateRange(
 export function toSlateSelectionPoint(
   snapshot: {
     context: Pick<EditorContext, 'schema' | 'value'>
-  } & Pick<EditorSnapshot, 'blockIndexMap'>,
+  } & Pick<EditorSnapshot, 'blockPathMap'>,
   selectionPoint: EditorSelectionPoint,
   direction: 'forward' | 'backward',
 ):
@@ -84,7 +84,7 @@ export function toSlateSelectionPoint(
     return undefined
   }
 
-  const blockIndex = snapshot.blockIndexMap.get(blockKey)
+  const blockIndex = snapshot.blockPathMap.getIndex([blockKey])
 
   if (blockIndex === undefined) {
     return undefined
