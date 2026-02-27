@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.settings.json",
+  "compilerOptions": {
+    "noCheck": true,
+    "rootDir": "src"
+  },
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "dist",
+    "node_modules"
+  ]
+}
