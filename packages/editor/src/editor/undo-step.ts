@@ -86,6 +86,37 @@ export function createUndoSteps({
     return createNewStep(steps, op, editor)
   }
 
+  // Handle case when both IDs are defined but different (e.g., consecutive
+  // forwarded insert.text events where each send gets a unique ID)
+  if (
+    currentUndoStepId !== undefined &&
+    previousUndoStepId !== undefined &&
+    currentUndoStepId !== previousUndoStepId
+  ) {
+    const lastOp = lastStep.operations.at(-1)
+
+    if (
+      lastOp &&
+      op.type === 'insert_text' &&
+      lastOp.type === 'insert_text' &&
+      op.offset === lastOp.offset + lastOp.text.length &&
+      Path.equals(op.path, lastOp.path) &&
+      op.text !== ' '
+    ) {
+      return mergeIntoLastStep(steps, lastStep, op)
+    }
+
+    if (
+      lastOp &&
+      op.type === 'remove_text' &&
+      lastOp.type === 'remove_text' &&
+      op.offset + op.text.length === lastOp.offset &&
+      Path.equals(op.path, lastOp.path)
+    ) {
+      return mergeIntoLastStep(steps, lastStep, op)
+    }
+  }
+
   return createNewStep(steps, op, editor)
 }
 
