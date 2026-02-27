@@ -1,11 +1,23 @@
-import type {Editor, MutationEvent} from '@portabletext/editor'
+import type {Patch} from '@portabletext/patches'
+import type {PortableTextBlock} from '@portabletext/schema'
 import type * as Y from 'yjs'
 
 /**
  * @public
  */
 export interface YjsPluginConfig {
-  editor: Editor
+  editor: {
+    on: (
+      event: 'patch',
+      listener: (event: {type: 'patch'; patch: Patch}) => void,
+    ) => {unsubscribe: () => void}
+    send: (event: {
+      type: 'patches'
+      patches: Array<Patch>
+      snapshot: Array<PortableTextBlock> | undefined
+    }) => void
+    getSnapshot: () => {context: {value: Array<PortableTextBlock> | undefined}}
+  }
   yDoc: Y.Doc
   localOrigin?: unknown
 }
@@ -16,10 +28,6 @@ export interface YjsPluginConfig {
 export interface YjsPluginInstance {
   connect: () => void
   disconnect: () => void
-  syncInitialState: (value: Array<any> | undefined) => void
   yDoc: Y.Doc
-  blocksMap: Y.Map<any>
-  orderArray: Y.Array<string>
+  patchesArray: Y.Array<string>
 }
-
-export type {MutationEvent}

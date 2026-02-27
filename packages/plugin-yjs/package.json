@@ -42,13 +42,10 @@
     "lint:fix": "biome lint --write .",
     "test": "vitest --run"
   },
-  "dependencies": {
-    "@sanity/diff-match-patch": "^3.2.0",
-    "yjs": "^13.6.29"
-  },
   "devDependencies": {
     "@portabletext/editor": "workspace:^",
     "@portabletext/patches": "workspace:^",
+    "@portabletext/schema": "workspace:^",
     "@sanity/pkg-utils": "^7.2.3",
     "@sanity/tsconfig": "^2.1.0",
     "typescript": "catalog:",
@@ -57,6 +54,7 @@
   "peerDependencies": {
     "@portabletext/editor": "^1.0.0",
     "@portabletext/patches": "^2.0.0",
+    "@portabletext/schema": "^1.0.0",
     "yjs": "^13.0.0"
   }
 }

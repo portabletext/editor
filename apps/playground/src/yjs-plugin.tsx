@@ -1,19 +1,15 @@
 import {useEditor} from '@portabletext/editor'
 import {createYjsPlugin} from '@portabletext/plugin-yjs'
-import {useContext, useEffect, useRef, useState} from 'react'
+import {useContext, useEffect, useState} from 'react'
 import * as Y from 'yjs'
 import {PlaygroundFeatureFlagsContext} from './feature-flags'
 
-// Shared Y.Doc context — all editors connect to the same doc
+// Shared Y.Doc — all editors connect to the same doc
 const sharedYDoc = new Y.Doc()
 
 /**
  * Playground Yjs plugin component.
- * When yjsMode is enabled, this replaces the playground's patch-based
- * sync with Yjs CRDT sync.
- *
- * Each editor instance gets its own plugin that connects to the shared Y.Doc.
- * The first editor to connect syncs its initial state to the Y.Doc.
+ * Connects an editor to the shared Y.Doc for CRDT sync.
  */
 export function PlaygroundYjsPlugin(props: {
   editorIndex: number
@@ -21,29 +17,21 @@ export function PlaygroundYjsPlugin(props: {
 }) {
   const featureFlags = useContext(PlaygroundFeatureFlagsContext)
   const editor = useEditor()
-  const pluginRef = useRef<ReturnType<typeof createYjsPlugin> | null>(null)
 
   useEffect(() => {
     if (!featureFlags.yjsMode) {
-      // Disconnect if Yjs mode was turned off
-      if (pluginRef.current) {
-        pluginRef.current.disconnect()
-        pluginRef.current = null
-      }
       return
     }
 
-    // Create a unique local origin per editor to avoid echo
     const localOrigin = `editor-${props.editorIndex}`
 
     let yDoc: Y.Doc
     let cleanup: (() => void) | undefined
 
     if (props.useLatency && featureFlags.yjsLatency > 0) {
-      // Latency mode: each editor gets its own Y.Doc that syncs with delay
+      // Latency simulation: each editor gets its own Y.Doc synced with delay
       yDoc = new Y.Doc()
 
-      // Sync from shared → local with delay
       const handleSharedUpdate = (update: Uint8Array, origin: unknown) => {
         if (origin === localOrigin) {
           return
@@ -53,7 +41,6 @@ export function PlaygroundYjsPlugin(props: {
         }, featureFlags.yjsLatency)
       }
 
-      // Sync from local → shared with delay
       const handleLocalUpdate = (update: Uint8Array, origin: unknown) => {
         if (origin === localOrigin) {
           setTimeout(() => {
@@ -70,7 +57,6 @@ export function PlaygroundYjsPlugin(props: {
         yDoc.off('update', handleLocalUpdate)
       }
     } else {
-      // Direct mode: all editors share the same Y.Doc
       yDoc = sharedYDoc
     }
 
@@ -80,16 +66,10 @@ export function PlaygroundYjsPlugin(props: {
       localOrigin,
     })
 
-    // Sync initial state from editor to Y.Doc (first editor wins)
-    const snapshot = editor.getSnapshot()
-    plugin.syncInitialState(snapshot.context.value)
-
     plugin.connect()
-    pluginRef.current = plugin
 
     return () => {
       plugin.disconnect()
-      pluginRef.current = null
       cleanup?.()
     }
   }, [
@@ -104,15 +84,33 @@ export function PlaygroundYjsPlugin(props: {
 }
 
 /**
- * Y.Doc tree viewer for the inspector panel.
- * Shows the current state of the shared Y.Doc.
+ * Y.Doc viewer for the inspector panel.
  */
 export function YjsTreeViewer() {
   const [tree, setTree] = useState<string>('')
 
   useEffect(() => {
     const update = () => {
-      setTree(renderYDocTree(sharedYDoc))
+      const patchesArray = sharedYDoc.getArray<string>('patches')
+      const lines: string[] = []
+      lines.push(`Y.Doc — patches array (${patchesArray.length} entries)`)
+      lines.push('')
+
+      // Show last 20 entries
+      const start = Math.max(0, patchesArray.length - 20)
+      for (let i = start; i < patchesArray.length; i++) {
+        try {
+          const entry = JSON.parse(patchesArray.get(i))
+          const patch = entry.patch
+          lines.push(
+            `[${i}] ${patch.type} @ ${JSON.stringify(patch.path).slice(0, 60)}`,
+          )
+        } catch {
+          lines.push(`[${i}] (parse error)`)
+        }
+      }
+
+      setTree(lines.join('\n'))
     }
 
     update()
@@ -129,78 +127,12 @@ export function YjsTreeViewer() {
   )
 }
 
-function renderYDocTree(yDoc: Y.Doc): string {
-  const lines: string[] = []
-  lines.push('Y.Doc')
-
-  const blocksMap = yDoc.getMap('blocks')
-  const orderArray = yDoc.getArray<string>('order')
-
-  lines.push(`├── blocks (Y.Map, ${blocksMap.size} entries)`)
-  lines.push(
-    `└── order (Y.Array, ${orderArray.length} entries): [${Array.from({length: orderArray.length}, (_, i) => orderArray.get(i)).join(', ')}]`,
-  )
-
-  if (blocksMap.size > 0) {
-    lines.push('')
-    for (const [key, value] of blocksMap.entries()) {
-      lines.push(`Block "${key}":`)
-      if (value instanceof Y.Map) {
-        renderYMap(value, lines, '  ')
-      }
-      lines.push('')
-    }
-  }
-
-  return lines.join('\n')
-}
-
-function renderYMap(yMap: Y.Map<any>, lines: string[], indent: string): void {
-  for (const [key, value] of yMap.entries()) {
-    if (value instanceof Y.Text) {
-      lines.push(`${indent}${key}: Y.Text("${value.toString()}")`)
-    } else if (value instanceof Y.Map) {
-      lines.push(`${indent}${key}: Y.Map`)
-      renderYMap(value, lines, `${indent}  `)
-    } else if (value instanceof Y.Array) {
-      lines.push(`${indent}${key}: Y.Array (${value.length} items)`)
-      renderYArray(value, lines, `${indent}  `)
-    } else if (typeof value === 'object' && value !== null) {
-      lines.push(`${indent}${key}: ${JSON.stringify(value)}`)
-    } else {
-      lines.push(`${indent}${key}: ${JSON.stringify(value)}`)
-    }
-  }
-}
-
-function renderYArray(
-  yArray: Y.Array<any>,
-  lines: string[],
-  indent: string,
-): void {
-  for (let i = 0; i < yArray.length; i++) {
-    const item = yArray.get(i)
-    if (item instanceof Y.Map) {
-      lines.push(`${indent}[${i}]: Y.Map`)
-      renderYMap(item, lines, `${indent}  `)
-    } else if (item instanceof Y.Text) {
-      lines.push(`${indent}[${i}]: Y.Text("${item.toString()}")`)
-    } else {
-      lines.push(`${indent}[${i}]: ${JSON.stringify(item)}`)
-    }
-  }
-}
-
 /**
- * Reset the shared Y.Doc (useful when toggling Yjs mode)
+ * Reset the shared Y.Doc
  */
 export function resetSharedYDoc() {
-  const blocksMap = sharedYDoc.getMap('blocks')
-  const orderArray = sharedYDoc.getArray<string>('order')
+  const patchesArray = sharedYDoc.getArray<string>('patches')
   sharedYDoc.transact(() => {
-    blocksMap.forEach((_: any, key: string) => {
-      blocksMap.delete(key)
-    })
-    orderArray.delete(0, orderArray.length)
+    patchesArray.delete(0, patchesArray.length)
   })
 }
