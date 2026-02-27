@@ -1,6 +1,6 @@
 {
   "name": "@portabletext/block-tools",
-  "version": "5.0.3",
+  "version": "5.0.4",
   "description": "Convert HTML to Portable Text with built-in support for Google Docs, Word, and Notion",
   "keywords": [
     "portable-text",

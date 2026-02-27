@@ -1,5 +1,14 @@
 # Changelog
 
+## 6.0.2
+
+### Patch Changes
+
+- [#2263](https://github.com/portabletext/editor/pull/2263) [`68d4f82`](https://github.com/portabletext/editor/commit/68d4f82bf596724d8bed31721786f21f5dea3377) Thanks [@christianhg](https://github.com/christianhg)! - fix(deps): remove @portabletext/sanity-bridge peer dependency
+
+- Updated dependencies []:
+  - @portabletext/block-tools@5.0.4
+
 ## 6.0.1
 
 ### Patch Changes
