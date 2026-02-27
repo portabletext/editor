@@ -75,10 +75,12 @@ import {Tooltip} from './primitives/tooltip'
 import {RangeDecorationButton} from './range-decoration-button'
 import {SlashCommandPickerPlugin} from './slash-command-picker'
 import {PortableTextToolbar} from './toolbar/portable-text-toolbar'
+import {PlaygroundYjsPlugin} from './yjs-plugin'
 
 export function Editor(props: {
   editorRef: EditorActorRef
   rangeDecorations: RangeDecoration[]
+  editorIndex?: number
 }) {
   const value = useSelector(props.editorRef, (s) => s.context.value)
   const keyGenerator = useSelector(
@@ -150,6 +152,12 @@ export function Editor(props: {
             </div>
           ) : null}
           <Container className="flex flex-col overflow-clip">
+            {playgroundFeatureFlags.yjsMode ? (
+              <PlaygroundYjsPlugin
+                editorIndex={props.editorIndex ?? 0}
+                useLatency={playgroundFeatureFlags.yjsMode}
+              />
+            ) : null}
             {featureFlags.emojiPickerPlugin ? <EmojiPickerPlugin /> : null}
             {featureFlags.mentionPickerPlugin ? <MentionPickerPlugin /> : null}
             {featureFlags.slashCommandPlugin ? (

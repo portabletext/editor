@@ -4,6 +4,7 @@ import {
   GithubIcon,
   MonitorIcon,
   MoonIcon,
+  NetworkIcon,
   PanelRightIcon,
   PlusIcon,
   SunIcon,
@@ -109,6 +110,18 @@ export function Header(props: {playgroundRef: PlaygroundActorRef}) {
           >
             <WrenchIcon className="size-4" />
             <span className="hidden sm:inline">Toolbar</span>
+          </Switch>
+          <Switch
+            isSelected={playgroundFeatureFlags.yjsMode}
+            onChange={() => {
+              props.playgroundRef.send({
+                type: 'toggle feature flag',
+                flag: 'yjsMode',
+              })
+            }}
+          >
+            <NetworkIcon className="size-4" />
+            <span className="hidden sm:inline">Yjs</span>
           </Switch>
           <Switch
             isSelected={showInspector}

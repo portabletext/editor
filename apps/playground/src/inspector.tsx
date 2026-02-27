@@ -1,10 +1,11 @@
 import {useActorRef, useSelector} from '@xstate/react'
-import {CheckIcon, CopyIcon, HistoryIcon, TrashIcon} from 'lucide-react'
+import {CheckIcon, CopyIcon, GitBranchIcon, HistoryIcon, TrashIcon} from 'lucide-react'
 import {useEffect, useState} from 'react'
 import {TooltipTrigger, type Key} from 'react-aria-components'
 import {highlightMachine} from './highlight-json-machine'
 import {MarkdownLogo, PortableTextLogo, ReactLogo} from './logos'
 import {PatchesList} from './patches-list'
+import {YjsTreeViewer} from './yjs-plugin'
 import type {PlaygroundActorRef} from './playground-machine'
 import {MarkdownPreview} from './previews/markdown-preview'
 import {ReactPreview} from './previews/react-preview'
@@ -14,7 +15,7 @@ import {Spinner} from './primitives/spinner'
 import {Tab, TabList, TabPanel, Tabs} from './primitives/tabs'
 import {Tooltip} from './primitives/tooltip'
 
-type TabId = 'output' | 'patches' | 'react-preview' | 'markdown-preview'
+type TabId = 'output' | 'patches' | 'react-preview' | 'markdown-preview' | 'yjs-tree'
 
 export function Inspector(props: {playgroundRef: PlaygroundActorRef}) {
   const [activeTab, setActiveTab] = useState<TabId>('output')
@@ -55,6 +56,12 @@ export function Inspector(props: {playgroundRef: PlaygroundActorRef}) {
               <span className="hidden sm:inline">Markdown</span>
             </span>
           </Tab>
+          <Tab id="yjs-tree">
+            <span className="flex items-center gap-1.5">
+              <GitBranchIcon className="size-3" />
+              <span className="hidden sm:inline">Y.Doc</span>
+            </span>
+          </Tab>
         </TabList>
         <TabActions activeTab={activeTab} playgroundRef={props.playgroundRef} />
       </div>
@@ -80,6 +87,11 @@ export function Inspector(props: {playgroundRef: PlaygroundActorRef}) {
       <TabPanel id="markdown-preview" className="flex-1 min-h-0">
         <Container className="h-full overflow-clip">
           <MarkdownPreview playgroundRef={props.playgroundRef} />
+        </Container>
+      </TabPanel>
+      <TabPanel id="yjs-tree" className="flex-1 min-h-0">
+        <Container className="h-full overflow-clip">
+          <YjsTreeViewer />
         </Container>
       </TabPanel>
     </Tabs>

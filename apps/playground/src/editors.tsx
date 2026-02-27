@@ -29,11 +29,12 @@ export function Editors(props: {playgroundRef: PlaygroundActorRef}) {
           <PlaygroundFeatureFlagsContext.Provider
             value={playgroundFeatureFlags}
           >
-            {editors.map((editor) => (
+            {editors.map((editor, index) => (
               <Editor
                 key={editor.id}
                 editorRef={editor}
                 rangeDecorations={rangeDecorations}
+                editorIndex={index}
               />
             ))}
           </PlaygroundFeatureFlagsContext.Provider>
