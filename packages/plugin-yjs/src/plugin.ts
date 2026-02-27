@@ -27,6 +27,12 @@ export function createYjsPlugin(config: YjsPluginConfig): YjsPluginInstance {
       }
 
       yDoc.transact(() => {
+        // Ensure all blocks referenced by patches exist in Y.Doc.
+        // Use the mutation snapshot to lazily populate missing blocks.
+        if (event.value) {
+          ensureBlocksExist(event.value, blocksMap, orderArray)
+        }
+
         for (const patch of localPatches) {
           applyPatchToYDoc(patch, blocksMap, orderArray)
         }
@@ -85,48 +91,7 @@ export function createYjsPlugin(config: YjsPluginConfig): YjsPluginInstance {
 
     yDoc.transact(() => {
       for (const block of value) {
-        const blockKey = block._key
-        if (!blockKey) {
-          continue
-        }
-
-        const blockMap = new Y.Map()
-        for (const [key, val] of Object.entries(block)) {
-          if (key === 'children' && Array.isArray(val)) {
-            const childrenArray = new Y.Array()
-            for (const child of val) {
-              const childMap = new Y.Map()
-              for (const [ck, cv] of Object.entries(
-                child as Record<string, unknown>,
-              )) {
-                if (ck === 'text' && typeof cv === 'string') {
-                  const yText = new Y.Text(cv)
-                  childMap.set(ck, yText)
-                } else {
-                  childMap.set(ck, cv)
-                }
-              }
-              childrenArray.push([childMap])
-            }
-            blockMap.set(key, childrenArray)
-          } else if (key === 'markDefs' && Array.isArray(val)) {
-            const markDefsArray = new Y.Array()
-            for (const markDef of val) {
-              const markDefMap = new Y.Map()
-              for (const [mk, mv] of Object.entries(
-                markDef as Record<string, unknown>,
-              )) {
-                markDefMap.set(mk, mv)
-              }
-              markDefsArray.push([markDefMap])
-            }
-            blockMap.set(key, markDefsArray)
-          } else {
-            blockMap.set(key, val)
-          }
-        }
-        blocksMap.set(blockKey, blockMap)
-        orderArray.push([blockKey])
+        addBlockToYDoc(block, blocksMap, orderArray)
       }
     }, localOrigin)
   }
@@ -139,6 +104,84 @@ export function createYjsPlugin(config: YjsPluginConfig): YjsPluginInstance {
     blocksMap,
     orderArray,
   }
+}
+
+/**
+ * Ensure all blocks from the snapshot exist in the Y.Doc.
+ * Adds any missing blocks without touching existing ones.
+ * This handles the case where Yjs mode is toggled on after
+ * content already exists in the editor.
+ */
+function ensureBlocksExist(
+  value: Array<any>,
+  blocksMap: Y.Map<any>,
+  orderArray: Y.Array<string>,
+): void {
+  for (const block of value) {
+    const blockKey = block['_key'] as string | undefined
+    if (!blockKey) {
+      continue
+    }
+
+    // Skip blocks that already exist in Y.Doc
+    if (blocksMap.has(blockKey)) {
+      continue
+    }
+
+    addBlockToYDoc(block, blocksMap, orderArray)
+  }
+}
+
+/**
+ * Add a single PT block to the Y.Doc, creating the appropriate
+ * Y.Map/Y.Array/Y.Text structure.
+ */
+function addBlockToYDoc(
+  block: Record<string, unknown>,
+  blocksMap: Y.Map<any>,
+  orderArray: Y.Array<string>,
+): void {
+  const blockKey = block['_key'] as string | undefined
+  if (!blockKey) {
+    return
+  }
+
+  const blockMap = new Y.Map()
+  for (const [key, val] of Object.entries(block)) {
+    if (key === 'children' && Array.isArray(val)) {
+      const childrenArray = new Y.Array()
+      for (const child of val) {
+        const childMap = new Y.Map()
+        for (const [ck, cv] of Object.entries(
+          child as Record<string, unknown>,
+        )) {
+          if (ck === 'text' && typeof cv === 'string') {
+            childMap.set(ck, new Y.Text(cv))
+          } else {
+            childMap.set(ck, cv)
+          }
+        }
+        childrenArray.push([childMap])
+      }
+      blockMap.set(key, childrenArray)
+    } else if (key === 'markDefs' && Array.isArray(val)) {
+      const markDefsArray = new Y.Array()
+      for (const markDef of val) {
+        const markDefMap = new Y.Map()
+        for (const [mk, mv] of Object.entries(
+          markDef as Record<string, unknown>,
+        )) {
+          markDefMap.set(mk, mv)
+        }
+        markDefsArray.push([markDefMap])
+      }
+      blockMap.set(key, markDefsArray)
+    } else {
+      blockMap.set(key, val)
+    }
+  }
+  blocksMap.set(blockKey, blockMap)
+  orderArray.push([blockKey])
 }
 
 function getCurrentSnapshot(
