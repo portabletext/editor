@@ -1,3 +1,4 @@
+import {InternalBlockPathMap} from '../internal-utils/block-path-map'
 import {buildIndexMaps} from '../internal-utils/build-index-maps'
 import {createPlaceholderBlock} from '../internal-utils/create-placeholder-block'
 import {debug} from '../internal-utils/debug'
@@ -33,7 +34,7 @@ export function createSlateEditor(config: SlateEditorConfig): SlateEditor {
 
   editor.decoratedRanges = []
   editor.decoratorState = {}
-  editor.blockIndexMap = new Map<string, number>()
+  editor.blockPathMap = new InternalBlockPathMap()
   editor.history = {undos: [], redos: []}
   editor.lastSelection = null
   editor.lastSlateSelection = null
@@ -63,10 +64,11 @@ export function createSlateEditor(config: SlateEditorConfig): SlateEditor {
       value: instance.value,
     },
     {
-      blockIndexMap: instance.blockIndexMap,
       listIndexMap: instance.listIndexMap,
     },
   )
+
+  instance.blockPathMap.rebuild(instance.value)
 
   const slateEditor: SlateEditor = {
     instance,

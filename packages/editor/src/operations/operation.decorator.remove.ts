@@ -15,7 +15,7 @@ export const decoratorRemoveOperationImplementation: OperationImplementation<
           value: operation.editor.value,
           selection: operation.at,
         },
-        blockIndexMap: operation.editor.blockIndexMap,
+        blockPathMap: operation.editor.blockPathMap,
       })
     : editor.selection
 

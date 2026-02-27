@@ -8,7 +8,7 @@ export const childUnsetOperationImplementation: OperationImplementation<
   'child.unset'
 > = ({context, operation}) => {
   const blockKey = operation.at[0]._key
-  const blockIndex = operation.editor.blockIndexMap.get(blockKey)
+  const blockIndex = operation.editor.blockPathMap.getIndex(blockKey)
 
   if (blockIndex === undefined) {
     throw new Error(`Unable to find block index for block key ${blockKey}`)

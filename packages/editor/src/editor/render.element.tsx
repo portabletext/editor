@@ -48,7 +48,7 @@ export function RenderElement(props: {
     )
   }
 
-  const blockIndex = slateStatic.blockIndexMap.get(props.element._key)
+  const blockIndex = slateStatic.blockPathMap.getIndex(props.element._key)
   const block =
     blockIndex !== undefined ? slateStatic.value.at(blockIndex) : undefined
 

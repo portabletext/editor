@@ -36,6 +36,7 @@ export {
   type StyleDefinition,
 } from '@portabletext/schema'
 export {useEditorSelector, type EditorSelector} from './editor/editor-selector'
+export type {BlockPathMap} from './internal-utils/block-path-map'
 export type {EditorContext, EditorSnapshot} from './editor/editor-snapshot'
 export {usePortableTextEditor} from './editor/usePortableTextEditor'
 export {usePortableTextEditorSelection} from './editor/usePortableTextEditorSelection'
