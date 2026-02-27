@@ -22,3 +22,11 @@ export const debug = {
   syncValue: createDebugger('sync:value'),
   syncPatch: createDebugger('sync:patch'),
 }
+
+/**
+ * Guards for expensive string formatting in hot paths.
+ * Check these before building debug log strings.
+ */
+export const debugEnabled = {
+  behaviors: rawDebug.enabled(`${rootName}behaviors`),
+}

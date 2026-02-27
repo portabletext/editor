@@ -13,6 +13,7 @@ import {defineBehavior} from './behavior.types.behavior'
 
 export const abstractDeleteBehaviors = [
   defineBehavior({
+    name: 'deleteBackwardRaise',
     on: 'delete.backward',
     guard: ({snapshot}) => {
       return snapshot.context.selection
@@ -28,6 +29,7 @@ export const abstractDeleteBehaviors = [
     ],
   }),
   defineBehavior({
+    name: 'deleteBackwardMergeBlocks',
     on: 'delete',
     guard: ({snapshot, event}) => {
       if (event.direction !== 'backward') {
@@ -93,6 +95,7 @@ export const abstractDeleteBehaviors = [
     ],
   }),
   defineBehavior({
+    name: 'deleteForwardRaise',
     on: 'delete.forward',
     guard: ({snapshot}) => {
       return snapshot.context.selection
@@ -108,6 +111,7 @@ export const abstractDeleteBehaviors = [
     ],
   }),
   defineBehavior({
+    name: 'deleteForwardEmptyBlock',
     on: 'delete',
     guard: ({snapshot, event}) => {
       if (event.direction !== 'forward') {
@@ -167,6 +171,7 @@ export const abstractDeleteBehaviors = [
     ],
   }),
   defineBehavior({
+    name: 'deleteForwardMergeBlocks',
     on: 'delete',
     guard: ({snapshot, event}) => {
       if (event.direction !== 'forward') {
@@ -220,6 +225,7 @@ export const abstractDeleteBehaviors = [
     ],
   }),
   defineBehavior({
+    name: 'deleteBlock',
     on: 'delete.block',
     actions: [
       ({event}) => [
@@ -241,6 +247,7 @@ export const abstractDeleteBehaviors = [
     ],
   }),
   defineBehavior({
+    name: 'deleteChild',
     on: 'delete.child',
     guard: ({snapshot, event}) => {
       const focusChild = getFocusChild({
@@ -295,6 +302,7 @@ export const abstractDeleteBehaviors = [
     actions: [(_, {selection}) => [raise({type: 'delete', at: selection})]],
   }),
   defineBehavior({
+    name: 'deleteText',
     on: 'delete.text',
     actions: [({event}) => [raise({...event, type: 'delete'})]],
   }),

@@ -18,6 +18,7 @@ const keyboardShortcutListener = fromCallback<
 
   return input.editor.registerBehavior({
     behavior: defineBehavior({
+      name: `toolbar:inlineObjectShortcut:${input.schemaType.name}`,
       on: 'keyboard.keydown',
       guard: ({event}) => shortcut.guard(event.originEvent),
       actions: [

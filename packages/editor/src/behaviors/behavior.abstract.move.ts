@@ -5,6 +5,7 @@ import {defineBehavior} from './behavior.types.behavior'
 
 export const abstractMoveBehaviors = [
   defineBehavior({
+    name: 'moveBlockUp',
     on: 'move.block up',
     guard: ({snapshot, event}) => {
       const previousBlock = getPreviousBlock({
@@ -41,6 +42,7 @@ export const abstractMoveBehaviors = [
     ],
   }),
   defineBehavior({
+    name: 'moveBlockDown',
     on: 'move.block down',
     guard: ({snapshot, event}) => {
       const nextBlock = getNextBlock({
