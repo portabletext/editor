@@ -48,7 +48,7 @@ export const blockUnsetOperationImplementation: OperationImplementation<
       ? []
       : key === '_key'
         ? set(context.keyGenerator(), ['_key'])
-        : unset(['value', key]),
+        : unset([key]),
   )
 
   const updatedSlateBlock = applyAll(slateBlock, patches) as Partial<Node>

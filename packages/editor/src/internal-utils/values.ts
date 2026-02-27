@@ -39,16 +39,14 @@ export function toSlateBlock(
       }
 
       if (childType !== schemaTypes.span.name) {
-        // Return 'slate' version of inline object where the actual
-        // value is stored in the `value` property.
-        // In slate, inline objects are represented as regular
-        // children with actual text node in order to be able to
-        // be selected the same way as the rest of the (text) content.
         hasInlines = true
+
+        const inlineObjectProps = childProps as Record<string, unknown>
 
         return {
           _type: childType,
           _key: childKey,
+          ...inlineObjectProps,
           children: [
             {
               _key: VOID_CHILD_KEY,
@@ -57,9 +55,7 @@ export function toSlateBlock(
               marks: [],
             },
           ],
-          value: childProps,
-          __inline: true,
-        }
+        } as Descendant
       }
 
       // Original child object (span)
@@ -80,9 +76,11 @@ export function toSlateBlock(
     return {_type, _key, ...rest, children} as Descendant
   }
 
+  const {children: _originalChildren, ...restWithoutChildren} = rest
   return {
     _type,
     _key,
+    ...restWithoutChildren,
     children: [
       {
         _key: VOID_CHILD_KEY,
@@ -91,7 +89,6 @@ export function toSlateBlock(
         marks: [],
       },
     ],
-    value: rest,
   } as Descendant
 }
 
@@ -108,31 +105,31 @@ export function fromSlateBlock(block: Descendant, textBlockType: string) {
   ) {
     let hasInlines = false
     const children = block.children.map((child) => {
-      const {_type: _cType} = child
-      if ('value' in child && _cType !== 'span') {
+      const {_type: childType} = child
+      if (
+        childType !== 'span' &&
+        'children' in child &&
+        Array.isArray(child.children)
+      ) {
         hasInlines = true
-        const {
-          value: v,
-          _key: k,
-          _type: t,
-          __inline: _i,
-          children: _c,
-          ...rest
-        } = child
-        return {...rest, ...v, _key: k as string, _type: t as string}
+        const {children: _voidChildren, ...rest} = child
+        return rest as typeof child
       }
       return child
     })
     if (!hasInlines) {
-      return block as PortableTextBlock // Original object
+      return block as PortableTextBlock
     }
     return {...block, children, _key, _type} as PortableTextBlock
   }
-  const blockValue = 'value' in block && block.value
+  const {children: _voidChildren, ...blockWithoutChildren} = block as {
+    children: unknown
+    [key: string]: unknown
+  }
   return {
+    ...blockWithoutChildren,
     _key,
     _type,
-    ...(typeof blockValue === 'object' ? blockValue : {}),
   } as PortableTextBlock
 }
 

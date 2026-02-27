@@ -139,34 +139,20 @@ export function setNodePatch(
     } else {
       const patches: Patch[] = []
 
-      const _key = operation.newProperties._key
+      for (const key of Object.keys(operation.newProperties)) {
+        const propertyValue = (
+          operation.newProperties as Record<string, unknown>
+        )[key]
 
-      if (_key !== undefined) {
-        patches.push(set(_key, [blockIndex, '_key']))
+        if (key === '_key') {
+          patches.push(set(propertyValue, [blockIndex, '_key']))
+        } else {
+          patches.push(set(propertyValue, [{_key: block._key}, key]))
+        }
       }
 
-      const newValue =
-        'value' in operation.newProperties &&
-        typeof operation.newProperties.value === 'object'
-          ? (operation.newProperties.value as Record<string, unknown>)
-          : ({} satisfies Record<string, unknown>)
-
-      const keys = Object.keys(newValue)
-
-      for (const key of keys) {
-        const value = newValue[key]
-
-        patches.push(set(value, [{_key: block._key}, key]))
-      }
-
-      const value =
-        'value' in operation.properties &&
-        typeof operation.properties.value === 'object'
-          ? (operation.properties.value as Record<string, unknown>)
-          : ({} satisfies Record<string, unknown>)
-
-      for (const key of Object.keys(value)) {
-        if (!(key in newValue)) {
+      for (const key of Object.keys(operation.properties)) {
+        if (!(key in operation.newProperties)) {
           patches.push(unset([{_key: block._key}, key]))
         }
       }
@@ -183,37 +169,30 @@ export function setNodePatch(
         const patches: Patch[] = []
 
         if (Element.isElement(child)) {
-          // The child is an inline object. This needs to be treated
-          // differently since all custom properties are stored on a `value`
-          // object.
+          for (const key of Object.keys(operation.newProperties)) {
+            const propertyValue = (
+              operation.newProperties as Record<string, unknown>
+            )[key]
 
-          const _key = operation.newProperties._key
-
-          if (_key !== undefined) {
-            patches.push(
-              set(_key, [
-                {_key: blockKey},
-                'children',
-                block.children.indexOf(child),
-                '_key',
-              ]),
-            )
-          }
-
-          const properties =
-            'value' in operation.newProperties &&
-            typeof operation.newProperties.value === 'object'
-              ? (operation.newProperties.value as Record<string, unknown>)
-              : ({} satisfies Record<string, unknown>)
-
-          const keys = Object.keys(properties)
-
-          for (const key of keys) {
-            const value = properties[key]
-
-            patches.push(
-              set(value, [{_key: blockKey}, 'children', {_key: childKey}, key]),
-            )
+            if (key === '_key') {
+              patches.push(
+                set(propertyValue, [
+                  {_key: blockKey},
+                  'children',
+                  block.children.indexOf(child),
+                  '_key',
+                ]),
+              )
+            } else {
+              patches.push(
+                set(propertyValue, [
+                  {_key: blockKey},
+                  'children',
+                  {_key: childKey},
+                  key,
+                ]),
+              )
+            }
           }
 
           return patches
@@ -326,27 +305,9 @@ export function insertNodePatch(
       return [setIfMissingPatch, insert([operation.node], position, path)]
     }
 
-    const _type = operation.node._type
-    const _key = operation.node._key
-    const value =
-      'value' in operation.node && typeof operation.node.value === 'object'
-        ? operation.node.value
-        : ({} satisfies Record<string, unknown>)
+    const {children: _voidChildren, ...inlineObject} = operation.node
 
-    return [
-      setIfMissingPatch,
-      insert(
-        [
-          {
-            _type,
-            _key,
-            ...value,
-          },
-        ],
-        position,
-        path,
-      ),
-    ]
+    return [setIfMissingPatch, insert([inlineObject], position, path)]
   }
 
   return []

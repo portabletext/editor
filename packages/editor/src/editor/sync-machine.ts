@@ -22,7 +22,7 @@ import {
   isEqualValues,
 } from '../internal-utils/equality'
 import {validateValue} from '../internal-utils/validateValue'
-import {toSlateBlock, VOID_CHILD_KEY} from '../internal-utils/values'
+import {toSlateBlock} from '../internal-utils/values'
 import {deleteText, Editor, Node, Text, type Descendant} from '../slate'
 import {withRemoteChanges} from '../slate-plugins/slate-plugin.remote-changes'
 import {pluginWithoutHistory} from '../slate-plugins/slate-plugin.without-history'
@@ -974,14 +974,6 @@ function updateBlock({
             })
 
             slateEditor.onChange()
-          } else if (!isSpanNode) {
-            // If it's a inline block, also update the void text node key
-            debug.syncValue(
-              'Updating changed inline object child',
-              currentBlockChild,
-            )
-
-            applySetNode(slateEditor, {_key: VOID_CHILD_KEY}, [...path, 0])
           }
         } else if (oldBlockChild) {
           debug.syncValue('Replacing child', currentBlockChild)

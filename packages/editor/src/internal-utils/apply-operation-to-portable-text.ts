@@ -66,16 +66,12 @@ function applyOperationToPortableTextImmutable(
           const newBlock = {
             ...insertedNode,
             children: insertedNode.children.map((child) => {
-              if ('__inline' in child) {
-                // Except for inline object children which need to have their
-                // `value` spread onto the block
-                return {
-                  _key: child._key,
-                  _type: child._type,
-                  ...('value' in child && typeof child['value'] === 'object'
-                    ? child['value']
-                    : {}),
-                }
+              if (
+                Element.isElement(child) &&
+                !isPartialSpanNode(context, child)
+              ) {
+                const {children: _voidChildren, ...rest} = child
+                return rest
               }
 
               return child
@@ -88,17 +84,8 @@ function applyOperationToPortableTextImmutable(
           }
         }
 
-        if (Element.isElement(insertedNode) && !('__inline' in insertedNode)) {
-          // Void blocks have to have their `value` spread onto the block
-          const newBlock = {
-            _key: insertedNode._key,
-            _type: insertedNode._type,
-            ...('value' in insertedNode &&
-            typeof insertedNode.value === 'object'
-              ? insertedNode.value
-              : {}),
-          }
-
+        if (Element.isElement(insertedNode)) {
+          const {children: _voidChildren, ...newBlock} = insertedNode
           return {
             ...root,
             children: insertChildren(root.children, index, newBlock),
@@ -118,18 +105,10 @@ function applyOperationToPortableTextImmutable(
         let newChild: SpanNode<EditorSchema> | ObjectNode | undefined
 
         if (isPartialSpanNode(context, insertedNode)) {
-          // Text nodes can be inserted as is
           newChild = insertedNode
-        } else if ('__inline' in insertedNode) {
-          // Void children have to have their `value` spread onto the block
-          newChild = {
-            _key: insertedNode._key,
-            _type: insertedNode._type,
-            ...('value' in insertedNode &&
-            typeof insertedNode.value === 'object'
-              ? insertedNode.value
-              : {}),
-          }
+        } else if (Element.isElement(insertedNode)) {
+          const {children: _voidChildren, ...rest} = insertedNode
+          newChild = rest as ObjectNode
         } else {
           return root
         }
@@ -371,24 +350,9 @@ function applyOperationToPortableTextImmutable(
       }
 
       if (isObjectNode(context, node)) {
-        const valueBefore = (
-          'value' in properties && typeof properties.value === 'object'
-            ? properties.value
-            : {}
-        ) as Partial<Node>
-        const valueAfter = (
-          'value' in newProperties && typeof newProperties.value === 'object'
-            ? newProperties.value
-            : {}
-        ) as Partial<Node>
-
         const newNode = {...node}
 
         for (const key in newProperties) {
-          if (key === 'value') {
-            continue
-          }
-
           const value = newProperties[key as keyof Partial<Node>]
 
           if (value == null) {
@@ -399,27 +363,7 @@ function applyOperationToPortableTextImmutable(
         }
 
         for (const key in properties) {
-          if (key === 'value') {
-            continue
-          }
-
           if (!newProperties.hasOwnProperty(key)) {
-            delete newNode[key]
-          }
-        }
-
-        for (const key in valueAfter) {
-          const value = valueAfter[key as keyof Partial<Node>]
-
-          if (value == null) {
-            delete newNode[key]
-          } else {
-            newNode[key] = value
-          }
-        }
-
-        for (const key in valueBefore) {
-          if (!valueAfter.hasOwnProperty(key)) {
             delete newNode[key]
           }
         }

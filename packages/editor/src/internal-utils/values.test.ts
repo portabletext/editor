@@ -95,8 +95,7 @@ describe(toSlateBlock.name, () => {
                   marks: [],
                 },
               ],
-              value: {text: 'foo'},
-              __inline: true,
+              text: 'foo',
             },
           ],
         })
@@ -129,7 +128,6 @@ describe(toSlateBlock.name, () => {
           _key: blockKey,
           children: [
             {
-              __inline: true,
               _key: stockTickerKey,
               _type: 'stock-ticker',
               children: [
@@ -140,9 +138,7 @@ describe(toSlateBlock.name, () => {
                   marks: [],
                 },
               ],
-              value: {
-                symbol: 'AAPL',
-              },
+              symbol: 'AAPL',
             },
           ],
         })
@@ -171,7 +167,6 @@ describe(toSlateBlock.name, () => {
           _key: blockKey,
           children: [
             {
-              __inline: true,
               _key: stockTickerKey,
               _type: 'stock-ticker',
               children: [
@@ -182,9 +177,7 @@ describe(toSlateBlock.name, () => {
                   marks: [],
                 },
               ],
-              value: {
-                symbol: 'AAPL',
-              },
+              symbol: 'AAPL',
             },
           ],
         })
@@ -217,7 +210,6 @@ describe(toSlateBlock.name, () => {
           _key: blockKey,
           children: [
             {
-              __inline: true,
               _key: stockTickerKey,
               _type: 'stock-ticker',
               children: [
@@ -228,9 +220,7 @@ describe(toSlateBlock.name, () => {
                   marks: [],
                 },
               ],
-              value: {
-                text: 'foo',
-              },
+              text: 'foo',
             },
           ],
         })
@@ -259,7 +249,6 @@ describe(toSlateBlock.name, () => {
           _key: blockKey,
           children: [
             {
-              __inline: true,
               _key: stockTickerKey,
               _type: 'stock-ticker',
               children: [
@@ -270,9 +259,7 @@ describe(toSlateBlock.name, () => {
                   marks: [],
                 },
               ],
-              value: {
-                text: 'foo',
-              },
+              text: 'foo',
             },
           ],
         })
