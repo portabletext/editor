@@ -4,7 +4,6 @@ import type {EditorContext} from '../editor/editor-snapshot'
 import {Element, Path, type Node, type Operation} from '../slate'
 import type {OmitFromUnion} from '../type-utils'
 import {
-  getBlock,
   getNode,
   getParent,
   getSpan,
@@ -16,7 +15,6 @@ import {
   type EditorNode,
   type ObjectNode,
   type SpanNode,
-  type TextBlockNode,
 } from './portable-text-node'
 
 export function applyOperationToPortableText(
@@ -54,74 +52,21 @@ function applyOperationToPortableTextImmutable(
         return root
       }
 
-      if (index > parent.children.length) {
+      if (
+        'children' in parent &&
+        Array.isArray(parent.children) &&
+        index > parent.children.length
+      ) {
         return root
       }
 
-      if (path.length === 1) {
-        // Inserting block at the root
-
-        if (isTextBlockNode(context, insertedNode)) {
-          // Text blocks can be inserted as is
-          const newBlock = {
-            ...insertedNode,
-            children: insertedNode.children.map((child) => {
-              if ('__inline' in child) {
-                // Except for inline object children which need to have their
-                // `value` spread onto the block
-                return {
-                  _key: child._key,
-                  _type: child._type,
-                  ...('value' in child && typeof child['value'] === 'object'
-                    ? child['value']
-                    : {}),
-                }
-              }
-
-              return child
-            }),
-          }
-
-          return {
-            ...root,
-            children: insertChildren(root.children, index, newBlock),
-          }
-        }
-
-        if (Element.isElement(insertedNode) && !('__inline' in insertedNode)) {
-          // Void blocks have to have their `value` spread onto the block
-          const newBlock = {
-            _key: insertedNode._key,
-            _type: insertedNode._type,
-            ...('value' in insertedNode &&
-            typeof insertedNode.value === 'object'
-              ? insertedNode.value
-              : {}),
-          }
-
-          return {
-            ...root,
-            children: insertChildren(root.children, index, newBlock),
-          }
-        }
-      }
-
-      if (path.length === 2) {
-        // Inserting children into blocks
-        const blockIndex = path[0]!
-
-        if (!isTextBlockNode(context, parent)) {
-          // Only text blocks can have children
-          return root
-        }
-
+      if (isTextBlockNode(context, parent)) {
+        // Inserting a child into a text block (span or inline object)
         let newChild: SpanNode<EditorSchema> | ObjectNode | undefined
 
         if (isPartialSpanNode(context, insertedNode)) {
-          // Text nodes can be inserted as is
           newChild = insertedNode
         } else if ('__inline' in insertedNode) {
-          // Void children have to have their `value` spread onto the block
           newChild = {
             _key: insertedNode._key,
             _type: insertedNode._type,
@@ -134,10 +79,50 @@ function applyOperationToPortableTextImmutable(
           return root
         }
 
-        return updateTextBlockAtIndex(context, root, blockIndex, (block) => ({
-          ...block,
-          children: insertChildren(block.children, index, newChild),
-        }))
+        const parentPath = path.slice(0, -1)
+        return updateChildrenAtPath(root, parentPath, (children) =>
+          insertChildren(children, index, newChild),
+        )
+      }
+
+      // Inserting a block into root or a container
+      if (isTextBlockNode(context, insertedNode)) {
+        const newBlock = {
+          ...insertedNode,
+          children: insertedNode.children.map((child) => {
+            if ('__inline' in child) {
+              return {
+                _key: child._key,
+                _type: child._type,
+                ...('value' in child && typeof child['value'] === 'object'
+                  ? child['value']
+                  : {}),
+              }
+            }
+
+            return child
+          }),
+        }
+
+        const parentPath = path.slice(0, -1)
+        return updateChildrenAtPath(root, parentPath, (children) =>
+          insertChildren(children, index, newBlock),
+        )
+      }
+
+      if (Element.isElement(insertedNode) && !('__inline' in insertedNode)) {
+        const newBlock = {
+          _key: insertedNode._key,
+          _type: insertedNode._type,
+          ...('value' in insertedNode && typeof insertedNode.value === 'object'
+            ? insertedNode.value
+            : {}),
+        }
+
+        const parentPath = path.slice(0, -1)
+        return updateChildrenAtPath(root, parentPath, (children) =>
+          insertChildren(children, index, newBlock),
+        )
       }
 
       return root
@@ -154,16 +139,15 @@ function applyOperationToPortableTextImmutable(
         return root
       }
 
-      const blockIndex = path[0]!
-      const childIndex = path[1]!
+      const parentPath = path.slice(0, -1)
+      const childIndex = path[path.length - 1]!
       const before = span.text.slice(0, offset)
       const after = span.text.slice(offset)
       const newSpan = {...span, text: before + text + after}
 
-      return updateTextBlockAtIndex(context, root, blockIndex, (block) => ({
-        ...block,
-        children: replaceChild(block.children, childIndex, newSpan),
-      }))
+      return updateChildrenAtPath(root, parentPath, (children) =>
+        replaceChild(children, childIndex, newSpan),
+      )
     }
 
     case 'merge_node': {
@@ -185,25 +169,18 @@ function applyOperationToPortableTextImmutable(
       }
 
       const index = path[path.length - 1]!
+      const parentPath = path.slice(0, -1)
 
       if (
         isPartialSpanNode(context, node) &&
         isPartialSpanNode(context, prev)
       ) {
         // Merging spans
-        const blockIndex = path[0]!
         const newPrev = {...prev, text: prev.text + node.text}
 
-        return updateTextBlockAtIndex(context, root, blockIndex, (block) => {
-          const newChildren = replaceChild(
-            block.children,
-            index - 1,
-            newPrev as never,
-          )
-          return {
-            ...block,
-            children: removeChildren(newChildren, index),
-          }
+        return updateChildrenAtPath(root, parentPath, (children) => {
+          const newChildren = replaceChild(children, index - 1, newPrev)
+          return removeChildren(newChildren, index)
         })
       }
 
@@ -213,11 +190,11 @@ function applyOperationToPortableTextImmutable(
           ...prev,
           children: [...prev.children, ...node.children],
         }
-        const newChildren = replaceChild(root.children, index - 1, newPrev)
-        return {
-          ...root,
-          children: removeChildren(newChildren, index),
-        }
+
+        return updateChildrenAtPath(root, parentPath, (children) => {
+          const newChildren = replaceChild(children, index - 1, newPrev)
+          return removeChildren(newChildren, index)
+        })
       }
 
       return root
@@ -239,29 +216,10 @@ function applyOperationToPortableTextImmutable(
       }
 
       // First, remove the node from its current position
-      let newRoot: EditorNode<EditorSchema>
-
-      if (path.length === 1) {
-        // Removing block from root
-        newRoot = {
-          ...root,
-          children: removeChildren(root.children, index),
-        }
-      } else if (path.length === 2) {
-        // Removing child from block
-        const blockIndex = path[0]!
-        newRoot = updateTextBlockAtIndex(
-          context,
-          root,
-          blockIndex,
-          (block) => ({
-            ...block,
-            children: removeChildren(block.children, index),
-          }),
-        )
-      } else {
-        return root
-      }
+      const removeParentPath = path.slice(0, -1)
+      const newRoot = updateChildrenAtPath(root, removeParentPath, (children) =>
+        removeChildren(children, index),
+      )
 
       // This is tricky, but since the `path` and `newPath` both refer to
       // the same snapshot in time, there's a mismatch. After either
@@ -271,36 +229,11 @@ function applyOperationToPortableTextImmutable(
       // the operation was applied.
       const truePath = Path.transform(path, operation)!
       const newIndex = truePath[truePath.length - 1]!
+      const insertParentPath = truePath.slice(0, -1)
 
-      if (truePath.length === 1) {
-        // Inserting block at root
-        return {
-          ...newRoot,
-          children: insertChildren(newRoot.children, newIndex, node as never),
-        }
-      }
-
-      if (truePath.length === 2) {
-        // Inserting child into block
-        const newBlockIndex = truePath[0]!
-        const newParent = newRoot.children[newBlockIndex]
-
-        if (!newParent || !isTextBlockNode(context, newParent)) {
-          return root
-        }
-
-        return updateTextBlockAtIndex(
-          context,
-          newRoot,
-          newBlockIndex,
-          (block) => ({
-            ...block,
-            children: insertChildren(block.children, newIndex, node as never),
-          }),
-        )
-      }
-
-      return root
+      return updateChildrenAtPath(newRoot, insertParentPath, (children) =>
+        insertChildren(children, newIndex, node as never),
+      )
     }
 
     case 'remove_node': {
@@ -312,24 +245,10 @@ function applyOperationToPortableTextImmutable(
         return root
       }
 
-      if (path.length === 1) {
-        // Removing block from root
-        return {
-          ...root,
-          children: removeChildren(root.children, index),
-        }
-      }
-
-      if (path.length === 2) {
-        // Removing child from block
-        const blockIndex = path[0]!
-        return updateTextBlockAtIndex(context, root, blockIndex, (block) => ({
-          ...block,
-          children: removeChildren(block.children, index),
-        }))
-      }
-
-      return root
+      const parentPath = path.slice(0, -1)
+      return updateChildrenAtPath(root, parentPath, (children) =>
+        removeChildren(children, index),
+      )
     }
 
     case 'remove_text': {
@@ -345,16 +264,15 @@ function applyOperationToPortableTextImmutable(
         return root
       }
 
-      const blockIndex = path[0]!
-      const childIndex = path[1]!
+      const parentPath = path.slice(0, -1)
+      const childIndex = path[path.length - 1]!
       const before = span.text.slice(0, offset)
       const after = span.text.slice(offset + text.length)
       const newSpan = {...span, text: before + after}
 
-      return updateTextBlockAtIndex(context, root, blockIndex, (block) => ({
-        ...block,
-        children: replaceChild(block.children, childIndex, newSpan as never),
-      }))
+      return updateChildrenAtPath(root, parentPath, (children) =>
+        replaceChild(children, childIndex, newSpan),
+      )
     }
 
     case 'set_node': {
@@ -369,6 +287,9 @@ function applyOperationToPortableTextImmutable(
       if (isEditorNode(node)) {
         return root
       }
+
+      const parentPath = path.slice(0, -1)
+      const index = path[path.length - 1]!
 
       if (isObjectNode(context, node)) {
         const valueBefore = (
@@ -424,21 +345,9 @@ function applyOperationToPortableTextImmutable(
           }
         }
 
-        if (path.length === 1) {
-          return {
-            ...root,
-            children: replaceChild(root.children, path[0]!, newNode),
-          }
-        }
-
-        if (path.length === 2) {
-          return updateTextBlockAtIndex(context, root, path[0]!, (block) => ({
-            ...block,
-            children: replaceChild(block.children, path[1]!, newNode),
-          }))
-        }
-
-        return root
+        return updateChildrenAtPath(root, parentPath, (children) =>
+          replaceChild(children, index, newNode),
+        )
       }
 
       if (isTextBlockNode(context, node)) {
@@ -465,10 +374,9 @@ function applyOperationToPortableTextImmutable(
           }
         }
 
-        return {
-          ...root,
-          children: replaceChild(root.children, path[0]!, newNode),
-        }
+        return updateChildrenAtPath(root, parentPath, (children) =>
+          replaceChild(children, index, newNode),
+        )
       }
 
       if (isPartialSpanNode(context, node)) {
@@ -495,10 +403,9 @@ function applyOperationToPortableTextImmutable(
           }
         }
 
-        return updateTextBlockAtIndex(context, root, path[0]!, (block) => ({
-          ...block,
-          children: replaceChild(block.children, path[1]!, newNode),
-        }))
+        return updateChildrenAtPath(root, parentPath, (children) =>
+          replaceChild(children, index, newNode),
+        )
       }
 
       return root
@@ -512,22 +419,19 @@ function applyOperationToPortableTextImmutable(
       }
 
       const parent = getParent(context, root, path)
+      const node = getNode(context, root, path)
       const index = path[path.length - 1]!
+      const parentPath = path.slice(0, -1)
 
-      if (!parent) {
+      if (!parent || !node) {
         return root
       }
 
-      if (isEditorNode(parent)) {
-        const block = getBlock(root, path)
-
-        if (!block || !isTextBlockNode(context, block)) {
-          return root
-        }
-
-        const before = block.children.slice(0, position)
-        const after = block.children.slice(position)
-        const updatedTextBlockNode = {...block, children: before}
+      if (isTextBlockNode(context, node)) {
+        // Splitting a text block: divide its children
+        const before = node.children.slice(0, position)
+        const after = node.children.slice(position)
+        const updatedTextBlockNode = {...node, children: before}
 
         // _key is deliberately left out
         const newTextBlockNode = {
@@ -536,24 +440,17 @@ function applyOperationToPortableTextImmutable(
           _type: context.schema.block.name,
         }
 
-        return {
-          ...root,
-          children: insertChildren(
-            replaceChild(root.children, index, updatedTextBlockNode),
+        return updateChildrenAtPath(root, parentPath, (children) =>
+          insertChildren(
+            replaceChild(children, index, updatedTextBlockNode),
             index + 1,
             newTextBlockNode,
           ),
-        }
+        )
       }
 
-      if (isTextBlockNode(context, parent)) {
-        const node = getNode(context, root, path)
-
-        if (!node || !isSpanNode(context, node)) {
-          return root
-        }
-
-        const blockIndex = path[0]!
+      if (isSpanNode(context, node)) {
+        // Splitting a span: divide its text
         const before = node.text.slice(0, position)
         const after = node.text.slice(position)
         const updatedSpanNode = {...node, text: before}
@@ -564,16 +461,13 @@ function applyOperationToPortableTextImmutable(
           text: after,
         }
 
-        return updateTextBlockAtIndex(context, root, blockIndex, (block) => {
-          return {
-            ...block,
-            children: insertChildren(
-              replaceChild(block.children, index, updatedSpanNode),
-              index + 1,
-              newSpanNode,
-            ),
-          }
-        })
+        return updateChildrenAtPath(root, parentPath, (children) =>
+          insertChildren(
+            replaceChild(children, index, updatedSpanNode),
+            index + 1,
+            newSpanNode,
+          ),
+        )
       }
 
       return root
@@ -593,26 +487,54 @@ function replaceChild<T>(children: T[], index: number, newChild: T): T[] {
   return [...children.slice(0, index), newChild, ...children.slice(index + 1)]
 }
 
-function updateTextBlockAtIndex(
-  context: Pick<EditorContext, 'schema'>,
+/**
+ * Immutably update a node's children at the given parent path.
+ * Rebuilds the tree from root down to the target parent.
+ *
+ * `parentPath` is the path to the node whose children should be updated.
+ * `updater` receives the current children array and returns the new one.
+ */
+function updateChildrenAtPath(
   root: EditorNode<EditorSchema>,
-  blockIndex: number,
-  updater: (block: TextBlockNode<EditorSchema>) => TextBlockNode<EditorSchema>,
+  parentPath: Path,
+  updater: (children: Array<unknown>) => Array<unknown>,
 ): EditorNode<EditorSchema> {
-  const block = root.children.at(blockIndex)
-
-  if (!block) {
-    return root
+  if (parentPath.length === 0) {
+    return {
+      ...root,
+      children: updater(root.children) as EditorNode<EditorSchema>['children'],
+    }
   }
 
-  if (!isTextBlockNode(context, block)) {
-    return root
+  // Rebuild the tree immutably from root to the target parent
+  // biome-ignore lint/suspicious/noExplicitAny: walking a heterogeneous tree
+  function rebuild(node: any, depth: number): any {
+    const index = parentPath[depth]!
+    const child = node.children?.[index]
+
+    if (!child) {
+      return node
+    }
+
+    if (depth === parentPath.length - 1) {
+      // This child is the target parent, update its children
+      const newChild = {
+        ...child,
+        children: updater(child.children),
+      }
+      return {
+        ...node,
+        children: replaceChild(node.children, index, newChild),
+      }
+    }
+
+    // Recurse deeper
+    const newChild = rebuild(child, depth + 1)
+    return {
+      ...node,
+      children: replaceChild(node.children, index, newChild),
+    }
   }
 
-  const newBlock = updater(block)
-
-  return {
-    ...root,
-    children: replaceChild(root.children, blockIndex, newBlock),
-  }
+  return rebuild(root, 0)
 }
