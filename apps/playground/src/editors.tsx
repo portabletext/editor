@@ -5,7 +5,6 @@ import {Inspector} from './inspector'
 import type {PlaygroundActorRef} from './playground-machine'
 import {LatencyYjsProvider} from './yjs-latency-provider'
 import {YjsOperationLogProvider} from './yjs-operation-log'
-import {YjsProvider} from './yjs-plugin'
 
 export function Editors(props: {playgroundRef: PlaygroundActorRef}) {
   const showInspector = useSelector(props.playgroundRef, (s) =>
@@ -29,27 +28,25 @@ export function Editors(props: {playgroundRef: PlaygroundActorRef}) {
             editorCount={editors.length}
             latencyMs={playgroundFeatureFlags.yjsLatency}
           >
-            <YjsProvider>
-              <div
-                className={`grid gap-4 items-start grid-cols-1 h-full ${
-                  showInspector ? 'md:grid-cols-2' : ''
-                }`}
-              >
-                <div className="flex flex-col gap-4">
-                  {editors.map((editor, index) => (
-                    <Editor
-                      key={editor.id}
-                      editorRef={editor}
-                      editorIndex={index}
-                      rangeDecorations={rangeDecorations}
-                    />
-                  ))}
-                </div>
-                {showInspector ? (
-                  <Inspector playgroundRef={props.playgroundRef} />
-                ) : null}
+            <div
+              className={`grid gap-4 items-start grid-cols-1 h-full ${
+                showInspector ? 'md:grid-cols-2' : ''
+              }`}
+            >
+              <div className="flex flex-col gap-4">
+                {editors.map((editor, index) => (
+                  <Editor
+                    key={editor.id}
+                    editorRef={editor}
+                    editorIndex={index}
+                    rangeDecorations={rangeDecorations}
+                  />
+                ))}
               </div>
-            </YjsProvider>
+              {showInspector ? (
+                <Inspector playgroundRef={props.playgroundRef} />
+              ) : null}
+            </div>
           </LatencyYjsProvider>
         </YjsOperationLogProvider>
       </PlaygroundFeatureFlagsContext.Provider>

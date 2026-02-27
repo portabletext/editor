@@ -4,27 +4,9 @@ import {
   type YjsEditor,
   type YjsOperationEntry,
 } from '@portabletext/editor/yjs'
-import {createContext, useContext, useEffect, useRef, useState} from 'react'
-import * as Y from 'yjs'
+import {useEffect, useRef} from 'react'
 import {useLatencySharedRoot} from './yjs-latency-provider'
 import {useYjsOperationLog} from './yjs-operation-log'
-
-export const YjsContext = createContext<Y.XmlText | null>(null)
-
-export function YjsProvider({children}: {children: React.ReactNode}) {
-  const [yDoc] = useState(() => new Y.Doc())
-  const [sharedRoot] = useState(
-    () => yDoc.get('content', Y.XmlText) as Y.XmlText,
-  )
-
-  useEffect(() => {
-    return () => yDoc.destroy()
-  }, [yDoc])
-
-  return (
-    <YjsContext.Provider value={sharedRoot}>{children}</YjsContext.Provider>
-  )
-}
 
 function getSlateEditor(
   editor: ReturnType<typeof useEditor>,
@@ -40,34 +22,20 @@ function getSlateEditor(
 export function PlaygroundYjsPlugin({
   enabled,
   editorIndex,
-  useLatency,
 }: {
   enabled: boolean
   editorIndex: number
-  useLatency: boolean
 }) {
   const editor = useEditor()
-  const sharedRootFromContext = useContext(YjsContext)
-  const latencySharedRoot = useLatencySharedRoot(editorIndex)
-  const sharedRoot = useLatency ? latencySharedRoot : sharedRootFromContext
+  const sharedRoot = useLatencySharedRoot(editorIndex)
   const yjsEditorRef = useRef<YjsEditor | null>(null)
-  const currentSharedRootRef = useRef<Y.XmlText | null>(null)
   const {addEntry} = useYjsOperationLog()
   const addEntryRef = useRef(addEntry)
   addEntryRef.current = addEntry
 
   useEffect(() => {
-    if (!sharedRoot) return
-
     const slateEditor = getSlateEditor(editor)
     if (!slateEditor) return
-
-    // If the shared root changed (e.g. toggling latency mode), disconnect the
-    // old editor and create a new one
-    if (yjsEditorRef.current && currentSharedRootRef.current !== sharedRoot) {
-      yjsEditorRef.current.disconnect()
-      yjsEditorRef.current = null
-    }
 
     if (!yjsEditorRef.current) {
       const onOperation = (entry: YjsOperationEntry) => {
@@ -80,7 +48,6 @@ export function PlaygroundYjsPlugin({
         onOperation,
       }) as unknown as YjsEditor
       yjsEditorRef.current = yjsEditor
-      currentSharedRootRef.current = sharedRoot
     }
 
     if (enabled) {

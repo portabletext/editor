@@ -36,6 +36,8 @@ import {
   PencilIcon,
   PencilOffIcon,
   SeparatorHorizontalIcon,
+  WifiIcon,
+  WifiOffIcon,
   XIcon,
 } from 'lucide-react'
 import {useContext, useEffect, useState, type JSX} from 'react'
@@ -75,6 +77,7 @@ import {Tooltip} from './primitives/tooltip'
 import {RangeDecorationButton} from './range-decoration-button'
 import {SlashCommandPickerPlugin} from './slash-command-picker'
 import {PortableTextToolbar} from './toolbar/portable-text-toolbar'
+import {useEditorOffline} from './yjs-latency-provider'
 import {PlaygroundYjsPlugin} from './yjs-plugin'
 
 export function Editor(props: {
@@ -113,7 +116,6 @@ export function Editor(props: {
           <PlaygroundYjsPlugin
             enabled={playgroundFeatureFlags.yjsMode}
             editorIndex={props.editorIndex}
-            useLatency={playgroundFeatureFlags.yjsLatency > 0}
           />
           <EditorEventListener
             editorRef={props.editorRef}
@@ -209,7 +211,11 @@ export function Editor(props: {
               </ErrorBoundary>
               {loading ? <Spinner /> : null}
             </div>
-            <EditorFooter editorRef={props.editorRef} readOnly={readOnly} />
+            <EditorFooter
+              editorRef={props.editorRef}
+              editorIndex={props.editorIndex}
+              readOnly={readOnly}
+            />
           </Container>
         </EditorProvider>
       </ErrorBoundary>
@@ -557,8 +563,13 @@ const styleMap: Map<string, (props: BlockStyleRenderProps) => JSX.Element> =
     ],
   ])
 
-function EditorFooter(props: {editorRef: EditorActorRef; readOnly: boolean}) {
+function EditorFooter(props: {
+  editorRef: EditorActorRef
+  editorIndex: number
+  readOnly: boolean
+}) {
   const editor = useEditor()
+  const playgroundFeatureFlags = useContext(PlaygroundFeatureFlagsContext)
   const patchesActive = useSelector(props.editorRef, (s) =>
     s.matches({'patch subscription': 'active'}),
   )
@@ -569,6 +580,8 @@ function EditorFooter(props: {editorRef: EditorActorRef; readOnly: boolean}) {
   const value = useEditorSelector(editor, (s) => s.context.value)
   const [showSelection, setShowSelection] = useState(false)
   const [showValue, setShowValue] = useState(false)
+  const {setOffline} = useEditorOffline()
+  const [offline, setOfflineState] = useState(false)
 
   const isExpanded = showSelection || showValue
 
@@ -659,6 +672,30 @@ function EditorFooter(props: {editorRef: EditorActorRef; readOnly: boolean}) {
                 : 'Not receiving value updates'}
             </Tooltip>
           </TooltipTrigger>
+          {playgroundFeatureFlags.yjsMode ? (
+            <TooltipTrigger>
+              <ToggleButton
+                variant="ghost"
+                size="sm"
+                isSelected={offline}
+                onChange={(selected) => {
+                  setOfflineState(selected)
+                  setOffline(props.editorIndex, selected)
+                }}
+              >
+                {offline ? (
+                  <WifiOffIcon className="size-3" />
+                ) : (
+                  <WifiIcon className="size-3" />
+                )}
+              </ToggleButton>
+              <Tooltip>
+                {offline
+                  ? 'Offline (click to reconnect)'
+                  : 'Online (click to go offline)'}
+              </Tooltip>
+            </TooltipTrigger>
+          ) : null}
           <TooltipTrigger>
             <Button
               variant="ghost"

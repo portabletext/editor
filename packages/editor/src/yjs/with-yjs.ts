@@ -36,10 +36,12 @@ export function withYjs(
 
   yjsEditor.sharedRoot = sharedRoot
   yjsEditor.localOrigin = localOrigin
-  yjsEditor.isYjsConnected = false
 
   let bufferedOps: BufferedOperation[] = []
   let isApplyingRemoteChanges = false
+  // Local to this closure — each `withYjs` wrapper tracks its own connection
+  // state independently, so stale wrappers don't buffer ops to the wrong Y.Doc.
+  let isConnected = false
 
   const {apply, onChange} = editor
 
@@ -80,7 +82,7 @@ export function withYjs(
       return
     }
 
-    if (!yjsEditor.isYjsConnected) {
+    if (!isConnected) {
       return
     }
 
@@ -121,10 +123,11 @@ export function withYjs(
   }
 
   yjsEditor.connect = () => {
-    if (yjsEditor.isYjsConnected) {
+    if (isConnected) {
       return
     }
 
+    isConnected = true
     yjsEditor.isYjsConnected = true
 
     // Sync initial state: if Y.Doc has content, apply it to Slate.
@@ -181,19 +184,19 @@ export function withYjs(
   }
 
   yjsEditor.disconnect = () => {
-    if (!yjsEditor.isYjsConnected) {
+    if (!isConnected) {
       return
     }
 
     flushBufferedOps()
     sharedRoot.unobserveDeep(handleYjsObserve)
+    isConnected = false
     yjsEditor.isYjsConnected = false
   }
 
   editor.apply = (op: Operation) => {
-    if (yjsEditor.isYjsConnected && !isApplyingRemoteChanges) {
+    if (isConnected && !isApplyingRemoteChanges) {
       if (op.type !== 'set_selection') {
-        // Buffer the operation with a snapshot of current doc state
         bufferedOps.push({op, doc: [...editor.children]})
       }
     }
@@ -202,7 +205,7 @@ export function withYjs(
   }
 
   editor.onChange = () => {
-    if (yjsEditor.isYjsConnected && !isApplyingRemoteChanges) {
+    if (isConnected && !isApplyingRemoteChanges) {
       flushBufferedOps()
     }
 

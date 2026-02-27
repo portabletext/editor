@@ -36,6 +36,8 @@ type LatencyContextValue = {
   getSharedRoot: (editorIndex: number) => Y.XmlText
   subscribeToCrdtEvents: (callback: CrdtEventCallback) => () => void
   getInFlightUpdates: () => InFlightUpdate[]
+  setOffline: (editorIndex: number, offline: boolean) => void
+  isOffline: (editorIndex: number) => boolean
 }
 
 const LatencyContext = createContext<LatencyContextValue>({
@@ -44,6 +46,8 @@ const LatencyContext = createContext<LatencyContextValue>({
   },
   subscribeToCrdtEvents: () => () => {},
   getInFlightUpdates: () => [],
+  setOffline: () => {},
+  isOffline: () => false,
 })
 
 export function useLatencySharedRoot(editorIndex: number): Y.XmlText {
@@ -54,6 +58,11 @@ export function useLatencySharedRoot(editorIndex: number): Y.XmlText {
 export function useCrdtEvents() {
   const {subscribeToCrdtEvents, getInFlightUpdates} = useContext(LatencyContext)
   return {subscribeToCrdtEvents, getInFlightUpdates}
+}
+
+export function useEditorOffline() {
+  const {setOffline, isOffline} = useContext(LatencyContext)
+  return {setOffline, isOffline}
 }
 
 function createDocs(count: number): LatencyDoc[] {
@@ -82,6 +91,7 @@ export function LatencyYjsProvider({
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([])
   const inFlightRef = useRef<InFlightUpdate[]>([])
   const subscribersRef = useRef<Set<CrdtEventCallback>>(new Set())
+  const offlineEditorsRef = useRef<Set<number>>(new Set())
 
   // Use a ref for docs so they survive React strict mode's unmount/remount
   // cycle. useState preserves the value across remount, but useEffect cleanup
@@ -121,6 +131,13 @@ export function LatencyYjsProvider({
 
         for (let targetIndex = 0; targetIndex < docs.length; targetIndex++) {
           if (targetIndex === sourceIndex) {
+            continue
+          }
+
+          if (
+            offlineEditorsRef.current.has(sourceIndex) ||
+            offlineEditorsRef.current.has(targetIndex)
+          ) {
             continue
           }
 
@@ -214,6 +231,48 @@ export function LatencyYjsProvider({
     [],
   )
 
+  const setOffline = useCallback((editorIndex: number, offline: boolean) => {
+    if (offline) {
+      offlineEditorsRef.current.add(editorIndex)
+    } else {
+      offlineEditorsRef.current.delete(editorIndex)
+
+      // Sync diverged state: exchange missing updates between the
+      // reconnecting editor and all other online editors.
+      const docs = docsRef.current
+      const reconnectedDoc = docs[editorIndex]?.doc
+      if (!reconnectedDoc) return
+
+      for (let other = 0; other < docs.length; other++) {
+        if (other === editorIndex || offlineEditorsRef.current.has(other)) {
+          continue
+        }
+        const otherDoc = docs[other]?.doc
+        if (!otherDoc) continue
+
+        // Send updates the other doc is missing from the reconnected doc
+        const otherStateVector = Y.encodeStateVector(otherDoc)
+        const missingOnOther = Y.encodeStateAsUpdate(
+          reconnectedDoc,
+          otherStateVector,
+        )
+        Y.applyUpdate(otherDoc, missingOnOther, 'remote')
+
+        // Send updates the reconnected doc is missing from the other doc
+        const reconnectedStateVector = Y.encodeStateVector(reconnectedDoc)
+        const missingOnReconnected = Y.encodeStateAsUpdate(
+          otherDoc,
+          reconnectedStateVector,
+        )
+        Y.applyUpdate(reconnectedDoc, missingOnReconnected, 'remote')
+      }
+    }
+  }, [])
+
+  const isOffline = useCallback((editorIndex: number) => {
+    return offlineEditorsRef.current.has(editorIndex)
+  }, [])
+
   const subscribeToCrdtEvents = useCallback((callback: CrdtEventCallback) => {
     subscribersRef.current.add(callback)
     return () => {
@@ -226,8 +285,20 @@ export function LatencyYjsProvider({
   }, [])
 
   const contextValue = useMemo<LatencyContextValue>(
-    () => ({getSharedRoot, subscribeToCrdtEvents, getInFlightUpdates}),
-    [getSharedRoot, subscribeToCrdtEvents, getInFlightUpdates],
+    () => ({
+      getSharedRoot,
+      subscribeToCrdtEvents,
+      getInFlightUpdates,
+      setOffline,
+      isOffline,
+    }),
+    [
+      getSharedRoot,
+      subscribeToCrdtEvents,
+      getInFlightUpdates,
+      setOffline,
+      isOffline,
+    ],
   )
 
   return (

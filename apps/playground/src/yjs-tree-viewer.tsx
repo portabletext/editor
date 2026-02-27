@@ -1,6 +1,6 @@
-import {useCallback, useContext, useEffect, useState} from 'react'
+import {useCallback, useEffect, useState} from 'react'
 import * as Y from 'yjs'
-import {YjsContext} from './yjs-plugin'
+import {useLatencySharedRoot} from './yjs-latency-provider'
 
 type TreeNode =
   | {
@@ -40,7 +40,7 @@ function buildTree(yText: Y.XmlText): TreeNode[] {
 }
 
 export function YjsTreeViewer() {
-  const sharedRoot = useContext(YjsContext)
+  const sharedRoot = useLatencySharedRoot(0)
   const [tree, setTree] = useState<TreeNode[]>([])
 
   const updateTree = useCallback(() => {
