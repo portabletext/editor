@@ -1,7 +1,7 @@
 import * as Y from 'yjs'
 import {applyPatchToYDoc} from './patch-to-ydoc'
-import {yEventsToPatches} from './ydoc-to-patch'
 import type {YjsPluginConfig, YjsPluginInstance} from './types'
+import {yEventsToPatches} from './ydoc-to-patch'
 
 export function createYjsPlugin(config: YjsPluginConfig): YjsPluginInstance {
   const {editor, yDoc, localOrigin = 'local'} = config
@@ -14,10 +14,14 @@ export function createYjsPlugin(config: YjsPluginConfig): YjsPluginInstance {
   function connect() {
     // 1. Subscribe to local mutations → push to Y.Doc
     const mutationSub = editor.on('mutation', (event) => {
-      if (isApplyingRemote) return
+      if (isApplyingRemote) {
+        return
+      }
 
       const localPatches = event.patches.filter((p) => p.origin === 'local')
-      if (localPatches.length === 0) return
+      if (localPatches.length === 0) {
+        return
+      }
 
       yDoc.transact(() => {
         for (const patch of localPatches) {
@@ -31,10 +35,14 @@ export function createYjsPlugin(config: YjsPluginConfig): YjsPluginInstance {
       events: Y.YEvent<any>[],
       transaction: Y.Transaction,
     ) => {
-      if (transaction.origin === localOrigin) return
+      if (transaction.origin === localOrigin) {
+        return
+      }
 
       const patches = yEventsToPatches(events, blocksMap, orderArray)
-      if (patches.length === 0) return
+      if (patches.length === 0) {
+        return
+      }
 
       isApplyingRemote = true
       try {
@@ -65,13 +73,19 @@ export function createYjsPlugin(config: YjsPluginConfig): YjsPluginInstance {
 
   // Initialize: sync current editor value to Y.Doc if Y.Doc is empty
   function syncInitialState(value: Array<any> | undefined) {
-    if (!value || value.length === 0) return
-    if (orderArray.length > 0) return // Y.Doc already has content
+    if (!value || value.length === 0) {
+      return
+    }
+    if (orderArray.length > 0) {
+      return // Y.Doc already has content
+    }
 
     yDoc.transact(() => {
       for (const block of value) {
         const blockKey = block._key
-        if (!blockKey) continue
+        if (!blockKey) {
+          continue
+        }
 
         const blockMap = new Y.Map()
         for (const [key, val] of Object.entries(block)) {

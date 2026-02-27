@@ -1,11 +1,16 @@
 import {useActorRef, useSelector} from '@xstate/react'
-import {CheckIcon, CopyIcon, GitBranchIcon, HistoryIcon, TrashIcon} from 'lucide-react'
+import {
+  CheckIcon,
+  CopyIcon,
+  GitBranchIcon,
+  HistoryIcon,
+  TrashIcon,
+} from 'lucide-react'
 import {useEffect, useState} from 'react'
 import {TooltipTrigger, type Key} from 'react-aria-components'
 import {highlightMachine} from './highlight-json-machine'
 import {MarkdownLogo, PortableTextLogo, ReactLogo} from './logos'
 import {PatchesList} from './patches-list'
-import {YjsTreeViewer} from './yjs-plugin'
 import type {PlaygroundActorRef} from './playground-machine'
 import {MarkdownPreview} from './previews/markdown-preview'
 import {ReactPreview} from './previews/react-preview'
@@ -14,8 +19,14 @@ import {Container} from './primitives/container'
 import {Spinner} from './primitives/spinner'
 import {Tab, TabList, TabPanel, Tabs} from './primitives/tabs'
 import {Tooltip} from './primitives/tooltip'
+import {YjsTreeViewer} from './yjs-plugin'
 
-type TabId = 'output' | 'patches' | 'react-preview' | 'markdown-preview' | 'yjs-tree'
+type TabId =
+  | 'output'
+  | 'patches'
+  | 'react-preview'
+  | 'markdown-preview'
+  | 'yjs-tree'
 
 export function Inspector(props: {playgroundRef: PlaygroundActorRef}) {
   const [activeTab, setActiveTab] = useState<TabId>('output')

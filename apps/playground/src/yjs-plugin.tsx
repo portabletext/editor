@@ -1,7 +1,8 @@
-import * as Y from 'yjs'
+// @ts-expect-error — yjs types resolved at build time
 import {useEditor} from '@portabletext/editor'
 import {createYjsPlugin} from '@portabletext/plugin-yjs'
 import {useContext, useEffect, useRef, useState} from 'react'
+import * as Y from 'yjs'
 import {PlaygroundFeatureFlagsContext} from './feature-flags'
 
 // Shared Y.Doc context — all editors connect to the same doc
@@ -45,7 +46,9 @@ export function PlaygroundYjsPlugin(props: {
 
       // Sync from shared → local with delay
       const handleSharedUpdate = (update: Uint8Array, origin: unknown) => {
-        if (origin === localOrigin) return
+        if (origin === localOrigin) {
+          return
+        }
         setTimeout(() => {
           Y.applyUpdate(yDoc, update)
         }, featureFlags.yjsLatency)
@@ -80,7 +83,7 @@ export function PlaygroundYjsPlugin(props: {
 
     // Sync initial state from editor to Y.Doc (first editor wins)
     const snapshot = editor.getSnapshot()
-    plugin.syncInitialState(snapshot.document.value)
+    plugin.syncInitialState(snapshot.context.value)
 
     plugin.connect()
     pluginRef.current = plugin
@@ -90,7 +93,13 @@ export function PlaygroundYjsPlugin(props: {
       pluginRef.current = null
       cleanup?.()
     }
-  }, [editor, featureFlags.yjsMode, featureFlags.yjsLatency, props.editorIndex, props.useLatency])
+  }, [
+    editor,
+    featureFlags.yjsMode,
+    featureFlags.yjsLatency,
+    props.editorIndex,
+    props.useLatency,
+  ])
 
   return null
 }
@@ -129,7 +138,9 @@ function renderYDocTree(yDoc: Y.Doc): string {
   const orderArray = yDoc.getArray<string>('order')
 
   lines.push(`├── blocks (Y.Map, ${blocksMap.size} entries)`)
-  lines.push(`└── order (Y.Array, ${orderArray.length} entries): [${Array.from({length: orderArray.length}, (_, i) => orderArray.get(i)).join(', ')}]`)
+  lines.push(
+    `└── order (Y.Array, ${orderArray.length} entries): [${Array.from({length: orderArray.length}, (_, i) => orderArray.get(i)).join(', ')}]`,
+  )
 
   if (blocksMap.size > 0) {
     lines.push('')
@@ -151,10 +162,10 @@ function renderYMap(yMap: Y.Map<any>, lines: string[], indent: string): void {
       lines.push(`${indent}${key}: Y.Text("${value.toString()}")`)
     } else if (value instanceof Y.Map) {
       lines.push(`${indent}${key}: Y.Map`)
-      renderYMap(value, lines, indent + '  ')
+      renderYMap(value, lines, `${indent}  `)
     } else if (value instanceof Y.Array) {
       lines.push(`${indent}${key}: Y.Array (${value.length} items)`)
-      renderYArray(value, lines, indent + '  ')
+      renderYArray(value, lines, `${indent}  `)
     } else if (typeof value === 'object' && value !== null) {
       lines.push(`${indent}${key}: ${JSON.stringify(value)}`)
     } else {
@@ -163,12 +174,16 @@ function renderYMap(yMap: Y.Map<any>, lines: string[], indent: string): void {
   }
 }
 
-function renderYArray(yArray: Y.Array<any>, lines: string[], indent: string): void {
+function renderYArray(
+  yArray: Y.Array<any>,
+  lines: string[],
+  indent: string,
+): void {
   for (let i = 0; i < yArray.length; i++) {
     const item = yArray.get(i)
     if (item instanceof Y.Map) {
       lines.push(`${indent}[${i}]: Y.Map`)
-      renderYMap(item, lines, indent + '  ')
+      renderYMap(item, lines, `${indent}  `)
     } else if (item instanceof Y.Text) {
       lines.push(`${indent}[${i}]: Y.Text("${item.toString()}")`)
     } else {
@@ -184,7 +199,9 @@ export function resetSharedYDoc() {
   const blocksMap = sharedYDoc.getMap('blocks')
   const orderArray = sharedYDoc.getArray<string>('order')
   sharedYDoc.transact(() => {
-    blocksMap.forEach((_, key) => blocksMap.delete(key))
+    blocksMap.forEach((_: any, key: string) => {
+      blocksMap.delete(key)
+    })
     orderArray.delete(0, orderArray.length)
   })
 }

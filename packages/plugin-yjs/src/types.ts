@@ -1,5 +1,5 @@
+import type {Editor, MutationEvent} from '@portabletext/editor'
 import type * as Y from 'yjs'
-import type {Editor} from '@portabletext/editor'
 
 export interface YjsPluginConfig {
   editor: Editor
@@ -15,3 +15,5 @@ export interface YjsPluginInstance {
   blocksMap: Y.Map<any>
   orderArray: Y.Array<string>
 }
+
+export type {MutationEvent}

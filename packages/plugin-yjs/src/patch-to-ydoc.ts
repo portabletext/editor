@@ -1,20 +1,20 @@
-import * as Y from 'yjs'
-import {
-  parsePatch,
-  applyPatches as dmpApplyPatches,
-  makeDiff,
-  DIFF_INSERT,
-  DIFF_DELETE,
-  DIFF_EQUAL,
-} from '@sanity/diff-match-patch'
 import type {
-  Patch,
   DiffMatchPatch,
+  InsertPatch,
+  Patch,
+  SetIfMissingPatch,
   SetPatch,
   UnsetPatch,
-  InsertPatch,
-  SetIfMissingPatch,
 } from '@portabletext/patches'
+import {
+  DIFF_DELETE,
+  DIFF_EQUAL,
+  DIFF_INSERT,
+  applyPatches as dmpApplyPatches,
+  makeDiff,
+  parsePatch,
+} from '@sanity/diff-match-patch'
+import * as Y from 'yjs'
 
 export function applyPatchToYDoc(
   patch: Patch,
@@ -71,7 +71,9 @@ function findChildIndex(childrenArray: Y.Array<any>, childKey: string): number {
 
 function findOrderIndex(orderArray: Y.Array<string>, key: string): number {
   for (let i = 0; i < orderArray.length; i++) {
-    if (orderArray.get(i) === key) return i
+    if (orderArray.get(i) === key) {
+      return i
+    }
   }
   return -1
 }
@@ -83,22 +85,34 @@ function applyDiffMatchPatch(
   // Path: [{_key}, "children", {_key}, "text"]
   const blockKey = resolveBlockKey(patch.path)
   const childKey = resolveChildKey(patch.path)
-  if (!blockKey || !childKey) return
+  if (!blockKey || !childKey) {
+    return
+  }
 
   const blockMap = blocksMap.get(blockKey)
-  if (!(blockMap instanceof Y.Map)) return
+  if (!(blockMap instanceof Y.Map)) {
+    return
+  }
 
   const children = blockMap.get('children')
-  if (!(children instanceof Y.Array)) return
+  if (!(children instanceof Y.Array)) {
+    return
+  }
 
   const childIndex = findChildIndex(children, childKey)
-  if (childIndex === -1) return
+  if (childIndex === -1) {
+    return
+  }
 
   const childMap = children.get(childIndex)
-  if (!(childMap instanceof Y.Map)) return
+  if (!(childMap instanceof Y.Map)) {
+    return
+  }
 
   const yText = childMap.get('text')
-  if (!(yText instanceof Y.Text)) return
+  if (!(yText instanceof Y.Text)) {
+    return
+  }
 
   // Parse the DMP patch and apply character-level operations to Y.Text
   const currentText = yText.toString()
@@ -125,7 +139,7 @@ function applyDiffMatchPatch(
 function applySetPatch(
   patch: SetPatch,
   blocksMap: Y.Map<any>,
-  orderArray: Y.Array<string>,
+  _orderArray: Y.Array<string>,
 ): void {
   const blockKey = resolveBlockKey(patch.path)
   if (!blockKey) {
@@ -134,7 +148,9 @@ function applySetPatch(
   }
 
   const blockMap = blocksMap.get(blockKey)
-  if (!(blockMap instanceof Y.Map)) return
+  if (!(blockMap instanceof Y.Map)) {
+    return
+  }
 
   if (patch.path.length === 1) {
     // Full block replacement: set({_key, _type, style, children, ...}, [{_key}])
@@ -209,16 +225,24 @@ function applySetPatch(
 
   // Span property: set(value, [{_key}, "children", {_key}, "marks"])
   const childKey = resolveChildKey(patch.path)
-  if (!childKey) return
+  if (!childKey) {
+    return
+  }
 
   const children = blockMap.get('children')
-  if (!(children instanceof Y.Array)) return
+  if (!(children instanceof Y.Array)) {
+    return
+  }
 
   const childIndex = findChildIndex(children, childKey)
-  if (childIndex === -1) return
+  if (childIndex === -1) {
+    return
+  }
 
   const childMap = children.get(childIndex)
-  if (!(childMap instanceof Y.Map)) return
+  if (!(childMap instanceof Y.Map)) {
+    return
+  }
 
   if (patch.path.length === 4) {
     const prop = patch.path[3]
@@ -247,13 +271,17 @@ function applyUnsetPatch(
 ): void {
   if (patch.path.length === 0) {
     // Unset entire document
-    blocksMap.forEach((_, key) => blocksMap.delete(key))
+    blocksMap.forEach((_, key) => {
+      blocksMap.delete(key)
+    })
     orderArray.delete(0, orderArray.length)
     return
   }
 
   const blockKey = resolveBlockKey(patch.path)
-  if (!blockKey) return
+  if (!blockKey) {
+    return
+  }
 
   if (patch.path.length === 1) {
     // Remove block
@@ -267,7 +295,9 @@ function applyUnsetPatch(
 
   // Remove span or block property
   const blockMap = blocksMap.get(blockKey)
-  if (!(blockMap instanceof Y.Map)) return
+  if (!(blockMap instanceof Y.Map)) {
+    return
+  }
 
   if (patch.path.length === 2) {
     // Remove block property
@@ -280,10 +310,14 @@ function applyUnsetPatch(
 
   // Remove span: [{_key}, "children", {_key}]
   const childKey = resolveChildKey(patch.path)
-  if (!childKey) return
+  if (!childKey) {
+    return
+  }
 
   const children = blockMap.get('children')
-  if (!(children instanceof Y.Array)) return
+  if (!(children instanceof Y.Array)) {
+    return
+  }
 
   if (patch.path.length === 3) {
     const childIndex = findChildIndex(children, childKey)
@@ -296,9 +330,13 @@ function applyUnsetPatch(
   // Remove span property: [{_key}, "children", {_key}, "marks"]
   if (patch.path.length === 4) {
     const childIndex = findChildIndex(children, childKey)
-    if (childIndex === -1) return
+    if (childIndex === -1) {
+      return
+    }
     const childMap = children.get(childIndex)
-    if (!(childMap instanceof Y.Map)) return
+    if (!(childMap instanceof Y.Map)) {
+      return
+    }
     const prop = patch.path[3]
     if (typeof prop === 'string') {
       childMap.delete(prop)
@@ -318,7 +356,9 @@ function applyInsertPatch(
     for (const item of patch.items) {
       const block = item as Record<string, unknown>
       const newKey = block._key as string
-      if (!newKey) continue
+      if (!newKey) {
+        continue
+      }
 
       // Create the block in the map
       const blockMap = new Y.Map()
@@ -373,18 +413,21 @@ function applyInsertPatch(
   // Insert children (spans)
   if (patch.path.length >= 3 && blockKey) {
     const blockMap = blocksMap.get(blockKey)
-    if (!(blockMap instanceof Y.Map)) return
+    if (!(blockMap instanceof Y.Map)) {
+      return
+    }
 
     const children = blockMap.get('children')
-    if (!(children instanceof Y.Array)) return
+    if (!(children instanceof Y.Array)) {
+      return
+    }
 
     const childKey = resolveChildKey(patch.path)
     let insertIndex: number
 
     if (childKey) {
       const targetIndex = findChildIndex(children, childKey)
-      insertIndex =
-        patch.position === 'after' ? targetIndex + 1 : targetIndex
+      insertIndex = patch.position === 'after' ? targetIndex + 1 : targetIndex
     } else if (typeof patch.path[2] === 'number') {
       insertIndex =
         patch.position === 'after' ? patch.path[2] + 1 : patch.path[2]
@@ -415,10 +458,14 @@ function applySetIfMissingPatch(
   // setIfMissing is defensive — only set if not present
   // Most common: setIfMissing([], [{_key}, "children"]) or setIfMissing([], [])
   const blockKey = resolveBlockKey(patch.path)
-  if (!blockKey) return
+  if (!blockKey) {
+    return
+  }
 
   const blockMap = blocksMap.get(blockKey)
-  if (!(blockMap instanceof Y.Map)) return
+  if (!(blockMap instanceof Y.Map)) {
+    return
+  }
 
   if (patch.path.length === 2) {
     const prop = patch.path[1]

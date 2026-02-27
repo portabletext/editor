@@ -2,9 +2,16 @@
   "name": "@portabletext/plugin-yjs",
   "version": "0.0.1",
   "description": "Yjs CRDT integration for the Portable Text Editor",
-  "keywords": ["portabletext", "yjs", "crdt", "collaboration"],
+  "keywords": [
+    "portabletext",
+    "yjs",
+    "crdt",
+    "collaboration"
+  ],
   "homepage": "https://portabletext.org",
-  "bugs": {"url": "https://github.com/portabletext/editor/issues"},
+  "bugs": {
+    "url": "https://github.com/portabletext/editor/issues"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/portabletext/editor.git",
@@ -23,7 +30,9 @@
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "pkg-utils build --strict --check --clean",
     "check:lint": "biome lint .",
@@ -34,13 +43,14 @@
     "test": "vitest --run"
   },
   "dependencies": {
-    "yjs": "^13.6.29",
-    "@sanity/diff-match-patch": "^3.2.0"
+    "@sanity/diff-match-patch": "^3.2.0",
+    "yjs": "^13.6.29"
   },
   "devDependencies": {
     "@portabletext/editor": "workspace:^",
     "@portabletext/patches": "workspace:^",
     "@sanity/pkg-utils": "^7.2.3",
+    "@sanity/tsconfig": "^2.1.0",
     "typescript": "catalog:",
     "vitest": "^3.2.3"
   },

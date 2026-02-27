@@ -1,6 +1,6 @@
-import * as Y from 'yjs'
-import {makePatches, stringifyPatches} from '@sanity/diff-match-patch'
 import type {Patch} from '@portabletext/patches'
+import {makePatches, stringifyPatches} from '@sanity/diff-match-patch'
+import * as Y from 'yjs'
 
 export function yEventsToPatches(
   events: Y.YEvent<any>[],
@@ -31,13 +31,17 @@ function handleBlockMapChanges(
   orderArray: Y.Array<string>,
   patches: Patch[],
 ): void {
-  if (!(event instanceof Y.YMapEvent)) return
+  if (!(event instanceof Y.YMapEvent)) {
+    return
+  }
 
   for (const [key, change] of event.changes.keys) {
     if (change.action === 'add') {
       // New block added — find its position in order array
       const blockMap = blocksMap.get(key)
-      if (!(blockMap instanceof Y.Map)) continue
+      if (!(blockMap instanceof Y.Map)) {
+        continue
+      }
 
       const block = yMapToPlainObject(blockMap)
       const orderIndex = findInArray(orderArray, key)
@@ -93,7 +97,9 @@ function handleNestedChanges(
 ): void {
   // Walk up to find the block key
   const path = event.path
-  if (path.length === 0) return
+  if (path.length === 0) {
+    return
+  }
 
   // Find the block this event belongs to
   let blockKey: string | undefined
@@ -109,7 +115,9 @@ function handleNestedChanges(
     }
   }
 
-  if (!blockKey || !blockMap) return
+  if (!blockKey || !blockMap) {
+    return
+  }
 
   if (event.target instanceof Y.Text) {
     // Text change within a span
@@ -132,13 +140,17 @@ function handleTextChange(
   const yText = event.target as Y.Text
   // Find which child this text belongs to
   const children = blockMap.get('children')
-  if (!(children instanceof Y.Array)) return
+  if (!(children instanceof Y.Array)) {
+    return
+  }
 
   for (let i = 0; i < children.length; i++) {
     const child = children.get(i)
     if (child instanceof Y.Map && child.get('text') === yText) {
       const childKey = child.get('_key') as string
-      if (!childKey) continue
+      if (!childKey) {
+        continue
+      }
 
       // Reconstruct the text change as a diffMatchPatch
       // We need the old text — compute from the delta
@@ -177,8 +189,7 @@ function reconstructOldText(newText: string, delta: any[]): string {
       newOffset += op.retain
     } else if (op.insert !== undefined) {
       // This was inserted — skip it in the new text
-      const insertLen =
-        typeof op.insert === 'string' ? op.insert.length : 1
+      const insertLen = typeof op.insert === 'string' ? op.insert.length : 1
       newOffset += insertLen
     } else if (op.delete !== undefined) {
       // This was deleted — we don't have the original text
@@ -199,14 +210,18 @@ function handleMapChange(
   blockMap: Y.Map<any>,
   patches: Patch[],
 ): void {
-  if (!(event instanceof Y.YMapEvent)) return
+  if (!(event instanceof Y.YMapEvent)) {
+    return
+  }
 
   const targetMap = event.target as Y.Map<any>
 
   // Is this the block map itself?
   if (targetMap === blockMap) {
     for (const [key, change] of event.changes.keys) {
-      if (key === 'children' || key === 'markDefs') continue // handled by array events
+      if (key === 'children' || key === 'markDefs') {
+        continue // handled by array events
+      }
       if (change.action === 'delete') {
         patches.push({type: 'unset', path: [{_key: blockKey}, key]})
       } else {
@@ -226,32 +241,25 @@ function handleMapChange(
     for (let i = 0; i < children.length; i++) {
       if (children.get(i) === targetMap) {
         const childKey = targetMap.get('_key') as string
-        if (!childKey) break
+        if (!childKey) {
+          break
+        }
 
         for (const [key, change] of event.changes.keys) {
-          if (key === 'text') continue // handled by text events
+          if (key === 'text') {
+            continue // handled by text events
+          }
           if (change.action === 'delete') {
             patches.push({
               type: 'unset',
-              path: [
-                {_key: blockKey},
-                'children',
-                {_key: childKey},
-                key,
-              ],
+              path: [{_key: blockKey}, 'children', {_key: childKey}, key],
             })
           } else {
             const value = targetMap.get(key)
             patches.push({
               type: 'set',
-              path: [
-                {_key: blockKey},
-                'children',
-                {_key: childKey},
-                key,
-              ],
-              value:
-                value instanceof Y.Text ? value.toString() : value,
+              path: [{_key: blockKey}, 'children', {_key: childKey}, key],
+              value: value instanceof Y.Text ? value.toString() : value,
             })
           }
         }
@@ -267,12 +275,16 @@ function handleArrayChange(
   blockMap: Y.Map<any>,
   patches: Patch[],
 ): void {
-  if (!(event instanceof Y.YArrayEvent)) return
+  if (!(event instanceof Y.YArrayEvent)) {
+    return
+  }
 
   const targetArray = event.target as Y.Array<any>
   const children = blockMap.get('children')
 
-  if (targetArray !== children) return
+  if (targetArray !== children) {
+    return
+  }
 
   let index = 0
   for (const delta of event.changes.delta) {
@@ -296,11 +308,7 @@ function handleArrayChange(
               if (prevKey) {
                 patches.push({
                   type: 'insert',
-                  path: [
-                    {_key: blockKey},
-                    'children',
-                    {_key: prevKey},
-                  ],
+                  path: [{_key: blockKey}, 'children', {_key: prevKey}],
                   position: 'after',
                   items: [child],
                 })
@@ -322,15 +330,21 @@ function handleArrayChange(
 }
 
 function isAncestorOf(potentialAncestor: any, target: any): boolean {
-  if (potentialAncestor === target) return true
+  if (potentialAncestor === target) {
+    return true
+  }
   if (potentialAncestor instanceof Y.Map) {
     for (const value of potentialAncestor.values()) {
-      if (isAncestorOf(value, target)) return true
+      if (isAncestorOf(value, target)) {
+        return true
+      }
     }
   }
   if (potentialAncestor instanceof Y.Array) {
     for (let i = 0; i < potentialAncestor.length; i++) {
-      if (isAncestorOf(potentialAncestor.get(i), target)) return true
+      if (isAncestorOf(potentialAncestor.get(i), target)) {
+        return true
+      }
     }
   }
   return false
@@ -338,12 +352,14 @@ function isAncestorOf(potentialAncestor: any, target: any): boolean {
 
 function findInArray(arr: Y.Array<string>, value: string): number {
   for (let i = 0; i < arr.length; i++) {
-    if (arr.get(i) === value) return i
+    if (arr.get(i) === value) {
+      return i
+    }
   }
   return -1
 }
 
-function yMapToPlainObject(yMap: Y.Map<any>): Record<string, unknown> {
+function yMapToPlainObject(yMap: Y.Map<any>): any {
   const obj: Record<string, unknown> = {}
   for (const [key, value] of yMap.entries()) {
     if (value instanceof Y.Text) {
