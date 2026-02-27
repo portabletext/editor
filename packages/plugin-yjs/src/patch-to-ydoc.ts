@@ -43,7 +43,7 @@ export function applyPatchToYDoc(
 function resolveBlockKey(path: any[]): string | undefined {
   const first = path[0]
   if (typeof first === 'object' && first !== null && '_key' in first) {
-    return first._key
+    return first['_key']
   }
   return undefined
 }
@@ -53,7 +53,7 @@ function resolveChildKey(path: any[]): string | undefined {
   if (path.length >= 3 && path[1] === 'children') {
     const third = path[2]
     if (typeof third === 'object' && third !== null && '_key' in third) {
-      return third._key
+      return third['_key']
     }
   }
   return undefined
@@ -355,7 +355,7 @@ function applyInsertPatch(
     // Insert blocks before/after a block
     for (const item of patch.items) {
       const block = item as Record<string, unknown>
-      const newKey = block._key as string
+      const newKey = block['_key'] as string
       if (!newKey) {
         continue
       }

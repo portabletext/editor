@@ -1,4 +1,3 @@
-// @ts-expect-error — yjs types resolved at build time
 import {useEditor} from '@portabletext/editor'
 import {createYjsPlugin} from '@portabletext/plugin-yjs'
 import {useContext, useEffect, useRef, useState} from 'react'

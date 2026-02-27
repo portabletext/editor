@@ -273,6 +273,9 @@ importers:
       xstate:
         specifier: ^5.25.0
         version: 5.25.0
+      yjs:
+        specifier: ^13.6.29
+        version: 13.6.29
       zod:
         specifier: ^4.1.12
         version: 4.1.13

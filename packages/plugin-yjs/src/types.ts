@@ -1,12 +1,18 @@
 import type {Editor, MutationEvent} from '@portabletext/editor'
 import type * as Y from 'yjs'
 
+/**
+ * @public
+ */
 export interface YjsPluginConfig {
   editor: Editor
   yDoc: Y.Doc
   localOrigin?: unknown
 }
 
+/**
+ * @public
+ */
 export interface YjsPluginInstance {
   connect: () => void
   disconnect: () => void

@@ -3,6 +3,9 @@ import {applyPatchToYDoc} from './patch-to-ydoc'
 import type {YjsPluginConfig, YjsPluginInstance} from './types'
 import {yEventsToPatches} from './ydoc-to-patch'
 
+/**
+ * @public
+ */
 export function createYjsPlugin(config: YjsPluginConfig): YjsPluginInstance {
   const {editor, yDoc, localOrigin = 'local'} = config
   const blocksMap = yDoc.getMap('blocks')

@@ -42,6 +42,7 @@
     "remeda": "^2.32.0",
     "shiki": "^3.17.0",
     "xstate": "^5.25.0",
+    "yjs": "^13.6.29",
     "zod": "^4.1.12"
   },
   "devDependencies": {
