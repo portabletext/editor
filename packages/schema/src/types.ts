@@ -96,6 +96,21 @@ export function isSpan(
 /**
  * @public
  */
+/**
+ * @public
+ */
+export function isContainer(
+  context: {schema: Schema},
+  typeName: string,
+): boolean {
+  return context.schema.containers.some(
+    (container) => container.name === typeName,
+  )
+}
+
+/**
+ * @public
+ */
 export interface PortableTextObject {
   _type: string
   _key: string

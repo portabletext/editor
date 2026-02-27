@@ -2,6 +2,7 @@ import type {Patch} from '@portabletext/patches'
 import type {
   AnnotationSchemaType,
   BlockObjectSchemaType,
+  ContainerSchemaType,
   DecoratorSchemaType,
   InlineObjectSchemaType,
   ListSchemaType,
@@ -267,6 +268,22 @@ export interface BlockStyleRenderProps {
 /** @beta */
 export type RenderListItemFunction = (
   props: BlockListItemRenderProps,
+) => JSX.Element
+
+/** @beta */
+export interface ContainerRenderProps {
+  children: ReactElement<any>
+  editorElementRef: RefObject<HTMLElement | null>
+  focused: boolean
+  path: BlockPath
+  schemaType: ContainerSchemaType
+  selected: boolean
+  value: PortableTextBlock
+}
+
+/** @beta */
+export type RenderContainerFunction = (
+  props: ContainerRenderProps,
 ) => JSX.Element
 
 /** @beta */

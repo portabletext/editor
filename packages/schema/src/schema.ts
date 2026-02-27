@@ -15,6 +15,7 @@ export type Schema = {
   annotations: ReadonlyArray<AnnotationSchemaType>
   blockObjects: ReadonlyArray<BlockObjectSchemaType>
   inlineObjects: ReadonlyArray<InlineObjectSchemaType>
+  containers: ReadonlyArray<ContainerSchemaType>
 }
 
 /**
@@ -76,6 +77,14 @@ export type InlineObjectSchemaType = BaseDefinition & {
  */
 export type FieldDefinition = BaseDefinition & {
   type: 'string' | 'number' | 'boolean' | 'array' | 'object'
+}
+
+/**
+ * @public
+ */
+export type ContainerSchemaType = BaseDefinition & {
+  child: string
+  fields: ReadonlyArray<FieldDefinition>
 }
 
 /**

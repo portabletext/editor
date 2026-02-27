@@ -1,4 +1,5 @@
 import {
+  isContainer,
   isTextBlock,
   type PortableTextBlock,
   type PortableTextChild,
@@ -236,7 +237,13 @@ export function createEditableAPI(
       }
     },
     isVoid: (element: PortableTextBlock | PortableTextChild) => {
-      return ![types.block.name, types.span.name].includes(element._type)
+      if ([types.block.name, types.span.name].includes(element._type)) {
+        return false
+      }
+      if (isContainer({schema: types}, element._type)) {
+        return false
+      }
+      return true
     },
     findByPath: (
       path: Path,

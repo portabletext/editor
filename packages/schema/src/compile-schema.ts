@@ -64,5 +64,10 @@ export function compileSchema(definition: SchemaDefinition): Schema {
       ...inlineObject,
       fields: inlineObject.fields ?? [],
     })),
+    containers: (definition.containers ?? []).map((container) => ({
+      ...container,
+      child: container.child,
+      fields: container.fields ?? [],
+    })),
   }
 }

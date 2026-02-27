@@ -1,7 +1,63 @@
 import {describe, expect, test, vi} from 'vitest'
 import {compileSchema} from './compile-schema'
+import {isContainer} from './types'
 
 describe(compileSchema.name, () => {
+  describe('containers', () => {
+    test('compiles container definitions', () => {
+      const schema = compileSchema({
+        containers: [{name: 'codeBlock', child: 'content'}],
+      })
+
+      expect(schema.containers).toEqual([
+        {name: 'codeBlock', child: 'content', fields: []},
+      ])
+    })
+
+    test('defaults to empty containers array', () => {
+      const schema = compileSchema({})
+
+      expect(schema.containers).toEqual([])
+    })
+
+    test('isContainer returns true for container types', () => {
+      const schema = compileSchema({
+        containers: [{name: 'codeBlock', child: 'content'}],
+      })
+
+      expect(isContainer({schema}, 'codeBlock')).toBe(true)
+    })
+
+    test('isContainer returns false for non-container types', () => {
+      const schema = compileSchema({
+        containers: [{name: 'codeBlock', child: 'content'}],
+      })
+
+      expect(isContainer({schema}, 'image')).toBe(false)
+      expect(isContainer({schema}, 'block')).toBe(false)
+    })
+
+    test('containers with fields', () => {
+      const schema = compileSchema({
+        containers: [
+          {
+            name: 'codeBlock',
+            child: 'content',
+            fields: [{name: 'language', type: 'string'}],
+          },
+        ],
+      })
+
+      expect(schema.containers).toEqual([
+        {
+          name: 'codeBlock',
+          child: 'content',
+          fields: [{name: 'language', type: 'string'}],
+        },
+      ])
+    })
+  })
+
   describe('block fields', () => {
     test('reserved fields are ignored and warned about', () => {
       const consoleWarnSpy = vi
@@ -19,6 +75,7 @@ describe(compileSchema.name, () => {
         annotations: [],
         blockObjects: [],
         inlineObjects: [],
+        containers: [],
       })
 
       expect(consoleWarnSpy).toHaveBeenCalledWith(
@@ -40,6 +97,7 @@ describe(compileSchema.name, () => {
         annotations: [],
         blockObjects: [],
         inlineObjects: [],
+        containers: [],
       })
     })
   })

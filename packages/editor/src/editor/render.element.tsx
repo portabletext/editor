@@ -1,4 +1,4 @@
-import {isTextBlock} from '@portabletext/schema'
+import {isContainer, isTextBlock} from '@portabletext/schema'
 import {useSelector} from '@xstate/react'
 import {useContext, type ReactElement} from 'react'
 import type {DropPosition} from '../behaviors/behavior.core.drop-position'
@@ -7,11 +7,13 @@ import {useSlateStatic, type RenderElementProps} from '../slate-react'
 import type {
   RenderBlockFunction,
   RenderChildFunction,
+  RenderContainerFunction,
   RenderListItemFunction,
   RenderStyleFunction,
 } from '../types/editor'
 import {EditorActorContext} from './editor-actor-context'
 import {RenderBlockObject} from './render.block-object'
+import {RenderContainer} from './render.container'
 import {RenderInlineObject} from './render.inline-object'
 import {RenderTextBlock} from './render.text-block'
 
@@ -23,6 +25,7 @@ export function RenderElement(props: {
   readOnly: boolean
   renderBlock?: RenderBlockFunction
   renderChild?: RenderChildFunction
+  renderContainer?: RenderContainerFunction
   renderListItem?: RenderListItemFunction
   renderStyle?: RenderStyleFunction
   spellCheck?: boolean
@@ -72,6 +75,25 @@ export function RenderElement(props: {
       >
         {props.children}
       </RenderTextBlock>
+    )
+  }
+
+  if (isContainer({schema}, props.element._type)) {
+    return (
+      <RenderContainer
+        attributes={props.attributes}
+        dropPosition={
+          props.dropPosition?.blockKey === props.element._key
+            ? props.dropPosition.positionBlock
+            : undefined
+        }
+        element={props.element}
+        readOnly={props.readOnly}
+        renderContainer={props.renderContainer}
+        schema={schema}
+      >
+        {props.children}
+      </RenderContainer>
     )
   }
 

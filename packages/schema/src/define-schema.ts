@@ -14,6 +14,7 @@ export type SchemaDefinition = {
   annotations?: ReadonlyArray<AnnotationDefinition>
   blockObjects?: ReadonlyArray<BlockObjectDefinition>
   inlineObjects?: ReadonlyArray<InlineObjectDefinition>
+  containers?: ReadonlyArray<ContainerDefinition>
 }
 
 /**
@@ -90,5 +91,19 @@ export type BlockObjectDefinition<
 export type InlineObjectDefinition<
   TBaseDefinition extends BaseDefinition = BaseDefinition,
 > = TBaseDefinition & {
+  fields?: ReadonlyArray<FieldDefinition>
+}
+
+/**
+ * @public
+ */
+export type ContainerDefinition<
+  TBaseDefinition extends BaseDefinition = BaseDefinition,
+> = TBaseDefinition & {
+  /**
+   * The field name that holds the container's child blocks.
+   * For example, 'content' for code blocks, 'rows' for tables.
+   */
+  child: string
   fields?: ReadonlyArray<FieldDefinition>
 }

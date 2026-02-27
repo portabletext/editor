@@ -32,6 +32,7 @@ import type {
   RenderAnnotationFunction,
   RenderBlockFunction,
   RenderChildFunction,
+  RenderContainerFunction,
   RenderDecoratorFunction,
   RenderListItemFunction,
   RenderPlaceholderFunction,
@@ -69,6 +70,7 @@ export type PortableTextEditableProps = Omit<
   renderAnnotation?: RenderAnnotationFunction
   renderBlock?: RenderBlockFunction
   renderChild?: RenderChildFunction
+  renderContainer?: RenderContainerFunction
   renderDecorator?: RenderDecoratorFunction
   renderListItem?: RenderListItemFunction
   renderPlaceholder?: RenderPlaceholderFunction
@@ -122,6 +124,7 @@ export const PortableTextEditable = forwardRef<
     renderAnnotation,
     renderBlock,
     renderChild,
+    renderContainer,
     renderDecorator,
     renderListItem,
     renderPlaceholder,
@@ -184,6 +187,7 @@ export const PortableTextEditable = forwardRef<
         readOnly={readOnly}
         renderBlock={renderBlock}
         renderChild={renderChild}
+        renderContainer={renderContainer}
         renderListItem={renderListItem}
         renderStyle={renderStyle}
         spellCheck={spellCheck}
@@ -195,6 +199,7 @@ export const PortableTextEditable = forwardRef<
       readOnly,
       renderBlock,
       renderChild,
+      renderContainer,
       renderListItem,
       renderStyle,
     ],
