@@ -85,28 +85,54 @@ export function PlaygroundYjsPlugin(props: {
 
 /**
  * Y.Doc viewer for the inspector panel.
+ * Shows the XmlFragment structure: blocks as XmlText with attributes and delta.
  */
 export function YjsTreeViewer() {
   const [tree, setTree] = useState<string>('')
 
   useEffect(() => {
     const update = () => {
-      const patchesArray = sharedYDoc.getArray<string>('patches')
+      const root = sharedYDoc.getXmlFragment('content')
       const lines: string[] = []
-      lines.push(`Y.Doc — patches array (${patchesArray.length} entries)`)
+      lines.push(`Y.Doc — XmlFragment "content" (${root.length} blocks)`)
       lines.push('')
 
-      // Show last 20 entries
-      const start = Math.max(0, patchesArray.length - 20)
-      for (let i = start; i < patchesArray.length; i++) {
-        try {
-          const entry = JSON.parse(patchesArray.get(i))
-          const patch = entry.patch
-          lines.push(
-            `[${i}] ${patch.type} @ ${JSON.stringify(patch.path).slice(0, 60)}`,
-          )
-        } catch {
-          lines.push(`[${i}] (parse error)`)
+      for (let i = 0; i < root.length; i++) {
+        const child = root.get(i)
+        if (child instanceof Y.XmlText) {
+          const attrs = child.getAttributes()
+          const key = attrs._key ?? '?'
+          const type = attrs._type ?? '?'
+          const style = attrs.style ?? ''
+          const listItem = attrs.listItem ? ` [${attrs.listItem}]` : ''
+
+          lines.push(`[${i}] ${type} _key="${key}" style="${style}"${listItem}`)
+
+          // Show delta (spans)
+          const delta = child.toDelta() as Array<{
+            insert: string | Y.XmlText
+            attributes?: Record<string, unknown>
+          }>
+          for (const entry of delta) {
+            if (typeof entry.insert === 'string') {
+              const spanKey = entry.attributes?._key ?? '?'
+              const marks = entry.attributes?.marks ?? '[]'
+              const text =
+                entry.insert.length > 40
+                  ? `${entry.insert.slice(0, 40)}…`
+                  : entry.insert
+              lines.push(`  span _key="${spanKey}" marks=${marks}`)
+              lines.push(`    "${text}"`)
+            }
+          }
+
+          // Show markDefs if present
+          const markDefs = attrs.markDefs
+          if (markDefs && markDefs !== '[]') {
+            lines.push(`  markDefs: ${markDefs}`)
+          }
+
+          lines.push('')
         }
       }
 
@@ -131,8 +157,10 @@ export function YjsTreeViewer() {
  * Reset the shared Y.Doc
  */
 export function resetSharedYDoc() {
-  const patchesArray = sharedYDoc.getArray<string>('patches')
+  const root = sharedYDoc.getXmlFragment('content')
   sharedYDoc.transact(() => {
-    patchesArray.delete(0, patchesArray.length)
+    if (root.length > 0) {
+      root.delete(0, root.length)
+    }
   })
 }
