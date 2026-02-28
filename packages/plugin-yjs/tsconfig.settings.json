@@ -1,0 +1,10 @@
+{
+  "extends": "@sanity/tsconfig/strictest",
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": "./dist",
+    "skipLibCheck": true,
+    "lib": ["ES2022"],
+    "target": "ES2022"
+  }
+}

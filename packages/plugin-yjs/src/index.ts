@@ -1,0 +1,5 @@
+export {createYjsPlugin} from './plugin'
+export {applyPatchToYDoc, blockToYText} from './apply-to-ydoc'
+export {createKeyMap} from './key-map'
+export {ydocToPatches} from './ydoc-to-patches'
+export type {KeyMap, YjsPluginConfig, YjsPluginInstance} from './types'

@@ -1,0 +1,64 @@
+{
+  "name": "@portabletext/plugin-yjs",
+  "version": "0.0.1",
+  "description": "Yjs CRDT integration for the Portable Text Editor",
+  "keywords": [
+    "portabletext",
+    "yjs",
+    "crdt",
+    "collaboration"
+  ],
+  "homepage": "https://portabletext.org",
+  "bugs": {
+    "url": "https://github.com/portabletext/editor/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/portabletext/editor.git",
+    "directory": "packages/plugin-yjs"
+  },
+  "license": "MIT",
+  "author": "Sanity.io <hello@sanity.io>",
+  "sideEffects": false,
+  "type": "module",
+  "exports": {
+    ".": {
+      "source": "./src/index.ts",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "pkg-utils build --strict --check --clean",
+    "check:lint": "biome lint .",
+    "check:types": "tsc --noEmit --pretty",
+    "clean": "del .turbo && del dist && del node_modules",
+    "dev": "pkg-utils watch",
+    "lint:fix": "biome lint --write .",
+    "test": "vitest --run"
+  },
+  "dependencies": {
+    "@sanity/diff-match-patch": "^3.2.0"
+  },
+  "devDependencies": {
+    "@portabletext/editor": "workspace:^",
+    "@portabletext/patches": "workspace:^",
+    "@portabletext/schema": "workspace:^",
+    "@sanity/diff-match-patch": "^3.2.0",
+    "@sanity/pkg-utils": "^7.2.3",
+    "@sanity/tsconfig": "^2.1.0",
+    "typescript": "catalog:",
+    "vitest": "^3.2.3"
+  },
+  "peerDependencies": {
+    "@portabletext/editor": "^1.0.0",
+    "@portabletext/patches": "^2.0.0",
+    "@portabletext/schema": "^1.0.0",
+    "yjs": "^13.0.0"
+  }
+}

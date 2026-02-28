@@ -28,6 +28,7 @@
     "@portabletext/plugin-paste-link": "workspace:*",
     "@portabletext/plugin-typeahead-picker": "workspace:*",
     "@portabletext/plugin-typography": "workspace:*",
+    "@portabletext/plugin-yjs": "workspace:*",
     "@portabletext/react": "^6.0.2",
     "@portabletext/toolbar": "workspace:*",
     "@xstate/react": "^6.0.0",
@@ -41,6 +42,7 @@
     "remeda": "^2.32.0",
     "shiki": "^3.17.0",
     "xstate": "^5.25.0",
+    "yjs": "^13.6.29",
     "zod": "^4.1.12"
   },
   "devDependencies": {
