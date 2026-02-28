@@ -1,5 +1,12 @@
 # @portabletext/markdown
 
+## 1.1.4
+
+### Patch Changes
+
+- Updated dependencies [[`4d6be62`](https://github.com/portabletext/editor/commit/4d6be62f1c1299a8e6e094b34a113f587c998556)]:
+  - @portabletext/schema@2.2.0
+
 ## 1.1.3
 
 ### Patch Changes
