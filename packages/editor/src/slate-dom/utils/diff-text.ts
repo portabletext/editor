@@ -20,6 +20,7 @@ export type TextDiff = {
   id: number
   path: Path
   diff: StringDiff
+  source?: 'deleteContentBackward' | 'deleteContentForward'
 }
 
 /**
@@ -302,7 +303,7 @@ export function transformTextDiff(
   textDiff: TextDiff,
   op: Operation,
 ): TextDiff | null {
-  const {path, diff, id} = textDiff
+  const {path, diff, id, source} = textDiff
 
   switch (op.type) {
     case 'insert_text': {
@@ -319,6 +320,7 @@ export function transformTextDiff(
           },
           id,
           path,
+          source,
         }
       }
 
@@ -330,6 +332,7 @@ export function transformTextDiff(
         },
         id,
         path,
+        source,
       }
     }
     case 'remove_text': {
@@ -346,6 +349,7 @@ export function transformTextDiff(
           },
           id,
           path,
+          source,
         }
       }
 
@@ -357,6 +361,7 @@ export function transformTextDiff(
         },
         id,
         path,
+        source,
       }
     }
     case 'split_node': {
@@ -365,6 +370,7 @@ export function transformTextDiff(
           diff,
           id,
           path: Path.transform(path, op, {affinity: 'backward'})!,
+          source,
         }
       }
 
@@ -377,6 +383,7 @@ export function transformTextDiff(
           },
           id,
           path,
+          source,
         }
       }
 
@@ -388,6 +395,7 @@ export function transformTextDiff(
         },
         id,
         path: Path.transform(path, op, {affinity: 'forward'})!,
+        source,
       }
     }
     case 'merge_node': {
@@ -396,6 +404,7 @@ export function transformTextDiff(
           diff,
           id,
           path: Path.transform(path, op)!,
+          source,
         }
       }
 
@@ -407,6 +416,7 @@ export function transformTextDiff(
         },
         id,
         path: Path.transform(path, op)!,
+        source,
       }
     }
   }
@@ -420,5 +430,6 @@ export function transformTextDiff(
     diff,
     path: newPath,
     id,
+    source,
   }
 }

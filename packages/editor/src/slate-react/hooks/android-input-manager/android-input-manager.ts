@@ -198,6 +198,31 @@ export function createAndroidInputManager({
           behaviorEvent: {type: 'insert.text', text: diff.diff.text},
           editor,
         })
+      } else if (diff.source === 'deleteContentBackward') {
+        // Restore collapsed selection at original cursor position (end of diff range)
+        // so delete.backward deletes the character before the cursor
+        const collapsedPoint = {path: diff.path, offset: diff.diff.end}
+        Transforms.select(editor, {
+          anchor: collapsedPoint,
+          focus: collapsedPoint,
+        })
+        editorActor.send({
+          type: 'behavior event',
+          behaviorEvent: {type: 'delete.backward', unit: 'character'},
+          editor,
+        })
+      } else if (diff.source === 'deleteContentForward') {
+        // Restore collapsed selection at original cursor position (start of diff range)
+        const collapsedPoint = {path: diff.path, offset: diff.diff.start}
+        Transforms.select(editor, {
+          anchor: collapsedPoint,
+          focus: collapsedPoint,
+        })
+        editorActor.send({
+          type: 'behavior event',
+          behaviorEvent: {type: 'delete.forward', unit: 'character'},
+          editor,
+        })
       } else {
         editorActor.send({
           type: 'behavior event',
@@ -305,7 +330,11 @@ export function createAndroidInputManager({
     placeholderElement.style.removeProperty('display')
   }
 
-  const storeDiff = (path: Path, diff: StringDiff) => {
+  const storeDiff = (
+    path: Path,
+    diff: StringDiff,
+    source?: TextDiff['source'],
+  ) => {
     debug('storeDiff', path, diff)
 
     const pendingDiffs = EDITOR_TO_PENDING_DIFFS.get(editor) ?? []
@@ -318,7 +347,7 @@ export function createAndroidInputManager({
     if (idx < 0) {
       const normalized = normalizeStringDiff(target.text, diff)
       if (normalized) {
-        pendingDiffs.push({path, diff, id: idCounter++})
+        pendingDiffs.push({path, diff, id: idCounter++, source})
       }
 
       updatePlaceholderVisibility()
@@ -335,6 +364,7 @@ export function createAndroidInputManager({
     pendingDiffs[idx] = {
       ...pendingDiffs[idx]!,
       diff: merged,
+      source: pendingDiffs[idx]!.source === source ? source : undefined,
     }
   }
 
@@ -514,11 +544,15 @@ export function createAndroidInputManager({
           const targetNode = Node.leaf(editor, anchor.path)
 
           if (anchor.offset < targetNode.text.length) {
-            return storeDiff(anchor.path, {
-              text: '',
-              start: anchor.offset,
-              end: anchor.offset + 1,
-            })
+            return storeDiff(
+              anchor.path,
+              {
+                text: '',
+                start: anchor.offset,
+                end: anchor.offset + 1,
+              },
+              'deleteContentForward',
+            )
           }
         }
 
@@ -549,11 +583,15 @@ export function createAndroidInputManager({
           Range.isCollapsed(targetRange) &&
           anchor.offset > 0
         ) {
-          return storeDiff(anchor.path, {
-            text: '',
-            start: anchor.offset - 1,
-            end: anchor.offset,
-          })
+          return storeDiff(
+            anchor.path,
+            {
+              text: '',
+              start: anchor.offset - 1,
+              end: anchor.offset,
+            },
+            'deleteContentBackward',
+          )
         }
 
         return scheduleAction(
