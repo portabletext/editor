@@ -1,5 +1,25 @@
 # Changelog
 
+## 3.1.0
+
+### Minor Changes
+
+- [#2187](https://github.com/portabletext/editor/pull/2187) [`4d6be62`](https://github.com/portabletext/editor/commit/4d6be62f1c1299a8e6e094b34a113f587c998556) Thanks [@christianhg](https://github.com/christianhg)! - feat: add nested blocks schema support
+
+  Add `nestedBlocks` to `Schema` and `SchemaDefinition` for block types that
+  appear inside block objects (e.g. table cells containing Portable Text content).
+  - `NestedBlockSchemaType` / `NestedBlockDefinition` for nested block types
+  - `OfDefinition` discriminated union (`BlockOfDefinition` | `ObjectOfDefinition`)
+    on `FieldDefinition.of` for array field member types
+  - `compileSchema()` emits `nestedBlocks: []` for existing schemas (additive)
+  - `sanitySchemaToPortableTextSchema()` walks block object fields recursively to
+    detect objects containing array-of-blocks fields
+
+### Patch Changes
+
+- Updated dependencies [[`4d6be62`](https://github.com/portabletext/editor/commit/4d6be62f1c1299a8e6e094b34a113f587c998556)]:
+  - @portabletext/schema@2.2.0
+
 ## 3.0.0
 
 ### Major Changes
