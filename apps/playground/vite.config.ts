@@ -43,6 +43,10 @@ export default defineConfig({
         __dirname,
         '../../packages/patches/src',
       ),
+      '@portabletext/plugin-character-pair-decorator': path.resolve(
+        __dirname,
+        '../../packages/plugin-character-pair-decorator/src',
+      ),
       '@portabletext/plugin-emoji-picker': path.resolve(
         __dirname,
         '../../packages/plugin-emoji-picker/src',

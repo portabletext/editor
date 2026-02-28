@@ -3,6 +3,8 @@ import {Editor} from './editor'
 import {PlaygroundFeatureFlagsContext} from './feature-flags'
 import {Inspector} from './inspector'
 import type {PlaygroundActorRef} from './playground-machine'
+import {LatencyYjsProvider} from './yjs-latency-provider'
+import {YjsOperationLogProvider} from './yjs-operation-log'
 
 export function Editors(props: {playgroundRef: PlaygroundActorRef}) {
   const showInspector = useSelector(props.playgroundRef, (s) =>
@@ -20,28 +22,34 @@ export function Editors(props: {playgroundRef: PlaygroundActorRef}) {
 
   return (
     <div className="p-3 md:p-4 flex-1 min-w-0">
-      <div
-        className={`grid gap-4 items-start grid-cols-1 h-full ${
-          showInspector ? 'md:grid-cols-2' : ''
-        }`}
-      >
-        <div className="flex flex-col gap-4">
-          <PlaygroundFeatureFlagsContext.Provider
-            value={playgroundFeatureFlags}
+      <PlaygroundFeatureFlagsContext.Provider value={playgroundFeatureFlags}>
+        <YjsOperationLogProvider>
+          <LatencyYjsProvider
+            editorCount={editors.length}
+            latencyMs={playgroundFeatureFlags.yjsLatency}
           >
-            {editors.map((editor) => (
-              <Editor
-                key={editor.id}
-                editorRef={editor}
-                rangeDecorations={rangeDecorations}
-              />
-            ))}
-          </PlaygroundFeatureFlagsContext.Provider>
-        </div>
-        {showInspector ? (
-          <Inspector playgroundRef={props.playgroundRef} />
-        ) : null}
-      </div>
+            <div
+              className={`grid gap-4 items-start grid-cols-1 h-full ${
+                showInspector ? 'md:grid-cols-2' : ''
+              }`}
+            >
+              <div className="flex flex-col gap-4">
+                {editors.map((editor, index) => (
+                  <Editor
+                    key={editor.id}
+                    editorRef={editor}
+                    editorIndex={index}
+                    rangeDecorations={rangeDecorations}
+                  />
+                ))}
+              </div>
+              {showInspector ? (
+                <Inspector playgroundRef={props.playgroundRef} />
+              ) : null}
+            </div>
+          </LatencyYjsProvider>
+        </YjsOperationLogProvider>
+      </PlaygroundFeatureFlagsContext.Provider>
     </div>
   )
 }

@@ -4,9 +4,11 @@ import {
   GithubIcon,
   MonitorIcon,
   MoonIcon,
+  NetworkIcon,
   PanelRightIcon,
   PlusIcon,
   SunIcon,
+  TimerIcon,
   WrenchIcon,
 } from 'lucide-react'
 import {TooltipTrigger} from 'react-aria-components'
@@ -119,6 +121,21 @@ export function Header(props: {playgroundRef: PlaygroundActorRef}) {
             <PanelRightIcon className="size-4" />
             <span className="hidden sm:inline">Inspector</span>
           </Switch>
+          <Switch
+            isSelected={playgroundFeatureFlags.yjsMode}
+            onChange={() => {
+              props.playgroundRef.send({
+                type: 'toggle feature flag',
+                flag: 'yjsMode',
+              })
+            }}
+          >
+            <NetworkIcon className="size-4" />
+            <span className="hidden sm:inline">Yjs Sync</span>
+          </Switch>
+          {playgroundFeatureFlags.yjsMode ? (
+            <LatencySlider playgroundRef={props.playgroundRef} />
+          ) : null}
         </div>
         <Separator orientation="vertical" className="h-5 hidden sm:block" />
         <div className="flex items-center gap-1">
@@ -151,5 +168,38 @@ export function Header(props: {playgroundRef: PlaygroundActorRef}) {
         </div>
       </nav>
     </header>
+  )
+}
+
+function LatencySlider(props: {playgroundRef: PlaygroundActorRef}) {
+  const latency = useSelector(
+    props.playgroundRef,
+    (s) => s.context.featureFlags.yjsLatency,
+  )
+
+  return (
+    <TooltipTrigger>
+      <div className="flex items-center gap-1.5 px-1">
+        <TimerIcon className="size-3.5 text-gray-500 dark:text-gray-400 shrink-0" />
+        <input
+          type="range"
+          min={0}
+          max={2000}
+          step={50}
+          value={latency}
+          onChange={(event) => {
+            props.playgroundRef.send({
+              type: 'set yjs latency',
+              latency: Number(event.target.value),
+            })
+          }}
+          className="w-16 h-1 accent-blue-500"
+        />
+        <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums w-12 text-right">
+          {latency}ms
+        </span>
+      </div>
+      <Tooltip>Sync latency between editors</Tooltip>
+    </TooltipTrigger>
   )
 }
