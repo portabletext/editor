@@ -1,90 +1,118 @@
-import type {Patch} from '@portabletext/patches'
 import type {PortableTextBlock} from '@portabletext/schema'
-import type * as Y from 'yjs'
+import * as Y from 'yjs'
+import {applyPatchToYDoc, blockToYText} from './apply-to-ydoc'
+import {createKeyMap} from './key-map'
 import type {YjsPluginConfig, YjsPluginInstance} from './types'
 
 /**
  * Create a Yjs plugin for the Portable Text Editor.
  *
- * Listens to granular `patch` events from the editor and stores them
- * in a Y.Array. Remote clients observe the Y.Array and inject the
- * patches into their editor via `editor.send({ type: 'patches' })`.
+ * Uses Y.XmlFragment as the root container with Y.XmlText blocks:
+ * - Root XmlFragment contains blocks as Y.XmlText children
+ * - Each block's Y.XmlText has attributes (_key, _type, style, etc.)
+ *   and delta content (spans as text inserts with _key, marks attributes)
+ * - Text edits use Y.Text character-level CRDT merging
  *
  * @public
  */
 export function createYjsPlugin(config: YjsPluginConfig): YjsPluginInstance {
   const {editor, yDoc, localOrigin = 'local'} = config
-  const patchesArray = yDoc.getArray<string>('patches')
+  const root = yDoc.getXmlFragment('content')
+  const keyMap = createKeyMap()
 
   let isApplyingRemote = false
   let subscriptions: Array<() => void> = []
 
-  function connect() {
-    // 1. Local patches → Y.Doc
-    const patchSub = editor.on('patch', (event) => {
+  /**
+   * Sync editor value to Y.Doc on connect.
+   * Only runs if Y.Doc is empty (first editor to connect wins).
+   */
+  function syncInitialState(): void {
+    const snapshot = editor.getSnapshot().context.value
+    if (!snapshot || snapshot.length === 0) {
+      return
+    }
+
+    // If Y.Doc already has content, populate keyMap from it
+    if (root.length > 0) {
+      for (let i = 0; i < root.length; i++) {
+        const child = root.get(i)
+        if (child instanceof Y.XmlText) {
+          const key = child.getAttribute('_key') as string | undefined
+          if (key) {
+            keyMap.set(key, child)
+          }
+        }
+      }
+      return
+    }
+
+    // Y.Doc is empty — populate from editor value
+    yDoc.transact(() => {
+      for (const block of snapshot) {
+        const yBlock = blockToYText(block as Record<string, unknown>, keyMap)
+        root.insert(root.length, [yBlock])
+      }
+    }, localOrigin)
+  }
+
+  function connect(): void {
+    syncInitialState()
+
+    // 1. Local mutations → Y.Doc
+    const mutationSub = editor.on('mutation', (event) => {
       if (isApplyingRemote) {
         return
       }
 
-      const patch = event.patch
-      if (patch.origin !== 'local') {
+      const localPatches = event.patches.filter((p) => p.origin === 'local')
+      if (localPatches.length === 0) {
         return
       }
 
-      const snapshot = editor.getSnapshot().context.value
-
       yDoc.transact(() => {
-        patchesArray.push([
-          JSON.stringify({
-            patch,
-            snapshot,
-          }),
-        ])
+        for (const patch of localPatches) {
+          applyPatchToYDoc(patch, root, keyMap)
+        }
       }, localOrigin)
     })
 
-    // 2. Y.Doc → remote patches into editor
-    const handleYjsChange = (event: Y.YArrayEvent<string>) => {
-      if (event.transaction.origin === localOrigin) {
+    // 2. Y.Doc changes → editor
+    // TODO: replace snapshot fallback with granular ydocToPatches
+    const handleYjsEvents = (
+      _events: Y.YEvent<Y.XmlText>[],
+      transaction: Y.Transaction,
+    ) => {
+      if (transaction.origin === localOrigin) {
         return
       }
 
-      for (const delta of event.changes.delta) {
-        if (delta.insert) {
-          for (const item of delta.insert as string[]) {
-            try {
-              const entry = JSON.parse(item) as {
-                patch: Patch
-                snapshot: Array<PortableTextBlock> | undefined
-              }
-
-              isApplyingRemote = true
-              try {
-                editor.send({
-                  type: 'patches',
-                  patches: [{...entry.patch, origin: 'remote' as const}],
-                  snapshot: entry.snapshot,
-                })
-              } finally {
-                isApplyingRemote = false
-              }
-            } catch {
-              // Skip malformed entries
-            }
-          }
+      const snapshot = rootToSnapshot(root) as
+        | Array<PortableTextBlock>
+        | undefined
+      if (snapshot) {
+        isApplyingRemote = true
+        try {
+          editor.send({
+            type: 'patches',
+            patches: [],
+            snapshot,
+          })
+        } finally {
+          isApplyingRemote = false
         }
       }
     }
 
-    patchesArray.observe(handleYjsChange)
+    root.observeDeep(handleYjsEvents)
 
     subscriptions = [
-      () => patchSub.unsubscribe(),
-      () => patchesArray.unobserve(handleYjsChange),
+      () => mutationSub.unsubscribe(),
+      () => root.unobserveDeep(handleYjsEvents),
     ]
   }
 
-  function disconnect() {
+  function disconnect(): void {
     for (const unsub of subscriptions) {
       unsub()
     }
@@ -95,6 +123,77 @@ export function createYjsPlugin(config: YjsPluginConfig): YjsPluginInstance {
     connect,
     disconnect,
     yDoc,
-    patchesArray,
+    sharedRoot: root,
+    keyMap,
   }
+}
+
+/**
+ * Convert Y.Doc root to a PT snapshot.
+ * Temporary fallback until granular ydocToPatches is implemented.
+ */
+function rootToSnapshot(
+  root: Y.XmlFragment,
+): Array<Record<string, unknown>> | undefined {
+  const blocks: Array<Record<string, unknown>> = []
+
+  for (let i = 0; i < root.length; i++) {
+    const child = root.get(i)
+    if (child instanceof Y.XmlText) {
+      blocks.push(yBlockToObject(child))
+    }
+  }
+
+  return blocks.length > 0 ? blocks : undefined
+}
+
+function yBlockToObject(yBlock: Y.XmlText): Record<string, unknown> {
+  const block: Record<string, unknown> = {}
+
+  const attrs = yBlock.getAttributes()
+  for (const [key, value] of Object.entries(attrs)) {
+    if (key === 'markDefs') {
+      try {
+        block[key] = JSON.parse(value as string)
+      } catch {
+        block[key] = []
+      }
+    } else {
+      block[key] = value
+    }
+  }
+
+  const blockDelta = yBlock.toDelta() as Array<{
+    insert: string | Y.XmlText
+    attributes?: Record<string, unknown>
+  }>
+
+  const children: Array<Record<string, unknown>> = []
+  for (const entry of blockDelta) {
+    if (typeof entry.insert === 'string') {
+      const child: Record<string, unknown> = {text: entry.insert}
+      if (entry.attributes) {
+        for (const [key, value] of Object.entries(entry.attributes)) {
+          if (key === 'marks') {
+            try {
+              child[key] = JSON.parse(value as string)
+            } catch {
+              child[key] = []
+            }
+          } else {
+            child[key] = value
+          }
+        }
+      }
+      children.push(child)
+    }
+  }
+
+  block['children'] = children.length > 0 ? children : [{text: ''}]
+
+  if (!block['markDefs']) {
+    block['markDefs'] = []
+  }
+
+  return block
 }
