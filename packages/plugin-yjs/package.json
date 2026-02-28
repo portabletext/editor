@@ -42,6 +42,9 @@
     "lint:fix": "biome lint --write .",
     "test": "vitest --run"
   },
+  "dependencies": {
+    "@sanity/diff-match-patch": "^3.2.0"
+  },
   "devDependencies": {
     "@portabletext/editor": "workspace:^",
     "@portabletext/patches": "workspace:^",

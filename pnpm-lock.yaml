@@ -1108,6 +1108,9 @@ importers:
 
   packages/plugin-yjs:
     dependencies:
+      '@sanity/diff-match-patch':
+        specifier: ^3.2.0
+        version: 3.2.0
       yjs:
         specifier: ^13.0.0
         version: 13.6.29
@@ -1121,9 +1124,6 @@ importers:
       '@portabletext/schema':
         specifier: workspace:^
         version: link:../schema
-      '@sanity/diff-match-patch':
-        specifier: ^3.2.0
-        version: 3.2.0
       '@sanity/pkg-utils':
         specifier: ^7.2.3
         version: 7.11.9(@types/babel__core@7.20.5)(@types/node@20.19.25)(babel-plugin-react-compiler@1.0.0)(typescript@5.9.3)

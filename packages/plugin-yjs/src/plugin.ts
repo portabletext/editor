@@ -3,6 +3,7 @@ import * as Y from 'yjs'
 import {applyPatchToYDoc, blockToYText} from './apply-to-ydoc'
 import {createKeyMap} from './key-map'
 import type {YjsPluginConfig, YjsPluginInstance} from './types'
+import {ydocToPatches} from './ydoc-to-patches'
 
 /**
  * Create a Yjs plugin for the Portable Text Editor.
@@ -77,30 +78,33 @@ export function createYjsPlugin(config: YjsPluginConfig): YjsPluginInstance {
       }, localOrigin)
     })
 
-    // 2. Y.Doc changes → editor
-    // TODO: replace snapshot fallback with granular ydocToPatches
+    // 2. Y.Doc changes → editor (granular PT patches)
     const handleYjsEvents = (
-      _events: Y.YEvent<Y.XmlText>[],
+      events: Y.YEvent<Y.XmlText>[],
       transaction: Y.Transaction,
     ) => {
       if (transaction.origin === localOrigin) {
         return
       }
 
+      const patches = ydocToPatches(events, keyMap)
+      if (patches.length === 0) {
+        return
+      }
+
       const snapshot = rootToSnapshot(root) as
         | Array<PortableTextBlock>
         | undefined
-      if (snapshot) {
-        isApplyingRemote = true
-        try {
-          editor.send({
-            type: 'patches',
-            patches: [],
-            snapshot,
-          })
-        } finally {
-          isApplyingRemote = false
-        }
+
+      isApplyingRemote = true
+      try {
+        editor.send({
+          type: 'patches',
+          patches: patches.map((p) => ({...p, origin: 'remote' as const})),
+          snapshot,
+        })
+      } finally {
+        isApplyingRemote = false
       }
     }
 
