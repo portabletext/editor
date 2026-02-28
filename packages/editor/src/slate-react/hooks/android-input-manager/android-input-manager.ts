@@ -19,7 +19,6 @@ import {
   EDITOR_TO_USER_MARKS,
   IS_COMPOSING,
   IS_NODE_MAP_DIRTY,
-  isDOMSelection,
   isTrackedMutation,
   mergeStringDiffs,
   normalizePoint,
@@ -509,19 +508,6 @@ export function createAndroidInputManager({
 
       case 'deleteContent':
       case 'deleteContentForward': {
-        const {anchor} = targetRange
-        if (canStoreDiff && Range.isCollapsed(targetRange)) {
-          const targetNode = Node.leaf(editor, anchor.path)
-
-          if (anchor.offset < targetNode.text.length) {
-            return storeDiff(anchor.path, {
-              text: '',
-              start: anchor.offset,
-              end: anchor.offset + 1,
-            })
-          }
-        }
-
         return scheduleAction(
           () =>
             editorActor.send({
@@ -534,28 +520,6 @@ export function createAndroidInputManager({
       }
 
       case 'deleteContentBackward': {
-        const {anchor} = targetRange
-
-        // If we have a mismatch between the native and slate selection being collapsed
-        // we are most likely deleting a zero-width placeholder and thus should perform it
-        // as an action to ensure correct behavior (mostly happens with mark placeholders)
-        const nativeCollapsed = isDOMSelection(nativeTargetRange)
-          ? nativeTargetRange.isCollapsed
-          : !!nativeTargetRange?.collapsed
-
-        if (
-          canStoreDiff &&
-          nativeCollapsed &&
-          Range.isCollapsed(targetRange) &&
-          anchor.offset > 0
-        ) {
-          return storeDiff(anchor.path, {
-            text: '',
-            start: anchor.offset - 1,
-            end: anchor.offset,
-          })
-        }
-
         return scheduleAction(
           () =>
             editorActor.send({
