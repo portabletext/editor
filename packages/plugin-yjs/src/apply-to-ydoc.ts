@@ -207,7 +207,29 @@ function applyDiffMatchPatch(patch: DiffMatchPatch, keyMap: KeyMap): void {
 
   // Get current text for this span
   const spanRange = findSpanOffset(yBlock, spanKey)
+
   if (!spanRange) {
+    // Span not in delta (empty span was optimized away by Yjs).
+    // Apply the DMP patch against empty string and insert the result.
+    const patches = parsePatch(patch.value)
+    const [newText] = dmpApplyPatches(patches, '', {
+      allowExceedingIndices: true,
+    })
+    if (newText) {
+      // Insert at end of block with span attributes
+      const blockLength = yBlock
+        .toDelta()
+        .reduce(
+          (len: number, entry: {insert: string | Y.XmlText}) =>
+            len + (typeof entry.insert === 'string' ? entry.insert.length : 1),
+          0,
+        )
+      yBlock.insert(blockLength, newText, {
+        _key: spanKey,
+        _type: 'span',
+        marks: '[]',
+      })
+    }
     return
   }
 
