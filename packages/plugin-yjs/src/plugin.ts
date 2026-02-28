@@ -1,3 +1,4 @@
+import type {Patch} from '@portabletext/patches'
 import type {PortableTextBlock} from '@portabletext/schema'
 import * as Y from 'yjs'
 import {applyPatchToYDoc, blockToYText} from './apply-to-ydoc'
@@ -100,7 +101,10 @@ export function createYjsPlugin(config: YjsPluginConfig): YjsPluginInstance {
       try {
         editor.send({
           type: 'patches',
-          patches: patches.map((p) => ({...p, origin: 'remote' as const})),
+          patches: patches.map((p) => ({
+            ...p,
+            origin: 'remote' as const,
+          })) as Array<Patch>,
           snapshot,
         })
       } finally {
