@@ -4,6 +4,7 @@ lib
 CHANGELOG.md
 pnpm-lock.yaml
 
+apps/docs/.astro
 apps/docs/src/content/docs/api
 packages/block-tools/test/**/*.html
 .changeset/*.md
