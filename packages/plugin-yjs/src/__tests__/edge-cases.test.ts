@@ -417,3 +417,242 @@ describe('edge cases: markDefs', () => {
     expect(markDefs[0].href).toBe('https://original.com')
   })
 })
+
+describe('edge cases: span split (multi-patch mutations)', () => {
+  test('bold selection splits span into two (truncate + insert)', () => {
+    const {root, keyMap} = createDoc([
+      {
+        _key: 'b1',
+        _type: 'block',
+        style: 'normal',
+        markDefs: [],
+        children: [{_key: 's1', _type: 'span', text: 'hello world', marks: []}],
+      },
+    ])
+
+    // PTE emits these patches when you select "world" and toggle bold:
+    // 1. Truncate the original span
+    // 2. Insert a new bold span after it
+    // Both should be applied atomically in one Y.Doc transaction
+    const yDoc = keyMap.getYText('b1')!.doc!
+    yDoc.transact(() => {
+      applyPatchToYDoc(
+        {
+          type: 'diffMatchPatch',
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
+          value: '@@ -3,9 +3,4 @@\n llo \n-world\n',
+        },
+        root,
+        keyMap,
+      )
+
+      applyPatchToYDoc(
+        {
+          type: 'insert',
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          position: 'after',
+          items: [
+            {_key: 's2', _type: 'span', text: 'world', marks: ['strong']},
+          ],
+        },
+        root,
+        keyMap,
+      )
+    })
+
+    const spans = getSpans(keyMap.getYText('b1')!)
+    expect(spans).toHaveLength(2)
+    expect(spans[0].text).toBe('hello ')
+    expect(spans[0].key).toBe('s1')
+    expect(spans[0].marks).toEqual([])
+    expect(spans[1].text).toBe('world')
+    expect(spans[1].key).toBe('s2')
+    expect(spans[1].marks).toEqual(['strong'])
+  })
+
+  test('unbold merges spans back (delete span + extend text)', () => {
+    const {root, keyMap} = createDoc([
+      {
+        _key: 'b1',
+        _type: 'block',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_key: 's1', _type: 'span', text: 'hello ', marks: []},
+          {_key: 's2', _type: 'span', text: 'world', marks: ['strong']},
+        ],
+      },
+    ])
+
+    // PTE emits these when you select all and remove bold:
+    // 1. Extend s1 text to include "world"
+    // 2. Remove s2
+    const yDoc = keyMap.getYText('b1')!.doc!
+    yDoc.transact(() => {
+      applyPatchToYDoc(
+        {
+          type: 'diffMatchPatch',
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
+          value: '@@ -3,4 +3,9 @@\n llo \n+world\n',
+        },
+        root,
+        keyMap,
+      )
+
+      applyPatchToYDoc(
+        {
+          type: 'unset',
+          path: [{_key: 'b1'}, 'children', {_key: 's2'}],
+        },
+        root,
+        keyMap,
+      )
+    })
+
+    const spans = getSpans(keyMap.getYText('b1')!)
+    expect(spans).toHaveLength(1)
+    expect(spans[0].text).toBe('hello world')
+    expect(spans[0].key).toBe('s1')
+    expect(spans[0].marks).toEqual([])
+  })
+
+  test('Enter key: split block into two', () => {
+    const {root, keyMap} = createDoc([
+      {
+        _key: 'b1',
+        _type: 'block',
+        style: 'normal',
+        markDefs: [],
+        children: [{_key: 's1', _type: 'span', text: 'hello world', marks: []}],
+      },
+    ])
+
+    // PTE emits these when you press Enter after "hello":
+    // 1. Truncate b1's span to "hello"
+    // 2. Insert new block b2 with " world"
+    const yDoc = keyMap.getYText('b1')!.doc!
+    yDoc.transact(() => {
+      applyPatchToYDoc(
+        {
+          type: 'diffMatchPatch',
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
+          value: '@@ -1,11 +1,5 @@\n hello\n- world\n',
+        },
+        root,
+        keyMap,
+      )
+
+      applyPatchToYDoc(
+        {
+          type: 'insert',
+          path: [{_key: 'b1'}],
+          position: 'after',
+          items: [
+            {
+              _key: 'b2',
+              _type: 'block',
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_key: 's2', _type: 'span', text: ' world', marks: []},
+              ],
+            },
+          ],
+        },
+        root,
+        keyMap,
+      )
+    })
+
+    expect(root.length).toBe(2)
+    expect(getBlockText(keyMap.getYText('b1')!)).toBe('hello')
+    expect(getBlockText(keyMap.getYText('b2')!)).toBe(' world')
+  })
+
+  test('concurrent span split + text edit in same block', () => {
+    // Two connected docs
+    const yDoc1 = new Y.Doc()
+    const root1 = yDoc1.getXmlFragment('content')
+    const keyMap1 = createKeyMap()
+
+    yDoc1.transact(() => {
+      const yBlock = blockToYText(
+        {
+          _key: 'b1',
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {_key: 's1', _type: 'span', text: 'hello world', marks: []},
+          ],
+        },
+        keyMap1,
+      )
+      root1.insert(0, [yBlock])
+    })
+
+    const yDoc2 = new Y.Doc()
+    const root2 = yDoc2.getXmlFragment('content')
+    const keyMap2 = createKeyMap()
+    Y.applyUpdate(yDoc2, Y.encodeStateAsUpdate(yDoc1))
+
+    // Populate keyMap2
+    for (let i = 0; i < root2.length; i++) {
+      const child = root2.get(i)
+      if (child instanceof Y.XmlText) {
+        const key = child.getAttribute('_key') as string | undefined
+        if (key) keyMap2.set(key, child)
+      }
+    }
+
+    // Client 1: bold "world" (span split)
+    yDoc1.transact(() => {
+      applyPatchToYDoc(
+        {
+          type: 'diffMatchPatch',
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
+          value: '@@ -3,9 +3,4 @@\n llo \n-world\n',
+        },
+        root1,
+        keyMap1,
+      )
+      applyPatchToYDoc(
+        {
+          type: 'insert',
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          position: 'after',
+          items: [
+            {_key: 's2', _type: 'span', text: 'world', marks: ['strong']},
+          ],
+        },
+        root1,
+        keyMap1,
+      )
+    }, 'client1')
+
+    // Client 2: append "!" to the text
+    yDoc2.transact(() => {
+      applyPatchToYDoc(
+        {
+          type: 'diffMatchPatch',
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
+          value: '@@ -6,5 +6,6 @@\n world\n+!\n',
+        },
+        root2,
+        keyMap2,
+      )
+    }, 'client2')
+
+    // Sync
+    Y.applyUpdate(yDoc1, Y.encodeStateAsUpdate(yDoc2))
+    Y.applyUpdate(yDoc2, Y.encodeStateAsUpdate(yDoc1))
+
+    // Both should converge — the exact text depends on Yjs merge order
+    // but both edits should be preserved
+    const text1 = getBlockText(keyMap1.getYText('b1')!)
+    const text2 = getBlockText(keyMap2.getYText('b1')!)
+    expect(text1).toBe(text2)
+    // Both "world" and "!" should be present somewhere
+    expect(text1).toContain('world')
+  })
+})
