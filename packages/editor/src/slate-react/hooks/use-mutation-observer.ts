@@ -5,7 +5,7 @@ export function useMutationObserver(
   node: RefObject<HTMLElement>,
   callback: MutationCallback,
   options: MutationObserverInit,
-) {
+): MutationObserver {
   const [mutationObserver] = useState(() => new MutationObserver(callback))
 
   useIsomorphicLayoutEffect(() => {
@@ -22,4 +22,6 @@ export function useMutationObserver(
     mutationObserver.observe(node.current, options)
     return () => mutationObserver.disconnect()
   }, [mutationObserver, node, options])
+
+  return mutationObserver
 }

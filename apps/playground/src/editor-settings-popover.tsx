@@ -76,6 +76,11 @@ export function EditorSettingsPopover(props: {editorRef: EditorActorRef}) {
               isSelected={featureFlags.typographyPlugin}
               onChange={() => toggleFlag('typographyPlugin')}
             />
+            <FeatureSwitch
+              label="Markdown editor"
+              isSelected={featureFlags.markdownEditorPlugin}
+              onChange={() => toggleFlag('markdownEditorPlugin')}
+            />
           </Section>
 
           <Separator orientation="horizontal" />

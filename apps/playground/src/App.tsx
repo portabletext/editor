@@ -3,6 +3,7 @@ import {editorIdGenerator} from './editor-id-generator'
 import {Editors} from './editors'
 import {Footer} from './footer'
 import {Header} from './header'
+import {HybridDebugPanel} from './hybrid-debug-panel'
 import {playgroundMachine} from './playground-machine'
 
 export function App() {
@@ -19,6 +20,7 @@ export function App() {
         <Editors playgroundRef={playgroundRef} />
       </main>
       <Footer />
+      <HybridDebugPanel />
     </div>
   )
 }

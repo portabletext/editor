@@ -828,8 +828,9 @@ export const DOMEditor: DOMEditorInterface = {
           ]
 
           leafNode =
-            leafNodes.findLast((leaf) => isBefore(nonEditableNode, leaf)) ??
-            null
+            [...leafNodes]
+              .reverse()
+              .find((leaf) => isBefore(nonEditableNode, leaf)) ?? null
 
           if (leafNode) {
             searchDirection === 'backward'

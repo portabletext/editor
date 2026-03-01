@@ -39,6 +39,16 @@ export const createRestoreDomManager = (
           return
         }
 
+        // During composition (IME input), the browser may restructure the
+        // DOM (add/remove nodes for composition UI). Reverting these
+        // structural mutations would undo the composition text, causing
+        // the hybrid input manager's parse-and-diff to see "no change."
+        // Skip structural restoration while composing — the hybrid input
+        // manager will reconcile after compositionEnd.
+        if (editor.composing) {
+          return
+        }
+
         mutation.removedNodes.forEach((node) => {
           mutation.target.insertBefore(node, mutation.nextSibling)
         })

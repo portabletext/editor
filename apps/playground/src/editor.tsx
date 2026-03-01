@@ -64,6 +64,7 @@ import {CodeEditorPlugin} from './plugins/plugin.code-editor'
 import {HtmlDeserializerPlugin} from './plugins/plugin.html-deserializer'
 import {ImageDeserializerPlugin} from './plugins/plugin.image-deserializer'
 import {markdownShortcutsPluginProps} from './plugins/plugin.markdown'
+import {MarkdownEditorPlugin} from './plugins/plugin.markdown-editor'
 import {TextFileDeserializerPlugin} from './plugins/plugin.text-file-deserializer'
 import {Button} from './primitives/button'
 import {Container} from './primitives/container'
@@ -179,6 +180,9 @@ export function Editor(props: {
                     ),
                 })}
               />
+            ) : null}
+            {featureFlags.markdownEditorPlugin ? (
+              <MarkdownEditorPlugin />
             ) : null}
             <div className="flex gap-2 items-center">
               <ErrorBoundary
