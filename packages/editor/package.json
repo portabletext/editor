@@ -53,6 +53,9 @@
       "source": "./src/utils/_exports/index.ts",
       "default": "./lib/utils/index.js"
     },
+    "./hybrid-debug": {
+      "default": "./src/hybrid-debug.ts"
+    },
     "./package.json": "./package.json"
   },
   "main": "./lib/index.js",
@@ -138,6 +141,7 @@
       "./test": "./src/test/_exports/index.ts",
       "./test/vitest": "./src/test/vitest/_exports/index.ts",
       "./utils": "./lib/utils/index.js",
+      "./hybrid-debug": "./src/hybrid-debug.ts",
       "./package.json": "./package.json"
     }
   }
