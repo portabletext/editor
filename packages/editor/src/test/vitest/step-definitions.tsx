@@ -313,27 +313,77 @@ export const stepDefinitions = [
   When(
     '{shortcut} is pressed',
     async (context: Context, shortcut: Parameter['shortcut']) => {
-      const shortcuts: Record<Parameter['shortcut'], string> = {
-        'deleteWord.backward': IS_MAC
-          ? '{Alt>}{Backspace}{/Alt}'
-          : '{Control>}{Backspace}{/Control}',
-        'deleteWord.forward': IS_MAC
-          ? '{Alt>}{Delete}{/Alt}'
-          : '{Control>}{Delete}{/Control}',
+      const keyboardShortcuts: Partial<Record<Parameter['shortcut'], string>> =
+        {
+          'deleteWord.backward': IS_MAC
+            ? '{Alt>}{Backspace}{/Alt}'
+            : '{Control>}{Backspace}{/Control}',
+          'deleteWord.forward': IS_MAC
+            ? '{Alt>}{Delete}{/Alt}'
+            : '{Control>}{Delete}{/Control}',
+          'clipboard.cut': IS_MAC ? '{Meta>}x{/Meta}' : '{Control>}x{/Control}',
+        }
+
+      const keyboardShortcut = keyboardShortcuts[shortcut]
+
+      if (keyboardShortcut) {
+        const previousSelection = context.editor.getSnapshot().context.selection
+        await userEvent.keyboard(keyboardShortcut)
+
+        await new Promise((resolve) => setTimeout(resolve, 100))
+
+        await vi.waitFor(() => {
+          const currentSelection =
+            context.editor.getSnapshot().context.selection
+
+          if (currentSelection) {
+            expect(currentSelection).not.toBe(previousSelection)
+          }
+        })
+
+        return
       }
 
-      const previousSelection = context.editor.getSnapshot().context.selection
-      await userEvent.keyboard(shortcuts[shortcut])
+      // Shortcuts that fire behavior events directly (no reliable
+      // cross-browser keyboard shortcut available)
+      const behaviorEvents: Partial<
+        Record<
+          Parameter['shortcut'],
+          | {
+              type: 'delete.backward'
+              unit: 'character' | 'word' | 'line' | 'block'
+            }
+          | {
+              type: 'delete.forward'
+              unit: 'character' | 'word' | 'line' | 'block'
+            }
+        >
+      > = {
+        'deleteLine.backward': {type: 'delete.backward', unit: 'line'},
+        'deleteLine.forward': {type: 'delete.forward', unit: 'line'},
+      }
 
-      await new Promise((resolve) => setTimeout(resolve, 100))
+      const behaviorEvent = behaviorEvents[shortcut]
 
-      await vi.waitFor(() => {
-        const currentSelection = context.editor.getSnapshot().context.selection
+      if (behaviorEvent) {
+        const previousSelection = context.editor.getSnapshot().context.selection
+        context.editor.send(behaviorEvent)
 
-        if (currentSelection) {
-          expect(currentSelection).not.toBe(previousSelection)
-        }
-      })
+        await new Promise((resolve) => setTimeout(resolve, 100))
+
+        await vi.waitFor(() => {
+          const currentSelection =
+            context.editor.getSnapshot().context.selection
+
+          if (currentSelection) {
+            expect(currentSelection).not.toBe(previousSelection)
+          }
+        })
+
+        return
+      }
+
+      throw new Error(`Unknown shortcut: ${shortcut}`)
     },
   ),
 

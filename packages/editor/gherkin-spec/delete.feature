@@ -47,3 +47,63 @@ Feature: Delete
       | "কি" | "ক"        |
       # Thai - "กิ" is ก (ko kai) + ิ (sara i)
       | "กิ" | "ก"        |
+
+  Scenario Outline: Deleting line backward
+    Given the text <text>
+    When the editor is focused
+    And the caret is put <position>
+    And "deleteLine.backward" is pressed
+    Then the text is <final text>
+    When undo is performed
+    Then the text is <text>
+
+    Examples:
+      | text          | position       | final text    |
+      | "foo bar baz" | after "bar"    | " baz"        |
+      | "foo bar baz" | after "baz"    | ""            |
+      | "foo bar baz" | after "foo "   | "bar baz"     |
+
+  Scenario: Deleting line backward at start of block merges blocks
+    Given the text "foo|bar"
+    When the editor is focused
+    And the caret is put before "bar"
+    And "deleteLine.backward" is pressed
+    Then the text is "foobar"
+    When undo is performed
+    Then the text is "foo|bar"
+
+  Scenario: Cutting selected text
+    Given the text "foo bar baz"
+    When the editor is focused
+    And "bar" is selected
+    And "clipboard.cut" is pressed
+    Then the text is "foo  baz"
+    When undo is performed
+    Then the text is "foo bar baz"
+
+  Scenario: Cutting across blocks
+    Given the text "foo|bar"
+    When the editor is focused
+    And "foobar" is selected
+    And "clipboard.cut" is pressed
+    Then the text is ""
+    When undo is performed
+    Then the text is "foo|bar"
+
+  Scenario: Deleting word backward at block boundary merges blocks
+    Given the text "foo|bar"
+    When the editor is focused
+    And the caret is put before "bar"
+    And "deleteWord.backward" is pressed
+    Then the text is "foobar"
+    When undo is performed
+    Then the text is "foo|bar"
+
+  Scenario: Deleting word forward at block boundary merges blocks
+    Given the text "foo|bar"
+    When the editor is focused
+    And the caret is put after "foo"
+    And "deleteWord.forward" is pressed
+    Then the text is "foobar"
+    When undo is performed
+    Then the text is "foo|bar"

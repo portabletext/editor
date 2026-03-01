@@ -68,9 +68,16 @@ const parameterType = {
     name: 'select-position',
     matcher: /"(start|end|none)"/,
   }),
-  shortcut: createParameterType<'deleteWord.backward' | 'deleteWord.forward'>({
+  shortcut: createParameterType<
+    | 'deleteWord.backward'
+    | 'deleteWord.forward'
+    | 'deleteLine.backward'
+    | 'deleteLine.forward'
+    | 'clipboard.cut'
+  >({
     name: 'shortcut',
-    matcher: /"(deleteWord\.backward|deleteWord\.forward)"/,
+    matcher:
+      /"(deleteWord\.backward|deleteWord\.forward|deleteLine\.backward|deleteLine\.forward|clipboard\.cut)"/,
   }),
   style: createParameterType({
     name: 'style',
