@@ -5,7 +5,7 @@ import {toSlateBlock} from '../values'
 const schemaTypes = compileSchema(defineSchema({}))
 
 describe(toSlateBlock.name, () => {
-  it('given type is custom with no custom properties, should include an empty text property in children', () => {
+  it('given type is custom with no custom properties, should be a leaf node', () => {
     const result = toSlateBlock(
       {
         _type: 'image',
@@ -17,11 +17,6 @@ describe(toSlateBlock.name, () => {
     expect(result).toMatchObject({
       _key: '123',
       _type: 'image',
-      children: [
-        {
-          text: '',
-        },
-      ],
     })
   })
 
@@ -88,14 +83,6 @@ describe(toSlateBlock.name, () => {
         {
           _key: '1232',
           _type: 'image',
-          children: [
-            {
-              _key: 'void-child',
-              _type: 'span',
-              marks: [],
-              text: '',
-            },
-          ],
           asset: {
             _ref: 'ref-123',
           },

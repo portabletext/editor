@@ -1,3 +1,4 @@
+import type {PortableTextBlock} from '@portabletext/schema'
 import {buildIndexMaps} from '../internal-utils/build-index-maps'
 import {createPlaceholderBlock} from '../internal-utils/create-placeholder-block'
 import {debug} from '../internal-utils/debug'
@@ -40,7 +41,15 @@ export function createSlateEditor(config: SlateEditorConfig): SlateEditor {
   editor.listIndexMap = new Map<string, number>()
   editor.remotePatches = []
   editor.undoStepId = undefined
-  editor.value = [placeholderBlock]
+
+  // editor.value is a getter over editor.children - the Slate tree IS the PT document
+  editor.children = [placeholderBlock] as unknown as Descendant[]
+  Object.defineProperty(editor, 'value', {
+    get() {
+      return editor.children as unknown as PortableTextBlock[]
+    },
+    configurable: true,
+  })
 
   editor.isDeferringMutations = false
   editor.isNormalizingNode = false

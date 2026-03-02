@@ -8,7 +8,7 @@ import {beforeEach, describe, expect, it, test} from 'vitest'
 import {createActor} from 'xstate'
 import {editorMachine} from '../editor/editor-machine'
 import {relayMachine} from '../editor/relay-machine'
-import {createEditor, type Descendant} from '../slate'
+import {createEditor, type Descendant, type Node} from '../slate'
 import {plugins} from '../slate-plugins/slate-plugins'
 import {defaultKeyGenerator} from '../utils/key-generator'
 import {
@@ -37,7 +37,13 @@ const e = createEditor({
   schema,
   keyGenerator: defaultKeyGenerator,
 })
-e.value = []
+e.children = [] as any
+Object.defineProperty(e, 'value', {
+  get() {
+    return e.children
+  },
+  configurable: true,
+})
 const editor = plugins(e, {
   editorActor,
   relayActor,
@@ -45,25 +51,6 @@ const editor = plugins(e, {
 })
 
 const createDefaultChildren = () =>
-  [
-    {
-      _type: 'block',
-      _key: '1f2e64b47787',
-      style: 'normal',
-      markDefs: [],
-      children: [
-        {_type: 'span', _key: 'c130395c640c', text: '', marks: []},
-        {
-          _key: '773866318fa8',
-          _type: 'someObject',
-          title: 'The Object',
-          children: [{_type: 'span', _key: 'bogus', text: '', marks: []}],
-        },
-        {_type: 'span', _key: 'fd9b4a4e6c0b', text: '', marks: []},
-      ],
-    },
-  ] satisfies Array<Descendant>
-const createDefaultValue = () =>
   [
     {
       _type: 'block',
@@ -91,31 +78,15 @@ describe(insertNodePatch.name, () => {
           {
             _key: 'k2',
             _type: 'image',
-            children: [
-              {
-                _key: 'void-child',
-                _type: 'span',
-                marks: [],
-                text: '',
-              },
-            ],
           },
-        ],
+        ] as unknown as Descendant[],
         {
           type: 'insert_node',
           path: [0],
           node: {
             _key: 'k2',
             _type: 'image',
-            children: [
-              {
-                _key: 'void-child',
-                _type: 'span',
-                marks: [],
-                text: '',
-              },
-            ],
-          },
+          } as unknown as Node,
         },
         [],
       ),
@@ -142,7 +113,7 @@ describe(insertNodePatch.name, () => {
 
 describe('operationToPatches', () => {
   beforeEach(() => {
-    editor.children = createDefaultChildren()
+    editor.children = createDefaultChildren() as unknown as Node[]
     editor.onChange()
   })
 
@@ -158,7 +129,7 @@ describe('operationToPatches', () => {
           properties: {_type: 'span', _key: 'c130395c640c', marks: []},
         },
 
-        createDefaultValue(),
+        createDefaultChildren(),
       ),
     ).toEqual([
       {
@@ -220,10 +191,9 @@ describe('operationToPatches', () => {
             _type: 'someObject',
             _key: 'c130395c640c',
             title: 'The Object',
-            children: [{_key: '1', _type: 'span', text: '', marks: []}],
-          },
+          } as unknown as Node,
         },
-        createDefaultValue(),
+        createDefaultChildren(),
       ),
     ).toMatchInlineSnapshot(`
       [
@@ -260,8 +230,7 @@ describe('operationToPatches', () => {
           node: {
             _type: 'someObject',
             _key: 'c130395c640c',
-            children: [{_key: '1', _type: 'span', text: '', marks: []}],
-          },
+          } as unknown as Node,
         },
 
         [],
@@ -302,11 +271,10 @@ describe('operationToPatches', () => {
             _type: 'someObject',
             _key: 'c130395c640c',
             title: 'The Object',
-            children: [{_key: '1', _type: 'span', text: '', marks: []}],
-          },
+          } as unknown as Node,
         },
 
-        createDefaultValue(),
+        createDefaultChildren(),
       ),
     ).toEqual([
       {
@@ -350,7 +318,7 @@ describe('operationToPatches', () => {
           text: '1',
           offset: 0,
         },
-        createDefaultValue(),
+        createDefaultChildren(),
       ),
     ).toMatchInlineSnapshot(`
       [
@@ -406,7 +374,7 @@ describe('operationToPatches', () => {
   })
 
   it('produces correct remove text patch', () => {
-    const before = createDefaultValue()
+    const before = createDefaultChildren()
     ;(before[0] as PortableTextTextBlock).children[2]!.text = '1'
     expect(
       removeTextPatch(
@@ -447,7 +415,7 @@ describe('operationToPatches', () => {
     expect(
       removeNodePatch(
         editorActor.getSnapshot().context.schema,
-        createDefaultValue(),
+        createDefaultChildren(),
         {
           type: 'remove_node',
           path: [0, 1],
@@ -455,8 +423,7 @@ describe('operationToPatches', () => {
             _key: '773866318fa8',
             _type: 'someObject',
             title: 'The object',
-            children: [{_type: 'span', _key: 'bogus', text: '', marks: []}],
-          },
+          } as unknown as Node,
         },
       ),
     ).toMatchInlineSnapshot(`
@@ -479,12 +446,12 @@ describe('operationToPatches', () => {
 
   it('produce correct remove block patch', () => {
     const children = createDefaultChildren()
-    const val = createDefaultValue()
+    const val = createDefaultChildren()
     expect(
       removeNodePatch(editorActor.getSnapshot().context.schema, val, {
         type: 'remove_node',
         path: [0],
-        node: children[0]!,
+        node: children[0]! as unknown as Node,
       }),
     ).toMatchInlineSnapshot(`
       [
@@ -501,7 +468,7 @@ describe('operationToPatches', () => {
   })
 
   it('produce correct merge node patch', () => {
-    const val = createDefaultValue()
+    const val = createDefaultChildren()
     ;(val[0] as PortableTextTextBlock).children.push({
       _type: 'span',
       _key: 'r4wr323432',
@@ -559,7 +526,7 @@ describe('operationToPatches', () => {
 
 describe('defensive setIfMissing patches', () => {
   beforeEach(() => {
-    editor.children = createDefaultChildren()
+    editor.children = createDefaultChildren() as unknown as Node[]
     editor.onChange()
   })
 
@@ -578,7 +545,7 @@ describe('defensive setIfMissing patches', () => {
             marks: [],
           },
         },
-        createDefaultValue(),
+        createDefaultChildren(),
       )
 
       expect(patches).toEqual([
@@ -607,10 +574,9 @@ describe('defensive setIfMissing patches', () => {
             _type: 'someObject',
             _key: 'new-object',
             title: 'New Object',
-            children: [{_key: '1', _type: 'span', text: '', marks: []}],
-          },
+          } as unknown as Node,
         },
-        createDefaultValue(),
+        createDefaultChildren(),
       )
 
       expect(patches).toEqual([
@@ -642,7 +608,7 @@ describe('defensive setIfMissing patches', () => {
           position: 0,
           properties: {_type: 'span', _key: 'c130395c640c', marks: []},
         },
-        createDefaultValue(),
+        createDefaultChildren(),
       )
 
       expect(patches).toEqual([

@@ -39,7 +39,6 @@ import {
   IS_UC_MOBILE,
   IS_WEBKIT,
   IS_WECHATBROWSER,
-  isDOMElement,
   isDOMNode,
   isPlainTextOnlyPaste,
   MARK_PLACEHOLDER_SYMBOL,
@@ -80,7 +79,6 @@ export interface RenderElementProps {
   attributes: {
     'data-slate-node': 'element'
     'data-slate-inline'?: true
-    'data-slate-void'?: true
     'dir'?: 'rtl'
     'ref': any
   }
@@ -1227,15 +1225,6 @@ export const Editable = forwardRef(
                       return
                     }
 
-                    // COMPAT: The event should be ignored if the focus is moving from
-                    // the editor to inside a void node's spacer element.
-                    if (
-                      isDOMElement(relatedTarget) &&
-                      relatedTarget.hasAttribute('data-slate-spacer')
-                    ) {
-                      return
-                    }
-
                     // COMPAT: The event should be ignored if the focus is moving to a
                     // non- editable section of an element that isn't a void node (eg.
                     // a list item of the check list example).
@@ -1249,7 +1238,7 @@ export const Editable = forwardRef(
                         relatedTarget,
                       )
 
-                      if (Element.isElement(node) && !editor.isVoid(node)) {
+                      if (Element.isElement(node) || Node.isObjectNode(node)) {
                         return
                       }
                     }
@@ -1495,7 +1484,7 @@ export const Editable = forwardRef(
                             editor,
                             selection.anchor.path,
                           )
-                          if (Editor.isVoid(editor, node)) {
+                          if (Node.isObjectNode(node)) {
                             Transforms.delete(editor)
                           }
                         }
@@ -1510,15 +1499,12 @@ export const Editable = forwardRef(
                       ReactEditor.hasTarget(editor, event.target) &&
                       !isEventHandled(event, attributes.onDragOver)
                     ) {
-                      // Only when the target is void, call `preventDefault` to signal
+                      // Only when the target is void/ObjectNode, call `preventDefault` to signal
                       // that drops are allowed. Editable content is droppable by
                       // default, and calling `preventDefault` hides the cursor.
                       const node = ReactEditor.toSlateNode(editor, event.target)
 
-                      if (
-                        Element.isElement(node) &&
-                        Editor.isVoid(editor, node)
-                      ) {
+                      if (Node.isObjectNode(node)) {
                         event.preventDefault()
                       }
                     }
@@ -1535,11 +1521,10 @@ export const Editable = forwardRef(
                       const node = ReactEditor.toSlateNode(editor, event.target)
                       const path = ReactEditor.findPath(editor, node)
                       const voidMatch =
-                        (Element.isElement(node) &&
-                          Editor.isVoid(editor, node)) ||
+                        Node.isObjectNode(node) ||
                         Editor.void(editor, {at: path, voids: true})
 
-                      // If starting a drag on a void node, make sure it is selected
+                      // If starting a drag on an ObjectNode, make sure it is selected
                       // so that it shows up in the selection's fragment.
                       if (voidMatch) {
                         const range = Editor.range(editor, path)
@@ -2004,12 +1989,7 @@ export const Editable = forwardRef(
                               selection.anchor.path,
                             )
 
-                            if (
-                              Element.isElement(currentNode) &&
-                              Editor.isVoid(editor, currentNode) &&
-                              (Editor.isInline(editor, currentNode) ||
-                                Editor.isBlock(editor, currentNode))
-                            ) {
+                            if (Node.isObjectNode(currentNode)) {
                               event.preventDefault()
                               editorActor.send({
                                 type: 'behavior event',

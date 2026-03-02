@@ -2,12 +2,12 @@ import type {MutableRefObject} from 'react'
 import {
   Editor,
   Element,
+  Node,
   Range,
   Scrubber,
   Transforms,
   type Ancestor,
   type BaseEditor,
-  type Node,
   type Operation,
   type Path,
   type Point,
@@ -331,12 +331,16 @@ export const DOMEditor: DOMEditorInterface = {
     const node = DOMEditor.toSlateNode(editor, event.target)
     const path = DOMEditor.findPath(editor, node)
 
-    // If the drop target is inside a void node, move it into either the
+    // If the drop target is inside an ObjectNode, move it into either the
     // next or previous node, depending on which side the `x` and `y`
     // coordinates are closest to.
-    if (Element.isElement(node) && Editor.isVoid(editor, node)) {
+    if (Node.isObjectNode(node)) {
       const rect = target.getBoundingClientRect()
-      const isPrev = editor.isInline(node)
+      // Inline ObjectNodes use horizontal distance, block ObjectNodes use vertical.
+      // TODO: path.length > 1 assumes flat document model. With containers,
+      // block objects inside containers would also have path.length > 1.
+      const isInline = path.length > 1
+      const isPrev = isInline
         ? x - rect.left < rect.left + rect.width - x
         : y - rect.top < rect.top + rect.height - y
 
@@ -558,7 +562,11 @@ export const DOMEditor: DOMEditorInterface = {
     const slateNode =
       DOMEditor.hasTarget(editor, target) &&
       DOMEditor.toSlateNode(editor, target)
-    return Element.isElement(slateNode) && Editor.isVoid(editor, slateNode)
+    return (
+      !!slateNode &&
+      (Node.isObjectNode(slateNode) ||
+        (Element.isElement(slateNode) && Editor.isVoid(editor, slateNode)))
+    )
   },
 
   setFragmentData: (editor, data, originEvent) =>

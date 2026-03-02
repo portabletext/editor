@@ -9,8 +9,6 @@ import {isEqualValues} from './equality'
 
 export const EMPTY_MARKDEFS: PortableTextObject[] = []
 
-export const VOID_CHILD_KEY = 'void-child'
-
 export function toSlateBlock(
   block: PortableTextBlock,
   {schemaTypes}: {schemaTypes: EditorSchema},
@@ -39,24 +37,12 @@ export function toSlateBlock(
       }
 
       if (childType !== schemaTypes.span.name) {
-        // Return 'slate' version of inline object where the actual
-        // properties are spread directly on the node.
-        // In slate, inline objects are represented as regular
-        // children with actual text node in order to be able to
-        // be selected the same way as the rest of the (text) content.
+        // Inline object is a leaf node (ObjectNode) - no children array
         hasInlines = true
 
         return {
           _type: childType,
           _key: childKey,
-          children: [
-            {
-              _key: VOID_CHILD_KEY,
-              _type: schemaTypes.span.name,
-              text: '',
-              marks: [],
-            },
-          ],
           ...childProps,
         }
       }
@@ -81,53 +67,22 @@ export function toSlateBlock(
 
   const {children: _originalChildren, ...blockObjectProps} = rest
 
+  // Block object is a leaf node (ObjectNode) - no children array
   return {
     _type,
     _key,
-    children: [
-      {
-        _key: VOID_CHILD_KEY,
-        _type: 'span',
-        text: '',
-        marks: [],
-      },
-    ],
     ...blockObjectProps,
   } as Descendant
 }
 
-export function fromSlateBlock(block: Descendant, textBlockType: string) {
+export function fromSlateBlock(block: Descendant, _textBlockType: string) {
   const {_key, _type} = block
   if (!_key || !_type) {
     throw new Error('Not a valid block')
   }
-  if (
-    _type === textBlockType &&
-    'children' in block &&
-    Array.isArray(block.children) &&
-    _key
-  ) {
-    let hasInlines = false
-    const children = block.children.map((child) => {
-      if (Element.isElement(child) && child._type !== 'span') {
-        hasInlines = true
-        const {children: _voidChildren, ...inlineObject} = child
-        return inlineObject
-      }
-      return child
-    })
-    if (!hasInlines) {
-      return block as PortableTextBlock // Original object
-    }
-    return {...block, children, _key, _type} as PortableTextBlock
-  }
-  const {children: _voidChildren, ...blockObject} = block as Element &
-    Record<string, unknown>
-  return {
-    ...blockObject,
-    _key,
-    _type,
-  } as PortableTextBlock
+  // The Slate tree is now PT-native. Inline objects and block objects
+  // no longer have void children to strip. Return the block as-is.
+  return block as PortableTextBlock
 }
 
 export function isEqualToEmptyEditor(

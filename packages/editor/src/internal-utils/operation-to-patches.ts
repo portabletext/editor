@@ -314,12 +314,8 @@ export function insertNodePatch(
       return [setIfMissingPatch, insert([operation.node], position, path)]
     }
 
-    const {children: _voidChildren, ...inlineObject} = operation.node as Record<
-      string,
-      unknown
-    >
-
-    return [setIfMissingPatch, insert([inlineObject], position, path)]
+    // Inline object is already PT-shaped (no void children to strip)
+    return [setIfMissingPatch, insert([operation.node], position, path)]
   }
 
   return []

@@ -1,5 +1,5 @@
 import React, {useCallback, type JSX} from 'react'
-import {ReactEditor, useReadOnly, useSlateStatic} from '..'
+import {ReactEditor, useSlateStatic} from '..'
 import {
   Editor,
   Node,
@@ -17,7 +17,6 @@ import type {
   RenderPlaceholderProps,
   RenderTextProps,
 } from './editable'
-import Text from './text'
 
 const defaultRenderElement = (props: RenderElementProps) => (
   <DefaultElement {...props} />
@@ -46,7 +45,6 @@ const Element = (props: {
     renderText,
   } = props
   const editor = useSlateStatic()
-  const readOnly = useReadOnly()
   const isInline = editor.isInline(element)
   const decorations = useDecorations(element, parentDecorations)
   const key = ReactEditor.findKey(editor, element)
@@ -64,7 +62,7 @@ const Element = (props: {
     },
     [editor, key, element],
   )
-  let children: React.ReactNode = useChildren({
+  const children: React.ReactNode = useChildren({
     decorations,
     node: element,
     renderElement,
@@ -78,7 +76,6 @@ const Element = (props: {
   // custom node renderer component.
   const attributes: {
     'data-slate-node': 'element'
-    'data-slate-void'?: true
     'data-slate-inline'?: true
     'contentEditable'?: false
     'dir'?: 'rtl'
@@ -101,42 +98,6 @@ const Element = (props: {
     if (dir === 'rtl') {
       attributes.dir = dir
     }
-  }
-
-  // If it's a void node, wrap the children in extra void-specific elements.
-  if (Editor.isVoid(editor, element)) {
-    attributes['data-slate-void'] = true
-
-    if (!readOnly && isInline) {
-      attributes.contentEditable = false
-    }
-
-    const Tag = isInline ? 'span' : 'div'
-    const [textEntry] = Node.texts(element)
-    const [text] = textEntry!
-
-    children = (
-      <Tag
-        data-slate-spacer
-        style={{
-          height: '0',
-          color: 'transparent',
-          outline: 'none',
-          position: 'absolute',
-        }}
-      >
-        <Text
-          renderPlaceholder={renderPlaceholder}
-          decorations={[]}
-          isLast={false}
-          parent={element}
-          text={text}
-        />
-      </Tag>
-    )
-
-    editor.nodeToIndex.set(text, 0)
-    editor.nodeToParent.set(text, element)
   }
 
   return renderElement({attributes, children, element})

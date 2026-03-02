@@ -56,22 +56,10 @@ export function createSchemaPlugin({editorActor}: {editorActor: EditorActor}) {
         !Array.isArray(obj['children'])
       )
     }
-    editor.isVoid = (element: Element): boolean => {
-      if (Editor.isEditor(element)) {
-        return false
-      }
-
-      return (
-        editorActor.getSnapshot().context.schema.block.name !== element._type &&
-        (editorActor
-          .getSnapshot()
-          .context.schema.blockObjects.map((obj) => obj.name)
-          .includes(element._type) ||
-          editorActor
-            .getSnapshot()
-            .context.schema.inlineObjects.map((obj) => obj.name)
-            .includes(element._type))
-      )
+    editor.isVoid = (_element: Element): boolean => {
+      // ObjectNodes are no longer void Elements - they are a distinct node type.
+      // This function is kept for backward compatibility but always returns false.
+      return false
     }
     editor.isInline = (element: Element): boolean => {
       if (Editor.isEditor(element)) {

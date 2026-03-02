@@ -2,6 +2,7 @@ import {useCallback, useRef, type JSX} from 'react'
 import {
   Editor,
   Element,
+  Node,
   Text,
   type Ancestor,
   type DecoratedRange,
@@ -11,6 +12,7 @@ import {
   splitDecorationsByChild,
   type Key,
 } from '../../slate-dom'
+import type {ObjectNode} from '../../slate/interfaces/node'
 import {getChunkTreeForNode} from '../chunking'
 import ChunkTree from '../components/chunk-tree'
 import type {
@@ -21,6 +23,7 @@ import type {
   RenderTextProps,
 } from '../components/editable'
 import ElementComponent from '../components/element'
+import ObjectNodeComponent from '../components/object-node'
 import TextComponent from '../components/text'
 import {ReactEditor} from '../plugin/react-editor'
 import {ElementContext} from './use-element'
@@ -120,10 +123,32 @@ const useChildren = (props: {
     )
   }
 
-  if (!chunking) {
-    return node.children.map((n, i) =>
-      Text.isText(n) ? renderTextComponent(n, i) : renderElementComponent(n, i),
+  const renderObjectNodeComponent = (n: ObjectNode, i: number) => {
+    const key = ReactEditor.findKey(editor, n)
+
+    return (
+      <ObjectNodeComponent
+        decorations={decorationsByChild[i] ?? []}
+        key={key.id}
+        objectNode={n}
+        renderElement={renderElement}
+      />
     )
+  }
+
+  if (!chunking) {
+    return node.children.map((n, i) => {
+      if (Element.isElement(n)) {
+        return renderElementComponent(n, i)
+      }
+      if (Node.isObjectNode(n)) {
+        return renderObjectNodeComponent(n, i)
+      }
+      if (Text.isText(n)) {
+        return renderTextComponent(n, i)
+      }
+      return renderTextComponent(n as Text, i)
+    })
   }
 
   const chunkTree = getChunkTreeForNode(editor, node, {

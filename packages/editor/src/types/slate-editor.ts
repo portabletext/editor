@@ -47,7 +47,7 @@ export interface PortableTextSlateEditor extends ReactEditor {
   listIndexMap: Map<string, number>
   remotePatches: Array<RemotePatch>
   undoStepId: string | undefined
-  value: Array<PortableTextBlock>
+  readonly value: Array<PortableTextBlock>
 
   isDeferringMutations: boolean
   isNormalizingNode: boolean
