@@ -117,13 +117,13 @@ export function setNodePatch(
     if (isTextBlock({schema}, block)) {
       const patches: Patch[] = []
 
-      for (const key of Object.keys(operation.newProperties)) {
-        const value = (operation.newProperties as Record<string, unknown>)[key]
-
+      for (const [key, propertyValue] of Object.entries(
+        operation.newProperties,
+      )) {
         if (key === '_key') {
-          patches.push(set(value, [blockIndex, '_key']))
+          patches.push(set(propertyValue, [blockIndex, '_key']))
         } else {
-          patches.push(set(value, [{_key: block._key}, key]))
+          patches.push(set(propertyValue, [{_key: block._key}, key]))
         }
       }
 
@@ -143,28 +143,22 @@ export function setNodePatch(
         patches.push(set(_key, [blockIndex, '_key']))
       }
 
-      const newValue =
-        'value' in operation.newProperties &&
-        typeof operation.newProperties.value === 'object'
-          ? (operation.newProperties.value as Record<string, unknown>)
-          : ({} satisfies Record<string, unknown>)
+      for (const [key, propertyValue] of Object.entries(
+        operation.newProperties,
+      )) {
+        if (key === '_key' || key === 'children') {
+          continue
+        }
 
-      const keys = Object.keys(newValue)
-
-      for (const key of keys) {
-        const value = newValue[key]
-
-        patches.push(set(value, [{_key: block._key}, key]))
+        patches.push(set(propertyValue, [{_key: block._key}, key]))
       }
 
-      const value =
-        'value' in operation.properties &&
-        typeof operation.properties.value === 'object'
-          ? (operation.properties.value as Record<string, unknown>)
-          : ({} satisfies Record<string, unknown>)
+      for (const key of Object.keys(operation.properties)) {
+        if (key === '_key' || key === 'children') {
+          continue
+        }
 
-      for (const key of Object.keys(value)) {
-        if (!(key in newValue)) {
+        if (!(key in operation.newProperties)) {
           patches.push(unset([{_key: block._key}, key]))
         }
       }
@@ -181,9 +175,8 @@ export function setNodePatch(
         const patches: Patch[] = []
 
         if (Element.isElement(child)) {
-          // The child is an inline object. This needs to be treated
-          // differently since all custom properties are stored on a `value`
-          // object.
+          // The child is an inline object. Properties are stored
+          // directly on the node.
 
           const _key = operation.newProperties._key
 
@@ -198,35 +191,32 @@ export function setNodePatch(
             )
           }
 
-          const properties =
-            'value' in operation.newProperties &&
-            typeof operation.newProperties.value === 'object'
-              ? (operation.newProperties.value as Record<string, unknown>)
-              : ({} satisfies Record<string, unknown>)
-
-          const keys = Object.keys(properties)
-
-          for (const key of keys) {
-            const value = properties[key]
+          for (const [key, propertyValue] of Object.entries(
+            operation.newProperties,
+          )) {
+            if (key === '_key' || key === 'children') {
+              continue
+            }
 
             patches.push(
-              set(value, [{_key: blockKey}, 'children', {_key: childKey}, key]),
+              set(propertyValue, [
+                {_key: blockKey},
+                'children',
+                {_key: childKey},
+                key,
+              ]),
             )
           }
 
           return patches
         }
 
-        const newPropNames = Object.keys(operation.newProperties)
-
-        for (const keyName of newPropNames) {
-          const value = (operation.newProperties as Record<string, unknown>)[
-            keyName
-          ]
-
+        for (const [keyName, propertyValue] of Object.entries(
+          operation.newProperties,
+        )) {
           if (keyName === '_key') {
             patches.push(
-              set(value, [
+              set(propertyValue, [
                 {_key: blockKey},
                 'children',
                 block.children.indexOf(child),
@@ -238,7 +228,7 @@ export function setNodePatch(
           }
 
           patches.push(
-            set(value, [
+            set(propertyValue, [
               {_key: blockKey},
               'children',
               {_key: childKey},
@@ -324,27 +314,12 @@ export function insertNodePatch(
       return [setIfMissingPatch, insert([operation.node], position, path)]
     }
 
-    const _type = operation.node._type
-    const _key = operation.node._key
-    const value =
-      'value' in operation.node && typeof operation.node.value === 'object'
-        ? operation.node.value
-        : ({} satisfies Record<string, unknown>)
+    const {children: _voidChildren, ...inlineObject} = operation.node as Record<
+      string,
+      unknown
+    >
 
-    return [
-      setIfMissingPatch,
-      insert(
-        [
-          {
-            _type,
-            _key,
-            ...value,
-          },
-        ],
-        position,
-        path,
-      ),
-    ]
+    return [setIfMissingPatch, insert([inlineObject], position, path)]
   }
 
   return []

@@ -247,9 +247,7 @@ function setPatch(
     ])
 
     if (editor.isTextBlock(block.node) && Element.isElement(updatedBlock)) {
-      applySetNode(editor, updatedBlock as unknown as Record<string, unknown>, [
-        block.index,
-      ])
+      applySetNode(editor, updatedBlock, [block.index])
 
       const previousSelection = editor.selection
 
@@ -286,9 +284,7 @@ function setPatch(
 
       return true
     } else {
-      applySetNode(editor, updatedBlock as unknown as Record<string, unknown>, [
-        block.index,
-      ])
+      applySetNode(editor, updatedBlock, [block.index])
 
       return true
     }
@@ -302,9 +298,7 @@ function setPatch(
       },
     ])
 
-    applySetNode(editor, updatedBlock as unknown as Record<string, unknown>, [
-      block.index,
-    ])
+    applySetNode(editor, updatedBlock, [block.index])
 
     return true
   }
@@ -363,16 +357,13 @@ function setPatch(
           },
         ])
 
-        applySetNode(editor, newNode as unknown as Record<string, unknown>, [
-          block.index,
-          child.index,
-        ])
+        applySetNode(editor, newNode, [block.index, child.index])
       }
     } else {
       // Setting inline object property
 
       const propPath = patch.path.slice(3)
-      const reservedProps = ['_key', '_type', 'children', '__inline']
+      const reservedProps = ['_key', '_type', 'children']
       const propEntry = propPath.at(0)
 
       if (propEntry === undefined) {
@@ -383,48 +374,27 @@ function setPatch(
         return false
       }
 
-      // If the child is an inline object, we need to apply the patch to the
-      // `value` property object.
-      const value =
-        'value' in child.node && typeof child.node.value === 'object'
-          ? child.node.value
-          : {}
-
-      const newValue = applyAll(value, [
+      const newNode = applyAll(child.node, [
         {
           ...patch,
           path: patch.path.slice(3),
         },
       ])
 
-      applySetNode(
-        editor,
-        {
-          ...(child.node as unknown as Record<string, unknown>),
-          value: newValue,
-        },
-        [block.index, child.index],
-      )
+      applySetNode(editor, newNode, [block.index, child.index])
     }
 
     return true
-  } else if (block && 'value' in block.node) {
+  } else if (block && !isTextBlock) {
     if (patch.path.length > 1 && patch.path[1] !== 'children') {
-      const newVal = applyAll(block.node.value, [
+      const newVal = applyAll(block.node, [
         {
           ...patch,
           path: patch.path.slice(1),
         },
       ])
 
-      applySetNode(
-        editor,
-        {
-          ...(block.node as unknown as Record<string, unknown>),
-          value: newVal,
-        },
-        [block.index],
-      )
+      applySetNode(editor, newVal, [block.index])
     } else {
       return false
     }
@@ -479,41 +449,42 @@ function unsetPatch(editor: PortableTextSlateEditor, patch: UnsetPatch) {
     }
   }
 
-  if (child && !Text.isText(child.node)) {
+  if (child && Element.isElement(child.node)) {
     // Unsetting inline object property
 
     const propPath = patch.path.slice(3)
     const propEntry = propPath.at(0)
-    const reservedProps = ['_key', '_type', 'children', '__inline']
+    const reservedProps = ['_key', '_type', 'children']
 
     if (propEntry === undefined) {
       return false
     }
 
     if (typeof propEntry === 'string' && reservedProps.includes(propEntry)) {
-      // All custom properties are stored on the `value` property object.
-      // If you try to unset any of the other top-level properties it's a
-      // no-op.
       return false
     }
 
-    const value =
-      'value' in child.node && typeof child.node.value === 'object'
-        ? child.node.value
-        : {}
-
-    const newValue = applyAll(value, [
+    const newNode = applyAll(child.node, [
       {
         ...patch,
         path: patch.path.slice(3),
       },
     ])
+    const newKeys = Object.keys(newNode)
 
-    applySetNode(
-      editor,
-      {...(child.node as unknown as Record<string, unknown>), value: newValue},
-      [block.index, child.index],
+    const removedProperties = Object.keys(child.node).filter(
+      (property) => !newKeys.includes(property),
     )
+
+    if (removedProperties.length > 0) {
+      const unsetProps: Record<string, null> = {}
+      for (const prop of removedProperties) {
+        unsetProps[prop] = null
+      }
+      applySetNode(editor, unsetProps, [block.index, child.index])
+    } else {
+      applySetNode(editor, newNode, [block.index, child.index])
+    }
 
     return true
   }
@@ -564,22 +535,29 @@ function unsetPatch(editor: PortableTextSlateEditor, patch: UnsetPatch) {
   }
 
   if (!child) {
-    if ('value' in block.node) {
-      const newVal = applyAll(block.node.value, [
+    if (!editor.isTextBlock(block.node)) {
+      // Block object — apply patch directly to the node
+      const newVal = applyAll(block.node, [
         {
           ...patch,
           path: patch.path.slice(1),
         },
       ])
+      const newKeys = Object.keys(newVal)
 
-      applySetNode(
-        editor,
-        {
-          ...(block.node as unknown as Record<string, unknown>),
-          value: newVal,
-        },
-        [block.index],
+      const removedProperties = Object.keys(block.node).filter(
+        (property) => !newKeys.includes(property),
       )
+
+      if (removedProperties.length > 0) {
+        const unsetProps: Record<string, null> = {}
+        for (const prop of removedProperties) {
+          unsetProps[prop] = null
+        }
+        applySetNode(editor, unsetProps, [block.index])
+      } else {
+        applySetNode(editor, newVal, [block.index])
+      }
 
       return true
     }

@@ -70,7 +70,7 @@ export const deleteOperationImplementation: OperationImplementation<
       at,
       match: (node) =>
         (isSpan(context, node) && node._key !== VOID_CHILD_KEY) ||
-        ('__inline' in node && node.__inline === true),
+        (Element.isElement(node) && operation.editor.isInline(node)),
     })
     const childPathRefs = Array.from(childMatches, ([, p]) =>
       Editor.pathRef(operation.editor, p),

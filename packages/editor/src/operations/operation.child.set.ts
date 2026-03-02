@@ -76,8 +76,6 @@ export const childSetOperationImplementation: OperationImplementation<
       )
     }
 
-    const value =
-      'value' in child && typeof child.value === 'object' ? child.value : {}
     const {_type, _key, ...rest} = operation.props
 
     for (const prop in rest) {
@@ -91,10 +89,7 @@ export const childSetOperationImplementation: OperationImplementation<
       {
         ...child,
         _key: typeof _key === 'string' ? _key : child._key,
-        value: {
-          ...value,
-          ...rest,
-        },
+        ...rest,
       },
       childPath,
     )

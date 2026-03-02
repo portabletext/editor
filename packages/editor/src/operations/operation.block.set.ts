@@ -1,7 +1,6 @@
 import {applyAll, set} from '@portabletext/patches'
 import {isTextBlock} from '@portabletext/schema'
 import {applySetNode} from '../internal-utils/apply-set-node'
-import type {Node} from '../slate'
 import {parseMarkDefs} from '../utils/parse-blocks'
 import type {OperationImplementation} from './operation.types'
 
@@ -95,15 +94,11 @@ export const blockSetOperationImplementation: OperationImplementation<
     }
 
     const patches = Object.entries(filteredProps).map(([key, value]) =>
-      key === '_key' ? set(value, ['_key']) : set(value, ['value', key]),
+      set(value, [key]),
     )
 
-    const updatedSlateBlock = applyAll(slateBlock, patches) as Partial<Node>
+    const updatedSlateBlock = applyAll(slateBlock, patches)
 
-    applySetNode(
-      operation.editor,
-      updatedSlateBlock as Record<string, unknown>,
-      [blockIndex],
-    )
+    applySetNode(operation.editor, updatedSlateBlock, [blockIndex])
   }
 }

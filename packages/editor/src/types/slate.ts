@@ -6,12 +6,11 @@ import type {BaseEditor, Descendant} from '../slate'
 import type {ReactEditor} from '../slate-react'
 import type {PortableTextSlateEditor} from './slate-editor'
 
-export interface VoidElement {
+export interface ObjectElement {
   _type: string
   _key: string
   children: Descendant[]
-  __inline: boolean
-  value: Record<string, unknown>
+  [key: string]: unknown
 }
 
 export interface SlateTextBlock extends Omit<
@@ -24,7 +23,7 @@ export interface SlateTextBlock extends Omit<
 declare module '../slate/index' {
   interface CustomTypes {
     Editor: BaseEditor & ReactEditor & PortableTextSlateEditor
-    Element: SlateTextBlock | VoidElement
+    Element: SlateTextBlock | ObjectElement
     Text: PortableTextSpan
   }
 }
