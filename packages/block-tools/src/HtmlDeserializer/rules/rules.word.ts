@@ -6,17 +6,47 @@ import {
 import type {DeserializerRule} from '../../types'
 import {isElement, tagName} from '../helpers'
 
+/**
+ * Read the list style map stored by the Word preprocessor on the document body.
+ * Returns a map from list ID (e.g. "l0") to list type ("bullet" or "number").
+ */
+function getListStyleMap(el: Node): Record<string, string> {
+  if (!isElement(el)) {
+    return {}
+  }
+
+  const body = el.closest('body') || el.ownerDocument?.body
+  if (!body) {
+    return {}
+  }
+
+  const data = body.getAttribute('data-word-list-styles')
+  if (!data) {
+    return {}
+  }
+
+  try {
+    return JSON.parse(data)
+  } catch {
+    return {}
+  }
+}
+
 function getListItemStyle(el: Node): string | undefined {
   const style = isElement(el) && el.getAttribute('style')
   if (!style) {
     return undefined
   }
 
-  if (!style.match(/lfo\d+/)) {
+  // Extract list ID and level from mso-list: e.g. "mso-list:l1 level1 lfo1"
+  const msoListMatch = style.match(/mso-list:\s*(l\d+)\s+(level\d+)\s+lfo\d+/)
+  if (!msoListMatch) {
     return undefined
   }
 
-  return style.match('lfo1') ? 'number' : 'bullet'
+  const key = `${msoListMatch[1]}:${msoListMatch[2]}`
+  const listStyles = getListStyleMap(el)
+  return (listStyles[key] as 'bullet' | 'number') || 'bullet'
 }
 
 function getListItemLevel(el: Node): number | undefined {
