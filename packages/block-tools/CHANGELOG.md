@@ -1,5 +1,17 @@
 # Changelog
 
+## 5.0.5
+
+### Patch Changes
+
+- [#2284](https://github.com/portabletext/editor/pull/2284) [`7886449`](https://github.com/portabletext/editor/commit/788644909eb30698aa4155790f1d90ee3e9ad008) Thanks [@christianhg](https://github.com/christianhg)! - fix: detect Word list types from `@list` CSS definitions
+
+  Word paste was flipping bullet and numbered list types. The `lfo` reference
+  number in `mso-list` style attributes is an arbitrary ID assigned per document,
+  not a list type indicator. The fix parses the `@list` CSS definitions from the
+  `<style>` block to check for `mso-level-number-format:bullet`, which is the
+  actual signal for bullet lists.
+
 ## 5.0.4
 
 ### Patch Changes
