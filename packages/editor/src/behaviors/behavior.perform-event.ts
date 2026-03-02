@@ -224,6 +224,8 @@ export function performEvent({
         actions.some(
           (action) => action.type === 'raise' || action.type === 'execute',
         ) || !actions.some((action) => action.type === 'forward')
+      if (event.type === 'keyboard.keydown') {
+      }
 
       let undoStepCreated = false
 
@@ -349,6 +351,8 @@ export function performEvent({
     break
   }
 
+  if (event.type === 'keyboard.keydown') {
+  }
   if (!defaultBehaviorOverwritten && isSyntheticBehaviorEvent(event)) {
     nativeEvent?.preventDefault()
 

@@ -2,7 +2,7 @@ import type {PortableTextSpan} from '@portabletext/schema'
 import {applySelect} from '../internal-utils/apply-selection'
 import {applySetNode} from '../internal-utils/apply-set-node'
 import {toSlateRange} from '../internal-utils/to-slate-range'
-import {Editor, Node, Path, Range} from '../slate'
+import {Editor, Node, Path, Range, Text} from '../slate'
 import type {OperationImplementation} from './operation.types'
 
 export const removeAnnotationOperationImplementation: OperationImplementation<
@@ -125,10 +125,12 @@ export const removeAnnotationOperationImplementation: OperationImplementation<
     // Split text nodes at range boundaries
     const splitRange = at ?? editor.selection
     if (splitRange && Range.isRange(splitRange)) {
+      const [splitLeaf] = Editor.leaf(editor, splitRange.anchor)
       if (
         !(
           Range.isCollapsed(splitRange) &&
-          Editor.leaf(editor, splitRange.anchor)[0].text.length > 0
+          Text.isText(splitLeaf) &&
+          splitLeaf.text.length > 0
         )
       ) {
         const splitRangeRef = Editor.rangeRef(editor, splitRange, {

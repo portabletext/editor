@@ -591,6 +591,27 @@ export const DOMEditor: DOMEditorInterface = {
     const el = DOMEditor.toDOMNode(editor, node)
     let domPoint: DOMPoint | undefined
 
+    // ObjectNodes are void — place the selection inside the spacer's
+    // zero-width text node, matching the old void-child behavior.
+    if (Node.isObjectNode(node)) {
+      const spacer = el.querySelector('[data-slate-zero-width]')
+      if (spacer) {
+        const domText = spacer.childNodes[0]
+        if (domText) {
+          return [domText, 0]
+        }
+      }
+      // Fallback: place at the ObjectNode's position in its parent
+      const parentEl = el.parentNode
+      if (parentEl) {
+        const index = Array.from(parentEl.childNodes).indexOf(el)
+        if (index !== -1) {
+          return [parentEl, index]
+        }
+      }
+      return [el, 0]
+    }
+
     // If we're inside a void node, force the offset to 0, otherwise the zero
     // width spacing character will result in an incorrect offset of 1
     if (Editor.void(editor, {at: point})) {
@@ -923,6 +944,53 @@ export const DOMEditor: DOMEditorInterface = {
       }
     }
 
+    // ObjectNodes have no text children — resolve to the ObjectNode's path.
+    // This handles two cases:
+    // 1. The DOM point is directly on an ObjectNode element (parentNode is the ObjectNode)
+    // 2. The DOM point is on a container at a child index (nearestNode is the container,
+    //    nearestOffset is the child index pointing to an ObjectNode)
+    if (!textNode && parentNode) {
+      // Case 2: Check if the DOM point is [container, childIndex] pointing to an ObjectNode
+      if (
+        nearestNode instanceof HTMLElement &&
+        nearestNode.hasAttribute('data-slate-node')
+      ) {
+        const childEl = nearestNode.childNodes[nearestOffset]
+        if (
+          childEl instanceof HTMLElement &&
+          DOMEditor.hasDOMNode(editor, childEl)
+        ) {
+          const slateNode = DOMEditor.toSlateNode(editor, childEl)
+          if (Node.isObjectNode(slateNode)) {
+            try {
+              const path = DOMEditor.findPath(editor, slateNode)
+              return {path, offset: 0} as T extends true ? Point | null : Point
+            } catch {
+              // Fall through
+            }
+          }
+        }
+      }
+
+      // Case 1: The parentNode itself is or contains an ObjectNode element
+      const elementNode =
+        parentNode.closest('[data-slate-node="element"]') ??
+        (parentNode.hasAttribute('data-slate-node') ? parentNode : null)
+
+      if (elementNode && DOMEditor.hasDOMNode(editor, elementNode)) {
+        const slateNode = DOMEditor.toSlateNode(editor, elementNode)
+
+        if (Node.isObjectNode(slateNode)) {
+          try {
+            const path = DOMEditor.findPath(editor, slateNode)
+            return {path, offset: 0} as T extends true ? Point | null : Point
+          } catch {
+            // Fall through to the textNode check below
+          }
+        }
+      }
+    }
+
     if (!textNode) {
       if (suppressThrow) {
         return null as T extends true ? Point | null : Point
@@ -945,6 +1013,23 @@ export const DOMEditor: DOMEditorInterface = {
       }
       throw e
     }
+
+    // If the resolved path points to a virtual child of an ObjectNode
+    // (the spacer's text node), truncate to the ObjectNode's path.
+    if (path.length > 1) {
+      const parentPath = path.slice(0, -1)
+      try {
+        const parentSlateNode = Node.get(editor, parentPath)
+        if (Node.isObjectNode(parentSlateNode)) {
+          return {path: parentPath, offset: 0} as T extends true
+            ? Point | null
+            : Point
+        }
+      } catch {
+        // Parent path doesn't exist in the tree, continue with original path
+      }
+    }
+
     return {path, offset} as T extends true ? Point | null : Point
   },
 
@@ -1071,6 +1156,9 @@ export const DOMEditor: DOMEditorInterface = {
       anchorOffset == null ||
       focusOffset == null
     ) {
+      if (suppressThrow) {
+        return null as T extends true ? Range | null : Range
+      }
       throw new Error(
         `Cannot resolve a Slate range from DOM range: ${domRange}`,
       )

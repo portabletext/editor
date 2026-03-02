@@ -78,7 +78,9 @@ export interface RenderElementProps {
   element: Element
   attributes: {
     'data-slate-node': 'element'
+    'data-slate-void'?: true
     'data-slate-inline'?: true
+    'contentEditable'?: false
     'dir'?: 'rtl'
     'ref': any
   }
@@ -1034,25 +1036,28 @@ export const Editable = forwardRef(
     if (editor.selection && Range.isCollapsed(editor.selection) && marks) {
       const {anchor} = editor.selection
       const leaf = Node.leaf(editor, anchor.path)
-      const {text: _text, ...rest} = leaf
 
-      // While marks isn't a 'complete' text, we can still use loose Text.equals
-      // here which only compares marks anyway.
-      if (!Text.equals(leaf, marks as Text, {loose: true})) {
-        state.hasMarkPlaceholder = true
+      if (Text.isText(leaf)) {
+        const {text: _text, ...rest} = leaf
 
-        const unset = Object.fromEntries(
-          Object.keys(rest).map((mark) => [mark, null]),
-        )
+        // While marks isn't a 'complete' text, we can still use loose Text.equals
+        // here which only compares marks anyway.
+        if (!Text.equals(leaf, marks as Text, {loose: true})) {
+          state.hasMarkPlaceholder = true
 
-        decorations.push({
-          [MARK_PLACEHOLDER_SYMBOL]: true,
-          ...unset,
-          ...marks,
+          const unset = Object.fromEntries(
+            Object.keys(rest).map((mark) => [mark, null]),
+          )
 
-          anchor,
-          focus: anchor,
-        })
+          decorations.push({
+            [MARK_PLACEHOLDER_SYMBOL]: true,
+            ...unset,
+            ...marks,
+
+            anchor,
+            focus: anchor,
+          })
+        }
       }
     }
 
@@ -1064,6 +1069,10 @@ export const Editable = forwardRef(
         if (selection) {
           const {anchor} = selection
           const text = Node.leaf(editor, anchor.path)
+
+          if (!Text.isText(text)) {
+            return
+          }
 
           // While marks isn't a 'complete' text, we can still use loose Text.equals
           // here which only compares marks anyway.

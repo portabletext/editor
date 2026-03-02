@@ -1,4 +1,4 @@
-import {Editor, Range} from '../slate'
+import {Editor, Node, Range} from '../slate'
 import type {OperationImplementation} from './operation.types'
 
 export const insertTextOperationImplementation: OperationImplementation<
@@ -19,6 +19,12 @@ export const insertTextOperationImplementation: OperationImplementation<
   }
 
   const {path, offset} = selection.anchor
+
+  // ObjectNodes are void — text cannot be inserted into them.
+  const node = Node.get(operation.editor, path)
+  if (Node.isObjectNode(node)) {
+    return
+  }
 
   if (operation.text.length > 0) {
     editor.apply({

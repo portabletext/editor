@@ -56,6 +56,11 @@ export const marks: EditorInterface['marks'] = (editor, _options = {}) => {
 
   let [node] = Editor.leaf(editor, path)
 
+  // ObjectNodes don't have marks
+  if (!Text.isText(node)) {
+    return {} as ReturnType<EditorInterface['marks']> & {}
+  }
+
   if (anchor.offset === 0) {
     const prev = Editor.previous(editor, {at: path, match: Text.isText})
     const markedVoid = Editor.above(editor, {

@@ -50,8 +50,17 @@ export function applyInsertNodeAtPoint(
     } else if (Element.isElement(node) && editor.isInline(node)) {
       match = (n) =>
         Text.isText(n) || (Element.isElement(n) && Editor.isInline(editor, n))
+    } else if (Node.isObjectNode(node)) {
+      // ObjectNodes can be inline or block-level. When inserting at a Point
+      // (inside a text block), they're inline.
+      match = (n) =>
+        Text.isText(n) ||
+        Node.isObjectNode(n) ||
+        (Element.isElement(n) && Editor.isInline(editor, n))
     } else {
-      match = (n) => Element.isElement(n) && Editor.isBlock(editor, n)
+      match = (n) =>
+        (Element.isElement(n) && Editor.isBlock(editor, n)) ||
+        Node.isObjectNode(n)
     }
 
     const [entry] = Editor.nodes(editor, {

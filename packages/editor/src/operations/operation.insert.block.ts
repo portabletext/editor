@@ -84,7 +84,8 @@ export function insertBlock(options: {
       at: start,
       mode: 'lowest',
       match: (node, path) =>
-        Element.isElement(node) && path.length <= start.path.length,
+        (Element.isElement(node) || Node.isObjectNode(node)) &&
+        path.length <= start.path.length,
     }),
   ).at(0) ?? [undefined, undefined]
   let [endBlock, endBlockPath] = Array.from(
@@ -92,7 +93,8 @@ export function insertBlock(options: {
       at: end,
       mode: 'lowest',
       match: (node, path) =>
-        Element.isElement(node) && path.length <= end.path.length,
+        (Element.isElement(node) || Node.isObjectNode(node)) &&
+        path.length <= end.path.length,
     }),
   ).at(0) ?? [undefined, undefined]
 
@@ -322,11 +324,17 @@ export function insertBlock(options: {
         Editor.nodes(editor, {
           at: Editor.end(editor, []),
           mode: 'lowest',
-          match: (node, path) => Element.isElement(node) && path.length === 1,
+          match: (node, path) =>
+            (Element.isElement(node) || Node.isObjectNode(node)) &&
+            path.length === 1,
         }),
       ).at(-1) ?? [undefined, undefined]
 
-      if (newEndBlock && newEndBlockPath && Element.isElement(newEndBlock)) {
+      if (
+        newEndBlock &&
+        newEndBlockPath &&
+        (Element.isElement(newEndBlock) || Node.isObjectNode(newEndBlock))
+      ) {
         endBlock = newEndBlock
         endBlockPath = newEndBlockPath
       }

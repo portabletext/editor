@@ -192,9 +192,10 @@ export interface NodeInterface {
   last: (root: Node, path: Path) => NodeEntry
 
   /**
-   * Get the node at a specific path, ensuring it's a leaf text node.
+   * Get the node at a specific path, ensuring it's a leaf node (Text or
+   * ObjectNode).
    */
-  leaf: (root: Node, path: Path) => Text
+  leaf: (root: Node, path: Path) => Text | ObjectNode
 
   /**
    * Return a generator of the in a branch of the tree, from a specific path.
@@ -548,10 +549,10 @@ export const Node: NodeInterface = {
     return [n, p]
   },
 
-  leaf(root: Node, path: Path): Text {
+  leaf(root: Node, path: Path): Text | ObjectNode {
     const node = Node.get(root, path)
 
-    if (!Text.isText(node)) {
+    if (!Text.isText(node) && !Node.isObjectNode(node)) {
       throw new Error(
         `Cannot get the leaf node at path [${path}] because it refers to a non-leaf node: ${Scrubber.stringify(
           node,

@@ -13,7 +13,7 @@ import type {PortableTextSlateEditor} from '../types/slate-editor'
  *
  * Skips `children` since those are structural properties managed by dedicated
  * operations. Skips `text` on text nodes (spans) for the same reason, but
- * allows `text` on elements (inline/block objects) where it's a user-defined
+ * allows `text` on elements and ObjectNodes where it's a user-defined
  * property.
  */
 export function applySetNode(
@@ -31,8 +31,12 @@ export function applySetNode(
       continue
     }
 
-    // Only skip `text` on actual text nodes (spans), not on elements (inline/block objects)
-    if (key === 'text' && !Element.isElement(node)) {
+    // Only skip `text` on actual text nodes (spans), not on elements or ObjectNodes
+    if (
+      key === 'text' &&
+      !Element.isElement(node) &&
+      !editor.isObjectNode(node)
+    ) {
       continue
     }
 

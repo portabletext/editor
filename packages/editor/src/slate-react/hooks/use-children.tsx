@@ -129,6 +129,7 @@ const useChildren = (props: {
     return (
       <ObjectNodeComponent
         decorations={decorationsByChild[i] ?? []}
+        isInline={!isEditor}
         key={key.id}
         objectNode={n}
         renderElement={renderElement}

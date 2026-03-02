@@ -28,10 +28,12 @@ export const decoratorRemoveOperationImplementation: OperationImplementation<
     const rangeRef = Editor.rangeRef(editor, at, {affinity: 'inward'})
 
     // Split text nodes at range boundaries (equivalent to setNodes with split:true and empty props)
+    const [decoratorLeaf] = Editor.leaf(editor, at.anchor)
     if (
       !(
         Range.isCollapsed(at) &&
-        Editor.leaf(editor, at.anchor)[0].text.length > 0
+        Text.isText(decoratorLeaf) &&
+        decoratorLeaf.text.length > 0
       )
     ) {
       const [start, end] = Range.edges(at)

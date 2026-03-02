@@ -1,6 +1,6 @@
 import {applySetNode} from '../internal-utils/apply-set-node'
 import {toSlateRange} from '../internal-utils/to-slate-range'
-import {Editor, Element} from '../slate'
+import {Editor, Node} from '../slate'
 import type {OperationImplementation} from './operation.types'
 
 export const childSetOperationImplementation: OperationImplementation<
@@ -65,7 +65,7 @@ export const childSetOperationImplementation: OperationImplementation<
     return
   }
 
-  if (Element.isElement(child)) {
+  if (Node.isObjectNode(child) || operation.editor.isObjectNode(child)) {
     const definition = context.schema.inlineObjects.find(
       (definition) => definition.name === child._type,
     )

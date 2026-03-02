@@ -29,8 +29,12 @@ export const apply: WithEditorFirstArg<Editor['apply']> = (editor, op) => {
     updateDirtyPaths(editor, editor.getDirtyPaths(op), transform)
   }
 
+  if (op.type === 'insert_node' || op.type === 'remove_node') {
+  }
   Transforms.transform(editor, op)
   editor.operations.push(op)
+  if (op.type === 'remove_node' || op.type === 'insert_node') {
+  }
   Editor.normalize(editor, {
     operation: op,
   })

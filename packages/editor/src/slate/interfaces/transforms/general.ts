@@ -238,8 +238,15 @@ export const GeneralTransforms: GeneralTransforms = {
             }
 
             // Only forbid setting `text` on text nodes (spans).
-            // On elements (inline/block objects), `text` is a user property.
-            if (key === 'text' && !isElement) {
+            // On elements and ObjectNodes (inline/block objects), `text` is a user property.
+            // ObjectNodes may have a `text` field (e.g., mentions with text: 'Jane'),
+            // which makes Node.isObjectNode fail (it checks typeof text !== 'string').
+            // Use marks array as the discriminator: spans have marks, ObjectNodes don't.
+            if (
+              key === 'text' &&
+              !isElement &&
+              Array.isArray((node as Record<string, unknown>)['marks'])
+            ) {
               throw new Error(`Cannot set the "${key}" property of nodes!`)
             }
 

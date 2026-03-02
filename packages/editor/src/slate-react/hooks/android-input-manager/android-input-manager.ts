@@ -297,6 +297,12 @@ export function createAndroidInputManager({
     const pendingDiffs = editor.pendingDiffs
 
     const target = Node.leaf(editor, path)
+
+    // ObjectNodes don't have text - skip diff storage
+    if (!Text.isText(target)) {
+      return
+    }
+
     const idx = pendingDiffs.findIndex((change) =>
       Path.equals(change.path, path),
     )
@@ -406,6 +412,19 @@ export function createAndroidInputManager({
       let [start, end] = Range.edges(targetRange)
       let [leaf, path] = Editor.leaf(editor, start.path)
 
+      // ObjectNodes don't have text - skip diff logic for them
+      if (!Text.isText(leaf)) {
+        return scheduleAction(
+          () =>
+            editorActor.send({
+              type: 'behavior event',
+              behaviorEvent: {type: 'delete', direction},
+              editor,
+            }),
+          {at: targetRange},
+        )
+      }
+
       if (Range.isExpanded(targetRange)) {
         if (leaf.text.length === start.offset && end.offset === 0) {
           const next = Editor.next(editor, {
@@ -498,7 +517,10 @@ export function createAndroidInputManager({
         if (canStoreDiff && Range.isCollapsed(targetRange)) {
           const targetNode = Node.leaf(editor, anchor.path)
 
-          if (anchor.offset < targetNode.text.length) {
+          if (
+            Text.isText(targetNode) &&
+            anchor.offset < targetNode.text.length
+          ) {
             return storeDiff(anchor.path, {
               text: '',
               start: anchor.offset,

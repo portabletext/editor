@@ -206,7 +206,7 @@ export function createUniqueKeysPlugin(editorActor: EditorActor) {
     editor.normalizeNode = (entry) => {
       const [node, path] = entry
 
-      if (Element.isElement(node)) {
+      if (Element.isElement(node) || Node.isObjectNode(node)) {
         const [parent] = Editor.parent(editor, path)
 
         if (parent && Editor.isEditor(parent)) {

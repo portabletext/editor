@@ -1,6 +1,6 @@
 import {isTextBlock} from '@portabletext/schema'
 import {applySetNode} from '../internal-utils/apply-set-node'
-import {Editor, Element} from '../slate'
+import {Editor, Node} from '../slate'
 import type {OperationImplementation} from './operation.types'
 
 export const childUnsetOperationImplementation: OperationImplementation<
@@ -86,7 +86,7 @@ export const childUnsetOperationImplementation: OperationImplementation<
     return
   }
 
-  if (Element.isElement(child)) {
+  if (Node.isObjectNode(child) || operation.editor.isObjectNode(child)) {
     const unsetProps: Record<string, unknown> = {}
     for (const prop of operation.props) {
       if (prop === '_type') {

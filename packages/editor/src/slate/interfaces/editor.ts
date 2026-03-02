@@ -6,6 +6,7 @@ import type {
   Location,
   Node,
   NodeEntry,
+  ObjectNode,
   Operation,
   Path,
   PathRef,
@@ -428,7 +429,7 @@ export interface EditorInterface {
     editor: Editor,
     at: Location,
     options?: EditorLeafOptions,
-  ) => NodeEntry<Text>
+  ) => NodeEntry<Text | ObjectNode>
 
   /**
    * Iterate through all of the levels at a location.

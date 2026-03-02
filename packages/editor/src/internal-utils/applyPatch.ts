@@ -449,7 +449,10 @@ function unsetPatch(editor: PortableTextSlateEditor, patch: UnsetPatch) {
     }
   }
 
-  if (child && Element.isElement(child.node)) {
+  if (
+    child &&
+    (Element.isElement(child.node) || Node.isObjectNode(child.node))
+  ) {
     // Unsetting inline object property
 
     const propPath = patch.path.slice(3)

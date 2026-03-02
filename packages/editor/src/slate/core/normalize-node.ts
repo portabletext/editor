@@ -67,8 +67,8 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
       const child = element.children[n] as Descendant
       const prev = element.children[n - 1] as Descendant | undefined
 
-      if (Text.isText(child)) {
-        if (prev != null && Text.isText(prev)) {
+      if (Text.isText(child) && !editor.isObjectNode(child)) {
+        if (prev != null && Text.isText(prev) && !editor.isObjectNode(prev)) {
           // Merge adjacent text nodes that are empty or match.
           if (child.text === '') {
             Transforms.removeNodes(editor, {
@@ -150,7 +150,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
       // Allow only block nodes in the top-level children and parent blocks
       // that only contain block nodes.
       if (
-        Text.isText(child) ||
+        (Text.isText(child) && !editor.isObjectNode(child)) ||
         (Element.isElement(child) && editor.isInline(child))
       ) {
         if (options?.fallbackElement) {
