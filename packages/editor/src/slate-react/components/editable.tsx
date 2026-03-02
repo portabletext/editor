@@ -538,7 +538,7 @@ export const Editable = forwardRef(
     // https://github.com/facebook/react/issues/11211
     const onDOMBeforeInput = useCallback(
       (event: InputEvent) => {
-        handleNativeHistoryEvents(editor, event)
+        handleNativeHistoryEvents(editor, editorActor, event)
         const el = ReactEditor.toDOMNode(editor, editor)
         const root = el.getRootNode()
 
@@ -1190,11 +1190,12 @@ export const Editable = forwardRef(
                     if (!ReactEditor.isFocused(editor)) {
                       handleNativeHistoryEvents(
                         editor,
+                        editorActor,
                         event.nativeEvent as InputEvent,
                       )
                     }
                   },
-                  [attributes.onInput, editor],
+                  [attributes.onInput, editor, editorActor],
                 )}
                 onBlur={useCallback(
                   (event: React.FocusEvent<HTMLDivElement>) => {
@@ -1683,22 +1684,24 @@ export const Editable = forwardRef(
                       // hotkeys ourselves. (2019/11/06)
                       if (Hotkeys.isRedo(nativeEvent)) {
                         event.preventDefault()
-                        const maybeHistoryEditor: any = editor
 
-                        if (typeof maybeHistoryEditor.redo === 'function') {
-                          maybeHistoryEditor.redo()
-                        }
+                        editorActor.send({
+                          type: 'behavior event',
+                          behaviorEvent: {type: 'history.redo'},
+                          editor,
+                        })
 
                         return
                       }
 
                       if (Hotkeys.isUndo(nativeEvent)) {
                         event.preventDefault()
-                        const maybeHistoryEditor: any = editor
 
-                        if (typeof maybeHistoryEditor.undo === 'function') {
-                          maybeHistoryEditor.undo()
-                        }
+                        editorActor.send({
+                          type: 'behavior event',
+                          behaviorEvent: {type: 'history.undo'},
+                          editor,
+                        })
 
                         return
                       }
@@ -2222,20 +2225,25 @@ export const isDOMEventHandled = <E extends Event>(
   return event.defaultPrevented
 }
 
-const handleNativeHistoryEvents = (editor: Editor, event: InputEvent) => {
-  const maybeHistoryEditor: any = editor
-  if (
-    event.inputType === 'historyUndo' &&
-    typeof maybeHistoryEditor.undo === 'function'
-  ) {
-    maybeHistoryEditor.undo()
+const handleNativeHistoryEvents = (
+  editor: Editor,
+  editorActor: EditorActor,
+  event: InputEvent,
+) => {
+  if (event.inputType === 'historyUndo') {
+    editorActor.send({
+      type: 'behavior event',
+      behaviorEvent: {type: 'history.undo'},
+      editor,
+    })
     return
   }
-  if (
-    event.inputType === 'historyRedo' &&
-    typeof maybeHistoryEditor.redo === 'function'
-  ) {
-    maybeHistoryEditor.redo()
+  if (event.inputType === 'historyRedo') {
+    editorActor.send({
+      type: 'behavior event',
+      behaviorEvent: {type: 'history.redo'},
+      editor,
+    })
     return
   }
 }
