@@ -132,12 +132,6 @@ function sanitySchemaTypeToSchema(
       title: inlineObject.title,
       fields: inlineObject.fields.map(sanityFieldToSchemaField),
     })),
-    nestedBlocks: collectNestedBlockTypes(blockObjectTypes).map(
-      (nestedBlock) => ({
-        name: nestedBlock.name,
-        fields: nestedBlock.fields.map(sanityFieldToSchemaField),
-      }),
-    ),
   }
 }
 
@@ -199,49 +193,6 @@ function sanityOfMemberToOfDefinition(memberType: SchemaType): OfDefinition {
   }
 
   return result
-}
-
-function collectNestedBlockTypes(
-  objectTypes: Array<ObjectSchemaType>,
-): Array<ObjectSchemaType> {
-  const nestedBlocks: Array<ObjectSchemaType> = []
-  const seen = new Set<string>()
-
-  function walkObjectType(objectType: ObjectSchemaType) {
-    if (seen.has(objectType.name)) {
-      return
-    }
-    seen.add(objectType.name)
-
-    for (const field of objectType.fields ?? []) {
-      const ofMembers = safeGetOf(field.type)
-      if (ofMembers) {
-        for (const memberType of ofMembers) {
-          if (findBlockType(memberType)) {
-            if (!nestedBlocks.some((nb) => nb.name === objectType.name)) {
-              nestedBlocks.push(objectType)
-            }
-          } else if (
-            memberType.jsonType === 'object' &&
-            memberType.name !== objectType.name
-          ) {
-            walkObjectType(memberType as ObjectSchemaType)
-          }
-        }
-      } else if (
-        field.type.jsonType === 'object' &&
-        field.type.name !== objectType.name
-      ) {
-        walkObjectType(field.type as ObjectSchemaType)
-      }
-    }
-  }
-
-  for (const objectType of objectTypes) {
-    walkObjectType(objectType)
-  }
-
-  return nestedBlocks
 }
 
 function resolveEnabledStyles(blockType: ObjectSchemaType) {

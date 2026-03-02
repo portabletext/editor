@@ -19,7 +19,6 @@ describe(compileSchema.name, () => {
         annotations: [],
         blockObjects: [],
         inlineObjects: [],
-        nestedBlocks: [],
       })
 
       expect(consoleWarnSpy).toHaveBeenCalledWith(
@@ -41,75 +40,6 @@ describe(compileSchema.name, () => {
         annotations: [],
         blockObjects: [],
         inlineObjects: [],
-        nestedBlocks: [],
-      })
-    })
-  })
-
-  describe('nested blocks', () => {
-    test('empty schema has nestedBlocks: []', () => {
-      expect(compileSchema({})).toEqual({
-        block: {name: 'block'},
-        span: {name: 'span'},
-        styles: [{value: 'normal', name: 'normal', title: 'Normal'}],
-        lists: [],
-        decorators: [],
-        annotations: [],
-        blockObjects: [],
-        inlineObjects: [],
-        nestedBlocks: [],
-      })
-    })
-
-    test('nested blocks are compiled with fields defaulting to []', () => {
-      expect(
-        compileSchema({
-          nestedBlocks: [{name: 'tableCell'}],
-        }),
-      ).toEqual({
-        block: {name: 'block'},
-        span: {name: 'span'},
-        styles: [{value: 'normal', name: 'normal', title: 'Normal'}],
-        lists: [],
-        decorators: [],
-        annotations: [],
-        blockObjects: [],
-        inlineObjects: [],
-        nestedBlocks: [{name: 'tableCell', fields: []}],
-      })
-    })
-
-    test('nested blocks with fields are compiled', () => {
-      expect(
-        compileSchema({
-          nestedBlocks: [
-            {
-              name: 'tableCell',
-              fields: [
-                {name: 'colspan', type: 'number'},
-                {name: 'rowspan', type: 'number'},
-              ],
-            },
-          ],
-        }),
-      ).toEqual({
-        block: {name: 'block'},
-        span: {name: 'span'},
-        styles: [{value: 'normal', name: 'normal', title: 'Normal'}],
-        lists: [],
-        decorators: [],
-        annotations: [],
-        blockObjects: [],
-        inlineObjects: [],
-        nestedBlocks: [
-          {
-            name: 'tableCell',
-            fields: [
-              {name: 'colspan', type: 'number'},
-              {name: 'rowspan', type: 'number'},
-            ],
-          },
-        ],
       })
     })
   })
@@ -160,7 +90,7 @@ describe(compileSchema.name, () => {
     test('of with block type preserves PTE sub-schema', () => {
       expect(
         compileSchema({
-          nestedBlocks: [
+          blockObjects: [
             {
               name: 'tableCell',
               fields: [
@@ -178,7 +108,7 @@ describe(compileSchema.name, () => {
               ],
             },
           ],
-        }).nestedBlocks,
+        }).blockObjects,
       ).toEqual([
         {
           name: 'tableCell',
@@ -199,7 +129,7 @@ describe(compileSchema.name, () => {
       ])
     })
 
-    test('table schema: blockObjects with of, nestedBlocks with block of', () => {
+    test('table schema: blockObjects with of containing block type', () => {
       const schema = compileSchema({
         blockObjects: [
           {
@@ -225,46 +155,7 @@ describe(compileSchema.name, () => {
             ],
           },
         ],
-        nestedBlocks: [
-          {
-            name: 'tableCell',
-            fields: [
-              {
-                name: 'content',
-                type: 'array',
-                of: [
-                  {
-                    type: 'block',
-                    styles: [{name: 'normal'}],
-                    lists: [],
-                  },
-                ],
-              },
-              {name: 'colspan', type: 'number'},
-            ],
-          },
-        ],
       })
-
-      expect(schema.nestedBlocks).toEqual([
-        {
-          name: 'tableCell',
-          fields: [
-            {
-              name: 'content',
-              type: 'array',
-              of: [
-                {
-                  type: 'block',
-                  styles: [{name: 'normal'}],
-                  lists: [],
-                },
-              ],
-            },
-            {name: 'colspan', type: 'number'},
-          ],
-        },
-      ])
 
       expect(schema.blockObjects).toEqual([
         {

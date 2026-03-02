@@ -15,7 +15,6 @@ export type Schema = {
   annotations: ReadonlyArray<AnnotationSchemaType>
   blockObjects: ReadonlyArray<BlockObjectSchemaType>
   inlineObjects: ReadonlyArray<InlineObjectSchemaType>
-  nestedBlocks: ReadonlyArray<BlockObjectSchemaType>
 }
 
 /**

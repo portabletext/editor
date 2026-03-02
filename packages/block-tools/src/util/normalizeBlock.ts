@@ -67,7 +67,6 @@ export function normalizeBlock(
     annotations: [],
     blockObjects: [],
     inlineObjects: [],
-    nestedBlocks: [],
   }
 
   if (node._type !== (options.blockTypeName || 'block')) {
