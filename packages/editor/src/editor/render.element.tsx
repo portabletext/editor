@@ -31,8 +31,7 @@ export function RenderElement(props: {
   const schema = useSelector(editorActor, (s) => s.context.schema)
   const slateStatic = useSlateStatic()
 
-  const isInline =
-    '__inline' in props.element && props.element.__inline === true
+  const isInline = slateStatic.isInline(props.element)
 
   if (isInline) {
     return (

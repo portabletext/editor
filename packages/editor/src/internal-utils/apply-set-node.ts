@@ -1,4 +1,4 @@
-import {Node, type Path} from '../slate'
+import {Element, Node, type Path} from '../slate'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 
 /**
@@ -11,30 +11,38 @@ import type {PortableTextSlateEditor} from '../types/slate-editor'
  * Properties set to `null` are treated as deletions (matching the behavior
  * of `Transforms.unsetNodes`).
  *
- * Skips `children` and `text` since those are structural properties managed
- * by dedicated operations.
+ * Skips `children` since those are structural properties managed by dedicated
+ * operations. Skips `text` on text nodes (spans) for the same reason, but
+ * allows `text` on elements (inline/block objects) where it's a user-defined
+ * property.
  */
 export function applySetNode(
   editor: PortableTextSlateEditor,
-  props: Record<string, unknown>,
+  props: Record<string, unknown> | object,
   path: Path,
 ): void {
-  const node = Node.get(editor, path) as unknown as Record<string, unknown>
+  const node = Node.get(editor, path) as Record<string, unknown>
+  const propsRecord = props as Record<string, unknown>
   const properties: Record<string, unknown> = {}
   const newProperties: Record<string, unknown> = {}
 
-  for (const key of Object.keys(props)) {
-    if (key === 'children' || key === 'text') {
+  for (const key of Object.keys(propsRecord)) {
+    if (key === 'children') {
       continue
     }
 
-    if (props[key] !== node[key]) {
+    // Only skip `text` on actual text nodes (spans), not on elements (inline/block objects)
+    if (key === 'text' && !Element.isElement(node)) {
+      continue
+    }
+
+    if (propsRecord[key] !== node[key]) {
       if (node.hasOwnProperty(key)) {
         properties[key] = node[key]
       }
 
-      if (props[key] != null) {
-        newProperties[key] = props[key]
+      if (propsRecord[key] != null) {
+        newProperties[key] = propsRecord[key]
       }
     }
   }

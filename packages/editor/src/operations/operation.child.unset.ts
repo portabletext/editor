@@ -1,4 +1,3 @@
-import {applyAll} from '@portabletext/patches'
 import {isTextBlock} from '@portabletext/schema'
 import {applySetNode} from '../internal-utils/apply-set-node'
 import {Editor, Element} from '../slate'
@@ -88,25 +87,18 @@ export const childUnsetOperationImplementation: OperationImplementation<
   }
 
   if (Element.isElement(child)) {
-    const value =
-      'value' in child && typeof child.value === 'object' ? child.value : {}
-    const patches = operation.props.map((prop) => ({
-      type: 'unset' as const,
-      path: [prop],
-    }))
-    const newValue = applyAll(value, patches)
-
-    applySetNode(
-      operation.editor,
-      {
-        ...child,
-        _key: operation.props.includes('_key')
-          ? context.keyGenerator()
-          : child._key,
-        value: newValue,
-      },
-      childPath,
-    )
+    const unsetProps: Record<string, unknown> = {}
+    for (const prop of operation.props) {
+      if (prop === '_type') {
+        continue
+      }
+      if (prop === '_key') {
+        unsetProps['_key'] = context.keyGenerator()
+      } else {
+        unsetProps[prop] = null
+      }
+    }
+    applySetNode(operation.editor, unsetProps, childPath)
 
     return
   }

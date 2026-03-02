@@ -66,16 +66,11 @@ function applyOperationToPortableTextImmutable(
           const newBlock = {
             ...insertedNode,
             children: insertedNode.children.map((child) => {
-              if ('__inline' in child) {
-                // Except for inline object children which need to have their
-                // `value` spread onto the block
-                return {
-                  _key: child._key,
-                  _type: child._type,
-                  ...('value' in child && typeof child['value'] === 'object'
-                    ? child['value']
-                    : {}),
-                }
+              if (isObjectNode(context, child)) {
+                // Inline object children need to have their
+                // `children` (void children) removed
+                const {children: _voidChildren, ...inlineObject} = child
+                return inlineObject
               }
 
               return child
@@ -88,15 +83,14 @@ function applyOperationToPortableTextImmutable(
           }
         }
 
-        if (Element.isElement(insertedNode) && !('__inline' in insertedNode)) {
-          // Void blocks have to have their `value` spread onto the block
+        if (
+          Element.isElement(insertedNode) &&
+          !isTextBlockNode(context, insertedNode)
+        ) {
+          // Void blocks have to have their `children` (void children) removed
+          const {children: _voidChildren, ...blockObject} = insertedNode
           const newBlock = {
-            _key: insertedNode._key,
-            _type: insertedNode._type,
-            ...('value' in insertedNode &&
-            typeof insertedNode.value === 'object'
-              ? insertedNode.value
-              : {}),
+            ...blockObject,
           }
 
           return {
@@ -120,16 +114,10 @@ function applyOperationToPortableTextImmutable(
         if (isPartialSpanNode(context, insertedNode)) {
           // Text nodes can be inserted as is
           newChild = insertedNode
-        } else if ('__inline' in insertedNode) {
-          // Void children have to have their `value` spread onto the block
-          newChild = {
-            _key: insertedNode._key,
-            _type: insertedNode._type,
-            ...('value' in insertedNode &&
-            typeof insertedNode.value === 'object'
-              ? insertedNode.value
-              : {}),
-          }
+        } else if (isObjectNode(context, insertedNode)) {
+          // Inline object children have their `children` (void children) removed
+          const {children: _voidChildren, ...inlineObject} = insertedNode
+          newChild = inlineObject
         } else {
           return root
         }
@@ -371,21 +359,10 @@ function applyOperationToPortableTextImmutable(
       }
 
       if (isObjectNode(context, node)) {
-        const valueBefore = (
-          'value' in properties && typeof properties.value === 'object'
-            ? properties.value
-            : {}
-        ) as Partial<Node>
-        const valueAfter = (
-          'value' in newProperties && typeof newProperties.value === 'object'
-            ? newProperties.value
-            : {}
-        ) as Partial<Node>
-
         const newNode = {...node}
 
         for (const key in newProperties) {
-          if (key === 'value') {
+          if (key === 'children') {
             continue
           }
 
@@ -399,27 +376,11 @@ function applyOperationToPortableTextImmutable(
         }
 
         for (const key in properties) {
-          if (key === 'value') {
+          if (key === 'children') {
             continue
           }
 
           if (!newProperties.hasOwnProperty(key)) {
-            delete newNode[key]
-          }
-        }
-
-        for (const key in valueAfter) {
-          const value = valueAfter[key as keyof Partial<Node>]
-
-          if (value == null) {
-            delete newNode[key]
-          } else {
-            newNode[key] = value
-          }
-        }
-
-        for (const key in valueBefore) {
-          if (!valueAfter.hasOwnProperty(key)) {
             delete newNode[key]
           }
         }

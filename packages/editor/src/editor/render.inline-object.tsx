@@ -59,13 +59,7 @@ export function RenderInlineObject(props: {
     ? selectionState.focusedChildPath === serializedPath
     : false
 
-  const inlineObject = {
-    _key: props.element._key,
-    _type: props.element._type,
-    ...('value' in props.element && typeof props.element.value === 'object'
-      ? props.element.value
-      : {}),
-  }
+  const {children: _voidChildren, ...inlineObject} = props.element
 
   return (
     <span

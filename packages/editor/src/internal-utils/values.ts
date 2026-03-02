@@ -40,7 +40,7 @@ export function toSlateBlock(
 
       if (childType !== schemaTypes.span.name) {
         // Return 'slate' version of inline object where the actual
-        // value is stored in the `value` property.
+        // properties are spread directly on the node.
         // In slate, inline objects are represented as regular
         // children with actual text node in order to be able to
         // be selected the same way as the rest of the (text) content.
@@ -57,8 +57,7 @@ export function toSlateBlock(
               marks: [],
             },
           ],
-          value: childProps,
-          __inline: true,
+          ...childProps,
         }
       }
 
@@ -80,6 +79,8 @@ export function toSlateBlock(
     return {_type, _key, ...rest, children} as Descendant
   }
 
+  const {children: _originalChildren, ...blockObjectProps} = rest
+
   return {
     _type,
     _key,
@@ -91,7 +92,7 @@ export function toSlateBlock(
         marks: [],
       },
     ],
-    value: rest,
+    ...blockObjectProps,
   } as Descendant
 }
 
@@ -108,18 +109,10 @@ export function fromSlateBlock(block: Descendant, textBlockType: string) {
   ) {
     let hasInlines = false
     const children = block.children.map((child) => {
-      const {_type: _cType} = child
-      if ('value' in child && _cType !== 'span') {
+      if (Element.isElement(child) && child._type !== 'span') {
         hasInlines = true
-        const {
-          value: v,
-          _key: k,
-          _type: t,
-          __inline: _i,
-          children: _c,
-          ...rest
-        } = child
-        return {...rest, ...v, _key: k as string, _type: t as string}
+        const {children: _voidChildren, ...inlineObject} = child
+        return inlineObject
       }
       return child
     })
@@ -128,11 +121,12 @@ export function fromSlateBlock(block: Descendant, textBlockType: string) {
     }
     return {...block, children, _key, _type} as PortableTextBlock
   }
-  const blockValue = 'value' in block && block.value
+  const {children: _voidChildren, ...blockObject} = block as Element &
+    Record<string, unknown>
   return {
+    ...blockObject,
     _key,
     _type,
-    ...(typeof blockValue === 'object' ? blockValue : {}),
   } as PortableTextBlock
 }
 

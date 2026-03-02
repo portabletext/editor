@@ -64,14 +64,30 @@ export function createSchemaPlugin({editorActor}: {editorActor: EditorActor}) {
         return false
       }
 
-      const inlineSchemaTypes = editorActor
-        .getSnapshot()
-        .context.schema.inlineObjects.map((obj) => obj.name)
-      return (
-        inlineSchemaTypes.includes(element._type) &&
-        '__inline' in element &&
-        element.__inline === true
-      )
+      const snapshot = editorActor.getSnapshot()
+      const isInlineType = snapshot.context.schema.inlineObjects
+        .map((obj) => obj.name)
+        .includes(element._type)
+
+      if (!isInlineType) {
+        return false
+      }
+
+      // For dual-registered types (both block object and inline object),
+      // determine inline status by position: top-level children are blocks.
+      const isAlsoBlockType = snapshot.context.schema.blockObjects
+        .map((obj) => obj.name)
+        .includes(element._type)
+
+      if (isAlsoBlockType) {
+        for (const child of editor.children) {
+          if (child === element) {
+            return false
+          }
+        }
+      }
+
+      return true
     }
 
     // Extend Slate's default normalization
