@@ -17,6 +17,8 @@ import React, {
 import scrollIntoView from 'scroll-into-view-if-needed'
 import {getDomNode} from '../../../dom-traversal/get-dom-node'
 import {getDomNodePath} from '../../../dom-traversal/get-dom-node-path'
+import type {InputManager} from '../../../dom/input-manager'
+import {useInputManager} from '../../../dom/use-input-manager'
 import type {EditorActor} from '../../../editor/editor-machine'
 import {getAncestor} from '../../../traversal/get-ancestor'
 import {getNode} from '../../../traversal/get-node'
@@ -39,24 +41,17 @@ import {
   isPlainTextOnlyPaste,
   type DOMElement,
   type DOMRange,
-  type DOMText,
 } from '../../dom/utils/dom'
 import {
   CAN_USE_DOM,
   HAS_BEFORE_INPUT_SUPPORT,
-  IS_ANDROID,
   IS_CHROME,
   IS_FIREFOX,
-  IS_FIREFOX_LEGACY,
-  IS_IOS,
-  IS_UC_MOBILE,
   IS_WEBKIT,
-  IS_WECHATBROWSER,
 } from '../../dom/utils/environment'
 import Hotkeys from '../../dom/utils/hotkeys'
 import {end as editorEnd} from '../../editor/end'
 import {range as editorRange} from '../../editor/range'
-import {rangeRef} from '../../editor/range-ref'
 import {start as editorStart} from '../../editor/start'
 import type {Editor} from '../../interfaces/editor'
 import type {NodeEntry} from '../../interfaces/node'
@@ -68,8 +63,6 @@ import {isBackwardRange} from '../../range/is-backward-range'
 import {isCollapsedRange} from '../../range/is-collapsed-range'
 import {isExpandedRange} from '../../range/is-expanded-range'
 import {rangeEquals} from '../../range/range-equals'
-import type {AndroidInputManager} from '../hooks/android-input-manager/android-input-manager'
-import {useAndroidInputManager} from '../hooks/android-input-manager/use-android-input-manager'
 import useChildren from '../hooks/use-children'
 import {DecorateContext, useDecorateContext} from '../hooks/use-decorations'
 import {useEngine} from '../hooks/use-engine'
@@ -80,8 +73,6 @@ import {useTrackUserInput} from '../hooks/use-track-user-input'
 import {debounce, throttle} from '../utils/debounce'
 import getDirection from '../utils/direction'
 import {RestoreDOM} from './restore-dom/restore-dom'
-
-type DeferredOperation = () => void
 
 const Children = (props: Parameters<typeof useChildren>[0]) => {
   const children = useChildren(props)
@@ -183,7 +174,6 @@ export const Editable = forwardRef(
     // Rerender editor when composition status changed
 
     const ref = useRef<HTMLDivElement | null>(null)
-    const deferredOperations = useRef<DeferredOperation[]>([])
     const processing = useRef(false)
 
     const {onUserInput, receivedUserInput} = useTrackUserInput()
@@ -217,14 +207,12 @@ export const Editable = forwardRef(
     }, [autoFocus])
 
     /**
-     * The AndroidInputManager object has a cyclical dependency on onDOMSelectionChange
+     * The `InputManager` has a cyclical dependency on `onDOMSelectionChange`
      *
      * It is defined as a reference to simplify hook dependencies and clarify that
      * it needs to be initialized.
      */
-    const androidInputManagerRef = useRef<
-      AndroidInputManager | null | undefined
-    >(undefined)
+    const inputManagerRef = useRef<InputManager | null>(null)
 
     // Listen on the native `selectionchange` event to be able to update any time
     // the selection changes. This is required because React's `onSelect` is leaky
@@ -262,10 +250,10 @@ export const Editable = forwardRef(
             return
           }
 
-          const androidInputManager = androidInputManagerRef.current
+          const inputManager = inputManagerRef.current
           if (
-            (IS_ANDROID || !editor.composing) &&
-            (!state.isUpdatingSelection || androidInputManager?.isFlushing())
+            (!editor.composing || inputManager?.isFlushing()) &&
+            (!state.isUpdatingSelection || inputManager?.isFlushing())
           ) {
             const root = DOMEditor.findDocumentOrShadowRoot(editor)
             const {activeElement} = root
@@ -306,14 +294,14 @@ export const Editable = forwardRef(
               if (range) {
                 if (
                   !editor.composing &&
-                  !androidInputManager?.hasPendingChanges() &&
-                  !androidInputManager?.isFlushing()
+                  !inputManager?.hasPendingChanges() &&
+                  !inputManager?.isFlushing()
                 ) {
                   // Suppress browser selection normalization that would
                   // overwrite a block object selection.
                   editor.select(range)
                 } else {
-                  androidInputManager?.handleUserSelect(range)
+                  inputManager?.handleUserSelect(range)
                 }
               }
             }
@@ -332,9 +320,10 @@ export const Editable = forwardRef(
       [onDOMSelectionChange],
     )
 
-    androidInputManagerRef.current = useAndroidInputManager({
+    inputManagerRef.current = useInputManager({
       editorActor,
       node: ref as React.RefObject<HTMLElement>,
+      editorRef: ref as React.RefObject<HTMLElement>,
       onDOMSelectionChange,
       scheduleOnDOMSelectionChange,
     })
@@ -356,7 +345,7 @@ export const Editable = forwardRef(
       if (
         !domSelection ||
         !editor.focused ||
-        androidInputManagerRef.current?.hasPendingAction()
+        inputManagerRef.current?.hasPendingAction()
       ) {
         return
       }
@@ -461,7 +450,7 @@ export const Editable = forwardRef(
         }
 
         if (newDomRange) {
-          if (editor.composing && !IS_ANDROID) {
+          if (editor.composing && !inputManagerRef.current?.isFlushing()) {
             domSelection.collapseToEnd()
           } else if (isBackwardRange(selection!, editor.snapshot.context)) {
             domSelection.setBaseAndExtent(
@@ -491,10 +480,9 @@ export const Editable = forwardRef(
         setDomSelection()
       }
 
-      const ensureSelection =
-        androidInputManagerRef.current?.isFlushing() === 'action'
+      const ensureSelection = inputManagerRef.current?.isFlushing() === 'action'
 
-      if (!IS_ANDROID || !ensureSelection) {
+      if (!ensureSelection) {
         setTimeout(() => {
           state.isUpdatingSelection = false
         })
@@ -591,370 +579,14 @@ export const Editable = forwardRef(
           DOMEditor.hasEditableTarget(editor, event.target) &&
           !isDOMEventHandled(event, propsOnDOMBeforeInput)
         ) {
-          // COMPAT: BeforeInput events aren't cancelable on android, so we have to handle them differently using the android input manager.
-          if (androidInputManagerRef.current) {
-            return androidInputManagerRef.current.handleDOMBeforeInput(event)
-          }
-
-          // Some IMEs/Chrome extensions like e.g. Grammarly set the selection immediately before
-          // triggering a `beforeinput` expecting the change to be applied to the immediately before
-          // set selection.
-          scheduleOnDOMSelectionChange.flush()
-          onDOMSelectionChange.flush()
-
-          const {selection} = editor.snapshot.context
-          const {inputType: type} = event
-          const data = (event as any).dataTransfer || event.data || undefined
-
-          const isCompositionChange =
-            type === 'insertCompositionText' || type === 'deleteCompositionText'
-
-          // COMPAT: use composition change events as a hint to where we should insert
-          // composition text if we aren't composing to work around https://github.com/ianstormtaylor/engine/issues/5038
-          if (isCompositionChange && editor.composing) {
-            return
-          }
-
-          let native = false
-          if (
-            type === 'insertText' &&
-            selection &&
-            isCollapsedRange(selection) &&
-            // Only use native character insertion for single characters a-z or space for now.
-            // Long-press events (hold a + press 4 = ä) to choose a special character otherwise
-            // causes duplicate inserts.
-            event.data &&
-            event.data.length === 1 &&
-            /[a-z ]/i.test(event.data) &&
-            // Chrome has issues correctly editing the start of nodes: https://bugs.chromium.org/p/chromium/issues/detail?id=1249405
-            // When there is an inline element, e.g. a link, and you select
-            // right after it (the start of the next node).
-            selection.anchor.offset !== 0
-          ) {
-            native = true
-
-            // If the NODE_MAP is dirty, we can't trust the selection anchor (eg DOMEditor.toDOMPoint)
-            if (!editor.isNodeMapDirty) {
-              // Chrome also has issues correctly editing the end of anchor elements: https://bugs.chromium.org/p/chromium/issues/detail?id=1259100
-              // Therefore we don't allow native events to insert text at the end of anchor nodes.
-              const {anchor} = selection
-
-              const [node, offset] = DOMEditor.toDOMPoint(editor, anchor)
-              const anchorNode = node.parentElement?.closest('a')
-
-              const window = DOMEditor.getWindow(editor)
-
-              if (
-                native &&
-                anchorNode &&
-                DOMEditor.hasDOMNode(editor, anchorNode)
-              ) {
-                // Find the last text node inside the anchor.
-                const lastText = window?.document
-                  .createTreeWalker(anchorNode, NodeFilter.SHOW_TEXT)
-                  .lastChild() as DOMText | null
-
-                if (
-                  lastText === node &&
-                  lastText.textContent?.length === offset
-                ) {
-                  native = false
-                }
-              }
-
-              // Chrome has issues with the presence of tab characters inside elements with whiteSpace = 'pre'
-              // causing abnormal insert behavior: https://bugs.chromium.org/p/chromium/issues/detail?id=1219139
-              if (
-                native &&
-                node.parentElement &&
-                window?.getComputedStyle(node.parentElement)?.whiteSpace ===
-                  'pre'
-              ) {
-                const block = getParent(editor.snapshot, anchor.path, {
-                  match: (node) =>
-                    isTextBlock({schema: editor.snapshot.context.schema}, node),
-                })
-
-                if (block) {
-                  const blockText = getText(editor.snapshot, block.path)
-
-                  if (blockText?.includes('\t')) {
-                    native = false
-                  }
-                }
-              }
-            }
-          }
-          // COMPAT: For the deleting forward/backward input types we don't want
-          // to change the selection because it is the range that will be deleted,
-          // and those commands determine that for themselves.
-          // If the NODE_MAP is dirty, we can't trust the selection anchor (eg DOMEditor.toDOMPoint via DOMEditor.toEditorSelection)
-          if (
-            (!type.startsWith('delete') || type.startsWith('deleteBy')) &&
-            !editor.isNodeMapDirty
-          ) {
-            const [targetRange] = (event as any).getTargetRanges()
-
-            // The target ranges tell us where the input should be applied.
-            // Synthetic `beforeinput` events dispatched by browser extensions
-            // like Grammarly carry no target ranges; they set the DOM selection
-            // to the affected range instead. The selection-change flush above
-            // normally syncs the editor selection to that DOM selection, but
-            // inside an iframe it can't: accepting an extension suggestion
-            // moves focus off the editable, so the flush bails on its focus
-            // check and the editor selection stays stale. Fall back to the DOM
-            // selection so the input isn't applied at the wrong place.
-            const domSelection = getSelection(
-              DOMEditor.findDocumentOrShadowRoot(editor),
-            )
-            const inputTarget =
-              targetRange ??
-              (domSelection && domSelection.rangeCount > 0
-                ? domSelection
-                : undefined)
-
-            if (inputTarget) {
-              const range = DOMEditor.toEditorSelection(editor, inputTarget, {
-                exactMatch: false,
-                // The DOM selection fallback is not guaranteed to be a valid
-                // editor range, so don't throw on it.
-                suppressThrow: !targetRange,
-              })
-
-              if (range && (!selection || !rangeEquals(selection, range))) {
-                native = false
-
-                const selectionRef =
-                  !isCompositionChange &&
-                  editor.snapshot.context.selection &&
-                  rangeRef(editor, editor.snapshot.context.selection)
-
-                editor.select(range)
-
-                if (selectionRef) {
-                  editor.userSelection = selectionRef
-                }
-              }
-            }
-          }
-
-          // Composition change types occur while a user is composing text and can't be
-          // cancelled. Let them through and wait for the composition to end.
-          if (isCompositionChange) {
-            return
-          }
-
-          if (!native) {
-            event.preventDefault()
-          }
-
-          // COMPAT: If the selection is expanded, even if the command seems like
-          // a delete forward/backward command it should delete the selection.
-          if (
-            selection &&
-            isExpandedRange(selection) &&
-            type.startsWith('delete')
-          ) {
-            const direction = type.endsWith('Backward') ? 'backward' : 'forward'
-            editorActor.send({
-              type: 'behavior event',
-              behaviorEvent: {type: 'delete', direction},
-              editor,
-            })
-            return
-          }
-
-          switch (type) {
-            case 'deleteByComposition':
-            case 'deleteByCut':
-            case 'deleteByDrag': {
-              editorActor.send({
-                type: 'behavior event',
-                behaviorEvent: {type: 'delete', direction: 'forward'},
-                editor,
-              })
-              break
-            }
-
-            case 'deleteContent':
-            case 'deleteContentForward': {
-              editorActor.send({
-                type: 'behavior event',
-                behaviorEvent: {type: 'delete.forward', unit: 'character'},
-                editor,
-              })
-              break
-            }
-
-            case 'deleteContentBackward': {
-              editorActor.send({
-                type: 'behavior event',
-                behaviorEvent: {type: 'delete.backward', unit: 'character'},
-                editor,
-              })
-              break
-            }
-
-            case 'deleteEntireSoftLine': {
-              editorActor.send({
-                type: 'behavior event',
-                behaviorEvent: {type: 'delete.backward', unit: 'line'},
-                editor,
-              })
-              editorActor.send({
-                type: 'behavior event',
-                behaviorEvent: {type: 'delete.forward', unit: 'line'},
-                editor,
-              })
-              break
-            }
-
-            case 'deleteHardLineBackward': {
-              editorActor.send({
-                type: 'behavior event',
-                behaviorEvent: {type: 'delete.backward', unit: 'block'},
-                editor,
-              })
-              break
-            }
-
-            case 'deleteSoftLineBackward': {
-              editorActor.send({
-                type: 'behavior event',
-                behaviorEvent: {type: 'delete.backward', unit: 'line'},
-                editor,
-              })
-              break
-            }
-
-            case 'deleteHardLineForward': {
-              editorActor.send({
-                type: 'behavior event',
-                behaviorEvent: {type: 'delete.forward', unit: 'block'},
-                editor,
-              })
-              break
-            }
-
-            case 'deleteSoftLineForward': {
-              editorActor.send({
-                type: 'behavior event',
-                behaviorEvent: {type: 'delete.forward', unit: 'line'},
-                editor,
-              })
-              break
-            }
-
-            case 'deleteWordBackward': {
-              editorActor.send({
-                type: 'behavior event',
-                behaviorEvent: {type: 'delete.backward', unit: 'word'},
-                editor,
-              })
-              break
-            }
-
-            case 'deleteWordForward': {
-              editorActor.send({
-                type: 'behavior event',
-                behaviorEvent: {type: 'delete.forward', unit: 'word'},
-                editor,
-              })
-              break
-            }
-
-            case 'insertLineBreak':
-              editorActor.send({
-                type: 'behavior event',
-                behaviorEvent: {type: 'insert.soft break'},
-                editor,
-              })
-              break
-
-            case 'insertParagraph': {
-              editorActor.send({
-                type: 'behavior event',
-                behaviorEvent: {type: 'insert.break'},
-                editor,
-              })
-              break
-            }
-
-            case 'insertFromComposition':
-            case 'insertFromDrop':
-            case 'insertFromPaste':
-            case 'insertFromYank':
-            case 'insertReplacementText':
-            case 'insertText': {
-              if (type === 'insertFromComposition') {
-                // COMPAT: in Safari, `compositionend` is dispatched after the
-                // `beforeinput` for "insertFromComposition". But if we wait for it
-                // then we will abort because we're still composing and the selection
-                // won't be updated properly.
-                // https://www.w3.org/TR/input-events-2/
-                if (editor.composing) {
-                  editor.composing = false
-                }
-              }
-
-              // use a weak comparison instead of 'instanceof' to allow
-              // programmatic access of paste events coming from external windows
-              // like cypress where cy.window does not work realibly
-              if (data?.constructor.name === 'DataTransfer') {
-                editorActor.send({
-                  type: 'behavior event',
-                  behaviorEvent: {
-                    type: 'input.*',
-                    originEvent: {dataTransfer: data},
-                  },
-                  editor,
-                })
-              } else if (typeof data === 'string') {
-                // Only insertText operations use the native functionality, for now.
-                // Potentially expand to single character deletes, as well.
-                if (native) {
-                  deferredOperations.current.push(() =>
-                    editorActor.send({
-                      type: 'behavior event',
-                      behaviorEvent: {type: 'insert.text', text: data},
-                      editor,
-                    }),
-                  )
-                } else {
-                  editorActor.send({
-                    type: 'behavior event',
-                    behaviorEvent: {type: 'insert.text', text: data},
-                    editor,
-                  })
-                }
-              }
-
-              break
-            }
-          }
-
-          // Restore the actual user section if nothing manually set it.
-          const toRestore = editor.userSelection?.unref()
-          editor.userSelection = null
-
-          if (
-            toRestore &&
-            (!editor.snapshot.context.selection ||
-              !rangeEquals(editor.snapshot.context.selection, toRestore))
-          ) {
-            editor.select(toRestore)
-          }
+          // Delegate all beforeinput handling to the input manager.
+          // The manager handles both the fast path (preventDefault + direct
+          // behavior event on desktop) and the slow path (parse-and-diff
+          // fallback for composition, spellcheck, Android IME, etc.)
+          inputManagerRef.current?.handleDOMBeforeInput(event)
         }
       },
-      [
-        editor,
-        editorActor,
-        onDOMSelectionChange,
-        onUserInput,
-        propsOnDOMBeforeInput,
-        readOnly,
-        scheduleOnDOMSelectionChange,
-      ],
+      [editor, editorActor, onUserInput, propsOnDOMBeforeInput, readOnly],
     )
 
     const callbackRef = useCallback(
@@ -1112,37 +744,9 @@ export const Editable = forwardRef(
                     return
                   }
 
-                  if (androidInputManagerRef.current) {
-                    androidInputManagerRef.current.handleInput()
-                    return
-                  }
-
-                  // Flush native operations, as native events will have propogated
-                  // and we can correctly compare DOM text values in components
-                  // to stop rendering, so that browser functions like autocorrect
-                  // and spellcheck work as expected.
-                  for (const op of deferredOperations.current) {
-                    op()
-                  }
-                  deferredOperations.current = []
-
-                  // COMPAT: Since `beforeinput` doesn't fully `preventDefault`,
-                  // there's a chance that content might be placed in the browser's undo stack.
-                  // This means undo can be triggered even when the div is not focused,
-                  // and it only triggers the input event for the node. (2024/10/09)
-                  if (
-                    !editor.focused &&
-                    isDOMNode(event.target) &&
-                    DOMEditor.hasEditableTarget(editor, event.target)
-                  ) {
-                    handleNativeHistoryEvents(
-                      editor,
-                      editorActor,
-                      event.nativeEvent as InputEvent,
-                    )
-                  }
+                  inputManagerRef.current?.handleInput()
                 },
-                [attributes.onInput, editor, editorActor],
+                [attributes.onInput],
               )}
               onBlur={useCallback(
                 (event: React.FocusEvent<HTMLDivElement>) => {
@@ -1338,39 +942,16 @@ export const Editable = forwardRef(
                       })
                     }
 
-                    androidInputManagerRef.current?.handleCompositionEnd(event)
+                    inputManagerRef.current?.handleCompositionEnd(
+                      event.nativeEvent,
+                    )
 
-                    if (
-                      isEventHandled(event, attributes.onCompositionEnd) ||
-                      IS_ANDROID
-                    ) {
+                    if (isEventHandled(event, attributes.onCompositionEnd)) {
                       return
-                    }
-
-                    // COMPAT: In Chrome, `beforeinput` events for compositions
-                    // aren't correct and never fire the "insertFromComposition"
-                    // type that we need. So instead, insert whenever a composition
-                    // ends since it will already have been committed to the DOM.
-                    if (
-                      !IS_WEBKIT &&
-                      !IS_FIREFOX_LEGACY &&
-                      !IS_IOS &&
-                      !IS_WECHATBROWSER &&
-                      !IS_UC_MOBILE &&
-                      event.data
-                    ) {
-                      editorActor.send({
-                        type: 'behavior event',
-                        behaviorEvent: {
-                          type: 'insert.text',
-                          text: event.data,
-                        },
-                        editor,
-                      })
                     }
                   }
                 },
-                [attributes.onCompositionEnd, editor, editorActor],
+                [attributes.onCompositionEnd, editor],
               )}
               onCompositionUpdate={useCallback(
                 (event: React.CompositionEvent<HTMLDivElement>) => {
@@ -1392,29 +973,16 @@ export const Editable = forwardRef(
                     return
                   }
                   if (DOMEditor.hasSelectableTarget(editor, event.target)) {
-                    androidInputManagerRef.current?.handleCompositionStart(
-                      event,
+                    inputManagerRef.current?.handleCompositionStart(
+                      event.nativeEvent,
                     )
 
-                    if (
-                      isEventHandled(event, attributes.onCompositionStart) ||
-                      IS_ANDROID
-                    ) {
-                      return
-                    }
-
-                    const {selection} = editor.snapshot.context
-                    if (selection && isExpandedRange(selection)) {
-                      editorActor.send({
-                        type: 'behavior event',
-                        behaviorEvent: {type: 'delete', direction: 'forward'},
-                        editor,
-                      })
+                    if (isEventHandled(event, attributes.onCompositionStart)) {
                       return
                     }
                   }
                 },
-                [attributes.onCompositionStart, editor, editorActor],
+                [attributes.onCompositionStart, editor],
               )}
               onCopy={attributes.onCopy}
               onCut={attributes.onCut}
@@ -1458,7 +1026,7 @@ export const Editable = forwardRef(
                     !readOnly &&
                     DOMEditor.hasEditableTarget(editor, event.target)
                   ) {
-                    androidInputManagerRef.current?.handleKeyDown(event)
+                    inputManagerRef.current?.handleKeyDown(event.nativeEvent)
 
                     const {nativeEvent} = event
 

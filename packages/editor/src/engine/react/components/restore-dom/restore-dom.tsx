@@ -5,7 +5,6 @@ import {
   type ReactNode,
   type RefObject,
 } from 'react'
-import {IS_ANDROID} from '../../../dom/utils/environment'
 import {EditorContext} from '../../hooks/use-engine-static'
 import {
   createRestoreDomManager,
@@ -79,6 +78,4 @@ class RestoreDOMComponent extends Component<RestoreDOMProps> {
   }
 }
 
-export const RestoreDOM: ComponentType<RestoreDOMProps> = IS_ANDROID
-  ? RestoreDOMComponent
-  : ({children}) => <>{children}</>
+export const RestoreDOM: ComponentType<RestoreDOMProps> = RestoreDOMComponent
