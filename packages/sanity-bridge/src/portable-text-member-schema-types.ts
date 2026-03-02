@@ -18,6 +18,7 @@ export type PortableTextMemberSchemaTypes = {
   annotations: (ObjectSchemaType & {i18nTitleKey?: string})[]
   block: ObjectSchemaType
   blockObjects: ObjectSchemaType[]
+  containers: ObjectSchemaType[]
   decorators: BlockDecoratorDefinition[]
   inlineObjects: ObjectSchemaType[]
   portableText: ArraySchemaType<PortableTextBlock>
@@ -77,6 +78,7 @@ export function createPortableTextMemberSchemaTypes(
     portableText: portableTextType,
     inlineObjects: inlineObjectTypes,
     blockObjects: blockObjectTypes,
+    containers: [],
     annotations: (spanType as SpanSchemaType).annotations,
   }
 }
