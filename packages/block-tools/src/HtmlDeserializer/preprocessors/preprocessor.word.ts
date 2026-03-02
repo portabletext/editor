@@ -35,10 +35,58 @@ function isWordHtml(html: string) {
   return WORD_HTML_REGEX.test(html)
 }
 
+/**
+ * Extract @list CSS definitions from the document's <style> blocks and store
+ * the results as a data attribute on <body>. This must run before the HTML
+ * preprocessor strips <style> elements.
+ *
+ * Word embeds list type information in CSS like:
+ *   @list l0:level1 { mso-level-number-format:bullet; ... }
+ *   @list l1:level1 { mso-level-number-position:left; ... }
+ *
+ * The map is keyed by "listId:levelN" (e.g. "l0:level1") because a single
+ * list definition can have numbered top-level items with bullet sub-levels.
+ */
+function extractListStyles(doc: Document): void {
+  const map: Record<string, 'bullet' | 'number'> = {}
+  let found = false
+
+  const styleEls = doc.querySelectorAll('style')
+  for (const styleEl of styleEls) {
+    const css = styleEl.textContent || ''
+
+    const listRulePattern = /@list\s+(l\d+):(level\d+)\s*\{([^}]*)\}/g
+
+    for (
+      let match = listRulePattern.exec(css);
+      match !== null;
+      match = listRulePattern.exec(css)
+    ) {
+      const listId = match[1]
+      const level = match[2]
+      const ruleBody = match[3]
+      const key = `${listId}:${level}`
+
+      if (/mso-level-number-format\s*:\s*bullet/i.test(ruleBody)) {
+        map[key] = 'bullet'
+      } else {
+        map[key] = 'number'
+      }
+      found = true
+    }
+  }
+
+  if (found && doc.body) {
+    doc.body.setAttribute('data-word-list-styles', JSON.stringify(map))
+  }
+}
+
 export function preprocessWord(html: string, doc: Document): Document {
   if (!isWordHtml(html)) {
     return doc
   }
+
+  extractListStyles(doc)
 
   const unwantedNodes = doc.evaluate(
     unwantedPaths.join('|'),
