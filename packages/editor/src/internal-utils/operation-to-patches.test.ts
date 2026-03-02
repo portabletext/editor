@@ -381,6 +381,37 @@ describe('operationToPatches', () => {
     `)
   })
 
+  it('returns empty patches when block is not a text block', () => {
+    const blockObjectSchema = compileSchema(
+      defineSchema({blockObjects: [{name: 'image'}]}),
+    )
+    const blockObjectChildren: Array<Descendant> = [
+      {
+        _key: 'img1',
+        _type: 'image',
+        children: [{_key: 'void-child', _type: 'span', marks: [], text: ''}],
+        value: {},
+      },
+    ]
+    const blockObjectValue: Array<PortableTextBlock> = [
+      {_key: 'img1', _type: 'image'},
+    ]
+
+    expect(
+      insertTextPatch(
+        blockObjectSchema,
+        blockObjectChildren,
+        {
+          type: 'insert_text',
+          path: [0, 0],
+          text: 'foo',
+          offset: 0,
+        },
+        blockObjectValue,
+      ),
+    ).toEqual([])
+  })
+
   it('produces correct remove text patch', () => {
     const before = createDefaultValue()
     ;(before[0] as PortableTextTextBlock).children[2]!.text = '1'

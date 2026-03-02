@@ -323,4 +323,55 @@ describe('event.insert.text', () => {
       expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo'])
     })
   })
+
+  test('Scenario: Inserting text on a block object is a no-op', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const imageKey = keyGenerator()
+
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {name: 'image', fields: [{name: 'src', type: 'string'}]},
+        ],
+      }),
+      initialValue: [
+        {
+          _key: imageKey,
+          _type: 'image',
+          src: 'https://example.com/image.jpg',
+        },
+      ],
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: [{_key: imageKey}], offset: 0},
+        focus: {path: [{_key: imageKey}], offset: 0},
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).not.toBeNull()
+    })
+
+    editor.send({type: 'insert.text', text: 'foo'})
+
+    // Give the editor time to process the event
+    await new Promise((resolve) => setTimeout(resolve, 100))
+
+    expect(errorSpy).not.toHaveBeenCalled()
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _key: imageKey,
+        _type: 'image',
+        src: 'https://example.com/image.jpg',
+      },
+    ])
+
+    errorSpy.mockRestore()
+  })
 })
