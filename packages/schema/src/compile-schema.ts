@@ -93,9 +93,5 @@ export function compileSchema(definition: SchemaDefinition): Schema {
       ...inlineObject,
       fields: inlineObject.fields?.map(compileField) ?? [],
     })),
-    nestedBlocks: (definition.nestedBlocks ?? []).map((nestedBlock) => ({
-      ...nestedBlock,
-      fields: nestedBlock.fields?.map(compileField) ?? [],
-    })),
   }
 }
