@@ -24,6 +24,7 @@ declare module '../slate/index' {
   interface CustomTypes {
     Editor: BaseEditor & ReactEditor & PortableTextSlateEditor
     Element: SlateTextBlock | ObjectElement
+    ObjectNode: ObjectElement // Forward declaration - will change in Phase 4
     Text: PortableTextSpan
   }
 }

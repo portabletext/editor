@@ -1,4 +1,6 @@
+import {Editor} from '../interfaces/editor'
 import type {EditorInterface} from '../interfaces/editor'
+import {Element} from '../interfaces/element'
 import {Node} from '../interfaces/node'
 import {Path} from '../interfaces/path'
 import {Range} from '../interfaces/range'
@@ -19,6 +21,15 @@ export const point: EditorInterface['point'] = (editor, at, options = {}) => {
     }
 
     const node = Node.get(editor, path)
+
+    // ObjectNode - return a point at offset 0
+    if (
+      !Text.isText(node) &&
+      !Element.isElement(node) &&
+      !Editor.isEditor(node)
+    ) {
+      return {path, offset: 0}
+    }
 
     if (!Text.isText(node)) {
       throw new Error(

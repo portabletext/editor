@@ -139,6 +139,16 @@ export function* positions(
       }
     }
 
+    // ObjectNode - yield one position, don't descend
+    if (
+      !Editor.isEditor(node) &&
+      !Element.isElement(node) &&
+      !Text.isText(node)
+    ) {
+      yield* maybeYield({path, offset: 0})
+      continue
+    }
+
     /*
      * TEXT LEAF NODE - Iterate through text content, yielding
      * positions every `distance` offset according to `unit`.

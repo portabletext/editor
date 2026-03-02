@@ -9,6 +9,7 @@ import type {EditorActor} from '../editor/editor-machine'
 import {applySetNode} from '../internal-utils/apply-set-node'
 import {debug} from '../internal-utils/debug'
 import {Editor, type Element} from '../slate'
+import {isObject} from '../slate/utils/is-object'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {isListBlock} from '../utils/parse-blocks'
 import {withNormalizeNode} from './slate-plugin.normalize-node'
@@ -41,6 +42,19 @@ export function createSchemaPlugin({editorActor}: {editorActor: EditorActor}) {
       }
 
       return isListBlock(editorActor.getSnapshot().context, value)
+    }
+    editor.isObjectNode = (value: unknown): boolean => {
+      if (!isObject(value) || Editor.isEditor(value)) {
+        return false
+      }
+      const schema = editorActor.getSnapshot().context.schema
+      const obj = value as Record<string, unknown>
+      return (
+        typeof obj['_type'] === 'string' &&
+        obj['_type'] !== schema.block.name &&
+        obj['_type'] !== schema.span.name &&
+        !Array.isArray(obj['children'])
+      )
     }
     editor.isVoid = (element: Element): boolean => {
       if (Editor.isEditor(element)) {
