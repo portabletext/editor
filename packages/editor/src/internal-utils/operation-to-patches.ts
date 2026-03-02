@@ -41,7 +41,7 @@ export function insertTextPatch(
     isTextBlock({schema}, children[operation.path[0]!]) &&
     children[operation.path[0]!]
   if (!block) {
-    throw new Error('Could not find block')
+    return []
   }
   const textChild =
     isTextBlock({schema}, block) &&
@@ -71,12 +71,10 @@ export function removeTextPatch(
   beforeValue: Array<PortableTextBlock>,
 ): Array<Patch> {
   const block = children[operation.path[0]!]
-  if (!block) {
-    throw new Error('Could not find block')
+  if (!block || !isTextBlock({schema}, block)) {
+    return []
   }
-  const child =
-    (isTextBlock({schema}, block) && block.children[operation.path[1]!]) ||
-    undefined
+  const child = block.children[operation.path[1]!] || undefined
   const textChild: PortableTextSpan | undefined = isSpan({schema}, child)
     ? child
     : undefined
