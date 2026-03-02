@@ -18,6 +18,11 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
     return
   }
 
+  // ObjectNodes are leaf nodes with no children — nothing to normalize.
+  if (Node.isObjectNode(node)) {
+    return
+  }
+
   if (!('children' in node)) {
     // If the node is not a text node, and doesn't have a `children` field,
     // then we have an invalid node that will upset slate.
@@ -47,11 +52,13 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   // - Elements that begin with a text child or an inline element child
   //   should have only inline children.
   // - All other elements should have only block children.
+  const firstChild = element.children[0]!
   const shouldHaveInlines =
     !(element === editor) &&
     (editor.isInline(element) ||
-      Text.isText(element.children[0]!) ||
-      editor.isInline(element.children[0]!))
+      Text.isText(firstChild) ||
+      Node.isObjectNode(firstChild) ||
+      (Element.isElement(firstChild) && editor.isInline(firstChild)))
 
   if (shouldHaveInlines) {
     // Since we'll be applying operations while iterating, we also modify
@@ -111,6 +118,27 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
           element = Node.get(editor, path) as Element
           n--
         }
+      } else if (Node.isObjectNode(child)) {
+        // Inline ObjectNodes need the same text-node-surrounding treatment
+        // as inline Elements.
+        if (prev == null || !Text.isText(prev)) {
+          const newChild = editor.createSpan()
+          Transforms.insertNodes(editor, newChild, {
+            at: path.concat(n),
+            voids: true,
+          })
+          element = Node.get(editor, path) as Element
+          n++
+        }
+        if (n === element.children.length - 1) {
+          const newChild = editor.createSpan()
+          Transforms.insertNodes(editor, newChild, {
+            at: path.concat(n + 1),
+            voids: true,
+          })
+          element = Node.get(editor, path) as Element
+          n++
+        }
       }
     }
   } else {
@@ -121,7 +149,10 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
 
       // Allow only block nodes in the top-level children and parent blocks
       // that only contain block nodes.
-      if (Text.isText(child) || editor.isInline(child)) {
+      if (
+        Text.isText(child) ||
+        (Element.isElement(child) && editor.isInline(child))
+      ) {
         if (options?.fallbackElement) {
           Transforms.wrapNodes(editor, options.fallbackElement(), {
             at: path.concat(n),

@@ -65,7 +65,7 @@ export const modifyChildren = (
     root.children = f(root.children)
   } else {
     modifyDescendant<Element>(root, path, (node) => {
-      if (Text.isText(node)) {
+      if (Text.isText(node) || Node.isObjectNode(node)) {
         throw new Error(
           `Cannot get the element at path [${path}] because it refers to a leaf node: ${Scrubber.stringify(
             node,
