@@ -1,5 +1,18 @@
 # Changelog
 
+## 6.0.3
+
+### Patch Changes
+
+- [#2278](https://github.com/portabletext/editor/pull/2278) [`08d7e56`](https://github.com/portabletext/editor/commit/08d7e56e0623ddfde4af4f827af09f19deabe44d) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove internal `undo()/redo()` calls
+
+- [#2285](https://github.com/portabletext/editor/pull/2285) [`bfa7feb`](https://github.com/portabletext/editor/commit/bfa7feb46aca3e9ef5fcd8f35a87177a2f75816d) Thanks [@christianhg](https://github.com/christianhg)! - fix: restore void guard for `insert.text` operation
+
+  Typing while a block object is selected no longer causes a console error. The `insert.text` operation now correctly skips void and read-only elements.
+
+- Updated dependencies [[`7886449`](https://github.com/portabletext/editor/commit/788644909eb30698aa4155790f1d90ee3e9ad008)]:
+  - @portabletext/block-tools@5.0.5
+
 ## 6.0.2
 
 ### Patch Changes
