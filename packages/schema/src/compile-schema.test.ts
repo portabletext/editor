@@ -19,7 +19,7 @@ describe(compileSchema.name, () => {
         annotations: [],
         blockObjects: [],
         inlineObjects: [],
-        nestedBlocks: [],
+        containers: [],
       })
 
       expect(consoleWarnSpy).toHaveBeenCalledWith(
@@ -41,13 +41,13 @@ describe(compileSchema.name, () => {
         annotations: [],
         blockObjects: [],
         inlineObjects: [],
-        nestedBlocks: [],
+        containers: [],
       })
     })
   })
 
-  describe('nested blocks', () => {
-    test('empty schema has nestedBlocks: []', () => {
+  describe('containers', () => {
+    test('empty schema has containers: []', () => {
       expect(compileSchema({})).toEqual({
         block: {name: 'block'},
         span: {name: 'span'},
@@ -57,14 +57,14 @@ describe(compileSchema.name, () => {
         annotations: [],
         blockObjects: [],
         inlineObjects: [],
-        nestedBlocks: [],
+        containers: [],
       })
     })
 
-    test('nested blocks are compiled with fields defaulting to []', () => {
+    test('containers are compiled with fields defaulting to []', () => {
       expect(
         compileSchema({
-          nestedBlocks: [{name: 'tableCell'}],
+          containers: [{name: 'tableCell'}],
         }),
       ).toEqual({
         block: {name: 'block'},
@@ -75,14 +75,14 @@ describe(compileSchema.name, () => {
         annotations: [],
         blockObjects: [],
         inlineObjects: [],
-        nestedBlocks: [{name: 'tableCell', fields: []}],
+        containers: [{name: 'tableCell', fields: []}],
       })
     })
 
-    test('nested blocks with fields are compiled', () => {
+    test('containers with fields are compiled', () => {
       expect(
         compileSchema({
-          nestedBlocks: [
+          containers: [
             {
               name: 'tableCell',
               fields: [
@@ -101,7 +101,7 @@ describe(compileSchema.name, () => {
         annotations: [],
         blockObjects: [],
         inlineObjects: [],
-        nestedBlocks: [
+        containers: [
           {
             name: 'tableCell',
             fields: [
@@ -160,7 +160,7 @@ describe(compileSchema.name, () => {
     test('of with block type preserves PTE sub-schema', () => {
       expect(
         compileSchema({
-          nestedBlocks: [
+          containers: [
             {
               name: 'tableCell',
               fields: [
@@ -178,7 +178,7 @@ describe(compileSchema.name, () => {
               ],
             },
           ],
-        }).nestedBlocks,
+        }).containers,
       ).toEqual([
         {
           name: 'tableCell',
@@ -199,7 +199,7 @@ describe(compileSchema.name, () => {
       ])
     })
 
-    test('table schema: blockObjects with of, nestedBlocks with block of', () => {
+    test('table schema: blockObjects with of, containers with block of', () => {
       const schema = compileSchema({
         blockObjects: [
           {
@@ -225,7 +225,7 @@ describe(compileSchema.name, () => {
             ],
           },
         ],
-        nestedBlocks: [
+        containers: [
           {
             name: 'tableCell',
             fields: [
@@ -246,7 +246,7 @@ describe(compileSchema.name, () => {
         ],
       })
 
-      expect(schema.nestedBlocks).toEqual([
+      expect(schema.containers).toEqual([
         {
           name: 'tableCell',
           fields: [
