@@ -55,15 +55,11 @@ const html = `
 </ul>
 `
 
-const blockContentType = defaultSchema
-  .get('blogPost')
-  .fields.find((field: any) => field.name === 'body').type
-
 const keyGenerator = createTestKeyGenerator()
 
 test(htmlToBlocks.name, () => {
   expect(
-    htmlToBlocks(html, blockContentType, {
+    htmlToBlocks(html, defaultSchema, {
       parseHtml: (html) => new JSDOM(html).window.document,
       keyGenerator,
       rules: [

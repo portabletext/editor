@@ -6,10 +6,6 @@ import {htmlToBlocks} from '../../src'
 import defaultSchema from '../fixtures/defaultSchema'
 import {createTestKeyGenerator} from '../test-key-generator'
 
-const blockContentType = defaultSchema
-  .get('blogPost')
-  .fields.find((field: any) => field.name === 'body').type
-
 const html = fs
   .readFileSync(path.resolve(__dirname, 'gdocs-whitespace-normalize.html'))
   .toString()
@@ -25,7 +21,7 @@ const keyGenerator = createTestKeyGenerator()
 
 test(htmlToBlocks.name, () => {
   expect(
-    htmlToBlocks(html, blockContentType, {
+    htmlToBlocks(html, defaultSchema, {
       parseHtml: (html) => new JSDOM(html).window.document,
       keyGenerator,
     }),

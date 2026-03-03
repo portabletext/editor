@@ -1,54 +1,36 @@
-import {Schema} from '@sanity/schema'
+import {compileSchema, defineSchema} from '@portabletext/schema'
 
-export default Schema.compile({
-  name: 'withDefaultBlockType',
-  types: [
-    {
-      type: 'object',
-      name: 'blogPost',
-      fields: [
-        {
-          title: 'Title',
-          type: 'string',
-          name: 'title',
-        },
-        {
-          title: 'Body',
-          name: 'body',
-          type: 'array',
-          of: [
-            {type: 'block'},
-            {
-              name: 'code',
-              type: 'object',
-              title: 'Code',
-              fields: [
-                {
-                  title: 'Code',
-                  name: 'code',
-                  type: 'text',
-                },
-                {
-                  name: 'language',
-                  title: 'Language',
-                  type: 'string',
-                },
-                {
-                  title: 'Highlighted lines',
-                  name: 'highlightedLines',
-                  type: 'array',
-                  of: [
-                    {
-                      type: 'number',
-                      title: 'Highlighted line',
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    },
-  ],
-})
+const defaultSchema = compileSchema(
+  defineSchema({
+    decorators: [
+      {name: 'strong'},
+      {name: 'em'},
+      {name: 'underline'},
+      {name: 'strike-through'},
+      {name: 'code'},
+    ],
+    annotations: [{name: 'link'}],
+    styles: [
+      {name: 'normal'},
+      {name: 'h1'},
+      {name: 'h2'},
+      {name: 'h3'},
+      {name: 'h4'},
+      {name: 'h5'},
+      {name: 'h6'},
+      {name: 'blockquote'},
+    ],
+    lists: [{name: 'bullet'}, {name: 'number'}],
+    blockObjects: [
+      {
+        name: 'code',
+        fields: [
+          {name: 'code', type: 'string'},
+          {name: 'language', type: 'string'},
+        ],
+      },
+    ],
+  }),
+)
+
+export default defaultSchema

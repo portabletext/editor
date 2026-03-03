@@ -4,14 +4,10 @@ import {htmlToBlocks} from '../../src'
 import defaultSchema from '../fixtures/defaultSchema'
 import {createTestKeyGenerator} from '../test-key-generator'
 
-const blockContentType = defaultSchema
-  .get('blogPost')
-  .fields.find((field: any) => field.name === 'body').type
-
 describe(htmlToBlocks.name, () => {
   test('list items without parent', () => {
     expect(
-      htmlToBlocks(`<li>foo bar</li><li>baz</li>`, blockContentType, {
+      htmlToBlocks(`<li>foo bar</li><li>baz</li>`, defaultSchema, {
         parseHtml: (html) => new JSDOM(html).window.document,
         keyGenerator: createTestKeyGenerator(),
       }),

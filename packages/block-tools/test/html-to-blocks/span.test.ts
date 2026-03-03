@@ -4,14 +4,10 @@ import {htmlToBlocks} from '../../src'
 import defaultSchema from '../fixtures/defaultSchema'
 import {createTestKeyGenerator} from '../test-key-generator'
 
-const blockContentType = defaultSchema
-  .get('blogPost')
-  .fields.find((field: any) => field.name === 'body').type
-
 describe(htmlToBlocks.name, () => {
   test('span with space', () => {
     expect(
-      htmlToBlocks(`a<span> </span>b`, blockContentType, {
+      htmlToBlocks(`a<span> </span>b`, defaultSchema, {
         parseHtml: (html) => new JSDOM(html).window.document,
         keyGenerator: createTestKeyGenerator(),
       }),

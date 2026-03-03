@@ -1,11 +1,12 @@
 [
   {
-    "_type": "customBlock",
+    "_type": "block",
     "markDefs": [],
     "style": "normal",
     "children": [
       {
         "_type": "span",
+        "_key": "randomKey1",
         "marks": [],
         "text": "A heading that is not allowed"
       }
@@ -13,86 +14,101 @@
     "_key": "randomKey0"
   },
   {
-    "_type": "customBlock",
+    "_type": "block",
     "markDefs": [],
     "style": "normal",
     "children": [
       {
         "_type": "span",
+        "_key": "randomKey3",
         "marks": ["strong"],
         "text": "Strong text but "
       },
       {
         "_type": "span",
+        "_key": "randomKey4",
         "marks": ["strong", "em"],
         "text": "this is also emphasized and "
       },
       {
         "_type": "span",
+        "_key": "randomKey5",
         "marks": ["strong", "em", "strike-through"],
         "text": "striked"
       },
       {
         "_type": "span",
+        "_key": "randomKey6",
         "marks": [],
         "text": " "
       },
       {
         "_type": "span",
+        "_key": "randomKey7",
         "marks": ["strong", "em", "sub"],
         "text": "and subbed"
       },
       {
         "_type": "span",
+        "_key": "randomKey8",
         "marks": [],
         "text": " "
       },
       {
         "_type": "span",
+        "_key": "randomKey9",
         "marks": ["strong", "em", "sup"],
         "text": "and supped"
       },
       {
         "_type": "span",
+        "_key": "randomKey10",
         "marks": [],
         "text": " "
       },
       {
         "_type": "span",
+        "_key": "randomKey11",
         "marks": ["strong", "em", "ins"],
         "text": "and inserted"
       },
       {
         "_type": "span",
+        "_key": "randomKey12",
         "marks": [],
         "text": " "
       },
       {
         "_type": "span",
+        "_key": "randomKey13",
         "marks": ["strong", "em", "mark"],
         "text": "and marked"
       },
       {
         "_type": "span",
+        "_key": "randomKey14",
         "marks": [],
         "text": " "
       },
       {
         "_type": "span",
+        "_key": "randomKey15",
         "marks": ["strong", "em", "strike-through"],
         "text": "and deleted"
       },
       {
         "_type": "span",
+        "_key": "randomKey16",
         "marks": [],
         "text": " "
       },
       {
         "_type": "span",
+        "_key": "randomKey17",
         "marks": ["strong", "em", "small"],
         "text": "and shrunk"
       }
     ],
-    "_key": "randomKey1"
+    "_key": "randomKey2"
   }
 ]

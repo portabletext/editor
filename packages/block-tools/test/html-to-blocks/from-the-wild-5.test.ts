@@ -7,10 +7,6 @@ import {isElement} from '../../src/HtmlDeserializer/helpers'
 import defaultSchema from '../fixtures/defaultSchema'
 import {createTestKeyGenerator} from '../test-key-generator'
 
-const blockContentType = defaultSchema
-  .get('blogPost')
-  .fields.find((field: any) => field.name === 'body').type
-
 const html = fs
   .readFileSync(path.resolve(__dirname, 'from-the-wild-5.html'))
   .toString()
@@ -26,7 +22,7 @@ const findElement = (nodes: any, target: string) =>
 
 test(htmlToBlocks.name, () => {
   expect(
-    htmlToBlocks(html, blockContentType, {
+    htmlToBlocks(html, defaultSchema, {
       parseHtml: (html) => new JSDOM(html).window.document,
       keyGenerator,
       rules: [
@@ -41,7 +37,7 @@ test(htmlToBlocks.name, () => {
               return block({
                 _type: 'promo',
                 title: title.textContent,
-                intro: htmlToBlocks(intro.innerHTML, blockContentType, {
+                intro: htmlToBlocks(intro.innerHTML, defaultSchema, {
                   parseHtml: (html) => new JSDOM(html).window.document,
                   keyGenerator,
                 }),

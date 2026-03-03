@@ -3,10 +3,6 @@ import type {DeserializerRule} from '../../../../src/types'
 import defaultSchema from '../../../fixtures/defaultSchema'
 import type {BlockTestFn} from '../types'
 
-const blockContentType = defaultSchema
-  .get('blogPost')
-  .fields.find((field: any) => field.name === 'body').type
-
 const rules: DeserializerRule[] = [
   // Map 'em' tags to 'strong'
   {
@@ -70,7 +66,7 @@ const testFn: BlockTestFn = (html, blockTools, commonOptions) => {
     ...commonOptions,
     rules,
   }
-  return blockTools.htmlToBlocks(html, blockContentType, options)
+  return blockTools.htmlToBlocks(html, defaultSchema, options)
 }
 
 export default testFn

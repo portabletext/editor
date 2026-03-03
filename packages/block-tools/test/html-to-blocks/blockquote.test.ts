@@ -4,16 +4,12 @@ import {htmlToBlocks} from '../../src'
 import defaultSchema from '../fixtures/defaultSchema'
 import {createTestKeyGenerator} from '../test-key-generator'
 
-const blockContentType = defaultSchema
-  .get('blogPost')
-  .fields.find((field: any) => field.name === 'body').type
-
 describe(htmlToBlocks.name, () => {
   test('blockquote of paragraphs', () => {
     expect(
       htmlToBlocks(
         `<blockquote><p>foo bar baz</p><p>fizz buzz</p></blockquote>`,
-        blockContentType,
+        defaultSchema,
         {
           parseHtml: (html) => new JSDOM(html).window.document,
           keyGenerator: createTestKeyGenerator(),
@@ -46,7 +42,7 @@ describe(htmlToBlocks.name, () => {
   <p>fizz buzz</p>
 </blockquote>
 `,
-        blockContentType,
+        defaultSchema,
         {
           parseHtml: (html) => new JSDOM(html).window.document,
           keyGenerator: createTestKeyGenerator(),
@@ -79,7 +75,7 @@ describe(htmlToBlocks.name, () => {
   fizz buzz
 </blockquote>
 `,
-        blockContentType,
+        defaultSchema,
         {
           parseHtml: (html) => new JSDOM(html).window.document,
           keyGenerator: createTestKeyGenerator(),
@@ -112,7 +108,7 @@ describe(htmlToBlocks.name, () => {
   <p>fizz buzz</p>
 </blockquote>
 `,
-        blockContentType,
+        defaultSchema,
         {
           parseHtml: (html) => new JSDOM(html).window.document,
           keyGenerator: createTestKeyGenerator(),
@@ -145,7 +141,7 @@ describe(htmlToBlocks.name, () => {
   <h2>fizz buzz</h2>
 </blockquote>
 `,
-        blockContentType,
+        defaultSchema,
         {
           parseHtml: (html) => new JSDOM(html).window.document,
           keyGenerator: createTestKeyGenerator(),
@@ -178,7 +174,7 @@ describe(htmlToBlocks.name, () => {
   <span>fizz buzz</span>
 </blockquote>
 `,
-        blockContentType,
+        defaultSchema,
         {
           parseHtml: (html) => new JSDOM(html).window.document,
           keyGenerator: createTestKeyGenerator(),
@@ -211,7 +207,7 @@ describe(htmlToBlocks.name, () => {
   fizz buzz
 </blockquote>
 `,
-        blockContentType,
+        defaultSchema,
         {
           parseHtml: (html) => new JSDOM(html).window.document,
           keyGenerator: createTestKeyGenerator(),

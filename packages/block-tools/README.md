@@ -6,63 +6,53 @@
 
 ## Example
 
-Let's start with a complete example:
+### Using a Portable Text schema
 
 ```js
 import {htmlToBlocks} from '@portabletext/block-tools'
-import {Schema} from '@sanity/schema'
+import {compileSchema, defineSchema} from '@portabletext/schema'
 
-// Start with compiling a schema we can work against
-const defaultSchema = Schema.compile({
-  name: 'myBlog',
-  types: [
-    {
-      type: 'object',
-      name: 'blogPost',
-      fields: [
-        {
-          title: 'Title',
-          type: 'string',
-          name: 'title',
-        },
-        {
-          title: 'Body',
-          name: 'body',
-          type: 'array',
-          of: [{type: 'block'}],
-        },
-      ],
-    },
-  ],
-})
+const schema = compileSchema(
+  defineSchema({
+    decorators: [{name: 'strong'}, {name: 'em'}, {name: 'code'}],
+    styles: [
+      {name: 'normal'},
+      {name: 'h1'},
+      {name: 'h2'},
+      {name: 'h3'},
+      {name: 'blockquote'},
+    ],
+    lists: [{name: 'bullet'}, {name: 'number'}],
+  }),
+)
 
-// The compiled schema type for the content type that holds the block array
-const blockContentType = defaultSchema
+const blocks = htmlToBlocks(
+  '<html><body><h1>Hello world!</h1><body></html>',
+  schema,
+)
+```
+
+### Using a Sanity schema
+
+If you have a Sanity schema, convert it first using `sanitySchemaToPortableTextSchema` from `@portabletext/sanity-bridge`:
+
+```js
+import {htmlToBlocks} from '@portabletext/block-tools'
+import {sanitySchemaToPortableTextSchema} from '@portabletext/sanity-bridge'
+
+const bodyType = sanitySchema
   .get('blogPost')
   .fields.find((field) => field.name === 'body').type
 
-// Convert HTML to block array
 const blocks = htmlToBlocks(
   '<html><body><h1>Hello world!</h1><body></html>',
-  blockContentType,
+  sanitySchemaToPortableTextSchema(bodyType),
 )
-// Outputs
-//
-//  {
-//    _type: 'block',
-//    style: 'h1'
-//    children: [
-//      {
-//        _type: 'span'
-//        text: 'Hello world!'
-//      }
-//    ]
-//  }
 ```
 
 ## Methods
 
-### `htmlToBlocks(html, blockContentType, options)` (html deserializer)
+### `htmlToBlocks(html, schema, options)` (html deserializer)
 
 This will deserialize the input html (string) into blocks.
 
@@ -72,9 +62,9 @@ This will deserialize the input html (string) into blocks.
 
 The stringified version of the HTML you are importing
 
-##### `blockContentType`
+##### `schema`
 
-A compiled version of the block content schema type.
+A compiled `Schema` from `@portabletext/schema`.
 
 The deserializer will respect the schema when deserializing the HTML elements to blocks.
 
@@ -108,10 +98,13 @@ that parses the html into a DOMParser compatible model / API.
 ```js
 const {JSDOM} = require('jsdom')
 const {htmlToBlocks} = require('@portabletext/block-tools')
+const {compileSchema, defineSchema} = require('@portabletext/schema')
+
+const schema = compileSchema(defineSchema({...}))
 
 const blocks = htmlToBlocks(
   '<html><body><h1>Hello world!</h1><body></html>',
-  blockContentType,
+  schema,
   {
     parseHtml: (html) => new JSDOM(html).window.document,
   },
@@ -125,7 +118,7 @@ You may add your own rules to deal with special HTML cases.
 ```js
 htmlToBlocks(
   '<html><body><pre><code>const foo = "bar"</code></pre></body></html>',
-  blockContentType,
+  schema,
   {
     parseHtml: (html) => new JSDOM(html),
     rules: [
