@@ -1,41 +1,40 @@
-import type {Schema} from '@portabletext/schema'
-import type {ArbitraryTypedObject} from './types'
+import type {PortableTextObject, Schema} from '@portabletext/schema'
 
 /**
- * Use the current `Schema` as well as the potential element props to determine
- * what Portable Text Object to use to represent the element.
+ * Matcher function for mapping HTML image elements to Portable Text block or
+ * inline objects.
+ *
+ * @param context - The current schema and key generator
+ * @param value - The HTML element attributes (e.g. `src`, `alt`)
+ * @param isInline - Whether the image is in an inline context
+ * @returns A Portable Text object to represent the image, or `undefined` to skip
+ *
+ * @public
  */
-type ObjectSchemaMatcher<TProps extends Record<string, unknown>> = ({
+export type ImageMatcher<
+  TValue extends Record<string, unknown> = Record<string, never>,
+> = ({
   context,
-  props,
+  value,
+  isInline,
 }: {
   context: {schema: Schema; keyGenerator: () => string}
-  props: TProps
-}) => ArbitraryTypedObject | undefined
+  value: TValue
+  isInline: boolean
+}) => PortableTextObject | undefined
 
 /**
- * Use the current `Schema` as well as the potential img element props to
- * determine what Portable Text Object to use to represent the image.
- * @beta
- */
-export type ImageSchemaMatcher = ObjectSchemaMatcher<{
-  src?: string
-  alt?: string
-  [key: string]: string | undefined
-}>
-
-/**
- * @beta
+ * @public
  */
 export type SchemaMatchers = {
   /**
-   * Called whenever the HTML parsing encounters an `<img>` element that is
-   * inferred to be a block element.
+   * Called whenever the HTML parsing encounters an `<img>` element.
+   * The `isInline` flag indicates whether the image is in a block or inline
+   * context.
    */
-  image?: ImageSchemaMatcher
-  /**
-   * Called whenever the HTML parsing encounters an `<img>` element that is
-   * inferred to be an inline element.
-   */
-  inlineImage?: ImageSchemaMatcher
+  image?: ImageMatcher<{
+    src?: string
+    alt?: string
+    [key: string]: string | undefined
+  }>
 }

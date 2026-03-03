@@ -1,6 +1,6 @@
 import {
   htmlToBlocks,
-  type ImageSchemaMatcher,
+  type ImageMatcher,
   type SchemaMatchers,
 } from '@portabletext/block-tools'
 import {defineSchema} from '@portabletext/schema'
@@ -178,20 +178,16 @@ describe('event.clipboard.paste', () => {
       ],
     })
 
-    const imageMatcher: ImageSchemaMatcher = ({context, props}) => {
+    const imageMatcher: ImageMatcher<{
+      src?: string
+      alt?: string
+      [key: string]: string | undefined
+    }> = ({context, value}) => {
       return {
         _type: 'image',
         _key: context.keyGenerator(),
-        src: props.src,
-        alt: props.alt,
-      }
-    }
-    const inlineImageMatcher: ImageSchemaMatcher = ({context, props}) => {
-      return {
-        _type: 'image',
-        _key: context.keyGenerator(),
-        src: props.src,
-        alt: props.alt,
+        src: value.src,
+        alt: value.alt,
       }
     }
 
@@ -229,13 +225,12 @@ describe('event.clipboard.paste', () => {
       })
     }
 
-    test('Scenario: `image` and `inlineImage` block-tools matchers', async () => {
+    test('Scenario: `image` block-tools matcher', async () => {
       const {editor} = await createTestEditor({
         children: (
           <BehaviorPlugin
             behaviors={[
               createBehavior({
-                inlineImage: inlineImageMatcher,
                 image: imageMatcher,
               }),
             ]}

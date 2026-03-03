@@ -4,12 +4,20 @@ import {JSDOM} from 'jsdom'
 import {describe, expect, test} from 'vitest'
 import {createTestKeyGenerator} from '../../test/test-key-generator'
 import {htmlToBlocks} from '../index'
-import type {ImageSchemaMatcher} from '../schema-matchers'
+import type {ImageMatcher} from '../schema-matchers'
 import type {HtmlDeserializerOptions} from '../types'
 import {createFlattenTableRule} from './flatten-tables'
 
 describe(createFlattenTableRule.name, () => {
-  const imageMatcher: ImageSchemaMatcher = ({context, props}) => {
+  const blockOnlyImageMatcher: ImageMatcher<{
+    src?: string
+    alt?: string
+    [key: string]: string | undefined
+  }> = ({context, value, isInline}) => {
+    if (isInline) {
+      return undefined
+    }
+
     if (
       !context.schema.blockObjects.some(
         (blockObject) => blockObject.name === 'image',
@@ -20,24 +28,30 @@ describe(createFlattenTableRule.name, () => {
 
     return {
       _type: 'image',
-      ...(props.src ? {src: props.src} : {}),
-      ...(props.alt ? {alt: props.alt} : {}),
+      _key: context.keyGenerator(),
+      ...(value.src ? {src: value.src} : {}),
+      ...(value.alt ? {alt: value.alt} : {}),
     }
   }
 
-  const inlineImageMatcher: ImageSchemaMatcher = ({context, props}) => {
-    if (
-      !context.schema.inlineObjects.some(
-        (inlineObject) => inlineObject.name === 'image',
-      )
-    ) {
+  const imageMatcher: ImageMatcher<{
+    src?: string
+    alt?: string
+    [key: string]: string | undefined
+  }> = ({context, value, isInline}) => {
+    const schemaCollection = isInline
+      ? context.schema.inlineObjects
+      : context.schema.blockObjects
+
+    if (!schemaCollection.some((item) => item.name === 'image')) {
       return undefined
     }
 
     return {
       _type: 'image',
-      ...(props.src ? {src: props.src} : {}),
-      ...(props.alt ? {alt: props.alt} : {}),
+      _key: context.keyGenerator(),
+      ...(value.src ? {src: value.src} : {}),
+      ...(value.alt ? {alt: value.alt} : {}),
     }
   }
 
@@ -436,13 +450,13 @@ describe(createFlattenTableRule.name, () => {
       ).toEqual(['Name, ,John Doe', 'Photo', 'Name, ,Jane Smith', 'Photo'])
     })
 
-    test('block image matcher', () => {
+    test('block-only image matcher', () => {
       expect(
         getTersePt({
           schema,
           value: transform(html, {
             matchers: {
-              image: imageMatcher,
+              image: blockOnlyImageMatcher,
             },
             rules: [flattenTableRule],
           }),
@@ -464,7 +478,6 @@ describe(createFlattenTableRule.name, () => {
           value: transform(html, {
             matchers: {
               image: imageMatcher,
-              inlineImage: inlineImageMatcher,
             },
             rules: [flattenTableRule],
           }),

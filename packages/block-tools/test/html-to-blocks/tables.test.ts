@@ -2,38 +2,27 @@ import {compileSchema, defineSchema} from '@portabletext/schema'
 import {getTersePt} from '@portabletext/test'
 import {JSDOM} from 'jsdom'
 import {describe, expect, test} from 'vitest'
-import {htmlToBlocks, type ImageSchemaMatcher} from '../../src'
+import {htmlToBlocks, type ImageMatcher} from '../../src'
 import {createTestKeyGenerator} from '../test-key-generator'
 
-const imageMatcher: ImageSchemaMatcher = ({context, props}) => {
-  if (
-    !context.schema.blockObjects.some(
-      (blockObject) => blockObject.name === 'image',
-    )
-  ) {
+const imageMatcher: ImageMatcher<{
+  src?: string
+  alt?: string
+  [key: string]: string | undefined
+}> = ({context, value, isInline}) => {
+  const schemaCollection = isInline
+    ? context.schema.inlineObjects
+    : context.schema.blockObjects
+
+  if (!schemaCollection.some((item) => item.name === 'image')) {
     return undefined
   }
 
   return {
     _type: 'image',
-    ...(props.src ? {src: props.src} : {}),
-    ...(props.alt ? {alt: props.alt} : {}),
-  }
-}
-
-const inlineImageMatcher: ImageSchemaMatcher = ({context, props}) => {
-  if (
-    !context.schema.inlineObjects.some(
-      (inlineObject) => inlineObject.name === 'image',
-    )
-  ) {
-    return undefined
-  }
-
-  return {
-    _type: 'image',
-    ...(props.src ? {src: props.src} : {}),
-    ...(props.alt ? {alt: props.alt} : {}),
+    _key: context.keyGenerator(),
+    ...(value.src ? {src: value.src} : {}),
+    ...(value.alt ? {alt: value.alt} : {}),
   }
 }
 
@@ -50,7 +39,6 @@ function transform(html: string) {
     keyGenerator: createTestKeyGenerator('k'),
     matchers: {
       image: imageMatcher,
-      inlineImage: inlineImageMatcher,
     },
   })
 }

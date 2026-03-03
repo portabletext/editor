@@ -61,9 +61,13 @@ export function createWordOnlineRules(
         const src = el.getAttribute('src') ?? undefined
         const alt = el.getAttribute('alt') ?? undefined
 
-        const props = Object.fromEntries(
-          Array.from(el.attributes).map((attr) => [attr.name, attr.value]),
-        )
+        const value = {
+          ...Object.fromEntries(
+            Array.from(el.attributes).map((attr) => [attr.name, attr.value]),
+          ),
+          ...(src ? {src} : {}),
+          ...(alt ? {alt} : {}),
+        }
 
         // Bare <img> tags are typically block-level, not inline
         // They should be returned as block images
@@ -72,11 +76,8 @@ export function createWordOnlineRules(
             schema: schema,
             keyGenerator: options.keyGenerator ?? keyGenerator,
           },
-          props: {
-            ...props,
-            ...(src ? {src} : {}),
-            ...(alt ? {alt} : {}),
-          },
+          value,
+          isInline: false,
         })
 
         if (image) {
@@ -118,9 +119,18 @@ export function createWordOnlineRules(
         const src = img.getAttribute('src') ?? undefined
         const alt = img.getAttribute('alt') ?? undefined
 
-        const props = Object.fromEntries(
-          Array.from(img.attributes).map((attr) => [attr.name, attr.value]),
-        )
+        const value = {
+          ...Object.fromEntries(
+            Array.from(img.attributes).map((attr) => [attr.name, attr.value]),
+          ),
+          ...(src ? {src} : {}),
+          ...(alt ? {alt} : {}),
+        }
+
+        const matcherContext = {
+          schema: schema,
+          keyGenerator: options.keyGenerator ?? keyGenerator,
+        }
 
         // Determine if this should be an inline or block-level image
         // Word Online inline images:
@@ -131,16 +141,10 @@ export function createWordOnlineRules(
 
         if (!isInsideParagraph || isInsideListItem) {
           // Inline image (either not in a paragraph, or inside a list item)
-          const inlineImage = options.matchers?.inlineImage?.({
-            context: {
-              schema: schema,
-              keyGenerator: options.keyGenerator ?? keyGenerator,
-            },
-            props: {
-              ...props,
-              ...(src ? {src} : {}),
-              ...(alt ? {alt} : {}),
-            },
+          const inlineImage = options.matchers?.image?.({
+            context: matcherContext,
+            value,
+            isInline: true,
           })
 
           if (inlineImage) {
@@ -150,15 +154,9 @@ export function createWordOnlineRules(
 
         // Block-level image (or fallback if inline image not supported)
         const image = options.matchers?.image?.({
-          context: {
-            schema: schema,
-            keyGenerator: options.keyGenerator ?? keyGenerator,
-          },
-          props: {
-            ...props,
-            ...(src ? {src} : {}),
-            ...(alt ? {alt} : {}),
-          },
+          context: matcherContext,
+          value,
+          isInline: false,
         })
 
         if (image) {

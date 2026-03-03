@@ -189,12 +189,12 @@ test('Scenario: Uploading images embedded in HTML', async () => {
               const blocks = htmlToBlocks(event.data, snapshot.context.schema, {
                 keyGenerator: snapshot.context.keyGenerator,
                 matchers: {
-                  image: ({context, props}) => {
+                  image: ({context, value}) => {
                     return {
                       _type: 'image',
                       _key: context.keyGenerator(),
-                      _src: props.src,
-                      _alt: props.alt,
+                      _src: value.src,
+                      _alt: value.alt,
                     }
                   },
                 },
@@ -362,12 +362,12 @@ test('Scenario: Pasting image files that exist both in HTML and as a file', asyn
       const blocks = htmlToBlocks(event.data, snapshot.context.schema, {
         keyGenerator: snapshot.context.keyGenerator,
         matchers: {
-          image: ({context, props}) => {
+          image: ({context, value}) => {
             return {
               _type: 'image',
               _key: context.keyGenerator(),
-              _src: props.src,
-              _alt: props.alt,
+              _src: value.src,
+              _alt: value.alt,
             }
           },
         },

@@ -287,21 +287,26 @@ export function createHTMLRules(
             Array.from(el.attributes).map((attr) => [attr.name, attr.value]),
           )
 
+          const value = {
+            ...props,
+            ...(src ? {src} : {}),
+            ...(alt ? {alt} : {}),
+          }
+
+          const matcherContext = {
+            schema,
+            keyGenerator: options.keyGenerator ?? keyGenerator,
+          }
+
           const ancestorOfLonelyChild =
             el?.parentElement?.parentElement?.getAttribute('data-lonely-child')
           const ancestorOfListItem = el.closest('li') !== null
 
           if (ancestorOfLonelyChild && !ancestorOfListItem) {
             const image = options.matchers?.image?.({
-              context: {
-                schema,
-                keyGenerator: options.keyGenerator ?? keyGenerator,
-              },
-              props: {
-                ...props,
-                ...(src ? {src} : {}),
-                ...(alt ? {alt} : {}),
-              },
+              context: matcherContext,
+              value,
+              isInline: false,
             })
 
             if (image) {
@@ -312,16 +317,10 @@ export function createHTMLRules(
             }
           }
 
-          const inlineImage = options.matchers?.inlineImage?.({
-            context: {
-              schema,
-              keyGenerator: options.keyGenerator ?? keyGenerator,
-            },
-            props: {
-              ...props,
-              ...(src ? {src} : {}),
-              ...(alt ? {alt} : {}),
-            },
+          const inlineImage = options.matchers?.image?.({
+            context: matcherContext,
+            value,
+            isInline: true,
           })
 
           if (inlineImage) {
@@ -329,15 +328,9 @@ export function createHTMLRules(
           }
 
           const image = options.matchers?.image?.({
-            context: {
-              schema,
-              keyGenerator: options.keyGenerator ?? keyGenerator,
-            },
-            props: {
-              ...props,
-              ...(src ? {src} : {}),
-              ...(alt ? {alt} : {}),
-            },
+            context: matcherContext,
+            value,
+            isInline: false,
           })
 
           if (image) {
