@@ -40,7 +40,7 @@ export function* nodes<T extends Node>(
     to = reverse ? first : last
   }
 
-  const nodeEntries = Node.nodes(editor, {
+  const nodeEntries = Node.nodes(editor, editor.schema, {
     reverse,
     from,
     to,
@@ -48,13 +48,10 @@ export function* nodes<T extends Node>(
       if (pass && pass([node, path])) {
         return true
       }
-      if (!Element.isElement(node)) {
+      if (!Element.isElement(node, editor.schema)) {
         return false
       }
-      if (
-        !voids &&
-        (Editor.isVoid(editor, node) || Editor.isElementReadOnly(editor, node))
-      ) {
+      if (!voids && Editor.isElementReadOnly(editor, node)) {
         return true
       }
 
@@ -77,7 +74,7 @@ export function* nodes<T extends Node>(
       // If we've arrived at a leaf text node that is not lower than the last
       // hit, then we've found a branch that doesn't include a match, which
       // means the match is not universal.
-      if (universal && !isLower && Text.isText(node)) {
+      if (universal && !isLower && Text.isText(node, editor.schema)) {
         return
       } else {
         continue

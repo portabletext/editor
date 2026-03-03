@@ -1,7 +1,8 @@
+import type {PortableTextBlock} from '@portabletext/schema'
 import {applySelect} from '../internal-utils/apply-selection'
 import {applySetNode} from '../internal-utils/apply-set-node'
 import {toSlateRange} from '../internal-utils/to-slate-range'
-import {Editor, Node, Range} from '../slate'
+import {Editor, Node, Range, Text} from '../slate'
 import {parseAnnotation} from '../utils/parse-blocks'
 import type {OperationImplementation} from './operation.types'
 
@@ -30,7 +31,7 @@ export const addAnnotationOperationImplementation: OperationImplementation<
     ? toSlateRange({
         context: {
           schema: context.schema,
-          value: operation.editor.value,
+          value: operation.editor.children as Array<PortableTextBlock>,
           selection: operation.at,
         },
         blockIndexMap: operation.editor.blockIndexMap,
@@ -91,10 +92,12 @@ export const addAnnotationOperationImplementation: OperationImplementation<
     // Split text nodes at range boundaries
     const splitRange = at ?? editor.selection
     if (splitRange && Range.isRange(splitRange)) {
+      const [splitLeaf] = Editor.leaf(editor, splitRange.anchor)
       if (
         !(
           Range.isCollapsed(splitRange) &&
-          Editor.leaf(editor, splitRange.anchor)[0].text.length > 0
+          Text.isText(splitLeaf, editor.schema) &&
+          splitLeaf.text.length > 0
         )
       ) {
         const splitRangeRef = Editor.rangeRef(editor, splitRange, {
@@ -108,7 +111,7 @@ export const addAnnotationOperationImplementation: OperationImplementation<
             type: 'split_node',
             path: splitEnd.path,
             position: splitEnd.offset,
-            properties: Node.extractProps(endNode),
+            properties: Node.extractProps(endNode, editor.schema),
           })
         }
         const startAtStart = Editor.isStart(editor, splitStart, splitStart.path)
@@ -121,7 +124,7 @@ export const addAnnotationOperationImplementation: OperationImplementation<
             type: 'split_node',
             path: splitStart.path,
             position: splitStart.offset,
-            properties: Node.extractProps(startNode),
+            properties: Node.extractProps(startNode, editor.schema),
           })
         }
         // Update selection if using editor.selection (not explicit `at`)
@@ -132,7 +135,7 @@ export const addAnnotationOperationImplementation: OperationImplementation<
       }
     }
 
-    const children = Node.children(editor, blockPath)
+    const children = Node.children(editor, blockPath, editor.schema)
 
     // Use the tracked range (updated after splits) or fall back to editor.selection
     const selectionRange = rangeRef?.current ?? editor.selection

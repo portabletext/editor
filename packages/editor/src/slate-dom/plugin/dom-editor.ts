@@ -1,13 +1,12 @@
 import type {MutableRefObject} from 'react'
 import {
   Editor,
-  Element,
+  Node,
   Range,
   Scrubber,
   Transforms,
   type Ancestor,
   type BaseEditor,
-  type Node,
   type Operation,
   type Path,
   type Point,
@@ -331,12 +330,16 @@ export const DOMEditor: DOMEditorInterface = {
     const node = DOMEditor.toSlateNode(editor, event.target)
     const path = DOMEditor.findPath(editor, node)
 
-    // If the drop target is inside a void node, move it into either the
+    // If the drop target is inside an ObjectNode, move it into either the
     // next or previous node, depending on which side the `x` and `y`
     // coordinates are closest to.
-    if (Element.isElement(node) && Editor.isVoid(editor, node)) {
+    if (editor.isObjectNode(node)) {
       const rect = target.getBoundingClientRect()
-      const isPrev = editor.isInline(node)
+
+      // TODO: path.length > 1 assumes flat document model. With containers,
+      // block objects inside containers would also have path.length > 1.
+      const isInline = path.length > 1
+      const isPrev = isInline
         ? x - rect.left < rect.left + rect.width - x
         : y - rect.top < rect.top + rect.height - y
 
@@ -558,7 +561,7 @@ export const DOMEditor: DOMEditorInterface = {
     const slateNode =
       DOMEditor.hasTarget(editor, target) &&
       DOMEditor.toSlateNode(editor, target)
-    return Element.isElement(slateNode) && Editor.isVoid(editor, slateNode)
+    return !!slateNode && editor.isObjectNode(slateNode)
   },
 
   setFragmentData: (editor, data, originEvent) =>
@@ -582,6 +585,25 @@ export const DOMEditor: DOMEditorInterface = {
     const [node] = Editor.node(editor, point.path)
     const el = DOMEditor.toDOMNode(editor, node)
     let domPoint: DOMPoint | undefined
+
+    if (editor.isObjectNode(node)) {
+      const spacer = el.querySelector('[data-slate-zero-width]')
+      if (spacer) {
+        const domText = spacer.childNodes[0]
+        if (domText) {
+          return [domText, 0]
+        }
+      }
+
+      const parentEl = el.parentNode
+      if (parentEl) {
+        const index = Array.from(parentEl.childNodes).indexOf(el)
+        if (index !== -1) {
+          return [parentEl, index]
+        }
+      }
+      return [el, 0]
+    }
 
     // If we're inside a void node, force the offset to 0, otherwise the zero
     // width spacing character will result in an incorrect offset of 1
@@ -915,6 +937,46 @@ export const DOMEditor: DOMEditorInterface = {
       }
     }
 
+    if (!textNode && parentNode) {
+      if (
+        nearestNode instanceof HTMLElement &&
+        nearestNode.hasAttribute('data-slate-node')
+      ) {
+        const childEl = nearestNode.childNodes[nearestOffset]
+        if (
+          childEl instanceof HTMLElement &&
+          DOMEditor.hasDOMNode(editor, childEl)
+        ) {
+          const slateNode = DOMEditor.toSlateNode(editor, childEl)
+          if (editor.isObjectNode(slateNode)) {
+            try {
+              const path = DOMEditor.findPath(editor, slateNode)
+              return {path, offset: 0} as T extends true ? Point | null : Point
+            } catch {
+              // Fall through
+            }
+          }
+        }
+      }
+
+      const elementNode =
+        parentNode.closest('[data-slate-node="element"]') ??
+        (parentNode.hasAttribute('data-slate-node') ? parentNode : null)
+
+      if (elementNode && DOMEditor.hasDOMNode(editor, elementNode)) {
+        const slateNode = DOMEditor.toSlateNode(editor, elementNode)
+
+        if (editor.isObjectNode(slateNode)) {
+          try {
+            const path = DOMEditor.findPath(editor, slateNode)
+            return {path, offset: 0} as T extends true ? Point | null : Point
+          } catch {
+            // Fall through to the textNode check below
+          }
+        }
+      }
+    }
+
     if (!textNode) {
       if (suppressThrow) {
         return null as T extends true ? Point | null : Point
@@ -937,6 +999,22 @@ export const DOMEditor: DOMEditorInterface = {
       }
       throw e
     }
+
+    // Truncate paths that resolve to the spacer's virtual text node.
+    if (path.length > 1) {
+      const parentPath = path.slice(0, -1)
+      try {
+        const parentSlateNode = Node.get(editor, parentPath, editor.schema)
+        if (editor.isObjectNode(parentSlateNode)) {
+          return {path: parentPath, offset: 0} as T extends true
+            ? Point | null
+            : Point
+        }
+      } catch {
+        // Parent path doesn't exist in the tree, continue with original path
+      }
+    }
+
     return {path, offset} as T extends true ? Point | null : Point
   },
 
@@ -1063,6 +1141,9 @@ export const DOMEditor: DOMEditorInterface = {
       anchorOffset == null ||
       focusOffset == null
     ) {
+      if (suppressThrow) {
+        return null as T extends true ? Range | null : Range
+      }
       throw new Error(
         `Cannot resolve a Slate range from DOM range: ${domRange}`,
       )

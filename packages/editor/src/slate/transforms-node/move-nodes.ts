@@ -16,7 +16,8 @@ export const moveNodes: NodeTransforms['moveNodes'] = (editor, options) => {
     if (match == null) {
       match = Path.isPath(at)
         ? matchPath(editor, at)
-        : (n) => Element.isElement(n) && Editor.isBlock(editor, n)
+        : (n) =>
+            Element.isElement(n, editor.schema) && Editor.isBlock(editor, n)
     }
 
     const toRef = Editor.pathRef(editor, to)

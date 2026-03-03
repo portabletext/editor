@@ -5,6 +5,7 @@
 type ExtendableTypes =
   | 'Editor'
   | 'Element'
+  | 'ObjectNode'
   | 'Text'
   | 'Selection'
   | 'Range'

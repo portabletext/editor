@@ -22,7 +22,7 @@ import {
   isEqualValues,
 } from '../internal-utils/equality'
 import {validateValue} from '../internal-utils/validateValue'
-import {toSlateBlock, VOID_CHILD_KEY} from '../internal-utils/values'
+import {toSlateBlock} from '../internal-utils/values'
 import {deleteText, Editor, Node, Text, type Descendant} from '../slate'
 import {withRemoteChanges} from '../slate-plugins/slate-plugin.remote-changes'
 import {pluginWithoutHistory} from '../slate-plugins/slate-plugin.without-history'
@@ -677,7 +677,7 @@ function syncBlock({
   value: Array<PortableTextBlock>
 }) {
   const oldSlateBlock = slateEditor.children.at(index)
-  const oldBlock = slateEditor.value.at(index)
+  const oldBlock = (slateEditor.children as Array<PortableTextBlock>).at(index)
 
   if (!oldSlateBlock || !oldBlock) {
     // Insert the new block
@@ -863,8 +863,8 @@ function replaceBlock({
 
   if (
     selectionFocusOnBlock &&
-    Node.has(slateEditor, currentSelection.anchor.path) &&
-    Node.has(slateEditor, currentSelection.focus.path)
+    Node.has(slateEditor, currentSelection.anchor.path, slateEditor.schema) &&
+    Node.has(slateEditor, currentSelection.focus.path, slateEditor.schema)
   ) {
     applySelect(slateEditor, currentSelection)
   }
@@ -952,10 +952,15 @@ function updateBlock({
     slateBlock.children.forEach((currentBlockChild, currentBlockChildIndex) => {
       const oldBlockChild = oldSlateBlock.children.at(currentBlockChildIndex)
       const isChildChanged =
-        !oldBlockChild || !isEqualChild(currentBlockChild, oldBlockChild)
+        !oldBlockChild ||
+        !isEqualChild(
+          currentBlockChild,
+          oldBlockChild,
+          slateEditor.schema.span.name,
+        )
       const isTextChanged =
         oldBlockChild &&
-        Text.isText(oldBlockChild) &&
+        Text.isText(oldBlockChild, slateEditor.schema) &&
         currentBlockChild.text !== oldBlockChild.text
       const path = [index, currentBlockChildIndex]
 
@@ -1000,13 +1005,10 @@ function updateBlock({
 
             slateEditor.onChange()
           } else if (!isSpanNode) {
-            // If it's a inline block, also update the void text node key
             debug.syncValue(
               'Updating changed inline object child',
               currentBlockChild,
             )
-
-            applySetNode(slateEditor, {_key: VOID_CHILD_KEY}, [...path, 0])
           }
         } else if (oldBlockChild) {
           debug.syncValue('Replacing child', currentBlockChild)

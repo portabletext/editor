@@ -1,6 +1,6 @@
 import {forwardRef, memo, useRef, useState} from 'react'
 import {ReactEditor, useSlateStatic} from '..'
-import {Editor, Node, Path, type Element, type Text} from '../../slate'
+import {Editor, Path, type Element, type Text} from '../../slate'
 import {IS_ANDROID, MARK_PLACEHOLDER_SYMBOL} from '../../slate-dom'
 import {useIsomorphicLayoutEffect} from '../hooks/use-isomorphic-layout-effect'
 
@@ -19,12 +19,6 @@ const SlateString = (props: {
   const path = ReactEditor.findPath(editor, text)
   const parentPath = Path.parent(path)
   const isMarkPlaceholder = Boolean((leaf as any)[MARK_PLACEHOLDER_SYMBOL])
-
-  // COMPAT: Render text inside void nodes with a zero-width space.
-  // So the node can contain selection but the text is not visible.
-  if (editor.isVoid(parent)) {
-    return <ZeroWidthString length={Node.string(parent).length} />
-  }
 
   // COMPAT: If this is the last text node in an empty block, render a zero-
   // width space that will convert into a line break when copying and pasting

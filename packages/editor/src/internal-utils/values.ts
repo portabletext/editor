@@ -9,8 +9,6 @@ import {isEqualValues} from './equality'
 
 export const EMPTY_MARKDEFS: PortableTextObject[] = []
 
-export const VOID_CHILD_KEY = 'void-child'
-
 export function toSlateBlock(
   block: PortableTextBlock,
   {schemaTypes}: {schemaTypes: EditorSchema},
@@ -39,26 +37,12 @@ export function toSlateBlock(
       }
 
       if (childType !== schemaTypes.span.name) {
-        // Return 'slate' version of inline object where the actual
-        // value is stored in the `value` property.
-        // In slate, inline objects are represented as regular
-        // children with actual text node in order to be able to
-        // be selected the same way as the rest of the (text) content.
         hasInlines = true
 
         return {
           _type: childType,
           _key: childKey,
-          children: [
-            {
-              _key: VOID_CHILD_KEY,
-              _type: schemaTypes.span.name,
-              text: '',
-              marks: [],
-            },
-          ],
-          value: childProps,
-          __inline: true,
+          ...childProps,
         }
       }
 
@@ -71,7 +55,7 @@ export function toSlateBlock(
       !hasMissingMarkDefs &&
       !hasMissingChildren &&
       !hasInlines &&
-      Element.isElement(block)
+      Element.isElement(block, schemaTypes)
     ) {
       // Original object
       return block
@@ -80,60 +64,13 @@ export function toSlateBlock(
     return {_type, _key, ...rest, children} as Descendant
   }
 
-  return {
-    _type,
-    _key,
-    children: [
-      {
-        _key: VOID_CHILD_KEY,
-        _type: 'span',
-        text: '',
-        marks: [],
-      },
-    ],
-    value: rest,
-  } as Descendant
-}
+  const {children: _originalChildren, ...blockObjectProps} = rest
 
-export function fromSlateBlock(block: Descendant, textBlockType: string) {
-  const {_key, _type} = block
-  if (!_key || !_type) {
-    throw new Error('Not a valid block')
-  }
-  if (
-    _type === textBlockType &&
-    'children' in block &&
-    Array.isArray(block.children) &&
-    _key
-  ) {
-    let hasInlines = false
-    const children = block.children.map((child) => {
-      const {_type: _cType} = child
-      if ('value' in child && _cType !== 'span') {
-        hasInlines = true
-        const {
-          value: v,
-          _key: k,
-          _type: t,
-          __inline: _i,
-          children: _c,
-          ...rest
-        } = child
-        return {...rest, ...v, _key: k as string, _type: t as string}
-      }
-      return child
-    })
-    if (!hasInlines) {
-      return block as PortableTextBlock // Original object
-    }
-    return {...block, children, _key, _type} as PortableTextBlock
-  }
-  const blockValue = 'value' in block && block.value
   return {
-    _key,
     _type,
-    ...(typeof blockValue === 'object' ? blockValue : {}),
-  } as PortableTextBlock
+    _key,
+    ...blockObjectProps,
+  } as Descendant
 }
 
 export function isEqualToEmptyEditor(
@@ -156,7 +93,7 @@ export function isEqualToEmptyEditor(
     return true
   }
 
-  if (!Element.isElement(firstBlock)) {
+  if (!Element.isElement(firstBlock, schemaTypes)) {
     return false
   }
 
@@ -194,7 +131,7 @@ export function isEqualToEmptyEditor(
     return false
   }
 
-  if (!Text.isText(firstChild)) {
+  if (!Text.isText(firstChild, schemaTypes)) {
     return false
   }
 

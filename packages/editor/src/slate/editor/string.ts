@@ -11,7 +11,7 @@ export const string: EditorInterface['string'] = (editor, at, options = {}) => {
 
   for (const [node, path] of Editor.nodes(editor, {
     at: range,
-    match: Text.isText,
+    match: (n) => Text.isText(n, editor.schema),
     voids,
   })) {
     let t = node.text

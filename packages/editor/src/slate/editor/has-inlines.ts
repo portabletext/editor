@@ -3,6 +3,6 @@ import {Text} from '../interfaces/text'
 
 export const hasInlines: EditorInterface['hasInlines'] = (editor, element) => {
   return element.children.some(
-    (n) => Text.isText(n) || Editor.isInline(editor, n),
+    (n) => Text.isText(n, editor.schema) || Editor.isInline(editor, n),
   )
 }

@@ -57,7 +57,7 @@ export function createEditorSnapshot({
     readOnly,
     schema,
     selection,
-    value: editor.value,
+    value: editor.children as Array<PortableTextBlock>,
   } satisfies EditorContext
 
   return {

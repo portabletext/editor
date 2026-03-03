@@ -1,3 +1,4 @@
+import type {PortableTextBlock} from '@portabletext/schema'
 import {applySetNode} from '../internal-utils/apply-set-node'
 import {toSlateRange} from '../internal-utils/to-slate-range'
 import {Editor, Element, Node, Range, Text} from '../slate'
@@ -12,7 +13,7 @@ export const decoratorRemoveOperationImplementation: OperationImplementation<
     ? toSlateRange({
         context: {
           schema: context.schema,
-          value: operation.editor.value,
+          value: operation.editor.children as Array<PortableTextBlock>,
           selection: operation.at,
         },
         blockIndexMap: operation.editor.blockIndexMap,
@@ -28,10 +29,12 @@ export const decoratorRemoveOperationImplementation: OperationImplementation<
     const rangeRef = Editor.rangeRef(editor, at, {affinity: 'inward'})
 
     // Split text nodes at range boundaries (equivalent to setNodes with split:true and empty props)
+    const [decoratorLeaf] = Editor.leaf(editor, at.anchor)
     if (
       !(
         Range.isCollapsed(at) &&
-        Editor.leaf(editor, at.anchor)[0].text.length > 0
+        Text.isText(decoratorLeaf, editor.schema) &&
+        decoratorLeaf.text.length > 0
       )
     ) {
       const [start, end] = Range.edges(at)
@@ -42,7 +45,7 @@ export const decoratorRemoveOperationImplementation: OperationImplementation<
           type: 'split_node',
           path: end.path,
           position: end.offset,
-          properties: Node.extractProps(endNode),
+          properties: Node.extractProps(endNode, editor.schema),
         })
       }
       const startAtStartOfNode = Editor.isStart(editor, start, start.path)
@@ -52,7 +55,7 @@ export const decoratorRemoveOperationImplementation: OperationImplementation<
           type: 'split_node',
           path: start.path,
           position: start.offset,
-          properties: Node.extractProps(startNode),
+          properties: Node.extractProps(startNode, editor.schema),
         })
       }
     }
@@ -63,19 +66,22 @@ export const decoratorRemoveOperationImplementation: OperationImplementation<
       const splitTextNodes = [
         ...Editor.nodes(editor, {
           at: updatedAt,
-          match: Text.isText,
+          match: (n) => Text.isText(n, editor.schema),
         }),
       ]
       splitTextNodes.forEach(([node, path]) => {
         const block = editor.children[path[0]!]
-        if (Element.isElement(block) && block.children.includes(node)) {
+        if (
+          Element.isElement(block, editor.schema) &&
+          block.children.includes(node)
+        ) {
           applySetNode(
             editor,
             {
               marks: (Array.isArray(node.marks) ? node.marks : []).filter(
                 (eMark: string) => eMark !== mark,
               ),
-              _type: 'span',
+              _type: context.schema.span.name,
             },
             path,
           )

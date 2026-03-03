@@ -5,10 +5,10 @@ export const path: EditorInterface['path'] = (editor, at, options = {}) => {
 
   if (Path.isPath(at)) {
     if (edge === 'start') {
-      const [, firstPath] = Node.first(editor, at)
+      const [, firstPath] = Node.first(editor, at, editor.schema)
       at = firstPath
     } else if (edge === 'end') {
-      const [, lastPath] = Node.last(editor, at)
+      const [, lastPath] = Node.last(editor, at, editor.schema)
       at = lastPath
     }
   }

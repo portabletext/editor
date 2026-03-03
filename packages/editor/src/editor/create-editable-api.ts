@@ -36,8 +36,6 @@ export function createEditableAPI(
   editor: PortableTextSlateEditor,
   editorActor: EditorActor,
 ) {
-  const types = editorActor.getSnapshot().context.schema
-
   const editableApi: EditableAPI = {
     focus: (): void => {
       editorActor.send({
@@ -141,7 +139,7 @@ export function createEditableAPI(
         return undefined
       }
 
-      return editor.value.at(focusBlockIndex)
+      return (editor.children as Array<PortableTextBlock>).at(focusBlockIndex)
     },
     focusChild: (): PortableTextChild | undefined => {
       if (!editor.selection) {
@@ -153,7 +151,7 @@ export function createEditableAPI(
 
       const block =
         focusBlockIndex !== undefined
-          ? editor.value.at(focusBlockIndex)
+          ? (editor.children as Array<PortableTextBlock>).at(focusBlockIndex)
           : undefined
 
       if (!block) {
@@ -235,8 +233,9 @@ export function createEditableAPI(
         return false
       }
     },
-    isVoid: (element: PortableTextBlock | PortableTextChild) => {
-      return ![types.block.name, types.span.name].includes(element._type)
+    isVoid: (element: PortableTextBlock | PortableTextChild): boolean => {
+      const schema = editorActor.getSnapshot().context.schema
+      return ![schema.block.name, schema.span.name].includes(element._type)
     },
     findByPath: (
       path: Path,
@@ -256,7 +255,7 @@ export function createEditableAPI(
         return [undefined, undefined]
       }
 
-      const block = editor.value.at(blockIndex)
+      const block = (editor.children as Array<PortableTextBlock>).at(blockIndex)
 
       if (!block) {
         return [undefined, undefined]
@@ -306,7 +305,7 @@ export function createEditableAPI(
         const spans = Editor.nodes(editor, {
           at: editor.selection,
           match: (node) =>
-            Text.isText(node) &&
+            Text.isText(node, editor.schema) &&
             node.marks !== undefined &&
             Array.isArray(node.marks) &&
             node.marks.length > 0,
@@ -316,7 +315,7 @@ export function createEditableAPI(
           if (editor.isTextBlock(block)) {
             block.markDefs?.forEach((def) => {
               if (
-                Text.isText(span) &&
+                Text.isText(span, editor.schema) &&
                 span.marks &&
                 Array.isArray(span.marks) &&
                 span.marks.includes(def._key)
@@ -472,7 +471,7 @@ export function createEditableAPI(
       return selection
     },
     getValue: () => {
-      return editor.value
+      return editor.children as Array<PortableTextBlock>
     },
     isCollapsedSelection: () => {
       return !!editor.selection && Range.isCollapsed(editor.selection)
@@ -500,7 +499,7 @@ export function createEditableAPI(
       const rangeA = toSlateRange({
         context: {
           schema: editorActor.getSnapshot().context.schema,
-          value: editor.value,
+          value: editor.children as Array<PortableTextBlock>,
           selection: selectionA,
         },
         blockIndexMap: editor.blockIndexMap,
@@ -508,7 +507,7 @@ export function createEditableAPI(
       const rangeB = toSlateRange({
         context: {
           schema: editorActor.getSnapshot().context.schema,
-          value: editor.value,
+          value: editor.children as Array<PortableTextBlock>,
           selection: selectionB,
         },
         blockIndexMap: editor.blockIndexMap,

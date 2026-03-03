@@ -1,14 +1,30 @@
 import {Editor, Path, Range, Scrubber, Text} from '..'
+import type {EditorSchema} from '../../editor/editor-schema'
+import type {ExtendedType} from '../types/custom-types'
+import {isObject} from '../utils/is-object'
 import {modifyChildren, modifyLeaf, removeChildren} from '../utils/modify'
 import {Element, type ElementEntry} from './element'
+
+/**
+ * `ObjectNode` represents a node with semantic content but no children or text.
+ * Block objects and inline objects are ObjectNodes in the tree.
+ */
+
+export interface BaseObjectNode {
+  _type: string
+  _key: string
+  [key: string]: unknown
+}
+
+export type ObjectNode = ExtendedType<'ObjectNode', BaseObjectNode>
 
 /**
  * The `Node` union type represents all of the different types of nodes that
  * occur in a Slate document tree.
  */
 
-export type BaseNode = Editor | Element | Text
-export type Node = Editor | Element | Text
+export type BaseNode = Editor | Element | ObjectNode | Text
+export type Node = Editor | Element | ObjectNode | Text
 
 export interface NodeAncestorsOptions {
   reverse?: boolean
@@ -30,10 +46,6 @@ export interface NodeElementsOptions {
   to?: Path
   reverse?: boolean
   pass?: (node: NodeEntry) => boolean
-}
-
-export interface NodeIsNodeOptions {
-  deep?: boolean
 }
 
 export interface NodeLevelsOptions {
@@ -58,7 +70,7 @@ export interface NodeInterface {
   /**
    * Get the node at a specific path, asserting that it's an ancestor node.
    */
-  ancestor: (root: Node, path: Path) => Ancestor
+  ancestor: (root: Node, path: Path, schema: EditorSchema) => Ancestor
 
   /**
    * Return a generator of all the ancestor nodes above a specific path.
@@ -69,13 +81,14 @@ export interface NodeInterface {
   ancestors: (
     root: Node,
     path: Path,
+    schema: EditorSchema,
     options?: NodeAncestorsOptions,
   ) => Generator<NodeEntry<Ancestor>, void, undefined>
 
   /**
    * Get the child of a node at a specific index.
    */
-  child: (root: Node, index: number) => Descendant
+  child: (root: Node, index: number, schema: EditorSchema) => Descendant
 
   /**
    * Iterate over the children of a node at a specific path.
@@ -83,24 +96,31 @@ export interface NodeInterface {
   children: (
     root: Node,
     path: Path,
+    schema: EditorSchema,
     options?: NodeChildrenOptions,
   ) => Generator<NodeEntry<Descendant>, void, undefined>
 
   /**
    * Get an entry for the common ancesetor node of two paths.
    */
-  common: (root: Node, path: Path, another: Path) => NodeEntry
+  common: (
+    root: Node,
+    path: Path,
+    another: Path,
+    schema: EditorSchema,
+  ) => NodeEntry
 
   /**
    * Get the node at a specific path, asserting that it's a descendant node.
    */
-  descendant: (root: Node, path: Path) => Descendant
+  descendant: (root: Node, path: Path, schema: EditorSchema) => Descendant
 
   /**
    * Return a generator of all the descendant node entries inside a root node.
    */
   descendants: (
     root: Node,
+    schema: EditorSchema,
     options?: NodeDescendantsOptions,
   ) => Generator<NodeEntry<Descendant>, void, undefined>
 
@@ -111,18 +131,19 @@ export interface NodeInterface {
    */
   elements: (
     root: Node,
+    schema: EditorSchema,
     options?: NodeElementsOptions,
   ) => Generator<ElementEntry, void, undefined>
 
   /**
    * Extract props from a Node.
    */
-  extractProps: (node: Node) => NodeProps
+  extractProps: (node: Node, schema: EditorSchema) => NodeProps
 
   /**
    * Get the first leaf node entry in a root node from a path.
    */
-  first: (root: Node, path: Path) => NodeEntry
+  first: (root: Node, path: Path, schema: EditorSchema) => NodeEntry
 
   /**
    * Get the sliced fragment represented by a range inside a root node.
@@ -130,43 +151,57 @@ export interface NodeInterface {
   fragment: <T extends Ancestor = Editor>(
     root: T,
     range: Range,
+    schema: EditorSchema,
   ) => T['children']
 
   /**
    * Get the descendant node referred to by a specific path. If the path is an
    * empty array, it refers to the root node itself.
    */
-  get: (root: Node, path: Path) => Node
+  get: (root: Node, path: Path, schema: EditorSchema) => Node
 
   /**
    * Similar to get, but returns undefined if the node does not exist.
    */
-  getIf: (root: Node, path: Path) => Node | undefined
+  getIf: (root: Node, path: Path, schema: EditorSchema) => Node | undefined
 
   /**
    * Check if a descendant node exists at a specific path.
    */
-  has: (root: Node, path: Path) => boolean
+  has: (root: Node, path: Path, schema: EditorSchema) => boolean
 
   /**
    * Check if a value implements the `Node` interface.
    */
-  isNode: (value: any, options?: NodeIsNodeOptions) => value is Node
+  isNode: (value: any, schema: EditorSchema) => value is Node
 
   /**
    * Check if a value is a list of `Node` objects.
    */
-  isNodeList: (value: any, options?: NodeIsNodeOptions) => value is Node[]
+  isNodeList: (value: any, schema: EditorSchema) => value is Node[]
+
+  /**
+   * Check if a value is a leaf node (Text or ObjectNode).
+   * Leaf nodes have no children to descend into.
+   */
+  isLeaf: (value: any, schema: EditorSchema) => boolean
+
+  /**
+   * Check if a value is an ObjectNode. Uses schema to determine whether
+   * a node's _type is neither the block type name nor the span type name.
+   */
+  isObjectNode: (value: any, schema: EditorSchema) => value is ObjectNode
 
   /**
    * Get the last leaf node entry in a root node from a path.
    */
-  last: (root: Node, path: Path) => NodeEntry
+  last: (root: Node, path: Path, schema: EditorSchema) => NodeEntry
 
   /**
-   * Get the node at a specific path, ensuring it's a leaf text node.
+   * Get the node at a specific path, ensuring it's a leaf node (Text or
+   * ObjectNode).
    */
-  leaf: (root: Node, path: Path) => Text
+  leaf: (root: Node, path: Path, schema: EditorSchema) => Text | ObjectNode
 
   /**
    * Return a generator of the in a branch of the tree, from a specific path.
@@ -177,13 +212,14 @@ export interface NodeInterface {
   levels: (
     root: Node,
     path: Path,
+    schema: EditorSchema,
     options?: NodeLevelsOptions,
   ) => Generator<NodeEntry, void, undefined>
 
   /**
    * Check if a node matches a set of props.
    */
-  matches: (node: Node, props: Partial<Node>) => boolean
+  matches: (node: Node, props: Partial<Node>, schema: EditorSchema) => boolean
 
   /**
    * Return a generator of all the node entries of a root node. Each entry is
@@ -192,13 +228,14 @@ export interface NodeInterface {
    */
   nodes: (
     root: Node,
+    schema: EditorSchema,
     options?: NodeNodesOptions,
   ) => Generator<NodeEntry, void, undefined>
 
   /**
    * Get the parent of a node at a specific path.
    */
-  parent: (root: Node, path: Path) => Ancestor
+  parent: (root: Node, path: Path, schema: EditorSchema) => Ancestor
 
   /**
    * Get the concatenated text string of a node's content.
@@ -207,25 +244,26 @@ export interface NodeInterface {
    * It is not a user-facing string, but a string for performing offset-related
    * computations for a node.
    */
-  string: (node: Node) => string
+  string: (node: Node, schema: EditorSchema) => string
 
   /**
    * Return a generator of all leaf text nodes in a root node.
    */
   texts: (
     root: Node,
+    schema: EditorSchema,
     options?: NodeTextsOptions,
   ) => Generator<NodeEntry<Text>, void, undefined>
 }
 
 // eslint-disable-next-line no-redeclare
 export const Node: NodeInterface = {
-  ancestor(root: Node, path: Path): Ancestor {
-    const node = Node.get(root, path)
+  ancestor(root: Node, path: Path, schema: EditorSchema): Ancestor {
+    const node = Node.get(root, path, schema)
 
-    if (Text.isText(node)) {
+    if (Text.isText(node, schema) || Node.isObjectNode(node, schema)) {
       throw new Error(
-        `Cannot get the ancestor node at path [${path}] because it refers to a text node instead: ${Scrubber.stringify(
+        `Cannot get the ancestor node at path [${path}] because it refers to a leaf node instead: ${Scrubber.stringify(
           node,
         )}`,
       )
@@ -237,19 +275,20 @@ export const Node: NodeInterface = {
   *ancestors(
     root: Node,
     path: Path,
+    schema: EditorSchema,
     options: NodeAncestorsOptions = {},
   ): Generator<NodeEntry<Ancestor>, void, undefined> {
     for (const p of Path.ancestors(path, options)) {
-      const n = Node.ancestor(root, p)
+      const n = Node.ancestor(root, p, schema)
       const entry: NodeEntry<Ancestor> = [n, p]
       yield entry
     }
   },
 
-  child(root: Node, index: number): Descendant {
-    if (Text.isText(root)) {
+  child(root: Node, index: number, schema: EditorSchema): Descendant {
+    if (Text.isText(root, schema) || Node.isObjectNode(root, schema)) {
       throw new Error(
-        `Cannot get the child of a text node: ${Scrubber.stringify(root)}`,
+        `Cannot get the child of a leaf node: ${Scrubber.stringify(root)}`,
       )
     }
 
@@ -269,29 +308,35 @@ export const Node: NodeInterface = {
   *children(
     root: Node,
     path: Path,
+    schema: EditorSchema,
     options: NodeChildrenOptions = {},
   ): Generator<NodeEntry<Descendant>, void, undefined> {
     const {reverse = false} = options
-    const ancestor = Node.ancestor(root, path)
+    const ancestor = Node.ancestor(root, path, schema)
     const {children} = ancestor
     let index = reverse ? children.length - 1 : 0
 
     while (reverse ? index >= 0 : index < children.length) {
-      const child = Node.child(ancestor, index)
+      const child = Node.child(ancestor, index, schema)
       const childPath = path.concat(index)
       yield [child, childPath]
       index = reverse ? index - 1 : index + 1
     }
   },
 
-  common(root: Node, path: Path, another: Path): NodeEntry {
+  common(
+    root: Node,
+    path: Path,
+    another: Path,
+    schema: EditorSchema,
+  ): NodeEntry {
     const p = Path.common(path, another)
-    const n = Node.get(root, p)
+    const n = Node.get(root, p, schema)
     return [n, p]
   },
 
-  descendant(root: Node, path: Path): Descendant {
-    const node = Node.get(root, path)
+  descendant(root: Node, path: Path, schema: EditorSchema): Descendant {
+    const node = Node.get(root, path, schema)
 
     if (Editor.isEditor(node)) {
       throw new Error(
@@ -306,9 +351,10 @@ export const Node: NodeInterface = {
 
   *descendants(
     root: Node,
+    schema: EditorSchema,
     options: NodeDescendantsOptions = {},
   ): Generator<NodeEntry<Descendant>, void, undefined> {
-    for (const [node, path] of Node.nodes(root, options)) {
+    for (const [node, path] of Node.nodes(root, schema, options)) {
       if (path.length !== 0) {
         // NOTE: we have to coerce here because checking the path's length does
         // guarantee that `node` is not a `Editor`, but TypeScript doesn't know.
@@ -319,48 +365,61 @@ export const Node: NodeInterface = {
 
   *elements(
     root: Node,
+    schema: EditorSchema,
     options: NodeElementsOptions = {},
   ): Generator<ElementEntry, void, undefined> {
-    for (const [node, path] of Node.nodes(root, options)) {
-      if (Element.isElement(node)) {
+    for (const [node, path] of Node.nodes(root, schema, options)) {
+      if (Element.isElement(node, schema)) {
         yield [node, path]
       }
     }
   },
 
-  extractProps(node: Node): NodeProps {
-    if (Element.isAncestor(node)) {
+  extractProps(node: Node, schema: EditorSchema): NodeProps {
+    if (Element.isAncestor(node, schema)) {
       const {children: _children, ...properties} = node
 
       return properties
-    } else {
+    } else if (Text.isText(node, schema)) {
       const {text: _text, ...properties} = node
 
       return properties
+    } else {
+      return {...(node as ObjectNode)}
     }
   },
 
-  first(root: Node, path: Path): NodeEntry {
+  first(root: Node, path: Path, schema: EditorSchema): NodeEntry {
     const p = path.slice()
-    let n = Node.get(root, p)
+    let n = Node.get(root, p, schema)
 
     while (n) {
-      if (Text.isText(n) || n.children.length === 0) {
+      if (Node.isLeaf(n, schema)) {
         break
-      } else {
-        n = n.children[0]! as Node
-        p.push(0)
       }
+
+      const ancestor = n as Ancestor
+
+      if (ancestor.children.length === 0) {
+        break
+      }
+
+      n = ancestor.children[0]! as Node
+      p.push(0)
     }
 
     return [n, p]
   },
 
-  fragment<T extends Ancestor = Editor>(root: T, range: Range): T['children'] {
+  fragment<T extends Ancestor = Editor>(
+    root: T,
+    range: Range,
+    schema: EditorSchema,
+  ): T['children'] {
     const newRoot: Ancestor = {children: root.children} as Ancestor
 
     const [start, end] = Range.edges(range)
-    const nodeEntries = Node.nodes(newRoot, {
+    const nodeEntries = Node.nodes(newRoot, schema, {
       reverse: true,
       pass: ([, path]) => !Range.includes(range, path),
     })
@@ -369,31 +428,39 @@ export const Node: NodeInterface = {
       if (!Range.includes(range, path)) {
         const index = path[path.length - 1]!
 
-        modifyChildren(newRoot, Path.parent(path), (children) =>
+        modifyChildren(newRoot, Path.parent(path), schema, (children) =>
           removeChildren(children, index, 1),
         )
       }
 
       if (Path.equals(path, end.path)) {
-        modifyLeaf(newRoot, path, (node) => {
-          const before = node.text.slice(0, end.offset)
-          return {...node, text: before}
-        })
+        const leaf = Node.get(newRoot, path, schema)
+
+        if (Text.isText(leaf, schema)) {
+          modifyLeaf(newRoot, path, schema, (node) => {
+            const before = node.text.slice(0, end.offset)
+            return {...node, text: before}
+          })
+        }
       }
 
       if (Path.equals(path, start.path)) {
-        modifyLeaf(newRoot, path, (node) => {
-          const before = node.text.slice(start.offset)
-          return {...node, text: before}
-        })
+        const leaf = Node.get(newRoot, path, schema)
+
+        if (Text.isText(leaf, schema)) {
+          modifyLeaf(newRoot, path, schema, (node) => {
+            const before = node.text.slice(start.offset)
+            return {...node, text: before}
+          })
+        }
       }
     }
 
     return newRoot.children
   },
 
-  get(root: Node, path: Path): Node {
-    const node = Node.getIf(root, path)
+  get(root: Node, path: Path, schema: EditorSchema): Node {
+    const node = Node.getIf(root, path, schema)
     if (node === undefined) {
       throw new Error(
         `Cannot find a descendant at path [${path}] in node: ${Scrubber.stringify(
@@ -404,76 +471,106 @@ export const Node: NodeInterface = {
     return node
   },
 
-  getIf(root: Node, path: Path): Node | undefined {
+  getIf(root: Node, path: Path, schema: EditorSchema): Node | undefined {
     let node = root
 
     for (let i = 0; i < path.length; i++) {
       const p = path[i]!
 
-      if (Text.isText(node) || !node.children[p]) {
+      if (Node.isLeaf(node, schema)) {
         return
       }
 
-      node = node.children[p]! as Node
+      const children = (node as Ancestor).children
+
+      if (!children[p]) {
+        return
+      }
+
+      node = children[p]! as Node
     }
 
     return node
   },
 
-  has(root: Node, path: Path): boolean {
+  has(root: Node, path: Path, schema: EditorSchema): boolean {
     let node = root
 
     for (let i = 0; i < path.length; i++) {
       const p = path[i]!
 
-      if (Text.isText(node) || !node.children[p]) {
+      if (Node.isLeaf(node, schema)) {
         return false
       }
 
-      node = node.children[p]! as Node
+      const children = (node as Ancestor).children
+
+      if (!children[p]) {
+        return false
+      }
+
+      node = children[p]! as Node
     }
 
     return true
   },
 
-  isNode(value: any, {deep = false}: NodeIsNodeOptions = {}): value is Node {
+  isNode(value: any, schema: EditorSchema): value is Node {
     return (
-      Text.isText(value) ||
-      Element.isElement(value, {deep}) ||
-      Editor.isEditor(value, {deep})
+      Text.isText(value, schema) ||
+      Element.isElement(value, schema) ||
+      Editor.isEditor(value) ||
+      Node.isObjectNode(value, schema)
     )
   },
 
-  isNodeList(
-    value: any,
-    {deep = false}: NodeIsNodeOptions = {},
-  ): value is Node[] {
+  isNodeList(value: any, schema: EditorSchema): value is Node[] {
     return (
-      Array.isArray(value) && value.every((val) => Node.isNode(val, {deep}))
+      Array.isArray(value) && value.every((val) => Node.isNode(val, schema))
     )
   },
 
-  last(root: Node, path: Path): NodeEntry {
+  isLeaf(value: any, schema: EditorSchema): boolean {
+    return Text.isText(value, schema) || Node.isObjectNode(value, schema)
+  },
+
+  isObjectNode(value: any, schema: EditorSchema): value is ObjectNode {
+    return (
+      isObject(value) &&
+      typeof value._type === 'string' &&
+      typeof value._key === 'string' &&
+      value._type !== schema.block.name &&
+      value._type !== schema.span.name
+    )
+  },
+
+  last(root: Node, path: Path, schema: EditorSchema): NodeEntry {
     const p = path.slice()
-    let n = Node.get(root, p)
+    let n = Node.get(root, p, schema)
 
     while (n) {
-      if (Text.isText(n) || n.children.length === 0) {
+      if (Node.isLeaf(n, schema)) {
         break
-      } else {
-        const i = n.children.length - 1
-        n = n.children[i]! as Node
-        p.push(i)
       }
+
+      const ancestor = n as Ancestor
+
+      if (ancestor.children.length === 0) {
+        break
+      }
+
+      const i = ancestor.children.length - 1
+      n = ancestor.children[i]! as Node
+      p.push(i)
     }
 
     return [n, p]
   },
 
-  leaf(root: Node, path: Path): Text {
-    const node = Node.get(root, path)
+  leaf(root: Node, path: Path, schema: EditorSchema): Text | ObjectNode {
+    const node = Node.get(root, path, schema)
 
-    if (!Text.isText(node)) {
+    if (!Text.isText(node, schema) && !Node.isObjectNode(node, schema)) {
       throw new Error(
         `Cannot get the leaf node at path [${path}] because it refers to a non-leaf node: ${Scrubber.stringify(
           node,
@@ -487,20 +584,21 @@ export const Node: NodeInterface = {
   *levels(
     root: Node,
     path: Path,
+    schema: EditorSchema,
     options: NodeLevelsOptions = {},
   ): Generator<NodeEntry, void, undefined> {
     for (const p of Path.levels(path, options)) {
-      const n = Node.get(root, p)
+      const n = Node.get(root, p, schema)
       yield [n, p]
     }
   },
 
-  matches(node: Node, props: Partial<Node>): boolean {
+  matches(node: Node, props: Partial<Node>, schema: EditorSchema): boolean {
     return (
-      (Element.isElement(node) &&
+      (Element.isElement(node, schema) &&
         Element.isElementProps(props) &&
         Element.matches(node, props)) ||
-      (Text.isText(node) &&
+      (Text.isText(node, schema) &&
         Text.isTextProps(props) &&
         Text.matches(node, props))
     )
@@ -508,6 +606,7 @@ export const Node: NodeInterface = {
 
   *nodes(
     root: Node,
+    schema: EditorSchema,
     options: NodeNodesOptions = {},
   ): Generator<NodeEntry, void, undefined> {
     const {pass, reverse = false} = options
@@ -528,19 +627,20 @@ export const Node: NodeInterface = {
       // If we're allowed to go downward and we haven't descended yet, do.
       if (
         !visited.has(n) &&
-        !Text.isText(n) &&
-        n.children.length !== 0 &&
+        !Node.isLeaf(n, schema) &&
+        (n as Ancestor).children.length !== 0 &&
         (pass == null || pass([n, p]) === false)
       ) {
         visited.add(n)
-        let nextIndex = reverse ? n.children.length - 1 : 0
+        const children = (n as Ancestor).children
+        let nextIndex = reverse ? children.length - 1 : 0
 
         if (Path.isAncestor(p, from)) {
           nextIndex = from[p.length]!
         }
 
         p = p.concat(nextIndex)
-        n = Node.get(root, p)
+        n = Node.get(root, p, schema)
         continue
       }
 
@@ -553,9 +653,9 @@ export const Node: NodeInterface = {
       if (!reverse) {
         const newPath = Path.next(p)
 
-        if (Node.has(root, newPath)) {
+        if (Node.has(root, newPath, schema)) {
           p = newPath
-          n = Node.get(root, p)
+          n = Node.get(root, p, schema)
           continue
         }
       }
@@ -564,22 +664,22 @@ export const Node: NodeInterface = {
       if (reverse && p[p.length - 1] !== 0) {
         const newPath = Path.previous(p)
         p = newPath
-        n = Node.get(root, p)
+        n = Node.get(root, p, schema)
         continue
       }
 
       // Otherwise we're going upward...
       p = Path.parent(p)
-      n = Node.get(root, p)
+      n = Node.get(root, p, schema)
       visited.add(n)
     }
   },
 
-  parent(root: Node, path: Path): Ancestor {
+  parent(root: Node, path: Path, schema: EditorSchema): Ancestor {
     const parentPath = Path.parent(path)
-    const p = Node.get(root, parentPath)
+    const p = Node.get(root, parentPath, schema)
 
-    if (Text.isText(p)) {
+    if (Text.isText(p, schema) || Node.isObjectNode(p, schema)) {
       throw new Error(
         `Cannot get the parent of path [${path}] because it does not exist in the root.`,
       )
@@ -588,20 +688,27 @@ export const Node: NodeInterface = {
     return p
   },
 
-  string(node: Node): string {
-    if (Text.isText(node)) {
-      return node.text
-    } else {
-      return node.children.map(Node.string).join('')
+  string(node: Node, schema: EditorSchema): string {
+    if (Node.isObjectNode(node, schema)) {
+      return ''
     }
+
+    if (Text.isText(node, schema)) {
+      return node.text
+    }
+
+    return (node as Ancestor).children
+      .map((child) => Node.string(child, schema))
+      .join('')
   },
 
   *texts(
     root: Node,
+    schema: EditorSchema,
     options: NodeTextsOptions = {},
   ): Generator<NodeEntry<Text>, void, undefined> {
-    for (const [node, path] of Node.nodes(root, options)) {
-      if (Text.isText(node)) {
+    for (const [node, path] of Node.nodes(root, schema, options)) {
+      if (Text.isText(node, schema)) {
         yield [node, path]
       }
     }
@@ -614,7 +721,7 @@ export const Node: NodeInterface = {
  * further than the more generic `Node` union.
  */
 
-export type Descendant = Element | Text
+export type Descendant = Element | ObjectNode | Text
 
 /**
  * The `Ancestor` union type represents nodes that are ancestors in the tree.
@@ -638,4 +745,5 @@ export type NodeEntry<T extends Node = Node> = [T, Path]
 export type NodeProps =
   | Omit<Editor, 'children'>
   | Omit<Element, 'children'>
+  | ObjectNode
   | Omit<Text, 'text'>

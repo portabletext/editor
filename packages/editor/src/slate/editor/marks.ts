@@ -36,7 +36,7 @@ export const marks: EditorInterface['marks'] = (editor, _options = {}) => {
     }
 
     const [match] = Editor.nodes(editor, {
-      match: Text.isText,
+      match: (n) => Text.isText(n, editor.schema),
       at: {
         anchor,
         focus,
@@ -56,26 +56,26 @@ export const marks: EditorInterface['marks'] = (editor, _options = {}) => {
 
   let [node] = Editor.leaf(editor, path)
 
+  if (!Text.isText(node, editor.schema)) {
+    return {} as ReturnType<EditorInterface['marks']> & {}
+  }
+
   if (anchor.offset === 0) {
-    const prev = Editor.previous(editor, {at: path, match: Text.isText})
-    const markedVoid = Editor.above(editor, {
-      match: (n) =>
-        Element.isElement(n) &&
-        Editor.isVoid(editor, n) &&
-        editor.markableVoid(n),
+    const prev = Editor.previous(editor, {
+      at: path,
+      match: (n) => Text.isText(n, editor.schema),
     })
-    if (!markedVoid) {
-      const block = Editor.above(editor, {
-        match: (n) => Element.isElement(n) && Editor.isBlock(editor, n),
-      })
+    const block = Editor.above(editor, {
+      match: (n) =>
+        Element.isElement(n, editor.schema) && Editor.isBlock(editor, n),
+    })
 
-      if (prev && block) {
-        const [prevNode, prevPath] = prev
-        const [, blockPath] = block
+    if (prev && block) {
+      const [prevNode, prevPath] = prev
+      const [, blockPath] = block
 
-        if (Path.isAncestor(blockPath, prevPath)) {
-          node = prevNode as Text
-        }
+      if (Path.isAncestor(blockPath, prevPath)) {
+        node = prevNode as Text
       }
     }
   }
