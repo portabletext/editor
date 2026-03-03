@@ -1,6 +1,7 @@
+import type {PortableTextBlock} from '@portabletext/schema'
 import {applySetNode} from '../internal-utils/apply-set-node'
 import {toSlateRange} from '../internal-utils/to-slate-range'
-import {Editor, Element} from '../slate'
+import {Editor} from '../slate'
 import type {OperationImplementation} from './operation.types'
 
 export const childSetOperationImplementation: OperationImplementation<
@@ -9,7 +10,7 @@ export const childSetOperationImplementation: OperationImplementation<
   const location = toSlateRange({
     context: {
       schema: context.schema,
-      value: operation.editor.value,
+      value: operation.editor.children as Array<PortableTextBlock>,
       selection: {
         anchor: {path: operation.at, offset: 0},
         focus: {path: operation.at, offset: 0},
@@ -65,7 +66,7 @@ export const childSetOperationImplementation: OperationImplementation<
     return
   }
 
-  if (Element.isElement(child)) {
+  if (operation.editor.isObjectNode(child)) {
     const definition = context.schema.inlineObjects.find(
       (definition) => definition.name === child._type,
     )
@@ -76,8 +77,6 @@ export const childSetOperationImplementation: OperationImplementation<
       )
     }
 
-    const value =
-      'value' in child && typeof child.value === 'object' ? child.value : {}
     const {_type, _key, ...rest} = operation.props
 
     for (const prop in rest) {
@@ -91,10 +90,7 @@ export const childSetOperationImplementation: OperationImplementation<
       {
         ...child,
         _key: typeof _key === 'string' ? _key : child._key,
-        value: {
-          ...value,
-          ...rest,
-        },
+        ...rest,
       },
       childPath,
     )

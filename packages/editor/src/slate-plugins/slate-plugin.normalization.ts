@@ -42,7 +42,7 @@ export function createNormalizationPlugin(
        * Merge spans with same set of .marks when doing merge_node operations
        */
       if (editor.isTextBlock(node)) {
-        const children = Node.children(editor, path)
+        const children = Node.children(editor, path, editor.schema)
 
         for (const [child, childPath] of children) {
           const nextNode = node.children[childPath[1]! + 1]
@@ -147,7 +147,11 @@ export function createNormalizationPlugin(
           .getSnapshot()
           .context.schema.decorators.map((decorator) => decorator.name)
 
-        for (const [child, childPath] of Node.children(editor, path)) {
+        for (const [child, childPath] of Node.children(
+          editor,
+          path,
+          editor.schema,
+        )) {
           if (editor.isTextSpan(child)) {
             const marks = child.marks ?? []
             const orphanedAnnotations = marks.filter((mark) => {
@@ -250,7 +254,7 @@ export function createNormalizationPlugin(
         const newMarkDefs = (node.markDefs || []).filter((def) => {
           return node.children.find((child) => {
             return (
-              Text.isText(child) &&
+              Text.isText(child, editor.schema) &&
               Array.isArray(child.marks) &&
               child.marks.includes(def._key)
             )

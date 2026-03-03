@@ -81,6 +81,7 @@ export interface RenderElementProps {
     'data-slate-node': 'element'
     'data-slate-inline'?: true
     'data-slate-void'?: true
+    'contentEditable'?: false
     'dir'?: 'rtl'
     'ref': any
   }
@@ -306,6 +307,8 @@ export const Editable = forwardRef(
                   !androidInputManager?.hasPendingChanges() &&
                   !androidInputManager?.isFlushing()
                 ) {
+                  // Suppress browser selection normalization that would
+                  // overwrite a block object selection.
                   Transforms.select(editor, range)
                 } else {
                   androidInputManager?.handleUserSelect(range)
@@ -658,10 +661,14 @@ export const Editable = forwardRef(
                 const block = Editor.above(editor, {
                   at: anchor.path,
                   match: (n) =>
-                    Element.isElement(n) && Editor.isBlock(editor, n),
+                    Element.isElement(n, editor.schema) &&
+                    Editor.isBlock(editor, n),
                 })
 
-                if (block && Node.string(block[0]).includes('\t')) {
+                if (
+                  block &&
+                  Node.string(block[0], editor.schema).includes('\t')
+                ) {
                   native = false
                 }
               }
@@ -1004,8 +1011,8 @@ export const Editable = forwardRef(
     const showPlaceholder =
       placeholder &&
       editor.children.length === 1 &&
-      Array.from(Node.texts(editor)).length === 1 &&
-      Node.string(editor) === '' &&
+      Array.from(Node.texts(editor, editor.schema)).length === 1 &&
+      Node.string(editor, editor.schema) === '' &&
       !isComposing
 
     const placeHolderResizeHandler = useCallback(
@@ -1035,26 +1042,27 @@ export const Editable = forwardRef(
 
     if (editor.selection && Range.isCollapsed(editor.selection) && marks) {
       const {anchor} = editor.selection
-      const leaf = Node.leaf(editor, anchor.path)
-      const {text: _text, ...rest} = leaf
+      const leaf = Node.leaf(editor, anchor.path, editor.schema)
 
-      // While marks isn't a 'complete' text, we can still use loose Text.equals
-      // here which only compares marks anyway.
-      if (!Text.equals(leaf, marks as Text, {loose: true})) {
-        state.hasMarkPlaceholder = true
+      if (Text.isText(leaf, editor.schema)) {
+        const {text: _text, ...rest} = leaf
 
-        const unset = Object.fromEntries(
-          Object.keys(rest).map((mark) => [mark, null]),
-        )
+        if (!Text.equals(leaf, marks as Text, {loose: true})) {
+          state.hasMarkPlaceholder = true
 
-        decorations.push({
-          [MARK_PLACEHOLDER_SYMBOL]: true,
-          ...unset,
-          ...marks,
+          const unset = Object.fromEntries(
+            Object.keys(rest).map((mark) => [mark, null]),
+          )
 
-          anchor,
-          focus: anchor,
-        })
+          decorations.push({
+            [MARK_PLACEHOLDER_SYMBOL]: true,
+            ...unset,
+            ...marks,
+
+            anchor,
+            focus: anchor,
+          })
+        }
       }
     }
 
@@ -1065,10 +1073,12 @@ export const Editable = forwardRef(
         const {selection} = editor
         if (selection) {
           const {anchor} = selection
-          const text = Node.leaf(editor, anchor.path)
+          const text = Node.leaf(editor, anchor.path, editor.schema)
 
-          // While marks isn't a 'complete' text, we can still use loose Text.equals
-          // here which only compares marks anyway.
+          if (!Text.isText(text, editor.schema)) {
+            return
+          }
+
           if (marks && !Text.equals(text, marks as Text, {loose: true})) {
             editor.pendingInsertionMarks = marks
             return
@@ -1249,7 +1259,10 @@ export const Editable = forwardRef(
                         relatedTarget,
                       )
 
-                      if (Element.isElement(node) && !editor.isVoid(node)) {
+                      if (
+                        Element.isElement(node, editor.schema) ||
+                        editor.isObjectNode(node)
+                      ) {
                         return
                       }
                     }
@@ -1288,7 +1301,7 @@ export const Editable = forwardRef(
                       // and that it still refers to the same node.
                       if (
                         !Editor.hasPath(editor, path) ||
-                        Node.get(editor, path) !== node
+                        Node.get(editor, path, editor.schema) !== node
                       ) {
                         return
                       }
@@ -1297,13 +1310,14 @@ export const Editable = forwardRef(
                         let blockPath = path
                         if (
                           !(
-                            Element.isElement(node) &&
+                            Element.isElement(node, editor.schema) &&
                             Editor.isBlock(editor, node)
                           )
                         ) {
                           const block = Editor.above(editor, {
                             match: (n) =>
-                              Element.isElement(n) && Editor.isBlock(editor, n),
+                              Element.isElement(n, editor.schema) &&
+                              Editor.isBlock(editor, n),
                             at: path,
                           })
 
@@ -1491,11 +1505,12 @@ export const Editable = forwardRef(
                             editor,
                           })
                         } else {
-                          const node = Node.parent(
+                          const node = Node.get(
                             editor,
                             selection.anchor.path,
+                            editor.schema,
                           )
-                          if (Editor.isVoid(editor, node)) {
+                          if (editor.isObjectNode(node)) {
                             Transforms.delete(editor)
                           }
                         }
@@ -1510,15 +1525,9 @@ export const Editable = forwardRef(
                       ReactEditor.hasTarget(editor, event.target) &&
                       !isEventHandled(event, attributes.onDragOver)
                     ) {
-                      // Only when the target is void, call `preventDefault` to signal
-                      // that drops are allowed. Editable content is droppable by
-                      // default, and calling `preventDefault` hides the cursor.
                       const node = ReactEditor.toSlateNode(editor, event.target)
 
-                      if (
-                        Element.isElement(node) &&
-                        Editor.isVoid(editor, node)
-                      ) {
+                      if (editor.isObjectNode(node)) {
                         event.preventDefault()
                       }
                     }
@@ -1535,11 +1544,9 @@ export const Editable = forwardRef(
                       const node = ReactEditor.toSlateNode(editor, event.target)
                       const path = ReactEditor.findPath(editor, node)
                       const voidMatch =
-                        (Element.isElement(node) &&
-                          Editor.isVoid(editor, node)) ||
+                        editor.isObjectNode(node) ||
                         Editor.void(editor, {at: path, voids: true})
 
-                      // If starting a drag on a void node, make sure it is selected
                       // so that it shows up in the selection's fragment.
                       if (voidMatch) {
                         const range = Editor.range(editor, path)
@@ -1676,7 +1683,9 @@ export const Editable = forwardRef(
                         editor.children[
                           selection !== null ? selection.focus.path[0]! : 0
                         ]!
-                      const isRTL = getDirection(Node.string(element)) === 'rtl'
+                      const isRTL =
+                        getDirection(Node.string(element, editor.schema)) ===
+                        'rtl'
 
                       // COMPAT: Since we prevent the default behavior on
                       // `beforeinput` events, the browser doesn't think there's ever
@@ -1999,17 +2008,13 @@ export const Editable = forwardRef(
                               Hotkeys.isDeleteForward(nativeEvent)) &&
                             Range.isCollapsed(selection)
                           ) {
-                            const currentNode = Node.parent(
+                            const currentNode = Node.get(
                               editor,
                               selection.anchor.path,
+                              editor.schema,
                             )
 
-                            if (
-                              Element.isElement(currentNode) &&
-                              Editor.isVoid(editor, currentNode) &&
-                              (Editor.isInline(editor, currentNode) ||
-                                Editor.isBlock(editor, currentNode))
-                            ) {
+                            if (editor.isObjectNode(currentNode)) {
                               event.preventDefault()
                               editorActor.send({
                                 type: 'behavior event',

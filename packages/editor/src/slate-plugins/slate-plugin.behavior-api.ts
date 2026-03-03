@@ -84,22 +84,22 @@ export function createBehaviorApiPlugin(editorActor: EditorActor) {
 
     editor.insertNodes = (nodes, options) => {
       if (editor.isNormalizingNode) {
-        const normalizedNodes = (Node.isNode(nodes) ? [nodes] : nodes).map(
-          (node) => {
-            if (!Text.isText(node)) {
-              return node
-            }
-
-            if (typeof node._type !== 'string') {
-              return {
-                ...(node as Node),
-                _type: editorActor.getSnapshot().context.schema.span.name,
-              }
-            }
-
+        const normalizedNodes = (
+          Node.isNode(nodes, editor.schema) ? [nodes] : nodes
+        ).map((node) => {
+          if (!Text.isText(node, editor.schema)) {
             return node
-          },
-        ) as Array<Node>
+          }
+
+          if (typeof node._type !== 'string') {
+            return {
+              ...(node as Node),
+              _type: editorActor.getSnapshot().context.schema.span.name,
+            }
+          }
+
+          return node
+        }) as Array<Node>
 
         insertNodes(normalizedNodes, options)
 

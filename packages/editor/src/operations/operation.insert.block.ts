@@ -1,3 +1,4 @@
+import type {PortableTextBlock} from '@portabletext/schema'
 import {isSpan} from '@portabletext/schema'
 import {isEqualChildren, isEqualMarks} from '../internal-utils/equality'
 import {getFocusChild} from '../internal-utils/slate-utils'
@@ -61,7 +62,7 @@ export function insertBlock(options: {
     ? toSlateRange({
         context: {
           schema: context.schema,
-          value: editor.value,
+          value: editor.children as Array<PortableTextBlock>,
           selection: options.at,
         },
         blockIndexMap: editor.blockIndexMap,
@@ -84,7 +85,8 @@ export function insertBlock(options: {
       at: start,
       mode: 'lowest',
       match: (node, path) =>
-        Element.isElement(node) && path.length <= start.path.length,
+        (Element.isElement(node, editor.schema) || editor.isObjectNode(node)) &&
+        path.length <= start.path.length,
     }),
   ).at(0) ?? [undefined, undefined]
   let [endBlock, endBlockPath] = Array.from(
@@ -92,7 +94,8 @@ export function insertBlock(options: {
       at: end,
       mode: 'lowest',
       match: (node, path) =>
-        Element.isElement(node) && path.length <= end.path.length,
+        (Element.isElement(node, editor.schema) || editor.isObjectNode(node)) &&
+        path.length <= end.path.length,
     }),
   ).at(0) ?? [undefined, undefined]
 
@@ -137,10 +140,11 @@ export function insertBlock(options: {
 
     // Remember if the selection started at the beginning of the block
     const start = Range.start(at)
-    const startBlock = Node.get(editor, [start.path[0]!])
+    const startBlock = Node.get(editor, [start.path[0]!], editor.schema)
     const startOfBlock = Editor.start(editor, [start.path[0]!])
     const isAtStartOfBlock =
-      Element.isElement(startBlock) && Point.equals(start, startOfBlock)
+      Element.isElement(startBlock, editor.schema) &&
+      Point.equals(start, startOfBlock)
 
     // Delete the expanded range
     deleteExpandedRange(editor, at)
@@ -187,9 +191,13 @@ export function insertBlock(options: {
         ? [atAfterDelete.anchor.path[0]! + 1]
         : [atAfterDelete.anchor.path[0]!]
       try {
-        const potentiallyEmptyBlock = Node.get(editor, emptyBlockPath)
+        const potentiallyEmptyBlock = Node.get(
+          editor,
+          emptyBlockPath,
+          editor.schema,
+        )
         if (
-          Element.isElement(potentiallyEmptyBlock) &&
+          Element.isElement(potentiallyEmptyBlock, editor.schema) &&
           isEmptyTextBlock(context, potentiallyEmptyBlock)
         ) {
           editor.apply({
@@ -223,7 +231,7 @@ export function insertBlock(options: {
 
     if (!isAtBlockStart && !isAtBlockEnd) {
       // We need to split the block at the selection point
-      const currentBlock = Node.get(editor, blockPath) as Element
+      const currentBlock = Node.get(editor, blockPath, editor.schema) as Element
 
       // Find the child index and offset within that child
       const childIndex = selectionPoint.path[1]!
@@ -231,7 +239,11 @@ export function insertBlock(options: {
 
       // Split the text node at the offset if needed
       if (childOffset > 0) {
-        const textNode = Node.get(editor, selectionPoint.path) as Text
+        const textNode = Node.get(
+          editor,
+          selectionPoint.path,
+          editor.schema,
+        ) as Text
         if (childOffset < textNode.text.length) {
           const {text: _, ...properties} = textNode
           editor.apply({
@@ -304,7 +316,11 @@ export function insertBlock(options: {
       if (isCrossBlock) {
         wasCrossBlockDeletion = true
         const startBlockPath: Path = [start.path[0]!]
-        const mergedBlock = Node.get(editor, startBlockPath) as Element
+        const mergedBlock = Node.get(
+          editor,
+          startBlockPath,
+          editor.schema,
+        ) as Element
         if (editor.isTextBlock(mergedBlock)) {
           // Find the merge position (where blocks were joined)
           const mergePoint: Point = {
@@ -322,11 +338,19 @@ export function insertBlock(options: {
         Editor.nodes(editor, {
           at: Editor.end(editor, []),
           mode: 'lowest',
-          match: (node, path) => Element.isElement(node) && path.length === 1,
+          match: (node, path) =>
+            (Element.isElement(node, editor.schema) ||
+              editor.isObjectNode(node)) &&
+            path.length === 1,
         }),
       ).at(-1) ?? [undefined, undefined]
 
-      if (newEndBlock && newEndBlockPath && Element.isElement(newEndBlock)) {
+      if (
+        newEndBlock &&
+        newEndBlockPath &&
+        (Element.isElement(newEndBlock, editor.schema) ||
+          editor.isObjectNode(newEndBlock))
+      ) {
         endBlock = newEndBlock
         endBlockPath = newEndBlockPath
       }
@@ -399,9 +423,12 @@ export function insertBlock(options: {
     })
 
     // Carry over the markDefs from the incoming block to the end block
-    const endBlockNode = Node.get(editor, endBlockPath)
+    const endBlockNode = Node.get(editor, endBlockPath, editor.schema)
 
-    if (Element.isElement(endBlockNode) && editor.isTextBlock(endBlockNode)) {
+    if (
+      Element.isElement(endBlockNode, editor.schema) &&
+      editor.isTextBlock(endBlockNode)
+    ) {
       const properties: Partial<Element> = {
         markDefs: endBlockNode.markDefs,
       }
@@ -419,7 +446,11 @@ export function insertBlock(options: {
 
     // If the children have changed, we need to create a new block with
     // the adjusted children
-    const adjustedBlock = !isEqualChildren(block.children, adjustedChildren)
+    const adjustedBlock = !isEqualChildren(
+      block.children,
+      adjustedChildren,
+      context.schema.span.name,
+    )
       ? {
           ...block,
           children: adjustedChildren as Descendant[],
@@ -517,7 +548,7 @@ export function insertBlock(options: {
       const [, end] = Range.edges(at)
 
       // Delete text in end node
-      const endNode = Node.get(editor, end.path) as Text
+      const endNode = Node.get(editor, end.path, editor.schema) as Text
       if (end.offset > 0) {
         editor.apply({
           type: 'remove_text',
@@ -548,13 +579,13 @@ export function insertBlock(options: {
       const [start] = Range.edges(at)
 
       // Remove nodes after start
-      const blockNode = Node.get(editor, endBlockPath) as Element
+      const blockNode = Node.get(editor, endBlockPath, editor.schema) as Element
       for (let i = blockNode.children.length - 1; i > start.path[1]!; i--) {
         removeNodeAt(editor, [...endBlockPath, i])
       }
 
       // Delete text from start node
-      const startNode = Node.get(editor, start.path) as Text
+      const startNode = Node.get(editor, start.path, editor.schema) as Text
       if (start.offset < startNode.text.length) {
         editor.apply({
           type: 'remove_text',
@@ -580,8 +611,8 @@ export function insertBlock(options: {
 
       if (editor.isTextBlock(block)) {
         // Inserting text block: split the text node and insert fragment
-        const nodeToSplit = Node.get(editor, startPoint.path)
-        if (Text.isText(nodeToSplit)) {
+        const nodeToSplit = Node.get(editor, startPoint.path, editor.schema)
+        if (Text.isText(nodeToSplit, editor.schema)) {
           const {text: _, ...properties} = nodeToSplit
           editor.apply({
             type: 'split_node',
@@ -614,9 +645,9 @@ export function insertBlock(options: {
         const firstBlockPathRef = Editor.pathRef(editor, blockPath)
 
         // Split text node first
-        const textNode = Node.get(editor, currentPath)
+        const textNode = Node.get(editor, currentPath, editor.schema)
         if (
-          Text.isText(textNode) &&
+          Text.isText(textNode, editor.schema) &&
           currentOffset > 0 &&
           currentOffset < textNode.text.length
         ) {
@@ -634,11 +665,11 @@ export function insertBlock(options: {
         // Split the block, preserving block properties
         const splitAtIndex =
           currentOffset > 0 ? currentPath[1]! + 1 : currentPath[1]!
-        const blockToSplit = Node.get(editor, blockPath)
+        const blockToSplit = Node.get(editor, blockPath, editor.schema)
 
         if (
           splitAtIndex < (blockToSplit as Element).children.length &&
-          Element.isElement(blockToSplit)
+          Element.isElement(blockToSplit, editor.schema)
         ) {
           // Get the properties to preserve in the split
           const {children: _, ...blockProperties} = blockToSplit
@@ -763,7 +794,7 @@ function insertNodeAt(
  * Removes a node at the given path.
  */
 function removeNodeAt(editor: PortableTextSlateEditor, path: Path) {
-  const node = Node.get(editor, path)
+  const node = Node.get(editor, path, editor.schema)
   editor.apply({type: 'remove_node', path, node})
 }
 
@@ -810,7 +841,7 @@ function deleteSameBlockRange(
 
   if (Path.equals(start.path, end.path)) {
     // Same text node - simple text removal
-    const text = Node.get(editor, start.path) as Text
+    const text = Node.get(editor, start.path, editor.schema) as Text
     const textToRemove = text.text.slice(start.offset, end.offset)
     editor.apply({
       type: 'remove_text',
@@ -823,7 +854,7 @@ function deleteSameBlockRange(
 
   // Different nodes in same block
   // Remove from start node to end
-  const startNode = Node.get(editor, start.path) as Text
+  const startNode = Node.get(editor, start.path, editor.schema) as Text
   if (start.offset < startNode.text.length) {
     const textToRemove = startNode.text.slice(start.offset)
     editor.apply({
@@ -841,7 +872,7 @@ function deleteSameBlockRange(
 
   // Remove from beginning of end node
   const newEndPath: Path = [...blockPath, start.path[1]! + 1]
-  const endNode = Node.get(editor, newEndPath) as Text
+  const endNode = Node.get(editor, newEndPath, editor.schema) as Text
   if (end.offset > 0) {
     const textToRemove = endNode.text.slice(0, end.offset)
     editor.apply({
@@ -853,9 +884,12 @@ function deleteSameBlockRange(
   }
 
   // Merge adjacent text nodes
-  const startNodeAfter = Node.get(editor, start.path)
-  const endNodeAfter = Node.get(editor, newEndPath)
-  if (Text.isText(startNodeAfter) && Text.isText(endNodeAfter)) {
+  const startNodeAfter = Node.get(editor, start.path, editor.schema)
+  const endNodeAfter = Node.get(editor, newEndPath, editor.schema)
+  if (
+    Text.isText(startNodeAfter, editor.schema) &&
+    Text.isText(endNodeAfter, editor.schema)
+  ) {
     const {text: _, ...properties} = endNodeAfter
     editor.apply({
       type: 'merge_node',
@@ -879,7 +913,7 @@ function deleteCrossBlockRange(
 
   // Remove from start position to end of start block
   if (start.path.length > 1) {
-    const startNode = Node.get(editor, start.path) as Text
+    const startNode = Node.get(editor, start.path, editor.schema) as Text
     if (start.offset < startNode.text.length) {
       const textToRemove = startNode.text.slice(start.offset)
       editor.apply({
@@ -891,7 +925,11 @@ function deleteCrossBlockRange(
     }
 
     // Remove remaining nodes in start block
-    const startBlock = Node.get(editor, startBlockPath) as Element
+    const startBlock = Node.get(
+      editor,
+      startBlockPath,
+      editor.schema,
+    ) as Element
     for (let i = startBlock.children.length - 1; i > start.path[1]!; i--) {
       removeNodeAt(editor, [...startBlockPath, i])
     }
@@ -912,7 +950,7 @@ function deleteCrossBlockRange(
 
     // Remove text from end node
     const endNodePath = [...adjustedEndBlockPath, 0]
-    const endNode = Node.get(editor, endNodePath) as Text
+    const endNode = Node.get(editor, endNodePath, editor.schema) as Text
     if (end.offset > 0) {
       const textToRemove = endNode.text.slice(0, end.offset)
       editor.apply({
@@ -925,8 +963,12 @@ function deleteCrossBlockRange(
   }
 
   // Merge the blocks if both are text blocks
-  const startBlock = Node.get(editor, startBlockPath) as Element
-  const endBlock = Node.get(editor, adjustedEndBlockPath) as Element
+  const startBlock = Node.get(editor, startBlockPath, editor.schema) as Element
+  const endBlock = Node.get(
+    editor,
+    adjustedEndBlockPath,
+    editor.schema,
+  ) as Element
   if (editor.isTextBlock(startBlock) && editor.isTextBlock(endBlock)) {
     const {children: _, ...properties} = endBlock
     editor.apply({
@@ -962,15 +1004,15 @@ function insertTextBlockFragment(
   block: Descendant,
   at: Point,
 ) {
-  if (!Element.isElement(block) || !editor.isTextBlock(block)) {
+  if (!Element.isElement(block, editor.schema) || !editor.isTextBlock(block)) {
     return
   }
 
   // Split the text node at the insertion point if needed
   if (at.offset > 0) {
-    const textNode = Node.get(editor, at.path)
+    const textNode = Node.get(editor, at.path, editor.schema)
 
-    if (Text.isText(textNode)) {
+    if (Text.isText(textNode, editor.schema)) {
       const {text: _, ...properties} = textNode
 
       editor.apply({

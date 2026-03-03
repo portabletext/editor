@@ -1,3 +1,4 @@
+import type {PortableTextBlock} from '@portabletext/schema'
 import {isSpan, isTextBlock} from '@portabletext/schema'
 import type {EditorActor} from '../editor/editor-machine'
 import type {EditorContext, EditorSnapshot} from '../editor/editor-snapshot'
@@ -49,7 +50,7 @@ export function createUniqueKeysPlugin(editorActor: EditorActor) {
               blockIndexMap: editor.blockIndexMap,
               context: {
                 schema: context.schema,
-                value: editor.value,
+                value: editor.children as Array<PortableTextBlock>,
               },
             },
             operation.path,
@@ -81,7 +82,7 @@ export function createUniqueKeysPlugin(editorActor: EditorActor) {
                 blockIndexMap: editor.blockIndexMap,
                 context: {
                   schema: context.schema,
-                  value: editor.value,
+                  value: editor.children as Array<PortableTextBlock>,
                 },
               },
               operation.path,
@@ -115,8 +116,10 @@ export function createUniqueKeysPlugin(editorActor: EditorActor) {
           return
         }
 
-        const block = editor.value.at(index)
-        const previousBlock = editor.value.at(prevIndex)
+        const block = (editor.children as Array<PortableTextBlock>).at(index)
+        const previousBlock = (editor.children as Array<PortableTextBlock>).at(
+          prevIndex,
+        )
 
         if (!block || !previousBlock) {
           apply(operation)
@@ -206,7 +209,7 @@ export function createUniqueKeysPlugin(editorActor: EditorActor) {
     editor.normalizeNode = (entry) => {
       const [node, path] = entry
 
-      if (Element.isElement(node)) {
+      if (Element.isElement(node, editor.schema) || editor.isObjectNode(node)) {
         const [parent] = Editor.parent(editor, path)
 
         if (parent && Editor.isEditor(parent)) {
@@ -243,7 +246,7 @@ export function createUniqueKeysPlugin(editorActor: EditorActor) {
       }
 
       if (
-        Element.isElement(node) &&
+        Element.isElement(node, editor.schema) &&
         node._type === editorActor.getSnapshot().context.schema.block.name
       ) {
         // Set key on block itself
@@ -261,7 +264,11 @@ export function createUniqueKeysPlugin(editorActor: EditorActor) {
         // Set unique keys on it's children
         const childKeys = new Set<string>()
 
-        for (const [child, childPath] of Node.children(editor, path)) {
+        for (const [child, childPath] of Node.children(
+          editor,
+          path,
+          editor.schema,
+        )) {
           if (child._key && childKeys.has(child._key)) {
             const _key = editorActor.getSnapshot().context.keyGenerator()
 

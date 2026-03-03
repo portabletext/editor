@@ -1,3 +1,4 @@
+import type {PortableTextChild} from '@portabletext/schema'
 import {useContext, useRef, type ReactElement} from 'react'
 import {getPointBlock} from '../internal-utils/slate-utils'
 import type {Element as SlateElement} from '../slate'
@@ -59,13 +60,7 @@ export function RenderInlineObject(props: {
     ? selectionState.focusedChildPath === serializedPath
     : false
 
-  const inlineObject = {
-    _key: props.element._key,
-    _type: props.element._type,
-    ...('value' in props.element && typeof props.element.value === 'object'
-      ? props.element.value
-      : {}),
-  }
+  const inlineObject = props.element as unknown as PortableTextChild
 
   return (
     <span

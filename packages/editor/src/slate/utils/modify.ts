@@ -1,3 +1,4 @@
+import type {EditorSchema} from '../../editor/editor-schema'
 import {
   Node,
   Scrubber,
@@ -29,19 +30,20 @@ export const removeChildren = replaceChildren
 export const modifyDescendant = <N extends Descendant>(
   root: Ancestor,
   path: Path,
+  schema: EditorSchema,
   f: (node: N) => N,
 ) => {
   if (path.length === 0) {
     throw new Error('Cannot modify the editor')
   }
 
-  const node = Node.get(root, path) as N
+  const node = Node.get(root, path, schema) as N
   const slicedPath = path.slice()
   let modifiedNode: Node = f(node)
 
   while (slicedPath.length > 1) {
     const index = slicedPath.pop()!
-    const ancestorNode = Node.get(root, slicedPath) as Ancestor
+    const ancestorNode = Node.get(root, slicedPath, schema) as Ancestor
 
     modifiedNode = {
       ...ancestorNode,
@@ -59,13 +61,14 @@ export const modifyDescendant = <N extends Descendant>(
 export const modifyChildren = (
   root: Ancestor,
   path: Path,
+  schema: EditorSchema,
   f: (children: Descendant[]) => Descendant[],
 ) => {
   if (path.length === 0) {
     root.children = f(root.children)
   } else {
-    modifyDescendant<Element>(root, path, (node) => {
-      if (Text.isText(node)) {
+    modifyDescendant<Element>(root, path, schema, (node) => {
+      if (Text.isText(node, schema) || Node.isObjectNode(node, schema)) {
         throw new Error(
           `Cannot get the element at path [${path}] because it refers to a leaf node: ${Scrubber.stringify(
             node,
@@ -84,10 +87,11 @@ export const modifyChildren = (
 export const modifyLeaf = (
   root: Ancestor,
   path: Path,
+  schema: EditorSchema,
   f: (leaf: Text) => Text,
 ) =>
-  modifyDescendant(root, path, (node) => {
-    if (!Text.isText(node)) {
+  modifyDescendant(root, path, schema, (node) => {
+    if (!Text.isText(node, schema)) {
       throw new Error(
         `Cannot get the leaf node at path [${path}] because it refers to a non-leaf node: ${Scrubber.stringify(
           node,

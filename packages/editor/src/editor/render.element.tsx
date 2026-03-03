@@ -1,3 +1,4 @@
+import type {PortableTextBlock} from '@portabletext/schema'
 import {isTextBlock} from '@portabletext/schema'
 import {useSelector} from '@xstate/react'
 import {useContext, type ReactElement} from 'react'
@@ -31,8 +32,7 @@ export function RenderElement(props: {
   const schema = useSelector(editorActor, (s) => s.context.schema)
   const slateStatic = useSlateStatic()
 
-  const isInline =
-    '__inline' in props.element && props.element.__inline === true
+  const isInline = slateStatic.isInline(props.element)
 
   if (isInline) {
     return (
@@ -50,7 +50,9 @@ export function RenderElement(props: {
 
   const blockIndex = slateStatic.blockIndexMap.get(props.element._key)
   const block =
-    blockIndex !== undefined ? slateStatic.value.at(blockIndex) : undefined
+    blockIndex !== undefined
+      ? (slateStatic.children as Array<PortableTextBlock>).at(blockIndex)
+      : undefined
 
   if (isTextBlock({schema}, block)) {
     return (

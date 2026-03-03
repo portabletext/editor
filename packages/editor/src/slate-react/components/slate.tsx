@@ -41,7 +41,7 @@ export const Slate = (props: {
 
   // Run once on first mount, but before `useEffect` or render
   React.useState(() => {
-    if (!Node.isNodeList(initialValue)) {
+    if (!Node.isNodeList(initialValue, editor.schema)) {
       throw new Error(
         `[Slate] initialValue is invalid! Expected a list of elements but got: ${Scrubber.stringify(
           initialValue,

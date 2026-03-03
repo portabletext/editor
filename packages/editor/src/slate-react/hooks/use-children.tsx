@@ -2,9 +2,11 @@ import {useCallback, useRef, type JSX} from 'react'
 import {
   Editor,
   Element,
+  Node,
   Text,
   type Ancestor,
   type DecoratedRange,
+  type ObjectNode,
 } from '../../slate'
 import {
   isElementDecorationsEqual,
@@ -21,6 +23,7 @@ import type {
   RenderTextProps,
 } from '../components/editable'
 import ElementComponent from '../components/element'
+import ObjectNodeComponent from '../components/object-node'
 import TextComponent from '../components/text'
 import {ReactEditor} from '../plugin/react-editor'
 import {ElementContext} from './use-element'
@@ -52,7 +55,10 @@ const useChildren = (props: {
   editor.isNodeMapDirty = false
 
   const isEditor = Editor.isEditor(node)
-  const isBlock = !isEditor && Element.isElement(node) && !editor.isInline(node)
+  const isBlock =
+    !isEditor &&
+    Element.isElement(node, editor.schema) &&
+    !editor.isInline(node)
   const isLeafBlock = isBlock && Editor.hasInlines(editor, node)
   const chunkSize = isLeafBlock ? null : editor.getChunkSize(node)
   const chunking = !!chunkSize
@@ -120,10 +126,33 @@ const useChildren = (props: {
     )
   }
 
-  if (!chunking) {
-    return node.children.map((n, i) =>
-      Text.isText(n) ? renderTextComponent(n, i) : renderElementComponent(n, i),
+  const renderObjectNodeComponent = (n: ObjectNode, i: number) => {
+    const key = ReactEditor.findKey(editor, n)
+
+    return (
+      <ObjectNodeComponent
+        decorations={decorationsByChild[i] ?? []}
+        isInline={!isEditor}
+        key={key.id}
+        objectNode={n}
+        renderElement={renderElement}
+      />
     )
+  }
+
+  if (!chunking) {
+    return node.children.map((n, i) => {
+      if (Element.isElement(n, editor.schema)) {
+        return renderElementComponent(n, i)
+      }
+      if (Node.isObjectNode(n, editor.schema)) {
+        return renderObjectNodeComponent(n, i)
+      }
+      if (Text.isText(n, editor.schema)) {
+        return renderTextComponent(n, i)
+      }
+      return renderTextComponent(n as Text, i)
+    })
   }
 
   const chunkTree = getChunkTreeForNode(editor, node, {

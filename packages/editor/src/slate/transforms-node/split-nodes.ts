@@ -31,7 +31,8 @@ export const splitNodes: NodeTransforms['splitNodes'] = (
     let {match, at = editor.selection, height = 0, always = false} = options
 
     if (match == null) {
-      match = (n) => Element.isElement(n) && Editor.isBlock(editor, n)
+      match = (n) =>
+        Element.isElement(n, editor.schema) && Editor.isBlock(editor, n)
     }
 
     if (Range.isRange(at)) {
@@ -71,7 +72,10 @@ export const splitNodes: NodeTransforms['splitNodes'] = (
       if (!voids && voidMatch) {
         const [voidNode, voidPath] = voidMatch
 
-        if (Element.isElement(voidNode) && editor.isInline(voidNode)) {
+        if (
+          Element.isElement(voidNode, editor.schema) &&
+          editor.isInline(voidNode)
+        ) {
           let after = Editor.after(editor, voidPath)
 
           if (!after) {
@@ -103,11 +107,7 @@ export const splitNodes: NodeTransforms['splitNodes'] = (
       })) {
         let split = false
 
-        if (
-          path.length < highestPath.length ||
-          path.length === 0 ||
-          (!voids && Element.isElement(node) && Editor.isVoid(editor, node))
-        ) {
+        if (path.length < highestPath.length || path.length === 0) {
           break
         }
 
@@ -116,7 +116,7 @@ export const splitNodes: NodeTransforms['splitNodes'] = (
 
         if (always || !beforeRef || !Editor.isEdge(editor, point, path)) {
           split = true
-          const properties = Node.extractProps(node)
+          const properties = Node.extractProps(node, editor.schema)
           editor.apply({
             type: 'split_node',
             path,

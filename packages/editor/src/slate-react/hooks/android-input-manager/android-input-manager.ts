@@ -296,7 +296,12 @@ export function createAndroidInputManager({
 
     const pendingDiffs = editor.pendingDiffs
 
-    const target = Node.leaf(editor, path)
+    const target = Node.leaf(editor, path, editor.schema)
+
+    if (!Text.isText(target, editor.schema)) {
+      return
+    }
+
     const idx = pendingDiffs.findIndex((change) =>
       Path.equals(change.path, path),
     )
@@ -406,11 +411,23 @@ export function createAndroidInputManager({
       let [start, end] = Range.edges(targetRange)
       let [leaf, path] = Editor.leaf(editor, start.path)
 
+      if (!Text.isText(leaf, editor.schema)) {
+        return scheduleAction(
+          () =>
+            editorActor.send({
+              type: 'behavior event',
+              behaviorEvent: {type: 'delete', direction},
+              editor,
+            }),
+          {at: targetRange},
+        )
+      }
+
       if (Range.isExpanded(targetRange)) {
         if (leaf.text.length === start.offset && end.offset === 0) {
           const next = Editor.next(editor, {
             at: start.path,
-            match: Text.isText,
+            match: (n) => Text.isText(n, editor.schema),
           })
           if (next && Path.equals(next[1], end.path)) {
             // when deleting a linebreak, targetRange will span across the break (ie start in the node before and end in the node after)
@@ -496,9 +513,12 @@ export function createAndroidInputManager({
       case 'deleteContentForward': {
         const {anchor} = targetRange
         if (canStoreDiff && Range.isCollapsed(targetRange)) {
-          const targetNode = Node.leaf(editor, anchor.path)
+          const targetNode = Node.leaf(editor, anchor.path, editor.schema)
 
-          if (anchor.offset < targetNode.text.length) {
+          if (
+            Text.isText(targetNode, editor.schema) &&
+            anchor.offset < targetNode.text.length
+          ) {
             return storeDiff(anchor.path, {
               text: '',
               start: anchor.offset,

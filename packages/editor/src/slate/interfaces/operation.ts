@@ -1,4 +1,4 @@
-import {isObject, Node, Path, Range, type ExtendedType} from '..'
+import {isObject, Path, Range, type ExtendedType, type Node} from '..'
 
 export type BaseInsertNodeOperation = {
   type: 'insert_node'
@@ -183,7 +183,7 @@ export const Operation: OperationInterface = {
 
     switch (value.type) {
       case 'insert_node':
-        return Path.isPath(value.path) && Node.isNode(value.node)
+        return Path.isPath(value.path) && isObject(value.node)
       case 'insert_text':
         return (
           typeof value.offset === 'number' &&
@@ -199,7 +199,7 @@ export const Operation: OperationInterface = {
       case 'move_node':
         return Path.isPath(value.path) && Path.isPath(value.newPath)
       case 'remove_node':
-        return Path.isPath(value.path) && Node.isNode(value.node)
+        return Path.isPath(value.path) && isObject(value.node)
       case 'remove_text':
         return (
           typeof value.offset === 'number' &&

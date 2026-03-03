@@ -13,9 +13,14 @@ export function getPreviousSpan({
 }): PortableTextSpan | undefined {
   let previousSpan: PortableTextSpan | undefined
 
-  for (const [child, childPath] of Node.children(editor, blockPath, {
-    reverse: true,
-  })) {
+  for (const [child, childPath] of Node.children(
+    editor,
+    blockPath,
+    editor.schema,
+    {
+      reverse: true,
+    },
+  )) {
     if (!editor.isTextSpan(child)) {
       continue
     }
@@ -40,7 +45,11 @@ export function getNextSpan({
 }): PortableTextSpan | undefined {
   let nextSpan: PortableTextSpan | undefined
 
-  for (const [child, childPath] of Node.children(editor, blockPath)) {
+  for (const [child, childPath] of Node.children(
+    editor,
+    blockPath,
+    editor.schema,
+  )) {
     if (!editor.isTextSpan(child)) {
       continue
     }
