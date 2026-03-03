@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.0.4
+
+### Patch Changes
+
+- [#2291](https://github.com/portabletext/editor/pull/2291) [`1042902`](https://github.com/portabletext/editor/commit/1042902fe941f66770ae078bf21f9f9fc4b92225) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update dependency @playwright/test to ^1.58.2
+
 ## 2.0.3
 
 ### Patch Changes
