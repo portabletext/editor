@@ -4,7 +4,7 @@ import {EditorRefPlugin} from '@portabletext/editor/plugins'
 import {defineSchema, type PortableTextBlock} from '@portabletext/schema'
 import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
 import {createRef} from 'react'
-import {describe, expect, test, vi} from 'vitest'
+import {afterEach, describe, expect, test, vi} from 'vitest'
 import {render} from 'vitest-browser-react'
 import {page} from 'vitest/browser'
 import {ValueSyncPlugin} from './plugin.sdk-value'
@@ -50,7 +50,7 @@ async function createSyncedEditor(options: {
   const editorRef = createRef<Editor>()
   const keyGenerator = createTestKeyGenerator()
 
-  render(
+  const result = await render(
     <EditorProvider
       initialConfig={{
         keyGenerator,
@@ -74,6 +74,7 @@ async function createSyncedEditor(options: {
   return {
     editor: editorRef.current!,
     locator,
+    unmount: result.unmount,
   }
 }
 
@@ -96,10 +97,18 @@ function getEditorText(editor: Editor): string[] {
 // ---- Tests ----
 
 describe('ValueSyncPlugin', () => {
+  let cleanup: (() => void) | undefined
+
+  afterEach(() => {
+    cleanup?.()
+    cleanup = undefined
+  })
+
   describe('initial value', () => {
     test('sends initial value from store to editor', async () => {
       const store = createMockValueStore([makeBlock('b1', 'Hello')])
-      const {editor} = await createSyncedEditor({store})
+      const {editor, unmount} = await createSyncedEditor({store})
+      cleanup = unmount
 
       await vi.waitFor(() => {
         expect(getEditorText(editor)).toEqual(['Hello'])
@@ -108,7 +117,8 @@ describe('ValueSyncPlugin', () => {
 
     test('starts with empty editor when store is empty', async () => {
       const store = createMockValueStore([])
-      const {editor} = await createSyncedEditor({store})
+      const {editor, unmount} = await createSyncedEditor({store})
+      cleanup = unmount
 
       await vi.waitFor(() => {
         expect(getEditorText(editor)).toEqual([''])
@@ -119,7 +129,8 @@ describe('ValueSyncPlugin', () => {
   describe('local edits push to store', () => {
     test('typing pushes value to store after mutation flush', async () => {
       const store = createMockValueStore()
-      const {editor, locator} = await createSyncedEditor({store})
+      const {editor, locator, unmount} = await createSyncedEditor({store})
+      cleanup = unmount
 
       await locator.click()
       editor.send({type: 'insert.text', text: 'Hello'})
@@ -141,7 +152,8 @@ describe('ValueSyncPlugin', () => {
   describe('remote changes apply to editor', () => {
     test('remote change updates editor when idle', async () => {
       const store = createMockValueStore()
-      const {editor} = await createSyncedEditor({store})
+      const {editor, unmount} = await createSyncedEditor({store})
+      cleanup = unmount
 
       store.setRemoteValue([makeBlock('b1', 'Hello from remote')])
 
@@ -154,7 +166,8 @@ describe('ValueSyncPlugin', () => {
   describe('echo suppression', () => {
     test('echo after local edit does not revert editor', async () => {
       const store = createMockValueStore()
-      const {editor, locator} = await createSyncedEditor({store})
+      const {editor, locator, unmount} = await createSyncedEditor({store})
+      cleanup = unmount
 
       await locator.click()
       editor.send({type: 'insert.text', text: 'Hello'})
@@ -174,7 +187,8 @@ describe('ValueSyncPlugin', () => {
 
     test('echo with normalization divergence does not revert editor', async () => {
       const store = createMockValueStore()
-      const {editor, locator} = await createSyncedEditor({store})
+      const {editor, locator, unmount} = await createSyncedEditor({store})
+      cleanup = unmount
 
       await locator.click()
       editor.send({type: 'insert.text', text: 'Hello'})
@@ -205,7 +219,8 @@ describe('ValueSyncPlugin', () => {
   describe('stale sync prevention', () => {
     test('stale remote value during typing does not revert editor', async () => {
       const store = createMockValueStore()
-      const {editor, locator} = await createSyncedEditor({store})
+      const {editor, locator, unmount} = await createSyncedEditor({store})
+      cleanup = unmount
 
       await locator.click()
       editor.send({type: 'insert.text', text: 'Hello'})
@@ -241,7 +256,8 @@ describe('ValueSyncPlugin', () => {
 
     test('remote change during local write applies after flush', async () => {
       const store = createMockValueStore()
-      const {editor, locator} = await createSyncedEditor({store})
+      const {editor, locator, unmount} = await createSyncedEditor({store})
+      cleanup = unmount
 
       await locator.click()
       editor.send({type: 'insert.text', text: 'Hello'})
@@ -287,7 +303,8 @@ describe('ValueSyncPlugin', () => {
 
     test('remote change without pending writes applies immediately', async () => {
       const store = createMockValueStore()
-      const {editor} = await createSyncedEditor({store})
+      const {editor, unmount} = await createSyncedEditor({store})
+      cleanup = unmount
 
       store.setRemoteValue([makeBlock('b1', 'Hello from remote')])
 
