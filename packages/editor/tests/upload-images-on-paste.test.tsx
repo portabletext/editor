@@ -1,5 +1,5 @@
 import {htmlToBlocks} from '@portabletext/block-tools'
-import {defineSchema, type PortableTextObject} from '@portabletext/schema'
+import {defineSchema, type PortableTextBlock} from '@portabletext/schema'
 import {expect, test, vi} from 'vitest'
 import {effect, execute, raise} from '../src/behaviors/behavior.types.action'
 import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
@@ -458,9 +458,9 @@ type PendingImageBlock = {
 }
 
 function isPendingImageBlock(
-  block: PortableTextObject,
+  block: PortableTextBlock,
 ): block is PendingImageBlock {
-  return block._type === 'image' && block['_src'] !== undefined
+  return block._type === 'image' && '_src' in block
 }
 
 type ImageResult =
