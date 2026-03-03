@@ -1,18 +1,22 @@
 # `@portabletext/block-tools`
 
-> Convert HTML to Portable Text with built-in support for Google Docs, Word, and Notion.
+> Sanity-flavored HTML to Portable Text conversion
 
-**NOTE:** To use `@portabletext/block-tools` in a Node.js script, you will need to provide a `parseHtml` method - generally using `JSDOM`. [Read more](#jsdom-example).
+This package wraps [`@portabletext/html`](../html) for use with Sanity schemas. If you're not using Sanity's schema system, use `@portabletext/html` directly - it has the same features with a simpler API.
 
-## Example
+## When to use which
 
-Let's start with a complete example:
+| Package                     | Use when                                                        |
+| --------------------------- | --------------------------------------------------------------- |
+| `@portabletext/html`        | Standalone projects, custom schemas, or any non-Sanity context  |
+| `@portabletext/block-tools` | Sanity projects where you already have a compiled Sanity schema |
 
-```js
+## Usage
+
+```ts
 import {htmlToBlocks} from '@portabletext/block-tools'
 import {Schema} from '@sanity/schema'
 
-// Start with compiling a schema we can work against
 const defaultSchema = Schema.compile({
   name: 'myBlog',
   types: [
@@ -36,161 +40,46 @@ const defaultSchema = Schema.compile({
   ],
 })
 
-// The compiled schema type for the content type that holds the block array
 const blockContentType = defaultSchema
   .get('blogPost')
   .fields.find((field) => field.name === 'body').type
 
-// Convert HTML to block array
 const blocks = htmlToBlocks(
-  '<html><body><h1>Hello world!</h1><body></html>',
+  '<html><body><h1>Hello world!</h1></body></html>',
   blockContentType,
 )
-// Outputs
-//
-//  {
-//    _type: 'block',
-//    style: 'h1'
-//    children: [
-//      {
-//        _type: 'span'
-//        text: 'Hello world!'
-//      }
-//    ]
-//  }
 ```
 
-## Methods
+### `htmlToBlocks(html, blockContentType, options?)`
 
-### `htmlToBlocks(html, blockContentType, options)` (html deserializer)
+Converts HTML to Portable Text blocks using a Sanity block content schema type.
 
-This will deserialize the input html (string) into blocks.
+Internally delegates to `@portabletext/html` after converting the Sanity schema. Supports the same `parseHtml`, `rules`, and `keyGenerator` options. See the [`@portabletext/html` README](../html/README.md) for full documentation on rules, whitespace handling, image matchers, and paste source support.
 
-#### Params
+**NOTE:** To use in Node.js, you need to provide a `parseHtml` option - generally using `JSDOM`:
 
-##### `html`
+```ts
+import {JSDOM} from 'jsdom'
 
-The stringified version of the HTML you are importing
-
-##### `blockContentType`
-
-A compiled version of the block content schema type.
-
-The deserializer will respect the schema when deserializing the HTML elements to blocks.
-
-It only supports a subset of HTML tags. Any HTML tag not in the block-tools [whitelist](https://github.com/portabletext/editor/blob/main/packages/block-tools/src/constants.ts) will be deserialized to normal blocks/spans.
-
-For instance, if the schema doesn't allow H2 styles, all H2 HTML elements will be output like this:
-
-```js
-{
-  _type: 'block',
-  style: 'normal'
-  children: [
-    {
-      _type: 'span'
-      text: 'Hello world!'
-    }
-  ]
-}
+const blocks = htmlToBlocks(html, blockContentType, {
+  parseHtml: (html) => new JSDOM(html).window.document,
+})
 ```
 
-##### `options` (optional)
+### `normalizeBlock(block, options?)`
 
-###### `parseHtml`
+Normalize a block object structure to ensure it has `_key`, `_type`, `children`, and `markDefs`.
 
-The HTML-deserialization is done by default by the browser's native DOMParser.
-On the server side you can give the function `parseHtml`
-that parses the html into a DOMParser compatible model / API.
-
-###### JSDOM example
-
-```js
-const {JSDOM} = require('jsdom')
-const {htmlToBlocks} = require('@portabletext/block-tools')
-
-const blocks = htmlToBlocks(
-  '<html><body><h1>Hello world!</h1><body></html>',
-  blockContentType,
-  {
-    parseHtml: (html) => new JSDOM(html).window.document,
-  },
-)
-```
-
-##### `rules`
-
-You may add your own rules to deal with special HTML cases.
-
-```js
-htmlToBlocks(
-  '<html><body><pre><code>const foo = "bar"</code></pre></body></html>',
-  blockContentType,
-  {
-    parseHtml: (html) => new JSDOM(html),
-    rules: [
-      // Special rule for code blocks
-      {
-        deserialize(el, next, block) {
-          if (el.tagName.toLowerCase() != 'pre') {
-            return undefined
-          }
-          const code = el.children[0]
-          const childNodes =
-            code && code.tagName.toLowerCase() === 'code'
-              ? code.childNodes
-              : el.childNodes
-          let text = ''
-          childNodes.forEach((node) => {
-            text += node.textContent
-          })
-          // Return this as an own block (via block helper function), instead of appending it to a default block's children
-          return block({
-            _type: 'code',
-            language: 'javascript',
-            text: text,
-          })
-        },
-      },
-    ],
-  },
-)
-```
-
-### `normalizeBlock(block, [options={}])`
-
-Normalize a block object structure to make sure it has what it needs.
-
-```js
+```ts
 import {normalizeBlock} from '@portabletext/block-tools'
 
-const partialBlock = {
+const normalized = normalizeBlock({
   _type: 'block',
-  children: [
-    {
-      _type: 'span',
-      text: 'Foobar',
-      marks: ['strong', 'df324e2qwe'],
-    },
-  ],
-}
-normalizeBlock(partialBlock, {allowedDecorators: ['strong']})
+  children: [{_type: 'span', text: 'Hello', marks: ['strong']}],
+})
+// => { _key: '...', _type: 'block', children: [{ _key: '...', _type: 'span', text: 'Hello', marks: ['strong'] }], markDefs: [] }
 ```
 
-Will produce
+## License
 
-```
-{
-  _key: 'randomKey0',
-  _type: 'block',
-  children: [
-    {
-      _key: 'randomKey00',
-      _type: 'span',
-      marks: ['strong'],
-      text: 'Foobar'
-    }
-  ],
-  markDefs: []
-}
-```
+MIT
