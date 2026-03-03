@@ -30,7 +30,7 @@
     "@portabletext/plugin-typography": "workspace:*",
     "@portabletext/react": "^6.0.2",
     "@portabletext/toolbar": "workspace:*",
-    "@xstate/react": "^6.0.0",
+    "@xstate/react": "^6.1.0",
     "emojilib": "^4.0.2",
     "fuse.js": "^7.1.0",
     "lucide-react": "^0.536.0",
@@ -40,7 +40,7 @@
     "react-is": "^19.2.3",
     "remeda": "^2.32.0",
     "shiki": "^3.17.0",
-    "xstate": "^5.25.0",
+    "xstate": "^5.28.0",
     "zod": "^4.1.12"
   },
   "devDependencies": {

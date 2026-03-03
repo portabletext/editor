@@ -52,8 +52,8 @@
     "test:browser:webkit:watch": "vitest watch --project \"browser (webkit)\""
   },
   "dependencies": {
-    "@xstate/react": "^6.0.0",
-    "xstate": "^5.25.0"
+    "@xstate/react": "^6.1.0",
+    "xstate": "^5.28.0"
   },
   "devDependencies": {
     "@portabletext/editor": "workspace:^",
