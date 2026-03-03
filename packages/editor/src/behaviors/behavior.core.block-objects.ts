@@ -590,15 +590,7 @@ const deleteSelectedBlockObject = defineBehavior({
         ]
       }
 
-      return [
-        raise({type: 'delete.block', at: focusBlockObject.path}),
-        raise({
-          type: 'insert.block',
-          block: {_type: snapshot.context.schema.block.name},
-          placement: 'auto',
-          select: 'start',
-        }),
-      ]
+      return [raise({type: 'delete.block', at: focusBlockObject.path})]
     },
   ],
 })
@@ -656,15 +648,7 @@ const backspaceSelectedBlockObject = defineBehavior({
         ]
       }
 
-      return [
-        raise({type: 'delete.block', at: focusBlockObject.path}),
-        raise({
-          type: 'insert.block',
-          block: {_type: snapshot.context.schema.block.name},
-          placement: 'auto',
-          select: 'start',
-        }),
-      ]
+      return [raise({type: 'delete.block', at: focusBlockObject.path})]
     },
   ],
 })
