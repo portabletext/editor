@@ -51,7 +51,8 @@ export const insertFragment: TextTransforms['insertFragment'] = (
     // instead since it will need to be split otherwise.
     const inlineElementMatch = Editor.above(editor, {
       at,
-      match: (n) => Element.isElement(n) && Editor.isInline(editor, n),
+      match: (n) =>
+        Element.isElement(n, editor.schema) && Editor.isInline(editor, n),
       mode: 'highest',
       voids,
     })
@@ -69,7 +70,8 @@ export const insertFragment: TextTransforms['insertFragment'] = (
     }
 
     const blockMatch = Editor.above(editor, {
-      match: (n) => Element.isElement(n) && Editor.isBlock(editor, n),
+      match: (n) =>
+        Element.isElement(n, editor.schema) && Editor.isBlock(editor, n),
       at,
       voids,
     })!
@@ -77,8 +79,16 @@ export const insertFragment: TextTransforms['insertFragment'] = (
     const isBlockStart = Editor.isStart(editor, at, blockPath)
     const isBlockEnd = Editor.isEnd(editor, at, blockPath)
     const isBlockEmpty = isBlockStart && isBlockEnd
-    const [, firstLeafPath] = Node.first({children: fragment} as Node, [])
-    const [, lastLeafPath] = Node.last({children: fragment} as Node, [])
+    const [, firstLeafPath] = Node.first(
+      {children: fragment} as Node,
+      [],
+      editor.schema,
+    )
+    const [, lastLeafPath] = Node.last(
+      {children: fragment} as Node,
+      [],
+      editor.schema,
+    )
 
     // For each node in the fragment, determine what level of wrapping should
     // be kept. At minimum, all text nodes will be inserted, but if
@@ -98,24 +108,22 @@ export const insertFragment: TextTransforms['insertFragment'] = (
       }
 
       // Unless we're at the start of the destination block, unwrap any
-      // non-void blocks that contain the first leaf node in the fragment.
+      // blocks that contain the first leaf node in the fragment.
       if (
         !isBlockStart &&
         Path.isAncestor(p, firstLeafPath) &&
-        Element.isElement(n) &&
-        !editor.isVoid(n) &&
+        Element.isElement(n, editor.schema) &&
         !editor.isInline(n)
       ) {
         return false
       }
 
-      // Unless we're at the end of the destination block, unwrap any non-void
+      // Unless we're at the end of the destination block, unwrap any
       // blocks that contain the last leaf node in the fragment.
       if (
         !isBlockEnd &&
         Path.isAncestor(p, lastLeafPath) &&
-        Element.isElement(n) &&
-        !editor.isVoid(n) &&
+        Element.isElement(n, editor.schema) &&
         !editor.isInline(n)
       ) {
         return false
@@ -140,16 +148,20 @@ export const insertFragment: TextTransforms['insertFragment'] = (
     // empty.
     const ends: Descendant[] = []
 
-    for (const entry of Node.nodes({children: fragment} as Node, {
-      pass: shouldInsert,
-    })) {
+    for (const entry of Node.nodes(
+      {children: fragment} as Node,
+      editor.schema,
+      {
+        pass: shouldInsert,
+      },
+    )) {
       const [node, path] = entry
 
       // If we encounter a block that does not contain the first leaf, we're no
       // longer in the first block of the fragment.
       if (
         starting &&
-        Element.isElement(node) &&
+        Element.isElement(node, editor.schema) &&
         !editor.isInline(node) &&
         !Path.isAncestor(path, firstLeafPath)
       ) {
@@ -157,7 +169,7 @@ export const insertFragment: TextTransforms['insertFragment'] = (
       }
 
       if (shouldInsert(entry)) {
-        if (Element.isElement(node) && !editor.isInline(node)) {
+        if (Element.isElement(node, editor.schema) && !editor.isInline(node)) {
           starting = false
           middles.push(node)
         } else if (starting) {
@@ -171,7 +183,8 @@ export const insertFragment: TextTransforms['insertFragment'] = (
     const inlineMatch = Array.from(
       Editor.nodes(editor, {
         at,
-        match: (n) => Text.isText(n) || Editor.isInline(editor, n),
+        match: (n) =>
+          Text.isText(n, editor.schema) || Editor.isInline(editor, n),
         mode: 'highest',
         voids,
       }),
@@ -199,8 +212,8 @@ export const insertFragment: TextTransforms['insertFragment'] = (
       at,
       match: (n) =>
         splitBlock
-          ? Element.isElement(n) && Editor.isBlock(editor, n)
-          : Text.isText(n) || Editor.isInline(editor, n),
+          ? Element.isElement(n, editor.schema) && Editor.isBlock(editor, n)
+          : Text.isText(n, editor.schema) || Editor.isInline(editor, n),
       mode: splitBlock ? 'lowest' : 'highest',
       always:
         splitBlock &&
@@ -218,7 +231,7 @@ export const insertFragment: TextTransforms['insertFragment'] = (
 
     Transforms.insertNodes(editor, starts, {
       at: startRef.current!,
-      match: (n) => Text.isText(n) || Editor.isInline(editor, n),
+      match: (n) => Text.isText(n, editor.schema) || Editor.isInline(editor, n),
       mode: 'highest',
       voids,
       batchDirty,
@@ -230,7 +243,8 @@ export const insertFragment: TextTransforms['insertFragment'] = (
 
     Transforms.insertNodes(editor, middles, {
       at: middleRef.current!,
-      match: (n) => Element.isElement(n) && Editor.isBlock(editor, n),
+      match: (n) =>
+        Element.isElement(n, editor.schema) && Editor.isBlock(editor, n),
       mode: 'lowest',
       voids,
       batchDirty,
@@ -238,7 +252,7 @@ export const insertFragment: TextTransforms['insertFragment'] = (
 
     Transforms.insertNodes(editor, ends, {
       at: endRef.current!,
-      match: (n) => Text.isText(n) || Editor.isInline(editor, n),
+      match: (n) => Text.isText(n, editor.schema) || Editor.isInline(editor, n),
       mode: 'highest',
       voids,
       batchDirty,

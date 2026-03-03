@@ -1,3 +1,4 @@
+import type {PortableTextBlock} from '@portabletext/schema'
 import {
   and,
   assign,
@@ -96,7 +97,7 @@ export const rangeDecorationsMachine = setup({
         const slateRange = toSlateRange({
           context: {
             schema: context.schema,
-            value: context.slateEditor.value,
+            value: context.slateEditor.children as Array<PortableTextBlock>,
             selection: rangeDecoration.selection,
           },
           blockIndexMap: context.slateEditor.blockIndexMap,
@@ -130,7 +131,7 @@ export const rangeDecorationsMachine = setup({
         const slateRange = toSlateRange({
           context: {
             schema: context.schema,
-            value: context.slateEditor.value,
+            value: context.slateEditor.children as Array<PortableTextBlock>,
             selection: rangeDecoration.selection,
           },
           blockIndexMap: context.slateEditor.blockIndexMap,
@@ -165,7 +166,7 @@ export const rangeDecorationsMachine = setup({
         const slateRange = toSlateRange({
           context: {
             schema: context.schema,
-            value: context.slateEditor.value,
+            value: context.slateEditor.children as Array<PortableTextBlock>,
             selection: decoratedRange.rangeDecoration.selection,
           },
           blockIndexMap: context.slateEditor.blockIndexMap,
@@ -364,9 +365,9 @@ function createDecorate(
 ) {
   return function decorate([node, path]: NodeEntry): Array<BaseRange> {
     const defaultStyle = schema.styles.at(0)?.name
-    const firstBlock = slateEditor.value[0]
+    const firstBlock = (slateEditor.children as Array<PortableTextBlock>)[0]
     const editorOnlyContainsEmptyParagraph =
-      slateEditor.value.length === 1 &&
+      (slateEditor.children as Array<PortableTextBlock>).length === 1 &&
       firstBlock &&
       isEmptyTextBlock({schema}, firstBlock) &&
       (!firstBlock.style || firstBlock.style === defaultStyle) &&
@@ -393,7 +394,10 @@ function createDecorate(
       return []
     }
 
-    if (!Element.isElement(node) || node.children.length === 0) {
+    if (
+      !Element.isElement(node, slateEditor.schema) ||
+      node.children.length === 0
+    ) {
       return []
     }
 

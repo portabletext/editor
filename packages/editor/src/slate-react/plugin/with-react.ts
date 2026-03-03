@@ -61,11 +61,11 @@ export const withReact = <T extends Editor>(
   // parent's chunk tree.
   e.apply = (operation) => {
     if (operation.type === 'move_node') {
-      const parent = Node.parent(e, operation.path)
+      const parent = Node.parent(e, operation.path, e.schema)
       const chunking = !!e.getChunkSize(parent)
 
       if (chunking) {
-        const node = Node.get(e, operation.path)
+        const node = Node.get(e, operation.path, e.schema)
         const chunkTree = getChunkTreeForNode(e, parent)
         const key = ReactEditor.findKey(e, node)
         chunkTree.movedNodeKeys.add(key)

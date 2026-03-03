@@ -7,6 +7,8 @@ export const elementReadOnly: EditorInterface['elementReadOnly'] = (
 ) => {
   return Editor.above(editor, {
     ...options,
-    match: (n) => Element.isElement(n) && Editor.isElementReadOnly(editor, n),
+    match: (n) =>
+      Element.isElement(n, editor.schema) &&
+      Editor.isElementReadOnly(editor, n),
   })
 }

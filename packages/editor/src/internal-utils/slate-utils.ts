@@ -1,4 +1,4 @@
-import type {PortableTextSpan} from '@portabletext/schema'
+import type {PortableTextBlock, PortableTextSpan} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
 import {
   Editor,
@@ -10,7 +10,6 @@ import {
 } from '../slate'
 import type {EditorSelection, EditorSelectionPoint} from '../types/editor'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
-import {fromSlateBlock} from './values'
 
 export function getBlockPath({
   editor,
@@ -171,7 +170,7 @@ export function getFocusChild({
   }
 
   try {
-    const focusChild = Node.child(focusBlock, childIndex)
+    const focusChild = Node.child(focusBlock, childIndex, editor.schema)
 
     return focusChild
       ? [focusChild, [...focusBlockPath, childIndex]]
@@ -196,7 +195,7 @@ function getPointChild({
   }
 
   try {
-    const pointChild = Node.child(block, childIndex)
+    const pointChild = Node.child(block, childIndex, editor.schema)
 
     return pointChild
       ? [pointChild, [...blockPath, childIndex]]
@@ -277,7 +276,7 @@ export function getNodeBlock({
     .at(0)
     ?.at(0)
 
-  return Element.isElement(parent)
+  return Element.isElement(parent, editor.schema)
     ? elementToBlock({
         schema,
         element: parent,
@@ -285,14 +284,8 @@ export function getNodeBlock({
     : undefined
 }
 
-function elementToBlock({
-  schema,
-  element,
-}: {
-  schema: EditorSchema
-  element: Element
-}) {
-  return fromSlateBlock(element, schema.block.name)
+function elementToBlock({element}: {schema: EditorSchema; element: Element}) {
+  return element as unknown as PortableTextBlock
 }
 
 function isBlockElement(
@@ -300,7 +293,7 @@ function isBlockElement(
   node: Node,
 ): node is Element {
   return (
-    Element.isElement(node) &&
+    Element.isElement(node, editor.schema) &&
     !editor.isInline(node) &&
     (schema.block.name === node._type ||
       schema.blockObjects.some(

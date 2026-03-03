@@ -3,6 +3,6 @@ import {Node} from '../interfaces/node'
 
 export const leaf: EditorInterface['leaf'] = (editor, at, options = {}) => {
   const path = Editor.path(editor, at, options)
-  const node = Node.leaf(editor, path)
+  const node = Node.leaf(editor, path, editor.schema)
   return [node, path]
 }

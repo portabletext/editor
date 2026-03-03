@@ -24,7 +24,8 @@ export const unhangRange: EditorInterface['unhangRange'] = (
 
   const endBlock = Editor.above(editor, {
     at: end,
-    match: (n) => Element.isElement(n) && Editor.isBlock(editor, n),
+    match: (n) =>
+      Element.isElement(n, editor.schema) && Editor.isBlock(editor, n),
     voids,
   })
   const blockPath = endBlock ? endBlock[1] : []
@@ -34,7 +35,7 @@ export const unhangRange: EditorInterface['unhangRange'] = (
 
   for (const [node, path] of Editor.nodes(editor, {
     at: before,
-    match: Text.isText,
+    match: (n) => Text.isText(n, editor.schema),
     reverse: true,
     voids,
   })) {

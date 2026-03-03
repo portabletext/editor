@@ -106,8 +106,6 @@ export const createEditor = (context: {
     isElementReadOnly: () => false,
     isInline: () => false,
     isSelectable: () => true,
-    isVoid: () => false,
-    markableVoid: () => false,
     onChange: () => {},
 
     // Core

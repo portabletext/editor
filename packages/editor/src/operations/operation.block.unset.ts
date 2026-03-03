@@ -1,7 +1,5 @@
-import {applyAll, set, unset} from '@portabletext/patches'
 import {isTextBlock} from '@portabletext/schema'
 import {applySetNode} from '../internal-utils/apply-set-node'
-import type {Node} from '../slate'
 import type {OperationImplementation} from './operation.types'
 
 export const blockUnsetOperationImplementation: OperationImplementation<
@@ -43,17 +41,16 @@ export const blockUnsetOperationImplementation: OperationImplementation<
     return
   }
 
-  const patches = operation.props.flatMap((key) =>
-    key === '_type'
-      ? []
-      : key === '_key'
-        ? set(context.keyGenerator(), ['_key'])
-        : unset(['value', key]),
-  )
-
-  const updatedSlateBlock = applyAll(slateBlock, patches) as Partial<Node>
-
-  applySetNode(operation.editor, updatedSlateBlock as Record<string, unknown>, [
-    blockIndex,
-  ])
+  const unsetProps: Record<string, unknown> = {}
+  for (const key of operation.props) {
+    if (key === '_type') {
+      continue
+    }
+    if (key === '_key') {
+      unsetProps['_key'] = context.keyGenerator()
+    } else {
+      unsetProps[key] = null
+    }
+  }
+  applySetNode(operation.editor, unsetProps, [blockIndex])
 }

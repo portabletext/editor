@@ -7,7 +7,7 @@ export const getFragment: WithEditorFirstArg<Editor['getFragment']> = (
   const {selection} = editor
 
   if (selection) {
-    return Node.fragment(editor, selection)
+    return Node.fragment(editor, selection, editor.schema)
   }
   return []
 }

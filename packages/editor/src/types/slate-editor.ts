@@ -5,6 +5,7 @@ import type {
   PortableTextSpan,
   PortableTextTextBlock,
 } from '@portabletext/schema'
+import type {EditorSchema} from '../editor/editor-schema'
 import type {DecoratedRange} from '../editor/range-decorations-machine'
 import type {Range, Operation as SlateOperation} from '../slate'
 import type {ReactEditor} from '../slate-react'
@@ -36,6 +37,8 @@ export interface PortableTextSlateEditor extends ReactEditor {
   isTextBlock: (value: unknown) => value is PortableTextTextBlock
   isTextSpan: (value: unknown) => value is PortableTextSpan
   isListBlock: (value: unknown) => value is PortableTextListBlock
+  isObjectNode: (value: unknown) => boolean
+  schema: EditorSchema
 
   decoratedRanges: Array<DecoratedRange>
   decoratorState: Record<string, boolean | undefined>
@@ -46,7 +49,6 @@ export interface PortableTextSlateEditor extends ReactEditor {
   listIndexMap: Map<string, number>
   remotePatches: Array<RemotePatch>
   undoStepId: string | undefined
-  value: Array<PortableTextBlock>
 
   isDeferringMutations: boolean
   isNormalizingNode: boolean

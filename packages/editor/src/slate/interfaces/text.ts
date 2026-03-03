@@ -1,4 +1,5 @@
 import {isObject, Range} from '..'
+import type {EditorSchema} from '../../editor/editor-schema'
 import type {ExtendedType} from '../types/custom-types'
 import {isDeepEqual} from '../utils/deep-equal'
 
@@ -45,12 +46,12 @@ export interface TextInterface {
   /**
    * Check if a value implements the `Text` interface.
    */
-  isText: (value: any) => value is Text
+  isText: (value: any, schema: EditorSchema) => value is Text
 
   /**
    * Check if a value is a list of `Text` objects.
    */
-  isTextList: (value: any) => value is Text[]
+  isTextList: (value: any, schema: EditorSchema) => value is Text[]
 
   /**
    * Check if some props are a partial of Text.
@@ -91,12 +92,14 @@ export const Text: TextInterface = {
     )
   },
 
-  isText(value: any): value is Text {
-    return isObject(value) && typeof value.text === 'string'
+  isText(value: any, schema: EditorSchema): value is Text {
+    return isObject(value) && value._type === schema.span.name
   },
 
-  isTextList(value: any): value is Text[] {
-    return Array.isArray(value) && value.every((val) => Text.isText(val))
+  isTextList(value: any, schema: EditorSchema): value is Text[] {
+    return (
+      Array.isArray(value) && value.every((val) => Text.isText(val, schema))
+    )
   },
 
   isTextProps(props: any): props is Partial<Text> {

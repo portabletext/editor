@@ -28,7 +28,7 @@ export const normalize: EditorInterface['normalize'] = (
   }
 
   if (force) {
-    const allPaths = Array.from(Node.nodes(editor), ([, p]) => p)
+    const allPaths = Array.from(Node.nodes(editor, editor.schema), ([, p]) => p)
     const allPathKeys = new Set(allPaths.map((p) => p.join(',')))
     editor.dirtyPaths = allPaths
     editor.dirtyPathKeys = allPathKeys
@@ -45,7 +45,7 @@ export const normalize: EditorInterface['normalize'] = (
       Running an initial pass avoids the catch-22 race condition.
     */
     for (const dirtyPath of getDirtyPaths(editor)) {
-      if (Node.has(editor, dirtyPath)) {
+      if (Node.has(editor, dirtyPath, editor.schema)) {
         const entry = Editor.node(editor, dirtyPath)
         const [node, _] = entry
 
@@ -56,7 +56,10 @@ export const normalize: EditorInterface['normalize'] = (
           As long as the normalizer only inserts child nodes for this case it is safe to do in any order;
           by definition adding children to an empty node can't cause other paths to change.
         */
-        if (Element.isElement(node) && node.children.length === 0) {
+        if (
+          Element.isElement(node, editor.schema) &&
+          node.children.length === 0
+        ) {
           editor.normalizeNode(entry, {operation})
         }
       }
@@ -81,7 +84,7 @@ export const normalize: EditorInterface['normalize'] = (
       const dirtyPath = popDirtyPath(editor)
 
       // If the node doesn't exist in the tree, it does not need to be normalized.
-      if (Node.has(editor, dirtyPath)) {
+      if (Node.has(editor, dirtyPath, editor.schema)) {
         const entry = Editor.node(editor, dirtyPath)
         editor.normalizeNode(entry, {operation})
       }
