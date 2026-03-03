@@ -1,1 +1,1 @@
-export * from './flatten-tables'
+export {createFlattenTableRule} from '@portabletext/html/rules'
