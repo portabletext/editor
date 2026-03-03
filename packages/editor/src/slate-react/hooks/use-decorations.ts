@@ -39,7 +39,7 @@ export const useDecorations = (
     return decorate([node, path])
   }
 
-  const equalityFn = Text.isText(node)
+  const equalityFn = Text.isText(node, editor.schema)
     ? isTextDecorationsEqual
     : isElementDecorationsEqual
 

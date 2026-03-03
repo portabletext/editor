@@ -31,8 +31,8 @@ export function verifyDiffState(editor: Editor, textDiff: TextDiff): boolean {
     return false
   }
 
-  const node = Node.get(editor, path)
-  if (!Text.isText(node)) {
+  const node = Node.get(editor, path, editor.schema)
+  if (!Text.isText(node, editor.schema)) {
     return false
   }
 
@@ -47,8 +47,10 @@ export function verifyDiffState(editor: Editor, textDiff: TextDiff): boolean {
     return false
   }
 
-  const nextNode = Node.get(editor, nextPath)
-  return Text.isText(nextNode) && nextNode.text.startsWith(diff.text)
+  const nextNode = Node.get(editor, nextPath, editor.schema)
+  return (
+    Text.isText(nextNode, editor.schema) && nextNode.text.startsWith(diff.text)
+  )
 }
 
 export function applyStringDiff(text: string, ...diffs: StringDiff[]) {
@@ -168,13 +170,14 @@ export function normalizePoint(editor: Editor, point: Point): Point | null {
     return null
   }
 
-  let leaf = Node.get(editor, path)
-  if (!Text.isText(leaf)) {
+  let leaf = Node.get(editor, path, editor.schema)
+  if (!Text.isText(leaf, editor.schema)) {
     return null
   }
 
   const parentBlock = Editor.above(editor, {
-    match: (n) => Element.isElement(n) && Editor.isBlock(editor, n),
+    match: (n) =>
+      Element.isElement(n, editor.schema) && Editor.isBlock(editor, n),
     at: path,
   })
 
@@ -183,7 +186,10 @@ export function normalizePoint(editor: Editor, point: Point): Point | null {
   }
 
   while (offset > leaf.text.length) {
-    const entry = Editor.next(editor, {at: path, match: Text.isText})
+    const entry = Editor.next(editor, {
+      at: path,
+      match: (n) => Text.isText(n, editor.schema),
+    })
     if (!entry || !Path.isDescendant(entry[1], parentBlock[1])) {
       return null
     }

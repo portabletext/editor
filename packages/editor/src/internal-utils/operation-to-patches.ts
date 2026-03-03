@@ -29,7 +29,6 @@ import {
   type SplitNodeOperation,
 } from '../slate'
 import type {Path} from '../types/paths'
-import {fromSlateBlock} from './values'
 
 export function insertTextPatch(
   schema: EditorSchema,
@@ -117,13 +116,13 @@ export function setNodePatch(
     if (isTextBlock({schema}, block)) {
       const patches: Patch[] = []
 
-      for (const key of Object.keys(operation.newProperties)) {
-        const value = (operation.newProperties as Record<string, unknown>)[key]
-
+      for (const [key, propertyValue] of Object.entries(
+        operation.newProperties,
+      )) {
         if (key === '_key') {
-          patches.push(set(value, [blockIndex, '_key']))
+          patches.push(set(propertyValue, [blockIndex, '_key']))
         } else {
-          patches.push(set(value, [{_key: block._key}, key]))
+          patches.push(set(propertyValue, [{_key: block._key}, key]))
         }
       }
 
@@ -143,28 +142,22 @@ export function setNodePatch(
         patches.push(set(_key, [blockIndex, '_key']))
       }
 
-      const newValue =
-        'value' in operation.newProperties &&
-        typeof operation.newProperties.value === 'object'
-          ? (operation.newProperties.value as Record<string, unknown>)
-          : ({} satisfies Record<string, unknown>)
+      for (const [key, propertyValue] of Object.entries(
+        operation.newProperties,
+      )) {
+        if (key === '_key' || key === 'children') {
+          continue
+        }
 
-      const keys = Object.keys(newValue)
-
-      for (const key of keys) {
-        const value = newValue[key]
-
-        patches.push(set(value, [{_key: block._key}, key]))
+        patches.push(set(propertyValue, [{_key: block._key}, key]))
       }
 
-      const value =
-        'value' in operation.properties &&
-        typeof operation.properties.value === 'object'
-          ? (operation.properties.value as Record<string, unknown>)
-          : ({} satisfies Record<string, unknown>)
+      for (const key of Object.keys(operation.properties)) {
+        if (key === '_key' || key === 'children') {
+          continue
+        }
 
-      for (const key of Object.keys(value)) {
-        if (!(key in newValue)) {
+        if (!(key in operation.newProperties)) {
           patches.push(unset([{_key: block._key}, key]))
         }
       }
@@ -180,11 +173,7 @@ export function setNodePatch(
         const childKey = child._key
         const patches: Patch[] = []
 
-        if (Element.isElement(child)) {
-          // The child is an inline object. This needs to be treated
-          // differently since all custom properties are stored on a `value`
-          // object.
-
+        if (Element.isElement(child, schema)) {
           const _key = operation.newProperties._key
 
           if (_key !== undefined) {
@@ -198,35 +187,32 @@ export function setNodePatch(
             )
           }
 
-          const properties =
-            'value' in operation.newProperties &&
-            typeof operation.newProperties.value === 'object'
-              ? (operation.newProperties.value as Record<string, unknown>)
-              : ({} satisfies Record<string, unknown>)
-
-          const keys = Object.keys(properties)
-
-          for (const key of keys) {
-            const value = properties[key]
+          for (const [key, propertyValue] of Object.entries(
+            operation.newProperties,
+          )) {
+            if (key === '_key' || key === 'children') {
+              continue
+            }
 
             patches.push(
-              set(value, [{_key: blockKey}, 'children', {_key: childKey}, key]),
+              set(propertyValue, [
+                {_key: blockKey},
+                'children',
+                {_key: childKey},
+                key,
+              ]),
             )
           }
 
           return patches
         }
 
-        const newPropNames = Object.keys(operation.newProperties)
-
-        for (const keyName of newPropNames) {
-          const value = (operation.newProperties as Record<string, unknown>)[
-            keyName
-          ]
-
+        for (const [keyName, propertyValue] of Object.entries(
+          operation.newProperties,
+        )) {
           if (keyName === '_key') {
             patches.push(
-              set(value, [
+              set(propertyValue, [
                 {_key: blockKey},
                 'children',
                 block.children.indexOf(child),
@@ -238,7 +224,7 @@ export function setNodePatch(
           }
 
           patches.push(
-            set(value, [
+            set(propertyValue, [
               {_key: blockKey},
               'children',
               {_key: childKey},
@@ -284,20 +270,16 @@ export function insertNodePatch(
     const targetKey = operation.path[0] === 0 ? block?._key : beforeBlock?._key
     if (targetKey) {
       return [
-        insert(
-          [fromSlateBlock(operation.node as Descendant, schema.block.name)],
-          position,
-          [{_key: targetKey}],
-        ),
+        insert([operation.node as PortableTextBlock], position, [
+          {_key: targetKey},
+        ]),
       ]
     }
     return [
       setIfMissing(beforeValue, []),
-      insert(
-        [fromSlateBlock(operation.node as Descendant, schema.block.name)],
-        'before',
-        [operation.path[0]!],
-      ),
+      insert([operation.node as PortableTextBlock], 'before', [
+        operation.path[0]!,
+      ]),
     ]
   } else if (
     isTextBlock({schema}, block) &&
@@ -320,31 +302,11 @@ export function insertNodePatch(
     // Defensive setIfMissing to ensure children array exists before inserting
     const setIfMissingPatch = setIfMissing([], [{_key: block._key}, 'children'])
 
-    if (Text.isText(operation.node)) {
+    if (Text.isText(operation.node, schema)) {
       return [setIfMissingPatch, insert([operation.node], position, path)]
     }
 
-    const _type = operation.node._type
-    const _key = operation.node._key
-    const value =
-      'value' in operation.node && typeof operation.node.value === 'object'
-        ? operation.node.value
-        : ({} satisfies Record<string, unknown>)
-
-    return [
-      setIfMissingPatch,
-      insert(
-        [
-          {
-            _type,
-            _key,
-            ...value,
-          },
-        ],
-        position,
-        path,
-      ),
-    ]
+    return [setIfMissingPatch, insert([operation.node], position, path)]
   }
 
   return []
@@ -372,7 +334,7 @@ export function splitNodePatch(
       if (!nextBlock) {
         return patches
       }
-      const targetValue = fromSlateBlock(nextBlock, schema.block.name)
+      const targetValue = nextBlock as PortableTextBlock
       if (targetValue) {
         patches.push(insert([targetValue], 'after', [{_key: splitBlock._key}]))
         const spansToUnset = oldBlock.children.slice(operation.position)
@@ -388,16 +350,13 @@ export function splitNodePatch(
     const splitSpan = splitBlock.children[operation.path[1]!]
     if (isSpan({schema}, splitSpan)) {
       const targetSpans = (
-        fromSlateBlock(
-          {
-            ...splitBlock,
-            children: splitBlock.children.slice(
-              operation.path[1]! + 1,
-              operation.path[1]! + 2,
-            ),
-          } as Descendant,
-          schema.block.name,
-        ) as PortableTextTextBlock
+        {
+          ...splitBlock,
+          children: splitBlock.children.slice(
+            operation.path[1]! + 1,
+            operation.path[1]! + 2,
+          ),
+        } as PortableTextTextBlock
       ).children
 
       // Defensive setIfMissing to ensure children array exists before inserting
@@ -478,7 +437,7 @@ export function mergeNodePatch(
       if (!prevBlock) {
         throw new Error('Previous block not found!')
       }
-      const newBlock = fromSlateBlock(prevBlock, schema.block.name)
+      const newBlock = prevBlock as PortableTextBlock
       patches.push(set(newBlock, [{_key: newBlock._key}]))
       patches.push(unset([{_key: block._key}]))
     } else {

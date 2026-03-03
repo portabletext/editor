@@ -26,7 +26,7 @@ export const insertNodes: NodeTransforms['insertNodes'] = (
     } = options
     let {at, match, select} = options
 
-    if (Node.isNode(nodes)) {
+    if (Node.isNode(nodes, editor.schema)) {
       nodes = [nodes]
     }
 
@@ -64,12 +64,14 @@ export const insertNodes: NodeTransforms['insertNodes'] = (
 
     if (Point.isPoint(at)) {
       if (match == null) {
-        if (Text.isText(node)) {
-          match = (n) => Text.isText(n)
+        if (Text.isText(node, editor.schema)) {
+          match = (n) => Text.isText(n, editor.schema)
         } else if (editor.isInline(node)) {
-          match = (n) => Text.isText(n) || Editor.isInline(editor, n)
+          match = (n) =>
+            Text.isText(n, editor.schema) || Editor.isInline(editor, n)
         } else {
-          match = (n) => Element.isElement(n) && Editor.isBlock(editor, n)
+          match = (n) =>
+            Element.isElement(n, editor.schema) && Editor.isBlock(editor, n)
         }
       }
 
@@ -120,11 +122,13 @@ export const insertNodes: NodeTransforms['insertNodes'] = (
             at = Path.next(at as Path)
 
             batchedOps.push(op)
-            if (Text.isText(node)) {
+            if (Text.isText(node, editor.schema)) {
               newDirtyPaths.push(path)
             } else {
               newDirtyPaths.push(
-                ...Array.from(Node.nodes(node), ([, p]) => path.concat(p)),
+                ...Array.from(Node.nodes(node, editor.schema), ([, p]) =>
+                  path.concat(p),
+                ),
               )
             }
           }

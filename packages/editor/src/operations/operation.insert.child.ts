@@ -4,7 +4,6 @@ import {
   applyInsertNodeAtPoint,
 } from '../internal-utils/apply-insert-node'
 import {getFocusBlock, getFocusSpan} from '../internal-utils/slate-utils'
-import {VOID_CHILD_KEY} from '../internal-utils/values'
 import type {Node} from '../slate'
 import {parseInlineObject, parseSpan} from '../utils/parse-blocks'
 import type {OperationImplementation} from './operation.types'
@@ -76,16 +75,7 @@ export const insertChildOperationImplementation: OperationImplementation<
     const inlineNode = {
       _key,
       _type,
-      children: [
-        {
-          _key: VOID_CHILD_KEY,
-          _type: 'span',
-          text: '',
-          marks: [],
-        },
-      ],
-      value: rest,
-      __inline: true,
+      ...rest,
     } as unknown as Node
 
     const [focusSpan] = getFocusSpan({editor: operation.editor})

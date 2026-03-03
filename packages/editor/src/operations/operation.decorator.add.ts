@@ -1,3 +1,4 @@
+import type {PortableTextBlock} from '@portabletext/schema'
 import {applySelect} from '../internal-utils/apply-selection'
 import {applySetNode} from '../internal-utils/apply-set-node'
 import {toSlateRange} from '../internal-utils/to-slate-range'
@@ -14,7 +15,7 @@ export const decoratorAddOperationImplementation: OperationImplementation<
     ? toSlateRange({
         context: {
           schema: context.schema,
-          value: operation.editor.value,
+          value: operation.editor.children as Array<PortableTextBlock>,
           selection: operation.at,
         },
         blockIndexMap: operation.editor.blockIndexMap,
@@ -38,7 +39,7 @@ export const decoratorAddOperationImplementation: OperationImplementation<
         type: 'split_node',
         path: end.path,
         position: end.offset,
-        properties: Node.extractProps(endNode),
+        properties: Node.extractProps(endNode, editor.schema),
       })
     }
 
@@ -50,7 +51,7 @@ export const decoratorAddOperationImplementation: OperationImplementation<
         type: 'split_node',
         path: start.path,
         position: start.offset,
-        properties: Node.extractProps(startNode),
+        properties: Node.extractProps(startNode, editor.schema),
       })
     }
 
@@ -67,7 +68,7 @@ export const decoratorAddOperationImplementation: OperationImplementation<
     // Use new selection to find nodes to decorate
     const splitTextNodes = Editor.nodes(editor, {
       at,
-      match: Text.isText,
+      match: (n) => Text.isText(n, editor.schema),
     })
 
     for (const [node, path] of splitTextNodes) {

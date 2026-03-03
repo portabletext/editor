@@ -79,7 +79,7 @@ export function* positions(
     /*
      * ELEMENT NODE - Yield position(s) for voids, collect blockText for blocks
      */
-    if (Element.isElement(node)) {
+    if (Element.isElement(node, editor.schema)) {
       if (!editor.isSelectable(node)) {
         /**
          * If the node is not selectable, skip it and its descendants
@@ -102,7 +102,7 @@ export function* positions(
       // Void nodes are a special case, so by default we will always
       // yield their first point. If the `voids` option is set to true,
       // then we will iterate over their content.
-      if (!voids && (editor.isVoid(node) || editor.isElementReadOnly(node))) {
+      if (!voids && editor.isElementReadOnly(node)) {
         yield* maybeYield(Editor.start(editor, path))
         continue
       }
@@ -139,11 +139,25 @@ export function* positions(
       }
     }
 
+    if (editor.isObjectNode(node)) {
+      yield* maybeYield({path, offset: 0})
+      continue
+    }
+
+    if (
+      !Editor.isEditor(node) &&
+      !Element.isElement(node, editor.schema) &&
+      !Text.isText(node, editor.schema)
+    ) {
+      yield* maybeYield({path, offset: 0})
+      continue
+    }
+
     /*
      * TEXT LEAF NODE - Iterate through text content, yielding
      * positions every `distance` offset according to `unit`.
      */
-    if (Text.isText(node)) {
+    if (Text.isText(node, editor.schema)) {
       const isFirst = Path.equals(path, first.path)
 
       // Proof that we always exhaust text nodes before encountering a new one:

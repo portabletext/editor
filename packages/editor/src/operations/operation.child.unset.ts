@@ -1,7 +1,7 @@
-import {applyAll} from '@portabletext/patches'
+import type {PortableTextBlock} from '@portabletext/schema'
 import {isTextBlock} from '@portabletext/schema'
 import {applySetNode} from '../internal-utils/apply-set-node'
-import {Editor, Element} from '../slate'
+import {Editor} from '../slate'
 import type {OperationImplementation} from './operation.types'
 
 export const childUnsetOperationImplementation: OperationImplementation<
@@ -15,7 +15,9 @@ export const childUnsetOperationImplementation: OperationImplementation<
   }
 
   const block =
-    blockIndex !== undefined ? operation.editor.value.at(blockIndex) : undefined
+    blockIndex !== undefined
+      ? (operation.editor.children as Array<PortableTextBlock>).at(blockIndex)
+      : undefined
 
   if (!block) {
     throw new Error(`Unable to find block at ${JSON.stringify(operation.at)}`)
@@ -87,26 +89,19 @@ export const childUnsetOperationImplementation: OperationImplementation<
     return
   }
 
-  if (Element.isElement(child)) {
-    const value =
-      'value' in child && typeof child.value === 'object' ? child.value : {}
-    const patches = operation.props.map((prop) => ({
-      type: 'unset' as const,
-      path: [prop],
-    }))
-    const newValue = applyAll(value, patches)
-
-    applySetNode(
-      operation.editor,
-      {
-        ...child,
-        _key: operation.props.includes('_key')
-          ? context.keyGenerator()
-          : child._key,
-        value: newValue,
-      },
-      childPath,
-    )
+  if (operation.editor.isObjectNode(child)) {
+    const unsetProps: Record<string, unknown> = {}
+    for (const prop of operation.props) {
+      if (prop === '_type') {
+        continue
+      }
+      if (prop === '_key') {
+        unsetProps['_key'] = context.keyGenerator()
+      } else {
+        unsetProps[prop] = null
+      }
+    }
+    applySetNode(operation.editor, unsetProps, childPath)
 
     return
   }

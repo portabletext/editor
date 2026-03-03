@@ -82,7 +82,7 @@ function isEqualTextBlocks(
     }
   }
 
-  if (!isEqualChildren(a.children, b.children)) {
+  if (!isEqualChildren(a.children, b.children, context.schema.span.name)) {
     return false
   }
 
@@ -213,6 +213,7 @@ type ChildLike = {
 export function isEqualChildren(
   a: Array<ChildLike>,
   b: Array<ChildLike>,
+  spanTypeName: string,
 ): boolean {
   if (a.length !== b.length) {
     return false
@@ -226,7 +227,7 @@ export function isEqualChildren(
       return false
     }
 
-    if (!isEqualChild(childA, childB)) {
+    if (!isEqualChild(childA, childB, spanTypeName)) {
       return false
     }
   }
@@ -234,8 +235,12 @@ export function isEqualChildren(
   return true
 }
 
-export function isEqualChild(a: ChildLike, b: ChildLike): boolean {
-  if (a._type === 'span' && b._type === 'span') {
+export function isEqualChild(
+  a: ChildLike,
+  b: ChildLike,
+  spanTypeName: string,
+): boolean {
+  if (a._type === spanTypeName && b._type === spanTypeName) {
     return isEqualSpans(a, b)
   }
 

@@ -37,7 +37,7 @@ export const GeneralTransforms: GeneralTransforms = {
       case 'insert_node': {
         const {path, node} = op
 
-        modifyChildren(editor, Path.parent(path), (children) => {
+        modifyChildren(editor, Path.parent(path), editor.schema, (children) => {
           const index = path[path.length - 1]!
 
           if (index > children.length) {
@@ -59,7 +59,7 @@ export const GeneralTransforms: GeneralTransforms = {
           break
         }
 
-        modifyLeaf(editor, path, (node) => {
+        modifyLeaf(editor, path, editor.schema, (node) => {
           const before = node.text.slice(0, offset)
           const after = node.text.slice(offset)
 
@@ -79,14 +79,20 @@ export const GeneralTransforms: GeneralTransforms = {
         const prevPath = Path.previous(path)
         const prevIndex = prevPath[prevPath.length - 1]!
 
-        modifyChildren(editor, Path.parent(path), (children) => {
+        modifyChildren(editor, Path.parent(path), editor.schema, (children) => {
           const node = children[index]!
           const prev = children[prevIndex]!
           let newNode: Descendant
 
-          if (Text.isText(node) && Text.isText(prev)) {
+          if (
+            Text.isText(node, editor.schema) &&
+            Text.isText(prev, editor.schema)
+          ) {
             newNode = {...prev, text: prev.text + node.text} as Descendant
-          } else if (!Text.isText(node) && !Text.isText(prev)) {
+          } else if (
+            !Text.isText(node, editor.schema) &&
+            !Text.isText(prev, editor.schema)
+          ) {
             newNode = {
               ...prev,
               children: prev.children.concat(node.children),
@@ -116,9 +122,9 @@ export const GeneralTransforms: GeneralTransforms = {
           )
         }
 
-        const node = Node.get(editor, path)
+        const node = Node.get(editor, path, editor.schema)
 
-        modifyChildren(editor, Path.parent(path), (children) =>
+        modifyChildren(editor, Path.parent(path), editor.schema, (children) =>
           removeChildren(children, index, 1),
         )
 
@@ -131,8 +137,11 @@ export const GeneralTransforms: GeneralTransforms = {
         const truePath = Path.transform(path, op)!
         const newIndex = truePath[truePath.length - 1]!
 
-        modifyChildren(editor, Path.parent(truePath), (children) =>
-          insertChildren(children, newIndex, node),
+        modifyChildren(
+          editor,
+          Path.parent(truePath),
+          editor.schema,
+          (children) => insertChildren(children, newIndex, node),
         )
 
         transformSelection = true
@@ -143,7 +152,7 @@ export const GeneralTransforms: GeneralTransforms = {
         const {path} = op
         const index = path[path.length - 1]!
 
-        modifyChildren(editor, Path.parent(path), (children) =>
+        modifyChildren(editor, Path.parent(path), editor.schema, (children) =>
           removeChildren(children, index, 1),
         )
 
@@ -161,7 +170,7 @@ export const GeneralTransforms: GeneralTransforms = {
               let prev: NodeEntry<Text> | undefined
               let next: NodeEntry<Text> | undefined
 
-              for (const [n, p] of Node.texts(editor)) {
+              for (const [n, p] of Node.texts(editor, editor.schema)) {
                 if (Path.compare(p, path) === -1) {
                   prev = [n, p]
                 } else {
@@ -207,7 +216,7 @@ export const GeneralTransforms: GeneralTransforms = {
           break
         }
 
-        modifyLeaf(editor, path, (node) => {
+        modifyLeaf(editor, path, editor.schema, (node) => {
           const before = node.text.slice(0, offset)
           const after = node.text.slice(offset + text.length)
 
@@ -228,11 +237,22 @@ export const GeneralTransforms: GeneralTransforms = {
           throw new Error(`Cannot set properties on the root node!`)
         }
 
-        modifyDescendant(editor, path, (node) => {
+        modifyDescendant(editor, path, editor.schema, (node) => {
           const newNode = {...node}
+          const isElement = 'children' in node && Array.isArray(node.children)
 
           for (const key in newProperties) {
-            if (key === 'children' || key === 'text') {
+            if (key === 'children') {
+              throw new Error(`Cannot set the "${key}" property of nodes!`)
+            }
+
+            // Only skip `text` on spans (which have marks), not on ObjectNodes
+            // where `text` is a user property.
+            if (
+              key === 'text' &&
+              !isElement &&
+              Array.isArray((node as Record<string, unknown>)['marks'])
+            ) {
               throw new Error(`Cannot set the "${key}" property of nodes!`)
             }
 
@@ -310,12 +330,12 @@ export const GeneralTransforms: GeneralTransforms = {
           )
         }
 
-        modifyChildren(editor, Path.parent(path), (children) => {
+        modifyChildren(editor, Path.parent(path), editor.schema, (children) => {
           const node = children[index]!
           let newNode: Descendant
           let nextNode: Descendant
 
-          if (Text.isText(node)) {
+          if (Text.isText(node, editor.schema)) {
             const before = node.text.slice(0, position)
             const after = node.text.slice(position)
             newNode = {

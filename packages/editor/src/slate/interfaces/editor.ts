@@ -6,6 +6,7 @@ import type {
   Location,
   Node,
   NodeEntry,
+  ObjectNode,
   Operation,
   Path,
   PathRef,
@@ -57,7 +58,6 @@ export interface BaseEditor {
   getFragment: () => Descendant[]
   isElementReadOnly: (element: Element) => boolean
   isSelectable: (element: Element) => boolean
-  markableVoid: (element: Element) => boolean
   normalizeNode: (
     entry: NodeEntry,
     options?: {
@@ -132,7 +132,6 @@ export interface BaseEditor {
   isInline: OmitFirstArg<typeof Editor.isInline>
   isNormalizing: OmitFirstArg<typeof Editor.isNormalizing>
   isStart: OmitFirstArg<typeof Editor.isStart>
-  isVoid: OmitFirstArg<typeof Editor.isVoid>
   leaf: OmitFirstArg<typeof Editor.leaf>
   levels: <T extends Node>(
     options?: EditorLevelsOptions<T>,
@@ -198,10 +197,6 @@ export interface EditorElementReadOnlyOptions {
   at?: Location
   mode?: MaximizeMode
   voids?: boolean
-}
-
-export interface EditorIsEditorOptions {
-  deep?: boolean
 }
 
 export interface EditorLeafOptions {
@@ -384,7 +379,7 @@ export interface EditorInterface {
   /**
    * Check if a value is an `Editor` object.
    */
-  isEditor: (value: any, options?: EditorIsEditorOptions) => value is Editor
+  isEditor: (value: any) => value is Editor
 
   /**
    * Check if a value is a read-only `Element` object.
@@ -417,18 +412,13 @@ export interface EditorInterface {
   isStart: (editor: Editor, point: Point, at: Location) => boolean
 
   /**
-   * Check if a value is a void `Element` object.
-   */
-  isVoid: (editor: Editor, value: Element) => boolean
-
-  /**
    * Get the leaf text node at a location.
    */
   leaf: (
     editor: Editor,
     at: Location,
     options?: EditorLeafOptions,
-  ) => NodeEntry<Text>
+  ) => NodeEntry<Text | ObjectNode>
 
   /**
    * Iterate through all of the levels at a location.
@@ -696,10 +686,6 @@ export const Editor: EditorInterface = {
 
   isStart(editor, point, at) {
     return editor.isStart(point, at)
-  },
-
-  isVoid(editor, value) {
-    return editor.isVoid(value)
   },
 
   leaf(editor, at, options) {

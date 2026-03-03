@@ -45,13 +45,24 @@ export function applyInsertNodeAtPoint(
   Editor.withoutNormalizing(editor, () => {
     let match: (n: Node) => boolean
 
-    if (Text.isText(node)) {
-      match = (n) => Text.isText(n)
-    } else if (Element.isElement(node) && editor.isInline(node)) {
+    if (Text.isText(node, editor.schema)) {
+      match = (n) => Text.isText(n, editor.schema)
+    } else if (
+      Element.isElement(node, editor.schema) &&
+      editor.isInline(node)
+    ) {
       match = (n) =>
-        Text.isText(n) || (Element.isElement(n) && Editor.isInline(editor, n))
+        Text.isText(n, editor.schema) ||
+        (Element.isElement(n, editor.schema) && Editor.isInline(editor, n))
+    } else if (editor.isObjectNode(node)) {
+      match = (n) =>
+        Text.isText(n, editor.schema) ||
+        editor.isObjectNode(n) ||
+        (Element.isElement(n, editor.schema) && Editor.isInline(editor, n))
     } else {
-      match = (n) => Element.isElement(n) && Editor.isBlock(editor, n)
+      match = (n) =>
+        (Element.isElement(n, editor.schema) && Editor.isBlock(editor, n)) ||
+        editor.isObjectNode(n)
     }
 
     const [entry] = Editor.nodes(editor, {
@@ -71,8 +82,8 @@ export function applyInsertNodeAtPoint(
 
     // Split the node at the point if we're not at an edge
     if (!Editor.isEdge(editor, at, matchPath)) {
-      const textNode = Node.get(editor, at.path)
-      const properties = Node.extractProps(textNode)
+      const textNode = Node.get(editor, at.path, editor.schema)
+      const properties = Node.extractProps(textNode, editor.schema)
 
       editor.apply({
         type: 'split_node',

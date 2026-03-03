@@ -1,4 +1,6 @@
+import {Editor} from '../interfaces/editor'
 import type {EditorInterface} from '../interfaces/editor'
+import {Element} from '../interfaces/element'
 import {Node} from '../interfaces/node'
 import {Path} from '../interfaces/path'
 import {Range} from '../interfaces/range'
@@ -11,16 +13,24 @@ export const point: EditorInterface['point'] = (editor, at, options = {}) => {
     let path: Path
 
     if (edge === 'end') {
-      const [, lastPath] = Node.last(editor, at)
+      const [, lastPath] = Node.last(editor, at, editor.schema)
       path = lastPath
     } else {
-      const [, firstPath] = Node.first(editor, at)
+      const [, firstPath] = Node.first(editor, at, editor.schema)
       path = firstPath
     }
 
-    const node = Node.get(editor, path)
+    const node = Node.get(editor, path, editor.schema)
 
-    if (!Text.isText(node)) {
+    if (
+      !Text.isText(node, editor.schema) &&
+      !Element.isElement(node, editor.schema) &&
+      !Editor.isEditor(node)
+    ) {
+      return {path, offset: 0}
+    }
+
+    if (!Text.isText(node, editor.schema)) {
       throw new Error(
         `Cannot get the ${edge} point in the node at path [${at}] because it has no ${edge} text node.`,
       )

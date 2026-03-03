@@ -133,7 +133,11 @@ export const withDOM = <T extends Editor>(
           changedPath = op.path
         }
 
-        const changedNode = Node.get(editor, Path.parent(changedPath))
+        const changedNode = Node.get(
+          editor,
+          Path.parent(changedPath),
+          editor.schema,
+        )
         const changedNodeKey = DOMEditor.findKey(e, changedNode)
         const changedPathRef = Editor.pathRef(e, Path.parent(changedPath))
         pathRefMatches.push([changedPathRef, changedNodeKey])
