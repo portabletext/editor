@@ -23,6 +23,7 @@ export type {
   StyleSchemaType,
 } from '@portabletext/schema'
 export type {EditorSchema} from './editor/editor-schema'
+export type {PortableTextEditorSchemaTypes} from './types/schema-compat'
 export {
   defineSchema,
   type AnnotationDefinition,

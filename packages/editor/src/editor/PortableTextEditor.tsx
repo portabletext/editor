@@ -2,7 +2,6 @@ import type {
   PortableTextBlock,
   PortableTextChild,
   PortableTextObject,
-  Schema,
 } from '@portabletext/schema'
 import type {
   AddedAnnotationPaths,
@@ -11,6 +10,7 @@ import type {
   EditorSelection,
 } from '../types/editor'
 import type {Path} from '../types/paths'
+import type {PortableTextEditorSchemaTypes} from '../types/schema-compat'
 import type {InternalEditor} from './create-editor'
 
 /**
@@ -34,7 +34,7 @@ export class PortableTextEditor {
   /**
    * A lookup table for all the relevant schema types for this portable text type.
    */
-  public schemaTypes: Schema
+  public schemaTypes: PortableTextEditorSchemaTypes
   /**
    * The editor instance
    */
