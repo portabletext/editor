@@ -1,5 +1,11 @@
 # Changelog
 
+## 6.0.5
+
+### Patch Changes
+
+- [#2297](https://github.com/portabletext/editor/pull/2297) [`c90dd12`](https://github.com/portabletext/editor/commit/c90dd12039ddb2502f740a5e84ece54b32ea2008) Thanks [@christianhg](https://github.com/christianhg)! - fix: apply nested `unset` patches correctly on text blocks
+
 ## 6.0.4
 
 ### Patch Changes
