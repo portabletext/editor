@@ -58,8 +58,8 @@ export function htmlToPortableText(
  * @portabletext/markdown API. SchemaMatchers uses ({context, props})
  * matching the internal block-tools engine.
  *
- * Keys are assigned during normalizeBlock, so any _key returned by the
- * ObjectMatcher is stripped to avoid advancing the key generator twice.
+ * If the ObjectMatcher returns a _key, it is preserved. normalizeBlock
+ * only assigns a key when one is missing.
  */
 function toSchemaMatchers(
   types: HtmlToPortableTextOptions['types'],
@@ -81,8 +81,7 @@ function toSchemaMatchers(
       if (!result) {
         return undefined
       }
-      const {_key: _, ...rest} = result
-      return rest as ReturnType<NonNullable<SchemaMatchers['image']>>
+      return result as ReturnType<NonNullable<SchemaMatchers['image']>>
     }
 
   return {

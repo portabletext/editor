@@ -71,6 +71,13 @@ describe(createFlattenTableRule.name, () => {
   })
 
   test('ordinary table', () => {
+    /**
+     * | Year | Sales    | Expenses | Profit  |
+     * | ---- | -------- | -------- | ------- |
+     * | 2022 | \$8,000  | \$5,000  | \$3,000 |
+     * | 2023 | \$10,000 | \$6,500  | \$3,500 |
+     * | 2024 | \$15,000 | \$9,000  | \$6,000 |
+     */
     const html = [
       '<table>',
       '<thead>',
@@ -128,6 +135,12 @@ describe(createFlattenTableRule.name, () => {
   })
 
   test('ordinary table without thead and tbody', () => {
+    /**
+     * | Year | Sales    | Expenses | Profit  |
+     * | 2022 | \$8,000  | \$5,000  | \$3,000 |
+     * | 2023 | \$10,000 | \$6,500  | \$3,500 |
+     * | 2024 | \$15,000 | \$9,000  | \$6,000 |
+     */
     const html = [
       '<table>',
       '<tr>',
@@ -185,6 +198,12 @@ describe(createFlattenTableRule.name, () => {
   })
 
   test('ordinary table without thead', () => {
+    /**
+     * | Year | Sales    | Expenses | Profit  |
+     * | 2022 | \$8,000  | \$5,000  | \$3,000 |
+     * | 2023 | \$10,000 | \$6,500  | \$3,500 |
+     * | 2024 | \$15,000 | \$9,000  | \$6,000 |
+     */
     const html = [
       '<table>',
       '<tbody>',
@@ -244,6 +263,12 @@ describe(createFlattenTableRule.name, () => {
   })
 
   test('ordinary table without tbody', () => {
+    /**
+     * | Year | Sales    | Expenses | Profit  |
+     * | 2022 | \$8,000  | \$5,000  | \$3,000 |
+     * | 2023 | \$10,000 | \$6,500  | \$3,500 |
+     * | 2024 | \$15,000 | \$9,000  | \$6,000 |
+     */
     const html = [
       '<table>',
       '<thead>',
@@ -299,6 +324,13 @@ describe(createFlattenTableRule.name, () => {
   })
 
   test('multiple header rows', () => {
+    /**
+     * | Name       | Age   |
+     * | Navn       | Alder |
+     * | ---        | ---   |
+     * | John Doe   | 18    |
+     * | Jane Smith | 20    |
+     */
     const html = [
       '<table>',
       '<thead>',
@@ -344,6 +376,10 @@ describe(createFlattenTableRule.name, () => {
   })
 
   test('only thead', () => {
+    /**
+     * | Name | John Doe |
+     * | Age  | 18       |
+     */
     const html = [
       '<table>',
       '<thead>',
@@ -370,6 +406,12 @@ describe(createFlattenTableRule.name, () => {
   })
 
   describe('table with images', () => {
+    /**
+     * | Name       | Photo                                                          |
+     * | ---        | ---                                                            |
+     * | John Doe   | <img src="https://via.placeholder.com/150" alt="John Doe" />   |
+     * | Jane Smith | <img src="https://via.placeholder.com/150" alt="Jane Smith" /> |
+     */
     const html = [
       '<table>',
       '<thead>',

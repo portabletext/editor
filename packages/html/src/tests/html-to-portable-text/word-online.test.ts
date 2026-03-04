@@ -402,22 +402,22 @@ describe('Word Online', () => {
       expect(transform([html])).toEqual([
         {
           _type: 'block',
-          _key: 'k0',
+          _key: 'k1',
           children: [
             {
               _type: 'span',
-              _key: 'k1',
+              _key: 'k2',
               text: 'foo',
               marks: [],
             },
             {
               _type: 'image',
-              _key: 'k2',
+              _key: 'k3',
               src: 'https://example.com/image.jpg',
             },
             {
               _type: 'span',
-              _key: 'k3',
+              _key: 'k4',
               text: 'bar',
               marks: [],
             },
@@ -444,11 +444,11 @@ describe('Word Online', () => {
       ).toEqual([
         {
           _type: 'block',
-          _key: 'k0',
+          _key: 'k1',
           children: [
             {
               _type: 'span',
-              _key: 'k1',
+              _key: 'k2',
               text: 'foo',
               marks: [],
             },
@@ -458,7 +458,7 @@ describe('Word Online', () => {
         },
         {
           _type: 'image',
-          _key: 'k2',
+          _key: 'k0',
           src: 'https://example.com/image.jpg',
         },
         {
@@ -485,14 +485,14 @@ describe('Word Online', () => {
     expect(transform([html])).toEqual([
       {
         _type: 'block',
-        _key: 'k0',
-        children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+        _key: 'k1',
+        children: [{_type: 'span', _key: 'k2', text: 'foo', marks: []}],
         markDefs: [],
         style: 'normal',
       },
       {
         _type: 'image',
-        _key: 'k2',
+        _key: 'k0',
         src: 'https://example.com/image.jpg',
       },
       {
@@ -512,8 +512,8 @@ describe('Word Online', () => {
       expect(transform([html])).toEqual([
         {
           _type: 'block',
-          _key: 'k0',
-          children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+          _key: 'k1',
+          children: [{_type: 'span', _key: 'k2', text: 'foo', marks: []}],
           style: 'normal',
           level: 1,
           listItem: 'bullet',
@@ -521,11 +521,11 @@ describe('Word Online', () => {
         },
         {
           _type: 'block',
-          _key: 'k2',
+          _key: 'k3',
           children: [
             {
               _type: 'image',
-              _key: 'k3',
+              _key: 'k4',
               src: 'https://example.com/image.jpg',
             },
           ],
@@ -536,8 +536,8 @@ describe('Word Online', () => {
         },
         {
           _type: 'block',
-          _key: 'k4',
-          children: [{_type: 'span', _key: 'k5', text: 'bar', marks: []}],
+          _key: 'k5',
+          children: [{_type: 'span', _key: 'k6', text: 'bar', marks: []}],
           style: 'normal',
           level: 3,
           listItem: 'bullet',
@@ -562,8 +562,8 @@ describe('Word Online', () => {
       ).toEqual([
         {
           _type: 'block',
-          _key: 'k0',
-          children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+          _key: 'k1',
+          children: [{_type: 'span', _key: 'k2', text: 'foo', marks: []}],
           style: 'normal',
           level: 1,
           listItem: 'bullet',
@@ -571,7 +571,7 @@ describe('Word Online', () => {
         },
         {
           _type: 'image',
-          _key: 'k2',
+          _key: 'k0',
           src: 'https://example.com/image.jpg',
         },
         {
@@ -594,8 +594,8 @@ describe('Word Online', () => {
       expect(transform([html])).toEqual([
         {
           _type: 'block',
-          _key: 'k0',
-          children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+          _key: 'k1',
+          children: [{_type: 'span', _key: 'k2', text: 'foo', marks: []}],
           style: 'normal',
           level: 1,
           listItem: 'bullet',
@@ -603,15 +603,15 @@ describe('Word Online', () => {
         },
         {
           _type: 'block',
-          _key: 'k2',
+          _key: 'k3',
           children: [
-            {_type: 'span', _key: 'k3', text: 'bar', marks: []},
+            {_type: 'span', _key: 'k4', text: 'bar', marks: []},
             {
               _type: 'image',
-              _key: 'k4',
+              _key: 'k5',
               src: 'https://example.com/image.jpg',
             },
-            {_type: 'span', _key: 'k5', text: 'baz', marks: []},
+            {_type: 'span', _key: 'k6', text: 'baz', marks: []},
           ],
           style: 'normal',
           level: 2,
@@ -620,8 +620,8 @@ describe('Word Online', () => {
         },
         {
           _type: 'block',
-          _key: 'k6',
-          children: [{_type: 'span', _key: 'k7', text: 'fizz', marks: []}],
+          _key: 'k7',
+          children: [{_type: 'span', _key: 'k8', text: 'fizz', marks: []}],
           style: 'normal',
           level: 3,
           listItem: 'bullet',
@@ -646,8 +646,8 @@ describe('Word Online', () => {
       ).toEqual([
         {
           _type: 'block',
-          _key: 'k0',
-          children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+          _key: 'k1',
+          children: [{_type: 'span', _key: 'k2', text: 'foo', marks: []}],
           style: 'normal',
           level: 1,
           listItem: 'bullet',
@@ -655,8 +655,8 @@ describe('Word Online', () => {
         },
         {
           _type: 'block',
-          _key: 'k2',
-          children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+          _key: 'k3',
+          children: [{_type: 'span', _key: 'k4', text: 'bar', marks: []}],
           style: 'normal',
           level: 2,
           listItem: 'bullet',
@@ -664,7 +664,7 @@ describe('Word Online', () => {
         },
         {
           _type: 'image',
-          _key: 'k4',
+          _key: 'k0',
           src: 'https://example.com/image.jpg',
         },
         {

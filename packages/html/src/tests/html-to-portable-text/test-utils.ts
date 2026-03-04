@@ -22,14 +22,11 @@ const imageMatcher: ObjectMatcher<{src?: string; alt?: string}> = ({
     return undefined
   }
 
-  // Note: _key is assigned by the engine during normalizeBlock.
-  // We return a minimal object here — the conversion layer strips _key
-  // before passing to the internal SchemaMatchers engine.
   return {
-    _key: '',
+    _key: context.keyGenerator(),
     _type: 'image',
     ...(value.src ? {src: value.src} : {}),
-  } as ReturnType<ObjectMatcher<{src?: string; alt?: string}>>
+  }
 }
 
 export function transform(
