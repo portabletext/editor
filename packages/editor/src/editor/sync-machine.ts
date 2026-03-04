@@ -897,6 +897,31 @@ function updateBlock({
     index,
   ])
 
+  // Remove properties present on the old node but absent from the new block.
+  // Skip children/text (structural, managed by dedicated operations).
+  const oldRecord = oldSlateBlock as unknown as Record<string, unknown>
+  const newRecord = slateBlock as unknown as Record<string, unknown>
+  const removedProperties: Record<string, unknown> = {}
+
+  for (const key of Object.keys(oldRecord)) {
+    if (key === 'children' || key === 'text') {
+      continue
+    }
+
+    if (!newRecord.hasOwnProperty(key)) {
+      removedProperties[key] = oldRecord[key]
+    }
+  }
+
+  if (Object.keys(removedProperties).length > 0) {
+    slateEditor.apply({
+      type: 'set_node',
+      path: [index],
+      properties: removedProperties,
+      newProperties: {},
+    })
+  }
+
   // Text block's need to have their children updated as well (setNode does not target a node's children)
   if (
     slateEditor.isTextBlock(slateBlock) &&

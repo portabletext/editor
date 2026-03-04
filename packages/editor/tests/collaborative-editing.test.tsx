@@ -285,6 +285,11 @@ describe('Collaborative editing', () => {
       })
 
       expect(emittedPatches).toEqual([
+        {
+          type: 'set',
+          path: [{_key: blockKey}, 'markDefs'],
+          value: [],
+        },
         diffMatchPatch('bar', 'barb', [
           {_key: blockKey},
           'children',
