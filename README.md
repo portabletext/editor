@@ -42,7 +42,8 @@ Or try the editor in the [Portable Text Playground](https://playground.portablet
 
 | Package                                                              | Description                                              |
 | -------------------------------------------------------------------- | -------------------------------------------------------- |
-| [`@portabletext/block-tools`](./packages/block-tools/)               | Various tools for processing Portable Text               |
+| [`@portabletext/html`](./packages/html/)                             | Convert HTML to Portable Text                            |
+| [`@portabletext/block-tools`](./packages/block-tools/)               | Sanity-flavored HTML to Portable Text (wraps html)       |
 | [`@portabletext/markdown`](./packages/markdown/)                     | Convert Portable Text to Markdown and back again         |
 | [`@portabletext/keyboard-shortcuts`](./packages/keyboard-shortcuts/) | Platform-aware keyboard shortcuts                        |
 | [`@portabletext/sanity-bridge`](./packages/sanity-bridge/)           | Convert between Sanity schemas and Portable Text schemas |
