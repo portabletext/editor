@@ -1006,28 +1006,6 @@ export const DOMEditor: DOMEditorInterface = {
       try {
         const parentSlateNode = Node.get(editor, parentPath, editor.schema)
         if (editor.isObjectNode(parentSlateNode)) {
-          // Preserve the current selection if it's at the next sibling,
-          // since the browser may normalize to the spacer.
-          if (parentPath.length > 1 && editor.selection) {
-            const currentPath = editor.selection.anchor.path
-            const currentLast = currentPath[currentPath.length - 1]
-            const parentLast = parentPath[parentPath.length - 1]
-            if (
-              currentLast !== undefined &&
-              parentLast !== undefined &&
-              Range.isCollapsed(editor.selection) &&
-              editor.selection.anchor.offset === 0 &&
-              currentPath.length === parentPath.length &&
-              currentLast === parentLast + 1 &&
-              currentPath
-                .slice(0, -1)
-                .every((v, i) => v === parentPath.slice(0, -1)[i])
-            ) {
-              return {path: currentPath, offset: 0} as T extends true
-                ? Point | null
-                : Point
-            }
-          }
           return {path: parentPath, offset: 0} as T extends true
             ? Point | null
             : Point
