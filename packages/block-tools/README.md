@@ -6,10 +6,10 @@ This package wraps [`@portabletext/html`](../html) for use with Sanity schemas. 
 
 ## When to use which
 
-| Package                      | Use when                                                         |
-| ---------------------------- | ---------------------------------------------------------------- |
-| `@portabletext/html`         | Standalone projects, custom schemas, or any non-Sanity context   |
-| `@portabletext/block-tools`  | Sanity projects where you already have a compiled Sanity schema  |
+| Package                     | Use when                                                        |
+| --------------------------- | --------------------------------------------------------------- |
+| `@portabletext/html`        | Standalone projects, custom schemas, or any non-Sanity context  |
+| `@portabletext/block-tools` | Sanity projects where you already have a compiled Sanity schema |
 
 ## Usage
 
