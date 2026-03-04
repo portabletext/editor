@@ -2,6 +2,8 @@
 
 > Convert HTML to Portable Text
 
+> **Using Sanity?** [`@portabletext/block-tools`](../block-tools) wraps this package with Sanity schema support - use that if you already have a compiled Sanity schema.
+
 ## Installation
 
 ```bash
