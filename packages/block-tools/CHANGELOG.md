@@ -1,5 +1,11 @@
 # Changelog
 
+## 5.1.0
+
+### Minor Changes
+
+- [#2259](https://github.com/portabletext/editor/pull/2259) [`5e3ded7`](https://github.com/portabletext/editor/commit/5e3ded76ba1b1407d1a673674fdf87d542ae8b9f) Thanks [@christianhg](https://github.com/christianhg)! - feat: use `@portabletext/html` as deserialization engine
+
 ## 5.0.5
 
 ### Patch Changes
