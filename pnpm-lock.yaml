@@ -541,7 +541,7 @@ importers:
         version: link:../test
       '@portabletext/types':
         specifier: ^4.0.1
-        version: 4.0.1
+        version: 4.0.2
       '@sanity/pkg-utils':
         specifier: ^10.2.1
         version: 10.2.1(@types/babel__core@7.20.5)(@types/node@20.19.25)(babel-plugin-react-compiler@1.0.0)(debug@4.4.3)(typescript@5.9.3)
@@ -585,8 +585,8 @@ importers:
         specifier: workspace:^
         version: link:../schema
       '@portabletext/toolkit':
-        specifier: ^5.0.1
-        version: 5.0.1
+        specifier: ^5.0.2
+        version: 5.0.2
       markdown-it:
         specifier: ^14.1.1
         version: 14.1.1
@@ -596,7 +596,7 @@ importers:
         version: link:../test
       '@portabletext/types':
         specifier: ^4.0.1
-        version: 4.0.1
+        version: 4.0.2
       '@sanity/pkg-utils':
         specifier: ^10.2.1
         version: 10.2.1(@types/babel__core@7.20.5)(@types/node@20.19.25)(babel-plugin-react-compiler@1.0.0)(debug@4.4.3)(typescript@5.9.3)
@@ -2707,12 +2707,12 @@ packages:
     resolution: {integrity: sha512-cLaxxEoe3e8Py/t+hZEw2+sOIWPCpO9fyruUlRdZMQ65IkdyFaJEJlXkpNDqwV0+BO2GVJqaQVM5T6MeGdt8Xg==}
     engines: {node: '>=20.19 <22 || >=22.12'}
 
-  '@portabletext/toolkit@5.0.1':
-    resolution: {integrity: sha512-qcwnWd15J2Ziwi0YfWHRx+DRqp87cPb+EBcYuEbDW0ChZwwxCdfIjDazzFpQeXnqhJn8own1c8UB3iHB61DiWg==}
+  '@portabletext/toolkit@5.0.2':
+    resolution: {integrity: sha512-Njc1LE1PMJkTx/wEPqZ6sOWGgFgX2B47fxpOQ/Ia4ByhsZoA5Sq8dNvvV5F052j/xE8TbOLiBEjS848FkKADDQ==}
     engines: {node: '>=20.19 <22 || >=22.12'}
 
-  '@portabletext/types@4.0.1':
-    resolution: {integrity: sha512-L8PZjVjmdKpW+82c1oNqGMqCOtQD2xORqJfr6Is7X5XXbz38eLYY79IM/1ok+Esf/iGOPtEYORdcf0ETmsWYew==}
+  '@portabletext/types@4.0.2':
+    resolution: {integrity: sha512-djfIGU9n6DRrunlvj2nIDAp17URo/nA4jSXGvf+Gupx8NLLy9fmJBZ3GL8yhqn9lSVc+cKCharjOa3aOBnWbRw==}
     engines: {node: '>=20.19 <22 || >=22.12'}
 
   '@radix-ui/number@1.1.1':
@@ -9632,20 +9632,20 @@ snapshots:
 
   '@portabletext/react@6.0.2(react@19.2.3)':
     dependencies:
-      '@portabletext/toolkit': 5.0.1
-      '@portabletext/types': 4.0.1
+      '@portabletext/toolkit': 5.0.2
+      '@portabletext/types': 4.0.2
       react: 19.2.3
 
   '@portabletext/to-html@5.0.1':
     dependencies:
-      '@portabletext/toolkit': 5.0.1
-      '@portabletext/types': 4.0.1
+      '@portabletext/toolkit': 5.0.2
+      '@portabletext/types': 4.0.2
 
-  '@portabletext/toolkit@5.0.1':
+  '@portabletext/toolkit@5.0.2':
     dependencies:
-      '@portabletext/types': 4.0.1
+      '@portabletext/types': 4.0.2
 
-  '@portabletext/types@4.0.1': {}
+  '@portabletext/types@4.0.2': {}
 
   '@radix-ui/number@1.1.1': {}
 
