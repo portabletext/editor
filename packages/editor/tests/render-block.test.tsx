@@ -154,6 +154,185 @@ describe('renderBlock', () => {
     )
   })
 
+  test('Re-renders when a nested custom prop is patched', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+
+    const initialValue: PortableTextBlock[] = [
+      {
+        _type: 'block',
+        _key: blockKey,
+        children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+        markDefs: [],
+        style: 'normal',
+        metadata: {},
+      },
+    ]
+
+    const renderBlockValues: Array<PortableTextBlock> = []
+    const renderBlock = (props: BlockRenderProps) => {
+      renderBlockValues.push(props.value)
+      return props.children
+    }
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue,
+      schemaDefinition: defineSchema({
+        block: {fields: [{name: 'metadata', type: 'object'}]},
+      }),
+      editableProps: {renderBlock},
+    })
+
+    await vi.waitFor(() => {
+      expect(renderBlockValues.length).toBeGreaterThan(0)
+    })
+
+    const initialCount = renderBlockValues.length
+
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'set',
+          origin: 'remote',
+          path: [{_key: blockKey}, 'metadata', 'title'],
+          value: 'Hello',
+        },
+      ],
+      snapshot: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+          metadata: {title: 'Hello'},
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(renderBlockValues.length).toBeGreaterThan(initialCount)
+      expect(renderBlockValues.at(-1)).toEqual({
+        _type: 'block',
+        _key: blockKey,
+        children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+        markDefs: [],
+        style: 'normal',
+        metadata: {title: 'Hello'},
+      })
+    })
+
+    const countAfterFirstPatch = renderBlockValues.length
+
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'set',
+          origin: 'remote',
+          path: [{_key: blockKey}, 'metadata', 'description'],
+          value: 'World',
+        },
+      ],
+      snapshot: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+          metadata: {title: 'Hello', description: 'World'},
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(renderBlockValues.length).toBeGreaterThan(countAfterFirstPatch)
+      expect(renderBlockValues.at(-1)).toEqual({
+        _type: 'block',
+        _key: blockKey,
+        children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+        markDefs: [],
+        style: 'normal',
+        metadata: {title: 'Hello', description: 'World'},
+      })
+    })
+  })
+
+  test('Re-renders when a nested custom prop is unset', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+
+    const initialValue: PortableTextBlock[] = [
+      {
+        _type: 'block',
+        _key: blockKey,
+        children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+        markDefs: [],
+        style: 'normal',
+        metadata: {title: 'Hello', description: 'World'},
+      },
+    ]
+
+    const renderBlockValues: Array<PortableTextBlock> = []
+    const renderBlock = (props: BlockRenderProps) => {
+      renderBlockValues.push(props.value)
+      return props.children
+    }
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue,
+      schemaDefinition: defineSchema({
+        block: {fields: [{name: 'metadata', type: 'object'}]},
+      }),
+      editableProps: {renderBlock},
+    })
+
+    await vi.waitFor(() => {
+      expect(renderBlockValues.length).toBeGreaterThan(0)
+    })
+
+    const initialCount = renderBlockValues.length
+
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'unset',
+          origin: 'remote',
+          path: [{_key: blockKey}, 'metadata', 'title'],
+        },
+      ],
+      snapshot: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+          metadata: {description: 'World'},
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(renderBlockValues.length).toBeGreaterThan(initialCount)
+      expect(renderBlockValues.at(-1)).toEqual({
+        _type: 'block',
+        _key: blockKey,
+        children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+        markDefs: [],
+        style: 'normal',
+        metadata: {description: 'World'},
+      })
+    })
+  })
+
   test('Scenario: Stable across re-renders', async () => {
     const keyGenerator = createTestKeyGenerator()
     const editorRef = React.createRef<Editor>()
