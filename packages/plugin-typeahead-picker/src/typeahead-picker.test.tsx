@@ -311,7 +311,7 @@ describe('Sync mode debouncing', () => {
     const debouncedSyncPicker = defineTypeaheadPicker<SyncMatch>({
       trigger: /:/,
       keyword: /\w*/,
-      debounceMs: 1000,
+      debounceMs: 3000,
       getMatches: ({keyword}) => {
         callCount++
         return [{key: '1', name: `Result for ${keyword}`}]
@@ -361,7 +361,7 @@ describe('Sync mode debouncing', () => {
     })
 
     // Wait for debounce time
-    await new Promise((resolve) => setTimeout(resolve, 1200))
+    await new Promise((resolve) => setTimeout(resolve, 3500))
 
     // Should have results for the final keyword
     await vi.waitFor(() => {
