@@ -1,5 +1,11 @@
 # @portabletext/markdown
 
+## 1.1.4
+
+### Patch Changes
+
+- [#2307](https://github.com/portabletext/editor/pull/2307) [`5031f18`](https://github.com/portabletext/editor/commit/5031f18f3d22f8acc5f4d39e6ea0db7b96d72553) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): Update dependency @portabletext/toolkit to ^5.0.2
+
 ## 1.1.3
 
 ### Patch Changes
