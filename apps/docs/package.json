@@ -21,7 +21,7 @@
     "@portabletext/patches": "workspace:*",
     "@portabletext/plugin-markdown-shortcuts": "workspace:*",
     "@portabletext/plugin-typography": "workspace:*",
-    "@portabletext/react": "^6.0.2",
+    "@portabletext/react": "^6.0.3",
     "@portabletext/toolbar": "workspace:*",
     "@radix-ui/react-dialog": "^1.1.14",
     "@radix-ui/react-popover": "^1.1.14",
