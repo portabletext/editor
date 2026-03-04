@@ -1,5 +1,12 @@
 # Changelog
 
+## 6.0.8
+
+### Patch Changes
+
+- Updated dependencies [[`5031f18`](https://github.com/portabletext/editor/commit/5031f18f3d22f8acc5f4d39e6ea0db7b96d72553)]:
+  - @portabletext/markdown@1.1.4
+
 ## 6.0.7
 
 ### Patch Changes
