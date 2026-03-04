@@ -1,5 +1,11 @@
 # Changelog
 
+## 6.0.7
+
+### Patch Changes
+
+- [#2300](https://github.com/portabletext/editor/pull/2300) [`ef4fe18`](https://github.com/portabletext/editor/commit/ef4fe182bec3696d3b4588c7c44e4ed9c3f680fd) Thanks [@christianhg](https://github.com/christianhg)! - fix: use `@portabletext/html` for HTML deserialization
+
 ## 6.0.6
 
 ### Patch Changes
