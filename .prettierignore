@@ -1,4 +1,5 @@
 .next
+coverage
 dist
 lib
 CHANGELOG.md
