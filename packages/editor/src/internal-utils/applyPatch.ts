@@ -601,7 +601,20 @@ function unsetPatch(editor: PortableTextSlateEditor, patch: UnsetPatch) {
         return false
       }
 
-      applySetNode(editor, {[propEntry]: null}, [block.index])
+      if (propPath.length === 1) {
+        applySetNode(editor, {[propEntry]: null}, [block.index])
+      } else {
+        const updatedBlock = applyAll(block.node, [
+          {
+            ...patch,
+            path: propPath,
+          },
+        ]) as unknown as Record<string, unknown>
+
+        applySetNode(editor, {[propEntry]: updatedBlock[propEntry]}, [
+          block.index,
+        ])
+      }
 
       return true
     }

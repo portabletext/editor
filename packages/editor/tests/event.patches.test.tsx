@@ -3466,4 +3466,49 @@ describe('event.patches', () => {
       expect(editor.getSnapshot().context.value).toEqual([block])
     })
   })
+
+  test('Scenario: `unset` nested text block property', async () => {
+    const {editor} = await createTestEditor({
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'k0',
+          children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+          metadata: {title: 'hello', description: 'world'},
+        },
+      ],
+      schemaDefinition: defineSchema({
+        block: {
+          fields: [{name: 'metadata', type: 'object'}],
+        },
+      }),
+    })
+
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'unset',
+          origin: 'remote',
+          path: [{_key: 'k0'}, 'metadata', 'title'],
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      return expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+          metadata: {description: 'world'},
+        },
+      ])
+    })
+  })
 })
