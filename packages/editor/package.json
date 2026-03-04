@@ -90,7 +90,7 @@
     "@portabletext/markdown": "workspace:^",
     "@portabletext/patches": "workspace:^",
     "@portabletext/schema": "workspace:^",
-    "@portabletext/to-html": "^5.0.1",
+    "@portabletext/to-html": "^5.0.2",
     "@xstate/react": "^6.1.0",
     "debug": "^4.4.3",
     "scroll-into-view-if-needed": "^3.1.0",
