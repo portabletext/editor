@@ -5,6 +5,7 @@ import {defineBehavior} from './behavior.types.behavior'
 
 export const abstractListItemBehaviors = [
   defineBehavior({
+    name: 'listItemAdd',
     on: 'list item.add',
     guard: ({snapshot, event}) => {
       if (
@@ -34,6 +35,7 @@ export const abstractListItemBehaviors = [
     ],
   }),
   defineBehavior({
+    name: 'listItemRemove',
     on: 'list item.remove',
     guard: ({snapshot}) => {
       const selectedTextBlocks = getSelectedTextBlocks(snapshot)
@@ -52,6 +54,7 @@ export const abstractListItemBehaviors = [
     ],
   }),
   defineBehavior({
+    name: 'listItemToggleRemove',
     on: 'list item.toggle',
     guard: ({snapshot, event}) => isActiveListItem(event.listItem)(snapshot),
     actions: [
@@ -61,6 +64,7 @@ export const abstractListItemBehaviors = [
     ],
   }),
   defineBehavior({
+    name: 'listItemToggleAdd',
     on: 'list item.toggle',
     guard: ({snapshot, event}) => !isActiveListItem(event.listItem)(snapshot),
     actions: [

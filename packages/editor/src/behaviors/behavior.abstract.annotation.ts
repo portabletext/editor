@@ -5,6 +5,7 @@ import {defineBehavior} from './behavior.types.behavior'
 
 export const abstractAnnotationBehaviors = [
   defineBehavior({
+    name: 'annotationSet',
     on: 'annotation.set',
     guard: ({snapshot, event}) => {
       const blockKey = event.at[0]._key
@@ -55,6 +56,7 @@ export const abstractAnnotationBehaviors = [
     ],
   }),
   defineBehavior({
+    name: 'annotationToggleRemove',
     on: 'annotation.toggle',
     guard: ({snapshot, event}) => {
       const at = event.at ?? snapshot.context.selection
@@ -84,6 +86,7 @@ export const abstractAnnotationBehaviors = [
     ],
   }),
   defineBehavior({
+    name: 'annotationToggleAdd',
     on: 'annotation.toggle',
     guard: ({snapshot, event}) => {
       const at = event.at ?? snapshot.context.selection

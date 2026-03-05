@@ -627,6 +627,7 @@ const triggerListenerCallback = <
       }),
       input.editor.registerBehavior({
         behavior: defineBehavior<KeywordFoundEvent, KeywordFoundEvent['type']>({
+          name: 'typeahead:keywordFound',
           on: 'custom.typeahead keyword found',
           guard: triggerGuard,
           actions: [
@@ -640,6 +641,7 @@ const triggerListenerCallback = <
       }),
       input.editor.registerBehavior({
         behavior: defineBehavior<TriggerFoundEvent, TriggerFoundEvent['type']>({
+          name: 'typeahead:triggerFound',
           on: 'custom.typeahead trigger found',
           guard: triggerGuard,
           actions: [
@@ -675,6 +677,7 @@ const escapeListenerCallback = <TMatch extends object>(): CallbackLogicFunction<
 
     return input.context.editor.registerBehavior({
       behavior: defineBehavior({
+        name: 'typeahead:escape',
         on: 'keyboard.keydown',
         guard: ({event}) => escapeShortcut.guard(event.originEvent),
         actions: [
@@ -728,6 +731,7 @@ const arrowListenerCallback = <TMatch extends object>(): CallbackLogicFunction<
     const unregisterBehaviors = [
       input.editor.registerBehavior({
         behavior: defineBehavior({
+          name: 'typeahead:arrowDown',
           on: 'keyboard.keydown',
           guard: ({event}) => arrowDownShortcut.guard(event.originEvent),
           actions: [
@@ -741,6 +745,7 @@ const arrowListenerCallback = <TMatch extends object>(): CallbackLogicFunction<
       }),
       input.editor.registerBehavior({
         behavior: defineBehavior({
+          name: 'typeahead:arrowUp',
           on: 'keyboard.keydown',
           guard: ({event}) => arrowUpShortcut.guard(event.originEvent),
           actions: [
@@ -799,6 +804,7 @@ const dismissListenerCallback = <
 
     return input.context.editor.registerBehavior({
       behavior: defineBehavior<DismissEvent, DismissEvent['type']>({
+        name: 'typeahead:dismiss',
         on: 'custom.typeahead dismiss',
         guard: ({event}) => event.pickerId === context.definition._id,
         actions: [
@@ -858,6 +864,7 @@ const submitListenerCallback = <TMatch extends object>(): CallbackLogicFunction<
     const unregisterBehaviors = [
       input.context.editor.registerBehavior({
         behavior: defineBehavior({
+          name: 'typeahead:submitMatch',
           on: 'keyboard.keydown',
           guard: ({event}) => {
             if (
@@ -883,6 +890,7 @@ const submitListenerCallback = <TMatch extends object>(): CallbackLogicFunction<
       }),
       input.context.editor.registerBehavior({
         behavior: defineBehavior({
+          name: 'typeahead:submitTriggerOnly',
           on: 'keyboard.keydown',
           guard: ({event}) =>
             (enterShortcut.guard(event.originEvent) ||
@@ -900,6 +908,7 @@ const submitListenerCallback = <TMatch extends object>(): CallbackLogicFunction<
       }),
       input.context.editor.registerBehavior({
         behavior: defineBehavior({
+          name: 'typeahead:submitNoMatches',
           on: 'keyboard.keydown',
           guard: ({event}) =>
             (enterShortcut.guard(event.originEvent) ||
@@ -974,6 +983,7 @@ const textInsertionListenerCallback = <
 
     return input.context.editor.registerBehavior({
       behavior: defineBehavior({
+        name: 'typeahead:textInsertion',
         on: 'insert.text',
         guard: ({snapshot}) => {
           if (!context.focusSpan) {
@@ -1025,6 +1035,7 @@ const selectMatchListenerCallback = <
   return ({sendBack, input}) => {
     return input.context.editor.registerBehavior({
       behavior: defineBehavior<InsertMatchEvent<TMatch>>({
+        name: 'typeahead:selectMatch',
         on: 'custom.typeahead select match',
         guard: ({event}) => event.pickerId === input.context.definition._id,
         actions: [

@@ -4,6 +4,7 @@ import {defineBehavior} from './behavior.types.behavior'
 
 export const abstractInputBehaviors = [
   defineBehavior({
+    name: 'inputDeleteExpandedSelection',
     on: 'input.*',
     guard: ({snapshot}) => isSelectionExpanded(snapshot),
     actions: [({event}) => [raise({type: 'delete'}), forward(event)]],
@@ -13,6 +14,7 @@ export const abstractInputBehaviors = [
    * In this case, we use insert.text to preserve existing marks.
    */
   defineBehavior({
+    name: 'inputInsertTextFromDataTransfer',
     on: 'input.*',
     guard: ({event}) => {
       const text = event.originEvent.dataTransfer.getData('text/plain')
@@ -52,6 +54,7 @@ export const abstractInputBehaviors = [
     ],
   }),
   defineBehavior({
+    name: 'inputDeserialize',
     on: 'input.*',
     actions: [
       ({event}) => [

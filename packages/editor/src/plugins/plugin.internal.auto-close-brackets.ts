@@ -9,6 +9,7 @@ export function AutoCloseBracketsPlugin() {
   useEffect(() => {
     const unregisterBehavior = editor.registerBehavior({
       behavior: defineBehavior({
+        name: 'autoCloseBrackets',
         on: 'insert.text',
         guard: ({event}) => {
           const bracketPairs: Record<string, string | undefined> = {

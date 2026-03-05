@@ -23,6 +23,11 @@ export type Behavior<
     ResolveBehaviorEvent<TBehaviorEventType>,
 > = {
   /**
+   * Human-readable identifier for debugging.
+   * Shows up in behavior trace logs (`localStorage.debug = 'pte:behaviors'`).
+   */
+  name?: string
+  /**
    * Editor Event that triggers this Behavior.
    */
   on: TBehaviorEventType
@@ -46,6 +51,7 @@ export type Behavior<
  *
  * ```tsx
  * const noLowerCaseA = defineBehavior({
+ *   name: 'noLowerCaseA',
  *   on: 'insert.text',
  *   guard: ({event, snapshot}) => event.text === 'a',
  *   actions: [({event, snapshot}) => [{type: 'insert.text', text: 'A'}]],

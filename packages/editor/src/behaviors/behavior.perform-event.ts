@@ -2,7 +2,7 @@ import type {Converter} from '../converters/converter.types'
 import {createEditorDom} from '../editor/editor-dom'
 import type {EditorSchema} from '../editor/editor-schema'
 import {createEditorSnapshot} from '../editor/editor-snapshot'
-import {debug} from '../internal-utils/debug'
+import {debug, debugEnabled} from '../internal-utils/debug'
 import {performOperation} from '../operations/operation.perform'
 import {withPerformingBehaviorOperation} from '../slate-plugins/slate-plugin.performing-behavior-operation'
 import {withoutNormalizingConditional} from '../slate-plugins/slate-plugin.without-normalizing-conditional'
@@ -19,6 +19,12 @@ import {
   type BehaviorEvent,
   type ExternalBehaviorEvent,
 } from './behavior.types.event'
+
+let traceDepth = 0
+
+function traceIndent() {
+  return '  '.repeat(traceDepth)
+}
 
 function eventCategory(event: BehaviorEvent) {
   return isNativeBehaviorEvent(event)
@@ -65,10 +71,7 @@ export function performEvent({
     editor.undoStepId = defaultKeyGenerator()
   }
 
-  debug.behaviors(
-    `(${mode}:${eventCategory(event)})`,
-    JSON.stringify(event, null, 2),
-  )
+  const tracing = debugEnabled.behaviors
 
   const eventBehaviors = [
     ...remainingEventBehaviors,
@@ -110,6 +113,13 @@ export function performEvent({
     return behavior.on === event.type
   })
 
+  if (tracing) {
+    debug.behaviors(
+      `${traceIndent()}> ${event.type} (${mode}:${eventCategory(event)}) -- ${eventBehaviors.length} candidates`,
+    )
+    traceDepth++
+  }
+
   if (eventBehaviors.length === 0 && isSyntheticBehaviorEvent(event)) {
     nativeEvent?.preventDefault()
 
@@ -134,6 +144,10 @@ export function performEvent({
 
     if (mode === 'send') {
       editor.onChange()
+    }
+
+    if (tracing) {
+      traceDepth--
     }
 
     return
@@ -173,7 +187,18 @@ export function performEvent({
     }
 
     if (!shouldRun) {
+      if (tracing) {
+        debug.behaviors(
+          `${traceIndent()}[${eventBehaviorIndex + 1}/${eventBehaviors.length}] ${eventBehavior.name ?? '(anonymous)'} -- guard: false`,
+        )
+      }
       continue
+    }
+
+    if (tracing) {
+      debug.behaviors(
+        `${traceIndent()}[${eventBehaviorIndex + 1}/${eventBehaviors.length}] ${eventBehavior.name ?? '(anonymous)'} -- guard: passed -> ${eventBehavior.actions.length} action set(s)`,
+      )
     }
 
     // This Behavior now "owns" the event and we can consider the default
@@ -346,7 +371,18 @@ export function performEvent({
       }
     }
 
+    if (tracing) {
+      const remaining = eventBehaviors.length - eventBehaviorIndex - 1
+      if (remaining > 0) {
+        debug.behaviors(`${traceIndent()}(skipped ${remaining} remaining)`)
+      }
+    }
+
     break
+  }
+
+  if (tracing) {
+    traceDepth--
   }
 
   if (!defaultBehaviorOverwritten && isSyntheticBehaviorEvent(event)) {

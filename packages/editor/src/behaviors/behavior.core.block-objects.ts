@@ -11,6 +11,7 @@ import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
 const arrowDownOnLonelyBlockObject = defineBehavior({
+  name: 'arrowDownOnLonelyBlockObject',
   on: 'keyboard.keydown',
   guard: ({snapshot, event}) => {
     const isArrowDown = defaultKeyboardShortcuts.arrowDown.guard(
@@ -46,6 +47,7 @@ const arrowDownOnLonelyBlockObject = defineBehavior({
 })
 
 const arrowUpOnLonelyBlockObject = defineBehavior({
+  name: 'arrowUpOnLonelyBlockObject',
   on: 'keyboard.keydown',
   guard: ({snapshot, event}) => {
     const isArrowUp = defaultKeyboardShortcuts.arrowUp.guard(event.originEvent)
@@ -79,6 +81,7 @@ const arrowUpOnLonelyBlockObject = defineBehavior({
 })
 
 const breakingBlockObject = defineBehavior({
+  name: 'breakingBlockObject',
   on: 'insert.break',
   guard: ({snapshot}) => {
     const focusBlockObject = getFocusBlockObject(snapshot)
@@ -100,6 +103,7 @@ const breakingBlockObject = defineBehavior({
 })
 
 const clickingAboveLonelyBlockObject = defineBehavior({
+  name: 'clickingAboveLonelyBlockObject',
   on: 'mouse.click',
   guard: ({snapshot, event}) => {
     if (snapshot.context.readOnly) {
@@ -151,6 +155,7 @@ const clickingAboveLonelyBlockObject = defineBehavior({
 })
 
 const clickingBelowLonelyBlockObject = defineBehavior({
+  name: 'clickingBelowLonelyBlockObject',
   on: 'mouse.click',
   guard: ({snapshot, event}) => {
     if (snapshot.context.readOnly) {
@@ -202,6 +207,7 @@ const clickingBelowLonelyBlockObject = defineBehavior({
 })
 
 const deletingEmptyTextBlockAfterBlockObject = defineBehavior({
+  name: 'deletingEmptyTextBlockAfterBlockObject',
   on: 'delete.backward',
   guard: ({snapshot}) => {
     const focusTextBlock = getFocusTextBlock(snapshot)
@@ -243,6 +249,7 @@ const deletingEmptyTextBlockAfterBlockObject = defineBehavior({
 })
 
 const deletingEmptyTextBlockBeforeBlockObject = defineBehavior({
+  name: 'deletingEmptyTextBlockBeforeBlockObject',
   on: 'delete.forward',
   guard: ({snapshot}) => {
     const focusTextBlock = getFocusTextBlock(snapshot)

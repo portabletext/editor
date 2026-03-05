@@ -118,6 +118,7 @@ function createPasteLinkBehaviors(
    * `preventOverlappingAnnotations` behavior will remove it first.
    */
   const pasteLinkOnSelection = defineBehavior({
+    name: 'pasteLinkOnSelection',
     on: 'clipboard.paste',
     guard: (guardParams) => {
       if (config.guard && config.guard(guardParams) === false) {
@@ -170,6 +171,7 @@ function createPasteLinkBehaviors(
    * etc.) are preserved.
    */
   const pasteLinkAtCaret = defineBehavior({
+    name: 'pasteLinkAtCaret',
     on: 'clipboard.paste',
     guard: (guardParams) => {
       if (config.guard && config.guard(guardParams) === false) {
