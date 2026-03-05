@@ -23,6 +23,7 @@ export function toSlateBlock(
     let hasInlines = false
     const hasMissingMarkDefs = typeof textBlock.markDefs === 'undefined'
     const hasMissingChildren = typeof textBlock.children === 'undefined'
+    let hasSpansWithMissingText = false
 
     const children = (textBlock.children || []).map((child) => {
       const {_type: childType, _key: childKey, ...childProps} = child
@@ -62,6 +63,15 @@ export function toSlateBlock(
         }
       }
 
+      if (typeof child.text !== 'string') {
+        hasSpansWithMissingText = true
+
+        return {
+          ...child,
+          text: '',
+        }
+      }
+
       // Original child object (span)
       return child
     })
@@ -71,6 +81,7 @@ export function toSlateBlock(
       !hasMissingMarkDefs &&
       !hasMissingChildren &&
       !hasInlines &&
+      !hasSpansWithMissingText &&
       Element.isElement(block)
     ) {
       // Original object

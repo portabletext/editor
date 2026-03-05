@@ -3352,7 +3352,7 @@ describe('event.patches', () => {
       expect(editor.getSnapshot().context.value).toEqual([block])
     })
 
-    test('Scenario: Setting span text is a noop', async () => {
+    test('Scenario: Setting span text for empty text property is a noop', async () => {
       const keyGenerator = createTestKeyGenerator()
       const blockKey = keyGenerator()
       const spanKey = keyGenerator()
@@ -3383,6 +3383,65 @@ describe('event.patches', () => {
       })
 
       expect(editor.getSnapshot().context.value).toEqual([block])
+    })
+
+    test('Scenario: Setting span text is not possible', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const blockKey = keyGenerator()
+      const spanKey = keyGenerator()
+      const block = {
+        _key: blockKey,
+        _type: 'block',
+        children: [
+          {_key: spanKey, _type: 'span', text: 'foo', marks: ['strong']},
+        ],
+        markDefs: [],
+        style: 'normal',
+      }
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        initialValue: [block],
+        schemaDefinition: defineSchema({
+          decorators: [{name: 'strong'}],
+        }),
+      })
+
+      const newSpanKey = keyGenerator()
+
+      editor.send({
+        type: 'patches',
+        patches: [
+          {
+            type: 'insert',
+            origin: 'remote',
+            path: [{_key: blockKey}, 'children', {_key: spanKey}],
+            items: [
+              // Spans without text are not allowed. This span will therefore
+              // be given an empty text prop upon insertion
+              {
+                _key: newSpanKey,
+                _type: 'span',
+                marks: [],
+              },
+            ],
+            position: 'after',
+          },
+          // This patch turns into a noop because the span was given an empty
+          // text prop upon insertion
+          {
+            type: 'setIfMissing',
+            origin: 'remote',
+            path: [{_key: blockKey}, 'children', {_key: newSpanKey}, 'text'],
+            value: 'bar',
+          },
+        ],
+        snapshot: undefined,
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([block])
+      })
     })
 
     test('Scenario: Setting nested span property', async () => {
