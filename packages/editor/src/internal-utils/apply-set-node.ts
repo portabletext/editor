@@ -4,10 +4,6 @@ import type {PortableTextSlateEditor} from '../types/slate-editor'
 /**
  * Apply a `set_node` operation at a known path.
  *
- * This replaces `Transforms.setNodes(editor, props, {at: path})` for the
- * common case where `at` is a concrete path (not a Range) and `split` is
- * not needed.
- *
  * Properties set to `null` are treated as deletions.
  *
  * Skips `children` since those are structural properties managed by dedicated

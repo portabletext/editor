@@ -1,6 +1,6 @@
 import type {Editor, Location, Node, Path} from '../../index'
 import type {MaximizeMode, RangeMode} from '../../types/types'
-import type {NodeMatch, PropsCompare, PropsMerge} from '../editor'
+import type {NodeMatch} from '../editor'
 
 export interface NodeInsertNodesOptions<T extends Node> {
   at?: Location
@@ -67,24 +67,6 @@ export interface NodeTransforms {
   ) => void
 
   /**
-   * Set new properties on the nodes at a location.
-   */
-  setNodes: <T extends Node>(
-    editor: Editor,
-    props: Partial<T>,
-    options?: {
-      at?: Location
-      match?: NodeMatch<T>
-      mode?: MaximizeMode
-      hanging?: boolean
-      split?: boolean
-      voids?: boolean
-      compare?: PropsCompare
-      merge?: PropsMerge
-    },
-  ) => void
-
-  /**
    * Split the nodes at a specific location.
    */
   splitNodes: <T extends Node>(
@@ -113,9 +95,6 @@ export const NodeTransforms: NodeTransforms = {
   },
   removeNodes(editor, options) {
     editor.removeNodes(options)
-  },
-  setNodes(editor, props, options) {
-    editor.setNodes(props, options)
   },
   splitNodes(editor, options) {
     editor.splitNodes(options)
