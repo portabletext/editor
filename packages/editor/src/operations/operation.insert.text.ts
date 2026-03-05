@@ -12,13 +12,6 @@ export const insertTextOperationImplementation: OperationImplementation<
     return
   }
 
-  if (
-    Editor.void(editor, {at: selection}) ||
-    Editor.elementReadOnly(editor, {at: selection})
-  ) {
-    return
-  }
-
   let {path, offset} = selection.anchor
 
   const node = Node.get(editor, path, editor.schema)
@@ -40,6 +33,11 @@ export const insertTextOperationImplementation: OperationImplementation<
     } else {
       return
     }
+  } else if (
+    Editor.void(editor, {at: selection}) ||
+    Editor.elementReadOnly(editor, {at: selection})
+  ) {
+    return
   }
 
   if (operation.text.length > 0) {
