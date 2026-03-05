@@ -107,7 +107,6 @@ export interface BaseEditor {
   setNormalizing: OmitFirstArg<typeof Editor.setNormalizing>
   setSelection: OmitFirstArg<typeof Transforms.setSelection>
   splitNodes: OmitFirstArg<typeof Transforms.splitNodes>
-  unsetNodes: OmitFirstArg<typeof Transforms.unsetNodes>
   withoutNormalizing: OmitFirstArg<typeof Editor.withoutNormalizing>
 
   // Overrideable core queries.
