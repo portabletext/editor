@@ -8,8 +8,7 @@ import type {PortableTextSlateEditor} from '../types/slate-editor'
  * common case where `at` is a concrete path (not a Range) and `split` is
  * not needed.
  *
- * Properties set to `null` are treated as deletions (matching the behavior
- * of `Transforms.unsetNodes`).
+ * Properties set to `null` are treated as deletions.
  *
  * Skips `children` since those are structural properties managed by dedicated
  * operations. Skips `text` on text nodes (spans) for the same reason, but

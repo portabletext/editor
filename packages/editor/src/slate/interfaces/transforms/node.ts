@@ -98,22 +98,6 @@ export interface NodeTransforms {
       voids?: boolean
     },
   ) => void
-
-  /**
-   * Unset properties on the nodes at a location.
-   */
-  unsetNodes: <T extends Node>(
-    editor: Editor,
-    props: string | string[],
-    options?: {
-      at?: Location
-      match?: NodeMatch<T>
-      mode?: MaximizeMode
-      hanging?: boolean
-      split?: boolean
-      voids?: boolean
-    },
-  ) => void
 }
 
 // eslint-disable-next-line no-redeclare
@@ -135,8 +119,5 @@ export const NodeTransforms: NodeTransforms = {
   },
   splitNodes(editor, options) {
     editor.splitNodes(options)
-  },
-  unsetNodes(editor, props, options) {
-    editor.unsetNodes(props, options)
   },
 }
