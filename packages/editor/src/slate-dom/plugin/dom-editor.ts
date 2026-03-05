@@ -51,7 +51,6 @@ export interface DOMEditor extends BaseEditor {
   hasSelectableTarget: (editor: Editor, target: EventTarget | null) => boolean
   hasTarget: (editor: Editor, target: EventTarget | null) => target is DOMNode
   insertData: (data: DataTransfer) => void
-  insertFragmentData: (data: DataTransfer) => boolean
   insertTextData: (data: DataTransfer) => boolean
   isTargetInsideNonReadonlyVoid: (
     editor: Editor,
@@ -175,11 +174,6 @@ export interface DOMEditorInterface {
    * Insert data from a `DataTransfer` into the editor.
    */
   insertData: (editor: Editor, data: DataTransfer) => void
-
-  /**
-   * Insert fragment data from a `DataTransfer` into the editor.
-   */
-  insertFragmentData: (editor: Editor, data: DataTransfer) => boolean
 
   /**
    * Insert text data from a `DataTransfer` into the editor.
@@ -540,8 +534,6 @@ export const DOMEditor: DOMEditorInterface = {
   insertData: (editor, data) => {
     editor.insertData(data)
   },
-
-  insertFragmentData: (editor, data) => editor.insertFragmentData(data),
 
   insertTextData: (editor, data) => editor.insertTextData(data),
 
