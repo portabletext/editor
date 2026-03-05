@@ -2,10 +2,14 @@ import {createContext} from 'react'
 
 export type PlaygroundFeatureFlags = {
   toolbar: boolean
+  yjsMode: boolean
+  yjsLatency: number
 }
 
 export const defaultPlaygroundFeatureFlags: PlaygroundFeatureFlags = {
   toolbar: true,
+  yjsMode: false,
+  yjsLatency: 0,
 }
 
 export const PlaygroundFeatureFlagsContext =
