@@ -128,21 +128,6 @@ export interface NodeTransforms {
       voids?: boolean
     },
   ) => void
-
-  /**
-   * Unwrap the nodes at a location from a parent node, splitting the parent if
-   * necessary to ensure that only the content in the range is unwrapped.
-   */
-  unwrapNodes: <T extends Node>(
-    editor: Editor,
-    options?: {
-      at?: Location
-      match?: NodeMatch<T>
-      mode?: MaximizeMode
-      split?: boolean
-      voids?: boolean
-    },
-  ) => void
 }
 
 // eslint-disable-next-line no-redeclare
@@ -170,8 +155,5 @@ export const NodeTransforms: NodeTransforms = {
   },
   unsetNodes(editor, props, options) {
     editor.unsetNodes(props, options)
-  },
-  unwrapNodes(editor, options) {
-    editor.unwrapNodes(options)
   },
 }

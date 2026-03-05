@@ -111,9 +111,8 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
             n++
           }
         } else {
-          // Allow only inline nodes to be in other inline nodes, or in
-          // parent blocks that only contain inlines and text.
-          Transforms.unwrapNodes(editor, {at: path.concat(n), voids: true})
+          // An Element cannot appear inline in another Element
+          Transforms.removeNodes(editor, {at: path.concat(n), voids: true})
           element = Node.get(editor, path, editor.schema) as Element
           n--
         }
