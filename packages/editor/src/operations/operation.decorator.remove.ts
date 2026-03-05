@@ -1,6 +1,5 @@
-import type {PortableTextBlock} from '@portabletext/schema'
 import {applySetNode} from '../internal-utils/apply-set-node'
-import {toSlateRange} from '../internal-utils/to-slate-range'
+import {editorToSlateRange} from '../internal-utils/to-slate-range'
 import {Editor, Element, Node, Range, Text} from '../slate'
 import type {OperationImplementation} from './operation.types'
 
@@ -10,14 +9,7 @@ export const decoratorRemoveOperationImplementation: OperationImplementation<
   const editor = operation.editor
   const mark = operation.decorator
   const at = operation.at
-    ? toSlateRange({
-        context: {
-          schema: context.schema,
-          value: operation.editor.children as Array<PortableTextBlock>,
-          selection: operation.at,
-        },
-        blockIndexMap: operation.editor.blockIndexMap,
-      })
+    ? editorToSlateRange(operation.editor, operation.at)
     : editor.selection
 
   if (!at) {

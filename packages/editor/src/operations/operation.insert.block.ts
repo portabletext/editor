@@ -1,8 +1,7 @@
-import type {PortableTextBlock} from '@portabletext/schema'
 import {isSpan} from '@portabletext/schema'
 import {isEqualChildren, isEqualMarks} from '../internal-utils/equality'
 import {getFocusChild} from '../internal-utils/slate-utils'
-import {toSlateRange} from '../internal-utils/to-slate-range'
+import {editorToSlateRange} from '../internal-utils/to-slate-range'
 import {toSlateBlock} from '../internal-utils/values'
 import {
   Editor,
@@ -59,14 +58,7 @@ export function insertBlock(options: {
 }) {
   const {context, block, placement, select, editor} = options
   const at = options.at
-    ? toSlateRange({
-        context: {
-          schema: context.schema,
-          value: editor.children as Array<PortableTextBlock>,
-          selection: options.at,
-        },
-        blockIndexMap: editor.blockIndexMap,
-      })
+    ? editorToSlateRange(editor, options.at)
     : editor.selection
 
   // Handle empty editor case

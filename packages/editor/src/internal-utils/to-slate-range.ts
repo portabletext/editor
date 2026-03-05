@@ -1,12 +1,14 @@
 import {
   isSpan,
   isTextBlock,
+  type PortableTextBlock,
   type PortableTextObject,
   type PortableTextSpan,
 } from '@portabletext/schema'
 import type {EditorContext, EditorSnapshot} from '../editor/editor-snapshot'
 import type {Path, Range} from '../slate'
-import type {EditorSelectionPoint} from '../types/editor'
+import type {EditorSelection, EditorSelectionPoint} from '../types/editor'
+import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {blockOffsetToSpanSelectionPoint} from '../utils/util.block-offset'
 import {isEqualSelectionPoints} from '../utils/util.is-equal-selection-points'
 import {
@@ -14,11 +16,32 @@ import {
   getChildKeyFromSelectionPoint,
 } from '../utils/util.selection-point'
 
-export function toSlateRange(
-  snapshot: {
-    context: Pick<EditorContext, 'schema' | 'value' | 'selection'>
-  } & Pick<EditorSnapshot, 'blockIndexMap'>,
+type ToSlateRangeSnapshot = {
+  context: Pick<EditorContext, 'schema' | 'value' | 'selection'>
+} & Pick<EditorSnapshot, 'blockIndexMap'>
+
+/**
+ * Convert a key-based EditorSelection to a Slate Range using the editor
+ * instance directly.
+ *
+ * This is a convenience wrapper around toSlateRange that builds the snapshot
+ * from the editor's current state.
+ */
+export function editorToSlateRange(
+  editor: PortableTextSlateEditor,
+  selection: EditorSelection,
 ): Range | null {
+  return toSlateRange({
+    context: {
+      schema: editor.schema,
+      value: editor.children as Array<PortableTextBlock>,
+      selection,
+    },
+    blockIndexMap: editor.blockIndexMap,
+  })
+}
+
+export function toSlateRange(snapshot: ToSlateRangeSnapshot): Range | null {
   if (!snapshot.context.selection) {
     return null
   }

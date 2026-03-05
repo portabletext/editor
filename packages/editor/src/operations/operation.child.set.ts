@@ -1,22 +1,14 @@
-import type {PortableTextBlock} from '@portabletext/schema'
 import {applySetNode} from '../internal-utils/apply-set-node'
-import {toSlateRange} from '../internal-utils/to-slate-range'
+import {editorToSlateRange} from '../internal-utils/to-slate-range'
 import {Editor} from '../slate'
 import type {OperationImplementation} from './operation.types'
 
 export const childSetOperationImplementation: OperationImplementation<
   'child.set'
 > = ({context, operation}) => {
-  const location = toSlateRange({
-    context: {
-      schema: context.schema,
-      value: operation.editor.children as Array<PortableTextBlock>,
-      selection: {
-        anchor: {path: operation.at, offset: 0},
-        focus: {path: operation.at, offset: 0},
-      },
-    },
-    blockIndexMap: operation.editor.blockIndexMap,
+  const location = editorToSlateRange(operation.editor, {
+    anchor: {path: operation.at, offset: 0},
+    focus: {path: operation.at, offset: 0},
   })
 
   if (!location) {
