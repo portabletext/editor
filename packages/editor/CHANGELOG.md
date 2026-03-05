@@ -1,5 +1,11 @@
 # Changelog
 
+## 6.0.11
+
+### Patch Changes
+
+- [#2317](https://github.com/portabletext/editor/pull/2317) [`4f31f06`](https://github.com/portabletext/editor/commit/4f31f06917b216f25cff8a04a204e15a6750ab91) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove unused internal line utilities
+
 ## 6.0.10
 
 ### Patch Changes
