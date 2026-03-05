@@ -1,13 +1,10 @@
 import type {
   PortableTextBlock,
-  PortableTextObject,
   PortableTextTextBlock,
 } from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
 import {Element, Text, type Descendant} from '../slate'
 import {isEqualValues} from './equality'
-
-export const EMPTY_MARKDEFS: PortableTextObject[] = []
 
 export function toSlateBlock(
   block: PortableTextBlock,

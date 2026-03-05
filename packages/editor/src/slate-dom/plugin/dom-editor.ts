@@ -171,16 +171,6 @@ export interface DOMEditorInterface {
   hasTarget: (editor: Editor, target: EventTarget | null) => target is DOMNode
 
   /**
-   * Insert data from a `DataTransfer` into the editor.
-   */
-  insertData: (editor: Editor, data: DataTransfer) => void
-
-  /**
-   * Insert text data from a `DataTransfer` into the editor.
-   */
-  insertTextData: (editor: Editor, data: DataTransfer) => boolean
-
-  /**
    * Check if the user is currently composing inside the editor.
    */
   isComposing: (editor: Editor) => boolean
@@ -530,12 +520,6 @@ export const DOMEditor: DOMEditorInterface = {
 
   hasTarget: (editor, target): target is DOMNode =>
     isDOMNode(target) && DOMEditor.hasDOMNode(editor, target),
-
-  insertData: (editor, data) => {
-    editor.insertData(data)
-  },
-
-  insertTextData: (editor, data) => editor.insertTextData(data),
 
   isComposing: (editor) => {
     return !!editor.composing

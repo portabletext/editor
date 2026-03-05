@@ -18,11 +18,10 @@ export {Slate} from './components/slate'
 export {useEditor} from './hooks/use-editor'
 export {useElement, useElementIf} from './hooks/use-element'
 export {useSlateStatic} from './hooks/use-slate-static'
-export {useComposing} from './hooks/use-composing'
-export {useFocused} from './hooks/use-focused'
+
 export {useReadOnly} from './hooks/use-read-only'
 export {useSelected} from './hooks/use-selected'
-export {useSlate, useSlateWithV} from './hooks/use-slate'
+export {useSlate} from './hooks/use-slate'
 export {useSlateSelector} from './hooks/use-slate-selector'
 export {useSlateSelection} from './hooks/use-slate-selection'
 
