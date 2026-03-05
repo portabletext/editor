@@ -1,4 +1,4 @@
-import type {Editor, Element, Location, Node, Path} from '../../index'
+import type {Editor, Location, Node, Path} from '../../index'
 import type {MaximizeMode, RangeMode} from '../../types/types'
 import type {NodeMatch, PropsCompare, PropsMerge} from '../editor'
 
@@ -143,22 +143,6 @@ export interface NodeTransforms {
       voids?: boolean
     },
   ) => void
-
-  /**
-   * Wrap the nodes at a location in a new container node, splitting the edges
-   * of the range first to ensure that only the content in the range is wrapped.
-   */
-  wrapNodes: <T extends Node>(
-    editor: Editor,
-    element: Element,
-    options?: {
-      at?: Location
-      match?: NodeMatch<T>
-      mode?: MaximizeMode
-      split?: boolean
-      voids?: boolean
-    },
-  ) => void
 }
 
 // eslint-disable-next-line no-redeclare
@@ -189,8 +173,5 @@ export const NodeTransforms: NodeTransforms = {
   },
   unwrapNodes(editor, options) {
     editor.unwrapNodes(options)
-  },
-  wrapNodes(editor, element, options) {
-    editor.wrapNodes(element, options)
   },
 }

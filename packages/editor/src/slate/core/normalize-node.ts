@@ -9,7 +9,6 @@ import type {WithEditorFirstArg} from '../utils/types'
 export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   editor,
   entry,
-  options,
 ) => {
   const [node, path] = entry as [object, Path]
 
@@ -151,14 +150,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
         Text.isText(child, editor.schema) ||
         (Element.isElement(child, editor.schema) && editor.isInline(child))
       ) {
-        if (options?.fallbackElement) {
-          Transforms.wrapNodes(editor, options.fallbackElement(), {
-            at: path.concat(n),
-            voids: true,
-          })
-        } else {
-          Transforms.removeNodes(editor, {at: path.concat(n), voids: true})
-        }
+        Transforms.removeNodes(editor, {at: path.concat(n), voids: true})
         element = Node.get(editor, path, editor.schema) as Ancestor
         n--
       }
