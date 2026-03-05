@@ -1,5 +1,11 @@
 # Changelog
 
+## 6.0.10
+
+### Patch Changes
+
+- [#2314](https://github.com/portabletext/editor/pull/2314) [`eec5bfa`](https://github.com/portabletext/editor/commit/eec5bfab7d50cc25a9de27bf6f21a586701a8650) Thanks [@christianhg](https://github.com/christianhg)! - fix: allow `insert.text` on inline objects
+
 ## 6.0.9
 
 ### Patch Changes
