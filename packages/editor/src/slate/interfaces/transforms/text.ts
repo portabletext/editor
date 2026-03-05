@@ -1,11 +1,4 @@
-import {
-  Editor,
-  Path,
-  Range,
-  Transforms,
-  type Location,
-  type Node,
-} from '../../index'
+import {Editor, Path, Range, Transforms, type Location} from '../../index'
 import type {TextUnit} from '../../types/types'
 import {getDefaultInsertLocation} from '../../utils'
 
@@ -18,13 +11,6 @@ export interface TextDeleteOptions {
   voids?: boolean
 }
 
-export interface TextInsertFragmentOptions {
-  at?: Location
-  hanging?: boolean
-  voids?: boolean
-  batchDirty?: boolean
-}
-
 export interface TextInsertTextOptions {
   at?: Location
   voids?: boolean
@@ -35,16 +21,6 @@ export interface TextTransforms {
    * Delete content in the editor.
    */
   delete: (editor: Editor, options?: TextDeleteOptions) => void
-
-  /**
-   * Insert a fragment in the editor
-   * at the specified location or (if not defined) the current selection or (if not defined) the end of the document.
-   */
-  insertFragment: (
-    editor: Editor,
-    fragment: Node[],
-    options?: TextInsertFragmentOptions,
-  ) => void
 
   /**
    * Insert a string of text in the editor
@@ -61,9 +37,6 @@ export interface TextTransforms {
 export const TextTransforms: TextTransforms = {
   delete(editor, options) {
     editor.delete(options)
-  },
-  insertFragment(editor, fragment, options) {
-    editor.insertFragment(fragment, options)
   },
   insertText(
     editor: Editor,

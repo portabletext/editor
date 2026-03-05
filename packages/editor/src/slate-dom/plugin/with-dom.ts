@@ -14,7 +14,7 @@ import {
   transformTextDiff,
   type TextDiff,
 } from '../utils/diff-text'
-import {getPlainText, getSlateFragmentAttribute, isDOMText} from '../utils/dom'
+import {getPlainText, isDOMText} from '../utils/dom'
 import type {Key} from '../utils/key'
 import {DOMEditor} from './dom-editor'
 
@@ -265,26 +265,7 @@ export const withDOM = <T extends Editor>(
   }
 
   e.insertData = (data: DataTransfer) => {
-    if (!e.insertFragmentData(data)) {
-      e.insertTextData(data)
-    }
-  }
-
-  e.insertFragmentData = (data: DataTransfer): boolean => {
-    /**
-     * Checking copied fragment from application/x-slate-fragment or data-slate-fragment
-     */
-    const fragment =
-      data.getData(`application/${clipboardFormatKey}`) ||
-      getSlateFragmentAttribute(data)
-
-    if (fragment) {
-      const decoded = decodeURIComponent(window.atob(fragment))
-      const parsed = JSON.parse(decoded) as Node[]
-      e.insertFragment(parsed)
-      return true
-    }
-    return false
+    e.insertTextData(data)
   }
 
   e.insertTextData = (data: DataTransfer): boolean => {
