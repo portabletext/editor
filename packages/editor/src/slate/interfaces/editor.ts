@@ -62,7 +62,6 @@ export interface BaseEditor {
     entry: NodeEntry,
     options?: {
       operation?: Operation
-      fallbackElement?: () => Element
     },
   ) => void
   onChange: (options?: {operation?: Operation}) => void
@@ -112,7 +111,6 @@ export interface BaseEditor {
   unsetNodes: OmitFirstArg<typeof Transforms.unsetNodes>
   unwrapNodes: OmitFirstArg<typeof Transforms.unwrapNodes>
   withoutNormalizing: OmitFirstArg<typeof Editor.withoutNormalizing>
-  wrapNodes: OmitFirstArg<typeof Transforms.wrapNodes>
 
   // Overrideable core queries.
 
