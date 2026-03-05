@@ -52,7 +52,6 @@ import {
   mergeNodes,
   moveNodes,
   removeNodes,
-  setNodes,
   splitNodes,
 } from './transforms-node'
 import {
@@ -152,7 +151,6 @@ export const createEditor = (context: {
     rangeRef: (...args: any[]) => (rangeRef as any)(e, ...args),
     removeNodes: (...args: any[]) => (removeNodes as any)(e, ...args),
     select: (...args: any[]) => (select as any)(e, ...args),
-    setNodes: (...args: any[]) => (setNodes as any)(e, ...args),
     setNormalizing: (...args: any[]) => (setNormalizing as any)(e, ...args),
     setSelection: (...args: any[]) => (setSelection as any)(e, ...args),
     splitNodes: (...args: any[]) => (splitNodes as any)(e, ...args),

@@ -91,19 +91,6 @@ export interface BaseEditor {
   normalize: OmitFirstArg<typeof Editor.normalize>
   removeNodes: OmitFirstArg<typeof Transforms.removeNodes>
   select: OmitFirstArg<typeof Transforms.select>
-  setNodes: <T extends Node>(
-    props: Partial<T>,
-    options?: {
-      at?: Location
-      match?: NodeMatch<T>
-      mode?: MaximizeMode
-      hanging?: boolean
-      split?: boolean
-      voids?: boolean
-      compare?: PropsCompare
-      merge?: PropsMerge
-    },
-  ) => void
   setNormalizing: OmitFirstArg<typeof Editor.setNormalizing>
   setSelection: OmitFirstArg<typeof Transforms.setSelection>
   splitNodes: OmitFirstArg<typeof Transforms.splitNodes>
