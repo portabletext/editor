@@ -28,10 +28,7 @@ import type {
   TextUnitAdjustment,
 } from '../types/types'
 import type {OmitFirstArg} from '../utils/types'
-import type {
-  TextInsertFragmentOptions,
-  TextInsertTextOptions,
-} from './transforms/text'
+import type {TextInsertTextOptions} from './transforms/text'
 
 /**
  * The `Editor` interface stores all the state of a Slate editor. It is extended
@@ -82,7 +79,6 @@ export interface BaseEditor {
   delete: OmitFirstArg<typeof Transforms.delete>
   deselect: OmitFirstArg<typeof Transforms.deselect>
   insertBreak: OmitFirstArg<typeof Editor.insertBreak>
-  insertFragment: OmitFirstArg<typeof Transforms.insertFragment>
   insertNodes: OmitFirstArg<typeof Transforms.insertNodes>
   insertText: OmitFirstArg<typeof Transforms.insertText>
   mergeNodes: OmitFirstArg<typeof Transforms.mergeNodes>
@@ -327,16 +323,6 @@ export interface EditorInterface {
    * If the selection is currently expanded, it will be deleted first.
    */
   insertBreak: (editor: Editor) => void
-
-  /**
-   * Inserts a fragment
-   * at the specified location or (if not defined) the current selection or (if not defined) the end of the document.
-   */
-  insertFragment: (
-    editor: Editor,
-    fragment: Node[],
-    options?: TextInsertFragmentOptions,
-  ) => void
 
   /**
    * Insert a string of text
@@ -624,10 +610,6 @@ export const Editor: EditorInterface = {
 
   insertBreak(editor) {
     editor.insertBreak()
-  },
-
-  insertFragment(editor, fragment, options) {
-    editor.insertFragment(fragment, options)
   },
 
   insertText(editor, text) {
