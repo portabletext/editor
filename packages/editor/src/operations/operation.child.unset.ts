@@ -1,6 +1,9 @@
-import type {PortableTextBlock} from '@portabletext/schema'
 import {isTextBlock} from '@portabletext/schema'
 import {applySetNode} from '../internal-utils/apply-set-node'
+import {
+  resolveBlock,
+  resolveChildPath,
+} from '../internal-utils/resolve-key-path'
 import {Editor} from '../slate'
 import type {OperationImplementation} from './operation.types'
 
@@ -8,105 +11,97 @@ export const childUnsetOperationImplementation: OperationImplementation<
   'child.unset'
 > = ({context, operation}) => {
   const blockKey = operation.at[0]._key
-  const blockIndex = operation.editor.blockIndexMap.get(blockKey)
-
-  if (blockIndex === undefined) {
-    throw new Error(`Unable to find block index for block key ${blockKey}`)
-  }
-
-  const block =
-    blockIndex !== undefined
-      ? (operation.editor.children as Array<PortableTextBlock>).at(blockIndex)
-      : undefined
-
-  if (!block) {
-    throw new Error(`Unable to find block at ${JSON.stringify(operation.at)}`)
-  }
-
-  if (!isTextBlock(context, block)) {
-    throw new Error(`Block ${JSON.stringify(blockKey)} is not a text block`)
-  }
-
   const childKey = operation.at[2]._key
 
-  if (!childKey) {
+  const resolved = resolveBlock(operation.editor, blockKey)
+
+  if (!resolved) {
     throw new Error(
-      `Unable to find child key at ${JSON.stringify(operation.at)}`,
+      `Unable to find block with key "${blockKey}" at ${JSON.stringify(operation.at)}`,
     )
   }
 
-  const childIndex = block.children.findIndex(
-    (child) => child._key === childKey,
-  )
+  const {node: block} = resolved
 
-  if (childIndex === -1) {
-    throw new Error(`Unable to find child at ${JSON.stringify(operation.at)}`)
+  if (!isTextBlock(context, block)) {
+    return
   }
 
-  const childEntry = Editor.node(operation.editor, [blockIndex, childIndex], {
+  const childPath = resolveChildPath(operation.editor, blockKey, childKey)
+
+  if (!childPath) {
+    throw new Error(
+      `Unable to find child with key "${childKey}" in block "${blockKey}"`,
+    )
+  }
+
+  const [child, resolvedChildPath] = Editor.node(operation.editor, childPath, {
     depth: 2,
   })
-  const child = childEntry?.[0]
-  const childPath = childEntry?.[1]
 
-  if (!child || !childPath) {
-    throw new Error(`Unable to find child at ${JSON.stringify(operation.at)}`)
+  if (!child) {
+    return
   }
 
-  if (operation.editor.isTextSpan(child)) {
-    const newNode: Record<string, unknown> = {}
+  const isSpan = child._type === context.schema.span.name
 
-    for (const prop of operation.props) {
-      if (prop === 'text') {
-        // Unsetting `text` requires special treatment
-        continue
-      }
+  if (isSpan) {
+    const propsToRemove = operation.props.filter(
+      (prop) =>
+        prop !== '_type' &&
+        prop !== '_key' &&
+        prop !== 'text' &&
+        prop !== 'marks',
+    )
 
-      if (prop === '_type') {
-        // It's not allowed to unset the _type of a span
-        continue
-      }
-
-      if (prop === '_key') {
-        newNode['_key'] = context.keyGenerator()
-        continue
-      }
-
-      newNode[prop] = null
+    const unsetProps: Record<string, null> = {}
+    for (const prop of propsToRemove) {
+      unsetProps[prop] = null
     }
 
-    applySetNode(operation.editor, newNode, childPath)
+    applySetNode(operation.editor, unsetProps, resolvedChildPath)
+
+    if (operation.props.includes('_key')) {
+      applySetNode(
+        operation.editor,
+        {_key: context.keyGenerator()},
+        resolvedChildPath,
+      )
+    }
 
     if (operation.props.includes('text')) {
-      operation.editor.apply({
-        type: 'remove_text',
-        path: childPath,
-        offset: 0,
-        text: child.text,
-      })
+      const currentText =
+        'text' in child && typeof child.text === 'string' ? child.text : ''
+
+      if (currentText.length > 0) {
+        operation.editor.apply({
+          type: 'remove_text',
+          path: resolvedChildPath,
+          offset: 0,
+          text: currentText,
+        })
+      }
     }
 
     return
   }
 
-  if (operation.editor.isObjectNode(child)) {
-    const unsetProps: Record<string, unknown> = {}
-    for (const prop of operation.props) {
-      if (prop === '_type') {
-        continue
-      }
-      if (prop === '_key') {
-        unsetProps['_key'] = context.keyGenerator()
-      } else {
-        unsetProps[prop] = null
-      }
-    }
-    applySetNode(operation.editor, unsetProps, childPath)
-
-    return
-  }
-
-  throw new Error(
-    `Unable to determine the type of child at ${JSON.stringify(operation.at)}`,
+  // Inline object
+  const schemaDefinition = context.schema.inlineObjects.find(
+    (definition) => definition.name === child._type,
   )
+
+  const unsetProps: Record<string, unknown> = {}
+  for (const key of operation.props) {
+    if (key === '_type') {
+      continue
+    }
+    if (key === '_key') {
+      unsetProps['_key'] = context.keyGenerator()
+    } else if (schemaDefinition?.fields.some((field) => field.name === key)) {
+      unsetProps[key] = null
+    }
+  }
+
+  applySetNode(operation.editor, unsetProps, resolvedChildPath)
 }

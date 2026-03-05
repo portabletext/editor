@@ -70,7 +70,7 @@ export const decoratorRemoveOperationImplementation: OperationImplementation<
         }),
       ]
       splitTextNodes.forEach(([node, path]) => {
-        const block = editor.children[path[0]!]
+        const [block] = Editor.node(editor, path.slice(0, 1))
         if (
           Element.isElement(block, editor.schema) &&
           block.children.includes(node)

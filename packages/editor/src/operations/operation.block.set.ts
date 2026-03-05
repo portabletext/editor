@@ -1,25 +1,23 @@
 import {applyAll, set} from '@portabletext/patches'
 import {isTextBlock} from '@portabletext/schema'
 import {applySetNode} from '../internal-utils/apply-set-node'
+import {resolveBlock} from '../internal-utils/resolve-key-path'
 import {parseMarkDefs} from '../utils/parse-blocks'
 import type {OperationImplementation} from './operation.types'
 
 export const blockSetOperationImplementation: OperationImplementation<
   'block.set'
 > = ({context, operation}) => {
-  const blockIndex = operation.editor.blockIndexMap.get(operation.at[0]._key)
+  const blockKey = operation.at[0]._key
+  const resolved = resolveBlock(operation.editor, blockKey)
 
-  if (blockIndex === undefined) {
+  if (!resolved) {
     throw new Error(
-      `Unable to find block index for block at ${JSON.stringify(operation.at)}`,
+      `Unable to find block with key "${blockKey}" at ${JSON.stringify(operation.at)}`,
     )
   }
 
-  const slateBlock = operation.editor.children.at(blockIndex)
-
-  if (!slateBlock) {
-    throw new Error(`Unable to find block at ${JSON.stringify(operation.at)}`)
-  }
+  const {node: slateBlock, index: blockIndex} = resolved
 
   if (isTextBlock(context, slateBlock)) {
     const filteredProps: Record<string, unknown> = {}
