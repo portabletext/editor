@@ -85,7 +85,6 @@ export interface BaseEditor {
   insertFragment: OmitFirstArg<typeof Transforms.insertFragment>
   insertNodes: OmitFirstArg<typeof Transforms.insertNodes>
   insertText: OmitFirstArg<typeof Transforms.insertText>
-  liftNodes: OmitFirstArg<typeof Transforms.liftNodes>
   mergeNodes: OmitFirstArg<typeof Transforms.mergeNodes>
   move: OmitFirstArg<typeof Transforms.move>
   moveNodes: OmitFirstArg<typeof Transforms.moveNodes>
