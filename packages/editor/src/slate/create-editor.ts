@@ -49,7 +49,6 @@ import {
 } from './editor'
 import {
   insertNodes,
-  liftNodes,
   mergeNodes,
   moveNodes,
   removeNodes,
@@ -136,7 +135,6 @@ export const createEditor = (context: {
     isStart: (...args: any[]) => (isStart as any)(e, ...args),
     leaf: (...args: any[]) => (leaf as any)(e, ...args),
     levels: (...args: any[]) => (levels as any)(e, ...args),
-    liftNodes: (...args: any[]) => (liftNodes as any)(e, ...args),
     mergeNodes: (...args: any[]) => (mergeNodes as any)(e, ...args),
     move: (...args: any[]) => (move as any)(e, ...args),
     moveNodes: (...args: any[]) => (moveNodes as any)(e, ...args),
