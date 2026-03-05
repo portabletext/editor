@@ -24,20 +24,6 @@ export interface NodeTransforms {
   ) => void
 
   /**
-   * Lift nodes at a specific location upwards in the document tree, splitting
-   * their parent in two if necessary.
-   */
-  liftNodes: <T extends Node>(
-    editor: Editor,
-    options?: {
-      at?: Location
-      match?: NodeMatch<T>
-      mode?: MaximizeMode
-      voids?: boolean
-    },
-  ) => void
-
-  /**
    * Merge a node at a location with the previous node of the same depth,
    * removing any empty containing nodes after the merge if necessary.
    */
@@ -134,9 +120,6 @@ export interface NodeTransforms {
 export const NodeTransforms: NodeTransforms = {
   insertNodes(editor, nodes, options) {
     editor.insertNodes(nodes, options)
-  },
-  liftNodes(editor, options) {
-    editor.liftNodes(options)
   },
   mergeNodes(editor, options) {
     editor.mergeNodes(options)
