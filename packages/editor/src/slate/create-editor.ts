@@ -54,7 +54,6 @@ import {
   removeNodes,
   setNodes,
   splitNodes,
-  unsetNodes,
 } from './transforms-node'
 import {
   collapse,
@@ -160,7 +159,6 @@ export const createEditor = (context: {
     start: (...args: any[]) => (start as any)(e, ...args),
     string: (...args: any[]) => (string as any)(e, ...args),
     unhangRange: (...args: any[]) => (unhangRange as any)(e, ...args),
-    unsetNodes: (...args: any[]) => (unsetNodes as any)(e, ...args),
     void: (...args: any[]) => (getVoid as any)(e, ...args),
     withoutNormalizing: (...args: any[]) =>
       (withoutNormalizing as any)(e, ...args),
