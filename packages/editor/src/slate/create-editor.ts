@@ -58,7 +58,6 @@ import {
   splitNodes,
   unsetNodes,
   unwrapNodes,
-  wrapNodes,
 } from './transforms-node'
 import {
   collapse,
@@ -171,7 +170,6 @@ export const createEditor = (context: {
     void: (...args: any[]) => (getVoid as any)(e, ...args),
     withoutNormalizing: (...args: any[]) =>
       (withoutNormalizing as any)(e, ...args),
-    wrapNodes: (...args: any[]) => (wrapNodes as any)(e, ...args),
     shouldMergeNodesRemovePrevNode: (...args: any[]) =>
       (shouldMergeNodesRemovePrevNode as any)(e, ...args),
   }
