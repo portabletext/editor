@@ -1,5 +1,18 @@
 # Changelog
 
+## 6.0.9
+
+### Patch Changes
+
+- [#2310](https://github.com/portabletext/editor/pull/2310) [`3149548`](https://github.com/portabletext/editor/commit/314954827b7c1df1d10b581dfe33c7ad175030ca) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update dependency @portabletext/to-html to ^5.0.2
+
+- [#2311](https://github.com/portabletext/editor/pull/2311) [`55ceaf2`](https://github.com/portabletext/editor/commit/55ceaf258948ad1dc9a2e41086821095f730ca25) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove stale custom block properties during value sync
+
+  Custom properties on blocks (like `_map`) are now correctly removed when
+  a value sync arrives without them. Previously, `updateBlock` only set
+  properties present on the incoming block, leaving stale custom properties
+  on the editor's tree.
+
 ## 6.0.8
 
 ### Patch Changes
