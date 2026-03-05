@@ -1502,4 +1502,122 @@ describe('Collaborative editing', () => {
       ])
     })
   })
+
+  describe('Unknown decorator normalization', () => {
+    test('Scenario: Setting a block with unknown decorators emits a patch to strip them', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const blockKey = keyGenerator()
+      const spanKey = keyGenerator()
+      const emittedPatches: Array<Patch> = []
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: defineSchema({
+          decorators: [{name: 'strong'}, {name: 'em'}],
+        }),
+        initialValue: [
+          {
+            _type: 'block',
+            _key: blockKey,
+            children: [
+              {
+                _type: 'span',
+                _key: spanKey,
+                text: 'foo',
+                marks: ['strong'],
+              },
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+        children: (
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                const {origin: _, ...patch} = event.patch
+                emittedPatches.push(patch)
+              }
+            }}
+          />
+        ),
+      })
+
+      expect(emittedPatches).toEqual([])
+
+      // Simulate a remote set patch that replaces the entire block
+      // with one containing an unknown decorator
+      editor.send({
+        type: 'patches',
+        patches: [
+          {
+            type: 'set',
+            origin: 'remote',
+            path: [{_key: blockKey}],
+            value: {
+              _type: 'block',
+              _key: blockKey,
+              children: [
+                {
+                  _type: 'span',
+                  _key: spanKey,
+                  text: 'foo',
+                  marks: ['strong', 'underline'],
+                },
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          },
+        ],
+        snapshot: [
+          {
+            _type: 'block',
+            _key: blockKey,
+            children: [
+              {
+                _type: 'span',
+                _key: spanKey,
+                text: 'foo',
+                marks: ['strong', 'underline'],
+              },
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      })
+
+      // The editor should normalize the block, strip the unknown
+      // 'underline' decorator, and emit a patch back
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          {
+            _type: 'block',
+            _key: blockKey,
+            children: [
+              {
+                _type: 'span',
+                _key: spanKey,
+                text: 'foo',
+                marks: ['strong'],
+              },
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ])
+      })
+
+      await vi.waitFor(() => {
+        expect(emittedPatches).toEqual([
+          {
+            type: 'set',
+            path: [{_key: blockKey}, 'children', {_key: spanKey}, 'marks'],
+            value: ['strong'],
+          },
+        ])
+      })
+    })
+  })
 })
