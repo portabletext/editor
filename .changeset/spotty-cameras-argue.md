@@ -2,4 +2,4 @@
 '@portabletext/editor': patch
 ---
 
-fix: published source maps
+fix: remove unused internal line utilities
