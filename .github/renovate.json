@@ -78,7 +78,8 @@
     {
       "description": "Group Cucumber packages",
       "matchPackageNames": ["@cucumber/*"],
-      "groupName": "cucumber"
+      "groupName": "cucumber",
+      "separateMajorMinor": false
     },
     {
       "description": "Group JSDOM packages",
