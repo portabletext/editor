@@ -117,12 +117,12 @@ export function createUndoSteps({
     }
   }
 
-  // Handle case when one ID is undefined and the other is not.
-  // This can happen when a forward-only behavior intercepts an event,
-  // causing the operation to be applied with an undoStepId, followed by
-  // a subsequent operation without one (or vice versa). We still want to
-  // merge consecutive text operations in this case.
-  if (currentUndoStepId === undefined || previousUndoStepId === undefined) {
+  // Handle case when the current operation has no undoStepId but the previous
+  // one did. This can happen when a forward-only behavior intercepts an event,
+  // causing the operation to be applied with an undoStepId, followed by a
+  // subsequent operation without one. We still want to merge consecutive text
+  // operations in this case.
+  if (currentUndoStepId === undefined && previousUndoStepId !== undefined) {
     const lastOp = lastStep.operations.at(-1)
 
     if (
