@@ -1,5 +1,6 @@
 import type {PortableTextBlock} from '@portabletext/schema'
 import {applySetNode} from '../internal-utils/apply-set-node'
+import {applySplitNode} from '../internal-utils/apply-split-node'
 import {toSlateRange} from '../internal-utils/to-slate-range'
 import {Editor, Element, Node, Range, Text} from '../slate'
 import type {OperationImplementation} from './operation.types'
@@ -41,22 +42,22 @@ export const decoratorRemoveOperationImplementation: OperationImplementation<
       const endAtEndOfNode = Editor.isEnd(editor, end, end.path)
       if (!endAtEndOfNode || !Editor.isEdge(editor, end, end.path)) {
         const [endNode] = Editor.node(editor, end.path)
-        editor.apply({
-          type: 'split_node',
-          path: end.path,
-          position: end.offset,
-          properties: Node.extractProps(endNode, editor.schema),
-        })
+        applySplitNode(
+          editor,
+          end.path,
+          end.offset,
+          Node.extractProps(endNode, editor.schema),
+        )
       }
       const startAtStartOfNode = Editor.isStart(editor, start, start.path)
       if (!startAtStartOfNode || !Editor.isEdge(editor, start, start.path)) {
         const [startNode] = Editor.node(editor, start.path)
-        editor.apply({
-          type: 'split_node',
-          path: start.path,
-          position: start.offset,
-          properties: Node.extractProps(startNode, editor.schema),
-        })
+        applySplitNode(
+          editor,
+          start.path,
+          start.offset,
+          Node.extractProps(startNode, editor.schema),
+        )
       }
     }
 
