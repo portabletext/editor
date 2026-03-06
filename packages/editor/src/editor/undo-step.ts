@@ -86,6 +86,38 @@ export function createUndoSteps({
     return createNewStep(steps, op, editor)
   }
 
+  // Handle case when one ID is undefined and the other is not.
+  // This can happen when a forward-only behavior intercepts an event,
+  // causing the operation to be applied with an undoStepId, followed by
+  // a subsequent operation without one (or vice versa). We still want to
+  // merge consecutive text operations in this case.
+  if (currentUndoStepId === undefined || previousUndoStepId === undefined) {
+    const lastOp = lastStep.operations.at(-1)
+
+    if (
+      lastOp &&
+      op.type === 'insert_text' &&
+      lastOp.type === 'insert_text' &&
+      op.offset === lastOp.offset + lastOp.text.length &&
+      Path.equals(op.path, lastOp.path) &&
+      op.text !== ' '
+    ) {
+      return mergeIntoLastStep(steps, lastStep, op)
+    }
+
+    if (
+      lastOp &&
+      op.type === 'remove_text' &&
+      lastOp.type === 'remove_text' &&
+      op.offset + op.text.length === lastOp.offset &&
+      Path.equals(op.path, lastOp.path)
+    ) {
+      return mergeIntoLastStep(steps, lastStep, op)
+    }
+
+    return createNewStep(steps, op, editor)
+  }
+
   return createNewStep(steps, op, editor)
 }
 
