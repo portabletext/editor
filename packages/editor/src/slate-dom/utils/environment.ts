@@ -3,10 +3,6 @@ export const IS_IOS =
   typeof window !== 'undefined' &&
   /iPad|iPhone|iPod/.test(navigator.userAgent) &&
   !(window as any).MSStream
-
-export const IS_APPLE =
-  typeof navigator !== 'undefined' && /Mac OS X/.test(navigator.userAgent)
-
 export const IS_ANDROID =
   typeof navigator !== 'undefined' && /Android/.test(navigator.userAgent)
 
@@ -61,16 +57,6 @@ export const CAN_USE_DOM = !!(
   typeof window.document !== 'undefined' &&
   typeof window.document.createElement !== 'undefined'
 )
-
-// Check if the browser is Safari and older than 17
-export const IS_SAFARI_LEGACY =
-  typeof navigator !== 'undefined' &&
-  /Safari/.test(navigator.userAgent) &&
-  /Version\/(\\d+)/.test(navigator.userAgent) &&
-  (navigator.userAgent.match(/Version\/(\\d+)/)?.[1]
-    ? // biome-ignore lint/suspicious/noNonNullAssertedOptionalChain: Slate upstream — regex match guaranteed by outer test
-      parseInt(navigator.userAgent.match(/Version\/(\\d+)/)?.[1]!, 10) < 17
-    : false)
 
 // COMPAT: Firefox/Edge Legacy don't support the `beforeinput` event
 // Chrome Legacy doesn't support `beforeinput` correctly

@@ -1,4 +1,3 @@
-import type {MutableRefObject} from 'react'
 import {
   Editor,
   Node,
@@ -72,7 +71,6 @@ export interface DOMEditor extends BaseEditor {
   elementToNode: WeakMap<HTMLElement, Node>
   nodeToElement: WeakMap<Node, HTMLElement>
   nodeToKey: WeakMap<Node, Key>
-  changeVersion: MutableRefObject<number>
   readOnly: boolean
   focused: boolean
   composing: boolean
@@ -89,25 +87,9 @@ export interface DOMEditor extends BaseEditor {
 
 export interface DOMEditorInterface {
   /**
-   * Experimental and android specific: Get pending diffs
-   */
-  androidPendingDiffs: (editor: Editor) => TextDiff[] | undefined
-
-  /**
-   * Experimental and android specific: Flush all pending diffs and cancel composition at the next possible time.
-   */
-  androidScheduleFlush: (editor: Editor) => void
-
-  /**
    * Blur the editor.
    */
   blur: (editor: Editor) => void
-
-  /**
-   * Deselect the editor.
-   */
-  deselect: (editor: Editor) => void
-
   /**
    * Find the DOM node that implements DocumentOrShadowRoot for the editor.
    */
@@ -179,11 +161,6 @@ export interface DOMEditorInterface {
    * Check if the editor is focused.
    */
   isFocused: (editor: Editor) => boolean
-
-  /**
-   * Check if the editor is in read-only mode.
-   */
-  isReadOnly: (editor: Editor) => boolean
 
   /**
    * Check if the target is inside void and in an non-readonly editor.
@@ -259,12 +236,6 @@ export interface DOMEditorInterface {
 
 // eslint-disable-next-line no-redeclare
 export const DOMEditor: DOMEditorInterface = {
-  androidPendingDiffs: (editor) => editor.pendingDiffs,
-
-  androidScheduleFlush: (editor) => {
-    editor.scheduleFlush?.()
-  },
-
   blur: (editor) => {
     const el = DOMEditor.toDOMNode(editor, editor)
     const root = DOMEditor.findDocumentOrShadowRoot(editor)
@@ -272,20 +243,6 @@ export const DOMEditor: DOMEditorInterface = {
 
     if (root.activeElement === el) {
       el.blur()
-    }
-  },
-
-  deselect: (editor) => {
-    const {selection} = editor
-    const root = DOMEditor.findDocumentOrShadowRoot(editor)
-    const domSelection = getSelection(root)
-
-    if (domSelection && domSelection.rangeCount > 0) {
-      domSelection.removeAllRanges()
-    }
-
-    if (selection) {
-      Transforms.deselect(editor)
     }
   },
 
@@ -526,8 +483,6 @@ export const DOMEditor: DOMEditorInterface = {
   },
 
   isFocused: (editor) => !!editor.focused,
-
-  isReadOnly: (editor) => !!editor.readOnly,
 
   isTargetInsideNonReadonlyVoid: (editor, target) => {
     if (editor.readOnly) {

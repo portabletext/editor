@@ -49,24 +49,6 @@ export interface TextInterface {
   isText: (value: any, schema: EditorSchema) => value is Text
 
   /**
-   * Check if a value is a list of `Text` objects.
-   */
-  isTextList: (value: any, schema: EditorSchema) => value is Text[]
-
-  /**
-   * Check if some props are a partial of Text.
-   */
-  isTextProps: (props: any) => props is Partial<Text>
-
-  /**
-   * Check if an text matches set of properties.
-   *
-   * Note: this is for matching custom properties, and it does not ensure that
-   * the `text` property are two nodes equal.
-   */
-  matches: (text: Text, props: Partial<Text>) => boolean
-
-  /**
    * Get the leaves for a text node given decorations.
    */
   decorations: (
@@ -94,33 +76,6 @@ export const Text: TextInterface = {
 
   isText(value: any, schema: EditorSchema): value is Text {
     return isObject(value) && value._type === schema.span.name
-  },
-
-  isTextList(value: any, schema: EditorSchema): value is Text[] {
-    return (
-      Array.isArray(value) && value.every((val) => Text.isText(val, schema))
-    )
-  },
-
-  isTextProps(props: any): props is Partial<Text> {
-    return (props as Partial<Text>).text !== undefined
-  },
-
-  matches(text: Text, props: Partial<Text>): boolean {
-    for (const key in props) {
-      if (key === 'text') {
-        continue
-      }
-
-      if (
-        !text.hasOwnProperty(key) ||
-        text[key as keyof Text] !== props[key as keyof Text]
-      ) {
-        return false
-      }
-    }
-
-    return true
   },
 
   decorations(

@@ -63,18 +63,6 @@ const deleteForward = createKeyboardShortcut({
   ],
 })
 
-const extendBackward = createKeyboardShortcut({
-  default: [
-    {key: 'ArrowLeft', shift: true, ctrl: false, meta: false, alt: false},
-  ],
-})
-
-const extendForward = createKeyboardShortcut({
-  default: [
-    {key: 'ArrowRight', shift: true, ctrl: false, meta: false, alt: false},
-  ],
-})
-
 const italic = createKeyboardShortcut({
   default: [{key: 'I', ctrl: true, meta: false, alt: false, shift: false}],
   apple: [{key: 'I', ctrl: false, meta: true, alt: false, shift: false}],
@@ -177,8 +165,6 @@ export default {
   isDeleteLineForward: deleteLineForward.guard,
   isDeleteWordBackward: deleteWordBackward.guard,
   isDeleteWordForward: deleteWordForward.guard,
-  isExtendBackward: extendBackward.guard,
-  isExtendForward: extendForward.guard,
   isExtendLineBackward: extendLineBackward.guard,
   isExtendLineForward: extendLineForward.guard,
   isItalic: italic.guard,
