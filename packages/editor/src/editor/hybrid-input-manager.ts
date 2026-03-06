@@ -468,11 +468,17 @@ export function createHybridInputManager({
             textBlockType: getTextBlockType(),
             elementToNode: editor.elementToNode,
             mutatedNodes,
+            spanType: editorActor.getSnapshot().context.schema.span.name,
           })
         }
 
         const cursorOffset = getCurrentCursorOffset()
-        const change = detectChange(oldBlocks, newBlocks, cursorOffset)
+        const change = detectChange(
+          oldBlocks,
+          newBlocks,
+          cursorOffset,
+          editorActor.getSnapshot().context.schema.span.name,
+        )
 
         const oldTexts = oldBlocks.map((block) => {
           const children = 'children' in block ? block.children : []
@@ -838,6 +844,7 @@ export function createHybridInputManager({
           textBlockType: getTextBlockType(),
           elementToNode: editor.elementToNode,
           mutatedNodes,
+          spanType: editorActor.getSnapshot().context.schema.span.name,
         })
       }
 

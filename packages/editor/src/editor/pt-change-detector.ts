@@ -84,13 +84,16 @@ function hasChildren(block: PortableTextBlock): block is PortableTextTextBlock {
   return 'children' in block && Array.isArray(block.children)
 }
 
-function isPortableTextSpan(child: unknown): child is PortableTextSpan {
+function isPortableTextSpan(
+  child: unknown,
+  spanType: string,
+): child is PortableTextSpan {
   if (typeof child !== 'object' || child === null) {
     return false
   }
   return (
     '_type' in child &&
-    child._type === 'span' &&
+    child._type === spanType &&
     'text' in child &&
     typeof child.text === 'string'
   )
@@ -101,12 +104,14 @@ function isPortableTextSpan(child: unknown): child is PortableTextSpan {
 // string for character-level diffing.
 // ---------------------------------------------------------------------------
 
-function getBlockText(block: PortableTextBlock): string {
+function getBlockText(block: PortableTextBlock, spanType: string): string {
   if (!hasChildren(block)) {
     return ''
   }
   return block.children
-    .filter(isPortableTextSpan)
+    .filter((child): child is PortableTextSpan =>
+      isPortableTextSpan(child, spanType),
+    )
     .map((span) => span.text)
     .join('')
 }
@@ -278,12 +283,18 @@ function alignBlocks(
  *
  * Falls back to the first span's key if the offset can't be resolved.
  */
-function findSpanKeyAtOffset(block: PortableTextBlock, offset: number): string {
+function findSpanKeyAtOffset(
+  block: PortableTextBlock,
+  offset: number,
+  spanType: string,
+): string {
   if (!hasChildren(block)) {
     return ''
   }
 
-  const spans = block.children.filter(isPortableTextSpan)
+  const spans = block.children.filter((child): child is PortableTextSpan =>
+    isPortableTextSpan(child, spanType),
+  )
   if (spans.length === 0) {
     return ''
   }
@@ -310,9 +321,10 @@ function detectTextChange(
   blockKey: string,
   oldBlock: PortableTextBlock,
   newBlock: PortableTextBlock,
+  spanType: string,
 ): PTChange | null {
-  const oldText = getBlockText(oldBlock)
-  const newText = getBlockText(newBlock)
+  const oldText = getBlockText(oldBlock, spanType)
+  const newText = getBlockText(newBlock, spanType)
 
   const diff = findTextDiff(oldText, newText)
   if (!diff) {
@@ -328,7 +340,7 @@ function detectTextChange(
     return {
       type: 'text-insert',
       blockKey,
-      spanKey: findSpanKeyAtOffset(newBlock, diff.diffStart),
+      spanKey: findSpanKeyAtOffset(newBlock, diff.diffStart, spanType),
       offset: diff.diffStart,
       text: insertedText,
     }
@@ -340,7 +352,7 @@ function detectTextChange(
     return {
       type: 'text-delete',
       blockKey,
-      spanKey: findSpanKeyAtOffset(oldBlock, diff.diffStart),
+      spanKey: findSpanKeyAtOffset(oldBlock, diff.diffStart, spanType),
       from: diff.diffStart,
       to: diff.oldEnd,
     }
@@ -351,7 +363,7 @@ function detectTextChange(
   return {
     type: 'text-replace',
     blockKey,
-    spanKey: findSpanKeyAtOffset(oldBlock, diff.diffStart),
+    spanKey: findSpanKeyAtOffset(oldBlock, diff.diffStart, spanType),
     from: diff.diffStart,
     to: diff.oldEnd,
     text: insertedText,
@@ -375,6 +387,7 @@ function detectBlockSplit(
   alignment: BlockAlignment,
   _oldBlocks: PortableTextBlock[],
   newBlocks: PortableTextBlock[],
+  spanType: string,
 ): BlockSplitChange | null {
   const {insertedKeys, deletedKeys} = alignment
 
@@ -419,9 +432,9 @@ function detectBlockSplit(
   }
 
   // Verify the split: old text should equal new text of original + new text of inserted
-  const oldText = getBlockText(oldOriginalBlock)
-  const newOriginalText = getBlockText(precedingBlock)
-  const insertedText = getBlockText(insertedBlock)
+  const oldText = getBlockText(oldOriginalBlock, spanType)
+  const newOriginalText = getBlockText(precedingBlock, spanType)
+  const insertedText = getBlockText(insertedBlock, spanType)
 
   if (oldText === newOriginalText + insertedText) {
     return {
@@ -450,6 +463,7 @@ function detectBlockSplit(
 function detectBlockMerge(
   alignment: BlockAlignment,
   oldBlocks: PortableTextBlock[],
+  spanType: string,
 ): BlockMergeChange | null {
   const {insertedKeys, deletedKeys} = alignment
 
@@ -479,7 +493,7 @@ function detectBlockMerge(
     return null
   }
 
-  const removedText = getBlockText(removedBlock)
+  const removedText = getBlockText(removedBlock, spanType)
 
   // Check if the block before the removed block absorbed its content
   // (forward merge — Backspace at start of second block)
@@ -492,8 +506,8 @@ function detectBlockMerge(
     const newPrecedingBlock = alignment.newBlocksByKey.get(precedingKey)
 
     if (newPrecedingBlock) {
-      const oldPrecedingText = getBlockText(precedingBlock)
-      const newPrecedingText = getBlockText(newPrecedingBlock)
+      const oldPrecedingText = getBlockText(precedingBlock, spanType)
+      const newPrecedingText = getBlockText(newPrecedingBlock, spanType)
 
       if (newPrecedingText === oldPrecedingText + removedText) {
         return {
@@ -517,8 +531,8 @@ function detectBlockMerge(
     const newFollowingBlock = alignment.newBlocksByKey.get(followingKey)
 
     if (newFollowingBlock) {
-      const oldFollowingText = getBlockText(followingBlock)
-      const newFollowingText = getBlockText(newFollowingBlock)
+      const oldFollowingText = getBlockText(followingBlock, spanType)
+      const newFollowingText = getBlockText(newFollowingBlock, spanType)
 
       if (newFollowingText === removedText + oldFollowingText) {
         return {
@@ -559,6 +573,7 @@ export function detectChange(
   oldBlocks: PortableTextBlock[],
   newBlocks: PortableTextBlock[],
   cursorOffset?: number,
+  spanType: string = 'span',
 ): PTChange {
   // Fast path: identical arrays (by reference or both empty)
   if (oldBlocks === newBlocks) {
@@ -579,13 +594,18 @@ export function detectChange(
   // -----------------------------------------------------------------------
 
   // Block split: one new block appeared, no blocks deleted
-  const splitChange = detectBlockSplit(alignment, oldBlocks, newBlocks)
+  const splitChange = detectBlockSplit(
+    alignment,
+    oldBlocks,
+    newBlocks,
+    spanType,
+  )
   if (splitChange) {
     return splitChange
   }
 
   // Block merge: one block deleted, no new blocks
-  const mergeChange = detectBlockMerge(alignment, oldBlocks)
+  const mergeChange = detectBlockMerge(alignment, oldBlocks, spanType)
   if (mergeChange) {
     return mergeChange
   }
@@ -650,7 +670,12 @@ export function detectChange(
       continue
     }
 
-    const textChange = detectTextChange(matchedKey, oldBlock, newBlock)
+    const textChange = detectTextChange(
+      matchedKey,
+      oldBlock,
+      newBlock,
+      spanType,
+    )
     if (textChange) {
       textChanges.push(textChange)
     }
@@ -673,7 +698,7 @@ export function detectChange(
       // need to map it to block-local offsets.
       let runningOffset = 0
       for (const newBlock of newBlocks) {
-        const blockText = getBlockText(newBlock)
+        const blockText = getBlockText(newBlock, spanType)
         const blockEnd = runningOffset + blockText.length
 
         if (cursorOffset >= runningOffset && cursorOffset <= blockEnd) {

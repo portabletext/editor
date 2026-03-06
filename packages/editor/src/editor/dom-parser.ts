@@ -21,6 +21,11 @@ export interface ParseDOMOptions {
   textBlockType: string
 
   /**
+   * The `_type` name used for spans in the schema (usually `'span'`).
+   */
+  spanType: string
+
+  /**
    * The WeakMap from DOM elements to Slate nodes, sourced from
    * `editor.elementToNode`. This is the primary mechanism for looking up
    * existing Slate data for DOM elements that haven't been mutated.
@@ -271,7 +276,8 @@ function parseTextBlock(
   const block: Record<string, unknown> = {
     _key: blockKey,
     _type: blockType,
-    children: children.length > 0 ? children : [createEmptySpan()],
+    children:
+      children.length > 0 ? children : [createEmptySpan(options.spanType)],
   }
 
   if (style !== undefined) {
@@ -408,7 +414,7 @@ function parseLeafElement(
 
   return {
     _key: spanKey,
-    _type: 'span',
+    _type: options.spanType as 'span',
     text: textContent,
     marks,
   }
@@ -733,10 +739,10 @@ function extractKeyFromSlateNode(
  * Create an empty span — used as the default child when a text block
  * has no parseable content.
  */
-function createEmptySpan(): PortableTextSpan {
+function createEmptySpan(spanType: string): PortableTextSpan {
   return {
     _key: generateTemporaryKey(),
-    _type: 'span',
+    _type: spanType as 'span',
     text: '',
     marks: [],
   }
