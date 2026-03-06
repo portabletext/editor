@@ -6,21 +6,6 @@ export interface ChunkTree {
   children: ChunkDescendant[]
 
   /**
-   * The keys of any Slate nodes that have been moved using move_node since the
-   * last render
-   *
-   * Detecting when a node has been moved to a different position in the
-   * children array is impossible to do efficiently while reconciling the chunk
-   * tree. This interferes with the reconciliation logic since it is treated as
-   * if the intermediate nodes were inserted and removed, causing them to be
-   * re-chunked unnecessarily.
-   *
-   * This set is used to detect when a node has been moved so that this case
-   * can be handled correctly and efficiently.
-   */
-  movedNodeKeys: Set<Key>
-
-  /**
    * The chunks whose descendants have been modified during the most recent
    * reconciliation
    *

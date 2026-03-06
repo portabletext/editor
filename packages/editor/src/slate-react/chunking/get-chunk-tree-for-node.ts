@@ -23,7 +23,6 @@ export const getChunkTreeForNode = (
   if (!chunkTree) {
     chunkTree = {
       type: 'root',
-      movedNodeKeys: new Set(),
       modifiedChunks: new Set(),
       children: [],
     }

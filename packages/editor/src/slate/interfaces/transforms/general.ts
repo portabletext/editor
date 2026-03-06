@@ -4,11 +4,11 @@ import {
   Point,
   Range,
   Scrubber,
-  type Text,
   type Editor,
   type NodeEntry,
   type Operation,
   type Selection,
+  type Text,
 } from '../../index'
 import {
   insertChildren,
@@ -65,42 +65,6 @@ export const GeneralTransforms: GeneralTransforms = {
             text: before + text + after,
           }
         })
-
-        transformSelection = true
-        break
-      }
-
-      case 'move_node': {
-        const {path, newPath} = op
-        const index = path[path.length - 1]!
-
-        if (Path.isAncestor(path, newPath)) {
-          throw new Error(
-            `Cannot move a path [${path}] to new path [${newPath}] because the destination is inside itself.`,
-          )
-        }
-
-        const node = Node.get(editor, path, editor.schema)
-
-        modifyChildren(editor, Path.parent(path), editor.schema, (children) =>
-          removeChildren(children, index, 1),
-        )
-
-        // This is tricky, but since the `path` and `newPath` both refer to
-        // the same snapshot in time, there's a mismatch. After either
-        // removing the original position, the second step's path can be out
-        // of date. So instead of using the `op.newPath` directly, we
-        // transform `op.path` to ascertain what the `newPath` would be after
-        // the operation was applied.
-        const truePath = Path.transform(path, op)!
-        const newIndex = truePath[truePath.length - 1]!
-
-        modifyChildren(
-          editor,
-          Path.parent(truePath),
-          editor.schema,
-          (children) => insertChildren(children, newIndex, node),
-        )
 
         transformSelection = true
         break

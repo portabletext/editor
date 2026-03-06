@@ -7,7 +7,6 @@ import {debug} from '../internal-utils/debug'
 import {
   insertNodePatch,
   insertTextPatch,
-  moveNodePatch,
   removeNodePatch,
   removeTextPatch,
   setNodePatch,
@@ -185,16 +184,6 @@ export function createPatchesPlugin({
             ...setNodePatch(
               editorActor.getSnapshot().context.schema,
               editor.children,
-              operation,
-            ),
-          ]
-          break
-        case 'move_node':
-          patches = [
-            ...patches,
-            ...moveNodePatch(
-              editorActor.getSnapshot().context.schema,
-              previousValue,
               operation,
             ),
           ]

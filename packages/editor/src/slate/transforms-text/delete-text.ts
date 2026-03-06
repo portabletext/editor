@@ -1,4 +1,5 @@
 import {applyMergeNode} from '../../internal-utils/apply-merge-node'
+import {applyMoveNode} from '../../internal-utils/apply-move-node'
 import {applySetNode} from '../../internal-utils/apply-set-node'
 import type {PortableTextSlateEditor} from '../../types/slate-editor'
 import {Editor} from '../interfaces/editor'
@@ -260,11 +261,7 @@ export const deleteText: TextTransforms['delete'] = (editor, options = {}) => {
           }
 
           if (!isPreviousSibling) {
-            Transforms.moveNodes(editor, {
-              at: mergePath,
-              to: newPath,
-              voids,
-            })
+            applyMoveNode(editor, mergePath, newPath)
           }
 
           if (emptyRef) {

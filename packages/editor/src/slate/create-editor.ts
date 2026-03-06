@@ -46,7 +46,7 @@ import {
   unhangRange,
   withoutNormalizing,
 } from './editor'
-import {insertNodes, moveNodes, removeNodes} from './transforms-node'
+import {insertNodes, removeNodes} from './transforms-node'
 import {
   collapse,
   deselect,
@@ -129,7 +129,9 @@ export const createEditor = (context: {
       throw new Error('mergeNodes is no longer supported')
     },
     move: (...args: any[]) => (move as any)(e, ...args),
-    moveNodes: (...args: any[]) => (moveNodes as any)(e, ...args),
+    moveNodes: () => {
+      throw new Error('moveNodes is no longer supported')
+    },
     next: (...args: any[]) => (next as any)(e, ...args),
     node: (...args: any[]) => (node as any)(e, ...args),
     nodes: (...args: any[]) => (nodes as any)(e, ...args),

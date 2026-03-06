@@ -14,7 +14,6 @@ import {defaultKeyGenerator} from '../utils/key-generator'
 import {
   insertNodePatch,
   insertTextPatch,
-  moveNodePatch,
   removeNodePatch,
   removeTextPatch,
 } from './operation-to-patches'
@@ -472,54 +471,6 @@ describe('defensive setIfMissing patches', () => {
           ],
           path: [{_key: '1f2e64b47787'}, 'children', {_key: 'fd9b4a4e6c0b'}],
           position: 'after',
-        },
-      ])
-    })
-  })
-
-  describe(moveNodePatch.name, () => {
-    test('includes setIfMissing before inserting child after move', () => {
-      const twoBlockValue = [
-        {
-          _type: 'block',
-          _key: 'block1',
-          style: 'normal',
-          markDefs: [],
-          children: [
-            {_type: 'span', _key: 'span1', text: 'first', marks: []},
-            {_type: 'span', _key: 'span2', text: 'second', marks: []},
-          ],
-        },
-        {
-          _type: 'block',
-          _key: 'block2',
-          style: 'normal',
-          markDefs: [],
-          children: [{_type: 'span', _key: 'span3', text: 'third', marks: []}],
-        },
-      ]
-
-      const patches = moveNodePatch(schema, twoBlockValue, {
-        type: 'move_node',
-        path: [0, 1],
-        newPath: [1, 0],
-      })
-
-      expect(patches).toEqual([
-        {
-          type: 'unset',
-          path: [{_key: 'block1'}, 'children', {_key: 'span2'}],
-        },
-        {
-          type: 'setIfMissing',
-          path: [{_key: 'block2'}, 'children'],
-          value: [],
-        },
-        {
-          type: 'insert',
-          items: [{_type: 'span', _key: 'span2', text: 'second', marks: []}],
-          path: [{_key: 'block2'}, 'children', {_key: 'span3'}],
-          position: 'before',
         },
       ])
     })

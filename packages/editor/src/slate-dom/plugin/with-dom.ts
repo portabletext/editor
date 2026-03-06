@@ -8,7 +8,6 @@ import {
   Range,
   Transforms,
   type Operation,
-  type PathRef,
   type PointRef,
 } from '../../slate'
 import {
@@ -67,7 +66,6 @@ export const withDOM = <T extends Editor>(
   // as apply() changes the object reference and hence invalidates the nodeToKey entry
   e.apply = (op: Operation) => {
     const matches: [Path, Key][] = []
-    const pathRefMatches: [PathRef, Key][] = []
 
     const pendingDiffs = e.pendingDiffs
     if (pendingDiffs?.length) {
@@ -112,34 +110,6 @@ export const withDOM = <T extends Editor>(
         matches.push(...getMatches(e, Path.parent(op.path)))
         break
       }
-
-      case 'move_node': {
-        const commonPath = Path.common(
-          Path.parent(op.path),
-          Path.parent(op.newPath),
-        )
-        matches.push(...getMatches(e, commonPath))
-
-        let changedPath: Path
-        if (Path.isBefore(op.path, op.newPath)) {
-          matches.push(...getMatches(e, Path.parent(op.path)))
-          changedPath = op.newPath
-        } else {
-          matches.push(...getMatches(e, Path.parent(op.newPath)))
-          changedPath = op.path
-        }
-
-        const changedNode = Node.get(
-          editor,
-          Path.parent(changedPath),
-          editor.schema,
-        )
-        const changedNodeKey = DOMEditor.findKey(e, changedNode)
-        const changedPathRef = Editor.pathRef(e, Path.parent(changedPath))
-        pathRefMatches.push([changedPathRef, changedNodeKey])
-
-        break
-      }
     }
 
     apply(op)
@@ -147,7 +117,6 @@ export const withDOM = <T extends Editor>(
     switch (op.type) {
       case 'insert_node':
       case 'remove_node':
-      case 'move_node':
       case 'insert_text':
       case 'remove_text':
       case 'set_selection': {
@@ -160,15 +129,6 @@ export const withDOM = <T extends Editor>(
     for (const [path, key] of matches) {
       const [node] = Editor.node(e, path)
       e.nodeToKey.set(node, key)
-    }
-
-    for (const [pathRef, key] of pathRefMatches) {
-      if (pathRef.current) {
-        const [node] = Editor.node(e, pathRef.current)
-        e.nodeToKey.set(node, key)
-      }
-
-      pathRef.unref()
     }
   }
 

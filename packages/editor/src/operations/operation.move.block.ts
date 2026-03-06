@@ -1,3 +1,4 @@
+import {applyMoveNode} from '../internal-utils/apply-move-node'
 import {getBlockKeyFromSelectionPoint} from '../utils/util.selection-point'
 import type {OperationImplementation} from './operation.types'
 
@@ -35,9 +36,5 @@ export const moveBlockOperationImplementation: OperationImplementation<
     throw new Error('Failed to get block index from block key')
   }
 
-  operation.editor.apply({
-    type: 'move_node',
-    path: [originBlockIndex],
-    newPath: [destinationBlockIndex],
-  })
+  applyMoveNode(operation.editor, [originBlockIndex], [destinationBlockIndex])
 }

@@ -83,7 +83,7 @@ export interface BaseEditor {
   insertText: OmitFirstArg<typeof Transforms.insertText>
   mergeNodes: (...args: any[]) => void
   move: OmitFirstArg<typeof Transforms.move>
-  moveNodes: OmitFirstArg<typeof Transforms.moveNodes>
+  moveNodes: (...args: any[]) => void
   normalize: OmitFirstArg<typeof Editor.normalize>
   removeNodes: OmitFirstArg<typeof Transforms.removeNodes>
   select: OmitFirstArg<typeof Transforms.select>

@@ -4,7 +4,6 @@ import {
   set,
   setIfMissing,
   unset,
-  type InsertPosition,
   type Patch,
 } from '@portabletext/patches'
 import {
@@ -20,7 +19,6 @@ import {
   type Descendant,
   type InsertNodeOperation,
   type InsertTextOperation,
-  type MoveNodeOperation,
   type RemoveNodeOperation,
   type RemoveTextOperation,
   type SetNodeOperation,
@@ -345,51 +343,4 @@ export function removeNodePatch(
   } else {
     return []
   }
-}
-
-export function moveNodePatch(
-  schema: EditorSchema,
-  beforeValue: Array<PortableTextBlock>,
-  operation: MoveNodeOperation,
-): Array<Patch> {
-  const patches: Patch[] = []
-  const block = beforeValue[operation.path[0]!]
-  const targetBlock = beforeValue[operation.newPath[0]!]
-
-  if (!targetBlock || !block) {
-    return patches
-  }
-
-  if (operation.path.length === 1) {
-    const position: InsertPosition =
-      operation.path[0]! > operation.newPath[0]! ? 'before' : 'after'
-    patches.push(unset([{_key: block._key}]))
-    patches.push(insert([block], position, [{_key: targetBlock._key}]))
-  } else if (
-    operation.path.length === 2 &&
-    isTextBlock({schema}, block) &&
-    isTextBlock({schema}, targetBlock)
-  ) {
-    const child = block.children[operation.path[1]!]
-    const targetChild = targetBlock.children[operation.newPath[1]!]
-    const position =
-      operation.newPath[1]! === targetBlock.children.length ? 'after' : 'before'
-    const childToInsert = block.children[operation.path[1]!]
-
-    if (!child || !targetChild || !childToInsert) {
-      return patches
-    }
-
-    patches.push(unset([{_key: block._key}, 'children', {_key: child._key}]))
-    // Defensive setIfMissing to ensure children array exists before inserting
-    patches.push(setIfMissing([], [{_key: targetBlock._key}, 'children']))
-    patches.push(
-      insert([childToInsert], position, [
-        {_key: targetBlock._key},
-        'children',
-        {_key: targetChild._key},
-      ]),
-    )
-  }
-  return patches
 }

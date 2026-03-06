@@ -31,33 +31,6 @@ export const getDirtyPaths: WithEditorFirstArg<Editor['getDirtyPaths']> = (
       return [...levels, ...descendants]
     }
 
-    case 'move_node': {
-      const {path, newPath} = op
-
-      if (Path.equals(path, newPath)) {
-        return []
-      }
-
-      const oldAncestors: Path[] = []
-      const newAncestors: Path[] = []
-
-      for (const ancestor of Path.ancestors(path)) {
-        const p = Path.transform(ancestor, op)
-        oldAncestors.push(p!)
-      }
-
-      for (const ancestor of Path.ancestors(newPath)) {
-        const p = Path.transform(ancestor, op)
-        newAncestors.push(p!)
-      }
-
-      const newParent = newAncestors[newAncestors.length - 1]!
-      const newIndex = newPath[newPath.length - 1]!
-      const resultPath = newParent.concat(newIndex)
-
-      return [...oldAncestors, ...newAncestors, resultPath]
-    }
-
     case 'remove_node': {
       const {path} = op
       const ancestors = Path.ancestors(path)
