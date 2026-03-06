@@ -7,12 +7,9 @@ import {debug} from '../internal-utils/debug'
 import {
   insertNodePatch,
   insertTextPatch,
-  mergeNodePatch,
-  moveNodePatch,
   removeNodePatch,
   removeTextPatch,
   setNodePatch,
-  splitNodePatch,
 } from '../internal-utils/operation-to-patches'
 import {isEqualToEmptyEditor} from '../internal-utils/values'
 import {Editor, type Operation} from '../slate'
@@ -170,17 +167,6 @@ export function createPatchesPlugin({
             ),
           ]
           break
-        case 'split_node':
-          patches = [
-            ...patches,
-            ...splitNodePatch(
-              editorActor.getSnapshot().context.schema,
-              editor.children,
-              operation,
-              previousValue,
-            ),
-          ]
-          break
         case 'insert_node':
           patches = [
             ...patches,
@@ -202,27 +188,6 @@ export function createPatchesPlugin({
             ),
           ]
           break
-        case 'merge_node':
-          patches = [
-            ...patches,
-            ...mergeNodePatch(
-              editorActor.getSnapshot().context.schema,
-              editor.children,
-              operation,
-              previousValue,
-            ),
-          ]
-          break
-        case 'move_node':
-          patches = [
-            ...patches,
-            ...moveNodePatch(
-              editorActor.getSnapshot().context.schema,
-              previousValue,
-              operation,
-            ),
-          ]
-          break
         default:
         // Do nothing
       }
@@ -231,9 +196,7 @@ export function createPatchesPlugin({
       if (
         !editorWasEmpty &&
         editorIsEmpty &&
-        ['merge_node', 'set_node', 'remove_text', 'remove_node'].includes(
-          operation.type,
-        )
+        ['set_node', 'remove_text', 'remove_node'].includes(operation.type)
       ) {
         patches = [...patches, unset([])]
         relayActor.send({

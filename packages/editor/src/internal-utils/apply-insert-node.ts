@@ -1,6 +1,7 @@
 import {Editor, Element, Node, Path, Text, type Point} from '../slate'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {applySelect} from './apply-selection'
+import {applySplitNode} from './apply-split-node'
 
 /**
  * Insert a node at a known path and optionally select the end of the
@@ -85,12 +86,7 @@ export function applyInsertNodeAtPoint(
       const textNode = Node.get(editor, at.path, editor.schema)
       const properties = Node.extractProps(textNode, editor.schema)
 
-      editor.apply({
-        type: 'split_node',
-        path: at.path,
-        position: at.offset,
-        properties,
-      })
+      applySplitNode(editor, at.path, at.offset, properties)
     }
 
     const path = pathRef.unref()!

@@ -1,6 +1,7 @@
 import type {PortableTextObject, PortableTextSpan} from '@portabletext/schema'
 import type {EditorActor} from '../editor/editor-machine'
 import {applyInsertNodeAtPath} from '../internal-utils/apply-insert-node'
+import {applyMergeNode} from '../internal-utils/apply-merge-node'
 import {applySetNode} from '../internal-utils/apply-set-node'
 import {createPlaceholderBlock} from '../internal-utils/create-placeholder-block'
 import {debug} from '../internal-utils/debug'
@@ -39,7 +40,7 @@ export function createNormalizationPlugin(
       }
 
       /**
-       * Merge spans with same set of .marks when doing merge_node operations
+       * Merge spans with same set of .marks
        */
       if (editor.isTextBlock(node)) {
         const children = Node.children(editor, path, editor.schema)
@@ -57,12 +58,7 @@ export function createNormalizationPlugin(
             withNormalizeNode(editor, () => {
               const mergePath = [childPath[0]!, childPath[1]! + 1]
               const {text: _text, ...properties} = nextNode
-              editor.apply({
-                type: 'merge_node',
-                path: mergePath,
-                position: child.text.length,
-                properties,
-              })
+              applyMergeNode(editor, mergePath, child.text.length, properties)
             })
             return
           }
@@ -242,15 +238,7 @@ export function createNormalizationPlugin(
       }
 
       // Check consistency of markDefs (unless we are merging two nodes)
-      if (
-        editor.isTextBlock(node) &&
-        !editor.operations.some(
-          (op) =>
-            op.type === 'merge_node' &&
-            'markDefs' in op.properties &&
-            op.path.length === 1,
-        )
-      ) {
+      if (editor.isTextBlock(node)) {
         const newMarkDefs = (node.markDefs || []).filter((def) => {
           return node.children.find((child) => {
             return (
@@ -260,6 +248,7 @@ export function createNormalizationPlugin(
             )
           })
         })
+
         if (node.markDefs && !isEqualMarkDefs(newMarkDefs, node.markDefs)) {
           debug.normalization('removing markDef not in use')
           withNormalizeNode(editor, () => {
@@ -361,40 +350,6 @@ export function createNormalizationPlugin(
         } else {
           // In any other case, we want to clear the decorator state.
           editor.decoratorState = {}
-        }
-      }
-
-      /**
-       * Copy over markDefs when merging blocks
-       */
-      if (
-        op.type === 'merge_node' &&
-        op.path.length === 1 &&
-        'markDefs' in op.properties &&
-        op.properties._type ===
-          editorActor.getSnapshot().context.schema.block.name &&
-        Array.isArray(op.properties.markDefs) &&
-        op.properties.markDefs.length > 0 &&
-        op.path[0]! - 1 >= 0
-      ) {
-        const [targetBlock, targetPath] = Editor.node(editor, [op.path[0]! - 1])
-
-        if (editor.isTextBlock(targetBlock)) {
-          const oldDefs =
-            (Array.isArray(targetBlock.markDefs) && targetBlock.markDefs) || []
-          const newMarkDefs = [
-            ...new Map(
-              [...oldDefs, ...op.properties.markDefs].map((def) => [
-                def._key,
-                def,
-              ]),
-            ).values(),
-          ]
-
-          debug.normalization(`copying markDefs over to merged block`, op)
-          applySetNode(editor, {markDefs: newMarkDefs}, targetPath)
-          apply(op)
-          return
         }
       }
 

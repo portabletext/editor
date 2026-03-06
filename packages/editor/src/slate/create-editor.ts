@@ -45,13 +45,7 @@ import {
   unhangRange,
   withoutNormalizing,
 } from './editor'
-import {
-  insertNodes,
-  mergeNodes,
-  moveNodes,
-  removeNodes,
-  splitNodes,
-} from './transforms-node'
+import {insertNodes, removeNodes} from './transforms-node'
 import {
   collapse,
   deselect,
@@ -129,9 +123,7 @@ export const createEditor = (context: {
     isStart: (...args: any[]) => (isStart as any)(e, ...args),
     leaf: (...args: any[]) => (leaf as any)(e, ...args),
     levels: (...args: any[]) => (levels as any)(e, ...args),
-    mergeNodes: (...args: any[]) => (mergeNodes as any)(e, ...args),
     move: (...args: any[]) => (move as any)(e, ...args),
-    moveNodes: (...args: any[]) => (moveNodes as any)(e, ...args),
     next: (...args: any[]) => (next as any)(e, ...args),
     node: (...args: any[]) => (node as any)(e, ...args),
     nodes: (...args: any[]) => (nodes as any)(e, ...args),
@@ -149,7 +141,6 @@ export const createEditor = (context: {
     select: (...args: any[]) => (select as any)(e, ...args),
     setNormalizing: (...args: any[]) => (setNormalizing as any)(e, ...args),
     setSelection: (...args: any[]) => (setSelection as any)(e, ...args),
-    splitNodes: (...args: any[]) => (splitNodes as any)(e, ...args),
     start: (...args: any[]) => (start as any)(e, ...args),
     string: (...args: any[]) => (string as any)(e, ...args),
     unhangRange: (...args: any[]) => (unhangRange as any)(e, ...args),

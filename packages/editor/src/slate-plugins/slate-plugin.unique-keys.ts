@@ -1,10 +1,9 @@
 import type {PortableTextBlock} from '@portabletext/schema'
-import {isSpan, isTextBlock} from '@portabletext/schema'
+import {isTextBlock} from '@portabletext/schema'
 import type {EditorActor} from '../editor/editor-machine'
 import type {EditorContext, EditorSnapshot} from '../editor/editor-snapshot'
 import {applySetNode} from '../internal-utils/apply-set-node'
-import {isEqualMarks} from '../internal-utils/equality'
-import {Editor, Element, Node, Path} from '../slate'
+import {Editor, Element, Node, type Path} from '../slate'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {withNormalizeNode} from './slate-plugin.normalize-node'
 
@@ -42,37 +41,6 @@ export function createUniqueKeysPlugin(editorActor: EditorActor) {
         return
       }
 
-      if (operation.type === 'split_node') {
-        const _key =
-          operation.properties._key &&
-          keyExistsAtPath(
-            {
-              blockIndexMap: editor.blockIndexMap,
-              context: {
-                schema: context.schema,
-                value: editor.children as Array<PortableTextBlock>,
-              },
-            },
-            operation.path,
-            operation.properties._key,
-          )
-            ? undefined
-            : operation.properties._key
-
-        apply({
-          ...operation,
-          properties: {
-            ...operation.properties,
-            _key:
-              _key === undefined
-                ? editorActor.getSnapshot().context.keyGenerator()
-                : _key,
-          },
-        })
-
-        return
-      }
-
       if (operation.type === 'insert_node') {
         if (!Editor.isEditor(operation.node)) {
           const _key =
@@ -104,103 +72,6 @@ export function createUniqueKeysPlugin(editorActor: EditorActor) {
 
           return
         }
-      }
-
-      if (operation.type === 'merge_node') {
-        const index = operation.path[operation.path.length - 1]!
-        const prevPath = Path.previous(operation.path)
-        const prevIndex = prevPath[prevPath.length - 1]!
-
-        if (operation.path.length !== 1 || prevPath.length !== 1) {
-          apply(operation)
-          return
-        }
-
-        const block = (editor.children as Array<PortableTextBlock>).at(index)
-        const previousBlock = (editor.children as Array<PortableTextBlock>).at(
-          prevIndex,
-        )
-
-        if (!block || !previousBlock) {
-          apply(operation)
-          return
-        }
-
-        if (
-          !isTextBlock(editorActor.getSnapshot().context, block) ||
-          !isTextBlock(editorActor.getSnapshot().context, previousBlock)
-        ) {
-          apply(operation)
-          return
-        }
-
-        // If we are merging two text blocks, then we need to make sure there
-        // are no duplicate keys in the blocks. Therefore, we assign new keys
-        // to any child or markDef that shares key with other children or
-        // markDefs in the previous block.
-        const previousBlockChildKeys = previousBlock.children.map(
-          (child) => child._key,
-        )
-        const previousBlockMarkDefKeys =
-          previousBlock.markDefs?.map((markDef) => markDef._key) ?? []
-
-        // Assign new keys to markDefs with duplicate keys and keep track of
-        // the mapping between the old and new keys
-        const markDefKeyMap = new Map<string, string>()
-        const adjustedMarkDefs = block.markDefs?.map((markDef) => {
-          if (previousBlockMarkDefKeys.includes(markDef._key)) {
-            const newKey = editorActor.getSnapshot().context.keyGenerator()
-            markDefKeyMap.set(markDef._key, newKey)
-            return {
-              ...markDef,
-              _key: newKey,
-            }
-          }
-
-          return markDef
-        })
-
-        // Assign new keys to spans with duplicate keys and update any markDef
-        // key if needed
-        let childIndex = 0
-        for (const child of block.children) {
-          if (isSpan(editorActor.getSnapshot().context, child)) {
-            const marks =
-              child.marks?.map((mark) => {
-                const markDefKey = markDefKeyMap.get(mark)
-
-                if (markDefKey) {
-                  return markDefKey
-                }
-
-                return mark
-              }) ?? []
-
-            if (!isEqualMarks(child.marks, marks)) {
-              applySetNode(editor, {marks}, [index, childIndex])
-            }
-          }
-
-          if (previousBlockChildKeys.includes(child._key)) {
-            applySetNode(
-              editor,
-              {_key: editorActor.getSnapshot().context.keyGenerator()},
-              [index, childIndex],
-            )
-          }
-          childIndex++
-        }
-
-        apply({
-          ...operation,
-          properties: {
-            ...operation.properties,
-            // Make sure the adjusted markDefs are carried along for the merge
-            // operation
-            markDefs: adjustedMarkDefs,
-          },
-        })
-        return
       }
 
       apply(operation)
