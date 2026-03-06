@@ -1,5 +1,14 @@
 # Changelog
 
+## 7.0.13
+
+### Patch Changes
+
+- Updated dependencies [[`626a8c4`](https://github.com/portabletext/editor/commit/626a8c4bfb0f739c3bdf1b4df3db42a38fd4ac90)]:
+  - @portabletext/editor@6.1.1
+  - @portabletext/plugin-character-pair-decorator@7.0.13
+  - @portabletext/plugin-input-rule@4.0.13
+
 ## 7.0.12
 
 ### Patch Changes
