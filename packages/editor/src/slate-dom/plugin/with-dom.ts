@@ -27,10 +27,7 @@ import {DOMEditor} from './dom-editor'
  * See https://docs.slatejs.org/concepts/11-typescript to learn how.
  */
 
-export const withDOM = <T extends Editor>(
-  editor: T,
-  clipboardFormatKey = 'x-slate-fragment',
-): T & DOMEditor => {
+export const withDOM = <T extends Editor>(editor: T): T & DOMEditor => {
   const e = editor as T & DOMEditor
   const {apply, onChange} = e
 
@@ -46,7 +43,6 @@ export const withDOM = <T extends Editor>(
   e.elementToNode = new WeakMap()
   e.nodeToElement = new WeakMap()
   e.nodeToKey = new WeakMap()
-  e.changeVersion = {current: 0}
   e.readOnly = false
   e.focused = false
   e.composing = false
@@ -251,7 +247,7 @@ export const withDOM = <T extends Editor>(
     const string = JSON.stringify(fragment)
     const encoded = window.btoa(encodeURIComponent(string))
     attach.setAttribute('data-slate-fragment', encoded)
-    data.setData(`application/${clipboardFormatKey}`, encoded)
+    data.setData('application/x-slate-fragment', encoded)
 
     // Add the content to a <div> so that we can get its inner HTML.
     const div = contents.ownerDocument.createElement('div')

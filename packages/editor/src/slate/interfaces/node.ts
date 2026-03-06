@@ -3,7 +3,7 @@ import type {EditorSchema} from '../../editor/editor-schema'
 import type {ExtendedType} from '../types/custom-types'
 import {isObject} from '../utils/is-object'
 import {modifyChildren, modifyLeaf, removeChildren} from '../utils/modify'
-import {Element, type ElementEntry} from './element'
+import {Element} from './element'
 
 /**
  * `ObjectNode` represents a node with semantic content but no children or text.
@@ -26,26 +26,8 @@ export type ObjectNode = ExtendedType<'ObjectNode', BaseObjectNode>
 export type BaseNode = Editor | Element | ObjectNode | Text
 export type Node = Editor | Element | ObjectNode | Text
 
-export interface NodeAncestorsOptions {
-  reverse?: boolean
-}
-
 export interface NodeChildrenOptions {
   reverse?: boolean
-}
-
-export interface NodeDescendantsOptions {
-  from?: Path
-  to?: Path
-  reverse?: boolean
-  pass?: (node: NodeEntry) => boolean
-}
-
-export interface NodeElementsOptions {
-  from?: Path
-  to?: Path
-  reverse?: boolean
-  pass?: (node: NodeEntry) => boolean
 }
 
 export interface NodeLevelsOptions {
@@ -73,19 +55,6 @@ export interface NodeInterface {
   ancestor: (root: Node, path: Path, schema: EditorSchema) => Ancestor
 
   /**
-   * Return a generator of all the ancestor nodes above a specific path.
-   *
-   * By default the order is top-down, from highest to lowest ancestor in
-   * the tree, but you can pass the `reverse: true` option to go bottom-up.
-   */
-  ancestors: (
-    root: Node,
-    path: Path,
-    schema: EditorSchema,
-    options?: NodeAncestorsOptions,
-  ) => Generator<NodeEntry<Ancestor>, void, undefined>
-
-  /**
    * Get the child of a node at a specific index.
    */
   child: (root: Node, index: number, schema: EditorSchema) => Descendant
@@ -99,41 +68,6 @@ export interface NodeInterface {
     schema: EditorSchema,
     options?: NodeChildrenOptions,
   ) => Generator<NodeEntry<Descendant>, void, undefined>
-
-  /**
-   * Get an entry for the common ancesetor node of two paths.
-   */
-  common: (
-    root: Node,
-    path: Path,
-    another: Path,
-    schema: EditorSchema,
-  ) => NodeEntry
-
-  /**
-   * Get the node at a specific path, asserting that it's a descendant node.
-   */
-  descendant: (root: Node, path: Path, schema: EditorSchema) => Descendant
-
-  /**
-   * Return a generator of all the descendant node entries inside a root node.
-   */
-  descendants: (
-    root: Node,
-    schema: EditorSchema,
-    options?: NodeDescendantsOptions,
-  ) => Generator<NodeEntry<Descendant>, void, undefined>
-
-  /**
-   * Return a generator of all the element nodes inside a root node. Each iteration
-   * will return an `ElementEntry` tuple consisting of `[Element, Path]`. If the
-   * root node is an element it will be included in the iteration as well.
-   */
-  elements: (
-    root: Node,
-    schema: EditorSchema,
-    options?: NodeElementsOptions,
-  ) => Generator<ElementEntry, void, undefined>
 
   /**
    * Extract props from a Node.
@@ -217,11 +151,6 @@ export interface NodeInterface {
   ) => Generator<NodeEntry, void, undefined>
 
   /**
-   * Check if a node matches a set of props.
-   */
-  matches: (node: Node, props: Partial<Node>, schema: EditorSchema) => boolean
-
-  /**
    * Return a generator of all the node entries of a root node. Each entry is
    * returned as a `[Node, Path]` tuple, with the path referring to the node's
    * position inside the root node.
@@ -272,19 +201,6 @@ export const Node: NodeInterface = {
     return node
   },
 
-  *ancestors(
-    root: Node,
-    path: Path,
-    schema: EditorSchema,
-    options: NodeAncestorsOptions = {},
-  ): Generator<NodeEntry<Ancestor>, void, undefined> {
-    for (const p of Path.ancestors(path, options)) {
-      const n = Node.ancestor(root, p, schema)
-      const entry: NodeEntry<Ancestor> = [n, p]
-      yield entry
-    }
-  },
-
   child(root: Node, index: number, schema: EditorSchema): Descendant {
     if (Text.isText(root, schema) || Node.isObjectNode(root, schema)) {
       throw new Error(
@@ -321,57 +237,6 @@ export const Node: NodeInterface = {
       const childPath = path.concat(index)
       yield [child, childPath]
       index = reverse ? index - 1 : index + 1
-    }
-  },
-
-  common(
-    root: Node,
-    path: Path,
-    another: Path,
-    schema: EditorSchema,
-  ): NodeEntry {
-    const p = Path.common(path, another)
-    const n = Node.get(root, p, schema)
-    return [n, p]
-  },
-
-  descendant(root: Node, path: Path, schema: EditorSchema): Descendant {
-    const node = Node.get(root, path, schema)
-
-    if (Editor.isEditor(node)) {
-      throw new Error(
-        `Cannot get the descendant node at path [${path}] because it refers to the root editor node instead: ${Scrubber.stringify(
-          node,
-        )}`,
-      )
-    }
-
-    return node
-  },
-
-  *descendants(
-    root: Node,
-    schema: EditorSchema,
-    options: NodeDescendantsOptions = {},
-  ): Generator<NodeEntry<Descendant>, void, undefined> {
-    for (const [node, path] of Node.nodes(root, schema, options)) {
-      if (path.length !== 0) {
-        // NOTE: we have to coerce here because checking the path's length does
-        // guarantee that `node` is not a `Editor`, but TypeScript doesn't know.
-        yield [node, path] as NodeEntry<Descendant>
-      }
-    }
-  },
-
-  *elements(
-    root: Node,
-    schema: EditorSchema,
-    options: NodeElementsOptions = {},
-  ): Generator<ElementEntry, void, undefined> {
-    for (const [node, path] of Node.nodes(root, schema, options)) {
-      if (Element.isElement(node, schema)) {
-        yield [node, path]
-      }
     }
   },
 
@@ -591,17 +456,6 @@ export const Node: NodeInterface = {
       const n = Node.get(root, p, schema)
       yield [n, p]
     }
-  },
-
-  matches(node: Node, props: Partial<Node>, schema: EditorSchema): boolean {
-    return (
-      (Element.isElement(node, schema) &&
-        Element.isElementProps(props) &&
-        Element.matches(node, props)) ||
-      (Text.isText(node, schema) &&
-        Text.isTextProps(props) &&
-        Text.matches(node, props))
-    )
   },
 
   *nodes(

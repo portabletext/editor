@@ -53,16 +53,6 @@ export interface PathInterface {
   compare: (path: Path, another: Path) => -1 | 0 | 1
 
   /**
-   * Check if a path ends after one of the indexes in another.
-   */
-  endsAfter: (path: Path, another: Path) => boolean
-
-  /**
-   * Check if a path ends at one of the indexes in another.
-   */
-  endsAt: (path: Path, another: Path) => boolean
-
-  /**
    * Check if a path ends before one of the indexes in another.
    */
   endsBefore: (path: Path, another: Path) => boolean
@@ -93,11 +83,6 @@ export interface PathInterface {
   isBefore: (path: Path, another: Path) => boolean
 
   /**
-   * Check if a path is a child of another.
-   */
-  isChild: (path: Path, another: Path) => boolean
-
-  /**
    * Check if a path is equal to or an ancestor of another.
    */
   isCommon: (path: Path, another: Path) => boolean
@@ -106,11 +91,6 @@ export interface PathInterface {
    * Check if a path is a descendant of another.
    */
   isDescendant: (path: Path, another: Path) => boolean
-
-  /**
-   * Check if a path is the parent of another.
-   */
-  isParent: (path: Path, another: Path) => boolean
 
   /**
    * Check is a value implements the `Path` interface.
@@ -161,11 +141,6 @@ export interface PathInterface {
    * Given a path, get the path to the previous sibling node.
    */
   previous: (path: Path) => Path
-
-  /**
-   * Get a path relative to an ancestor.
-   */
-  relative: (path: Path, ancestor: Path) => Path
 
   /**
    * Transform a path by an operation.
@@ -224,22 +199,6 @@ export const Path: PathInterface = {
     return 0
   },
 
-  endsAfter(path: Path, another: Path): boolean {
-    const i = path.length - 1
-    const as = path.slice(0, i)
-    const bs = another.slice(0, i)
-    const av = path[i]!
-    const bv = another[i]!
-    return Path.equals(as, bs) && av > bv
-  },
-
-  endsAt(path: Path, another: Path): boolean {
-    const i = path.length
-    const as = path.slice(0, i)
-    const bs = another.slice(0, i)
-    return Path.equals(as, bs)
-  },
-
   endsBefore(path: Path, another: Path): boolean {
     const i = path.length - 1
     const as = path.slice(0, i)
@@ -271,24 +230,12 @@ export const Path: PathInterface = {
     return Path.compare(path, another) === -1
   },
 
-  isChild(path: Path, another: Path): boolean {
-    return (
-      path.length === another.length + 1 && Path.compare(path, another) === 0
-    )
-  },
-
   isCommon(path: Path, another: Path): boolean {
     return path.length <= another.length && Path.compare(path, another) === 0
   },
 
   isDescendant(path: Path, another: Path): boolean {
     return path.length > another.length && Path.compare(path, another) === 0
-  },
-
-  isParent(path: Path, another: Path): boolean {
-    return (
-      path.length + 1 === another.length && Path.compare(path, another) === 0
-    )
   },
 
   isPath(value: any): value is Path {
@@ -380,16 +327,6 @@ export const Path: PathInterface = {
     }
 
     return path.slice(0, -1).concat(last - 1)
-  },
-
-  relative(path: Path, ancestor: Path): Path {
-    if (!Path.isAncestor(ancestor, path) && !Path.equals(path, ancestor)) {
-      throw new Error(
-        `Cannot get the relative path of [${path}] inside ancestor [${ancestor}], because it is not above or equal to the path.`,
-      )
-    }
-
-    return path.slice(ancestor.length)
   },
 
   transform(

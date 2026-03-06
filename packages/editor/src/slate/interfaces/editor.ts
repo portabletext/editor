@@ -101,7 +101,6 @@ export interface BaseEditor {
   before: OmitFirstArg<typeof Editor.before>
   elementReadOnly: OmitFirstArg<typeof Editor.elementReadOnly>
   end: OmitFirstArg<typeof Editor.end>
-  getMarks: OmitFirstArg<typeof Editor.marks>
   hasInlines: OmitFirstArg<typeof Editor.hasInlines>
   hasPath: OmitFirstArg<typeof Editor.hasPath>
   isBlock: OmitFirstArg<typeof Editor.isBlock>
@@ -395,12 +394,6 @@ export interface EditorInterface {
     editor: Editor,
     options?: EditorLevelsOptions<T>,
   ) => Generator<NodeEntry<T>, void, undefined>
-
-  /**
-   * Get the marks that would be added to text at the current selection.
-   */
-  marks: (editor: Editor) => Omit<Text, 'text'> | null
-
   /**
    * Get the matching node in the branch of the document after a location.
    */
@@ -659,11 +652,6 @@ export const Editor: EditorInterface = {
   levels(editor, options) {
     return editor.levels(options)
   },
-
-  marks(editor) {
-    return editor.getMarks()
-  },
-
   next<T extends Descendant>(
     editor: Editor,
     options?: EditorNextOptions<T>,

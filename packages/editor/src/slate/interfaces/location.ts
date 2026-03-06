@@ -1,4 +1,4 @@
-import {Path, Point, Range} from '..'
+import {Path, type Point, type Range} from '..'
 
 /**
  * The `Location` interface is a union of the ways to refer to a specific
@@ -10,20 +10,6 @@ import {Path, Point, Range} from '..'
  */
 
 export type Location = Path | Point | Range
-
-export interface LocationInterface {
-  /**
-   * Check if a value implements the `Location` interface.
-   */
-  isLocation: (value: any) => value is Location
-}
-
-// eslint-disable-next-line no-redeclare
-export const Location: LocationInterface = {
-  isLocation(value: any): value is Location {
-    return Path.isPath(value) || Point.isPoint(value) || Range.isRange(value)
-  },
-}
 
 /**
  * The `Span` interface is a low-level way to refer to locations in nodes

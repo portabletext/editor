@@ -13,13 +13,10 @@ import {ReactEditor} from './react-editor'
  *
  * See https://docs.slatejs.org/concepts/11-typescript to learn how.
  */
-export const withReact = <T extends Editor>(
-  editor: T,
-  clipboardFormatKey = 'x-slate-fragment',
-): T & ReactEditor => {
+export const withReact = <T extends Editor>(editor: T): T & ReactEditor => {
   let e = editor as T & ReactEditor
 
-  e = withDOM(e, clipboardFormatKey)
+  e = withDOM(e)
 
   const {onChange, apply, insertText} = e
 
