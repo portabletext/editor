@@ -792,4 +792,35 @@ describe('event.history.undo', () => {
       expect(editor.getSnapshot().context.value).toEqual(initialValue)
     })
   })
+
+  test('Scenario: forward-only behavior should not break consecutive typing merge', async () => {
+    const {editor, locator} = await createTestEditor({
+      children: (
+        <BehaviorPlugin
+          behaviors={[
+            defineBehavior({
+              on: 'insert.text',
+              guard: ({event}) => event.text === 'a',
+              actions: [({event}) => [forward(event)]],
+            }),
+          ]}
+        />
+      ),
+    })
+
+    await userEvent.type(locator, 'a')
+    await userEvent.type(locator, 'b')
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['ab'])
+    })
+
+    // If the undoStepId leak is fixed, these should be one undo step
+    // (consecutive insert_text, same path, adjacent offsets)
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
+    })
+  })
 })
