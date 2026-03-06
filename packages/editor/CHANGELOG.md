@@ -1,5 +1,31 @@
 # Changelog
 
+## 6.1.0
+
+### Minor Changes
+
+- [#2279](https://github.com/portabletext/editor/pull/2279) [`919c976`](https://github.com/portabletext/editor/commit/919c97670fd1446dea189792639ea90d6a43cee0) Thanks [@christianhg](https://github.com/christianhg)! - feat: simplify internal tree representation to match Portable Text structure
+
+### Patch Changes
+
+- [#2279](https://github.com/portabletext/editor/pull/2279) [`a7cc971`](https://github.com/portabletext/editor/commit/a7cc9717e2438fcb461c7119136234f691fb9bbb) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove unused internal `wrapNodes` transform
+
+- [#2279](https://github.com/portabletext/editor/pull/2279) [`da1e5ff`](https://github.com/portabletext/editor/commit/da1e5ffd3a82f350aa4b6d30b21972d18cc16abd) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove unused internal `setNodes` transform
+
+- [#2279](https://github.com/portabletext/editor/pull/2279) [`67089e4`](https://github.com/portabletext/editor/commit/67089e4a9b38cb5711f050c47d0fb029a9d1a828) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove unused internal utils
+
+- [#2279](https://github.com/portabletext/editor/pull/2279) [`1eb5078`](https://github.com/portabletext/editor/commit/1eb50782640e274fa085f8032d8643b0791198e0) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove unused internal `liftNodes` transform
+
+- [#2279](https://github.com/portabletext/editor/pull/2279) [`94ed1ea`](https://github.com/portabletext/editor/commit/94ed1ea6c4bd8d19fba2ac79abc95b5f5e756750) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove unused internal Slate utils/hooks
+
+- [#2279](https://github.com/portabletext/editor/pull/2279) [`d1692de`](https://github.com/portabletext/editor/commit/d1692de11f086fd7e95f0799de295922b2244cf7) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove unused internal `unwrapNodes` transform
+
+- [#2279](https://github.com/portabletext/editor/pull/2279) [`e939322`](https://github.com/portabletext/editor/commit/e939322b1e087a6f927b4d6f82b9b02154c181b4) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove unused internal `insertFragment` transform
+
+- [#2279](https://github.com/portabletext/editor/pull/2279) [`82b41bf`](https://github.com/portabletext/editor/commit/82b41bf170355f24c4db501567b51bd89c8a71fc) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove unused internal `unsetNodes` transform
+
+- [#2279](https://github.com/portabletext/editor/pull/2279) [`92aafc5`](https://github.com/portabletext/editor/commit/92aafc59990627a56aff431214fecaffc60b9d96) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove unused internal `insertBreak` method
+
 ## 6.0.11
 
 ### Patch Changes
