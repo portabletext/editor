@@ -1,4 +1,4 @@
-import {useContext, useMemo, useReducer} from 'react'
+import {useContext, useReducer} from 'react'
 import type {Editor} from '../../slate'
 import {useIsomorphicLayoutEffect} from './use-isomorphic-layout-effect'
 import {SlateSelectorContext} from './use-slate-selector'
@@ -24,32 +24,4 @@ export const useSlate = (): Editor => {
   )
 
   return useSlateStatic()
-}
-
-const getEditorVersionRef = (editor: Editor) => {
-  const v = editor.changeVersion
-
-  // Register the `onChange` handler exactly once per editor
-  const {onChange} = editor
-
-  editor.onChange = (options) => {
-    v.current++
-    onChange(options)
-  }
-
-  return v
-}
-
-/**
- * Get the current editor object and its version, which increments on every
- * change.
- *
- * @deprecated The `v` counter is no longer used except for this hook, and may
- * be removed in a future version.
- */
-
-export const useSlateWithV = (): {editor: Editor; v: number} => {
-  const editor = useSlate()
-  const vRef = useMemo(() => getEditorVersionRef(editor), [editor])
-  return {editor, v: vRef.current}
 }
