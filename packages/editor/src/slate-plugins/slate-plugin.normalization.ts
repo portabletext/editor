@@ -1,6 +1,7 @@
 import type {PortableTextObject, PortableTextSpan} from '@portabletext/schema'
 import type {EditorActor} from '../editor/editor-machine'
 import {applyInsertNodeAtPath} from '../internal-utils/apply-insert-node'
+import {applyMergeNode} from '../internal-utils/apply-merge-node'
 import {applySetNode} from '../internal-utils/apply-set-node'
 import {createPlaceholderBlock} from '../internal-utils/create-placeholder-block'
 import {debug} from '../internal-utils/debug'
@@ -39,7 +40,7 @@ export function createNormalizationPlugin(
       }
 
       /**
-       * Merge spans with same set of .marks when doing merge_node operations
+       * Merge spans with same set of .marks
        */
       if (editor.isTextBlock(node)) {
         const children = Node.children(editor, path, editor.schema)
@@ -57,12 +58,7 @@ export function createNormalizationPlugin(
             withNormalizeNode(editor, () => {
               const mergePath = [childPath[0]!, childPath[1]! + 1]
               const {text: _text, ...properties} = nextNode
-              editor.apply({
-                type: 'merge_node',
-                path: mergePath,
-                position: child.text.length,
-                properties,
-              })
+              applyMergeNode(editor, mergePath, child.text.length, properties)
             })
             return
           }
@@ -245,10 +241,7 @@ export function createNormalizationPlugin(
       if (
         editor.isTextBlock(node) &&
         !editor.operations.some(
-          (op) =>
-            op.type === 'merge_node' &&
-            'markDefs' in op.properties &&
-            op.path.length === 1,
+          (op) => op.type === 'remove_node' && op.path.length === 1,
         )
       ) {
         const newMarkDefs = (node.markDefs || []).filter((def) => {
