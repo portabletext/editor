@@ -1,5 +1,11 @@
 # Changelog
 
+## 6.1.1
+
+### Patch Changes
+
+- [#2243](https://github.com/portabletext/editor/pull/2243) [`626a8c4`](https://github.com/portabletext/editor/commit/626a8c4bfb0f739c3bdf1b4df3db42a38fd4ac90) Thanks [@christianhg](https://github.com/christianhg)! - fix: forward on insert.text breaks undo batching
+
 ## 6.1.0
 
 ### Minor Changes
