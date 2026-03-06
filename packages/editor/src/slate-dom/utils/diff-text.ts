@@ -364,56 +364,6 @@ export function transformTextDiff(
         path,
       }
     }
-    case 'split_node': {
-      if (!Path.equals(op.path, path) || op.position >= diff.end) {
-        return {
-          diff,
-          id,
-          path: Path.transform(path, op, {affinity: 'backward'})!,
-        }
-      }
-
-      if (op.position > diff.start) {
-        return {
-          diff: {
-            start: diff.start,
-            end: Math.min(op.position, diff.end),
-            text: diff.text,
-          },
-          id,
-          path,
-        }
-      }
-
-      return {
-        diff: {
-          start: diff.start - op.position,
-          end: diff.end - op.position,
-          text: diff.text,
-        },
-        id,
-        path: Path.transform(path, op, {affinity: 'forward'})!,
-      }
-    }
-    case 'merge_node': {
-      if (!Path.equals(op.path, path)) {
-        return {
-          diff,
-          id,
-          path: Path.transform(path, op)!,
-        }
-      }
-
-      return {
-        diff: {
-          start: diff.start + op.position,
-          end: diff.end + op.position,
-          text: diff.text,
-        },
-        id,
-        path: Path.transform(path, op)!,
-      }
-    }
   }
 
   const newPath = Path.transform(path, op)

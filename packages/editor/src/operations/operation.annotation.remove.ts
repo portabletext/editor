@@ -1,6 +1,7 @@
 import type {PortableTextBlock, PortableTextSpan} from '@portabletext/schema'
 import {applySelect} from '../internal-utils/apply-selection'
 import {applySetNode} from '../internal-utils/apply-set-node'
+import {applySplitNode} from '../internal-utils/apply-split-node'
 import {toSlateRange} from '../internal-utils/to-slate-range'
 import {Editor, Node, Path, Range, Text} from '../slate'
 import type {OperationImplementation} from './operation.types'
@@ -149,12 +150,12 @@ export const removeAnnotationOperationImplementation: OperationImplementation<
         const endAtEnd = Editor.isEnd(editor, splitEnd, splitEnd.path)
         if (!endAtEnd || !Editor.isEdge(editor, splitEnd, splitEnd.path)) {
           const [endNode] = Editor.node(editor, splitEnd.path)
-          editor.apply({
-            type: 'split_node',
-            path: splitEnd.path,
-            position: splitEnd.offset,
-            properties: Node.extractProps(endNode, editor.schema),
-          })
+          applySplitNode(
+            editor,
+            splitEnd.path,
+            splitEnd.offset,
+            Node.extractProps(endNode, editor.schema),
+          )
         }
         const startAtStart = Editor.isStart(editor, splitStart, splitStart.path)
         if (
@@ -162,12 +163,12 @@ export const removeAnnotationOperationImplementation: OperationImplementation<
           !Editor.isEdge(editor, splitStart, splitStart.path)
         ) {
           const [startNode] = Editor.node(editor, splitStart.path)
-          editor.apply({
-            type: 'split_node',
-            path: splitStart.path,
-            position: splitStart.offset,
-            properties: Node.extractProps(startNode, editor.schema),
-          })
+          applySplitNode(
+            editor,
+            splitStart.path,
+            splitStart.offset,
+            Node.extractProps(startNode, editor.schema),
+          )
         }
         // Update selection if using editor.selection (not explicit `at`)
         const updatedSplitRange = splitRangeRef.unref()

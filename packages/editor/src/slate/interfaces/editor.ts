@@ -81,15 +81,12 @@ export interface BaseEditor {
   insertBreak: OmitFirstArg<typeof Editor.insertBreak>
   insertNodes: OmitFirstArg<typeof Transforms.insertNodes>
   insertText: OmitFirstArg<typeof Transforms.insertText>
-  mergeNodes: OmitFirstArg<typeof Transforms.mergeNodes>
   move: OmitFirstArg<typeof Transforms.move>
-  moveNodes: OmitFirstArg<typeof Transforms.moveNodes>
   normalize: OmitFirstArg<typeof Editor.normalize>
   removeNodes: OmitFirstArg<typeof Transforms.removeNodes>
   select: OmitFirstArg<typeof Transforms.select>
   setNormalizing: OmitFirstArg<typeof Editor.setNormalizing>
   setSelection: OmitFirstArg<typeof Transforms.setSelection>
-  splitNodes: OmitFirstArg<typeof Transforms.splitNodes>
   withoutNormalizing: OmitFirstArg<typeof Editor.withoutNormalizing>
 
   // Overrideable core queries.

@@ -51,12 +51,8 @@ export const reconcileChildren = (
     // position in the same children array, this will be a positive number.
     const lookAhead = childrenHelper.lookAhead(treeLeaf.node, treeLeaf.key)
 
-    // If the node was moved, we want to remove it and insert it later, rather
-    // then re-inserting all intermediate nodes before it.
-    const wasMoved = lookAhead > 0 && chunkTree.movedNodeKeys.has(treeLeaf.key)
-
-    // If the tree leaf was moved or removed, remove it
-    if (lookAhead === -1 || wasMoved) {
+    // If the tree leaf was removed, remove it
+    if (lookAhead === -1) {
       chunkTreeHelper.remove()
       continue
     }
@@ -123,6 +119,4 @@ export const reconcileChildren = (
       onInsert?.(node, childrenHelper.pointerIndex + relativeIndex)
     })
   }
-
-  chunkTree.movedNodeKeys.clear()
 }
