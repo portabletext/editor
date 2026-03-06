@@ -79,16 +79,13 @@ export function applyMoveNode(
   // double-transform it
   const savedSelection = editor.selection
 
-  // Compute the adjusted newPath after the remove_node operation.
-  // After removing the node at `path`, paths shift. We need to figure out
-  // where `newPath` ends up after the removal.
-  const removeOp = {type: 'remove_node' as const, path, node}
-  const adjustedNewPath = Path.transform(newPath, removeOp)!
-
+  // In Slate's move_node semantics, newPath already refers to the position
+  // in the tree AFTER the node at path has been removed. So we use newPath
+  // directly as the insert position — no adjustment needed.
   try {
     Editor.withoutNormalizing(editor, () => {
       editor.apply({type: 'remove_node', path, node})
-      editor.apply({type: 'insert_node', path: adjustedNewPath, node})
+      editor.apply({type: 'insert_node', path: newPath, node})
     })
   } finally {
     // Restore pre-transformed selection (decomposed ops may have
