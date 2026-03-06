@@ -344,6 +344,10 @@ export function performEvent({
       if (undoStepCreated) {
         editor.undoStepId = undefined
       }
+
+      if (mode === 'send') {
+        editor.undoStepId = undefined
+      }
     }
 
     break
