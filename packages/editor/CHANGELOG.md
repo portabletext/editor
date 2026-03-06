@@ -1,5 +1,11 @@
 # Changelog
 
+## 6.1.2
+
+### Patch Changes
+
+- [#2329](https://github.com/portabletext/editor/pull/2329) [`761233d`](https://github.com/portabletext/editor/commit/761233d7dc3493eebfb7fe8e0f841a382105b543) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove unused internal Slate code
+
 ## 6.1.1
 
 ### Patch Changes
