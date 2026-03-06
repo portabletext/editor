@@ -853,7 +853,7 @@ describe('event.history.undo', () => {
       decorator: 'strong',
     })
 
-    // After adding: "f" + "oob" (strong) + "ar" — three spans
+    // After adding: "f" + "oob" (strong) + "ar" - three spans
     await vi.waitFor(() => {
       expect(getTersePt(editor.getSnapshot().context)).toEqual(['f,oob,ar'])
     })
@@ -919,7 +919,7 @@ describe('event.history.undo', () => {
       },
     })
 
-    // After adding: "f" + "oob" (link) + "ar" — three spans
+    // After adding: "f" + "oob" (link) + "ar" - three spans
     await vi.waitFor(() => {
       expect(getTersePt(editor.getSnapshot().context)).toEqual(['f,oob,ar'])
     })
@@ -929,6 +929,37 @@ describe('event.history.undo', () => {
     // After undo: back to original value
     await vi.waitFor(() => {
       expect(editor.getSnapshot().context.value).toEqual(initialValue)
+    })
+  })
+
+  test('Scenario: forward-only behavior should not break consecutive typing merge', async () => {
+    const {editor, locator} = await createTestEditor({
+      children: (
+        <BehaviorPlugin
+          behaviors={[
+            defineBehavior({
+              on: 'insert.text',
+              guard: ({event}) => event.text === 'a',
+              actions: [({event}) => [forward(event)]],
+            }),
+          ]}
+        />
+      ),
+    })
+
+    await userEvent.type(locator, 'a')
+    await userEvent.type(locator, 'b')
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['ab'])
+    })
+
+    // If the undoStepId leak is fixed, these should be one undo step
+    // (consecutive insert_text, same path, adjacent offsets)
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
     })
   })
 })
