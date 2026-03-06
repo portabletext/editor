@@ -37,6 +37,7 @@ export {
 } from '@portabletext/schema'
 export {useEditorSelector, type EditorSelector} from './editor/editor-selector'
 export type {EditorContext, EditorSnapshot} from './editor/editor-snapshot'
+export type {BlockPathMap} from './internal-utils/block-path-map'
 export {usePortableTextEditor} from './editor/usePortableTextEditor'
 export {usePortableTextEditorSelection} from './editor/usePortableTextEditorSelection'
 export {defaultKeyGenerator as keyGenerator} from './utils/key-generator'
