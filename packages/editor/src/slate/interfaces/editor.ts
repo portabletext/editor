@@ -81,7 +81,7 @@ export interface BaseEditor {
   insertBreak: OmitFirstArg<typeof Editor.insertBreak>
   insertNodes: OmitFirstArg<typeof Transforms.insertNodes>
   insertText: OmitFirstArg<typeof Transforms.insertText>
-  mergeNodes: OmitFirstArg<typeof Transforms.mergeNodes>
+  mergeNodes: (...args: any[]) => void
   move: OmitFirstArg<typeof Transforms.move>
   moveNodes: OmitFirstArg<typeof Transforms.moveNodes>
   normalize: OmitFirstArg<typeof Editor.normalize>
@@ -89,7 +89,7 @@ export interface BaseEditor {
   select: OmitFirstArg<typeof Transforms.select>
   setNormalizing: OmitFirstArg<typeof Editor.setNormalizing>
   setSelection: OmitFirstArg<typeof Transforms.setSelection>
-  splitNodes: OmitFirstArg<typeof Transforms.splitNodes>
+  splitNodes: (...args: any[]) => void
   withoutNormalizing: OmitFirstArg<typeof Editor.withoutNormalizing>
 
   // Overrideable core queries.

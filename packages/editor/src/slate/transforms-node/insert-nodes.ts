@@ -1,3 +1,5 @@
+import {applySplitNode} from '../../internal-utils/apply-split-node'
+import type {PortableTextSlateEditor} from '../../types/slate-editor'
 import {batchDirtyPaths} from '../core/batch-dirty-paths'
 import {updateDirtyPaths} from '../core/update-dirty-paths'
 import type {BaseInsertNodeOperation} from '../interfaces'
@@ -6,6 +8,7 @@ import {Element} from '../interfaces/element'
 import {Node} from '../interfaces/node'
 import {Path} from '../interfaces/path'
 import {Point} from '../interfaces/point'
+import type {PointRef} from '../interfaces/point-ref'
 import {Range} from '../interfaces/range'
 import {Text} from '../interfaces/text'
 import {Transforms} from '../interfaces/transforms'
@@ -86,7 +89,68 @@ export const insertNodes: NodeTransforms['insertNodes'] = (
         const [, matchPath] = entry
         const pathRef = Editor.pathRef(editor, matchPath)
         const isAtEnd = Editor.isEnd(editor, at, matchPath)
-        Transforms.splitNodes(editor, {at, match, mode, voids})
+
+        // Inline split logic (equivalent to Transforms.splitNodes with {at, match, mode, voids})
+        {
+          const splitAt = at as Point
+          const beforeRef = Editor.pointRef(editor, splitAt, {
+            affinity: 'backward',
+          })
+          let afterRef: PointRef | undefined
+          try {
+            const [highest] = Editor.nodes(editor, {
+              at: splitAt,
+              match,
+              mode,
+              voids,
+            })
+
+            if (highest) {
+              afterRef = Editor.pointRef(editor, splitAt)
+              const depth = splitAt.path.length
+              const [, highestPath] = highest
+              const lowestPath = splitAt.path.slice(0, depth)
+              let position = splitAt.offset
+
+              for (const [node, nodePath] of Editor.levels(editor, {
+                at: lowestPath,
+                reverse: true,
+                voids,
+              })) {
+                let split = false
+
+                if (
+                  nodePath.length < highestPath.length ||
+                  nodePath.length === 0
+                ) {
+                  break
+                }
+
+                const point = beforeRef.current!
+                const isEndOfNode = Editor.isEnd(editor, point, nodePath)
+
+                if (!Editor.isEdge(editor, point, nodePath)) {
+                  split = true
+                  const properties = Node.extractProps(node, editor.schema)
+                  applySplitNode(
+                    editor as unknown as PortableTextSlateEditor,
+                    nodePath,
+                    position,
+                    properties,
+                  )
+                }
+
+                position =
+                  nodePath[nodePath.length - 1]! +
+                  (split || isEndOfNode ? 1 : 0)
+              }
+            }
+          } finally {
+            beforeRef.unref()
+            afterRef?.unref()
+          }
+        }
+
         const path = pathRef.unref()!
         at = isAtEnd ? Path.next(path) : path
       } else {

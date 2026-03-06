@@ -24,21 +24,6 @@ export interface NodeTransforms {
   ) => void
 
   /**
-   * Merge a node at a location with the previous node of the same depth,
-   * removing any empty containing nodes after the merge if necessary.
-   */
-  mergeNodes: <T extends Node>(
-    editor: Editor,
-    options?: {
-      at?: Location
-      match?: NodeMatch<T>
-      mode?: RangeMode
-      hanging?: boolean
-      voids?: boolean
-    },
-  ) => void
-
-  /**
    * Move the nodes at a location to a new location.
    */
   moveNodes: <T extends Node>(
@@ -65,21 +50,6 @@ export interface NodeTransforms {
       voids?: boolean
     },
   ) => void
-
-  /**
-   * Split the nodes at a specific location.
-   */
-  splitNodes: <T extends Node>(
-    editor: Editor,
-    options?: {
-      at?: Location
-      match?: NodeMatch<T>
-      mode?: RangeMode
-      always?: boolean
-      height?: number
-      voids?: boolean
-    },
-  ) => void
 }
 
 // eslint-disable-next-line no-redeclare
@@ -87,16 +57,10 @@ export const NodeTransforms: NodeTransforms = {
   insertNodes(editor, nodes, options) {
     editor.insertNodes(nodes, options)
   },
-  mergeNodes(editor, options) {
-    editor.mergeNodes(options)
-  },
   moveNodes(editor, options) {
     editor.moveNodes(options)
   },
   removeNodes(editor, options) {
     editor.removeNodes(options)
-  },
-  splitNodes(editor, options) {
-    editor.splitNodes(options)
   },
 }

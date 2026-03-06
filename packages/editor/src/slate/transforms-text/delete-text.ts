@@ -1,3 +1,6 @@
+import {applyMergeNode} from '../../internal-utils/apply-merge-node'
+import {applySetNode} from '../../internal-utils/apply-set-node'
+import type {PortableTextSlateEditor} from '../../types/slate-editor'
 import {Editor} from '../interfaces/editor'
 import {Element} from '../interfaces/element'
 import {Node} from '../interfaces/node'
@@ -5,6 +8,7 @@ import type {NodeEntry} from '../interfaces/node'
 import {Path} from '../interfaces/path'
 import {Point} from '../interfaces/point'
 import {Range} from '../interfaces/range'
+import {Scrubber} from '../interfaces/scrubber'
 import {Text} from '../interfaces/text'
 import {Transforms} from '../interfaces/transforms'
 import type {TextTransforms} from '../interfaces/transforms/text'
@@ -172,11 +176,143 @@ export const deleteText: TextTransforms['delete'] = (editor, options = {}) => {
     }
 
     if (!isSingleText && isAcrossBlocks && endRef.current && startRef.current) {
-      Transforms.mergeNodes(editor, {
-        at: endRef.current,
-        hanging: true,
+      // Inline merge logic (equivalent to Transforms.mergeNodes with {at: endRef.current, hanging: true, voids})
+      const mergeAt: Point = endRef.current
+      const mergeMatch = (n: Node) =>
+        Element.isElement(n, editor.schema) && Editor.isBlock(editor, n)
+
+      const [current] = Editor.nodes(editor, {
+        at: mergeAt,
+        match: mergeMatch,
         voids,
+        mode: 'lowest',
       })
+      const prev = Editor.previous(editor, {
+        at: mergeAt,
+        match: mergeMatch,
+        voids,
+        mode: 'lowest',
+      })
+
+      if (current && prev) {
+        const [mergeNode, mergePath] = current
+        const [prevNode, prevPath] = prev
+
+        if (mergePath.length !== 0 && prevPath.length !== 0) {
+          const newPath = Path.next(prevPath)
+          const commonPath = Path.common(mergePath, prevPath)
+          const isPreviousSibling = Path.isSibling(mergePath, prevPath)
+          const levels = Array.from(
+            Editor.levels(editor, {at: mergePath}),
+            ([n]) => n,
+          )
+            .slice(commonPath.length)
+            .slice(0, -1)
+
+          // Determine if the merge will leave an ancestor of the path empty
+          const hasSingleChildNest = (node: Node): boolean => {
+            if (Element.isElement(node, editor.schema)) {
+              const element = node as Element
+              if (element.children.length === 1) {
+                return hasSingleChildNest(element.children[0]!)
+              } else {
+                return false
+              }
+            } else if (Editor.isEditor(node)) {
+              return false
+            } else {
+              return true
+            }
+          }
+
+          const emptyAncestor = Editor.above(editor, {
+            at: mergePath,
+            mode: 'highest',
+            match: (n) => levels.includes(n) && hasSingleChildNest(n),
+          })
+
+          const emptyRef =
+            emptyAncestor && Editor.pathRef(editor, emptyAncestor[1])
+
+          let properties: Partial<Node>
+          let position: number
+
+          if (
+            Text.isText(mergeNode, editor.schema) &&
+            Text.isText(prevNode, editor.schema)
+          ) {
+            const {text: _text, ...rest} = mergeNode
+            position = prevNode.text.length
+            properties = rest
+          } else if (
+            Element.isElement(mergeNode, editor.schema) &&
+            Element.isElement(prevNode, editor.schema)
+          ) {
+            const {children: _children, ...rest} = mergeNode
+            position = prevNode.children.length
+            properties = rest
+          } else {
+            throw new Error(
+              `Cannot merge the node at path [${mergePath}] with the previous sibling because it is not the same kind: ${Scrubber.stringify(
+                mergeNode,
+              )} ${Scrubber.stringify(prevNode)}`,
+            )
+          }
+
+          if (!isPreviousSibling) {
+            Transforms.moveNodes(editor, {
+              at: mergePath,
+              to: newPath,
+              voids,
+            })
+          }
+
+          if (emptyRef) {
+            Transforms.removeNodes(editor, {
+              at: emptyRef.current!,
+              voids,
+            })
+          }
+
+          if (Editor.shouldMergeNodesRemovePrevNode(editor, prev, current)) {
+            Transforms.removeNodes(editor, {at: prevPath, voids})
+          } else {
+            // Copy markDefs from the merging block to the target before merging
+            const pteEditor = editor as unknown as PortableTextSlateEditor
+            if (
+              pteEditor.isTextBlock(mergeNode) &&
+              pteEditor.isTextBlock(prevNode) &&
+              Array.isArray(mergeNode.markDefs) &&
+              mergeNode.markDefs.length > 0
+            ) {
+              const targetPath = isPreviousSibling
+                ? prevPath
+                : Path.previous(newPath)
+              const oldDefs =
+                (Array.isArray(prevNode.markDefs) && prevNode.markDefs) || []
+              const newMarkDefs = [
+                ...new Map(
+                  [...oldDefs, ...mergeNode.markDefs].map((def) => [
+                    def._key,
+                    def,
+                  ]),
+                ).values(),
+              ]
+              applySetNode(pteEditor, {markDefs: newMarkDefs}, targetPath)
+            }
+            applyMergeNode(
+              pteEditor,
+              newPath,
+              position,
+              properties as Record<string, unknown>,
+            )
+          }
+
+          if (emptyRef) {
+            emptyRef.unref()
+          }
+        }
+      }
     }
 
     // For certain scripts, deleting N character(s) backward should delete

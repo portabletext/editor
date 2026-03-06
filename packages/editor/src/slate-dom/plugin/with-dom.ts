@@ -1,5 +1,7 @@
+import {applySplitNode} from '../../internal-utils/apply-split-node'
 import {
   Editor,
+  Element,
   Node,
   Path,
   Point,
@@ -7,6 +9,7 @@ import {
   Transforms,
   type Operation,
   type PathRef,
+  type PointRef,
 } from '../../slate'
 import {
   transformPendingPoint,
@@ -92,8 +95,7 @@ export const withDOM = <T extends Editor>(
     switch (op.type) {
       case 'insert_text':
       case 'remove_text':
-      case 'set_node':
-      case 'split_node': {
+      case 'set_node': {
         matches.push(...getMatches(e, op.path))
         break
       }
@@ -108,12 +110,6 @@ export const withDOM = <T extends Editor>(
       case 'insert_node':
       case 'remove_node': {
         matches.push(...getMatches(e, Path.parent(op.path)))
-        break
-      }
-
-      case 'merge_node': {
-        const prevPath = Path.previous(op.path)
-        matches.push(...getMatches(e, prevPath))
         break
       }
 
@@ -151,9 +147,7 @@ export const withDOM = <T extends Editor>(
     switch (op.type) {
       case 'insert_node':
       case 'remove_node':
-      case 'merge_node':
       case 'move_node':
-      case 'split_node':
       case 'insert_text':
       case 'remove_text':
       case 'set_selection': {
@@ -277,7 +271,84 @@ export const withDOM = <T extends Editor>(
 
       for (const line of lines) {
         if (split) {
-          Transforms.splitNodes(e, {always: true})
+          // Inline split logic (equivalent to Transforms.splitNodes(e, {always: true}))
+          Editor.withoutNormalizing(e, () => {
+            let splitAt: Point | null = null
+
+            if (e.selection) {
+              if (Range.isCollapsed(e.selection)) {
+                splitAt = e.selection.anchor
+              } else {
+                const [, end] = Range.edges(e.selection)
+                const pointRef = Editor.pointRef(e, end)
+                Transforms.delete(e, {at: e.selection})
+                splitAt = pointRef.unref()
+              }
+            }
+
+            if (!splitAt) {
+              return
+            }
+
+            const splitMatch = (n: Node) =>
+              Element.isElement(n, e.schema) && Editor.isBlock(e, n)
+
+            const beforeRef = Editor.pointRef(e, splitAt, {
+              affinity: 'backward',
+            })
+            let afterRef: PointRef | undefined
+            try {
+              const [highest] = Editor.nodes(e, {
+                at: splitAt,
+                match: splitMatch,
+                mode: 'lowest',
+                voids: false,
+              })
+
+              if (!highest) {
+                return
+              }
+
+              afterRef = Editor.pointRef(e, splitAt)
+              const depth = splitAt.path.length
+              const [, highestPath] = highest
+              const lowestPath = splitAt.path.slice(0, depth)
+              let position = splitAt.offset
+
+              for (const [node, nodePath] of Editor.levels(e, {
+                at: lowestPath,
+                reverse: true,
+                voids: false,
+              })) {
+                let didSplit = false
+
+                if (
+                  nodePath.length < highestPath.length ||
+                  nodePath.length === 0
+                ) {
+                  break
+                }
+
+                const point = beforeRef.current!
+                const isEndOfNode = Editor.isEnd(e, point, nodePath)
+
+                // always = true, so always split
+                didSplit = true
+                const properties = Node.extractProps(node, e.schema)
+                applySplitNode(e, nodePath, position, properties)
+
+                position =
+                  nodePath[nodePath.length - 1]! +
+                  (didSplit || isEndOfNode ? 1 : 0)
+              }
+
+              const point = afterRef.current || Editor.end(e, [])
+              Transforms.select(e, point)
+            } finally {
+              beforeRef.unref()
+              afterRef?.unref()
+            }
+          })
         }
 
         e.insertText(line)

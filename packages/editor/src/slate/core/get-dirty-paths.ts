@@ -31,13 +31,6 @@ export const getDirtyPaths: WithEditorFirstArg<Editor['getDirtyPaths']> = (
       return [...levels, ...descendants]
     }
 
-    case 'merge_node': {
-      const {path} = op
-      const ancestors = Path.ancestors(path)
-      const previousPath = Path.previous(path)
-      return [...ancestors, previousPath]
-    }
-
     case 'move_node': {
       const {path, newPath} = op
 
@@ -69,13 +62,6 @@ export const getDirtyPaths: WithEditorFirstArg<Editor['getDirtyPaths']> = (
       const {path} = op
       const ancestors = Path.ancestors(path)
       return [...ancestors]
-    }
-
-    case 'split_node': {
-      const {path} = op
-      const levels = Path.levels(path)
-      const nextPath = Path.next(path)
-      return [...levels, nextPath]
     }
 
     default: {

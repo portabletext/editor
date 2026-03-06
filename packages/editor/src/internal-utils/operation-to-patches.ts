@@ -12,7 +12,6 @@ import {
   isTextBlock,
   type PortableTextBlock,
   type PortableTextSpan,
-  type PortableTextTextBlock,
 } from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
 import {
@@ -21,12 +20,10 @@ import {
   type Descendant,
   type InsertNodeOperation,
   type InsertTextOperation,
-  type MergeNodeOperation,
   type MoveNodeOperation,
   type RemoveNodeOperation,
   type RemoveTextOperation,
   type SetNodeOperation,
-  type SplitNodeOperation,
 } from '../slate'
 import type {Path} from '../types/paths'
 
@@ -312,76 +309,6 @@ export function insertNodePatch(
   return []
 }
 
-export function splitNodePatch(
-  schema: EditorSchema,
-  children: Descendant[],
-  operation: SplitNodeOperation,
-  beforeValue: Array<PortableTextBlock>,
-): Array<Patch> {
-  const patches: Patch[] = []
-  const splitBlock = children[operation.path[0]!]
-  if (!isTextBlock({schema}, splitBlock)) {
-    throw new Error(
-      `Block with path ${JSON.stringify(
-        operation.path[0],
-      )} is not a text block and can't be split`,
-    )
-  }
-  if (operation.path.length === 1) {
-    const oldBlock = beforeValue[operation.path[0]!]
-    if (isTextBlock({schema}, oldBlock)) {
-      const nextBlock = children[operation.path[0]! + 1]
-      if (!nextBlock) {
-        return patches
-      }
-      const targetValue = nextBlock as PortableTextBlock
-      if (targetValue) {
-        patches.push(insert([targetValue], 'after', [{_key: splitBlock._key}]))
-        const spansToUnset = oldBlock.children.slice(operation.position)
-        spansToUnset.forEach((span) => {
-          const path = [{_key: oldBlock._key}, 'children', {_key: span._key}]
-          patches.push(unset(path))
-        })
-      }
-    }
-    return patches
-  }
-  if (operation.path.length === 2) {
-    const splitSpan = splitBlock.children[operation.path[1]!]
-    if (isSpan({schema}, splitSpan)) {
-      const targetSpans = (
-        {
-          ...splitBlock,
-          children: splitBlock.children.slice(
-            operation.path[1]! + 1,
-            operation.path[1]! + 2,
-          ),
-        } as PortableTextTextBlock
-      ).children
-
-      // Defensive setIfMissing to ensure children array exists before inserting
-      patches.push(setIfMissing([], [{_key: splitBlock._key}, 'children']))
-      patches.push(
-        insert(targetSpans, 'after', [
-          {_key: splitBlock._key},
-          'children',
-          {_key: splitSpan._key},
-        ]),
-      )
-      patches.push(
-        set(splitSpan.text, [
-          {_key: splitBlock._key},
-          'children',
-          {_key: splitSpan._key},
-          'text',
-        ]),
-      )
-    }
-    return patches
-  }
-  return patches
-}
-
 export function removeNodePatch(
   schema: EditorSchema,
   beforeValue: Array<PortableTextBlock>,
@@ -418,91 +345,6 @@ export function removeNodePatch(
   } else {
     return []
   }
-}
-
-export function mergeNodePatch(
-  schema: EditorSchema,
-  children: Descendant[],
-  operation: MergeNodeOperation,
-  beforeValue: Array<PortableTextBlock>,
-): Array<Patch> {
-  const patches: Patch[] = []
-
-  const block = beforeValue[operation.path[0]!]
-  const updatedBlock = children[operation.path[0]!]
-
-  if (operation.path.length === 1) {
-    if (block?._key) {
-      const prevBlock = children[operation.path[0]! - 1]
-      if (!prevBlock) {
-        throw new Error('Previous block not found!')
-      }
-      const newBlock = prevBlock as PortableTextBlock
-      patches.push(set(newBlock, [{_key: newBlock._key}]))
-      patches.push(unset([{_key: block._key}]))
-    } else {
-      throw new Error('Target key not found!')
-    }
-  } else if (
-    isTextBlock({schema}, block) &&
-    isTextBlock({schema}, updatedBlock) &&
-    operation.path.length === 2
-  ) {
-    const updatedSpan =
-      updatedBlock.children[operation.path[1]! - 1] &&
-      isSpan({schema}, updatedBlock.children[operation.path[1]! - 1])
-        ? updatedBlock.children[operation.path[1]! - 1]
-        : undefined
-    const removedSpan =
-      block.children[operation.path[1]!] &&
-      isSpan({schema}, block.children[operation.path[1]!])
-        ? block.children[operation.path[1]!]
-        : undefined
-
-    if (updatedSpan) {
-      const spansMatchingKey = block.children.filter(
-        (span) => span._key === updatedSpan._key,
-      )
-
-      if (spansMatchingKey.length === 1) {
-        const prevSpan = spansMatchingKey[0]
-
-        if (isSpan({schema}, prevSpan) && prevSpan.text !== updatedSpan.text) {
-          patches.push(
-            set(updatedSpan.text, [
-              {_key: block._key},
-              'children',
-              {_key: updatedSpan._key},
-              'text',
-            ]),
-          )
-        }
-      } else {
-        console.warn(
-          `Multiple spans have \`_key\` ${updatedSpan._key}. It's ambiguous which one to update.`,
-          JSON.stringify(block, null, 2),
-        )
-      }
-    }
-
-    if (removedSpan) {
-      const spansMatchingKey = block.children.filter(
-        (span) => span._key === removedSpan._key,
-      )
-
-      if (spansMatchingKey.length === 1) {
-        patches.push(
-          unset([{_key: block._key}, 'children', {_key: removedSpan._key}]),
-        )
-      } else {
-        console.warn(
-          `Multiple spans have \`_key\` ${removedSpan._key}. It's ambiguous which one to remove.`,
-          JSON.stringify(block, null, 2),
-        )
-      }
-    }
-  }
-  return patches
 }
 
 export function moveNodePatch(

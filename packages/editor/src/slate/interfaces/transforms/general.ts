@@ -4,10 +4,8 @@ import {
   Point,
   Range,
   Scrubber,
-  Text,
-  type Descendant,
+  type Text,
   type Editor,
-  type Element,
   type NodeEntry,
   type Operation,
   type Selection,
@@ -18,7 +16,6 @@ import {
   modifyDescendant,
   modifyLeaf,
   removeChildren,
-  replaceChildren,
 } from '../../utils/modify'
 
 export interface GeneralTransforms {
@@ -67,45 +64,6 @@ export const GeneralTransforms: GeneralTransforms = {
             ...node,
             text: before + text + after,
           }
-        })
-
-        transformSelection = true
-        break
-      }
-
-      case 'merge_node': {
-        const {path} = op
-        const index = path[path.length - 1]!
-        const prevPath = Path.previous(path)
-        const prevIndex = prevPath[prevPath.length - 1]!
-
-        modifyChildren(editor, Path.parent(path), editor.schema, (children) => {
-          const node = children[index]!
-          const prev = children[prevIndex]!
-          let newNode: Descendant
-
-          if (
-            Text.isText(node, editor.schema) &&
-            Text.isText(prev, editor.schema)
-          ) {
-            newNode = {...prev, text: prev.text + node.text} as Descendant
-          } else if (
-            !Text.isText(node, editor.schema) &&
-            !Text.isText(prev, editor.schema)
-          ) {
-            newNode = {
-              ...prev,
-              children: prev.children.concat(node.children),
-            } as Descendant
-          } else {
-            throw new Error(
-              `Cannot apply a "merge_node" operation at path [${path}] to nodes of different interfaces: ${Scrubber.stringify(
-                node,
-              )} ${Scrubber.stringify(prev)}`,
-            )
-          }
-
-          return replaceChildren(children, prevIndex, 2, newNode)
         })
 
         transformSelection = true
@@ -317,52 +275,6 @@ export const GeneralTransforms: GeneralTransforms = {
 
         editor.selection = selection
 
-        break
-      }
-
-      case 'split_node': {
-        const {path, position, properties} = op
-        const index = path[path.length - 1]!
-
-        if (path.length === 0) {
-          throw new Error(
-            `Cannot apply a "split_node" operation at path [${path}] because the root node cannot be split.`,
-          )
-        }
-
-        modifyChildren(editor, Path.parent(path), editor.schema, (children) => {
-          const node = children[index]!
-          let newNode: Descendant
-          let nextNode: Descendant
-
-          if (Text.isText(node, editor.schema)) {
-            const before = node.text.slice(0, position)
-            const after = node.text.slice(position)
-            newNode = {
-              ...node,
-              text: before,
-            } as Descendant
-            nextNode = {
-              ...(properties as Partial<Text>),
-              text: after,
-            } as Descendant
-          } else {
-            const before = node.children.slice(0, position)
-            const after = node.children.slice(position)
-            newNode = {
-              ...node,
-              children: before,
-            } as Descendant
-            nextNode = {
-              ...(properties as Partial<Element>),
-              children: after,
-            } as Descendant
-          }
-
-          return replaceChildren(children, index, 1, newNode, nextNode)
-        })
-
-        transformSelection = true
         break
       }
     }

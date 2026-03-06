@@ -1,5 +1,3 @@
 export * from './insert-nodes'
-export * from './merge-nodes'
 export * from './move-nodes'
 export * from './remove-nodes'
-export * from './split-nodes'

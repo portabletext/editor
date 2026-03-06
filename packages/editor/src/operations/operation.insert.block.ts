@@ -1,5 +1,8 @@
 import type {PortableTextBlock} from '@portabletext/schema'
 import {isSpan} from '@portabletext/schema'
+import {applyMergeNode} from '../internal-utils/apply-merge-node'
+import {applySetNode} from '../internal-utils/apply-set-node'
+import {applySplitNode} from '../internal-utils/apply-split-node'
 import {isEqualChildren, isEqualMarks} from '../internal-utils/equality'
 import {getFocusChild} from '../internal-utils/slate-utils'
 import {toSlateRange} from '../internal-utils/to-slate-range'
@@ -246,24 +249,14 @@ export function insertBlock(options: {
         ) as Text
         if (childOffset < textNode.text.length) {
           const {text: _, ...properties} = textNode
-          editor.apply({
-            type: 'split_node',
-            path: selectionPoint.path,
-            position: childOffset,
-            properties,
-          })
+          applySplitNode(editor, selectionPoint.path, childOffset, properties)
         }
       }
 
       // Now split the block itself
       const splitAtIndex = childOffset > 0 ? childIndex + 1 : childIndex
       const {children: _, ...blockProperties} = currentBlock
-      editor.apply({
-        type: 'split_node',
-        path: blockPath,
-        position: splitAtIndex,
-        properties: blockProperties,
-      })
+      applySplitNode(editor, blockPath, splitAtIndex, blockProperties)
 
       // Insert the block object between the two split blocks
       const insertPath: Path = [blockPath[0]! + 1]
@@ -614,12 +607,7 @@ export function insertBlock(options: {
         const nodeToSplit = Node.get(editor, startPoint.path, editor.schema)
         if (Text.isText(nodeToSplit, editor.schema)) {
           const {text: _, ...properties} = nodeToSplit
-          editor.apply({
-            type: 'split_node',
-            path: startPoint.path,
-            position: startPoint.offset,
-            properties,
-          })
+          applySplitNode(editor, startPoint.path, startPoint.offset, properties)
         }
 
         insertTextBlockFragment(editor, block, startPoint)
@@ -652,12 +640,7 @@ export function insertBlock(options: {
           currentOffset < textNode.text.length
         ) {
           const {text: _, ...properties} = textNode
-          editor.apply({
-            type: 'split_node',
-            path: currentPath,
-            position: currentOffset,
-            properties,
-          })
+          applySplitNode(editor, currentPath, currentOffset, properties)
           currentPath = Path.next(currentPath)
           currentOffset = 0
         }
@@ -673,12 +656,7 @@ export function insertBlock(options: {
         ) {
           // Get the properties to preserve in the split
           const {children: _, ...blockProperties} = blockToSplit
-          editor.apply({
-            type: 'split_node',
-            path: blockPath,
-            position: splitAtIndex,
-            properties: blockProperties,
-          })
+          applySplitNode(editor, blockPath, splitAtIndex, blockProperties)
         }
 
         // Get the current path of the first block after splits
@@ -891,12 +869,7 @@ function deleteSameBlockRange(
     Text.isText(endNodeAfter, editor.schema)
   ) {
     const {text: _, ...properties} = endNodeAfter
-    editor.apply({
-      type: 'merge_node',
-      path: newEndPath,
-      position: startNodeAfter.text.length,
-      properties,
-    })
+    applyMergeNode(editor, newEndPath, startNodeAfter.text.length, properties)
   }
 }
 
@@ -970,12 +943,26 @@ function deleteCrossBlockRange(
     editor.schema,
   ) as Element
   if (editor.isTextBlock(startBlock) && editor.isTextBlock(endBlock)) {
-    const {children: _, ...properties} = endBlock
-    editor.apply({
-      type: 'merge_node',
-      path: adjustedEndBlockPath,
-      position: startBlock.children.length,
-      properties,
+    // Wrap in withoutNormalizing so normalization doesn't strip the copied
+    // markDefs before the merge moves the children that reference them.
+    Editor.withoutNormalizing(editor, () => {
+      if (Array.isArray(endBlock.markDefs) && endBlock.markDefs.length > 0) {
+        const oldDefs =
+          (Array.isArray(startBlock.markDefs) && startBlock.markDefs) || []
+        const newMarkDefs = [
+          ...new Map(
+            [...oldDefs, ...endBlock.markDefs].map((def) => [def._key, def]),
+          ).values(),
+        ]
+        applySetNode(editor, {markDefs: newMarkDefs}, startBlockPath)
+      }
+      const {children: _, ...properties} = endBlock
+      applyMergeNode(
+        editor,
+        adjustedEndBlockPath,
+        startBlock.children.length,
+        properties,
+      )
     })
   }
 }
@@ -1015,12 +1002,7 @@ function insertTextBlockFragment(
     if (Text.isText(textNode, editor.schema)) {
       const {text: _, ...properties} = textNode
 
-      editor.apply({
-        type: 'split_node',
-        path: at.path,
-        position: at.offset,
-        properties,
-      })
+      applySplitNode(editor, at.path, at.offset, properties)
     }
   }
 

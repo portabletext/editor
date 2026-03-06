@@ -14,11 +14,9 @@ import {defaultKeyGenerator} from '../utils/key-generator'
 import {
   insertNodePatch,
   insertTextPatch,
-  mergeNodePatch,
   moveNodePatch,
   removeNodePatch,
   removeTextPatch,
-  splitNodePatch,
 } from './operation-to-patches'
 
 const schemaDefinition = defineSchema({
@@ -115,68 +113,6 @@ describe('operationToPatches', () => {
   beforeEach(() => {
     editor.children = createDefaultChildren() as unknown as Node[]
     editor.onChange()
-  })
-
-  it('translates void items correctly when splitting spans', () => {
-    expect(
-      splitNodePatch(
-        schema,
-        editor.children,
-        {
-          type: 'split_node',
-          path: [0, 0],
-          position: 0,
-          properties: {_type: 'span', _key: 'c130395c640c', marks: []},
-        },
-
-        createDefaultChildren(),
-      ),
-    ).toEqual([
-      {
-        path: [
-          {
-            _key: '1f2e64b47787',
-          },
-          'children',
-        ],
-        type: 'setIfMissing',
-        value: [],
-      },
-      {
-        items: [
-          {
-            _key: '773866318fa8',
-            _type: 'someObject',
-            title: 'The Object',
-          },
-        ],
-        path: [
-          {
-            _key: '1f2e64b47787',
-          },
-          'children',
-          {
-            _key: 'c130395c640c',
-          },
-        ],
-        position: 'after',
-        type: 'insert',
-      },
-      {
-        path: [
-          {
-            _key: '1f2e64b47787',
-          },
-          'children',
-          {
-            _key: 'c130395c640c',
-          },
-          'text',
-        ],
-        type: 'set',
-        value: '',
-      },
-    ])
   })
 
   it('produce correct insert block patch', () => {
@@ -466,62 +402,6 @@ describe('operationToPatches', () => {
       ]
     `)
   })
-
-  it('produce correct merge node patch', () => {
-    const val = createDefaultChildren()
-    ;(val[0] as PortableTextTextBlock).children.push({
-      _type: 'span',
-      _key: 'r4wr323432',
-      text: '1234',
-      marks: [],
-    })
-    const block = editor.children[0] as PortableTextTextBlock
-    block.children = block.children.splice(0, 3)
-    block.children[2]!.text = '1234'
-    editor.onChange()
-    expect(
-      mergeNodePatch(
-        schema,
-        editor.children,
-        {
-          type: 'merge_node',
-          path: [0, 3],
-          position: 2,
-          properties: {text: '1234'},
-        },
-        val,
-      ),
-    ).toMatchInlineSnapshot(`
-      [
-        {
-          "path": [
-            {
-              "_key": "1f2e64b47787",
-            },
-            "children",
-            {
-              "_key": "fd9b4a4e6c0b",
-            },
-            "text",
-          ],
-          "type": "set",
-          "value": "1234",
-        },
-        {
-          "path": [
-            {
-              "_key": "1f2e64b47787",
-            },
-            "children",
-            {
-              "_key": "r4wr323432",
-            },
-          ],
-          "type": "unset",
-        },
-      ]
-    `)
-  })
 })
 
 describe('defensive setIfMissing patches', () => {
@@ -592,52 +472,6 @@ describe('defensive setIfMissing patches', () => {
           ],
           path: [{_key: '1f2e64b47787'}, 'children', {_key: 'fd9b4a4e6c0b'}],
           position: 'after',
-        },
-      ])
-    })
-  })
-
-  describe(splitNodePatch.name, () => {
-    test('includes setIfMissing before inserting spans after split', () => {
-      const patches = splitNodePatch(
-        schema,
-        editor.children,
-        {
-          type: 'split_node',
-          path: [0, 0],
-          position: 0,
-          properties: {_type: 'span', _key: 'c130395c640c', marks: []},
-        },
-        createDefaultChildren(),
-      )
-
-      expect(patches).toEqual([
-        {
-          type: 'setIfMissing',
-          path: [{_key: '1f2e64b47787'}, 'children'],
-          value: [],
-        },
-        {
-          type: 'insert',
-          items: [
-            {
-              _key: '773866318fa8',
-              _type: 'someObject',
-              title: 'The Object',
-            },
-          ],
-          path: [{_key: '1f2e64b47787'}, 'children', {_key: 'c130395c640c'}],
-          position: 'after',
-        },
-        {
-          type: 'set',
-          path: [
-            {_key: '1f2e64b47787'},
-            'children',
-            {_key: 'c130395c640c'},
-            'text',
-          ],
-          value: '',
         },
       ])
     })
