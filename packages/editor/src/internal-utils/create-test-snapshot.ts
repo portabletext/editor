@@ -22,7 +22,7 @@ export function createTestSnapshot(snapshot: {
     blockIndexMap.set(block._key, index)
   })
 
-  blockPathMap.rebuild(context.value)
+  blockPathMap.rebuild(context.value, context.schema)
 
   return {
     blockIndexMap,

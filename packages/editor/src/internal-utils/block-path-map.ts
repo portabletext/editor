@@ -155,17 +155,68 @@ export class InternalBlockPathMap {
 
   /**
    * Full rebuild from value array. Called once on init/reset.
-   * For now, only indexes top-level blocks (same as blockIndexMap).
-   * The serialized key-path for a top-level block is just its `_key`.
+   *
+   * When a schema is provided, recurses into container fields to index
+   * nested blocks. The positional path uses one index per keyed segment:
+   * for a block at value[1].rows[0].cells[2], the positional path is [1, 0, 2].
+   *
+   * Without a schema, only indexes top-level blocks (backward compatible).
    */
-  rebuild(value: Array<PortableTextBlock>): void {
+  rebuild(
+    value: Array<PortableTextBlock>,
+    schema?: {
+      containers: ReadonlyArray<{
+        name: string
+        fields: ReadonlyArray<{name: string; type: string}>
+      }>
+    },
+  ): void {
     this.map.clear()
-    for (let i = 0; i < value.length; i++) {
-      const block = value[i]
-      if (block !== undefined) {
-        // Top-level block: serialized key-path is just the _key
-        const keyPath = serializeKeyPath([block._key])
-        this.map.set(keyPath, [i])
+    const containers = schema?.containers ?? []
+    this.indexBlocks(value, [], [], containers)
+  }
+
+  /**
+   * Recursively index blocks into the map.
+   * For each block, adds an entry with its key-path and positional path,
+   * then recurses into container array fields.
+   */
+  private indexBlocks(
+    blocks: Array<PortableTextBlock>,
+    keyPrefix: string[],
+    pathPrefix: number[],
+    containers: ReadonlyArray<{
+      name: string
+      fields: ReadonlyArray<{name: string; type: string}>
+    }>,
+  ): void {
+    for (let i = 0; i < blocks.length; i++) {
+      const block = blocks[i]
+      if (block === undefined) {
+        continue
+      }
+      const keyPath = [...keyPrefix, block._key]
+      const posPath = [...pathPrefix, i]
+      this.map.set(serializeKeyPath(keyPath), posPath)
+
+      // Recurse into container fields
+      if (containers.length > 0) {
+        const containerDef = containers.find((c) => c.name === block._type)
+        if (containerDef) {
+          for (const field of containerDef.fields) {
+            if (field.type === 'array') {
+              const children = (block as Record<string, unknown>)[field.name]
+              if (Array.isArray(children)) {
+                this.indexBlocks(
+                  children as Array<PortableTextBlock>,
+                  keyPath,
+                  posPath,
+                  containers,
+                )
+              }
+            }
+          }
+        }
       }
     }
   }

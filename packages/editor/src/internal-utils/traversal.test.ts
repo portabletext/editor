@@ -42,6 +42,11 @@ function container(
 const schemaWithImage = compileSchema(
   defineSchema({
     blockObjects: [{name: 'image'}],
+    containers: [
+      {name: 'table', fields: [{name: 'rows', type: 'array'}]},
+      {name: 'row', fields: [{name: 'cells', type: 'array'}]},
+      {name: 'cell', fields: [{name: 'content', type: 'array'}]},
+    ],
   }),
 )
 
