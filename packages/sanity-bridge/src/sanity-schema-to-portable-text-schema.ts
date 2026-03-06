@@ -132,6 +132,7 @@ function sanitySchemaTypeToSchema(
       title: inlineObject.title,
       fields: inlineObject.fields.map(sanityFieldToSchemaField),
     })),
+    containers: [],
   }
 }
 

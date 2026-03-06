@@ -19,6 +19,7 @@ describe(compileSchema.name, () => {
         annotations: [],
         blockObjects: [],
         inlineObjects: [],
+        containers: [],
       })
 
       expect(consoleWarnSpy).toHaveBeenCalledWith(
@@ -40,6 +41,7 @@ describe(compileSchema.name, () => {
         annotations: [],
         blockObjects: [],
         inlineObjects: [],
+        containers: [],
       })
     })
   })
@@ -177,6 +179,52 @@ describe(compileSchema.name, () => {
                   ],
                 },
               ],
+            },
+          ],
+        },
+      ])
+    })
+  })
+
+  describe('containers', () => {
+    test('empty schema has containers: []', () => {
+      expect(compileSchema({}).containers).toEqual([])
+    })
+
+    test('containers are compiled with fields defaulting to []', () => {
+      expect(
+        compileSchema({
+          containers: [{name: 'table'}],
+        }).containers,
+      ).toEqual([{name: 'table', fields: []}])
+    })
+
+    test('containers with fields are compiled', () => {
+      expect(
+        compileSchema({
+          containers: [
+            {
+              name: 'callout',
+              fields: [
+                {name: 'tone', type: 'string'},
+                {
+                  name: 'content',
+                  type: 'array',
+                  of: [{type: 'block'}],
+                },
+              ],
+            },
+          ],
+        }).containers,
+      ).toEqual([
+        {
+          name: 'callout',
+          fields: [
+            {name: 'tone', type: 'string'},
+            {
+              name: 'content',
+              type: 'array',
+              of: [{type: 'block'}],
             },
           ],
         },

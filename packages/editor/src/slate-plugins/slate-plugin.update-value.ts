@@ -31,6 +31,8 @@ export function updateValuePlugin(
 
     apply(operation)
 
+    editor.blockPathMap.applyOperation(operation)
+
     buildIndexMaps(
       {
         schema: context.schema,

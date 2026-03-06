@@ -114,6 +114,7 @@ describe(sanitySchemaToPortableTextSchema.name, () => {
     ],
     blockObjects: [],
     inlineObjects: [],
+    containers: [],
   }
 
   test('simple compiled schema', () => {
