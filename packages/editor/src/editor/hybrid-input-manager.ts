@@ -223,15 +223,7 @@ export function createHybridInputManager({
    * Falls back to 'block' which is the standard PT text block type.
    */
   function getTextBlockType(): string {
-    const firstBlock = (editor.children as Array<PortableTextBlock>)[0]
-    if (
-      firstBlock &&
-      'children' in firstBlock &&
-      editor.isTextBlock(firstBlock)
-    ) {
-      return firstBlock._type
-    }
-    return 'block'
+    return editorActor.getSnapshot().context.schema.block.name
   }
 
   function send(behaviorEvent: BehaviorEvent): void {
