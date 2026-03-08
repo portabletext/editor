@@ -1,5 +1,6 @@
 import {isTextBlock} from '@portabletext/schema'
-import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator} from '@portabletext/test'
+import {toTextspec} from '@portabletext/textspec'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {defineSchema} from '../src'
@@ -62,10 +63,9 @@ describe('event.insert.blocks', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        ',{image},',
-        '',
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toBe(
+        'P: {image}\nP: ',
+      )
     })
   })
 
@@ -176,7 +176,6 @@ describe('event.insert.blocks', () => {
 
       if (!options.useAtProp) {
         await userEvent.click(locator)
-
         editor.send({
           type: 'select',
           at: initialSelection,
@@ -222,7 +221,6 @@ describe('event.insert.blocks', () => {
             _key: 'k7',
           },
         ])
-
         expect(editor.getSnapshot().context.selection).toEqual({
           anchor: {
             path: [{_key: 'k7'}],
@@ -260,7 +258,6 @@ describe('event.insert.blocks', () => {
             _key: 'k7',
           },
         ])
-
         expect(editor.getSnapshot().context.selection).toEqual({
           anchor: {
             path: [{_key: 'k7'}],
@@ -297,7 +294,6 @@ describe('event.insert.blocks', () => {
             _key: 'k7',
           },
         ])
-
         expect(editor.getSnapshot().context.selection).toEqual({
           anchor: {
             path: [{_key: 'k6'}],
@@ -335,7 +331,6 @@ describe('event.insert.blocks', () => {
             _key: 'k7',
           },
         ])
-
         expect(editor.getSnapshot().context.selection).toEqual({
           anchor: {
             path: [{_key: 'k6'}],
@@ -372,7 +367,6 @@ describe('event.insert.blocks', () => {
             _key: 'k7',
           },
         ])
-
         expect(editor.getSnapshot().context.selection).toBeNull()
       })
     })
@@ -400,7 +394,6 @@ describe('event.insert.blocks', () => {
             _key: 'k7',
           },
         ])
-
         expect(editor.getSnapshot().context.selection).toBeNull()
       })
     })
@@ -428,7 +421,6 @@ describe('event.insert.blocks', () => {
           },
           block,
         ])
-
         expect(editor.getSnapshot().context.selection).toEqual({
           anchor: {
             path: [{_key: 'k7'}],
@@ -467,7 +459,6 @@ describe('event.insert.blocks', () => {
           },
           block,
         ])
-
         expect(editor.getSnapshot().context.selection).toEqual({
           anchor: {
             path: [{_key: 'k7'}],
@@ -505,7 +496,6 @@ describe('event.insert.blocks', () => {
           },
           block,
         ])
-
         expect(editor.getSnapshot().context.selection).toEqual({
           anchor: {
             path: [{_key: 'k6'}],
@@ -544,7 +534,6 @@ describe('event.insert.blocks', () => {
           },
           block,
         ])
-
         expect(editor.getSnapshot().context.selection).toEqual({
           anchor: {
             path: [{_key: 'k6'}],
@@ -583,7 +572,6 @@ describe('event.insert.blocks', () => {
           },
           block,
         ])
-
         expect(editor.getSnapshot().context.selection).toEqual(initialSelection)
       })
     })
@@ -612,7 +600,6 @@ describe('event.insert.blocks', () => {
           },
           block,
         ])
-
         expect(editor.getSnapshot().context.selection).toBeNull()
       })
     })
@@ -640,7 +627,6 @@ describe('event.insert.blocks', () => {
             _key: 'k7',
           },
         ])
-
         expect(editor.getSnapshot().context.selection).toEqual({
           anchor: {
             path: [{_key: 'k7'}],
@@ -679,7 +665,6 @@ describe('event.insert.blocks', () => {
             _key: 'k7',
           },
         ])
-
         expect(editor.getSnapshot().context.selection).toEqual({
           anchor: {
             path: [{_key: 'k7'}],
@@ -717,7 +702,6 @@ describe('event.insert.blocks', () => {
             _key: 'k7',
           },
         ])
-
         expect(editor.getSnapshot().context.selection).toEqual({
           anchor: {
             path: [{_key: 'k6'}],
@@ -756,7 +740,6 @@ describe('event.insert.blocks', () => {
             _key: 'k7',
           },
         ])
-
         expect(editor.getSnapshot().context.selection).toEqual({
           anchor: {
             path: [{_key: 'k6'}],
@@ -795,7 +778,6 @@ describe('event.insert.blocks', () => {
             _key: 'k7',
           },
         ])
-
         expect(editor.getSnapshot().context.selection).toEqual(initialSelection)
       })
     })
@@ -824,7 +806,6 @@ describe('event.insert.blocks', () => {
             _key: 'k7',
           },
         ])
-
         expect(editor.getSnapshot().context.selection).toBeNull()
       })
     })
@@ -852,7 +833,6 @@ describe('event.insert.blocks', () => {
           imageB,
           block,
         ])
-
         expect(editor.getSnapshot().context.selection).toEqual({
           anchor: {
             path: [{_key: 'k7'}],
@@ -891,7 +871,6 @@ describe('event.insert.blocks', () => {
           imageB,
           block,
         ])
-
         expect(editor.getSnapshot().context.selection).toEqual({
           anchor: {
             path: [{_key: 'k7'}],
@@ -929,7 +908,6 @@ describe('event.insert.blocks', () => {
           imageB,
           block,
         ])
-
         expect(editor.getSnapshot().context.selection).toEqual({
           anchor: {
             path: [{_key: 'k6'}],
@@ -968,7 +946,6 @@ describe('event.insert.blocks', () => {
           imageB,
           block,
         ])
-
         expect(editor.getSnapshot().context.selection).toEqual({
           anchor: {
             path: [{_key: 'k6'}],
@@ -1006,7 +983,6 @@ describe('event.insert.blocks', () => {
           imageB,
           block,
         ])
-
         expect(editor.getSnapshot().context.selection).toEqual({
           anchor: {
             path: [{_key: imageA._key}],
@@ -1045,7 +1021,6 @@ describe('event.insert.blocks', () => {
           imageB,
           block,
         ])
-
         expect(editor.getSnapshot().context.selection).toBeNull()
       })
     })
@@ -1073,7 +1048,6 @@ describe('event.insert.blocks', () => {
           imageB,
           block,
         ])
-
         expect(editor.getSnapshot().context.selection).toEqual({
           anchor: {
             path: [{_key: 'k7'}],
@@ -1112,7 +1086,6 @@ describe('event.insert.blocks', () => {
           imageB,
           block,
         ])
-
         expect(editor.getSnapshot().context.selection).toEqual({
           anchor: {
             path: [{_key: 'k7'}],
@@ -1150,7 +1123,6 @@ describe('event.insert.blocks', () => {
           imageB,
           block,
         ])
-
         expect(editor.getSnapshot().context.selection).toEqual({
           anchor: {
             path: [{_key: 'k6'}],
@@ -1189,7 +1161,6 @@ describe('event.insert.blocks', () => {
           imageB,
           block,
         ])
-
         expect(editor.getSnapshot().context.selection).toEqual({
           anchor: {
             path: [{_key: 'k6'}],
@@ -1227,7 +1198,6 @@ describe('event.insert.blocks', () => {
           imageB,
           block,
         ])
-
         expect(editor.getSnapshot().context.selection).toEqual({
           anchor: {
             path: [{_key: imageA._key}],
@@ -1266,7 +1236,6 @@ describe('event.insert.blocks', () => {
           imageB,
           block,
         ])
-
         expect(editor.getSnapshot().context.selection).toBeNull()
       })
     })
@@ -1294,7 +1263,6 @@ describe('event.insert.blocks', () => {
           imageB,
           block,
         ])
-
         expect(editor.getSnapshot().context.selection).toEqual({
           anchor: {
             path: [{_key: 'k7'}],
@@ -1333,7 +1301,6 @@ describe('event.insert.blocks', () => {
           imageB,
           block,
         ])
-
         expect(editor.getSnapshot().context.selection).toEqual({
           anchor: {
             path: [{_key: 'k7'}],
@@ -1371,7 +1338,6 @@ describe('event.insert.blocks', () => {
           imageB,
           block,
         ])
-
         expect(editor.getSnapshot().context.selection).toEqual({
           anchor: {
             path: [{_key: 'k6'}],
@@ -1410,7 +1376,6 @@ describe('event.insert.blocks', () => {
           imageB,
           block,
         ])
-
         expect(editor.getSnapshot().context.selection).toEqual({
           anchor: {
             path: [{_key: 'k6'}],
@@ -1448,7 +1413,6 @@ describe('event.insert.blocks', () => {
           imageB,
           block,
         ])
-
         expect(editor.getSnapshot().context.selection).toEqual({
           anchor: {
             path: [{_key: imageA._key}],
@@ -1487,7 +1451,6 @@ describe('event.insert.blocks', () => {
           imageB,
           block,
         ])
-
         expect(editor.getSnapshot().context.selection).toBeNull()
       })
     })
@@ -1515,7 +1478,6 @@ describe('event.insert.blocks', () => {
           },
           block,
         ])
-
         expect(editor.getSnapshot().context.selection).toEqual({
           anchor: {
             path: [{_key: 'k7'}],
@@ -1554,7 +1516,6 @@ describe('event.insert.blocks', () => {
           },
           block,
         ])
-
         expect(editor.getSnapshot().context.selection).toEqual({
           anchor: {
             path: [{_key: 'k7'}],
@@ -1592,7 +1553,6 @@ describe('event.insert.blocks', () => {
           },
           block,
         ])
-
         expect(editor.getSnapshot().context.selection).toEqual({
           anchor: {
             path: [{_key: 'k6'}],
@@ -1631,7 +1591,6 @@ describe('event.insert.blocks', () => {
           },
           block,
         ])
-
         expect(editor.getSnapshot().context.selection).toEqual({
           anchor: {
             path: [{_key: 'k6'}],
@@ -1670,7 +1629,6 @@ describe('event.insert.blocks', () => {
           },
           block,
         ])
-
         expect(editor.getSnapshot().context.selection).toEqual(initialSelection)
       })
     })
@@ -1699,7 +1657,6 @@ describe('event.insert.blocks', () => {
           },
           block,
         ])
-
         expect(editor.getSnapshot().context.selection).toBeNull()
       })
     })
@@ -1727,7 +1684,6 @@ describe('event.insert.blocks', () => {
             _key: 'k7',
           },
         ])
-
         expect(editor.getSnapshot().context.selection).toEqual({
           anchor: {
             path: [{_key: 'k7'}],
@@ -1766,7 +1722,6 @@ describe('event.insert.blocks', () => {
             _key: 'k7',
           },
         ])
-
         expect(editor.getSnapshot().context.selection).toEqual({
           anchor: {
             path: [{_key: 'k7'}],
@@ -1804,7 +1759,6 @@ describe('event.insert.blocks', () => {
             _key: 'k7',
           },
         ])
-
         expect(editor.getSnapshot().context.selection).toEqual({
           anchor: {
             path: [{_key: 'k6'}],
@@ -1843,7 +1797,6 @@ describe('event.insert.blocks', () => {
             _key: 'k7',
           },
         ])
-
         expect(editor.getSnapshot().context.selection).toEqual({
           anchor: {
             path: [{_key: 'k6'}],
@@ -1882,7 +1835,6 @@ describe('event.insert.blocks', () => {
             _key: 'k7',
           },
         ])
-
         expect(editor.getSnapshot().context.selection).toEqual(initialSelection)
       })
     })
@@ -1911,7 +1863,6 @@ describe('event.insert.blocks', () => {
             _key: 'k7',
           },
         ])
-
         expect(editor.getSnapshot().context.selection).toBeNull()
       })
     })
@@ -1957,346 +1908,10 @@ describe('event.insert.blocks', () => {
             ],
           },
         ])
-
         expect(editor.getSnapshot().context.selection).toEqual({
           anchor: {
             path: [{_key: 'k7'}],
             offset: 0,
           },
-          focus: {
-            path: [{_key: 'k7'}],
-            offset: 0,
-          },
-          backward: false,
-        })
-      })
-    })
-
-    test('target: text-mid, placement: auto, select: end, useAtProp: true', async () => {
-      const {editor, imageA, imageB, block} = await createTest({
-        target: 'text-mid',
-        placement: 'auto',
-        select: 'end',
-        useAtProp: true,
-      })
-
-      await vi.waitFor(() => {
-        expect(editor.getSnapshot().context.value).toEqual([
-          imageA,
-          imageB,
-          {
-            ...block,
-            children: [
-              {
-                ...block.children[0],
-                text: 'foo',
-              },
-            ],
-          },
-          // Inserting the same images again will generate new _keys to avoid
-          // conflicts
-          {
-            ...imageA,
-            _key: 'k6',
-          },
-          {
-            ...imageB,
-            _key: 'k7',
-          },
-          {
-            ...block,
-            _key: 'k8',
-            children: [
-              {
-                ...block.children[0],
-                text: 'bar',
-              },
-            ],
-          },
-        ])
-
-        expect(editor.getSnapshot().context.selection).toEqual({
-          anchor: {
-            path: [{_key: 'k7'}],
-            offset: 0,
-          },
-          focus: {
-            path: [{_key: 'k7'}],
-            offset: 0,
-          },
-          backward: false,
-        })
-      })
-    })
-
-    test('target: text-mid, placement: auto, select: start', async () => {
-      const {editor, imageA, imageB, block} = await createTest({
-        target: 'text-mid',
-        placement: 'auto',
-        select: 'start',
-      })
-
-      await vi.waitFor(() => {
-        expect(editor.getSnapshot().context.value).toEqual([
-          imageA,
-          imageB,
-          {
-            ...block,
-            children: [
-              {
-                ...block.children[0],
-                text: 'foo',
-              },
-            ],
-          },
-          // Inserting the same images again will generate new _keys to avoid
-          // conflicts
-          {
-            ...imageA,
-            _key: 'k6',
-          },
-          {
-            ...imageB,
-            _key: 'k7',
-          },
-          {
-            ...block,
-            _key: 'k8',
-            children: [
-              {
-                ...block.children[0],
-                text: 'bar',
-              },
-            ],
-          },
-        ])
-
-        expect(editor.getSnapshot().context.selection).toEqual({
-          anchor: {
-            path: [{_key: 'k6'}],
-            offset: 0,
-          },
-          focus: {
-            path: [{_key: 'k6'}],
-            offset: 0,
-          },
-          backward: false,
-        })
-      })
-    })
-
-    test('target: text-mid, placement: auto, select: start, useAtProp: true', async () => {
-      const {editor, imageA, imageB, block} = await createTest({
-        target: 'text-mid',
-        placement: 'auto',
-        select: 'start',
-        useAtProp: true,
-      })
-
-      await vi.waitFor(() => {
-        expect(editor.getSnapshot().context.value).toEqual([
-          imageA,
-          imageB,
-          {
-            ...block,
-            children: [
-              {
-                ...block.children[0],
-                text: 'foo',
-              },
-            ],
-          },
-          // Inserting the same images again will generate new _keys to avoid
-          // conflicts
-          {
-            ...imageA,
-            _key: 'k6',
-          },
-          {
-            ...imageB,
-            _key: 'k7',
-          },
-          {
-            ...block,
-            _key: 'k8',
-            children: [
-              {
-                ...block.children[0],
-                text: 'bar',
-              },
-            ],
-          },
-        ])
-
-        expect(editor.getSnapshot().context.selection).toEqual({
-          anchor: {
-            path: [{_key: 'k6'}],
-            offset: 0,
-          },
-          focus: {
-            path: [{_key: 'k6'}],
-            offset: 0,
-          },
-          backward: false,
-        })
-      })
-    })
-
-    test('target: text-mid, placement: auto, select: none', async () => {
-      const {editor, imageA, imageB, block, initialSelection} =
-        await createTest({
-          target: 'text-mid',
-          placement: 'auto',
-          select: 'none',
-        })
-
-      await vi.waitFor(() => {
-        expect(editor.getSnapshot().context.value).toEqual([
-          imageA,
-          imageB,
-          {
-            ...block,
-            children: [
-              {
-                ...block.children[0],
-                text: 'foo',
-              },
-            ],
-          },
-          // Inserting the same images again will generate new _keys to avoid
-          // conflicts
-          {
-            ...imageA,
-            _key: 'k6',
-          },
-          {
-            ...imageB,
-            _key: 'k7',
-          },
-          {
-            ...block,
-            _key: 'k8',
-            children: [
-              {
-                ...block.children[0],
-                text: 'bar',
-              },
-            ],
-          },
-        ])
-
-        expect(editor.getSnapshot().context.selection).toEqual(initialSelection)
-      })
-    })
-
-    test('target: text-mid, placement: auto, select: none, useAtProp: true', async () => {
-      const {editor, imageA, imageB, block} = await createTest({
-        target: 'text-mid',
-        placement: 'auto',
-        select: 'none',
-        useAtProp: true,
-      })
-
-      await vi.waitFor(() => {
-        expect(editor.getSnapshot().context.value).toEqual([
-          imageA,
-          imageB,
-          {
-            ...block,
-            children: [
-              {
-                ...block.children[0],
-                text: 'foo',
-              },
-            ],
-          },
-          // Inserting the same images again will generate new _keys to avoid
-          // conflicts
-          {
-            ...imageA,
-            _key: 'k6',
-          },
-          {
-            ...imageB,
-            _key: 'k7',
-          },
-          {
-            ...block,
-            _key: 'k8',
-            children: [
-              {
-                ...block.children[0],
-                text: 'bar',
-              },
-            ],
-          },
-        ])
-
-        expect(editor.getSnapshot().context.selection).toBeNull()
-      })
-    })
-  })
-
-  test('Scenario: aborting `insert.block` of a specific block', async () => {
-    const {editor} = await createTestEditor({
-      children: (
-        <BehaviorPlugin
-          behaviors={[
-            defineBehavior({
-              on: 'insert.block',
-              guard: ({snapshot, event}) => {
-                if (!isTextBlock(snapshot.context, event.block)) {
-                  return false
-                }
-
-                const text = getTextBlockText(event.block)
-
-                return text === 'bar'
-              },
-
-              actions: [],
-            }),
-          ]}
-        />
-      ),
-    })
-
-    editor.send({
-      type: 'insert.blocks',
-      blocks: [
-        {
-          _type: 'block',
-          children: [
-            {
-              _type: 'span',
-              text: 'foo',
-            },
-          ],
-        },
-        {
-          _type: 'block',
-          children: [
-            {
-              _type: 'span',
-              text: 'bar',
-            },
-          ],
-        },
-        {
-          _type: 'block',
-          children: [
-            {
-              _type: 'span',
-              text: 'baz',
-            },
-          ],
-        },
-      ],
-      placement: 'auto',
-    })
-
-    await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo', 'baz'])
-    })
-  })
-})
+         
+... Output truncated at 50KB. Use offset/limit to page.
