@@ -1,5 +1,6 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
-import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator} from '@portabletext/test'
+import {toTextspec} from '@portabletext/textspec'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import type {
@@ -29,6 +30,7 @@ describe('Setup', () => {
         children: [{_type: 'span', _key: keyGenerator(), text: 'bar'}],
       },
     ]
+
     const events: Array<EditorEmittedEvent> = []
     let mutationEvent: MutationEvent | undefined
     let resolveFooBarMutation: () => void
@@ -41,13 +43,12 @@ describe('Setup', () => {
         <EventListenerPlugin
           on={(event) => {
             events.push(event)
-
             if (
               event.type === 'mutation' &&
-              getTersePt({
+              toTextspec({
                 schema: compileSchema(defineSchema({})),
                 value: event.value ?? [],
-              }).at(0) === 'foo bar'
+              }) === 'P: foo bar'
             ) {
               resolveFooBarMutation()
               mutationEvent = event
@@ -60,7 +61,7 @@ describe('Setup', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: foo')
     })
 
     expect(events.slice(0, 2)).toEqual([
@@ -80,10 +81,10 @@ describe('Setup', () => {
         getSelectionAfterText(editor.getSnapshot().context, 'foo'),
       )
     })
-    await userEvent.type(locator, ' bar')
 
+    await userEvent.type(locator, ' bar')
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo bar'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: foo bar')
     })
 
     await fooBarMutationPromise
