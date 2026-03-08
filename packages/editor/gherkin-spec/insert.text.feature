@@ -11,8 +11,8 @@ Feature: Insert text
     Then the text is <new text>
 
     Examples:
-      | text       | selection | new text     |
-      | "foo\|bar" | "oo"      | "fnew\|bar"  |
-      | "foo\|bar" | "b"       | "foo\|newar" |
-      | "foo\|bar" | "ooba"    | "fnewr"      |
-      | "foo\|bar" | "foobar"  | "new"        |
+      | text             | selection | new text          |
+      | "P: foo;;P: bar" | "oo"      | "P: fnew;;P: bar" |
+      | "P: foo;;P: bar" | "b"       | "P: foo;;P: newar"|
+      | "P: foo;;P: bar" | "ooba"    | "P: fnewr"        |
+      | "P: foo;;P: bar" | "foobar"  | "P: new"          |
