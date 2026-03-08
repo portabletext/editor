@@ -97,6 +97,7 @@ const parameterType = {
     name: 'textspec',
     matcher: /"(.*)"/u,
     type: String,
+    transform: (input) => input.replace(/\\\|/g, '|').replace(/\\\^/g, '^'),
   }),
 }
 
