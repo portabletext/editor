@@ -4,7 +4,8 @@ import {
   isTextBlock,
   type PortableTextBlock,
 } from '@portabletext/schema'
-import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator} from '@portabletext/test'
+import {toTextspec} from '@portabletext/textspec'
 import {createRef, useState, type ReactNode, type RefObject} from 'react'
 import {describe, expect, it, test, vi} from 'vitest'
 import {render} from 'vitest-browser-react'
@@ -43,7 +44,7 @@ let rangeDecorationIteration = 0
 
 const RangeDecorationTestComponent = ({children}: {children?: ReactNode}) => {
   rangeDecorationIteration++
-  return <span data-testid="range-decoration">{children}</span>
+  return <span>{children}</span>
 }
 
 function updateRangeDecorations({
@@ -201,7 +202,6 @@ describe('RangeDecorations', () => {
         .element(locator.getByTestId('range-decoration'))
         .toBeInTheDocument(),
     )
-
     await vi.waitFor(() =>
       expect
         .element(locator.getByTestId('range-decoration'))
@@ -216,10 +216,7 @@ describe('RangeDecorations', () => {
     await userEvent.type(locator, '123 ')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        '123 Hello there world',
-        "It's a beautiful day on planet earth",
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: 123 Hello there world\nP: It\'s a beautiful day on planet earth')
     })
 
     await rerender({
@@ -293,9 +290,10 @@ describe('RangeDecorations', () => {
   })
 
   it('only render range decorations as necessary', async () => {
-    const editorRef: RefObject<PortableTextEditor | null> = createRef()
+    const editorRef: RefObject<PortableTextEditor> = createRef()
     const onChange = vi.fn()
     const value = [helloBlock]
+
     let rangeDecorations: RangeDecoration[] = [
       {
         component: RangeDecorationTestComponent,
@@ -347,6 +345,7 @@ describe('RangeDecorations', () => {
     await vi.waitFor(() => {
       expect([rangeDecorationIteration, 'initial']).toEqual([1, 'initial'])
     })
+
     // Update the range decorations, a new object with identical values
     rangeDecorations = [
       {
@@ -376,6 +375,7 @@ describe('RangeDecorations', () => {
         'updated-with-equal-values',
       ])
     })
+
     // Update the range decorations with a new offset
     rangeDecorations = [
       {
@@ -387,6 +387,7 @@ describe('RangeDecorations', () => {
         payload: {id: 'a'},
       },
     ]
+
     await rerender({
       children: (
         <>
@@ -498,7 +499,8 @@ describe('RangeDecorations', () => {
 
   test("Scenario: Range Decorations don't affect the caret position", async () => {
     const keyGenerator = createTestKeyGenerator()
-    const editorRef: RefObject<Editor | null> = createRef()
+    const editorRef: RefObject<Editor> = createRef()
+
     // Keeping track of the mutation events emitted by the editor
     const mutationEvents: Array<MutationEvent> = []
 
@@ -517,10 +519,10 @@ describe('RangeDecorations', () => {
         <EditorProvider
           initialConfig={{
             keyGenerator,
-            schemaDefinition: schema,
-            initialValue: value,
+            schemaDefinition: defineSchema({}),
           }}
         >
+          <EditorRefPlugin editorRef={editorRef} />
           <EventListenerPlugin
             on={(event) => {
               if (
@@ -536,6 +538,7 @@ describe('RangeDecorations', () => {
                   path: event.patch.path,
                   offset: 0,
                 })
+
                 const block = editorRef.current
                   ?.getSnapshot()
                   .context.value?.find((block) => block._key === blockKey)
@@ -573,20 +576,20 @@ describe('RangeDecorations', () => {
               }
             }}
           />
-          <PortableTextEditable rangeDecorations={rangeDecorations} />
-          {props.children}
+          <PortableTextEditable rangeDecorations={rangeDecorations}>
+            {props.children}
+          </PortableTextEditable>
         </EditorProvider>
       )
     }
 
     render(
       <App>
-        <EditorRefPlugin ref={editorRef} />
+        <></>
       </App>,
     )
 
     const locator = page.getByRole('textbox')
-
     await userEvent.click(locator)
     await userEvent.type(locator, 'f')
 
