@@ -1,5 +1,6 @@
 import {defineSchema} from '@portabletext/schema'
-import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator} from '@portabletext/test'
+import {toTextspec} from '@portabletext/textspec'
 import {describe, expect, test, vi} from 'vitest'
 import {execute, forward} from '../src/behaviors/behavior.types.action'
 import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
@@ -192,6 +193,7 @@ describe('event.insert.span', () => {
   test('Scenario: Inserting on block object', async () => {
     const keyGenerator = createTestKeyGenerator()
     const imageKey = keyGenerator()
+
     const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition: defineSchema({
@@ -227,10 +229,9 @@ describe('event.insert.span', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        '{image}',
-        'foo',
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        '{IMAGE}\nP: foo',
+      )
     })
   })
 
@@ -238,6 +239,7 @@ describe('event.insert.span', () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const imageKey = keyGenerator()
+
     const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition: defineSchema({
@@ -303,7 +305,9 @@ describe('event.insert.span', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([',{image},foo'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'P: {image} foo',
+      )
     })
   })
 })
