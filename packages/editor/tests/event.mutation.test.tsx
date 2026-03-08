@@ -1,5 +1,6 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
-import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator} from '@portabletext/test'
+import {toTextspec} from '@portabletext/textspec'
 import {makeDiff, makePatches, stringifyPatches} from '@sanity/diff-match-patch'
 import {useState} from 'react'
 import {describe, expect, test, vi} from 'vitest'
@@ -18,7 +19,6 @@ import {createTestEditor} from '../src/test/vitest'
 describe('event.mutation', () => {
   test('Scenario: Deferring mutation events when read-only', async () => {
     const onEvent = vi.fn<(event: EditorEmittedEvent) => void>()
-
     let resolveFooMutation: () => void
     const fooMutationPromise = new Promise<void>((resolve) => {
       resolveFooMutation = resolve
@@ -31,10 +31,10 @@ describe('event.mutation', () => {
             onEvent(event)
             if (
               event.type === 'mutation' &&
-              getTersePt({
+              toTextspec({
                 schema: compileSchema(defineSchema({})),
                 value: event.value ?? [],
-              }).at(0) === 'foo'
+              }) === 'P: foo'
             ) {
               resolveFooMutation()
             }
@@ -44,11 +44,9 @@ describe('event.mutation', () => {
     })
 
     await userEvent.type(locator, 'foo')
-
     await fooMutationPromise
 
     editor.send({type: 'insert.text', text: 'bar'})
-
     editor.send({type: 'update readOnly', readOnly: true})
 
     await new Promise((resolve) => setTimeout(resolve, 250))
@@ -135,8 +133,10 @@ describe('event.mutation', () => {
 
   test('Scenario: Flushing pending mutations when unmounting', async () => {
     const keyGenerator = createTestKeyGenerator()
+
     // Keeping track of the patches emitted by the editor
     const patches: Array<Patch> = []
+
     // Keeping track of the mutation events emitted by the editor
     const mutationEvents: Array<MutationEvent> = []
 
@@ -147,11 +147,10 @@ describe('event.mutation', () => {
       return (
         <EditorProvider
           key={editorKey}
-          initialConfig={{
-            keyGenerator,
-            schemaDefinition: defineSchema({}),
-          }}
+          keyGenerator={keyGenerator}
+          initialConfig={{schemaDefinition: defineSchema({})}}
         >
+          <PortableTextEditable />
           <EventListenerPlugin
             on={(event) => {
               if (event.type === 'patch') {
@@ -168,13 +167,11 @@ describe('event.mutation', () => {
                   setEditorKey('editor-1')
                 }
               }
-
               if (event.type === 'mutation') {
                 mutationEvents.push(event)
               }
             }}
           />
-          <PortableTextEditable />
         </EditorProvider>
       )
     }
@@ -182,6 +179,7 @@ describe('event.mutation', () => {
     await render(<App />)
 
     const locator = page.getByRole('textbox')
+
     await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
 
     await userEvent.click(locator)
