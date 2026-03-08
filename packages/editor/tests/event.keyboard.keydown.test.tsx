@@ -1,4 +1,4 @@
-import {getTersePt} from '@portabletext/test'
+import {toTextspec} from '@portabletext/textspec'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {execute, raise} from '../src/behaviors/behavior.types.action'
@@ -52,7 +52,7 @@ describe('event.keyboard.keydown', () => {
           behaviors={[
             defineBehavior({
               on: 'keyboard.keydown',
-              guard: ({snapshot, event}) => {
+              guard: ({event, snapshot}) => {
                 if (event.originEvent.key !== 'ArrowDown') {
                   return false
                 }
@@ -119,11 +119,7 @@ describe('event.keyboard.keydown', () => {
     await userEvent.type(locator, 'new')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        'foo',
-        'newbar',
-        'baz',
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: foo\nP: newbar\nP: baz')
     })
   })
 
@@ -134,7 +130,7 @@ describe('event.keyboard.keydown', () => {
           behaviors={[
             defineBehavior({
               on: 'keyboard.keydown',
-              guard: ({snapshot, event}) => {
+              guard: ({event, snapshot}) => {
                 if (event.originEvent.key !== 'ArrowDown') {
                   return false
                 }
@@ -201,11 +197,7 @@ describe('event.keyboard.keydown', () => {
     await userEvent.type(locator, 'new')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        'foo',
-        'newbar',
-        'baz',
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: foo\nP: newbar\nP: baz')
     })
   })
 })
