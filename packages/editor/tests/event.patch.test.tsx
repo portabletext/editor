@@ -8,7 +8,8 @@ import {
   type Patch,
 } from '@portabletext/patches'
 import {defineSchema, type PortableTextBlock} from '@portabletext/schema'
-import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator} from '@portabletext/test'
+import {toTextspec} from '@portabletext/textspec'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
@@ -18,6 +19,7 @@ describe('event.patch', () => {
   test('Scenario: Deleting empty block above non-empty text block', async () => {
     const keyGenerator = createTestKeyGenerator()
     const patches: Array<Patch> = []
+
     const blockAKey = keyGenerator()
     const spanAKey = keyGenerator()
     const blockBKey = keyGenerator()
@@ -70,7 +72,7 @@ describe('event.patch', () => {
     await userEvent.keyboard('{Delete}')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['bar'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: bar')
     })
 
     expect(patches).toEqual([
@@ -125,6 +127,7 @@ describe('event.patch', () => {
       markDefs: [],
       style: 'normal',
     }
+
     const h1 = {
       _type: 'block',
       _key: keyGenerator(),
@@ -289,7 +292,6 @@ describe('event.patch', () => {
             style: 'normal',
           },
         ])
-
         expect(patches).toEqual([
           setIfMissing([], []),
           insert(
@@ -327,7 +329,6 @@ describe('event.patch', () => {
             style: 'normal',
           },
         ])
-
         expect(patches.slice(3)).toEqual([
           diffMatchPatch('f', '', [
             {_key: 'k0'},
@@ -351,7 +352,6 @@ describe('event.patch', () => {
             style: 'normal',
           },
         ])
-
         expect(patches.slice(5)).toEqual([
           setIfMissing([], []),
           insert(
@@ -419,7 +419,6 @@ describe('event.patch', () => {
             foo: 'bar',
           },
         ])
-
         expect(patches).toEqual([
           setIfMissing([], []),
           insert(
@@ -459,7 +458,6 @@ describe('event.patch', () => {
             foo: 'bar',
           },
         ])
-
         expect(patches.slice(4)).toEqual([
           diffMatchPatch('f', '', [
             {_key: 'k0'},
@@ -483,7 +481,6 @@ describe('event.patch', () => {
             foo: 'bar',
           },
         ])
-
         expect(patches.slice(5)).toEqual([
           diffMatchPatch('', 'f', [
             {_key: 'k0'},
@@ -519,7 +516,7 @@ describe('event.patch', () => {
 
         await vi.waitFor(() => {
           expect(editor.getSnapshot().context.value).toEqual(remoteValue)
-          expect(getTersePt(editor.getSnapshot().context)).toEqual(['hello'])
+          expect(toTextspec(editor.getSnapshot().context)).toBe('P: hello')
         })
       })
 
@@ -558,9 +555,7 @@ describe('event.patch', () => {
 
         await vi.waitFor(() => {
           expect(editor.getSnapshot().context.value).toEqual(remoteValue)
-          expect(getTersePt(editor.getSnapshot().context)).toEqual([
-            'hello world',
-          ])
+          expect(toTextspec(editor.getSnapshot().context)).toBe('P: hello world')
         })
       })
     })
@@ -587,7 +582,7 @@ describe('event.patch', () => {
 
         await vi.waitFor(() => {
           expect(editor.getSnapshot().context.value).toEqual(remoteValue)
-          expect(getTersePt(editor.getSnapshot().context)).toEqual(['hello'])
+          expect(toTextspec(editor.getSnapshot().context)).toBe('P: hello')
         })
       })
 
@@ -626,9 +621,7 @@ describe('event.patch', () => {
 
         await vi.waitFor(() => {
           expect(editor.getSnapshot().context.value).toEqual(remoteValue)
-          expect(getTersePt(editor.getSnapshot().context)).toEqual([
-            'hello world',
-          ])
+          expect(toTextspec(editor.getSnapshot().context)).toBe('P: hello world')
         })
       })
     })
@@ -637,6 +630,7 @@ describe('event.patch', () => {
   test('Scenario: Deleting all text with annotation', async () => {
     const keyGenerator = createTestKeyGenerator()
     const patches: Array<Patch> = []
+
     const blockKey = keyGenerator()
     const span1Key = keyGenerator()
     const span2Key = keyGenerator()
@@ -677,7 +671,7 @@ describe('event.patch', () => {
     await userEvent.keyboard('{Delete}')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P:')
     })
 
     expect(patches).toEqual(
