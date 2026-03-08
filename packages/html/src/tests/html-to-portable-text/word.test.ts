@@ -1,5 +1,5 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
-import {getTersePt} from '@portabletext/test'
+import {toTextspec} from '@portabletext/textspec'
 import {describe, expect, test} from 'vitest'
 import {transform} from './test-utils'
 
@@ -8,11 +8,11 @@ describe('Word', () => {
     const html = `<p class=MsoNormal>foo <b>bar</b> baz<o:p></o:p></p>`
 
     expect(
-      getTersePt({
+      toTextspec({
         schema: compileSchema(defineSchema({})),
         value: transform([html]),
       }),
-    ).toEqual(['foo ,bar, baz'])
+    ).toBe('P: foo [strong:bar] baz')
   })
 
   test('simple table', () => {
@@ -37,11 +37,11 @@ describe('Word', () => {
     ].join('\n')
 
     expect(
-      getTersePt({
+      toTextspec({
         schema: compileSchema(defineSchema({})),
         value: transform([html]),
       }),
-    ).toEqual(['foo', 'bar'])
+    ).toBe('P: foo\nP: bar')
   })
 
   test('bullet and numbered lists with multi-level definitions', () => {
