@@ -1,6 +1,7 @@
 import type {Patch} from '@portabletext/patches'
 import {defineSchema} from '@portabletext/schema'
-import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator} from '@portabletext/test'
+import {toTextspec} from '@portabletext/textspec'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {defineBehavior, raise} from '../src/behaviors'
@@ -25,7 +26,8 @@ describe('event.insert.child', () => {
                 }
 
                 const suggestionKey =
-                  focusSpan.node.marks?.at(0) ?? snapshot.context.keyGenerator()
+                  focusSpan.node.marks?.at(0) ??
+                  snapshot.context.keyGenerator()
 
                 return {focusSpan, focusTextBlock, suggestionKey}
               },
@@ -77,7 +79,6 @@ describe('event.insert.child', () => {
     })
 
     await userEvent.click(locator)
-
     await userEvent.type(locator, 'a')
 
     await vi.waitFor(() => {
@@ -111,6 +112,7 @@ describe('event.insert.child', () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const stockTickerKey = keyGenerator()
+
     const {editor, locator} = await createTestEditor({
       keyGenerator,
       initialValue: [
@@ -163,9 +165,9 @@ describe('event.insert.child', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        'foo,{stock-ticker},newbar',
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'P: foo {stock-ticker} newbar',
+      )
     })
   })
 
@@ -173,6 +175,7 @@ describe('event.insert.child', () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const stockTickerKey = keyGenerator()
+
     const {editor, locator} = await createTestEditor({
       keyGenerator,
       initialValue: [
@@ -225,9 +228,9 @@ describe('event.insert.child', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        'foo,{stock-ticker},,{stock-ticker}, bar baz',
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'P: foo {stock-ticker} {stock-ticker} bar baz',
+      )
     })
   })
 
@@ -236,6 +239,7 @@ describe('event.insert.child', () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
+
     const {editor, locator} = await createTestEditor({
       keyGenerator,
       initialValue: [
@@ -276,10 +280,12 @@ describe('event.insert.child', () => {
       },
       backward: false,
     }
+
     editor.send({
       type: 'select',
       at: selection,
     })
+
     await vi.waitFor(() => {
       expect(editor.getSnapshot().context.selection).toEqual(selection)
     })
@@ -293,9 +299,9 @@ describe('event.insert.child', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        'foo,{stock-ticker},',
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'P: foo {stock-ticker}',
+      )
     })
 
     await vi.waitFor(() => {
