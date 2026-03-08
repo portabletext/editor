@@ -12,7 +12,7 @@ import type {Parameter} from '../gherkin-parameter-types'
  */
 export const textspecStepDefinitions = [
   Given(
-    'the editor state is {textspec}',
+    'the editor state {textspec}',
     (context: Context, textspec: Parameter['textspec']) => {
       const {blocks, selection} = fromTextspec(
         {
