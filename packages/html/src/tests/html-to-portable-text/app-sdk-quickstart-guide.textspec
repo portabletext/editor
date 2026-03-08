@@ -1,0 +1,123 @@
+P: Status: \[DRAFT\]
+P: Changelog:
+UL:
+  LI: John Doe (mailto:john.doe@example.com) added initial draft
+P: 
+P: Title
+P: Use sentence case. Max 70 characters.
+P: App SDK Quickstart Guide
+P: Description
+P: A clear description of the article, sentence form, max 155 characters
+P: Get up and running quickly with the Sanity App SDK by following this step-by-step guide!
+P: 
+P: Configuration
+P: Layout
+P: Default or step-by-step
+P: Step by step
+P: Slug
+P: 
+P: Primary Section
+P: the route this article renders on
+P: 
+P: Search keywords
+P: SDK, Quickstart, Guide, Sanity, Step-by-step
+P: 
+P: SEO
+P: Title
+P: 
+P: Description
+P: 
+P: Image
+P: 
+P: 
+P: Main image
+P: Primary image for content\; fallback for social media previews and SEO if "SEO Image" is not set.
+P: 
+P: Image asset
+P: 
+P: ALT text
+P: Describe the image for people who can't see it
+P: a screenshot of a sanity app that says welcome to your sanity app
+P: Dark Mode Variant
+P: Optional alternate image to be used in dark mode.
+P: 
+P: Caption
+P: Create your own custom apps with the Sanity SDK
+P: 
+P: Content
+P: Main content for the documentation article.
+P: 
+OL:
+  LI: Create a new App SDK app
+P: Initialize a new project by running
+P: Terminal:
+P: npx sanity@latest init --template app-quickstart
+P: When prompted:
+UL:
+  LI: Select yes when asked to install the sanity package
+  LI: Choose your organization, or create a new one
+  LI: Specify a location to save your project locally
+  LI: Choose whether you want to work with TypeScript or JavaScript
+P: Once you've worked through these options, the CLI should proceed to install all the necessary dependencies, and report back with a confirmation.
+P: Terminal:
+P: ✅ Success! Your custom app has been scaffolded.(cd my-cool-project to navigate to your new project directory)
+P: 
+P: Next, configure the project(s) and dataset(s) your app should work with.
+P: 
+P: Get started in `src/App.tsx`, or refer to our documentation for a walkthrough:https://sanity.io/docs/app-sdk/sdk-configuration
+OL:
+  LI: Navigate to the project directory
+P: If you chose to install your project in a folder different to the current directory, such as a sub-folder, navigate into the project root.
+P: Terminal:
+P: cd my-cool-project
+OL:
+  LI: Inspect the project folder
+P: In your favorite editor, open the project root and have a look around. Note the sanity.cli.ts, App.tsx, and ExampleComponent.tsx files in particular.
+P: Callout:
+P: JS\|TS\|JSX\|TSX
+P: For readability we won't note every time a file could be either a js/jsx-file or a ts/tsx-file. We'll default to showing the examples inTypeScript going forth. If you are working in JavaScript, replace those T's with J's!
+P: sanity.cli.ts
+P: This is the main configuration for your project . By default, it contains the unique ID for your organization, and the entrypoint for your app.
+P: src/App.tsx
+P: This is the main entrypoint for your application. It contains the <SanityApp /> context provider, and demonstrates how to connect your application to an existing Sanity project. The <SanityApp /> component provides child components with the necessary context to use the SDK React hooks to interact with the content in your project.
+P: Before moving on, modify the config variable to include the projectId and dataset for the Sanity project you’d like to work with in your custom app.
+P: src/ExampleComponent.tsx
+P: This component just displays some static content to welcome you to your project. Feel free to get rid of it, or use it as a springboard to write something cooler.
+P: sanity.cli.ts
+P: import \{defineCliConfig\} from 'sanity/cli'
+P: 
+P: export default defineCliConfig(\{
+P: app: \{
+P: organizationId: 'your-org-id',
+P: entry: './src/App.tsx',
+P: \},
+P: \})
+OL:
+  LI: Start the development server
+P: It's time to actually run the app! Enter the following command in your terminal:
+P: You should see the CLI reporting on its progress.
+P: Once having successfully launched your app, the CLI will provide you with a URL where you can see it running locally in the Sanity Dashboard. Open this link in your browser to see the Dashboard front page, then locate your application in the sidebar.
+P: Terminal:
+P: npx sanity@latest init --template app-quickstart
+P: 
+P: 
+OL:
+  LI: Deploy your app
+P: Finally, when you are happy with your custom app, it's time to deploy it. Run the following command:
+P: Your custom app will be deployed and made available in your organization dashboard.
+OL:
+  LI: Troubleshooting
+P: If you see an error about the port being in use:
+UL:
+  LI: Kill any existing process using port 3333, or
+  LI: Start the dev server on a different port:
+P: If you see an error about missing authorization:
+UL:
+  LI: Make sure your user account has the appropriate privileges
+  LI: Log out and back in to Sanity
+P: 
+OL:
+  LI: Next steps
+  LI: Explore the React App SDK reference docs (link to internal reference)
+  LI: See examples of the App SDK in action in the SDK Explorer (link to internal reference)
+  LI: Read the introduction to the Sanity App SDK (link to internal reference)

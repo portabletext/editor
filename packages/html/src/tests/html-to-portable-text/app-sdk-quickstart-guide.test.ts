@@ -1,20 +1,16 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import {compileSchema, defineSchema} from '@portabletext/schema'
-import {getTersePt} from '@portabletext/test'
+import {toTextspec} from '@portabletext/textspec'
 import {describe, expect, test} from 'vitest'
 import {transform} from './test-utils'
 
 const schema = compileSchema(defineSchema({}))
 
 describe('App SDK Quickstart Guide', () => {
-  const tersePt = JSON.parse(
-    fs
-      .readFileSync(
-        path.resolve(__dirname, 'app-sdk-quickstart-guide.terse-pt.json'),
-      )
-      .toString(),
-  )
+  const expectedTextspec = fs
+    .readFileSync(path.resolve(__dirname, 'app-sdk-quickstart-guide.textspec'))
+    .toString()
 
   test('Google Docs', () => {
     const htmlGdocs = fs
@@ -23,7 +19,9 @@ describe('App SDK Quickstart Guide', () => {
       )
       .toString()
 
-    expect(getTersePt({schema, value: transform([htmlGdocs])})).toEqual(tersePt)
+    expect(toTextspec({schema, value: transform([htmlGdocs])})).toBe(
+      expectedTextspec,
+    )
   })
 
   test('Word', () => {
@@ -33,7 +31,9 @@ describe('App SDK Quickstart Guide', () => {
       )
       .toString()
 
-    expect(getTersePt({schema, value: transform([htmlWord])})).toEqual(tersePt)
+    expect(toTextspec({schema, value: transform([htmlWord])})).toBe(
+      expectedTextspec,
+    )
   })
 
   test('Word (Windows)', () => {
@@ -43,8 +43,8 @@ describe('App SDK Quickstart Guide', () => {
       )
       .toString()
 
-    expect(getTersePt({schema, value: transform([htmlWordWindows])})).toEqual(
-      tersePt,
+    expect(toTextspec({schema, value: transform([htmlWordWindows])})).toBe(
+      expectedTextspec,
     )
   })
 
@@ -55,8 +55,8 @@ describe('App SDK Quickstart Guide', () => {
       )
       .toString()
 
-    expect(getTersePt({schema, value: transform([htmlWordOnline])})).toEqual(
-      tersePt,
+    expect(toTextspec({schema, value: transform([htmlWordOnline])})).toBe(
+      expectedTextspec,
     )
   })
 
@@ -71,7 +71,7 @@ describe('App SDK Quickstart Guide', () => {
       .toString()
 
     expect(
-      getTersePt({schema, value: transform([htmlWordOnlineWindows])}),
-    ).toEqual(tersePt)
+      toTextspec({schema, value: transform([htmlWordOnlineWindows])}),
+    ).toBe(expectedTextspec)
   })
 })
