@@ -1,5 +1,5 @@
 import {defineSchema, type PortableTextTextBlock} from '@portabletext/schema'
-import {getTersePt} from '@portabletext/test'
+import {toTextspec} from '@portabletext/textspec'
 import {describe, expect, test} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {getTextMarks} from '../src/internal-utils/text-marks'
@@ -25,7 +25,6 @@ describe('event.annotation', () => {
       type: 'select',
       at: getTextSelection(editor.getSnapshot().context, 'world'),
     })
-
     editor.send({
       type: 'annotation.add',
       annotation: {
@@ -40,7 +39,6 @@ describe('event.annotation', () => {
       type: 'select',
       at: getTextSelection(editor.getSnapshot().context, 'Hello'),
     })
-
     editor.send({
       type: 'annotation.add',
       annotation: {
@@ -51,9 +49,9 @@ describe('event.annotation', () => {
       },
     })
 
-    expect(getTersePt(editor.getSnapshot().context)).toEqual([
-      'Hello,, ,world,!',
-    ])
+    expect(toTextspec(editor.getSnapshot().context)).toBe(
+      'P: [@link href="https://portabletext.org":Hello], [@link href="https://sanity.io":world]!',
+    )
     expect(getTextMarks(editor.getSnapshot().context, 'Hello')).toEqual(['k5'])
     expect(getTextMarks(editor.getSnapshot().context, 'world')).toEqual(['k2'])
 
@@ -61,7 +59,6 @@ describe('event.annotation', () => {
       type: 'select',
       at: getSelectionBeforeText(editor.getSnapshot().context, 'ld'),
     })
-
     editor.send({
       type: 'annotation.remove',
       annotation: {
@@ -69,7 +66,9 @@ describe('event.annotation', () => {
       },
     })
 
-    expect(getTersePt(editor.getSnapshot().context)).toEqual(['Hello,, world!'])
+    expect(toTextspec(editor.getSnapshot().context)).toBe(
+      'P: [@link href="https://portabletext.org":Hello], world!',
+    )
     expect(getTextMarks(editor.getSnapshot().context, 'Hello')).toEqual(['k5'])
   })
 
@@ -87,7 +86,6 @@ describe('event.annotation', () => {
       type: 'select',
       at: getTextSelection(editor.getSnapshot().context, 'Hello, world!'),
     })
-
     editor.send({
       type: 'annotation.add',
       annotation: {name: 'link', value: {}},
