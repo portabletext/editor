@@ -643,9 +643,10 @@ export const stepDefinitions = [
   Then(
     'the text is {textspec}',
     async (context: Context, textspec: Parameter['textspec']) => {
+      const {schema, value} = context.editor.getSnapshot().context
       await vi.waitFor(() => {
         expect(
-          toTextspec(context.editor.getSnapshot().context),
+          toTextspec({schema, value}),
           'Unexpected editor text',
         ).toBe(textspec)
       })
