@@ -1,6 +1,7 @@
 import {htmlToPortableText, type ObjectMatcher} from '@portabletext/html'
 import {defineSchema} from '@portabletext/schema'
-import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator} from '@portabletext/test'
+import {toTextspec} from '@portabletext/textspec'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {raise} from '../src/behaviors/behavior.types.action'
@@ -151,7 +152,7 @@ describe('event.clipboard.paste', () => {
 
   describe('Scenario Outline: Pasting text/html with an inline image', () => {
     const html =
-      '<p>Hello world</p><p>foo <img src="https://example.com/image.jpg" alt="Image" /> bar</p><p>baz</p>'
+      '<p>Hello world</p><p>foo ![Image](https://example.com/image.jpg) bar</p><p>baz</p>'
 
     const schemaDefinition = defineSchema({
       blockObjects: [
@@ -227,11 +228,7 @@ describe('event.clipboard.paste', () => {
       const {editor} = await createTestEditor({
         children: (
           <BehaviorPlugin
-            behaviors={[
-              createBehavior({
-                image: imageMatcher,
-              }),
-            ]}
+            behaviors={[createBehavior({image: imageMatcher})]}
           />
         ),
         schemaDefinition,
@@ -239,6 +236,7 @@ describe('event.clipboard.paste', () => {
 
       const dataTransfer = new DataTransfer()
       dataTransfer.setData('text/html', html)
+
       editor.send({
         type: 'clipboard.paste',
         originEvent: {dataTransfer},
@@ -248,11 +246,9 @@ describe('event.clipboard.paste', () => {
       })
 
       await vi.waitFor(() => {
-        expect(getTersePt(editor.getSnapshot().context!)).toEqual([
-          'Hello world',
-          'foo ,{image}, bar',
-          'baz',
-        ])
+        expect(toTextspec(editor.getSnapshot().context!)).toBe(
+          'P: Hello world\nP: foo {image} bar\nP: baz',
+        )
       })
     })
 
@@ -264,6 +260,7 @@ describe('event.clipboard.paste', () => {
         if (isInline) {
           return undefined
         }
+
         return {
           _type: 'image',
           _key: context.keyGenerator(),
@@ -275,11 +272,7 @@ describe('event.clipboard.paste', () => {
       const {editor} = await createTestEditor({
         children: (
           <BehaviorPlugin
-            behaviors={[
-              createBehavior({
-                image: blockOnlyImageMatcher,
-              }),
-            ]}
+            behaviors={[createBehavior({image: blockOnlyImageMatcher})]}
           />
         ),
         schemaDefinition,
@@ -287,6 +280,7 @@ describe('event.clipboard.paste', () => {
 
       const dataTransfer = new DataTransfer()
       dataTransfer.setData('text/html', html)
+
       editor.send({
         type: 'clipboard.paste',
         originEvent: {dataTransfer},
@@ -296,13 +290,9 @@ describe('event.clipboard.paste', () => {
       })
 
       await vi.waitFor(() => {
-        expect(getTersePt(editor.getSnapshot().context!)).toEqual([
-          'Hello world',
-          'foo',
-          '{image}',
-          'bar',
-          'baz',
-        ])
+        expect(toTextspec(editor.getSnapshot().context!)).toBe(
+          'P: Hello world\nP: foo\n{IMAGE}\nP: bar\nP: baz',
+        )
       })
     })
 
@@ -314,6 +304,7 @@ describe('event.clipboard.paste', () => {
 
       const dataTransfer = new DataTransfer()
       dataTransfer.setData('text/html', html)
+
       editor.send({
         type: 'clipboard.paste',
         originEvent: {dataTransfer},
@@ -323,11 +314,9 @@ describe('event.clipboard.paste', () => {
       })
 
       await vi.waitFor(() => {
-        expect(getTersePt(editor.getSnapshot().context!)).toEqual([
-          'Hello world',
-          'foo bar',
-          'baz',
-        ])
+        expect(toTextspec(editor.getSnapshot().context!)).toBe(
+          'P: Hello world\nP: foo bar\nP: baz',
+        )
       })
     })
   })
@@ -342,6 +331,7 @@ describe('event.clipboard.paste', () => {
     const bazSpanKey = keyGenerator()
     const fizzBlockKey = keyGenerator()
     const fizzSpanKey = keyGenerator()
+
     const initialValue = [
       {
         _key: fooBlockKey,
@@ -367,7 +357,9 @@ describe('event.clipboard.paste', () => {
       {
         _key: fizzBlockKey,
         _type: 'block',
-        children: [{_key: fizzSpanKey, _type: 'span', text: 'fizz', marks: []}],
+        children: [
+          {_key: fizzSpanKey, _type: 'span', text: 'fizz', marks: []},
+        ],
         style: 'normal',
         markDefs: [],
       },
@@ -413,12 +405,9 @@ describe('event.clipboard.paste', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context!)).toEqual([
-        'foo',
-        'bar',
-        'baz',
-        'fizz',
-      ])
+      expect(toTextspec(editor.getSnapshot().context!)).toBe(
+        'P: foo\nP: bar\nP: baz\nP: fizz',
+      )
     })
   })
 })
