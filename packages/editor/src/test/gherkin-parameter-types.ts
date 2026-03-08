@@ -1,4 +1,3 @@
-import {parseTersePtString} from '@portabletext/test'
 import {createParameterType, type ParameterType} from 'racejar'
 
 /**
@@ -82,12 +81,6 @@ const parameterType = {
     name: 'style',
     matcher: /"(normal|blockquote|h\d)"/,
   }),
-  tersePt: createParameterType<Array<string>>({
-    name: 'terse-pt',
-    matcher: /"(.*)"/u,
-    type: Array,
-    transform: parseTersePtString,
-  }),
   text: createParameterType<string>({
     name: 'text',
     matcher: /"([a-z]*)"/u,
@@ -118,7 +111,6 @@ export const parameterTypes = [
   parameterType.selectPosition,
   parameterType.shortcut,
   parameterType.style,
-  parameterType.tersePt,
   parameterType.text,
   parameterType.textspec,
 ]
