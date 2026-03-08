@@ -1,6 +1,7 @@
 import type {Patch} from '@portabletext/patches'
 import {defineSchema} from '@portabletext/schema'
-import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator} from '@portabletext/test'
+import {toTextspec} from '@portabletext/textspec'
 import {describe, expect, test, vi} from 'vitest'
 import {execute} from '../src/behaviors/behavior.types.action'
 import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
@@ -271,7 +272,7 @@ describe('event.insert.block', () => {
       children: (
         <BehaviorPlugin
           behaviors={[
-            defineBehavior<{placement: InsertPlacement; text: string}>({
+            defineBehavior<{type: 'custom.insert'; placement: InsertPlacement; text: string}>({
               on: 'custom.insert',
               actions: [
                 ({snapshot, event}) => {
@@ -331,6 +332,7 @@ describe('event.insert.block', () => {
     })
 
     editor.send({type: 'focus'})
+
     editor.send({
       type: 'custom.insert',
       placement: 'auto',
@@ -357,6 +359,7 @@ describe('event.insert.block', () => {
     })
 
     editor.send({type: 'focus'})
+
     editor.send({
       type: 'custom.insert',
       placement: 'auto',
@@ -383,6 +386,7 @@ describe('event.insert.block', () => {
     })
 
     editor.send({type: 'focus'})
+
     editor.send({
       type: 'custom.insert',
       placement: 'auto',
@@ -411,6 +415,7 @@ describe('event.insert.block', () => {
 
   test('Scenario: Inserting block with lonely inline object', async () => {
     const patches: Array<Patch> = []
+
     const {editor} = await createTestEditor({
       children: (
         <EventListenerPlugin
@@ -442,9 +447,9 @@ describe('event.insert.block', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        ',{stock-ticker},',
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'P: {stock-ticker}',
+      )
     })
 
     await vi.waitFor(() => {
@@ -505,6 +510,7 @@ describe('event.insert.block', () => {
 
   test('Scenario: Inserting block with two inline objects', async () => {
     const patches: Array<Patch> = []
+
     const {editor} = await createTestEditor({
       children: (
         <EventListenerPlugin
@@ -539,9 +545,9 @@ describe('event.insert.block', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        ',{stock-ticker},,{stock-ticker},',
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'P: {stock-ticker} {stock-ticker}',
+      )
     })
 
     await vi.waitFor(() => {
@@ -605,6 +611,7 @@ describe('event.insert.block', () => {
   test('Scenario: Inserting text block into empty heading replaces it', async () => {
     const keyGenerator = createTestKeyGenerator()
     const headingKey = keyGenerator()
+
     const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition: defineSchema({
@@ -644,6 +651,7 @@ describe('event.insert.block', () => {
 
   test('Scenario: Inserting text block into empty blockquote replaces it', async () => {
     const keyGenerator = createTestKeyGenerator()
+
     const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition: defineSchema({
@@ -691,6 +699,7 @@ describe('event.insert.block', () => {
   describe('empty list item replacement', () => {
     test('without selection, without `at` - list properties NOT inherited', async () => {
       const keyGenerator = createTestKeyGenerator()
+
       const {editor} = await createTestEditor({
         keyGenerator,
         schemaDefinition: defineSchema({
@@ -725,6 +734,7 @@ describe('event.insert.block', () => {
         ],
         markDefs: [],
       }
+
       editor.send({
         type: 'insert.block',
         block,
@@ -740,6 +750,7 @@ describe('event.insert.block', () => {
     test('with selection, without `at` - list properties inherited', async () => {
       const keyGenerator = createTestKeyGenerator()
       const listBlockKey = keyGenerator()
+
       const {editor} = await createTestEditor({
         keyGenerator,
         schemaDefinition: defineSchema({
@@ -798,6 +809,7 @@ describe('event.insert.block', () => {
     test('without selection, with `at` - list properties inherited', async () => {
       const keyGenerator = createTestKeyGenerator()
       const listBlockKey = keyGenerator()
+
       const {editor} = await createTestEditor({
         keyGenerator,
         schemaDefinition: defineSchema({
@@ -854,6 +866,7 @@ describe('event.insert.block', () => {
       const keyGenerator = createTestKeyGenerator()
       const listBlockKey = keyGenerator()
       const normalBlockKey = keyGenerator()
+
       const {editor} = await createTestEditor({
         keyGenerator,
         schemaDefinition: defineSchema({
