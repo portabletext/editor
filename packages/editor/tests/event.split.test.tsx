@@ -1,5 +1,6 @@
 import {defineSchema} from '@portabletext/schema'
-import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator} from '@portabletext/test'
+import {toTextspec} from '@portabletext/textspec'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {getSelectionText} from '../src/internal-utils/selection-text'
@@ -47,15 +48,13 @@ describe('event.split', () => {
       type: 'select',
       at: getSelectionAfterText(editor.getSnapshot().context, 'foo'),
     })
-
     editor.send({
       type: 'split',
     })
 
-    expect(getTersePt(editor.getSnapshot().context)).toEqual([
-      'foo',
-      ',{stock-ticker},',
-    ])
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      'P: foo\nP: {stock-ticker}',
+    )
   })
 
   test('Scenario: Splitting text block with custom properties', async () => {
@@ -80,7 +79,6 @@ describe('event.split', () => {
       type: 'select',
       at: getSelectionAfterText(editor.getSnapshot().context, 'foo'),
     })
-
     editor.send({
       type: 'split',
     })
@@ -176,17 +174,17 @@ describe('event.split', () => {
     editor.send({type: 'split'})
 
     await userEvent.keyboard('{ArrowRight}')
-
     await userEvent.type(locator, 'bar')
 
-    expect(getTersePt(editor.getSnapshot().context)).toEqual([
-      'foo,{stock-ticker},bar',
-    ])
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      'P: foo {stock-ticker} bar',
+    )
   })
 
   test('Scenario: Splitting block object is a noop', async () => {
     const keyGenerator = createTestKeyGenerator()
     const imageKey = keyGenerator()
+
     const {editor, locator} = await createTestEditor({
       keyGenerator,
       schemaDefinition: defineSchema({
@@ -230,10 +228,9 @@ describe('event.split', () => {
     editor.send({type: 'split'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        '{image}',
-        'bar',
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        '{IMAGE}\nP: bar',
+      )
     })
   })
 
@@ -299,27 +296,31 @@ describe('event.split', () => {
     editor.send({type: 'split'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo', 'ar'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'P: foo\nP: ar',
+      )
     })
 
     await userEvent.type(locator, 'baz')
 
-    expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo', 'bazar'])
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      'P: foo\nP: bazar',
+    )
 
     editor.send({type: 'history.undo'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo', 'ar'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'P: foo\nP: ar',
+      )
     })
 
     editor.send({type: 'history.undo'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        'foo',
-        '{image}',
-        'bar',
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'P: foo\n{IMAGE}\nP: bar',
+      )
     })
   })
 
@@ -385,12 +386,16 @@ describe('event.split', () => {
     editor.send({type: 'split'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['f', 'bar'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'P: f\nP: bar',
+      )
     })
 
     await userEvent.type(locator, 'baz')
 
-    expect(getTersePt(editor.getSnapshot().context)).toEqual(['fbaz', 'bar'])
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      'P: fbaz\nP: bar',
+    )
   })
 
   test('Scenario: Splitting with an expanded selection from one span to another', async () => {
@@ -440,10 +445,9 @@ describe('event.split', () => {
     editor.send({type: 'split'})
 
     await vi.waitFor(() => {
-      return expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        'fo',
-        'ar',
-      ])
+      return expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'P: fo\nP: ar',
+      )
     })
   })
 })
