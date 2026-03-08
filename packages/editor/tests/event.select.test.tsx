@@ -1,4 +1,5 @@
-import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator} from '@portabletext/test'
+import {toTextspec} from '@portabletext/textspec'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {
@@ -30,6 +31,7 @@ describe('event.select', () => {
     const keyGenerator = createTestKeyGenerator()
     const fooBlockKey = keyGenerator()
     const fooSpanKey = keyGenerator()
+
     const initialValue = [
       {
         _key: fooBlockKey,
@@ -47,12 +49,12 @@ describe('event.select', () => {
             behaviors={[
               defineBehavior({
                 on: 'select',
+                guard: ({event}) => ({event}),
                 actions: [
                   ({event}) => [forward(event)],
                   ({event}) => [
                     effect(() => {
                       selectEvents.push(event)
-
                       if (selectEvents.length === 1) {
                         resolveInitialSelection()
                       }
@@ -74,7 +76,6 @@ describe('event.select', () => {
     })
 
     await userEvent.click(locator)
-
     await initialSelectionPromise
 
     const beforeFooSelection = getSelectionBeforeText(
@@ -84,10 +85,12 @@ describe('event.select', () => {
       },
       'foo',
     )
+
     editor.send({
       type: 'select',
       at: beforeFooSelection,
     })
+
     await vi.waitFor(() => {
       expect(editor.getSnapshot().context.selection).toEqual(beforeFooSelection)
     })
@@ -165,6 +168,7 @@ describe('event.select', () => {
     const fooSpanKey = keyGenerator()
     const barBlockKey = keyGenerator()
     const barSpanKey = keyGenerator()
+
     const initialValue = [
       {
         _key: fooBlockKey,
@@ -187,12 +191,12 @@ describe('event.select', () => {
             behaviors={[
               defineBehavior({
                 on: 'select',
+                guard: ({event}) => ({event}),
                 actions: [
                   ({event}) => [forward(event)],
                   ({event}) => [
                     effect(() => {
                       selectEvents.push(event)
-
                       if (selectEvents.length === 1) {
                         resolveInitialSelection()
                       }
@@ -245,8 +249,8 @@ describe('event.select', () => {
         </>
       ),
     })
-    await userEvent.click(locator)
 
+    await userEvent.click(locator)
     await initialSelectionPromise
 
     const midBarSelection = {
@@ -265,6 +269,7 @@ describe('event.select', () => {
       type: 'select',
       at: midBarSelection,
     })
+
     await vi.waitFor(() => {
       expect(editor.getSnapshot().context.selection).toEqual(midBarSelection)
     })
@@ -331,7 +336,9 @@ describe('event.select', () => {
   test('Scenario: Typing text does not raise `select` event', async () => {
     const selectEvents: Array<BehaviorEvent> = []
     const selectionEvents: Array<EditorEmittedEvent> = []
+
     const keyGenerator = createTestKeyGenerator()
+
     const {editor, locator} = await createTestEditor({
       keyGenerator,
       children: (
@@ -340,6 +347,7 @@ describe('event.select', () => {
             behaviors={[
               defineBehavior({
                 on: 'select',
+                guard: ({event}) => ({event}),
                 actions: [
                   ({event}) => [forward(event)],
                   ({event}) => [
@@ -368,7 +376,6 @@ describe('event.select', () => {
     )
 
     await userEvent.click(locator)
-
     await userEvent.type(locator, 'f')
 
     await vi.waitFor(() => {
@@ -412,6 +419,7 @@ describe('event.select', () => {
             behaviors={[
               defineBehavior({
                 on: 'select',
+                guard: ({event}) => ({event}),
                 actions: [
                   ({event}) => [forward(event)],
                   ({event}) => [
@@ -464,6 +472,7 @@ describe('event.select', () => {
   test('Scenario: Overriding arrow navigation by raising `select` event', async () => {
     const selectEvents: Array<BehaviorEvent> = []
     const selectionEvents: Array<EditorEmittedEvent> = []
+
     const keyGenerator = createTestKeyGenerator()
 
     const {editor, locator} = await createTestEditor({
@@ -474,6 +483,7 @@ describe('event.select', () => {
             behaviors={[
               defineBehavior({
                 on: 'select',
+                guard: ({event}) => ({event}),
                 actions: [
                   ({event}) => [forward(event)],
                   ({event}) => [
@@ -592,6 +602,7 @@ describe('event.select', () => {
   test('Scenario: Preventing arrow navigation by swallowing the `select` event', async () => {
     const selectEvents: Array<BehaviorEvent> = []
     const selectionEvents: Array<EditorEmittedEvent> = []
+
     const keyGenerator = createTestKeyGenerator()
 
     const {editor, locator} = await createTestEditor({
@@ -602,6 +613,7 @@ describe('event.select', () => {
             behaviors={[
               defineBehavior({
                 on: 'select',
+                guard: ({event}) => ({event}),
                 actions: [
                   ({event}) => [forward(event)],
                   ({event}) => [
@@ -710,6 +722,7 @@ describe('event.select', () => {
   test('Scenario: Arrow navigation raises `select` event', async () => {
     const selectEvents: Array<BehaviorEvent> = []
     const selectionEvents: Array<EditorEmittedEvent> = []
+
     const keyGenerator = createTestKeyGenerator()
 
     const {editor, locator} = await createTestEditor({
@@ -720,6 +733,7 @@ describe('event.select', () => {
             behaviors={[
               defineBehavior({
                 on: 'select',
+                guard: ({event}) => ({event}),
                 actions: [
                   ({event}) => [forward(event)],
                   ({event}) => [
@@ -825,6 +839,7 @@ describe('event.select', () => {
   test('Scenario: Synthetic `insert.text` event does not raise `select` event', async () => {
     const selectEvents: Array<BehaviorEvent> = []
     const selectionEvents: Array<EditorEmittedEvent> = []
+
     const keyGenerator = createTestKeyGenerator()
 
     const {editor} = await createTestEditor({
@@ -835,6 +850,7 @@ describe('event.select', () => {
             behaviors={[
               defineBehavior({
                 on: 'select',
+                guard: ({event}) => ({event}),
                 actions: [
                   ({event}) => [forward(event)],
                   ({event}) => [
@@ -863,7 +879,7 @@ describe('event.select', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: foo')
 
       expect(selectEvents).toEqual([
         {
