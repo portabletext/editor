@@ -1,5 +1,6 @@
 import {defineSchema} from '@portabletext/schema'
-import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator} from '@portabletext/test'
+import {toTextspec} from '@portabletext/textspec'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {
@@ -45,25 +46,25 @@ describe('event.history.undo', () => {
     await userEvent.type(locator, 'x')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['y*z'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: y*z')
     })
 
     editor.send({type: 'history.undo'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['y*'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: y*')
     })
 
     editor.send({type: 'history.undo'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['x'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: x')
     })
 
     editor.send({type: 'history.undo'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P:')
     })
   })
 
@@ -88,13 +89,13 @@ describe('event.history.undo', () => {
     await userEvent.type(locator, 'a')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['bc'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: bc')
     })
 
     editor.send({type: 'history.undo'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['b'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: b')
     })
   })
 
@@ -105,7 +106,7 @@ describe('event.history.undo', () => {
           behaviors={[
             defineBehavior({
               on: 'insert.text',
-              guard: ({snapshot, event}) => {
+              guard: ({event, snapshot}) => {
                 if (event.text !== 'c') {
                   return false
                 }
@@ -148,19 +149,19 @@ describe('event.history.undo', () => {
     await userEvent.type(locator, 'c')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['d'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: d')
     })
 
     editor.send({type: 'history.undo'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P:')
     })
 
     editor.send({type: 'history.undo'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['abc'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: abc')
     })
   })
 
@@ -196,13 +197,13 @@ describe('event.history.undo', () => {
     await userEvent.type(locator, 'a')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['yz'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: yz')
     })
 
     editor.send({type: 'history.undo'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['y'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: y')
     })
   })
 
@@ -235,13 +236,13 @@ describe('event.history.undo', () => {
     await userEvent.type(locator, 'a')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['B', 'c'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: B\nP: c')
     })
 
     editor.send({type: 'history.undo'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P:')
     })
   })
 
@@ -273,13 +274,13 @@ describe('event.history.undo', () => {
     await userEvent.type(locator, 'a')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['AB'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: AB')
     })
 
     editor.send({type: 'history.undo'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['A'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: A')
     })
   })
 
@@ -319,13 +320,13 @@ describe('event.history.undo', () => {
       editor.send({type: 'custom.insert block', text: 'bar'})
 
       await vi.waitFor(() => {
-        expect(getTersePt(editor.getSnapshot().context)).toEqual(['foobar'])
+        expect(toTextspec(editor.getSnapshot().context)).toBe('P: foobar')
       })
 
       editor.send({type: 'history.undo'})
 
       await vi.waitFor(() => {
-        expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo'])
+        expect(toTextspec(editor.getSnapshot().context)).toBe('P: foo')
       })
     })
 
@@ -364,13 +365,13 @@ describe('event.history.undo', () => {
       editor.send({type: 'custom.insert block', text: 'bar'})
 
       await vi.waitFor(() => {
-        expect(getTersePt(editor.getSnapshot().context)).toEqual(['foobar'])
+        expect(toTextspec(editor.getSnapshot().context)).toBe('P: foobar')
       })
 
       editor.send({type: 'history.undo'})
 
       await vi.waitFor(() => {
-        expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo'])
+        expect(toTextspec(editor.getSnapshot().context)).toBe('P: foo')
       })
     })
 
@@ -409,13 +410,13 @@ describe('event.history.undo', () => {
       editor.send({type: 'custom.insert block', text: 'bar'})
 
       await vi.waitFor(() => {
-        expect(getTersePt(editor.getSnapshot().context)).toEqual(['foobar'])
+        expect(toTextspec(editor.getSnapshot().context)).toBe('P: foobar')
       })
 
       editor.send({type: 'history.undo'})
 
       await vi.waitFor(() => {
-        expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo'])
+        expect(toTextspec(editor.getSnapshot().context)).toBe('P: foo')
       })
     })
   })
@@ -444,13 +445,13 @@ describe('event.history.undo', () => {
     await userEvent.type(locator, 'a')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['b'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: b')
     })
 
     editor.send({type: 'history.undo'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['a'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: a')
     })
   })
 
@@ -472,13 +473,13 @@ describe('event.history.undo', () => {
     await userEvent.type(locator, 'a')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['aa'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: aa')
     })
 
     editor.send({type: 'history.undo'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P:')
     })
   })
 
@@ -503,13 +504,13 @@ describe('event.history.undo', () => {
     await userEvent.type(locator, 'a')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['aa'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: aa')
     })
 
     editor.send({type: 'history.undo'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['a'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: a')
     })
   })
 
@@ -544,31 +545,31 @@ describe('event.history.undo', () => {
     await userEvent.type(locator, 'a')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['ABAB'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: ABAB')
     })
 
     editor.send({type: 'history.undo'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['ABA'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: ABA')
     })
 
     editor.send({type: 'history.undo'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['AB'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: AB')
     })
 
     editor.send({type: 'history.undo'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['A'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: A')
     })
 
     editor.send({type: 'history.undo'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P:')
     })
   })
 
@@ -596,13 +597,13 @@ describe('event.history.undo', () => {
     await userEvent.type(locator, 'a')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['b'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: b')
     })
 
     editor.send({type: 'history.undo'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['a'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: a')
     })
 
     await userEvent.keyboard('{ArrowLeft}')
@@ -610,7 +611,7 @@ describe('event.history.undo', () => {
     editor.send({type: 'history.undo'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P:')
     })
   })
 
@@ -621,7 +622,7 @@ describe('event.history.undo', () => {
           behaviors={[
             defineBehavior({
               on: 'insert.text',
-              guard: ({snapshot}) => {
+              guard: ({event, snapshot}) => {
                 const focusBlock = getFocusBlock(snapshot)
 
                 if (!focusBlock) {
@@ -640,13 +641,13 @@ describe('event.history.undo', () => {
     await userEvent.type(locator, 'hello')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['hello'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: hello')
     })
 
     editor.send({type: 'history.undo'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P:')
     })
   })
 
@@ -659,7 +660,7 @@ describe('event.history.undo', () => {
           behaviors={[
             defineBehavior({
               on: 'insert.text',
-              guard: ({snapshot}) => {
+              guard: ({event, snapshot}) => {
                 const focusBlock = getFocusBlock(snapshot)
 
                 if (!focusBlock) {
@@ -685,14 +686,14 @@ describe('event.history.undo', () => {
     await userEvent.type(locator, 'hello')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['hello'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: hello')
       expect(sideEffectLog).toHaveLength(5)
     })
 
     editor.send({type: 'history.undo'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P:')
     })
   })
 
@@ -729,14 +730,14 @@ describe('event.history.undo', () => {
     await userEvent.type(locator, 'hi')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['h!i!'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: h!i!')
     })
 
     // First undo reverts the second raise ('!' after 'i')
     editor.send({type: 'history.undo'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['h!i'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: h!i')
     })
 
     // Second undo reverts the forwarded 'i' and the first raise ('!' after 'h')
@@ -744,7 +745,7 @@ describe('event.history.undo', () => {
     editor.send({type: 'history.undo'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['h'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: h')
     })
   })
 
@@ -764,9 +765,7 @@ describe('event.history.undo', () => {
                 ],
               ],
             }),
-            defineBehavior<{
-              at: EditorSelection
-            }>({
+            defineBehavior<{at: EditorSelection}>({
               on: 'custom.select',
               actions: [({event}) => [raise({type: 'select', at: event.at})]],
             }),
@@ -778,13 +777,13 @@ describe('event.history.undo', () => {
     await userEvent.type(locator, 'a')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['b'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: b')
     })
 
     editor.send({type: 'history.undo'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['a'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: a')
     })
 
     const firstBlock = getFirstBlock(editor.getSnapshot())
@@ -805,7 +804,7 @@ describe('event.history.undo', () => {
     editor.send({type: 'history.undo'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P:')
     })
   })
 
@@ -813,6 +812,7 @@ describe('event.history.undo', () => {
     const keyGenerator = createTestKeyGenerator()
     const spanKey = keyGenerator()
     const blockKey = keyGenerator()
+
     const initialValue = [
       {
         _type: 'block',
@@ -855,7 +855,7 @@ describe('event.history.undo', () => {
 
     // After adding: "f" + "oob" (strong) + "ar" — three spans
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['f,oob,ar'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: f[strong:oob]ar')
     })
 
     editor.send({type: 'history.undo'})
@@ -870,6 +870,7 @@ describe('event.history.undo', () => {
     const keyGenerator = createTestKeyGenerator()
     const spanKey = keyGenerator()
     const blockKey = keyGenerator()
+
     const initialValue = [
       {
         _type: 'block',
@@ -921,7 +922,7 @@ describe('event.history.undo', () => {
 
     // After adding: "f" + "oob" (link) + "ar" — three spans
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['f,oob,ar'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: f[@link href="https://example.com":oob]ar')
     })
 
     editor.send({type: 'history.undo'})
