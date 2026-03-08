@@ -9,7 +9,7 @@ Feature: Splitting Blocks
     When the editor is focused
     And the caret is put before "foo"
     And "{Enter}" is pressed
-    Then the text is "|foo"
+    Then the text is "P:;;P: foo"
     And "foo" is in block "b1"
 
   Scenario: Splitting block in the middle
@@ -17,14 +17,14 @@ Feature: Splitting Blocks
     When the editor is focused
     And the caret is put after "fo"
     And "{Enter}" is pressed
-    Then the text is "fo|o"
+    Then the text is "P: fo;;P: o"
     And "fo" is in block "b1"
 
   Scenario: Splitting block at the end
     Given a block "b1" with text "foo"
     When the editor is focused
     And "{Enter}" is pressed
-    Then the text is "foo|"
+    Then the text is "P: foo;;P:"
     And "foo" is in block "b1"
 
   Scenario: Splitting empty block creates a new block below
@@ -56,7 +56,7 @@ Feature: Splitting Blocks
       ```
     When "{Enter}" is pressed
     And "baz" is typed
-    Then the text is "foo||baz"
+    Then the text is "P: foo;;P:;;P: baz"
     And "foo" is in block "b1"
     And "" is in block "b2"
 
@@ -65,7 +65,7 @@ Feature: Splitting Blocks
     When the editor is focused
     And the caret is put before "foo"
     And "{Shift>}{Enter}{/Shift}" is pressed
-    Then the text is "\nfoo"
+    Then the text is "P: \nfoo"
     And "\nfoo" is in block "b1"
 
   Scenario: Soft-splitting block in the middle
@@ -73,14 +73,14 @@ Feature: Splitting Blocks
     When the editor is focused
     And the caret is put after "fo"
     And "{Shift>}{Enter}{/Shift}" is pressed
-    Then the text is "fo\no"
+    Then the text is "P: fo\no"
     And "fo\no" is in block "b1"
 
   Scenario: Soft-splitting block at the end
     Given a block "b1" with text "foo"
     When the editor is focused
     And "{Shift>}{Enter}{/Shift}" is pressed
-    Then the text is "foo\n"
+    Then the text is "P: foo\n"
     And "foo\n" is in block "b1"
 
   Scenario: Splitting styled block at the beginning
@@ -89,7 +89,7 @@ Feature: Splitting Blocks
     And "h1" is toggled
     And the caret is put before "foo"
     And "{Enter}" is pressed
-    Then the text is "|h1:foo"
+    Then the text is "P:;;H1: foo"
 
   Scenario: Splitting styled block in the middle
     Given a block "b1" with text "foo"
@@ -97,7 +97,7 @@ Feature: Splitting Blocks
     And "h1" is toggled
     And the caret is put after "fo"
     And "{Enter}" is pressed
-    Then the text is "h1:fo|h1:o"
+    Then the text is "H1: fo;;H1: o"
     And "fo" is in block "b1"
 
   Scenario: Splitting styled block at the end
@@ -105,44 +105,44 @@ Feature: Splitting Blocks
     When the editor is focused
     And "h1" is toggled
     And "{Enter}" is pressed
-    Then the text is "h1:foo|"
+    Then the text is "H1: foo;;P:"
     And "foo" is in block "b1"
 
   Scenario: Soft-splitting styled block at the beginning
-    Given the text "foo"
+    Given the text "P: foo"
     When the editor is focused
     And "h1" is toggled
     And the caret is put before "foo"
     And "{Shift>}{Enter}{/Shift}" is pressed
-    Then the text is "h1:\nfoo"
+    Then the text is "H1: \nfoo"
 
   Scenario: Soft-splitting styled block in the middle
-    Given the text "foo"
+    Given the text "P: foo"
     When the editor is focused
     And "h1" is toggled
     And the caret is put after "fo"
     And "{Shift>}{Enter}{/Shift}" is pressed
-    Then the text is "h1:fo\no"
+    Then the text is "H1: fo\no"
 
   Scenario: Soft-splitting styled block at the end
-    Given the text "foo"
+    Given the text "P: foo"
     When the editor is focused
     And "h1" is toggled
     And "{Shift>}{Enter}{/Shift}" is pressed
-    Then the text is "h1:foo\n"
+    Then the text is "H1: foo\n"
 
   Scenario: Splitting decorated styled block at the beginning
-    Given the text "h1:foo bar baz"
+    Given the text "H1: foo bar baz"
     And "strong" around "foo"
     When the editor is focused
     And the caret is put before "foo"
     And "{Enter}" is pressed
     And "new" is typed
-    Then the text is "|h1:newfoo, bar baz"
+    Then the text is "P:;;H1: [strong:newfoo] bar baz"
     And "newfoo" has marks "strong"
 
   Scenario Outline: Splitting decorated styled block in the middle
-    Given the text "foo bar baz"
+    Given the text "P: foo bar baz"
     And "strong" around <decorated>
     When the editor is focused
     And "h1" is toggled
@@ -152,24 +152,24 @@ Feature: Splitting Blocks
     Then the text is <new text>
 
     Examples:
-      | decorated | position      | new text                  |
-      | "foo"     | after "foo"   | "h1:foo\|h1:new bar baz"  |
-      | "bar"     | after "foo "  | "h1:foo \|h1:newbar, baz" |
-      | "bar"     | before "bar"  | "h1:foo \|h1:newbar, baz" |
-      | "bar"     | after "bar"   | "h1:foo ,bar\|h1:new baz" |
-      | "bar"     | before " baz" | "h1:foo ,bar\|h1:new baz" |
-      | "baz"     | before "baz"  | "h1:foo bar \|h1:newbaz"  |
-      | "baz"     | after "bar "  | "h1:foo bar \|h1:newbaz"  |
+      | decorated | position       | new text                                       |
+      | "foo"     | after "foo"    | "H1: [strong:foo];;H1: new bar baz"            |
+      | "bar"     | after "foo "   | "H1: foo ;;H1: [strong:newbar] baz"            |
+      | "bar"     | before "bar"   | "H1: foo ;;H1: [strong:newbar] baz"            |
+      | "bar"     | after "bar"    | "H1: foo [strong:bar];;H1: new baz"            |
+      | "bar"     | before " baz"  | "H1: foo [strong:bar];;H1: new baz"            |
+      | "baz"     | before "baz"   | "H1: foo bar ;;H1: [strong:newbaz]"            |
+      | "baz"     | after "bar "   | "H1: foo bar ;;H1: [strong:newbaz]"            |
 
   Scenario: Splitting decorated styled block at the end
-    Given the text "foo bar baz"
+    Given the text "P: foo bar baz"
     And "strong" around "baz"
     When the editor is focused
     And "h1" is toggled
     And the caret is put after "baz"
     And "{Enter}" is pressed
     And "new" is typed
-    Then the text is "h1:foo bar ,baz|new"
+    Then the text is "H1: foo bar [strong:baz];;P: new"
     And "new" has no marks
 
   Scenario Outline: Splitting block with an expanded selection
@@ -181,9 +181,9 @@ Feature: Splitting Blocks
     Then the text is <new text>
 
     Examples:
-      | selection | new text |
-      | "foobar"  | ""       |
-      | "ooba"    | "f\|r"   |
+      | selection | new text       |
+      | "foobar"  | "P:"           |
+      | "ooba"    | "P: f;;P: r"   |
 
   Scenario: Pressing Enter when selecting multiple block objects
     Given blocks "auto"
@@ -202,4 +202,4 @@ Feature: Splitting Blocks
     When the editor is focused
     And everything is selected
     And "{Enter}" is pressed
-    Then the text is ""
+    Then the text is "P:"
