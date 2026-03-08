@@ -1,0 +1,143 @@
+H1: Markdown to Portable Text: A Complete Guide
+P: Converting markdown to Portable Text is a [strong:powerful] way to bridge the gap between [em:simple text formatting] and [strong:[em:structured content]].
+H2: Why Portable Text?
+P: Portable Text is a [strong:specification] for [em:rich text] that is:
+UL:
+  LI: Platform [strong:agnostic]
+  LI: [strong:Structured] and [em:queryable]
+  LI: Designed for [strong:[em:modern content workflows]]
+P: Visit [@link href="https://portabletext.org":https://portabletext.org] for more information, or check out the [@link href="https://github.com/portabletext/portabletext":official documentation].
+{HORIZONTAL-RULE}
+H2: Supported Features
+H3: Text Formatting
+P: You can use [strong:bold text], [em:italic text], [code:inline code], and even [strike-through:strikethrough] text. The parser handles [strong:[em:nested formatting]] gracefully, including [strong:[em:bold and italic]] combined.
+P: Here’s some [code:code with **bold inside**] and [strong:text with ][strong:[code:code inside]] to test edge cases.
+H3: Links and Images
+P: Reference-style links work too! Check out this [@link href="https://portabletext.org":example link] that uses references defined elsewhere.
+{IMAGE alt="A beautiful diagram" src="https://example.com/diagram.png" title="Markdown to PT Flow"}
+P: Here’s an inline image in text: {image alt="icon" src="https://example.com/icon.png"} followed by more text.
+H3: Code Blocks
+P: Fenced code blocks with syntax highlighting:
+{CODE code="function markdownToPortableText(markdown) {\n  const tokens = parseMarkdown(markdown)\n  return transformToPortableText(tokens)\n}" language="javascript"}
+P: Indented code blocks also work:
+{CODE code="const simple = \"code block\";\nconsole.log(simple);"}
+H3: Blockquotes
+BLOCKQUOTE: Markdown is a lightweight markup language for creating formatted text.
+BLOCKQUOTE: It was created by John Gruber in 2004.
+P: Nested blockquotes are supported:
+BLOCKQUOTE: This is the outer quote
+BLOCKQUOTE: And this is nested deeper
+BLOCKQUOTE: With multiple paragraphs
+H3: Lists
+H4: Unordered Lists
+UL:
+  LI: [strong:Bold item] in a list
+  LI: [em:Italic item] with [@link href="https://example.com":a link]
+  LI:
+    P: Item with [code:inline code]
+    UL:
+      LI: Nested item one
+      LI:
+        P: Nested item two
+        UL:
+          LI: Even deeper nesting
+  LI: Back to top level
+H4: Ordered Lists
+OL:
+  LI: First step: Parse the markdown
+  LI: Second step: Generate tokens
+  LI:
+    P: Third step: Transform to Portable Text
+    OL:
+      LI: Map block types
+      LI: Handle inline formatting
+      LI: Preserve structure
+H4: Mixed Lists
+OL:
+  LI:
+    P: Ordered parent
+    UL:
+      LI: Unordered child
+      LI:
+        P: Another unordered
+        OL:
+          LI: Back to ordered
+          LI: Still ordered
+  LI: Continue ordered parent
+H3: Tables
+P: Here’s a comparison of different content formats:
+{TABLE}
+P: Feature support matrix:
+{TABLE}
+H3: Horizontal Rules
+P: You can separate sections with horizontal rules:
+{HORIZONTAL-RULE}
+P: They create visual breaks in the content.
+{HORIZONTAL-RULE}
+H3: All Heading Levels
+H1: Heading 1
+H2: Heading 2
+H3: Heading 3
+H4: Heading 4
+H5: Heading 5
+H6: Heading 6
+H2: Advanced Examples
+H3: Overlapping Formatting
+P: This paragraph contains [strong:bold with ][strong:[em:italic inside]] and [em:italic with ][em:[strong:bold inside]] to test proper nesting.
+P: You can also have [strong:bold with ][strong:[code:code]] and [em:italic with ][em:[code:code]] and even [code:code with **bold** and _italic_] (though the formatting inside code should be preserved as-is).
+H3: Links with Formatting
+P: Here’s a [strong:[@link href="https://example.com":bold link]] and an [em:[@link href="https://example.com":italic link]] and even a [code:[@link href="https://example.com":code link]].
+H3: Complex List Items
+UL:
+  LI: Item with [strong:bold], [em:italic], and [code:code]
+  LI: Item with a [@link href="https://example.com":link to ][strong:[@link href="https://example.com":bold]][@link href="https://example.com": content]
+  LI:
+    P: Item with an inline image {image alt="small icon" src="https://example.com/icon.png"} in the middle
+    UL:
+      LI: Nested [strong:bold item] with [em:italic] and [code:code]
+      LI: Another nested item
+H3: Line Breaks
+P: This is a line with a hard break
+that continues on the next line but stays in the same paragraph.
+P: Another paragraph with a break
+and more content.
+H3: Autolinks
+P: Check out these autolinks: [@link href="https://example.com":https://example.com] and [@link href="mailto:hello@example.com":mailto:hello@example.com] for quick linking.
+H3: HTML Passthrough
+{HTML html="<div class=\"custom-block\">\n  <p>This is raw HTML that gets preserved</p>\n</div>"}
+P: Inline HTML like highlighted text can be handled too.
+H3: Reference Links
+P: This is [@link href="https://portabletext.org":reference link one] and this is [@link href="https://github.com/portabletext/editor":reference link two].
+P: You can also use [@link href="https://example.com":implicit references] by just using the text as the reference.
+H2: Implementation Notes
+P: The transformation process involves several key steps:
+OL:
+  LI: [strong:Lexical Analysis]: Parse markdown into tokens
+  LI: [strong:Syntax Tree Building]: Construct an AST from tokens
+  LI: [strong:Transformation]: Map markdown AST to Portable Text structure
+  LI: [strong:Validation]: Ensure output conforms to schema
+H3: Edge Cases
+H4: Empty Blocks
+P: Sometimes you have empty paragraphs:
+P: Or consecutive horizontal rules:
+{HORIZONTAL-RULE}
+{HORIZONTAL-RULE}
+H4: Special Characters
+P: Text with special characters like [code:&amp\;], [code:&lt\;], and [code:&gt\;] should be handled correctly.
+H4: URLs in Text
+P: Raw URLs like [@link href="https://example.com":https://example.com] (without angle brackets) may or may not become links depending on the parser configuration.
+H2: Conclusion
+P: This document demonstrates the [strong:comprehensive] support for [em:markdown features] in the [code:markdown-to-portable-text] converter. With proper handling of:
+UL:
+  LI: All basic formatting
+  LI: Complex nesting
+  LI: Various link types
+  LI: Images (block and inline)
+  LI: Code blocks
+  LI: Lists of all types
+  LI: Tables
+  LI: And much more!
+P: The result is [strong:[em:robust, reliable]] content transformation that preserves both structure and semantics.
+{HORIZONTAL-RULE}
+P: [strong:Happy converting!] 🎉
+P: [em:Last updated: 2025]

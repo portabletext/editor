@@ -1,0 +1,94 @@
+H1: An h1 header
+P: Paragraphs are separated by a blank line.
+P: 2nd paragraph. [em:Italic], [strong:bold], and [code:monospace]. Itemized lists
+look like:
+UL:
+  LI: this one
+  LI: that one
+  LI: the other one
+P: Note that — not considering the asterisk — the actual text
+content starts at 4-columns in.
+BLOCKQUOTE: Block quotes are
+written like so.
+BLOCKQUOTE: They can span multiple paragraphs,
+if you like.
+P: Use 3 dashes for an em-dash. Use 2 dashes for ranges (ex., “it’s all
+in chapters 12–14”). Three dots … will be converted to an ellipsis.
+Unicode is supported. ☺
+H2: An h2 header
+P: Here’s a numbered list:
+OL:
+  LI: first item
+  LI: second item
+  LI: third item
+P: Note again how the actual text starts at 4 columns in (4 characters
+from the left side). Here’s a code sample:
+{CODE code="# Let me re-iterate ...\nfor i in 1 .. 10 { do-something(i) }"}
+P: As you probably guessed, indented 4 spaces. By the way, instead of
+indenting the block, you can use delimited blocks, if you like:
+{CODE code="define foobar() {\n    print \"Welcome to flavor country!\";\n}"}
+P: (which makes copying & pasting easier). You can optionally mark the
+delimited block for Pandoc to syntax highlight it:
+{CODE code="import time\n# Quick, count to ten!\nfor i in range(10):\n    # (but not *too* quick)\n    time.sleep(0.5)\n    print i" language="python"}
+H3: An h3 header
+P: Now a nested list:
+OL:
+  LI:
+    P: First, get these ingredients:
+    UL:
+      LI: carrots
+      LI: celery
+      LI: lentils
+  LI: Boil some water.
+  LI: Dump everything in the pot and follow
+this algorithm:
+{CODE code="find wooden spoon\nuncover pot\nstir\ncover pot\nbalance wooden spoon precariously on pot handle\nwait 10 minutes\ngoto first step (or shut off burner when done)"}
+OL:
+  LI: Do not bump wooden spoon or it will fall.
+P: Notice again how text always lines up on 4-space indents (including
+that last line which continues item 3 above).
+P: Here’s a link to [@link href="http://foo.bar":a website], to a [@link href="local-doc.html":local
+doc], and to a [@link href="#an-h2-header":section heading in the current
+doc]. Here’s a footnote \[\^1\].
+P: \[\^1\]: Footnote text goes here.
+P: Tables can look like this:
+P: size material color
+{HORIZONTAL-RULE}
+P: 9 leather brown
+10 hemp canvas natural
+11 glass transparent
+P: Table: Shoes, their sizes, and what they’re made of
+P: (The above is the caption for the table.) Pandoc also supports
+multi-line tables:
+{HORIZONTAL-RULE}
+P: keyword text
+{HORIZONTAL-RULE}
+P: red Sunsets, apples, and
+other red or reddish
+things.
+P: green Leaves, grass, frogs
+and other things it’s
+not easy being.
+{HORIZONTAL-RULE}
+P: A horizontal rule follows.
+{HORIZONTAL-RULE}
+P: Here’s a definition list:
+P: apples
+: Good for making applesauce.
+oranges
+: Citrus!
+tomatoes
+: There’s no “e” in tomatoe.
+P: Again, text is indented 4 spaces. (Put a blank line between each
+term/definition pair to spread things out more.)
+P: Here’s a “line block”:
+P: \| Line one
+\| Line too
+\| Line tree
+P: and images can be specified like so:
+{IMAGE alt="example image" src="example-image.jpg" title="An exemplary image"}
+P: Inline math equations go in like so: $\\omega = d\\phi / dt$. Display
+math should get its own line and be put in in double-dollarsigns:
+P: $$I = \\int \\rho R\^\{2\} dV$$
+P: And note that you can backslash-escape any punctuation characters
+which you wish to be displayed literally, ex.: `foo`, *bar*, etc.

@@ -1,7 +1,8 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import type {BlockObjectDefinition} from '@portabletext/schema'
-import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator} from '@portabletext/test'
+import {toTextspec} from '@portabletext/textspec'
 import {describe, expect, test} from 'vitest'
 import {defaultSchema} from './default-schema'
 import {portableTextToMarkdown} from './from-portable-text/portable-text-to-markdown'
@@ -20,11 +21,9 @@ const exampleDocumentMarkdownOut = fs.readFileSync(
   path.resolve(__dirname, 'example-document.advanced.out.md'),
   'utf-8',
 )
-const exampleDocumentTersePt = JSON.parse(
-  fs.readFileSync(
-    path.resolve(__dirname, 'example-document.advanced.terse-pt.json'),
-    'utf-8',
-  ),
+const exampleDocumentTextspec = fs.readFileSync(
+  path.resolve(__dirname, 'example-document.advanced.textspec'),
+  'utf-8',
 )
 
 const tableObjectDefinition = {
@@ -50,9 +49,9 @@ describe('example document (advanced)', () => {
         table: tableObjectMatcher,
       },
     })
-    const tersePt = getTersePt({schema: defaultSchema, value: blocks})
+    const textspec = toTextspec({schema: defaultSchema, value: blocks})
 
-    expect(tersePt).toEqual(exampleDocumentTersePt)
+    expect(textspec).toBe(exampleDocumentTextspec)
   })
 
   test('portable text to markdown', () => {

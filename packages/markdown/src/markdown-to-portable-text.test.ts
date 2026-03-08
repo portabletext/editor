@@ -3,7 +3,8 @@ import {
   defineSchema,
   type BlockObjectDefinition,
 } from '@portabletext/schema'
-import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator} from '@portabletext/test'
+import {toTextspec} from '@portabletext/textspec'
 import {describe, expect, test} from 'vitest'
 import {defaultSchema} from './default-schema'
 import {markdownToPortableText} from './to-portable-text/markdown-to-portable-text'
@@ -1327,18 +1328,23 @@ describe(markdownToPortableText.name, () => {
         const portableText = markdownToPortableText(markdown, {keyGenerator})
 
         expect(
-          getTersePt({
+          toTextspec({
             schema: defaultSchema,
             value: portableText,
           }),
-        ).toEqual([
-          '>#:Ordered parent',
-          '>>-:Unordered child',
-          '>>-:Another unordered',
-          '>>>#:Back to ordered',
-          '>>>#:Still ordered',
-          '>#:Continue ordered parent',
-        ])
+        ).toBe(
+          [
+            'OL:',
+            '  LI: Ordered parent',
+            '  LI: Unordered child',
+            '  LI:',
+            '    P: Another unordered',
+            '    OL:',
+            '      LI: Back to ordered',
+            '      LI: Still ordered',
+            '  LI: Continue ordered parent',
+          ].join('\n'),
+        )
       })
     })
 
