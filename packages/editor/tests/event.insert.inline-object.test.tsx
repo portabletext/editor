@@ -1,5 +1,6 @@
 import {defineSchema, type PortableTextTextBlock} from '@portabletext/schema'
-import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator} from '@portabletext/test'
+import {toTextspec} from '@portabletext/textspec'
 import {describe, expect, test, vi} from 'vitest'
 import {page, userEvent} from 'vitest/browser'
 import type {EditorEmittedEvent} from '../src'
@@ -40,7 +41,6 @@ describe('event.insert.inline object', () => {
         style: 'normal',
       },
     ])
-
     expect(
       Object.keys(
         (editor.getSnapshot().context.value![0] as PortableTextTextBlock)
@@ -61,12 +61,13 @@ describe('event.insert.inline object', () => {
     const inlineObjectSelectionPromise = new Promise<void>((resolve) => {
       resolveInlineObjectSelection = resolve
     })
+
     const {editor, locator} = await createTestEditor({
       children: (
         <>
           <button
-            data-testid="insert-stock-ticker"
             type="button"
+            data-testid="insert-stock-ticker"
             onClick={() => {
               editor.send({
                 type: 'insert.inline object',
@@ -89,7 +90,6 @@ describe('event.insert.inline object', () => {
               if (event.type === 'focused') {
                 focusEvents.push(event)
               }
-
               if (event.type === 'selection') {
                 const childSegment = event.selection?.focus.path.at(2)
 
@@ -100,7 +100,6 @@ describe('event.insert.inline object', () => {
                 ) {
                   resolveInitialSelection()
                 }
-
                 if (
                   childSegment &&
                   isKeyedSegment(childSegment) &&
@@ -124,6 +123,7 @@ describe('event.insert.inline object', () => {
     })
 
     const insertStockTickerButton = page.getByTestId('insert-stock-ticker')
+
     await vi.waitFor(() =>
       expect.element(insertStockTickerButton).toBeInTheDocument(),
     )
@@ -258,10 +258,9 @@ describe('event.insert.inline object', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        '{image}',
-        ',{stock ticker},',
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toBe(
+        '{IMAGE}\nP: {stock ticker}',
+      )
     })
   })
 })
