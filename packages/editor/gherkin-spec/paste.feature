@@ -4,7 +4,7 @@ Feature: Paste
     Given one editor
 
   Scenario Outline: Pasting text block into a text block
-    Given the text "foo bar buz"
+    Given the text "P: foo bar buz"
     And "strong" around "bar"
     When <selection>
     And x-portable-text is pasted
@@ -23,24 +23,24 @@ Feature: Paste
     Then the text is <text>
 
     Examples:
-      | selection                     | text                           |
-      | the caret is put after "buz"  | "foo ,bar, buzfoo ,bar, buz"   |
-      | the caret is put before "foo" | "foo ,bar, buzfoo ,bar, buz"   |
-      | the caret is put after "ba"   | "foo ,ba,foo ,bar, buz,r, buz" |
-      | "foo bar buz" is selected     | "foo ,bar, buz"                |
+      | selection                      | text                                                        |
+      | the caret is put after "buz"   | "P: foo [strong:bar] buzfoo [strong:bar] buz"               |
+      | the caret is put before "foo"  | "P: foo [strong:bar] buzfoo [strong:bar] buz"               |
+      | the caret is put after "ba"    | "P: foo [strong:ba]foo [strong:bar] buz[strong:r] buz"      |
+      | "foo bar buz" is selected      | "P: foo [strong:bar] buz"                                   |
 
   Scenario: Pasting text/plain into a text block
-    Given the text "foo bar buz"
+    Given the text "P: foo bar buz"
     And "strong" around "bar"
     When the caret is put after "ba"
     And data is pasted
       | text/plain | new |
-    Then the text is "foo ,banewr, buz"
+    Then the text is "P: foo [strong:banewr] buz"
 
   Scenario: Pasting text/html into a text block
-    Given the text "foo bar buz"
+    Given the text "P: foo bar buz"
     And "strong" around "bar"
     When the caret is put after "ba"
     And data is pasted
       | text/html | <p>new</p> |
-    Then the text is "foo ,ba,new,r, buz"
+    Then the text is "P: foo [strong:ba]new[strong:r] buz"
