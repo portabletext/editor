@@ -1,5 +1,6 @@
 import {defineSchema} from '@portabletext/schema'
-import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator} from '@portabletext/test'
+import {toTextspec} from '@portabletext/textspec'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {execute, forward, raise} from '../src/behaviors/behavior.types.action'
@@ -21,13 +22,14 @@ describe('Serialize/Deserialize', () => {
           behaviors={[
             defineBehavior({
               on: 'serialize.data',
-              guard: ({event}) => event.mimeType === 'text/html',
+              guard: ({event}) =>
+                event.mimeType === 'text/html',
               actions: [
                 ({event}) => [
                   raise({
                     type: 'serialization.success',
                     mimeType: 'text/html',
-                    data: '<img src="https://example.com/image.png" />',
+                    data: '![](https://example.com/image.png)',
                     originEvent: event.originEvent,
                   }),
                 ],
@@ -35,7 +37,8 @@ describe('Serialize/Deserialize', () => {
             }),
             defineBehavior({
               on: 'deserialize.data',
-              guard: ({event}) => event.mimeType === 'text/html',
+              guard: ({event}) =>
+                event.mimeType === 'text/html',
               actions: [
                 ({snapshot, event}) => [
                   raise({
@@ -85,11 +88,13 @@ describe('Serialize/Deserialize', () => {
     )
 
     await userEvent.click(locator)
+
     // When "foo bar baz" is selected
     editor.send({
       type: 'select',
       at: fooBarBazSelection,
     })
+
     await vi.waitFor(() => {
       const selection = editor.getSnapshot().context.selection
       expect(selection).toEqual({...fooBarBazSelection, backward: false})
@@ -97,6 +102,7 @@ describe('Serialize/Deserialize', () => {
 
     // And a cut is performed
     const dataTransfer = new DataTransfer()
+
     editor.send({
       type: 'clipboard.cut',
       originEvent: {dataTransfer},
@@ -107,7 +113,7 @@ describe('Serialize/Deserialize', () => {
 
     // Then custom text/html is put on the clipboard
     expect(dataTransfer.getData('text/html')).toBe(
-      '<img src="https://example.com/image.png" />',
+      '![](https://example.com/image.png)',
     )
 
     // And standard application/x-portable-text is put on the clipboard
@@ -132,7 +138,7 @@ describe('Serialize/Deserialize', () => {
 
     // And the text is ""
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: ')
     })
 
     // When a paste is performed
@@ -146,13 +152,14 @@ describe('Serialize/Deserialize', () => {
 
     // Then the text is "foo bar baz"
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo bar baz'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: foo bar baz')
     })
 
     // However, when only text/plain and text/html is pasted
     const newDataTransfer = new DataTransfer()
     newDataTransfer.setData('text/plain', 'hey')
-    newDataTransfer.setData('text/html', '<strong>hey</strong>')
+    newDataTransfer.setData('text/html', '**hey**')
+
     editor.send({
       type: 'clipboard.paste',
       originEvent: {dataTransfer: newDataTransfer},
@@ -163,10 +170,7 @@ describe('Serialize/Deserialize', () => {
 
     // The custom HTML deserializer takes precedence
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        'foo bar baz',
-        '{image}',
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: foo bar baz\n{IMAGE}')
     })
   })
 
@@ -179,8 +183,8 @@ describe('Serialize/Deserialize', () => {
       children: (
         <BehaviorPlugin
           behaviors={[
-            // Given a custom plugin that deliberately fails to deserialize
-            // application/x-portable-text, application/json and text/markdown
+            // Given a custom plugin that fails deserialization of
+            // application/x-portable-text, application/json, and text/markdown
             defineBehavior({
               on: 'deserialize.data',
               guard: ({event}) => {
@@ -208,7 +212,8 @@ describe('Serialize/Deserialize', () => {
             // And a custom plugin that alters the deserialization of text/html
             defineBehavior({
               on: 'deserialize.data',
-              guard: ({event}) => event.mimeType === 'text/html',
+              guard: ({event}) =>
+                event.mimeType === 'text/html',
               actions: [
                 ({event}) => [
                   raise({
@@ -262,6 +267,7 @@ describe('Serialize/Deserialize', () => {
     )
 
     await userEvent.click(locator)
+
     // When "foo bar baz" is selected
     editor.send({
       type: 'select',
@@ -270,6 +276,7 @@ describe('Serialize/Deserialize', () => {
 
     // And a cut is performed
     const dataTransfer = new DataTransfer()
+
     editor.send({
       type: 'clipboard.cut',
       originEvent: {dataTransfer},
@@ -302,7 +309,9 @@ describe('Serialize/Deserialize', () => {
     expect(dataTransfer.getData('text/markdown')).toEqual('# foo bar baz')
 
     // And text/html is put on the clipboard
-    expect(dataTransfer.getData('text/html')).toEqual('<h1>foo bar baz</h1>')
+    expect(dataTransfer.getData('text/html')).toEqual(
+      '<h1>foo bar baz</h1>',
+    )
 
     // When a paste is performed
     editor.send({
@@ -315,9 +324,7 @@ describe('Serialize/Deserialize', () => {
 
     // Then the text is "Overwritten HTML"
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        'Overwritten HTML',
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: Overwritten HTML')
     })
   })
 
@@ -329,7 +336,9 @@ describe('Serialize/Deserialize', () => {
         <BehaviorPlugin
           behaviors={[
             defineBehavior({
-              on: 'deserialize',
+              on: 'deserialize.data',
+              guard: ({event}) =>
+                event.mimeType === 'text/html',
               actions: [({event}) => [execute(event)]],
             }),
             // This Behavior won't receive the `deserialize.data` event since
@@ -338,7 +347,8 @@ describe('Serialize/Deserialize', () => {
             // can intercept the event propagation).
             defineBehavior({
               on: 'deserialize.data',
-              guard: ({event}) => event.mimeType === 'text/html',
+              guard: ({event}) =>
+                event.mimeType === 'text/html',
               actions: [
                 ({event}) => [
                   forward({
@@ -373,7 +383,7 @@ describe('Serialize/Deserialize', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo bar baz'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: foo bar baz')
     })
   })
 
@@ -385,7 +395,9 @@ describe('Serialize/Deserialize', () => {
         <BehaviorPlugin
           behaviors={[
             defineBehavior({
-              on: 'deserialize',
+              on: 'deserialize.data',
+              guard: ({event}) =>
+                event.mimeType === 'text/html',
               actions: [({event}) => [forward(event)]],
             }),
             // This Behavior *will* receive the `deserialize.data` event
@@ -393,7 +405,8 @@ describe('Serialize/Deserialize', () => {
             // forwards the `deserialize` event.
             defineBehavior({
               on: 'deserialize.data',
-              guard: ({event}) => event.mimeType === 'text/html',
+              guard: ({event}) =>
+                event.mimeType === 'text/html',
               actions: [
                 ({event}) => [
                   forward({
@@ -428,7 +441,7 @@ describe('Serialize/Deserialize', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['fizz buzz'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: fizz buzz')
     })
   })
 })
