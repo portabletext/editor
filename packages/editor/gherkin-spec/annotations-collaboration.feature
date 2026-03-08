@@ -14,6 +14,6 @@ Feature: Annotations Collaboration
     And Editor B is focused
     And the caret is put after "fo" in Editor B
     And "a" is typed in Editor B
-    Then the text is "fo,a"
+    Then the text is "P: [@comment:fo]a"
     And "fo" has marks "c1"
     And "a" has no marks
