@@ -9,10 +9,13 @@ import type {Parameter} from '../gherkin-parameter-types'
  *
  * These are the textspec equivalents of the terse-pt step definitions
  * in step-definitions.tsx. Both coexist during the migration period.
+ *
+ * Step names match the terse-pt originals so feature files only need
+ * to change the parameter type from {terse-pt} to {textspec}.
  */
 export const textspecStepDefinitions = [
   Given(
-    'the editor state {textspec}',
+    'the text {textspec}',
     (context: Context, textspec: Parameter['textspec']) => {
       const {blocks, selection} = fromTextspec(
         {
@@ -36,13 +39,59 @@ export const textspecStepDefinitions = [
     },
   ),
   Then(
-    'the editor state is {textspec}',
+    'the text is {textspec}',
     async (context: Context, textspec: Parameter['textspec']) => {
       await vi.waitFor(() => {
         expect(
           toTextspec(context.editor.getSnapshot().context),
-          'Unexpected editor state',
+          'Unexpected editor text',
         ).toBe(textspec)
+      })
+    },
+  ),
+  Then(
+    '{textspec} is in block {key}',
+    (context: Context, textspec: Parameter['textspec'], key: string) => {
+      // textspec for a single block assertion - extract the text content
+      // and delegate to the same block key lookup
+      const {blocks} = fromTextspec(
+        {
+          keyGenerator: context.editor.getSnapshot().context.keyGenerator,
+          schema: context.editor.getSnapshot().context.schema,
+        },
+        textspec,
+      )
+      const block = blocks.at(0)
+      if (!block) {
+        throw new Error('Expected at least one block in textspec')
+      }
+      if (blocks.length > 1) {
+        throw new Error('Expected at most one block in textspec')
+      }
+      // Use toTextspec to get the text representation and compare block keys
+      const snapshot = context.editor.getSnapshot().context
+      const matchingBlock = snapshot.value.find((b) => {
+        return toTextspec({schema: snapshot.schema, value: [b]}) === textspec
+      })
+      if (!matchingBlock) {
+        throw new Error(`No block matching textspec: ${textspec}`)
+      }
+      expect(matchingBlock._key).toBe(key)
+    },
+  ),
+  Then(
+    '{textspec} is selected',
+    async (context: Context, textspec: Parameter['textspec']) => {
+      await vi.waitFor(() => {
+        const snapshot = context.editor.getSnapshot().context
+        const state = toTextspec({
+          schema: snapshot.schema,
+          value: snapshot.value,
+          selection: snapshot.selection ?? undefined,
+        })
+        // The textspec should appear somewhere in the full state
+        // or match the selected text representation
+        expect(state, 'Unexpected selection').toContain(textspec)
       })
     },
   ),
