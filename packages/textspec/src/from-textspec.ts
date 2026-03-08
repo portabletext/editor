@@ -323,6 +323,9 @@ function resolvePointToPTE(
  *
  * @public
  */
+/**
+ * @public
+ */
 export function fromTextspec(
   context: {
     schema: Schema

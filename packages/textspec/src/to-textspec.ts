@@ -354,6 +354,9 @@ function convertSelection(
  *
  * @public
  */
+/**
+ * @public
+ */
 export function toTextspec(context: {
   schema: Schema
   value: Array<PortableTextBlock>
