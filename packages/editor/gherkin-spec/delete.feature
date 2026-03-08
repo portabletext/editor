@@ -12,9 +12,9 @@ Feature: Delete
     Then the text is <new text>
 
     Examples:
-      | text            | selection | new text   |
-      | "foo\|bar"      | "foo"     | "new\|bar" |
-      | "foo\|bar\|baz" | "foobar"  | "new\|baz" |
+      | text                     | selection | new text         |
+      | "P: foo;;P: bar"         | "foo"     | "P: new;;P: bar" |
+      | "P: foo;;P: bar;;P: baz" | "foobar"  | "P: new;;P: baz" |
 
   Scenario Outline: Deleting word
     Given the text <text>
@@ -24,13 +24,13 @@ Feature: Delete
     Then the text is <final text>
 
     Examples:
-      | text          | position        | shortcut              | final text  |
-      | "foo bar baz" | after "bar"     | "deleteWord.backward" | "foo  baz"  |
-      | "foo bar baz" | after "bar "    | "deleteWord.backward" | "foo baz"   |
-      | "foo bar baz" | after "foo ba"  | "deleteWord.backward" | "foo r baz" |
-      | "foo bar baz" | before "bar"    | "deleteWord.forward"  | "foo  baz"  |
-      | "foo bar baz" | before " bar"   | "deleteWord.forward"  | "foo baz"   |
-      | "foo bar baz" | before "ar baz" | "deleteWord.forward"  | "foo b baz" |
+      | text             | position        | shortcut              | final text      |
+      | "P: foo bar baz" | after "bar"     | "deleteWord.backward" | "P: foo  baz"   |
+      | "P: foo bar baz" | after "bar "    | "deleteWord.backward" | "P: foo  baz"   |
+      | "P: foo bar baz" | after "foo ba"  | "deleteWord.backward" | "P: foo r baz"  |
+      | "P: foo bar baz" | before "bar"    | "deleteWord.forward"  | "P: foo  baz"   |
+      | "P: foo bar baz" | before " bar"   | "deleteWord.forward"  | "P: foo baz"    |
+      | "P: foo bar baz" | before "ar baz" | "deleteWord.forward"  | "P: foo b baz"  |
 
   Scenario Outline: Deleting code points in complex scripts
     Given the text <text>
@@ -41,12 +41,12 @@ Feature: Delete
 
     Examples:
       # Hindi (Devanagari) - "कि" is क (ka) + ि (vowel i), two code points
-      | text | final text |
-      | "कि" | "क"        |
+      | text          | final text   |
+      | "P: कि"  | "P: क"       |
       # Bengali - "কি" is ক (ka) + ি (vowel i)
-      | "কি" | "ক"        |
+      | "P: কি"  | "P: ক"       |
       # Thai - "กิ" is ก (ko kai) + ิ (sara i)
-      | "กิ" | "ก"        |
+      | "P: กิ"  | "P: ก"       |
 
   Scenario Outline: Deleting line backward
     Given the text <text>
@@ -58,74 +58,74 @@ Feature: Delete
     Then the text is <text>
 
     Examples:
-      | text          | position     | final text |
-      | "foo bar baz" | after "bar"  | " baz"     |
-      | "foo bar baz" | after "baz"  | ""         |
-      | "foo bar baz" | after "foo " | "bar baz"  |
+      | text             | position     | final text   |
+      | "P: foo bar baz" | after "bar"  | "P:  baz"    |
+      | "P: foo bar baz" | after "baz"  | "P:"         |
+      | "P: foo bar baz" | after "foo " | "P: bar baz" |
 
   Scenario: Deleting line backward at start of block merges blocks
-    Given the text "foo|bar"
+    Given the text "P: foo;;P: bar"
     When the editor is focused
     And the caret is put before "bar"
     And "deleteLine.backward" is pressed
-    Then the text is "foobar"
+    Then the text is "P: foobar"
     When undo is performed
-    Then the text is "foo|bar"
+    Then the text is "P: foo;;P: bar"
 
   Scenario: Cutting selected text
-    Given the text "foo bar baz"
+    Given the text "P: foo bar baz"
     When the editor is focused
     And "bar" is selected
     And cut is performed
-    Then the text is "foo  baz"
+    Then the text is "P: foo  baz"
     When undo is performed
-    Then the text is "foo bar baz"
+    Then the text is "P: foo bar baz"
 
   Scenario: Cutting across blocks
-    Given the text "foo|bar"
+    Given the text "P: foo;;P: bar"
     When the editor is focused
     And "foobar" is selected
     And cut is performed
-    Then the text is ""
+    Then the text is "P:"
     When undo is performed
-    Then the text is "foo|bar"
+    Then the text is "P: foo;;P: bar"
 
   Scenario: Deleting word backward at block boundary merges blocks
-    Given the text "foo|bar"
+    Given the text "P: foo;;P: bar"
     When the editor is focused
     And the caret is put before "bar"
     And "deleteWord.backward" is pressed
-    Then the text is "foobar"
+    Then the text is "P: foobar"
     When undo is performed
-    Then the text is "foo|bar"
+    Then the text is "P: foo;;P: bar"
 
   Scenario: Deleting word forward at block boundary merges blocks
-    Given the text "foo|bar"
+    Given the text "P: foo;;P: bar"
     When the editor is focused
     And the caret is put after "foo"
     And "deleteWord.forward" is pressed
-    Then the text is "foobar"
+    Then the text is "P: foobar"
     When undo is performed
-    Then the text is "foo|bar"
+    Then the text is "P: foo;;P: bar"
 
   Scenario: Cutting with collapsed selection is a no-op
-    Given the text "foo bar baz"
+    Given the text "P: foo bar baz"
     When the editor is focused
     And the caret is put after "bar"
     And cut is performed
-    Then the text is "foo bar baz"
+    Then the text is "P: foo bar baz"
 
   Scenario: Deleting line backward in empty block
-    Given the text ""
+    Given the text "P:"
     When the editor is focused
     And "deleteLine.backward" is pressed
-    Then the text is ""
+    Then the text is "P:"
 
   Scenario: Deleting line backward only affects current block
-    Given the text "foo|bar baz"
+    Given the text "P: foo;;P: bar baz"
     When the editor is focused
     And the caret is put after "bar"
     And "deleteLine.backward" is pressed
-    Then the text is "foo| baz"
+    Then the text is "P: foo;;P:  baz"
     When undo is performed
-    Then the text is "foo|bar baz"
+    Then the text is "P: foo;;P: bar baz"
