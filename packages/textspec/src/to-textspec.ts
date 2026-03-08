@@ -1,12 +1,3 @@
-import {serialize} from '@textspec/notation'
-import type {
-  Block,
-  ContainerBlock,
-  EditorState,
-  InlineNode,
-  Selection as TextspecSelection,
-  TextBlock,
-} from '@textspec/notation'
 import {isSpan, isTextBlock} from '@portabletext/schema'
 import type {
   PortableTextBlock,
@@ -14,6 +5,15 @@ import type {
   PortableTextTextBlock,
   Schema,
 } from '@portabletext/schema'
+import {serialize} from '@textspec/notation'
+import type {
+  Block,
+  ContainerBlock,
+  EditorState,
+  InlineNode,
+  TextBlock,
+  Selection as TextspecSelection,
+} from '@textspec/notation'
 
 /**
  * Selection types that are structurally compatible with PTE's EditorSelection.
@@ -272,14 +272,22 @@ function resolveSelectionPoint(
 
   // Extract block key from path[0]
   const blockSegment = point.path[0]
-  if (!blockSegment || typeof blockSegment !== 'object' || !('_key' in blockSegment)) {
+  if (
+    !blockSegment ||
+    typeof blockSegment !== 'object' ||
+    !('_key' in blockSegment)
+  ) {
     return undefined
   }
   const blockKey = blockSegment._key
 
   // Extract child key from path[2] (path is [blockKey, 'children', childKey])
   const childSegment = point.path[2]
-  if (!childSegment || typeof childSegment !== 'object' || !('_key' in childSegment)) {
+  if (
+    !childSegment ||
+    typeof childSegment !== 'object' ||
+    !('_key' in childSegment)
+  ) {
     return undefined
   }
   const childKey = childSegment._key
@@ -292,7 +300,12 @@ function resolveSelectionPoint(
       pteBlockIndex = i
       break
     }
-    if (block && !isTextBlock(ctx, block) && '_key' in block && block._key === blockKey) {
+    if (
+      block &&
+      !isTextBlock(ctx, block) &&
+      '_key' in block &&
+      block._key === blockKey
+    ) {
       pteBlockIndex = i
       break
     }
@@ -338,6 +351,8 @@ function convertSelection(
 
 /**
  * Serialize PTE state to a textspec notation string.
+ *
+ * @public
  */
 export function toTextspec(context: {
   schema: Schema

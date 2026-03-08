@@ -1,10 +1,3 @@
-import {parse} from '@textspec/notation'
-import type {
-  Block,
-  ContainerBlock,
-  InlineNode,
-  TextBlock,
-} from '@textspec/notation'
 import type {
   PortableTextBlock,
   PortableTextObject,
@@ -13,6 +6,13 @@ import type {
   Schema,
 } from '@portabletext/schema'
 import {isTextBlock} from '@portabletext/schema'
+import {parse} from '@textspec/notation'
+import type {
+  Block,
+  ContainerBlock,
+  InlineNode,
+  TextBlock,
+} from '@textspec/notation'
 
 /**
  * Selection types structurally compatible with PTE's EditorSelection.
@@ -97,7 +97,12 @@ function flattenInlineNode(
       const results: Array<PortableTextSpan | PortableTextObject> = []
 
       for (const child of node.children) {
-        const flattened = flattenInlineNode(child, keyGenerator, childMarks, markDefs)
+        const flattened = flattenInlineNode(
+          child,
+          keyGenerator,
+          childMarks,
+          markDefs,
+        )
         for (const item of flattened) {
           results.push(item)
         }
@@ -193,7 +198,12 @@ function flattenContainer(
           )
         } else if (liChild.kind === 'containerBlock') {
           // Nested list
-          const nested = flattenContainer(schema, liChild, keyGenerator, level + 1)
+          const nested = flattenContainer(
+            schema,
+            liChild,
+            keyGenerator,
+            level + 1,
+          )
           for (const nestedBlock of nested) {
             results.push(nestedBlock)
           }
@@ -265,7 +275,12 @@ function convertBlockToPTE(
 function convertSelectionToPTE(
   schema: Schema,
   blocks: Array<PortableTextBlock>,
-  state: {selection: {anchor: {path: Array<number>; offset: number}; focus: {path: Array<number>; offset: number}} | null},
+  state: {
+    selection: {
+      anchor: {path: Array<number>; offset: number}
+      focus: {path: Array<number>; offset: number}
+    } | null
+  },
 ): SelectionValue | null {
   if (!state.selection) return null
 
@@ -305,6 +320,8 @@ function resolvePointToPTE(
 
 /**
  * Parse a textspec notation string into PTE blocks and selection.
+ *
+ * @public
  */
 export function fromTextspec(
   context: {
@@ -320,7 +337,11 @@ export function fromTextspec(
   const blocks: Array<PortableTextBlock> = []
 
   for (const block of state.blocks) {
-    const pteBlocks = convertBlockToPTE(context.schema, block, context.keyGenerator)
+    const pteBlocks = convertBlockToPTE(
+      context.schema,
+      block,
+      context.keyGenerator,
+    )
     for (const pteBlock of pteBlocks) {
       blocks.push(pteBlock)
     }
