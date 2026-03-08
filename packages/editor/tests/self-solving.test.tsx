@@ -1,6 +1,7 @@
 import type {Patch} from '@portabletext/patches'
 import {compileSchema, defineSchema} from '@portabletext/schema'
-import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator} from '@portabletext/test'
+import {toTextspec} from '@portabletext/textspec'
 import {makeDiff, makePatches, stringifyPatches} from '@sanity/diff-match-patch'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
@@ -36,24 +37,28 @@ describe('Feature: Self-solving', () => {
         style: 'normal',
       },
     ]
+
     const spanPatch: Patch = {
       type: 'set',
       path: [{_key: blockKey}, 'children', {_key: spanKey}, 'marks'],
       value: [],
       origin: 'local',
     }
+
     const blockPatch: Patch = {
       type: 'set',
       path: [{_key: blockKey}, 'markDefs'],
       value: [],
       origin: 'local',
     }
+
     const strongPatch: Patch = {
       type: 'set',
       path: [{_key: blockKey}, 'children', {_key: spanKey}, 'marks'],
       value: ['strong'],
       origin: 'local',
     }
+
     const onEvent = vi.fn<(event: EditorEmittedEvent) => void>()
     const patchEvents: Array<PatchEvent> = []
     const mutationEvents: Array<MutationEvent> = []
@@ -67,6 +72,7 @@ describe('Feature: Self-solving', () => {
             if (event.type === 'patch') {
               patchEvents.push(event)
             }
+
             if (event.type === 'mutation') {
               mutationEvents.push(event)
             }
@@ -93,6 +99,7 @@ describe('Feature: Self-solving', () => {
         'foo',
       ),
     })
+
     editor.send({
       type: 'decorator.toggle',
       decorator: 'strong',
@@ -104,6 +111,7 @@ describe('Feature: Self-solving', () => {
         {type: 'patch', patch: blockPatch},
         {type: 'patch', patch: strongPatch},
       ])
+
       expect(mutationEvents).toEqual([
         {
           type: 'mutation',
@@ -236,6 +244,7 @@ describe('Feature: Self-solving', () => {
   test('Scenario: Missing .style is added to inserted block', async () => {
     const patches: Array<Patch> = []
     const keyGenerator = createTestKeyGenerator()
+
     const {editor} = await createTestEditor({
       keyGenerator,
       initialValue: [],
@@ -252,6 +261,7 @@ describe('Feature: Self-solving', () => {
 
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
+
     editor.send({
       type: 'insert.block',
       at: {
@@ -379,18 +389,21 @@ describe('Feature: Self-solving', () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
+
     const fooSpan = {
       _key: spanKey,
       _type: 'span',
       text: 'foo',
       marks: [],
     }
+
     const barSpan = {
       _key: spanKey,
       _type: 'span',
       text: 'bar',
       marks: ['strong'],
     }
+
     const block = {
       _key: blockKey,
       _type: 'block',
@@ -398,6 +411,7 @@ describe('Feature: Self-solving', () => {
       style: 'normal',
       markDefs: [],
     }
+
     const initialValue = [block]
 
     const {editor, locator} = await createTestEditor({
@@ -430,7 +444,6 @@ describe('Feature: Self-solving', () => {
           ],
         },
       ])
-
       expect(patches).toEqual([])
     })
 
@@ -453,8 +466,7 @@ describe('Feature: Self-solving', () => {
     await userEvent.type(locator, 'b')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo,barb'])
-
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: foo [strong:barb]')
       expect(patches).toEqual([
         {
           origin: 'local',
@@ -477,18 +489,21 @@ describe('Feature: Self-solving', () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
+
     const fooSpan = {
       _key: spanKey,
       _type: 'span',
       text: 'foo',
       marks: [],
     }
+
     const barSpan = {
       _key: spanKey,
       _type: 'span',
       text: 'bar',
       marks: ['strong'],
     }
+
     const block = {
       _key: blockKey,
       _type: 'block',
@@ -496,6 +511,7 @@ describe('Feature: Self-solving', () => {
       style: 'normal',
       markDefs: [],
     }
+
     const initialValue = [block]
 
     const {editor, locator} = await createTestEditor({
@@ -554,7 +570,6 @@ describe('Feature: Self-solving', () => {
           ],
         },
       ])
-
       expect(patches).toEqual([
         {
           origin: 'local',
@@ -582,6 +597,7 @@ describe('Feature: Self-solving', () => {
     const patches: Array<Patch> = []
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
+
     const fooKey = keyGenerator()
     const fooSpan = {
       _key: fooKey,
@@ -589,6 +605,7 @@ describe('Feature: Self-solving', () => {
       text: 'foo',
       marks: [],
     }
+
     const barKey = keyGenerator()
     const barSpan = {
       _key: barKey,
@@ -596,6 +613,7 @@ describe('Feature: Self-solving', () => {
       text: 'bar',
       marks: [],
     }
+
     const block0 = {
       _key: blockKey,
       _type: 'block',
@@ -603,6 +621,7 @@ describe('Feature: Self-solving', () => {
       style: 'normal',
       markDefs: [],
     }
+
     const block1 = {
       _key: blockKey,
       _type: 'block',
@@ -610,10 +629,12 @@ describe('Feature: Self-solving', () => {
       style: 'normal',
       markDefs: [],
     }
+
     const image = {
       _key: blockKey,
       _type: 'image',
     }
+
     const initialValue = [block0, block1, image]
 
     const {editor, locator} = await createTestEditor({
@@ -705,6 +726,7 @@ describe('Feature: Self-solving', () => {
     const patches: Array<Patch> = []
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
+
     const fooKey = keyGenerator()
     const fooSpan = {
       _key: fooKey,
@@ -712,6 +734,7 @@ describe('Feature: Self-solving', () => {
       text: 'foo',
       marks: [],
     }
+
     const barKey = keyGenerator()
     const barSpan = {
       _key: barKey,
@@ -719,6 +742,7 @@ describe('Feature: Self-solving', () => {
       text: 'bar',
       marks: [],
     }
+
     const block = {
       _key: blockKey,
       _type: 'block',
@@ -726,6 +750,7 @@ describe('Feature: Self-solving', () => {
       style: 'normal',
       markDefs: [],
     }
+
     const initialValue = [block]
 
     const {editor} = await createTestEditor({
