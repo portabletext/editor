@@ -5,7 +5,7 @@ Feature: Annotations Across Blocks
     And a global keymap
 
   Scenario: Adding annotation across blocks
-    Given the text ""
+    Given the text "P:"
     When the editor is focused
     And "foo" is typed
     And "{Enter}" is pressed
@@ -16,7 +16,7 @@ Feature: Annotations Across Blocks
     And "bar" has marks "l2"
 
   Scenario: Adding annotation across blocks (backwards selection)
-    Given the text ""
+    Given the text "P:"
     When the editor is focused
     And "foo" is typed
     And "{Enter}" is pressed
@@ -49,58 +49,58 @@ Feature: Annotations Across Blocks
     And "foo|{image}|bar" is selected
 
   Scenario: Splitting an annotation across blocks
-    Given the text "foobar"
+    Given the text "P: foobar"
     And a "link" "l1" around "foobar"
     When the editor is focused
     And the caret is put after "foo"
     And "{Enter}" is pressed
-    Then the text is "foo|bar"
+    Then the text is "P: [@link:foo];;P: [@link:bar]"
     And "foo" has marks "l1"
     And "bar" has marks "l1"
 
   Scenario: Splitting an annotation across blocks using a selection
-    Given the text "foo bar baz"
+    Given the text "P: foo bar baz"
     And a "link" "l1" around "foo bar baz"
     When the editor is focused
     And "bar" is selected
     And "{Enter}" is pressed
-    Then the text is "foo | baz"
+    Then the text is "P: [@link:foo ];;P: [@link: baz]"
     And "foo " has marks "l1"
     And " baz" has marks "l1"
 
   Scenario: Splitting a split annotation across blocks
-    Given the text "foo bar baz"
+    Given the text "P: foo bar baz"
     And a "link" "l1" around "foo bar baz"
     And "strong" around "bar"
     When the editor is focused
     And the caret is put after "foo"
     And "{Enter}" is pressed
-    Then the text is "foo| ,bar, baz"
+    Then the text is "P: [@link:foo];;P: [@link: ][strong:[@link:bar]][@link: baz]"
     And "foo" has marks "l1"
     And " " has marks "l1"
     And "bar" has marks "l1,strong"
     And " baz" has marks "l1"
 
   Scenario: Splitting text after annotation doesn't touch the annotation
-    Given the text "foo bar baz"
+    Given the text "P: foo bar baz"
     And a "link" "l1" around "foo"
     When the editor is focused
     And the caret is put after "bar"
     And "{Enter}" is pressed
-    Then the text is "foo, bar| baz"
+    Then the text is "P: [@link:foo] bar;;P:  baz"
     And "foo" has marks "l1"
 
   # Warning: Possible wrong behaviour
   # "foo" and "bar" should rejoin as one link
   # Fixing this is possibly a breaking change
   Scenario: Splitting and merging an annotation across blocks
-    Given the text "foobar"
+    Given the text "P: foobar"
     And a "link" "l1" around "foobar"
     When the editor is focused
     And the caret is put after "foo"
     And "{Enter}" is pressed
     And "{Backspace}" is pressed
-    Then the text is "foo,bar"
+    Then the text is "P: [@link:foo][@link:bar]"
     And "foo" has marks "l1"
     And "bar" has an annotation different than "l1"
 
@@ -108,37 +108,37 @@ Feature: Annotations Across Blocks
   # The " baz" link should have a unique key
   # Fixing this is possibly a breaking change
   Scenario: Toggling part of an annotation off
-    Given the text "foo bar baz"
+    Given the text "P: foo bar baz"
     And a "link" "l1" around "foo bar baz"
     When "bar" is selected
     And "link" is toggled
-    Then the text is "foo ,bar, baz"
+    Then the text is "P: [@link:foo ]bar[@link: baz]"
     And "foo " has marks "l1"
     And "bar" has no marks
     And " baz" has marks "l1"
 
   Scenario: Splitting block before annotation
-    Given the text "foo"
+    Given the text "P: foo"
     And a "link" "l1" around "foo"
     When the editor is focused
     And the caret is put before "foo"
     And "{Enter}" is pressed
-    Then the text is "|foo"
+    Then the text is "P:;;P: [@link:foo]"
     And "" has no marks
     And "foo" has marks "l1"
 
   Scenario: Splitting block after annotation
-    Given the text "foo"
+    Given the text "P: foo"
     And a "link" "l1" around "foo"
     When the editor is focused
     And the caret is put after "foo"
     And "{Enter}" is pressed
-    Then the text is "foo|"
+    Then the text is "P: [@link:foo];;P:"
     And "foo" has marks "l1"
     And "" has no marks
 
   Scenario: Merging blocks with annotations
-    Given the text "foo"
+    Given the text "P: foo"
     When the editor is focused
     And "{Enter}" is pressed
     And "bar" is typed
@@ -148,6 +148,6 @@ Feature: Annotations Across Blocks
     And "link" "l2" is toggled
     And the caret is put before "bar"
     And "{Backspace}" is pressed
-    Then the text is "foo,bar"
+    Then the text is "P: [@link:foo][@link:bar]"
     And "foo" has marks "l1"
     And "bar" has marks "l2"
