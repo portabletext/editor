@@ -1,5 +1,6 @@
 import {defineSchema} from '@portabletext/schema'
-import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator} from '@portabletext/test'
+import {toTextspec} from '@portabletext/textspec'
 import {describe, expect, test, vi} from 'vitest'
 import type {EditorEmittedEvent} from '../src/editor/relay-machine'
 import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
@@ -9,6 +10,7 @@ describe('Value validation', () => {
   test('Initial value with `null` child results in a validation error', async () => {
     const keyGenerator = createTestKeyGenerator()
     const events: Array<EditorEmittedEvent> = []
+
     await createTestEditor({
       keyGenerator,
       initialValue: [
@@ -40,6 +42,7 @@ describe('Value validation', () => {
   test('Scenario: Initial value with `null` child in second block results in a validation error', async () => {
     const keyGenerator = createTestKeyGenerator()
     const events: Array<EditorEmittedEvent> = []
+
     await createTestEditor({
       keyGenerator,
       initialValue: [
@@ -81,6 +84,7 @@ describe('Value validation', () => {
     const blockKey = keyGenerator()
     const fooKey = keyGenerator()
     const barKey = keyGenerator()
+
     const {editor} = await createTestEditor({
       keyGenerator,
       initialValue: [
@@ -106,7 +110,7 @@ describe('Value validation', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo,bar'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: foo [strong:bar]')
     })
 
     await vi.waitFor(() => {
@@ -141,13 +145,14 @@ describe('Value validation', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo,bar'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: foo [strong:bar]')
     })
   })
 
   test('Scenario: New block with `null` child results in a validation error', async () => {
     const keyGenerator = createTestKeyGenerator()
     const events: Array<EditorEmittedEvent> = []
+
     const {editor} = await createTestEditor({
       keyGenerator,
       children: (
