@@ -2,7 +2,8 @@ import type {Editor} from '@portabletext/editor'
 import {EditorProvider, PortableTextEditable} from '@portabletext/editor'
 import {EditorRefPlugin} from '@portabletext/editor/plugins'
 import {defineSchema, type PortableTextBlock} from '@portabletext/schema'
-import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator} from '@portabletext/test'
+import {toTextspec} from '@portabletext/textspec'
 import {createRef} from 'react'
 import {afterEach, describe, expect, test, vi} from 'vitest'
 import {render} from 'vitest-browser-react'
@@ -53,18 +54,24 @@ async function createSyncedEditor(options: {
   const result = await render(
     <EditorProvider
       initialConfig={{
+        schemaDefinition: defineSchema({
+          decorators: [{name: 'strong'}, {name: 'em'}],
+          styles: [{name: 'normal'}, {name: 'h1'}],
+          lists: [{name: 'bullet'}, {name: 'number'}],
+          blockObjects: [],
+          inlineObjects: [],
+          annotations: [],
+        }),
         keyGenerator,
-        schemaDefinition: defineSchema({}),
-        initialValue: options.initialValue,
       }}
     >
       <EditorRefPlugin ref={editorRef} />
-      <PortableTextEditable />
       <ValueSyncPlugin
         getRemoteValue={options.store.getRemoteValue}
         pushValue={options.store.pushValue}
         onRemoteValueChange={options.store.onRemoteValueChange}
       />
+      <PortableTextEditable />
     </EditorProvider>,
   )
 
@@ -90,8 +97,9 @@ function makeBlock(key: string, text: string): PortableTextBlock {
   }
 }
 
-function getEditorText(editor: Editor): string[] {
-  return getTersePt(editor.getSnapshot().context)
+function getEditorText(editor: Editor): string {
+  const ctx = editor.getSnapshot().context
+  return toTextspec({schema: ctx.schema, value: ctx.value})
 }
 
 // ---- Tests ----
@@ -111,7 +119,7 @@ describe('ValueSyncPlugin', () => {
       cleanup = unmount
 
       await vi.waitFor(() => {
-        expect(getEditorText(editor)).toEqual(['Hello'])
+        expect(getEditorText(editor)).toBe('P: Hello')
       })
     })
 
@@ -121,7 +129,7 @@ describe('ValueSyncPlugin', () => {
       cleanup = unmount
 
       await vi.waitFor(() => {
-        expect(getEditorText(editor)).toEqual([''])
+        expect(getEditorText(editor)).toBe('P: ')
       })
     })
   })
@@ -141,11 +149,11 @@ describe('ValueSyncPlugin', () => {
 
       const pushedValue = store.pushValue.mock.lastCall?.[0] ?? []
       expect(
-        getTersePt({
+        toTextspec({
           value: pushedValue,
           schema: editor.getSnapshot().context.schema,
         }),
-      ).toEqual(['Hello'])
+      ).toBe('P: Hello')
     })
   })
 
@@ -158,7 +166,7 @@ describe('ValueSyncPlugin', () => {
       store.setRemoteValue([makeBlock('b1', 'Hello from remote')])
 
       await vi.waitFor(() => {
-        expect(getEditorText(editor)).toEqual(['Hello from remote'])
+        expect(getEditorText(editor)).toBe('P: Hello from remote')
       })
     })
   })
@@ -181,7 +189,7 @@ describe('ValueSyncPlugin', () => {
       // by the "pushing to remote" state. The editor should still
       // have the correct value.
       await vi.waitFor(() => {
-        expect(getEditorText(editor)).toEqual(['Hello'])
+        expect(getEditorText(editor)).toBe('P: Hello')
       })
     })
 
@@ -211,7 +219,7 @@ describe('ValueSyncPlugin', () => {
 
       // Editor should still have the correct value, not reverted
       await vi.waitFor(() => {
-        expect(getEditorText(editor)).toEqual(['Hello'])
+        expect(getEditorText(editor)).toBe('P: Hello')
       })
     })
   })
@@ -241,7 +249,7 @@ describe('ValueSyncPlugin', () => {
       // Editor should NOT revert to "Hello" — it has pending writes.
       // Wait a bit to make sure no revert happens.
       await new Promise((resolve) => setTimeout(resolve, 100))
-      expect(getEditorText(editor)).toEqual(['Hello world'])
+      expect(getEditorText(editor)).toBe('P: Hello world')
 
       // Wait for the second push
       await vi.waitFor(() => {
@@ -250,7 +258,7 @@ describe('ValueSyncPlugin', () => {
 
       // After mutation flush, editor should have the full text
       await vi.waitFor(() => {
-        expect(getEditorText(editor)).toEqual(['Hello world'])
+        expect(getEditorText(editor)).toBe('P: Hello world')
       })
     })
 
@@ -261,7 +269,6 @@ describe('ValueSyncPlugin', () => {
 
       await locator.click()
       editor.send({type: 'insert.text', text: 'Hello'})
-
       await vi.waitFor(() => {
         expect(store.pushValue).toHaveBeenCalled()
       })
@@ -297,7 +304,7 @@ describe('ValueSyncPlugin', () => {
       // `pending sync` defers the sync until after the push. The deferred
       // sync should detect the remote block and apply it.
       await vi.waitFor(() => {
-        expect(getEditorText(editor)).toEqual(['Hello world', 'from remote'])
+        expect(getEditorText(editor)).toBe('P: Hello world\nP: from remote')
       })
     })
 
@@ -309,7 +316,7 @@ describe('ValueSyncPlugin', () => {
       store.setRemoteValue([makeBlock('b1', 'Hello from remote')])
 
       await vi.waitFor(() => {
-        expect(getEditorText(editor)).toEqual(['Hello from remote'])
+        expect(getEditorText(editor)).toBe('P: Hello from remote')
       })
     })
   })
