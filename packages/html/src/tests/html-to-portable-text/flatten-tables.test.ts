@@ -1,5 +1,5 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
-import {getTersePt} from '@portabletext/test'
+import {toTextspec} from '@portabletext/textspec'
 import {JSDOM} from 'jsdom'
 import {describe, expect, test} from 'vitest'
 import {htmlToPortableText} from '../../html-to-portable-text'
@@ -112,26 +112,28 @@ describe(createFlattenTableRule.name, () => {
     ].join('')
 
     expect(
-      getTersePt({
+      toTextspec({
         schema,
         value: transform(html, {
           rules: [flattenTableRule],
         }),
       }),
-    ).toEqual([
-      'Year, ,2022',
-      'Sales, ,$8,000',
-      'Expenses, ,$5,000',
-      'Profit, ,$3,000',
-      'Year, ,2023',
-      'Sales, ,$10,000',
-      'Expenses, ,$6,500',
-      'Profit, ,$3,500',
-      'Year, ,2024',
-      'Sales, ,$15,000',
-      'Expenses, ,$9,000',
-      'Profit, ,$6,000',
-    ])
+    ).toBe(
+      [
+        'P: Year 2022',
+        'P: Sales $8,000',
+        'P: Expenses $5,000',
+        'P: Profit $3,000',
+        'P: Year 2023',
+        'P: Sales $10,000',
+        'P: Expenses $6,500',
+        'P: Profit $3,500',
+        'P: Year 2024',
+        'P: Sales $15,000',
+        'P: Expenses $9,000',
+        'P: Profit $6,000',
+      ].join('\n'),
+    )
   })
 
   test('ordinary table without thead and tbody', () => {
@@ -171,30 +173,32 @@ describe(createFlattenTableRule.name, () => {
     ].join('')
 
     expect(
-      getTersePt({
+      toTextspec({
         schema,
         value: transform(html, {
           rules: [flattenTableRule],
         }),
       }),
-    ).toEqual([
-      'Year',
-      'Sales',
-      'Expenses',
-      'Profit',
-      '2022',
-      '$8,000',
-      '$5,000',
-      '$3,000',
-      '2023',
-      '$10,000',
-      '$6,500',
-      '$3,500',
-      '2024',
-      '$15,000',
-      '$9,000',
-      '$6,000',
-    ])
+    ).toBe(
+      [
+        'P: Year',
+        'P: Sales',
+        'P: Expenses',
+        'P: Profit',
+        'P: 2022',
+        'P: $8,000',
+        'P: $5,000',
+        'P: $3,000',
+        'P: 2023',
+        'P: $10,000',
+        'P: $6,500',
+        'P: $3,500',
+        'P: 2024',
+        'P: $15,000',
+        'P: $9,000',
+        'P: $6,000',
+      ].join('\n'),
+    )
   })
 
   test('ordinary table without thead', () => {
@@ -236,30 +240,32 @@ describe(createFlattenTableRule.name, () => {
     ].join('')
 
     expect(
-      getTersePt({
+      toTextspec({
         schema,
         value: transform(html, {
           rules: [flattenTableRule],
         }),
       }),
-    ).toEqual([
-      'Year',
-      'Sales',
-      'Expenses',
-      'Profit',
-      '2022',
-      '$8,000',
-      '$5,000',
-      '$3,000',
-      '2023',
-      '$10,000',
-      '$6,500',
-      '$3,500',
-      '2024',
-      '$15,000',
-      '$9,000',
-      '$6,000',
-    ])
+    ).toBe(
+      [
+        'P: Year',
+        'P: Sales',
+        'P: Expenses',
+        'P: Profit',
+        'P: 2022',
+        'P: $8,000',
+        'P: $5,000',
+        'P: $3,000',
+        'P: 2023',
+        'P: $10,000',
+        'P: $6,500',
+        'P: $3,500',
+        'P: 2024',
+        'P: $15,000',
+        'P: $9,000',
+        'P: $6,000',
+      ].join('\n'),
+    )
   })
 
   test('ordinary table without tbody', () => {
@@ -301,26 +307,28 @@ describe(createFlattenTableRule.name, () => {
     ].join('')
 
     expect(
-      getTersePt({
+      toTextspec({
         schema,
         value: transform(html, {
           rules: [flattenTableRule],
         }),
       }),
-    ).toEqual([
-      'Year, ,2022',
-      'Sales, ,$8,000',
-      'Expenses, ,$5,000',
-      'Profit, ,$3,000',
-      'Year, ,2023',
-      'Sales, ,$10,000',
-      'Expenses, ,$6,500',
-      'Profit, ,$3,500',
-      'Year, ,2024',
-      'Sales, ,$15,000',
-      'Expenses, ,$9,000',
-      'Profit, ,$6,000',
-    ])
+    ).toBe(
+      [
+        'P: Year 2022',
+        'P: Sales $8,000',
+        'P: Expenses $5,000',
+        'P: Profit $3,000',
+        'P: Year 2023',
+        'P: Sales $10,000',
+        'P: Expenses $6,500',
+        'P: Profit $3,500',
+        'P: Year 2024',
+        'P: Sales $15,000',
+        'P: Expenses $9,000',
+        'P: Profit $6,000',
+      ].join('\n'),
+    )
   })
 
   test('multiple header rows', () => {
@@ -357,22 +365,24 @@ describe(createFlattenTableRule.name, () => {
     ].join('')
 
     expect(
-      getTersePt({
+      toTextspec({
         schema,
         value: transform(html, {
           rules: [flattenTableRule],
         }),
       }),
-    ).toEqual([
-      'Name',
-      'Age',
-      'Navn',
-      'Alder',
-      'John Doe',
-      '18',
-      'Jane Smith',
-      '20',
-    ])
+    ).toBe(
+      [
+        'P: Name',
+        'P: Age',
+        'P: Navn',
+        'P: Alder',
+        'P: John Doe',
+        'P: 18',
+        'P: Jane Smith',
+        'P: 20',
+      ].join('\n'),
+    )
   })
 
   test('only thead', () => {
@@ -396,13 +406,20 @@ describe(createFlattenTableRule.name, () => {
     ].join('')
 
     expect(
-      getTersePt({
+      toTextspec({
         schema,
         value: transform(html, {
           rules: [flattenTableRule],
         }),
       }),
-    ).toEqual(['Name', 'John Doe', 'Age', '18'])
+    ).toBe(
+      [
+        'P: Name',
+        'P: John Doe',
+        'P: Age',
+        'P: 18',
+      ].join('\n'),
+    )
   })
 
   describe('table with images', () => {
@@ -435,18 +452,25 @@ describe(createFlattenTableRule.name, () => {
 
     test('no image matcher', () => {
       expect(
-        getTersePt({
+        toTextspec({
           schema,
           value: transform(html, {
             rules: [flattenTableRule],
           }),
         }),
-      ).toEqual(['Name, ,John Doe', 'Photo', 'Name, ,Jane Smith', 'Photo'])
+      ).toBe(
+        [
+          'P: Name John Doe',
+          'P: Photo',
+          'P: Name Jane Smith',
+          'P: Photo',
+        ].join('\n'),
+      )
     })
 
     test('block-only schema: images become blocks', () => {
       expect(
-        getTersePt({
+        toTextspec({
           schema: blockOnlySchema,
           value: transform(html, {
             schema: blockOnlySchema,
@@ -454,31 +478,35 @@ describe(createFlattenTableRule.name, () => {
             rules: [flattenTableRule],
           }),
         }),
-      ).toEqual([
-        'Name, ,John Doe',
-        'Photo',
-        '{image}',
-        'Name, ,Jane Smith',
-        'Photo',
-        '{image}',
-      ])
+      ).toBe(
+        [
+          'P: Name John Doe',
+          'P: Photo',
+          '{IMAGE}',
+          'P: Name Jane Smith',
+          'P: Photo',
+          '{IMAGE}',
+        ].join('\n'),
+      )
     })
 
     test('block and inline schema: images become inline', () => {
       expect(
-        getTersePt({
+        toTextspec({
           schema,
           value: transform(html, {
             types: {image: imageMatcher},
             rules: [flattenTableRule],
           }),
         }),
-      ).toEqual([
-        'Name, ,John Doe',
-        'Photo, ,{image}',
-        'Name, ,Jane Smith',
-        'Photo, ,{image}',
-      ])
+      ).toBe(
+        [
+          'P: Name John Doe',
+          'P: Photo {image}',
+          'P: Name Jane Smith',
+          'P: Photo {image}',
+        ].join('\n'),
+      )
     })
 
     describe('Google Docs', () => {
@@ -486,13 +514,18 @@ describe(createFlattenTableRule.name, () => {
         const html = `<meta charset='utf-8'><meta charset="utf-8"><b style="font-weight:normal;" id="docs-internal-guid-e0aa048e-7fff-f3cb-0d6d-5e68751be0e3"><div dir="ltr" style="margin-left:0pt;" align="left"><table style="border:none;border-collapse:collapse;table-layout:fixed;width:468pt"><colgroup><col /><col /></colgroup><thead><tr style="height:0pt"><th style="border-left:solid #000000 1pt;border-right:solid #000000 1pt;border-bottom:solid #000000 1pt;border-top:solid #000000 1pt;vertical-align:top;padding:5pt 5pt 5pt 5pt;overflow:hidden;overflow-wrap:break-word;" scope="col"><p dir="ltr" style="line-height:1.2;margin-top:0pt;margin-bottom:0pt;"><span style="font-size:12pt;font-family:Arial,sans-serif;color:#000000;background-color:transparent;font-weight:400;font-style:normal;font-variant:normal;text-decoration:none;vertical-align:baseline;white-space:pre;white-space:pre-wrap;">Header 1</span></p></th><th style="border-left:solid #000000 1pt;border-right:solid #000000 1pt;border-bottom:solid #000000 1pt;border-top:solid #000000 1pt;vertical-align:top;padding:5pt 5pt 5pt 5pt;overflow:hidden;overflow-wrap:break-word;" scope="col"><p dir="ltr" style="line-height:1.2;margin-top:0pt;margin-bottom:0pt;"><span style="font-size:12pt;font-family:Arial,sans-serif;color:#000000;background-color:transparent;font-weight:400;font-style:normal;font-variant:normal;text-decoration:none;vertical-align:baseline;white-space:pre;white-space:pre-wrap;">Header 2</span></p></th></tr></thead><tbody><tr style="height:0pt"><td style="border-left:solid #000000 1pt;border-right:solid #000000 1pt;border-bottom:solid #000000 1pt;border-top:solid #000000 1pt;vertical-align:top;padding:5pt 5pt 5pt 5pt;overflow:hidden;overflow-wrap:break-word;"><p dir="ltr" style="line-height:1.2;margin-top:0pt;margin-bottom:0pt;"><span style="font-size:12pt;font-family:Arial,sans-serif;color:#000000;background-color:transparent;font-weight:400;font-style:normal;font-variant:normal;text-decoration:none;vertical-align:baseline;white-space:pre;white-space:pre-wrap;">Cell 1</span></p></td><td style="border-left:solid #000000 1pt;border-right:solid #000000 1pt;border-bottom:solid #000000 1pt;border-top:solid #000000 1pt;vertical-align:top;padding:5pt 5pt 5pt 5pt;overflow:hidden;overflow-wrap:break-word;"><p dir="ltr" style="line-height:1.2;margin-top:0pt;margin-bottom:0pt;"><span style="font-size:12pt;font-family:Arial,sans-serif;color:#000000;background-color:transparent;font-weight:400;font-style:normal;font-variant:normal;text-decoration:none;vertical-align:baseline;white-space:pre;white-space:pre-wrap;">Cell 2</span></p></td></tr></tbody></table></div></b>`
 
         expect(
-          getTersePt({
+          toTextspec({
             schema,
             value: transform(html, {
               rules: [flattenTableRule],
             }),
           }),
-        ).toEqual(['Header 1, ,Cell 1', 'Header 2, ,Cell 2'])
+        ).toBe(
+          [
+            'P: Header 1 Cell 1',
+            'P: Header 2 Cell 2',
+          ].join('\n'),
+        )
       })
     })
   })
