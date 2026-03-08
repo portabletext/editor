@@ -18,9 +18,11 @@ import type {
 /**
  * Selection types that are structurally compatible with PTE's EditorSelection.
  * Defined locally to avoid depending on @portabletext/editor (which requires React).
+ * The path type is intentionally wide to accept EditorSelectionPoint.path
+ * which includes KeyedSegment, IndexTuple, string, and number.
  */
 interface SelectionPoint {
-  path: Array<{_key: string} | string | number>
+  path: Array<unknown>
   offset: number
 }
 

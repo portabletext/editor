@@ -454,6 +454,9 @@ importers:
       '@portabletext/test':
         specifier: workspace:^
         version: link:../test
+      '@portabletext/textspec':
+        specifier: workspace:^
+        version: link:../textspec
       '@sanity/diff-match-patch':
         specifier: ^3.2.0
         version: 3.2.0
@@ -594,6 +597,9 @@ importers:
       '@portabletext/test':
         specifier: workspace:^
         version: link:../test
+      '@portabletext/textspec':
+        specifier: workspace:^
+        version: link:../textspec
       '@portabletext/types':
         specifier: ^4.0.2
         version: 4.0.2

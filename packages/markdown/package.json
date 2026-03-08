@@ -52,6 +52,7 @@
   },
   "devDependencies": {
     "@portabletext/test": "workspace:^",
+    "@portabletext/textspec": "workspace:^",
     "@portabletext/types": "^4.0.2",
     "@sanity/pkg-utils": "^10.2.1",
     "@sanity/tsconfig": "^2.1.0",
