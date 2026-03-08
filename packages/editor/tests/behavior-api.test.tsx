@@ -1,4 +1,5 @@
-import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator} from '@portabletext/test'
+import {toTextspec} from '@portabletext/textspec'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {defineSchema, type EditorEmittedEvent} from '../src'
@@ -24,9 +25,6 @@ describe('Behavior API', () => {
             defineBehavior({
               on: 'insert.text',
               guard: ({event}) => event.text === 'b',
-              // The insertion of 'a' is executed, which means the event
-              // doesn't trigger any other Behavior from this point.
-              // Hence, no infinite loop is created.
               actions: [() => [execute({type: 'insert.text', text: 'a'})]],
             }),
             defineBehavior({
@@ -40,14 +38,15 @@ describe('Behavior API', () => {
     })
 
     await userEvent.type(locator, 'a')
+
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['a'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: a')
     })
 
     editor.send({type: 'history.undo'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P:')
     })
   })
 
@@ -59,22 +58,18 @@ describe('Behavior API', () => {
             defineBehavior({
               on: 'insert.text',
               guard: ({event}) => event.text === 'a',
-              // Raising `custom.a`
               actions: [() => [raise({type: 'custom.a'})]],
             }),
             defineBehavior({
               on: 'custom.a',
-              // Raises `custom.b`
               actions: [() => [raise({type: 'custom.b'})]],
             }),
             defineBehavior({
               on: 'custom.b',
-              // Which ends up executing this
               actions: [() => [execute({type: 'insert.text', text: 'b'})]],
             }),
             defineBehavior({
               on: 'custom.b',
-              // But not this, of course
               actions: [() => [execute({type: 'insert.text', text: 'c'})]],
             }),
           ]}
@@ -83,14 +78,15 @@ describe('Behavior API', () => {
     })
 
     await userEvent.type(locator, 'a')
+
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['b'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: b')
     })
 
     editor.send({type: 'history.undo'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P:')
     })
   })
 
@@ -115,9 +111,9 @@ describe('Behavior API', () => {
     editor.send({type: 'custom.hello world'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        'Hello, world!',
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toBe(
+        'P: Hello, world!',
+      )
     })
   })
 
@@ -129,8 +125,6 @@ describe('Behavior API', () => {
             defineBehavior({
               on: 'custom.hello world',
               actions: [
-                // No Behavior listens for this event, so it ends up being
-                // executed.
                 () => [raise({type: 'insert.text', text: 'Hello, world!'})],
               ],
             }),
@@ -144,9 +138,9 @@ describe('Behavior API', () => {
     editor.send({type: 'custom.hello world'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        'Hello, world!',
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toBe(
+        'P: Hello, world!',
+      )
     })
   })
 
@@ -165,14 +159,15 @@ describe('Behavior API', () => {
     })
 
     await userEvent.type(locator, 'a')
+
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['a'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: a')
     })
 
     editor.send({type: 'history.undo'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P:')
     })
   })
 
@@ -193,10 +188,10 @@ describe('Behavior API', () => {
     })
 
     await userEvent.type(locator, 'a')
-    await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['a'])
-    })
 
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: a')
+    })
     expect(sideEffect).toHaveBeenCalled()
   })
 
@@ -236,10 +231,10 @@ describe('Behavior API', () => {
     })
 
     await userEvent.type(locator, 'a')
-    await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['a'])
-    })
 
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: a')
+    })
     expect(sideEffectA).toHaveBeenCalled()
     expect(sideEffectB).not.toHaveBeenCalled()
 
@@ -247,9 +242,8 @@ describe('Behavior API', () => {
     await userEvent.type(locator, 'c')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['ac'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: ac')
     })
-
     expect(sideEffectB).toHaveBeenCalled()
   })
 
@@ -278,7 +272,7 @@ describe('Behavior API', () => {
     await userEvent.type(locator, 'b')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['b'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: b')
     })
   })
 
@@ -303,8 +297,9 @@ describe('Behavior API', () => {
     })
 
     await userEvent.type(locator, 'a')
+
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['b'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: b')
     })
   })
 
@@ -331,8 +326,9 @@ describe('Behavior API', () => {
     })
 
     await userEvent.type(locator, 'a')
+
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['bb'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: bb')
     })
   })
 
@@ -358,8 +354,9 @@ describe('Behavior API', () => {
 
     await userEvent.type(locator, 'a')
     await userEvent.type(locator, 'c')
+
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['c'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: c')
     })
   })
 
@@ -378,8 +375,9 @@ describe('Behavior API', () => {
     })
 
     await userEvent.type(locator, 'a')
+
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['a'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: a')
     })
   })
 
@@ -398,8 +396,9 @@ describe('Behavior API', () => {
     })
 
     await userEvent.type(locator, 'a')
+
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['a'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: a')
     })
   })
 
@@ -418,13 +417,15 @@ describe('Behavior API', () => {
     })
 
     await userEvent.type(locator, 'a')
+
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P:')
     })
   })
 
   test('Scenario: no `forward` action cancels a native event', async () => {
     const events: Array<BehaviorEvent['type']> = []
+
     const {editor, locator} = await createTestEditor({
       children: (
         <BehaviorPlugin
@@ -432,7 +433,7 @@ describe('Behavior API', () => {
             defineBehavior({
               on: 'keyboard.keydown',
               actions: [
-                () => [
+                ({event}) => [
                   effect(() => {}),
                   raise({
                     type: 'insert.text',
@@ -458,9 +459,11 @@ describe('Behavior API', () => {
     })
 
     await userEvent.type(locator, 'a')
+
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['b'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: b')
     })
+
     await vi.waitFor(() => {
       expect(events.includes('keyboard.keyup')).toBe(true)
       expect(events.includes('keyboard.keydown')).toBe(false)
@@ -469,6 +472,7 @@ describe('Behavior API', () => {
 
   test('Scenario: `effect` can be used to `send` a `focus` event', async () => {
     const focusedBlurredEvents: Array<EditorEmittedEvent['type']> = []
+
     let resolveEditorBlurred: () => void
     const editorBlurredPromise = new Promise<void>((resolve) => {
       resolveEditorBlurred = resolve
@@ -482,7 +486,6 @@ describe('Behavior API', () => {
               if (event.type === 'focused') {
                 focusedBlurredEvents.push(event.type)
               }
-
               if (event.type === 'blurred') {
                 resolveEditorBlurred()
                 focusedBlurredEvents.push(event.type)
@@ -606,7 +609,7 @@ describe('Behavior API', () => {
     editor.send({type: 'insert.break'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo', ' bar'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: foo\nP:  bar')
     })
   })
 
@@ -649,7 +652,7 @@ describe('Behavior API', () => {
     editor.send({type: 'insert.break'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo', ' bar'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: foo\nP:  bar')
     })
   })
 
@@ -658,6 +661,7 @@ describe('Behavior API', () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
+
     const {editor, locator} = await createTestEditor({
       keyGenerator,
       initialValue: [
@@ -705,7 +709,7 @@ describe('Behavior API', () => {
     await userEvent.type(locator, ')')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['(c)'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: (c)')
     })
 
     expect(insertTextEvents).toEqual(['insert.text', 'insert.text'])
@@ -723,6 +727,7 @@ describe('Behavior API', () => {
                   ({event}) => {
                     const text =
                       event.originEvent.dataTransfer?.getData('text/plain')
+
                     return text
                       ? [forward({type: 'insert.text', text: text.trim()})]
                       : []
@@ -746,7 +751,7 @@ describe('Behavior API', () => {
       })
 
       await vi.waitFor(() => {
-        expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo'])
+        expect(toTextspec(editor.getSnapshot().context)).toBe('P: foo')
       })
     })
 
@@ -764,6 +769,7 @@ describe('Behavior API', () => {
                   ({event}) => {
                     const text =
                       event.originEvent.dataTransfer?.getData('text/plain')
+
                     return text
                       ? [forward({type: 'insert.text', text: text.trim()})]
                       : []
