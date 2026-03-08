@@ -1,5 +1,6 @@
 import {isTextBlock} from '@portabletext/schema'
-import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator} from '@portabletext/test'
+import {toTextspec} from '@portabletext/textspec'
 import {describe, expect, test, vi} from 'vitest'
 import {defineSchema} from '../src'
 import {execute, raise} from '../src/behaviors/behavior.types.action'
@@ -20,6 +21,7 @@ describe('overlapping annotations', () => {
   const barKey = keyGenerator()
   const bazKey = keyGenerator()
   const commentKey = keyGenerator()
+
   const value = [
     {
       _type: 'block',
@@ -45,6 +47,7 @@ describe('overlapping annotations', () => {
       markDefs: [{_key: commentKey, _type: 'comment', text: 'Comment A'}],
     },
   ]
+
   const schemaDefinition = defineSchema({
     annotations: [
       {name: 'comment', fields: [{name: 'text', type: 'string'}]},
@@ -76,16 +79,13 @@ describe('overlapping annotations', () => {
 
     await vi.waitFor(() => {
       // Then the text is "fo,o bar b,az"
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        'fo,o bar b,az',
-      ])
-
+      expect(toTextspec(editor.getSnapshot().context)).toBe(
+        'P: fo[@comment text="Comment B":o bar b]az',
+      )
       const block = editor.getSnapshot().context.value.at(0)
-
       if (!isTextBlock(editor.getSnapshot().context, block)) {
         throw new Error('Block is not a text block')
       }
-
       // And only Comment B is present
       expect(block.markDefs).toEqual([
         expect.objectContaining({
@@ -105,7 +105,11 @@ describe('overlapping annotations', () => {
         <BehaviorPlugin
           behaviors={[
             defineBehavior({
-              on: 'annotation.add',
+              on: 'annotation.toggle',
+              guard: ({snapshot, event}) =>
+                isActiveAnnotation(event.annotation.name, {mode: 'partial'})(
+                  snapshot,
+                ),
               actions: [({event}) => [execute(event)]],
             }),
           ]}
@@ -130,16 +134,13 @@ describe('overlapping annotations', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        'fo,o ,bar, b,az',
-      ])
-
+      expect(toTextspec(editor.getSnapshot().context)).toBe(
+        'P: fo[@comment text="Comment B":o [@comment text="Comment A":bar] b]az',
+      )
       const block = editor.getSnapshot().context.value.at(0)
-
       if (!isTextBlock(editor.getSnapshot().context, block)) {
         throw new Error('Block is not a text block')
       }
-
       expect(block.markDefs).toEqual([
         {
           _key: commentKey,
@@ -151,7 +152,6 @@ describe('overlapping annotations', () => {
           text: 'Comment B',
         }),
       ])
-
       expect(getTextMarks(editor.getSnapshot().context, 'bar')).toEqual(
         block.markDefs?.map((markDef) => markDef._key),
       )
@@ -159,29 +159,25 @@ describe('overlapping annotations', () => {
   })
 
   test('manually configuring mutually exclusive annotations', async () => {
-    const mutuallyExclusives: Record<string, string[]> = {
+    const mutuallyExclusives: Record<string, Array<string>> = {
       link: ['comment'],
     }
-
     const {editor} = await createTestEditor({
       children: (
         <BehaviorPlugin
           behaviors={[
             defineBehavior({
-              on: 'annotation.add',
+              on: 'annotation.toggle',
               guard: ({snapshot, event}) => {
                 const mutuallyExclusive =
                   mutuallyExclusives[event.annotation.name]
-
                 if (!mutuallyExclusive) {
                   return false
                 }
-
                 const activeMutuallyExclusive = mutuallyExclusive.filter(
                   (annotation) =>
                     isActiveAnnotation(annotation, {mode: 'partial'})(snapshot),
                 )
-
                 return {activeMutuallyExclusive}
               },
               actions: [
@@ -215,16 +211,13 @@ describe('overlapping annotations', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        'fo,o bar b,az',
-      ])
-
+      expect(toTextspec(editor.getSnapshot().context)).toBe(
+        'P: fo[@link href="https://portabletext.org":o bar b]az',
+      )
       const block = editor.getSnapshot().context.value.at(0)
-
       if (!isTextBlock(editor.getSnapshot().context, block)) {
         throw new Error('Block is not a text block')
       }
-
       expect(block.markDefs).toEqual([
         expect.objectContaining({
           _type: 'link',
@@ -244,16 +237,13 @@ describe('overlapping annotations', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        'fo,o, bar b,az',
-      ])
-
+      expect(toTextspec(editor.getSnapshot().context)).toBe(
+        'P: [@link href="https://sanity.io":fo[@link href="https://portabletext.org":o]] [@link href="https://portabletext.org": bar b]az',
+      )
       const block = editor.getSnapshot().context.value.at(0)
-
       if (!isTextBlock(editor.getSnapshot().context, block)) {
         throw new Error('Block is not a text block')
       }
-
       expect(block.markDefs).toEqual([
         expect.objectContaining({
           _type: 'link',
