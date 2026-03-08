@@ -1,5 +1,6 @@
 import {defineSchema} from '@portabletext/schema'
-import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator} from '@portabletext/test'
+import {toTextspec} from '@portabletext/textspec'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {
@@ -18,6 +19,7 @@ import {createTestEditor} from '../src/test/vitest'
 describe('event.delete', () => {
   test('Scenario: Deleting collapsed selection', async () => {
     const keyGenerator = createTestKeyGenerator()
+
     const {editor, locator} = await createTestEditor({
       keyGenerator,
       schemaDefinition: defineSchema({
@@ -54,13 +56,8 @@ describe('event.delete', () => {
     })
 
     await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
-
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        'foo',
-        'bar',
-        '{image}',
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: foo\nP: bar\n{IMAGE}')
     })
 
     editor.send({
@@ -78,10 +75,7 @@ describe('event.delete', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        'foobar',
-        '{image}',
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: foobar\n{IMAGE}')
     })
 
     editor.send({
@@ -99,7 +93,7 @@ describe('event.delete', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foobar'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: foobar')
     })
   })
 
@@ -110,6 +104,7 @@ describe('event.delete', () => {
     const barBlockKey = keyGenerator()
     const barSpanKey = keyGenerator()
     const imageKey = keyGenerator()
+
     const {editor} = await createTestEditor({
       initialValue: [
         {
@@ -138,11 +133,7 @@ describe('event.delete', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        'foo',
-        '{image}',
-        'bar',
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: foo\n{IMAGE}\nP: bar')
     })
 
     editor.send({
@@ -160,12 +151,13 @@ describe('event.delete', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P:')
     })
   })
 
   test('Scenario: Deleting selection hanging around a block object', async () => {
     const keyGenerator = createTestKeyGenerator()
+
     const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition: defineSchema({
@@ -190,11 +182,7 @@ describe('event.delete', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        'foo',
-        '{image}',
-        'bar',
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: foo\n{IMAGE}\nP: bar')
     })
 
     editor.send({
@@ -212,12 +200,13 @@ describe('event.delete', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['bar'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: bar')
     })
   })
 
   test('Scenario: Deleting selection hanging around a block object #2', async () => {
     const keyGenerator = createTestKeyGenerator()
+
     const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition: defineSchema({
@@ -242,11 +231,7 @@ describe('event.delete', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        'foo',
-        '{image}',
-        'bar',
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: foo\n{IMAGE}\nP: bar')
     })
 
     editor.send({
@@ -265,12 +250,13 @@ describe('event.delete', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['bar'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: bar')
     })
   })
 
   test('Scenario: Deleting selection hanging around a block object #3', async () => {
     const keyGenerator = createTestKeyGenerator()
+
     const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition: defineSchema({
@@ -295,11 +281,7 @@ describe('event.delete', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        'foo',
-        '{image}',
-        'bar',
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: foo\n{IMAGE}\nP: bar')
     })
 
     editor.send({
@@ -317,7 +299,7 @@ describe('event.delete', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: foo')
     })
   })
 
@@ -330,6 +312,7 @@ describe('event.delete', () => {
     const barSpanKey = keyGenerator()
     const bazBlockKey = keyGenerator()
     const bazSpanKey = keyGenerator()
+
     const fooBlock = {
       _key: fooBlockKey,
       _type: 'block',
@@ -382,8 +365,7 @@ describe('event.delete', () => {
         })
 
         await vi.waitFor(() => {
-          expect(getTersePt(editor.getSnapshot().context)).toEqual(['', 'baz'])
-
+          expect(toTextspec(editor.getSnapshot().context)).toBe('P:\nP: baz')
           expect(editor.getSnapshot().context.selection).toBeNull()
         })
       })
@@ -420,7 +402,7 @@ describe('event.delete', () => {
         })
 
         await vi.waitFor(() => {
-          expect(getTersePt(editor.getSnapshot().context)).toEqual(['', 'baz'])
+          expect(toTextspec(editor.getSnapshot().context)).toBe('P:\nP: baz')
           expect(editor.getSnapshot().context.selection).toEqual({
             anchor: {
               path: [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}],
@@ -461,7 +443,7 @@ describe('event.delete', () => {
       })
 
       await vi.waitFor(() => {
-        expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
+        expect(toTextspec(editor.getSnapshot().context)).toBe('P:')
       })
     })
   })
@@ -475,6 +457,7 @@ describe('event.delete', () => {
     const blockBKey = keyGenerator()
     const fizzKey = keyGenerator()
     const buzzKey = keyGenerator()
+
     const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition: defineSchema({
@@ -516,10 +499,7 @@ describe('event.delete', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        'foo,bar,baz',
-        'fi,z',
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: foo[strong:bar]baz\nP: fi[strong:z]')
     })
 
     editor.send({
@@ -537,7 +517,7 @@ describe('event.delete', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foaz', 'fi,z'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: foaz\nP: fi[strong:z]')
     })
   })
 
@@ -547,6 +527,7 @@ describe('event.delete', () => {
     const block1Key = keyGenerator()
     const block2Key = keyGenerator()
     const block3Key = keyGenerator()
+
     const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition: defineSchema({blockObjects: [{name: 'image'}]}),
@@ -589,7 +570,7 @@ describe('event.delete', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['baz'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: baz')
     })
   })
 
@@ -619,7 +600,7 @@ describe('event.delete', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo baz'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: foo baz')
       expect(editor.getSnapshot().context.selection).toBeNull()
     })
   })
@@ -657,7 +638,7 @@ describe('event.delete', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo baz'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: foo baz')
       expect(editor.getSnapshot().context.selection).toEqual({
         anchor: {
           path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
@@ -705,7 +686,7 @@ describe('event.delete', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo baz'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: foo baz')
       expect(editor.getSnapshot().context.selection).toEqual({
         anchor: {
           path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
@@ -727,6 +708,7 @@ describe('event.delete', () => {
       const fooKey = keyGenerator()
       const stockTickerKey = keyGenerator()
       const barKey = keyGenerator()
+
       const initialValue = [
         {
           _type: 'block',
@@ -766,7 +748,7 @@ describe('event.delete', () => {
         })
 
         await vi.waitFor(() => {
-          expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
+          expect(toTextspec(editor.getSnapshot().context)).toBe('P:')
         })
       })
 
@@ -795,7 +777,7 @@ describe('event.delete', () => {
         })
 
         await vi.waitFor(() => {
-          expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
+          expect(toTextspec(editor.getSnapshot().context)).toBe('P:')
         })
       })
 
@@ -824,9 +806,7 @@ describe('event.delete', () => {
         })
 
         await vi.waitFor(() => {
-          expect(getTersePt(editor.getSnapshot().context)).toEqual([
-            ',{stock-ticker},bar',
-          ])
+          expect(toTextspec(editor.getSnapshot().context)).toBe('P: {stock-ticker}bar')
         })
       })
 
@@ -855,7 +835,7 @@ describe('event.delete', () => {
         })
 
         await vi.waitFor(() => {
-          expect(getTersePt(editor.getSnapshot().context)).toEqual(['foobar'])
+          expect(toTextspec(editor.getSnapshot().context)).toBe('P: foobar')
         })
       })
     })
@@ -863,6 +843,7 @@ describe('event.delete', () => {
     test('Scenario: Deleting block object', async () => {
       const keyGenerator = createTestKeyGenerator()
       const imageKey = keyGenerator()
+
       const {editor} = await createTestEditor({
         keyGenerator,
         schemaDefinition: defineSchema({
@@ -886,7 +867,7 @@ describe('event.delete', () => {
       })
 
       await vi.waitFor(() => {
-        expect(getTersePt(editor.getSnapshot().context)).toEqual(['{image}'])
+        expect(toTextspec(editor.getSnapshot().context)).toBe('{IMAGE}')
       })
     })
 
@@ -897,6 +878,7 @@ describe('event.delete', () => {
       const barBlockKey = keyGenerator()
       const barSpanKey = keyGenerator()
       const imageKey = keyGenerator()
+
       const {editor} = await createTestEditor({
         keyGenerator,
         schemaDefinition: defineSchema({
@@ -936,17 +918,14 @@ describe('event.delete', () => {
       })
 
       await vi.waitFor(() => {
-        expect(getTersePt(editor.getSnapshot().context)).toEqual([
-          '',
-          '{image}',
-          '',
-        ])
+        expect(toTextspec(editor.getSnapshot().context)).toBe('P:\n{IMAGE}\nP:')
       })
     })
   })
 
   test('Scenario: Delete backward uses at location instead of selection', async () => {
     const keyGenerator = createTestKeyGenerator()
+
     const {editor, locator} = await createTestEditor({
       keyGenerator,
       initialValue: [
@@ -983,7 +962,7 @@ describe('event.delete', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foobar'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: foobar')
     })
   })
 
@@ -991,6 +970,7 @@ describe('event.delete', () => {
     const behaviorEvents: Array<BehaviorEvent> = []
     const keyGenerator = createTestKeyGenerator()
     const imageKey = keyGenerator()
+
     // Given a lonely block object
     const initialValue = [
       {
@@ -998,6 +978,7 @@ describe('event.delete', () => {
         _key: imageKey,
       },
     ]
+
     const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition: defineSchema({
@@ -1008,7 +989,7 @@ describe('event.delete', () => {
         <BehaviorPlugin
           behaviors={[
             defineBehavior({
-              on: '*',
+              on: 'delete',
               actions: [
                 ({event}) => [
                   effect(() => {
@@ -1034,7 +1015,7 @@ describe('event.delete', () => {
 
     await vi.waitFor(() => {
       // Then a placeholder block is silently inserted
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P:')
       expect(behaviorEvents).toEqual([
         {
           type: 'delete',
