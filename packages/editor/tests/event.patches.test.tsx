@@ -1674,7 +1674,12 @@ describe('event.patches', () => {
     await userEvent.type(locator, ' bar')
 
     await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toBe('P: foo bar')
+      expect(
+        toTextspec({
+          schema: editor.getSnapshot().context.schema,
+          value: editor.getSnapshot().context.value,
+        }),
+      ).toBe('P: foo bar')
     })
 
     editor.send({
@@ -1701,7 +1706,12 @@ describe('event.patches', () => {
     })
 
     await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toBe('P: baz')
+      expect(
+        toTextspec({
+          schema: editor.getSnapshot().context.schema,
+          value: editor.getSnapshot().context.value,
+        }),
+      ).toBe('P: baz')
     })
   })
 
@@ -2244,7 +2254,12 @@ describe('event.patches', () => {
       })
 
       await vi.waitFor(() => {
-        expect(toTextspec(editor.getSnapshot().context)).toBe('{IMAGE}')
+        expect(
+          toTextspec({
+            schema: editor.getSnapshot().context.schema,
+            value: editor.getSnapshot().context.value,
+          }),
+        ).toBe('{IMAGE}')
       })
     })
 

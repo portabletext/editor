@@ -1,4 +1,5 @@
 Feature: Selection Adjustment
+
   Background:
     Given two editors
     And a global keymap
@@ -9,7 +10,7 @@ Feature: Selection Adjustment
     And Editor B is focused
     And the caret is put before "foo" in Editor B
     And "{Enter}" is pressed in Editor B
-    Then the text is "P:;;P: foo"
+    Then the text is "P: ;;P: foo"
     And the caret is after "foo"
 
   Scenario: Selection is kept if another editor deletes the line above
@@ -29,5 +30,5 @@ Feature: Selection Adjustment
     And "{Enter}" is pressed in Editor B
     And the caret is put after "foo" in Editor B
     And "{Backspace}" is pressed 4 times in Editor B
-    Then the text is "P:;;P: bar"
+    Then the text is "P: ;;P: bar"
     And the caret is after "bar"

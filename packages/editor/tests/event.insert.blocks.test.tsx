@@ -63,7 +63,12 @@ describe('event.insert.blocks', () => {
     })
 
     await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toBe('{IMAGE}\nP: ')
+      expect(
+        toTextspec({
+          schema: editor.getSnapshot().context.schema,
+          value: editor.getSnapshot().context.value,
+        }),
+      ).toBe('{IMAGE}\nP: ')
     })
   })
 
@@ -2294,7 +2299,12 @@ describe('event.insert.blocks', () => {
     })
 
     await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toBe('P: foo\nP: baz')
+      expect(
+        toTextspec({
+          schema: editor.getSnapshot().context.schema,
+          value: editor.getSnapshot().context.value,
+        }),
+      ).toBe('P: foo\nP: baz')
     })
   })
 })

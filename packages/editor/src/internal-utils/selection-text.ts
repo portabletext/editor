@@ -1,4 +1,4 @@
-import {getTersePt} from '@portabletext/test'
+import {toTextspec} from '@portabletext/textspec'
 import type {EditorContext} from '../editor/editor-snapshot'
 import {sliceBlocks} from '../utils/util.slice-blocks'
 
@@ -9,7 +9,7 @@ export function getSelectionText(
   >,
 ) {
   if (!context.selection) {
-    return []
+    return ''
   }
 
   const slice = sliceBlocks({
@@ -17,5 +17,5 @@ export function getSelectionText(
     blocks: context.value,
   })
 
-  return getTersePt({schema: context.schema, value: slice})
+  return toTextspec({schema: context.schema, value: slice}, {singleLine: true})
 }

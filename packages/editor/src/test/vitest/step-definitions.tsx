@@ -226,8 +226,7 @@ export const stepDefinitions = [
       // through the beforeinput -> DOM mutation -> Slate operation pipeline.
       await new Promise((resolve) => setTimeout(resolve, 100))
       await vi.waitFor(() => {
-        const currentSelection =
-          context.editor.getSnapshot().context.selection
+        const currentSelection = context.editor.getSnapshot().context.selection
         if (currentSelection) {
           expect(currentSelection).not.toBe(previousSelection)
         }
@@ -237,15 +236,13 @@ export const stepDefinitions = [
   When(
     '{button} is pressed in Editor B',
     async (context: Context, button: Parameter['button']) => {
-      const previousSelection =
-        context.editorB.getSnapshot().context.selection
+      const previousSelection = context.editorB.getSnapshot().context.selection
 
       await userEvent.keyboard(button)
 
       await new Promise((resolve) => setTimeout(resolve, 100))
       await vi.waitFor(() => {
-        const currentSelection =
-          context.editorB.getSnapshot().context.selection
+        const currentSelection = context.editorB.getSnapshot().context.selection
         if (currentSelection) {
           expect(currentSelection).not.toBe(previousSelection)
         }
@@ -256,8 +253,7 @@ export const stepDefinitions = [
     '{button} is pressed {int} times',
     async (context: Context, button: Parameter['button'], times: number) => {
       for (let i = 0; i < times; i++) {
-        const previousSelection =
-          context.editor.getSnapshot().context.selection
+        const previousSelection = context.editor.getSnapshot().context.selection
 
         await userEvent.keyboard(button)
 
@@ -308,8 +304,7 @@ export const stepDefinitions = [
       const keyboardShortcut = keyboardShortcuts[shortcut]
 
       if (keyboardShortcut) {
-        const previousSelection =
-          context.editor.getSnapshot().context.selection
+        const previousSelection = context.editor.getSnapshot().context.selection
 
         await userEvent.keyboard(keyboardShortcut)
 
@@ -347,8 +342,7 @@ export const stepDefinitions = [
       const behaviorEvent = behaviorEvents[shortcut]
 
       if (behaviorEvent) {
-        const previousSelection =
-          context.editor.getSnapshot().context.selection
+        const previousSelection = context.editor.getSnapshot().context.selection
 
         context.editor.send(behaviorEvent)
 
@@ -534,9 +528,7 @@ export const stepDefinitions = [
         context.editor.send({
           type: 'select',
           at:
-            direction === 'forwards'
-              ? selection
-              : reverseSelection(selection),
+            direction === 'forwards' ? selection : reverseSelection(selection),
         })
       })
     },
@@ -646,7 +638,7 @@ export const stepDefinitions = [
       const {schema, value} = context.editor.getSnapshot().context
       await vi.waitFor(() => {
         expect(
-          toTextspec({schema, value}),
+          toTextspec({schema, value}, {singleLine: true}),
           'Unexpected editor text',
         ).toBe(textspec)
       })
@@ -706,8 +698,7 @@ export const stepDefinitions = [
           context.editor.getSnapshot().context.schema,
           newValue,
         ).filter(
-          (newAnnotationKey) =>
-            !priorAnnotationKeys.includes(newAnnotationKey),
+          (newAnnotationKey) => !priorAnnotationKeys.includes(newAnnotationKey),
         )
       })
 
@@ -775,8 +766,7 @@ export const stepDefinitions = [
           context.editor.getSnapshot().context.schema,
           newValue,
         ).filter(
-          (newAnnotationKey) =>
-            !priorAnnotationKeys.includes(newAnnotationKey),
+          (newAnnotationKey) => !priorAnnotationKeys.includes(newAnnotationKey),
         )
       })
 
@@ -904,10 +894,7 @@ export const stepDefinitions = [
   ),
   Then('{string} has no marks', async (context: Context, text: string) => {
     await vi.waitFor(() => {
-      const textMarks = getTextMarks(
-        context.editor.getSnapshot().context,
-        text,
-      )
+      const textMarks = getTextMarks(context.editor.getSnapshot().context, text)
 
       expect(textMarks).toEqual([])
     })

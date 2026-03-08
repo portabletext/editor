@@ -356,14 +356,14 @@ function convertSelection(
  *
  * @public
  */
-/**
- * @public
- */
-export function toTextspec(context: {
-  schema: Schema
-  value: Array<PortableTextBlock>
-  selection?: SelectionValue | null
-}): string {
+export function toTextspec(
+  context: {
+    schema: Schema
+    value: Array<PortableTextBlock>
+    selection?: SelectionValue | null
+  },
+  options?: {singleLine?: boolean},
+): string {
   const ctx = {schema: context.schema}
   const textspecBlocks: Array<Block> = []
 
@@ -426,5 +426,5 @@ export function toTextspec(context: {
     selection,
   }
 
-  return serialize(state)
+  return serialize(state, options?.singleLine ? {singleLine: true} : undefined)
 }

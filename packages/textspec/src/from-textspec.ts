@@ -134,6 +134,7 @@ function convertTextBlockToPTE(
   listItem?: string,
   level?: number,
 ): PortableTextTextBlock {
+  const blockKey = keyGenerator()
   const markDefs: Array<PortableTextObject> = []
   const children: Array<PortableTextSpan | PortableTextObject> = []
 
@@ -146,7 +147,7 @@ function convertTextBlockToPTE(
 
   const result: PortableTextTextBlock = {
     _type: schema.block.name,
-    _key: keyGenerator(),
+    _key: blockKey,
     children,
     ...(markDefs.length > 0 ? {markDefs} : {}),
     style,
@@ -323,9 +324,6 @@ function resolvePointToPTE(
  *
  * @public
  */
-/**
- * @public
- */
 export function fromTextspec(
   context: {
     schema: Schema
@@ -336,7 +334,11 @@ export function fromTextspec(
   blocks: Array<PortableTextBlock>
   selection: SelectionValue | null
 } {
-  const state = parse(textspec)
+  // If no selection markers are present, add a cursor at the end
+  // to satisfy the parser's requirement for a selection marker.
+  const hasSelection = /(?<!\\)[|^]/.test(textspec)
+  const input = hasSelection ? textspec : `${textspec}|`
+  const state = parse(input)
   const blocks: Array<PortableTextBlock> = []
 
   for (const block of state.blocks) {

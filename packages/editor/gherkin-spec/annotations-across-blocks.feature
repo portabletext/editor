@@ -5,7 +5,7 @@ Feature: Annotations Across Blocks
     And a global keymap
 
   Scenario: Adding annotation across blocks
-    Given the text "P:"
+    Given the text "P: "
     When the editor is focused
     And "foo" is typed
     And "{Enter}" is pressed
@@ -16,7 +16,7 @@ Feature: Annotations Across Blocks
     And "bar" has marks "l2"
 
   Scenario: Adding annotation across blocks (backwards selection)
-    Given the text "P:"
+    Given the text "P: "
     When the editor is focused
     And "foo" is typed
     And "{Enter}" is pressed
@@ -28,25 +28,25 @@ Feature: Annotations Across Blocks
 
   Scenario: Adding annotation across an image
     When the editor is focused
-    And "foo|{image}" is inserted at "auto" and selected at the "end"
+    And "P: foo;;{IMAGE}" is inserted at "auto" and selected at the "end"
     And "{Enter}" is pressed
     And "bar" is typed
     And "foobar" is selected
     And "link" "l1,l2" is toggled
     Then "foo" has marks "l1"
     And "bar" has marks "l2"
-    And "foo|{image}|bar" is selected
+    And "P: foo;;{IMAGE};;P: bar" is selected
 
   Scenario: Adding annotation across an image (backwards selection)
     When the editor is focused
-    And "foo|{image}" is inserted at "auto" and selected at the "end"
+    And "P: foo;;{IMAGE}" is inserted at "auto" and selected at the "end"
     And "{Enter}" is pressed
     And "bar" is typed
     And "foobar" is selected backwards
     And "link" "l1,l2" is toggled
     Then "foo" has marks "l1"
     And "bar" has marks "l2"
-    And "foo|{image}|bar" is selected
+    And "P: foo;;{IMAGE};;P: bar" is selected
 
   Scenario: Splitting an annotation across blocks
     Given the text "P: foobar"
@@ -123,7 +123,7 @@ Feature: Annotations Across Blocks
     When the editor is focused
     And the caret is put before "foo"
     And "{Enter}" is pressed
-    Then the text is "P:;;P: [@link:foo]"
+    Then the text is "P: ;;P: [@link:foo]"
     And "" has no marks
     And "foo" has marks "l1"
 
@@ -133,7 +133,7 @@ Feature: Annotations Across Blocks
     When the editor is focused
     And the caret is put after "foo"
     And "{Enter}" is pressed
-    Then the text is "P: [@link:foo];;P:"
+    Then the text is "P: [@link:foo];;P: "
     And "foo" has marks "l1"
     And "" has no marks
 

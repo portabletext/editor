@@ -4,7 +4,7 @@ Feature: Undo/Redo
     Given a global keymap
 
   Scenario: Undoing writing two words
-    Given the text "P:"
+    Given the text "P: "
     When the editor is focused
     And "foo" is typed
     And " bar" is typed
@@ -12,7 +12,7 @@ Feature: Undo/Redo
     Then the text is "P: foo"
 
   Scenario: Selection change does not affect the undo stack
-    Given the text "P:"
+    Given the text "P: "
     When the editor is focused
     And "foo" is typed
     And "{ArrowLeft}" is pressed

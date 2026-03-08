@@ -90,6 +90,7 @@ const parameterType = {
     name: 'textspec',
     matcher: /"(.*)"/u,
     type: String,
+    transform: (input) => input.replace(/\\n/g, '\n'),
   }),
 }
 

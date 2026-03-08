@@ -24,29 +24,29 @@ Feature: Delete
     Then the text is <final text>
 
     Examples:
-      | text             | position        | shortcut              | final text      |
-      | "P: foo bar baz" | after "bar"     | "deleteWord.backward" | "P: foo  baz"   |
-      | "P: foo bar baz" | after "bar "    | "deleteWord.backward" | "P: foo  baz"   |
-      | "P: foo bar baz" | after "foo ba"  | "deleteWord.backward" | "P: foo r baz"  |
-      | "P: foo bar baz" | before "bar"    | "deleteWord.forward"  | "P: foo  baz"   |
-      | "P: foo bar baz" | before " bar"   | "deleteWord.forward"  | "P: foo baz"    |
-      | "P: foo bar baz" | before "ar baz" | "deleteWord.forward"  | "P: foo b baz"  |
+      | text             | position        | shortcut              | final text     |
+      | "P: foo bar baz" | after "bar"     | "deleteWord.backward" | "P: foo  baz"  |
+      | "P: foo bar baz" | after "bar "    | "deleteWord.backward" | "P: foo  baz"  |
+      | "P: foo bar baz" | after "foo ba"  | "deleteWord.backward" | "P: foo r baz" |
+      | "P: foo bar baz" | before "bar"    | "deleteWord.forward"  | "P: foo  baz"  |
+      | "P: foo bar baz" | before " bar"   | "deleteWord.forward"  | "P: foo baz"   |
+      | "P: foo bar baz" | before "ar baz" | "deleteWord.forward"  | "P: foo b baz" |
 
   Scenario Outline: Deleting code points in complex scripts
     Given the text <text>
     When the editor is focused
-    And the caret is put after <text>
+    And the caret is put after <content>
     And "{Backspace}" is pressed
     Then the text is <final text>
 
     Examples:
       # Hindi (Devanagari) - "कि" is क (ka) + ि (vowel i), two code points
-      | text          | final text   |
-      | "P: कि"  | "P: क"       |
+      | text    | content | final text |
+      | "P: कि" | "कि"    | "P: क"     |
       # Bengali - "কি" is ক (ka) + ি (vowel i)
-      | "P: কি"  | "P: ক"       |
+      | "P: কি" | "কি"    | "P: ক"     |
       # Thai - "กิ" is ก (ko kai) + ิ (sara i)
-      | "P: กิ"  | "P: ก"       |
+      | "P: กิ" | "กิ"    | "P: ก"     |
 
   Scenario Outline: Deleting line backward
     Given the text <text>
@@ -60,7 +60,7 @@ Feature: Delete
     Examples:
       | text             | position     | final text   |
       | "P: foo bar baz" | after "bar"  | "P:  baz"    |
-      | "P: foo bar baz" | after "baz"  | "P:"         |
+      | "P: foo bar baz" | after "baz"  | "P: "        |
       | "P: foo bar baz" | after "foo " | "P: bar baz" |
 
   Scenario: Deleting line backward at start of block merges blocks
@@ -86,7 +86,7 @@ Feature: Delete
     When the editor is focused
     And "foobar" is selected
     And cut is performed
-    Then the text is "P:"
+    Then the text is "P: "
     When undo is performed
     Then the text is "P: foo;;P: bar"
 
@@ -116,10 +116,10 @@ Feature: Delete
     Then the text is "P: foo bar baz"
 
   Scenario: Deleting line backward in empty block
-    Given the text "P:"
+    Given the text "P: "
     When the editor is focused
     And "deleteLine.backward" is pressed
-    Then the text is "P:"
+    Then the text is "P: "
 
   Scenario: Deleting line backward only affects current block
     Given the text "P: foo;;P: bar baz"

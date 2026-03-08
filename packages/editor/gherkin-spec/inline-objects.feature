@@ -1,53 +1,53 @@
 # In-text objects like stock tickers
 Feature: Inline Objects
 
-Background:
-  Given one editor
-  And a global keymap
+  Background:
+    Given one editor
+    And a global keymap
 
-Scenario: Writing after inserting an inline object
-  Given the text "P:"
-  When the editor is focused
-  And "foo" is typed
-  And a "stock-ticker" is inserted
-  And "{ArrowRight}" is pressed
-  And "bar" is typed
-  Then the text is "P: foo{stock-ticker}bar"
+  Scenario: Writing after inserting an inline object
+    Given the text "P: "
+    When the editor is focused
+    And "foo" is typed
+    And a "stock-ticker" is inserted
+    And "{ArrowRight}" is pressed
+    And "bar" is typed
+    Then the text is "P: foo{stock-ticker}bar"
 
-Scenario: Pressing Delete before an inline object
-  Given the text "P: foo{stock-ticker}"
-  When the editor is focused
-  And the caret is put after "foo"
-  And "{Delete}" is pressed
-  Then the text is "P: foo"
+  Scenario: Pressing Delete before an inline object
+    Given the text "P: foo{stock-ticker}"
+    When the editor is focused
+    And the caret is put after "foo"
+    And "{Delete}" is pressed
+    Then the text is "P: foo"
 
-Scenario: Pressing Backspace after an inline object
-  Given the text "P: foo{stock-ticker}"
-  When the editor is focused
-  And "{Backspace}" is pressed
-  Then the caret is after "foo"
+  Scenario: Pressing Backspace after an inline object
+    Given the text "P: foo{stock-ticker}"
+    When the editor is focused
+    And "{Backspace}" is pressed
+    Then the caret is after "foo"
 
-Scenario: Adding a decorator across an inline object
-  Given the text "P: foo{stock-ticker}bar"
-  When "foobar" is selected
-  And "strong" is toggled
-  Then the text is "P: foo{stock-ticker}bar"
-  And "foo" has marks "strong"
-  And "bar" has marks "strong"
+  Scenario: Adding a decorator across an inline object
+    Given the text "P: foo{stock-ticker}bar"
+    When "foobar" is selected
+    And "strong" is toggled
+    Then the text is "P: [strong:foo]{stock-ticker}[strong:bar]"
+    And "foo" has marks "strong"
+    And "bar" has marks "strong"
 
-Scenario: Adding an annotation across an inline object
-  Given the text "P: foo{stock-ticker}bar"
-  When "foobar" is selected
-  And "link" "l1" is toggled
-  Then the text is "P: foo{stock-ticker}bar"
-  And "foo" has marks "l1"
-  And "bar" has marks "l1"
+  Scenario: Adding an annotation across an inline object
+    Given the text "P: foo{stock-ticker}bar"
+    When "foobar" is selected
+    And "link" "l1" is toggled
+    Then the text is "P: [@link:foo]{stock-ticker}[@link:bar]"
+    And "foo" has marks "l1"
+    And "bar" has marks "l1"
 
-Scenario: Removing an annotation across an inline block
-  Given the text "P: foo{stock-ticker}bar"
-  When "foobar" is selected
-  And "link" is toggled
-  And "link" is toggled
-  Then the text is "P: foo{stock-ticker}bar"
-  And "foo" has no marks
-  And "bar" has no marks
+  Scenario: Removing an annotation across an inline block
+    Given the text "P: foo{stock-ticker}bar"
+    When "foobar" is selected
+    And "link" is toggled
+    And "link" is toggled
+    Then the text is "P: foo{stock-ticker}bar"
+    And "foo" has no marks
+    And "bar" has no marks

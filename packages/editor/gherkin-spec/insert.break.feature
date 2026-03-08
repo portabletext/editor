@@ -13,10 +13,10 @@ Feature: Insert Break
     And the caret is <new position>
 
     Examples:
-      | position     | text       | new position  |
-      | before "foo" | "P:;;P: barfoo" | before "foo"  |
-      | after "foo"  | "P: foo;;P: bar" | after "bar"   |
-      | after "f"    | "P: f;;P: baroo" | after "bar"   |
+      | position     | text             | new position |
+      | before "foo" | "P: ;;P: barfoo" | before "foo" |
+      | after "foo"  | "P: foo;;P: bar" | after "bar"  |
+      | after "f"    | "P: f;;P: baroo" | after "bar"  |
 
   Scenario Outline: Breaking second text block
     Given the text "P: foo;;P: bar"
@@ -31,10 +31,10 @@ Feature: Insert Break
     Then the text is "P: foo;;P: bar"
 
     Examples:
-      | position     | text              | new position  |
-      | before "bar" | "P: foo;;P:;;P: bazbar"   | before "bar"  |
-      | after "bar"  | "P: foo;;P: bar;;P: baz"   | after "baz"   |
-      | after "b"    | "P: foo;;P: b;;P: bazar"   | after "baz"   |
+      | position     | text                     | new position |
+      | before "bar" | "P: foo;;P: ;;P: bazbar" | before "bar" |
+      | after "bar"  | "P: foo;;P: bar;;P: baz" | after "baz"  |
+      | after "b"    | "P: foo;;P: b;;P: bazar" | after "baz"  |
 
   Scenario: Breaking before inline object
     Given the text "P: foo{stock-ticker}bar"
@@ -50,7 +50,7 @@ Feature: Insert Break
     When the editor is focused
     And everything is selected
     And "{Enter}" is pressed
-    Then the text is "P:"
+    Then the text is "P: "
     When undo is performed
     Then the text is "P: foo;;{IMAGE};;P: bar"
 
@@ -60,4 +60,4 @@ Feature: Insert Break
     And the caret is put after "foo"
     And "{ArrowRight}" is pressed
     And "{Enter}" is pressed
-    Then the text is "P: foo;;{IMAGE};;P:"
+    Then the text is "P: foo;;{IMAGE};;P: "

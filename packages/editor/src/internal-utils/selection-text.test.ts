@@ -28,5 +28,5 @@ test(getSelectionText.name, () => {
         focus: {path: [{_key: 'A-4'}, 'children', {_key: 'A-7'}], offset: 3},
       },
     }),
-  ).toEqual(['bar'])
+  ).toEqual('P: [@link:bar]')
 })

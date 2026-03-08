@@ -32,7 +32,7 @@ Feature: Annotations Edge Cases
     And "foo baz" has no marks
 
   Scenario: Deleting across annotated blocks
-    Given the text "P:"
+    Given the text "P: "
     When the editor is focused
     And "foo" is typed
     And "{Enter}" is pressed
