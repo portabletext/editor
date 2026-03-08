@@ -1,5 +1,6 @@
 import {isSpan} from '@portabletext/schema'
-import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator} from '@portabletext/test'
+import {toTextspec} from '@portabletext/textspec'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {defineSchema} from '../src'
@@ -21,7 +22,7 @@ describe('event.insert.text', () => {
     editor.send({type: 'insert.text', text: 'foo'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: foo')
       expect(editor.getSnapshot().context.selection).toEqual({
         anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 3},
         focus: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 3},
@@ -32,7 +33,7 @@ describe('event.insert.text', () => {
     editor.send({type: 'insert.text', text: 'bar'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foobar'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: foobar')
       expect(editor.getSnapshot().context.selection).toEqual({
         anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 6},
         focus: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 6},
@@ -43,7 +44,7 @@ describe('event.insert.text', () => {
     editor.send({type: 'delete.backward', unit: 'character'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['fooba'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: fooba')
       expect(editor.getSnapshot().context.selection).toEqual({
         anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 5},
         focus: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 5},
@@ -54,6 +55,7 @@ describe('event.insert.text', () => {
 
   test('Scenario: `insert.text` can trigger `insert.child` events', async () => {
     const insertChildEvents: Array<BehaviorEvent> = []
+
     const {editor, locator} = await createTestEditor({
       children: (
         <BehaviorPlugin
@@ -79,7 +81,6 @@ describe('event.insert.text', () => {
 
     await userEvent.click(locator)
     await userEvent.type(locator, 'foo ')
-
     await userEvent.keyboard(
       IS_MAC ? '{Meta>}b{/Meta}' : '{Control>}b{/Control}',
     )
@@ -117,9 +118,7 @@ describe('event.insert.text', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        'foo ,bar, baz',
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: foo [strong:bar] baz')
     })
   })
 
@@ -142,19 +141,17 @@ describe('event.insert.text', () => {
 
     await userEvent.click(locator)
     await userEvent.type(locator, 'foo ')
-
     await userEvent.keyboard(
       IS_MAC ? '{Meta>}b{/Meta}' : '{Control>}b{/Control}',
     )
     await userEvent.type(locator, 'bar')
-
     await userEvent.keyboard(
       IS_MAC ? '{Meta>}b{/Meta}' : '{Control>}b{/Control}',
     )
     await userEvent.type(locator, ' baz')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo bar baz'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: foo bar baz')
     })
   })
 
@@ -199,12 +196,10 @@ describe('event.insert.text', () => {
     })
 
     await userEvent.click(locator)
-
     editor.send({
       type: 'select',
       at: getSelectionAfterText(editor.getSnapshot().context, 'foo'),
     })
-
     await userEvent.type(locator, ' bar')
 
     await vi.waitFor(() => {
@@ -233,7 +228,6 @@ describe('event.insert.text', () => {
                 if (isSpan(snapshot.context, event.child)) {
                   return {span: event.child}
                 }
-
                 return false
               },
               actions: [
@@ -252,19 +246,17 @@ describe('event.insert.text', () => {
 
     await userEvent.click(locator)
     await userEvent.type(locator, 'foo ')
-
     await userEvent.keyboard(
       IS_MAC ? '{Meta>}b{/Meta}' : '{Control>}b{/Control}',
     )
     await userEvent.type(locator, 'bar')
-
     await userEvent.keyboard(
       IS_MAC ? '{Meta>}b{/Meta}' : '{Control>}b{/Control}',
     )
     await userEvent.type(locator, ' baz')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo bar baz'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: foo bar baz')
     })
   })
 
@@ -279,7 +271,6 @@ describe('event.insert.text', () => {
                 if (isSpan(snapshot.context, event.child)) {
                   return {span: event.child}
                 }
-
                 return false
               },
               actions: [
@@ -298,19 +289,17 @@ describe('event.insert.text', () => {
 
     await userEvent.click(locator)
     await userEvent.type(locator, 'foo ')
-
     await userEvent.keyboard(
       IS_MAC ? '{Meta>}b{/Meta}' : '{Control>}b{/Control}',
     )
     await userEvent.type(locator, 'bar')
-
     await userEvent.keyboard(
       IS_MAC ? '{Meta>}b{/Meta}' : '{Control>}b{/Control}',
     )
     await userEvent.type(locator, ' baz')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo bar baz'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: foo bar baz')
     })
   })
 
@@ -320,14 +309,13 @@ describe('event.insert.text', () => {
     editor.send({type: 'insert.text', text: 'foo'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: foo')
     })
   })
 
   test('Scenario: Inserting text on a block object is a no-op', async () => {
     const keyGenerator = createTestKeyGenerator()
     const imageKey = keyGenerator()
-
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 
     const {editor} = await createTestEditor({
