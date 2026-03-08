@@ -1,4 +1,5 @@
-import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator} from '@portabletext/test'
+import {toTextspec} from '@portabletext/textspec'
 import {describe, expect, test, vi} from 'vitest'
 import {defineSchema, type Patch} from '../src'
 import {EventListenerPlugin} from '../src/plugins'
@@ -54,9 +55,9 @@ describe('event.child.set', () => {
     })
 
     await vi.waitFor(() => {
-      return expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        ',{image},',
-      ])
+      return expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'P: {image}',
+      )
     })
 
     const newImageKey = keyGenerator()
@@ -160,9 +161,9 @@ describe('event.child.set', () => {
     })
 
     await vi.waitFor(() => {
-      return expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        ',{cell},',
-      ])
+      return expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'P: {cell}',
+      )
     })
 
     editor.send({
@@ -263,9 +264,9 @@ describe('event.child.set', () => {
     })
 
     await vi.waitFor(() => {
-      return expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        ',{cell},',
-      ])
+      return expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'P: {cell}',
+      )
     })
 
     editor.send({
@@ -334,7 +335,9 @@ describe('event.child.set', () => {
     })
 
     await vi.waitFor(() => {
-      return expect(getTersePt(editor.getSnapshot().context)).toEqual(['Hello'])
+      return expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'P: Hello',
+      )
     })
 
     const newSpanKey = keyGenerator()
@@ -413,9 +416,9 @@ describe('event.child.set', () => {
     })
 
     await vi.waitFor(() => {
-      return expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        ',{mention},',
-      ])
+      return expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'P: {mention}',
+      )
     })
 
     editor.send({
