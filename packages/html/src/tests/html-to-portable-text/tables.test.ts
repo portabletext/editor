@@ -1,5 +1,5 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
-import {getTersePt} from '@portabletext/test'
+import {toTextspec} from '@portabletext/textspec'
 import {JSDOM} from 'jsdom'
 import {describe, expect, test} from 'vitest'
 import type {ObjectMatcher} from '../../index'
@@ -57,12 +57,9 @@ describe('tables', () => {
       '</tbody></table>',
     ].join('')
 
-    expect(getTersePt({schema, value: transform(html)})).toEqual([
-      'foo',
-      'bar',
-      'baz',
-      'fizz',
-    ])
+    expect(toTextspec({schema, value: transform(html)})).toBe(
+      'P: foo\nP: bar\nP: baz\nP: fizz',
+    )
   })
 
   test('simple table with thead', () => {
@@ -80,12 +77,9 @@ describe('tables', () => {
       '</tbody></table>',
     ].join('')
 
-    expect(getTersePt({schema, value: transform(html)})).toEqual([
-      'foo',
-      'bar',
-      'baz',
-      'fizz',
-    ])
+    expect(toTextspec({schema, value: transform(html)})).toBe(
+      'P: foo\nP: bar\nP: baz\nP: fizz',
+    )
   })
 
   test('simple table transposed', () => {
@@ -100,12 +94,9 @@ describe('tables', () => {
       '</tbody></table>',
     ].join('')
 
-    expect(getTersePt({schema, value: transform(html)})).toEqual([
-      'foo',
-      'baz',
-      'bar',
-      'fizz',
-    ])
+    expect(toTextspec({schema, value: transform(html)})).toBe(
+      'P: foo\nP: baz\nP: bar\nP: fizz',
+    )
   })
 
   test('larger table with thead', () => {
@@ -149,33 +140,32 @@ describe('tables', () => {
       '</table>',
     ].join('')
 
-    expect(getTersePt({schema, value: transform(html)})).toEqual([
-      'Year',
-      'Sales',
-      'Expenses',
-      'Profit',
-      '2022',
-      '$8,000',
-      '$5,000',
-      '$3,000',
-      '2023',
-      '$10,000',
-      '$6,500',
-      '$3,500',
-      '2024',
-      '$15,000',
-      '$9,000',
-      '$6,000',
-    ])
+    expect(toTextspec({schema, value: transform(html)})).toBe(
+      [
+        'P: Year',
+        'P: Sales',
+        'P: Expenses',
+        'P: Profit',
+        'P: 2022',
+        'P: $8,000',
+        'P: $5,000',
+        'P: $3,000',
+        'P: 2023',
+        'P: $10,000',
+        'P: $6,500',
+        'P: $3,500',
+        'P: 2024',
+        'P: $15,000',
+        'P: $9,000',
+        'P: $6,000',
+      ].join('\n'),
+    )
   })
 
   test('larger table transposed', () => {
     /**
-     * |          | 2022    | 2023     | 2024     |
-     * | -------- | ------- | -------- | -------- |
-     * | Sales    | \$8,000 | \$10,000 | \$15,000 |
-     * | Expenses | \$5,000 | \$6,500  | \$9,000  |
-     * | Profit   | \$3,000 | \$3,500  | \$6,000  |
+     * | foo | baz  |
+     * | bar | fizz |
      */
     const transposed = [
       '<table>',
@@ -210,31 +200,33 @@ describe('tables', () => {
       '</table>',
     ].join('')
 
-    expect(getTersePt({schema, value: transform(transposed)})).toEqual([
-      '',
-      '2022',
-      '2023',
-      '2024',
-      'Sales',
-      '$8,000',
-      '$10,000',
-      '$15,000',
-      'Expenses',
-      '$5,000',
-      '$6,500',
-      '$9,000',
-      'Profit',
-      '$3,000',
-      '$3,500',
-      '$6,000',
-    ])
+    expect(toTextspec({schema, value: transform(transposed)})).toBe(
+      [
+        'P: ',
+        'P: 2022',
+        'P: 2023',
+        'P: 2024',
+        'P: Sales',
+        'P: $8,000',
+        'P: $10,000',
+        'P: $15,000',
+        'P: Expenses',
+        'P: $5,000',
+        'P: $6,500',
+        'P: $9,000',
+        'P: Profit',
+        'P: $3,000',
+        'P: $3,500',
+        'P: $6,000',
+      ].join('\n'),
+    )
   })
 
   describe('table cell with image', () => {
     test('Google Docs', () => {
       const html = `<meta charset='utf-8'><meta charset="utf-8"><b style="font-weight:normal;" id="docs-internal-guid-e43aaf72-7fff-b92f-4e9c-c262cf7e0bea"><div dir="ltr" style="margin-left:0pt;" align="left"><table style="border:none;border-collapse:collapse;table-layout:fixed;width:468pt"><colgroup><col /></colgroup><tbody><tr style="height:0pt"><td style="border-left:solid #000000 1pt;border-right:solid #000000 1pt;border-bottom:solid #000000 1pt;border-top:solid #000000 1pt;vertical-align:top;padding:5pt 5pt 5pt 5pt;overflow:hidden;overflow-wrap:break-word;"><p dir="ltr" style="line-height:1.38;margin-top:0pt;margin-bottom:0pt;"><span style="font-size:11pt;font-family:Arial,sans-serif;color:#000000;background-color:transparent;font-weight:400;font-style:normal;font-variant:normal;text-decoration:none;vertical-align:baseline;white-space:pre;white-space:pre-wrap;"><span style="border:none;display:inline-block;overflow:hidden;width:317px;height:237px;"><img src="https://example.com/image.jpg" width="317" height="237" style="margin-left:0px;margin-top:0px;" /></span></span></p></td></tr></tbody></table></div></b>`
 
-      expect(getTersePt({schema, value: transform(html)})).toEqual(['{image}'])
+      expect(toTextspec({schema, value: transform(html)})).toBe('{IMAGE}')
     })
   })
 
@@ -272,18 +264,20 @@ describe('tables', () => {
         '</b>',
       ].join('')
 
-      expect(getTersePt({schema, value: transform(html)})).toEqual([
-        'Image asset',
-        '{image}',
-        'ALT text',
-        "Describe the image for people who can't see it",
-        'a screenshot of a sanity app that says welcome to your sanity app',
-        'Dark Mode Variant',
-        'Optional alternate image to be used in dark mode.',
-        '{image}',
-        'Caption',
-        'Create your own custom apps with the Sanity SDK',
-      ])
+      expect(toTextspec({schema, value: transform(html)})).toBe(
+        [
+          'P: Image asset',
+          '{IMAGE}',
+          'P: ALT text',
+          "P: Describe the image for people who can't see it",
+          'P: a screenshot of a sanity app that says welcome to your sanity app',
+          'P: Dark Mode Variant',
+          'P: Optional alternate image to be used in dark mode.',
+          '{IMAGE}',
+          'P: Caption',
+          'P: Create your own custom apps with the Sanity SDK',
+        ].join('\n'),
+      )
     })
   })
 })

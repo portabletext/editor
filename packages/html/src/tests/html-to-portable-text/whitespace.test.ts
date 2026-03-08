@@ -1,5 +1,5 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
-import {getTersePt} from '@portabletext/test'
+import {toTextspec} from '@portabletext/textspec'
 import {describe, expect, test} from 'vitest'
 import {transform} from './test-utils'
 
@@ -32,28 +32,28 @@ const p = `
 describe('Whitespace', () => {
   test('table', () => {
     expect(
-      getTersePt({
+      toTextspec({
         schema: compileSchema(defineSchema({})),
         value: transform([table]),
       }),
-    ).toEqual(['foo', 'bar'])
+    ).toBe('P: foo\nP: bar')
   })
 
   test('pre', () => {
     expect(
-      getTersePt({
+      toTextspec({
         schema: compileSchema(defineSchema({})),
         value: transform([pre]),
       }),
-    ).toEqual(['foo\n  bar'])
+    ).toBe('P: foo\n  bar')
   })
 
   test('p', () => {
     expect(
-      getTersePt({
+      toTextspec({
         schema: compileSchema(defineSchema({})),
         value: transform([p]),
       }),
-    ).toEqual(['foo bar'])
+    ).toBe('P: foo bar')
   })
 })
