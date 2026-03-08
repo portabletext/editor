@@ -1,4 +1,5 @@
-import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator} from '@portabletext/test'
+import {toTextspec} from '@portabletext/textspec'
 import React from 'react'
 import {describe, expect, test, vi} from 'vitest'
 import {defineSchema, PortableTextEditor} from '../src'
@@ -9,13 +10,13 @@ import {createTestEditor} from '../src/test/vitest'
 describe(PortableTextEditor.addAnnotation.name, () => {
   test('Scenario: Prevents overlapping annotations of the same type', async () => {
     const keyGenerator = createTestKeyGenerator()
-    const portableTextEditorRef = React.createRef<PortableTextEditor>()
+    const portableTextEditorRef =
+      React.createRef<PortableTextEditor>()
     const blockKey = keyGenerator()
     const fooSpanKey = keyGenerator()
     const barSpanKey = keyGenerator()
     const bazSpanKey = keyGenerator()
     const linkKey = keyGenerator()
-
     const {editor} = await createTestEditor({
       children: (
         <InternalPortableTextEditorRefPlugin ref={portableTextEditorRef} />
@@ -52,15 +53,16 @@ describe(PortableTextEditor.addAnnotation.name, () => {
     )
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        'fo,o bar b,az',
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toBe(
+        'P: fo [@link href="https://sanity.io":o bar b] az',
+      )
     })
   })
 
   test('Scenario: Returns paths', async () => {
     const keyGenerator = createTestKeyGenerator()
-    const portableTextEditorRef = React.createRef<PortableTextEditor>()
+    const portableTextEditorRef =
+      React.createRef<PortableTextEditor>()
     const blockAKey = keyGenerator()
     const fizzBuzzSpanKey = keyGenerator()
     const blockBKey = keyGenerator()
@@ -68,7 +70,6 @@ describe(PortableTextEditor.addAnnotation.name, () => {
     const barSpanKey = keyGenerator()
     const bazSpanKey = keyGenerator()
     const linkKey = keyGenerator()
-
     const {editor} = await createTestEditor({
       children: (
         <InternalPortableTextEditorRefPlugin ref={portableTextEditorRef} />
