@@ -6,7 +6,8 @@ import {
   unset,
   type Patch,
 } from '@portabletext/patches'
-import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
+import {toTextspec} from '@portabletext/textspec'
+import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {defineSchema} from '../src'
@@ -27,12 +28,14 @@ describe('event.delete.backward', () => {
     const patches: Array<Patch> = []
     const keyGenerator = createTestKeyGenerator()
     const imageKey = keyGenerator()
+
     let foreignValue = [
       {
         _type: 'image',
         _key: imageKey,
       },
     ]
+
     const {editor, locator} = await createTestEditor({
       keyGenerator,
       initialValue: foreignValue,
@@ -67,7 +70,6 @@ describe('event.delete.backward', () => {
         },
       ])
       expect(foreignValue).toEqual([])
-
       expect(patches).toEqual([unset([{_key: imageKey}])])
     })
 
@@ -90,7 +92,6 @@ describe('event.delete.backward', () => {
           foo: 'bar',
         },
       ]
-
       expect(editor.getSnapshot().context.value).toEqual(expectedValue)
       expect(foreignValue).toEqual(expectedValue)
       expect(patches.slice(1)).toEqual([
@@ -120,7 +121,7 @@ describe('event.delete.backward', () => {
           behaviors={[
             defineBehavior({
               on: 'delete.backward',
-              actions: [({event}) => [execute(event)]],
+              actions: [(event) => [execute(event)]],
             }),
           ]}
         />
@@ -128,11 +129,10 @@ describe('event.delete.backward', () => {
     })
 
     await userEvent.type(locator, 'foo')
-
     await userEvent.keyboard('{Backspace}')
 
     await vi.waitFor(() => {
-      return expect(getTersePt(editor.getSnapshot().context)).toEqual(['fo'])
+      return expect(toTextspec(editor.getSnapshot().context)).toBe('P: fo')
     })
   })
 
@@ -180,9 +180,9 @@ describe('event.delete.backward', () => {
           <BehaviorPlugin
             behaviors={[
               defineBehavior({
-                on: '*',
+                on: 'delete.backward',
                 actions: [
-                  ({event}) => [
+                  (event) => [
                     effect(() => {
                       behaviorEvents.push(event)
                     }),
@@ -282,7 +282,7 @@ describe('event.delete.backward', () => {
         })
 
         await vi.waitFor(() => {
-          expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo  baz'])
+          expect(toTextspec(editor.getSnapshot().context)).toBe('P: foo  baz')
         })
       })
 
@@ -311,9 +311,7 @@ describe('event.delete.backward', () => {
         })
 
         await vi.waitFor(() => {
-          expect(getTersePt(editor.getSnapshot().context)).toEqual([
-            'foo b baz',
-          ])
+          expect(toTextspec(editor.getSnapshot().context)).toBe('P: foo b baz')
         })
       })
     })
@@ -341,7 +339,7 @@ describe('event.delete.backward', () => {
         })
 
         await vi.waitFor(() => {
-          expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo  baz'])
+          expect(toTextspec(editor.getSnapshot().context)).toBe('P: foo  baz')
         })
       })
 
@@ -367,9 +365,7 @@ describe('event.delete.backward', () => {
         })
 
         await vi.waitFor(() => {
-          expect(getTersePt(editor.getSnapshot().context)).toEqual([
-            'foo b baz',
-          ])
+          expect(toTextspec(editor.getSnapshot().context)).toBe('P: foo b baz')
         })
       })
     })
@@ -410,7 +406,7 @@ describe('event.delete.backward', () => {
       })
 
       await vi.waitFor(() => {
-        expect(getTersePt(editor.getSnapshot().context)).toEqual(['bar baz'])
+        expect(toTextspec(editor.getSnapshot().context)).toBe('P: bar baz')
       })
     })
 
@@ -442,7 +438,7 @@ describe('event.delete.backward', () => {
       })
 
       await vi.waitFor(() => {
-        expect(getTersePt(editor.getSnapshot().context)).toEqual(['bar baz'])
+        expect(toTextspec(editor.getSnapshot().context)).toBe('P: bar baz')
       })
     })
   })
