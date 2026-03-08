@@ -7,7 +7,8 @@ import {
   type Patch,
 } from '@portabletext/patches'
 import type {PortableTextBlock} from '@portabletext/schema'
-import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator} from '@portabletext/test'
+import {toTextspec} from '@portabletext/textspec'
 import {makeDiff, makePatches, stringifyPatches} from '@sanity/diff-match-patch'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
@@ -17,7 +18,8 @@ import {createTestEditor, createTestEditors} from '../src/test/vitest'
 
 describe('event.patches', () => {
   test('Scenario: Consuming initial diffMatchPatch', async () => {
-    const {editor, locator, onEditorEvent, editorB} = await createTestEditors()
+    const {editor, locator, onEditorEvent, editorB} =
+      await createTestEditors()
 
     await userEvent.type(locator, 'f')
 
@@ -127,7 +129,9 @@ describe('event.patches', () => {
             {
               _type: 'block',
               _key: 'ea-k2',
-              children: [{_type: 'span', _key: 'ea-k3', text: '', marks: []}],
+              children: [
+                {_type: 'span', _key: 'ea-k3', text: '', marks: []},
+              ],
               markDefs: [],
               style: 'normal',
             },
@@ -173,7 +177,8 @@ describe('event.patches', () => {
   })
 
   test('Scenario: Splitting initial block', async () => {
-    const {editor, onEditorEvent, editorB, locator} = await createTestEditors()
+    const {editor, onEditorEvent, editorB, locator} =
+      await createTestEditors()
 
     await userEvent.click(locator)
     await userEvent.keyboard('{Enter}')
@@ -199,7 +204,9 @@ describe('event.patches', () => {
             {
               _type: 'block',
               _key: 'ea-k0',
-              children: [{_type: 'span', _key: 'ea-k1', text: '', marks: []}],
+              children: [
+                {_type: 'span', _key: 'ea-k1', text: '', marks: []},
+              ],
               markDefs: [],
               style: 'normal',
             },
@@ -217,7 +224,9 @@ describe('event.patches', () => {
             {
               _type: 'block',
               _key: 'ea-k2',
-              children: [{_type: 'span', _key: 'ea-k3', text: '', marks: []}],
+              children: [
+                {_type: 'span', _key: 'ea-k3', text: '', marks: []},
+              ],
               markDefs: [],
               style: 'normal',
             },
@@ -264,6 +273,7 @@ describe('event.patches', () => {
 
   test('Scenario: Patching while syncing initial value', async () => {
     const keyGenerator = createTestKeyGenerator()
+
     const listBlock = {
       _key: keyGenerator(),
       _type: 'block',
@@ -280,6 +290,7 @@ describe('event.patches', () => {
       markDefs: [],
       style: 'normal',
     }
+
     const headingBlock = {
       _type: 'block',
       _key: keyGenerator(),
@@ -339,6 +350,7 @@ describe('event.patches', () => {
   test('Scenario: Patching while syncing incoming value', async () => {
     const keyGenerator = createTestKeyGenerator()
     const onEvent = vi.fn<() => EditorEmittedEvent>()
+
     const {editor} = await createTestEditor({
       children: <EventListenerPlugin on={onEvent} />,
       keyGenerator,
@@ -364,6 +376,7 @@ describe('event.patches', () => {
       markDefs: [],
       style: 'normal',
     }
+
     const headingBlock = {
       _type: 'block',
       _key: keyGenerator(),
@@ -681,6 +694,7 @@ describe('event.patches', () => {
     let foreignValue: Array<PortableTextBlock> | undefined
     const patches: Array<Patch> = []
     const keyGenerator = createTestKeyGenerator()
+
     const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition: defineSchema({
@@ -738,7 +752,6 @@ describe('event.patches', () => {
           foo: 'bar',
         },
       ]
-
       expect(editor.getSnapshot().context.value).toEqual(expectedValue)
       expect(foreignValue).toEqual(expectedValue)
       expect(patches).toEqual([
@@ -764,6 +777,7 @@ describe('event.patches', () => {
   test('Scenario: `set` initial block object property', async () => {
     const keyGenerator = createTestKeyGenerator()
     const imageKey = keyGenerator()
+
     const {editor} = await createTestEditor({
       initialValue: [
         {
@@ -952,6 +966,7 @@ describe('event.patches', () => {
   test('Scenario: `unset` block object properties', async () => {
     const keyGenerator = createTestKeyGenerator()
     const imageKey = keyGenerator()
+
     const {editor} = await createTestEditor({
       initialValue: [
         {
@@ -1029,6 +1044,7 @@ describe('event.patches', () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
+
     const {editor} = await createTestEditor({
       initialValue: [
         {
@@ -1112,6 +1128,7 @@ describe('event.patches', () => {
     const span1Key = keyGenerator()
     const stockTickerKey = keyGenerator()
     const span2Key = keyGenerator()
+
     const {editor} = await createTestEditor({
       initialValue: [
         {
@@ -1311,6 +1328,7 @@ describe('event.patches', () => {
     const span1Key = keyGenerator()
     const mentionKey = keyGenerator()
     const span2Key = keyGenerator()
+
     const initialValue = [
       {
         _key: blockKey,
@@ -1379,6 +1397,7 @@ describe('event.patches', () => {
     const span1Key = keyGenerator()
     const stockTickerKey = keyGenerator()
     const span2Key = keyGenerator()
+
     const {editor} = await createTestEditor({
       initialValue: [
         {
@@ -1450,6 +1469,7 @@ describe('event.patches', () => {
     const span1Key = keyGenerator()
     const stockTickerKey = keyGenerator()
     const span2Key = keyGenerator()
+
     const {editor} = await createTestEditor({
       initialValue: [
         {
@@ -1530,6 +1550,7 @@ describe('event.patches', () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
+
     const {editor} = await createTestEditor({
       keyGenerator,
       initialValue: [
@@ -1575,6 +1596,7 @@ describe('event.patches', () => {
     const fooKey = keyGenerator()
     const markDefKey = keyGenerator()
     const imageKey = keyGenerator()
+
     const initialValue = [
       {
         _key: blockKey,
@@ -1654,6 +1676,7 @@ describe('event.patches', () => {
   test('Scenario: `unset`ing last text block and `insert`ing a new one', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
+
     const {editor, locator} = await createTestEditor({
       keyGenerator,
       initialValue: [
@@ -1673,7 +1696,7 @@ describe('event.patches', () => {
     await userEvent.type(locator, ' bar')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo bar'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: foo bar')
     })
 
     editor.send({
@@ -1700,7 +1723,7 @@ describe('event.patches', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['baz'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: baz')
     })
   })
 
@@ -1951,7 +1974,8 @@ describe('event.patches', () => {
     })
 
     test('Scenario: Adding and removing text #2', async () => {
-      const editorText = 'Many quick brown fox jumps over the very lazy dog'
+      const editorText =
+        'Many quick brown fox jumps over the very lazy dog'
       const incomingText =
         'The many, quick, brown, foxes jumps over all of the lazy dogs'
       const {editor, blockKey, spanKey} = await createEditor(editorText)
@@ -1982,1533 +2006,5 @@ describe('event.patches', () => {
                 _type: 'span',
                 text: incomingText,
                 marks: [],
-              },
-            ],
-            markDefs: [],
-            style: 'normal',
-          },
-        ])
-      })
-    })
-
-    test('Scenario: Reverse line edits', async () => {
-      const line1 = 'The quick brown fox jumps over the lazy dog'
-      const line2 = 'But the slow green frog jumps over the wild cat'
-      const editorText = [line1, line2, line1, line2].join('\n')
-      const incomingText = [line2, line1, line2, line1].join('\n')
-
-      const {editor, blockKey, spanKey} = await createEditor(editorText)
-
-      editor.send({
-        type: 'patches',
-        patches: [
-          {
-            type: 'diffMatchPatch',
-            origin: 'remote',
-            path: [{_key: blockKey}, 'children', {_key: spanKey}, 'text'],
-            value: stringifyPatches(
-              makePatches(makeDiff(editorText, incomingText)),
-            ),
-          },
-        ],
-        snapshot: undefined,
-      })
-
-      await vi.waitFor(() => {
-        return expect(editor.getSnapshot().context.value).toEqual([
-          {
-            _key: blockKey,
-            _type: 'block',
-            children: [
-              {
-                _key: spanKey,
-                _type: 'span',
-                text: incomingText,
-                marks: [],
-              },
-            ],
-            markDefs: [],
-            style: 'normal',
-          },
-        ])
-      })
-    })
-
-    test('Scenario: Larger text differences', async () => {
-      const editorText = `Portable Text is a agnostic abstraction of "rich text" that can be stringified into any markup language, for instance HTML, Markdown, SSML, XML, etc. It's designed to be efficient for collaboration, and makes it possible to enrich rich text with data structures in depth.\n\nPortable Text is built on the idea of rich text as an array of blocks, themselves arrays of children spans. Each block can have a style and a set of mark dfinitions, which describe data structures distributed on the children spans. Portable Text also allows for inserting arbitrary data objects in the array, only requiring _type-key. Portable Text also allows for custom objects in the root array, enabling rendering environments to mix rich text with custom content types.\n\nPortable Text is a combination of arrays and objects. In its simplest form it's an array of objects with an array of children. Some definitions: \n- Block: Typically recognized as a section of a text, e.g. a paragraph or a heading.\n- Span: Piece of text with a set of marks, e.g. bold or italic.\n- Mark: A mark is a data structure that can be appliad to a span, e.g. a link or a comment.\n- Mark definition: A mark definition is a structure that describes a mark, a link or a comment.`
-      const incomingText = `Portable Text is an agnostic abstraction of rich text that can be serialized into pretty much any markup language, be it HTML, Markdown, SSML, XML, etc. It is designed to be efficient for real-time collaborative interfaces, and makes it possible to annotate rich text with additional data structures recursively.\n\nPortable Text is built on the idea of rich text as an array of blocks, themselves arrays of child spans. Each block can have a style and a set of mark definitions, which describe data structures that can be applied on the children spans. Portable Text also allows for inserting arbitrary data objects in the array, only requiring _type-key. Portable Text also allows for custom content objects in the root array, enabling editing- and rendering environments to mix rich text with custom content types.\n\nPortable Text is a recursive composition of arrays and objects. In its simplest form it's an array of objects of a type with an array of children. Some definitions: \n- Block: A block is what's typically recognized as a section of a text, e.g. a paragraph or a heading.\n- Span: A span is a piece of text with a set of marks, e.g. bold or italic.\n- Mark: A mark is a data structure that can be applied to a span, e.g. a link or a comment.\n- Mark definition: A mark definition is a data structure that describes a mark, e.g. a link or a comment.`
-
-      const {editor, blockKey, spanKey} = await createEditor(editorText)
-
-      editor.send({
-        type: 'patches',
-        patches: [
-          {
-            type: 'diffMatchPatch',
-            origin: 'remote',
-            path: [{_key: blockKey}, 'children', {_key: spanKey}, 'text'],
-            value: stringifyPatches(
-              makePatches(makeDiff(editorText, incomingText)),
-            ),
-          },
-        ],
-        snapshot: undefined,
-      })
-
-      await vi.waitFor(() => {
-        return expect(editor.getSnapshot().context.value).toEqual([
-          {
-            _key: blockKey,
-            _type: 'block',
-            children: [
-              {
-                _key: spanKey,
-                _type: 'span',
-                text: incomingText,
-                marks: [],
-              },
-            ],
-            markDefs: [],
-            style: 'normal',
-          },
-        ])
-      })
-    })
-
-    test('Scenario: Offset text differences', async () => {
-      const editorText = `This string has changes, but they occur somewhere near the end. That means we need to use an offset to get at the change, we cannot just rely on equality segaments in the generated diff.`
-      const incomingText = `This string has changes, but they occur somewhere near the end. That means we need to use an offset to get at the change, we cannot just rely on equality segments in the generated diff.`
-
-      const {editor, blockKey, spanKey} = await createEditor(editorText)
-
-      editor.send({
-        type: 'patches',
-        patches: [
-          {
-            type: 'diffMatchPatch',
-            origin: 'remote',
-            path: [{_key: blockKey}, 'children', {_key: spanKey}, 'text'],
-            value: stringifyPatches(
-              makePatches(makeDiff(editorText, incomingText)),
-            ),
-          },
-        ],
-        snapshot: undefined,
-      })
-
-      await vi.waitFor(() => {
-        return expect(editor.getSnapshot().context.value).toEqual([
-          {
-            _key: blockKey,
-            _type: 'block',
-            children: [
-              {
-                _key: spanKey,
-                _type: 'span',
-                text: incomingText,
-                marks: [],
-              },
-            ],
-            markDefs: [],
-            style: 'normal',
-          },
-        ])
-      })
-    })
-  })
-
-  test('Scenario: `set` block with new markDef', async () => {
-    const keyGenerator = createTestKeyGenerator()
-    const blockKey = keyGenerator()
-    const fooKey = keyGenerator()
-    const barKey = keyGenerator()
-    const linkKey = keyGenerator()
-    const newLinkKey = keyGenerator()
-
-    // Given the text foo,bar
-    // And a link around "foo"
-    const {editor, locator} = await createTestEditor({
-      keyGenerator,
-      initialValue: [
-        {
-          _key: blockKey,
-          _type: 'block',
-          children: [
-            {_key: fooKey, _type: 'span', text: 'foo', marks: [linkKey]},
-            {_key: barKey, _type: 'span', text: 'bar', marks: []},
-          ],
-          markDefs: [{_key: linkKey, _type: 'link'}],
-          style: 'normal',
-        },
-      ],
-      schemaDefinition: defineSchema({
-        annotations: [{name: 'link'}],
-        styles: [{name: 'normal'}, {name: 'h1'}],
-      }),
-    })
-
-    // When the cursor is put after "foo b"
-    await userEvent.click(locator)
-    const midBarSelection = {
-      anchor: {
-        path: [{_key: blockKey}, 'children', {_key: barKey}],
-        offset: 1,
-      },
-      focus: {
-        path: [{_key: blockKey}, 'children', {_key: barKey}],
-        offset: 1,
-      },
-      backward: false,
-    }
-    editor.send({
-      type: 'select',
-      at: midBarSelection,
-    })
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).toEqual(midBarSelection)
-    })
-
-    // And the block is replaced with a new block with different link _key
-    const newBlock = {
-      _key: blockKey,
-      _type: 'block',
-      children: [
-        {_key: fooKey, _type: 'span', text: 'foo', marks: [newLinkKey]},
-        {_key: barKey, _type: 'span', text: 'bar', marks: []},
-      ],
-      markDefs: [{_key: newLinkKey, _type: 'link'}],
-      style: 'normal',
-    }
-    editor.send({
-      type: 'patches',
-      patches: [
-        {
-          origin: 'remote',
-          type: 'set',
-          path: [{_key: blockKey}],
-          value: newBlock,
-        },
-      ],
-      snapshot: [newBlock],
-    })
-
-    // Then the block is replaced with the new block
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([newBlock])
-    })
-
-    // And the selection is restored
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).toEqual(midBarSelection)
-    })
-  })
-
-  describe('`insert`', () => {
-    test('Scenario: Inserting block object on empty editor', async () => {
-      const keyGenerator = createTestKeyGenerator()
-      const blockKey = keyGenerator()
-      const {editor} = await createTestEditor({
-        keyGenerator,
-        schemaDefinition: defineSchema({
-          blockObjects: [{name: 'image'}],
-        }),
-      })
-
-      editor.send({
-        type: 'patches',
-        patches: [
-          {
-            ...unset([]),
-            origin: 'remote',
-          },
-          {
-            origin: 'remote',
-            type: 'insert',
-            position: 'before',
-            path: [0],
-            items: [
-              {
-                _key: blockKey,
-                _type: 'image',
-              },
-            ],
-          },
-        ],
-        snapshot: [
-          {
-            _key: blockKey,
-            _type: 'image',
-          },
-        ],
-      })
-
-      await vi.waitFor(() => {
-        expect(getTersePt(editor.getSnapshot().context)).toEqual(['{image}'])
-      })
-    })
-
-    test('Scenario: Inserting text block on empty editor', async () => {
-      const patches: Array<Patch> = []
-      const keyGenerator = createTestKeyGenerator()
-      const spanKey = keyGenerator()
-      const blockKey = keyGenerator()
-      const block = {
-        _key: blockKey,
-        _type: 'block',
-        children: [{_key: spanKey, _type: 'span', text: 'foo', marks: []}],
-        markDefs: [],
-        style: 'normal',
-      }
-      let foreignValue = [block]
-      const {editor} = await createTestEditor({
-        keyGenerator,
-        schemaDefinition: defineSchema({
-          block: {fields: [{name: 'foo', type: 'string'}]},
-        }),
-        children: (
-          <EventListenerPlugin
-            on={(event) => {
-              if (event.type === 'patch') {
-                const {origin: _, ...patch} = event.patch
-                patches.push(patch)
-                foreignValue = applyAll(foreignValue, [patch])
-              }
-            }}
-          />
-        ),
-      })
-
-      editor.send({
-        type: 'patches',
-        patches: [
-          {
-            ...unset([]),
-            origin: 'remote',
-          },
-          {
-            origin: 'remote',
-            type: 'insert',
-            position: 'before',
-            path: [0],
-            items: [block],
-          },
-        ],
-        snapshot: [block],
-      })
-
-      await vi.waitFor(() => {
-        expect(editor.getSnapshot().context.value).toEqual([block])
-        expect(patches).toEqual([])
-      })
-
-      editor.send({
-        type: 'block.set',
-        at: [{_key: blockKey}],
-        props: {
-          foo: 'bar',
-        },
-      })
-
-      await vi.waitFor(() => {
-        const expectedValue = [
-          {
-            ...block,
-            foo: 'bar',
-          },
-        ]
-
-        expect(editor.getSnapshot().context.value).toEqual(expectedValue)
-        expect(foreignValue).toEqual(expectedValue)
-        expect(patches).toEqual([set('bar', [{_key: blockKey}, 'foo'])])
-      })
-    })
-
-    describe('Scenario Outline: Inserting two text blocks on empty editor', () => {
-      test('Scenario: Both blocks are empty', async () => {
-        const keyGenerator = createTestKeyGenerator()
-        const {editor} = await createTestEditor({
-          keyGenerator,
-          schemaDefinition: defineSchema({}),
-        })
-        const blockAKey = keyGenerator()
-        const spanAKey = keyGenerator()
-        const blockBKey = keyGenerator()
-        const spanBKey = keyGenerator()
-        const blockA = {
-          _key: blockAKey,
-          _type: 'block',
-          children: [{_key: spanAKey, _type: 'span', text: '', marks: []}],
-          markDefs: [],
-          style: 'normal',
-        }
-        const blockB = {
-          _key: blockBKey,
-          _type: 'block',
-          children: [{_key: spanBKey, _type: 'span', text: '', marks: []}],
-          markDefs: [],
-          style: 'normal',
-        }
-        editor.send({
-          type: 'patches',
-          patches: [
-            {
-              origin: 'remote',
-              type: 'insert',
-              position: 'before',
-              path: [0],
-              items: [blockA, blockB],
-            },
-          ],
-          snapshot: [blockA, blockB],
-        })
-
-        await vi.waitFor(() => {
-          expect(editor.getSnapshot().context.value).toEqual([blockA, blockB])
-        })
-      })
-
-      test('Scenario: First block is empty', async () => {
-        const keyGenerator = createTestKeyGenerator()
-        const {editor} = await createTestEditor({
-          keyGenerator,
-          schemaDefinition: defineSchema({}),
-        })
-        const blockAKey = keyGenerator()
-        const spanAKey = keyGenerator()
-        const blockBKey = keyGenerator()
-        const spanBKey = keyGenerator()
-        const blockA = {
-          _key: blockAKey,
-          _type: 'block',
-          children: [{_key: spanAKey, _type: 'span', text: '', marks: []}],
-          markDefs: [],
-          style: 'normal',
-        }
-        const blockB = {
-          _key: blockBKey,
-          _type: 'block',
-          children: [{_key: spanBKey, _type: 'span', text: 'bar', marks: []}],
-          markDefs: [],
-          style: 'normal',
-        }
-
-        editor.send({
-          type: 'patches',
-          patches: [
-            {
-              origin: 'remote',
-              type: 'insert',
-              position: 'before',
-              path: [0],
-              items: [blockA, blockB],
-            },
-          ],
-          snapshot: [blockA, blockB],
-        })
-
-        await vi.waitFor(() => {
-          expect(editor.getSnapshot().context.value).toEqual([blockA, blockB])
-        })
-      })
-
-      test('Scenario: Second block is empty', async () => {
-        const keyGenerator = createTestKeyGenerator()
-        const {editor} = await createTestEditor({
-          keyGenerator,
-          schemaDefinition: defineSchema({}),
-        })
-        const blockAKey = keyGenerator()
-        const spanAKey = keyGenerator()
-        const blockBKey = keyGenerator()
-        const spanBKey = keyGenerator()
-        const blockA = {
-          _key: blockAKey,
-          _type: 'block',
-          children: [{_key: spanAKey, _type: 'span', text: 'foo', marks: []}],
-          markDefs: [],
-          style: 'normal',
-        }
-        const blockB = {
-          _key: blockBKey,
-          _type: 'block',
-          children: [{_key: spanBKey, _type: 'span', text: '', marks: []}],
-          markDefs: [],
-          style: 'normal',
-        }
-
-        editor.send({
-          type: 'patches',
-          patches: [
-            {
-              origin: 'remote',
-              type: 'insert',
-              position: 'before',
-              path: [0],
-              items: [blockA, blockB],
-            },
-          ],
-          snapshot: [blockA, blockB],
-        })
-
-        await vi.waitFor(() => {
-          expect(editor.getSnapshot().context.value).toEqual([blockA, blockB])
-        })
-      })
-    })
-  })
-
-  describe('`setIfMissing`', () => {
-    test('Scenario: Setting empty array on non-empty editor is a noop', async () => {
-      const keyGenerator = createTestKeyGenerator()
-      const blockKey = keyGenerator()
-      const spanKey = keyGenerator()
-
-      const initialBlock = {
-        _key: blockKey,
-        _type: 'block',
-        children: [{_key: spanKey, _type: 'span', text: 'hello', marks: []}],
-        markDefs: [],
-        style: 'normal',
-      }
-
-      const {editor} = await createTestEditor({
-        keyGenerator,
-        initialValue: [initialBlock],
-      })
-
-      editor.send({
-        type: 'patches',
-        patches: [
-          {
-            type: 'setIfMissing',
-            origin: 'remote',
-            path: [],
-            value: [],
-          },
-        ],
-        snapshot: undefined,
-      })
-
-      await vi.waitFor(() => {
-        expect(editor.getSnapshot().context.value).toEqual([initialBlock])
-      })
-    })
-
-    test('Scenario: Setting empty array on empty editor is a noop', async () => {
-      const keyGenerator = createTestKeyGenerator()
-
-      const {editor} = await createTestEditor({
-        keyGenerator,
-      })
-
-      editor.send({
-        type: 'patches',
-        patches: [
-          {
-            type: 'setIfMissing',
-            origin: 'remote',
-            path: [],
-            value: [],
-          },
-        ],
-        snapshot: undefined,
-      })
-
-      await vi.waitFor(() => {
-        expect(editor.getSnapshot().context.value).toEqual([
-          // Original placeholder
-          {
-            _type: 'block',
-            _key: 'k0',
-            children: [{_type: 'span', _key: 'k1', text: '', marks: []}],
-            markDefs: [],
-            style: 'normal',
-          },
-        ])
-      })
-    })
-
-    test('Scenario: Setting missing text block property', async () => {
-      const keyGenerator = createTestKeyGenerator()
-      const blockKey = keyGenerator()
-      const spanKey = keyGenerator()
-      const block = {
-        _key: blockKey,
-        _type: 'block',
-        children: [{_key: spanKey, _type: 'span', text: '', marks: []}],
-        markDefs: [],
-        style: 'normal',
-      }
-
-      const {editor} = await createTestEditor({
-        keyGenerator,
-        initialValue: [block],
-      })
-
-      editor.send({
-        type: 'patches',
-        patches: [
-          {
-            type: 'setIfMissing',
-            origin: 'remote',
-            path: [{_key: blockKey}, 'level'],
-            value: 1,
-          },
-        ],
-        snapshot: undefined,
-      })
-
-      await vi.waitFor(() => {
-        expect(editor.getSnapshot().context.value).toEqual([
-          {...block, level: 1},
-        ])
-      })
-    })
-
-    test('Scenario: Setting existing text block property is a noop', async () => {
-      const keyGenerator = createTestKeyGenerator()
-      const blockKey = keyGenerator()
-      const spanKey = keyGenerator()
-      const block = {
-        _key: blockKey,
-        _type: 'block',
-        children: [{_key: spanKey, _type: 'span', text: '', marks: []}],
-        markDefs: [],
-        style: 'h1',
-      }
-
-      const {editor} = await createTestEditor({
-        keyGenerator,
-        schemaDefinition: defineSchema({
-          styles: [{name: 'normal'}, {name: 'h1'}],
-        }),
-        initialValue: [block],
-      })
-
-      editor.send({
-        type: 'patches',
-        patches: [
-          {
-            type: 'setIfMissing',
-            origin: 'remote',
-            path: [{_key: blockKey}, 'style'],
-            value: 'normal',
-          },
-        ],
-        snapshot: undefined,
-      })
-
-      await vi.waitFor(() => {
-        expect(editor.getSnapshot().context.value).toEqual([block])
-      })
-    })
-
-    test('Scenario: Setting nested text block property', async () => {
-      const keyGenerator = createTestKeyGenerator()
-      const blockKey = keyGenerator()
-      const spanKey = keyGenerator()
-      const block = {
-        _key: blockKey,
-        _type: 'block',
-        children: [{_key: spanKey, _type: 'span', text: '', marks: []}],
-        markDefs: [],
-        style: 'normal',
-        foo: {},
-      }
-
-      const {editor} = await createTestEditor({
-        keyGenerator,
-        initialValue: [block],
-        schemaDefinition: defineSchema({
-          block: {fields: [{name: 'foo', type: 'object'}]},
-        }),
-      })
-
-      editor.send({
-        type: 'patches',
-        patches: [
-          {
-            type: 'setIfMissing',
-            origin: 'remote',
-            path: [{_key: blockKey}, 'foo', 'bar'],
-            value: 'baz',
-          },
-        ],
-        snapshot: undefined,
-      })
-
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          ...block,
-          foo: {bar: 'baz'},
-        },
-      ])
-    })
-
-    test('Scenario: Setting existing nested text block property is a noop', async () => {
-      const keyGenerator = createTestKeyGenerator()
-      const blockKey = keyGenerator()
-      const spanKey = keyGenerator()
-      const block = {
-        _key: blockKey,
-        _type: 'block',
-        children: [{_key: spanKey, _type: 'span', text: '', marks: []}],
-        markDefs: [],
-        style: 'normal',
-        foo: {bar: 'baz'},
-      }
-
-      const {editor} = await createTestEditor({
-        keyGenerator,
-        initialValue: [block],
-        schemaDefinition: defineSchema({
-          block: {fields: [{name: 'foo', type: 'object'}]},
-        }),
-      })
-
-      editor.send({
-        type: 'patches',
-        patches: [
-          {
-            type: 'setIfMissing',
-            origin: 'remote',
-            path: [{_key: blockKey}, 'foo', 'bar'],
-            value: 'fizz',
-          },
-        ],
-        snapshot: undefined,
-      })
-
-      expect(editor.getSnapshot().context.value).toEqual([block])
-    })
-
-    test('Scenario: Setting markDef property', async () => {
-      const keyGenerator = createTestKeyGenerator()
-      const blockKey = keyGenerator()
-      const spanKey = keyGenerator()
-      const linkKey = keyGenerator()
-      const block = {
-        _key: blockKey,
-        _type: 'block',
-        children: [
-          {_key: spanKey, _type: 'span', text: 'foo', marks: [linkKey]},
-        ],
-        markDefs: [
-          {
-            _key: linkKey,
-            _type: 'link',
-          },
-        ],
-        style: 'normal',
-      }
-
-      const {editor} = await createTestEditor({
-        keyGenerator,
-        initialValue: [block],
-        schemaDefinition: defineSchema({
-          annotations: [
-            {name: 'link', fields: [{name: 'href', type: 'string'}]},
-          ],
-        }),
-      })
-
-      editor.send({
-        type: 'patches',
-        patches: [
-          {
-            type: 'setIfMissing',
-            origin: 'remote',
-            path: [{_key: blockKey}, 'markDefs', {_key: linkKey}, 'href'],
-            value: 'https://example.com',
-          },
-        ],
-        snapshot: undefined,
-      })
-
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          ...block,
-          markDefs: [{...block.markDefs[0], href: 'https://example.com'}],
-        },
-      ])
-    })
-
-    test('Scenario: Setting existing markDef property is a noop', async () => {
-      const keyGenerator = createTestKeyGenerator()
-      const blockKey = keyGenerator()
-      const spanKey = keyGenerator()
-      const linkKey = keyGenerator()
-      const block = {
-        _key: blockKey,
-        _type: 'block',
-        children: [
-          {_key: spanKey, _type: 'span', text: 'foo', marks: [linkKey]},
-        ],
-        markDefs: [
-          {
-            _key: linkKey,
-            _type: 'link',
-            href: 'https://example.com',
-          },
-        ],
-        style: 'normal',
-      }
-
-      const {editor} = await createTestEditor({
-        keyGenerator,
-        initialValue: [block],
-        schemaDefinition: defineSchema({
-          annotations: [
-            {name: 'link', fields: [{name: 'href', type: 'string'}]},
-          ],
-        }),
-      })
-
-      editor.send({
-        type: 'patches',
-        patches: [
-          {
-            type: 'setIfMissing',
-            origin: 'remote',
-            path: [{_key: blockKey}, 'markDefs', {_key: linkKey}, 'href'],
-            value: 'https://example.net',
-          },
-        ],
-        snapshot: undefined,
-      })
-
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          ...block,
-          markDefs: [{...block.markDefs[0], href: 'https://example.com'}],
-        },
-      ])
-    })
-
-    test('Scenario: Setting nested markDef property', async () => {
-      const keyGenerator = createTestKeyGenerator()
-      const blockKey = keyGenerator()
-      const spanKey = keyGenerator()
-      const linkKey = keyGenerator()
-      const block = {
-        _key: blockKey,
-        _type: 'block',
-        children: [
-          {_key: spanKey, _type: 'span', text: 'foo', marks: [linkKey]},
-        ],
-        markDefs: [
-          {
-            _key: linkKey,
-            _type: 'link',
-            foo: {},
-          },
-        ],
-        style: 'normal',
-      }
-
-      const {editor} = await createTestEditor({
-        keyGenerator,
-        initialValue: [block],
-        schemaDefinition: defineSchema({
-          annotations: [
-            {name: 'link', fields: [{name: 'foo', type: 'object'}]},
-          ],
-        }),
-      })
-
-      editor.send({
-        type: 'patches',
-        patches: [
-          {
-            type: 'setIfMissing',
-            origin: 'remote',
-            path: [{_key: blockKey}, 'markDefs', {_key: linkKey}, 'foo', 'bar'],
-            value: 'baz',
-          },
-        ],
-        snapshot: undefined,
-      })
-
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          ...block,
-          markDefs: [{...block.markDefs[0], foo: {bar: 'baz'}}],
-        },
-      ])
-    })
-
-    test('Scenario: Setting existing nested markDef property is a noop', async () => {
-      const keyGenerator = createTestKeyGenerator()
-      const blockKey = keyGenerator()
-      const spanKey = keyGenerator()
-      const linkKey = keyGenerator()
-      const block = {
-        _key: blockKey,
-        _type: 'block',
-        children: [
-          {_key: spanKey, _type: 'span', text: 'foo', marks: [linkKey]},
-        ],
-        markDefs: [
-          {
-            _key: linkKey,
-            _type: 'link',
-            foo: {bar: 'baz'},
-          },
-        ],
-        style: 'normal',
-      }
-
-      const {editor} = await createTestEditor({
-        keyGenerator,
-        initialValue: [block],
-        schemaDefinition: defineSchema({
-          annotations: [
-            {name: 'link', fields: [{name: 'foo', type: 'object'}]},
-          ],
-        }),
-      })
-
-      editor.send({
-        type: 'patches',
-        patches: [
-          {
-            type: 'setIfMissing',
-            origin: 'remote',
-            path: [{_key: blockKey}, 'markDefs', {_key: linkKey}, 'foo', 'bar'],
-            value: 'fizz',
-          },
-        ],
-        snapshot: undefined,
-      })
-
-      expect(editor.getSnapshot().context.value).toEqual([block])
-    })
-
-    test('Scenario: Setting missing block object property', async () => {
-      const keyGenerator = createTestKeyGenerator()
-      const imageKey = keyGenerator()
-      const image = {
-        _key: imageKey,
-        _type: 'image',
-      }
-
-      const {editor} = await createTestEditor({
-        keyGenerator,
-        initialValue: [image],
-        schemaDefinition: defineSchema({
-          blockObjects: [
-            {name: 'image', fields: [{name: 'src', type: 'string'}]},
-          ],
-        }),
-      })
-
-      editor.send({
-        type: 'patches',
-        patches: [
-          {
-            type: 'setIfMissing',
-            origin: 'remote',
-            path: [{_key: imageKey}, 'src'],
-            value: 'https://example.com/image-a.png',
-          },
-        ],
-        snapshot: undefined,
-      })
-
-      await vi.waitFor(() => {
-        expect(editor.getSnapshot().context.value).toEqual([
-          {
-            ...image,
-            src: 'https://example.com/image-a.png',
-          },
-        ])
-      })
-    })
-
-    test('Scenario: Setting existing block object property is a noop', async () => {
-      const keyGenerator = createTestKeyGenerator()
-      const imageKey = keyGenerator()
-      const image = {
-        _key: imageKey,
-        _type: 'image',
-        src: 'https://example.com/image-a.png',
-      }
-
-      const {editor} = await createTestEditor({
-        keyGenerator,
-        initialValue: [image],
-        schemaDefinition: defineSchema({
-          blockObjects: [
-            {name: 'image', fields: [{name: 'src', type: 'string'}]},
-          ],
-        }),
-      })
-
-      editor.send({
-        type: 'patches',
-        patches: [
-          {
-            type: 'setIfMissing',
-            origin: 'remote',
-            path: [{_key: imageKey}, 'src'],
-            value: 'https://example.com/image-b.png',
-          },
-        ],
-        snapshot: undefined,
-      })
-
-      await vi.waitFor(() => {
-        expect(editor.getSnapshot().context.value).toEqual([image])
-      })
-    })
-
-    test('Scenario: Setting block object property where existing value is 0 is a noop', async () => {
-      const keyGenerator = createTestKeyGenerator()
-      const imageKey = keyGenerator()
-      const image = {
-        _key: imageKey,
-        _type: 'image',
-        asset: {src: 0},
-      }
-
-      const {editor} = await createTestEditor({
-        keyGenerator,
-        initialValue: [image],
-        schemaDefinition: defineSchema({
-          blockObjects: [
-            {name: 'image', fields: [{name: 'asset', type: 'object'}]},
-          ],
-        }),
-      })
-
-      editor.send({
-        type: 'patches',
-        patches: [
-          {
-            type: 'setIfMissing',
-            origin: 'remote',
-            path: [{_key: imageKey}, 'asset', 'src'],
-            value: 1,
-          },
-        ],
-        snapshot: undefined,
-      })
-
-      await vi.waitFor(() => {
-        expect(editor.getSnapshot().context.value).toEqual([image])
-      })
-    })
-
-    test('Scenario: Setting block object property where existing value is false is a noop', async () => {
-      const keyGenerator = createTestKeyGenerator()
-      const imageKey = keyGenerator()
-      const image = {
-        _key: imageKey,
-        _type: 'image',
-        asset: {src: false},
-      }
-
-      const {editor} = await createTestEditor({
-        keyGenerator,
-        initialValue: [image],
-        schemaDefinition: defineSchema({
-          blockObjects: [
-            {name: 'image', fields: [{name: 'asset', type: 'object'}]},
-          ],
-        }),
-      })
-
-      editor.send({
-        type: 'patches',
-        patches: [
-          {
-            type: 'setIfMissing',
-            origin: 'remote',
-            path: [{_key: imageKey}, 'asset', 'src'],
-            value: true,
-          },
-        ],
-        snapshot: undefined,
-      })
-
-      await vi.waitFor(() => {
-        expect(editor.getSnapshot().context.value).toEqual([image])
-      })
-    })
-
-    test('Scenario: Setting block object property where existing value is null is a noop', async () => {
-      const keyGenerator = createTestKeyGenerator()
-      const imageKey = keyGenerator()
-      const image = {
-        _key: imageKey,
-        _type: 'image',
-        asset: {src: null},
-      }
-
-      const {editor} = await createTestEditor({
-        keyGenerator,
-        initialValue: [image],
-        schemaDefinition: defineSchema({
-          blockObjects: [
-            {name: 'image', fields: [{name: 'asset', type: 'object'}]},
-          ],
-        }),
-      })
-
-      editor.send({
-        type: 'patches',
-        patches: [
-          {
-            type: 'setIfMissing',
-            origin: 'remote',
-            path: [{_key: imageKey}, 'asset', 'src'],
-            value: 'https://example.com/image-a.png',
-          },
-        ],
-        snapshot: undefined,
-      })
-
-      await vi.waitFor(() => {
-        expect(editor.getSnapshot().context.value).toEqual([image])
-      })
-    })
-
-    test('Scenario: Setting object property on block object', async () => {
-      const keyGenerator = createTestKeyGenerator()
-      const imageKey = keyGenerator()
-      const image = {
-        _key: imageKey,
-        _type: 'image',
-      }
-
-      const {editor} = await createTestEditor({
-        keyGenerator,
-        initialValue: [image],
-        schemaDefinition: defineSchema({
-          blockObjects: [
-            {name: 'image', fields: [{name: 'asset', type: 'object'}]},
-          ],
-        }),
-      })
-
-      editor.send({
-        type: 'patches',
-        patches: [
-          {
-            type: 'setIfMissing',
-            origin: 'remote',
-            path: [{_key: imageKey}, 'asset'],
-            value: {
-              src: 'https://example.com/image-a.png',
-            },
-          },
-        ],
-        snapshot: undefined,
-      })
-
-      await vi.waitFor(() => {
-        expect(editor.getSnapshot().context.value).toEqual([
-          {
-            ...image,
-            asset: {src: 'https://example.com/image-a.png'},
-          },
-        ])
-      })
-    })
-
-    test('Scenario: Setting array property on block object', async () => {
-      const keyGenerator = createTestKeyGenerator()
-      const imageKey = keyGenerator()
-      const image = {
-        _key: imageKey,
-        _type: 'image',
-      }
-
-      const {editor} = await createTestEditor({
-        keyGenerator,
-        initialValue: [image],
-        schemaDefinition: defineSchema({
-          blockObjects: [
-            {name: 'image', fields: [{name: 'assets', type: 'array'}]},
-          ],
-        }),
-      })
-
-      editor.send({
-        type: 'patches',
-        patches: [
-          {
-            type: 'setIfMissing',
-            origin: 'remote',
-            path: [{_key: imageKey}, 'assets'],
-            value: [{src: 'https://example.com/image-a.png'}],
-          },
-        ],
-        snapshot: undefined,
-      })
-
-      await vi.waitFor(() => {
-        expect(editor.getSnapshot().context.value).toEqual([
-          {
-            ...image,
-            assets: [{src: 'https://example.com/image-a.png'}],
-          },
-        ])
-      })
-    })
-
-    test('Scenario: Composing patches on block object', async () => {
-      const keyGenerator = createTestKeyGenerator()
-      const imageKey = keyGenerator()
-      const image = {
-        _key: imageKey,
-        _type: 'image',
-      }
-
-      const {editor} = await createTestEditor({
-        keyGenerator,
-        initialValue: [image],
-        schemaDefinition: defineSchema({
-          blockObjects: [
-            {name: 'image', fields: [{name: 'asset', type: 'object'}]},
-          ],
-        }),
-      })
-
-      editor.send({
-        type: 'patches',
-        patches: [
-          {
-            type: 'setIfMissing',
-            origin: 'remote',
-            path: [{_key: imageKey}, 'asset'],
-            value: {},
-          },
-          {
-            type: 'setIfMissing',
-            origin: 'remote',
-            path: [{_key: imageKey}, 'asset', 'src'],
-            value: 'https://example.com/image-b.png',
-          },
-        ],
-        snapshot: undefined,
-      })
-
-      await vi.waitFor(() => {
-        expect(editor.getSnapshot().context.value).toEqual([
-          {
-            ...image,
-            asset: {src: 'https://example.com/image-b.png'},
-          },
-        ])
-      })
-    })
-
-    test('Scenario: Setting nested block object property', async () => {
-      const keyGenerator = createTestKeyGenerator()
-      const imageKey = keyGenerator()
-      const image = {
-        _key: imageKey,
-        _type: 'image',
-        asset: {},
-      }
-
-      const {editor} = await createTestEditor({
-        keyGenerator,
-        initialValue: [image],
-        schemaDefinition: defineSchema({
-          blockObjects: [
-            {name: 'image', fields: [{name: 'asset', type: 'object'}]},
-          ],
-        }),
-      })
-
-      editor.send({
-        type: 'patches',
-        patches: [
-          {
-            type: 'setIfMissing',
-            origin: 'remote',
-            path: [{_key: imageKey}, 'asset', 'src'],
-            value: 'https://example.com/image-a.png',
-          },
-        ],
-        snapshot: undefined,
-      })
-
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          ...image,
-          asset: {src: 'https://example.com/image-a.png'},
-        },
-      ])
-    })
-
-    test('Scenario: Setting existing nested block object property is a noop', async () => {
-      const keyGenerator = createTestKeyGenerator()
-      const imageKey = keyGenerator()
-      const image = {
-        _key: imageKey,
-        _type: 'image',
-        asset: {src: 'https://example.com/image-a.png'},
-      }
-
-      const {editor} = await createTestEditor({
-        keyGenerator,
-        initialValue: [image],
-        schemaDefinition: defineSchema({
-          blockObjects: [
-            {name: 'image', fields: [{name: 'asset', type: 'object'}]},
-          ],
-        }),
-      })
-
-      editor.send({
-        type: 'patches',
-        patches: [
-          {
-            type: 'setIfMissing',
-            origin: 'remote',
-            path: [{_key: imageKey}, 'asset', 'src'],
-            value: 'https://example.com/image-b.png',
-          },
-        ],
-        snapshot: undefined,
-      })
-
-      expect(editor.getSnapshot().context.value).toEqual([image])
-    })
-
-    test('Scenario: Setting missing span property', async () => {
-      const keyGenerator = createTestKeyGenerator()
-      const blockKey = keyGenerator()
-      const spanKey = keyGenerator()
-      const block = {
-        _key: blockKey,
-        _type: 'block',
-        children: [{_key: spanKey, _type: 'span', text: '', marks: []}],
-        markDefs: [],
-        style: 'normal',
-      }
-
-      const {editor} = await createTestEditor({
-        keyGenerator,
-        initialValue: [block],
-      })
-
-      editor.send({
-        type: 'patches',
-        patches: [
-          {
-            type: 'setIfMissing',
-            origin: 'remote',
-            path: [{_key: blockKey}, 'children', {_key: spanKey}, 'foo'],
-            value: 'bar',
-          },
-        ],
-        snapshot: undefined,
-      })
-
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          ...block,
-          children: [{...block.children[0], foo: 'bar'}],
-        },
-      ])
-    })
-
-    test('Scenario: Setting existing span property is a noop', async () => {
-      const keyGenerator = createTestKeyGenerator()
-      const blockKey = keyGenerator()
-      const spanKey = keyGenerator()
-      const block = {
-        _key: blockKey,
-        _type: 'block',
-        children: [
-          {_key: spanKey, _type: 'span', text: '', marks: [], foo: 'bar'},
-        ],
-        markDefs: [],
-        style: 'normal',
-      }
-
-      const {editor} = await createTestEditor({
-        keyGenerator,
-        initialValue: [block],
-      })
-
-      editor.send({
-        type: 'patches',
-        patches: [
-          {
-            type: 'setIfMissing',
-            origin: 'remote',
-            path: [{_key: blockKey}, 'children', {_key: spanKey}, 'foo'],
-            value: 'baz',
-          },
-        ],
-        snapshot: undefined,
-      })
-
-      expect(editor.getSnapshot().context.value).toEqual([block])
-    })
-
-    test('Scenario: Setting span text is a noop', async () => {
-      const keyGenerator = createTestKeyGenerator()
-      const blockKey = keyGenerator()
-      const spanKey = keyGenerator()
-      const block = {
-        _key: blockKey,
-        _type: 'block',
-        children: [{_key: spanKey, _type: 'span', text: '', marks: []}],
-        markDefs: [],
-        style: 'normal',
-      }
-
-      const {editor} = await createTestEditor({
-        keyGenerator,
-        initialValue: [block],
-      })
-
-      editor.send({
-        type: 'patches',
-        patches: [
-          {
-            type: 'setIfMissing',
-            origin: 'remote',
-            path: [{_key: blockKey}, 'children', {_key: spanKey}, 'text'],
-            value: 'foo',
-          },
-        ],
-        snapshot: undefined,
-      })
-
-      expect(editor.getSnapshot().context.value).toEqual([block])
-    })
-
-    test('Scenario: Setting nested span property', async () => {
-      const keyGenerator = createTestKeyGenerator()
-      const blockKey = keyGenerator()
-      const spanKey = keyGenerator()
-      const block = {
-        _key: blockKey,
-        _type: 'block',
-        children: [
-          {_key: spanKey, _type: 'span', text: '', marks: [], foo: {}},
-        ],
-        markDefs: [],
-        style: 'normal',
-      }
-
-      const {editor} = await createTestEditor({
-        keyGenerator,
-        initialValue: [block],
-      })
-
-      editor.send({
-        type: 'patches',
-        patches: [
-          {
-            type: 'setIfMissing',
-            origin: 'remote',
-            path: [{_key: blockKey}, 'children', {_key: spanKey}, 'foo', 'bar'],
-            value: 'baz',
-          },
-        ],
-        snapshot: undefined,
-      })
-
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          ...block,
-          children: [{...block.children[0], foo: {bar: 'baz'}}],
-        },
-      ])
-    })
-
-    test('Scenario: Setting existing nested span property is a noop', async () => {
-      const keyGenerator = createTestKeyGenerator()
-      const blockKey = keyGenerator()
-      const spanKey = keyGenerator()
-      const block = {
-        _key: blockKey,
-        _type: 'block',
-        children: [
-          {
-            _key: spanKey,
-            _type: 'span',
-            text: '',
-            marks: [],
-            foo: {bar: 'baz'},
-          },
-        ],
-        markDefs: [],
-        style: 'normal',
-      }
-
-      const {editor} = await createTestEditor({
-        keyGenerator,
-        initialValue: [block],
-      })
-
-      editor.send({
-        type: 'patches',
-        patches: [
-          {
-            type: 'setIfMissing',
-            origin: 'remote',
-            path: [{_key: blockKey}, 'children', {_key: spanKey}, 'foo', 'bar'],
-            value: 'fizz',
-          },
-        ],
-        snapshot: undefined,
-      })
-
-      expect(editor.getSnapshot().context.value).toEqual([block])
-    })
-  })
-
-  test('Scenario: `unset` nested text block property', async () => {
-    const {editor} = await createTestEditor({
-      initialValue: [
-        {
-          _type: 'block',
-          _key: 'k0',
-          children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
-          markDefs: [],
-          style: 'normal',
-          metadata: {title: 'hello', description: 'world'},
-        },
-      ],
-      schemaDefinition: defineSchema({
-        block: {
-          fields: [{name: 'metadata', type: 'object'}],
-        },
-      }),
-    })
-
-    editor.send({
-      type: 'patches',
-      patches: [
-        {
-          type: 'unset',
-          origin: 'remote',
-          path: [{_key: 'k0'}, 'metadata', 'title'],
-        },
-      ],
-      snapshot: undefined,
-    })
-
-    await vi.waitFor(() => {
-      return expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'block',
-          _key: 'k0',
-          children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
-          markDefs: [],
-          style: 'normal',
-          metadata: {description: 'world'},
-        },
-      ])
-    })
-  })
-})
+       
+... Output truncated at 50KB. Use offset/limit to page.
