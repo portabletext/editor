@@ -1,4 +1,5 @@
-import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator} from '@portabletext/test'
+import {toTextspec} from '@portabletext/textspec'
 import {makeDiff, makePatches, stringifyPatches} from '@sanity/diff-match-patch'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
@@ -46,7 +47,7 @@ describe('event.child.unset', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['Hello'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: Hello')
       expect(patches).toEqual([])
     })
 
@@ -57,7 +58,7 @@ describe('event.child.unset', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['Hello'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: Hello')
       expect(patches).toEqual([
         {
           origin: 'local',
@@ -110,7 +111,7 @@ describe('event.child.unset', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['Hello'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: Hello')
       expect(patches).toEqual([])
     })
 
@@ -168,7 +169,7 @@ describe('event.child.unset', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['Hell'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: Hell')
       expect(patches).toEqual([])
     })
 
@@ -229,7 +230,7 @@ describe('event.child.unset', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['Hello'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: Hello')
       expect(patches).toEqual([])
     })
 
@@ -278,7 +279,6 @@ describe('event.child.unset', () => {
         markDefs: [],
       },
     ]
-
     const {editor, locator} = await createTestEditor({
       keyGenerator,
       initialValue,
@@ -300,7 +300,7 @@ describe('event.child.unset', () => {
     await userEvent.type(locator, 'o')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['Hello'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: Hello')
       expect(patches).toEqual([
         {
           origin: 'local',
@@ -380,7 +380,7 @@ describe('event.child.unset', () => {
     await userEvent.type(locator, 'f')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['f'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: f')
       expect(patches.slice(7)).toEqual([
         {
           origin: 'local',
@@ -452,7 +452,6 @@ describe('event.child.unset', () => {
         markDefs: [],
       },
     ]
-
     const {editor} = await createTestEditor({
       keyGenerator,
       initialValue,
@@ -462,7 +461,7 @@ describe('event.child.unset', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([',{image},'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: {image}')
     })
 
     editor.send({
