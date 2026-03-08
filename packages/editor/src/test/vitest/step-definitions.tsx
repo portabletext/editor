@@ -1,5 +1,5 @@
 import {defineSchema} from '@portabletext/schema'
-import {getTersePt, parseTersePt} from '@portabletext/test'
+import {fromTextspec, toTextspec} from '@portabletext/textspec'
 import {Given, Then, When} from 'racejar'
 import {assert, expect, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
@@ -65,28 +65,24 @@ export const stepDefinitions = [
     context.locatorB = locatorB
     context.editorB = editorB
   }),
-
   Given('a global keymap', (context: Context) => {
     context.keyMap = new Map()
   }),
-
   When('the editor is focused', async (context: Context) => {
     await userEvent.click(context.locator)
   }),
-
   When('Editor B is focused', async (context: Context) => {
     await userEvent.click(context.locatorB)
   }),
-
   Given(
-    'the text {terse-pt}',
-    (context: Context, tersePt: Parameter['tersePt']) => {
-      const blocks = parseTersePt(
+    'the text {textspec}',
+    (context: Context, textspec: Parameter['textspec']) => {
+      const {blocks} = fromTextspec(
         {
           keyGenerator: context.editor.getSnapshot().context.keyGenerator,
           schema: context.editor.getSnapshot().context.schema,
         },
-        tersePt,
+        textspec,
       )
 
       context.editor.send({
@@ -97,7 +93,6 @@ export const stepDefinitions = [
       })
     },
   ),
-
   /**
    * Block steps
    */
@@ -122,7 +117,6 @@ export const stepDefinitions = [
       })
     },
   ),
-
   /**
    * Child steps
    */
@@ -167,7 +161,6 @@ export const stepDefinitions = [
       })
     },
   ),
-
   /**
    * Text steps
    */
@@ -211,24 +204,13 @@ export const stepDefinitions = [
     context.editor.send({type: 'insert.text', text})
   }),
   Then(
-    '{terse-pt} is in block {key}',
-    (context: Context, text: Array<string>, key: string) => {
-      const string = text.at(0)
-
-      if (string === undefined) {
-        assert.fail('Expected at least one text string')
-      }
-
-      if (text.length > 1) {
-        assert.fail('Expected at most one text string')
-      }
-
+    '{textspec} is in block {key}',
+    (context: Context, textspec: Parameter['textspec'], key: string) => {
       expect(
-        getTextBlockKey(context.editor.getSnapshot().context, string),
+        getTextBlockKey(context.editor.getSnapshot().context, textspec),
       ).toBe(key)
     },
   ),
-
   /**
    * Button steps
    */
@@ -236,16 +218,16 @@ export const stepDefinitions = [
     '{button} is pressed',
     async (context: Context, button: Parameter['button']) => {
       const previousSelection = context.editor.getSnapshot().context.selection
+
       await userEvent.keyboard(button)
 
       // Delay to allow the browser to process the event.
       // Firefox needs more time than Chromium to process keyboard events
       // through the beforeinput -> DOM mutation -> Slate operation pipeline.
       await new Promise((resolve) => setTimeout(resolve, 100))
-
       await vi.waitFor(() => {
-        const currentSelection = context.editor.getSnapshot().context.selection
-
+        const currentSelection =
+          context.editor.getSnapshot().context.selection
         if (currentSelection) {
           expect(currentSelection).not.toBe(previousSelection)
         }
@@ -255,14 +237,15 @@ export const stepDefinitions = [
   When(
     '{button} is pressed in Editor B',
     async (context: Context, button: Parameter['button']) => {
-      const previousSelection = context.editorB.getSnapshot().context.selection
+      const previousSelection =
+        context.editorB.getSnapshot().context.selection
+
       await userEvent.keyboard(button)
 
       await new Promise((resolve) => setTimeout(resolve, 100))
-
       await vi.waitFor(() => {
-        const currentSelection = context.editorB.getSnapshot().context.selection
-
+        const currentSelection =
+          context.editorB.getSnapshot().context.selection
         if (currentSelection) {
           expect(currentSelection).not.toBe(previousSelection)
         }
@@ -273,15 +256,15 @@ export const stepDefinitions = [
     '{button} is pressed {int} times',
     async (context: Context, button: Parameter['button'], times: number) => {
       for (let i = 0; i < times; i++) {
-        const previousSelection = context.editor.getSnapshot().context.selection
+        const previousSelection =
+          context.editor.getSnapshot().context.selection
+
         await userEvent.keyboard(button)
 
         await new Promise((resolve) => setTimeout(resolve, 100))
-
         await vi.waitFor(() => {
           const currentSelection =
             context.editor.getSnapshot().context.selection
-
           if (currentSelection) {
             expect(currentSelection).not.toBe(previousSelection)
           }
@@ -295,14 +278,13 @@ export const stepDefinitions = [
       for (let i = 0; i < times; i++) {
         const previousSelection =
           context.editorB.getSnapshot().context.selection
+
         await userEvent.keyboard(button)
 
         await new Promise((resolve) => setTimeout(resolve, 100))
-
         await vi.waitFor(() => {
           const currentSelection =
             context.editorB.getSnapshot().context.selection
-
           if (currentSelection) {
             expect(currentSelection).not.toBe(previousSelection)
           }
@@ -326,15 +308,15 @@ export const stepDefinitions = [
       const keyboardShortcut = keyboardShortcuts[shortcut]
 
       if (keyboardShortcut) {
-        const previousSelection = context.editor.getSnapshot().context.selection
+        const previousSelection =
+          context.editor.getSnapshot().context.selection
+
         await userEvent.keyboard(keyboardShortcut)
 
         await new Promise((resolve) => setTimeout(resolve, 100))
-
         await vi.waitFor(() => {
           const currentSelection =
             context.editor.getSnapshot().context.selection
-
           if (currentSelection) {
             expect(currentSelection).not.toBe(previousSelection)
           }
@@ -365,15 +347,15 @@ export const stepDefinitions = [
       const behaviorEvent = behaviorEvents[shortcut]
 
       if (behaviorEvent) {
-        const previousSelection = context.editor.getSnapshot().context.selection
+        const previousSelection =
+          context.editor.getSnapshot().context.selection
+
         context.editor.send(behaviorEvent)
 
         await new Promise((resolve) => setTimeout(resolve, 100))
-
         await vi.waitFor(() => {
           const currentSelection =
             context.editor.getSnapshot().context.selection
-
           if (currentSelection) {
             expect(currentSelection).not.toBe(previousSelection)
           }
@@ -385,7 +367,6 @@ export const stepDefinitions = [
       throw new Error(`Unknown shortcut: ${shortcut}`)
     },
   ),
-
   /**
    * Selection steps
    */
@@ -553,7 +534,9 @@ export const stepDefinitions = [
         context.editor.send({
           type: 'select',
           at:
-            direction === 'forwards' ? selection : reverseSelection(selection),
+            direction === 'forwards'
+              ? selection
+              : reverseSelection(selection),
         })
       })
     },
@@ -574,30 +557,29 @@ export const stepDefinitions = [
     },
   ),
   Then(
-    '{terse-pt} is selected',
-    async (context: Context, text: Array<string>) => {
+    '{textspec} is selected',
+    async (context: Context, textspec: Parameter['textspec']) => {
       await vi.waitFor(() => {
         expect(
           getSelectionText(context.editor.getSnapshot().context),
           'Unexpected selection',
-        ).toEqual(text)
+        ).toEqual(textspec)
       })
     },
   ),
-
   When(
-    '{terse-pt} is inserted at {placement}',
+    '{textspec} is inserted at {placement}',
     (
       context: Context,
-      tersePt: Parameter['tersePt'],
+      textspec: Parameter['textspec'],
       placement: Parameter['placement'],
     ) => {
-      const blocks = parseTersePt(
+      const {blocks} = fromTextspec(
         {
           keyGenerator: context.editor.getSnapshot().context.keyGenerator,
           schema: context.editor.getSnapshot().context.schema,
         },
-        tersePt,
+        textspec,
       )
 
       context.editor.send({
@@ -608,19 +590,19 @@ export const stepDefinitions = [
     },
   ),
   When(
-    '{terse-pt} is inserted at {placement} and selected at the {select-position}',
+    '{textspec} is inserted at {placement} and selected at the {select-position}',
     (
       context: Context,
-      tersePt: Parameter['tersePt'],
+      textspec: Parameter['textspec'],
       placement: Parameter['placement'],
       selectPosition: Parameter['selectPosition'],
     ) => {
-      const blocks = parseTersePt(
+      const {blocks} = fromTextspec(
         {
           keyGenerator: context.editor.getSnapshot().context.keyGenerator,
           schema: context.editor.getSnapshot().context.schema,
         },
-        tersePt,
+        textspec,
       )
 
       context.editor.send({
@@ -658,19 +640,17 @@ export const stepDefinitions = [
       })
     },
   ),
-
   Then(
-    'the text is {terse-pt}',
-    async (context: Context, tersePt: Parameter['tersePt']) => {
+    'the text is {textspec}',
+    async (context: Context, textspec: Parameter['textspec']) => {
       await vi.waitFor(() => {
         expect(
-          getTersePt(context.editor.getSnapshot().context),
+          toTextspec(context.editor.getSnapshot().context),
           'Unexpected editor text',
-        ).toEqual(tersePt)
+        ).toBe(textspec)
       })
     },
   ),
-
   /**
    * Annotation steps
    */
@@ -695,6 +675,7 @@ export const stepDefinitions = [
       })
 
       const value = context.editor.getSnapshot().context.value
+
       const priorAnnotationKeys = getValueAnnotations(
         context.editor.getSnapshot().context.schema,
         value,
@@ -724,7 +705,8 @@ export const stepDefinitions = [
           context.editor.getSnapshot().context.schema,
           newValue,
         ).filter(
-          (newAnnotationKey) => !priorAnnotationKeys.includes(newAnnotationKey),
+          (newAnnotationKey) =>
+            !priorAnnotationKeys.includes(newAnnotationKey),
         )
       })
 
@@ -762,6 +744,7 @@ export const stepDefinitions = [
       keyKeys: Array<string>,
     ) => {
       const value = context.editor.getSnapshot().context.value
+
       const priorAnnotationKeys = getValueAnnotations(
         context.editor.getSnapshot().context.schema,
         value,
@@ -791,7 +774,8 @@ export const stepDefinitions = [
           context.editor.getSnapshot().context.schema,
           newValue,
         ).filter(
-          (newAnnotationKey) => !priorAnnotationKeys.includes(newAnnotationKey),
+          (newAnnotationKey) =>
+            !priorAnnotationKeys.includes(newAnnotationKey),
         )
       })
 
@@ -818,7 +802,6 @@ export const stepDefinitions = [
       expect(marks).not.toEqual(expectedMarks)
     },
   ),
-
   /**
    * Decorator steps
    */
@@ -866,6 +849,7 @@ export const stepDefinitions = [
           context.editor.getSnapshot().context,
           text,
         )
+
         const anchorOffset = selection
           ? spanSelectionPointToBlockOffset({
               context: {
@@ -875,6 +859,7 @@ export const stepDefinitions = [
               selectionPoint: selection.anchor,
             })
           : undefined
+
         const focusOffset = selection
           ? spanSelectionPointToBlockOffset({
               context: {
@@ -899,7 +884,6 @@ export const stepDefinitions = [
       })
     },
   ),
-
   /**
    * Mark steps
    */
@@ -919,7 +903,11 @@ export const stepDefinitions = [
   ),
   Then('{string} has no marks', async (context: Context, text: string) => {
     await vi.waitFor(() => {
-      const textMarks = getTextMarks(context.editor.getSnapshot().context, text)
+      const textMarks = getTextMarks(
+        context.editor.getSnapshot().context,
+        text,
+      )
+
       expect(textMarks).toEqual([])
     })
   }),
@@ -935,14 +923,12 @@ export const stepDefinitions = [
       ).toEqual(marksB)
     },
   ),
-
   /**
    * Style steps
    */
   When('{style} is toggled', (context: Context, style: Parameter['style']) => {
     context.editor.send({type: 'style.toggle', style})
   }),
-
   /**
    * Clipboard steps
    */
@@ -979,14 +965,12 @@ export const stepDefinitions = [
       })
     },
   ),
-
   /**
    * Clipboard steps
    */
   When('cut is performed', async () => {
     await userEvent.cut()
   }),
-
   /**
    * Undo/Redo steps
    */
