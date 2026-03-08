@@ -1,4 +1,5 @@
-import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator} from '@portabletext/test'
+import {toTextspec} from '@portabletext/textspec'
 import {describe, expect, test, vi} from 'vitest'
 import {defineSchema, type EditorEmittedEvent} from '../src'
 import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
@@ -173,7 +174,6 @@ describe('event.update value', () => {
 
   test('Scenario: Updating the text of an empty span', async () => {
     const keyGenerator = createTestKeyGenerator()
-
     const span = {_type: 'span', _key: 'span1', text: '', marks: []}
     const emptyFirstLine = {
       _key: 'block1', // Static key
@@ -182,10 +182,12 @@ describe('event.update value', () => {
       style: 'normal' as const,
       markDefs: [],
     }
+
     const populatedFirstLine = {
       ...emptyFirstLine,
       children: [{...span, text: 'e'}], // Same block key, different content
     }
+
     const lastLine = {
       _key: 'block2', // Static key
       _type: 'block',
@@ -226,6 +228,7 @@ describe('event.update value', () => {
   test("Scenario: Updating before 'ready'", async () => {
     const keyGenerator = createTestKeyGenerator()
     const onEvent = vi.fn<() => EditorEmittedEvent>()
+
     const listBlock = {
       _key: keyGenerator(),
       _type: 'block',
@@ -284,6 +287,7 @@ describe('event.update value', () => {
       style: 'h2',
       markDefs: [],
     }
+
     const h1 = {
       _key: keyGenerator(),
       _type: 'block',
@@ -291,6 +295,7 @@ describe('event.update value', () => {
       style: 'h1',
       markDefs: [],
     }
+
     const paragraph = {
       _key: keyGenerator(),
       _type: 'block',
@@ -333,6 +338,7 @@ describe('event.update value', () => {
   test('Scenario: Clearing lonely block object', async () => {
     const keyGenerator = createTestKeyGenerator()
     const imageKey = keyGenerator()
+
     const {editor} = await createTestEditor({
       keyGenerator,
       initialValue: [
@@ -384,6 +390,7 @@ describe('event.update value', () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
+
     const {editor} = await createTestEditor({
       keyGenerator,
       initialValue: [
@@ -455,6 +462,7 @@ describe('event.update value', () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
+
     const {editor} = await createTestEditor({
       keyGenerator,
       initialValue: [
@@ -503,6 +511,7 @@ describe('event.update value', () => {
   test('Scenario: Updating with unknown block object', async () => {
     const keyGenerator = createTestKeyGenerator()
     const events: Array<EditorEmittedEvent> = []
+
     const {editor} = await createTestEditor({
       children: (
         <EventListenerPlugin
@@ -539,7 +548,7 @@ describe('event.update value', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo'])
+      expect(toTextspec(editor.getSnapshot().context)).toBe('P: foo')
     })
 
     await vi.waitFor(() => {
@@ -556,6 +565,7 @@ describe('event.update value', () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
+
     const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition: defineSchema({
@@ -746,6 +756,7 @@ describe('event.update value', () => {
     const keyGenerator = createTestKeyGenerator()
     const imageKey = keyGenerator()
     const emittedEvents: Array<EditorEmittedEvent> = []
+
     const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition: defineSchema({
@@ -813,7 +824,6 @@ describe('event.update value', () => {
 
   test('Scenario: Changing and adding text block children', async () => {
     const keyGenerator = createTestKeyGenerator()
-
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
     const emptySpanKey = keyGenerator()
@@ -878,7 +888,6 @@ describe('event.update value', () => {
 
   test('Scenario: Removing children from a block that is not the first block', async () => {
     const keyGenerator = createTestKeyGenerator()
-
     const block1Key = keyGenerator()
     const span1Key = keyGenerator()
     const block2Key = keyGenerator()
@@ -963,7 +972,6 @@ describe('event.update value', () => {
 
   test('Scenario: Reordering children within a block (same keys, different positions)', async () => {
     const keyGenerator = createTestKeyGenerator()
-
     const blockKey = keyGenerator()
     const spanAKey = keyGenerator()
     const spanBKey = keyGenerator()
