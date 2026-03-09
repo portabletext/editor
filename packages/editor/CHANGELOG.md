@@ -1,5 +1,11 @@
 # Changelog
 
+## 6.2.0
+
+### Minor Changes
+
+- [#2327](https://github.com/portabletext/editor/pull/2327) [`d312abd`](https://github.com/portabletext/editor/commit/d312abd5b07affa20b5defb2fe587a66394e0831) Thanks [@christianhg](https://github.com/christianhg)! - feat: make internal Slate operations patch-compliant
+
 ## 6.1.2
 
 ### Patch Changes
