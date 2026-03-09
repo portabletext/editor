@@ -1,5 +1,7 @@
 import type {PortableTextBlock} from '@portabletext/schema'
+import type {EditorSchema} from '../editor/editor-schema'
 import type {Operation} from '../slate'
+import {resolveArrayFields} from './resolve-container-fields'
 
 /**
  * Separator used to join key segments in serialized key-paths.
@@ -155,17 +157,69 @@ export class InternalBlockPathMap {
 
   /**
    * Full rebuild from value array. Called once on init/reset.
-   * For now, only indexes top-level blocks (same as blockIndexMap).
-   * The serialized key-path for a top-level block is just its `_key`.
+   *
+   * When containers and schema are provided, recurses into container fields
+   * to index nested blocks. The positional path uses one index per keyed
+   * segment: for a block at value[1].rows[0].cells[2], the positional path
+   * is [1, 0, 2].
+   *
+   * Without containers, only indexes top-level blocks (backward compatible).
    */
-  rebuild(value: Array<PortableTextBlock>): void {
+  rebuild(
+    value: Array<PortableTextBlock>,
+    containers?: Set<string>,
+    schema?: EditorSchema,
+  ): void {
     this.map.clear()
-    for (let i = 0; i < value.length; i++) {
-      const block = value[i]
-      if (block !== undefined) {
-        // Top-level block: serialized key-path is just the _key
-        const keyPath = serializeKeyPath([block._key])
-        this.map.set(keyPath, [i])
+    if (containers && containers.size > 0 && schema) {
+      this.indexBlocks(value, [], [], containers, schema)
+    } else {
+      // Backward compatible: top-level only
+      for (let i = 0; i < value.length; i++) {
+        const block = value[i]
+        if (block !== undefined) {
+          this.map.set(serializeKeyPath([block._key]), [i])
+        }
+      }
+    }
+  }
+
+  /**
+   * Recursively index blocks into the map.
+   * For each block, adds an entry with its key-path and positional path,
+   * then recurses into container array fields.
+   */
+  private indexBlocks(
+    blocks: Array<PortableTextBlock>,
+    keyPrefix: string[],
+    pathPrefix: number[],
+    containers: Set<string>,
+    schema: EditorSchema,
+  ): void {
+    for (let i = 0; i < blocks.length; i++) {
+      const block = blocks[i]
+      if (block === undefined) {
+        continue
+      }
+      const keyPath = [...keyPrefix, block._key]
+      const posPath = [...pathPrefix, i]
+      this.map.set(serializeKeyPath(keyPath), posPath)
+
+      // Recurse into container fields
+      if (containers.has(block._type)) {
+        const arrayFields = resolveArrayFields(schema, block._type)
+        for (const fieldName of arrayFields) {
+          const children = (block as Record<string, unknown>)[fieldName]
+          if (Array.isArray(children)) {
+            this.indexBlocks(
+              children as Array<PortableTextBlock>,
+              keyPath,
+              posPath,
+              containers,
+              schema,
+            )
+          }
+        }
       }
     }
   }

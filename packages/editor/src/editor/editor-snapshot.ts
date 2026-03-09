@@ -10,6 +10,7 @@ import type {EditorSchema} from './editor-schema'
  * @public
  */
 export type EditorContext = {
+  containers: Set<string>
   converters: Array<Converter>
   keyGenerator: () => string
   readOnly: boolean
@@ -33,12 +34,14 @@ export type EditorSnapshot = {
 }
 
 export function createEditorSnapshot({
+  containers,
   converters,
   editor,
   keyGenerator,
   readOnly,
   schema,
 }: {
+  containers?: Set<string>
   converters: Array<Converter>
   editor: PortableTextSlateEditor
   keyGenerator: () => string
@@ -54,6 +57,7 @@ export function createEditorSnapshot({
     : null
 
   const context = {
+    containers: containers ?? new Set<string>(),
     converters,
     keyGenerator,
     readOnly,

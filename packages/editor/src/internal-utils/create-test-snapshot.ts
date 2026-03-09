@@ -8,6 +8,7 @@ export function createTestSnapshot(snapshot: {
   decoratorState?: Partial<EditorSnapshot['decoratorState']>
 }): EditorSnapshot {
   const context = {
+    containers: snapshot.context?.containers ?? new Set<string>(),
     converters: snapshot.context?.converters ?? [],
     schema: snapshot.context?.schema ?? compileSchema(defineSchema({})),
     keyGenerator: snapshot.context?.keyGenerator ?? createTestKeyGenerator(),
@@ -22,7 +23,7 @@ export function createTestSnapshot(snapshot: {
     blockIndexMap.set(block._key, index)
   })
 
-  blockPathMap.rebuild(context.value)
+  blockPathMap.rebuild(context.value, context.containers, context.schema)
 
   return {
     blockIndexMap,

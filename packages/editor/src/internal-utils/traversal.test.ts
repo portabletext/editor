@@ -41,9 +41,45 @@ function container(
 
 const schemaWithImage = compileSchema(
   defineSchema({
-    blockObjects: [{name: 'image'}],
+    blockObjects: [
+      {name: 'image'},
+      {
+        name: 'table',
+        fields: [
+          {
+            name: 'rows',
+            type: 'array',
+            of: [
+              {
+                type: 'row',
+                fields: [
+                  {
+                    name: 'cells',
+                    type: 'array',
+                    of: [
+                      {
+                        type: 'cell',
+                        fields: [
+                          {
+                            name: 'content',
+                            type: 'array',
+                            of: [{type: 'block'}],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ],
   }),
 )
+
+const containerTypes = new Set(['table', 'row', 'cell'])
 
 // -- Flat document (top-level only) --
 
@@ -56,7 +92,11 @@ const flatValue: Array<PortableTextBlock> = [
 
 function flatSnapshot() {
   return createTestSnapshot({
-    context: {value: flatValue, schema: schemaWithImage},
+    context: {
+      value: flatValue,
+      schema: schemaWithImage,
+      containers: containerTypes,
+    },
   })
 }
 
@@ -106,7 +146,11 @@ const deepValue: Array<PortableTextBlock> = [p1, table1, p2, img1]
 
 function deepSnapshot() {
   return createTestSnapshot({
-    context: {value: deepValue, schema: schemaWithImage},
+    context: {
+      value: deepValue,
+      schema: schemaWithImage,
+      containers: containerTypes,
+    },
   })
 }
 
@@ -470,7 +514,7 @@ describe('traversal', () => {
     })
   })
 
-  // ---- getNextBlock (cursor-order) ----
+  // ---- getNextBlock (cursor-order, containers opaque) ----
   describe('getNextBlock', () => {
     test('returns next leaf in flat document', () => {
       const snapshot = flatSnapshot()
@@ -485,12 +529,12 @@ describe('traversal', () => {
       expect(getNextBlock(snapshot, [{_key: 'c'}])).toEqual(undefined)
     })
 
-    test('enters container from preceding block', () => {
+    test('returns container from preceding block (does not descend)', () => {
       const snapshot = deepSnapshot()
-      // p1 -> first leaf in table -> nested-p1
+      // p1 -> table-1 (container returned as cursor stop)
       expect(getNextBlock(snapshot, pathP1)).toEqual({
-        node: nestedP1,
-        path: pathNestedP1,
+        node: table1,
+        path: pathTable1,
       })
     })
 
@@ -502,25 +546,25 @@ describe('traversal', () => {
       })
     })
 
-    test('crosses cell boundary', () => {
+    test('walks up to next container sibling at cell boundary', () => {
       const snapshot = deepSnapshot()
-      // nested-p2 (last in cell-1) -> nested-p3 (first in cell-2)
+      // nested-p2 (last in cell-1.content) -> walks up -> cell-2
       expect(getNextBlock(snapshot, pathNestedP2)).toEqual({
-        node: nestedP3,
-        path: pathNestedP3,
+        node: cell2,
+        path: pathCell2,
       })
     })
 
-    test('crosses row boundary', () => {
+    test('walks up to next container sibling at row boundary', () => {
       const snapshot = deepSnapshot()
-      // nested-p3 (last in row-1) -> nested-p4 (first in row-2)
+      // nested-p3 (only in cell-2.content) -> walks up past cell-2, past row-1 -> row-2
       expect(getNextBlock(snapshot, pathNestedP3)).toEqual({
-        node: nestedP4,
-        path: pathNestedP4,
+        node: row2,
+        path: pathRow2,
       })
     })
 
-    test('skips block objects correctly in cursor order', () => {
+    test('returns next leaf block object within cell', () => {
       const snapshot = deepSnapshot()
       // nested-p4 -> nested-img1 (image is a leaf block object)
       expect(getNextBlock(snapshot, pathNestedP4)).toEqual({
@@ -531,7 +575,7 @@ describe('traversal', () => {
 
     test('exits container to following block', () => {
       const snapshot = deepSnapshot()
-      // nested-img1 (last in table) -> p2
+      // nested-img1 (last in table) -> walks up through cell-3, row-2, table-1 -> p2
       expect(getNextBlock(snapshot, pathNestedImg1)).toEqual({
         node: p2,
         path: pathP2,
@@ -552,12 +596,12 @@ describe('traversal', () => {
       expect(getNextBlock(snapshot, pathImg1)).toEqual(undefined)
     })
 
-    test('descends into container when given container path', () => {
+    test('returns next sibling when given container path', () => {
       const snapshot = deepSnapshot()
-      // table-1 -> first leaf -> nested-p1
+      // table-1 -> p2 (does not descend into container)
       expect(getNextBlock(snapshot, pathTable1)).toEqual({
-        node: nestedP1,
-        path: pathNestedP1,
+        node: p2,
+        path: pathP2,
       })
     })
 
@@ -567,7 +611,7 @@ describe('traversal', () => {
     })
   })
 
-  // ---- getPrevBlock (cursor-order) ----
+  // ---- getPrevBlock (cursor-order, containers opaque) ----
   describe('getPrevBlock', () => {
     test('returns previous leaf in flat document', () => {
       const snapshot = flatSnapshot()
@@ -582,12 +626,12 @@ describe('traversal', () => {
       expect(getPrevBlock(snapshot, [{_key: 'a'}])).toEqual(undefined)
     })
 
-    test('enters container from end', () => {
+    test('returns container from following block (does not descend)', () => {
       const snapshot = deepSnapshot()
-      // p2 -> last leaf in table -> nested-img1
+      // p2 -> table-1 (container returned as cursor stop)
       expect(getPrevBlock(snapshot, pathP2)).toEqual({
-        node: nestedImg1,
-        path: pathNestedImg1,
+        node: table1,
+        path: pathTable1,
       })
     })
 
@@ -599,27 +643,27 @@ describe('traversal', () => {
       })
     })
 
-    test('crosses cell boundary backward', () => {
+    test('walks up to prev container sibling at cell boundary', () => {
       const snapshot = deepSnapshot()
-      // nested-p3 (first in cell-2) -> nested-p2 (last in cell-1)
+      // nested-p3 (first in cell-2.content) -> walks up -> cell-1
       expect(getPrevBlock(snapshot, pathNestedP3)).toEqual({
-        node: nestedP2,
-        path: pathNestedP2,
+        node: cell1,
+        path: pathCell1,
       })
     })
 
-    test('crosses row boundary backward', () => {
+    test('walks up to prev container sibling at row boundary', () => {
       const snapshot = deepSnapshot()
-      // nested-p4 (first in row-2) -> nested-p3 (last in row-1)
+      // nested-p4 (first in cell-3.content) -> walks up past cell-3, past row-2 -> row-1
       expect(getPrevBlock(snapshot, pathNestedP4)).toEqual({
-        node: nestedP3,
-        path: pathNestedP3,
+        node: row1,
+        path: pathRow1,
       })
     })
 
     test('exits container to top-level backward', () => {
       const snapshot = deepSnapshot()
-      // nested-p1 (first in table) -> p1
+      // nested-p1 (first in table) -> walks up through cell-1, row-1, table-1 -> p1
       expect(getPrevBlock(snapshot, pathNestedP1)).toEqual({
         node: p1,
         path: pathP1,
