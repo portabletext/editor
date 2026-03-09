@@ -10,12 +10,11 @@ import {
   isSpan,
   isTextBlock,
   type PortableTextBlock,
-  type PortableTextSpan,
+  type PortableTextTextBlock,
 } from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
 import {
   Element,
-  Text,
   type Descendant,
   type InsertNodeOperation,
   type InsertTextOperation,
@@ -24,6 +23,23 @@ import {
   type SetNodeOperation,
 } from '../slate'
 import type {Path} from '../types/paths'
+import {type KeyPath, resolveKeyPath} from './resolve-key-path'
+
+// ---------------------------------------------------------------------------
+// Key-path helpers
+// ---------------------------------------------------------------------------
+
+function withTextField(keyPath: KeyPath): Path {
+  return [...keyPath, 'text']
+}
+
+function withProperty(keyPath: KeyPath, property: string): Path {
+  return [...keyPath, property]
+}
+
+// ---------------------------------------------------------------------------
+// Text patches
+// ---------------------------------------------------------------------------
 
 export function insertTextPatch(
   schema: EditorSchema,
@@ -31,30 +47,30 @@ export function insertTextPatch(
   operation: InsertTextOperation,
   beforeValue: Array<PortableTextBlock>,
 ): Array<Patch> {
-  const block =
-    isTextBlock({schema}, children[operation.path[0]!]) &&
-    children[operation.path[0]!]
-  if (!block) {
+  const keyPath = resolveKeyPath(
+    schema,
+    children as Array<PortableTextBlock>,
+    operation.path,
+  )
+  if (!keyPath || keyPath.length < 3) {
     return []
   }
-  const textChild =
-    isTextBlock({schema}, block) &&
-    isSpan({schema}, block.children[operation.path[1]!]) &&
-    (block.children[operation.path[1]!] as PortableTextSpan)
-  if (!textChild) {
+
+  const block = children[operation.path[0]!]
+  if (!block || !isTextBlock({schema}, block)) {
+    return []
+  }
+  const child = block.children[operation.path[1]!]
+  if (!child || !isSpan({schema}, child)) {
     throw new Error('Could not find child')
   }
-  const path: Path = [
-    {_key: block._key},
-    'children',
-    {_key: textChild._key},
-    'text',
-  ]
+
   const prevBlock = beforeValue[operation.path[0]!]
   const prevChild =
     isTextBlock({schema}, prevBlock) && prevBlock.children[operation.path[1]!]
   const prevText = isSpan({schema}, prevChild) ? prevChild.text : ''
-  const patch = diffMatchPatch(prevText, textChild.text, path)
+
+  const patch = diffMatchPatch(prevText, child.text, withTextField(keyPath))
   return patch.value.length ? [patch] : []
 }
 
@@ -64,193 +80,154 @@ export function removeTextPatch(
   operation: RemoveTextOperation,
   beforeValue: Array<PortableTextBlock>,
 ): Array<Patch> {
+  const keyPath = resolveKeyPath(
+    schema,
+    children as Array<PortableTextBlock>,
+    operation.path,
+  )
+  if (!keyPath || keyPath.length < 3) {
+    return []
+  }
+
   const block = children[operation.path[0]!]
   if (!block || !isTextBlock({schema}, block)) {
     return []
   }
-  const child = block.children[operation.path[1]!] || undefined
-  const textChild: PortableTextSpan | undefined = isSpan({schema}, child)
-    ? child
-    : undefined
-  if (child && !textChild) {
-    throw new Error('Expected span')
-  }
-  if (!textChild) {
+  const child = block.children[operation.path[1]!]
+  if (!child) {
     throw new Error('Could not find child')
   }
-  const path: Path = [
-    {_key: block._key},
-    'children',
-    {_key: textChild._key},
-    'text',
-  ]
+  if (!isSpan({schema}, child)) {
+    throw new Error('Expected span')
+  }
+
   const beforeBlock = beforeValue[operation.path[0]!]
-  const prevTextChild =
+  const prevChild =
     isTextBlock({schema}, beforeBlock) &&
     beforeBlock.children[operation.path[1]!]
-  const prevText = isSpan({schema}, prevTextChild) && prevTextChild.text
-  const patch = diffMatchPatch(prevText || '', textChild.text, path)
+  const prevText = isSpan({schema}, prevChild) ? prevChild.text : ''
+
+  const patch = diffMatchPatch(prevText, child.text, withTextField(keyPath))
   return patch.value ? [patch] : []
 }
+
+// ---------------------------------------------------------------------------
+// Set-node patches
+// ---------------------------------------------------------------------------
 
 export function setNodePatch(
   schema: EditorSchema,
   children: Descendant[],
   operation: SetNodeOperation,
 ): Array<Patch> {
-  const blockIndex = operation.path.at(0)
-
-  if (blockIndex !== undefined && operation.path.length === 1) {
-    const block = children.at(blockIndex)
-
-    if (!block) {
-      console.error('Could not find block at index', blockIndex)
-      return []
-    }
-
-    if (isTextBlock({schema}, block)) {
-      const patches: Patch[] = []
-
-      for (const [key, propertyValue] of Object.entries(
-        operation.newProperties,
-      )) {
-        if (key === '_key') {
-          patches.push(set(propertyValue, [blockIndex, '_key']))
-        } else {
-          patches.push(set(propertyValue, [{_key: block._key}, key]))
-        }
-      }
-
-      for (const key of Object.keys(operation.properties)) {
-        if (!(key in operation.newProperties)) {
-          patches.push(unset([{_key: block._key}, key]))
-        }
-      }
-
-      return patches
-    } else {
-      const patches: Patch[] = []
-
-      const _key = operation.newProperties._key
-
-      if (_key !== undefined) {
-        patches.push(set(_key, [blockIndex, '_key']))
-      }
-
-      for (const [key, propertyValue] of Object.entries(
-        operation.newProperties,
-      )) {
-        if (key === '_key' || key === 'children') {
-          continue
-        }
-
-        patches.push(set(propertyValue, [{_key: block._key}, key]))
-      }
-
-      for (const key of Object.keys(operation.properties)) {
-        if (key === '_key' || key === 'children') {
-          continue
-        }
-
-        if (!(key in operation.newProperties)) {
-          patches.push(unset([{_key: block._key}, key]))
-        }
-      }
-
-      return patches
-    }
-  } else if (operation.path.length === 2) {
-    const block = children[operation.path[0]!]
-    if (isTextBlock({schema}, block)) {
-      const child = block.children[operation.path[1]!]
-      if (child) {
-        const blockKey = block._key
-        const childKey = child._key
-        const patches: Patch[] = []
-
-        if (Element.isElement(child, schema)) {
-          const _key = operation.newProperties._key
-
-          if (_key !== undefined) {
-            patches.push(
-              set(_key, [
-                {_key: blockKey},
-                'children',
-                block.children.indexOf(child),
-                '_key',
-              ]),
-            )
-          }
-
-          for (const [key, propertyValue] of Object.entries(
-            operation.newProperties,
-          )) {
-            if (key === '_key' || key === 'children') {
-              continue
-            }
-
-            patches.push(
-              set(propertyValue, [
-                {_key: blockKey},
-                'children',
-                {_key: childKey},
-                key,
-              ]),
-            )
-          }
-
-          return patches
-        }
-
-        for (const [keyName, propertyValue] of Object.entries(
-          operation.newProperties,
-        )) {
-          if (keyName === '_key') {
-            patches.push(
-              set(propertyValue, [
-                {_key: blockKey},
-                'children',
-                block.children.indexOf(child),
-                keyName,
-              ]),
-            )
-
-            continue
-          }
-
-          patches.push(
-            set(propertyValue, [
-              {_key: blockKey},
-              'children',
-              {_key: childKey},
-              keyName,
-            ]),
-          )
-        }
-
-        const propNames = Object.keys(operation.properties)
-
-        for (const keyName of propNames) {
-          if (keyName in operation.newProperties) {
-            continue
-          }
-
-          patches.push(
-            unset([{_key: blockKey}, 'children', {_key: childKey}, keyName]),
-          )
-        }
-
-        return patches
-      }
-      throw new Error('Could not find a valid child')
-    }
-    throw new Error('Could not find a valid block')
-  } else {
-    throw new Error(
-      `Unexpected path encountered: ${JSON.stringify(operation.path)}`,
-    )
+  if (operation.path.length === 1) {
+    return setBlockNodePatch(schema, children, operation)
   }
+
+  if (operation.path.length === 2) {
+    return setChildNodePatch(schema, children, operation)
+  }
+
+  throw new Error(
+    `Unexpected path encountered: ${JSON.stringify(operation.path)}`,
+  )
 }
+
+function setBlockNodePatch(
+  schema: EditorSchema,
+  children: Descendant[],
+  operation: SetNodeOperation,
+): Array<Patch> {
+  const blockIndex = operation.path[0]!
+  const keyPath = resolveKeyPath(
+    schema,
+    children as Array<PortableTextBlock>,
+    operation.path,
+  )
+
+  if (!keyPath) {
+    console.error('Could not find block at index', blockIndex)
+    return []
+  }
+
+  const block = children[blockIndex]!
+  const skipChildren = !isTextBlock({schema}, block)
+  const patches: Patch[] = []
+
+  for (const [key, value] of Object.entries(operation.newProperties)) {
+    if (key === '_key') {
+      patches.push(set(value, [blockIndex, '_key']))
+    } else if (!skipChildren || key !== 'children') {
+      patches.push(set(value, withProperty(keyPath, key)))
+    }
+  }
+
+  for (const key of Object.keys(operation.properties)) {
+    if (key === '_key' || (skipChildren && key === 'children')) {
+      continue
+    }
+    if (!(key in operation.newProperties)) {
+      patches.push(unset(withProperty(keyPath, key)))
+    }
+  }
+
+  return patches
+}
+
+function setChildNodePatch(
+  schema: EditorSchema,
+  children: Descendant[],
+  operation: SetNodeOperation,
+): Array<Patch> {
+  const keyPath = resolveKeyPath(
+    schema,
+    children as Array<PortableTextBlock>,
+    operation.path,
+  )
+
+  if (!keyPath) {
+    throw new Error('Could not find a valid block or child')
+  }
+
+  const block = children[operation.path[0]!]
+  if (!isTextBlock({schema}, block)) {
+    throw new Error('Could not find a valid block')
+  }
+
+  const child = block.children[operation.path[1]!]
+  if (!child) {
+    throw new Error('Could not find a valid child')
+  }
+
+  const childIndex = block.children.indexOf(child)
+  const blockKey = block._key
+  const isElement = Element.isElement(child, schema)
+  const patches: Patch[] = []
+
+  for (const [key, value] of Object.entries(operation.newProperties)) {
+    if (key === '_key') {
+      patches.push(
+        set(value, [{_key: blockKey}, 'children', childIndex, '_key']),
+      )
+    } else if (!isElement || key !== 'children') {
+      patches.push(set(value, withProperty(keyPath, key)))
+    }
+  }
+
+  if (!isElement) {
+    for (const key of Object.keys(operation.properties)) {
+      if (!(key in operation.newProperties)) {
+        patches.push(unset(withProperty(keyPath, key)))
+      }
+    }
+  }
+
+  return patches
+}
+
+// ---------------------------------------------------------------------------
+// Insert-node patches
+// ---------------------------------------------------------------------------
 
 export function insertNodePatch(
   schema: EditorSchema,
@@ -258,54 +235,71 @@ export function insertNodePatch(
   operation: InsertNodeOperation,
   beforeValue: Array<PortableTextBlock>,
 ): Array<Patch> {
-  const block = beforeValue[operation.path[0]!]
   if (operation.path.length === 1) {
-    const position = operation.path[0] === 0 ? 'before' : 'after'
-    const beforeBlock = beforeValue[operation.path[0]! - 1]
-    const targetKey = operation.path[0] === 0 ? block?._key : beforeBlock?._key
-    if (targetKey) {
-      return [
-        insert([operation.node as PortableTextBlock], position, [
-          {_key: targetKey},
-        ]),
-      ]
-    }
-    return [
-      setIfMissing(beforeValue, []),
-      insert([operation.node as PortableTextBlock], 'before', [
-        operation.path[0]!,
-      ]),
-    ]
-  } else if (
+    return insertBlockNodePatch(schema, operation, beforeValue)
+  }
+
+  const block = beforeValue[operation.path[0]!]
+
+  if (
     isTextBlock({schema}, block) &&
     operation.path.length === 2 &&
     children[operation.path[0]!]
   ) {
-    const position =
-      block.children.length === 0 || !block.children[operation.path[1]! - 1]
-        ? 'before'
-        : 'after'
-    const path =
-      block.children.length <= 1 || !block.children[operation.path[1]! - 1]
-        ? [{_key: block._key}, 'children', 0]
-        : [
-            {_key: block._key},
-            'children',
-            {_key: block.children[operation.path[1]! - 1]!._key},
-          ]
-
-    // Defensive setIfMissing to ensure children array exists before inserting
-    const setIfMissingPatch = setIfMissing([], [{_key: block._key}, 'children'])
-
-    if (Text.isText(operation.node, schema)) {
-      return [setIfMissingPatch, insert([operation.node], position, path)]
-    }
-
-    return [setIfMissingPatch, insert([operation.node], position, path)]
+    return insertChildNodePatch(operation, block)
   }
 
   return []
 }
+
+function insertBlockNodePatch(
+  schema: EditorSchema,
+  operation: InsertNodeOperation,
+  beforeValue: Array<PortableTextBlock>,
+): Array<Patch> {
+  const insertIdx = operation.path[0]!
+  const position = insertIdx === 0 ? 'before' : 'after'
+  const adjacentIdx = insertIdx === 0 ? 0 : insertIdx - 1
+  const adjacentKeyPath = resolveKeyPath(schema, beforeValue, [adjacentIdx])
+
+  if (adjacentKeyPath) {
+    return [
+      insert(
+        [operation.node as PortableTextBlock],
+        position,
+        adjacentKeyPath as Path,
+      ),
+    ]
+  }
+
+  return [
+    setIfMissing(beforeValue, []),
+    insert([operation.node as PortableTextBlock], 'before', [insertIdx]),
+  ]
+}
+
+function insertChildNodePatch(
+  operation: InsertNodeOperation,
+  block: PortableTextTextBlock,
+): Array<Patch> {
+  const childIdx = operation.path[1]!
+  const prevChild = block.children[childIdx - 1]
+  const position =
+    block.children.length === 0 || !prevChild ? 'before' : 'after'
+  const path: Path =
+    block.children.length <= 1 || !prevChild
+      ? [{_key: block._key}, 'children', 0]
+      : [{_key: block._key}, 'children', {_key: prevChild._key}]
+
+  return [
+    setIfMissing([], [{_key: block._key}, 'children']),
+    insert([operation.node], position, path),
+  ]
+}
+
+// ---------------------------------------------------------------------------
+// Remove-node patches
+// ---------------------------------------------------------------------------
 
 export function removeNodePatch(
   schema: EditorSchema,
@@ -313,34 +307,39 @@ export function removeNodePatch(
   operation: RemoveNodeOperation,
 ): Array<Patch> {
   const block = beforeValue[operation.path[0]!]
+
   if (operation.path.length === 1) {
-    // Remove a single block
-    if (block && block._key) {
-      return [unset([{_key: block._key}])]
+    const keyPath = resolveKeyPath(schema, beforeValue, operation.path)
+    if (!keyPath) {
+      throw new Error('Block not found')
     }
-    throw new Error('Block not found')
-  } else if (isTextBlock({schema}, block) && operation.path.length === 2) {
-    const spanToRemove = block.children[operation.path[1]!]
+    return [unset(keyPath as Path)]
+  }
 
-    if (spanToRemove) {
-      const spansMatchingKey = block.children.filter(
-        (span) => span._key === operation.node._key,
-      )
-
-      if (spansMatchingKey.length > 1) {
-        console.warn(
-          `Multiple spans have \`_key\` ${operation.node._key}. It's ambiguous which one to remove.`,
-          JSON.stringify(block, null, 2),
-        )
-        return []
-      }
-
-      return [
-        unset([{_key: block._key}, 'children', {_key: spanToRemove._key}]),
-      ]
-    }
-    return []
-  } else {
+  if (!isTextBlock({schema}, block) || operation.path.length !== 2) {
     return []
   }
+
+  const child = block.children[operation.path[1]!]
+  if (!child) {
+    return []
+  }
+
+  const duplicates = block.children.filter(
+    (span) => span._key === operation.node._key,
+  )
+  if (duplicates.length > 1) {
+    console.warn(
+      `Multiple spans have \`_key\` ${operation.node._key}. It's ambiguous which one to remove.`,
+      JSON.stringify(block, null, 2),
+    )
+    return []
+  }
+
+  const keyPath = resolveKeyPath(schema, beforeValue, operation.path)
+  if (!keyPath) {
+    return []
+  }
+
+  return [unset(keyPath as Path)]
 }
