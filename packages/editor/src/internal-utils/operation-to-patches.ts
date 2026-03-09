@@ -25,10 +25,6 @@ import {
 import type {Path} from '../types/paths'
 import {type KeyPath, resolveKeyPath} from './resolve-key-path'
 
-// ---------------------------------------------------------------------------
-// Key-path helpers
-// ---------------------------------------------------------------------------
-
 function withTextField(keyPath: KeyPath): Path {
   return [...keyPath, 'text']
 }
@@ -36,10 +32,6 @@ function withTextField(keyPath: KeyPath): Path {
 function withProperty(keyPath: KeyPath, property: string): Path {
   return [...keyPath, property]
 }
-
-// ---------------------------------------------------------------------------
-// Text patches
-// ---------------------------------------------------------------------------
 
 export function insertTextPatch(
   schema: EditorSchema,
@@ -110,10 +102,6 @@ export function removeTextPatch(
   const patch = diffMatchPatch(prevText, child.text, withTextField(keyPath))
   return patch.value ? [patch] : []
 }
-
-// ---------------------------------------------------------------------------
-// Set-node patches
-// ---------------------------------------------------------------------------
 
 export function setNodePatch(
   schema: EditorSchema,
@@ -225,10 +213,6 @@ function setChildNodePatch(
   return patches
 }
 
-// ---------------------------------------------------------------------------
-// Insert-node patches
-// ---------------------------------------------------------------------------
-
 export function insertNodePatch(
   schema: EditorSchema,
   children: Descendant[],
@@ -296,10 +280,6 @@ function insertChildNodePatch(
     insert([operation.node], position, path),
   ]
 }
-
-// ---------------------------------------------------------------------------
-// Remove-node patches
-// ---------------------------------------------------------------------------
 
 export function removeNodePatch(
   schema: EditorSchema,
