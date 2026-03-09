@@ -1,5 +1,12 @@
 # Changelog
 
+## 6.0.15
+
+### Patch Changes
+
+- Updated dependencies [[`d312abd`](https://github.com/portabletext/editor/commit/d312abd5b07affa20b5defb2fe587a66394e0831)]:
+  - @portabletext/editor@6.2.0
+
 ## 6.0.14
 
 ### Patch Changes
