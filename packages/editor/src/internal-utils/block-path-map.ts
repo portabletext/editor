@@ -119,7 +119,8 @@ export class InternalBlockPathMap {
    * For nested blocks: `['container', 'nested']`
    */
   get(keyPath: string[]): number[] | undefined {
-    return this.map.get(serializeKeyPath(keyPath))
+    const path = this.map.get(serializeKeyPath(keyPath))
+    return path ? [...path] : undefined
   }
 
   /**

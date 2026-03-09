@@ -7,6 +7,8 @@ import {
   getChildren,
   getContainingContainer,
   getDepth,
+  getFirstLeaf,
+  getLastLeaf,
   getNextBlock,
   getNextSibling,
   getNode,
@@ -835,6 +837,99 @@ describe('traversal', () => {
     test('returns undefined for top-level container', () => {
       const snapshot = deepSnapshot()
       expect(getContainingContainer(snapshot, pathTable1)).toEqual(undefined)
+    })
+  })
+
+  describe('getFirstLeaf', () => {
+    test('returns leaf block as itself', () => {
+      const snapshot = deepSnapshot()
+      expect(getFirstLeaf(snapshot, p1, pathP1)).toEqual({
+        node: p1,
+        path: pathP1,
+      })
+    })
+
+    test('returns first deeply nested leaf from table', () => {
+      const snapshot = deepSnapshot()
+      expect(getFirstLeaf(snapshot, table1, pathTable1)).toEqual({
+        node: nestedP1,
+        path: pathNestedP1,
+      })
+    })
+
+    test('returns first leaf from row', () => {
+      const snapshot = deepSnapshot()
+      expect(getFirstLeaf(snapshot, row1, pathRow1)).toEqual({
+        node: nestedP1,
+        path: pathNestedP1,
+      })
+    })
+
+    test('returns first leaf from cell', () => {
+      const snapshot = deepSnapshot()
+      expect(getFirstLeaf(snapshot, cell2, pathCell2)).toEqual({
+        node: nestedP3,
+        path: pathNestedP3,
+      })
+    })
+
+    test('returns block object leaf (non-container)', () => {
+      const snapshot = deepSnapshot()
+      expect(getFirstLeaf(snapshot, img1, pathImg1)).toEqual({
+        node: img1,
+        path: pathImg1,
+      })
+    })
+
+    test('returns first leaf from second row', () => {
+      const snapshot = deepSnapshot()
+      expect(getFirstLeaf(snapshot, row2, pathRow2)).toEqual({
+        node: nestedP4,
+        path: pathNestedP4,
+      })
+    })
+  })
+
+  describe('getLastLeaf', () => {
+    test('returns leaf block as itself', () => {
+      const snapshot = deepSnapshot()
+      expect(getLastLeaf(snapshot, p2, pathP2)).toEqual({
+        node: p2,
+        path: pathP2,
+      })
+    })
+
+    test('returns last deeply nested leaf from table', () => {
+      const snapshot = deepSnapshot()
+      expect(getLastLeaf(snapshot, table1, pathTable1)).toEqual({
+        node: nestedImg1,
+        path: pathNestedImg1,
+      })
+    })
+
+    test('returns last leaf from row', () => {
+      const snapshot = deepSnapshot()
+      expect(getLastLeaf(snapshot, row1, pathRow1)).toEqual({
+        node: nestedP3,
+        path: pathNestedP3,
+      })
+    })
+
+    test('returns last leaf from cell with mixed content', () => {
+      const snapshot = deepSnapshot()
+      // cell-3 has nested-p4 and nested-img1
+      expect(getLastLeaf(snapshot, cell3, pathCell3)).toEqual({
+        node: nestedImg1,
+        path: pathNestedImg1,
+      })
+    })
+
+    test('returns last leaf from first cell', () => {
+      const snapshot = deepSnapshot()
+      expect(getLastLeaf(snapshot, cell1, pathCell1)).toEqual({
+        node: nestedP2,
+        path: pathNestedP2,
+      })
     })
   })
 })
