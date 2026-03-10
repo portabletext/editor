@@ -266,15 +266,6 @@ export function transformPendingPoint(
     return null
   }
 
-  if (
-    op.type === 'split_node' &&
-    Path.equals(op.path, point.path) &&
-    anchor.offset < op.position &&
-    diff.start < op.position
-  ) {
-    return transformed
-  }
-
   return {
     path: transformed.path,
     offset: transformed.offset + diff.text.length - diff.end + diff.start,

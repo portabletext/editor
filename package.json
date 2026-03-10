@@ -91,6 +91,10 @@
       "@types/react": "$@types/react",
       "@types/react-dom": "$@types/react-dom",
       "@types/react-is": "$@types/react-is"
-    }
+    },
+    "ignoredBuiltDependencies": [
+      "esbuild",
+      "sharp"
+    ]
   }
 }

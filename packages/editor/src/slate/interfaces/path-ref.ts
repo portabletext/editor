@@ -22,13 +22,13 @@ export interface PathRefInterface {
 // eslint-disable-next-line no-redeclare
 export const PathRef: PathRefInterface = {
   transform(ref: PathRef, op: Operation): void {
-    const {current, affinity} = ref
+    const {current} = ref
 
     if (current == null) {
       return
     }
 
-    const path = Path.transform(current, op, {affinity})
+    const path = Path.transform(current, op)
     ref.current = path
 
     if (path == null) {

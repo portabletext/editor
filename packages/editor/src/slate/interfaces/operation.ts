@@ -23,29 +23,6 @@ export type InsertTextOperation = ExtendedType<
   BaseInsertTextOperation
 >
 
-export type BaseMergeNodeOperation = {
-  type: 'merge_node'
-  path: Path
-  position: number
-  properties: Partial<Node>
-}
-
-export type MergeNodeOperation = ExtendedType<
-  'MergeNodeOperation',
-  BaseMergeNodeOperation
->
-
-export type BaseMoveNodeOperation = {
-  type: 'move_node'
-  path: Path
-  newPath: Path
-}
-
-export type MoveNodeOperation = ExtendedType<
-  'MoveNodeOperation',
-  BaseMoveNodeOperation
->
-
 export type BaseRemoveNodeOperation = {
   type: 'remove_node'
   path: Path
@@ -103,25 +80,10 @@ export type SetSelectionOperation = ExtendedType<
   BaseSetSelectionOperation
 >
 
-export type BaseSplitNodeOperation = {
-  type: 'split_node'
-  path: Path
-  position: number
-  properties: Partial<Node>
-}
-
-export type SplitNodeOperation = ExtendedType<
-  'SplitNodeOperation',
-  BaseSplitNodeOperation
->
-
 export type NodeOperation =
   | InsertNodeOperation
-  | MergeNodeOperation
-  | MoveNodeOperation
   | RemoveNodeOperation
   | SetNodeOperation
-  | SplitNodeOperation
 
 export type SelectionOperation = SetSelectionOperation
 
@@ -171,14 +133,6 @@ export const Operation: OperationInterface = {
           typeof value.text === 'string' &&
           Path.isPath(value.path)
         )
-      case 'merge_node':
-        return (
-          typeof value.position === 'number' &&
-          Path.isPath(value.path) &&
-          isObject(value.properties)
-        )
-      case 'move_node':
-        return Path.isPath(value.path) && Path.isPath(value.newPath)
       case 'remove_node':
         return Path.isPath(value.path) && isObject(value.node)
       case 'remove_text':
@@ -199,12 +153,6 @@ export const Operation: OperationInterface = {
           (value.newProperties === null && Range.isRange(value.properties)) ||
           (isObject(value.properties) && isObject(value.newProperties))
         )
-      case 'split_node':
-        return (
-          Path.isPath(value.path) &&
-          typeof value.position === 'number' &&
-          isObject(value.properties)
-        )
       default:
         return false
     }
@@ -224,35 +172,6 @@ export const Operation: OperationInterface = {
 
       case 'insert_text': {
         return {...op, type: 'remove_text'}
-      }
-
-      case 'merge_node': {
-        return {...op, type: 'split_node', path: Path.previous(op.path)}
-      }
-
-      case 'move_node': {
-        const {newPath, path} = op
-
-        // PERF: in this case the move operation is a no-op anyways.
-        if (Path.equals(newPath, path)) {
-          return op
-        }
-
-        // If the move happens completely within a single parent the path and
-        // newPath are stable with respect to each other.
-        if (Path.isSibling(path, newPath)) {
-          return {...op, path: newPath, newPath: path}
-        }
-
-        // If the move does not happen within a single parent it is possible
-        // for the move to impact the true path to the location where the node
-        // was removed from and where it was inserted. We have to adjust for this
-        // and find the original path. We can accomplish this (only in non-sibling)
-        // moves by looking at the impact of the move operation on the node
-        // after the original move path.
-        const inversePath = Path.transform(path, op)!
-        const inverseNewPath = Path.transform(Path.next(path), op)!
-        return {...op, path: inversePath, newPath: inverseNewPath}
       }
 
       case 'remove_node': {
@@ -288,9 +207,7 @@ export const Operation: OperationInterface = {
         }
       }
 
-      case 'split_node': {
-        return {...op, type: 'merge_node', path: Path.next(op.path)}
-      }
+
     }
   },
 }
