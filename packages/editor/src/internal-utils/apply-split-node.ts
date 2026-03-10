@@ -3,27 +3,21 @@ import {
   Element,
   Node as NodeUtils,
   Path,
-  PathRef,
-  Point,
-  PointRef,
-  Range,
-  RangeRef,
   Text,
   type Node,
+  type Point,
 } from '../slate'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
+import {rangeRefAffinities} from './range-ref-affinities'
 
 /**
  * Split a node at the given path and position using only patch-compliant
  * operations (remove_text/remove_node + insert_node).
  *
- * This replaces direct `editor.apply({type: 'split_node', ...})` calls
- * to eliminate split_node from the operation vocabulary.
- *
- * Because split_node has specific ref-transform semantics that can't be
- * replicated by the incremental transforms of the decomposed operations,
- * we pre-transform all active refs with the equivalent split_node operation
- * and then suppress ref transforms for the individual low-level operations.
+ * Because the decomposed operations would produce different ref-transform
+ * semantics than a single split, we pre-transform all active refs with
+ * the split semantics directly and suppress ref transforms for the
+ * individual low-level operations.
  */
 export function applySplitNode(
   editor: PortableTextSlateEditor,
@@ -33,32 +27,74 @@ export function applySplitNode(
 ): void {
   const node = NodeUtils.get(editor, path, editor.schema)
 
-  // Build the equivalent split_node operation for ref transforms
-  const splitOp = {
-    type: 'split_node' as const,
-    path,
-    position,
-    properties,
-  }
-
-  // Pre-transform all refs as if a split_node happened
+  // Pre-transform all refs with split semantics
   for (const ref of Editor.pathRefs(editor)) {
-    PathRef.transform(ref, splitOp)
+    const current = ref.current
+    if (current) {
+      ref.current = transformPathForSplit(
+        current,
+        path,
+        position,
+        ref.affinity ?? 'forward',
+      )
+    }
   }
   for (const ref of Editor.pointRefs(editor)) {
-    PointRef.transform(ref, splitOp)
+    const current = ref.current
+    if (current) {
+      ref.current = transformPointForSplit(
+        current,
+        path,
+        position,
+        ref.affinity ?? 'forward',
+      )
+    }
   }
   for (const ref of Editor.rangeRefs(editor)) {
-    RangeRef.transform(ref, splitOp)
+    const current = ref.current
+    if (current) {
+      const [anchorAffinity, focusAffinity] = rangeRefAffinities(
+        current,
+        ref.affinity,
+      )
+      const anchor = transformPointForSplit(
+        current.anchor,
+        path,
+        position,
+        anchorAffinity ?? 'forward',
+      )
+      const focus = transformPointForSplit(
+        current.focus,
+        path,
+        position,
+        focusAffinity ?? 'forward',
+      )
+      if (anchor && focus) {
+        ref.current = {anchor, focus}
+      } else {
+        ref.current = null
+        ref.unref()
+      }
+    }
   }
 
-  // Pre-transform editor.selection as if a split_node happened
+  // Pre-transform editor.selection
   if (editor.selection) {
-    const sel = {...editor.selection}
-    for (const [point, key] of Range.points(sel)) {
-      sel[key] = Point.transform(point, splitOp)!
+    const anchor = transformPointForSplit(
+      editor.selection.anchor,
+      path,
+      position,
+      'forward',
+    )
+    const focus = transformPointForSplit(
+      editor.selection.focus,
+      path,
+      position,
+      'forward',
+    )
+    if (anchor && focus) {
+      editor.selection = {anchor, focus}
     }
-    editor.selection = sel
   }
 
   // Temporarily remove all refs so the decomposed operations don't
@@ -79,7 +115,6 @@ export function applySplitNode(
       if (Text.isText(node, editor.schema)) {
         const afterText = node.text.slice(position)
         const newNode = {...properties, text: afterText} as Node
-
         editor.apply({
           type: 'remove_text',
           path,
@@ -125,4 +160,66 @@ export function applySplitNode(
       Editor.rangeRefs(editor).add(ref)
     }
   }
+}
+
+/**
+ * Transform a path for a split_node operation.
+ *
+ * When a node at `splitPath` is split at `position`:
+ * - A new sibling appears after the split node, shifting later paths forward
+ * - Children at or after `position` move into the new sibling
+ *
+ * The `affinity` parameter controls what happens when the path equals the
+ * split path: 'forward' moves to the new node, 'backward' stays.
+ */
+function transformPathForSplit(
+  path: Path,
+  splitPath: Path,
+  position: number,
+  affinity: 'forward' | 'backward' = 'forward',
+): Path | null {
+  const p = [...path]
+
+  if (Path.equals(splitPath, p)) {
+    if (affinity === 'forward') {
+      p[p.length - 1] = p[p.length - 1]! + 1
+    }
+    // backward: no change
+  } else if (Path.endsBefore(splitPath, p)) {
+    p[splitPath.length - 1] = p[splitPath.length - 1]! + 1
+  } else if (
+    Path.isAncestor(splitPath, p) &&
+    path[splitPath.length]! >= position
+  ) {
+    p[splitPath.length - 1] = p[splitPath.length - 1]! + 1
+    p[splitPath.length] = p[splitPath.length]! - position
+  }
+
+  return p
+}
+
+/**
+ * Transform a point for a split_node operation.
+ *
+ * If the point is inside the split node and at or after the split position,
+ * it moves into the new node with an adjusted offset.
+ */
+function transformPointForSplit(
+  point: Point,
+  splitPath: Path,
+  position: number,
+  affinity: 'forward' | 'backward' = 'forward',
+): Point | null {
+  let {path, offset} = point
+
+  if (Path.equals(splitPath, path)) {
+    if (position < offset || (position === offset && affinity === 'forward')) {
+      offset -= position
+      path = transformPathForSplit(path, splitPath, position, 'forward')!
+    }
+  } else {
+    path = transformPathForSplit(path, splitPath, position, affinity)!
+  }
+
+  return {path, offset}
 }

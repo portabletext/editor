@@ -57,8 +57,7 @@ export function createNormalizationPlugin(
             debug.normalization('merging spans with same marks')
             withNormalizeNode(editor, () => {
               const mergePath = [childPath[0]!, childPath[1]! + 1]
-              const {text: _text, ...properties} = nextNode
-              applyMergeNode(editor, mergePath, child.text.length, properties)
+              applyMergeNode(editor, mergePath, child.text.length)
             })
             return
           }

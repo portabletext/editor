@@ -235,23 +235,18 @@ export const deleteText: TextTransforms['delete'] = (editor, options = {}) => {
           const emptyRef =
             emptyAncestor && Editor.pathRef(editor, emptyAncestor[1])
 
-          let properties: Partial<Node>
           let position: number
 
           if (
             Text.isText(mergeNode, editor.schema) &&
             Text.isText(prevNode, editor.schema)
           ) {
-            const {text: _text, ...rest} = mergeNode
             position = prevNode.text.length
-            properties = rest
           } else if (
             Element.isElement(mergeNode, editor.schema) &&
             Element.isElement(prevNode, editor.schema)
           ) {
-            const {children: _children, ...rest} = mergeNode
             position = prevNode.children.length
-            properties = rest
           } else {
             throw new Error(
               `Cannot merge the node at path [${mergePath}] with the previous sibling because it is not the same kind: ${Scrubber.stringify(
@@ -297,12 +292,7 @@ export const deleteText: TextTransforms['delete'] = (editor, options = {}) => {
               ]
               applySetNode(pteEditor, {markDefs: newMarkDefs}, targetPath)
             }
-            applyMergeNode(
-              pteEditor,
-              newPath,
-              position,
-              properties as Record<string, unknown>,
-            )
+            applyMergeNode(pteEditor, newPath, position)
           }
 
           if (emptyRef) {

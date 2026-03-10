@@ -87,12 +87,10 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
             n--
           } else if (Text.equals(child, prev, {loose: true})) {
             const mergePath = path.concat(n)
-            const {text: _text, ...properties} = child
             applyMergeNode(
               editor as unknown as PortableTextSlateEditor,
               mergePath,
               prev.text.length,
-              properties,
             )
             element = Node.get(editor, path, editor.schema) as Element
             n--

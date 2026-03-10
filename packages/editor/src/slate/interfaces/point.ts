@@ -110,9 +110,8 @@ export const Point: PointInterface = {
     let {path, offset} = point
 
     switch (op.type) {
-      case 'insert_node':
-      case 'move_node': {
-        path = Path.transform(path, op, options)!
+      case 'insert_node': {
+        path = Path.transform(path, op)!
         break
       }
 
@@ -125,15 +124,6 @@ export const Point: PointInterface = {
           offset += op.text.length
         }
 
-        break
-      }
-
-      case 'merge_node': {
-        if (Path.equals(op.path, path)) {
-          offset += op.position
-        }
-
-        path = Path.transform(path, op, options)!
         break
       }
 
@@ -150,29 +140,7 @@ export const Point: PointInterface = {
           return null
         }
 
-        path = Path.transform(path, op, options)!
-        break
-      }
-
-      case 'split_node': {
-        if (Path.equals(op.path, path)) {
-          if (op.position === offset && affinity == null) {
-            return null
-          } else if (
-            op.position < offset ||
-            (op.position === offset && affinity === 'forward')
-          ) {
-            offset -= op.position
-
-            path = Path.transform(path, op, {
-              ...options,
-              affinity: 'forward',
-            })!
-          }
-        } else {
-          path = Path.transform(path, op, options)!
-        }
-
+        path = Path.transform(path, op)!
         break
       }
 

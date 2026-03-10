@@ -868,8 +868,7 @@ function deleteSameBlockRange(
     Text.isText(startNodeAfter, editor.schema) &&
     Text.isText(endNodeAfter, editor.schema)
   ) {
-    const {text: _, ...properties} = endNodeAfter
-    applyMergeNode(editor, newEndPath, startNodeAfter.text.length, properties)
+    applyMergeNode(editor, newEndPath, startNodeAfter.text.length)
   }
 }
 
@@ -956,13 +955,7 @@ function deleteCrossBlockRange(
         ]
         applySetNode(editor, {markDefs: newMarkDefs}, startBlockPath)
       }
-      const {children: _, ...properties} = endBlock
-      applyMergeNode(
-        editor,
-        adjustedEndBlockPath,
-        startBlock.children.length,
-        properties,
-      )
+      applyMergeNode(editor, adjustedEndBlockPath, startBlock.children.length)
     })
   }
 }

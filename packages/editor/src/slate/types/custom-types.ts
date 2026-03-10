@@ -13,13 +13,10 @@ type ExtendableTypes =
   | 'Operation'
   | 'InsertNodeOperation'
   | 'InsertTextOperation'
-  | 'MergeNodeOperation'
-  | 'MoveNodeOperation'
   | 'RemoveNodeOperation'
   | 'RemoveTextOperation'
   | 'SetNodeOperation'
   | 'SetSelectionOperation'
-  | 'SplitNodeOperation'
 
 export interface CustomTypes {
   [key: string]: unknown
