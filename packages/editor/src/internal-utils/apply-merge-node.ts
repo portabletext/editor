@@ -3,14 +3,10 @@ import {
   Element,
   Node as NodeUtils,
   Path,
-  PathRef,
-  Point,
-  PointRef,
   Range,
-  RangeRef,
   Text,
   type Node,
-  type Operation,
+  type Point,
 } from '../slate'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 
@@ -18,13 +14,10 @@ import type {PortableTextSlateEditor} from '../types/slate-editor'
  * Merge a node at the given path into its previous sibling using only
  * patch-compliant operations (insert_text/insert_node + remove_node).
  *
- * This replaces direct `editor.apply({type: 'merge_node', ...})` calls
- * to eliminate merge_node from the operation vocabulary.
- *
- * Because merge_node has specific ref-transform semantics that can't be
- * replicated by the incremental transforms of the decomposed operations,
- * we pre-transform all active refs with the equivalent merge_node operation
- * and then suppress ref transforms for the individual low-level operations.
+ * Because the decomposed operations would produce different ref-transform
+ * semantics than a single merge, we pre-transform all active refs with
+ * the merge semantics directly and suppress ref transforms for the
+ * individual low-level operations.
  *
  * For text nodes: appends the text to the previous sibling, then removes the node.
  * For element nodes: moves children into the previous sibling, then removes the node.
@@ -33,40 +26,48 @@ export function applyMergeNode(
   editor: PortableTextSlateEditor,
   path: Path,
   position: number,
-  properties: Record<string, unknown>,
 ): void {
   const node = NodeUtils.get(editor, path, editor.schema)
   const prevPath = Path.previous(path)
 
-  // Build the equivalent merge_node operation for ref transforms
-  const mergeOp: Operation = {
-    type: 'merge_node' as const,
-    path,
-    position,
-    properties,
-  }
-
-  // Pre-transform all refs as if a merge_node happened
+  // Pre-transform all refs with merge semantics
   for (const ref of Editor.pathRefs(editor)) {
-    PathRef.transform(ref, mergeOp)
+    const current = ref.current
+    if (current) {
+      ref.current = transformPathForMerge(current, path, position)
+    }
   }
   for (const ref of Editor.pointRefs(editor)) {
-    PointRef.transform(ref, mergeOp)
+    const current = ref.current
+    if (current) {
+      ref.current = transformPointForMerge(current, path, position)
+    }
   }
   for (const ref of Editor.rangeRefs(editor)) {
-    RangeRef.transform(ref, mergeOp)
-  }
-
-  // Pre-transform editor.selection as if a merge_node happened
-  if (editor.selection) {
-    const sel = {...editor.selection}
-    for (const [point, key] of Range.points(sel)) {
-      const result = Point.transform(point, mergeOp)
-      if (result) {
-        sel[key] = result
+    const current = ref.current
+    if (current) {
+      const anchor = transformPointForMerge(current.anchor, path, position)
+      const focus = transformPointForMerge(current.focus, path, position)
+      if (anchor && focus) {
+        ref.current = {anchor, focus}
+      } else {
+        ref.current = null
+        ref.unref()
       }
     }
-    editor.selection = sel
+  }
+
+  // Pre-transform editor.selection
+  if (editor.selection) {
+    const anchor = transformPointForMerge(
+      editor.selection.anchor,
+      path,
+      position,
+    )
+    const focus = transformPointForMerge(editor.selection.focus, path, position)
+    if (anchor && focus) {
+      editor.selection = {anchor, focus}
+    }
   }
 
   // Temporarily remove all refs so the decomposed operations don't
@@ -81,9 +82,8 @@ export function applyMergeNode(
   // Save the pre-transformed selection
   const savedSelection = editor.selection
 
-  // Pre-transform DOM-layer pending state (pendingDiffs, pendingSelection,
-  // pendingAction) with the merge_node operation, then suppress transforms
-  // during the decomposed operations by temporarily clearing them.
+  // Pre-transform DOM-layer pending state with merge semantics, then
+  // suppress transforms during the decomposed operations by clearing them.
   // These properties are added by the DOM plugin at runtime.
   const editorAny = editor as unknown as Record<string, unknown>
   const savedPendingDiffs = editorAny['pendingDiffs']
@@ -97,16 +97,7 @@ export function applyMergeNode(
           diff: {start: number; end: number; text: string}
           id: number
           path: Path
-        }) =>
-          transformTextDiffForMerge(
-            textDiff,
-            mergeOp as {
-              type: 'merge_node'
-              path: Path
-              position: number
-              properties: Record<string, unknown>
-            },
-          ),
+        }) => transformTextDiffForMerge(textDiff, path, position),
       )
       .filter(Boolean)
   }
@@ -118,10 +109,8 @@ export function applyMergeNode(
     'focus' in (savedPendingSelection as Record<string, unknown>)
   ) {
     const sel = savedPendingSelection as Range
-    const anchor = Point.transform(sel.anchor, mergeOp, {
-      affinity: 'backward',
-    })
-    const focus = Point.transform(sel.focus, mergeOp, {affinity: 'backward'})
+    const anchor = transformPointForMerge(sel.anchor, path, position)
+    const focus = transformPointForMerge(sel.focus, path, position)
     editorAny['pendingSelection'] = anchor && focus ? {anchor, focus} : null
   }
 
@@ -131,16 +120,12 @@ export function applyMergeNode(
     'at' in (savedPendingAction as Record<string, unknown>)
   ) {
     const action = savedPendingAction as {at: Point | Range}
-    if (Point.isPoint(action.at)) {
-      const at = Point.transform(action.at, mergeOp, {affinity: 'backward'})
+    if ('offset' in action.at && typeof action.at.offset === 'number') {
+      const at = transformPointForMerge(action.at as Point, path, position)
       editorAny['pendingAction'] = at ? {...action, at} : null
     } else if (Range.isRange(action.at)) {
-      const anchor = Point.transform(action.at.anchor, mergeOp, {
-        affinity: 'backward',
-      })
-      const focus = Point.transform(action.at.focus, mergeOp, {
-        affinity: 'backward',
-      })
+      const anchor = transformPointForMerge(action.at.anchor, path, position)
+      const focus = transformPointForMerge(action.at.focus, path, position)
       editorAny['pendingAction'] =
         anchor && focus ? {...action, at: {anchor, focus}} : null
     }
@@ -206,8 +191,7 @@ export function applyMergeNode(
 }
 
 /**
- * Transform a text diff for a merge_node operation.
- * This replicates the logic from slate-dom's transformTextDiff for merge_node.
+ * Transform a text diff for a merge operation.
  */
 function transformTextDiffForMerge(
   textDiff: {
@@ -215,12 +199,8 @@ function transformTextDiffForMerge(
     id: number
     path: Path
   },
-  op: {
-    type: 'merge_node'
-    path: Path
-    position: number
-    properties: Record<string, unknown>
-  },
+  mergePath: Path,
+  position: number,
 ): {
   diff: {start: number; end: number; text: string}
   id: number
@@ -228,8 +208,8 @@ function transformTextDiffForMerge(
 } | null {
   const {path, diff, id} = textDiff
 
-  if (!Path.equals(op.path, path)) {
-    const newPath = Path.transform(path, op)
+  if (!Path.equals(mergePath, path)) {
+    const newPath = transformPathForMerge(path, mergePath, position)
     if (!newPath) {
       return null
     }
@@ -238,11 +218,57 @@ function transformTextDiffForMerge(
 
   return {
     diff: {
-      start: diff.start + op.position,
-      end: diff.end + op.position,
+      start: diff.start + position,
+      end: diff.end + position,
       text: diff.text,
     },
     id,
-    path: Path.transform(path, op)!,
+    path: transformPathForMerge(path, mergePath, position)!,
   }
+}
+
+/**
+ * Transform a path for a merge_node operation.
+ *
+ * When a node at `mergePath` is merged into its previous sibling:
+ * - The merged node disappears, so paths at or after it shift back by 1
+ * - Children of the merged node move into the previous sibling at `position`
+ */
+function transformPathForMerge(
+  path: Path,
+  mergePath: Path,
+  position: number,
+): Path | null {
+  const p = [...path]
+
+  if (Path.equals(mergePath, p) || Path.endsBefore(mergePath, p)) {
+    p[mergePath.length - 1] = p[mergePath.length - 1]! - 1
+  } else if (Path.isAncestor(mergePath, p)) {
+    p[mergePath.length - 1] = p[mergePath.length - 1]! - 1
+    p[mergePath.length] = p[mergePath.length]! + position
+  }
+
+  return p
+}
+
+/**
+ * Transform a point for a merge_node operation.
+ *
+ * If the point is inside the merged node, its offset shifts by `position`
+ * (the number of children/characters already in the merge target).
+ */
+function transformPointForMerge(
+  point: Point,
+  mergePath: Path,
+  position: number,
+): Point {
+  let {path, offset} = point
+
+  if (Path.equals(mergePath, path)) {
+    offset += position
+  }
+
+  path = transformPathForMerge(path, mergePath, position)!
+
+  return {path, offset}
 }

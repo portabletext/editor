@@ -1,12 +1,4 @@
-import type {
-  InsertNodeOperation,
-  MergeNodeOperation,
-  MoveNodeOperation,
-  Operation,
-  RemoveNodeOperation,
-  SplitNodeOperation,
-} from '..'
-import type {TextDirection} from '../types/types'
+import type {InsertNodeOperation, Operation, RemoveNodeOperation} from '..'
 
 /**
  * `Path` arrays are a list of indexes that describe a node's exact position in
@@ -22,10 +14,6 @@ export interface PathAncestorsOptions {
 
 export interface PathLevelsOptions {
   reverse?: boolean
-}
-
-export interface PathTransformOptions {
-  affinity?: TextDirection | null
 }
 
 export interface PathInterface {
@@ -118,19 +106,11 @@ export interface PathInterface {
 
   /**
    * Returns whether this operation can affect paths or not. Used as an
-   * optimization when updating dirty paths during normalization
-   *
-   * NOTE: This *must* be kept in sync with the implementation of 'transform'
-   * below
+   * optimization when updating dirty paths during normalization.
    */
   operationCanTransformPath: (
     operation: Operation,
-  ) => operation is
-    | InsertNodeOperation
-    | RemoveNodeOperation
-    | MergeNodeOperation
-    | SplitNodeOperation
-    | MoveNodeOperation
+  ) => operation is InsertNodeOperation | RemoveNodeOperation
 
   /**
    * Given a path, return a new path referring to the parent node above it.
@@ -145,11 +125,7 @@ export interface PathInterface {
   /**
    * Transform a path by an operation.
    */
-  transform: (
-    path: Path,
-    operation: Operation,
-    options?: PathTransformOptions,
-  ) => Path | null
+  transform: (path: Path, operation: Operation) => Path | null
 }
 
 // eslint-disable-next-line no-redeclare
@@ -285,18 +261,10 @@ export const Path: PathInterface = {
 
   operationCanTransformPath(
     operation: Operation,
-  ): operation is
-    | InsertNodeOperation
-    | RemoveNodeOperation
-    | MergeNodeOperation
-    | SplitNodeOperation
-    | MoveNodeOperation {
+  ): operation is InsertNodeOperation | RemoveNodeOperation {
     switch (operation.type) {
       case 'insert_node':
       case 'remove_node':
-      case 'merge_node':
-      case 'split_node':
-      case 'move_node':
         return true
       default:
         return false
@@ -329,18 +297,13 @@ export const Path: PathInterface = {
     return path.slice(0, -1).concat(last - 1)
   },
 
-  transform(
-    path: Path | null,
-    operation: Operation,
-    options: PathTransformOptions = {},
-  ): Path | null {
+  transform(path: Path | null, operation: Operation): Path | null {
     if (!path) {
       return null
     }
 
     // PERF: use destructing instead of immer
     const p = [...path]
-    const {affinity = 'forward'} = options
 
     // PERF: Exit early if the operation is guaranteed not to have an effect.
     if (path.length === 0) {
@@ -368,86 +331,6 @@ export const Path: PathInterface = {
         if (Path.equals(op, p) || Path.isAncestor(op, p)) {
           return null
         } else if (Path.endsBefore(op, p)) {
-          p[op.length - 1] = p[op.length - 1]! - 1
-        }
-
-        break
-      }
-
-      case 'merge_node': {
-        const {path: op, position} = operation
-
-        if (Path.equals(op, p) || Path.endsBefore(op, p)) {
-          p[op.length - 1] = p[op.length - 1]! - 1
-        } else if (Path.isAncestor(op, p)) {
-          p[op.length - 1] = p[op.length - 1]! - 1
-          p[op.length] = p[op.length]! + position
-        }
-
-        break
-      }
-
-      case 'split_node': {
-        const {path: op, position} = operation
-
-        if (Path.equals(op, p)) {
-          if (affinity === 'forward') {
-            p[p.length - 1] = p[p.length - 1]! + 1
-          } else if (affinity === 'backward') {
-            // Nothing, because it still refers to the right path.
-          } else {
-            return null
-          }
-        } else if (Path.endsBefore(op, p)) {
-          p[op.length - 1] = p[op.length - 1]! + 1
-        } else if (Path.isAncestor(op, p) && path[op.length]! >= position) {
-          p[op.length - 1] = p[op.length - 1]! + 1
-          p[op.length] = p[op.length]! - position
-        }
-
-        break
-      }
-
-      case 'move_node': {
-        const {path: op, newPath: onp} = operation
-
-        // If the old and new path are the same, it's a no-op.
-        if (Path.equals(op, onp)) {
-          return p
-        }
-
-        if (Path.isAncestor(op, p) || Path.equals(op, p)) {
-          const copy = onp.slice()
-
-          if (Path.endsBefore(op, onp) && op.length < onp.length) {
-            copy[op.length - 1] = copy[op.length - 1]! - 1
-          }
-
-          return copy.concat(p.slice(op.length))
-        } else if (
-          Path.isSibling(op, onp) &&
-          (Path.isAncestor(onp, p) || Path.equals(onp, p))
-        ) {
-          if (Path.endsBefore(op, p)) {
-            p[op.length - 1] = p[op.length - 1]! - 1
-          } else {
-            p[op.length - 1] = p[op.length - 1]! + 1
-          }
-        } else if (
-          Path.endsBefore(onp, p) ||
-          Path.equals(onp, p) ||
-          Path.isAncestor(onp, p)
-        ) {
-          if (Path.endsBefore(op, p)) {
-            p[op.length - 1] = p[op.length - 1]! - 1
-          }
-
-          p[onp.length - 1] = p[onp.length - 1]! + 1
-        } else if (Path.endsBefore(op, p)) {
-          if (Path.equals(onp, p)) {
-            p[onp.length - 1] = p[onp.length - 1]! + 1
-          }
-
           p[op.length - 1] = p[op.length - 1]! - 1
         }
 
