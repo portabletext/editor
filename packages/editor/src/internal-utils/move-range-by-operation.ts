@@ -360,3 +360,112 @@ function adjustPointAfterMerge(
   // when the correct insert_node fires
   return point
 }
+
+/**
+ * Check whether a text operation (`insert_text` or `remove_text`) modifies
+ * content inside a range without shifting the range's boundary points.
+ *
+ * Only text operations are considered. Node-level operations (`set_node`,
+ * `insert_node`, `remove_node`, etc.) are excluded because they either:
+ * - Shift boundary paths → already caught by `onMoved` with `reason: 'moved'`
+ * - Are Slate normalization noise (e.g. `set_node` adding default `marks`
+ *   or `markDefs` to untouched blocks/spans)
+ *
+ * Call this only when the boundary points didn't move (i.e., the range
+ * transform returned the original range unchanged).
+ */
+export function isOperationInsideRange(
+  operation: Operation,
+  range: Range,
+): boolean {
+  if (operation.type !== 'insert_text' && operation.type !== 'remove_text') {
+    return false
+  }
+
+  const opBlockIndex = operation.path[0]
+  const opChildIndex = operation.path[1] ?? 0
+
+  if (opBlockIndex === undefined) {
+    return false
+  }
+
+  const startPoint = Point.isBefore(range.anchor, range.focus)
+    ? range.anchor
+    : range.focus
+  const endPoint = startPoint === range.anchor ? range.focus : range.anchor
+
+  const startBlock = startPoint.path[0]
+  const endBlock = endPoint.path[0]
+
+  if (startBlock === undefined || endBlock === undefined) {
+    return false
+  }
+
+  // Operation on an interior block (strictly between start and end blocks)
+  if (opBlockIndex > startBlock && opBlockIndex < endBlock) {
+    return true
+  }
+
+  // Range within a single block
+  if (startBlock === endBlock) {
+    if (opBlockIndex !== startBlock) {
+      return false
+    }
+
+    const startChild = startPoint.path[1] ?? 0
+    const endChild = endPoint.path[1] ?? 0
+
+    if (opChildIndex > startChild && opChildIndex < endChild) {
+      return true
+    }
+
+    if (opChildIndex === startChild && opChildIndex === endChild) {
+      return (
+        operation.offset > startPoint.offset &&
+        operation.offset < endPoint.offset
+      )
+    }
+
+    if (opChildIndex === startChild) {
+      return operation.offset > startPoint.offset
+    }
+
+    if (opChildIndex === endChild) {
+      return operation.offset < endPoint.offset
+    }
+
+    return false
+  }
+
+  // Multi-block range: check if op is after the start point
+  if (opBlockIndex === startBlock) {
+    const pointChild = startPoint.path[1] ?? 0
+
+    if (opChildIndex > pointChild) {
+      return true
+    }
+
+    if (opChildIndex === pointChild) {
+      return operation.offset > startPoint.offset
+    }
+
+    return false
+  }
+
+  // Multi-block range: check if op is before the end point
+  if (opBlockIndex === endBlock) {
+    const pointChild = endPoint.path[1] ?? 0
+
+    if (opChildIndex < pointChild) {
+      return true
+    }
+
+    if (opChildIndex === pointChild) {
+      return operation.offset < endPoint.offset
+    }
+
+    return false
+  }
+
+  return false
+}

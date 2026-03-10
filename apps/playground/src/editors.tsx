@@ -21,6 +21,10 @@ export function Editors(props: {playgroundRef: PlaygroundActorRef}) {
     props.playgroundRef,
     (s) => s.context.remoteFixUp,
   )
+  const activeDecorationId = useSelector(
+    props.playgroundRef,
+    (s) => s.context.activeDecorationId,
+  )
 
   return (
     <div className="p-3 md:p-4 flex-1 min-w-0">
@@ -38,6 +42,16 @@ export function Editors(props: {playgroundRef: PlaygroundActorRef}) {
                 key={editor.id}
                 editorRef={editor}
                 rangeDecorations={rangeDecorations}
+                activeDecorationId={activeDecorationId}
+                onSetActiveDecoration={(decorationId) =>
+                  props.playgroundRef.send({
+                    type: 'set active decoration',
+                    decorationId,
+                  })
+                }
+                onClearActiveDecoration={() =>
+                  props.playgroundRef.send({type: 'clear active decoration'})
+                }
                 remoteFixUp={remoteFixUp}
                 onToggleRemoteFixUp={() =>
                   props.playgroundRef.send({type: 'toggle remote fix-up'})

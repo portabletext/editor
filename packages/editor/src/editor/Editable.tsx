@@ -203,7 +203,10 @@ export const PortableTextEditable = forwardRef<
   const renderLeaf = useCallback(
     (
       leafProps: RenderLeafProps & {
-        leaf: Text & {placeholder?: boolean; rangeDecoration?: RangeDecoration}
+        leaf: Text & {
+          placeholder?: boolean
+          rangeDecorations?: RangeDecoration[]
+        }
       },
     ) => (
       <RenderLeaf

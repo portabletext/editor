@@ -22,7 +22,7 @@ const PLACEHOLDER_STYLE: CSSProperties = {
 
 export function RenderLeaf(
   props: RenderLeafProps & {
-    leaf: Text & {placeholder?: boolean; rangeDecoration?: RangeDecoration}
+    leaf: Text & {placeholder?: boolean; rangeDecorations?: RangeDecoration[]}
     readOnly: boolean
     renderAnnotation?: RenderAnnotationFunction
     renderChild?: RenderChildFunction
@@ -54,10 +54,13 @@ export function RenderLeaf(
     )
   }
 
-  const rangeDecoration = props.leaf.rangeDecoration
+  const rangeDecorations = props.leaf.rangeDecorations
 
-  if (rangeDecoration) {
-    renderedSpan = rangeDecoration.component({children: renderedSpan})
+  if (rangeDecorations) {
+    for (const rangeDecoration of rangeDecorations) {
+      const DecorationComponent = rangeDecoration.component
+      renderedSpan = <DecorationComponent>{renderedSpan}</DecorationComponent>
+    }
   }
 
   return renderedSpan

@@ -7,10 +7,19 @@ import {
   type RangeDecorationOnMovedDetails,
 } from '@portabletext/editor'
 import {TextCursorIcon} from 'lucide-react'
-import {useCallback, useRef} from 'react'
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useRef,
+  type PropsWithChildren,
+  type RefObject,
+} from 'react'
 import {TooltipTrigger} from 'react-aria-components'
 import {Button} from './primitives/button'
 import {Tooltip} from './primitives/tooltip'
+
+export const ActiveDecorationContext = createContext<string | null>(null)
 
 let nextDecorationId = 1
 
@@ -121,6 +130,9 @@ function findTextInDocument(
 export function RangeDecorationButton(props: {
   onAddRangeDecoration: (rangeDecoration: RangeDecoration) => void
   onRangeDecorationMoved: (details: RangeDecorationOnMovedDetails) => void
+  activeDecorationId: string | null
+  onSetActiveDecoration: (decorationId: string) => void
+  onClearActiveDecoration: () => void
   remoteFixUp: boolean
 }) {
   const editor = useEditor()
@@ -129,9 +141,18 @@ export function RangeDecorationButton(props: {
     (snapshot) => snapshot.context.readOnly || !snapshot.context.selection,
   )
 
-  // Use refs so the onMoved closure always reads current values
+  // Use refs so closures always read current values
   const remoteFixUpRef = useRef(props.remoteFixUp)
   remoteFixUpRef.current = props.remoteFixUp
+
+  const activeDecorationIdRef = useRef(props.activeDecorationId)
+  activeDecorationIdRef.current = props.activeDecorationId
+
+  const onSetActiveDecorationRef = useRef(props.onSetActiveDecoration)
+  onSetActiveDecorationRef.current = props.onSetActiveDecoration
+
+  const onClearActiveDecorationRef = useRef(props.onClearActiveDecoration)
+  onClearActiveDecorationRef.current = props.onClearActiveDecoration
 
   const onPress = useCallback(() => {
     const snapshot = editor.getSnapshot()
@@ -142,9 +163,14 @@ export function RangeDecorationButton(props: {
     const originalText = getSelectedText(value, selection)
 
     const decorationId = nextDecorationId++
+    const id = `decoration-${decorationId}`
     props.onAddRangeDecoration({
-      id: `decoration-${decorationId}`,
-      component: createRangeComponent(decorationId),
+      id,
+      component: createRangeComponent(id, decorationId, {
+        activeDecorationIdRef,
+        onSetActiveDecorationRef,
+        onClearActiveDecorationRef,
+      }),
       selection,
       payload: {originalText},
       onMoved: (details) => {
@@ -192,19 +218,60 @@ export function RangeDecorationButton(props: {
 }
 
 const RANGE_COLORS = [
-  'bg-green-200 border-green-600 dark:bg-green-900/50 dark:border-green-400',
-  'bg-blue-200 border-blue-600 dark:bg-blue-900/50 dark:border-blue-400',
-  'bg-purple-200 border-purple-600 dark:bg-purple-900/50 dark:border-purple-400',
-  'bg-amber-200 border-amber-600 dark:bg-amber-900/50 dark:border-amber-400',
-  'bg-pink-200 border-pink-600 dark:bg-pink-900/50 dark:border-pink-400',
-  'bg-cyan-200 border-cyan-600 dark:bg-cyan-900/50 dark:border-cyan-400',
-  'bg-red-200 border-red-600 dark:bg-red-900/50 dark:border-red-400',
-  'bg-teal-200 border-teal-600 dark:bg-teal-900/50 dark:border-teal-400',
+  'bg-green-200/80 dark:bg-green-900/40',
+  'bg-blue-200/80 dark:bg-blue-900/40',
+  'bg-purple-200/80 dark:bg-purple-900/40',
+  'bg-amber-200/80 dark:bg-amber-900/40',
+  'bg-pink-200/80 dark:bg-pink-900/40',
+  'bg-cyan-200/80 dark:bg-cyan-900/40',
+  'bg-red-200/80 dark:bg-red-900/40',
+  'bg-teal-200/80 dark:bg-teal-900/40',
 ]
 
-function createRangeComponent(colorIndex: number) {
+interface RangeComponentRefs {
+  activeDecorationIdRef: RefObject<string | null>
+  onSetActiveDecorationRef: RefObject<(id: string) => void>
+  onClearActiveDecorationRef: RefObject<() => void>
+}
+
+function createRangeComponent(
+  decorationId: string,
+  colorIndex: number,
+  refs: RangeComponentRefs,
+) {
   const color = RANGE_COLORS[colorIndex % RANGE_COLORS.length]
-  return function RangeComponent(props: React.PropsWithChildren<unknown>) {
-    return <span className={`border ${color}`}>{props.children}</span>
+  return function RangeComponent(props: PropsWithChildren) {
+    const activeId = useContext(ActiveDecorationContext)
+    const isActive = activeId === decorationId
+    const dimmed = activeId !== null && !isActive
+
+    return (
+      <span
+        data-decoration-id={decorationId}
+        className={`${color} ${dimmed ? 'dimmed' : ''}`}
+        onMouseOver={(event) => {
+          event.stopPropagation()
+          if (activeId !== null && activeId !== decorationId) {
+            if (
+              event.currentTarget.closest(`[data-decoration-id="${activeId}"]`)
+            ) {
+              return
+            }
+          }
+          refs.onSetActiveDecorationRef.current(decorationId)
+        }}
+        onMouseOut={(event) => {
+          event.stopPropagation()
+          if (!isActive) return
+          const related = event.relatedTarget as HTMLElement | null
+          if (related?.closest?.(`[data-decoration-id="${decorationId}"]`)) {
+            return
+          }
+          refs.onClearActiveDecorationRef.current()
+        }}
+      >
+        {props.children}
+      </span>
+    )
   }
 }

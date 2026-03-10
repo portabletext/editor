@@ -10,6 +10,10 @@ export function RangeDecorationDebugger(props: {
     props.playgroundRef,
     (s) => s.context.rangeDecorations,
   )
+  const activeDecorationId = useSelector(
+    props.playgroundRef,
+    (s) => s.context.activeDecorationId,
+  )
 
   if (rangeDecorations.length === 0) {
     return (
@@ -32,21 +36,43 @@ export function RangeDecorationDebugger(props: {
         {rangeDecorations.length !== 1 ? 's' : ''}
       </div>
       {rangeDecorations.map((decoration, index) => {
-        const id =
+        const payloadId =
           typeof decoration.payload?.id === 'string'
             ? decoration.payload.id
             : String(index)
+        const decorationId = decoration.id
+        const isActive =
+          decorationId != null && decorationId === activeDecorationId
+
         return (
-          <div
-            key={id}
-            className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 bg-gray-50 dark:bg-gray-800/50"
+          <button
+            key={payloadId}
+            type="button"
+            className={`w-full text-left border rounded-lg p-3 transition-colors cursor-pointer ${
+              isActive
+                ? 'border-blue-400 dark:border-blue-500 bg-blue-50 dark:bg-blue-900/30 ring-1 ring-blue-400 dark:ring-blue-500'
+                : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 hover:border-gray-300 dark:hover:border-gray-600'
+            }`}
+            onClick={() => {
+              if (!decorationId) return
+              if (isActive) {
+                props.playgroundRef.send({type: 'clear active decoration'})
+              } else {
+                props.playgroundRef.send({
+                  type: 'set active decoration',
+                  decorationId,
+                })
+              }
+            }}
           >
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
                 Decoration #{index + 1}
               </span>
-              {id && (
-                <span className="text-xs text-gray-400 font-mono">{id}</span>
+              {payloadId && (
+                <span className="text-xs text-gray-400 font-mono">
+                  {payloadId}
+                </span>
               )}
             </div>
 
@@ -71,7 +97,7 @@ export function RangeDecorationDebugger(props: {
                 No selection (decoration will be removed)
               </div>
             )}
-          </div>
+          </button>
         )
       })}
     </div>

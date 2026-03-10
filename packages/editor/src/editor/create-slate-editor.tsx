@@ -33,6 +33,7 @@ export function createSlateEditor(config: SlateEditorConfig): SlateEditor {
 
   editor.decoratedRanges = []
   editor.preBatchDecorationRanges = new Map()
+  editor.batchContentChangedDecorations = new Set()
   editor.decoratorState = {}
   editor.blockIndexMap = new Map<string, number>()
   editor.history = {undos: [], redos: []}

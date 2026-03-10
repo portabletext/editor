@@ -288,6 +288,18 @@ export interface RangeDecorationOnMovedDetails {
   previousSelection: EditorSelection
   newSelection: EditorSelection
   origin: 'remote' | 'local'
+  /**
+   * Why the callback fired.
+   *
+   * - `'moved'` — the range's boundary points (anchor/focus) shifted due to
+   *   an editing operation, or the range was invalidated (`newSelection` is
+   *   `null`).
+   * - `'contentChanged'` — the boundary points are unchanged, but content
+   *   inside the range was modified (text edits, node changes, etc.).
+   *   `previousSelection` and `newSelection` will be identical.
+   *   The return value is ignored for this reason.
+   */
+  reason: 'moved' | 'contentChanged'
 }
 /**
  * A range decoration is a UI affordance that wraps a given selection range in the editor

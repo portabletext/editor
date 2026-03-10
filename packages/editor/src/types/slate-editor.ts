@@ -96,6 +96,12 @@ export interface PortableTextSlateEditor extends ReactEditor {
     RangeDecoration,
     {range: Range | null; selection: EditorSelection}
   >
+  /**
+   * Tracks decorations whose interior content was modified during a remote
+   * batch. Populated by the `move range decorations` action when callbacks
+   * are suppressed; consumed and cleared by `reconcile range decorations`.
+   */
+  batchContentChangedDecorations: Set<RangeDecoration>
   decoratorState: Record<string, boolean | undefined>
   blockIndexMap: Map<string, number>
   history: History

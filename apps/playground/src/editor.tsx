@@ -73,13 +73,19 @@ import {ErrorScreen} from './primitives/error-screen'
 import {Spinner} from './primitives/spinner'
 import {ToggleButton} from './primitives/toggle-button'
 import {Tooltip} from './primitives/tooltip'
-import {RangeDecorationButton} from './range-decoration-button'
+import {
+  ActiveDecorationContext,
+  RangeDecorationButton,
+} from './range-decoration-button'
 import {SlashCommandPickerPlugin} from './slash-command-picker'
 import {PortableTextToolbar} from './toolbar/portable-text-toolbar'
 
 export function Editor(props: {
   editorRef: EditorActorRef
   rangeDecorations: RangeDecoration[]
+  activeDecorationId: string | null
+  onSetActiveDecoration: (decorationId: string) => void
+  onClearActiveDecoration: () => void
   remoteFixUp: boolean
   onToggleRemoteFixUp: () => void
 }) {
@@ -148,6 +154,9 @@ export function Editor(props: {
                       details,
                     })
                   }}
+                  activeDecorationId={props.activeDecorationId}
+                  onSetActiveDecoration={props.onSetActiveDecoration}
+                  onClearActiveDecoration={props.onClearActiveDecoration}
                   remoteFixUp={props.remoteFixUp}
                 />
               </PortableTextToolbar>
@@ -191,17 +200,21 @@ export function Editor(props: {
                 onError={console.error}
               >
                 <EditorFeatureFlagsContext.Provider value={featureFlags}>
-                  <PortableTextEditable
-                    className={`rounded-b-md outline-none data-[read-only=true]:opacity-50 px-2 h-75 -mx-2 -mb-2 overflow-auto flex-1 ${featureFlags.dragHandles ? 'ps-5' : ''}`}
-                    rangeDecorations={props.rangeDecorations}
-                    renderAnnotation={renderAnnotation}
-                    renderBlock={RenderBlock}
-                    renderChild={renderChild}
-                    renderDecorator={renderDecorator}
-                    renderListItem={renderListItem}
-                    renderPlaceholder={renderPlaceholder}
-                    renderStyle={renderStyle}
-                  />
+                  <ActiveDecorationContext.Provider
+                    value={props.activeDecorationId}
+                  >
+                    <PortableTextEditable
+                      className={`rounded-b-md outline-none data-[read-only=true]:opacity-50 px-2 h-75 -mx-2 -mb-2 overflow-auto flex-1 ${featureFlags.dragHandles ? 'ps-5' : ''}`}
+                      rangeDecorations={props.rangeDecorations}
+                      renderAnnotation={renderAnnotation}
+                      renderBlock={RenderBlock}
+                      renderChild={renderChild}
+                      renderDecorator={renderDecorator}
+                      renderListItem={renderListItem}
+                      renderPlaceholder={renderPlaceholder}
+                      renderStyle={renderStyle}
+                    />
+                  </ActiveDecorationContext.Provider>
                 </EditorFeatureFlagsContext.Provider>
               </ErrorBoundary>
               {loading ? <Spinner /> : null}
