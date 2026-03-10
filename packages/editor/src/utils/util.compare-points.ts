@@ -1,4 +1,5 @@
 import {isTextBlock} from '@portabletext/schema'
+import {getIndexForKey} from '@sanity/json-match'
 import type {EditorSnapshot} from '../editor/editor-snapshot'
 import type {EditorSelectionPoint} from '../types/editor'
 import {
@@ -29,8 +30,8 @@ export function comparePoints(
     throw new Error(`Cannot compare points: no block key found for ${pointB}`)
   }
 
-  const blockIndexA = snapshot.blockIndexMap.get(blockKeyA)
-  const blockIndexB = snapshot.blockIndexMap.get(blockKeyB)
+  const blockIndexA = getIndexForKey(snapshot.context.value, blockKeyA)
+  const blockIndexB = getIndexForKey(snapshot.context.value, blockKeyB)
 
   if (blockIndexA === undefined) {
     throw new Error(`Cannot compare points: block "${blockKeyA}" not found`)

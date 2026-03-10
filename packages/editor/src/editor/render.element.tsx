@@ -1,5 +1,6 @@
 import type {PortableTextBlock} from '@portabletext/schema'
 import {isTextBlock} from '@portabletext/schema'
+import {getIndexForKey} from '@sanity/json-match'
 import {useSelector} from '@xstate/react'
 import {useContext, type ReactElement} from 'react'
 import type {DropPosition} from '../behaviors/behavior.core.drop-position'
@@ -48,7 +49,7 @@ export function RenderElement(props: {
     )
   }
 
-  const blockIndex = slateStatic.blockIndexMap.get(props.element._key)
+  const blockIndex = getIndexForKey(slateStatic.children as Array<PortableTextBlock>, props.element._key)
   const block =
     blockIndex !== undefined
       ? (slateStatic.children as Array<PortableTextBlock>).at(blockIndex)

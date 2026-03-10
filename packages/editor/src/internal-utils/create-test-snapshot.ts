@@ -14,14 +14,8 @@ export function createTestSnapshot(snapshot: {
     value: snapshot.context?.value ?? [],
     selection: snapshot.context?.selection ?? null,
   }
-  const blockIndexMap = new Map<string, number>()
-
-  snapshot.context?.value?.forEach((block, index) => {
-    blockIndexMap.set(block._key, index)
-  })
 
   return {
-    blockIndexMap,
     context,
     decoratorState: snapshot?.decoratorState ?? {},
   }

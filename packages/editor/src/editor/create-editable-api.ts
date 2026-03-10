@@ -4,6 +4,7 @@ import {
   type PortableTextChild,
   type PortableTextObject,
 } from '@portabletext/schema'
+import {getIndexForKey} from '@sanity/json-match'
 import {
   isListItemActive,
   isStyleActive,
@@ -249,7 +250,7 @@ export function createEditableAPI(
         return [undefined, undefined]
       }
 
-      const blockIndex = editor.blockIndexMap.get(blockKey)
+      const blockIndex = getIndexForKey(editor.children as Array<PortableTextBlock>, blockKey)
 
       if (blockIndex === undefined) {
         return [undefined, undefined]
@@ -502,7 +503,6 @@ export function createEditableAPI(
           value: editor.children as Array<PortableTextBlock>,
           selection: selectionA,
         },
-        blockIndexMap: editor.blockIndexMap,
       })
       const rangeB = toSlateRange({
         context: {
@@ -510,7 +510,6 @@ export function createEditableAPI(
           value: editor.children as Array<PortableTextBlock>,
           selection: selectionB,
         },
-        blockIndexMap: editor.blockIndexMap,
       })
 
       // Make sure the ranges are valid

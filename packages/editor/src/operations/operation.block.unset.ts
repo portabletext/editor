@@ -1,4 +1,5 @@
-import {isTextBlock} from '@portabletext/schema'
+import {isTextBlock, type PortableTextBlock} from '@portabletext/schema'
+import {getIndexForKey} from '@sanity/json-match'
 import {applySetNode} from '../internal-utils/apply-set-node'
 import type {OperationImplementation} from './operation.types'
 
@@ -6,7 +7,7 @@ export const blockUnsetOperationImplementation: OperationImplementation<
   'block.unset'
 > = ({context, operation}) => {
   const blockKey = operation.at[0]._key
-  const blockIndex = operation.editor.blockIndexMap.get(blockKey)
+  const blockIndex = getIndexForKey(operation.editor.children as Array<PortableTextBlock>, blockKey)
 
   if (blockIndex === undefined) {
     throw new Error(`Unable to find block index for block key ${blockKey}`)

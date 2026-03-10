@@ -1,7 +1,8 @@
 import type {PortableTextBlock} from '@portabletext/schema'
 import {isTextBlock} from '@portabletext/schema'
+import {getIndexForKey} from '@sanity/json-match'
 import type {EditorActor} from '../editor/editor-machine'
-import type {EditorContext, EditorSnapshot} from '../editor/editor-snapshot'
+import type {EditorContext} from '../editor/editor-snapshot'
 import {applySetNode} from '../internal-utils/apply-set-node'
 import {Editor, Element, Node, type Path} from '../slate'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
@@ -47,7 +48,6 @@ export function createUniqueKeysPlugin(editorActor: EditorActor) {
             operation.node._key &&
             keyExistsAtPath(
               {
-                blockIndexMap: editor.blockIndexMap,
                 context: {
                   schema: context.schema,
                   value: editor.children as Array<PortableTextBlock>,
@@ -178,14 +178,14 @@ export function createUniqueKeysPlugin(editorActor: EditorActor) {
 }
 
 function keyExistsAtPath(
-  snapshot: Pick<EditorSnapshot, 'blockIndexMap'> & {
+  snapshot: {
     context: Pick<EditorContext, 'schema' | 'value'>
   },
   path: Path,
   key: string,
 ): boolean {
   if (path.length === 1) {
-    return snapshot.blockIndexMap.has(key)
+    return getIndexForKey(snapshot.context.value, key) !== undefined
   }
 
   if (path.length > 2) {

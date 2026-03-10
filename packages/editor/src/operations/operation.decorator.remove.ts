@@ -17,7 +17,6 @@ export const decoratorRemoveOperationImplementation: OperationImplementation<
           value: operation.editor.children as Array<PortableTextBlock>,
           selection: operation.at,
         },
-        blockIndexMap: operation.editor.blockIndexMap,
       })
     : editor.selection
 

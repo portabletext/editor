@@ -4,7 +4,8 @@ import {
   type PortableTextObject,
   type PortableTextSpan,
 } from '@portabletext/schema'
-import type {EditorContext, EditorSnapshot} from '../editor/editor-snapshot'
+import {getIndexForKey} from '@sanity/json-match'
+import type {EditorContext} from '../editor/editor-snapshot'
 import type {Path, Range} from '../slate'
 import type {EditorSelectionPoint} from '../types/editor'
 import {blockOffsetToSpanSelectionPoint} from '../utils/util.block-offset'
@@ -14,11 +15,9 @@ import {
   getChildKeyFromSelectionPoint,
 } from '../utils/util.selection-point'
 
-export function toSlateRange(
-  snapshot: {
-    context: Pick<EditorContext, 'schema' | 'value' | 'selection'>
-  } & Pick<EditorSnapshot, 'blockIndexMap'>,
-): Range | null {
+export function toSlateRange(snapshot: {
+  context: Pick<EditorContext, 'schema' | 'value' | 'selection'>
+}): Range | null {
   if (!snapshot.context.selection) {
     return null
   }
@@ -69,7 +68,7 @@ export function toSlateRange(
 export function toSlateSelectionPoint(
   snapshot: {
     context: Pick<EditorContext, 'schema' | 'value'>
-  } & Pick<EditorSnapshot, 'blockIndexMap'>,
+  },
   selectionPoint: EditorSelectionPoint,
   direction: 'forward' | 'backward',
 ):
@@ -84,7 +83,7 @@ export function toSlateSelectionPoint(
     return undefined
   }
 
-  const blockIndex = snapshot.blockIndexMap.get(blockKey)
+  const blockIndex = getIndexForKey(snapshot.context.value, blockKey)
 
   if (blockIndex === undefined) {
     return undefined

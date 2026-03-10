@@ -68,7 +68,6 @@ export function insertBlock(options: {
           value: editor.children as Array<PortableTextBlock>,
           selection: options.at,
         },
-        blockIndexMap: editor.blockIndexMap,
       })
     : editor.selection
 

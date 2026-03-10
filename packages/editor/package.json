@@ -91,6 +91,7 @@
     "@portabletext/patches": "workspace:^",
     "@portabletext/schema": "workspace:^",
     "@portabletext/to-html": "^5.0.2",
+    "@sanity/json-match": "^1.0.5",
     "@xstate/react": "^6.1.0",
     "debug": "^4.4.3",
     "scroll-into-view-if-needed": "^3.1.0",

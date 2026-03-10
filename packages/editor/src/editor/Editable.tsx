@@ -247,7 +247,6 @@ export const PortableTextEditable = forwardRef<
             value: slateEditor.children as Array<PortableTextBlock>,
             selection: normalizedSelection,
           },
-          blockIndexMap: slateEditor.blockIndexMap,
         })
         if (slateRange) {
           slateEditor.select(slateRange)

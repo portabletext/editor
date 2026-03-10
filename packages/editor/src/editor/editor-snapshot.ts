@@ -22,7 +22,6 @@ export type EditorContext = {
  */
 export type EditorSnapshot = {
   context: EditorContext
-  blockIndexMap: Map<string, number>
   /**
    * @beta
    * Subject to change
@@ -61,7 +60,6 @@ export function createEditorSnapshot({
   } satisfies EditorContext
 
   return {
-    blockIndexMap: editor.blockIndexMap,
     context,
     decoratorState: editor.decoratorState,
   } satisfies EditorSnapshot

@@ -55,7 +55,6 @@ describe(toSlateRange.name, () => {
           },
         },
       },
-      blockIndexMap: new Map([[blockKey, 0]]),
     })
 
     expect(range).toEqual({
@@ -104,7 +103,6 @@ describe(toSlateRange.name, () => {
           },
         },
       },
-      blockIndexMap: new Map([[blockKey, 0]]),
     })
 
     expect(range).toEqual({
@@ -137,7 +135,6 @@ describe(toSlateRange.name, () => {
           },
         },
       },
-      blockIndexMap: new Map([[blockObjectKey, 0]]),
     })
 
     expect(range).toEqual({
@@ -179,7 +176,6 @@ describe(toSlateRange.name, () => {
           },
         },
       },
-      blockIndexMap: new Map([[blockKey, 0]]),
     })
 
     expect(range).toEqual({
@@ -220,7 +216,6 @@ describe(toSlateRange.name, () => {
           },
         },
       },
-      blockIndexMap: new Map([[blockKey, 0]]),
     })
 
     expect(range).toEqual({
@@ -267,7 +262,6 @@ describe(toSlateRange.name, () => {
           },
         },
       },
-      blockIndexMap: new Map([[blockKey, 0]]),
     })
 
     expect(range).toEqual({

@@ -1,5 +1,6 @@
 import {isSpan, isTextBlock} from '@portabletext/schema'
 import type {PortableTextChild} from '@portabletext/schema'
+import {getIndexForKey} from '@sanity/json-match'
 import type {EditorSelector} from '../editor/editor-selector'
 import type {ChildPath} from '../types/paths'
 import {
@@ -44,8 +45,8 @@ export function getSelectedChildren<
       return []
     }
 
-    const startBlockIndex = snapshot.blockIndexMap.get(startBlockKey)
-    const endBlockIndex = snapshot.blockIndexMap.get(endBlockKey)
+    const startBlockIndex = getIndexForKey(snapshot.context.value, startBlockKey)
+    const endBlockIndex = getIndexForKey(snapshot.context.value, endBlockKey)
 
     if (startBlockIndex === undefined || endBlockIndex === undefined) {
       return []

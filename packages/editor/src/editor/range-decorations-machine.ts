@@ -100,7 +100,6 @@ export const rangeDecorationsMachine = setup({
             value: context.slateEditor.children as Array<PortableTextBlock>,
             selection: rangeDecoration.selection,
           },
-          blockIndexMap: context.slateEditor.blockIndexMap,
         })
 
         if (!Range.isRange(slateRange)) {
@@ -134,7 +133,6 @@ export const rangeDecorationsMachine = setup({
             value: context.slateEditor.children as Array<PortableTextBlock>,
             selection: rangeDecoration.selection,
           },
-          blockIndexMap: context.slateEditor.blockIndexMap,
         })
 
         if (!Range.isRange(slateRange)) {
@@ -169,7 +167,6 @@ export const rangeDecorationsMachine = setup({
             value: context.slateEditor.children as Array<PortableTextBlock>,
             selection: decoratedRange.rangeDecoration.selection,
           },
-          blockIndexMap: context.slateEditor.blockIndexMap,
         })
 
         if (!Range.isRange(slateRange)) {

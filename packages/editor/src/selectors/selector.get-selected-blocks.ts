@@ -1,4 +1,5 @@
 import type {PortableTextBlock} from '@portabletext/schema'
+import {getIndexForKey} from '@sanity/json-match'
 import type {EditorSelector} from '../editor/editor-selector'
 import type {BlockPath} from '../types/paths'
 import {getSelectionEndPoint} from '../utils/util.get-selection-end-point'
@@ -25,8 +26,8 @@ export const getSelectedBlocks: EditorSelector<
     return selectedBlocks
   }
 
-  const startBlockIndex = snapshot.blockIndexMap.get(startKey)
-  const endBlockIndex = snapshot.blockIndexMap.get(endKey)
+  const startBlockIndex = getIndexForKey(snapshot.context.value, startKey)
+  const endBlockIndex = getIndexForKey(snapshot.context.value, endKey)
 
   if (startBlockIndex === undefined || endBlockIndex === undefined) {
     return selectedBlocks

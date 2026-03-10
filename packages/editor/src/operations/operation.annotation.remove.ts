@@ -18,7 +18,6 @@ export const removeAnnotationOperationImplementation: OperationImplementation<
           value: operation.editor.children as Array<PortableTextBlock>,
           selection: operation.at,
         },
-        blockIndexMap: operation.editor.blockIndexMap,
       })
     : null
 

@@ -1,5 +1,6 @@
 import {applyAll, set} from '@portabletext/patches'
-import {isTextBlock} from '@portabletext/schema'
+import {isTextBlock, type PortableTextBlock} from '@portabletext/schema'
+import {getIndexForKey} from '@sanity/json-match'
 import {applySetNode} from '../internal-utils/apply-set-node'
 import {parseMarkDefs} from '../utils/parse-blocks'
 import type {OperationImplementation} from './operation.types'
@@ -7,7 +8,7 @@ import type {OperationImplementation} from './operation.types'
 export const blockSetOperationImplementation: OperationImplementation<
   'block.set'
 > = ({context, operation}) => {
-  const blockIndex = operation.editor.blockIndexMap.get(operation.at[0]._key)
+  const blockIndex = getIndexForKey(operation.editor.children as Array<PortableTextBlock>, operation.at[0]._key)
 
   if (blockIndex === undefined) {
     throw new Error(

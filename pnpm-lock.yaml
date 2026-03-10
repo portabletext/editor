@@ -438,6 +438,9 @@ importers:
       '@portabletext/to-html':
         specifier: ^5.0.2
         version: 5.0.2
+      '@sanity/json-match':
+        specifier: ^1.0.5
+        version: 1.0.5
       '@xstate/react':
         specifier: ^6.1.0
         version: 6.1.0(@types/react@19.2.14)(react@19.2.3)(xstate@5.28.0)

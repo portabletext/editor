@@ -1,3 +1,5 @@
+import type {PortableTextBlock} from '@portabletext/schema'
+import {getIndexForKey} from '@sanity/json-match'
 import {applyMoveNode} from '../internal-utils/apply-move-node'
 import {getBlockKeyFromSelectionPoint} from '../utils/util.selection-point'
 import type {OperationImplementation} from './operation.types'
@@ -14,7 +16,7 @@ export const moveBlockOperationImplementation: OperationImplementation<
     throw new Error('Failed to get block key from selection point')
   }
 
-  const originBlockIndex = operation.editor.blockIndexMap.get(originKey)
+  const originBlockIndex = getIndexForKey(operation.editor.children as Array<PortableTextBlock>, originKey)
 
   if (originBlockIndex === undefined) {
     throw new Error('Failed to get block index from block key')
@@ -29,8 +31,10 @@ export const moveBlockOperationImplementation: OperationImplementation<
     throw new Error('Failed to get block key from selection point')
   }
 
-  const destinationBlockIndex =
-    operation.editor.blockIndexMap.get(destinationKey)
+  const destinationBlockIndex = getIndexForKey(
+    operation.editor.children as Array<PortableTextBlock>,
+    destinationKey,
+  )
 
   if (destinationBlockIndex === undefined) {
     throw new Error('Failed to get block index from block key')

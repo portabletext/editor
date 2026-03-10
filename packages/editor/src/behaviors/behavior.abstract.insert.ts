@@ -1,4 +1,5 @@
 import {isTextBlock} from '@portabletext/schema'
+import {getIndexForKey} from '@sanity/json-match'
 import type {EditorSelector} from '../editor/editor-selector'
 import {isSelectionExpanded} from '../selectors'
 import {getFocusInlineObject} from '../selectors/selector.get-focus-inline-object'
@@ -21,7 +22,7 @@ function getUniqueBlockKey(
       return snapshot.context.keyGenerator()
     }
 
-    if (snapshot.blockIndexMap.has(blockKey)) {
+    if (getIndexForKey(snapshot.context.value, blockKey) !== undefined) {
       return snapshot.context.keyGenerator()
     }
 

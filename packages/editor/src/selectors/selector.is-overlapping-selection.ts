@@ -1,3 +1,4 @@
+import {getIndexForKey} from '@sanity/json-match'
 import type {EditorSelection, EditorSelectionPoint} from '../types/editor'
 import {
   getSelectionEndPoint,
@@ -43,15 +44,20 @@ export function isOverlappingSelection(
       return false
     }
 
-    const selectionStartBlockIndex = snapshot.blockIndexMap.get(
+    const selectionStartBlockIndex = getIndexForKey(
+      snapshot.context.value,
       selectionStartBlockKey,
     )
-    const selectionEndBlockIndex =
-      snapshot.blockIndexMap.get(selectionEndBlockKey)
-    const editorSelectionStartBlockIndex = snapshot.blockIndexMap.get(
+    const selectionEndBlockIndex = getIndexForKey(
+      snapshot.context.value,
+      selectionEndBlockKey,
+    )
+    const editorSelectionStartBlockIndex = getIndexForKey(
+      snapshot.context.value,
       editorSelectionStartBlockKey,
     )
-    const editorSelectionEndBlockIndex = snapshot.blockIndexMap.get(
+    const editorSelectionEndBlockIndex = getIndexForKey(
+      snapshot.context.value,
       editorSelectionEndBlockKey,
     )
 

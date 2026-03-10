@@ -1,3 +1,4 @@
+import {getIndexForKey} from '@sanity/json-match'
 import {useSelector} from '@xstate/react'
 import {createContext, useContext} from 'react'
 import {getFocusChild} from '../selectors'
@@ -111,17 +112,18 @@ export function SelectionStateProvider({
       let selectedBlockKeys: Set<string> = emptySet
 
       if (startBlockKey && endBlockKey) {
-        const startBlockIndex = snapshot.blockIndexMap.get(startBlockKey)
-        const endBlockIndex = snapshot.blockIndexMap.get(endBlockKey)
+        const startBlockIndex = getIndexForKey(snapshot.context.value, startBlockKey)
+        const endBlockIndex = getIndexForKey(snapshot.context.value, endBlockKey)
 
         if (startBlockIndex !== undefined && endBlockIndex !== undefined) {
           const minIndex = Math.min(startBlockIndex, endBlockIndex)
           const maxIndex = Math.max(startBlockIndex, endBlockIndex)
           selectedBlockKeys = new Set<string>()
 
-          for (const [key, index] of snapshot.blockIndexMap) {
-            if (index >= minIndex && index <= maxIndex) {
-              selectedBlockKeys.add(key)
+          for (const block of snapshot.context.value) {
+            const index = getIndexForKey(snapshot.context.value, block._key)
+            if (index !== undefined && index >= minIndex && index <= maxIndex) {
+              selectedBlockKeys.add(block._key)
             }
           }
         }
