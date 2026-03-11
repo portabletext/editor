@@ -19,9 +19,6 @@ export const withReact = <T extends Editor>(editor: T): T & ReactEditor => {
 
   const {onChange, apply, insertText} = e
 
-  e.getChunkSize = () => null
-  e.keyToChunkTree = new WeakMap()
-
   if (IS_ANDROID) {
     e.insertText = (text, options) => {
       // COMPAT: Android devices, specifically Samsung devices, experience cursor jumping.
