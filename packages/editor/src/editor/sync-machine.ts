@@ -1,6 +1,7 @@
 import type {Patch} from '@portabletext/patches'
 import {isSpan, type PortableTextBlock} from '@portabletext/schema'
 import type {ActorRefFrom} from 'xstate'
+import {isKeyedSegment} from '../types/paths'
 import {
   and,
   assertEvent,
@@ -639,10 +640,12 @@ function removeExtraBlocks({
 
         if (value.length < childrenLength) {
           for (let i = childrenLength - 1; i > value.length - 1; i--) {
-            const [removeNode] = Editor.node(slateEditor, [i])
+            const blockToRemove = slateEditor.children[i]!
+            const blockRemovePath = [{_key: (blockToRemove as any)._key}]
+            const [removeNode] = Editor.node(slateEditor, blockRemovePath)
             slateEditor.apply({
               type: 'remove_node',
-              path: [i],
+              path: blockRemovePath,
               node: removeNode,
             })
           }
@@ -848,25 +851,34 @@ function replaceBlock({
   // While replacing the block and the current selection focus is on the replaced block,
   // temporarily deselect the editor then optimistically try to restore the selection afterwards.
   const currentSelection = slateEditor.selection
-  const selectionFocusOnBlock =
-    currentSelection && currentSelection.focus.path[0] === index
+  const blockAtIndex = slateEditor.children[index] as any
+  const selectionFocusOnBlock = (() => {
+    if (!currentSelection) return false
+    const firstSeg = currentSelection.focus.path[0]
+    if (isKeyedSegment(firstSeg)) {
+      return firstSeg._key === blockAtIndex?._key
+    }
+    return firstSeg === index
+  })()
 
   if (selectionFocusOnBlock) {
     applyDeselect(slateEditor)
   }
 
-  const [oldNode] = Editor.node(slateEditor, [index])
-  slateEditor.apply({type: 'remove_node', path: [index], node: oldNode})
+  const oldBlock = slateEditor.children[index]!
+  const oldBlockPath = [{_key: (oldBlock as any)._key}]
+  const [oldNode] = Editor.node(slateEditor, oldBlockPath)
+  slateEditor.apply({type: 'remove_node', path: oldBlockPath, node: oldNode})
   slateEditor.apply({type: 'insert_node', path: [index], node: slateBlock})
 
   slateEditor.onChange()
 
   if (
     selectionFocusOnBlock &&
-    Node.has(slateEditor, currentSelection.anchor.path, slateEditor.schema) &&
-    Node.has(slateEditor, currentSelection.focus.path, slateEditor.schema)
+    Node.has(slateEditor, currentSelection!.anchor.path, slateEditor.schema) &&
+    Node.has(slateEditor, currentSelection!.focus.path, slateEditor.schema)
   ) {
-    applySelect(slateEditor, currentSelection)
+    applySelect(slateEditor, currentSelection!)
   }
 }
 
@@ -894,7 +906,7 @@ function updateBlock({
 
   // Update the root props on the block
   applySetNode(slateEditor, slateBlock as unknown as Record<string, unknown>, [
-    index,
+    {_key: block._key},
   ])
 
   // Remove properties present on the old node but absent from the new block.
@@ -916,7 +928,7 @@ function updateBlock({
   if (Object.keys(removedProperties).length > 0) {
     slateEditor.apply({
       type: 'set_node',
-      path: [index],
+      path: [{_key: block._key}],
       properties: removedProperties,
       newProperties: {},
     })
@@ -939,10 +951,13 @@ function updateBlock({
         if (childIndex > 0) {
           debug.syncValue('Removing child')
 
-          const [childNode] = Editor.node(slateEditor, [index, childIndex])
+          const currentBlock = slateEditor.children[index] as any
+          const childToRemove = currentBlock.children[childIndex]
+          const childRemovePath = [{_key: currentBlock._key}, 'children', {_key: childToRemove._key}]
+          const [childNode] = Editor.node(slateEditor, childRemovePath)
           slateEditor.apply({
             type: 'remove_node',
-            path: [index, childIndex],
+            path: childRemovePath,
             node: childNode,
           })
         }
@@ -1013,13 +1028,13 @@ function updateBlock({
         } else if (oldBlockChild) {
           debug.syncValue('Replacing child', currentBlockChild)
 
-          const [oldChild] = Editor.node(slateEditor, [
-            index,
-            currentBlockChildIndex,
-          ])
+          const currentSlateBlock = slateEditor.children[index] as any
+          const oldChildNode = currentSlateBlock.children[currentBlockChildIndex]
+          const oldChildPath = [{_key: currentSlateBlock._key}, 'children', {_key: oldChildNode._key}]
+          const [oldChild] = Editor.node(slateEditor, oldChildPath)
           slateEditor.apply({
             type: 'remove_node',
-            path: [index, currentBlockChildIndex],
+            path: oldChildPath,
             node: oldChild,
           })
           slateEditor.apply({
