@@ -23,9 +23,8 @@ import type {
   EditableAPIDeleteOptions,
   EditorSelection,
 } from '../types/editor'
-import type {Path} from '../types/paths'
+import {lastKeyedSegment, resolveSegmentIndex, type Path} from '../types/paths'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
-import {resolveSegmentIndex} from '../types/paths'
 import {
   getBlockKeyFromSelectionPoint,
   getChildKeyFromSelectionPoint,
@@ -148,7 +147,7 @@ export function createEditableAPI(
       }
 
       const focusBlockIndex = editor.selection.focus.path.at(0)
-      const focusChildIndex = editor.selection.focus.path.at(1)
+      const focusChildIndex = lastKeyedSegment(editor.selection.focus.path)
 
       const block =
         focusBlockIndex !== undefined

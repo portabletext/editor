@@ -7,14 +7,14 @@ import {getFocusBlock, getFocusSpan} from '../internal-utils/slate-utils'
 import {Element, Node} from '../slate'
 import {parseInlineObject, parseSpan} from '../utils/parse-blocks'
 import type {OperationImplementation} from './operation.types'
-import {resolveSegmentIndex} from '../types/paths'
+import {lastKeyedSegment, resolveSegmentIndex} from '../types/paths'
 
 export const insertChildOperationImplementation: OperationImplementation<
   'insert.child'
 > = ({context, operation}) => {
   const focus = operation.editor.selection?.focus
   const focusBlockIndex = focus?.path.at(0)
-  const focusChildIndex = focus?.path.at(1)
+  const focusChildIndex = lastKeyedSegment(focus?.path ?? [])
 
   if (focusBlockIndex === undefined || focusChildIndex === undefined) {
     throw new Error('Unable to insert child without a focus')

@@ -144,8 +144,9 @@ export const splitDecorationsByChild = (
     }
 
     const [startPoint, endPoint] = Range.edges(editor, decorationRange)
-    const startIndex = resolveSegmentIndex(node.children, startPoint.path[level]!)
-    const endIndex = resolveSegmentIndex(node.children, endPoint.path[level]!)
+    // Skip field name segment: path[level] is 'children', path[level+1] is the child key
+    const startIndex = resolveSegmentIndex(node.children, startPoint.path[level + 1]!)
+    const endIndex = resolveSegmentIndex(node.children, endPoint.path[level + 1]!)
 
     for (let i = startIndex; i <= endIndex; i++) {
       const ds = decorationsByChild[i]

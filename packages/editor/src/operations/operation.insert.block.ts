@@ -18,7 +18,7 @@ import {
   type Descendant,
 } from '../slate'
 import type {EditorSelection} from '../types/editor'
-import {resolveSegmentIndex} from '../types/paths'
+import {lastKeyedSegment, resolveSegmentIndex} from '../types/paths'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {parseBlock} from '../utils/parse-blocks'
 import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
@@ -238,7 +238,7 @@ export function insertBlock(options: {
       const currentBlock = Node.get(editor, blockPath, editor.schema) as Element
 
       // Find the child index and offset within that child
-      const childIndex = resolveSegmentIndex(currentBlock.children, selectionPoint.path[1]!)
+      const childIndex = resolveSegmentIndex(currentBlock.children, lastKeyedSegment(selectionPoint.path)!)
       const childOffset = selectionPoint.offset
 
       // Split the text node at the offset if needed
@@ -318,7 +318,7 @@ export function insertBlock(options: {
         if (editor.isTextBlock(mergedBlock)) {
           // Find the merge position (where blocks were joined)
           const mergePoint: Point = {
-            path: [...startBlockPath, start.path[1]!],
+            path: [...startBlockPath, ...start.path.slice(1)],
             offset: start.offset,
           }
           setSelectionToPoint(editor, mergePoint)
@@ -554,7 +554,7 @@ export function insertBlock(options: {
 
       // Remove nodes before end
       const endBlock = Node.get(editor, endBlockPath, editor.schema) as Element
-      for (let i = resolveSegmentIndex(endBlock.children, end.path[1]!) - 1; i >= 0; i--) {
+      for (let i = resolveSegmentIndex(endBlock.children, lastKeyedSegment(end.path)!) - 1; i >= 0; i--) {
         removeNodeAt(editor, [...endBlockPath, i])
       }
 
@@ -575,7 +575,7 @@ export function insertBlock(options: {
 
       // Remove nodes after start
       const blockNode = Node.get(editor, endBlockPath, editor.schema) as Element
-      for (let i = blockNode.children.length - 1; i > resolveSegmentIndex(blockNode.children, start.path[1]!); i--) {
+      for (let i = blockNode.children.length - 1; i > resolveSegmentIndex(blockNode.children, lastKeyedSegment(start.path)!); i--) {
         removeNodeAt(editor, [...endBlockPath, i])
       }
 
@@ -650,8 +650,8 @@ export function insertBlock(options: {
         // Split the block, preserving block properties
         const splitAtIndex =
           currentOffset > 0
-          ? resolveSegmentIndex((Node.get(editor, blockPath, editor.schema) as Element).children, currentPath[1]!) + 1
-          : resolveSegmentIndex((Node.get(editor, blockPath, editor.schema) as Element).children, currentPath[1]!)
+          ? resolveSegmentIndex((Node.get(editor, blockPath, editor.schema) as Element).children, lastKeyedSegment(currentPath)!) + 1
+          : resolveSegmentIndex((Node.get(editor, blockPath, editor.schema) as Element).children, lastKeyedSegment(currentPath)!)
         const blockToSplit = Node.get(editor, blockPath, editor.schema)
 
         if (
@@ -849,13 +849,13 @@ function deleteSameBlockRange(
 
   // Remove nodes between start and end
   const block = Node.get(editor, blockPath, editor.schema) as Element
-  const endChildIndex = resolveSegmentIndex(block.children, end.path[1]!)
-  for (let i = endChildIndex - 1; i > resolveSegmentIndex(block.children, start.path[1]!); i--) {
+  const endChildIndex = resolveSegmentIndex(block.children, lastKeyedSegment(end.path)!)
+  for (let i = endChildIndex - 1; i > resolveSegmentIndex(block.children, lastKeyedSegment(start.path)!); i--) {
     removeNodeAt(editor, [...blockPath, i])
   }
 
   // Remove from beginning of end node
-  const newEndPath: Path = [...blockPath, resolveSegmentIndex((Node.get(editor, blockPath, editor.schema) as Element).children, start.path[1]!) + 1]
+  const newEndPath: Path = [...blockPath, resolveSegmentIndex((Node.get(editor, blockPath, editor.schema) as Element).children, lastKeyedSegment(start.path)!) + 1]
   const endNode = Node.get(editor, newEndPath, editor.schema) as Text
   if (end.offset > 0) {
     const textToRemove = endNode.text.slice(0, end.offset)
@@ -908,7 +908,7 @@ function deleteCrossBlockRange(
       startBlockPath,
       editor.schema,
     ) as Element
-    for (let i = startBlock.children.length - 1; i > resolveSegmentIndex(startBlock.children, start.path[1]!); i--) {
+    for (let i = startBlock.children.length - 1; i > resolveSegmentIndex(startBlock.children, lastKeyedSegment(start.path)!); i--) {
       removeNodeAt(editor, [...startBlockPath, i])
     }
   }
@@ -924,7 +924,7 @@ function deleteCrossBlockRange(
   const adjustedEndBlockPath: Path = [resolveSegmentIndex(editor.children, start.path[0]!) + 1]
   if (end.path.length > 1) {
     // Remove nodes before end position
-    for (let i = 0; i < resolveSegmentIndex((Node.get(editor, adjustedEndBlockPath, editor.schema) as Element).children, end.path[1]!); i++) {
+    for (let i = 0; i < resolveSegmentIndex((Node.get(editor, adjustedEndBlockPath, editor.schema) as Element).children, lastKeyedSegment(end.path)!); i++) {
       removeNodeAt(editor, [...adjustedEndBlockPath, 0])
     }
 

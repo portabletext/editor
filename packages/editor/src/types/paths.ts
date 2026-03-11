@@ -99,3 +99,19 @@ export function resolveSegmentIndex(
   }
   return -1
 }
+
+/**
+ * Get the last KeyedSegment from a path.
+ * In a keyed path like [blockKey, 'children', spanKey], this returns spanKey.
+ * Returns undefined if no keyed segment exists.
+ *
+ * @public
+ */
+export function lastKeyedSegment(path: Path): KeyedSegment | undefined {
+  for (let i = path.length - 1; i >= 0; i--) {
+    if (isKeyedSegment(path[i]!)) {
+      return path[i] as KeyedSegment
+    }
+  }
+  return undefined
+}
