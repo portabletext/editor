@@ -1,5 +1,6 @@
 import {Editor, type EditorInterface} from '../interfaces/editor'
 import {Element} from '../interfaces/element'
+import {Node} from '../interfaces/node'
 import {Path} from '../interfaces/path'
 import {Range} from '../interfaces/range'
 import {Text} from '../interfaces/text'
@@ -17,7 +18,7 @@ export const unhangRange: EditorInterface['unhangRange'] = (
     start.offset !== 0 ||
     end.offset !== 0 ||
     Range.isCollapsed(range) ||
-    Path.hasPrevious(end.path)
+    Node.hasPrevious(editor, end.path, editor.schema)
   ) {
     return range
   }

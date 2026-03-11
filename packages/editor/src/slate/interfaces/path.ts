@@ -61,13 +61,19 @@ export interface PathInterface {
   common: (path: Path, another: Path) => Path
 
   /**
-   * Check if a path ends before one of the segments in another.
-   * Both paths must share the same ancestor up to the second-to-last segment
-   * of `path`, and then `path`'s final keyed segment must appear earlier in
-   * the parent's children than `another`'s corresponding segment.
+   * Compare a path to another, returning an integer indicating whether the path
+   * was before, at, or after the other.
    *
-   * With keyed paths, this requires tree context to determine ordering.
-   * For now, this checks structural prefix relationships only.
+   * With keyed paths, sibling ordering cannot be determined without the tree.
+   * This function returns 0 for paths that diverge at keyed segments.
+   * Use Node.compare for true document-order comparison.
+   */
+  compare: (path: Path, another: Path) => -1 | 0 | 1
+
+  /**
+   * Check if a path ends before one of the segments in another.
+   * With keyed paths, this checks structural prefix relationships.
+   * Actual ordering requires tree context — use Node.isBefore for that.
    */
   endsBefore: (path: Path, another: Path) => boolean
 
@@ -77,9 +83,23 @@ export interface PathInterface {
   equals: (path: Path, another: Path) => boolean
 
   /**
+   * Check if a path is after another.
+   * With keyed paths, returns false when ordering can't be determined.
+   * Use Node.isAfter for true document-order comparison.
+   */
+  isAfter: (path: Path, another: Path) => boolean
+
+  /**
    * Check if a path is an ancestor of another.
    */
   isAncestor: (path: Path, another: Path) => boolean
+
+  /**
+   * Check if a path is before another.
+   * With keyed paths, returns false when ordering can't be determined.
+   * Use Node.isBefore for true document-order comparison.
+   */
+  isBefore: (path: Path, another: Path) => boolean
 
   /**
    * Check if a path is equal to or an ancestor of another.
@@ -168,6 +188,31 @@ export const Path: PathInterface = {
     return common
   },
 
+  compare(path: Path, another: Path): -1 | 0 | 1 {
+    const min = Math.min(path.length, another.length)
+
+    for (let i = 0; i < min; i++) {
+      const av = path[i]!
+      const bv = another[i]!
+
+      if (segmentsEqual(av, bv)) {
+        continue
+      }
+
+      // For numeric segments, compare numerically
+      if (typeof av === 'number' && typeof bv === 'number') {
+        return av < bv ? -1 : 1
+      }
+
+      // For keyed segments or mixed types, we can't determine order
+      // without the tree. Return 0 (treat as equal level).
+      // Callers needing true ordering should use Node.compare.
+      return 0
+    }
+
+    return 0
+  },
+
   endsBefore(path: Path, another: Path): boolean {
     // With keyed paths, we can only check structural relationships.
     // Two paths "end before" if they share the same parent path and
@@ -192,11 +237,19 @@ export const Path: PathInterface = {
     )
   },
 
+  isAfter(path: Path, another: Path): boolean {
+    return Path.compare(path, another) === 1
+  },
+
   isAncestor(path: Path, another: Path): boolean {
     return (
       path.length < another.length &&
       path.every((segment, i) => segmentsEqual(segment, another[i]!))
     )
+  },
+
+  isBefore(path: Path, another: Path): boolean {
+    return Path.compare(path, another) === -1
   },
 
   isCommon(path: Path, another: Path): boolean {

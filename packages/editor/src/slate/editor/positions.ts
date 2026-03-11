@@ -1,5 +1,6 @@
 import {Editor, type EditorPositionsOptions} from '../interfaces/editor'
 import {Element} from '../interfaces/element'
+import {Node} from '../interfaces/node'
 import {Path} from '../interfaces/path'
 import type {Point} from '../interfaces/point'
 import {Range} from '../interfaces/range'
@@ -86,13 +87,14 @@ export function* positions(
          */
         skippedPaths.push(path)
         if (reverse) {
-          if (Path.hasPrevious(path)) {
-            yield* maybeYield(Editor.end(editor, Path.previous(path)))
+          const prevPath = Node.previous(editor, path, editor.schema)
+          if (prevPath) {
+            yield* maybeYield(Editor.end(editor, prevPath))
           }
           continue
         } else {
-          const nextPath = Path.next(path)
-          if (Editor.hasPath(editor, nextPath)) {
+          const nextPath = Node.next(editor, path, editor.schema)
+          if (nextPath && Editor.hasPath(editor, nextPath)) {
             yield* maybeYield(Editor.start(editor, nextPath))
           }
           continue
