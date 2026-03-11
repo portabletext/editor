@@ -1,12 +1,20 @@
 import type {InsertNodeOperation, Operation, RemoveNodeOperation} from '..'
+import type {
+  KeyedSegment,
+  Path as PtePath,
+  PathSegment,
+} from '../../types/paths'
 
 /**
- * `Path` arrays are a list of indexes that describe a node's exact position in
- * a Slate node tree. Although they are usually relative to the root `Editor`
- * object, they can be relative to any `Node` object.
+ * `Path` arrays are a list of segments that describe a node's exact position
+ * in a Slate node tree. Segments alternate between keyed segments
+ * (`{_key: string}`) that identify nodes and string segments that name the
+ * field to traverse into.
+ *
+ * Example: `[{_key: 'table0'}, 'rows', {_key: 'row1'}, 'cells', {_key: 'cell2'}]`
  */
 
-export type Path = number[]
+export type Path = PtePath
 
 export interface PathAncestorsOptions {
   reverse?: boolean
@@ -14,6 +22,28 @@ export interface PathAncestorsOptions {
 
 export interface PathLevelsOptions {
   reverse?: boolean
+}
+
+/**
+ * Check if a value is a KeyedSegment ({_key: string}).
+ */
+function isKeyedSegment(value: unknown): value is KeyedSegment {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    '_key' in value &&
+    typeof (value as KeyedSegment)._key === 'string'
+  )
+}
+
+/**
+ * Compare two path segments for equality.
+ */
+function segmentsEqual(a: PathSegment, b: PathSegment): boolean {
+  if (isKeyedSegment(a) && isKeyedSegment(b)) {
+    return a._key === b._key
+  }
+  return a === b
 }
 
 export interface PathInterface {
@@ -31,17 +61,13 @@ export interface PathInterface {
   common: (path: Path, another: Path) => Path
 
   /**
-   * Compare a path to another, returning an integer indicating whether the path
-   * was before, at, or after the other.
+   * Check if a path ends before one of the segments in another.
+   * Both paths must share the same ancestor up to the second-to-last segment
+   * of `path`, and then `path`'s final keyed segment must appear earlier in
+   * the parent's children than `another`'s corresponding segment.
    *
-   * Note: Two paths of unequal length can still receive a `0` result if one is
-   * directly above or below the other. If you want exact matching, use
-   * [[Path.equals]] instead.
-   */
-  compare: (path: Path, another: Path) => -1 | 0 | 1
-
-  /**
-   * Check if a path ends before one of the indexes in another.
+   * With keyed paths, this requires tree context to determine ordering.
+   * For now, this checks structural prefix relationships only.
    */
   endsBefore: (path: Path, another: Path) => boolean
 
@@ -51,24 +77,9 @@ export interface PathInterface {
   equals: (path: Path, another: Path) => boolean
 
   /**
-   * Check if the path of previous sibling node exists
-   */
-  hasPrevious: (path: Path) => boolean
-
-  /**
-   * Check if a path is after another.
-   */
-  isAfter: (path: Path, another: Path) => boolean
-
-  /**
    * Check if a path is an ancestor of another.
    */
   isAncestor: (path: Path, another: Path) => boolean
-
-  /**
-   * Check if a path is before another.
-   */
-  isBefore: (path: Path, another: Path) => boolean
 
   /**
    * Check if a path is equal to or an ancestor of another.
@@ -100,11 +111,6 @@ export interface PathInterface {
   levels: (path: Path, options?: PathLevelsOptions) => Path[]
 
   /**
-   * Given a path, get the path to the next sibling node.
-   */
-  next: (path: Path) => Path
-
-  /**
    * Returns whether this operation can affect paths or not. Used as an
    * optimization when updating dirty paths during normalization.
    */
@@ -114,16 +120,18 @@ export interface PathInterface {
 
   /**
    * Given a path, return a new path referring to the parent node above it.
+   * For keyed paths, this drops the last keyed segment and its preceding
+   * field name (if any).
    */
   parent: (path: Path) => Path
 
   /**
-   * Given a path, get the path to the previous sibling node.
-   */
-  previous: (path: Path) => Path
-
-  /**
    * Transform a path by an operation.
+   *
+   * With keyed paths:
+   * - `insert_node` is a no-op (keys don't shift)
+   * - `remove_node` returns null if the operation's path is a prefix of
+   *   (or equal to) this path
    */
   transform: (path: Path, operation: Operation) => Path | null
 }
@@ -150,7 +158,7 @@ export const Path: PathInterface = {
       const av = path[i]!
       const bv = another[i]!
 
-      if (av !== bv) {
+      if (!segmentsEqual(av, bv)) {
         break
       }
 
@@ -160,85 +168,96 @@ export const Path: PathInterface = {
     return common
   },
 
-  compare(path: Path, another: Path): -1 | 0 | 1 {
-    const min = Math.min(path.length, another.length)
-
-    for (let i = 0; i < min; i++) {
-      if (path[i]! < another[i]!) {
-        return -1
-      }
-      if (path[i]! > another[i]!) {
-        return 1
-      }
-    }
-
-    return 0
-  },
-
   endsBefore(path: Path, another: Path): boolean {
+    // With keyed paths, we can only check structural relationships.
+    // Two paths "end before" if they share the same parent path and
+    // the final segments differ. Actual ordering requires tree context.
+    // This is kept for compatibility but callers that need true ordering
+    // should use Node-level utilities.
     const i = path.length - 1
+    if (i < 0 || i >= another.length) {
+      return false
+    }
     const as = path.slice(0, i)
     const bs = another.slice(0, i)
     const av = path[i]!
     const bv = another[i]!
-    return Path.equals(as, bs) && av < bv
+    return Path.equals(as, bs) && !segmentsEqual(av, bv)
   },
 
   equals(path: Path, another: Path): boolean {
     return (
-      path.length === another.length && path.every((n, i) => n === another[i]!)
+      path.length === another.length &&
+      path.every((segment, i) => segmentsEqual(segment, another[i]!))
     )
   },
 
-  hasPrevious(path: Path): boolean {
-    return path[path.length - 1]! > 0
-  },
-
-  isAfter(path: Path, another: Path): boolean {
-    return Path.compare(path, another) === 1
-  },
-
   isAncestor(path: Path, another: Path): boolean {
-    return path.length < another.length && Path.compare(path, another) === 0
-  },
-
-  isBefore(path: Path, another: Path): boolean {
-    return Path.compare(path, another) === -1
+    return (
+      path.length < another.length &&
+      path.every((segment, i) => segmentsEqual(segment, another[i]!))
+    )
   },
 
   isCommon(path: Path, another: Path): boolean {
-    return path.length <= another.length && Path.compare(path, another) === 0
+    return (
+      path.length <= another.length &&
+      path.every((segment, i) => segmentsEqual(segment, another[i]!))
+    )
   },
 
   isDescendant(path: Path, another: Path): boolean {
-    return path.length > another.length && Path.compare(path, another) === 0
+    return (
+      path.length > another.length &&
+      another.every((segment, i) => segmentsEqual(segment, path[i]!))
+    )
   },
 
   isPath(value: any): value is Path {
     return (
       Array.isArray(value) &&
-      (value.length === 0 || typeof value[0] === 'number')
+      (value.length === 0 ||
+        typeof value[0] === 'string' ||
+        typeof value[0] === 'number' ||
+        isKeyedSegment(value[0]))
     )
   },
 
   isSibling(path: Path, another: Path): boolean {
-    if (path.length !== another.length) {
+    if (path.length !== another.length || path.length === 0) {
       return false
     }
 
     const as = path.slice(0, -1)
     const bs = another.slice(0, -1)
-    const al = path[path.length - 1]
-    const bl = another[another.length - 1]
-    return al !== bl && Path.equals(as, bs)
+    const al = path[path.length - 1]!
+    const bl = another[another.length - 1]!
+    return !segmentsEqual(al, bl) && Path.equals(as, bs)
   },
 
   levels(path: Path, options: PathLevelsOptions = {}): Path[] {
     const {reverse = false} = options
     const list: Path[] = []
 
-    for (let i = 0; i <= path.length; i++) {
-      list.push(path.slice(0, i))
+    // For keyed paths, levels are at each keyed segment boundary.
+    // A path like [{_key: 'a'}, 'children', {_key: 'b'}] has levels:
+    // [], [{_key: 'a'}], [{_key: 'a'}, 'children', {_key: 'b'}]
+    //
+    // We include the empty path (root) and each prefix that ends with
+    // a keyed segment.
+    list.push([])
+
+    for (let i = 0; i < path.length; i++) {
+      const segment = path[i]!
+      if (isKeyedSegment(segment)) {
+        list.push(path.slice(0, i + 1))
+      }
+    }
+
+    // If the path doesn't end with a keyed segment (e.g., ends with a
+    // field name), include the full path too.
+    if (path.length > 0 && !isKeyedSegment(path[path.length - 1]!)) {
+      list.push([...path])
     }
 
     if (reverse) {
@@ -246,17 +265,6 @@ export const Path: PathInterface = {
     }
 
     return list
-  },
-
-  next(path: Path): Path {
-    if (path.length === 0) {
-      throw new Error(
-        `Cannot get the next path of a root path [${path}], because it has no next index.`,
-      )
-    }
-
-    const last = path[path.length - 1]!
-    return path.slice(0, -1).concat(last + 1)
   },
 
   operationCanTransformPath(
@@ -276,25 +284,25 @@ export const Path: PathInterface = {
       throw new Error(`Cannot get the parent path of the root path [${path}].`)
     }
 
-    return path.slice(0, -1)
-  },
+    // For keyed paths, the parent is found by dropping the last keyed
+    // segment and its preceding field name.
+    // [{_key: 'a'}, 'children', {_key: 'b'}] -> [{_key: 'a'}]
+    // [{_key: 'a'}] -> []
+    const lastKeyedIndex = findLastKeyedIndex(path)
 
-  previous(path: Path): Path {
-    if (path.length === 0) {
-      throw new Error(
-        `Cannot get the previous path of a root path [${path}], because it has no previous index.`,
-      )
+    if (lastKeyedIndex <= 0) {
+      // Path is just [{_key: 'x'}] or similar — parent is root
+      return []
     }
 
-    const last = path[path.length - 1]!
-
-    if (last <= 0) {
-      throw new Error(
-        `Cannot get the previous path of a first child path [${path}] because it would result in a negative index.`,
-      )
+    // Drop the field name before the last keyed segment too
+    // e.g., [{_key: 'a'}, 'children', {_key: 'b'}] -> [{_key: 'a'}]
+    const fieldNameIndex = lastKeyedIndex - 1
+    if (fieldNameIndex >= 0 && typeof path[fieldNameIndex] === 'string') {
+      return path.slice(0, fieldNameIndex)
     }
 
-    return path.slice(0, -1).concat(last - 1)
+    return path.slice(0, lastKeyedIndex)
   },
 
   transform(path: Path | null, operation: Operation): Path | null {
@@ -302,42 +310,39 @@ export const Path: PathInterface = {
       return null
     }
 
-    // PERF: use destructing instead of immer
-    const p = [...path]
-
-    // PERF: Exit early if the operation is guaranteed not to have an effect.
-    if (path.length === 0) {
-      return p
-    }
-
+    // With keyed paths, transforms are trivial:
+    // - insert_node: keys don't shift, so the path is unchanged
+    // - remove_node: if the removed node's path is this path or an
+    //   ancestor of it, the path no longer exists (return null)
     switch (operation.type) {
       case 'insert_node': {
-        const {path: op} = operation
-
-        if (
-          Path.equals(op, p) ||
-          Path.endsBefore(op, p) ||
-          Path.isAncestor(op, p)
-        ) {
-          p[op.length - 1] = p[op.length - 1]! + 1
-        }
-
-        break
+        // No-op: inserting a node doesn't affect keyed paths
+        return [...path]
       }
 
       case 'remove_node': {
         const {path: op} = operation
 
-        if (Path.equals(op, p) || Path.isAncestor(op, p)) {
+        if (Path.equals(op, path) || Path.isAncestor(op, path)) {
           return null
-        } else if (Path.endsBefore(op, p)) {
-          p[op.length - 1] = p[op.length - 1]! - 1
         }
 
-        break
+        return [...path]
       }
     }
 
-    return p
+    return [...path]
   },
+}
+
+/**
+ * Find the index of the last KeyedSegment in a path.
+ */
+function findLastKeyedIndex(path: Path): number {
+  for (let i = path.length - 1; i >= 0; i--) {
+    if (isKeyedSegment(path[i]!)) {
+      return i
+    }
+  }
+  return -1
 }
