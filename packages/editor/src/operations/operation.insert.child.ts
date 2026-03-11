@@ -4,9 +4,10 @@ import {
   applyInsertNodeAtPoint,
 } from '../internal-utils/apply-insert-node'
 import {getFocusBlock, getFocusSpan} from '../internal-utils/slate-utils'
-import type {Node} from '../slate'
+import {Element, Node} from '../slate'
 import {parseInlineObject, parseSpan} from '../utils/parse-blocks'
 import type {OperationImplementation} from './operation.types'
+import {resolveSegmentIndex} from '../types/paths'
 
 export const insertChildOperationImplementation: OperationImplementation<
   'insert.child'
@@ -50,7 +51,7 @@ export const insertChildOperationImplementation: OperationImplementation<
     } else {
       applyInsertNodeAtPath(operation.editor, span, [
         focusBlockIndex,
-        (focusChildIndex as number) + 1,
+        resolveSegmentIndex((Node.get(operation.editor, [focusBlockIndex], operation.editor.schema) as Element).children, focusChildIndex!) + 1,
       ])
     }
 
@@ -83,7 +84,7 @@ export const insertChildOperationImplementation: OperationImplementation<
     } else {
       applyInsertNodeAtPath(operation.editor, inlineNode, [
         focusBlockIndex,
-        (focusChildIndex as number) + 1,
+        resolveSegmentIndex((Node.get(operation.editor, [focusBlockIndex], operation.editor.schema) as Element).children, focusChildIndex!) + 1,
       ])
     }
 

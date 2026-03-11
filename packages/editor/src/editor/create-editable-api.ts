@@ -25,6 +25,7 @@ import type {
 } from '../types/editor'
 import type {Path} from '../types/paths'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
+import {resolveSegmentIndex} from '../types/paths'
 import {
   getBlockKeyFromSelectionPoint,
   getChildKeyFromSelectionPoint,
@@ -139,7 +140,7 @@ export function createEditableAPI(
         return undefined
       }
 
-      return (editor.children as Array<PortableTextBlock>).at(focusBlockIndex as number)
+      return (editor.children as Array<PortableTextBlock>).at(resolveSegmentIndex(editor.children, focusBlockIndex!))
     },
     focusChild: (): PortableTextChild | undefined => {
       if (!editor.selection) {
@@ -151,7 +152,7 @@ export function createEditableAPI(
 
       const block =
         focusBlockIndex !== undefined
-          ? (editor.children as Array<PortableTextBlock>).at(focusBlockIndex as number)
+          ? (editor.children as Array<PortableTextBlock>).at(resolveSegmentIndex(editor.children, focusBlockIndex!))
           : undefined
 
       if (!block) {

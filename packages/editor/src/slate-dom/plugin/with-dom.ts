@@ -19,6 +19,7 @@ import {
 import {getPlainText, isDOMText} from '../utils/dom'
 import type {Key} from '../utils/key'
 import {DOMEditor} from './dom-editor'
+import {resolveSegmentIndex} from '../../types/paths'
 
 /**
  * `withDOM` adds DOM specific behaviors to the editor.
@@ -294,7 +295,7 @@ export const withDOM = <T extends Editor>(editor: T): T & DOMEditor => {
                 applySplitNode(e, nodePath, position, properties)
 
                 position =
-                  (nodePath[nodePath.length - 1] as number) +
+                  resolveSegmentIndex((Node.parent(e, nodePath, e.schema) as any).children ?? [], nodePath[nodePath.length - 1]!) +
                   (didSplit || isEndOfNode ? 1 : 0)
               }
 

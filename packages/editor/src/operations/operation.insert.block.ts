@@ -18,6 +18,7 @@ import {
   type Descendant,
 } from '../slate'
 import type {EditorSelection} from '../types/editor'
+import {resolveSegmentIndex} from '../types/paths'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {parseBlock} from '../utils/parse-blocks'
 import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
@@ -143,8 +144,8 @@ export function insertBlock(options: {
 
     // Remember if the selection started at the beginning of the block
     const start = Range.start(editor, at)
-    const startBlock = Node.get(editor, [start.path[0] as number], editor.schema)
-    const startOfBlock = Editor.start(editor, [start.path[0] as number])
+    const startBlock = Node.get(editor, [start.path[0]!], editor.schema)
+    const startOfBlock = Editor.start(editor, [start.path[0]!])
     const isAtStartOfBlock =
       Element.isElement(startBlock, editor.schema) &&
       Point.equals(start, startOfBlock)
@@ -162,8 +163,8 @@ export function insertBlock(options: {
     if (atAfterDelete) {
       // If selection was at start of block, insert before; otherwise insert after
       const insertPath: Path = isAtStartOfBlock
-        ? [atAfterDelete.anchor.path[0] as number]
-        : [(atAfterDelete.anchor.path[0] as number) + 1]
+        ? [atAfterDelete.anchor.path[0]!]
+        : [resolveSegmentIndex(editor.children, atAfterDelete.anchor.path[0]!) + 1]
       editor.apply({type: 'insert_node', path: insertPath, node: block})
 
       if (select !== 'none') {
@@ -191,8 +192,8 @@ export function insertBlock(options: {
       // If we inserted before (isAtStartOfBlock), check the block that was pushed down
       // Otherwise, check the block before the insertion
       const emptyBlockPath: Path = isAtStartOfBlock
-        ? [(atAfterDelete.anchor.path[0] as number) + 1]
-        : [atAfterDelete.anchor.path[0] as number]
+        ? [resolveSegmentIndex(editor.children, atAfterDelete.anchor.path[0]!) + 1]
+        : [atAfterDelete.anchor.path[0]!]
       try {
         const potentiallyEmptyBlock = Node.get(
           editor,
@@ -224,7 +225,7 @@ export function insertBlock(options: {
     !Range.isExpanded(at)
   ) {
     const selectionPoint = Range.start(editor, at)
-    const blockPath: Path = [selectionPoint.path[0] as number]
+    const blockPath: Path = [selectionPoint.path[0]!]
     const blockStartPoint = Editor.start(editor, blockPath)
     const blockEndPoint = Editor.end(editor, blockPath)
 
@@ -237,7 +238,7 @@ export function insertBlock(options: {
       const currentBlock = Node.get(editor, blockPath, editor.schema) as Element
 
       // Find the child index and offset within that child
-      const childIndex = selectionPoint.path[1]!
+      const childIndex = resolveSegmentIndex(currentBlock.children, selectionPoint.path[1]!)
       const childOffset = selectionPoint.offset
 
       // Split the text node at the offset if needed
@@ -254,12 +255,12 @@ export function insertBlock(options: {
       }
 
       // Now split the block itself
-      const splitAtIndex = childOffset > 0 ? (childIndex as number) + 1 : (childIndex as number)
+      const splitAtIndex = childOffset > 0 ? childIndex + 1 : childIndex
       const {children: _, ...blockProperties} = currentBlock
       applySplitNode(editor, blockPath, splitAtIndex, blockProperties)
 
       // Insert the block object between the two split blocks
-      const insertPath: Path = [(blockPath[0] as number) + 1]
+      const insertPath: Path = [resolveSegmentIndex(editor.children, blockPath[0]!) + 1]
       editor.apply({type: 'insert_node', path: insertPath, node: block})
 
       // Handle selection based on select parameter
@@ -308,7 +309,7 @@ export function insertBlock(options: {
       // For cross-block deletion, set selection to the merge point
       if (isCrossBlock) {
         wasCrossBlockDeletion = true
-        const startBlockPath: Path = [start.path[0] as number]
+        const startBlockPath: Path = [start.path[0]!]
         const mergedBlock = Node.get(
           editor,
           startBlockPath,
@@ -482,7 +483,7 @@ export function insertBlock(options: {
     // Inserting block object (not text block) into an existing block
     if (!editor.isTextBlock(endBlock)) {
       // End block is not a text block - just insert after it
-      insertNodeAt(editor, [(endBlockPath[0] as number) + 1], block, select)
+      insertNodeAt(editor, [resolveSegmentIndex(editor.children, endBlockPath[0]!) + 1], block, select)
       return
     }
 
@@ -511,7 +512,7 @@ export function insertBlock(options: {
       Range.isCollapsed(at) &&
       Point.equals(selectionEndPoint, endBlockEndPoint)
     ) {
-      const nextPath: Path = [(endBlockPath[0] as number) + 1]
+      const nextPath: Path = [resolveSegmentIndex(editor.children, endBlockPath[0]!) + 1]
       editor.apply({type: 'insert_node', path: nextPath, node: block})
       if (select !== 'none') {
         setSelection(editor, nextPath, 'start')
@@ -552,7 +553,8 @@ export function insertBlock(options: {
       }
 
       // Remove nodes before end
-      for (let i = (end.path[1] as number) - 1; i >= 0; i--) {
+      const endBlock = Node.get(editor, endBlockPath, editor.schema) as Element
+      for (let i = resolveSegmentIndex(endBlock.children, end.path[1]!) - 1; i >= 0; i--) {
         removeNodeAt(editor, [...endBlockPath, i])
       }
 
@@ -573,7 +575,7 @@ export function insertBlock(options: {
 
       // Remove nodes after start
       const blockNode = Node.get(editor, endBlockPath, editor.schema) as Element
-      for (let i = blockNode.children.length - 1; i > (start.path[1] as number)!; i--) {
+      for (let i = blockNode.children.length - 1; i > resolveSegmentIndex(startBlock.children, start.path[1]!); i--) {
         removeNodeAt(editor, [...endBlockPath, i])
       }
 
@@ -615,7 +617,7 @@ export function insertBlock(options: {
         if (select === 'none') {
           setSelectionToRange(editor, at)
         } else {
-          setSelection(editor, [(endBlockPath[0] as number) + 1], 'start')
+          setSelection(editor, [resolveSegmentIndex(editor.children, endBlockPath[0]!) + 1], 'start')
         }
       } else {
         // Inserting block object: split the entire block and insert between
@@ -629,7 +631,7 @@ export function insertBlock(options: {
         })
 
         // Create a path ref to track the first block's path as it changes
-        const blockPath: Path = [currentPath[0] as number]
+        const blockPath: Path = [currentPath[0]!]
         const firstBlockPathRef = Editor.pathRef(editor, blockPath)
 
         // Split text node first
@@ -647,16 +649,18 @@ export function insertBlock(options: {
 
         // Split the block, preserving block properties
         const splitAtIndex =
-          currentOffset > 0 ? (currentPath[1] as number) + 1 : currentPath[1]!
+          currentOffset > 0
+          ? resolveSegmentIndex((Node.get(editor, blockPath, editor.schema) as Element).children, currentPath[1]!) + 1
+          : resolveSegmentIndex((Node.get(editor, blockPath, editor.schema) as Element).children, currentPath[1]!)
         const blockToSplit = Node.get(editor, blockPath, editor.schema)
 
         if (
-          (splitAtIndex as number) < (blockToSplit as Element).children.length &&
+          splitAtIndex < (blockToSplit as Element).children.length &&
           Element.isElement(blockToSplit, editor.schema)
         ) {
           // Get the properties to preserve in the split
           const {children: _, ...blockProperties} = blockToSplit
-          applySplitNode(editor, blockPath, splitAtIndex as number, blockProperties)
+          applySplitNode(editor, blockPath, splitAtIndex, blockProperties)
         }
 
         // Get the current path of the first block after splits
@@ -664,8 +668,8 @@ export function insertBlock(options: {
 
         // Insert block object between the split blocks
         const insertPath: Path = currentFirstBlockPath
-          ? [(currentFirstBlockPath[0] as number) + 1]
-          : [(blockPath[0] as number) + 1]
+          ? [resolveSegmentIndex(editor.children, currentFirstBlockPath[0]!) + 1]
+          : [resolveSegmentIndex(editor.children, blockPath[0]!) + 1]
         editor.apply({type: 'insert_node', path: insertPath, node: block})
 
         if (select === 'start' || select === 'end') {
@@ -689,7 +693,7 @@ export function insertBlock(options: {
       }
     } else {
       // Not on a text span - just insert after
-      const nextPath: Path = [(endBlockPath[0] as number) + 1]
+      const nextPath: Path = [resolveSegmentIndex(editor.children, endBlockPath[0]!) + 1]
       editor.apply({type: 'insert_node', path: nextPath, node: block})
       if (select === 'none') {
         setSelectionToRange(editor, at)
@@ -815,7 +819,7 @@ function deleteSameBlockRange(
   start: Point,
   end: Point,
 ) {
-  const blockPath: Path = [start.path[0] as number]
+  const blockPath: Path = [start.path[0]!]
 
   if (Path.equals(start.path, end.path)) {
     // Same text node - simple text removal
@@ -844,12 +848,14 @@ function deleteSameBlockRange(
   }
 
   // Remove nodes between start and end
-  for (let i = (end.path[1] as number) - 1; i > (start.path[1] as number)!; i--) {
+  const block = Node.get(editor, blockPath, editor.schema) as Element
+  const endChildIndex = resolveSegmentIndex(block.children, end.path[1]!)
+  for (let i = endChildIndex - 1; i > resolveSegmentIndex(block.children, start.path[1]!); i--) {
     removeNodeAt(editor, [...blockPath, i])
   }
 
   // Remove from beginning of end node
-  const newEndPath: Path = [...blockPath, (start.path[1] as number) + 1]
+  const newEndPath: Path = [...blockPath, resolveSegmentIndex((Node.get(editor, blockPath, editor.schema) as Element).children, start.path[1]!) + 1]
   const endNode = Node.get(editor, newEndPath, editor.schema) as Text
   if (end.offset > 0) {
     const textToRemove = endNode.text.slice(0, end.offset)
@@ -881,7 +887,7 @@ function deleteCrossBlockRange(
   start: Point,
   end: Point,
 ) {
-  const startBlockPath: Path = [start.path[0] as number]
+  const startBlockPath: Path = [start.path[0]!]
 
   // Remove from start position to end of start block
   if (start.path.length > 1) {
@@ -902,21 +908,23 @@ function deleteCrossBlockRange(
       startBlockPath,
       editor.schema,
     ) as Element
-    for (let i = startBlock.children.length - 1; i > (start.path[1] as number)!; i--) {
+    for (let i = startBlock.children.length - 1; i > resolveSegmentIndex(startBlock.children, start.path[1]!); i--) {
       removeNodeAt(editor, [...startBlockPath, i])
     }
   }
 
   // Remove all blocks between start and end
-  for (let i = (end.path[0] as number) - 1; i > (start.path[0] as number)!; i--) {
+  const endBlockIndex = resolveSegmentIndex(editor.children, end.path[0]!)
+  const startBlockIndex = resolveSegmentIndex(editor.children, start.path[0]!)
+  for (let i = endBlockIndex - 1; i > startBlockIndex; i--) {
     removeNodeAt(editor, [i])
   }
 
   // Remove from beginning of end block to end position
-  const adjustedEndBlockPath: Path = [(start.path[0] as number) + 1]
+  const adjustedEndBlockPath: Path = [resolveSegmentIndex(editor.children, start.path[0]!) + 1]
   if (end.path.length > 1) {
     // Remove nodes before end position
-    for (let i = 0; i < (end.path[1] as number); i++) {
+    for (let i = 0; i < resolveSegmentIndex((Node.get(editor, adjustedEndBlockPath, editor.schema) as Element).children, end.path[1]!); i++) {
       removeNodeAt(editor, [...adjustedEndBlockPath, 0])
     }
 
@@ -1001,7 +1009,8 @@ function insertTextBlockFragment(
 
   // Insert each child as a node
   const parentPath = Path.parent(at.path)
-  let insertIndex = (at.path[at.path.length - 1] as number) + (at.offset > 0 ? 1 : 0)
+  const parentNode = Node.get(editor, Path.parent(at.path), editor.schema) as Element
+  let insertIndex = resolveSegmentIndex(parentNode.children, at.path[at.path.length - 1]!) + (at.offset > 0 ? 1 : 0)
 
   for (const child of block.children) {
     const childPath = [...parentPath, insertIndex]

@@ -5,6 +5,7 @@ import type {EditorContext, EditorSnapshot} from '../editor/editor-snapshot'
 import {applySetNode} from '../internal-utils/apply-set-node'
 import {Editor, Element, Node, type Path} from '../slate'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
+import {resolveSegmentIndex} from '../types/paths'
 import {withNormalizeNode} from './slate-plugin.normalize-node'
 
 /**
@@ -195,7 +196,7 @@ function keyExistsAtPath(
   const parentBlockIndex = path.at(0)
   const parentBlock =
     parentBlockIndex !== undefined
-      ? snapshot.context.value.at(parentBlockIndex as number)
+      ? snapshot.context.value.at(resolveSegmentIndex(snapshot.context.value, parentBlockIndex!))
       : undefined
 
   if (!parentBlock) {

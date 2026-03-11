@@ -74,3 +74,28 @@ export function isKeyedSegment(value: unknown): value is KeyedSegment {
     typeof (value as KeyedSegment)._key === 'string'
   )
 }
+
+/**
+ * Resolve a path segment to a numeric index within a children array.
+ *
+ * - If the segment is a number, returns it directly.
+ * - If the segment is a KeyedSegment, finds the child with the matching `_key`.
+ * - Otherwise returns -1.
+ *
+ * @public
+ */
+export function resolveSegmentIndex(
+  children: ArrayLike<unknown>,
+  segment: PathSegment,
+): number {
+  if (typeof segment === 'number') {
+    return segment
+  }
+  if (isKeyedSegment(segment)) {
+    return Array.prototype.findIndex.call(
+      children,
+      (c: any) => c?._key === segment._key,
+    )
+  }
+  return -1
+}

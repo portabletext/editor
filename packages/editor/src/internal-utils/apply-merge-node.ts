@@ -9,6 +9,7 @@ import {
   type Point,
 } from '../slate'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
+import {resolveSegmentIndex} from '../types/paths'
 
 /**
  * Merge a node at the given path into its previous sibling using only
@@ -251,10 +252,18 @@ function transformPathForMerge(
   const p = [...path]
 
   if (Path.equals(mergePath, p) || NodeUtils.isBefore(editor, mergePath, p, editor.schema)) {
-    p[mergePath.length - 1] = (p[mergePath.length - 1] as number) - 1
+    const parentPath = p.slice(0, mergePath.length - 1)
+    const parent = NodeUtils.getIf(editor, parentPath, editor.schema)
+    const siblings = parent ? ((parent as any).children ?? []) : []
+    p[mergePath.length - 1] = resolveSegmentIndex(siblings, p[mergePath.length - 1]!) - 1
   } else if (Path.isAncestor(mergePath, p)) {
-    p[mergePath.length - 1] = (p[mergePath.length - 1] as number) - 1
-    p[mergePath.length] = (p[mergePath.length] as number) + position
+    const parentPath2 = p.slice(0, mergePath.length - 1)
+    const parent2 = NodeUtils.getIf(editor, parentPath2, editor.schema)
+    const siblings2 = parent2 ? ((parent2 as any).children ?? []) : []
+    p[mergePath.length - 1] = resolveSegmentIndex(siblings2, p[mergePath.length - 1]!) - 1
+    const mergedNode = NodeUtils.getIf(editor, p.slice(0, mergePath.length), editor.schema)
+    const mergedChildren = mergedNode ? ((mergedNode as any).children ?? []) : []
+    p[mergePath.length] = resolveSegmentIndex(mergedChildren, p[mergePath.length]!) + position
   }
 
   return p

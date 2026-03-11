@@ -10,6 +10,7 @@ import {
 } from '../slate'
 import type {EditorSelection, EditorSelectionPoint} from '../types/editor'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
+import {resolveSegmentIndex} from '../types/paths'
 
 export function getBlockPath({
   editor,
@@ -31,7 +32,7 @@ export function getBlockPath({
     return undefined
   }
 
-  return [blockIndex as number]
+  return [resolveSegmentIndex(editor.children, blockIndex!)]
 }
 
 export function getAnchorBlock({
@@ -170,7 +171,7 @@ export function getFocusChild({
   }
 
   try {
-    const focusChild = Node.child(focusBlock, childIndex as number, editor.schema)
+    const focusChild = Node.child(focusBlock, resolveSegmentIndex((focusBlock as any).children ?? [], childIndex!), editor.schema)
 
     return focusChild
       ? [focusChild, [...focusBlockPath, childIndex]]
@@ -195,7 +196,7 @@ function getPointChild({
   }
 
   try {
-    const pointChild = Node.child(block, childIndex as number, editor.schema)
+    const pointChild = Node.child(block, resolveSegmentIndex((block as any).children ?? [], childIndex!), editor.schema)
 
     return pointChild
       ? [pointChild, [...blockPath, childIndex]]

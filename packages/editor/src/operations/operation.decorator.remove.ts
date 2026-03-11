@@ -4,6 +4,7 @@ import {applySplitNode} from '../internal-utils/apply-split-node'
 import {toSlateRange} from '../internal-utils/to-slate-range'
 import {Editor, Element, Node, Range, Text} from '../slate'
 import type {OperationImplementation} from './operation.types'
+import {resolveSegmentIndex} from '../types/paths'
 
 export const decoratorRemoveOperationImplementation: OperationImplementation<
   'decorator.remove'
@@ -71,7 +72,7 @@ export const decoratorRemoveOperationImplementation: OperationImplementation<
         }),
       ]
       splitTextNodes.forEach(([node, path]) => {
-        const block = editor.children[path[0] as number]
+        const block = editor.children[resolveSegmentIndex(editor.children, path[0]!)]
         if (
           Element.isElement(block, editor.schema) &&
           block.children.includes(node)

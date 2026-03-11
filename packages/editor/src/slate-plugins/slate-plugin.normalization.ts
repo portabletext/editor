@@ -8,6 +8,7 @@ import {debug} from '../internal-utils/debug'
 import {isEqualMarkDefs} from '../internal-utils/equality'
 import {Editor, Node, Path, Range, Text} from '../slate'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
+import {resolveSegmentIndex} from '../types/paths'
 import {withNormalizeNode} from './slate-plugin.normalize-node'
 import {withoutPatching} from './slate-plugin.without-patching'
 
@@ -45,7 +46,7 @@ export function createNormalizationPlugin(
         const children = Node.children(editor, path, editor.schema)
 
         for (const [child, childPath] of children) {
-          const nextNode = node.children[(childPath[1] as number) + 1]
+          const nextNode = node.children[resolveSegmentIndex(node.children, childPath[1]!) + 1]
 
           if (
             editor.isTextSpan(child) &&
@@ -55,7 +56,7 @@ export function createNormalizationPlugin(
           ) {
             debug.normalization('merging spans with same marks')
             withNormalizeNode(editor, () => {
-              const mergePath = [childPath[0]!, (childPath[1] as number) + 1]
+              const mergePath = [childPath[0]!, resolveSegmentIndex(node.children, childPath[1]!) + 1]
               applyMergeNode(editor, mergePath, child.text.length)
             })
             return
@@ -326,7 +327,7 @@ export function createNormalizationPlugin(
               newFocusSpan &&
               op.newProperties.focus.path[0] === op.properties.focus.path[0] &&
               op.newProperties.focus.path[1] ===
-                (op.properties.focus.path[1] as number) + 1 &&
+                resolveSegmentIndex((Node.get(editor, [op.properties.focus.path[0]!], editor.schema) as any).children ?? [], op.properties.focus.path[1]!) + 1 &&
               focusSpan.text.length === op.properties.focus.offset &&
               op.newProperties.focus.offset === 0
             const movedToPreviousSpan =
@@ -334,7 +335,7 @@ export function createNormalizationPlugin(
               newFocusSpan &&
               op.newProperties.focus.path[0] === op.properties.focus.path[0] &&
               op.newProperties.focus.path[1] ===
-                (op.properties.focus.path[1] as number) - 1 &&
+                resolveSegmentIndex((Node.get(editor, [op.properties.focus.path[0]!], editor.schema) as any).children ?? [], op.properties.focus.path[1]!) - 1 &&
               op.properties.focus.offset === 0 &&
               newFocusSpan.text.length === op.newProperties.focus.offset
 

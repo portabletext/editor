@@ -1,6 +1,7 @@
 import {Editor, Range, type Ancestor, type DecoratedRange} from '../../slate'
 import {DOMEditor} from '../plugin/dom-editor'
 import {PLACEHOLDER_SYMBOL} from './symbols'
+import {resolveSegmentIndex} from '../../types/paths'
 
 export const shallowCompare = (
   obj1: {[key: string]: unknown},
@@ -143,8 +144,8 @@ export const splitDecorationsByChild = (
     }
 
     const [startPoint, endPoint] = Range.edges(editor, decorationRange)
-    const startIndex = startPoint.path[level] as number
-    const endIndex = endPoint.path[level] as number
+    const startIndex = resolveSegmentIndex(node.children, startPoint.path[level]!)
+    const endIndex = resolveSegmentIndex(node.children, endPoint.path[level]!)
 
     for (let i = startIndex; i <= endIndex; i++) {
       const ds = decorationsByChild[i]

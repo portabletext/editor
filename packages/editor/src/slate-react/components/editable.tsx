@@ -63,6 +63,7 @@ import {ReactEditor} from '../plugin/react-editor'
 import {debounce, throttle} from '../utils/debounce'
 import getDirection from '../utils/direction'
 import {RestoreDOM} from './restore-dom/restore-dom'
+import {resolveSegmentIndex} from '../../types/paths'
 
 type DeferredOperation = () => void
 
@@ -1667,7 +1668,7 @@ export const Editable = forwardRef(
                       const {selection} = editor
                       const element =
                         editor.children[
-                          selection !== null ? (selection.focus.path[0] as number) : 0
+                          selection !== null ? resolveSegmentIndex(editor.children, selection.focus.path[0]!) : 0
                         ]!
                       const isRTL =
                         getDirection(Node.string(element, editor.schema)) ===

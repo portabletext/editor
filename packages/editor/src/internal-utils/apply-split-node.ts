@@ -8,6 +8,7 @@ import {
   type Point,
 } from '../slate'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
+import {resolveSegmentIndex} from '../types/paths'
 import {rangeRefAffinities} from './range-ref-affinities'
 
 /**
@@ -196,17 +197,35 @@ function transformPathForSplit(
 
   if (Path.equals(splitPath, p)) {
     if (affinity === 'forward') {
-      p[p.length - 1] = (p[p.length - 1] as number) + 1
+      {
+      const parentPath = p.slice(0, p.length - 1)
+      const parent = NodeUtils.getIf(editor, parentPath, editor.schema)
+      const siblings = parent ? ((parent as any).children ?? []) : []
+      p[p.length - 1] = resolveSegmentIndex(siblings, p[p.length - 1]!) + 1
+    }
     }
     // backward: no change
   } else if (NodeUtils.isBefore(editor, splitPath, p, editor.schema)) {
-    p[splitDepth] = (p[splitDepth] as number) + 1
+    {
+      const parentPath = p.slice(0, splitDepth)
+      const parent = NodeUtils.getIf(editor, parentPath, editor.schema)
+      const siblings = parent ? ((parent as any).children ?? []) : []
+      p[splitDepth] = resolveSegmentIndex(siblings, p[splitDepth]!) + 1
+    }
   } else if (
     Path.isAncestor(splitPath, p) &&
-    (path[splitPath.length] as number) >= position
+    resolveSegmentIndex(
+      (NodeUtils.getIf(editor, path.slice(0, splitPath.length), editor.schema) as any)?.children ?? [],
+      path[splitPath.length]!
+    ) >= position
   ) {
-    p[splitDepth] = (p[splitDepth] as number) + 1
-    p[splitPath.length] = (p[splitPath.length] as number) - position
+    const parentPath3 = p.slice(0, splitDepth)
+    const parent3 = NodeUtils.getIf(editor, parentPath3, editor.schema)
+    const siblings3 = parent3 ? ((parent3 as any).children ?? []) : []
+    p[splitDepth] = resolveSegmentIndex(siblings3, p[splitDepth]!) + 1
+    const innerParent = NodeUtils.getIf(editor, p.slice(0, splitPath.length), editor.schema)
+    const innerChildren = innerParent ? ((innerParent as any).children ?? []) : []
+    p[splitPath.length] = resolveSegmentIndex(innerChildren, p[splitPath.length]!) - position
   }
 
   return p

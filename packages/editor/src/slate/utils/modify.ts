@@ -1,5 +1,5 @@
 import type {EditorSchema} from '../../editor/editor-schema'
-import {isKeyedSegment, type KeyedSegment} from '../../types/paths'
+import {isKeyedSegment, resolveSegmentIndex} from '../../types/paths'
 import {
   Node,
   Scrubber,
@@ -11,18 +11,10 @@ import {
 } from '../interfaces'
 
 /**
- * Resolve a path segment to a numeric index in a children array.
+ * @deprecated Use resolveSegmentIndex from types/paths instead.
  */
 function resolveIndex(children: Descendant[], segment: unknown): number {
-  if (typeof segment === 'number') {
-    return segment
-  }
-  if (isKeyedSegment(segment)) {
-    return children.findIndex(
-      (c: any) => c?._key === (segment as KeyedSegment)._key,
-    )
-  }
-  return -1
+  return resolveSegmentIndex(children as Array<{_key?: string}>, segment as any)
 }
 
 export const insertChildren = <T>(

@@ -8,6 +8,7 @@ import {
 } from '@sanity/diff-match-patch'
 import type {Descendant, Operation} from '../slate'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
+import {resolveSegmentIndex} from '../types/paths'
 import {isKeyedSegment} from '../utils'
 import {debug} from './debug'
 
@@ -34,6 +35,7 @@ export function transformOperation(
     )
     return [
       adjustBlockPath(
+        editor,
         transformedOperation,
         patch.items.length,
         insertBlockIndex,
@@ -55,7 +57,7 @@ export function transformOperation(
       debug.history('Skipping transformation that targeted removed block')
       return []
     }
-    return [adjustBlockPath(transformedOperation, -1, unsetBlockIndex)]
+    return [adjustBlockPath(editor, transformedOperation, -1, unsetBlockIndex)]
   }
 
   // Someone reset the whole value
@@ -158,6 +160,7 @@ export function transformOperation(
  * Adjust the block path for a operation
  */
 function adjustBlockPath(
+  editor: PortableTextSlateEditor,
   operation: Operation,
   level: number,
   blockIndex: number,
@@ -167,11 +170,11 @@ function adjustBlockPath(
     blockIndex >= 0 &&
     transformedOperation.type !== 'set_selection' &&
     Array.isArray(transformedOperation.path) &&
-    (transformedOperation.path[0] as number) >= (blockIndex as number) + level &&
-    (transformedOperation.path[0] as number) + level > -1
+    resolveSegmentIndex(editor.children, transformedOperation.path[0]!) >= blockIndex + level &&
+    resolveSegmentIndex(editor.children, transformedOperation.path[0]!) + level > -1
   ) {
     const newPath = [
-      (transformedOperation.path[0] as number) + level,
+      resolveSegmentIndex(editor.children, transformedOperation.path[0]!) + level,
       ...transformedOperation.path.slice(1),
     ]
     transformedOperation.path = newPath
@@ -194,10 +197,10 @@ function adjustBlockPath(
       points.forEach((point) => {
         if (
           point &&
-          (point.path[0] as number) >= (blockIndex as number) + level &&
-          (point.path[0] as number) + level > -1
+          resolveSegmentIndex(editor.children, point.path[0]!) >= blockIndex + level &&
+          resolveSegmentIndex(editor.children, point.path[0]!) + level > -1
         ) {
-          point.path = [(point.path[0] as number) + level, ...point.path.slice(1)]
+          point.path = [resolveSegmentIndex(editor.children, point.path[0]!) + level, ...point.path.slice(1)]
         }
       })
       if (currentFocus && currentAnchor) {
@@ -224,9 +227,9 @@ function findOperationTargetBlock(
 ): Descendant | undefined {
   let block: Descendant | undefined
   if (operation.type === 'set_selection' && editor.selection) {
-    block = editor.children[editor.selection.focus.path[0] as number]
+    block = editor.children[resolveSegmentIndex(editor.children, editor.selection.focus.path[0]!)]
   } else if ('path' in operation) {
-    block = editor.children[operation.path[0] as number]
+    block = editor.children[resolveSegmentIndex(editor.children, operation.path[0]!)]
   }
   return block
 }
