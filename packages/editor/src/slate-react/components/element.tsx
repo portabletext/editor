@@ -11,7 +11,6 @@ import useChildren from '../hooks/use-children'
 import {useDecorations} from '../hooks/use-decorations'
 import getDirection from '../utils/direction'
 import type {
-  RenderChunkProps,
   RenderElementProps,
   RenderLeafProps,
   RenderPlaceholderProps,
@@ -30,7 +29,6 @@ const Element = (props: {
   decorations: DecoratedRange[]
   element: SlateElement
   renderElement?: (props: RenderElementProps) => JSX.Element
-  renderChunk?: (props: RenderChunkProps) => JSX.Element
   renderPlaceholder: (props: RenderPlaceholderProps) => JSX.Element
   renderText?: (props: RenderTextProps) => JSX.Element
   renderLeaf?: (props: RenderLeafProps) => JSX.Element
@@ -39,7 +37,6 @@ const Element = (props: {
     decorations: parentDecorations,
     element,
     renderElement = defaultRenderElement,
-    renderChunk,
     renderPlaceholder,
     renderLeaf,
     renderText,
@@ -66,7 +63,6 @@ const Element = (props: {
     decorations,
     node: element,
     renderElement,
-    renderChunk,
     renderPlaceholder,
     renderLeaf,
     renderText,
@@ -108,7 +104,6 @@ const MemoizedElement = React.memo(Element, (prev, next) => {
   return (
     prev.element === next.element &&
     prev.renderElement === next.renderElement &&
-    prev.renderChunk === next.renderChunk &&
     prev.renderText === next.renderText &&
     prev.renderLeaf === next.renderLeaf &&
     prev.renderPlaceholder === next.renderPlaceholder &&

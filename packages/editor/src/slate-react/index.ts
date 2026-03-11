@@ -2,7 +2,6 @@
 export {
   Editable,
   type RenderElementProps,
-  type RenderChunkProps,
   type RenderLeafProps,
   type RenderPlaceholderProps,
   DefaultPlaceholder,
