@@ -8,8 +8,7 @@ import {
 } from '@sanity/diff-match-patch'
 import type {Descendant, Operation} from '../slate'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
-import {resolveSegmentIndex} from '../types/paths'
-import {isKeyedSegment} from '../utils'
+import {isKeyedSegment, resolveSegmentIndex} from '../types/paths'
 import {debug} from './debug'
 
 /**
@@ -166,6 +165,23 @@ function adjustBlockPath(
   blockIndex: number,
 ): Operation {
   const transformedOperation = {...operation}
+
+  // With keyed paths, block path adjustment is unnecessary —
+  // keys don't shift when blocks are inserted or removed.
+  if (
+    transformedOperation.type !== 'set_selection' &&
+    'path' in transformedOperation &&
+    Array.isArray(transformedOperation.path) &&
+    isKeyedSegment(transformedOperation.path[0])
+  ) {
+    return transformedOperation
+  }
+  if (transformedOperation.type === 'set_selection') {
+    const anyPoint = transformedOperation.properties?.focus ?? transformedOperation.newProperties?.focus
+    if (anyPoint && isKeyedSegment(anyPoint.path[0])) {
+      return transformedOperation
+    }
+  }
   if (
     blockIndex >= 0 &&
     transformedOperation.type !== 'set_selection' &&

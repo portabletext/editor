@@ -23,7 +23,7 @@ import {
   type RemoveTextOperation,
   type SetNodeOperation,
 } from '../slate'
-import {lastKeyedSegment, resolveSegmentIndex, type Path} from '../types/paths'
+import {childSegment, resolveSegmentIndex, type Path} from '../types/paths'
 
 export function insertTextPatch(
   schema: EditorSchema,
@@ -39,8 +39,8 @@ export function insertTextPatch(
   }
   const textChild =
     isTextBlock({schema}, block) &&
-    isSpan({schema}, block.children[resolveSegmentIndex(block.children, lastKeyedSegment(operation.path)!)]) &&
-    (block.children[resolveSegmentIndex(block.children, lastKeyedSegment(operation.path)!)] as PortableTextSpan)
+    isSpan({schema}, block.children[resolveSegmentIndex(block.children, childSegment(operation.path)!)]) &&
+    (block.children[resolveSegmentIndex(block.children, childSegment(operation.path)!)] as PortableTextSpan)
   if (!textChild) {
     throw new Error('Could not find child')
   }
@@ -52,7 +52,7 @@ export function insertTextPatch(
   ]
   const prevBlock = beforeValue[resolveSegmentIndex(beforeValue, operation.path[0]!)]
   const prevChild =
-    isTextBlock({schema}, prevBlock) && prevBlock.children[resolveSegmentIndex(prevBlock.children, lastKeyedSegment(operation.path)!)]
+    isTextBlock({schema}, prevBlock) && prevBlock.children[resolveSegmentIndex(prevBlock.children, childSegment(operation.path)!)]
   const prevText = isSpan({schema}, prevChild) ? prevChild.text : ''
   const patch = diffMatchPatch(prevText, textChild.text, path)
   return patch.value.length ? [patch] : []
@@ -68,7 +68,7 @@ export function removeTextPatch(
   if (!block || !isTextBlock({schema}, block)) {
     return []
   }
-  const child = block.children[resolveSegmentIndex(block.children, lastKeyedSegment(operation.path)!)] || undefined
+  const child = block.children[resolveSegmentIndex(block.children, childSegment(operation.path)!)] || undefined
   const textChild: PortableTextSpan | undefined = isSpan({schema}, child)
     ? child
     : undefined
@@ -87,7 +87,7 @@ export function removeTextPatch(
   const beforeBlock = beforeValue[resolveSegmentIndex(beforeValue, operation.path[0]!)]
   const prevTextChild =
     isTextBlock({schema}, beforeBlock) &&
-    beforeBlock.children[resolveSegmentIndex(beforeBlock.children, lastKeyedSegment(operation.path)!)]
+    beforeBlock.children[resolveSegmentIndex(beforeBlock.children, childSegment(operation.path)!)]
   const prevText = isSpan({schema}, prevTextChild) && prevTextChild.text
   const patch = diffMatchPatch(prevText || '', textChild.text, path)
   return patch.value ? [patch] : []
@@ -159,10 +159,10 @@ export function setNodePatch(
 
       return patches
     }
-  } else if (operation.path.length === 2) {
+  } else if (operation.path.length >= 2) {
     const block = children[resolveSegmentIndex(children, operation.path[0]!)]
     if (isTextBlock({schema}, block)) {
-      const child = block.children[resolveSegmentIndex(block.children, lastKeyedSegment(operation.path)!)]
+      const child = block.children[resolveSegmentIndex(block.children, childSegment(operation.path)!)]
       if (child) {
         const blockKey = block._key
         const childKey = child._key
@@ -278,20 +278,20 @@ export function insertNodePatch(
     ]
   } else if (
     isTextBlock({schema}, block) &&
-    operation.path.length === 2 &&
+    operation.path.length >= 2 &&
     children[resolveSegmentIndex(children, operation.path[0]!)]
   ) {
     const position =
-      block.children.length === 0 || !block.children[resolveSegmentIndex(block.children, lastKeyedSegment(operation.path)!) - 1]
+      block.children.length === 0 || !block.children[resolveSegmentIndex(block.children, childSegment(operation.path)!) - 1]
         ? 'before'
         : 'after'
     const path =
-      block.children.length <= 1 || !block.children[resolveSegmentIndex(block.children, lastKeyedSegment(operation.path)!) - 1]
+      block.children.length <= 1 || !block.children[resolveSegmentIndex(block.children, childSegment(operation.path)!) - 1]
         ? [{_key: block._key}, 'children', 0]
         : [
             {_key: block._key},
             'children',
-            {_key: block.children[resolveSegmentIndex(block.children, lastKeyedSegment(operation.path)!) - 1]!._key},
+            {_key: block.children[resolveSegmentIndex(block.children, childSegment(operation.path)!) - 1]!._key},
           ]
 
     // Defensive setIfMissing to ensure children array exists before inserting
@@ -319,8 +319,8 @@ export function removeNodePatch(
       return [unset([{_key: block._key}])]
     }
     throw new Error('Block not found')
-  } else if (isTextBlock({schema}, block) && operation.path.length === 2) {
-    const spanToRemove = block.children[resolveSegmentIndex(block.children, lastKeyedSegment(operation.path)!)]
+  } else if (isTextBlock({schema}, block) && operation.path.length >= 2) {
+    const spanToRemove = block.children[resolveSegmentIndex(block.children, childSegment(operation.path)!)]
 
     if (spanToRemove) {
       const spansMatchingKey = block.children.filter(

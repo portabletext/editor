@@ -115,3 +115,25 @@ export function lastKeyedSegment(path: Path): KeyedSegment | undefined {
   }
   return undefined
 }
+
+/**
+ * Get the child-identifying segment from a path.
+ *
+ * Handles both keyed paths and legacy numeric paths:
+ * - Keyed: [blockKey, 'children', spanKey] → spanKey
+ * - Numeric: [0, 1] → 1
+ * - Block-level: [blockKey] or [0] → the single segment
+ *
+ * Returns the last segment that is either a KeyedSegment or a number.
+ *
+ * @public
+ */
+export function childSegment(path: Path): PathSegment | undefined {
+  for (let i = path.length - 1; i >= 0; i--) {
+    const seg = path[i]!
+    if (isKeyedSegment(seg) || typeof seg === 'number') {
+      return seg
+    }
+  }
+  return undefined
+}

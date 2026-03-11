@@ -10,7 +10,7 @@ import {
 } from '../slate'
 import type {EditorSelection, EditorSelectionPoint} from '../types/editor'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
-import {lastKeyedSegment, resolveSegmentIndex} from '../types/paths'
+import {childSegment, resolveSegmentIndex} from '../types/paths'
 
 export function getBlockPath({
   editor,
@@ -164,7 +164,7 @@ export function getFocusChild({
   editor: PortableTextSlateEditor
 }): [node: Node, path: SlatePath] | [undefined, undefined] {
   const [focusBlock, focusBlockPath] = getFocusBlock({editor})
-  const childIndex = lastKeyedSegment(editor.selection?.focus.path ?? [])
+  const childIndex = childSegment(editor.selection?.focus.path ?? [])
 
   if (!focusBlock || !focusBlockPath || childIndex === undefined) {
     return [undefined, undefined]
@@ -189,7 +189,7 @@ function getPointChild({
   point: Point
 }): [node: Node, path: SlatePath] | [undefined, undefined] {
   const [block, blockPath] = getPointBlock({editor, point})
-  const childIndex = lastKeyedSegment(point.path)
+  const childIndex = childSegment(point.path)
 
   if (!block || !blockPath || childIndex === undefined) {
     return [undefined, undefined]

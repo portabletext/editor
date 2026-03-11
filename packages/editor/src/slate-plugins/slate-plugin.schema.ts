@@ -91,7 +91,7 @@ export function createSchemaPlugin({editorActor}: {editorActor: EditorActor}) {
       const [node, path] = entry
 
       // If text block children node is missing _type, set it to the span type
-      if (node._type === undefined && path.length === 2) {
+      if (node._type === undefined && path.length >= 2) {
         debug.normalization('Setting span type on text node without a type')
         const span = node as PortableTextSpan
         const key =
@@ -111,7 +111,7 @@ export function createSchemaPlugin({editorActor}: {editorActor: EditorActor}) {
       }
 
       // catches cases when the children are missing keys but excludes it when the normalize is running the node as the editor object
-      if (node._key === undefined && (path.length === 1 || path.length === 2)) {
+      if (node._key === undefined && (path.length === 1 || path.length >= 2)) {
         debug.normalization('Setting missing key on child node without a key')
         const key = editorActor.getSnapshot().context.keyGenerator()
         withNormalizeNode(editor, () => {
