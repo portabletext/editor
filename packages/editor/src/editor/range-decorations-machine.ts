@@ -419,10 +419,10 @@ function createDecorate(
       }
 
       return (
-        Range.intersection(editor, decoratedRange, {
+        Range.intersection(slateEditor, decoratedRange, {
           anchor: {path, offset: 0},
           focus: {path, offset: 0},
-        }) || Range.includes(editor, decoratedRange, path)
+        }) || Range.includes(slateEditor, decoratedRange, path)
       )
     })
   }

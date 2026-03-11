@@ -68,7 +68,7 @@ export function applyInsertNodeAtPoint(
     }
 
     const path = pathRef.unref()!
-    const insertPath = isAtEnd ? Path.next(path) : path
+    const insertPath = isAtEnd ? (Node.next(editor, path, editor.schema) ?? path) : path
 
     editor.apply({type: 'insert_node', path: insertPath, node})
 

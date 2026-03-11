@@ -44,6 +44,7 @@ export function applySplitNode(
     const current = ref.current
     if (current) {
       ref.current = transformPointForSplit(
+        editor,
         current,
         path,
         position,
@@ -59,12 +60,14 @@ export function applySplitNode(
         ref.affinity,
       )
       const anchor = transformPointForSplit(
+        editor,
         current.anchor,
         path,
         position,
         anchorAffinity ?? 'forward',
       )
       const focus = transformPointForSplit(
+        editor,
         current.focus,
         path,
         position,
@@ -82,12 +85,14 @@ export function applySplitNode(
   // Pre-transform editor.selection
   if (editor.selection) {
     const anchor = transformPointForSplit(
+      editor,
       editor.selection.anchor,
       path,
       position,
       'forward',
     )
     const focus = transformPointForSplit(
+      editor,
       editor.selection.focus,
       path,
       position,
@@ -124,7 +129,7 @@ export function applySplitNode(
         })
         editor.apply({
           type: 'insert_node',
-          path: Path.next(path),
+          path: NodeUtils.next(editor, path, editor.schema) ?? path,
           node: newNode,
         })
       } else if (Element.isElement(node, editor.schema)) {
@@ -140,7 +145,7 @@ export function applySplitNode(
         }
         editor.apply({
           type: 'insert_node',
-          path: Path.next(path),
+          path: NodeUtils.next(editor, path, editor.schema) ?? path,
           node: newNode,
         })
       }
@@ -182,19 +187,27 @@ function transformPathForSplit(
 ): Path | null {
   const p = [...path]
 
+  // During the transition to keyed paths, ref transforms still operate
+  // on numeric indices. Cast segments to numbers for arithmetic.
+  // TODO: With fully keyed paths, split transforms become trivial —
+  // keys don't shift, only the split node itself changes.
+  const splitDepth = splitPath.length - 1
+  const pathAtSplitDepth = p[splitDepth]
+  const splitAtDepth = splitPath[splitDepth]
+
   if (Path.equals(splitPath, p)) {
     if (affinity === 'forward') {
-      p[p.length - 1] = p[p.length - 1]! + 1
+      p[p.length - 1] = (p[p.length - 1] as number) + 1
     }
     // backward: no change
   } else if (NodeUtils.isBefore(editor, splitPath, p, editor.schema)) {
-    p[splitPath.length - 1] = p[splitPath.length - 1]! + 1
+    p[splitDepth] = (p[splitDepth] as number) + 1
   } else if (
     Path.isAncestor(splitPath, p) &&
-    path[splitPath.length]! >= position
+    (path[splitPath.length] as number) >= position
   ) {
-    p[splitPath.length - 1] = p[splitPath.length - 1]! + 1
-    p[splitPath.length] = p[splitPath.length]! - position
+    p[splitDepth] = (p[splitDepth] as number) + 1
+    p[splitPath.length] = (p[splitPath.length] as number) - position
   }
 
   return p
@@ -207,6 +220,7 @@ function transformPathForSplit(
  * it moves into the new node with an adjusted offset.
  */
 function transformPointForSplit(
+  editor: Editor,
   point: Point,
   splitPath: Path,
   position: number,

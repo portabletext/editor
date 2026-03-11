@@ -28,7 +28,13 @@ export function applyMergeNode(
   position: number,
 ): void {
   const node = NodeUtils.get(editor, path, editor.schema)
-  const prevPath = Path.previous(path)
+  const prevPath = NodeUtils.previous(editor, path, editor.schema)
+
+  if (!prevPath) {
+    throw new Error(
+      `Cannot merge node at path [${path}] because it has no previous sibling.`,
+    )
+  }
 
   // Pre-transform all refs with merge semantics
   for (const ref of Editor.pathRefs(editor)) {
@@ -40,14 +46,14 @@ export function applyMergeNode(
   for (const ref of Editor.pointRefs(editor)) {
     const current = ref.current
     if (current) {
-      ref.current = transformPointForMerge(current, path, position)
+      ref.current = transformPointForMerge(editor, current, path, position)
     }
   }
   for (const ref of Editor.rangeRefs(editor)) {
     const current = ref.current
     if (current) {
-      const anchor = transformPointForMerge(current.anchor, path, position)
-      const focus = transformPointForMerge(current.focus, path, position)
+      const anchor = transformPointForMerge(editor, current.anchor, path, position)
+      const focus = transformPointForMerge(editor, current.focus, path, position)
       if (anchor && focus) {
         ref.current = {anchor, focus}
       } else {
@@ -60,11 +66,12 @@ export function applyMergeNode(
   // Pre-transform editor.selection
   if (editor.selection) {
     const anchor = transformPointForMerge(
+      editor,
       editor.selection.anchor,
       path,
       position,
     )
-    const focus = transformPointForMerge(editor.selection.focus, path, position)
+    const focus = transformPointForMerge(editor, editor.selection.focus, path, position)
     if (anchor && focus) {
       editor.selection = {anchor, focus}
     }
@@ -97,7 +104,7 @@ export function applyMergeNode(
           diff: {start: number; end: number; text: string}
           id: number
           path: Path
-        }) => transformTextDiffForMerge(textDiff, path, position),
+        }) => transformTextDiffForMerge(editor, textDiff, path, position),
       )
       .filter(Boolean)
   }
@@ -109,8 +116,8 @@ export function applyMergeNode(
     'focus' in (savedPendingSelection as Record<string, unknown>)
   ) {
     const sel = savedPendingSelection as Range
-    const anchor = transformPointForMerge(sel.anchor, path, position)
-    const focus = transformPointForMerge(sel.focus, path, position)
+    const anchor = transformPointForMerge(editor, sel.anchor, path, position)
+    const focus = transformPointForMerge(editor, sel.focus, path, position)
     editorAny['pendingSelection'] = anchor && focus ? {anchor, focus} : null
   }
 
@@ -121,11 +128,11 @@ export function applyMergeNode(
   ) {
     const action = savedPendingAction as {at: Point | Range}
     if ('offset' in action.at && typeof action.at.offset === 'number') {
-      const at = transformPointForMerge(action.at as Point, path, position)
+      const at = transformPointForMerge(editor, action.at as Point, path, position)
       editorAny['pendingAction'] = at ? {...action, at} : null
     } else if (Range.isRange(action.at)) {
-      const anchor = transformPointForMerge(action.at.anchor, path, position)
-      const focus = transformPointForMerge(action.at.focus, path, position)
+      const anchor = transformPointForMerge(editor, action.at.anchor, path, position)
+      const focus = transformPointForMerge(editor, action.at.focus, path, position)
       editorAny['pendingAction'] =
         anchor && focus ? {...action, at: {anchor, focus}} : null
     }
@@ -194,6 +201,7 @@ export function applyMergeNode(
  * Transform a text diff for a merge operation.
  */
 function transformTextDiffForMerge(
+  editor: Editor,
   textDiff: {
     diff: {start: number; end: number; text: string}
     id: number
@@ -243,10 +251,10 @@ function transformPathForMerge(
   const p = [...path]
 
   if (Path.equals(mergePath, p) || NodeUtils.isBefore(editor, mergePath, p, editor.schema)) {
-    p[mergePath.length - 1] = p[mergePath.length - 1]! - 1
+    p[mergePath.length - 1] = (p[mergePath.length - 1] as number) - 1
   } else if (Path.isAncestor(mergePath, p)) {
-    p[mergePath.length - 1] = p[mergePath.length - 1]! - 1
-    p[mergePath.length] = p[mergePath.length]! + position
+    p[mergePath.length - 1] = (p[mergePath.length - 1] as number) - 1
+    p[mergePath.length] = (p[mergePath.length] as number) + position
   }
 
   return p
@@ -259,6 +267,7 @@ function transformPathForMerge(
  * (the number of children/characters already in the merge target).
  */
 function transformPointForMerge(
+  editor: Editor,
   point: Point,
   mergePath: Path,
   position: number,
