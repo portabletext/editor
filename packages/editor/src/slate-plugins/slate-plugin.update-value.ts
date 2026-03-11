@@ -11,7 +11,7 @@ export function updateValuePlugin(
   const {apply} = editor
 
   editor.apply = (operation) => {
-    if (editor.isNormalizingNode) {
+    if (editor.isNormalizingNode && debug.normalization.enabled) {
       debug.normalization(
         `(slate operation)\n${JSON.stringify(operation, null, 2)}`,
       )

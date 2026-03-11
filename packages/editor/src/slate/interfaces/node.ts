@@ -1,5 +1,5 @@
-import {Editor, Path, Range, Scrubber, Text} from '..'
-import {isKeyedSegment, type KeyedSegment} from '../../types/paths'
+import {Editor, Path, Range, Text} from '..'
+import {isKeyedSegment, type KeyedSegment, type PathSegment} from '../../types/paths'
 import type {EditorSchema} from '../../editor/editor-schema'
 import type {ExtendedType} from '../types/custom-types'
 import {isObject} from '../utils/is-object'
@@ -19,6 +19,23 @@ import {Element} from './element'
  * but with containers this will be schema-driven (e.g., 'rows', 'cells',
  * 'content'). This is the Phase 3 extension point for container support.
  */
+
+/**
+ * Build the path segments for a child of the given parent.
+ * At the root level (parentPath = []), omits the field name to maintain
+ * the convention that block paths are [key] not ['children', key].
+ */
+function childPathSegments(
+  parentPath: Path,
+  fieldName: string,
+  childKey: KeyedSegment | number,
+): PathSegment[] {
+  if (parentPath.length === 0) {
+    return [childKey]
+  }
+  return [fieldName, childKey]
+}
+
 function getChildrenFieldName(_node: any, _schema: any): string {
   return 'children'
 }
@@ -300,9 +317,7 @@ export const Node: NodeInterface = {
 
     if (Text.isText(node, schema) || Node.isObjectNode(node, schema)) {
       throw new Error(
-        `Cannot get the ancestor node at path [${path}] because it refers to a leaf node instead: ${Scrubber.stringify(
-          node,
-        )}`,
+        `Cannot get the ancestor node at path [${path}] because it refers to a leaf node instead: ${"[node]"}`,
       )
     }
 
@@ -312,7 +327,7 @@ export const Node: NodeInterface = {
   child(root: Node, index: number, schema: EditorSchema): Descendant {
     if (Text.isText(root, schema) || Node.isObjectNode(root, schema)) {
       throw new Error(
-        `Cannot get the child of a leaf node: ${Scrubber.stringify(root)}`,
+        `Cannot get the child of a leaf node: ${"[root node]"}`,
       )
     }
 
@@ -320,9 +335,7 @@ export const Node: NodeInterface = {
 
     if (c == null) {
       throw new Error(
-        `Cannot get child at index \`${index}\` in node: ${Scrubber.stringify(
-          root,
-        )}`,
+        `Cannot get child at index \`${index}\` in node: ${"[root node]"}`,
       )
     }
 
@@ -346,7 +359,10 @@ export const Node: NodeInterface = {
     for (const index of indices) {
       const child = children[index]! as Descendant
       const key = childKeySegment(child)
-      const childPath: Path = [...path, fieldName, key]
+      // At the root level (path = []), block paths are just [key] without
+      // the field name prefix. This matches the historical convention where
+      // blocks are at [0], [1], etc. — now [{_key:'b1'}], [{_key:'b2'}].
+      const childPath: Path = [...path, ...childPathSegments(path, fieldName, key)]
       yield [child, childPath]
     }
   },
@@ -383,7 +399,7 @@ export const Node: NodeInterface = {
 
       const firstChild = children[0]! as Node
       const fieldName = getChildrenFieldName(ancestor, schema)
-      p.push(fieldName, childKeySegment(firstChild))
+      p.push(...childPathSegments(p, fieldName, childKeySegment(firstChild)))
       n = firstChild
     }
 
@@ -470,9 +486,7 @@ export const Node: NodeInterface = {
     const node = Node.getIf(root, path, schema)
     if (node === undefined) {
       throw new Error(
-        `Cannot find a descendant at path [${path}] in node: ${Scrubber.stringify(
-          root,
-        )}`,
+        `Cannot find a descendant at path [${JSON.stringify(path)}] in node`,
       )
     }
     return node
@@ -565,7 +579,7 @@ export const Node: NodeInterface = {
 
       const lastChild = children[children.length - 1]! as Node
       const fieldName = getChildrenFieldName(ancestor, schema)
-      p.push(fieldName, childKeySegment(lastChild))
+      p.push(...childPathSegments(p, fieldName, childKeySegment(lastChild)))
       n = lastChild
     }
 
@@ -577,9 +591,7 @@ export const Node: NodeInterface = {
 
     if (!Text.isText(node, schema) && !Node.isObjectNode(node, schema)) {
       throw new Error(
-        `Cannot get the leaf node at path [${path}] because it refers to a non-leaf node: ${Scrubber.stringify(
-          node,
-        )}`,
+        `Cannot get the leaf node at path [${path}] because it refers to a non-leaf node: ${"[node]"}`,
       )
     }
 
@@ -656,7 +668,7 @@ export const Node: NodeInterface = {
 
         const child = children[childIndex]
         if (child) {
-          p = [...p, fieldName, childKeySegment(child)]
+          p = [...p, ...childPathSegments(p, fieldName, childKeySegment(child))]
           n = child as Node
           continue
         }
@@ -685,7 +697,7 @@ export const Node: NodeInterface = {
         if (nextIndex >= 0 && nextIndex < siblings.length) {
           const sibling = siblings[nextIndex]!
           const fieldName = getChildrenFieldName(parentNode, schema)
-          p = [...parentPath, fieldName, childKeySegment(sibling)]
+          p = [...parentPath, ...childPathSegments(parentPath, fieldName, childKeySegment(sibling))]
           n = sibling as Node
           continue
         }
@@ -722,7 +734,7 @@ export const Node: NodeInterface = {
 
     const nextChild = siblings[nextIndex]!
     const fieldName = getChildrenFieldName(parentNode, schema)
-    return [...parentPath, fieldName, childKeySegment(nextChild)]
+    return [...parentPath, ...childPathSegments(parentPath, fieldName, childKeySegment(nextChild))]
   },
 
   previous(
@@ -749,7 +761,7 @@ export const Node: NodeInterface = {
 
     const prevChild = siblings[prevIndex]!
     const fieldName = getChildrenFieldName(parentNode, schema)
-    return [...parentPath, fieldName, childKeySegment(prevChild)]
+    return [...parentPath, ...childPathSegments(parentPath, fieldName, childKeySegment(prevChild))]
   },
 
   hasPrevious(

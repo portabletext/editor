@@ -1,4 +1,5 @@
 import {Element, Node, type Path} from '../slate'
+
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 
 /**

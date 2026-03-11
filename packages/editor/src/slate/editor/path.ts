@@ -1,4 +1,5 @@
 import {Node, Path, Point, Range, type EditorInterface} from '../interfaces'
+import {isKeyedSegment} from '../../types/paths'
 
 export const path: EditorInterface['path'] = (editor, at, options = {}) => {
   const {depth, edge} = options
@@ -28,7 +29,21 @@ export const path: EditorInterface['path'] = (editor, at, options = {}) => {
   }
 
   if (depth != null) {
-    at = at.slice(0, depth)
+    // With keyed paths, each "level" is 2 segments (fieldName + key),
+    // except the root level which is 1 segment (just the key).
+    // Count keyed segments to find the slice point for the desired depth.
+    let keyCount = 0
+    let sliceAt = at.length
+    for (let i = 0; i < at.length; i++) {
+      if (isKeyedSegment(at[i]!) || typeof at[i] === 'number') {
+        keyCount++
+        if (keyCount === depth) {
+          sliceAt = i + 1
+          break
+        }
+      }
+    }
+    at = at.slice(0, sliceAt)
   }
 
   return at

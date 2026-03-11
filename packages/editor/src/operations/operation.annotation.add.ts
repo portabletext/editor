@@ -75,6 +75,7 @@ export const addAnnotationOperationImplementation: OperationImplementation<
     )
 
     if (existingMarkDef === undefined) {
+      console.error('[annotation.add] block applySetNode blockPath:', JSON.stringify(blockPath))
       applySetNode(
         editor,
         {

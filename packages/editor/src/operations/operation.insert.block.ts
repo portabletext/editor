@@ -776,6 +776,9 @@ function insertNodeAt(
  * Removes a node at the given path.
  */
 function removeNodeAt(editor: PortableTextSlateEditor, path: Path) {
+  if (path.length === 0) {
+    throw new Error('removeNodeAt called with empty path - would remove editor root')
+  }
   const node = Node.get(editor, path, editor.schema)
   editor.apply({type: 'remove_node', path, node})
 }
