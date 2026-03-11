@@ -98,7 +98,7 @@ export function toSlateSelectionPoint(
 
   if (!isTextBlock(snapshot.context, block)) {
     return {
-      path: [blockIndex],
+      path: [{_key: block._key}],
       offset: 0,
     }
   }
@@ -131,8 +131,11 @@ export function toSlateSelectionPoint(
   // If we still don't have a child key, then we have to resort to selecting
   // the first child of the block (which by Slate convention is a span).
   if (!childKey) {
+    const firstChild = block.children[0]
     return {
-      path: [blockIndex, 0],
+      path: firstChild
+        ? [{_key: block._key}, 'children', {_key: firstChild._key}]
+        : [{_key: block._key}],
       offset: 0,
     }
   }
@@ -162,14 +165,17 @@ export function toSlateSelectionPoint(
   // then we have to resort to selecting the first child of the block (which
   // by Slate convention is a span).
   if (childPath.length === 0) {
+    const firstChild = block.children[0]
     return {
-      path: [blockIndex, 0],
+      path: firstChild
+        ? [{_key: block._key}, 'children', {_key: firstChild._key}]
+        : [{_key: block._key}],
       offset: 0,
     }
   }
 
   return {
-    path: [blockIndex].concat(childPath),
+    path: [{_key: block._key}, 'children', {_key: childKey}],
     offset: isSpan(snapshot.context, pathChild)
       ? Math.min(pathChild.text.length, offset)
       : offset,

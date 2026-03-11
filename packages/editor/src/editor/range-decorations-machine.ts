@@ -374,14 +374,19 @@ function createDecorate(
       !firstBlock.listItem
 
     if (editorOnlyContainsEmptyParagraph) {
+      const firstBlockKey = (firstBlock as any)?._key
+      const firstChildKey = (firstBlock as any)?.children?.[0]?._key
+      const placeholderPath = firstBlockKey && firstChildKey
+        ? [{_key: firstBlockKey}, 'children', {_key: firstChildKey}]
+        : [0, 0]
       return [
         {
           anchor: {
-            path: [0, 0],
+            path: placeholderPath,
             offset: 0,
           },
           focus: {
-            path: [0, 0],
+            path: placeholderPath,
             offset: 0,
           },
           placeholder: true,
