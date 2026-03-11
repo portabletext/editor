@@ -141,7 +141,7 @@ export const insertNodes: NodeTransforms['insertNodes'] = (
                 }
 
                 position =
-                  nodePath[nodePath.length - 1]! +
+                  Node.indexOf(editor, nodePath, editor.schema) +
                   (split || isEndOfNode ? 1 : 0)
               }
             }
@@ -152,14 +152,14 @@ export const insertNodes: NodeTransforms['insertNodes'] = (
         }
 
         const path = pathRef.unref()!
-        at = isAtEnd ? Path.next(path) : path
+        at = isAtEnd ? Node.next(editor, path, editor.schema) ?? path : path
       } else {
         return
       }
     }
 
     const parentPath = Path.parent(at)
-    let index = at[at.length - 1]!
+    let index = Node.indexOf(editor, at, editor.schema)
 
     if (!voids && Editor.void(editor, {at: parentPath})) {
       return
@@ -183,7 +183,7 @@ export const insertNodes: NodeTransforms['insertNodes'] = (
               node,
             }
             editor.apply(op)
-            at = Path.next(at as Path)
+            at = Node.next(editor, at as Path, editor.schema) ?? (at as Path)
 
             batchedOps.push(op)
             if (Text.isText(node, editor.schema)) {
@@ -218,11 +218,11 @@ export const insertNodes: NodeTransforms['insertNodes'] = (
         index++
 
         editor.apply({type: 'insert_node', path, node})
-        at = Path.next(at as Path)
+        at = Node.next(editor, at as Path, editor.schema) ?? (at as Path)
       }
     }
 
-    at = Path.previous(at)
+    at = Node.previous(editor, at as Path, editor.schema) ?? (at as Path)
 
     if (select) {
       const point = Editor.end(editor, at)

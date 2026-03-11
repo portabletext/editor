@@ -199,7 +199,7 @@ export const deleteText: TextTransforms['delete'] = (editor, options = {}) => {
         const [prevNode, prevPath] = prev
 
         if (mergePath.length !== 0 && prevPath.length !== 0) {
-          const newPath = Path.next(prevPath)
+          const newPath = Node.next(editor, prevPath, editor.schema) ?? prevPath
           const commonPath = Path.common(mergePath, prevPath)
           const isPreviousSibling = Path.isSibling(mergePath, prevPath)
           const levels = Array.from(
@@ -280,7 +280,7 @@ export const deleteText: TextTransforms['delete'] = (editor, options = {}) => {
             ) {
               const targetPath = isPreviousSibling
                 ? prevPath
-                : Path.previous(newPath)
+                : Node.previous(editor, newPath, editor.schema) ?? newPath
               const oldDefs =
                 (Array.isArray(prevNode.markDefs) && prevNode.markDefs) || []
               const newMarkDefs = [

@@ -408,14 +408,29 @@ export const Node: NodeInterface = {
   ): T['children'] {
     const newRoot: Ancestor = {children: root.children} as Ancestor
 
-    const [start, end] = Range.edges(editor, range)
+    // Range.edges needs an editor for ordering, but fragment operates on
+    // a plain Ancestor. Use anchor/focus directly — callers are responsible
+    // for providing a properly ordered range.
+    const {anchor, focus} = range
+    const anchorFirst = Path.isAncestor(anchor.path, focus.path) ||
+      (Path.equals(anchor.path, focus.path) && anchor.offset <= focus.offset)
+    const [start, end] = anchorFirst ? [anchor, focus] : [focus, anchor]
+
     const nodeEntries = Node.nodes(newRoot, schema, {
       reverse: true,
-      pass: ([, path]) => !Range.includes(editor, range, path),
+      pass: ([, path]) => {
+        // Inline the includes check without needing editor
+        const afterStart = Path.compare(path, start.path) >= 0
+        const beforeEnd = Path.compare(path, end.path) <= 0
+        return !(afterStart && beforeEnd)
+      },
     })
 
     for (const [, path] of nodeEntries) {
-      if (!Range.includes(editor, range, path)) {
+      // Inline the includes check
+      const afterStart = Path.compare(path, start.path) >= 0
+      const beforeEnd = Path.compare(path, end.path) <= 0
+      if (!(afterStart && beforeEnd)) {
         const parentPath = Path.parent(path)
         const lastSegment = path[path.length - 1]!
 

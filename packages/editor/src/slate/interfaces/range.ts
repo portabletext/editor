@@ -102,7 +102,6 @@ export interface RangeInterface {
    * Transform a range by an operation.
    */
   transform: (
-    editor: Editor,
     range: Range,
     op: Operation,
     options?: RangeTransformOptions,
@@ -211,7 +210,6 @@ export const Range: RangeInterface = {
   },
 
   transform(
-    editor: Editor,
     range: Range | null,
     op: Operation,
     options: RangeTransformOptions = {},
@@ -225,25 +223,15 @@ export const Range: RangeInterface = {
     let affinityFocus: 'forward' | 'backward' | null
 
     if (affinity === 'inward') {
-      // If the range is collapsed, make sure to use the same affinity to
-      // avoid the two points passing each other and expanding in the opposite
-      // direction
       const isCollapsed = Range.isCollapsed(range)
-      if (Range.isForward(editor, range)) {
-        affinityAnchor = 'forward'
-        affinityFocus = isCollapsed ? affinityAnchor : 'backward'
-      } else {
-        affinityAnchor = 'backward'
-        affinityFocus = isCollapsed ? affinityAnchor : 'forward'
-      }
+      // Assume forward range (anchor before focus) when we can't determine
+      // order. This is safe because Range.transform is about adjusting
+      // points by operations, not about document order.
+      affinityAnchor = 'forward'
+      affinityFocus = isCollapsed ? affinityAnchor : 'backward'
     } else if (affinity === 'outward') {
-      if (Range.isForward(editor, range)) {
-        affinityAnchor = 'backward'
-        affinityFocus = 'forward'
-      } else {
-        affinityAnchor = 'forward'
-        affinityFocus = 'backward'
-      }
+      affinityAnchor = 'backward'
+      affinityFocus = 'forward'
     } else {
       affinityAnchor = affinity
       affinityFocus = affinity

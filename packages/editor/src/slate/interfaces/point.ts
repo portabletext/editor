@@ -1,5 +1,4 @@
 import {isObject, Node, Path, type Editor, type ExtendedType, type Operation} from '..'
-import type {EditorSchema} from '../../editor/editor-schema'
 import type {TextDirection} from '../types/types'
 
 /**
