@@ -46,14 +46,12 @@ export const insertChildOperationImplementation: OperationImplementation<
     const [focusSpan] = getFocusSpan({editor: operation.editor})
 
     if (focusSpan) {
-      applyInsertNodeAtPoint(operation.editor, span, focus, {select: true})
+      applyInsertNodeAtPoint(operation.editor, span, focus)
     } else {
-      applyInsertNodeAtPath(
-        operation.editor,
-        span,
-        [focusBlockIndex, focusChildIndex + 1],
-        {select: true},
-      )
+      applyInsertNodeAtPath(operation.editor, span, [
+        focusBlockIndex,
+        focusChildIndex + 1,
+      ])
     }
 
     // This makes sure the selection is set correctly when event handling is run
@@ -81,16 +79,12 @@ export const insertChildOperationImplementation: OperationImplementation<
     const [focusSpan] = getFocusSpan({editor: operation.editor})
 
     if (focusSpan) {
-      applyInsertNodeAtPoint(operation.editor, inlineNode, focus, {
-        select: true,
-      })
+      applyInsertNodeAtPoint(operation.editor, inlineNode, focus)
     } else {
-      applyInsertNodeAtPath(
-        operation.editor,
-        inlineNode,
-        [focusBlockIndex, focusChildIndex + 1],
-        {select: true},
-      )
+      applyInsertNodeAtPath(operation.editor, inlineNode, [
+        focusBlockIndex,
+        focusChildIndex + 1,
+      ])
     }
 
     return

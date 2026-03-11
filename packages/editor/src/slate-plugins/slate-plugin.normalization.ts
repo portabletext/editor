@@ -33,7 +33,6 @@ export function createNormalizationPlugin(
               editor,
               createPlaceholderBlock(editorActor.getSnapshot().context),
               [0],
-              {select: true},
             )
           })
         })

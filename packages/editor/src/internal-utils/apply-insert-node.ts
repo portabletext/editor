@@ -14,16 +14,13 @@ export function applyInsertNodeAtPath(
   editor: PortableTextSlateEditor,
   node: Node,
   path: Path,
-  options: {select?: boolean} = {},
 ): void {
   editor.apply({type: 'insert_node', path, node})
 
-  if (options.select) {
-    const point = Editor.end(editor, path)
+  const point = Editor.end(editor, path)
 
-    if (point) {
-      applySelect(editor, point)
-    }
+  if (point) {
+    applySelect(editor, point)
   }
 }
 
@@ -41,7 +38,6 @@ export function applyInsertNodeAtPoint(
   editor: PortableTextSlateEditor,
   node: Node,
   at: Point,
-  options: {select?: boolean} = {},
 ): void {
   Editor.withoutNormalizing(editor, () => {
     let match: (n: Node) => boolean
@@ -94,12 +90,10 @@ export function applyInsertNodeAtPoint(
 
     editor.apply({type: 'insert_node', path: insertPath, node})
 
-    if (options.select) {
-      const point = Editor.end(editor, insertPath)
+    const point = Editor.end(editor, insertPath)
 
-      if (point) {
-        applySelect(editor, point)
-      }
+    if (point) {
+      applySelect(editor, point)
     }
   })
 }
