@@ -669,16 +669,11 @@ export const PortableTextEditable = forwardRef<
     const onDragEnd = () => {
       editorActor.send({type: 'dragend'})
     }
-    const onDrop = () => {
-      editorActor.send({type: 'drop'})
-    }
 
     window.document.addEventListener('dragend', onDragEnd)
-    window.document.addEventListener('drop', onDrop)
 
     return () => {
       window.document.removeEventListener('dragend', onDragEnd)
-      window.document.removeEventListener('drop', onDrop)
     }
   }, [slateEditor, editorActor])
 
@@ -892,6 +887,8 @@ export const PortableTextEditable = forwardRef<
         editor: slateEditor,
         nativeEvent: event,
       })
+
+      editorActor.send({type: 'drop'})
 
       // Prevent Slate from handling the event
       return true
