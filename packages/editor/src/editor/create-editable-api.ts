@@ -139,7 +139,7 @@ export function createEditableAPI(
         return undefined
       }
 
-      return (editor.children as Array<PortableTextBlock>).at(focusBlockIndex)
+      return (editor.children as Array<PortableTextBlock>).at(focusBlockIndex as number)
     },
     focusChild: (): PortableTextChild | undefined => {
       if (!editor.selection) {
@@ -151,7 +151,7 @@ export function createEditableAPI(
 
       const block =
         focusBlockIndex !== undefined
-          ? (editor.children as Array<PortableTextBlock>).at(focusBlockIndex)
+          ? (editor.children as Array<PortableTextBlock>).at(focusBlockIndex as number)
           : undefined
 
       if (!block) {

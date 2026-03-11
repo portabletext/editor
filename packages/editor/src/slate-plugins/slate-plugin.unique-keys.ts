@@ -195,7 +195,7 @@ function keyExistsAtPath(
   const parentBlockIndex = path.at(0)
   const parentBlock =
     parentBlockIndex !== undefined
-      ? snapshot.context.value.at(parentBlockIndex)
+      ? snapshot.context.value.at(parentBlockIndex as number)
       : undefined
 
   if (!parentBlock) {

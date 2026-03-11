@@ -56,6 +56,7 @@ export function applySplitNode(
     const current = ref.current
     if (current) {
       const [anchorAffinity, focusAffinity] = rangeRefAffinities(
+        editor,
         current,
         ref.affinity,
       )
@@ -192,8 +193,6 @@ function transformPathForSplit(
   // TODO: With fully keyed paths, split transforms become trivial —
   // keys don't shift, only the split node itself changes.
   const splitDepth = splitPath.length - 1
-  const pathAtSplitDepth = p[splitDepth]
-  const splitAtDepth = splitPath[splitDepth]
 
   if (Path.equals(splitPath, p)) {
     if (affinity === 'forward') {

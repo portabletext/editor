@@ -1,4 +1,4 @@
-import {Range} from '../slate'
+import {Range, type Editor} from '../slate'
 import type {RangeRef} from '../slate/interfaces/range-ref'
 
 /**
@@ -10,6 +10,7 @@ import type {RangeRef} from '../slate/interfaces/range-ref'
  * 'forward'/'backward'/null, both points use the same affinity.
  */
 export function rangeRefAffinities(
+  editor: Editor,
   range: Range,
   affinity: RangeRef['affinity'],
 ): ['forward' | 'backward' | null, 'forward' | 'backward' | null] {

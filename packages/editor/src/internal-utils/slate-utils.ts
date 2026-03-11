@@ -31,7 +31,7 @@ export function getBlockPath({
     return undefined
   }
 
-  return [blockIndex]
+  return [blockIndex as number]
 }
 
 export function getAnchorBlock({
@@ -170,7 +170,7 @@ export function getFocusChild({
   }
 
   try {
-    const focusChild = Node.child(focusBlock, childIndex, editor.schema)
+    const focusChild = Node.child(focusBlock, childIndex as number, editor.schema)
 
     return focusChild
       ? [focusChild, [...focusBlockPath, childIndex]]
@@ -195,7 +195,7 @@ function getPointChild({
   }
 
   try {
-    const pointChild = Node.child(block, childIndex, editor.schema)
+    const pointChild = Node.child(block, childIndex as number, editor.schema)
 
     return pointChild
       ? [pointChild, [...blockPath, childIndex]]

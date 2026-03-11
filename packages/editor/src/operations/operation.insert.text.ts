@@ -1,5 +1,5 @@
 import {applySelect} from '../internal-utils/apply-selection'
-import {Editor, Node, Path, Range, Text} from '../slate'
+import {Editor, Node, Range, Text} from '../slate'
 import type {OperationImplementation} from './operation.types'
 
 export const insertTextOperationImplementation: OperationImplementation<
@@ -18,7 +18,7 @@ export const insertTextOperationImplementation: OperationImplementation<
 
   // If the selection is at an ObjectNode, move to the adjacent span.
   if (editor.isObjectNode(node)) {
-    const nextPath = Path.next(path)
+    const nextPath = (Node.next(editor, path, editor.schema) ?? path)
 
     if (Editor.hasPath(editor, nextPath)) {
       const nextNode = Node.get(editor, nextPath, editor.schema)

@@ -294,7 +294,7 @@ export const withDOM = <T extends Editor>(editor: T): T & DOMEditor => {
                 applySplitNode(e, nodePath, position, properties)
 
                 position =
-                  nodePath[nodePath.length - 1]! +
+                  (nodePath[nodePath.length - 1] as number) +
                   (didSplit || isEndOfNode ? 1 : 0)
               }
 

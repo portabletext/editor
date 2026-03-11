@@ -1667,7 +1667,7 @@ export const Editable = forwardRef(
                       const {selection} = editor
                       const element =
                         editor.children[
-                          selection !== null ? selection.focus.path[0]! : 0
+                          selection !== null ? (selection.focus.path[0] as number) : 0
                         ]!
                       const isRTL =
                         getDirection(Node.string(element, editor.schema)) ===
@@ -2116,7 +2116,7 @@ export const defaultScrollSelectionIntoView = (
   domRange: DOMRange,
 ) => {
   // Scroll to the focus point of the selection, in case the selection is expanded
-  const isBackward = !!editor.selection && Range.isBackward(editor, e.selection)
+  const isBackward = !!editor.selection && Range.isBackward(editor as unknown as Editor, editor.selection)
   const domFocusPoint = domRange.cloneRange()
   domFocusPoint.collapse(isBackward)
 

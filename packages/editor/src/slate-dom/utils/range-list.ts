@@ -143,8 +143,8 @@ export const splitDecorationsByChild = (
     }
 
     const [startPoint, endPoint] = Range.edges(editor, decorationRange)
-    const startIndex = startPoint.path[level]!
-    const endIndex = endPoint.path[level]!
+    const startIndex = startPoint.path[level] as number
+    const endIndex = endPoint.path[level] as number
 
     for (let i = startIndex; i <= endIndex; i++) {
       const ds = decorationsByChild[i]

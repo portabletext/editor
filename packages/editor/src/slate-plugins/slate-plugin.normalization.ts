@@ -45,7 +45,7 @@ export function createNormalizationPlugin(
         const children = Node.children(editor, path, editor.schema)
 
         for (const [child, childPath] of children) {
-          const nextNode = node.children[childPath[1]! + 1]
+          const nextNode = node.children[(childPath[1] as number) + 1]
 
           if (
             editor.isTextSpan(child) &&
@@ -55,7 +55,7 @@ export function createNormalizationPlugin(
           ) {
             debug.normalization('merging spans with same marks')
             withNormalizeNode(editor, () => {
-              const mergePath = [childPath[0]!, childPath[1]! + 1]
+              const mergePath = [childPath[0]!, (childPath[1] as number) + 1]
               applyMergeNode(editor, mergePath, child.text.length)
             })
             return
@@ -326,7 +326,7 @@ export function createNormalizationPlugin(
               newFocusSpan &&
               op.newProperties.focus.path[0] === op.properties.focus.path[0] &&
               op.newProperties.focus.path[1] ===
-                op.properties.focus.path[1]! + 1 &&
+                (op.properties.focus.path[1] as number) + 1 &&
               focusSpan.text.length === op.properties.focus.offset &&
               op.newProperties.focus.offset === 0
             const movedToPreviousSpan =
@@ -334,7 +334,7 @@ export function createNormalizationPlugin(
               newFocusSpan &&
               op.newProperties.focus.path[0] === op.properties.focus.path[0] &&
               op.newProperties.focus.path[1] ===
-                op.properties.focus.path[1]! - 1 &&
+                (op.properties.focus.path[1] as number) - 1 &&
               op.properties.focus.offset === 0 &&
               newFocusSpan.text.length === op.newProperties.focus.offset
 

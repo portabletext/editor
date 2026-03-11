@@ -50,7 +50,7 @@ export const insertChildOperationImplementation: OperationImplementation<
     } else {
       applyInsertNodeAtPath(operation.editor, span, [
         focusBlockIndex,
-        focusChildIndex + 1,
+        (focusChildIndex as number) + 1,
       ])
     }
 
@@ -83,7 +83,7 @@ export const insertChildOperationImplementation: OperationImplementation<
     } else {
       applyInsertNodeAtPath(operation.editor, inlineNode, [
         focusBlockIndex,
-        focusChildIndex + 1,
+        (focusChildIndex as number) + 1,
       ])
     }
 

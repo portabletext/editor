@@ -42,7 +42,7 @@ export function verifyDiffState(editor: Editor, textDiff: TextDiff): boolean {
     )
   }
 
-  const nextPath = Path.next(path)
+  const nextPath = (Node.next(editor, path, editor.schema) ?? path)
   if (!Editor.hasPath(editor, nextPath)) {
     return false
   }
