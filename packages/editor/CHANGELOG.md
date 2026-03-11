@@ -1,5 +1,15 @@
 # Changelog
 
+## 6.3.0
+
+### Minor Changes
+
+- [#2348](https://github.com/portabletext/editor/pull/2348) [`58d4eb1`](https://github.com/portabletext/editor/commit/58d4eb11bf2f069acd10c4ef8ae2c1e87b57f75c) Thanks [@christianhg](https://github.com/christianhg)! - feat: remove unused internal chunking system from rendering layer
+
+### Patch Changes
+
+- [#2346](https://github.com/portabletext/editor/pull/2346) [`eb3c4ce`](https://github.com/portabletext/editor/commit/eb3c4cef6f14d5ec7fa0325e5f19c6191524d44c) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove internal compound operations completely
+
 ## 6.2.0
 
 ### Minor Changes
