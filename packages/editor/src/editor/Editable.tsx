@@ -232,15 +232,21 @@ export const PortableTextEditable = forwardRef<
 
   const restoreSelectionFromProps = useCallback(() => {
     if (propsSelection) {
-      debug.selection(`Selection from props ${JSON.stringify(propsSelection)}`)
+      if (debug.selection.enabled) {
+        debug.selection(
+          `Selection from props ${JSON.stringify(propsSelection)}`,
+        )
+      }
       const normalizedSelection = normalizeSelection(
         propsSelection,
         slateEditor.children as Array<PortableTextBlock>,
       )
       if (normalizedSelection !== null) {
-        debug.selection(
-          `Normalized selection from props ${JSON.stringify(normalizedSelection)}`,
-        )
+        if (debug.selection.enabled) {
+          debug.selection(
+            `Normalized selection from props ${JSON.stringify(normalizedSelection)}`,
+          )
+        }
         const slateRange = toSlateRange({
           context: {
             schema: editorActor.getSnapshot().context.schema,

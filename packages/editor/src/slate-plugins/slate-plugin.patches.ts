@@ -11,6 +11,7 @@ import {
   removeTextPatch,
   setNodePatch,
 } from '../internal-utils/operation-to-patches'
+import {safeStringify} from '../internal-utils/safe-stringify'
 import {isEqualToEmptyEditor} from '../internal-utils/values'
 import {Editor, type Operation} from '../slate'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
@@ -58,17 +59,21 @@ export function createPatchesPlugin({
                   changed = applyPatch(editor, patch)
 
                   if (changed) {
-                    debug.syncPatch(
-                      `(applied) ${JSON.stringify(patch, null, 2)}`,
-                    )
+                    if (debug.syncPatch.enabled) {
+                      debug.syncPatch(
+                        `(applied) ${JSON.stringify(patch, null, 2)}`,
+                      )
+                    }
                   } else {
-                    debug.syncPatch(
-                      `(ignored) ${JSON.stringify(patch, null, 2)}`,
-                    )
+                    if (debug.syncPatch.enabled) {
+                      debug.syncPatch(
+                        `(ignored) ${JSON.stringify(patch, null, 2)}`,
+                      )
+                    }
                   }
                 } catch (error) {
                   console.error(
-                    `Applying patch ${JSON.stringify(patch)} failed due to: ${error instanceof Error ? error.message : error}`,
+                    `Applying patch ${safeStringify(patch)} failed due to: ${error instanceof Error ? error.message : error}`,
                   )
                 }
               }

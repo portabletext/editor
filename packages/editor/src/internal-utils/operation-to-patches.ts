@@ -24,6 +24,7 @@ import {
   type SetNodeOperation,
 } from '../slate'
 import type {Path} from '../types/paths'
+import {safeStringify} from './safe-stringify'
 
 export function insertTextPatch(
   schema: EditorSchema,
@@ -330,7 +331,7 @@ export function removeNodePatch(
       if (spansMatchingKey.length > 1) {
         console.warn(
           `Multiple spans have \`_key\` ${operation.node._key}. It's ambiguous which one to remove.`,
-          JSON.stringify(block, null, 2),
+          safeStringify(block, 2),
         )
         return []
       }
