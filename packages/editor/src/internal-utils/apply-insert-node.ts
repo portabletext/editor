@@ -1,4 +1,4 @@
-import {Editor, Element, Node, Path, Text, type Point} from '../slate'
+import {Editor, Node, Path, Text, type Point} from '../slate'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {applySelect} from './apply-selection'
 import {applySplitNode} from './apply-split-node'
@@ -40,27 +40,9 @@ export function applyInsertNodeAtPoint(
   at: Point,
 ): void {
   Editor.withoutNormalizing(editor, () => {
-    let match: (n: Node) => boolean
-
-    if (Text.isText(node, editor.schema)) {
-      match = (n) => Text.isText(n, editor.schema)
-    } else if (
-      Element.isElement(node, editor.schema) &&
-      editor.isInline(node)
-    ) {
-      match = (n) =>
-        Text.isText(n, editor.schema) ||
-        (Element.isElement(n, editor.schema) && Editor.isInline(editor, n))
-    } else if (editor.isObjectNode(node)) {
-      match = (n) =>
-        Text.isText(n, editor.schema) ||
-        editor.isObjectNode(n) ||
-        (Element.isElement(n, editor.schema) && Editor.isInline(editor, n))
-    } else {
-      match = (n) =>
-        (Element.isElement(n, editor.schema) && Editor.isBlock(editor, n)) ||
-        editor.isObjectNode(n)
-    }
+    const match = Text.isText(node, editor.schema)
+      ? (n: Node) => Text.isText(n, editor.schema)
+      : (n: Node) => Text.isText(n, editor.schema) || editor.isObjectNode(n)
 
     const [entry] = Editor.nodes(editor, {
       at: at.path,
