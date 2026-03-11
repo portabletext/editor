@@ -1,23 +1,11 @@
 import {Editor, Path, Range, Scrubber, Text} from '..'
-import type {KeyedSegment} from '../../types/paths'
+import {isKeyedSegment, type KeyedSegment} from '../../types/paths'
 import type {EditorSchema} from '../../editor/editor-schema'
 import type {ExtendedType} from '../types/custom-types'
 import {isObject} from '../utils/is-object'
 import {modifyChildren, modifyLeaf, removeChildren} from '../utils/modify'
 import {Element} from './element'
 
-
-/**
- * Check if a value is a KeyedSegment ({_key: string}).
- */
-function isKeyedSegment(value: unknown): value is KeyedSegment {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    '_key' in value &&
-    typeof (value as KeyedSegment)._key === 'string'
-  )
-}
 
 /**
  * Resolve a single path segment against a node.
@@ -28,7 +16,8 @@ function isKeyedSegment(value: unknown): value is KeyedSegment {
 
 /**
  * Get the children field name for a node. Currently always 'children',
- * but with containers this will be schema-driven.
+ * but with containers this will be schema-driven (e.g., 'rows', 'cells',
+ * 'content'). This is the Phase 3 extension point for container support.
  */
 function getChildrenFieldName(_node: any, _schema: any): string {
   return 'children'
@@ -633,7 +622,7 @@ export const Node: NodeInterface = {
       if (
         !visited.has(n) &&
         !Node.isLeaf(n, schema) &&
-        (n as Ancestor).children.length !== 0 &&
+        getChildrenArray(n as Ancestor, schema).length !== 0 &&
         (pass == null || pass([n, p]) === false)
       ) {
         visited.add(n)

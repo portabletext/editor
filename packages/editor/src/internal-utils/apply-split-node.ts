@@ -32,6 +32,7 @@ export function applySplitNode(
     const current = ref.current
     if (current) {
       ref.current = transformPathForSplit(
+        editor,
         current,
         path,
         position,
@@ -173,6 +174,7 @@ export function applySplitNode(
  * split path: 'forward' moves to the new node, 'backward' stays.
  */
 function transformPathForSplit(
+  editor: Editor,
   path: Path,
   splitPath: Path,
   position: number,
@@ -185,7 +187,7 @@ function transformPathForSplit(
       p[p.length - 1] = p[p.length - 1]! + 1
     }
     // backward: no change
-  } else if (Path.endsBefore(splitPath, p)) {
+  } else if (NodeUtils.isBefore(editor, splitPath, p, editor.schema)) {
     p[splitPath.length - 1] = p[splitPath.length - 1]! + 1
   } else if (
     Path.isAncestor(splitPath, p) &&
@@ -215,10 +217,10 @@ function transformPointForSplit(
   if (Path.equals(splitPath, path)) {
     if (position < offset || (position === offset && affinity === 'forward')) {
       offset -= position
-      path = transformPathForSplit(path, splitPath, position, 'forward')!
+      path = transformPathForSplit(editor, path, splitPath, position, 'forward')!
     }
   } else {
-    path = transformPathForSplit(path, splitPath, position, affinity)!
+    path = transformPathForSplit(editor, path, splitPath, position, affinity)!
   }
 
   return {path, offset}

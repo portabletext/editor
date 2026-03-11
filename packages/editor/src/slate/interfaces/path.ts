@@ -1,8 +1,8 @@
 import type {InsertNodeOperation, Operation, RemoveNodeOperation} from '..'
-import type {
-  KeyedSegment,
-  Path as PtePath,
-  PathSegment,
+import {
+  isKeyedSegment,
+  type Path as PtePath,
+  type PathSegment,
 } from '../../types/paths'
 
 /**
@@ -22,18 +22,6 @@ export interface PathAncestorsOptions {
 
 export interface PathLevelsOptions {
   reverse?: boolean
-}
-
-/**
- * Check if a value is a KeyedSegment ({_key: string}).
- */
-function isKeyedSegment(value: unknown): value is KeyedSegment {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    '_key' in value &&
-    typeof (value as KeyedSegment)._key === 'string'
-  )
 }
 
 /**

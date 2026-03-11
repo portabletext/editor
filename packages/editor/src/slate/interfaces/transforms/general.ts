@@ -10,7 +10,7 @@ import {
   type Selection,
   type Text,
 } from '../../index'
-import type {KeyedSegment} from '../../../types/paths'
+import {isKeyedSegment} from '../../../types/paths'
 import {
   insertChildren,
   modifyChildren,
@@ -19,14 +19,6 @@ import {
   removeChildren,
 } from '../../utils/modify'
 
-function isKeyedSegment(value: unknown): value is KeyedSegment {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    '_key' in value &&
-    typeof (value as KeyedSegment)._key === 'string'
-  )
-}
 
 /**
  * Resolve the last path segment to a numeric index in a children array.
@@ -130,7 +122,7 @@ export const GeneralTransforms: GeneralTransforms = {
               let next: NodeEntry<Text> | undefined
 
               for (const [n, p] of Node.texts(editor, editor.schema)) {
-                if (Path.compare(p, path) === -1) {
+                if (Node.compare(editor, p, path, editor.schema) === -1) {
                   prev = [n, p]
                 } else {
                   next = [n, p]

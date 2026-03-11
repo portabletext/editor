@@ -1,5 +1,5 @@
 import type {EditorSchema} from '../../editor/editor-schema'
-import type {KeyedSegment} from '../../types/paths'
+import {isKeyedSegment, type KeyedSegment} from '../../types/paths'
 import {
   Node,
   Scrubber,
@@ -9,18 +9,6 @@ import {
   type Element,
   type Path,
 } from '../interfaces'
-
-/**
- * Check if a value is a KeyedSegment ({_key: string}).
- */
-function isKeyedSegment(value: unknown): value is KeyedSegment {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    '_key' in value &&
-    typeof (value as KeyedSegment)._key === 'string'
-  )
-}
 
 /**
  * Resolve a path segment to a numeric index in a children array.

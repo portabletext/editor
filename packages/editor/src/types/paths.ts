@@ -61,3 +61,16 @@ export type AnnotationPath = [{_key: string}, 'markDefs', {_key: string}]
  * @public
  */
 export type ChildPath = [{_key: string}, 'children', {_key: string}]
+
+/**
+ * Check if a value is a KeyedSegment ({_key: string}).
+ * @public
+ */
+export function isKeyedSegment(value: unknown): value is KeyedSegment {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    '_key' in value &&
+    typeof (value as KeyedSegment)._key === 'string'
+  )
+}

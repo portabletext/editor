@@ -34,7 +34,7 @@ export function applyMergeNode(
   for (const ref of Editor.pathRefs(editor)) {
     const current = ref.current
     if (current) {
-      ref.current = transformPathForMerge(current, path, position)
+      ref.current = transformPathForMerge(editor, current, path, position)
     }
   }
   for (const ref of Editor.pointRefs(editor)) {
@@ -209,7 +209,7 @@ function transformTextDiffForMerge(
   const {path, diff, id} = textDiff
 
   if (!Path.equals(mergePath, path)) {
-    const newPath = transformPathForMerge(path, mergePath, position)
+    const newPath = transformPathForMerge(editor, path, mergePath, position)
     if (!newPath) {
       return null
     }
@@ -223,7 +223,7 @@ function transformTextDiffForMerge(
       text: diff.text,
     },
     id,
-    path: transformPathForMerge(path, mergePath, position)!,
+    path: transformPathForMerge(editor, path, mergePath, position)!,
   }
 }
 
@@ -235,13 +235,14 @@ function transformTextDiffForMerge(
  * - Children of the merged node move into the previous sibling at `position`
  */
 function transformPathForMerge(
+  editor: Editor,
   path: Path,
   mergePath: Path,
   position: number,
 ): Path | null {
   const p = [...path]
 
-  if (Path.equals(mergePath, p) || Path.endsBefore(mergePath, p)) {
+  if (Path.equals(mergePath, p) || NodeUtils.isBefore(editor, mergePath, p, editor.schema)) {
     p[mergePath.length - 1] = p[mergePath.length - 1]! - 1
   } else if (Path.isAncestor(mergePath, p)) {
     p[mergePath.length - 1] = p[mergePath.length - 1]! - 1
@@ -268,7 +269,7 @@ function transformPointForMerge(
     offset += position
   }
 
-  path = transformPathForMerge(path, mergePath, position)!
+  path = transformPathForMerge(editor, path, mergePath, position)!
 
   return {path, offset}
 }
