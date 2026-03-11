@@ -358,7 +358,20 @@ export const DOMEditor: DOMEditorInterface = {
         break
       }
 
-      path.unshift(i)
+      // Build keyed path segments instead of numeric indices.
+      // At the root level (parent is editor), use just the key segment.
+      // At deeper levels, prepend the field name ('children') and key.
+      const childKey = (child as any)?._key
+      if (childKey) {
+        if (Editor.isEditor(parent)) {
+          path.unshift({_key: childKey})
+        } else {
+          path.unshift('children', {_key: childKey})
+        }
+      } else {
+        // Fallback for nodes without _key
+        path.unshift(i)
+      }
       child = parent
     }
 
