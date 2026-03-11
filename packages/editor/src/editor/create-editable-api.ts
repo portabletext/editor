@@ -517,7 +517,7 @@ export function createEditableAPI(
       const isValidRanges = Range.isRange(rangeA) && Range.isRange(rangeB)
 
       // Check if the ranges are overlapping
-      const isOverlapping = isValidRanges && Range.includes(rangeA, rangeB)
+      const isOverlapping = isValidRanges && Range.includes(editor, rangeA, rangeB)
 
       return isOverlapping
     },

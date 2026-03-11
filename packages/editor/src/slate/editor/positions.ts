@@ -45,7 +45,7 @@ export function* positions(
    */
 
   const range = Editor.range(editor, at)
-  const [start, end] = Range.edges(range)
+  const [start, end] = Range.edges(editor, range)
   const first = reverse ? end : start
   let isNewBlock = false
   let blockText = ''
@@ -127,7 +127,7 @@ export function* positions(
         // start/end edge cases where block extends beyond range.
         // Equivalent to this, but presumably more performant:
         //   blockRange = Editor.range(editor, ...Editor.edges(editor, path))
-        //   blockRange = Range.intersection(range, blockRange) // intersect
+        //   blockRange = Range.intersection(editor, range, blockRange) // intersect
         //   blockText = Editor.string(editor, blockRange, { voids })
         const e = Path.isAncestor(path, end.path)
           ? end

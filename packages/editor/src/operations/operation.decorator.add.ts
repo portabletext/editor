@@ -30,7 +30,7 @@ export const decoratorAddOperationImplementation: OperationImplementation<
 
   if (Range.isExpanded(at)) {
     const rangeRef = Editor.rangeRef(editor, at, {affinity: 'inward'})
-    const [start, end] = Range.edges(at)
+    const [start, end] = Range.edges(editor, at)
 
     const endAtEndOfNode = Editor.isEnd(editor, end, end.path)
 

@@ -15,9 +15,9 @@ export const path: EditorInterface['path'] = (editor, at, options = {}) => {
 
   if (Range.isRange(at)) {
     if (edge === 'start') {
-      at = Range.start(at)
+      at = Range.start(editor, at)
     } else if (edge === 'end') {
-      at = Range.end(at)
+      at = Range.end(editor, at)
     } else {
       at = Path.common(at.anchor.path, at.focus.path)
     }

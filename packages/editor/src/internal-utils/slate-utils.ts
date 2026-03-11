@@ -120,7 +120,7 @@ export function getSelectionStartBlock({
     return [undefined, undefined]
   }
 
-  const selectionStartPoint = Range.start(editor.selection)
+  const selectionStartPoint = Range.start(editor, editor.selection)
 
   return getPointBlock({editor, point: selectionStartPoint})
 }
@@ -134,7 +134,7 @@ export function getSelectionEndBlock({
     return [undefined, undefined]
   }
 
-  const selectionEndPoint = Range.end(editor.selection)
+  const selectionEndPoint = Range.end(editor, editor.selection)
 
   return getPointBlock({editor, point: selectionEndPoint})
 }
@@ -400,7 +400,7 @@ export function slateRangeToSelection({
       path: [{_key: focusBlock._key}],
       offset: range.focus.offset,
     },
-    backward: Range.isBackward(range),
+    backward: Range.isBackward(editor, range),
   }
 
   if (anchorChild) {

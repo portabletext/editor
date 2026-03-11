@@ -2,6 +2,7 @@ import {
   isObject,
   Path,
   Point,
+  type Editor,
   type ExtendedType,
   type Operation,
   type PointEntry,
@@ -32,14 +33,14 @@ export interface RangeTransformOptions {
 export interface RangeInterface {
   /**
    * Get the start and end points of a range, in the order in which they appear
-   * in the document.
+   * in the document. Requires the editor for document-order comparison.
    */
-  edges: (range: Range, options?: RangeEdgesOptions) => [Point, Point]
+  edges: (editor: Editor, range: Range, options?: RangeEdgesOptions) => [Point, Point]
 
   /**
    * Get the end point of a range.
    */
-  end: (range: Range) => Point
+  end: (editor: Editor, range: Range) => Point
 
   /**
    * Check if a range is exactly equal to another.
@@ -49,18 +50,18 @@ export interface RangeInterface {
   /**
    * Check if a range includes a path, a point or part of another range.
    */
-  includes: (range: Range, target: Path | Point | Range) => boolean
+  includes: (editor: Editor, range: Range, target: Path | Point | Range) => boolean
 
   /**
    * Get the intersection of a range with another.
    */
-  intersection: (range: Range, another: Range) => Range | null
+  intersection: (editor: Editor, range: Range, another: Range) => Range | null
 
   /**
    * Check if a range is backward, meaning that its anchor point appears in the
    * document _after_ its focus point.
    */
-  isBackward: (range: Range) => boolean
+  isBackward: (editor: Editor, range: Range) => boolean
 
   /**
    * Check if a range is collapsed, meaning that both its anchor and focus
@@ -80,7 +81,7 @@ export interface RangeInterface {
    *
    * This is the opposite of [[Range.isBackward]] and is provided for legibility.
    */
-  isForward: (range: Range) => boolean
+  isForward: (editor: Editor, range: Range) => boolean
 
   /**
    * Check if a value implements the [[Range]] interface.
@@ -95,12 +96,13 @@ export interface RangeInterface {
   /**
    * Get the start point of a range.
    */
-  start: (range: Range) => Point
+  start: (editor: Editor, range: Range) => Point
 
   /**
    * Transform a range by an operation.
    */
   transform: (
+    editor: Editor,
     range: Range,
     op: Operation,
     options?: RangeTransformOptions,
@@ -109,16 +111,16 @@ export interface RangeInterface {
 
 // eslint-disable-next-line no-redeclare
 export const Range: RangeInterface = {
-  edges(range: Range, options: RangeEdgesOptions = {}): [Point, Point] {
+  edges(editor: Editor, range: Range, options: RangeEdgesOptions = {}): [Point, Point] {
     const {reverse = false} = options
     const {anchor, focus} = range
-    return Range.isBackward(range) === reverse
+    return Range.isBackward(editor, range) === reverse
       ? [anchor, focus]
       : [focus, anchor]
   },
 
-  end(range: Range): Point {
-    const [, end] = Range.edges(range)
+  end(editor: Editor, range: Range): Point {
+    const [, end] = Range.edges(editor, range)
     return end
   },
 
@@ -129,27 +131,27 @@ export const Range: RangeInterface = {
     )
   },
 
-  includes(range: Range, target: Path | Point | Range): boolean {
+  includes(editor: Editor, range: Range, target: Path | Point | Range): boolean {
     if (Range.isRange(target)) {
       if (
-        Range.includes(range, target.anchor) ||
-        Range.includes(range, target.focus)
+        Range.includes(editor, range, target.anchor) ||
+        Range.includes(editor, range, target.focus)
       ) {
         return true
       }
 
-      const [rs, re] = Range.edges(range)
-      const [ts, te] = Range.edges(target)
-      return Point.isBefore(rs, ts) && Point.isAfter(re, te)
+      const [rs, re] = Range.edges(editor, range)
+      const [ts, te] = Range.edges(editor, target)
+      return Point.isBefore(editor, rs, ts) && Point.isAfter(editor, re, te)
     }
 
-    const [start, end] = Range.edges(range)
+    const [start, end] = Range.edges(editor, range)
     let isAfterStart = false
     let isBeforeEnd = false
 
     if (Point.isPoint(target)) {
-      isAfterStart = Point.compare(target, start) >= 0
-      isBeforeEnd = Point.compare(target, end) <= 0
+      isAfterStart = Point.compare(editor, target, start) >= 0
+      isBeforeEnd = Point.compare(editor, target, end) <= 0
     } else {
       isAfterStart = Path.compare(target, start.path) >= 0
       isBeforeEnd = Path.compare(target, end.path) <= 0
@@ -158,23 +160,23 @@ export const Range: RangeInterface = {
     return isAfterStart && isBeforeEnd
   },
 
-  intersection(range: Range, another: Range): Range | null {
+  intersection(editor: Editor, range: Range, another: Range): Range | null {
     const {anchor: _anchor, focus: _focus, ...rest} = range
-    const [s1, e1] = Range.edges(range)
-    const [s2, e2] = Range.edges(another)
-    const start = Point.isBefore(s1, s2) ? s2 : s1
-    const end = Point.isBefore(e1, e2) ? e1 : e2
+    const [s1, e1] = Range.edges(editor, range)
+    const [s2, e2] = Range.edges(editor, another)
+    const start = Point.isBefore(editor, s1, s2) ? s2 : s1
+    const end = Point.isBefore(editor, e1, e2) ? e1 : e2
 
-    if (Point.isBefore(end, start)) {
+    if (Point.isBefore(editor, end, start)) {
       return null
     } else {
       return {anchor: start, focus: end, ...rest}
     }
   },
 
-  isBackward(range: Range): boolean {
+  isBackward(editor: Editor, range: Range): boolean {
     const {anchor, focus} = range
-    return Point.isAfter(anchor, focus)
+    return Point.isAfter(editor, anchor, focus)
   },
 
   isCollapsed(range: Range): boolean {
@@ -186,8 +188,8 @@ export const Range: RangeInterface = {
     return !Range.isCollapsed(range)
   },
 
-  isForward(range: Range): boolean {
-    return !Range.isBackward(range)
+  isForward(editor: Editor, range: Range): boolean {
+    return !Range.isBackward(editor, range)
   },
 
   isRange(value: any): value is Range {
@@ -203,12 +205,13 @@ export const Range: RangeInterface = {
     yield [range.focus, 'focus']
   },
 
-  start(range: Range): Point {
-    const [start] = Range.edges(range)
+  start(editor: Editor, range: Range): Point {
+    const [start] = Range.edges(editor, range)
     return start
   },
 
   transform(
+    editor: Editor,
     range: Range | null,
     op: Operation,
     options: RangeTransformOptions = {},
@@ -226,7 +229,7 @@ export const Range: RangeInterface = {
       // avoid the two points passing each other and expanding in the opposite
       // direction
       const isCollapsed = Range.isCollapsed(range)
-      if (Range.isForward(range)) {
+      if (Range.isForward(editor, range)) {
         affinityAnchor = 'forward'
         affinityFocus = isCollapsed ? affinityAnchor : 'backward'
       } else {
@@ -234,7 +237,7 @@ export const Range: RangeInterface = {
         affinityFocus = isCollapsed ? affinityAnchor : 'forward'
       }
     } else if (affinity === 'outward') {
-      if (Range.isForward(range)) {
+      if (Range.isForward(editor, range)) {
         affinityAnchor = 'backward'
         affinityFocus = 'forward'
       } else {
@@ -254,6 +257,6 @@ export const Range: RangeInterface = {
       return null
     }
 
-    return {anchor, focus}
+    return {...range, anchor, focus}
   },
 }

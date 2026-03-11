@@ -605,7 +605,7 @@ export const DOMEditor: DOMEditorInterface = {
 
   toDOMRange: (editor, range) => {
     const {anchor, focus} = range
-    const isBackward = Range.isBackward(range)
+    const isBackward = Range.isBackward(editor, range)
     const domAnchor = DOMEditor.toDOMPoint(editor, anchor)
     const domFocus = Range.isCollapsed(range)
       ? domAnchor
@@ -1120,7 +1120,7 @@ export const DOMEditor: DOMEditorInterface = {
     // unhang the range to avoid mistakenly including the void
     if (
       Range.isExpanded(range) &&
-      Range.isForward(range) &&
+      Range.isForward(editor, range) &&
       isDOMElement(focusNode) &&
       Editor.void(editor, {at: range.focus, mode: 'highest'})
     ) {

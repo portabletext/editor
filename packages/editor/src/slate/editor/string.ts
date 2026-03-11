@@ -6,7 +6,7 @@ import {Text} from '../interfaces/text'
 export const string: EditorInterface['string'] = (editor, at, options = {}) => {
   const {voids = false} = options
   const range = Editor.range(editor, at)
-  const [start, end] = Range.edges(range)
+  const [start, end] = Range.edges(editor, range)
   let text = ''
 
   for (const [node, path] of Editor.nodes(editor, {

@@ -59,7 +59,7 @@ export const deleteText: TextTransforms['delete'] = (editor, options = {}) => {
     }
 
     if (!hanging) {
-      const [, end] = Range.edges(at)
+      const [, end] = Range.edges(editor, at)
       const endOfDoc = Editor.end(editor, [])
 
       if (!Point.equals(end, endOfDoc)) {
@@ -67,7 +67,7 @@ export const deleteText: TextTransforms['delete'] = (editor, options = {}) => {
       }
     }
 
-    let [start, end] = Range.edges(at)
+    let [start, end] = Range.edges(editor, at)
     const startBlock = Editor.above(editor, {
       match: (n) =>
         Element.isElement(n, editor.schema) && Editor.isBlock(editor, n),

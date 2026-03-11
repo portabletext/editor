@@ -135,7 +135,7 @@ export const withDOM = <T extends Editor>(editor: T): T & DOMEditor => {
       return
     }
 
-    const [start, end] = Range.edges(selection)
+    const [start, end] = Range.edges(editor, selection)
     const startVoid = Editor.void(e, {at: start.path})
     const endVoid = Editor.void(e, {at: end.path})
 
@@ -235,7 +235,7 @@ export const withDOM = <T extends Editor>(editor: T): T & DOMEditor => {
               if (Range.isCollapsed(e.selection)) {
                 splitAt = e.selection.anchor
               } else {
-                const [, end] = Range.edges(e.selection)
+                const [, end] = Range.edges(editor, e.selection)
                 const pointRef = Editor.pointRef(e, end)
                 Transforms.delete(e, {at: e.selection})
                 splitAt = pointRef.unref()

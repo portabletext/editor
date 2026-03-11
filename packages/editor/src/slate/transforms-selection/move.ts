@@ -13,11 +13,11 @@ export const move: SelectionTransforms['move'] = (editor, options = {}) => {
   }
 
   if (edge === 'start') {
-    edge = Range.isBackward(selection) ? 'focus' : 'anchor'
+    edge = Range.isBackward(editor, selection) ? 'focus' : 'anchor'
   }
 
   if (edge === 'end') {
-    edge = Range.isBackward(selection) ? 'anchor' : 'focus'
+    edge = Range.isBackward(editor, selection) ? 'anchor' : 'focus'
   }
 
   const {anchor, focus} = selection

@@ -40,7 +40,7 @@ export const point: EditorInterface['point'] = (editor, at, options = {}) => {
   }
 
   if (Range.isRange(at)) {
-    const [start, end] = Range.edges(at)
+    const [start, end] = Range.edges(editor, at)
     return edge === 'start' ? start : end
   }
 

@@ -193,12 +193,12 @@ export function createBehaviorApiPlugin(editorActor: EditorActor) {
         : undefined
 
       const backward = editor.selection
-        ? Range.isBackward({
+        ? Range.isBackward(editor, {
             anchor: partialRange.anchor ?? editor.selection.anchor,
             focus: partialRange.focus ?? editor.selection.focus,
           })
         : partialRange.anchor && partialRange.focus
-          ? Range.isBackward({
+          ? Range.isBackward(editor, {
               anchor: partialRange.anchor,
               focus: partialRange.focus,
             })

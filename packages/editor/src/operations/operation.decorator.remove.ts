@@ -38,7 +38,7 @@ export const decoratorRemoveOperationImplementation: OperationImplementation<
         decoratorLeaf.text.length > 0
       )
     ) {
-      const [start, end] = Range.edges(at)
+      const [start, end] = Range.edges(editor, at)
       const endAtEndOfNode = Editor.isEnd(editor, end, end.path)
       if (!endAtEndOfNode || !Editor.isEdge(editor, end, end.path)) {
         const [endNode] = Editor.node(editor, end.path)

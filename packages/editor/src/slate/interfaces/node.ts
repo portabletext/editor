@@ -408,14 +408,14 @@ export const Node: NodeInterface = {
   ): T['children'] {
     const newRoot: Ancestor = {children: root.children} as Ancestor
 
-    const [start, end] = Range.edges(range)
+    const [start, end] = Range.edges(editor, range)
     const nodeEntries = Node.nodes(newRoot, schema, {
       reverse: true,
-      pass: ([, path]) => !Range.includes(range, path),
+      pass: ([, path]) => !Range.includes(editor, range, path),
     })
 
     for (const [, path] of nodeEntries) {
-      if (!Range.includes(range, path)) {
+      if (!Range.includes(editor, range, path)) {
         const parentPath = Path.parent(path)
         const lastSegment = path[path.length - 1]!
 

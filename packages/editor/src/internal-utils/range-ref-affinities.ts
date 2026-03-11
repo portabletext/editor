@@ -15,7 +15,7 @@ export function rangeRefAffinities(
 ): ['forward' | 'backward' | null, 'forward' | 'backward' | null] {
   if (affinity === 'inward') {
     const isCollapsed = Range.isCollapsed(range)
-    if (Range.isForward(range)) {
+    if (Range.isForward(editor, range)) {
       const anchorAffinity = 'forward'
       return [anchorAffinity, isCollapsed ? anchorAffinity : 'backward']
     } else {
@@ -23,7 +23,7 @@ export function rangeRefAffinities(
       return [anchorAffinity, isCollapsed ? anchorAffinity : 'forward']
     }
   } else if (affinity === 'outward') {
-    if (Range.isForward(range)) {
+    if (Range.isForward(editor, range)) {
       return ['backward', 'forward']
     } else {
       return ['forward', 'backward']

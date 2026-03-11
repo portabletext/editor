@@ -445,7 +445,7 @@ export const Editable = forwardRef(
         if (newDomRange) {
           if (ReactEditor.isComposing(editor) && !IS_ANDROID) {
             domSelection.collapseToEnd()
-          } else if (Range.isBackward(selection!)) {
+          } else if (Range.isBackward(editor, selection!)) {
             domSelection.setBaseAndExtent(
               newDomRange.endContainer,
               newDomRange.endOffset,
@@ -2116,7 +2116,7 @@ export const defaultScrollSelectionIntoView = (
   domRange: DOMRange,
 ) => {
   // Scroll to the focus point of the selection, in case the selection is expanded
-  const isBackward = !!editor.selection && Range.isBackward(editor.selection)
+  const isBackward = !!editor.selection && Range.isBackward(editor, e.selection)
   const domFocusPoint = domRange.cloneRange()
   domFocusPoint.collapse(isBackward)
 

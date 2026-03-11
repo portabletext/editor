@@ -28,7 +28,7 @@ export const RangeRef: RangeRefInterface = {
       return
     }
 
-    const path = Range.transform(current, op, {affinity})
+    const path = Range.transform(editor, current, op, {affinity})
     ref.current = path
 
     if (path == null) {

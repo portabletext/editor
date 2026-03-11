@@ -55,11 +55,11 @@ export const TextTransforms: TextTransforms = {
         if (Range.isCollapsed(at)) {
           at = at.anchor
         } else {
-          const end = Range.end(at)
+          const end = Range.end(editor, at)
           if (!voids && Editor.void(editor, {at: end})) {
             return
           }
-          const start = Range.start(at)
+          const start = Range.start(editor, at)
           const startRef = Editor.pointRef(editor, start)
           const endRef = Editor.pointRef(editor, end)
           Transforms.delete(editor, {at, voids})

@@ -51,7 +51,7 @@ export const addAnnotationOperationImplementation: OperationImplementation<
   const selectedBlocks = Editor.nodes(editor, {
     at: effectiveSelection,
     match: (node) => editor.isTextBlock(node),
-    reverse: Range.isBackward(effectiveSelection),
+    reverse: Range.isBackward(editor, effectiveSelection),
   })
 
   let blockIndex = 0
@@ -104,7 +104,7 @@ export const addAnnotationOperationImplementation: OperationImplementation<
         const splitRangeRef = Editor.rangeRef(editor, splitRange, {
           affinity: 'inward',
         })
-        const [splitStart, splitEnd] = Range.edges(splitRange)
+        const [splitStart, splitEnd] = Range.edges(editor, splitRange)
         const endAtEnd = Editor.isEnd(editor, splitEnd, splitEnd.path)
         if (!endAtEnd || !Editor.isEdge(editor, splitEnd, splitEnd.path)) {
           const [endNode] = Editor.node(editor, splitEnd.path)
@@ -146,7 +146,7 @@ export const addAnnotationOperationImplementation: OperationImplementation<
         continue
       }
 
-      if (!selectionRange || !Range.includes(selectionRange, path)) {
+      if (!selectionRange || !Range.includes(editor, selectionRange, path)) {
         continue
       }
 

@@ -1,4 +1,5 @@
-import {isObject, Path, type ExtendedType, type Operation} from '..'
+import {isObject, Node, Path, type Editor, type ExtendedType, type Operation} from '..'
+import type {EditorSchema} from '../../editor/editor-schema'
 import type {TextDirection} from '../types/types'
 
 /**
@@ -24,17 +25,17 @@ export interface PointInterface {
    * Compare a point to another, returning an integer indicating whether the
    * point was before, at, or after the other.
    */
-  compare: (point: Point, another: Point) => -1 | 0 | 1
+  compare: (editor: Editor, point: Point, another: Point) => -1 | 0 | 1
 
   /**
    * Check if a point is after another.
    */
-  isAfter: (point: Point, another: Point) => boolean
+  isAfter: (editor: Editor, point: Point, another: Point) => boolean
 
   /**
    * Check if a point is before another.
    */
-  isBefore: (point: Point, another: Point) => boolean
+  isBefore: (editor: Editor, point: Point, another: Point) => boolean
 
   /**
    * Check if a point is exactly equal to another.
@@ -58,8 +59,8 @@ export interface PointInterface {
 
 // eslint-disable-next-line no-redeclare
 export const Point: PointInterface = {
-  compare(point: Point, another: Point): -1 | 0 | 1 {
-    const result = Path.compare(point.path, another.path)
+  compare(editor: Editor, point: Point, another: Point): -1 | 0 | 1 {
+    const result = Node.compare(editor, point.path, another.path, editor.schema)
 
     if (result === 0) {
       if (point.offset < another.offset) {
@@ -74,12 +75,12 @@ export const Point: PointInterface = {
     return result
   },
 
-  isAfter(point: Point, another: Point): boolean {
-    return Point.compare(point, another) === 1
+  isAfter(editor: Editor, point: Point, another: Point): boolean {
+    return Point.compare(editor, point, another) === 1
   },
 
-  isBefore(point: Point, another: Point): boolean {
-    return Point.compare(point, another) === -1
+  isBefore(editor: Editor, point: Point, another: Point): boolean {
+    return Point.compare(editor, point, another) === -1
   },
 
   equals(point: Point, another: Point): boolean {

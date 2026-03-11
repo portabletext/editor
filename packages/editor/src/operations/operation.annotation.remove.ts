@@ -146,7 +146,7 @@ export const removeAnnotationOperationImplementation: OperationImplementation<
         const splitRangeRef = Editor.rangeRef(editor, splitRange, {
           affinity: 'inward',
         })
-        const [splitStart, splitEnd] = Range.edges(splitRange)
+        const [splitStart, splitEnd] = Range.edges(editor, splitRange)
         const endAtEnd = Editor.isEnd(editor, splitEnd, splitEnd.path)
         if (!endAtEnd || !Editor.isEdge(editor, splitEnd, splitEnd.path)) {
           const [endNode] = Editor.node(editor, splitEnd.path)
@@ -194,7 +194,7 @@ export const removeAnnotationOperationImplementation: OperationImplementation<
           continue
         }
 
-        if (!selectionRange || !Range.includes(selectionRange, childPath)) {
+        if (!selectionRange || !Range.includes(editor, selectionRange, childPath)) {
           continue
         }
 

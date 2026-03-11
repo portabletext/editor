@@ -91,7 +91,7 @@ export const Text: TextInterface = {
         merge: mergeDecoration,
         ...rest
       } = dec
-      const [start, end] = Range.edges(dec)
+      const [start, end] = Range.edges(editor, dec)
       const next = []
       let leafEnd = 0
       const decorationStart = start.offset

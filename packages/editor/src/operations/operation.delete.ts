@@ -34,7 +34,7 @@ export const deleteOperationImplementation: OperationImplementation<
     throw new Error('Unable to delete without a selection')
   }
 
-  const [start, end] = Range.edges(at)
+  const [start, end] = Range.edges(editor, at)
 
   if (operation.unit === 'block') {
     const startBlockIndex = start.path.at(0)
@@ -455,7 +455,7 @@ function findCurrentLineRange(
   editor: PortableTextSlateEditor,
   parentRange: Range,
 ): Range {
-  const parentRangeBoundary = Editor.range(editor, Range.end(parentRange))
+  const parentRangeBoundary = Editor.range(editor, Range.end(editor, parentRange))
   const positions = Array.from(Editor.positions(editor, {at: parentRange}))
 
   let left = 0

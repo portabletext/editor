@@ -137,12 +137,12 @@ export const splitDecorationsByChild = (
   }
 
   for (const decoration of decorations) {
-    const decorationRange = Range.intersection(ancestorRange, decoration)
+    const decorationRange = Range.intersection(editor, ancestorRange, decoration)
     if (!decorationRange) {
       continue
     }
 
-    const [startPoint, endPoint] = Range.edges(decorationRange)
+    const [startPoint, endPoint] = Range.edges(editor, decorationRange)
     const startIndex = startPoint.path[level]!
     const endIndex = endPoint.path[level]!
 
@@ -153,7 +153,7 @@ export const splitDecorationsByChild = (
       }
 
       const childRange = getChildRange(i)
-      const childDecorationRange = Range.intersection(childRange, decoration)
+      const childDecorationRange = Range.intersection(editor, childRange, decoration)
       if (!childDecorationRange) {
         continue
       }

@@ -16,10 +16,10 @@ export const collapse: SelectionTransforms['collapse'] = (
   } else if (edge === 'focus') {
     Transforms.select(editor, selection.focus)
   } else if (edge === 'start') {
-    const [start] = Range.edges(selection)
+    const [start] = Range.edges(editor, selection)
     Transforms.select(editor, start)
   } else if (edge === 'end') {
-    const [, end] = Range.edges(selection)
+    const [, end] = Range.edges(editor, selection)
     Transforms.select(editor, end)
   }
 }

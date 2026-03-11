@@ -11,7 +11,7 @@ export const unhangRange: EditorInterface['unhangRange'] = (
   options = {},
 ) => {
   const {voids = false} = options
-  let [start, end] = Range.edges(range)
+  let [start, end] = Range.edges(editor, range)
 
   // PERF: exit early if we can guarantee that the range isn't hanging.
   if (

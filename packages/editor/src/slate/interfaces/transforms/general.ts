@@ -10,6 +10,7 @@ import {
   type Selection,
   type Text,
 } from '../../index'
+import type {KeyedSegment} from '../../../types/paths'
 import {
   insertChildren,
   modifyChildren,
@@ -17,6 +18,34 @@ import {
   modifyLeaf,
   removeChildren,
 } from '../../utils/modify'
+
+function isKeyedSegment(value: unknown): value is KeyedSegment {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    '_key' in value &&
+    typeof (value as KeyedSegment)._key === 'string'
+  )
+}
+
+/**
+ * Resolve the last path segment to a numeric index in a children array.
+ */
+function resolveLastSegmentIndex(
+  children: any[],
+  path: import('../../../types/paths').Path,
+): number {
+  const lastSegment = path[path.length - 1]!
+  if (typeof lastSegment === 'number') {
+    return lastSegment
+  }
+  if (isKeyedSegment(lastSegment)) {
+    return children.findIndex(
+      (c: any) => c?._key === lastSegment._key,
+    )
+  }
+  return -1
+}
 
 export interface GeneralTransforms {
   /**
@@ -35,7 +64,12 @@ export const GeneralTransforms: GeneralTransforms = {
         const {path, node} = op
 
         modifyChildren(editor, Path.parent(path), editor.schema, (children) => {
-          const index = path[path.length - 1]!
+          const index = resolveLastSegmentIndex(children, path)
+
+          if (index === -1) {
+            // For keyed inserts, append at the end if key not found
+            return insertChildren(children, children.length, node)
+          }
 
           if (index > children.length) {
             throw new Error(
@@ -72,11 +106,14 @@ export const GeneralTransforms: GeneralTransforms = {
 
       case 'remove_node': {
         const {path} = op
-        const index = path[path.length - 1]!
 
-        modifyChildren(editor, Path.parent(path), editor.schema, (children) =>
-          removeChildren(children, index, 1),
-        )
+        modifyChildren(editor, Path.parent(path), editor.schema, (children) => {
+          const index = resolveLastSegmentIndex(children, path)
+          if (index >= 0) {
+            return removeChildren(children, index, 1)
+          }
+          return children
+        })
 
         // Transform all the points in the value, but if the point was in the
         // node that was removed we need to update the range or remove it.
