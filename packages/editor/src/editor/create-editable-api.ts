@@ -164,7 +164,7 @@ export function createEditableAPI(
           return undefined
         }
 
-        return block.children.at(focusChildIndex)
+        return block.children.at(resolveSegmentIndex(block.children, focusChildIndex))
       }
 
       return undefined

@@ -575,7 +575,7 @@ export function insertBlock(options: {
 
       // Remove nodes after start
       const blockNode = Node.get(editor, endBlockPath, editor.schema) as Element
-      for (let i = blockNode.children.length - 1; i > resolveSegmentIndex(startBlock.children, start.path[1]!); i--) {
+      for (let i = blockNode.children.length - 1; i > resolveSegmentIndex(blockNode.children, start.path[1]!); i--) {
         removeNodeAt(editor, [...endBlockPath, i])
       }
 
