@@ -27,6 +27,18 @@ import {applyDeselect, applySelect} from './apply-selection'
 import {applySetNode} from './apply-set-node'
 import {isEqualToEmptyEditor, toSlateBlock} from './values'
 
+function blockPath(block: {node: Descendant; index: number}): Path {
+  return [{_key: (block.node as any)._key}]
+}
+
+function childPath(
+  block: {node: Descendant; index: number},
+  child: {node: Descendant; index: number},
+): Path {
+  return [{_key: (block.node as any)._key}, 'children', {_key: (child.node as any)._key}]
+}
+
+
 /**
  * Creates a function that can apply a patch onto a PortableTextSlateEditor.
  */
@@ -105,7 +117,7 @@ function diffMatchPatch(
     if (op === DIFF_INSERT) {
       editor.apply({
         type: 'insert_text',
-        path: [block.index, child.index],
+        path: childPath(block, child),
         offset,
         text,
       })
@@ -113,7 +125,7 @@ function diffMatchPatch(
     } else if (op === DIFF_DELETE) {
       editor.apply({
         type: 'remove_text',
-        path: [block.index, child.index],
+        path: childPath(block, child),
         offset: offset,
         text,
       })
@@ -183,8 +195,10 @@ function insertPatch(
         position === 'before'
           ? targetBlockIndex + blocksToInsert.length
           : targetBlockIndex
-      const [removeNode] = Editor.node(editor, [removeIdx])
-      editor.apply({type: 'remove_node', path: [removeIdx], node: removeNode})
+      const removeBlock = editor.children[removeIdx]!
+      const removeBlockPath = [{_key: (removeBlock as any)._key}]
+      const [removeNode] = Editor.node(editor, removeBlockPath)
+      editor.apply({type: 'remove_node', path: removeBlockPath, node: removeNode})
     }
 
     return true
@@ -251,14 +265,14 @@ function setPatch(
       editor.isTextBlock(block.node) &&
       Element.isElement(updatedBlock, editor.schema)
     ) {
-      applySetNode(editor, updatedBlock, [block.index])
+      applySetNode(editor, updatedBlock, blockPath(block))
 
       const previousSelection = editor.selection
 
       // Remove the previous children
       const childPaths = Array.from(
         Editor.nodes(editor, {
-          at: [block.index],
+          at: blockPath(block),
           reverse: true,
           mode: 'lowest',
         }),
@@ -288,7 +302,7 @@ function setPatch(
 
       return true
     } else {
-      applySetNode(editor, updatedBlock, [block.index])
+      applySetNode(editor, updatedBlock, blockPath(block))
 
       return true
     }
@@ -302,7 +316,7 @@ function setPatch(
       },
     ])
 
-    applySetNode(editor, updatedBlock, [block.index])
+    applySetNode(editor, updatedBlock, blockPath(block))
 
     return true
   }
@@ -327,13 +341,13 @@ function setPatch(
         if (oldText !== newText) {
           editor.apply({
             type: 'remove_text',
-            path: [block.index, child.index],
+            path: childPath(block, child),
             offset: 0,
             text: oldText,
           })
           editor.apply({
             type: 'insert_text',
-            path: [block.index, child.index],
+            path: childPath(block, child),
             offset: 0,
             text: newText,
           })
@@ -366,7 +380,7 @@ function setPatch(
           },
         ])
 
-        applySetNode(editor, newNode, [block.index, child.index])
+        applySetNode(editor, newNode, childPath(block, child))
       }
     } else {
       // Setting inline object property
@@ -390,7 +404,7 @@ function setPatch(
         },
       ])
 
-      applySetNode(editor, newNode, [block.index, child.index])
+      applySetNode(editor, newNode, childPath(block, child))
     }
 
     return true
@@ -403,7 +417,7 @@ function setPatch(
         },
       ])
 
-      applySetNode(editor, newVal, [block.index])
+      applySetNode(editor, newVal, blockPath(block))
     } else {
       return false
     }
@@ -436,8 +450,8 @@ function unsetPatch(editor: PortableTextSlateEditor, patch: UnsetPatch) {
 
   // Single blocks
   if (patch.path.length === 1) {
-    const [blockNode] = Editor.node(editor, [block.index])
-    editor.apply({type: 'remove_node', path: [block.index], node: blockNode})
+    const [blockNode] = Editor.node(editor, blockPath(block))
+    editor.apply({type: 'remove_node', path: blockPath(block), node: blockNode})
 
     return true
   }
@@ -447,10 +461,10 @@ function unsetPatch(editor: PortableTextSlateEditor, patch: UnsetPatch) {
   // Unset on text block children
   if (editor.isTextBlock(block.node) && child) {
     if (patch.path[1] === 'children' && patch.path.length === 3) {
-      const [childNode] = Editor.node(editor, [block.index, child.index])
+      const [childNode] = Editor.node(editor, childPath(block, child))
       editor.apply({
         type: 'remove_node',
-        path: [block.index, child.index],
+        path: childPath(block, child),
         node: childNode,
       })
 
@@ -494,9 +508,9 @@ function unsetPatch(editor: PortableTextSlateEditor, patch: UnsetPatch) {
       for (const prop of removedProperties) {
         unsetProps[prop] = null
       }
-      applySetNode(editor, unsetProps, [block.index, child.index])
+      applySetNode(editor, unsetProps, childPath(block, child))
     } else {
-      applySetNode(editor, newNode, [block.index, child.index])
+      applySetNode(editor, newNode, childPath(block, child))
     }
 
     return true
@@ -518,7 +532,7 @@ function unsetPatch(editor: PortableTextSlateEditor, patch: UnsetPatch) {
     if (typeof propEntry === 'string' && propEntry === 'text') {
       editor.apply({
         type: 'remove_text',
-        path: [block.index, child.index],
+        path: childPath(block, child),
         offset: 0,
         text: child.node.text,
       })
@@ -542,7 +556,7 @@ function unsetPatch(editor: PortableTextSlateEditor, patch: UnsetPatch) {
     for (const prop of removedProperties) {
       unsetProps[prop] = null
     }
-    applySetNode(editor, unsetProps, [block.index, child.index])
+    applySetNode(editor, unsetProps, childPath(block, child))
 
     return true
   }
@@ -566,9 +580,9 @@ function unsetPatch(editor: PortableTextSlateEditor, patch: UnsetPatch) {
         for (const prop of removedProperties) {
           unsetProps[prop] = null
         }
-        applySetNode(editor, unsetProps, [block.index])
+        applySetNode(editor, unsetProps, blockPath(block))
       } else {
-        applySetNode(editor, newVal, [block.index])
+        applySetNode(editor, newVal, blockPath(block))
       }
 
       return true
@@ -592,7 +606,7 @@ function unsetPatch(editor: PortableTextSlateEditor, patch: UnsetPatch) {
       }
 
       if (propPath.length === 1) {
-        applySetNode(editor, {[propEntry]: null}, [block.index])
+        applySetNode(editor, {[propEntry]: null}, blockPath(block))
       } else {
         const updatedBlock = applyAll(block.node, [
           {
