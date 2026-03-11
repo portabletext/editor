@@ -209,9 +209,81 @@ export interface NodeInterface {
   ) => Generator<NodeEntry, void, undefined>
 
   /**
+   * Get the path to the next sibling of the node at the given path.
+   * Returns the path if the sibling exists, or undefined if there is no next sibling.
+   */
+  next: (
+    root: Node,
+    path: Path,
+    schema: EditorSchema,
+  ) => Path | undefined
+
+  /**
    * Get the parent of a node at a specific path.
    */
   parent: (root: Node, path: Path, schema: EditorSchema) => Ancestor
+
+  /**
+   * Get the path to the previous sibling of the node at the given path.
+   * Returns the path if the sibling exists, or undefined if there is no previous sibling.
+   */
+  previous: (
+    root: Node,
+    path: Path,
+    schema: EditorSchema,
+  ) => Path | undefined
+
+  /**
+   * Check if the node at the given path has a previous sibling.
+   */
+  hasPrevious: (
+    root: Node,
+    path: Path,
+    schema: EditorSchema,
+  ) => boolean
+
+  /**
+   * Compare two paths in document order. Returns -1 if `path` comes before
+   * `another`, 0 if they are equal or one is an ancestor of the other,
+   * and 1 if `path` comes after `another`. Requires the tree to determine
+   * sibling ordering.
+   */
+  compare: (
+    root: Node,
+    path: Path,
+    another: Path,
+    schema: EditorSchema,
+  ) => -1 | 0 | 1
+
+  /**
+   * Check if a path is before another in document order.
+   */
+  isBefore: (
+    root: Node,
+    path: Path,
+    another: Path,
+    schema: EditorSchema,
+  ) => boolean
+
+  /**
+   * Check if a path is after another in document order.
+   */
+  isAfter: (
+    root: Node,
+    path: Path,
+    another: Path,
+    schema: EditorSchema,
+  ) => boolean
+
+  /**
+   * Get the numeric index of a child within its parent's children array.
+   * Returns -1 if not found.
+   */
+  indexOf: (
+    root: Node,
+    path: Path,
+    schema: EditorSchema,
+  ) => number
 
   /**
    * Get the concatenated text string of a node's content.
@@ -620,6 +692,172 @@ export const Node: NodeInterface = {
       n = Node.get(root, p, schema)
       visited.add(n)
     }
+  },
+
+  next(
+    root: Node,
+    path: Path,
+    schema: EditorSchema,
+  ): Path | undefined {
+    if (path.length === 0) return undefined
+
+    const parentPath = Path.parent(path)
+    const parentNode = Node.getIf(root, parentPath, schema)
+    if (!parentNode || Node.isLeaf(parentNode, schema)) return undefined
+
+    const siblings = getChildrenArray(parentNode as Ancestor, schema)
+    const lastSegment = path[path.length - 1]!
+    const currentIndex = isKeyedSegment(lastSegment)
+      ? siblings.findIndex((c: any) => c?._key === lastSegment._key)
+      : typeof lastSegment === 'number'
+        ? lastSegment
+        : -1
+
+    const nextIndex = currentIndex + 1
+    if (nextIndex >= siblings.length) return undefined
+
+    const nextChild = siblings[nextIndex]!
+    const fieldName = getChildrenFieldName(parentNode, schema)
+    return [...parentPath, fieldName, childKeySegment(nextChild)]
+  },
+
+  previous(
+    root: Node,
+    path: Path,
+    schema: EditorSchema,
+  ): Path | undefined {
+    if (path.length === 0) return undefined
+
+    const parentPath = Path.parent(path)
+    const parentNode = Node.getIf(root, parentPath, schema)
+    if (!parentNode || Node.isLeaf(parentNode, schema)) return undefined
+
+    const siblings = getChildrenArray(parentNode as Ancestor, schema)
+    const lastSegment = path[path.length - 1]!
+    const currentIndex = isKeyedSegment(lastSegment)
+      ? siblings.findIndex((c: any) => c?._key === lastSegment._key)
+      : typeof lastSegment === 'number'
+        ? lastSegment
+        : -1
+
+    const prevIndex = currentIndex - 1
+    if (prevIndex < 0) return undefined
+
+    const prevChild = siblings[prevIndex]!
+    const fieldName = getChildrenFieldName(parentNode, schema)
+    return [...parentPath, fieldName, childKeySegment(prevChild)]
+  },
+
+  hasPrevious(
+    root: Node,
+    path: Path,
+    schema: EditorSchema,
+  ): boolean {
+    return Node.previous(root, path, schema) !== undefined
+  },
+
+  compare(
+    root: Node,
+    path: Path,
+    another: Path,
+    schema: EditorSchema,
+  ): -1 | 0 | 1 {
+    // Find the common prefix, then compare the diverging segments
+    const minLen = Math.min(path.length, another.length)
+
+    for (let i = 0; i < minLen; i++) {
+      const a = path[i]!
+      const b = another[i]!
+
+      // If segments are equal, continue
+      if (isKeyedSegment(a) && isKeyedSegment(b)) {
+        if (a._key === b._key) continue
+
+        // Different keys at the same level — need to find their order
+        // Walk up to find the parent and compare indices
+        // The previous segment should be a field name
+        const fieldIdx = i - 1
+        if (fieldIdx >= 0 && typeof path[fieldIdx] === 'string') {
+          const grandparentPath = path.slice(0, fieldIdx)
+          const grandparent = Node.getIf(root, grandparentPath, schema)
+          if (grandparent && !Node.isLeaf(grandparent, schema)) {
+            const fieldName = path[fieldIdx] as string
+            const children = (grandparent as any)[fieldName] as any[]
+            if (Array.isArray(children)) {
+              const aIdx = children.findIndex((c: any) => c?._key === a._key)
+              const bIdx = children.findIndex((c: any) => c?._key === b._key)
+              if (aIdx < bIdx) return -1
+              if (aIdx > bIdx) return 1
+            }
+          }
+        } else if (i === 0) {
+          // Top-level children of root
+          const children = (root as any).children as any[]
+          if (Array.isArray(children)) {
+            const aIdx = children.findIndex((c: any) => c?._key === a._key)
+            const bIdx = children.findIndex((c: any) => c?._key === b._key)
+            if (aIdx < bIdx) return -1
+            if (aIdx > bIdx) return 1
+          }
+        }
+        // Fallback: can't determine order
+        return 0
+      } else if (typeof a === 'string' && typeof b === 'string') {
+        if (a === b) continue
+        // Different field names at the same level — unusual
+        return a < b ? -1 : 1
+      } else if (typeof a === 'number' && typeof b === 'number') {
+        if (a === b) continue
+        return a < b ? -1 : 1
+      } else {
+        // Mixed segment types — shouldn't happen in well-formed paths
+        return 0
+      }
+    }
+
+    // One path is a prefix of the other (ancestor relationship)
+    return 0
+  },
+
+  isBefore(
+    root: Node,
+    path: Path,
+    another: Path,
+    schema: EditorSchema,
+  ): boolean {
+    return Node.compare(root, path, another, schema) === -1
+  },
+
+  isAfter(
+    root: Node,
+    path: Path,
+    another: Path,
+    schema: EditorSchema,
+  ): boolean {
+    return Node.compare(root, path, another, schema) === 1
+  },
+
+  indexOf(
+    root: Node,
+    path: Path,
+    schema: EditorSchema,
+  ): number {
+    if (path.length === 0) return -1
+
+    const parentPath = Path.parent(path)
+    const parentNode = Node.getIf(root, parentPath, schema)
+    if (!parentNode || Node.isLeaf(parentNode, schema)) return -1
+
+    const siblings = getChildrenArray(parentNode as Ancestor, schema)
+    const lastSegment = path[path.length - 1]!
+
+    if (isKeyedSegment(lastSegment)) {
+      return siblings.findIndex((c: any) => c?._key === lastSegment._key)
+    }
+    if (typeof lastSegment === 'number') {
+      return lastSegment
+    }
+    return -1
   },
 
     parent(root: Node, path: Path, schema: EditorSchema): Ancestor {
