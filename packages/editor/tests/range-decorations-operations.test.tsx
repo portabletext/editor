@@ -3890,3 +3890,610 @@ describe('RangeDecorations: Multi-Block Paste Operations', () => {
     })
   })
 })
+
+describe('RangeDecorations: Overlapping Decorations', () => {
+  test('Insert inside overlap fires onMoved on both decorations', async () => {
+    const onMovedSpyA = vi.fn()
+    const onMovedSpyB = vi.fn()
+
+    let rangeDecorations: Array<RangeDecoration> = [
+      {
+        component: RangeDecorationComponent,
+        payload: {id: 'decA'},
+        selection: {
+          anchor: {
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            offset: 3,
+          },
+          focus: {
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            offset: 11,
+          },
+        },
+        onMoved: (details) => {
+          onMovedSpyA(details)
+          rangeDecorations = updateRangeDecorations({rangeDecorations, details})
+        },
+      },
+      {
+        component: RangeDecorationComponent,
+        payload: {id: 'decB'},
+        selection: {
+          anchor: {
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            offset: 6,
+          },
+          focus: {
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            offset: 9,
+          },
+        },
+        onMoved: (details) => {
+          onMovedSpyB(details)
+          rangeDecorations = updateRangeDecorations({rangeDecorations, details})
+        },
+      },
+    ]
+
+    // "Hello world end": decA covers "lo world" (3-11), decB covers "wor" (6-9)
+    const {editor, locator} = await createTestEditor({
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', _key: 's1', text: 'Hello world end'}],
+          markDefs: [],
+        },
+      ],
+      editableProps: {rangeDecorations},
+    })
+
+    await vi.waitFor(async () => {
+      const count = await locator.getByTestId('range-decoration').all()
+      expect(count.length).toBeGreaterThanOrEqual(2)
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 7,
+        },
+        focus: {
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 7,
+        },
+      },
+    })
+    editor.send({type: 'insert.text', text: 'X'})
+
+    await vi.waitFor(() => {
+      const terse = getTersePt(editor.getSnapshot().context)
+      expect(terse[0]).toContain('X')
+    })
+
+    expect(onMovedSpyA).toHaveBeenCalled()
+    expect(onMovedSpyB).toHaveBeenCalled()
+
+    const lastCallA =
+      onMovedSpyA.mock.calls[onMovedSpyA.mock.calls.length - 1]?.[0]
+    const lastCallB =
+      onMovedSpyB.mock.calls[onMovedSpyB.mock.calls.length - 1]?.[0]
+    expect(lastCallA?.newSelection).not.toBeNull()
+    expect(lastCallB?.newSelection).not.toBeNull()
+    expect(lastCallA?.reason).toBe('moved')
+    expect(lastCallB?.reason).toBe('moved')
+  })
+
+  test('Insert before overlap fires onMoved on both decorations', async () => {
+    const onMovedSpyA = vi.fn()
+    const onMovedSpyB = vi.fn()
+
+    let rangeDecorations: Array<RangeDecoration> = [
+      {
+        component: RangeDecorationComponent,
+        payload: {id: 'decA'},
+        selection: {
+          anchor: {
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            offset: 3,
+          },
+          focus: {
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            offset: 11,
+          },
+        },
+        onMoved: (details) => {
+          onMovedSpyA(details)
+          rangeDecorations = updateRangeDecorations({rangeDecorations, details})
+        },
+      },
+      {
+        component: RangeDecorationComponent,
+        payload: {id: 'decB'},
+        selection: {
+          anchor: {
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            offset: 6,
+          },
+          focus: {
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            offset: 9,
+          },
+        },
+        onMoved: (details) => {
+          onMovedSpyB(details)
+          rangeDecorations = updateRangeDecorations({rangeDecorations, details})
+        },
+      },
+    ]
+
+    // "Hello world end": decA covers "lo world" (3-11), decB covers "wor" (6-9)
+    const {editor, locator, rerender} = await createTestEditor({
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', _key: 's1', text: 'Hello world end'}],
+          markDefs: [],
+        },
+      ],
+      editableProps: {rangeDecorations},
+    })
+
+    await vi.waitFor(async () => {
+      const count = await locator.getByTestId('range-decoration').all()
+      expect(count.length).toBeGreaterThanOrEqual(2)
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 0,
+        },
+      },
+    })
+    editor.send({type: 'insert.text', text: 'ZZ'})
+
+    await vi.waitFor(() => {
+      const terse = getTersePt(editor.getSnapshot().context)
+      expect(terse[0]).toContain('ZZ')
+    })
+
+    expect(onMovedSpyA).toHaveBeenCalled()
+    expect(onMovedSpyB).toHaveBeenCalled()
+
+    const lastCallA =
+      onMovedSpyA.mock.calls[onMovedSpyA.mock.calls.length - 1]?.[0]
+    const lastCallB =
+      onMovedSpyB.mock.calls[onMovedSpyB.mock.calls.length - 1]?.[0]
+    expect(lastCallA?.newSelection).not.toBeNull()
+    expect(lastCallB?.newSelection).not.toBeNull()
+    expect(lastCallA?.reason).toBe('moved')
+    expect(lastCallB?.reason).toBe('moved')
+
+    await rerender({
+      initialValue: editor.getSnapshot().context.value,
+      editableProps: {rangeDecorations},
+    })
+
+    await vi.waitFor(async () => {
+      const count = await locator.getByTestId('range-decoration').all()
+      expect(count.length).toBeGreaterThanOrEqual(2)
+    })
+  })
+
+  test('Delete across partial overlap fires onMoved on both decorations', async () => {
+    const onMovedSpyA = vi.fn()
+    const onMovedSpyB = vi.fn()
+
+    // "Hello world ending": decA covers "lo world" (3-11), decB covers "world end" (6-15)
+    // Overlap: "world" (6-11)
+    let rangeDecorations: Array<RangeDecoration> = [
+      {
+        component: RangeDecorationComponent,
+        payload: {id: 'decA'},
+        selection: {
+          anchor: {
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            offset: 3,
+          },
+          focus: {
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            offset: 11,
+          },
+        },
+        onMoved: (details) => {
+          onMovedSpyA(details)
+          rangeDecorations = updateRangeDecorations({rangeDecorations, details})
+        },
+      },
+      {
+        component: RangeDecorationComponent,
+        payload: {id: 'decB'},
+        selection: {
+          anchor: {
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            offset: 6,
+          },
+          focus: {
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            offset: 15,
+          },
+        },
+        onMoved: (details) => {
+          onMovedSpyB(details)
+          rangeDecorations = updateRangeDecorations({rangeDecorations, details})
+        },
+      },
+    ]
+
+    const {editor, locator} = await createTestEditor({
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', _key: 's1', text: 'Hello world ending'}],
+          markDefs: [],
+        },
+      ],
+      editableProps: {rangeDecorations},
+    })
+
+    await vi.waitFor(async () => {
+      const count = await locator.getByTestId('range-decoration').all()
+      expect(count.length).toBeGreaterThanOrEqual(2)
+    })
+
+    // Select the overlap region "world" (6-11) and replace with "Q"
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 6,
+        },
+        focus: {
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 11,
+        },
+      },
+    })
+    editor.send({type: 'insert.text', text: 'Q'})
+
+    await vi.waitFor(() => {
+      const terse = getTersePt(editor.getSnapshot().context)
+      expect(terse[0]).toContain('Q')
+    })
+
+    expect(onMovedSpyA).toHaveBeenCalled()
+    expect(onMovedSpyB).toHaveBeenCalled()
+
+    const lastCallA =
+      onMovedSpyA.mock.calls[onMovedSpyA.mock.calls.length - 1]?.[0]
+    const lastCallB =
+      onMovedSpyB.mock.calls[onMovedSpyB.mock.calls.length - 1]?.[0]
+    expect(lastCallA?.newSelection).not.toBeNull()
+    expect(lastCallB?.newSelection).not.toBeNull()
+  })
+
+  test('Replace fully contained overlap fires onMoved on both decorations', async () => {
+    const onMovedSpyA = vi.fn()
+    const onMovedSpyB = vi.fn()
+
+    // decA covers "lo world" (3-11), decB covers "wor" (6-9) — fully inside decA
+    let rangeDecorations: Array<RangeDecoration> = [
+      {
+        component: RangeDecorationComponent,
+        payload: {id: 'decA'},
+        selection: {
+          anchor: {
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            offset: 3,
+          },
+          focus: {
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            offset: 11,
+          },
+        },
+        onMoved: (details) => {
+          onMovedSpyA(details)
+          rangeDecorations = updateRangeDecorations({rangeDecorations, details})
+        },
+      },
+      {
+        component: RangeDecorationComponent,
+        payload: {id: 'decB'},
+        selection: {
+          anchor: {
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            offset: 6,
+          },
+          focus: {
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            offset: 9,
+          },
+        },
+        onMoved: (details) => {
+          onMovedSpyB(details)
+          rangeDecorations = updateRangeDecorations({rangeDecorations, details})
+        },
+      },
+    ]
+
+    const {editor, locator} = await createTestEditor({
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', _key: 's1', text: 'Hello world end'}],
+          markDefs: [],
+        },
+      ],
+      editableProps: {rangeDecorations},
+    })
+
+    await vi.waitFor(async () => {
+      const count = await locator.getByTestId('range-decoration').all()
+      expect(count.length).toBeGreaterThanOrEqual(2)
+    })
+
+    // Select decB's exact range 6-9 ("wor") and replace with "YYY"
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 6,
+        },
+        focus: {
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 9,
+        },
+      },
+    })
+    editor.send({type: 'insert.text', text: 'YYY'})
+
+    await vi.waitFor(() => {
+      const terse = getTersePt(editor.getSnapshot().context)
+      expect(terse[0]).toContain('YYY')
+    })
+
+    expect(onMovedSpyA).toHaveBeenCalled()
+    expect(onMovedSpyB).toHaveBeenCalled()
+
+    const lastCallA =
+      onMovedSpyA.mock.calls[onMovedSpyA.mock.calls.length - 1]?.[0]
+    const lastCallB =
+      onMovedSpyB.mock.calls[onMovedSpyB.mock.calls.length - 1]?.[0]
+    expect(lastCallA?.newSelection).not.toBeNull()
+    expect(lastCallB?.newSelection).not.toBeNull()
+  })
+
+  test('Split inside overlap fires onMoved on both decorations', async () => {
+    const onMovedSpyA = vi.fn()
+    const onMovedSpyB = vi.fn()
+
+    let rangeDecorations: Array<RangeDecoration> = [
+      {
+        component: RangeDecorationComponent,
+        payload: {id: 'decA'},
+        selection: {
+          anchor: {
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            offset: 3,
+          },
+          focus: {
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            offset: 11,
+          },
+        },
+        onMoved: (details) => {
+          onMovedSpyA(details)
+          rangeDecorations = updateRangeDecorations({rangeDecorations, details})
+        },
+      },
+      {
+        component: RangeDecorationComponent,
+        payload: {id: 'decB'},
+        selection: {
+          anchor: {
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            offset: 6,
+          },
+          focus: {
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            offset: 9,
+          },
+        },
+        onMoved: (details) => {
+          onMovedSpyB(details)
+          rangeDecorations = updateRangeDecorations({rangeDecorations, details})
+        },
+      },
+    ]
+
+    const {editor, locator, rerender} = await createTestEditor({
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', _key: 's1', text: 'Hello world end'}],
+          markDefs: [],
+        },
+      ],
+      editableProps: {rangeDecorations},
+    })
+
+    await vi.waitFor(async () => {
+      const count = await locator.getByTestId('range-decoration').all()
+      expect(count.length).toBeGreaterThanOrEqual(2)
+    })
+
+    // Split at offset 7 (inside the overlap region)
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 7,
+        },
+        focus: {
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 7,
+        },
+      },
+    })
+    editor.send({type: 'insert.break'})
+
+    await vi.waitFor(() => {
+      const terse = getTersePt(editor.getSnapshot().context)
+      expect(terse.length).toBe(2)
+    })
+
+    expect(getTersePt(editor.getSnapshot().context)).toEqual([
+      'Hello w',
+      'orld end',
+    ])
+
+    expect(onMovedSpyA).toHaveBeenCalled()
+    expect(onMovedSpyB).toHaveBeenCalled()
+
+    const lastCallA =
+      onMovedSpyA.mock.calls[onMovedSpyA.mock.calls.length - 1]?.[0]
+    const lastCallB =
+      onMovedSpyB.mock.calls[onMovedSpyB.mock.calls.length - 1]?.[0]
+    expect(lastCallA?.newSelection).not.toBeNull()
+    expect(lastCallB?.newSelection).not.toBeNull()
+    expect(lastCallA?.reason).toBe('moved')
+    expect(lastCallB?.reason).toBe('moved')
+
+    await rerender({
+      initialValue: editor.getSnapshot().context.value,
+      editableProps: {rangeDecorations},
+    })
+
+    await vi.waitFor(async () => {
+      const count = await locator.getByTestId('range-decoration').all()
+      expect(count.length).toBeGreaterThanOrEqual(2)
+    })
+  })
+
+  test('Remote edit inside overlap fires onMoved on both decorations', async () => {
+    const onMovedSpyA = vi.fn()
+    const onMovedSpyB = vi.fn()
+
+    let rangeDecorationsB: Array<RangeDecoration> = [
+      {
+        component: RangeDecorationComponent,
+        payload: {id: 'decA'},
+        selection: {
+          anchor: {
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            offset: 3,
+          },
+          focus: {
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            offset: 11,
+          },
+        },
+        onMoved: (details) => {
+          onMovedSpyA(details)
+          rangeDecorationsB = updateRangeDecorations({
+            rangeDecorations: rangeDecorationsB,
+            details,
+          })
+        },
+      },
+      {
+        component: RangeDecorationComponent,
+        payload: {id: 'decB'},
+        selection: {
+          anchor: {
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            offset: 6,
+          },
+          focus: {
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            offset: 9,
+          },
+        },
+        onMoved: (details) => {
+          onMovedSpyB(details)
+          rangeDecorationsB = updateRangeDecorations({
+            rangeDecorations: rangeDecorationsB,
+            details,
+          })
+        },
+      },
+    ]
+
+    const {editor, locator, editorB, locatorB} = await createTestEditors({
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', _key: 's1', text: 'Hello world end'}],
+          markDefs: [],
+        },
+      ],
+      editableProps: {},
+      editablePropsB: {rangeDecorations: rangeDecorationsB},
+    })
+
+    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+    await vi.waitFor(() => expect.element(locatorB).toBeInTheDocument())
+
+    await vi.waitFor(async () => {
+      const count = await locatorB.getByTestId('range-decoration').all()
+      expect(count.length).toBeGreaterThanOrEqual(2)
+    })
+
+    onMovedSpyA.mockClear()
+    onMovedSpyB.mockClear()
+
+    // Type in Editor A at offset 7 (inside the overlap of Editor B's decorations)
+    await userEvent.click(locator)
+    editor.send({type: 'focus'})
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 7,
+        },
+        focus: {
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 7,
+        },
+      },
+    })
+
+    await userEvent.type(locator, 'X')
+
+    await vi.waitFor(() => {
+      const terseB = getTersePt(editorB.getSnapshot().context)
+      expect(terseB[0]).toContain('X')
+    })
+
+    // Both decorations in Editor B should have fired via reconciliation
+    expect(onMovedSpyA).toHaveBeenCalled()
+    expect(onMovedSpyB).toHaveBeenCalled()
+
+    const lastCallA =
+      onMovedSpyA.mock.calls[onMovedSpyA.mock.calls.length - 1]?.[0]
+    const lastCallB =
+      onMovedSpyB.mock.calls[onMovedSpyB.mock.calls.length - 1]?.[0]
+    expect(lastCallA?.newSelection).not.toBeNull()
+    expect(lastCallB?.newSelection).not.toBeNull()
+    expect(lastCallA?.origin).toBe('remote')
+    expect(lastCallB?.origin).toBe('remote')
+  })
+})
