@@ -4,6 +4,16 @@
     "rules": {
       "complexity": {
         "useLiteralKeys": "off"
+      },
+      "style": {
+        "noRestrictedGlobals": {
+          "level": "error",
+          "options": {
+            "deniedGlobals": {
+              "JSON": "Use `safeStringify`/`safeParse` instead of `JSON.stringify`/`JSON.parse` to avoid crashes on circular references."
+            }
+          }
+        }
       }
     }
   }

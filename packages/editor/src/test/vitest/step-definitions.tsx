@@ -5,6 +5,7 @@ import {assert, expect, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {getEditorSelection} from '../../internal-utils/editor-selection'
 import {IS_MAC} from '../../internal-utils/is-hotkey'
+import {safeParse} from '../../internal-utils/safe-json'
 import {getSelectionText} from '../../internal-utils/selection-text'
 import {getTextBlockKey} from '../../internal-utils/text-block-key'
 import {getTextMarks} from '../../internal-utils/text-marks'
@@ -111,7 +112,7 @@ export const stepDefinitions = [
             schema: context.editor.getSnapshot().context.schema,
             keyGenerator: context.editor.getSnapshot().context.keyGenerator,
           },
-          blocks: JSON.parse(blocks),
+          blocks: safeParse(blocks),
           options: {
             normalize: false,
             removeUnusedMarkDefs: false,
@@ -133,7 +134,7 @@ export const stepDefinitions = [
           schema: context.editor.getSnapshot().context.schema,
           keyGenerator: context.editor.getSnapshot().context.keyGenerator,
         },
-        span: JSON.parse(child),
+        span: safeParse(child),
         markDefKeyMap: new Map(),
         options: {validateFields: true},
       }) ??
@@ -142,7 +143,7 @@ export const stepDefinitions = [
           schema: context.editor.getSnapshot().context.schema,
           keyGenerator: context.editor.getSnapshot().context.keyGenerator,
         },
-        inlineObject: JSON.parse(child),
+        inlineObject: safeParse(child),
         options: {validateFields: true},
       })
 
@@ -646,7 +647,7 @@ export const stepDefinitions = [
             schema: context.editor.getSnapshot().context.schema,
             keyGenerator: context.editor.getSnapshot().context.keyGenerator,
           },
-          blocks: JSON.parse(blocks),
+          blocks: safeParse(blocks),
           options: {
             normalize: false,
             removeUnusedMarkDefs: false,

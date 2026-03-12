@@ -4,6 +4,7 @@ import {applyMergeNode} from '../internal-utils/apply-merge-node'
 import {applySetNode} from '../internal-utils/apply-set-node'
 import {applySplitNode} from '../internal-utils/apply-split-node'
 import {isEqualChildren, isEqualMarks} from '../internal-utils/equality'
+import {safeStringify} from '../internal-utils/safe-json'
 import {getFocusChild} from '../internal-utils/slate-utils'
 import {toSlateRange} from '../internal-utils/to-slate-range'
 import {toSlateBlock} from '../internal-utils/values'
@@ -37,7 +38,7 @@ export const insertBlockOperationImplementation: OperationImplementation<
   })
 
   if (!parsedBlock) {
-    throw new Error(`Failed to parse block ${JSON.stringify(operation.block)}`)
+    throw new Error(`Failed to parse block ${safeStringify(operation.block)}`)
   }
 
   const block = toSlateBlock(parsedBlock, {schemaTypes: context.schema})

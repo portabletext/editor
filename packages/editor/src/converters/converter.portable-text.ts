@@ -1,3 +1,4 @@
+import {safeParse, safeStringify} from '../internal-utils/safe-json'
 import {getSelectedValue} from '../selectors/selector.get-selected-value'
 import {parseBlock} from '../utils/parse-blocks'
 import {defineConverter} from './converter.types'
@@ -29,13 +30,13 @@ export const converterPortableText = defineConverter({
 
     return {
       type: 'serialization.success',
-      data: JSON.stringify(blocks),
+      data: safeStringify(blocks),
       mimeType: 'application/x-portable-text',
       originEvent: event.originEvent,
     }
   },
   deserialize: ({snapshot, event}) => {
-    const blocks = JSON.parse(event.data)
+    const blocks = safeParse(event.data)
 
     if (!Array.isArray(blocks)) {
       return {

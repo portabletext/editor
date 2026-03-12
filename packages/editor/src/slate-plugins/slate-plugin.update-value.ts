@@ -2,6 +2,7 @@ import type {PortableTextBlock} from '@portabletext/schema'
 import type {EditorContext} from '../editor/editor-snapshot'
 import {buildIndexMaps} from '../internal-utils/build-index-maps'
 import {debug} from '../internal-utils/debug'
+import {safeStringify} from '../internal-utils/safe-json'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 
 export function updateValuePlugin(
@@ -12,9 +13,7 @@ export function updateValuePlugin(
 
   editor.apply = (operation) => {
     if (editor.isNormalizingNode) {
-      debug.normalization(
-        `(slate operation)\n${JSON.stringify(operation, null, 2)}`,
-      )
+      debug.normalization(`(slate operation)\n${safeStringify(operation, 2)}`)
     }
 
     if (operation.type === 'set_selection') {

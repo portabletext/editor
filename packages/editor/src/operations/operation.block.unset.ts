@@ -1,5 +1,6 @@
 import {isTextBlock} from '@portabletext/schema'
 import {applySetNode} from '../internal-utils/apply-set-node'
+import {safeStringify} from '../internal-utils/safe-json'
 import type {OperationImplementation} from './operation.types'
 
 export const blockUnsetOperationImplementation: OperationImplementation<
@@ -18,7 +19,7 @@ export const blockUnsetOperationImplementation: OperationImplementation<
       : undefined
 
   if (!slateBlock) {
-    throw new Error(`Unable to find block at ${JSON.stringify(operation.at)}`)
+    throw new Error(`Unable to find block at ${safeStringify(operation.at)}`)
   }
 
   if (isTextBlock(context, slateBlock)) {

@@ -1,5 +1,6 @@
 import type {PortableTextBlock} from '@portabletext/schema'
 import {applySetNode} from '../internal-utils/apply-set-node'
+import {safeStringify} from '../internal-utils/safe-json'
 import {toSlateRange} from '../internal-utils/to-slate-range'
 import {Editor} from '../slate'
 import type {OperationImplementation} from './operation.types'
@@ -21,7 +22,7 @@ export const childSetOperationImplementation: OperationImplementation<
 
   if (!location) {
     throw new Error(
-      `Unable to convert ${JSON.stringify(operation.at)} into a Slate Range`,
+      `Unable to convert ${safeStringify(operation.at)} into a Slate Range`,
     )
   }
 
@@ -30,7 +31,7 @@ export const childSetOperationImplementation: OperationImplementation<
   const childPath = childEntry?.[1]
 
   if (!child || !childPath) {
-    throw new Error(`Unable to find child at ${JSON.stringify(operation.at)}`)
+    throw new Error(`Unable to find child at ${safeStringify(operation.at)}`)
   }
 
   if (operation.editor.isTextSpan(child)) {
@@ -99,6 +100,6 @@ export const childSetOperationImplementation: OperationImplementation<
   }
 
   throw new Error(
-    `Unable to determine the type of child at ${JSON.stringify(operation.at)}`,
+    `Unable to determine the type of child at ${safeStringify(operation.at)}`,
   )
 }
