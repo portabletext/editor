@@ -167,11 +167,11 @@ function adjustBlockPath(
     blockIndex >= 0 &&
     transformedOperation.type !== 'set_selection' &&
     Array.isArray(transformedOperation.path) &&
-    transformedOperation.path[0]! >= blockIndex + level &&
-    transformedOperation.path[0]! + level > -1
+    (transformedOperation.path[0]! as number) >= blockIndex + level &&
+    (transformedOperation.path[0]! as number) + level > -1
   ) {
     const newPath = [
-      transformedOperation.path[0]! + level,
+      (transformedOperation.path[0]! as number) + level,
       ...transformedOperation.path.slice(1),
     ]
     transformedOperation.path = newPath
@@ -226,7 +226,7 @@ function findOperationTargetBlock(
   if (operation.type === 'set_selection' && editor.selection) {
     block = editor.children[editor.selection.focus.path[0]!]
   } else if ('path' in operation) {
-    block = editor.children[operation.path[0]!]
+    block = editor.children[operation.path[0]! as number]
   }
   return block
 }

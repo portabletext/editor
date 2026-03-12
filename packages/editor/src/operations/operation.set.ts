@@ -1,4 +1,3 @@
-import {applyAll, set} from '@portabletext/patches'
 import type {PortableTextTextBlock} from '@portabletext/schema'
 import {isTextBlock} from '@portabletext/schema'
 import {applySetNode} from '../internal-utils/apply-set-node'
@@ -38,6 +37,7 @@ export const setOperationImplementation: OperationImplementation<'set'> = ({
     throw new Error(`Unable to find block at ${safeStringify(path)}`)
   }
 
+  // Block-level set
   if (path.length === 1) {
     setAtBlock({
       context,
@@ -48,8 +48,7 @@ export const setOperationImplementation: OperationImplementation<'set'> = ({
     return
   }
 
-  // For text blocks, children (spans and inline objects) need Slate-level
-  // operations for text replacement and proper diffing.
+  // Child-level set on text blocks (spans need Slate-level text operations)
   if (
     path.length === 3 &&
     path[1] === 'children' &&
@@ -59,16 +58,9 @@ export const setOperationImplementation: OperationImplementation<'set'> = ({
     return
   }
 
-  // Deep path into a block object (e.g., table cells) — apply the value
-  // changes within the block using patches, then write the whole block back.
-  // This mirrors how applyPatch handles deep patches on block objects.
-  const innerPath = path.slice(1)
-  const patches = Object.entries(operation.value).map(([key, value]) =>
-    set(value, [...innerPath, key]),
-  )
-  const updatedBlock = applyAll(block, patches)
-
-  applySetNode(operation.editor, updatedBlock, [blockIndex])
+  // Deep path — apply set_node at the deep PTE path directly.
+  // modifyDescendant handles PTE path segments (field names, keyed segments).
+  applySetNode(operation.editor, operation.value, path)
 }
 
 function setAtBlock({

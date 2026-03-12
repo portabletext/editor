@@ -99,7 +99,34 @@ export function setNodePatch(
   children: Descendant[],
   operation: SetNodeOperation,
 ): Array<Patch> {
-  const blockIndex = operation.path.at(0)
+  // Deep PTE path — the path already describes the exact location.
+  if (hasNonNumericSegments(operation.path)) {
+    const patches: Patch[] = []
+
+    for (const [key, propertyValue] of Object.entries(
+      operation.newProperties,
+    )) {
+      if (key === '_key' || key === '_type') {
+        continue
+      }
+
+      patches.push(set(propertyValue, [...operation.path, key]))
+    }
+
+    for (const key of Object.keys(operation.properties)) {
+      if (key === '_key' || key === '_type') {
+        continue
+      }
+
+      if (!(key in operation.newProperties)) {
+        patches.push(unset([...operation.path, key]))
+      }
+    }
+
+    return patches
+  }
+
+  const blockIndex = operation.path.at(0) as number | undefined
 
   if (blockIndex !== undefined && operation.path.length === 1) {
     const block = children.at(blockIndex)
@@ -145,10 +172,7 @@ export function setNodePatch(
           continue
         }
 
-        const basePath: Path = [{_key: block._key}, key]
-        const oldValue = (operation.properties as Record<string, unknown>)[key]
-
-        diffDeep(patches, basePath, oldValue, propertyValue)
+        patches.push(set(propertyValue, [{_key: block._key}, key]))
       }
 
       for (const key of Object.keys(operation.properties)) {
@@ -164,9 +188,9 @@ export function setNodePatch(
       return patches
     }
   } else if (operation.path.length === 2) {
-    const block = children[operation.path[0]!]
+    const block = children[operation.path[0]! as number]
     if (isTextBlock({schema}, block)) {
-      const child = block.children[operation.path[1]!]
+      const child = block.children[operation.path[1]! as number]
       if (child) {
         const blockKey = block._key
         const childKey = child._key
@@ -349,88 +373,10 @@ export function removeNodePatch(
   }
 }
 
-/**
- * Recursively diff old and new values to produce granular patches.
- *
- * Walks keyed arrays by matching `_key` fields and recurses into objects
- * to find the deepest changed leaf. Falls back to a flat `set` when the
- * values are primitives, unkeyed arrays, or when there is no old value to
- * diff against.
- */
-function diffDeep(
-  patches: Patch[],
-  basePath: Path,
-  oldValue: unknown,
-  newValue: unknown,
-): void {
-  if (oldValue === newValue) {
-    return
-  }
-
-  // No old value to diff against — set the whole thing
-  if (oldValue === undefined || oldValue === null) {
-    patches.push(set(newValue, basePath))
-    return
-  }
-
-  // Both are arrays — try to match by _key and recurse
-  if (Array.isArray(oldValue) && Array.isArray(newValue)) {
-    const oldKeyed = isKeyedArray(oldValue)
-    const newKeyed = isKeyedArray(newValue)
-
-    if (oldKeyed && newKeyed) {
-      const oldByKey = new Map(
-        oldValue.map((item) => [item['_key'] as string, item]),
-      )
-
-      for (const newItem of newValue) {
-        const key = newItem['_key'] as string
-        const oldItem = oldByKey.get(key)
-
-        if (oldItem) {
-          diffDeepObject(patches, [...basePath, {_key: key}], oldItem, newItem)
-        }
-      }
-
-      return
-    }
-
-    patches.push(set(newValue, basePath))
-    return
-  }
-
-  // Both are plain objects — recurse into fields
-  if (isPlainObject(oldValue) && isPlainObject(newValue)) {
-    diffDeepObject(patches, basePath, oldValue, newValue)
-    return
-  }
-
-  patches.push(set(newValue, basePath))
-}
-
-function diffDeepObject(
-  patches: Patch[],
-  basePath: Path,
-  oldObj: Record<string, unknown>,
-  newObj: Record<string, unknown>,
-): void {
-  for (const [key, value] of Object.entries(newObj)) {
-    if (key === '_key' || key === '_type') {
-      continue
-    }
-
-    diffDeep(patches, [...basePath, key], oldObj[key], value)
-  }
-}
-
-function isKeyedArray(
-  arr: Array<unknown>,
-): arr is Array<Record<string, unknown>> {
-  return (
-    arr.length > 0 && arr.every((item) => isPlainObject(item) && '_key' in item)
+function hasNonNumericSegments(path: ReadonlyArray<unknown>): boolean {
+  return path.some(
+    (segment) =>
+      typeof segment === 'string' ||
+      (typeof segment === 'object' && segment !== null && '_key' in segment),
   )
-}
-
-function isPlainObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
 }

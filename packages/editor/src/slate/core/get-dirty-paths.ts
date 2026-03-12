@@ -16,7 +16,22 @@ export const getDirtyPaths: WithEditorFirstArg<Editor['getDirtyPaths']> = (
     case 'remove_text':
     case 'set_node': {
       const {path} = op
-      return Path.levels(path)
+
+      // PTE paths with non-numeric segments target deep block object
+      // properties. Only the numeric prefix matters for normalization
+      // since block objects are opaque to Slate.
+      if (path.some((s) => typeof s !== 'number')) {
+        const numericPrefix = []
+        for (const s of path) {
+          if (typeof s !== 'number') {
+            break
+          }
+          numericPrefix.push(s)
+        }
+        return Path.levels(numericPrefix)
+      }
+
+      return Path.levels(path as Path)
     }
 
     case 'insert_node': {

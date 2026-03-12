@@ -1,4 +1,5 @@
 import {isObject, Path, Range, type ExtendedType, type Node} from '..'
+import type {Path as PtePath} from '../../types/paths'
 
 export type BaseInsertNodeOperation = {
   type: 'insert_node'
@@ -48,7 +49,7 @@ export type RemoveTextOperation = ExtendedType<
 
 export type BaseSetNodeOperation = {
   type: 'set_node'
-  path: Path
+  path: Path | PtePath
   properties: Partial<Node>
   newProperties: Partial<Node>
 }

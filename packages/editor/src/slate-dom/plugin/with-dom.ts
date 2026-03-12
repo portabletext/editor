@@ -89,7 +89,15 @@ export const withDOM = <T extends Editor>(editor: T): T & DOMEditor => {
       case 'insert_text':
       case 'remove_text':
       case 'set_node': {
-        matches.push(...getMatches(e, op.path))
+        // PTE paths with non-numeric segments target deep block object
+        // properties. Only the numeric prefix matters for DOM reconciliation.
+        const slatePath = op.path.every((s) => typeof s === 'number')
+          ? (op.path as Path)
+          : (op.path.slice(
+              0,
+              op.path.findIndex((s) => typeof s !== 'number'),
+            ) as Path)
+        matches.push(...getMatches(e, slatePath))
         break
       }
 
