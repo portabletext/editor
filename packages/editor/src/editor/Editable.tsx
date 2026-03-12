@@ -45,6 +45,7 @@ import {isEmptyTextBlock} from '../utils'
 import {parseBlocks} from '../utils/parse-blocks'
 import {EditorActorContext} from './editor-actor-context'
 import {performHotkey} from './perform-hotkey'
+import {performMovementHotkey} from './perform-movement-hotkey'
 import {rangeDecorationsMachine} from './range-decorations-machine'
 import {RelayActorContext} from './relay-actor-context'
 import {RenderElement} from './render.element'
@@ -624,6 +625,13 @@ export const PortableTextEditable = forwardRef<
           },
           editor: slateEditor,
           nativeEvent: event,
+        })
+      }
+
+      if (!event.isDefaultPrevented()) {
+        performMovementHotkey({
+          editor: slateEditor,
+          event,
         })
       }
     },
