@@ -1,5 +1,17 @@
 # Changelog
 
+## 6.3.1
+
+### Patch Changes
+
+- [#2353](https://github.com/portabletext/editor/pull/2353) [`262b0bc`](https://github.com/portabletext/editor/commit/262b0bc01b35491b82700e63c5a98d6ddc4d9513) Thanks [@christianhg](https://github.com/christianhg)! - fix: ban `JSON.stringify`/`JSON.parse` and replace with safe alternatives
+
+- [#2354](https://github.com/portabletext/editor/pull/2354) [`d992e30`](https://github.com/portabletext/editor/commit/d992e30c5d91876ae43b0d5d82caee3c48259595) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove unused internal serialization code
+
+- [#2357](https://github.com/portabletext/editor/pull/2357) [`f06602e`](https://github.com/portabletext/editor/commit/f06602ea0e2d288c306230358e37e9fa8e7a9f5d) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove dead inner editable event handlers for clipboard and drag-and-drop
+
+- [#2358](https://github.com/portabletext/editor/pull/2358) [`6a6ef2b`](https://github.com/portabletext/editor/commit/6a6ef2be1aa039de899a845f3a79f3e9958f51bc) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove redundant undo/redo hotkey handling from inner editable
+
 ## 6.3.0
 
 ### Minor Changes
