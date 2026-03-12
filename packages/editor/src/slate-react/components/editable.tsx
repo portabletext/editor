@@ -61,7 +61,6 @@ import {useFlushDeferredSelectorsOnRender} from '../hooks/use-slate-selector'
 import {useTrackUserInput} from '../hooks/use-track-user-input'
 import {ReactEditor} from '../plugin/react-editor'
 import {debounce, throttle} from '../utils/debounce'
-import getDirection from '../utils/direction'
 import {RestoreDOM} from './restore-dom/restore-dom'
 
 type DeferredOperation = () => void
@@ -1494,106 +1493,6 @@ export const Editable = forwardRef(
                       }
 
                       const {selection} = editor
-                      const element =
-                        editor.children[
-                          selection !== null ? selection.focus.path[0]! : 0
-                        ]!
-                      const isRTL =
-                        getDirection(Node.string(element, editor.schema)) ===
-                        'rtl'
-
-                      // COMPAT: Certain browsers don't handle the selection updates
-                      // properly. In Chrome, the selection isn't properly extended.
-                      // And in Firefox, the selection isn't properly collapsed.
-                      // (2017/10/17)
-                      if (Hotkeys.isMoveLineBackward(nativeEvent)) {
-                        event.preventDefault()
-                        Transforms.move(editor, {unit: 'line', reverse: true})
-                        return
-                      }
-
-                      if (Hotkeys.isMoveLineForward(nativeEvent)) {
-                        event.preventDefault()
-                        Transforms.move(editor, {unit: 'line'})
-                        return
-                      }
-
-                      if (Hotkeys.isExtendLineBackward(nativeEvent)) {
-                        event.preventDefault()
-                        Transforms.move(editor, {
-                          unit: 'line',
-                          edge: 'focus',
-                          reverse: true,
-                        })
-                        return
-                      }
-
-                      if (Hotkeys.isExtendLineForward(nativeEvent)) {
-                        event.preventDefault()
-                        Transforms.move(editor, {unit: 'line', edge: 'focus'})
-                        return
-                      }
-
-                      // COMPAT: If a void node is selected, or a zero-width text node
-                      // adjacent to an inline is selected, we need to handle these
-                      // hotkeys manually because browsers won't be able to skip over
-                      // the void node with the zero-width space not being an empty
-                      // string.
-                      if (Hotkeys.isMoveBackward(nativeEvent)) {
-                        event.preventDefault()
-
-                        if (selection && Range.isCollapsed(selection)) {
-                          Transforms.move(editor, {reverse: !isRTL})
-                        } else {
-                          Transforms.collapse(editor, {
-                            edge: isRTL ? 'end' : 'start',
-                          })
-                        }
-
-                        return
-                      }
-
-                      if (Hotkeys.isMoveForward(nativeEvent)) {
-                        event.preventDefault()
-
-                        if (selection && Range.isCollapsed(selection)) {
-                          Transforms.move(editor, {reverse: isRTL})
-                        } else {
-                          Transforms.collapse(editor, {
-                            edge: isRTL ? 'start' : 'end',
-                          })
-                        }
-
-                        return
-                      }
-
-                      if (Hotkeys.isMoveWordBackward(nativeEvent)) {
-                        event.preventDefault()
-
-                        if (selection && Range.isExpanded(selection)) {
-                          Transforms.collapse(editor, {edge: 'focus'})
-                        }
-
-                        Transforms.move(editor, {
-                          unit: 'word',
-                          reverse: !isRTL,
-                        })
-                        return
-                      }
-
-                      if (Hotkeys.isMoveWordForward(nativeEvent)) {
-                        event.preventDefault()
-
-                        if (selection && Range.isExpanded(selection)) {
-                          Transforms.collapse(editor, {edge: 'focus'})
-                        }
-
-                        Transforms.move(editor, {
-                          unit: 'word',
-                          reverse: isRTL,
-                        })
-                        return
-                      }
 
                       // COMPAT: Certain browsers don't support the `beforeinput` event, so we
                       // fall back to guessing at the input intention for hotkeys.
