@@ -87,9 +87,20 @@ export const withDOM = <T extends Editor>(editor: T): T & DOMEditor => {
 
     switch (op.type) {
       case 'insert_text':
-      case 'remove_text':
-      case 'set_node': {
+      case 'remove_text': {
         matches.push(...getMatches(e, op.path))
+        break
+      }
+
+      case 'set_node': {
+        const numericPath: Path = []
+        for (const s of op.path) {
+          if (typeof s !== 'number') {
+            break
+          }
+          numericPath.push(s)
+        }
+        matches.push(...getMatches(e, numericPath))
         break
       }
 

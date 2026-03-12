@@ -48,7 +48,7 @@ export type RemoveTextOperation = ExtendedType<
 
 export type BaseSetNodeOperation = {
   type: 'set_node'
-  path: Path
+  path: Path | ReadonlyArray<number | string>
   properties: Partial<Node>
   newProperties: Partial<Node>
 }

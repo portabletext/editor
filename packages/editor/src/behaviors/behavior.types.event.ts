@@ -7,7 +7,7 @@ import type {
   ChildWithOptionalKey,
 } from '../types/block-with-optional-key'
 import type {EditorSelection} from '../types/editor'
-import type {AnnotationPath, BlockPath, ChildPath} from '../types/paths'
+import type {AnnotationPath, BlockPath, ChildPath, Path} from '../types/paths'
 
 /**
  * @beta
@@ -63,9 +63,7 @@ export type ExternalBehaviorEvent =
 const syntheticBehaviorEventTypes = [
   'annotation.add',
   'annotation.remove',
-  'block.set',
   'block.unset',
-  'child.set',
   'child.unset',
   'decorator.add',
   'decorator.remove',
@@ -79,6 +77,7 @@ const syntheticBehaviorEventTypes = [
   'move.block',
   'move.forward',
   'select',
+  'set',
 ] as const
 
 type SyntheticBehaviorEventType =
@@ -109,19 +108,9 @@ export type SyntheticBehaviorEvent =
       at?: NonNullable<EditorSelection>
     }
   | {
-      type: StrictExtract<SyntheticBehaviorEventType, 'block.set'>
-      at: BlockPath
-      props: Record<string, unknown>
-    }
-  | {
       type: StrictExtract<SyntheticBehaviorEventType, 'block.unset'>
       at: BlockPath
       props: Array<string>
-    }
-  | {
-      type: StrictExtract<SyntheticBehaviorEventType, 'child.set'>
-      at: ChildPath
-      props: {[prop: string]: unknown}
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'child.unset'>
@@ -188,6 +177,11 @@ export type SyntheticBehaviorEvent =
       type: StrictExtract<SyntheticBehaviorEventType, 'select'>
       at: EditorSelection
     }
+  | {
+      type: StrictExtract<SyntheticBehaviorEventType, 'set'>
+      at: Path
+      value: Record<string, unknown>
+    }
   | AbstractBehaviorEvent
 
 /**
@@ -216,6 +210,8 @@ export function isSyntheticBehaviorEvent(
 const abstractBehaviorEventTypes = [
   'annotation.set',
   'annotation.toggle',
+  'block.set',
+  'child.set',
   'decorator.toggle',
   'delete.backward',
   'delete.block',
@@ -253,6 +249,16 @@ export type AbstractBehaviorEventType =
   (typeof abstractBehaviorEventTypes)[number]
 
 type AbstractBehaviorEvent =
+  | {
+      type: StrictExtract<SyntheticBehaviorEventType, 'block.set'>
+      at: BlockPath
+      props: Record<string, unknown>
+    }
+  | {
+      type: StrictExtract<SyntheticBehaviorEventType, 'child.set'>
+      at: ChildPath
+      props: {[prop: string]: unknown}
+    }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'annotation.set'>
       at: AnnotationPath

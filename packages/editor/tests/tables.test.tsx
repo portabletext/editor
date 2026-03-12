@@ -1,7 +1,8 @@
-import {set, unset} from '@portabletext/patches'
+import {set, unset, type Patch} from '@portabletext/patches'
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
+import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
 import {createTestEditor} from '../src/test/vitest'
 
 const schemaDefinition = defineSchema({
@@ -80,10 +81,22 @@ async function createTableTestEditor() {
 
   const initialValue = [table]
 
+  const emittedPatches: Array<Patch> = []
+
   const {editor, locator} = await createTestEditor({
     keyGenerator,
     schemaDefinition,
     initialValue,
+    children: (
+      <EventListenerPlugin
+        on={(event) => {
+          if (event.type === 'patch') {
+            const {origin: _, ...patch} = event.patch
+            emittedPatches.push(patch)
+          }
+        }}
+      />
+    ),
   })
 
   return {
@@ -95,6 +108,7 @@ async function createTableTestEditor() {
     block,
     span,
     initialValue,
+    emittedPatches,
   }
 }
 
@@ -359,6 +373,169 @@ describe('tables', () => {
             ],
           },
         ])
+      })
+    })
+  })
+
+  describe('set behavior event', () => {
+    test('set on block object at root level', async () => {
+      const {editor, table, emittedPatches} = await createTableTestEditor()
+
+      editor.send({
+        type: 'set',
+        at: [{_key: table._key}],
+        value: {headerRows: 2},
+      })
+
+      await vi.waitFor(() => {
+        const value = editor.getSnapshot().context.value
+        expect(value).toEqual([
+          {
+            ...table,
+            headerRows: 2,
+          },
+        ])
+      })
+
+      await vi.waitFor(() => {
+        expect(emittedPatches).toContainEqual(
+          set(2, [{_key: table._key}, 'headerRows']),
+        )
+      })
+    })
+
+    test('set on deeply nested span via deep path', async () => {
+      const {editor, table, row, cell, block, span, emittedPatches} =
+        await createTableTestEditor()
+
+      editor.send({
+        type: 'set',
+        at: [
+          {_key: table._key},
+          'rows',
+          {_key: row._key},
+          'cells',
+          {_key: cell._key},
+          'content',
+          {_key: block._key},
+          'children',
+          {_key: span._key},
+        ],
+        value: {marks: ['strong']},
+      })
+
+      await vi.waitFor(() => {
+        const value = editor.getSnapshot().context.value
+        expect(value).toEqual([
+          {
+            ...table,
+            rows: [
+              {
+                ...row,
+                cells: [
+                  {
+                    ...cell,
+                    content: [
+                      {
+                        ...block,
+                        children: [
+                          {
+                            ...span,
+                            marks: ['strong'],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ])
+      })
+
+      await vi.waitFor(() => {
+        expect(emittedPatches).toContainEqual(
+          set(
+            ['strong'],
+            [
+              {_key: table._key},
+              'rows',
+              {_key: row._key},
+              'cells',
+              {_key: cell._key},
+              'content',
+              {_key: block._key},
+              'children',
+              {_key: span._key},
+              'marks',
+            ],
+          ),
+        )
+      })
+    })
+
+    test('block.set delegates to set', async () => {
+      const {editor, table, emittedPatches} = await createTableTestEditor()
+
+      editor.send({
+        type: 'block.set',
+        at: [{_key: table._key}],
+        props: {headerRows: 3},
+      })
+
+      await vi.waitFor(() => {
+        const value = editor.getSnapshot().context.value
+        expect(value).toEqual([
+          {
+            ...table,
+            headerRows: 3,
+          },
+        ])
+      })
+
+      await vi.waitFor(() => {
+        expect(emittedPatches).toContainEqual(
+          set(3, [{_key: table._key}, 'headerRows']),
+        )
+      })
+    })
+
+    test('undo reverses set', async () => {
+      const {editor, table, initialValue, emittedPatches} =
+        await createTableTestEditor()
+
+      editor.send({
+        type: 'set',
+        at: [{_key: table._key}],
+        value: {headerRows: 2},
+      })
+
+      await vi.waitFor(() => {
+        const value = editor.getSnapshot().context.value
+        expect(value).toEqual([
+          {
+            ...table,
+            headerRows: 2,
+          },
+        ])
+      })
+
+      editor.send({
+        type: 'history.undo',
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual(initialValue)
+      })
+
+      await vi.waitFor(() => {
+        expect(emittedPatches).toContainEqual(
+          set(2, [{_key: table._key}, 'headerRows']),
+        )
+        expect(emittedPatches).toContainEqual(
+          unset([{_key: table._key}, 'headerRows']),
+        )
       })
     })
   })

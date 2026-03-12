@@ -99,9 +99,20 @@ export function setNodePatch(
   children: Descendant[],
   operation: SetNodeOperation,
 ): Array<Patch> {
+  // Deep indexed path — translate indices back to keys for patch paths
+  if (operation.path.some((s) => typeof s === 'string')) {
+    return deepSetNodePatch(schema, children, operation)
+  }
+
   const blockIndex = operation.path.at(0)
 
-  if (blockIndex !== undefined && operation.path.length === 1) {
+  if (typeof blockIndex !== 'number') {
+    throw new Error(
+      `Expected numeric block index at path[0], got ${safeStringify(blockIndex)}`,
+    )
+  }
+
+  if (operation.path.length === 1) {
     const block = children.at(blockIndex)
 
     if (!block) {
@@ -161,9 +172,15 @@ export function setNodePatch(
       return patches
     }
   } else if (operation.path.length === 2) {
-    const block = children[operation.path[0]!]
+    const childIndex = operation.path[1]
+    if (typeof childIndex !== 'number') {
+      throw new Error(
+        `Expected numeric child index at path[1], got ${safeStringify(childIndex)}`,
+      )
+    }
+    const block = children[blockIndex]
     if (isTextBlock({schema}, block)) {
-      const child = block.children[operation.path[1]!]
+      const child = block.children[childIndex]
       if (child) {
         const blockKey = block._key
         const childKey = child._key
@@ -251,6 +268,71 @@ export function setNodePatch(
       `Unexpected path encountered: ${safeStringify(operation.path)}`,
     )
   }
+}
+
+function deepSetNodePatch(
+  _schema: EditorSchema,
+  children: Array<Descendant>,
+  operation: SetNodeOperation,
+): Array<Patch> {
+  const keyedPath: Array<{_key: string} | string> = []
+  let current: unknown = {children}
+
+  for (const segment of operation.path) {
+    if (typeof current !== 'object' || current === null) {
+      break
+    }
+
+    if (typeof segment === 'number') {
+      const arr = Array.isArray(current)
+        ? current
+        : 'children' in current
+          ? (current.children as Array<unknown>)
+          : undefined
+
+      if (!arr) {
+        break
+      }
+
+      const item = arr[segment]
+
+      if (
+        typeof item === 'object' &&
+        item !== null &&
+        '_key' in item &&
+        typeof item._key === 'string'
+      ) {
+        keyedPath.push({_key: item._key})
+      } else {
+        keyedPath.push({_key: String(segment)})
+      }
+
+      current = item
+    } else if (typeof segment === 'string') {
+      keyedPath.push(segment)
+      current = (current as Record<string, unknown>)[segment]
+    }
+  }
+
+  const patches: Array<Patch> = []
+
+  for (const [key, value] of Object.entries(operation.newProperties)) {
+    if (key === '_key' || key === '_type') {
+      continue
+    }
+    patches.push(set(value, [...keyedPath, key]))
+  }
+
+  for (const key of Object.keys(operation.properties)) {
+    if (key === '_key' || key === '_type') {
+      continue
+    }
+    if (!(key in operation.newProperties)) {
+      patches.push(unset([...keyedPath, key]))
+    }
+  }
+
+  return patches
 }
 
 export function insertNodePatch(

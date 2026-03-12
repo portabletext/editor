@@ -13,10 +13,22 @@ export const getDirtyPaths: WithEditorFirstArg<Editor['getDirtyPaths']> = (
 ) => {
   switch (op.type) {
     case 'insert_text':
-    case 'remove_text':
-    case 'set_node': {
+    case 'remove_text': {
       const {path} = op
       return Path.levels(path)
+    }
+
+    case 'set_node': {
+      const {path} = op
+
+      const numericPath: number[] = []
+      for (const s of path) {
+        if (typeof s !== 'number') {
+          break
+        }
+        numericPath.push(s)
+      }
+      return Path.levels(numericPath)
     }
 
     case 'insert_node': {

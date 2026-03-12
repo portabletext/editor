@@ -1,5 +1,50 @@
-import {Element, Node, type Path} from '../slate'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
+import {safeStringify} from './safe-json'
+
+function isElement(node: unknown): boolean {
+  if (typeof node !== 'object' || node === null || !('children' in node)) {
+    return false
+  }
+
+  return Array.isArray(node.children)
+}
+
+function getNodeAtPath(
+  root: unknown,
+  path: ReadonlyArray<number | string>,
+): Record<string, unknown> {
+  let current: unknown = root
+
+  for (const segment of path) {
+    if (typeof current !== 'object' || current === null) {
+      throw new Error(
+        `Cannot navigate path ${safeStringify(path)}: hit non-object`,
+      )
+    }
+
+    if (typeof segment === 'number') {
+      const children = Array.isArray(current)
+        ? current
+        : 'children' in current
+          ? (current.children as Array<unknown>)
+          : undefined
+
+      if (!children) {
+        throw new Error(`Cannot find children at path ${safeStringify(path)}`)
+      }
+
+      current = children[segment]
+    } else {
+      current = (current as Record<string, unknown>)[segment]
+    }
+
+    if (current === undefined) {
+      throw new Error(`Cannot find node at path ${safeStringify(path)}`)
+    }
+  }
+
+  return current as Record<string, unknown>
+}
 
 /**
  * Apply a `set_node` operation at a known path.
@@ -14,33 +59,28 @@ import type {PortableTextSlateEditor} from '../types/slate-editor'
 export function applySetNode(
   editor: PortableTextSlateEditor,
   props: Record<string, unknown> | object,
-  path: Path,
+  path: ReadonlyArray<number | string>,
 ): void {
-  const node = Node.get(editor, path, editor.schema) as Record<string, unknown>
-  const propsRecord = props as Record<string, unknown>
+  const node = getNodeAtPath(editor, path)
   const properties: Record<string, unknown> = {}
   const newProperties: Record<string, unknown> = {}
 
-  for (const key of Object.keys(propsRecord)) {
+  for (const [key, value] of Object.entries(props)) {
     if (key === 'children') {
       continue
     }
 
-    if (
-      key === 'text' &&
-      !Element.isElement(node, editor.schema) &&
-      !editor.isObjectNode(node)
-    ) {
+    if (key === 'text' && !isElement(node) && !editor.isObjectNode(node)) {
       continue
     }
 
-    if (propsRecord[key] !== node[key]) {
+    if (value !== node[key]) {
       if (node.hasOwnProperty(key)) {
         properties[key] = node[key]
       }
 
-      if (propsRecord[key] != null) {
-        newProperties[key] = propsRecord[key]
+      if (value != null) {
+        newProperties[key] = value
       }
     }
   }
