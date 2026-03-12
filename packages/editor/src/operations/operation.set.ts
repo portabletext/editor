@@ -68,12 +68,6 @@ export const setOperationImplementation: OperationImplementation<'set'> = ({
   )
   const updatedBlock = applyAll(block, patches)
 
-  // Tell the patch plugin to emit granular patches at the deep path instead
-  // of a coarse set on the entire changed field.
-  operation.editor.patchOverrides = Object.entries(operation.value).map(
-    ([key, value]) => set(value, [firstSegment, ...innerPath, key]),
-  )
-
   applySetNode(operation.editor, updatedBlock, [blockIndex])
 }
 

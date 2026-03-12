@@ -47,7 +47,6 @@ export function createSlateEditor(config: SlateEditorConfig): SlateEditor {
   editor.isDeferringMutations = false
   editor.isNormalizingNode = false
   editor.isPatching = true
-  editor.patchOverrides = undefined
   editor.isPerformingBehaviorOperation = false
   editor.isProcessingRemoteChanges = false
   editor.isRedoing = false

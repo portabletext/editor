@@ -176,19 +176,14 @@ export function createPatchesPlugin({
           ]
           break
         case 'set_node':
-          if (editor.patchOverrides) {
-            patches = [...patches, ...editor.patchOverrides]
-            editor.patchOverrides = undefined
-          } else {
-            patches = [
-              ...patches,
-              ...setNodePatch(
-                editorActor.getSnapshot().context.schema,
-                editor.children,
-                operation,
-              ),
-            ]
-          }
+          patches = [
+            ...patches,
+            ...setNodePatch(
+              editorActor.getSnapshot().context.schema,
+              editor.children,
+              operation,
+            ),
+          ]
           break
         default:
         // Do nothing

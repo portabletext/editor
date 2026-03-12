@@ -145,7 +145,10 @@ export function setNodePatch(
           continue
         }
 
-        patches.push(set(propertyValue, [{_key: block._key}, key]))
+        const basePath: Path = [{_key: block._key}, key]
+        const oldValue = (operation.properties as Record<string, unknown>)[key]
+
+        diffDeep(patches, basePath, oldValue, propertyValue)
       }
 
       for (const key of Object.keys(operation.properties)) {
@@ -344,4 +347,90 @@ export function removeNodePatch(
   } else {
     return []
   }
+}
+
+/**
+ * Recursively diff old and new values to produce granular patches.
+ *
+ * Walks keyed arrays by matching `_key` fields and recurses into objects
+ * to find the deepest changed leaf. Falls back to a flat `set` when the
+ * values are primitives, unkeyed arrays, or when there is no old value to
+ * diff against.
+ */
+function diffDeep(
+  patches: Patch[],
+  basePath: Path,
+  oldValue: unknown,
+  newValue: unknown,
+): void {
+  if (oldValue === newValue) {
+    return
+  }
+
+  // No old value to diff against — set the whole thing
+  if (oldValue === undefined || oldValue === null) {
+    patches.push(set(newValue, basePath))
+    return
+  }
+
+  // Both are arrays — try to match by _key and recurse
+  if (Array.isArray(oldValue) && Array.isArray(newValue)) {
+    const oldKeyed = isKeyedArray(oldValue)
+    const newKeyed = isKeyedArray(newValue)
+
+    if (oldKeyed && newKeyed) {
+      const oldByKey = new Map(
+        oldValue.map((item) => [item['_key'] as string, item]),
+      )
+
+      for (const newItem of newValue) {
+        const key = newItem['_key'] as string
+        const oldItem = oldByKey.get(key)
+
+        if (oldItem) {
+          diffDeepObject(patches, [...basePath, {_key: key}], oldItem, newItem)
+        }
+      }
+
+      return
+    }
+
+    patches.push(set(newValue, basePath))
+    return
+  }
+
+  // Both are plain objects — recurse into fields
+  if (isPlainObject(oldValue) && isPlainObject(newValue)) {
+    diffDeepObject(patches, basePath, oldValue, newValue)
+    return
+  }
+
+  patches.push(set(newValue, basePath))
+}
+
+function diffDeepObject(
+  patches: Patch[],
+  basePath: Path,
+  oldObj: Record<string, unknown>,
+  newObj: Record<string, unknown>,
+): void {
+  for (const [key, value] of Object.entries(newObj)) {
+    if (key === '_key' || key === '_type') {
+      continue
+    }
+
+    diffDeep(patches, [...basePath, key], oldObj[key], value)
+  }
+}
+
+function isKeyedArray(
+  arr: Array<unknown>,
+): arr is Array<Record<string, unknown>> {
+  return (
+    arr.length > 0 && arr.every((item) => isPlainObject(item) && '_key' in item)
+  )
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
