@@ -21,6 +21,7 @@ import {
   isEqualChild,
   isEqualValues,
 } from '../internal-utils/equality'
+import {safeStringify} from '../internal-utils/safe-json'
 import {validateValue} from '../internal-utils/validateValue'
 import {toSlateBlock} from '../internal-utils/values'
 import {deleteText, Editor, Node, Text, type Descendant} from '../slate'
@@ -169,7 +170,7 @@ export const syncMachine = setup({
         context.slateEditor.isProcessingRemoteChanges
 
       debug.syncValue(
-        JSON.stringify({
+        safeStringify({
           isBusy,
           isDeferringMutations: context.slateEditor.isDeferringMutations,
           isProcessingRemoteChanges:

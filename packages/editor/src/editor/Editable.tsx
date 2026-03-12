@@ -14,6 +14,7 @@ import {
 } from 'react'
 import {debug} from '../internal-utils/debug'
 import {getEventPosition} from '../internal-utils/event-position'
+import {safeStringify} from '../internal-utils/safe-json'
 import {normalizeSelection} from '../internal-utils/selection'
 import {slateRangeToSelection} from '../internal-utils/slate-utils'
 import {toSlateRange} from '../internal-utils/to-slate-range'
@@ -232,14 +233,14 @@ export const PortableTextEditable = forwardRef<
 
   const restoreSelectionFromProps = useCallback(() => {
     if (propsSelection) {
-      debug.selection(`Selection from props ${JSON.stringify(propsSelection)}`)
+      debug.selection(`Selection from props ${safeStringify(propsSelection)}`)
       const normalizedSelection = normalizeSelection(
         propsSelection,
         slateEditor.children as Array<PortableTextBlock>,
       )
       if (normalizedSelection !== null) {
         debug.selection(
-          `Normalized selection from props ${JSON.stringify(normalizedSelection)}`,
+          `Normalized selection from props ${safeStringify(normalizedSelection)}`,
         )
         const slateRange = toSlateRange({
           context: {

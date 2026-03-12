@@ -1,6 +1,7 @@
 import type {PortableTextBlock} from '@portabletext/schema'
 import {isTextBlock} from '@portabletext/schema'
 import {applySetNode} from '../internal-utils/apply-set-node'
+import {safeStringify} from '../internal-utils/safe-json'
 import {Editor} from '../slate'
 import type {OperationImplementation} from './operation.types'
 
@@ -20,18 +21,18 @@ export const childUnsetOperationImplementation: OperationImplementation<
       : undefined
 
   if (!block) {
-    throw new Error(`Unable to find block at ${JSON.stringify(operation.at)}`)
+    throw new Error(`Unable to find block at ${safeStringify(operation.at)}`)
   }
 
   if (!isTextBlock(context, block)) {
-    throw new Error(`Block ${JSON.stringify(blockKey)} is not a text block`)
+    throw new Error(`Block ${safeStringify(blockKey)} is not a text block`)
   }
 
   const childKey = operation.at[2]._key
 
   if (!childKey) {
     throw new Error(
-      `Unable to find child key at ${JSON.stringify(operation.at)}`,
+      `Unable to find child key at ${safeStringify(operation.at)}`,
     )
   }
 
@@ -40,7 +41,7 @@ export const childUnsetOperationImplementation: OperationImplementation<
   )
 
   if (childIndex === -1) {
-    throw new Error(`Unable to find child at ${JSON.stringify(operation.at)}`)
+    throw new Error(`Unable to find child at ${safeStringify(operation.at)}`)
   }
 
   const childEntry = Editor.node(operation.editor, [blockIndex, childIndex], {
@@ -50,7 +51,7 @@ export const childUnsetOperationImplementation: OperationImplementation<
   const childPath = childEntry?.[1]
 
   if (!child || !childPath) {
-    throw new Error(`Unable to find child at ${JSON.stringify(operation.at)}`)
+    throw new Error(`Unable to find child at ${safeStringify(operation.at)}`)
   }
 
   if (operation.editor.isTextSpan(child)) {
@@ -107,6 +108,6 @@ export const childUnsetOperationImplementation: OperationImplementation<
   }
 
   throw new Error(
-    `Unable to determine the type of child at ${JSON.stringify(operation.at)}`,
+    `Unable to determine the type of child at ${safeStringify(operation.at)}`,
   )
 }

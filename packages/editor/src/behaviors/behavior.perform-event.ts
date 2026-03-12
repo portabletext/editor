@@ -3,6 +3,7 @@ import {createEditorDom} from '../editor/editor-dom'
 import type {EditorSchema} from '../editor/editor-schema'
 import {createEditorSnapshot} from '../editor/editor-snapshot'
 import {debug} from '../internal-utils/debug'
+import {safeStringify} from '../internal-utils/safe-json'
 import {performOperation} from '../operations/operation.perform'
 import {withPerformingBehaviorOperation} from '../slate-plugins/slate-plugin.performing-behavior-operation'
 import {withoutNormalizingConditional} from '../slate-plugins/slate-plugin.without-normalizing-conditional'
@@ -65,10 +66,7 @@ export function performEvent({
     editor.undoStepId = defaultKeyGenerator()
   }
 
-  debug.behaviors(
-    `(${mode}:${eventCategory(event)})`,
-    JSON.stringify(event, null, 2),
-  )
+  debug.behaviors(`(${mode}:${eventCategory(event)})`, safeStringify(event, 2))
 
   const eventBehaviors = [
     ...remainingEventBehaviors,
@@ -118,7 +116,7 @@ export function performEvent({
     }
 
     withPerformingBehaviorOperation(editor, () => {
-      debug.operation(JSON.stringify(event, null, 2))
+      debug.operation(safeStringify(event, 2))
 
       performOperation({
         context: {
@@ -357,7 +355,7 @@ export function performEvent({
     }
 
     withPerformingBehaviorOperation(editor, () => {
-      debug.operation(JSON.stringify(event, null, 2))
+      debug.operation(safeStringify(event, 2))
 
       performOperation({
         context: {keyGenerator, schema},

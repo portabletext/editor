@@ -2,6 +2,7 @@ import type {PortableTextBlock} from '@portabletext/schema'
 import {applySelect} from '../internal-utils/apply-selection'
 import {applySetNode} from '../internal-utils/apply-set-node'
 import {applySplitNode} from '../internal-utils/apply-split-node'
+import {safeStringify} from '../internal-utils/safe-json'
 import {toSlateRange} from '../internal-utils/to-slate-range'
 import {Editor, Node, Range, Text} from '../slate'
 import {parseAnnotation} from '../utils/parse-blocks'
@@ -22,7 +23,7 @@ export const addAnnotationOperationImplementation: OperationImplementation<
 
   if (!parsedAnnotation) {
     throw new Error(
-      `Failed to parse annotation ${JSON.stringify(operation.annotation)}`,
+      `Failed to parse annotation ${safeStringify(operation.annotation)}`,
     )
   }
 

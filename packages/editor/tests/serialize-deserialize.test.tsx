@@ -4,6 +4,7 @@ import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {execute, forward, raise} from '../src/behaviors/behavior.types.action'
 import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
+import {safeStringify} from '../src/internal-utils/safe-json'
 import {getTextSelection} from '../src/internal-utils/text-selection'
 import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
 import {createTestEditor} from '../src/test/vitest'
@@ -112,7 +113,7 @@ describe('Serialize/Deserialize', () => {
 
     // And standard application/x-portable-text is put on the clipboard
     expect(dataTransfer.getData('application/x-portable-text')).toEqual(
-      JSON.stringify([
+      safeStringify([
         {
           _type: 'block',
           _key: blockKey,
@@ -280,7 +281,7 @@ describe('Serialize/Deserialize', () => {
 
     // Then application/x-portable-text is put on the clipboard
     expect(dataTransfer.getData('application/x-portable-text')).toEqual(
-      JSON.stringify([
+      safeStringify([
         {
           _type: 'block',
           _key: blockKey,
