@@ -189,7 +189,6 @@ export const Editable = forwardRef(
     // Keep track of some state for the event handler logic.
     const state = useMemo(
       () => ({
-        isDraggingInternally: false,
         isUpdatingSelection: false,
         latestElement: null as DOMElement | null,
         hasMarkPlaceholder: false,
@@ -254,8 +253,7 @@ export const Editable = forwardRef(
           const androidInputManager = androidInputManagerRef.current
           if (
             (IS_ANDROID || !ReactEditor.isComposing(editor)) &&
-            (!state.isUpdatingSelection || androidInputManager?.isFlushing()) &&
-            !state.isDraggingInternally
+            (!state.isUpdatingSelection || androidInputManager?.isFlushing())
           ) {
             const root = ReactEditor.findDocumentOrShadowRoot(editor)
             const {activeElement} = root
@@ -972,24 +970,13 @@ export const Editable = forwardRef(
       // (2019/11/04) https://github.com/facebook/react/issues/5785
       window.document.addEventListener('selectionchange', onSelectionChange)
 
-      // Listen for dragend and drop globally. In Firefox, if a drop handler
-      // initiates an operation that causes the originally dragged element to
-      // unmount, that element will not emit a dragend event. (2024/06/21)
-      const stoppedDragging = () => {
-        state.isDraggingInternally = false
-      }
-      window.document.addEventListener('dragend', stoppedDragging)
-      window.document.addEventListener('drop', stoppedDragging)
-
       return () => {
         window.document.removeEventListener(
           'selectionchange',
           onSelectionChange,
         )
-        window.document.removeEventListener('dragend', stoppedDragging)
-        window.document.removeEventListener('drop', stoppedDragging)
       }
-    }, [scheduleOnDOMSelectionChange, state])
+    }, [scheduleOnDOMSelectionChange])
 
     const decorations = decorate([editor, []])
     const decorateContext = useDecorateContext(decorate)
@@ -1447,112 +1434,12 @@ export const Editable = forwardRef(
                   },
                   [attributes.onCompositionStart, editor, editorActor],
                 )}
-                onCopy={useCallback(
-                  (event: React.ClipboardEvent<HTMLDivElement>) => {
-                    if (ReactEditor.hasSelectableTarget(editor, event.target)) {
-                      attributes.onCopy?.(event)
-                    }
-                  },
-                  [attributes.onCopy, editor],
-                )}
-                onCut={useCallback(
-                  (event: React.ClipboardEvent<HTMLDivElement>) => {
-                    if (
-                      !readOnly &&
-                      ReactEditor.hasSelectableTarget(editor, event.target)
-                    ) {
-                      attributes.onCut?.(event)
-                    }
-                  },
-                  [readOnly, editor, attributes.onCut],
-                )}
-                onDragOver={useCallback(
-                  (event: React.DragEvent<HTMLDivElement>) => {
-                    if (
-                      ReactEditor.hasTarget(editor, event.target) &&
-                      !isEventHandled(event, attributes.onDragOver)
-                    ) {
-                      const node = ReactEditor.toSlateNode(editor, event.target)
-
-                      if (editor.isObjectNode(node)) {
-                        event.preventDefault()
-                      }
-                    }
-                  },
-                  [attributes.onDragOver, editor],
-                )}
-                onDragStart={useCallback(
-                  (event: React.DragEvent<HTMLDivElement>) => {
-                    if (
-                      !readOnly &&
-                      ReactEditor.hasTarget(editor, event.target)
-                    ) {
-                      attributes.onDragStart?.(event)
-                    }
-                  },
-                  [readOnly, editor, attributes.onDragStart, state],
-                )}
-                onDrop={useCallback(
-                  (event: React.DragEvent<HTMLDivElement>) => {
-                    if (
-                      !readOnly &&
-                      ReactEditor.hasTarget(editor, event.target) &&
-                      !isEventHandled(event, attributes.onDrop)
-                    ) {
-                      event.preventDefault()
-
-                      // Keep a reference to the dragged range before updating selection
-                      const draggedRange = editor.selection
-
-                      // Find the range where the drop happened
-                      const range = ReactEditor.findEventRange(editor, event)
-                      const data = event.dataTransfer
-
-                      Transforms.select(editor, range)
-
-                      if (state.isDraggingInternally) {
-                        if (
-                          draggedRange &&
-                          !Range.equals(draggedRange, range) &&
-                          !Editor.void(editor, {at: range, voids: true})
-                        ) {
-                          Transforms.delete(editor, {
-                            at: draggedRange,
-                          })
-                        }
-                      }
-
-                      editorActor.send({
-                        type: 'behavior event',
-                        behaviorEvent: {
-                          type: 'input.*',
-                          originEvent: {dataTransfer: data},
-                        },
-                        editor,
-                      })
-
-                      // When dragging from another source into the editor, it's possible
-                      // that the current editor does not have focus.
-                      if (!ReactEditor.isFocused(editor)) {
-                        ReactEditor.focus(editor)
-                      }
-                    }
-                  },
-                  [readOnly, editor, editorActor, attributes.onDrop, state],
-                )}
-                onDragEnd={useCallback(
-                  (event: React.DragEvent<HTMLDivElement>) => {
-                    if (
-                      !readOnly &&
-                      state.isDraggingInternally &&
-                      attributes.onDragEnd &&
-                      ReactEditor.hasTarget(editor, event.target)
-                    ) {
-                      attributes.onDragEnd(event)
-                    }
-                  },
-                  [readOnly, state, attributes, editor],
-                )}
+                onCopy={attributes.onCopy}
+                onCut={attributes.onCut}
+                onDragOver={attributes.onDragOver}
+                onDragStart={attributes.onDragStart}
+                onDrop={attributes.onDrop}
+                onDragEnd={attributes.onDragEnd}
                 onFocus={useCallback(
                   (event: React.FocusEvent<HTMLDivElement>) => {
                     if (
