@@ -300,6 +300,10 @@ export const PortableTextEditable = forwardRef<
   // Handle from props onCopy function
   const handleCopy = useCallback(
     (event: ClipboardEvent<HTMLDivElement>): void | ReactEditor => {
+      if (!ReactEditor.hasSelectableTarget(slateEditor, event.target)) {
+        return
+      }
+
       if (onCopy) {
         const result = onCopy(event)
         // CopyFn may return something to avoid doing default stuff
@@ -344,6 +348,10 @@ export const PortableTextEditable = forwardRef<
 
   const handleCut = useCallback(
     (event: ClipboardEvent<HTMLDivElement>) => {
+      if (!ReactEditor.hasSelectableTarget(slateEditor, event.target)) {
+        return
+      }
+
       if (onCut) {
         const result = onCut(event)
         // CutFn may return something to avoid doing default stuff
@@ -684,6 +692,10 @@ export const PortableTextEditable = forwardRef<
 
   const handleDragStart = useCallback(
     (event: React.DragEvent<HTMLDivElement>) => {
+      if (readOnly || !ReactEditor.hasTarget(slateEditor, event.target)) {
+        return
+      }
+
       onDragStart?.(event)
 
       if (event.isDefaultPrevented() || event.isPropagationStopped()) {
@@ -723,7 +735,7 @@ export const PortableTextEditable = forwardRef<
       // Prevent Slate from handling the event
       return true
     },
-    [onDragStart, editorActor, slateEditor],
+    [readOnly, onDragStart, editorActor, slateEditor],
   )
 
   const handleDrag = useCallback(
