@@ -1502,34 +1502,6 @@ export const Editable = forwardRef(
                         getDirection(Node.string(element, editor.schema)) ===
                         'rtl'
 
-                      // COMPAT: Since we prevent the default behavior on
-                      // `beforeinput` events, the browser doesn't think there's ever
-                      // any history stack to undo or redo, so we have to manage these
-                      // hotkeys ourselves. (2019/11/06)
-                      if (Hotkeys.isRedo(nativeEvent)) {
-                        event.preventDefault()
-
-                        editorActor.send({
-                          type: 'behavior event',
-                          behaviorEvent: {type: 'history.redo'},
-                          editor,
-                        })
-
-                        return
-                      }
-
-                      if (Hotkeys.isUndo(nativeEvent)) {
-                        event.preventDefault()
-
-                        editorActor.send({
-                          type: 'behavior event',
-                          behaviorEvent: {type: 'history.undo'},
-                          editor,
-                        })
-
-                        return
-                      }
-
                       // COMPAT: Certain browsers don't handle the selection updates
                       // properly. In Chrome, the selection isn't properly extended.
                       // And in Firefox, the selection isn't properly collapsed.
