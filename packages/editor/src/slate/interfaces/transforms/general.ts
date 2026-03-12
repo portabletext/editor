@@ -34,6 +34,12 @@ export const GeneralTransforms: GeneralTransforms = {
       case 'insert_node': {
         const {path, node} = op
 
+        if (typeof path[path.length - 1] !== 'number') {
+          throw new Error(
+            `Cannot apply an "insert_node" operation at path [${path}] because the last path segment is not a number. insert_node requires a numeric index since the node does not exist yet.`,
+          )
+        }
+
         modifyChildren(editor, Path.parent(path), editor.schema, (children) => {
           const index = path[path.length - 1]!
 
