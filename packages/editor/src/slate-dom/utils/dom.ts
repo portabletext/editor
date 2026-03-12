@@ -84,14 +84,6 @@ export const isDOMSelection = (value: any): value is DOMSelection => {
 }
 
 /**
- * Check if a DOM node is an element node.
- */
-
-export const isDOMText = (value: any): value is DOMText => {
-  return isDOMNode(value) && value.nodeType === 3
-}
-
-/**
  * Checks whether a paste event is a plaintext-only event.
  */
 
@@ -214,35 +206,6 @@ export const getEditableChild = (
 ): DOMNode => {
   const [child] = getEditableChildAndIndex(parent, index, direction)
   return child
-}
-
-/**
- * Get a plaintext representation of the content of a node, accounting for block
- * elements which get a newline appended.
- *
- * The domNode must be attached to the DOM.
- */
-
-export const getPlainText = (domNode: DOMNode) => {
-  let text = ''
-
-  if (isDOMText(domNode) && domNode.nodeValue) {
-    return domNode.nodeValue
-  }
-
-  if (isDOMElement(domNode)) {
-    for (const childNode of Array.from(domNode.childNodes)) {
-      text += getPlainText(childNode)
-    }
-
-    const display = getComputedStyle(domNode).getPropertyValue('display')
-
-    if (display === 'block' || display === 'list' || domNode.tagName === 'BR') {
-      text += '\n'
-    }
-  }
-
-  return text
 }
 
 /**

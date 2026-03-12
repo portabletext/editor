@@ -55,10 +55,6 @@ export interface DOMEditor extends BaseEditor {
     editor: Editor,
     target: EventTarget | null,
   ) => boolean
-  setFragmentData: (
-    data: DataTransfer,
-    originEvent?: 'drag' | 'copy' | 'cut',
-  ) => void
 
   isNodeMapDirty: boolean
   domWindow: Window | null
@@ -169,15 +165,6 @@ export interface DOMEditorInterface {
     editor: Editor,
     target: EventTarget | null,
   ) => boolean
-
-  /**
-   * Sets data from the currently selected fragment on a `DataTransfer`.
-   */
-  setFragmentData: (
-    editor: Editor,
-    data: DataTransfer,
-    originEvent?: 'drag' | 'copy' | 'cut',
-  ) => void
 
   /**
    * Find the native DOM element from a Slate node.
@@ -494,9 +481,6 @@ export const DOMEditor: DOMEditorInterface = {
       DOMEditor.toSlateNode(editor, target)
     return !!slateNode && editor.isObjectNode(slateNode)
   },
-
-  setFragmentData: (editor, data, originEvent) =>
-    editor.setFragmentData(data, originEvent),
 
   toDOMNode: (editor, node) => {
     const domNode = Editor.isEditor(node)
