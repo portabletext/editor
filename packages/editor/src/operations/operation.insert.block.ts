@@ -86,7 +86,7 @@ export function insertBlock(options: {
       mode: 'lowest',
       match: (node, path) =>
         (Element.isElement(node, editor.schema) || editor.isObjectNode(node)) &&
-        path.length <= start.path.length,
+        path.length === 1,
     }),
   ).at(0) ?? [undefined, undefined]
   let [endBlock, endBlockPath] = Array.from(
@@ -95,7 +95,7 @@ export function insertBlock(options: {
       mode: 'lowest',
       match: (node, path) =>
         (Element.isElement(node, editor.schema) || editor.isObjectNode(node)) &&
-        path.length <= end.path.length,
+        path.length === 1,
     }),
   ).at(0) ?? [undefined, undefined]
 

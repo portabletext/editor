@@ -230,4 +230,134 @@ describe('event.drag.drop', () => {
       ])
     })
   })
+
+  test('Scenario: Dropping block image onto inline object inserts as block, not inline', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const fooKey = keyGenerator()
+    const stockTickerKey = keyGenerator()
+    const barKey = keyGenerator()
+    const imageKey = keyGenerator()
+
+    const {locator, editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {name: 'image', fields: [{name: 'src', type: 'string'}]},
+        ],
+        inlineObjects: [
+          {name: 'image', fields: [{name: 'src', type: 'string'}]},
+        ],
+      }),
+      initialValue: [
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [
+            {_key: fooKey, _type: 'span', text: 'foo', marks: []},
+            {
+              _type: 'image',
+              _key: stockTickerKey,
+              src: 'https://example.com/inline.jpg',
+            },
+            {_key: barKey, _type: 'span', text: 'bar', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _key: imageKey,
+          _type: 'image',
+          src: 'https://example.com/block.jpg',
+        },
+      ],
+    })
+
+    const imageSelection = {
+      anchor: {
+        path: [{_key: imageKey}],
+        offset: 0,
+      },
+      focus: {
+        path: [{_key: imageKey}],
+        offset: 0,
+      },
+    }
+
+    await userEvent.click(locator)
+    editor.send({type: 'select', at: imageSelection})
+
+    await vi.waitFor(() => {
+      const selection = editor.getSnapshot().context.selection
+      expect(selection).toEqual({
+        ...imageSelection,
+        backward: false,
+      })
+    })
+
+    const json = converterPortableText.serialize({
+      snapshot: editor.getSnapshot(),
+      event: {
+        type: 'serialize',
+        originEvent: 'drag.dragstart',
+      },
+    })
+
+    if (json.type === 'serialization.failure') {
+      assert.fail(json.reason)
+    }
+
+    const dataTransfer = new DataTransfer()
+    dataTransfer.setData(json.mimeType, json.data)
+
+    editor.send({
+      type: 'drag.drop',
+      originEvent: {
+        dataTransfer,
+      },
+      dragOrigin: {selection: imageSelection},
+      position: {
+        block: 'start',
+        isEditor: false,
+        selection: {
+          anchor: {
+            path: [{_key: blockKey}, 'children', {_key: stockTickerKey}],
+            offset: 0,
+          },
+          focus: {
+            path: [{_key: blockKey}, 'children', {_key: stockTickerKey}],
+            offset: 0,
+          },
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      const value = editor.getSnapshot().context.value
+
+      // The block image should be a top-level block, not nested inside the
+      // text block as an inline image
+      const blockImage = value.find(
+        (block) =>
+          block._type === 'image' &&
+          'src' in block &&
+          block['src'] === 'https://example.com/block.jpg',
+      )
+      expect(blockImage).toBeDefined()
+
+      // It should NOT appear as a child of any text block
+      for (const block of value) {
+        if (block._type === 'block' && 'children' in block) {
+          const inlineBlockImages = (
+            block.children as Array<{_type: string; src?: string}>
+          ).filter(
+            (child) =>
+              child._type === 'image' &&
+              child.src === 'https://example.com/block.jpg',
+          )
+          expect(inlineBlockImages).toHaveLength(0)
+        }
+      }
+    })
+  })
 })
