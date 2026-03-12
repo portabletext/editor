@@ -60,6 +60,12 @@ export interface PortableTextSlateEditor extends ReactEditor {
   withHistory: boolean
 
   /**
+   * When set, the patch plugin will emit these patches instead of computing
+   * patches from the next Slate operation. Cleared after use.
+   */
+  patchOverrides: Patch[] | undefined
+
+  /**
    * Undo
    */
   undo: () => void

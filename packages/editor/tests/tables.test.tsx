@@ -459,28 +459,19 @@ describe('tables', () => {
         expect(emittedPatches).toEqual([
           {
             type: 'set',
-            path: [{_key: table._key}, 'rows'],
-            value: [
-              {
-                ...row,
-                cells: [
-                  {
-                    ...cell,
-                    content: [
-                      {
-                        ...block,
-                        children: [
-                          {
-                            ...span,
-                            marks: ['strong'],
-                          },
-                        ],
-                      },
-                    ],
-                  },
-                ],
-              },
+            path: [
+              {_key: table._key},
+              'rows',
+              {_key: row._key},
+              'cells',
+              {_key: cell._key},
+              'content',
+              {_key: block._key},
+              'children',
+              {_key: span._key},
+              'marks',
             ],
+            value: ['strong'],
           },
         ])
       })
@@ -539,28 +530,19 @@ describe('tables', () => {
         expect(emittedPatches).toEqual([
           {
             type: 'set',
-            path: [{_key: table._key}, 'rows'],
-            value: [
-              {
-                ...row,
-                cells: [
-                  {
-                    ...cell,
-                    content: [
-                      {
-                        ...block,
-                        children: [
-                          {
-                            ...span,
-                            text: 'bar',
-                          },
-                        ],
-                      },
-                    ],
-                  },
-                ],
-              },
+            path: [
+              {_key: table._key},
+              'rows',
+              {_key: row._key},
+              'cells',
+              {_key: cell._key},
+              'content',
+              {_key: block._key},
+              'children',
+              {_key: span._key},
+              'text',
             ],
+            value: 'bar',
           },
         ])
       })
