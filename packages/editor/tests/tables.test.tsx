@@ -362,4 +362,169 @@ describe('tables', () => {
       })
     })
   })
+
+  describe('set behavior event', () => {
+    test('set on block object at root level', async () => {
+      const {editor, table} = await createTableTestEditor()
+
+      editor.send({
+        type: 'set',
+        at: [{_key: table._key}],
+        value: {headerRows: 2},
+      })
+
+      await vi.waitFor(() => {
+        return expect(editor.getSnapshot().context.value).toEqual([
+          {
+            ...table,
+            headerRows: 2,
+          },
+        ])
+      })
+    })
+
+    test('set on deeply nested span via child path', async () => {
+      const {editor, table, row, cell, block, span} =
+        await createTableTestEditor()
+
+      editor.send({
+        type: 'set',
+        at: [
+          {_key: table._key},
+          'rows',
+          {_key: row._key},
+          'cells',
+          {_key: cell._key},
+          'content',
+          {_key: block._key},
+          'children',
+          {_key: span._key},
+        ],
+        value: {marks: ['strong']},
+      })
+
+      await vi.waitFor(() => {
+        return expect(editor.getSnapshot().context.value).toEqual([
+          {
+            ...table,
+            rows: [
+              {
+                ...row,
+                cells: [
+                  {
+                    ...cell,
+                    content: [
+                      {
+                        ...block,
+                        children: [
+                          {
+                            ...span,
+                            marks: ['strong'],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ])
+      })
+    })
+
+    test('set text on deeply nested span', async () => {
+      const {editor, table, row, cell, block, span} =
+        await createTableTestEditor()
+
+      editor.send({
+        type: 'set',
+        at: [
+          {_key: table._key},
+          'rows',
+          {_key: row._key},
+          'cells',
+          {_key: cell._key},
+          'content',
+          {_key: block._key},
+          'children',
+          {_key: span._key},
+        ],
+        value: {text: 'bar'},
+      })
+
+      await vi.waitFor(() => {
+        return expect(editor.getSnapshot().context.value).toEqual([
+          {
+            ...table,
+            rows: [
+              {
+                ...row,
+                cells: [
+                  {
+                    ...cell,
+                    content: [
+                      {
+                        ...block,
+                        children: [
+                          {
+                            ...span,
+                            text: 'bar',
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ])
+      })
+    })
+
+    test('block.set delegates to set', async () => {
+      const {editor, table} = await createTableTestEditor()
+
+      editor.send({
+        type: 'block.set',
+        at: [{_key: table._key}],
+        props: {headerRows: 3},
+      })
+
+      await vi.waitFor(() => {
+        return expect(editor.getSnapshot().context.value).toEqual([
+          {
+            ...table,
+            headerRows: 3,
+          },
+        ])
+      })
+    })
+
+    test('undo reverses set', async () => {
+      const {editor, table, initialValue} = await createTableTestEditor()
+
+      editor.send({
+        type: 'set',
+        at: [{_key: table._key}],
+        value: {headerRows: 1},
+      })
+
+      await vi.waitFor(() => {
+        return expect(editor.getSnapshot().context.value).toEqual([
+          {
+            ...table,
+            headerRows: 1,
+          },
+        ])
+      })
+
+      editor.send({type: 'history.undo'})
+
+      await vi.waitFor(() => {
+        return expect(editor.getSnapshot().context.value).toEqual(initialValue)
+      })
+    })
+  })
 })
