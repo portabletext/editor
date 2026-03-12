@@ -242,11 +242,6 @@ export function createBehaviorApiPlugin(editorActor: EditorActor) {
       return
     }
 
-    editor.setFragmentData = () => {
-      console.error('Unexpected call to .setFragmentData(...)')
-      return
-    }
-
     editor.undo = () => {
       if (editor.isNormalizingNode || editor.isPerformingBehaviorOperation) {
         console.error('Unexpected call to .undo(...)')

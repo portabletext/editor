@@ -1449,17 +1449,8 @@ export const Editable = forwardRef(
                 )}
                 onCopy={useCallback(
                   (event: React.ClipboardEvent<HTMLDivElement>) => {
-                    if (
-                      ReactEditor.hasSelectableTarget(editor, event.target) &&
-                      !isEventHandled(event, attributes.onCopy) &&
-                      !isDOMEventTargetInput(event)
-                    ) {
-                      event.preventDefault()
-                      ReactEditor.setFragmentData(
-                        editor,
-                        event.clipboardData,
-                        'copy',
-                      )
+                    if (ReactEditor.hasSelectableTarget(editor, event.target)) {
+                      attributes.onCopy?.(event)
                     }
                   },
                   [attributes.onCopy, editor],
@@ -1468,42 +1459,12 @@ export const Editable = forwardRef(
                   (event: React.ClipboardEvent<HTMLDivElement>) => {
                     if (
                       !readOnly &&
-                      ReactEditor.hasSelectableTarget(editor, event.target) &&
-                      !isEventHandled(event, attributes.onCut) &&
-                      !isDOMEventTargetInput(event)
+                      ReactEditor.hasSelectableTarget(editor, event.target)
                     ) {
-                      event.preventDefault()
-                      ReactEditor.setFragmentData(
-                        editor,
-                        event.clipboardData,
-                        'cut',
-                      )
-                      const {selection} = editor
-
-                      if (selection) {
-                        if (Range.isExpanded(selection)) {
-                          editorActor.send({
-                            type: 'behavior event',
-                            behaviorEvent: {
-                              type: 'delete',
-                              direction: 'forward',
-                            },
-                            editor,
-                          })
-                        } else {
-                          const node = Node.get(
-                            editor,
-                            selection.anchor.path,
-                            editor.schema,
-                          )
-                          if (editor.isObjectNode(node)) {
-                            Transforms.delete(editor)
-                          }
-                        }
-                      }
+                      attributes.onCut?.(event)
                     }
                   },
-                  [readOnly, editor, editorActor, attributes.onCut],
+                  [readOnly, editor, attributes.onCut],
                 )}
                 onDragOver={useCallback(
                   (event: React.DragEvent<HTMLDivElement>) => {
@@ -1524,28 +1485,9 @@ export const Editable = forwardRef(
                   (event: React.DragEvent<HTMLDivElement>) => {
                     if (
                       !readOnly &&
-                      ReactEditor.hasTarget(editor, event.target) &&
-                      !isEventHandled(event, attributes.onDragStart)
+                      ReactEditor.hasTarget(editor, event.target)
                     ) {
-                      const node = ReactEditor.toSlateNode(editor, event.target)
-                      const path = ReactEditor.findPath(editor, node)
-                      const voidMatch =
-                        editor.isObjectNode(node) ||
-                        Editor.void(editor, {at: path, voids: true})
-
-                      // so that it shows up in the selection's fragment.
-                      if (voidMatch) {
-                        const range = Editor.range(editor, path)
-                        Transforms.select(editor, range)
-                      }
-
-                      state.isDraggingInternally = true
-
-                      ReactEditor.setFragmentData(
-                        editor,
-                        event.dataTransfer,
-                        'drag',
-                      )
+                      attributes.onDragStart?.(event)
                     }
                   },
                   [readOnly, editor, attributes.onDragStart, state],
