@@ -2,6 +2,7 @@ import {isSpan, isTextBlock} from '@portabletext/schema'
 import type {EditorContext} from '../editor/editor-snapshot'
 import type {EditorSelection, EditorSelectionPoint} from '../types/editor'
 import {collapseSelection} from './collapse-selection'
+import {safeStringify} from './safe-json'
 import {splitString} from './split-string'
 import {stringOverlap} from './string-overlap'
 
@@ -100,7 +101,7 @@ export function getTextSelection(
 
   if (!anchor || !focus) {
     throw new Error(
-      `Unable to find selection for text "${text}" in value "${JSON.stringify(context.value)}"`,
+      `Unable to find selection for text "${text}" in value "${safeStringify(context.value)}"`,
     )
   }
 

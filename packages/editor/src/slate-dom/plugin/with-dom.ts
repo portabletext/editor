@@ -1,4 +1,5 @@
 import {applySplitNode} from '../../internal-utils/apply-split-node'
+import {safeStringify} from '../../internal-utils/safe-json'
 import {
   Editor,
   Element,
@@ -198,7 +199,7 @@ export const withDOM = <T extends Editor>(editor: T): T & DOMEditor => {
     }
 
     const fragment = e.getFragment()
-    const string = JSON.stringify(fragment)
+    const string = safeStringify(fragment)
     const encoded = window.btoa(encodeURIComponent(string))
     attach.setAttribute('data-slate-fragment', encoded)
     data.setData('application/x-slate-fragment', encoded)
