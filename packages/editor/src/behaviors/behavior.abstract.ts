@@ -12,6 +12,7 @@ import {abstractListItemBehaviors} from './behavior.abstract.list-item'
 import {abstractMoveBehaviors} from './behavior.abstract.move'
 import {abstractSelectBehaviors} from './behavior.abstract.select'
 import {abstractSerializeBehaviors} from './behavior.abstract.serialize'
+import {abstractSetBehaviors} from './behavior.abstract.set'
 import {abstractSplitBehaviors} from './behavior.abstract.split'
 import {abstractStyleBehaviors} from './behavior.abstract.style'
 import {forward, raise} from './behavior.types.action'
@@ -111,5 +112,6 @@ export const abstractBehaviors = [
   ...abstractStyleBehaviors,
   ...abstractSelectBehaviors,
   ...abstractSerializeBehaviors,
+  ...abstractSetBehaviors,
   ...abstractSplitBehaviors,
 ]

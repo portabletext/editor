@@ -1,9 +1,7 @@
 import {Editor} from '../slate'
 import {addAnnotationOperationImplementation} from './operation.annotation.add'
 import {removeAnnotationOperationImplementation} from './operation.annotation.remove'
-import {blockSetOperationImplementation} from './operation.block.set'
 import {blockUnsetOperationImplementation} from './operation.block.unset'
-import {childSetOperationImplementation} from './operation.child.set'
 import {childUnsetOperationImplementation} from './operation.child.unset'
 import {decoratorAddOperationImplementation} from './operation.decorator.add'
 import {decoratorRemoveOperationImplementation} from './operation.decorator.remove'
@@ -17,6 +15,7 @@ import {moveBackwardOperationImplementation} from './operation.move.backward'
 import {moveBlockOperationImplementation} from './operation.move.block'
 import {moveForwardOperationImplementation} from './operation.move.forward'
 import {selectOperationImplementation} from './operation.select'
+import {setOperationImplementation} from './operation.set'
 import type {
   Operation,
   OperationContext,
@@ -26,9 +25,7 @@ import type {
 const operationImplementations: OperationImplementations = {
   'annotation.add': addAnnotationOperationImplementation,
   'annotation.remove': removeAnnotationOperationImplementation,
-  'block.set': blockSetOperationImplementation,
   'block.unset': blockUnsetOperationImplementation,
-  'child.set': childSetOperationImplementation,
   'child.unset': childUnsetOperationImplementation,
   'decorator.add': decoratorAddOperationImplementation,
   'decorator.remove': decoratorRemoveOperationImplementation,
@@ -42,6 +39,7 @@ const operationImplementations: OperationImplementations = {
   'move.block': moveBlockOperationImplementation,
   'move.forward': moveForwardOperationImplementation,
   'select': selectOperationImplementation,
+  'set': setOperationImplementation,
 }
 
 export function performOperation({
@@ -68,22 +66,8 @@ export function performOperation({
           })
           break
         }
-        case 'block.set': {
-          operationImplementations['block.set']({
-            context,
-            operation,
-          })
-          break
-        }
         case 'block.unset': {
           operationImplementations['block.unset']({
-            context,
-            operation,
-          })
-          break
-        }
-        case 'child.set': {
-          operationImplementations['child.set']({
             context,
             operation,
           })
@@ -168,6 +152,13 @@ export function performOperation({
         }
         case 'move.forward': {
           operationImplementations['move.forward']({
+            context,
+            operation,
+          })
+          break
+        }
+        case 'set': {
+          operationImplementations.set({
             context,
             operation,
           })
