@@ -1,6 +1,8 @@
-import {isSpan, isTextBlock} from '@portabletext/schema'
+import {applyAll, set} from '@portabletext/patches'
+import type {PortableTextTextBlock} from '@portabletext/schema'
+import {isTextBlock} from '@portabletext/schema'
 import {applySetNode} from '../internal-utils/apply-set-node'
-import type {KeyedSegment} from '../types/paths'
+import {safeStringify} from '../internal-utils/safe-json'
 import {parseMarkDefs} from '../utils/parse-blocks'
 import type {OperationImplementation} from './operation.types'
 
@@ -14,61 +16,89 @@ export const setOperationImplementation: OperationImplementation<'set'> = ({
     throw new Error('Cannot set properties on the root editor node')
   }
 
-  const slatePath = resolveToSlatePath(operation.editor, path)
+  const firstSegment = path[0]
 
-  if (!slatePath) {
+  if (typeof firstSegment !== 'object' || !('_key' in firstSegment)) {
     throw new Error(
-      `Unable to resolve path ${JSON.stringify(path)} to a Slate path`,
+      `Expected keyed segment at path[0], got ${safeStringify(firstSegment)}`,
     )
   }
 
-  const node = nodeAtSlatePath(operation.editor, slatePath)
+  const blockIndex = operation.editor.blockIndexMap.get(firstSegment._key)
 
-  if (!node) {
-    throw new Error(`Unable to find node at ${JSON.stringify(path)}`)
+  if (blockIndex === undefined) {
+    throw new Error(
+      `Unable to find block index for block at ${safeStringify(path)}`,
+    )
   }
 
-  if (isTextBlock(context, node)) {
+  const block = operation.editor.children.at(blockIndex)
+
+  if (!block) {
+    throw new Error(`Unable to find block at ${safeStringify(path)}`)
+  }
+
+  if (path.length === 1) {
+    setAtBlock({
+      context,
+      operation,
+      block: block as Record<string, unknown>,
+      blockIndex,
+    })
+    return
+  }
+
+  // For text blocks, children (spans and inline objects) need Slate-level
+  // operations for text replacement and proper diffing.
+  if (
+    path.length === 3 &&
+    path[1] === 'children' &&
+    isTextBlock(context, block)
+  ) {
+    setAtChild({context, operation, block, blockIndex})
+    return
+  }
+
+  // Deep path into a block object (e.g., table cells) — apply the value
+  // changes within the block using patches, then write the whole block back.
+  // This mirrors how applyPatch handles deep patches on block objects.
+  const innerPath = path.slice(1)
+  const patches = Object.entries(operation.value).map(([key, value]) =>
+    set(value, [...innerPath, key]),
+  )
+  const updatedBlock = applyAll(block, patches)
+
+  applySetNode(operation.editor, updatedBlock, [blockIndex])
+}
+
+function setAtBlock({
+  context,
+  operation,
+  block,
+  blockIndex,
+}: {
+  context: Parameters<OperationImplementation<'set'>>[0]['context']
+  operation: Parameters<OperationImplementation<'set'>>[0]['operation']
+  block: Record<string, unknown>
+  blockIndex: number
+}) {
+  if (isTextBlock(context, block)) {
     applySetNode(
       operation.editor,
       filterTextBlockValue({context, value: operation.value}),
-      slatePath,
+      [blockIndex],
     )
     return
   }
 
-  if (isSpan(context, node)) {
-    const {_type, text, ...rest} = operation.value
-
-    applySetNode(operation.editor, {...node, ...rest}, slatePath)
-
-    if (typeof text === 'string' && text !== node.text) {
-      operation.editor.apply({
-        type: 'remove_text',
-        path: slatePath,
-        offset: 0,
-        text: node.text,
-      })
-
-      operation.editor.apply({
-        type: 'insert_text',
-        path: slatePath,
-        offset: 0,
-        text,
-      })
-    }
-
-    return
-  }
-
-  if (operation.editor.isObjectNode(node)) {
-    const definition =
-      context.schema.blockObjects.find((d) => d.name === node['_type']) ??
-      context.schema.inlineObjects.find((d) => d.name === node['_type'])
+  if (operation.editor.isObjectNode(block)) {
+    const definition = context.schema.blockObjects.find(
+      (d) => d.name === block['_type'],
+    )
 
     if (!definition) {
       throw new Error(
-        `Unable to find schema definition for object type ${node['_type']}`,
+        `Unable to find schema definition for object type ${block['_type']}`,
       )
     }
 
@@ -83,94 +113,98 @@ export const setOperationImplementation: OperationImplementation<'set'> = ({
     applySetNode(
       operation.editor,
       {
-        ...node,
-        _key: typeof _key === 'string' ? _key : node['_key'],
+        ...block,
+        _key: typeof _key === 'string' ? _key : block['_key'],
         ...rest,
       },
-      slatePath,
+      [blockIndex],
     )
 
     return
   }
 
-  // Unknown node type at this depth — apply without schema filtering
-  applySetNode(operation.editor, {...node, ...operation.value}, slatePath)
+  applySetNode(operation.editor, {...block, ...operation.value}, [blockIndex])
 }
 
-function resolveToSlatePath(
-  editor: Parameters<OperationImplementation<'set'>>[0]['operation']['editor'],
-  path: Parameters<OperationImplementation<'set'>>[0]['operation']['at'],
-): number[] | undefined {
-  const slatePath: number[] = []
-  let current: Record<string, unknown> = editor as unknown as Record<
-    string,
-    unknown
-  >
+function setAtChild({
+  context,
+  operation,
+  block,
+  blockIndex,
+}: {
+  context: Parameters<OperationImplementation<'set'>>[0]['context']
+  operation: Parameters<OperationImplementation<'set'>>[0]['operation']
+  block: PortableTextTextBlock
+  blockIndex: number
+}) {
+  const childSegment = operation.at[2]
 
-  for (const segment of path) {
-    if (typeof segment === 'string') {
-      const field = current[segment]
-
-      if (!Array.isArray(field)) {
-        return undefined
-      }
-
-      current = {children: field} as Record<string, unknown>
-      continue
-    }
-
-    if (typeof segment === 'object' && '_key' in segment) {
-      const children = current['children'] as Array<{_key: string}> | undefined
-
-      if (!children) {
-        return undefined
-      }
-
-      const index = children.findIndex(
-        (child) => child._key === (segment as KeyedSegment)._key,
-      )
-
-      if (index === -1) {
-        return undefined
-      }
-
-      slatePath.push(index)
-      current = children[index] as Record<string, unknown>
-      continue
-    }
-
-    return undefined
+  if (typeof childSegment !== 'object' || !('_key' in childSegment)) {
+    return
   }
 
-  return slatePath.length > 0 ? slatePath : undefined
-}
+  const childIndex = block.children.findIndex(
+    (c) => c._key === childSegment._key,
+  )
 
-function nodeAtSlatePath(
-  editor: Parameters<OperationImplementation<'set'>>[0]['operation']['editor'],
-  slatePath: number[],
-): Record<string, unknown> | undefined {
-  let node: Record<string, unknown> = editor as unknown as Record<
-    string,
-    unknown
-  >
-
-  for (const index of slatePath) {
-    const children = node['children'] as
-      | Array<Record<string, unknown>>
-      | undefined
-
-    if (!children) {
-      return undefined
-    }
-
-    node = children[index]!
-
-    if (!node) {
-      return undefined
-    }
+  if (childIndex === -1) {
+    return
   }
 
-  return node
+  const child = block.children[childIndex]!
+  const childPath = [blockIndex, childIndex]
+
+  if (operation.editor.isTextSpan(child)) {
+    const {_type, text, ...rest} = operation.value
+
+    applySetNode(operation.editor, {...child, ...rest}, childPath)
+
+    if (typeof text === 'string' && text !== child.text) {
+      operation.editor.apply({
+        type: 'remove_text',
+        path: childPath,
+        offset: 0,
+        text: child.text,
+      })
+
+      operation.editor.apply({
+        type: 'insert_text',
+        path: childPath,
+        offset: 0,
+        text,
+      })
+    }
+
+    return
+  }
+
+  if (operation.editor.isObjectNode(child)) {
+    const definition = context.schema.inlineObjects.find(
+      (d) => d.name === child._type,
+    )
+
+    if (!definition) {
+      return
+    }
+
+    const {_type, _key, ...rest} = operation.value
+
+    for (const prop in rest) {
+      if (!definition.fields.some((field) => field.name === prop)) {
+        delete rest[prop]
+      }
+    }
+
+    applySetNode(
+      operation.editor,
+      {
+        ...child,
+        _key: typeof _key === 'string' ? _key : child._key,
+        ...rest,
+      },
+      childPath,
+    )
+  }
 }
 
 function filterTextBlockValue({
