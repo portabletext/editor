@@ -187,7 +187,6 @@ export function deleteText(editor: Editor, options: TextDeleteOptions = {}) {
     }
 
     if (!isSingleText && isAcrossBlocks && endRef.current && startRef.current) {
-      // Inline merge logic (equivalent to Transforms.mergeNodes with {at: endRef.current, hanging: true, voids})
       const mergeAt: Point = endRef.current
       const mergeMatch = (n: Node) =>
         Element.isElement(n, editor.schema) && Editor.isBlock(editor, n)

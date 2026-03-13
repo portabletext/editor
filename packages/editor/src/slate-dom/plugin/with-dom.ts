@@ -6,7 +6,6 @@ import {
   Path,
   Point,
   Range,
-  Transforms,
   type Operation,
   type PointRef,
 } from '../../slate'
@@ -140,7 +139,6 @@ export const withDOM = <T extends Editor>(editor: T): T & DOMEditor => {
 
       for (const line of lines) {
         if (split) {
-          // Inline split logic (equivalent to Transforms.splitNodes(e, {always: true}))
           Editor.withoutNormalizing(e, () => {
             let splitAt: Point | null = null
 
@@ -212,7 +210,7 @@ export const withDOM = <T extends Editor>(editor: T): T & DOMEditor => {
               }
 
               const point = afterRef.current || Editor.end(e, [])
-              Transforms.select(e, point)
+              e.select(point)
             } finally {
               beforeRef.unref()
               afterRef?.unref()

@@ -99,7 +99,6 @@ export function insertNodes<T extends Node>(
         const pathRef = Editor.pathRef(editor, matchPath)
         const isAtEnd = Editor.isEnd(editor, at, matchPath)
 
-        // Inline split logic (equivalent to Transforms.splitNodes with {at, match, mode, voids})
         {
           const splitAt = at as Point
           const beforeRef = Editor.pointRef(editor, splitAt, {

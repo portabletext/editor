@@ -3,9 +3,6 @@ import type {PortableTextSlateEditor} from '../types/slate-editor'
 
 /**
  * Set the editor selection to the given target.
- *
- * Replaces `Transforms.select(editor, target)` with raw `set_selection`
- * operations.
  */
 export function applySelect(
   editor: PortableTextSlateEditor,
@@ -46,9 +43,6 @@ export function applySelect(
 
 /**
  * Clear the editor selection.
- *
- * Replaces `Transforms.deselect(editor)` with a raw `set_selection`
- * operation.
  */
 export function applyDeselect(editor: PortableTextSlateEditor): void {
   const {selection} = editor

@@ -4,9 +4,6 @@ import {applySelect} from './apply-selection'
 
 /**
  * Move the selection by a given distance and unit.
- *
- * Replaces `Transforms.move(editor, {unit, distance, reverse})` with
- * point computation and a raw `set_selection` operation.
  */
 export function applyMove(
   editor: PortableTextSlateEditor,
