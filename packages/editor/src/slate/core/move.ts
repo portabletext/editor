@@ -1,9 +1,16 @@
 import {Editor} from '../interfaces/editor'
-import {Range} from '../interfaces/range'
-import {Transforms} from '../interfaces/transforms'
-import type {SelectionTransforms} from '../interfaces/transforms/selection'
+import type {Range} from '../interfaces/range'
+import {Range as RangeUtils} from '../interfaces/range'
+import type {MoveUnit, SelectionEdge} from '../types/types'
 
-export const move: SelectionTransforms['move'] = (editor, options = {}) => {
+export interface SelectionMoveOptions {
+  distance?: number
+  unit?: MoveUnit
+  reverse?: boolean
+  edge?: SelectionEdge
+}
+
+export function move(editor: Editor, options: SelectionMoveOptions = {}): void {
   const {selection} = editor
   const {distance = 1, unit = 'character', reverse = false} = options
   let {edge = null} = options
@@ -13,11 +20,11 @@ export const move: SelectionTransforms['move'] = (editor, options = {}) => {
   }
 
   if (edge === 'start') {
-    edge = Range.isBackward(selection) ? 'focus' : 'anchor'
+    edge = RangeUtils.isBackward(selection) ? 'focus' : 'anchor'
   }
 
   if (edge === 'end') {
-    edge = Range.isBackward(selection) ? 'anchor' : 'focus'
+    edge = RangeUtils.isBackward(selection) ? 'anchor' : 'focus'
   }
 
   const {anchor, focus} = selection
@@ -44,5 +51,5 @@ export const move: SelectionTransforms['move'] = (editor, options = {}) => {
     }
   }
 
-  Transforms.setSelection(editor, props)
+  editor.setSelection(props)
 }

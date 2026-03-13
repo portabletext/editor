@@ -18,7 +18,6 @@ import {
   Path,
   Range,
   Text,
-  Transforms,
   type DecoratedRange,
   type LeafPosition,
   type NodeEntry,
@@ -243,7 +242,7 @@ export const Editable = forwardRef(
             if (active) {
               document.execCommand('indent')
             } else {
-              Transforms.deselect(editor)
+              editor.deselect()
             }
 
             processing.current = false
@@ -268,7 +267,7 @@ export const Editable = forwardRef(
             }
 
             if (!domSelection) {
-              return Transforms.deselect(editor)
+              return editor.deselect()
             }
 
             const {anchorNode, focusNode} = domSelection
@@ -293,7 +292,7 @@ export const Editable = forwardRef(
                 ) {
                   // Suppress browser selection normalization that would
                   // overwrite a block object selection.
-                  Transforms.select(editor, range)
+                  editor.select(range)
                 } else {
                   androidInputManager?.handleUserSelect(range)
                 }
@@ -302,7 +301,7 @@ export const Editable = forwardRef(
 
             // Deselect the editor if the dom selection is not selectable in readonly mode
             if (readOnly && (!anchorNodeSelectable || !focusNodeInEditor)) {
-              Transforms.deselect(editor)
+              editor.deselect()
             }
           }
         }, 100),
@@ -544,7 +543,7 @@ export const Editable = forwardRef(
             suppressThrow: false,
           })
 
-          Transforms.select(editor, slateRange)
+          editor.select(slateRange)
 
           event.preventDefault()
           event.stopImmediatePropagation()
@@ -682,7 +681,7 @@ export const Editable = forwardRef(
                   editor.selection &&
                   Editor.rangeRef(editor, editor.selection)
 
-                Transforms.select(editor, range)
+                editor.select(range)
 
                 if (selectionRef) {
                   editor.userSelection = selectionRef
@@ -895,7 +894,7 @@ export const Editable = forwardRef(
             toRestore &&
             (!editor.selection || !Range.equals(editor.selection, toRestore))
           ) {
-            Transforms.select(editor, toRestore)
+            editor.select(toRestore)
           }
         }
       },
@@ -1298,7 +1297,7 @@ export const Editable = forwardRef(
                         }
 
                         const range = Editor.range(editor, blockPath)
-                        Transforms.select(editor, range)
+                        editor.select(range)
                         return
                       }
 
@@ -1317,7 +1316,7 @@ export const Editable = forwardRef(
                         Path.equals(startVoid[1], endVoid[1])
                       ) {
                         const range = Editor.range(editor, start)
-                        Transforms.select(editor, range)
+                        editor.select(range)
                       }
                     }
                   },
@@ -1508,19 +1507,19 @@ export const Editable = forwardRef(
                       // (2017/10/17)
                       if (Hotkeys.isMoveLineBackward(nativeEvent)) {
                         event.preventDefault()
-                        Transforms.move(editor, {unit: 'line', reverse: true})
+                        editor.move({unit: 'line', reverse: true})
                         return
                       }
 
                       if (Hotkeys.isMoveLineForward(nativeEvent)) {
                         event.preventDefault()
-                        Transforms.move(editor, {unit: 'line'})
+                        editor.move({unit: 'line'})
                         return
                       }
 
                       if (Hotkeys.isExtendLineBackward(nativeEvent)) {
                         event.preventDefault()
-                        Transforms.move(editor, {
+                        editor.move({
                           unit: 'line',
                           edge: 'focus',
                           reverse: true,
@@ -1530,7 +1529,7 @@ export const Editable = forwardRef(
 
                       if (Hotkeys.isExtendLineForward(nativeEvent)) {
                         event.preventDefault()
-                        Transforms.move(editor, {unit: 'line', edge: 'focus'})
+                        editor.move({unit: 'line', edge: 'focus'})
                         return
                       }
 
@@ -1543,9 +1542,9 @@ export const Editable = forwardRef(
                         event.preventDefault()
 
                         if (selection && Range.isCollapsed(selection)) {
-                          Transforms.move(editor, {reverse: !isRTL})
+                          editor.move({reverse: !isRTL})
                         } else {
-                          Transforms.collapse(editor, {
+                          editor.collapse({
                             edge: isRTL ? 'end' : 'start',
                           })
                         }
@@ -1557,9 +1556,9 @@ export const Editable = forwardRef(
                         event.preventDefault()
 
                         if (selection && Range.isCollapsed(selection)) {
-                          Transforms.move(editor, {reverse: isRTL})
+                          editor.move({reverse: isRTL})
                         } else {
-                          Transforms.collapse(editor, {
+                          editor.collapse({
                             edge: isRTL ? 'start' : 'end',
                           })
                         }
@@ -1571,10 +1570,10 @@ export const Editable = forwardRef(
                         event.preventDefault()
 
                         if (selection && Range.isExpanded(selection)) {
-                          Transforms.collapse(editor, {edge: 'focus'})
+                          editor.collapse({edge: 'focus'})
                         }
 
-                        Transforms.move(editor, {
+                        editor.move({
                           unit: 'word',
                           reverse: !isRTL,
                         })
@@ -1585,10 +1584,10 @@ export const Editable = forwardRef(
                         event.preventDefault()
 
                         if (selection && Range.isExpanded(selection)) {
-                          Transforms.collapse(editor, {edge: 'focus'})
+                          editor.collapse({edge: 'focus'})
                         }
 
-                        Transforms.move(editor, {
+                        editor.move({
                           unit: 'word',
                           reverse: isRTL,
                         })

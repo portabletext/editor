@@ -6,9 +6,6 @@ import {applySplitNode} from './apply-split-node'
 /**
  * Insert a node at a known path and optionally select the end of the
  * inserted node.
- *
- * Replaces `Transforms.insertNodes(editor, node, {at: path, select: true})`
- * for the case where `at` is a concrete Path.
  */
 export function applyInsertNodeAtPath(
   editor: PortableTextSlateEditor,
@@ -27,12 +24,6 @@ export function applyInsertNodeAtPath(
 /**
  * Insert a node at a Point, splitting the existing text node if needed,
  * and optionally select the end of the inserted node.
- *
- * Replaces `Transforms.insertNodes(editor, node, {at: point, select: true})`
- * for the case where `at` is a Point inside a text node.
- *
- * This handles the common PTE pattern of inserting spans or inline objects
- * at the cursor position.
  */
 export function applyInsertNodeAtPoint(
   editor: PortableTextSlateEditor,

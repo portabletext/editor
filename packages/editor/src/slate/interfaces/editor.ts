@@ -16,11 +16,12 @@ import type {
   RangeRef,
   Span,
   Text,
-  Transforms,
 } from '..'
+import type {SelectionCollapseOptions} from '../core/collapse'
 import type {TextDeleteOptions} from '../core/delete-text'
 import type {InsertNodesOptions} from '../core/insert-nodes'
 import type {TextInsertTextOptions} from '../core/insert-text'
+import type {SelectionMoveOptions} from '../core/move'
 import type {RemoveNodesOptions} from '../core/remove-nodes'
 import {isEditor} from '../editor/is-editor'
 import type {
@@ -75,23 +76,21 @@ export interface BaseEditor {
     operation?: Operation
   }) => boolean
 
-  // Overrideable core transforms.
-
-  collapse: OmitFirstArg<typeof Transforms.collapse>
+  collapse: (options?: SelectionCollapseOptions) => void
   delete: (options?: TextDeleteOptions) => void
-  deselect: OmitFirstArg<typeof Transforms.deselect>
+  deselect: () => void
   insertBreak: OmitFirstArg<typeof Editor.insertBreak>
   insertNodes: <T extends Node>(
     nodes: Node | Node[],
     options?: InsertNodesOptions<T>,
   ) => void
   insertText: (text: string, options?: TextInsertTextOptions) => void
-  move: OmitFirstArg<typeof Transforms.move>
+  move: (options?: SelectionMoveOptions) => void
   normalize: OmitFirstArg<typeof Editor.normalize>
   removeNodes: <T extends Node>(options?: RemoveNodesOptions<T>) => void
-  select: OmitFirstArg<typeof Transforms.select>
+  select: (target: Location) => void
   setNormalizing: OmitFirstArg<typeof Editor.setNormalizing>
-  setSelection: OmitFirstArg<typeof Transforms.setSelection>
+  setSelection: (props: Partial<Range>) => void
   withoutNormalizing: OmitFirstArg<typeof Editor.withoutNormalizing>
 
   // Overrideable core queries.

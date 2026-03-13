@@ -7,7 +7,12 @@ import {
   type Text,
 } from './'
 import {apply} from './core'
+import {collapse} from './core/collapse'
 import {deleteText} from './core/delete-text'
+import {deselect} from './core/deselect'
+import {move} from './core/move'
+import {select} from './core/select'
+import {setSelection} from './core/set-selection'
 import {
   above,
   after,
@@ -44,13 +49,6 @@ import {
   unhangRange,
   withoutNormalizing,
 } from './editor'
-import {
-  collapse,
-  deselect,
-  move,
-  select,
-  setSelection,
-} from './transforms-selection'
 
 /**
  * Create a new Slate `Editor` object.

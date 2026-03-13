@@ -1,11 +1,8 @@
+import type {Editor} from '../interfaces/editor'
 import {Point} from '../interfaces/point'
 import type {Range} from '../interfaces/range'
-import type {SelectionTransforms} from '../interfaces/transforms/selection'
 
-export const setSelection: SelectionTransforms['setSelection'] = (
-  editor,
-  props,
-) => {
+export function setSelection(editor: Editor, props: Partial<Range>): void {
   const {selection} = editor
   const oldProps: Partial<Range> | null = {}
   const newProps: Partial<Range> = {}

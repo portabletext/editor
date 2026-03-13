@@ -1,15 +1,14 @@
+import type {Location} from '../interfaces'
 import {Editor} from '../interfaces/editor'
 import {Range} from '../interfaces/range'
 import {Scrubber} from '../interfaces/scrubber'
-import {Transforms} from '../interfaces/transforms'
-import type {SelectionTransforms} from '../interfaces/transforms/selection'
 
-export const select: SelectionTransforms['select'] = (editor, target) => {
+export function select(editor: Editor, target: Location): void {
   const {selection} = editor
   target = Editor.range(editor, target)
 
   if (selection) {
-    Transforms.setSelection(editor, target)
+    editor.setSelection(target)
     return
   }
 
