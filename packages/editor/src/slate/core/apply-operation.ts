@@ -9,14 +9,14 @@ import {
   type Operation,
   type Selection,
   type Text,
-} from '../../index'
+} from '../index'
 import {
   insertChildren,
   modifyChildren,
   modifyDescendant,
   modifyLeaf,
   removeChildren,
-} from '../../utils/modify'
+} from '../utils/modify'
 
 export function applyOperation(editor: Editor, op: Operation): void {
   let transformSelection = false
