@@ -1,6 +1,7 @@
 import {applyMergeNode} from '../../internal-utils/apply-merge-node'
 import {applySetNode} from '../../internal-utils/apply-set-node'
 import type {PortableTextSlateEditor} from '../../types/slate-editor'
+import type {Location} from '../index'
 import {Editor} from '../interfaces/editor'
 import {Element} from '../interfaces/element'
 import {Node} from '../interfaces/node'
@@ -11,9 +12,19 @@ import {Range} from '../interfaces/range'
 import {Scrubber} from '../interfaces/scrubber'
 import {Text} from '../interfaces/text'
 import {Transforms} from '../interfaces/transforms'
-import type {TextTransforms} from '../interfaces/transforms/text'
+import type {TextUnit} from '../types/types'
+import {insertText} from './insert-text'
 
-export const deleteText: TextTransforms['delete'] = (editor, options = {}) => {
+export interface TextDeleteOptions {
+  at?: Location
+  distance?: number
+  unit?: TextUnit
+  reverse?: boolean
+  hanging?: boolean
+  voids?: boolean
+}
+
+export function deleteText(editor: Editor, options: TextDeleteOptions = {}) {
   Editor.withoutNormalizing(editor, () => {
     const {
       reverse = false,
@@ -325,10 +336,7 @@ export const deleteText: TextTransforms['delete'] = (editor, options = {}) => {
         /[\u0980-\u09FF\u0E00-\u0E7F\u1000-\u109F\u0900-\u097F\u1780-\u17FF\u0D00-\u0D7F\u0B00-\u0B7F\u0A00-\u0A7F\u0B80-\u0BFF\u0C00-\u0C7F]+/,
       )
     ) {
-      Transforms.insertText(
-        editor,
-        removedText.slice(0, removedText.length - distance),
-      )
+      insertText(editor, removedText.slice(0, removedText.length - distance))
     }
 
     const startUnref = startRef.unref()

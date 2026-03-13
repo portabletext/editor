@@ -150,7 +150,7 @@ export const withDOM = <T extends Editor>(editor: T): T & DOMEditor => {
               } else {
                 const [, end] = Range.edges(e.selection)
                 const pointRef = Editor.pointRef(e, end)
-                Transforms.delete(e, {at: e.selection})
+                e.delete({at: e.selection})
                 splitAt = pointRef.unref()
               }
             }

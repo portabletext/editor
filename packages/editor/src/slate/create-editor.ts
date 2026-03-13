@@ -1,13 +1,13 @@
 import type {EditorSchema} from '../editor/editor-schema'
 import {
   getDirtyPaths,
-  insertText,
   normalizeNode,
   shouldNormalize,
   type Editor,
   type Text,
 } from './'
 import {apply} from './core'
+import {deleteText} from './core/delete-text'
 import {
   above,
   after,
@@ -52,7 +52,6 @@ import {
   select,
   setSelection,
 } from './transforms-selection'
-import {deleteText} from './transforms-text'
 
 /**
  * Create a new Slate `Editor` object.
@@ -97,7 +96,6 @@ export const createEditor = (context: {
     apply: (...args: any[]) => (apply as any)(e, ...args),
 
     // Editor
-    insertText: (...args: any[]) => (insertText as any)(e, ...args),
     normalizeNode: (...args: any[]) => (normalizeNode as any)(e, ...args),
     getDirtyPaths: (...args: any[]) => (getDirtyPaths as any)(e, ...args),
     shouldNormalize: (...args: any[]) => (shouldNormalize as any)(e, ...args),

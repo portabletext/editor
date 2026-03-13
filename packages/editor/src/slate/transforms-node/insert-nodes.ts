@@ -60,7 +60,7 @@ export const insertNodes: NodeTransforms['insertNodes'] = (
       } else {
         const [, end] = Range.edges(at)
         const pointRef = Editor.pointRef(editor, end)
-        Transforms.delete(editor, {at})
+        editor.delete({at})
         at = pointRef.unref()!
       }
     }

@@ -2,7 +2,6 @@ import type {PortableTextBlock} from '@portabletext/schema'
 import {isSpan, isTextBlock} from '@portabletext/schema'
 import {toSlateRange} from '../internal-utils/to-slate-range'
 import {
-  deleteText,
   Editor,
   Element,
   Node,
@@ -13,6 +12,7 @@ import {
   type NodeEntry,
 } from '../slate'
 import {DOMEditor} from '../slate-dom'
+import {deleteText} from '../slate/core/delete-text'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import type {OperationImplementation} from './operation.types'
 

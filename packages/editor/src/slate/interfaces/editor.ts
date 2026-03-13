@@ -18,6 +18,8 @@ import type {
   Text,
   Transforms,
 } from '..'
+import type {TextDeleteOptions} from '../core/delete-text'
+import type {TextInsertTextOptions} from '../core/insert-text'
 import {isEditor} from '../editor/is-editor'
 import type {
   LeafEdge,
@@ -28,7 +30,6 @@ import type {
   TextUnitAdjustment,
 } from '../types/types'
 import type {OmitFirstArg} from '../utils/types'
-import type {TextInsertTextOptions} from './transforms/text'
 
 /**
  * The `Editor` interface stores all the state of a Slate editor. It is extended
@@ -75,11 +76,11 @@ export interface BaseEditor {
   // Overrideable core transforms.
 
   collapse: OmitFirstArg<typeof Transforms.collapse>
-  delete: OmitFirstArg<typeof Transforms.delete>
+  delete: (options?: TextDeleteOptions) => void
   deselect: OmitFirstArg<typeof Transforms.deselect>
   insertBreak: OmitFirstArg<typeof Editor.insertBreak>
   insertNodes: OmitFirstArg<typeof Transforms.insertNodes>
-  insertText: OmitFirstArg<typeof Transforms.insertText>
+  insertText: (text: string, options?: TextInsertTextOptions) => void
   move: OmitFirstArg<typeof Transforms.move>
   normalize: OmitFirstArg<typeof Editor.normalize>
   removeNodes: OmitFirstArg<typeof Transforms.removeNodes>
@@ -318,16 +319,6 @@ export interface EditorInterface {
    * If the selection is currently expanded, it will be deleted first.
    */
   insertBreak: (editor: Editor) => void
-
-  /**
-   * Insert a string of text
-   * at the specified location or (if not defined) the current selection or (if not defined) the end of the document.
-   */
-  insertText: (
-    editor: Editor,
-    text: string,
-    options?: TextInsertTextOptions,
-  ) => void
 
   /**
    * Check if a value is a block `Element` object.
@@ -599,10 +590,6 @@ export const Editor: EditorInterface = {
 
   insertBreak(editor) {
     editor.insertBreak()
-  },
-
-  insertText(editor, text) {
-    editor.insertText(text)
   },
 
   isBlock(editor, value) {
