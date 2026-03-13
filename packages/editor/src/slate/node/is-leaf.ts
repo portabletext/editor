@@ -1,7 +1,7 @@
 import type {EditorSchema} from '../../editor/editor-schema'
-import {Text} from '../interfaces/text'
+import {isText} from '../text/is-text'
 import {isObjectNode} from './is-object-node'
 
 export function isLeaf(value: any, schema: EditorSchema): boolean {
-  return Text.isText(value, schema) || isObjectNode(value, schema)
+  return isText(value, schema) || isObjectNode(value, schema)
 }

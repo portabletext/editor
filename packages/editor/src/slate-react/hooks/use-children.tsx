@@ -1,11 +1,11 @@
 import {useCallback, useRef, type JSX} from 'react'
-import {
+import type {
+  Ancestor,
+  DecoratedRange,
+  Editor,
   Element,
+  ObjectNode,
   Text,
-  type Ancestor,
-  type DecoratedRange,
-  type Editor,
-  type ObjectNode,
 } from '../../slate'
 import {
   isElementDecorationsEqual,
@@ -13,7 +13,9 @@ import {
   type Key,
 } from '../../slate-dom'
 import {isEditor} from '../../slate/editor/is-editor'
+import {isElement} from '../../slate/element/is-element'
 import {isObjectNode} from '../../slate/node/is-object-node'
+import {isText} from '../../slate/text/is-text'
 import type {
   RenderElementProps,
   RenderLeafProps,
@@ -120,13 +122,13 @@ const useChildren = (props: {
   }
 
   return node.children.map((n, i) => {
-    if (Element.isElement(n, editor.schema)) {
+    if (isElement(n, editor.schema)) {
       return renderElementComponent(n, i)
     }
     if (isObjectNode(n, editor.schema)) {
       return renderObjectNodeComponent(n, i)
     }
-    if (Text.isText(n, editor.schema)) {
+    if (isText(n, editor.schema)) {
       return renderTextComponent(n, i)
     }
     return renderTextComponent(n as Text, i)

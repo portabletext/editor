@@ -1,7 +1,8 @@
 import React, {useCallback, useRef, type JSX} from 'react'
 import {ReactEditor, useSlateStatic} from '..'
-import {Text as SlateText, type DecoratedRange, type Element} from '../../slate'
+import type {DecoratedRange, Element, Text as SlateText} from '../../slate'
 import {isTextDecorationsEqual} from '../../slate-dom'
+import {getTextDecorations} from '../../slate/text/get-text-decorations'
 import {useDecorations} from '../hooks/use-decorations'
 import type {
   RenderLeafProps,
@@ -38,7 +39,7 @@ const Text = (props: {
   const editor = useSlateStatic()
   const ref = useRef<HTMLSpanElement | null>(null)
   const decorations = useDecorations(text, parentDecorations)
-  const decoratedLeaves = SlateText.decorations(text, decorations)
+  const decoratedLeaves = getTextDecorations(text, decorations)
   const key = ReactEditor.findKey(editor, text)
   const children = []
 

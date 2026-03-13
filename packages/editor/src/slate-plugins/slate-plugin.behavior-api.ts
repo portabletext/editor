@@ -3,8 +3,10 @@ import {
   slatePointToSelectionPoint,
   slateRangeToSelection,
 } from '../internal-utils/slate-utils'
-import {Point, Range, type Editor} from '../slate'
+import type {Editor} from '../slate'
 import {range as editorRange} from '../slate/editor/range'
+import {pointEquals} from '../slate/point/point-equals'
+import {isBackwardRange} from '../slate/range/is-backward-range'
 
 export function createBehaviorApiPlugin(editorActor: EditorActor) {
   return function behaviorApiPlugin(editor: Editor) {
@@ -61,12 +63,12 @@ export function createBehaviorApiPlugin(editorActor: EditorActor) {
         : undefined
 
       const backward = editor.selection
-        ? Range.isBackward({
+        ? isBackwardRange({
             anchor: partialRange.anchor ?? editor.selection.anchor,
             focus: partialRange.focus ?? editor.selection.focus,
           })
         : partialRange.anchor && partialRange.focus
-          ? Range.isBackward({
+          ? isBackwardRange({
               anchor: partialRange.anchor,
               focus: partialRange.focus,
             })
@@ -77,8 +79,8 @@ export function createBehaviorApiPlugin(editorActor: EditorActor) {
         const newFocus = partialRange.focus ?? editor.selection.focus
 
         if (
-          Point.equals(newAnchor, editor.selection.anchor) &&
-          Point.equals(newFocus, editor.selection.focus)
+          pointEquals(newAnchor, editor.selection.anchor) &&
+          pointEquals(newFocus, editor.selection.focus)
         ) {
           // To avoid double `select` events, we call `setSelection` directly
           // if the selection wouldn't actually change.

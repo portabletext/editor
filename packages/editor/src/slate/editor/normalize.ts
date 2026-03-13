@@ -1,6 +1,6 @@
+import {isElement} from '../element/is-element'
 import type {Operation, Path} from '../interfaces'
 import type {Editor} from '../interfaces/editor'
-import {Element} from '../interfaces/element'
 import {getNodes} from '../node/get-nodes'
 import {hasNode} from '../node/has-node'
 import {isNormalizing} from './is-normalizing'
@@ -61,7 +61,7 @@ export function normalize(
           by definition adding children to an empty node can't cause other paths to change.
         */
         if (
-          Element.isElement(entryNode, editor.schema) &&
+          isElement(entryNode, editor.schema) &&
           entryNode.children.length === 0
         ) {
           editor.normalizeNode(entry, {operation})

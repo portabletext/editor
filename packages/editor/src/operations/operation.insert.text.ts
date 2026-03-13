@@ -1,9 +1,11 @@
 import {applySelect} from '../internal-utils/apply-selection'
-import {Path, Range, Text} from '../slate'
 import {elementReadOnly} from '../slate/editor/element-read-only'
 import {getVoid} from '../slate/editor/get-void'
 import {hasPath} from '../slate/editor/has-path'
 import {getNode} from '../slate/node/get-node'
+import {nextPath} from '../slate/path/next-path'
+import {isCollapsedRange} from '../slate/range/is-collapsed-range'
+import {isText} from '../slate/text/is-text'
 import type {OperationImplementation} from './operation.types'
 
 export const insertTextOperationImplementation: OperationImplementation<
@@ -12,7 +14,7 @@ export const insertTextOperationImplementation: OperationImplementation<
   const {editor} = operation
   const {selection} = editor
 
-  if (!selection || !Range.isCollapsed(selection)) {
+  if (!selection || !isCollapsedRange(selection)) {
     return
   }
 
@@ -22,13 +24,13 @@ export const insertTextOperationImplementation: OperationImplementation<
 
   // If the selection is at an ObjectNode, move to the adjacent span.
   if (editor.isObjectNode(node)) {
-    const nextPath = Path.next(path)
+    const next = nextPath(path)
 
-    if (hasPath(editor, nextPath)) {
-      const nextNode = getNode(editor, nextPath, editor.schema)
+    if (hasPath(editor, next)) {
+      const nextNode = getNode(editor, next, editor.schema)
 
-      if (Text.isText(nextNode, editor.schema)) {
-        path = nextPath
+      if (isText(nextNode, editor.schema)) {
+        path = next
         offset = 0
         applySelect(editor, {path, offset})
       } else {

@@ -13,16 +13,16 @@ import {
   type PortableTextSpan,
 } from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
-import {
-  Element,
-  Text,
-  type Descendant,
-  type InsertNodeOperation,
-  type InsertTextOperation,
-  type RemoveNodeOperation,
-  type RemoveTextOperation,
-  type SetNodeOperation,
+import type {
+  Descendant,
+  InsertNodeOperation,
+  InsertTextOperation,
+  RemoveNodeOperation,
+  RemoveTextOperation,
+  SetNodeOperation,
 } from '../slate'
+import {isElement} from '../slate/element/is-element'
+import {isText} from '../slate/text/is-text'
 import type {Path} from '../types/paths'
 import {safeStringify} from './safe-json'
 
@@ -169,7 +169,7 @@ export function setNodePatch(
         const childKey = child._key
         const patches: Patch[] = []
 
-        if (Element.isElement(child, schema)) {
+        if (isElement(child, schema)) {
           const _key = operation.newProperties._key
 
           if (_key !== undefined) {
@@ -298,7 +298,7 @@ export function insertNodePatch(
     // Defensive setIfMissing to ensure children array exists before inserting
     const setIfMissingPatch = setIfMissing([], [{_key: block._key}, 'children'])
 
-    if (Text.isText(operation.node, schema)) {
+    if (isText(operation.node, schema)) {
       return [setIfMissingPatch, insert([operation.node], position, path)]
     }
 

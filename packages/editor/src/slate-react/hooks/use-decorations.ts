@@ -1,14 +1,10 @@
 import {createContext, useCallback, useContext, useMemo, useRef} from 'react'
-import {
-  Text,
-  type DecoratedRange,
-  type Descendant,
-  type NodeEntry,
-} from '../../slate'
+import type {DecoratedRange, Descendant, NodeEntry} from '../../slate'
 import {
   isElementDecorationsEqual,
   isTextDecorationsEqual,
 } from '../../slate-dom'
+import {isText} from '../../slate/text/is-text'
 import {ReactEditor} from '../plugin/react-editor'
 import {useGenericSelector} from './use-generic-selector'
 import {useIsomorphicLayoutEffect} from './use-isomorphic-layout-effect'
@@ -39,7 +35,7 @@ export const useDecorations = (
     return decorate([node, path])
   }
 
-  const equalityFn = Text.isText(node, editor.schema)
+  const equalityFn = isText(node, editor.schema)
     ? isTextDecorationsEqual
     : isElementDecorationsEqual
 

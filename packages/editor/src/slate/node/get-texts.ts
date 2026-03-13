@@ -1,6 +1,7 @@
 import type {EditorSchema} from '../../editor/editor-schema'
 import type {Node, NodeEntry, NodeTextsOptions} from '../interfaces/node'
-import {Text} from '../interfaces/text'
+import type {Text} from '../interfaces/text'
+import {isText} from '../text/is-text'
 import {getNodes} from './get-nodes'
 
 export function* getTexts(
@@ -9,7 +10,7 @@ export function* getTexts(
   options: NodeTextsOptions = {},
 ): Generator<NodeEntry<Text>, void, undefined> {
   for (const [node, path] of getNodes(root, schema, options)) {
-    if (Text.isText(node, schema)) {
+    if (isText(node, schema)) {
       yield [node, path]
     }
   }

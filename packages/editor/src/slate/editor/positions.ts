@@ -1,10 +1,15 @@
+import {isElement} from '../element/is-element'
 import type {Location} from '../interfaces'
 import type {Editor} from '../interfaces/editor'
-import {Element} from '../interfaces/element'
-import {Path} from '../interfaces/path'
+import type {Path} from '../interfaces/path'
 import type {Point} from '../interfaces/point'
-import {Range} from '../interfaces/range'
-import {Text} from '../interfaces/text'
+import {isAncestorPath} from '../path/is-ancestor-path'
+import {nextPath} from '../path/next-path'
+import {pathEquals} from '../path/path-equals'
+import {pathHasPrevious} from '../path/path-has-previous'
+import {previousPath} from '../path/previous-path'
+import {rangeEdges} from '../range/range-edges'
+import {isText} from '../text/is-text'
 import type {TextUnitAdjustment} from '../types/types'
 import {
   getCharacterDistance,
@@ -59,7 +64,7 @@ export function* positions(
    */
 
   const editorRange = range(editor, at)
-  const [start, end] = Range.edges(editorRange)
+  const [start, end] = rangeEdges(editorRange)
   const first = reverse ? end : start
   let isNewBlock = false
   let blockText = ''
@@ -82,7 +87,7 @@ export function* positions(
     // If the node is inside a skipped ancestor, do not return any points, but
     // still process its content so that the iteration state remains correct.
     const hasSkippedAncestor = skippedPaths.some((p) =>
-      Path.isAncestor(p, nodePath),
+      isAncestorPath(p, nodePath),
     )
 
     function* maybeYield(point: Point) {
@@ -94,21 +99,21 @@ export function* positions(
     /*
      * ELEMENT NODE - Yield position(s) for voids, collect blockText for blocks
      */
-    if (Element.isElement(node, editor.schema)) {
+    if (isElement(node, editor.schema)) {
       if (!editor.isSelectable(node)) {
         /**
          * If the node is not selectable, skip it and its descendants
          */
         skippedPaths.push(nodePath)
         if (reverse) {
-          if (Path.hasPrevious(nodePath)) {
-            yield* maybeYield(editorEnd(editor, Path.previous(nodePath)))
+          if (pathHasPrevious(nodePath)) {
+            yield* maybeYield(editorEnd(editor, previousPath(nodePath)))
           }
           continue
         } else {
-          const nextPath = Path.next(nodePath)
-          if (hasPath(editor, nextPath)) {
-            yield* maybeYield(editorStart(editor, nextPath))
+          const next = nextPath(nodePath)
+          if (hasPath(editor, next)) {
+            yield* maybeYield(editorStart(editor, next))
           }
           continue
         }
@@ -142,10 +147,10 @@ export function* positions(
         //   blockRange = Editor.range(editor, ...Editor.edges(editor, path))
         //   blockRange = Range.intersection(range, blockRange) // intersect
         //   blockText = Editor.string(editor, blockRange, { voids })
-        const e = Path.isAncestor(nodePath, end.path)
+        const e = isAncestorPath(nodePath, end.path)
           ? end
           : editorEnd(editor, nodePath)
-        const s = Path.isAncestor(nodePath, start.path)
+        const s = isAncestorPath(nodePath, start.path)
           ? start
           : editorStart(editor, nodePath)
 
@@ -161,8 +166,8 @@ export function* positions(
 
     if (
       !isEditor(node) &&
-      !Element.isElement(node, editor.schema) &&
-      !Text.isText(node, editor.schema)
+      !isElement(node, editor.schema) &&
+      !isText(node, editor.schema)
     ) {
       yield* maybeYield({path: nodePath, offset: 0})
       continue
@@ -172,8 +177,8 @@ export function* positions(
      * TEXT LEAF NODE - Iterate through text content, yielding
      * positions every `distance` offset according to `unit`.
      */
-    if (Text.isText(node, editor.schema)) {
-      const isFirst = Path.equals(nodePath, first.path)
+    if (isText(node, editor.schema)) {
+      const isFirst = pathEquals(nodePath, first.path)
 
       // Proof that we always exhaust text nodes before encountering a new one:
       //   console.assert(leafTextRemaining <= 0,

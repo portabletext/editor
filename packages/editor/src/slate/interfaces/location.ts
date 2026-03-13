@@ -1,4 +1,5 @@
-import {Path, type Point, type Range} from '..'
+import type {Path, Point, Range} from '..'
+import {isPath} from '../path/is-path'
 
 /**
  * The `Location` interface is a union of the ways to refer to a specific
@@ -28,8 +29,6 @@ export interface SpanInterface {
 // eslint-disable-next-line no-redeclare
 export const Span: SpanInterface = {
   isSpan(value: any): value is Span {
-    return (
-      Array.isArray(value) && value.length === 2 && value.every(Path.isPath)
-    )
+    return Array.isArray(value) && value.length === 2 && value.every(isPath)
   },
 }

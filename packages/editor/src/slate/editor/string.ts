@@ -1,8 +1,8 @@
 import type {Location} from '../interfaces'
 import type {Editor} from '../interfaces/editor'
-import {Path} from '../interfaces/path'
-import {Range} from '../interfaces/range'
-import {Text} from '../interfaces/text'
+import {pathEquals} from '../path/path-equals'
+import {rangeEdges} from '../range/range-edges'
+import {isText} from '../text/is-text'
 import {nodes} from './nodes'
 import {range} from './range'
 
@@ -13,21 +13,21 @@ export function string(
 ): string {
   const {voids = false} = options
   const editorRange = range(editor, at)
-  const [start, end] = Range.edges(editorRange)
+  const [start, end] = rangeEdges(editorRange)
   let text = ''
 
   for (const [node, path] of nodes(editor, {
     at: editorRange,
-    match: (n) => Text.isText(n, editor.schema),
+    match: (n) => isText(n, editor.schema),
     voids,
   })) {
     let t = node.text
 
-    if (Path.equals(path, end.path)) {
+    if (pathEquals(path, end.path)) {
       t = t.slice(0, end.offset)
     }
 
-    if (Path.equals(path, start.path)) {
+    if (pathEquals(path, start.path)) {
       t = t.slice(start.offset)
     }
 

@@ -4,12 +4,12 @@ import {nodes} from '../editor/nodes'
 import {pathRef} from '../editor/path-ref'
 import {unhangRange} from '../editor/unhang-range'
 import {withoutNormalizing} from '../editor/without-normalizing'
+import {isElement} from '../element/is-element'
 import type {Location} from '../interfaces'
 import type {Editor, NodeMatch} from '../interfaces/editor'
-import {Element} from '../interfaces/element'
 import type {Node} from '../interfaces/node'
-import {Path} from '../interfaces/path'
-import {Range} from '../interfaces/range'
+import {isPath} from '../path/is-path'
+import {isRange} from '../range/is-range'
 import type {RangeMode} from '../types/types'
 import {matchPath} from '../utils/match-path'
 
@@ -34,12 +34,12 @@ export function removeNodes<T extends Node>(
     }
 
     if (match == null) {
-      match = Path.isPath(at)
+      match = isPath(at)
         ? matchPath(editor, at)
-        : (n) => Element.isElement(n, editor.schema) && isBlock(editor, n)
+        : (n) => isElement(n, editor.schema) && isBlock(editor, n)
     }
 
-    if (!hanging && Range.isRange(at)) {
+    if (!hanging && isRange(at)) {
       at = unhangRange(editor, at, {voids})
     }
 

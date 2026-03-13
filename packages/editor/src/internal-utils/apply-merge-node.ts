@@ -1,6 +1,13 @@
-import {Element, Path, Range, Text, type Node, type Point} from '../slate'
+import type {Node, Path, Point, Range} from '../slate'
 import {withoutNormalizing} from '../slate/editor/without-normalizing'
+import {isElement} from '../slate/element/is-element'
 import {getNode} from '../slate/node/get-node'
+import {isAncestorPath} from '../slate/path/is-ancestor-path'
+import {pathEndsBefore} from '../slate/path/path-ends-before'
+import {pathEquals} from '../slate/path/path-equals'
+import {previousPath} from '../slate/path/previous-path'
+import {isRange} from '../slate/range/is-range'
+import {isText} from '../slate/text/is-text'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 
 /**
@@ -21,7 +28,7 @@ export function applyMergeNode(
   position: number,
 ): void {
   const node = getNode(editor, path, editor.schema)
-  const prevPath = Path.previous(path)
+  const prevPath = previousPath(path)
 
   // Pre-transform all refs with merge semantics
   for (const ref of editor.pathRefs) {
@@ -116,7 +123,7 @@ export function applyMergeNode(
     if ('offset' in action.at && typeof action.at.offset === 'number') {
       const at = transformPointForMerge(action.at as Point, path, position)
       editorAny['pendingAction'] = at ? {...action, at} : null
-    } else if (Range.isRange(action.at)) {
+    } else if (isRange(action.at)) {
       const anchor = transformPointForMerge(action.at.anchor, path, position)
       const focus = transformPointForMerge(action.at.focus, path, position)
       editorAny['pendingAction'] =
@@ -135,7 +142,7 @@ export function applyMergeNode(
 
   try {
     withoutNormalizing(editor, () => {
-      if (Text.isText(node, editor.schema)) {
+      if (isText(node, editor.schema)) {
         // Merge text: insert the text into the previous sibling at the position
         if (node.text.length > 0) {
           editor.apply({
@@ -147,7 +154,7 @@ export function applyMergeNode(
         }
         // Remove the now-redundant text node
         editor.apply({type: 'remove_node', path, node: node as Node})
-      } else if (Element.isElement(node, editor.schema)) {
+      } else if (isElement(node, editor.schema)) {
         // Merge element: move all children into the previous sibling
         const children = node.children
         for (let i = 0; i < children.length; i++) {
@@ -201,7 +208,7 @@ function transformTextDiffForMerge(
 } | null {
   const {path, diff, id} = textDiff
 
-  if (!Path.equals(mergePath, path)) {
+  if (!pathEquals(mergePath, path)) {
     const newPath = transformPathForMerge(path, mergePath, position)
     if (!newPath) {
       return null
@@ -234,9 +241,9 @@ function transformPathForMerge(
 ): Path | null {
   const p = [...path]
 
-  if (Path.equals(mergePath, p) || Path.endsBefore(mergePath, p)) {
+  if (pathEquals(mergePath, p) || pathEndsBefore(mergePath, p)) {
     p[mergePath.length - 1] = p[mergePath.length - 1]! - 1
-  } else if (Path.isAncestor(mergePath, p)) {
+  } else if (isAncestorPath(mergePath, p)) {
     p[mergePath.length - 1] = p[mergePath.length - 1]! - 1
     p[mergePath.length] = p[mergePath.length]! + position
   }
@@ -257,7 +264,7 @@ function transformPointForMerge(
 ): Point {
   let {path, offset} = point
 
-  if (Path.equals(mergePath, path)) {
+  if (pathEquals(mergePath, path)) {
     offset += position
   }
 

@@ -1,10 +1,6 @@
 import React, {useCallback, useEffect, useState} from 'react'
-import {
-  Scrubber,
-  type Descendant,
-  type Editor,
-  type Selection,
-} from '../../slate'
+import {safeStringify} from '../../internal-utils/safe-json'
+import type {Descendant, Editor, Selection} from '../../slate'
 import {isEditor} from '../../slate/editor/is-editor'
 import {isNodeList} from '../../slate/node/is-node-list'
 import {FocusedContext} from '../hooks/use-focused'
@@ -44,7 +40,7 @@ export const Slate = (props: {
   React.useState(() => {
     if (!isNodeList(initialValue, editor.schema)) {
       throw new Error(
-        `[Slate] initialValue is invalid! Expected a list of elements but got: ${Scrubber.stringify(
+        `[Slate] initialValue is invalid! Expected a list of elements but got: ${safeStringify(
           initialValue,
         )}`,
       )
@@ -52,7 +48,7 @@ export const Slate = (props: {
 
     if (!isEditor(editor)) {
       throw new Error(
-        `[Slate] editor is invalid! You passed: ${Scrubber.stringify(editor)}`,
+        `[Slate] editor is invalid! You passed: ${safeStringify(editor)}`,
       )
     }
 

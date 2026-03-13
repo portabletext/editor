@@ -1,14 +1,14 @@
 import type {EditorSchema} from '../../editor/editor-schema'
 import {isEditor} from '../editor/is-editor'
-import {Element} from '../interfaces/element'
+import {isElement} from '../element/is-element'
 import type {Node} from '../interfaces/node'
-import {Text} from '../interfaces/text'
+import {isText} from '../text/is-text'
 import {isObjectNode} from './is-object-node'
 
 export function isNode(value: any, schema: EditorSchema): value is Node {
   return (
-    Text.isText(value, schema) ||
-    Element.isElement(value, schema) ||
+    isText(value, schema) ||
+    isElement(value, schema) ||
     isEditor(value) ||
     isObjectNode(value, schema)
   )

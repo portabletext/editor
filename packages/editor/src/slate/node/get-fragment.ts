@@ -1,8 +1,11 @@
 import type {EditorSchema} from '../../editor/editor-schema'
 import type {Ancestor} from '../interfaces/node'
-import {Path} from '../interfaces/path'
-import {Range} from '../interfaces/range'
-import {Text} from '../interfaces/text'
+import type {Range} from '../interfaces/range'
+import {parentPath} from '../path/parent-path'
+import {pathEquals} from '../path/path-equals'
+import {rangeEdges} from '../range/range-edges'
+import {rangeIncludes} from '../range/range-includes'
+import {isText} from '../text/is-text'
 import {modifyChildren, modifyLeaf, removeChildren} from '../utils/modify'
 import {getNode} from './get-node'
 import {getNodes} from './get-nodes'
@@ -14,25 +17,25 @@ export function getFragment<T extends Ancestor>(
 ): T['children'] {
   const newRoot: Ancestor = {children: root.children} as Ancestor
 
-  const [start, end] = Range.edges(range)
+  const [start, end] = rangeEdges(range)
   const nodeEntries = getNodes(newRoot, schema, {
     reverse: true,
-    pass: ([, path]) => !Range.includes(range, path),
+    pass: ([, path]) => !rangeIncludes(range, path),
   })
 
   for (const [, path] of nodeEntries) {
-    if (!Range.includes(range, path)) {
+    if (!rangeIncludes(range, path)) {
       const index = path[path.length - 1]!
 
-      modifyChildren(newRoot, Path.parent(path), schema, (children) =>
+      modifyChildren(newRoot, parentPath(path), schema, (children) =>
         removeChildren(children, index, 1),
       )
     }
 
-    if (Path.equals(path, end.path)) {
+    if (pathEquals(path, end.path)) {
       const leaf = getNode(newRoot, path, schema)
 
-      if (Text.isText(leaf, schema)) {
+      if (isText(leaf, schema)) {
         modifyLeaf(newRoot, path, schema, (node) => {
           const before = node.text.slice(0, end.offset)
           return {...node, text: before}
@@ -40,10 +43,10 @@ export function getFragment<T extends Ancestor>(
       }
     }
 
-    if (Path.equals(path, start.path)) {
+    if (pathEquals(path, start.path)) {
       const leaf = getNode(newRoot, path, schema)
 
-      if (Text.isText(leaf, schema)) {
+      if (isText(leaf, schema)) {
         modifyLeaf(newRoot, path, schema, (node) => {
           const before = node.text.slice(start.offset)
           return {...node, text: before}

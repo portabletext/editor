@@ -1,4 +1,4 @@
-import {Path, Text, type Node, type Point} from '../slate'
+import type {Node, Path, Point} from '../slate'
 import {end} from '../slate/editor/end'
 import {isEdge} from '../slate/editor/is-edge'
 import {isEnd} from '../slate/editor/is-end'
@@ -7,6 +7,8 @@ import {pathRef} from '../slate/editor/path-ref'
 import {withoutNormalizing} from '../slate/editor/without-normalizing'
 import {extractProps} from '../slate/node/extract-props'
 import {getNode} from '../slate/node/get-node'
+import {nextPath} from '../slate/path/next-path'
+import {isText} from '../slate/text/is-text'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {applySelect} from './apply-selection'
 import {applySplitNode} from './apply-split-node'
@@ -39,9 +41,9 @@ export function applyInsertNodeAtPoint(
   at: Point,
 ): void {
   withoutNormalizing(editor, () => {
-    const match = Text.isText(node, editor.schema)
-      ? (n: Node) => Text.isText(n, editor.schema)
-      : (n: Node) => Text.isText(n, editor.schema) || editor.isObjectNode(n)
+    const match = isText(node, editor.schema)
+      ? (n: Node) => isText(n, editor.schema)
+      : (n: Node) => isText(n, editor.schema) || editor.isObjectNode(n)
 
     const [entry] = nodes(editor, {
       at: at.path,
@@ -67,7 +69,7 @@ export function applyInsertNodeAtPoint(
     }
 
     const path = ref.unref()!
-    const insertPath = isAtEnd ? Path.next(path) : path
+    const insertPath = isAtEnd ? nextPath(path) : path
 
     editor.apply({type: 'insert_node', path: insertPath, node})
 

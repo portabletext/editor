@@ -3,7 +3,7 @@ import {applySelect} from '../internal-utils/apply-selection'
 import {applySetNode} from '../internal-utils/apply-set-node'
 import {applySplitNode} from '../internal-utils/apply-split-node'
 import {toSlateRange} from '../internal-utils/to-slate-range'
-import {Path, Range, Text} from '../slate'
+import type {Path} from '../slate'
 import {isEdge} from '../slate/editor/is-edge'
 import {isEnd} from '../slate/editor/is-end'
 import {isStart} from '../slate/editor/is-start'
@@ -13,6 +13,13 @@ import {nodes} from '../slate/editor/nodes'
 import {rangeRef} from '../slate/editor/range-ref'
 import {extractProps} from '../slate/node/extract-props'
 import {getChildren} from '../slate/node/get-children'
+import {isAfterPath} from '../slate/path/is-after-path'
+import {isBeforePath} from '../slate/path/is-before-path'
+import {isCollapsedRange} from '../slate/range/is-collapsed-range'
+import {isRange} from '../slate/range/is-range'
+import {rangeEdges} from '../slate/range/range-edges'
+import {rangeIncludes} from '../slate/range/range-includes'
+import {isText} from '../slate/text/is-text'
 import type {OperationImplementation} from './operation.types'
 
 export const removeAnnotationOperationImplementation: OperationImplementation<
@@ -37,7 +44,7 @@ export const removeAnnotationOperationImplementation: OperationImplementation<
     return
   }
 
-  if (Range.isCollapsed(effectiveSelection)) {
+  if (isCollapsedRange(effectiveSelection)) {
     const [block, blockPath] = editorNode(editor, effectiveSelection, {
       depth: 1,
     })
@@ -87,7 +94,7 @@ export const removeAnnotationOperationImplementation: OperationImplementation<
         continue
       }
 
-      if (!Path.isBefore(childPath, selectedChildPath)) {
+      if (!isBeforePath(childPath, selectedChildPath)) {
         continue
       }
 
@@ -111,7 +118,7 @@ export const removeAnnotationOperationImplementation: OperationImplementation<
         continue
       }
 
-      if (!Path.isAfter(childPath, selectedChildPath)) {
+      if (!isAfterPath(childPath, selectedChildPath)) {
         continue
       }
 
@@ -141,19 +148,19 @@ export const removeAnnotationOperationImplementation: OperationImplementation<
 
     // Split text nodes at range boundaries
     const splitRange = at ?? editor.selection
-    if (splitRange && Range.isRange(splitRange)) {
+    if (splitRange && isRange(splitRange)) {
       const [splitLeaf] = leaf(editor, splitRange.anchor)
       if (
         !(
-          Range.isCollapsed(splitRange) &&
-          Text.isText(splitLeaf, editor.schema) &&
+          isCollapsedRange(splitRange) &&
+          isText(splitLeaf, editor.schema) &&
           splitLeaf.text.length > 0
         )
       ) {
         const splitRangeRef = rangeRef(editor, splitRange, {
           affinity: 'inward',
         })
-        const [splitStart, splitEnd] = Range.edges(splitRange)
+        const [splitStart, splitEnd] = rangeEdges(splitRange)
         const endAtEnd = isEnd(editor, splitEnd, splitEnd.path)
         if (!endAtEnd || !isEdge(editor, splitEnd, splitEnd.path)) {
           const [endNode] = editorNode(editor, splitEnd.path)
@@ -198,7 +205,7 @@ export const removeAnnotationOperationImplementation: OperationImplementation<
           continue
         }
 
-        if (!selectionRange || !Range.includes(selectionRange, childPath)) {
+        if (!selectionRange || !rangeIncludes(selectionRange, childPath)) {
           continue
         }
 

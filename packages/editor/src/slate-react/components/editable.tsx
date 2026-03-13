@@ -11,15 +11,13 @@ import React, {
 } from 'react'
 import scrollIntoView from 'scroll-into-view-if-needed'
 import type {EditorActor} from '../../editor/editor-machine'
-import {
+import type {
+  DecoratedRange,
+  Editor,
   Element,
-  Path,
-  Range,
+  LeafPosition,
+  NodeEntry,
   Text,
-  type DecoratedRange,
-  type Editor,
-  type LeafPosition,
-  type NodeEntry,
 } from '../../slate'
 import {
   CAN_USE_DOM,
@@ -58,10 +56,18 @@ import {isBlock} from '../../slate/editor/is-block'
 import {range as editorRange} from '../../slate/editor/range'
 import {rangeRef} from '../../slate/editor/range-ref'
 import {start as editorStart} from '../../slate/editor/start'
+import {isElement} from '../../slate/element/is-element'
 import {getLeaf} from '../../slate/node/get-leaf'
 import {getNode} from '../../slate/node/get-node'
 import {getString} from '../../slate/node/get-string'
 import {getTexts} from '../../slate/node/get-texts'
+import {pathEquals} from '../../slate/path/path-equals'
+import {isBackwardRange} from '../../slate/range/is-backward-range'
+import {isCollapsedRange} from '../../slate/range/is-collapsed-range'
+import {isExpandedRange} from '../../slate/range/is-expanded-range'
+import {rangeEquals} from '../../slate/range/range-equals'
+import {isText} from '../../slate/text/is-text'
+import {textEquals} from '../../slate/text/text-equals'
 import type {AndroidInputManager} from '../hooks/android-input-manager/android-input-manager'
 import {useAndroidInputManager} from '../hooks/android-input-manager/use-android-input-manager'
 import useChildren from '../hooks/use-children'
@@ -414,7 +420,7 @@ export const Editable = forwardRef(
             suppressThrow: true,
           })
 
-          if (slateRange && Range.equals(slateRange, selection)) {
+          if (slateRange && rangeEquals(slateRange, selection)) {
             if (!state.hasMarkPlaceholder) {
               return
             }
@@ -456,7 +462,7 @@ export const Editable = forwardRef(
         if (newDomRange) {
           if (ReactEditor.isComposing(editor) && !IS_ANDROID) {
             domSelection.collapseToEnd()
-          } else if (Range.isBackward(selection!)) {
+          } else if (isBackwardRange(selection!)) {
             domSelection.setBaseAndExtent(
               newDomRange.endContainer,
               newDomRange.endOffset,
@@ -598,7 +604,7 @@ export const Editable = forwardRef(
           if (
             type === 'insertText' &&
             selection &&
-            Range.isCollapsed(selection) &&
+            isCollapsedRange(selection) &&
             // Only use native character insertion for single characters a-z or space for now.
             // Long-press events (hold a + press 4 = ä) to choose a special character otherwise
             // causes duplicate inserts.
@@ -658,7 +664,7 @@ export const Editable = forwardRef(
                 const block = above(editor, {
                   at: anchor.path,
                   match: (n) =>
-                    Element.isElement(n, editor.schema) && isBlock(editor, n),
+                    isElement(n, editor.schema) && isBlock(editor, n),
                 })
 
                 if (
@@ -686,7 +692,7 @@ export const Editable = forwardRef(
                 suppressThrow: false,
               })
 
-              if (!selection || !Range.equals(selection, range)) {
+              if (!selection || !rangeEquals(selection, range)) {
                 native = false
 
                 const selectionRef =
@@ -717,7 +723,7 @@ export const Editable = forwardRef(
           // a delete forward/backward command it should delete the selection.
           if (
             selection &&
-            Range.isExpanded(selection) &&
+            isExpandedRange(selection) &&
             type.startsWith('delete')
           ) {
             const direction = type.endsWith('Backward') ? 'backward' : 'forward'
@@ -905,7 +911,7 @@ export const Editable = forwardRef(
 
           if (
             toRestore &&
-            (!editor.selection || !Range.equals(editor.selection, toRestore))
+            (!editor.selection || !rangeEquals(editor.selection, toRestore))
           ) {
             editor.select(toRestore)
           }
@@ -1025,14 +1031,14 @@ export const Editable = forwardRef(
     const {marks} = editor
     state.hasMarkPlaceholder = false
 
-    if (editor.selection && Range.isCollapsed(editor.selection) && marks) {
+    if (editor.selection && isCollapsedRange(editor.selection) && marks) {
       const {anchor} = editor.selection
       const leaf = getLeaf(editor, anchor.path, editor.schema)
 
-      if (Text.isText(leaf, editor.schema)) {
+      if (isText(leaf, editor.schema)) {
         const {text: _text, ...rest} = leaf
 
-        if (!Text.equals(leaf, marks as Text, {loose: true})) {
+        if (!textEquals(leaf, marks as Text, {loose: true})) {
           state.hasMarkPlaceholder = true
 
           const unset = Object.fromEntries(
@@ -1060,11 +1066,11 @@ export const Editable = forwardRef(
           const {anchor} = selection
           const text = getLeaf(editor, anchor.path, editor.schema)
 
-          if (!Text.isText(text, editor.schema)) {
+          if (!isText(text, editor.schema)) {
             return
           }
 
-          if (marks && !Text.equals(text, marks as Text, {loose: true})) {
+          if (marks && !textEquals(text, marks as Text, {loose: true})) {
             editor.pendingInsertionMarks = marks
             return
           }
@@ -1245,7 +1251,7 @@ export const Editable = forwardRef(
                       )
 
                       if (
-                        Element.isElement(node, editor.schema) ||
+                        isElement(node, editor.schema) ||
                         editor.isObjectNode(node)
                       ) {
                         return
@@ -1295,14 +1301,13 @@ export const Editable = forwardRef(
                         let blockPath = path
                         if (
                           !(
-                            Element.isElement(node, editor.schema) &&
+                            isElement(node, editor.schema) &&
                             isBlock(editor, node)
                           )
                         ) {
                           const block = above(editor, {
                             match: (n) =>
-                              Element.isElement(n, editor.schema) &&
-                              isBlock(editor, n),
+                              isElement(n, editor.schema) && isBlock(editor, n),
                             at: path,
                           })
 
@@ -1326,7 +1331,7 @@ export const Editable = forwardRef(
                       if (
                         startVoid &&
                         endVoid &&
-                        Path.equals(startVoid[1], endVoid[1])
+                        pathEquals(startVoid[1], endVoid[1])
                       ) {
                         const range = editorRange(editor, start)
                         editor.select(range)
@@ -1434,7 +1439,7 @@ export const Editable = forwardRef(
                       setIsComposing(true)
 
                       const {selection} = editor
-                      if (selection && Range.isExpanded(selection)) {
+                      if (selection && isExpandedRange(selection)) {
                         editorActor.send({
                           type: 'behavior event',
                           behaviorEvent: {type: 'delete', direction: 'forward'},
@@ -1554,7 +1559,7 @@ export const Editable = forwardRef(
                       if (Hotkeys.isMoveBackward(nativeEvent)) {
                         event.preventDefault()
 
-                        if (selection && Range.isCollapsed(selection)) {
+                        if (selection && isCollapsedRange(selection)) {
                           move(editor, {reverse: !isRTL})
                         } else {
                           collapse(editor, {
@@ -1568,7 +1573,7 @@ export const Editable = forwardRef(
                       if (Hotkeys.isMoveForward(nativeEvent)) {
                         event.preventDefault()
 
-                        if (selection && Range.isCollapsed(selection)) {
+                        if (selection && isCollapsedRange(selection)) {
                           move(editor, {reverse: isRTL})
                         } else {
                           collapse(editor, {
@@ -1582,7 +1587,7 @@ export const Editable = forwardRef(
                       if (Hotkeys.isMoveWordBackward(nativeEvent)) {
                         event.preventDefault()
 
-                        if (selection && Range.isExpanded(selection)) {
+                        if (selection && isExpandedRange(selection)) {
                           collapse(editor, {edge: 'focus'})
                         }
 
@@ -1596,7 +1601,7 @@ export const Editable = forwardRef(
                       if (Hotkeys.isMoveWordForward(nativeEvent)) {
                         event.preventDefault()
 
-                        if (selection && Range.isExpanded(selection)) {
+                        if (selection && isExpandedRange(selection)) {
                           collapse(editor, {edge: 'focus'})
                         }
 
@@ -1645,7 +1650,7 @@ export const Editable = forwardRef(
                         if (Hotkeys.isDeleteBackward(nativeEvent)) {
                           event.preventDefault()
 
-                          if (selection && Range.isExpanded(selection)) {
+                          if (selection && isExpandedRange(selection)) {
                             editorActor.send({
                               type: 'behavior event',
                               behaviorEvent: {
@@ -1671,7 +1676,7 @@ export const Editable = forwardRef(
                         if (Hotkeys.isDeleteForward(nativeEvent)) {
                           event.preventDefault()
 
-                          if (selection && Range.isExpanded(selection)) {
+                          if (selection && isExpandedRange(selection)) {
                             editorActor.send({
                               type: 'behavior event',
                               behaviorEvent: {
@@ -1697,7 +1702,7 @@ export const Editable = forwardRef(
                         if (Hotkeys.isDeleteLineBackward(nativeEvent)) {
                           event.preventDefault()
 
-                          if (selection && Range.isExpanded(selection)) {
+                          if (selection && isExpandedRange(selection)) {
                             editorActor.send({
                               type: 'behavior event',
                               behaviorEvent: {
@@ -1723,7 +1728,7 @@ export const Editable = forwardRef(
                         if (Hotkeys.isDeleteLineForward(nativeEvent)) {
                           event.preventDefault()
 
-                          if (selection && Range.isExpanded(selection)) {
+                          if (selection && isExpandedRange(selection)) {
                             editorActor.send({
                               type: 'behavior event',
                               behaviorEvent: {
@@ -1749,7 +1754,7 @@ export const Editable = forwardRef(
                         if (Hotkeys.isDeleteWordBackward(nativeEvent)) {
                           event.preventDefault()
 
-                          if (selection && Range.isExpanded(selection)) {
+                          if (selection && isExpandedRange(selection)) {
                             editorActor.send({
                               type: 'behavior event',
                               behaviorEvent: {
@@ -1775,7 +1780,7 @@ export const Editable = forwardRef(
                         if (Hotkeys.isDeleteWordForward(nativeEvent)) {
                           event.preventDefault()
 
-                          if (selection && Range.isExpanded(selection)) {
+                          if (selection && isExpandedRange(selection)) {
                             editorActor.send({
                               type: 'behavior event',
                               behaviorEvent: {
@@ -1805,7 +1810,7 @@ export const Editable = forwardRef(
                             selection &&
                             (Hotkeys.isDeleteBackward(nativeEvent) ||
                               Hotkeys.isDeleteForward(nativeEvent)) &&
-                            Range.isCollapsed(selection)
+                            isCollapsedRange(selection)
                           ) {
                             const currentNode = getNode(
                               editor,
@@ -1929,7 +1934,7 @@ export const defaultScrollSelectionIntoView = (
   domRange: DOMRange,
 ) => {
   // Scroll to the focus point of the selection, in case the selection is expanded
-  const isBackward = !!editor.selection && Range.isBackward(editor.selection)
+  const isBackward = !!editor.selection && isBackwardRange(editor.selection)
   const domFocusPoint = domRange.cloneRange()
   domFocusPoint.collapse(isBackward)
 

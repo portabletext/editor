@@ -11,18 +11,27 @@ import {pathRef} from '../editor/path-ref'
 import {pointRef} from '../editor/point-ref'
 import {unhangRange} from '../editor/unhang-range'
 import {withoutNormalizing} from '../editor/without-normalizing'
+import {isElement} from '../element/is-element'
 import type {BaseInsertNodeOperation, Location} from '../interfaces'
-import {Editor, type NodeMatch} from '../interfaces/editor'
-import {Element} from '../interfaces/element'
+import type {Editor, NodeMatch} from '../interfaces/editor'
 import type {Node} from '../interfaces/node'
-import {Path} from '../interfaces/path'
-import {Point} from '../interfaces/point'
+import type {Path} from '../interfaces/path'
+import type {Point} from '../interfaces/point'
 import type {PointRef} from '../interfaces/point-ref'
-import {Range} from '../interfaces/range'
-import {Text} from '../interfaces/text'
 import {extractProps} from '../node/extract-props'
 import {getNodes} from '../node/get-nodes'
 import {isNode} from '../node/is-node'
+import {nextPath} from '../path/next-path'
+import {operationCanTransformPath} from '../path/operation-can-transform-path'
+import {parentPath} from '../path/parent-path'
+import {pathLevels} from '../path/path-levels'
+import {previousPath} from '../path/previous-path'
+import {transformPath} from '../path/transform-path'
+import {isPoint} from '../point/is-point'
+import {isCollapsedRange} from '../range/is-collapsed-range'
+import {isRange} from '../range/is-range'
+import {rangeEdges} from '../range/range-edges'
+import {isText} from '../text/is-text'
 import type {RangeMode} from '../types/types'
 import {getDefaultInsertLocation} from '../utils'
 import {batchDirtyPaths} from './batch-dirty-paths'
@@ -74,31 +83,29 @@ export function insertNodes<T extends Node>(
       select = false
     }
 
-    if (Range.isRange(at)) {
+    if (isRange(at)) {
       if (!hanging) {
         at = unhangRange(editor, at, {voids})
       }
 
-      if (Range.isCollapsed(at)) {
+      if (isCollapsedRange(at)) {
         at = at.anchor
       } else {
-        const [, end] = Range.edges(at)
+        const [, end] = rangeEdges(at)
         const endPointRef = pointRef(editor, end)
         deleteText(editor, {at})
         at = endPointRef.unref()!
       }
     }
 
-    if (Point.isPoint(at)) {
+    if (isPoint(at)) {
       if (match == null) {
-        if (Text.isText(node, editor.schema)) {
-          match = (n) => Text.isText(n, editor.schema)
+        if (isText(node, editor.schema)) {
+          match = (n) => isText(n, editor.schema)
         } else if (editor.isInline(node)) {
-          match = (n) =>
-            Text.isText(n, editor.schema) || Editor.isInline(editor, n)
+          match = (n) => isText(n, editor.schema) || editor.isInline(n)
         } else {
-          match = (n) =>
-            Element.isElement(n, editor.schema) && isBlock(editor, n)
+          match = (n) => isElement(n, editor.schema) && isBlock(editor, n)
         }
       }
 
@@ -175,16 +182,16 @@ export function insertNodes<T extends Node>(
         }
 
         const path = matchPathRef.unref()!
-        at = isAtEnd ? Path.next(path) : path
+        at = isAtEnd ? nextPath(path) : path
       } else {
         return
       }
     }
 
-    const parentPath = Path.parent(at)
+    const parentPath_ = parentPath(at)
     let index = at[at.length - 1]!
 
-    if (!voids && getVoid(editor, {at: parentPath})) {
+    if (!voids && getVoid(editor, {at: parentPath_})) {
       return
     }
 
@@ -192,12 +199,12 @@ export function insertNodes<T extends Node>(
       // PERF: batch update dirty paths
       // batched ops used to transform existing dirty paths
       const batchedOps: BaseInsertNodeOperation[] = []
-      const newDirtyPaths: Path[] = Path.levels(parentPath)
+      const newDirtyPaths: Path[] = pathLevels(parentPath_)
       batchDirtyPaths(
         editor,
         () => {
           for (const node of nodes as Node[]) {
-            const path = parentPath.concat(index)
+            const path = parentPath_.concat(index)
             index++
 
             const op: BaseInsertNodeOperation = {
@@ -206,10 +213,10 @@ export function insertNodes<T extends Node>(
               node,
             }
             editor.apply(op)
-            at = Path.next(at as Path)
+            at = nextPath(at as Path)
 
             batchedOps.push(op)
-            if (Text.isText(node, editor.schema)) {
+            if (isText(node, editor.schema)) {
               newDirtyPaths.push(path)
             } else {
               newDirtyPaths.push(
@@ -224,8 +231,8 @@ export function insertNodes<T extends Node>(
           updateDirtyPaths(editor, newDirtyPaths, (p) => {
             let newPath: Path | null = p
             for (const op of batchedOps) {
-              if (Path.operationCanTransformPath(op)) {
-                newPath = Path.transform(newPath, op)
+              if (operationCanTransformPath(op)) {
+                newPath = transformPath(newPath, op)
                 if (!newPath) {
                   return null
                 }
@@ -237,15 +244,15 @@ export function insertNodes<T extends Node>(
       )
     } else {
       for (const node of nodes as Node[]) {
-        const path = parentPath.concat(index)
+        const path = parentPath_.concat(index)
         index++
 
         editor.apply({type: 'insert_node', path, node})
-        at = Path.next(at as Path)
+        at = nextPath(at as Path)
       }
     }
 
-    at = Path.previous(at)
+    at = previousPath(at)
 
     if (select) {
       const point = editorEnd(editor, at)

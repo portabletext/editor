@@ -1,6 +1,8 @@
-import {Path, Point, type Editor, type Operation} from '../../slate'
+import type {Editor, Operation, Path} from '../../slate'
 import {levels} from '../../slate/editor/levels'
 import {node as editorNode} from '../../slate/editor/node'
+import {parentPath} from '../../slate/path/parent-path'
+import {isPoint} from '../../slate/point/is-point'
 import {
   transformPendingPoint,
   transformPendingRange,
@@ -69,7 +71,7 @@ export const withDOM = <T extends Editor>(editor: T): T & DOMEditor => {
 
     const pendingAction = e.pendingAction
     if (pendingAction?.at) {
-      const at = Point.isPoint(pendingAction?.at)
+      const at = isPoint(pendingAction?.at)
         ? transformPendingPoint(e, pendingAction.at, op)
         : transformPendingRange(e, pendingAction.at, op)
 
@@ -93,7 +95,7 @@ export const withDOM = <T extends Editor>(editor: T): T & DOMEditor => {
 
       case 'insert_node':
       case 'remove_node': {
-        matches.push(...getMatches(e, Path.parent(op.path)))
+        matches.push(...getMatches(e, parentPath(op.path)))
         break
       }
     }

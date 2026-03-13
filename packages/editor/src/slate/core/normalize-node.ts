@@ -1,11 +1,13 @@
 import {applyMergeNode} from '../../internal-utils/apply-merge-node'
 import type {PortableTextSlateEditor} from '../../types/slate-editor'
+import {isElement} from '../element/is-element'
 import type {Editor} from '../interfaces/editor'
-import {Element} from '../interfaces/element'
+import type {Element} from '../interfaces/element'
 import type {Ancestor, Descendant, Node} from '../interfaces/node'
 import type {Path} from '../interfaces/path'
-import {Text} from '../interfaces/text'
 import {getNode} from '../node/get-node'
+import {isText} from '../text/is-text'
+import {textEquals} from '../text/text-equals'
 import type {WithEditorFirstArg} from '../utils/types'
 import {insertNodes} from './insert-nodes'
 import {removeNodes} from './remove-nodes'
@@ -17,7 +19,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   const [node, path] = entry as [object, Path]
 
   // There are no core normalizations for text nodes.
-  if (Text.isText(node as Node, editor.schema)) {
+  if (isText(node as Node, editor.schema)) {
     return
   }
 
@@ -58,10 +60,9 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   const shouldHaveInlines =
     !(element === editor) &&
     (editor.isInline(element) ||
-      Text.isText(firstChild, editor.schema) ||
+      isText(firstChild, editor.schema) ||
       editor.isObjectNode(firstChild) ||
-      (Element.isElement(firstChild, editor.schema) &&
-        editor.isInline(firstChild)))
+      (isElement(firstChild, editor.schema) && editor.isInline(firstChild)))
 
   if (shouldHaveInlines) {
     // Since we'll be applying operations while iterating, we also modify
@@ -70,8 +71,8 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
       const child = element.children[n] as Descendant
       const prev = element.children[n - 1] as Descendant | undefined
 
-      if (Text.isText(child, editor.schema)) {
-        if (prev != null && Text.isText(prev, editor.schema)) {
+      if (isText(child, editor.schema)) {
+        if (prev != null && isText(prev, editor.schema)) {
           // Merge adjacent text nodes that are empty or match.
           if (child.text === '') {
             removeNodes(editor, {
@@ -87,7 +88,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
             })
             element = getNode(editor, path, editor.schema) as Element
             n--
-          } else if (Text.equals(child, prev, {loose: true})) {
+          } else if (textEquals(child, prev, {loose: true})) {
             const mergePath = path.concat(n)
             applyMergeNode(
               editor as unknown as PortableTextSlateEditor,
@@ -98,10 +99,10 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
             n--
           }
         }
-      } else if (Element.isElement(child, editor.schema)) {
+      } else if (isElement(child, editor.schema)) {
         if (editor.isInline(child)) {
           // Ensure that inline nodes are surrounded by text nodes.
-          if (prev == null || !Text.isText(prev, editor.schema)) {
+          if (prev == null || !isText(prev, editor.schema)) {
             const newChild = editor.createSpan()
             insertNodes(editor, newChild, {
               at: path.concat(n),
@@ -126,7 +127,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
           n--
         }
       } else if (editor.isObjectNode(child)) {
-        if (prev == null || !Text.isText(prev, editor.schema)) {
+        if (prev == null || !isText(prev, editor.schema)) {
           const newChild = editor.createSpan()
           insertNodes(editor, newChild, {
             at: path.concat(n),
@@ -155,8 +156,8 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
       // Allow only block nodes in the top-level children and parent blocks
       // that only contain block nodes.
       if (
-        Text.isText(child, editor.schema) ||
-        (Element.isElement(child, editor.schema) && editor.isInline(child))
+        isText(child, editor.schema) ||
+        (isElement(child, editor.schema) && editor.isInline(child))
       ) {
         removeNodes(editor, {at: path.concat(n), voids: true})
         element = getNode(editor, path, editor.schema) as Ancestor

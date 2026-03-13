@@ -3,7 +3,6 @@ import {applySelect} from '../internal-utils/apply-selection'
 import {applySetNode} from '../internal-utils/apply-set-node'
 import {applySplitNode} from '../internal-utils/apply-split-node'
 import {toSlateRange} from '../internal-utils/to-slate-range'
-import {Range, Text} from '../slate'
 import {isEdge} from '../slate/editor/is-edge'
 import {isEnd} from '../slate/editor/is-end'
 import {isStart} from '../slate/editor/is-start'
@@ -11,6 +10,9 @@ import {node as editorNode} from '../slate/editor/node'
 import {nodes} from '../slate/editor/nodes'
 import {rangeRef} from '../slate/editor/range-ref'
 import {extractProps} from '../slate/node/extract-props'
+import {isExpandedRange} from '../slate/range/is-expanded-range'
+import {rangeEdges} from '../slate/range/range-edges'
+import {isText} from '../slate/text/is-text'
 import type {OperationImplementation} from './operation.types'
 
 export const decoratorAddOperationImplementation: OperationImplementation<
@@ -35,9 +37,9 @@ export const decoratorAddOperationImplementation: OperationImplementation<
     return
   }
 
-  if (Range.isExpanded(at)) {
+  if (isExpandedRange(at)) {
     const ref = rangeRef(editor, at, {affinity: 'inward'})
-    const [start, end] = Range.edges(at)
+    const [start, end] = rangeEdges(at)
 
     const endAtEndOfNode = isEnd(editor, end, end.path)
 
@@ -76,7 +78,7 @@ export const decoratorAddOperationImplementation: OperationImplementation<
     // Use new selection to find nodes to decorate
     const splitTextNodes = nodes(editor, {
       at,
-      match: (n) => Text.isText(n, editor.schema),
+      match: (n) => isText(n, editor.schema),
     })
 
     for (const [node, path] of splitTextNodes) {

@@ -1,19 +1,23 @@
 import type {PortableTextBlock, PortableTextSpan} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
-import {
+import type {
+  Editor,
   Element,
+  Node,
+  Point,
   Range,
-  type Editor,
-  type Node,
-  type Point,
-  type Path as SlatePath,
+  Path as SlatePath,
 } from '../slate'
 import {end} from '../slate/editor/end'
 import {isEditor} from '../slate/editor/is-editor'
 import {node as editorNode} from '../slate/editor/node'
 import {nodes as editorNodes} from '../slate/editor/nodes'
 import {start} from '../slate/editor/start'
+import {isElement} from '../slate/element/is-element'
 import {getChild} from '../slate/node/get-child'
+import {isBackwardRange} from '../slate/range/is-backward-range'
+import {rangeEnd} from '../slate/range/range-end'
+import {rangeStart} from '../slate/range/range-start'
 import type {EditorSelection, EditorSelectionPoint} from '../types/editor'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 
@@ -126,7 +130,7 @@ export function getSelectionStartBlock({
     return [undefined, undefined]
   }
 
-  const selectionStartPoint = Range.start(editor.selection)
+  const selectionStartPoint = rangeStart(editor.selection)
 
   return getPointBlock({editor, point: selectionStartPoint})
 }
@@ -140,7 +144,7 @@ export function getSelectionEndBlock({
     return [undefined, undefined]
   }
 
-  const selectionEndPoint = Range.end(editor.selection)
+  const selectionEndPoint = rangeEnd(editor.selection)
 
   return getPointBlock({editor, point: selectionEndPoint})
 }
@@ -282,7 +286,7 @@ export function getNodeBlock({
     .at(0)
     ?.at(0)
 
-  return Element.isElement(parent, editor.schema)
+  return isElement(parent, editor.schema)
     ? elementToBlock({
         schema,
         element: parent,
@@ -299,7 +303,7 @@ function isBlockElement(
   node: Node,
 ): node is Element {
   return (
-    Element.isElement(node, editor.schema) &&
+    isElement(node, editor.schema) &&
     !editor.isInline(node) &&
     (schema.block.name === node._type ||
       schema.blockObjects.some(
@@ -406,7 +410,7 @@ export function slateRangeToSelection({
       path: [{_key: focusBlock._key}],
       offset: range.focus.offset,
     },
-    backward: Range.isBackward(range),
+    backward: isBackwardRange(range),
   }
 
   if (anchorChild) {

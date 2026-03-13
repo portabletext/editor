@@ -1,7 +1,7 @@
+import {isElement} from '../element/is-element'
 import type {Descendant, NodeEntry} from '../interfaces'
 import type {Editor} from '../interfaces/editor'
-import {Element} from '../interfaces/element'
-import {Text} from '../interfaces/text'
+import {isText} from '../text/is-text'
 
 export function shouldMergeNodesRemovePrevNode(
   _editor: Editor,
@@ -15,15 +15,15 @@ export function shouldMergeNodesRemovePrevNode(
   // if prevNode is first child in parent,don't remove it.
 
   const isEmptyElement =
-    Element.isElement(prevNode, _editor.schema) &&
+    isElement(prevNode, _editor.schema) &&
     (prevNode.children.length === 0 ||
       (prevNode.children.length === 1 &&
-        Text.isText(prevNode.children[0], _editor.schema) &&
+        isText(prevNode.children[0], _editor.schema) &&
         prevNode.children[0].text === ''))
 
   return (
     isEmptyElement ||
-    (Text.isText(prevNode, _editor.schema) &&
+    (isText(prevNode, _editor.schema) &&
       prevNode.text === '' &&
       prevPath[prevPath.length - 1] !== 0)
   )

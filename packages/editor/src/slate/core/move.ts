@@ -2,7 +2,7 @@ import {after} from '../editor/after'
 import {before} from '../editor/before'
 import type {Editor} from '../interfaces/editor'
 import type {Range} from '../interfaces/range'
-import {Range as RangeUtils} from '../interfaces/range'
+import {isBackwardRange} from '../range/is-backward-range'
 import type {MoveUnit, SelectionEdge} from '../types/types'
 
 export interface SelectionMoveOptions {
@@ -22,11 +22,11 @@ export function move(editor: Editor, options: SelectionMoveOptions = {}): void {
   }
 
   if (edge === 'start') {
-    edge = RangeUtils.isBackward(selection) ? 'focus' : 'anchor'
+    edge = isBackwardRange(selection) ? 'focus' : 'anchor'
   }
 
   if (edge === 'end') {
-    edge = RangeUtils.isBackward(selection) ? 'anchor' : 'focus'
+    edge = isBackwardRange(selection) ? 'anchor' : 'focus'
   }
 
   const {anchor, focus} = selection

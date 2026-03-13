@@ -1,4 +1,5 @@
-import {Element, type Path} from '../slate'
+import type {Path} from '../slate'
+import {isElement} from '../slate/element/is-element'
 import {getNode} from '../slate/node/get-node'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 
@@ -29,7 +30,7 @@ export function applySetNode(
 
     if (
       key === 'text' &&
-      !Element.isElement(node, editor.schema) &&
+      !isElement(node, editor.schema) &&
       !editor.isObjectNode(node)
     ) {
       continue

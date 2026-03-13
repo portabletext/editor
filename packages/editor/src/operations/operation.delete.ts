@@ -1,15 +1,7 @@
 import type {PortableTextBlock} from '@portabletext/schema'
 import {isSpan, isTextBlock} from '@portabletext/schema'
 import {toSlateRange} from '../internal-utils/to-slate-range'
-import {
-  Editor,
-  Element,
-  Path,
-  Point,
-  Range,
-  Text,
-  type NodeEntry,
-} from '../slate'
+import type {Editor, NodeEntry, Path, Range} from '../slate'
 import {DOMEditor} from '../slate-dom'
 import {deleteText} from '../slate/core/delete-text'
 import {above} from '../slate/editor/above'
@@ -24,7 +16,16 @@ import {pointRef} from '../slate/editor/point-ref'
 import {positions as editorPositions} from '../slate/editor/positions'
 import {range as editorRange} from '../slate/editor/range'
 import {start as editorStart} from '../slate/editor/start'
+import {isElement} from '../slate/element/is-element'
 import {getNode} from '../slate/node/get-node'
+import {comparePaths} from '../slate/path/compare-paths'
+import {isCommonPath} from '../slate/path/is-common-path'
+import {pathEquals} from '../slate/path/path-equals'
+import {pointEquals} from '../slate/point/point-equals'
+import {isCollapsedRange} from '../slate/range/is-collapsed-range'
+import {rangeEdges} from '../slate/range/range-edges'
+import {rangeEnd} from '../slate/range/range-end'
+import {isText} from '../slate/text/is-text'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import type {OperationImplementation} from './operation.types'
 
@@ -46,7 +47,7 @@ export const deleteOperationImplementation: OperationImplementation<
     throw new Error('Unable to delete without a selection')
   }
 
-  const [start, end] = Range.edges(at)
+  const [start, end] = rangeEdges(at)
 
   if (operation.unit === 'block') {
     const startBlockIndex = start.path.at(0)
@@ -63,7 +64,7 @@ export const deleteOperationImplementation: OperationImplementation<
     const blockMatches = nodes(operation.editor, {
       at: removeRange,
       match: (n) =>
-        (Element.isElement(n, operation.editor.schema) &&
+        (isElement(n, operation.editor.schema) &&
           isBlock(operation.editor, n)) ||
         operation.editor.isObjectNode(n),
       mode: 'highest',
@@ -87,7 +88,7 @@ export const deleteOperationImplementation: OperationImplementation<
       at,
       match: (node, path) =>
         isSpan(context, node) ||
-        (Element.isElement(node, operation.editor.schema) &&
+        (isElement(node, operation.editor.schema) &&
           operation.editor.isInline(node)) ||
         // TODO: Update depth check when containers land (path.length > 1 assumes flat structure)
         (operation.editor.isObjectNode(node) && path.length > 1),
@@ -109,8 +110,7 @@ export const deleteOperationImplementation: OperationImplementation<
   if (operation.direction === 'backward' && operation.unit === 'line') {
     const parentBlockEntry = above(operation.editor, {
       match: (n) =>
-        Element.isElement(n, operation.editor.schema) &&
-        isBlock(operation.editor, n),
+        isElement(n, operation.editor.schema) && isBlock(operation.editor, n),
       at,
     })
 
@@ -127,7 +127,7 @@ export const deleteOperationImplementation: OperationImplementation<
         parentElementRange,
       )
 
-      if (!Range.isCollapsed(currentLineRange)) {
+      if (!isCollapsedRange(currentLineRange)) {
         deleteText(operation.editor, {at: currentLineRange})
         return
       }
@@ -135,7 +135,7 @@ export const deleteOperationImplementation: OperationImplementation<
   }
 
   if (operation.unit === 'word') {
-    if (Range.isCollapsed(at)) {
+    if (isCollapsedRange(at)) {
       deleteText(operation.editor, {
         at,
         unit: 'word',
@@ -146,7 +146,7 @@ export const deleteOperationImplementation: OperationImplementation<
     }
   }
 
-  if (Range.isCollapsed(at) && start.path.length >= 2) {
+  if (isCollapsedRange(at) && start.path.length >= 2) {
     try {
       const node = getNode(
         operation.editor,
@@ -201,7 +201,7 @@ export const deleteOperationImplementation: OperationImplementation<
     startNodeEntry ??
     above(operation.editor, {
       match: (n) =>
-        (Element.isElement(n, operation.editor.schema) &&
+        (isElement(n, operation.editor.schema) &&
           isBlock(operation.editor, n)) ||
         operation.editor.isObjectNode(n),
       at: start,
@@ -211,14 +211,14 @@ export const deleteOperationImplementation: OperationImplementation<
     endNodeEntry ??
     above(operation.editor, {
       match: (n) =>
-        (Element.isElement(n, operation.editor.schema) &&
+        (isElement(n, operation.editor.schema) &&
           isBlock(operation.editor, n)) ||
         operation.editor.isObjectNode(n),
       at: end,
       voids: false,
     })
   const isAcrossBlocks =
-    startBlock && endBlock && !Path.equals(startBlock[1], endBlock[1])
+    startBlock && endBlock && !pathEquals(startBlock[1], endBlock[1])
 
   const startObjectNode =
     startBlock && operation.editor.isObjectNode(startBlock[0])
@@ -244,15 +244,15 @@ export const deleteOperationImplementation: OperationImplementation<
   for (const entry of nodes(operation.editor, {at, voids: false})) {
     const [node, path] = entry
 
-    if (lastPath && Path.compare(path, lastPath) === 0) {
+    if (lastPath && comparePaths(path, lastPath) === 0) {
       continue
     }
 
     if (
       operation.editor.isObjectNode(node) ||
-      (Element.isElement(node, operation.editor.schema) &&
-        Editor.isElementReadOnly(operation.editor, node)) ||
-      (!Path.isCommon(path, start.path) && !Path.isCommon(path, end.path))
+      (isElement(node, operation.editor.schema) &&
+        operation.editor.isElementReadOnly(node)) ||
+      (!isCommonPath(path, start.path) && !isCommonPath(path, end.path))
     ) {
       matches.push(entry)
       lastPath = path
@@ -268,8 +268,8 @@ export const deleteOperationImplementation: OperationImplementation<
   const endToEndSelection =
     startBlock &&
     endBlock &&
-    Point.equals(start, editorStart(operation.editor, startBlock[1])) &&
-    Point.equals(end, editorEnd(operation.editor, endBlock[1]))
+    pointEquals(start, editorStart(operation.editor, startBlock[1])) &&
+    pointEquals(end, editorEnd(operation.editor, endBlock[1]))
 
   if (endToEndSelection && isAcrossBlocks) {
     if (!startNonEditable) {
@@ -280,7 +280,7 @@ export const deleteOperationImplementation: OperationImplementation<
         operation.editor.schema,
       )
 
-      if (Text.isText(node, operation.editor.schema) && node.text.length > 0) {
+      if (isText(node, operation.editor.schema) && node.text.length > 0) {
         operation.editor.apply({
           type: 'remove_text',
           path: point.path,
@@ -307,7 +307,7 @@ export const deleteOperationImplementation: OperationImplementation<
         operation.editor.schema,
       )
 
-      if (Text.isText(node, operation.editor.schema)) {
+      if (isText(node, operation.editor.schema)) {
         const {path} = point
         const offset = 0
         const text = node.text.slice(offset, end.offset)
@@ -322,7 +322,7 @@ export const deleteOperationImplementation: OperationImplementation<
       const endBlockMatches = nodes(operation.editor, {
         at: endRef.current,
         match: (n) =>
-          (Element.isElement(n, operation.editor.schema) &&
+          (isElement(n, operation.editor.schema) &&
             isBlock(operation.editor, n)) ||
           operation.editor.isObjectNode(n),
       })
@@ -360,7 +360,7 @@ export const deleteOperationImplementation: OperationImplementation<
     startNonEditable &&
     startBlock &&
     endBlock &&
-    Path.equals(startBlock[1], endBlock[1]) &&
+    pathEquals(startBlock[1], endBlock[1]) &&
     operation.editor.isObjectNode(startBlock[0])
   ) {
     const path = startBlock[1]
@@ -385,7 +385,7 @@ export const deleteOperationImplementation: OperationImplementation<
         const path = pathRef.unref()
 
         if (path) {
-          if (endObjectNode && Path.equals(path, endObjectNode[1])) {
+          if (endObjectNode && pathEquals(path, endObjectNode[1])) {
             removedEndObjectNode = true
           }
           operation.editor.apply({type: 'remove_node', path, node: nodeAtPath})
@@ -467,7 +467,7 @@ function findCurrentLineRange(
   editor: PortableTextSlateEditor,
   parentRange: Range,
 ): Range {
-  const parentRangeBoundary = editorRange(editor, Range.end(parentRange))
+  const parentRangeBoundary = editorRange(editor, rangeEnd(parentRange))
   const positions = Array.from(editorPositions(editor, {at: parentRange}))
 
   let left = 0

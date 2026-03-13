@@ -1,20 +1,24 @@
 import type {Location} from '../interfaces'
 import type {Editor} from '../interfaces/editor'
-import {Path as PathUtils} from '../interfaces/path'
-import {Point} from '../interfaces/point'
-import {Range} from '../interfaces/range'
+import type {Path} from '../interfaces/path'
 import {getFirst} from '../node/get-first'
 import {getLast} from '../node/get-last'
+import {commonPath} from '../path/common-path'
+import {isPath} from '../path/is-path'
+import {isPoint} from '../point/is-point'
+import {isRange} from '../range/is-range'
+import {rangeEnd} from '../range/range-end'
+import {rangeStart} from '../range/range-start'
 import type {LeafEdge} from '../types/types'
 
 export function path(
   editor: Editor,
   at: Location,
   options: {depth?: number; edge?: LeafEdge} = {},
-): PathUtils {
+): Path {
   const {depth, edge} = options
 
-  if (PathUtils.isPath(at)) {
+  if (isPath(at)) {
     if (edge === 'start') {
       const [, firstPath] = getFirst(editor, at, editor.schema)
       at = firstPath
@@ -24,17 +28,17 @@ export function path(
     }
   }
 
-  if (Range.isRange(at)) {
+  if (isRange(at)) {
     if (edge === 'start') {
-      at = Range.start(at)
+      at = rangeStart(at)
     } else if (edge === 'end') {
-      at = Range.end(at)
+      at = rangeEnd(at)
     } else {
-      at = PathUtils.common(at.anchor.path, at.focus.path)
+      at = commonPath(at.anchor.path, at.focus.path)
     }
   }
 
-  if (Point.isPoint(at)) {
+  if (isPoint(at)) {
     at = at.path
   }
 

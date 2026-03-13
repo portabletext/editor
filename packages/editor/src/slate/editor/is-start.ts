@@ -1,6 +1,7 @@
 import type {Location} from '../interfaces'
 import type {Editor} from '../interfaces/editor'
-import {Point} from '../interfaces/point'
+import type {Point} from '../interfaces/point'
+import {pointEquals} from '../point/point-equals'
 import {start} from './start'
 
 export function isStart(editor: Editor, point: Point, at: Location): boolean {
@@ -10,5 +11,5 @@ export function isStart(editor: Editor, point: Point, at: Location): boolean {
   }
 
   const editorStart = start(editor, at)
-  return Point.equals(point, editorStart)
+  return pointEquals(point, editorStart)
 }
