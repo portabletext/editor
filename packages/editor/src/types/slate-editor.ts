@@ -58,14 +58,4 @@ export interface PortableTextSlateEditor extends ReactEditor {
   isRedoing: boolean
   isUndoing: boolean
   withHistory: boolean
-
-  /**
-   * Undo
-   */
-  undo: () => void
-
-  /**
-   * Redo
-   */
-  redo: () => void
 }
