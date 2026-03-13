@@ -1,6 +1,5 @@
 import type {EditorSchema} from '../editor/editor-schema'
 import {apply} from './core/apply'
-import {deleteText} from './core/delete-text'
 import {getDirtyPaths} from './core/get-dirty-paths'
 import {normalizeNode} from './core/normalize-node'
 import {select} from './core/select'
@@ -57,7 +56,6 @@ export const createEditor = (context: {
     shouldNormalize: (...args: any[]) => (shouldNormalize as any)(e, ...args),
 
     // Overrideable commands
-    delete: (...args: any[]) => (deleteText as any)(e, ...args),
     insertText: () => {},
     select: (...args: any[]) => (select as any)(e, ...args),
     setSelection: (...args: any[]) => (setSelection as any)(e, ...args),

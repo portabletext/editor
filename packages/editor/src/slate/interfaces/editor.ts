@@ -13,7 +13,6 @@ import type {
   RangeRef,
   Text,
 } from '..'
-import type {TextDeleteOptions} from '../core/delete-text'
 import type {TextInsertTextOptions} from '../core/insert-text'
 import {isEditor} from '../editor/is-editor'
 
@@ -65,7 +64,6 @@ export interface BaseEditor {
 
   // Overrideable commands.
 
-  delete: (options?: TextDeleteOptions) => void
   insertText: (text: string, options?: TextInsertTextOptions) => void
   select: (target: Location) => void
   setSelection: (props: Partial<Range>) => void
