@@ -58,7 +58,6 @@ export const createEditor = (context: {
     shouldNormalize: (...args: any[]) => (shouldNormalize as any)(e, ...args),
 
     // Overrideable commands
-    insertText: () => {},
     select: (...args: any[]) => (select as any)(e, ...args),
     setSelection: (...args: any[]) => (setSelection as any)(e, ...args),
   }
