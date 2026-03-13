@@ -8,7 +8,8 @@ import {
 import type {EditorActor} from '../editor/editor-machine'
 import {applySetNode} from '../internal-utils/apply-set-node'
 import {debug} from '../internal-utils/debug'
-import {Editor, type Element} from '../slate'
+import type {Element} from '../slate'
+import {isEditor} from '../slate/editor/is-editor'
 import {isObject} from '../slate/utils/is-object'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {isListBlock} from '../utils/parse-blocks'
@@ -23,21 +24,21 @@ export function createSchemaPlugin({editorActor}: {editorActor: EditorActor}) {
     editor: PortableTextSlateEditor,
   ): PortableTextSlateEditor {
     editor.isTextBlock = (value: unknown): value is PortableTextTextBlock => {
-      if (Editor.isEditor(value)) {
+      if (isEditor(value)) {
         return false
       }
 
       return isTextBlock(editorActor.getSnapshot().context, value)
     }
     editor.isTextSpan = (value: unknown): value is PortableTextSpan => {
-      if (Editor.isEditor(value)) {
+      if (isEditor(value)) {
         return false
       }
 
       return isSpan(editorActor.getSnapshot().context, value)
     }
     editor.isListBlock = (value: unknown): value is PortableTextListBlock => {
-      if (Editor.isEditor(value)) {
+      if (isEditor(value)) {
         return false
       }
 
@@ -45,7 +46,7 @@ export function createSchemaPlugin({editorActor}: {editorActor: EditorActor}) {
     }
     editor.schema = editorActor.getSnapshot().context.schema
     editor.isObjectNode = (value: unknown): boolean => {
-      if (!isObject(value) || Editor.isEditor(value)) {
+      if (!isObject(value) || isEditor(value)) {
         return false
       }
       const obj = value as Record<string, unknown>
@@ -56,7 +57,7 @@ export function createSchemaPlugin({editorActor}: {editorActor: EditorActor}) {
       )
     }
     editor.isInline = (element: Element): boolean => {
-      if (Editor.isEditor(element)) {
+      if (isEditor(element)) {
         return false
       }
 

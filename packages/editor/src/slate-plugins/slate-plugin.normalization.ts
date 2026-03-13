@@ -6,7 +6,8 @@ import {applySetNode} from '../internal-utils/apply-set-node'
 import {createPlaceholderBlock} from '../internal-utils/create-placeholder-block'
 import {debug} from '../internal-utils/debug'
 import {isEqualMarkDefs} from '../internal-utils/equality'
-import {Editor, Node, Path, Range, Text} from '../slate'
+import {Node, Path, Range, Text} from '../slate'
+import {isEditor} from '../slate/editor/is-editor'
 import {node as editorNode} from '../slate/editor/node'
 import {nodes} from '../slate/editor/nodes'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
@@ -28,7 +29,7 @@ export function createNormalizationPlugin(
       /**
        * Add a placeholder block when the editor is empty
        */
-      if (Editor.isEditor(node) && node.children.length === 0) {
+      if (isEditor(node) && node.children.length === 0) {
         withoutPatching(editor, () => {
           withNormalizeNode(editor, () => {
             applyInsertNodeAtPath(

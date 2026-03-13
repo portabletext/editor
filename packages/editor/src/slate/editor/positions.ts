@@ -1,5 +1,5 @@
 import type {Location} from '../interfaces'
-import {Editor} from '../interfaces/editor'
+import type {Editor} from '../interfaces/editor'
 import {Element} from '../interfaces/element'
 import {Path} from '../interfaces/path'
 import type {Point} from '../interfaces/point'
@@ -14,6 +14,7 @@ import {
 import {end as editorEnd} from './end'
 import {hasInlines} from './has-inlines'
 import {hasPath} from './has-path'
+import {isEditor} from './is-editor'
 import {nodes} from './nodes'
 import {range} from './range'
 import {start as editorStart} from './start'
@@ -159,7 +160,7 @@ export function* positions(
     }
 
     if (
-      !Editor.isEditor(node) &&
+      !isEditor(node) &&
       !Element.isElement(node, editor.schema) &&
       !Text.isText(node, editor.schema)
     ) {

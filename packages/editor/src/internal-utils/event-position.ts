@@ -1,7 +1,8 @@
 import type {EditorActor} from '../editor/editor-machine'
 import type {EditorSchema} from '../editor/editor-schema'
-import {Editor, type BaseRange, type Node} from '../slate'
+import type {BaseRange, Node} from '../slate'
 import {DOMEditor, isDOMNode} from '../slate-dom'
+import {isEditor} from '../slate/editor/is-editor'
 import type {EditorSelection} from '../types/editor'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {getBlockEndPoint} from '../utils/util.get-block-end-point'
@@ -64,7 +65,7 @@ export function getEventPosition({
     eventBlock &&
     eventPositionBlock &&
     !eventSelection &&
-    !Editor.isEditor(eventNode)
+    !isEditor(eventNode)
   ) {
     // If we for some reason can't find the event selection, then we default to
     // selecting the entire block that the event originates from.
@@ -133,7 +134,7 @@ export function getEventPosition({
 
   return {
     block: eventPositionBlock,
-    isEditor: Editor.isEditor(eventNode),
+    isEditor: isEditor(eventNode),
     selection: eventSelection,
   }
 }

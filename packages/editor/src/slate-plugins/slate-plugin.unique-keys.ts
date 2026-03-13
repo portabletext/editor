@@ -3,7 +3,8 @@ import {isTextBlock} from '@portabletext/schema'
 import type {EditorActor} from '../editor/editor-machine'
 import type {EditorContext, EditorSnapshot} from '../editor/editor-snapshot'
 import {applySetNode} from '../internal-utils/apply-set-node'
-import {Editor, Element, Node, type Path} from '../slate'
+import {Element, Node, type Path} from '../slate'
+import {isEditor} from '../slate/editor/is-editor'
 import {parent as editorParent} from '../slate/editor/parent'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {withNormalizeNode} from './slate-plugin.normalize-node'
@@ -43,7 +44,7 @@ export function createUniqueKeysPlugin(editorActor: EditorActor) {
       }
 
       if (operation.type === 'insert_node') {
-        if (!Editor.isEditor(operation.node)) {
+        if (!isEditor(operation.node)) {
           const _key =
             operation.node._key &&
             keyExistsAtPath(
@@ -84,7 +85,7 @@ export function createUniqueKeysPlugin(editorActor: EditorActor) {
       if (Element.isElement(node, editor.schema) || editor.isObjectNode(node)) {
         const [parentNode] = editorParent(editor, path)
 
-        if (parentNode && Editor.isEditor(parentNode)) {
+        if (parentNode && isEditor(parentNode)) {
           const blockKeys = new Set<string>()
 
           for (const sibling of parentNode.children) {
