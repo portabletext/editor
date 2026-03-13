@@ -1,7 +1,6 @@
 import type {EditorSchema} from '../editor/editor-schema'
 import {
   getDirtyPaths,
-  getFragment,
   insertText,
   normalizeNode,
   shouldNormalize,
@@ -98,7 +97,6 @@ export const createEditor = (context: {
     apply: (...args: any[]) => (apply as any)(e, ...args),
 
     // Editor
-    getFragment: (...args: any[]) => (getFragment as any)(e, ...args),
     insertText: (...args: any[]) => (insertText as any)(e, ...args),
     normalizeNode: (...args: any[]) => (normalizeNode as any)(e, ...args),
     getDirtyPaths: (...args: any[]) => (getDirtyPaths as any)(e, ...args),

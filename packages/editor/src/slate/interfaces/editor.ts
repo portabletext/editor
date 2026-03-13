@@ -52,7 +52,6 @@ export interface BaseEditor {
   apply: (operation: Operation) => void
   createSpan: () => Text
   getDirtyPaths: (operation: Operation) => Path[]
-  getFragment: () => Descendant[]
   isElementReadOnly: (element: Element) => boolean
   isSelectable: (element: Element) => boolean
   normalizeNode: (
