@@ -44,7 +44,6 @@ import {
   unhangRange,
   withoutNormalizing,
 } from './editor'
-import {insertNodes, removeNodes} from './transforms-node'
 import {
   collapse,
   deselect,
@@ -111,7 +110,6 @@ export const createEditor = (context: {
     end: (...args: any[]) => (end as any)(e, ...args),
     hasInlines: (...args: any[]) => (hasInlines as any)(e, ...args),
     hasPath: (...args: any[]) => (hasPath as any)(e, ...args),
-    insertNodes: (...args: any[]) => (insertNodes as any)(e, ...args),
     isBlock: (...args: any[]) => (isBlock as any)(e, ...args),
     isEdge: (...args: any[]) => (isEdge as any)(e, ...args),
     isEnd: (...args: any[]) => (isEnd as any)(e, ...args),
@@ -133,7 +131,6 @@ export const createEditor = (context: {
     previous: (...args: any[]) => (previous as any)(e, ...args),
     range: (...args: any[]) => (range as any)(e, ...args),
     rangeRef: (...args: any[]) => (rangeRef as any)(e, ...args),
-    removeNodes: (...args: any[]) => (removeNodes as any)(e, ...args),
     select: (...args: any[]) => (select as any)(e, ...args),
     setNormalizing: (...args: any[]) => (setNormalizing as any)(e, ...args),
     setSelection: (...args: any[]) => (setSelection as any)(e, ...args),

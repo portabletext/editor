@@ -1,9 +1,7 @@
 import {applySplitNode} from '../../internal-utils/apply-split-node'
 import type {PortableTextSlateEditor} from '../../types/slate-editor'
-import {batchDirtyPaths} from '../core/batch-dirty-paths'
-import {updateDirtyPaths} from '../core/update-dirty-paths'
-import type {BaseInsertNodeOperation} from '../interfaces'
-import {Editor} from '../interfaces/editor'
+import type {BaseInsertNodeOperation, Location} from '../interfaces'
+import {Editor, type NodeMatch} from '../interfaces/editor'
 import {Element} from '../interfaces/element'
 import {Node} from '../interfaces/node'
 import {Path} from '../interfaces/path'
@@ -11,15 +9,26 @@ import {Point} from '../interfaces/point'
 import type {PointRef} from '../interfaces/point-ref'
 import {Range} from '../interfaces/range'
 import {Text} from '../interfaces/text'
-import {Transforms} from '../interfaces/transforms'
-import type {NodeTransforms} from '../interfaces/transforms/node'
+import type {RangeMode} from '../types/types'
 import {getDefaultInsertLocation} from '../utils'
+import {batchDirtyPaths} from './batch-dirty-paths'
+import {updateDirtyPaths} from './update-dirty-paths'
 
-export const insertNodes: NodeTransforms['insertNodes'] = (
-  editor,
-  nodes,
-  options = {},
-) => {
+export interface InsertNodesOptions<T extends Node> {
+  at?: Location
+  match?: NodeMatch<T>
+  mode?: RangeMode
+  hanging?: boolean
+  select?: boolean
+  voids?: boolean
+  batchDirty?: boolean
+}
+
+export function insertNodes<T extends Node>(
+  editor: Editor,
+  nodes: Node | Node[],
+  options: InsertNodesOptions<T> = {},
+): void {
   Editor.withoutNormalizing(editor, () => {
     const {
       hanging = false,
@@ -228,7 +237,7 @@ export const insertNodes: NodeTransforms['insertNodes'] = (
       const point = Editor.end(editor, at)
 
       if (point) {
-        Transforms.select(editor, point)
+        editor.select(point)
       }
     }
   })

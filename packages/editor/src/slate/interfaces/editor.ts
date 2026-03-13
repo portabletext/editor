@@ -19,7 +19,9 @@ import type {
   Transforms,
 } from '..'
 import type {TextDeleteOptions} from '../core/delete-text'
+import type {InsertNodesOptions} from '../core/insert-nodes'
 import type {TextInsertTextOptions} from '../core/insert-text'
+import type {RemoveNodesOptions} from '../core/remove-nodes'
 import {isEditor} from '../editor/is-editor'
 import type {
   LeafEdge,
@@ -79,11 +81,14 @@ export interface BaseEditor {
   delete: (options?: TextDeleteOptions) => void
   deselect: OmitFirstArg<typeof Transforms.deselect>
   insertBreak: OmitFirstArg<typeof Editor.insertBreak>
-  insertNodes: OmitFirstArg<typeof Transforms.insertNodes>
+  insertNodes: <T extends Node>(
+    nodes: Node | Node[],
+    options?: InsertNodesOptions<T>,
+  ) => void
   insertText: (text: string, options?: TextInsertTextOptions) => void
   move: OmitFirstArg<typeof Transforms.move>
   normalize: OmitFirstArg<typeof Editor.normalize>
-  removeNodes: OmitFirstArg<typeof Transforms.removeNodes>
+  removeNodes: <T extends Node>(options?: RemoveNodesOptions<T>) => void
   select: OmitFirstArg<typeof Transforms.select>
   setNormalizing: OmitFirstArg<typeof Editor.setNormalizing>
   setSelection: OmitFirstArg<typeof Transforms.setSelection>

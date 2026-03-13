@@ -5,8 +5,9 @@ import {Element} from '../interfaces/element'
 import {Node, type Ancestor, type Descendant} from '../interfaces/node'
 import type {Path} from '../interfaces/path'
 import {Text} from '../interfaces/text'
-import {Transforms} from '../interfaces/transforms'
 import type {WithEditorFirstArg} from '../utils/types'
+import {insertNodes} from './insert-nodes'
+import {removeNodes} from './remove-nodes'
 
 export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   editor,
@@ -42,7 +43,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   // Ensure that elements have at least one child.
   if (element !== editor && element.children.length === 0) {
     const child = editor.createSpan()
-    Transforms.insertNodes(editor, child, {at: path.concat(0), voids: true})
+    insertNodes(editor, child, {at: path.concat(0), voids: true})
     element = Node.get(editor, path, editor.schema) as Element
   }
 
@@ -72,14 +73,14 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
         if (prev != null && Text.isText(prev, editor.schema)) {
           // Merge adjacent text nodes that are empty or match.
           if (child.text === '') {
-            Transforms.removeNodes(editor, {
+            removeNodes(editor, {
               at: path.concat(n),
               voids: true,
             })
             element = Node.get(editor, path, editor.schema) as Element
             n--
           } else if (prev.text === '') {
-            Transforms.removeNodes(editor, {
+            removeNodes(editor, {
               at: path.concat(n - 1),
               voids: true,
             })
@@ -101,7 +102,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
           // Ensure that inline nodes are surrounded by text nodes.
           if (prev == null || !Text.isText(prev, editor.schema)) {
             const newChild = editor.createSpan()
-            Transforms.insertNodes(editor, newChild, {
+            insertNodes(editor, newChild, {
               at: path.concat(n),
               voids: true,
             })
@@ -110,7 +111,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
           }
           if (n === element.children.length - 1) {
             const newChild = editor.createSpan()
-            Transforms.insertNodes(editor, newChild, {
+            insertNodes(editor, newChild, {
               at: path.concat(n + 1),
               voids: true,
             })
@@ -119,14 +120,14 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
           }
         } else {
           // An Element cannot appear inline in another Element
-          Transforms.removeNodes(editor, {at: path.concat(n), voids: true})
+          removeNodes(editor, {at: path.concat(n), voids: true})
           element = Node.get(editor, path, editor.schema) as Element
           n--
         }
       } else if (editor.isObjectNode(child)) {
         if (prev == null || !Text.isText(prev, editor.schema)) {
           const newChild = editor.createSpan()
-          Transforms.insertNodes(editor, newChild, {
+          insertNodes(editor, newChild, {
             at: path.concat(n),
             voids: true,
           })
@@ -135,7 +136,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
         }
         if (n === element.children.length - 1) {
           const newChild = editor.createSpan()
-          Transforms.insertNodes(editor, newChild, {
+          insertNodes(editor, newChild, {
             at: path.concat(n + 1),
             voids: true,
           })
@@ -156,7 +157,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
         Text.isText(child, editor.schema) ||
         (Element.isElement(child, editor.schema) && editor.isInline(child))
       ) {
-        Transforms.removeNodes(editor, {at: path.concat(n), voids: true})
+        removeNodes(editor, {at: path.concat(n), voids: true})
         element = Node.get(editor, path, editor.schema) as Ancestor
         n--
       }

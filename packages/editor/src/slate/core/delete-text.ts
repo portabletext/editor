@@ -11,9 +11,9 @@ import {Point} from '../interfaces/point'
 import {Range} from '../interfaces/range'
 import {Scrubber} from '../interfaces/scrubber'
 import {Text} from '../interfaces/text'
-import {Transforms} from '../interfaces/transforms'
 import type {TextUnit} from '../types/types'
 import {insertText} from './insert-text'
+import {removeNodes} from './remove-nodes'
 
 export interface TextDeleteOptions {
   at?: Location
@@ -61,7 +61,7 @@ export function deleteText(editor: Editor, options: TextDeleteOptions = {}) {
     }
 
     if (Path.isPath(at)) {
-      Transforms.removeNodes(editor, {at, voids})
+      removeNodes(editor, {at, voids})
       return
     }
 
@@ -169,7 +169,7 @@ export function deleteText(editor: Editor, options: TextDeleteOptions = {}) {
       .map((r) => r.unref())
       .filter((r): r is Path => r !== null)
       .forEach((p) => {
-        Transforms.removeNodes(editor, {at: p, voids})
+        removeNodes(editor, {at: p, voids})
       })
 
     if (!endNonEditable) {
@@ -272,14 +272,14 @@ export function deleteText(editor: Editor, options: TextDeleteOptions = {}) {
           }
 
           if (emptyRef) {
-            Transforms.removeNodes(editor, {
+            removeNodes(editor, {
               at: emptyRef.current!,
               voids,
             })
           }
 
           if (Editor.shouldMergeNodesRemovePrevNode(editor, prev, current)) {
-            Transforms.removeNodes(editor, {at: prevPath, voids})
+            removeNodes(editor, {at: prevPath, voids})
           } else {
             // Copy markDefs from the merging block to the target before merging
             const pteEditor = editor as unknown as PortableTextSlateEditor
@@ -344,7 +344,7 @@ export function deleteText(editor: Editor, options: TextDeleteOptions = {}) {
     const point = reverse ? startUnref || endUnref : endUnref || startUnref
 
     if (options.at == null && point) {
-      Transforms.select(editor, point)
+      editor.select(point)
     }
   })
 }

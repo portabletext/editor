@@ -1,14 +1,24 @@
-import {Editor} from '../interfaces/editor'
+import type {Location} from '../interfaces'
+import {Editor, type NodeMatch} from '../interfaces/editor'
 import {Element} from '../interfaces/element'
+import {Node} from '../interfaces/node'
 import {Path} from '../interfaces/path'
 import {Range} from '../interfaces/range'
-import type {NodeTransforms} from '../interfaces/transforms/node'
+import type {RangeMode} from '../types/types'
 import {matchPath} from '../utils/match-path'
 
-export const removeNodes: NodeTransforms['removeNodes'] = (
-  editor,
-  options = {},
-) => {
+export interface RemoveNodesOptions<T extends Node> {
+  at?: Location
+  match?: NodeMatch<T>
+  mode?: RangeMode
+  hanging?: boolean
+  voids?: boolean
+}
+
+export function removeNodes<T extends Node>(
+  editor: Editor,
+  options: RemoveNodesOptions<T> = {},
+): void {
   Editor.withoutNormalizing(editor, () => {
     const {hanging = false, voids = false, mode = 'lowest'} = options
     let {at = editor.selection, match} = options
