@@ -1,8 +1,5 @@
-import type {EditorInterface} from '../interfaces/editor'
+import type {Editor} from '../interfaces/editor'
 
-export const setNormalizing: EditorInterface['setNormalizing'] = (
-  editor,
-  isNormalizing,
-) => {
+export function setNormalizing(editor: Editor, isNormalizing: boolean): void {
   editor.normalizing = isNormalizing
 }

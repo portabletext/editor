@@ -3,7 +3,8 @@ import {
   slatePointToSelectionPoint,
   slateRangeToSelection,
 } from '../internal-utils/slate-utils'
-import {Editor, Point, Range} from '../slate'
+import {Point, Range, type Editor} from '../slate'
+import {range as editorRange} from '../slate/editor/range'
 
 export function createBehaviorApiPlugin(editorActor: EditorActor) {
   return function behaviorApiPlugin(editor: Editor) {
@@ -15,7 +16,7 @@ export function createBehaviorApiPlugin(editorActor: EditorActor) {
         return
       }
 
-      const range = options?.at ? Editor.range(editor, options.at) : undefined
+      const range = options?.at ? editorRange(editor, options.at) : undefined
       const selection = range
         ? slateRangeToSelection({
             schema: editorActor.getSnapshot().context.schema,
@@ -126,7 +127,7 @@ export function createBehaviorApiPlugin(editorActor: EditorActor) {
         return
       }
 
-      const range = Editor.range(editor, location)
+      const range = editorRange(editor, location)
 
       editorActor.send({
         type: 'behavior event',

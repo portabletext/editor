@@ -1,4 +1,10 @@
-import {Editor, Node, Path, Text, type Point} from '../slate'
+import {Node, Path, Text, type Point} from '../slate'
+import {end} from '../slate/editor/end'
+import {isEdge} from '../slate/editor/is-edge'
+import {isEnd} from '../slate/editor/is-end'
+import {nodes} from '../slate/editor/nodes'
+import {pathRef} from '../slate/editor/path-ref'
+import {withoutNormalizing} from '../slate/editor/without-normalizing'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {applySelect} from './apply-selection'
 import {applySplitNode} from './apply-split-node'
@@ -14,7 +20,7 @@ export function applyInsertNodeAtPath(
 ): void {
   editor.apply({type: 'insert_node', path, node})
 
-  const point = Editor.end(editor, path)
+  const point = end(editor, path)
 
   if (point) {
     applySelect(editor, point)
@@ -30,12 +36,12 @@ export function applyInsertNodeAtPoint(
   node: Node,
   at: Point,
 ): void {
-  Editor.withoutNormalizing(editor, () => {
+  withoutNormalizing(editor, () => {
     const match = Text.isText(node, editor.schema)
       ? (n: Node) => Text.isText(n, editor.schema)
       : (n: Node) => Text.isText(n, editor.schema) || editor.isObjectNode(n)
 
-    const [entry] = Editor.nodes(editor, {
+    const [entry] = nodes(editor, {
       at: at.path,
       match,
       mode: 'lowest',
@@ -47,23 +53,23 @@ export function applyInsertNodeAtPoint(
     }
 
     const [, matchPath] = entry
-    const pathRef = Editor.pathRef(editor, matchPath)
-    const isAtEnd = Editor.isEnd(editor, at, matchPath)
+    const ref = pathRef(editor, matchPath)
+    const isAtEnd = isEnd(editor, at, matchPath)
 
     // Split the node at the point if we're not at an edge
-    if (!Editor.isEdge(editor, at, matchPath)) {
+    if (!isEdge(editor, at, matchPath)) {
       const textNode = Node.get(editor, at.path, editor.schema)
       const properties = Node.extractProps(textNode, editor.schema)
 
       applySplitNode(editor, at.path, at.offset, properties)
     }
 
-    const path = pathRef.unref()!
+    const path = ref.unref()!
     const insertPath = isAtEnd ? Path.next(path) : path
 
     editor.apply({type: 'insert_node', path: insertPath, node})
 
-    const point = Editor.end(editor, insertPath)
+    const point = end(editor, insertPath)
 
     if (point) {
       applySelect(editor, point)

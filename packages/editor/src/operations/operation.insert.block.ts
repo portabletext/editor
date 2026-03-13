@@ -9,7 +9,6 @@ import {getFocusChild} from '../internal-utils/slate-utils'
 import {toSlateRange} from '../internal-utils/to-slate-range'
 import {toSlateBlock} from '../internal-utils/values'
 import {
-  Editor,
   Element,
   Node,
   Path,
@@ -18,6 +17,13 @@ import {
   Text,
   type Descendant,
 } from '../slate'
+import {end as editorEnd} from '../slate/editor/end'
+import {nodes} from '../slate/editor/nodes'
+import {pathRef} from '../slate/editor/path-ref'
+import {pointRef} from '../slate/editor/point-ref'
+import {rangeRef} from '../slate/editor/range-ref'
+import {start as editorStart} from '../slate/editor/start'
+import {withoutNormalizing} from '../slate/editor/without-normalizing'
 import type {EditorSelection} from '../types/editor'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {parseBlock} from '../utils/parse-blocks'
@@ -81,11 +87,11 @@ export function insertBlock(options: {
 
   // Fall back to the start and end of the editor if neither an editor
   // selection nor an `at` range is provided
-  const start = at ? Range.start(at) : Editor.start(editor, [])
-  const end = at ? Range.end(at) : Editor.end(editor, [])
+  const start = at ? Range.start(at) : editorStart(editor, [])
+  const end = at ? Range.end(at) : editorEnd(editor, [])
 
   const [startBlock, startBlockPath] = Array.from(
-    Editor.nodes(editor, {
+    nodes(editor, {
       at: start,
       mode: 'lowest',
       match: (node, path) =>
@@ -94,7 +100,7 @@ export function insertBlock(options: {
     }),
   ).at(0) ?? [undefined, undefined]
   let [endBlock, endBlockPath] = Array.from(
-    Editor.nodes(editor, {
+    nodes(editor, {
       at: end,
       mode: 'lowest',
       match: (node, path) =>
@@ -124,7 +130,7 @@ export function insertBlock(options: {
     }
 
     if (editor.isTextBlock(block) && editor.isTextBlock(endBlock)) {
-      const selectionBefore = Editor.end(editor, endBlockPath)
+      const selectionBefore = editorEnd(editor, endBlockPath)
       insertTextBlockFragment(editor, block, selectionBefore)
 
       if (select === 'start') {
@@ -140,12 +146,12 @@ export function insertBlock(options: {
   }
 
   if (Range.isExpanded(at) && !editor.isTextBlock(block)) {
-    const atBeforeDelete = Editor.rangeRef(editor, at, {affinity: 'inward'})
+    const atBeforeDelete = rangeRef(editor, at, {affinity: 'inward'})
 
     // Remember if the selection started at the beginning of the block
     const start = Range.start(at)
     const startBlock = Node.get(editor, [start.path[0]!], editor.schema)
-    const startOfBlock = Editor.start(editor, [start.path[0]!])
+    const startOfBlock = editorStart(editor, [start.path[0]!])
     const isAtStartOfBlock =
       Element.isElement(startBlock, editor.schema) &&
       Point.equals(start, startOfBlock)
@@ -156,7 +162,7 @@ export function insertBlock(options: {
     const atAfterDelete = atBeforeDelete.unref() ?? editor.selection
 
     const atBeforeInsert = atAfterDelete
-      ? Editor.rangeRef(editor, atAfterDelete, {affinity: 'inward'})
+      ? rangeRef(editor, atAfterDelete, {affinity: 'inward'})
       : undefined
 
     // Insert the block at the position after delete
@@ -168,7 +174,7 @@ export function insertBlock(options: {
       editor.apply({type: 'insert_node', path: insertPath, node: block})
 
       if (select !== 'none') {
-        const point = Editor.start(editor, insertPath)
+        const point = editorStart(editor, insertPath)
         editor.apply({
           type: 'set_selection',
           properties: editor.selection,
@@ -226,8 +232,8 @@ export function insertBlock(options: {
   ) {
     const selectionPoint = Range.start(at)
     const blockPath: Path = [selectionPoint.path[0]!]
-    const blockStartPoint = Editor.start(editor, blockPath)
-    const blockEndPoint = Editor.end(editor, blockPath)
+    const blockStartPoint = editorStart(editor, blockPath)
+    const blockEndPoint = editorEnd(editor, blockPath)
 
     // Check if we're in the middle of the block (not at start or end)
     const isAtBlockStart = Point.equals(selectionPoint, blockStartPoint)
@@ -266,7 +272,7 @@ export function insertBlock(options: {
       // Handle selection based on select parameter
       if (select === 'none') {
         // Restore selection to end of first block (where the user was typing)
-        const firstBlockEndPoint = Editor.end(editor, blockPath)
+        const firstBlockEndPoint = editorEnd(editor, blockPath)
         editor.apply({
           type: 'set_selection',
           properties: editor.selection,
@@ -276,14 +282,14 @@ export function insertBlock(options: {
           },
         })
       } else if (select === 'start') {
-        const point = Editor.start(editor, insertPath)
+        const point = editorStart(editor, insertPath)
         editor.apply({
           type: 'set_selection',
           properties: editor.selection,
           newProperties: {anchor: point, focus: point},
         })
       } else if (select === 'end') {
-        const point = Editor.end(editor, insertPath)
+        const point = editorEnd(editor, insertPath)
         editor.apply({
           type: 'set_selection',
           properties: editor.selection,
@@ -329,8 +335,8 @@ export function insertBlock(options: {
 
       // After deletion, refetch the end block since paths may have changed
       const [newEndBlock, newEndBlockPath] = Array.from(
-        Editor.nodes(editor, {
-          at: Editor.end(editor, []),
+        nodes(editor, {
+          at: editorEnd(editor, []),
           mode: 'lowest',
           match: (node, path) =>
             (Element.isElement(node, editor.schema) ||
@@ -454,7 +460,7 @@ export function insertBlock(options: {
     if (select === 'end') {
       const insertAt = editor.selection
         ? Range.end(editor.selection)
-        : Editor.end(editor, endBlockPath)
+        : editorEnd(editor, endBlockPath)
 
       insertTextBlockFragment(editor, adjustedBlock, insertAt)
 
@@ -472,7 +478,7 @@ export function insertBlock(options: {
       if (wasCrossBlockDeletion) {
         setSelectionToPoint(editor, selectionStartPoint)
       } else {
-        const endBlockStartPoint = Editor.start(editor, endBlockPath)
+        const endBlockStartPoint = editorStart(editor, endBlockPath)
         if (!Point.equals(selectionStartPoint, endBlockStartPoint)) {
           setSelectionToPoint(editor, selectionStartPoint)
         }
@@ -487,8 +493,8 @@ export function insertBlock(options: {
       return
     }
 
-    const endBlockStartPoint = Editor.start(editor, endBlockPath)
-    const endBlockEndPoint = Editor.end(editor, endBlockPath)
+    const endBlockStartPoint = editorStart(editor, endBlockPath)
+    const endBlockEndPoint = editorEnd(editor, endBlockPath)
     const selectionStartPoint = Range.start(at)
     const selectionEndPoint = Range.end(at)
 
@@ -557,7 +563,7 @@ export function insertBlock(options: {
         removeNodeAt(editor, [...endBlockPath, i])
       }
 
-      insertTextBlockFragment(editor, block, Editor.start(editor, endBlockPath))
+      insertTextBlockFragment(editor, block, editorStart(editor, endBlockPath))
 
       if (select !== 'none') {
         setSelection(editor, endBlockPath, select)
@@ -625,13 +631,13 @@ export function insertBlock(options: {
         let currentOffset = startPoint.offset
 
         // Create a point ref to track where the cursor should be after operations
-        const cursorPositionRef = Editor.pointRef(editor, startPoint, {
+        const cursorPositionRef = pointRef(editor, startPoint, {
           affinity: 'backward',
         })
 
         // Create a path ref to track the first block's path as it changes
         const blockPath: Path = [currentPath[0]!]
-        const firstBlockPathRef = Editor.pathRef(editor, blockPath)
+        const firstBlockPathRef = pathRef(editor, blockPath)
 
         // Split text node first
         const textNode = Node.get(editor, currentPath, editor.schema)
@@ -670,7 +676,7 @@ export function insertBlock(options: {
         editor.apply({type: 'insert_node', path: insertPath, node: block})
 
         if (select === 'start' || select === 'end') {
-          const point = Editor.start(editor, insertPath)
+          const point = editorStart(editor, insertPath)
           editor.apply({
             type: 'set_selection',
             properties: editor.selection,
@@ -711,7 +717,7 @@ function setSelection(
   position: 'start' | 'end',
 ) {
   const point =
-    position === 'start' ? Editor.start(editor, path) : Editor.end(editor, path)
+    position === 'start' ? editorStart(editor, path) : editorEnd(editor, path)
   editor.apply({
     type: 'set_selection',
     properties: editor.selection,
@@ -797,8 +803,8 @@ function replaceEmptyTextBlock(
 
   const point =
     select === 'end'
-      ? Editor.end(editor, blockPath)
-      : Editor.start(editor, blockPath)
+      ? editorEnd(editor, blockPath)
+      : editorStart(editor, blockPath)
 
   clearSelection(editor)
   editor.apply({
@@ -945,7 +951,7 @@ function deleteCrossBlockRange(
   if (editor.isTextBlock(startBlock) && editor.isTextBlock(endBlock)) {
     // Wrap in withoutNormalizing so normalization doesn't strip the copied
     // markDefs before the merge moves the children that reference them.
-    Editor.withoutNormalizing(editor, () => {
+    withoutNormalizing(editor, () => {
       if (Array.isArray(endBlock.markDefs) && endBlock.markDefs.length > 0) {
         const oldDefs =
           (Array.isArray(startBlock.markDefs) && startBlock.markDefs) || []

@@ -2,7 +2,14 @@ import type {PortableTextBlock} from '@portabletext/schema'
 import {applySetNode} from '../internal-utils/apply-set-node'
 import {applySplitNode} from '../internal-utils/apply-split-node'
 import {toSlateRange} from '../internal-utils/to-slate-range'
-import {Editor, Element, Node, Range, Text} from '../slate'
+import {Element, Node, Range, Text} from '../slate'
+import {isEdge} from '../slate/editor/is-edge'
+import {isEnd} from '../slate/editor/is-end'
+import {isStart} from '../slate/editor/is-start'
+import {leaf} from '../slate/editor/leaf'
+import {node as editorNode} from '../slate/editor/node'
+import {nodes} from '../slate/editor/nodes'
+import {rangeRef} from '../slate/editor/range-ref'
 import type {OperationImplementation} from './operation.types'
 
 export const decoratorRemoveOperationImplementation: OperationImplementation<
@@ -27,10 +34,10 @@ export const decoratorRemoveOperationImplementation: OperationImplementation<
   }
 
   if (Range.isExpanded(at)) {
-    const rangeRef = Editor.rangeRef(editor, at, {affinity: 'inward'})
+    const ref = rangeRef(editor, at, {affinity: 'inward'})
 
     // Split text nodes at range boundaries (equivalent to setNodes with split:true and empty props)
-    const [decoratorLeaf] = Editor.leaf(editor, at.anchor)
+    const [decoratorLeaf] = leaf(editor, at.anchor)
     if (
       !(
         Range.isCollapsed(at) &&
@@ -39,9 +46,9 @@ export const decoratorRemoveOperationImplementation: OperationImplementation<
       )
     ) {
       const [start, end] = Range.edges(at)
-      const endAtEndOfNode = Editor.isEnd(editor, end, end.path)
-      if (!endAtEndOfNode || !Editor.isEdge(editor, end, end.path)) {
-        const [endNode] = Editor.node(editor, end.path)
+      const endAtEndOfNode = isEnd(editor, end, end.path)
+      if (!endAtEndOfNode || !isEdge(editor, end, end.path)) {
+        const [endNode] = editorNode(editor, end.path)
         applySplitNode(
           editor,
           end.path,
@@ -49,9 +56,9 @@ export const decoratorRemoveOperationImplementation: OperationImplementation<
           Node.extractProps(endNode, editor.schema),
         )
       }
-      const startAtStartOfNode = Editor.isStart(editor, start, start.path)
-      if (!startAtStartOfNode || !Editor.isEdge(editor, start, start.path)) {
-        const [startNode] = Editor.node(editor, start.path)
+      const startAtStartOfNode = isStart(editor, start, start.path)
+      if (!startAtStartOfNode || !isEdge(editor, start, start.path)) {
+        const [startNode] = editorNode(editor, start.path)
         applySplitNode(
           editor,
           start.path,
@@ -61,11 +68,11 @@ export const decoratorRemoveOperationImplementation: OperationImplementation<
       }
     }
 
-    const updatedAt = rangeRef.unref()
+    const updatedAt = ref.unref()
 
     if (updatedAt) {
       const splitTextNodes = [
-        ...Editor.nodes(editor, {
+        ...nodes(editor, {
           at: updatedAt,
           match: (n) => Text.isText(n, editor.schema),
         }),
@@ -90,7 +97,7 @@ export const decoratorRemoveOperationImplementation: OperationImplementation<
       })
     }
   } else {
-    const [block, blockPath] = Editor.node(editor, at, {
+    const [block, blockPath] = editorNode(editor, at, {
       depth: 1,
     })
     const lonelyEmptySpan =
@@ -107,7 +114,7 @@ export const decoratorRemoveOperationImplementation: OperationImplementation<
         (existingMark) => existingMark !== mark,
       )
 
-      for (const [, spanPath] of Editor.nodes(editor, {
+      for (const [, spanPath] of nodes(editor, {
         at: blockPath,
         match: (node) => editor.isTextSpan(node),
       })) {

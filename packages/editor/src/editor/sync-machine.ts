@@ -24,11 +24,14 @@ import {
 import {safeStringify} from '../internal-utils/safe-json'
 import {validateValue} from '../internal-utils/validateValue'
 import {toSlateBlock} from '../internal-utils/values'
-import {Editor, Node, Text, type Descendant} from '../slate'
+import {Node, Text, type Descendant} from '../slate'
 import {withRemoteChanges} from '../slate-plugins/slate-plugin.remote-changes'
 import {pluginWithoutHistory} from '../slate-plugins/slate-plugin.without-history'
 import {withoutPatching} from '../slate-plugins/slate-plugin.without-patching'
 import {deleteText} from '../slate/core/delete-text'
+import {node as editorNode} from '../slate/editor/node'
+import {start} from '../slate/editor/start'
+import {withoutNormalizing} from '../slate/editor/without-normalizing'
 import type {PickFromUnion} from '../type-utils'
 import type {InvalidValueResolution} from '../types/editor'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
@@ -561,7 +564,7 @@ async function updateValue({
       !slateEditor.selection &&
       slateEditor.children.length > 0
     ) {
-      applySelect(slateEditor, Editor.start(slateEditor, []))
+      applySelect(slateEditor, start(slateEditor, []))
       slateEditor.onChange()
     }
 
@@ -596,7 +599,7 @@ function clearEditor({
   slateEditor: PortableTextSlateEditor
   doneSyncing: boolean
 }) {
-  Editor.withoutNormalizing(slateEditor, () => {
+  withoutNormalizing(slateEditor, () => {
     pluginWithoutHistory(slateEditor, () => {
       withRemoteChanges(slateEditor, () => {
         withoutPatching(slateEditor, () => {
@@ -608,7 +611,7 @@ function clearEditor({
 
           slateEditor.children.forEach((_, index) => {
             const removePath = [childrenLength - 1 - index]
-            const [removeNode] = Editor.node(slateEditor, removePath)
+            const [removeNode] = editorNode(slateEditor, removePath)
             slateEditor.apply({
               type: 'remove_node',
               path: removePath,
@@ -634,14 +637,14 @@ function removeExtraBlocks({
 }) {
   let isChanged = false
 
-  Editor.withoutNormalizing(slateEditor, () => {
+  withoutNormalizing(slateEditor, () => {
     withRemoteChanges(slateEditor, () => {
       withoutPatching(slateEditor, () => {
         const childrenLength = slateEditor.children.length
 
         if (value.length < childrenLength) {
           for (let i = childrenLength - 1; i > value.length - 1; i--) {
-            const [removeNode] = Editor.node(slateEditor, [i])
+            const [removeNode] = editorNode(slateEditor, [i])
             slateEditor.apply({
               type: 'remove_node',
               path: [i],
@@ -699,7 +702,7 @@ function syncBlock({
         schemaTypes: context.schema,
       })
 
-      Editor.withoutNormalizing(slateEditor, () => {
+      withoutNormalizing(slateEditor, () => {
         withRemoteChanges(slateEditor, () => {
           withoutPatching(slateEditor, () => {
             slateEditor.apply({
@@ -779,7 +782,7 @@ function syncBlock({
     if (oldBlock._key === block._key && oldBlock._type === block._type) {
       debug.syncValue('Updating block', oldBlock, block)
 
-      Editor.withoutNormalizing(slateEditor, () => {
+      withoutNormalizing(slateEditor, () => {
         withRemoteChanges(slateEditor, () => {
           withoutPatching(slateEditor, () => {
             updateBlock({
@@ -795,7 +798,7 @@ function syncBlock({
     } else {
       debug.syncValue('Replacing block', oldBlock, block)
 
-      Editor.withoutNormalizing(slateEditor, () => {
+      withoutNormalizing(slateEditor, () => {
         withRemoteChanges(slateEditor, () => {
           withoutPatching(slateEditor, () => {
             replaceBlock({
@@ -857,7 +860,7 @@ function replaceBlock({
     applyDeselect(slateEditor)
   }
 
-  const [oldNode] = Editor.node(slateEditor, [index])
+  const [oldNode] = editorNode(slateEditor, [index])
   slateEditor.apply({type: 'remove_node', path: [index], node: oldNode})
   slateEditor.apply({type: 'insert_node', path: [index], node: slateBlock})
 
@@ -941,7 +944,7 @@ function updateBlock({
         if (childIndex > 0) {
           debug.syncValue('Removing child')
 
-          const [childNode] = Editor.node(slateEditor, [index, childIndex])
+          const [childNode] = editorNode(slateEditor, [index, childIndex])
           slateEditor.apply({
             type: 'remove_node',
             path: [index, childIndex],
@@ -1015,7 +1018,7 @@ function updateBlock({
         } else if (oldBlockChild) {
           debug.syncValue('Replacing child', currentBlockChild)
 
-          const [oldChild] = Editor.node(slateEditor, [
+          const [oldChild] = editorNode(slateEditor, [
             index,
             currentBlockChildIndex,
           ])

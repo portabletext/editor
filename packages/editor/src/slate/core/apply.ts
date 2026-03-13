@@ -1,4 +1,5 @@
-import {Editor} from '../interfaces/editor'
+import {normalize} from '../editor/normalize'
+import type {Editor} from '../interfaces/editor'
 import {Path} from '../interfaces/path'
 import {PathRef} from '../interfaces/path-ref'
 import {PointRef} from '../interfaces/point-ref'
@@ -9,15 +10,15 @@ import {isBatchingDirtyPaths} from './batch-dirty-paths'
 import {updateDirtyPaths} from './update-dirty-paths'
 
 export const apply: WithEditorFirstArg<Editor['apply']> = (editor, op) => {
-  for (const ref of Editor.pathRefs(editor)) {
+  for (const ref of editor.pathRefs) {
     PathRef.transform(ref, op)
   }
 
-  for (const ref of Editor.pointRefs(editor)) {
+  for (const ref of editor.pointRefs) {
     PointRef.transform(ref, op)
   }
 
-  for (const ref of Editor.rangeRefs(editor)) {
+  for (const ref of editor.rangeRefs) {
     RangeRef.transform(ref, op)
   }
 
@@ -32,7 +33,7 @@ export const apply: WithEditorFirstArg<Editor['apply']> = (editor, op) => {
   applyOperation(editor, op)
 
   editor.operations.push(op)
-  Editor.normalize(editor, {
+  normalize(editor, {
     operation: op,
   })
 

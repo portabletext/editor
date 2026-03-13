@@ -1,5 +1,8 @@
 import {applySelect} from '../internal-utils/apply-selection'
-import {Editor, Node, Path, Range, Text} from '../slate'
+import {Node, Path, Range, Text} from '../slate'
+import {elementReadOnly} from '../slate/editor/element-read-only'
+import {getVoid} from '../slate/editor/get-void'
+import {hasPath} from '../slate/editor/has-path'
 import type {OperationImplementation} from './operation.types'
 
 export const insertTextOperationImplementation: OperationImplementation<
@@ -20,7 +23,7 @@ export const insertTextOperationImplementation: OperationImplementation<
   if (editor.isObjectNode(node)) {
     const nextPath = Path.next(path)
 
-    if (Editor.hasPath(editor, nextPath)) {
+    if (hasPath(editor, nextPath)) {
       const nextNode = Node.get(editor, nextPath, editor.schema)
 
       if (Text.isText(nextNode, editor.schema)) {
@@ -34,8 +37,8 @@ export const insertTextOperationImplementation: OperationImplementation<
       return
     }
   } else if (
-    Editor.void(editor, {at: selection}) ||
-    Editor.elementReadOnly(editor, {at: selection})
+    getVoid(editor, {at: selection}) ||
+    elementReadOnly(editor, {at: selection})
   ) {
     return
   }

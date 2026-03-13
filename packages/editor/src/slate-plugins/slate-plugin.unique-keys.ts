@@ -4,6 +4,7 @@ import type {EditorActor} from '../editor/editor-machine'
 import type {EditorContext, EditorSnapshot} from '../editor/editor-snapshot'
 import {applySetNode} from '../internal-utils/apply-set-node'
 import {Editor, Element, Node, type Path} from '../slate'
+import {parent as editorParent} from '../slate/editor/parent'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {withNormalizeNode} from './slate-plugin.normalize-node'
 
@@ -81,12 +82,12 @@ export function createUniqueKeysPlugin(editorActor: EditorActor) {
       const [node, path] = entry
 
       if (Element.isElement(node, editor.schema) || editor.isObjectNode(node)) {
-        const [parent] = Editor.parent(editor, path)
+        const [parentNode] = editorParent(editor, path)
 
-        if (parent && Editor.isEditor(parent)) {
+        if (parentNode && Editor.isEditor(parentNode)) {
           const blockKeys = new Set<string>()
 
-          for (const sibling of parent.children) {
+          for (const sibling of parentNode.children) {
             if (sibling._key && blockKeys.has(sibling._key)) {
               const _key = editorActor.getSnapshot().context.keyGenerator()
 

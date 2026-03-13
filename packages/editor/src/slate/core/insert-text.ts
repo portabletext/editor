@@ -1,5 +1,10 @@
+import {elementReadOnly} from '../editor/element-read-only'
+import {getVoid} from '../editor/get-void'
+import {pointRef} from '../editor/point-ref'
+import {range as editorRange} from '../editor/range'
+import {withoutNormalizing} from '../editor/without-normalizing'
 import type {Location} from '../index'
-import {Editor} from '../interfaces/editor'
+import type {Editor} from '../interfaces/editor'
 import {Path} from '../interfaces/path'
 import {Range} from '../interfaces/range'
 import {getDefaultInsertLocation} from '../utils'
@@ -14,12 +19,12 @@ export function insertText(
   text: string,
   options: TextInsertTextOptions = {},
 ): void {
-  Editor.withoutNormalizing(editor, () => {
+  withoutNormalizing(editor, () => {
     const {voids = false} = options
     let {at = getDefaultInsertLocation(editor)} = options
 
     if (Path.isPath(at)) {
-      at = Editor.range(editor, at)
+      at = editorRange(editor, at)
     }
 
     if (Range.isRange(at)) {
@@ -27,12 +32,12 @@ export function insertText(
         at = at.anchor
       } else {
         const end = Range.end(at)
-        if (!voids && Editor.void(editor, {at: end})) {
+        if (!voids && getVoid(editor, {at: end})) {
           return
         }
         const start = Range.start(at)
-        const startRef = Editor.pointRef(editor, start)
-        const endRef = Editor.pointRef(editor, end)
+        const startRef = pointRef(editor, start)
+        const endRef = pointRef(editor, end)
         editor.delete({at, voids})
         const startPoint = startRef.unref()
         const endPoint = endRef.unref()
@@ -42,10 +47,7 @@ export function insertText(
       }
     }
 
-    if (
-      (!voids && Editor.void(editor, {at})) ||
-      Editor.elementReadOnly(editor, {at})
-    ) {
+    if ((!voids && getVoid(editor, {at})) || elementReadOnly(editor, {at})) {
       return
     }
 

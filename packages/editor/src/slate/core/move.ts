@@ -1,4 +1,6 @@
-import {Editor} from '../interfaces/editor'
+import {after} from '../editor/after'
+import {before} from '../editor/before'
+import type {Editor} from '../interfaces/editor'
 import type {Range} from '../interfaces/range'
 import {Range as RangeUtils} from '../interfaces/range'
 import type {MoveUnit, SelectionEdge} from '../types/types'
@@ -33,8 +35,8 @@ export function move(editor: Editor, options: SelectionMoveOptions = {}): void {
 
   if (edge == null || edge === 'anchor') {
     const point = reverse
-      ? Editor.before(editor, anchor, opts)
-      : Editor.after(editor, anchor, opts)
+      ? before(editor, anchor, opts)
+      : after(editor, anchor, opts)
 
     if (point) {
       props.anchor = point
@@ -43,8 +45,8 @@ export function move(editor: Editor, options: SelectionMoveOptions = {}): void {
 
   if (edge == null || edge === 'focus') {
     const point = reverse
-      ? Editor.before(editor, focus, opts)
-      : Editor.after(editor, focus, opts)
+      ? before(editor, focus, opts)
+      : after(editor, focus, opts)
 
     if (point) {
       props.focus = point

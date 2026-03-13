@@ -1,12 +1,17 @@
+import type {Location, Point} from '../interfaces'
 import {Editor} from '../interfaces/editor'
-import type {EditorInterface} from '../interfaces/editor'
 import {Element} from '../interfaces/element'
 import {Node} from '../interfaces/node'
 import {Path} from '../interfaces/path'
 import {Range} from '../interfaces/range'
 import {Text} from '../interfaces/text'
+import type {LeafEdge} from '../types/types'
 
-export const point: EditorInterface['point'] = (editor, at, options = {}) => {
+export function point(
+  editor: Editor,
+  at: Location,
+  options: {edge?: LeafEdge} = {},
+): Point {
   const {edge = 'start'} = options
 
   if (Path.isPath(at)) {

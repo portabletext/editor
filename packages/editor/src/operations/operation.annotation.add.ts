@@ -4,7 +4,14 @@ import {applySetNode} from '../internal-utils/apply-set-node'
 import {applySplitNode} from '../internal-utils/apply-split-node'
 import {safeStringify} from '../internal-utils/safe-json'
 import {toSlateRange} from '../internal-utils/to-slate-range'
-import {Editor, Node, Range, Text} from '../slate'
+import {Node, Range, Text} from '../slate'
+import {isEdge} from '../slate/editor/is-edge'
+import {isEnd} from '../slate/editor/is-end'
+import {isStart} from '../slate/editor/is-start'
+import {leaf} from '../slate/editor/leaf'
+import {node as editorNode} from '../slate/editor/node'
+import {nodes} from '../slate/editor/nodes'
+import {rangeRef} from '../slate/editor/range-ref'
 import {parseAnnotation} from '../utils/parse-blocks'
 import type {OperationImplementation} from './operation.types'
 
@@ -47,9 +54,9 @@ export const addAnnotationOperationImplementation: OperationImplementation<
   }
 
   // Track the range across mutations when `at` is explicitly provided
-  const rangeRef = at ? Editor.rangeRef(editor, at, {affinity: 'inward'}) : null
+  const ref = at ? rangeRef(editor, at, {affinity: 'inward'}) : null
 
-  const selectedBlocks = Editor.nodes(editor, {
+  const selectedBlocks = nodes(editor, {
     at: effectiveSelection,
     match: (node) => editor.isTextBlock(node),
     reverse: Range.isBackward(effectiveSelection),
@@ -94,7 +101,7 @@ export const addAnnotationOperationImplementation: OperationImplementation<
     // Split text nodes at range boundaries
     const splitRange = at ?? editor.selection
     if (splitRange && Range.isRange(splitRange)) {
-      const [splitLeaf] = Editor.leaf(editor, splitRange.anchor)
+      const [splitLeaf] = leaf(editor, splitRange.anchor)
       if (
         !(
           Range.isCollapsed(splitRange) &&
@@ -102,13 +109,13 @@ export const addAnnotationOperationImplementation: OperationImplementation<
           splitLeaf.text.length > 0
         )
       ) {
-        const splitRangeRef = Editor.rangeRef(editor, splitRange, {
+        const splitRangeRef = rangeRef(editor, splitRange, {
           affinity: 'inward',
         })
         const [splitStart, splitEnd] = Range.edges(splitRange)
-        const endAtEnd = Editor.isEnd(editor, splitEnd, splitEnd.path)
-        if (!endAtEnd || !Editor.isEdge(editor, splitEnd, splitEnd.path)) {
-          const [endNode] = Editor.node(editor, splitEnd.path)
+        const endAtEnd = isEnd(editor, splitEnd, splitEnd.path)
+        if (!endAtEnd || !isEdge(editor, splitEnd, splitEnd.path)) {
+          const [endNode] = editorNode(editor, splitEnd.path)
           applySplitNode(
             editor,
             splitEnd.path,
@@ -116,12 +123,9 @@ export const addAnnotationOperationImplementation: OperationImplementation<
             Node.extractProps(endNode, editor.schema),
           )
         }
-        const startAtStart = Editor.isStart(editor, splitStart, splitStart.path)
-        if (
-          !startAtStart ||
-          !Editor.isEdge(editor, splitStart, splitStart.path)
-        ) {
-          const [startNode] = Editor.node(editor, splitStart.path)
+        const startAtStart = isStart(editor, splitStart, splitStart.path)
+        if (!startAtStart || !isEdge(editor, splitStart, splitStart.path)) {
+          const [startNode] = editorNode(editor, splitStart.path)
           applySplitNode(
             editor,
             splitStart.path,
@@ -140,7 +144,7 @@ export const addAnnotationOperationImplementation: OperationImplementation<
     const children = Node.children(editor, blockPath, editor.schema)
 
     // Use the tracked range (updated after splits) or fall back to editor.selection
-    const selectionRange = rangeRef?.current ?? editor.selection
+    const selectionRange = ref?.current ?? editor.selection
 
     for (const [span, path] of children) {
       if (!editor.isTextSpan(span)) {
@@ -160,5 +164,5 @@ export const addAnnotationOperationImplementation: OperationImplementation<
   }
 
   // Clean up the range ref
-  rangeRef?.unref()
+  ref?.unref()
 }

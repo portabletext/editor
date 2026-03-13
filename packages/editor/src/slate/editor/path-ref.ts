@@ -1,25 +1,26 @@
-import {Editor, type EditorInterface} from '../interfaces/editor'
-import type {PathRef} from '../interfaces/path-ref'
+import type {Path, PathRef} from '../interfaces'
+import type {Editor} from '../interfaces/editor'
+import type {TextDirection} from '../types/types'
 
-export const pathRef: EditorInterface['pathRef'] = (
-  editor,
-  path,
-  options = {},
-) => {
+export function pathRef(
+  editor: Editor,
+  path: Path,
+  options: {affinity?: TextDirection | null} = {},
+): PathRef {
   const {affinity = 'forward'} = options
   const ref: PathRef = {
     current: path,
     affinity,
     unref() {
       const {current} = ref
-      const pathRefs = Editor.pathRefs(editor)
+      const pathRefs = editor.pathRefs
       pathRefs.delete(ref)
       ref.current = null
       return current
     },
   }
 
-  const refs = Editor.pathRefs(editor)
+  const refs = editor.pathRefs
   refs.add(ref)
   return ref
 }

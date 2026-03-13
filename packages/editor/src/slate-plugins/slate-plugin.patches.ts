@@ -13,7 +13,9 @@ import {
 } from '../internal-utils/operation-to-patches'
 import {safeStringify} from '../internal-utils/safe-json'
 import {isEqualToEmptyEditor} from '../internal-utils/values'
-import {Editor, type Operation} from '../slate'
+import type {Editor, Operation} from '../slate'
+import {normalize} from '../slate/editor/normalize'
+import {withoutNormalizing} from '../slate/editor/without-normalizing'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {withRemoteChanges} from './slate-plugin.remote-changes'
 import {pluginWithoutHistory} from './slate-plugin.without-history'
@@ -51,7 +53,7 @@ export function createPatchesPlugin({
       let changed = false
 
       withRemoteChanges(editor, () => {
-        Editor.withoutNormalizing(editor, () => {
+        withoutNormalizing(editor, () => {
           withoutPatching(editor, () => {
             pluginWithoutHistory(editor, () => {
               for (const patch of patches) {
@@ -73,7 +75,7 @@ export function createPatchesPlugin({
           })
         })
         if (changed) {
-          editor.normalize()
+          normalize(editor)
           editor.onChange()
         }
       })

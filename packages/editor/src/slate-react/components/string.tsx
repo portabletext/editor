@@ -1,7 +1,8 @@
 import {forwardRef, memo, useRef, useState} from 'react'
 import {ReactEditor, useSlateStatic} from '..'
-import {Editor, Path, type Element, type Text} from '../../slate'
+import {Path, type Element, type Text} from '../../slate'
 import {IS_ANDROID, MARK_PLACEHOLDER_SYMBOL} from '../../slate-dom'
+import {string as editorString} from '../../slate/editor/string'
 import {useIsomorphicLayoutEffect} from '../hooks/use-isomorphic-layout-effect'
 
 /**
@@ -27,7 +28,7 @@ const SlateString = (props: {
     leaf.text === '' &&
     parent.children[parent.children.length - 1] === text &&
     !editor.isInline(parent) &&
-    Editor.string(editor, parentPath) === ''
+    editorString(editor, parentPath) === ''
   ) {
     return <ZeroWidthString isLineBreak isMarkPlaceholder={isMarkPlaceholder} />
   }

@@ -1,5 +1,5 @@
-import {Editor, Node} from '../slate'
-import type {Point} from '../slate'
+import {Node, type Point} from '../slate'
+import {withoutNormalizing} from '../slate/editor/without-normalizing'
 import {getBlockKeyFromSelectionPoint} from '../utils/util.selection-point'
 import type {OperationImplementation} from './operation.types'
 
@@ -43,7 +43,7 @@ export const moveBlockOperationImplementation: OperationImplementation<
     ? {anchor: {...editor.selection.anchor}, focus: {...editor.selection.focus}}
     : null
 
-  Editor.withoutNormalizing(editor, () => {
+  withoutNormalizing(editor, () => {
     editor.apply({type: 'remove_node', path: [originBlockIndex], node})
     editor.apply({type: 'insert_node', path: [destinationBlockIndex], node})
   })

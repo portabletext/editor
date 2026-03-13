@@ -1,13 +1,17 @@
 import {
-  Editor,
   Element,
   Node,
   Path,
   Point,
   Range,
   Text,
+  type Editor,
   type Operation,
 } from '../../slate'
+import {above} from '../../slate/editor/above'
+import {hasPath} from '../../slate/editor/has-path'
+import {isBlock} from '../../slate/editor/is-block'
+import {next as editorNext} from '../../slate/editor/next'
 
 export type StringDiff = {
   start: number
@@ -27,7 +31,7 @@ export type TextDiff = {
  */
 export function verifyDiffState(editor: Editor, textDiff: TextDiff): boolean {
   const {path, diff} = textDiff
-  if (!Editor.hasPath(editor, path)) {
+  if (!hasPath(editor, path)) {
     return false
   }
 
@@ -43,7 +47,7 @@ export function verifyDiffState(editor: Editor, textDiff: TextDiff): boolean {
   }
 
   const nextPath = Path.next(path)
-  if (!Editor.hasPath(editor, nextPath)) {
+  if (!hasPath(editor, nextPath)) {
     return false
   }
 
@@ -166,7 +170,7 @@ export function targetRange(textDiff: TextDiff): Range {
  */
 export function normalizePoint(editor: Editor, point: Point): Point | null {
   let {path, offset} = point
-  if (!Editor.hasPath(editor, path)) {
+  if (!hasPath(editor, path)) {
     return null
   }
 
@@ -175,9 +179,8 @@ export function normalizePoint(editor: Editor, point: Point): Point | null {
     return null
   }
 
-  const parentBlock = Editor.above(editor, {
-    match: (n) =>
-      Element.isElement(n, editor.schema) && Editor.isBlock(editor, n),
+  const parentBlock = above(editor, {
+    match: (n) => Element.isElement(n, editor.schema) && isBlock(editor, n),
     at: path,
   })
 
@@ -186,7 +189,7 @@ export function normalizePoint(editor: Editor, point: Point): Point | null {
   }
 
   while (offset > leaf.text.length) {
-    const entry = Editor.next(editor, {
+    const entry = editorNext(editor, {
       at: path,
       match: (n) => Text.isText(n, editor.schema),
     })

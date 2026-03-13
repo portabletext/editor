@@ -3,7 +3,13 @@ import {applySelect} from '../internal-utils/apply-selection'
 import {applySetNode} from '../internal-utils/apply-set-node'
 import {applySplitNode} from '../internal-utils/apply-split-node'
 import {toSlateRange} from '../internal-utils/to-slate-range'
-import {Editor, Node, Range, Text} from '../slate'
+import {Node, Range, Text} from '../slate'
+import {isEdge} from '../slate/editor/is-edge'
+import {isEnd} from '../slate/editor/is-end'
+import {isStart} from '../slate/editor/is-start'
+import {node as editorNode} from '../slate/editor/node'
+import {nodes} from '../slate/editor/nodes'
+import {rangeRef} from '../slate/editor/range-ref'
 import type {OperationImplementation} from './operation.types'
 
 export const decoratorAddOperationImplementation: OperationImplementation<
@@ -29,13 +35,13 @@ export const decoratorAddOperationImplementation: OperationImplementation<
   }
 
   if (Range.isExpanded(at)) {
-    const rangeRef = Editor.rangeRef(editor, at, {affinity: 'inward'})
+    const ref = rangeRef(editor, at, {affinity: 'inward'})
     const [start, end] = Range.edges(at)
 
-    const endAtEndOfNode = Editor.isEnd(editor, end, end.path)
+    const endAtEndOfNode = isEnd(editor, end, end.path)
 
-    if (!endAtEndOfNode || !Editor.isEdge(editor, end, end.path)) {
-      const [endNode] = Editor.node(editor, end.path)
+    if (!endAtEndOfNode || !isEdge(editor, end, end.path)) {
+      const [endNode] = editorNode(editor, end.path)
       applySplitNode(
         editor,
         end.path,
@@ -44,10 +50,10 @@ export const decoratorAddOperationImplementation: OperationImplementation<
       )
     }
 
-    const startAtStartOfNode = Editor.isStart(editor, start, start.path)
+    const startAtStartOfNode = isStart(editor, start, start.path)
 
-    if (!startAtStartOfNode || !Editor.isEdge(editor, start, start.path)) {
-      const [startNode] = Editor.node(editor, start.path)
+    if (!startAtStartOfNode || !isEdge(editor, start, start.path)) {
+      const [startNode] = editorNode(editor, start.path)
       applySplitNode(
         editor,
         start.path,
@@ -56,7 +62,7 @@ export const decoratorAddOperationImplementation: OperationImplementation<
       )
     }
 
-    at = rangeRef.unref()
+    at = ref.unref()
 
     if (!at) {
       throw new Error('Unable to add decorator without a selection')
@@ -67,7 +73,7 @@ export const decoratorAddOperationImplementation: OperationImplementation<
     }
 
     // Use new selection to find nodes to decorate
-    const splitTextNodes = Editor.nodes(editor, {
+    const splitTextNodes = nodes(editor, {
       at,
       match: (n) => Text.isText(n, editor.schema),
     })
@@ -83,7 +89,7 @@ export const decoratorAddOperationImplementation: OperationImplementation<
     }
   } else {
     const selectedSpan = Array.from(
-      Editor.nodes(editor, {
+      nodes(editor, {
         at,
         match: (node) => editor.isTextSpan(node),
       }),
@@ -93,7 +99,7 @@ export const decoratorAddOperationImplementation: OperationImplementation<
       return
     }
 
-    const [block, blockPath] = Editor.node(editor, at, {
+    const [block, blockPath] = editorNode(editor, at, {
       depth: 1,
     })
     const lonelyEmptySpan =
@@ -114,7 +120,7 @@ export const decoratorAddOperationImplementation: OperationImplementation<
         existingMarks.length === existingMarksWithoutDecorator.length
           ? [...existingMarks, mark]
           : existingMarksWithoutDecorator
-      for (const [, spanPath] of Editor.nodes(editor, {
+      for (const [, spanPath] of nodes(editor, {
         at: blockPath,
         match: (node) => editor.isTextSpan(node),
       })) {

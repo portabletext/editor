@@ -3,6 +3,7 @@ import {toSlateRange} from '../internal-utils/to-slate-range'
 import {getSelectionEndBlock, getSelectionStartBlock} from '../selectors'
 import {Editor} from '../slate'
 import {DOMEditor} from '../slate-dom'
+import {nodes} from '../slate/editor/nodes'
 import type {PickFromUnion} from '../type-utils'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import type {EditorSnapshot} from './editor-snapshot'
@@ -63,7 +64,7 @@ function getBlockNodes(
 
   try {
     const blockEntries = Array.from(
-      Editor.nodes(slateEditor, {
+      nodes(slateEditor, {
         at: range,
         mode: 'highest',
         match: (n) => !Editor.isEditor(n),
@@ -94,7 +95,7 @@ function getChildNodes(
 
   try {
     const childEntries = Array.from(
-      Editor.nodes(slateEditor, {
+      nodes(slateEditor, {
         at: range,
         mode: 'lowest',
         match: (n) => !Editor.isEditor(n),

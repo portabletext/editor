@@ -1,5 +1,5 @@
 import type {EditorActor} from '../../../editor/editor-machine'
-import {Editor, Node, Path, Point, Range, Text} from '../../../slate'
+import {Node, Path, Point, Range, Text, type Editor} from '../../../slate'
 import {
   applyStringDiff,
   isDOMSelection,
@@ -13,6 +13,10 @@ import {
   type StringDiff,
   type TextDiff,
 } from '../../../slate-dom'
+import {leaf as editorLeaf} from '../../../slate/editor/leaf'
+import {next as editorNext} from '../../../slate/editor/next'
+import {range as editorRange} from '../../../slate/editor/range'
+import {rangeRef} from '../../../slate/editor/range-ref'
 import {ReactEditor} from '../../plugin/react-editor'
 import type {DebouncedFunc} from '../../utils/debounce'
 
@@ -107,7 +111,7 @@ export function createAndroidInputManager({
         return
       }
 
-      const targetRange = Editor.range(editor, target)
+      const targetRange = editorRange(editor, target)
       if (!editor.selection || !Range.equals(editor.selection, targetRange)) {
         editor.select(target)
       }
@@ -144,7 +148,7 @@ export function createAndroidInputManager({
 
     const selectionRef =
       editor.selection &&
-      Editor.rangeRef(editor, editor.selection, {affinity: 'forward'})
+      rangeRef(editor, editor.selection, {affinity: 'forward'})
     editor.userMarks = editor.marks
 
     debug('flush', editor.pendingAction, editor.pendingDiffs)
@@ -401,7 +405,7 @@ export function createAndroidInputManager({
     if (type.startsWith('delete')) {
       const direction = type.endsWith('Backward') ? 'backward' : 'forward'
       let [start, end] = Range.edges(targetRange)
-      let [leaf, path] = Editor.leaf(editor, start.path)
+      let [leaf, path] = editorLeaf(editor, start.path)
 
       if (!Text.isText(leaf, editor.schema)) {
         return scheduleAction(
@@ -417,7 +421,7 @@ export function createAndroidInputManager({
 
       if (Range.isExpanded(targetRange)) {
         if (leaf.text.length === start.offset && end.offset === 0) {
-          const next = Editor.next(editor, {
+          const next = editorNext(editor, {
             at: start.path,
             match: (n) => Text.isText(n, editor.schema),
           })
@@ -464,7 +468,7 @@ export function createAndroidInputManager({
           Path.equals(targetRange.anchor.path, targetRange.focus.path)
         ) {
           const point = {path: targetRange.anchor.path, offset: start.offset}
-          const range = Editor.range(editor, point, point)
+          const range = editorRange(editor, point, point)
           handleUserSelect(range)
 
           return storeDiff(targetRange.anchor.path, {

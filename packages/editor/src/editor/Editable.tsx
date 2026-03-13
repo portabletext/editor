@@ -18,7 +18,7 @@ import {safeStringify} from '../internal-utils/safe-json'
 import {normalizeSelection} from '../internal-utils/selection'
 import {slateRangeToSelection} from '../internal-utils/slate-utils'
 import {toSlateRange} from '../internal-utils/to-slate-range'
-import {Editor, type Text} from '../slate'
+import type {Text} from '../slate'
 import {
   ReactEditor,
   Editable as SlateEditable,
@@ -26,6 +26,7 @@ import {
   type RenderElementProps,
   type RenderLeafProps,
 } from '../slate-react'
+import {start} from '../slate/editor/start'
 import type {
   EditorSelection,
   OnCopyFn,
@@ -532,7 +533,7 @@ export const PortableTextEditable = forwardRef<
             (slateEditor.children as Array<PortableTextBlock>).at(0),
           )
         ) {
-          slateEditor.select(Editor.start(slateEditor, []))
+          slateEditor.select(start(slateEditor, []))
           slateEditor.onChange()
         }
       }

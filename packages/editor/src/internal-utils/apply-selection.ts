@@ -1,4 +1,6 @@
-import {Editor, Point, Range} from '../slate'
+import {Point, Range} from '../slate'
+import {end as editorEnd} from '../slate/editor/end'
+import {start as editorStart} from '../slate/editor/start'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 
 /**
@@ -71,7 +73,7 @@ function toRange(
   }
 
   // Path — create a range spanning the entire node
-  const start = Editor.start(editor, target)
-  const end = Editor.end(editor, target)
+  const start = editorStart(editor, target)
+  const end = editorEnd(editor, target)
   return {anchor: start, focus: end}
 }

@@ -7,6 +7,8 @@ import {createPlaceholderBlock} from '../internal-utils/create-placeholder-block
 import {debug} from '../internal-utils/debug'
 import {isEqualMarkDefs} from '../internal-utils/equality'
 import {Editor, Node, Path, Range, Text} from '../slate'
+import {node as editorNode} from '../slate/editor/node'
+import {nodes} from '../slate/editor/nodes'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {withNormalizeNode} from './slate-plugin.normalize-node'
 import {withoutPatching} from './slate-plugin.without-patching'
@@ -106,7 +108,7 @@ export function createNormalizationPlugin(
        */
       if (editor.isTextSpan(node)) {
         const blockPath = Path.parent(path)
-        const [block] = Editor.node(editor, blockPath)
+        const [block] = editorNode(editor, blockPath)
         const decorators = editorActor
           .getSnapshot()
           .context.schema.decorators.map((decorator) => decorator.name)
@@ -181,7 +183,7 @@ export function createNormalizationPlugin(
        */
       if (editor.isTextSpan(node)) {
         const blockPath = Path.parent(path)
-        const [block] = Editor.node(editor, blockPath)
+        const [block] = editorNode(editor, blockPath)
 
         if (editor.isTextBlock(block)) {
           const decorators = editorActor
@@ -306,7 +308,7 @@ export function createNormalizationPlugin(
 
           if (previousSelectionIsCollapsed && newSelectionIsCollapsed) {
             const focusSpan: PortableTextSpan | undefined = Array.from(
-              Editor.nodes(editor, {
+              nodes(editor, {
                 mode: 'lowest',
                 at: op.properties.focus,
                 match: (n) => editor.isTextSpan(n),
@@ -314,7 +316,7 @@ export function createNormalizationPlugin(
               }),
             )[0]?.[0]
             const newFocusSpan: PortableTextSpan | undefined = Array.from(
-              Editor.nodes(editor, {
+              nodes(editor, {
                 mode: 'lowest',
                 at: op.newProperties.focus,
                 match: (n) => editor.isTextSpan(n),

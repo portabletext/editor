@@ -14,7 +14,7 @@ import {
   type AnyEventObject,
 } from 'xstate'
 import {debug} from '../internal-utils/debug'
-import {Editor} from '../slate'
+import {isNormalizing} from '../slate/editor/is-normalizing'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import type {EditorSchema} from './editor-schema'
 import type {PatchEvent} from './relay-machine'
@@ -178,8 +178,7 @@ export const mutationMachine = setup({
   },
   guards: {
     'is read-only': ({context}) => context.readOnly,
-    'slate is normalizing': ({context}) =>
-      Editor.isNormalizing(context.slateEditor),
+    'slate is normalizing': ({context}) => isNormalizing(context.slateEditor),
   },
   delays: {
     'type debounce': 250,

@@ -1,8 +1,8 @@
 import {setup} from 'xstate'
 import {applyDeselect, applySelect} from '../internal-utils/apply-selection'
 import {debug} from '../internal-utils/debug'
-import {Editor} from '../slate'
 import {ReactEditor} from '../slate-react'
+import {start} from '../slate/editor/start'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 
 const validateSelectionSetup = setup({
@@ -141,7 +141,7 @@ function validateSelection(
     applyDeselect(slateEditor)
     // Select top document if there is a top block to select
     if (slateEditor.children.length > 0) {
-      applySelect(slateEditor, Editor.start(slateEditor, []))
+      applySelect(slateEditor, start(slateEditor, []))
     }
     slateEditor.onChange()
   }

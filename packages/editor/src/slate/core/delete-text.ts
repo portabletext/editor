@@ -1,6 +1,22 @@
 import {applyMergeNode} from '../../internal-utils/apply-merge-node'
 import {applySetNode} from '../../internal-utils/apply-set-node'
 import type {PortableTextSlateEditor} from '../../types/slate-editor'
+import {above} from '../editor/above'
+import {after} from '../editor/after'
+import {before} from '../editor/before'
+import {elementReadOnly} from '../editor/element-read-only'
+import {end as editorEnd} from '../editor/end'
+import {getVoid} from '../editor/get-void'
+import {isBlock} from '../editor/is-block'
+import {levels} from '../editor/levels'
+import {nodes} from '../editor/nodes'
+import {pathRef} from '../editor/path-ref'
+import {pointRef} from '../editor/point-ref'
+import {previous as editorPrevious} from '../editor/previous'
+import {shouldMergeNodesRemovePrevNode} from '../editor/should-merge-nodes-remove-prev-node'
+import {start as editorStart} from '../editor/start'
+import {unhangRange} from '../editor/unhang-range'
+import {withoutNormalizing} from '../editor/without-normalizing'
 import type {Location} from '../index'
 import {Editor} from '../interfaces/editor'
 import {Element} from '../interfaces/element'
@@ -25,7 +41,7 @@ export interface TextDeleteOptions {
 }
 
 export function deleteText(editor: Editor, options: TextDeleteOptions = {}) {
-  Editor.withoutNormalizing(editor, () => {
+  withoutNormalizing(editor, () => {
     const {
       reverse = false,
       unit = 'character',
@@ -45,7 +61,7 @@ export function deleteText(editor: Editor, options: TextDeleteOptions = {}) {
     }
 
     if (Point.isPoint(at)) {
-      const furthestVoid = Editor.void(editor, {at, mode: 'highest'})
+      const furthestVoid = getVoid(editor, {at, mode: 'highest'})
 
       if (!voids && furthestVoid) {
         const [, voidPath] = furthestVoid
@@ -53,8 +69,8 @@ export function deleteText(editor: Editor, options: TextDeleteOptions = {}) {
       } else {
         const opts = {unit, distance}
         const target = reverse
-          ? Editor.before(editor, at, opts) || Editor.start(editor, [])
-          : Editor.after(editor, at, opts) || Editor.end(editor, [])
+          ? before(editor, at, opts) || editorStart(editor, [])
+          : after(editor, at, opts) || editorEnd(editor, [])
         at = {anchor: at, focus: target}
         hanging = true
       }
@@ -71,23 +87,21 @@ export function deleteText(editor: Editor, options: TextDeleteOptions = {}) {
 
     if (!hanging) {
       const [, end] = Range.edges(at)
-      const endOfDoc = Editor.end(editor, [])
+      const endOfDoc = editorEnd(editor, [])
 
       if (!Point.equals(end, endOfDoc)) {
-        at = Editor.unhangRange(editor, at, {voids})
+        at = unhangRange(editor, at, {voids})
       }
     }
 
     let [start, end] = Range.edges(at)
-    const startBlock = Editor.above(editor, {
-      match: (n) =>
-        Element.isElement(n, editor.schema) && Editor.isBlock(editor, n),
+    const startBlock = above(editor, {
+      match: (n) => Element.isElement(n, editor.schema) && isBlock(editor, n),
       at: start,
       voids,
     })
-    const endBlock = Editor.above(editor, {
-      match: (n) =>
-        Element.isElement(n, editor.schema) && Editor.isBlock(editor, n),
+    const endBlock = above(editor, {
+      match: (n) => Element.isElement(n, editor.schema) && isBlock(editor, n),
       at: end,
       voids,
     })
@@ -96,27 +110,35 @@ export function deleteText(editor: Editor, options: TextDeleteOptions = {}) {
     const isSingleText = Path.equals(start.path, end.path)
     const startNonEditable = voids
       ? null
-      : (Editor.void(editor, {at: start, mode: 'highest'}) ??
-        Editor.elementReadOnly(editor, {at: start, mode: 'highest'}))
+      : (getVoid(editor, {at: start, mode: 'highest'}) ??
+        elementReadOnly(editor, {at: start, mode: 'highest'}))
     const endNonEditable = voids
       ? null
-      : (Editor.void(editor, {at: end, mode: 'highest'}) ??
-        Editor.elementReadOnly(editor, {at: end, mode: 'highest'}))
+      : (getVoid(editor, {at: end, mode: 'highest'}) ??
+        elementReadOnly(editor, {at: end, mode: 'highest'}))
 
     // If the start or end points are inside an inline void, nudge them out.
     if (startNonEditable) {
-      const before = Editor.before(editor, start)
+      const beforePoint = before(editor, start)
 
-      if (before && startBlock && Path.isAncestor(startBlock[1], before.path)) {
-        start = before
+      if (
+        beforePoint &&
+        startBlock &&
+        Path.isAncestor(startBlock[1], beforePoint.path)
+      ) {
+        start = beforePoint
       }
     }
 
     if (endNonEditable) {
-      const after = Editor.after(editor, end)
+      const afterPoint = after(editor, end)
 
-      if (after && endBlock && Path.isAncestor(endBlock[1], after.path)) {
-        end = after
+      if (
+        afterPoint &&
+        endBlock &&
+        Path.isAncestor(endBlock[1], afterPoint.path)
+      ) {
+        end = afterPoint
       }
     }
 
@@ -125,7 +147,7 @@ export function deleteText(editor: Editor, options: TextDeleteOptions = {}) {
     const matches: NodeEntry[] = []
     let lastPath: Path | undefined
 
-    for (const entry of Editor.nodes(editor, {at, voids})) {
+    for (const entry of nodes(editor, {at, voids})) {
       const [node, path] = entry
 
       if (lastPath && Path.compare(path, lastPath) === 0) {
@@ -144,9 +166,9 @@ export function deleteText(editor: Editor, options: TextDeleteOptions = {}) {
       }
     }
 
-    const pathRefs = Array.from(matches, ([, p]) => Editor.pathRef(editor, p))
-    const startRef = Editor.pointRef(editor, start)
-    const endRef = Editor.pointRef(editor, end)
+    const pathRefs = Array.from(matches, ([, p]) => pathRef(editor, p))
+    const startRef = pointRef(editor, start)
+    const endRef = pointRef(editor, end)
 
     let removedText = ''
 
@@ -189,15 +211,15 @@ export function deleteText(editor: Editor, options: TextDeleteOptions = {}) {
     if (!isSingleText && isAcrossBlocks && endRef.current && startRef.current) {
       const mergeAt: Point = endRef.current
       const mergeMatch = (n: Node) =>
-        Element.isElement(n, editor.schema) && Editor.isBlock(editor, n)
+        Element.isElement(n, editor.schema) && isBlock(editor, n)
 
-      const [current] = Editor.nodes(editor, {
+      const [current] = nodes(editor, {
         at: mergeAt,
         match: mergeMatch,
         voids,
         mode: 'lowest',
       })
-      const prev = Editor.previous(editor, {
+      const prev = editorPrevious(editor, {
         at: mergeAt,
         match: mergeMatch,
         voids,
@@ -212,8 +234,8 @@ export function deleteText(editor: Editor, options: TextDeleteOptions = {}) {
           const newPath = Path.next(prevPath)
           const commonPath = Path.common(mergePath, prevPath)
           const isPreviousSibling = Path.isSibling(mergePath, prevPath)
-          const levels = Array.from(
-            Editor.levels(editor, {at: mergePath}),
+          const editorLevels = Array.from(
+            levels(editor, {at: mergePath}),
             ([n]) => n,
           )
             .slice(commonPath.length)
@@ -235,14 +257,13 @@ export function deleteText(editor: Editor, options: TextDeleteOptions = {}) {
             }
           }
 
-          const emptyAncestor = Editor.above(editor, {
+          const emptyAncestor = above(editor, {
             at: mergePath,
             mode: 'highest',
-            match: (n) => levels.includes(n) && hasSingleChildNest(n),
+            match: (n) => editorLevels.includes(n) && hasSingleChildNest(n),
           })
 
-          const emptyRef =
-            emptyAncestor && Editor.pathRef(editor, emptyAncestor[1])
+          const emptyRef = emptyAncestor && pathRef(editor, emptyAncestor[1])
 
           let position: number
 
@@ -277,7 +298,7 @@ export function deleteText(editor: Editor, options: TextDeleteOptions = {}) {
             })
           }
 
-          if (Editor.shouldMergeNodesRemovePrevNode(editor, prev, current)) {
+          if (shouldMergeNodesRemovePrevNode(editor, prev, current)) {
             removeNodes(editor, {at: prevPath, voids})
           } else {
             // Copy markDefs from the merging block to the target before merging
