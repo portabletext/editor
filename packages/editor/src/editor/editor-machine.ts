@@ -18,8 +18,11 @@ import type {
 import type {Converter} from '../converters/converter.types'
 import {debug} from '../internal-utils/debug'
 import type {EventPosition} from '../internal-utils/event-position'
+import {slateRangeToSelection} from '../internal-utils/slate-utils'
 import {sortByPriority} from '../priority/priority.sort'
 import {ReactEditor} from '../slate-react'
+import {start as editorStart} from '../slate/editor/start'
+import {Range} from '../slate/interfaces/range'
 import type {NamespaceEvent, OmitFromUnion} from '../type-utils'
 import type {EditorSelection} from '../types/editor'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
@@ -298,7 +301,7 @@ export const editorMachine = setup({
         )
       }
     },
-    'handle focus': ({context}) => {
+    'handle focus': ({context, self}) => {
       const slateEditor = context.slateEditor
 
       if (!slateEditor) {
@@ -311,15 +314,30 @@ export const editorMachine = setup({
 
         ReactEditor.focus(slateEditor)
 
-        if (currentSelection) {
-          slateEditor.select(currentSelection)
+        const selectionToRestore =
+          currentSelection ?? editorStart(slateEditor, [])
+        const range = Range.isRange(selectionToRestore)
+          ? selectionToRestore
+          : {anchor: selectionToRestore, focus: selectionToRestore}
 
-          // Tell Slate to use this selection for DOM sync
-          slateEditor.pendingSelection = slateEditor.selection
+        self.send({
+          type: 'behavior event',
+          behaviorEvent: {
+            type: 'select',
+            at: slateRangeToSelection({
+              schema: context.schema,
+              editor: slateEditor,
+              range,
+            }),
+          },
+          editor: slateEditor,
+        })
 
-          // Trigger the DOM sync
-          slateEditor.onChange()
-        }
+        // Tell Slate to use this selection for DOM sync
+        slateEditor.pendingSelection = slateEditor.selection
+
+        // Trigger the DOM sync
+        slateEditor.onChange()
       } catch (error) {
         console.error(
           new Error(

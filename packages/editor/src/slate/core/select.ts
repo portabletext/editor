@@ -3,13 +3,14 @@ import type {Location} from '../interfaces'
 import type {Editor} from '../interfaces/editor'
 import {Range} from '../interfaces/range'
 import {Scrubber} from '../interfaces/scrubber'
+import {setSelection} from './set-selection'
 
 export function select(editor: Editor, target: Location): void {
   const {selection} = editor
   target = editorRange(editor, target)
 
   if (selection) {
-    editor.setSelection(target)
+    setSelection(editor, target)
     return
   }
 

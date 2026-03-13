@@ -252,7 +252,18 @@ export const PortableTextEditable = forwardRef<
           blockIndexMap: slateEditor.blockIndexMap,
         })
         if (slateRange) {
-          slateEditor.select(slateRange)
+          editorActor.send({
+            type: 'behavior event',
+            behaviorEvent: {
+              type: 'select',
+              at: slateRangeToSelection({
+                schema: editorActor.getSnapshot().context.schema,
+                editor: slateEditor,
+                range: slateRange,
+              }),
+            },
+            editor: slateEditor,
+          })
           // Output selection here in those cases where the editor selection was the same, and there are no set_selection operations made.
           // The selection is usually automatically emitted by the withPortableTextSelections plugin whenever there is a set_selection operation applied.
           if (!slateEditor.operations.some((o) => o.type === 'set_selection')) {
@@ -533,7 +544,20 @@ export const PortableTextEditable = forwardRef<
             (slateEditor.children as Array<PortableTextBlock>).at(0),
           )
         ) {
-          slateEditor.select(start(slateEditor, []))
+          const focusPoint = start(slateEditor, [])
+          const range = {anchor: focusPoint, focus: focusPoint}
+          editorActor.send({
+            type: 'behavior event',
+            behaviorEvent: {
+              type: 'select',
+              at: slateRangeToSelection({
+                schema: editorActor.getSnapshot().context.schema,
+                editor: slateEditor,
+                range,
+              }),
+            },
+            editor: slateEditor,
+          })
           slateEditor.onChange()
         }
       }

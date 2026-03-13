@@ -31,6 +31,7 @@ import {Text} from '../interfaces/text'
 import type {TextUnit} from '../types/types'
 import {insertText} from './insert-text'
 import {removeNodes} from './remove-nodes'
+import {select} from './select'
 
 export interface TextDeleteOptions {
   at?: Location
@@ -365,7 +366,7 @@ export function deleteText(editor: Editor, options: TextDeleteOptions = {}) {
     const point = reverse ? startUnref || endUnref : endUnref || startUnref
 
     if (options.at == null && point) {
-      editor.select(point)
+      select(editor, point)
     }
   })
 }

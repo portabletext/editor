@@ -11,6 +11,7 @@ import React, {
 } from 'react'
 import scrollIntoView from 'scroll-into-view-if-needed'
 import type {EditorActor} from '../../editor/editor-machine'
+import {slateRangeToSelection} from '../../internal-utils/slate-utils'
 import {
   Element,
   Node,
@@ -52,6 +53,8 @@ import {collapse} from '../../slate/core/collapse'
 import {deselect} from '../../slate/core/deselect'
 import {move} from '../../slate/core/move'
 import {above} from '../../slate/editor/above'
+import {after} from '../../slate/editor/after'
+import {before} from '../../slate/editor/before'
 import {end as editorEnd} from '../../slate/editor/end'
 import {getVoid} from '../../slate/editor/get-void'
 import {hasPath} from '../../slate/editor/has-path'
@@ -301,9 +304,23 @@ export const Editable = forwardRef(
                   !androidInputManager?.hasPendingChanges() &&
                   !androidInputManager?.isFlushing()
                 ) {
-                  // Suppress browser selection normalization that would
-                  // overwrite a block object selection.
-                  editor.select(range)
+                  if (
+                    !editor.selection ||
+                    !Range.equals(editor.selection, range)
+                  ) {
+                    editorActor.send({
+                      type: 'behavior event',
+                      behaviorEvent: {
+                        type: 'select',
+                        at: slateRangeToSelection({
+                          schema: editorActor.getSnapshot().context.schema,
+                          editor,
+                          range,
+                        }),
+                      },
+                      editor,
+                    })
+                  }
                 } else {
                   androidInputManager?.handleUserSelect(range)
                 }
@@ -554,7 +571,18 @@ export const Editable = forwardRef(
             suppressThrow: false,
           })
 
-          editor.select(slateRange)
+          editorActor.send({
+            type: 'behavior event',
+            behaviorEvent: {
+              type: 'select',
+              at: slateRangeToSelection({
+                schema: editorActor.getSnapshot().context.schema,
+                editor,
+                range: slateRange,
+              }),
+            },
+            editor,
+          })
 
           event.preventDefault()
           event.stopImmediatePropagation()
@@ -691,7 +719,18 @@ export const Editable = forwardRef(
                   editor.selection &&
                   rangeRef(editor, editor.selection)
 
-                editor.select(range)
+                editorActor.send({
+                  type: 'behavior event',
+                  behaviorEvent: {
+                    type: 'select',
+                    at: slateRangeToSelection({
+                      schema: editorActor.getSnapshot().context.schema,
+                      editor,
+                      range,
+                    }),
+                  },
+                  editor,
+                })
 
                 if (selectionRef) {
                   editor.userSelection = selectionRef
@@ -904,7 +943,18 @@ export const Editable = forwardRef(
             toRestore &&
             (!editor.selection || !Range.equals(editor.selection, toRestore))
           ) {
-            editor.select(toRestore)
+            editorActor.send({
+              type: 'behavior event',
+              behaviorEvent: {
+                type: 'select',
+                at: slateRangeToSelection({
+                  schema: editorActor.getSnapshot().context.schema,
+                  editor,
+                  range: toRestore,
+                }),
+              },
+              editor,
+            })
           }
         }
       },
@@ -1307,7 +1357,18 @@ export const Editable = forwardRef(
                         }
 
                         const range = editorRange(editor, blockPath)
-                        editor.select(range)
+                        editorActor.send({
+                          type: 'behavior event',
+                          behaviorEvent: {
+                            type: 'select',
+                            at: slateRangeToSelection({
+                              schema: editorActor.getSnapshot().context.schema,
+                              editor,
+                              range,
+                            }),
+                          },
+                          editor,
+                        })
                         return
                       }
 
@@ -1326,7 +1387,18 @@ export const Editable = forwardRef(
                         Path.equals(startVoid[1], endVoid[1])
                       ) {
                         const range = editorRange(editor, start)
-                        editor.select(range)
+                        editorActor.send({
+                          type: 'behavior event',
+                          behaviorEvent: {
+                            type: 'select',
+                            at: slateRangeToSelection({
+                              schema: editorActor.getSnapshot().context.schema,
+                              editor,
+                              range,
+                            }),
+                          },
+                          editor,
+                        })
                       }
                     }
                   },
@@ -1551,11 +1623,23 @@ export const Editable = forwardRef(
                       if (Hotkeys.isMoveBackward(nativeEvent)) {
                         event.preventDefault()
 
-                        if (selection && Range.isCollapsed(selection)) {
-                          move(editor, {reverse: !isRTL})
-                        } else {
-                          collapse(editor, {
-                            edge: isRTL ? 'end' : 'start',
+                        const target = selection
+                          ? moveBackwardTarget(editor, selection, isRTL)
+                          : undefined
+
+                        if (target) {
+                          editorActor.send({
+                            type: 'behavior event',
+                            behaviorEvent: {
+                              type: 'select',
+                              at: slateRangeToSelection({
+                                schema:
+                                  editorActor.getSnapshot().context.schema,
+                                editor,
+                                range: target,
+                              }),
+                            },
+                            editor,
                           })
                         }
 
@@ -1565,11 +1649,23 @@ export const Editable = forwardRef(
                       if (Hotkeys.isMoveForward(nativeEvent)) {
                         event.preventDefault()
 
-                        if (selection && Range.isCollapsed(selection)) {
-                          move(editor, {reverse: isRTL})
-                        } else {
-                          collapse(editor, {
-                            edge: isRTL ? 'start' : 'end',
+                        const target = selection
+                          ? moveForwardTarget(editor, selection, isRTL)
+                          : undefined
+
+                        if (target) {
+                          editorActor.send({
+                            type: 'behavior event',
+                            behaviorEvent: {
+                              type: 'select',
+                              at: slateRangeToSelection({
+                                schema:
+                                  editorActor.getSnapshot().context.schema,
+                                editor,
+                                range: target,
+                              }),
+                            },
+                            editor,
                           })
                         }
 
@@ -1961,6 +2057,44 @@ export const defaultScrollSelectionIntoView = (
     // @ts-expect-error an unorthodox delete D:
     delete leafEl.getBoundingClientRect
   }
+}
+
+function moveBackwardTarget(
+  editor: Editor,
+  selection: Range,
+  isRTL: boolean,
+): Range | undefined {
+  if (Range.isCollapsed(selection)) {
+    const point = isRTL
+      ? after(editor, selection.focus, {distance: 1, unit: 'character'})
+      : before(editor, selection.anchor, {distance: 1, unit: 'character'})
+    if (point) {
+      return {anchor: point, focus: point}
+    }
+    return undefined
+  }
+  const [start, end] = Range.edges(selection)
+  const edge = isRTL ? end : start
+  return {anchor: edge, focus: edge}
+}
+
+function moveForwardTarget(
+  editor: Editor,
+  selection: Range,
+  isRTL: boolean,
+): Range | undefined {
+  if (Range.isCollapsed(selection)) {
+    const point = isRTL
+      ? before(editor, selection.anchor, {distance: 1, unit: 'character'})
+      : after(editor, selection.focus, {distance: 1, unit: 'character'})
+    if (point) {
+      return {anchor: point, focus: point}
+    }
+    return undefined
+  }
+  const [start, end] = Range.edges(selection)
+  const edge = isRTL ? start : end
+  return {anchor: edge, focus: edge}
 }
 
 /**

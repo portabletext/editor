@@ -2,8 +2,6 @@ import type {EditorSchema} from '../editor/editor-schema'
 import {apply} from './core/apply'
 import {getDirtyPaths} from './core/get-dirty-paths'
 import {normalizeNode} from './core/normalize-node'
-import {select} from './core/select'
-import {setSelection} from './core/set-selection'
 import {shouldNormalize} from './core/should-normalize'
 import {EDITOR_BRAND} from './editor/is-editor'
 import type {Editor} from './interfaces/editor'
@@ -56,10 +54,6 @@ export const createEditor = (context: {
     normalizeNode: (...args: any[]) => (normalizeNode as any)(e, ...args),
     getDirtyPaths: (...args: any[]) => (getDirtyPaths as any)(e, ...args),
     shouldNormalize: (...args: any[]) => (shouldNormalize as any)(e, ...args),
-
-    // Overrideable commands
-    select: (...args: any[]) => (select as any)(e, ...args),
-    setSelection: (...args: any[]) => (setSelection as any)(e, ...args),
   }
   /* eslint-enable @typescript-eslint/no-explicit-any */
 

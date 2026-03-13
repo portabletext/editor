@@ -396,10 +396,6 @@ export const DOMEditor: DOMEditorInterface = {
         domSelection?.removeAllRanges()
         domSelection?.addRange(domRange)
       }
-      // Create a new selection in the top of the document if missing
-      if (!editor.selection) {
-        editor.select(editorStart(editor, []))
-      }
       // IS_FOCUSED should be set before calling el.focus() to ensure that
       // FocusedContext is updated to the correct value
       editor.focused = true

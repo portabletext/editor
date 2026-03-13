@@ -1,4 +1,5 @@
 import type {EditorActor} from '../../../editor/editor-machine'
+import {slateRangeToSelection} from '../../../internal-utils/slate-utils'
 import {Node, Path, Point, Range, Text, type Editor} from '../../../slate'
 import {
   applyStringDiff,
@@ -13,6 +14,7 @@ import {
   type StringDiff,
   type TextDiff,
 } from '../../../slate-dom'
+import {select} from '../../../slate/core/select'
 import {leaf as editorLeaf} from '../../../slate/editor/leaf'
 import {next as editorNext} from '../../../slate/editor/next'
 import {range as editorRange} from '../../../slate/editor/range'
@@ -90,7 +92,16 @@ export function createAndroidInputManager({
       debug('apply pending selection', pendingSelection, normalized)
 
       if (normalized && (!selection || !Range.equals(normalized, selection))) {
-        editor.select(normalized)
+        const at = slateRangeToSelection({
+          schema: editorActor.getSnapshot().context.schema,
+          editor,
+          range: normalized,
+        })
+        editorActor.send({
+          type: 'behavior event',
+          behaviorEvent: {type: 'select', at},
+          editor,
+        })
       }
     }
   }
@@ -113,7 +124,7 @@ export function createAndroidInputManager({
 
       const targetRange = editorRange(editor, target)
       if (!editor.selection || !Range.equals(editor.selection, targetRange)) {
-        editor.select(target)
+        select(editor, target)
       }
     }
 
@@ -172,7 +183,7 @@ export function createAndroidInputManager({
 
       const range = targetRange(diff)
       if (!editor.selection || !Range.equals(editor.selection, range)) {
-        editor.select(range)
+        select(editor, range)
       }
 
       if (diff.diff.text) {
@@ -218,7 +229,7 @@ export function createAndroidInputManager({
       !editor.pendingSelection &&
       (!editor.selection || !Range.equals(selection, editor.selection))
     ) {
-      editor.select(selection)
+      select(editor, selection)
     }
 
     if (hasPendingAction()) {
@@ -812,7 +823,7 @@ export function createAndroidInputManager({
 
               scheduleAction(
                 () => {
-                  editor.select({
+                  select(editor, {
                     anchor: newPoint,
                     focus: newPoint,
                   })
