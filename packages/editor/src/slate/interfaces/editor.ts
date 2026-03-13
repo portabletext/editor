@@ -66,7 +66,6 @@ export interface BaseEditor {
   // Overrideable commands.
 
   delete: (options?: TextDeleteOptions) => void
-  insertBreak: () => void
   insertText: (text: string, options?: TextInsertTextOptions) => void
   select: (target: Location) => void
   setSelection: (props: Partial<Range>) => void
@@ -81,8 +80,6 @@ export type Selection = ExtendedType<'Selection', BaseSelection>
 export type EditorMarks = Omit<Text, 'text'>
 
 export interface EditorInterface {
-  insertBreak: (editor: Editor) => void
-
   isEditor: (value: any) => value is Editor
 
   isElementReadOnly: (editor: Editor, element: Element) => boolean
@@ -94,10 +91,6 @@ export interface EditorInterface {
 
 // eslint-disable-next-line no-redeclare
 export const Editor: EditorInterface = {
-  insertBreak(editor) {
-    editor.insertBreak()
-  },
-
   isEditor(value: any): value is Editor {
     return isEditor(value)
   },
