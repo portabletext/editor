@@ -8,6 +8,7 @@ import type {Editor} from '../interfaces/editor'
 import {Path} from '../interfaces/path'
 import {Range} from '../interfaces/range'
 import {getDefaultInsertLocation} from '../utils'
+import {deleteText} from './delete-text'
 
 export interface TextInsertTextOptions {
   at?: Location
@@ -38,7 +39,7 @@ export function insertText(
         const start = Range.start(at)
         const startRef = pointRef(editor, start)
         const endRef = pointRef(editor, end)
-        editor.delete({at, voids})
+        deleteText(editor, {at, voids})
         const startPoint = startRef.unref()
         const endPoint = endRef.unref()
 

@@ -23,6 +23,7 @@ import {Text} from '../interfaces/text'
 import type {RangeMode} from '../types/types'
 import {getDefaultInsertLocation} from '../utils'
 import {batchDirtyPaths} from './batch-dirty-paths'
+import {deleteText} from './delete-text'
 import {updateDirtyPaths} from './update-dirty-paths'
 
 export interface InsertNodesOptions<T extends Node> {
@@ -80,7 +81,7 @@ export function insertNodes<T extends Node>(
       } else {
         const [, end] = Range.edges(at)
         const endPointRef = pointRef(editor, end)
-        editor.delete({at})
+        deleteText(editor, {at})
         at = endPointRef.unref()!
       }
     }

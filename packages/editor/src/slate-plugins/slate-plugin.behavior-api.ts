@@ -8,46 +8,7 @@ import {range as editorRange} from '../slate/editor/range'
 
 export function createBehaviorApiPlugin(editorActor: EditorActor) {
   return function behaviorApiPlugin(editor: Editor) {
-    const {delete: editorDelete, select, setSelection} = editor
-
-    editor.delete = (options) => {
-      if (editor.isNormalizingNode || editor.isPerformingBehaviorOperation) {
-        editorDelete(options)
-        return
-      }
-
-      const range = options?.at ? editorRange(editor, options.at) : undefined
-      const selection = range
-        ? slateRangeToSelection({
-            schema: editorActor.getSnapshot().context.schema,
-            editor,
-            range,
-          })
-        : undefined
-
-      if (selection) {
-        editorActor.send({
-          type: 'behavior event',
-          behaviorEvent: {
-            type: 'delete',
-            at: selection,
-            direction: options?.reverse ? 'backward' : 'forward',
-            unit: options?.unit,
-          },
-          editor,
-        })
-      } else {
-        editorActor.send({
-          type: 'behavior event',
-          behaviorEvent: {
-            type: 'delete',
-            direction: options?.reverse ? 'backward' : 'forward',
-            unit: options?.unit,
-          },
-          editor,
-        })
-      }
-    }
+    const {select, setSelection} = editor
 
     editor.insertText = (text) => {
       if (editor.isNormalizingNode || editor.isPerformingBehaviorOperation) {
