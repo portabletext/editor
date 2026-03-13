@@ -11,6 +11,7 @@ import {
   type RangeRef,
   type Text,
 } from '../../slate'
+import {select} from '../../slate/core/select'
 import {after} from '../../slate/editor/after'
 import {before} from '../../slate/editor/before'
 import {getVoid} from '../../slate/editor/get-void'
@@ -398,7 +399,7 @@ export const DOMEditor: DOMEditorInterface = {
       }
       // Create a new selection in the top of the document if missing
       if (!editor.selection) {
-        editor.select(editorStart(editor, []))
+        select(editor, editorStart(editor, []))
       }
       // IS_FOCUSED should be set before calling el.focus() to ensure that
       // FocusedContext is updated to the correct value

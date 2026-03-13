@@ -9,6 +9,7 @@ import {Path} from '../interfaces/path'
 import {Range} from '../interfaces/range'
 import {getDefaultInsertLocation} from '../utils'
 import {deleteText} from './delete-text'
+import {setSelection} from './set-selection'
 
 export interface TextInsertTextOptions {
   at?: Location
@@ -44,7 +45,7 @@ export function insertText(
         const endPoint = endRef.unref()
 
         at = startPoint || endPoint!
-        editor.setSelection({anchor: at, focus: at})
+        setSelection(editor, {anchor: at, focus: at})
       }
     }
 

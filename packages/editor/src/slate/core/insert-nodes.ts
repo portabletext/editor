@@ -24,6 +24,7 @@ import type {RangeMode} from '../types/types'
 import {getDefaultInsertLocation} from '../utils'
 import {batchDirtyPaths} from './batch-dirty-paths'
 import {deleteText} from './delete-text'
+import {select as selectLocation} from './select'
 import {updateDirtyPaths} from './update-dirty-paths'
 
 export interface InsertNodesOptions<T extends Node> {
@@ -248,7 +249,7 @@ export function insertNodes<T extends Node>(
       const point = editorEnd(editor, at)
 
       if (point) {
-        editor.select(point)
+        selectLocation(editor, point)
       }
     }
   })

@@ -4,6 +4,7 @@ import type {Editor} from '../interfaces/editor'
 import type {Range} from '../interfaces/range'
 import {Range as RangeUtils} from '../interfaces/range'
 import type {MoveUnit, SelectionEdge} from '../types/types'
+import {setSelection} from './set-selection'
 
 export interface SelectionMoveOptions {
   distance?: number
@@ -53,5 +54,5 @@ export function move(editor: Editor, options: SelectionMoveOptions = {}): void {
     }
   }
 
-  editor.setSelection(props)
+  setSelection(editor, props)
 }

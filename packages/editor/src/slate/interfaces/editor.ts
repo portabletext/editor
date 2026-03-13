@@ -2,7 +2,6 @@ import type {
   Descendant,
   Element,
   ExtendedType,
-  Location,
   Node,
   NodeEntry,
   Operation,
@@ -59,11 +58,6 @@ export interface BaseEditor {
     dirtyPaths: Path[]
     operation?: Operation
   }) => boolean
-
-  // Overrideable commands.
-
-  select: (target: Location) => void
-  setSelection: (props: Partial<Range>) => void
 }
 
 export type Editor = ExtendedType<'Editor', BaseEditor>
