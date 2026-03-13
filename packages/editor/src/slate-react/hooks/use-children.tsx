@@ -1,11 +1,11 @@
 import {useCallback, useRef, type JSX} from 'react'
 import {
-  Editor,
   Element,
   Node,
   Text,
   type Ancestor,
   type DecoratedRange,
+  type Editor,
   type ObjectNode,
 } from '../../slate'
 import {
@@ -13,6 +13,7 @@ import {
   splitDecorationsByChild,
   type Key,
 } from '../../slate-dom'
+import {isEditor} from '../../slate/editor/is-editor'
 import type {
   RenderElementProps,
   RenderLeafProps,
@@ -49,7 +50,7 @@ const useChildren = (props: {
   const editor = useSlateStatic()
   editor.isNodeMapDirty = false
 
-  const isEditor = Editor.isEditor(node)
+  const isEditorNode = isEditor(node)
 
   const decorationsByChild = useDecorationsByChild(editor, node, decorations)
 
@@ -110,7 +111,7 @@ const useChildren = (props: {
     return (
       <ObjectNodeComponent
         decorations={decorationsByChild[i] ?? []}
-        isInline={!isEditor}
+        isInline={!isEditorNode}
         key={key.id}
         objectNode={n}
         renderElement={renderElement}

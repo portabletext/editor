@@ -1,11 +1,12 @@
 import React, {useCallback, useEffect, useState} from 'react'
 import {
-  Editor,
   Node,
   Scrubber,
   type Descendant,
+  type Editor,
   type Selection,
 } from '../../slate'
+import {isEditor} from '../../slate/editor/is-editor'
 import {FocusedContext} from '../hooks/use-focused'
 import {useIsomorphicLayoutEffect} from '../hooks/use-isomorphic-layout-effect'
 import {
@@ -49,7 +50,7 @@ export const Slate = (props: {
       )
     }
 
-    if (!Editor.isEditor(editor)) {
+    if (!isEditor(editor)) {
       throw new Error(
         `[Slate] editor is invalid! You passed: ${Scrubber.stringify(editor)}`,
       )

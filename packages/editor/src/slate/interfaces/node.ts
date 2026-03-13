@@ -1,5 +1,6 @@
-import {Editor, Path, Range, Scrubber, Text} from '..'
+import {Path, Range, Scrubber, Text, type Editor} from '..'
 import type {EditorSchema} from '../../editor/editor-schema'
+import {isEditor} from '../editor/is-editor'
 import type {ExtendedType} from '../types/custom-types'
 import {isObject} from '../utils/is-object'
 import {modifyChildren, modifyLeaf, removeChildren} from '../utils/modify'
@@ -384,7 +385,7 @@ export const Node: NodeInterface = {
     return (
       Text.isText(value, schema) ||
       Element.isElement(value, schema) ||
-      Editor.isEditor(value) ||
+      isEditor(value) ||
       Node.isObjectNode(value, schema)
     )
   },

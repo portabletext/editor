@@ -1,10 +1,10 @@
 import {
-  Editor,
   Node,
   Range,
   Scrubber,
   type Ancestor,
   type BaseEditor,
+  type Editor,
   type Operation,
   type Path,
   type Point,
@@ -15,6 +15,7 @@ import {after} from '../../slate/editor/after'
 import {before} from '../../slate/editor/before'
 import {getVoid} from '../../slate/editor/get-void'
 import {hasPath} from '../../slate/editor/has-path'
+import {isEditor} from '../../slate/editor/is-editor'
 import {node as editorNode} from '../../slate/editor/node'
 import {point as editorPoint} from '../../slate/editor/point'
 import {range as editorRange} from '../../slate/editor/range'
@@ -336,7 +337,7 @@ export const DOMEditor: DOMEditorInterface = {
       const parent = editor.nodeToParent.get(child)
 
       if (parent == null) {
-        if (Editor.isEditor(child)) {
+        if (isEditor(child)) {
           return path
         } else {
           break
@@ -485,7 +486,7 @@ export const DOMEditor: DOMEditorInterface = {
   },
 
   toDOMNode: (editor, node) => {
-    const domNode = Editor.isEditor(node)
+    const domNode = isEditor(node)
       ? editor.domElement
       : editor.keyToElement?.get(DOMEditor.findKey(editor, node))
 

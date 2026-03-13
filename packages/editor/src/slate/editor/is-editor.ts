@@ -1,27 +1,10 @@
-import type {Editor, EditorInterface} from '../interfaces/editor'
-import {Operation} from '../interfaces/operation'
-import {Range} from '../interfaces/range'
+import type {Editor} from '../interfaces/editor'
 import {isObject} from '../utils'
 
-export const isEditor: EditorInterface['isEditor'] = (
-  value: any,
-): value is Editor => {
-  if (!isObject(value)) {
-    return false
-  }
+const EDITOR_BRAND = Symbol.for('slate-editor')
 
-  const isEditor =
-    typeof value.apply === 'function' &&
-    typeof value.insertText === 'function' &&
-    typeof value.isElementReadOnly === 'function' &&
-    typeof value.isInline === 'function' &&
-    typeof value.isSelectable === 'function' &&
-    typeof value.normalizeNode === 'function' &&
-    typeof value.onChange === 'function' &&
-    typeof value.getDirtyPaths === 'function' &&
-    (value.marks === null || isObject(value.marks)) &&
-    (value.selection === null || Range.isRange(value.selection)) &&
-    Operation.isOperationList(value.operations)
-
-  return isEditor
+export function isEditor(value: unknown): value is Editor {
+  return isObject(value) && (value as any)[EDITOR_BRAND] === true
 }
+
+export {EDITOR_BRAND}

@@ -14,7 +14,6 @@ import type {
   Text,
 } from '..'
 import type {TextInsertTextOptions} from '../core/insert-text'
-import {isEditor} from '../editor/is-editor'
 
 /**
  * The `Editor` interface stores all the state of a Slate editor. It is extended
@@ -78,8 +77,6 @@ export type Selection = ExtendedType<'Selection', BaseSelection>
 export type EditorMarks = Omit<Text, 'text'>
 
 export interface EditorInterface {
-  isEditor: (value: any) => value is Editor
-
   isElementReadOnly: (editor: Editor, element: Element) => boolean
 
   isInline: (editor: Editor, value: Element) => boolean
@@ -89,10 +86,6 @@ export interface EditorInterface {
 
 // eslint-disable-next-line no-redeclare
 export const Editor: EditorInterface = {
-  isEditor(value: any): value is Editor {
-    return isEditor(value)
-  },
-
   isElementReadOnly(editor, element) {
     return editor.isElementReadOnly(element)
   },

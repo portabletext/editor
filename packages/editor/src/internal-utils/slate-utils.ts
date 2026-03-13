@@ -1,14 +1,15 @@
 import type {PortableTextBlock, PortableTextSpan} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
 import {
-  Editor,
   Element,
   Node,
   Range,
+  type Editor,
   type Point,
   type Path as SlatePath,
 } from '../slate'
 import {end} from '../slate/editor/end'
+import {isEditor} from '../slate/editor/is-editor'
 import {node as editorNode} from '../slate/editor/node'
 import {nodes as editorNodes} from '../slate/editor/nodes'
 import {start} from '../slate/editor/start'
@@ -260,7 +261,7 @@ export function getNodeBlock({
   schema: EditorSchema
   node: Node
 }) {
-  if (Editor.isEditor(node)) {
+  if (isEditor(node)) {
     return undefined
   }
 

@@ -8,6 +8,7 @@ import {elementReadOnly} from '../editor/element-read-only'
 import {end as editorEnd} from '../editor/end'
 import {getVoid} from '../editor/get-void'
 import {isBlock} from '../editor/is-block'
+import {isEditor} from '../editor/is-editor'
 import {levels} from '../editor/levels'
 import {nodes} from '../editor/nodes'
 import {pathRef} from '../editor/path-ref'
@@ -250,7 +251,7 @@ export function deleteText(editor: Editor, options: TextDeleteOptions = {}) {
               } else {
                 return false
               }
-            } else if (Editor.isEditor(node)) {
+            } else if (isEditor(node)) {
               return false
             } else {
               return true

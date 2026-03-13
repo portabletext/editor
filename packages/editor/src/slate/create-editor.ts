@@ -5,6 +5,7 @@ import {normalizeNode} from './core/normalize-node'
 import {select} from './core/select'
 import {setSelection} from './core/set-selection'
 import {shouldNormalize} from './core/should-normalize'
+import {EDITOR_BRAND} from './editor/is-editor'
 import type {Editor} from './interfaces/editor'
 import type {Text} from './interfaces/text'
 
@@ -23,6 +24,7 @@ export const createEditor = (context: {
 }): Editor => {
   /* eslint-disable @typescript-eslint/no-explicit-any */
   const e: any = {
+    [EDITOR_BRAND]: true,
     children: [],
     operations: [],
     selection: null,

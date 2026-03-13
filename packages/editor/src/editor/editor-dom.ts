@@ -1,8 +1,8 @@
 import type {BehaviorEvent} from '../behaviors/behavior.types.event'
 import {toSlateRange} from '../internal-utils/to-slate-range'
 import {getSelectionEndBlock, getSelectionStartBlock} from '../selectors'
-import {Editor} from '../slate'
 import {DOMEditor} from '../slate-dom'
+import {isEditor} from '../slate/editor/is-editor'
 import {nodes} from '../slate/editor/nodes'
 import type {PickFromUnion} from '../type-utils'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
@@ -67,7 +67,7 @@ function getBlockNodes(
       nodes(slateEditor, {
         at: range,
         mode: 'highest',
-        match: (n) => !Editor.isEditor(n),
+        match: (n) => !isEditor(n),
       }),
     )
 
@@ -98,7 +98,7 @@ function getChildNodes(
       nodes(slateEditor, {
         at: range,
         mode: 'lowest',
-        match: (n) => !Editor.isEditor(n),
+        match: (n) => !isEditor(n),
       }),
     )
 
