@@ -13,6 +13,18 @@ import {
 } from '../slate'
 import {DOMEditor} from '../slate-dom'
 import {deleteText} from '../slate/core/delete-text'
+import {above} from '../slate/editor/above'
+import {elementReadOnly} from '../slate/editor/element-read-only'
+import {end as editorEnd} from '../slate/editor/end'
+import {getVoid} from '../slate/editor/get-void'
+import {isBlock} from '../slate/editor/is-block'
+import {node as editorNode} from '../slate/editor/node'
+import {nodes} from '../slate/editor/nodes'
+import {pathRef} from '../slate/editor/path-ref'
+import {pointRef} from '../slate/editor/point-ref'
+import {positions as editorPositions} from '../slate/editor/positions'
+import {range as editorRange} from '../slate/editor/range'
+import {start as editorStart} from '../slate/editor/start'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import type {OperationImplementation} from './operation.types'
 
@@ -48,21 +60,21 @@ export const deleteOperationImplementation: OperationImplementation<
       anchor: {path: [startBlockIndex], offset: 0},
       focus: {path: [endBlockIndex], offset: 0},
     }
-    const blockMatches = Editor.nodes(operation.editor, {
+    const blockMatches = nodes(operation.editor, {
       at: removeRange,
       match: (n) =>
         (Element.isElement(n, operation.editor.schema) &&
-          Editor.isBlock(operation.editor, n)) ||
+          isBlock(operation.editor, n)) ||
         operation.editor.isObjectNode(n),
       mode: 'highest',
     })
     const blockPathRefs = Array.from(blockMatches, ([, p]) =>
-      Editor.pathRef(operation.editor, p),
+      pathRef(operation.editor, p),
     )
     for (const pathRef of blockPathRefs) {
       const path = pathRef.unref()!
       if (path) {
-        const [node] = Editor.node(operation.editor, path)
+        const [node] = editorNode(operation.editor, path)
         operation.editor.apply({type: 'remove_node', path, node})
       }
     }
@@ -71,7 +83,7 @@ export const deleteOperationImplementation: OperationImplementation<
   }
 
   if (operation.unit === 'child') {
-    const childMatches = Editor.nodes(operation.editor, {
+    const childMatches = nodes(operation.editor, {
       at,
       match: (node, path) =>
         isSpan(context, node) ||
@@ -81,12 +93,12 @@ export const deleteOperationImplementation: OperationImplementation<
         (operation.editor.isObjectNode(node) && path.length > 1),
     })
     const childPathRefs = Array.from(childMatches, ([, p]) =>
-      Editor.pathRef(operation.editor, p),
+      pathRef(operation.editor, p),
     )
     for (const pathRef of childPathRefs) {
       const path = pathRef.unref()!
       if (path) {
-        const [node] = Editor.node(operation.editor, path)
+        const [node] = editorNode(operation.editor, path)
         operation.editor.apply({type: 'remove_node', path, node})
       }
     }
@@ -95,16 +107,16 @@ export const deleteOperationImplementation: OperationImplementation<
   }
 
   if (operation.direction === 'backward' && operation.unit === 'line') {
-    const parentBlockEntry = Editor.above(operation.editor, {
+    const parentBlockEntry = above(operation.editor, {
       match: (n) =>
         Element.isElement(n, operation.editor.schema) &&
-        Editor.isBlock(operation.editor, n),
+        isBlock(operation.editor, n),
       at,
     })
 
     if (parentBlockEntry) {
       const [, parentBlockPath] = parentBlockEntry
-      const parentElementRange = Editor.range(
+      const parentElementRange = editorRange(
         operation.editor,
         parentBlockPath,
         at.anchor,
@@ -187,20 +199,20 @@ export const deleteOperationImplementation: OperationImplementation<
 
   const startBlock =
     startNodeEntry ??
-    Editor.above(operation.editor, {
+    above(operation.editor, {
       match: (n) =>
         (Element.isElement(n, operation.editor.schema) &&
-          Editor.isBlock(operation.editor, n)) ||
+          isBlock(operation.editor, n)) ||
         operation.editor.isObjectNode(n),
       at: start,
       voids: false,
     })
   const endBlock =
     endNodeEntry ??
-    Editor.above(operation.editor, {
+    above(operation.editor, {
       match: (n) =>
         (Element.isElement(n, operation.editor.schema) &&
-          Editor.isBlock(operation.editor, n)) ||
+          isBlock(operation.editor, n)) ||
         operation.editor.isObjectNode(n),
       at: end,
       voids: false,
@@ -219,17 +231,17 @@ export const deleteOperationImplementation: OperationImplementation<
 
   const startNonEditable =
     startObjectNode ??
-    Editor.void(operation.editor, {at: start, mode: 'highest'}) ??
-    Editor.elementReadOnly(operation.editor, {at: start, mode: 'highest'})
+    getVoid(operation.editor, {at: start, mode: 'highest'}) ??
+    elementReadOnly(operation.editor, {at: start, mode: 'highest'})
   const endNonEditable =
     endObjectNode ??
-    Editor.void(operation.editor, {at: end, mode: 'highest'}) ??
-    Editor.elementReadOnly(operation.editor, {at: end, mode: 'highest'})
+    getVoid(operation.editor, {at: end, mode: 'highest'}) ??
+    elementReadOnly(operation.editor, {at: end, mode: 'highest'})
 
   const matches: NodeEntry[] = []
   let lastPath: Path | undefined
 
-  for (const entry of Editor.nodes(operation.editor, {at, voids: false})) {
+  for (const entry of nodes(operation.editor, {at, voids: false})) {
     const [node, path] = entry
 
     if (lastPath && Path.compare(path, lastPath) === 0) {
@@ -248,16 +260,16 @@ export const deleteOperationImplementation: OperationImplementation<
   }
 
   const pathRefs = Array.from(matches, ([, path]) =>
-    Editor.pathRef(operation.editor, path),
+    pathRef(operation.editor, path),
   )
-  const startRef = Editor.pointRef(operation.editor, start)
-  const endRef = Editor.pointRef(operation.editor, end)
+  const startRef = pointRef(operation.editor, start)
+  const endRef = pointRef(operation.editor, end)
 
   const endToEndSelection =
     startBlock &&
     endBlock &&
-    Point.equals(start, Editor.start(operation.editor, startBlock[1])) &&
-    Point.equals(end, Editor.end(operation.editor, endBlock[1]))
+    Point.equals(start, editorStart(operation.editor, startBlock[1])) &&
+    Point.equals(end, editorEnd(operation.editor, endBlock[1]))
 
   if (endToEndSelection && isAcrossBlocks) {
     if (!startNonEditable) {
@@ -282,7 +294,7 @@ export const deleteOperationImplementation: OperationImplementation<
       const path = pathRef.unref()
 
       if (path) {
-        const [nodeAtPath] = Editor.node(operation.editor, path)
+        const [nodeAtPath] = editorNode(operation.editor, path)
         operation.editor.apply({type: 'remove_node', path, node: nodeAtPath})
       }
     }
@@ -307,20 +319,20 @@ export const deleteOperationImplementation: OperationImplementation<
     }
 
     if (endRef.current && startRef.current) {
-      const endBlockMatches = Editor.nodes(operation.editor, {
+      const endBlockMatches = nodes(operation.editor, {
         at: endRef.current,
         match: (n) =>
           (Element.isElement(n, operation.editor.schema) &&
-            Editor.isBlock(operation.editor, n)) ||
+            isBlock(operation.editor, n)) ||
           operation.editor.isObjectNode(n),
       })
       const endBlockPathRefs = Array.from(endBlockMatches, ([, p]) =>
-        Editor.pathRef(operation.editor, p),
+        pathRef(operation.editor, p),
       )
       for (const pathRef of endBlockPathRefs) {
         const endPath = pathRef.unref()!
         if (endPath) {
-          const [endNode] = Editor.node(operation.editor, endPath)
+          const [endNode] = editorNode(operation.editor, endPath)
           operation.editor.apply({
             type: 'remove_node',
             path: endPath,
@@ -367,7 +379,7 @@ export const deleteOperationImplementation: OperationImplementation<
     const currentPath = pathRef.current
 
     if (currentPath) {
-      const [nodeAtPath] = Editor.node(operation.editor, currentPath)
+      const [nodeAtPath] = editorNode(operation.editor, currentPath)
 
       if (operation.editor.isObjectNode(nodeAtPath)) {
         const path = pathRef.unref()
@@ -395,7 +407,7 @@ export const deleteOperationImplementation: OperationImplementation<
       removedEndObjectNode &&
       (!updatedEnd || updatedStart.path.at(0) !== updatedEnd.path.at(0))
     ) {
-      const startBlockEnd = Editor.end(operation.editor, [
+      const startBlockEnd = editorEnd(operation.editor, [
         updatedStart.path.at(0)!,
       ])
       return {anchor: updatedStart, focus: startBlockEnd}
@@ -455,8 +467,8 @@ function findCurrentLineRange(
   editor: PortableTextSlateEditor,
   parentRange: Range,
 ): Range {
-  const parentRangeBoundary = Editor.range(editor, Range.end(parentRange))
-  const positions = Array.from(Editor.positions(editor, {at: parentRange}))
+  const parentRangeBoundary = editorRange(editor, Range.end(parentRange))
+  const positions = Array.from(editorPositions(editor, {at: parentRange}))
 
   let left = 0
   let right = positions.length
@@ -465,15 +477,15 @@ function findCurrentLineRange(
   if (
     rangesAreOnSameLine(
       editor,
-      Editor.range(editor, positions[left]!),
+      editorRange(editor, positions[left]!),
       parentRangeBoundary,
     )
   ) {
-    return Editor.range(editor, positions[left]!, parentRangeBoundary)
+    return editorRange(editor, positions[left]!, parentRangeBoundary)
   }
 
   if (positions.length < 2) {
-    return Editor.range(
+    return editorRange(
       editor,
       positions[positions.length - 1]!,
       parentRangeBoundary,
@@ -484,7 +496,7 @@ function findCurrentLineRange(
     if (
       rangesAreOnSameLine(
         editor,
-        Editor.range(editor, positions[middle]!),
+        editorRange(editor, positions[middle]!),
         parentRangeBoundary,
       )
     ) {
@@ -496,7 +508,7 @@ function findCurrentLineRange(
     middle = Math.floor((left + right) / 2)
   }
 
-  return Editor.range(editor, positions[left]!, parentRangeBoundary)
+  return editorRange(editor, positions[left]!, parentRangeBoundary)
 }
 
 function rangesAreOnSameLine(editor: Editor, range1: Range, range2: Range) {

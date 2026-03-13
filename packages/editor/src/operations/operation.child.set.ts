@@ -2,7 +2,7 @@ import type {PortableTextBlock} from '@portabletext/schema'
 import {applySetNode} from '../internal-utils/apply-set-node'
 import {safeStringify} from '../internal-utils/safe-json'
 import {toSlateRange} from '../internal-utils/to-slate-range'
-import {Editor} from '../slate'
+import {node as editorNode} from '../slate/editor/node'
 import type {OperationImplementation} from './operation.types'
 
 export const childSetOperationImplementation: OperationImplementation<
@@ -26,7 +26,7 @@ export const childSetOperationImplementation: OperationImplementation<
     )
   }
 
-  const childEntry = Editor.node(operation.editor, location, {depth: 2})
+  const childEntry = editorNode(operation.editor, location, {depth: 2})
   const child = childEntry?.[0]
   const childPath = childEntry?.[1]
 

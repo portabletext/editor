@@ -2,7 +2,7 @@ import type {PortableTextBlock} from '@portabletext/schema'
 import {isTextBlock} from '@portabletext/schema'
 import {applySetNode} from '../internal-utils/apply-set-node'
 import {safeStringify} from '../internal-utils/safe-json'
-import {Editor} from '../slate'
+import {node as editorNode} from '../slate/editor/node'
 import type {OperationImplementation} from './operation.types'
 
 export const childUnsetOperationImplementation: OperationImplementation<
@@ -44,7 +44,7 @@ export const childUnsetOperationImplementation: OperationImplementation<
     throw new Error(`Unable to find child at ${safeStringify(operation.at)}`)
   }
 
-  const childEntry = Editor.node(operation.editor, [blockIndex, childIndex], {
+  const childEntry = editorNode(operation.editor, [blockIndex, childIndex], {
     depth: 2,
   })
   const child = childEntry?.[0]

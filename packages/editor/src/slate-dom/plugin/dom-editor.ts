@@ -11,6 +11,15 @@ import {
   type RangeRef,
   type Text,
 } from '../../slate'
+import {after} from '../../slate/editor/after'
+import {before} from '../../slate/editor/before'
+import {getVoid} from '../../slate/editor/get-void'
+import {hasPath} from '../../slate/editor/has-path'
+import {node as editorNode} from '../../slate/editor/node'
+import {point as editorPoint} from '../../slate/editor/point'
+import {range as editorRange} from '../../slate/editor/range'
+import {start as editorStart} from '../../slate/editor/start'
+import {unhangRange} from '../../slate/editor/unhang-range'
 import type {TextDiff} from '../utils/diff-text'
 import {
   closestShadowAware,
@@ -270,15 +279,13 @@ export const DOMEditor: DOMEditorInterface = {
         ? x - rect.left < rect.left + rect.width - x
         : y - rect.top < rect.top + rect.height - y
 
-      const edge = Editor.point(editor, path, {
+      const edge = editorPoint(editor, path, {
         edge: isPrev ? 'start' : 'end',
       })
-      const point = isPrev
-        ? Editor.before(editor, edge)
-        : Editor.after(editor, edge)
+      const point = isPrev ? before(editor, edge) : after(editor, edge)
 
       if (point) {
-        const range = Editor.range(editor, point)
+        const range = editorRange(editor, point)
         return range
       }
     }
@@ -392,7 +399,7 @@ export const DOMEditor: DOMEditorInterface = {
       }
       // Create a new selection in the top of the document if missing
       if (!editor.selection) {
-        editor.select(Editor.start(editor, []))
+        editor.select(editorStart(editor, []))
       }
       // IS_FOCUSED should be set before calling el.focus() to ensure that
       // FocusedContext is updated to the correct value
@@ -452,9 +459,7 @@ export const DOMEditor: DOMEditorInterface = {
 
   hasRange: (editor, range) => {
     const {anchor, focus} = range
-    return (
-      Editor.hasPath(editor, anchor.path) && Editor.hasPath(editor, focus.path)
-    )
+    return hasPath(editor, anchor.path) && hasPath(editor, focus.path)
   },
 
   hasSelectableTarget: (editor, target) =>
@@ -496,7 +501,7 @@ export const DOMEditor: DOMEditorInterface = {
   },
 
   toDOMPoint: (editor, point) => {
-    const [node] = Editor.node(editor, point.path)
+    const [node] = editorNode(editor, point.path)
     const el = DOMEditor.toDOMNode(editor, node)
     let domPoint: DOMPoint | undefined
 
@@ -521,7 +526,7 @@ export const DOMEditor: DOMEditorInterface = {
 
     // If we're inside a void node, force the offset to 0, otherwise the zero
     // width spacing character will result in an incorrect offset of 1
-    if (Editor.void(editor, {at: point})) {
+    if (getVoid(editor, {at: point})) {
       point = {path: point.path, offset: 0}
     }
 
@@ -841,7 +846,7 @@ export const DOMEditor: DOMEditorInterface = {
           }
           throw e
         }
-        let {path, offset} = Editor.start(editor, nodePath)
+        let {path, offset} = editorStart(editor, nodePath)
 
         if (!node.querySelector('[data-slate-leaf]')) {
           offset = nearestOffset
@@ -1105,9 +1110,9 @@ export const DOMEditor: DOMEditorInterface = {
       Range.isExpanded(range) &&
       Range.isForward(range) &&
       isDOMElement(focusNode) &&
-      Editor.void(editor, {at: range.focus, mode: 'highest'})
+      getVoid(editor, {at: range.focus, mode: 'highest'})
     ) {
-      range = Editor.unhangRange(editor, range, {voids: true})
+      range = unhangRange(editor, range, {voids: true})
     }
 
     return range as unknown as T extends true ? Range | null : Range

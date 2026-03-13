@@ -1,54 +1,13 @@
 import type {EditorSchema} from '../editor/editor-schema'
-import {
-  getDirtyPaths,
-  normalizeNode,
-  shouldNormalize,
-  type Editor,
-  type Text,
-} from './'
-import {apply} from './core'
-import {collapse} from './core/collapse'
+import {apply} from './core/apply'
 import {deleteText} from './core/delete-text'
-import {deselect} from './core/deselect'
-import {move} from './core/move'
+import {getDirtyPaths} from './core/get-dirty-paths'
+import {normalizeNode} from './core/normalize-node'
 import {select} from './core/select'
 import {setSelection} from './core/set-selection'
-import {
-  above,
-  after,
-  before,
-  elementReadOnly,
-  end,
-  getVoid,
-  hasInlines,
-  hasPath,
-  isBlock,
-  isEdge,
-  isEnd,
-  isNormalizing,
-  isStart,
-  leaf,
-  levels,
-  next,
-  node,
-  nodes,
-  normalize,
-  parent,
-  path,
-  pathRef,
-  point,
-  pointRef,
-  positions,
-  previous,
-  range,
-  rangeRef,
-  setNormalizing,
-  shouldMergeNodesRemovePrevNode,
-  start,
-  string,
-  unhangRange,
-  withoutNormalizing,
-} from './editor'
+import {shouldNormalize} from './core/should-normalize'
+import type {Editor} from './interfaces/editor'
+import type {Text} from './interfaces/text'
 
 /**
  * Create a new Slate `Editor` object.
@@ -97,49 +56,12 @@ export const createEditor = (context: {
     getDirtyPaths: (...args: any[]) => (getDirtyPaths as any)(e, ...args),
     shouldNormalize: (...args: any[]) => (shouldNormalize as any)(e, ...args),
 
-    // Editor interface
-    above: (...args: any[]) => (above as any)(e, ...args),
-    after: (...args: any[]) => (after as any)(e, ...args),
-    before: (...args: any[]) => (before as any)(e, ...args),
-    collapse: (...args: any[]) => (collapse as any)(e, ...args),
+    // Overrideable commands
     delete: (...args: any[]) => (deleteText as any)(e, ...args),
-    deselect: (...args: any[]) => (deselect as any)(e, ...args),
-    elementReadOnly: (...args: any[]) => (elementReadOnly as any)(e, ...args),
-    end: (...args: any[]) => (end as any)(e, ...args),
-    hasInlines: (...args: any[]) => (hasInlines as any)(e, ...args),
-    hasPath: (...args: any[]) => (hasPath as any)(e, ...args),
-    isBlock: (...args: any[]) => (isBlock as any)(e, ...args),
-    isEdge: (...args: any[]) => (isEdge as any)(e, ...args),
-    isEnd: (...args: any[]) => (isEnd as any)(e, ...args),
-    isNormalizing: (...args: any[]) => (isNormalizing as any)(e, ...args),
-    isStart: (...args: any[]) => (isStart as any)(e, ...args),
-    leaf: (...args: any[]) => (leaf as any)(e, ...args),
-    levels: (...args: any[]) => (levels as any)(e, ...args),
-    move: (...args: any[]) => (move as any)(e, ...args),
-    next: (...args: any[]) => (next as any)(e, ...args),
-    node: (...args: any[]) => (node as any)(e, ...args),
-    nodes: (...args: any[]) => (nodes as any)(e, ...args),
-    normalize: (...args: any[]) => (normalize as any)(e, ...args),
-    parent: (...args: any[]) => (parent as any)(e, ...args),
-    path: (...args: any[]) => (path as any)(e, ...args),
-    pathRef: (...args: any[]) => (pathRef as any)(e, ...args),
-    point: (...args: any[]) => (point as any)(e, ...args),
-    pointRef: (...args: any[]) => (pointRef as any)(e, ...args),
-    positions: (...args: any[]) => (positions as any)(e, ...args),
-    previous: (...args: any[]) => (previous as any)(e, ...args),
-    range: (...args: any[]) => (range as any)(e, ...args),
-    rangeRef: (...args: any[]) => (rangeRef as any)(e, ...args),
+    insertBreak: () => {},
+    insertText: () => {},
     select: (...args: any[]) => (select as any)(e, ...args),
-    setNormalizing: (...args: any[]) => (setNormalizing as any)(e, ...args),
     setSelection: (...args: any[]) => (setSelection as any)(e, ...args),
-    start: (...args: any[]) => (start as any)(e, ...args),
-    string: (...args: any[]) => (string as any)(e, ...args),
-    unhangRange: (...args: any[]) => (unhangRange as any)(e, ...args),
-    void: (...args: any[]) => (getVoid as any)(e, ...args),
-    withoutNormalizing: (...args: any[]) =>
-      (withoutNormalizing as any)(e, ...args),
-    shouldMergeNodesRemovePrevNode: (...args: any[]) =>
-      (shouldMergeNodesRemovePrevNode as any)(e, ...args),
   }
   /* eslint-enable @typescript-eslint/no-explicit-any */
 

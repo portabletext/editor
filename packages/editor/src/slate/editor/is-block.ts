@@ -1,5 +1,6 @@
-import type {EditorInterface} from '../interfaces/editor'
+import type {Element} from '../interfaces'
+import type {Editor} from '../interfaces/editor'
 
-export const isBlock: EditorInterface['isBlock'] = (editor, value) => {
+export function isBlock(editor: Editor, value: Element): boolean {
   return !editor.isInline(value)
 }

@@ -1,12 +1,15 @@
-import {Editor, type EditorInterface} from '../interfaces/editor'
+import type {Operation, Path} from '../interfaces'
+import type {Editor} from '../interfaces/editor'
 import {Element} from '../interfaces/element'
 import {Node} from '../interfaces/node'
-import type {Path} from '../interfaces/path'
+import {isNormalizing} from './is-normalizing'
+import {node} from './node'
+import {withoutNormalizing} from './without-normalizing'
 
-export const normalize: EditorInterface['normalize'] = (
-  editor,
-  options = {},
-) => {
+export function normalize(
+  editor: Editor,
+  options: {force?: boolean; operation?: Operation} = {},
+): void {
   const {force = false, operation} = options
   const getDirtyPaths = (editor: Editor) => {
     return editor.dirtyPaths
@@ -23,7 +26,7 @@ export const normalize: EditorInterface['normalize'] = (
     return path
   }
 
-  if (!Editor.isNormalizing(editor)) {
+  if (!isNormalizing(editor)) {
     return
   }
 
@@ -38,7 +41,7 @@ export const normalize: EditorInterface['normalize'] = (
     return
   }
 
-  Editor.withoutNormalizing(editor, () => {
+  withoutNormalizing(editor, () => {
     /*
       Fix dirty elements with no children.
       editor.normalizeNode() does fix this, but some normalization fixes also require it to work.
@@ -46,8 +49,8 @@ export const normalize: EditorInterface['normalize'] = (
     */
     for (const dirtyPath of getDirtyPaths(editor)) {
       if (Node.has(editor, dirtyPath, editor.schema)) {
-        const entry = Editor.node(editor, dirtyPath)
-        const [node, _] = entry
+        const entry = node(editor, dirtyPath)
+        const [entryNode, _] = entry
 
         /*
           The default normalizer inserts an empty text node in this scenario, but it can be customised.
@@ -57,8 +60,8 @@ export const normalize: EditorInterface['normalize'] = (
           by definition adding children to an empty node can't cause other paths to change.
         */
         if (
-          Element.isElement(node, editor.schema) &&
-          node.children.length === 0
+          Element.isElement(entryNode, editor.schema) &&
+          entryNode.children.length === 0
         ) {
           editor.normalizeNode(entry, {operation})
         }
@@ -85,7 +88,7 @@ export const normalize: EditorInterface['normalize'] = (
 
       // If the node doesn't exist in the tree, it does not need to be normalized.
       if (Node.has(editor, dirtyPath, editor.schema)) {
-        const entry = Editor.node(editor, dirtyPath)
+        const entry = node(editor, dirtyPath)
         editor.normalizeNode(entry, {operation})
       }
       iteration++

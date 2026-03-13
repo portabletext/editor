@@ -1,12 +1,12 @@
 import React, {useCallback, type JSX} from 'react'
 import {ReactEditor, useSlateStatic} from '..'
 import {
-  Editor,
   Node,
   type DecoratedRange,
   type Element as SlateElement,
 } from '../../slate'
 import {isElementDecorationsEqual} from '../../slate-dom'
+import {hasInlines} from '../../slate/editor/has-inlines'
 import useChildren from '../hooks/use-children'
 import {useDecorations} from '../hooks/use-decorations'
 import getDirection from '../utils/direction'
@@ -88,7 +88,7 @@ const Element = (props: {
 
   // If it's a block node with inline children, add the proper `dir` attribute
   // for text direction.
-  if (!isInline && Editor.hasInlines(editor, element)) {
+  if (!isInline && hasInlines(editor, element)) {
     const text = Node.string(element, editor.schema)
     const dir = getDirection(text)
 

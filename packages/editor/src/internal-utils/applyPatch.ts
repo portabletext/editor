@@ -19,7 +19,10 @@ import {
 } from '@sanity/diff-match-patch'
 import type {EditorSchema} from '../editor/editor-schema'
 import type {EditorContext} from '../editor/editor-snapshot'
-import {Editor, Element, Node, Text, type Descendant} from '../slate'
+import {Element, Node, Text, type Descendant} from '../slate'
+import {node as editorNode} from '../slate/editor/node'
+import {nodes as editorNodes} from '../slate/editor/nodes'
+import {pathRef} from '../slate/editor/path-ref'
 import type {Path} from '../types/paths'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
@@ -183,7 +186,7 @@ function insertPatch(
         position === 'before'
           ? targetBlockIndex + blocksToInsert.length
           : targetBlockIndex
-      const [removeNode] = Editor.node(editor, [removeIdx])
+      const [removeNode] = editorNode(editor, [removeIdx])
       editor.apply({type: 'remove_node', path: [removeIdx], node: removeNode})
     }
 
@@ -257,17 +260,17 @@ function setPatch(
 
       // Remove the previous children
       const childPaths = Array.from(
-        Editor.nodes(editor, {
+        editorNodes(editor, {
           at: [block.index],
           reverse: true,
           mode: 'lowest',
         }),
-        ([, p]) => Editor.pathRef(editor, p),
+        ([, p]) => pathRef(editor, p),
       )
       for (const pathRef of childPaths) {
         const childPath = pathRef.unref()!
         if (childPath) {
-          const [childNode] = Editor.node(editor, childPath)
+          const [childNode] = editorNode(editor, childPath)
           editor.apply({type: 'remove_node', path: childPath, node: childNode})
         }
       }
@@ -436,7 +439,7 @@ function unsetPatch(editor: PortableTextSlateEditor, patch: UnsetPatch) {
 
   // Single blocks
   if (patch.path.length === 1) {
-    const [blockNode] = Editor.node(editor, [block.index])
+    const [blockNode] = editorNode(editor, [block.index])
     editor.apply({type: 'remove_node', path: [block.index], node: blockNode})
 
     return true
@@ -447,7 +450,7 @@ function unsetPatch(editor: PortableTextSlateEditor, patch: UnsetPatch) {
   // Unset on text block children
   if (editor.isTextBlock(block.node) && child) {
     if (patch.path[1] === 'children' && patch.path.length === 3) {
-      const [childNode] = Editor.node(editor, [block.index, child.index])
+      const [childNode] = editorNode(editor, [block.index, child.index])
       editor.apply({
         type: 'remove_node',
         path: [block.index, child.index],

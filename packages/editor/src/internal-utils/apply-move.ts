@@ -1,4 +1,5 @@
-import {Editor} from '../slate'
+import {after} from '../slate/editor/after'
+import {before} from '../slate/editor/before'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {applySelect} from './apply-selection'
 
@@ -24,12 +25,12 @@ export function applyMove(
   const opts = {distance, unit}
 
   const newAnchor = reverse
-    ? Editor.before(editor, anchor, opts)
-    : Editor.after(editor, anchor, opts)
+    ? before(editor, anchor, opts)
+    : after(editor, anchor, opts)
 
   const newFocus = reverse
-    ? Editor.before(editor, focus, opts)
-    : Editor.after(editor, focus, opts)
+    ? before(editor, focus, opts)
+    : after(editor, focus, opts)
 
   const props: {anchor?: typeof newAnchor; focus?: typeof newFocus} = {}
 

@@ -1,39 +1,43 @@
-import {Editor, type EditorInterface} from '../interfaces/editor'
+import type {Range} from '../interfaces'
+import type {Editor} from '../interfaces/editor'
 import {Element} from '../interfaces/element'
 import {Path} from '../interfaces/path'
-import {Range} from '../interfaces/range'
+import {Range as RangeUtils} from '../interfaces/range'
 import {Text} from '../interfaces/text'
+import {above} from './above'
+import {isBlock} from './is-block'
+import {nodes} from './nodes'
+import {start as editorStart} from './start'
 
-export const unhangRange: EditorInterface['unhangRange'] = (
-  editor,
-  range,
-  options = {},
-) => {
+export function unhangRange(
+  editor: Editor,
+  range: Range,
+  options: {voids?: boolean} = {},
+): Range {
   const {voids = false} = options
-  let [start, end] = Range.edges(range)
+  let [start, end] = RangeUtils.edges(range)
 
   // PERF: exit early if we can guarantee that the range isn't hanging.
   if (
     start.offset !== 0 ||
     end.offset !== 0 ||
-    Range.isCollapsed(range) ||
+    RangeUtils.isCollapsed(range) ||
     Path.hasPrevious(end.path)
   ) {
     return range
   }
 
-  const endBlock = Editor.above(editor, {
+  const endBlock = above(editor, {
     at: end,
-    match: (n) =>
-      Element.isElement(n, editor.schema) && Editor.isBlock(editor, n),
+    match: (n) => Element.isElement(n, editor.schema) && isBlock(editor, n),
     voids,
   })
   const blockPath = endBlock ? endBlock[1] : []
-  const first = Editor.start(editor, start)
+  const first = editorStart(editor, start)
   const before = {anchor: first, focus: end}
   let skip = true
 
-  for (const [node, path] of Editor.nodes(editor, {
+  for (const [node, path] of nodes(editor, {
     at: before,
     match: (n) => Text.isText(n, editor.schema),
     reverse: true,

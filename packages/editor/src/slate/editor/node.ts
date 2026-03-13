@@ -1,8 +1,15 @@
-import {Editor, type EditorInterface} from '../interfaces/editor'
-import {Node} from '../interfaces/node'
+import type {Location, Node, NodeEntry} from '../interfaces'
+import type {Editor} from '../interfaces/editor'
+import {Node as NodeUtils} from '../interfaces/node'
+import type {LeafEdge} from '../types/types'
+import {path} from './path'
 
-export const node: EditorInterface['node'] = (editor, at, options = {}) => {
-  const path = Editor.path(editor, at, options)
-  const node = Node.get(editor, path, editor.schema)
-  return [node, path]
+export function node(
+  editor: Editor,
+  at: Location,
+  options: {depth?: number; edge?: LeafEdge} = {},
+): NodeEntry<Node> {
+  const nodePath = path(editor, at, options)
+  const nodeValue = NodeUtils.get(editor, nodePath, editor.schema)
+  return [nodeValue, nodePath]
 }

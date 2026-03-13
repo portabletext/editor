@@ -12,13 +12,13 @@ import React, {
 import scrollIntoView from 'scroll-into-view-if-needed'
 import type {EditorActor} from '../../editor/editor-machine'
 import {
-  Editor,
   Element,
   Node,
   Path,
   Range,
   Text,
   type DecoratedRange,
+  type Editor,
   type LeafPosition,
   type NodeEntry,
 } from '../../slate'
@@ -48,6 +48,17 @@ import {
   type DOMRange,
   type DOMText,
 } from '../../slate-dom'
+import {collapse} from '../../slate/core/collapse'
+import {deselect} from '../../slate/core/deselect'
+import {move} from '../../slate/core/move'
+import {above} from '../../slate/editor/above'
+import {end as editorEnd} from '../../slate/editor/end'
+import {getVoid} from '../../slate/editor/get-void'
+import {hasPath} from '../../slate/editor/has-path'
+import {isBlock} from '../../slate/editor/is-block'
+import {range as editorRange} from '../../slate/editor/range'
+import {rangeRef} from '../../slate/editor/range-ref'
+import {start as editorStart} from '../../slate/editor/start'
 import type {AndroidInputManager} from '../hooks/android-input-manager/android-input-manager'
 import {useAndroidInputManager} from '../hooks/android-input-manager/use-android-input-manager'
 import useChildren from '../hooks/use-children'
@@ -242,7 +253,7 @@ export const Editable = forwardRef(
             if (active) {
               document.execCommand('indent')
             } else {
-              editor.deselect()
+              deselect(editor)
             }
 
             processing.current = false
@@ -267,7 +278,7 @@ export const Editable = forwardRef(
             }
 
             if (!domSelection) {
-              return editor.deselect()
+              return deselect(editor)
             }
 
             const {anchorNode, focusNode} = domSelection
@@ -301,7 +312,7 @@ export const Editable = forwardRef(
 
             // Deselect the editor if the dom selection is not selectable in readonly mode
             if (readOnly && (!anchorNodeSelectable || !focusNodeInEditor)) {
-              editor.deselect()
+              deselect(editor)
             }
           }
         }, 100),
@@ -641,11 +652,10 @@ export const Editable = forwardRef(
                 window?.getComputedStyle(node.parentElement)?.whiteSpace ===
                   'pre'
               ) {
-                const block = Editor.above(editor, {
+                const block = above(editor, {
                   at: anchor.path,
                   match: (n) =>
-                    Element.isElement(n, editor.schema) &&
-                    Editor.isBlock(editor, n),
+                    Element.isElement(n, editor.schema) && isBlock(editor, n),
                 })
 
                 if (
@@ -679,7 +689,7 @@ export const Editable = forwardRef(
                 const selectionRef =
                   !isCompositionChange &&
                   editor.selection &&
-                  Editor.rangeRef(editor, editor.selection)
+                  rangeRef(editor, editor.selection)
 
                 editor.select(range)
 
@@ -999,13 +1009,13 @@ export const Editable = forwardRef(
     )
 
     if (showPlaceholder) {
-      const start = Editor.start(editor, [])
+      const placeholderStart = editorStart(editor, [])
       decorations.push({
         [PLACEHOLDER_SYMBOL]: true,
         placeholder,
         onPlaceholderResize: placeHolderResizeHandler,
-        anchor: start,
-        focus: start,
+        anchor: placeholderStart,
+        focus: placeholderStart,
       } as any)
     }
 
@@ -1272,7 +1282,7 @@ export const Editable = forwardRef(
                       // Therefore we must check that this path actually exists,
                       // and that it still refers to the same node.
                       if (
-                        !Editor.hasPath(editor, path) ||
+                        !hasPath(editor, path) ||
                         Node.get(editor, path, editor.schema) !== node
                       ) {
                         return
@@ -1283,20 +1293,20 @@ export const Editable = forwardRef(
                         if (
                           !(
                             Element.isElement(node, editor.schema) &&
-                            Editor.isBlock(editor, node)
+                            isBlock(editor, node)
                           )
                         ) {
-                          const block = Editor.above(editor, {
+                          const block = above(editor, {
                             match: (n) =>
                               Element.isElement(n, editor.schema) &&
-                              Editor.isBlock(editor, n),
+                              isBlock(editor, n),
                             at: path,
                           })
 
                           blockPath = block?.[1] ?? path.slice(0, 1)
                         }
 
-                        const range = Editor.range(editor, blockPath)
+                        const range = editorRange(editor, blockPath)
                         editor.select(range)
                         return
                       }
@@ -1305,17 +1315,17 @@ export const Editable = forwardRef(
                         return
                       }
 
-                      const start = Editor.start(editor, path)
-                      const end = Editor.end(editor, path)
-                      const startVoid = Editor.void(editor, {at: start})
-                      const endVoid = Editor.void(editor, {at: end})
+                      const start = editorStart(editor, path)
+                      const end = editorEnd(editor, path)
+                      const startVoid = getVoid(editor, {at: start})
+                      const endVoid = getVoid(editor, {at: end})
 
                       if (
                         startVoid &&
                         endVoid &&
                         Path.equals(startVoid[1], endVoid[1])
                       ) {
-                        const range = Editor.range(editor, start)
+                        const range = editorRange(editor, start)
                         editor.select(range)
                       }
                     }
@@ -1507,19 +1517,19 @@ export const Editable = forwardRef(
                       // (2017/10/17)
                       if (Hotkeys.isMoveLineBackward(nativeEvent)) {
                         event.preventDefault()
-                        editor.move({unit: 'line', reverse: true})
+                        move(editor, {unit: 'line', reverse: true})
                         return
                       }
 
                       if (Hotkeys.isMoveLineForward(nativeEvent)) {
                         event.preventDefault()
-                        editor.move({unit: 'line'})
+                        move(editor, {unit: 'line'})
                         return
                       }
 
                       if (Hotkeys.isExtendLineBackward(nativeEvent)) {
                         event.preventDefault()
-                        editor.move({
+                        move(editor, {
                           unit: 'line',
                           edge: 'focus',
                           reverse: true,
@@ -1529,7 +1539,7 @@ export const Editable = forwardRef(
 
                       if (Hotkeys.isExtendLineForward(nativeEvent)) {
                         event.preventDefault()
-                        editor.move({unit: 'line', edge: 'focus'})
+                        move(editor, {unit: 'line', edge: 'focus'})
                         return
                       }
 
@@ -1542,9 +1552,9 @@ export const Editable = forwardRef(
                         event.preventDefault()
 
                         if (selection && Range.isCollapsed(selection)) {
-                          editor.move({reverse: !isRTL})
+                          move(editor, {reverse: !isRTL})
                         } else {
-                          editor.collapse({
+                          collapse(editor, {
                             edge: isRTL ? 'end' : 'start',
                           })
                         }
@@ -1556,9 +1566,9 @@ export const Editable = forwardRef(
                         event.preventDefault()
 
                         if (selection && Range.isCollapsed(selection)) {
-                          editor.move({reverse: isRTL})
+                          move(editor, {reverse: isRTL})
                         } else {
-                          editor.collapse({
+                          collapse(editor, {
                             edge: isRTL ? 'start' : 'end',
                           })
                         }
@@ -1570,10 +1580,10 @@ export const Editable = forwardRef(
                         event.preventDefault()
 
                         if (selection && Range.isExpanded(selection)) {
-                          editor.collapse({edge: 'focus'})
+                          collapse(editor, {edge: 'focus'})
                         }
 
-                        editor.move({
+                        move(editor, {
                           unit: 'word',
                           reverse: !isRTL,
                         })
@@ -1584,10 +1594,10 @@ export const Editable = forwardRef(
                         event.preventDefault()
 
                         if (selection && Range.isExpanded(selection)) {
-                          editor.collapse({edge: 'focus'})
+                          collapse(editor, {edge: 'focus'})
                         }
 
-                        editor.move({
+                        move(editor, {
                           unit: 'word',
                           reverse: isRTL,
                         })

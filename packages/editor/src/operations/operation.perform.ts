@@ -1,4 +1,5 @@
-import {Editor} from '../slate'
+import {isNormalizing} from '../slate/editor/is-normalizing'
+import {withoutNormalizing} from '../slate/editor/without-normalizing'
 import {addAnnotationOperationImplementation} from './operation.annotation.add'
 import {removeAnnotationOperationImplementation} from './operation.annotation.remove'
 import {blockSetOperationImplementation} from './operation.block.set'
@@ -190,8 +191,8 @@ export function performOperation({
     }
   }
 
-  if (Editor.isNormalizing(operation.editor)) {
-    Editor.withoutNormalizing(operation.editor, perform)
+  if (isNormalizing(operation.editor)) {
+    withoutNormalizing(operation.editor, perform)
   } else {
     perform()
   }

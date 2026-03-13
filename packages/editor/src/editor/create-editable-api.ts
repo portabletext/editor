@@ -16,8 +16,10 @@ import {getFocusBlock} from '../selectors/selector.get-focus-block'
 import {getFocusSpan} from '../selectors/selector.get-focus-span'
 import {getSelectedValue} from '../selectors/selector.get-selected-value'
 import {isActiveAnnotation} from '../selectors/selector.is-active-annotation'
-import {Editor, Range, Text} from '../slate'
+import {Range, Text} from '../slate'
 import {ReactEditor} from '../slate-react'
+import {node as editorNode} from '../slate/editor/node'
+import {nodes} from '../slate/editor/nodes'
 import type {
   EditableAPI,
   EditableAPIDeleteOptions,
@@ -283,7 +285,7 @@ export function createEditableAPI(
       let node: Node | undefined
       try {
         const [item] = Array.from(
-          Editor.nodes(editor, {
+          nodes(editor, {
             at: [],
             match: (n) => n._key === element._key,
           }) || [],
@@ -302,7 +304,7 @@ export function createEditableAPI(
       }
       try {
         const activeAnnotations: PortableTextObject[] = []
-        const spans = Editor.nodes(editor, {
+        const spans = nodes(editor, {
           at: editor.selection,
           match: (node) =>
             Text.isText(node, editor.schema) &&
@@ -311,7 +313,7 @@ export function createEditableAPI(
             node.marks.length > 0,
         })
         for (const [span, path] of spans) {
-          const [block] = Editor.node(editor, path, {depth: 1})
+          const [block] = editorNode(editor, path, {depth: 1})
           if (editor.isTextBlock(block)) {
             block.markDefs?.forEach((def) => {
               if (

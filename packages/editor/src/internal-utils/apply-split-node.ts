@@ -1,5 +1,4 @@
 import {
-  Editor,
   Element,
   Node as NodeUtils,
   Path,
@@ -7,6 +6,7 @@ import {
   type Node,
   type Point,
 } from '../slate'
+import {withoutNormalizing} from '../slate/editor/without-normalizing'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {rangeRefAffinities} from './range-ref-affinities'
 
@@ -28,7 +28,7 @@ export function applySplitNode(
   const node = NodeUtils.get(editor, path, editor.schema)
 
   // Pre-transform all refs with split semantics
-  for (const ref of Editor.pathRefs(editor)) {
+  for (const ref of editor.pathRefs) {
     const current = ref.current
     if (current) {
       ref.current = transformPathForSplit(
@@ -39,7 +39,7 @@ export function applySplitNode(
       )
     }
   }
-  for (const ref of Editor.pointRefs(editor)) {
+  for (const ref of editor.pointRefs) {
     const current = ref.current
     if (current) {
       ref.current = transformPointForSplit(
@@ -50,7 +50,7 @@ export function applySplitNode(
       )
     }
   }
-  for (const ref of Editor.rangeRefs(editor)) {
+  for (const ref of editor.rangeRefs) {
     const current = ref.current
     if (current) {
       const [anchorAffinity, focusAffinity] = rangeRefAffinities(
@@ -99,19 +99,19 @@ export function applySplitNode(
 
   // Temporarily remove all refs so the decomposed operations don't
   // double-transform them
-  const pathRefs = new Set(Editor.pathRefs(editor))
-  const pointRefs = new Set(Editor.pointRefs(editor))
-  const rangeRefs = new Set(Editor.rangeRefs(editor))
-  Editor.pathRefs(editor).clear()
-  Editor.pointRefs(editor).clear()
-  Editor.rangeRefs(editor).clear()
+  const pathRefs = new Set(editor.pathRefs)
+  const pointRefs = new Set(editor.pointRefs)
+  const rangeRefs = new Set(editor.rangeRefs)
+  editor.pathRefs.clear()
+  editor.pointRefs.clear()
+  editor.rangeRefs.clear()
 
   // Save the pre-transformed selection so decomposed operations don't
   // double-transform it
   const savedSelection = editor.selection
 
   try {
-    Editor.withoutNormalizing(editor, () => {
+    withoutNormalizing(editor, () => {
       if (Text.isText(node, editor.schema)) {
         const afterText = node.text.slice(position)
         const newNode = {...properties, text: afterText} as Node
@@ -151,13 +151,13 @@ export function applySplitNode(
 
     // Restore all refs
     for (const ref of pathRefs) {
-      Editor.pathRefs(editor).add(ref)
+      editor.pathRefs.add(ref)
     }
     for (const ref of pointRefs) {
-      Editor.pointRefs(editor).add(ref)
+      editor.pointRefs.add(ref)
     }
     for (const ref of rangeRefs) {
-      Editor.rangeRefs(editor).add(ref)
+      editor.rangeRefs.add(ref)
     }
   }
 }

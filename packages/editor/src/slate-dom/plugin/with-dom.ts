@@ -1,14 +1,22 @@
 import {applySplitNode} from '../../internal-utils/apply-split-node'
 import {
-  Editor,
   Element,
   Node,
   Path,
   Point,
   Range,
+  type Editor,
   type Operation,
   type PointRef,
 } from '../../slate'
+import {end as editorEnd} from '../../slate/editor/end'
+import {isBlock} from '../../slate/editor/is-block'
+import {isEnd} from '../../slate/editor/is-end'
+import {levels} from '../../slate/editor/levels'
+import {node as editorNode} from '../../slate/editor/node'
+import {nodes} from '../../slate/editor/nodes'
+import {pointRef} from '../../slate/editor/point-ref'
+import {withoutNormalizing} from '../../slate/editor/without-normalizing'
 import {
   transformPendingPoint,
   transformPendingRange,
@@ -121,7 +129,7 @@ export const withDOM = <T extends Editor>(editor: T): T & DOMEditor => {
     }
 
     for (const [path, key] of matches) {
-      const [node] = Editor.node(e, path)
+      const [node] = editorNode(e, path)
       e.nodeToKey.set(node, key)
     }
   }
@@ -139,7 +147,7 @@ export const withDOM = <T extends Editor>(editor: T): T & DOMEditor => {
 
       for (const line of lines) {
         if (split) {
-          Editor.withoutNormalizing(e, () => {
+          withoutNormalizing(e, () => {
             let splitAt: Point | null = null
 
             if (e.selection) {
@@ -147,9 +155,9 @@ export const withDOM = <T extends Editor>(editor: T): T & DOMEditor => {
                 splitAt = e.selection.anchor
               } else {
                 const [, end] = Range.edges(e.selection)
-                const pointRef = Editor.pointRef(e, end)
+                const endPointRef = pointRef(e, end)
                 e.delete({at: e.selection})
-                splitAt = pointRef.unref()
+                splitAt = endPointRef.unref()
               }
             }
 
@@ -158,14 +166,14 @@ export const withDOM = <T extends Editor>(editor: T): T & DOMEditor => {
             }
 
             const splitMatch = (n: Node) =>
-              Element.isElement(n, e.schema) && Editor.isBlock(e, n)
+              Element.isElement(n, e.schema) && isBlock(e, n)
 
-            const beforeRef = Editor.pointRef(e, splitAt, {
+            const beforeRef = pointRef(e, splitAt, {
               affinity: 'backward',
             })
             let afterRef: PointRef | undefined
             try {
-              const [highest] = Editor.nodes(e, {
+              const [highest] = nodes(e, {
                 at: splitAt,
                 match: splitMatch,
                 mode: 'lowest',
@@ -176,13 +184,13 @@ export const withDOM = <T extends Editor>(editor: T): T & DOMEditor => {
                 return
               }
 
-              afterRef = Editor.pointRef(e, splitAt)
+              afterRef = pointRef(e, splitAt)
               const depth = splitAt.path.length
               const [, highestPath] = highest
               const lowestPath = splitAt.path.slice(0, depth)
               let position = splitAt.offset
 
-              for (const [node, nodePath] of Editor.levels(e, {
+              for (const [node, nodePath] of levels(e, {
                 at: lowestPath,
                 reverse: true,
                 voids: false,
@@ -197,7 +205,7 @@ export const withDOM = <T extends Editor>(editor: T): T & DOMEditor => {
                 }
 
                 const point = beforeRef.current!
-                const isEndOfNode = Editor.isEnd(e, point, nodePath)
+                const isEndOfNode = isEnd(e, point, nodePath)
 
                 // always = true, so always split
                 didSplit = true
@@ -209,7 +217,7 @@ export const withDOM = <T extends Editor>(editor: T): T & DOMEditor => {
                   (didSplit || isEndOfNode ? 1 : 0)
               }
 
-              const point = afterRef.current || Editor.end(e, [])
+              const point = afterRef.current || editorEnd(e, [])
               e.select(point)
             } finally {
               beforeRef.unref()
@@ -241,7 +249,7 @@ export const withDOM = <T extends Editor>(editor: T): T & DOMEditor => {
 
 const getMatches = (e: Editor, path: Path) => {
   const matches: [Path, Key][] = []
-  for (const [n, p] of Editor.levels(e, {at: path})) {
+  for (const [n, p] of levels(e, {at: path})) {
     const key = DOMEditor.findKey(e, n)
     matches.push([p, key])
   }

@@ -1,8 +1,22 @@
-import {Editor, type EditorInterface} from '../interfaces/editor'
-import type {Span} from '../interfaces/location'
+import type {Descendant, Location, NodeEntry, Span} from '../interfaces'
+import type {Editor, NodeMatch} from '../interfaces/editor'
 import {Path} from '../interfaces/path'
+import type {SelectionMode} from '../types/types'
+import {before} from './before'
+import {node} from './node'
+import {nodes} from './nodes'
+import {parent} from './parent'
+import {path} from './path'
 
-export const previous: EditorInterface['previous'] = (editor, options = {}) => {
+export function previous<T extends Descendant>(
+  editor: Editor,
+  options: {
+    at?: Location
+    match?: NodeMatch<T>
+    mode?: SelectionMode
+    voids?: boolean
+  } = {},
+): NodeEntry<T> | undefined {
   const {mode = 'lowest', voids = false} = options
   let {match, at = editor.selection} = options
 
@@ -10,13 +24,13 @@ export const previous: EditorInterface['previous'] = (editor, options = {}) => {
     return
   }
 
-  const pointBeforeLocation = Editor.before(editor, at, {voids})
+  const pointBeforeLocation = before(editor, at, {voids})
 
   if (!pointBeforeLocation) {
     return
   }
 
-  const [, to] = Editor.node(editor, Editor.path(editor, [], {edge: 'start'}))
+  const [, to] = node(editor, path(editor, [], {edge: 'start'}))
 
   // The search location is from the start of the document to the path of
   // the point before the location passed in
@@ -28,14 +42,14 @@ export const previous: EditorInterface['previous'] = (editor, options = {}) => {
 
   if (match == null) {
     if (Path.isPath(at)) {
-      const [parent] = Editor.parent(editor, at)
-      match = (n) => parent.children.includes(n)
+      const [parentNode] = parent(editor, at)
+      match = (n) => parentNode.children.includes(n)
     } else {
       match = () => true
     }
   }
 
-  const [previous] = Editor.nodes(editor, {
+  const [previousEntry] = nodes(editor, {
     reverse: true,
     at: span,
     match,
@@ -43,5 +57,5 @@ export const previous: EditorInterface['previous'] = (editor, options = {}) => {
     voids,
   })
 
-  return previous
+  return previousEntry as NodeEntry<T> | undefined
 }

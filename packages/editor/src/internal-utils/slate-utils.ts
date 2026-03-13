@@ -8,6 +8,10 @@ import {
   type Point,
   type Path as SlatePath,
 } from '../slate'
+import {end} from '../slate/editor/end'
+import {node as editorNode} from '../slate/editor/node'
+import {nodes as editorNodes} from '../slate/editor/nodes'
+import {start} from '../slate/editor/start'
 import type {EditorSelection, EditorSelectionPoint} from '../types/editor'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 
@@ -19,7 +23,7 @@ export function getBlockPath({
   _key: string
 }): [number] | undefined {
   const [, blockPath] = Array.from(
-    Editor.nodes(editor, {
+    editorNodes(editor, {
       at: [],
       match: (n) => n._key === _key,
     }),
@@ -45,7 +49,7 @@ export function getAnchorBlock({
 
   try {
     return (
-      Editor.node(editor, editor.selection.anchor.path.slice(0, 1)) ?? [
+      editorNode(editor, editor.selection.anchor.path.slice(0, 1)) ?? [
         undefined,
         undefined,
       ]
@@ -66,7 +70,7 @@ export function getFocusBlock({
 
   try {
     return (
-      Editor.node(editor, editor.selection.focus.path.slice(0, 1)) ?? [
+      editorNode(editor, editor.selection.focus.path.slice(0, 1)) ?? [
         undefined,
         undefined,
       ]
@@ -96,7 +100,7 @@ export function getFocusSpan({
       return [undefined, undefined]
     }
 
-    const [node, path] = Editor.node(
+    const [node, path] = editorNode(
       editor,
       editor.selection.focus.path.slice(0, 2),
     )
@@ -147,7 +151,7 @@ export function getPointBlock({
   point: Point
 }): [node: Node, path: SlatePath] | [undefined, undefined] {
   try {
-    const [block] = Editor.node(editor, point.path.slice(0, 1)) ?? [
+    const [block] = editorNode(editor, point.path.slice(0, 1)) ?? [
       undefined,
       undefined,
     ]
@@ -214,12 +218,12 @@ export function getFirstBlock({
     return [undefined, undefined]
   }
 
-  const firstPoint = Editor.start(editor, [])
+  const firstPoint = start(editor, [])
   const firstBlockPath = firstPoint.path.at(0)
 
   try {
     return firstBlockPath !== undefined
-      ? (Editor.node(editor, [firstBlockPath]) ?? [undefined, undefined])
+      ? (editorNode(editor, [firstBlockPath]) ?? [undefined, undefined])
       : [undefined, undefined]
   } catch {
     return [undefined, undefined]
@@ -235,12 +239,12 @@ export function getLastBlock({
     return [undefined, undefined]
   }
 
-  const lastPoint = Editor.end(editor, [])
+  const lastPoint = end(editor, [])
   const lastBlockPath = lastPoint.path.at(0)
 
   try {
     return lastBlockPath !== undefined
-      ? (Editor.node(editor, [lastBlockPath]) ?? [undefined, undefined])
+      ? (editorNode(editor, [lastBlockPath]) ?? [undefined, undefined])
       : [undefined, undefined]
   } catch {
     return [undefined, undefined]
@@ -265,7 +269,7 @@ export function getNodeBlock({
   }
 
   const parent = Array.from(
-    Editor.nodes(editor, {
+    editorNodes(editor, {
       mode: 'highest',
       at: [],
       match: (n) =>
@@ -314,7 +318,7 @@ export function isListItemActive({
   }
 
   const selectedBlocks = [
-    ...Editor.nodes(editor, {
+    ...editorNodes(editor, {
       at: editor.selection,
       match: (node) => editor.isTextBlock(node),
     }),
@@ -341,7 +345,7 @@ export function isStyleActive({
   }
 
   const selectedBlocks = [
-    ...Editor.nodes(editor, {
+    ...editorNodes(editor, {
       at: editor.selection,
       match: (node) => editor.isTextBlock(node),
     }),

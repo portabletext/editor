@@ -1,9 +1,19 @@
-import {Node, Path, Point, Range, type EditorInterface} from '../interfaces'
+import type {Location} from '../interfaces'
+import type {Editor} from '../interfaces/editor'
+import {Node} from '../interfaces/node'
+import {Path as PathUtils} from '../interfaces/path'
+import {Point} from '../interfaces/point'
+import {Range} from '../interfaces/range'
+import type {LeafEdge} from '../types/types'
 
-export const path: EditorInterface['path'] = (editor, at, options = {}) => {
+export function path(
+  editor: Editor,
+  at: Location,
+  options: {depth?: number; edge?: LeafEdge} = {},
+): PathUtils {
   const {depth, edge} = options
 
-  if (Path.isPath(at)) {
+  if (PathUtils.isPath(at)) {
     if (edge === 'start') {
       const [, firstPath] = Node.first(editor, at, editor.schema)
       at = firstPath
@@ -19,7 +29,7 @@ export const path: EditorInterface['path'] = (editor, at, options = {}) => {
     } else if (edge === 'end') {
       at = Range.end(at)
     } else {
-      at = Path.common(at.anchor.path, at.focus.path)
+      at = PathUtils.common(at.anchor.path, at.focus.path)
     }
   }
 

@@ -1,16 +1,23 @@
-import {Editor, type EditorInterface} from '../interfaces/editor'
+import type {Location} from '../interfaces'
+import type {Editor} from '../interfaces/editor'
 import {Path} from '../interfaces/path'
 import {Range} from '../interfaces/range'
 import {Text} from '../interfaces/text'
+import {nodes} from './nodes'
+import {range} from './range'
 
-export const string: EditorInterface['string'] = (editor, at, options = {}) => {
+export function string(
+  editor: Editor,
+  at: Location,
+  options: {voids?: boolean} = {},
+): string {
   const {voids = false} = options
-  const range = Editor.range(editor, at)
-  const [start, end] = Range.edges(range)
+  const editorRange = range(editor, at)
+  const [start, end] = Range.edges(editorRange)
   let text = ''
 
-  for (const [node, path] of Editor.nodes(editor, {
-    at: range,
+  for (const [node, path] of nodes(editor, {
+    at: editorRange,
     match: (n) => Text.isText(n, editor.schema),
     voids,
   })) {

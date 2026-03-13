@@ -1,4 +1,10 @@
-import {Editor, Range, type Ancestor, type DecoratedRange} from '../../slate'
+import {
+  Range,
+  type Ancestor,
+  type DecoratedRange,
+  type Editor,
+} from '../../slate'
+import {range as editorRange} from '../../slate/editor/range'
 import {DOMEditor} from '../plugin/dom-editor'
 import {PLACEHOLDER_SYMBOL} from './symbols'
 
@@ -122,7 +128,7 @@ export const splitDecorationsByChild = (
 
   const path = DOMEditor.findPath(editor, node)
   const level = path.length
-  const ancestorRange = Editor.range(editor, path)
+  const ancestorRange = editorRange(editor, path)
 
   const cachedChildRanges = new Array<Range | undefined>(node.children.length)
 
@@ -131,7 +137,7 @@ export const splitDecorationsByChild = (
     if (cachedRange) {
       return cachedRange
     }
-    const childRange = Editor.range(editor, [...path, index])
+    const childRange = editorRange(editor, [...path, index])
     cachedChildRanges[index] = childRange
     return childRange
   }

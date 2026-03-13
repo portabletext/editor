@@ -1,6 +1,4 @@
-export * from './core'
 export * from './create-editor'
-export * from './editor'
 export * from './interfaces'
 export * from './types'
 export * from './utils/is-object'

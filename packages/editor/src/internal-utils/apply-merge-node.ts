@@ -1,5 +1,4 @@
 import {
-  Editor,
   Element,
   Node as NodeUtils,
   Path,
@@ -8,6 +7,7 @@ import {
   type Node,
   type Point,
 } from '../slate'
+import {withoutNormalizing} from '../slate/editor/without-normalizing'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 
 /**
@@ -31,19 +31,19 @@ export function applyMergeNode(
   const prevPath = Path.previous(path)
 
   // Pre-transform all refs with merge semantics
-  for (const ref of Editor.pathRefs(editor)) {
+  for (const ref of editor.pathRefs) {
     const current = ref.current
     if (current) {
       ref.current = transformPathForMerge(current, path, position)
     }
   }
-  for (const ref of Editor.pointRefs(editor)) {
+  for (const ref of editor.pointRefs) {
     const current = ref.current
     if (current) {
       ref.current = transformPointForMerge(current, path, position)
     }
   }
-  for (const ref of Editor.rangeRefs(editor)) {
+  for (const ref of editor.rangeRefs) {
     const current = ref.current
     if (current) {
       const anchor = transformPointForMerge(current.anchor, path, position)
@@ -72,12 +72,12 @@ export function applyMergeNode(
 
   // Temporarily remove all refs so the decomposed operations don't
   // double-transform them
-  const pathRefs = new Set(Editor.pathRefs(editor))
-  const pointRefs = new Set(Editor.pointRefs(editor))
-  const rangeRefs = new Set(Editor.rangeRefs(editor))
-  Editor.pathRefs(editor).clear()
-  Editor.pointRefs(editor).clear()
-  Editor.rangeRefs(editor).clear()
+  const pathRefs = new Set(editor.pathRefs)
+  const pointRefs = new Set(editor.pointRefs)
+  const rangeRefs = new Set(editor.rangeRefs)
+  editor.pathRefs.clear()
+  editor.pointRefs.clear()
+  editor.rangeRefs.clear()
 
   // Save the pre-transformed selection
   const savedSelection = editor.selection
@@ -141,7 +141,7 @@ export function applyMergeNode(
   editorAny['pendingAction'] = null
 
   try {
-    Editor.withoutNormalizing(editor, () => {
+    withoutNormalizing(editor, () => {
       if (Text.isText(node, editor.schema)) {
         // Merge text: insert the text into the previous sibling at the position
         if (node.text.length > 0) {
@@ -174,13 +174,13 @@ export function applyMergeNode(
 
     // Restore all refs
     for (const ref of pathRefs) {
-      Editor.pathRefs(editor).add(ref)
+      editor.pathRefs.add(ref)
     }
     for (const ref of pointRefs) {
-      Editor.pointRefs(editor).add(ref)
+      editor.pointRefs.add(ref)
     }
     for (const ref of rangeRefs) {
-      Editor.rangeRefs(editor).add(ref)
+      editor.rangeRefs.add(ref)
     }
 
     // Restore pre-transformed pending state

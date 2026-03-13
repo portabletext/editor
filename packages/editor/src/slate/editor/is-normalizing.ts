@@ -1,5 +1,5 @@
-import type {EditorInterface} from '../interfaces/editor'
+import type {Editor} from '../interfaces/editor'
 
-export const isNormalizing: EditorInterface['isNormalizing'] = (editor) => {
+export function isNormalizing(editor: Editor): boolean {
   return editor.normalizing
 }

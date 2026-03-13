@@ -1,13 +1,24 @@
-import {Editor, type EditorNodesOptions} from '../interfaces/editor'
+import type {Location, Span} from '../interfaces'
+import {Editor, type NodeMatch} from '../interfaces/editor'
 import {Element} from '../interfaces/element'
-import {Span} from '../interfaces/location'
+import {Span as SpanUtils} from '../interfaces/location'
 import {Node, type NodeEntry} from '../interfaces/node'
 import {Path} from '../interfaces/path'
 import {Text} from '../interfaces/text'
+import type {SelectionMode} from '../types/types'
+import {path} from './path'
 
 export function* nodes<T extends Node>(
   editor: Editor,
-  options: EditorNodesOptions<T> = {},
+  options: {
+    at?: Location | Span
+    match?: NodeMatch<T>
+    mode?: SelectionMode
+    universal?: boolean
+    reverse?: boolean
+    voids?: boolean
+    pass?: (entry: NodeEntry) => boolean
+  } = {},
 ): Generator<NodeEntry<T>, void, undefined> {
   const {
     at = editor.selection,
@@ -30,12 +41,12 @@ export function* nodes<T extends Node>(
   let from: Path
   let to: Path
 
-  if (Span.isSpan(at)) {
+  if (SpanUtils.isSpan(at)) {
     from = at[0]
     to = at[1]
   } else {
-    const first = Editor.path(editor, at, {edge: 'start'})
-    const last = Editor.path(editor, at, {edge: 'end'})
+    const first = path(editor, at, {edge: 'start'})
+    const last = path(editor, at, {edge: 'end'})
     from = reverse ? last : first
     to = reverse ? first : last
   }

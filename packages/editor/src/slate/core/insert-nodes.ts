@@ -1,5 +1,16 @@
 import {applySplitNode} from '../../internal-utils/apply-split-node'
 import type {PortableTextSlateEditor} from '../../types/slate-editor'
+import {end as editorEnd} from '../editor/end'
+import {getVoid} from '../editor/get-void'
+import {isBlock} from '../editor/is-block'
+import {isEdge} from '../editor/is-edge'
+import {isEnd} from '../editor/is-end'
+import {levels} from '../editor/levels'
+import {nodes as editorNodes} from '../editor/nodes'
+import {pathRef} from '../editor/path-ref'
+import {pointRef} from '../editor/point-ref'
+import {unhangRange} from '../editor/unhang-range'
+import {withoutNormalizing} from '../editor/without-normalizing'
 import type {BaseInsertNodeOperation, Location} from '../interfaces'
 import {Editor, type NodeMatch} from '../interfaces/editor'
 import {Element} from '../interfaces/element'
@@ -29,7 +40,7 @@ export function insertNodes<T extends Node>(
   nodes: Node | Node[],
   options: InsertNodesOptions<T> = {},
 ): void {
-  Editor.withoutNormalizing(editor, () => {
+  withoutNormalizing(editor, () => {
     const {
       hanging = false,
       voids = false,
@@ -61,16 +72,16 @@ export function insertNodes<T extends Node>(
 
     if (Range.isRange(at)) {
       if (!hanging) {
-        at = Editor.unhangRange(editor, at, {voids})
+        at = unhangRange(editor, at, {voids})
       }
 
       if (Range.isCollapsed(at)) {
         at = at.anchor
       } else {
         const [, end] = Range.edges(at)
-        const pointRef = Editor.pointRef(editor, end)
+        const endPointRef = pointRef(editor, end)
         editor.delete({at})
-        at = pointRef.unref()!
+        at = endPointRef.unref()!
       }
     }
 
@@ -83,11 +94,11 @@ export function insertNodes<T extends Node>(
             Text.isText(n, editor.schema) || Editor.isInline(editor, n)
         } else {
           match = (n) =>
-            Element.isElement(n, editor.schema) && Editor.isBlock(editor, n)
+            Element.isElement(n, editor.schema) && isBlock(editor, n)
         }
       }
 
-      const [entry] = Editor.nodes(editor, {
+      const [entry] = editorNodes(editor, {
         at: at.path,
         match,
         mode,
@@ -96,17 +107,17 @@ export function insertNodes<T extends Node>(
 
       if (entry) {
         const [, matchPath] = entry
-        const pathRef = Editor.pathRef(editor, matchPath)
-        const isAtEnd = Editor.isEnd(editor, at, matchPath)
+        const matchPathRef = pathRef(editor, matchPath)
+        const isAtEnd = isEnd(editor, at, matchPath)
 
         {
           const splitAt = at as Point
-          const beforeRef = Editor.pointRef(editor, splitAt, {
+          const beforeRef = pointRef(editor, splitAt, {
             affinity: 'backward',
           })
           let afterRef: PointRef | undefined
           try {
-            const [highest] = Editor.nodes(editor, {
+            const [highest] = editorNodes(editor, {
               at: splitAt,
               match,
               mode,
@@ -114,13 +125,13 @@ export function insertNodes<T extends Node>(
             })
 
             if (highest) {
-              afterRef = Editor.pointRef(editor, splitAt)
+              afterRef = pointRef(editor, splitAt)
               const depth = splitAt.path.length
               const [, highestPath] = highest
               const lowestPath = splitAt.path.slice(0, depth)
               let position = splitAt.offset
 
-              for (const [node, nodePath] of Editor.levels(editor, {
+              for (const [node, nodePath] of levels(editor, {
                 at: lowestPath,
                 reverse: true,
                 voids,
@@ -135,9 +146,9 @@ export function insertNodes<T extends Node>(
                 }
 
                 const point = beforeRef.current!
-                const isEndOfNode = Editor.isEnd(editor, point, nodePath)
+                const isEndOfNode = isEnd(editor, point, nodePath)
 
-                if (!Editor.isEdge(editor, point, nodePath)) {
+                if (!isEdge(editor, point, nodePath)) {
                   split = true
                   const properties = Node.extractProps(node, editor.schema)
                   applySplitNode(
@@ -159,7 +170,7 @@ export function insertNodes<T extends Node>(
           }
         }
 
-        const path = pathRef.unref()!
+        const path = matchPathRef.unref()!
         at = isAtEnd ? Path.next(path) : path
       } else {
         return
@@ -169,7 +180,7 @@ export function insertNodes<T extends Node>(
     const parentPath = Path.parent(at)
     let index = at[at.length - 1]!
 
-    if (!voids && Editor.void(editor, {at: parentPath})) {
+    if (!voids && getVoid(editor, {at: parentPath})) {
       return
     }
 
@@ -233,7 +244,7 @@ export function insertNodes<T extends Node>(
     at = Path.previous(at)
 
     if (select) {
-      const point = Editor.end(editor, at)
+      const point = editorEnd(editor, at)
 
       if (point) {
         editor.select(point)

@@ -1,38 +1,21 @@
 import type {
-  Ancestor,
   Descendant,
   Element,
   ExtendedType,
   Location,
   Node,
   NodeEntry,
-  ObjectNode,
   Operation,
   Path,
   PathRef,
-  Point,
   PointRef,
   Range,
   RangeRef,
-  Span,
   Text,
 } from '..'
-import type {SelectionCollapseOptions} from '../core/collapse'
 import type {TextDeleteOptions} from '../core/delete-text'
-import type {InsertNodesOptions} from '../core/insert-nodes'
 import type {TextInsertTextOptions} from '../core/insert-text'
-import type {SelectionMoveOptions} from '../core/move'
-import type {RemoveNodesOptions} from '../core/remove-nodes'
 import {isEditor} from '../editor/is-editor'
-import type {
-  LeafEdge,
-  MaximizeMode,
-  RangeDirection,
-  SelectionMode,
-  TextDirection,
-  TextUnitAdjustment,
-} from '../types/types'
-import type {OmitFirstArg} from '../utils/types'
 
 /**
  * The `Editor` interface stores all the state of a Slate editor. It is extended
@@ -50,6 +33,9 @@ export interface BaseEditor {
   flushing: boolean
   normalizing: boolean
   batchingDirtyPaths: boolean
+  pathRefs: Set<PathRef>
+  pointRefs: Set<PointRef>
+  rangeRefs: Set<RangeRef>
 
   // Overrideable core methods.
 
@@ -57,6 +43,7 @@ export interface BaseEditor {
   createSpan: () => Text
   getDirtyPaths: (operation: Operation) => Path[]
   isElementReadOnly: (element: Element) => boolean
+  isInline: (element: Element) => boolean
   isSelectable: (element: Element) => boolean
   normalizeNode: (
     entry: NodeEntry,
@@ -76,72 +63,13 @@ export interface BaseEditor {
     operation?: Operation
   }) => boolean
 
-  collapse: (options?: SelectionCollapseOptions) => void
+  // Overrideable commands.
+
   delete: (options?: TextDeleteOptions) => void
-  deselect: () => void
-  insertBreak: OmitFirstArg<typeof Editor.insertBreak>
-  insertNodes: <T extends Node>(
-    nodes: Node | Node[],
-    options?: InsertNodesOptions<T>,
-  ) => void
+  insertBreak: () => void
   insertText: (text: string, options?: TextInsertTextOptions) => void
-  move: (options?: SelectionMoveOptions) => void
-  normalize: OmitFirstArg<typeof Editor.normalize>
-  removeNodes: <T extends Node>(options?: RemoveNodesOptions<T>) => void
   select: (target: Location) => void
-  setNormalizing: OmitFirstArg<typeof Editor.setNormalizing>
   setSelection: (props: Partial<Range>) => void
-  withoutNormalizing: OmitFirstArg<typeof Editor.withoutNormalizing>
-
-  // Overrideable core queries.
-
-  above: <T extends Ancestor>(
-    options?: EditorAboveOptions<T>,
-  ) => NodeEntry<T> | undefined
-  after: OmitFirstArg<typeof Editor.after>
-  before: OmitFirstArg<typeof Editor.before>
-  elementReadOnly: OmitFirstArg<typeof Editor.elementReadOnly>
-  end: OmitFirstArg<typeof Editor.end>
-  hasInlines: OmitFirstArg<typeof Editor.hasInlines>
-  hasPath: OmitFirstArg<typeof Editor.hasPath>
-  isBlock: OmitFirstArg<typeof Editor.isBlock>
-  isEdge: OmitFirstArg<typeof Editor.isEdge>
-  isEnd: OmitFirstArg<typeof Editor.isEnd>
-  isInline: OmitFirstArg<typeof Editor.isInline>
-  isNormalizing: OmitFirstArg<typeof Editor.isNormalizing>
-  isStart: OmitFirstArg<typeof Editor.isStart>
-  leaf: OmitFirstArg<typeof Editor.leaf>
-  levels: <T extends Node>(
-    options?: EditorLevelsOptions<T>,
-  ) => Generator<NodeEntry<T>, void, undefined>
-  next: <T extends Descendant>(
-    options?: EditorNextOptions<T>,
-  ) => NodeEntry<T> | undefined
-  node: OmitFirstArg<typeof Editor.node>
-  nodes: <T extends Node>(
-    options?: EditorNodesOptions<T>,
-  ) => Generator<NodeEntry<T>, void, undefined>
-  parent: OmitFirstArg<typeof Editor.parent>
-  path: OmitFirstArg<typeof Editor.path>
-  pathRef: OmitFirstArg<typeof Editor.pathRef>
-  pathRefs: Set<PathRef>
-  point: OmitFirstArg<typeof Editor.point>
-  pointRef: OmitFirstArg<typeof Editor.pointRef>
-  pointRefs: Set<PointRef>
-  positions: OmitFirstArg<typeof Editor.positions>
-  previous: <T extends Node>(
-    options?: EditorPreviousOptions<T>,
-  ) => NodeEntry<T> | undefined
-  range: OmitFirstArg<typeof Editor.range>
-  rangeRef: OmitFirstArg<typeof Editor.rangeRef>
-  rangeRefs: Set<RangeRef>
-  start: OmitFirstArg<typeof Editor.start>
-  string: OmitFirstArg<typeof Editor.string>
-  unhangRange: OmitFirstArg<typeof Editor.unhangRange>
-  void: OmitFirstArg<typeof Editor.void>
-  shouldMergeNodesRemovePrevNode: OmitFirstArg<
-    typeof Editor.shouldMergeNodesRemovePrevNode
-  >
 }
 
 export type Editor = ExtendedType<'Editor', BaseEditor>
@@ -152,456 +80,22 @@ export type Selection = ExtendedType<'Selection', BaseSelection>
 
 export type EditorMarks = Omit<Text, 'text'>
 
-export interface EditorAboveOptions<T extends Ancestor> {
-  at?: Location
-  match?: NodeMatch<T>
-  mode?: MaximizeMode
-  voids?: boolean
-}
-
-export interface EditorAfterOptions {
-  distance?: number
-  unit?: TextUnitAdjustment
-  voids?: boolean
-}
-
-export interface EditorBeforeOptions {
-  distance?: number
-  unit?: TextUnitAdjustment
-  voids?: boolean
-}
-
-export interface EditorElementReadOnlyOptions {
-  at?: Location
-  mode?: MaximizeMode
-  voids?: boolean
-}
-
-export interface EditorLeafOptions {
-  depth?: number
-  edge?: LeafEdge
-}
-
-export interface EditorLevelsOptions<T extends Node> {
-  at?: Location
-  match?: NodeMatch<T>
-  reverse?: boolean
-  voids?: boolean
-}
-
-export interface EditorNextOptions<T extends Descendant> {
-  at?: Location
-  match?: NodeMatch<T>
-  mode?: SelectionMode
-  voids?: boolean
-}
-
-export interface EditorNodeOptions {
-  depth?: number
-  edge?: LeafEdge
-}
-
-export interface EditorNodesOptions<T extends Node> {
-  at?: Location | Span
-  match?: NodeMatch<T>
-  mode?: SelectionMode
-  universal?: boolean
-  reverse?: boolean
-  voids?: boolean
-  pass?: (entry: NodeEntry) => boolean
-}
-
-export interface EditorNormalizeOptions {
-  force?: boolean
-  operation?: Operation
-}
-
-export interface EditorParentOptions {
-  depth?: number
-  edge?: LeafEdge
-}
-
-export interface EditorPathOptions {
-  depth?: number
-  edge?: LeafEdge
-}
-
-export interface EditorPathRefOptions {
-  affinity?: TextDirection | null
-}
-
-export interface EditorPointOptions {
-  edge?: LeafEdge
-}
-
-export interface EditorPointRefOptions {
-  affinity?: TextDirection | null
-}
-
-export interface EditorPositionsOptions {
-  at?: Location
-  unit?: TextUnitAdjustment
-  reverse?: boolean
-  voids?: boolean
-}
-
-export interface EditorPreviousOptions<T extends Node> {
-  at?: Location
-  match?: NodeMatch<T>
-  mode?: SelectionMode
-  voids?: boolean
-}
-
-export interface EditorRangeRefOptions {
-  affinity?: RangeDirection | null
-}
-
-export interface EditorStringOptions {
-  voids?: boolean
-}
-
-export interface EditorUnhangRangeOptions {
-  voids?: boolean
-}
-
-export interface EditorVoidOptions {
-  at?: Location
-  mode?: MaximizeMode
-  voids?: boolean
-}
-
 export interface EditorInterface {
-  /**
-   * Get the ancestor above a location in the document.
-   */
-  above: <T extends Ancestor>(
-    editor: Editor,
-    options?: EditorAboveOptions<T>,
-  ) => NodeEntry<T> | undefined
-
-  /**
-   * Get the point after a location.
-   */
-  after: (
-    editor: Editor,
-    at: Location,
-    options?: EditorAfterOptions,
-  ) => Point | undefined
-
-  /**
-   * Get the point before a location.
-   */
-  before: (
-    editor: Editor,
-    at: Location,
-    options?: EditorBeforeOptions,
-  ) => Point | undefined
-
-  /**
-   * Match a read-only element in the current branch of the editor.
-   */
-  elementReadOnly: (
-    editor: Editor,
-    options?: EditorElementReadOnlyOptions,
-  ) => NodeEntry<Element> | undefined
-
-  /**
-   * Get the end point of a location.
-   */
-  end: (editor: Editor, at: Location) => Point
-
-  /**
-   * Check if a node has inline and text children.
-   */
-  hasInlines: (editor: Editor, element: Element) => boolean
-
-  hasPath: (editor: Editor, path: Path) => boolean
-
-  /**
-   * Insert a block break at the current selection.
-   *
-   * If the selection is currently expanded, it will be deleted first.
-   */
   insertBreak: (editor: Editor) => void
 
-  /**
-   * Check if a value is a block `Element` object.
-   */
-  isBlock: (editor: Editor, value: Element) => boolean
-
-  /**
-   * Check if a point is an edge of a location.
-   */
-  isEdge: (editor: Editor, point: Point, at: Location) => boolean
-
-  /**
-   * Check if a value is an `Editor` object.
-   */
   isEditor: (value: any) => value is Editor
 
-  /**
-   * Check if a value is a read-only `Element` object.
-   */
   isElementReadOnly: (editor: Editor, element: Element) => boolean
 
-  /**
-   * Check if a point is the end point of a location.
-   */
-  isEnd: (editor: Editor, point: Point, at: Location) => boolean
-
-  /**
-   * Check if a value is an inline `Element` object.
-   */
   isInline: (editor: Editor, value: Element) => boolean
 
-  /**
-   * Check if the editor is currently normalizing after each operation.
-   */
-  isNormalizing: (editor: Editor) => boolean
-
-  /**
-   * Check if a value is a selectable `Element` object.
-   */
   isSelectable: (editor: Editor, element: Element) => boolean
-
-  /**
-   * Check if a point is the start point of a location.
-   */
-  isStart: (editor: Editor, point: Point, at: Location) => boolean
-
-  /**
-   * Get the leaf text node at a location.
-   */
-  leaf: (
-    editor: Editor,
-    at: Location,
-    options?: EditorLeafOptions,
-  ) => NodeEntry<Text | ObjectNode>
-
-  /**
-   * Iterate through all of the levels at a location.
-   */
-  levels: <T extends Node>(
-    editor: Editor,
-    options?: EditorLevelsOptions<T>,
-  ) => Generator<NodeEntry<T>, void, undefined>
-  /**
-   * Get the matching node in the branch of the document after a location.
-   */
-  next: <T extends Descendant>(
-    editor: Editor,
-    options?: EditorNextOptions<T>,
-  ) => NodeEntry<T> | undefined
-
-  /**
-   * Get the node at a location.
-   */
-  node: (editor: Editor, at: Location, options?: EditorNodeOptions) => NodeEntry
-
-  /**
-   * Iterate through all of the nodes in the Editor.
-   */
-  nodes: <T extends Node>(
-    editor: Editor,
-    options?: EditorNodesOptions<T>,
-  ) => Generator<NodeEntry<T>, void, undefined>
-
-  /**
-   * Normalize any dirty objects in the editor.
-   */
-  normalize: (editor: Editor, options?: EditorNormalizeOptions) => void
-
-  /**
-   * Get the parent node of a location.
-   */
-  parent: (
-    editor: Editor,
-    at: Location,
-    options?: EditorParentOptions,
-  ) => NodeEntry<Ancestor>
-
-  /**
-   * Get the path of a location.
-   */
-  path: (editor: Editor, at: Location, options?: EditorPathOptions) => Path
-
-  /**
-   * Create a mutable ref for a `Path` object, which will stay in sync as new
-   * operations are applied to the editor.
-   */
-  pathRef: (
-    editor: Editor,
-    path: Path,
-    options?: EditorPathRefOptions,
-  ) => PathRef
-
-  /**
-   * Get the set of currently tracked path refs of the editor.
-   */
-  pathRefs: (editor: Editor) => Set<PathRef>
-
-  /**
-   * Get the start or end point of a location.
-   */
-  point: (editor: Editor, at: Location, options?: EditorPointOptions) => Point
-
-  /**
-   * Create a mutable ref for a `Point` object, which will stay in sync as new
-   * operations are applied to the editor.
-   */
-  pointRef: (
-    editor: Editor,
-    point: Point,
-    options?: EditorPointRefOptions,
-  ) => PointRef
-
-  /**
-   * Get the set of currently tracked point refs of the editor.
-   */
-  pointRefs: (editor: Editor) => Set<PointRef>
-
-  /**
-   * Return all the positions in `at` range where a `Point` can be placed.
-   *
-   * By default, moves forward by individual offsets at a time, but
-   * the `unit` option can be used to to move by character, word, line, or block.
-   *
-   * The `reverse` option can be used to change iteration direction.
-   *
-   * Note: By default void nodes are treated as a single point and iteration
-   * will not happen inside their content unless you pass in true for the
-   * `voids` option, then iteration will occur.
-   */
-  positions: (
-    editor: Editor,
-    options?: EditorPositionsOptions,
-  ) => Generator<Point, void, undefined>
-
-  /**
-   * Get the matching node in the branch of the document before a location.
-   */
-  previous: <T extends Node>(
-    editor: Editor,
-    options?: EditorPreviousOptions<T>,
-  ) => NodeEntry<T> | undefined
-
-  /**
-   * Get a range of a location.
-   */
-  range: (editor: Editor, at: Location, to?: Location) => Range
-
-  /**
-   * Create a mutable ref for a `Range` object, which will stay in sync as new
-   * operations are applied to the editor.
-   */
-  rangeRef: (
-    editor: Editor,
-    range: Range,
-    options?: EditorRangeRefOptions,
-  ) => RangeRef
-
-  /**
-   * Get the set of currently tracked range refs of the editor.
-   */
-  rangeRefs: (editor: Editor) => Set<RangeRef>
-
-  /**
-   * Manually set if the editor should currently be normalizing.
-   *
-   * Note: Using this incorrectly can leave the editor in an invalid state.
-   *
-   */
-  setNormalizing: (editor: Editor, isNormalizing: boolean) => void
-
-  /**
-   * Get the start point of a location.
-   */
-  start: (editor: Editor, at: Location) => Point
-
-  /**
-   * Get the text string content of a location.
-   *
-   * Note: by default the text of void nodes is considered to be an empty
-   * string, regardless of content, unless you pass in true for the voids option
-   */
-  string: (
-    editor: Editor,
-    at: Location,
-    options?: EditorStringOptions,
-  ) => string
-
-  /**
-   * Convert a range into a non-hanging one.
-   */
-  unhangRange: (
-    editor: Editor,
-    range: Range,
-    options?: EditorUnhangRangeOptions,
-  ) => Range
-
-  /**
-   * Match a void node in the current branch of the editor.
-   */
-  void: (
-    editor: Editor,
-    options?: EditorVoidOptions,
-  ) => NodeEntry<Element> | undefined
-
-  /**
-   * Call a function, deferring normalization until after it completes.
-   */
-  withoutNormalizing: (editor: Editor, fn: () => void) => void
-
-  /**
-   *  Call a function, Determine whether or not remove the previous node when merge.
-   */
-  shouldMergeNodesRemovePrevNode: (
-    editor: Editor,
-    prevNodeEntry: NodeEntry,
-    curNodeEntry: NodeEntry,
-  ) => boolean
 }
 
 // eslint-disable-next-line no-redeclare
 export const Editor: EditorInterface = {
-  above(editor, options) {
-    return editor.above(options)
-  },
-
-  after(editor, at, options) {
-    return editor.after(at, options)
-  },
-
-  before(editor, at, options) {
-    return editor.before(at, options)
-  },
-
-  elementReadOnly(editor: Editor, options: EditorElementReadOnlyOptions = {}) {
-    return editor.elementReadOnly(options)
-  },
-
-  end(editor, at) {
-    return editor.end(at)
-  },
-
-  hasInlines(editor, element) {
-    return editor.hasInlines(element)
-  },
-
-  hasPath(editor, path) {
-    return editor.hasPath(path)
-  },
-
   insertBreak(editor) {
     editor.insertBreak()
-  },
-
-  isBlock(editor, value) {
-    return editor.isBlock(value)
-  },
-
-  isEdge(editor, point, at) {
-    return editor.isEdge(point, at)
   },
 
   isEditor(value: any): value is Editor {
@@ -612,125 +106,12 @@ export const Editor: EditorInterface = {
     return editor.isElementReadOnly(element)
   },
 
-  isEnd(editor, point, at) {
-    return editor.isEnd(point, at)
-  },
-
   isInline(editor, value) {
     return editor.isInline(value)
   },
 
-  isNormalizing(editor) {
-    return editor.isNormalizing()
-  },
-
   isSelectable(editor: Editor, value: Element) {
     return editor.isSelectable(value)
-  },
-
-  isStart(editor, point, at) {
-    return editor.isStart(point, at)
-  },
-
-  leaf(editor, at, options) {
-    return editor.leaf(at, options)
-  },
-
-  levels(editor, options) {
-    return editor.levels(options)
-  },
-  next<T extends Descendant>(
-    editor: Editor,
-    options?: EditorNextOptions<T>,
-  ): NodeEntry<T> | undefined {
-    return editor.next(options)
-  },
-
-  node(editor, at, options) {
-    return editor.node(at, options)
-  },
-
-  nodes(editor, options) {
-    return editor.nodes(options)
-  },
-
-  normalize(editor, options) {
-    editor.normalize(options)
-  },
-
-  parent(editor, at, options) {
-    return editor.parent(at, options)
-  },
-
-  path(editor, at, options) {
-    return editor.path(at, options)
-  },
-
-  pathRef(editor, path, options) {
-    return editor.pathRef(path, options)
-  },
-
-  pathRefs(editor) {
-    return editor.pathRefs
-  },
-
-  point(editor, at, options) {
-    return editor.point(at, options)
-  },
-
-  pointRef(editor, point, options) {
-    return editor.pointRef(point, options)
-  },
-
-  pointRefs(editor) {
-    return editor.pointRefs
-  },
-
-  positions(editor, options) {
-    return editor.positions(options)
-  },
-
-  previous(editor, options) {
-    return editor.previous(options)
-  },
-
-  range(editor, at, to) {
-    return editor.range(at, to)
-  },
-
-  rangeRef(editor, range, options) {
-    return editor.rangeRef(range, options)
-  },
-
-  rangeRefs(editor) {
-    return editor.rangeRefs
-  },
-
-  setNormalizing(editor, isNormalizing) {
-    editor.setNormalizing(isNormalizing)
-  },
-
-  start(editor, at) {
-    return editor.start(at)
-  },
-
-  string(editor, at, options) {
-    return editor.string(at, options)
-  },
-
-  unhangRange(editor, range, options) {
-    return editor.unhangRange(range, options)
-  },
-
-  void(editor, options) {
-    return editor.void(options)
-  },
-
-  withoutNormalizing(editor, fn: () => void) {
-    editor.withoutNormalizing(fn)
-  },
-  shouldMergeNodesRemovePrevNode: (editor, prevNode, curNode) => {
-    return editor.shouldMergeNodesRemovePrevNode(prevNode, curNode)
   },
 }
 
