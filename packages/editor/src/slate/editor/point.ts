@@ -1,10 +1,12 @@
 import type {Location, Point} from '../interfaces'
 import type {Editor} from '../interfaces/editor'
 import {Element} from '../interfaces/element'
-import {Node} from '../interfaces/node'
 import {Path} from '../interfaces/path'
 import {Range} from '../interfaces/range'
 import {Text} from '../interfaces/text'
+import {getFirst} from '../node/get-first'
+import {getLast} from '../node/get-last'
+import {getNode} from '../node/get-node'
 import type {LeafEdge} from '../types/types'
 import {isEditor} from './is-editor'
 
@@ -19,14 +21,14 @@ export function point(
     let path: Path
 
     if (edge === 'end') {
-      const [, lastPath] = Node.last(editor, at, editor.schema)
+      const [, lastPath] = getLast(editor, at, editor.schema)
       path = lastPath
     } else {
-      const [, firstPath] = Node.first(editor, at, editor.schema)
+      const [, firstPath] = getFirst(editor, at, editor.schema)
       path = firstPath
     }
 
-    const node = Node.get(editor, path, editor.schema)
+    const node = getNode(editor, path, editor.schema)
 
     if (
       !Text.isText(node, editor.schema) &&

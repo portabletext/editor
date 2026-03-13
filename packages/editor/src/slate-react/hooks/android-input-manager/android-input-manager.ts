@@ -1,5 +1,5 @@
 import type {EditorActor} from '../../../editor/editor-machine'
-import {Node, Path, Point, Range, Text, type Editor} from '../../../slate'
+import {Path, Point, Range, Text, type Editor} from '../../../slate'
 import {
   applyStringDiff,
   isDOMSelection,
@@ -17,6 +17,7 @@ import {leaf as editorLeaf} from '../../../slate/editor/leaf'
 import {next as editorNext} from '../../../slate/editor/next'
 import {range as editorRange} from '../../../slate/editor/range'
 import {rangeRef} from '../../../slate/editor/range-ref'
+import {getLeaf} from '../../../slate/node/get-leaf'
 import {ReactEditor} from '../../plugin/react-editor'
 import type {DebouncedFunc} from '../../utils/debounce'
 
@@ -292,7 +293,7 @@ export function createAndroidInputManager({
 
     const pendingDiffs = editor.pendingDiffs
 
-    const target = Node.leaf(editor, path, editor.schema)
+    const target = getLeaf(editor, path, editor.schema)
 
     if (!Text.isText(target, editor.schema)) {
       return
@@ -509,7 +510,7 @@ export function createAndroidInputManager({
       case 'deleteContentForward': {
         const {anchor} = targetRange
         if (canStoreDiff && Range.isCollapsed(targetRange)) {
-          const targetNode = Node.leaf(editor, anchor.path, editor.schema)
+          const targetNode = getLeaf(editor, anchor.path, editor.schema)
 
           if (
             Text.isText(targetNode, editor.schema) &&

@@ -1,12 +1,6 @@
-import {
-  Element,
-  Node as NodeUtils,
-  Path,
-  Text,
-  type Node,
-  type Point,
-} from '../slate'
+import {Element, Path, Text, type Node, type Point} from '../slate'
 import {withoutNormalizing} from '../slate/editor/without-normalizing'
+import {getNode} from '../slate/node/get-node'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {rangeRefAffinities} from './range-ref-affinities'
 
@@ -25,7 +19,7 @@ export function applySplitNode(
   position: number,
   properties: Record<string, unknown>,
 ): void {
-  const node = NodeUtils.get(editor, path, editor.schema)
+  const node = getNode(editor, path, editor.schema)
 
   // Pre-transform all refs with split semantics
   for (const ref of editor.pathRefs) {

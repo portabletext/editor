@@ -1,13 +1,15 @@
 import type {EditorSchema} from '../../editor/editor-schema'
 import {
-  Node,
   Scrubber,
   Text,
   type Ancestor,
   type Descendant,
   type Element,
+  type Node,
   type Path,
 } from '../interfaces'
+import {getNode} from '../node/get-node'
+import {isObjectNode} from '../node/is-object-node'
 
 export const insertChildren = <T>(
   xs: T[],
@@ -37,13 +39,13 @@ export const modifyDescendant = <N extends Descendant>(
     throw new Error('Cannot modify the editor')
   }
 
-  const node = Node.get(root, path, schema) as N
+  const node = getNode(root, path, schema) as N
   const slicedPath = path.slice()
   let modifiedNode: Node = f(node)
 
   while (slicedPath.length > 1) {
     const index = slicedPath.pop()!
-    const ancestorNode = Node.get(root, slicedPath, schema) as Ancestor
+    const ancestorNode = getNode(root, slicedPath, schema) as Ancestor
 
     modifiedNode = {
       ...ancestorNode,
@@ -68,7 +70,7 @@ export const modifyChildren = (
     root.children = f(root.children)
   } else {
     modifyDescendant<Element>(root, path, schema, (node) => {
-      if (Text.isText(node, schema) || Node.isObjectNode(node, schema)) {
+      if (Text.isText(node, schema) || isObjectNode(node, schema)) {
         throw new Error(
           `Cannot get the element at path [${path}] because it refers to a leaf node: ${Scrubber.stringify(
             node,

@@ -4,7 +4,7 @@ import {applySetNode} from '../internal-utils/apply-set-node'
 import {applySplitNode} from '../internal-utils/apply-split-node'
 import {safeStringify} from '../internal-utils/safe-json'
 import {toSlateRange} from '../internal-utils/to-slate-range'
-import {Node, Range, Text} from '../slate'
+import {Range, Text} from '../slate'
 import {isEdge} from '../slate/editor/is-edge'
 import {isEnd} from '../slate/editor/is-end'
 import {isStart} from '../slate/editor/is-start'
@@ -12,6 +12,8 @@ import {leaf} from '../slate/editor/leaf'
 import {node as editorNode} from '../slate/editor/node'
 import {nodes} from '../slate/editor/nodes'
 import {rangeRef} from '../slate/editor/range-ref'
+import {extractProps} from '../slate/node/extract-props'
+import {getChildren} from '../slate/node/get-children'
 import {parseAnnotation} from '../utils/parse-blocks'
 import type {OperationImplementation} from './operation.types'
 
@@ -120,7 +122,7 @@ export const addAnnotationOperationImplementation: OperationImplementation<
             editor,
             splitEnd.path,
             splitEnd.offset,
-            Node.extractProps(endNode, editor.schema),
+            extractProps(endNode, editor.schema),
           )
         }
         const startAtStart = isStart(editor, splitStart, splitStart.path)
@@ -130,7 +132,7 @@ export const addAnnotationOperationImplementation: OperationImplementation<
             editor,
             splitStart.path,
             splitStart.offset,
-            Node.extractProps(startNode, editor.schema),
+            extractProps(startNode, editor.schema),
           )
         }
         // Update selection if using editor.selection (not explicit `at`)
@@ -141,7 +143,7 @@ export const addAnnotationOperationImplementation: OperationImplementation<
       }
     }
 
-    const children = Node.children(editor, blockPath, editor.schema)
+    const children = getChildren(editor, blockPath, editor.schema)
 
     // Use the tracked range (updated after splits) or fall back to editor.selection
     const selectionRange = ref?.current ?? editor.selection

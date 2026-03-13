@@ -21,13 +21,13 @@ import {withoutNormalizing} from '../editor/without-normalizing'
 import type {Location} from '../index'
 import {Editor} from '../interfaces/editor'
 import {Element} from '../interfaces/element'
-import {Node} from '../interfaces/node'
-import type {NodeEntry} from '../interfaces/node'
+import type {Node, NodeEntry} from '../interfaces/node'
 import {Path} from '../interfaces/path'
 import {Point} from '../interfaces/point'
 import {Range} from '../interfaces/range'
 import {Scrubber} from '../interfaces/scrubber'
 import {Text} from '../interfaces/text'
+import {getNode} from '../node/get-node'
 import type {TextUnit} from '../types/types'
 import {insertText} from './insert-text'
 import {removeNodes} from './remove-nodes'
@@ -175,7 +175,7 @@ export function deleteText(editor: Editor, options: TextDeleteOptions = {}) {
 
     if (!isSingleText && !startNonEditable) {
       const point = startRef.current!
-      const node = Node.get(editor, point.path, editor.schema)
+      const node = getNode(editor, point.path, editor.schema)
       if (Text.isText(node, editor.schema)) {
         const {path} = point
         const {offset} = start
@@ -197,7 +197,7 @@ export function deleteText(editor: Editor, options: TextDeleteOptions = {}) {
 
     if (!endNonEditable) {
       const point = endRef.current!
-      const node = Node.get(editor, point.path, editor.schema)
+      const node = getNode(editor, point.path, editor.schema)
       if (Text.isText(node, editor.schema)) {
         const {path} = point
         const offset = isSingleText ? start.offset : 0
@@ -287,7 +287,7 @@ export function deleteText(editor: Editor, options: TextDeleteOptions = {}) {
           }
 
           if (!isPreviousSibling) {
-            const moveNode = Node.get(editor, mergePath, editor.schema)
+            const moveNode = getNode(editor, mergePath, editor.schema)
             editor.apply({type: 'remove_node', path: mergePath, node: moveNode})
             editor.apply({type: 'insert_node', path: newPath, node: moveNode})
           }

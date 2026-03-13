@@ -1,6 +1,6 @@
 import type {Location, NodeEntry, ObjectNode} from '../interfaces'
 import type {Editor} from '../interfaces/editor'
-import {Node} from '../interfaces/node'
+import {getNode} from '../node/get-node'
 import type {MaximizeMode} from '../types/types'
 import {above} from './above'
 import {path} from './path'
@@ -15,7 +15,7 @@ export function getVoid(
   }
 
   const nodePath = path(editor, at)
-  const node = Node.get(editor, nodePath, editor.schema)
+  const node = getNode(editor, nodePath, editor.schema)
 
   if (editor.isObjectNode(node)) {
     return [node, nodePath] as any

@@ -1,9 +1,10 @@
 import type {Location} from '../interfaces'
 import type {Editor} from '../interfaces/editor'
-import {Node} from '../interfaces/node'
 import {Path as PathUtils} from '../interfaces/path'
 import {Point} from '../interfaces/point'
 import {Range} from '../interfaces/range'
+import {getFirst} from '../node/get-first'
+import {getLast} from '../node/get-last'
 import type {LeafEdge} from '../types/types'
 
 export function path(
@@ -15,10 +16,10 @@ export function path(
 
   if (PathUtils.isPath(at)) {
     if (edge === 'start') {
-      const [, firstPath] = Node.first(editor, at, editor.schema)
+      const [, firstPath] = getFirst(editor, at, editor.schema)
       at = firstPath
     } else if (edge === 'end') {
-      const [, lastPath] = Node.last(editor, at, editor.schema)
+      const [, lastPath] = getLast(editor, at, editor.schema)
       at = lastPath
     }
   }

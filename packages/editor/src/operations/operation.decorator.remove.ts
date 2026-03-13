@@ -2,7 +2,7 @@ import type {PortableTextBlock} from '@portabletext/schema'
 import {applySetNode} from '../internal-utils/apply-set-node'
 import {applySplitNode} from '../internal-utils/apply-split-node'
 import {toSlateRange} from '../internal-utils/to-slate-range'
-import {Element, Node, Range, Text} from '../slate'
+import {Element, Range, Text} from '../slate'
 import {isEdge} from '../slate/editor/is-edge'
 import {isEnd} from '../slate/editor/is-end'
 import {isStart} from '../slate/editor/is-start'
@@ -10,6 +10,7 @@ import {leaf} from '../slate/editor/leaf'
 import {node as editorNode} from '../slate/editor/node'
 import {nodes} from '../slate/editor/nodes'
 import {rangeRef} from '../slate/editor/range-ref'
+import {extractProps} from '../slate/node/extract-props'
 import type {OperationImplementation} from './operation.types'
 
 export const decoratorRemoveOperationImplementation: OperationImplementation<
@@ -53,7 +54,7 @@ export const decoratorRemoveOperationImplementation: OperationImplementation<
           editor,
           end.path,
           end.offset,
-          Node.extractProps(endNode, editor.schema),
+          extractProps(endNode, editor.schema),
         )
       }
       const startAtStartOfNode = isStart(editor, start, start.path)
@@ -63,7 +64,7 @@ export const decoratorRemoveOperationImplementation: OperationImplementation<
           editor,
           start.path,
           start.offset,
-          Node.extractProps(startNode, editor.schema),
+          extractProps(startNode, editor.schema),
         )
       }
     }

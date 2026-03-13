@@ -13,7 +13,6 @@ import scrollIntoView from 'scroll-into-view-if-needed'
 import type {EditorActor} from '../../editor/editor-machine'
 import {
   Element,
-  Node,
   Path,
   Range,
   Text,
@@ -59,6 +58,10 @@ import {isBlock} from '../../slate/editor/is-block'
 import {range as editorRange} from '../../slate/editor/range'
 import {rangeRef} from '../../slate/editor/range-ref'
 import {start as editorStart} from '../../slate/editor/start'
+import {getLeaf} from '../../slate/node/get-leaf'
+import {getNode} from '../../slate/node/get-node'
+import {getString} from '../../slate/node/get-string'
+import {getTexts} from '../../slate/node/get-texts'
 import type {AndroidInputManager} from '../hooks/android-input-manager/android-input-manager'
 import {useAndroidInputManager} from '../hooks/android-input-manager/use-android-input-manager'
 import useChildren from '../hooks/use-children'
@@ -660,7 +663,7 @@ export const Editable = forwardRef(
 
                 if (
                   block &&
-                  Node.string(block[0], editor.schema).includes('\t')
+                  getString(block[0], editor.schema).includes('\t')
                 ) {
                   native = false
                 }
@@ -993,8 +996,8 @@ export const Editable = forwardRef(
     const showPlaceholder =
       placeholder &&
       editor.children.length === 1 &&
-      Array.from(Node.texts(editor, editor.schema)).length === 1 &&
-      Node.string(editor, editor.schema) === '' &&
+      Array.from(getTexts(editor, editor.schema)).length === 1 &&
+      getString(editor, editor.schema) === '' &&
       !isComposing
 
     const placeHolderResizeHandler = useCallback(
@@ -1024,7 +1027,7 @@ export const Editable = forwardRef(
 
     if (editor.selection && Range.isCollapsed(editor.selection) && marks) {
       const {anchor} = editor.selection
-      const leaf = Node.leaf(editor, anchor.path, editor.schema)
+      const leaf = getLeaf(editor, anchor.path, editor.schema)
 
       if (Text.isText(leaf, editor.schema)) {
         const {text: _text, ...rest} = leaf
@@ -1055,7 +1058,7 @@ export const Editable = forwardRef(
         const {selection} = editor
         if (selection) {
           const {anchor} = selection
-          const text = Node.leaf(editor, anchor.path, editor.schema)
+          const text = getLeaf(editor, anchor.path, editor.schema)
 
           if (!Text.isText(text, editor.schema)) {
             return
@@ -1283,7 +1286,7 @@ export const Editable = forwardRef(
                       // and that it still refers to the same node.
                       if (
                         !hasPath(editor, path) ||
-                        Node.get(editor, path, editor.schema) !== node
+                        getNode(editor, path, editor.schema) !== node
                       ) {
                         return
                       }
@@ -1508,7 +1511,7 @@ export const Editable = forwardRef(
                           selection !== null ? selection.focus.path[0]! : 0
                         ]!
                       const isRTL =
-                        getDirection(Node.string(element, editor.schema)) ===
+                        getDirection(getString(element, editor.schema)) ===
                         'rtl'
 
                       // COMPAT: Certain browsers don't handle the selection updates
@@ -1804,7 +1807,7 @@ export const Editable = forwardRef(
                               Hotkeys.isDeleteForward(nativeEvent)) &&
                             Range.isCollapsed(selection)
                           ) {
-                            const currentNode = Node.get(
+                            const currentNode = getNode(
                               editor,
                               selection.anchor.path,
                               editor.schema,

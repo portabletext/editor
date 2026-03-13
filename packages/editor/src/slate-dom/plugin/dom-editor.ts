@@ -1,10 +1,10 @@
 import {
-  Node,
   Range,
   Scrubber,
   type Ancestor,
   type BaseEditor,
   type Editor,
+  type Node,
   type Operation,
   type Path,
   type Point,
@@ -21,6 +21,7 @@ import {point as editorPoint} from '../../slate/editor/point'
 import {range as editorRange} from '../../slate/editor/range'
 import {start as editorStart} from '../../slate/editor/start'
 import {unhangRange} from '../../slate/editor/unhang-range'
+import {getNode} from '../../slate/node/get-node'
 import type {TextDiff} from '../utils/diff-text'
 import {
   closestShadowAware,
@@ -922,7 +923,7 @@ export const DOMEditor: DOMEditorInterface = {
     if (path.length > 1) {
       const parentPath = path.slice(0, -1)
       try {
-        const parentSlateNode = Node.get(editor, parentPath, editor.schema)
+        const parentSlateNode = getNode(editor, parentPath, editor.schema)
         if (editor.isObjectNode(parentSlateNode)) {
           return {path: parentPath, offset: 0} as T extends true
             ? Point | null
