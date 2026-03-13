@@ -1,5 +1,29 @@
 # Changelog
 
+## 6.3.2
+
+### Patch Changes
+
+- [#2366](https://github.com/portabletext/editor/pull/2366) [`b245c6e`](https://github.com/portabletext/editor/commit/b245c6e3b9dea50e3eab1f475df85d68bd4d0f94) Thanks [@christianhg](https://github.com/christianhg)! - fix: simplify internal `isEditor` check
+
+- [#2366](https://github.com/portabletext/editor/pull/2366) [`dba286d`](https://github.com/portabletext/editor/commit/dba286de99fe63debc543fc354713dcf0b1fd0bf) Thanks [@christianhg](https://github.com/christianhg)! - fix: untangle internal `insertText` method
+
+- [#2366](https://github.com/portabletext/editor/pull/2366) [`6e7ef87`](https://github.com/portabletext/editor/commit/6e7ef8735a7e4ce66866cc54ef8d21f8350ef1d6) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove internal `Transforms` interface
+
+- [#2366](https://github.com/portabletext/editor/pull/2366) [`75dcbad`](https://github.com/portabletext/editor/commit/75dcbad57e7a220a9d8c0cb4d1581037a7134bab) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove unused internal `delete` editor method
+
+- [#2366](https://github.com/portabletext/editor/pull/2366) [`d5d8fc9`](https://github.com/portabletext/editor/commit/d5d8fc98ad4b8482e6724644bdfe4dcac2f71d5c) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove unused internal `getFragment` method
+
+- [#2370](https://github.com/portabletext/editor/pull/2370) [`a02e017`](https://github.com/portabletext/editor/commit/a02e017bf09a071caceea4648deee9becb311408) Thanks [@christianhg](https://github.com/christianhg)! - fix: untangle internal `Node` interface
+
+- [#2366](https://github.com/portabletext/editor/pull/2366) [`d4068ce`](https://github.com/portabletext/editor/commit/d4068ceb273aec29a789c76d8706ce8e00ad9138) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove unused internal `insertBreak` method
+
+- [#2366](https://github.com/portabletext/editor/pull/2366) [`b89f7f2`](https://github.com/portabletext/editor/commit/b89f7f2b35893004afd77ceb27de4def9a8279ef) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove unused internal node interface wiring
+
+- [#2366](https://github.com/portabletext/editor/pull/2366) [`a657b0d`](https://github.com/portabletext/editor/commit/a657b0d6c1061f13ec9c8c6229ff10201dc525a5) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove unused internal `insert(Text)Data` methods
+
+- [#2366](https://github.com/portabletext/editor/pull/2366) [`e6b2825`](https://github.com/portabletext/editor/commit/e6b28255d13404ace2ea12193d432f9a7da96748) Thanks [@christianhg](https://github.com/christianhg)! - fix: untangle internal editor methods
+
 ## 6.3.1
 
 ### Patch Changes
