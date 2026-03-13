@@ -3,11 +3,11 @@ import {
   slatePointToSelectionPoint,
   slateRangeToSelection,
 } from '../internal-utils/slate-utils'
-import {Editor, Point, Range, type Node} from '../slate'
+import {Editor, Point, Range} from '../slate'
 
 export function createBehaviorApiPlugin(editorActor: EditorActor) {
   return function behaviorApiPlugin(editor: Editor) {
-    const {delete: editorDelete, insertNodes, select, setSelection} = editor
+    const {delete: editorDelete, select, setSelection} = editor
 
     editor.delete = (options) => {
       if (editor.isNormalizingNode || editor.isPerformingBehaviorOperation) {
@@ -80,33 +80,6 @@ export function createBehaviorApiPlugin(editorActor: EditorActor) {
         },
         editor,
       })
-    }
-
-    editor.insertNodes = (nodes, options) => {
-      if (editor.isNormalizingNode) {
-        const normalizedNodes = (!Array.isArray(nodes) ? [nodes] : nodes).map(
-          (node) => {
-            if (!('text' in node) || typeof node.text !== 'string') {
-              return node
-            }
-
-            if (typeof node._type !== 'string') {
-              return {
-                ...(node as Node),
-                _type: editorActor.getSnapshot().context.schema.span.name,
-              }
-            }
-
-            return node
-          },
-        ) as Array<Node>
-
-        insertNodes(normalizedNodes, options)
-
-        return
-      }
-
-      insertNodes(nodes, options)
     }
 
     editor.insertText = (text) => {
