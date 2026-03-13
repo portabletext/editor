@@ -10,22 +10,6 @@ export function createBehaviorApiPlugin(editorActor: EditorActor) {
   return function behaviorApiPlugin(editor: Editor) {
     const {select, setSelection} = editor
 
-    editor.redo = () => {
-      if (editor.isNormalizingNode || editor.isPerformingBehaviorOperation) {
-        console.error('Unexpected call to .redo(...)')
-        return
-      }
-
-      editorActor.send({
-        type: 'behavior event',
-        behaviorEvent: {
-          type: 'history.redo',
-        },
-        editor,
-      })
-      return
-    }
-
     editor.select = (location) => {
       if (editor.isNormalizingNode || editor.isPerformingBehaviorOperation) {
         select(location)
@@ -120,22 +104,6 @@ export function createBehaviorApiPlugin(editorActor: EditorActor) {
             focus,
             backward,
           },
-        },
-        editor,
-      })
-      return
-    }
-
-    editor.undo = () => {
-      if (editor.isNormalizingNode || editor.isPerformingBehaviorOperation) {
-        console.error('Unexpected call to .undo(...)')
-        return
-      }
-
-      editorActor.send({
-        type: 'behavior event',
-        behaviorEvent: {
-          type: 'history.undo',
         },
         editor,
       })
