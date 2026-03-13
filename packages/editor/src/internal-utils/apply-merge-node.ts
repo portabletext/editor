@@ -1,13 +1,6 @@
-import {
-  Element,
-  Node as NodeUtils,
-  Path,
-  Range,
-  Text,
-  type Node,
-  type Point,
-} from '../slate'
+import {Element, Path, Range, Text, type Node, type Point} from '../slate'
 import {withoutNormalizing} from '../slate/editor/without-normalizing'
+import {getNode} from '../slate/node/get-node'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 
 /**
@@ -27,7 +20,7 @@ export function applyMergeNode(
   path: Path,
   position: number,
 ): void {
-  const node = NodeUtils.get(editor, path, editor.schema)
+  const node = getNode(editor, path, editor.schema)
   const prevPath = Path.previous(path)
 
   // Pre-transform all refs with merge semantics

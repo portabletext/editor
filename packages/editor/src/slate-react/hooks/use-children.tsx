@@ -1,7 +1,6 @@
 import {useCallback, useRef, type JSX} from 'react'
 import {
   Element,
-  Node,
   Text,
   type Ancestor,
   type DecoratedRange,
@@ -14,6 +13,7 @@ import {
   type Key,
 } from '../../slate-dom'
 import {isEditor} from '../../slate/editor/is-editor'
+import {isObjectNode} from '../../slate/node/is-object-node'
 import type {
   RenderElementProps,
   RenderLeafProps,
@@ -123,7 +123,7 @@ const useChildren = (props: {
     if (Element.isElement(n, editor.schema)) {
       return renderElementComponent(n, i)
     }
-    if (Node.isObjectNode(n, editor.schema)) {
+    if (isObjectNode(n, editor.schema)) {
       return renderObjectNodeComponent(n, i)
     }
     if (Text.isText(n, editor.schema)) {

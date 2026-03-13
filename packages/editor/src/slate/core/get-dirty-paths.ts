@@ -1,7 +1,7 @@
 import type {Editor} from '../interfaces/editor'
-import {Node} from '../interfaces/node'
 import {Path} from '../interfaces/path'
 import {Text} from '../interfaces/text'
+import {getNodes} from '../node/get-nodes'
 import type {WithEditorFirstArg} from '../utils/types'
 
 /**
@@ -24,9 +24,7 @@ export const getDirtyPaths: WithEditorFirstArg<Editor['getDirtyPaths']> = (
       const levels = Path.levels(path)
       const descendants = Text.isText(node, _editor.schema)
         ? []
-        : Array.from(Node.nodes(node, _editor.schema), ([, p]) =>
-            path.concat(p),
-          )
+        : Array.from(getNodes(node, _editor.schema), ([, p]) => path.concat(p))
 
       return [...levels, ...descendants]
     }

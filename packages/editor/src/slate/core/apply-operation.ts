@@ -1,15 +1,16 @@
 import {
-  Node,
   Path,
   Point,
   Range,
   Scrubber,
   type Editor,
+  type Node,
   type NodeEntry,
   type Operation,
   type Selection,
   type Text,
 } from '../index'
+import {getTexts} from '../node/get-texts'
 import {
   insertChildren,
   modifyChildren,
@@ -83,7 +84,7 @@ export function applyOperation(editor: Editor, op: Operation): void {
             let prev: NodeEntry<Text> | undefined
             let next: NodeEntry<Text> | undefined
 
-            for (const [n, p] of Node.texts(editor, editor.schema)) {
+            for (const [n, p] of getTexts(editor, editor.schema)) {
               if (Path.compare(p, path) === -1) {
                 prev = [n, p]
               } else {

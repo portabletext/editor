@@ -6,10 +6,11 @@ import {applySetNode} from '../internal-utils/apply-set-node'
 import {createPlaceholderBlock} from '../internal-utils/create-placeholder-block'
 import {debug} from '../internal-utils/debug'
 import {isEqualMarkDefs} from '../internal-utils/equality'
-import {Node, Path, Range, Text} from '../slate'
+import {Path, Range, Text} from '../slate'
 import {isEditor} from '../slate/editor/is-editor'
 import {node as editorNode} from '../slate/editor/node'
 import {nodes} from '../slate/editor/nodes'
+import {getChildren} from '../slate/node/get-children'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {withNormalizeNode} from './slate-plugin.normalize-node'
 import {withoutPatching} from './slate-plugin.without-patching'
@@ -45,7 +46,7 @@ export function createNormalizationPlugin(
        * Merge spans with same set of .marks
        */
       if (editor.isTextBlock(node)) {
-        const children = Node.children(editor, path, editor.schema)
+        const children = getChildren(editor, path, editor.schema)
 
         for (const [child, childPath] of children) {
           const nextNode = node.children[childPath[1]! + 1]
@@ -144,7 +145,7 @@ export function createNormalizationPlugin(
           .getSnapshot()
           .context.schema.decorators.map((decorator) => decorator.name)
 
-        for (const [child, childPath] of Node.children(
+        for (const [child, childPath] of getChildren(
           editor,
           path,
           editor.schema,

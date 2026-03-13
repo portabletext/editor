@@ -3,13 +3,14 @@ import {applySelect} from '../internal-utils/apply-selection'
 import {applySetNode} from '../internal-utils/apply-set-node'
 import {applySplitNode} from '../internal-utils/apply-split-node'
 import {toSlateRange} from '../internal-utils/to-slate-range'
-import {Node, Range, Text} from '../slate'
+import {Range, Text} from '../slate'
 import {isEdge} from '../slate/editor/is-edge'
 import {isEnd} from '../slate/editor/is-end'
 import {isStart} from '../slate/editor/is-start'
 import {node as editorNode} from '../slate/editor/node'
 import {nodes} from '../slate/editor/nodes'
 import {rangeRef} from '../slate/editor/range-ref'
+import {extractProps} from '../slate/node/extract-props'
 import type {OperationImplementation} from './operation.types'
 
 export const decoratorAddOperationImplementation: OperationImplementation<
@@ -46,7 +47,7 @@ export const decoratorAddOperationImplementation: OperationImplementation<
         editor,
         end.path,
         end.offset,
-        Node.extractProps(endNode, editor.schema),
+        extractProps(endNode, editor.schema),
       )
     }
 
@@ -58,7 +59,7 @@ export const decoratorAddOperationImplementation: OperationImplementation<
         editor,
         start.path,
         start.offset,
-        Node.extractProps(startNode, editor.schema),
+        extractProps(startNode, editor.schema),
       )
     }
 

@@ -1,4 +1,5 @@
-import {Element, Node, type Path} from '../slate'
+import {Element, type Path} from '../slate'
+import {getNode} from '../slate/node/get-node'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 
 /**
@@ -16,7 +17,7 @@ export function applySetNode(
   props: Record<string, unknown> | object,
   path: Path,
 ): void {
-  const node = Node.get(editor, path, editor.schema) as Record<string, unknown>
+  const node = getNode(editor, path, editor.schema) as Record<string, unknown>
   const propsRecord = props as Record<string, unknown>
   const properties: Record<string, unknown> = {}
   const newProperties: Record<string, unknown> = {}

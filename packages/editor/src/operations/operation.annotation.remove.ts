@@ -3,7 +3,7 @@ import {applySelect} from '../internal-utils/apply-selection'
 import {applySetNode} from '../internal-utils/apply-set-node'
 import {applySplitNode} from '../internal-utils/apply-split-node'
 import {toSlateRange} from '../internal-utils/to-slate-range'
-import {Node, Path, Range, Text} from '../slate'
+import {Path, Range, Text} from '../slate'
 import {isEdge} from '../slate/editor/is-edge'
 import {isEnd} from '../slate/editor/is-end'
 import {isStart} from '../slate/editor/is-start'
@@ -11,6 +11,8 @@ import {leaf} from '../slate/editor/leaf'
 import {node as editorNode} from '../slate/editor/node'
 import {nodes} from '../slate/editor/nodes'
 import {rangeRef} from '../slate/editor/range-ref'
+import {extractProps} from '../slate/node/extract-props'
+import {getChildren} from '../slate/node/get-children'
 import type {OperationImplementation} from './operation.types'
 
 export const removeAnnotationOperationImplementation: OperationImplementation<
@@ -73,7 +75,7 @@ export const removeAnnotationOperationImplementation: OperationImplementation<
       [span: PortableTextSpan, path: Path]
     > = []
 
-    for (const [child, childPath] of Node.children(
+    for (const [child, childPath] of getChildren(
       editor,
       blockPath,
       editor.schema,
@@ -100,7 +102,7 @@ export const removeAnnotationOperationImplementation: OperationImplementation<
       [span: PortableTextSpan, path: Path]
     > = []
 
-    for (const [child, childPath] of Node.children(
+    for (const [child, childPath] of getChildren(
       editor,
       blockPath,
       editor.schema,
@@ -159,7 +161,7 @@ export const removeAnnotationOperationImplementation: OperationImplementation<
             editor,
             splitEnd.path,
             splitEnd.offset,
-            Node.extractProps(endNode, editor.schema),
+            extractProps(endNode, editor.schema),
           )
         }
         const startAtStart = isStart(editor, splitStart, splitStart.path)
@@ -169,7 +171,7 @@ export const removeAnnotationOperationImplementation: OperationImplementation<
             editor,
             splitStart.path,
             splitStart.offset,
-            Node.extractProps(startNode, editor.schema),
+            extractProps(startNode, editor.schema),
           )
         }
         // Update selection if using editor.selection (not explicit `at`)
@@ -189,7 +191,7 @@ export const removeAnnotationOperationImplementation: OperationImplementation<
     const selectionRange = ref?.current ?? editor.selection
 
     for (const [block, blockPath] of blocks) {
-      const children = Node.children(editor, blockPath, editor.schema)
+      const children = getChildren(editor, blockPath, editor.schema)
 
       for (const [child, childPath] of children) {
         if (!editor.isTextSpan(child)) {

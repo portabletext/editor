@@ -24,7 +24,7 @@ import {
 import {safeStringify} from '../internal-utils/safe-json'
 import {validateValue} from '../internal-utils/validateValue'
 import {toSlateBlock} from '../internal-utils/values'
-import {Node, Text, type Descendant} from '../slate'
+import {Text, type Descendant, type Node} from '../slate'
 import {withRemoteChanges} from '../slate-plugins/slate-plugin.remote-changes'
 import {pluginWithoutHistory} from '../slate-plugins/slate-plugin.without-history'
 import {withoutPatching} from '../slate-plugins/slate-plugin.without-patching'
@@ -32,6 +32,7 @@ import {deleteText} from '../slate/core/delete-text'
 import {node as editorNode} from '../slate/editor/node'
 import {start} from '../slate/editor/start'
 import {withoutNormalizing} from '../slate/editor/without-normalizing'
+import {hasNode} from '../slate/node/has-node'
 import type {PickFromUnion} from '../type-utils'
 import type {InvalidValueResolution} from '../types/editor'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
@@ -868,8 +869,8 @@ function replaceBlock({
 
   if (
     selectionFocusOnBlock &&
-    Node.has(slateEditor, currentSelection.anchor.path, slateEditor.schema) &&
-    Node.has(slateEditor, currentSelection.focus.path, slateEditor.schema)
+    hasNode(slateEditor, currentSelection.anchor.path, slateEditor.schema) &&
+    hasNode(slateEditor, currentSelection.focus.path, slateEditor.schema)
   ) {
     applySelect(slateEditor, currentSelection)
   }

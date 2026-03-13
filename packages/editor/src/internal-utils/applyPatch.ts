@@ -19,10 +19,11 @@ import {
 } from '@sanity/diff-match-patch'
 import type {EditorSchema} from '../editor/editor-schema'
 import type {EditorContext} from '../editor/editor-snapshot'
-import {Element, Node, Text, type Descendant} from '../slate'
+import {Element, Text, type Descendant} from '../slate'
 import {node as editorNode} from '../slate/editor/node'
 import {nodes as editorNodes} from '../slate/editor/nodes'
 import {pathRef} from '../slate/editor/path-ref'
+import {getChildren} from '../slate/node/get-children'
 import type {Path} from '../types/paths'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
@@ -420,7 +421,7 @@ function unsetPatch(editor: PortableTextSlateEditor, patch: UnsetPatch) {
   if (patch.path.length === 0) {
     applyDeselect(editor)
 
-    const children = Node.children(editor, [], editor.schema, {
+    const children = getChildren(editor, [], editor.schema, {
       reverse: true,
     })
 

@@ -1,12 +1,12 @@
 import React, {useCallback, useEffect, useState} from 'react'
 import {
-  Node,
   Scrubber,
   type Descendant,
   type Editor,
   type Selection,
 } from '../../slate'
 import {isEditor} from '../../slate/editor/is-editor'
+import {isNodeList} from '../../slate/node/is-node-list'
 import {FocusedContext} from '../hooks/use-focused'
 import {useIsomorphicLayoutEffect} from '../hooks/use-isomorphic-layout-effect'
 import {
@@ -42,7 +42,7 @@ export const Slate = (props: {
 
   // Run once on first mount, but before `useEffect` or render
   React.useState(() => {
-    if (!Node.isNodeList(initialValue, editor.schema)) {
+    if (!isNodeList(initialValue, editor.schema)) {
       throw new Error(
         `[Slate] initialValue is invalid! Expected a list of elements but got: ${Scrubber.stringify(
           initialValue,

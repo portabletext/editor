@@ -1,6 +1,5 @@
 import {
   Element,
-  Node,
   Path,
   Point,
   Range,
@@ -12,6 +11,7 @@ import {above} from '../../slate/editor/above'
 import {hasPath} from '../../slate/editor/has-path'
 import {isBlock} from '../../slate/editor/is-block'
 import {next as editorNext} from '../../slate/editor/next'
+import {getNode} from '../../slate/node/get-node'
 
 export type StringDiff = {
   start: number
@@ -35,7 +35,7 @@ export function verifyDiffState(editor: Editor, textDiff: TextDiff): boolean {
     return false
   }
 
-  const node = Node.get(editor, path, editor.schema)
+  const node = getNode(editor, path, editor.schema)
   if (!Text.isText(node, editor.schema)) {
     return false
   }
@@ -51,7 +51,7 @@ export function verifyDiffState(editor: Editor, textDiff: TextDiff): boolean {
     return false
   }
 
-  const nextNode = Node.get(editor, nextPath, editor.schema)
+  const nextNode = getNode(editor, nextPath, editor.schema)
   return (
     Text.isText(nextNode, editor.schema) && nextNode.text.startsWith(diff.text)
   )
@@ -174,7 +174,7 @@ export function normalizePoint(editor: Editor, point: Point): Point | null {
     return null
   }
 
-  let leaf = Node.get(editor, path, editor.schema)
+  let leaf = getNode(editor, path, editor.schema)
   if (!Text.isText(leaf, editor.schema)) {
     return null
   }

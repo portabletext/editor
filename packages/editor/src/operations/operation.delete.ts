@@ -4,7 +4,6 @@ import {toSlateRange} from '../internal-utils/to-slate-range'
 import {
   Editor,
   Element,
-  Node,
   Path,
   Point,
   Range,
@@ -25,6 +24,7 @@ import {pointRef} from '../slate/editor/point-ref'
 import {positions as editorPositions} from '../slate/editor/positions'
 import {range as editorRange} from '../slate/editor/range'
 import {start as editorStart} from '../slate/editor/start'
+import {getNode} from '../slate/node/get-node'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import type {OperationImplementation} from './operation.types'
 
@@ -148,7 +148,7 @@ export const deleteOperationImplementation: OperationImplementation<
 
   if (Range.isCollapsed(at) && start.path.length >= 2) {
     try {
-      const node = Node.get(
+      const node = getNode(
         operation.editor,
         start.path,
         operation.editor.schema,
@@ -171,7 +171,7 @@ export const deleteOperationImplementation: OperationImplementation<
   const startNodeEntry: NodeEntry | undefined = (() => {
     const blockIndex = start.path.at(0)
     if (blockIndex !== undefined) {
-      const node = Node.get(
+      const node = getNode(
         operation.editor,
         [blockIndex],
         operation.editor.schema,
@@ -185,7 +185,7 @@ export const deleteOperationImplementation: OperationImplementation<
   const endNodeEntry: NodeEntry | undefined = (() => {
     const blockIndex = end.path.at(0)
     if (blockIndex !== undefined) {
-      const node = Node.get(
+      const node = getNode(
         operation.editor,
         [blockIndex],
         operation.editor.schema,
@@ -274,7 +274,7 @@ export const deleteOperationImplementation: OperationImplementation<
   if (endToEndSelection && isAcrossBlocks) {
     if (!startNonEditable) {
       const point = startRef.current!
-      const node = Node.get(
+      const node = getNode(
         operation.editor,
         point.path,
         operation.editor.schema,
@@ -301,7 +301,7 @@ export const deleteOperationImplementation: OperationImplementation<
 
     if (!endNonEditable) {
       const point = endRef.current!
-      const node = Node.get(
+      const node = getNode(
         operation.editor,
         point.path,
         operation.editor.schema,

@@ -3,9 +3,10 @@ import {isTextBlock} from '@portabletext/schema'
 import type {EditorActor} from '../editor/editor-machine'
 import type {EditorContext, EditorSnapshot} from '../editor/editor-snapshot'
 import {applySetNode} from '../internal-utils/apply-set-node'
-import {Element, Node, type Path} from '../slate'
+import {Element, type Path} from '../slate'
 import {isEditor} from '../slate/editor/is-editor'
 import {parent as editorParent} from '../slate/editor/parent'
+import {getChildren} from '../slate/node/get-children'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {withNormalizeNode} from './slate-plugin.normalize-node'
 
@@ -137,7 +138,7 @@ export function createUniqueKeysPlugin(editorActor: EditorActor) {
         // Set unique keys on it's children
         const childKeys = new Set<string>()
 
-        for (const [child, childPath] of Node.children(
+        for (const [child, childPath] of getChildren(
           editor,
           path,
           editor.schema,

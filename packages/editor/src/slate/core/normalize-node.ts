@@ -2,9 +2,10 @@ import {applyMergeNode} from '../../internal-utils/apply-merge-node'
 import type {PortableTextSlateEditor} from '../../types/slate-editor'
 import type {Editor} from '../interfaces/editor'
 import {Element} from '../interfaces/element'
-import {Node, type Ancestor, type Descendant} from '../interfaces/node'
+import type {Ancestor, Descendant, Node} from '../interfaces/node'
 import type {Path} from '../interfaces/path'
 import {Text} from '../interfaces/text'
+import {getNode} from '../node/get-node'
 import type {WithEditorFirstArg} from '../utils/types'
 import {insertNodes} from './insert-nodes'
 import {removeNodes} from './remove-nodes'
@@ -44,7 +45,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   if (element !== editor && element.children.length === 0) {
     const child = editor.createSpan()
     insertNodes(editor, child, {at: path.concat(0), voids: true})
-    element = Node.get(editor, path, editor.schema) as Element
+    element = getNode(editor, path, editor.schema) as Element
   }
 
   // Determine whether the node should have only block or only inline children.
@@ -77,14 +78,14 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
               at: path.concat(n),
               voids: true,
             })
-            element = Node.get(editor, path, editor.schema) as Element
+            element = getNode(editor, path, editor.schema) as Element
             n--
           } else if (prev.text === '') {
             removeNodes(editor, {
               at: path.concat(n - 1),
               voids: true,
             })
-            element = Node.get(editor, path, editor.schema) as Element
+            element = getNode(editor, path, editor.schema) as Element
             n--
           } else if (Text.equals(child, prev, {loose: true})) {
             const mergePath = path.concat(n)
@@ -93,7 +94,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
               mergePath,
               prev.text.length,
             )
-            element = Node.get(editor, path, editor.schema) as Element
+            element = getNode(editor, path, editor.schema) as Element
             n--
           }
         }
@@ -106,7 +107,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
               at: path.concat(n),
               voids: true,
             })
-            element = Node.get(editor, path, editor.schema) as Element
+            element = getNode(editor, path, editor.schema) as Element
             n++
           }
           if (n === element.children.length - 1) {
@@ -115,13 +116,13 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
               at: path.concat(n + 1),
               voids: true,
             })
-            element = Node.get(editor, path, editor.schema) as Element
+            element = getNode(editor, path, editor.schema) as Element
             n++
           }
         } else {
           // An Element cannot appear inline in another Element
           removeNodes(editor, {at: path.concat(n), voids: true})
-          element = Node.get(editor, path, editor.schema) as Element
+          element = getNode(editor, path, editor.schema) as Element
           n--
         }
       } else if (editor.isObjectNode(child)) {
@@ -131,7 +132,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
             at: path.concat(n),
             voids: true,
           })
-          element = Node.get(editor, path, editor.schema) as Element
+          element = getNode(editor, path, editor.schema) as Element
           n++
         }
         if (n === element.children.length - 1) {
@@ -140,7 +141,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
             at: path.concat(n + 1),
             voids: true,
           })
-          element = Node.get(editor, path, editor.schema) as Element
+          element = getNode(editor, path, editor.schema) as Element
           n++
         }
       }
@@ -158,7 +159,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
         (Element.isElement(child, editor.schema) && editor.isInline(child))
       ) {
         removeNodes(editor, {at: path.concat(n), voids: true})
-        element = Node.get(editor, path, editor.schema) as Ancestor
+        element = getNode(editor, path, editor.schema) as Ancestor
         n--
       }
     }

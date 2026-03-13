@@ -2,9 +2,9 @@ import type {PortableTextBlock, PortableTextSpan} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
 import {
   Element,
-  Node,
   Range,
   type Editor,
+  type Node,
   type Point,
   type Path as SlatePath,
 } from '../slate'
@@ -13,6 +13,7 @@ import {isEditor} from '../slate/editor/is-editor'
 import {node as editorNode} from '../slate/editor/node'
 import {nodes as editorNodes} from '../slate/editor/nodes'
 import {start} from '../slate/editor/start'
+import {getChild} from '../slate/node/get-child'
 import type {EditorSelection, EditorSelectionPoint} from '../types/editor'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 
@@ -175,7 +176,7 @@ export function getFocusChild({
   }
 
   try {
-    const focusChild = Node.child(focusBlock, childIndex, editor.schema)
+    const focusChild = getChild(focusBlock, childIndex, editor.schema)
 
     return focusChild
       ? [focusChild, [...focusBlockPath, childIndex]]
@@ -200,7 +201,7 @@ function getPointChild({
   }
 
   try {
-    const pointChild = Node.child(block, childIndex, editor.schema)
+    const pointChild = getChild(block, childIndex, editor.schema)
 
     return pointChild
       ? [pointChild, [...blockPath, childIndex]]

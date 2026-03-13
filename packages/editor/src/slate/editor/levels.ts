@@ -1,6 +1,7 @@
 import type {Location} from '../interfaces'
 import type {Editor, NodeMatch} from '../interfaces/editor'
-import {Node, type NodeEntry} from '../interfaces/node'
+import type {Node, NodeEntry} from '../interfaces/node'
+import {getLevels} from '../node/get-levels'
 import {path} from './path'
 
 export function* levels<T extends Node>(
@@ -26,7 +27,7 @@ export function* levels<T extends Node>(
   const levels: NodeEntry<T>[] = []
   const fromPath = path(editor, at)
 
-  for (const [n, p] of Node.levels(editor, fromPath, editor.schema)) {
+  for (const [n, p] of getLevels(editor, fromPath, editor.schema)) {
     if (!match(n, p)) {
       continue
     }

@@ -1,8 +1,9 @@
 import {applySelect} from '../internal-utils/apply-selection'
-import {Node, Path, Range, Text} from '../slate'
+import {Path, Range, Text} from '../slate'
 import {elementReadOnly} from '../slate/editor/element-read-only'
 import {getVoid} from '../slate/editor/get-void'
 import {hasPath} from '../slate/editor/has-path'
+import {getNode} from '../slate/node/get-node'
 import type {OperationImplementation} from './operation.types'
 
 export const insertTextOperationImplementation: OperationImplementation<
@@ -17,14 +18,14 @@ export const insertTextOperationImplementation: OperationImplementation<
 
   let {path, offset} = selection.anchor
 
-  const node = Node.get(editor, path, editor.schema)
+  const node = getNode(editor, path, editor.schema)
 
   // If the selection is at an ObjectNode, move to the adjacent span.
   if (editor.isObjectNode(node)) {
     const nextPath = Path.next(path)
 
     if (hasPath(editor, nextPath)) {
-      const nextNode = Node.get(editor, nextPath, editor.schema)
+      const nextNode = getNode(editor, nextPath, editor.schema)
 
       if (Text.isText(nextNode, editor.schema)) {
         path = nextPath

@@ -1,7 +1,8 @@
 import type {Operation, Path} from '../interfaces'
 import type {Editor} from '../interfaces/editor'
 import {Element} from '../interfaces/element'
-import {Node} from '../interfaces/node'
+import {getNodes} from '../node/get-nodes'
+import {hasNode} from '../node/has-node'
 import {isNormalizing} from './is-normalizing'
 import {node} from './node'
 import {withoutNormalizing} from './without-normalizing'
@@ -31,7 +32,7 @@ export function normalize(
   }
 
   if (force) {
-    const allPaths = Array.from(Node.nodes(editor, editor.schema), ([, p]) => p)
+    const allPaths = Array.from(getNodes(editor, editor.schema), ([, p]) => p)
     const allPathKeys = new Set(allPaths.map((p) => p.join(',')))
     editor.dirtyPaths = allPaths
     editor.dirtyPathKeys = allPathKeys
@@ -48,7 +49,7 @@ export function normalize(
       Running an initial pass avoids the catch-22 race condition.
     */
     for (const dirtyPath of getDirtyPaths(editor)) {
-      if (Node.has(editor, dirtyPath, editor.schema)) {
+      if (hasNode(editor, dirtyPath, editor.schema)) {
         const entry = node(editor, dirtyPath)
         const [entryNode, _] = entry
 
@@ -87,7 +88,7 @@ export function normalize(
       const dirtyPath = popDirtyPath(editor)
 
       // If the node doesn't exist in the tree, it does not need to be normalized.
-      if (Node.has(editor, dirtyPath, editor.schema)) {
+      if (hasNode(editor, dirtyPath, editor.schema)) {
         const entry = node(editor, dirtyPath)
         editor.normalizeNode(entry, {operation})
       }

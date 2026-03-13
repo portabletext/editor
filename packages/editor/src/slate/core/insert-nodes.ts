@@ -14,12 +14,15 @@ import {withoutNormalizing} from '../editor/without-normalizing'
 import type {BaseInsertNodeOperation, Location} from '../interfaces'
 import {Editor, type NodeMatch} from '../interfaces/editor'
 import {Element} from '../interfaces/element'
-import {Node} from '../interfaces/node'
+import type {Node} from '../interfaces/node'
 import {Path} from '../interfaces/path'
 import {Point} from '../interfaces/point'
 import type {PointRef} from '../interfaces/point-ref'
 import {Range} from '../interfaces/range'
 import {Text} from '../interfaces/text'
+import {extractProps} from '../node/extract-props'
+import {getNodes} from '../node/get-nodes'
+import {isNode} from '../node/is-node'
 import type {RangeMode} from '../types/types'
 import {getDefaultInsertLocation} from '../utils'
 import {batchDirtyPaths} from './batch-dirty-paths'
@@ -50,7 +53,7 @@ export function insertNodes<T extends Node>(
     } = options
     let {at, match, select} = options
 
-    if (Node.isNode(nodes, editor.schema)) {
+    if (isNode(nodes, editor.schema)) {
       nodes = [nodes]
     }
 
@@ -151,7 +154,7 @@ export function insertNodes<T extends Node>(
 
                 if (!isEdge(editor, point, nodePath)) {
                   split = true
-                  const properties = Node.extractProps(node, editor.schema)
+                  const properties = extractProps(node, editor.schema)
                   applySplitNode(
                     editor as unknown as PortableTextSlateEditor,
                     nodePath,
@@ -210,7 +213,7 @@ export function insertNodes<T extends Node>(
               newDirtyPaths.push(path)
             } else {
               newDirtyPaths.push(
-                ...Array.from(Node.nodes(node, editor.schema), ([, p]) =>
+                ...Array.from(getNodes(node, editor.schema), ([, p]) =>
                   path.concat(p),
                 ),
               )

@@ -2,9 +2,10 @@ import type {Location, Span} from '../interfaces'
 import {Editor, type NodeMatch} from '../interfaces/editor'
 import {Element} from '../interfaces/element'
 import {Span as SpanUtils} from '../interfaces/location'
-import {Node, type NodeEntry} from '../interfaces/node'
+import type {Node, NodeEntry} from '../interfaces/node'
 import {Path} from '../interfaces/path'
 import {Text} from '../interfaces/text'
+import {getNodes} from '../node/get-nodes'
 import type {SelectionMode} from '../types/types'
 import {path} from './path'
 
@@ -51,7 +52,7 @@ export function* nodes<T extends Node>(
     to = reverse ? first : last
   }
 
-  const nodeEntries = Node.nodes(editor, editor.schema, {
+  const nodeEntries = getNodes(editor, editor.schema, {
     reverse,
     from,
     to,
