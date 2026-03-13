@@ -482,8 +482,13 @@ export function createEditableAPI(
       return !!editor.selection && Range.isExpanded(editor.selection)
     },
     insertBreak: () => {
-      editor.insertBreak()
-      editor.onChange()
+      editorActor.send({
+        type: 'behavior event',
+        behaviorEvent: {
+          type: 'insert.break',
+        },
+        editor,
+      })
     },
     getFragment: () => {
       const snapshot = getEditorSnapshot({

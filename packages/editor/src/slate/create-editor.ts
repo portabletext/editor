@@ -58,7 +58,6 @@ export const createEditor = (context: {
 
     // Overrideable commands
     delete: (...args: any[]) => (deleteText as any)(e, ...args),
-    insertBreak: () => {},
     insertText: () => {},
     select: (...args: any[]) => (select as any)(e, ...args),
     setSelection: (...args: any[]) => (setSelection as any)(e, ...args),

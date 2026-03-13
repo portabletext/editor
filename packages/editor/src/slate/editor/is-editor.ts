@@ -12,7 +12,6 @@ export const isEditor: EditorInterface['isEditor'] = (
 
   const isEditor =
     typeof value.apply === 'function' &&
-    typeof value.insertBreak === 'function' &&
     typeof value.insertText === 'function' &&
     typeof value.isElementReadOnly === 'function' &&
     typeof value.isInline === 'function' &&

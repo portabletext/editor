@@ -49,22 +49,6 @@ export function createBehaviorApiPlugin(editorActor: EditorActor) {
       }
     }
 
-    editor.insertBreak = () => {
-      if (editor.isNormalizingNode || editor.isPerformingBehaviorOperation) {
-        console.error('Unexpected call to .insertBreak(...)')
-        return
-      }
-
-      editorActor.send({
-        type: 'behavior event',
-        behaviorEvent: {
-          type: 'insert.break',
-        },
-        editor,
-      })
-      return
-    }
-
     editor.insertText = (text) => {
       if (editor.isNormalizingNode || editor.isPerformingBehaviorOperation) {
         console.error('Unexpected call to .insertText(...)')
