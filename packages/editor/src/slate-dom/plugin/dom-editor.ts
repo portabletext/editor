@@ -57,8 +57,6 @@ export interface DOMEditor extends BaseEditor {
   hasRange: (editor: Editor, range: Range) => boolean
   hasSelectableTarget: (editor: Editor, target: EventTarget | null) => boolean
   hasTarget: (editor: Editor, target: EventTarget | null) => target is DOMNode
-  insertData: (data: DataTransfer) => void
-  insertTextData: (data: DataTransfer) => boolean
   isTargetInsideNonReadonlyVoid: (
     editor: Editor,
     target: EventTarget | null,

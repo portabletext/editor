@@ -65,24 +65,6 @@ export function createBehaviorApiPlugin(editorActor: EditorActor) {
       return
     }
 
-    editor.insertData = (dataTransfer) => {
-      if (editor.isNormalizingNode || editor.isPerformingBehaviorOperation) {
-        console.error('Unexpected call to .insertData(...)')
-        return
-      }
-
-      editorActor.send({
-        type: 'behavior event',
-        behaviorEvent: {
-          type: 'input.*',
-          originEvent: {
-            dataTransfer,
-          },
-        },
-        editor,
-      })
-    }
-
     editor.insertText = (text) => {
       if (editor.isNormalizingNode || editor.isPerformingBehaviorOperation) {
         console.error('Unexpected call to .insertText(...)')
