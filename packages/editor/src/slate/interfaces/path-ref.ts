@@ -1,4 +1,5 @@
-import {Path, type Operation} from '..'
+import type {Operation, Path} from '..'
+import {transformPath} from '../path/transform-path'
 
 /**
  * `PathRef` objects keep a specific path in a document synced over time as new
@@ -13,9 +14,6 @@ export interface PathRef {
 }
 
 export interface PathRefInterface {
-  /**
-   * Transform the path ref's current value by an operation.
-   */
   transform: (ref: PathRef, op: Operation) => void
 }
 
@@ -28,7 +26,7 @@ export const PathRef: PathRefInterface = {
       return
     }
 
-    const path = Path.transform(current, op)
+    const path = transformPath(current, op)
     ref.current = path
 
     if (path == null) {

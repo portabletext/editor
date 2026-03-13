@@ -1,7 +1,8 @@
 import type {Ancestor, Location, NodeEntry} from '../interfaces'
 import type {Editor, NodeMatch} from '../interfaces/editor'
-import {Path} from '../interfaces/path'
-import {Range} from '../interfaces/range'
+import {parentPath} from '../path/parent-path'
+import {pathEquals} from '../path/path-equals'
+import {isRange} from '../range/is-range'
 import type {MaximizeMode} from '../types/types'
 import {levels} from './levels'
 import {path} from './path'
@@ -25,11 +26,11 @@ export function above<T extends Ancestor>(
 
   // If `at` is a Range that spans mulitple nodes, `path` will be their common ancestor.
   // Otherwise `path` will be a text node and/or the same as `at`, in which cases we want to start with its parent.
-  if (!Range.isRange(at) || Path.equals(at.focus.path, at.anchor.path)) {
+  if (!isRange(at) || pathEquals(at.focus.path, at.anchor.path)) {
     if (fromPath.length === 0) {
       return
     }
-    fromPath = Path.parent(fromPath)
+    fromPath = parentPath(fromPath)
   }
 
   const reverse = mode === 'lowest'

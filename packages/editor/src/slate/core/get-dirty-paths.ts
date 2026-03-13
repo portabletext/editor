@@ -1,7 +1,8 @@
 import type {Editor} from '../interfaces/editor'
-import {Path} from '../interfaces/path'
-import {Text} from '../interfaces/text'
 import {getNodes} from '../node/get-nodes'
+import {pathAncestors} from '../path/path-ancestors'
+import {pathLevels} from '../path/path-levels'
+import {isText} from '../text/is-text'
 import type {WithEditorFirstArg} from '../utils/types'
 
 /**
@@ -16,13 +17,13 @@ export const getDirtyPaths: WithEditorFirstArg<Editor['getDirtyPaths']> = (
     case 'remove_text':
     case 'set_node': {
       const {path} = op
-      return Path.levels(path)
+      return pathLevels(path)
     }
 
     case 'insert_node': {
       const {node, path} = op
-      const levels = Path.levels(path)
-      const descendants = Text.isText(node, _editor.schema)
+      const levels = pathLevels(path)
+      const descendants = isText(node, _editor.schema)
         ? []
         : Array.from(getNodes(node, _editor.schema), ([, p]) => path.concat(p))
 
@@ -31,7 +32,7 @@ export const getDirtyPaths: WithEditorFirstArg<Editor['getDirtyPaths']> = (
 
     case 'remove_node': {
       const {path} = op
-      const ancestors = Path.ancestors(path)
+      const ancestors = pathAncestors(path)
       return [...ancestors]
     }
 

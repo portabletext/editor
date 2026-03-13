@@ -1,5 +1,5 @@
 import type {EditorActor} from '../../../editor/editor-machine'
-import {Path, Point, Range, Text, type Editor} from '../../../slate'
+import type {Editor, Path, Point, Range} from '../../../slate'
 import {
   applyStringDiff,
   isDOMSelection,
@@ -18,6 +18,13 @@ import {next as editorNext} from '../../../slate/editor/next'
 import {range as editorRange} from '../../../slate/editor/range'
 import {rangeRef} from '../../../slate/editor/range-ref'
 import {getLeaf} from '../../../slate/node/get-leaf'
+import {pathEquals} from '../../../slate/path/path-equals'
+import {isPoint} from '../../../slate/point/is-point'
+import {isCollapsedRange} from '../../../slate/range/is-collapsed-range'
+import {isExpandedRange} from '../../../slate/range/is-expanded-range'
+import {rangeEdges} from '../../../slate/range/range-edges'
+import {rangeEquals} from '../../../slate/range/range-equals'
+import {isText} from '../../../slate/text/is-text'
 import {ReactEditor} from '../../plugin/react-editor'
 import type {DebouncedFunc} from '../../utils/debounce'
 
@@ -90,7 +97,7 @@ export function createAndroidInputManager({
 
       debug('apply pending selection', pendingSelection, normalized)
 
-      if (normalized && (!selection || !Range.equals(normalized, selection))) {
+      if (normalized && (!selection || !rangeEquals(normalized, selection))) {
         editor.select(normalized)
       }
     }
@@ -104,7 +111,7 @@ export function createAndroidInputManager({
     }
 
     if (action.at) {
-      const target = Point.isPoint(action.at)
+      const target = isPoint(action.at)
         ? normalizePoint(editor, action.at)
         : normalizeRange(editor, action.at)
 
@@ -113,7 +120,7 @@ export function createAndroidInputManager({
       }
 
       const targetRange = editorRange(editor, target)
-      if (!editor.selection || !Range.equals(editor.selection, targetRange)) {
+      if (!editor.selection || !rangeEquals(editor.selection, targetRange)) {
         editor.select(target)
       }
     }
@@ -172,7 +179,7 @@ export function createAndroidInputManager({
       }
 
       const range = targetRange(diff)
-      if (!editor.selection || !Range.equals(editor.selection, range)) {
+      if (!editor.selection || !rangeEquals(editor.selection, range)) {
         editor.select(range)
       }
 
@@ -217,7 +224,7 @@ export function createAndroidInputManager({
     if (
       selection &&
       !editor.pendingSelection &&
-      (!editor.selection || !Range.equals(selection, editor.selection))
+      (!editor.selection || !rangeEquals(selection, editor.selection))
     ) {
       editor.select(selection)
     }
@@ -295,12 +302,12 @@ export function createAndroidInputManager({
 
     const target = getLeaf(editor, path, editor.schema)
 
-    if (!Text.isText(target, editor.schema)) {
+    if (!isText(target, editor.schema)) {
       return
     }
 
     const idx = pendingDiffs.findIndex((change) =>
-      Path.equals(change.path, path),
+      pathEquals(change.path, path),
     )
     if (idx < 0) {
       const normalized = normalizeStringDiff(target.text, diff)
@@ -405,10 +412,10 @@ export function createAndroidInputManager({
 
     if (type.startsWith('delete')) {
       const direction = type.endsWith('Backward') ? 'backward' : 'forward'
-      let [start, end] = Range.edges(targetRange)
+      let [start, end] = rangeEdges(targetRange)
       let [leaf, path] = editorLeaf(editor, start.path)
 
-      if (!Text.isText(leaf, editor.schema)) {
+      if (!isText(leaf, editor.schema)) {
         return scheduleAction(
           () =>
             editorActor.send({
@@ -420,13 +427,13 @@ export function createAndroidInputManager({
         )
       }
 
-      if (Range.isExpanded(targetRange)) {
+      if (isExpandedRange(targetRange)) {
         if (leaf.text.length === start.offset && end.offset === 0) {
           const next = editorNext(editor, {
             at: start.path,
-            match: (n) => Text.isText(n, editor.schema),
+            match: (n) => isText(n, editor.schema),
           })
-          if (next && Path.equals(next[1], end.path)) {
+          if (next && pathEquals(next[1], end.path)) {
             // when deleting a linebreak, targetRange will span across the break (ie start in the node before and end in the node after)
             // if the node before is empty, this will look like a hanging range and get unhung later--which will take the break we want to remove out of the range
             // so to avoid this we collapse the target range to default to single character deletion
@@ -449,7 +456,7 @@ export function createAndroidInputManager({
       }
       const pendingDiffs = editor.pendingDiffs
       const relevantPendingDiffs = pendingDiffs?.find((change) =>
-        Path.equals(change.path, path),
+        pathEquals(change.path, path),
       )
       const diffs = relevantPendingDiffs
         ? [relevantPendingDiffs.diff, diff]
@@ -463,10 +470,10 @@ export function createAndroidInputManager({
         canStoreDiff = false
       }
 
-      if (Range.isExpanded(targetRange)) {
+      if (isExpandedRange(targetRange)) {
         if (
           canStoreDiff &&
-          Path.equals(targetRange.anchor.path, targetRange.focus.path)
+          pathEquals(targetRange.anchor.path, targetRange.focus.path)
         ) {
           const point = {path: targetRange.anchor.path, offset: start.offset}
           const range = editorRange(editor, point, point)
@@ -509,11 +516,11 @@ export function createAndroidInputManager({
       case 'deleteContent':
       case 'deleteContentForward': {
         const {anchor} = targetRange
-        if (canStoreDiff && Range.isCollapsed(targetRange)) {
+        if (canStoreDiff && isCollapsedRange(targetRange)) {
           const targetNode = getLeaf(editor, anchor.path, editor.schema)
 
           if (
-            Text.isText(targetNode, editor.schema) &&
+            isText(targetNode, editor.schema) &&
             anchor.offset < targetNode.text.length
           ) {
             return storeDiff(anchor.path, {
@@ -548,7 +555,7 @@ export function createAndroidInputManager({
         if (
           canStoreDiff &&
           nativeCollapsed &&
-          Range.isCollapsed(targetRange) &&
+          isCollapsedRange(targetRange) &&
           anchor.offset > 0
         ) {
           return storeDiff(anchor.path, {
@@ -749,8 +756,8 @@ export function createAndroidInputManager({
           )
         }
 
-        if (Path.equals(targetRange.anchor.path, targetRange.focus.path)) {
-          const [start, end] = Range.edges(targetRange)
+        if (pathEquals(targetRange.anchor.path, targetRange.focus.path)) {
+          const [start, end] = rangeEdges(targetRange)
 
           const diff = {
             start: start.offset,
@@ -786,7 +793,7 @@ export function createAndroidInputManager({
               insertPositionHint = diff
             } else if (
               insertPositionHint &&
-              Range.isCollapsed(targetRange) &&
+              isCollapsedRange(targetRange) &&
               insertPositionHint.end + insertPositionHint.text.length ===
                 start.offset
             ) {
@@ -868,10 +875,10 @@ export function createAndroidInputManager({
     }
 
     const pathChanged =
-      !selection || !Path.equals(selection.anchor.path, range.anchor.path)
+      !selection || !pathEquals(selection.anchor.path, range.anchor.path)
     const parentPathChanged =
       !selection ||
-      !Path.equals(
+      !pathEquals(
         selection.anchor.path.slice(0, -1),
         range.anchor.path.slice(0, -1),
       )

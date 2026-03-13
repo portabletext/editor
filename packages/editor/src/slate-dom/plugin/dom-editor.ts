@@ -1,15 +1,15 @@
-import {
+import {safeStringify} from '../../internal-utils/safe-json'
+import type {
+  Ancestor,
+  BaseEditor,
+  Editor,
+  Node,
+  Operation,
+  Path,
+  Point,
   Range,
-  Scrubber,
-  type Ancestor,
-  type BaseEditor,
-  type Editor,
-  type Node,
-  type Operation,
-  type Path,
-  type Point,
-  type RangeRef,
-  type Text,
+  RangeRef,
+  Text,
 } from '../../slate'
 import {after} from '../../slate/editor/after'
 import {before} from '../../slate/editor/before'
@@ -22,6 +22,10 @@ import {range as editorRange} from '../../slate/editor/range'
 import {start as editorStart} from '../../slate/editor/start'
 import {unhangRange} from '../../slate/editor/unhang-range'
 import {getNode} from '../../slate/node/get-node'
+import {isBackwardRange} from '../../slate/range/is-backward-range'
+import {isCollapsedRange} from '../../slate/range/is-collapsed-range'
+import {isExpandedRange} from '../../slate/range/is-expanded-range'
+import {isForwardRange} from '../../slate/range/is-forward-range'
 import type {TextDiff} from '../utils/diff-text'
 import {
   closestShadowAware,
@@ -356,7 +360,7 @@ export const DOMEditor: DOMEditorInterface = {
     }
 
     throw new Error(
-      `Unable to find the path for Slate node: ${Scrubber.stringify(node)}`,
+      `Unable to find the path for Slate node: ${safeStringify(node)}`,
     )
   },
 
@@ -493,7 +497,7 @@ export const DOMEditor: DOMEditorInterface = {
 
     if (!domNode) {
       throw new Error(
-        `Cannot resolve a DOM node from Slate node: ${Scrubber.stringify(node)}`,
+        `Cannot resolve a DOM node from Slate node: ${safeStringify(node)}`,
       )
     }
 
@@ -582,9 +586,7 @@ export const DOMEditor: DOMEditorInterface = {
 
     if (!domPoint) {
       throw new Error(
-        `Cannot resolve a DOM point from Slate point: ${Scrubber.stringify(
-          point,
-        )}`,
+        `Cannot resolve a DOM point from Slate point: ${safeStringify(point)}`,
       )
     }
 
@@ -593,9 +595,9 @@ export const DOMEditor: DOMEditorInterface = {
 
   toDOMRange: (editor, range) => {
     const {anchor, focus} = range
-    const isBackward = Range.isBackward(range)
+    const isBackward = isBackwardRange(range)
     const domAnchor = DOMEditor.toDOMPoint(editor, anchor)
-    const domFocus = Range.isCollapsed(range)
+    const domFocus = isCollapsedRange(range)
       ? domAnchor
       : DOMEditor.toDOMPoint(editor, focus)
 
@@ -1107,8 +1109,8 @@ export const DOMEditor: DOMEditorInterface = {
     // (meaning that the selection ends before the element)
     // unhang the range to avoid mistakenly including the void
     if (
-      Range.isExpanded(range) &&
-      Range.isForward(range) &&
+      isExpandedRange(range) &&
+      isForwardRange(range) &&
       isDOMElement(focusNode) &&
       getVoid(editor, {at: range.focus, mode: 'highest'})
     ) {

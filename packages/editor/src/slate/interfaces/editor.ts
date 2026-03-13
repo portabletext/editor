@@ -74,29 +74,6 @@ export type Selection = ExtendedType<'Selection', BaseSelection>
 
 export type EditorMarks = Omit<Text, 'text'>
 
-export interface EditorInterface {
-  isElementReadOnly: (editor: Editor, element: Element) => boolean
-
-  isInline: (editor: Editor, value: Element) => boolean
-
-  isSelectable: (editor: Editor, element: Element) => boolean
-}
-
-// eslint-disable-next-line no-redeclare
-export const Editor: EditorInterface = {
-  isElementReadOnly(editor, element) {
-    return editor.isElementReadOnly(element)
-  },
-
-  isInline(editor, value) {
-    return editor.isInline(value)
-  },
-
-  isSelectable(editor: Editor, value: Element) {
-    return editor.isSelectable(value)
-  },
-}
-
 /**
  * A helper type for narrowing matched nodes with a predicate.
  */

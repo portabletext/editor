@@ -1,6 +1,6 @@
 import type {EditorSchema} from '../../editor/editor-schema'
 import type {Ancestor, Node} from '../interfaces/node'
-import {Text} from '../interfaces/text'
+import {isText} from '../text/is-text'
 import {isObjectNode} from './is-object-node'
 
 export function getString(node: Node, schema: EditorSchema): string {
@@ -8,7 +8,7 @@ export function getString(node: Node, schema: EditorSchema): string {
     return ''
   }
 
-  if (Text.isText(node, schema)) {
+  if (isText(node, schema)) {
     return node.text
   }
 

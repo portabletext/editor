@@ -16,10 +16,14 @@ import {getFocusBlock} from '../selectors/selector.get-focus-block'
 import {getFocusSpan} from '../selectors/selector.get-focus-span'
 import {getSelectedValue} from '../selectors/selector.get-selected-value'
 import {isActiveAnnotation} from '../selectors/selector.is-active-annotation'
-import {Range, Text} from '../slate'
 import {ReactEditor} from '../slate-react'
 import {node as editorNode} from '../slate/editor/node'
 import {nodes} from '../slate/editor/nodes'
+import {isCollapsedRange} from '../slate/range/is-collapsed-range'
+import {isExpandedRange} from '../slate/range/is-expanded-range'
+import {isRange} from '../slate/range/is-range'
+import {rangeIncludes} from '../slate/range/range-includes'
+import {isText} from '../slate/text/is-text'
 import type {
   EditableAPI,
   EditableAPIDeleteOptions,
@@ -307,7 +311,7 @@ export function createEditableAPI(
         const spans = nodes(editor, {
           at: editor.selection,
           match: (node) =>
-            Text.isText(node, editor.schema) &&
+            isText(node, editor.schema) &&
             node.marks !== undefined &&
             Array.isArray(node.marks) &&
             node.marks.length > 0,
@@ -317,7 +321,7 @@ export function createEditableAPI(
           if (editor.isTextBlock(block)) {
             block.markDefs?.forEach((def) => {
               if (
-                Text.isText(span, editor.schema) &&
+                isText(span, editor.schema) &&
                 span.marks &&
                 Array.isArray(span.marks) &&
                 span.marks.includes(def._key)
@@ -476,10 +480,10 @@ export function createEditableAPI(
       return editor.children as Array<PortableTextBlock>
     },
     isCollapsedSelection: () => {
-      return !!editor.selection && Range.isCollapsed(editor.selection)
+      return !!editor.selection && isCollapsedRange(editor.selection)
     },
     isExpandedSelection: () => {
-      return !!editor.selection && Range.isExpanded(editor.selection)
+      return !!editor.selection && isExpandedRange(editor.selection)
     },
     insertBreak: () => {
       editorActor.send({
@@ -521,10 +525,10 @@ export function createEditableAPI(
       })
 
       // Make sure the ranges are valid
-      const isValidRanges = Range.isRange(rangeA) && Range.isRange(rangeB)
+      const isValidRanges = isRange(rangeA) && isRange(rangeB)
 
       // Check if the ranges are overlapping
-      const isOverlapping = isValidRanges && Range.includes(rangeA, rangeB)
+      const isOverlapping = isValidRanges && rangeIncludes(rangeA, rangeB)
 
       return isOverlapping
     },

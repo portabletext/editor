@@ -1,10 +1,8 @@
-import {
-  Range,
-  type Ancestor,
-  type DecoratedRange,
-  type Editor,
-} from '../../slate'
+import type {Ancestor, DecoratedRange, Editor, Range} from '../../slate'
 import {range as editorRange} from '../../slate/editor/range'
+import {rangeEdges} from '../../slate/range/range-edges'
+import {rangeEquals} from '../../slate/range/range-equals'
+import {rangeIntersection} from '../../slate/range/range-intersection'
 import {DOMEditor} from '../plugin/dom-editor'
 import {PLACEHOLDER_SYMBOL} from './symbols'
 
@@ -55,7 +53,7 @@ export const isElementDecorationsEqual = (
     const range = list[i]!
     const other = another[i]!
 
-    if (!Range.equals(range, other) || !isDecorationFlagsEqual(range, other)) {
+    if (!rangeEquals(range, other) || !isDecorationFlagsEqual(range, other)) {
       return false
     }
   }
@@ -143,12 +141,12 @@ export const splitDecorationsByChild = (
   }
 
   for (const decoration of decorations) {
-    const decorationRange = Range.intersection(ancestorRange, decoration)
+    const decorationRange = rangeIntersection(ancestorRange, decoration)
     if (!decorationRange) {
       continue
     }
 
-    const [startPoint, endPoint] = Range.edges(decorationRange)
+    const [startPoint, endPoint] = rangeEdges(decorationRange)
     const startIndex = startPoint.path[level]!
     const endIndex = endPoint.path[level]!
 
@@ -159,7 +157,7 @@ export const splitDecorationsByChild = (
       }
 
       const childRange = getChildRange(i)
-      const childDecorationRange = Range.intersection(childRange, decoration)
+      const childDecorationRange = rangeIntersection(childRange, decoration)
       if (!childDecorationRange) {
         continue
       }

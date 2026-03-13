@@ -1,5 +1,7 @@
-import {Range} from '../slate'
+import type {Range} from '../slate'
 import type {RangeRef} from '../slate/interfaces/range-ref'
+import {isCollapsedRange} from '../slate/range/is-collapsed-range'
+import {isForwardRange} from '../slate/range/is-forward-range'
 
 /**
  * Resolve the per-point affinities for a RangeRef.
@@ -14,8 +16,8 @@ export function rangeRefAffinities(
   affinity: RangeRef['affinity'],
 ): ['forward' | 'backward' | null, 'forward' | 'backward' | null] {
   if (affinity === 'inward') {
-    const isCollapsed = Range.isCollapsed(range)
-    if (Range.isForward(range)) {
+    const isCollapsed = isCollapsedRange(range)
+    if (isForwardRange(range)) {
       const anchorAffinity = 'forward'
       return [anchorAffinity, isCollapsed ? anchorAffinity : 'backward']
     } else {
@@ -23,7 +25,7 @@ export function rangeRefAffinities(
       return [anchorAffinity, isCollapsed ? anchorAffinity : 'forward']
     }
   } else if (affinity === 'outward') {
-    if (Range.isForward(range)) {
+    if (isForwardRange(range)) {
       return ['backward', 'forward']
     } else {
       return ['forward', 'backward']

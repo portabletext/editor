@@ -1,6 +1,6 @@
 import type {Descendant, Location, NodeEntry, Span} from '../interfaces'
 import type {Editor, NodeMatch} from '../interfaces/editor'
-import {Path} from '../interfaces/path'
+import {isPath} from '../path/is-path'
 import type {SelectionMode} from '../types/types'
 import {before} from './before'
 import {node} from './node'
@@ -36,12 +36,12 @@ export function previous<T extends Descendant>(
   // the point before the location passed in
   const span: Span = [pointBeforeLocation.path, to]
 
-  if (Path.isPath(at) && at.length === 0) {
+  if (isPath(at) && at.length === 0) {
     throw new Error(`Cannot get the previous node from the root node!`)
   }
 
   if (match == null) {
-    if (Path.isPath(at)) {
+    if (isPath(at)) {
       const [parentNode] = parent(editor, at)
       match = (n) => parentNode.children.includes(n)
     } else {

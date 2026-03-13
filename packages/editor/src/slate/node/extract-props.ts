@@ -1,14 +1,14 @@
 import type {EditorSchema} from '../../editor/editor-schema'
-import {Element} from '../interfaces/element'
+import {isAncestorElement} from '../element/is-ancestor-element'
 import type {Node, NodeProps, ObjectNode} from '../interfaces/node'
-import {Text} from '../interfaces/text'
+import {isText} from '../text/is-text'
 
 export function extractProps(node: Node, schema: EditorSchema): NodeProps {
-  if (Element.isAncestor(node, schema)) {
+  if (isAncestorElement(node, schema)) {
     const {children: _children, ...properties} = node
 
     return properties
-  } else if (Text.isText(node, schema)) {
+  } else if (isText(node, schema)) {
     const {text: _text, ...properties} = node
 
     return properties

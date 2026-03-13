@@ -1,4 +1,5 @@
-import {Path, type Operation} from '../slate'
+import type {Operation} from '../slate'
+import {pathEquals} from '../slate/path/path-equals'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 
 type UndoStep = {
@@ -67,7 +68,7 @@ export function createUndoSteps({
       op.type === 'insert_text' &&
       lastOp.type === 'insert_text' &&
       op.offset === lastOp.offset + lastOp.text.length &&
-      Path.equals(op.path, lastOp.path) &&
+      pathEquals(op.path, lastOp.path) &&
       op.text !== ' '
     ) {
       return mergeIntoLastStep(steps, lastStep, op)
@@ -78,7 +79,7 @@ export function createUndoSteps({
       op.type === 'remove_text' &&
       lastOp.type === 'remove_text' &&
       op.offset + op.text.length === lastOp.offset &&
-      Path.equals(op.path, lastOp.path)
+      pathEquals(op.path, lastOp.path)
     ) {
       return mergeIntoLastStep(steps, lastStep, op)
     }
@@ -100,7 +101,7 @@ export function createUndoSteps({
       op.type === 'insert_text' &&
       lastOp.type === 'insert_text' &&
       op.offset === lastOp.offset + lastOp.text.length &&
-      Path.equals(op.path, lastOp.path) &&
+      pathEquals(op.path, lastOp.path) &&
       op.text !== ' '
     ) {
       return mergeIntoLastStep(steps, lastStep, op)
@@ -111,7 +112,7 @@ export function createUndoSteps({
       op.type === 'remove_text' &&
       lastOp.type === 'remove_text' &&
       op.offset + op.text.length === lastOp.offset &&
-      Path.equals(op.path, lastOp.path)
+      pathEquals(op.path, lastOp.path)
     ) {
       return mergeIntoLastStep(steps, lastStep, op)
     }

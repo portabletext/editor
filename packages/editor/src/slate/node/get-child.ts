@@ -1,7 +1,7 @@
 import type {EditorSchema} from '../../editor/editor-schema'
+import {safeStringify} from '../../internal-utils/safe-json'
 import type {Descendant, Node} from '../interfaces/node'
-import {Scrubber} from '../interfaces/scrubber'
-import {Text} from '../interfaces/text'
+import {isText} from '../text/is-text'
 import {isObjectNode} from './is-object-node'
 
 export function getChild(
@@ -9,9 +9,9 @@ export function getChild(
   index: number,
   schema: EditorSchema,
 ): Descendant {
-  if (Text.isText(root, schema) || isObjectNode(root, schema)) {
+  if (isText(root, schema) || isObjectNode(root, schema)) {
     throw new Error(
-      `Cannot get the child of a leaf node: ${Scrubber.stringify(root)}`,
+      `Cannot get the child of a leaf node: ${safeStringify(root)}`,
     )
   }
 
@@ -19,9 +19,7 @@ export function getChild(
 
   if (c == null) {
     throw new Error(
-      `Cannot get child at index \`${index}\` in node: ${Scrubber.stringify(
-        root,
-      )}`,
+      `Cannot get child at index \`${index}\` in node: ${safeStringify(root)}`,
     )
   }
 

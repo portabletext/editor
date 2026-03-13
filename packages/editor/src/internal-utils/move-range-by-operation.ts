@@ -1,17 +1,19 @@
-import {Point, type Operation, type Range} from '../slate'
+import type {Operation, Range} from '../slate'
+import {pointEquals} from '../slate/point/point-equals'
+import {transformPoint} from '../slate/point/transform-point'
 
 export function moveRangeByOperation(
   range: Range,
   operation: Operation,
 ): Range | null {
-  const anchor = Point.transform(range.anchor, operation)
-  const focus = Point.transform(range.focus, operation)
+  const anchor = transformPoint(range.anchor, operation)
+  const focus = transformPoint(range.focus, operation)
 
   if (anchor === null || focus === null) {
     return null
   }
 
-  if (Point.equals(anchor, range.anchor) && Point.equals(focus, range.focus)) {
+  if (pointEquals(anchor, range.anchor) && pointEquals(focus, range.focus)) {
     return range
   }
 

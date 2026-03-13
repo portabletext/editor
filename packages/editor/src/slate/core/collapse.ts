@@ -1,5 +1,5 @@
 import type {Editor} from '../interfaces/editor'
-import {Range} from '../interfaces/range'
+import {rangeEdges} from '../range/range-edges'
 import type {SelectionEdge} from '../types/types'
 
 export interface SelectionCollapseOptions {
@@ -20,10 +20,10 @@ export function collapse(
   } else if (edge === 'focus') {
     editor.select(selection.focus)
   } else if (edge === 'start') {
-    const [start] = Range.edges(selection)
+    const [start] = rangeEdges(selection)
     editor.select(start)
   } else if (edge === 'end') {
-    const [, end] = Range.edges(selection)
+    const [, end] = rangeEdges(selection)
     editor.select(end)
   }
 }

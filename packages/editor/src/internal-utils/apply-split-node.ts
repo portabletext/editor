@@ -1,6 +1,12 @@
-import {Element, Path, Text, type Node, type Point} from '../slate'
+import type {Node, Path, Point} from '../slate'
 import {withoutNormalizing} from '../slate/editor/without-normalizing'
+import {isElement} from '../slate/element/is-element'
 import {getNode} from '../slate/node/get-node'
+import {isAncestorPath} from '../slate/path/is-ancestor-path'
+import {nextPath} from '../slate/path/next-path'
+import {pathEndsBefore} from '../slate/path/path-ends-before'
+import {pathEquals} from '../slate/path/path-equals'
+import {isText} from '../slate/text/is-text'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {rangeRefAffinities} from './range-ref-affinities'
 
@@ -106,7 +112,7 @@ export function applySplitNode(
 
   try {
     withoutNormalizing(editor, () => {
-      if (Text.isText(node, editor.schema)) {
+      if (isText(node, editor.schema)) {
         const afterText = node.text.slice(position)
         const newNode = {...properties, text: afterText} as Node
         editor.apply({
@@ -117,10 +123,10 @@ export function applySplitNode(
         })
         editor.apply({
           type: 'insert_node',
-          path: Path.next(path),
+          path: nextPath(path),
           node: newNode,
         })
-      } else if (Element.isElement(node, editor.schema)) {
+      } else if (isElement(node, editor.schema)) {
         const afterChildren = node.children.slice(position)
         const newNode = {...properties, children: afterChildren} as Node
 
@@ -133,7 +139,7 @@ export function applySplitNode(
         }
         editor.apply({
           type: 'insert_node',
-          path: Path.next(path),
+          path: nextPath(path),
           node: newNode,
         })
       }
@@ -174,15 +180,15 @@ function transformPathForSplit(
 ): Path | null {
   const p = [...path]
 
-  if (Path.equals(splitPath, p)) {
+  if (pathEquals(splitPath, p)) {
     if (affinity === 'forward') {
       p[p.length - 1] = p[p.length - 1]! + 1
     }
     // backward: no change
-  } else if (Path.endsBefore(splitPath, p)) {
+  } else if (pathEndsBefore(splitPath, p)) {
     p[splitPath.length - 1] = p[splitPath.length - 1]! + 1
   } else if (
-    Path.isAncestor(splitPath, p) &&
+    isAncestorPath(splitPath, p) &&
     path[splitPath.length]! >= position
   ) {
     p[splitPath.length - 1] = p[splitPath.length - 1]! + 1
@@ -206,7 +212,7 @@ function transformPointForSplit(
 ): Point | null {
   let {path, offset} = point
 
-  if (Path.equals(splitPath, path)) {
+  if (pathEquals(splitPath, path)) {
     if (position < offset || (position === offset && affinity === 'forward')) {
       offset -= position
       path = transformPathForSplit(path, splitPath, position, 'forward')!

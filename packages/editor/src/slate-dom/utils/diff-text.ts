@@ -1,17 +1,17 @@
-import {
-  Element,
-  Path,
-  Point,
-  Range,
-  Text,
-  type Editor,
-  type Operation,
-} from '../../slate'
+import type {Editor, Operation, Path, Point, Range} from '../../slate'
 import {above} from '../../slate/editor/above'
 import {hasPath} from '../../slate/editor/has-path'
 import {isBlock} from '../../slate/editor/is-block'
 import {next as editorNext} from '../../slate/editor/next'
+import {isElement} from '../../slate/element/is-element'
 import {getNode} from '../../slate/node/get-node'
+import {isDescendantPath} from '../../slate/path/is-descendant-path'
+import {nextPath as getNextPath} from '../../slate/path/next-path'
+import {pathEquals} from '../../slate/path/path-equals'
+import {transformPath} from '../../slate/path/transform-path'
+import {transformPoint} from '../../slate/point/transform-point'
+import {isCollapsedRange} from '../../slate/range/is-collapsed-range'
+import {isText} from '../../slate/text/is-text'
 
 export type StringDiff = {
   start: number
@@ -36,7 +36,7 @@ export function verifyDiffState(editor: Editor, textDiff: TextDiff): boolean {
   }
 
   const node = getNode(editor, path, editor.schema)
-  if (!Text.isText(node, editor.schema)) {
+  if (!isText(node, editor.schema)) {
     return false
   }
 
@@ -46,15 +46,13 @@ export function verifyDiffState(editor: Editor, textDiff: TextDiff): boolean {
     )
   }
 
-  const nextPath = Path.next(path)
+  const nextPath = getNextPath(path)
   if (!hasPath(editor, nextPath)) {
     return false
   }
 
   const nextNode = getNode(editor, nextPath, editor.schema)
-  return (
-    Text.isText(nextNode, editor.schema) && nextNode.text.startsWith(diff.text)
-  )
+  return isText(nextNode, editor.schema) && nextNode.text.startsWith(diff.text)
 }
 
 export function applyStringDiff(text: string, ...diffs: StringDiff[]) {
@@ -175,12 +173,12 @@ export function normalizePoint(editor: Editor, point: Point): Point | null {
   }
 
   let leaf = getNode(editor, path, editor.schema)
-  if (!Text.isText(leaf, editor.schema)) {
+  if (!isText(leaf, editor.schema)) {
     return null
   }
 
   const parentBlock = above(editor, {
-    match: (n) => Element.isElement(n, editor.schema) && isBlock(editor, n),
+    match: (n) => isElement(n, editor.schema) && isBlock(editor, n),
     at: path,
   })
 
@@ -191,9 +189,9 @@ export function normalizePoint(editor: Editor, point: Point): Point | null {
   while (offset > leaf.text.length) {
     const entry = editorNext(editor, {
       at: path,
-      match: (n) => Text.isText(n, editor.schema),
+      match: (n) => isText(n, editor.schema),
     })
-    if (!entry || !Path.isDescendant(entry[1], parentBlock[1])) {
+    if (!entry || !isDescendantPath(entry[1], parentBlock[1])) {
       return null
     }
 
@@ -214,7 +212,7 @@ export function normalizeRange(editor: Editor, range: Range): Range | null {
     return null
   }
 
-  if (Range.isCollapsed(range)) {
+  if (isCollapsedRange(range)) {
     return {anchor, focus: anchor}
   }
 
@@ -232,10 +230,10 @@ export function transformPendingPoint(
   op: Operation,
 ): Point | null {
   const pendingDiffs = editor.pendingDiffs
-  const textDiff = pendingDiffs?.find(({path}) => Path.equals(path, point.path))
+  const textDiff = pendingDiffs?.find(({path}) => pathEquals(path, point.path))
 
   if (!textDiff || point.offset <= textDiff.diff.start) {
-    return Point.transform(point, op, {affinity: 'backward'})
+    return transformPoint(point, op, {affinity: 'backward'})
   }
 
   const {diff} = textDiff
@@ -243,7 +241,7 @@ export function transformPendingPoint(
   // the diff will be applied to and add the offset inside the diff.
   if (point.offset <= diff.start + diff.text.length) {
     const anchor = {path: point.path, offset: diff.start}
-    const transformed = Point.transform(anchor, op, {
+    const transformed = transformPoint(anchor, op, {
       affinity: 'backward',
     })
 
@@ -262,7 +260,7 @@ export function transformPendingPoint(
     path: point.path,
     offset: point.offset - diff.text.length + diff.end - diff.start,
   }
-  const transformed = Point.transform(anchor, op, {
+  const transformed = transformPoint(anchor, op, {
     affinity: 'backward',
   })
   if (!transformed) {
@@ -285,7 +283,7 @@ export function transformPendingRange(
     return null
   }
 
-  if (Range.isCollapsed(range)) {
+  if (isCollapsedRange(range)) {
     return {anchor, focus: anchor}
   }
 
@@ -305,7 +303,7 @@ export function transformTextDiff(
 
   switch (op.type) {
     case 'insert_text': {
-      if (!Path.equals(op.path, path) || op.offset >= diff.end) {
+      if (!pathEquals(op.path, path) || op.offset >= diff.end) {
         return textDiff
       }
 
@@ -332,7 +330,7 @@ export function transformTextDiff(
       }
     }
     case 'remove_text': {
-      if (!Path.equals(op.path, path) || op.offset >= diff.end) {
+      if (!pathEquals(op.path, path) || op.offset >= diff.end) {
         return textDiff
       }
 
@@ -360,7 +358,7 @@ export function transformTextDiff(
     }
   }
 
-  const newPath = Path.transform(path, op)
+  const newPath = transformPath(path, op)
   if (!newPath) {
     return null
   }

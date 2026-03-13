@@ -1,9 +1,9 @@
 import {applyDeselect} from '../internal-utils/apply-selection'
 import {transformOperation} from '../internal-utils/transform-operation'
-import {Operation} from '../slate'
 import {pluginUndoing} from '../slate-plugins/slate-plugin.undoing'
 import {pluginWithoutHistory} from '../slate-plugins/slate-plugin.without-history'
 import {withoutNormalizing} from '../slate/editor/without-normalizing'
+import {inverseOperation} from '../slate/operation/inverse-operation'
 import type {OperationImplementation} from './operation.types'
 
 export const historyUndoOperationImplementation: OperationImplementation<
@@ -32,7 +32,7 @@ export const historyUndoOperationImplementation: OperationImplementation<
         )
       })
       const reversedOperations = transformedOperations
-        .map(Operation.inverse)
+        .map(inverseOperation)
         .reverse()
 
       try {

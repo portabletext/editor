@@ -1,15 +1,16 @@
 import type {EditorSchema} from '../../editor/editor-schema'
-import {
-  Scrubber,
+import {safeStringify} from '../../internal-utils/safe-json'
+import type {
+  Ancestor,
+  Descendant,
+  Element,
+  Node,
+  Path,
   Text,
-  type Ancestor,
-  type Descendant,
-  type Element,
-  type Node,
-  type Path,
 } from '../interfaces'
 import {getNode} from '../node/get-node'
 import {isObjectNode} from '../node/is-object-node'
+import {isText} from '../text/is-text'
 
 export const insertChildren = <T>(
   xs: T[],
@@ -70,9 +71,9 @@ export const modifyChildren = (
     root.children = f(root.children)
   } else {
     modifyDescendant<Element>(root, path, schema, (node) => {
-      if (Text.isText(node, schema) || isObjectNode(node, schema)) {
+      if (isText(node, schema) || isObjectNode(node, schema)) {
         throw new Error(
-          `Cannot get the element at path [${path}] because it refers to a leaf node: ${Scrubber.stringify(
+          `Cannot get the element at path [${path}] because it refers to a leaf node: ${safeStringify(
             node,
           )}`,
         )
@@ -93,9 +94,9 @@ export const modifyLeaf = (
   f: (leaf: Text) => Text,
 ) =>
   modifyDescendant(root, path, schema, (node) => {
-    if (!Text.isText(node, schema)) {
+    if (!isText(node, schema)) {
       throw new Error(
-        `Cannot get the leaf node at path [${path}] because it refers to a non-leaf node: ${Scrubber.stringify(
+        `Cannot get the leaf node at path [${path}] because it refers to a non-leaf node: ${safeStringify(
           node,
         )}`,
       )

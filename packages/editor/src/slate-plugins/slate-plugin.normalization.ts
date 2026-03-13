@@ -6,11 +6,13 @@ import {applySetNode} from '../internal-utils/apply-set-node'
 import {createPlaceholderBlock} from '../internal-utils/create-placeholder-block'
 import {debug} from '../internal-utils/debug'
 import {isEqualMarkDefs} from '../internal-utils/equality'
-import {Path, Range, Text} from '../slate'
 import {isEditor} from '../slate/editor/is-editor'
 import {node as editorNode} from '../slate/editor/node'
 import {nodes} from '../slate/editor/nodes'
 import {getChildren} from '../slate/node/get-children'
+import {parentPath} from '../slate/path/parent-path'
+import {isCollapsedRange} from '../slate/range/is-collapsed-range'
+import {isText} from '../slate/text/is-text'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {withNormalizeNode} from './slate-plugin.normalize-node'
 import {withoutPatching} from './slate-plugin.without-patching'
@@ -109,7 +111,7 @@ export function createNormalizationPlugin(
        * Remove annotations from empty spans
        */
       if (editor.isTextSpan(node)) {
-        const blockPath = Path.parent(path)
+        const blockPath = parentPath(path)
         const [block] = editorNode(editor, blockPath)
         const decorators = editorActor
           .getSnapshot()
@@ -184,7 +186,7 @@ export function createNormalizationPlugin(
        * Remove orphaned annotations from span nodes
        */
       if (editor.isTextSpan(node)) {
-        const blockPath = Path.parent(path)
+        const blockPath = parentPath(path)
         const [block] = editorNode(editor, blockPath)
 
         if (editor.isTextBlock(block)) {
@@ -244,7 +246,7 @@ export function createNormalizationPlugin(
         const newMarkDefs = (node.markDefs || []).filter((def) => {
           return node.children.find((child) => {
             return (
-              Text.isText(child, editor.schema) &&
+              isText(child, editor.schema) &&
               Array.isArray(child.marks) &&
               child.marks.includes(def._key)
             )
@@ -299,11 +301,11 @@ export function createNormalizationPlugin(
           op.newProperties.anchor &&
           op.newProperties.focus
         ) {
-          const previousSelectionIsCollapsed = Range.isCollapsed({
+          const previousSelectionIsCollapsed = isCollapsedRange({
             anchor: op.properties.anchor,
             focus: op.properties.focus,
           })
-          const newSelectionIsCollapsed = Range.isCollapsed({
+          const newSelectionIsCollapsed = isCollapsedRange({
             anchor: op.newProperties.anchor,
             focus: op.newProperties.focus,
           })

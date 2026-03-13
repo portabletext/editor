@@ -7,8 +7,9 @@ import React, {
   type JSX,
   type MutableRefObject,
 } from 'react'
-import {Text, type Element, type LeafPosition} from '../../slate'
+import type {Element, LeafPosition, Text} from '../../slate'
 import {IS_ANDROID, IS_WEBKIT, PLACEHOLDER_SYMBOL} from '../../slate-dom'
+import {textEquals} from '../../slate/text/text-equals'
 import {useSlateStatic} from '../hooks/use-slate-static'
 import type {RenderLeafProps, RenderPlaceholderProps} from './editable'
 import SlateString from './string'
@@ -172,7 +173,7 @@ const MemoizedLeaf = React.memo(Leaf, (prev, next) => {
     next.renderLeaf === prev.renderLeaf &&
     next.renderPlaceholder === prev.renderPlaceholder &&
     next.text === prev.text &&
-    Text.equals(next.leaf, prev.leaf) &&
+    textEquals(next.leaf, prev.leaf) &&
     (next.leaf as any)[PLACEHOLDER_SYMBOL] ===
       (prev.leaf as any)[PLACEHOLDER_SYMBOL]
   )

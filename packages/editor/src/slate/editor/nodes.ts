@@ -1,11 +1,12 @@
+import {isElement} from '../element/is-element'
 import type {Location, Span} from '../interfaces'
-import {Editor, type NodeMatch} from '../interfaces/editor'
-import {Element} from '../interfaces/element'
+import type {Editor, NodeMatch} from '../interfaces/editor'
 import {Span as SpanUtils} from '../interfaces/location'
 import type {Node, NodeEntry} from '../interfaces/node'
-import {Path} from '../interfaces/path'
-import {Text} from '../interfaces/text'
+import type {Path} from '../interfaces/path'
 import {getNodes} from '../node/get-nodes'
+import {comparePaths} from '../path/compare-paths'
+import {isText} from '../text/is-text'
 import type {SelectionMode} from '../types/types'
 import {path} from './path'
 
@@ -60,10 +61,10 @@ export function* nodes<T extends Node>(
       if (pass && pass([node, path])) {
         return true
       }
-      if (!Element.isElement(node, editor.schema)) {
+      if (!isElement(node, editor.schema)) {
         return false
       }
-      if (!voids && Editor.isElementReadOnly(editor, node)) {
+      if (!voids && editor.isElementReadOnly(node)) {
         return true
       }
 
@@ -75,7 +76,7 @@ export function* nodes<T extends Node>(
   let hit: NodeEntry<T> | undefined
 
   for (const [node, path] of nodeEntries) {
-    const isLower = hit && Path.compare(path, hit[1]) === 0
+    const isLower = hit && comparePaths(path, hit[1]) === 0
 
     // In highest mode any node lower than the last hit is not a match.
     if (mode === 'highest' && isLower) {
@@ -86,7 +87,7 @@ export function* nodes<T extends Node>(
       // If we've arrived at a leaf text node that is not lower than the last
       // hit, then we've found a branch that doesn't include a match, which
       // means the match is not universal.
-      if (universal && !isLower && Text.isText(node, editor.schema)) {
+      if (universal && !isLower && isText(node, editor.schema)) {
         return
       } else {
         continue

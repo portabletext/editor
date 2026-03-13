@@ -1,8 +1,9 @@
 import {forwardRef, memo, useRef, useState} from 'react'
 import {ReactEditor, useSlateStatic} from '..'
-import {Path, type Element, type Text} from '../../slate'
+import type {Element, Text} from '../../slate'
 import {IS_ANDROID, MARK_PLACEHOLDER_SYMBOL} from '../../slate-dom'
 import {string as editorString} from '../../slate/editor/string'
+import {parentPath} from '../../slate/path/parent-path'
 import {useIsomorphicLayoutEffect} from '../hooks/use-isomorphic-layout-effect'
 
 /**
@@ -18,7 +19,7 @@ const SlateString = (props: {
   const {isLast, leaf, parent, text} = props
   const editor = useSlateStatic()
   const path = ReactEditor.findPath(editor, text)
-  const parentPath = Path.parent(path)
+  const parentPath_ = parentPath(path)
   const isMarkPlaceholder = Boolean((leaf as any)[MARK_PLACEHOLDER_SYMBOL])
 
   // COMPAT: If this is the last text node in an empty block, render a zero-
@@ -28,7 +29,7 @@ const SlateString = (props: {
     leaf.text === '' &&
     parent.children[parent.children.length - 1] === text &&
     !editor.isInline(parent) &&
-    editorString(editor, parentPath) === ''
+    editorString(editor, parentPath_) === ''
   ) {
     return <ZeroWidthString isLineBreak isMarkPlaceholder={isMarkPlaceholder} />
   }

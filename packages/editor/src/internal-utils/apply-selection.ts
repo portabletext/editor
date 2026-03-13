@@ -1,6 +1,9 @@
-import {Point, Range} from '../slate'
+import type {Point, Range} from '../slate'
 import {end as editorEnd} from '../slate/editor/end'
 import {start as editorStart} from '../slate/editor/start'
+import {isPoint} from '../slate/point/is-point'
+import {pointEquals} from '../slate/point/point-equals'
+import {isRange} from '../slate/range/is-range'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 
 /**
@@ -17,12 +20,12 @@ export function applySelect(
     const oldProps: Partial<Range> = {}
     const newProps: Partial<Range> = {}
 
-    if (range.anchor != null && !Point.equals(range.anchor, selection.anchor)) {
+    if (range.anchor != null && !pointEquals(range.anchor, selection.anchor)) {
       oldProps.anchor = selection.anchor
       newProps.anchor = range.anchor
     }
 
-    if (range.focus != null && !Point.equals(range.focus, selection.focus)) {
+    if (range.focus != null && !pointEquals(range.focus, selection.focus)) {
       oldProps.focus = selection.focus
       newProps.focus = range.focus
     }
@@ -64,11 +67,11 @@ function toRange(
   editor: PortableTextSlateEditor,
   target: Range | Point | Path,
 ): Range {
-  if (Range.isRange(target)) {
+  if (isRange(target)) {
     return target
   }
 
-  if (Point.isPoint(target)) {
+  if (isPoint(target)) {
     return {anchor: target, focus: target}
   }
 

@@ -1,16 +1,23 @@
-import {
-  Path,
-  Point,
+import {safeStringify} from '../../internal-utils/safe-json'
+import type {
+  Editor,
+  Node,
+  NodeEntry,
+  Operation,
   Range,
-  Scrubber,
-  type Editor,
-  type Node,
-  type NodeEntry,
-  type Operation,
-  type Selection,
-  type Text,
+  Selection,
+  Text,
 } from '../index'
 import {getTexts} from '../node/get-texts'
+import {commonPath} from '../path/common-path'
+import {comparePaths} from '../path/compare-paths'
+import {isSiblingPath} from '../path/is-sibling-path'
+import {parentPath} from '../path/parent-path'
+import {pathEquals} from '../path/path-equals'
+import {transformPoint} from '../point/transform-point'
+import {isRange} from '../range/is-range'
+import {rangeEquals} from '../range/range-equals'
+import {rangePoints} from '../range/range-points'
 import {
   insertChildren,
   modifyChildren,
@@ -26,7 +33,7 @@ export function applyOperation(editor: Editor, op: Operation): void {
     case 'insert_node': {
       const {path, node} = op
 
-      modifyChildren(editor, Path.parent(path), editor.schema, (children) => {
+      modifyChildren(editor, parentPath(path), editor.schema, (children) => {
         const index = path[path.length - 1]!
 
         if (index > children.length) {
@@ -66,7 +73,7 @@ export function applyOperation(editor: Editor, op: Operation): void {
       const {path} = op
       const index = path[path.length - 1]!
 
-      modifyChildren(editor, Path.parent(path), editor.schema, (children) =>
+      modifyChildren(editor, parentPath(path), editor.schema, (children) =>
         removeChildren(children, index, 1),
       )
 
@@ -75,8 +82,8 @@ export function applyOperation(editor: Editor, op: Operation): void {
       if (editor.selection) {
         let selection: Selection = {...editor.selection}
 
-        for (const [point, key] of Range.points(selection)) {
-          const result = Point.transform(point, op)
+        for (const [point, key] of rangePoints(selection)) {
+          const result = transformPoint(point, op)
 
           if (selection != null && result != null) {
             selection[key] = result
@@ -85,7 +92,7 @@ export function applyOperation(editor: Editor, op: Operation): void {
             let next: NodeEntry<Text> | undefined
 
             for (const [n, p] of getTexts(editor, editor.schema)) {
-              if (Path.compare(p, path) === -1) {
+              if (comparePaths(p, path) === -1) {
                 prev = [n, p]
               } else {
                 next = [n, p]
@@ -95,14 +102,14 @@ export function applyOperation(editor: Editor, op: Operation): void {
 
             let preferNext = false
             if (prev && next) {
-              if (Path.isSibling(prev[1], path)) {
+              if (isSiblingPath(prev[1], path)) {
                 preferNext = false
-              } else if (Path.equals(next[1], path)) {
+              } else if (pathEquals(next[1], path)) {
                 preferNext = true
               } else {
                 preferNext =
-                  Path.common(prev[1], path).length <
-                  Path.common(next[1], path).length
+                  commonPath(prev[1], path).length <
+                  commonPath(next[1], path).length
               }
             }
 
@@ -116,7 +123,7 @@ export function applyOperation(editor: Editor, op: Operation): void {
           }
         }
 
-        if (!selection || !Range.equals(selection, editor.selection)) {
+        if (!selection || !rangeEquals(selection, editor.selection)) {
           editor.selection = selection
         }
       }
@@ -201,9 +208,9 @@ export function applyOperation(editor: Editor, op: Operation): void {
       }
 
       if (editor.selection == null) {
-        if (!Range.isRange(newProperties)) {
+        if (!isRange(newProperties)) {
           throw new Error(
-            `Cannot apply an incomplete "set_selection" operation properties ${Scrubber.stringify(
+            `Cannot apply an incomplete "set_selection" operation properties ${safeStringify(
               newProperties,
             )} when there is no current selection.`,
           )
@@ -238,11 +245,11 @@ export function applyOperation(editor: Editor, op: Operation): void {
   if (transformSelection && editor.selection) {
     const selection = {...editor.selection}
 
-    for (const [point, key] of Range.points(selection)) {
-      selection[key] = Point.transform(point, op)!
+    for (const [point, key] of rangePoints(selection)) {
+      selection[key] = transformPoint(point, op)!
     }
 
-    if (!Range.equals(selection, editor.selection)) {
+    if (!rangeEquals(selection, editor.selection)) {
       editor.selection = selection
     }
   }

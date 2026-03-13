@@ -24,7 +24,7 @@ import {
 import {safeStringify} from '../internal-utils/safe-json'
 import {validateValue} from '../internal-utils/validateValue'
 import {toSlateBlock} from '../internal-utils/values'
-import {Text, type Descendant, type Node} from '../slate'
+import type {Descendant, Node} from '../slate'
 import {withRemoteChanges} from '../slate-plugins/slate-plugin.remote-changes'
 import {pluginWithoutHistory} from '../slate-plugins/slate-plugin.without-history'
 import {withoutPatching} from '../slate-plugins/slate-plugin.without-patching'
@@ -33,6 +33,7 @@ import {node as editorNode} from '../slate/editor/node'
 import {start} from '../slate/editor/start'
 import {withoutNormalizing} from '../slate/editor/without-normalizing'
 import {hasNode} from '../slate/node/has-node'
+import {isText} from '../slate/text/is-text'
 import type {PickFromUnion} from '../type-utils'
 import type {InvalidValueResolution} from '../types/editor'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
@@ -966,7 +967,7 @@ function updateBlock({
         )
       const isTextChanged =
         oldBlockChild &&
-        Text.isText(oldBlockChild, slateEditor.schema) &&
+        isText(oldBlockChild, slateEditor.schema) &&
         currentBlockChild.text !== oldBlockChild.text
       const path = [index, currentBlockChildIndex]
 

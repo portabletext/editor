@@ -1,6 +1,6 @@
 import type {Editor} from '../interfaces/editor'
-import {Point} from '../interfaces/point'
 import type {Range} from '../interfaces/range'
+import {pointEquals} from '../point/point-equals'
 
 export function setSelection(editor: Editor, props: Partial<Range>): void {
   const {selection} = editor
@@ -15,10 +15,10 @@ export function setSelection(editor: Editor, props: Partial<Range>): void {
     if (
       (k === 'anchor' &&
         props.anchor != null &&
-        !Point.equals(props.anchor, selection.anchor)) ||
+        !pointEquals(props.anchor, selection.anchor)) ||
       (k === 'focus' &&
         props.focus != null &&
-        !Point.equals(props.focus, selection.focus)) ||
+        !pointEquals(props.focus, selection.focus)) ||
       (k !== 'anchor' &&
         k !== 'focus' &&
         props[k as keyof Range] !== selection[k as keyof Range])

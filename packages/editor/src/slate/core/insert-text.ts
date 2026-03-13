@@ -5,8 +5,11 @@ import {range as editorRange} from '../editor/range'
 import {withoutNormalizing} from '../editor/without-normalizing'
 import type {Location} from '../index'
 import type {Editor} from '../interfaces/editor'
-import {Path} from '../interfaces/path'
-import {Range} from '../interfaces/range'
+import {isPath} from '../path/is-path'
+import {isCollapsedRange} from '../range/is-collapsed-range'
+import {isRange} from '../range/is-range'
+import {rangeEnd} from '../range/range-end'
+import {rangeStart} from '../range/range-start'
 import {getDefaultInsertLocation} from '../utils'
 import {deleteText} from './delete-text'
 
@@ -24,19 +27,19 @@ export function insertText(
     const {voids = false} = options
     let {at = getDefaultInsertLocation(editor)} = options
 
-    if (Path.isPath(at)) {
+    if (isPath(at)) {
       at = editorRange(editor, at)
     }
 
-    if (Range.isRange(at)) {
-      if (Range.isCollapsed(at)) {
+    if (isRange(at)) {
+      if (isCollapsedRange(at)) {
         at = at.anchor
       } else {
-        const end = Range.end(at)
+        const end = rangeEnd(at)
         if (!voids && getVoid(editor, {at: end})) {
           return
         }
-        const start = Range.start(at)
+        const start = rangeStart(at)
         const startRef = pointRef(editor, start)
         const endRef = pointRef(editor, end)
         deleteText(editor, {at, voids})

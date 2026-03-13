@@ -19,11 +19,13 @@ import {
 } from '@sanity/diff-match-patch'
 import type {EditorSchema} from '../editor/editor-schema'
 import type {EditorContext} from '../editor/editor-snapshot'
-import {Element, Text, type Descendant} from '../slate'
+import type {Descendant} from '../slate'
 import {node as editorNode} from '../slate/editor/node'
 import {nodes as editorNodes} from '../slate/editor/nodes'
 import {pathRef} from '../slate/editor/path-ref'
+import {isElement} from '../slate/element/is-element'
 import {getChildren} from '../slate/node/get-children'
+import {isText} from '../slate/text/is-text'
 import type {Path} from '../types/paths'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
@@ -94,7 +96,7 @@ function diffMatchPatch(
     patch.path[1] === 'children' &&
     patch.path[3] === 'text'
 
-  if (!isSpanTextDiffMatchPatch || !Text.isText(child.node, editor.schema)) {
+  if (!isSpanTextDiffMatchPatch || !isText(child.node, editor.schema)) {
     return false
   }
 
@@ -211,7 +213,7 @@ function insertPatch(
     position === 'after' ? targetChild.index + 1 : targetChild.index
   const childInsertPath = [block.index, normalizedIdx]
 
-  if (childrenToInsert && Element.isElement(childrenToInsert, editor.schema)) {
+  if (childrenToInsert && isElement(childrenToInsert, editor.schema)) {
     childrenToInsert.children.forEach((node, i) => {
       editor.apply({
         type: 'insert_node',
@@ -253,7 +255,7 @@ function setPatch(
 
     if (
       editor.isTextBlock(block.node) &&
-      Element.isElement(updatedBlock, editor.schema)
+      isElement(updatedBlock, editor.schema)
     ) {
       applySetNode(editor, updatedBlock, [block.index])
 
@@ -315,7 +317,7 @@ function setPatch(
 
   // If this is targeting a text block child
   if (isTextBlock && child) {
-    if (Text.isText(child.node, editor.schema)) {
+    if (isText(child.node, editor.schema)) {
       if (
         value !== null &&
         typeof value === 'object' &&
@@ -464,8 +466,7 @@ function unsetPatch(editor: PortableTextSlateEditor, patch: UnsetPatch) {
 
   if (
     child &&
-    (Element.isElement(child.node, editor.schema) ||
-      editor.isObjectNode(child.node))
+    (isElement(child.node, editor.schema) || editor.isObjectNode(child.node))
   ) {
     // Unsetting inline object property
 
@@ -506,7 +507,7 @@ function unsetPatch(editor: PortableTextSlateEditor, patch: UnsetPatch) {
     return true
   }
 
-  if (child && Text.isText(child.node, editor.schema)) {
+  if (child && isText(child.node, editor.schema)) {
     const propPath = patch.path.slice(3)
     const propEntry = propPath.at(0)
     const reservedProps = ['_key', '_type']
@@ -651,7 +652,7 @@ function findBlockChild(
 ): {node: Descendant; index: number} | undefined {
   const blockNode = block.node
 
-  if (!Element.isElement(blockNode, schema) || path[1] !== 'children') {
+  if (!isElement(blockNode, schema) || path[1] !== 'children') {
     return undefined
   }
 

@@ -1,9 +1,9 @@
 import type {Element} from '../interfaces'
-import {Editor} from '../interfaces/editor'
-import {Text} from '../interfaces/text'
+import type {Editor} from '../interfaces/editor'
+import {isText} from '../text/is-text'
 
 export function hasInlines(editor: Editor, element: Element): boolean {
   return element.children.some(
-    (n) => Text.isText(n, editor.schema) || Editor.isInline(editor, n),
+    (n) => isText(n, editor.schema) || editor.isInline(n),
   )
 }

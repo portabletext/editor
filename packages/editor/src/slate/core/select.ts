@@ -1,8 +1,8 @@
+import {safeStringify} from '../../internal-utils/safe-json'
 import {range as editorRange} from '../editor/range'
 import type {Location} from '../interfaces'
 import type {Editor} from '../interfaces/editor'
-import {Range} from '../interfaces/range'
-import {Scrubber} from '../interfaces/scrubber'
+import {isRange} from '../range/is-range'
 
 export function select(editor: Editor, target: Location): void {
   const {selection} = editor
@@ -13,9 +13,9 @@ export function select(editor: Editor, target: Location): void {
     return
   }
 
-  if (!Range.isRange(target)) {
+  if (!isRange(target)) {
     throw new Error(
-      `When setting the selection and the current selection is \`null\` you must provide at least an \`anchor\` and \`focus\`, but you passed: ${Scrubber.stringify(
+      `When setting the selection and the current selection is \`null\` you must provide at least an \`anchor\` and \`focus\`, but you passed: ${safeStringify(
         target,
       )}`,
     )
