@@ -1,6 +1,6 @@
 import ReactDOM from 'react-dom'
 import type {Editor} from '../../slate'
-import {IS_ANDROID, withDOM} from '../../slate-dom'
+import {withDOM} from '../../slate-dom'
 import {REACT_MAJOR_VERSION} from '../utils/environment'
 import type {ReactEditor} from './react-editor'
 
@@ -17,21 +17,7 @@ export const withReact = <T extends Editor>(editor: T): T & ReactEditor => {
 
   e = withDOM(e)
 
-  const {onChange, apply, insertText} = e
-
-  if (IS_ANDROID) {
-    e.insertText = (text, options) => {
-      // COMPAT: Android devices, specifically Samsung devices, experience cursor jumping.
-      // This issue occurs when the ⁠insertText function is called immediately after typing.
-      // The problem arises because typing schedules a selection change.
-      // However, this selection change is only executed after the ⁠insertText function.
-      // As a result, the already obsolete selection is applied, leading to incorrect
-      // final cursor position.
-      e.pendingSelection = null
-
-      return insertText(text, options)
-    }
-  }
+  const {onChange, apply} = e
 
   e.onChange = (options) => {
     // COMPAT: React < 18 doesn't batch `setState` hook calls, which means

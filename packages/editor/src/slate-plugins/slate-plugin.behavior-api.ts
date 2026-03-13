@@ -10,23 +10,6 @@ export function createBehaviorApiPlugin(editorActor: EditorActor) {
   return function behaviorApiPlugin(editor: Editor) {
     const {select, setSelection} = editor
 
-    editor.insertText = (text) => {
-      if (editor.isNormalizingNode || editor.isPerformingBehaviorOperation) {
-        console.error('Unexpected call to .insertText(...)')
-        return
-      }
-
-      editorActor.send({
-        type: 'behavior event',
-        behaviorEvent: {
-          type: 'insert.text',
-          text,
-        },
-        editor,
-      })
-      return
-    }
-
     editor.redo = () => {
       if (editor.isNormalizingNode || editor.isPerformingBehaviorOperation) {
         console.error('Unexpected call to .redo(...)')

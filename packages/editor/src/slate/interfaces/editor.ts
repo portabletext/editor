@@ -13,7 +13,6 @@ import type {
   RangeRef,
   Text,
 } from '..'
-import type {TextInsertTextOptions} from '../core/insert-text'
 
 /**
  * The `Editor` interface stores all the state of a Slate editor. It is extended
@@ -63,7 +62,6 @@ export interface BaseEditor {
 
   // Overrideable commands.
 
-  insertText: (text: string, options?: TextInsertTextOptions) => void
   select: (target: Location) => void
   setSelection: (props: Partial<Range>) => void
 }
