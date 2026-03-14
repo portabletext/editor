@@ -3,6 +3,7 @@ import {getNodes} from '../node/get-nodes'
 import {pathAncestors} from '../path/path-ancestors'
 import {pathLevels} from '../path/path-levels'
 import {isText} from '../text/is-text'
+import {resolveKeyedPath} from '../utils/resolve-keyed-path'
 import type {WithEditorFirstArg} from '../utils/types'
 
 /**
@@ -34,6 +35,18 @@ export const getDirtyPaths: WithEditorFirstArg<Editor['getDirtyPaths']> = (
       const {path} = op
       const ancestors = pathAncestors(path)
       return [...ancestors]
+    }
+
+    case 'set_node_keyed': {
+      const indexedPath = resolveKeyedPath(
+        _editor,
+        op.path,
+        _editor.blockIndexMap,
+      )
+      if (!indexedPath) {
+        return []
+      }
+      return pathLevels(indexedPath)
     }
 
     default: {

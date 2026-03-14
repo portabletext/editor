@@ -3,6 +3,7 @@ import {levels} from '../../slate/editor/levels'
 import {node as editorNode} from '../../slate/editor/node'
 import {parentPath} from '../../slate/path/parent-path'
 import {isPoint} from '../../slate/point/is-point'
+import {resolveKeyedPath} from '../../slate/utils/resolve-keyed-path'
 import {
   transformPendingPoint,
   transformPendingRange,
@@ -83,6 +84,14 @@ export const withDOM = <T extends Editor>(editor: T): T & DOMEditor => {
       case 'remove_text':
       case 'set_node': {
         matches.push(...getMatches(e, op.path))
+        break
+      }
+
+      case 'set_node_keyed': {
+        const resolved = resolveKeyedPath(e, op.path, e.blockIndexMap)
+        if (resolved) {
+          matches.push(...getMatches(e, resolved))
+        }
         break
       }
 

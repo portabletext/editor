@@ -1,56 +1,47 @@
-import type {PortableTextBlock} from '@portabletext/schema'
 import {isTextBlock} from '@portabletext/schema'
-import {applySetNode} from '../internal-utils/apply-set-node'
+import {applySetNodeKeyed} from '../internal-utils/apply-set-node-keyed'
 import {safeStringify} from '../internal-utils/safe-json'
-import {node as editorNode} from '../slate/editor/node'
+import {getNode} from '../slate/node/get-node'
+import {resolveKeyedPath} from '../slate/utils/resolve-keyed-path'
 import type {OperationImplementation} from './operation.types'
 
 export const childUnsetOperationImplementation: OperationImplementation<
   'child.unset'
 > = ({context, operation}) => {
-  const blockKey = operation.at[0]._key
-  const blockIndex = operation.editor.blockIndexMap.get(blockKey)
+  const keyedPath = [operation.at[0], 'children', operation.at[2]]
+  const indexedPath = resolveKeyedPath(
+    operation.editor,
+    keyedPath,
+    operation.editor.blockIndexMap,
+  )
 
-  if (blockIndex === undefined) {
-    throw new Error(`Unable to find block index for block key ${blockKey}`)
+  if (!indexedPath) {
+    throw new Error(`Unable to find child at ${safeStringify(operation.at)}`)
   }
 
-  const block =
-    blockIndex !== undefined
-      ? (operation.editor.children as Array<PortableTextBlock>).at(blockIndex)
-      : undefined
+  const block = getNode(
+    operation.editor,
+    [indexedPath.at(0)!],
+    operation.editor.schema,
+  )
 
   if (!block) {
     throw new Error(`Unable to find block at ${safeStringify(operation.at)}`)
   }
 
   if (!isTextBlock(context, block)) {
-    throw new Error(`Block ${safeStringify(blockKey)} is not a text block`)
-  }
-
-  const childKey = operation.at[2]._key
-
-  if (!childKey) {
     throw new Error(
-      `Unable to find child key at ${safeStringify(operation.at)}`,
+      `Block ${safeStringify(operation.at[0]._key)} is not a text block`,
     )
   }
 
-  const childIndex = block.children.findIndex(
-    (child) => child._key === childKey,
-  )
+  const child = getNode(
+    operation.editor,
+    indexedPath,
+    operation.editor.schema,
+  ) as Record<string, unknown>
 
-  if (childIndex === -1) {
-    throw new Error(`Unable to find child at ${safeStringify(operation.at)}`)
-  }
-
-  const childEntry = editorNode(operation.editor, [blockIndex, childIndex], {
-    depth: 2,
-  })
-  const child = childEntry?.[0]
-  const childPath = childEntry?.[1]
-
-  if (!child || !childPath) {
+  if (!child) {
     throw new Error(`Unable to find child at ${safeStringify(operation.at)}`)
   }
 
@@ -76,14 +67,14 @@ export const childUnsetOperationImplementation: OperationImplementation<
       newNode[prop] = null
     }
 
-    applySetNode(operation.editor, newNode, childPath)
+    applySetNodeKeyed(operation.editor, newNode, keyedPath)
 
     if (operation.props.includes('text')) {
       operation.editor.apply({
         type: 'remove_text',
-        path: childPath,
+        path: indexedPath,
         offset: 0,
-        text: child.text,
+        text: child.text as string,
       })
     }
 
@@ -102,7 +93,7 @@ export const childUnsetOperationImplementation: OperationImplementation<
         unsetProps[prop] = null
       }
     }
-    applySetNode(operation.editor, unsetProps, childPath)
+    applySetNodeKeyed(operation.editor, unsetProps, keyedPath)
 
     return
   }

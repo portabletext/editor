@@ -16,6 +16,7 @@ type ExtendableTypes =
   | 'RemoveNodeOperation'
   | 'RemoveTextOperation'
   | 'SetNodeOperation'
+  | 'SetNodeKeyedOperation'
   | 'SetSelectionOperation'
 
 export interface CustomTypes {

@@ -1,22 +1,30 @@
 import {isTextBlock} from '@portabletext/schema'
-import {applySetNode} from '../internal-utils/apply-set-node'
+import {applySetNodeKeyed} from '../internal-utils/apply-set-node-keyed'
 import {safeStringify} from '../internal-utils/safe-json'
+import {getNode} from '../slate/node/get-node'
+import {resolveKeyedPath} from '../slate/utils/resolve-keyed-path'
 import type {OperationImplementation} from './operation.types'
 
 export const blockUnsetOperationImplementation: OperationImplementation<
   'block.unset'
 > = ({context, operation}) => {
-  const blockKey = operation.at[0]._key
-  const blockIndex = operation.editor.blockIndexMap.get(blockKey)
+  const indexedPath = resolveKeyedPath(
+    operation.editor,
+    [operation.at[0]],
+    operation.editor.blockIndexMap,
+  )
 
-  if (blockIndex === undefined) {
-    throw new Error(`Unable to find block index for block key ${blockKey}`)
+  if (!indexedPath) {
+    throw new Error(
+      `Unable to find block index for block key ${operation.at[0]._key}`,
+    )
   }
 
-  const slateBlock =
-    blockIndex !== undefined
-      ? operation.editor.children.at(blockIndex)
-      : undefined
+  const slateBlock = getNode(
+    operation.editor,
+    indexedPath,
+    operation.editor.schema,
+  )
 
   if (!slateBlock) {
     throw new Error(`Unable to find block at ${safeStringify(operation.at)}`)
@@ -31,11 +39,11 @@ export const blockUnsetOperationImplementation: OperationImplementation<
     for (const prop of propsToRemove) {
       unsetProps[prop] = null
     }
-    applySetNode(operation.editor, unsetProps, [blockIndex])
+    applySetNodeKeyed(operation.editor, unsetProps, [operation.at[0]])
 
     if (operation.props.includes('_key')) {
-      applySetNode(operation.editor, {_key: context.keyGenerator()}, [
-        blockIndex,
+      applySetNodeKeyed(operation.editor, {_key: context.keyGenerator()}, [
+        operation.at[0],
       ])
     }
 
@@ -53,5 +61,5 @@ export const blockUnsetOperationImplementation: OperationImplementation<
       unsetProps[key] = null
     }
   }
-  applySetNode(operation.editor, unsetProps, [blockIndex])
+  applySetNodeKeyed(operation.editor, unsetProps, [operation.at[0]])
 }

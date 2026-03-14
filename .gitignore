@@ -8,3 +8,4 @@ node_modules
 .vercel
 .env*.local
 .eslintcache
+.bundle-stats

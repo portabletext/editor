@@ -25,6 +25,7 @@ import {
   modifyLeaf,
   removeChildren,
 } from '../utils/modify'
+import {resolveKeyedPath} from '../utils/resolve-keyed-path'
 
 export function applyOperation(editor: Editor, op: Operation): void {
   let transformSelection = false
@@ -172,6 +173,59 @@ export function applyOperation(editor: Editor, op: Operation): void {
           if (
             key === 'text' &&
             !isElement &&
+            Array.isArray((node as Record<string, unknown>)['marks'])
+          ) {
+            throw new Error(`Cannot set the "${key}" property of nodes!`)
+          }
+
+          const value = newProperties[key as keyof Node]
+
+          if (value == null) {
+            delete newNode[key as keyof Node]
+          } else {
+            newNode[key as keyof Node] = value
+          }
+        }
+
+        // properties that were previously defined, but are now missing, must be deleted
+        for (const key in properties) {
+          if (!newProperties.hasOwnProperty(key)) {
+            delete newNode[key as keyof Node]
+          }
+        }
+
+        return newNode
+      })
+
+      break
+    }
+
+    case 'set_node_keyed': {
+      const {path: keyedPath, properties, newProperties} = op
+      const indexedPath = resolveKeyedPath(
+        editor,
+        keyedPath,
+        editor.blockIndexMap,
+      )
+
+      if (!indexedPath || indexedPath.length === 0) {
+        throw new Error(`Cannot resolve keyed path to a node`)
+      }
+
+      modifyDescendant(editor, indexedPath, editor.schema, (node) => {
+        const newNode = {...node}
+        const isElem = 'children' in node && Array.isArray(node.children)
+
+        for (const key in newProperties) {
+          if (key === 'children') {
+            throw new Error(`Cannot set the "${key}" property of nodes!`)
+          }
+
+          // Only skip `text` on spans (which have marks), not on ObjectNodes
+          // where `text` is a user property.
+          if (
+            key === 'text' &&
+            !isElem &&
             Array.isArray((node as Record<string, unknown>)['marks'])
           ) {
             throw new Error(`Cannot set the "${key}" property of nodes!`)

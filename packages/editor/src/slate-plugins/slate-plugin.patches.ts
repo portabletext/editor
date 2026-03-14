@@ -9,6 +9,7 @@ import {
   insertTextPatch,
   removeNodePatch,
   removeTextPatch,
+  setNodeKeyedPatch,
   setNodePatch,
 } from '../internal-utils/operation-to-patches'
 import {safeStringify} from '../internal-utils/safe-json'
@@ -187,6 +188,16 @@ export function createPatchesPlugin({
             ),
           ]
           break
+        case 'set_node_keyed':
+          patches = [
+            ...patches,
+            ...setNodeKeyedPatch(
+              editorActor.getSnapshot().context.schema,
+              editor.children,
+              operation,
+            ),
+          ]
+          break
         default:
         // Do nothing
       }
@@ -195,7 +206,9 @@ export function createPatchesPlugin({
       if (
         !editorWasEmpty &&
         editorIsEmpty &&
-        ['set_node', 'remove_text', 'remove_node'].includes(operation.type)
+        ['set_node', 'set_node_keyed', 'remove_text', 'remove_node'].includes(
+          operation.type,
+        )
       ) {
         patches = [...patches, unset([])]
         relayActor.send({

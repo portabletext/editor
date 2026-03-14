@@ -19,10 +19,12 @@ import type {
   InsertTextOperation,
   RemoveNodeOperation,
   RemoveTextOperation,
+  SetNodeKeyedOperation,
   SetNodeOperation,
 } from '../slate'
 import {isElement} from '../slate/element/is-element'
 import {isText} from '../slate/text/is-text'
+import {resolveKeyedPath} from '../slate/utils/resolve-keyed-path'
 import type {Path} from '../types/paths'
 import {safeStringify} from './safe-json'
 
@@ -344,4 +346,94 @@ export function removeNodePatch(
   } else {
     return []
   }
+}
+
+export function setNodeKeyedPatch(
+  _schema: EditorSchema,
+  children: Array<Descendant>,
+  operation: SetNodeKeyedOperation,
+): Array<Patch> {
+  const patches: Array<Patch> = []
+
+  // If _key is being changed, the old key in operation.path won't resolve
+  // because the tree is already mutated. Replace the last keyed segment
+  // with the new key so we can resolve the path in the current tree.
+  const newKey = operation.newProperties._key
+  const effectivePath =
+    newKey !== undefined
+      ? operation.path.map((segment, i) =>
+          i === operation.path.length - 1 &&
+          typeof segment === 'object' &&
+          '_key' in segment
+            ? {_key: newKey as string}
+            : segment,
+        )
+      : operation.path
+
+  const indexedPath = resolveKeyedPath({children}, effectivePath)
+
+  if (!indexedPath) {
+    return []
+  }
+
+  for (const [key, propertyValue] of Object.entries(operation.newProperties)) {
+    if (key === 'children') {
+      continue
+    }
+
+    if (key === '_key') {
+      // _key patches must use a numeric index for the node whose key is
+      // changing — you can't reference a node by its key when that key is
+      // the thing being changed. We build a path that keeps keyed segments
+      // for ancestors but uses the numeric index for the target node.
+      //
+      // Find the last keyed segment (the node whose _key is changing)
+      // and replace only that one with its resolved numeric index.
+      let lastKeyedIdx = -1
+      for (let i = effectivePath.length - 1; i >= 0; i--) {
+        const seg = effectivePath[i]
+        if (typeof seg === 'object' && seg !== null && '_key' in seg) {
+          lastKeyedIdx = i
+          break
+        }
+      }
+
+      // Count how many keyed segments precede the last one to find its
+      // position in the indexedPath array.
+      let keyedCount = 0
+      const hybridPath: Array<{_key: string} | string | number> = []
+      for (let i = 0; i < effectivePath.length; i++) {
+        const segment = effectivePath[i]!
+        if (typeof segment === 'object' && '_key' in segment) {
+          if (i === lastKeyedIdx) {
+            // Replace the target node's keyed segment with numeric index
+            hybridPath.push(indexedPath[keyedCount]!)
+          } else {
+            // Keep ancestor keyed segments as-is
+            hybridPath.push(segment)
+          }
+          keyedCount++
+        } else {
+          hybridPath.push(segment)
+        }
+      }
+      patches.push(set(propertyValue, [...hybridPath, '_key']))
+    } else {
+      // Use effectivePath (with new key if _key changed) since the tree
+      // is already mutated and the old key no longer exists.
+      patches.push(set(propertyValue, [...effectivePath, key]))
+    }
+  }
+
+  for (const key of Object.keys(operation.properties)) {
+    if (key === '_key' || key === 'children') {
+      continue
+    }
+
+    if (!(key in operation.newProperties)) {
+      patches.push(unset([...effectivePath, key]))
+    }
+  }
+
+  return patches
 }

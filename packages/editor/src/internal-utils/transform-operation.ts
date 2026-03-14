@@ -166,6 +166,7 @@ function adjustBlockPath(
   if (
     blockIndex >= 0 &&
     transformedOperation.type !== 'set_selection' &&
+    transformedOperation.type !== 'set_node_keyed' &&
     Array.isArray(transformedOperation.path) &&
     transformedOperation.path[0]! >= blockIndex + level &&
     transformedOperation.path[0]! + level > -1
@@ -225,6 +226,9 @@ function findOperationTargetBlock(
   let block: Descendant | undefined
   if (operation.type === 'set_selection' && editor.selection) {
     block = editor.children[editor.selection.focus.path[0]!]
+  } else if (operation.type === 'set_node_keyed') {
+    // set_node_keyed uses keyed paths, not indexed paths
+    return undefined
   } else if ('path' in operation) {
     block = editor.children[operation.path[0]!]
   }

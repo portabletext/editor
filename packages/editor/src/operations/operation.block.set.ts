@@ -1,22 +1,32 @@
 import {applyAll, set} from '@portabletext/patches'
 import {isTextBlock} from '@portabletext/schema'
-import {applySetNode} from '../internal-utils/apply-set-node'
+import {applySetNodeKeyed} from '../internal-utils/apply-set-node-keyed'
 import {safeStringify} from '../internal-utils/safe-json'
+import {getNode} from '../slate/node/get-node'
+import {resolveKeyedPath} from '../slate/utils/resolve-keyed-path'
 import {parseMarkDefs} from '../utils/parse-blocks'
 import type {OperationImplementation} from './operation.types'
 
 export const blockSetOperationImplementation: OperationImplementation<
   'block.set'
 > = ({context, operation}) => {
-  const blockIndex = operation.editor.blockIndexMap.get(operation.at[0]._key)
+  const indexedPath = resolveKeyedPath(
+    operation.editor,
+    [operation.at[0]],
+    operation.editor.blockIndexMap,
+  )
 
-  if (blockIndex === undefined) {
+  if (!indexedPath) {
     throw new Error(
       `Unable to find block index for block at ${safeStringify(operation.at)}`,
     )
   }
 
-  const slateBlock = operation.editor.children.at(blockIndex)
+  const slateBlock = getNode(
+    operation.editor,
+    indexedPath,
+    operation.editor.schema,
+  )
 
   if (!slateBlock) {
     throw new Error(`Unable to find block at ${safeStringify(operation.at)}`)
@@ -72,7 +82,7 @@ export const blockSetOperationImplementation: OperationImplementation<
       }
     }
 
-    applySetNode(operation.editor, filteredProps, [blockIndex])
+    applySetNodeKeyed(operation.editor, filteredProps, [operation.at[0]])
   } else {
     const schemaDefinition = context.schema.blockObjects.find(
       (definition) => definition.name === slateBlock._type,
@@ -100,6 +110,6 @@ export const blockSetOperationImplementation: OperationImplementation<
 
     const updatedSlateBlock = applyAll(slateBlock, patches)
 
-    applySetNode(operation.editor, updatedSlateBlock, [blockIndex])
+    applySetNodeKeyed(operation.editor, updatedSlateBlock, [operation.at[0]])
   }
 }

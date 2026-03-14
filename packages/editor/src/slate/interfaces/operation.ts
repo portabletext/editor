@@ -58,6 +58,21 @@ export type SetNodeOperation = ExtendedType<
   BaseSetNodeOperation
 >
 
+export type KeyedPathSegment = {_key: string}
+export type KeyedPath = Array<KeyedPathSegment | string>
+
+export type BaseSetNodeKeyedOperation = {
+  type: 'set_node_keyed'
+  path: KeyedPath
+  properties: Partial<Node>
+  newProperties: Partial<Node>
+}
+
+export type SetNodeKeyedOperation = ExtendedType<
+  'SetNodeKeyedOperation',
+  BaseSetNodeKeyedOperation
+>
+
 export type BaseSetSelectionOperation =
   | {
       type: 'set_selection'
@@ -84,6 +99,7 @@ export type NodeOperation =
   | InsertNodeOperation
   | RemoveNodeOperation
   | SetNodeOperation
+  | SetNodeKeyedOperation
 
 export type SelectionOperation = SetSelectionOperation
 

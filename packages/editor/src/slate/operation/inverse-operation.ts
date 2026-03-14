@@ -24,6 +24,16 @@ export function inverseOperation(op: Operation): Operation {
       return {...op, properties: newProperties, newProperties: properties}
     }
 
+    case 'set_node_keyed': {
+      const {properties, newProperties} = op
+      return {
+        type: 'set_node_keyed',
+        path: op.path,
+        properties: newProperties,
+        newProperties: properties,
+      }
+    }
+
     case 'set_selection': {
       const {properties, newProperties} = op
 

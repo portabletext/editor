@@ -11,3 +11,4 @@ packages/html/src/tests/**/*.html
 .changeset/*.md
 packages/markdown/src/example-document.out.md
 packages/markdown/src/example-document.advanced.out.md
+.bundle-stats
