@@ -1,8 +1,10 @@
 import React, {useCallback, useMemo, type JSX} from 'react'
-import {ReactEditor, useReadOnly, useSlateStatic} from '..'
 import type {DecoratedRange} from '../../slate'
 import {IS_ANDROID, isElementDecorationsEqual} from '../../slate-dom'
 import type {ObjectNode} from '../../slate/interfaces/node'
+import {useReadOnly} from '../hooks/use-read-only'
+import {useSlateStatic} from '../hooks/use-slate-static'
+import {ReactEditor} from '../plugin/react-editor'
 import type {RenderElementProps} from './editable'
 
 const defaultRenderElement = (props: RenderElementProps) => {
