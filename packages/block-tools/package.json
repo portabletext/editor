@@ -53,12 +53,12 @@
     "@portabletext/html": "workspace:^",
     "@portabletext/sanity-bridge": "workspace:^",
     "@portabletext/schema": "workspace:^",
-    "@sanity/types": "^5.13.0"
+    "@sanity/types": "^5.16.0"
   },
   "devDependencies": {
     "@portabletext/test": "workspace:^",
     "@sanity/pkg-utils": "^10.2.1",
-    "@sanity/schema": "^5.13.0",
+    "@sanity/schema": "^5.16.0",
     "@types/jsdom": "^27.0.0",
     "@vercel/stega": "1.0.0",
     "@vitest/coverage-v8": "^4.0.18",
