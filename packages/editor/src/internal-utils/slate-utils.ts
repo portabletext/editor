@@ -21,29 +21,6 @@ import {rangeStart} from '../slate/range/range-start'
 import type {EditorSelection, EditorSelectionPoint} from '../types/editor'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 
-export function getBlockPath({
-  editor,
-  _key,
-}: {
-  editor: PortableTextSlateEditor
-  _key: string
-}): [number] | undefined {
-  const [, blockPath] = Array.from(
-    editorNodes(editor, {
-      at: [],
-      match: (n) => n._key === _key,
-    }),
-  ).at(0) ?? [undefined, undefined]
-
-  const blockIndex = blockPath?.at(0)
-
-  if (blockIndex === undefined) {
-    return undefined
-  }
-
-  return [blockIndex]
-}
-
 export function getAnchorBlock({
   editor,
 }: {
