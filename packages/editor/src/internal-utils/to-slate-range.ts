@@ -66,7 +66,7 @@ export function toSlateRange(
   }
 }
 
-export function toSlateSelectionPoint(
+function toSlateSelectionPoint(
   snapshot: {
     context: Pick<EditorContext, 'schema' | 'value'>
   } & Pick<EditorSnapshot, 'blockIndexMap'>,

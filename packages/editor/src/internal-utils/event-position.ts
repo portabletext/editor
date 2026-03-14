@@ -139,7 +139,7 @@ export function getEventPosition({
   }
 }
 
-export function getEventNode({
+function getEventNode({
   slateEditor,
   event,
 }: {
@@ -238,7 +238,7 @@ function getEventPositionBlock({
   return location < height / 2 ? 'start' : 'end'
 }
 
-export function getEventSelection({
+function getEventSelection({
   schema,
   slateEditor,
   event,

@@ -9,7 +9,7 @@ import {
 import type {EditorSchema} from '../editor/editor-schema'
 import type {InvalidValueResolution} from '../types/editor'
 
-export interface Validation {
+interface Validation {
   valid: boolean
   resolution: InvalidValueResolution | null
   value: PortableTextBlock[] | undefined
