@@ -1,5 +1,6 @@
-import type {Location, Point} from '../interfaces'
 import type {Editor} from '../interfaces/editor'
+import type {Location} from '../interfaces/location'
+import type {Point} from '../interfaces/point'
 import type {TextUnitAdjustment} from '../types/types'
 import {point} from './point'
 import {positions} from './positions'

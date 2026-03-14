@@ -1,6 +1,8 @@
 import {isElement} from '../element/is-element'
-import type {Element, Location, NodeEntry} from '../interfaces'
 import type {Editor} from '../interfaces/editor'
+import type {Element} from '../interfaces/element'
+import type {Location} from '../interfaces/location'
+import type {NodeEntry} from '../interfaces/node'
 import type {MaximizeMode} from '../types/types'
 import {above} from './above'
 

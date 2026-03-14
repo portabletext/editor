@@ -1,6 +1,6 @@
 import {isElement} from '../element/is-element'
-import type {Location, Span} from '../interfaces'
 import type {Editor, NodeMatch} from '../interfaces/editor'
+import type {Location, Span} from '../interfaces/location'
 import {Span as SpanUtils} from '../interfaces/location'
 import type {Node, NodeEntry} from '../interfaces/node'
 import type {Path} from '../interfaces/path'

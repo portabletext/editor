@@ -1,6 +1,6 @@
 import {isElement} from '../element/is-element'
-import type {Location} from '../interfaces'
 import type {Editor} from '../interfaces/editor'
+import type {Location} from '../interfaces/location'
 import type {Path} from '../interfaces/path'
 import type {Point} from '../interfaces/point'
 import {isAncestorPath} from '../path/is-ancestor-path'

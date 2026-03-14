@@ -1,5 +1,6 @@
-import type {Ancestor, Location, NodeEntry} from '../interfaces'
 import type {Editor, NodeMatch} from '../interfaces/editor'
+import type {Location} from '../interfaces/location'
+import type {Ancestor, NodeEntry} from '../interfaces/node'
 import {parentPath} from '../path/parent-path'
 import {pathEquals} from '../path/path-equals'
 import {isRange} from '../range/is-range'

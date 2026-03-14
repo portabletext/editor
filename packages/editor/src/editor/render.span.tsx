@@ -1,7 +1,8 @@
 import type {InlineObjectSchemaType} from '@portabletext/schema'
 import {useSelector} from '@xstate/react'
 import {useContext, useMemo, useRef, type ReactElement} from 'react'
-import {useSlateStatic, type RenderLeafProps} from '../slate-react'
+import type {RenderLeafProps} from '../slate/react/components/editable'
+import {useSlateStatic} from '../slate/react/hooks/use-slate-static'
 import type {
   BlockAnnotationRenderProps,
   BlockChildRenderProps,

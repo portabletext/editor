@@ -1,5 +1,6 @@
-import type {Range, RangeRef} from '../interfaces'
 import type {Editor} from '../interfaces/editor'
+import type {Range} from '../interfaces/range'
+import type {RangeRef} from '../interfaces/range-ref'
 import type {RangeDirection} from '../types/types'
 
 export function rangeRef(

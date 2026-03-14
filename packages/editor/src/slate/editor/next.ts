@@ -1,5 +1,6 @@
-import type {Descendant, Location, NodeEntry, Span} from '../interfaces'
 import type {Editor, NodeMatch} from '../interfaces/editor'
+import type {Location, Span} from '../interfaces/location'
+import type {Descendant, NodeEntry} from '../interfaces/node'
 import {isPath} from '../path/is-path'
 import type {SelectionMode} from '../types/types'
 import {after} from './after'

@@ -8,7 +8,7 @@ import type {
 import type {EditorSchema} from '../editor/editor-schema'
 import type {DecoratedRange} from '../editor/range-decorations-machine'
 import type {Range, Operation as SlateOperation} from '../slate'
-import type {ReactEditor} from '../slate-react'
+import type {ReactEditor} from '../slate/react/plugin/react-editor'
 import type {EditorSelection} from './editor'
 // Side-effect import to ensure Slate module augmentation is included
 import './slate'

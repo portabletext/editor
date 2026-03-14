@@ -1,5 +1,6 @@
-import type {Location, NodeEntry, ObjectNode} from '../interfaces'
 import type {Editor} from '../interfaces/editor'
+import type {Location} from '../interfaces/location'
+import type {NodeEntry, ObjectNode} from '../interfaces/node'
 import {getNode} from '../node/get-node'
 import type {MaximizeMode} from '../types/types'
 import {above} from './above'

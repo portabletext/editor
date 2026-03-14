@@ -5,7 +5,8 @@ import type {
 import {useContext, useRef, type ReactElement} from 'react'
 import type {DropPosition} from '../behaviors/behavior.core.drop-position'
 import type {Element as SlateElement} from '../slate'
-import {useSlateSelector, type RenderElementProps} from '../slate-react'
+import type {RenderElementProps} from '../slate/react/components/editable'
+import {useSlateSelector} from '../slate/react/hooks/use-slate-selector'
 import type {
   BlockListItemRenderProps,
   BlockRenderProps,

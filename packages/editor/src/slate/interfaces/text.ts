@@ -1,5 +1,5 @@
-import type {Range} from '..'
 import type {ExtendedType} from '../types/custom-types'
+import type {Range} from './range'
 
 /**
  * `Text` objects represent the nodes that contain the actual text content of a

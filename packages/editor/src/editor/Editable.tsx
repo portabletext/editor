@@ -19,14 +19,14 @@ import {normalizeSelection} from '../internal-utils/selection'
 import {slateRangeToSelection} from '../internal-utils/slate-utils'
 import {toSlateRange} from '../internal-utils/to-slate-range'
 import type {Text} from '../slate'
+import {start} from '../slate/editor/start'
 import {
-  ReactEditor,
   Editable as SlateEditable,
-  useSlate,
   type RenderElementProps,
   type RenderLeafProps,
-} from '../slate-react'
-import {start} from '../slate/editor/start'
+} from '../slate/react/components/editable'
+import {useSlate} from '../slate/react/hooks/use-slate'
+import {ReactEditor} from '../slate/react/plugin/react-editor'
 import type {
   EditorSelection,
   OnCopyFn,

@@ -1,5 +1,6 @@
-import type {Descendant, Path} from '..'
 import type {ExtendedType} from '../types/custom-types'
+import type {Descendant} from './node'
+import type {Path} from './path'
 
 /**
  * `Element` objects are a type of node in a Slate document that contain other

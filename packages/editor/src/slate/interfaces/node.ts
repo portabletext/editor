@@ -1,7 +1,8 @@
-import type {Path, Text} from '..'
 import type {Editor} from '../interfaces/editor'
 import type {ExtendedType} from '../types/custom-types'
 import type {Element} from './element'
+import type {Path} from './path'
+import type {Text} from './text'
 
 /**
  * `ObjectNode` represents a node with semantic content but no children or text.
