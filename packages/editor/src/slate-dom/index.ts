@@ -18,27 +18,19 @@ export {
 } from './utils/diff-text'
 
 export {
-  closestShadowAware,
   containsShadowAware,
   type DOMElement,
   type DOMNode,
-  type DOMPoint,
   type DOMRange,
-  type DOMSelection,
-  type DOMStaticRange,
   DOMText,
   getActiveElement,
   getDefaultView,
   getSelection,
-  hasShadowRoot,
-  isAfter,
-  isBefore,
   isDOMElement,
   isDOMNode,
   isDOMSelection,
   isPlainTextOnlyPaste,
   isTrackedMutation,
-  normalizeDOMPoint,
 } from './utils/dom'
 
 export {
