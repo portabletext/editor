@@ -2,11 +2,11 @@ import type {PortableTextBlock} from '@portabletext/schema'
 import {getTersePt} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
+import {createTestEditors} from '../src/test/vitest'
 import {
   getSelectionAfterText,
   getSelectionBeforeText,
-} from '../src/internal-utils/text-selection'
-import {createTestEditors} from '../src/test/vitest'
+} from '../test-utils/text-selection'
 
 function createInitialValue(text: string): Array<PortableTextBlock> {
   return [

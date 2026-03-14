@@ -1,6 +1,6 @@
 import {getTersePt} from '@portabletext/test'
-import type {EditorContext} from '../editor/editor-snapshot'
-import {sliceBlocks} from '../utils/util.slice-blocks'
+import type {EditorContext} from '../src/editor/editor-snapshot'
+import {sliceBlocks} from '../src/utils/util.slice-blocks'
 
 export function getSelectionText(
   context: Pick<

@@ -1,4 +1,4 @@
-import type {EditorSelection} from '../types/editor'
+import type {EditorSelection} from '../src/types/editor'
 
 export function collapseSelection<
   TEditorSelection extends NonNullable<EditorSelection> | null,

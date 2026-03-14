@@ -1,6 +1,6 @@
 import type {PortableTextBlock} from '@portabletext/schema'
 import {describe, expect, test} from 'vitest'
-import {createTestSnapshot} from '../internal-utils/create-test-snapshot'
+import {createTestSnapshot} from '../../test-utils/create-test-snapshot'
 import type {EditorSelection} from '../types/editor'
 import {getSelectedSpans} from './selector.get-selected-spans'
 

@@ -1,5 +1,5 @@
 import {describe, expect, test} from 'vitest'
-import {createTestSnapshot} from '../internal-utils/create-test-snapshot'
+import {createTestSnapshot} from '../../test-utils/create-test-snapshot'
 import type {EditorSelection} from '../types/editor'
 import {defaultKeyGenerator} from '../utils/key-generator'
 import {isOverlappingSelection} from './selector.is-overlapping-selection'

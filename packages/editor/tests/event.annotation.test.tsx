@@ -2,12 +2,12 @@ import {defineSchema, type PortableTextTextBlock} from '@portabletext/schema'
 import {getTersePt} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
 import {userEvent} from 'vitest/browser'
-import {getTextMarks} from '../src/internal-utils/text-marks'
+import {createTestEditor} from '../src/test/vitest'
+import {getTextMarks} from '../test-utils/text-marks'
 import {
   getSelectionBeforeText,
   getTextSelection,
-} from '../src/internal-utils/text-selection'
-import {createTestEditor} from '../src/test/vitest'
+} from '../test-utils/text-selection'
 
 describe('event.annotation', () => {
   test('.add/.remove', async () => {

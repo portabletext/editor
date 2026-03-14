@@ -2,11 +2,11 @@ import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
+import {createTestEditor} from '../src/test/vitest'
 import {
   getSelectionAfterText,
   getTextSelection,
-} from '../src/internal-utils/text-selection'
-import {createTestEditor} from '../src/test/vitest'
+} from '../test-utils/text-selection'
 
 describe('event.input.*', () => {
   test('Scenario: text/html equal to text/plain', async () => {

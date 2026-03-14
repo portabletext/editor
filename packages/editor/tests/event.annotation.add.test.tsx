@@ -1,11 +1,11 @@
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
+import {createTestEditor} from '../src/test/vitest'
 import {
   getSelectionAfterText,
   getTextSelection,
-} from '../src/internal-utils/text-selection'
-import {createTestEditor} from '../src/test/vitest'
+} from '../test-utils/text-selection'
 
 describe('event.annotation.add', () => {
   describe('Scenario: Adding annotation to part of text', () => {

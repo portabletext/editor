@@ -7,9 +7,9 @@ import {effect, execute, forward} from '../src/behaviors/behavior.types.action'
 import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
 import type {BehaviorEvent} from '../src/behaviors/behavior.types.event'
 import {IS_MAC} from '../src/internal-utils/is-hotkey'
-import {getSelectionAfterText} from '../src/internal-utils/text-selection'
 import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
 import {createTestEditor} from '../src/test/vitest'
+import {getSelectionAfterText} from '../test-utils/text-selection'
 
 describe('event.insert.text', () => {
   test('Scenario: Consecutive `insert.text` events', async () => {

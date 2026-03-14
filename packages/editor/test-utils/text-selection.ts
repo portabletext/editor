@@ -1,8 +1,8 @@
 import {isSpan, isTextBlock} from '@portabletext/schema'
-import type {EditorContext} from '../editor/editor-snapshot'
-import type {EditorSelection, EditorSelectionPoint} from '../types/editor'
+import type {EditorContext} from '../src/editor/editor-snapshot'
+import {safeStringify} from '../src/internal-utils/safe-json'
+import type {EditorSelection, EditorSelectionPoint} from '../src/types/editor'
 import {collapseSelection} from './collapse-selection'
-import {safeStringify} from './safe-json'
 import {splitString} from './split-string'
 import {stringOverlap} from './string-overlap'
 

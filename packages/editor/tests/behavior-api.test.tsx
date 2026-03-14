@@ -10,10 +10,10 @@ import {
   raise,
 } from '../src/behaviors/behavior.types.action'
 import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
-import {getSelectionAfterText} from '../src/internal-utils/text-selection'
 import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
 import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
 import {createTestEditor} from '../src/test/vitest'
+import {getSelectionAfterText} from '../test-utils/text-selection'
 
 describe('Behavior API', () => {
   test('Scenario: Suppressing raised events while executing', async () => {

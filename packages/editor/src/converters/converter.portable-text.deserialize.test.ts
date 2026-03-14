@@ -4,7 +4,7 @@ import {
   type SchemaDefinition,
 } from '@portabletext/schema'
 import {assert, describe, expect, test} from 'vitest'
-import {createTestSnapshot} from '../internal-utils/create-test-snapshot'
+import {createTestSnapshot} from '../../test-utils/create-test-snapshot'
 import {safeStringify} from '../internal-utils/safe-json'
 import {converterPortableText} from './converter.portable-text'
 
