@@ -21,7 +21,6 @@ export type ObjectNode = ExtendedType<'ObjectNode', BaseObjectNode>
  * occur in a Slate document tree.
  */
 
-export type BaseNode = Editor | Element | ObjectNode | Text
 export type Node = Editor | Element | ObjectNode | Text
 
 export interface NodeChildrenOptions {
