@@ -1,7 +1,7 @@
 import {getTersePt} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
-import {getSelectionAfterText} from '../internal-utils/text-selection'
+import {getSelectionAfterText} from '../../test-utils/text-selection'
 import {createTestEditor} from '../test/vitest'
 import {validateSelectionMachine} from './validate-selection-machine'
 

@@ -1,6 +1,6 @@
 import {isSpan, isTextBlock} from '@portabletext/schema'
-import type {EditorContext} from '../editor/editor-snapshot'
-import type {EditorSelection, EditorSelectionPoint} from '../types/editor'
+import type {EditorContext} from '../src/editor/editor-snapshot'
+import type {EditorSelection, EditorSelectionPoint} from '../src/types/editor'
 
 export function getEditorSelection(
   context: Pick<EditorContext, 'schema' | 'value'>,

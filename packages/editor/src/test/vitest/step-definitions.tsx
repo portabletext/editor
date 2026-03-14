@@ -3,18 +3,18 @@ import {getTersePt, parseTersePt} from '@portabletext/test'
 import {Given, Then, When} from 'racejar'
 import {assert, expect, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
-import {getEditorSelection} from '../../internal-utils/editor-selection'
-import {IS_MAC} from '../../internal-utils/is-hotkey'
-import {safeParse} from '../../internal-utils/safe-json'
-import {getSelectionText} from '../../internal-utils/selection-text'
-import {getTextBlockKey} from '../../internal-utils/text-block-key'
-import {getTextMarks} from '../../internal-utils/text-marks'
+import {getEditorSelection} from '../../../test-utils/editor-selection'
+import {getSelectionText} from '../../../test-utils/selection-text'
+import {getTextBlockKey} from '../../../test-utils/text-block-key'
+import {getTextMarks} from '../../../test-utils/text-marks'
 import {
   getSelectionAfterText,
   getSelectionBeforeText,
   getTextSelection,
-} from '../../internal-utils/text-selection'
-import {getValueAnnotations} from '../../internal-utils/value-annotations'
+} from '../../../test-utils/text-selection'
+import {getValueAnnotations} from '../../../test-utils/value-annotations'
+import {IS_MAC} from '../../internal-utils/is-hotkey'
+import {safeParse} from '../../internal-utils/safe-json'
 import {createTestEditor, createTestEditors} from '../../test/vitest'
 import {
   parseBlocks,

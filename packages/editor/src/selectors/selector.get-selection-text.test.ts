@@ -4,7 +4,7 @@ import {
   type PortableTextBlock,
 } from '@portabletext/schema'
 import {expect, test} from 'vitest'
-import {createTestSnapshot} from '../internal-utils/create-test-snapshot'
+import {createTestSnapshot} from '../../test-utils/create-test-snapshot'
 import type {EditorSelection} from '../types/editor'
 import {getSelectionText} from './selector.get-selection-text'
 

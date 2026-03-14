@@ -13,10 +13,10 @@ import {userEvent} from 'vitest/browser'
 import {effect, forward} from '../src/behaviors/behavior.types.action'
 import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
 import type {BehaviorEvent} from '../src/behaviors/behavior.types.event'
-import {getSelectionAfterText} from '../src/internal-utils/text-selection'
 import {EventListenerPlugin} from '../src/plugins'
 import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
 import {createTestEditor} from '../src/test/vitest'
+import {getSelectionAfterText} from '../test-utils/text-selection'
 
 describe('event.delete.forward', () => {
   test('Scenario: Deleting lonely block object', async () => {

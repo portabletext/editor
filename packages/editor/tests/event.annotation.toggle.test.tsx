@@ -1,8 +1,8 @@
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
-import {getTextSelection} from '../src/internal-utils/text-selection'
 import {createTestEditor} from '../src/test/vitest'
+import {getTextSelection} from '../test-utils/text-selection'
 
 describe('event.annotation.toggle', () => {
   describe('Scenario: Toggling annotation on unannotated text', () => {

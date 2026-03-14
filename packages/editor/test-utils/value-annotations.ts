@@ -1,5 +1,5 @@
 import {isSpan, isTextBlock, type PortableTextBlock} from '@portabletext/schema'
-import type {EditorSchema} from '../editor/editor-schema'
+import type {EditorSchema} from '../src/editor/editor-schema'
 
 export function getValueAnnotations(
   schema: EditorSchema,

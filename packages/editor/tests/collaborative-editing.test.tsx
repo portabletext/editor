@@ -4,9 +4,9 @@ import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent, type Locator} from 'vitest/browser'
 import type {Editor} from '../src'
-import {getSelectionAfterText} from '../src/internal-utils/text-selection'
 import {EventListenerPlugin} from '../src/plugins'
 import {createTestEditor} from '../src/test/vitest'
+import {getSelectionAfterText} from '../test-utils/text-selection'
 
 /**********
  * Step definitions

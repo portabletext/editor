@@ -5,9 +5,9 @@ import {userEvent} from 'vitest/browser'
 import {execute, forward, raise} from '../src/behaviors/behavior.types.action'
 import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
 import {safeStringify} from '../src/internal-utils/safe-json'
-import {getTextSelection} from '../src/internal-utils/text-selection'
 import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
 import {createTestEditor} from '../src/test/vitest'
+import {getTextSelection} from '../test-utils/text-selection'
 
 describe('Serialize/Deserialize', () => {
   test('Scenario: Custom text/html deserializer', async () => {

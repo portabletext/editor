@@ -1,26 +1,22 @@
 import {isSpan, isTextBlock} from '@portabletext/schema'
-import type {EditorContext} from '../editor/editor-snapshot'
+import type {EditorContext} from '../src/editor/editor-snapshot'
 
-export function getTextBlockKey(
+export function getTextMarks(
   context: Pick<EditorContext, 'schema' | 'value'>,
   text: string,
 ) {
-  let blockKey: string | undefined
+  let marks: Array<string> = []
 
   for (const block of context.value) {
     if (isTextBlock(context, block)) {
       for (const child of block.children) {
         if (isSpan(context, child) && child.text === text) {
-          blockKey = block._key
+          marks = child.marks ?? []
           break
         }
       }
     }
   }
 
-  if (!blockKey) {
-    throw new Error(`Unable to find block key for text "${text}"`)
-  }
-
-  return blockKey
+  return marks
 }

@@ -8,12 +8,12 @@ import {
   forward,
   type BehaviorEvent,
 } from '../src/behaviors'
+import {BehaviorPlugin} from '../src/plugins'
+import {createTestEditor} from '../src/test/vitest'
 import {
   getSelectionAfterText,
   getSelectionBeforeText,
-} from '../src/internal-utils/text-selection'
-import {BehaviorPlugin} from '../src/plugins'
-import {createTestEditor} from '../src/test/vitest'
+} from '../test-utils/text-selection'
 
 describe('event.delete', () => {
   test('Scenario: Deleting collapsed selection', async () => {

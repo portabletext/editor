@@ -2,8 +2,8 @@ import {defineSchema, isTextBlock} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
-import {getTextSelection} from '../src/internal-utils/text-selection'
 import {createTestEditor} from '../src/test/vitest'
+import {getTextSelection} from '../test-utils/text-selection'
 
 /**
  * At all times, these `_key`s should be unique:

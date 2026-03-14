@@ -19,10 +19,6 @@ import {
   type RangeDecorationOnMovedDetails,
 } from '../src'
 import type {PortableTextEditor} from '../src/editor/PortableTextEditor'
-import {
-  getSelectionAfterText,
-  getSelectionBeforeText,
-} from '../src/internal-utils/text-selection'
 import {EventListenerPlugin} from '../src/plugins'
 import {EditorRefPlugin} from '../src/plugins/plugin.editor-ref'
 import {InternalPortableTextEditorRefPlugin} from '../src/plugins/plugin.internal.portable-text-editor-ref'
@@ -31,6 +27,10 @@ import {
   getBlockKeyFromSelectionPoint,
   getChildKeyFromSelectionPoint,
 } from '../src/utils/util.selection-point'
+import {
+  getSelectionAfterText,
+  getSelectionBeforeText,
+} from '../test-utils/text-selection'
 
 const helloBlock: PortableTextBlock = {
   _key: '123',

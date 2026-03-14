@@ -9,12 +9,12 @@ import type {
   MutationEvent,
   PatchEvent,
 } from '../src/editor/relay-machine'
+import {EventListenerPlugin} from '../src/plugins'
+import {createTestEditor} from '../src/test/vitest'
 import {
   getSelectionAfterText,
   getTextSelection,
-} from '../src/internal-utils/text-selection'
-import {EventListenerPlugin} from '../src/plugins'
-import {createTestEditor} from '../src/test/vitest'
+} from '../test-utils/text-selection'
 
 describe('Feature: Self-solving', () => {
   test('Scenario: Missing .markDefs and .marks are added after the editor is made dirty', async () => {
