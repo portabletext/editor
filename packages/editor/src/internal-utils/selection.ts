@@ -3,7 +3,7 @@ import type {EditorSelection, EditorSelectionPoint} from '../types/editor'
 import type {Path} from '../types/paths'
 import {isKeyedSegment} from '../utils'
 
-export function normalizePoint(
+function normalizePoint(
   point: EditorSelectionPoint,
   value: PortableTextBlock[],
 ): EditorSelectionPoint | null {
