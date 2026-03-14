@@ -1,8 +1,8 @@
 import {applyDeselect} from '../internal-utils/apply-selection'
 import {transformOperation} from '../internal-utils/transform-operation'
-import {pluginRedoing} from '../slate-plugins/slate-plugin.redoing'
-import {pluginWithoutHistory} from '../slate-plugins/slate-plugin.without-history'
 import {withoutNormalizing} from '../slate/editor/without-normalizing'
+import {pluginRedoing} from '../slate/plugins/slate-plugin.redoing'
+import {pluginWithoutHistory} from '../slate/plugins/slate-plugin.without-history'
 import type {OperationImplementation} from './operation.types'
 
 export const historyRedoOperationImplementation: OperationImplementation<

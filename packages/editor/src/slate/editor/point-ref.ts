@@ -1,5 +1,6 @@
-import type {Point, PointRef} from '../interfaces'
 import type {Editor} from '../interfaces/editor'
+import type {Point} from '../interfaces/point'
+import type {PointRef} from '../interfaces/point-ref'
 import type {TextDirection} from '../types/types'
 
 export function pointRef(

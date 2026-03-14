@@ -1,8 +1,8 @@
 import {setup} from 'xstate'
 import {applyDeselect, applySelect} from '../internal-utils/apply-selection'
 import {debug} from '../internal-utils/debug'
-import {ReactEditor} from '../slate-react'
 import {start} from '../slate/editor/start'
+import {ReactEditor} from '../slate/react/plugin/react-editor'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 
 const validateSelectionSetup = setup({

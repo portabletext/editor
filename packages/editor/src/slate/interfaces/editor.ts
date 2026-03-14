@@ -1,18 +1,14 @@
-import type {
-  Descendant,
-  Element,
-  ExtendedType,
-  Location,
-  Node,
-  NodeEntry,
-  Operation,
-  Path,
-  PathRef,
-  PointRef,
-  Range,
-  RangeRef,
-  Text,
-} from '..'
+import type {ExtendedType} from '../types/custom-types'
+import type {Element} from './element'
+import type {Location} from './location'
+import type {Descendant, Node, NodeEntry} from './node'
+import type {Operation} from './operation'
+import type {Path} from './path'
+import type {PathRef} from './path-ref'
+import type {PointRef} from './point-ref'
+import type {Range} from './range'
+import type {RangeRef} from './range-ref'
+import type {Text} from './text'
 
 /**
  * The `Editor` interface stores all the state of a Slate editor. It is extended

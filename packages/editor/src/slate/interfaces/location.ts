@@ -1,5 +1,7 @@
-import type {Path, Point, Range} from '..'
 import {isPath} from '../path/is-path'
+import type {Path} from './path'
+import type {Point} from './point'
+import type {Range} from './range'
 
 /**
  * The `Location` interface is a union of the ways to refer to a specific

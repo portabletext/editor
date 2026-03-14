@@ -1,6 +1,7 @@
 import {isElement} from '../element/is-element'
-import type {Operation, Path} from '../interfaces'
 import type {Editor} from '../interfaces/editor'
+import type {Operation} from '../interfaces/operation'
+import type {Path} from '../interfaces/path'
 import {getNodes} from '../node/get-nodes'
 import {hasNode} from '../node/has-node'
 import {isNormalizing} from './is-normalizing'

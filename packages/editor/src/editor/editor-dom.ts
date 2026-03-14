@@ -1,7 +1,7 @@
 import type {BehaviorEvent} from '../behaviors/behavior.types.event'
 import {toSlateRange} from '../internal-utils/to-slate-range'
 import {getSelectionEndBlock, getSelectionStartBlock} from '../selectors'
-import {DOMEditor} from '../slate-dom'
+import {DOMEditor} from '../slate/dom/plugin/dom-editor'
 import {isEditor} from '../slate/editor/is-editor'
 import {nodes} from '../slate/editor/nodes'
 import type {PickFromUnion} from '../type-utils'

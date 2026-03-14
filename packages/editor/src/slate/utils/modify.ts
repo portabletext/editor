@@ -1,13 +1,9 @@
 import type {EditorSchema} from '../../editor/editor-schema'
 import {safeStringify} from '../../internal-utils/safe-json'
-import type {
-  Ancestor,
-  Descendant,
-  Element,
-  Node,
-  Path,
-  Text,
-} from '../interfaces'
+import type {Element} from '../interfaces/element'
+import type {Ancestor, Descendant, Node} from '../interfaces/node'
+import type {Path} from '../interfaces/path'
+import type {Text} from '../interfaces/text'
 import {getNode} from '../node/get-node'
 import {isObjectNode} from '../node/is-object-node'
 import {isText} from '../text/is-text'

@@ -1,4 +1,4 @@
-import type {Operation} from '../interfaces'
+import type {Operation} from '../interfaces/operation'
 import type {RangeRef} from '../interfaces/range-ref'
 import {transformRange} from '../range/transform-range'
 

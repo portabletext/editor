@@ -1,5 +1,5 @@
-import type {Location} from '../interfaces'
 import type {Editor} from '../interfaces/editor'
+import type {Location} from '../interfaces/location'
 import {pathEquals} from '../path/path-equals'
 import {rangeEdges} from '../range/range-edges'
 import {isText} from '../text/is-text'

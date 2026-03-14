@@ -1,6 +1,7 @@
-import type {Operation, Point} from '..'
 import {transformPoint} from '../point/transform-point'
 import type {TextDirection} from '../types/types'
+import type {Operation} from './operation'
+import type {Point} from './point'
 
 /**
  * `PointRef` objects keep a specific point in a document synced over time as new

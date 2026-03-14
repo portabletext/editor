@@ -1,6 +1,6 @@
 import {isElement} from '../element/is-element'
-import type {Descendant, NodeEntry} from '../interfaces'
 import type {Editor} from '../interfaces/editor'
+import type {Descendant, NodeEntry} from '../interfaces/node'
 import {isText} from '../text/is-text'
 
 export function shouldMergeNodesRemovePrevNode(

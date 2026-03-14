@@ -1,4 +1,4 @@
-import type {Range} from '..'
+import type {Range} from './range'
 
 /**
  * `RangeRef` objects keep a specific range in a document synced over time as new

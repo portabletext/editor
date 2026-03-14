@@ -1,5 +1,5 @@
-import type {Location} from '../interfaces'
 import type {Editor, NodeMatch} from '../interfaces/editor'
+import type {Location} from '../interfaces/location'
 import type {Node, NodeEntry} from '../interfaces/node'
 import {getLevels} from '../node/get-levels'
 import {path} from './path'

@@ -1,5 +1,6 @@
-import type {Operation, Path} from '..'
 import {transformPath} from '../path/transform-path'
+import type {Operation} from './operation'
+import type {Path} from './path'
 
 /**
  * `PathRef` objects keep a specific path in a document synced over time as new

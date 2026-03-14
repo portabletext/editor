@@ -1,5 +1,6 @@
 import {end} from '../editor/end'
-import type {Editor, Location} from '../interfaces'
+import type {Editor} from '../interfaces/editor'
+import type {Location} from '../interfaces/location'
 
 /**
  * Get the default location to insert content into the editor.

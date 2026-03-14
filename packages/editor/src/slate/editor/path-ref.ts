@@ -1,5 +1,6 @@
-import type {Path, PathRef} from '../interfaces'
 import type {Editor} from '../interfaces/editor'
+import type {Path} from '../interfaces/path'
+import type {PathRef} from '../interfaces/path-ref'
 import type {TextDirection} from '../types/types'
 
 export function pathRef(

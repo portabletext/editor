@@ -1,13 +1,9 @@
 import {safeStringify} from '../../internal-utils/safe-json'
-import type {
-  Editor,
-  Node,
-  NodeEntry,
-  Operation,
-  Range,
-  Selection,
-  Text,
-} from '../index'
+import type {Editor, Selection} from '../interfaces/editor'
+import type {Node, NodeEntry} from '../interfaces/node'
+import type {Operation} from '../interfaces/operation'
+import type {Range} from '../interfaces/range'
+import type {Text} from '../interfaces/text'
 import {getTexts} from '../node/get-texts'
 import {commonPath} from '../path/common-path'
 import {comparePaths} from '../path/compare-paths'

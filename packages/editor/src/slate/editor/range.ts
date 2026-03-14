@@ -1,5 +1,6 @@
-import type {Location, Range} from '../interfaces'
 import type {Editor} from '../interfaces/editor'
+import type {Location} from '../interfaces/location'
+import type {Range} from '../interfaces/range'
 import {isRange} from '../range/is-range'
 import {end} from './end'
 import {start} from './start'

@@ -1,5 +1,5 @@
 import type {Editor} from '../interfaces/editor'
-import {isObject} from '../utils'
+import {isObject} from '../utils/is-object'
 
 const EDITOR_BRAND = Symbol.for('slate-editor')
 

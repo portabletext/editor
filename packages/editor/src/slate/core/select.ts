@@ -1,7 +1,7 @@
 import {safeStringify} from '../../internal-utils/safe-json'
 import {range as editorRange} from '../editor/range'
-import type {Location} from '../interfaces'
 import type {Editor} from '../interfaces/editor'
+import type {Location} from '../interfaces/location'
 import {isRange} from '../range/is-range'
 
 export function select(editor: Editor, target: Location): void {

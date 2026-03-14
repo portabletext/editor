@@ -1,6 +1,6 @@
 import {isElement} from '../element/is-element'
-import type {Range} from '../interfaces'
 import type {Editor} from '../interfaces/editor'
+import type {Range} from '../interfaces/range'
 import {isBeforePath} from '../path/is-before-path'
 import {pathHasPrevious} from '../path/path-has-previous'
 import {isCollapsedRange} from '../range/is-collapsed-range'

@@ -1,5 +1,6 @@
-import type {Location, Node, NodeEntry} from '../interfaces'
 import type {Editor} from '../interfaces/editor'
+import type {Location} from '../interfaces/location'
+import type {Node, NodeEntry} from '../interfaces/node'
 import {getNode} from '../node/get-node'
 import type {LeafEdge} from '../types/types'
 import {path} from './path'

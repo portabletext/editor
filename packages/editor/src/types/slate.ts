@@ -3,7 +3,7 @@ import type {
   PortableTextTextBlock,
 } from '@portabletext/schema'
 import type {BaseEditor, Descendant} from '../slate'
-import type {ReactEditor} from '../slate-react'
+import type {ReactEditor} from '../slate/react/plugin/react-editor'
 import type {PortableTextSlateEditor} from './slate-editor'
 
 export interface ObjectElement {

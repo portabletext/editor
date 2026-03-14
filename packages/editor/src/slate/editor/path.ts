@@ -1,5 +1,5 @@
-import type {Location} from '../interfaces'
 import type {Editor} from '../interfaces/editor'
+import type {Location} from '../interfaces/location'
 import type {Path} from '../interfaces/path'
 import {getFirst} from '../node/get-first'
 import {getLast} from '../node/get-last'

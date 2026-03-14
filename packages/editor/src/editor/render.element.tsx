@@ -4,7 +4,8 @@ import {useSelector} from '@xstate/react'
 import {useContext, type ReactElement} from 'react'
 import type {DropPosition} from '../behaviors/behavior.core.drop-position'
 import type {Element as SlateElement} from '../slate'
-import {useSlateStatic, type RenderElementProps} from '../slate-react'
+import type {RenderElementProps} from '../slate/react/components/editable'
+import {useSlateStatic} from '../slate/react/hooks/use-slate-static'
 import type {
   RenderBlockFunction,
   RenderChildFunction,
