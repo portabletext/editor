@@ -15,7 +15,7 @@ export interface PointRef {
   unref(): Point | null
 }
 
-export interface PointRefInterface {
+interface PointRefInterface {
   transform: (ref: PointRef, op: Operation) => void
 }
 

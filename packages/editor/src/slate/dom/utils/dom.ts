@@ -21,7 +21,6 @@ type DOMStaticRange = globalThis.StaticRange
 
 export {
   type DOMNode,
-  type DOMComment,
   type DOMElement,
   DOMText,
   type DOMRange,
@@ -53,7 +52,7 @@ export const getDefaultView = (value: any): Window | null => {
  * Check if a DOM node is a comment node.
  */
 
-export const isDOMComment = (value: any): value is DOMComment => {
+const isDOMComment = (value: any): value is DOMComment => {
   return isDOMNode(value) && value.nodeType === 8
 }
 
@@ -150,7 +149,7 @@ export const hasShadowRoot = (node: Node | null) => {
  * `direction`.
  */
 
-export const getEditableChildAndIndex = (
+const getEditableChildAndIndex = (
   parent: DOMElement,
   index: number,
   direction: 'forward' | 'backward',
@@ -199,7 +198,7 @@ export const getEditableChildAndIndex = (
  * `direction`.
  */
 
-export const getEditableChild = (
+const getEditableChild = (
   parent: DOMElement,
   index: number,
   direction: 'forward' | 'backward',

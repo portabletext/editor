@@ -9,7 +9,7 @@ import {rangeIntersection} from '../../range/range-intersection'
 import {DOMEditor} from '../plugin/dom-editor'
 import {PLACEHOLDER_SYMBOL} from './symbols'
 
-export const shallowCompare = (
+const shallowCompare = (
   obj1: {[key: string]: unknown},
   obj2: {[key: string]: unknown},
 ) =>

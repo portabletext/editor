@@ -114,7 +114,7 @@ const MemoizedElement = React.memo(Element, (prev, next) => {
  * The default element renderer.
  */
 
-export const DefaultElement = (props: RenderElementProps) => {
+const DefaultElement = (props: RenderElementProps) => {
   const {attributes, children, element} = props
   const editor = useSlateStatic()
   const Tag = editor.isInline(element) ? 'span' : 'div'

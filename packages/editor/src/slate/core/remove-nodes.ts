@@ -13,7 +13,7 @@ import {isRange} from '../range/is-range'
 import type {RangeMode} from '../types/types'
 import {matchPath} from '../utils/match-path'
 
-export interface RemoveNodesOptions<T extends Node> {
+interface RemoveNodesOptions<T extends Node> {
   at?: Location
   match?: NodeMatch<T>
   mode?: RangeMode

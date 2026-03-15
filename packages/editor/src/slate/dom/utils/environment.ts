@@ -15,7 +15,7 @@ export const IS_WEBKIT =
   /AppleWebKit(?!.*Chrome)/i.test(navigator.userAgent)
 
 // "modern" Edge was released at 79.x
-export const IS_EDGE_LEGACY =
+const IS_EDGE_LEGACY =
   typeof navigator !== 'undefined' &&
   /Edge?\/(?:[0-6][0-9]|[0-7][0-8])(?:\.)/i.test(navigator.userAgent)
 
@@ -24,11 +24,11 @@ export const IS_CHROME =
 
 // Native `beforeInput` events don't work well with react on Chrome 75
 // and older, Chrome 76+ can use `beforeInput` though.
-export const IS_CHROME_LEGACY =
+const IS_CHROME_LEGACY =
   typeof navigator !== 'undefined' &&
   /Chrome?\/(?:[0-7][0-5]|[0-6][0-9])(?:\.)/i.test(navigator.userAgent)
 
-export const IS_ANDROID_CHROME_LEGACY =
+const IS_ANDROID_CHROME_LEGACY =
   IS_ANDROID &&
   typeof navigator !== 'undefined' &&
   /Chrome?\/(?:[0-5]?\d)(?:\.)/i.test(navigator.userAgent)

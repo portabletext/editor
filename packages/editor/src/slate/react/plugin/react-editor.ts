@@ -6,7 +6,7 @@ import {DOMEditor, type DOMEditorInterface} from '../../dom/plugin/dom-editor'
 
 export interface ReactEditor extends DOMEditor {}
 
-export interface ReactEditorInterface extends DOMEditorInterface {}
+interface ReactEditorInterface extends DOMEditorInterface {}
 
 // eslint-disable-next-line no-redeclare
 export const ReactEditor: ReactEditorInterface = DOMEditor

@@ -143,7 +143,7 @@ export interface RenderTextProps {
  * `EditableProps` are passed to the `<Editable>` component.
  */
 
-export type EditableProps = {
+type EditableProps = {
   decorate?: (entry: NodeEntry) => DecoratedRange[]
   editorActor: EditorActor
   onDOMBeforeInput?: (event: InputEvent) => void
@@ -1907,10 +1907,7 @@ export type RenderPlaceholderProps = {
  * The default placeholder element
  */
 
-export const DefaultPlaceholder = ({
-  attributes,
-  children,
-}: RenderPlaceholderProps) => (
+const DefaultPlaceholder = ({attributes, children}: RenderPlaceholderProps) => (
   // COMPAT: Artificially add a line-break to the end on the placeholder element
   // to prevent Android IMEs to pick up its content in autocorrect and to auto-capitalize the first letter
   <span {...attributes}>
@@ -1923,13 +1920,13 @@ export const DefaultPlaceholder = ({
  * A default memoized decorate function.
  */
 
-export const defaultDecorate: (entry: NodeEntry) => DecoratedRange[] = () => []
+const defaultDecorate: (entry: NodeEntry) => DecoratedRange[] = () => []
 
 /**
  * A default implement to scroll dom range into view.
  */
 
-export const defaultScrollSelectionIntoView = (
+const defaultScrollSelectionIntoView = (
   editor: ReactEditor,
   domRange: DOMRange,
 ) => {
@@ -1975,7 +1972,7 @@ export const defaultScrollSelectionIntoView = (
  * Check if an event is overrided by a handler.
  */
 
-export const isEventHandled = <
+const isEventHandled = <
   EventType extends React.SyntheticEvent<unknown, unknown>,
 >(
   event: EventType,
@@ -1998,7 +1995,7 @@ export const isEventHandled = <
 /**
  * Check if the event's target is an input element
  */
-export const isDOMEventTargetInput = <
+const isDOMEventTargetInput = <
   EventType extends React.SyntheticEvent<unknown, unknown>,
 >(
   event: EventType,
@@ -2014,7 +2011,7 @@ export const isDOMEventTargetInput = <
  * Check if a DOM event is overrided by a handler.
  */
 
-export const isDOMEventHandled = <E extends Event>(
+const isDOMEventHandled = <E extends Event>(
   event: E,
   handler?: (event: E) => void | boolean,
 ) => {

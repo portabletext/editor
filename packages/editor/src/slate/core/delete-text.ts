@@ -46,7 +46,7 @@ import type {TextUnit} from '../types/types'
 import {insertText} from './insert-text'
 import {removeNodes} from './remove-nodes'
 
-export interface TextDeleteOptions {
+interface TextDeleteOptions {
   at?: Location
   distance?: number
   unit?: TextUnit

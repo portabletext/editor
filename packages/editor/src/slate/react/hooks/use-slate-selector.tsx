@@ -6,7 +6,7 @@ import {useSlateStatic} from './use-slate-static'
 
 type Callback = () => void
 
-export interface SlateSelectorOptions {
+interface SlateSelectorOptions {
   /**
    * If true, defer calling the selector function until after `Editable` has
    * finished rendering. This ensures that `ReactEditor.findPath` won't return

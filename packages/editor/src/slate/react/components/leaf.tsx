@@ -181,7 +181,7 @@ const MemoizedLeaf = React.memo(Leaf, (prev, next) => {
   )
 })
 
-export const DefaultLeaf = (props: RenderLeafProps) => {
+const DefaultLeaf = (props: RenderLeafProps) => {
   const {attributes, children} = props
   return <span {...attributes}>{children}</span>
 }

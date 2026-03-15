@@ -21,7 +21,7 @@ export type Location = Path | Point | Range
 
 export type Span = [Path, Path]
 
-export interface SpanInterface {
+interface SpanInterface {
   /**
    * Check if a value implements the `Span` interface.
    */

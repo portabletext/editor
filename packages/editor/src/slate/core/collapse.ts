@@ -2,7 +2,7 @@ import type {Editor} from '../interfaces/editor'
 import {rangeEdges} from '../range/range-edges'
 import type {SelectionEdge} from '../types/types'
 
-export interface SelectionCollapseOptions {
+interface SelectionCollapseOptions {
   edge?: SelectionEdge
 }
 
