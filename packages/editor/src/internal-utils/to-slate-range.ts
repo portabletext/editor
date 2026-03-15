@@ -5,7 +5,8 @@ import {
   type PortableTextSpan,
 } from '@portabletext/schema'
 import type {EditorContext, EditorSnapshot} from '../editor/editor-snapshot'
-import type {Path, Range} from '../slate'
+import type {Path} from '../slate/interfaces/path'
+import type {Range} from '../slate/interfaces/range'
 import type {EditorSelectionPoint} from '../types/editor'
 import {blockOffsetToSpanSelectionPoint} from '../utils/util.block-offset'
 import {isEqualSelectionPoints} from '../utils/util.is-equal-selection-points'

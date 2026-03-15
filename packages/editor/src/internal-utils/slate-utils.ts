@@ -1,19 +1,17 @@
 import type {PortableTextBlock, PortableTextSpan} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
-import type {
-  Editor,
-  Element,
-  Node,
-  Point,
-  Range,
-  Path as SlatePath,
-} from '../slate'
 import {end} from '../slate/editor/end'
 import {isEditor} from '../slate/editor/is-editor'
 import {node as editorNode} from '../slate/editor/node'
 import {nodes as editorNodes} from '../slate/editor/nodes'
 import {start} from '../slate/editor/start'
 import {isElement} from '../slate/element/is-element'
+import type {Editor} from '../slate/interfaces/editor'
+import type {Element} from '../slate/interfaces/element'
+import type {Node} from '../slate/interfaces/node'
+import type {Path as SlatePath} from '../slate/interfaces/path'
+import type {Point} from '../slate/interfaces/point'
+import type {Range} from '../slate/interfaces/range'
 import {getChild} from '../slate/node/get-child'
 import {isBackwardRange} from '../slate/range/is-backward-range'
 import {rangeEnd} from '../slate/range/range-end'

@@ -1,4 +1,4 @@
-import type {ExtendedType} from '../types/custom-types'
+import type {ObjectElement, SlateTextBlock} from '../../types/slate'
 import type {Descendant} from './node'
 
 /**
@@ -11,4 +11,4 @@ export interface BaseElement {
   children: Descendant[]
 }
 
-export type Element = ExtendedType<'Element', BaseElement>
+export type Element = SlateTextBlock | ObjectElement

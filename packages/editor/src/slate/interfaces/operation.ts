@@ -1,4 +1,3 @@
-import type {ExtendedType} from '../types/custom-types'
 import type {Node} from './node'
 import type {Path} from './path'
 import type {Range} from './range'
@@ -9,10 +8,7 @@ export type BaseInsertNodeOperation = {
   node: Node
 }
 
-export type InsertNodeOperation = ExtendedType<
-  'InsertNodeOperation',
-  BaseInsertNodeOperation
->
+export type InsertNodeOperation = BaseInsertNodeOperation
 
 export type BaseInsertTextOperation = {
   type: 'insert_text'
@@ -21,10 +17,7 @@ export type BaseInsertTextOperation = {
   text: string
 }
 
-export type InsertTextOperation = ExtendedType<
-  'InsertTextOperation',
-  BaseInsertTextOperation
->
+export type InsertTextOperation = BaseInsertTextOperation
 
 export type BaseRemoveNodeOperation = {
   type: 'remove_node'
@@ -32,10 +25,7 @@ export type BaseRemoveNodeOperation = {
   node: Node
 }
 
-export type RemoveNodeOperation = ExtendedType<
-  'RemoveNodeOperation',
-  BaseRemoveNodeOperation
->
+export type RemoveNodeOperation = BaseRemoveNodeOperation
 
 export type BaseRemoveTextOperation = {
   type: 'remove_text'
@@ -44,10 +34,7 @@ export type BaseRemoveTextOperation = {
   text: string
 }
 
-export type RemoveTextOperation = ExtendedType<
-  'RemoveTextOperation',
-  BaseRemoveTextOperation
->
+export type RemoveTextOperation = BaseRemoveTextOperation
 
 export type BaseSetNodeOperation = {
   type: 'set_node'
@@ -56,10 +43,7 @@ export type BaseSetNodeOperation = {
   newProperties: Partial<Node>
 }
 
-export type SetNodeOperation = ExtendedType<
-  'SetNodeOperation',
-  BaseSetNodeOperation
->
+export type SetNodeOperation = BaseSetNodeOperation
 
 type BaseSetSelectionOperation =
   | {
@@ -78,10 +62,7 @@ type BaseSetSelectionOperation =
       newProperties: null
     }
 
-type SetSelectionOperation = ExtendedType<
-  'SetSelectionOperation',
-  BaseSetSelectionOperation
->
+type SetSelectionOperation = BaseSetSelectionOperation
 
 export type BaseOperation =
   | InsertNodeOperation
@@ -90,4 +71,4 @@ export type BaseOperation =
   | SetSelectionOperation
   | InsertTextOperation
   | RemoveTextOperation
-export type Operation = ExtendedType<'Operation', BaseOperation>
+export type Operation = BaseOperation

@@ -7,11 +7,10 @@ import type {
 } from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
 import type {DecoratedRange} from '../editor/range-decorations-machine'
-import type {Range, Operation as SlateOperation} from '../slate'
+import type {Operation as SlateOperation} from '../slate/interfaces/operation'
+import type {Range} from '../slate/interfaces/range'
 import type {ReactEditor} from '../slate/react/plugin/react-editor'
 import type {EditorSelection} from './editor'
-// Side-effect import to ensure Slate module augmentation is included
-import './slate'
 
 type HistoryItem = {
   operations: SlateOperation[]

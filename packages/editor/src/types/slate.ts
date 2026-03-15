@@ -1,10 +1,5 @@
-import type {
-  PortableTextSpan,
-  PortableTextTextBlock,
-} from '@portabletext/schema'
-import type {BaseEditor, Descendant} from '../slate'
-import type {ReactEditor} from '../slate/react/plugin/react-editor'
-import type {PortableTextSlateEditor} from './slate-editor'
+import type {PortableTextTextBlock} from '@portabletext/schema'
+import type {Descendant} from '../slate/interfaces/node'
 
 export interface ObjectElement {
   _type: string
@@ -18,13 +13,4 @@ export interface SlateTextBlock extends Omit<
   'children'
 > {
   children: Descendant[]
-}
-
-declare module '../slate/index' {
-  interface CustomTypes {
-    Editor: BaseEditor & ReactEditor & PortableTextSlateEditor
-    Element: SlateTextBlock | ObjectElement
-    ObjectNode: ObjectElement
-    Text: PortableTextSpan
-  }
 }

@@ -1,6 +1,7 @@
-import type {Point, Range} from '../slate'
 import {end as editorEnd} from '../slate/editor/end'
 import {start as editorStart} from '../slate/editor/start'
+import type {Point} from '../slate/interfaces/point'
+import type {Range} from '../slate/interfaces/range'
 import {isPoint} from '../slate/point/is-point'
 import {pointEquals} from '../slate/point/point-equals'
 import {isRange} from '../slate/range/is-range'

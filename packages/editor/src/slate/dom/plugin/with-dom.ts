@@ -16,11 +16,6 @@ import {DOMEditor} from './dom-editor'
 
 /**
  * `withDOM` adds DOM specific behaviors to the editor.
- *
- * If you are using TypeScript, you must extend Slate's CustomTypes to use
- * this plugin.
- *
- * See https://docs.slatejs.org/concepts/11-typescript to learn how.
  */
 
 export const withDOM = <T extends Editor>(editor: T): T & DOMEditor => {
