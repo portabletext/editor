@@ -1,4 +1,4 @@
-import type {ExtendedType} from '../types/custom-types'
+import type {PortableTextSpan} from '@portabletext/schema'
 import type {Range} from './range'
 
 /**
@@ -11,7 +11,7 @@ export interface BaseText {
   text: string
 }
 
-export type Text = ExtendedType<'Text', BaseText>
+export type Text = PortableTextSpan
 
 export interface LeafPosition {
   start: number

@@ -1,4 +1,3 @@
-import type {ExtendedType} from '../types/custom-types'
 import type {RangeDirection} from '../types/types'
 import type {Point} from './point'
 
@@ -13,7 +12,7 @@ export interface BaseRange {
   focus: Point
 }
 
-export type Range = ExtendedType<'Range', BaseRange>
+export type Range = BaseRange
 
 export interface RangeEdgesOptions {
   reverse?: boolean

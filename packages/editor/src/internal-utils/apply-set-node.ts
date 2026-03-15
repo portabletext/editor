@@ -1,5 +1,5 @@
-import type {Path} from '../slate'
 import {isElement} from '../slate/element/is-element'
+import type {Path} from '../slate/interfaces/path'
 import {getNode} from '../slate/node/get-node'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 

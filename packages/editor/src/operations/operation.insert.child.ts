@@ -4,7 +4,7 @@ import {
   applyInsertNodeAtPoint,
 } from '../internal-utils/apply-insert-node'
 import {getFocusBlock, getFocusSpan} from '../internal-utils/slate-utils'
-import type {Node} from '../slate'
+import type {Node} from '../slate/interfaces/node'
 import {parseInlineObject, parseSpan} from '../utils/parse-blocks'
 import type {OperationImplementation} from './operation.types'
 

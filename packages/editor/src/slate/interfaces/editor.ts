@@ -1,4 +1,5 @@
-import type {ExtendedType} from '../types/custom-types'
+import type {PortableTextSlateEditor} from '../../types/slate-editor'
+import type {ReactEditor} from '../react/plugin/react-editor'
 import type {Element} from './element'
 import type {Location} from './location'
 import type {Descendant, Node, NodeEntry} from './node'
@@ -62,11 +63,11 @@ export interface BaseEditor {
   setSelection: (props: Partial<Range>) => void
 }
 
-export type Editor = ExtendedType<'Editor', BaseEditor>
+export type Editor = BaseEditor & ReactEditor & PortableTextSlateEditor
 
 export type BaseSelection = Range | null
 
-export type Selection = ExtendedType<'Selection', BaseSelection>
+export type Selection = BaseSelection
 
 export type EditorMarks = Omit<Text, 'text'>
 

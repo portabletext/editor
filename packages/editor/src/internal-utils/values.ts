@@ -3,8 +3,8 @@ import type {
   PortableTextTextBlock,
 } from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
-import type {Descendant} from '../slate'
 import {isElement} from '../slate/element/is-element'
+import type {Descendant} from '../slate/interfaces/node'
 import {isText} from '../slate/text/is-text'
 import {isEqualValues} from './equality'
 

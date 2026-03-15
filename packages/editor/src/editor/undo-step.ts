@@ -1,4 +1,4 @@
-import type {Operation} from '../slate'
+import type {Operation} from '../slate/interfaces/operation'
 import {pathEquals} from '../slate/path/path-equals'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 

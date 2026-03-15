@@ -13,15 +13,15 @@ import {
   type PortableTextSpan,
 } from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
+import {isElement} from '../slate/element/is-element'
+import type {Descendant} from '../slate/interfaces/node'
 import type {
-  Descendant,
   InsertNodeOperation,
   InsertTextOperation,
   RemoveNodeOperation,
   RemoveTextOperation,
   SetNodeOperation,
-} from '../slate'
-import {isElement} from '../slate/element/is-element'
+} from '../slate/interfaces/operation'
 import {isText} from '../slate/text/is-text'
 import type {Path} from '../types/paths'
 import {safeStringify} from './safe-json'
