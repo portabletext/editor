@@ -170,7 +170,7 @@ const isWordCharacter = (
  * Iterate on codepoints from right to left.
  */
 
-export const codepointsIteratorRTL = function* (str: string) {
+const codepointsIteratorRTL = function* (str: string) {
   const end = str.length - 1
 
   for (let i = 0; i < str.length; i++) {

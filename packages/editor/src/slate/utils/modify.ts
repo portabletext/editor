@@ -14,7 +14,7 @@ export const insertChildren = <T>(
   ...newValues: T[]
 ) => [...xs.slice(0, index), ...newValues, ...xs.slice(index)]
 
-export const replaceChildren = <T>(
+const replaceChildren = <T>(
   xs: T[],
   index: number,
   removeCount: number,

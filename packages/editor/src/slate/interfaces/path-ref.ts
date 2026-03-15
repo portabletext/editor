@@ -14,7 +14,7 @@ export interface PathRef {
   unref(): Path | null
 }
 
-export interface PathRefInterface {
+interface PathRefInterface {
   transform: (ref: PathRef, op: Operation) => void
 }
 

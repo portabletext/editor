@@ -13,7 +13,7 @@ import {rangeStart} from '../range/range-start'
 import {getDefaultInsertLocation} from '../utils/get-default-insert-location'
 import {deleteText} from './delete-text'
 
-export interface TextInsertTextOptions {
+interface TextInsertTextOptions {
   at?: Location
   voids?: boolean
 }

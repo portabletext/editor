@@ -39,7 +39,7 @@ import {batchDirtyPaths} from './batch-dirty-paths'
 import {deleteText} from './delete-text'
 import {updateDirtyPaths} from './update-dirty-paths'
 
-export interface InsertNodesOptions<T extends Node> {
+interface InsertNodesOptions<T extends Node> {
   at?: Location
   match?: NodeMatch<T>
   mode?: RangeMode

@@ -61,7 +61,7 @@ export type SetNodeOperation = ExtendedType<
   BaseSetNodeOperation
 >
 
-export type BaseSetSelectionOperation =
+type BaseSetSelectionOperation =
   | {
       type: 'set_selection'
       properties: null
@@ -78,19 +78,16 @@ export type BaseSetSelectionOperation =
       newProperties: null
     }
 
-export type SetSelectionOperation = ExtendedType<
+type SetSelectionOperation = ExtendedType<
   'SetSelectionOperation',
   BaseSetSelectionOperation
 >
 
-export type NodeOperation =
+export type BaseOperation =
   | InsertNodeOperation
   | RemoveNodeOperation
   | SetNodeOperation
-
-export type SelectionOperation = SetSelectionOperation
-
-export type TextOperation = InsertTextOperation | RemoveTextOperation
-
-export type BaseOperation = NodeOperation | SelectionOperation | TextOperation
+  | SetSelectionOperation
+  | InsertTextOperation
+  | RemoveTextOperation
 export type Operation = ExtendedType<'Operation', BaseOperation>

@@ -104,7 +104,7 @@ const MemoizedText = memo(
  * Leaf strings without text, render as zero-width strings.
  */
 
-export const ZeroWidthString = (props: {
+const ZeroWidthString = (props: {
   length?: number
   isLineBreak?: boolean
   isMarkPlaceholder?: boolean

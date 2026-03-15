@@ -5,7 +5,7 @@ import type {Range} from '../interfaces/range'
 import {isBackwardRange} from '../range/is-backward-range'
 import type {MoveUnit, SelectionEdge} from '../types/types'
 
-export interface SelectionMoveOptions {
+interface SelectionMoveOptions {
   distance?: number
   unit?: MoveUnit
   reverse?: boolean

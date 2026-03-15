@@ -30,8 +30,6 @@ import {isText} from '../../../text/is-text'
 import {ReactEditor} from '../../plugin/react-editor'
 import type {DebouncedFunc} from '../../utils/debounce'
 
-export type Action = {at?: Point | Range; run: () => void}
-
 // https://github.com/facebook/draft-js/blob/main/src/component/handlers/composition/DraftEditorCompositionHandler.js#L41
 // When using keyboard English association function, conpositionEnd triggered too fast, resulting in after `insertText` still maintain association state.
 const RESOLVE_DELAY = 25
