@@ -1,4 +1,5 @@
-import type {Operation, Range} from '../slate'
+import type {Operation} from '../slate/interfaces/operation'
+import type {Range} from '../slate/interfaces/range'
 import {pointEquals} from '../slate/point/point-equals'
 import {transformPoint} from '../slate/point/transform-point'
 

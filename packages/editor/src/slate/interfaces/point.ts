@@ -1,4 +1,3 @@
-import type {ExtendedType} from '../types/custom-types'
 import type {TextDirection} from '../types/types'
 
 /**
@@ -13,7 +12,7 @@ export interface BasePoint {
   offset: number
 }
 
-export type Point = ExtendedType<'Point', BasePoint>
+export type Point = BasePoint
 
 export interface PointTransformOptions {
   affinity?: TextDirection | null

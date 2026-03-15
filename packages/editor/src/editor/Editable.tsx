@@ -18,8 +18,8 @@ import {safeStringify} from '../internal-utils/safe-json'
 import {normalizeSelection} from '../internal-utils/selection'
 import {slateRangeToSelection} from '../internal-utils/slate-utils'
 import {toSlateRange} from '../internal-utils/to-slate-range'
-import type {Text} from '../slate'
 import {start} from '../slate/editor/start'
+import type {Text} from '../slate/interfaces/text'
 import {
   Editable as SlateEditable,
   type RenderElementProps,

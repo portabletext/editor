@@ -1,5 +1,5 @@
-import type {Point} from '../slate'
 import {withoutNormalizing} from '../slate/editor/without-normalizing'
+import type {Point} from '../slate/interfaces/point'
 import {getNode} from '../slate/node/get-node'
 import {getBlockKeyFromSelectionPoint} from '../utils/util.selection-point'
 import type {OperationImplementation} from './operation.types'
