@@ -1,4 +1,5 @@
-import type {Range, RangeRef} from '../slate'
+import type {Range} from '../slate/interfaces/range'
+import type {RangeRef} from '../slate/interfaces/range-ref'
 import {isCollapsedRange} from '../slate/range/is-collapsed-range'
 import {isForwardRange} from '../slate/range/is-forward-range'
 

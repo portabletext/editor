@@ -1,5 +1,5 @@
+import type {ObjectElement} from '../../types/slate'
 import type {Editor} from '../interfaces/editor'
-import type {ExtendedType} from '../types/custom-types'
 import type {Element} from './element'
 import type {Path} from './path'
 import type {Text} from './text'
@@ -15,7 +15,7 @@ export interface BaseObjectNode {
   [key: string]: unknown
 }
 
-export type ObjectNode = ExtendedType<'ObjectNode', BaseObjectNode>
+export type ObjectNode = ObjectElement
 
 /**
  * The `Node` union type represents all of the different types of nodes that
