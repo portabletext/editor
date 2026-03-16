@@ -50,7 +50,7 @@ interface TextDeleteOptions {
   unit?: TextUnit
   reverse?: boolean
   hanging?: boolean
-  voids?: boolean
+  includeObjectNodes?: boolean
 }
 
 export function deleteText(editor: Editor, options: TextDeleteOptions = {}) {
@@ -59,7 +59,7 @@ export function deleteText(editor: Editor, options: TextDeleteOptions = {}) {
       reverse = false,
       unit = 'character',
       distance = 1,
-      voids = false,
+      includeObjectNodes = false,
     } = options
     let {at = editor.selection, hanging = false} = options
 
@@ -76,7 +76,7 @@ export function deleteText(editor: Editor, options: TextDeleteOptions = {}) {
     if (isPoint(at)) {
       const furthestObjectNode = getObjectNode(editor, {at, mode: 'highest'})
 
-      if (!voids && furthestObjectNode) {
+      if (!includeObjectNodes && furthestObjectNode) {
         const [, voidPath] = furthestObjectNode
         at = voidPath
       } else {
@@ -90,7 +90,7 @@ export function deleteText(editor: Editor, options: TextDeleteOptions = {}) {
     }
 
     if (isPath(at)) {
-      removeNodes(editor, {at, voids})
+      removeNodes(editor, {at, includeObjectNodes})
       return
     }
 
@@ -103,7 +103,7 @@ export function deleteText(editor: Editor, options: TextDeleteOptions = {}) {
       const endOfDoc = editorEnd(editor, [])
 
       if (!pointEquals(end, endOfDoc)) {
-        at = unhangRange(editor, at, {voids})
+        at = unhangRange(editor, at, {includeObjectNodes})
       }
     }
 
@@ -111,21 +111,21 @@ export function deleteText(editor: Editor, options: TextDeleteOptions = {}) {
     const startBlock = above(editor, {
       match: (n) => isTextBlock({schema: editor.schema}, n),
       at: start,
-      voids,
+      includeObjectNodes,
     })
     const endBlock = above(editor, {
       match: (n) => isTextBlock({schema: editor.schema}, n),
       at: end,
-      voids,
+      includeObjectNodes,
     })
     const isAcrossBlocks =
       startBlock && endBlock && !pathEquals(startBlock[1], endBlock[1])
     const isSingleText = pathEquals(start.path, end.path)
-    const startNonEditable = voids
+    const startNonEditable = includeObjectNodes
       ? null
       : (getObjectNode(editor, {at: start, mode: 'highest'}) ??
         elementReadOnly(editor, {at: start, mode: 'highest'}))
-    const endNonEditable = voids
+    const endNonEditable = includeObjectNodes
       ? null
       : (getObjectNode(editor, {at: end, mode: 'highest'}) ??
         elementReadOnly(editor, {at: end, mode: 'highest'}))
@@ -160,7 +160,7 @@ export function deleteText(editor: Editor, options: TextDeleteOptions = {}) {
     const matches: NodeEntry[] = []
     let lastPath: Path | undefined
 
-    for (const entry of nodes(editor, {at, voids})) {
+    for (const entry of nodes(editor, {at, includeObjectNodes})) {
       const [node, path] = entry
 
       if (lastPath && comparePaths(path, lastPath) === 0) {
@@ -168,7 +168,7 @@ export function deleteText(editor: Editor, options: TextDeleteOptions = {}) {
       }
 
       if (
-        (!voids &&
+        (!includeObjectNodes &&
           (isObjectNode({schema: editor.schema}, node) ||
             (isTextBlock({schema: editor.schema}, node) &&
               editor.isElementReadOnly(node)))) ||
@@ -204,7 +204,7 @@ export function deleteText(editor: Editor, options: TextDeleteOptions = {}) {
       .map((r) => r.unref())
       .filter((r): r is Path => r !== null)
       .forEach((p) => {
-        removeNodes(editor, {at: p, voids})
+        removeNodes(editor, {at: p, includeObjectNodes})
       })
 
     if (!endNonEditable) {
@@ -228,13 +228,13 @@ export function deleteText(editor: Editor, options: TextDeleteOptions = {}) {
       const [current] = nodes(editor, {
         at: mergeAt,
         match: mergeMatch,
-        voids,
+        includeObjectNodes,
         mode: 'lowest',
       })
       const prev = editorPrevious(editor, {
         at: mergeAt,
         match: mergeMatch,
-        voids,
+        includeObjectNodes,
         mode: 'lowest',
       })
 
@@ -307,12 +307,12 @@ export function deleteText(editor: Editor, options: TextDeleteOptions = {}) {
           if (emptyRef) {
             removeNodes(editor, {
               at: emptyRef.current!,
-              voids,
+              includeObjectNodes,
             })
           }
 
           if (shouldMergeNodesRemovePrevNode(editor, prev, current)) {
-            removeNodes(editor, {at: prevPath, voids})
+            removeNodes(editor, {at: prevPath, includeObjectNodes})
           } else {
             // Copy markDefs from the merging block to the target before merging
             const pteEditor = editor as unknown as PortableTextSlateEditor

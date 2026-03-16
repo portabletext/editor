@@ -1110,7 +1110,7 @@ export const DOMEditor: DOMEditorInterface = {
       isDOMElement(focusNode) &&
       getObjectNode(editor, {at: range.focus, mode: 'highest'})
     ) {
-      range = unhangRange(editor, range, {voids: true})
+      range = unhangRange(editor, range, {includeObjectNodes: true})
     }
 
     return range as unknown as T extends true ? Range | null : Range

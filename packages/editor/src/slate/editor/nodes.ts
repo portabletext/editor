@@ -17,7 +17,7 @@ export function* nodes<T extends Node>(
     mode?: SelectionMode
     universal?: boolean
     reverse?: boolean
-    voids?: boolean
+    includeObjectNodes?: boolean
     pass?: (entry: NodeEntry) => boolean
   } = {},
 ): Generator<NodeEntry<T>, void, undefined> {
@@ -26,7 +26,7 @@ export function* nodes<T extends Node>(
     mode = 'all',
     universal = false,
     reverse = false,
-    voids = false,
+    includeObjectNodes = false,
     pass,
   } = options
   let {match} = options
@@ -63,7 +63,7 @@ export function* nodes<T extends Node>(
       if (!isTextBlock({schema: editor.schema}, node)) {
         return false
       }
-      if (!voids && editor.isElementReadOnly(node)) {
+      if (!includeObjectNodes && editor.isElementReadOnly(node)) {
         return true
       }
 

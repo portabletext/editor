@@ -14,17 +14,17 @@ export function next<T extends Node>(
     at?: Location
     match: NodeMatch<T>
     mode?: SelectionMode
-    voids?: boolean
+    includeObjectNodes?: boolean
   },
 ): NodeEntry<T> | undefined {
-  const {mode = 'lowest', voids = false} = options
+  const {mode = 'lowest', includeObjectNodes = false} = options
   const {match, at = editor.selection} = options
 
   if (!at) {
     return
   }
 
-  const pointAfterLocation = after(editor, at, {voids})
+  const pointAfterLocation = after(editor, at, {includeObjectNodes})
 
   if (!pointAfterLocation) {
     return
@@ -38,7 +38,7 @@ export function next<T extends Node>(
     throw new Error(`Cannot get the next node from the root node!`)
   }
 
-  const [nextEntry] = nodes(editor, {at: span, match, mode, voids})
+  const [nextEntry] = nodes(editor, {at: span, match, mode, includeObjectNodes})
 
   return nextEntry
 }

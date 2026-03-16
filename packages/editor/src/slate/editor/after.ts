@@ -9,7 +9,11 @@ import {positions} from './positions'
 export function after(
   editor: Editor,
   at: Location,
-  options: {distance?: number; unit?: TextUnitAdjustment; voids?: boolean} = {},
+  options: {
+    distance?: number
+    unit?: TextUnitAdjustment
+    includeObjectNodes?: boolean
+  } = {},
 ): Point | undefined {
   const anchor = point(editor, at, {edge: 'end'})
   const focus = end(editor, [])

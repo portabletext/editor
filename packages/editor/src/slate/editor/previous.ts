@@ -14,17 +14,17 @@ export function previous<T extends Node>(
     at?: Location
     match: NodeMatch<T>
     mode?: SelectionMode
-    voids?: boolean
+    includeObjectNodes?: boolean
   },
 ): NodeEntry<T> | undefined {
-  const {mode = 'lowest', voids = false} = options
+  const {mode = 'lowest', includeObjectNodes = false} = options
   const {match, at = editor.selection} = options
 
   if (!at) {
     return
   }
 
-  const pointBeforeLocation = before(editor, at, {voids})
+  const pointBeforeLocation = before(editor, at, {includeObjectNodes})
 
   if (!pointBeforeLocation) {
     return
@@ -45,7 +45,7 @@ export function previous<T extends Node>(
     at: span,
     match,
     mode,
-    voids,
+    includeObjectNodes,
   })
 
   return previousEntry

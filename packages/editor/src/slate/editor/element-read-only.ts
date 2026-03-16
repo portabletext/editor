@@ -11,7 +11,11 @@ import {above} from './above'
 
 export function elementReadOnly(
   editor: Editor,
-  options: {at?: Location; mode?: MaximizeMode; voids?: boolean} = {},
+  options: {
+    at?: Location
+    mode?: MaximizeMode
+    includeObjectNodes?: boolean
+  } = {},
 ): NodeEntry<PortableTextTextBlock | PortableTextObject> | undefined {
   return above(editor, {
     ...options,

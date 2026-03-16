@@ -41,7 +41,7 @@ interface InsertNodesOptions<T extends Node> {
   mode?: RangeMode
   hanging?: boolean
   select?: boolean
-  voids?: boolean
+  includeObjectNodes?: boolean
   batchDirty?: boolean
 }
 
@@ -53,7 +53,7 @@ export function insertNodes<T extends Node>(
   withoutNormalizing(editor, () => {
     const {
       hanging = false,
-      voids = false,
+      includeObjectNodes = false,
       mode = 'lowest',
       batchDirty = true,
     } = options
@@ -78,7 +78,7 @@ export function insertNodes<T extends Node>(
 
     if (isRange(at)) {
       if (!hanging) {
-        at = unhangRange(editor, at, {voids})
+        at = unhangRange(editor, at, {includeObjectNodes})
       }
 
       if (isCollapsedRange(at)) {
@@ -107,7 +107,7 @@ export function insertNodes<T extends Node>(
         at: at.path,
         match,
         mode,
-        voids,
+        includeObjectNodes,
       })
 
       if (entry) {
@@ -126,7 +126,7 @@ export function insertNodes<T extends Node>(
               at: splitAt,
               match,
               mode,
-              voids,
+              includeObjectNodes,
             })
 
             if (highest) {
@@ -139,7 +139,7 @@ export function insertNodes<T extends Node>(
               for (const [node, nodePath] of levels(editor, {
                 at: lowestPath,
                 reverse: true,
-                voids,
+                includeObjectNodes,
               })) {
                 let split = false
 
@@ -180,7 +180,7 @@ export function insertNodes<T extends Node>(
     const parentPath_ = parentPath(at)
     let index = at[at.length - 1]!
 
-    if (!voids && getObjectNode(editor, {at: parentPath_})) {
+    if (!includeObjectNodes && getObjectNode(editor, {at: parentPath_})) {
       return
     }
 

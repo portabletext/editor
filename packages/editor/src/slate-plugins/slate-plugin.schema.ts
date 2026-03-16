@@ -11,7 +11,7 @@ import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {withNormalizeNode} from './slate-plugin.normalize-node'
 
 /**
- * This plugin makes sure that schema types are recognized properly by Slate as blocks, voids, inlines
+ * This plugin makes sure that schema types are recognized properly by Slate as blocks, object nodes, inlines
  *
  */
 export function createSchemaPlugin({editorActor}: {editorActor: EditorActor}) {

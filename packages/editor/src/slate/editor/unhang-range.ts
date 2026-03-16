@@ -12,9 +12,9 @@ import {start as editorStart} from './start'
 export function unhangRange(
   editor: Editor,
   range: Range,
-  options: {voids?: boolean} = {},
+  options: {includeObjectNodes?: boolean} = {},
 ): Range {
-  const {voids = false} = options
+  const {includeObjectNodes = false} = options
   let [start, end] = rangeEdges(range)
 
   // PERF: exit early if we can guarantee that the range isn't hanging.
@@ -30,7 +30,7 @@ export function unhangRange(
   const endBlock = above(editor, {
     at: end,
     match: (n) => isTextBlock({schema: editor.schema}, n),
-    voids,
+    includeObjectNodes,
   })
   const blockPath = endBlock ? endBlock[1] : []
   const first = editorStart(editor, start)
@@ -41,7 +41,7 @@ export function unhangRange(
     at: before,
     match: (n) => isSpan({schema: editor.schema}, n),
     reverse: true,
-    voids,
+    includeObjectNodes,
   })) {
     if (skip) {
       skip = false

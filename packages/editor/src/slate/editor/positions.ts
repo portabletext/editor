@@ -31,14 +31,14 @@ export function* positions(
     at?: Location
     unit?: TextUnitAdjustment
     reverse?: boolean
-    voids?: boolean
+    includeObjectNodes?: boolean
   } = {},
 ): Generator<Point, void, undefined> {
   const {
     at = editor.selection,
     unit = 'offset',
     reverse = false,
-    voids = false,
+    includeObjectNodes = false,
   } = options
 
   if (!at) {
@@ -82,7 +82,7 @@ export function* positions(
   for (const [node, nodePath] of nodes(editor, {
     at,
     reverse,
-    voids,
+    includeObjectNodes,
   })) {
     // If the node is inside a skipped ancestor, do not return any points, but
     // still process its content so that the iteration state remains correct.
@@ -97,7 +97,7 @@ export function* positions(
     }
 
     /*
-     * ELEMENT NODE - Yield position(s) for voids, collect blockText for blocks
+     * ELEMENT NODE - Yield position(s) for object nodes, collect blockText for blocks
      */
     if (isTextBlock({schema: editor.schema}, node)) {
       if (!editor.isSelectable(node)) {
@@ -119,10 +119,10 @@ export function* positions(
         }
       }
 
-      // Void nodes are a special case, so by default we will always
-      // yield their first point. If the `voids` option is set to true,
+      // Object nodes are a special case, so by default we will always
+      // yield their first point. If the `includeObjectNodes` option is set to true,
       // then we will iterate over their content.
-      if (!voids && editor.isElementReadOnly(node)) {
+      if (!includeObjectNodes && editor.isElementReadOnly(node)) {
         yield* maybeYield(editorStart(editor, nodePath))
         continue
       }
@@ -146,7 +146,7 @@ export function* positions(
         // Equivalent to this, but presumably more performant:
         //   blockRange = Editor.range(editor, ...Editor.edges(editor, path))
         //   blockRange = Range.intersection(range, blockRange) // intersect
-        //   blockText = Editor.string(editor, blockRange, { voids })
+        //   blockText = Editor.string(editor, blockRange, { includeObjectNodes })
         const e = isAncestorPath(nodePath, end.path)
           ? end
           : editorEnd(editor, nodePath)
@@ -154,7 +154,7 @@ export function* positions(
           ? start
           : editorStart(editor, nodePath)
 
-        blockText = string(editor, {anchor: s, focus: e}, {voids})
+        blockText = string(editor, {anchor: s, focus: e}, {includeObjectNodes})
         isNewBlock = true
       }
     }
