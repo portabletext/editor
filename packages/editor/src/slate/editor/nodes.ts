@@ -1,4 +1,4 @@
-import {isSpan, isTextBlock} from '@portabletext/schema'
+import {isTextBlock} from '@portabletext/schema'
 import type {Editor, NodeMatch} from '../interfaces/editor'
 import type {Location, Span} from '../interfaces/location'
 import {Span as SpanUtils} from '../interfaces/location'
@@ -15,19 +15,15 @@ export function* nodes<T extends Node>(
     at?: Location | Span
     match?: NodeMatch<T>
     mode?: SelectionMode
-    universal?: boolean
     reverse?: boolean
     includeObjectNodes?: boolean
-    pass?: (entry: NodeEntry) => boolean
   } = {},
 ): Generator<NodeEntry<T>, void, undefined> {
   const {
     at = editor.selection,
-    mode = 'all',
-    universal = false,
+    mode,
     reverse = false,
     includeObjectNodes = false,
-    pass,
   } = options
   let {match} = options
 
@@ -56,10 +52,7 @@ export function* nodes<T extends Node>(
     reverse,
     from,
     to,
-    pass: ([node, path]) => {
-      if (pass && pass([node, path])) {
-        return true
-      }
+    pass: ([node]) => {
       if (!isTextBlock({schema: editor.schema}, node)) {
         return false
       }
@@ -71,7 +64,6 @@ export function* nodes<T extends Node>(
     },
   })
 
-  const matches: NodeEntry<T>[] = []
   let hit: NodeEntry<T> | undefined
 
   for (const [node, path] of nodeEntries) {
@@ -83,14 +75,14 @@ export function* nodes<T extends Node>(
     }
 
     if (!match(node, path)) {
-      // If we've arrived at a leaf text node that is not lower than the last
-      // hit, then we've found a branch that doesn't include a match, which
-      // means the match is not universal.
-      if (universal && !isLower && isSpan({schema: editor.schema}, node)) {
-        return
-      } else {
-        continue
-      }
+      continue
+    }
+
+    // When no mode is specified, yield every matching node.
+    if (!mode) {
+      yield [node as T, path] satisfies NodeEntry<T>
+      hit = [node as T, path] satisfies NodeEntry<T>
+      continue
     }
 
     // If there's a match and it's lower than the last, update the hit.
@@ -104,11 +96,7 @@ export function* nodes<T extends Node>(
       mode === 'lowest' ? hit : ([node as T, path] satisfies NodeEntry<T>)
 
     if (emit) {
-      if (universal) {
-        matches.push(emit)
-      } else {
-        yield emit
-      }
+      yield emit
     }
 
     hit = [node as T, path] satisfies NodeEntry<T>
@@ -116,16 +104,6 @@ export function* nodes<T extends Node>(
 
   // Since lowest is always emitting one behind, catch up at the end.
   if (mode === 'lowest' && hit) {
-    if (universal) {
-      matches.push(hit)
-    } else {
-      yield hit
-    }
-  }
-
-  // Universal defers to ensure that the match occurs in every branch, so we
-  // yield all of the matches after iterating.
-  if (universal) {
-    yield* matches
+    yield hit
   }
 }

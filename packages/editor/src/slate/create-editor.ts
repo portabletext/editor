@@ -44,7 +44,6 @@ export const createEditor = (context: {
     }),
     isElementReadOnly: () => false,
     isInline: () => false,
-    isSelectable: () => true,
     onChange: () => {},
 
     // Core

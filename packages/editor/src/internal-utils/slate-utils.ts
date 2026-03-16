@@ -17,32 +17,9 @@ import type {Point} from '../slate/interfaces/point'
 import type {Range} from '../slate/interfaces/range'
 import {getChild} from '../slate/node/get-child'
 import {isBackwardRange} from '../slate/range/is-backward-range'
-import {rangeEnd} from '../slate/range/range-end'
-import {rangeStart} from '../slate/range/range-start'
 import type {EditorSelection, EditorSelectionPoint} from '../types/editor'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {isListBlock} from '../utils/parse-blocks'
-
-export function getAnchorBlock({
-  editor,
-}: {
-  editor: PortableTextSlateEditor
-}): [node: Node, path: SlatePath] | [undefined, undefined] {
-  if (!editor.selection) {
-    return [undefined, undefined]
-  }
-
-  try {
-    return (
-      editorNode(editor, editor.selection.anchor.path.slice(0, 1)) ?? [
-        undefined,
-        undefined,
-      ]
-    )
-  } catch {
-    return [undefined, undefined]
-  }
-}
 
 export function getFocusBlock({
   editor,
@@ -98,34 +75,6 @@ export function getFocusSpan({
   }
 
   return [undefined, undefined]
-}
-
-export function getSelectionStartBlock({
-  editor,
-}: {
-  editor: PortableTextSlateEditor
-}): [node: Node, path: SlatePath] | [undefined, undefined] {
-  if (!editor.selection) {
-    return [undefined, undefined]
-  }
-
-  const selectionStartPoint = rangeStart(editor.selection)
-
-  return getPointBlock({editor, point: selectionStartPoint})
-}
-
-export function getSelectionEndBlock({
-  editor,
-}: {
-  editor: PortableTextSlateEditor
-}): [node: Node, path: SlatePath] | [undefined, undefined] {
-  if (!editor.selection) {
-    return [undefined, undefined]
-  }
-
-  const selectionEndPoint = rangeEnd(editor.selection)
-
-  return getPointBlock({editor, point: selectionEndPoint})
 }
 
 export function getPointBlock({

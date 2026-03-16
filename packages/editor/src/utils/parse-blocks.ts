@@ -55,7 +55,7 @@ export function parseBlock({
   )
 }
 
-export function parseBlockObject({
+function parseBlockObject({
   blockObject,
   context,
   options,
@@ -97,7 +97,7 @@ export function isListBlock(
   )
 }
 
-export function parseTextBlock({
+function parseTextBlock({
   block,
   context,
   options,
