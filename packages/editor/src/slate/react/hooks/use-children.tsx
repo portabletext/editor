@@ -1,3 +1,9 @@
+import type {
+  PortableTextObject,
+  PortableTextSpan,
+  PortableTextTextBlock,
+} from '@portabletext/schema'
+import {isSpan, isTextBlock} from '@portabletext/schema'
 import {useCallback, useRef, type JSX} from 'react'
 import type {Key} from '../../dom/utils/key'
 import {
@@ -5,13 +11,10 @@ import {
   splitDecorationsByChild,
 } from '../../dom/utils/range-list'
 import {isEditor} from '../../editor/is-editor'
-import {isElement} from '../../element/is-element'
 import type {Editor} from '../../interfaces/editor'
-import type {Element} from '../../interfaces/element'
-import type {Ancestor, ObjectNode} from '../../interfaces/node'
-import type {DecoratedRange, Text} from '../../interfaces/text'
+import type {Node} from '../../interfaces/node'
+import type {DecoratedRange} from '../../interfaces/text'
 import {isObjectNode} from '../../node/is-object-node'
-import {isText} from '../../text/is-text'
 import type {
   RenderElementProps,
   RenderLeafProps,
@@ -31,7 +34,7 @@ import {useSlateStatic} from './use-slate-static'
 
 const useChildren = (props: {
   decorations: DecoratedRange[]
-  node: Ancestor
+  node: Editor | Node
   renderElement?: (props: RenderElementProps) => JSX.Element
   renderPlaceholder: (props: RenderPlaceholderProps) => JSX.Element
   renderText?: (props: RenderTextProps) => JSX.Element
@@ -52,14 +55,24 @@ const useChildren = (props: {
 
   const decorationsByChild = useDecorationsByChild(editor, node, decorations)
 
+  const children = isEditor(node)
+    ? node.children
+    : isTextBlock({schema: editor.schema}, node)
+      ? node.children
+      : []
+
   // Update the index and parent of each child.
-  node.children.forEach((n, i) => {
+  children.forEach((n: Node, i: number) => {
     editor.nodeToIndex.set(n, i)
     editor.nodeToParent.set(n, node)
   })
 
   const renderElementComponent = useCallback(
-    (n: Element, i: number, cachedKey?: Key) => {
+    (
+      n: PortableTextTextBlock | PortableTextObject,
+      i: number,
+      cachedKey?: Key,
+    ) => {
       const key = cachedKey ?? ReactEditor.findKey(editor, n)
 
       return (
@@ -86,15 +99,25 @@ const useChildren = (props: {
     ],
   )
 
-  const renderTextComponent = (n: Text, i: number) => {
+  const textBlockParent = isTextBlock({schema: editor.schema}, node)
+    ? node
+    : undefined
+
+  const renderTextComponent = (n: PortableTextSpan, i: number) => {
+    if (!textBlockParent) {
+      throw new Error(
+        'Cannot render text component without a text block parent',
+      )
+    }
+
     const key = ReactEditor.findKey(editor, n)
 
     return (
       <TextComponent
         decorations={decorationsByChild[i] ?? []}
         key={key.id}
-        isLast={i === node.children.length - 1}
-        parent={node}
+        isLast={i === children.length - 1}
+        parent={textBlockParent}
         renderPlaceholder={renderPlaceholder}
         renderLeaf={renderLeaf}
         renderText={renderText}
@@ -103,7 +126,7 @@ const useChildren = (props: {
     )
   }
 
-  const renderObjectNodeComponent = (n: ObjectNode, i: number) => {
+  const renderObjectNodeComponent = (n: PortableTextObject, i: number) => {
     const key = ReactEditor.findKey(editor, n)
 
     return (
@@ -117,23 +140,23 @@ const useChildren = (props: {
     )
   }
 
-  return node.children.map((n, i) => {
-    if (isElement(n, editor.schema)) {
+  return children.map((n: Node, i: number) => {
+    if (isTextBlock({schema: editor.schema}, n)) {
       return renderElementComponent(n, i)
     }
-    if (isObjectNode(n, editor.schema)) {
+    if (isObjectNode({schema: editor.schema}, n)) {
       return renderObjectNodeComponent(n, i)
     }
-    if (isText(n, editor.schema)) {
+    if (isSpan({schema: editor.schema}, n)) {
       return renderTextComponent(n, i)
     }
-    return renderTextComponent(n as Text, i)
+    throw new Error(`Unexpected node type`)
   })
 }
 
 const useDecorationsByChild = (
   editor: Editor,
-  node: Ancestor,
+  node: Editor | Node,
   decorations: DecoratedRange[],
 ) => {
   const decorationsByChild = splitDecorationsByChild(editor, node, decorations)

@@ -1,5 +1,5 @@
 import type {Patch} from '@portabletext/patches'
-import {isSpan, type PortableTextBlock} from '@portabletext/schema'
+import {isSpan, isTextBlock, type PortableTextBlock} from '@portabletext/schema'
 import type {ActorRefFrom} from 'xstate'
 import {
   and,
@@ -31,9 +31,8 @@ import {deleteText} from '../slate/core/delete-text'
 import {node as editorNode} from '../slate/editor/node'
 import {start} from '../slate/editor/start'
 import {withoutNormalizing} from '../slate/editor/without-normalizing'
-import type {Descendant, Node} from '../slate/interfaces/node'
+import type {Node} from '../slate/interfaces/node'
 import {hasNode} from '../slate/node/has-node'
-import {isText} from '../slate/text/is-text'
 import type {PickFromUnion} from '../type-utils'
 import type {InvalidValueResolution} from '../types/editor'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
@@ -684,7 +683,7 @@ function syncBlock({
   value: Array<PortableTextBlock>
 }) {
   const oldSlateBlock = slateEditor.children.at(index)
-  const oldBlock = (slateEditor.children as Array<PortableTextBlock>).at(index)
+  const oldBlock = slateEditor.children.at(index)
 
   if (!oldSlateBlock || !oldBlock) {
     // Insert the new block
@@ -891,7 +890,7 @@ function updateBlock({
     schema: EditorSchema
   }
   slateEditor: PortableTextSlateEditor
-  oldSlateBlock: Descendant
+  oldSlateBlock: Node
   block: PortableTextBlock
   index: number
 }) {
@@ -931,8 +930,8 @@ function updateBlock({
 
   // Text block's need to have their children updated as well (setNode does not target a node's children)
   if (
-    slateEditor.isTextBlock(slateBlock) &&
-    slateEditor.isTextBlock(oldSlateBlock)
+    isTextBlock({schema: slateEditor.schema}, slateBlock) &&
+    isTextBlock({schema: slateEditor.schema}, oldSlateBlock)
   ) {
     const oldBlockChildrenLength = oldSlateBlock.children.length
 
@@ -967,7 +966,7 @@ function updateBlock({
         )
       const isTextChanged =
         oldBlockChild &&
-        isText(oldBlockChild, slateEditor.schema) &&
+        isSpan({schema: slateEditor.schema}, oldBlockChild) &&
         currentBlockChild.text !== oldBlockChild.text
       const path = [index, currentBlockChildIndex]
 
@@ -1032,7 +1031,7 @@ function updateBlock({
           slateEditor.apply({
             type: 'insert_node',
             path: [index, currentBlockChildIndex],
-            node: currentBlockChild as Node,
+            node: currentBlockChild,
           })
 
           slateEditor.onChange()
@@ -1043,7 +1042,7 @@ function updateBlock({
           slateEditor.apply({
             type: 'insert_node',
             path: [index, currentBlockChildIndex],
-            node: currentBlockChild as Node,
+            node: currentBlockChild,
           })
 
           slateEditor.onChange()

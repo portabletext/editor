@@ -112,6 +112,10 @@ export const withDOM = <T extends Editor>(editor: T): T & DOMEditor => {
     }
 
     for (const [path, key] of matches) {
+      if (path.length === 0) {
+        continue
+      }
+
       const [node] = editorNode(e, path)
       e.nodeToKey.set(node, key)
     }

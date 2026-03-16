@@ -1,16 +1,14 @@
+import type {PortableTextObject} from '@portabletext/schema'
 import type {EditorSchema} from '../../editor/editor-schema'
-import type {ObjectNode} from '../interfaces/node'
-import {isObject} from '../utils/is-object'
+import {isTypedObject} from '../../utils/asserters'
 
 export function isObjectNode(
-  value: any,
-  schema: EditorSchema,
-): value is ObjectNode {
+  context: {schema: EditorSchema},
+  node: unknown,
+): node is PortableTextObject {
   return (
-    isObject(value) &&
-    typeof value._type === 'string' &&
-    typeof value._key === 'string' &&
-    value._type !== schema.block.name &&
-    value._type !== schema.span.name
+    isTypedObject(node) &&
+    node._type !== context.schema.block.name &&
+    node._type !== context.schema.span.name
   )
 }

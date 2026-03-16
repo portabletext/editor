@@ -1,13 +1,19 @@
 import type {EditorSchema} from '../../editor/editor-schema'
-import type {Ancestor, Node} from '../interfaces/node'
+import type {Editor} from '../interfaces/editor'
+import type {Node} from '../interfaces/node'
+import type {Path} from '../interfaces/path'
 import {isLeaf} from './is-leaf'
 
 export function getNodeIf(
-  root: Node,
+  root: Editor | Node,
   path: Path,
   schema: EditorSchema,
 ): Node | undefined {
-  let node = root
+  if (path.length === 0) {
+    return undefined
+  }
+
+  let node: Editor | Node = root
 
   for (let i = 0; i < path.length; i++) {
     const p = path[i]!
@@ -16,16 +22,14 @@ export function getNodeIf(
       return
     }
 
-    const children = (node as Ancestor).children
+    const children = node.children
 
     if (!children[p]) {
       return
     }
 
-    node = children[p]! as Node
+    node = children[p]!
   }
 
-  return node
+  return node as Node
 }
-
-type Path = number[]

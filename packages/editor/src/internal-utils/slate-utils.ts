@@ -1,13 +1,16 @@
-import type {PortableTextBlock, PortableTextSpan} from '@portabletext/schema'
+import {
+  isSpan,
+  isTextBlock,
+  type PortableTextSpan,
+  type PortableTextTextBlock,
+} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
 import {end} from '../slate/editor/end'
 import {isEditor} from '../slate/editor/is-editor'
 import {node as editorNode} from '../slate/editor/node'
 import {nodes as editorNodes} from '../slate/editor/nodes'
 import {start} from '../slate/editor/start'
-import {isElement} from '../slate/element/is-element'
 import type {Editor} from '../slate/interfaces/editor'
-import type {Element} from '../slate/interfaces/element'
 import type {Node} from '../slate/interfaces/node'
 import type {Path as SlatePath} from '../slate/interfaces/path'
 import type {Point} from '../slate/interfaces/point'
@@ -18,6 +21,7 @@ import {rangeEnd} from '../slate/range/range-end'
 import {rangeStart} from '../slate/range/range-start'
 import type {EditorSelection, EditorSelectionPoint} from '../types/editor'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
+import {isListBlock} from '../utils/parse-blocks'
 
 export function getAnchorBlock({
   editor,
@@ -77,7 +81,7 @@ export function getFocusSpan({
       return [undefined, undefined]
     }
 
-    if (!editor.isTextBlock(focusBlock)) {
+    if (!isTextBlock({schema: editor.schema}, focusBlock)) {
       return [undefined, undefined]
     }
 
@@ -86,7 +90,7 @@ export function getFocusSpan({
       editor.selection.focus.path.slice(0, 2),
     )
 
-    if (editor.isTextSpan(node)) {
+    if (isSpan({schema: editor.schema}, node)) {
       return [node, path]
     }
   } catch {
@@ -239,13 +243,13 @@ export function getNodeBlock({
 }: {
   editor: PortableTextSlateEditor
   schema: EditorSchema
-  node: Node
+  node: Editor | Node
 }) {
   if (isEditor(node)) {
     return undefined
   }
 
-  if (isBlockElement({editor, schema}, node)) {
+  if (isBlockElement({schema}, node)) {
     return elementToBlock({schema, element: node})
   }
 
@@ -254,14 +258,14 @@ export function getNodeBlock({
       mode: 'highest',
       at: [],
       match: (n) =>
-        isBlockElement({editor, schema}, n) &&
-        n.children.some((child) => child._key === node._key),
+        isBlockElement({schema}, n) &&
+        n.children.some((child: Node) => child._key === node._key),
     }),
   )
     .at(0)
     ?.at(0)
 
-  return isElement(parent, editor.schema)
+  return isTextBlock({schema: editor.schema}, parent)
     ? elementToBlock({
         schema,
         element: parent,
@@ -269,22 +273,20 @@ export function getNodeBlock({
     : undefined
 }
 
-function elementToBlock({element}: {schema: EditorSchema; element: Element}) {
-  return element as unknown as PortableTextBlock
+function elementToBlock({
+  element,
+}: {
+  schema: EditorSchema
+  element: PortableTextTextBlock
+}) {
+  return element
 }
 
 function isBlockElement(
-  {editor, schema}: {editor: PortableTextSlateEditor; schema: EditorSchema},
+  {schema}: {schema: EditorSchema},
   node: Node,
-): node is Element {
-  return (
-    isElement(node, editor.schema) &&
-    !editor.isInline(node) &&
-    (schema.block.name === node._type ||
-      schema.blockObjects.some(
-        (blockObject) => blockObject.name === node._type,
-      ))
-  )
+): node is PortableTextTextBlock {
+  return isTextBlock({schema}, node)
 }
 
 export function isListItemActive({
@@ -301,13 +303,15 @@ export function isListItemActive({
   const selectedBlocks = [
     ...editorNodes(editor, {
       at: editor.selection,
-      match: (node) => editor.isTextBlock(node),
+      match: (node) => isTextBlock({schema: editor.schema}, node),
     }),
   ]
 
   if (selectedBlocks.length > 0) {
     return selectedBlocks.every(
-      ([node]) => editor.isListBlock(node) && node.listItem === listItem,
+      ([node]) =>
+        isListBlock({schema: editor.schema}, node) &&
+        node.listItem === listItem,
     )
   }
 
@@ -328,7 +332,7 @@ export function isStyleActive({
   const selectedBlocks = [
     ...editorNodes(editor, {
       at: editor.selection,
-      match: (node) => editor.isTextBlock(node),
+      match: (node) => isTextBlock({schema: editor.schema}, node),
     }),
   ]
 

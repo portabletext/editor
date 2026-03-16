@@ -1,3 +1,4 @@
+import {isSpan} from '@portabletext/schema'
 import {end} from '../slate/editor/end'
 import {isEdge} from '../slate/editor/is-edge'
 import {isEnd} from '../slate/editor/is-end'
@@ -9,8 +10,8 @@ import type {Path} from '../slate/interfaces/path'
 import type {Point} from '../slate/interfaces/point'
 import {extractProps} from '../slate/node/extract-props'
 import {getNode} from '../slate/node/get-node'
+import {isObjectNode} from '../slate/node/is-object-node'
 import {nextPath} from '../slate/path/next-path'
-import {isText} from '../slate/text/is-text'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {applySelect} from './apply-selection'
 import {applySplitNode} from './apply-split-node'
@@ -43,9 +44,11 @@ export function applyInsertNodeAtPoint(
   at: Point,
 ): void {
   withoutNormalizing(editor, () => {
-    const match = isText(node, editor.schema)
-      ? (n: Node) => isText(n, editor.schema)
-      : (n: Node) => isText(n, editor.schema) || editor.isObjectNode(n)
+    const match = isSpan({schema: editor.schema}, node)
+      ? (n: Node) => isSpan({schema: editor.schema}, n)
+      : (n: Node) =>
+          isSpan({schema: editor.schema}, n) ||
+          isObjectNode({schema: editor.schema}, n)
 
     const [entry] = nodes(editor, {
       at: at.path,

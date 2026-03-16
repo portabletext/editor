@@ -1,9 +1,11 @@
-import type {PortableTextBlock} from '@portabletext/schema'
+import type {
+  PortableTextObject,
+  PortableTextTextBlock,
+} from '@portabletext/schema'
 import {isTextBlock} from '@portabletext/schema'
 import {useSelector} from '@xstate/react'
 import {useContext, type ReactElement} from 'react'
 import type {DropPosition} from '../behaviors/behavior.core.drop-position'
-import type {Element as SlateElement} from '../slate/interfaces/element'
 import type {RenderElementProps} from '../slate/react/components/editable'
 import {useSlateStatic} from '../slate/react/hooks/use-slate-static'
 import type {
@@ -21,7 +23,7 @@ export function RenderElement(props: {
   attributes: RenderElementProps['attributes']
   children: ReactElement
   dropPosition?: DropPosition
-  element: SlateElement
+  element: PortableTextTextBlock | PortableTextObject
   readOnly: boolean
   renderBlock?: RenderBlockFunction
   renderChild?: RenderChildFunction
@@ -33,29 +35,7 @@ export function RenderElement(props: {
   const schema = useSelector(editorActor, (s) => s.context.schema)
   const slateStatic = useSlateStatic()
 
-  const isInline = slateStatic.isInline(props.element)
-
-  if (isInline) {
-    return (
-      <RenderInlineObject
-        attributes={props.attributes}
-        element={props.element}
-        readOnly={props.readOnly}
-        renderChild={props.renderChild}
-        schema={schema}
-      >
-        {props.children}
-      </RenderInlineObject>
-    )
-  }
-
-  const blockIndex = slateStatic.blockIndexMap.get(props.element._key)
-  const block =
-    blockIndex !== undefined
-      ? (slateStatic.children as Array<PortableTextBlock>).at(blockIndex)
-      : undefined
-
-  if (isTextBlock({schema}, block)) {
+  if (isTextBlock({schema}, props.element)) {
     return (
       <RenderTextBlock
         attributes={props.attributes}
@@ -71,17 +51,31 @@ export function RenderElement(props: {
         renderStyle={props.renderStyle}
         schema={schema}
         spellCheck={props.spellCheck}
-        textBlock={block}
+        textBlock={props.element}
       >
         {props.children}
       </RenderTextBlock>
     )
   }
 
+  if (slateStatic.isInline(props.element)) {
+    return (
+      <RenderInlineObject
+        attributes={props.attributes}
+        element={props.element}
+        readOnly={props.readOnly}
+        renderChild={props.renderChild}
+        schema={schema}
+      >
+        {props.children}
+      </RenderInlineObject>
+    )
+  }
+
   return (
     <RenderBlockObject
       attributes={props.attributes}
-      blockObject={block}
+      blockObject={props.element}
       dropPosition={
         props.dropPosition?.blockKey === props.element._key
           ? props.dropPosition.positionBlock

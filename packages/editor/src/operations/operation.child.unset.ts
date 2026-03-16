@@ -1,8 +1,8 @@
-import type {PortableTextBlock} from '@portabletext/schema'
-import {isTextBlock} from '@portabletext/schema'
+import {isSpan, isTextBlock} from '@portabletext/schema'
 import {applySetNode} from '../internal-utils/apply-set-node'
 import {safeStringify} from '../internal-utils/safe-json'
 import {node as editorNode} from '../slate/editor/node'
+import {isObjectNode} from '../slate/node/is-object-node'
 import type {OperationImplementation} from './operation.types'
 
 export const childUnsetOperationImplementation: OperationImplementation<
@@ -17,7 +17,7 @@ export const childUnsetOperationImplementation: OperationImplementation<
 
   const block =
     blockIndex !== undefined
-      ? (operation.editor.children as Array<PortableTextBlock>).at(blockIndex)
+      ? operation.editor.children.at(blockIndex)
       : undefined
 
   if (!block) {
@@ -54,7 +54,7 @@ export const childUnsetOperationImplementation: OperationImplementation<
     throw new Error(`Unable to find child at ${safeStringify(operation.at)}`)
   }
 
-  if (operation.editor.isTextSpan(child)) {
+  if (isSpan({schema: operation.editor.schema}, child)) {
     const newNode: Record<string, unknown> = {}
 
     for (const prop of operation.props) {
@@ -90,7 +90,7 @@ export const childUnsetOperationImplementation: OperationImplementation<
     return
   }
 
-  if (operation.editor.isObjectNode(child)) {
+  if (isObjectNode({schema: operation.editor.schema}, child)) {
     const unsetProps: Record<string, unknown> = {}
     for (const prop of operation.props) {
       if (prop === '_type') {

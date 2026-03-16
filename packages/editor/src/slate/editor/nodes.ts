@@ -1,4 +1,4 @@
-import {isElement} from '../element/is-element'
+import {isSpan, isTextBlock} from '@portabletext/schema'
 import type {Editor, NodeMatch} from '../interfaces/editor'
 import type {Location, Span} from '../interfaces/location'
 import {Span as SpanUtils} from '../interfaces/location'
@@ -6,7 +6,6 @@ import type {Node, NodeEntry} from '../interfaces/node'
 import type {Path} from '../interfaces/path'
 import {getNodes} from '../node/get-nodes'
 import {comparePaths} from '../path/compare-paths'
-import {isText} from '../text/is-text'
 import type {SelectionMode} from '../types/types'
 import {path} from './path'
 
@@ -61,7 +60,7 @@ export function* nodes<T extends Node>(
       if (pass && pass([node, path])) {
         return true
       }
-      if (!isElement(node, editor.schema)) {
+      if (!isTextBlock({schema: editor.schema}, node)) {
         return false
       }
       if (!voids && editor.isElementReadOnly(node)) {
@@ -87,7 +86,7 @@ export function* nodes<T extends Node>(
       // If we've arrived at a leaf text node that is not lower than the last
       // hit, then we've found a branch that doesn't include a match, which
       // means the match is not universal.
-      if (universal && !isLower && isText(node, editor.schema)) {
+      if (universal && !isLower && isSpan({schema: editor.schema}, node)) {
         return
       } else {
         continue
@@ -96,13 +95,13 @@ export function* nodes<T extends Node>(
 
     // If there's a match and it's lower than the last, update the hit.
     if (mode === 'lowest' && isLower) {
-      hit = [node, path] as NodeEntry<T>
+      hit = [node as T, path] satisfies NodeEntry<T>
       continue
     }
 
     // In lowest mode we emit the last hit, once it's guaranteed lowest.
     const emit: NodeEntry<T> | undefined =
-      mode === 'lowest' ? hit : ([node, path] as NodeEntry<T>)
+      mode === 'lowest' ? hit : ([node as T, path] satisfies NodeEntry<T>)
 
     if (emit) {
       if (universal) {
@@ -112,7 +111,7 @@ export function* nodes<T extends Node>(
       }
     }
 
-    hit = [node, path] as NodeEntry<T>
+    hit = [node as T, path] satisfies NodeEntry<T>
   }
 
   // Since lowest is always emitting one behind, catch up at the end.

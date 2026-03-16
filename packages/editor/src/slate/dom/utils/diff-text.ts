@@ -1,8 +1,7 @@
+import {isSpan, isTextBlock} from '@portabletext/schema'
 import {above} from '../../editor/above'
 import {hasPath} from '../../editor/has-path'
-import {isBlock} from '../../editor/is-block'
 import {next as editorNext} from '../../editor/next'
-import {isElement} from '../../element/is-element'
 import type {Editor} from '../../interfaces/editor'
 import type {Operation} from '../../interfaces/operation'
 import type {Path} from '../../interfaces/path'
@@ -15,7 +14,6 @@ import {pathEquals} from '../../path/path-equals'
 import {transformPath} from '../../path/transform-path'
 import {transformPoint} from '../../point/transform-point'
 import {isCollapsedRange} from '../../range/is-collapsed-range'
-import {isText} from '../../text/is-text'
 
 export type StringDiff = {
   start: number
@@ -40,7 +38,7 @@ export function verifyDiffState(editor: Editor, textDiff: TextDiff): boolean {
   }
 
   const node = getNode(editor, path, editor.schema)
-  if (!isText(node, editor.schema)) {
+  if (!isSpan({schema: editor.schema}, node)) {
     return false
   }
 
@@ -56,7 +54,10 @@ export function verifyDiffState(editor: Editor, textDiff: TextDiff): boolean {
   }
 
   const nextNode = getNode(editor, nextPath, editor.schema)
-  return isText(nextNode, editor.schema) && nextNode.text.startsWith(diff.text)
+  return (
+    isSpan({schema: editor.schema}, nextNode) &&
+    nextNode.text.startsWith(diff.text)
+  )
 }
 
 export function applyStringDiff(text: string, ...diffs: StringDiff[]) {
@@ -177,12 +178,12 @@ export function normalizePoint(editor: Editor, point: Point): Point | null {
   }
 
   let leaf = getNode(editor, path, editor.schema)
-  if (!isText(leaf, editor.schema)) {
+  if (!isSpan({schema: editor.schema}, leaf)) {
     return null
   }
 
   const parentBlock = above(editor, {
-    match: (n) => isElement(n, editor.schema) && isBlock(editor, n),
+    match: (n) => isTextBlock({schema: editor.schema}, n),
     at: path,
   })
 
@@ -193,7 +194,7 @@ export function normalizePoint(editor: Editor, point: Point): Point | null {
   while (offset > leaf.text.length) {
     const entry = editorNext(editor, {
       at: path,
-      match: (n) => isText(n, editor.schema),
+      match: (n) => isSpan({schema: editor.schema}, n),
     })
     if (!entry || !isDescendantPath(entry[1], parentBlock[1])) {
       return null

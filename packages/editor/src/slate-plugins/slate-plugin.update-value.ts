@@ -1,4 +1,3 @@
-import type {PortableTextBlock} from '@portabletext/schema'
 import type {EditorContext} from '../editor/editor-snapshot'
 import {buildIndexMaps} from '../internal-utils/build-index-maps'
 import {debug} from '../internal-utils/debug'
@@ -33,7 +32,7 @@ export function updateValuePlugin(
     buildIndexMaps(
       {
         schema: context.schema,
-        value: editor.children as PortableTextBlock[],
+        value: editor.children,
       },
       {
         blockIndexMap: editor.blockIndexMap,

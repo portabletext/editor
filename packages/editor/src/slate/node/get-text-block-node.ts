@@ -1,25 +1,24 @@
+import type {PortableTextTextBlock} from '@portabletext/schema'
+import {isTextBlock} from '@portabletext/schema'
 import type {EditorSchema} from '../../editor/editor-schema'
 import {safeStringify} from '../../internal-utils/safe-json'
 import type {Editor} from '../interfaces/editor'
 import type {Node} from '../interfaces/node'
 import type {Path} from '../interfaces/path'
 import {getNode} from './get-node'
-import {isLeaf} from './is-leaf'
 
-export function getAncestor(
+export function getTextBlockNode(
   root: Editor | Node,
   path: Path,
   schema: EditorSchema,
-): Node {
+): PortableTextTextBlock {
   const node = getNode(root, path, schema)
 
-  if (isLeaf(node, schema)) {
-    throw new Error(
-      `Cannot get the ancestor node at path [${path}] because it refers to a leaf node instead: ${safeStringify(
-        node,
-      )}`,
-    )
+  if (isTextBlock({schema}, node)) {
+    return node
   }
 
-  return node
+  throw new Error(
+    `Cannot get the text block at path [${path}] because it refers to a non-text-block node: ${safeStringify(node)}`,
+  )
 }

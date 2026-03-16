@@ -1,7 +1,11 @@
+import type {
+  PortableTextObject,
+  PortableTextTextBlock,
+} from '@portabletext/schema'
+import {isTextBlock} from '@portabletext/schema'
 import React, {useCallback, type JSX} from 'react'
 import {isElementDecorationsEqual} from '../../dom/utils/range-list'
 import {hasInlines} from '../../editor/has-inlines'
-import type {Element as SlateElement} from '../../interfaces/element'
 import type {DecoratedRange} from '../../interfaces/text'
 import {getString} from '../../node/get-string'
 import useChildren from '../hooks/use-children'
@@ -26,7 +30,7 @@ const defaultRenderElement = (props: RenderElementProps) => (
 
 const Element = (props: {
   decorations: DecoratedRange[]
-  element: SlateElement
+  element: PortableTextTextBlock | PortableTextObject
   renderElement?: (props: RenderElementProps) => JSX.Element
   renderPlaceholder: (props: RenderPlaceholderProps) => JSX.Element
   renderText?: (props: RenderTextProps) => JSX.Element
@@ -87,7 +91,11 @@ const Element = (props: {
 
   // If it's a block node with inline children, add the proper `dir` attribute
   // for text direction.
-  if (!isInline && hasInlines(editor, element)) {
+  if (
+    !isInline &&
+    isTextBlock({schema: editor.schema}, element) &&
+    hasInlines(editor, element)
+  ) {
     const text = getString(element, editor.schema)
     const dir = getDirection(text)
 

@@ -1,7 +1,7 @@
+import type {PortableTextObject} from '@portabletext/schema'
 import React, {useCallback, useMemo, type JSX} from 'react'
 import {IS_ANDROID} from '../../dom/utils/environment'
 import {isElementDecorationsEqual} from '../../dom/utils/range-list'
-import type {ObjectNode} from '../../interfaces/node'
 import type {DecoratedRange} from '../../interfaces/text'
 import {useReadOnly} from '../hooks/use-read-only'
 import {useSlateStatic} from '../hooks/use-slate-static'
@@ -30,7 +30,7 @@ const defaultRenderElement = (props: RenderElementProps) => {
 
 const ObjectNodeComponent = (props: {
   decorations: DecoratedRange[]
-  objectNode: ObjectNode
+  objectNode: PortableTextObject
   isInline: boolean
   renderElement?: (props: RenderElementProps) => JSX.Element
 }) => {
@@ -121,8 +121,7 @@ const ObjectNodeComponent = (props: {
   return renderElement({
     attributes,
     children,
-    element:
-      objectNode as unknown as import('../../interfaces/element').Element,
+    element: objectNode,
   })
 }
 

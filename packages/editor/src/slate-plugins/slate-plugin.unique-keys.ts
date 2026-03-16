@@ -1,13 +1,12 @@
-import type {PortableTextBlock} from '@portabletext/schema'
 import {isTextBlock} from '@portabletext/schema'
 import type {EditorActor} from '../editor/editor-machine'
 import type {EditorContext, EditorSnapshot} from '../editor/editor-snapshot'
 import {applySetNode} from '../internal-utils/apply-set-node'
 import {isEditor} from '../slate/editor/is-editor'
 import {parent as editorParent} from '../slate/editor/parent'
-import {isElement} from '../slate/element/is-element'
 import type {Path} from '../slate/interfaces/path'
 import {getChildren} from '../slate/node/get-children'
+import {isObjectNode} from '../slate/node/is-object-node'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {withNormalizeNode} from './slate-plugin.normalize-node'
 
@@ -54,7 +53,7 @@ export function createUniqueKeysPlugin(editorActor: EditorActor) {
                 blockIndexMap: editor.blockIndexMap,
                 context: {
                   schema: context.schema,
-                  value: editor.children as Array<PortableTextBlock>,
+                  value: editor.children,
                 },
               },
               operation.path,
@@ -84,7 +83,10 @@ export function createUniqueKeysPlugin(editorActor: EditorActor) {
     editor.normalizeNode = (entry) => {
       const [node, path] = entry
 
-      if (isElement(node, editor.schema) || editor.isObjectNode(node)) {
+      if (
+        isTextBlock({schema: editor.schema}, node) ||
+        isObjectNode({schema: editor.schema}, node)
+      ) {
         const [parentNode] = editorParent(editor, path)
 
         if (parentNode && isEditor(parentNode)) {
@@ -120,10 +122,7 @@ export function createUniqueKeysPlugin(editorActor: EditorActor) {
         }
       }
 
-      if (
-        isElement(node, editor.schema) &&
-        node._type === editorActor.getSnapshot().context.schema.block.name
-      ) {
+      if (isTextBlock({schema: editor.schema}, node)) {
         // Set key on block itself
         if (!node._key) {
           withNormalizeNode(editor, () => {

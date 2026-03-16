@@ -1,8 +1,9 @@
-import type {PortableTextBlock} from '@portabletext/schema'
+import {isSpan} from '@portabletext/schema'
 import {applySetNode} from '../internal-utils/apply-set-node'
 import {safeStringify} from '../internal-utils/safe-json'
 import {toSlateRange} from '../internal-utils/to-slate-range'
 import {node as editorNode} from '../slate/editor/node'
+import {isObjectNode} from '../slate/node/is-object-node'
 import type {OperationImplementation} from './operation.types'
 
 export const childSetOperationImplementation: OperationImplementation<
@@ -11,7 +12,7 @@ export const childSetOperationImplementation: OperationImplementation<
   const location = toSlateRange({
     context: {
       schema: context.schema,
-      value: operation.editor.children as Array<PortableTextBlock>,
+      value: operation.editor.children,
       selection: {
         anchor: {path: operation.at, offset: 0},
         focus: {path: operation.at, offset: 0},
@@ -34,7 +35,7 @@ export const childSetOperationImplementation: OperationImplementation<
     throw new Error(`Unable to find child at ${safeStringify(operation.at)}`)
   }
 
-  if (operation.editor.isTextSpan(child)) {
+  if (isSpan({schema: operation.editor.schema}, child)) {
     const {_type, text, ...rest} = operation.props
 
     applySetNode(
@@ -67,7 +68,7 @@ export const childSetOperationImplementation: OperationImplementation<
     return
   }
 
-  if (operation.editor.isObjectNode(child)) {
+  if (isObjectNode({schema: operation.editor.schema}, child)) {
     const definition = context.schema.inlineObjects.find(
       (definition) => definition.name === child._type,
     )

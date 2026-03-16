@@ -4,7 +4,6 @@ import {createPlaceholderBlock} from '../internal-utils/create-placeholder-block
 import {debug} from '../internal-utils/debug'
 import {plugins} from '../slate-plugins/slate-plugins'
 import {createEditor} from '../slate/create-editor'
-import type {Descendant} from '../slate/interfaces/node'
 import {withReact} from '../slate/react/plugin/with-react'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import type {EditorActor} from './editor-machine'
@@ -18,7 +17,7 @@ type SlateEditorConfig = {
 
 export type SlateEditor = {
   instance: PortableTextSlateEditor
-  initialValue: Array<Descendant>
+  initialValue: Array<PortableTextBlock>
 }
 
 export function createSlateEditor(config: SlateEditorConfig): SlateEditor {
@@ -43,7 +42,7 @@ export function createSlateEditor(config: SlateEditorConfig): SlateEditor {
   editor.remotePatches = []
   editor.undoStepId = undefined
 
-  editor.children = [placeholderBlock] as unknown as Descendant[]
+  editor.children = [placeholderBlock]
 
   editor.isDeferringMutations = false
   editor.isNormalizingNode = false
@@ -63,7 +62,7 @@ export function createSlateEditor(config: SlateEditorConfig): SlateEditor {
   buildIndexMaps(
     {
       schema: context.schema,
-      value: instance.children as Array<PortableTextBlock>,
+      value: instance.children,
     },
     {
       blockIndexMap: instance.blockIndexMap,

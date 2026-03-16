@@ -1,25 +1,24 @@
 import type {Editor, NodeMatch} from '../interfaces/editor'
 import type {Location, Span} from '../interfaces/location'
-import type {Descendant, NodeEntry} from '../interfaces/node'
+import type {Node, NodeEntry} from '../interfaces/node'
 import {isPath} from '../path/is-path'
 import type {SelectionMode} from '../types/types'
 import {before} from './before'
 import {node} from './node'
 import {nodes} from './nodes'
-import {parent} from './parent'
 import {path} from './path'
 
-export function previous<T extends Descendant>(
+export function previous<T extends Node>(
   editor: Editor,
   options: {
     at?: Location
-    match?: NodeMatch<T>
+    match: NodeMatch<T>
     mode?: SelectionMode
     voids?: boolean
-  } = {},
+  },
 ): NodeEntry<T> | undefined {
   const {mode = 'lowest', voids = false} = options
-  let {match, at = editor.selection} = options
+  const {match, at = editor.selection} = options
 
   if (!at) {
     return
@@ -41,15 +40,6 @@ export function previous<T extends Descendant>(
     throw new Error(`Cannot get the previous node from the root node!`)
   }
 
-  if (match == null) {
-    if (isPath(at)) {
-      const [parentNode] = parent(editor, at)
-      match = (n) => parentNode.children.includes(n)
-    } else {
-      match = () => true
-    }
-  }
-
   const [previousEntry] = nodes(editor, {
     reverse: true,
     at: span,
@@ -58,5 +48,5 @@ export function previous<T extends Descendant>(
     voids,
   })
 
-  return previousEntry as NodeEntry<T> | undefined
+  return previousEntry
 }

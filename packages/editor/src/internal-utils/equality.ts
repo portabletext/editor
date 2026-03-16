@@ -4,12 +4,12 @@ import {
   type PortableTextObject,
   type Schema,
 } from '@portabletext/schema'
-import type {Descendant} from '../slate/interfaces/node'
+import type {Node} from '../slate/interfaces/node'
 
 export function isEqualValues(
   context: {schema: Schema},
-  a: Array<PortableTextBlock | Descendant> | undefined,
-  b: Array<PortableTextBlock | Descendant> | undefined,
+  a: Array<PortableTextBlock | Node> | undefined,
+  b: Array<PortableTextBlock | Node> | undefined,
 ): boolean {
   if (!a || !b) {
     return a === b
@@ -37,8 +37,8 @@ export function isEqualValues(
 
 export function isEqualBlocks(
   context: {schema: Schema},
-  a: PortableTextBlock | Descendant,
-  b: PortableTextBlock | Descendant,
+  a: PortableTextBlock | Node,
+  b: PortableTextBlock | Node,
 ): boolean {
   if (a._type !== b._type) {
     return false
@@ -56,8 +56,8 @@ export function isEqualBlocks(
 
 function isEqualTextBlocks(
   context: {schema: Schema},
-  a: PortableTextBlock | Descendant,
-  b: PortableTextBlock | Descendant,
+  a: PortableTextBlock | Node,
+  b: PortableTextBlock | Node,
 ): boolean {
   if (!isTextBlock(context, a) || !isTextBlock(context, b)) {
     return false
@@ -98,8 +98,8 @@ function isEqualTextBlocks(
 }
 
 function isEqualProps(
-  a: PortableTextBlock | Descendant,
-  b: PortableTextBlock | Descendant,
+  a: PortableTextBlock | Node,
+  b: PortableTextBlock | Node,
   excludeKeys: Array<string>,
 ): boolean {
   const keysA = Object.keys(a).filter((key) => !excludeKeys.includes(key))
@@ -248,8 +248,8 @@ export function isEqualChild(
 }
 
 function isEqualPortableTextObjects(
-  a: PortableTextBlock | Descendant,
-  b: PortableTextBlock | Descendant,
+  a: PortableTextBlock | Node,
+  b: PortableTextBlock | Node,
 ): boolean {
   if (a._key !== b._key || a._type !== b._type) {
     return false

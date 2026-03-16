@@ -7,12 +7,10 @@ import type {Point} from './point'
  * multiple nodes.
  */
 
-export interface BaseRange {
+export interface Range {
   anchor: Point
   focus: Point
 }
-
-export type Range = BaseRange
 
 export interface RangeEdgesOptions {
   reverse?: boolean

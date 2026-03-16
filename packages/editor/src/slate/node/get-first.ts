@@ -1,32 +1,43 @@
 import type {EditorSchema} from '../../editor/editor-schema'
-import type {Ancestor, Node, NodeEntry} from '../interfaces/node'
+import type {Editor} from '../interfaces/editor'
+import type {Node, NodeEntry} from '../interfaces/node'
+import type {Path} from '../interfaces/path'
 import {getNode} from './get-node'
 import {isLeaf} from './is-leaf'
 
 export function getFirst(
-  root: Node,
+  root: Editor | Node,
   path: Path,
   schema: EditorSchema,
 ): NodeEntry {
   const p = path.slice()
-  let n = getNode(root, p, schema)
+  let n: Node
+
+  if (path.length === 0) {
+    if (isLeaf(root, schema) || root.children.length === 0) {
+      throw new Error('Cannot get the first descendant of a leaf or empty root')
+    }
+
+    n = root.children[0]!
+    p.push(0)
+  } else {
+    n = getNode(root, p, schema)
+  }
 
   while (n) {
     if (isLeaf(n, schema)) {
       break
     }
 
-    const ancestor = n as Ancestor
+    const ancestorChildren = n.children
 
-    if (ancestor.children.length === 0) {
+    if (ancestorChildren.length === 0) {
       break
     }
 
-    n = ancestor.children[0]! as Node
+    n = ancestorChildren[0]!
     p.push(0)
   }
 
   return [n, p]
 }
-
-type Path = number[]

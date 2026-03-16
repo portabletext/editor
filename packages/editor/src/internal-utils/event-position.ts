@@ -3,8 +3,9 @@ import type {EditorSchema} from '../editor/editor-schema'
 import {DOMEditor} from '../slate/dom/plugin/dom-editor'
 import {isDOMNode} from '../slate/dom/utils/dom'
 import {isEditor} from '../slate/editor/is-editor'
+import type {Editor} from '../slate/interfaces/editor'
 import type {Node} from '../slate/interfaces/node'
-import type {BaseRange} from '../slate/interfaces/range'
+import type {Range as SlateRange} from '../slate/interfaces/range'
 import type {EditorSelection} from '../types/editor'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {getBlockEndPoint} from '../utils/util.get-block-end-point'
@@ -152,7 +153,7 @@ function getEventNode({
     return undefined
   }
 
-  let node: Node | undefined
+  let node: Editor | Node | undefined
 
   try {
     node = DOMEditor.toSlateNode(slateEditor, event.target)
@@ -168,7 +169,7 @@ function getEventPositionBlock({
   slateEditor,
   event,
 }: {
-  node: Node
+  node: Editor | Node
   slateEditor: PortableTextSlateEditor
   event: DragEvent | MouseEvent
 }): EventPositionBlock | undefined {
@@ -307,7 +308,7 @@ function getSlateRangeFromEvent(
     return undefined
   }
 
-  let range: BaseRange | undefined
+  let range: SlateRange | undefined
 
   try {
     range = DOMEditor.toSlateRange(editor, domRange, {

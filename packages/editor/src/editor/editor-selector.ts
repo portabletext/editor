@@ -1,4 +1,3 @@
-import type {PortableTextBlock} from '@portabletext/schema'
 import {useSelector} from '@xstate/react'
 import type {Editor} from '../editor'
 import {slateRangeToSelection} from '../internal-utils/slate-utils'
@@ -83,7 +82,7 @@ export function getEditorSnapshot({
       readOnly: editorActorSnapshot.matches({'edit mode': 'read only'}),
       schema: editorActorSnapshot.context.schema,
       selection,
-      value: slateEditorInstance.children as Array<PortableTextBlock>,
+      value: slateEditorInstance.children,
     },
     decoratorState: slateEditorInstance.decoratorState,
   }

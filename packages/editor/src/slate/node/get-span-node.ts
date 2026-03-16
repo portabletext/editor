@@ -1,25 +1,24 @@
+import type {PortableTextSpan} from '@portabletext/schema'
+import {isSpan} from '@portabletext/schema'
 import type {EditorSchema} from '../../editor/editor-schema'
 import {safeStringify} from '../../internal-utils/safe-json'
 import type {Editor} from '../interfaces/editor'
 import type {Node} from '../interfaces/node'
 import type {Path} from '../interfaces/path'
 import {getNode} from './get-node'
-import {isLeaf} from './is-leaf'
 
-export function getAncestor(
+export function getSpanNode(
   root: Editor | Node,
   path: Path,
   schema: EditorSchema,
-): Node {
+): PortableTextSpan {
   const node = getNode(root, path, schema)
 
-  if (isLeaf(node, schema)) {
-    throw new Error(
-      `Cannot get the ancestor node at path [${path}] because it refers to a leaf node instead: ${safeStringify(
-        node,
-      )}`,
-    )
+  if (isSpan({schema}, node)) {
+    return node
   }
 
-  return node
+  throw new Error(
+    `Cannot get the span at path [${path}] because it refers to a non-span node: ${safeStringify(node)}`,
+  )
 }

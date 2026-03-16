@@ -1,15 +1,15 @@
-import {isElement} from '../element/is-element'
+import {isSpan, isTextBlock} from '@portabletext/schema'
 import type {Editor} from '../interfaces/editor'
 import type {Location} from '../interfaces/location'
 import type {Path} from '../interfaces/path'
 import type {Point} from '../interfaces/point'
+import {isObjectNode} from '../node/is-object-node'
 import {isAncestorPath} from '../path/is-ancestor-path'
 import {nextPath} from '../path/next-path'
 import {pathEquals} from '../path/path-equals'
 import {pathHasPrevious} from '../path/path-has-previous'
 import {previousPath} from '../path/previous-path'
 import {rangeEdges} from '../range/range-edges'
-import {isText} from '../text/is-text'
 import type {TextUnitAdjustment} from '../types/types'
 import {
   getCharacterDistance,
@@ -99,7 +99,7 @@ export function* positions(
     /*
      * ELEMENT NODE - Yield position(s) for voids, collect blockText for blocks
      */
-    if (isElement(node, editor.schema)) {
+    if (isTextBlock({schema: editor.schema}, node)) {
       if (!editor.isSelectable(node)) {
         /**
          * If the node is not selectable, skip it and its descendants
@@ -159,15 +159,15 @@ export function* positions(
       }
     }
 
-    if (editor.isObjectNode(node)) {
+    if (isObjectNode({schema: editor.schema}, node)) {
       yield* maybeYield({path: nodePath, offset: 0})
       continue
     }
 
     if (
       !isEditor(node) &&
-      !isElement(node, editor.schema) &&
-      !isText(node, editor.schema)
+      !isTextBlock({schema: editor.schema}, node) &&
+      !isSpan({schema: editor.schema}, node)
     ) {
       yield* maybeYield({path: nodePath, offset: 0})
       continue
@@ -177,7 +177,7 @@ export function* positions(
      * TEXT LEAF NODE - Iterate through text content, yielding
      * positions every `distance` offset according to `unit`.
      */
-    if (isText(node, editor.schema)) {
+    if (isSpan({schema: editor.schema}, node)) {
       const isFirst = pathEquals(nodePath, first.path)
 
       // Proof that we always exhaust text nodes before encountering a new one:

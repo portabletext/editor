@@ -32,7 +32,7 @@ export function* levels<T extends Node>(
       continue
     }
 
-    levels.push([n, p] as NodeEntry<T>)
+    levels.push([n as T, p] satisfies NodeEntry<T>)
   }
 
   if (reverse) {

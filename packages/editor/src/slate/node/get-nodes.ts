@@ -1,10 +1,6 @@
 import type {EditorSchema} from '../../editor/editor-schema'
-import type {
-  Ancestor,
-  Node,
-  NodeEntry,
-  NodeNodesOptions,
-} from '../interfaces/node'
+import type {Editor} from '../interfaces/editor'
+import type {Node, NodeEntry} from '../interfaces/node'
 import type {Path} from '../interfaces/path'
 import {isAfterPath} from '../path/is-after-path'
 import {isAncestorPath} from '../path/is-ancestor-path'
@@ -17,15 +13,20 @@ import {hasNode} from './has-node'
 import {isLeaf} from './is-leaf'
 
 export function* getNodes(
-  root: Node,
+  root: Editor | Node,
   schema: EditorSchema,
-  options: NodeNodesOptions = {},
+  options: {
+    from?: Path
+    to?: Path
+    reverse?: boolean
+    pass?: (entry: NodeEntry) => boolean
+  } = {},
 ): Generator<NodeEntry, void, undefined> {
   const {pass, reverse = false} = options
   const {from = [], to} = options
   const visited = new Set()
   let p: Path = []
-  let n = root
+  let n: Editor | Node = root
 
   while (true) {
     if (to && (reverse ? isBeforePath(p, to) : isAfterPath(p, to))) {
@@ -33,17 +34,17 @@ export function* getNodes(
     }
 
     if (!visited.has(n)) {
-      yield [n, p]
+      yield [n as Node, p]
     }
 
     if (
       !visited.has(n) &&
       !isLeaf(n, schema) &&
-      (n as Ancestor).children.length !== 0 &&
-      (pass == null || pass([n, p]) === false)
+      n.children.length !== 0 &&
+      (pass == null || pass([n as Node, p]) === false)
     ) {
       visited.add(n)
-      const children = (n as Ancestor).children
+      const children = n.children
       let nextIndex = reverse ? children.length - 1 : 0
 
       if (isAncestorPath(p, from)) {
@@ -77,7 +78,7 @@ export function* getNodes(
     }
 
     p = parentPath(p)
-    n = getNode(root, p, schema)
+    n = p.length === 0 ? root : getNode(root, p, schema)
     visited.add(n)
   }
 }

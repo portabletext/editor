@@ -1,27 +1,22 @@
+import {isTextBlock} from '@portabletext/schema'
 import type {EditorSchema} from '../../editor/editor-schema'
 import {safeStringify} from '../../internal-utils/safe-json'
-import type {Descendant, Node} from '../interfaces/node'
-import {isText} from '../text/is-text'
-import {isObjectNode} from './is-object-node'
+import {isEditor} from '../editor/is-editor'
+import type {Editor} from '../interfaces/editor'
+import type {Node} from '../interfaces/node'
 
 export function getChild(
-  root: Node,
+  root: Editor | Node,
   index: number,
   schema: EditorSchema,
-): Descendant {
-  if (isText(root, schema) || isObjectNode(root, schema)) {
-    throw new Error(
-      `Cannot get the child of a leaf node: ${safeStringify(root)}`,
-    )
+): Node {
+  if (isEditor(root)) {
+    return root.children[index]!
   }
 
-  const c = root.children[index] as Descendant
-
-  if (c == null) {
-    throw new Error(
-      `Cannot get child at index \`${index}\` in node: ${safeStringify(root)}`,
-    )
+  if (isTextBlock({schema}, root)) {
+    return root.children[index]!
   }
 
-  return c
+  throw new Error(`Cannot get the child of a leaf node: ${safeStringify(root)}`)
 }

@@ -1,4 +1,9 @@
 import {ResizeObserver as ResizeObserverPolyfill} from '@juggle/resize-observer'
+import type {
+  PortableTextObject,
+  PortableTextSpan,
+  PortableTextTextBlock,
+} from '@portabletext/schema'
 import React, {
   useCallback,
   useEffect,
@@ -9,8 +14,7 @@ import React, {
 } from 'react'
 import {IS_ANDROID, IS_WEBKIT} from '../../dom/utils/environment'
 import {PLACEHOLDER_SYMBOL} from '../../dom/utils/symbols'
-import type {Element} from '../../interfaces/element'
-import type {LeafPosition, Text} from '../../interfaces/text'
+import type {LeafPosition} from '../../interfaces/text'
 import {textEquals} from '../../text/text-equals'
 import {useSlateStatic} from '../hooks/use-slate-static'
 import type {RenderLeafProps, RenderPlaceholderProps} from './editable'
@@ -48,11 +52,11 @@ const defaultRenderLeaf = (props: RenderLeafProps) => <DefaultLeaf {...props} />
  */
 const Leaf = (props: {
   isLast: boolean
-  leaf: Text
-  parent: Element
+  leaf: PortableTextSpan
+  parent: PortableTextTextBlock | PortableTextObject
   renderPlaceholder: (props: RenderPlaceholderProps) => JSX.Element
   renderLeaf?: (props: RenderLeafProps) => JSX.Element
-  text: Text
+  text: PortableTextSpan
   leafPosition?: LeafPosition
 }) => {
   const {

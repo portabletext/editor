@@ -1,11 +1,11 @@
+import {isSpan} from '@portabletext/schema'
 import {createContext, useCallback, useContext, useMemo, useRef} from 'react'
 import {
   isElementDecorationsEqual,
   isTextDecorationsEqual,
 } from '../../dom/utils/range-list'
-import type {Descendant, NodeEntry} from '../../interfaces/node'
+import type {Node, NodeEntry} from '../../interfaces/node'
 import type {DecoratedRange} from '../../interfaces/text'
-import {isText} from '../../text/is-text'
 import {ReactEditor} from '../plugin/react-editor'
 import {useGenericSelector} from './use-generic-selector'
 import {useIsomorphicLayoutEffect} from './use-isomorphic-layout-effect'
@@ -24,7 +24,7 @@ export const DecorateContext = createContext<{
 }>({} as any)
 
 export const useDecorations = (
-  node: Descendant,
+  node: Node,
   parentDecorations: DecoratedRange[],
 ): DecoratedRange[] => {
   const editor = useSlateStatic()
@@ -36,7 +36,7 @@ export const useDecorations = (
     return decorate([node, path])
   }
 
-  const equalityFn = isText(node, editor.schema)
+  const equalityFn = isSpan({schema: editor.schema}, node)
     ? isTextDecorationsEqual
     : isElementDecorationsEqual
 

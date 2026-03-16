@@ -1,8 +1,7 @@
+import {isSpan, isTextBlock} from '@portabletext/schema'
 import {applySplitNode} from '../../internal-utils/apply-split-node'
-import type {PortableTextSlateEditor} from '../../types/slate-editor'
 import {end as editorEnd} from '../editor/end'
-import {getVoid} from '../editor/get-void'
-import {isBlock} from '../editor/is-block'
+import {getObjectNode} from '../editor/get-object-node'
 import {isEdge} from '../editor/is-edge'
 import {isEnd} from '../editor/is-end'
 import {levels} from '../editor/levels'
@@ -11,17 +10,15 @@ import {pathRef} from '../editor/path-ref'
 import {pointRef} from '../editor/point-ref'
 import {unhangRange} from '../editor/unhang-range'
 import {withoutNormalizing} from '../editor/without-normalizing'
-import {isElement} from '../element/is-element'
 import type {Editor, NodeMatch} from '../interfaces/editor'
 import type {Location} from '../interfaces/location'
 import type {Node} from '../interfaces/node'
-import type {BaseInsertNodeOperation} from '../interfaces/operation'
+import type {InsertNodeOperation} from '../interfaces/operation'
 import type {Path} from '../interfaces/path'
 import type {Point} from '../interfaces/point'
 import type {PointRef} from '../interfaces/point-ref'
 import {extractProps} from '../node/extract-props'
 import {getNodes} from '../node/get-nodes'
-import {isNode} from '../node/is-node'
 import {nextPath} from '../path/next-path'
 import {operationCanTransformPath} from '../path/operation-can-transform-path'
 import {parentPath} from '../path/parent-path'
@@ -32,7 +29,6 @@ import {isPoint} from '../point/is-point'
 import {isCollapsedRange} from '../range/is-collapsed-range'
 import {isRange} from '../range/is-range'
 import {rangeEdges} from '../range/range-edges'
-import {isText} from '../text/is-text'
 import type {RangeMode} from '../types/types'
 import {getDefaultInsertLocation} from '../utils/get-default-insert-location'
 import {batchDirtyPaths} from './batch-dirty-paths'
@@ -51,7 +47,7 @@ interface InsertNodesOptions<T extends Node> {
 
 export function insertNodes<T extends Node>(
   editor: Editor,
-  nodes: Node | Node[],
+  nodes: Array<Node>,
   options: InsertNodesOptions<T> = {},
 ): void {
   withoutNormalizing(editor, () => {
@@ -62,10 +58,6 @@ export function insertNodes<T extends Node>(
       batchDirty = true,
     } = options
     let {at, match, select} = options
-
-    if (isNode(nodes, editor.schema)) {
-      nodes = [nodes]
-    }
 
     if (nodes.length === 0) {
       return
@@ -101,12 +93,13 @@ export function insertNodes<T extends Node>(
 
     if (isPoint(at)) {
       if (match == null) {
-        if (isText(node, editor.schema)) {
-          match = (n) => isText(n, editor.schema)
+        if (isSpan({schema: editor.schema}, node)) {
+          match = (n) => isSpan({schema: editor.schema}, n)
         } else if (editor.isInline(node)) {
-          match = (n) => isText(n, editor.schema) || editor.isInline(n)
+          match = (n) =>
+            isSpan({schema: editor.schema}, n) || editor.isInline(n)
         } else {
-          match = (n) => isElement(n, editor.schema) && isBlock(editor, n)
+          match = (n) => isTextBlock({schema: editor.schema}, n)
         }
       }
 
@@ -163,12 +156,7 @@ export function insertNodes<T extends Node>(
                 if (!isEdge(editor, point, nodePath)) {
                   split = true
                   const properties = extractProps(node, editor.schema)
-                  applySplitNode(
-                    editor as unknown as PortableTextSlateEditor,
-                    nodePath,
-                    position,
-                    properties,
-                  )
+                  applySplitNode(editor, nodePath, position, properties)
                 }
 
                 position =
@@ -192,23 +180,23 @@ export function insertNodes<T extends Node>(
     const parentPath_ = parentPath(at)
     let index = at[at.length - 1]!
 
-    if (!voids && getVoid(editor, {at: parentPath_})) {
+    if (!voids && getObjectNode(editor, {at: parentPath_})) {
       return
     }
 
     if (batchDirty) {
       // PERF: batch update dirty paths
       // batched ops used to transform existing dirty paths
-      const batchedOps: BaseInsertNodeOperation[] = []
+      const batchedOps: InsertNodeOperation[] = []
       const newDirtyPaths: Path[] = pathLevels(parentPath_)
       batchDirtyPaths(
         editor,
         () => {
-          for (const node of nodes as Node[]) {
+          for (const node of nodes) {
             const path = parentPath_.concat(index)
             index++
 
-            const op: BaseInsertNodeOperation = {
+            const op: InsertNodeOperation = {
               type: 'insert_node',
               path,
               node,
@@ -217,7 +205,7 @@ export function insertNodes<T extends Node>(
             at = nextPath(at as Path)
 
             batchedOps.push(op)
-            if (isText(node, editor.schema)) {
+            if (isSpan({schema: editor.schema}, node)) {
               newDirtyPaths.push(path)
             } else {
               newDirtyPaths.push(
@@ -244,7 +232,7 @@ export function insertNodes<T extends Node>(
         },
       )
     } else {
-      for (const node of nodes as Node[]) {
+      for (const node of nodes) {
         const path = parentPath_.concat(index)
         index++
 

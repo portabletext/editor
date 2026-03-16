@@ -1,4 +1,4 @@
-import {compileSchema, type PortableTextBlock} from '@portabletext/schema'
+import {compileSchema} from '@portabletext/schema'
 import {createActor} from 'xstate'
 import {coreConverters} from '../converters/converters.core'
 import type {Editor, EditorConfig} from '../editor'
@@ -232,7 +232,7 @@ function createActors(config: {
           config.editorActor.send({
             ...event,
             type: 'internal.patch',
-            value: config.slateEditor.children as Array<PortableTextBlock>,
+            value: config.slateEditor.children,
           })
           break
 

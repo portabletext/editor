@@ -1,9 +1,8 @@
+import type {PortableTextBlock} from '@portabletext/schema'
 import React, {useCallback, useEffect, useState} from 'react'
 import {safeStringify} from '../../../internal-utils/safe-json'
 import {isEditor} from '../../editor/is-editor'
 import type {Editor, Selection} from '../../interfaces/editor'
-import type {Descendant} from '../../interfaces/node'
-import {isNodeList} from '../../node/is-node-list'
 import {FocusedContext} from '../hooks/use-focused'
 import {useIsomorphicLayoutEffect} from '../hooks/use-isomorphic-layout-effect'
 import {
@@ -21,11 +20,11 @@ import {REACT_MAJOR_VERSION} from '../utils/environment'
 
 export const Slate = (props: {
   editor: Editor
-  initialValue: Descendant[]
+  initialValue: PortableTextBlock[]
   children: React.ReactNode
-  onChange?: (value: Descendant[]) => void
+  onChange?: (value: PortableTextBlock[]) => void
   onSelectionChange?: (selection: Selection) => void
-  onValueChange?: (value: Descendant[]) => void
+  onValueChange?: (value: PortableTextBlock[]) => void
 }) => {
   const {
     editor,
@@ -39,14 +38,6 @@ export const Slate = (props: {
 
   // Run once on first mount, but before `useEffect` or render
   React.useState(() => {
-    if (!isNodeList(initialValue, editor.schema)) {
-      throw new Error(
-        `[Slate] initialValue is invalid! Expected a list of elements but got: ${safeStringify(
-          initialValue,
-        )}`,
-      )
-    }
-
     if (!isEditor(editor)) {
       throw new Error(
         `[Slate] editor is invalid! You passed: ${safeStringify(editor)}`,

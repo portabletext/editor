@@ -1,4 +1,9 @@
+import type {
+  PortableTextObject,
+  PortableTextTextBlock,
+} from '@portabletext/schema'
 import {createContext} from 'react'
-import type {Element} from '../../interfaces/element'
 
-export const ElementContext = createContext<Element | null>(null)
+export const ElementContext = createContext<
+  PortableTextTextBlock | PortableTextObject | null
+>(null)

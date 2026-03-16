@@ -1,4 +1,4 @@
-import {isElement} from '../element/is-element'
+import {isTextBlock} from '@portabletext/schema'
 import type {Editor} from '../interfaces/editor'
 import type {Operation} from '../interfaces/operation'
 import type {Path} from '../interfaces/path'
@@ -50,6 +50,10 @@ export function normalize(
       Running an initial pass avoids the catch-22 race condition.
     */
     for (const dirtyPath of getDirtyPaths(editor)) {
+      if (dirtyPath.length === 0) {
+        continue
+      }
+
       if (hasNode(editor, dirtyPath, editor.schema)) {
         const entry = node(editor, dirtyPath)
         const [entryNode, _] = entry
@@ -62,7 +66,7 @@ export function normalize(
           by definition adding children to an empty node can't cause other paths to change.
         */
         if (
-          isElement(entryNode, editor.schema) &&
+          isTextBlock({schema: editor.schema}, entryNode) &&
           entryNode.children.length === 0
         ) {
           editor.normalizeNode(entry, {operation})
@@ -89,7 +93,9 @@ export function normalize(
       const dirtyPath = popDirtyPath(editor)
 
       // If the node doesn't exist in the tree, it does not need to be normalized.
-      if (hasNode(editor, dirtyPath, editor.schema)) {
+      if (dirtyPath.length === 0) {
+        editor.normalizeNode([editor, dirtyPath], {operation})
+      } else if (hasNode(editor, dirtyPath, editor.schema)) {
         const entry = node(editor, dirtyPath)
         editor.normalizeNode(entry, {operation})
       }

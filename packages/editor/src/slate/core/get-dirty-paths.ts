@@ -1,8 +1,8 @@
+import {isSpan} from '@portabletext/schema'
 import type {Editor} from '../interfaces/editor'
 import {getNodes} from '../node/get-nodes'
 import {pathAncestors} from '../path/path-ancestors'
 import {pathLevels} from '../path/path-levels'
-import {isText} from '../text/is-text'
 import type {WithEditorFirstArg} from '../utils/types'
 
 /**
@@ -23,7 +23,7 @@ export const getDirtyPaths: WithEditorFirstArg<Editor['getDirtyPaths']> = (
     case 'insert_node': {
       const {node, path} = op
       const levels = pathLevels(path)
-      const descendants = isText(node, _editor.schema)
+      const descendants = isSpan({schema: _editor.schema}, node)
         ? []
         : Array.from(getNodes(node, _editor.schema), ([, p]) => path.concat(p))
 

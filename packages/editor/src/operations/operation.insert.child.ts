@@ -4,7 +4,6 @@ import {
   applyInsertNodeAtPoint,
 } from '../internal-utils/apply-insert-node'
 import {getFocusBlock, getFocusSpan} from '../internal-utils/slate-utils'
-import type {Node} from '../slate/interfaces/node'
 import {parseInlineObject, parseSpan} from '../utils/parse-blocks'
 import type {OperationImplementation} from './operation.types'
 
@@ -74,7 +73,7 @@ export const insertChildOperationImplementation: OperationImplementation<
       _key,
       _type,
       ...rest,
-    } as unknown as Node
+    }
 
     const [focusSpan] = getFocusSpan({editor: operation.editor})
 

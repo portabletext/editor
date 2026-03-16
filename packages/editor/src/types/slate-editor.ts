@@ -1,10 +1,5 @@
 import type {Patch} from '@portabletext/patches'
-import type {
-  PortableTextBlock,
-  PortableTextListBlock,
-  PortableTextSpan,
-  PortableTextTextBlock,
-} from '@portabletext/schema'
+import type {PortableTextBlock} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
 import type {DecoratedRange} from '../editor/range-decorations-machine'
 import type {Operation as SlateOperation} from '../slate/interfaces/operation'
@@ -33,10 +28,6 @@ export interface PortableTextSlateEditor extends ReactEditor {
   _key: 'editor'
   _type: 'editor'
 
-  isTextBlock: (value: unknown) => value is PortableTextTextBlock
-  isTextSpan: (value: unknown) => value is PortableTextSpan
-  isListBlock: (value: unknown) => value is PortableTextListBlock
-  isObjectNode: (value: unknown) => boolean
   schema: EditorSchema
 
   decoratedRanges: Array<DecoratedRange>

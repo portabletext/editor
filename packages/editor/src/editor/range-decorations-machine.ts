@@ -1,4 +1,4 @@
-import type {PortableTextBlock} from '@portabletext/schema'
+import {isTextBlock} from '@portabletext/schema'
 import {
   and,
   assign,
@@ -11,10 +11,9 @@ import {isDeepEqual} from '../internal-utils/equality'
 import {moveRangeByOperation} from '../internal-utils/move-range-by-operation'
 import {slateRangeToSelection} from '../internal-utils/slate-utils'
 import {toSlateRange} from '../internal-utils/to-slate-range'
-import {isElement} from '../slate/element/is-element'
-import type {NodeEntry} from '../slate/interfaces/node'
+import type {Node, NodeEntry} from '../slate/interfaces/node'
 import type {Operation} from '../slate/interfaces/operation'
-import type {BaseRange} from '../slate/interfaces/range'
+import type {Range} from '../slate/interfaces/range'
 import {pathEquals} from '../slate/path/path-equals'
 import {isCollapsedRange} from '../slate/range/is-collapsed-range'
 import {isRange} from '../slate/range/is-range'
@@ -45,7 +44,7 @@ const slateOperationCallback: CallbackLogicFunction<
   }
 }
 
-export type DecoratedRange = BaseRange & {rangeDecoration: RangeDecoration}
+export type DecoratedRange = Range & {rangeDecoration: RangeDecoration}
 
 export const rangeDecorationsMachine = setup({
   types: {
@@ -55,7 +54,7 @@ export const rangeDecorationsMachine = setup({
       readOnly: boolean
       schema: EditorSchema
       slateEditor: PortableTextSlateEditor
-      decorate: {fn: (nodeEntry: NodeEntry) => Array<BaseRange>}
+      decorate: {fn: (nodeEntry: NodeEntry) => Array<Range>}
     },
     input: {} as {
       rangeDecorations: Array<RangeDecoration>
@@ -98,7 +97,7 @@ export const rangeDecorationsMachine = setup({
         const slateRange = toSlateRange({
           context: {
             schema: context.schema,
-            value: context.slateEditor.children as Array<PortableTextBlock>,
+            value: context.slateEditor.children,
             selection: rangeDecoration.selection,
           },
           blockIndexMap: context.slateEditor.blockIndexMap,
@@ -132,7 +131,7 @@ export const rangeDecorationsMachine = setup({
         const slateRange = toSlateRange({
           context: {
             schema: context.schema,
-            value: context.slateEditor.children as Array<PortableTextBlock>,
+            value: context.slateEditor.children,
             selection: rangeDecoration.selection,
           },
           blockIndexMap: context.slateEditor.blockIndexMap,
@@ -167,7 +166,7 @@ export const rangeDecorationsMachine = setup({
         const slateRange = toSlateRange({
           context: {
             schema: context.schema,
-            value: context.slateEditor.children as Array<PortableTextBlock>,
+            value: context.slateEditor.children,
             selection: decoratedRange.rangeDecoration.selection,
           },
           blockIndexMap: context.slateEditor.blockIndexMap,
@@ -182,7 +181,7 @@ export const rangeDecorationsMachine = setup({
           continue
         }
 
-        let newRange: BaseRange | null | undefined
+        let newRange: Range | null | undefined
 
         newRange = moveRangeByOperation(slateRange, event.operation)
         if (
@@ -364,11 +363,11 @@ function createDecorate(
   schema: EditorSchema,
   slateEditor: PortableTextSlateEditor,
 ) {
-  return function decorate([node, path]: NodeEntry): Array<BaseRange> {
+  return function decorate([node, path]: NodeEntry): Array<Range> {
     const defaultStyle = schema.styles.at(0)?.name
-    const firstBlock = (slateEditor.children as Array<PortableTextBlock>)[0]
+    const firstBlock = slateEditor.children[0]
     const editorOnlyContainsEmptyParagraph =
-      (slateEditor.children as Array<PortableTextBlock>).length === 1 &&
+      slateEditor.children.length === 1 &&
       firstBlock &&
       isEmptyTextBlock({schema}, firstBlock) &&
       (!firstBlock.style || firstBlock.style === defaultStyle) &&
@@ -386,7 +385,7 @@ function createDecorate(
             offset: 0,
           },
           placeholder: true,
-        } as BaseRange,
+        } as Range,
       ]
     }
 
@@ -395,7 +394,10 @@ function createDecorate(
       return []
     }
 
-    if (!isElement(node, slateEditor.schema) || node.children.length === 0) {
+    if (
+      !isTextBlock({schema: slateEditor.schema}, node) ||
+      node.children.length === 0
+    ) {
       return []
     }
 
@@ -410,7 +412,7 @@ function createDecorate(
       if (isCollapsedRange(decoratedRange)) {
         // Collapsed ranges should only be decorated if they are on a block child level (length 2)
         return node.children.some(
-          (_, childIndex) =>
+          (_: Node, childIndex: number) =>
             pathEquals(decoratedRange.anchor.path, [blockIndex, childIndex]) &&
             pathEquals(decoratedRange.focus.path, [blockIndex, childIndex]),
         )

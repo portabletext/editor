@@ -1,12 +1,11 @@
-import {isElement} from '../element/is-element'
+import {isSpan, isTextBlock} from '@portabletext/schema'
 import type {Editor} from '../interfaces/editor'
-import type {Descendant, NodeEntry} from '../interfaces/node'
-import {isText} from '../text/is-text'
+import type {Node, NodeEntry} from '../interfaces/node'
 
 export function shouldMergeNodesRemovePrevNode(
   _editor: Editor,
-  [prevNode, prevPath]: NodeEntry<Descendant>,
-  [_curNode, _curNodePath]: NodeEntry<Descendant>,
+  [prevNode, prevPath]: NodeEntry<Node>,
+  [_curNode, _curNodePath]: NodeEntry<Node>,
 ): boolean {
   // If the target node that we're merging with is empty, remove it instead
   // of merging the two. This is a common rich text editor behavior to
@@ -14,16 +13,19 @@ export function shouldMergeNodesRemovePrevNode(
   // hanging selection.
   // if prevNode is first child in parent,don't remove it.
 
-  const isEmptyElement =
-    isElement(prevNode, _editor.schema) &&
-    (prevNode.children.length === 0 ||
-      (prevNode.children.length === 1 &&
-        isText(prevNode.children[0], _editor.schema) &&
-        prevNode.children[0].text === ''))
+  let isEmptyElement = false
+  if (isTextBlock({schema: _editor.schema}, prevNode)) {
+    const prevChildren = prevNode.children
+    isEmptyElement =
+      prevChildren.length === 0 ||
+      (prevChildren.length === 1 &&
+        isSpan({schema: _editor.schema}, prevChildren[0]) &&
+        prevChildren[0].text === '')
+  }
 
   return (
     isEmptyElement ||
-    (isText(prevNode, _editor.schema) &&
+    (isSpan({schema: _editor.schema}, prevNode) &&
       prevNode.text === '' &&
       prevPath[prevPath.length - 1] !== 0)
   )

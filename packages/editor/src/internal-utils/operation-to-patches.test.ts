@@ -10,7 +10,7 @@ import {editorMachine} from '../editor/editor-machine'
 import {relayMachine} from '../editor/relay-machine'
 import {plugins} from '../slate-plugins/slate-plugins'
 import {createEditor} from '../slate/create-editor'
-import type {Descendant, Node} from '../slate/interfaces/node'
+import type {Node} from '../slate/interfaces/node'
 import {defaultKeyGenerator} from '../utils/key-generator'
 import {
   insertNodePatch,
@@ -77,14 +77,14 @@ describe(insertNodePatch.name, () => {
             _key: 'k2',
             _type: 'image',
           },
-        ] as unknown as Descendant[],
+        ],
         {
           type: 'insert_node',
           path: [0],
           node: {
             _key: 'k2',
             _type: 'image',
-          } as unknown as Node,
+          },
         },
         [],
       ),
@@ -111,7 +111,7 @@ describe(insertNodePatch.name, () => {
 
 describe('operationToPatches', () => {
   beforeEach(() => {
-    editor.children = createDefaultChildren() as unknown as Node[]
+    editor.children = createDefaultChildren()
     editor.onChange()
   })
 
@@ -127,7 +127,7 @@ describe('operationToPatches', () => {
             _type: 'someObject',
             _key: 'c130395c640c',
             title: 'The Object',
-          } as unknown as Node,
+          },
         },
         createDefaultChildren(),
       ),
@@ -166,7 +166,7 @@ describe('operationToPatches', () => {
           node: {
             _type: 'someObject',
             _key: 'c130395c640c',
-          } as unknown as Node,
+          },
         },
 
         [],
@@ -207,7 +207,7 @@ describe('operationToPatches', () => {
             _type: 'someObject',
             _key: 'c130395c640c',
             title: 'The Object',
-          } as unknown as Node,
+          },
         },
 
         createDefaultChildren(),
@@ -282,7 +282,7 @@ describe('operationToPatches', () => {
     const blockObjectSchema = compileSchema(
       defineSchema({blockObjects: [{name: 'image'}]}),
     )
-    const blockObjectChildren: Array<Descendant> = [
+    const blockObjectChildren: Array<Node> = [
       {
         _key: 'img1',
         _type: 'image',
@@ -359,7 +359,7 @@ describe('operationToPatches', () => {
             _key: '773866318fa8',
             _type: 'someObject',
             title: 'The object',
-          } as unknown as Node,
+          },
         },
       ),
     ).toMatchInlineSnapshot(`
@@ -387,7 +387,7 @@ describe('operationToPatches', () => {
       removeNodePatch(editorActor.getSnapshot().context.schema, val, {
         type: 'remove_node',
         path: [0],
-        node: children[0]! as unknown as Node,
+        node: children[0]!,
       }),
     ).toMatchInlineSnapshot(`
       [
@@ -406,7 +406,7 @@ describe('operationToPatches', () => {
 
 describe('defensive setIfMissing patches', () => {
   beforeEach(() => {
-    editor.children = createDefaultChildren() as unknown as Node[]
+    editor.children = createDefaultChildren()
     editor.onChange()
   })
 
@@ -454,7 +454,7 @@ describe('defensive setIfMissing patches', () => {
             _type: 'someObject',
             _key: 'new-object',
             title: 'New Object',
-          } as unknown as Node,
+          },
         },
         createDefaultChildren(),
       )

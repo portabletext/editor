@@ -1,10 +1,9 @@
-import {isBlock} from '../editor/is-block'
+import {isTextBlock} from '@portabletext/schema'
 import {node as editorNode} from '../editor/node'
 import {nodes} from '../editor/nodes'
 import {pathRef} from '../editor/path-ref'
 import {unhangRange} from '../editor/unhang-range'
 import {withoutNormalizing} from '../editor/without-normalizing'
-import {isElement} from '../element/is-element'
 import type {Editor, NodeMatch} from '../interfaces/editor'
 import type {Location} from '../interfaces/location'
 import type {Node} from '../interfaces/node'
@@ -36,7 +35,7 @@ export function removeNodes<T extends Node>(
     if (match == null) {
       match = isPath(at)
         ? matchPath(editor, at)
-        : (n) => isElement(n, editor.schema) && isBlock(editor, n)
+        : (n) => isTextBlock({schema: editor.schema}, n)
     }
 
     if (!hanging && isRange(at)) {

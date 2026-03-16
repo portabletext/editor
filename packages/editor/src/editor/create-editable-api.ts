@@ -1,4 +1,5 @@
 import {
+  isSpan,
   isTextBlock,
   type PortableTextBlock,
   type PortableTextChild,
@@ -23,7 +24,6 @@ import {isExpandedRange} from '../slate/range/is-expanded-range'
 import {isRange} from '../slate/range/is-range'
 import {rangeIncludes} from '../slate/range/range-includes'
 import {ReactEditor} from '../slate/react/plugin/react-editor'
-import {isText} from '../slate/text/is-text'
 import type {
   EditableAPI,
   EditableAPIDeleteOptions,
@@ -145,7 +145,7 @@ export function createEditableAPI(
         return undefined
       }
 
-      return (editor.children as Array<PortableTextBlock>).at(focusBlockIndex)
+      return editor.children.at(focusBlockIndex)
     },
     focusChild: (): PortableTextChild | undefined => {
       if (!editor.selection) {
@@ -157,7 +157,7 @@ export function createEditableAPI(
 
       const block =
         focusBlockIndex !== undefined
-          ? (editor.children as Array<PortableTextBlock>).at(focusBlockIndex)
+          ? editor.children.at(focusBlockIndex)
           : undefined
 
       if (!block) {
@@ -261,7 +261,7 @@ export function createEditableAPI(
         return [undefined, undefined]
       }
 
-      const block = (editor.children as Array<PortableTextBlock>).at(blockIndex)
+      const block = editor.children.at(blockIndex)
 
       if (!block) {
         return [undefined, undefined]
@@ -311,17 +311,17 @@ export function createEditableAPI(
         const spans = nodes(editor, {
           at: editor.selection,
           match: (node) =>
-            isText(node, editor.schema) &&
+            isSpan({schema: editor.schema}, node) &&
             node.marks !== undefined &&
             Array.isArray(node.marks) &&
             node.marks.length > 0,
         })
         for (const [span, path] of spans) {
           const [block] = editorNode(editor, path, {depth: 1})
-          if (editor.isTextBlock(block)) {
+          if (isTextBlock({schema: editor.schema}, block)) {
             block.markDefs?.forEach((def) => {
               if (
-                isText(span, editor.schema) &&
+                isSpan({schema: editor.schema}, span) &&
                 span.marks &&
                 Array.isArray(span.marks) &&
                 span.marks.includes(def._key)
@@ -477,7 +477,7 @@ export function createEditableAPI(
       return selection
     },
     getValue: () => {
-      return editor.children as Array<PortableTextBlock>
+      return editor.children
     },
     isCollapsedSelection: () => {
       return !!editor.selection && isCollapsedRange(editor.selection)
@@ -510,7 +510,7 @@ export function createEditableAPI(
       const rangeA = toSlateRange({
         context: {
           schema: editorActor.getSnapshot().context.schema,
-          value: editor.children as Array<PortableTextBlock>,
+          value: editor.children,
           selection: selectionA,
         },
         blockIndexMap: editor.blockIndexMap,
@@ -518,7 +518,7 @@ export function createEditableAPI(
       const rangeB = toSlateRange({
         context: {
           schema: editorActor.getSnapshot().context.schema,
-          value: editor.children as Array<PortableTextBlock>,
+          value: editor.children,
           selection: selectionB,
         },
         blockIndexMap: editor.blockIndexMap,

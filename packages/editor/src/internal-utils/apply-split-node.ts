@@ -1,5 +1,5 @@
+import {isSpan, isTextBlock} from '@portabletext/schema'
 import {withoutNormalizing} from '../slate/editor/without-normalizing'
-import {isElement} from '../slate/element/is-element'
 import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
 import type {Point} from '../slate/interfaces/point'
@@ -8,7 +8,6 @@ import {isAncestorPath} from '../slate/path/is-ancestor-path'
 import {nextPath} from '../slate/path/next-path'
 import {pathEndsBefore} from '../slate/path/path-ends-before'
 import {pathEquals} from '../slate/path/path-equals'
-import {isText} from '../slate/text/is-text'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {rangeRefAffinities} from './range-ref-affinities'
 
@@ -114,7 +113,7 @@ export function applySplitNode(
 
   try {
     withoutNormalizing(editor, () => {
-      if (isText(node, editor.schema)) {
+      if (isSpan({schema: editor.schema}, node)) {
         const afterText = node.text.slice(position)
         const newNode = {...properties, text: afterText} as Node
         editor.apply({
@@ -128,15 +127,16 @@ export function applySplitNode(
           path: nextPath(path),
           node: newNode,
         })
-      } else if (isElement(node, editor.schema)) {
-        const afterChildren = node.children.slice(position)
+      } else if (isTextBlock({schema: editor.schema}, node)) {
+        const children = node.children
+        const afterChildren = children.slice(position)
         const newNode = {...properties, children: afterChildren} as Node
 
-        for (let i = node.children.length - 1; i >= position; i--) {
+        for (let i = children.length - 1; i >= position; i--) {
           editor.apply({
             type: 'remove_node',
             path: [...path, i],
-            node: node.children[i]!,
+            node: children[i]!,
           })
         }
         editor.apply({

@@ -1,16 +1,23 @@
+import type {PortableTextSpan} from '@portabletext/schema'
+import {isSpan} from '@portabletext/schema'
 import type {EditorSchema} from '../../editor/editor-schema'
-import type {Node, NodeEntry, NodeTextsOptions} from '../interfaces/node'
-import type {Text} from '../interfaces/text'
-import {isText} from '../text/is-text'
+import type {Editor} from '../interfaces/editor'
+import type {Node, NodeEntry} from '../interfaces/node'
+import type {Path} from '../interfaces/path'
 import {getNodes} from './get-nodes'
 
 export function* getTexts(
-  root: Node,
+  root: Editor | Node,
   schema: EditorSchema,
-  options: NodeTextsOptions = {},
-): Generator<NodeEntry<Text>, void, undefined> {
+  options: {
+    from?: Path
+    to?: Path
+    reverse?: boolean
+    pass?: (node: NodeEntry) => boolean
+  } = {},
+): Generator<NodeEntry<PortableTextSpan>, void, undefined> {
   for (const [node, path] of getNodes(root, schema, options)) {
-    if (isText(node, schema)) {
+    if (isSpan({schema}, node)) {
       yield [node, path]
     }
   }

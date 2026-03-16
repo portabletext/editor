@@ -7,12 +7,10 @@ import type {TextDirection} from '../types/types'
  * only refer to `Text` nodes.
  */
 
-export interface BasePoint {
+export interface Point {
   path: number[]
   offset: number
 }
-
-export type Point = BasePoint
 
 export interface PointTransformOptions {
   affinity?: TextDirection | null

@@ -6,7 +6,7 @@ import {
   DIFF_INSERT,
   parsePatch,
 } from '@sanity/diff-match-patch'
-import type {Descendant} from '../slate/interfaces/node'
+import type {Node} from '../slate/interfaces/node'
 import type {Operation} from '../slate/interfaces/operation'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {isKeyedSegment} from '../utils'
@@ -222,8 +222,8 @@ function adjustBlockPath(
 function findOperationTargetBlock(
   editor: PortableTextSlateEditor,
   operation: Operation,
-): Descendant | undefined {
-  let block: Descendant | undefined
+): Node | undefined {
+  let block: Node | undefined
   if (operation.type === 'set_selection' && editor.selection) {
     block = editor.children[editor.selection.focus.path[0]!]
   } else if ('path' in operation) {

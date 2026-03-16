@@ -1,6 +1,8 @@
+import {isTextBlock} from '@portabletext/schema'
+import {isEditor} from '../../editor/is-editor'
 import {range as editorRange} from '../../editor/range'
 import type {Editor} from '../../interfaces/editor'
-import type {Ancestor} from '../../interfaces/node'
+import type {Node} from '../../interfaces/node'
 import type {Range} from '../../interfaces/range'
 import type {DecoratedRange} from '../../interfaces/text'
 import {rangeEdges} from '../../range/range-edges'
@@ -115,13 +117,15 @@ export const isTextDecorationsEqual = (
 
 export const splitDecorationsByChild = (
   editor: Editor,
-  node: Ancestor,
+  node: Editor | Node,
   decorations: DecoratedRange[],
 ): DecoratedRange[][] => {
-  const decorationsByChild = Array.from(
-    node.children,
-    (): DecoratedRange[] => [],
-  )
+  const children: readonly unknown[] = isEditor(node)
+    ? node.children
+    : isTextBlock({schema: editor.schema}, node)
+      ? node.children
+      : []
+  const decorationsByChild = Array.from(children, (): DecoratedRange[] => [])
 
   if (decorations.length === 0) {
     return decorationsByChild
@@ -131,7 +135,7 @@ export const splitDecorationsByChild = (
   const level = path.length
   const ancestorRange = editorRange(editor, path)
 
-  const cachedChildRanges = new Array<Range | undefined>(node.children.length)
+  const cachedChildRanges = new Array<Range | undefined>(children.length)
 
   const getChildRange = (index: number) => {
     const cachedRange = cachedChildRanges[index]

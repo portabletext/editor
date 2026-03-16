@@ -1,15 +1,17 @@
+import type {PortableTextObject} from '@portabletext/schema'
 import type {Editor} from '../interfaces/editor'
 import type {Location} from '../interfaces/location'
-import type {NodeEntry, ObjectNode} from '../interfaces/node'
+import type {NodeEntry} from '../interfaces/node'
 import {getNode} from '../node/get-node'
+import {isObjectNode} from '../node/is-object-node'
 import type {MaximizeMode} from '../types/types'
 import {above} from './above'
 import {path} from './path'
 
-export function getVoid(
+export function getObjectNode(
   editor: Editor,
-  options: {at?: Location; mode?: MaximizeMode; voids?: boolean} = {},
-): NodeEntry<ObjectNode> | undefined {
+  options: {at?: Location; mode?: MaximizeMode} = {},
+): NodeEntry<PortableTextObject> | undefined {
   const {at = editor.selection} = options
   if (!at) {
     return
@@ -18,12 +20,12 @@ export function getVoid(
   const nodePath = path(editor, at)
   const node = getNode(editor, nodePath, editor.schema)
 
-  if (editor.isObjectNode(node)) {
-    return [node, nodePath] as any
+  if (isObjectNode({schema: editor.schema}, node)) {
+    return [node, nodePath]
   }
 
   return above(editor, {
     ...options,
-    match: (n) => editor.isObjectNode(n),
-  }) as NodeEntry<ObjectNode> | undefined
+    match: (n) => isObjectNode({schema: editor.schema}, n),
+  })
 }
