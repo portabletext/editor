@@ -17,7 +17,7 @@ interface RemoveNodesOptions<T extends Node> {
   match?: NodeMatch<T>
   mode?: RangeMode
   hanging?: boolean
-  voids?: boolean
+  includeObjectNodes?: boolean
 }
 
 export function removeNodes<T extends Node>(
@@ -25,7 +25,11 @@ export function removeNodes<T extends Node>(
   options: RemoveNodesOptions<T> = {},
 ): void {
   withoutNormalizing(editor, () => {
-    const {hanging = false, voids = false, mode = 'lowest'} = options
+    const {
+      hanging = false,
+      includeObjectNodes = false,
+      mode = 'lowest',
+    } = options
     let {at = editor.selection, match} = options
 
     if (!at) {
@@ -39,10 +43,10 @@ export function removeNodes<T extends Node>(
     }
 
     if (!hanging && isRange(at)) {
-      at = unhangRange(editor, at, {voids})
+      at = unhangRange(editor, at, {includeObjectNodes})
     }
 
-    const depths = nodes(editor, {at, match, mode, voids})
+    const depths = nodes(editor, {at, match, mode, includeObjectNodes})
     const pathRefs = Array.from(depths, ([, p]) => pathRef(editor, p))
 
     for (const ref of pathRefs) {

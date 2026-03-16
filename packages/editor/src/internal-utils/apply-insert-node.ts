@@ -54,7 +54,7 @@ export function applyInsertNodeAtPoint(
       at: at.path,
       match,
       mode: 'lowest',
-      voids: false,
+      includeObjectNodes: false,
     })
 
     if (!entry) {

@@ -9,7 +9,11 @@ import {start} from './start'
 export function before(
   editor: Editor,
   at: Location,
-  options: {distance?: number; unit?: TextUnitAdjustment; voids?: boolean} = {},
+  options: {
+    distance?: number
+    unit?: TextUnitAdjustment
+    includeObjectNodes?: boolean
+  } = {},
 ): Point | undefined {
   const anchor = start(editor, [])
   const focus = point(editor, at, {edge: 'start'})

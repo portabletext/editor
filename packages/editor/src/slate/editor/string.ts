@@ -9,9 +9,9 @@ import {range} from './range'
 export function string(
   editor: Editor,
   at: Location,
-  options: {voids?: boolean} = {},
+  options: {includeObjectNodes?: boolean} = {},
 ): string {
-  const {voids = false} = options
+  const {includeObjectNodes = false} = options
   const editorRange = range(editor, at)
   const [start, end] = rangeEdges(editorRange)
   let text = ''
@@ -19,7 +19,7 @@ export function string(
   for (const [node, path] of nodes(editor, {
     at: editorRange,
     match: (n) => isSpan({schema: editor.schema}, n),
-    voids,
+    includeObjectNodes,
   })) {
     let t = node.text
 

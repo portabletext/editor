@@ -319,7 +319,7 @@ export function createNormalizationPlugin(
                 mode: 'lowest',
                 at: op.properties.focus,
                 match: (n) => isSpan({schema: editor.schema}, n),
-                voids: false,
+                includeObjectNodes: false,
               }),
             )[0]?.[0]
             const newFocusSpan: PortableTextSpan | undefined = Array.from(
@@ -327,7 +327,7 @@ export function createNormalizationPlugin(
                 mode: 'lowest',
                 at: op.newProperties.focus,
                 match: (n) => isSpan({schema: editor.schema}, n),
-                voids: false,
+                includeObjectNodes: false,
               }),
             )[0]?.[0]
             const movedToNextSpan =

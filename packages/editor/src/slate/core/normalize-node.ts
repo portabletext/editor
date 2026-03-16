@@ -37,7 +37,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   // Ensure that elements have at least one child.
   if (element !== editor && element.children.length === 0) {
     const child = editor.createSpan()
-    insertNodes(editor, [child], {at: path.concat(0), voids: true})
+    insertNodes(editor, [child], {at: path.concat(0), includeObjectNodes: true})
     element = getTextBlockNode(editor, path, editor.schema)
   }
 
@@ -69,14 +69,14 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
           if (child.text === '') {
             removeNodes(editor, {
               at: path.concat(n),
-              voids: true,
+              includeObjectNodes: true,
             })
             element = getTextBlockNode(editor, path, editor.schema)
             n--
           } else if (prev.text === '') {
             removeNodes(editor, {
               at: path.concat(n - 1),
-              voids: true,
+              includeObjectNodes: true,
             })
             element = getTextBlockNode(editor, path, editor.schema)
             n--
@@ -94,7 +94,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
             const newChild = editor.createSpan()
             insertNodes(editor, [newChild], {
               at: path.concat(n),
-              voids: true,
+              includeObjectNodes: true,
             })
             element = getTextBlockNode(editor, path, editor.schema)
             n++
@@ -103,14 +103,14 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
             const newChild = editor.createSpan()
             insertNodes(editor, [newChild], {
               at: path.concat(n + 1),
-              voids: true,
+              includeObjectNodes: true,
             })
             element = getTextBlockNode(editor, path, editor.schema)
             n++
           }
         } else {
           // An Element cannot appear inline in another Element
-          removeNodes(editor, {at: path.concat(n), voids: true})
+          removeNodes(editor, {at: path.concat(n), includeObjectNodes: true})
           element = getTextBlockNode(editor, path, editor.schema)
           n--
         }
@@ -119,7 +119,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
           const newChild = editor.createSpan()
           insertNodes(editor, [newChild], {
             at: path.concat(n),
-            voids: true,
+            includeObjectNodes: true,
           })
           element = getTextBlockNode(editor, path, editor.schema)
           n++
@@ -128,7 +128,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
           const newChild = editor.createSpan()
           insertNodes(editor, [newChild], {
             at: path.concat(n + 1),
-            voids: true,
+            includeObjectNodes: true,
           })
           element = getTextBlockNode(editor, path, editor.schema)
           n++
@@ -147,7 +147,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
         isSpan({schema: editor.schema}, child) ||
         (isTextBlock({schema: editor.schema}, child) && editor.isInline(child))
       ) {
-        removeNodes(editor, {at: path.concat(n), voids: true})
+        removeNodes(editor, {at: path.concat(n), includeObjectNodes: true})
         element =
           path.length === 0
             ? editor

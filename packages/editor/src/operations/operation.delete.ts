@@ -205,7 +205,7 @@ export const deleteOperationImplementation: OperationImplementation<
         (isObjectNode({schema: operation.editor.schema}, n) &&
           !operation.editor.isInline(n)),
       at: start,
-      voids: false,
+      includeObjectNodes: false,
     })
   const endBlock =
     endNodeEntry ??
@@ -215,7 +215,7 @@ export const deleteOperationImplementation: OperationImplementation<
         (isObjectNode({schema: operation.editor.schema}, n) &&
           !operation.editor.isInline(n)),
       at: end,
-      voids: false,
+      includeObjectNodes: false,
     })
   const isAcrossBlocks =
     startBlock && endBlock && !pathEquals(startBlock[1], endBlock[1])
@@ -241,7 +241,10 @@ export const deleteOperationImplementation: OperationImplementation<
   const matches: NodeEntry[] = []
   let lastPath: Path | undefined
 
-  for (const entry of nodes(operation.editor, {at, voids: false})) {
+  for (const entry of nodes(operation.editor, {
+    at,
+    includeObjectNodes: false,
+  })) {
     const [node, path] = entry
 
     if (lastPath && comparePaths(path, lastPath) === 0) {

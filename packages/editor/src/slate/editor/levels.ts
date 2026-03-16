@@ -10,7 +10,7 @@ export function* levels<T extends Node>(
     at?: Location
     match?: NodeMatch<T>
     reverse?: boolean
-    voids?: boolean
+    includeObjectNodes?: boolean
   } = {},
 ): Generator<NodeEntry<T>, void, undefined> {
   const {at = editor.selection, reverse = false} = options

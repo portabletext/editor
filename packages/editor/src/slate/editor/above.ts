@@ -14,10 +14,15 @@ export function above<T extends Node>(
     at?: Location
     match?: NodeMatch<T>
     mode?: MaximizeMode
-    voids?: boolean
+    includeObjectNodes?: boolean
   } = {},
 ): NodeEntry<T> | undefined {
-  const {voids = false, mode = 'lowest', at = editor.selection, match} = options
+  const {
+    includeObjectNodes = false,
+    mode = 'lowest',
+    at = editor.selection,
+    match,
+  } = options
 
   if (!at) {
     return
@@ -38,7 +43,7 @@ export function above<T extends Node>(
 
   const [firstMatch] = levels(editor, {
     at: fromPath,
-    voids,
+    includeObjectNodes,
     match,
     reverse,
   })

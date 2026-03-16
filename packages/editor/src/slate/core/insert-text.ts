@@ -15,7 +15,7 @@ import {deleteText} from './delete-text'
 
 interface TextInsertTextOptions {
   at?: Location
-  voids?: boolean
+  includeObjectNodes?: boolean
 }
 
 export function insertText(
@@ -24,7 +24,7 @@ export function insertText(
   options: TextInsertTextOptions = {},
 ): void {
   withoutNormalizing(editor, () => {
-    const {voids = false} = options
+    const {includeObjectNodes = false} = options
     let {at = getDefaultInsertLocation(editor)} = options
 
     if (isPath(at)) {
@@ -36,13 +36,13 @@ export function insertText(
         at = at.anchor
       } else {
         const end = rangeEnd(at)
-        if (!voids && getObjectNode(editor, {at: end})) {
+        if (!includeObjectNodes && getObjectNode(editor, {at: end})) {
           return
         }
         const start = rangeStart(at)
         const startRef = pointRef(editor, start)
         const endRef = pointRef(editor, end)
-        deleteText(editor, {at, voids})
+        deleteText(editor, {at, includeObjectNodes})
         const startPoint = startRef.unref()
         const endPoint = endRef.unref()
 
@@ -52,7 +52,7 @@ export function insertText(
     }
 
     if (
-      (!voids && getObjectNode(editor, {at})) ||
+      (!includeObjectNodes && getObjectNode(editor, {at})) ||
       elementReadOnly(editor, {at})
     ) {
       return
