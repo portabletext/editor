@@ -1,4 +1,5 @@
-import type {PortableTextBlock, PortableTextSpan} from '@portabletext/schema'
+import type {PortableTextSpan} from '@portabletext/schema'
+import {isSpan, isTextBlock} from '@portabletext/schema'
 import {applySelect} from '../internal-utils/apply-selection'
 import {applySetNode} from '../internal-utils/apply-set-node'
 import {applySplitNode} from '../internal-utils/apply-split-node'
@@ -19,7 +20,6 @@ import {isCollapsedRange} from '../slate/range/is-collapsed-range'
 import {isRange} from '../slate/range/is-range'
 import {rangeEdges} from '../slate/range/range-edges'
 import {rangeIncludes} from '../slate/range/range-includes'
-import {isText} from '../slate/text/is-text'
 import type {OperationImplementation} from './operation.types'
 
 export const removeAnnotationOperationImplementation: OperationImplementation<
@@ -31,7 +31,7 @@ export const removeAnnotationOperationImplementation: OperationImplementation<
     ? toSlateRange({
         context: {
           schema: context.schema,
-          value: operation.editor.children as Array<PortableTextBlock>,
+          value: operation.editor.children,
           selection: operation.at,
         },
         blockIndexMap: operation.editor.blockIndexMap,
@@ -49,7 +49,7 @@ export const removeAnnotationOperationImplementation: OperationImplementation<
       depth: 1,
     })
 
-    if (!editor.isTextBlock(block)) {
+    if (!isTextBlock({schema: editor.schema}, block)) {
       return
     }
 
@@ -66,7 +66,7 @@ export const removeAnnotationOperationImplementation: OperationImplementation<
       },
     )
 
-    if (!editor.isTextSpan(selectedChild)) {
+    if (!isSpan({schema: editor.schema}, selectedChild)) {
       return
     }
 
@@ -90,7 +90,7 @@ export const removeAnnotationOperationImplementation: OperationImplementation<
         reverse: true,
       },
     )) {
-      if (!editor.isTextSpan(child)) {
+      if (!isSpan({schema: editor.schema}, child)) {
         continue
       }
 
@@ -114,7 +114,7 @@ export const removeAnnotationOperationImplementation: OperationImplementation<
       blockPath,
       editor.schema,
     )) {
-      if (!editor.isTextSpan(child)) {
+      if (!isSpan({schema: editor.schema}, child)) {
         continue
       }
 
@@ -153,7 +153,7 @@ export const removeAnnotationOperationImplementation: OperationImplementation<
       if (
         !(
           isCollapsedRange(splitRange) &&
-          isText(splitLeaf, editor.schema) &&
+          isSpan({schema: editor.schema}, splitLeaf) &&
           splitLeaf.text.length > 0
         )
       ) {
@@ -191,7 +191,7 @@ export const removeAnnotationOperationImplementation: OperationImplementation<
 
     const blocks = nodes(editor, {
       at: effectiveSelection,
-      match: (node) => editor.isTextBlock(node),
+      match: (node) => isTextBlock({schema: editor.schema}, node),
     })
 
     // Use the tracked range (updated after splits) or fall back to editor.selection
@@ -201,7 +201,7 @@ export const removeAnnotationOperationImplementation: OperationImplementation<
       const children = getChildren(editor, blockPath, editor.schema)
 
       for (const [child, childPath] of children) {
-        if (!editor.isTextSpan(child)) {
+        if (!isSpan({schema: editor.schema}, child)) {
           continue
         }
 

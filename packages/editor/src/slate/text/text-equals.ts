@@ -1,9 +1,10 @@
-import type {Text, TextEqualsOptions} from '../interfaces/text'
+import type {PortableTextSpan} from '@portabletext/schema'
+import type {TextEqualsOptions} from '../interfaces/text'
 import {isDeepEqual} from '../utils/deep-equal'
 
 export function textEquals(
-  text: Text,
-  another: Text,
+  text: PortableTextSpan,
+  another: PortableTextSpan | Omit<PortableTextSpan, 'text'>,
   options: TextEqualsOptions = {},
 ): boolean {
   const {loose = false} = options

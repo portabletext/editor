@@ -1,9 +1,15 @@
 import type {EditorSchema} from '../../editor/editor-schema'
-import type {Ancestor, Node} from '../interfaces/node'
+import type {Editor} from '../interfaces/editor'
+import type {Node} from '../interfaces/node'
+import type {Path} from '../interfaces/path'
 import {isLeaf} from './is-leaf'
 
-export function hasNode(root: Node, path: Path, schema: EditorSchema): boolean {
-  let node = root
+export function hasNode(
+  root: Editor | Node,
+  path: Path,
+  schema: EditorSchema,
+): boolean {
+  let node: Editor | Node = root
 
   for (let i = 0; i < path.length; i++) {
     const p = path[i]!
@@ -12,16 +18,14 @@ export function hasNode(root: Node, path: Path, schema: EditorSchema): boolean {
       return false
     }
 
-    const children = (node as Ancestor).children
+    const children = node.children
 
     if (!children[p]) {
       return false
     }
 
-    node = children[p]! as Node
+    node = children[p]!
   }
 
   return true
 }
-
-type Path = number[]

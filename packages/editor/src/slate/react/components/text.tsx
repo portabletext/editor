@@ -1,7 +1,10 @@
+import type {
+  PortableTextSpan,
+  PortableTextTextBlock,
+} from '@portabletext/schema'
 import React, {useCallback, useRef, type JSX} from 'react'
 import {isTextDecorationsEqual} from '../../dom/utils/range-list'
-import type {Element} from '../../interfaces/element'
-import type {DecoratedRange, Text as SlateText} from '../../interfaces/text'
+import type {DecoratedRange} from '../../interfaces/text'
 import {getTextDecorations} from '../../text/get-text-decorations'
 import {useDecorations} from '../hooks/use-decorations'
 import {useSlateStatic} from '../hooks/use-slate-static'
@@ -22,11 +25,11 @@ const defaultRenderText = (props: RenderTextProps) => <DefaultText {...props} />
 const Text = (props: {
   decorations: DecoratedRange[]
   isLast: boolean
-  parent: Element
+  parent: PortableTextTextBlock
   renderPlaceholder: (props: RenderPlaceholderProps) => JSX.Element
   renderLeaf?: (props: RenderLeafProps) => JSX.Element
   renderText?: (props: RenderTextProps) => JSX.Element
-  text: SlateText
+  text: PortableTextSpan
 }) => {
   const {
     decorations: parentDecorations,

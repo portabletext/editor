@@ -1,5 +1,5 @@
 import {elementReadOnly} from '../editor/element-read-only'
-import {getVoid} from '../editor/get-void'
+import {getObjectNode} from '../editor/get-object-node'
 import {pointRef} from '../editor/point-ref'
 import {range as editorRange} from '../editor/range'
 import {withoutNormalizing} from '../editor/without-normalizing'
@@ -36,7 +36,7 @@ export function insertText(
         at = at.anchor
       } else {
         const end = rangeEnd(at)
-        if (!voids && getVoid(editor, {at: end})) {
+        if (!voids && getObjectNode(editor, {at: end})) {
           return
         }
         const start = rangeStart(at)
@@ -51,7 +51,10 @@ export function insertText(
       }
     }
 
-    if ((!voids && getVoid(editor, {at})) || elementReadOnly(editor, {at})) {
+    if (
+      (!voids && getObjectNode(editor, {at})) ||
+      elementReadOnly(editor, {at})
+    ) {
       return
     }
 

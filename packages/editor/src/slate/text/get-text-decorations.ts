@@ -1,11 +1,14 @@
-import type {DecoratedRange, LeafPosition, Text} from '../interfaces/text'
+import type {PortableTextSpan} from '@portabletext/schema'
+import type {DecoratedRange, LeafPosition} from '../interfaces/text'
 import {rangeEdges} from '../range/range-edges'
 
 export function getTextDecorations(
-  node: Text,
+  node: PortableTextSpan,
   decorations: DecoratedRange[],
-): {leaf: Text; position?: LeafPosition}[] {
-  let leaves: {leaf: Text; position?: LeafPosition}[] = [{leaf: {...node}}]
+): {leaf: PortableTextSpan; position?: LeafPosition}[] {
+  let leaves: {leaf: PortableTextSpan; position?: LeafPosition}[] = [
+    {leaf: {...node}},
+  ]
 
   for (const dec of decorations) {
     const {
@@ -44,8 +47,8 @@ export function getTextDecorations(
       }
 
       let middle = leaf
-      let before: {leaf: Text} | undefined
-      let after: {leaf: Text} | undefined
+      let before: {leaf: PortableTextSpan} | undefined
+      let after: {leaf: PortableTextSpan} | undefined
 
       if (decorationEnd < leafEnd) {
         const off = decorationEnd - leafStart

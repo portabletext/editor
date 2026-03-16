@@ -1,18 +1,17 @@
+import {isSpan, isTextBlock} from '@portabletext/schema'
 import type {EditorSchema} from '../../editor/editor-schema'
-import {isAncestorElement} from '../element/is-ancestor-element'
-import type {Node, NodeProps, ObjectNode} from '../interfaces/node'
-import {isText} from '../text/is-text'
+import type {Node, NodeProps} from '../interfaces/node'
 
 export function extractProps(node: Node, schema: EditorSchema): NodeProps {
-  if (isAncestorElement(node, schema)) {
+  if (isTextBlock({schema}, node)) {
     const {children: _children, ...properties} = node
 
     return properties
-  } else if (isText(node, schema)) {
+  } else if (isSpan({schema}, node)) {
     const {text: _text, ...properties} = node
 
     return properties
   } else {
-    return {...(node as ObjectNode)}
+    return {...node}
   }
 }

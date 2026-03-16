@@ -1,9 +1,9 @@
+import type {PortableTextSpan} from '@portabletext/schema'
 import {safeStringify} from '../../internal-utils/safe-json'
 import type {Editor, Selection} from '../interfaces/editor'
 import type {Node, NodeEntry} from '../interfaces/node'
 import type {Operation} from '../interfaces/operation'
 import type {Range} from '../interfaces/range'
-import type {Text} from '../interfaces/text'
 import {getTexts} from '../node/get-texts'
 import {commonPath} from '../path/common-path'
 import {comparePaths} from '../path/compare-paths'
@@ -84,8 +84,8 @@ export function applyOperation(editor: Editor, op: Operation): void {
           if (selection != null && result != null) {
             selection[key] = result
           } else {
-            let prev: NodeEntry<Text> | undefined
-            let next: NodeEntry<Text> | undefined
+            let prev: NodeEntry<PortableTextSpan> | undefined
+            let next: NodeEntry<PortableTextSpan> | undefined
 
             for (const [n, p] of getTexts(editor, editor.schema)) {
               if (comparePaths(p, path) === -1) {

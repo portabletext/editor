@@ -1,3 +1,4 @@
+import {isSpan} from '@portabletext/schema'
 import type {EditorActor} from '../../../../editor/editor-machine'
 import {
   applyStringDiff,
@@ -26,7 +27,6 @@ import {isCollapsedRange} from '../../../range/is-collapsed-range'
 import {isExpandedRange} from '../../../range/is-expanded-range'
 import {rangeEdges} from '../../../range/range-edges'
 import {rangeEquals} from '../../../range/range-equals'
-import {isText} from '../../../text/is-text'
 import {ReactEditor} from '../../plugin/react-editor'
 import type {DebouncedFunc} from '../../utils/debounce'
 
@@ -170,7 +170,7 @@ export function createAndroidInputManager({
 
       if (pendingMarks !== undefined) {
         editor.pendingInsertionMarks = null
-        editor.marks = pendingMarks as typeof editor.marks
+        editor.marks = pendingMarks
       }
 
       if (pendingMarks && insertPositionHint === false) {
@@ -250,7 +250,7 @@ export function createAndroidInputManager({
     const userMarks = editor.userMarks
     editor.userMarks = null
     if (userMarks !== undefined) {
-      editor.marks = userMarks as typeof editor.marks
+      editor.marks = userMarks
       editor.onChange()
     }
   }
@@ -302,7 +302,7 @@ export function createAndroidInputManager({
 
     const target = getLeaf(editor, path, editor.schema)
 
-    if (!isText(target, editor.schema)) {
+    if (!isSpan({schema: editor.schema}, target)) {
       return
     }
 
@@ -415,7 +415,7 @@ export function createAndroidInputManager({
       let [start, end] = rangeEdges(targetRange)
       let [leaf, path] = editorLeaf(editor, start.path)
 
-      if (!isText(leaf, editor.schema)) {
+      if (!isSpan({schema: editor.schema}, leaf)) {
         return scheduleAction(
           () =>
             editorActor.send({
@@ -431,7 +431,7 @@ export function createAndroidInputManager({
         if (leaf.text.length === start.offset && end.offset === 0) {
           const next = editorNext(editor, {
             at: start.path,
-            match: (n) => isText(n, editor.schema),
+            match: (n) => isSpan({schema: editor.schema}, n),
           })
           if (next && pathEquals(next[1], end.path)) {
             // when deleting a linebreak, targetRange will span across the break (ie start in the node before and end in the node after)
@@ -520,7 +520,7 @@ export function createAndroidInputManager({
           const targetNode = getLeaf(editor, anchor.path, editor.schema)
 
           if (
-            isText(targetNode, editor.schema) &&
+            isSpan({schema: editor.schema}, targetNode) &&
             anchor.offset < targetNode.text.length
           ) {
             return storeDiff(anchor.path, {

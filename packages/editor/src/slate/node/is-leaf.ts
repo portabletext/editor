@@ -1,7 +1,16 @@
+import {
+  isSpan,
+  type PortableTextObject,
+  type PortableTextSpan,
+} from '@portabletext/schema'
 import type {EditorSchema} from '../../editor/editor-schema'
-import {isText} from '../text/is-text'
+import type {Editor} from '../interfaces/editor'
+import type {Node} from '../interfaces/node'
 import {isObjectNode} from './is-object-node'
 
-export function isLeaf(value: any, schema: EditorSchema): boolean {
-  return isText(value, schema) || isObjectNode(value, schema)
+export function isLeaf(
+  node: Editor | Node,
+  schema: EditorSchema,
+): node is PortableTextSpan | PortableTextObject {
+  return isSpan({schema}, node) || isObjectNode({schema}, node)
 }

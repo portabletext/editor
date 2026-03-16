@@ -2,50 +2,40 @@ import type {Node} from './node'
 import type {Path} from './path'
 import type {Range} from './range'
 
-export type BaseInsertNodeOperation = {
+export type InsertNodeOperation = {
   type: 'insert_node'
   path: Path
   node: Node
 }
 
-export type InsertNodeOperation = BaseInsertNodeOperation
-
-export type BaseInsertTextOperation = {
+export type InsertTextOperation = {
   type: 'insert_text'
   path: Path
   offset: number
   text: string
 }
 
-export type InsertTextOperation = BaseInsertTextOperation
-
-export type BaseRemoveNodeOperation = {
+export type RemoveNodeOperation = {
   type: 'remove_node'
   path: Path
   node: Node
 }
 
-export type RemoveNodeOperation = BaseRemoveNodeOperation
-
-export type BaseRemoveTextOperation = {
+export type RemoveTextOperation = {
   type: 'remove_text'
   path: Path
   offset: number
   text: string
 }
 
-export type RemoveTextOperation = BaseRemoveTextOperation
-
-export type BaseSetNodeOperation = {
+export type SetNodeOperation = {
   type: 'set_node'
   path: Path
   properties: Partial<Node>
   newProperties: Partial<Node>
 }
 
-export type SetNodeOperation = BaseSetNodeOperation
-
-type BaseSetSelectionOperation =
+type SetSelectionOperation =
   | {
       type: 'set_selection'
       properties: null
@@ -62,13 +52,10 @@ type BaseSetSelectionOperation =
       newProperties: null
     }
 
-type SetSelectionOperation = BaseSetSelectionOperation
-
-export type BaseOperation =
+export type Operation =
   | InsertNodeOperation
   | RemoveNodeOperation
   | SetNodeOperation
   | SetSelectionOperation
   | InsertTextOperation
   | RemoveTextOperation
-export type Operation = BaseOperation

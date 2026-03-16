@@ -7,7 +7,6 @@ import {setSelection} from './core/set-selection'
 import {shouldNormalize} from './core/should-normalize'
 import {EDITOR_BRAND} from './editor/is-editor'
 import type {Editor} from './interfaces/editor'
-import type {Text} from './interfaces/text'
 
 /**
  * Create a new Slate `Editor` object.
@@ -37,13 +36,12 @@ export const createEditor = (context: {
     pathRefs: new Set(),
     pointRefs: new Set(),
     rangeRefs: new Set(),
-    createSpan: () =>
-      ({
-        _type: context.schema.span.name,
-        _key: context.keyGenerator(),
-        text: '',
-        marks: [],
-      }) as Text,
+    createSpan: () => ({
+      _type: context.schema.span.name,
+      _key: context.keyGenerator(),
+      text: '',
+      marks: [],
+    }),
     isElementReadOnly: () => false,
     isInline: () => false,
     isSelectable: () => true,

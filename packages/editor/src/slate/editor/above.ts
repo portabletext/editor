@@ -1,6 +1,6 @@
 import type {Editor, NodeMatch} from '../interfaces/editor'
 import type {Location} from '../interfaces/location'
-import type {Ancestor, NodeEntry} from '../interfaces/node'
+import type {Node, NodeEntry} from '../interfaces/node'
 import {parentPath} from '../path/parent-path'
 import {pathEquals} from '../path/path-equals'
 import {isRange} from '../range/is-range'
@@ -8,7 +8,7 @@ import type {MaximizeMode} from '../types/types'
 import {levels} from './levels'
 import {path} from './path'
 
-export function above<T extends Ancestor>(
+export function above<T extends Node>(
   editor: Editor,
   options: {
     at?: Location
@@ -39,8 +39,8 @@ export function above<T extends Ancestor>(
   const [firstMatch] = levels(editor, {
     at: fromPath,
     voids,
-    match: match as NodeMatch<any>,
+    match,
     reverse,
   })
-  return firstMatch as NodeEntry<T> | undefined
+  return firstMatch
 }

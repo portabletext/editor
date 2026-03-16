@@ -1,15 +1,19 @@
+import type {
+  PortableTextBlock,
+  PortableTextObject,
+  PortableTextSpan,
+  PortableTextTextBlock,
+} from '@portabletext/schema'
 import type {PortableTextSlateEditor} from '../../types/slate-editor'
 import type {ReactEditor} from '../react/plugin/react-editor'
-import type {Element} from './element'
 import type {Location} from './location'
-import type {Descendant, Node, NodeEntry} from './node'
+import type {Node} from './node'
 import type {Operation} from './operation'
 import type {Path} from './path'
 import type {PathRef} from './path-ref'
 import type {PointRef} from './point-ref'
 import type {Range} from './range'
 import type {RangeRef} from './range-ref'
-import type {Text} from './text'
 
 /**
  * The `Editor` interface stores all the state of a Slate editor. It is extended
@@ -18,7 +22,7 @@ import type {Text} from './text'
 export interface BaseEditor {
   // Core state.
 
-  children: Descendant[]
+  children: PortableTextBlock[]
   selection: Selection
   operations: Operation[]
   marks: EditorMarks | null
@@ -34,13 +38,15 @@ export interface BaseEditor {
   // Overrideable core methods.
 
   apply: (operation: Operation) => void
-  createSpan: () => Text
+  createSpan: () => PortableTextSpan
   getDirtyPaths: (operation: Operation) => Path[]
-  isElementReadOnly: (element: Element) => boolean
-  isInline: (element: Element) => boolean
-  isSelectable: (element: Element) => boolean
+  isElementReadOnly: (
+    element: PortableTextTextBlock | PortableTextObject,
+  ) => boolean
+  isInline: (element: PortableTextTextBlock | PortableTextObject) => boolean
+  isSelectable: (element: PortableTextTextBlock | PortableTextObject) => boolean
   normalizeNode: (
-    entry: NodeEntry,
+    entry: [Editor | Node, Path],
     options?: {
       operation?: Operation
     },
@@ -65,11 +71,9 @@ export interface BaseEditor {
 
 export type Editor = BaseEditor & ReactEditor & PortableTextSlateEditor
 
-export type BaseSelection = Range | null
+export type Selection = Range | null
 
-export type Selection = BaseSelection
-
-export type EditorMarks = Omit<Text, 'text'>
+export type EditorMarks = Omit<PortableTextSpan, 'text'>
 
 /**
  * A helper type for narrowing matched nodes with a predicate.

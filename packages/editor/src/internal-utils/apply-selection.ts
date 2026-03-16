@@ -1,5 +1,6 @@
 import {end as editorEnd} from '../slate/editor/end'
 import {start as editorStart} from '../slate/editor/start'
+import type {Path} from '../slate/interfaces/path'
 import type {Point} from '../slate/interfaces/point'
 import type {Range} from '../slate/interfaces/range'
 import {isPoint} from '../slate/point/is-point'
@@ -61,8 +62,6 @@ export function applyDeselect(editor: PortableTextSlateEditor): void {
     })
   }
 }
-
-type Path = Array<number>
 
 function toRange(
   editor: PortableTextSlateEditor,

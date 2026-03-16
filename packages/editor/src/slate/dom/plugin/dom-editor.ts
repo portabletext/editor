@@ -1,7 +1,7 @@
 import {safeStringify} from '../../../internal-utils/safe-json'
 import {after} from '../../editor/after'
 import {before} from '../../editor/before'
-import {getVoid} from '../../editor/get-void'
+import {getObjectNode} from '../../editor/get-object-node'
 import {hasPath} from '../../editor/has-path'
 import {isEditor} from '../../editor/is-editor'
 import {node as editorNode} from '../../editor/node'
@@ -9,15 +9,15 @@ import {point as editorPoint} from '../../editor/point'
 import {range as editorRange} from '../../editor/range'
 import {start as editorStart} from '../../editor/start'
 import {unhangRange} from '../../editor/unhang-range'
-import type {BaseEditor, Editor} from '../../interfaces/editor'
-import type {Ancestor, Node} from '../../interfaces/node'
+import type {BaseEditor, Editor, EditorMarks} from '../../interfaces/editor'
+import type {Node} from '../../interfaces/node'
 import type {Operation} from '../../interfaces/operation'
 import type {Path} from '../../interfaces/path'
 import type {Point} from '../../interfaces/point'
 import type {Range} from '../../interfaces/range'
 import type {RangeRef} from '../../interfaces/range-ref'
-import type {Text} from '../../interfaces/text'
 import {getNode} from '../../node/get-node'
+import {isObjectNode} from '../../node/is-object-node'
 import {isBackwardRange} from '../../range/is-backward-range'
 import {isCollapsedRange} from '../../range/is-collapsed-range'
 import {isExpandedRange} from '../../range/is-expanded-range'
@@ -70,19 +70,19 @@ export interface DOMEditor extends BaseEditor {
   domPlaceholder: string
   domPlaceholderElement: HTMLElement | null
   keyToElement: WeakMap<Key, HTMLElement>
-  nodeToIndex: WeakMap<Node, number>
-  nodeToParent: WeakMap<Node, Ancestor>
-  elementToNode: WeakMap<HTMLElement, Node>
-  nodeToElement: WeakMap<Node, HTMLElement>
-  nodeToKey: WeakMap<Node, Key>
+  nodeToIndex: WeakMap<Editor | Node, number>
+  nodeToParent: WeakMap<Editor | Node, Editor | Node>
+  elementToNode: WeakMap<HTMLElement, Editor | Node>
+  nodeToElement: WeakMap<Editor | Node, HTMLElement>
+  nodeToKey: WeakMap<Editor | Node, Key>
   readOnly: boolean
   focused: boolean
   composing: boolean
   userSelection: RangeRef | null
   onContextChange: ((options?: {operation?: Operation}) => void) | null
   scheduleFlush: (() => void) | null
-  pendingInsertionMarks: Partial<Text> | null
-  userMarks: Partial<Text> | null
+  pendingInsertionMarks: EditorMarks | null
+  userMarks: EditorMarks | null
   pendingDiffs: TextDiff[]
   pendingAction: Action | null
   pendingSelection: Range | null
@@ -107,12 +107,12 @@ export interface DOMEditorInterface {
   /**
    * Find a key for a Slate node.
    */
-  findKey: (editor: Editor, node: Node) => Key
+  findKey: (editor: Editor, node: Editor | Node) => Key
 
   /**
    * Find the path of Slate node.
    */
-  findPath: (editor: Editor, node: Node) => Path
+  findPath: (editor: Editor, node: Editor | Node) => Path
 
   /**
    * Focus the editor.
@@ -177,7 +177,7 @@ export interface DOMEditorInterface {
   /**
    * Find the native DOM element from a Slate node.
    */
-  toDOMNode: (editor: Editor, node: Node) => HTMLElement
+  toDOMNode: (editor: Editor, node: Editor | Node) => HTMLElement
 
   /**
    * Find a native DOM selection point from a Slate point.
@@ -197,7 +197,7 @@ export interface DOMEditorInterface {
   /**
    * Find a Slate node from a native DOM `element`.
    */
-  toSlateNode: (editor: Editor, domNode: DOMNode) => Node
+  toSlateNode: (editor: Editor, domNode: DOMNode) => Editor | Node
 
   /**
    * Find a Slate point from a DOM selection's `domNode` and `domOffset`.
@@ -269,7 +269,7 @@ export const DOMEditor: DOMEditorInterface = {
     // If the drop target is inside an ObjectNode, move it into either the
     // next or previous node, depending on which side the `x` and `y`
     // coordinates are closest to.
-    if (editor.isObjectNode(node)) {
+    if (isObjectNode({schema: editor.schema}, node)) {
       const rect = target.getBoundingClientRect()
 
       // TODO: path.length > 1 assumes flat document model. With containers,
@@ -483,7 +483,7 @@ export const DOMEditor: DOMEditorInterface = {
     const slateNode =
       DOMEditor.hasTarget(editor, target) &&
       DOMEditor.toSlateNode(editor, target)
-    return !!slateNode && editor.isObjectNode(slateNode)
+    return !!slateNode && isObjectNode({schema: editor.schema}, slateNode)
   },
 
   toDOMNode: (editor, node) => {
@@ -505,7 +505,7 @@ export const DOMEditor: DOMEditorInterface = {
     const el = DOMEditor.toDOMNode(editor, node)
     let domPoint: DOMPoint | undefined
 
-    if (editor.isObjectNode(node)) {
+    if (isObjectNode({schema: editor.schema}, node)) {
       const spacer = el.querySelector('[data-slate-zero-width]')
       if (spacer) {
         const domText = spacer.childNodes[0]
@@ -524,9 +524,9 @@ export const DOMEditor: DOMEditorInterface = {
       return [el, 0]
     }
 
-    // If we're inside a void node, force the offset to 0, otherwise the zero
+    // If we're inside an object node, force the offset to 0, otherwise the zero
     // width spacing character will result in an incorrect offset of 1
-    if (getVoid(editor, {at: point})) {
+    if (getObjectNode(editor, {at: point})) {
       point = {path: point.path, offset: 0}
     }
 
@@ -865,7 +865,7 @@ export const DOMEditor: DOMEditorInterface = {
           DOMEditor.hasDOMNode(editor, childEl)
         ) {
           const slateNode = DOMEditor.toSlateNode(editor, childEl)
-          if (editor.isObjectNode(slateNode)) {
+          if (isObjectNode({schema: editor.schema}, slateNode)) {
             try {
               const path = DOMEditor.findPath(editor, slateNode)
               return {path, offset: 0} as T extends true ? Point | null : Point
@@ -883,7 +883,7 @@ export const DOMEditor: DOMEditorInterface = {
       if (elementNode && DOMEditor.hasDOMNode(editor, elementNode)) {
         const slateNode = DOMEditor.toSlateNode(editor, elementNode)
 
-        if (editor.isObjectNode(slateNode)) {
+        if (isObjectNode({schema: editor.schema}, slateNode)) {
           try {
             const path = DOMEditor.findPath(editor, slateNode)
             return {path, offset: 0} as T extends true ? Point | null : Point
@@ -922,7 +922,7 @@ export const DOMEditor: DOMEditorInterface = {
       const parentPath = path.slice(0, -1)
       try {
         const parentSlateNode = getNode(editor, parentPath, editor.schema)
-        if (editor.isObjectNode(parentSlateNode)) {
+        if (isObjectNode({schema: editor.schema}, parentSlateNode)) {
           return {path: parentPath, offset: 0} as T extends true
             ? Point | null
             : Point
@@ -1108,7 +1108,7 @@ export const DOMEditor: DOMEditorInterface = {
       isExpandedRange(range) &&
       isForwardRange(range) &&
       isDOMElement(focusNode) &&
-      getVoid(editor, {at: range.focus, mode: 'highest'})
+      getObjectNode(editor, {at: range.focus, mode: 'highest'})
     ) {
       range = unhangRange(editor, range, {voids: true})
     }

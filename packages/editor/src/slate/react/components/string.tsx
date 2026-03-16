@@ -1,9 +1,13 @@
+import {
+  isTextBlock,
+  type PortableTextObject,
+  type PortableTextSpan,
+  type PortableTextTextBlock,
+} from '@portabletext/schema'
 import {forwardRef, memo, useRef, useState} from 'react'
 import {IS_ANDROID} from '../../dom/utils/environment'
 import {MARK_PLACEHOLDER_SYMBOL} from '../../dom/utils/symbols'
 import {string as editorString} from '../../editor/string'
-import type {Element} from '../../interfaces/element'
-import type {Text} from '../../interfaces/text'
 import {parentPath} from '../../path/parent-path'
 import {useIsomorphicLayoutEffect} from '../hooks/use-isomorphic-layout-effect'
 import {useSlateStatic} from '../hooks/use-slate-static'
@@ -15,9 +19,9 @@ import {ReactEditor} from '../plugin/react-editor'
 
 const SlateString = (props: {
   isLast: boolean
-  leaf: Text
-  parent: Element
-  text: Text
+  leaf: PortableTextSpan
+  parent: PortableTextTextBlock | PortableTextObject
+  text: PortableTextSpan
 }) => {
   const {isLast, leaf, parent, text} = props
   const editor = useSlateStatic()
@@ -30,6 +34,7 @@ const SlateString = (props: {
   // to support expected plain text.
   if (
     leaf.text === '' &&
+    isTextBlock({schema: editor.schema}, parent) &&
     parent.children[parent.children.length - 1] === text &&
     !editor.isInline(parent) &&
     editorString(editor, parentPath_) === ''

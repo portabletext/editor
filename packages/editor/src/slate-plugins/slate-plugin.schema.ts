@@ -1,18 +1,13 @@
-import {
-  isSpan,
-  isTextBlock,
-  type PortableTextListBlock,
-  type PortableTextSpan,
-  type PortableTextTextBlock,
+import type {
+  PortableTextObject,
+  PortableTextSpan,
+  PortableTextTextBlock,
 } from '@portabletext/schema'
 import type {EditorActor} from '../editor/editor-machine'
 import {applySetNode} from '../internal-utils/apply-set-node'
 import {debug} from '../internal-utils/debug'
 import {isEditor} from '../slate/editor/is-editor'
-import type {Element} from '../slate/interfaces/element'
-import {isObject} from '../slate/utils/is-object'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
-import {isListBlock} from '../utils/parse-blocks'
 import {withNormalizeNode} from './slate-plugin.normalize-node'
 
 /**
@@ -23,40 +18,10 @@ export function createSchemaPlugin({editorActor}: {editorActor: EditorActor}) {
   return function schemaPlugin(
     editor: PortableTextSlateEditor,
   ): PortableTextSlateEditor {
-    editor.isTextBlock = (value: unknown): value is PortableTextTextBlock => {
-      if (isEditor(value)) {
-        return false
-      }
-
-      return isTextBlock(editorActor.getSnapshot().context, value)
-    }
-    editor.isTextSpan = (value: unknown): value is PortableTextSpan => {
-      if (isEditor(value)) {
-        return false
-      }
-
-      return isSpan(editorActor.getSnapshot().context, value)
-    }
-    editor.isListBlock = (value: unknown): value is PortableTextListBlock => {
-      if (isEditor(value)) {
-        return false
-      }
-
-      return isListBlock(editorActor.getSnapshot().context, value)
-    }
     editor.schema = editorActor.getSnapshot().context.schema
-    editor.isObjectNode = (value: unknown): boolean => {
-      if (!isObject(value) || isEditor(value)) {
-        return false
-      }
-      const obj = value as Record<string, unknown>
-      return (
-        typeof obj['_type'] === 'string' &&
-        obj['_type'] !== editor.schema.block.name &&
-        obj['_type'] !== editor.schema.span.name
-      )
-    }
-    editor.isInline = (element: Element): boolean => {
+    editor.isInline = (
+      element: PortableTextTextBlock | PortableTextObject,
+    ): boolean => {
       if (isEditor(element)) {
         return false
       }
@@ -90,6 +55,11 @@ export function createSchemaPlugin({editorActor}: {editorActor: EditorActor}) {
     const {normalizeNode} = editor
     editor.normalizeNode = (entry) => {
       const [node, path] = entry
+
+      if (isEditor(node)) {
+        normalizeNode(entry)
+        return
+      }
 
       // If text block children node is missing _type, set it to the span type
       if (node._type === undefined && path.length === 2) {

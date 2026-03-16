@@ -1,6 +1,5 @@
+import {isSpan, isTextBlock} from '@portabletext/schema'
 import {withoutNormalizing} from '../slate/editor/without-normalizing'
-import {isElement} from '../slate/element/is-element'
-import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
 import type {Point} from '../slate/interfaces/point'
 import type {Range} from '../slate/interfaces/range'
@@ -10,7 +9,6 @@ import {pathEndsBefore} from '../slate/path/path-ends-before'
 import {pathEquals} from '../slate/path/path-equals'
 import {previousPath} from '../slate/path/previous-path'
 import {isRange} from '../slate/range/is-range'
-import {isText} from '../slate/text/is-text'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 
 /**
@@ -145,7 +143,7 @@ export function applyMergeNode(
 
   try {
     withoutNormalizing(editor, () => {
-      if (isText(node, editor.schema)) {
+      if (isSpan({schema: editor.schema}, node)) {
         // Merge text: insert the text into the previous sibling at the position
         if (node.text.length > 0) {
           editor.apply({
@@ -156,19 +154,18 @@ export function applyMergeNode(
           })
         }
         // Remove the now-redundant text node
-        editor.apply({type: 'remove_node', path, node: node as Node})
-      } else if (isElement(node, editor.schema)) {
+        editor.apply({type: 'remove_node', path, node: node})
+      } else if (isTextBlock({schema: editor.schema}, node)) {
         // Merge element: move all children into the previous sibling
-        const children = node.children
-        for (let i = 0; i < children.length; i++) {
+        for (let i = 0; i < node.children.length; i++) {
           editor.apply({
             type: 'insert_node',
             path: [...prevPath, position + i],
-            node: children[i]!,
+            node: node.children[i]!,
           })
         }
         // Remove the now-empty element
-        editor.apply({type: 'remove_node', path, node: node as Node})
+        editor.apply({type: 'remove_node', path, node: node})
       }
     })
   } finally {

@@ -1,4 +1,4 @@
-import type {PortableTextBlock} from '@portabletext/schema'
+import {isSpan, isTextBlock} from '@portabletext/schema'
 import {applySelect} from '../internal-utils/apply-selection'
 import {applySetNode} from '../internal-utils/apply-set-node'
 import {applySplitNode} from '../internal-utils/apply-split-node'
@@ -18,7 +18,6 @@ import {isCollapsedRange} from '../slate/range/is-collapsed-range'
 import {isRange} from '../slate/range/is-range'
 import {rangeEdges} from '../slate/range/range-edges'
 import {rangeIncludes} from '../slate/range/range-includes'
-import {isText} from '../slate/text/is-text'
 import {parseAnnotation} from '../utils/parse-blocks'
 import type {OperationImplementation} from './operation.types'
 
@@ -47,7 +46,7 @@ export const addAnnotationOperationImplementation: OperationImplementation<
     ? toSlateRange({
         context: {
           schema: context.schema,
-          value: operation.editor.children as Array<PortableTextBlock>,
+          value: operation.editor.children,
           selection: operation.at,
         },
         blockIndexMap: operation.editor.blockIndexMap,
@@ -65,7 +64,7 @@ export const addAnnotationOperationImplementation: OperationImplementation<
 
   const selectedBlocks = nodes(editor, {
     at: effectiveSelection,
-    match: (node) => editor.isTextBlock(node),
+    match: (node) => isTextBlock({schema: editor.schema}, node),
     reverse: isBackwardRange(effectiveSelection),
   })
 
@@ -112,7 +111,7 @@ export const addAnnotationOperationImplementation: OperationImplementation<
       if (
         !(
           isCollapsedRange(splitRange) &&
-          isText(splitLeaf, editor.schema) &&
+          isSpan({schema: editor.schema}, splitLeaf) &&
           splitLeaf.text.length > 0
         )
       ) {
@@ -154,7 +153,7 @@ export const addAnnotationOperationImplementation: OperationImplementation<
     const selectionRange = ref?.current ?? editor.selection
 
     for (const [span, path] of children) {
-      if (!editor.isTextSpan(span)) {
+      if (!isSpan({schema: editor.schema}, span)) {
         continue
       }
 

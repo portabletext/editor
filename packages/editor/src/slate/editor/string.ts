@@ -1,8 +1,8 @@
+import {isSpan} from '@portabletext/schema'
 import type {Editor} from '../interfaces/editor'
 import type {Location} from '../interfaces/location'
 import {pathEquals} from '../path/path-equals'
 import {rangeEdges} from '../range/range-edges'
-import {isText} from '../text/is-text'
 import {nodes} from './nodes'
 import {range} from './range'
 
@@ -18,7 +18,7 @@ export function string(
 
   for (const [node, path] of nodes(editor, {
     at: editorRange,
-    match: (n) => isText(n, editor.schema),
+    match: (n) => isSpan({schema: editor.schema}, n),
     voids,
   })) {
     let t = node.text

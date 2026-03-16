@@ -1,13 +1,11 @@
-import {isElement} from '../element/is-element'
+import {isSpan, isTextBlock} from '@portabletext/schema'
 import type {Editor} from '../interfaces/editor'
 import type {Range} from '../interfaces/range'
 import {isBeforePath} from '../path/is-before-path'
 import {pathHasPrevious} from '../path/path-has-previous'
 import {isCollapsedRange} from '../range/is-collapsed-range'
 import {rangeEdges} from '../range/range-edges'
-import {isText} from '../text/is-text'
 import {above} from './above'
-import {isBlock} from './is-block'
 import {nodes} from './nodes'
 import {start as editorStart} from './start'
 
@@ -31,7 +29,7 @@ export function unhangRange(
 
   const endBlock = above(editor, {
     at: end,
-    match: (n) => isElement(n, editor.schema) && isBlock(editor, n),
+    match: (n) => isTextBlock({schema: editor.schema}, n),
     voids,
   })
   const blockPath = endBlock ? endBlock[1] : []
@@ -41,7 +39,7 @@ export function unhangRange(
 
   for (const [node, path] of nodes(editor, {
     at: before,
-    match: (n) => isText(n, editor.schema),
+    match: (n) => isSpan({schema: editor.schema}, n),
     reverse: true,
     voids,
   })) {

@@ -1,22 +1,25 @@
+import {isTextBlock} from '@portabletext/schema'
 import type {EditorSchema} from '../../editor/editor-schema'
-import type {
-  Descendant,
-  Node,
-  NodeChildrenOptions,
-  NodeEntry,
-} from '../interfaces/node'
+import type {Editor} from '../interfaces/editor'
+import type {Node, NodeEntry} from '../interfaces/node'
+import type {Path} from '../interfaces/path'
 import {getAncestor} from './get-ancestor'
 import {getChild} from './get-child'
 
 export function* getChildren(
-  root: Node,
+  root: Editor | Node,
   path: Path,
   schema: EditorSchema,
-  options: NodeChildrenOptions = {},
-): Generator<NodeEntry<Descendant>, void, undefined> {
+  options: {reverse?: boolean} = {},
+): Generator<NodeEntry<Node>, void, undefined> {
   const {reverse = false} = options
-  const ancestor = getAncestor(root, path, schema)
-  const {children} = ancestor
+  const ancestor = path.length === 0 ? root : getAncestor(root, path, schema)
+
+  if (!isTextBlock({schema}, ancestor)) {
+    return
+  }
+
+  const children = ancestor.children
   let index = reverse ? children.length - 1 : 0
 
   while (reverse ? index >= 0 : index < children.length) {
@@ -26,5 +29,3 @@ export function* getChildren(
     index = reverse ? index - 1 : index + 1
   }
 }
-
-type Path = number[]

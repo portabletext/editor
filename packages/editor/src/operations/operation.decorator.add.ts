@@ -1,4 +1,4 @@
-import type {PortableTextBlock} from '@portabletext/schema'
+import {isSpan, isTextBlock} from '@portabletext/schema'
 import {applySelect} from '../internal-utils/apply-selection'
 import {applySetNode} from '../internal-utils/apply-set-node'
 import {applySplitNode} from '../internal-utils/apply-split-node'
@@ -12,7 +12,6 @@ import {rangeRef} from '../slate/editor/range-ref'
 import {extractProps} from '../slate/node/extract-props'
 import {isExpandedRange} from '../slate/range/is-expanded-range'
 import {rangeEdges} from '../slate/range/range-edges'
-import {isText} from '../slate/text/is-text'
 import type {OperationImplementation} from './operation.types'
 
 export const decoratorAddOperationImplementation: OperationImplementation<
@@ -25,7 +24,7 @@ export const decoratorAddOperationImplementation: OperationImplementation<
     ? toSlateRange({
         context: {
           schema: context.schema,
-          value: operation.editor.children as Array<PortableTextBlock>,
+          value: operation.editor.children,
           selection: operation.at,
         },
         blockIndexMap: operation.editor.blockIndexMap,
@@ -78,7 +77,7 @@ export const decoratorAddOperationImplementation: OperationImplementation<
     // Use new selection to find nodes to decorate
     const splitTextNodes = nodes(editor, {
       at,
-      match: (n) => isText(n, editor.schema),
+      match: (n) => isSpan({schema: editor.schema}, n),
     })
 
     for (const [node, path] of splitTextNodes) {
@@ -94,7 +93,7 @@ export const decoratorAddOperationImplementation: OperationImplementation<
     const selectedSpan = Array.from(
       nodes(editor, {
         at,
-        match: (node) => editor.isTextSpan(node),
+        match: (node) => isSpan({schema: editor.schema}, node),
       }),
     )?.at(0)
 
@@ -106,9 +105,9 @@ export const decoratorAddOperationImplementation: OperationImplementation<
       depth: 1,
     })
     const lonelyEmptySpan =
-      editor.isTextBlock(block) &&
+      isTextBlock({schema: editor.schema}, block) &&
       block.children.length === 1 &&
-      editor.isTextSpan(block.children[0]) &&
+      isSpan({schema: editor.schema}, block.children[0]) &&
       block.children[0].text === ''
         ? block.children[0]
         : undefined
@@ -125,7 +124,7 @@ export const decoratorAddOperationImplementation: OperationImplementation<
           : existingMarksWithoutDecorator
       for (const [, spanPath] of nodes(editor, {
         at: blockPath,
-        match: (node) => editor.isTextSpan(node),
+        match: (node) => isSpan({schema: editor.schema}, node),
       })) {
         applySetNode(editor, {marks: newMarks}, spanPath)
       }

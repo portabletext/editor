@@ -2,16 +2,15 @@ import type {
   PortableTextBlock,
   PortableTextTextBlock,
 } from '@portabletext/schema'
+import {isSpan, isTextBlock} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
-import {isElement} from '../slate/element/is-element'
-import type {Descendant} from '../slate/interfaces/node'
-import {isText} from '../slate/text/is-text'
+import type {Node} from '../slate/interfaces/node'
 import {isEqualValues} from './equality'
 
 export function toSlateBlock(
   block: PortableTextBlock,
   {schemaTypes}: {schemaTypes: EditorSchema},
-): Descendant {
+): Node {
   const {_type, _key, ...rest} = block
   const isPortableText = block && block._type === schemaTypes.block.name
 
@@ -54,13 +53,13 @@ export function toSlateBlock(
       !hasMissingMarkDefs &&
       !hasMissingChildren &&
       !hasInlines &&
-      isElement(block, schemaTypes)
+      isTextBlock({schema: schemaTypes}, block)
     ) {
       // Original object
       return block
     }
 
-    return {_type, _key, ...rest, children} as Descendant
+    return {_type, _key, ...rest, children}
   }
 
   const {children: _originalChildren, ...blockObjectProps} = rest
@@ -69,12 +68,12 @@ export function toSlateBlock(
     _type,
     _key,
     ...blockObjectProps,
-  } as Descendant
+  }
 }
 
 export function isEqualToEmptyEditor(
   initialValue: Array<PortableTextBlock> | undefined,
-  blocks: Array<Descendant> | Array<PortableTextBlock>,
+  blocks: Array<Node> | Array<PortableTextBlock>,
   schemaTypes: EditorSchema,
 ): boolean {
   if (!blocks) {
@@ -92,7 +91,7 @@ export function isEqualToEmptyEditor(
     return true
   }
 
-  if (!isElement(firstBlock, schemaTypes)) {
+  if (!isTextBlock({schema: schemaTypes}, firstBlock)) {
     return false
   }
 
@@ -130,7 +129,7 @@ export function isEqualToEmptyEditor(
     return false
   }
 
-  if (!isText(firstChild, schemaTypes)) {
+  if (!isSpan({schema: schemaTypes}, firstChild)) {
     return false
   }
 

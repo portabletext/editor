@@ -13,8 +13,7 @@ import {
   type PortableTextSpan,
 } from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
-import {isElement} from '../slate/element/is-element'
-import type {Descendant} from '../slate/interfaces/node'
+import type {Node} from '../slate/interfaces/node'
 import type {
   InsertNodeOperation,
   InsertTextOperation,
@@ -22,13 +21,12 @@ import type {
   RemoveTextOperation,
   SetNodeOperation,
 } from '../slate/interfaces/operation'
-import {isText} from '../slate/text/is-text'
 import type {Path} from '../types/paths'
 import {safeStringify} from './safe-json'
 
 export function insertTextPatch(
   schema: EditorSchema,
-  children: Descendant[],
+  children: Node[],
   operation: InsertTextOperation,
   beforeValue: Array<PortableTextBlock>,
 ): Array<Patch> {
@@ -61,7 +59,7 @@ export function insertTextPatch(
 
 export function removeTextPatch(
   schema: EditorSchema,
-  children: Descendant[],
+  children: Node[],
   operation: RemoveTextOperation,
   beforeValue: Array<PortableTextBlock>,
 ): Array<Patch> {
@@ -96,7 +94,7 @@ export function removeTextPatch(
 
 export function setNodePatch(
   schema: EditorSchema,
-  children: Descendant[],
+  children: Node[],
   operation: SetNodeOperation,
 ): Array<Patch> {
   const blockIndex = operation.path.at(0)
@@ -169,7 +167,7 @@ export function setNodePatch(
         const childKey = child._key
         const patches: Patch[] = []
 
-        if (isElement(child, schema)) {
+        if (isTextBlock({schema}, child)) {
           const _key = operation.newProperties._key
 
           if (_key !== undefined) {
@@ -255,7 +253,7 @@ export function setNodePatch(
 
 export function insertNodePatch(
   schema: EditorSchema,
-  children: Descendant[],
+  children: Node[],
   operation: InsertNodeOperation,
   beforeValue: Array<PortableTextBlock>,
 ): Array<Patch> {
@@ -298,7 +296,7 @@ export function insertNodePatch(
     // Defensive setIfMissing to ensure children array exists before inserting
     const setIfMissingPatch = setIfMissing([], [{_key: block._key}, 'children'])
 
-    if (isText(operation.node, schema)) {
+    if (isSpan({schema}, operation.node)) {
       return [setIfMissingPatch, insert([operation.node], position, path)]
     }
 

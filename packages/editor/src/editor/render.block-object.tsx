@@ -1,7 +1,6 @@
 import type {PortableTextObject} from '@portabletext/schema'
 import {useContext, useRef, type ReactElement} from 'react'
 import type {DropPosition} from '../behaviors/behavior.core.drop-position'
-import type {Element as SlateElement} from '../slate/interfaces/element'
 import type {RenderElementProps} from '../slate/react/components/editable'
 import type {BlockRenderProps, RenderBlockFunction} from '../types/editor'
 import type {EditorSchema} from './editor-schema'
@@ -14,7 +13,7 @@ export function RenderBlockObject(props: {
   blockObject: PortableTextObject | undefined
   dropPosition?: DropPosition['positionBlock']
   children: ReactElement
-  element: SlateElement
+  element: PortableTextObject
   readOnly: boolean
   renderBlock?: RenderBlockFunction
   schema: EditorSchema

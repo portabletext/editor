@@ -1,8 +1,7 @@
-import type {PortableTextChild} from '@portabletext/schema'
+import type {PortableTextChild, PortableTextObject} from '@portabletext/schema'
 import {useContext, useRef, type ReactElement} from 'react'
 import {getPointBlock} from '../internal-utils/slate-utils'
 import {DOMEditor} from '../slate/dom/plugin/dom-editor'
-import type {Element as SlateElement} from '../slate/interfaces/element'
 import type {RenderElementProps} from '../slate/react/components/editable'
 import {useSlateStatic} from '../slate/react/hooks/use-slate-static'
 import type {BlockChildRenderProps, RenderChildFunction} from '../types/editor'
@@ -14,7 +13,7 @@ import {SelectionStateContext} from './selection-state-context'
 export function RenderInlineObject(props: {
   attributes: RenderElementProps['attributes']
   children: ReactElement
-  element: SlateElement
+  element: PortableTextObject
   readOnly: boolean
   renderChild?: RenderChildFunction
   schema: EditorSchema

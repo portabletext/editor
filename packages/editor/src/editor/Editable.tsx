@@ -1,4 +1,4 @@
-import type {PortableTextBlock} from '@portabletext/schema'
+import type {PortableTextSpan} from '@portabletext/schema'
 import {useActorRef, useSelector} from '@xstate/react'
 import {
   forwardRef,
@@ -19,7 +19,6 @@ import {normalizeSelection} from '../internal-utils/selection'
 import {slateRangeToSelection} from '../internal-utils/slate-utils'
 import {toSlateRange} from '../internal-utils/to-slate-range'
 import {start} from '../slate/editor/start'
-import type {Text} from '../slate/interfaces/text'
 import {
   Editable as SlateEditable,
   type RenderElementProps,
@@ -206,7 +205,10 @@ export const PortableTextEditable = forwardRef<
   const renderLeaf = useCallback(
     (
       leafProps: RenderLeafProps & {
-        leaf: Text & {placeholder?: boolean; rangeDecoration?: RangeDecoration}
+        leaf: PortableTextSpan & {
+          placeholder?: boolean
+          rangeDecoration?: RangeDecoration
+        }
       },
     ) => (
       <RenderLeaf
@@ -237,7 +239,7 @@ export const PortableTextEditable = forwardRef<
       debug.selection(`Selection from props ${safeStringify(propsSelection)}`)
       const normalizedSelection = normalizeSelection(
         propsSelection,
-        slateEditor.children as Array<PortableTextBlock>,
+        slateEditor.children,
       )
       if (normalizedSelection !== null) {
         debug.selection(
@@ -246,7 +248,7 @@ export const PortableTextEditable = forwardRef<
         const slateRange = toSlateRange({
           context: {
             schema: editorActor.getSnapshot().context.schema,
-            value: slateEditor.children as Array<PortableTextBlock>,
+            value: slateEditor.children,
             selection: normalizedSelection,
           },
           blockIndexMap: slateEditor.blockIndexMap,
@@ -393,7 +395,7 @@ export const PortableTextEditable = forwardRef<
   // Handle incoming pasting events in the editor
   const handlePaste = useCallback(
     (event: ClipboardEvent<HTMLDivElement>): Promise<void> | void => {
-      const value = slateEditor.children as Array<PortableTextBlock>
+      const value = slateEditor.children
       const ptRange = slateEditor.selection
         ? slateRangeToSelection({
             schema: editorActor.getSnapshot().context.schema,
@@ -530,7 +532,7 @@ export const PortableTextEditable = forwardRef<
           slateEditor.children.length === 1 &&
           isEmptyTextBlock(
             editorActor.getSnapshot().context,
-            (slateEditor.children as Array<PortableTextBlock>).at(0),
+            slateEditor.children.at(0),
           )
         ) {
           slateEditor.select(start(slateEditor, []))

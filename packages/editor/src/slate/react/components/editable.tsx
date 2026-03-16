@@ -1,3 +1,9 @@
+import type {
+  PortableTextObject,
+  PortableTextSpan,
+  PortableTextTextBlock,
+} from '@portabletext/schema'
+import {isSpan, isTextBlock} from '@portabletext/schema'
 import React, {
   forwardRef,
   useCallback,
@@ -46,27 +52,24 @@ import {
 } from '../../dom/utils/symbols'
 import {above} from '../../editor/above'
 import {end as editorEnd} from '../../editor/end'
-import {getVoid} from '../../editor/get-void'
-import {hasPath} from '../../editor/has-path'
-import {isBlock} from '../../editor/is-block'
+import {getObjectNode} from '../../editor/get-object-node'
 import {range as editorRange} from '../../editor/range'
 import {rangeRef} from '../../editor/range-ref'
 import {start as editorStart} from '../../editor/start'
-import {isElement} from '../../element/is-element'
 import type {Editor} from '../../interfaces/editor'
-import type {Element} from '../../interfaces/element'
 import type {NodeEntry} from '../../interfaces/node'
-import type {DecoratedRange, LeafPosition, Text} from '../../interfaces/text'
+import type {DecoratedRange, LeafPosition} from '../../interfaces/text'
 import {getLeaf} from '../../node/get-leaf'
 import {getNode} from '../../node/get-node'
+import {getNodeIf} from '../../node/get-node-if'
 import {getString} from '../../node/get-string'
 import {getTexts} from '../../node/get-texts'
+import {isObjectNode} from '../../node/is-object-node'
 import {pathEquals} from '../../path/path-equals'
 import {isBackwardRange} from '../../range/is-backward-range'
 import {isCollapsedRange} from '../../range/is-collapsed-range'
 import {isExpandedRange} from '../../range/is-expanded-range'
 import {rangeEquals} from '../../range/range-equals'
-import {isText} from '../../text/is-text'
 import {textEquals} from '../../text/text-equals'
 import type {AndroidInputManager} from '../hooks/android-input-manager/android-input-manager'
 import {useAndroidInputManager} from '../hooks/android-input-manager/use-android-input-manager'
@@ -95,7 +98,7 @@ const Children = (props: Parameters<typeof useChildren>[0]) => (
 
 export interface RenderElementProps {
   children: any
-  element: Element
+  element: PortableTextTextBlock | PortableTextObject
   attributes: {
     'data-slate-node': 'element'
     'data-slate-inline'?: true
@@ -116,8 +119,8 @@ export interface RenderLeafProps {
    * The leaf node with any applied decorations.
    * If no decorations are applied, it will be identical to the `text` property.
    */
-  leaf: Text
-  text: Text
+  leaf: PortableTextSpan
+  text: PortableTextSpan
   attributes: {
     'data-slate-leaf': true
   }
@@ -131,7 +134,7 @@ export interface RenderLeafProps {
  * `RenderTextProps` are passed to the `renderText` handler.
  */
 export interface RenderTextProps {
-  text: Text
+  text: PortableTextSpan
   children: any
   attributes: {
     'data-slate-node': 'text'
@@ -663,8 +666,7 @@ export const Editable = forwardRef(
               ) {
                 const block = above(editor, {
                   at: anchor.path,
-                  match: (n) =>
-                    isElement(n, editor.schema) && isBlock(editor, n),
+                  match: (n) => isTextBlock({schema: editor.schema}, n),
                 })
 
                 if (
@@ -996,7 +998,7 @@ export const Editable = forwardRef(
       }
     }, [scheduleOnDOMSelectionChange])
 
-    const decorations = decorate([editor, []])
+    const decorations = decorate([editor as any, []])
     const decorateContext = useDecorateContext(decorate)
 
     const showPlaceholder =
@@ -1035,10 +1037,10 @@ export const Editable = forwardRef(
       const {anchor} = editor.selection
       const leaf = getLeaf(editor, anchor.path, editor.schema)
 
-      if (isText(leaf, editor.schema)) {
+      if (isSpan({schema: editor.schema}, leaf)) {
         const {text: _text, ...rest} = leaf
 
-        if (!textEquals(leaf, marks as Text, {loose: true})) {
+        if (!textEquals(leaf, marks, {loose: true})) {
           state.hasMarkPlaceholder = true
 
           const unset = Object.fromEntries(
@@ -1066,11 +1068,11 @@ export const Editable = forwardRef(
           const {anchor} = selection
           const text = getLeaf(editor, anchor.path, editor.schema)
 
-          if (!isText(text, editor.schema)) {
+          if (!isSpan({schema: editor.schema}, text)) {
             return
           }
 
-          if (marks && !textEquals(text, marks as Text, {loose: true})) {
+          if (marks && !textEquals(text, marks, {loose: true})) {
             editor.pendingInsertionMarks = marks
             return
           }
@@ -1251,8 +1253,8 @@ export const Editable = forwardRef(
                       )
 
                       if (
-                        isElement(node, editor.schema) ||
-                        editor.isObjectNode(node)
+                        isTextBlock({schema: editor.schema}, node) ||
+                        isObjectNode({schema: editor.schema}, node)
                       ) {
                         return
                       }
@@ -1290,10 +1292,7 @@ export const Editable = forwardRef(
                       // because onClick handlers can change the document before we get here.
                       // Therefore we must check that this path actually exists,
                       // and that it still refers to the same node.
-                      if (
-                        !hasPath(editor, path) ||
-                        getNode(editor, path, editor.schema) !== node
-                      ) {
+                      if (getNodeIf(editor, path, editor.schema) !== node) {
                         return
                       }
 
@@ -1301,13 +1300,13 @@ export const Editable = forwardRef(
                         let blockPath = path
                         if (
                           !(
-                            isElement(node, editor.schema) &&
-                            isBlock(editor, node)
+                            isTextBlock({schema: editor.schema}, node) &&
+                            !editor.isInline(node)
                           )
                         ) {
                           const block = above(editor, {
                             match: (n) =>
-                              isElement(n, editor.schema) && isBlock(editor, n),
+                              isTextBlock({schema: editor.schema}, n),
                             at: path,
                           })
 
@@ -1325,13 +1324,13 @@ export const Editable = forwardRef(
 
                       const start = editorStart(editor, path)
                       const end = editorEnd(editor, path)
-                      const startVoid = getVoid(editor, {at: start})
-                      const endVoid = getVoid(editor, {at: end})
+                      const startObjectNode = getObjectNode(editor, {at: start})
+                      const endObjectNode = getObjectNode(editor, {at: end})
 
                       if (
-                        startVoid &&
-                        endVoid &&
-                        pathEquals(startVoid[1], endVoid[1])
+                        startObjectNode &&
+                        endObjectNode &&
+                        pathEquals(startObjectNode[1], endObjectNode[1])
                       ) {
                         const range = editorRange(editor, start)
                         editor.select(range)
@@ -1382,7 +1381,7 @@ export const Editable = forwardRef(
                         // Ensure we insert text with the marks the user was actually seeing
                         if (placeholderMarks !== undefined) {
                           editor.userMarks = editor.marks
-                          editor.marks = placeholderMarks as typeof editor.marks
+                          editor.marks = placeholderMarks
                         }
 
                         editorActor.send({
@@ -1397,7 +1396,7 @@ export const Editable = forwardRef(
                         const userMarks = editor.userMarks
                         editor.userMarks = null
                         if (userMarks !== undefined) {
-                          editor.marks = userMarks as typeof editor.marks
+                          editor.marks = userMarks
                         }
                       }
                     }
@@ -1818,7 +1817,9 @@ export const Editable = forwardRef(
                               editor.schema,
                             )
 
-                            if (editor.isObjectNode(currentNode)) {
+                            if (
+                              isObjectNode({schema: editor.schema}, currentNode)
+                            ) {
                               event.preventDefault()
                               editorActor.send({
                                 type: 'behavior event',
