@@ -3,8 +3,8 @@ import type {EditorSchema} from '../../editor/editor-schema'
 import type {Editor} from '../interfaces/editor'
 import type {Node, NodeEntry} from '../interfaces/node'
 import type {Path} from '../interfaces/path'
-import {getAncestor} from './get-ancestor'
 import {getChild} from './get-child'
+import {getNode} from './get-node'
 
 export function* getChildren(
   root: Editor | Node,
@@ -13,7 +13,7 @@ export function* getChildren(
   options: {reverse?: boolean} = {},
 ): Generator<NodeEntry<Node>, void, undefined> {
   const {reverse = false} = options
-  const ancestor = path.length === 0 ? root : getAncestor(root, path, schema)
+  const ancestor = path.length === 0 ? root : getNode(root, path, schema)
 
   if (!isTextBlock({schema}, ancestor)) {
     return

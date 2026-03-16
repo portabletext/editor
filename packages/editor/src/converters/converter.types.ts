@@ -15,7 +15,7 @@ export function defineConverter<TMIMEType extends MIMEType>(
   return converter
 }
 
-export type ConverterEvent<TMIMEType extends MIMEType = MIMEType> =
+type ConverterEvent<TMIMEType extends MIMEType = MIMEType> =
   | {
       type: 'serialize'
       originEvent: 'clipboard.copy' | 'clipboard.cut' | 'drag.dragstart'

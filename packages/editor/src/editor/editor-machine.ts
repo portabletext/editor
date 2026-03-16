@@ -65,7 +65,7 @@ export type EditorActor = ActorRefFrom<typeof editorMachine>
 /**
  * @internal
  */
-export type InternalEditorEvent =
+type InternalEditorEvent =
   | ExternalEditorEvent
   | {
       type: 'add behavior'
@@ -117,7 +117,7 @@ export type InternalEditorEvent =
 /**
  * @internal
  */
-export type InternalEditorEmittedEvent =
+type InternalEditorEmittedEvent =
   | OmitFromUnion<EditorEmittedEvent, 'type', 'patch'>
   | InternalPatchEvent
   | PatchesEvent

@@ -1,14 +1,10 @@
 import {isSpan, isTextBlock} from '@portabletext/schema'
 import type {Editor} from '../interfaces/editor'
 import type {Location} from '../interfaces/location'
-import type {Path} from '../interfaces/path'
 import type {Point} from '../interfaces/point'
 import {isObjectNode} from '../node/is-object-node'
 import {isAncestorPath} from '../path/is-ancestor-path'
-import {nextPath} from '../path/next-path'
 import {pathEquals} from '../path/path-equals'
-import {pathHasPrevious} from '../path/path-has-previous'
-import {previousPath} from '../path/previous-path'
 import {rangeEdges} from '../range/range-edges'
 import type {TextUnitAdjustment} from '../types/types'
 import {
@@ -18,7 +14,6 @@ import {
 } from '../utils/string'
 import {end as editorEnd} from './end'
 import {hasInlines} from './has-inlines'
-import {hasPath} from './has-path'
 import {isEditor} from './is-editor'
 import {nodes} from './nodes'
 import {range} from './range'
@@ -71,7 +66,6 @@ export function* positions(
   let distance = 0 // Distance for leafText to catch up to blockText.
   let leafTextRemaining = 0
   let leafTextOffset = 0
-  const skippedPaths: Path[] = []
 
   // Iterate through all nodes in range, grabbing entire textual content
   // of block nodes in blockText, and text nodes in leafText.
@@ -84,46 +78,15 @@ export function* positions(
     reverse,
     includeObjectNodes,
   })) {
-    // If the node is inside a skipped ancestor, do not return any points, but
-    // still process its content so that the iteration state remains correct.
-    const hasSkippedAncestor = skippedPaths.some((p) =>
-      isAncestorPath(p, nodePath),
-    )
-
-    function* maybeYield(point: Point) {
-      if (!hasSkippedAncestor) {
-        yield point
-      }
-    }
-
     /*
      * ELEMENT NODE - Yield position(s) for object nodes, collect blockText for blocks
      */
     if (isTextBlock({schema: editor.schema}, node)) {
-      if (!editor.isSelectable(node)) {
-        /**
-         * If the node is not selectable, skip it and its descendants
-         */
-        skippedPaths.push(nodePath)
-        if (reverse) {
-          if (pathHasPrevious(nodePath)) {
-            yield* maybeYield(editorEnd(editor, previousPath(nodePath)))
-          }
-          continue
-        } else {
-          const next = nextPath(nodePath)
-          if (hasPath(editor, next)) {
-            yield* maybeYield(editorStart(editor, next))
-          }
-          continue
-        }
-      }
-
       // Object nodes are a special case, so by default we will always
       // yield their first point. If the `includeObjectNodes` option is set to true,
       // then we will iterate over their content.
       if (!includeObjectNodes && editor.isElementReadOnly(node)) {
-        yield* maybeYield(editorStart(editor, nodePath))
+        yield editorStart(editor, nodePath)
         continue
       }
 
@@ -160,7 +123,7 @@ export function* positions(
     }
 
     if (isObjectNode({schema: editor.schema}, node)) {
-      yield* maybeYield({path: nodePath, offset: 0})
+      yield {path: nodePath, offset: 0}
       continue
     }
 
@@ -169,7 +132,7 @@ export function* positions(
       !isTextBlock({schema: editor.schema}, node) &&
       !isSpan({schema: editor.schema}, node)
     ) {
-      yield* maybeYield({path: nodePath, offset: 0})
+      yield {path: nodePath, offset: 0}
       continue
     }
 
@@ -198,7 +161,7 @@ export function* positions(
 
       // Yield position at the start of node (potentially).
       if (isFirst || isNewBlock || unit === 'offset') {
-        yield* maybeYield({path: nodePath, offset: leafTextOffset})
+        yield {path: nodePath, offset: leafTextOffset}
         isNewBlock = false
       }
 
@@ -235,7 +198,7 @@ export function* positions(
         // to catch up with `blockText`, so we can reset `distance`
         // and yield this position in this node.
         distance = 0
-        yield* maybeYield({path: nodePath, offset: leafTextOffset})
+        yield {path: nodePath, offset: leafTextOffset}
       }
     }
   }

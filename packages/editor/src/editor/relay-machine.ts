@@ -64,7 +64,7 @@ type ErrorEvent = {
   data: unknown
 }
 
-export type InternalEditorEmittedEvent = EditorEmittedEvent | UnsetEvent
+type InternalEditorEmittedEvent = EditorEmittedEvent | UnsetEvent
 
 /**
  * @public
@@ -80,7 +80,7 @@ export type PatchEvent = {
   patch: Patch
 }
 
-export type UnsetEvent = {
+type UnsetEvent = {
   /**
    * @deprecated Use `'patch'` events instead
    */

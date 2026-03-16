@@ -44,7 +44,6 @@ export interface BaseEditor {
     element: PortableTextTextBlock | PortableTextObject,
   ) => boolean
   isInline: (element: PortableTextTextBlock | PortableTextObject) => boolean
-  isSelectable: (element: PortableTextTextBlock | PortableTextObject) => boolean
   normalizeNode: (
     entry: [Editor | Node, Path],
     options?: {

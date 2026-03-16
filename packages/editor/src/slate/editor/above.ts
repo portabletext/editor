@@ -12,10 +12,10 @@ export function above<T extends Node>(
   editor: Editor,
   options: {
     at?: Location
-    match?: NodeMatch<T>
+    match: NodeMatch<T>
     mode?: MaximizeMode
     includeObjectNodes?: boolean
-  } = {},
+  },
 ): NodeEntry<T> | undefined {
   const {
     includeObjectNodes = false,

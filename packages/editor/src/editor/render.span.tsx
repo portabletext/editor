@@ -16,7 +16,7 @@ import {serializePath} from '../utils/util.serialize-path'
 import {EditorActorContext} from './editor-actor-context'
 import {SelectionStateContext} from './selection-state-context'
 
-export interface RenderSpanProps extends RenderLeafProps {
+interface RenderSpanProps extends RenderLeafProps {
   children: ReactElement<any>
   renderAnnotation?: RenderAnnotationFunction
   renderChild?: RenderChildFunction

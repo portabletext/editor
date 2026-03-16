@@ -67,7 +67,7 @@ export const insertBlockOperationImplementation: OperationImplementation<
   })
 }
 
-export function insertBlock(options: {
+function insertBlock(options: {
   context: OperationContext
   block: Node
   placement: 'auto' | 'after' | 'before'
