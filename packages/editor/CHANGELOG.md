@@ -1,5 +1,31 @@
 # Changelog
 
+## 6.4.0
+
+### Minor Changes
+
+- [#2371](https://github.com/portabletext/editor/pull/2371) [`1d7b52e`](https://github.com/portabletext/editor/commit/1d7b52e7c86486545514b33bb9dee54efeeb266c) Thanks [@christianhg](https://github.com/christianhg)! - feat: untangle remaining internal Slate interfaces
+
+### Patch Changes
+
+- [#2376](https://github.com/portabletext/editor/pull/2376) [`e6815f7`](https://github.com/portabletext/editor/commit/e6815f794bbf282ad434b42992181db8c27eaa0c) Thanks [@christianhg](https://github.com/christianhg)! - fix: clean internal barrel over-exports
+
+- [#2379](https://github.com/portabletext/editor/pull/2379) [`71f1d38`](https://github.com/portabletext/editor/commit/71f1d38465a8c5b4e4c79116dbb9c105855e48b6) Thanks [@christianhg](https://github.com/christianhg)! - fix: consolidate internal Slate directories
+
+- [#2384](https://github.com/portabletext/editor/pull/2384) [`a698b0a`](https://github.com/portabletext/editor/commit/a698b0ae35f690ce31d4410d47e16698b1998cf4) Thanks [@christianhg](https://github.com/christianhg)! - fix: register synthetic text node in effect to survive React strict mode
+
+- [#2377](https://github.com/portabletext/editor/pull/2377) [`c512b8b`](https://github.com/portabletext/editor/commit/c512b8bf4bd091afccedd535d93ebad9f383bacf) Thanks [@christianhg](https://github.com/christianhg)! - fix: move test-only utilities out of production code
+
+- [#2374](https://github.com/portabletext/editor/pull/2374) [`61abd09`](https://github.com/portabletext/editor/commit/61abd09b56e76de97bc0617bc824087f4e5457a9) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove internal dead code exports
+
+  Removed internal dead code exports with zero callers: `getBlockPath`, `getParent`, `OmitFirstArg`, `PropsCompare`, `PropsMerge`, `BaseNode`, `OriginalEditorFunctions`, and `@types/direction.d.ts`. None of these were part of the public API.
+
+- [#2375](https://github.com/portabletext/editor/pull/2375) [`014c3b4`](https://github.com/portabletext/editor/commit/014c3b4656efcc75f81c3a27fc9a637cab91f12c) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove unnecessary internal exports
+
+- [#2380](https://github.com/portabletext/editor/pull/2380) [`19eb009`](https://github.com/portabletext/editor/commit/19eb009158853dae411e9f2bcd700381a1b62f9a) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove unused internal Slate code
+
+- [#2378](https://github.com/portabletext/editor/pull/2378) [`9299613`](https://github.com/portabletext/editor/commit/9299613d8876cdd60c31fb0b71c3c84cb2548c6c) Thanks [@christianhg](https://github.com/christianhg)! - fix: simplify internal operation dispatch
+
 ## 6.3.2
 
 ### Patch Changes
