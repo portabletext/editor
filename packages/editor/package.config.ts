@@ -26,10 +26,7 @@ export default defineConfig({
   babel: {reactCompiler: true},
   reactCompilerOptions: {
     target: '19',
-    sources: (filename: string) =>
-      !filename.includes('/src/slate/') &&
-      !filename.includes('/src/slate-dom/') &&
-      !filename.includes('/src/slate-react/'),
+    sources: (filename: string) => !filename.includes('/src/slate/'),
   },
   dts: 'rolldown',
 })
