@@ -54,10 +54,6 @@ export function isTextBlock(
     return false
   }
 
-  if (!Array.isArray(block.children)) {
-    return false
-  }
-
   return true
 }
 
