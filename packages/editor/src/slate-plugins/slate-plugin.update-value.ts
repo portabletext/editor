@@ -1,9 +1,9 @@
 import type {PortableTextBlock} from '@portabletext/schema'
-import type {EditorContext} from '../../editor/editor-snapshot'
-import {buildIndexMaps} from '../../internal-utils/build-index-maps'
-import {debug} from '../../internal-utils/debug'
-import {safeStringify} from '../../internal-utils/safe-json'
-import type {PortableTextSlateEditor} from '../../types/slate-editor'
+import type {EditorContext} from '../editor/editor-snapshot'
+import {buildIndexMaps} from '../internal-utils/build-index-maps'
+import {debug} from '../internal-utils/debug'
+import {safeStringify} from '../internal-utils/safe-json'
+import type {PortableTextSlateEditor} from '../types/slate-editor'
 
 export function updateValuePlugin(
   context: Pick<EditorContext, 'keyGenerator' | 'schema'>,
