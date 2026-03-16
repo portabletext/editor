@@ -57,9 +57,6 @@ const ObjectNodeComponent = (props: {
     [],
   )
 
-  editor.nodeToIndex.set(syntheticText as any, 0)
-  editor.nodeToParent.set(syntheticText as any, objectNode)
-
   const spacerTextRef = useCallback(
     (span: HTMLSpanElement | null) => {
       if (span) {
@@ -77,6 +74,8 @@ const ObjectNodeComponent = (props: {
   )
 
   React.useEffect(() => {
+    editor.nodeToIndex.set(syntheticText as any, 0)
+    editor.nodeToParent.set(syntheticText as any, objectNode)
     return () => {
       editor.nodeToIndex.delete(syntheticText as any)
       editor.nodeToParent.delete(syntheticText as any)
