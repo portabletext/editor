@@ -1,5 +1,5 @@
-import {withoutNormalizing} from '../editor/without-normalizing'
-import type {Editor} from '../interfaces/editor'
+import {withoutNormalizing} from '../slate/editor/without-normalizing'
+import type {Editor} from '../slate/interfaces/editor'
 
 export function withoutNormalizingConditional(
   editor: Editor,

@@ -1,23 +1,23 @@
 import {insert, setIfMissing, unset, type Patch} from '@portabletext/patches'
 import type {PortableTextBlock} from '@portabletext/schema'
-import type {EditorActor} from '../../editor/editor-machine'
-import type {RelayActor} from '../../editor/relay-machine'
-import {createApplyPatch} from '../../internal-utils/applyPatch'
-import {debug} from '../../internal-utils/debug'
+import type {EditorActor} from '../editor/editor-machine'
+import type {RelayActor} from '../editor/relay-machine'
+import {createApplyPatch} from '../internal-utils/applyPatch'
+import {debug} from '../internal-utils/debug'
 import {
   insertNodePatch,
   insertTextPatch,
   removeNodePatch,
   removeTextPatch,
   setNodePatch,
-} from '../../internal-utils/operation-to-patches'
-import {safeStringify} from '../../internal-utils/safe-json'
-import {isEqualToEmptyEditor} from '../../internal-utils/values'
-import type {PortableTextSlateEditor} from '../../types/slate-editor'
-import {normalize} from '../editor/normalize'
-import {withoutNormalizing} from '../editor/without-normalizing'
-import type {Editor} from '../interfaces/editor'
-import type {Operation} from '../interfaces/operation'
+} from '../internal-utils/operation-to-patches'
+import {safeStringify} from '../internal-utils/safe-json'
+import {isEqualToEmptyEditor} from '../internal-utils/values'
+import {normalize} from '../slate/editor/normalize'
+import {withoutNormalizing} from '../slate/editor/without-normalizing'
+import type {Editor} from '../slate/interfaces/editor'
+import type {Operation} from '../slate/interfaces/operation'
+import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {withRemoteChanges} from './slate-plugin.remote-changes'
 import {pluginWithoutHistory} from './slate-plugin.without-history'
 import {withoutPatching} from './slate-plugin.without-patching'

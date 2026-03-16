@@ -5,14 +5,14 @@ import {
   type PortableTextSpan,
   type PortableTextTextBlock,
 } from '@portabletext/schema'
-import type {EditorActor} from '../../editor/editor-machine'
-import {applySetNode} from '../../internal-utils/apply-set-node'
-import {debug} from '../../internal-utils/debug'
-import type {PortableTextSlateEditor} from '../../types/slate-editor'
-import {isListBlock} from '../../utils/parse-blocks'
-import {isEditor} from '../editor/is-editor'
-import type {Element} from '../interfaces/element'
-import {isObject} from '../utils/is-object'
+import type {EditorActor} from '../editor/editor-machine'
+import {applySetNode} from '../internal-utils/apply-set-node'
+import {debug} from '../internal-utils/debug'
+import {isEditor} from '../slate/editor/is-editor'
+import type {Element} from '../slate/interfaces/element'
+import {isObject} from '../slate/utils/is-object'
+import type {PortableTextSlateEditor} from '../types/slate-editor'
+import {isListBlock} from '../utils/parse-blocks'
 import {withNormalizeNode} from './slate-plugin.normalize-node'
 
 /**

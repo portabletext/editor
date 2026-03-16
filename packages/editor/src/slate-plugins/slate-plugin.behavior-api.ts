@@ -1,12 +1,12 @@
-import type {EditorActor} from '../../editor/editor-machine'
+import type {EditorActor} from '../editor/editor-machine'
 import {
   slatePointToSelectionPoint,
   slateRangeToSelection,
-} from '../../internal-utils/slate-utils'
-import {range as editorRange} from '../editor/range'
-import type {Editor} from '../interfaces/editor'
-import {pointEquals} from '../point/point-equals'
-import {isBackwardRange} from '../range/is-backward-range'
+} from '../internal-utils/slate-utils'
+import {range as editorRange} from '../slate/editor/range'
+import type {Editor} from '../slate/interfaces/editor'
+import {pointEquals} from '../slate/point/point-equals'
+import {isBackwardRange} from '../slate/range/is-backward-range'
 
 export function createBehaviorApiPlugin(editorActor: EditorActor) {
   return function behaviorApiPlugin(editor: Editor) {

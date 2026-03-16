@@ -8,9 +8,9 @@ import {beforeEach, describe, expect, it, test} from 'vitest'
 import {createActor} from 'xstate'
 import {editorMachine} from '../editor/editor-machine'
 import {relayMachine} from '../editor/relay-machine'
+import {plugins} from '../slate-plugins/slate-plugins'
 import {createEditor} from '../slate/create-editor'
 import type {Descendant, Node} from '../slate/interfaces/node'
-import {plugins} from '../slate/plugins/slate-plugins'
 import {defaultKeyGenerator} from '../utils/key-generator'
 import {
   insertNodePatch,

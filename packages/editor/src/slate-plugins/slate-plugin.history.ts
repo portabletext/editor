@@ -4,10 +4,10 @@
  */
 
 import type {PortableTextBlock} from '@portabletext/schema'
-import type {EditorActor} from '../../editor/editor-machine'
-import {createUndoSteps} from '../../editor/undo-step'
-import type {PortableTextSlateEditor} from '../../types/slate-editor'
-import type {Operation} from '../interfaces/operation'
+import type {EditorActor} from '../editor/editor-machine'
+import {createUndoSteps} from '../editor/undo-step'
+import type {Operation} from '../slate/interfaces/operation'
+import type {PortableTextSlateEditor} from '../types/slate-editor'
 
 const UNDO_STEP_LIMIT = 1000
 

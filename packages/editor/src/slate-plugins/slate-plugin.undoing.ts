@@ -1,4 +1,4 @@
-import type {PortableTextSlateEditor} from '../../types/slate-editor'
+import type {PortableTextSlateEditor} from '../types/slate-editor'
 
 export function pluginUndoing(editor: PortableTextSlateEditor, fn: () => void) {
   const prev = editor.isUndoing
