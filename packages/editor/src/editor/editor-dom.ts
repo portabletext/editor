@@ -1,7 +1,7 @@
 import type {BehaviorEvent} from '../behaviors/behavior.types.event'
+import {getDomNode} from '../dom-traversal/get-dom-node'
 import {toSlateRange} from '../internal-utils/to-slate-range'
 import {getSelectionEndBlock, getSelectionStartBlock} from '../selectors'
-import {DOMEditor} from '../slate/dom/plugin/dom-editor'
 import {isEditor} from '../slate/editor/is-editor'
 import {nodes} from '../slate/editor/nodes'
 import type {PickFromUnion} from '../type-utils'
@@ -71,9 +71,15 @@ function getBlockNodes(
       }),
     )
 
-    return blockEntries.map(([blockNode]) =>
-      DOMEditor.toDOMNode(slateEditor, blockNode),
-    )
+    return blockEntries.flatMap(([, blockPath]) => {
+      const domNode = getDomNode(slateEditor, blockPath)
+
+      if (!domNode) {
+        return []
+      }
+
+      return domNode
+    })
   } catch {
     return []
   }
@@ -102,20 +108,22 @@ function getChildNodes(
       }),
     )
 
-    return childEntries.map(([childNode]) =>
-      DOMEditor.toDOMNode(slateEditor, childNode),
-    )
+    return childEntries.flatMap(([, childPath]) => {
+      const domNode = getDomNode(slateEditor, childPath)
+
+      if (!domNode) {
+        return []
+      }
+
+      return domNode
+    })
   } catch {
     return []
   }
 }
 
 function getEditorElement(slateEditor: PortableTextSlateEditor) {
-  try {
-    return DOMEditor.toDOMNode(slateEditor, slateEditor)
-  } catch {
-    return undefined
-  }
+  return getDomNode(slateEditor, [])
 }
 
 function getSelectionRect(snapshot: EditorSnapshot) {
