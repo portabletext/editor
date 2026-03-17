@@ -1,17 +1,13 @@
 import type {PortableTextBlock} from '@portabletext/schema'
-import React, {useCallback, useEffect, useState} from 'react'
+import React, {useCallback, useEffect} from 'react'
 import {safeStringify} from '../../../internal-utils/safe-json'
 import {isEditor} from '../../editor/is-editor'
 import type {Editor, Selection} from '../../interfaces/editor'
-import {FocusedContext} from '../hooks/use-focused'
-import {useIsomorphicLayoutEffect} from '../hooks/use-isomorphic-layout-effect'
 import {
   SlateSelectorContext,
   useSelectorContext,
 } from '../hooks/use-slate-selector'
 import {EditorContext} from '../hooks/use-slate-static'
-import {ReactEditor} from '../plugin/react-editor'
-import {REACT_MAJOR_VERSION} from '../utils/environment'
 
 /**
  * A wrapper around the provider to handle `onChange` events, because the editor
@@ -78,41 +74,9 @@ export const Slate = (props: {
     }
   }, [editor, onContextChange])
 
-  const [isFocused, setIsFocused] = useState(ReactEditor.isFocused(editor))
-
-  useEffect(() => {
-    setIsFocused(ReactEditor.isFocused(editor))
-  }, [editor])
-
-  useIsomorphicLayoutEffect(() => {
-    const fn = () => setIsFocused(ReactEditor.isFocused(editor))
-    if (REACT_MAJOR_VERSION >= 17) {
-      // In React >= 17 onFocus and onBlur listen to the focusin and focusout events during the bubbling phase.
-      // Therefore in order for <Editable />'s handlers to run first, which is necessary for ReactEditor.isFocused(editor)
-      // to return the correct value, we have to listen to the focusin and focusout events without useCapture here.
-      document.addEventListener('focusin', fn)
-      document.addEventListener('focusout', fn)
-      return () => {
-        document.removeEventListener('focusin', fn)
-        document.removeEventListener('focusout', fn)
-      }
-    } else {
-      document.addEventListener('focus', fn, true)
-      document.addEventListener('blur', fn, true)
-      return () => {
-        document.removeEventListener('focus', fn, true)
-        document.removeEventListener('blur', fn, true)
-      }
-    }
-  }, [editor])
-
   return (
     <SlateSelectorContext.Provider value={selectorContext}>
-      <EditorContext.Provider value={editor}>
-        <FocusedContext.Provider value={isFocused}>
-          {children}
-        </FocusedContext.Provider>
-      </EditorContext.Provider>
+      <EditorContext.Provider value={editor}>{children}</EditorContext.Provider>
     </SlateSelectorContext.Provider>
   )
 }
