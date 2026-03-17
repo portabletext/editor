@@ -42,11 +42,9 @@ const ObjectNodeComponent = (props: {
     (ref: HTMLElement | null) => {
       if (ref) {
         editor.keyToElement?.set(key, ref)
-        editor.nodeToElement.set(objectNode, ref)
         editor.elementToNode.set(ref, objectNode)
       } else {
         editor.keyToElement?.delete(key)
-        editor.nodeToElement.delete(objectNode)
       }
     },
     [editor, key, objectNode],
@@ -64,10 +62,8 @@ const ObjectNodeComponent = (props: {
           ReactEditor.findKey(editor, syntheticText as any),
           span,
         )
-        editor.nodeToElement.set(syntheticText as any, span)
         editor.elementToNode.set(span, syntheticText as any)
       } else {
-        editor.nodeToElement.delete(syntheticText as any)
       }
     },
     [editor, syntheticText],

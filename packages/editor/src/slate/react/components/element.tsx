@@ -53,11 +53,9 @@ const Element = (props: {
       // Update element-related editor maps with the DOM element ref.
       if (ref) {
         editor.keyToElement?.set(key, ref)
-        editor.nodeToElement.set(element, ref)
         editor.elementToNode.set(ref, element)
       } else {
         editor.keyToElement?.delete(key)
-        editor.nodeToElement.delete(element)
       }
     },
     [editor, key, element],

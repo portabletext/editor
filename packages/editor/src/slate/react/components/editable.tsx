@@ -350,10 +350,7 @@ export const Editable = forwardRef(
       if (ref.current && (window = getDefaultView(ref.current))) {
         editor.domWindow = window
         editor.domElement = ref.current
-        editor.nodeToElement.set(editor, ref.current)
         editor.elementToNode.set(ref.current, editor)
-      } else {
-        editor.nodeToElement.delete(editor)
       }
 
       // Make sure the DOM selection state is in sync.
@@ -936,7 +933,6 @@ export const Editable = forwardRef(
           onDOMSelectionChange.cancel()
           scheduleOnDOMSelectionChange.cancel()
           editor.domElement = null
-          editor.nodeToElement.delete(editor)
 
           if (ref.current && HAS_BEFORE_INPUT_SUPPORT) {
             ref.current.removeEventListener('beforeinput', onDOMBeforeInput)

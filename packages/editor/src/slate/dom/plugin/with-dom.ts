@@ -32,7 +32,6 @@ export const withDOM = <T extends Editor>(editor: T): T & DOMEditor => {
   e.nodeToIndex = new WeakMap()
   e.nodeToParent = new WeakMap()
   e.elementToNode = new WeakMap()
-  e.nodeToElement = new WeakMap()
   e.nodeToKey = new WeakMap()
   e.readOnly = false
   e.focused = false
