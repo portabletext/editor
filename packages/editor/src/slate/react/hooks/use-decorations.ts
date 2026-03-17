@@ -5,8 +5,8 @@ import {
   isTextDecorationsEqual,
 } from '../../dom/utils/range-list'
 import type {Node, NodeEntry} from '../../interfaces/node'
+import type {Path} from '../../interfaces/path'
 import type {DecoratedRange} from '../../interfaces/text'
-import {ReactEditor} from '../plugin/react-editor'
 import {useGenericSelector} from './use-generic-selector'
 import {useIsomorphicLayoutEffect} from './use-isomorphic-layout-effect'
 import {useSlateStatic} from './use-slate-static'
@@ -25,6 +25,7 @@ export const DecorateContext = createContext<{
 
 export const useDecorations = (
   node: Node,
+  path: Path,
   parentDecorations: DecoratedRange[],
 ): DecoratedRange[] => {
   const editor = useSlateStatic()
@@ -32,7 +33,6 @@ export const useDecorations = (
 
   // Not memoized since we want nodes to be decorated on each render
   const selector = () => {
-    const path = ReactEditor.findPath(editor, node)
     return decorate([node, path])
   }
 

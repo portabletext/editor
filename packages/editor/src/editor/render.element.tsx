@@ -24,6 +24,7 @@ export function RenderElement(props: {
   children: ReactElement
   dropPosition?: DropPosition
   element: PortableTextTextBlock | PortableTextObject
+  indexedPath: RenderElementProps['indexedPath']
   readOnly: boolean
   renderBlock?: RenderBlockFunction
   renderChild?: RenderChildFunction
@@ -63,6 +64,7 @@ export function RenderElement(props: {
       <RenderInlineObject
         attributes={props.attributes}
         element={props.element}
+        indexedPath={props.indexedPath}
         readOnly={props.readOnly}
         renderChild={props.renderChild}
         schema={schema}

@@ -2,13 +2,13 @@ import type {
   PortableTextSpan,
   PortableTextTextBlock,
 } from '@portabletext/schema'
-import React, {useCallback, useRef, type JSX} from 'react'
+import React, {type JSX} from 'react'
 import {isTextDecorationsEqual} from '../../dom/utils/range-list'
+import type {Path} from '../../interfaces/path'
 import type {DecoratedRange} from '../../interfaces/text'
+import {pathEquals} from '../../path/path-equals'
 import {getTextDecorations} from '../../text/get-text-decorations'
 import {useDecorations} from '../hooks/use-decorations'
-import {useSlateStatic} from '../hooks/use-slate-static'
-import {ReactEditor} from '../plugin/react-editor'
 import type {
   RenderLeafProps,
   RenderPlaceholderProps,
@@ -23,29 +23,30 @@ const defaultRenderText = (props: RenderTextProps) => <DefaultText {...props} />
  */
 
 const Text = (props: {
+  dataPath: string
   decorations: DecoratedRange[]
   isLast: boolean
   parent: PortableTextTextBlock
+  indexedPath: Path
   renderPlaceholder: (props: RenderPlaceholderProps) => JSX.Element
   renderLeaf?: (props: RenderLeafProps) => JSX.Element
   renderText?: (props: RenderTextProps) => JSX.Element
   text: PortableTextSpan
 }) => {
   const {
+    dataPath,
     decorations: parentDecorations,
     isLast,
     parent,
+    indexedPath,
     renderPlaceholder,
     renderLeaf,
     renderText = defaultRenderText,
     text,
   } = props
 
-  const editor = useSlateStatic()
-  const ref = useRef<HTMLSpanElement | null>(null)
-  const decorations = useDecorations(text, parentDecorations)
+  const decorations = useDecorations(text, indexedPath, parentDecorations)
   const decoratedLeaves = getTextDecorations(text, decorations)
-  const key = ReactEditor.findKey(editor, text)
   const children = []
 
   for (let i = 0; i < decoratedLeaves.length; i++) {
@@ -54,40 +55,24 @@ const Text = (props: {
     children.push(
       <Leaf
         isLast={isLast && i === decoratedLeaves.length - 1}
-        key={`${key.id}-${i}`}
+        key={`${text._key}-${i}`}
         renderPlaceholder={renderPlaceholder}
         leaf={leaf}
         leafPosition={position}
         text={text}
+        indexedPath={indexedPath}
         parent={parent}
         renderLeaf={renderLeaf}
       />,
     )
   }
 
-  // Update element-related editor maps with the DOM element ref.
-  const callbackRef = useCallback(
-    (span: HTMLSpanElement | null) => {
-      if (span) {
-        editor.keyToElement?.set(key, span)
-        editor.elementToNode.set(span, text)
-      } else {
-        editor.keyToElement?.delete(key)
-        if (ref.current) {
-          editor.elementToNode.delete(ref.current)
-        }
-      }
-      ref.current = span
-    },
-    [ref, editor, key, text],
-  )
-
   const attributes: {
     'data-slate-node': 'text'
-    'ref': any
+    'data-pt-path': string
   } = {
     'data-slate-node': 'text',
-    'ref': callbackRef,
+    'data-pt-path': dataPath,
   }
 
   return renderText({
@@ -101,6 +86,7 @@ const MemoizedText = React.memo(Text, (prev, next) => {
   return (
     next.parent === prev.parent &&
     next.isLast === prev.isLast &&
+    pathEquals(next.indexedPath, prev.indexedPath) &&
     next.renderText === prev.renderText &&
     next.renderLeaf === prev.renderLeaf &&
     next.renderPlaceholder === prev.renderPlaceholder &&

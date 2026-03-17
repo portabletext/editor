@@ -2,6 +2,7 @@ import type {InlineObjectSchemaType} from '@portabletext/schema'
 import {isTextBlock} from '@portabletext/schema'
 import {useSelector} from '@xstate/react'
 import {useContext, useMemo, useRef, type ReactElement} from 'react'
+import {serializePath} from '../paths/serialize-path'
 import type {RenderLeafProps} from '../slate/react/components/editable'
 import {useSlateStatic} from '../slate/react/hooks/use-slate-static'
 import type {
@@ -12,7 +13,6 @@ import type {
   RenderChildFunction,
   RenderDecoratorFunction,
 } from '../types/editor'
-import {serializePath} from '../utils/util.serialize-path'
 import {EditorActorContext} from './editor-actor-context'
 import {SelectionStateContext} from './selection-state-context'
 

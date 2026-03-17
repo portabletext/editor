@@ -1,18 +1,14 @@
+import {getDomNode} from '../../../dom-traversal/get-dom-node'
+import {getDomNodePath} from '../../../dom-traversal/get-dom-node-path'
 import {safeStringify} from '../../../internal-utils/safe-json'
-import {after} from '../../editor/after'
-import {before} from '../../editor/before'
+import {keyedPathToIndexedPath} from '../../../paths/keyed-path-to-indexed-path'
 import {getObjectNode} from '../../editor/get-object-node'
 import {hasPath} from '../../editor/has-path'
-import {isEditor} from '../../editor/is-editor'
 import {node as editorNode} from '../../editor/node'
-import {point as editorPoint} from '../../editor/point'
-import {range as editorRange} from '../../editor/range'
 import {start as editorStart} from '../../editor/start'
 import {unhangRange} from '../../editor/unhang-range'
 import type {BaseEditor, Editor, EditorMarks} from '../../interfaces/editor'
-import type {Node} from '../../interfaces/node'
 import type {Operation} from '../../interfaces/operation'
-import type {Path} from '../../interfaces/path'
 import type {Point} from '../../interfaces/point'
 import type {Range} from '../../interfaces/range'
 import type {RangeRef} from '../../interfaces/range-ref'
@@ -43,7 +39,6 @@ import {
   type DOMStaticRange,
 } from '../utils/dom'
 import {IS_ANDROID, IS_CHROME, IS_FIREFOX} from '../utils/environment'
-import {Key} from '../utils/key'
 
 export type Action = {at?: Point | Range; run: () => void}
 
@@ -69,11 +64,7 @@ export interface DOMEditor extends BaseEditor {
   domElement: HTMLElement | null
   domPlaceholder: string
   domPlaceholderElement: HTMLElement | null
-  keyToElement: WeakMap<Key, HTMLElement>
-  nodeToIndex: WeakMap<Editor | Node, number>
-  nodeToParent: WeakMap<Editor | Node, Editor | Node>
-  elementToNode: WeakMap<HTMLElement, Editor | Node>
-  nodeToKey: WeakMap<Editor | Node, Key>
+
   readOnly: boolean
   focused: boolean
   composing: boolean
@@ -97,21 +88,6 @@ export interface DOMEditorInterface {
    * Find the DOM node that implements DocumentOrShadowRoot for the editor.
    */
   findDocumentOrShadowRoot: (editor: Editor) => Document | ShadowRoot
-
-  /**
-   * Get the target range from a DOM `event`.
-   */
-  findEventRange: (editor: Editor, event: any) => Range
-
-  /**
-   * Find a key for a Slate node.
-   */
-  findKey: (editor: Editor, node: Editor | Node) => Key
-
-  /**
-   * Find the path of Slate node.
-   */
-  findPath: (editor: Editor, node: Editor | Node) => Path
 
   /**
    * Focus the editor.
@@ -174,11 +150,6 @@ export interface DOMEditorInterface {
   ) => boolean
 
   /**
-   * Find the native DOM element from a Slate node.
-   */
-  toDOMNode: (editor: Editor, node: Editor | Node) => HTMLElement
-
-  /**
    * Find a native DOM selection point from a Slate point.
    */
   toDOMPoint: (editor: Editor, point: Point) => DOMPoint
@@ -192,11 +163,6 @@ export interface DOMEditorInterface {
    * according to https://dom.spec.whatwg.org/#concept-range-bp-set.
    */
   toDOMRange: (editor: Editor, range: Range) => DOMRange
-
-  /**
-   * Find a Slate node from a native DOM `element`.
-   */
-  toSlateNode: (editor: Editor, domNode: DOMNode) => Editor | Node
 
   /**
    * Find a Slate point from a DOM selection's `domNode` and `domOffset`.
@@ -231,7 +197,7 @@ export interface DOMEditorInterface {
 // eslint-disable-next-line no-redeclare
 export const DOMEditor: DOMEditorInterface = {
   blur: (editor) => {
-    const el = DOMEditor.toDOMNode(editor, editor)
+    const el = getDomNode(editor, [])
     const root = DOMEditor.findDocumentOrShadowRoot(editor)
     editor.focused = false
 
@@ -241,7 +207,12 @@ export const DOMEditor: DOMEditorInterface = {
   },
 
   findDocumentOrShadowRoot: (editor) => {
-    const el = DOMEditor.toDOMNode(editor, editor)
+    const el = getDomNode(editor, [])
+
+    if (!el) {
+      throw new Error('Cannot resolve a DOM node: editor is not mounted')
+    }
+
     const root = el.getRootNode()
 
     if (root instanceof Document || root instanceof ShadowRoot) {
@@ -249,114 +220,6 @@ export const DOMEditor: DOMEditorInterface = {
     }
 
     return el.ownerDocument
-  },
-
-  findEventRange: (editor, event) => {
-    if ('nativeEvent' in event) {
-      event = event.nativeEvent
-    }
-
-    const {clientX: x, clientY: y, target} = event
-
-    if (x == null || y == null) {
-      throw new Error(`Cannot resolve a Slate range from a DOM event: ${event}`)
-    }
-
-    const node = DOMEditor.toSlateNode(editor, event.target)
-    const path = DOMEditor.findPath(editor, node)
-
-    // If the drop target is inside an ObjectNode, move it into either the
-    // next or previous node, depending on which side the `x` and `y`
-    // coordinates are closest to.
-    if (isObjectNode({schema: editor.schema}, node)) {
-      const rect = target.getBoundingClientRect()
-
-      // TODO: path.length > 1 assumes flat document model. With containers,
-      // block objects inside containers would also have path.length > 1.
-      const isInline = path.length > 1
-      const isPrev = isInline
-        ? x - rect.left < rect.left + rect.width - x
-        : y - rect.top < rect.top + rect.height - y
-
-      const edge = editorPoint(editor, path, {
-        edge: isPrev ? 'start' : 'end',
-      })
-      const point = isPrev ? before(editor, edge) : after(editor, edge)
-
-      if (point) {
-        const range = editorRange(editor, point)
-        return range
-      }
-    }
-
-    // Else resolve a range from the caret position where the drop occured.
-    let domRange: globalThis.Range | null = null
-    const {document} = DOMEditor.getWindow(editor)
-
-    // COMPAT: In Firefox, `caretRangeFromPoint` doesn't exist. (2016/07/25)
-    if (document.caretRangeFromPoint) {
-      domRange = document.caretRangeFromPoint(x, y)
-    } else {
-      const position = document.caretPositionFromPoint(x, y)
-
-      if (position) {
-        domRange = document.createRange()
-        domRange.setStart(position.offsetNode, position.offset)
-        domRange.setEnd(position.offsetNode, position.offset)
-      }
-    }
-
-    if (!domRange) {
-      throw new Error(`Cannot resolve a Slate range from a DOM event: ${event}`)
-    }
-
-    // Resolve a Slate range from the DOM range.
-    const range = DOMEditor.toSlateRange(editor, domRange, {
-      exactMatch: false,
-      suppressThrow: false,
-    })
-    return range
-  },
-
-  findKey: (editor, node) => {
-    let key = editor.nodeToKey.get(node)
-
-    if (!key) {
-      key = new Key()
-      editor.nodeToKey.set(node, key)
-    }
-
-    return key
-  },
-
-  findPath: (editor, node) => {
-    const path: Path = []
-    let child = node
-
-    while (true) {
-      const parent = editor.nodeToParent.get(child)
-
-      if (parent == null) {
-        if (isEditor(child)) {
-          return path
-        } else {
-          break
-        }
-      }
-
-      const i = editor.nodeToIndex.get(child)
-
-      if (i == null) {
-        break
-      }
-
-      path.unshift(i)
-      child = parent
-    }
-
-    throw new Error(
-      `Unable to find the path for Slate node: ${safeStringify(node)}`,
-    )
   },
 
   focus: (editor, options = {retries: 5}) => {
@@ -386,7 +249,12 @@ export const DOMEditor: DOMEditorInterface = {
       return
     }
 
-    const el = DOMEditor.toDOMNode(editor, editor)
+    const el = getDomNode(editor, [])
+
+    if (!el) {
+      throw new Error('Cannot resolve a DOM node: editor is not mounted')
+    }
+
     const root = DOMEditor.findDocumentOrShadowRoot(editor)
     if (root.activeElement !== el) {
       // Ensure that the DOM selection state is set to the editor's selection
@@ -417,7 +285,12 @@ export const DOMEditor: DOMEditorInterface = {
 
   hasDOMNode: (editor, target, options = {}) => {
     const {editable = false} = options
-    const editorEl = DOMEditor.toDOMNode(editor, editor)
+    const editorEl = getDomNode(editor, [])
+
+    if (!editorEl) {
+      return false
+    }
+
     let targetEl: HTMLElement | null = null
 
     // COMPAT: In Firefox, reading `target.nodeType` will throw an error if
@@ -479,29 +352,22 @@ export const DOMEditor: DOMEditorInterface = {
       return false
     }
 
-    const slateNode =
-      DOMEditor.hasTarget(editor, target) &&
-      DOMEditor.toSlateNode(editor, target)
-    return !!slateNode && isObjectNode({schema: editor.schema}, slateNode)
-  },
-
-  toDOMNode: (editor, node) => {
-    const domNode = isEditor(node)
-      ? editor.domElement
-      : editor.keyToElement?.get(DOMEditor.findKey(editor, node))
-
-    if (!domNode) {
-      throw new Error(
-        `Cannot resolve a DOM node from Slate node: ${safeStringify(node)}`,
-      )
+    if (!DOMEditor.hasTarget(editor, target)) {
+      return false
     }
 
-    return domNode
+    const el = isDOMElement(target) ? target : target.parentElement
+    return !!el?.closest('[data-slate-void]')
   },
 
   toDOMPoint: (editor, point) => {
     const [node] = editorNode(editor, point.path)
-    const el = DOMEditor.toDOMNode(editor, node)
+    const el = getDomNode(editor, point.path)
+
+    if (!el) {
+      throw new Error(`Cannot resolve a DOM node from path: ${point.path}`)
+    }
+
     let domPoint: DOMPoint | undefined
 
     if (isObjectNode({schema: editor.schema}, node)) {
@@ -618,22 +484,6 @@ export const DOMEditor: DOMEditorInterface = {
     return domRange
   },
 
-  toSlateNode: (editor, domNode) => {
-    let domEl = isDOMElement(domNode) ? domNode : domNode.parentElement
-
-    if (domEl && !domEl.hasAttribute('data-slate-node')) {
-      domEl = domEl.closest(`[data-slate-node]`)
-    }
-
-    const node = domEl ? editor.elementToNode.get(domEl as HTMLElement) : null
-
-    if (!node) {
-      throw new Error(`Cannot resolve a Slate node from DOM node: ${domEl}`)
-    }
-
-    return node
-  },
-
   toSlatePoint: <T extends boolean>(
     editor: Editor,
     domPoint: DOMPoint,
@@ -652,7 +502,12 @@ export const DOMEditor: DOMEditorInterface = {
     let offset = 0
 
     if (parentNode) {
-      const editorEl = DOMEditor.toDOMNode(editor, editor)
+      const editorEl = getDomNode(editor, [])
+
+      if (!editorEl) {
+        throw new Error('Cannot resolve a DOM node: editor is not mounted')
+      }
+
       const potentialVoidNode = parentNode.closest('[data-slate-void="true"]')
       // Need to ensure that the closest void node is actually a void node
       // within this editor, and not a void node within some parent editor. This can happen
@@ -833,17 +688,21 @@ export const DOMEditor: DOMEditorInterface = {
         : parentNode.closest('[data-slate-node]')
 
       if (node && DOMEditor.hasDOMNode(editor, node, {editable: true})) {
-        const slateNode = DOMEditor.toSlateNode(editor, node)
-        let nodePath: Path
-        try {
-          nodePath = DOMEditor.findPath(editor, slateNode)
-        } catch (e) {
+        const nodePath = getDomNodePath(node)
+        const indexedPath = nodePath
+          ? keyedPathToIndexedPath(editor, nodePath, editor.blockIndexMap)
+          : undefined
+
+        if (!indexedPath) {
           if (suppressThrow) {
             return null as T extends true ? Point | null : Point
           }
-          throw e
+          throw new Error(
+            `Cannot resolve a Slate point from DOM point: ${domPoint}`,
+          )
         }
-        let {path, offset} = editorStart(editor, nodePath)
+
+        let {path, offset} = editorStart(editor, indexedPath)
 
         if (!node.querySelector('[data-slate-leaf]')) {
           offset = nearestOffset
@@ -863,13 +722,16 @@ export const DOMEditor: DOMEditorInterface = {
           childEl instanceof HTMLElement &&
           DOMEditor.hasDOMNode(editor, childEl)
         ) {
-          const slateNode = DOMEditor.toSlateNode(editor, childEl)
-          if (isObjectNode({schema: editor.schema}, slateNode)) {
-            try {
-              const path = DOMEditor.findPath(editor, slateNode)
-              return {path, offset: 0} as T extends true ? Point | null : Point
-            } catch {
-              // Fall through
+          const voidEl = childEl.closest('[data-slate-void]')
+
+          if (voidEl) {
+            const path = getDomNodePath(voidEl)
+            const indexedPath = path
+              ? keyedPathToIndexedPath(editor, path, editor.blockIndexMap)
+              : undefined
+
+            if (indexedPath) {
+              return {path: indexedPath, offset: 0}
             }
           }
         }
@@ -880,14 +742,16 @@ export const DOMEditor: DOMEditorInterface = {
         (parentNode.hasAttribute('data-slate-node') ? parentNode : null)
 
       if (elementNode && DOMEditor.hasDOMNode(editor, elementNode)) {
-        const slateNode = DOMEditor.toSlateNode(editor, elementNode)
+        const voidEl = elementNode.closest('[data-slate-void]')
 
-        if (isObjectNode({schema: editor.schema}, slateNode)) {
-          try {
-            const path = DOMEditor.findPath(editor, slateNode)
-            return {path, offset: 0} as T extends true ? Point | null : Point
-          } catch {
-            // Fall through to the textNode check below
+        if (voidEl) {
+          const path = getDomNodePath(voidEl)
+          const indexedPath = path
+            ? keyedPathToIndexedPath(editor, path, editor.blockIndexMap)
+            : undefined
+
+          if (indexedPath) {
+            return {path: indexedPath, offset: 0}
           }
         }
       }
@@ -905,33 +769,35 @@ export const DOMEditor: DOMEditorInterface = {
     // COMPAT: If someone is clicking from one Slate editor into another,
     // the select event fires twice, once for the old editor's `element`
     // first, and then afterwards for the correct `element`. (2017/03/03)
-    const slateNode = DOMEditor.toSlateNode(editor, textNode!)
-    let path: Path
-    try {
-      path = DOMEditor.findPath(editor, slateNode)
-    } catch (e) {
+    const path = getDomNodePath(textNode!)
+    const indexedPath = path
+      ? keyedPathToIndexedPath(editor, path, editor.blockIndexMap)
+      : undefined
+
+    if (!indexedPath) {
       if (suppressThrow) {
         return null as T extends true ? Point | null : Point
       }
-      throw e
+      throw new Error(
+        `Cannot resolve a Slate point from DOM point: ${domPoint}`,
+      )
     }
 
     // Truncate paths that resolve to the spacer's virtual text node.
-    if (path.length > 1) {
-      const parentPath = path.slice(0, -1)
+    if (indexedPath.length > 1) {
+      const parentPath = indexedPath.slice(0, -1)
       try {
         const parentSlateNode = getNode(editor, parentPath, editor.schema)
+
         if (isObjectNode({schema: editor.schema}, parentSlateNode)) {
-          return {path: parentPath, offset: 0} as T extends true
-            ? Point | null
-            : Point
+          return {path: parentPath, offset: 0}
         }
       } catch {
         // Parent path doesn't exist in the tree, continue with original path
       }
     }
 
-    return {path, offset} as T extends true ? Point | null : Point
+    return {path: indexedPath, offset}
   },
 
   toSlateRange: <T extends boolean>(

@@ -3,15 +3,16 @@ import type {
   PortableTextTextBlock,
 } from '@portabletext/schema'
 import {isTextBlock} from '@portabletext/schema'
-import React, {useCallback, type JSX} from 'react'
+import React, {type JSX} from 'react'
 import {isElementDecorationsEqual} from '../../dom/utils/range-list'
 import {hasInlines} from '../../editor/has-inlines'
+import type {Path} from '../../interfaces/path'
 import type {DecoratedRange} from '../../interfaces/text'
 import {getString} from '../../node/get-string'
+import {pathEquals} from '../../path/path-equals'
 import useChildren from '../hooks/use-children'
 import {useDecorations} from '../hooks/use-decorations'
 import {useSlateStatic} from '../hooks/use-slate-static'
-import {ReactEditor} from '../plugin/react-editor'
 import getDirection from '../utils/direction'
 import type {
   RenderElementProps,
@@ -29,14 +30,17 @@ const defaultRenderElement = (props: RenderElementProps) => (
  */
 
 const Element = (props: {
+  dataPath: string
   decorations: DecoratedRange[]
   element: PortableTextTextBlock | PortableTextObject
+  indexedPath: Path
   renderElement?: (props: RenderElementProps) => JSX.Element
   renderPlaceholder: (props: RenderPlaceholderProps) => JSX.Element
   renderText?: (props: RenderTextProps) => JSX.Element
   renderLeaf?: (props: RenderLeafProps) => JSX.Element
 }) => {
   const {
+    dataPath,
     decorations: parentDecorations,
     element,
     renderElement = defaultRenderElement,
@@ -46,23 +50,16 @@ const Element = (props: {
   } = props
   const editor = useSlateStatic()
   const isInline = editor.isInline(element)
-  const decorations = useDecorations(element, parentDecorations)
-  const key = ReactEditor.findKey(editor, element)
-  const ref = useCallback(
-    (ref: HTMLElement | null) => {
-      // Update element-related editor maps with the DOM element ref.
-      if (ref) {
-        editor.keyToElement?.set(key, ref)
-        editor.elementToNode.set(ref, element)
-      } else {
-        editor.keyToElement?.delete(key)
-      }
-    },
-    [editor, key, element],
+  const decorations = useDecorations(
+    element,
+    props.indexedPath,
+    parentDecorations,
   )
   const children: React.ReactNode = useChildren({
+    parentDataPath: dataPath,
     decorations,
     node: element,
+    indexedPath: props.indexedPath,
     renderElement,
     renderPlaceholder,
     renderLeaf,
@@ -75,12 +72,12 @@ const Element = (props: {
     'data-slate-node': 'element'
     'data-slate-void'?: true
     'data-slate-inline'?: true
+    'data-pt-path': string
     'contentEditable'?: false
     'dir'?: 'rtl'
-    'ref': any
   } = {
     'data-slate-node': 'element',
-    ref,
+    'data-pt-path': dataPath,
   }
 
   if (isInline) {
@@ -102,12 +99,19 @@ const Element = (props: {
     }
   }
 
-  return renderElement({attributes, children, element})
+  return renderElement({
+    attributes,
+    children,
+    element,
+    indexedPath: props.indexedPath,
+  })
 }
 
 const MemoizedElement = React.memo(Element, (prev, next) => {
   return (
+    prev.dataPath === next.dataPath &&
     prev.element === next.element &&
+    pathEquals(prev.indexedPath, next.indexedPath) &&
     prev.renderElement === next.renderElement &&
     prev.renderText === next.renderText &&
     prev.renderLeaf === next.renderLeaf &&

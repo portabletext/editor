@@ -14,6 +14,7 @@ import React, {
 } from 'react'
 import {IS_ANDROID, IS_WEBKIT} from '../../dom/utils/environment'
 import {PLACEHOLDER_SYMBOL} from '../../dom/utils/symbols'
+import type {Path} from '../../interfaces/path'
 import type {LeafPosition} from '../../interfaces/text'
 import {textEquals} from '../../text/text-equals'
 import {useSlateStatic} from '../hooks/use-slate-static'
@@ -54,6 +55,7 @@ const Leaf = (props: {
   isLast: boolean
   leaf: PortableTextSpan
   parent: PortableTextTextBlock | PortableTextObject
+  indexedPath: Path
   renderPlaceholder: (props: RenderPlaceholderProps) => JSX.Element
   renderLeaf?: (props: RenderLeafProps) => JSX.Element
   text: PortableTextSpan
@@ -63,6 +65,7 @@ const Leaf = (props: {
     leaf,
     isLast,
     text,
+    indexedPath,
     parent,
     renderPlaceholder,
     renderLeaf = defaultRenderLeaf,
@@ -103,7 +106,13 @@ const Leaf = (props: {
   )
 
   let children = (
-    <SlateString isLast={isLast} leaf={leaf} parent={parent} text={text} />
+    <SlateString
+      isLast={isLast}
+      leaf={leaf}
+      parent={parent}
+      indexedPath={indexedPath}
+      text={text}
+    />
   )
 
   const leafIsPlaceholder = Boolean((leaf as any)[PLACEHOLDER_SYMBOL])

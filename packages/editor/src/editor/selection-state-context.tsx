@@ -1,5 +1,6 @@
 import {useSelector} from '@xstate/react'
 import {createContext, useContext} from 'react'
+import {serializePath} from '../paths/serialize-path'
 import {getFocusChild} from '../selectors'
 import {getSelectedChildren} from '../selectors/selector.get-selected-children'
 import {getSelectionEndPoint} from '../selectors/selector.get-selection-end-point'
@@ -7,7 +8,6 @@ import {getSelectionStartPoint} from '../selectors/selector.get-selection-start-
 import {isSelectionCollapsed} from '../selectors/selector.is-selection-collapsed'
 import {useSlateStatic} from '../slate/react/hooks/use-slate-static'
 import {getBlockKeyFromSelectionPoint} from '../utils/util.selection-point'
-import {serializePath} from '../utils/util.serialize-path'
 import {EditorActorContext} from './editor-actor-context'
 import {getEditorSnapshot} from './editor-selector'
 
