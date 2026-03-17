@@ -1,5 +1,21 @@
 # Changelog
 
+## 6.5.0
+
+### Minor Changes
+
+- [#2381](https://github.com/portabletext/editor/pull/2381) [`a1992ab`](https://github.com/portabletext/editor/commit/a1992abed6f2a38486c9c9734949f0cc2ae97396) Thanks [@christianhg](https://github.com/christianhg)! - feat: make Slate internals Portable Text-native
+
+### Patch Changes
+
+- [#2388](https://github.com/portabletext/editor/pull/2388) [`cbccc01`](https://github.com/portabletext/editor/commit/cbccc0178f0eab4732424a579411a7e711786266) Thanks [@christianhg](https://github.com/christianhg)! - fix: simplify internal editor creation
+
+- [#2389](https://github.com/portabletext/editor/pull/2389) [`3d026ee`](https://github.com/portabletext/editor/commit/3d026ee624e62970429199b9082b7a3bab7e26db) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove unused internal node->element WeakMap
+
+- [#2388](https://github.com/portabletext/editor/pull/2388) [`d93fd9b`](https://github.com/portabletext/editor/commit/d93fd9b17fc1bbae0c70fe323537563e81944238) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove unused internal focus context
+
+- [#2381](https://github.com/portabletext/editor/pull/2381) [`4e86fc3`](https://github.com/portabletext/editor/commit/4e86fc34824fe5e2c6eb78e6277475702f434c99) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove dead internal code paths
+
 ## 6.4.0
 
 ### Minor Changes
