@@ -9,7 +9,7 @@ import type {EditableAPI} from '../types/editor'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {defaultKeyGenerator} from '../utils/key-generator'
 import {createEditableAPI} from './create-editable-api'
-import {createSlateEditor, type SlateEditor} from './create-slate-editor'
+import {createSlateEditor} from './create-slate-editor'
 import {createEditorDom} from './editor-dom'
 import type {EditorActor} from './editor-machine'
 import {editorMachine, rerouteExternalBehaviorEvent} from './editor-machine'
@@ -22,7 +22,7 @@ export type InternalEditor = Editor & {
   _internal: {
     editable: EditableAPI
     editorActor: EditorActor
-    slateEditor: SlateEditor
+    slateEditor: PortableTextSlateEditor
   }
 }
 
@@ -48,23 +48,20 @@ export function createInternalEditor(config: EditorConfig): {
     relayActor,
     subscriptions,
   })
-  const editable = createEditableAPI(slateEditor.instance, editorActor)
+  const editable = createEditableAPI(slateEditor, editorActor)
   const {mutationActor, syncActor} = createActors({
     editorActor,
     relayActor,
-    slateEditor: slateEditor.instance,
+    slateEditor,
     subscriptions,
   })
 
   const editor = {
-    dom: createEditorDom(
-      (event) => editorActor.send(event),
-      slateEditor.instance,
-    ),
+    dom: createEditorDom((event) => editorActor.send(event), slateEditor),
     getSnapshot: () =>
       getEditorSnapshot({
         editorActorSnapshot: editorActor.getSnapshot(),
-        slateEditorInstance: slateEditor.instance,
+        slateEditorInstance: slateEditor,
       }),
     registerBehavior: (behaviorConfig) => {
       const priority = createEditorPriority({
@@ -106,7 +103,7 @@ export function createInternalEditor(config: EditorConfig): {
           editorActor.send(
             rerouteExternalBehaviorEvent({
               event,
-              slateEditor: slateEditor.instance,
+              slateEditor,
             }),
           )
       }

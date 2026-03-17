@@ -1,4 +1,3 @@
-import type {PortableTextBlock} from '@portabletext/schema'
 import {buildIndexMaps} from '../internal-utils/build-index-maps'
 import {createPlaceholderBlock} from '../internal-utils/create-placeholder-block'
 import {debug} from '../internal-utils/debug'
@@ -15,12 +14,9 @@ type SlateEditorConfig = {
   subscriptions: Array<() => () => void>
 }
 
-export type SlateEditor = {
-  instance: PortableTextSlateEditor
-  initialValue: Array<PortableTextBlock>
-}
-
-export function createSlateEditor(config: SlateEditorConfig): SlateEditor {
+export function createSlateEditor(
+  config: SlateEditorConfig,
+): PortableTextSlateEditor {
   debug.setup('creating new slate editor instance')
 
   const context = config.editorActor.getSnapshot().context
@@ -53,7 +49,7 @@ export function createSlateEditor(config: SlateEditorConfig): SlateEditor {
   editor.isUndoing = false
   editor.withHistory = true
 
-  const instance = plugins(withReact(editor), {
+  const slateEditor = plugins(withReact(editor), {
     editorActor: config.editorActor,
     relayActor: config.relayActor,
     subscriptions: config.subscriptions,
@@ -62,18 +58,13 @@ export function createSlateEditor(config: SlateEditorConfig): SlateEditor {
   buildIndexMaps(
     {
       schema: context.schema,
-      value: instance.children,
+      value: slateEditor.children,
     },
     {
-      blockIndexMap: instance.blockIndexMap,
-      listIndexMap: instance.listIndexMap,
+      blockIndexMap: slateEditor.blockIndexMap,
+      listIndexMap: slateEditor.listIndexMap,
     },
   )
-
-  const slateEditor: SlateEditor = {
-    instance,
-    initialValue: [placeholderBlock],
-  }
 
   return slateEditor
 }
