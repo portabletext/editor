@@ -3,12 +3,12 @@ import {isEditor} from '../../editor/is-editor'
 import {range as editorRange} from '../../editor/range'
 import type {Editor} from '../../interfaces/editor'
 import type {Node} from '../../interfaces/node'
+import type {Path} from '../../interfaces/path'
 import type {Range} from '../../interfaces/range'
 import type {DecoratedRange} from '../../interfaces/text'
 import {rangeEdges} from '../../range/range-edges'
 import {rangeEquals} from '../../range/range-equals'
 import {rangeIntersection} from '../../range/range-intersection'
-import {DOMEditor} from '../plugin/dom-editor'
 import {PLACEHOLDER_SYMBOL} from './symbols'
 
 const shallowCompare = (
@@ -118,6 +118,7 @@ export const isTextDecorationsEqual = (
 export const splitDecorationsByChild = (
   editor: Editor,
   node: Editor | Node,
+  path: Path,
   decorations: DecoratedRange[],
 ): DecoratedRange[][] => {
   const children: readonly unknown[] = isEditor(node)
@@ -130,8 +131,6 @@ export const splitDecorationsByChild = (
   if (decorations.length === 0) {
     return decorationsByChild
   }
-
-  const path = DOMEditor.findPath(editor, node)
   const level = path.length
   const ancestorRange = editorRange(editor, path)
 

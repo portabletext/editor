@@ -5,6 +5,7 @@ import {
   type PortableTextChild,
   type PortableTextObject,
 } from '@portabletext/schema'
+import {getDomNode} from '../dom-traversal/get-dom-node'
 import {
   isListItemActive,
   isStyleActive,
@@ -23,7 +24,6 @@ import {isCollapsedRange} from '../slate/range/is-collapsed-range'
 import {isExpandedRange} from '../slate/range/is-expanded-range'
 import {isRange} from '../slate/range/is-range'
 import {rangeIncludes} from '../slate/range/range-includes'
-import {ReactEditor} from '../slate/react/plugin/react-editor'
 import type {
   EditableAPI,
   EditableAPIDeleteOptions,
@@ -288,14 +288,15 @@ export function createEditableAPI(
     ): Node | undefined => {
       let node: Node | undefined
       try {
-        const [item] = Array.from(
+        const entry = Array.from(
           nodes(editor, {
             at: [],
             match: (n) => n._key === element._key,
           }) || [],
-        )[0] || [undefined]
-        if (item) {
-          node = ReactEditor.toDOMNode(editor, item)
+        )[0]
+        if (entry) {
+          const [, itemPath] = entry
+          node = getDomNode(editor, itemPath)
         }
       } catch {
         // Nothing

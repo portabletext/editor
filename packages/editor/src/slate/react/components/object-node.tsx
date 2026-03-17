@@ -1,11 +1,11 @@
 import type {PortableTextObject} from '@portabletext/schema'
-import React, {useCallback, useMemo, type JSX} from 'react'
+import React, {type JSX} from 'react'
 import {IS_ANDROID} from '../../dom/utils/environment'
 import {isElementDecorationsEqual} from '../../dom/utils/range-list'
+import type {Path} from '../../interfaces/path'
 import type {DecoratedRange} from '../../interfaces/text'
+import {pathEquals} from '../../path/path-equals'
 import {useReadOnly} from '../hooks/use-read-only'
-import {useSlateStatic} from '../hooks/use-slate-static'
-import {ReactEditor} from '../plugin/react-editor'
 import type {RenderElementProps} from './editable'
 
 const defaultRenderElement = (props: RenderElementProps) => {
@@ -23,65 +23,28 @@ const defaultRenderElement = (props: RenderElementProps) => {
  *
  * Although ObjectNodes have no children in the Slate model, the DOM must
  * contain a hidden spacer with a zero-width text node for selection anchoring.
- * The spacer renders the same DOM structure as the old void children but
- * bypasses the Text component entirely (no useDecorations, no findPath on
- * synthetic nodes). Map registration is done directly.
  */
-
 const ObjectNodeComponent = (props: {
+  dataPath: string
   decorations: DecoratedRange[]
   objectNode: PortableTextObject
   isInline: boolean
+  indexedPath: Path
   renderElement?: (props: RenderElementProps) => JSX.Element
 }) => {
-  const {objectNode, isInline, renderElement = defaultRenderElement} = props
-  const editor = useSlateStatic()
+  const {
+    dataPath,
+    objectNode,
+    isInline,
+    indexedPath,
+    renderElement = defaultRenderElement,
+  } = props
   const readOnly = useReadOnly()
-  const key = ReactEditor.findKey(editor, objectNode)
-  const ref = useCallback(
-    (ref: HTMLElement | null) => {
-      if (ref) {
-        editor.keyToElement?.set(key, ref)
-        editor.elementToNode.set(ref, objectNode)
-      } else {
-        editor.keyToElement?.delete(key)
-      }
-    },
-    [editor, key, objectNode],
-  )
-
-  const syntheticText = useMemo(
-    () => ({text: '', marks: []}) as Record<string, unknown>,
-    [],
-  )
-
-  const spacerTextRef = useCallback(
-    (span: HTMLSpanElement | null) => {
-      if (span) {
-        editor.keyToElement?.set(
-          ReactEditor.findKey(editor, syntheticText as any),
-          span,
-        )
-        editor.elementToNode.set(span, syntheticText as any)
-      } else {
-      }
-    },
-    [editor, syntheticText],
-  )
-
-  React.useEffect(() => {
-    editor.nodeToIndex.set(syntheticText as any, 0)
-    editor.nodeToParent.set(syntheticText as any, objectNode)
-    return () => {
-      editor.nodeToIndex.delete(syntheticText as any)
-      editor.nodeToParent.delete(syntheticText as any)
-    }
-  }, [editor, syntheticText, objectNode])
 
   const attributes: RenderElementProps['attributes'] = {
     'data-slate-node': 'element',
     'data-slate-void': true,
-    ref,
+    'data-path': dataPath,
   }
 
   if (isInline) {
@@ -104,7 +67,7 @@ const ObjectNodeComponent = (props: {
         position: 'absolute',
       }}
     >
-      <span data-slate-node="text" ref={spacerTextRef}>
+      <span data-slate-node="text">
         <span data-slate-leaf>
           <span data-slate-zero-width="z" data-slate-length={0}>
             {!IS_ANDROID ? '\uFEFF' : null}
@@ -118,12 +81,15 @@ const ObjectNodeComponent = (props: {
     attributes,
     children,
     element: objectNode,
+    indexedPath,
   })
 }
 
 const MemoizedObjectNode = React.memo(ObjectNodeComponent, (prev, next) => {
   return (
+    prev.dataPath === next.dataPath &&
     prev.objectNode === next.objectNode &&
+    pathEquals(prev.indexedPath, next.indexedPath) &&
     prev.renderElement === next.renderElement &&
     prev.isInline === next.isInline &&
     isElementDecorationsEqual(prev.decorations, next.decorations)
