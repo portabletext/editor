@@ -56,7 +56,7 @@ export function EditorProvider(props: EditorProviderProps) {
     internalEditor.actors.editorActor.start()
     internalEditor.actors.editorActor.send({
       type: 'add slate editor',
-      editor: internalEditor.editor._internal.slateEditor.instance,
+      editor: internalEditor.editor._internal.slateEditor,
     })
     internalEditor.actors.mutationActor.start()
     internalEditor.actors.relayActor.start()
@@ -78,12 +78,7 @@ export function EditorProvider(props: EditorProviderProps) {
     <EditorContext.Provider value={internalEditor.editor}>
       <EditorActorContext.Provider value={internalEditor.actors.editorActor}>
         <RelayActorContext.Provider value={internalEditor.actors.relayActor}>
-          <Slate
-            editor={internalEditor.editor._internal.slateEditor.instance}
-            initialValue={
-              internalEditor.editor._internal.slateEditor.initialValue
-            }
-          >
+          <Slate editor={internalEditor.editor._internal.slateEditor}>
             <PortableTextEditorContext.Provider value={portableTextEditor}>
               {props.children}
             </PortableTextEditorContext.Provider>

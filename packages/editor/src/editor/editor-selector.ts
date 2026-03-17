@@ -49,8 +49,7 @@ export function useEditorSelector<TSelected>(
     (editorActorSnapshot) => {
       const snapshot = getEditorSnapshot({
         editorActorSnapshot,
-        slateEditorInstance: (editor as InternalEditor)._internal.slateEditor
-          .instance,
+        slateEditorInstance: (editor as InternalEditor)._internal.slateEditor,
       })
 
       return selector(snapshot)

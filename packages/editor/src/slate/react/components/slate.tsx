@@ -1,8 +1,6 @@
-import type {PortableTextBlock} from '@portabletext/schema'
-import React, {useCallback, useEffect} from 'react'
-import {safeStringify} from '../../../internal-utils/safe-json'
-import {isEditor} from '../../editor/is-editor'
-import type {Editor, Selection} from '../../interfaces/editor'
+import type React from 'react'
+import {useCallback, useEffect} from 'react'
+import type {Editor} from '../../interfaces/editor'
 import {
   SlateSelectorContext,
   useSelectorContext,
@@ -14,57 +12,14 @@ import {EditorContext} from '../hooks/use-slate-static'
  * is a mutable singleton so it won't ever register as "changed" otherwise.
  */
 
-export const Slate = (props: {
-  editor: Editor
-  initialValue: PortableTextBlock[]
-  children: React.ReactNode
-  onChange?: (value: PortableTextBlock[]) => void
-  onSelectionChange?: (selection: Selection) => void
-  onValueChange?: (value: PortableTextBlock[]) => void
-}) => {
-  const {
-    editor,
-    children,
-    onChange,
-    onSelectionChange,
-    onValueChange,
-    initialValue,
-    ...rest
-  } = props
-
-  // Run once on first mount, but before `useEffect` or render
-  React.useState(() => {
-    if (!isEditor(editor)) {
-      throw new Error(
-        `[Slate] editor is invalid! You passed: ${safeStringify(editor)}`,
-      )
-    }
-
-    editor.children = initialValue
-    Object.assign(editor, rest)
-  })
+export const Slate = (props: {editor: Editor; children: React.ReactNode}) => {
+  const {editor, children} = props
 
   const {selectorContext, onChange: handleSelectorChange} = useSelectorContext()
 
   const onContextChange = useCallback(() => {
-    if (onChange) {
-      onChange(editor.children)
-    }
-    if (
-      onSelectionChange &&
-      editor.operations.find((op) => op.type === 'set_selection')
-    ) {
-      onSelectionChange(editor.selection)
-    }
-    if (
-      onValueChange &&
-      editor.operations.find((op) => op.type !== 'set_selection')
-    ) {
-      onValueChange(editor.children)
-    }
-
     handleSelectorChange()
-  }, [editor, handleSelectorChange, onChange, onSelectionChange, onValueChange])
+  }, [editor, handleSelectorChange])
 
   useEffect(() => {
     editor.onContextChange = onContextChange
