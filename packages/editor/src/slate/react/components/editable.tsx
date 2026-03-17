@@ -17,6 +17,8 @@ import React, {
 } from 'react'
 import scrollIntoView from 'scroll-into-view-if-needed'
 import type {EditorActor} from '../../../editor/editor-machine'
+import {getDomNodePath} from '../../../paths/get-dom-node-path'
+import {keyedPathToIndexedPath} from '../../../paths/keyed-path-to-indexed-path'
 import {collapse} from '../../core/collapse'
 import {deselect} from '../../core/deselect'
 import {move} from '../../core/move'
@@ -58,6 +60,7 @@ import {rangeRef} from '../../editor/range-ref'
 import {start as editorStart} from '../../editor/start'
 import type {Editor} from '../../interfaces/editor'
 import type {NodeEntry} from '../../interfaces/node'
+import type {Path} from '../../interfaces/path'
 import type {DecoratedRange, LeafPosition} from '../../interfaces/text'
 import {getLeaf} from '../../node/get-leaf'
 import {getNode} from '../../node/get-node'
@@ -99,13 +102,14 @@ const Children = (props: Parameters<typeof useChildren>[0]) => (
 export interface RenderElementProps {
   children: any
   element: PortableTextTextBlock | PortableTextObject
+  indexedPath: Path
   attributes: {
     'data-slate-node': 'element'
     'data-slate-inline'?: true
     'data-slate-void'?: true
+    'data-path': string
     'contentEditable'?: false
     'dir'?: 'rtl'
-    'ref': any
   }
 }
 
@@ -138,7 +142,7 @@ export interface RenderTextProps {
   children: any
   attributes: {
     'data-slate-node': 'text'
-    'ref': any
+    'data-path': string
   }
 }
 
@@ -254,7 +258,7 @@ export const Editable = forwardRef(
             return
           }
 
-          const el = ReactEditor.toDOMNode(editor, editor)
+          const el = ReactEditor.toDOMNode(editor, [])
           const root = el.getRootNode()
 
           if (!processing.current && IS_WEBKIT && root instanceof ShadowRoot) {
@@ -279,7 +283,7 @@ export const Editable = forwardRef(
           ) {
             const root = ReactEditor.findDocumentOrShadowRoot(editor)
             const {activeElement} = root
-            const el = ReactEditor.toDOMNode(editor, editor)
+            const el = ReactEditor.toDOMNode(editor, [])
             const domSelection = getSelection(root)
 
             if (activeElement === el) {
@@ -350,7 +354,6 @@ export const Editable = forwardRef(
       if (ref.current && (window = getDefaultView(ref.current))) {
         editor.domWindow = window
         editor.domElement = ref.current
-        editor.elementToNode.set(ref.current, editor)
       }
 
       // Make sure the DOM selection state is in sync.
@@ -505,7 +508,7 @@ export const Editable = forwardRef(
         if (ensureSelection) {
           const ensureDomSelection = (forceChange?: boolean) => {
             try {
-              const el = ReactEditor.toDOMNode(editor, editor)
+              const el = ReactEditor.toDOMNode(editor, [])
               el.focus()
 
               setDomSelection(forceChange)
@@ -545,7 +548,7 @@ export const Editable = forwardRef(
     const onDOMBeforeInput = useCallback(
       (event: InputEvent) => {
         handleNativeHistoryEvents(editor, editorActor, event)
-        const el = ReactEditor.toDOMNode(editor, editor)
+        const el = ReactEditor.toDOMNode(editor, [])
         const root = el.getRootNode()
 
         if (processing?.current && IS_WEBKIT && root instanceof ShadowRoot) {
@@ -1112,6 +1115,7 @@ export const Editable = forwardRef(
                 }
                 data-slate-editor
                 data-slate-node="value"
+                data-path=""
                 // explicitly set this
                 contentEditable={!readOnly}
                 // in some cases, a decoration needs access to the range / selection to decorate a text node,
@@ -1217,7 +1221,7 @@ export const Editable = forwardRef(
                     }
 
                     const {relatedTarget} = event
-                    const el = ReactEditor.toDOMNode(editor, editor)
+                    const el = ReactEditor.toDOMNode(editor, [])
 
                     // COMPAT: The event should be ignored if the focus is returning
                     // to the editor from an embedded editable element (eg. an <input>
@@ -1243,16 +1247,24 @@ export const Editable = forwardRef(
                       isDOMNode(relatedTarget) &&
                       ReactEditor.hasDOMNode(editor, relatedTarget)
                     ) {
-                      const node = ReactEditor.toSlateNode(
-                        editor,
-                        relatedTarget,
-                      )
+                      const relatedPath = getDomNodePath(relatedTarget)
+                      const indexedPath = relatedPath
+                        ? keyedPathToIndexedPath(editor, relatedPath)
+                        : undefined
 
-                      if (
-                        isTextBlock({schema: editor.schema}, node) ||
-                        isObjectNode({schema: editor.schema}, node)
-                      ) {
-                        return
+                      if (indexedPath) {
+                        const relatedNode = getNodeIf(
+                          editor,
+                          indexedPath,
+                          editor.schema,
+                        )
+                        if (
+                          relatedNode &&
+                          (isTextBlock({schema: editor.schema}, relatedNode) ||
+                            isObjectNode({schema: editor.schema}, relatedNode))
+                        ) {
+                          return
+                        }
                       }
                     }
 
@@ -1281,19 +1293,30 @@ export const Editable = forwardRef(
                       !isEventHandled(event, attributes.onClick) &&
                       isDOMNode(event.target)
                     ) {
-                      const node = ReactEditor.toSlateNode(editor, event.target)
-                      const path = ReactEditor.findPath(editor, node)
+                      const path = getDomNodePath(event.target)
+                      const indexedPath = path
+                        ? keyedPathToIndexedPath(editor, path)
+                        : undefined
 
-                      // At this time, the Slate document may be arbitrarily different,
-                      // because onClick handlers can change the document before we get here.
-                      // Therefore we must check that this path actually exists,
-                      // and that it still refers to the same node.
-                      if (getNodeIf(editor, path, editor.schema) !== node) {
+                      if (!indexedPath) {
                         return
                       }
 
-                      if (event.detail === TRIPLE_CLICK && path.length >= 1) {
-                        let blockPath = path
+                      // At this time, the Slate document may be arbitrarily different,
+                      // because onClick handlers can change the document before we get here.
+                      // Therefore we must check that this path actually exists.
+                      const node = getNodeIf(editor, indexedPath, editor.schema)
+
+                      if (!node) {
+                        return
+                      }
+
+                      if (
+                        event.detail === TRIPLE_CLICK &&
+                        indexedPath.length >= 1
+                      ) {
+                        let blockPath = indexedPath
+
                         if (
                           !(
                             isTextBlock({schema: editor.schema}, node) &&
@@ -1303,10 +1326,10 @@ export const Editable = forwardRef(
                           const block = above(editor, {
                             match: (n) =>
                               isTextBlock({schema: editor.schema}, n),
-                            at: path,
+                            at: indexedPath,
                           })
 
-                          blockPath = block?.[1] ?? path.slice(0, 1)
+                          blockPath = block?.[1] ?? indexedPath.slice(0, 1)
                         }
 
                         const range = editorRange(editor, blockPath)
@@ -1318,8 +1341,8 @@ export const Editable = forwardRef(
                         return
                       }
 
-                      const start = editorStart(editor, path)
-                      const end = editorEnd(editor, path)
+                      const start = editorStart(editor, indexedPath)
+                      const end = editorEnd(editor, indexedPath)
                       const startObjectNode = getObjectNode(editor, {at: start})
                       const endObjectNode = getObjectNode(editor, {at: end})
 
@@ -1460,7 +1483,7 @@ export const Editable = forwardRef(
                       ReactEditor.hasEditableTarget(editor, event.target) &&
                       !isEventHandled(event, attributes.onFocus)
                     ) {
-                      const el = ReactEditor.toDOMNode(editor, editor)
+                      const el = ReactEditor.toDOMNode(editor, [])
                       const root = ReactEditor.findDocumentOrShadowRoot(editor)
                       state.latestElement = root.activeElement
 
@@ -1870,8 +1893,10 @@ export const Editable = forwardRef(
                 )}
               >
                 <Children
+                  parentDataPath=""
                   decorations={decorations}
                   node={editor}
+                  indexedPath={[]}
                   renderElement={renderElement}
                   renderPlaceholder={renderPlaceholder}
                   renderLeaf={renderLeaf}

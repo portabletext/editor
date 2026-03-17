@@ -1,6 +1,9 @@
 import type {Path} from '../types/paths'
-import {isKeyedSegment} from './util.is-keyed-segment'
+import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 
+/**
+ * Serialize a keyed path to a string.
+ */
 export function serializePath(path: Path): string {
   return path
     .map((segment) => {

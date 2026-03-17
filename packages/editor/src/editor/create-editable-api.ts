@@ -288,14 +288,15 @@ export function createEditableAPI(
     ): Node | undefined => {
       let node: Node | undefined
       try {
-        const [item] = Array.from(
+        const entry = Array.from(
           nodes(editor, {
             at: [],
             match: (n) => n._key === element._key,
           }) || [],
-        )[0] || [undefined]
-        if (item) {
-          node = ReactEditor.toDOMNode(editor, item)
+        )[0]
+        if (entry) {
+          const [, itemPath] = entry
+          node = ReactEditor.toDOMNode(editor, itemPath)
         }
       } catch {
         // Nothing

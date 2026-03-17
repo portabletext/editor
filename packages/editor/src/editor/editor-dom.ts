@@ -71,8 +71,8 @@ function getBlockNodes(
       }),
     )
 
-    return blockEntries.map(([blockNode]) =>
-      DOMEditor.toDOMNode(slateEditor, blockNode),
+    return blockEntries.map(([, blockPath]) =>
+      DOMEditor.toDOMNode(slateEditor, blockPath),
     )
   } catch {
     return []
@@ -102,8 +102,8 @@ function getChildNodes(
       }),
     )
 
-    return childEntries.map(([childNode]) =>
-      DOMEditor.toDOMNode(slateEditor, childNode),
+    return childEntries.map(([, childPath]) =>
+      DOMEditor.toDOMNode(slateEditor, childPath),
     )
   } catch {
     return []
@@ -112,7 +112,7 @@ function getChildNodes(
 
 function getEditorElement(slateEditor: PortableTextSlateEditor) {
   try {
-    return DOMEditor.toDOMNode(slateEditor, slateEditor)
+    return DOMEditor.toDOMNode(slateEditor, [])
   } catch {
     return undefined
   }

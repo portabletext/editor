@@ -5,7 +5,6 @@ import type {
 } from '@portabletext/schema'
 import {isSpan, isTextBlock} from '@portabletext/schema'
 import {useCallback, useRef, type JSX} from 'react'
-import type {Key} from '../../dom/utils/key'
 import {
   isElementDecorationsEqual,
   splitDecorationsByChild,
@@ -13,6 +12,7 @@ import {
 import {isEditor} from '../../editor/is-editor'
 import type {Editor} from '../../interfaces/editor'
 import type {Node} from '../../interfaces/node'
+import type {Path} from '../../interfaces/path'
 import type {DecoratedRange} from '../../interfaces/text'
 import {isObjectNode} from '../../node/is-object-node'
 import type {
@@ -24,7 +24,6 @@ import type {
 import ElementComponent from '../components/element'
 import ObjectNodeComponent from '../components/object-node'
 import TextComponent from '../components/text'
-import {ReactEditor} from '../plugin/react-editor'
 import {ElementContext} from './use-element'
 import {useSlateStatic} from './use-slate-static'
 
@@ -33,16 +32,20 @@ import {useSlateStatic} from './use-slate-static'
  */
 
 const useChildren = (props: {
+  parentDataPath: string
   decorations: DecoratedRange[]
   node: Editor | Node
+  indexedPath: Path
   renderElement?: (props: RenderElementProps) => JSX.Element
   renderPlaceholder: (props: RenderPlaceholderProps) => JSX.Element
   renderText?: (props: RenderTextProps) => JSX.Element
   renderLeaf?: (props: RenderLeafProps) => JSX.Element
 }) => {
   const {
+    parentDataPath,
     decorations,
     node,
+    indexedPath: parentIndexedPath,
     renderElement,
     renderPlaceholder,
     renderText,
@@ -53,7 +56,12 @@ const useChildren = (props: {
 
   const isEditorNode = isEditor(node)
 
-  const decorationsByChild = useDecorationsByChild(editor, node, decorations)
+  const decorationsByChild = useDecorationsByChild(
+    editor,
+    node,
+    parentIndexedPath,
+    decorations,
+  )
 
   const children = isEditor(node)
     ? node.children
@@ -61,26 +69,21 @@ const useChildren = (props: {
       ? node.children
       : []
 
-  // Update the index and parent of each child.
-  children.forEach((n: Node, i: number) => {
-    editor.nodeToIndex.set(n, i)
-    editor.nodeToParent.set(n, node)
-  })
-
   const renderElementComponent = useCallback(
-    (
-      n: PortableTextTextBlock | PortableTextObject,
-      i: number,
-      cachedKey?: Key,
-    ) => {
-      const key = cachedKey ?? ReactEditor.findKey(editor, n)
+    (node: PortableTextTextBlock | PortableTextObject, i: number) => {
+      const nodeDataPath =
+        parentDataPath === ''
+          ? `${node._key}`
+          : `${parentDataPath}.children.${node._key}`
 
       return (
-        <ElementContext.Provider key={`provider-${key.id}`} value={n}>
+        <ElementContext.Provider key={`provider-${node._key}`} value={node}>
           <ElementComponent
+            dataPath={nodeDataPath}
             decorations={decorationsByChild[i] ?? []}
-            element={n}
-            key={key.id}
+            element={node}
+            key={node._key}
+            indexedPath={parentIndexedPath.concat(i)}
             renderElement={renderElement}
             renderPlaceholder={renderPlaceholder}
             renderLeaf={renderLeaf}
@@ -90,8 +93,9 @@ const useChildren = (props: {
       )
     },
     [
-      editor,
+      parentDataPath,
       decorationsByChild,
+      parentIndexedPath,
       renderElement,
       renderPlaceholder,
       renderLeaf,
@@ -103,38 +107,49 @@ const useChildren = (props: {
     ? node
     : undefined
 
-  const renderTextComponent = (n: PortableTextSpan, i: number) => {
+  const renderTextComponent = (node: PortableTextSpan, index: number) => {
     if (!textBlockParent) {
       throw new Error(
         'Cannot render text component without a text block parent',
       )
     }
 
-    const key = ReactEditor.findKey(editor, n)
+    const nodeDataPath =
+      parentDataPath !== '' ? `${parentDataPath}.children.${node._key}` : ''
 
     return (
       <TextComponent
-        decorations={decorationsByChild[i] ?? []}
-        key={key.id}
-        isLast={i === children.length - 1}
+        dataPath={nodeDataPath}
+        decorations={decorationsByChild[index] ?? []}
+        key={node._key}
+        isLast={index === children.length - 1}
         parent={textBlockParent}
+        indexedPath={parentIndexedPath.concat(index)}
         renderPlaceholder={renderPlaceholder}
         renderLeaf={renderLeaf}
         renderText={renderText}
-        text={n}
+        text={node}
       />
     )
   }
 
-  const renderObjectNodeComponent = (n: PortableTextObject, i: number) => {
-    const key = ReactEditor.findKey(editor, n)
+  const renderObjectNodeComponent = (
+    node: PortableTextObject,
+    index: number,
+  ) => {
+    const nodeDataPath =
+      parentDataPath === ''
+        ? `${node._key}`
+        : `${parentDataPath}.children.${node._key}`
 
     return (
       <ObjectNodeComponent
-        decorations={decorationsByChild[i] ?? []}
+        dataPath={nodeDataPath}
+        decorations={decorationsByChild[index] ?? []}
         isInline={!isEditorNode}
-        key={key.id}
-        objectNode={n}
+        key={node._key}
+        objectNode={node}
+        indexedPath={parentIndexedPath.concat(index)}
         renderElement={renderElement}
       />
     )
@@ -157,9 +172,15 @@ const useChildren = (props: {
 const useDecorationsByChild = (
   editor: Editor,
   node: Editor | Node,
+  indexedPath: Path,
   decorations: DecoratedRange[],
 ) => {
-  const decorationsByChild = splitDecorationsByChild(editor, node, decorations)
+  const decorationsByChild = splitDecorationsByChild(
+    editor,
+    node,
+    indexedPath,
+    decorations,
+  )
 
   // The value we return is a mutable array of `DecoratedRange[]` arrays. Each
   // `DecoratedRange[]` is only updated if the decorations at that index have
