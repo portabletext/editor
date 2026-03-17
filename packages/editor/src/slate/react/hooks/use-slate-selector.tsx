@@ -6,25 +6,13 @@ import {useSlateStatic} from './use-slate-static'
 
 type Callback = () => void
 
-interface SlateSelectorOptions {
-  /**
-   * If true, defer calling the selector function until after `Editable` has
-   * finished rendering. This ensures that `ReactEditor.findPath` won't return
-   * an outdated path if called inside the selector.
-   */
-  deferred?: boolean
-}
-
 /**
  * A React context for sharing the editor selector context in a way to control
  * re-renders.
  */
 
 export const SlateSelectorContext = createContext<{
-  addEventListener: (
-    callback: Callback,
-    options?: SlateSelectorOptions,
-  ) => () => void
+  addEventListener: (callback: Callback) => () => void
   flushDeferred: () => void
 }>({} as any)
 
@@ -48,7 +36,6 @@ const refEquality = (a: any, b: any) => a === b
 export function useSlateSelector<T>(
   selector: (editor: Editor) => T,
   equalityFn: (a: T | null, b: T) => boolean = refEquality,
-  {deferred}: SlateSelectorOptions = {},
 ): T {
   const context = useContext(SlateSelectorContext)
   if (!context) {
@@ -69,10 +56,10 @@ export function useSlateSelector<T>(
   )
 
   useIsomorphicLayoutEffect(() => {
-    const unsubscribe = addEventListener(update, {deferred})
+    const unsubscribe = addEventListener(update)
     update()
     return unsubscribe
-  }, [addEventListener, update, deferred])
+  }, [addEventListener, update])
 
   return selectedState
 }
@@ -97,20 +84,13 @@ export function useSelectorContext() {
     deferredEventListeners.current.clear()
   }, [])
 
-  const addEventListener = useCallback(
-    (callbackProp: Callback, {deferred = false}: SlateSelectorOptions = {}) => {
-      const callback = deferred
-        ? () => deferredEventListeners.current.add(callbackProp)
-        : callbackProp
+  const addEventListener = useCallback((callbackProp: Callback) => {
+    eventListeners.current.add(callbackProp)
 
-      eventListeners.current.add(callback)
-
-      return () => {
-        eventListeners.current.delete(callback)
-      }
-    },
-    [],
-  )
+    return () => {
+      eventListeners.current.delete(callbackProp)
+    }
+  }, [])
 
   const selectorContext = useMemo(
     () => ({
