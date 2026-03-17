@@ -73,7 +73,6 @@ export interface DOMEditor extends BaseEditor {
   nodeToIndex: WeakMap<Editor | Node, number>
   nodeToParent: WeakMap<Editor | Node, Editor | Node>
   elementToNode: WeakMap<HTMLElement, Editor | Node>
-  nodeToElement: WeakMap<Editor | Node, HTMLElement>
   nodeToKey: WeakMap<Editor | Node, Key>
   readOnly: boolean
   focused: boolean

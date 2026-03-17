@@ -70,11 +70,9 @@ const Text = (props: {
     (span: HTMLSpanElement | null) => {
       if (span) {
         editor.keyToElement?.set(key, span)
-        editor.nodeToElement.set(text, span)
         editor.elementToNode.set(span, text)
       } else {
         editor.keyToElement?.delete(key)
-        editor.nodeToElement.delete(text)
         if (ref.current) {
           editor.elementToNode.delete(ref.current)
         }
