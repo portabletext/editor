@@ -5,6 +5,7 @@ import {
   type PortableTextTextBlock,
 } from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
+import {indexedPathToKeyedPath} from '../paths/indexed-path-to-keyed-path'
 import {end} from '../slate/editor/end'
 import {isEditor} from '../slate/editor/is-editor'
 import {node as editorNode} from '../slate/editor/node'
@@ -112,31 +113,6 @@ export function getFocusChild({
 
     return focusChild
       ? [focusChild, [...focusBlockPath, childIndex]]
-      : [undefined, undefined]
-  } catch {
-    return [undefined, undefined]
-  }
-}
-
-function getPointChild({
-  editor,
-  point,
-}: {
-  editor: PortableTextSlateEditor
-  point: Point
-}): [node: Node, path: SlatePath] | [undefined, undefined] {
-  const [block, blockPath] = getPointBlock({editor, point})
-  const childIndex = point.path.at(1)
-
-  if (!block || !blockPath || childIndex === undefined) {
-    return [undefined, undefined]
-  }
-
-  try {
-    const pointChild = getChild(block, childIndex, editor.schema)
-
-    return pointChild
-      ? [pointChild, [...blockPath, childIndex]]
       : [undefined, undefined]
   } catch {
     return [undefined, undefined]
@@ -301,57 +277,22 @@ export function slateRangeToSelection({
   editor: PortableTextSlateEditor
   range: Range
 }): EditorSelection {
-  const [anchorBlock] = getPointBlock({
+  const anchor = slatePointToSelectionPoint({
+    schema,
     editor,
     point: range.anchor,
   })
-  const [focusBlock] = getPointBlock({
-    editor,
-    point: range.focus,
-  })
+  const focus = slatePointToSelectionPoint({schema, editor, point: range.focus})
 
-  if (!anchorBlock || !focusBlock) {
+  if (!anchor || !focus) {
     return null
   }
 
-  const [anchorChild] =
-    anchorBlock._type === schema.block.name
-      ? getPointChild({
-          editor,
-          point: range.anchor,
-        })
-      : [undefined, undefined]
-  const [focusChild] =
-    focusBlock._type === schema.block.name
-      ? getPointChild({
-          editor,
-          point: range.focus,
-        })
-      : [undefined, undefined]
-
-  const selection: EditorSelection = {
-    anchor: {
-      path: [{_key: anchorBlock._key}],
-      offset: range.anchor.offset,
-    },
-    focus: {
-      path: [{_key: focusBlock._key}],
-      offset: range.focus.offset,
-    },
+  return {
+    anchor,
+    focus,
     backward: isBackwardRange(range),
   }
-
-  if (anchorChild) {
-    selection.anchor.path.push('children')
-    selection.anchor.path.push({_key: anchorChild._key})
-  }
-
-  if (focusChild) {
-    selection.focus.path.push('children')
-    selection.focus.path.push({_key: focusChild._key})
-  }
-
-  return selection
 }
 
 export function slatePointToSelectionPoint({
@@ -363,32 +304,14 @@ export function slatePointToSelectionPoint({
   editor: PortableTextSlateEditor
   point: Point
 }): EditorSelectionPoint | undefined {
-  const [block] = getPointBlock({
-    editor,
-    point,
-  })
+  const keyedPath = indexedPathToKeyedPath(editor, point.path, schema)
 
-  if (!block) {
+  if (!keyedPath) {
     return undefined
   }
 
-  const [child] =
-    block._type === schema.block.name
-      ? getPointChild({
-          editor,
-          point,
-        })
-      : [undefined, undefined]
-
-  if (child) {
-    return {
-      path: [{_key: block._key}, 'children', {_key: child._key}],
-      offset: point.offset,
-    }
-  }
-
   return {
-    path: [{_key: block._key}],
+    path: keyedPath,
     offset: point.offset,
   }
 }

@@ -160,7 +160,7 @@ function getEventNode({
   try {
     const path = getDomNodePath(event.target)
     const indexedPath = path
-      ? keyedPathToIndexedPath(slateEditor, path)
+      ? keyedPathToIndexedPath(slateEditor, path, slateEditor.blockIndexMap)
       : undefined
 
     if (indexedPath) {

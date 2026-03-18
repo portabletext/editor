@@ -26,7 +26,24 @@ const initialValue: Array<PortableTextBlock> = [
                   {
                     _type: 'span',
                     _key: 'span-1',
-                    text: 'Hello, world!',
+                    text: 'Hello,',
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            _type: 'cell',
+            _key: 'cell-2',
+            content: [
+              {
+                _type: 'block',
+                _key: 'block-2',
+                children: [
+                  {
+                    _type: 'span',
+                    _key: 'span-2',
+                    text: 'world!',
                   },
                 ],
               },

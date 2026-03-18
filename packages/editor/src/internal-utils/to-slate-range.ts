@@ -1,10 +1,6 @@
-import {
-  isSpan,
-  isTextBlock,
-  type PortableTextObject,
-  type PortableTextSpan,
-} from '@portabletext/schema'
+import {isSpan, isTextBlock} from '@portabletext/schema'
 import type {EditorContext, EditorSnapshot} from '../editor/editor-snapshot'
+import {keyedPathToIndexedPath} from '../paths/keyed-path-to-indexed-path'
 import type {Path} from '../slate/interfaces/path'
 import type {Range} from '../slate/interfaces/range'
 import type {EditorSelectionPoint} from '../types/editor'
@@ -138,41 +134,37 @@ function toSlateSelectionPoint(
     }
   }
 
-  let offset = spanSelectionPoint?.offset ?? selectionPoint.offset
-  let childPath: Array<number> = []
-  let childIndex = -1
-  let pathChild: PortableTextSpan | PortableTextObject | undefined
-
-  for (const child of block.children) {
-    childIndex++
-    if (child._key === childKey) {
-      pathChild = child
-      if (isSpan(snapshot.context, child)) {
-        childPath = [childIndex]
-      } else {
-        // ObjectNodes have a spacer text node in the DOM for cursor
-        // anchoring. The selection resolves to the ObjectNode path.
-        childPath = [childIndex]
-        offset = 0
-      }
-      break
-    }
-  }
+  const indexedPath = keyedPathToIndexedPath(
+    {children: snapshot.context.value},
+    [{_key: blockKey}, 'children', {_key: childKey}],
+    snapshot.blockIndexMap,
+  )
 
   // If we for some unforeseen reason didn't manage to produce a child path,
   // then we have to resort to selecting the first child of the block (which
   // by Slate convention is a span).
-  if (childPath.length === 0) {
+  if (indexedPath.length < 2) {
     return {
       path: [blockIndex, 0],
       offset: 0,
     }
   }
 
+  let offset = spanSelectionPoint?.offset ?? selectionPoint.offset
+  const childIndex = indexedPath[1]!
+  const pathChild = block.children[childIndex]
+
+  if (pathChild && !isSpan(snapshot.context, pathChild)) {
+    // ObjectNodes have a spacer text node in the DOM for cursor
+    // anchoring. The selection resolves to the ObjectNode path.
+    offset = 0
+  }
+
   return {
-    path: [blockIndex].concat(childPath),
-    offset: isSpan(snapshot.context, pathChild)
-      ? Math.min(pathChild.text.length, offset)
-      : offset,
+    path: indexedPath,
+    offset:
+      pathChild && isSpan(snapshot.context, pathChild)
+        ? Math.min(pathChild.text.length, offset)
+        : offset,
   }
 }

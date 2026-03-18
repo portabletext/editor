@@ -3,22 +3,48 @@ import type {KeyedSegment} from '../types/paths'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 
 /**
- * Converts a keyed path to an indexed path by recursively walking the tree
- * assuming each string segment is the address of the current node's children.
+ * Converts a keyed path to an indexed path.
+ *
+ * Uses `blockIndexMap` for O(1) lookup of the first segment, then walks the
+ * tree for deeper segments using string segments as property names.
  *
  * - `[{_key: 'k0'}]` -> `[0]`
  * - `[{_key: 'k0'}, 'children', {_key: 's0'}]` -> `[0, 0]`
- * - `[{_key: 'k0'}, 'children', {_key: 's0'}, 'children', {_key: 's1'}]` -> `[0, 0, 0]`
  */
 export function keyedPathToIndexedPath(
-  node: {
-    children: Array<Node>
-  },
+  root: {children: Array<Node>},
+  keyedPath: Array<KeyedSegment | string>,
+  blockIndexMap: Map<string, number>,
+): Array<number> {
+  if (keyedPath.length === 0) {
+    return []
+  }
+
+  const firstSegment = keyedPath[0]
+
+  if (!firstSegment || !isKeyedSegment(firstSegment)) {
+    return []
+  }
+
+  const blockIndex = blockIndexMap.get(firstSegment._key)
+
+  if (blockIndex === undefined) {
+    return []
+  }
+
+  const block = root.children[blockIndex]
+
+  if (!block) {
+    return []
+  }
+
+  return [blockIndex, ...resolveChildPath(block, keyedPath.slice(1))]
+}
+
+function resolveChildPath(
+  node: Node,
   keyedPath: Array<KeyedSegment | string>,
 ): Array<number> {
-  const indexedPath: Array<number> = []
-  let currentNode: Node | undefined
-
   for (let i = 0; i < keyedPath.length; i++) {
     const segment = keyedPath[i]
 
@@ -27,38 +53,43 @@ export function keyedPathToIndexedPath(
     }
 
     if (isKeyedSegment(segment)) {
-      let currentChildIndex = 0
+      const children = (node as {children?: Array<Node>}).children
 
-      for (const child of node.children) {
-        if (child._key === segment._key) {
-          currentNode = child
-
-          indexedPath.push(currentChildIndex)
-
-          break
-        }
-
-        currentChildIndex++
+      if (!children) {
+        break
       }
-    } else {
-      if (currentNode && segment in currentNode) {
-        // Dynamic property access for schema-defined child fields (e.g. "children").
-        // The `in` check above ensures the property exists on the node.
-        const childrenField = (currentNode as Record<string, unknown>)[segment]
 
-        if (Array.isArray(childrenField)) {
-          const subPath = keyedPathToIndexedPath(
-            {children: childrenField as Array<Node>},
-            keyedPath.slice(i + 1),
-          )
+      let childIndex = 0
 
-          indexedPath.push(...subPath)
+      for (const child of children) {
+        if (child._key === segment._key) {
+          return [
+            childIndex,
+            ...resolveChildPath(child, keyedPath.slice(i + 1)),
+          ]
         }
+
+        childIndex++
+      }
+
+      break
+    } else {
+      if (!(segment in node)) {
+        break
+      }
+
+      const childrenField = (node as Record<string, unknown>)[segment]
+
+      if (Array.isArray(childrenField)) {
+        return resolveChildPath(
+          {children: childrenField} as unknown as Node,
+          keyedPath.slice(i + 1),
+        )
       }
 
       break
     }
   }
 
-  return indexedPath
+  return []
 }

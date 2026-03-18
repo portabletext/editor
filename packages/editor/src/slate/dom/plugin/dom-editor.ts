@@ -701,7 +701,7 @@ export const DOMEditor: DOMEditorInterface = {
       if (node && DOMEditor.hasDOMNode(editor, node, {editable: true})) {
         const nodePath = getDomNodePath(node)
         const indexedPath = nodePath
-          ? keyedPathToIndexedPath(editor, nodePath)
+          ? keyedPathToIndexedPath(editor, nodePath, editor.blockIndexMap)
           : undefined
 
         if (!indexedPath) {
@@ -738,7 +738,7 @@ export const DOMEditor: DOMEditorInterface = {
           if (voidEl) {
             const path = getDomNodePath(voidEl)
             const indexedPath = path
-              ? keyedPathToIndexedPath(editor, path)
+              ? keyedPathToIndexedPath(editor, path, editor.blockIndexMap)
               : undefined
 
             if (indexedPath) {
@@ -758,7 +758,7 @@ export const DOMEditor: DOMEditorInterface = {
         if (voidEl) {
           const path = getDomNodePath(voidEl)
           const indexedPath = path
-            ? keyedPathToIndexedPath(editor, path)
+            ? keyedPathToIndexedPath(editor, path, editor.blockIndexMap)
             : undefined
 
           if (indexedPath) {
@@ -781,7 +781,9 @@ export const DOMEditor: DOMEditorInterface = {
     // the select event fires twice, once for the old editor's `element`
     // first, and then afterwards for the correct `element`. (2017/03/03)
     const path = getDomNodePath(textNode!)
-    const indexedPath = path ? keyedPathToIndexedPath(editor, path) : undefined
+    const indexedPath = path
+      ? keyedPathToIndexedPath(editor, path, editor.blockIndexMap)
+      : undefined
 
     if (!indexedPath) {
       if (suppressThrow) {

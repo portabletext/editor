@@ -1249,7 +1249,11 @@ export const Editable = forwardRef(
                     ) {
                       const relatedPath = getDomNodePath(relatedTarget)
                       const indexedPath = relatedPath
-                        ? keyedPathToIndexedPath(editor, relatedPath)
+                        ? keyedPathToIndexedPath(
+                            editor,
+                            relatedPath,
+                            editor.blockIndexMap,
+                          )
                         : undefined
 
                       if (indexedPath) {
@@ -1295,7 +1299,11 @@ export const Editable = forwardRef(
                     ) {
                       const path = getDomNodePath(event.target)
                       const indexedPath = path
-                        ? keyedPathToIndexedPath(editor, path)
+                        ? keyedPathToIndexedPath(
+                            editor,
+                            path,
+                            editor.blockIndexMap,
+                          )
                         : undefined
 
                       if (!indexedPath) {
