@@ -20,6 +20,7 @@ import type {EditorActor} from '../../../editor/editor-machine'
 import {collapse} from '../../core/collapse'
 import {deselect} from '../../core/deselect'
 import {move} from '../../core/move'
+import {DOMEditor} from '../../dom/plugin/dom-editor'
 import {TRIPLE_CLICK} from '../../dom/utils/constants'
 import {
   containsShadowAware,
@@ -1186,7 +1187,11 @@ export const Editable = forwardRef(
                     // there's a chance that content might be placed in the browser's undo stack.
                     // This means undo can be triggered even when the div is not focused,
                     // and it only triggers the input event for the node. (2024/10/09)
-                    if (!ReactEditor.isFocused(editor)) {
+                    if (
+                      !ReactEditor.isFocused(editor) &&
+                      isDOMNode(event.target) &&
+                      DOMEditor.hasEditableTarget(editor, event.target)
+                    ) {
                       handleNativeHistoryEvents(
                         editor,
                         editorActor,
