@@ -50,13 +50,14 @@ export function getContainerChildFields(
 
 /**
  * Walk the schema tree to find the field definitions for a given type.
+ * When no scope is provided, searches the entire schema tree recursively.
  */
 function findFieldsForType(
   schema: Schema,
   typeName: string,
   scopePath?: string,
 ): ReadonlyArray<FieldDefinition> | undefined {
-  // If no scope, look at top-level block objects
+  // Check top-level block objects first (works with or without scope)
   if (!scopePath) {
     const blockObject = schema.blockObjects.find(
       (blockObj) => blockObj.name === typeName,
@@ -64,6 +65,14 @@ function findFieldsForType(
 
     if (blockObject) {
       return blockObject.fields
+    }
+
+    // Search the entire schema tree for this type
+    for (const blockObj of schema.blockObjects) {
+      const found = findTypeFieldsRecursive(blockObj.fields, typeName)
+      if (found) {
+        return found
+      }
     }
 
     return undefined
@@ -116,6 +125,38 @@ function findFieldsForType(
 }
 
 /**
+ * Recursively search all fields for a type and return its fields.
+ */
+function findTypeFieldsRecursive(
+  fields: ReadonlyArray<FieldDefinition>,
+  typeName: string,
+): ReadonlyArray<FieldDefinition> | undefined {
+  for (const field of fields) {
+    if (field.type === 'array' && 'of' in field && field.of) {
+      for (const ofMember of field.of) {
+        if (
+          ofMember.type === typeName &&
+          'fields' in ofMember &&
+          ofMember.fields
+        ) {
+          return ofMember.fields
+        }
+
+        // Recurse into nested types
+        if ('fields' in ofMember && ofMember.fields) {
+          const found = findTypeFieldsRecursive(ofMember.fields, typeName)
+          if (found) {
+            return found
+          }
+        }
+      }
+    }
+  }
+
+  return undefined
+}
+
+/**
  * Search through fields for array fields that contain an 'of' member
  * matching the given type name, and return that member's fields.
  */
@@ -142,11 +183,78 @@ function findTypeInFields(
 
 /**
  * Check if a given type has container child fields (i.e., is a container).
+ *
+ * When no scopePath is provided, searches the entire schema tree recursively.
+ * A type is a container if it has array fields with nested types anywhere
+ * in the schema definition.
  */
 export function isContainerType(
   schema: Schema,
   typeName: string,
   scopePath?: string,
 ): boolean {
-  return getContainerChildFields(schema, typeName, scopePath).length > 0
+  // If a scope is provided, use the scoped lookup
+  if (scopePath !== undefined) {
+    return getContainerChildFields(schema, typeName, scopePath).length > 0
+  }
+
+  // Check top-level block objects first
+  if (getContainerChildFields(schema, typeName).length > 0) {
+    return true
+  }
+
+  // Search the entire schema tree for this type
+  return hasContainerFieldsAnywhere(schema, typeName)
+}
+
+/**
+ * Recursively search all block object definitions for a type with array fields.
+ */
+function hasContainerFieldsAnywhere(schema: Schema, typeName: string): boolean {
+  for (const blockObject of schema.blockObjects) {
+    if (searchFieldsForContainerType(blockObject.fields, typeName)) {
+      return true
+    }
+  }
+
+  return false
+}
+
+/**
+ * Recursively search field definitions for a type that has array child fields.
+ * A type is a container if it has any array fields - the array field's contents
+ * can be blocks, objects, or other types.
+ */
+function searchFieldsForContainerType(
+  fields: ReadonlyArray<FieldDefinition>,
+  typeName: string,
+): boolean {
+  for (const field of fields) {
+    if (field.type === 'array' && 'of' in field && field.of) {
+      for (const ofMember of field.of) {
+        if (ofMember.type === typeName) {
+          // Found the type - check if it has any array fields (making it a container)
+          if ('fields' in ofMember && ofMember.fields) {
+            return ofMember.fields.some(
+              (childField) =>
+                childField.type === 'array' &&
+                'of' in childField &&
+                childField.of,
+            )
+          }
+
+          return false
+        }
+
+        // Recurse into nested types
+        if ('fields' in ofMember && ofMember.fields) {
+          if (searchFieldsForContainerType(ofMember.fields, typeName)) {
+            return true
+          }
+        }
+      }
+    }
+  }
+
+  return false
 }

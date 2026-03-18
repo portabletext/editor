@@ -4,12 +4,15 @@ import type {
   PortableTextTextBlock,
 } from '@portabletext/schema'
 import {isSpan, isTextBlock} from '@portabletext/schema'
+import {useSelector} from '@xstate/react'
 import {useCallback, useContext, useRef, type JSX} from 'react'
 import {ContainerScopeContext} from '../../../editor/container-scope-context'
+import {EditorActorContext} from '../../../editor/editor-actor-context'
 import {
   getContainerChildFields,
   isContainerType,
 } from '../../../renderers/container-schema'
+import {getRendererKey} from '../../../renderers/renderer.types'
 import {
   isElementDecorationsEqual,
   splitDecorationsByChild,
@@ -114,6 +117,8 @@ const useChildren = (props: {
 
   const isEditorNode = isEditor(node)
   const currentScope = useContext(ContainerScopeContext)
+  const editorActor = useContext(EditorActorContext)
+  const renderers = useSelector(editorActor, (s) => s.context.renderers)
 
   const decorationsByChild = useDecorationsByChild(
     editor,
@@ -122,10 +127,22 @@ const useChildren = (props: {
     decorations,
   )
 
+  const hasRenderer = (typeName: string, scope?: string): boolean => {
+    if (scope) {
+      const scopedKey = getRendererKey('blockObject', `${scope}.${typeName}`)
+      if (renderers.has(scopedKey)) {
+        return true
+      }
+    }
+    const key = getRendererKey('blockObject', typeName)
+    return renderers.has(key)
+  }
+
   const isContainerNode =
     !isEditor(node) &&
     isObjectNode({schema: editor.schema}, node) &&
-    isContainerType(editor.schema, node._type)
+    isContainerType(editor.schema, node._type) &&
+    hasRenderer(node._type, currentScope)
 
   // When the current node is a container, compute the scope for its children.
   // The scope accumulates: undefined -> 'table' -> 'table.row' -> 'table.row.cell'
@@ -225,11 +242,13 @@ const useChildren = (props: {
     node: PortableTextObject,
     index: number,
   ) => {
-    // Container types go through the normal Element pipeline
-    // Element will call useChildren which will iterate their schema-defined fields
+    // Container types go through the normal Element pipeline only when a
+    // renderer is registered. Without a renderer, they render as void objects
+    // (backwards compatible).
     if (
       (isEditorNode || isContainerNode) &&
-      isContainerType(editor.schema, node._type)
+      isContainerType(editor.schema, node._type) &&
+      hasRenderer(node._type, childScope)
     ) {
       return renderElementComponent(node, index)
     }

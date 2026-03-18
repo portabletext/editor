@@ -371,8 +371,32 @@ describe('tables', () => {
   })
 
   describe('rendering', () => {
+    const defaultRenderers: Array<Renderer> = [
+      {
+        type: 'blockObject',
+        name: 'table',
+        render: ({attributes, children}) => (
+          <table {...attributes}>
+            <tbody>{children}</tbody>
+          </table>
+        ),
+      },
+      {
+        type: 'blockObject',
+        name: 'table.row',
+        render: ({attributes, children}) => <tr {...attributes}>{children}</tr>,
+      },
+      {
+        type: 'blockObject',
+        name: 'table.row.cell',
+        render: ({attributes, children}) => <td {...attributes}>{children}</td>,
+      },
+    ]
+
     test('table data-path', async () => {
-      const {locator, table} = await createTableTestEditor()
+      const {locator, table} = await createTableTestEditor({
+        renderers: defaultRenderers,
+      })
 
       await vi.waitFor(() => {
         const el = locator
@@ -383,7 +407,9 @@ describe('tables', () => {
     })
 
     test('row data-path', async () => {
-      const {locator, table, row} = await createTableTestEditor()
+      const {locator, table, row} = await createTableTestEditor({
+        renderers: defaultRenderers,
+      })
 
       await vi.waitFor(() => {
         const el = locator
@@ -394,7 +420,9 @@ describe('tables', () => {
     })
 
     test('cell data-path', async () => {
-      const {locator, table, row, cell} = await createTableTestEditor()
+      const {locator, table, row, cell} = await createTableTestEditor({
+        renderers: defaultRenderers,
+      })
 
       await vi.waitFor(() => {
         const el = locator
@@ -407,7 +435,9 @@ describe('tables', () => {
     })
 
     test('block inside cell data-path', async () => {
-      const {locator, table, row, cell, block} = await createTableTestEditor()
+      const {locator, table, row, cell, block} = await createTableTestEditor({
+        renderers: defaultRenderers,
+      })
 
       await vi.waitFor(() => {
         const el = locator
@@ -421,7 +451,7 @@ describe('tables', () => {
 
     test('span inside cell data-path', async () => {
       const {locator, table, row, cell, block, span} =
-        await createTableTestEditor()
+        await createTableTestEditor({renderers: defaultRenderers})
 
       await vi.waitFor(() => {
         const el = locator
@@ -477,7 +507,9 @@ describe('tables', () => {
     })
 
     test('container is not void', async () => {
-      const {locator, table} = await createTableTestEditor()
+      const {locator, table} = await createTableTestEditor({
+        renderers: defaultRenderers,
+      })
 
       await vi.waitFor(() => {
         const el = locator
@@ -489,7 +521,9 @@ describe('tables', () => {
     })
 
     test('text content is rendered inside cell', async () => {
-      const {locator} = await createTableTestEditor()
+      const {locator} = await createTableTestEditor({
+        renderers: defaultRenderers,
+      })
 
       await vi.waitFor(() => {
         expect(locator.element().textContent).toContain('foo')

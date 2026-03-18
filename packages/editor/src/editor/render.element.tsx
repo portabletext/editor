@@ -7,6 +7,7 @@ import {useSelector} from '@xstate/react'
 import {useContext, type ReactElement} from 'react'
 import type {DropPosition} from '../behaviors/behavior.core.drop-position'
 import {isContainerType} from '../renderers/container-schema'
+import type {RendererConfig} from '../renderers/renderer.types'
 import {useRenderer} from '../renderers/use-renderer'
 import type {RenderElementProps} from '../slate/react/components/editable'
 import {useSlateStatic} from '../slate/react/hooks/use-slate-static'
@@ -77,11 +78,22 @@ export function RenderElement(props: {
     )
   }
 
-  // Container types (block objects with child fields) render as non-void
-  // elements with editable children. Use the registered renderer if available.
-  if (isContainerType(schema, props.element._type)) {
+  // Container types render as non-void elements with editable children,
+  // but only when a renderer is registered. Without a renderer, they fall
+  // through to the default block object rendering (void, backwards compatible).
+  const scope = useContext(ContainerScopeContext)
+  const containerRenderer = useRenderer(
+    'blockObject',
+    props.element._type,
+    scope,
+  )
+  if (containerRenderer && isContainerType(schema, props.element._type)) {
     return (
-      <RenderContainer attributes={props.attributes} element={props.element}>
+      <RenderContainer
+        attributes={props.attributes}
+        element={props.element}
+        rendererConfig={containerRenderer}
+      >
         {props.children}
       </RenderContainer>
     )
@@ -110,22 +122,11 @@ function RenderContainer(props: {
   attributes: RenderElementProps['attributes']
   children: ReactElement
   element: PortableTextObject
+  rendererConfig: RendererConfig
 }) {
-  const scope = useContext(ContainerScopeContext)
-  const rendererConfig = useRenderer('blockObject', props.element._type, scope)
-
-  if (rendererConfig) {
-    return rendererConfig.renderer.render({
-      attributes: props.attributes,
-      children: props.children,
-      node: props.element,
-    })
-  }
-
-  // Default container rendering - just a div wrapper
-  return (
-    <div {...props.attributes} style={{position: 'relative'}}>
-      {props.children}
-    </div>
-  )
+  return props.rendererConfig.renderer.render({
+    attributes: props.attributes,
+    children: props.children,
+    node: props.element,
+  })
 }
