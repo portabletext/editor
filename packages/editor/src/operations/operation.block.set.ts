@@ -30,6 +30,11 @@ export const blockSetOperationImplementation: OperationImplementation<
         continue
       }
 
+      if (key === '_key') {
+        filteredProps[key] = operation.props[key]
+        continue
+      }
+
       if (key === 'style') {
         if (
           context.schema.styles.some(
