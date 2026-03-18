@@ -1,3 +1,4 @@
+import {PortableTextBlock} from '@portabletext/editor'
 import {useActorRef} from '@xstate/react'
 import {editorIdGenerator} from './editor-id-generator'
 import {Editors} from './editors'
@@ -5,10 +6,13 @@ import {Footer} from './footer'
 import {Header} from './header'
 import {playgroundMachine} from './playground-machine'
 
+const initialValue: Array<PortableTextBlock> = []
+
 export function App() {
   const playgroundRef = useActorRef(playgroundMachine, {
     input: {
       editorIdGenerator: editorIdGenerator(),
+      initialValue,
     },
   })
 

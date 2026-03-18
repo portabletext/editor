@@ -290,6 +290,7 @@ export const playgroundMachine = setup({
         },
     input: {} as {
       editorIdGenerator: Generator<string, string>
+      initialValue: Array<PortableTextBlock> | undefined
     },
   },
   actions: {
@@ -419,15 +420,17 @@ export const playgroundMachine = setup({
   },
 }).createMachine({
   id: 'playground',
-  context: ({input}) => ({
-    editorIdGenerator: input.editorIdGenerator,
-    featureFlags: defaultPlaygroundFeatureFlags,
-    value: undefined,
-    patchDerivedValue: undefined,
-    rangeDecorations: [],
-    editors: [],
-    patchFeed: [],
-  }),
+  context: ({input}) => {
+    return {
+      editorIdGenerator: input.editorIdGenerator,
+      featureFlags: defaultPlaygroundFeatureFlags,
+      value: input.initialValue,
+      patchDerivedValue: input.initialValue,
+      rangeDecorations: [],
+      editors: [],
+      patchFeed: [],
+    }
+  },
   on: {
     'add editor': {
       actions: ['add editor to context'],
