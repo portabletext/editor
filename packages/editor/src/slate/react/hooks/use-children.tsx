@@ -5,7 +5,10 @@ import type {
 } from '@portabletext/schema'
 import {isSpan, isTextBlock} from '@portabletext/schema'
 import {useCallback, useRef, type JSX} from 'react'
-import {isContainerType} from '../../../renderers/container-schema'
+import {
+  getContainerChildFields,
+  isContainerType,
+} from '../../../renderers/container-schema'
 import {
   isElementDecorationsEqual,
   splitDecorationsByChild,
@@ -16,7 +19,6 @@ import type {Node} from '../../interfaces/node'
 import type {Path} from '../../interfaces/path'
 import type {DecoratedRange} from '../../interfaces/text'
 import {isObjectNode} from '../../node/is-object-node'
-import ContainerNodeComponent from '../components/container-node'
 import type {
   RenderElementProps,
   RenderLeafProps,
@@ -28,6 +30,59 @@ import ObjectNodeComponent from '../components/object-node'
 import TextComponent from '../components/text'
 import {ElementContext} from './use-element'
 import {useSlateStatic} from './use-slate-static'
+
+/**
+ * Collect all children from a container node's schema-defined child fields
+ * into a flat array, preserving the field name for each child.
+ */
+function getContainerChildrenFlat(editor: Editor, node: Node): Array<Node> {
+  const childFields = getContainerChildFields(editor.schema, node._type)
+  const result: Array<Node> = []
+
+  for (const childField of childFields) {
+    const fieldValue = (node as Record<string, unknown>)[childField.fieldName]
+
+    if (!Array.isArray(fieldValue)) {
+      continue
+    }
+
+    for (const child of fieldValue) {
+      if (child && typeof child === 'object' && '_key' in child) {
+        result.push(child as Node)
+      }
+    }
+  }
+
+  return result
+}
+
+/**
+ * Build a map from child _key to the field name it came from.
+ * Used for data-path construction (e.g., "table-1.rows.row-1").
+ */
+function buildContainerChildFieldMap(
+  editor: Editor,
+  node: Node,
+): Map<string, string> {
+  const childFields = getContainerChildFields(editor.schema, node._type)
+  const map = new Map<string, string>()
+
+  for (const childField of childFields) {
+    const fieldValue = (node as Record<string, unknown>)[childField.fieldName]
+
+    if (!Array.isArray(fieldValue)) {
+      continue
+    }
+
+    for (const child of fieldValue) {
+      if (child && typeof child === 'object' && '_key' in child) {
+        map.set((child as {_key: string})._key, childField.fieldName)
+      }
+    }
+  }
+
+  return map
+}
 
 /**
  * Children.
@@ -65,16 +120,31 @@ const useChildren = (props: {
     decorations,
   )
 
-  const children = isEditor(node)
+  const isContainerNode =
+    !isEditor(node) &&
+    isObjectNode({schema: editor.schema}, node) &&
+    isContainerType(editor.schema, node._type)
+
+  const children: Array<Node> = isEditor(node)
     ? node.children
     : isTextBlock({schema: editor.schema}, node)
       ? node.children
-      : []
+      : isContainerNode
+        ? getContainerChildrenFlat(editor, node)
+        : []
+
+  // For container nodes, we need to know which field each child came from
+  // so we can build the correct data-path (e.g., "table-1.rows.row-1")
+  const containerChildFieldMap = isContainerNode
+    ? buildContainerChildFieldMap(editor, node)
+    : undefined
 
   const renderElementComponent = useCallback(
     (node: PortableTextTextBlock | PortableTextObject, i: number) => {
-      const nodeDataPath =
-        parentDataPath === ''
+      // For container children, use field name in the path instead of "children"
+      const nodeDataPath = containerChildFieldMap
+        ? `${parentDataPath}.${containerChildFieldMap.get(node._key) ?? 'children'}.${node._key}`
+        : parentDataPath === ''
           ? `${node._key}`
           : `${parentDataPath}.children.${node._key}`
 
@@ -95,6 +165,7 @@ const useChildren = (props: {
       )
     },
     [
+      containerChildFieldMap,
       parentDataPath,
       decorationsByChild,
       parentIndexedPath,
@@ -139,33 +210,26 @@ const useChildren = (props: {
     node: PortableTextObject,
     index: number,
   ) => {
-    const nodeDataPath =
-      parentDataPath === ''
+    // Container types go through the normal Element pipeline
+    // Element will call useChildren which will iterate their schema-defined fields
+    if (
+      (isEditorNode || isContainerNode) &&
+      isContainerType(editor.schema, node._type)
+    ) {
+      return renderElementComponent(node, index)
+    }
+
+    const nodeDataPath = containerChildFieldMap
+      ? `${parentDataPath}.${containerChildFieldMap.get(node._key) ?? 'children'}.${node._key}`
+      : parentDataPath === ''
         ? `${node._key}`
         : `${parentDataPath}.children.${node._key}`
-
-    // Check if this object node is a container type (has child fields)
-    if (isEditorNode && isContainerType(editor.schema, node._type)) {
-      return (
-        <ContainerNodeComponent
-          key={node._key}
-          dataPath={nodeDataPath}
-          decorations={decorationsByChild[index] ?? []}
-          containerNode={node}
-          indexedPath={parentIndexedPath.concat(index)}
-          renderElement={renderElement}
-          renderPlaceholder={renderPlaceholder}
-          renderLeaf={renderLeaf}
-          renderText={renderText}
-        />
-      )
-    }
 
     return (
       <ObjectNodeComponent
         dataPath={nodeDataPath}
         decorations={decorationsByChild[index] ?? []}
-        isInline={!isEditorNode}
+        isInline={!isEditorNode && !isContainerNode}
         key={node._key}
         objectNode={node}
         indexedPath={parentIndexedPath.concat(index)}

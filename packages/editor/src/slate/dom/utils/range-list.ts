@@ -1,4 +1,8 @@
 import {isTextBlock} from '@portabletext/schema'
+import {
+  getContainerChildFields,
+  isContainerType,
+} from '../../../renderers/container-schema'
 import {isEditor} from '../../editor/is-editor'
 import {range as editorRange} from '../../editor/range'
 import type {Editor} from '../../interfaces/editor'
@@ -6,6 +10,7 @@ import type {Node} from '../../interfaces/node'
 import type {Path} from '../../interfaces/path'
 import type {Range} from '../../interfaces/range'
 import type {DecoratedRange} from '../../interfaces/text'
+import {isObjectNode} from '../../node/is-object-node'
 import {rangeEdges} from '../../range/range-edges'
 import {rangeEquals} from '../../range/range-equals'
 import {rangeIntersection} from '../../range/range-intersection'
@@ -108,6 +113,31 @@ export const isTextDecorationsEqual = (
 }
 
 /**
+ * Collect all children from a container node's schema-defined child fields
+ * into a flat array.
+ */
+function getContainerChildrenFlat(editor: Editor, node: Node): Array<unknown> {
+  const childFields = getContainerChildFields(editor.schema, node._type)
+  const result: Array<unknown> = []
+
+  for (const childField of childFields) {
+    const fieldValue = (node as Record<string, unknown>)[childField.fieldName]
+
+    if (!Array.isArray(fieldValue)) {
+      continue
+    }
+
+    for (const child of fieldValue) {
+      if (child && typeof child === 'object' && '_key' in child) {
+        result.push(child)
+      }
+    }
+  }
+
+  return result
+}
+
+/**
  * Split and group decorations by each child of a node.
  *
  * @returns An array with length equal to that of `node.children`. Each index
@@ -125,7 +155,10 @@ export const splitDecorationsByChild = (
     ? node.children
     : isTextBlock({schema: editor.schema}, node)
       ? node.children
-      : []
+      : isObjectNode({schema: editor.schema}, node) &&
+          isContainerType(editor.schema, node._type)
+        ? getContainerChildrenFlat(editor, node)
+        : []
   const decorationsByChild = Array.from(children, (): DecoratedRange[] => [])
 
   if (decorations.length === 0) {

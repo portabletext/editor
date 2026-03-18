@@ -6,6 +6,8 @@ import {isTextBlock} from '@portabletext/schema'
 import {useSelector} from '@xstate/react'
 import {useContext, type ReactElement} from 'react'
 import type {DropPosition} from '../behaviors/behavior.core.drop-position'
+import {isContainerType} from '../renderers/container-schema'
+import {useRenderer} from '../renderers/use-renderer'
 import type {RenderElementProps} from '../slate/react/components/editable'
 import {useSlateStatic} from '../slate/react/hooks/use-slate-static'
 import type {
@@ -74,6 +76,16 @@ export function RenderElement(props: {
     )
   }
 
+  // Container types (block objects with child fields) render as non-void
+  // elements with editable children. Use the registered renderer if available.
+  if (isContainerType(schema, props.element._type)) {
+    return (
+      <RenderContainer attributes={props.attributes} element={props.element}>
+        {props.children}
+      </RenderContainer>
+    )
+  }
+
   return (
     <RenderBlockObject
       attributes={props.attributes}
@@ -90,5 +102,28 @@ export function RenderElement(props: {
     >
       {props.children}
     </RenderBlockObject>
+  )
+}
+
+function RenderContainer(props: {
+  attributes: RenderElementProps['attributes']
+  children: ReactElement
+  element: PortableTextObject
+}) {
+  const rendererConfig = useRenderer('blockObject', props.element._type)
+
+  if (rendererConfig) {
+    return rendererConfig.renderer.render({
+      attributes: props.attributes,
+      children: props.children,
+      node: props.element,
+    })
+  }
+
+  // Default container rendering - just a div wrapper
+  return (
+    <div {...props.attributes} style={{position: 'relative'}}>
+      {props.children}
+    </div>
   )
 }

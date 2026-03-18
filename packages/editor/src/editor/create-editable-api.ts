@@ -11,6 +11,7 @@ import {
   slateRangeToSelection,
 } from '../internal-utils/slate-utils'
 import {toSlateRange} from '../internal-utils/to-slate-range'
+import {isContainerType} from '../renderers/container-schema'
 import {getActiveAnnotationsMarks} from '../selectors/selector.get-active-annotation-marks'
 import {getActiveDecorators} from '../selectors/selector.get-active-decorators'
 import {getFocusBlock} from '../selectors/selector.get-focus-block'
@@ -241,6 +242,9 @@ export function createEditableAPI(
     },
     isVoid: (element: PortableTextBlock | PortableTextChild): boolean => {
       const schema = editorActor.getSnapshot().context.schema
+      if (isContainerType(schema, element._type)) {
+        return false
+      }
       return ![schema.block.name, schema.span.name].includes(element._type)
     },
     findByPath: (
