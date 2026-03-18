@@ -73,6 +73,7 @@ async function createTableTestEditor(options?: {renderers?: Array<Renderer>}) {
   }
   const row = {
     _key: rowKey,
+    _type: 'row',
     cells: [cell],
   }
   const table = {
