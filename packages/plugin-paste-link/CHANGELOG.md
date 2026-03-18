@@ -1,5 +1,12 @@
 # @portabletext/plugin-paste-link
 
+## 3.0.21
+
+### Patch Changes
+
+- Updated dependencies [[`746bad3`](https://github.com/portabletext/editor/commit/746bad3e3199fa15cdd87c08396f120c01f4a3e8), [`182af30`](https://github.com/portabletext/editor/commit/182af3025562c832d553c11badea49cd18665ad2)]:
+  - @portabletext/editor@6.5.1
+
 ## 3.0.20
 
 ### Patch Changes

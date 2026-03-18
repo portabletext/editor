@@ -1,5 +1,13 @@
 # Changelog
 
+## 6.5.1
+
+### Patch Changes
+
+- [#2390](https://github.com/portabletext/editor/pull/2390) [`746bad3`](https://github.com/portabletext/editor/commit/746bad3e3199fa15cdd87c08396f120c01f4a3e8) Thanks [@christianhg](https://github.com/christianhg)! - fix: allow `block.set` updating text block key
+
+- [#2393](https://github.com/portabletext/editor/pull/2393) [`182af30`](https://github.com/portabletext/editor/commit/182af3025562c832d553c11badea49cd18665ad2) Thanks [@christianhg](https://github.com/christianhg)! - fix: issue with nested editors triggering history events in parent editor
+
 ## 6.5.0
 
 ### Minor Changes
