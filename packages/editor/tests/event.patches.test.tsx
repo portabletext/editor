@@ -495,6 +495,90 @@ describe('event.patches', () => {
     })
   })
 
+  test('Scenario: `set` text block key', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    const newBlockKey = keyGenerator()
+
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'set',
+          origin: 'remote',
+          path: [{_key: blockKey}, '_key'],
+          value: newBlockKey,
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      return expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: newBlockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+  })
+
+  test('Scenario: `set` block object key', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const imageKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      initialValue: [
+        {
+          _key: imageKey,
+          _type: 'image',
+        },
+      ],
+      schemaDefinition: defineSchema({
+        blockObjects: [{name: 'image'}],
+      }),
+    })
+
+    const newImageKey = keyGenerator()
+
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'set',
+          origin: 'remote',
+          path: [{_key: imageKey}, '_key'],
+          value: newImageKey,
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      return expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: newImageKey,
+          _type: 'image',
+        },
+      ])
+    })
+  })
+
   test('Scenario: `set` span properties', async () => {
     const {editor} = await createTestEditor({
       initialValue: [
