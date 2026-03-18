@@ -75,3 +75,4 @@ export type {
 } from './types/editor'
 export type {HotkeyOptions} from './types/options'
 export type {AnnotationPath, BlockPath, ChildPath} from './types/paths'
+export type {Renderer, RendererConfig} from './renderers/renderer.types'

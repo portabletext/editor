@@ -12,10 +12,12 @@ import {
   type RenderAnnotationFunction,
   type RenderChildFunction,
   type RenderDecoratorFunction,
+  type Renderer,
   type RenderListItemFunction,
   type RenderPlaceholderFunction,
   type RenderStyleFunction,
 } from '@portabletext/editor'
+import {RendererPlugin} from '@portabletext/editor/plugins'
 import {MarkdownShortcutsPlugin} from '@portabletext/plugin-markdown-shortcuts'
 import {OneLinePlugin} from '@portabletext/plugin-one-line'
 import {PasteLinkPlugin} from '@portabletext/plugin-paste-link'
@@ -150,6 +152,7 @@ export function Editor(props: {
             </div>
           ) : null}
           <Container className="flex flex-col overflow-clip">
+            <RendererPlugin renderers={tableRenderers} />
             {featureFlags.emojiPickerPlugin ? <EmojiPickerPlugin /> : null}
             {featureFlags.mentionPickerPlugin ? <MentionPickerPlugin /> : null}
             {featureFlags.slashCommandPlugin ? (
@@ -675,6 +678,40 @@ function EditorFooter(props: {editorRef: EditorActorRef; readOnly: boolean}) {
     </div>
   )
 }
+
+const tableRenderers: Array<Renderer> = [
+  {
+    type: 'blockObject',
+    name: 'table',
+    render: ({attributes, children}) => (
+      <table
+        {...attributes}
+        style={{
+          border: '1px solid black',
+          borderCollapse: 'collapse',
+          width: '100%',
+          margin: '8px 0',
+        }}
+      >
+        <tbody>{children}</tbody>
+      </table>
+    ),
+  },
+  {
+    type: 'blockObject',
+    name: 'table.row',
+    render: ({attributes, children}) => <tr {...attributes}>{children}</tr>,
+  },
+  {
+    type: 'blockObject',
+    name: 'table.row.cell',
+    render: ({attributes, children}) => (
+      <td {...attributes} style={{border: '1px solid black', padding: '8px'}}>
+        {children}
+      </td>
+    ),
+  },
+]
 
 function JsonPane(props: {label: string; data: unknown}) {
   const [copied, setCopied] = useState(false)

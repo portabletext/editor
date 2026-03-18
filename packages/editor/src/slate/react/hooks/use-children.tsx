@@ -5,6 +5,7 @@ import type {
 } from '@portabletext/schema'
 import {isSpan, isTextBlock} from '@portabletext/schema'
 import {useCallback, useRef, type JSX} from 'react'
+import {isContainerType} from '../../../renderers/container-schema'
 import {
   isElementDecorationsEqual,
   splitDecorationsByChild,
@@ -15,6 +16,7 @@ import type {Node} from '../../interfaces/node'
 import type {Path} from '../../interfaces/path'
 import type {DecoratedRange} from '../../interfaces/text'
 import {isObjectNode} from '../../node/is-object-node'
+import ContainerNodeComponent from '../components/container-node'
 import type {
   RenderElementProps,
   RenderLeafProps,
@@ -141,6 +143,23 @@ const useChildren = (props: {
       parentDataPath === ''
         ? `${node._key}`
         : `${parentDataPath}.children.${node._key}`
+
+    // Check if this object node is a container type (has child fields)
+    if (isEditorNode && isContainerType(editor.schema, node._type)) {
+      return (
+        <ContainerNodeComponent
+          key={node._key}
+          dataPath={nodeDataPath}
+          decorations={decorationsByChild[index] ?? []}
+          containerNode={node}
+          indexedPath={parentIndexedPath.concat(index)}
+          renderElement={renderElement}
+          renderPlaceholder={renderPlaceholder}
+          renderLeaf={renderLeaf}
+          renderText={renderText}
+        />
+      )
+    }
 
     return (
       <ObjectNodeComponent
