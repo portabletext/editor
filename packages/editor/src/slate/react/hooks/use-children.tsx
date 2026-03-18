@@ -4,7 +4,8 @@ import type {
   PortableTextTextBlock,
 } from '@portabletext/schema'
 import {isSpan, isTextBlock} from '@portabletext/schema'
-import {useCallback, useRef, type JSX} from 'react'
+import {useCallback, useContext, useRef, type JSX} from 'react'
+import {ContainerScopeContext} from '../../../editor/container-scope-context'
 import {
   getContainerChildFields,
   isContainerType,
@@ -112,6 +113,7 @@ const useChildren = (props: {
   editor.isNodeMapDirty = false
 
   const isEditorNode = isEditor(node)
+  const currentScope = useContext(ContainerScopeContext)
 
   const decorationsByChild = useDecorationsByChild(
     editor,
@@ -124,6 +126,14 @@ const useChildren = (props: {
     !isEditor(node) &&
     isObjectNode({schema: editor.schema}, node) &&
     isContainerType(editor.schema, node._type)
+
+  // When the current node is a container, compute the scope for its children.
+  // The scope accumulates: undefined -> 'table' -> 'table.row' -> 'table.row.cell'
+  const childScope = isContainerNode
+    ? currentScope
+      ? `${currentScope}.${node._type}`
+      : node._type
+    : currentScope
 
   const children: Array<Node> = isEditor(node)
     ? node.children
@@ -149,19 +159,24 @@ const useChildren = (props: {
           : `${parentDataPath}.children.${node._key}`
 
       return (
-        <ElementContext.Provider key={`provider-${node._key}`} value={node}>
-          <ElementComponent
-            dataPath={nodeDataPath}
-            decorations={decorationsByChild[i] ?? []}
-            element={node}
-            key={node._key}
-            indexedPath={parentIndexedPath.concat(i)}
-            renderElement={renderElement}
-            renderPlaceholder={renderPlaceholder}
-            renderLeaf={renderLeaf}
-            renderText={renderText}
-          />
-        </ElementContext.Provider>
+        <ContainerScopeContext.Provider
+          key={`scope-${node._key}`}
+          value={childScope}
+        >
+          <ElementContext.Provider key={`provider-${node._key}`} value={node}>
+            <ElementComponent
+              dataPath={nodeDataPath}
+              decorations={decorationsByChild[i] ?? []}
+              element={node}
+              key={node._key}
+              indexedPath={parentIndexedPath.concat(i)}
+              renderElement={renderElement}
+              renderPlaceholder={renderPlaceholder}
+              renderLeaf={renderLeaf}
+              renderText={renderText}
+            />
+          </ElementContext.Provider>
+        </ContainerScopeContext.Provider>
       )
     },
     [
@@ -226,15 +241,20 @@ const useChildren = (props: {
         : `${parentDataPath}.children.${node._key}`
 
     return (
-      <ObjectNodeComponent
-        dataPath={nodeDataPath}
-        decorations={decorationsByChild[index] ?? []}
-        isInline={!isEditorNode && !isContainerNode}
-        key={node._key}
-        objectNode={node}
-        indexedPath={parentIndexedPath.concat(index)}
-        renderElement={renderElement}
-      />
+      <ContainerScopeContext.Provider
+        key={`scope-${node._key}`}
+        value={childScope}
+      >
+        <ObjectNodeComponent
+          dataPath={nodeDataPath}
+          decorations={decorationsByChild[index] ?? []}
+          isInline={!isEditorNode && !isContainerNode}
+          key={node._key}
+          objectNode={node}
+          indexedPath={parentIndexedPath.concat(index)}
+          renderElement={renderElement}
+        />
+      </ContainerScopeContext.Provider>
     )
   }
 

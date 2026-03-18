@@ -16,6 +16,7 @@ import type {
   RenderListItemFunction,
   RenderStyleFunction,
 } from '../types/editor'
+import {ContainerScopeContext} from './container-scope-context'
 import {EditorActorContext} from './editor-actor-context'
 import {RenderBlockObject} from './render.block-object'
 import {RenderInlineObject} from './render.inline-object'
@@ -110,7 +111,8 @@ function RenderContainer(props: {
   children: ReactElement
   element: PortableTextObject
 }) {
-  const rendererConfig = useRenderer('blockObject', props.element._type)
+  const scope = useContext(ContainerScopeContext)
+  const rendererConfig = useRenderer('blockObject', props.element._type, scope)
 
   if (rendererConfig) {
     return rendererConfig.renderer.render({
