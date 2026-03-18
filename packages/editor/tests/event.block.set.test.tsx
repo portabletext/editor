@@ -290,6 +290,64 @@ describe('event.block.set', () => {
     })
   })
 
+  test('Scenario: updating text block _key', async () => {
+    const patches: Array<Patch> = []
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [{_key: spanKey, _type: 'span', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patches.push(event.patch)
+            }
+          }}
+        />
+      ),
+    })
+
+    const newTextBlockKey = keyGenerator()
+
+    editor.send({
+      type: 'block.set',
+      at: [{_key: blockKey}],
+      props: {
+        _key: newTextBlockKey,
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: newTextBlockKey,
+          _type: 'block',
+          children: [{_key: spanKey, _type: 'span', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+      expect(patches).toEqual([
+        {
+          type: 'set',
+          path: [0, '_key'],
+          value: newTextBlockKey,
+          origin: 'local',
+        },
+      ])
+    })
+  })
+
   test('Scenario: updating block object _type is a noop', async () => {
     const patches: Array<Patch> = []
     const keyGenerator = createTestKeyGenerator()
