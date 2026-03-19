@@ -1,7 +1,10 @@
 import {set, unset} from '@portabletext/patches'
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
+import React from 'react'
 import {describe, expect, test, vi} from 'vitest'
+import {RendererPlugin} from '../src/plugins'
+import type {Renderer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
 
 const schemaDefinition = defineSchema({
@@ -45,7 +48,7 @@ const schemaDefinition = defineSchema({
   ],
 })
 
-async function createTableTestEditor() {
+async function createTableTestEditor(options?: {renderers?: Array<Renderer>}) {
   const keyGenerator = createTestKeyGenerator()
   const tableKey = keyGenerator()
   const rowKey = keyGenerator()
@@ -70,6 +73,7 @@ async function createTableTestEditor() {
   }
   const row = {
     _key: rowKey,
+    _type: 'row',
     cells: [cell],
   }
   const table = {
@@ -84,6 +88,9 @@ async function createTableTestEditor() {
     keyGenerator,
     schemaDefinition,
     initialValue,
+    children: options?.renderers ? (
+      <RendererPlugin renderers={options.renderers} />
+    ) : undefined,
   })
 
   return {
@@ -359,6 +366,167 @@ describe('tables', () => {
             ],
           },
         ])
+      })
+    })
+  })
+
+  describe('rendering', () => {
+    const defaultRenderers: Array<Renderer> = [
+      {
+        type: 'blockObject',
+        name: 'table',
+        render: ({attributes, children}) => (
+          <table {...attributes}>
+            <tbody>{children}</tbody>
+          </table>
+        ),
+      },
+      {
+        type: 'blockObject',
+        name: 'table.row',
+        render: ({attributes, children}) => <tr {...attributes}>{children}</tr>,
+      },
+      {
+        type: 'blockObject',
+        name: 'table.row.cell',
+        render: ({attributes, children}) => <td {...attributes}>{children}</td>,
+      },
+    ]
+
+    test('table data-path', async () => {
+      const {locator, table} = await createTableTestEditor({
+        renderers: defaultRenderers,
+      })
+
+      await vi.waitFor(() => {
+        const el = locator
+          .element()
+          .querySelector(`[data-path="${table._key}"]`)
+        expect(el).not.toBeNull()
+      })
+    })
+
+    test('row data-path', async () => {
+      const {locator, table, row} = await createTableTestEditor({
+        renderers: defaultRenderers,
+      })
+
+      await vi.waitFor(() => {
+        const el = locator
+          .element()
+          .querySelector(`[data-path="${table._key}.rows.${row._key}"]`)
+        expect(el).not.toBeNull()
+      })
+    })
+
+    test('cell data-path', async () => {
+      const {locator, table, row, cell} = await createTableTestEditor({
+        renderers: defaultRenderers,
+      })
+
+      await vi.waitFor(() => {
+        const el = locator
+          .element()
+          .querySelector(
+            `[data-path="${table._key}.rows.${row._key}.cells.${cell._key}"]`,
+          )
+        expect(el).not.toBeNull()
+      })
+    })
+
+    test('block inside cell data-path', async () => {
+      const {locator, table, row, cell, block} = await createTableTestEditor({
+        renderers: defaultRenderers,
+      })
+
+      await vi.waitFor(() => {
+        const el = locator
+          .element()
+          .querySelector(
+            `[data-path="${table._key}.rows.${row._key}.cells.${cell._key}.content.${block._key}"]`,
+          )
+        expect(el).not.toBeNull()
+      })
+    })
+
+    test('span inside cell data-path', async () => {
+      const {locator, table, row, cell, block, span} =
+        await createTableTestEditor({renderers: defaultRenderers})
+
+      await vi.waitFor(() => {
+        const el = locator
+          .element()
+          .querySelector(
+            `[data-path="${table._key}.rows.${row._key}.cells.${cell._key}.content.${block._key}.children.${span._key}"]`,
+          )
+        expect(el).not.toBeNull()
+      })
+    })
+
+    test('registered renderers produce correct DOM', async () => {
+      const renderers: Array<Renderer> = [
+        {
+          type: 'blockObject',
+          name: 'table',
+          render: ({attributes, children}) => (
+            <table {...attributes}>
+              <tbody>{children}</tbody>
+            </table>
+          ),
+        },
+        {
+          type: 'blockObject',
+          name: 'table.row',
+          render: ({attributes, children}) => (
+            <tr {...attributes}>{children}</tr>
+          ),
+        },
+        {
+          type: 'blockObject',
+          name: 'table.row.cell',
+          render: ({attributes, children}) => (
+            <td {...attributes}>{children}</td>
+          ),
+        },
+      ]
+
+      const {locator} = await createTableTestEditor({renderers})
+
+      await vi.waitFor(() => {
+        const table = locator.element().querySelector('table')
+        expect(table).not.toBeNull()
+
+        const tr = table!.querySelector('tr')
+        expect(tr).not.toBeNull()
+
+        const td = tr!.querySelector('td')
+        expect(td).not.toBeNull()
+
+        expect(td!.textContent).toContain('foo')
+      })
+    })
+
+    test('container is not void', async () => {
+      const {locator, table} = await createTableTestEditor({
+        renderers: defaultRenderers,
+      })
+
+      await vi.waitFor(() => {
+        const el = locator
+          .element()
+          .querySelector(`[data-path="${table._key}"]`)
+        expect(el).not.toBeNull()
+        expect(el!.hasAttribute('data-slate-void')).toBe(false)
+      })
+    })
+
+    test('text content is rendered inside cell', async () => {
+      const {locator} = await createTableTestEditor({
+        renderers: defaultRenderers,
+      })
+
+      await vi.waitFor(() => {
+        expect(locator.element().textContent).toContain('foo')
       })
     })
   })

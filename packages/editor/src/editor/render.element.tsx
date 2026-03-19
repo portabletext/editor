@@ -6,6 +6,9 @@ import {isTextBlock} from '@portabletext/schema'
 import {useSelector} from '@xstate/react'
 import {useContext, type ReactElement} from 'react'
 import type {DropPosition} from '../behaviors/behavior.core.drop-position'
+import {isContainerType} from '../renderers/container-schema'
+import type {RendererConfig} from '../renderers/renderer.types'
+import {useRenderer} from '../renderers/use-renderer'
 import type {RenderElementProps} from '../slate/react/components/editable'
 import {useSlateStatic} from '../slate/react/hooks/use-slate-static'
 import type {
@@ -14,6 +17,7 @@ import type {
   RenderListItemFunction,
   RenderStyleFunction,
 } from '../types/editor'
+import {ContainerScopeContext} from './container-scope-context'
 import {EditorActorContext} from './editor-actor-context'
 import {RenderBlockObject} from './render.block-object'
 import {RenderInlineObject} from './render.inline-object'
@@ -74,6 +78,27 @@ export function RenderElement(props: {
     )
   }
 
+  // Container types render as non-void elements with editable children,
+  // but only when a renderer is registered. Without a renderer, they fall
+  // through to the default block object rendering (void, backwards compatible).
+  const scope = useContext(ContainerScopeContext)
+  const containerRenderer = useRenderer(
+    'blockObject',
+    props.element._type,
+    scope,
+  )
+  if (containerRenderer && isContainerType(schema, props.element._type)) {
+    return (
+      <RenderContainer
+        attributes={props.attributes}
+        element={props.element}
+        rendererConfig={containerRenderer}
+      >
+        {props.children}
+      </RenderContainer>
+    )
+  }
+
   return (
     <RenderBlockObject
       attributes={props.attributes}
@@ -91,4 +116,17 @@ export function RenderElement(props: {
       {props.children}
     </RenderBlockObject>
   )
+}
+
+function RenderContainer(props: {
+  attributes: RenderElementProps['attributes']
+  children: ReactElement
+  element: PortableTextObject
+  rendererConfig: RendererConfig
+}) {
+  return props.rendererConfig.renderer.render({
+    attributes: props.attributes,
+    children: props.children,
+    node: props.element,
+  })
 }
