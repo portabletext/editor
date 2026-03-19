@@ -1,5 +1,12 @@
 # @portabletext/plugin-paste-link
 
+## 3.0.22
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @portabletext/editor@6.5.2
+
 ## 3.0.21
 
 ### Patch Changes

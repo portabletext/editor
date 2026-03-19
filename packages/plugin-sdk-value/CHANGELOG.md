@@ -1,5 +1,12 @@
 # Changelog
 
+## 6.0.22
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @portabletext/editor@6.5.2
+
 ## 6.0.21
 
 ### Patch Changes
