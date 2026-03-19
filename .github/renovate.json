@@ -85,6 +85,11 @@
       "description": "Group JSDOM packages",
       "matchPackageNames": ["/jsdom/"],
       "groupName": "jsdom"
+    },
+    {
+      "description": "Group Vitest packages",
+      "matchPackageNames": ["/vitest/"],
+      "groupName": "vitest"
     }
   ]
 }
