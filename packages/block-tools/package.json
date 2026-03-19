@@ -61,10 +61,10 @@
     "@sanity/schema": "^5.13.0",
     "@types/jsdom": "^27.0.0",
     "@vercel/stega": "1.0.0",
-    "@vitest/coverage-v8": "^4.0.18",
+    "@vitest/coverage-v8": "^4.1.0",
     "jsdom": "^27.0.0",
     "typescript": "catalog:",
-    "vitest": "^4.0.18"
+    "vitest": "^4.1.0"
   },
   "engines": {
     "node": ">=20.19 <22 || >=22.12"
