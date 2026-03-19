@@ -1,5 +1,5 @@
 import type {Node} from '../slate/interfaces/node'
-import type {KeyedSegment} from '../types/paths'
+import type {Path} from '../types/paths'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 
 /**
@@ -13,7 +13,7 @@ import {isKeyedSegment} from '../utils/util.is-keyed-segment'
  */
 export function keyedPathToIndexedPath(
   root: {children: Array<Node>},
-  keyedPath: Array<KeyedSegment | string>,
+  keyedPath: Path,
   blockIndexMap: Map<string, number>,
 ): Array<number> {
   if (keyedPath.length === 0) {
@@ -41,10 +41,7 @@ export function keyedPathToIndexedPath(
   return [blockIndex, ...resolveChildPath(block, keyedPath.slice(1))]
 }
 
-function resolveChildPath(
-  node: Node,
-  keyedPath: Array<KeyedSegment | string>,
-): Array<number> {
+function resolveChildPath(node: Node, keyedPath: Path): Array<number> {
   for (let i = 0; i < keyedPath.length; i++) {
     const segment = keyedPath[i]
 
@@ -74,6 +71,10 @@ function resolveChildPath(
 
       break
     } else {
+      if (typeof segment !== 'string') {
+        break
+      }
+
       if (!(segment in node)) {
         break
       }

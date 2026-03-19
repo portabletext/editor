@@ -1,11 +1,16 @@
+import {isTextBlock, type OfDefinition} from '@portabletext/schema'
 import type {EditorSchema} from '../../editor/editor-schema'
-import type {Editor} from '../interfaces/editor'
+import {
+  findFieldsForType,
+  findFirstArrayField,
+} from '../../paths/indexed-path-to-keyed-path'
 import type {Node} from '../interfaces/node'
 import type {Path} from '../interfaces/path'
 import {isLeaf} from './is-leaf'
+import {isObjectNode} from './is-object-node'
 
 export function getNodeIf(
-  root: Editor | Node,
+  root: {children: Array<Node>} | Node,
   path: Path,
   schema: EditorSchema,
 ): Node | undefined {
@@ -13,10 +18,38 @@ export function getNodeIf(
     return undefined
   }
 
-  let node: Editor | Node = root
+  let currentScope: ReadonlyArray<OfDefinition> | undefined
+  let node: {children: Array<Node>} | Node = root
 
   for (let i = 0; i < path.length; i++) {
     const p = path[i]!
+
+    if (isTextBlock({schema}, node)) {
+      return node.children[p]!
+    }
+
+    if (isObjectNode({schema}, node)) {
+      const objectFields = findFieldsForType(node._type, schema, currentScope)
+
+      if (!objectFields) {
+        return
+      }
+
+      const arrayField = findFirstArrayField(objectFields)
+
+      console.log('arrayField', arrayField)
+      if (!arrayField) {
+        return
+      }
+
+      const array = (node as Record<string, unknown>)[
+        arrayField.name
+      ] as Array<Node>
+
+      node = array[p]!
+      currentScope = arrayField ? arrayField.of : undefined
+      continue
+    }
 
     if (isLeaf(node, schema)) {
       return

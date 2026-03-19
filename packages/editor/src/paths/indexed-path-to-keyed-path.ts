@@ -72,7 +72,7 @@ export function indexedPathToKeyedPath(
   return keyedPath
 }
 
-function findFieldsForType(
+export function findFieldsForType(
   typeName: string,
   schema: EditorSchema,
   scope?: ReadonlyArray<OfDefinition>,
@@ -100,7 +100,7 @@ function findFieldsForType(
   return undefined
 }
 
-function findFirstArrayField(
+export function findFirstArrayField(
   fields: ReadonlyArray<FieldDefinition>,
 ): (FieldDefinition & {type: 'array'}) | undefined {
   for (const field of fields) {

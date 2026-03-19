@@ -275,4 +275,117 @@ describe(toSlateRange.name, () => {
       focus: {path: [0, 1], offset: 0},
     })
   })
+
+  test('table -> row -> cell -> block -> span', () => {
+    const schema = compileSchema(
+      defineSchema({
+        blockObjects: [
+          {
+            name: 'table',
+            fields: [
+              {
+                name: 'rows',
+                type: 'array',
+                of: [
+                  {
+                    type: 'row',
+                    fields: [
+                      {
+                        name: 'cells',
+                        type: 'array',
+                        of: [
+                          {
+                            type: 'cell',
+                            fields: [
+                              {
+                                name: 'content',
+                                type: 'array',
+                                of: [{type: 'block'}],
+                              },
+                            ],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }),
+    )
+    const keyGenerator = createTestKeyGenerator()
+    const tableKey = keyGenerator()
+    const rowKey = keyGenerator()
+    const cellKey = keyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const table = {
+      _key: tableKey,
+      _type: 'table',
+      rows: [
+        {
+          _key: rowKey,
+          _type: 'row',
+          cells: [
+            {
+              _key: cellKey,
+              _type: 'cell',
+              content: [
+                {
+                  _key: blockKey,
+                  _type: 'block',
+                  children: [{_key: spanKey, _type: 'span', text: 'foo'}],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    }
+
+    expect(
+      toSlateRange({
+        context: {
+          schema,
+          value: [table],
+          selection: {
+            anchor: {
+              path: [
+                {_key: tableKey},
+                'rows',
+                {_key: rowKey},
+                'cells',
+                {_key: cellKey},
+                'content',
+                {_key: blockKey},
+                'children',
+                {_key: spanKey},
+              ],
+              offset: 3,
+            },
+            focus: {
+              path: [
+                {_key: tableKey},
+                'rows',
+                {_key: rowKey},
+                'cells',
+                {_key: cellKey},
+                'content',
+                {_key: blockKey},
+                'children',
+                {_key: spanKey},
+              ],
+              offset: 3,
+            },
+          },
+        },
+        blockIndexMap: new Map([[tableKey, 0]]),
+      }),
+    ).toEqual({
+      anchor: {path: [0, 0, 0, 0, 0], offset: 3},
+      focus: {path: [0, 0, 0, 0, 0], offset: 3},
+    })
+  })
 })
