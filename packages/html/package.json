@@ -51,7 +51,7 @@
   },
   "dependencies": {
     "@portabletext/schema": "workspace:^",
-    "@vercel/stega": "1.0.0"
+    "@vercel/stega": "^1.1.0"
   },
   "devDependencies": {
     "@portabletext/test": "workspace:^",

@@ -12,6 +12,7 @@ minimumReleaseAgeExclude:
   - '@sanity/*'
   - '@types/*'
   - '@typescript/*'
+  - '@vercel/stega'
   - csstype
   - 'groq-js'
   - 'react'
