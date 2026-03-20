@@ -1,7 +1,7 @@
 import {JSDOM} from 'jsdom'
 import {describe, expect, test} from 'vitest'
 import {htmlToPortableText} from '../../index'
-import {defaultSchema} from '../fixtures/defaultSchema'
+import defaultSchema from '../fixtures/defaultSchema'
 import {createTestKeyGenerator} from '../test-key-generator'
 
 const schema = defaultSchema

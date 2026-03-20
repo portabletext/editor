@@ -1,0 +1,62 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "ignoreDependencies": ["@types/react", "@types/react-dom", "@types/react-is"],
+  "workspaces": {
+    "packages/*": {
+      "entry": ["src/index.ts!", "package.config.ts!"],
+      "ignoreDependencies": [
+        "babel-plugin-react-compiler",
+        "eslint-formatter-gha",
+        "@vitest/browser",
+        "@vitest/browser-playwright",
+        "@vitest/coverage-v8",
+        "@vitest/coverage-istanbul"
+      ]
+    },
+    "packages/editor": {
+      "entry": [
+        "src/index.ts!",
+        "src/behaviors/_exports/index.ts!",
+        "src/plugins/_exports/index.ts!",
+        "src/selectors/_exports/index.ts!",
+        "src/test/_exports/index.ts!",
+        "src/test/vitest/_exports/index.ts!",
+        "src/utils/_exports/index.ts!",
+        "package.config.ts!"
+      ],
+      "ignoreDependencies": [
+        "babel-plugin-react-compiler",
+        "eslint-formatter-gha",
+        "@vitest/browser",
+        "@vitest/browser-playwright",
+        "@vitest/coverage-v8",
+        "@vitest/coverage-istanbul"
+      ]
+    },
+    "packages/html": {
+      "entry": [
+        "src/index.ts!",
+        "src/rules/index.ts!",
+        "src/tests/snapshot-tests/*/index.ts",
+        "package.config.ts!"
+      ],
+      "ignoreDependencies": [
+        "babel-plugin-react-compiler",
+        "eslint-formatter-gha",
+        "@vitest/browser",
+        "@vitest/browser-playwright",
+        "@vitest/coverage-v8",
+        "@vitest/coverage-istanbul"
+      ]
+    },
+    "apps/*": {
+      "ignoreDependencies": [
+        "babel-plugin-react-compiler",
+        "eslint-formatter-gha",
+        "tailwindcss-react-aria-components",
+        "sharp"
+      ]
+    },
+    "examples/*": {}
+  }
+}

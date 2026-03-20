@@ -12,11 +12,7 @@ import {
 import {tv} from 'tailwind-variants'
 import {button} from './button'
 import {Description, FieldError, Label} from './field'
-import {
-  DropdownItem,
-  DropdownSection,
-  type DropdownSectionProps,
-} from './list-box'
+import {DropdownItem} from './list-box'
 import {Popover} from './popover'
 import {composeTailwindRenderProps} from './utils'
 
@@ -91,10 +87,4 @@ export function Select<T extends object>({
 
 export function SelectItem(props: ListBoxItemProps) {
   return <DropdownItem {...props} />
-}
-
-export function SelectSection<T extends object>(
-  props: DropdownSectionProps<T>,
-) {
-  return <DropdownSection {...props} />
 }

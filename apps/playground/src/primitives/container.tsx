@@ -2,7 +2,7 @@ import type {HTMLAttributes} from 'react'
 import {twMerge} from 'tailwind-merge'
 import {tv} from 'tailwind-variants'
 
-export const container = tv({
+const container = tv({
   base: 'bg-white dark:bg-gray-800',
   variants: {
     variant: {

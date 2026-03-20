@@ -1,16 +1,12 @@
 import {Check} from 'lucide-react'
 import {
   ListBoxItem as AriaListBoxItem,
-  Collection,
   composeRenderProps,
-  Header,
-  Section,
   type ListBoxItemProps,
-  type SectionProps,
 } from 'react-aria-components'
 import {tv} from 'tailwind-variants'
 
-export const dropdownItemStyles = tv({
+const dropdownItemStyles = tv({
   base: 'group flex items-center gap-2 cursor-default select-none py-1.5 px-2 rounded outline outline-0 text-sm forced-color-adjust-none',
   variants: {
     isDisabled: {
@@ -47,22 +43,5 @@ export function DropdownItem(props: ListBoxItemProps) {
         </>
       ))}
     </AriaListBoxItem>
-  )
-}
-
-export interface DropdownSectionProps<T> extends SectionProps<T> {
-  title?: string
-}
-
-export function DropdownSection<T extends object>(
-  props: DropdownSectionProps<T>,
-) {
-  return (
-    <Section className="first:-mt-[5px] after:content-[''] after:block after:h-[5px]">
-      <Header className="text-sm font-semibold text-gray-500 dark:text-gray-400 px-4 py-1 truncate sticky -top-[5px] -mt-px -mx-1 z-10 bg-gray-100/60 dark:bg-gray-800/60 backdrop-blur-md supports-[-moz-appearance:none]:bg-gray-100 dark:supports-[-moz-appearance:none]:bg-gray-800 border-y dark:border-gray-700 [&+*]:mt-1">
-        {props.title}
-      </Header>
-      <Collection items={props.items}>{props.children}</Collection>
-    </Section>
   )
 }

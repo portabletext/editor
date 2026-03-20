@@ -1,6 +1,6 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
 
-export const defaultSchema = compileSchema(
+const defaultSchema = compileSchema(
   defineSchema({
     annotations: [{name: 'link'}],
     decorators: [

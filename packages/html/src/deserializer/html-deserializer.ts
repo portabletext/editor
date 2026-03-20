@@ -31,7 +31,7 @@ import {createRules} from './rules'
 import type {SchemaMatchers} from './schema-matchers'
 import {trimWhitespace} from './trim-whitespace'
 
-export interface HtmlDeserializerOptions {
+interface HtmlDeserializerOptions {
   keyGenerator?: () => string
   rules?: DeserializerRule[]
   parseHtml?: HtmlParser

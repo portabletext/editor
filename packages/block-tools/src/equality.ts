@@ -22,10 +22,6 @@ export function isEqualMarks(
 /**
  * More or less copied from Remeda (https://github.com/remeda/remeda/blob/main/packages/remeda/src/isDeepEqual.ts)
  */
-export function isDeepEqual<A, B>(data: A, other: B) {
-  return isDeepEqualImplementation(data, other)
-}
-
 function isDeepEqualImplementation<T>(data: unknown, other: T): data is T {
   if (data === other) {
     return true

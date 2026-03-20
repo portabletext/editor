@@ -26,6 +26,6 @@ export function ErrorScreen(props: {
   )
 }
 
-export function getErrorMessage(error: unknown, fallback: string) {
+function getErrorMessage(error: unknown, fallback: string) {
   return isError(error) ? error.message : fallback
 }
