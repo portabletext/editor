@@ -209,20 +209,22 @@ export const Editable = forwardRef(
     const {onUserInput, receivedUserInput} = useTrackUserInput()
 
     const [, forceRender] = useReducer((s) => s + 1, 0)
-    editor.forceRender = forceRender
 
-    // Update internal state on each render.
-    editor.readOnly = readOnly
+    useIsomorphicLayoutEffect(() => {
+      editor.readOnly = readOnly
+      editor.forceRender = forceRender
+    })
 
     // Keep track of some state for the event handler logic.
     const state = useMemo(
       () => ({
         isUpdatingSelection: false,
         latestElement: null as DOMElement | null,
-        hasMarkPlaceholder: false,
       }),
       [],
     )
+
+    const hasMarkPlaceholderRef = useRef(false)
 
     // The autoFocus TextareaHTMLAttribute doesn't do anything on a div, so it
     // needs to be manually focused.
@@ -360,6 +362,10 @@ export const Editable = forwardRef(
     })
 
     useIsomorphicLayoutEffect(() => {
+      hasMarkPlaceholderRef.current = hasMarkPlaceholder
+    })
+
+    useIsomorphicLayoutEffect(() => {
       // Update element-related editor maps with the DOM element ref.
       let window: Window | null = null
       // biome-ignore lint/suspicious/noAssignInExpressions: Slate upstream pattern — assignment in condition
@@ -436,7 +442,7 @@ export const Editable = forwardRef(
           })
 
           if (slateRange && rangeEquals(slateRange, selection)) {
-            if (!state.hasMarkPlaceholder) {
+            if (!hasMarkPlaceholderRef.current) {
               return
             }
 
@@ -1052,7 +1058,7 @@ export const Editable = forwardRef(
     }
 
     const {marks} = editor
-    state.hasMarkPlaceholder = false
+    let hasMarkPlaceholder = false
 
     if (editor.selection && isCollapsedRange(editor.selection) && marks) {
       const {anchor} = editor.selection
@@ -1062,7 +1068,7 @@ export const Editable = forwardRef(
         const {text: _text, ...rest} = leaf
 
         if (!textEquals(leaf, marks, {loose: true})) {
-          state.hasMarkPlaceholder = true
+          hasMarkPlaceholder = true
 
           const unset = Object.fromEntries(
             Object.keys(rest).map((mark) => [mark, null]),

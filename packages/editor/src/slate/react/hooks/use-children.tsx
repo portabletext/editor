@@ -4,7 +4,7 @@ import type {
   PortableTextTextBlock,
 } from '@portabletext/schema'
 import {isSpan, isTextBlock} from '@portabletext/schema'
-import {useCallback, useRef, type JSX} from 'react'
+import {useCallback, useMemo, useRef, type JSX} from 'react'
 import {
   isElementDecorationsEqual,
   splitDecorationsByChild,
@@ -25,6 +25,7 @@ import ElementComponent from '../components/element'
 import ObjectNodeComponent from '../components/object-node'
 import TextComponent from '../components/text'
 import {ElementContext} from './use-element'
+import {useIsomorphicLayoutEffect} from './use-isomorphic-layout-effect'
 import {useSlateStatic} from './use-slate-static'
 
 /**
@@ -52,7 +53,10 @@ const useChildren = (props: {
     renderLeaf,
   } = props
   const editor = useSlateStatic()
-  editor.isNodeMapDirty = false
+
+  useIsomorphicLayoutEffect(() => {
+    editor.isNodeMapDirty = false
+  })
 
   const isEditorNode = isEditor(node)
 
@@ -184,27 +188,25 @@ const useDecorationsByChild = (
     decorations,
   )
 
-  // The value we return is a mutable array of `DecoratedRange[]` arrays. Each
-  // `DecoratedRange[]` is only updated if the decorations at that index have
-  // changed, which speeds up the equality check for the `decorations` prop in
-  // the memoized `Element` and `Text` components.
-  const mutableDecorationsByChild = useRef(decorationsByChild).current
+  const previousRef = useRef<DecoratedRange[][]>(decorationsByChild)
 
-  // Resize the mutable array to match the latest result
-  mutableDecorationsByChild.length = decorationsByChild.length
+  const stableDecorationsByChild = useMemo(() => {
+    const previous = previousRef.current
+    const next = decorationsByChild.map((decorations, i) => {
+      const previousDecorations: DecoratedRange[] | null = previous[i] ?? null
+      if (isElementDecorationsEqual(previousDecorations, decorations)) {
+        return previousDecorations!
+      }
+      return decorations
+    })
+    return next
+  }, [decorationsByChild])
 
-  for (let i = 0; i < decorationsByChild.length; i++) {
-    const decorations = decorationsByChild[i]!
+  useIsomorphicLayoutEffect(() => {
+    previousRef.current = stableDecorationsByChild
+  })
 
-    const previousDecorations: DecoratedRange[] | null =
-      mutableDecorationsByChild[i] ?? null
-
-    if (!isElementDecorationsEqual(previousDecorations, decorations)) {
-      mutableDecorationsByChild[i] = decorations!
-    }
-  }
-
-  return mutableDecorationsByChild
+  return stableDecorationsByChild
 }
 
 export default useChildren
