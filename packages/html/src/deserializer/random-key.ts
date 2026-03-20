@@ -20,7 +20,7 @@ for (let i = 0; i < 256; ++i) {
  * @param length - Length of string to generate
  * @returns A string of the given length
  */
-export function randomKey(length: number): string {
+function randomKey(length: number): string {
   return whatwgRNG(length)
     .reduce((str, n) => str + byteToHex[n], '')
     .slice(0, length)

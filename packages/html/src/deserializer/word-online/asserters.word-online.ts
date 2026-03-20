@@ -48,18 +48,6 @@ export function isTextRunSpan(el: Node): boolean {
   )
 }
 
-export function isEmptyOutlineElement(el: Element): boolean {
-  if (!isElement(el)) {
-    return false
-  }
-
-  if (!el.classList.contains('OutlineElement')) {
-    return false
-  }
-
-  return el.textContent.trim() === ''
-}
-
 export function isFindHit(el: Node): boolean {
   if (!isElement(el) || tagName(el) !== 'span') {
     return false

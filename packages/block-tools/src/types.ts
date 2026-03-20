@@ -1,4 +1,3 @@
-import type {PortableTextObject} from '@portabletext/schema'
 import type {SchemaMatchers} from './schema-matchers'
 
 /**
@@ -14,44 +13,6 @@ export interface TypedObject {
  */
 export interface ArbitraryTypedObject extends TypedObject {
   [key: string]: unknown
-}
-
-export function isArbitraryTypedObject(
-  object: unknown,
-): object is ArbitraryTypedObject {
-  return isRecord(object) && typeof object._type === 'string'
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return !!value && (typeof value === 'object' || typeof value === 'function')
-}
-
-export interface MinimalSpan {
-  _type: 'span'
-  _key?: string
-  text: string
-  marks?: string[]
-}
-
-export interface MinimalBlock extends TypedObject {
-  _type: 'block'
-  children: TypedObject[]
-  markDefs?: TypedObject[]
-  style?: string
-  level?: number
-  listItem?: string
-}
-
-export interface PlaceholderDecorator {
-  _type: '__decorator'
-  name: string
-  children: TypedObject[]
-}
-
-export interface PlaceholderAnnotation {
-  _type: '__annotation'
-  markDef: PortableTextObject
-  children: TypedObject[]
 }
 
 /**
@@ -77,10 +38,6 @@ export interface HtmlDeserializerOptions {
    * @beta
    */
   matchers?: SchemaMatchers
-}
-
-export interface HtmlPreprocessorOptions {
-  unstable_whitespaceOnPasteMode?: WhiteSpacePasteMode
 }
 
 /**

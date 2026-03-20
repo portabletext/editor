@@ -118,7 +118,7 @@ export const defaultHtmlObjectDefinition = {
   fields: [{name: 'html', type: 'string'}],
 } as const satisfies BlockObjectDefinition
 
-export const defaultTableObjectDefinition = {
+const defaultTableObjectDefinition = {
   name: 'table',
   fields: [
     {name: 'headerRows', type: 'number'},

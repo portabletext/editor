@@ -47,10 +47,6 @@ export const HTML_HEADER_TAGS: Record<string, PartialBlock | undefined> = {
   h6: {...DEFAULT_BLOCK, style: 'h6'},
 }
 
-export const HTML_MISC_TAGS = {
-  br: {...DEFAULT_BLOCK, style: BLOCK_DEFAULT_STYLE} as PartialBlock,
-}
-
 export const HTML_DECORATOR_TAGS: Record<string, string | undefined> = {
   b: 'strong',
   strong: 'strong',
@@ -79,26 +75,3 @@ export const HTML_LIST_ITEM_TAGS: Record<string, PartialBlock | undefined> = {
     listItem: 'bullet',
   },
 }
-
-export const ELEMENT_MAP = {
-  ...HTML_BLOCK_TAGS,
-  ...HTML_SPAN_TAGS,
-  ...HTML_LIST_CONTAINER_TAGS,
-  ...HTML_LIST_ITEM_TAGS,
-  ...HTML_HEADER_TAGS,
-  ...HTML_MISC_TAGS,
-}
-
-export const DEFAULT_SUPPORTED_STYLES = [
-  ...new Set(
-    Object.values(ELEMENT_MAP)
-      .filter((tag): tag is PartialBlock => 'style' in tag)
-      .map((tag) => tag.style),
-  ),
-]
-
-export const DEFAULT_SUPPORTED_DECORATORS = [
-  ...new Set(Object.values(HTML_DECORATOR_TAGS)),
-]
-
-export const DEFAULT_SUPPORTED_ANNOTATIONS = ['link']

@@ -12,35 +12,35 @@ import {
  * Default style definitions
  ********************/
 
-export const normalStyleDefinition = {
+const normalStyleDefinition = {
   name: 'normal',
 } as const satisfies StyleDefinition
 
-export const h1StyleDefinition = {
+const h1StyleDefinition = {
   name: 'h1',
 } as const satisfies StyleDefinition
 
-export const h2StyleDefinition = {
+const h2StyleDefinition = {
   name: 'h2',
 } as const satisfies StyleDefinition
 
-export const h3StyleDefinition = {
+const h3StyleDefinition = {
   name: 'h3',
 } as const satisfies StyleDefinition
 
-export const h4StyleDefinition = {
+const h4StyleDefinition = {
   name: 'h4',
 } as const satisfies StyleDefinition
 
-export const h5StyleDefinition = {
+const h5StyleDefinition = {
   name: 'h5',
 } as const satisfies StyleDefinition
 
-export const h6StyleDefinition = {
+const h6StyleDefinition = {
   name: 'h6',
 } as const satisfies StyleDefinition
 
-export const blockquoteStyleDefinition = {
+const blockquoteStyleDefinition = {
   name: 'blockquote',
 } as const satisfies StyleDefinition
 
@@ -48,11 +48,11 @@ export const blockquoteStyleDefinition = {
  * Default list definitions
  ********************/
 
-export const defaultOrderedListItemDefinition = {
+const defaultOrderedListItemDefinition = {
   name: 'number',
 } as const satisfies ListDefinition
 
-export const defaultUnorderedListItemDefinition = {
+const defaultUnorderedListItemDefinition = {
   name: 'bullet',
 } as const satisfies ListDefinition
 
@@ -60,19 +60,19 @@ export const defaultUnorderedListItemDefinition = {
  * Default decorator definitions
  ********************/
 
-export const defaultStrongDecoratorDefinition = {
+const defaultStrongDecoratorDefinition = {
   name: 'strong',
 } as const satisfies DecoratorDefinition
 
-export const defaultEmDecoratorDefinition = {
+const defaultEmDecoratorDefinition = {
   name: 'em',
 } as const satisfies DecoratorDefinition
 
-export const defaultCodeDecoratorDefinition = {
+const defaultCodeDecoratorDefinition = {
   name: 'code',
 } as const satisfies DecoratorDefinition
 
-export const defaultStrikeThroughDecoratorDefinition = {
+const defaultStrikeThroughDecoratorDefinition = {
   name: 'strike-through',
 } as const satisfies DecoratorDefinition
 
@@ -80,7 +80,7 @@ export const defaultStrikeThroughDecoratorDefinition = {
  * Default annotation definitions
  ********************/
 
-export const defaultLinkObjectDefinition = {
+const defaultLinkObjectDefinition = {
   name: 'link',
   fields: [
     {name: 'href', type: 'string'},
@@ -92,7 +92,7 @@ export const defaultLinkObjectDefinition = {
  * Default object definitions
  ********************/
 
-export const defaultCodeObjectDefinition = {
+const defaultCodeObjectDefinition = {
   name: 'code',
   fields: [
     {name: 'language', type: 'string'},
@@ -100,7 +100,7 @@ export const defaultCodeObjectDefinition = {
   ],
 } as const satisfies BlockObjectDefinition
 
-export const defaultImageObjectDefinition = {
+const defaultImageObjectDefinition = {
   name: 'image',
   fields: [
     {name: 'src', type: 'string'},
@@ -109,16 +109,16 @@ export const defaultImageObjectDefinition = {
   ],
 } as const satisfies BlockObjectDefinition
 
-export const defaultHorizontalRuleObjectDefinition = {
+const defaultHorizontalRuleObjectDefinition = {
   name: 'horizontal-rule',
 } as const satisfies BlockObjectDefinition
 
-export const defaultHtmlObjectDefinition = {
+const defaultHtmlObjectDefinition = {
   name: 'html',
   fields: [{name: 'html', type: 'string'}],
 } as const satisfies BlockObjectDefinition
 
-export const defaultTableObjectDefinition = {
+const defaultTableObjectDefinition = {
   name: 'table',
   fields: [
     {name: 'headerRows', type: 'number'},
