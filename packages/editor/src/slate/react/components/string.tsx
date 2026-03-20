@@ -93,6 +93,7 @@ const SlateString = (props: {
  * Leaf strings with text in them.
  */
 const TextString = (props: {text: string; isTrailing?: boolean}) => {
+  'use no memo'
   const {text, isTrailing = false} = props
   const ref = useRef<HTMLSpanElement>(null)
   const getTextContent = () => {

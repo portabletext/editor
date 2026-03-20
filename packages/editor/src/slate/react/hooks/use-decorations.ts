@@ -28,6 +28,7 @@ export const useDecorations = (
   path: Path,
   parentDecorations: DecoratedRange[],
 ): DecoratedRange[] => {
+  'use no memo'
   const editor = useSlateStatic()
   const {decorate, addEventListener} = useContext(DecorateContext)
 
