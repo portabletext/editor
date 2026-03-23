@@ -451,6 +451,9 @@ importers:
       '@sanity/tsconfig':
         specifier: ^2.1.0
         version: 2.1.0
+      '@textspec/notation':
+        specifier: ^1.0.0
+        version: 1.0.0
       '@types/debug':
         specifier: ^4.1.12
         version: 4.1.12
@@ -4519,6 +4522,10 @@ packages:
     resolution: {integrity: sha512-jVA+/UpKL1vRLg6Hkao5jldawNmRo7mQYrZtNHMIVpLfLhDml5nMRUo/8MwoX2vNXvnaXNNMedrMfMugAVX1nA==}
     peerDependencies:
       vite: ^5.2.0 || ^6 || ^7
+
+  '@textspec/notation@1.0.0':
+    resolution: {integrity: sha512-XqGSyEJZ1FNApsICzBERYz0CdYC7p65krNdRoh9pCmUxrC/vGfd37kXBYkC0Sv1XT8gh/a2uzWpW21F1Ws8vxA==}
+    engines: {node: '>=20.19 <22 || >=22.12'}
 
   '@ts-morph/common@0.28.1':
     resolution: {integrity: sha512-W74iWf7ILp1ZKNYXY5qbddNaml7e9Sedv5lvU1V8lftlitkc9Pq1A+jlH23ltDgWYeZFFEqGCD1Ies9hqu3O+g==}
@@ -12134,6 +12141,8 @@ snapshots:
       '@tailwindcss/oxide': 4.1.18
       tailwindcss: 4.1.18
       vite: 7.3.1(@types/node@20.19.25)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.2)
+
+  '@textspec/notation@1.0.0': {}
 
   '@ts-morph/common@0.28.1':
     dependencies:

@@ -12,6 +12,7 @@ import {
   getSelectionBeforeText,
   getTextSelection,
 } from '../../../test-utils/text-selection'
+import {fromTextspec, toTextspec} from '../../../test-utils/textspec'
 import {getValueAnnotations} from '../../../test-utils/value-annotations'
 import {IS_MAC} from '../../internal-utils/is-hotkey'
 import {safeParse} from '../../internal-utils/safe-json'
@@ -668,6 +669,40 @@ export const stepDefinitions = [
           getTersePt(context.editor.getSnapshot().context),
           'Unexpected editor text',
         ).toEqual(tersePt)
+      })
+    },
+  ),
+
+  /**
+   * Textspec steps
+   */
+  Given(
+    'the editor state {textspec}',
+    (context: Context, textspec: Parameter['textspec']) => {
+      const {blocks} = fromTextspec(
+        {
+          keyGenerator: context.editor.getSnapshot().context.keyGenerator,
+          schema: context.editor.getSnapshot().context.schema,
+        },
+        textspec,
+      )
+
+      context.editor.send({
+        type: 'insert.blocks',
+        blocks,
+        placement: 'auto',
+        select: 'end',
+      })
+    },
+  ),
+  Then(
+    'the editor state is {textspec}',
+    async (context: Context, textspec: Parameter['textspec']) => {
+      await vi.waitFor(() => {
+        expect(
+          toTextspec(context.editor.getSnapshot().context, {singleLine: true}),
+          'Unexpected editor state',
+        ).toEqual(textspec)
       })
     },
   ),
