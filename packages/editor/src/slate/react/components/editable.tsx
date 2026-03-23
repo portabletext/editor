@@ -76,6 +76,7 @@ import {isCollapsedRange} from '../../range/is-collapsed-range'
 import {isExpandedRange} from '../../range/is-expanded-range'
 import {rangeEquals} from '../../range/range-equals'
 import {textEquals} from '../../text/text-equals'
+import {normalizeRangeAtMarkBoundary} from '../../utils/normalize-range-at-mark-boundary'
 import type {AndroidInputManager} from '../hooks/android-input-manager/android-input-manager'
 import {useAndroidInputManager} from '../hooks/android-input-manager/use-android-input-manager'
 import useChildren from '../hooks/use-children'
@@ -324,6 +325,13 @@ export const Editable = forwardRef(
               })
 
               if (range) {
+                const normalizedRange = normalizeRangeAtMarkBoundary(
+                  range,
+                  editor.children,
+                  editor.schema,
+                  editor.selection,
+                )
+
                 if (
                   !ReactEditor.isComposing(editor) &&
                   !androidInputManager?.hasPendingChanges() &&
@@ -331,9 +339,9 @@ export const Editable = forwardRef(
                 ) {
                   // Suppress browser selection normalization that would
                   // overwrite a block object selection.
-                  editor.select(range)
+                  editor.select(normalizedRange)
                 } else {
-                  androidInputManager?.handleUserSelect(range)
+                  androidInputManager?.handleUserSelect(normalizedRange)
                 }
               }
             }
