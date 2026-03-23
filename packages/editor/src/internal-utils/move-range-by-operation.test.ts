@@ -31,6 +31,63 @@ describe('moveRangeByOperation', () => {
     })
   })
 
+  it('does not expand range when inserting text at the end', () => {
+    const range: Range = {
+      anchor: {path: [0, 0], offset: 5},
+      focus: {path: [0, 0], offset: 10},
+    }
+    const operation: Operation = {
+      type: 'insert_text',
+      path: [0, 0],
+      offset: 10,
+      text: 'x',
+    }
+
+    const result = moveRangeByOperation(range, operation)
+
+    expect(result).toBe(range)
+  })
+
+  it('does not expand range when inserting text at the start', () => {
+    const range: Range = {
+      anchor: {path: [0, 0], offset: 5},
+      focus: {path: [0, 0], offset: 10},
+    }
+    const operation: Operation = {
+      type: 'insert_text',
+      path: [0, 0],
+      offset: 5,
+      text: 'x',
+    }
+
+    const result = moveRangeByOperation(range, operation)
+
+    expect(result).toEqual({
+      anchor: {path: [0, 0], offset: 6},
+      focus: {path: [0, 0], offset: 11},
+    })
+  })
+
+  it('shifts both points forward for collapsed range at insert offset', () => {
+    const range: Range = {
+      anchor: {path: [0, 0], offset: 5},
+      focus: {path: [0, 0], offset: 5},
+    }
+    const operation: Operation = {
+      type: 'insert_text',
+      path: [0, 0],
+      offset: 5,
+      text: 'abc',
+    }
+
+    const result = moveRangeByOperation(range, operation)
+
+    expect(result).toEqual({
+      anchor: {path: [0, 0], offset: 8},
+      focus: {path: [0, 0], offset: 8},
+    })
+  })
+
   it('returns null when anchor is deleted', () => {
     const range: Range = {
       anchor: {path: [0, 0], offset: 5},

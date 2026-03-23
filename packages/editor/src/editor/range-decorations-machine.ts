@@ -356,9 +356,37 @@ export const rangeDecorationsMachine = setup({
           )
         }
 
+        // Detect intermediate merge state: mergeContext is active and at
+        // least one point is still on the deleted block (hasn't been mapped
+        // to the target yet). In this state, slateRangeToSelection would
+        // return null (the block no longer exists) and onMoved would
+        // mislead the consumer into removing the decoration. The point
+        // will be correctly mapped when insert_node fires for the
+        // corresponding child.
+        const isIntermediateMergeState =
+          mergeContext !== null &&
+          deletedBlockIndex !== undefined &&
+          newRange !== null &&
+          Range.isRange(newRange) &&
+          (newRange.anchor.path[0] === deletedBlockIndex ||
+            newRange.focus.path[0] === deletedBlockIndex)
+
+        // If a previously-expanded range has collapsed (all content deleted),
+        // treat it as invalidation — the zero-width remnant is meaningless.
+        if (
+          !isIntermediateMergeState &&
+          !suppressCallback &&
+          Range.isExpanded(slateRange) &&
+          newRange !== null &&
+          Range.isRange(newRange) &&
+          Range.isCollapsed(newRange)
+        ) {
+          newRange = null
+        }
+
         // Fire onMoved for local ops only. Remote ops batch callbacks
         // into a single 'reconcile decorations' event after the batch.
-        if (!suppressCallback) {
+        if (!suppressCallback && !isIntermediateMergeState) {
           const boundaryChanged =
             (newRange && newRange !== slateRange) ||
             (newRange === null && slateRange)
@@ -412,22 +440,36 @@ export const rangeDecorationsMachine = setup({
         // reconciliation handler will re-resolve it after the batch completes.
         if (newRange !== null) {
           const rangeToUse = newRange || slateRange
-          // Only update selection for local ops. During remote batches,
-          // preserve the original selection for reconciliation to re-resolve
-          // from. Point.transform may produce wrong intermediate results
-          // without splitContext/mergeContext (e.g. paste-restructure ops).
-          if (!suppressCallback) {
-            decoratedRange.rangeDecoration.selection = slateRangeToSelection({
+          if (isIntermediateMergeState) {
+            // During intermediate merge: keep the old selection (don't try
+            // to resolve the stale range). The Slate range is preserved so
+            // insert_node can map it correctly in the next operation.
+            rangeDecorationState.push({
+              merge: mergeRangeDecorations,
+              ...rangeToUse,
+              rangeDecoration: decoratedRange.rangeDecoration,
+            })
+          } else if (!suppressCallback) {
+            const newSelection = slateRangeToSelection({
               schema: context.schema,
               editor: context.slateEditor,
               range: rangeToUse,
             })
+            rangeDecorationState.push({
+              merge: mergeRangeDecorations,
+              ...rangeToUse,
+              rangeDecoration: {
+                ...decoratedRange.rangeDecoration,
+                selection: newSelection,
+              },
+            })
+          } else {
+            rangeDecorationState.push({
+              merge: mergeRangeDecorations,
+              ...rangeToUse,
+              rangeDecoration: decoratedRange.rangeDecoration,
+            })
           }
-          rangeDecorationState.push({
-            merge: mergeRangeDecorations,
-            ...rangeToUse,
-            rangeDecoration: decoratedRange.rangeDecoration,
-          })
         } else if (suppressCallback) {
           // During remote batch: keep the decoration alive with its last known range.
           // Reconciliation will re-resolve from EditorSelection keys after the batch.
@@ -523,6 +565,45 @@ export const rangeDecorationsMachine = setup({
           continue
         }
 
+        // If a previously-expanded range collapsed during the remote batch,
+        // treat it as invalidation.
+        if (
+          previousRange !== null &&
+          Range.isExpanded(previousRange) &&
+          Range.isCollapsed(freshSlateRange)
+        ) {
+          const consumerSelection = rangeDecoration.onMoved?.({
+            previousSelection,
+            newSelection: null,
+            rangeDecoration,
+            origin: 'remote',
+            reason: 'moved',
+          })
+
+          if (consumerSelection) {
+            const consumerSlateRange = toSlateRange({
+              context: {
+                schema: context.schema,
+                value: context.slateEditor.value,
+                selection: consumerSelection,
+              },
+              blockIndexMap: context.slateEditor.blockIndexMap,
+            })
+
+            if (Range.isRange(consumerSlateRange)) {
+              rangeDecorationState.push({
+                merge: mergeRangeDecorations,
+                ...consumerSlateRange,
+                rangeDecoration: {
+                  ...rangeDecoration,
+                  selection: consumerSelection,
+                },
+              })
+            }
+          }
+          continue
+        }
+
         // Detect if the range changed during the batch.
         // "Changed" means toSlateRange re-resolved to a DIFFERENT position than
         // the pre-batch snapshot — indicating a structural change (split, merge,
@@ -576,36 +657,76 @@ export const rangeDecorationsMachine = setup({
             },
           })
         } else {
-          // No structural change: Point.transform correctly tracked offset
-          // shifts during the batch (e.g. text insertions in the same span).
-          // toSlateRange re-resolved to the same position as pre-batch because
-          // it uses the original offsets literally (just clamped to text.length).
-          // Trust Point.transform's cached Slate range — it has the correct
-          // shifted offsets. Compute selection from it to keep in sync.
+          // No structural change detected by toSlateRange re-resolution.
+          // Point.transform may still have shifted offsets (e.g. text
+          // inserted before the decoration in the same span). Compare
+          // the cached Point.transform'd range against the pre-batch
+          // snapshot to detect offset-only shifts.
           const cachedSelection = slateRangeToSelection({
             schema: context.schema,
             editor: context.slateEditor,
             range: decoratedRange,
           })
 
-          if (contentChangedSet.has(rangeDecoration)) {
-            rangeDecoration.onMoved?.({
-              previousSelection: cachedSelection,
+          const offsetShifted =
+            previousRange && !Range.equals(previousRange, decoratedRange)
+
+          if (offsetShifted) {
+            let finalSelection = cachedSelection
+            let finalSlateRange: Range = decoratedRange
+
+            const consumerSelection = rangeDecoration.onMoved?.({
+              previousSelection,
               newSelection: cachedSelection,
               rangeDecoration,
               origin: 'remote',
-              reason: 'contentChanged',
+              reason: 'moved',
+            })
+
+            if (consumerSelection) {
+              const consumerSlateRange = toSlateRange({
+                context: {
+                  schema: context.schema,
+                  value: context.slateEditor.value,
+                  selection: consumerSelection,
+                },
+                blockIndexMap: context.slateEditor.blockIndexMap,
+              })
+
+              if (Range.isRange(consumerSlateRange)) {
+                finalSelection = consumerSelection
+                finalSlateRange = consumerSlateRange
+              }
+            }
+
+            rangeDecorationState.push({
+              merge: mergeRangeDecorations,
+              ...finalSlateRange,
+              rangeDecoration: {
+                ...rangeDecoration,
+                selection: finalSelection,
+              },
+            })
+          } else {
+            if (contentChangedSet.has(rangeDecoration)) {
+              rangeDecoration.onMoved?.({
+                previousSelection: cachedSelection,
+                newSelection: cachedSelection,
+                rangeDecoration,
+                origin: 'remote',
+                reason: 'contentChanged',
+              })
+            }
+
+            rangeDecorationState.push({
+              ...decoratedRange,
+              merge: mergeRangeDecorations,
+              rangeDecoration: {
+                ...rangeDecoration,
+                selection: cachedSelection,
+              },
             })
           }
-
-          rangeDecorationState.push({
-            ...decoratedRange,
-            merge: mergeRangeDecorations,
-            rangeDecoration: {
-              ...rangeDecoration,
-              selection: cachedSelection,
-            },
-          })
         }
       }
 

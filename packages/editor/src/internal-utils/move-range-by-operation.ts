@@ -8,8 +8,23 @@ export function moveRangeByOperation(
   range: Range,
   operation: Operation,
 ): Range | null {
-  const anchor = Point.transform(range.anchor, operation)
-  const focus = Point.transform(range.focus, operation)
+  const isCollapsed = Point.equals(range.anchor, range.focus)
+
+  // For non-collapsed ranges, use backward affinity on the end point so that
+  // inserting text at the exact boundary doesn't expand the range.
+  const anchorIsEnd = !isCollapsed && Point.isAfter(range.anchor, range.focus)
+  const focusIsEnd = !isCollapsed && !anchorIsEnd
+
+  const anchor = Point.transform(
+    range.anchor,
+    operation,
+    anchorIsEnd ? {affinity: 'backward'} : undefined,
+  )
+  const focus = Point.transform(
+    range.focus,
+    operation,
+    focusIsEnd ? {affinity: 'backward'} : undefined,
+  )
 
   if (anchor === null || focus === null) {
     return null

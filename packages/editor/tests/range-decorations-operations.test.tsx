@@ -797,6 +797,137 @@ describe('RangeDecorations: Block Merge Operations', () => {
         .toHaveTextContent('world'),
     )
   })
+
+  test('Scenario 2.4: Sequential backspace merges 3 blocks into 1, decoration on last block survives', async () => {
+    const onMovedSpy = vi.fn()
+    let rangeDecorations: Array<RangeDecoration> = [
+      {
+        component: RangeDecorationComponent,
+        payload: {id: 'dec1'},
+        selection: {
+          anchor: {
+            path: [{_key: 'b3'}, 'children', {_key: 's3'}],
+            offset: 0,
+          },
+          focus: {
+            path: [{_key: 'b3'}, 'children', {_key: 's3'}],
+            offset: 5,
+          },
+        },
+        onMoved: (details) => {
+          onMovedSpy(details)
+          rangeDecorations = updateRangeDecorations({rangeDecorations, details})
+        },
+      },
+    ]
+
+    const {editor, locator, rerender} = await createTestEditor({
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', _key: 's1', text: 'Hello'}],
+          markDefs: [],
+        },
+        {
+          _type: 'block',
+          _key: 'b2',
+          children: [{_type: 'span', _key: 's2', text: ' '}],
+          markDefs: [],
+        },
+        {
+          _type: 'block',
+          _key: 'b3',
+          children: [{_type: 'span', _key: 's3', text: 'world'}],
+          markDefs: [],
+        },
+      ],
+      editableProps: {rangeDecorations},
+    })
+
+    await vi.waitFor(() =>
+      expect
+        .element(locator.getByTestId('range-decoration'))
+        .toHaveTextContent('world'),
+    )
+
+    // First merge: backspace at start of b3 → merges b3 into b2
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: 'b3'}, 'children', {_key: 's3'}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: 'b3'}, 'children', {_key: 's3'}],
+          offset: 0,
+        },
+      },
+    })
+    editor.send({type: 'delete', direction: 'backward'})
+
+    await vi.waitFor(() => {
+      const terse = getTersePt(editor.getSnapshot().context)
+      expect(terse.length).toBe(2)
+    })
+
+    await rerender({
+      initialValue: editor.getSnapshot().context.value,
+      editableProps: {rangeDecorations},
+    })
+
+    // Decoration should survive the first merge
+    await vi.waitFor(() =>
+      expect
+        .element(locator.getByTestId('range-decoration'))
+        .toHaveTextContent('world'),
+    )
+
+    // Second merge: backspace at start of merged block → merges into b1
+    const value = editor.getSnapshot().context.value!
+    const block2Key = value[1]!._key
+    const block2Children = (value[1] as {children: Array<{_key: string}>})
+      .children
+    const firstChildKey = block2Children[0]!._key
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: block2Key}, 'children', {_key: firstChildKey}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: block2Key}, 'children', {_key: firstChildKey}],
+          offset: 0,
+        },
+      },
+    })
+    editor.send({type: 'delete', direction: 'backward'})
+
+    await vi.waitFor(() => {
+      const terse = getTersePt(editor.getSnapshot().context)
+      expect(terse.length).toBe(1)
+    })
+
+    expect(getTersePt(editor.getSnapshot().context)).toEqual(['Hello world'])
+
+    const lastCall =
+      onMovedSpy.mock.calls[onMovedSpy.mock.calls.length - 1]?.[0]
+    expect(lastCall?.newSelection).not.toBeNull()
+
+    await rerender({
+      initialValue: editor.getSnapshot().context.value,
+      editableProps: {rangeDecorations},
+    })
+
+    await vi.waitFor(() =>
+      expect
+        .element(locator.getByTestId('range-decoration'))
+        .toHaveTextContent('world'),
+    )
+  })
 })
 
 describe('RangeDecorations: Paste Operations', () => {
@@ -1046,6 +1177,103 @@ describe('RangeDecorations: Collapsed (Cursor) Decorations', () => {
     const lastCall =
       onMovedSpy.mock.calls[onMovedSpy.mock.calls.length - 1]?.[0]
     expect(lastCall?.newSelection).not.toBeNull()
+  })
+
+  test('Scenario 5.2: Expanded decoration collapses when its content is deleted', async () => {
+    const onMovedSpy = vi.fn()
+    let rangeDecorations: Array<RangeDecoration> = [
+      {
+        component: RangeDecorationComponent,
+        payload: {id: 'dec1'},
+        selection: {
+          anchor: {
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            offset: 0,
+          },
+          focus: {
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            offset: 5,
+          },
+        },
+        onMoved: (details) => {
+          onMovedSpy(details)
+          rangeDecorations = updateRangeDecorations({rangeDecorations, details})
+        },
+      },
+    ]
+
+    const {editor, locator, rerender} = await createTestEditor({
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', _key: 's1', text: 'Hello world'}],
+          markDefs: [],
+        },
+      ],
+      editableProps: {rangeDecorations},
+    })
+
+    // Verify initial decoration on "Hello"
+    await vi.waitFor(() =>
+      expect
+        .element(locator.getByTestId('range-decoration'))
+        .toHaveTextContent('Hello'),
+    )
+
+    // Select "Hello" and delete it
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 5,
+        },
+      },
+    })
+
+    editor.send({
+      type: 'delete.text',
+      at: {
+        anchor: {
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 5,
+        },
+      },
+    })
+
+    // Wait for deletion
+    await vi.waitFor(() => {
+      const terse = getTersePt(editor.getSnapshot().context)
+      expect(terse[0]).toBe(' world')
+    })
+
+    // onMoved should be called with newSelection: null (invalidated)
+    expect(onMovedSpy).toHaveBeenCalled()
+    const lastCall =
+      onMovedSpy.mock.calls[onMovedSpy.mock.calls.length - 1]?.[0]
+    expect(lastCall?.newSelection).toBeNull()
+
+    // Re-render with updated decorations (should be empty after removal)
+    await rerender({
+      initialValue: editor.getSnapshot().context.value,
+      editableProps: {rangeDecorations},
+    })
+
+    // Decoration should no longer be in the document
+    await vi.waitFor(() =>
+      expect
+        .element(locator.getByTestId('range-decoration'))
+        .not.toBeInTheDocument(),
+    )
   })
 })
 
@@ -1483,8 +1711,9 @@ describe('RangeDecorations: Undo/Redo', () => {
       expect(terse.length).toBe(1)
     })
 
-    // onMoved should be called for undo
-    expect(onMovedSpy).toHaveBeenCalled()
+    // The decoration range [0, 5] is unchanged by the undo (insert_text at the
+    // focus offset doesn't expand the range), so onMoved should NOT be called.
+    expect(onMovedSpy).not.toHaveBeenCalled()
 
     // Re-render after undo
     await rerender({
@@ -1894,7 +2123,7 @@ describe('RangeDecorations: Copy-Paste Operations', () => {
   })
 })
 
-describe('RangeDecorations: Block Merge Operations', () => {
+describe('RangeDecorations: Block Merge (Decoration Preservation)', () => {
   // Josef's scenario: backspace/delete to merge blocks breaks decorations
 
   test('Backspace at start of second block should preserve decoration in first block', async () => {
@@ -2527,23 +2756,12 @@ describe('RangeDecorations: onMoved Return Value', () => {
     const remoteCalls = allCalls.filter((d) => d.origin === 'remote')
     expect(remoteCalls.length).toBeGreaterThan(0)
 
-    // The very first onMoved call should carry the original "dolly" range
-    // as previousSelection (offset 6-11 before any edits shifted it)
-    const firstCall = allCalls[0]!
-    expect(firstCall.previousSelection).not.toBeNull()
-    expect(firstCall.previousSelection!.anchor.offset).toBe(6)
-    expect(firstCall.previousSelection!.focus.offset).toBe(11)
-
-    // Each subsequent call's previousSelection should match the prior call's newSelection
-    for (let i = 1; i < allCalls.length; i++) {
-      const prev = allCalls[i - 1]!
-      const curr = allCalls[i]!
-      if (prev.newSelection && curr.previousSelection) {
-        expect(curr.previousSelection.anchor.offset).toBe(
-          prev.newSelection.anchor.offset,
-        )
-      }
-    }
+    // The first remote call should carry the original "dolly" range
+    // as previousSelection (offset 6-11 before any remote edits)
+    const firstRemoteCall = remoteCalls[0]!
+    expect(firstRemoteCall.previousSelection).not.toBeNull()
+    expect(firstRemoteCall.previousSelection!.anchor.offset).toBe(6)
+    expect(firstRemoteCall.previousSelection!.focus.offset).toBe(11)
 
     // The last call should have a valid newSelection
     expect(allCalls[allCalls.length - 1]!.newSelection).not.toBeNull()
@@ -4274,7 +4492,9 @@ describe('RangeDecorations: Overlapping Decorations', () => {
     const lastCallB =
       onMovedSpyB.mock.calls[onMovedSpyB.mock.calls.length - 1]?.[0]
     expect(lastCallA?.newSelection).not.toBeNull()
-    expect(lastCallB?.newSelection).not.toBeNull()
+    // Decoration B's entire content was replaced — the remove_text collapses
+    // it, which invalidates the decoration (zero-width remnants are removed).
+    expect(lastCallB?.newSelection).toBeNull()
   })
 
   test('Split inside overlap fires onMoved on both decorations', async () => {
@@ -4495,5 +4715,365 @@ describe('RangeDecorations: Overlapping Decorations', () => {
     expect(lastCallB?.newSelection).not.toBeNull()
     expect(lastCallA?.origin).toBe('remote')
     expect(lastCallB?.origin).toBe('remote')
+  })
+})
+
+describe('RangeDecorations: Immutability', () => {
+  test('Local operation does not mutate the original RangeDecoration object', async () => {
+    const onMovedSpy = vi.fn()
+    const originalSelection: EditorSelection = {
+      anchor: {
+        path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+        offset: 6,
+      },
+      focus: {
+        path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+        offset: 11,
+      },
+    }
+    const selectionSnapshot = JSON.parse(JSON.stringify(originalSelection))
+
+    const decoration: RangeDecoration = {
+      component: RangeDecorationComponent,
+      payload: {id: 'dec1'},
+      selection: originalSelection,
+      onMoved: (details) => {
+        onMovedSpy(details)
+      },
+    }
+
+    const rangeDecorations: Array<RangeDecoration> = [decoration]
+
+    const {editor, locator} = await createTestEditor({
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', _key: 's1', text: 'Hello world'}],
+          markDefs: [],
+        },
+      ],
+      editableProps: {rangeDecorations},
+    })
+
+    await vi.waitFor(() =>
+      expect
+        .element(locator.getByTestId('range-decoration'))
+        .toHaveTextContent('world'),
+    )
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 0,
+        },
+      },
+    })
+
+    editor.send({type: 'insert.text', text: 'AAA '})
+
+    await vi.waitFor(() => {
+      const terse = getTersePt(editor.getSnapshot().context)
+      expect(terse[0]).toContain('AAA')
+    })
+
+    expect(onMovedSpy).toHaveBeenCalled()
+    const lastCall =
+      onMovedSpy.mock.calls[onMovedSpy.mock.calls.length - 1]?.[0]
+    expect(lastCall?.newSelection).not.toBeNull()
+    expect(lastCall?.newSelection?.anchor?.offset).toBe(10)
+    expect(lastCall?.newSelection?.focus?.offset).toBe(15)
+
+    expect(decoration.selection).toEqual(selectionSnapshot)
+  })
+})
+
+describe('RangeDecorations: Undo Paste', () => {
+  test('Decoration returns to original position after undoing paste', async () => {
+    const onMovedSpy = vi.fn()
+    let rangeDecorations: Array<RangeDecoration> = [
+      {
+        component: RangeDecorationComponent,
+        payload: {id: 'dec1'},
+        selection: {
+          anchor: {
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            offset: 6,
+          },
+          focus: {
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            offset: 11,
+          },
+        },
+        onMoved: (details) => {
+          onMovedSpy(details)
+          rangeDecorations = updateRangeDecorations({rangeDecorations, details})
+        },
+      },
+    ]
+
+    const {editor, locator, rerender} = await createTestEditor({
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', _key: 's1', text: 'Hello world'}],
+          markDefs: [],
+        },
+      ],
+      editableProps: {rangeDecorations},
+    })
+
+    await vi.waitFor(() =>
+      expect
+        .element(locator.getByTestId('range-decoration'))
+        .toHaveTextContent('world'),
+    )
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 0,
+        },
+      },
+    })
+
+    editor.send({type: 'insert.text', text: 'PASTED '})
+
+    await vi.waitFor(() => {
+      const terse = getTersePt(editor.getSnapshot().context)
+      expect(terse[0]).toContain('PASTED')
+    })
+
+    expect(onMovedSpy).toHaveBeenCalled()
+
+    await rerender({
+      initialValue: editor.getSnapshot().context.value,
+      editableProps: {rangeDecorations},
+    })
+
+    await vi.waitFor(() =>
+      expect
+        .element(locator.getByTestId('range-decoration'))
+        .toHaveTextContent('world'),
+    )
+
+    onMovedSpy.mockClear()
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      const terse = getTersePt(editor.getSnapshot().context)
+      expect(terse[0]).toBe('Hello world')
+    })
+
+    expect(onMovedSpy).toHaveBeenCalled()
+    const lastCall =
+      onMovedSpy.mock.calls[onMovedSpy.mock.calls.length - 1]?.[0]
+    expect(lastCall?.newSelection).not.toBeNull()
+    expect(lastCall?.newSelection?.anchor?.offset).toBe(6)
+    expect(lastCall?.newSelection?.focus?.offset).toBe(11)
+
+    await rerender({
+      initialValue: editor.getSnapshot().context.value,
+      editableProps: {rangeDecorations},
+    })
+
+    await vi.waitFor(() =>
+      expect
+        .element(locator.getByTestId('range-decoration'))
+        .toHaveTextContent('world'),
+    )
+  })
+})
+
+describe('RangeDecorations: Inline Object Insertion', () => {
+  test('Insert inline object before decoration shifts decoration', async () => {
+    const onMovedSpy = vi.fn()
+    let rangeDecorations: Array<RangeDecoration> = [
+      {
+        component: RangeDecorationComponent,
+        payload: {id: 'dec1'},
+        selection: {
+          anchor: {
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            offset: 6,
+          },
+          focus: {
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            offset: 11,
+          },
+        },
+        onMoved: (details) => {
+          onMovedSpy(details)
+          rangeDecorations = updateRangeDecorations({rangeDecorations, details})
+        },
+      },
+    ]
+
+    const {editor, locator, rerender} = await createTestEditor({
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', _key: 's1', text: 'Hello world'}],
+          markDefs: [],
+        },
+      ],
+      editableProps: {rangeDecorations},
+      schemaDefinition: {
+        inlineObjects: [{name: 'stock-ticker'}],
+      },
+    })
+
+    await vi.waitFor(() =>
+      expect
+        .element(locator.getByTestId('range-decoration'))
+        .toHaveTextContent('world'),
+    )
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 0,
+        },
+      },
+    })
+
+    editor.send({
+      type: 'insert.inline object',
+      inlineObject: {name: 'stock-ticker'},
+    })
+
+    await vi.waitFor(() => {
+      const value = editor.getSnapshot().context.value
+      const block = value?.[0] as PortableTextBlock & {
+        children: Array<{_type: string}>
+      }
+      expect(block?.children?.length).toBeGreaterThan(1)
+    })
+
+    expect(onMovedSpy).toHaveBeenCalled()
+    const lastCall =
+      onMovedSpy.mock.calls[onMovedSpy.mock.calls.length - 1]?.[0]
+    expect(lastCall?.newSelection).not.toBeNull()
+
+    await rerender({
+      initialValue: editor.getSnapshot().context.value,
+      editableProps: {rangeDecorations},
+      schemaDefinition: {
+        inlineObjects: [{name: 'stock-ticker'}],
+      },
+    })
+
+    await vi.waitFor(() =>
+      expect
+        .element(locator.getByTestId('range-decoration'))
+        .toHaveTextContent('world'),
+    )
+  })
+
+  test('Insert inline object after decoration does not affect decoration', async () => {
+    const onMovedSpy = vi.fn()
+    let rangeDecorations: Array<RangeDecoration> = [
+      {
+        component: RangeDecorationComponent,
+        payload: {id: 'dec1'},
+        selection: {
+          anchor: {
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            offset: 0,
+          },
+          focus: {
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            offset: 5,
+          },
+        },
+        onMoved: (details) => {
+          onMovedSpy(details)
+          rangeDecorations = updateRangeDecorations({rangeDecorations, details})
+        },
+      },
+    ]
+
+    const {editor, locator, rerender} = await createTestEditor({
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', _key: 's1', text: 'Hello world'}],
+          markDefs: [],
+        },
+      ],
+      editableProps: {rangeDecorations},
+      schemaDefinition: {
+        inlineObjects: [{name: 'stock-ticker'}],
+      },
+    })
+
+    await vi.waitFor(() =>
+      expect
+        .element(locator.getByTestId('range-decoration'))
+        .toHaveTextContent('Hello'),
+    )
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 11,
+        },
+        focus: {
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 11,
+        },
+      },
+    })
+
+    editor.send({
+      type: 'insert.inline object',
+      inlineObject: {name: 'stock-ticker'},
+    })
+
+    await vi.waitFor(() => {
+      const value = editor.getSnapshot().context.value
+      const block = value?.[0] as PortableTextBlock & {
+        children: Array<{_type: string}>
+      }
+      expect(block?.children?.length).toBeGreaterThan(1)
+    })
+
+    await rerender({
+      initialValue: editor.getSnapshot().context.value,
+      editableProps: {rangeDecorations},
+      schemaDefinition: {
+        inlineObjects: [{name: 'stock-ticker'}],
+      },
+    })
+
+    await vi.waitFor(() =>
+      expect
+        .element(locator.getByTestId('range-decoration'))
+        .toHaveTextContent('Hello'),
+    )
   })
 })
