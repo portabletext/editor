@@ -76,7 +76,6 @@ import {isCollapsedRange} from '../../range/is-collapsed-range'
 import {isExpandedRange} from '../../range/is-expanded-range'
 import {rangeEquals} from '../../range/range-equals'
 import {textEquals} from '../../text/text-equals'
-import {normalizeRangeAtMarkBoundary} from '../../utils/normalize-range-at-mark-boundary'
 import type {AndroidInputManager} from '../hooks/android-input-manager/android-input-manager'
 import {useAndroidInputManager} from '../hooks/android-input-manager/use-android-input-manager'
 import useChildren from '../hooks/use-children'
@@ -324,16 +323,7 @@ export const Editable = forwardRef(
                 suppressThrow: true,
               })
 
-              const normalizedRange = range
-                ? normalizeRangeAtMarkBoundary(
-                    range,
-                    editor.children,
-                    editor.schema,
-                    editor.selection,
-                  )
-                : range
-
-              if (normalizedRange) {
+              if (range) {
                 if (
                   !ReactEditor.isComposing(editor) &&
                   !androidInputManager?.hasPendingChanges() &&
@@ -341,9 +331,9 @@ export const Editable = forwardRef(
                 ) {
                   // Suppress browser selection normalization that would
                   // overwrite a block object selection.
-                  editor.select(normalizedRange)
+                  editor.select(range)
                 } else {
-                  androidInputManager?.handleUserSelect(normalizedRange)
+                  androidInputManager?.handleUserSelect(range)
                 }
               }
             }
@@ -466,19 +456,10 @@ export const Editable = forwardRef(
         // but Slate's value is not being updated through any operation
         // and thus it doesn't transform selection on its own
         if (selection && !ReactEditor.hasRange(editor, selection)) {
-          const resolvedRange = ReactEditor.toSlateRange(editor, domSelection, {
+          editor.selection = ReactEditor.toSlateRange(editor, domSelection, {
             exactMatch: false,
             suppressThrow: true,
           })
-
-          editor.selection = resolvedRange
-            ? normalizeRangeAtMarkBoundary(
-                resolvedRange,
-                editor.children,
-                editor.schema,
-                editor.selection,
-              )
-            : resolvedRange
           return
         }
 
