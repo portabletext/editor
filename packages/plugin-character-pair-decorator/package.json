@@ -1,6 +1,6 @@
 {
   "name": "@portabletext/plugin-character-pair-decorator",
-  "version": "7.0.0",
+  "version": "7.0.22",
   "description": "Automatically match a pair of characters and decorate the text in between",
   "keywords": [
     "portabletext",
@@ -48,9 +48,9 @@
     "test:unit:watch": "vitest"
   },
   "dependencies": {
-    "@xstate/react": "^6.0.0",
+    "@xstate/react": "^6.1.0",
     "remeda": "^2.32.0",
-    "xstate": "^5.25.0"
+    "xstate": "^5.28.0"
   },
   "devDependencies": {
     "@portabletext/editor": "workspace:^",
@@ -62,7 +62,7 @@
     "react": "^19.2.3",
     "typescript": "catalog:",
     "typescript-eslint": "^8.48.0",
-    "vitest": "^4.0.18"
+    "vitest": "^4.1.0"
   },
   "peerDependencies": {
     "@portabletext/editor": "workspace:^",

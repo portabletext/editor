@@ -1,5 +1,269 @@
 # Changelog
 
+## 6.5.2
+
+### Patch Changes
+
+- Updated dependencies [[`99c5a4f`](https://github.com/portabletext/editor/commit/99c5a4f6f9515af6341b8947ec08d487735b72dc)]:
+  - @portabletext/html@1.0.1
+
+## 6.5.1
+
+### Patch Changes
+
+- [#2390](https://github.com/portabletext/editor/pull/2390) [`746bad3`](https://github.com/portabletext/editor/commit/746bad3e3199fa15cdd87c08396f120c01f4a3e8) Thanks [@christianhg](https://github.com/christianhg)! - fix: allow `block.set` updating text block key
+
+- [#2393](https://github.com/portabletext/editor/pull/2393) [`182af30`](https://github.com/portabletext/editor/commit/182af3025562c832d553c11badea49cd18665ad2) Thanks [@christianhg](https://github.com/christianhg)! - fix: issue with nested editors triggering history events in parent editor
+
+## 6.5.0
+
+### Minor Changes
+
+- [#2381](https://github.com/portabletext/editor/pull/2381) [`a1992ab`](https://github.com/portabletext/editor/commit/a1992abed6f2a38486c9c9734949f0cc2ae97396) Thanks [@christianhg](https://github.com/christianhg)! - feat: make Slate internals Portable Text-native
+
+### Patch Changes
+
+- [#2388](https://github.com/portabletext/editor/pull/2388) [`cbccc01`](https://github.com/portabletext/editor/commit/cbccc0178f0eab4732424a579411a7e711786266) Thanks [@christianhg](https://github.com/christianhg)! - fix: simplify internal editor creation
+
+- [#2389](https://github.com/portabletext/editor/pull/2389) [`3d026ee`](https://github.com/portabletext/editor/commit/3d026ee624e62970429199b9082b7a3bab7e26db) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove unused internal node->element WeakMap
+
+- [#2388](https://github.com/portabletext/editor/pull/2388) [`d93fd9b`](https://github.com/portabletext/editor/commit/d93fd9b17fc1bbae0c70fe323537563e81944238) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove unused internal focus context
+
+- [#2381](https://github.com/portabletext/editor/pull/2381) [`4e86fc3`](https://github.com/portabletext/editor/commit/4e86fc34824fe5e2c6eb78e6277475702f434c99) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove dead internal code paths
+
+## 6.4.0
+
+### Minor Changes
+
+- [#2371](https://github.com/portabletext/editor/pull/2371) [`1d7b52e`](https://github.com/portabletext/editor/commit/1d7b52e7c86486545514b33bb9dee54efeeb266c) Thanks [@christianhg](https://github.com/christianhg)! - feat: untangle remaining internal Slate interfaces
+
+### Patch Changes
+
+- [#2376](https://github.com/portabletext/editor/pull/2376) [`e6815f7`](https://github.com/portabletext/editor/commit/e6815f794bbf282ad434b42992181db8c27eaa0c) Thanks [@christianhg](https://github.com/christianhg)! - fix: clean internal barrel over-exports
+
+- [#2379](https://github.com/portabletext/editor/pull/2379) [`71f1d38`](https://github.com/portabletext/editor/commit/71f1d38465a8c5b4e4c79116dbb9c105855e48b6) Thanks [@christianhg](https://github.com/christianhg)! - fix: consolidate internal Slate directories
+
+- [#2384](https://github.com/portabletext/editor/pull/2384) [`a698b0a`](https://github.com/portabletext/editor/commit/a698b0ae35f690ce31d4410d47e16698b1998cf4) Thanks [@christianhg](https://github.com/christianhg)! - fix: register synthetic text node in effect to survive React strict mode
+
+- [#2377](https://github.com/portabletext/editor/pull/2377) [`c512b8b`](https://github.com/portabletext/editor/commit/c512b8bf4bd091afccedd535d93ebad9f383bacf) Thanks [@christianhg](https://github.com/christianhg)! - fix: move test-only utilities out of production code
+
+- [#2374](https://github.com/portabletext/editor/pull/2374) [`61abd09`](https://github.com/portabletext/editor/commit/61abd09b56e76de97bc0617bc824087f4e5457a9) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove internal dead code exports
+
+  Removed internal dead code exports with zero callers: `getBlockPath`, `getParent`, `OmitFirstArg`, `PropsCompare`, `PropsMerge`, `BaseNode`, `OriginalEditorFunctions`, and `@types/direction.d.ts`. None of these were part of the public API.
+
+- [#2375](https://github.com/portabletext/editor/pull/2375) [`014c3b4`](https://github.com/portabletext/editor/commit/014c3b4656efcc75f81c3a27fc9a637cab91f12c) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove unnecessary internal exports
+
+- [#2380](https://github.com/portabletext/editor/pull/2380) [`19eb009`](https://github.com/portabletext/editor/commit/19eb009158853dae411e9f2bcd700381a1b62f9a) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove unused internal Slate code
+
+- [#2378](https://github.com/portabletext/editor/pull/2378) [`9299613`](https://github.com/portabletext/editor/commit/9299613d8876cdd60c31fb0b71c3c84cb2548c6c) Thanks [@christianhg](https://github.com/christianhg)! - fix: simplify internal operation dispatch
+
+## 6.3.2
+
+### Patch Changes
+
+- [#2366](https://github.com/portabletext/editor/pull/2366) [`b245c6e`](https://github.com/portabletext/editor/commit/b245c6e3b9dea50e3eab1f475df85d68bd4d0f94) Thanks [@christianhg](https://github.com/christianhg)! - fix: simplify internal `isEditor` check
+
+- [#2366](https://github.com/portabletext/editor/pull/2366) [`dba286d`](https://github.com/portabletext/editor/commit/dba286de99fe63debc543fc354713dcf0b1fd0bf) Thanks [@christianhg](https://github.com/christianhg)! - fix: untangle internal `insertText` method
+
+- [#2366](https://github.com/portabletext/editor/pull/2366) [`6e7ef87`](https://github.com/portabletext/editor/commit/6e7ef8735a7e4ce66866cc54ef8d21f8350ef1d6) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove internal `Transforms` interface
+
+- [#2366](https://github.com/portabletext/editor/pull/2366) [`75dcbad`](https://github.com/portabletext/editor/commit/75dcbad57e7a220a9d8c0cb4d1581037a7134bab) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove unused internal `delete` editor method
+
+- [#2366](https://github.com/portabletext/editor/pull/2366) [`d5d8fc9`](https://github.com/portabletext/editor/commit/d5d8fc98ad4b8482e6724644bdfe4dcac2f71d5c) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove unused internal `getFragment` method
+
+- [#2370](https://github.com/portabletext/editor/pull/2370) [`a02e017`](https://github.com/portabletext/editor/commit/a02e017bf09a071caceea4648deee9becb311408) Thanks [@christianhg](https://github.com/christianhg)! - fix: untangle internal `Node` interface
+
+- [#2366](https://github.com/portabletext/editor/pull/2366) [`d4068ce`](https://github.com/portabletext/editor/commit/d4068ceb273aec29a789c76d8706ce8e00ad9138) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove unused internal `insertBreak` method
+
+- [#2366](https://github.com/portabletext/editor/pull/2366) [`b89f7f2`](https://github.com/portabletext/editor/commit/b89f7f2b35893004afd77ceb27de4def9a8279ef) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove unused internal node interface wiring
+
+- [#2366](https://github.com/portabletext/editor/pull/2366) [`a657b0d`](https://github.com/portabletext/editor/commit/a657b0d6c1061f13ec9c8c6229ff10201dc525a5) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove unused internal `insert(Text)Data` methods
+
+- [#2366](https://github.com/portabletext/editor/pull/2366) [`e6b2825`](https://github.com/portabletext/editor/commit/e6b28255d13404ace2ea12193d432f9a7da96748) Thanks [@christianhg](https://github.com/christianhg)! - fix: untangle internal editor methods
+
+## 6.3.1
+
+### Patch Changes
+
+- [#2353](https://github.com/portabletext/editor/pull/2353) [`262b0bc`](https://github.com/portabletext/editor/commit/262b0bc01b35491b82700e63c5a98d6ddc4d9513) Thanks [@christianhg](https://github.com/christianhg)! - fix: ban `JSON.stringify`/`JSON.parse` and replace with safe alternatives
+
+- [#2354](https://github.com/portabletext/editor/pull/2354) [`d992e30`](https://github.com/portabletext/editor/commit/d992e30c5d91876ae43b0d5d82caee3c48259595) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove unused internal serialization code
+
+- [#2357](https://github.com/portabletext/editor/pull/2357) [`f06602e`](https://github.com/portabletext/editor/commit/f06602ea0e2d288c306230358e37e9fa8e7a9f5d) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove dead inner editable event handlers for clipboard and drag-and-drop
+
+- [#2358](https://github.com/portabletext/editor/pull/2358) [`6a6ef2b`](https://github.com/portabletext/editor/commit/6a6ef2be1aa039de899a845f3a79f3e9958f51bc) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove redundant undo/redo hotkey handling from inner editable
+
+## 6.3.0
+
+### Minor Changes
+
+- [#2348](https://github.com/portabletext/editor/pull/2348) [`58d4eb1`](https://github.com/portabletext/editor/commit/58d4eb11bf2f069acd10c4ef8ae2c1e87b57f75c) Thanks [@christianhg](https://github.com/christianhg)! - feat: remove unused internal chunking system from rendering layer
+
+### Patch Changes
+
+- [#2346](https://github.com/portabletext/editor/pull/2346) [`eb3c4ce`](https://github.com/portabletext/editor/commit/eb3c4cef6f14d5ec7fa0325e5f19c6191524d44c) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove internal compound operations completely
+
+## 6.2.0
+
+### Minor Changes
+
+- [#2327](https://github.com/portabletext/editor/pull/2327) [`d312abd`](https://github.com/portabletext/editor/commit/d312abd5b07affa20b5defb2fe587a66394e0831) Thanks [@christianhg](https://github.com/christianhg)! - feat: make internal Slate operations patch-compliant
+
+## 6.1.2
+
+### Patch Changes
+
+- [#2329](https://github.com/portabletext/editor/pull/2329) [`761233d`](https://github.com/portabletext/editor/commit/761233d7dc3493eebfb7fe8e0f841a382105b543) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove unused internal Slate code
+
+## 6.1.1
+
+### Patch Changes
+
+- [#2243](https://github.com/portabletext/editor/pull/2243) [`626a8c4`](https://github.com/portabletext/editor/commit/626a8c4bfb0f739c3bdf1b4df3db42a38fd4ac90) Thanks [@christianhg](https://github.com/christianhg)! - fix: forward on insert.text breaks undo batching
+
+## 6.1.0
+
+### Minor Changes
+
+- [#2279](https://github.com/portabletext/editor/pull/2279) [`919c976`](https://github.com/portabletext/editor/commit/919c97670fd1446dea189792639ea90d6a43cee0) Thanks [@christianhg](https://github.com/christianhg)! - feat: simplify internal tree representation to match Portable Text structure
+
+### Patch Changes
+
+- [#2279](https://github.com/portabletext/editor/pull/2279) [`a7cc971`](https://github.com/portabletext/editor/commit/a7cc9717e2438fcb461c7119136234f691fb9bbb) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove unused internal `wrapNodes` transform
+
+- [#2279](https://github.com/portabletext/editor/pull/2279) [`da1e5ff`](https://github.com/portabletext/editor/commit/da1e5ffd3a82f350aa4b6d30b21972d18cc16abd) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove unused internal `setNodes` transform
+
+- [#2279](https://github.com/portabletext/editor/pull/2279) [`67089e4`](https://github.com/portabletext/editor/commit/67089e4a9b38cb5711f050c47d0fb029a9d1a828) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove unused internal utils
+
+- [#2279](https://github.com/portabletext/editor/pull/2279) [`1eb5078`](https://github.com/portabletext/editor/commit/1eb50782640e274fa085f8032d8643b0791198e0) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove unused internal `liftNodes` transform
+
+- [#2279](https://github.com/portabletext/editor/pull/2279) [`94ed1ea`](https://github.com/portabletext/editor/commit/94ed1ea6c4bd8d19fba2ac79abc95b5f5e756750) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove unused internal Slate utils/hooks
+
+- [#2279](https://github.com/portabletext/editor/pull/2279) [`d1692de`](https://github.com/portabletext/editor/commit/d1692de11f086fd7e95f0799de295922b2244cf7) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove unused internal `unwrapNodes` transform
+
+- [#2279](https://github.com/portabletext/editor/pull/2279) [`e939322`](https://github.com/portabletext/editor/commit/e939322b1e087a6f927b4d6f82b9b02154c181b4) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove unused internal `insertFragment` transform
+
+- [#2279](https://github.com/portabletext/editor/pull/2279) [`82b41bf`](https://github.com/portabletext/editor/commit/82b41bf170355f24c4db501567b51bd89c8a71fc) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove unused internal `unsetNodes` transform
+
+- [#2279](https://github.com/portabletext/editor/pull/2279) [`92aafc5`](https://github.com/portabletext/editor/commit/92aafc59990627a56aff431214fecaffc60b9d96) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove unused internal `insertBreak` method
+
+## 6.0.11
+
+### Patch Changes
+
+- [#2317](https://github.com/portabletext/editor/pull/2317) [`4f31f06`](https://github.com/portabletext/editor/commit/4f31f06917b216f25cff8a04a204e15a6750ab91) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove unused internal line utilities
+
+## 6.0.10
+
+### Patch Changes
+
+- [#2314](https://github.com/portabletext/editor/pull/2314) [`eec5bfa`](https://github.com/portabletext/editor/commit/eec5bfab7d50cc25a9de27bf6f21a586701a8650) Thanks [@christianhg](https://github.com/christianhg)! - fix: allow `insert.text` on inline objects
+
+## 6.0.9
+
+### Patch Changes
+
+- [#2310](https://github.com/portabletext/editor/pull/2310) [`3149548`](https://github.com/portabletext/editor/commit/314954827b7c1df1d10b581dfe33c7ad175030ca) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update dependency @portabletext/to-html to ^5.0.2
+
+- [#2311](https://github.com/portabletext/editor/pull/2311) [`55ceaf2`](https://github.com/portabletext/editor/commit/55ceaf258948ad1dc9a2e41086821095f730ca25) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove stale custom block properties during value sync
+
+  Custom properties on blocks (like `_map`) are now correctly removed when
+  a value sync arrives without them. Previously, `updateBlock` only set
+  properties present on the incoming block, leaving stale custom properties
+  on the editor's tree.
+
+## 6.0.8
+
+### Patch Changes
+
+- Updated dependencies [[`5031f18`](https://github.com/portabletext/editor/commit/5031f18f3d22f8acc5f4d39e6ea0db7b96d72553)]:
+  - @portabletext/markdown@1.1.4
+
+## 6.0.7
+
+### Patch Changes
+
+- [#2300](https://github.com/portabletext/editor/pull/2300) [`ef4fe18`](https://github.com/portabletext/editor/commit/ef4fe182bec3696d3b4588c7c44e4ed9c3f680fd) Thanks [@christianhg](https://github.com/christianhg)! - fix: use `@portabletext/html` for HTML deserialization
+
+## 6.0.6
+
+### Patch Changes
+
+- Updated dependencies [[`5e3ded7`](https://github.com/portabletext/editor/commit/5e3ded76ba1b1407d1a673674fdf87d542ae8b9f)]:
+  - @portabletext/block-tools@5.1.0
+
+## 6.0.5
+
+### Patch Changes
+
+- [#2297](https://github.com/portabletext/editor/pull/2297) [`c90dd12`](https://github.com/portabletext/editor/commit/c90dd12039ddb2502f740a5e84ece54b32ea2008) Thanks [@christianhg](https://github.com/christianhg)! - fix: apply nested `unset` patches correctly on text blocks
+
+## 6.0.4
+
+### Patch Changes
+
+- [#2292](https://github.com/portabletext/editor/pull/2292) [`e71f420`](https://github.com/portabletext/editor/commit/e71f420de68de7d99eaacee405c8eeaa7f983c35) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): Update xstate
+
+## 6.0.3
+
+### Patch Changes
+
+- [#2278](https://github.com/portabletext/editor/pull/2278) [`08d7e56`](https://github.com/portabletext/editor/commit/08d7e56e0623ddfde4af4f827af09f19deabe44d) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove internal `undo()/redo()` calls
+
+- [#2285](https://github.com/portabletext/editor/pull/2285) [`bfa7feb`](https://github.com/portabletext/editor/commit/bfa7feb46aca3e9ef5fcd8f35a87177a2f75816d) Thanks [@christianhg](https://github.com/christianhg)! - fix: restore void guard for `insert.text` operation
+
+  Typing while a block object is selected no longer causes a console error. The `insert.text` operation now correctly skips void and read-only elements.
+
+- Updated dependencies [[`7886449`](https://github.com/portabletext/editor/commit/788644909eb30698aa4155790f1d90ee3e9ad008)]:
+  - @portabletext/block-tools@5.0.5
+
+## 6.0.2
+
+### Patch Changes
+
+- [#2263](https://github.com/portabletext/editor/pull/2263) [`68d4f82`](https://github.com/portabletext/editor/commit/68d4f82bf596724d8bed31721786f21f5dea3377) Thanks [@christianhg](https://github.com/christianhg)! - fix(deps): remove @portabletext/sanity-bridge peer dependency
+
+- Updated dependencies []:
+  - @portabletext/block-tools@5.0.4
+
+## 6.0.1
+
+### Patch Changes
+
+- [#2200](https://github.com/portabletext/editor/pull/2200) [`da6e04f`](https://github.com/portabletext/editor/commit/da6e04f3685de0ecab1bee38c941d5cdd3cd1aac) Thanks [@christianhg](https://github.com/christianhg)! - fix: bypass editor methods for DOM input events
+
+  DOM input events now route directly to the behavior system instead of going through Editor methods first. This moves event handling closer to the source, giving more control over how input is processed.
+
+- [#2256](https://github.com/portabletext/editor/pull/2256) [`a4b0b48`](https://github.com/portabletext/editor/commit/a4b0b484e865a83174d27196112c619ffd9b1605) Thanks [@christianhg](https://github.com/christianhg)! - Remove unused internal Slate editor methods (edges, first, fragment, hasBlocks, hasTexts, isEmpty, last). These are internal to the Slate layer and not part of the public PTE API.
+
+- [#2241](https://github.com/portabletext/editor/pull/2241) [`9e768b1`](https://github.com/portabletext/editor/commit/9e768b1d88446d89bbfc9dd7d0e54ba3d7d09765) Thanks [@christianhg](https://github.com/christianhg)! - fix: add editor to focus listener effect dependency array
+
+- [#2241](https://github.com/portabletext/editor/pull/2241) [`d28c017`](https://github.com/portabletext/editor/commit/d28c017bec5a064cd3402b9a99a3358f693c4238) Thanks [@christianhg](https://github.com/christianhg)! - fix(perf): optimize normalizeNode with split loops and element refetching
+
+- [#2252](https://github.com/portabletext/editor/pull/2252) [`c3b7905`](https://github.com/portabletext/editor/commit/c3b79057c4992409dde5646d86d3b7c5d3db26a3) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove unused internal Editor methods
+
+  Removed internal Editor methods that were superseded by the behavior system: `addMark`, `removeMark`, `deleteBackward`, `deleteForward`, `deleteFragment`, `insertSoftBreak`, `insertNode`, and `Transforms.setPoint`. These were never part of the public API.
+
+- [#2239](https://github.com/portabletext/editor/pull/2239) [`e9bcda3`](https://github.com/portabletext/editor/commit/e9bcda385fb8217fddffe039325a9d338a51adec) Thanks [@christianhg](https://github.com/christianhg)! - fix: replace is-hotkey with @portabletext/keyboard-shortcuts. is-hotkey doesn't ship ESM.
+
+- [#2255](https://github.com/portabletext/editor/pull/2255) [`80c7378`](https://github.com/portabletext/editor/commit/80c73781a0d45fce376083a810f16b1438c9d94f) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove remaining WeakMaps, move state onto editor object
+
+  WeakMaps are an upstream Slate pattern for supporting multiple editor instances sharing a module scope. Since PTE owns the editor lifecycle, storing state directly on the editor object is simpler and easier to debug.
+
+- [#2253](https://github.com/portabletext/editor/pull/2253) [`77a10ce`](https://github.com/portabletext/editor/commit/77a10ced03fe211bd912b520e7fb469985fec1af) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove WeakMaps from Slate core, move state onto editor object
+
+  WeakMaps are an upstream Slate pattern for supporting multiple editor instances sharing a module scope. Since PTE owns the editor lifecycle, storing state directly on the editor object is simpler and easier to debug.
+
+- [#2254](https://github.com/portabletext/editor/pull/2254) [`018857f`](https://github.com/portabletext/editor/commit/018857fc34d9d600d4a45c06b1b62926759e4164) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove Editor-keyed WeakMaps from slate-dom, move state onto DOMEditor
+
+  WeakMaps are an upstream Slate pattern for supporting multiple editor instances sharing a module scope. Since PTE owns the editor lifecycle, storing state directly on the editor object is simpler and easier to debug.
+
+- [#2251](https://github.com/portabletext/editor/pull/2251) [`398adef`](https://github.com/portabletext/editor/commit/398adefc035c177dafd0b16d7dbdcd8de6f86fde) Thanks [@christianhg](https://github.com/christianhg)! - fix: replace `Transforms` calls with raw operations in editor internals
+
+  Replaced all `Transforms.*` calls in PTE source code with raw `editor.apply()` operations or direct `editor.*` method calls. This is an internal refactor with no behavior change. Helper utilities (`applySelect`, `applyDeselect`, `applySetNode`, `applyInsertNodeAtPath`, `applyInsertNodeAtPoint`, `applyMove`) extracted to `internal-utils/`.
+
+- [#2241](https://github.com/portabletext/editor/pull/2241) [`7d5b051`](https://github.com/portabletext/editor/commit/7d5b051a4a310b798b62ba78b6fea0a11351ed48) Thanks [@christianhg](https://github.com/christianhg)! - fix: respect suppressThrow in toSlatePoint findPath calls
+
 ## 6.0.0
 
 ### Major Changes

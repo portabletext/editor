@@ -19,9 +19,7 @@ import type {Converter} from '../converters/converter.types'
 import {debug} from '../internal-utils/debug'
 import type {EventPosition} from '../internal-utils/event-position'
 import {sortByPriority} from '../priority/priority.sort'
-import {Transforms} from '../slate'
-import {EDITOR_TO_PENDING_SELECTION} from '../slate-dom'
-import {ReactEditor} from '../slate-react'
+import {ReactEditor} from '../slate/react/plugin/react-editor'
 import type {NamespaceEvent, OmitFromUnion} from '../type-utils'
 import type {EditorSelection} from '../types/editor'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
@@ -67,7 +65,7 @@ export type EditorActor = ActorRefFrom<typeof editorMachine>
 /**
  * @internal
  */
-export type InternalEditorEvent =
+type InternalEditorEvent =
   | ExternalEditorEvent
   | {
       type: 'add behavior'
@@ -119,7 +117,7 @@ export type InternalEditorEvent =
 /**
  * @internal
  */
-export type InternalEditorEmittedEvent =
+type InternalEditorEmittedEvent =
   | OmitFromUnion<EditorEmittedEvent, 'type', 'patch'>
   | InternalPatchEvent
   | PatchesEvent
@@ -314,10 +312,10 @@ export const editorMachine = setup({
         ReactEditor.focus(slateEditor)
 
         if (currentSelection) {
-          Transforms.select(slateEditor, currentSelection)
+          slateEditor.select(currentSelection)
 
           // Tell Slate to use this selection for DOM sync
-          EDITOR_TO_PENDING_SELECTION.set(slateEditor, slateEditor.selection)
+          slateEditor.pendingSelection = slateEditor.selection
 
           // Trigger the DOM sync
           slateEditor.onChange()

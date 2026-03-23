@@ -1,9 +1,11 @@
 import {
+  isSpan,
   isTextBlock,
   type PortableTextBlock,
   type PortableTextChild,
   type PortableTextObject,
 } from '@portabletext/schema'
+import {getDomNode} from '../dom-traversal/get-dom-node'
 import {
   isListItemActive,
   isStyleActive,
@@ -16,8 +18,12 @@ import {getFocusBlock} from '../selectors/selector.get-focus-block'
 import {getFocusSpan} from '../selectors/selector.get-focus-span'
 import {getSelectedValue} from '../selectors/selector.get-selected-value'
 import {isActiveAnnotation} from '../selectors/selector.is-active-annotation'
-import {Editor, Range, Text, Transforms} from '../slate'
-import {ReactEditor} from '../slate-react'
+import {node as editorNode} from '../slate/editor/node'
+import {nodes} from '../slate/editor/nodes'
+import {isCollapsedRange} from '../slate/range/is-collapsed-range'
+import {isExpandedRange} from '../slate/range/is-expanded-range'
+import {isRange} from '../slate/range/is-range'
+import {rangeIncludes} from '../slate/range/range-includes'
 import type {
   EditableAPI,
   EditableAPIDeleteOptions,
@@ -36,8 +42,6 @@ export function createEditableAPI(
   editor: PortableTextSlateEditor,
   editorActor: EditorActor,
 ) {
-  const types = editorActor.getSnapshot().context.schema
-
   const editableApi: EditableAPI = {
     focus: (): void => {
       editorActor.send({
@@ -121,22 +125,14 @@ export function createEditableAPI(
       })
     },
     select: (selection: EditorSelection): void => {
-      const slateSelection = toSlateRange({
-        context: {
-          schema: editorActor.getSnapshot().context.schema,
-          value: editor.value,
-          selection,
+      editorActor.send({
+        type: 'behavior event',
+        behaviorEvent: {
+          type: 'select',
+          at: selection,
         },
-        blockIndexMap: editor.blockIndexMap,
+        editor,
       })
-
-      if (slateSelection) {
-        Transforms.select(editor, slateSelection)
-      } else {
-        Transforms.deselect(editor)
-      }
-
-      editor.onChange()
     },
     focusBlock: (): PortableTextBlock | undefined => {
       if (!editor.selection) {
@@ -149,7 +145,7 @@ export function createEditableAPI(
         return undefined
       }
 
-      return editor.value.at(focusBlockIndex)
+      return editor.children.at(focusBlockIndex)
     },
     focusChild: (): PortableTextChild | undefined => {
       if (!editor.selection) {
@@ -161,7 +157,7 @@ export function createEditableAPI(
 
       const block =
         focusBlockIndex !== undefined
-          ? editor.value.at(focusBlockIndex)
+          ? editor.children.at(focusBlockIndex)
           : undefined
 
       if (!block) {
@@ -243,8 +239,9 @@ export function createEditableAPI(
         return false
       }
     },
-    isVoid: (element: PortableTextBlock | PortableTextChild) => {
-      return ![types.block.name, types.span.name].includes(element._type)
+    isVoid: (element: PortableTextBlock | PortableTextChild): boolean => {
+      const schema = editorActor.getSnapshot().context.schema
+      return ![schema.block.name, schema.span.name].includes(element._type)
     },
     findByPath: (
       path: Path,
@@ -264,7 +261,7 @@ export function createEditableAPI(
         return [undefined, undefined]
       }
 
-      const block = editor.value.at(blockIndex)
+      const block = editor.children.at(blockIndex)
 
       if (!block) {
         return [undefined, undefined]
@@ -291,14 +288,15 @@ export function createEditableAPI(
     ): Node | undefined => {
       let node: Node | undefined
       try {
-        const [item] = Array.from(
-          Editor.nodes(editor, {
+        const entry = Array.from(
+          nodes(editor, {
             at: [],
             match: (n) => n._key === element._key,
           }) || [],
-        )[0] || [undefined]
-        if (item) {
-          node = ReactEditor.toDOMNode(editor, item)
+        )[0]
+        if (entry) {
+          const [, itemPath] = entry
+          node = getDomNode(editor, itemPath)
         }
       } catch {
         // Nothing
@@ -311,20 +309,20 @@ export function createEditableAPI(
       }
       try {
         const activeAnnotations: PortableTextObject[] = []
-        const spans = Editor.nodes(editor, {
+        const spans = nodes(editor, {
           at: editor.selection,
           match: (node) =>
-            Text.isText(node) &&
+            isSpan({schema: editor.schema}, node) &&
             node.marks !== undefined &&
             Array.isArray(node.marks) &&
             node.marks.length > 0,
         })
         for (const [span, path] of spans) {
-          const [block] = Editor.node(editor, path, {depth: 1})
-          if (editor.isTextBlock(block)) {
+          const [block] = editorNode(editor, path, {depth: 1})
+          if (isTextBlock({schema: editor.schema}, block)) {
             block.markDefs?.forEach((def) => {
               if (
-                Text.isText(span) &&
+                isSpan({schema: editor.schema}, span) &&
                 span.marks &&
                 Array.isArray(span.marks) &&
                 span.marks.includes(def._key)
@@ -480,17 +478,22 @@ export function createEditableAPI(
       return selection
     },
     getValue: () => {
-      return editor.value
+      return editor.children
     },
     isCollapsedSelection: () => {
-      return !!editor.selection && Range.isCollapsed(editor.selection)
+      return !!editor.selection && isCollapsedRange(editor.selection)
     },
     isExpandedSelection: () => {
-      return !!editor.selection && Range.isExpanded(editor.selection)
+      return !!editor.selection && isExpandedRange(editor.selection)
     },
     insertBreak: () => {
-      editor.insertBreak()
-      editor.onChange()
+      editorActor.send({
+        type: 'behavior event',
+        behaviorEvent: {
+          type: 'insert.break',
+        },
+        editor,
+      })
     },
     getFragment: () => {
       const snapshot = getEditorSnapshot({
@@ -508,7 +511,7 @@ export function createEditableAPI(
       const rangeA = toSlateRange({
         context: {
           schema: editorActor.getSnapshot().context.schema,
-          value: editor.value,
+          value: editor.children,
           selection: selectionA,
         },
         blockIndexMap: editor.blockIndexMap,
@@ -516,17 +519,17 @@ export function createEditableAPI(
       const rangeB = toSlateRange({
         context: {
           schema: editorActor.getSnapshot().context.schema,
-          value: editor.value,
+          value: editor.children,
           selection: selectionB,
         },
         blockIndexMap: editor.blockIndexMap,
       })
 
       // Make sure the ranges are valid
-      const isValidRanges = Range.isRange(rangeA) && Range.isRange(rangeB)
+      const isValidRanges = isRange(rangeA) && isRange(rangeB)
 
       // Check if the ranges are overlapping
-      const isOverlapping = isValidRanges && Range.includes(rangeA, rangeB)
+      const isOverlapping = isValidRanges && rangeIncludes(rangeA, rangeB)
 
       return isOverlapping
     },

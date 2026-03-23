@@ -1,6 +1,6 @@
-import {applyAll, set, unset} from '@portabletext/patches'
 import {isTextBlock} from '@portabletext/schema'
-import {Transforms, type Node} from '../slate'
+import {applySetNode} from '../internal-utils/apply-set-node'
+import {safeStringify} from '../internal-utils/safe-json'
 import type {OperationImplementation} from './operation.types'
 
 export const blockUnsetOperationImplementation: OperationImplementation<
@@ -19,7 +19,7 @@ export const blockUnsetOperationImplementation: OperationImplementation<
       : undefined
 
   if (!slateBlock) {
-    throw new Error(`Unable to find block at ${JSON.stringify(operation.at)}`)
+    throw new Error(`Unable to find block at ${safeStringify(operation.at)}`)
   }
 
   if (isTextBlock(context, slateBlock)) {
@@ -27,28 +27,31 @@ export const blockUnsetOperationImplementation: OperationImplementation<
       (prop) => prop !== '_type' && prop !== '_key' && prop !== 'children',
     )
 
-    Transforms.unsetNodes(operation.editor, propsToRemove, {at: [blockIndex]})
+    const unsetProps: Record<string, null> = {}
+    for (const prop of propsToRemove) {
+      unsetProps[prop] = null
+    }
+    applySetNode(operation.editor, unsetProps, [blockIndex])
 
     if (operation.props.includes('_key')) {
-      Transforms.setNodes(
-        operation.editor,
-        {_key: context.keyGenerator()},
-        {at: [blockIndex]},
-      )
+      applySetNode(operation.editor, {_key: context.keyGenerator()}, [
+        blockIndex,
+      ])
     }
 
     return
   }
 
-  const patches = operation.props.flatMap((key) =>
-    key === '_type'
-      ? []
-      : key === '_key'
-        ? set(context.keyGenerator(), ['_key'])
-        : unset(['value', key]),
-  )
-
-  const updatedSlateBlock = applyAll(slateBlock, patches) as Partial<Node>
-
-  Transforms.setNodes(operation.editor, updatedSlateBlock, {at: [blockIndex]})
+  const unsetProps: Record<string, unknown> = {}
+  for (const key of operation.props) {
+    if (key === '_type') {
+      continue
+    }
+    if (key === '_key') {
+      unsetProps['_key'] = context.keyGenerator()
+    } else {
+      unsetProps[key] = null
+    }
+  }
+  applySetNode(operation.editor, unsetProps, [blockIndex])
 }

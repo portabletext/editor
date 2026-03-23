@@ -1,5 +1,15 @@
 # Changelog
 
+## 3.0.0
+
+### Major Changes
+
+- [#2207](https://github.com/portabletext/editor/pull/2207) [`e83d990`](https://github.com/portabletext/editor/commit/e83d990c3f8db67fc7d33c653455c5ea52a19490) Thanks [@christianhg](https://github.com/christianhg)! - Remove `compileSchemaDefinitionToPortableTextMemberSchemaTypes`, `portableTextMemberSchemaTypesToSchema`, and the intermediate `PortableTextMemberSchemaTypes` conversion step from `sanitySchemaToPortableTextSchema`.
+
+  `sanitySchemaToPortableTextSchema` now produces a PTE `Schema` directly from the Sanity schema without going through `PortableTextMemberSchemaTypes` as an intermediate representation.
+
+  `createPortableTextMemberSchemaTypes` and the `PortableTextMemberSchemaTypes` type are still exported for consumers that need Sanity-specific schema types.
+
 ## 2.0.2
 
 ### Patch Changes

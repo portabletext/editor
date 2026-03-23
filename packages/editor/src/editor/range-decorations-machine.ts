@@ -1,3 +1,4 @@
+import {isTextBlock} from '@portabletext/schema'
 import {
   and,
   assign,
@@ -14,23 +15,36 @@ import {
 } from '../internal-utils/move-range-by-operation'
 import {slateRangeToSelection} from '../internal-utils/slate-utils'
 import {toSlateRange} from '../internal-utils/to-slate-range'
-import {
-  Element,
-  Path,
-  Point,
-  Range,
-  type BaseRange,
-  type NodeEntry,
-  type Operation,
-} from '../slate'
+import type {Node, NodeEntry} from '../slate/interfaces/node'
+import type {Operation} from '../slate/interfaces/operation'
+import type {Range} from '../slate/interfaces/range'
+import {pathEquals} from '../slate/path/path-equals'
+import {comparePoints} from '../slate/point/compare-points'
+import {isCollapsedRange} from '../slate/range/is-collapsed-range'
+import {isExpandedRange} from '../slate/range/is-expanded-range'
+import {isRange} from '../slate/range/is-range'
+import {rangeEquals} from '../slate/range/range-equals'
+import {rangeIncludes} from '../slate/range/range-includes'
+import {rangeIntersection} from '../slate/range/range-intersection'
+import {rangeStart} from '../slate/range/range-start'
 import type {EditorSelection, RangeDecoration} from '../types/editor'
-import type {PortableTextSlateEditor} from '../types/slate-editor'
+import type {
+  MergeContext,
+  PortableTextSlateEditor,
+  SplitContext,
+} from '../types/slate-editor'
 import {isEmptyTextBlock} from '../utils'
 import type {EditorSchema} from './editor-schema'
 
 const slateOperationCallback: CallbackLogicFunction<
   AnyEventObject,
-  | {type: 'slate operation'; operation: Operation; suppressCallback: boolean}
+  | {
+      type: 'slate operation'
+      operation: Operation
+      suppressCallback: boolean
+      mergeContext: MergeContext | null
+      splitContext: SplitContext | null
+    }
   | {type: 'reconcile decorations'},
   {slateEditor: PortableTextSlateEditor}
 > = ({input, sendBack}) => {
@@ -55,6 +69,10 @@ const slateOperationCallback: CallbackLogicFunction<
       return
     }
 
+    if (input.slateEditor._suppressDecorationSendBack > 0) {
+      return
+    }
+
     const isRemoteBatch =
       input.slateEditor.isProcessingRemoteChanges || pendingReconciliation
 
@@ -74,7 +92,7 @@ const slateOperationCallback: CallbackLogicFunction<
       >()
       for (const dr of input.slateEditor.decoratedRanges) {
         snapshot.set(dr.rangeDecoration, {
-          range: Range.isRange(dr)
+          range: isRange(dr)
             ? {anchor: {...dr.anchor}, focus: {...dr.focus}}
             : null,
           selection: dr.rangeDecoration.selection,
@@ -83,13 +101,16 @@ const slateOperationCallback: CallbackLogicFunction<
       input.slateEditor.preBatchDecorationRanges = snapshot
     }
 
-    // Always send the operation — Point.transform handles offset shifts
-    // correctly for same-span operations. During remote batches, the
-    // suppressCallback flag tells the handler to skip onMoved calls.
+    // Capture merge/split context NOW while it's still set. Behavior
+    // effects clear it synchronously after the raise completes, but
+    // XState processes sendBack events asynchronously — by the time the
+    // machine handles "slate operation", the context would be null.
     sendBack({
       type: 'slate operation',
       operation: op,
       suppressCallback: isRemoteBatch,
+      mergeContext: input.slateEditor.mergeContext,
+      splitContext: input.slateEditor.splitContext,
     })
 
     // Schedule microtask once per batch. Fires after all synchronous code
@@ -109,7 +130,7 @@ const slateOperationCallback: CallbackLogicFunction<
   }
 }
 
-export type DecoratedRange = BaseRange & {
+export type DecoratedRange = Range & {
   rangeDecoration: RangeDecoration
   merge: (
     leaf: Record<string, unknown>,
@@ -137,7 +158,7 @@ export const rangeDecorationsMachine = setup({
       readOnly: boolean
       schema: EditorSchema
       slateEditor: PortableTextSlateEditor
-      decorate: {fn: (nodeEntry: NodeEntry) => Array<BaseRange>}
+      decorate: {fn: (nodeEntry: NodeEntry) => Array<Range>}
     },
     input: {} as {
       rangeDecorations: Array<RangeDecoration>
@@ -158,6 +179,8 @@ export const rangeDecorationsMachine = setup({
           type: 'slate operation'
           operation: Operation
           suppressCallback?: boolean
+          mergeContext?: MergeContext | null
+          splitContext?: SplitContext | null
         }
       | {
           type: 'reconcile decorations'
@@ -184,13 +207,13 @@ export const rangeDecorationsMachine = setup({
         const slateRange = toSlateRange({
           context: {
             schema: context.schema,
-            value: context.slateEditor.value,
+            value: context.slateEditor.children,
             selection: rangeDecoration.selection,
           },
           blockIndexMap: context.slateEditor.blockIndexMap,
         })
 
-        if (!Range.isRange(slateRange)) {
+        if (!isRange(slateRange)) {
           rangeDecoration.onMoved?.({
             previousSelection: rangeDecoration.selection,
             newSelection: null,
@@ -221,13 +244,13 @@ export const rangeDecorationsMachine = setup({
         const slateRange = toSlateRange({
           context: {
             schema: context.schema,
-            value: context.slateEditor.value,
+            value: context.slateEditor.children,
             selection: rangeDecoration.selection,
           },
           blockIndexMap: context.slateEditor.blockIndexMap,
         })
 
-        if (!Range.isRange(slateRange)) {
+        if (!isRange(slateRange)) {
           rangeDecoration.onMoved?.({
             previousSelection: rangeDecoration.selection,
             newSelection: null,
@@ -254,7 +277,8 @@ export const rangeDecorationsMachine = setup({
       }
 
       const rangeDecorationState: Array<DecoratedRange> = []
-      const {splitContext, mergeContext} = context.slateEditor
+      const mergeContext: MergeContext | null = event.mergeContext ?? null
+      const splitContext: SplitContext | null = event.splitContext ?? null
       const suppressCallback = event.suppressCallback === true
 
       // Get the original block index if we're in a split context
@@ -293,7 +317,7 @@ export const rangeDecorationsMachine = setup({
           {anchor: boolean; focus: boolean}
         >()
         for (const dr of context.slateEditor.decoratedRanges) {
-          if (Range.isRange(dr)) {
+          if (isRange(dr)) {
             flags.set(dr.rangeDecoration, {
               anchor: dr.anchor.path[0] === deletedBlockIndex,
               focus: dr.focus.path[0] === deletedBlockIndex,
@@ -312,11 +336,11 @@ export const rangeDecorationsMachine = setup({
         //    by Slate's Point.transform for any operation type (split, merge, etc.)
         // 3. For splits, we need original offsets before remove_text clamping
         // 4. For merges, we need the indices before the block is removed
-        const slateRange: Range | null = Range.isRange(decoratedRange)
+        const slateRange: Range | null = isRange(decoratedRange)
           ? {anchor: decoratedRange.anchor, focus: decoratedRange.focus}
           : null
 
-        if (!Range.isRange(slateRange)) {
+        if (!isRange(slateRange)) {
           if (!suppressCallback) {
             decoratedRange.rangeDecoration.onMoved?.({
               previousSelection: decoratedRange.rangeDecoration.selection,
@@ -329,7 +353,7 @@ export const rangeDecorationsMachine = setup({
           continue
         }
 
-        let newRange: BaseRange | null | undefined
+        let newRange: Range | null | undefined
 
         // First try merge-aware transformation
         const mergeFlags =
@@ -367,7 +391,7 @@ export const rangeDecorationsMachine = setup({
           mergeContext !== null &&
           deletedBlockIndex !== undefined &&
           newRange !== null &&
-          Range.isRange(newRange) &&
+          isRange(newRange) &&
           (newRange.anchor.path[0] === deletedBlockIndex ||
             newRange.focus.path[0] === deletedBlockIndex)
 
@@ -376,10 +400,10 @@ export const rangeDecorationsMachine = setup({
         if (
           !isIntermediateMergeState &&
           !suppressCallback &&
-          Range.isExpanded(slateRange) &&
+          isExpandedRange(slateRange) &&
           newRange !== null &&
-          Range.isRange(newRange) &&
-          Range.isCollapsed(newRange)
+          isRange(newRange) &&
+          isCollapsedRange(newRange)
         ) {
           newRange = null
         }
@@ -520,13 +544,13 @@ export const rangeDecorationsMachine = setup({
         const freshSlateRange = toSlateRange({
           context: {
             schema: context.schema,
-            value: context.slateEditor.value,
+            value: context.slateEditor.children,
             selection: selectionForResolution,
           },
           blockIndexMap: context.slateEditor.blockIndexMap,
         })
 
-        if (!Range.isRange(freshSlateRange)) {
+        if (!isRange(freshSlateRange)) {
           // Decoration can no longer be resolved in the document
           if (previousRange !== null) {
             const consumerSelection = rangeDecoration.onMoved?.({
@@ -543,13 +567,13 @@ export const rangeDecorationsMachine = setup({
               const consumerSlateRange = toSlateRange({
                 context: {
                   schema: context.schema,
-                  value: context.slateEditor.value,
+                  value: context.slateEditor.children,
                   selection: consumerSelection,
                 },
                 blockIndexMap: context.slateEditor.blockIndexMap,
               })
 
-              if (Range.isRange(consumerSlateRange)) {
+              if (isRange(consumerSlateRange)) {
                 rangeDecorationState.push({
                   merge: mergeRangeDecorations,
                   ...consumerSlateRange,
@@ -569,8 +593,8 @@ export const rangeDecorationsMachine = setup({
         // treat it as invalidation.
         if (
           previousRange !== null &&
-          Range.isExpanded(previousRange) &&
-          Range.isCollapsed(freshSlateRange)
+          isExpandedRange(previousRange) &&
+          isCollapsedRange(freshSlateRange)
         ) {
           const consumerSelection = rangeDecoration.onMoved?.({
             previousSelection,
@@ -584,13 +608,13 @@ export const rangeDecorationsMachine = setup({
             const consumerSlateRange = toSlateRange({
               context: {
                 schema: context.schema,
-                value: context.slateEditor.value,
+                value: context.slateEditor.children,
                 selection: consumerSelection,
               },
               blockIndexMap: context.slateEditor.blockIndexMap,
             })
 
-            if (Range.isRange(consumerSlateRange)) {
+            if (isRange(consumerSlateRange)) {
               rangeDecorationState.push({
                 merge: mergeRangeDecorations,
                 ...consumerSlateRange,
@@ -609,7 +633,7 @@ export const rangeDecorationsMachine = setup({
         // the pre-batch snapshot — indicating a structural change (split, merge,
         // paste-restructure, block deletion, etc.).
         const changed =
-          !previousRange || !Range.equals(previousRange, freshSlateRange)
+          !previousRange || !rangeEquals(previousRange, freshSlateRange)
 
         if (changed) {
           // Structural change: use toSlateRange's re-resolved position.
@@ -636,13 +660,13 @@ export const rangeDecorationsMachine = setup({
             const consumerSlateRange = toSlateRange({
               context: {
                 schema: context.schema,
-                value: context.slateEditor.value,
+                value: context.slateEditor.children,
                 selection: consumerSelection,
               },
               blockIndexMap: context.slateEditor.blockIndexMap,
             })
 
-            if (Range.isRange(consumerSlateRange)) {
+            if (isRange(consumerSlateRange)) {
               finalSelection = consumerSelection
               finalSlateRange = consumerSlateRange
             }
@@ -669,7 +693,7 @@ export const rangeDecorationsMachine = setup({
           })
 
           const offsetShifted =
-            previousRange && !Range.equals(previousRange, decoratedRange)
+            previousRange && !rangeEquals(previousRange, decoratedRange)
 
           if (offsetShifted) {
             let finalSelection = cachedSelection
@@ -687,13 +711,13 @@ export const rangeDecorationsMachine = setup({
               const consumerSlateRange = toSlateRange({
                 context: {
                   schema: context.schema,
-                  value: context.slateEditor.value,
+                  value: context.slateEditor.children,
                   selection: consumerSelection,
                 },
                 blockIndexMap: context.slateEditor.blockIndexMap,
               })
 
-              if (Range.isRange(consumerSlateRange)) {
+              if (isRange(consumerSlateRange)) {
                 finalSelection = consumerSelection
                 finalSlateRange = consumerSlateRange
               }
@@ -883,11 +907,11 @@ function createDecorate(
   schema: EditorSchema,
   slateEditor: PortableTextSlateEditor,
 ) {
-  return function decorate([node, path]: NodeEntry): Array<BaseRange> {
+  return function decorate([node, path]: NodeEntry): Array<Range> {
     const defaultStyle = schema.styles.at(0)?.name
-    const firstBlock = slateEditor.value[0]
+    const firstBlock = slateEditor.children[0]
     const editorOnlyContainsEmptyParagraph =
-      slateEditor.value.length === 1 &&
+      slateEditor.children.length === 1 &&
       firstBlock &&
       isEmptyTextBlock({schema}, firstBlock) &&
       (!firstBlock.style || firstBlock.style === defaultStyle) &&
@@ -905,7 +929,7 @@ function createDecorate(
             offset: 0,
           },
           placeholder: true,
-        } as BaseRange,
+        } as Range,
       ]
     }
 
@@ -914,7 +938,10 @@ function createDecorate(
       return []
     }
 
-    if (!Element.isElement(node) || node.children.length === 0) {
+    if (
+      !isTextBlock({schema: slateEditor.schema}, node) ||
+      node.children.length === 0
+    ) {
       return []
     }
 
@@ -927,25 +954,25 @@ function createDecorate(
     return slateEditor.decoratedRanges
       .filter((decoratedRange) => {
         // Special case in order to only return one decoration for collapsed ranges
-        if (Range.isCollapsed(decoratedRange)) {
+        if (isCollapsedRange(decoratedRange)) {
           // Collapsed ranges should only be decorated if they are on a block child level (length 2)
           return node.children.some(
-            (_, childIndex) =>
-              Path.equals(decoratedRange.anchor.path, [
+            (_: Node, childIndex: number) =>
+              pathEquals(decoratedRange.anchor.path, [
                 blockIndex,
                 childIndex,
               ]) &&
-              Path.equals(decoratedRange.focus.path, [blockIndex, childIndex]),
+              pathEquals(decoratedRange.focus.path, [blockIndex, childIndex]),
           )
         }
 
         return (
-          Range.intersection(decoratedRange, {
+          rangeIntersection(decoratedRange, {
             anchor: {path, offset: 0},
             focus: {path, offset: 0},
-          }) || Range.includes(decoratedRange, path)
+          }) || rangeIncludes(decoratedRange, path)
         )
       })
-      .sort((a, b) => Point.compare(Range.start(b), Range.start(a)))
+      .sort((a, b) => comparePoints(rangeStart(b), rangeStart(a)))
   }
 }

@@ -1,26 +1,33 @@
-import {Point, type Node, type Operation, type Range} from '../slate'
+import type {Node} from '../slate/interfaces/node'
+import type {Operation} from '../slate/interfaces/operation'
+import type {Point} from '../slate/interfaces/point'
+import type {Range} from '../slate/interfaces/range'
+import {isAfterPoint} from '../slate/point/is-after-point'
+import {isBeforePoint} from '../slate/point/is-before-point'
+import {pointEquals} from '../slate/point/point-equals'
+import {transformPoint} from '../slate/point/transform-point'
 import type {MergeContext, SplitContext} from '../types/slate-editor'
 
-// Mock node for insert_node operations - only path matters for Point.transform
+// Mock node for insert_node operations - only path matters for transformPoint
 const mockNode = {children: []} as unknown as Node
 
 export function moveRangeByOperation(
   range: Range,
   operation: Operation,
 ): Range | null {
-  const isCollapsed = Point.equals(range.anchor, range.focus)
+  const isCollapsed = pointEquals(range.anchor, range.focus)
 
   // For non-collapsed ranges, use backward affinity on the end point so that
   // inserting text at the exact boundary doesn't expand the range.
-  const anchorIsEnd = !isCollapsed && Point.isAfter(range.anchor, range.focus)
+  const anchorIsEnd = !isCollapsed && isAfterPoint(range.anchor, range.focus)
   const focusIsEnd = !isCollapsed && !anchorIsEnd
 
-  const anchor = Point.transform(
+  const anchor = transformPoint(
     range.anchor,
     operation,
     anchorIsEnd ? {affinity: 'backward'} : undefined,
   )
-  const focus = Point.transform(
+  const focus = transformPoint(
     range.focus,
     operation,
     focusIsEnd ? {affinity: 'backward'} : undefined,
@@ -30,7 +37,7 @@ export function moveRangeByOperation(
     return null
   }
 
-  if (Point.equals(anchor, range.anchor) && Point.equals(focus, range.focus)) {
+  if (pointEquals(anchor, range.anchor) && pointEquals(focus, range.focus)) {
     return range
   }
 
@@ -114,8 +121,8 @@ export function moveRangeBySplitAwareOperation(
 
       // If nothing changed, return original range
       if (
-        Point.equals(newAnchor, range.anchor) &&
-        Point.equals(newFocus, range.focus)
+        pointEquals(newAnchor, range.anchor) &&
+        pointEquals(newFocus, range.focus)
       ) {
         return range
       }
@@ -151,7 +158,7 @@ function adjustPointAfterSplit(
 ): Point {
   if (point.path[0] !== originalBlockIndex) {
     return (
-      Point.transform(point, {
+      transformPoint(point, {
         type: 'insert_node',
         path: [newBlockIndex],
         node: mockNode,
@@ -170,7 +177,7 @@ function adjustPointAfterSplit(
 
   if (staysInOriginal) {
     return (
-      Point.transform(point, {
+      transformPoint(point, {
         type: 'insert_node',
         path: [newBlockIndex],
         node: mockNode,
@@ -253,14 +260,14 @@ export function moveRangeByMergeAwareOperation(
       if (anchorOnDeleted || focusOnDeleted) {
         const newAnchor = anchorOnDeleted
           ? range.anchor
-          : (Point.transform(range.anchor, operation) ?? range.anchor)
+          : (transformPoint(range.anchor, operation) ?? range.anchor)
         const newFocus = focusOnDeleted
           ? range.focus
-          : (Point.transform(range.focus, operation) ?? range.focus)
+          : (transformPoint(range.focus, operation) ?? range.focus)
 
         if (
-          Point.equals(newAnchor, range.anchor) &&
-          Point.equals(newFocus, range.focus)
+          pointEquals(newAnchor, range.anchor) &&
+          pointEquals(newFocus, range.focus)
         ) {
           return range
         }
@@ -312,8 +319,8 @@ export function moveRangeByMergeAwareOperation(
           : range.focus
 
         if (
-          Point.equals(newAnchor, range.anchor) &&
-          Point.equals(newFocus, range.focus)
+          pointEquals(newAnchor, range.anchor) &&
+          pointEquals(newFocus, range.focus)
         ) {
           return range
         }
@@ -404,7 +411,7 @@ export function isOperationInsideRange(
     return false
   }
 
-  const startPoint = Point.isBefore(range.anchor, range.focus)
+  const startPoint = isBeforePoint(range.anchor, range.focus)
     ? range.anchor
     : range.focus
   const endPoint = startPoint === range.anchor ? range.focus : range.anchor

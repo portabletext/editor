@@ -4,7 +4,8 @@ import {
   type SchemaDefinition,
 } from '@portabletext/schema'
 import {assert, describe, expect, test} from 'vitest'
-import {createTestSnapshot} from '../internal-utils/create-test-snapshot'
+import {createTestSnapshot} from '../../test-utils/create-test-snapshot'
+import {safeStringify} from '../internal-utils/safe-json'
 import {converterPortableText} from './converter.portable-text'
 
 function createSnapshot(schema: SchemaDefinition) {
@@ -23,7 +24,7 @@ describe(converterPortableText.deserialize, () => {
         snapshot: createSnapshot(defineSchema({})),
         event: {
           type: 'deserialize',
-          data: JSON.stringify(''),
+          data: safeStringify(''),
         },
       }),
     ).toMatchObject({
@@ -37,7 +38,7 @@ describe(converterPortableText.deserialize, () => {
         snapshot: createSnapshot(defineSchema({})),
         event: {
           type: 'deserialize',
-          data: JSON.stringify([]),
+          data: safeStringify([]),
         },
       }),
     ).toMatchObject({
@@ -51,7 +52,7 @@ describe(converterPortableText.deserialize, () => {
         snapshot: createSnapshot(defineSchema({})),
         event: {
           type: 'deserialize',
-          data: JSON.stringify([{foo: 'bar'}]),
+          data: safeStringify([{foo: 'bar'}]),
         },
       }),
     ).toMatchObject({
@@ -65,7 +66,7 @@ describe(converterPortableText.deserialize, () => {
         snapshot: createSnapshot(defineSchema({})),
         event: {
           type: 'deserialize',
-          data: JSON.stringify([{_type: 'block', children: []}, {foo: 'bar'}]),
+          data: safeStringify([{_type: 'block', children: []}, {foo: 'bar'}]),
         },
       }),
     ).toMatchObject({
@@ -92,7 +93,7 @@ describe(converterPortableText.deserialize, () => {
         snapshot: createSnapshot(defineSchema({})),
         event: {
           type: 'deserialize',
-          data: JSON.stringify([
+          data: safeStringify([
             {
               _type: 'block',
               children: [
@@ -127,7 +128,7 @@ describe(converterPortableText.deserialize, () => {
         snapshot: createSnapshot(defineSchema({})),
         event: {
           type: 'deserialize',
-          data: JSON.stringify([{_type: 'foo'}]),
+          data: safeStringify([{_type: 'foo'}]),
         },
       }),
     ).toMatchObject({
@@ -147,7 +148,7 @@ describe(converterPortableText.deserialize, () => {
         ),
         event: {
           type: 'deserialize',
-          data: JSON.stringify([
+          data: safeStringify([
             {
               _key: 'b2',
               _type: 'image',
@@ -173,7 +174,7 @@ describe(converterPortableText.deserialize, () => {
         snapshot: createSnapshot(defineSchema({})),
         event: {
           type: 'deserialize',
-          data: JSON.stringify([
+          data: safeStringify([
             {
               _type: 'block',
               children: [{_type: 'stock-ticker', symbol: 'AAPL'}],
@@ -213,7 +214,7 @@ describe(converterPortableText.deserialize, () => {
         ),
         event: {
           type: 'deserialize',
-          data: JSON.stringify([
+          data: safeStringify([
             {
               _type: 'block',
               children: [{_type: 'stock-ticker', symbol: 'AAPL'}],
@@ -236,7 +237,7 @@ describe(converterPortableText.deserialize, () => {
       snapshot: createSnapshot(defineSchema({})),
       event: {
         type: 'deserialize',
-        data: JSON.stringify([
+        data: safeStringify([
           {
             _type: 'block',
             children: [],
@@ -270,7 +271,7 @@ describe(converterPortableText.deserialize, () => {
       snapshot: createSnapshot(defineSchema({styles: [{name: 'h1'}]})),
       event: {
         type: 'deserialize',
-        data: JSON.stringify([
+        data: safeStringify([
           {
             _type: 'block',
             children: [],
@@ -304,7 +305,7 @@ describe(converterPortableText.deserialize, () => {
       snapshot: createSnapshot(defineSchema({})),
       event: {
         type: 'deserialize',
-        data: JSON.stringify([
+        data: safeStringify([
           {
             _type: 'block',
             children: [],
@@ -343,7 +344,7 @@ describe(converterPortableText.deserialize, () => {
       ),
       event: {
         type: 'deserialize',
-        data: JSON.stringify([
+        data: safeStringify([
           {
             _type: 'block',
             children: [],
@@ -379,7 +380,7 @@ describe(converterPortableText.deserialize, () => {
       snapshot: createSnapshot(defineSchema({})),
       event: {
         type: 'deserialize',
-        data: JSON.stringify([
+        data: safeStringify([
           {
             _type: 'block',
             children: [],
@@ -420,7 +421,7 @@ describe(converterPortableText.deserialize, () => {
       ),
       event: {
         type: 'deserialize',
-        data: JSON.stringify([
+        data: safeStringify([
           {
             _type: 'block',
             children: [],
@@ -459,7 +460,7 @@ describe(converterPortableText.deserialize, () => {
         snapshot: createSnapshot(defineSchema({})),
         event: {
           type: 'deserialize',
-          data: JSON.stringify([
+          data: safeStringify([
             {
               _type: 'block',
               children: [
@@ -523,7 +524,7 @@ describe(converterPortableText.deserialize, () => {
         ),
         event: {
           type: 'deserialize',
-          data: JSON.stringify([
+          data: safeStringify([
             {
               _type: 'block',
               children: [
@@ -588,7 +589,7 @@ describe(converterPortableText.deserialize, () => {
         snapshot: createSnapshot(defineSchema({})),
         event: {
           type: 'deserialize',
-          data: JSON.stringify([
+          data: safeStringify([
             {
               _type: 'block',
               children: [
@@ -638,7 +639,7 @@ describe(converterPortableText.deserialize, () => {
         ),
         event: {
           type: 'deserialize',
-          data: JSON.stringify([
+          data: safeStringify([
             {
               _type: 'block',
               children: [

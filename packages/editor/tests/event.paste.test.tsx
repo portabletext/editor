@@ -1,8 +1,4 @@
-import {
-  htmlToBlocks,
-  type ImageSchemaMatcher,
-  type SchemaMatchers,
-} from '@portabletext/block-tools'
+import {htmlToPortableText, type ObjectMatcher} from '@portabletext/html'
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
@@ -178,24 +174,21 @@ describe('event.clipboard.paste', () => {
       ],
     })
 
-    const imageMatcher: ImageSchemaMatcher = ({context, props}) => {
+    const imageMatcher: ObjectMatcher<{src?: string; alt?: string}> = ({
+      context,
+      value,
+    }) => {
       return {
         _type: 'image',
         _key: context.keyGenerator(),
-        src: props.src,
-        alt: props.alt,
-      }
-    }
-    const inlineImageMatcher: ImageSchemaMatcher = ({context, props}) => {
-      return {
-        _type: 'image',
-        _key: context.keyGenerator(),
-        src: props.src,
-        alt: props.alt,
+        src: value.src,
+        alt: value.alt,
       }
     }
 
-    function createBehavior(matchers: SchemaMatchers) {
+    function createBehavior(types?: {
+      image?: ObjectMatcher<{src?: string; alt?: string}>
+    }) {
       return defineBehavior({
         on: 'deserialize.data',
         guard: ({snapshot, event}) => {
@@ -203,9 +196,10 @@ describe('event.clipboard.paste', () => {
             return false
           }
 
-          const blocks = htmlToBlocks(event.data, snapshot.context.schema, {
+          const blocks = htmlToPortableText(event.data, {
+            schema: snapshot.context.schema,
             keyGenerator: snapshot.context.keyGenerator,
-            matchers,
+            types,
           })
 
           if (blocks.length === 0) {
@@ -229,13 +223,12 @@ describe('event.clipboard.paste', () => {
       })
     }
 
-    test('Scenario: `image` and `inlineImage` block-tools matchers', async () => {
+    test('Scenario: `image` ObjectMatcher (block and inline)', async () => {
       const {editor} = await createTestEditor({
         children: (
           <BehaviorPlugin
             behaviors={[
               createBehavior({
-                inlineImage: inlineImageMatcher,
                 image: imageMatcher,
               }),
             ]}
@@ -263,13 +256,28 @@ describe('event.clipboard.paste', () => {
       })
     })
 
-    test('Scenario: only `image` matcher', async () => {
+    test('Scenario: block-only image matcher', async () => {
+      const blockOnlyImageMatcher: ObjectMatcher<{
+        src?: string
+        alt?: string
+      }> = ({context, value, isInline}) => {
+        if (isInline) {
+          return undefined
+        }
+        return {
+          _type: 'image',
+          _key: context.keyGenerator(),
+          src: value.src,
+          alt: value.alt,
+        }
+      }
+
       const {editor} = await createTestEditor({
         children: (
           <BehaviorPlugin
             behaviors={[
               createBehavior({
-                image: imageMatcher,
+                image: blockOnlyImageMatcher,
               }),
             ]}
           />
@@ -300,7 +308,7 @@ describe('event.clipboard.paste', () => {
 
     test('Scenario: No matchers', async () => {
       const {editor} = await createTestEditor({
-        children: <BehaviorPlugin behaviors={[createBehavior({})]} />,
+        children: <BehaviorPlugin behaviors={[createBehavior()]} />,
         schemaDefinition,
       })
 

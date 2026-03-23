@@ -49,8 +49,7 @@ export function useEditorSelector<TSelected>(
     (editorActorSnapshot) => {
       const snapshot = getEditorSnapshot({
         editorActorSnapshot,
-        slateEditorInstance: (editor as InternalEditor)._internal.slateEditor
-          .instance,
+        slateEditorInstance: (editor as InternalEditor)._internal.slateEditor,
       })
 
       return selector(snapshot)
@@ -82,7 +81,7 @@ export function getEditorSnapshot({
       readOnly: editorActorSnapshot.matches({'edit mode': 'read only'}),
       schema: editorActorSnapshot.context.schema,
       selection,
-      value: slateEditorInstance.value,
+      value: slateEditorInstance.children,
     },
     decoratorState: slateEditorInstance.decoratorState,
   }

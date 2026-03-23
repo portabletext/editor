@@ -1,0 +1,48 @@
+import {after} from '../slate/editor/after'
+import {before} from '../slate/editor/before'
+import type {PortableTextSlateEditor} from '../types/slate-editor'
+import {applySelect} from './apply-selection'
+
+/**
+ * Move the selection by a given distance and unit.
+ */
+export function applyMove(
+  editor: PortableTextSlateEditor,
+  options: {
+    distance?: number
+    unit?: 'character' | 'word' | 'line' | 'offset'
+    reverse?: boolean
+  } = {},
+): void {
+  const {selection} = editor
+
+  if (!selection) {
+    return
+  }
+
+  const {distance = 1, unit = 'character', reverse = false} = options
+  const {anchor, focus} = selection
+  const opts = {distance, unit}
+
+  const newAnchor = reverse
+    ? before(editor, anchor, opts)
+    : after(editor, anchor, opts)
+
+  const newFocus = reverse
+    ? before(editor, focus, opts)
+    : after(editor, focus, opts)
+
+  const props: {anchor?: typeof newAnchor; focus?: typeof newFocus} = {}
+
+  if (newAnchor) {
+    props.anchor = newAnchor
+  }
+
+  if (newFocus) {
+    props.focus = newFocus
+  }
+
+  if (props.anchor || props.focus) {
+    applySelect(editor, {...selection, ...props})
+  }
+}

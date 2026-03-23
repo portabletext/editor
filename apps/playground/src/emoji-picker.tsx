@@ -96,7 +96,7 @@ export function EmojiPickerPlugin() {
 
 const MAX_VISIBLE_MATCHES = 50
 
-export function EmojiListBox(props: {
+function EmojiListBox(props: {
   keyword: string
   matches: ReadonlyArray<EmojiMatch>
   selectedIndex: number

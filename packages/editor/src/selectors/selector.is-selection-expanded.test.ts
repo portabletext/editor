@@ -1,5 +1,5 @@
 import {describe, expect, test} from 'vitest'
-import {createTestSnapshot} from '../internal-utils/create-test-snapshot'
+import {createTestSnapshot} from '../../test-utils/create-test-snapshot'
 import {isSelectionExpanded} from './selector.is-selection-expanded'
 
 describe(isSelectionExpanded.name, () => {

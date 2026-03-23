@@ -1,7 +1,7 @@
 import type {EditorContext} from '../editor/editor-snapshot'
-import {applyOperationToPortableText} from '../internal-utils/apply-operation-to-portable-text'
 import {buildIndexMaps} from '../internal-utils/build-index-maps'
 import {debug} from '../internal-utils/debug'
+import {safeStringify} from '../internal-utils/safe-json'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 
 export function updateValuePlugin(
@@ -12,21 +12,13 @@ export function updateValuePlugin(
 
   editor.apply = (operation) => {
     if (editor.isNormalizingNode) {
-      debug.normalization(
-        `(slate operation)\n${JSON.stringify(operation, null, 2)}`,
-      )
+      debug.normalization(`(slate operation)\n${safeStringify(operation, 2)}`)
     }
 
     if (operation.type === 'set_selection') {
       apply(operation)
       return
     }
-
-    editor.value = applyOperationToPortableText(
-      context,
-      editor.value,
-      operation,
-    )
 
     if (operation.type === 'insert_text' || operation.type === 'remove_text') {
       // Inserting and removing text has no effect on index maps so there is
@@ -35,18 +27,18 @@ export function updateValuePlugin(
       return
     }
 
+    apply(operation)
+
     buildIndexMaps(
       {
         schema: context.schema,
-        value: editor.value,
+        value: editor.children,
       },
       {
         blockIndexMap: editor.blockIndexMap,
         listIndexMap: editor.listIndexMap,
       },
     )
-
-    apply(operation)
   }
 
   return editor

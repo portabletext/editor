@@ -116,9 +116,7 @@ Feature({
     Then(
       'the keyword is {string}',
       async (context: Context & {keywordLocator: Locator}, keyword: string) => {
-        await vi.waitFor(() =>
-          expect(context.keywordLocator.element().textContent).toEqual(keyword),
-        )
+        await expect.element(context.keywordLocator).toHaveTextContent(keyword)
       },
     ),
   ],

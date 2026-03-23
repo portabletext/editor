@@ -1,47 +1,52 @@
-import {Editor, type EditorInterface} from '../interfaces/editor'
-import type {Span} from '../interfaces/location'
-import {Path} from '../interfaces/path'
+import type {Editor, NodeMatch} from '../interfaces/editor'
+import type {Location, Span} from '../interfaces/location'
+import type {Node, NodeEntry} from '../interfaces/node'
+import {isPath} from '../path/is-path'
+import type {SelectionMode} from '../types/types'
+import {before} from './before'
+import {node} from './node'
+import {nodes} from './nodes'
+import {path} from './path'
 
-export const previous: EditorInterface['previous'] = (editor, options = {}) => {
-  const {mode = 'lowest', voids = false} = options
-  let {match, at = editor.selection} = options
+export function previous<T extends Node>(
+  editor: Editor,
+  options: {
+    at?: Location
+    match: NodeMatch<T>
+    mode?: SelectionMode
+    includeObjectNodes?: boolean
+  },
+): NodeEntry<T> | undefined {
+  const {mode = 'lowest', includeObjectNodes = false} = options
+  const {match, at = editor.selection} = options
 
   if (!at) {
     return
   }
 
-  const pointBeforeLocation = Editor.before(editor, at, {voids})
+  const pointBeforeLocation = before(editor, at, {includeObjectNodes})
 
   if (!pointBeforeLocation) {
     return
   }
 
-  const [, to] = Editor.first(editor, [])
+  const [, to] = node(editor, path(editor, [], {edge: 'start'}))
 
   // The search location is from the start of the document to the path of
   // the point before the location passed in
   const span: Span = [pointBeforeLocation.path, to]
 
-  if (Path.isPath(at) && at.length === 0) {
+  if (isPath(at) && at.length === 0) {
     throw new Error(`Cannot get the previous node from the root node!`)
   }
 
-  if (match == null) {
-    if (Path.isPath(at)) {
-      const [parent] = Editor.parent(editor, at)
-      match = (n) => parent.children.includes(n)
-    } else {
-      match = () => true
-    }
-  }
-
-  const [previous] = Editor.nodes(editor, {
+  const [previousEntry] = nodes(editor, {
     reverse: true,
     at: span,
     match,
     mode,
-    voids,
+    includeObjectNodes,
   })
 
-  return previous
+  return previousEntry
 }

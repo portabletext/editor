@@ -1,19 +1,15 @@
 import {
-  composeRenderProps,
-  Group,
   FieldError as RACFieldError,
   Input as RACInput,
   Label as RACLabel,
   Text,
   type FieldErrorProps,
-  type GroupProps,
   type InputProps,
   type LabelProps,
   type TextProps,
 } from 'react-aria-components'
 import {twMerge} from 'tailwind-merge'
-import {tv} from 'tailwind-variants'
-import {composeTailwindRenderProps, focusRing} from './utils'
+import {composeTailwindRenderProps} from './utils'
 
 export function Label(props: LabelProps) {
   return (
@@ -47,39 +43,6 @@ export function FieldError(props: FieldErrorProps) {
       className={composeTailwindRenderProps(
         props.className,
         'text-sm text-red-600 forced-colors:text-[Mark]',
-      )}
-    />
-  )
-}
-
-export const fieldBorderStyles = tv({
-  variants: {
-    isFocusWithin: {
-      false:
-        'border-gray-200 dark:border-gray-700 forced-colors:border-[ButtonBorder]',
-      true: 'border-blue-600 dark:border-blue-500 forced-colors:border-[Highlight]',
-    },
-    isInvalid: {
-      true: 'border-red-600 forced-colors:border-[Mark]',
-    },
-    isDisabled: {
-      true: 'border-gray-200 dark:border-gray-700 forced-colors:border-[GrayText]',
-    },
-  },
-})
-
-export const fieldGroupStyles = tv({
-  extend: focusRing,
-  base: 'group flex items-center h-9 bg-white dark:bg-gray-800 forced-colors:bg-[Field] border-2 rounded-lg overflow-hidden',
-  variants: fieldBorderStyles.variants,
-})
-
-export function FieldGroup(props: GroupProps) {
-  return (
-    <Group
-      {...props}
-      className={composeRenderProps(props.className, (className, renderProps) =>
-        fieldGroupStyles({...renderProps, className}),
       )}
     />
   )

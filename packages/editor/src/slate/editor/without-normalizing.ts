@@ -1,15 +1,15 @@
-import {Editor, type EditorInterface} from '../interfaces/editor'
+import type {Editor} from '../interfaces/editor'
+import {isNormalizing} from './is-normalizing'
+import {normalize} from './normalize'
+import {setNormalizing} from './set-normalizing'
 
-export const withoutNormalizing: EditorInterface['withoutNormalizing'] = (
-  editor,
-  fn,
-) => {
-  const value = Editor.isNormalizing(editor)
-  Editor.setNormalizing(editor, false)
+export function withoutNormalizing(editor: Editor, fn: () => void): void {
+  const value = isNormalizing(editor)
+  setNormalizing(editor, false)
   try {
     fn()
   } finally {
-    Editor.setNormalizing(editor, value)
+    setNormalizing(editor, value)
   }
-  Editor.normalize(editor)
+  normalize(editor)
 }

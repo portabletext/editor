@@ -1,7 +1,8 @@
+import {htmlToPortableText, type ObjectMatcher} from '@portabletext/html'
 import {sanitySchemaToPortableTextSchema} from '@portabletext/sanity-bridge'
-import type {Schema} from '@portabletext/schema'
+import type {PortableTextBlock, Schema} from '@portabletext/schema'
 import type {ArraySchemaType} from '@sanity/types'
-import HtmlDeserializer from './HtmlDeserializer'
+import type {ImageSchemaMatcher} from './schema-matchers'
 import type {HtmlDeserializerOptions, TypedObject} from './types'
 import {normalizeBlock} from './util/normalizeBlock'
 
@@ -18,15 +19,46 @@ export function htmlToBlocks(
   html: string,
   schemaType: ArraySchemaType | Schema,
   options: HtmlDeserializerOptions = {},
-) {
+): PortableTextBlock[] {
   const schema = isSanitySchema(schemaType)
     ? sanitySchemaToPortableTextSchema(schemaType)
     : schemaType
 
-  const deserializer = new HtmlDeserializer(schema, options)
-  return deserializer
-    .deserialize(html)
-    .map((block) => normalizeBlock(block, {keyGenerator: options.keyGenerator}))
+  return htmlToPortableText(html, {
+    schema,
+    keyGenerator: options.keyGenerator,
+    parseHtml: options.parseHtml,
+    rules: options.rules,
+    whitespaceMode: options.unstable_whitespaceOnPasteMode,
+    types: adaptMatchers(options.matchers),
+  })
+}
+
+/**
+ * Adapt block-tools' separate image/inlineImage SchemaMatchers to
+ * @portabletext/html's single ObjectMatcher with isInline flag.
+ */
+function adaptMatchers(matchers?: {
+  image?: ImageSchemaMatcher
+  inlineImage?: ImageSchemaMatcher
+}): {image?: ObjectMatcher<{src?: string; alt?: string}>} | undefined {
+  if (!matchers?.image && !matchers?.inlineImage) {
+    return undefined
+  }
+
+  return {
+    image: ({context, value, isInline}) => {
+      const matcher = isInline ? matchers.inlineImage : matchers.image
+      if (!matcher) {
+        return undefined
+      }
+      const result = matcher({context, props: value})
+      if (!result) {
+        return undefined
+      }
+      return result as ReturnType<ObjectMatcher<{src?: string; alt?: string}>>
+    },
+  }
 }
 
 export type {ImageSchemaMatcher, SchemaMatchers} from './schema-matchers'

@@ -1,82 +1,65 @@
-import {
-  isSpan,
-  isTextBlock,
-  type PortableTextListBlock,
-  type PortableTextSpan,
-  type PortableTextTextBlock,
+import type {
+  PortableTextObject,
+  PortableTextSpan,
+  PortableTextTextBlock,
 } from '@portabletext/schema'
 import type {EditorActor} from '../editor/editor-machine'
+import {applySetNode} from '../internal-utils/apply-set-node'
 import {debug} from '../internal-utils/debug'
-import {Editor, Transforms, type Element} from '../slate'
+import {isEditor} from '../slate/editor/is-editor'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
-import {isListBlock} from '../utils/parse-blocks'
 import {withNormalizeNode} from './slate-plugin.normalize-node'
 
 /**
- * This plugin makes sure that schema types are recognized properly by Slate as blocks, voids, inlines
+ * This plugin makes sure that schema types are recognized properly by Slate as blocks, object nodes, inlines
  *
  */
 export function createSchemaPlugin({editorActor}: {editorActor: EditorActor}) {
   return function schemaPlugin(
     editor: PortableTextSlateEditor,
   ): PortableTextSlateEditor {
-    editor.isTextBlock = (value: unknown): value is PortableTextTextBlock => {
-      if (Editor.isEditor(value)) {
+    editor.schema = editorActor.getSnapshot().context.schema
+    editor.isInline = (
+      element: PortableTextTextBlock | PortableTextObject,
+    ): boolean => {
+      if (isEditor(element)) {
         return false
       }
 
-      return isTextBlock(editorActor.getSnapshot().context, value)
-    }
-    editor.isTextSpan = (value: unknown): value is PortableTextSpan => {
-      if (Editor.isEditor(value)) {
+      const snapshot = editorActor.getSnapshot()
+      const isInlineType = snapshot.context.schema.inlineObjects
+        .map((obj) => obj.name)
+        .includes(element._type)
+
+      if (!isInlineType) {
         return false
       }
 
-      return isSpan(editorActor.getSnapshot().context, value)
-    }
-    editor.isListBlock = (value: unknown): value is PortableTextListBlock => {
-      if (Editor.isEditor(value)) {
-        return false
+      // Dual-registered types use position to determine inline status.
+      const isAlsoBlockType = snapshot.context.schema.blockObjects
+        .map((obj) => obj.name)
+        .includes(element._type)
+
+      if (isAlsoBlockType) {
+        for (const child of editor.children) {
+          if (child === element) {
+            return false
+          }
+        }
       }
 
-      return isListBlock(editorActor.getSnapshot().context, value)
-    }
-    editor.isVoid = (element: Element): boolean => {
-      if (Editor.isEditor(element)) {
-        return false
-      }
-
-      return (
-        editorActor.getSnapshot().context.schema.block.name !== element._type &&
-        (editorActor
-          .getSnapshot()
-          .context.schema.blockObjects.map((obj) => obj.name)
-          .includes(element._type) ||
-          editorActor
-            .getSnapshot()
-            .context.schema.inlineObjects.map((obj) => obj.name)
-            .includes(element._type))
-      )
-    }
-    editor.isInline = (element: Element): boolean => {
-      if (Editor.isEditor(element)) {
-        return false
-      }
-
-      const inlineSchemaTypes = editorActor
-        .getSnapshot()
-        .context.schema.inlineObjects.map((obj) => obj.name)
-      return (
-        inlineSchemaTypes.includes(element._type) &&
-        '__inline' in element &&
-        element.__inline === true
-      )
+      return true
     }
 
     // Extend Slate's default normalization
     const {normalizeNode} = editor
     editor.normalizeNode = (entry) => {
       const [node, path] = entry
+
+      if (isEditor(node)) {
+        normalizeNode(entry)
+        return
+      }
 
       // If text block children node is missing _type, set it to the span type
       if (node._type === undefined && path.length === 2) {
@@ -85,14 +68,14 @@ export function createSchemaPlugin({editorActor}: {editorActor: EditorActor}) {
         const key =
           span._key || editorActor.getSnapshot().context.keyGenerator()
         withNormalizeNode(editor, () => {
-          Transforms.setNodes(
+          applySetNode(
             editor,
             {
               ...span,
               _type: editorActor.getSnapshot().context.schema.span.name,
               _key: key,
             },
-            {at: path},
+            path,
           )
         })
         return
@@ -103,7 +86,7 @@ export function createSchemaPlugin({editorActor}: {editorActor: EditorActor}) {
         debug.normalization('Setting missing key on child node without a key')
         const key = editorActor.getSnapshot().context.keyGenerator()
         withNormalizeNode(editor, () => {
-          Transforms.setNodes(editor, {_key: key}, {at: path})
+          applySetNode(editor, {_key: key}, path)
         })
         return
       }

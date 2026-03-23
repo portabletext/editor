@@ -67,6 +67,7 @@ export function createPortableTextMemberSchemaTypes(
   const blockObjectTypes = (portableTextType.of?.filter(
     (field) => field.name !== blockType.name,
   ) || []) as ObjectSchemaType[]
+
   return {
     styles: resolveEnabledStyles(blockType),
     decorators: resolveEnabledDecorators(spanType),

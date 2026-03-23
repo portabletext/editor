@@ -1,5 +1,7 @@
-import {Point, type Operation} from '..'
+import {transformPoint} from '../point/transform-point'
 import type {TextDirection} from '../types/types'
+import type {Operation} from './operation'
+import type {Point} from './point'
 
 /**
  * `PointRef` objects keep a specific point in a document synced over time as new
@@ -13,10 +15,7 @@ export interface PointRef {
   unref(): Point | null
 }
 
-export interface PointRefInterface {
-  /**
-   * Transform the point ref's current value by an operation.
-   */
+interface PointRefInterface {
   transform: (ref: PointRef, op: Operation) => void
 }
 
@@ -29,7 +28,7 @@ export const PointRef: PointRefInterface = {
       return
     }
 
-    const point = Point.transform(current, op, {affinity})
+    const point = transformPoint(current, op, {affinity})
     ref.current = point
 
     if (point == null) {

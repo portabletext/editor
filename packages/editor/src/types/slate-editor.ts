@@ -1,16 +1,11 @@
 import type {Patch} from '@portabletext/patches'
-import type {
-  PortableTextBlock,
-  PortableTextListBlock,
-  PortableTextSpan,
-  PortableTextTextBlock,
-} from '@portabletext/schema'
+import type {PortableTextBlock} from '@portabletext/schema'
+import type {EditorSchema} from '../editor/editor-schema'
 import type {DecoratedRange} from '../editor/range-decorations-machine'
-import type {Range, Operation as SlateOperation} from '../slate'
-import type {ReactEditor} from '../slate-react'
+import type {Operation as SlateOperation} from '../slate/interfaces/operation'
+import type {Range} from '../slate/interfaces/range'
+import type {ReactEditor} from '../slate/react/plugin/react-editor'
 import type {EditorSelection, RangeDecoration} from './editor'
-// Side-effect import to ensure Slate module augmentation is included
-import './slate'
 
 type HistoryItem = {
   operations: SlateOperation[]
@@ -79,9 +74,7 @@ export interface PortableTextSlateEditor extends ReactEditor {
   _key: 'editor'
   _type: 'editor'
 
-  isTextBlock: (value: unknown) => value is PortableTextTextBlock
-  isTextSpan: (value: unknown) => value is PortableTextSpan
-  isListBlock: (value: unknown) => value is PortableTextListBlock
+  schema: EditorSchema
 
   decoratedRanges: Array<DecoratedRange>
   /**
@@ -110,7 +103,6 @@ export interface PortableTextSlateEditor extends ReactEditor {
   listIndexMap: Map<string, number>
   remotePatches: Array<RemotePatch>
   undoStepId: string | undefined
-  value: Array<PortableTextBlock>
 
   /**
    * Context for the current split operation.
@@ -137,6 +129,14 @@ export interface PortableTextSlateEditor extends ReactEditor {
     {anchor: boolean; focus: boolean}
   > | null
 
+  /**
+   * When > 0, the decoration `sendBack` interceptor skips firing
+   * `slate operation` events. Used by `applyMergeNode` and `applySplitNode`
+   * to suppress events for their decomposed operations, which would
+   * otherwise double-transform or invalidate decoration ranges.
+   */
+  _suppressDecorationSendBack: number
+
   isDeferringMutations: boolean
   isNormalizingNode: boolean
   isPatching: boolean
@@ -145,14 +145,4 @@ export interface PortableTextSlateEditor extends ReactEditor {
   isRedoing: boolean
   isUndoing: boolean
   withHistory: boolean
-
-  /**
-   * Undo
-   */
-  undo: () => void
-
-  /**
-   * Redo
-   */
-  redo: () => void
 }

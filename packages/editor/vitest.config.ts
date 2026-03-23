@@ -8,6 +8,7 @@ export default defineConfig({
       provider: 'istanbul',
       reporter: ['html', 'json', 'json-summary'],
       include: ['src/**'],
+      exclude: ['src/**/LICENSE'],
       reportOnFailure: true,
       clean: true,
     },

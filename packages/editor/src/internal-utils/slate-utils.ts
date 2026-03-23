@@ -1,60 +1,25 @@
-import type {PortableTextSpan} from '@portabletext/schema'
-import type {EditorSchema} from '../editor/editor-schema'
 import {
-  Editor,
-  Element,
-  Node,
-  Range,
-  type Point,
-  type Path as SlatePath,
-} from '../slate'
+  isSpan,
+  isTextBlock,
+  type PortableTextSpan,
+  type PortableTextTextBlock,
+} from '@portabletext/schema'
+import type {EditorSchema} from '../editor/editor-schema'
+import {end} from '../slate/editor/end'
+import {isEditor} from '../slate/editor/is-editor'
+import {node as editorNode} from '../slate/editor/node'
+import {nodes as editorNodes} from '../slate/editor/nodes'
+import {start} from '../slate/editor/start'
+import type {Editor} from '../slate/interfaces/editor'
+import type {Node} from '../slate/interfaces/node'
+import type {Path as SlatePath} from '../slate/interfaces/path'
+import type {Point} from '../slate/interfaces/point'
+import type {Range} from '../slate/interfaces/range'
+import {getChild} from '../slate/node/get-child'
+import {isBackwardRange} from '../slate/range/is-backward-range'
 import type {EditorSelection, EditorSelectionPoint} from '../types/editor'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
-import {fromSlateBlock} from './values'
-
-export function getBlockPath({
-  editor,
-  _key,
-}: {
-  editor: PortableTextSlateEditor
-  _key: string
-}): [number] | undefined {
-  const [, blockPath] = Array.from(
-    Editor.nodes(editor, {
-      at: [],
-      match: (n) => n._key === _key,
-    }),
-  ).at(0) ?? [undefined, undefined]
-
-  const blockIndex = blockPath?.at(0)
-
-  if (blockIndex === undefined) {
-    return undefined
-  }
-
-  return [blockIndex]
-}
-
-export function getAnchorBlock({
-  editor,
-}: {
-  editor: PortableTextSlateEditor
-}): [node: Node, path: SlatePath] | [undefined, undefined] {
-  if (!editor.selection) {
-    return [undefined, undefined]
-  }
-
-  try {
-    return (
-      Editor.node(editor, editor.selection.anchor.path.slice(0, 1)) ?? [
-        undefined,
-        undefined,
-      ]
-    )
-  } catch {
-    return [undefined, undefined]
-  }
-}
+import {isListBlock} from '../utils/parse-blocks'
 
 export function getFocusBlock({
   editor,
@@ -67,7 +32,7 @@ export function getFocusBlock({
 
   try {
     return (
-      Editor.node(editor, editor.selection.focus.path.slice(0, 1)) ?? [
+      editorNode(editor, editor.selection.focus.path.slice(0, 1)) ?? [
         undefined,
         undefined,
       ]
@@ -93,16 +58,16 @@ export function getFocusSpan({
       return [undefined, undefined]
     }
 
-    if (!editor.isTextBlock(focusBlock)) {
+    if (!isTextBlock({schema: editor.schema}, focusBlock)) {
       return [undefined, undefined]
     }
 
-    const [node, path] = Editor.node(
+    const [node, path] = editorNode(
       editor,
       editor.selection.focus.path.slice(0, 2),
     )
 
-    if (editor.isTextSpan(node)) {
+    if (isSpan({schema: editor.schema}, node)) {
       return [node, path]
     }
   } catch {
@@ -110,34 +75,6 @@ export function getFocusSpan({
   }
 
   return [undefined, undefined]
-}
-
-export function getSelectionStartBlock({
-  editor,
-}: {
-  editor: PortableTextSlateEditor
-}): [node: Node, path: SlatePath] | [undefined, undefined] {
-  if (!editor.selection) {
-    return [undefined, undefined]
-  }
-
-  const selectionStartPoint = Range.start(editor.selection)
-
-  return getPointBlock({editor, point: selectionStartPoint})
-}
-
-export function getSelectionEndBlock({
-  editor,
-}: {
-  editor: PortableTextSlateEditor
-}): [node: Node, path: SlatePath] | [undefined, undefined] {
-  if (!editor.selection) {
-    return [undefined, undefined]
-  }
-
-  const selectionEndPoint = Range.end(editor.selection)
-
-  return getPointBlock({editor, point: selectionEndPoint})
 }
 
 export function getPointBlock({
@@ -148,7 +85,7 @@ export function getPointBlock({
   point: Point
 }): [node: Node, path: SlatePath] | [undefined, undefined] {
   try {
-    const [block] = Editor.node(editor, point.path.slice(0, 1)) ?? [
+    const [block] = editorNode(editor, point.path.slice(0, 1)) ?? [
       undefined,
       undefined,
     ]
@@ -171,7 +108,7 @@ export function getFocusChild({
   }
 
   try {
-    const focusChild = Node.child(focusBlock, childIndex)
+    const focusChild = getChild(focusBlock, childIndex, editor.schema)
 
     return focusChild
       ? [focusChild, [...focusBlockPath, childIndex]]
@@ -196,7 +133,7 @@ function getPointChild({
   }
 
   try {
-    const pointChild = Node.child(block, childIndex)
+    const pointChild = getChild(block, childIndex, editor.schema)
 
     return pointChild
       ? [pointChild, [...blockPath, childIndex]]
@@ -215,12 +152,12 @@ export function getFirstBlock({
     return [undefined, undefined]
   }
 
-  const firstPoint = Editor.start(editor, [])
+  const firstPoint = start(editor, [])
   const firstBlockPath = firstPoint.path.at(0)
 
   try {
     return firstBlockPath !== undefined
-      ? (Editor.node(editor, [firstBlockPath]) ?? [undefined, undefined])
+      ? (editorNode(editor, [firstBlockPath]) ?? [undefined, undefined])
       : [undefined, undefined]
   } catch {
     return [undefined, undefined]
@@ -236,12 +173,12 @@ export function getLastBlock({
     return [undefined, undefined]
   }
 
-  const lastPoint = Editor.end(editor, [])
+  const lastPoint = end(editor, [])
   const lastBlockPath = lastPoint.path.at(0)
 
   try {
     return lastBlockPath !== undefined
-      ? (Editor.node(editor, [lastBlockPath]) ?? [undefined, undefined])
+      ? (editorNode(editor, [lastBlockPath]) ?? [undefined, undefined])
       : [undefined, undefined]
   } catch {
     return [undefined, undefined]
@@ -255,29 +192,29 @@ export function getNodeBlock({
 }: {
   editor: PortableTextSlateEditor
   schema: EditorSchema
-  node: Node
+  node: Editor | Node
 }) {
-  if (Editor.isEditor(node)) {
+  if (isEditor(node)) {
     return undefined
   }
 
-  if (isBlockElement({editor, schema}, node)) {
+  if (isBlockElement({schema}, node)) {
     return elementToBlock({schema, element: node})
   }
 
   const parent = Array.from(
-    Editor.nodes(editor, {
+    editorNodes(editor, {
       mode: 'highest',
       at: [],
       match: (n) =>
-        isBlockElement({editor, schema}, n) &&
-        n.children.some((child) => child._key === node._key),
+        isBlockElement({schema}, n) &&
+        n.children.some((child: Node) => child._key === node._key),
     }),
   )
     .at(0)
     ?.at(0)
 
-  return Element.isElement(parent)
+  return isTextBlock({schema: editor.schema}, parent)
     ? elementToBlock({
         schema,
         element: parent,
@@ -286,27 +223,19 @@ export function getNodeBlock({
 }
 
 function elementToBlock({
-  schema,
   element,
 }: {
   schema: EditorSchema
-  element: Element
+  element: PortableTextTextBlock
 }) {
-  return fromSlateBlock(element, schema.block.name)
+  return element
 }
 
 function isBlockElement(
-  {editor, schema}: {editor: PortableTextSlateEditor; schema: EditorSchema},
+  {schema}: {schema: EditorSchema},
   node: Node,
-): node is Element {
-  return (
-    Element.isElement(node) &&
-    !editor.isInline(node) &&
-    (schema.block.name === node._type ||
-      schema.blockObjects.some(
-        (blockObject) => blockObject.name === node._type,
-      ))
-  )
+): node is PortableTextTextBlock {
+  return isTextBlock({schema}, node)
 }
 
 export function isListItemActive({
@@ -321,15 +250,17 @@ export function isListItemActive({
   }
 
   const selectedBlocks = [
-    ...Editor.nodes(editor, {
+    ...editorNodes(editor, {
       at: editor.selection,
-      match: (node) => editor.isTextBlock(node),
+      match: (node) => isTextBlock({schema: editor.schema}, node),
     }),
   ]
 
   if (selectedBlocks.length > 0) {
     return selectedBlocks.every(
-      ([node]) => editor.isListBlock(node) && node.listItem === listItem,
+      ([node]) =>
+        isListBlock({schema: editor.schema}, node) &&
+        node.listItem === listItem,
     )
   }
 
@@ -348,9 +279,9 @@ export function isStyleActive({
   }
 
   const selectedBlocks = [
-    ...Editor.nodes(editor, {
+    ...editorNodes(editor, {
       at: editor.selection,
-      match: (node) => editor.isTextBlock(node),
+      match: (node) => isTextBlock({schema: editor.schema}, node),
     }),
   ]
 
@@ -407,7 +338,7 @@ export function slateRangeToSelection({
       path: [{_key: focusBlock._key}],
       offset: range.focus.offset,
     },
-    backward: Range.isBackward(range),
+    backward: isBackwardRange(range),
   }
 
   if (anchorChild) {

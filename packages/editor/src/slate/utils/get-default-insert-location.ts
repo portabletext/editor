@@ -1,4 +1,6 @@
-import {Editor, type Location} from '../interfaces'
+import {end} from '../editor/end'
+import type {Editor} from '../interfaces/editor'
+import type {Location} from '../interfaces/location'
 
 /**
  * Get the default location to insert content into the editor.
@@ -10,7 +12,7 @@ export const getDefaultInsertLocation = (editor: Editor): Location => {
   if (editor.selection) {
     return editor.selection
   } else if (editor.children.length > 0) {
-    return Editor.end(editor, [])
+    return end(editor, [])
   } else {
     return [0]
   }

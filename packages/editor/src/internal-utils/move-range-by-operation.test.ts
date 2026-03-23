@@ -1,5 +1,7 @@
 import {describe, expect, it} from 'vitest'
-import type {Node, Operation, Range} from '../slate'
+import type {Node} from '../slate/interfaces/node'
+import type {Operation} from '../slate/interfaces/operation'
+import type {Range} from '../slate/interfaces/range'
 import type {MergeContext, SplitContext} from '../types/slate-editor'
 import {
   moveRangeByMergeAwareOperation,

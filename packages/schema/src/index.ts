@@ -17,6 +17,7 @@ export type {
   FieldDefinition,
   InlineObjectSchemaType,
   ListSchemaType,
+  OfDefinition,
   Schema,
   StyleSchemaType,
 } from './schema'

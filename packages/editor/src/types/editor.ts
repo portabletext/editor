@@ -86,11 +86,11 @@ export interface EditableAPI {
   isCollapsedSelection: () => boolean
   isExpandedSelection: () => boolean
   isMarkActive: (mark: string) => boolean
+  isVoid: (element: PortableTextBlock | PortableTextChild) => boolean
   isSelectionsOverlapping: (
     selectionA: EditorSelection,
     selectionB: EditorSelection,
   ) => boolean
-  isVoid: (element: PortableTextBlock | PortableTextChild) => boolean
   marks: () => string[]
   redo: () => void
   removeAnnotation: <TSchemaType extends {name: string}>(
@@ -289,15 +289,10 @@ export interface RangeDecorationOnMovedDetails {
   newSelection: EditorSelection
   origin: 'remote' | 'local'
   /**
-   * Why the callback fired.
-   *
-   * - `'moved'` — the range's boundary points (anchor/focus) shifted due to
-   *   an editing operation, or the range was invalidated (`newSelection` is
-   *   `null`).
-   * - `'contentChanged'` — the boundary points are unchanged, but content
-   *   inside the range was modified (text edits, node changes, etc.).
-   *   `previousSelection` and `newSelection` will be identical.
-   *   The return value is ignored for this reason.
+   * - `'moved'` — the range's boundary points shifted or the range was
+   *   invalidated.
+   * - `'contentChanged'` — the boundary points are unchanged but content
+   *   inside the range was modified.
    */
   reason: 'moved' | 'contentChanged'
 }

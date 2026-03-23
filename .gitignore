@@ -1,3 +1,4 @@
+.bundle-stats
 .turbo
 .vscode
 __screenshots__
@@ -8,9 +9,3 @@ node_modules
 .vercel
 .env*.local
 .eslintcache
-extracted-438/
-pkg-438/
-portable-text-editor/
-portable-text-editor-v8.tar.gz
-combined.patch
-combined-clean.patch

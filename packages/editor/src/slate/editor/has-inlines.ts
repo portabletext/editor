@@ -1,8 +1,15 @@
-import {Editor, type EditorInterface} from '../interfaces/editor'
-import {Text} from '../interfaces/text'
+import type {PortableTextTextBlock} from '@portabletext/schema'
+import {isSpan} from '@portabletext/schema'
+import type {Editor} from '../interfaces/editor'
 
-export const hasInlines: EditorInterface['hasInlines'] = (editor, element) => {
-  return element.children.some(
-    (n) => Text.isText(n) || Editor.isInline(editor, n),
-  )
+export function hasInlines(
+  editor: Editor,
+  element: PortableTextTextBlock,
+): boolean {
+  return element.children.some((n) => {
+    if (isSpan({schema: editor.schema}, n)) {
+      return true
+    }
+    return editor.isInline(n)
+  })
 }

@@ -1,7 +1,5 @@
-import type {EditorInterface} from '../interfaces/editor'
-import {NORMALIZING} from '../utils/weak-maps'
+import type {Editor} from '../interfaces/editor'
 
-export const isNormalizing: EditorInterface['isNormalizing'] = (editor) => {
-  const isNormalizing = NORMALIZING.get(editor)
-  return isNormalizing === undefined ? true : isNormalizing
+export function isNormalizing(editor: Editor): boolean {
+  return editor.normalizing
 }

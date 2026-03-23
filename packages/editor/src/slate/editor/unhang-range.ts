@@ -1,49 +1,54 @@
-import {Editor, type EditorInterface} from '../interfaces/editor'
-import {Element} from '../interfaces/element'
-import {Path} from '../interfaces/path'
-import {Range} from '../interfaces/range'
-import {Text} from '../interfaces/text'
+import {isSpan, isTextBlock} from '@portabletext/schema'
+import type {Editor} from '../interfaces/editor'
+import type {Range} from '../interfaces/range'
+import {isBeforePath} from '../path/is-before-path'
+import {pathHasPrevious} from '../path/path-has-previous'
+import {isCollapsedRange} from '../range/is-collapsed-range'
+import {rangeEdges} from '../range/range-edges'
+import {above} from './above'
+import {nodes} from './nodes'
+import {start as editorStart} from './start'
 
-export const unhangRange: EditorInterface['unhangRange'] = (
-  editor,
-  range,
-  options = {},
-) => {
-  const {voids = false} = options
-  let [start, end] = Range.edges(range)
+export function unhangRange(
+  editor: Editor,
+  range: Range,
+  options: {includeObjectNodes?: boolean} = {},
+): Range {
+  const {includeObjectNodes = false} = options
+  let [start, end] = rangeEdges(range)
 
   // PERF: exit early if we can guarantee that the range isn't hanging.
   if (
     start.offset !== 0 ||
     end.offset !== 0 ||
-    Range.isCollapsed(range) ||
-    Path.hasPrevious(end.path)
+    isCollapsedRange(range) ||
+    pathHasPrevious(end.path)
   ) {
     return range
   }
 
-  const endBlock = Editor.above(editor, {
+  const endBlock = above(editor, {
     at: end,
-    match: (n) => Element.isElement(n) && Editor.isBlock(editor, n),
-    voids,
+    match: (n) => isTextBlock({schema: editor.schema}, n),
+    includeObjectNodes,
   })
   const blockPath = endBlock ? endBlock[1] : []
-  const first = Editor.start(editor, start)
+  const first = editorStart(editor, start)
   const before = {anchor: first, focus: end}
   let skip = true
 
-  for (const [node, path] of Editor.nodes(editor, {
+  for (const [node, path] of nodes(editor, {
     at: before,
-    match: Text.isText,
+    match: (n) => isSpan({schema: editor.schema}, n),
     reverse: true,
-    voids,
+    includeObjectNodes,
   })) {
     if (skip) {
       skip = false
       continue
     }
 
-    if (node.text !== '' || Path.isBefore(path, blockPath)) {
+    if (node.text !== '' || isBeforePath(path, blockPath)) {
       end = {path, offset: node.text.length}
       break
     }

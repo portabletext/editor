@@ -1,4 +1,4 @@
-import {htmlToBlocks} from '@portabletext/block-tools'
+import {htmlToPortableText} from '@portabletext/html'
 import {isTextBlock} from '@portabletext/schema'
 import {getSelectedValue} from '../selectors/selector.get-selected-value'
 import {parseBlock} from '../utils/parse-blocks'
@@ -69,7 +69,8 @@ export const converterTextPlain = defineConverter({
 
     const textToHtml = `<html><body>${html}</body></html>`
 
-    const blocks = htmlToBlocks(textToHtml, snapshot.context.schema, {
+    const blocks = htmlToPortableText(textToHtml, {
+      schema: snapshot.context.schema,
       keyGenerator: snapshot.context.keyGenerator,
     })
 

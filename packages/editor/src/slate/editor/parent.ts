@@ -1,10 +1,23 @@
-import {Editor, type EditorInterface} from '../interfaces/editor'
-import type {Ancestor, NodeEntry} from '../interfaces/node'
-import {Path} from '../interfaces/path'
+import type {Editor} from '../interfaces/editor'
+import type {Location} from '../interfaces/location'
+import type {Node, NodeEntry} from '../interfaces/node'
+import type {Path} from '../interfaces/path'
+import {parentPath} from '../path/parent-path'
+import type {LeafEdge} from '../types/types'
+import {node} from './node'
+import {path} from './path'
 
-export const parent: EditorInterface['parent'] = (editor, at, options = {}) => {
-  const path = Editor.path(editor, at, options)
-  const parentPath = Path.parent(path)
-  const entry = Editor.node(editor, parentPath)
-  return entry as NodeEntry<Ancestor>
+export function parent(
+  editor: Editor,
+  at: Location,
+  options: {depth?: number; edge?: LeafEdge} = {},
+): NodeEntry<Node> | [Editor, Path] {
+  const nodePath = path(editor, at, options)
+  const parentPath_ = parentPath(nodePath)
+
+  if (parentPath_.length === 0) {
+    return [editor, parentPath_]
+  }
+
+  return node(editor, parentPath_)
 }

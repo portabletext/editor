@@ -7,15 +7,16 @@ import {debug} from '../internal-utils/debug'
 import {
   insertNodePatch,
   insertTextPatch,
-  mergeNodePatch,
-  moveNodePatch,
   removeNodePatch,
   removeTextPatch,
   setNodePatch,
-  splitNodePatch,
 } from '../internal-utils/operation-to-patches'
+import {safeStringify} from '../internal-utils/safe-json'
 import {isEqualToEmptyEditor} from '../internal-utils/values'
-import {Editor, type Operation} from '../slate'
+import {normalize} from '../slate/editor/normalize'
+import {withoutNormalizing} from '../slate/editor/without-normalizing'
+import type {Editor} from '../slate/interfaces/editor'
+import type {Operation} from '../slate/interfaces/operation'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {withRemoteChanges} from './slate-plugin.remote-changes'
 import {pluginWithoutHistory} from './slate-plugin.without-history'
@@ -33,13 +34,13 @@ export function createPatchesPlugin({
   subscriptions,
 }: Options): (editor: PortableTextSlateEditor) => PortableTextSlateEditor {
   // The previous editor value are needed to figure out the _key of deleted nodes
-  // The editor.value would no longer contain that information if the node is already deleted.
+  // The editor.children would no longer contain that information if the node is already deleted.
   let previousValue: PortableTextBlock[]
 
   const applyPatch = createApplyPatch(editorActor.getSnapshot().context)
 
   return function patchesPlugin(editor: PortableTextSlateEditor) {
-    previousValue = [...editor.value]
+    previousValue = [...editor.children]
 
     const {apply} = editor
     let bufferedPatches: Patch[] = []
@@ -53,7 +54,7 @@ export function createPatchesPlugin({
       let changed = false
 
       withRemoteChanges(editor, () => {
-        Editor.withoutNormalizing(editor, () => {
+        withoutNormalizing(editor, () => {
           withoutPatching(editor, () => {
             pluginWithoutHistory(editor, () => {
               for (const patch of patches) {
@@ -61,17 +62,13 @@ export function createPatchesPlugin({
                   changed = applyPatch(editor, patch)
 
                   if (changed) {
-                    debug.syncPatch(
-                      `(applied) ${JSON.stringify(patch, null, 2)}`,
-                    )
+                    debug.syncPatch(`(applied) ${safeStringify(patch, 2)}`)
                   } else {
-                    debug.syncPatch(
-                      `(ignored) ${JSON.stringify(patch, null, 2)}`,
-                    )
+                    debug.syncPatch(`(ignored) ${safeStringify(patch, 2)}`)
                   }
                 } catch (error) {
                   console.error(
-                    `Applying patch ${JSON.stringify(patch)} failed due to: ${error instanceof Error ? error.message : error}`,
+                    `Applying patch ${safeStringify(patch)} failed due to: ${error instanceof Error ? error.message : error}`,
                   )
                 }
               }
@@ -79,7 +76,7 @@ export function createPatchesPlugin({
           })
         })
         if (changed) {
-          editor.normalize()
+          normalize(editor)
           editor.onChange()
         }
       })
@@ -107,7 +104,7 @@ export function createPatchesPlugin({
       let patches: Patch[] = []
 
       // Update previous children here before we apply
-      previousValue = editor.value
+      previousValue = editor.children
 
       const editorWasEmpty = isEqualToEmptyEditor(
         editorActor.getSnapshot().context.initialValue,
@@ -120,7 +117,7 @@ export function createPatchesPlugin({
 
       const editorIsEmpty = isEqualToEmptyEditor(
         editorActor.getSnapshot().context.initialValue,
-        editor.value,
+        editor.children,
         editorActor.getSnapshot().context.schema,
       )
 
@@ -170,17 +167,6 @@ export function createPatchesPlugin({
             ),
           ]
           break
-        case 'split_node':
-          patches = [
-            ...patches,
-            ...splitNodePatch(
-              editorActor.getSnapshot().context.schema,
-              editor.children,
-              operation,
-              previousValue,
-            ),
-          ]
-          break
         case 'insert_node':
           patches = [
             ...patches,
@@ -202,27 +188,6 @@ export function createPatchesPlugin({
             ),
           ]
           break
-        case 'merge_node':
-          patches = [
-            ...patches,
-            ...mergeNodePatch(
-              editorActor.getSnapshot().context.schema,
-              editor.children,
-              operation,
-              previousValue,
-            ),
-          ]
-          break
-        case 'move_node':
-          patches = [
-            ...patches,
-            ...moveNodePatch(
-              editorActor.getSnapshot().context.schema,
-              previousValue,
-              operation,
-            ),
-          ]
-          break
         default:
         // Do nothing
       }
@@ -231,9 +196,7 @@ export function createPatchesPlugin({
       if (
         !editorWasEmpty &&
         editorIsEmpty &&
-        ['merge_node', 'set_node', 'remove_text', 'remove_node'].includes(
-          operation.type,
-        )
+        ['set_node', 'remove_text', 'remove_node'].includes(operation.type)
       ) {
         patches = [...patches, unset([])]
         relayActor.send({
@@ -254,7 +217,7 @@ export function createPatchesPlugin({
             type: 'internal.patch',
             patch: {...patch, origin: 'local'},
             operationId: editor.undoStepId,
-            value: editor.value,
+            value: editor.children,
           })
         }
       }

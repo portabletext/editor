@@ -4,12 +4,12 @@ import {
   type PortableTextObject,
   type Schema,
 } from '@portabletext/schema'
-import type {Descendant} from '../slate'
+import type {Node} from '../slate/interfaces/node'
 
 export function isEqualValues(
   context: {schema: Schema},
-  a: Array<PortableTextBlock | Descendant> | undefined,
-  b: Array<PortableTextBlock | Descendant> | undefined,
+  a: Array<PortableTextBlock | Node> | undefined,
+  b: Array<PortableTextBlock | Node> | undefined,
 ): boolean {
   if (!a || !b) {
     return a === b
@@ -37,8 +37,8 @@ export function isEqualValues(
 
 export function isEqualBlocks(
   context: {schema: Schema},
-  a: PortableTextBlock | Descendant,
-  b: PortableTextBlock | Descendant,
+  a: PortableTextBlock | Node,
+  b: PortableTextBlock | Node,
 ): boolean {
   if (a._type !== b._type) {
     return false
@@ -56,8 +56,8 @@ export function isEqualBlocks(
 
 function isEqualTextBlocks(
   context: {schema: Schema},
-  a: PortableTextBlock | Descendant,
-  b: PortableTextBlock | Descendant,
+  a: PortableTextBlock | Node,
+  b: PortableTextBlock | Node,
 ): boolean {
   if (!isTextBlock(context, a) || !isTextBlock(context, b)) {
     return false
@@ -82,7 +82,7 @@ function isEqualTextBlocks(
     }
   }
 
-  if (!isEqualChildren(a.children, b.children)) {
+  if (!isEqualChildren(a.children, b.children, context.schema.span.name)) {
     return false
   }
 
@@ -98,8 +98,8 @@ function isEqualTextBlocks(
 }
 
 function isEqualProps(
-  a: PortableTextBlock | Descendant,
-  b: PortableTextBlock | Descendant,
+  a: PortableTextBlock | Node,
+  b: PortableTextBlock | Node,
   excludeKeys: Array<string>,
 ): boolean {
   const keysA = Object.keys(a).filter((key) => !excludeKeys.includes(key))
@@ -213,6 +213,7 @@ type ChildLike = {
 export function isEqualChildren(
   a: Array<ChildLike>,
   b: Array<ChildLike>,
+  spanTypeName: string,
 ): boolean {
   if (a.length !== b.length) {
     return false
@@ -226,7 +227,7 @@ export function isEqualChildren(
       return false
     }
 
-    if (!isEqualChild(childA, childB)) {
+    if (!isEqualChild(childA, childB, spanTypeName)) {
       return false
     }
   }
@@ -234,8 +235,12 @@ export function isEqualChildren(
   return true
 }
 
-export function isEqualChild(a: ChildLike, b: ChildLike): boolean {
-  if (a._type === 'span' && b._type === 'span') {
+export function isEqualChild(
+  a: ChildLike,
+  b: ChildLike,
+  spanTypeName: string,
+): boolean {
+  if (a._type === spanTypeName && b._type === spanTypeName) {
     return isEqualSpans(a, b)
   }
 
@@ -243,8 +248,8 @@ export function isEqualChild(a: ChildLike, b: ChildLike): boolean {
 }
 
 function isEqualPortableTextObjects(
-  a: PortableTextBlock | Descendant,
-  b: PortableTextBlock | Descendant,
+  a: PortableTextBlock | Node,
+  b: PortableTextBlock | Node,
 ): boolean {
   if (a._key !== b._key || a._type !== b._type) {
     return false

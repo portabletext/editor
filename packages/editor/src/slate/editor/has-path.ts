@@ -1,6 +1,7 @@
-import type {EditorInterface} from '../interfaces/editor'
-import {Node} from '../interfaces/node'
+import type {Editor} from '../interfaces/editor'
+import type {Path} from '../interfaces/path'
+import {hasNode} from '../node/has-node'
 
-export const hasPath: EditorInterface['hasPath'] = (editor, path) => {
-  return Node.has(editor, path)
+export function hasPath(editor: Editor, path: Path): boolean {
+  return hasNode(editor, path, editor.schema)
 }

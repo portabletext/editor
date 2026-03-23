@@ -1,6 +1,6 @@
 import * as React from 'react'
 
-export type ErrorBoundaryFallbackUI<FallbackProps> = (
+type ErrorBoundaryFallbackUI<FallbackProps> = (
   props: {
     dismiss: () => void
     error: Error

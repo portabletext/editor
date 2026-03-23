@@ -1,8 +1,9 @@
 import type {BehaviorEvent} from '../behaviors/behavior.types.event'
+import {getDomNode} from '../dom-traversal/get-dom-node'
 import {toSlateRange} from '../internal-utils/to-slate-range'
 import {getSelectionEndBlock, getSelectionStartBlock} from '../selectors'
-import {Editor} from '../slate'
-import {DOMEditor} from '../slate-dom'
+import {isEditor} from '../slate/editor/is-editor'
+import {nodes} from '../slate/editor/nodes'
 import type {PickFromUnion} from '../type-utils'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import type {EditorSnapshot} from './editor-snapshot'
@@ -63,16 +64,22 @@ function getBlockNodes(
 
   try {
     const blockEntries = Array.from(
-      Editor.nodes(slateEditor, {
+      nodes(slateEditor, {
         at: range,
         mode: 'highest',
-        match: (n) => !Editor.isEditor(n),
+        match: (n) => !isEditor(n),
       }),
     )
 
-    return blockEntries.map(([blockNode]) =>
-      DOMEditor.toDOMNode(slateEditor, blockNode),
-    )
+    return blockEntries.flatMap(([, blockPath]) => {
+      const domNode = getDomNode(slateEditor, blockPath)
+
+      if (!domNode) {
+        return []
+      }
+
+      return domNode
+    })
   } catch {
     return []
   }
@@ -94,27 +101,29 @@ function getChildNodes(
 
   try {
     const childEntries = Array.from(
-      Editor.nodes(slateEditor, {
+      nodes(slateEditor, {
         at: range,
         mode: 'lowest',
-        match: (n) => !Editor.isEditor(n),
+        match: (n) => !isEditor(n),
       }),
     )
 
-    return childEntries.map(([childNode]) =>
-      DOMEditor.toDOMNode(slateEditor, childNode),
-    )
+    return childEntries.flatMap(([, childPath]) => {
+      const domNode = getDomNode(slateEditor, childPath)
+
+      if (!domNode) {
+        return []
+      }
+
+      return domNode
+    })
   } catch {
     return []
   }
 }
 
 function getEditorElement(slateEditor: PortableTextSlateEditor) {
-  try {
-    return DOMEditor.toDOMNode(slateEditor, slateEditor)
-  } catch {
-    return undefined
-  }
+  return getDomNode(slateEditor, [])
 }
 
 function getSelectionRect(snapshot: EditorSnapshot) {

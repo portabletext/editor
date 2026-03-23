@@ -1,20 +1,24 @@
-import {Editor, type EditorInterface} from '../interfaces/editor'
-import {Element} from '../interfaces/element'
-import {Node} from '../interfaces/node'
+import {isTextBlock} from '@portabletext/schema'
+import type {Editor} from '../interfaces/editor'
+import type {Operation} from '../interfaces/operation'
 import type {Path} from '../interfaces/path'
-import {DIRTY_PATH_KEYS, DIRTY_PATHS} from '../utils/weak-maps'
+import {getNodes} from '../node/get-nodes'
+import {hasNode} from '../node/has-node'
+import {isNormalizing} from './is-normalizing'
+import {node} from './node'
+import {withoutNormalizing} from './without-normalizing'
 
-export const normalize: EditorInterface['normalize'] = (
-  editor,
-  options = {},
-) => {
+export function normalize(
+  editor: Editor,
+  options: {force?: boolean; operation?: Operation} = {},
+): void {
   const {force = false, operation} = options
   const getDirtyPaths = (editor: Editor) => {
-    return DIRTY_PATHS.get(editor) || []
+    return editor.dirtyPaths
   }
 
   const getDirtyPathKeys = (editor: Editor) => {
-    return DIRTY_PATH_KEYS.get(editor) || new Set()
+    return editor.dirtyPathKeys
   }
 
   const popDirtyPath = (editor: Editor): Path => {
@@ -24,31 +28,35 @@ export const normalize: EditorInterface['normalize'] = (
     return path
   }
 
-  if (!Editor.isNormalizing(editor)) {
+  if (!isNormalizing(editor)) {
     return
   }
 
   if (force) {
-    const allPaths = Array.from(Node.nodes(editor), ([, p]) => p)
+    const allPaths = Array.from(getNodes(editor, editor.schema), ([, p]) => p)
     const allPathKeys = new Set(allPaths.map((p) => p.join(',')))
-    DIRTY_PATHS.set(editor, allPaths)
-    DIRTY_PATH_KEYS.set(editor, allPathKeys)
+    editor.dirtyPaths = allPaths
+    editor.dirtyPathKeys = allPathKeys
   }
 
   if (getDirtyPaths(editor).length === 0) {
     return
   }
 
-  Editor.withoutNormalizing(editor, () => {
+  withoutNormalizing(editor, () => {
     /*
       Fix dirty elements with no children.
       editor.normalizeNode() does fix this, but some normalization fixes also require it to work.
       Running an initial pass avoids the catch-22 race condition.
     */
     for (const dirtyPath of getDirtyPaths(editor)) {
-      if (Node.has(editor, dirtyPath)) {
-        const entry = Editor.node(editor, dirtyPath)
-        const [node, _] = entry
+      if (dirtyPath.length === 0) {
+        continue
+      }
+
+      if (hasNode(editor, dirtyPath, editor.schema)) {
+        const entry = node(editor, dirtyPath)
+        const [entryNode, _] = entry
 
         /*
           The default normalizer inserts an empty text node in this scenario, but it can be customised.
@@ -57,7 +65,10 @@ export const normalize: EditorInterface['normalize'] = (
           As long as the normalizer only inserts child nodes for this case it is safe to do in any order;
           by definition adding children to an empty node can't cause other paths to change.
         */
-        if (Element.isElement(node) && node.children.length === 0) {
+        if (
+          isTextBlock({schema: editor.schema}, entryNode) &&
+          entryNode.children.length === 0
+        ) {
           editor.normalizeNode(entry, {operation})
         }
       }
@@ -82,8 +93,10 @@ export const normalize: EditorInterface['normalize'] = (
       const dirtyPath = popDirtyPath(editor)
 
       // If the node doesn't exist in the tree, it does not need to be normalized.
-      if (Node.has(editor, dirtyPath)) {
-        const entry = Editor.node(editor, dirtyPath)
+      if (dirtyPath.length === 0) {
+        editor.normalizeNode([editor, dirtyPath], {operation})
+      } else if (hasNode(editor, dirtyPath, editor.schema)) {
+        const entry = node(editor, dirtyPath)
         editor.normalizeNode(entry, {operation})
       }
       iteration++

@@ -1,26 +1,33 @@
-import {Editor, type EditorInterface} from '../interfaces/editor'
-import {Path} from '../interfaces/path'
-import {Range} from '../interfaces/range'
-import {Text} from '../interfaces/text'
+import {isSpan} from '@portabletext/schema'
+import type {Editor} from '../interfaces/editor'
+import type {Location} from '../interfaces/location'
+import {pathEquals} from '../path/path-equals'
+import {rangeEdges} from '../range/range-edges'
+import {nodes} from './nodes'
+import {range} from './range'
 
-export const string: EditorInterface['string'] = (editor, at, options = {}) => {
-  const {voids = false} = options
-  const range = Editor.range(editor, at)
-  const [start, end] = Range.edges(range)
+export function string(
+  editor: Editor,
+  at: Location,
+  options: {includeObjectNodes?: boolean} = {},
+): string {
+  const {includeObjectNodes = false} = options
+  const editorRange = range(editor, at)
+  const [start, end] = rangeEdges(editorRange)
   let text = ''
 
-  for (const [node, path] of Editor.nodes(editor, {
-    at: range,
-    match: Text.isText,
-    voids,
+  for (const [node, path] of nodes(editor, {
+    at: editorRange,
+    match: (n) => isSpan({schema: editor.schema}, n),
+    includeObjectNodes,
   })) {
     let t = node.text
 
-    if (Path.equals(path, end.path)) {
+    if (pathEquals(path, end.path)) {
       t = t.slice(0, end.offset)
     }
 
-    if (Path.equals(path, start.path)) {
+    if (pathEquals(path, start.path)) {
       t = t.slice(start.offset)
     }
 

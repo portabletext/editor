@@ -1,6 +1,6 @@
 {
   "name": "@portabletext/plugin-sdk-value",
-  "version": "6.0.0",
+  "version": "6.0.22",
   "description": "Synchronizes the Portable Text Editor value with the Sanity SDK, allowing for two-way editing.",
   "keywords": [
     "portabletext",
@@ -60,23 +60,21 @@
   "dependencies": {
     "@sanity/diff-patch": "^6.0.0",
     "@sanity/json-match": "^1.0.5",
-    "@xstate/react": "^6.0.0",
-    "xstate": "^5.25.0"
+    "@xstate/react": "^6.1.0",
+    "xstate": "^5.28.0"
   },
   "devDependencies": {
     "@portabletext/editor": "workspace:^",
     "@portabletext/patches": "workspace:^",
     "@portabletext/schema": "workspace:^",
     "@portabletext/test": "workspace:^",
-    "@sanity/schema": "^5.9.0",
     "@sanity/sdk-react": "^2.1.2",
     "@sanity/tsconfig": "^2.1.0",
-    "@sanity/types": "^5.9.0",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.4",
-    "@vitest/browser": "^4.0.18",
-    "@vitest/browser-playwright": "^4.0.18",
+    "@vitest/browser": "^4.1.0",
+    "@vitest/browser-playwright": "^4.1.0",
     "babel-plugin-react-compiler": "^1.0.0",
     "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^7.0.1",
@@ -85,8 +83,8 @@
     "react-dom": "^19.2.3",
     "typescript": "catalog:",
     "typescript-eslint": "^8.48.0",
-    "vitest": "^4.0.18",
-    "vitest-browser-react": "^2.0.5"
+    "vitest": "^4.1.0",
+    "vitest-browser-react": "^2.1.0"
   },
   "peerDependencies": {
     "@portabletext/editor": "workspace:^",

@@ -1,24 +1,39 @@
-import {Editor, type EditorPositionsOptions} from '../interfaces/editor'
-import {Element} from '../interfaces/element'
-import {Path} from '../interfaces/path'
+import {isSpan, isTextBlock} from '@portabletext/schema'
+import type {Editor} from '../interfaces/editor'
+import type {Location} from '../interfaces/location'
 import type {Point} from '../interfaces/point'
-import {Range} from '../interfaces/range'
-import {Text} from '../interfaces/text'
+import {isObjectNode} from '../node/is-object-node'
+import {isAncestorPath} from '../path/is-ancestor-path'
+import {pathEquals} from '../path/path-equals'
+import {rangeEdges} from '../range/range-edges'
+import type {TextUnitAdjustment} from '../types/types'
 import {
   getCharacterDistance,
   getWordDistance,
   splitByCharacterDistance,
 } from '../utils/string'
+import {end as editorEnd} from './end'
+import {hasInlines} from './has-inlines'
+import {isEditor} from './is-editor'
+import {nodes} from './nodes'
+import {range} from './range'
+import {start as editorStart} from './start'
+import {string} from './string'
 
 export function* positions(
   editor: Editor,
-  options: EditorPositionsOptions = {},
+  options: {
+    at?: Location
+    unit?: TextUnitAdjustment
+    reverse?: boolean
+    includeObjectNodes?: boolean
+  } = {},
 ): Generator<Point, void, undefined> {
   const {
     at = editor.selection,
     unit = 'offset',
     reverse = false,
-    voids = false,
+    includeObjectNodes = false,
   } = options
 
   if (!at) {
@@ -43,15 +58,14 @@ export function* positions(
    * a block node always appears before all of its leaf nodes.
    */
 
-  const range = Editor.range(editor, at)
-  const [start, end] = Range.edges(range)
+  const editorRange = range(editor, at)
+  const [start, end] = rangeEdges(editorRange)
   const first = reverse ? end : start
   let isNewBlock = false
   let blockText = ''
   let distance = 0 // Distance for leafText to catch up to blockText.
   let leafTextRemaining = 0
   let leafTextOffset = 0
-  const skippedPaths: Path[] = []
 
   // Iterate through all nodes in range, grabbing entire textual content
   // of block nodes in blockText, and text nodes in leafText.
@@ -59,51 +73,20 @@ export function* positions(
   // encounter the block node, then all of its text nodes, so when iterating
   // through the blockText and leafText we just need to remember a window of
   // one block node and leaf node, respectively.
-  for (const [node, path] of Editor.nodes(editor, {
+  for (const [node, nodePath] of nodes(editor, {
     at,
     reverse,
-    voids,
+    includeObjectNodes,
   })) {
-    // If the node is inside a skipped ancestor, do not return any points, but
-    // still process its content so that the iteration state remains correct.
-    const hasSkippedAncestor = skippedPaths.some((p) =>
-      Path.isAncestor(p, path),
-    )
-
-    function* maybeYield(point: Point) {
-      if (!hasSkippedAncestor) {
-        yield point
-      }
-    }
-
     /*
-     * ELEMENT NODE - Yield position(s) for voids, collect blockText for blocks
+     * ELEMENT NODE - Yield position(s) for object nodes, collect blockText for blocks
      */
-    if (Element.isElement(node)) {
-      if (!editor.isSelectable(node)) {
-        /**
-         * If the node is not selectable, skip it and its descendants
-         */
-        skippedPaths.push(path)
-        if (reverse) {
-          if (Path.hasPrevious(path)) {
-            yield* maybeYield(Editor.end(editor, Path.previous(path)))
-          }
-          continue
-        } else {
-          const nextPath = Path.next(path)
-          if (Editor.hasPath(editor, nextPath)) {
-            yield* maybeYield(Editor.start(editor, nextPath))
-          }
-          continue
-        }
-      }
-
-      // Void nodes are a special case, so by default we will always
-      // yield their first point. If the `voids` option is set to true,
+    if (isTextBlock({schema: editor.schema}, node)) {
+      // Object nodes are a special case, so by default we will always
+      // yield their first point. If the `includeObjectNodes` option is set to true,
       // then we will iterate over their content.
-      if (!voids && (editor.isVoid(node) || editor.isElementReadOnly(node))) {
-        yield* maybeYield(Editor.start(editor, path))
+      if (!includeObjectNodes && editor.isElementReadOnly(node)) {
+        yield editorStart(editor, nodePath)
         continue
       }
 
@@ -115,7 +98,7 @@ export function* positions(
       }
 
       // Block element node - set `blockText` to its text content.
-      if (Editor.hasInlines(editor, node)) {
+      if (hasInlines(editor, node)) {
         // We always exhaust block nodes before encountering a new one:
         //   console.assert(blockText === '',
         //     `blockText='${blockText}' - `+
@@ -126,25 +109,39 @@ export function* positions(
         // Equivalent to this, but presumably more performant:
         //   blockRange = Editor.range(editor, ...Editor.edges(editor, path))
         //   blockRange = Range.intersection(range, blockRange) // intersect
-        //   blockText = Editor.string(editor, blockRange, { voids })
-        const e = Path.isAncestor(path, end.path)
+        //   blockText = Editor.string(editor, blockRange, { includeObjectNodes })
+        const e = isAncestorPath(nodePath, end.path)
           ? end
-          : Editor.end(editor, path)
-        const s = Path.isAncestor(path, start.path)
+          : editorEnd(editor, nodePath)
+        const s = isAncestorPath(nodePath, start.path)
           ? start
-          : Editor.start(editor, path)
+          : editorStart(editor, nodePath)
 
-        blockText = Editor.string(editor, {anchor: s, focus: e}, {voids})
+        blockText = string(editor, {anchor: s, focus: e}, {includeObjectNodes})
         isNewBlock = true
       }
+    }
+
+    if (isObjectNode({schema: editor.schema}, node)) {
+      yield {path: nodePath, offset: 0}
+      continue
+    }
+
+    if (
+      !isEditor(node) &&
+      !isTextBlock({schema: editor.schema}, node) &&
+      !isSpan({schema: editor.schema}, node)
+    ) {
+      yield {path: nodePath, offset: 0}
+      continue
     }
 
     /*
      * TEXT LEAF NODE - Iterate through text content, yielding
      * positions every `distance` offset according to `unit`.
      */
-    if (Text.isText(node)) {
-      const isFirst = Path.equals(path, first.path)
+    if (isSpan({schema: editor.schema}, node)) {
+      const isFirst = pathEquals(nodePath, first.path)
 
       // Proof that we always exhaust text nodes before encountering a new one:
       //   console.assert(leafTextRemaining <= 0,
@@ -164,7 +161,7 @@ export function* positions(
 
       // Yield position at the start of node (potentially).
       if (isFirst || isNewBlock || unit === 'offset') {
-        yield* maybeYield({path, offset: leafTextOffset})
+        yield {path: nodePath, offset: leafTextOffset}
         isNewBlock = false
       }
 
@@ -201,7 +198,7 @@ export function* positions(
         // to catch up with `blockText`, so we can reset `distance`
         // and yield this position in this node.
         distance = 0
-        yield* maybeYield({path, offset: leafTextOffset})
+        yield {path: nodePath, offset: leafTextOffset}
       }
     }
   }

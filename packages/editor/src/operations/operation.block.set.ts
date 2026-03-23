@@ -1,6 +1,7 @@
 import {applyAll, set} from '@portabletext/patches'
 import {isTextBlock} from '@portabletext/schema'
-import {Transforms, type Node} from '../slate'
+import {applySetNode} from '../internal-utils/apply-set-node'
+import {safeStringify} from '../internal-utils/safe-json'
 import {parseMarkDefs} from '../utils/parse-blocks'
 import type {OperationImplementation} from './operation.types'
 
@@ -11,14 +12,14 @@ export const blockSetOperationImplementation: OperationImplementation<
 
   if (blockIndex === undefined) {
     throw new Error(
-      `Unable to find block index for block at ${JSON.stringify(operation.at)}`,
+      `Unable to find block index for block at ${safeStringify(operation.at)}`,
     )
   }
 
   const slateBlock = operation.editor.children.at(blockIndex)
 
   if (!slateBlock) {
-    throw new Error(`Unable to find block at ${JSON.stringify(operation.at)}`)
+    throw new Error(`Unable to find block at ${safeStringify(operation.at)}`)
   }
 
   if (isTextBlock(context, slateBlock)) {
@@ -26,6 +27,11 @@ export const blockSetOperationImplementation: OperationImplementation<
 
     for (const key of Object.keys(operation.props)) {
       if (key === '_type' || key === 'children') {
+        continue
+      }
+
+      if (key === '_key') {
+        filteredProps[key] = operation.props[key]
         continue
       }
 
@@ -71,7 +77,7 @@ export const blockSetOperationImplementation: OperationImplementation<
       }
     }
 
-    Transforms.setNodes(operation.editor, filteredProps, {at: [blockIndex]})
+    applySetNode(operation.editor, filteredProps, [blockIndex])
   } else {
     const schemaDefinition = context.schema.blockObjects.find(
       (definition) => definition.name === slateBlock._type,
@@ -94,11 +100,11 @@ export const blockSetOperationImplementation: OperationImplementation<
     }
 
     const patches = Object.entries(filteredProps).map(([key, value]) =>
-      key === '_key' ? set(value, ['_key']) : set(value, ['value', key]),
+      set(value, [key]),
     )
 
-    const updatedSlateBlock = applyAll(slateBlock, patches) as Partial<Node>
+    const updatedSlateBlock = applyAll(slateBlock, patches)
 
-    Transforms.setNodes(operation.editor, updatedSlateBlock, {at: [blockIndex]})
+    applySetNode(operation.editor, updatedSlateBlock, [blockIndex])
   }
 }

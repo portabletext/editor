@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.0.5
+
+### Patch Changes
+
+- [#2337](https://github.com/portabletext/editor/pull/2337) [`f6177bb`](https://github.com/portabletext/editor/commit/f6177bba99bf2a43d6880c440e8bc4fb3d5e8b36) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): Update cucumber
+
+## 2.0.4
+
+### Patch Changes
+
+- [#2291](https://github.com/portabletext/editor/pull/2291) [`1042902`](https://github.com/portabletext/editor/commit/1042902fe941f66770ae078bf21f9f9fc4b92225) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update dependency @playwright/test to ^1.58.2
+
 ## 2.0.3
 
 ### Patch Changes

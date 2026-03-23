@@ -1,6 +1,6 @@
 {
   "name": "racejar",
-  "version": "2.0.3",
+  "version": "2.0.5",
   "description": "A testing framework agnostic Gherkin driver",
   "keywords": [
     "cucumber",
@@ -59,22 +59,22 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@cucumber/cucumber-expressions": "^18.1.0",
-    "@cucumber/gherkin": "^36.1.0",
-    "@cucumber/messages": "^30.1.0"
+    "@cucumber/cucumber-expressions": "^19.0.0",
+    "@cucumber/gherkin": "^39.0.0",
+    "@cucumber/messages": "^32.2.0"
   },
   "devDependencies": {
     "@jest/globals": "^30.2.0",
-    "@playwright/test": "^1.57.0",
+    "@playwright/test": "^1.58.2",
     "@sanity/pkg-utils": "^10.2.1",
     "@sanity/tsconfig": "^2.1.0",
     "typescript": "catalog:",
-    "vitest": "^4.0.18"
+    "vitest": "^4.1.0"
   },
   "peerDependencies": {
     "@jest/globals": "^30.2.0",
-    "@playwright/test": "^1.57.0",
-    "vitest": "^4.0.18"
+    "@playwright/test": "^1.58.2",
+    "vitest": "^4.1.0"
   },
   "engines": {
     "node": ">=20.19 <22 || >=22.12"

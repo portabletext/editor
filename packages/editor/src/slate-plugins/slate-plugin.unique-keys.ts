@@ -1,8 +1,12 @@
-import {isSpan, isTextBlock} from '@portabletext/schema'
+import {isTextBlock} from '@portabletext/schema'
 import type {EditorActor} from '../editor/editor-machine'
 import type {EditorContext, EditorSnapshot} from '../editor/editor-snapshot'
-import {isEqualMarks} from '../internal-utils/equality'
-import {Editor, Element, Node, Path, Transforms} from '../slate'
+import {applySetNode} from '../internal-utils/apply-set-node'
+import {isEditor} from '../slate/editor/is-editor'
+import {parent as editorParent} from '../slate/editor/parent'
+import type {Path} from '../slate/interfaces/path'
+import {getChildren} from '../slate/node/get-children'
+import {isObjectNode} from '../slate/node/is-object-node'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {withNormalizeNode} from './slate-plugin.normalize-node'
 
@@ -40,39 +44,8 @@ export function createUniqueKeysPlugin(editorActor: EditorActor) {
         return
       }
 
-      if (operation.type === 'split_node') {
-        const _key =
-          operation.properties._key &&
-          keyExistsAtPath(
-            {
-              blockIndexMap: editor.blockIndexMap,
-              context: {
-                schema: context.schema,
-                value: editor.value,
-              },
-            },
-            operation.path,
-            operation.properties._key,
-          )
-            ? undefined
-            : operation.properties._key
-
-        apply({
-          ...operation,
-          properties: {
-            ...operation.properties,
-            _key:
-              _key === undefined
-                ? editorActor.getSnapshot().context.keyGenerator()
-                : _key,
-          },
-        })
-
-        return
-      }
-
       if (operation.type === 'insert_node') {
-        if (!Editor.isEditor(operation.node)) {
+        if (!isEditor(operation.node)) {
           const _key =
             operation.node._key &&
             keyExistsAtPath(
@@ -80,7 +53,7 @@ export function createUniqueKeysPlugin(editorActor: EditorActor) {
                 blockIndexMap: editor.blockIndexMap,
                 context: {
                   schema: context.schema,
-                  value: editor.value,
+                  value: editor.children,
                 },
               },
               operation.path,
@@ -104,133 +77,29 @@ export function createUniqueKeysPlugin(editorActor: EditorActor) {
         }
       }
 
-      if (operation.type === 'merge_node') {
-        const index = operation.path[operation.path.length - 1]!
-        const prevPath = Path.previous(operation.path)
-        const prevIndex = prevPath[prevPath.length - 1]!
-
-        if (operation.path.length !== 1 || prevPath.length !== 1) {
-          apply(operation)
-          return
-        }
-
-        const block = editor.value.at(index)
-        const previousBlock = editor.value.at(prevIndex)
-
-        if (!block || !previousBlock) {
-          apply(operation)
-          return
-        }
-
-        if (
-          !isTextBlock(editorActor.getSnapshot().context, block) ||
-          !isTextBlock(editorActor.getSnapshot().context, previousBlock)
-        ) {
-          apply(operation)
-          return
-        }
-
-        // If we are merging two text blocks, then we need to make sure there
-        // are no duplicate keys in the blocks. Therefore, we assign new keys
-        // to any child or markDef that shares key with other children or
-        // markDefs in the previous block.
-        const previousBlockChildKeys = previousBlock.children.map(
-          (child) => child._key,
-        )
-        const previousBlockMarkDefKeys =
-          previousBlock.markDefs?.map((markDef) => markDef._key) ?? []
-
-        // Assign new keys to markDefs with duplicate keys and keep track of
-        // the mapping between the old and new keys
-        const markDefKeyMap = new Map<string, string>()
-        const adjustedMarkDefs = block.markDefs?.map((markDef) => {
-          if (previousBlockMarkDefKeys.includes(markDef._key)) {
-            const newKey = editorActor.getSnapshot().context.keyGenerator()
-            markDefKeyMap.set(markDef._key, newKey)
-            return {
-              ...markDef,
-              _key: newKey,
-            }
-          }
-
-          return markDef
-        })
-
-        // Assign new keys to spans with duplicate keys and update any markDef
-        // key if needed
-        let childIndex = 0
-        for (const child of block.children) {
-          if (isSpan(editorActor.getSnapshot().context, child)) {
-            const marks =
-              child.marks?.map((mark) => {
-                const markDefKey = markDefKeyMap.get(mark)
-
-                if (markDefKey) {
-                  return markDefKey
-                }
-
-                return mark
-              }) ?? []
-
-            if (!isEqualMarks(child.marks, marks)) {
-              Transforms.setNodes(
-                editor,
-                {
-                  marks,
-                },
-                {
-                  at: [index, childIndex],
-                },
-              )
-            }
-          }
-
-          if (previousBlockChildKeys.includes(child._key)) {
-            Transforms.setNodes(
-              editor,
-              {
-                _key: editorActor.getSnapshot().context.keyGenerator(),
-              },
-              {
-                at: [index, childIndex],
-              },
-            )
-          }
-          childIndex++
-        }
-
-        apply({
-          ...operation,
-          properties: {
-            ...operation.properties,
-            // Make sure the adjusted markDefs are carried along for the merge
-            // operation
-            markDefs: adjustedMarkDefs,
-          },
-        })
-        return
-      }
-
       apply(operation)
     }
 
     editor.normalizeNode = (entry) => {
       const [node, path] = entry
 
-      if (Element.isElement(node)) {
-        const [parent] = Editor.parent(editor, path)
+      if (
+        isTextBlock({schema: editor.schema}, node) ||
+        isObjectNode({schema: editor.schema}, node)
+      ) {
+        const [parentNode] = editorParent(editor, path)
 
-        if (parent && Editor.isEditor(parent)) {
+        if (parentNode && isEditor(parentNode)) {
           const blockKeys = new Set<string>()
 
-          for (const sibling of parent.children) {
+          for (const sibling of parentNode.children) {
             if (sibling._key && blockKeys.has(sibling._key)) {
               const _key = editorActor.getSnapshot().context.keyGenerator()
 
               blockKeys.add(_key)
 
               withNormalizeNode(editor, () => {
-                Transforms.setNodes(editor, {_key}, {at: path})
+                applySetNode(editor, {_key}, path)
               })
 
               return
@@ -242,7 +111,7 @@ export function createUniqueKeysPlugin(editorActor: EditorActor) {
               blockKeys.add(_key)
 
               withNormalizeNode(editor, () => {
-                Transforms.setNodes(editor, {_key}, {at: path})
+                applySetNode(editor, {_key}, path)
               })
 
               return
@@ -253,17 +122,14 @@ export function createUniqueKeysPlugin(editorActor: EditorActor) {
         }
       }
 
-      if (
-        Element.isElement(node) &&
-        node._type === editorActor.getSnapshot().context.schema.block.name
-      ) {
+      if (isTextBlock({schema: editor.schema}, node)) {
         // Set key on block itself
         if (!node._key) {
           withNormalizeNode(editor, () => {
-            Transforms.setNodes(
+            applySetNode(
               editor,
               {_key: editorActor.getSnapshot().context.keyGenerator()},
-              {at: path},
+              path,
             )
           })
           return
@@ -272,14 +138,18 @@ export function createUniqueKeysPlugin(editorActor: EditorActor) {
         // Set unique keys on it's children
         const childKeys = new Set<string>()
 
-        for (const [child, childPath] of Node.children(editor, path)) {
+        for (const [child, childPath] of getChildren(
+          editor,
+          path,
+          editor.schema,
+        )) {
           if (child._key && childKeys.has(child._key)) {
             const _key = editorActor.getSnapshot().context.keyGenerator()
 
             childKeys.add(_key)
 
             withNormalizeNode(editor, () => {
-              Transforms.setNodes(editor, {_key}, {at: childPath})
+              applySetNode(editor, {_key}, childPath)
             })
 
             return
@@ -291,7 +161,7 @@ export function createUniqueKeysPlugin(editorActor: EditorActor) {
             childKeys.add(_key)
 
             withNormalizeNode(editor, () => {
-              Transforms.setNodes(editor, {_key}, {at: childPath})
+              applySetNode(editor, {_key}, childPath)
             })
 
             return

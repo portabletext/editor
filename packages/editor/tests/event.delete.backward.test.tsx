@@ -13,14 +13,14 @@ import {defineSchema} from '../src'
 import {effect, execute, forward} from '../src/behaviors/behavior.types.action'
 import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
 import type {BehaviorEvent} from '../src/behaviors/behavior.types.event'
+import {EventListenerPlugin} from '../src/plugins'
+import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
+import {createTestEditor} from '../src/test/vitest'
 import {
   getSelectionAfterText,
   getSelectionBeforeText,
   getTextSelection,
-} from '../src/internal-utils/text-selection'
-import {EventListenerPlugin} from '../src/plugins'
-import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
-import {createTestEditor} from '../src/test/vitest'
+} from '../test-utils/text-selection'
 
 describe('event.delete.backward', () => {
   test('Scenario: Deleting lonely block object', async () => {

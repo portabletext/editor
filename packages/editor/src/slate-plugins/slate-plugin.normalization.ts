@@ -1,9 +1,18 @@
 import type {PortableTextObject, PortableTextSpan} from '@portabletext/schema'
+import {isSpan, isTextBlock} from '@portabletext/schema'
 import type {EditorActor} from '../editor/editor-machine'
+import {applyInsertNodeAtPath} from '../internal-utils/apply-insert-node'
+import {applyMergeNode} from '../internal-utils/apply-merge-node'
+import {applySetNode} from '../internal-utils/apply-set-node'
 import {createPlaceholderBlock} from '../internal-utils/create-placeholder-block'
 import {debug} from '../internal-utils/debug'
 import {isEqualMarkDefs} from '../internal-utils/equality'
-import {Editor, Node, Path, Range, Text, Transforms} from '../slate'
+import {isEditor} from '../slate/editor/is-editor'
+import {node as editorNode} from '../slate/editor/node'
+import {nodes} from '../slate/editor/nodes'
+import {getChildren} from '../slate/node/get-children'
+import {parentPath} from '../slate/path/parent-path'
+import {isCollapsedRange} from '../slate/range/is-collapsed-range'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {withNormalizeNode} from './slate-plugin.normalize-node'
 import {withoutPatching} from './slate-plugin.without-patching'
@@ -23,39 +32,37 @@ export function createNormalizationPlugin(
       /**
        * Add a placeholder block when the editor is empty
        */
-      if (Editor.isEditor(node) && node.children.length === 0) {
+      if (isEditor(node) && node.children.length === 0) {
         withoutPatching(editor, () => {
           withNormalizeNode(editor, () => {
-            Transforms.insertNodes(
+            applyInsertNodeAtPath(
               editor,
               createPlaceholderBlock(editorActor.getSnapshot().context),
-              {at: [0], select: true},
+              [0],
             )
           })
         })
       }
 
       /**
-       * Merge spans with same set of .marks when doing merge_node operations
+       * Merge spans with same set of .marks
        */
-      if (editor.isTextBlock(node)) {
-        const children = Node.children(editor, path)
+      if (isTextBlock({schema: editor.schema}, node)) {
+        const children = getChildren(editor, path, editor.schema)
 
         for (const [child, childPath] of children) {
           const nextNode = node.children[childPath[1]! + 1]
 
           if (
-            editor.isTextSpan(child) &&
-            editor.isTextSpan(nextNode) &&
+            isSpan({schema: editor.schema}, child) &&
+            isSpan({schema: editor.schema}, nextNode) &&
             child.marks?.every((mark) => nextNode.marks?.includes(mark)) &&
             nextNode.marks?.every((mark) => child.marks?.includes(mark))
           ) {
             debug.normalization('merging spans with same marks')
             withNormalizeNode(editor, () => {
-              Transforms.mergeNodes(editor, {
-                at: [childPath[0]!, childPath[1]! + 1],
-                voids: true,
-              })
+              const mergePath = [childPath[0]!, childPath[1]! + 1]
+              applyMergeNode(editor, mergePath, child.text.length)
             })
             return
           }
@@ -65,10 +72,13 @@ export function createNormalizationPlugin(
       /**
        * Add missing .markDefs to block nodes
        */
-      if (editor.isTextBlock(node) && !Array.isArray(node.markDefs)) {
+      if (
+        isTextBlock({schema: editor.schema}, node) &&
+        !Array.isArray(node.markDefs)
+      ) {
         debug.normalization('adding .markDefs to block node')
         withNormalizeNode(editor, () => {
-          Transforms.setNodes(editor, {markDefs: []}, {at: path})
+          applySetNode(editor, {markDefs: []}, path)
         })
         return
       }
@@ -78,13 +88,13 @@ export function createNormalizationPlugin(
        */
       if (
         defaultStyle &&
-        editor.isTextBlock(node) &&
+        isTextBlock({schema: editor.schema}, node) &&
         typeof node.style === 'undefined'
       ) {
         debug.normalization('adding .style to block node')
 
         withNormalizeNode(editor, () => {
-          Transforms.setNodes(editor, {style: defaultStyle}, {at: path})
+          applySetNode(editor, {style: defaultStyle}, path)
         })
         return
       }
@@ -92,10 +102,10 @@ export function createNormalizationPlugin(
       /**
        * Add missing .marks to span nodes
        */
-      if (editor.isTextSpan(node) && !Array.isArray(node.marks)) {
+      if (isSpan({schema: editor.schema}, node) && !Array.isArray(node.marks)) {
         debug.normalization('Adding .marks to span node')
         withNormalizeNode(editor, () => {
-          Transforms.setNodes(editor, {marks: []}, {at: path})
+          applySetNode(editor, {marks: []}, path)
         })
         return
       }
@@ -103,9 +113,9 @@ export function createNormalizationPlugin(
       /**
        * Remove annotations from empty spans
        */
-      if (editor.isTextSpan(node)) {
-        const blockPath = Path.parent(path)
-        const [block] = Editor.node(editor, blockPath)
+      if (isSpan({schema: editor.schema}, node)) {
+        const blockPath = parentPath(path)
+        const [block] = editorNode(editor, blockPath)
         const decorators = editorActor
           .getSnapshot()
           .context.schema.decorators.map((decorator) => decorator.name)
@@ -113,18 +123,18 @@ export function createNormalizationPlugin(
           (mark) => !decorators.includes(mark),
         )
 
-        if (editor.isTextBlock(block)) {
+        if (isTextBlock({schema: editor.schema}, block)) {
           if (node.text === '' && annotations && annotations.length > 0) {
             debug.normalization('removing annotations from empty span node')
             withNormalizeNode(editor, () => {
-              Transforms.setNodes(
+              applySetNode(
                 editor,
                 {
                   marks: node.marks?.filter((mark) =>
                     decorators.includes(mark),
                   ),
                 },
-                {at: path},
+                path,
               )
             })
             return
@@ -135,13 +145,17 @@ export function createNormalizationPlugin(
       /**
        * Remove orphaned annotations from child spans of block nodes
        */
-      if (editor.isTextBlock(node)) {
+      if (isTextBlock({schema: editor.schema}, node)) {
         const decorators = editorActor
           .getSnapshot()
           .context.schema.decorators.map((decorator) => decorator.name)
 
-        for (const [child, childPath] of Node.children(editor, path)) {
-          if (editor.isTextSpan(child)) {
+        for (const [child, childPath] of getChildren(
+          editor,
+          path,
+          editor.schema,
+        )) {
+          if (isSpan({schema: editor.schema}, child)) {
             const marks = child.marks ?? []
             const orphanedAnnotations = marks.filter((mark) => {
               return (
@@ -155,14 +169,14 @@ export function createNormalizationPlugin(
                 'removing orphaned annotations from span node',
               )
               withNormalizeNode(editor, () => {
-                Transforms.setNodes(
+                applySetNode(
                   editor,
                   {
                     marks: marks.filter(
                       (mark) => !orphanedAnnotations.includes(mark),
                     ),
                   },
-                  {at: childPath},
+                  childPath,
                 )
               })
               return
@@ -174,11 +188,11 @@ export function createNormalizationPlugin(
       /**
        * Remove orphaned annotations from span nodes
        */
-      if (editor.isTextSpan(node)) {
-        const blockPath = Path.parent(path)
-        const [block] = Editor.node(editor, blockPath)
+      if (isSpan({schema: editor.schema}, node)) {
+        const blockPath = parentPath(path)
+        const [block] = editorNode(editor, blockPath)
 
-        if (editor.isTextBlock(block)) {
+        if (isTextBlock({schema: editor.schema}, block)) {
           const decorators = editorActor
             .getSnapshot()
             .context.schema.decorators.map((decorator) => decorator.name)
@@ -193,14 +207,14 @@ export function createNormalizationPlugin(
           if (orphanedAnnotations.length > 0) {
             debug.normalization('removing orphaned annotations from span node')
             withNormalizeNode(editor, () => {
-              Transforms.setNodes(
+              applySetNode(
                 editor,
                 {
                   marks: marks.filter(
                     (mark) => !orphanedAnnotations.includes(mark),
                   ),
                 },
-                {at: path},
+                path,
               )
             })
             return
@@ -209,7 +223,7 @@ export function createNormalizationPlugin(
       }
 
       // Remove duplicate markDefs
-      if (editor.isTextBlock(node)) {
+      if (isTextBlock({schema: editor.schema}, node)) {
         const markDefs = node.markDefs ?? []
         const markDefKeys = new Set<string>()
         const newMarkDefs: Array<PortableTextObject> = []
@@ -224,40 +238,33 @@ export function createNormalizationPlugin(
         if (markDefs.length !== newMarkDefs.length) {
           debug.normalization('removing duplicate markDefs')
           withNormalizeNode(editor, () => {
-            Transforms.setNodes(editor, {markDefs: newMarkDefs}, {at: path})
+            applySetNode(editor, {markDefs: newMarkDefs}, path)
           })
           return
         }
       }
 
       // Check consistency of markDefs (unless we are merging two nodes)
-      if (
-        editor.isTextBlock(node) &&
-        !editor.operations.some(
-          (op) =>
-            op.type === 'merge_node' &&
-            'markDefs' in op.properties &&
-            op.path.length === 1,
-        )
-      ) {
+      if (isTextBlock({schema: editor.schema}, node)) {
         const newMarkDefs = (node.markDefs || []).filter((def) => {
           return node.children.find((child) => {
             return (
-              Text.isText(child) &&
+              isSpan({schema: editor.schema}, child) &&
               Array.isArray(child.marks) &&
               child.marks.includes(def._key)
             )
           })
         })
+
         if (node.markDefs && !isEqualMarkDefs(newMarkDefs, node.markDefs)) {
           debug.normalization('removing markDef not in use')
           withNormalizeNode(editor, () => {
-            Transforms.setNodes(
+            applySetNode(
               editor,
               {
                 markDefs: newMarkDefs,
               },
-              {at: path},
+              path,
             )
           })
           return
@@ -297,30 +304,30 @@ export function createNormalizationPlugin(
           op.newProperties.anchor &&
           op.newProperties.focus
         ) {
-          const previousSelectionIsCollapsed = Range.isCollapsed({
+          const previousSelectionIsCollapsed = isCollapsedRange({
             anchor: op.properties.anchor,
             focus: op.properties.focus,
           })
-          const newSelectionIsCollapsed = Range.isCollapsed({
+          const newSelectionIsCollapsed = isCollapsedRange({
             anchor: op.newProperties.anchor,
             focus: op.newProperties.focus,
           })
 
           if (previousSelectionIsCollapsed && newSelectionIsCollapsed) {
             const focusSpan: PortableTextSpan | undefined = Array.from(
-              Editor.nodes(editor, {
+              nodes(editor, {
                 mode: 'lowest',
                 at: op.properties.focus,
-                match: (n) => editor.isTextSpan(n),
-                voids: false,
+                match: (n) => isSpan({schema: editor.schema}, n),
+                includeObjectNodes: false,
               }),
             )[0]?.[0]
             const newFocusSpan: PortableTextSpan | undefined = Array.from(
-              Editor.nodes(editor, {
+              nodes(editor, {
                 mode: 'lowest',
                 at: op.newProperties.focus,
-                match: (n) => editor.isTextSpan(n),
-                voids: false,
+                match: (n) => isSpan({schema: editor.schema}, n),
+                includeObjectNodes: false,
               }),
             )[0]?.[0]
             const movedToNextSpan =
@@ -350,44 +357,6 @@ export function createNormalizationPlugin(
         } else {
           // In any other case, we want to clear the decorator state.
           editor.decoratorState = {}
-        }
-      }
-
-      /**
-       * Copy over markDefs when merging blocks
-       */
-      if (
-        op.type === 'merge_node' &&
-        op.path.length === 1 &&
-        'markDefs' in op.properties &&
-        op.properties._type ===
-          editorActor.getSnapshot().context.schema.block.name &&
-        Array.isArray(op.properties.markDefs) &&
-        op.properties.markDefs.length > 0 &&
-        op.path[0]! - 1 >= 0
-      ) {
-        const [targetBlock, targetPath] = Editor.node(editor, [op.path[0]! - 1])
-
-        if (editor.isTextBlock(targetBlock)) {
-          const oldDefs =
-            (Array.isArray(targetBlock.markDefs) && targetBlock.markDefs) || []
-          const newMarkDefs = [
-            ...new Map(
-              [...oldDefs, ...op.properties.markDefs].map((def) => [
-                def._key,
-                def,
-              ]),
-            ).values(),
-          ]
-
-          debug.normalization(`copying markDefs over to merged block`, op)
-          Transforms.setNodes(
-            editor,
-            {markDefs: newMarkDefs},
-            {at: targetPath, voids: false},
-          )
-          apply(op)
-          return
         }
       }
 

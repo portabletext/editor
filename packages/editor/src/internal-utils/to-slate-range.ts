@@ -5,7 +5,8 @@ import {
   type PortableTextSpan,
 } from '@portabletext/schema'
 import type {EditorContext, EditorSnapshot} from '../editor/editor-snapshot'
-import type {Path, Range} from '../slate'
+import type {Path} from '../slate/interfaces/path'
+import type {Range} from '../slate/interfaces/range'
 import type {EditorSelectionPoint} from '../types/editor'
 import {blockOffsetToSpanSelectionPoint} from '../utils/util.block-offset'
 import {isEqualSelectionPoints} from '../utils/util.is-equal-selection-points'
@@ -66,7 +67,7 @@ export function toSlateRange(
   }
 }
 
-export function toSlateSelectionPoint(
+function toSlateSelectionPoint(
   snapshot: {
     context: Pick<EditorContext, 'schema' | 'value'>
   } & Pick<EditorSnapshot, 'blockIndexMap'>,
@@ -98,7 +99,7 @@ export function toSlateSelectionPoint(
 
   if (!isTextBlock(snapshot.context, block)) {
     return {
-      path: [blockIndex, 0],
+      path: [blockIndex],
       offset: 0,
     }
   }
@@ -149,7 +150,9 @@ export function toSlateSelectionPoint(
       if (isSpan(snapshot.context, child)) {
         childPath = [childIndex]
       } else {
-        childPath = [childIndex, 0]
+        // ObjectNodes have a spacer text node in the DOM for cursor
+        // anchoring. The selection resolves to the ObjectNode path.
+        childPath = [childIndex]
         offset = 0
       }
       break

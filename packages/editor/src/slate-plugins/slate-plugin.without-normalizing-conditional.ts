@@ -1,4 +1,5 @@
-import {Editor} from '../slate'
+import {withoutNormalizing} from '../slate/editor/without-normalizing'
+import type {Editor} from '../slate/interfaces/editor'
 
 export function withoutNormalizingConditional(
   editor: Editor,
@@ -6,7 +7,7 @@ export function withoutNormalizingConditional(
   fn: () => void,
 ) {
   if (predicate()) {
-    Editor.withoutNormalizing(editor, fn)
+    withoutNormalizing(editor, fn)
   } else {
     fn()
   }

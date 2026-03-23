@@ -3,17 +3,18 @@ import {getTersePt, parseTersePt} from '@portabletext/test'
 import {Given, Then, When} from 'racejar'
 import {assert, expect, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
-import {getEditorSelection} from '../../internal-utils/editor-selection'
-import {IS_MAC} from '../../internal-utils/is-hotkey'
-import {getSelectionText} from '../../internal-utils/selection-text'
-import {getTextBlockKey} from '../../internal-utils/text-block-key'
-import {getTextMarks} from '../../internal-utils/text-marks'
+import {getEditorSelection} from '../../../test-utils/editor-selection'
+import {getSelectionText} from '../../../test-utils/selection-text'
+import {getTextBlockKey} from '../../../test-utils/text-block-key'
+import {getTextMarks} from '../../../test-utils/text-marks'
 import {
   getSelectionAfterText,
   getSelectionBeforeText,
   getTextSelection,
-} from '../../internal-utils/text-selection'
-import {getValueAnnotations} from '../../internal-utils/value-annotations'
+} from '../../../test-utils/text-selection'
+import {getValueAnnotations} from '../../../test-utils/value-annotations'
+import {IS_MAC} from '../../internal-utils/is-hotkey'
+import {safeParse} from '../../internal-utils/safe-json'
 import {createTestEditor, createTestEditors} from '../../test/vitest'
 import {
   parseBlocks,
@@ -111,7 +112,7 @@ export const stepDefinitions = [
             schema: context.editor.getSnapshot().context.schema,
             keyGenerator: context.editor.getSnapshot().context.keyGenerator,
           },
-          blocks: JSON.parse(blocks),
+          blocks: safeParse(blocks),
           options: {
             normalize: false,
             removeUnusedMarkDefs: false,
@@ -133,7 +134,7 @@ export const stepDefinitions = [
           schema: context.editor.getSnapshot().context.schema,
           keyGenerator: context.editor.getSnapshot().context.keyGenerator,
         },
-        span: JSON.parse(child),
+        span: safeParse(child),
         markDefKeyMap: new Map(),
         options: {validateFields: true},
       }) ??
@@ -142,7 +143,7 @@ export const stepDefinitions = [
           schema: context.editor.getSnapshot().context.schema,
           keyGenerator: context.editor.getSnapshot().context.keyGenerator,
         },
-        inlineObject: JSON.parse(child),
+        inlineObject: safeParse(child),
         options: {validateFields: true},
       })
 
@@ -313,27 +314,76 @@ export const stepDefinitions = [
   When(
     '{shortcut} is pressed',
     async (context: Context, shortcut: Parameter['shortcut']) => {
-      const shortcuts: Record<Parameter['shortcut'], string> = {
-        'deleteWord.backward': IS_MAC
-          ? '{Alt>}{Backspace}{/Alt}'
-          : '{Control>}{Backspace}{/Control}',
-        'deleteWord.forward': IS_MAC
-          ? '{Alt>}{Delete}{/Alt}'
-          : '{Control>}{Delete}{/Control}',
+      const keyboardShortcuts: Partial<Record<Parameter['shortcut'], string>> =
+        {
+          'deleteWord.backward': IS_MAC
+            ? '{Alt>}{Backspace}{/Alt}'
+            : '{Control>}{Backspace}{/Control}',
+          'deleteWord.forward': IS_MAC
+            ? '{Alt>}{Delete}{/Alt}'
+            : '{Control>}{Delete}{/Control}',
+        }
+
+      const keyboardShortcut = keyboardShortcuts[shortcut]
+
+      if (keyboardShortcut) {
+        const previousSelection = context.editor.getSnapshot().context.selection
+        await userEvent.keyboard(keyboardShortcut)
+
+        await new Promise((resolve) => setTimeout(resolve, 100))
+
+        await vi.waitFor(() => {
+          const currentSelection =
+            context.editor.getSnapshot().context.selection
+
+          if (currentSelection) {
+            expect(currentSelection).not.toBe(previousSelection)
+          }
+        })
+
+        return
       }
 
-      const previousSelection = context.editor.getSnapshot().context.selection
-      await userEvent.keyboard(shortcuts[shortcut])
+      // Shortcuts that fire behavior events directly (no reliable
+      // cross-browser keyboard shortcut available)
+      const behaviorEvents: Partial<
+        Record<
+          Parameter['shortcut'],
+          | {
+              type: 'delete.backward'
+              unit: 'character' | 'word' | 'line' | 'block'
+            }
+          | {
+              type: 'delete.forward'
+              unit: 'character' | 'word' | 'line' | 'block'
+            }
+        >
+      > = {
+        'deleteLine.backward': {type: 'delete.backward', unit: 'line'},
+        'deleteLine.forward': {type: 'delete.forward', unit: 'line'},
+      }
 
-      await new Promise((resolve) => setTimeout(resolve, 100))
+      const behaviorEvent = behaviorEvents[shortcut]
 
-      await vi.waitFor(() => {
-        const currentSelection = context.editor.getSnapshot().context.selection
+      if (behaviorEvent) {
+        const previousSelection = context.editor.getSnapshot().context.selection
+        context.editor.send(behaviorEvent)
 
-        if (currentSelection) {
-          expect(currentSelection).not.toBe(previousSelection)
-        }
-      })
+        await new Promise((resolve) => setTimeout(resolve, 100))
+
+        await vi.waitFor(() => {
+          const currentSelection =
+            context.editor.getSnapshot().context.selection
+
+          if (currentSelection) {
+            expect(currentSelection).not.toBe(previousSelection)
+          }
+        })
+
+        return
+      }
+
+      throw new Error(`Unknown shortcut: ${shortcut}`)
     },
   ),
 
@@ -597,7 +647,7 @@ export const stepDefinitions = [
             schema: context.editor.getSnapshot().context.schema,
             keyGenerator: context.editor.getSnapshot().context.keyGenerator,
           },
-          blocks: JSON.parse(blocks),
+          blocks: safeParse(blocks),
           options: {
             normalize: false,
             removeUnusedMarkDefs: false,
@@ -930,6 +980,13 @@ export const stepDefinitions = [
       })
     },
   ),
+
+  /**
+   * Clipboard steps
+   */
+  When('cut is performed', async () => {
+    await userEvent.cut()
+  }),
 
   /**
    * Undo/Redo steps

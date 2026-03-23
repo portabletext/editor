@@ -1,7 +1,10 @@
-import {Editor, type EditorInterface} from '../interfaces/editor'
-import {Point} from '../interfaces/point'
+import type {Editor} from '../interfaces/editor'
+import type {Location} from '../interfaces/location'
+import type {Point} from '../interfaces/point'
+import {pointEquals} from '../point/point-equals'
+import {end} from './end'
 
-export const isEnd: EditorInterface['isEnd'] = (editor, point, at) => {
-  const end = Editor.end(editor, at)
-  return Point.equals(point, end)
+export function isEnd(editor: Editor, point: Point, at: Location): boolean {
+  const editorEnd = end(editor, at)
+  return pointEquals(point, editorEnd)
 }

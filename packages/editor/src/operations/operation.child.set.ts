@@ -1,5 +1,9 @@
+import {isSpan} from '@portabletext/schema'
+import {applySetNode} from '../internal-utils/apply-set-node'
+import {safeStringify} from '../internal-utils/safe-json'
 import {toSlateRange} from '../internal-utils/to-slate-range'
-import {Editor, Element, Transforms} from '../slate'
+import {node as editorNode} from '../slate/editor/node'
+import {isObjectNode} from '../slate/node/is-object-node'
 import type {OperationImplementation} from './operation.types'
 
 export const childSetOperationImplementation: OperationImplementation<
@@ -8,7 +12,7 @@ export const childSetOperationImplementation: OperationImplementation<
   const location = toSlateRange({
     context: {
       schema: context.schema,
-      value: operation.editor.value,
+      value: operation.editor.children,
       selection: {
         anchor: {path: operation.at, offset: 0},
         focus: {path: operation.at, offset: 0},
@@ -19,28 +23,28 @@ export const childSetOperationImplementation: OperationImplementation<
 
   if (!location) {
     throw new Error(
-      `Unable to convert ${JSON.stringify(operation.at)} into a Slate Range`,
+      `Unable to convert ${safeStringify(operation.at)} into a Slate Range`,
     )
   }
 
-  const childEntry = Editor.node(operation.editor, location, {depth: 2})
+  const childEntry = editorNode(operation.editor, location, {depth: 2})
   const child = childEntry?.[0]
   const childPath = childEntry?.[1]
 
   if (!child || !childPath) {
-    throw new Error(`Unable to find child at ${JSON.stringify(operation.at)}`)
+    throw new Error(`Unable to find child at ${safeStringify(operation.at)}`)
   }
 
-  if (operation.editor.isTextSpan(child)) {
+  if (isSpan({schema: operation.editor.schema}, child)) {
     const {_type, text, ...rest} = operation.props
 
-    Transforms.setNodes(
+    applySetNode(
       operation.editor,
       {
         ...child,
         ...rest,
       },
-      {at: childPath},
+      childPath,
     )
 
     if (typeof text === 'string') {
@@ -64,7 +68,7 @@ export const childSetOperationImplementation: OperationImplementation<
     return
   }
 
-  if (Element.isElement(child)) {
+  if (isObjectNode({schema: operation.editor.schema}, child)) {
     const definition = context.schema.inlineObjects.find(
       (definition) => definition.name === child._type,
     )
@@ -75,8 +79,6 @@ export const childSetOperationImplementation: OperationImplementation<
       )
     }
 
-    const value =
-      'value' in child && typeof child.value === 'object' ? child.value : {}
     const {_type, _key, ...rest} = operation.props
 
     for (const prop in rest) {
@@ -85,23 +87,20 @@ export const childSetOperationImplementation: OperationImplementation<
       }
     }
 
-    Transforms.setNodes(
+    applySetNode(
       operation.editor,
       {
         ...child,
         _key: typeof _key === 'string' ? _key : child._key,
-        value: {
-          ...value,
-          ...rest,
-        },
+        ...rest,
       },
-      {at: childPath},
+      childPath,
     )
 
     return
   }
 
   throw new Error(
-    `Unable to determine the type of child at ${JSON.stringify(operation.at)}`,
+    `Unable to determine the type of child at ${safeStringify(operation.at)}`,
   )
 }

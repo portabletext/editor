@@ -1,5 +1,39 @@
 # Changelog
 
+## 5.1.1
+
+### Patch Changes
+
+- [#2397](https://github.com/portabletext/editor/pull/2397) [`99c5a4f`](https://github.com/portabletext/editor/commit/99c5a4f6f9515af6341b8947ec08d487735b72dc) Thanks [@stipsan](https://github.com/stipsan)! - Upgrade `@vercel/stega` to v1.1.0
+
+- Updated dependencies [[`99c5a4f`](https://github.com/portabletext/editor/commit/99c5a4f6f9515af6341b8947ec08d487735b72dc)]:
+  - @portabletext/html@1.0.1
+
+## 5.1.0
+
+### Minor Changes
+
+- [#2259](https://github.com/portabletext/editor/pull/2259) [`5e3ded7`](https://github.com/portabletext/editor/commit/5e3ded76ba1b1407d1a673674fdf87d542ae8b9f) Thanks [@christianhg](https://github.com/christianhg)! - feat: use `@portabletext/html` as deserialization engine
+
+## 5.0.5
+
+### Patch Changes
+
+- [#2284](https://github.com/portabletext/editor/pull/2284) [`7886449`](https://github.com/portabletext/editor/commit/788644909eb30698aa4155790f1d90ee3e9ad008) Thanks [@christianhg](https://github.com/christianhg)! - fix: detect Word list types from `@list` CSS definitions
+
+  Word paste was flipping bullet and numbered list types. The `lfo` reference
+  number in `mso-list` style attributes is an arbitrary ID assigned per document,
+  not a list type indicator. The fix parses the `@list` CSS definitions from the
+  `<style>` block to check for `mso-level-number-format:bullet`, which is the
+  actual signal for bullet lists.
+
+## 5.0.4
+
+### Patch Changes
+
+- Updated dependencies [[`e83d990`](https://github.com/portabletext/editor/commit/e83d990c3f8db67fc7d33c653455c5ea52a19490)]:
+  - @portabletext/sanity-bridge@3.0.0
+
 ## 5.0.3
 
 ### Patch Changes

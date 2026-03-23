@@ -1,12 +1,19 @@
-import {Editor, type EditorLevelsOptions} from '../interfaces/editor'
-import {Element} from '../interfaces/element'
-import {Node, type NodeEntry} from '../interfaces/node'
+import type {Editor, NodeMatch} from '../interfaces/editor'
+import type {Location} from '../interfaces/location'
+import type {Node, NodeEntry} from '../interfaces/node'
+import {getLevels} from '../node/get-levels'
+import {path} from './path'
 
 export function* levels<T extends Node>(
   editor: Editor,
-  options: EditorLevelsOptions<T> = {},
+  options: {
+    at?: Location
+    match?: NodeMatch<T>
+    reverse?: boolean
+    includeObjectNodes?: boolean
+  } = {},
 ): Generator<NodeEntry<T>, void, undefined> {
-  const {at = editor.selection, reverse = false, voids = false} = options
+  const {at = editor.selection, reverse = false} = options
   let {match} = options
 
   if (match == null) {
@@ -18,18 +25,14 @@ export function* levels<T extends Node>(
   }
 
   const levels: NodeEntry<T>[] = []
-  const path = Editor.path(editor, at)
+  const fromPath = path(editor, at)
 
-  for (const [n, p] of Node.levels(editor, path)) {
+  for (const [n, p] of getLevels(editor, fromPath, editor.schema)) {
     if (!match(n, p)) {
       continue
     }
 
-    levels.push([n, p] as NodeEntry<T>)
-
-    if (!voids && Element.isElement(n) && Editor.isVoid(editor, n)) {
-      break
-    }
+    levels.push([n as T, p] satisfies NodeEntry<T>)
   }
 
   if (reverse) {

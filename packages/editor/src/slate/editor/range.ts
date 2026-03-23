@@ -1,12 +1,16 @@
-import {Editor, type EditorInterface} from '../interfaces/editor'
-import {Range} from '../interfaces/range'
+import type {Editor} from '../interfaces/editor'
+import type {Location} from '../interfaces/location'
+import type {Range} from '../interfaces/range'
+import {isRange} from '../range/is-range'
+import {end} from './end'
+import {start} from './start'
 
-export const range: EditorInterface['range'] = (editor, at, to) => {
-  if (Range.isRange(at) && !to) {
+export function range(editor: Editor, at: Location, to?: Location): Range {
+  if (isRange(at) && !to) {
     return at
   }
 
-  const start = Editor.start(editor, at)
-  const end = Editor.end(editor, to || at)
-  return {anchor: start, focus: end}
+  const rangeStart = start(editor, at)
+  const rangeEnd = end(editor, to || at)
+  return {anchor: rangeStart, focus: rangeEnd}
 }

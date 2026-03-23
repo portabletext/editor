@@ -1,7 +1,10 @@
 import type {InlineObjectSchemaType} from '@portabletext/schema'
+import {isTextBlock} from '@portabletext/schema'
 import {useSelector} from '@xstate/react'
 import {useContext, useMemo, useRef, type ReactElement} from 'react'
-import {useSlateStatic, type RenderLeafProps} from '../slate-react'
+import {serializePath} from '../paths/serialize-path'
+import type {RenderLeafProps} from '../slate/react/components/editable'
+import {useSlateStatic} from '../slate/react/hooks/use-slate-static'
 import type {
   BlockAnnotationRenderProps,
   BlockChildRenderProps,
@@ -10,11 +13,10 @@ import type {
   RenderChildFunction,
   RenderDecoratorFunction,
 } from '../types/editor'
-import {serializePath} from '../utils/util.serialize-path'
 import {EditorActorContext} from './editor-actor-context'
 import {SelectionStateContext} from './selection-state-context'
 
-export interface RenderSpanProps extends RenderLeafProps {
+interface RenderSpanProps extends RenderLeafProps {
   children: ReactElement<any>
   renderAnnotation?: RenderAnnotationFunction
   renderChild?: RenderChildFunction
@@ -33,7 +35,10 @@ export function RenderSpan(props: RenderSpanProps) {
   } satisfies InlineObjectSchemaType
 
   const parent = props.children.props.parent
-  const block = parent && slateEditor.isTextBlock(parent) ? parent : undefined
+  const block =
+    parent && isTextBlock({schema: slateEditor.schema}, parent)
+      ? parent
+      : undefined
 
   const path = useMemo(
     () =>
@@ -64,19 +69,21 @@ export function RenderSpan(props: RenderSpanProps) {
     ),
   ]
 
-  const annotationMarkDefs = (props.leaf.marks ?? []).flatMap((mark) => {
-    if (decoratorSchemaTypes.includes(mark)) {
+  const annotationMarkDefs = (props.leaf.marks ?? []).flatMap(
+    (mark: string) => {
+      if (decoratorSchemaTypes.includes(mark)) {
+        return []
+      }
+
+      const markDef = block?.markDefs?.find((markDef) => markDef._key === mark)
+
+      if (markDef) {
+        return [markDef]
+      }
+
       return []
-    }
-
-    const markDef = block?.markDefs?.find((markDef) => markDef._key === mark)
-
-    if (markDef) {
-      return [markDef]
-    }
-
-    return []
-  })
+    },
+  )
 
   let children = props.children
 

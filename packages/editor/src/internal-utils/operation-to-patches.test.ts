@@ -8,17 +8,15 @@ import {beforeEach, describe, expect, it, test} from 'vitest'
 import {createActor} from 'xstate'
 import {editorMachine} from '../editor/editor-machine'
 import {relayMachine} from '../editor/relay-machine'
-import {createEditor, type Descendant} from '../slate'
 import {plugins} from '../slate-plugins/slate-plugins'
+import {createEditor} from '../slate/create-editor'
+import type {Node} from '../slate/interfaces/node'
 import {defaultKeyGenerator} from '../utils/key-generator'
 import {
   insertNodePatch,
   insertTextPatch,
-  mergeNodePatch,
-  moveNodePatch,
   removeNodePatch,
   removeTextPatch,
-  splitNodePatch,
 } from './operation-to-patches'
 
 const schemaDefinition = defineSchema({
@@ -37,7 +35,13 @@ const e = createEditor({
   schema,
   keyGenerator: defaultKeyGenerator,
 })
-e.value = []
+e.children = [] as any
+Object.defineProperty(e, 'value', {
+  get() {
+    return e.children
+  },
+  configurable: true,
+})
 const editor = plugins(e, {
   editorActor,
   relayActor,
@@ -56,27 +60,7 @@ const createDefaultChildren = () =>
         {
           _key: '773866318fa8',
           _type: 'someObject',
-          value: {title: 'The Object'},
-          __inline: true,
-          children: [{_type: 'span', _key: 'bogus', text: '', marks: []}],
-        },
-        {_type: 'span', _key: 'fd9b4a4e6c0b', text: '', marks: []},
-      ],
-    },
-  ] satisfies Array<Descendant>
-const createDefaultValue = () =>
-  [
-    {
-      _type: 'block',
-      _key: '1f2e64b47787',
-      style: 'normal',
-      markDefs: [],
-      children: [
-        {_type: 'span', _key: 'c130395c640c', text: '', marks: []},
-        {
-          _key: '773866318fa8',
-          _type: 'someObject',
-          value: {title: 'The Object'},
+          title: 'The Object',
         },
         {_type: 'span', _key: 'fd9b4a4e6c0b', text: '', marks: []},
       ],
@@ -92,15 +76,6 @@ describe(insertNodePatch.name, () => {
           {
             _key: 'k2',
             _type: 'image',
-            children: [
-              {
-                _key: 'void-child',
-                _type: 'span',
-                marks: [],
-                text: '',
-              },
-            ],
-            value: {},
           },
         ],
         {
@@ -109,15 +84,6 @@ describe(insertNodePatch.name, () => {
           node: {
             _key: 'k2',
             _type: 'image',
-            children: [
-              {
-                _key: 'void-child',
-                _type: 'span',
-                marks: [],
-                text: '',
-              },
-            ],
-            value: {},
           },
         },
         [],
@@ -149,68 +115,6 @@ describe('operationToPatches', () => {
     editor.onChange()
   })
 
-  it('translates void items correctly when splitting spans', () => {
-    expect(
-      splitNodePatch(
-        schema,
-        editor.children,
-        {
-          type: 'split_node',
-          path: [0, 0],
-          position: 0,
-          properties: {_type: 'span', _key: 'c130395c640c', marks: []},
-        },
-
-        createDefaultValue(),
-      ),
-    ).toEqual([
-      {
-        path: [
-          {
-            _key: '1f2e64b47787',
-          },
-          'children',
-        ],
-        type: 'setIfMissing',
-        value: [],
-      },
-      {
-        items: [
-          {
-            _key: '773866318fa8',
-            _type: 'someObject',
-            title: 'The Object',
-          },
-        ],
-        path: [
-          {
-            _key: '1f2e64b47787',
-          },
-          'children',
-          {
-            _key: 'c130395c640c',
-          },
-        ],
-        position: 'after',
-        type: 'insert',
-      },
-      {
-        path: [
-          {
-            _key: '1f2e64b47787',
-          },
-          'children',
-          {
-            _key: 'c130395c640c',
-          },
-          'text',
-        ],
-        type: 'set',
-        value: '',
-      },
-    ])
-  })
-
   it('produce correct insert block patch', () => {
     expect(
       insertNodePatch(
@@ -222,12 +126,10 @@ describe('operationToPatches', () => {
           node: {
             _type: 'someObject',
             _key: 'c130395c640c',
-            value: {title: 'The Object'},
-            __inline: false,
-            children: [{_key: '1', _type: 'span', text: '', marks: []}],
+            title: 'The Object',
           },
         },
-        createDefaultValue(),
+        createDefaultChildren(),
       ),
     ).toMatchInlineSnapshot(`
       [
@@ -264,9 +166,6 @@ describe('operationToPatches', () => {
           node: {
             _type: 'someObject',
             _key: 'c130395c640c',
-            value: {},
-            __inline: false,
-            children: [{_key: '1', _type: 'span', text: '', marks: []}],
           },
         },
 
@@ -307,13 +206,11 @@ describe('operationToPatches', () => {
           node: {
             _type: 'someObject',
             _key: 'c130395c640c',
-            value: {title: 'The Object'},
-            __inline: true,
-            children: [{_key: '1', _type: 'span', text: '', marks: []}],
+            title: 'The Object',
           },
         },
 
-        createDefaultValue(),
+        createDefaultChildren(),
       ),
     ).toEqual([
       {
@@ -357,7 +254,7 @@ describe('operationToPatches', () => {
           text: '1',
           offset: 0,
         },
-        createDefaultValue(),
+        createDefaultChildren(),
       ),
     ).toMatchInlineSnapshot(`
       [
@@ -381,8 +278,39 @@ describe('operationToPatches', () => {
     `)
   })
 
+  it('returns empty patches when block is not a text block', () => {
+    const blockObjectSchema = compileSchema(
+      defineSchema({blockObjects: [{name: 'image'}]}),
+    )
+    const blockObjectChildren: Array<Node> = [
+      {
+        _key: 'img1',
+        _type: 'image',
+        children: [{_key: 'void-child', _type: 'span', marks: [], text: ''}],
+        value: {},
+      },
+    ]
+    const blockObjectValue: Array<PortableTextBlock> = [
+      {_key: 'img1', _type: 'image'},
+    ]
+
+    expect(
+      insertTextPatch(
+        blockObjectSchema,
+        blockObjectChildren,
+        {
+          type: 'insert_text',
+          path: [0, 0],
+          text: 'foo',
+          offset: 0,
+        },
+        blockObjectValue,
+      ),
+    ).toEqual([])
+  })
+
   it('produces correct remove text patch', () => {
-    const before = createDefaultValue()
+    const before = createDefaultChildren()
     ;(before[0] as PortableTextTextBlock).children[2]!.text = '1'
     expect(
       removeTextPatch(
@@ -423,16 +351,14 @@ describe('operationToPatches', () => {
     expect(
       removeNodePatch(
         editorActor.getSnapshot().context.schema,
-        createDefaultValue(),
+        createDefaultChildren(),
         {
           type: 'remove_node',
           path: [0, 1],
           node: {
             _key: '773866318fa8',
             _type: 'someObject',
-            value: {title: 'The object'},
-            __inline: true,
-            children: [{_type: 'span', _key: 'bogus', text: '', marks: []}],
+            title: 'The object',
           },
         },
       ),
@@ -456,7 +382,7 @@ describe('operationToPatches', () => {
 
   it('produce correct remove block patch', () => {
     const children = createDefaultChildren()
-    const val = createDefaultValue()
+    const val = createDefaultChildren()
     expect(
       removeNodePatch(editorActor.getSnapshot().context.schema, val, {
         type: 'remove_node',
@@ -469,62 +395,6 @@ describe('operationToPatches', () => {
           "path": [
             {
               "_key": "1f2e64b47787",
-            },
-          ],
-          "type": "unset",
-        },
-      ]
-    `)
-  })
-
-  it('produce correct merge node patch', () => {
-    const val = createDefaultValue()
-    ;(val[0] as PortableTextTextBlock).children.push({
-      _type: 'span',
-      _key: 'r4wr323432',
-      text: '1234',
-      marks: [],
-    })
-    const block = editor.children[0] as PortableTextTextBlock
-    block.children = block.children.splice(0, 3)
-    block.children[2]!.text = '1234'
-    editor.onChange()
-    expect(
-      mergeNodePatch(
-        schema,
-        editor.children,
-        {
-          type: 'merge_node',
-          path: [0, 3],
-          position: 2,
-          properties: {text: '1234'},
-        },
-        val,
-      ),
-    ).toMatchInlineSnapshot(`
-      [
-        {
-          "path": [
-            {
-              "_key": "1f2e64b47787",
-            },
-            "children",
-            {
-              "_key": "fd9b4a4e6c0b",
-            },
-            "text",
-          ],
-          "type": "set",
-          "value": "1234",
-        },
-        {
-          "path": [
-            {
-              "_key": "1f2e64b47787",
-            },
-            "children",
-            {
-              "_key": "r4wr323432",
             },
           ],
           "type": "unset",
@@ -555,7 +425,7 @@ describe('defensive setIfMissing patches', () => {
             marks: [],
           },
         },
-        createDefaultValue(),
+        createDefaultChildren(),
       )
 
       expect(patches).toEqual([
@@ -583,12 +453,10 @@ describe('defensive setIfMissing patches', () => {
           node: {
             _type: 'someObject',
             _key: 'new-object',
-            value: {title: 'New Object'},
-            __inline: true,
-            children: [{_key: '1', _type: 'span', text: '', marks: []}],
+            title: 'New Object',
           },
         },
-        createDefaultValue(),
+        createDefaultChildren(),
       )
 
       expect(patches).toEqual([
@@ -604,100 +472,6 @@ describe('defensive setIfMissing patches', () => {
           ],
           path: [{_key: '1f2e64b47787'}, 'children', {_key: 'fd9b4a4e6c0b'}],
           position: 'after',
-        },
-      ])
-    })
-  })
-
-  describe(splitNodePatch.name, () => {
-    test('includes setIfMissing before inserting spans after split', () => {
-      const patches = splitNodePatch(
-        schema,
-        editor.children,
-        {
-          type: 'split_node',
-          path: [0, 0],
-          position: 0,
-          properties: {_type: 'span', _key: 'c130395c640c', marks: []},
-        },
-        createDefaultValue(),
-      )
-
-      expect(patches).toEqual([
-        {
-          type: 'setIfMissing',
-          path: [{_key: '1f2e64b47787'}, 'children'],
-          value: [],
-        },
-        {
-          type: 'insert',
-          items: [
-            {
-              _key: '773866318fa8',
-              _type: 'someObject',
-              title: 'The Object',
-            },
-          ],
-          path: [{_key: '1f2e64b47787'}, 'children', {_key: 'c130395c640c'}],
-          position: 'after',
-        },
-        {
-          type: 'set',
-          path: [
-            {_key: '1f2e64b47787'},
-            'children',
-            {_key: 'c130395c640c'},
-            'text',
-          ],
-          value: '',
-        },
-      ])
-    })
-  })
-
-  describe(moveNodePatch.name, () => {
-    test('includes setIfMissing before inserting child after move', () => {
-      const twoBlockValue = [
-        {
-          _type: 'block',
-          _key: 'block1',
-          style: 'normal',
-          markDefs: [],
-          children: [
-            {_type: 'span', _key: 'span1', text: 'first', marks: []},
-            {_type: 'span', _key: 'span2', text: 'second', marks: []},
-          ],
-        },
-        {
-          _type: 'block',
-          _key: 'block2',
-          style: 'normal',
-          markDefs: [],
-          children: [{_type: 'span', _key: 'span3', text: 'third', marks: []}],
-        },
-      ]
-
-      const patches = moveNodePatch(schema, twoBlockValue, {
-        type: 'move_node',
-        path: [0, 1],
-        newPath: [1, 0],
-      })
-
-      expect(patches).toEqual([
-        {
-          type: 'unset',
-          path: [{_key: 'block1'}, 'children', {_key: 'span2'}],
-        },
-        {
-          type: 'setIfMissing',
-          path: [{_key: 'block2'}, 'children'],
-          value: [],
-        },
-        {
-          type: 'insert',
-          items: [{_type: 'span', _key: 'span2', text: 'second', marks: []}],
-          path: [{_key: 'block2'}, 'children', {_key: 'span3'}],
-          position: 'before',
         },
       ])
     })

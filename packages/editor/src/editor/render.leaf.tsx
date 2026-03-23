@@ -1,7 +1,7 @@
+import type {PortableTextSpan} from '@portabletext/schema'
 import {useSelector} from '@xstate/react'
 import {useContext, type CSSProperties} from 'react'
-import type {Text} from '../slate'
-import type {RenderLeafProps} from '../slate-react'
+import type {RenderLeafProps} from '../slate/react/components/editable'
 import type {
   RangeDecoration,
   RenderAnnotationFunction,
@@ -22,7 +22,10 @@ const PLACEHOLDER_STYLE: CSSProperties = {
 
 export function RenderLeaf(
   props: RenderLeafProps & {
-    leaf: Text & {placeholder?: boolean; rangeDecorations?: RangeDecoration[]}
+    leaf: PortableTextSpan & {
+      placeholder?: boolean
+      rangeDecorations?: RangeDecoration[]
+    }
     readOnly: boolean
     renderAnnotation?: RenderAnnotationFunction
     renderChild?: RenderChildFunction

@@ -35,6 +35,7 @@ export default defineConfig({
         __dirname,
         '../../packages/keyboard-shortcuts/src',
       ),
+      '@portabletext/html': path.resolve(__dirname, '../../packages/html/src'),
       '@portabletext/markdown': path.resolve(
         __dirname,
         '../../packages/markdown/src',
@@ -78,10 +79,6 @@ export default defineConfig({
       '@portabletext/schema': path.resolve(
         __dirname,
         '../../packages/schema/src',
-      ),
-      '@portabletext/sanity-bridge': path.resolve(
-        __dirname,
-        '../../packages/sanity-bridge/src',
       ),
     },
   },

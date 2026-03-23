@@ -1,8 +1,10 @@
 import {isTextBlock} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
 import {isSelectionExpanded} from '../selectors'
+import {getFocusInlineObject} from '../selectors/selector.get-focus-inline-object'
 import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
 import {getLastBlock} from '../selectors/selector.get-last-block'
+import {isSelectionCollapsed} from '../selectors/selector.is-selection-collapsed'
 import {getBlockEndPoint} from '../utils/util.get-block-end-point'
 import {getBlockStartPoint} from '../utils/util.get-block-start-point'
 import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
@@ -638,6 +640,19 @@ export const abstractInsertBehaviors = [
           },
         }),
       ],
+    ],
+  }),
+
+  /**
+   * When the selection is on an inline object, move the selection past it
+   * before inserting text.
+   */
+  defineBehavior({
+    on: 'insert.text',
+    guard: ({snapshot}) =>
+      isSelectionCollapsed(snapshot) && getFocusInlineObject(snapshot),
+    actions: [
+      ({event}) => [raise({type: 'move.forward', distance: 1}), raise(event)],
     ],
   }),
 

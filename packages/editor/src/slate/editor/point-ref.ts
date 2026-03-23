@@ -1,25 +1,27 @@
-import {Editor, type EditorInterface} from '../interfaces/editor'
+import type {Editor} from '../interfaces/editor'
+import type {Point} from '../interfaces/point'
 import type {PointRef} from '../interfaces/point-ref'
+import type {TextDirection} from '../types/types'
 
-export const pointRef: EditorInterface['pointRef'] = (
-  editor,
-  point,
-  options = {},
-) => {
+export function pointRef(
+  editor: Editor,
+  point: Point,
+  options: {affinity?: TextDirection | null} = {},
+): PointRef {
   const {affinity = 'forward'} = options
   const ref: PointRef = {
     current: point,
     affinity,
     unref() {
       const {current} = ref
-      const pointRefs = Editor.pointRefs(editor)
+      const pointRefs = editor.pointRefs
       pointRefs.delete(ref)
       ref.current = null
       return current
     },
   }
 
-  const refs = Editor.pointRefs(editor)
+  const refs = editor.pointRefs
   refs.add(ref)
   return ref
 }

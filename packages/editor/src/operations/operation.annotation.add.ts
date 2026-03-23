@@ -1,5 +1,23 @@
+import {isSpan, isTextBlock} from '@portabletext/schema'
+import {applySelect} from '../internal-utils/apply-selection'
+import {applySetNode} from '../internal-utils/apply-set-node'
+import {applySplitNode} from '../internal-utils/apply-split-node'
+import {safeStringify} from '../internal-utils/safe-json'
 import {toSlateRange} from '../internal-utils/to-slate-range'
-import {Editor, Node, Range, Text, Transforms} from '../slate'
+import {isEdge} from '../slate/editor/is-edge'
+import {isEnd} from '../slate/editor/is-end'
+import {isStart} from '../slate/editor/is-start'
+import {leaf} from '../slate/editor/leaf'
+import {node as editorNode} from '../slate/editor/node'
+import {nodes} from '../slate/editor/nodes'
+import {rangeRef} from '../slate/editor/range-ref'
+import {extractProps} from '../slate/node/extract-props'
+import {getChildren} from '../slate/node/get-children'
+import {isBackwardRange} from '../slate/range/is-backward-range'
+import {isCollapsedRange} from '../slate/range/is-collapsed-range'
+import {isRange} from '../slate/range/is-range'
+import {rangeEdges} from '../slate/range/range-edges'
+import {rangeIncludes} from '../slate/range/range-includes'
 import {parseAnnotation} from '../utils/parse-blocks'
 import type {OperationImplementation} from './operation.types'
 
@@ -18,7 +36,7 @@ export const addAnnotationOperationImplementation: OperationImplementation<
 
   if (!parsedAnnotation) {
     throw new Error(
-      `Failed to parse annotation ${JSON.stringify(operation.annotation)}`,
+      `Failed to parse annotation ${safeStringify(operation.annotation)}`,
     )
   }
 
@@ -28,7 +46,7 @@ export const addAnnotationOperationImplementation: OperationImplementation<
     ? toSlateRange({
         context: {
           schema: context.schema,
-          value: operation.editor.value,
+          value: operation.editor.children,
           selection: operation.at,
         },
         blockIndexMap: operation.editor.blockIndexMap,
@@ -37,17 +55,17 @@ export const addAnnotationOperationImplementation: OperationImplementation<
 
   const effectiveSelection = at ?? editor.selection
 
-  if (!effectiveSelection || Range.isCollapsed(effectiveSelection)) {
+  if (!effectiveSelection || isCollapsedRange(effectiveSelection)) {
     return
   }
 
   // Track the range across mutations when `at` is explicitly provided
-  const rangeRef = at ? Editor.rangeRef(editor, at, {affinity: 'inward'}) : null
+  const ref = at ? rangeRef(editor, at, {affinity: 'inward'}) : null
 
-  const selectedBlocks = Editor.nodes(editor, {
+  const selectedBlocks = nodes(editor, {
     at: effectiveSelection,
-    match: (node) => editor.isTextBlock(node),
-    reverse: Range.isBackward(effectiveSelection),
+    match: (node) => isTextBlock({schema: editor.schema}, node),
+    reverse: isBackwardRange(effectiveSelection),
   })
 
   let blockIndex = 0
@@ -71,7 +89,7 @@ export const addAnnotationOperationImplementation: OperationImplementation<
     )
 
     if (existingMarkDef === undefined) {
-      Transforms.setNodes(
+      applySetNode(
         editor,
         {
           markDefs: [
@@ -82,46 +100,75 @@ export const addAnnotationOperationImplementation: OperationImplementation<
             },
           ],
         },
-        {at: blockPath},
+        blockPath,
       )
     }
 
-    // When `at` is explicitly provided, use it for the split
-    // Otherwise, use the editor's current selection (original behavior)
-    if (at) {
-      Transforms.setNodes(editor, {}, {match: Text.isText, split: true, at})
-    } else {
-      Transforms.setNodes(editor, {}, {match: Text.isText, split: true})
+    // Split text nodes at range boundaries
+    const splitRange = at ?? editor.selection
+    if (splitRange && isRange(splitRange)) {
+      const [splitLeaf] = leaf(editor, splitRange.anchor)
+      if (
+        !(
+          isCollapsedRange(splitRange) &&
+          isSpan({schema: editor.schema}, splitLeaf) &&
+          splitLeaf.text.length > 0
+        )
+      ) {
+        const splitRangeRef = rangeRef(editor, splitRange, {
+          affinity: 'inward',
+        })
+        const [splitStart, splitEnd] = rangeEdges(splitRange)
+        const endAtEnd = isEnd(editor, splitEnd, splitEnd.path)
+        if (!endAtEnd || !isEdge(editor, splitEnd, splitEnd.path)) {
+          const [endNode] = editorNode(editor, splitEnd.path)
+          applySplitNode(
+            editor,
+            splitEnd.path,
+            splitEnd.offset,
+            extractProps(endNode, editor.schema),
+          )
+        }
+        const startAtStart = isStart(editor, splitStart, splitStart.path)
+        if (!startAtStart || !isEdge(editor, splitStart, splitStart.path)) {
+          const [startNode] = editorNode(editor, splitStart.path)
+          applySplitNode(
+            editor,
+            splitStart.path,
+            splitStart.offset,
+            extractProps(startNode, editor.schema),
+          )
+        }
+        // Update selection if using editor.selection (not explicit `at`)
+        const updatedSplitRange = splitRangeRef.unref()
+        if (!at && updatedSplitRange) {
+          applySelect(editor, updatedSplitRange)
+        }
+      }
     }
 
-    const children = Node.children(editor, blockPath)
+    const children = getChildren(editor, blockPath, editor.schema)
 
     // Use the tracked range (updated after splits) or fall back to editor.selection
-    const selectionRange = rangeRef?.current ?? editor.selection
+    const selectionRange = ref?.current ?? editor.selection
 
     for (const [span, path] of children) {
-      if (!editor.isTextSpan(span)) {
+      if (!isSpan({schema: editor.schema}, span)) {
         continue
       }
 
-      if (!selectionRange || !Range.includes(selectionRange, path)) {
+      if (!selectionRange || !rangeIncludes(selectionRange, path)) {
         continue
       }
 
       const marks = span.marks ?? []
 
-      Transforms.setNodes(
-        editor,
-        {
-          marks: [...marks, annotationKey],
-        },
-        {at: path},
-      )
+      applySetNode(editor, {marks: [...marks, annotationKey]}, path)
     }
 
     blockIndex++
   }
 
   // Clean up the range ref
-  rangeRef?.unref()
+  ref?.unref()
 }

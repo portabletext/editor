@@ -1,15 +1,28 @@
-import {Editor, type EditorInterface} from '../interfaces/editor'
-import type {BasePoint} from '../interfaces/point'
+import type {Editor} from '../interfaces/editor'
+import type {Location} from '../interfaces/location'
+import type {Point} from '../interfaces/point'
+import type {TextUnitAdjustment} from '../types/types'
+import {point} from './point'
+import {positions} from './positions'
+import {start} from './start'
 
-export const before: EditorInterface['before'] = (editor, at, options = {}) => {
-  const anchor = Editor.start(editor, [])
-  const focus = Editor.point(editor, at, {edge: 'start'})
+export function before(
+  editor: Editor,
+  at: Location,
+  options: {
+    distance?: number
+    unit?: TextUnitAdjustment
+    includeObjectNodes?: boolean
+  } = {},
+): Point | undefined {
+  const anchor = start(editor, [])
+  const focus = point(editor, at, {edge: 'start'})
   const range = {anchor, focus}
   const {distance = 1} = options
   let d = 0
-  let target: BasePoint | undefined
+  let target: Point | undefined
 
-  for (const p of Editor.positions(editor, {
+  for (const p of positions(editor, {
     ...options,
     at: range,
     reverse: true,

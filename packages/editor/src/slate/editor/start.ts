@@ -1,5 +1,8 @@
-import {Editor, type EditorInterface} from '../interfaces/editor'
+import type {Editor} from '../interfaces/editor'
+import type {Location} from '../interfaces/location'
+import type {Point} from '../interfaces/point'
+import {point} from './point'
 
-export const start: EditorInterface['start'] = (editor, at) => {
-  return Editor.point(editor, at, {edge: 'start'})
+export function start(editor: Editor, at: Location): Point {
+  return point(editor, at, {edge: 'start'})
 }

@@ -43,4 +43,144 @@ describe(compileSchema.name, () => {
       })
     })
   })
+
+  describe('field of', () => {
+    test('of with object type is preserved on array fields', () => {
+      expect(
+        compileSchema({
+          blockObjects: [
+            {
+              name: 'gallery',
+              fields: [
+                {
+                  name: 'images',
+                  type: 'array',
+                  of: [
+                    {
+                      type: 'galleryImage',
+                      name: 'galleryImage',
+                      fields: [{name: 'alt', type: 'string'}],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        }).blockObjects,
+      ).toEqual([
+        {
+          name: 'gallery',
+          fields: [
+            {
+              name: 'images',
+              type: 'array',
+              of: [
+                {
+                  type: 'galleryImage',
+                  name: 'galleryImage',
+                  fields: [{name: 'alt', type: 'string'}],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+    })
+
+    test('of with block type preserves PTE sub-schema', () => {
+      expect(
+        compileSchema({
+          blockObjects: [
+            {
+              name: 'tableCell',
+              fields: [
+                {
+                  name: 'content',
+                  type: 'array',
+                  of: [
+                    {
+                      type: 'block',
+                      styles: [{name: 'normal'}, {name: 'h1'}],
+                      decorators: [{name: 'strong'}],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        }).blockObjects,
+      ).toEqual([
+        {
+          name: 'tableCell',
+          fields: [
+            {
+              name: 'content',
+              type: 'array',
+              of: [
+                {
+                  type: 'block',
+                  styles: [{name: 'normal'}, {name: 'h1'}],
+                  decorators: [{name: 'strong'}],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+    })
+
+    test('table schema: blockObjects with of containing block type', () => {
+      const schema = compileSchema({
+        blockObjects: [
+          {
+            name: 'table',
+            fields: [
+              {
+                name: 'rows',
+                type: 'array',
+                of: [
+                  {
+                    type: 'tableRow',
+                    name: 'tableRow',
+                    fields: [
+                      {
+                        name: 'cells',
+                        type: 'array',
+                        of: [{type: 'tableCell', name: 'tableCell'}],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      })
+
+      expect(schema.blockObjects).toEqual([
+        {
+          name: 'table',
+          fields: [
+            {
+              name: 'rows',
+              type: 'array',
+              of: [
+                {
+                  type: 'tableRow',
+                  name: 'tableRow',
+                  fields: [
+                    {
+                      name: 'cells',
+                      type: 'array',
+                      of: [{type: 'tableCell', name: 'tableCell'}],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+    })
+  })
 })

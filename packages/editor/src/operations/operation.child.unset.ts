@@ -1,6 +1,8 @@
-import {applyAll} from '@portabletext/patches'
-import {isTextBlock} from '@portabletext/schema'
-import {Editor, Element, Transforms} from '../slate'
+import {isSpan, isTextBlock} from '@portabletext/schema'
+import {applySetNode} from '../internal-utils/apply-set-node'
+import {safeStringify} from '../internal-utils/safe-json'
+import {node as editorNode} from '../slate/editor/node'
+import {isObjectNode} from '../slate/node/is-object-node'
 import type {OperationImplementation} from './operation.types'
 
 export const childUnsetOperationImplementation: OperationImplementation<
@@ -14,21 +16,23 @@ export const childUnsetOperationImplementation: OperationImplementation<
   }
 
   const block =
-    blockIndex !== undefined ? operation.editor.value.at(blockIndex) : undefined
+    blockIndex !== undefined
+      ? operation.editor.children.at(blockIndex)
+      : undefined
 
   if (!block) {
-    throw new Error(`Unable to find block at ${JSON.stringify(operation.at)}`)
+    throw new Error(`Unable to find block at ${safeStringify(operation.at)}`)
   }
 
   if (!isTextBlock(context, block)) {
-    throw new Error(`Block ${JSON.stringify(blockKey)} is not a text block`)
+    throw new Error(`Block ${safeStringify(blockKey)} is not a text block`)
   }
 
   const childKey = operation.at[2]._key
 
   if (!childKey) {
     throw new Error(
-      `Unable to find child key at ${JSON.stringify(operation.at)}`,
+      `Unable to find child key at ${safeStringify(operation.at)}`,
     )
   }
 
@@ -37,20 +41,20 @@ export const childUnsetOperationImplementation: OperationImplementation<
   )
 
   if (childIndex === -1) {
-    throw new Error(`Unable to find child at ${JSON.stringify(operation.at)}`)
+    throw new Error(`Unable to find child at ${safeStringify(operation.at)}`)
   }
 
-  const childEntry = Editor.node(operation.editor, [blockIndex, childIndex], {
+  const childEntry = editorNode(operation.editor, [blockIndex, childIndex], {
     depth: 2,
   })
   const child = childEntry?.[0]
   const childPath = childEntry?.[1]
 
   if (!child || !childPath) {
-    throw new Error(`Unable to find child at ${JSON.stringify(operation.at)}`)
+    throw new Error(`Unable to find child at ${safeStringify(operation.at)}`)
   }
 
-  if (operation.editor.isTextSpan(child)) {
+  if (isSpan({schema: operation.editor.schema}, child)) {
     const newNode: Record<string, unknown> = {}
 
     for (const prop of operation.props) {
@@ -72,7 +76,7 @@ export const childUnsetOperationImplementation: OperationImplementation<
       newNode[prop] = null
     }
 
-    Transforms.setNodes(operation.editor, newNode, {at: childPath})
+    applySetNode(operation.editor, newNode, childPath)
 
     if (operation.props.includes('text')) {
       operation.editor.apply({
@@ -86,31 +90,24 @@ export const childUnsetOperationImplementation: OperationImplementation<
     return
   }
 
-  if (Element.isElement(child)) {
-    const value =
-      'value' in child && typeof child.value === 'object' ? child.value : {}
-    const patches = operation.props.map((prop) => ({
-      type: 'unset' as const,
-      path: [prop],
-    }))
-    const newValue = applyAll(value, patches)
-
-    Transforms.setNodes(
-      operation.editor,
-      {
-        ...child,
-        _key: operation.props.includes('_key')
-          ? context.keyGenerator()
-          : child._key,
-        value: newValue,
-      },
-      {at: childPath},
-    )
+  if (isObjectNode({schema: operation.editor.schema}, child)) {
+    const unsetProps: Record<string, unknown> = {}
+    for (const prop of operation.props) {
+      if (prop === '_type') {
+        continue
+      }
+      if (prop === '_key') {
+        unsetProps['_key'] = context.keyGenerator()
+      } else {
+        unsetProps[prop] = null
+      }
+    }
+    applySetNode(operation.editor, unsetProps, childPath)
 
     return
   }
 
   throw new Error(
-    `Unable to determine the type of child at ${JSON.stringify(operation.at)}`,
+    `Unable to determine the type of child at ${safeStringify(operation.at)}`,
   )
 }

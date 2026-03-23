@@ -4,11 +4,11 @@ import {describe, expect, test, vi} from 'vitest'
 import {defineSchema} from '../src'
 import {execute, raise} from '../src/behaviors/behavior.types.action'
 import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
-import {getTextMarks} from '../src/internal-utils/text-marks'
-import {getTextSelection} from '../src/internal-utils/text-selection'
 import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
 import {isActiveAnnotation} from '../src/selectors/selector.is-active-annotation'
 import {createTestEditor} from '../src/test/vitest'
+import {getTextMarks} from '../test-utils/text-marks'
+import {getTextSelection} from '../test-utils/text-selection'
 
 /**
  * By default, annotations of the same type cannot overlap.

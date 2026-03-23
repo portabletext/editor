@@ -9,14 +9,14 @@ import {
   type BehaviorEvent,
 } from '../src/behaviors'
 import type {EditorEmittedEvent} from '../src/editor/relay-machine'
-import {
-  getSelectionAfterText,
-  getSelectionBeforeText,
-} from '../src/internal-utils/text-selection'
 import {BehaviorPlugin, EventListenerPlugin} from '../src/plugins'
 import {getFocusTextBlock} from '../src/selectors'
 import {createTestEditor} from '../src/test/vitest'
 import {getBlockStartPoint} from '../src/utils'
+import {
+  getSelectionAfterText,
+  getSelectionBeforeText,
+} from '../test-utils/text-selection'
 
 describe('event.select', () => {
   test('Scenario: Arrow navigation causes `select` event', async () => {

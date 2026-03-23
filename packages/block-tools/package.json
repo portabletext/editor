@@ -1,7 +1,7 @@
 {
   "name": "@portabletext/block-tools",
-  "version": "5.0.3",
-  "description": "Convert HTML to Portable Text with built-in support for Google Docs, Word, and Notion",
+  "version": "5.1.1",
+  "description": "Sanity-flavored HTML to Portable Text conversion (wraps @portabletext/html)",
   "keywords": [
     "portable-text",
     "block-tools"
@@ -50,20 +50,19 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@portabletext/html": "workspace:^",
     "@portabletext/sanity-bridge": "workspace:^",
     "@portabletext/schema": "workspace:^",
-    "@sanity/types": "^5.9.0"
+    "@sanity/types": "^5.13.0"
   },
   "devDependencies": {
-    "@portabletext/test": "workspace:^",
     "@sanity/pkg-utils": "^10.2.1",
-    "@sanity/schema": "^5.9.0",
+    "@sanity/schema": "^5.13.0",
     "@types/jsdom": "^27.0.0",
-    "@vercel/stega": "1.0.0",
-    "@vitest/coverage-v8": "^4.0.18",
+    "@vitest/coverage-v8": "^4.1.0",
     "jsdom": "^27.0.0",
     "typescript": "catalog:",
-    "vitest": "^4.0.18"
+    "vitest": "^4.1.0"
   },
   "engines": {
     "node": ">=20.19 <22 || >=22.12"

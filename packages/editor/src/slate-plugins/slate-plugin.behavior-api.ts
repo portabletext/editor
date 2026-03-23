@@ -3,194 +3,14 @@ import {
   slatePointToSelectionPoint,
   slateRangeToSelection,
 } from '../internal-utils/slate-utils'
-import {Editor, Node, Point, Range, Text} from '../slate'
+import {range as editorRange} from '../slate/editor/range'
+import type {Editor} from '../slate/interfaces/editor'
+import {pointEquals} from '../slate/point/point-equals'
+import {isBackwardRange} from '../slate/range/is-backward-range'
 
 export function createBehaviorApiPlugin(editorActor: EditorActor) {
   return function behaviorApiPlugin(editor: Editor) {
-    const {delete: editorDelete, insertNodes, select, setSelection} = editor
-
-    editor.delete = (options) => {
-      if (editor.isNormalizingNode || editor.isPerformingBehaviorOperation) {
-        editorDelete(options)
-        return
-      }
-
-      const range = options?.at ? Editor.range(editor, options.at) : undefined
-      const selection = range
-        ? slateRangeToSelection({
-            schema: editorActor.getSnapshot().context.schema,
-            editor,
-            range,
-          })
-        : undefined
-
-      if (selection) {
-        editorActor.send({
-          type: 'behavior event',
-          behaviorEvent: {
-            type: 'delete',
-            at: selection,
-            direction: options?.reverse ? 'backward' : 'forward',
-            unit: options?.unit,
-          },
-          editor,
-        })
-      } else {
-        editorActor.send({
-          type: 'behavior event',
-          behaviorEvent: {
-            type: 'delete',
-            direction: options?.reverse ? 'backward' : 'forward',
-            unit: options?.unit,
-          },
-          editor,
-        })
-      }
-    }
-
-    editor.deleteBackward = (unit) => {
-      if (editor.isNormalizingNode || editor.isPerformingBehaviorOperation) {
-        console.error('Unexpected call to .deleteBackward(...)')
-        return
-      }
-
-      editorActor.send({
-        type: 'behavior event',
-        behaviorEvent: {
-          type: 'delete.backward',
-          unit,
-        },
-        editor,
-      })
-      return
-    }
-
-    editor.deleteForward = (unit) => {
-      if (editor.isNormalizingNode || editor.isPerformingBehaviorOperation) {
-        console.error('Unexpected call to .deleteForward(...)')
-        return
-      }
-
-      editorActor.send({
-        type: 'behavior event',
-        behaviorEvent: {
-          type: 'delete.forward',
-          unit,
-        },
-        editor,
-      })
-      return
-    }
-
-    editor.insertBreak = () => {
-      if (editor.isNormalizingNode || editor.isPerformingBehaviorOperation) {
-        console.error('Unexpected call to .insertBreak(...)')
-        return
-      }
-
-      editorActor.send({
-        type: 'behavior event',
-        behaviorEvent: {
-          type: 'insert.break',
-        },
-        editor,
-      })
-      return
-    }
-
-    editor.insertData = (dataTransfer) => {
-      if (editor.isNormalizingNode || editor.isPerformingBehaviorOperation) {
-        console.error('Unexpected call to .insertData(...)')
-        return
-      }
-
-      editorActor.send({
-        type: 'behavior event',
-        behaviorEvent: {
-          type: 'input.*',
-          originEvent: {
-            dataTransfer,
-          },
-        },
-        editor,
-      })
-    }
-
-    editor.insertNodes = (nodes, options) => {
-      if (editor.isNormalizingNode) {
-        const normalizedNodes = (Node.isNode(nodes) ? [nodes] : nodes).map(
-          (node) => {
-            if (!Text.isText(node)) {
-              return node
-            }
-
-            if (typeof node._type !== 'string') {
-              return {
-                ...(node as Node),
-                _type: editorActor.getSnapshot().context.schema.span.name,
-              }
-            }
-
-            return node
-          },
-        ) as Array<Node>
-
-        insertNodes(normalizedNodes, options)
-
-        return
-      }
-
-      insertNodes(nodes, options)
-    }
-
-    editor.insertSoftBreak = () => {
-      if (editor.isNormalizingNode || editor.isPerformingBehaviorOperation) {
-        console.error('Unexpected call to .insertSoftBreak(...)')
-        return
-      }
-
-      editorActor.send({
-        type: 'behavior event',
-        behaviorEvent: {
-          type: 'insert.soft break',
-        },
-        editor,
-      })
-      return
-    }
-
-    editor.insertText = (text) => {
-      if (editor.isNormalizingNode || editor.isPerformingBehaviorOperation) {
-        console.error('Unexpected call to .insertText(...)')
-        return
-      }
-
-      editorActor.send({
-        type: 'behavior event',
-        behaviorEvent: {
-          type: 'insert.text',
-          text,
-        },
-        editor,
-      })
-      return
-    }
-
-    editor.redo = () => {
-      if (editor.isNormalizingNode || editor.isPerformingBehaviorOperation) {
-        console.error('Unexpected call to .redo(...)')
-        return
-      }
-
-      editorActor.send({
-        type: 'behavior event',
-        behaviorEvent: {
-          type: 'history.redo',
-        },
-        editor,
-      })
-      return
-    }
+    const {select, setSelection} = editor
 
     editor.select = (location) => {
       if (editor.isNormalizingNode || editor.isPerformingBehaviorOperation) {
@@ -203,7 +23,7 @@ export function createBehaviorApiPlugin(editorActor: EditorActor) {
         return
       }
 
-      const range = Editor.range(editor, location)
+      const range = editorRange(editor, location)
 
       editorActor.send({
         type: 'behavior event',
@@ -243,12 +63,12 @@ export function createBehaviorApiPlugin(editorActor: EditorActor) {
         : undefined
 
       const backward = editor.selection
-        ? Range.isBackward({
+        ? isBackwardRange({
             anchor: partialRange.anchor ?? editor.selection.anchor,
             focus: partialRange.focus ?? editor.selection.focus,
           })
         : partialRange.anchor && partialRange.focus
-          ? Range.isBackward({
+          ? isBackwardRange({
               anchor: partialRange.anchor,
               focus: partialRange.focus,
             })
@@ -259,8 +79,8 @@ export function createBehaviorApiPlugin(editorActor: EditorActor) {
         const newFocus = partialRange.focus ?? editor.selection.focus
 
         if (
-          Point.equals(newAnchor, editor.selection.anchor) &&
-          Point.equals(newFocus, editor.selection.focus)
+          pointEquals(newAnchor, editor.selection.anchor) &&
+          pointEquals(newFocus, editor.selection.focus)
         ) {
           // To avoid double `select` events, we call `setSelection` directly
           // if the selection wouldn't actually change.
@@ -286,27 +106,6 @@ export function createBehaviorApiPlugin(editorActor: EditorActor) {
             focus,
             backward,
           },
-        },
-        editor,
-      })
-      return
-    }
-
-    editor.setFragmentData = () => {
-      console.error('Unexpected call to .setFragmentData(...)')
-      return
-    }
-
-    editor.undo = () => {
-      if (editor.isNormalizingNode || editor.isPerformingBehaviorOperation) {
-        console.error('Unexpected call to .undo(...)')
-        return
-      }
-
-      editorActor.send({
-        type: 'behavior event',
-        behaviorEvent: {
-          type: 'history.undo',
         },
         editor,
       })

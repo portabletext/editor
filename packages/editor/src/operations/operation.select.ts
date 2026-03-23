@@ -1,6 +1,5 @@
+import {applyDeselect, applySelect} from '../internal-utils/apply-selection'
 import {toSlateRange} from '../internal-utils/to-slate-range'
-import {Transforms} from '../slate'
-import {IS_FOCUSED, IS_READ_ONLY} from '../slate-dom'
 import type {OperationImplementation} from './operation.types'
 
 export const selectOperationImplementation: OperationImplementation<
@@ -9,19 +8,19 @@ export const selectOperationImplementation: OperationImplementation<
   const newSelection = toSlateRange({
     context: {
       schema: context.schema,
-      value: operation.editor.value,
+      value: operation.editor.children,
       selection: operation.at,
     },
     blockIndexMap: operation.editor.blockIndexMap,
   })
 
   if (newSelection) {
-    Transforms.select(operation.editor, newSelection)
+    applySelect(operation.editor, newSelection)
   } else {
-    Transforms.deselect(operation.editor)
+    applyDeselect(operation.editor)
   }
 
-  if (IS_FOCUSED.get(operation.editor) && IS_READ_ONLY.get(operation.editor)) {
-    IS_FOCUSED.set(operation.editor, false)
+  if (operation.editor.focused && operation.editor.readOnly) {
+    operation.editor.focused = false
   }
 }

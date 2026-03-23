@@ -1,8 +1,13 @@
 import {defineSchema} from '@portabletext/schema'
-import {getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
-import {execute, forward, raise} from '../src/behaviors/behavior.types.action'
+import {
+  effect,
+  execute,
+  forward,
+  raise,
+} from '../src/behaviors/behavior.types.action'
 import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
 import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
 import {getFirstBlock, getFocusBlock} from '../src/selectors'
@@ -609,6 +614,140 @@ describe('event.history.undo', () => {
     })
   })
 
+  test('Scenario: Forwarding `insert.text` preserves undo batching', async () => {
+    const {editor, locator} = await createTestEditor({
+      children: (
+        <BehaviorPlugin
+          behaviors={[
+            defineBehavior({
+              on: 'insert.text',
+              guard: ({snapshot}) => {
+                const focusBlock = getFocusBlock(snapshot)
+
+                if (!focusBlock) {
+                  return false
+                }
+
+                return {focusBlock}
+              },
+              actions: [({event}) => [forward(event)], () => []],
+            }),
+          ]}
+        />
+      ),
+    })
+
+    await userEvent.type(locator, 'hello')
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['hello'])
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
+    })
+  })
+
+  test('Scenario: Forwarding `insert.text` with side effect preserves undo batching', async () => {
+    const sideEffectLog: Array<string> = []
+
+    const {editor, locator} = await createTestEditor({
+      children: (
+        <BehaviorPlugin
+          behaviors={[
+            defineBehavior({
+              on: 'insert.text',
+              guard: ({snapshot}) => {
+                const focusBlock = getFocusBlock(snapshot)
+
+                if (!focusBlock) {
+                  return false
+                }
+
+                return {focusBlock}
+              },
+              actions: [
+                ({event}) => [forward(event)],
+                () => [
+                  effect(() => {
+                    sideEffectLog.push('observed')
+                  }),
+                ],
+              ],
+            }),
+          ]}
+        />
+      ),
+    })
+
+    await userEvent.type(locator, 'hello')
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['hello'])
+      expect(sideEffectLog).toHaveLength(5)
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
+    })
+  })
+
+  test('Scenario: Forwarding `insert.text` with `raise` preserves undo batching', async () => {
+    const {editor, locator} = await createTestEditor({
+      children: (
+        <BehaviorPlugin
+          behaviors={[
+            defineBehavior({
+              on: 'insert.text',
+              guard: ({event, snapshot}) => {
+                if (event.text === '!') {
+                  return false
+                }
+
+                const focusBlock = getFocusBlock(snapshot)
+
+                if (!focusBlock) {
+                  return false
+                }
+
+                return {focusBlock}
+              },
+              actions: [
+                ({event}) => [forward(event)],
+                () => [raise({type: 'insert.text', text: '!'})],
+              ],
+            }),
+          ]}
+        />
+      ),
+    })
+
+    await userEvent.type(locator, 'hi')
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['h!i!'])
+    })
+
+    // First undo reverts the second raise ('!' after 'i')
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['h!i'])
+    })
+
+    // Second undo reverts the forwarded 'i' and the first raise ('!' after 'h')
+    // These merge because the raise's insert_text is adjacent to the forward's
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['h'])
+    })
+  })
+
   test('Scenario: Undo after sending `select` after ended Behavior', async () => {
     const {editor, locator} = await createTestEditor({
       children: (
@@ -667,6 +806,129 @@ describe('event.history.undo', () => {
 
     await vi.waitFor(() => {
       expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
+    })
+  })
+
+  test('Scenario: Undoing decorator add across a range', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const spanKey = keyGenerator()
+    const blockKey = keyGenerator()
+    const initialValue = [
+      {
+        _type: 'block',
+        _key: blockKey,
+        children: [{_type: 'span', _key: spanKey, text: 'foobar', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ]
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({decorators: [{name: 'strong'}]}),
+      initialValue,
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(initialValue)
+    })
+
+    // Select "oob" (offset 1 to 4)
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 1,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 4,
+        },
+      },
+    })
+
+    editor.send({
+      type: 'decorator.add',
+      decorator: 'strong',
+    })
+
+    // After adding: "f" + "oob" (strong) + "ar" — three spans
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['f,oob,ar'])
+    })
+
+    editor.send({type: 'history.undo'})
+
+    // After undo: back to original value
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(initialValue)
+    })
+  })
+
+  test('Scenario: Undoing annotation add across a range', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const spanKey = keyGenerator()
+    const blockKey = keyGenerator()
+    const initialValue = [
+      {
+        _type: 'block',
+        _key: blockKey,
+        children: [{_type: 'span', _key: spanKey, text: 'foobar', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ]
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        decorators: [{name: 'strong'}],
+        annotations: [{name: 'link'}],
+      }),
+      initialValue,
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(initialValue)
+    })
+
+    // Select "oob" (offset 1 to 4)
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 1,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 4,
+        },
+      },
+    })
+
+    const annotationKey = keyGenerator()
+
+    editor.send({
+      type: 'annotation.add',
+      annotation: {
+        name: 'link',
+        _key: annotationKey,
+        value: {href: 'https://example.com'},
+      },
+    })
+
+    // After adding: "f" + "oob" (link) + "ar" — three spans
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['f,oob,ar'])
+    })
+
+    editor.send({type: 'history.undo'})
+
+    // After undo: back to original value
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(initialValue)
     })
   })
 })

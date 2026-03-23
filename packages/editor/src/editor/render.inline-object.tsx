@@ -1,11 +1,11 @@
+import type {PortableTextChild, PortableTextObject} from '@portabletext/schema'
 import {useContext, useRef, type ReactElement} from 'react'
 import {getPointBlock} from '../internal-utils/slate-utils'
-import type {Element as SlateElement} from '../slate'
-import {DOMEditor} from '../slate-dom'
-import type {RenderElementProps} from '../slate-react'
-import {useSlateStatic} from '../slate-react'
+import {serializePath} from '../paths/serialize-path'
+import type {Path} from '../slate/interfaces/path'
+import type {RenderElementProps} from '../slate/react/components/editable'
+import {useSlateStatic} from '../slate/react/hooks/use-slate-static'
 import type {BlockChildRenderProps, RenderChildFunction} from '../types/editor'
-import {serializePath} from '../utils/util.serialize-path'
 import type {EditorSchema} from './editor-schema'
 import {RenderDefaultInlineObject} from './render.default-object'
 import {SelectionStateContext} from './selection-state-context'
@@ -13,7 +13,8 @@ import {SelectionStateContext} from './selection-state-context'
 export function RenderInlineObject(props: {
   attributes: RenderElementProps['attributes']
   children: ReactElement
-  element: SlateElement
+  element: PortableTextObject
+  indexedPath: Path
   readOnly: boolean
   renderChild?: RenderChildFunction
   schema: EditorSchema
@@ -31,11 +32,10 @@ export function RenderInlineObject(props: {
     )
   }
 
-  const slatePath = DOMEditor.findPath(slateEditor, props.element)
   const [block] = getPointBlock({
     editor: slateEditor,
     point: {
-      path: slatePath,
+      path: props.indexedPath,
       offset: 0,
     },
   })
@@ -59,13 +59,7 @@ export function RenderInlineObject(props: {
     ? selectionState.focusedChildPath === serializedPath
     : false
 
-  const inlineObject = {
-    _key: props.element._key,
-    _type: props.element._type,
-    ...('value' in props.element && typeof props.element.value === 'object'
-      ? props.element.value
-      : {}),
-  }
+  const inlineObject = props.element as unknown as PortableTextChild
 
   return (
     <span
