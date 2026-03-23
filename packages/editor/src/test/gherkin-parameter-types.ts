@@ -93,12 +93,6 @@ const parameterType = {
     matcher: /"([a-z]*)"/u,
     type: String,
   }),
-  textspec: createParameterType<string>({
-    name: 'textspec',
-    matcher: /"(.*)"/u,
-    type: String,
-    transform: (input) => input.replace(/\\n/g, '\n'),
-  }),
 }
 
 /**
@@ -121,5 +115,4 @@ export const parameterTypes = [
   parameterType.style,
   parameterType.tersePt,
   parameterType.text,
-  parameterType.textspec,
 ]

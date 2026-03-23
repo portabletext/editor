@@ -676,28 +676,25 @@ export const stepDefinitions = [
   /**
    * Textspec steps
    */
-  Given(
-    'the editor state {textspec}',
-    (context: Context, textspec: Parameter['textspec']) => {
-      const {blocks} = fromTextspec(
-        {
-          keyGenerator: context.editor.getSnapshot().context.keyGenerator,
-          schema: context.editor.getSnapshot().context.schema,
-        },
-        textspec,
-      )
+  Given('the editor state {string}', (context: Context, textspec: string) => {
+    const {blocks} = fromTextspec(
+      {
+        keyGenerator: context.editor.getSnapshot().context.keyGenerator,
+        schema: context.editor.getSnapshot().context.schema,
+      },
+      textspec,
+    )
 
-      context.editor.send({
-        type: 'insert.blocks',
-        blocks,
-        placement: 'auto',
-        select: 'end',
-      })
-    },
-  ),
+    context.editor.send({
+      type: 'insert.blocks',
+      blocks,
+      placement: 'auto',
+      select: 'end',
+    })
+  }),
   Then(
-    'the editor state is {textspec}',
-    async (context: Context, textspec: Parameter['textspec']) => {
+    'the editor state is {string}',
+    async (context: Context, textspec: string) => {
       await vi.waitFor(() => {
         expect(
           toTextspec(context.editor.getSnapshot().context, {singleLine: true}),
