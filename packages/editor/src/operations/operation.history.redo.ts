@@ -1,4 +1,5 @@
 import {applyDeselect} from '../internal-utils/apply-selection'
+import {preTransformDecorationsForHistory} from '../internal-utils/pre-transform-decorations-for-history'
 import {transformOperation} from '../internal-utils/transform-operation'
 import {pluginRedoing} from '../slate-plugins/slate-plugin.redoing'
 import {pluginWithoutHistory} from '../slate-plugins/slate-plugin.without-history'
@@ -30,6 +31,9 @@ export const historyRedoOperationImplementation: OperationImplementation<
           ),
         )
       })
+
+      const cleanup = preTransformDecorationsForHistory(editor, step, 'redo')
+
       try {
         withoutNormalizing(editor, () => {
           pluginRedoing(editor, () => {
@@ -51,8 +55,11 @@ export const historyRedoOperationImplementation: OperationImplementation<
         editor.withHistory = true
         editor.isRedoing = false
         editor.onChange()
+        cleanup()
         return
       }
+
+      cleanup()
       editor.history.undos.push(step)
       editor.history.redos.pop()
     }

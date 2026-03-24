@@ -1,4 +1,5 @@
 import {applyDeselect} from '../internal-utils/apply-selection'
+import {preTransformDecorationsForHistory} from '../internal-utils/pre-transform-decorations-for-history'
 import {transformOperation} from '../internal-utils/transform-operation'
 import {pluginUndoing} from '../slate-plugins/slate-plugin.undoing'
 import {pluginWithoutHistory} from '../slate-plugins/slate-plugin.without-history'
@@ -35,6 +36,8 @@ export const historyUndoOperationImplementation: OperationImplementation<
         .map(inverseOperation)
         .reverse()
 
+      const cleanup = preTransformDecorationsForHistory(editor, step, 'undo')
+
       try {
         withoutNormalizing(editor, () => {
           pluginUndoing(editor, () => {
@@ -56,8 +59,11 @@ export const historyUndoOperationImplementation: OperationImplementation<
         editor.withHistory = true
         editor.isUndoing = false
         editor.onChange()
+        cleanup()
         return
       }
+
+      cleanup()
       editor.history.redos.push(step)
       editor.history.undos.pop()
     }

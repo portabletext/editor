@@ -1810,6 +1810,557 @@ describe('RangeDecorations: Undo/Redo', () => {
         .toHaveTextContent('Hello'),
     )
   })
+
+  test('Scenario 6.3: Undo split with decoration after split point', async () => {
+    const onMovedSpy = vi.fn()
+    let rangeDecorations: Array<RangeDecoration> = [
+      {
+        component: RangeDecorationComponent,
+        payload: {id: 'dec1'},
+        selection: {
+          anchor: {
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            offset: 6,
+          },
+          focus: {
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            offset: 11,
+          },
+        },
+        onMoved: (details) => {
+          onMovedSpy(details)
+          rangeDecorations = updateRangeDecorations({rangeDecorations, details})
+        },
+      },
+    ]
+
+    const {editor, locator, rerender} = await createTestEditor({
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', _key: 's1', text: 'Hello world'}],
+          markDefs: [],
+        },
+      ],
+      editableProps: {rangeDecorations},
+    })
+
+    await vi.waitFor(() =>
+      expect
+        .element(locator.getByTestId('range-decoration'))
+        .toHaveTextContent('world'),
+    )
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 5,
+        },
+        focus: {
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 5,
+        },
+      },
+    })
+    editor.send({type: 'insert.break'})
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context).length).toBe(2)
+    })
+
+    await rerender({
+      initialValue: editor.getSnapshot().context.value,
+      editableProps: {rangeDecorations},
+    })
+
+    await vi.waitFor(() =>
+      expect
+        .element(locator.getByTestId('range-decoration'))
+        .toHaveTextContent('world'),
+    )
+
+    onMovedSpy.mockClear()
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context).length).toBe(1)
+    })
+
+    await rerender({
+      initialValue: editor.getSnapshot().context.value,
+      editableProps: {rangeDecorations},
+    })
+
+    await vi.waitFor(() =>
+      expect
+        .element(locator.getByTestId('range-decoration'))
+        .toHaveTextContent('world'),
+    )
+  })
+
+  test('Scenario 6.4: Redo split with decoration after split point', async () => {
+    const onMovedSpy = vi.fn()
+    let rangeDecorations: Array<RangeDecoration> = [
+      {
+        component: RangeDecorationComponent,
+        payload: {id: 'dec1'},
+        selection: {
+          anchor: {
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            offset: 6,
+          },
+          focus: {
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            offset: 11,
+          },
+        },
+        onMoved: (details) => {
+          onMovedSpy(details)
+          rangeDecorations = updateRangeDecorations({rangeDecorations, details})
+        },
+      },
+    ]
+
+    const {editor, locator, rerender} = await createTestEditor({
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', _key: 's1', text: 'Hello world'}],
+          markDefs: [],
+        },
+      ],
+      editableProps: {rangeDecorations},
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 5,
+        },
+        focus: {
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 5,
+        },
+      },
+    })
+    editor.send({type: 'insert.break'})
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context).length).toBe(2)
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context).length).toBe(1)
+    })
+
+    editor.send({type: 'history.redo'})
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context).length).toBe(2)
+    })
+
+    await rerender({
+      initialValue: editor.getSnapshot().context.value,
+      editableProps: {rangeDecorations},
+    })
+
+    await vi.waitFor(() =>
+      expect
+        .element(locator.getByTestId('range-decoration'))
+        .toHaveTextContent('world'),
+    )
+  })
+
+  test('Scenario 6.5: Undo merge (Backspace) with decoration in first block', async () => {
+    const onMovedSpy = vi.fn()
+    let rangeDecorations: Array<RangeDecoration> = [
+      {
+        component: RangeDecorationComponent,
+        payload: {id: 'dec1'},
+        selection: {
+          anchor: {
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            offset: 0,
+          },
+          focus: {
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            offset: 5,
+          },
+        },
+        onMoved: (details) => {
+          onMovedSpy(details)
+          rangeDecorations = updateRangeDecorations({rangeDecorations, details})
+        },
+      },
+    ]
+
+    const {editor, locator, rerender} = await createTestEditor({
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', _key: 's1', text: 'Hello'}],
+          markDefs: [],
+        },
+        {
+          _type: 'block',
+          _key: 'b2',
+          children: [{_type: 'span', _key: 's2', text: ' world'}],
+          markDefs: [],
+        },
+      ],
+      editableProps: {rangeDecorations},
+    })
+
+    await vi.waitFor(() =>
+      expect
+        .element(locator.getByTestId('range-decoration'))
+        .toHaveTextContent('Hello'),
+    )
+
+    await userEvent.click(locator)
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: 'b2'}, 'children', {_key: 's2'}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: 'b2'}, 'children', {_key: 's2'}],
+          offset: 0,
+        },
+      },
+    })
+
+    await userEvent.keyboard('{Backspace}')
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context).length).toBe(1)
+    })
+
+    await rerender({
+      initialValue: editor.getSnapshot().context.value,
+      editableProps: {rangeDecorations},
+    })
+
+    await vi.waitFor(() =>
+      expect
+        .element(locator.getByTestId('range-decoration'))
+        .toHaveTextContent('Hello'),
+    )
+
+    onMovedSpy.mockClear()
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context).length).toBe(2)
+    })
+
+    await rerender({
+      initialValue: editor.getSnapshot().context.value,
+      editableProps: {rangeDecorations},
+    })
+
+    await vi.waitFor(() =>
+      expect
+        .element(locator.getByTestId('range-decoration'))
+        .toHaveTextContent('Hello'),
+    )
+  })
+
+  test('Scenario 6.6: Undo merge (Backspace) with decoration in second block', async () => {
+    const onMovedSpy = vi.fn()
+    let rangeDecorations: Array<RangeDecoration> = [
+      {
+        component: RangeDecorationComponent,
+        payload: {id: 'dec1'},
+        selection: {
+          anchor: {
+            path: [{_key: 'b2'}, 'children', {_key: 's2'}],
+            offset: 0,
+          },
+          focus: {
+            path: [{_key: 'b2'}, 'children', {_key: 's2'}],
+            offset: 5,
+          },
+        },
+        onMoved: (details) => {
+          onMovedSpy(details)
+          rangeDecorations = updateRangeDecorations({rangeDecorations, details})
+        },
+      },
+    ]
+
+    const {editor, locator, rerender} = await createTestEditor({
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', _key: 's1', text: 'Hello'}],
+          markDefs: [],
+        },
+        {
+          _type: 'block',
+          _key: 'b2',
+          children: [{_type: 'span', _key: 's2', text: 'world'}],
+          markDefs: [],
+        },
+      ],
+      editableProps: {rangeDecorations},
+    })
+
+    await vi.waitFor(() =>
+      expect
+        .element(locator.getByTestId('range-decoration'))
+        .toHaveTextContent('world'),
+    )
+
+    await userEvent.click(locator)
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: 'b2'}, 'children', {_key: 's2'}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: 'b2'}, 'children', {_key: 's2'}],
+          offset: 0,
+        },
+      },
+    })
+
+    await userEvent.keyboard('{Backspace}')
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context).length).toBe(1)
+      expect(getTersePt(editor.getSnapshot().context)[0]).toBe('Helloworld')
+    })
+
+    await rerender({
+      initialValue: editor.getSnapshot().context.value,
+      editableProps: {rangeDecorations},
+    })
+
+    await vi.waitFor(() =>
+      expect
+        .element(locator.getByTestId('range-decoration'))
+        .toHaveTextContent('world'),
+    )
+
+    onMovedSpy.mockClear()
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context).length).toBe(2)
+    })
+
+    await rerender({
+      initialValue: editor.getSnapshot().context.value,
+      editableProps: {rangeDecorations},
+    })
+
+    await vi.waitFor(() =>
+      expect
+        .element(locator.getByTestId('range-decoration'))
+        .toHaveTextContent('world'),
+    )
+  })
+
+  test('Scenario 6.7: Redo merge with decoration', async () => {
+    const onMovedSpy = vi.fn()
+    let rangeDecorations: Array<RangeDecoration> = [
+      {
+        component: RangeDecorationComponent,
+        payload: {id: 'dec1'},
+        selection: {
+          anchor: {
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            offset: 0,
+          },
+          focus: {
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            offset: 5,
+          },
+        },
+        onMoved: (details) => {
+          onMovedSpy(details)
+          rangeDecorations = updateRangeDecorations({rangeDecorations, details})
+        },
+      },
+    ]
+
+    const {editor, locator, rerender} = await createTestEditor({
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', _key: 's1', text: 'Hello'}],
+          markDefs: [],
+        },
+        {
+          _type: 'block',
+          _key: 'b2',
+          children: [{_type: 'span', _key: 's2', text: ' world'}],
+          markDefs: [],
+        },
+      ],
+      editableProps: {rangeDecorations},
+    })
+
+    await vi.waitFor(() =>
+      expect
+        .element(locator.getByTestId('range-decoration'))
+        .toHaveTextContent('Hello'),
+    )
+
+    await userEvent.click(locator)
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: 'b2'}, 'children', {_key: 's2'}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: 'b2'}, 'children', {_key: 's2'}],
+          offset: 0,
+        },
+      },
+    })
+
+    await userEvent.keyboard('{Backspace}')
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context).length).toBe(1)
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context).length).toBe(2)
+    })
+
+    editor.send({type: 'history.redo'})
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context).length).toBe(1)
+    })
+
+    await rerender({
+      initialValue: editor.getSnapshot().context.value,
+      editableProps: {rangeDecorations},
+    })
+
+    await vi.waitFor(() =>
+      expect
+        .element(locator.getByTestId('range-decoration'))
+        .toHaveTextContent('Hello'),
+    )
+  })
+
+  test('Scenario 6.8: Undo split with decoration spanning split point', async () => {
+    const onMovedSpy = vi.fn()
+    let rangeDecorations: Array<RangeDecoration> = [
+      {
+        component: RangeDecorationComponent,
+        payload: {id: 'dec1'},
+        selection: {
+          anchor: {
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            offset: 3,
+          },
+          focus: {
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            offset: 9,
+          },
+        },
+        onMoved: (details) => {
+          onMovedSpy(details)
+          rangeDecorations = updateRangeDecorations({rangeDecorations, details})
+        },
+      },
+    ]
+
+    const {editor, locator, rerender} = await createTestEditor({
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', _key: 's1', text: 'Hello world'}],
+          markDefs: [],
+        },
+      ],
+      editableProps: {rangeDecorations},
+    })
+
+    await vi.waitFor(() =>
+      expect
+        .element(locator.getByTestId('range-decoration'))
+        .toHaveTextContent('lo wor'),
+    )
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 5,
+        },
+        focus: {
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 5,
+        },
+      },
+    })
+    editor.send({type: 'insert.break'})
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context).length).toBe(2)
+    })
+
+    await rerender({
+      initialValue: editor.getSnapshot().context.value,
+      editableProps: {rangeDecorations},
+    })
+
+    onMovedSpy.mockClear()
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context).length).toBe(1)
+    })
+
+    await rerender({
+      initialValue: editor.getSnapshot().context.value,
+      editableProps: {rangeDecorations},
+    })
+
+    const lastCall =
+      onMovedSpy.mock.calls[onMovedSpy.mock.calls.length - 1]?.[0]
+    if (lastCall) {
+      expect(lastCall.newSelection).not.toBeNull()
+    }
+
+    await vi.waitFor(() =>
+      expect
+        .element(locator.getByTestId('range-decoration'))
+        .toHaveTextContent('lo wor'),
+    )
+  })
 })
 
 // ============================================================================

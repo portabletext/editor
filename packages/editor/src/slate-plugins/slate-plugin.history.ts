@@ -111,6 +111,14 @@ export function createHistoryPlugin({
         previousUndoStepId,
       })
 
+      if (editor.splitContext || editor.mergeContext) {
+        const lastStep = editor.history.undos.at(-1)
+        if (lastStep) {
+          if (editor.splitContext) lastStep.splitContext = editor.splitContext
+          if (editor.mergeContext) lastStep.mergeContext = editor.mergeContext
+        }
+      }
+
       // Make sure we don't exceed the maximum number of undo steps we want
       // to store.
       while (editor.history.undos.length > UNDO_STEP_LIMIT) {

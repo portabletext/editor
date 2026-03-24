@@ -320,7 +320,7 @@ function transformPathForMerge(
  * If the point is inside the merged node, its offset shifts by `position`
  * (the number of children/characters already in the merge target).
  */
-function transformPointForMerge(
+export function transformPointForMerge(
   point: Point,
   mergePath: Path,
   position: number,

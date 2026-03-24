@@ -248,7 +248,7 @@ function transformPathForSplit(
  * If the point is inside the split node and at or after the split position,
  * it moves into the new node with an adjusted offset.
  */
-function transformPointForSplit(
+export function transformPointForSplit(
   point: Point,
   splitPath: Path,
   position: number,

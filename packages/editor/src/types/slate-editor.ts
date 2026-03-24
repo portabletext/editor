@@ -10,6 +10,8 @@ import type {EditorSelection, RangeDecoration} from './editor'
 type HistoryItem = {
   operations: SlateOperation[]
   timestamp: Date
+  splitContext?: SplitContext | null
+  mergeContext?: MergeContext | null
 }
 
 interface History {
