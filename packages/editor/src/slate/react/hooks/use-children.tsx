@@ -1,10 +1,18 @@
 import type {
+  OfDefinition,
   PortableTextObject,
   PortableTextSpan,
   PortableTextTextBlock,
 } from '@portabletext/schema'
 import {isSpan, isTextBlock} from '@portabletext/schema'
-import {useCallback, useRef, type JSX} from 'react'
+import {useCallback, useContext, useRef, type JSX} from 'react'
+import {
+  ContainerScopeContext,
+  type ContainerScope,
+} from '../../../editor/container-scope-context'
+import {EditorActorContext} from '../../../editor/editor-actor-context'
+import {getRendererKey} from '../../../renderers/renderer.types'
+import {resolveChildArrayField} from '../../../schema/resolve-child-array-field'
 import {
   isElementDecorationsEqual,
   splitDecorationsByChild,
@@ -54,6 +62,9 @@ const useChildren = (props: {
   const editor = useSlateStatic()
   editor.isNodeMapDirty = false
 
+  const editorActor = useContext(EditorActorContext)
+  const containerScope = useContext(ContainerScopeContext)
+
   const isEditorNode = isEditor(node)
 
   const decorationsByChild = useDecorationsByChild(
@@ -63,27 +74,46 @@ const useChildren = (props: {
     decorations,
   )
 
+  // Determine the children array and scope for this node.
+  // containerScope carries the parent's accumulated path, used to look up
+  // the current node's renderer. containerChildInfo resolves the current
+  // node's child array field and computes the scope for its children.
+  const renderers = editorActor.getSnapshot().context.renderers
+  const containerChildInfo = getContainerChildInfo(
+    editor,
+    node,
+    renderers,
+    containerScope,
+  )
+
   const children = isEditor(node)
     ? node.children
     : isTextBlock({schema: editor.schema}, node)
       ? node.children
-      : []
+      : containerChildInfo
+        ? containerChildInfo.children
+        : []
 
   const renderElementComponent = useCallback(
-    (node: PortableTextTextBlock | PortableTextObject, i: number) => {
+    (childNode: PortableTextTextBlock | PortableTextObject, index: number) => {
       const nodeDataPath =
         parentDataPath === ''
-          ? `[_key=="${node._key}"]`
-          : `${parentDataPath}.children[_key=="${node._key}"]`
+          ? `[_key=="${childNode._key}"]`
+          : containerChildInfo
+            ? `${parentDataPath}.${containerChildInfo.fieldName}[_key=="${childNode._key}"]`
+            : `${parentDataPath}.children[_key=="${childNode._key}"]`
 
       return (
-        <ElementContext.Provider key={`provider-${node._key}`} value={node}>
+        <ElementContext.Provider
+          key={`provider-${childNode._key}`}
+          value={childNode}
+        >
           <ElementComponent
             dataPath={nodeDataPath}
-            decorations={decorationsByChild[i] ?? []}
-            element={node}
-            key={node._key}
-            indexedPath={parentIndexedPath.concat(i)}
+            decorations={decorationsByChild[index] ?? []}
+            element={childNode}
+            key={childNode._key}
+            indexedPath={parentIndexedPath.concat(index)}
             renderElement={renderElement}
             renderPlaceholder={renderPlaceholder}
             renderLeaf={renderLeaf}
@@ -94,6 +124,7 @@ const useChildren = (props: {
     },
     [
       parentDataPath,
+      containerChildInfo,
       decorationsByChild,
       parentIndexedPath,
       renderElement,
@@ -107,7 +138,7 @@ const useChildren = (props: {
     ? node
     : undefined
 
-  const renderTextComponent = (node: PortableTextSpan, index: number) => {
+  const renderTextComponent = (childNode: PortableTextSpan, index: number) => {
     if (!textBlockParent) {
       throw new Error(
         'Cannot render text component without a text block parent',
@@ -116,59 +147,247 @@ const useChildren = (props: {
 
     const nodeDataPath =
       parentDataPath !== ''
-        ? `${parentDataPath}.children[_key=="${node._key}"]`
+        ? `${parentDataPath}.children[_key=="${childNode._key}"]`
         : ''
 
     return (
       <TextComponent
         dataPath={nodeDataPath}
         decorations={decorationsByChild[index] ?? []}
-        key={node._key}
+        key={childNode._key}
         isLast={index === children.length - 1}
         parent={textBlockParent}
         indexedPath={parentIndexedPath.concat(index)}
         renderPlaceholder={renderPlaceholder}
         renderLeaf={renderLeaf}
         renderText={renderText}
-        text={node}
+        text={childNode}
       />
     )
   }
 
   const renderObjectNodeComponent = (
-    node: PortableTextObject,
+    childNode: PortableTextObject,
     index: number,
   ) => {
     const nodeDataPath =
       parentDataPath === ''
-        ? `[_key=="${node._key}"]`
-        : `${parentDataPath}.children[_key=="${node._key}"]`
+        ? `[_key=="${childNode._key}"]`
+        : containerChildInfo
+          ? `${parentDataPath}.${containerChildInfo.fieldName}[_key=="${childNode._key}"]`
+          : `${parentDataPath}.children[_key=="${childNode._key}"]`
 
     return (
       <ObjectNodeComponent
         dataPath={nodeDataPath}
         decorations={decorationsByChild[index] ?? []}
         isInline={!isEditorNode}
-        key={node._key}
-        objectNode={node}
+        key={childNode._key}
+        objectNode={childNode}
         indexedPath={parentIndexedPath.concat(index)}
         renderElement={renderElement}
       />
     )
   }
 
-  return children.map((n: Node, i: number) => {
-    if (isTextBlock({schema: editor.schema}, n)) {
-      return renderElementComponent(n, i)
+  // Wrap container children in scope context.
+  // The scope carries the parent's accumulated path so that the child's
+  // renderer can be looked up as scope.name + '.' + child._type.
+  const renderContainerElementComponent = useCallback(
+    (
+      childNode: PortableTextTextBlock | PortableTextObject,
+      index: number,
+      scope: ContainerScope,
+    ) => {
+      const nodeDataPath = containerChildInfo
+        ? parentDataPath === ''
+          ? `[_key=="${childNode._key}"]`
+          : `${parentDataPath}.${containerChildInfo.fieldName}[_key=="${childNode._key}"]`
+        : parentDataPath === ''
+          ? `[_key=="${childNode._key}"]`
+          : `${parentDataPath}.children[_key=="${childNode._key}"]`
+
+      return (
+        <ContainerScopeContext.Provider
+          key={`scope-${childNode._key}`}
+          value={scope}
+        >
+          <ElementContext.Provider
+            key={`provider-${childNode._key}`}
+            value={childNode}
+          >
+            <ElementComponent
+              dataPath={nodeDataPath}
+              decorations={decorationsByChild[index] ?? []}
+              element={childNode}
+              key={childNode._key}
+              indexedPath={parentIndexedPath.concat(index)}
+              renderElement={renderElement}
+              renderPlaceholder={renderPlaceholder}
+              renderLeaf={renderLeaf}
+              renderText={renderText}
+            />
+          </ElementContext.Provider>
+        </ContainerScopeContext.Provider>
+      )
+    },
+    [
+      containerChildInfo,
+      parentDataPath,
+      decorationsByChild,
+      parentIndexedPath,
+      renderElement,
+      renderPlaceholder,
+      renderLeaf,
+      renderText,
+    ],
+  )
+
+  // The scope name for looking up children's renderers.
+  // This is the current container's full path.
+  const childScopeName = containerChildInfo?.scopeName
+
+  return children.map((childNode: Node, index: number) => {
+    if (isTextBlock({schema: editor.schema}, childNode)) {
+      // If we're inside a container, wrap in scope context so that
+      // text blocks inside containers get the correct scope
+      if (containerChildInfo) {
+        const nodeDataPath = `${parentDataPath}.${containerChildInfo.fieldName}[_key=="${childNode._key}"]`
+        return (
+          <ContainerScopeContext.Provider
+            key={`scope-${childNode._key}`}
+            value={{
+              name: childScopeName ?? '',
+              schemaScope: containerChildInfo.ofDefinitions,
+            }}
+          >
+            <ElementContext.Provider
+              key={`provider-${childNode._key}`}
+              value={childNode}
+            >
+              <ElementComponent
+                dataPath={nodeDataPath}
+                decorations={decorationsByChild[index] ?? []}
+                element={childNode}
+                key={childNode._key}
+                indexedPath={parentIndexedPath.concat(index)}
+                renderElement={renderElement}
+                renderPlaceholder={renderPlaceholder}
+                renderLeaf={renderLeaf}
+                renderText={renderText}
+              />
+            </ElementContext.Provider>
+          </ContainerScopeContext.Provider>
+        )
+      }
+      return renderElementComponent(childNode, index)
     }
-    if (isObjectNode({schema: editor.schema}, n)) {
-      return renderObjectNodeComponent(n, i)
+    if (isObjectNode({schema: editor.schema}, childNode)) {
+      // Check if this object node has a registered renderer.
+      // Use the current container's scope name to build the scoped renderer key.
+      const lookupScopeName = childScopeName ?? containerScope?.name
+      const rendererKey = getRendererKey('blockObject', childNode._type)
+      const scopedRendererKey = lookupScopeName
+        ? getRendererKey('blockObject', `${lookupScopeName}.${childNode._type}`)
+        : undefined
+      const hasRenderer =
+        (scopedRendererKey && renderers.has(scopedRendererKey)) ||
+        renderers.has(rendererKey)
+
+      if (hasRenderer) {
+        // Container with a renderer - render through Element pipeline.
+        // Set the scope to the parent's accumulated path so that
+        // the child's getContainerChildInfo can look up its renderer.
+        const scope: ContainerScope = {
+          name: lookupScopeName ?? '',
+          schemaScope: containerChildInfo?.ofDefinitions,
+        }
+        return renderContainerElementComponent(childNode, index, scope)
+      }
+      return renderObjectNodeComponent(childNode, index)
     }
-    if (isSpan({schema: editor.schema}, n)) {
-      return renderTextComponent(n, i)
+    if (isSpan({schema: editor.schema}, childNode)) {
+      return renderTextComponent(childNode, index)
     }
     throw new Error(`Unexpected node type`)
   })
+}
+
+type ContainerChildInfo = {
+  children: Array<Node>
+  fieldName: string
+  /** The full scope name of the current container (e.g. 'table', 'table.row') */
+  scopeName: string
+  ofDefinitions: ReadonlyArray<OfDefinition> | undefined
+}
+
+/**
+ * Checks if the given node is a container with a registered renderer.
+ * If so, resolves its child array field and returns the children and scope info.
+ *
+ * The containerScope carries the parent's accumulated path. The current node's
+ * renderer is looked up as scope.name + '.' + node._type (or just node._type
+ * if scope is undefined).
+ */
+function getContainerChildInfo(
+  editor: Editor,
+  node: Editor | Node,
+  renderers: Map<string, unknown>,
+  containerScope: ContainerScope | undefined,
+): ContainerChildInfo | undefined {
+  if (isEditor(node)) {
+    return undefined
+  }
+  if (isTextBlock({schema: editor.schema}, node)) {
+    return undefined
+  }
+  if (!isObjectNode({schema: editor.schema}, node)) {
+    return undefined
+  }
+
+  // Check if this node has a registered renderer.
+  // The scope name is the parent's accumulated path.
+  const parentScopeName = containerScope?.name
+  const rendererKey = getRendererKey('blockObject', node._type)
+  const scopedRendererKey = parentScopeName
+    ? getRendererKey('blockObject', `${parentScopeName}.${node._type}`)
+    : undefined
+  const hasRenderer =
+    (scopedRendererKey && renderers.has(scopedRendererKey)) ||
+    renderers.has(rendererKey)
+
+  if (!hasRenderer) {
+    return undefined
+  }
+
+  // Resolve the child array field from the schema, using the schema scope
+  // from the container context to find nested type definitions
+  const arrayField = resolveChildArrayField(
+    {schema: editor.schema, scope: containerScope?.schemaScope},
+    node,
+  )
+
+  if (!arrayField) {
+    return undefined
+  }
+
+  const fieldValue = (node as Record<string, unknown>)[arrayField.name]
+
+  if (!Array.isArray(fieldValue)) {
+    return undefined
+  }
+
+  // The full scope name for this container
+  const scopeName = parentScopeName
+    ? `${parentScopeName}.${node._type}`
+    : node._type
+
+  return {
+    children: fieldValue,
+    fieldName: arrayField.name,
+    scopeName,
+    ofDefinitions: arrayField.of,
+  }
 }
 
 const useDecorationsByChild = (

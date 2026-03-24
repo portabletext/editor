@@ -19,6 +19,8 @@ import type {Converter} from '../converters/converter.types'
 import {debug} from '../internal-utils/debug'
 import type {EventPosition} from '../internal-utils/event-position'
 import {sortByPriority} from '../priority/priority.sort'
+import type {RendererConfig} from '../renderers/renderer.types'
+import {getRendererKey} from '../renderers/renderer.types'
 import {ReactEditor} from '../slate/react/plugin/react-editor'
 import type {NamespaceEvent, OmitFromUnion} from '../type-utils'
 import type {EditorSelection} from '../types/editor'
@@ -113,6 +115,8 @@ type InternalEditorEvent =
   | {type: 'dragend'}
   | {type: 'drop'}
   | {type: 'add slate editor'; editor: PortableTextSlateEditor}
+  | {type: 'register renderer'; config: RendererConfig}
+  | {type: 'unregister renderer'; key: string}
 
 /**
  * @internal
@@ -177,6 +181,7 @@ export const editorMachine = setup({
       keyGenerator: () => string
       pendingEvents: Array<InternalPatchEvent | MutationEvent>
       pendingIncomingPatchesEvents: Array<PatchesEvent>
+      renderers: Map<string, RendererConfig>
       schema: EditorSchema
       initialReadOnly: boolean
       selection: EditorSelection
@@ -402,6 +407,7 @@ export const editorMachine = setup({
     keyGenerator: input.keyGenerator,
     pendingEvents: [],
     pendingIncomingPatchesEvents: [],
+    renderers: new Map(),
     schema: input.schema,
     selection: null,
     initialReadOnly: input.readOnly ?? false,
@@ -411,6 +417,28 @@ export const editorMachine = setup({
     'add behavior': {actions: 'add behavior to context'},
     'remove behavior': {actions: 'remove behavior from context'},
     'add slate editor': {actions: 'add slate editor to context'},
+    'register renderer': {
+      actions: assign({
+        renderers: ({context, event}) => {
+          const key = getRendererKey(
+            event.config.renderer.type,
+            event.config.renderer.name,
+          )
+          const newRenderers = new Map(context.renderers)
+          newRenderers.set(key, event.config)
+          return newRenderers
+        },
+      }),
+    },
+    'unregister renderer': {
+      actions: assign({
+        renderers: ({context, event}) => {
+          const newRenderers = new Map(context.renderers)
+          newRenderers.delete(event.key)
+          return newRenderers
+        },
+      }),
+    },
     'update selection': {
       actions: [
         assign({selection: ({event}) => event.selection}),
