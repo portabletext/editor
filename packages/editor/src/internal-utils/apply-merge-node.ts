@@ -1,4 +1,6 @@
 import {isSpan, isTextBlock} from '@portabletext/schema'
+import type {DecoratedRange} from '../editor/range-decorations-machine'
+import {slateRangeToSelection} from '../internal-utils/slate-utils'
 import {withoutNormalizing} from '../slate/editor/without-normalizing'
 import type {Path} from '../slate/interfaces/path'
 import type {Point} from '../slate/interfaces/point'
@@ -8,6 +10,7 @@ import {isAncestorPath} from '../slate/path/is-ancestor-path'
 import {pathEndsBefore} from '../slate/path/path-ends-before'
 import {pathEquals} from '../slate/path/path-equals'
 import {previousPath} from '../slate/path/previous-path'
+import {pointEquals} from '../slate/point/point-equals'
 import {isRange} from '../slate/range/is-range'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 
@@ -70,6 +73,36 @@ export function applyMergeNode(
       editor.selection = {anchor, focus}
     }
   }
+
+  // Pre-transform decoratedRanges and snapshot original ranges so we can
+  // fire onMoved after the decomposed operations complete.
+  const decorationSnapshots: Array<{
+    decoratedRange: DecoratedRange
+    originalRange: Range
+    newRange: Range
+  }> = []
+
+  editor.decoratedRanges = editor.decoratedRanges.map((dr) => {
+    if (!isRange(dr)) return dr
+
+    const newAnchor = transformPointForMerge(dr.anchor, path, position)
+    const newFocus = transformPointForMerge(dr.focus, path, position)
+
+    if (pointEquals(newAnchor, dr.anchor) && pointEquals(newFocus, dr.focus)) {
+      return dr
+    }
+
+    const newRange: Range = {anchor: newAnchor, focus: newFocus}
+    decorationSnapshots.push({
+      decoratedRange: dr,
+      originalRange: {anchor: dr.anchor, focus: dr.focus},
+      newRange,
+    })
+
+    return {...dr, ...newRange}
+  })
+
+  editor._suppressDecorationSendBack++
 
   // Temporarily remove all refs so the decomposed operations don't
   // double-transform them
@@ -187,6 +220,36 @@ export function applyMergeNode(
     editorAny['pendingDiffs'] = preTransformedPendingDiffs
     editorAny['pendingSelection'] = preTransformedPendingSelection
     editorAny['pendingAction'] = preTransformedPendingAction
+
+    editor._suppressDecorationSendBack--
+  }
+
+  // After decomposed ops, the document reflects the merge. Compute new
+  // EditorSelections for pre-transformed decorations and fire onMoved.
+  if (
+    editor._suppressDecorationSendBack === 0 &&
+    decorationSnapshots.length > 0
+  ) {
+    for (const {decoratedRange, newRange} of decorationSnapshots) {
+      const newSelection = slateRangeToSelection({
+        schema: editor.schema,
+        editor,
+        range: newRange,
+      })
+
+      decoratedRange.rangeDecoration.onMoved?.({
+        previousSelection: decoratedRange.rangeDecoration.selection,
+        newSelection,
+        rangeDecoration: decoratedRange.rangeDecoration,
+        origin: 'local',
+        reason: 'moved',
+      })
+
+      decoratedRange.rangeDecoration = {
+        ...decoratedRange.rangeDecoration,
+        selection: newSelection,
+      }
+    }
   }
 }
 

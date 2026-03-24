@@ -5,7 +5,7 @@ import type {DecoratedRange} from '../editor/range-decorations-machine'
 import type {Operation as SlateOperation} from '../slate/interfaces/operation'
 import type {Range} from '../slate/interfaces/range'
 import type {ReactEditor} from '../slate/react/plugin/react-editor'
-import type {EditorSelection} from './editor'
+import type {EditorSelection, RangeDecoration} from './editor'
 
 type HistoryItem = {
   operations: SlateOperation[]
@@ -24,6 +24,52 @@ export type RemotePatch = {
   previousSnapshot: PortableTextBlock[] | undefined
 }
 
+/**
+ * Context passed during a split operation to help RangeDecorator
+ * recompute decoration positions correctly.
+ */
+export interface SplitContext {
+  /** The offset in the original block where the split occurs */
+  splitOffset: number
+  /** The child index of the span being split */
+  splitChildIndex: number
+  /** The _key of the block being split */
+  originalBlockKey: string
+  /** The _key of the new block created after the split */
+  newBlockKey: string
+  /** The _key of the original span (child) being split */
+  originalSpanKey: string
+  /** The _key of the new span in the new block (may be same or different) */
+  newSpanKey: string
+}
+
+/**
+ * Context passed during a merge operation to help RangeDecorator
+ * recompute decoration positions correctly.
+ *
+ * During a forward-delete merge (Delete at end of block 1) or
+ * backward-delete merge (Backspace at start of block 2), the
+ * second block is deleted and its content is re-inserted into
+ * the first block. This context helps track that relationship.
+ */
+export interface MergeContext {
+  /** The _key of the block being deleted (block whose content is moving) */
+  deletedBlockKey: string
+  /** The _key of the block receiving the content */
+  targetBlockKey: string
+  /** The text length of the target block before merge (insertion offset) */
+  targetBlockTextLength: number
+  /** The index of the deleted block at the time context was created */
+  deletedBlockIndex: number
+  /** The index of the target block at the time context was created */
+  targetBlockIndex: number
+  /** The number of children in the target block before merge.
+   *  Used to compute correct insertion indices for multi-child blocks
+   *  (e.g., blocks with bold/italic spans). Child N from the deleted block
+   *  ends up at index targetOriginalChildCount + N in the target block. */
+  targetOriginalChildCount: number
+}
+
 export interface PortableTextSlateEditor extends ReactEditor {
   _key: 'editor'
   _type: 'editor'
@@ -31,6 +77,24 @@ export interface PortableTextSlateEditor extends ReactEditor {
   schema: EditorSchema
 
   decoratedRanges: Array<DecoratedRange>
+  /**
+   * Snapshot of decoration state taken before a remote batch starts.
+   * Used by the reconciliation handler to diff pre-batch vs post-batch
+   * and fire a single onMoved callback per changed decoration.
+   * Stores both the Slate Range (for change detection) and the
+   * EditorSelection (for previousSelection in onMoved callbacks).
+   * Managed by the apply interceptor in range-decorations-machine.
+   */
+  preBatchDecorationRanges: Map<
+    RangeDecoration,
+    {range: Range | null; selection: EditorSelection}
+  >
+  /**
+   * Tracks decorations whose interior content was modified during a remote
+   * batch. Populated by the `move range decorations` action when callbacks
+   * are suppressed; consumed and cleared by `reconcile range decorations`.
+   */
+  batchContentChangedDecorations: Set<RangeDecoration>
   decoratorState: Record<string, boolean | undefined>
   blockIndexMap: Map<string, number>
   history: History
@@ -39,6 +103,39 @@ export interface PortableTextSlateEditor extends ReactEditor {
   listIndexMap: Map<string, number>
   remotePatches: Array<RemotePatch>
   undoStepId: string | undefined
+
+  /**
+   * Context for the current split operation.
+   * Set before delete+insert operations, cleared after.
+   * Used by RangeDecorator to correctly recompute decoration positions.
+   */
+  splitContext: SplitContext | null
+
+  /**
+   * Context for the current merge operation.
+   * Set before delete+insert operations, cleared after.
+   * Used by RangeDecorator to correctly recompute decoration positions.
+   */
+  mergeContext: MergeContext | null
+
+  /**
+   * Tracks which decoration points were on the deleted block BEFORE
+   * `remove_node` shifts paths. Computed during `remove_node` and consumed
+   * during `insert_node` to avoid stale-index collisions where a shifted
+   * point coincidentally lands at `deletedBlockIndex`.
+   */
+  mergeDeletedBlockFlags: Map<
+    RangeDecoration,
+    {anchor: boolean; focus: boolean}
+  > | null
+
+  /**
+   * When > 0, the decoration `sendBack` interceptor skips firing
+   * `slate operation` events. Used by `applyMergeNode` and `applySplitNode`
+   * to suppress events for their decomposed operations, which would
+   * otherwise double-transform or invalidate decoration ranges.
+   */
+  _suppressDecorationSendBack: number
 
   isDeferringMutations: boolean
   isNormalizingNode: boolean

@@ -265,14 +265,20 @@ function insertBlock(options: {
         const textNode = getSpanNode(editor, selectionPoint.path, editor.schema)
         if (childOffset < textNode.text.length) {
           const {text: _, ...properties} = textNode
-          applySplitNode(editor, selectionPoint.path, childOffset, properties)
+          applySplitNode(editor, selectionPoint.path, childOffset, {
+            ...properties,
+            _key: context.keyGenerator(),
+          })
         }
       }
 
       // Now split the block itself
       const splitAtIndex = childOffset > 0 ? childIndex + 1 : childIndex
       const {children: _, ...blockProperties} = currentBlock
-      applySplitNode(editor, blockPath, splitAtIndex, blockProperties)
+      applySplitNode(editor, blockPath, splitAtIndex, {
+        ...blockProperties,
+        _key: context.keyGenerator(),
+      })
 
       // Insert the block object between the two split blocks
       const insertPath: Path = [blockPath[0]! + 1]
@@ -657,7 +663,10 @@ function insertBlock(options: {
           currentOffset < textNode.text.length
         ) {
           const {text: _, ...properties} = textNode
-          applySplitNode(editor, currentPath, currentOffset, properties)
+          applySplitNode(editor, currentPath, currentOffset, {
+            ...properties,
+            _key: context.keyGenerator(),
+          })
           currentPath = nextPath(currentPath)
           currentOffset = 0
         }
@@ -673,7 +682,10 @@ function insertBlock(options: {
         ) {
           // Get the properties to preserve in the split
           const {children: _, ...blockProperties} = blockToSplit
-          applySplitNode(editor, blockPath, splitAtIndex, blockProperties)
+          applySplitNode(editor, blockPath, splitAtIndex, {
+            ...blockProperties,
+            _key: context.keyGenerator(),
+          })
         }
 
         // Get the current path of the first block after splits

@@ -25,6 +25,9 @@ type CreateTestEditorOptions = {
   schemaDefinition?: SchemaDefinition
   children?: React.ReactNode
   editableProps?: PortableTextEditableProps
+  /** Separate editable props for Editor B (createTestEditors only).
+   *  When provided, Editor B uses these instead of `editableProps`. */
+  editablePropsB?: PortableTextEditableProps
 }
 
 /**
@@ -157,7 +160,7 @@ export async function createTestEditors(
       >
         <EditorRefPlugin ref={editorBRef} />
         <PortableTextEditable
-          {...options.editableProps}
+          {...(options.editablePropsB ?? options.editableProps)}
           data-testid="editor-b"
         />
         <EventListenerPlugin

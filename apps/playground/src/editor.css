@@ -191,3 +191,11 @@
 [data-level='10'] {
   padding-left: calc(var(--list-padding) * 9);
 }
+
+/**
+ * Dimmed range decorations: fade background and border
+ * without affecting text or nested active decorations.
+ */
+[data-decoration-id].dimmed {
+  background: transparent !important;
+}

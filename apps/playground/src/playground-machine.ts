@@ -263,6 +263,8 @@ export const playgroundMachine = setup({
       value: Array<PortableTextBlock> | undefined
       patchDerivedValue: Array<PortableTextBlock> | undefined
       rangeDecorations: Array<RangeDecoration>
+      activeDecorationId: string | null
+      remoteFixUp: boolean
       patchFeed: Array<GlobalPatchEntry>
     },
     events: {} as
@@ -287,7 +289,10 @@ export const playgroundMachine = setup({
       | {
           type: 'toggle feature flag'
           flag: keyof PlaygroundFeatureFlags
-        },
+        }
+      | {type: 'toggle remote fix-up'}
+      | {type: 'set active decoration'; decorationId: string}
+      | {type: 'clear active decoration'},
     input: {} as {
       editorIdGenerator: Generator<string, string>
     },
@@ -425,6 +430,8 @@ export const playgroundMachine = setup({
     value: undefined,
     patchDerivedValue: undefined,
     rangeDecorations: [],
+    activeDecorationId: null,
+    remoteFixUp: false,
     editors: [],
     patchFeed: [],
   }),
@@ -459,6 +466,21 @@ export const playgroundMachine = setup({
           ...context.featureFlags,
           [event.flag]: !context.featureFlags[event.flag],
         }),
+      }),
+    },
+    'toggle remote fix-up': {
+      actions: assign({
+        remoteFixUp: ({context}) => !context.remoteFixUp,
+      }),
+    },
+    'set active decoration': {
+      actions: assign({
+        activeDecorationId: ({event}) => event.decorationId,
+      }),
+    },
+    'clear active decoration': {
+      actions: assign({
+        activeDecorationId: () => null,
       }),
     },
   },

@@ -285,8 +285,16 @@ export type ScrollSelectionIntoViewFunction = (
  * @alpha */
 export interface RangeDecorationOnMovedDetails {
   rangeDecoration: RangeDecoration
+  previousSelection: EditorSelection
   newSelection: EditorSelection
   origin: 'remote' | 'local'
+  /**
+   * - `'moved'` — the range's boundary points shifted or the range was
+   *   invalidated.
+   * - `'contentChanged'` — the boundary points are unchanged but content
+   *   inside the range was modified.
+   */
+  reason: 'moved' | 'contentChanged'
 }
 /**
  * A range decoration is a UI affordance that wraps a given selection range in the editor
@@ -313,9 +321,24 @@ export interface RangeDecoration {
    */
   selection: EditorSelection
   /**
-   * A optional callback that will be called when the range decoration potentially moves according to user edits.
+   * Called when the range decoration moves due to edits.
+   *
+   * When `origin` is `'remote'`, the return value is honored: return an
+   * `EditorSelection` to override the auto-resolved position (e.g. re-resolve
+   * from a W3C annotation or other source of truth). This is useful because
+   * remote structural ops (split/merge) may truncate or invalidate the
+   * decoration, and the editor cannot reconstruct the full range without
+   * consumer knowledge.
+   *
+   * When `origin` is `'local'`, the return value is ignored — local transforms
+   * (split/merge context) already produce correct positions.
    */
-  onMoved?: (details: RangeDecorationOnMovedDetails) => void
+  onMoved?: (details: RangeDecorationOnMovedDetails) => EditorSelection | void
+  /**
+   * Stable identifier for matching to external data (e.g., annotation/comment ID).
+   * Set by the consumer — PTE preserves it and passes it through in onMoved details.
+   */
+  id?: string
   /**
    * A custom payload that can be set on the range decoration
    */
