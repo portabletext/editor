@@ -1,7 +1,14 @@
-import {isSpan, isTextBlock, type PortableTextSpan} from '@portabletext/schema'
+import {
+  isSpan,
+  isTextBlock,
+  type OfDefinition,
+  type PortableTextSpan,
+} from '@portabletext/schema'
 import type {EditorSchema} from '../../editor/editor-schema'
 import {safeStringify} from '../../internal-utils/safe-json'
+import {getNodeChildren} from '../../node-traversal/get-children'
 import {getNode} from '../../node-traversal/get-node'
+import {resolveChildArrayField} from '../../schema/resolve-child-array-field'
 import {isEditor} from '../editor/is-editor'
 import type {Editor} from '../interfaces/editor'
 import type {Node} from '../interfaces/node'
@@ -22,6 +29,29 @@ const replaceChildren = <T>(
 ) => [...xs.slice(0, index), ...newValues, ...xs.slice(index + removeCount)]
 
 export const removeChildren = replaceChildren
+
+/**
+ * Resolve the child field name for a node. Returns `'children'` for text
+ * blocks and the schema-defined field name for container objects.
+ */
+function resolveChildFieldName(
+  context: {schema: EditorSchema},
+  node: Node,
+  scope: ReadonlyArray<OfDefinition> | undefined,
+): string {
+  if (isTextBlock(context, node)) {
+    return 'children'
+  }
+
+  if (isObjectNode(context, node)) {
+    const field = resolveChildArrayField({schema: context.schema, scope}, node)
+    if (field) {
+      return field.name
+    }
+  }
+
+  return 'children'
+}
 
 /**
  * Replace a descendant with a new node, replacing all ancestors
@@ -55,8 +85,42 @@ export const modifyDescendant = <N extends Node>(
   const slicedPath = path.slice()
   let modifiedNode: Node = f(node as N)
 
+  // Walk from root to target, collecting the child field name at each
+  // ancestor level so we can write back to the correct field when
+  // rebuilding the ancestor chain.
+  const fieldNames: Array<string> = []
+  let currentScope: ReadonlyArray<OfDefinition> | undefined = undefined
+  let currentScopePath = ''
+  let walkChildren: Array<Node> = typedRoot.children
+
+  for (let i = 0; i < path.length - 1; i++) {
+    const walkNode = walkChildren.at(path.at(i)!)
+
+    if (!walkNode) {
+      throw new Error(`Cannot find ancestor at path [${path.slice(0, i + 1)}]`)
+    }
+
+    const childInfo = getNodeChildren(
+      context,
+      walkNode,
+      currentScope,
+      currentScopePath,
+    )
+
+    if (!childInfo) {
+      // Leaf node - shouldn't happen since getNode validated the path
+      fieldNames.push('children')
+    } else {
+      fieldNames.push(resolveChildFieldName({schema}, walkNode, currentScope))
+      currentScope = childInfo.scope
+      currentScopePath = childInfo.scopePath
+      walkChildren = childInfo.children
+    }
+  }
+
   while (slicedPath.length > 1) {
     const index = slicedPath.pop()!
+    const fieldName = fieldNames.pop()!
     const ancestorEntry = getNode(
       {...context, value: typedRoot.children},
       slicedPath,
@@ -68,8 +132,8 @@ export const modifyDescendant = <N extends Node>(
 
     modifiedNode = {
       ...ancestorNode,
-      children: replaceChildren(
-        isTextBlock({schema}, ancestorNode) ? ancestorNode.children : [],
+      [fieldName]: replaceChildren(
+        (ancestorNode as Record<string, unknown>)[fieldName] as Array<Node>,
         index,
         1,
         modifiedNode,
@@ -109,8 +173,57 @@ export const modifyChildren = (
           : [],
     )
   } else {
+    const editableTypes = isEditor(root)
+      ? root.editableTypes
+      : new Set<string>()
+
+    // Walk from root to the target node to build up scope context
+    // so we can resolve the correct child field name.
+    let currentScope: ReadonlyArray<OfDefinition> | undefined = undefined
+    let currentScopePath = ''
+    const context = {schema, editableTypes}
+    let walkChildren: Array<Node> = isEditor(root)
+      ? root.children
+      : isTextBlock({schema}, root)
+        ? root.children
+        : []
+
+    for (let i = 0; i < path.length; i++) {
+      const walkNode = walkChildren.at(path.at(i)!)
+
+      if (!walkNode) {
+        break
+      }
+
+      const childInfo = getNodeChildren(
+        context,
+        walkNode,
+        currentScope,
+        currentScopePath,
+      )
+
+      if (childInfo) {
+        // Only update scope if this is NOT the target node (last in path).
+        // For the target node, we need the scope from its PARENT to resolve
+        // its own child field.
+        if (i < path.length - 1) {
+          currentScope = childInfo.scope
+          currentScopePath = childInfo.scopePath
+          walkChildren = childInfo.children
+        }
+      }
+    }
+
+    const scopeForTarget = currentScope
     modifyDescendant(root, path, schema, (node) => {
-      if (isSpan({schema}, node) || isObjectNode({schema}, node)) {
+      const childInfo = getNodeChildren(
+        context,
+        node,
+        scopeForTarget,
+        currentScopePath,
+      )
+
+      if (!childInfo) {
         throw new Error(
           `Cannot get the element at path [${path}] because it refers to a leaf node: ${safeStringify(
             node,
@@ -118,9 +231,11 @@ export const modifyChildren = (
         )
       }
 
+      const fieldName = resolveChildFieldName({schema}, node, scopeForTarget)
+
       return {
         ...node,
-        children: f(isTextBlock({schema}, node) ? node.children : []),
+        [fieldName]: f(childInfo.children),
       }
     })
   }
