@@ -1,10 +1,11 @@
 import type {PortableTextSpan} from '@portabletext/schema'
+import {isSpan, isTextBlock} from '@portabletext/schema'
 import {safeStringify} from '../../internal-utils/safe-json'
+import {getNodes} from '../../node-traversal/get-nodes'
 import type {Editor, Selection} from '../interfaces/editor'
 import type {Node, NodeEntry} from '../interfaces/node'
 import type {Operation} from '../interfaces/operation'
 import type {Range} from '../interfaces/range'
-import {getTexts} from '../node/get-texts'
 import {commonPath} from '../path/common-path'
 import {comparePaths} from '../path/compare-paths'
 import {isSiblingPath} from '../path/is-sibling-path'
@@ -87,7 +88,10 @@ export function applyOperation(editor: Editor, op: Operation): void {
             let prev: NodeEntry<PortableTextSpan> | undefined
             let next: NodeEntry<PortableTextSpan> | undefined
 
-            for (const [n, p] of getTexts(editor, editor.schema)) {
+            for (const {node: n, path: p} of getNodes(editor)) {
+              if (!isSpan({schema: editor.schema}, n)) {
+                continue
+              }
               if (comparePaths(p, path) === -1) {
                 prev = [n, p]
               } else {
@@ -156,7 +160,7 @@ export function applyOperation(editor: Editor, op: Operation): void {
 
       modifyDescendant(editor, path, editor.schema, (node) => {
         const newNode = {...node}
-        const isElement = 'children' in node && Array.isArray(node.children)
+        const isTextBlockNode = isTextBlock({schema: editor.schema}, node)
 
         for (const key in newProperties) {
           if (key === 'children') {
@@ -167,7 +171,7 @@ export function applyOperation(editor: Editor, op: Operation): void {
           // where `text` is a user property.
           if (
             key === 'text' &&
-            !isElement &&
+            !isTextBlockNode &&
             Array.isArray((node as Record<string, unknown>)['marks'])
           ) {
             throw new Error(`Cannot set the "${key}" property of nodes!`)

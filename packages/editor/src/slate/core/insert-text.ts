@@ -1,10 +1,12 @@
-import {elementReadOnly} from '../editor/element-read-only'
-import {getObjectNode} from '../editor/get-object-node'
+import {getAncestorObjectNode} from '../../node-traversal/get-ancestor-object-node'
+import {getNode} from '../../node-traversal/get-node'
+import {path as editorPath} from '../editor/path'
 import {pointRef} from '../editor/point-ref'
 import {range as editorRange} from '../editor/range'
 import {withoutNormalizing} from '../editor/without-normalizing'
 import type {Editor} from '../interfaces/editor'
 import type {Location} from '../interfaces/location'
+import {isObjectNode} from '../node/is-object-node'
 import {isPath} from '../path/is-path'
 import {isCollapsedRange} from '../range/is-collapsed-range'
 import {isRange} from '../range/is-range'
@@ -36,8 +38,16 @@ export function insertText(
         at = at.anchor
       } else {
         const end = rangeEnd(at)
-        if (!includeObjectNodes && getObjectNode(editor, {at: end})) {
-          return
+        if (!includeObjectNodes) {
+          const endPath = editorPath(editor, end)
+          const endEntry = getNode(editor, endPath)
+          const endObjectNode =
+            endEntry && isObjectNode({schema: editor.schema}, endEntry.node)
+              ? endEntry
+              : getAncestorObjectNode(editor, end.path)
+          if (endObjectNode) {
+            return
+          }
         }
         const start = rangeStart(at)
         const startRef = pointRef(editor, start)
@@ -51,13 +61,17 @@ export function insertText(
       }
     }
 
-    if (
-      (!includeObjectNodes && getObjectNode(editor, {at})) ||
-      elementReadOnly(editor, {at})
-    ) {
-      return
+    if (!includeObjectNodes) {
+      const atPath = editorPath(editor, at)
+      const atEntry = getNode(editor, atPath)
+      const atObjectNode =
+        atEntry && isObjectNode({schema: editor.schema}, atEntry.node)
+          ? atEntry
+          : getAncestorObjectNode(editor, at.path)
+      if (atObjectNode) {
+        return
+      }
     }
-
     const {path, offset} = at
     if (text.length > 0) {
       editor.apply({type: 'insert_text', path, offset, text})

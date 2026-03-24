@@ -1,10 +1,12 @@
 import {getDomNode} from '../../../dom-traversal/get-dom-node'
 import {getDomNodePath} from '../../../dom-traversal/get-dom-node-path'
 import {safeStringify} from '../../../internal-utils/safe-json'
+import {getAncestorObjectNode} from '../../../node-traversal/get-ancestor-object-node'
+import {getHighestObjectNode} from '../../../node-traversal/get-highest-object-node'
+import {getNode} from '../../../node-traversal/get-node'
+import {hasNode} from '../../../node-traversal/has-node'
 import {keyedPathToIndexedPath} from '../../../paths/keyed-path-to-indexed-path'
-import {getObjectNode} from '../../editor/get-object-node'
-import {hasPath} from '../../editor/has-path'
-import {node as editorNode} from '../../editor/node'
+import {path as editorPath} from '../../editor/path'
 import {start as editorStart} from '../../editor/start'
 import {unhangRange} from '../../editor/unhang-range'
 import type {BaseEditor, Editor, EditorMarks} from '../../interfaces/editor'
@@ -12,7 +14,6 @@ import type {Operation} from '../../interfaces/operation'
 import type {Point} from '../../interfaces/point'
 import type {Range} from '../../interfaces/range'
 import type {RangeRef} from '../../interfaces/range-ref'
-import {getNode} from '../../node/get-node'
 import {isObjectNode} from '../../node/is-object-node'
 import {isBackwardRange} from '../../range/is-backward-range'
 import {isCollapsedRange} from '../../range/is-collapsed-range'
@@ -331,7 +332,7 @@ export const DOMEditor: DOMEditorInterface = {
 
   hasRange: (editor, range) => {
     const {anchor, focus} = range
-    return hasPath(editor, anchor.path) && hasPath(editor, focus.path)
+    return hasNode(editor, anchor.path) && hasNode(editor, focus.path)
   },
 
   hasSelectableTarget: (editor, target) =>
@@ -361,7 +362,7 @@ export const DOMEditor: DOMEditorInterface = {
   },
 
   toDOMPoint: (editor, point) => {
-    const [node] = editorNode(editor, point.path)
+    const nodeEntry = getNode(editor, point.path)
     const el = getDomNode(editor, point.path)
 
     if (!el) {
@@ -370,7 +371,7 @@ export const DOMEditor: DOMEditorInterface = {
 
     let domPoint: DOMPoint | undefined
 
-    if (isObjectNode({schema: editor.schema}, node)) {
+    if (nodeEntry && isObjectNode({schema: editor.schema}, nodeEntry.node)) {
       const spacer = el.querySelector('[data-slate-zero-width]')
       if (spacer) {
         const domText = spacer.childNodes[0]
@@ -391,7 +392,13 @@ export const DOMEditor: DOMEditorInterface = {
 
     // If we're inside an object node, force the offset to 0, otherwise the zero
     // width spacing character will result in an incorrect offset of 1
-    if (getObjectNode(editor, {at: point})) {
+    const pointPath = editorPath(editor, point)
+    const pointEntry = getNode(editor, pointPath)
+    const pointObjectNode =
+      pointEntry && isObjectNode({schema: editor.schema}, pointEntry.node)
+        ? pointEntry
+        : getAncestorObjectNode(editor, point.path)
+    if (pointObjectNode) {
       point = {path: point.path, offset: 0}
     }
 
@@ -786,14 +793,13 @@ export const DOMEditor: DOMEditorInterface = {
     // Truncate paths that resolve to the spacer's virtual text node.
     if (indexedPath.length > 1) {
       const parentPath = indexedPath.slice(0, -1)
-      try {
-        const parentSlateNode = getNode(editor, parentPath, editor.schema)
+      const parentEntry = getNode(editor, parentPath)
 
-        if (isObjectNode({schema: editor.schema}, parentSlateNode)) {
-          return {path: parentPath, offset: 0}
-        }
-      } catch {
-        // Parent path doesn't exist in the tree, continue with original path
+      if (
+        parentEntry &&
+        isObjectNode({schema: editor.schema}, parentEntry.node)
+      ) {
+        return {path: parentPath, offset: 0}
       }
     }
 
@@ -973,9 +979,9 @@ export const DOMEditor: DOMEditorInterface = {
       isExpandedRange(range) &&
       isForwardRange(range) &&
       isDOMElement(focusNode) &&
-      getObjectNode(editor, {at: range.focus, mode: 'highest'})
+      getHighestObjectNode(editor, range.focus.path)
     ) {
-      range = unhangRange(editor, range, {includeObjectNodes: true})
+      range = unhangRange(editor, range)
     }
 
     return range as unknown as T extends true ? Range | null : Range

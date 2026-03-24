@@ -1,9 +1,7 @@
-import {isSpan} from '@portabletext/schema'
 import {applySelect} from '../internal-utils/apply-selection'
-import {elementReadOnly} from '../slate/editor/element-read-only'
-import {getObjectNode} from '../slate/editor/get-object-node'
-import {hasPath} from '../slate/editor/has-path'
-import {getNode} from '../slate/node/get-node'
+import {getNode} from '../node-traversal/get-node'
+import {getSpanNode} from '../node-traversal/get-span-node'
+import {hasNode} from '../node-traversal/has-node'
 import {isObjectNode} from '../slate/node/is-object-node'
 import {nextPath} from '../slate/path/next-path'
 import {isCollapsedRange} from '../slate/range/is-collapsed-range'
@@ -21,16 +19,22 @@ export const insertTextOperationImplementation: OperationImplementation<
 
   let {path, offset} = selection.anchor
 
-  const node = getNode(editor, path, editor.schema)
+  const nodeEntry = getNode(editor, path)
+
+  if (!nodeEntry) {
+    return
+  }
+
+  const node = nodeEntry.node
 
   // If the selection is at an ObjectNode, move to the adjacent span.
   if (isObjectNode({schema: editor.schema}, node)) {
     const next = nextPath(path)
 
-    if (hasPath(editor, next)) {
-      const nextNode = getNode(editor, next, editor.schema)
+    if (hasNode(editor, next)) {
+      const nextNodeEntry = getSpanNode(editor, next)
 
-      if (isSpan({schema: editor.schema}, nextNode)) {
+      if (nextNodeEntry) {
         path = next
         offset = 0
         applySelect(editor, {path, offset})
@@ -40,11 +44,6 @@ export const insertTextOperationImplementation: OperationImplementation<
     } else {
       return
     }
-  } else if (
-    getObjectNode(editor, {at: selection}) ||
-    elementReadOnly(editor, {at: selection})
-  ) {
-    return
   }
 
   if (operation.text.length > 0) {

@@ -2,11 +2,10 @@ import {isTextBlock} from '@portabletext/schema'
 import type {EditorActor} from '../editor/editor-machine'
 import type {EditorContext, EditorSnapshot} from '../editor/editor-snapshot'
 import {applySetNode} from '../internal-utils/apply-set-node'
+import {getChildren} from '../node-traversal/get-children'
+import {getParent} from '../node-traversal/get-parent'
 import {isEditor} from '../slate/editor/is-editor'
-import {parent as editorParent} from '../slate/editor/parent'
 import type {Path} from '../slate/interfaces/path'
-import {getChildren} from '../slate/node/get-children'
-import {isObjectNode} from '../slate/node/is-object-node'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {withNormalizeNode} from './slate-plugin.normalize-node'
 
@@ -81,94 +80,44 @@ export function createUniqueKeysPlugin(editorActor: EditorActor) {
     }
 
     editor.normalizeNode = (entry) => {
-      const [node, path] = entry
+      const [_node, path] = entry
 
-      if (
-        isTextBlock({schema: editor.schema}, node) ||
-        isObjectNode({schema: editor.schema}, node)
-      ) {
-        const [parentNode] = editorParent(editor, path)
+      const parent = getParent(editor, path)
+      const siblings = parent
+        ? getChildren(editor, parent.path)
+        : editor.children.map((child, index) => ({
+            node: child,
+            path: [index],
+          }))
 
-        if (parentNode && isEditor(parentNode)) {
-          const blockKeys = new Set<string>()
+      const siblingKeys = new Set<string>()
 
-          for (const sibling of parentNode.children) {
-            if (sibling._key && blockKeys.has(sibling._key)) {
-              const _key = editorActor.getSnapshot().context.keyGenerator()
+      for (const sibling of siblings) {
+        if (sibling.node._key && siblingKeys.has(sibling.node._key)) {
+          const _key = editorActor.getSnapshot().context.keyGenerator()
 
-              blockKeys.add(_key)
+          siblingKeys.add(_key)
 
-              withNormalizeNode(editor, () => {
-                applySetNode(editor, {_key}, path)
-              })
-
-              return
-            }
-
-            if (!sibling._key) {
-              const _key = editorActor.getSnapshot().context.keyGenerator()
-
-              blockKeys.add(_key)
-
-              withNormalizeNode(editor, () => {
-                applySetNode(editor, {_key}, path)
-              })
-
-              return
-            }
-
-            blockKeys.add(sibling._key)
-          }
-        }
-      }
-
-      if (isTextBlock({schema: editor.schema}, node)) {
-        // Set key on block itself
-        if (!node._key) {
           withNormalizeNode(editor, () => {
-            applySetNode(
-              editor,
-              {_key: editorActor.getSnapshot().context.keyGenerator()},
-              path,
-            )
+            applySetNode(editor, {_key}, path)
           })
+
           return
         }
 
-        // Set unique keys on it's children
-        const childKeys = new Set<string>()
+        if (!sibling.node._key) {
+          const _key = editorActor.getSnapshot().context.keyGenerator()
 
-        for (const [child, childPath] of getChildren(
-          editor,
-          path,
-          editor.schema,
-        )) {
-          if (child._key && childKeys.has(child._key)) {
-            const _key = editorActor.getSnapshot().context.keyGenerator()
+          siblingKeys.add(_key)
 
-            childKeys.add(_key)
+          withNormalizeNode(editor, () => {
+            applySetNode(editor, {_key}, path)
+          })
 
-            withNormalizeNode(editor, () => {
-              applySetNode(editor, {_key}, childPath)
-            })
-
-            return
-          }
-
-          if (!child._key) {
-            const _key = editorActor.getSnapshot().context.keyGenerator()
-
-            childKeys.add(_key)
-
-            withNormalizeNode(editor, () => {
-              applySetNode(editor, {_key}, childPath)
-            })
-
-            return
-          }
-
-          childKeys.add(child._key)
+          return
         }
+
+        siblingKeys.add(sibling.node._key)
       }
 
       withNormalizeNode(editor, () => {

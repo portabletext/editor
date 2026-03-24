@@ -24,15 +24,15 @@ import {
 import {safeStringify} from '../internal-utils/safe-json'
 import {validateValue} from '../internal-utils/validateValue'
 import {toSlateBlock} from '../internal-utils/values'
+import {getNode} from '../node-traversal/get-node'
+import {hasNode} from '../node-traversal/has-node'
 import {withRemoteChanges} from '../slate-plugins/slate-plugin.remote-changes'
 import {pluginWithoutHistory} from '../slate-plugins/slate-plugin.without-history'
 import {withoutPatching} from '../slate-plugins/slate-plugin.without-patching'
 import {deleteText} from '../slate/core/delete-text'
-import {node as editorNode} from '../slate/editor/node'
 import {start} from '../slate/editor/start'
 import {withoutNormalizing} from '../slate/editor/without-normalizing'
 import type {Node} from '../slate/interfaces/node'
-import {hasNode} from '../slate/node/has-node'
 import type {PickFromUnion} from '../type-utils'
 import type {InvalidValueResolution} from '../types/editor'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
@@ -612,7 +612,11 @@ function clearEditor({
 
           slateEditor.children.forEach((_, index) => {
             const removePath = [childrenLength - 1 - index]
-            const [removeNode] = editorNode(slateEditor, removePath)
+            const removeEntry = getNode(slateEditor, removePath)
+            if (!removeEntry) {
+              return
+            }
+            const removeNode = removeEntry.node
             slateEditor.apply({
               type: 'remove_node',
               path: removePath,
@@ -645,7 +649,11 @@ function removeExtraBlocks({
 
         if (value.length < childrenLength) {
           for (let i = childrenLength - 1; i > value.length - 1; i--) {
-            const [removeNode] = editorNode(slateEditor, [i])
+            const removeEntry2 = getNode(slateEditor, [i])
+            if (!removeEntry2) {
+              continue
+            }
+            const removeNode = removeEntry2.node
             slateEditor.apply({
               type: 'remove_node',
               path: [i],
@@ -861,7 +869,11 @@ function replaceBlock({
     applyDeselect(slateEditor)
   }
 
-  const [oldNode] = editorNode(slateEditor, [index])
+  const oldNodeEntry = getNode(slateEditor, [index])
+  if (!oldNodeEntry) {
+    return
+  }
+  const oldNode = oldNodeEntry.node
   slateEditor.apply({type: 'remove_node', path: [index], node: oldNode})
   slateEditor.apply({type: 'insert_node', path: [index], node: slateBlock})
 
@@ -869,8 +881,8 @@ function replaceBlock({
 
   if (
     selectionFocusOnBlock &&
-    hasNode(slateEditor, currentSelection.anchor.path, slateEditor.schema) &&
-    hasNode(slateEditor, currentSelection.focus.path, slateEditor.schema)
+    hasNode(slateEditor, currentSelection.anchor.path) &&
+    hasNode(slateEditor, currentSelection.focus.path)
   ) {
     applySelect(slateEditor, currentSelection)
   }
@@ -945,7 +957,11 @@ function updateBlock({
         if (childIndex > 0) {
           debug.syncValue('Removing child')
 
-          const [childNode] = editorNode(slateEditor, [index, childIndex])
+          const childNodeEntry = getNode(slateEditor, [index, childIndex])
+          if (!childNodeEntry) {
+            return
+          }
+          const childNode = childNodeEntry.node
           slateEditor.apply({
             type: 'remove_node',
             path: [index, childIndex],
@@ -1019,10 +1035,14 @@ function updateBlock({
         } else if (oldBlockChild) {
           debug.syncValue('Replacing child', currentBlockChild)
 
-          const [oldChild] = editorNode(slateEditor, [
+          const oldChildEntry = getNode(slateEditor, [
             index,
             currentBlockChildIndex,
           ])
+          if (!oldChildEntry) {
+            return
+          }
+          const oldChild = oldChildEntry.node
           slateEditor.apply({
             type: 'remove_node',
             path: [index, currentBlockChildIndex],

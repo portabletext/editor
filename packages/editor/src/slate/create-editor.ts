@@ -25,6 +25,9 @@ export const createEditor = (context: {
   const e: any = {
     [EDITOR_BRAND]: true,
     children: [],
+    get value() {
+      return this.children
+    },
     operations: [],
     selection: null,
     marks: null,
@@ -42,7 +45,6 @@ export const createEditor = (context: {
       text: '',
       marks: [],
     }),
-    isElementReadOnly: () => false,
     isInline: () => false,
     onChange: () => {},
 

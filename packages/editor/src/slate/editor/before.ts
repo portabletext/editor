@@ -12,7 +12,6 @@ export function before(
   options: {
     distance?: number
     unit?: TextUnitAdjustment
-    includeObjectNodes?: boolean
   } = {},
 ): Point | undefined {
   const anchor = start(editor, [])

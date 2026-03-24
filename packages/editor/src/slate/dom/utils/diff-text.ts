@@ -1,13 +1,14 @@
-import {isSpan, isTextBlock} from '@portabletext/schema'
-import {above} from '../../editor/above'
-import {hasPath} from '../../editor/has-path'
-import {next as editorNext} from '../../editor/next'
+import {isSpan} from '@portabletext/schema'
+import {getAncestorTextBlock} from '../../../node-traversal/get-ancestor-text-block'
+import {getNodes} from '../../../node-traversal/get-nodes'
+import {getSpanNode} from '../../../node-traversal/get-span-node'
+import {hasNode} from '../../../node-traversal/has-node'
+import {after} from '../../editor/after'
 import type {Editor} from '../../interfaces/editor'
 import type {Operation} from '../../interfaces/operation'
 import type {Path} from '../../interfaces/path'
 import type {Point} from '../../interfaces/point'
 import type {Range} from '../../interfaces/range'
-import {getNode} from '../../node/get-node'
 import {isDescendantPath} from '../../path/is-descendant-path'
 import {nextPath as getNextPath} from '../../path/next-path'
 import {pathEquals} from '../../path/path-equals'
@@ -33,14 +34,15 @@ export type TextDiff = {
  */
 export function verifyDiffState(editor: Editor, textDiff: TextDiff): boolean {
   const {path, diff} = textDiff
-  if (!hasPath(editor, path)) {
+  if (!hasNode(editor, path)) {
     return false
   }
 
-  const node = getNode(editor, path, editor.schema)
-  if (!isSpan({schema: editor.schema}, node)) {
+  const nodeEntry = getSpanNode(editor, path)
+  if (!nodeEntry) {
     return false
   }
+  const node = nodeEntry.node
 
   if (diff.start !== node.text.length || diff.text.length === 0) {
     return (
@@ -49,15 +51,12 @@ export function verifyDiffState(editor: Editor, textDiff: TextDiff): boolean {
   }
 
   const nextPath = getNextPath(path)
-  if (!hasPath(editor, nextPath)) {
+  if (!hasNode(editor, nextPath)) {
     return false
   }
 
-  const nextNode = getNode(editor, nextPath, editor.schema)
-  return (
-    isSpan({schema: editor.schema}, nextNode) &&
-    nextNode.text.startsWith(diff.text)
-  )
+  const nextNodeEntry = getSpanNode(editor, nextPath)
+  return !!nextNodeEntry && nextNodeEntry.node.text.startsWith(diff.text)
 }
 
 export function applyStringDiff(text: string, ...diffs: StringDiff[]) {
@@ -173,36 +172,41 @@ export function targetRange(textDiff: TextDiff): Range {
  */
 export function normalizePoint(editor: Editor, point: Point): Point | null {
   let {path, offset} = point
-  if (!hasPath(editor, path)) {
+  if (!hasNode(editor, path)) {
     return null
   }
 
-  let leaf = getNode(editor, path, editor.schema)
-  if (!isSpan({schema: editor.schema}, leaf)) {
+  const leafEntry = getSpanNode(editor, path)
+  if (!leafEntry) {
     return null
   }
+  let leaf = leafEntry.node
 
-  const parentBlock = above(editor, {
-    match: (n) => isTextBlock({schema: editor.schema}, n),
-    at: path,
-  })
+  const parentBlock = getAncestorTextBlock(editor, path)
 
   if (!parentBlock) {
     return null
   }
 
   while (offset > leaf.text.length) {
-    const entry = editorNext(editor, {
-      at: path,
-      match: (n) => isSpan({schema: editor.schema}, n),
-    })
-    if (!entry || !isDescendantPath(entry[1], parentBlock[1])) {
+    const afterPoint = after(editor, path)
+    const [nextEntry] = afterPoint
+      ? getNodes(editor, {
+          from: afterPoint.path,
+          match: (n) => isSpan({schema: editor.schema}, n),
+        })
+      : []
+    if (
+      !nextEntry ||
+      !isSpan({schema: editor.schema}, nextEntry.node) ||
+      !isDescendantPath(nextEntry.path, parentBlock.path)
+    ) {
       return null
     }
 
     offset -= leaf.text.length
-    leaf = entry[0]
-    path = entry[1]
+    leaf = nextEntry.node
+    path = nextEntry.path
   }
 
   return {path, offset}

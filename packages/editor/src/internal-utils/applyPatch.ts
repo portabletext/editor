@@ -24,11 +24,10 @@ import {
 } from '@sanity/diff-match-patch'
 import type {EditorSchema} from '../editor/editor-schema'
 import type {EditorContext} from '../editor/editor-snapshot'
-import {node as editorNode} from '../slate/editor/node'
-import {nodes as editorNodes} from '../slate/editor/nodes'
+import {getChildren} from '../node-traversal/get-children'
+import {getNode} from '../node-traversal/get-node'
 import {pathRef} from '../slate/editor/path-ref'
 import type {Node} from '../slate/interfaces/node'
-import {getChildren} from '../slate/node/get-children'
 import {isObjectNode} from '../slate/node/is-object-node'
 import type {Path} from '../types/paths'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
@@ -196,8 +195,15 @@ function insertPatch(
         position === 'before'
           ? targetBlockIndex + blocksToInsert.length
           : targetBlockIndex
-      const [removeNode] = editorNode(editor, [removeIdx])
-      editor.apply({type: 'remove_node', path: [removeIdx], node: removeNode})
+      const removeEntry = getNode(editor, [removeIdx])
+      if (!removeEntry) {
+        return false
+      }
+      editor.apply({
+        type: 'remove_node',
+        path: [removeIdx],
+        node: removeEntry.node,
+      })
     }
 
     return true
@@ -271,20 +277,24 @@ function setPatch(
 
       const previousSelection = editor.selection
 
-      // Remove the previous children
-      const childPaths = Array.from(
-        editorNodes(editor, {
-          at: [block.index],
-          reverse: true,
-          mode: 'lowest',
-        }),
-        ([, p]) => pathRef(editor, p),
+      // Remove the previous children in reverse order (highest index first)
+      const children = getChildren(editor, [block.index])
+
+      const childPaths = Array.from(children.reverse(), (entry) =>
+        pathRef(editor, entry.path),
       )
       for (const pathRef of childPaths) {
         const childPath = pathRef.unref()!
         if (childPath) {
-          const [childNode] = editorNode(editor, childPath)
-          editor.apply({type: 'remove_node', path: childPath, node: childNode})
+          const childNodeEntry = getNode(editor, childPath)
+          if (!childNodeEntry) {
+            continue
+          }
+          editor.apply({
+            type: 'remove_node',
+            path: childPath,
+            node: childNodeEntry.node,
+          })
         }
       }
 
@@ -433,12 +443,15 @@ function unsetPatch(editor: PortableTextSlateEditor, patch: UnsetPatch) {
   if (patch.path.length === 0) {
     applyDeselect(editor)
 
-    const children = getChildren(editor, [], editor.schema, {
-      reverse: true,
-    })
+    const children = getChildren(editor, [])
 
-    for (const [node, path] of children) {
-      editor.apply({type: 'remove_node', path, node})
+    for (let index = children.length - 1; index >= 0; index--) {
+      const entry = children[index]
+      if (!entry) {
+        continue
+      }
+      const {node: node, path: nodePath} = entry
+      editor.apply({type: 'remove_node', path: nodePath, node})
     }
 
     return true
@@ -452,8 +465,15 @@ function unsetPatch(editor: PortableTextSlateEditor, patch: UnsetPatch) {
 
   // Single blocks
   if (patch.path.length === 1) {
-    const [blockNode] = editorNode(editor, [block.index])
-    editor.apply({type: 'remove_node', path: [block.index], node: blockNode})
+    const blockNodeEntry = getNode(editor, [block.index])
+    if (!blockNodeEntry) {
+      return false
+    }
+    editor.apply({
+      type: 'remove_node',
+      path: [block.index],
+      node: blockNodeEntry.node,
+    })
 
     return true
   }
@@ -463,11 +483,14 @@ function unsetPatch(editor: PortableTextSlateEditor, patch: UnsetPatch) {
   // Unset on text block children
   if (isTextBlock({schema: editor.schema}, block.node) && child) {
     if (patch.path[1] === 'children' && patch.path.length === 3) {
-      const [childNode] = editorNode(editor, [block.index, child.index])
+      const childNodeEntry2 = getNode(editor, [block.index, child.index])
+      if (!childNodeEntry2) {
+        return false
+      }
       editor.apply({
         type: 'remove_node',
         path: [block.index, child.index],
-        node: childNode,
+        node: childNodeEntry2.node,
       })
 
       return true

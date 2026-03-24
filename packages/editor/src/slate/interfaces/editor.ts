@@ -23,6 +23,7 @@ export interface BaseEditor {
   // Core state.
 
   children: PortableTextBlock[]
+  readonly value: PortableTextBlock[]
   selection: Selection
   operations: Operation[]
   marks: EditorMarks | null
@@ -40,9 +41,6 @@ export interface BaseEditor {
   apply: (operation: Operation) => void
   createSpan: () => PortableTextSpan
   getDirtyPaths: (operation: Operation) => Path[]
-  isElementReadOnly: (
-    element: PortableTextTextBlock | PortableTextObject,
-  ) => boolean
   isInline: (element: PortableTextTextBlock | PortableTextObject) => boolean
   normalizeNode: (
     entry: [Editor | Node, Path],

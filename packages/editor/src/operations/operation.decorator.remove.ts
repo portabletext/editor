@@ -2,17 +2,20 @@ import {isSpan, isTextBlock} from '@portabletext/schema'
 import {applySetNode} from '../internal-utils/apply-set-node'
 import {applySplitNode} from '../internal-utils/apply-split-node'
 import {toSlateRange} from '../internal-utils/to-slate-range'
+import {getNode} from '../node-traversal/get-node'
+import {getNodes} from '../node-traversal/get-nodes'
 import {isEdge} from '../slate/editor/is-edge'
 import {isEnd} from '../slate/editor/is-end'
 import {isStart} from '../slate/editor/is-start'
-import {leaf} from '../slate/editor/leaf'
-import {node as editorNode} from '../slate/editor/node'
-import {nodes} from '../slate/editor/nodes'
+import {path as editorPath} from '../slate/editor/path'
 import {rangeRef} from '../slate/editor/range-ref'
 import {extractProps} from '../slate/node/extract-props'
+import {isObjectNode} from '../slate/node/is-object-node'
 import {isCollapsedRange} from '../slate/range/is-collapsed-range'
 import {isExpandedRange} from '../slate/range/is-expanded-range'
 import {rangeEdges} from '../slate/range/range-edges'
+import {rangeEnd} from '../slate/range/range-end'
+import {rangeStart} from '../slate/range/range-start'
 import type {OperationImplementation} from './operation.types'
 
 export const decoratorRemoveOperationImplementation: OperationImplementation<
@@ -40,9 +43,16 @@ export const decoratorRemoveOperationImplementation: OperationImplementation<
     const ref = rangeRef(editor, at, {affinity: 'inward'})
 
     // Split text nodes at range boundaries (equivalent to setNodes with split:true and empty props)
-    const [decoratorLeaf] = leaf(editor, at.anchor)
+    const decoratorLeafNodeEntry = getNode(editor, at.anchor.path)
+    const decoratorLeaf =
+      decoratorLeafNodeEntry &&
+      (isSpan({schema: editor.schema}, decoratorLeafNodeEntry.node) ||
+        isObjectNode({schema: editor.schema}, decoratorLeafNodeEntry.node))
+        ? decoratorLeafNodeEntry.node
+        : undefined
     if (
       !(
+        decoratorLeaf &&
         isCollapsedRange(at) &&
         isSpan({schema: editor.schema}, decoratorLeaf) &&
         decoratorLeaf.text.length > 0
@@ -51,23 +61,29 @@ export const decoratorRemoveOperationImplementation: OperationImplementation<
       const [start, end] = rangeEdges(at)
       const endAtEndOfNode = isEnd(editor, end, end.path)
       if (!endAtEndOfNode || !isEdge(editor, end, end.path)) {
-        const [endNode] = editorNode(editor, end.path)
-        applySplitNode(
-          editor,
-          end.path,
-          end.offset,
-          extractProps(endNode, editor.schema),
-        )
+        const endNodeEntry = getNode(editor, end.path)
+        if (endNodeEntry) {
+          const endNode = endNodeEntry.node
+          applySplitNode(
+            editor,
+            end.path,
+            end.offset,
+            extractProps(endNode, editor.schema),
+          )
+        }
       }
       const startAtStartOfNode = isStart(editor, start, start.path)
       if (!startAtStartOfNode || !isEdge(editor, start, start.path)) {
-        const [startNode] = editorNode(editor, start.path)
-        applySplitNode(
-          editor,
-          start.path,
-          start.offset,
-          extractProps(startNode, editor.schema),
-        )
+        const startNodeEntry = getNode(editor, start.path)
+        if (startNodeEntry) {
+          const startNode = startNodeEntry.node
+          applySplitNode(
+            editor,
+            start.path,
+            start.offset,
+            extractProps(startNode, editor.schema),
+          )
+        }
       }
     }
 
@@ -75,13 +91,18 @@ export const decoratorRemoveOperationImplementation: OperationImplementation<
 
     if (updatedAt) {
       const splitTextNodes = [
-        ...nodes(editor, {
-          at: updatedAt,
+        ...getNodes(editor, {
+          from: rangeStart(updatedAt).path,
+          to: rangeEnd(updatedAt).path,
           match: (n) => isSpan({schema: editor.schema}, n),
         }),
       ]
-      splitTextNodes.forEach(([node, path]) => {
-        const block = editor.children[path[0]!]
+      for (const {node, path: nodePath} of splitTextNodes) {
+        if (!isSpan({schema: editor.schema}, node)) {
+          continue
+        }
+
+        const block = editor.children[nodePath[0]!]
         if (
           isTextBlock({schema: editor.schema}, block) &&
           block.children.includes(node)
@@ -94,15 +115,17 @@ export const decoratorRemoveOperationImplementation: OperationImplementation<
               ),
               _type: context.schema.span.name,
             },
-            path,
+            nodePath,
           )
         }
-      })
+      }
     }
   } else {
-    const [block, blockPath] = editorNode(editor, at, {
-      depth: 1,
-    })
+    const blockEntry = getNode(editor, editorPath(editor, at, {depth: 1}))
+    if (!blockEntry) {
+      return
+    }
+    const {node: block, path: blockPath} = blockEntry
     const lonelyEmptySpan =
       isTextBlock({schema: editor.schema}, block) &&
       block.children.length === 1 &&
@@ -117,10 +140,12 @@ export const decoratorRemoveOperationImplementation: OperationImplementation<
         (existingMark) => existingMark !== mark,
       )
 
-      for (const [, spanPath] of nodes(editor, {
-        at: blockPath,
-        match: (node) => isSpan({schema: editor.schema}, node),
-      })) {
+      for (const {path: spanPath} of Array.from(
+        getNodes(editor, {
+          at: blockPath,
+          match: (node) => isSpan({schema: editor.schema}, node),
+        }),
+      )) {
         applySetNode(editor, {marks: existingMarksWithoutDecorator}, spanPath)
       }
     } else {

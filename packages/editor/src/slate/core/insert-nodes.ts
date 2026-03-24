@@ -1,11 +1,12 @@
 import {isSpan, isTextBlock} from '@portabletext/schema'
 import {applySplitNode} from '../../internal-utils/apply-split-node'
+import {getAncestorObjectNode} from '../../node-traversal/get-ancestor-object-node'
+import {getNode} from '../../node-traversal/get-node'
+import {getNodeDescendants, getNodes} from '../../node-traversal/get-nodes'
 import {end as editorEnd} from '../editor/end'
-import {getObjectNode} from '../editor/get-object-node'
 import {isEdge} from '../editor/is-edge'
 import {isEnd} from '../editor/is-end'
-import {levels} from '../editor/levels'
-import {nodes as editorNodes} from '../editor/nodes'
+import {path as editorPath} from '../editor/path'
 import {pathRef} from '../editor/path-ref'
 import {pointRef} from '../editor/point-ref'
 import {unhangRange} from '../editor/unhang-range'
@@ -18,7 +19,8 @@ import type {Path} from '../interfaces/path'
 import type {Point} from '../interfaces/point'
 import type {PointRef} from '../interfaces/point-ref'
 import {extractProps} from '../node/extract-props'
-import {getNodes} from '../node/get-nodes'
+import {isObjectNode} from '../node/is-object-node'
+import {comparePaths} from '../path/compare-paths'
 import {nextPath} from '../path/next-path'
 import {operationCanTransformPath} from '../path/operation-can-transform-path'
 import {parentPath} from '../path/parent-path'
@@ -78,7 +80,7 @@ export function insertNodes<T extends Node>(
 
     if (isRange(at)) {
       if (!hanging) {
-        at = unhangRange(editor, at, {includeObjectNodes})
+        at = unhangRange(editor, at)
       }
 
       if (isCollapsedRange(at)) {
@@ -103,15 +105,15 @@ export function insertNodes<T extends Node>(
         }
       }
 
-      const [entry] = editorNodes(editor, {
-        at: at.path,
-        match,
+      const entry = firstNodeWithMode(editor, {
+        from: editorPath(editor, at.path, {edge: 'start'}),
+        to: editorPath(editor, at.path, {edge: 'end'}),
+        match: match!,
         mode,
-        includeObjectNodes,
       })
 
       if (entry) {
-        const [, matchPath] = entry
+        const matchPath = entry.path
         const matchPathRef = pathRef(editor, matchPath)
         const isAtEnd = isEnd(editor, at, matchPath)
 
@@ -122,25 +124,30 @@ export function insertNodes<T extends Node>(
           })
           let afterRef: PointRef | undefined
           try {
-            const [highest] = editorNodes(editor, {
-              at: splitAt,
-              match,
+            const highest = firstNodeWithMode(editor, {
+              from: splitAt.path,
+              to: splitAt.path,
+              match: match!,
               mode,
-              includeObjectNodes,
             })
 
             if (highest) {
               afterRef = pointRef(editor, splitAt)
               const depth = splitAt.path.length
-              const [, highestPath] = highest
+              const highestPath = highest.path
               const lowestPath = splitAt.path.slice(0, depth)
               let position = splitAt.offset
 
-              for (const [node, nodePath] of levels(editor, {
-                at: lowestPath,
-                reverse: true,
-                includeObjectNodes,
-              })) {
+              const levelEntries = pathLevels(lowestPath)
+                .filter((levelPath) => levelPath.length > 0)
+                .map((levelPath) => getNode(editor, levelPath))
+                .filter(
+                  (entry): entry is {node: Node; path: Array<number>} =>
+                    entry !== undefined,
+                )
+                .reverse()
+
+              for (const {node: node, path: nodePath} of levelEntries) {
                 let split = false
 
                 if (
@@ -180,8 +187,17 @@ export function insertNodes<T extends Node>(
     const parentPath_ = parentPath(at)
     let index = at[at.length - 1]!
 
-    if (!includeObjectNodes && getObjectNode(editor, {at: parentPath_})) {
-      return
+    if (!includeObjectNodes) {
+      const parentNodePath = editorPath(editor, parentPath_)
+      const parentNodeEntry = getNode(editor, parentNodePath)
+      const parentObjectNode =
+        parentNodeEntry &&
+        isObjectNode({schema: editor.schema}, parentNodeEntry.node)
+          ? parentNodeEntry
+          : getAncestorObjectNode(editor, parentPath_)
+      if (parentObjectNode) {
+        return
+      }
     }
 
     if (batchDirty) {
@@ -205,14 +221,11 @@ export function insertNodes<T extends Node>(
             at = nextPath(at as Path)
 
             batchedOps.push(op)
-            if (isSpan({schema: editor.schema}, node)) {
-              newDirtyPaths.push(path)
-            } else {
-              newDirtyPaths.push(
-                ...Array.from(getNodes(node, editor.schema), ([, p]) =>
-                  path.concat(p),
-                ),
-              )
+
+            if (!isSpan(editor, node)) {
+              for (const {path: p} of getNodeDescendants(editor, node)) {
+                newDirtyPaths.push(path.concat(p))
+              }
             }
           }
         },
@@ -251,4 +264,45 @@ export function insertNodes<T extends Node>(
       }
     }
   })
+}
+
+function firstNodeWithMode(
+  editor: Editor,
+  options: {
+    from: Array<number>
+    to: Array<number>
+    match: (node: Node, path: Array<number>) => boolean
+    mode: 'highest' | 'lowest'
+  },
+): {node: Node; path: Array<number>} | undefined {
+  const {from, to, match, mode} = options
+  let hit: {node: Node; path: Array<number>} | undefined
+
+  for (const {node, path: nodePath} of getNodes(editor, {
+    from,
+    to,
+    match,
+  })) {
+    const entry = {node, path: nodePath}
+    const isLower = hit && comparePaths(nodePath, hit.path) === 0
+
+    if (mode === 'highest' && isLower) {
+      continue
+    }
+
+    if (mode === 'lowest' && isLower) {
+      hit = entry
+      continue
+    }
+
+    const emit = mode === 'lowest' ? hit : entry
+
+    if (emit) {
+      return emit
+    }
+
+    hit = entry
+  }
+
+  return hit
 }

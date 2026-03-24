@@ -2,25 +2,21 @@ import {getDomNode} from '../dom-traversal/get-dom-node'
 import {getDomNodePath} from '../dom-traversal/get-dom-node-path'
 import type {EditorActor} from '../editor/editor-machine'
 import type {EditorSchema} from '../editor/editor-schema'
+import {getNode} from '../node-traversal/get-node'
+import {getBlock} from '../node-traversal/is-block'
 import {keyedPathToIndexedPath} from '../paths/keyed-path-to-indexed-path'
 import {DOMEditor} from '../slate/dom/plugin/dom-editor'
 import {isDOMNode} from '../slate/dom/utils/dom'
 import {isEditor} from '../slate/editor/is-editor'
 import type {Path} from '../slate/interfaces/path'
 import type {Range as SlateRange} from '../slate/interfaces/range'
-import {getNodeIf} from '../slate/node/get-node-if'
 import type {EditorSelection} from '../types/editor'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {getBlockEndPoint} from '../utils/util.get-block-end-point'
 import {getBlockStartPoint} from '../utils/util.get-block-start-point'
 import {isSelectionCollapsed} from '../utils/util.is-selection-collapsed'
 import {getBlockKeyFromSelectionPoint} from '../utils/util.selection-point'
-import {
-  getFirstBlock,
-  getLastBlock,
-  getNodeBlock,
-  slateRangeToSelection,
-} from './slate-utils'
+import {slateRangeToSelection} from './slate-utils'
 
 export type EventPosition = {
   block: 'start' | 'end'
@@ -53,11 +49,8 @@ export function getEventPosition({
 
   const {node: eventNode, path: eventPath} = eventResult
 
-  const eventBlock = getNodeBlock({
-    editor: slateEditor,
-    schema: editorActor.getSnapshot().context.schema,
-    node: eventNode,
-  })
+  const eventBlockEntry = getBlock(slateEditor, eventPath.slice(0, 1))
+  const eventBlock = eventBlockEntry?.node
   const eventPositionBlock = getEventPositionBlock({
     nodePath: eventPath,
     slateEditor,
@@ -168,9 +161,9 @@ function getEventNode({
       if (indexedPath.length === 0) {
         return {node: slateEditor, path: indexedPath}
       } else {
-        const node = getNodeIf(slateEditor, indexedPath, slateEditor.schema)
-        if (node) {
-          return {node, path: indexedPath}
+        const nodeEntry = getNode(slateEditor, indexedPath)
+        if (nodeEntry) {
+          return {node: nodeEntry.node, path: indexedPath}
         }
       }
     }
@@ -190,13 +183,13 @@ function getEventPositionBlock({
   slateEditor: PortableTextSlateEditor
   event: DragEvent | MouseEvent
 }): EventPositionBlock | undefined {
-  const [firstBlock, firstBlockPath] = getFirstBlock({editor: slateEditor})
+  const firstBlockEntry = getNode(slateEditor, [0])
 
-  if (!firstBlock) {
+  if (!firstBlockEntry) {
     return undefined
   }
 
-  const firstBlockElement = getDomNode(slateEditor, firstBlockPath)
+  const firstBlockElement = getDomNode(slateEditor, firstBlockEntry.path)
 
   if (!firstBlockElement) {
     return undefined
@@ -208,13 +201,15 @@ function getEventPositionBlock({
     return 'start'
   }
 
-  const [lastBlock, lastBlockPath] = getLastBlock({editor: slateEditor})
+  const lastBlockIndex = slateEditor.children.length - 1
+  const lastBlockEntry =
+    lastBlockIndex >= 0 ? getNode(slateEditor, [lastBlockIndex]) : undefined
 
-  if (!lastBlock) {
+  if (!lastBlockEntry) {
     return undefined
   }
 
-  const lastBlockElement = getDomNode(slateEditor, lastBlockPath)
+  const lastBlockElement = getDomNode(slateEditor, lastBlockEntry.path)
 
   if (!lastBlockElement) {
     return undefined
