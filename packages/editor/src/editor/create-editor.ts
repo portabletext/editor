@@ -5,6 +5,8 @@ import type {Editor, EditorConfig} from '../editor'
 import {debug} from '../internal-utils/debug'
 import {corePriority} from '../priority/priority.core'
 import {createEditorPriority} from '../priority/priority.types'
+import {getEditableTypePaths} from '../renderers/container-schema'
+import {getRendererKey} from '../renderers/renderer.types'
 import type {EditableAPI} from '../types/editor'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {defaultKeyGenerator} from '../utils/key-generator'
@@ -86,6 +88,16 @@ export function createInternalEditor(config: EditorConfig): {
           type: 'remove behavior',
           behaviorConfig: behaviorConfigWithPriority,
         })
+      }
+    },
+    registerRenderer: ({renderer}) => {
+      const key = getRendererKey(renderer.type, renderer.name)
+      editorActor.send({type: 'register renderer', config: {renderer}})
+      updateEditableTypes(editorActor, slateEditor)
+
+      return () => {
+        editorActor.send({type: 'unregister renderer', key})
+        updateEditableTypes(editorActor, slateEditor)
       }
     },
     send: (event) => {
@@ -284,4 +296,23 @@ function createActors(config: {
     mutationActor,
     syncActor,
   }
+}
+
+function updateEditableTypes(
+  editorActor: EditorActor,
+  slateEditor: PortableTextSlateEditor,
+) {
+  const snapshot = editorActor.getSnapshot()
+  const schema = snapshot.context.schema
+  const renderers = snapshot.context.renderers
+  const editableTypes = new Set<string>()
+
+  for (const rendererConfig of renderers.values()) {
+    const paths = getEditableTypePaths(schema, rendererConfig.renderer.name)
+    for (const path of paths) {
+      editableTypes.add(path)
+    }
+  }
+
+  slateEditor.editableTypes = editableTypes
 }

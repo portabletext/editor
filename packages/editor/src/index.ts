@@ -7,6 +7,7 @@ export type {
   PortableTextTextBlock,
 } from '@portabletext/schema'
 export type {Editor, EditorConfig, EditorEvent} from './editor'
+export type {Renderer, RendererConfig} from './renderers/renderer.types'
 export {PortableTextEditable} from './editor/Editable'
 export type {PortableTextEditableProps} from './editor/Editable'
 export type {PatchesEvent} from './editor/editor-machine'
