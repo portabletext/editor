@@ -2,14 +2,11 @@ import type {EditorActor} from '../editor/editor-machine'
 import type {RelayActor} from '../editor/relay-machine'
 import type {Editor} from '../slate/interfaces/editor'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
+import {setupApply} from './slate-plugin.apply'
 import {createBehaviorApiPlugin} from './slate-plugin.behavior-api'
-import {createHistoryPlugin} from './slate-plugin.history'
-import {createNormalizationPlugin} from './slate-plugin.normalization'
-import {createPatchesPlugin} from './slate-plugin.patches'
+import {setupNormalizeNode} from './slate-plugin.normalize-node-collapsed'
 import {createSchemaPlugin} from './slate-plugin.schema'
-import {createUniqueKeysPlugin} from './slate-plugin.unique-keys'
 import {updateSelectionPlugin} from './slate-plugin.update-selection'
-import {updateValuePlugin} from './slate-plugin.update-value'
 
 type PluginsOptions = {
   editorActor: EditorActor
@@ -23,40 +20,35 @@ export const plugins = <T extends Editor>(
 ): PortableTextSlateEditor => {
   const e = editor as T & PortableTextSlateEditor
   const {editorActor, relayActor} = options
-  const uniqueKeysPlugin = createUniqueKeysPlugin(editorActor)
+
+  // Schema plugin: sets editor.schema, editor.isInline
+  // Note: schema's normalizeNode is now handled by setupNormalizeNode
   const schemaPlugin = createSchemaPlugin({
     editorActor,
   })
-  const patchesPlugin = createPatchesPlugin({
+  schemaPlugin(e)
+
+  // Selection plugin: wraps onChange for selection tracking
+  updateSelectionPlugin({
+    editorActor,
+    editor: e,
+  })
+
+  // Collapsed apply: replaces uniqueKeys, history, patches, updateValue,
+  // withReact, withDom, and core apply plugins
+  setupApply(e, {
     editorActor,
     relayActor,
     subscriptions: options.subscriptions,
   })
-  const historyPlugin = createHistoryPlugin({
-    editorActor,
-    subscriptions: options.subscriptions,
-  })
-  const normalizationPlugin = createNormalizationPlugin(editorActor)
-  const behaviorApiPlugin = createBehaviorApiPlugin(editorActor)
 
-  // Ordering is important here, selection dealing last, data manipulation in the middle and core model stuff first.
-  return behaviorApiPlugin(
-    schemaPlugin(
-      uniqueKeysPlugin(
-        normalizationPlugin(
-          historyPlugin(
-            patchesPlugin(
-              updateValuePlugin(
-                editorActor.getSnapshot().context,
-                updateSelectionPlugin({
-                  editorActor,
-                  editor: e,
-                }),
-              ),
-            ),
-          ),
-        ),
-      ),
-    ),
-  )
+  // Collapsed normalizeNode: replaces uniqueKeys, schema, and normalization
+  // plugin normalizeNode chains
+  setupNormalizeNode(e, editorActor)
+
+  // Behavior API: wraps select/setSelection (not apply)
+  const behaviorApiPlugin = createBehaviorApiPlugin(editorActor)
+  behaviorApiPlugin(e)
+
+  return e
 }
