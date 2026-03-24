@@ -1,8 +1,8 @@
+import {isSpan} from '@portabletext/schema'
 import {getActiveAnnotationsMarks} from '../selectors/selector.get-active-annotation-marks'
 import {getActiveDecorators} from '../selectors/selector.get-active-decorators'
 import {getFocusSpan} from '../selectors/selector.get-focus-span'
-import {getNextSpan} from '../selectors/selector.get-next-span'
-import {getPreviousSpan} from '../selectors/selector.get-previous-span'
+import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
 import {forward, raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
@@ -35,39 +35,48 @@ export const coreInsertBehaviors = [
         const atStart = offset === 0
         const atEnd = offset === focusSpan.node.text.length
 
-        if (atEnd) {
-          const nextSpan = getNextSpan(snapshot)
+        const focusBlock = getFocusTextBlock(snapshot)
 
-          if (nextSpan) {
-            const nextMarks = nextSpan.node.marks ?? []
+        if (focusBlock) {
+          const children = focusBlock.node.children
+          const focusIndex = children.findIndex(
+            (child) => child._key === focusSpan.node._key,
+          )
 
-            if (
-              activeMarks.length === nextMarks.length &&
-              activeMarks.every((mark) => nextMarks.includes(mark))
-            ) {
-              return {
-                type: 'move' as const,
-                targetSpanKey: nextSpan.node._key,
-                targetOffset: 0,
+          if (atEnd && focusIndex < children.length - 1) {
+            const nextChild = children[focusIndex + 1]
+
+            if (nextChild && isSpan(snapshot.context, nextChild)) {
+              const nextMarks = nextChild.marks ?? []
+
+              if (
+                activeMarks.length === nextMarks.length &&
+                activeMarks.every((mark) => nextMarks.includes(mark))
+              ) {
+                return {
+                  type: 'move' as const,
+                  targetSpanKey: nextChild._key,
+                  targetOffset: 0,
+                }
               }
             }
           }
-        }
 
-        if (atStart) {
-          const previousSpan = getPreviousSpan(snapshot)
+          if (atStart && focusIndex > 0) {
+            const prevChild = children[focusIndex - 1]
 
-          if (previousSpan) {
-            const prevMarks = previousSpan.node.marks ?? []
+            if (prevChild && isSpan(snapshot.context, prevChild)) {
+              const prevMarks = prevChild.marks ?? []
 
-            if (
-              activeMarks.length === prevMarks.length &&
-              activeMarks.every((mark) => prevMarks.includes(mark))
-            ) {
-              return {
-                type: 'move' as const,
-                targetSpanKey: previousSpan.node._key,
-                targetOffset: previousSpan.node.text.length,
+              if (
+                activeMarks.length === prevMarks.length &&
+                activeMarks.every((mark) => prevMarks.includes(mark))
+              ) {
+                return {
+                  type: 'move' as const,
+                  targetSpanKey: prevChild._key,
+                  targetOffset: prevChild.text.length,
+                }
               }
             }
           }
