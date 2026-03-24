@@ -1,5 +1,5 @@
 ---
-'@portabletext/editor': patch
+'@portabletext/editor': minor
 ---
 
 feat: simplify internal DOM mapping
