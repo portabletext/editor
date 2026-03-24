@@ -1,6 +1,6 @@
 import {isSpan} from '@portabletext/schema'
+import {getNodeDescendants} from '../../node-traversal/get-nodes'
 import type {Editor} from '../interfaces/editor'
-import {getNodes} from '../node/get-nodes'
 import {pathAncestors} from '../path/path-ancestors'
 import {pathLevels} from '../path/path-levels'
 import type {WithEditorFirstArg} from '../utils/types'
@@ -9,7 +9,7 @@ import type {WithEditorFirstArg} from '../utils/types'
  * Get the "dirty" paths generated from an operation.
  */
 export const getDirtyPaths: WithEditorFirstArg<Editor['getDirtyPaths']> = (
-  _editor,
+  editor,
   op,
 ) => {
   switch (op.type) {
@@ -23,9 +23,15 @@ export const getDirtyPaths: WithEditorFirstArg<Editor['getDirtyPaths']> = (
     case 'insert_node': {
       const {node, path} = op
       const levels = pathLevels(path)
-      const descendants = isSpan({schema: _editor.schema}, node)
-        ? []
-        : Array.from(getNodes(node, _editor.schema), ([, p]) => path.concat(p))
+
+      if (isSpan(editor, node)) {
+        return levels
+      }
+
+      const descendants = Array.from(
+        getNodeDescendants(editor, node),
+        (entry) => path.concat(entry.path),
+      )
 
       return [...levels, ...descendants]
     }

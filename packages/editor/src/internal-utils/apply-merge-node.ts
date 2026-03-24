@@ -1,9 +1,9 @@
 import {isSpan, isTextBlock} from '@portabletext/schema'
+import {getNode} from '../node-traversal/get-node'
 import {withoutNormalizing} from '../slate/editor/without-normalizing'
 import type {Path} from '../slate/interfaces/path'
 import type {Point} from '../slate/interfaces/point'
 import type {Range} from '../slate/interfaces/range'
-import {getNode} from '../slate/node/get-node'
 import {isAncestorPath} from '../slate/path/is-ancestor-path'
 import {pathEndsBefore} from '../slate/path/path-ends-before'
 import {pathEquals} from '../slate/path/path-equals'
@@ -28,7 +28,13 @@ export function applyMergeNode(
   path: Path,
   position: number,
 ): void {
-  const node = getNode(editor, path, editor.schema)
+  const nodeEntry = getNode(editor, path)
+
+  if (!nodeEntry) {
+    return
+  }
+
+  const node = nodeEntry.node
   const prevPath = previousPath(path)
 
   // Pre-transform all refs with merge semantics

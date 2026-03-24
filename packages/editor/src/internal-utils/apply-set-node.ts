@@ -1,6 +1,6 @@
 import {isTextBlock} from '@portabletext/schema'
+import {getNode} from '../node-traversal/get-node'
 import type {Path} from '../slate/interfaces/path'
-import {getNode} from '../slate/node/get-node'
 import {isObjectNode} from '../slate/node/is-object-node'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 
@@ -19,7 +19,14 @@ export function applySetNode(
   props: Record<string, unknown> | object,
   path: Path,
 ): void {
-  const node = getNode(editor, path, editor.schema) as Record<string, unknown>
+  const nodeEntry = getNode(editor, path)
+
+  if (!nodeEntry) {
+    return
+  }
+
+  const node = nodeEntry.node
+  const nodeRecord = node as Record<string, unknown>
   const propsRecord = props as Record<string, unknown>
   const properties: Record<string, unknown> = {}
   const newProperties: Record<string, unknown> = {}
@@ -37,9 +44,9 @@ export function applySetNode(
       continue
     }
 
-    if (propsRecord[key] !== node[key]) {
-      if (node.hasOwnProperty(key)) {
-        properties[key] = node[key]
+    if (propsRecord[key] !== nodeRecord[key]) {
+      if (nodeRecord.hasOwnProperty(key)) {
+        properties[key] = nodeRecord[key]
       }
 
       if (propsRecord[key] != null) {

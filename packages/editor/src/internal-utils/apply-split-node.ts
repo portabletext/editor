@@ -1,9 +1,9 @@
 import {isSpan, isTextBlock} from '@portabletext/schema'
+import {getNode} from '../node-traversal/get-node'
 import {withoutNormalizing} from '../slate/editor/without-normalizing'
 import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
 import type {Point} from '../slate/interfaces/point'
-import {getNode} from '../slate/node/get-node'
 import {isAncestorPath} from '../slate/path/is-ancestor-path'
 import {nextPath} from '../slate/path/next-path'
 import {pathEndsBefore} from '../slate/path/path-ends-before'
@@ -26,7 +26,13 @@ export function applySplitNode(
   position: number,
   properties: Record<string, unknown>,
 ): void {
-  const node = getNode(editor, path, editor.schema)
+  const nodeEntry = getNode(editor, path)
+
+  if (!nodeEntry) {
+    return
+  }
+
+  const node = nodeEntry.node
 
   // Pre-transform all refs with split semantics
   for (const ref of editor.pathRefs) {

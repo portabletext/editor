@@ -1,21 +1,52 @@
 import {
+  isSpan,
   isTextBlock,
   type PortableTextObject,
   type PortableTextSpan,
   type PortableTextTextBlock,
 } from '@portabletext/schema'
 import {forwardRef, memo, useRef, useState} from 'react'
+import {getNodes} from '../../../node-traversal/get-nodes'
 import {IS_ANDROID} from '../../dom/utils/environment'
 import {MARK_PLACEHOLDER_SYMBOL} from '../../dom/utils/symbols'
-import {string as editorString} from '../../editor/string'
+import {end as editorEnd} from '../../editor/end'
+import {start as editorStart} from '../../editor/start'
+import type {Editor} from '../../interfaces/editor'
 import type {Path} from '../../interfaces/path'
 import {parentPath} from '../../path/parent-path'
+import {pathEquals} from '../../path/path-equals'
 import {useIsomorphicLayoutEffect} from '../hooks/use-isomorphic-layout-effect'
 import {useSlateStatic} from '../hooks/use-slate-static'
 
 /**
  * Leaf content strings.
  */
+
+function getTextContent(editor: Editor, path: Path): string {
+  const start = editorStart(editor, path)
+  const end = editorEnd(editor, path)
+  let text = ''
+
+  for (const {node, path: nodePath} of getNodes(editor, {
+    from: start.path,
+    to: end.path,
+    match: (n) => isSpan({schema: editor.schema}, n),
+  })) {
+    if (!isSpan({schema: editor.schema}, node)) {
+      continue
+    }
+    let nodeText = node.text
+    if (pathEquals(nodePath, end.path)) {
+      nodeText = nodeText.slice(0, end.offset)
+    }
+    if (pathEquals(nodePath, start.path)) {
+      nodeText = nodeText.slice(start.offset)
+    }
+    text += nodeText
+  }
+
+  return text
+}
 
 const SlateString = (props: {
   isLast: boolean
@@ -37,7 +68,7 @@ const SlateString = (props: {
     isTextBlock({schema: editor.schema}, parent) &&
     parent.children[parent.children.length - 1] === text &&
     !editor.isInline(parent) &&
-    editorString(editor, parentIndexedPath) === ''
+    getTextContent(editor, parentIndexedPath) === ''
   ) {
     return <ZeroWidthString isLineBreak isMarkPlaceholder={isMarkPlaceholder} />
   }

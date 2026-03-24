@@ -1,6 +1,6 @@
+import {getNode} from '../node-traversal/get-node'
 import {withoutNormalizing} from '../slate/editor/without-normalizing'
 import type {Point} from '../slate/interfaces/point'
-import {getNode} from '../slate/node/get-node'
 import {getBlockKeyFromSelectionPoint} from '../utils/util.selection-point'
 import type {OperationImplementation} from './operation.types'
 
@@ -39,7 +39,14 @@ export const moveBlockOperationImplementation: OperationImplementation<
   }
 
   const editor = operation.editor
-  const node = getNode(editor, [originBlockIndex], editor.schema)
+  const nodeEntry = getNode(editor, [originBlockIndex])
+
+  if (!nodeEntry) {
+    return
+  }
+
+  const node = nodeEntry.node
+
   const savedSelection = editor.selection
     ? {anchor: {...editor.selection.anchor}, focus: {...editor.selection.focus}}
     : null

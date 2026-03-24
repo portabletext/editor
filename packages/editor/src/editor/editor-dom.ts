@@ -1,9 +1,10 @@
 import type {BehaviorEvent} from '../behaviors/behavior.types.event'
 import {getDomNode} from '../dom-traversal/get-dom-node'
 import {toSlateRange} from '../internal-utils/to-slate-range'
+import {getNodes} from '../node-traversal/get-nodes'
 import {getSelectionEndBlock, getSelectionStartBlock} from '../selectors'
-import {isEditor} from '../slate/editor/is-editor'
-import {nodes} from '../slate/editor/nodes'
+import {isAncestorPath} from '../slate/path/is-ancestor-path'
+import {rangeEdges} from '../slate/range/range-edges'
 import type {PickFromUnion} from '../type-utils'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import type {EditorSnapshot} from './editor-snapshot'
@@ -63,16 +64,26 @@ function getBlockNodes(
   }
 
   try {
-    const blockEntries = Array.from(
-      nodes(slateEditor, {
-        at: range,
-        mode: 'highest',
-        match: (n) => !isEditor(n),
-      }),
-    )
+    const [start, end] = rangeEdges(range)
+    const blockEntries: Array<{node: unknown; path: Array<number>}> = []
+    let lastHighestPath: Array<number> | undefined
 
-    return blockEntries.flatMap(([, blockPath]) => {
-      const domNode = getDomNode(slateEditor, blockPath)
+    for (const entry of getNodes(slateEditor, {
+      from: start.path,
+      to: end.path,
+    })) {
+      const entryPath = entry.path
+
+      if (lastHighestPath && isAncestorPath(lastHighestPath, entryPath)) {
+        continue
+      }
+
+      lastHighestPath = entryPath
+      blockEntries.push(entry)
+    }
+
+    return blockEntries.flatMap((blockEntry) => {
+      const domNode = getDomNode(slateEditor, blockEntry.path)
 
       if (!domNode) {
         return []
@@ -100,16 +111,34 @@ function getChildNodes(
   }
 
   try {
-    const childEntries = Array.from(
-      nodes(slateEditor, {
-        at: range,
-        mode: 'lowest',
-        match: (n) => !isEditor(n),
-      }),
-    )
+    const [start, end] = rangeEdges(range)
+    const childEntries: Array<{node: unknown; path: Array<number>}> = []
+    let buffered: {node: unknown; path: Array<number>} | undefined
 
-    return childEntries.flatMap(([, childPath]) => {
-      const domNode = getDomNode(slateEditor, childPath)
+    for (const entry of getNodes(slateEditor, {
+      from: start.path,
+      to: end.path,
+    })) {
+      const entryPath = entry.path
+
+      if (buffered) {
+        if (isAncestorPath(buffered.path, entryPath)) {
+          buffered = entry
+          continue
+        }
+
+        childEntries.push(buffered)
+      }
+
+      buffered = entry
+    }
+
+    if (buffered) {
+      childEntries.push(buffered)
+    }
+
+    return childEntries.flatMap((childEntry) => {
+      const domNode = getDomNode(slateEditor, childEntry.path)
 
       if (!domNode) {
         return []

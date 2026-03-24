@@ -12,18 +12,21 @@ import {
   slateRangeToSelection,
 } from '../internal-utils/slate-utils'
 import {toSlateRange} from '../internal-utils/to-slate-range'
+import {getNodes} from '../node-traversal/get-nodes'
+import {getTextBlockNode} from '../node-traversal/get-text-block-node'
 import {getActiveAnnotationsMarks} from '../selectors/selector.get-active-annotation-marks'
 import {getActiveDecorators} from '../selectors/selector.get-active-decorators'
 import {getFocusBlock} from '../selectors/selector.get-focus-block'
 import {getFocusSpan} from '../selectors/selector.get-focus-span'
 import {getSelectedValue} from '../selectors/selector.get-selected-value'
 import {isActiveAnnotation} from '../selectors/selector.is-active-annotation'
-import {node as editorNode} from '../slate/editor/node'
-import {nodes} from '../slate/editor/nodes'
+import {path as editorPath} from '../slate/editor/path'
 import {isCollapsedRange} from '../slate/range/is-collapsed-range'
 import {isExpandedRange} from '../slate/range/is-expanded-range'
 import {isRange} from '../slate/range/is-range'
+import {rangeEnd} from '../slate/range/range-end'
 import {rangeIncludes} from '../slate/range/range-includes'
+import {rangeStart} from '../slate/range/range-start'
 import type {
   EditableAPI,
   EditableAPIDeleteOptions,
@@ -289,13 +292,10 @@ export function createEditableAPI(
       let node: Node | undefined
       try {
         const entry = Array.from(
-          nodes(editor, {
-            at: [],
-            match: (n) => n._key === element._key,
-          }) || [],
+          getNodes(editor, {match: (n) => n._key === element._key}),
         )[0]
         if (entry) {
-          const [, itemPath] = entry
+          const itemPath = entry.path
           node = getDomNode(editor, itemPath)
         }
       } catch {
@@ -309,28 +309,34 @@ export function createEditableAPI(
       }
       try {
         const activeAnnotations: PortableTextObject[] = []
-        const spans = nodes(editor, {
-          at: editor.selection,
+        const spans = getNodes(editor, {
+          from: rangeStart(editor.selection).path,
+          to: rangeEnd(editor.selection).path,
           match: (node) =>
             isSpan({schema: editor.schema}, node) &&
             node.marks !== undefined &&
             Array.isArray(node.marks) &&
             node.marks.length > 0,
         })
-        for (const [span, path] of spans) {
-          const [block] = editorNode(editor, path, {depth: 1})
-          if (isTextBlock({schema: editor.schema}, block)) {
-            block.markDefs?.forEach((def) => {
-              if (
-                isSpan({schema: editor.schema}, span) &&
-                span.marks &&
-                Array.isArray(span.marks) &&
-                span.marks.includes(def._key)
-              ) {
-                activeAnnotations.push(def)
-              }
-            })
+        for (const {node: span, path: spanPath} of spans) {
+          const blockEntry = getTextBlockNode(
+            editor,
+            editorPath(editor, spanPath, {depth: 1}),
+          )
+          if (!blockEntry) {
+            continue
           }
+          const block = blockEntry.node
+          block.markDefs?.forEach((def) => {
+            if (
+              isSpan({schema: editor.schema}, span) &&
+              span.marks &&
+              Array.isArray(span.marks) &&
+              span.marks.includes(def._key)
+            ) {
+              activeAnnotations.push(def)
+            }
+          })
         }
         return activeAnnotations
       } catch {

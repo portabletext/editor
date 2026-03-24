@@ -28,6 +28,8 @@ export function createSlateEditor(
     keyGenerator: context.keyGenerator,
   })
 
+  editor.editableTypes = new Set()
+
   editor.decoratedRanges = []
   editor.decoratorState = {}
   editor.blockIndexMap = new Map<string, number>()

@@ -1,6 +1,6 @@
 import type {PortableTextChild, PortableTextObject} from '@portabletext/schema'
 import {useContext, useRef, type ReactElement} from 'react'
-import {getPointBlock} from '../internal-utils/slate-utils'
+import {getNode} from '../node-traversal/get-node'
 import {serializePath} from '../paths/serialize-path'
 import type {Path} from '../slate/interfaces/path'
 import type {RenderElementProps} from '../slate/react/components/editable'
@@ -32,13 +32,8 @@ export function RenderInlineObject(props: {
     )
   }
 
-  const [block] = getPointBlock({
-    editor: slateEditor,
-    point: {
-      path: props.indexedPath,
-      offset: 0,
-    },
-  })
+  const blockEntry = getNode(slateEditor, props.indexedPath.slice(0, 1))
+  const block = blockEntry?.node
 
   if (!block) {
     console.error(

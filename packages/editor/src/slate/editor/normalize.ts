@@ -1,11 +1,11 @@
 import {isTextBlock} from '@portabletext/schema'
+import {getNode} from '../../node-traversal/get-node'
+import {getNodes} from '../../node-traversal/get-nodes'
+import {hasNode} from '../../node-traversal/has-node'
 import type {Editor} from '../interfaces/editor'
 import type {Operation} from '../interfaces/operation'
 import type {Path} from '../interfaces/path'
-import {getNodes} from '../node/get-nodes'
-import {hasNode} from '../node/has-node'
 import {isNormalizing} from './is-normalizing'
-import {node} from './node'
 import {withoutNormalizing} from './without-normalizing'
 
 export function normalize(
@@ -33,7 +33,7 @@ export function normalize(
   }
 
   if (force) {
-    const allPaths = Array.from(getNodes(editor, editor.schema), ([, p]) => p)
+    const allPaths = Array.from(getNodes(editor), (entry) => entry.path)
     const allPathKeys = new Set(allPaths.map((p) => p.join(',')))
     editor.dirtyPaths = allPaths
     editor.dirtyPathKeys = allPathKeys
@@ -54,9 +54,12 @@ export function normalize(
         continue
       }
 
-      if (hasNode(editor, dirtyPath, editor.schema)) {
-        const entry = node(editor, dirtyPath)
-        const [entryNode, _] = entry
+      if (hasNode(editor, dirtyPath)) {
+        const entry = getNode(editor, dirtyPath)
+        if (!entry) {
+          continue
+        }
+        const entryNode = entry.node
 
         /*
           The default normalizer inserts an empty text node in this scenario, but it can be customised.
@@ -69,7 +72,7 @@ export function normalize(
           isTextBlock({schema: editor.schema}, entryNode) &&
           entryNode.children.length === 0
         ) {
-          editor.normalizeNode(entry, {operation})
+          editor.normalizeNode([entry.node, entry.path], {operation})
         }
       }
     }
@@ -95,9 +98,11 @@ export function normalize(
       // If the node doesn't exist in the tree, it does not need to be normalized.
       if (dirtyPath.length === 0) {
         editor.normalizeNode([editor, dirtyPath], {operation})
-      } else if (hasNode(editor, dirtyPath, editor.schema)) {
-        const entry = node(editor, dirtyPath)
-        editor.normalizeNode(entry, {operation})
+      } else if (hasNode(editor, dirtyPath)) {
+        const entry = getNode(editor, dirtyPath)
+        if (entry) {
+          editor.normalizeNode([entry.node, entry.path], {operation})
+        }
       }
       iteration++
       dirtyPaths = getDirtyPaths(editor)

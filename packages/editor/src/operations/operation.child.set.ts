@@ -2,7 +2,8 @@ import {isSpan} from '@portabletext/schema'
 import {applySetNode} from '../internal-utils/apply-set-node'
 import {safeStringify} from '../internal-utils/safe-json'
 import {toSlateRange} from '../internal-utils/to-slate-range'
-import {node as editorNode} from '../slate/editor/node'
+import {getNode} from '../node-traversal/get-node'
+import {path as editorPath} from '../slate/editor/path'
 import {isObjectNode} from '../slate/node/is-object-node'
 import type {OperationImplementation} from './operation.types'
 
@@ -27,13 +28,14 @@ export const childSetOperationImplementation: OperationImplementation<
     )
   }
 
-  const childEntry = editorNode(operation.editor, location, {depth: 2})
-  const child = childEntry?.[0]
-  const childPath = childEntry?.[1]
+  const resolvedPath = editorPath(operation.editor, location, {depth: 2})
+  const childEntry = getNode(operation.editor, resolvedPath)
 
-  if (!child || !childPath) {
+  if (!childEntry) {
     throw new Error(`Unable to find child at ${safeStringify(operation.at)}`)
   }
+
+  const {node: child, path: childPath} = childEntry
 
   if (isSpan({schema: operation.editor.schema}, child)) {
     const {_type, text, ...rest} = operation.props

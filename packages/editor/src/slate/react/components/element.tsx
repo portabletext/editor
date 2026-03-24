@@ -4,11 +4,10 @@ import type {
 } from '@portabletext/schema'
 import {isTextBlock} from '@portabletext/schema'
 import React, {type JSX} from 'react'
+import {getText} from '../../../node-traversal/get-text'
 import {isElementDecorationsEqual} from '../../dom/utils/range-list'
-import {hasInlines} from '../../editor/has-inlines'
 import type {Path} from '../../interfaces/path'
 import type {DecoratedRange} from '../../interfaces/text'
-import {getString} from '../../node/get-string'
 import {pathEquals} from '../../path/path-equals'
 import useChildren from '../hooks/use-children'
 import {useDecorations} from '../hooks/use-decorations'
@@ -86,13 +85,9 @@ const Element = (props: {
 
   // If it's a block node with inline children, add the proper `dir` attribute
   // for text direction.
-  if (
-    !isInline &&
-    isTextBlock({schema: editor.schema}, element) &&
-    hasInlines(editor, element)
-  ) {
-    const text = getString(element, editor.schema)
-    const dir = getDirection(text)
+  if (!isInline && isTextBlock({schema: editor.schema}, element)) {
+    const text = getText(editor, props.indexedPath)
+    const dir = text !== undefined ? getDirection(text) : undefined
 
     if (dir === 'rtl') {
       attributes.dir = dir

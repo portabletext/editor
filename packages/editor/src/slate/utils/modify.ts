@@ -1,11 +1,11 @@
 import {isSpan, isTextBlock, type PortableTextSpan} from '@portabletext/schema'
 import type {EditorSchema} from '../../editor/editor-schema'
 import {safeStringify} from '../../internal-utils/safe-json'
+import {getNode} from '../../node-traversal/get-node'
 import {isEditor} from '../editor/is-editor'
 import type {Editor} from '../interfaces/editor'
 import type {Node} from '../interfaces/node'
 import type {Path} from '../interfaces/path'
-import {getNode} from '../node/get-node'
 import {isObjectNode} from '../node/is-object-node'
 
 export const insertChildren = <T>(
@@ -36,13 +36,35 @@ export const modifyDescendant = <N extends Node>(
     throw new Error('Cannot modify the editor')
   }
 
-  const node = getNode(root, path, schema) as N
+  const editableTypes = isEditor(root) ? root.editableTypes : new Set<string>()
+  const context = {schema, editableTypes}
+  const typedRoot = isEditor(root)
+    ? root
+    : isTextBlock({schema}, root)
+      ? root
+      : undefined
+
+  if (!typedRoot) {
+    throw new Error('Cannot modify descendant: root has no children')
+  }
+  const nodeEntry = getNode({...context, value: typedRoot.children}, path)
+  if (!nodeEntry) {
+    throw new Error(`Cannot find a descendant at path [${path}]`)
+  }
+  const node = nodeEntry.node
   const slicedPath = path.slice()
-  let modifiedNode: Node = f(node)
+  let modifiedNode: Node = f(node as N)
 
   while (slicedPath.length > 1) {
     const index = slicedPath.pop()!
-    const ancestorNode = getNode(root, slicedPath, schema)
+    const ancestorEntry = getNode(
+      {...context, value: typedRoot.children},
+      slicedPath,
+    )
+    if (!ancestorEntry) {
+      throw new Error(`Cannot find ancestor at path [${slicedPath}]`)
+    }
+    const ancestorNode = ancestorEntry.node
 
     modifiedNode = {
       ...ancestorNode,

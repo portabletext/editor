@@ -29,6 +29,7 @@ export interface PortableTextSlateEditor extends ReactEditor {
   _type: 'editor'
 
   schema: EditorSchema
+  editableTypes: Set<string>
 
   decoratedRanges: Array<DecoratedRange>
   decoratorState: Record<string, boolean | undefined>

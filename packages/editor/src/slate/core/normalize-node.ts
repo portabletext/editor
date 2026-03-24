@@ -1,10 +1,10 @@
 import type {PortableTextTextBlock} from '@portabletext/schema'
 import {isSpan, isTextBlock} from '@portabletext/schema'
 import {applyMergeNode} from '../../internal-utils/apply-merge-node'
+import {getTextBlockNode} from '../../node-traversal/get-text-block-node'
 import {isEditor} from '../editor/is-editor'
 import type {Editor} from '../interfaces/editor'
 import type {Node} from '../interfaces/node'
-import {getTextBlockNode} from '../node/get-text-block-node'
 import {isObjectNode} from '../node/is-object-node'
 import {textEquals} from '../text/text-equals'
 import type {WithEditorFirstArg} from '../utils/types'
@@ -38,7 +38,11 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   if (element !== editor && element.children.length === 0) {
     const child = editor.createSpan()
     insertNodes(editor, [child], {at: path.concat(0), includeObjectNodes: true})
-    element = getTextBlockNode(editor, path, editor.schema)
+    const refetched = getTextBlockNode(editor, path)?.node
+    if (!refetched) {
+      return
+    }
+    element = refetched
   }
 
   // Determine whether the node should have only block or only inline children.
@@ -71,19 +75,31 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
               at: path.concat(n),
               includeObjectNodes: true,
             })
-            element = getTextBlockNode(editor, path, editor.schema)
+            const refetched = getTextBlockNode(editor, path)?.node
+            if (!refetched) {
+              return
+            }
+            element = refetched
             n--
           } else if (prev.text === '') {
             removeNodes(editor, {
               at: path.concat(n - 1),
               includeObjectNodes: true,
             })
-            element = getTextBlockNode(editor, path, editor.schema)
+            const refetched = getTextBlockNode(editor, path)?.node
+            if (!refetched) {
+              return
+            }
+            element = refetched
             n--
           } else if (textEquals(child, prev, {loose: true})) {
             const mergePath = path.concat(n)
             applyMergeNode(editor, mergePath, prev.text.length)
-            element = getTextBlockNode(editor, path, editor.schema)
+            const refetched = getTextBlockNode(editor, path)?.node
+            if (!refetched) {
+              return
+            }
+            element = refetched
             n--
           }
         }
@@ -96,7 +112,11 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
               at: path.concat(n),
               includeObjectNodes: true,
             })
-            element = getTextBlockNode(editor, path, editor.schema)
+            const refetched = getTextBlockNode(editor, path)?.node
+            if (!refetched) {
+              return
+            }
+            element = refetched
             n++
           }
           if (n === element.children.length - 1) {
@@ -105,13 +125,21 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
               at: path.concat(n + 1),
               includeObjectNodes: true,
             })
-            element = getTextBlockNode(editor, path, editor.schema)
+            const refetched = getTextBlockNode(editor, path)?.node
+            if (!refetched) {
+              return
+            }
+            element = refetched
             n++
           }
         } else {
           // An Element cannot appear inline in another Element
           removeNodes(editor, {at: path.concat(n), includeObjectNodes: true})
-          element = getTextBlockNode(editor, path, editor.schema)
+          const refetched = getTextBlockNode(editor, path)?.node
+          if (!refetched) {
+            return
+          }
+          element = refetched
           n--
         }
       } else if (isObjectNode({schema: editor.schema}, child)) {
@@ -121,7 +149,11 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
             at: path.concat(n),
             includeObjectNodes: true,
           })
-          element = getTextBlockNode(editor, path, editor.schema)
+          const refetched = getTextBlockNode(editor, path)?.node
+          if (!refetched) {
+            return
+          }
+          element = refetched
           n++
         }
         if (n === element.children.length - 1) {
@@ -130,7 +162,11 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
             at: path.concat(n + 1),
             includeObjectNodes: true,
           })
-          element = getTextBlockNode(editor, path, editor.schema)
+          const refetched = getTextBlockNode(editor, path)?.node
+          if (!refetched) {
+            return
+          }
+          element = refetched
           n++
         }
       }
@@ -148,10 +184,15 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
         (isTextBlock({schema: editor.schema}, child) && editor.isInline(child))
       ) {
         removeNodes(editor, {at: path.concat(n), includeObjectNodes: true})
-        element =
-          path.length === 0
-            ? editor
-            : getTextBlockNode(editor, path, editor.schema)
+        if (path.length === 0) {
+          element = editor
+        } else {
+          const refetched = getTextBlockNode(editor, path)?.node
+          if (!refetched) {
+            return
+          }
+          element = refetched
+        }
         n--
       }
     }
