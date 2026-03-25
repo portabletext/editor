@@ -151,6 +151,23 @@ export const rangeDecorationsMachine = setup({
         })
 
         if (!isRange(slateRange)) {
+          // If the selection can't be resolved, check if there's an existing
+          // decorated range for this decoration. This handles the case where
+          // the rangeDecorations prop is updated before remote patches have
+          // been applied, causing the new PTE selection to point to blocks
+          // that don't exist yet in this editor's tree.
+          const existing = context.slateEditor.decoratedRanges.find((dr) =>
+            isDeepEqual(dr.rangeDecoration.payload, rangeDecoration.payload),
+          )
+
+          if (existing) {
+            rangeDecorationState.push({
+              ...existing,
+              rangeDecoration,
+            })
+            continue
+          }
+
           rangeDecoration.onMoved?.({
             newSelection: null,
             rangeDecoration,
