@@ -126,7 +126,7 @@ function diffMatchPatch(
       editor.apply({
         type: 'remove_text',
         path: [block.index, child.index],
-        offset: offset,
+        offset,
         text,
       })
     } else if (op === DIFF_EQUAL) {

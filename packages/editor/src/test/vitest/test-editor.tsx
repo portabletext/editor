@@ -42,7 +42,7 @@ export async function createTestEditor(
   const renderResult = await render(
     <EditorProvider
       initialConfig={{
-        keyGenerator: keyGenerator,
+        keyGenerator,
         schemaDefinition: options.schemaDefinition ?? defineSchema({}),
         initialValue: options.initialValue,
       }}
@@ -58,7 +58,7 @@ export async function createTestEditor(
       ? renderResult.rerender(
           <EditorProvider
             initialConfig={{
-              keyGenerator: keyGenerator,
+              keyGenerator,
               schemaDefinition: newOptions.schemaDefinition ?? defineSchema({}),
               initialValue: newOptions.initialValue,
             }}
@@ -71,7 +71,7 @@ export async function createTestEditor(
       : renderResult.rerender(
           <EditorProvider
             initialConfig={{
-              keyGenerator: keyGenerator,
+              keyGenerator,
               schemaDefinition: options.schemaDefinition ?? defineSchema({}),
               initialValue: options.initialValue,
             }}
@@ -117,7 +117,7 @@ export async function createTestEditors(
     <>
       <EditorProvider
         initialConfig={{
-          keyGenerator: keyGenerator,
+          keyGenerator,
           schemaDefinition: options.schemaDefinition ?? defineSchema({}),
           initialValue: options.initialValue,
         }}

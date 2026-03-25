@@ -6,6 +6,7 @@
         "useLiteralKeys": "off"
       },
       "style": {
+        "useConsistentObjectDefinitions": "error",
         "noRestrictedGlobals": {
           "level": "error",
           "options": {

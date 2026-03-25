@@ -5,6 +5,6 @@ import {stepDefinitions} from '../src/test/vitest'
 
 Feature({
   featureText: pasteFeature,
-  stepDefinitions: stepDefinitions,
-  parameterTypes: parameterTypes,
+  stepDefinitions,
+  parameterTypes,
 })

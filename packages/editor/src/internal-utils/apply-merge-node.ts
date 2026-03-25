@@ -160,7 +160,7 @@ export function applyMergeNode(
           })
         }
         // Remove the now-redundant text node
-        editor.apply({type: 'remove_node', path, node: node})
+        editor.apply({type: 'remove_node', path, node})
       } else if (isTextBlock({schema: editor.schema}, node)) {
         // Merge element: move all children into the previous sibling
         for (let i = 0; i < node.children.length; i++) {
@@ -171,7 +171,7 @@ export function applyMergeNode(
           })
         }
         // Remove the now-empty element
-        editor.apply({type: 'remove_node', path, node: node})
+        editor.apply({type: 'remove_node', path, node})
       }
     })
   } finally {
