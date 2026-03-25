@@ -187,23 +187,6 @@ describe('resolveNodePath', () => {
       })
     })
 
-    test('resolves numeric first segment', () => {
-      const context = createContext(children, flatSchema)
-      const result = resolveNodePath(context, [0, 'style'])
-
-      expect(result).toEqual({
-        indexedPath: [0],
-        propertyPath: ['style'],
-      })
-    })
-
-    test('returns undefined for numeric segment beyond children length', () => {
-      const context = createContext(children, flatSchema)
-      const result = resolveNodePath(context, [5])
-
-      expect(result).toBeUndefined()
-    })
-
     test('returns undefined for unknown key', () => {
       const context = createContext(children, flatSchema)
       const result = resolveNodePath(context, [{_key: 'unknown'}])

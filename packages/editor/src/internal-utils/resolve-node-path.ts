@@ -44,14 +44,6 @@ export function resolveNodePath(
   }
 
   if (keyedIndices.length === 0) {
-    // Handle numeric first segment (e.g., [0] for inserting into empty editor)
-    const firstSegment = patchPath.at(0)
-    if (typeof firstSegment === 'number') {
-      const node = context.children.at(firstSegment)
-      if (node) {
-        return {indexedPath: [firstSegment], propertyPath: patchPath.slice(1)}
-      }
-    }
     return undefined
   }
 
@@ -79,8 +71,8 @@ export function resolveNodePath(
       continue
     }
 
-    const resolvedEntry = getNode(context, indexedPath)
-    if (!resolvedEntry || resolvedEntry.node._key !== lastKeyedSegment._key) {
+    const entry = getNode(context, indexedPath)
+    if (!entry || entry.node._key !== lastKeyedSegment._key) {
       continue
     }
 
