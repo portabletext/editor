@@ -289,7 +289,7 @@ export function performEvent({
               performEvent({
                 mode: mode === 'execute' ? 'execute' : 'forward',
                 behaviors,
-                remainingEventBehaviors: remainingEventBehaviors,
+                remainingEventBehaviors,
                 event: action.event,
                 editor,
                 converters,
