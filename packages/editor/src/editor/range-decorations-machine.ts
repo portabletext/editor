@@ -238,6 +238,34 @@ export const rangeDecorationsMachine = setup({
           }
         }
 
+        // Check if remove_node would displace this decoration.
+        // Use the decoration's current Slate range (not the re-resolved one)
+        // because the PTE selection may resolve to a different block if keys
+        // were duplicated during a previous split.
+        if (
+          event.operation.type === 'remove_node' &&
+          !isCollapsedRange(decoratedRange)
+        ) {
+          const displaced = checkRemoveNodeDisplacement(
+            decoratedRange,
+            event.operation,
+            context.schema,
+          )
+
+          if (displaced) {
+            const existing =
+              displacedDecorationsMap.get(context.slateEditor) ?? []
+            existing.push({
+              decoratedRange,
+              removedText: displaced.removedText,
+              relativeAnchorOffset: displaced.relativeAnchorOffset,
+              relativeFocusOffset: displaced.relativeFocusOffset,
+            })
+            displacedDecorationsMap.set(context.slateEditor, existing)
+            continue
+          }
+        }
+
         let newRange: Range | null | undefined
 
         newRange = moveRangeByOperation(slateRange, event.operation)
@@ -278,26 +306,6 @@ export const rangeDecorationsMachine = setup({
       }
 
       context.slateEditor.decoratedRanges = rangeDecorationState
-
-      // Clean up any displaced decorations that weren't re-attached after
-      // a non-remove_text operation (the insert that would re-attach them
-      // has already been processed or won't come)
-      if (
-        event.operation.type !== 'remove_text' &&
-        event.operation.type !== 'insert_node'
-      ) {
-        const remaining = displacedDecorationsMap.get(context.slateEditor) ?? []
-
-        for (const d of remaining) {
-          d.decoratedRange.rangeDecoration.onMoved?.({
-            newSelection: null,
-            rangeDecoration: d.decoratedRange.rangeDecoration,
-            origin: 'local',
-          })
-        }
-
-        displacedDecorationsMap.delete(context.slateEditor)
-      }
     },
     'assign readOnly': assign({
       readOnly: ({context, event}) => {
@@ -472,6 +480,66 @@ function checkDisplacement(
 }
 
 /**
+ * Check if a remove_node operation would displace a non-collapsed decoration.
+ *
+ * A decoration is displaced when both its anchor and focus are descendants of
+ * the removed node's path. We extract the text from the span the decoration
+ * is on so it can be matched during re-attachment.
+ */
+function checkRemoveNodeDisplacement(
+  range: Range,
+  op: {type: 'remove_node'; path: number[]; node: Node},
+  schema: EditorSchema,
+):
+  | {
+      removedText: string
+      relativeAnchorOffset: number
+      relativeFocusOffset: number
+    }
+  | undefined {
+  const anchorIsDescendant =
+    pathEquals(op.path, range.anchor.path) ||
+    (op.path.length < range.anchor.path.length &&
+      range.anchor.path
+        .slice(0, op.path.length)
+        .every((v, i) => v === op.path[i]))
+  const focusIsDescendant =
+    pathEquals(op.path, range.focus.path) ||
+    (op.path.length < range.focus.path.length &&
+      range.focus.path
+        .slice(0, op.path.length)
+        .every((v, i) => v === op.path[i]))
+
+  if (!anchorIsDescendant || !focusIsDescendant) {
+    return undefined
+  }
+
+  // Both endpoints are within the removed node. Find the span text.
+  if (
+    !pathEquals(range.anchor.path, range.focus.path) ||
+    !isTextBlock({schema}, op.node)
+  ) {
+    return undefined
+  }
+
+  const childIndex = range.anchor.path[op.path.length]
+  if (childIndex === undefined) {
+    return undefined
+  }
+
+  const child = op.node.children[childIndex]
+  if (!child || !isSpan({schema}, child)) {
+    return undefined
+  }
+
+  return {
+    removedText: child.text,
+    relativeAnchorOffset: range.anchor.offset,
+    relativeFocusOffset: range.focus.offset,
+  }
+}
+
+/**
  * Try to re-attach displaced decorations to text content in an inserted node.
  *
  * When a block is split via delete + insert.block, the removed text reappears
@@ -492,78 +560,127 @@ function reattachDisplacedDecorations({
   schema: EditorSchema
   rangeDecorationState: Array<DecoratedRange>
 }) {
-  if (!isTextBlock({schema}, insertedNode)) {
-    return
-  }
-
-  for (const d of displaced) {
+  // Handle text block inserts: walk children looking for matching text
+  if (isTextBlock({schema}, insertedNode)) {
     let childIndex = 0
 
     for (const child of insertedNode.children) {
       if (isSpan({schema}, child)) {
-        const textIndex = child.text.indexOf(d.removedText)
-
-        if (textIndex !== -1) {
-          const anchorOffset = textIndex + d.relativeAnchorOffset
-          const focusOffset = textIndex + d.relativeFocusOffset
-
-          if (
-            anchorOffset <= child.text.length &&
-            focusOffset <= child.text.length
-          ) {
-            const newRange: Range = {
-              anchor: {path: [...insertPath, childIndex], offset: anchorOffset},
-              focus: {path: [...insertPath, childIndex], offset: focusOffset},
-            }
-
-            // Build the PTE selection directly from the inserted node's keys
-            // since the tree may not be updated yet when this runs
-            const blockKey = insertedNode._key as string
-            const childKey = child._key as string
-            const newSelection =
-              blockKey && childKey
-                ? {
-                    anchor: {
-                      path: [
-                        {_key: blockKey},
-                        'children' as const,
-                        {_key: childKey},
-                      ],
-                      offset: anchorOffset,
-                    },
-                    focus: {
-                      path: [
-                        {_key: blockKey},
-                        'children' as const,
-                        {_key: childKey},
-                      ],
-                      offset: focusOffset,
-                    },
-                  }
-                : null
-
-            d.decoratedRange.rangeDecoration.onMoved?.({
-              newSelection,
-              rangeDecoration: d.decoratedRange.rangeDecoration,
-              origin: 'local',
-            })
-
-            rangeDecorationState.push({
-              ...newRange,
-              rangeDecoration: {
-                ...d.decoratedRange.rangeDecoration,
-                selection: newSelection,
-              },
-            })
-
-            d.reattached = true
-            break
-          }
-        }
+        tryReattachToSpan({
+          displaced,
+          spanText: child.text,
+          spanPath: [...insertPath, childIndex],
+          blockKey: insertedNode._key as string,
+          childKey: child._key as string,
+          rangeDecorationState,
+        })
       }
 
       childIndex++
     }
+
+    return
+  }
+
+  // Handle span inserts: the inserted node itself is a span
+  if (isSpan({schema}, insertedNode)) {
+    tryReattachToSpan({
+      displaced,
+      spanText: insertedNode.text,
+      spanPath: insertPath,
+      blockKey: undefined,
+      childKey: insertedNode._key as string,
+      rangeDecorationState,
+    })
+  }
+}
+
+function tryReattachToSpan({
+  displaced,
+  spanText,
+  spanPath,
+  blockKey,
+  childKey,
+  rangeDecorationState,
+}: {
+  displaced: Array<DisplacedDecoration>
+  spanText: string
+  spanPath: number[]
+  blockKey: string | undefined
+  childKey: string
+  rangeDecorationState: Array<DecoratedRange>
+}) {
+  for (const d of displaced) {
+    if (d.reattached) {
+      continue
+    }
+
+    const textIndex = spanText.indexOf(d.removedText)
+
+    if (textIndex === -1) {
+      continue
+    }
+
+    const anchorOffset = textIndex + d.relativeAnchorOffset
+    const focusOffset = textIndex + d.relativeFocusOffset
+
+    if (anchorOffset > spanText.length || focusOffset > spanText.length) {
+      continue
+    }
+
+    const newRange: Range = {
+      anchor: {path: spanPath, offset: anchorOffset},
+      focus: {path: spanPath, offset: focusOffset},
+    }
+
+    // Build the PTE selection from the node keys. For span-level inserts
+    // where we don't have the block key, we fall back to the decoration's
+    // original block key from its PTE selection.
+    const resolvedBlockKey =
+      blockKey ??
+      (
+        d.decoratedRange.rangeDecoration.selection?.anchor.path[0] as
+          | {_key: string}
+          | undefined
+      )?._key
+
+    const newSelection =
+      resolvedBlockKey && childKey
+        ? {
+            anchor: {
+              path: [
+                {_key: resolvedBlockKey},
+                'children' as const,
+                {_key: childKey},
+              ],
+              offset: anchorOffset,
+            },
+            focus: {
+              path: [
+                {_key: resolvedBlockKey},
+                'children' as const,
+                {_key: childKey},
+              ],
+              offset: focusOffset,
+            },
+          }
+        : null
+
+    d.decoratedRange.rangeDecoration.onMoved?.({
+      newSelection,
+      rangeDecoration: d.decoratedRange.rangeDecoration,
+      origin: 'local',
+    })
+
+    rangeDecorationState.push({
+      ...newRange,
+      rangeDecoration: {
+        ...d.decoratedRange.rangeDecoration,
+        selection: newSelection,
+      },
+    })
+
+    d.reattached = true
   }
 }
 
