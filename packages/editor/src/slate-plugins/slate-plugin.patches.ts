@@ -138,31 +138,24 @@ export function createPatchesPlugin({
         case 'insert_text':
           patches = [
             ...patches,
-            ...insertTextPatch(
-              editorActor.getSnapshot().context.schema,
-              editor.children,
-              operation,
-              previousValue,
-            ),
+            ...insertTextPatch(editor, operation, previousValue),
           ]
           break
         case 'remove_text':
           patches = [
             ...patches,
-            ...removeTextPatch(
-              editorActor.getSnapshot().context.schema,
-              editor.children,
-              operation,
-              previousValue,
-            ),
+            ...removeTextPatch(editor, operation, previousValue),
           ]
           break
         case 'remove_node':
           patches = [
             ...patches,
             ...removeNodePatch(
-              editorActor.getSnapshot().context.schema,
-              previousValue,
+              {
+                schema: editor.schema,
+                editableTypes: editor.editableTypes,
+                value: previousValue,
+              },
               operation,
             ),
           ]
@@ -170,23 +163,11 @@ export function createPatchesPlugin({
         case 'insert_node':
           patches = [
             ...patches,
-            ...insertNodePatch(
-              editorActor.getSnapshot().context.schema,
-              editor.children,
-              operation,
-              previousValue,
-            ),
+            ...insertNodePatch(editor, operation, previousValue),
           ]
           break
         case 'set_node':
-          patches = [
-            ...patches,
-            ...setNodePatch(
-              editorActor.getSnapshot().context.schema,
-              editor.children,
-              operation,
-            ),
-          ]
+          patches = [...patches, ...setNodePatch(editor, operation)]
           break
         default:
         // Do nothing
