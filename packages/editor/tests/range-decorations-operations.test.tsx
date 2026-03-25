@@ -5628,3 +5628,114 @@ describe('RangeDecorations: Inline Object Insertion', () => {
     )
   })
 })
+
+describe('RangeDecorations: Undo Mark Operations', () => {
+  test('Decoration survives adding a mark and then undoing it', async () => {
+    const onMovedSpy = vi.fn()
+    let rangeDecorations: Array<RangeDecoration> = [
+      {
+        component: RangeDecorationComponent,
+        payload: {id: 'dec1'},
+        selection: {
+          anchor: {
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            offset: 0,
+          },
+          focus: {
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            offset: 15,
+          },
+        },
+        onMoved: (details) => {
+          onMovedSpy(details)
+          rangeDecorations = updateRangeDecorations({rangeDecorations, details})
+        },
+      },
+    ]
+
+    const {editor, locator, rerender} = await createTestEditor({
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', _key: 's1', text: 'Hello world foo'}],
+          markDefs: [],
+        },
+      ],
+      schemaDefinition: {
+        decorators: [{name: 'strong'}],
+      },
+      editableProps: {rangeDecorations},
+    })
+
+    await vi.waitFor(() =>
+      expect
+        .element(locator.getByTestId('range-decoration'))
+        .toHaveTextContent('Hello world foo'),
+    )
+
+    editor.send({
+      type: 'decorator.add',
+      decorator: 'strong',
+      at: {
+        anchor: {
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 6,
+        },
+        focus: {
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 11,
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      const value = editor.getSnapshot().context.value
+      const block = value?.[0] as PortableTextBlock & {
+        children: Array<{_type: string; text?: string; marks?: string[]}>
+      }
+      const boldSpan = block?.children?.find(
+        (c) => c.marks && c.marks.includes('strong'),
+      )
+      expect(boldSpan).toBeDefined()
+      expect(boldSpan?.text).toBe('world')
+    })
+
+    await rerender({
+      initialValue: editor.getSnapshot().context.value,
+      schemaDefinition: {decorators: [{name: 'strong'}]},
+      editableProps: {rangeDecorations},
+    })
+
+    await vi.waitFor(() =>
+      expect(
+        locator.getByTestId('range-decoration').elements().length,
+      ).toBeGreaterThanOrEqual(1),
+    )
+
+    onMovedSpy.mockClear()
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      const value = editor.getSnapshot().context.value
+      const block = value?.[0] as PortableTextBlock & {
+        children: Array<{_type: string; text?: string}>
+      }
+      expect(block?.children?.length).toBe(1)
+      expect(block?.children?.[0]?.text).toBe('Hello world foo')
+    })
+
+    await rerender({
+      initialValue: editor.getSnapshot().context.value,
+      schemaDefinition: {decorators: [{name: 'strong'}]},
+      editableProps: {rangeDecorations},
+    })
+
+    await vi.waitFor(() =>
+      expect
+        .element(locator.getByTestId('range-decoration'))
+        .toHaveTextContent('Hello world foo'),
+    )
+  })
+})

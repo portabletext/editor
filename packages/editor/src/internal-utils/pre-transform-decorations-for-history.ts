@@ -1,3 +1,4 @@
+import {isSpan, isTextBlock} from '@portabletext/schema'
 import type {DecoratedRange} from '../editor/range-decorations-machine'
 import type {UndoStep} from '../editor/undo-step'
 import {slateRangeToSelection} from '../internal-utils/slate-utils'
@@ -139,6 +140,9 @@ export function preTransformDecorationsForHistory(
 
   const transform = buildTransformChain(editor, step, direction)
   if (!transform) {
+    if (hasChildNodeOpsDestroyingPoints(step, direction)) {
+      return blockOffsetFallback(editor)
+    }
     return () => {}
   }
 
@@ -221,6 +225,160 @@ export function preTransformDecorationsForHistory(
             ...decoratedRange.rangeDecoration,
             selection: newSelection,
           }
+        }
+      }
+    }
+  }
+}
+
+interface BlockTextOffset {
+  blockIndex: number
+  textOffset: number
+}
+
+function computeBlockTextOffset(
+  point: Point,
+  editor: PortableTextSlateEditor,
+): BlockTextOffset | null {
+  const blockIndex = point.path[0]
+  const childIndex = point.path[1]
+  if (blockIndex === undefined || childIndex === undefined) return null
+
+  const block = editor.children[blockIndex]
+  if (!block || !isTextBlock({schema: editor.schema}, block)) return null
+
+  let textOffset = 0
+  for (let idx = 0; idx < childIndex; idx++) {
+    const child = block.children[idx]
+    if (isSpan({schema: editor.schema}, child)) {
+      textOffset += child.text.length
+    }
+  }
+  textOffset += point.offset
+
+  return {blockIndex, textOffset}
+}
+
+function resolveBlockTextOffset(
+  offset: BlockTextOffset,
+  editor: PortableTextSlateEditor,
+): Point | null {
+  const block = editor.children[offset.blockIndex]
+  if (!block || !isTextBlock({schema: editor.schema}, block)) return null
+
+  let remaining = offset.textOffset
+  for (let idx = 0; idx < block.children.length; idx++) {
+    const child = block.children[idx]
+    if (isSpan({schema: editor.schema}, child)) {
+      if (remaining <= child.text.length) {
+        return {path: [offset.blockIndex, idx], offset: remaining}
+      }
+      remaining -= child.text.length
+    }
+  }
+
+  const lastIdx = block.children.length - 1
+  const lastChild = block.children[lastIdx]
+  if (lastIdx >= 0 && isSpan({schema: editor.schema}, lastChild)) {
+    return {path: [offset.blockIndex, lastIdx], offset: lastChild.text.length}
+  }
+
+  return null
+}
+
+/**
+ * Detects whether applying the step's operations (inverted for undo,
+ * forward for redo) would include `remove_node` at child level — the
+ * operation that destroys decoration points via `transformPoint`
+ * returning `null`. This happens when marks are undone: `applySplitNode`
+ * decomposes span splits into `remove_text` + `insert_node`, and
+ * undoing those produces `remove_node` on the inserted span.
+ */
+function hasChildNodeOpsDestroyingPoints(
+  step: UndoStep,
+  direction: 'undo' | 'redo',
+): boolean {
+  for (const op of step.operations) {
+    if (op.type === 'set_selection') continue
+    if (op.path.length < 2) continue
+
+    if (direction === 'undo') {
+      if (op.type === 'insert_node') return true
+    } else {
+      if (op.type === 'remove_node') return true
+    }
+  }
+  return false
+}
+
+/**
+ * Fallback for undo/redo steps without split/merge context (e.g., mark
+ * operations that split spans without setting `editor.splitContext`).
+ * Snapshots decoration positions as block-key + absolute text offset,
+ * suppresses sendback during the history ops, then re-resolves from
+ * offsets afterward.
+ */
+function blockOffsetFallback(editor: PortableTextSlateEditor): () => void {
+  const snapshots: Array<{
+    decoratedRange: DecoratedRange
+    originalSelection: EditorSelection
+    anchorOffset: BlockTextOffset
+    focusOffset: BlockTextOffset
+  }> = []
+
+  for (const dr of editor.decoratedRanges) {
+    if (!isRange(dr)) continue
+    const anchorOffset = computeBlockTextOffset(dr.anchor, editor)
+    const focusOffset = computeBlockTextOffset(dr.focus, editor)
+    if (!anchorOffset || !focusOffset) continue
+    snapshots.push({
+      decoratedRange: dr,
+      originalSelection: dr.rangeDecoration.selection,
+      anchorOffset,
+      focusOffset,
+    })
+  }
+
+  if (snapshots.length === 0) return () => {}
+
+  editor._suppressDecorationSendBack++
+
+  return () => {
+    editor._suppressDecorationSendBack--
+    if (editor._suppressDecorationSendBack > 0) return
+
+    for (const snap of snapshots) {
+      const newAnchor = resolveBlockTextOffset(snap.anchorOffset, editor)
+      const newFocus = resolveBlockTextOffset(snap.focusOffset, editor)
+      if (!newAnchor || !newFocus) continue
+
+      const moved =
+        !pointEquals(newAnchor, snap.decoratedRange.anchor) ||
+        !pointEquals(newFocus, snap.decoratedRange.focus)
+
+      snap.decoratedRange.anchor = newAnchor
+      snap.decoratedRange.focus = newFocus
+
+      const newSelection = slateRangeToSelection({
+        schema: editor.schema,
+        editor,
+        range: {anchor: newAnchor, focus: newFocus},
+      })
+
+      if (moved) {
+        snap.decoratedRange.rangeDecoration.onMoved?.({
+          previousSelection: snap.originalSelection,
+          newSelection,
+          rangeDecoration: snap.decoratedRange.rangeDecoration,
+          origin: 'local',
+          reason: 'moved',
+        })
+      }
+
+      if (newSelection) {
+        snap.decoratedRange.rangeDecoration = {
+          ...snap.decoratedRange.rangeDecoration,
+          selection: newSelection,
         }
       }
     }
