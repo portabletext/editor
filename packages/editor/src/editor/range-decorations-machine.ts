@@ -1,4 +1,4 @@
-import {isTextBlock} from '@portabletext/schema'
+import {isSpan, isTextBlock} from '@portabletext/schema'
 import {
   and,
   assign,
@@ -23,6 +23,19 @@ import type {RangeDecoration} from '../types/editor'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {isEmptyTextBlock} from '../utils'
 import type {EditorSchema} from './editor-schema'
+
+type DisplacedDecoration = {
+  decoratedRange: DecoratedRange
+  removedText: string
+  relativeAnchorOffset: number
+  relativeFocusOffset: number
+  reattached?: boolean
+}
+
+const displacedDecorationsMap = new WeakMap<
+  PortableTextSlateEditor,
+  Array<DisplacedDecoration>
+>()
 
 const slateOperationCallback: CallbackLogicFunction<
   AnyEventObject,
@@ -162,6 +175,29 @@ export const rangeDecorationsMachine = setup({
 
       const rangeDecorationState: Array<DecoratedRange> = []
 
+      // Try to re-attach displaced decorations when new content is inserted
+      if (event.operation.type === 'insert_node') {
+        const displaced = displacedDecorationsMap.get(context.slateEditor) ?? []
+
+        if (displaced.length > 0) {
+          const insertedNode = event.operation.node
+          const insertPath = event.operation.path
+
+          reattachDisplacedDecorations({
+            displaced,
+            insertedNode,
+            insertPath,
+            schema: context.schema,
+            rangeDecorationState,
+          })
+
+          displacedDecorationsMap.set(
+            context.slateEditor,
+            displaced.filter((d) => !d.reattached),
+          )
+        }
+      }
+
       for (const decoratedRange of context.slateEditor.decoratedRanges) {
         const slateRange = toSlateRange({
           context: {
@@ -179,6 +215,27 @@ export const rangeDecorationsMachine = setup({
             origin: 'local',
           })
           continue
+        }
+
+        // Check if remove_text would displace this decoration
+        if (
+          event.operation.type === 'remove_text' &&
+          !isCollapsedRange(slateRange)
+        ) {
+          const displaced = checkDisplacement(slateRange, event.operation)
+
+          if (displaced) {
+            const existing =
+              displacedDecorationsMap.get(context.slateEditor) ?? []
+            existing.push({
+              decoratedRange,
+              removedText: event.operation.text,
+              relativeAnchorOffset: displaced.relativeAnchorOffset,
+              relativeFocusOffset: displaced.relativeFocusOffset,
+            })
+            displacedDecorationsMap.set(context.slateEditor, existing)
+            continue
+          }
         }
 
         let newRange: Range | null | undefined
@@ -221,6 +278,26 @@ export const rangeDecorationsMachine = setup({
       }
 
       context.slateEditor.decoratedRanges = rangeDecorationState
+
+      // Clean up any displaced decorations that weren't re-attached after
+      // a non-remove_text operation (the insert that would re-attach them
+      // has already been processed or won't come)
+      if (
+        event.operation.type !== 'remove_text' &&
+        event.operation.type !== 'insert_node'
+      ) {
+        const remaining = displacedDecorationsMap.get(context.slateEditor) ?? []
+
+        for (const d of remaining) {
+          d.decoratedRange.rangeDecoration.onMoved?.({
+            newSelection: null,
+            rangeDecoration: d.decoratedRange.rangeDecoration,
+            origin: 'local',
+          })
+        }
+
+        displacedDecorationsMap.delete(context.slateEditor)
+      }
     },
     'assign readOnly': assign({
       readOnly: ({context, event}) => {
@@ -246,7 +323,8 @@ export const rangeDecorationsMachine = setup({
     'has pending range decorations': ({context}) =>
       context.pendingRangeDecorations.length > 0,
     'has range decorations': ({context}) =>
-      context.slateEditor.decoratedRanges.length > 0,
+      context.slateEditor.decoratedRanges.length > 0 ||
+      (displacedDecorationsMap.get(context.slateEditor) ?? []).length > 0,
     'has different decorations': ({context, event}) => {
       if (event.type !== 'range decorations updated') {
         return false
@@ -358,6 +436,136 @@ export const rangeDecorationsMachine = setup({
     },
   },
 })
+
+/**
+ * Check if a remove_text operation would displace a non-collapsed decoration.
+ *
+ * A decoration is displaced when both its anchor and focus fall within the
+ * removed text range. Instead of collapsing the decoration (losing the range
+ * information), we track the relative offsets so the decoration can be
+ * re-attached when the text reappears in an insert_node operation.
+ */
+function checkDisplacement(
+  range: Range,
+  op: {type: 'remove_text'; path: number[]; offset: number; text: string},
+): {relativeAnchorOffset: number; relativeFocusOffset: number} | undefined {
+  const removeStart = op.offset
+  const removeEnd = op.offset + op.text.length
+
+  const anchorInRange =
+    pathEquals(range.anchor.path, op.path) &&
+    range.anchor.offset >= removeStart &&
+    range.anchor.offset <= removeEnd
+  const focusInRange =
+    pathEquals(range.focus.path, op.path) &&
+    range.focus.offset >= removeStart &&
+    range.focus.offset <= removeEnd
+
+  if (!anchorInRange || !focusInRange) {
+    return undefined
+  }
+
+  return {
+    relativeAnchorOffset: range.anchor.offset - removeStart,
+    relativeFocusOffset: range.focus.offset - removeStart,
+  }
+}
+
+/**
+ * Try to re-attach displaced decorations to text content in an inserted node.
+ *
+ * When a block is split via delete + insert.block, the removed text reappears
+ * in the inserted node. This function walks the inserted node's spans looking
+ * for text that matches the removed text, and re-attaches the decoration at
+ * the correct position.
+ */
+function reattachDisplacedDecorations({
+  displaced,
+  insertedNode,
+  insertPath,
+  schema,
+  rangeDecorationState,
+}: {
+  displaced: Array<DisplacedDecoration>
+  insertedNode: Node
+  insertPath: number[]
+  schema: EditorSchema
+  rangeDecorationState: Array<DecoratedRange>
+}) {
+  if (!isTextBlock({schema}, insertedNode)) {
+    return
+  }
+
+  for (const d of displaced) {
+    let childIndex = 0
+
+    for (const child of insertedNode.children) {
+      if (isSpan({schema}, child)) {
+        const textIndex = child.text.indexOf(d.removedText)
+
+        if (textIndex !== -1) {
+          const anchorOffset = textIndex + d.relativeAnchorOffset
+          const focusOffset = textIndex + d.relativeFocusOffset
+
+          if (
+            anchorOffset <= child.text.length &&
+            focusOffset <= child.text.length
+          ) {
+            const newRange: Range = {
+              anchor: {path: [...insertPath, childIndex], offset: anchorOffset},
+              focus: {path: [...insertPath, childIndex], offset: focusOffset},
+            }
+
+            // Build the PTE selection directly from the inserted node's keys
+            // since the tree may not be updated yet when this runs
+            const blockKey = insertedNode._key as string
+            const childKey = child._key as string
+            const newSelection =
+              blockKey && childKey
+                ? {
+                    anchor: {
+                      path: [
+                        {_key: blockKey},
+                        'children' as const,
+                        {_key: childKey},
+                      ],
+                      offset: anchorOffset,
+                    },
+                    focus: {
+                      path: [
+                        {_key: blockKey},
+                        'children' as const,
+                        {_key: childKey},
+                      ],
+                      offset: focusOffset,
+                    },
+                  }
+                : null
+
+            d.decoratedRange.rangeDecoration.onMoved?.({
+              newSelection,
+              rangeDecoration: d.decoratedRange.rangeDecoration,
+              origin: 'local',
+            })
+
+            rangeDecorationState.push({
+              ...newRange,
+              rangeDecoration: {
+                ...d.decoratedRange.rangeDecoration,
+                selection: newSelection,
+              },
+            })
+
+            d.reattached = true
+            break
+          }
+        }
+      }
+
+      childIndex++
+    }
+  }
+}
 
 function createDecorate(
   schema: EditorSchema,
