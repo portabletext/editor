@@ -450,7 +450,7 @@ function unsetPatch(editor: PortableTextSlateEditor, patch: UnsetPatch) {
       if (!entry) {
         continue
       }
-      const {node: node, path: nodePath} = entry
+      const {node, path: nodePath} = entry
       editor.apply({type: 'remove_node', path: nodePath, node})
     }
 

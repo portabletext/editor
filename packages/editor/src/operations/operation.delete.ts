@@ -7,6 +7,7 @@ import {getNodes} from '../node-traversal/get-nodes'
 import {getParent} from '../node-traversal/get-parent'
 import {getSpanNode} from '../node-traversal/get-span-node'
 import {isBlock} from '../node-traversal/is-block'
+import {isInline} from '../node-traversal/is-inline'
 import {deleteText} from '../slate/core/delete-text'
 import {DOMEditor} from '../slate/dom/plugin/dom-editor'
 import {end as editorEnd} from '../slate/editor/end'
@@ -104,7 +105,7 @@ export const deleteOperationImplementation: OperationImplementation<
     const childMatches = getNodes(operation.editor, {
       from: start.path,
       to: end.path,
-      match: (_node, path) => !isBlock(operation.editor, path),
+      match: (_node, path) => isInline(operation.editor, path),
     })
     const childPathRefs = Array.from(childMatches, (entry) =>
       pathRef(operation.editor, entry.path),
@@ -173,7 +174,7 @@ export const deleteOperationImplementation: OperationImplementation<
   if (isCollapsedRange(at) && start.path.length >= 2) {
     const nodeEntry = getNode(operation.editor, start.path)
     if (nodeEntry) {
-      const {node: node, path: nodePath} = nodeEntry
+      const {node, path: nodePath} = nodeEntry
       if (isObjectNode({schema: operation.editor.schema}, node)) {
         operation.editor.apply({
           type: 'remove_node',

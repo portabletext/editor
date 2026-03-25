@@ -4,13 +4,13 @@ import {applySplitNode} from '../internal-utils/apply-split-node'
 import {toSlateRange} from '../internal-utils/to-slate-range'
 import {getNode} from '../node-traversal/get-node'
 import {getNodes} from '../node-traversal/get-nodes'
+import {isLeaf} from '../node-traversal/is-leaf'
 import {isEdge} from '../slate/editor/is-edge'
 import {isEnd} from '../slate/editor/is-end'
 import {isStart} from '../slate/editor/is-start'
 import {path as editorPath} from '../slate/editor/path'
 import {rangeRef} from '../slate/editor/range-ref'
 import {extractProps} from '../slate/node/extract-props'
-import {isObjectNode} from '../slate/node/is-object-node'
 import {isCollapsedRange} from '../slate/range/is-collapsed-range'
 import {isExpandedRange} from '../slate/range/is-expanded-range'
 import {rangeEdges} from '../slate/range/range-edges'
@@ -43,12 +43,10 @@ export const decoratorRemoveOperationImplementation: OperationImplementation<
     const ref = rangeRef(editor, at, {affinity: 'inward'})
 
     // Split text nodes at range boundaries (equivalent to setNodes with split:true and empty props)
-    const decoratorLeafNodeEntry = getNode(editor, at.anchor.path)
+    const decoratorLeafEntry = getNode(editor, at.anchor.path)
     const decoratorLeaf =
-      decoratorLeafNodeEntry &&
-      (isSpan({schema: editor.schema}, decoratorLeafNodeEntry.node) ||
-        isObjectNode({schema: editor.schema}, decoratorLeafNodeEntry.node))
-        ? decoratorLeafNodeEntry.node
+      decoratorLeafEntry && isLeaf(editor, decoratorLeafEntry.path)
+        ? decoratorLeafEntry.node
         : undefined
     if (
       !(
