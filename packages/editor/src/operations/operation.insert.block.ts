@@ -799,7 +799,7 @@ function removeNodeAt(editor: PortableTextSlateEditor, path: Path) {
     return
   }
 
-  const {node: node, path: nodePath} = nodeEntry
+  const {node, path: nodePath} = nodeEntry
   editor.apply({type: 'remove_node', path: nodePath, node})
 }
 

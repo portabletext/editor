@@ -7,6 +7,7 @@ import {toSlateRange} from '../internal-utils/to-slate-range'
 import {getChildren} from '../node-traversal/get-children'
 import {getNode} from '../node-traversal/get-node'
 import {getNodes} from '../node-traversal/get-nodes'
+import {isLeaf} from '../node-traversal/is-leaf'
 import {isEdge} from '../slate/editor/is-edge'
 import {isEnd} from '../slate/editor/is-end'
 import {isStart} from '../slate/editor/is-start'
@@ -14,7 +15,6 @@ import {path as editorPath} from '../slate/editor/path'
 import {rangeRef} from '../slate/editor/range-ref'
 import type {Path} from '../slate/interfaces/path'
 import {extractProps} from '../slate/node/extract-props'
-import {isObjectNode} from '../slate/node/is-object-node'
 import {isAfterPath} from '../slate/path/is-after-path'
 import {isBeforePath} from '../slate/path/is-before-path'
 import {isCollapsedRange} from '../slate/range/is-collapsed-range'
@@ -161,12 +161,10 @@ export const removeAnnotationOperationImplementation: OperationImplementation<
     // Split text nodes at range boundaries
     const splitRange = at ?? editor.selection
     if (splitRange && isRange(splitRange)) {
-      const splitLeafNodeEntry = getNode(editor, splitRange.anchor.path)
+      const splitLeafEntry = getNode(editor, splitRange.anchor.path)
       const splitLeaf =
-        splitLeafNodeEntry &&
-        (isSpan({schema: editor.schema}, splitLeafNodeEntry.node) ||
-          isObjectNode({schema: editor.schema}, splitLeafNodeEntry.node))
-          ? splitLeafNodeEntry.node
+        splitLeafEntry && isLeaf(editor, splitLeafEntry.path)
+          ? splitLeafEntry.node
           : undefined
       if (
         !(

@@ -147,7 +147,7 @@ export function insertNodes<T extends Node>(
                 )
                 .reverse()
 
-              for (const {node: node, path: nodePath} of levelEntries) {
+              for (const {node, path: nodePath} of levelEntries) {
                 let split = false
 
                 if (

@@ -1,8 +1,9 @@
+import {isSpan} from '@portabletext/schema'
 import {applySelect} from '../internal-utils/apply-selection'
 import {getNode} from '../node-traversal/get-node'
 import {getSpanNode} from '../node-traversal/get-span-node'
 import {hasNode} from '../node-traversal/has-node'
-import {isObjectNode} from '../slate/node/is-object-node'
+import {isLeaf} from '../node-traversal/is-leaf'
 import {nextPath} from '../slate/path/next-path'
 import {isCollapsedRange} from '../slate/range/is-collapsed-range'
 import type {OperationImplementation} from './operation.types'
@@ -27,8 +28,12 @@ export const insertTextOperationImplementation: OperationImplementation<
 
   const node = nodeEntry.node
 
-  // If the selection is at an ObjectNode, move to the adjacent span.
-  if (isObjectNode({schema: editor.schema}, node)) {
+  // If the selection is at a non-span leaf (inline object or block object),
+  // try to move to the adjacent span.
+  if (
+    isLeaf(editor, nodeEntry.path) &&
+    !isSpan({schema: editor.schema}, node)
+  ) {
     const next = nextPath(path)
 
     if (hasNode(editor, next)) {

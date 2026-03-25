@@ -18,7 +18,7 @@ export function getNode(
   }
 
   let currentChildren: Array<Node> = context.value
-  let scope: Parameters<typeof getNodeChildren>[2] = undefined
+  let scope: Parameters<typeof getNodeChildren>[2]
   let scopePath = ''
   let node: Node | undefined
 
