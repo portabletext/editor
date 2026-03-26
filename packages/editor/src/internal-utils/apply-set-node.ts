@@ -8,10 +8,9 @@ import type {PortableTextSlateEditor} from '../types/slate-editor'
  *
  * Properties set to `null` are treated as deletions.
  *
- * Skips `children` since those are structural properties managed by dedicated
- * operations. Skips `text` on text nodes (spans) for the same reason, but
- * allows `text` on elements and ObjectNodes where it's a user-defined
- * property.
+ * Skips `children` on text blocks since child changes are managed by
+ * dedicated `insert_node` and `remove_node` operations. Skips `text` on
+ * spans since text changes are managed by `insert_text` and `remove_text`.
  */
 export function applySetNode(
   editor: PortableTextSlateEditor,
