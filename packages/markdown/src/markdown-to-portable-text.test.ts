@@ -4431,4 +4431,204 @@ describe(markdownToPortableText.name, () => {
       ])
     })
   })
+
+  describe('callout', () => {
+    test('basic note callout', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const result = markdownToPortableText('> [!NOTE]\n> This is a note', {
+        keyGenerator,
+      })
+      expect(result).toEqual([
+        {
+          _type: 'callout',
+          _key: 'k2',
+          type: 'note',
+          content: [
+            {
+              _type: 'block',
+              _key: 'k0',
+              style: 'blockquote',
+              children: [
+                {
+                  _type: 'span',
+                  _key: 'k1',
+                  text: 'This is a note',
+                  marks: [],
+                },
+              ],
+              markDefs: [],
+            },
+          ],
+        },
+      ])
+    })
+
+    test('warning callout', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const result = markdownToPortableText('> [!WARNING]\n> Be careful here', {
+        keyGenerator,
+      })
+      expect(result).toEqual([
+        {
+          _type: 'callout',
+          _key: 'k2',
+          type: 'warning',
+          content: [
+            {
+              _type: 'block',
+              _key: 'k0',
+              style: 'blockquote',
+              children: [
+                {
+                  _type: 'span',
+                  _key: 'k1',
+                  text: 'Be careful here',
+                  marks: [],
+                },
+              ],
+              markDefs: [],
+            },
+          ],
+        },
+      ])
+    })
+
+    test('callout with formatting', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const result = markdownToPortableText(
+        '> [!TIP]\n> This is **bold** and *italic*',
+        {keyGenerator},
+      )
+      expect(result).toEqual([
+        {
+          _type: 'callout',
+          _key: 'k5',
+          type: 'tip',
+          content: [
+            {
+              _type: 'block',
+              _key: 'k0',
+              style: 'blockquote',
+              children: [
+                {
+                  _type: 'span',
+                  _key: 'k1',
+                  text: 'This is ',
+                  marks: [],
+                },
+                {
+                  _type: 'span',
+                  _key: 'k2',
+                  text: 'bold',
+                  marks: ['strong'],
+                },
+                {
+                  _type: 'span',
+                  _key: 'k3',
+                  text: ' and ',
+                  marks: [],
+                },
+                {
+                  _type: 'span',
+                  _key: 'k4',
+                  text: 'italic',
+                  marks: ['em'],
+                },
+              ],
+              markDefs: [],
+            },
+          ],
+        },
+      ])
+    })
+
+    test('callout with multiple paragraphs', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const result = markdownToPortableText(
+        '> [!IMPORTANT]\n> First paragraph\n>\n> Second paragraph',
+        {keyGenerator},
+      )
+      expect(result).toEqual([
+        {
+          _type: 'callout',
+          _key: 'k4',
+          type: 'important',
+          content: [
+            {
+              _type: 'block',
+              _key: 'k0',
+              style: 'blockquote',
+              children: [
+                {
+                  _type: 'span',
+                  _key: 'k1',
+                  text: 'First paragraph',
+                  marks: [],
+                },
+              ],
+              markDefs: [],
+            },
+            {
+              _type: 'block',
+              _key: 'k2',
+              style: 'blockquote',
+              children: [
+                {
+                  _type: 'span',
+                  _key: 'k3',
+                  text: 'Second paragraph',
+                  marks: [],
+                },
+              ],
+              markDefs: [],
+            },
+          ],
+        },
+      ])
+    })
+
+    test('callout not in schema falls back to blockquote blocks', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const result = markdownToPortableText('> [!NOTE]\n> This is a note', {
+        keyGenerator,
+        schema: compileSchema(
+          defineSchema({
+            styles: [{name: 'normal'}, {name: 'blockquote'}],
+          }),
+        ),
+      })
+      expect(result).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'blockquote',
+          children: [
+            {
+              _type: 'span',
+              _key: 'k1',
+              text: 'This is a note',
+              marks: [],
+            },
+          ],
+          markDefs: [],
+        },
+      ])
+    })
+
+    test('all supported callout types', () => {
+      const types = ['NOTE', 'TIP', 'WARNING', 'CAUTION', 'IMPORTANT']
+
+      for (const type of types) {
+        const keyGenerator = createTestKeyGenerator()
+        const result = markdownToPortableText(`> [!${type}]\n> Content`, {
+          keyGenerator,
+        })
+        const callout = result[0]
+        expect(callout?._type).toBe('callout')
+        expect(callout && 'type' in callout ? callout['type'] : undefined).toBe(
+          type.toLowerCase(),
+        )
+      }
+    })
+  })
 })
