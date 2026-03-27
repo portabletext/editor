@@ -3,7 +3,7 @@ import type {
   PortableTextSpan,
   PortableTextTextBlock,
 } from '@portabletext/schema'
-import {isSpan, isTextBlock} from '@portabletext/schema'
+import {isSpan} from '@portabletext/schema'
 import React, {
   forwardRef,
   useCallback,
@@ -68,6 +68,7 @@ import type {NodeEntry} from '../../interfaces/node'
 import type {Path} from '../../interfaces/path'
 import type {DecoratedRange, LeafPosition} from '../../interfaces/text'
 import {isObjectNode} from '../../node/is-object-node'
+import {isTextBlockNode} from '../../node/is-text-block-node'
 import {pathEquals} from '../../path/path-equals'
 import {isBackwardRange} from '../../range/is-backward-range'
 import {isCollapsedRange} from '../../range/is-collapsed-range'
@@ -1304,7 +1305,10 @@ export const Editable = forwardRef(
                           : undefined
                         if (
                           relatedNode &&
-                          (isTextBlock({schema: editor.schema}, relatedNode) ||
+                          (isTextBlockNode(
+                            {schema: editor.schema},
+                            relatedNode,
+                          ) ||
                             isObjectNode({schema: editor.schema}, relatedNode))
                         ) {
                           return
@@ -1368,7 +1372,7 @@ export const Editable = forwardRef(
 
                         if (
                           !(
-                            isTextBlock({schema: editor.schema}, node) &&
+                            isTextBlockNode({schema: editor.schema}, node) &&
                             !editor.isInline(node)
                           )
                         ) {

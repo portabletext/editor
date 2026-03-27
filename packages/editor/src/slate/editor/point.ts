@@ -1,9 +1,10 @@
-import {isSpan, isTextBlock} from '@portabletext/schema'
+import {isSpan} from '@portabletext/schema'
 import {getLeaf} from '../../node-traversal/get-leaf'
 import type {Editor} from '../interfaces/editor'
 import type {Location} from '../interfaces/location'
 import type {Path} from '../interfaces/path'
 import type {Point} from '../interfaces/point'
+import {isTextBlockNode} from '../node/is-text-block-node'
 import {isPath} from '../path/is-path'
 import {isRange} from '../range/is-range'
 import {rangeEdges} from '../range/range-edges'
@@ -34,7 +35,7 @@ export function point(
 
     if (
       !isSpan({schema: editor.schema}, node) &&
-      !isTextBlock({schema: editor.schema}, node) &&
+      !isTextBlockNode({schema: editor.schema}, node) &&
       !isEditor(node)
     ) {
       return {path, offset: 0}

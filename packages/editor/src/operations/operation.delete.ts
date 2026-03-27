@@ -1,4 +1,3 @@
-import {isTextBlock} from '@portabletext/schema'
 import {toSlateRange} from '../internal-utils/to-slate-range'
 import {getAncestorTextBlock} from '../node-traversal/get-ancestor-text-block'
 import {getHighestObjectNode} from '../node-traversal/get-highest-object-node'
@@ -21,6 +20,7 @@ import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
 import type {Range} from '../slate/interfaces/range'
 import {isObjectNode} from '../slate/node/is-object-node'
+import {isTextBlockNode} from '../slate/node/is-text-block-node'
 import {commonPath} from '../slate/path/common-path'
 import {comparePaths} from '../slate/path/compare-paths'
 import {isAncestorPath} from '../slate/path/is-ancestor-path'
@@ -132,7 +132,7 @@ export const deleteOperationImplementation: OperationImplementation<
           const nodeEntry = getNode(operation.editor, fromPath)
           if (
             nodeEntry &&
-            isTextBlock({schema: operation.editor.schema}, nodeEntry.node)
+            isTextBlockNode({schema: operation.editor.schema}, nodeEntry.node)
           ) {
             return nodeEntry
           }
@@ -429,12 +429,12 @@ export const deleteOperationImplementation: OperationImplementation<
   const reverse = operation.direction === 'backward'
   const hanging = reverse
     ? end
-      ? isTextBlock(context, endBlock?.node)
+      ? isTextBlockNode(context, endBlock?.node)
         ? end.offset === 0
         : true
       : false
     : start
-      ? isTextBlock(context, startBlock?.node)
+      ? isTextBlockNode(context, startBlock?.node)
         ? start.offset === 0
         : true
       : false

@@ -1,7 +1,8 @@
 import type {PortableTextBlock} from '@portabletext/schema'
-import {isSpan, isTextBlock} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
 import type {Node} from '../slate/interfaces/node'
+import {isSpanNode} from '../slate/node/is-span-node'
+import {isTextBlockNode} from '../slate/node/is-text-block-node'
 import {getNode} from './get-node'
 import {getParent} from './get-parent'
 
@@ -27,7 +28,7 @@ export function isBlock(
     return true
   }
 
-  return !isTextBlock({schema: context.schema}, parent.node)
+  return !isTextBlockNode({schema: context.schema}, parent.node)
 }
 
 /**
@@ -56,7 +57,7 @@ export function getBlock(
 
   // Narrow the type: a block is never a span (spans always have a text block
   // parent, so isBlock returns false for them).
-  if (isSpan({schema: context.schema}, entry.node)) {
+  if (isSpanNode({schema: context.schema}, entry.node)) {
     return undefined
   }
 

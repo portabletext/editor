@@ -1,10 +1,11 @@
-import {isSpan, isTextBlock} from '@portabletext/schema'
+import {isSpan} from '@portabletext/schema'
 import {getFocusChild} from '../selectors/selector.get-focus-child'
 import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
 import {getNextBlock} from '../selectors/selector.get-next-block'
 import {getPreviousBlock} from '../selectors/selector.get-previous-block'
 import {isAtTheEndOfBlock} from '../selectors/selector.is-at-the-end-of-block'
 import {isAtTheStartOfBlock} from '../selectors/selector.is-at-the-start-of-block'
+import {isTextBlockNode} from '../slate/node/is-text-block-node'
 import {getBlockEndPoint} from '../utils/util.get-block-end-point'
 import {getBlockStartPoint} from '../utils/util.get-block-start-point'
 import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
@@ -64,7 +65,7 @@ export const abstractDeleteBehaviors = [
         block: previousBlock,
       })
 
-      if (!isTextBlock(snapshot.context, previousBlock.node)) {
+      if (!isTextBlockNode(snapshot.context, previousBlock.node)) {
         return false
       }
 
@@ -198,7 +199,7 @@ export const abstractDeleteBehaviors = [
         return false
       }
 
-      if (!isTextBlock(snapshot.context, nextBlock.node)) {
+      if (!isTextBlockNode(snapshot.context, nextBlock.node)) {
         return false
       }
 

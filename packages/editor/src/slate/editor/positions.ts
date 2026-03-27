@@ -1,9 +1,10 @@
-import {isSpan, isTextBlock} from '@portabletext/schema'
+import {isSpan} from '@portabletext/schema'
 import {getNodes} from '../../node-traversal/get-nodes'
 import type {Editor} from '../interfaces/editor'
 import type {Location} from '../interfaces/location'
 import type {Point} from '../interfaces/point'
 import {isObjectNode} from '../node/is-object-node'
+import {isTextBlockNode} from '../node/is-text-block-node'
 import {isAncestorPath} from '../path/is-ancestor-path'
 import {pathEquals} from '../path/path-equals'
 import {rangeEdges} from '../range/range-edges'
@@ -72,7 +73,7 @@ export function* positions(
     /*
      * ELEMENT NODE - Yield position(s) for object nodes, collect blockText for blocks
      */
-    if (isTextBlock({schema: editor.schema}, node)) {
+    if (isTextBlockNode({schema: editor.schema}, node)) {
       // Inline element nodes are ignored as they don't themselves
       // contribute to `blockText` or `leafText` - their parent and
       // children do.
@@ -128,7 +129,7 @@ export function* positions(
     }
 
     if (
-      !isTextBlock({schema: editor.schema}, node) &&
+      !isTextBlockNode({schema: editor.schema}, node) &&
       !isSpan({schema: editor.schema}, node)
     ) {
       yield {path: nodePath, offset: 0}

@@ -1,11 +1,11 @@
 import {createKeyboardShortcut} from '@portabletext/keyboard-shortcuts'
-import {isTextBlock} from '@portabletext/schema'
 import {defaultKeyboardShortcuts} from '../editor/default-keyboard-shortcuts'
 import {getFocusBlock} from '../selectors/selector.get-focus-block'
 import {getFocusInlineObject} from '../selectors/selector.get-focus-inline-object'
 import {getPreviousBlock} from '../selectors/selector.get-previous-block'
 import {isSelectionCollapsed} from '../selectors/selector.is-selection-collapsed'
 import {isSelectionExpanded} from '../selectors/selector.is-selection-expanded'
+import {isTextBlockNode} from '../slate/node/is-text-block-node'
 import {getBlockEndPoint} from '../utils/util.get-block-end-point'
 import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
 import {raise} from './behavior.types.action'
@@ -162,7 +162,7 @@ export const abstractKeyboardBehaviors = [
       }
 
       const hanging =
-        isTextBlock(snapshot.context, focusBlock.node) &&
+        isTextBlockNode(snapshot.context, focusBlock.node) &&
         snapshot.context.selection.focus.offset === 0
 
       if (hanging && isEmptyTextBlock(snapshot.context, focusBlock.node)) {
