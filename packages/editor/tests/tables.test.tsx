@@ -2,6 +2,7 @@ import {set, unset} from '@portabletext/patches'
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
+import type {InternalEditor} from '../src/editor/create-editor'
 import {createTestEditor} from '../src/test/vitest'
 
 const schemaDefinition = defineSchema({
@@ -86,6 +87,13 @@ async function createTableTestEditor() {
     initialValue,
   })
 
+  // Register container types as editable so the editor knows their child
+  // fields are structural, not regular data properties.
+  const slateEditor = (editor as InternalEditor)._internal.slateEditor
+  slateEditor.editableTypes.add('table')
+  slateEditor.editableTypes.add('row')
+  slateEditor.editableTypes.add('cell')
+
   return {
     editor,
     locator,
@@ -128,7 +136,7 @@ describe('tables', () => {
     })
 
     test('set rows', async () => {
-      const {editor, table} = await createTableTestEditor()
+      const {editor, table, initialValue} = await createTableTestEditor()
 
       const newRow = {
         _key: editor.getSnapshot().context.keyGenerator(),
@@ -160,18 +168,15 @@ describe('tables', () => {
         snapshot: undefined,
       })
 
+      // Setting a child array field via set_node is a no-op.
+      // The child field is managed by insert_node/remove_node.
       await vi.waitFor(() => {
-        return expect(editor.getSnapshot().context.value).toEqual([
-          {
-            ...table,
-            rows: [newRow],
-          },
-        ])
+        return expect(editor.getSnapshot().context.value).toEqual(initialValue)
       })
     })
 
     test('set cells', async () => {
-      const {editor, table, row} = await createTableTestEditor()
+      const {editor, table, row, initialValue} = await createTableTestEditor()
 
       const newCell = {
         _key: editor.getSnapshot().context.keyGenerator(),
@@ -202,18 +207,15 @@ describe('tables', () => {
         snapshot: undefined,
       })
 
+      // Setting a child array field via set_node is a no-op.
+      // The child field is managed by insert_node/remove_node.
       await vi.waitFor(() => {
-        return expect(editor.getSnapshot().context.value).toEqual([
-          {
-            ...table,
-            rows: [{...row, cells: [newCell]}],
-          },
-        ])
+        return expect(editor.getSnapshot().context.value).toEqual(initialValue)
       })
     })
 
     test('set marks', async () => {
-      const {editor, table, row, cell, block, span} =
+      const {editor, table, row, cell, block, span, initialValue} =
         await createTableTestEditor()
 
       editor.send({
@@ -238,38 +240,15 @@ describe('tables', () => {
         snapshot: undefined,
       })
 
+      // Setting a deeply nested property that changes the child array field
+      // is a no-op because the child field is managed by insert_node/remove_node.
       await vi.waitFor(() => {
-        return expect(editor.getSnapshot().context.value).toEqual([
-          {
-            ...table,
-            rows: [
-              {
-                ...row,
-                cells: [
-                  {
-                    ...cell,
-                    content: [
-                      {
-                        ...block,
-                        children: [
-                          {
-                            ...span,
-                            marks: ['strong'],
-                          },
-                        ],
-                      },
-                    ],
-                  },
-                ],
-              },
-            ],
-          },
-        ])
+        return expect(editor.getSnapshot().context.value).toEqual(initialValue)
       })
     })
 
     test('unset rows', async () => {
-      const {editor, table} = await createTableTestEditor()
+      const {editor, table, initialValue} = await createTableTestEditor()
 
       editor.send({
         type: 'patches',
@@ -277,15 +256,15 @@ describe('tables', () => {
         snapshot: undefined,
       })
 
+      // Unsetting a child array field via set_node is a no-op.
+      // The child field is managed by insert_node/remove_node.
       await vi.waitFor(() => {
-        return expect(editor.getSnapshot().context.value).toEqual([
-          {...table, rows: undefined},
-        ])
+        return expect(editor.getSnapshot().context.value).toEqual(initialValue)
       })
     })
 
     test('unset cells', async () => {
-      const {editor, table, row} = await createTableTestEditor()
+      const {editor, table, row, initialValue} = await createTableTestEditor()
 
       editor.send({
         type: 'patches',
@@ -295,15 +274,16 @@ describe('tables', () => {
         snapshot: undefined,
       })
 
+      // Unsetting a child array field via set_node is a no-op.
+      // The child field is managed by insert_node/remove_node.
       await vi.waitFor(() => {
-        return expect(editor.getSnapshot().context.value).toEqual([
-          {...table, rows: [{...row, cells: undefined}]},
-        ])
+        return expect(editor.getSnapshot().context.value).toEqual(initialValue)
       })
     })
 
     test('unset content', async () => {
-      const {editor, table, row, cell} = await createTableTestEditor()
+      const {editor, table, row, cell, initialValue} =
+        await createTableTestEditor()
 
       editor.send({
         type: 'patches',
@@ -320,15 +300,16 @@ describe('tables', () => {
         snapshot: undefined,
       })
 
+      // Unsetting a child array field via set_node is a no-op.
+      // The child field is managed by insert_node/remove_node.
       await vi.waitFor(() => {
-        return expect(editor.getSnapshot().context.value).toEqual([
-          {...table, rows: [{...row, cells: [{...cell, content: undefined}]}]},
-        ])
+        return expect(editor.getSnapshot().context.value).toEqual(initialValue)
       })
     })
 
     test('unset children', async () => {
-      const {editor, table, row, cell, block} = await createTableTestEditor()
+      const {editor, table, row, cell, block, initialValue} =
+        await createTableTestEditor()
 
       editor.send({
         type: 'patches',
@@ -347,18 +328,10 @@ describe('tables', () => {
         snapshot: undefined,
       })
 
+      // Unsetting a child array field via set_node is a no-op.
+      // The child field is managed by insert_node/remove_node.
       await vi.waitFor(() => {
-        return expect(editor.getSnapshot().context.value).toEqual([
-          {
-            ...table,
-            rows: [
-              {
-                ...row,
-                cells: [{...cell, content: [{...block, children: undefined}]}],
-              },
-            ],
-          },
-        ])
+        return expect(editor.getSnapshot().context.value).toEqual(initialValue)
       })
     })
   })
