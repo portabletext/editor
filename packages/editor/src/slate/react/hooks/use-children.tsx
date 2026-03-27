@@ -15,6 +15,7 @@ import type {Node} from '../../interfaces/node'
 import type {Path} from '../../interfaces/path'
 import type {DecoratedRange} from '../../interfaces/text'
 import {isObjectNode} from '../../node/is-object-node'
+import {isSpanNode} from '../../node/is-span-node'
 import type {
   RenderElementProps,
   RenderLeafProps,
@@ -166,6 +167,10 @@ const useChildren = (props: {
     }
     if (isSpan({schema: editor.schema}, n)) {
       return renderTextComponent(n, i)
+    }
+    // Fallback for span nodes without `text`
+    if (isSpanNode({schema: editor.schema}, n)) {
+      return null
     }
     throw new Error(`Unexpected node type`)
   })

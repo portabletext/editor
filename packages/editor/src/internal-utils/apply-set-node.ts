@@ -1,7 +1,6 @@
-import {isTextBlock} from '@portabletext/schema'
 import {getNode} from '../node-traversal/get-node'
 import type {Path} from '../slate/interfaces/path'
-import {isObjectNode} from '../slate/node/is-object-node'
+import {isSpanNode} from '../slate/node/is-span-node'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 
 /**
@@ -36,11 +35,7 @@ export function applySetNode(
       continue
     }
 
-    if (
-      key === 'text' &&
-      !isTextBlock({schema: editor.schema}, node) &&
-      !isObjectNode({schema: editor.schema}, node)
-    ) {
+    if (key === 'text' && isSpanNode({schema: editor.schema}, node)) {
       continue
     }
 

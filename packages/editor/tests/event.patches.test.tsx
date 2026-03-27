@@ -1457,6 +1457,75 @@ describe('event.patches', () => {
     })
   })
 
+  test('Scenario: `set`ing "text" field on span', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [
+            {_key: spanKey, _type: 'span', text: 'foo bar baz', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 5,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 5,
+        },
+      },
+    })
+
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'set',
+          path: [{_key: blockKey}, 'children', {_key: spanKey}, 'text'],
+          value: 'foo',
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [{_key: spanKey, _type: 'span', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 3,
+        },
+        backward: false,
+      })
+    })
+  })
+
   test('Scenario: `unset` inline object properties', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
