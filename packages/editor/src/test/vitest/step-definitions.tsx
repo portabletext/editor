@@ -236,7 +236,7 @@ export const stepDefinitions = [
   When(
     '{button} is pressed',
     async (context: Context, button: Parameter['button']) => {
-      const previousSelection = context.editor.getSnapshot().context.selection
+      const previousSnapshot = context.editor.getSnapshot().context
       await userEvent.keyboard(button)
 
       // Delay to allow the browser to process the event.
@@ -245,28 +245,30 @@ export const stepDefinitions = [
       await new Promise((resolve) => setTimeout(resolve, 100))
 
       await vi.waitFor(() => {
-        const currentSelection = context.editor.getSnapshot().context.selection
+        const currentSnapshot = context.editor.getSnapshot().context
 
-        if (currentSelection) {
-          expect(currentSelection).not.toBe(previousSelection)
-        }
+        expect(
+          currentSnapshot.selection !== previousSnapshot.selection ||
+            currentSnapshot.value !== previousSnapshot.value,
+        ).toBe(true)
       })
     },
   ),
   When(
     '{button} is pressed in Editor B',
     async (context: Context, button: Parameter['button']) => {
-      const previousSelection = context.editorB.getSnapshot().context.selection
+      const previousSnapshot = context.editorB.getSnapshot().context
       await userEvent.keyboard(button)
 
       await new Promise((resolve) => setTimeout(resolve, 100))
 
       await vi.waitFor(() => {
-        const currentSelection = context.editorB.getSnapshot().context.selection
+        const currentSnapshot = context.editorB.getSnapshot().context
 
-        if (currentSelection) {
-          expect(currentSelection).not.toBe(previousSelection)
-        }
+        expect(
+          currentSnapshot.selection !== previousSnapshot.selection ||
+            currentSnapshot.value !== previousSnapshot.value,
+        ).toBe(true)
       })
     },
   ),
@@ -274,18 +276,18 @@ export const stepDefinitions = [
     '{button} is pressed {int} times',
     async (context: Context, button: Parameter['button'], times: number) => {
       for (let i = 0; i < times; i++) {
-        const previousSelection = context.editor.getSnapshot().context.selection
+        const previousSnapshot = context.editor.getSnapshot().context
         await userEvent.keyboard(button)
 
         await new Promise((resolve) => setTimeout(resolve, 100))
 
         await vi.waitFor(() => {
-          const currentSelection =
-            context.editor.getSnapshot().context.selection
+          const currentSnapshot = context.editor.getSnapshot().context
 
-          if (currentSelection) {
-            expect(currentSelection).not.toBe(previousSelection)
-          }
+          expect(
+            currentSnapshot.selection !== previousSnapshot.selection ||
+              currentSnapshot.value !== previousSnapshot.value,
+          ).toBe(true)
         })
       }
     },
@@ -294,19 +296,18 @@ export const stepDefinitions = [
     '{button} is pressed {int} times in Editor B',
     async (context: Context, button: Parameter['button'], times: number) => {
       for (let i = 0; i < times; i++) {
-        const previousSelection =
-          context.editorB.getSnapshot().context.selection
+        const previousSnapshot = context.editorB.getSnapshot().context
         await userEvent.keyboard(button)
 
         await new Promise((resolve) => setTimeout(resolve, 100))
 
         await vi.waitFor(() => {
-          const currentSelection =
-            context.editorB.getSnapshot().context.selection
+          const currentSnapshot = context.editorB.getSnapshot().context
 
-          if (currentSelection) {
-            expect(currentSelection).not.toBe(previousSelection)
-          }
+          expect(
+            currentSnapshot.selection !== previousSnapshot.selection ||
+              currentSnapshot.value !== previousSnapshot.value,
+          ).toBe(true)
         })
       }
     },
