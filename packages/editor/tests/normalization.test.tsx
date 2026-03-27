@@ -1,6 +1,8 @@
+import type {Patch} from '@portabletext/patches'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {defineSchema} from '../src'
+import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
 import {createTestEditor} from '../src/test/vitest'
 
 describe('normalization', () => {
@@ -83,6 +85,300 @@ describe('normalization', () => {
           ],
         },
       ])
+    })
+  })
+
+  test('Scenario: text blocks with no `children` get placeholder children', async () => {
+    const patches: Array<Patch> = []
+    const keyGenerator = createTestKeyGenerator()
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              const {origin: _, ...patch} = event.patch
+              patches.push(patch)
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'insert',
+          path: [{_key: 'k0'}],
+          position: 'after',
+          items: [
+            {
+              _type: 'block',
+              _key: 'new-block',
+              style: 'normal',
+              markDefs: [],
+            },
+          ],
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          children: [{_type: 'span', _key: 'k1', text: '', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: 'new-block',
+          children: [
+            {
+              _type: 'span',
+              _key: 'k2',
+              text: '',
+              marks: [],
+            },
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+      expect(patches).toEqual([
+        {
+          type: 'setIfMissing',
+          path: [{_key: 'new-block'}, 'children'],
+          value: [],
+        },
+        {
+          type: 'insert',
+          path: [{_key: 'new-block'}, 'children', 0],
+          position: 'before',
+          items: [{_type: 'span', _key: 'k2', text: '', marks: []}],
+        },
+      ])
+    })
+  })
+
+  test('Scenario: text blocks with empty `children` get placeholder children', async () => {
+    const patches: Array<Patch> = []
+    const keyGenerator = createTestKeyGenerator()
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              const {origin: _, ...patch} = event.patch
+              patches.push(patch)
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'insert',
+          path: [{_key: 'k0'}],
+          position: 'after',
+          items: [
+            {
+              _type: 'block',
+              _key: 'new-block',
+              children: [],
+              style: 'normal',
+              markDefs: [],
+            },
+          ],
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          children: [{_type: 'span', _key: 'k1', text: '', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: 'new-block',
+          children: [
+            {
+              _type: 'span',
+              _key: 'k2',
+              text: '',
+              marks: [],
+            },
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+      expect(patches).toEqual([
+        {
+          type: 'setIfMissing',
+          path: [{_key: 'new-block'}, 'children'],
+          value: [],
+        },
+        {
+          type: 'insert',
+          path: [{_key: 'new-block'}, 'children', 0],
+          position: 'before',
+          items: [{_type: 'span', _key: 'k2', text: '', marks: []}],
+        },
+      ])
+    })
+  })
+
+  test('Scenario: span with no `_key` gets a key', async () => {
+    const patches: Array<Patch> = []
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const fooKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        decorators: [{name: 'strong'}],
+      }),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: fooKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              const {origin: _, ...patch} = event.patch
+              patches.push(patch)
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'insert',
+          path: [{_key: blockKey}, 'children', {_key: fooKey}],
+          position: 'after',
+          items: [{_type: 'span', text: 'bar', marks: ['strong']}],
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {_type: 'span', _key: fooKey, text: 'foo', marks: []},
+            {_type: 'span', _key: 'k4', text: 'bar', marks: ['strong']},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+      expect(patches).toEqual([
+        {
+          type: 'set',
+          path: [{_key: 'k0'}, 'children', 1, '_key'],
+          value: 'k4',
+        },
+      ])
+    })
+  })
+
+  test('Scenario: lonely span with no `text` gets an empty string', async () => {
+    const patches: Array<Patch> = []
+    const keyGenerator = createTestKeyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        decorators: [{name: 'strong'}],
+      }),
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              const {origin: _, ...patch} = event.patch
+              patches.push(patch)
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'insert',
+          path: [{_key: 'k0'}],
+          position: 'after',
+          items: [
+            {
+              _type: 'block',
+              _key: keyGenerator(),
+              children: [{_type: 'span', _key: keyGenerator(), marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          children: [{_type: 'span', _key: 'k1', text: '', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: 'k2',
+          children: [{_type: 'span', _key: 'k3', text: '', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+      // expect(patches).toEqual([
+      //   {
+      //     type: 'set',
+      //     path: [{_key: 'k0'}, 'children', 1, '_key'],
+      //     value: 'k4',
+      //   },
+      // ])
     })
   })
 })

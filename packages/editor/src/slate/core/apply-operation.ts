@@ -1,5 +1,5 @@
 import type {PortableTextSpan} from '@portabletext/schema'
-import {isSpan, isTextBlock} from '@portabletext/schema'
+import {isSpan} from '@portabletext/schema'
 import {safeStringify} from '../../internal-utils/safe-json'
 import {getNodes} from '../../node-traversal/get-nodes'
 import type {Editor, Selection} from '../interfaces/editor'
@@ -160,20 +160,9 @@ export function applyOperation(editor: Editor, op: Operation): void {
 
       modifyDescendant(editor, path, editor.schema, (node) => {
         const newNode = {...node}
-        const isTextBlockNode = isTextBlock({schema: editor.schema}, node)
 
         for (const key in newProperties) {
           if (key === 'children') {
-            throw new Error(`Cannot set the "${key}" property of nodes!`)
-          }
-
-          // Only skip `text` on spans (which have marks), not on ObjectNodes
-          // where `text` is a user property.
-          if (
-            key === 'text' &&
-            !isTextBlockNode &&
-            Array.isArray((node as Record<string, unknown>)['marks'])
-          ) {
             throw new Error(`Cannot set the "${key}" property of nodes!`)
           }
 
