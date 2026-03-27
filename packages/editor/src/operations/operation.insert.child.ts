@@ -1,9 +1,10 @@
-import {isSpan, isTextBlock} from '@portabletext/schema'
+import {isSpan} from '@portabletext/schema'
 import {
   applyInsertNodeAtPath,
   applyInsertNodeAtPoint,
 } from '../internal-utils/apply-insert-node'
 import {getNode} from '../node-traversal/get-node'
+import {isTextBlockNode} from '../slate/node/is-text-block-node'
 import {parseInlineObject, parseSpan} from '../utils/parse-blocks'
 import type {OperationImplementation} from './operation.types'
 
@@ -28,7 +29,7 @@ export const insertChildOperationImplementation: OperationImplementation<
     throw new Error('Unable to insert child without a focus block')
   }
 
-  if (!isTextBlock(context, focusBlock)) {
+  if (!isTextBlockNode(context, focusBlock)) {
     throw new Error('Unable to insert child into a non-text block')
   }
 

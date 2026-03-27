@@ -16,6 +16,7 @@ import type {Path} from '../../interfaces/path'
 import type {DecoratedRange} from '../../interfaces/text'
 import {isObjectNode} from '../../node/is-object-node'
 import {isSpanNode} from '../../node/is-span-node'
+import {isTextBlockNode} from '../../node/is-text-block-node'
 import type {
   RenderElementProps,
   RenderLeafProps,
@@ -161,6 +162,10 @@ const useChildren = (props: {
   return children.map((n: Node, i: number) => {
     if (isTextBlock({schema: editor.schema}, n)) {
       return renderElementComponent(n, i)
+    }
+    // Fallback for text block nodes without `children`
+    if (isTextBlockNode({schema: editor.schema}, n)) {
+      return null
     }
     if (isObjectNode({schema: editor.schema}, n)) {
       return renderObjectNodeComponent(n, i)

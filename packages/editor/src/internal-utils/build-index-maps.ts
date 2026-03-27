@@ -1,5 +1,5 @@
-import {isTextBlock} from '@portabletext/schema'
 import type {EditorContext} from '../editor/editor-snapshot'
+import {isTextBlockNode} from '../slate/node/is-text-block-node'
 
 // Maps for each list type, keeping track of the current list count for each
 // level.
@@ -39,7 +39,7 @@ export function buildIndexMaps(
     blockIndexMap.set(block._key, blockIndex)
 
     // Clear the state if we encounter a non-text block
-    if (!isTextBlock(context, block)) {
+    if (!isTextBlockNode(context, block)) {
       levelIndexMaps.clear()
       previousListItem = undefined
 

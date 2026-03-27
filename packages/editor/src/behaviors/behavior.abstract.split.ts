@@ -1,10 +1,10 @@
-import {isTextBlock} from '@portabletext/schema'
 import {isSelectionExpanded} from '../selectors'
 import {getFocusBlockObject} from '../selectors/selector.get-focus-block-object'
 import {getFocusInlineObject} from '../selectors/selector.get-focus-inline-object'
 import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
 import {getSelectionEndBlock} from '../selectors/selector.get-selection-end-block'
 import {getSelectionStartBlock} from '../selectors/selector.get-selection-start-block'
+import {isTextBlockNode} from '../slate/node/is-text-block-node'
 import {isEqualSelectionPoints} from '../utils'
 import {parseBlock} from '../utils/parse-blocks'
 import {getBlockEndPoint} from '../utils/util.get-block-end-point'
@@ -72,8 +72,8 @@ export const abstractSplitBehaviors = [
       })
 
       if (
-        isTextBlock(snapshot.context, startBlock.node) &&
-        isTextBlock(snapshot.context, endBlock.node) &&
+        isTextBlockNode(snapshot.context, startBlock.node) &&
+        isTextBlockNode(snapshot.context, endBlock.node) &&
         !isEqualSelectionPoints(startPoint, startBlockStartPoint) &&
         !isEqualSelectionPoints(endPoint, endBlockEndPoint)
       ) {

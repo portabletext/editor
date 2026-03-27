@@ -1,5 +1,6 @@
-import {isTextBlock, type PortableTextTextBlock} from '@portabletext/schema'
+import type {PortableTextTextBlock} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
+import {isTextBlockNode} from '../slate/node/is-text-block-node'
 import {getSelectedBlocks} from './selector.get-selected-blocks'
 
 /**
@@ -14,7 +15,7 @@ export const getActiveStyle: EditorSelector<PortableTextTextBlock['style']> = (
 
   const selectedBlocks = getSelectedBlocks(snapshot).map((block) => block.node)
   const selectedTextBlocks = selectedBlocks.filter((block) =>
-    isTextBlock(snapshot.context, block),
+    isTextBlockNode(snapshot.context, block),
   )
 
   const firstTextBlock = selectedTextBlocks.at(0)

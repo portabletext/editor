@@ -1,4 +1,4 @@
-import {isSpan, isTextBlock} from '@portabletext/schema'
+import {isSpan} from '@portabletext/schema'
 import {applySplitNode} from '../../internal-utils/apply-split-node'
 import {getAncestorObjectNode} from '../../node-traversal/get-ancestor-object-node'
 import {getNode} from '../../node-traversal/get-node'
@@ -20,6 +20,7 @@ import type {Point} from '../interfaces/point'
 import type {PointRef} from '../interfaces/point-ref'
 import {extractProps} from '../node/extract-props'
 import {isObjectNode} from '../node/is-object-node'
+import {isTextBlockNode} from '../node/is-text-block-node'
 import {comparePaths} from '../path/compare-paths'
 import {nextPath} from '../path/next-path'
 import {operationCanTransformPath} from '../path/operation-can-transform-path'
@@ -101,7 +102,7 @@ export function insertNodes<T extends Node>(
           match = (n) =>
             isSpan({schema: editor.schema}, n) || editor.isInline(n)
         } else {
-          match = (n) => isTextBlock({schema: editor.schema}, n)
+          match = (n) => isTextBlockNode({schema: editor.schema}, n)
         }
       }
 

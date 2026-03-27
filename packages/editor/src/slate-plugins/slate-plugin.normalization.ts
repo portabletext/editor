@@ -12,6 +12,7 @@ import {getSpanNode} from '../node-traversal/get-span-node'
 import {getTextBlockNode} from '../node-traversal/get-text-block-node'
 import {isEditor} from '../slate/editor/is-editor'
 import {isSpanNode} from '../slate/node/is-span-node'
+import {isTextBlockNode} from '../slate/node/is-text-block-node'
 import {parentPath} from '../slate/path/parent-path'
 import {isCollapsedRange} from '../slate/range/is-collapsed-range'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
@@ -75,7 +76,7 @@ export function createNormalizationPlugin(
        * Add missing .markDefs to block nodes
        */
       if (
-        isTextBlock({schema: editor.schema}, node) &&
+        isTextBlockNode({schema: editor.schema}, node) &&
         !Array.isArray(node.markDefs)
       ) {
         debug.normalization('adding .markDefs to block node')
@@ -90,7 +91,7 @@ export function createNormalizationPlugin(
        */
       if (
         defaultStyle &&
-        isTextBlock({schema: editor.schema}, node) &&
+        isTextBlockNode({schema: editor.schema}, node) &&
         typeof node.style === 'undefined'
       ) {
         debug.normalization('adding .style to block node')
