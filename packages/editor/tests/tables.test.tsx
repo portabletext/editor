@@ -115,6 +115,147 @@ describe('tables', () => {
     })
   })
 
+  describe('normalization', () => {
+    test('table with no rows gets full structure', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const tableKey = keyGenerator()
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition,
+        initialValue: [
+          {
+            _key: tableKey,
+            _type: 'table',
+          },
+        ],
+      })
+
+      await vi.waitFor(() => {
+        const value = editor.getSnapshot().context.value
+        expect(value).toHaveLength(1)
+        const table = value.at(0) as Record<string, unknown>
+        expect(table['_type']).toBe('table')
+        expect(Array.isArray(table['rows'])).toBe(true)
+        const rows = table['rows'] as Array<Record<string, unknown>>
+        expect(rows).toHaveLength(1)
+        const row = rows.at(0) as Record<string, unknown>
+        expect(row['_type']).toBe('row')
+        expect(Array.isArray(row['cells'])).toBe(true)
+        const cells = row['cells'] as Array<Record<string, unknown>>
+        expect(cells).toHaveLength(1)
+        const cell = cells.at(0) as Record<string, unknown>
+        expect(cell['_type']).toBe('cell')
+        expect(Array.isArray(cell['content'])).toBe(true)
+        const content = cell['content'] as Array<Record<string, unknown>>
+        expect(content).toHaveLength(1)
+        const block = content.at(0) as Record<string, unknown>
+        expect(block['_type']).toBe('block')
+        expect(Array.isArray(block['children'])).toBe(true)
+        const children = block['children'] as Array<Record<string, unknown>>
+        expect(children).toHaveLength(1)
+        expect(children.at(0)).toMatchObject({
+          _type: 'span',
+          text: '',
+        })
+      })
+    })
+
+    test('table with empty rows gets full structure', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const tableKey = keyGenerator()
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition,
+        initialValue: [
+          {
+            _key: tableKey,
+            _type: 'table',
+            rows: [],
+          },
+        ],
+      })
+
+      await vi.waitFor(() => {
+        const value = editor.getSnapshot().context.value
+        const table = value.at(0) as Record<string, unknown>
+        const rows = table['rows'] as Array<Record<string, unknown>>
+        expect(rows).toHaveLength(1)
+        expect(rows.at(0)).toMatchObject({_type: 'row'})
+      })
+    })
+
+    test('row with no cells gets normalized', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const tableKey = keyGenerator()
+      const rowKey = keyGenerator()
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition,
+        initialValue: [
+          {
+            _key: tableKey,
+            _type: 'table',
+            rows: [{_key: rowKey, _type: 'row'}],
+          },
+        ],
+      })
+
+      await vi.waitFor(() => {
+        const value = editor.getSnapshot().context.value
+        const table = value.at(0) as Record<string, unknown>
+        const rows = table['rows'] as Array<Record<string, unknown>>
+        const row = rows.at(0) as Record<string, unknown>
+        expect(Array.isArray(row['cells'])).toBe(true)
+        const cells = row['cells'] as Array<Record<string, unknown>>
+        expect(cells).toHaveLength(1)
+        expect(cells.at(0)).toMatchObject({_type: 'cell'})
+      })
+    })
+
+    test('cell with no content gets normalized', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const tableKey = keyGenerator()
+      const rowKey = keyGenerator()
+      const cellKey = keyGenerator()
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition,
+        initialValue: [
+          {
+            _key: tableKey,
+            _type: 'table',
+            rows: [
+              {
+                _key: rowKey,
+                _type: 'row',
+                cells: [{_key: cellKey, _type: 'cell'}],
+              },
+            ],
+          },
+        ],
+      })
+
+      await vi.waitFor(() => {
+        const value = editor.getSnapshot().context.value
+        const table = value.at(0) as Record<string, unknown>
+        const rows = table['rows'] as Array<Record<string, unknown>>
+        const row = rows.at(0) as Record<string, unknown>
+        const cells = row['cells'] as Array<Record<string, unknown>>
+        const cell = cells.at(0) as Record<string, unknown>
+        expect(Array.isArray(cell['content'])).toBe(true)
+        const content = cell['content'] as Array<Record<string, unknown>>
+        expect(content).toHaveLength(1)
+        const block = content.at(0) as Record<string, unknown>
+        expect(block['_type']).toBe('block')
+        expect(Array.isArray(block['children'])).toBe(true)
+      })
+    })
+  })
+
   describe('incoming patches', () => {
     test('set headerRows', async () => {
       const {editor, table} = await createTableTestEditor()
