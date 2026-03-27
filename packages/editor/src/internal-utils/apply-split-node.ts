@@ -1,4 +1,5 @@
 import {isSpan, isTextBlock} from '@portabletext/schema'
+import type {DecoratedRange} from '../editor/range-decorations-machine'
 import {getNode} from '../node-traversal/get-node'
 import {withoutNormalizing} from '../slate/editor/without-normalizing'
 import type {Node} from '../slate/interfaces/node'
@@ -8,8 +9,13 @@ import {isAncestorPath} from '../slate/path/is-ancestor-path'
 import {nextPath} from '../slate/path/next-path'
 import {pathEndsBefore} from '../slate/path/path-ends-before'
 import {pathEquals} from '../slate/path/path-equals'
+import {isAfterPoint} from '../slate/point/is-after-point'
+import {pointEquals} from '../slate/point/point-equals'
+import {isRange} from '../slate/range/is-range'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
+import {isDeepEqual} from './equality'
 import {rangeRefAffinities} from './range-ref-affinities'
+import {slateRangeToSelection} from './slate-utils'
 
 /**
  * Split a node at the given path and position using only patch-compliant
@@ -104,6 +110,16 @@ export function applySplitNode(
     }
   }
 
+  // Pre-transform decoratedRanges with inward affinity: the end point of a
+  // non-collapsed range uses 'backward' so the decoration doesn't expand
+  // across the split boundary, while the start point uses 'forward' so it
+  // moves to the new block when exactly at the split position.
+  const transformedDecorations = transformDecoratedRangesForSplit(
+    editor.decoratedRanges,
+    path,
+    position,
+  )
+
   // Temporarily remove all refs so the decomposed operations don't
   // double-transform them
   const pathRefs = new Set(editor.pathRefs)
@@ -116,6 +132,10 @@ export function applySplitNode(
   // Save the pre-transformed selection so decomposed operations don't
   // double-transform it
   const savedSelection = editor.selection
+
+  // Clear decoratedRanges during decomposed ops so the range-decorations
+  // machine callback doesn't double-transform them
+  editor.decoratedRanges = []
 
   try {
     withoutNormalizing(editor, () => {
@@ -167,7 +187,93 @@ export function applySplitNode(
     for (const ref of rangeRefs) {
       editor.rangeRefs.add(ref)
     }
+
+    // Restore pre-transformed decoratedRanges and update selections to match
+    editor.decoratedRanges = updateDecoratedRangeSelections(
+      editor,
+      transformedDecorations,
+    )
   }
+}
+
+function transformDecoratedRangesForSplit(
+  decoratedRanges: Array<DecoratedRange>,
+  path: Path,
+  position: number,
+): Array<DecoratedRange> {
+  return decoratedRanges.map((dr) => {
+    if (!isRange(dr)) {
+      return dr
+    }
+
+    const isCollapsed = pointEquals(dr.anchor, dr.focus)
+    const anchorIsEnd = !isCollapsed && isAfterPoint(dr.anchor, dr.focus)
+    const focusIsEnd = !isCollapsed && !anchorIsEnd
+
+    const newAnchor = transformPointForSplit(
+      dr.anchor,
+      path,
+      position,
+      anchorIsEnd ? 'backward' : 'forward',
+    )
+    const newFocus = transformPointForSplit(
+      dr.focus,
+      path,
+      position,
+      focusIsEnd ? 'backward' : 'forward',
+    )
+
+    if (
+      newAnchor &&
+      newFocus &&
+      (!pointEquals(newAnchor, dr.anchor) || !pointEquals(newFocus, dr.focus))
+    ) {
+      return {...dr, anchor: newAnchor, focus: newFocus}
+    }
+
+    return dr
+  })
+}
+
+/**
+ * Update the `rangeDecoration.selection` on each decorated range to match
+ * the current Slate range, and fire `onMoved` for any that changed.
+ */
+function updateDecoratedRangeSelections(
+  editor: PortableTextSlateEditor,
+  decoratedRanges: Array<DecoratedRange>,
+): Array<DecoratedRange> {
+  return decoratedRanges.map((dr) => {
+    if (!isRange(dr)) {
+      return dr
+    }
+
+    const newSelection = slateRangeToSelection({
+      schema: editor.schema,
+      editor,
+      range: dr,
+    })
+
+    const oldSelection = dr.rangeDecoration.selection
+
+    if (isDeepEqual(oldSelection, newSelection)) {
+      return dr
+    }
+
+    dr.rangeDecoration.onMoved?.({
+      newSelection,
+      rangeDecoration: dr.rangeDecoration,
+      origin: 'local',
+    })
+
+    return {
+      ...dr,
+      rangeDecoration: {
+        ...dr.rangeDecoration,
+        selection: newSelection,
+      },
+    }
+  })
 }
 
 /**

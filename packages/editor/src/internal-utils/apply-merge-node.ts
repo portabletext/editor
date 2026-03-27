@@ -1,4 +1,5 @@
 import {isSpan, isTextBlock} from '@portabletext/schema'
+import type {DecoratedRange} from '../editor/range-decorations-machine'
 import {getNode} from '../node-traversal/get-node'
 import {withoutNormalizing} from '../slate/editor/without-normalizing'
 import type {Path} from '../slate/interfaces/path'
@@ -8,8 +9,11 @@ import {isAncestorPath} from '../slate/path/is-ancestor-path'
 import {pathEndsBefore} from '../slate/path/path-ends-before'
 import {pathEquals} from '../slate/path/path-equals'
 import {previousPath} from '../slate/path/previous-path'
+import {pointEquals} from '../slate/point/point-equals'
 import {isRange} from '../slate/range/is-range'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
+import {isDeepEqual} from './equality'
+import {slateRangeToSelection} from './slate-utils'
 
 /**
  * Merge a node at the given path into its previous sibling using only
@@ -76,6 +80,13 @@ export function applyMergeNode(
       editor.selection = {anchor, focus}
     }
   }
+
+  // Pre-transform decoratedRanges with merge semantics
+  const transformedDecorations = transformDecoratedRangesForMerge(
+    editor.decoratedRanges,
+    path,
+    position,
+  )
 
   // Temporarily remove all refs so the decomposed operations don't
   // double-transform them
@@ -147,6 +158,10 @@ export function applyMergeNode(
   editorAny['pendingSelection'] = null
   editorAny['pendingAction'] = null
 
+  // Clear decoratedRanges during decomposed ops so the range-decorations
+  // machine callback doesn't double-transform them
+  editor.decoratedRanges = []
+
   try {
     withoutNormalizing(editor, () => {
       if (isSpan({schema: editor.schema}, node)) {
@@ -193,7 +208,78 @@ export function applyMergeNode(
     editorAny['pendingDiffs'] = preTransformedPendingDiffs
     editorAny['pendingSelection'] = preTransformedPendingSelection
     editorAny['pendingAction'] = preTransformedPendingAction
+
+    // Restore pre-transformed decoratedRanges and update selections to match
+    editor.decoratedRanges = updateDecoratedRangeSelections(
+      editor,
+      transformedDecorations,
+    )
   }
+}
+
+function transformDecoratedRangesForMerge(
+  decoratedRanges: Array<DecoratedRange>,
+  path: Path,
+  position: number,
+): Array<DecoratedRange> {
+  return decoratedRanges.map((dr) => {
+    if (!isRange(dr)) {
+      return dr
+    }
+
+    const newAnchor = transformPointForMerge(dr.anchor, path, position)
+    const newFocus = transformPointForMerge(dr.focus, path, position)
+
+    if (
+      !pointEquals(newAnchor, dr.anchor) ||
+      !pointEquals(newFocus, dr.focus)
+    ) {
+      return {...dr, anchor: newAnchor, focus: newFocus}
+    }
+
+    return dr
+  })
+}
+
+/**
+ * Update the `rangeDecoration.selection` on each decorated range to match
+ * the current Slate range, and fire `onMoved` for any that changed.
+ */
+function updateDecoratedRangeSelections(
+  editor: PortableTextSlateEditor,
+  decoratedRanges: Array<DecoratedRange>,
+): Array<DecoratedRange> {
+  return decoratedRanges.map((dr) => {
+    if (!isRange(dr)) {
+      return dr
+    }
+
+    const newSelection = slateRangeToSelection({
+      schema: editor.schema,
+      editor,
+      range: dr,
+    })
+
+    const oldSelection = dr.rangeDecoration.selection
+
+    if (isDeepEqual(oldSelection, newSelection)) {
+      return dr
+    }
+
+    dr.rangeDecoration.onMoved?.({
+      newSelection,
+      rangeDecoration: dr.rangeDecoration,
+      origin: 'local',
+    })
+
+    return {
+      ...dr,
+      rangeDecoration: {
+        ...dr.rangeDecoration,
+        selection: newSelection,
+      },
+    }
+  })
 }
 
 /**
