@@ -118,6 +118,40 @@ export function createUndoSteps({
     }
   }
 
+  // Handle case when the current operation has no undoStepId but the previous
+  // one did. This can happen when a forward-only behavior intercepts an event,
+  // causing the operation to be applied with an undoStepId, followed by a
+  // subsequent operation without one. We still want to merge consecutive text
+  // operations in this case.
+  //
+  // Note: the reverse case (current has ID, previous doesn't) is intentionally
+  // not merged. When a behavior claims an event with an undoStepId, it signals
+  // an intentional undo step boundary (e.g., input rules).
+  if (currentUndoStepId === undefined && previousUndoStepId !== undefined) {
+    const lastOp = lastStep.operations.at(-1)
+
+    if (
+      lastOp &&
+      op.type === 'insert_text' &&
+      lastOp.type === 'insert_text' &&
+      op.offset === lastOp.offset + lastOp.text.length &&
+      Path.equals(op.path, lastOp.path) &&
+      op.text !== ' '
+    ) {
+      return mergeIntoLastStep(steps, lastStep, op)
+    }
+
+    if (
+      lastOp &&
+      op.type === 'remove_text' &&
+      lastOp.type === 'remove_text' &&
+      op.offset + op.text.length === lastOp.offset &&
+      Path.equals(op.path, lastOp.path)
+    ) {
+      return mergeIntoLastStep(steps, lastStep, op)
+    }
+  }
+
   return createNewStep(steps, op, editor)
 }
 
