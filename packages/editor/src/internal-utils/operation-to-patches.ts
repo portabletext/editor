@@ -6,13 +6,12 @@ import {
   unset,
   type Patch,
 } from '@portabletext/patches'
-import {
-  isSpan,
-  isTextBlock,
-  type PortableTextBlock,
-  type PortableTextSpan,
-} from '@portabletext/schema'
+import {isSpan, isTextBlock, type PortableTextBlock} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
+import {getChildren, getNodeChildren} from '../node-traversal/get-children'
+import {getNode} from '../node-traversal/get-node'
+import {indexedPathToKeyedPath} from '../paths/indexed-path-to-keyed-path'
+import {resolveChildArrayField} from '../schema/resolve-child-array-field'
 import type {Node} from '../slate/interfaces/node'
 import type {
   InsertNodeOperation,
@@ -21,325 +20,369 @@ import type {
   RemoveTextOperation,
   SetNodeOperation,
 } from '../slate/interfaces/operation'
+import {isObjectNode} from '../slate/node/is-object-node'
 import type {Path} from '../types/paths'
-import {safeStringify} from './safe-json'
+
+export type PatchContext = {
+  schema: EditorSchema
+  editableTypes: Set<string>
+  value: Array<Node>
+}
+
+/**
+ * Builds the keyed path to the parent of the node at `path`, including the
+ * child array field name. Used by `insertNodePatch` to construct paths like
+ * `[{_key: block._key}, 'children']`.
+ *
+ * For path `[0]`: returns `[]` (top-level, no parent field)
+ * For path `[0, 1]`: returns `[{_key: block._key}, 'children']`
+ * For path `[0, 0, 0]`: returns `[{_key: container._key}, 'content', {_key: block._key}, 'children']`
+ */
+function resolveParentFieldPath(
+  context: PatchContext,
+  path: Array<number>,
+): Path | undefined {
+  if (path.length <= 1) {
+    return []
+  }
+
+  const parentPath = path.slice(0, -1)
+  const parentKeyedPath = indexedPathToKeyedPath(
+    {children: context.value},
+    parentPath,
+    context.schema,
+  )
+
+  if (!parentKeyedPath) {
+    return undefined
+  }
+
+  // Walk the tree to the parent node, tracking scope so we can resolve
+  // the correct child array field for nested container types.
+  let currentChildren: Array<Node> = context.value
+  let scope: Parameters<typeof resolveChildArrayField>[0]['scope']
+  let scopePath = ''
+
+  for (let index = 0; index < parentPath.length; index++) {
+    const segmentIndex = parentPath.at(index)
+
+    if (segmentIndex === undefined) {
+      return undefined
+    }
+
+    const node = currentChildren.at(segmentIndex)
+
+    if (!node) {
+      return undefined
+    }
+
+    if (index < parentPath.length - 1) {
+      const next = getNodeChildren(
+        {schema: context.schema, editableTypes: context.editableTypes},
+        node,
+        scope,
+        scopePath,
+      )
+
+      if (!next) {
+        return undefined
+      }
+
+      currentChildren = next.children
+      scope = next.scope
+      scopePath = next.scopePath
+    } else {
+      // Reached the parent node - determine its child field name
+      if (isTextBlock(context, node)) {
+        return [...parentKeyedPath, 'children']
+      }
+
+      if (isObjectNode(context, node)) {
+        const arrayField = resolveChildArrayField(
+          {schema: context.schema, scope},
+          node,
+        )
+
+        if (!arrayField) {
+          return undefined
+        }
+
+        return [...parentKeyedPath, arrayField.name]
+      }
+
+      return undefined
+    }
+  }
+
+  return undefined
+}
 
 export function insertTextPatch(
-  schema: EditorSchema,
-  children: Node[],
+  context: PatchContext,
   operation: InsertTextOperation,
   beforeValue: Array<PortableTextBlock>,
 ): Array<Patch> {
-  const block =
-    isTextBlock({schema}, children[operation.path[0]!]) &&
-    children[operation.path[0]!]
-  if (!block) {
+  const node = getNode(context, operation.path)?.node
+
+  if (!node || !isSpan(context, node)) {
+    console.error('Unable to find span')
     return []
   }
-  const textChild =
-    isTextBlock({schema}, block) &&
-    isSpan({schema}, block.children[operation.path[1]!]) &&
-    (block.children[operation.path[1]!] as PortableTextSpan)
-  if (!textChild) {
-    throw new Error('Could not find child')
+
+  const previousNode = getNode(
+    {
+      schema: context.schema,
+      editableTypes: context.editableTypes,
+      value: beforeValue,
+    },
+    operation.path,
+  )?.node
+
+  if (!previousNode || !isSpan(context, previousNode)) {
+    console.error('Unable to find previous version of span')
+    return []
   }
-  const path: Path = [
-    {_key: block._key},
-    'children',
-    {_key: textChild._key},
+
+  const keyedPath = indexedPathToKeyedPath(
+    {children: context.value},
+    operation.path,
+    context.schema,
+  )
+
+  if (!keyedPath) {
+    console.error('Unable to convert indexed path to keyed path')
+    return []
+  }
+
+  const patch = diffMatchPatch(previousNode.text, node.text, [
+    ...keyedPath,
     'text',
-  ]
-  const prevBlock = beforeValue[operation.path[0]!]
-  const prevChild =
-    isTextBlock({schema}, prevBlock) && prevBlock.children[operation.path[1]!]
-  const prevText = isSpan({schema}, prevChild) ? prevChild.text : ''
-  const patch = diffMatchPatch(prevText, textChild.text, path)
-  return patch.value.length ? [patch] : []
+  ])
+
+  return patch.value ? [patch] : []
 }
 
 export function removeTextPatch(
-  schema: EditorSchema,
-  children: Node[],
+  context: PatchContext,
   operation: RemoveTextOperation,
   beforeValue: Array<PortableTextBlock>,
 ): Array<Patch> {
-  const block = children[operation.path[0]!]
-  if (!block || !isTextBlock({schema}, block)) {
+  const node = getNode(context, operation.path)?.node
+
+  if (!node || !isSpan(context, node)) {
+    console.error('Unable to find span')
     return []
   }
-  const child = block.children[operation.path[1]!] || undefined
-  const textChild: PortableTextSpan | undefined = isSpan({schema}, child)
-    ? child
-    : undefined
-  if (child && !textChild) {
-    throw new Error('Expected span')
+
+  const previousNode = getNode(
+    {
+      schema: context.schema,
+      editableTypes: context.editableTypes,
+      value: beforeValue,
+    },
+    operation.path,
+  )?.node
+
+  if (!previousNode || !isSpan(context, previousNode)) {
+    console.error('Unable to find previous version of span')
+    return []
   }
-  if (!textChild) {
-    throw new Error('Could not find child')
+
+  const keyedPath = indexedPathToKeyedPath(
+    {children: context.value},
+    operation.path,
+    context.schema,
+  )
+
+  if (!keyedPath) {
+    console.error('Unable to convert indexed path to keyed path')
+    return []
   }
-  const path: Path = [
-    {_key: block._key},
-    'children',
-    {_key: textChild._key},
+
+  const patch = diffMatchPatch(previousNode.text, node.text, [
+    ...keyedPath,
     'text',
-  ]
-  const beforeBlock = beforeValue[operation.path[0]!]
-  const prevTextChild =
-    isTextBlock({schema}, beforeBlock) &&
-    beforeBlock.children[operation.path[1]!]
-  const prevText = isSpan({schema}, prevTextChild) && prevTextChild.text
-  const patch = diffMatchPatch(prevText || '', textChild.text, path)
+  ])
+
   return patch.value ? [patch] : []
 }
 
 export function setNodePatch(
-  schema: EditorSchema,
-  children: Node[],
+  context: PatchContext,
   operation: SetNodeOperation,
 ): Array<Patch> {
-  const blockIndex = operation.path.at(0)
+  const keyedPath = indexedPathToKeyedPath(
+    {children: context.value},
+    operation.path,
+    context.schema,
+  )
 
-  if (blockIndex !== undefined && operation.path.length === 1) {
-    const block = children.at(blockIndex)
-
-    if (!block) {
-      console.error('Could not find block at index', blockIndex)
-      return []
-    }
-
-    if (isTextBlock({schema}, block)) {
-      const patches: Patch[] = []
-
-      for (const [key, propertyValue] of Object.entries(
-        operation.newProperties,
-      )) {
-        if (key === '_key') {
-          patches.push(set(propertyValue, [blockIndex, '_key']))
-        } else {
-          patches.push(set(propertyValue, [{_key: block._key}, key]))
-        }
-      }
-
-      for (const key of Object.keys(operation.properties)) {
-        if (!(key in operation.newProperties)) {
-          patches.push(unset([{_key: block._key}, key]))
-        }
-      }
-
-      return patches
-    } else {
-      const patches: Patch[] = []
-
-      const _key = operation.newProperties._key
-
-      if (_key !== undefined) {
-        patches.push(set(_key, [blockIndex, '_key']))
-      }
-
-      for (const [key, propertyValue] of Object.entries(
-        operation.newProperties,
-      )) {
-        if (key === '_key' || key === 'children') {
-          continue
-        }
-
-        patches.push(set(propertyValue, [{_key: block._key}, key]))
-      }
-
-      for (const key of Object.keys(operation.properties)) {
-        if (key === '_key' || key === 'children') {
-          continue
-        }
-
-        if (!(key in operation.newProperties)) {
-          patches.push(unset([{_key: block._key}, key]))
-        }
-      }
-
-      return patches
-    }
-  } else if (operation.path.length === 2) {
-    const block = children[operation.path[0]!]
-    if (isTextBlock({schema}, block)) {
-      const child = block.children[operation.path[1]!]
-      if (child) {
-        const blockKey = block._key
-        const childKey = child._key
-        const patches: Patch[] = []
-
-        if (isTextBlock({schema}, child)) {
-          const _key = operation.newProperties._key
-
-          if (_key !== undefined) {
-            patches.push(
-              set(_key, [
-                {_key: blockKey},
-                'children',
-                block.children.indexOf(child),
-                '_key',
-              ]),
-            )
-          }
-
-          for (const [key, propertyValue] of Object.entries(
-            operation.newProperties,
-          )) {
-            if (key === '_key' || key === 'children') {
-              continue
-            }
-
-            patches.push(
-              set(propertyValue, [
-                {_key: blockKey},
-                'children',
-                {_key: childKey},
-                key,
-              ]),
-            )
-          }
-
-          return patches
-        }
-
-        for (const [keyName, propertyValue] of Object.entries(
-          operation.newProperties,
-        )) {
-          if (keyName === '_key') {
-            patches.push(
-              set(propertyValue, [
-                {_key: blockKey},
-                'children',
-                block.children.indexOf(child),
-                keyName,
-              ]),
-            )
-
-            continue
-          }
-
-          patches.push(
-            set(propertyValue, [
-              {_key: blockKey},
-              'children',
-              {_key: childKey},
-              keyName,
-            ]),
-          )
-        }
-
-        const propNames = Object.keys(operation.properties)
-
-        for (const keyName of propNames) {
-          if (keyName in operation.newProperties) {
-            continue
-          }
-
-          patches.push(
-            unset([{_key: blockKey}, 'children', {_key: childKey}, keyName]),
-          )
-        }
-
-        return patches
-      }
-      throw new Error('Could not find a valid child')
-    }
-    throw new Error('Could not find a valid block')
-  } else {
-    throw new Error(
-      `Unexpected path encountered: ${safeStringify(operation.path)}`,
-    )
+  if (!keyedPath) {
+    console.error('Unable to convert indexed path to keyed path')
+    return []
   }
+
+  const patches: Patch[] = []
+  const lastIndex = operation.path.at(-1)
+
+  // Build the positional path prefix for _key changes.
+  // For top-level blocks: just the block index.
+  // For children: parent keyed path + child field name + child index.
+  // We derive this by stripping the last key segment from the full keyed path.
+  const parentFieldPath =
+    operation.path.length <= 1 ? [] : keyedPath.slice(0, -1)
+
+  for (const [propertyName, propertyValue] of Object.entries(
+    operation.newProperties,
+  )) {
+    if (propertyName === '_key') {
+      if (lastIndex !== undefined) {
+        patches.push(
+          set(propertyValue, [...parentFieldPath, lastIndex, '_key']),
+        )
+      }
+      continue
+    }
+
+    patches.push(set(propertyValue, [...keyedPath, propertyName]))
+  }
+
+  for (const propertyName of Object.keys(operation.properties)) {
+    if (!(propertyName in operation.newProperties)) {
+      patches.push(unset([...keyedPath, propertyName]))
+    }
+  }
+
+  return patches
 }
 
 export function insertNodePatch(
-  schema: EditorSchema,
-  children: Node[],
+  context: PatchContext,
   operation: InsertNodeOperation,
   beforeValue: Array<PortableTextBlock>,
 ): Array<Patch> {
-  const block = beforeValue[operation.path[0]!]
   if (operation.path.length === 1) {
-    const position = operation.path[0] === 0 ? 'before' : 'after'
-    const beforeBlock = beforeValue[operation.path[0]! - 1]
-    const targetKey = operation.path[0] === 0 ? block?._key : beforeBlock?._key
-    if (targetKey) {
-      return [
-        insert([operation.node as PortableTextBlock], position, [
-          {_key: targetKey},
-        ]),
-      ]
+    const insertIndex = operation.path.at(0)
+
+    if (insertIndex === undefined) {
+      return []
     }
+
+    const position = insertIndex === 0 ? 'before' : 'after'
+    const referenceBlock =
+      insertIndex === 0
+        ? beforeValue.at(insertIndex)
+        : beforeValue.at(insertIndex - 1)
+    const targetKey = referenceBlock?._key
+
+    if (targetKey) {
+      return [insert([operation.node], position, [{_key: targetKey}])]
+    }
+
     return [
       setIfMissing(beforeValue, []),
-      insert([operation.node as PortableTextBlock], 'before', [
-        operation.path[0]!,
-      ]),
+      insert([operation.node], 'before', [insertIndex]),
     ]
-  } else if (
-    isTextBlock({schema}, block) &&
-    operation.path.length === 2 &&
-    children[operation.path[0]!]
-  ) {
-    const position =
-      block.children.length === 0 || !block.children[operation.path[1]! - 1]
-        ? 'before'
-        : 'after'
-    const path =
-      block.children.length <= 1 || !block.children[operation.path[1]! - 1]
-        ? [{_key: block._key}, 'children', 0]
-        : [
-            {_key: block._key},
-            'children',
-            {_key: block.children[operation.path[1]! - 1]!._key},
-          ]
-
-    // Defensive setIfMissing to ensure children array exists before inserting
-    const setIfMissingPatch = setIfMissing([], [{_key: block._key}, 'children'])
-
-    if (isSpan({schema}, operation.node)) {
-      return [setIfMissingPatch, insert([operation.node], position, path)]
-    }
-
-    return [setIfMissingPatch, insert([operation.node], position, path)]
   }
 
-  return []
+  // Verify the parent block still exists in the current state
+  const firstIndex = operation.path.at(0)
+
+  if (firstIndex === undefined) {
+    return []
+  }
+
+  const currentBlock = context.value.at(firstIndex)
+
+  if (!currentBlock) {
+    return []
+  }
+
+  const beforeContext: PatchContext = {
+    schema: context.schema,
+    editableTypes: context.editableTypes,
+    value: beforeValue,
+  }
+
+  const parentFieldPath = resolveParentFieldPath(beforeContext, operation.path)
+
+  if (!parentFieldPath) {
+    return []
+  }
+
+  const parentPath = operation.path.slice(0, -1)
+  const parentChildren = getChildren(beforeContext, parentPath)
+
+  const childIndex = operation.path.at(-1)
+
+  if (childIndex === undefined) {
+    return []
+  }
+
+  const previousSibling =
+    childIndex > 0 ? parentChildren.at(childIndex - 1) : undefined
+
+  const position =
+    parentChildren.length === 0 || !previousSibling ? 'before' : 'after'
+
+  const insertPath =
+    parentChildren.length <= 1 || !previousSibling
+      ? [...parentFieldPath, 0]
+      : [...parentFieldPath, {_key: previousSibling.node._key}]
+
+  const setIfMissingPatch = setIfMissing([], parentFieldPath)
+
+  return [setIfMissingPatch, insert([operation.node], position, insertPath)]
 }
 
 export function removeNodePatch(
-  schema: EditorSchema,
-  beforeValue: Array<PortableTextBlock>,
+  context: PatchContext,
   operation: RemoveNodeOperation,
 ): Array<Patch> {
-  const block = beforeValue[operation.path[0]!]
   if (operation.path.length === 1) {
-    // Remove a single block
+    const firstIndex = operation.path.at(0)
+
+    if (firstIndex === undefined) {
+      console.error('Unable to find block')
+      return []
+    }
+
+    const block = context.value.at(firstIndex)
+
     if (block && block._key) {
       return [unset([{_key: block._key}])]
     }
-    throw new Error('Block not found')
-  } else if (isTextBlock({schema}, block) && operation.path.length === 2) {
-    const spanToRemove = block.children[operation.path[1]!]
 
-    if (spanToRemove) {
-      const spansMatchingKey = block.children.filter(
-        (span) => span._key === operation.node._key,
-      )
-
-      if (spansMatchingKey.length > 1) {
-        console.warn(
-          `Multiple spans have \`_key\` ${operation.node._key}. It's ambiguous which one to remove.`,
-          safeStringify(block, 2),
-        )
-        return []
-      }
-
-      return [
-        unset([{_key: block._key}, 'children', {_key: spanToRemove._key}]),
-      ]
-    }
-    return []
-  } else {
+    console.error('Unable to find block')
     return []
   }
+
+  const keyedPath = indexedPathToKeyedPath(
+    {children: context.value},
+    operation.path,
+    context.schema,
+  )
+
+  if (!keyedPath) {
+    return []
+  }
+
+  // Check for duplicate keys among siblings
+  const parentPath = operation.path.slice(0, -1)
+  const siblingChildren = getChildren(context, parentPath)
+
+  if (siblingChildren.length > 0) {
+    const matchingKeyCount = siblingChildren.filter(
+      (sibling) => sibling.node._key === operation.node._key,
+    ).length
+
+    if (matchingKeyCount > 1) {
+      console.warn(
+        `Multiple children have \`_key\` ${operation.node._key}. It's ambiguous which one to remove.`,
+      )
+      return []
+    }
+  }
+
+  return [unset(keyedPath)]
 }

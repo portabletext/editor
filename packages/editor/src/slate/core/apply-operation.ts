@@ -2,10 +2,13 @@ import type {PortableTextSpan} from '@portabletext/schema'
 import {isSpan} from '@portabletext/schema'
 import {safeStringify} from '../../internal-utils/safe-json'
 import {getNodes} from '../../node-traversal/get-nodes'
+import {resolveChildFieldName} from '../../schema/resolve-child-field-name'
 import type {Editor, Selection} from '../interfaces/editor'
 import type {Node, NodeEntry} from '../interfaces/node'
 import type {Operation} from '../interfaces/operation'
 import type {Range} from '../interfaces/range'
+import {isObjectNode} from '../node/is-object-node'
+import {isTextBlockNode} from '../node/is-text-block-node'
 import {commonPath} from '../path/common-path'
 import {comparePaths} from '../path/compare-paths'
 import {isSiblingPath} from '../path/is-sibling-path'
@@ -161,8 +164,20 @@ export function applyOperation(editor: Editor, op: Operation): void {
       modifyDescendant(editor, path, editor.schema, (node) => {
         const newNode = {...node}
 
+        // Resolve which field holds children for this node type
+        let childFieldName: string | undefined
+        if (isTextBlockNode({schema: editor.schema}, node)) {
+          childFieldName = 'children'
+        } else if (isObjectNode({schema: editor.schema}, node)) {
+          childFieldName = resolveChildFieldName(
+            editor.schema,
+            editor.editableTypes,
+            node,
+          )
+        }
+
         for (const key in newProperties) {
-          if (key === 'children') {
+          if (key === childFieldName) {
             throw new Error(`Cannot set the "${key}" property of nodes!`)
           }
 

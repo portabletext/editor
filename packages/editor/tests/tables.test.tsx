@@ -2,6 +2,7 @@ import {set, unset} from '@portabletext/patches'
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
+import type {InternalEditor} from '../src/editor/create-editor'
 import {createTestEditor} from '../src/test/vitest'
 
 const schemaDefinition = defineSchema({
@@ -86,6 +87,13 @@ async function createTableTestEditor() {
     initialValue,
   })
 
+  // Register container types as editable so the editor knows their child
+  // fields are structural, not regular data properties.
+  const slateEditor = (editor as InternalEditor)._internal.slateEditor
+  slateEditor.editableTypes.add('table')
+  slateEditor.editableTypes.add('row')
+  slateEditor.editableTypes.add('cell')
+
   return {
     editor,
     locator,
@@ -104,6 +112,147 @@ describe('tables', () => {
 
     await vi.waitFor(() => {
       return expect(editor.getSnapshot().context.value).toEqual(initialValue)
+    })
+  })
+
+  describe('normalization', () => {
+    test('table with no rows gets full structure', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const tableKey = keyGenerator()
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition,
+        initialValue: [
+          {
+            _key: tableKey,
+            _type: 'table',
+          },
+        ],
+      })
+
+      await vi.waitFor(() => {
+        const value = editor.getSnapshot().context.value
+        expect(value).toHaveLength(1)
+        const table = value.at(0) as Record<string, unknown>
+        expect(table['_type']).toBe('table')
+        expect(Array.isArray(table['rows'])).toBe(true)
+        const rows = table['rows'] as Array<Record<string, unknown>>
+        expect(rows).toHaveLength(1)
+        const row = rows.at(0) as Record<string, unknown>
+        expect(row['_type']).toBe('row')
+        expect(Array.isArray(row['cells'])).toBe(true)
+        const cells = row['cells'] as Array<Record<string, unknown>>
+        expect(cells).toHaveLength(1)
+        const cell = cells.at(0) as Record<string, unknown>
+        expect(cell['_type']).toBe('cell')
+        expect(Array.isArray(cell['content'])).toBe(true)
+        const content = cell['content'] as Array<Record<string, unknown>>
+        expect(content).toHaveLength(1)
+        const block = content.at(0) as Record<string, unknown>
+        expect(block['_type']).toBe('block')
+        expect(Array.isArray(block['children'])).toBe(true)
+        const children = block['children'] as Array<Record<string, unknown>>
+        expect(children).toHaveLength(1)
+        expect(children.at(0)).toMatchObject({
+          _type: 'span',
+          text: '',
+        })
+      })
+    })
+
+    test('table with empty rows gets full structure', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const tableKey = keyGenerator()
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition,
+        initialValue: [
+          {
+            _key: tableKey,
+            _type: 'table',
+            rows: [],
+          },
+        ],
+      })
+
+      await vi.waitFor(() => {
+        const value = editor.getSnapshot().context.value
+        const table = value.at(0) as Record<string, unknown>
+        const rows = table['rows'] as Array<Record<string, unknown>>
+        expect(rows).toHaveLength(1)
+        expect(rows.at(0)).toMatchObject({_type: 'row'})
+      })
+    })
+
+    test('row with no cells gets normalized', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const tableKey = keyGenerator()
+      const rowKey = keyGenerator()
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition,
+        initialValue: [
+          {
+            _key: tableKey,
+            _type: 'table',
+            rows: [{_key: rowKey, _type: 'row'}],
+          },
+        ],
+      })
+
+      await vi.waitFor(() => {
+        const value = editor.getSnapshot().context.value
+        const table = value.at(0) as Record<string, unknown>
+        const rows = table['rows'] as Array<Record<string, unknown>>
+        const row = rows.at(0) as Record<string, unknown>
+        expect(Array.isArray(row['cells'])).toBe(true)
+        const cells = row['cells'] as Array<Record<string, unknown>>
+        expect(cells).toHaveLength(1)
+        expect(cells.at(0)).toMatchObject({_type: 'cell'})
+      })
+    })
+
+    test('cell with no content gets normalized', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const tableKey = keyGenerator()
+      const rowKey = keyGenerator()
+      const cellKey = keyGenerator()
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition,
+        initialValue: [
+          {
+            _key: tableKey,
+            _type: 'table',
+            rows: [
+              {
+                _key: rowKey,
+                _type: 'row',
+                cells: [{_key: cellKey, _type: 'cell'}],
+              },
+            ],
+          },
+        ],
+      })
+
+      await vi.waitFor(() => {
+        const value = editor.getSnapshot().context.value
+        const table = value.at(0) as Record<string, unknown>
+        const rows = table['rows'] as Array<Record<string, unknown>>
+        const row = rows.at(0) as Record<string, unknown>
+        const cells = row['cells'] as Array<Record<string, unknown>>
+        const cell = cells.at(0) as Record<string, unknown>
+        expect(Array.isArray(cell['content'])).toBe(true)
+        const content = cell['content'] as Array<Record<string, unknown>>
+        expect(content).toHaveLength(1)
+        const block = content.at(0) as Record<string, unknown>
+        expect(block['_type']).toBe('block')
+        expect(Array.isArray(block['children'])).toBe(true)
+      })
     })
   })
 
@@ -128,7 +277,7 @@ describe('tables', () => {
     })
 
     test('set rows', async () => {
-      const {editor, table} = await createTableTestEditor()
+      const {editor, table, initialValue} = await createTableTestEditor()
 
       const newRow = {
         _key: editor.getSnapshot().context.keyGenerator(),
@@ -160,18 +309,15 @@ describe('tables', () => {
         snapshot: undefined,
       })
 
+      // Setting a child array field via set_node is a no-op.
+      // The child field is managed by insert_node/remove_node.
       await vi.waitFor(() => {
-        return expect(editor.getSnapshot().context.value).toEqual([
-          {
-            ...table,
-            rows: [newRow],
-          },
-        ])
+        return expect(editor.getSnapshot().context.value).toEqual(initialValue)
       })
     })
 
     test('set cells', async () => {
-      const {editor, table, row} = await createTableTestEditor()
+      const {editor, table, row, initialValue} = await createTableTestEditor()
 
       const newCell = {
         _key: editor.getSnapshot().context.keyGenerator(),
@@ -202,18 +348,15 @@ describe('tables', () => {
         snapshot: undefined,
       })
 
+      // Setting a child array field via set_node is a no-op.
+      // The child field is managed by insert_node/remove_node.
       await vi.waitFor(() => {
-        return expect(editor.getSnapshot().context.value).toEqual([
-          {
-            ...table,
-            rows: [{...row, cells: [newCell]}],
-          },
-        ])
+        return expect(editor.getSnapshot().context.value).toEqual(initialValue)
       })
     })
 
     test('set marks', async () => {
-      const {editor, table, row, cell, block, span} =
+      const {editor, table, row, cell, block, span, initialValue} =
         await createTableTestEditor()
 
       editor.send({
@@ -238,38 +381,15 @@ describe('tables', () => {
         snapshot: undefined,
       })
 
+      // Setting a deeply nested property that changes the child array field
+      // is a no-op because the child field is managed by insert_node/remove_node.
       await vi.waitFor(() => {
-        return expect(editor.getSnapshot().context.value).toEqual([
-          {
-            ...table,
-            rows: [
-              {
-                ...row,
-                cells: [
-                  {
-                    ...cell,
-                    content: [
-                      {
-                        ...block,
-                        children: [
-                          {
-                            ...span,
-                            marks: ['strong'],
-                          },
-                        ],
-                      },
-                    ],
-                  },
-                ],
-              },
-            ],
-          },
-        ])
+        return expect(editor.getSnapshot().context.value).toEqual(initialValue)
       })
     })
 
     test('unset rows', async () => {
-      const {editor, table} = await createTableTestEditor()
+      const {editor, table, initialValue} = await createTableTestEditor()
 
       editor.send({
         type: 'patches',
@@ -277,15 +397,15 @@ describe('tables', () => {
         snapshot: undefined,
       })
 
+      // Unsetting a child array field via set_node is a no-op.
+      // The child field is managed by insert_node/remove_node.
       await vi.waitFor(() => {
-        return expect(editor.getSnapshot().context.value).toEqual([
-          {...table, rows: undefined},
-        ])
+        return expect(editor.getSnapshot().context.value).toEqual(initialValue)
       })
     })
 
     test('unset cells', async () => {
-      const {editor, table, row} = await createTableTestEditor()
+      const {editor, table, row, initialValue} = await createTableTestEditor()
 
       editor.send({
         type: 'patches',
@@ -295,15 +415,16 @@ describe('tables', () => {
         snapshot: undefined,
       })
 
+      // Unsetting a child array field via set_node is a no-op.
+      // The child field is managed by insert_node/remove_node.
       await vi.waitFor(() => {
-        return expect(editor.getSnapshot().context.value).toEqual([
-          {...table, rows: [{...row, cells: undefined}]},
-        ])
+        return expect(editor.getSnapshot().context.value).toEqual(initialValue)
       })
     })
 
     test('unset content', async () => {
-      const {editor, table, row, cell} = await createTableTestEditor()
+      const {editor, table, row, cell, initialValue} =
+        await createTableTestEditor()
 
       editor.send({
         type: 'patches',
@@ -320,15 +441,16 @@ describe('tables', () => {
         snapshot: undefined,
       })
 
+      // Unsetting a child array field via set_node is a no-op.
+      // The child field is managed by insert_node/remove_node.
       await vi.waitFor(() => {
-        return expect(editor.getSnapshot().context.value).toEqual([
-          {...table, rows: [{...row, cells: [{...cell, content: undefined}]}]},
-        ])
+        return expect(editor.getSnapshot().context.value).toEqual(initialValue)
       })
     })
 
     test('unset children', async () => {
-      const {editor, table, row, cell, block} = await createTableTestEditor()
+      const {editor, table, row, cell, block, initialValue} =
+        await createTableTestEditor()
 
       editor.send({
         type: 'patches',
@@ -347,18 +469,10 @@ describe('tables', () => {
         snapshot: undefined,
       })
 
+      // Unsetting a child array field via set_node is a no-op.
+      // The child field is managed by insert_node/remove_node.
       await vi.waitFor(() => {
-        return expect(editor.getSnapshot().context.value).toEqual([
-          {
-            ...table,
-            rows: [
-              {
-                ...row,
-                cells: [{...cell, content: [{...block, children: undefined}]}],
-              },
-            ],
-          },
-        ])
+        return expect(editor.getSnapshot().context.value).toEqual(initialValue)
       })
     })
   })
