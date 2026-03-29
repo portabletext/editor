@@ -1,3 +1,4 @@
+import {alert} from '@mdit/plugin-alert'
 import {
   isSpan,
   type PortableTextBlock,
@@ -8,6 +9,7 @@ import {
 import markdownit from 'markdown-it'
 import {
   blockquoteStyleDefinition,
+  defaultCalloutObjectDefinition,
   defaultCodeDecoratorDefinition,
   defaultCodeObjectDefinition,
   defaultEmDecoratorDefinition,
@@ -85,6 +87,7 @@ type Options = {
       }>
     }>
     image?: ObjectMatcher<{src: string; alt: string; title: string | undefined}>
+    callout?: ObjectMatcher<{tone: string; content: Array<PortableTextBlock>}>
   }
   html?: {
     /**
@@ -166,6 +169,7 @@ const defaultOptions = {
     horizontalRule: buildObjectMatcher(defaultHorizontalRuleObjectDefinition),
     html: buildObjectMatcher(defaultHtmlObjectDefinition),
     image: imageBlockMatcher,
+    callout: buildObjectMatcher(defaultCalloutObjectDefinition),
   },
 } as const satisfies Options
 
@@ -234,7 +238,9 @@ export function markdownToPortableText(
     html: true,
     linkify: true,
     typographer: true,
-  }).enable(['strikethrough', 'table'])
+  })
+    .enable(['strikethrough', 'table'])
+    .use(alert)
 
   const tokens = md.parse(markdown, {})
 
@@ -247,6 +253,10 @@ export function markdownToPortableText(
   let currentMarkDefs: Array<PortableTextObject> = []
   let currentBlockquoteStyle: string | null = null // Track blockquote style when inside blockquote
   let inListItem = false // Track if we're inside a list item
+
+  // Callout state
+  let calloutStartIndex: number | null = null
+  let calloutType: string | null = null
 
   // Table state
   let currentTable: {
@@ -1246,6 +1256,60 @@ export function markdownToPortableText(
               break
           }
         }
+        break
+      }
+
+      // Callouts (GFM alerts)
+      case 'alert_open': {
+        flushBlock()
+        calloutStartIndex = portableText.length
+        calloutType = token.markup
+
+        // Set blockquote style so content blocks inside the callout
+        // get blockquote styling (used in fallback when callout type
+        // is not in the schema)
+        const style =
+          consolidatedOptions.block.blockquote({
+            context: {schema: consolidatedOptions.schema},
+          }) ??
+          consolidatedOptions.block.normal({
+            context: {schema: consolidatedOptions.schema},
+          })
+
+        currentBlockquoteStyle = style ?? 'normal'
+        break
+      }
+
+      case 'alert_title': {
+        // Type is already captured via alert_open's markup
+        break
+      }
+
+      case 'alert_close': {
+        flushBlock()
+
+        if (calloutStartIndex !== null && calloutType !== null) {
+          const contentBlocks = portableText.splice(calloutStartIndex)
+
+          const calloutObject = consolidatedOptions.types.callout?.({
+            context: {
+              schema: consolidatedOptions.schema,
+              keyGenerator: consolidatedOptions.keyGenerator,
+            },
+            value: {tone: calloutType, content: contentBlocks},
+            isInline: false,
+          })
+
+          if (calloutObject) {
+            portableText.push(calloutObject)
+          } else {
+            portableText.push(...contentBlocks)
+          }
+        }
+
+        calloutStartIndex = null
+        calloutType = null
+        currentBlockquoteStyle = null
         break
       }
 

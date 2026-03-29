@@ -76,6 +76,7 @@ const markdown = portableTextToMarkdown([
 | Images           | ✅                       | ✅\*                     |
 | Tables           | ✅\*                     | ✅\*                     |
 | HTML blocks      | ✅                       | ✅\*                     |
+| Callouts         | ✅\*                     | ✅\*                     |
 
 \* Requires custom configuration (see usage below)
 
@@ -160,14 +161,14 @@ Out of the box, the library includes sensible defaults for both. Customize them 
 
 The default schema includes the following definitions:
 
-| Type            | Values                                                                                                                                                                                     |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `styles`        | `'normal'`, `'h1'`, `'h2'`, `'h3'`, `'h4'`, `'h5'`, `'h6'`, `'blockquote'`                                                                                                                 |
-| `lists`         | `'number'`, `'bullet'`                                                                                                                                                                     |
-| `decorators`    | `'strong'`, `'em'`, `'code'`, `'strike-through'`                                                                                                                                           |
-| `annotations`   | `'link'` (fields: `'href'`, `'title'`)                                                                                                                                                     |
-| `blockObjects`  | `'code'` (fields: `'language'`, `'code'`), `'image'` (fields: `'src'`, `'alt'`, `'title'`), `'horizontal-rule'`, `'html'` (fields: `'html'`), `'table'` (fields: `'headerRows'`, `'rows'`) |
-| `inlineObjects` | `'image'` (fields: `'src'`, `'alt'`, `'title'`)                                                                                                                                            |
+| Type            | Values                                                                                                                                                                                                                                  |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `styles`        | `'normal'`, `'h1'`, `'h2'`, `'h3'`, `'h4'`, `'h5'`, `'h6'`, `'blockquote'`                                                                                                                                                              |
+| `lists`         | `'number'`, `'bullet'`                                                                                                                                                                                                                  |
+| `decorators`    | `'strong'`, `'em'`, `'code'`, `'strike-through'`                                                                                                                                                                                        |
+| `annotations`   | `'link'` (fields: `'href'`, `'title'`)                                                                                                                                                                                                  |
+| `blockObjects`  | `'code'` (fields: `'language'`, `'code'`), `'image'` (fields: `'src'`, `'alt'`, `'title'`), `'horizontal-rule'`, `'html'` (fields: `'html'`), `'table'` (fields: `'headerRows'`, `'rows'`), `'callout'` (fields: `'tone'`, `'content'`) |
+| `inlineObjects` | `'image'` (fields: `'src'`, `'alt'`, `'title'`)                                                                                                                                                                                         |
 
 To use a custom Schema, import `compileSchema` and `defineSchema` from `@portabletext/schema`:
 
@@ -214,6 +215,7 @@ Matchers map Markdown concepts to Portable Text types defined in the Schema. Eac
 |            | `horizontalRule` | `---`                   | `'horizontal-rule'` |
 |            | `image`          | `![alt](src)`           | `'image'`           |
 |            | `html`           | HTML blocks             | `'html'`            |
+|            | `callout`        | `> [!NOTE]`, etc.       | `'callout'`         |
 
 #### Configuring matchers
 
@@ -293,6 +295,8 @@ The default code block matcher requires the schema type to have a `'code'` field
 **Nested lists** are handled automatically. Each list item block includes a `level` property indicating its nesting depth (1 for top-level, 2 for nested, etc.).
 
 **HTML blocks** (like `<div>...</div>`) become `'html'` block objects with the raw HTML in the `'html'` field. Inline HTML is controlled by the `html.inline` option.
+
+**Callouts** use the `> [!TYPE]` syntax (GFM alerts) where `TYPE` is one of `NOTE`, `TIP`, `WARNING`, `CAUTION`, or `IMPORTANT`. They become `'callout'` block objects with a `'tone'` field (the lowercased type name) and a `'content'` field (an array of Portable Text blocks). When the schema doesn't include a `'callout'` block object, the content falls back to blockquote-styled blocks.
 
 #### Other options
 
@@ -402,7 +406,8 @@ Provide custom renderers to control how Portable Text renders to Markdown.
 ```ts
 portableTextToMarkdown(blocks, {
   types: {
-    callout: ({value}) => `> **${value.title}**\n> ${value.text}`,
+    // Render a custom "chart" block object
+    chart: ({value}) => `![${value.title}](${value.imageUrl})`,
   },
 })
 ```
@@ -424,6 +429,7 @@ portableTextToMarkdown(blocks, {
 
 ```ts
 import {
+  DefaultCalloutRenderer,
   DefaultCodeBlockRenderer,
   DefaultHorizontalRuleRenderer,
   DefaultHtmlRenderer,
@@ -434,6 +440,7 @@ import {
 
 portableTextToMarkdown(blocks, {
   types: {
+    'callout': DefaultCalloutRenderer,
     'code': DefaultCodeBlockRenderer,
     'horizontal-rule': DefaultHorizontalRuleRenderer,
     'html': DefaultHtmlRenderer,
@@ -443,13 +450,14 @@ portableTextToMarkdown(blocks, {
 })
 ```
 
-| Renderer                        | Expected value                                | Output                 |
-| ------------------------------- | --------------------------------------------- | ---------------------- |
-| `DefaultCodeBlockRenderer`      | `{code: string, language?: string}`           | ` ```lang\ncode\n``` ` |
-| `DefaultHorizontalRuleRenderer` | (no fields required)                          | `---`                  |
-| `DefaultHtmlRenderer`           | `{html: string}`                              | Raw HTML               |
-| `DefaultImageRenderer`          | `{src: string, alt?: string, title?: string}` | `![alt](src "title")`  |
-| `DefaultTableRenderer`          | `{rows: [...], headerRows?: number}`          | Markdown table         |
+| Renderer                        | Expected value                                 | Output                 |
+| ------------------------------- | ---------------------------------------------- | ---------------------- |
+| `DefaultCalloutRenderer`        | `{tone: string, content: PortableTextBlock[]}` | `> [!TYPE]\n> content` |
+| `DefaultCodeBlockRenderer`      | `{code: string, language?: string}`            | ` ```lang\ncode\n``` ` |
+| `DefaultHorizontalRuleRenderer` | (no fields required)                           | `---`                  |
+| `DefaultHtmlRenderer`           | `{html: string}`                               | Raw HTML               |
+| `DefaultImageRenderer`          | `{src: string, alt?: string, title?: string}`  | `![alt](src "title")`  |
+| `DefaultTableRenderer`          | `{rows: [...], headerRows?: number}`           | Markdown table         |
 
 #### What renderers receive
 

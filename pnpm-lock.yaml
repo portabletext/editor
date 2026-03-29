@@ -566,6 +566,9 @@ importers:
 
   packages/markdown:
     dependencies:
+      '@mdit/plugin-alert':
+        specifier: ^0.23.1
+        version: 0.23.1(markdown-it@14.1.1)
       '@portabletext/schema':
         specifier: workspace:^
         version: link:../schema
@@ -2565,6 +2568,15 @@ packages:
 
   '@manypkg/get-packages@1.1.3':
     resolution: {integrity: sha512-fo+QhuU3qE/2TQMQmbVMqaQ6EWbMhi4ABWP+O4AM1NqPBuy0OrApV5LO6BrrgnhtAHS2NH6RrVk9OL181tTi8A==}
+
+  '@mdit/plugin-alert@0.23.1':
+    resolution: {integrity: sha512-vbWxewra32hfZKF+XeeWK/eoAzQbe0cSRfSattX9oxGOcaEbcVx2/g7nmI9//ItsOKO7XNRy7ZKLdnm+CaMPvg==}
+    engines: {node: '>= 20'}
+    peerDependencies:
+      markdown-it: ^14.1.0
+    peerDependenciesMeta:
+      markdown-it:
+        optional: true
 
   '@mdx-js/mdx@3.1.1':
     resolution: {integrity: sha512-f6ZO2ifpwAQIpzGWaBQT2TXxPv6z3RBzQKpVftEWN78Vl/YweF1uwussDx8ECAXVtr3Rs89fKyG9YlzUs9DyGQ==}
@@ -9809,6 +9821,12 @@ snapshots:
       fs-extra: 8.1.0
       globby: 11.1.0
       read-yaml-file: 1.1.0
+
+  '@mdit/plugin-alert@0.23.1(markdown-it@14.1.1)':
+    dependencies:
+      '@types/markdown-it': 14.1.2
+    optionalDependencies:
+      markdown-it: 14.1.1
 
   '@mdx-js/mdx@3.1.1':
     dependencies:

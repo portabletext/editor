@@ -24,6 +24,7 @@ export {
   DefaultUnderlineRenderer,
 } from './from-portable-text/renderers/marks'
 export {
+  DefaultCalloutRenderer,
   DefaultCodeBlockRenderer,
   DefaultHorizontalRuleRenderer,
   DefaultHtmlRenderer,
