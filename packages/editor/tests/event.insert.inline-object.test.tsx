@@ -162,19 +162,25 @@ describe('event.insert.inline object', () => {
       ])
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).toEqual({
-        anchor: {
-          path: [{_key: 'k0'}, 'children', {_key: 'k2'}],
-          offset: 0,
-        },
-        focus: {
-          path: [{_key: 'k0'}, 'children', {_key: 'k2'}],
-          offset: 0,
-        },
-        backward: false,
-      })
-    })
+    // Allow the selection to settle after focus restoration before asserting.
+    // WebKit may briefly place the selection on the preceding span before
+    // moving it to the inline object.
+    await vi.waitFor(
+      () => {
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {
+            path: [{_key: 'k0'}, 'children', {_key: 'k2'}],
+            offset: 0,
+          },
+          focus: {
+            path: [{_key: 'k0'}, 'children', {_key: 'k2'}],
+            offset: 0,
+          },
+          backward: false,
+        })
+      },
+      {timeout: 5000, interval: 100},
+    )
 
     await userEvent.keyboard('{ArrowRight}')
 
