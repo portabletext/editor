@@ -24,7 +24,6 @@ export function applySplitNode(
   editor: PortableTextSlateEditor,
   path: Path,
   position: number,
-  properties: Record<string, unknown>,
 ): void {
   const nodeEntry = getNode(editor, path)
 
@@ -120,6 +119,7 @@ export function applySplitNode(
   try {
     withoutNormalizing(editor, () => {
       if (isSpan({schema: editor.schema}, node)) {
+        const {text: _text, ...properties} = node
         const afterText = node.text.slice(position)
         const newNode = {...properties, text: afterText} as Node
         editor.apply({
@@ -134,6 +134,7 @@ export function applySplitNode(
           node: newNode,
         })
       } else if (isTextBlock({schema: editor.schema}, node)) {
+        const {children: _children, ...properties} = node
         const children = node.children
         const afterChildren = children.slice(position)
         const newNode = {...properties, children: afterChildren} as Node

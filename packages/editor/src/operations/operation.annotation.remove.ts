@@ -14,7 +14,6 @@ import {isStart} from '../slate/editor/is-start'
 import {path as editorPath} from '../slate/editor/path'
 import {rangeRef} from '../slate/editor/range-ref'
 import type {Path} from '../slate/interfaces/path'
-import {extractProps} from '../slate/node/extract-props'
 import {isAfterPath} from '../slate/path/is-after-path'
 import {isBeforePath} from '../slate/path/is-before-path'
 import {isCollapsedRange} from '../slate/range/is-collapsed-range'
@@ -180,27 +179,11 @@ export const removeAnnotationOperationImplementation: OperationImplementation<
         const [splitStart, splitEnd] = rangeEdges(splitRange)
         const endAtEnd = isEnd(editor, splitEnd, splitEnd.path)
         if (!endAtEnd || !isEdge(editor, splitEnd, splitEnd.path)) {
-          const endNodeEntry = getNode(editor, splitEnd.path)
-          if (endNodeEntry) {
-            applySplitNode(
-              editor,
-              splitEnd.path,
-              splitEnd.offset,
-              extractProps(endNodeEntry.node, editor.schema),
-            )
-          }
+          applySplitNode(editor, splitEnd.path, splitEnd.offset)
         }
         const startAtStart = isStart(editor, splitStart, splitStart.path)
         if (!startAtStart || !isEdge(editor, splitStart, splitStart.path)) {
-          const startNodeEntry = getNode(editor, splitStart.path)
-          if (startNodeEntry) {
-            applySplitNode(
-              editor,
-              splitStart.path,
-              splitStart.offset,
-              extractProps(startNodeEntry.node, editor.schema),
-            )
-          }
+          applySplitNode(editor, splitStart.path, splitStart.offset)
         }
         // Update selection if using editor.selection (not explicit `at`)
         const updatedSplitRange = splitRangeRef.unref()

@@ -13,11 +13,3 @@ export type Node = PortableTextTextBlock | PortableTextObject | PortableTextSpan
  * node in the document.
  */
 export type NodeEntry<T extends Node = Node> = [T, Path]
-
-/**
- * Convenience type for returning the props of a node.
- */
-export type NodeProps =
-  | Omit<PortableTextTextBlock, 'children'>
-  | Omit<PortableTextObject, 'children'>
-  | Omit<PortableTextSpan, 'text'>

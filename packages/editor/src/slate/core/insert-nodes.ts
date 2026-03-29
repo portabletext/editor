@@ -18,7 +18,6 @@ import type {InsertNodeOperation} from '../interfaces/operation'
 import type {Path} from '../interfaces/path'
 import type {Point} from '../interfaces/point'
 import type {PointRef} from '../interfaces/point-ref'
-import {extractProps} from '../node/extract-props'
 import {isObjectNode} from '../node/is-object-node'
 import {isTextBlockNode} from '../node/is-text-block-node'
 import {comparePaths} from '../path/compare-paths'
@@ -148,7 +147,7 @@ export function insertNodes<T extends Node>(
                 )
                 .reverse()
 
-              for (const {node, path: nodePath} of levelEntries) {
+              for (const {path: nodePath} of levelEntries) {
                 let split = false
 
                 if (
@@ -163,8 +162,7 @@ export function insertNodes<T extends Node>(
 
                 if (!isEdge(editor, point, nodePath)) {
                   split = true
-                  const properties = extractProps(node, editor.schema)
-                  applySplitNode(editor, nodePath, position, properties)
+                  applySplitNode(editor, nodePath, position)
                 }
 
                 position =
