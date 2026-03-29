@@ -111,9 +111,29 @@ export const abstractDeserializeBehaviors = [
     },
     actions: [(_, deserializeDataEvent) => [raise(deserializeDataEvent)]],
   }),
+  /**
+   * When pasting text/plain into a text block, the pasted text inherits
+   * formatting from the text it's pasted into. This behavior handles the
+   * text/plain case at the deserialize.data level so that consumer behaviors
+   * on deserialize.data can override it by running first.
+   */
   defineBehavior({
     on: 'deserialize.data',
     guard: ({snapshot, event}) => {
+      if (event.mimeType !== 'text/plain') {
+        return false
+      }
+
+      if (event.originEvent.type === 'drag.drop') {
+        return false
+      }
+
+      const focusTextBlock = getFocusTextBlock(snapshot)
+
+      if (!focusTextBlock) {
+        return false
+      }
+
       const converter = snapshot.context.converters.find(
         (converter) => converter.mimeType === event.mimeType,
       )
@@ -122,53 +142,30 @@ export const abstractDeserializeBehaviors = [
         return false
       }
 
-      return converter.deserialize({
+      const deserializeResult = converter.deserialize({
         snapshot,
         event: {
           type: 'deserialize',
           data: event.data,
         },
       })
-    },
-    actions: [
-      ({event}, deserializeEvent) => [
-        raise({
-          ...deserializeEvent,
-          originEvent: event.originEvent,
-        }),
-      ],
-    ],
-  }),
-  /**
-   * If we are pasting text/plain into a text block then we can probably
-   * assume that the intended behavior is that the pasted text inherits
-   * formatting from the text it's pasted into.
-   */
-  defineBehavior({
-    on: 'deserialization.success',
-    guard: ({snapshot, event}) => {
-      const focusTextBlock = getFocusTextBlock(snapshot)
 
-      if (
-        focusTextBlock &&
-        event.mimeType === 'text/plain' &&
-        event.originEvent.type !== 'drag.drop'
-      ) {
-        const activeDecorators = getActiveDecorators(snapshot)
-        const activeAnnotations = getActiveAnnotations(snapshot)
-
-        return {
-          activeAnnotations,
-          activeDecorators,
-          textRuns: event.data.flatMap((block) =>
-            isTextBlock(snapshot.context, block)
-              ? [getTextBlockText(block)]
-              : [],
-          ),
-        }
+      if (deserializeResult.type !== 'deserialization.success') {
+        return false
       }
 
-      return false
+      const activeDecorators = getActiveDecorators(snapshot)
+      const activeAnnotations = getActiveAnnotations(snapshot)
+
+      const textRuns = deserializeResult.data.flatMap((block) =>
+        isTextBlock(snapshot.context, block) ? [getTextBlockText(block)] : [],
+      )
+
+      return {
+        activeAnnotations,
+        activeDecorators,
+        textRuns,
+      }
     },
     actions: [
       (_, {activeAnnotations, activeDecorators, textRuns}) =>
@@ -202,6 +199,34 @@ export const abstractDeserializeBehaviors = [
                 }),
               ],
         ),
+    ],
+  }),
+  defineBehavior({
+    on: 'deserialize.data',
+    guard: ({snapshot, event}) => {
+      const converter = snapshot.context.converters.find(
+        (converter) => converter.mimeType === event.mimeType,
+      )
+
+      if (!converter) {
+        return false
+      }
+
+      return converter.deserialize({
+        snapshot,
+        event: {
+          type: 'deserialize',
+          data: event.data,
+        },
+      })
+    },
+    actions: [
+      ({event}, deserializeEvent) => [
+        raise({
+          ...deserializeEvent,
+          originEvent: event.originEvent,
+        }),
+      ],
     ],
   }),
   defineBehavior({
