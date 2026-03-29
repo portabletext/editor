@@ -106,24 +106,19 @@ export function createPatchesPlugin({
       // Update previous children here before we apply
       previousValue = editor.children
 
+      const snapshot = editorActor.getSnapshot()
+      const {initialValue, schema} = snapshot.context
+
       const editorWasEmpty =
         previousValue.length === 1 &&
-        isEqualToEmptyEditor(
-          editorActor.getSnapshot().context.initialValue,
-          previousValue,
-          editorActor.getSnapshot().context.schema,
-        )
+        isEqualToEmptyEditor(initialValue, previousValue, schema)
 
       // Apply the operation
       apply(operation)
 
       const editorIsEmpty =
         editor.children.length === 1 &&
-        isEqualToEmptyEditor(
-          editorActor.getSnapshot().context.initialValue,
-          editor.children,
-          editorActor.getSnapshot().context.schema,
-        )
+        isEqualToEmptyEditor(initialValue, editor.children, schema)
 
       if (!editor.isPatching) {
         return editor
@@ -143,7 +138,7 @@ export function createPatchesPlugin({
           patches = [
             ...patches,
             ...insertTextPatch(
-              editorActor.getSnapshot().context.schema,
+              schema,
               editor.children,
               operation,
               previousValue,
@@ -154,7 +149,7 @@ export function createPatchesPlugin({
           patches = [
             ...patches,
             ...removeTextPatch(
-              editorActor.getSnapshot().context.schema,
+              schema,
               editor.children,
               operation,
               previousValue,
@@ -164,18 +159,14 @@ export function createPatchesPlugin({
         case 'remove_node':
           patches = [
             ...patches,
-            ...removeNodePatch(
-              editorActor.getSnapshot().context.schema,
-              previousValue,
-              operation,
-            ),
+            ...removeNodePatch(schema, previousValue, operation),
           ]
           break
         case 'insert_node':
           patches = [
             ...patches,
             ...insertNodePatch(
-              editorActor.getSnapshot().context.schema,
+              schema,
               editor.children,
               operation,
               previousValue,
@@ -185,11 +176,7 @@ export function createPatchesPlugin({
         case 'set_node':
           patches = [
             ...patches,
-            ...setNodePatch(
-              editorActor.getSnapshot().context.schema,
-              editor.children,
-              operation,
-            ),
+            ...setNodePatch(schema, editor.children, operation),
           ]
           break
         default:
