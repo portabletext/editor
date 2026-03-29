@@ -8,7 +8,6 @@ import {withoutNormalizing} from '../slate/editor/without-normalizing'
 import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
 import type {Point} from '../slate/interfaces/point'
-import {extractProps} from '../slate/node/extract-props'
 import {isObjectNode} from '../slate/node/is-object-node'
 import {nextPath} from '../slate/path/next-path'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
@@ -62,16 +61,7 @@ export function applyInsertNodeAtPoint(
 
     // Split the node at the point if we're not at an edge
     if (!isEdge(editor, at, matchPath)) {
-      const textNodeEntry = getNode(editor, at.path)
-
-      if (!textNodeEntry) {
-        return
-      }
-
-      const textNode = textNodeEntry.node
-      const properties = extractProps(textNode, editor.schema)
-
-      applySplitNode(editor, at.path, at.offset, properties)
+      applySplitNode(editor, at.path, at.offset)
     }
 
     const path = ref.unref()!

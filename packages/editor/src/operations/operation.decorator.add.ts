@@ -10,7 +10,6 @@ import {isEnd} from '../slate/editor/is-end'
 import {isStart} from '../slate/editor/is-start'
 import {path as editorPath} from '../slate/editor/path'
 import {rangeRef} from '../slate/editor/range-ref'
-import {extractProps} from '../slate/node/extract-props'
 import {isExpandedRange} from '../slate/range/is-expanded-range'
 import {rangeEdges} from '../slate/range/range-edges'
 import {rangeEnd} from '../slate/range/range-end'
@@ -46,31 +45,13 @@ export const decoratorAddOperationImplementation: OperationImplementation<
     const endAtEndOfNode = isEnd(editor, end, end.path)
 
     if (!endAtEndOfNode || !isEdge(editor, end, end.path)) {
-      const endNodeEntry = getNode(editor, end.path)
-      if (endNodeEntry) {
-        const endNode = endNodeEntry.node
-        applySplitNode(
-          editor,
-          end.path,
-          end.offset,
-          extractProps(endNode, editor.schema),
-        )
-      }
+      applySplitNode(editor, end.path, end.offset)
     }
 
     const startAtStartOfNode = isStart(editor, start, start.path)
 
     if (!startAtStartOfNode || !isEdge(editor, start, start.path)) {
-      const startNodeEntry = getNode(editor, start.path)
-      if (startNodeEntry) {
-        const startNode = startNodeEntry.node
-        applySplitNode(
-          editor,
-          start.path,
-          start.offset,
-          extractProps(startNode, editor.schema),
-        )
-      }
+      applySplitNode(editor, start.path, start.offset)
     }
 
     at = ref.unref()

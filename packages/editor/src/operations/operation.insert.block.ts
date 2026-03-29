@@ -253,8 +253,6 @@ function insertBlock(options: {
       if (!currentBlockEntry) {
         return
       }
-      const currentBlock = currentBlockEntry.node
-
       // Find the child index and offset within that child
       const childIndex = selectionPoint.path[1]!
       const childOffset = selectionPoint.offset
@@ -263,18 +261,15 @@ function insertBlock(options: {
       if (childOffset > 0) {
         const textNodeEntry = getSpanNode(editor, selectionPoint.path)
         if (textNodeEntry) {
-          const textNode = textNodeEntry.node
-          if (childOffset < textNode.text.length) {
-            const {text: _, ...properties} = textNode
-            applySplitNode(editor, selectionPoint.path, childOffset, properties)
+          if (childOffset < textNodeEntry.node.text.length) {
+            applySplitNode(editor, selectionPoint.path, childOffset)
           }
         }
       }
 
       // Now split the block itself
       const splitAtIndex = childOffset > 0 ? childIndex + 1 : childIndex
-      const {children: _, ...blockProperties} = currentBlock
-      applySplitNode(editor, blockPath, splitAtIndex, blockProperties)
+      applySplitNode(editor, blockPath, splitAtIndex)
 
       // Insert the block object between the two split blocks
       const insertPath: Path = [blockPath[0]! + 1]
@@ -627,8 +622,7 @@ function insertBlock(options: {
         // Inserting text block: split the text node and insert fragment
         const nodeToSplitEntry = getSpanNode(editor, startPoint.path)
         if (nodeToSplitEntry) {
-          const {text: _, ...properties} = nodeToSplitEntry.node
-          applySplitNode(editor, startPoint.path, startPoint.offset, properties)
+          applySplitNode(editor, startPoint.path, startPoint.offset)
         }
 
         insertTextBlockFragment(editor, block, startPoint)
@@ -660,8 +654,7 @@ function insertBlock(options: {
           currentOffset > 0 &&
           currentOffset < textNodeEntry.node.text.length
         ) {
-          const {text: _, ...properties} = textNodeEntry.node
-          applySplitNode(editor, currentPath, currentOffset, properties)
+          applySplitNode(editor, currentPath, currentOffset)
           currentPath = nextPath(currentPath)
           currentOffset = 0
         }
@@ -676,8 +669,7 @@ function insertBlock(options: {
           splitAtIndex < blockToSplitEntry.node.children.length
         ) {
           // Get the properties to preserve in the split
-          const {children: _, ...blockProperties} = blockToSplitEntry.node
-          applySplitNode(editor, blockPath, splitAtIndex, blockProperties)
+          applySplitNode(editor, blockPath, splitAtIndex)
         }
 
         // Get the current path of the first block after splits
@@ -1031,9 +1023,7 @@ function insertTextBlockFragment(
     const textNodeEntry = getSpanNode(editor, at.path)
 
     if (textNodeEntry) {
-      const {text: _, ...properties} = textNodeEntry.node
-
-      applySplitNode(editor, at.path, at.offset, properties)
+      applySplitNode(editor, at.path, at.offset)
     }
   }
 
