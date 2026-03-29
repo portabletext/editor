@@ -162,10 +162,6 @@ export function applyOperation(editor: Editor, op: Operation): void {
         const newNode = {...node}
 
         for (const key in newProperties) {
-          if (key === 'children') {
-            throw new Error(`Cannot set the "${key}" property of nodes!`)
-          }
-
           const value = newProperties[key as keyof Node]
 
           if (value == null) {
