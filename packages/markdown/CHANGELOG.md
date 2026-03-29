@@ -1,5 +1,32 @@
 # @portabletext/markdown
 
+## 1.2.0
+
+### Minor Changes
+
+- [#2417](https://github.com/portabletext/editor/pull/2417) [`251c51b`](https://github.com/portabletext/editor/commit/251c51b7a731dc5008798ea1f922e3d1ad2e11d5) Thanks [@christianhg](https://github.com/christianhg)! - feat: add first-class GFM callout support
+
+  GFM callouts (`> [!NOTE]`, `> [!TIP]`, `> [!WARNING]`, etc.) are now parsed as structured callout objects instead of regular blockquotes. A `DefaultCalloutRenderer` is also available for serializing callout objects back to GFM syntax. Consumers can customize callout handling via the `types.callout` matcher option.
+
+  ```ts
+  import {markdownToPortableText} from '@portabletext/markdown'
+
+  markdownToPortableText('> [!NOTE]\n> This is a note')
+  // => [{_type: 'callout', tone: 'note', content: [...]}]
+  ```
+
+  ```ts
+  import {
+    DefaultCalloutRenderer,
+    portableTextToMarkdown,
+  } from '@portabletext/markdown'
+
+  portableTextToMarkdown(blocks, {
+    types: {callout: DefaultCalloutRenderer},
+  })
+  // => '> [!NOTE]\n> This is a note'
+  ```
+
 ## 1.1.4
 
 ### Patch Changes
