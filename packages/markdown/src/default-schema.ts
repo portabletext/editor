@@ -126,6 +126,14 @@ const defaultTableObjectDefinition = {
   ],
 } as const satisfies BlockObjectDefinition
 
+export const defaultCalloutObjectDefinition = {
+  name: 'callout',
+  fields: [
+    {name: 'tone', type: 'string'},
+    {name: 'content', type: 'array'},
+  ],
+} as const satisfies BlockObjectDefinition
+
 /**
  * The default schema for converting markdown to Portable Text.
  *
@@ -155,10 +163,11 @@ export const defaultSchema = compileSchema(
     ],
     annotations: [defaultLinkObjectDefinition],
     blockObjects: [
+      defaultCalloutObjectDefinition,
       defaultCodeObjectDefinition,
       defaultHorizontalRuleObjectDefinition,
-      defaultImageObjectDefinition,
       defaultHtmlObjectDefinition,
+      defaultImageObjectDefinition,
       defaultTableObjectDefinition,
     ],
     inlineObjects: [defaultImageObjectDefinition],

@@ -8,6 +8,7 @@ import {describe, expect, test} from 'vitest'
 import {portableTextToMarkdown} from './from-portable-text/portable-text-to-markdown'
 import {DefaultListItemRenderer} from './from-portable-text/renderers/list-item'
 import {
+  DefaultCalloutRenderer,
   DefaultCodeBlockRenderer,
   DefaultImageRenderer,
   DefaultTableRenderer,
@@ -1085,6 +1086,89 @@ describe(portableTextToMarkdown.name, () => {
           }),
         ).toBe(markdownOut)
       })
+    })
+  })
+
+  describe('callouts', () => {
+    describe('basic callout', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const markdownIn = '> [!NOTE]\n> This is a note'
+      const portableText = markdownToPortableText(markdownIn, {keyGenerator})
+
+      test('default renderer', () => {
+        const markdownOut = [
+          '```json',
+          JSON.stringify(portableText.at(0), null, 2),
+          '```',
+        ].join('\n')
+
+        expect(portableTextToMarkdown(portableText)).toBe(markdownOut)
+      })
+
+      test('pluggable default renderer', () => {
+        expect(
+          portableTextToMarkdown(portableText, {
+            types: {
+              callout: DefaultCalloutRenderer,
+            },
+          }),
+        ).toBe(markdownIn)
+      })
+    })
+
+    describe('callout with formatting', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const markdownIn = '> [!TIP]\n> This is **bold** and *italic*'
+      const portableText = markdownToPortableText(markdownIn, {keyGenerator})
+
+      test('pluggable default renderer', () => {
+        expect(
+          portableTextToMarkdown(portableText, {
+            types: {
+              callout: DefaultCalloutRenderer,
+            },
+          }),
+        ).toBe('> [!TIP]\n> This is **bold** and _italic_')
+      })
+    })
+
+    describe('callout with multiple paragraphs', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const markdownIn =
+        '> [!IMPORTANT]\n> First paragraph\n>\n> Second paragraph'
+      const portableText = markdownToPortableText(markdownIn, {keyGenerator})
+
+      test('pluggable default renderer', () => {
+        expect(
+          portableTextToMarkdown(portableText, {
+            types: {
+              callout: DefaultCalloutRenderer,
+            },
+          }),
+        ).toBe(markdownIn)
+      })
+    })
+
+    describe('all supported callout types', () => {
+      const types = ['NOTE', 'TIP', 'WARNING', 'CAUTION', 'IMPORTANT']
+
+      for (const type of types) {
+        test(`\`${type}\` callout`, () => {
+          const keyGenerator = createTestKeyGenerator()
+          const markdownIn = `> [!${type}]\n> Content`
+          const portableText = markdownToPortableText(markdownIn, {
+            keyGenerator,
+          })
+
+          expect(
+            portableTextToMarkdown(portableText, {
+              types: {
+                callout: DefaultCalloutRenderer,
+              },
+            }),
+          ).toBe(markdownIn)
+        })
+      }
     })
   })
 })

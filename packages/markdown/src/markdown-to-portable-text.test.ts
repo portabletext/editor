@@ -4431,4 +4431,252 @@ describe(markdownToPortableText.name, () => {
       ])
     })
   })
+
+  describe('callout', () => {
+    test('basic note callout', () => {
+      const keyGenerator = createTestKeyGenerator()
+      expect(
+        markdownToPortableText('> [!NOTE]\n> This is a note', {
+          keyGenerator,
+        }),
+      ).toEqual([
+        {
+          _type: 'callout',
+          _key: 'k2',
+          tone: 'note',
+          content: [
+            {
+              _type: 'block',
+              _key: 'k0',
+              style: 'blockquote',
+              children: [
+                {
+                  _type: 'span',
+                  _key: 'k1',
+                  text: 'This is a note',
+                  marks: [],
+                },
+              ],
+              markDefs: [],
+            },
+          ],
+        },
+      ])
+    })
+
+    test('warning callout', () => {
+      const keyGenerator = createTestKeyGenerator()
+      expect(
+        markdownToPortableText('> [!WARNING]\n> Be careful here', {
+          keyGenerator,
+        }),
+      ).toEqual([
+        {
+          _type: 'callout',
+          _key: 'k2',
+          tone: 'warning',
+          content: [
+            {
+              _type: 'block',
+              _key: 'k0',
+              style: 'blockquote',
+              children: [
+                {
+                  _type: 'span',
+                  _key: 'k1',
+                  text: 'Be careful here',
+                  marks: [],
+                },
+              ],
+              markDefs: [],
+            },
+          ],
+        },
+      ])
+    })
+
+    test('callout with formatting', () => {
+      const keyGenerator = createTestKeyGenerator()
+      expect(
+        markdownToPortableText('> [!TIP]\n> This is **bold** and *italic*', {
+          keyGenerator,
+        }),
+      ).toEqual([
+        {
+          _type: 'callout',
+          _key: 'k5',
+          tone: 'tip',
+          content: [
+            {
+              _type: 'block',
+              _key: 'k0',
+              style: 'blockquote',
+              children: [
+                {
+                  _type: 'span',
+                  _key: 'k1',
+                  text: 'This is ',
+                  marks: [],
+                },
+                {
+                  _type: 'span',
+                  _key: 'k2',
+                  text: 'bold',
+                  marks: ['strong'],
+                },
+                {
+                  _type: 'span',
+                  _key: 'k3',
+                  text: ' and ',
+                  marks: [],
+                },
+                {
+                  _type: 'span',
+                  _key: 'k4',
+                  text: 'italic',
+                  marks: ['em'],
+                },
+              ],
+              markDefs: [],
+            },
+          ],
+        },
+      ])
+    })
+
+    test('callout with multiple paragraphs', () => {
+      const keyGenerator = createTestKeyGenerator()
+      expect(
+        markdownToPortableText(
+          '> [!IMPORTANT]\n> First paragraph\n>\n> Second paragraph',
+          {keyGenerator},
+        ),
+      ).toEqual([
+        {
+          _type: 'callout',
+          _key: 'k4',
+          tone: 'important',
+          content: [
+            {
+              _type: 'block',
+              _key: 'k0',
+              style: 'blockquote',
+              children: [
+                {
+                  _type: 'span',
+                  _key: 'k1',
+                  text: 'First paragraph',
+                  marks: [],
+                },
+              ],
+              markDefs: [],
+            },
+            {
+              _type: 'block',
+              _key: 'k2',
+              style: 'blockquote',
+              children: [
+                {
+                  _type: 'span',
+                  _key: 'k3',
+                  text: 'Second paragraph',
+                  marks: [],
+                },
+              ],
+              markDefs: [],
+            },
+          ],
+        },
+      ])
+    })
+
+    test('callout not in schema falls back to `blockquote` blocks', () => {
+      const keyGenerator = createTestKeyGenerator()
+      expect(
+        markdownToPortableText('> [!NOTE]\n> This is a note', {
+          keyGenerator,
+          schema: compileSchema(
+            defineSchema({
+              styles: [{name: 'normal'}, {name: 'blockquote'}],
+            }),
+          ),
+        }),
+      ).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'blockquote',
+          children: [
+            {
+              _type: 'span',
+              _key: 'k1',
+              text: 'This is a note',
+              marks: [],
+            },
+          ],
+          markDefs: [],
+        },
+      ])
+    })
+
+    test('callout not in schema and no `blockquote` style falls back to `normal` text blocks', () => {
+      const keyGenerator = createTestKeyGenerator()
+      expect(
+        markdownToPortableText('> [!NOTE]\n> This is a note', {
+          keyGenerator,
+          schema: compileSchema(defineSchema({})),
+        }),
+      ).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          children: [
+            {
+              _type: 'span',
+              _key: 'k1',
+              text: 'This is a note',
+              marks: [],
+            },
+          ],
+          markDefs: [],
+        },
+      ])
+    })
+
+    test('all supported callout types', () => {
+      const types = ['NOTE', 'TIP', 'WARNING', 'CAUTION', 'IMPORTANT']
+
+      for (const type of types) {
+        const keyGenerator = createTestKeyGenerator()
+        expect(
+          markdownToPortableText(`> [!${type}]\n> Content`, {
+            keyGenerator,
+          }),
+        ).toEqual([
+          {
+            _type: 'callout',
+            _key: 'k2',
+            tone: type.toLowerCase(),
+            content: [
+              {
+                _type: 'block',
+                _key: 'k0',
+                style: 'blockquote',
+                children: [
+                  {
+                    _type: 'span',
+                    _key: 'k1',
+                    text: 'Content',
+                    marks: [],
+                  },
+                ],
+                markDefs: [],
+              },
+            ],
+          },
+        ])
+      }
+    })
+  })
 })
