@@ -23,7 +23,12 @@ export function normalize(
 
   const popDirtyPath = (editor: Editor): Path => {
     const path = getDirtyPaths(editor).pop()!
-    const key = path.join(',')
+    const key =
+      path.length === 1
+        ? String(path[0])
+        : path.length === 2
+          ? `${path[0]},${path[1]}`
+          : path.join(',')
     getDirtyPathKeys(editor).delete(key)
     return path
   }

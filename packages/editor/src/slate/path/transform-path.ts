@@ -12,18 +12,22 @@ export function transformPath(
     return null
   }
 
-  const p = [...path]
-
   if (path.length === 0) {
-    return p
+    return path
   }
 
   switch (operation.type) {
     case 'insert_node': {
       const {path: op} = operation
 
-      if (pathEquals(op, p) || pathEndsBefore(op, p) || isAncestorPath(op, p)) {
+      if (
+        pathEquals(op, path) ||
+        pathEndsBefore(op, path) ||
+        isAncestorPath(op, path)
+      ) {
+        const p = [...path]
         p[op.length - 1] = p[op.length - 1]! + 1
+        return p
       }
 
       break
@@ -32,15 +36,17 @@ export function transformPath(
     case 'remove_node': {
       const {path: op} = operation
 
-      if (pathEquals(op, p) || isAncestorPath(op, p)) {
+      if (pathEquals(op, path) || isAncestorPath(op, path)) {
         return null
-      } else if (pathEndsBefore(op, p)) {
+      } else if (pathEndsBefore(op, path)) {
+        const p = [...path]
         p[op.length - 1] = p[op.length - 1]! - 1
+        return p
       }
 
       break
     }
   }
 
-  return p
+  return path
 }
