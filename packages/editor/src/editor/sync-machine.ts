@@ -911,21 +911,16 @@ function updateBlock({
   })
 
   // Update the root props on the block
-  applySetNode(slateEditor, slateBlock as unknown as Record<string, unknown>, [
-    index,
-  ])
+  const {children: _children, ...blockProps} =
+    slateBlock as unknown as Record<string, unknown>
+  applySetNode(slateEditor, blockProps, [index])
 
   // Remove properties present on the old node but absent from the new block.
-  // Skip children/text (structural, managed by dedicated operations).
   const oldRecord = oldSlateBlock as unknown as Record<string, unknown>
   const newRecord = slateBlock as unknown as Record<string, unknown>
   const removedProperties: Record<string, unknown> = {}
 
   for (const key of Object.keys(oldRecord)) {
-    if (key === 'children' || key === 'text') {
-      continue
-    }
-
     if (!newRecord.hasOwnProperty(key)) {
       removedProperties[key] = oldRecord[key]
     }
@@ -998,11 +993,9 @@ function updateBlock({
             oldBlockChild,
           )
 
-          applySetNode(
-            slateEditor,
-            currentBlockChild as unknown as Record<string, unknown>,
-            path,
-          )
+          const {text: _text, ...childProps} =
+            currentBlockChild as unknown as Record<string, unknown>
+          applySetNode(slateEditor, childProps, path)
 
           const isSpanNode =
             isSpan({schema: context.schema}, currentBlockChild) &&

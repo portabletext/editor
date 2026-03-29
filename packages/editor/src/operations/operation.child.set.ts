@@ -40,14 +40,7 @@ export const childSetOperationImplementation: OperationImplementation<
   if (isSpan({schema: operation.editor.schema}, child)) {
     const {_type, text, ...rest} = operation.props
 
-    applySetNode(
-      operation.editor,
-      {
-        ...child,
-        ...rest,
-      },
-      childPath,
-    )
+    applySetNode(operation.editor, rest, childPath)
 
     if (typeof text === 'string') {
       if (child.text !== text) {
@@ -83,21 +76,19 @@ export const childSetOperationImplementation: OperationImplementation<
 
     const {_type, _key, ...rest} = operation.props
 
+    const filteredProps: Record<string, unknown> = {}
+
+    if (typeof _key === 'string') {
+      filteredProps['_key'] = _key
+    }
+
     for (const prop in rest) {
-      if (!definition.fields.some((field) => field.name === prop)) {
-        delete rest[prop]
+      if (definition.fields.some((field) => field.name === prop)) {
+        filteredProps[prop] = rest[prop]
       }
     }
 
-    applySetNode(
-      operation.editor,
-      {
-        ...child,
-        _key: typeof _key === 'string' ? _key : child._key,
-        ...rest,
-      },
-      childPath,
-    )
+    applySetNode(operation.editor, filteredProps, childPath)
 
     return
   }
