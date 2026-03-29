@@ -4442,7 +4442,7 @@ describe(markdownToPortableText.name, () => {
         {
           _type: 'callout',
           _key: 'k2',
-          type: 'note',
+          tone: 'note',
           content: [
             {
               _type: 'block',
@@ -4472,7 +4472,7 @@ describe(markdownToPortableText.name, () => {
         {
           _type: 'callout',
           _key: 'k2',
-          type: 'warning',
+          tone: 'warning',
           content: [
             {
               _type: 'block',
@@ -4503,7 +4503,7 @@ describe(markdownToPortableText.name, () => {
         {
           _type: 'callout',
           _key: 'k5',
-          type: 'tip',
+          tone: 'tip',
           content: [
             {
               _type: 'block',
@@ -4552,7 +4552,7 @@ describe(markdownToPortableText.name, () => {
         {
           _type: 'callout',
           _key: 'k4',
-          type: 'important',
+          tone: 'important',
           content: [
             {
               _type: 'block',
@@ -4587,7 +4587,7 @@ describe(markdownToPortableText.name, () => {
       ])
     })
 
-    test('callout not in schema falls back to blockquote blocks', () => {
+    test('callout not in schema falls back to `blockquote` blocks', () => {
       const keyGenerator = createTestKeyGenerator()
       const result = markdownToPortableText('> [!NOTE]\n> This is a note', {
         keyGenerator,
@@ -4615,6 +4615,30 @@ describe(markdownToPortableText.name, () => {
       ])
     })
 
+    test('callout not in schema and no `blockquote` style falls back to `normal` text blocks', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const result = markdownToPortableText('> [!NOTE]\n> This is a note', {
+        keyGenerator,
+        schema: compileSchema(defineSchema({})),
+      })
+      expect(result).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          children: [
+            {
+              _type: 'span',
+              _key: 'k1',
+              text: 'This is a note',
+              marks: [],
+            },
+          ],
+          markDefs: [],
+        },
+      ])
+    })
+
     test('all supported callout types', () => {
       const types = ['NOTE', 'TIP', 'WARNING', 'CAUTION', 'IMPORTANT']
 
@@ -4623,11 +4647,29 @@ describe(markdownToPortableText.name, () => {
         const result = markdownToPortableText(`> [!${type}]\n> Content`, {
           keyGenerator,
         })
-        const callout = result[0]
-        expect(callout?._type).toBe('callout')
-        expect(callout && 'type' in callout ? callout['type'] : undefined).toBe(
-          type.toLowerCase(),
-        )
+        expect(result).toEqual([
+          {
+            _type: 'callout',
+            _key: 'k2',
+            tone: type.toLowerCase(),
+            content: [
+              {
+                _type: 'block',
+                _key: 'k0',
+                style: 'blockquote',
+                children: [
+                  {
+                    _type: 'span',
+                    _key: 'k1',
+                    text: 'Content',
+                    marks: [],
+                  },
+                ],
+                markDefs: [],
+              },
+            ],
+          },
+        ])
       }
     })
   })

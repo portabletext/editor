@@ -129,7 +129,7 @@ const defaultTableObjectDefinition = {
 export const defaultCalloutObjectDefinition = {
   name: 'callout',
   fields: [
-    {name: 'type', type: 'string'},
+    {name: 'tone', type: 'string'},
     {name: 'content', type: 'array'},
   ],
 } as const satisfies BlockObjectDefinition

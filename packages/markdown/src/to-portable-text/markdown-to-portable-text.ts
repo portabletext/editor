@@ -87,7 +87,7 @@ type Options = {
       }>
     }>
     image?: ObjectMatcher<{src: string; alt: string; title: string | undefined}>
-    callout?: ObjectMatcher<{type: string; content: Array<PortableTextBlock>}>
+    callout?: ObjectMatcher<{tone: string; content: Array<PortableTextBlock>}>
   }
   html?: {
     /**
@@ -1296,7 +1296,7 @@ export function markdownToPortableText(
               schema: consolidatedOptions.schema,
               keyGenerator: consolidatedOptions.keyGenerator,
             },
-            value: {type: calloutType, content: contentBlocks},
+            value: {tone: calloutType, content: contentBlocks},
             isInline: false,
           })
 
