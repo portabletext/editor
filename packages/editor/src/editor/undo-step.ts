@@ -138,13 +138,12 @@ function createNewStep(
           op,
         ]
 
-  return [
-    ...steps,
-    {
-      operations,
-      timestamp: new Date(),
-    },
-  ]
+  steps.push({
+    operations,
+    timestamp: new Date(),
+  })
+
+  return steps
 }
 
 function mergeIntoLastStep(
@@ -152,11 +151,7 @@ function mergeIntoLastStep(
   lastStep: UndoStep,
   op: Operation,
 ): Array<UndoStep> {
-  return [
-    ...steps.slice(0, -1),
-    {
-      timestamp: lastStep.timestamp,
-      operations: [...lastStep.operations, op],
-    },
-  ]
+  lastStep.operations.push(op)
+
+  return steps
 }

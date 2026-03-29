@@ -106,20 +106,24 @@ export function createPatchesPlugin({
       // Update previous children here before we apply
       previousValue = editor.children
 
-      const editorWasEmpty = isEqualToEmptyEditor(
-        editorActor.getSnapshot().context.initialValue,
-        previousValue,
-        editorActor.getSnapshot().context.schema,
-      )
+      const editorWasEmpty =
+        previousValue.length === 1 &&
+        isEqualToEmptyEditor(
+          editorActor.getSnapshot().context.initialValue,
+          previousValue,
+          editorActor.getSnapshot().context.schema,
+        )
 
       // Apply the operation
       apply(operation)
 
-      const editorIsEmpty = isEqualToEmptyEditor(
-        editorActor.getSnapshot().context.initialValue,
-        editor.children,
-        editorActor.getSnapshot().context.schema,
-      )
+      const editorIsEmpty =
+        editor.children.length === 1 &&
+        isEqualToEmptyEditor(
+          editorActor.getSnapshot().context.initialValue,
+          editor.children,
+          editorActor.getSnapshot().context.schema,
+        )
 
       if (!editor.isPatching) {
         return editor
