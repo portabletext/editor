@@ -1,5 +1,38 @@
 # Changelog
 
+## 6.6.0
+
+### Minor Changes
+
+- [#2387](https://github.com/portabletext/editor/pull/2387) [`055bdb1`](https://github.com/portabletext/editor/commit/055bdb160eb0b4e83e291ac3bf508ed6865747b8) Thanks [@christianhg](https://github.com/christianhg)! - feat: simplify internal DOM mapping
+
+  Introduces a new `data-pt-path` attribute on editor DOM nodes to aid the mapping between the internal model and the DOM.
+
+  Path attributes use serialized paths like `data-pt-path="[_key=="k0"].children[_key=="s1"]"` for a text block span.
+
+- [#2398](https://github.com/portabletext/editor/pull/2398) [`041fef0`](https://github.com/portabletext/editor/commit/041fef01c7663317e7e13fc9197536c23822709f) Thanks [@christianhg](https://github.com/christianhg)! - feat: internal Portable Text-native node traversal
+
+  Replaces the vendored Slate traversal system with schema-driven functions that resolve children on any node type, not just `.children`. The old system hardcoded `.children` as the only child field, which blocks first-class nesting where children will live in schema-defined fields like `rows`, `cells`, or `content`.
+
+### Patch Changes
+
+- [#2414](https://github.com/portabletext/editor/pull/2414) [`ff8220d`](https://github.com/portabletext/editor/commit/ff8220db49b8407664b06d840f3d20b393b0effd) Thanks [@christianhg](https://github.com/christianhg)! - fix: add proper internal check for leaf nodes
+
+  Add an `isLeaf` predicate that correctly distinguishes between nodes that cannot have children and nodes that currently have no children. This replaces ad-hoc `isSpan || isObjectNode` checks in operations with a proper leaf node check that is aware of editable containers.
+
+- [#2427](https://github.com/portabletext/editor/pull/2427) [`a8bdabb`](https://github.com/portabletext/editor/commit/a8bdabbb644bec953a29a52b4241a5d279399246) Thanks [@christianhg](https://github.com/christianhg)! - fix: inline `extractProps` into `applySplitNode`
+
+- [#2421](https://github.com/portabletext/editor/pull/2421) [`b97146c`](https://github.com/portabletext/editor/commit/b97146ccf45cc6d51dbd6b4d0d86015fa2af8039) Thanks [@christianhg](https://github.com/christianhg)! - fix: use lax type guards for text block and span identification
+
+- [#2420](https://github.com/portabletext/editor/pull/2420) [`56c20c3`](https://github.com/portabletext/editor/commit/56c20c34a7378e141126d5e63aded6e3b4d810da) Thanks [@christianhg](https://github.com/christianhg)! - fix: handle spans with missing text property during normalization and rendering
+
+- [#2425](https://github.com/portabletext/editor/pull/2425) [`d1928a2`](https://github.com/portabletext/editor/commit/d1928a2661ef5319f3bf7602b03bf650f726f3f2) Thanks [@christianhg](https://github.com/christianhg)! - fix: move `text/plain` inherit-formatting to `deserialize.data`
+
+  Consumer behaviors on `deserialize.data` can now override the default `text/plain` paste handling. Previously, the inherit-formatting logic ran on `deserialization.success`, which stripped structure from any blocks produced by consumer `deserialize.data` behaviors.
+
+- Updated dependencies [[`251c51b`](https://github.com/portabletext/editor/commit/251c51b7a731dc5008798ea1f922e3d1ad2e11d5)]:
+  - @portabletext/markdown@1.2.0
+
 ## 6.5.2
 
 ### Patch Changes

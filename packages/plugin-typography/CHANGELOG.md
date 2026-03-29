@@ -1,5 +1,13 @@
 # @portabletext/plugin-typography
 
+## 7.0.23
+
+### Patch Changes
+
+- Updated dependencies [[`ff8220d`](https://github.com/portabletext/editor/commit/ff8220db49b8407664b06d840f3d20b393b0effd), [`a8bdabb`](https://github.com/portabletext/editor/commit/a8bdabbb644bec953a29a52b4241a5d279399246), [`b97146c`](https://github.com/portabletext/editor/commit/b97146ccf45cc6d51dbd6b4d0d86015fa2af8039), [`055bdb1`](https://github.com/portabletext/editor/commit/055bdb160eb0b4e83e291ac3bf508ed6865747b8), [`041fef0`](https://github.com/portabletext/editor/commit/041fef01c7663317e7e13fc9197536c23822709f), [`56c20c3`](https://github.com/portabletext/editor/commit/56c20c34a7378e141126d5e63aded6e3b4d810da), [`d1928a2`](https://github.com/portabletext/editor/commit/d1928a2661ef5319f3bf7602b03bf650f726f3f2)]:
+  - @portabletext/editor@6.6.0
+  - @portabletext/plugin-input-rule@4.0.23
+
 ## 7.0.22
 
 ### Patch Changes
