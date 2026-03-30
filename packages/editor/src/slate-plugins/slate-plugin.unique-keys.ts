@@ -45,9 +45,11 @@ export function createUniqueKeysPlugin(editorActor: EditorActor) {
 
       if (operation.type === 'insert_node') {
         if (!isEditor(operation.node)) {
-          const _key =
-            operation.node._key &&
-            keyExistsAtPath(
+          const existingKey = operation.node._key
+
+          if (
+            existingKey &&
+            !keyExistsAtPath(
               {
                 blockIndexMap: editor.blockIndexMap,
                 context: {
@@ -56,21 +58,21 @@ export function createUniqueKeysPlugin(editorActor: EditorActor) {
                 },
               },
               operation.path,
-              operation.node._key,
+              existingKey,
             )
-              ? undefined
-              : operation.node._key
-
-          apply({
-            ...operation,
-            node: {
-              ...operation.node,
-              _key:
-                _key === undefined
-                  ? editorActor.getSnapshot().context.keyGenerator()
-                  : _key,
-            },
-          })
+          ) {
+            // Key is valid — pass through without allocation
+            apply(operation)
+          } else {
+            // Key collision or missing — generate a new one
+            apply({
+              ...operation,
+              node: {
+                ...operation.node,
+                _key: editorActor.getSnapshot().context.keyGenerator(),
+              },
+            })
+          }
 
           return
         }
@@ -78,6 +80,8 @@ export function createUniqueKeysPlugin(editorActor: EditorActor) {
 
       apply(operation)
     }
+
+    const {keyGenerator} = context
 
     editor.normalizeNode = (entry) => {
       const [_node, path] = entry
@@ -94,7 +98,7 @@ export function createUniqueKeysPlugin(editorActor: EditorActor) {
 
       for (const sibling of siblings) {
         if (sibling.node._key && siblingKeys.has(sibling.node._key)) {
-          const _key = editorActor.getSnapshot().context.keyGenerator()
+          const _key = keyGenerator()
 
           siblingKeys.add(_key)
 
@@ -106,7 +110,7 @@ export function createUniqueKeysPlugin(editorActor: EditorActor) {
         }
 
         if (!sibling.node._key) {
-          const _key = editorActor.getSnapshot().context.keyGenerator()
+          const _key = keyGenerator()
 
           siblingKeys.add(_key)
 

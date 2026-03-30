@@ -66,46 +66,54 @@ export function performEvent({
     editor.undoStepId = defaultKeyGenerator()
   }
 
-  debug.behaviors(`(${mode}:${eventCategory(event)})`, safeStringify(event, 2))
+  if (debug.behaviors.enabled) {
+    debug.behaviors(
+      `(${mode}:${eventCategory(event)})`,
+      safeStringify(event, 2),
+    )
+  }
 
-  const eventBehaviors = [
-    ...remainingEventBehaviors,
-    ...abstractBehaviors,
-  ].filter((behavior) => {
+  const allBehaviors =
+    remainingEventBehaviors.length === 0
+      ? abstractBehaviors
+      : remainingEventBehaviors.concat(abstractBehaviors)
+
+  const dotIndex = event.type.indexOf('.')
+  const eventNamespace =
+    dotIndex !== -1 ? event.type.slice(0, dotIndex) : undefined
+
+  const eventBehaviors = allBehaviors.filter((behavior) => {
+    if (behavior.on === event.type) {
+      return true
+    }
+
     // Catches all events
     if (behavior.on === '*') {
       return true
     }
 
-    const [listenedNamespace] =
-      behavior.on.includes('*') && behavior.on.includes('.')
-        ? behavior.on.split('.')
-        : [undefined]
-    const [eventNamespace] = event.type.includes('.')
-      ? event.type.split('.')
-      : [undefined]
+    const listenedOn = behavior.on
+    const starDotIndex = listenedOn.indexOf('.')
+
+    if (starDotIndex === -1 || !listenedOn.includes('*')) {
+      return false
+    }
+
+    const listenedNamespace = listenedOn.slice(0, starDotIndex)
 
     // Handles scenarios like a Behavior listening for `select.*` and the event
     // `select.block` is fired.
-    if (
-      listenedNamespace !== undefined &&
-      eventNamespace !== undefined &&
-      listenedNamespace === eventNamespace
-    ) {
+    if (eventNamespace !== undefined && listenedNamespace === eventNamespace) {
       return true
     }
 
     // Handles scenarios like a Behavior listening for `select.*` and the event
     // `select` is fired.
-    if (
-      listenedNamespace !== undefined &&
-      eventNamespace === undefined &&
-      listenedNamespace === event.type
-    ) {
+    if (eventNamespace === undefined && listenedNamespace === event.type) {
       return true
     }
 
-    return behavior.on === event.type
+    return false
   })
 
   if (eventBehaviors.length === 0 && isSyntheticBehaviorEvent(event)) {
@@ -116,7 +124,9 @@ export function performEvent({
     }
 
     withPerformingBehaviorOperation(editor, () => {
-      debug.operation(safeStringify(event, 2))
+      if (debug.operation.enabled) {
+        debug.operation(safeStringify(event, 2))
+      }
 
       performOperation({
         context: {
@@ -136,6 +146,8 @@ export function performEvent({
 
     return
   }
+
+  const editorDom = createEditorDom(sendBack, editor)
 
   const guardSnapshot = createEditorSnapshot({
     converters,
@@ -160,7 +172,7 @@ export function performEvent({
         eventBehavior.guard({
           snapshot: guardSnapshot,
           event,
-          dom: createEditorDom(sendBack, editor),
+          dom: editorDom,
         })
     } catch (error) {
       console.error(
@@ -205,7 +217,7 @@ export function performEvent({
           {
             snapshot: actionsSnapshot,
             event,
-            dom: createEditorDom(sendBack, editor),
+            dom: editorDom,
           },
           shouldRun,
         )
@@ -358,7 +370,9 @@ export function performEvent({
     }
 
     withPerformingBehaviorOperation(editor, () => {
-      debug.operation(safeStringify(event, 2))
+      if (debug.operation.enabled) {
+        debug.operation(safeStringify(event, 2))
+      }
 
       performOperation({
         context: {keyGenerator, schema},
