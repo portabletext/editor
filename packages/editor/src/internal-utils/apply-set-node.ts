@@ -6,9 +6,6 @@ import type {PortableTextSlateEditor} from '../types/slate-editor'
  * Apply a `set_node` operation at a known path.
  *
  * Properties set to `null` are treated as deletions.
- *
- * Skips `children` since those are structural properties managed by dedicated
- * operations.
  */
 export function applySetNode(
   editor: PortableTextSlateEditor,
@@ -28,10 +25,6 @@ export function applySetNode(
   const newProperties: Record<string, unknown> = {}
 
   for (const key of Object.keys(propsRecord)) {
-    if (key === 'children') {
-      continue
-    }
-
     if (propsRecord[key] !== nodeRecord[key]) {
       if (nodeRecord.hasOwnProperty(key)) {
         properties[key] = nodeRecord[key]

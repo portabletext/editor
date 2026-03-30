@@ -910,10 +910,14 @@ function updateBlock({
     schemaTypes: context.schema,
   })
 
-  // Update the root props on the block
-  applySetNode(slateEditor, slateBlock as unknown as Record<string, unknown>, [
-    index,
-  ])
+  // Update the root props on the block.
+  // Strip children (managed by dedicated operations below).
+  const {children: _children, ...blockProps} = slateBlock as unknown as Record<
+    string,
+    unknown
+  >
+
+  applySetNode(slateEditor, blockProps, [index])
 
   // Remove properties present on the old node but absent from the new block.
   // Skip children/text (structural, managed by dedicated operations).
