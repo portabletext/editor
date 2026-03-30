@@ -361,7 +361,10 @@ function setPatch(
     }
   }
 
-  if (blockIsTextBlock && patch.path[1] !== 'children') {
+  if (
+    blockIsTextBlock &&
+    (patch.path.length === 2 || patch.path[1] !== 'children')
+  ) {
     const updatedBlock = applyAll(block.node, [
       {
         ...patch,

@@ -626,7 +626,7 @@ describe('event.block.unset', () => {
     })
   })
 
-  test('Scenario: `unset`ing text block children is a noop', async () => {
+  test('Scenario: `unset`ing text block children removes them and normalization restores', async () => {
     const patches: Array<Patch> = []
     const keyGenerator = createTestKeyGenerator()
     const {editor} = await createTestEditor({
@@ -689,20 +689,27 @@ describe('event.block.unset', () => {
     })
 
     await vi.waitFor(() => {
+      // Children are unset then normalization restores an empty span.
+      // Style is unset then normalization restores the default.
       expect(editor.getSnapshot().context.value).toEqual([
         {
           _key: textBlockKey,
           _type: 'block',
-          children: [
-            {_key: 'k3', _type: 'span', text: 'Hello, world!', marks: []},
-          ],
+          children: [{_key: 'k4', _type: 'span', text: '', marks: []}],
           markDefs: [],
           style: 'normal',
         },
       ])
       expect(patches.slice(4)).toEqual([
+        unset([{_key: textBlockKey}, 'children']),
         unset([{_key: textBlockKey}, 'style']),
         set('normal', [{_key: textBlockKey}, 'style']),
+        setIfMissing([], [{_key: textBlockKey}, 'children']),
+        insert([{_key: 'k4', _type: 'span', text: '', marks: []}], 'before', [
+          {_key: textBlockKey},
+          'children',
+          0,
+        ]),
       ])
     })
   })

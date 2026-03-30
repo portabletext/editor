@@ -139,7 +139,7 @@ export function setNodePatch(
       for (const [key, propertyValue] of Object.entries(
         operation.newProperties,
       )) {
-        if (key === '_key' || key === 'children') {
+        if (key === '_key') {
           continue
         }
 
@@ -147,7 +147,7 @@ export function setNodePatch(
       }
 
       for (const key of Object.keys(operation.properties)) {
-        if (key === '_key' || key === 'children') {
+        if (key === '_key') {
           continue
         }
 
@@ -184,7 +184,7 @@ export function setNodePatch(
           for (const [key, propertyValue] of Object.entries(
             operation.newProperties,
           )) {
-            if (key === '_key' || key === 'children') {
+            if (key === '_key') {
               continue
             }
 

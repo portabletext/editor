@@ -24,7 +24,7 @@ export const blockUnsetOperationImplementation: OperationImplementation<
 
   if (isTextBlockNode(context, slateBlock)) {
     const propsToRemove = operation.props.filter(
-      (prop) => prop !== '_type' && prop !== '_key' && prop !== 'children',
+      (prop) => prop !== '_type' && prop !== '_key',
     )
 
     const unsetProps: Record<string, null> = {}

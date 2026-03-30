@@ -26,7 +26,7 @@ export const blockSetOperationImplementation: OperationImplementation<
     const filteredProps: Record<string, unknown> = {}
 
     for (const key of Object.keys(operation.props)) {
-      if (key === '_type' || key === 'children') {
+      if (key === '_type') {
         continue
       }
 
