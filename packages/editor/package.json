@@ -84,7 +84,6 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@juggle/resize-observer": "^3.4.0",
     "@portabletext/html": "workspace:^",
     "@portabletext/keyboard-shortcuts": "workspace:^",
     "@portabletext/markdown": "workspace:^",
