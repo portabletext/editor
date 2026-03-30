@@ -314,6 +314,81 @@ describe('normalization', () => {
     })
   })
 
+  test('Scenario: spans with missing text get empty text', async () => {
+    const patches: Array<Patch> = []
+    const keyGenerator = createTestKeyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              const {origin: _, ...patch} = event.patch
+              patches.push(patch)
+            }
+          }}
+        />
+      ),
+    })
+
+    const blockAKey = keyGenerator()
+    const spanAKey = keyGenerator()
+    const blockBKey = keyGenerator()
+    const spanBKey = keyGenerator()
+    const newValue = [
+      {
+        _type: 'block',
+        _key: blockAKey,
+        children: [{_type: 'span', _key: spanAKey, text: 'foo', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+      {
+        _type: 'block',
+        _key: blockBKey,
+        children: [{_type: 'span', _key: spanBKey, marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ]
+
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'set',
+          path: [],
+          value: newValue,
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        newValue.at(0),
+        {
+          ...newValue.at(1),
+          children: [
+            {
+              ...newValue.at(1)?.children.at(0),
+              text: '',
+            },
+          ],
+        },
+      ])
+
+      expect(patches).toEqual([
+        {
+          type: 'set',
+          path: [{_key: blockBKey}, 'children', {_key: spanBKey}, 'text'],
+          value: '',
+        },
+      ])
+    })
+  })
+
   test('Scenario: lonely span with no `text` gets an empty string', async () => {
     const patches: Array<Patch> = []
     const keyGenerator = createTestKeyGenerator()

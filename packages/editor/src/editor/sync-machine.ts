@@ -998,11 +998,10 @@ function updateBlock({
             oldBlockChild,
           )
 
-          applySetNode(
-            slateEditor,
-            currentBlockChild as unknown as Record<string, unknown>,
-            path,
-          )
+          const {text: _text, ...childProps} =
+            currentBlockChild as unknown as Record<string, unknown>
+
+          applySetNode(slateEditor, childProps, path)
 
           const isSpanNode =
             isSpan({schema: context.schema}, currentBlockChild) &&

@@ -185,6 +185,7 @@ export function applyOperation(editor: Editor, op: Operation): void {
         return newNode
       })
 
+      transformSelection = true
       break
     }
 

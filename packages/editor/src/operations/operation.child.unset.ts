@@ -56,11 +56,6 @@ export const childUnsetOperationImplementation: OperationImplementation<
     const newNode: Record<string, unknown> = {}
 
     for (const prop of operation.props) {
-      if (prop === 'text') {
-        // Unsetting `text` requires special treatment
-        continue
-      }
-
       if (prop === '_type') {
         // It's not allowed to unset the _type of a span
         continue
@@ -75,15 +70,6 @@ export const childUnsetOperationImplementation: OperationImplementation<
     }
 
     applySetNode(operation.editor, newNode, childPath)
-
-    if (operation.props.includes('text')) {
-      operation.editor.apply({
-        type: 'remove_text',
-        path: childPath,
-        offset: 0,
-        text: child.text,
-      })
-    }
 
     return
   }

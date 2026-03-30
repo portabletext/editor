@@ -50,6 +50,20 @@ export function transformPoint(
       break
     }
 
+    case 'set_node': {
+      const newProperties = op.newProperties as Record<string, unknown>
+
+      if (
+        pathEquals(op.path, path) &&
+        'text' in op.properties &&
+        (!('text' in newProperties) || newProperties['text'] == null)
+      ) {
+        offset = 0
+      }
+
+      break
+    }
+
     default:
       return point
   }
