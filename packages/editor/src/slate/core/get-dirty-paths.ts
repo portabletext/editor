@@ -28,12 +28,11 @@ export const getDirtyPaths: WithEditorFirstArg<Editor['getDirtyPaths']> = (
         return levels
       }
 
-      const descendants = Array.from(
-        getNodeDescendants(editor, node),
-        (entry) => path.concat(entry.path),
-      )
+      for (const entry of getNodeDescendants(editor, node)) {
+        levels.push(path.concat(entry.path))
+      }
 
-      return [...levels, ...descendants]
+      return levels
     }
 
     case 'remove_node': {

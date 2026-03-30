@@ -8,18 +8,26 @@ import type {Node} from '../interfaces/node'
 import type {Path} from '../interfaces/path'
 import {isObjectNode} from '../node/is-object-node'
 
-export const insertChildren = <T>(
+export function insertChildren<T>(
   xs: T[],
   index: number,
   ...newValues: T[]
-) => [...xs.slice(0, index), ...newValues, ...xs.slice(index)]
+): T[] {
+  const result = xs.slice()
+  result.splice(index, 0, ...newValues)
+  return result
+}
 
-const replaceChildren = <T>(
+function replaceChildren<T>(
   xs: T[],
   index: number,
   removeCount: number,
   ...newValues: T[]
-) => [...xs.slice(0, index), ...newValues, ...xs.slice(index + removeCount)]
+): T[] {
+  const result = xs.slice()
+  result.splice(index, removeCount, ...newValues)
+  return result
+}
 
 export const removeChildren = replaceChildren
 
