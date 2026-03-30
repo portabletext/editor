@@ -19,7 +19,12 @@ export function updateDirtyPaths(
 
   const add = (path: Path | null) => {
     if (path) {
-      const key = path.join(',')
+      const key =
+        path.length === 1
+          ? String(path[0])
+          : path.length === 2
+            ? `${path[0]},${path[1]}`
+            : path.join(',')
 
       if (!dirtyPathKeys.has(key)) {
         dirtyPathKeys.add(key)
