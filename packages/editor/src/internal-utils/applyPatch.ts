@@ -248,6 +248,47 @@ function setPatch(
 ) {
   let value = patch.value
 
+  // Full value replacement (path [])
+  if (patch.path.length === 0) {
+    if (!Array.isArray(value)) {
+      return false
+    }
+
+    // setIfMissing at root is a noop when the editor already has content
+    if (patch.type === 'setIfMissing' && editor.children.length > 0) {
+      return false
+    }
+
+    const previousSelection = editor.selection
+
+    // Remove all existing blocks in reverse order
+    for (let i = editor.children.length - 1; i >= 0; i--) {
+      const node = editor.children[i]
+      if (node) {
+        editor.apply({type: 'remove_node', path: [i], node})
+      }
+    }
+
+    // Insert the new blocks
+    let insertIndex = 0
+    for (const block of value) {
+      editor.apply({
+        type: 'insert_node',
+        path: [insertIndex],
+        node: block as Node,
+      })
+
+      insertIndex++
+    }
+
+    // Restore the selection if it's still valid
+    if (previousSelection) {
+      applySelect(editor, previousSelection)
+    }
+
+    return true
+  }
+
   if (typeof patch.path[3] === 'string') {
     value = {}
     value[patch.path[3]] = patch.value

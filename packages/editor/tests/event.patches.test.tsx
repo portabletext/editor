@@ -16,6 +16,152 @@ import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
 import {createTestEditor, createTestEditors} from '../src/test/vitest'
 
 describe('event.patches', () => {
+  describe('Scenario: `set`ing the entire value', () => {
+    test('more blocks', async () => {
+      const keyGenerator = createTestKeyGenerator()
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        initialValue: [
+          {
+            _type: 'block',
+            _key: keyGenerator(),
+            children: [
+              {
+                _type: 'span',
+                _key: keyGenerator(),
+                text: 'Initial text',
+                marks: [],
+              },
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      })
+
+      const newValue = [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          children: [
+            {
+              _type: 'span',
+              _key: keyGenerator(),
+              text: 'Replaced text with new content',
+              marks: [],
+            },
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          children: [
+            {
+              _type: 'span',
+              _key: keyGenerator(),
+              text: 'Second block',
+              marks: [],
+            },
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ]
+
+      editor.send({
+        type: 'patches',
+        patches: [
+          {
+            type: 'set',
+            path: [],
+            value: newValue,
+            origin: 'remote',
+          },
+        ],
+        snapshot: newValue,
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual(newValue)
+      })
+    })
+
+    test('fewer blocks', async () => {
+      const keyGenerator = createTestKeyGenerator()
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: defineSchema({}),
+        initialValue: [
+          {
+            _type: 'block',
+            _key: keyGenerator(),
+            children: [
+              {_type: 'span', _key: keyGenerator(), text: 'First', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: keyGenerator(),
+            children: [
+              {_type: 'span', _key: keyGenerator(), text: 'Second', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: keyGenerator(),
+            children: [
+              {_type: 'span', _key: keyGenerator(), text: 'Third', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      })
+
+      const newValue = [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          children: [
+            {
+              _type: 'span',
+              _key: keyGenerator(),
+              text: 'Only block',
+              marks: [],
+            },
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ]
+
+      editor.send({
+        type: 'patches',
+        patches: [
+          {
+            type: 'set',
+            path: [],
+            value: newValue,
+            origin: 'remote',
+          },
+        ],
+        snapshot: newValue,
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual(newValue)
+      })
+    })
+  })
+
   test('Scenario: Consuming initial diffMatchPatch', async () => {
     const {editor, locator, onEditorEvent, editorB} = await createTestEditors()
 
