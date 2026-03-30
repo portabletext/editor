@@ -11,7 +11,6 @@ import {getChildren} from '../node-traversal/get-children'
 import {getSpanNode} from '../node-traversal/get-span-node'
 import {getTextBlockNode} from '../node-traversal/get-text-block-node'
 import {isEditor} from '../slate/editor/is-editor'
-import {isSpanNode} from '../slate/node/is-span-node'
 import {isTextBlockNode} from '../slate/node/is-text-block-node'
 import {parentPath} from '../slate/path/parent-path'
 import {isCollapsedRange} from '../slate/range/is-collapsed-range'
@@ -98,25 +97,6 @@ export function createNormalizationPlugin(
 
         withNormalizeNode(editor, () => {
           applySetNode(editor, {style: defaultStyle}, path)
-        })
-        return
-      }
-
-      /**
-       * Add missing .text to span nodes
-       */
-      if (
-        isSpanNode({schema: editor.schema}, node) &&
-        typeof node.text !== 'string'
-      ) {
-        debug.normalization('Adding .text to span node')
-        withNormalizeNode(editor, () => {
-          editor.apply({
-            type: 'set_node',
-            path,
-            properties: {},
-            newProperties: {text: ''},
-          })
         })
         return
       }

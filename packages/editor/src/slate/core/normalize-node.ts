@@ -1,11 +1,13 @@
 import type {PortableTextTextBlock} from '@portabletext/schema'
 import {isSpan, isTextBlock} from '@portabletext/schema'
 import {applyMergeNode} from '../../internal-utils/apply-merge-node'
+import {debug} from '../../internal-utils/debug'
 import {getTextBlockNode} from '../../node-traversal/get-text-block-node'
 import {isEditor} from '../editor/is-editor'
 import type {Editor} from '../interfaces/editor'
 import type {Node} from '../interfaces/node'
 import {isObjectNode} from '../node/is-object-node'
+import {isSpanNode} from '../node/is-span-node'
 import {textEquals} from '../text/text-equals'
 import type {WithEditorFirstArg} from '../utils/types'
 import {insertNodes} from './insert-nodes'
@@ -17,8 +19,21 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
 ) => {
   const [node, path] = entry
 
-  // There are no core normalizations for text nodes.
-  if (isSpan({schema: editor.schema}, node)) {
+  if (isSpanNode({schema: editor.schema}, node)) {
+    /**
+     * Add missing .text to span nodes
+     */
+    if (typeof node.text !== 'string') {
+      debug.normalization('Adding .text to span node')
+      editor.apply({
+        type: 'set_node',
+        path,
+        properties: {},
+        newProperties: {text: ''},
+      })
+      return
+    }
+
     return
   }
 
