@@ -59,12 +59,13 @@ const SlateString = (props: {
   const editor = useSlateStatic()
   const parentIndexedPath = parentPath(indexedPath)
   const isMarkPlaceholder = Boolean((leaf as any)[MARK_PLACEHOLDER_SYMBOL])
+  const leafText = leaf.text ?? ''
 
   // COMPAT: If this is the last text node in an empty block, render a zero-
   // width space that will convert into a line break when copying and pasting
   // to support expected plain text.
   if (
-    leaf.text === '' &&
+    leafText === '' &&
     isTextBlock({schema: editor.schema}, parent) &&
     parent.children[parent.children.length - 1] === text &&
     !editor.isInline(parent) &&
@@ -76,17 +77,17 @@ const SlateString = (props: {
   // COMPAT: If the text is empty, it's because it's on the edge of an inline
   // node, so we render a zero-width space so that the selection can be
   // inserted next to it still.
-  if (leaf.text === '') {
+  if (leafText === '') {
     return <ZeroWidthString isMarkPlaceholder={isMarkPlaceholder} />
   }
 
   // COMPAT: Browsers will collapse trailing new lines at the end of blocks,
   // so we need to add an extra trailing new lines to prevent that.
-  if (isLast && leaf.text.slice(-1) === '\n') {
-    return <TextString isTrailing text={leaf.text} />
+  if (isLast && leafText.slice(-1) === '\n') {
+    return <TextString isTrailing text={leafText} />
   }
 
-  return <TextString text={leaf.text} />
+  return <TextString text={leafText} />
 }
 
 /**

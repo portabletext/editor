@@ -1,6 +1,5 @@
 import {getNode} from '../node-traversal/get-node'
 import type {Path} from '../slate/interfaces/path'
-import {isSpanNode} from '../slate/node/is-span-node'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 
 /**
@@ -9,9 +8,7 @@ import type {PortableTextSlateEditor} from '../types/slate-editor'
  * Properties set to `null` are treated as deletions.
  *
  * Skips `children` since those are structural properties managed by dedicated
- * operations. Skips `text` on text nodes (spans) for the same reason, but
- * allows `text` on elements and ObjectNodes where it's a user-defined
- * property.
+ * operations.
  */
 export function applySetNode(
   editor: PortableTextSlateEditor,
@@ -32,10 +29,6 @@ export function applySetNode(
 
   for (const key of Object.keys(propsRecord)) {
     if (key === 'children') {
-      continue
-    }
-
-    if (key === 'text' && isSpanNode({schema: editor.schema}, node)) {
       continue
     }
 
