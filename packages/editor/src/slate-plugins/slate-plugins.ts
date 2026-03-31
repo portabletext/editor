@@ -4,7 +4,6 @@ import type {Editor} from '../slate/interfaces/editor'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {createBehaviorApiPlugin} from './slate-plugin.behavior-api'
 import {createHistoryPlugin} from './slate-plugin.history'
-import {createNormalizationPlugin} from './slate-plugin.normalization'
 import {createPatchesPlugin} from './slate-plugin.patches'
 import {updateSelectionPlugin} from './slate-plugin.update-selection'
 import {updateValuePlugin} from './slate-plugin.update-value'
@@ -30,21 +29,18 @@ export const plugins = <T extends Editor>(
     editorActor,
     subscriptions: options.subscriptions,
   })
-  const normalizationPlugin = createNormalizationPlugin()
   const behaviorApiPlugin = createBehaviorApiPlugin(editorActor)
 
   // Ordering is important here, selection dealing last, data manipulation in the middle and core model stuff first.
   return behaviorApiPlugin(
-    normalizationPlugin(
-      historyPlugin(
-        patchesPlugin(
-          updateValuePlugin(
-            editorActor.getSnapshot().context,
-            updateSelectionPlugin({
-              editorActor,
-              editor: e,
-            }),
-          ),
+    historyPlugin(
+      patchesPlugin(
+        updateValuePlugin(
+          editorActor.getSnapshot().context,
+          updateSelectionPlugin({
+            editorActor,
+            editor: e,
+          }),
         ),
       ),
     ),
