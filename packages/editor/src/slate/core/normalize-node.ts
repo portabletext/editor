@@ -6,6 +6,7 @@ import {getTextBlockNode} from '../../node-traversal/get-text-block-node'
 import {isEditor} from '../editor/is-editor'
 import type {Editor} from '../interfaces/editor'
 import type {Node} from '../interfaces/node'
+import {createSpanNode} from '../node/create-span-node'
 import {isObjectNode} from '../node/is-object-node'
 import {isSpanNode} from '../node/is-span-node'
 import {textEquals} from '../text/text-equals'
@@ -51,7 +52,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
 
   // Ensure that elements have at least one child.
   if (element !== editor && element.children.length === 0) {
-    const child = editor.createSpan()
+    const child = createSpanNode(editor)
     insertNodes(editor, [child], {at: path.concat(0), includeObjectNodes: true})
     const refetched = getTextBlockNode(editor, path)?.node
     if (!refetched) {
@@ -122,7 +123,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
         if (editor.isInline(child)) {
           // Ensure that inline nodes are surrounded by text nodes.
           if (prev == null || !isSpan({schema: editor.schema}, prev)) {
-            const newChild = editor.createSpan()
+            const newChild = createSpanNode(editor)
             insertNodes(editor, [newChild], {
               at: path.concat(n),
               includeObjectNodes: true,
@@ -135,7 +136,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
             n++
           }
           if (n === element.children.length - 1) {
-            const newChild = editor.createSpan()
+            const newChild = createSpanNode(editor)
             insertNodes(editor, [newChild], {
               at: path.concat(n + 1),
               includeObjectNodes: true,
@@ -159,7 +160,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
         }
       } else if (isObjectNode({schema: editor.schema}, child)) {
         if (prev == null || !isSpan({schema: editor.schema}, prev)) {
-          const newChild = editor.createSpan()
+          const newChild = createSpanNode(editor)
           insertNodes(editor, [newChild], {
             at: path.concat(n),
             includeObjectNodes: true,
@@ -172,7 +173,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
           n++
         }
         if (n === element.children.length - 1) {
-          const newChild = editor.createSpan()
+          const newChild = createSpanNode(editor)
           insertNodes(editor, [newChild], {
             at: path.concat(n + 1),
             includeObjectNodes: true,
