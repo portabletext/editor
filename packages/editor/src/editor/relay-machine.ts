@@ -3,6 +3,7 @@ import type {PortableTextBlock} from '@portabletext/schema'
 import type {FocusEvent} from 'react'
 import {assign, emit, setup, type ActorRefFrom} from 'xstate'
 import type {EditorSelection, InvalidValueResolution} from '../types/editor'
+import type {RangeDecorationShift} from '../types/slate-editor'
 
 /**
  * @public
@@ -73,6 +74,7 @@ export type MutationEvent = {
   type: 'mutation'
   patches: Array<Patch>
   value: Array<PortableTextBlock> | undefined
+  rangeDecorationShifts: Array<RangeDecorationShift>
 }
 
 export type PatchEvent = {

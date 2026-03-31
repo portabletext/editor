@@ -124,6 +124,7 @@ describe('Feature: Self-solving', () => {
               markDefs: [],
             },
           ],
+          rangeDecorationShifts: [],
         },
         {
           type: 'mutation',
@@ -144,6 +145,7 @@ describe('Feature: Self-solving', () => {
               markDefs: [],
             },
           ],
+          rangeDecorationShifts: [],
         },
       ])
     })

@@ -1,3 +1,4 @@
+import type {RangeDecorationShift} from '@portabletext/editor'
 import {ChevronRightIcon, HistoryIcon} from 'lucide-react'
 import {useState} from 'react'
 import {tv} from 'tailwind-variants'
@@ -24,6 +25,10 @@ const typeBadgeStyle = tv({
         'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300',
       diffMatchPatch:
         'bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300',
+      moved:
+        'bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300',
+      contentChanged:
+        'bg-teal-100 dark:bg-teal-900/50 text-teal-700 dark:text-teal-300',
       default: 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300',
     },
   },
@@ -40,6 +45,7 @@ const editorBadgeStyle = tv({
 })
 
 type FlattenedPatch = {
+  kind: 'patch'
   id: string
   editorId: string
   timestamp: number
@@ -47,33 +53,63 @@ type FlattenedPatch = {
   isNew: boolean
 }
 
-function flattenPatches(
+type FlattenedShift = {
+  kind: 'shift'
+  id: string
+  editorId: string
+  timestamp: number
+  shift: RangeDecorationShift
+  isNew: boolean
+}
+
+type FlattenedItem = FlattenedPatch | FlattenedShift
+
+function flattenEntries(
   entries: Array<GlobalPatchEntry>,
-): Array<FlattenedPatch> {
+): Array<FlattenedItem> {
   if (entries.length === 0) {
     return []
   }
 
   const newestTimestamp = entries[0]?.timestamp
 
-  return entries.flatMap((entry) =>
-    [...entry.patches].reverse().map((patch, index) => ({
-      id: `${entry.id}-${index}`,
-      editorId: entry.editorId,
-      timestamp: entry.timestamp,
-      patch,
-      isNew: entry.timestamp === newestTimestamp,
-    })),
-  )
+  return entries.flatMap((entry) => {
+    const isNew = entry.timestamp === newestTimestamp
+    const items: Array<FlattenedItem> = []
+
+    for (const [index, patch] of [...entry.patches].reverse().entries()) {
+      items.push({
+        kind: 'patch',
+        id: `${entry.id}-p${index}`,
+        editorId: entry.editorId,
+        timestamp: entry.timestamp,
+        patch,
+        isNew,
+      })
+    }
+
+    for (const [index, shift] of entry.rangeDecorationShifts.entries()) {
+      items.push({
+        kind: 'shift',
+        id: `${entry.id}-s${index}`,
+        editorId: entry.editorId,
+        timestamp: entry.timestamp,
+        shift,
+        isNew,
+      })
+    }
+
+    return items
+  })
 }
 
 export function PatchesList(props: {
   entries: Array<GlobalPatchEntry>
   showEditorLabel: boolean
 }) {
-  const flatPatches = flattenPatches(props.entries)
+  const items = flattenEntries(props.entries)
 
-  if (flatPatches.length === 0) {
+  if (items.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-center gap-2">
         <HistoryIcon className="size-8 text-gray-300 dark:text-gray-600" />
@@ -89,13 +125,21 @@ export function PatchesList(props: {
 
   return (
     <div className="flex flex-col gap-2 h-full overflow-y-auto">
-      {flatPatches.map((item) => (
-        <PatchCard
-          key={item.id}
-          item={item}
-          showEditorLabel={props.showEditorLabel}
-        />
-      ))}
+      {items.map((item) =>
+        item.kind === 'patch' ? (
+          <PatchCard
+            key={item.id}
+            item={item}
+            showEditorLabel={props.showEditorLabel}
+          />
+        ) : (
+          <ShiftCard
+            key={item.id}
+            item={item}
+            showEditorLabel={props.showEditorLabel}
+          />
+        ),
+      )}
     </div>
   )
 }
@@ -165,6 +209,83 @@ function PatchCard(props: {item: FlattenedPatch; showEditorLabel: boolean}) {
               {JSON.stringify(value)}
             </div>
           )}
+        </>
+      )}
+    </button>
+  )
+}
+
+function serializeShift(shift: RangeDecorationShift): object {
+  const {rangeDecoration, ...rest} = shift
+  const {
+    component: _component,
+    onMoved: _onMoved,
+    ...serializableDecoration
+  } = rangeDecoration
+  return {...rest, rangeDecoration: serializableDecoration}
+}
+
+function formatSelection(
+  selection: RangeDecorationShift['previousSelection'],
+): string {
+  if (!selection) {
+    return 'null'
+  }
+  return `[${JSON.stringify(selection.anchor.path)},${selection.anchor.offset}]..[${JSON.stringify(selection.focus.path)},${selection.focus.offset}]`
+}
+
+function ShiftCard(props: {item: FlattenedShift; showEditorLabel: boolean}) {
+  const {item, showEditorLabel} = props
+  const [isExpanded, setIsExpanded] = useState(false)
+  const {shift} = item
+  const decorationId = String(
+    shift.rangeDecoration.id ?? shift.rangeDecoration.payload?.id ?? '',
+  )
+
+  return (
+    <button
+      type="button"
+      className={patchCardStyle({isNew: item.isNew})}
+      onClick={() => setIsExpanded(!isExpanded)}
+    >
+      <div className="flex items-center gap-1.5">
+        <ChevronRightIcon
+          className={`size-3 text-gray-400 dark:text-gray-500 shrink-0 transition-transform duration-150 ${isExpanded ? 'rotate-90' : ''}`}
+        />
+        {showEditorLabel && (
+          <span className={editorBadgeStyle({isNew: item.isNew})}>
+            {item.editorId}
+          </span>
+        )}
+        <span className={typeBadgeStyle({type: shift.reason})}>
+          {shift.reason}
+        </span>
+        <span className={typeBadgeStyle({type: 'default'})}>
+          {shift.origin}
+        </span>
+        {decorationId && (
+          <span className="text-xs font-mono text-gray-500 dark:text-gray-400 truncate">
+            {decorationId}
+          </span>
+        )}
+        <span className="text-xs text-gray-400 dark:text-gray-500 ml-auto shrink-0">
+          {new Date(item.timestamp).toLocaleTimeString()}
+        </span>
+      </div>
+      {isExpanded ? (
+        <pre className="text-xs font-mono text-gray-600 dark:text-gray-400 whitespace-pre-wrap break-all mt-2">
+          {JSON.stringify(serializeShift(shift), null, 2)}
+        </pre>
+      ) : (
+        <>
+          <div className="text-xs font-mono text-gray-600 dark:text-gray-400 truncate mt-1">
+            <span className="text-gray-400 dark:text-gray-500">prev:</span>{' '}
+            {formatSelection(shift.previousSelection)}
+          </div>
+          <div className="text-xs font-mono text-gray-600 dark:text-gray-400 truncate">
+            <span className="text-gray-400 dark:text-gray-500">next:</span>{' '}
+            {formatSelection(shift.newSelection)}
+          </div>
         </>
       )}
     </button>

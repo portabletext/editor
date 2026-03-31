@@ -5,7 +5,11 @@ import type {DecoratedRange} from '../editor/range-decorations-machine'
 import type {Operation as SlateOperation} from '../slate/interfaces/operation'
 import type {Range} from '../slate/interfaces/range'
 import type {ReactEditor} from '../slate/react/plugin/react-editor'
-import type {EditorSelection, RangeDecoration} from './editor'
+import type {
+  EditorSelection,
+  RangeDecoration,
+  RangeDecorationOnMovedDetails,
+} from './editor'
 
 type HistoryItem = {
   operations: SlateOperation[]
@@ -132,6 +136,13 @@ export interface PortableTextSlateEditor extends ReactEditor {
   > | null
 
   /**
+   * Accumulates decoration shift records between mutation flushes.
+   * Consumed and cleared by the mutation machine's `'emit mutations'`
+   * action so that `MutationEvent` includes `rangeDecorationShifts`.
+   */
+  pendingDecorationShifts: Array<RangeDecorationShift>
+
+  /**
    * When > 0, the decoration `sendBack` interceptor skips firing
    * `slate operation` events. Used by `applyMergeNode` and `applySplitNode`
    * to suppress events for their decomposed operations, which would
@@ -147,4 +158,39 @@ export interface PortableTextSlateEditor extends ReactEditor {
   isRedoing: boolean
   isUndoing: boolean
   withHistory: boolean
+}
+
+/**
+ * @public
+ */
+export type RangeDecorationShift = Omit<
+  RangeDecorationOnMovedDetails,
+  'rangeDecoration'
+> & {
+  rangeDecoration: RangeDecoration
+}
+
+/**
+ * Push a decoration shift record to the accumulator, deduplicating by
+ * `rangeDecoration` identity. When the same decoration shifts multiple
+ * times before the mutation flush, the earliest `previousSelection` is
+ * kept and the latest `newSelection` / `reason` wins.
+ */
+export function pushDecorationShift(
+  slateEditor: PortableTextSlateEditor,
+  details: RangeDecorationShift,
+): void {
+  const existing = slateEditor.pendingDecorationShifts.findIndex(
+    (shift) => shift.rangeDecoration === details.rangeDecoration,
+  )
+
+  if (existing !== -1) {
+    slateEditor.pendingDecorationShifts[existing] = {
+      ...details,
+      previousSelection:
+        slateEditor.pendingDecorationShifts[existing]!.previousSelection,
+    }
+  } else {
+    slateEditor.pendingDecorationShifts.push(details)
+  }
 }

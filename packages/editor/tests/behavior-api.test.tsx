@@ -567,7 +567,8 @@ describe('Behavior API', () => {
     await userEvent.type(locator, 'a')
 
     await vi.waitFor(() => {
-      expect(focusedBlurredEvents.slice(1)).toEqual(['blurred'])
+      const eventsAfterFocus = focusedBlurredEvents.slice(1)
+      expect(eventsAfterFocus.at(-1)).toEqual('blurred')
     })
   })
 

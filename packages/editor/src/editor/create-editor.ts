@@ -201,6 +201,7 @@ function createActors(config: {
           type: 'mutation',
           patches: event.patches,
           value: event.snapshot,
+          rangeDecorationShifts: event.rangeDecorationShifts,
         })
       }
       if (event.type === 'patch') {

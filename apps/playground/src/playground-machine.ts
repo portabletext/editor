@@ -5,6 +5,7 @@ import {
   type PortableTextBlock,
   type RangeDecoration,
   type RangeDecorationOnMovedDetails,
+  type RangeDecorationShift,
 } from '@portabletext/editor'
 import {portableTextToMarkdown} from '@portabletext/markdown'
 import {applyAll, type Patch} from '@portabletext/patches'
@@ -249,6 +250,7 @@ export type GlobalPatchEntry = {
   id: string
   editorId: string
   patches: Array<Patch>
+  rangeDecorationShifts: Array<RangeDecorationShift>
   timestamp: number
 }
 
@@ -331,6 +333,7 @@ export const playgroundMachine = setup({
             id: keyGenerator(),
             editorId: event.editorId,
             patches: event.patches,
+            rangeDecorationShifts: event.rangeDecorationShifts,
             timestamp: Date.now(),
           },
           ...context.patchFeed,

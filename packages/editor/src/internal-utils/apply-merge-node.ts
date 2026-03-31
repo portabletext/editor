@@ -12,7 +12,10 @@ import {pathEquals} from '../slate/path/path-equals'
 import {previousPath} from '../slate/path/previous-path'
 import {pointEquals} from '../slate/point/point-equals'
 import {isRange} from '../slate/range/is-range'
-import type {PortableTextSlateEditor} from '../types/slate-editor'
+import {
+  pushDecorationShift,
+  type PortableTextSlateEditor,
+} from '../types/slate-editor'
 
 /**
  * Merge a node at the given path into its previous sibling using only
@@ -237,13 +240,15 @@ export function applyMergeNode(
         range: newRange,
       })
 
-      decoratedRange.rangeDecoration.onMoved?.({
+      const shiftDetails = {
         previousSelection: decoratedRange.rangeDecoration.selection,
         newSelection,
         rangeDecoration: decoratedRange.rangeDecoration,
-        origin: 'local',
-        reason: 'moved',
-      })
+        origin: 'local' as const,
+        reason: 'moved' as const,
+      }
+      decoratedRange.rangeDecoration.onMoved?.(shiftDetails)
+      pushDecorationShift(editor, shiftDetails)
 
       decoratedRange.rangeDecoration = {
         ...decoratedRange.rangeDecoration,

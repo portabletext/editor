@@ -3196,28 +3196,13 @@ describe('RangeDecorations: Multi-PTE Sync', () => {
 })
 
 describe('RangeDecorations: onMoved Return Value', () => {
-  test('Consumer can override decoration selection via onMoved return value', async () => {
+  test('Remote shift is reported in onMoved and uses auto-resolved position', async () => {
     // Editor B has a decoration on "dolly" (offset 6-11)
     // Editor A types "AAA " at the beginning → remote patches sync to Editor B
     // onMoved fires with auto-shifted selection for "dolly" (offset 10-15)
-    // Consumer returns a DIFFERENT selection covering the full text
-    // The decoration machine should use the consumer's selection
+    // The decoration lands at the auto-resolved position (no override)
 
     const onMovedSpyB = vi.fn()
-
-    // The consumer-provided selection: cover the entire span text
-    // After "AAA " is typed, the text is "AAA hello dolly" (15 chars)
-    // Consumer wants to highlight "AAA hello dolly" (offset 0-15)
-    const makeFullRangeSelection = (): EditorSelection => ({
-      anchor: {
-        path: [{_key: 'b1'}, 'children', {_key: 's1'}],
-        offset: 0,
-      },
-      focus: {
-        path: [{_key: 'b1'}, 'children', {_key: 's1'}],
-        offset: 15,
-      },
-    })
 
     let rangeDecorationsB: Array<RangeDecoration> = [
       {
@@ -3226,23 +3211,19 @@ describe('RangeDecorations: onMoved Return Value', () => {
         selection: {
           anchor: {
             path: [{_key: 'b1'}, 'children', {_key: 's1'}],
-            offset: 6, // start of "dolly"
+            offset: 6,
           },
           focus: {
             path: [{_key: 'b1'}, 'children', {_key: 's1'}],
-            offset: 11, // end of "dolly"
+            offset: 11,
           },
         },
         onMoved: (details) => {
           onMovedSpyB(details)
-          // Return a different selection — simulates W3C annotation re-resolve
-          const overrideSelection = makeFullRangeSelection()
-          rangeDecorationsB = rangeDecorationsB.map((d) =>
-            d.payload?.['id'] === 'dec1'
-              ? {...d, selection: overrideSelection}
-              : d,
-          )
-          return overrideSelection
+          rangeDecorationsB = updateRangeDecorations({
+            rangeDecorations: rangeDecorationsB,
+            details,
+          })
         },
       },
     ]
@@ -3259,18 +3240,15 @@ describe('RangeDecorations: onMoved Return Value', () => {
       editableProps: {rangeDecorations: rangeDecorationsB},
     })
 
-    // Wait for both editors to be ready
     await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
     await vi.waitFor(() => expect.element(locatorB).toBeInTheDocument())
 
-    // Verify initial decoration in Editor B on "dolly"
     await vi.waitFor(() =>
       expect
         .element(locatorB.getByTestId('range-decoration'))
         .toHaveTextContent('dolly'),
     )
 
-    // Type in Editor A at the beginning
     await userEvent.click(locator)
     editor.send({type: 'focus'})
     editor.send({
@@ -3289,7 +3267,6 @@ describe('RangeDecorations: onMoved Return Value', () => {
 
     await userEvent.type(locator, 'AAA ')
 
-    // Wait for sync to complete
     await vi.waitFor(() => {
       const terseA = getTersePt(editor.getSnapshot().context)
       const terseB = getTersePt(editorB.getSnapshot().context)
@@ -3297,33 +3274,26 @@ describe('RangeDecorations: onMoved Return Value', () => {
       expect(terseB[0]).toContain('AAA')
     })
 
-    // onMoved should have been called
     expect(onMovedSpyB).toHaveBeenCalled()
 
-    // onMoved should have been called with origin: 'remote'
     const allCalls = onMovedSpyB.mock.calls.map(
       (c: RangeDecorationOnMovedDetails[]) => c[0],
     ) as RangeDecorationOnMovedDetails[]
     const remoteCalls = allCalls.filter((d) => d.origin === 'remote')
     expect(remoteCalls.length).toBeGreaterThan(0)
 
-    // The first remote call should carry the original "dolly" range
-    // as previousSelection (offset 6-11 before any remote edits)
     const firstRemoteCall = remoteCalls[0]!
     expect(firstRemoteCall.previousSelection).not.toBeNull()
     expect(firstRemoteCall.previousSelection!.anchor.offset).toBe(6)
     expect(firstRemoteCall.previousSelection!.focus.offset).toBe(11)
 
-    // The last call should have a valid newSelection
     expect(allCalls[allCalls.length - 1]!.newSelection).not.toBeNull()
 
-    // CRITICAL: The decoration should now cover the FULL text "AAA hello dolly"
-    // because the consumer returned a selection covering offset 0-15,
-    // NOT just "dolly" at offset 10-15
+    // Decoration should land at auto-resolved position: "dolly" shifted to offset 10-15
     await vi.waitFor(() =>
       expect
         .element(locatorB.getByTestId('range-decoration'))
-        .toHaveTextContent('AAA hello dolly'),
+        .toHaveTextContent('dolly'),
     )
   })
 
@@ -5737,5 +5707,103 @@ describe('RangeDecorations: Undo Mark Operations', () => {
         .element(locator.getByTestId('range-decoration'))
         .toHaveTextContent('Hello world foo'),
     )
+  })
+})
+
+describe('RangeDecorations: rangeDecorationShifts on mutation event', () => {
+  test('Local edit includes rangeDecorationShifts in mutation event', async () => {
+    const mutationEvents: Array<{
+      patches: Array<Patch>
+      rangeDecorationShifts: Array<unknown>
+    }> = []
+
+    let rangeDecorations: Array<RangeDecoration> = [
+      {
+        component: RangeDecorationComponent,
+        payload: {id: 'dec1'},
+        selection: {
+          anchor: {
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            offset: 6,
+          },
+          focus: {
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            offset: 11,
+          },
+        },
+        onMoved: (details) => {
+          rangeDecorations = updateRangeDecorations({
+            rangeDecorations,
+            details,
+          })
+        },
+      },
+    ]
+
+    const {editor, locator} = await createTestEditor({
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', _key: 's1', text: 'hello dolly'}],
+          markDefs: [],
+        },
+      ],
+      editableProps: {rangeDecorations},
+    })
+
+    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+
+    editor.on('mutation', (event) => {
+      if (event.type === 'mutation') {
+        mutationEvents.push({
+          patches: event.patches,
+          rangeDecorationShifts: event.rangeDecorationShifts,
+        })
+      }
+    })
+
+    // Type at the beginning to shift the decoration
+    await userEvent.click(locator)
+    editor.send({type: 'focus'})
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 0,
+        },
+      },
+    })
+
+    await userEvent.type(locator, 'Hi ')
+
+    // Wait for mutation to flush
+    await vi.waitFor(() => {
+      expect(mutationEvents.length).toBeGreaterThan(0)
+    })
+
+    // At least one mutation should include rangeDecorationShifts
+    const withShifts = mutationEvents.filter(
+      (e) => e.rangeDecorationShifts.length > 0,
+    )
+    expect(withShifts.length).toBeGreaterThan(0)
+
+    const shifts = withShifts[0]!.rangeDecorationShifts as Array<{
+      rangeDecoration: RangeDecoration
+      previousSelection: EditorSelection
+      newSelection: EditorSelection
+      origin: string
+      reason: string
+    }>
+
+    expect(shifts[0]!.origin).toBe('local')
+    expect(shifts[0]!.reason).toBe('moved')
+    expect(shifts[0]!.previousSelection).not.toBeNull()
+    expect(shifts[0]!.newSelection).not.toBeNull()
   })
 })

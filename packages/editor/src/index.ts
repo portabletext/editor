@@ -42,6 +42,7 @@ export {usePortableTextEditorSelection} from './editor/usePortableTextEditorSele
 export {defaultKeyGenerator as keyGenerator} from './utils/key-generator'
 export {PortableTextEditor} from './editor/PortableTextEditor'
 export type {EditorEmittedEvent, MutationEvent} from './editor/relay-machine'
+export type {RangeDecorationShift} from './types/slate-editor'
 export {useEditor} from './editor/use-editor'
 export type {AddedAnnotationPaths} from './types/editor'
 export type {BlockOffset} from './types/block-offset'

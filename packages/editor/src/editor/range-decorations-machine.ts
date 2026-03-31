@@ -28,10 +28,11 @@ import {rangeIncludes} from '../slate/range/range-includes'
 import {rangeIntersection} from '../slate/range/range-intersection'
 import {rangeStart} from '../slate/range/range-start'
 import type {EditorSelection, RangeDecoration} from '../types/editor'
-import type {
-  MergeContext,
-  PortableTextSlateEditor,
-  SplitContext,
+import {
+  pushDecorationShift,
+  type MergeContext,
+  type PortableTextSlateEditor,
+  type SplitContext,
 } from '../types/slate-editor'
 import {isEmptyTextBlock} from '../utils'
 import type {EditorSchema} from './editor-schema'
@@ -214,13 +215,15 @@ export const rangeDecorationsMachine = setup({
         })
 
         if (!isRange(slateRange)) {
-          rangeDecoration.onMoved?.({
+          const shiftDetails = {
             previousSelection: rangeDecoration.selection,
-            newSelection: null,
+            newSelection: null as EditorSelection,
             rangeDecoration,
-            origin: 'local',
-            reason: 'moved',
-          })
+            origin: 'local' as const,
+            reason: 'moved' as const,
+          }
+          rangeDecoration.onMoved?.(shiftDetails)
+          pushDecorationShift(context.slateEditor, shiftDetails)
           continue
         }
 
@@ -251,13 +254,15 @@ export const rangeDecorationsMachine = setup({
         })
 
         if (!isRange(slateRange)) {
-          rangeDecoration.onMoved?.({
+          const shiftDetails = {
             previousSelection: rangeDecoration.selection,
-            newSelection: null,
+            newSelection: null as EditorSelection,
             rangeDecoration,
-            origin: 'local',
-            reason: 'moved',
-          })
+            origin: 'local' as const,
+            reason: 'moved' as const,
+          }
+          rangeDecoration.onMoved?.(shiftDetails)
+          pushDecorationShift(context.slateEditor, shiftDetails)
           continue
         }
 
@@ -424,24 +429,28 @@ export const rangeDecorationsMachine = setup({
                 })
               : null
 
-            decoratedRange.rangeDecoration.onMoved?.({
+            const shiftDetails = {
               previousSelection: decoratedRange.rangeDecoration.selection,
               newSelection: newRangeSelection,
               rangeDecoration: decoratedRange.rangeDecoration,
-              origin: 'local',
-              reason: 'moved',
-            })
+              origin: 'local' as const,
+              reason: 'moved' as const,
+            }
+            decoratedRange.rangeDecoration.onMoved?.(shiftDetails)
+            pushDecorationShift(context.slateEditor, shiftDetails)
           } else if (
             newRange !== null &&
             isOperationInsideRange(event.operation, newRange || slateRange)
           ) {
-            decoratedRange.rangeDecoration.onMoved?.({
+            const shiftDetails = {
               previousSelection: decoratedRange.rangeDecoration.selection,
               newSelection: decoratedRange.rangeDecoration.selection,
               rangeDecoration: decoratedRange.rangeDecoration,
-              origin: 'local',
-              reason: 'contentChanged',
-            })
+              origin: 'local' as const,
+              reason: 'contentChanged' as const,
+            }
+            decoratedRange.rangeDecoration.onMoved?.(shiftDetails)
+            pushDecorationShift(context.slateEditor, shiftDetails)
           }
         }
 
@@ -551,40 +560,16 @@ export const rangeDecorationsMachine = setup({
         })
 
         if (!isRange(freshSlateRange)) {
-          // Decoration can no longer be resolved in the document
           if (previousRange !== null) {
-            const consumerSelection = rangeDecoration.onMoved?.({
+            const shiftDetails = {
               previousSelection,
-              newSelection: null,
+              newSelection: null as EditorSelection,
               rangeDecoration,
-              origin: 'remote',
-              reason: 'moved',
-            })
-
-            // If the consumer returned an EditorSelection, use it to
-            // keep the decoration alive (e.g. re-resolved from W3C annotation)
-            if (consumerSelection) {
-              const consumerSlateRange = toSlateRange({
-                context: {
-                  schema: context.schema,
-                  value: context.slateEditor.children,
-                  selection: consumerSelection,
-                },
-                blockIndexMap: context.slateEditor.blockIndexMap,
-              })
-
-              if (isRange(consumerSlateRange)) {
-                rangeDecorationState.push({
-                  merge: mergeRangeDecorations,
-                  ...consumerSlateRange,
-                  rangeDecoration: {
-                    ...rangeDecoration,
-                    selection: consumerSelection,
-                  },
-                })
-                continue
-              }
+              origin: 'remote' as const,
+              reason: 'moved' as const,
             }
+            rangeDecoration.onMoved?.(shiftDetails)
+            pushDecorationShift(context.slateEditor, shiftDetails)
           }
           continue
         }
@@ -596,35 +581,15 @@ export const rangeDecorationsMachine = setup({
           isExpandedRange(previousRange) &&
           isCollapsedRange(freshSlateRange)
         ) {
-          const consumerSelection = rangeDecoration.onMoved?.({
+          const shiftDetails = {
             previousSelection,
-            newSelection: null,
+            newSelection: null as EditorSelection,
             rangeDecoration,
-            origin: 'remote',
-            reason: 'moved',
-          })
-
-          if (consumerSelection) {
-            const consumerSlateRange = toSlateRange({
-              context: {
-                schema: context.schema,
-                value: context.slateEditor.children,
-                selection: consumerSelection,
-              },
-              blockIndexMap: context.slateEditor.blockIndexMap,
-            })
-
-            if (isRange(consumerSlateRange)) {
-              rangeDecorationState.push({
-                merge: mergeRangeDecorations,
-                ...consumerSlateRange,
-                rangeDecoration: {
-                  ...rangeDecoration,
-                  selection: consumerSelection,
-                },
-              })
-            }
+            origin: 'remote' as const,
+            reason: 'moved' as const,
           }
+          rangeDecoration.onMoved?.(shiftDetails)
+          pushDecorationShift(context.slateEditor, shiftDetails)
           continue
         }
 
@@ -639,42 +604,25 @@ export const rangeDecorationsMachine = setup({
           // Structural change: use toSlateRange's re-resolved position.
           // Point.transform may have produced wrong results without
           // splitContext/mergeContext, so freshSlateRange is authoritative.
-          let finalSelection = slateRangeToSelection({
+          const finalSelection = slateRangeToSelection({
             schema: context.schema,
             editor: context.slateEditor,
             range: freshSlateRange,
           })
-          let finalSlateRange = freshSlateRange
 
-          const consumerSelection = rangeDecoration.onMoved?.({
+          const shiftDetails = {
             previousSelection,
             newSelection: finalSelection,
             rangeDecoration,
-            origin: 'remote',
-            reason: 'moved',
-          })
-
-          // If the consumer returned an EditorSelection, use it instead
-          // of the auto-resolved one (e.g. re-resolved from W3C annotation)
-          if (consumerSelection) {
-            const consumerSlateRange = toSlateRange({
-              context: {
-                schema: context.schema,
-                value: context.slateEditor.children,
-                selection: consumerSelection,
-              },
-              blockIndexMap: context.slateEditor.blockIndexMap,
-            })
-
-            if (isRange(consumerSlateRange)) {
-              finalSelection = consumerSelection
-              finalSlateRange = consumerSlateRange
-            }
+            origin: 'remote' as const,
+            reason: 'moved' as const,
           }
+          rangeDecoration.onMoved?.(shiftDetails)
+          pushDecorationShift(context.slateEditor, shiftDetails)
 
           rangeDecorationState.push({
             merge: mergeRangeDecorations,
-            ...finalSlateRange,
+            ...freshSlateRange,
             rangeDecoration: {
               ...rangeDecoration,
               selection: finalSelection,
@@ -696,50 +644,35 @@ export const rangeDecorationsMachine = setup({
             previousRange && !rangeEquals(previousRange, decoratedRange)
 
           if (offsetShifted) {
-            let finalSelection = cachedSelection
-            let finalSlateRange: Range = decoratedRange
-
-            const consumerSelection = rangeDecoration.onMoved?.({
+            const shiftDetails = {
               previousSelection,
               newSelection: cachedSelection,
               rangeDecoration,
-              origin: 'remote',
-              reason: 'moved',
-            })
-
-            if (consumerSelection) {
-              const consumerSlateRange = toSlateRange({
-                context: {
-                  schema: context.schema,
-                  value: context.slateEditor.children,
-                  selection: consumerSelection,
-                },
-                blockIndexMap: context.slateEditor.blockIndexMap,
-              })
-
-              if (isRange(consumerSlateRange)) {
-                finalSelection = consumerSelection
-                finalSlateRange = consumerSlateRange
-              }
+              origin: 'remote' as const,
+              reason: 'moved' as const,
             }
+            rangeDecoration.onMoved?.(shiftDetails)
+            pushDecorationShift(context.slateEditor, shiftDetails)
 
             rangeDecorationState.push({
+              ...decoratedRange,
               merge: mergeRangeDecorations,
-              ...finalSlateRange,
               rangeDecoration: {
                 ...rangeDecoration,
-                selection: finalSelection,
+                selection: cachedSelection,
               },
             })
           } else {
             if (contentChangedSet.has(rangeDecoration)) {
-              rangeDecoration.onMoved?.({
+              const shiftDetails = {
                 previousSelection: cachedSelection,
                 newSelection: cachedSelection,
                 rangeDecoration,
-                origin: 'remote',
-                reason: 'contentChanged',
-              })
+                origin: 'remote' as const,
+                reason: 'contentChanged' as const,
+              }
+              rangeDecoration.onMoved?.(shiftDetails)
+              pushDecorationShift(context.slateEditor, shiftDetails)
             }
 
             rangeDecorationState.push({

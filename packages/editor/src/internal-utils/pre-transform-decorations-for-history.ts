@@ -7,7 +7,10 @@ import {isAfterPoint} from '../slate/point/is-after-point'
 import {pointEquals} from '../slate/point/point-equals'
 import {isRange} from '../slate/range/is-range'
 import type {EditorSelection} from '../types/editor'
-import type {PortableTextSlateEditor} from '../types/slate-editor'
+import {
+  pushDecorationShift,
+  type PortableTextSlateEditor,
+} from '../types/slate-editor'
 import {transformPointForMerge} from './apply-merge-node'
 import {transformPointForSplit} from './apply-split-node'
 
@@ -211,13 +214,15 @@ export function preTransformDecorationsForHistory(
         })
 
         if (moved) {
-          decoratedRange.rangeDecoration.onMoved?.({
+          const shiftDetails = {
             previousSelection: originalSelection,
             newSelection,
             rangeDecoration: decoratedRange.rangeDecoration,
-            origin: 'local',
-            reason: 'moved',
-          })
+            origin: 'local' as const,
+            reason: 'moved' as const,
+          }
+          decoratedRange.rangeDecoration.onMoved?.(shiftDetails)
+          pushDecorationShift(editor, shiftDetails)
         }
 
         if (newSelection) {

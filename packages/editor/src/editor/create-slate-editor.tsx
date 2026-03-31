@@ -45,6 +45,7 @@ export function createSlateEditor(
   editor.splitContext = null
   editor.mergeContext = null
   editor.mergeDeletedBlockFlags = null
+  editor.pendingDecorationShifts = []
   editor._suppressDecorationSendBack = 0
 
   editor.isDeferringMutations = false

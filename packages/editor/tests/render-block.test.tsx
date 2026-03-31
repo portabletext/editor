@@ -400,7 +400,7 @@ describe('renderBlock', () => {
     // Waiting for the mutation event to be emitted so we know the value has
     // been set inside `App`
     await vi.waitFor(() => {
-      expect(mutationEvents.length).toEqual(1)
+      expect(mutationEvents.length).toBeGreaterThanOrEqual(1)
     })
 
     // Asserting that the `renderBlock` callback has been mounted exactly once

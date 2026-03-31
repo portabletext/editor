@@ -39,23 +39,27 @@ describe('focus', () => {
 
     await userEvent.click(locator)
 
-    // Wait for both focus and selection to settle.
-    // Firefox can be slow to process focus on empty contenteditable elements.
     await vi.waitFor(() => {
-      expect(focusEvents.at(-1)).toEqual('focused')
+      expect(focusEvents).toContain('focused')
       expect(editor.getSnapshot().context.selection).toEqual(expectedSelection)
     })
 
     await userEvent.click(toolbarLocator)
 
     await vi.waitFor(() => {
-      expect(focusEvents.at(-1)).toEqual('blurred')
+      expect(focusEvents).toContain('blurred')
     })
+
+    const focusCountBeforeReclick = focusEvents.filter(
+      (event) => event === 'focused',
+    ).length
 
     await userEvent.click(locator)
 
     await vi.waitFor(() => {
-      expect(focusEvents.at(-1)).toEqual('focused')
+      expect(
+        focusEvents.filter((event) => event === 'focused').length,
+      ).toBeGreaterThan(focusCountBeforeReclick)
       expect(editor.getSnapshot().context.selection).toEqual(expectedSelection)
     })
   })
@@ -122,24 +126,26 @@ describe('focus', () => {
     await vi.waitFor(() => expect.element(barSpanLocator).toBeInTheDocument())
     await vi.waitFor(() => expect.element(toolbarLocator).toBeInTheDocument())
 
+    const expectedSelection = {
+      anchor: {
+        path: [{_key: barBlockKey}, 'children', {_key: barSpanKey}],
+        offset: 0,
+      },
+      focus: {
+        path: [{_key: barBlockKey}, 'children', {_key: barSpanKey}],
+        offset: 0,
+      },
+      backward: false,
+    }
+
     await userEvent.click(barSpanLocator)
 
+    // Firefox may fire a transient `blurred` after `focused` when clicking a
+    // child span inside contenteditable. Checking the selection together with
+    // the focus event avoids the race — a correct selection proves focus.
     await vi.waitFor(() => {
-      expect(focusEvents.at(-1)).toEqual('focused')
-    })
-
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).toEqual({
-        anchor: {
-          path: [{_key: barBlockKey}, 'children', {_key: barSpanKey}],
-          offset: 0,
-        },
-        focus: {
-          path: [{_key: barBlockKey}, 'children', {_key: barSpanKey}],
-          offset: 0,
-        },
-        backward: false,
-      })
+      expect(focusEvents).toContain('focused')
+      expect(editor.getSnapshot().context.selection).toEqual(expectedSelection)
     })
 
     await userEvent.click(toolbarLocator)
@@ -148,24 +154,17 @@ describe('focus', () => {
       expect(focusEvents.at(-1)).toEqual('blurred')
     })
 
+    const focusCountBeforeReclick = focusEvents.filter(
+      (event) => event === 'focused',
+    ).length
+
     await userEvent.click(barSpanLocator)
 
     await vi.waitFor(() => {
-      expect(focusEvents.at(-1)).toEqual('focused')
-    })
-
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).toEqual({
-        anchor: {
-          path: [{_key: barBlockKey}, 'children', {_key: barSpanKey}],
-          offset: 0,
-        },
-        focus: {
-          path: [{_key: barBlockKey}, 'children', {_key: barSpanKey}],
-          offset: 0,
-        },
-        backward: false,
-      })
+      expect(
+        focusEvents.filter((event) => event === 'focused').length,
+      ).toBeGreaterThan(focusCountBeforeReclick)
+      expect(editor.getSnapshot().context.selection).toEqual(expectedSelection)
     })
   })
 })

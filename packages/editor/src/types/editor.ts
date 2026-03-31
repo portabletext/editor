@@ -323,17 +323,10 @@ export interface RangeDecoration {
   /**
    * Called when the range decoration moves due to edits.
    *
-   * When `origin` is `'remote'`, the return value is honored: return an
-   * `EditorSelection` to override the auto-resolved position (e.g. re-resolve
-   * from a W3C annotation or other source of truth). This is useful because
-   * remote structural ops (split/merge) may truncate or invalidate the
-   * decoration, and the editor cannot reconstruct the full range without
-   * consumer knowledge.
-   *
-   * When `origin` is `'local'`, the return value is ignored — local transforms
-   * (split/merge context) already produce correct positions.
+   * For transactional handling of moves alongside content changes, use
+   * `rangeDecorationShifts` on the `'mutation'` event instead.
    */
-  onMoved?: (details: RangeDecorationOnMovedDetails) => EditorSelection | void
+  onMoved?: (details: RangeDecorationOnMovedDetails) => void
   /**
    * Stable identifier for matching to external data (e.g., annotation/comment ID).
    * Set by the consumer — PTE preserves it and passes it through in onMoved details.
