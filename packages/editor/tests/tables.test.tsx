@@ -1,4 +1,4 @@
-import {set, unset} from '@portabletext/patches'
+import {diffMatchPatch, set, setIfMissing, unset} from '@portabletext/patches'
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import React from 'react'
@@ -473,6 +473,9 @@ describe('tables', () => {
         snapshot: undefined,
       })
 
+      // The first span has no marks property (not yet normalized), while the
+      // new span has marks: []. Since isSpan requires marks to be an array,
+      // the merge normalization doesn't fire. Both spans remain separate.
       await vi.waitFor(() => {
         return expect(editor.getSnapshot().context.value).toEqual([
           {
@@ -526,14 +529,227 @@ describe('tables', () => {
       // span, so the unset becomes a direct remove_node operation. This dirties
       // the text block's path, allowing normalization to restore an empty span.
       await vi.waitFor(() => {
-        const value = editor.getSnapshot().context.value
-        const content = getTableCellContent(value)
-        const block = content.at(0)!
-        const children = block['children'] as Array<Record<string, unknown>>
-        expect(children.length).toBe(1)
-        expect(children.at(0)).toEqual(
-          expect.objectContaining({_type: 'span', text: '', marks: []}),
-        )
+        return expect(editor.getSnapshot().context.value).toEqual([
+          {
+            ...table,
+            rows: [
+              {
+                ...row,
+                cells: [
+                  {
+                    ...cell,
+                    content: [
+                      {
+                        ...block,
+                        children: [
+                          {
+                            _key: 'k7',
+                            _type: 'span',
+                            text: '',
+                            marks: [],
+                          },
+                        ],
+                        markDefs: [],
+                        style: 'normal',
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ])
+      })
+    })
+
+    test('diffMatchPatch on span inside container', async () => {
+      const {editor, table, row, cell, block, span} =
+        await createTableTestEditor()
+
+      const path = [
+        {_key: table._key},
+        'rows',
+        {_key: row._key},
+        'cells',
+        {_key: cell._key},
+        'content',
+        {_key: block._key},
+        'children',
+        {_key: span._key},
+        'text',
+      ] as const
+
+      editor.send({
+        type: 'patches',
+        patches: [diffMatchPatch('foo', 'foobar', [...path])],
+        snapshot: undefined,
+      })
+
+      await vi.waitFor(() => {
+        return expect(editor.getSnapshot().context.value).toEqual([
+          {
+            ...table,
+            rows: [
+              {
+                ...row,
+                cells: [
+                  {
+                    ...cell,
+                    content: [
+                      {
+                        ...block,
+                        children: [
+                          {
+                            ...span,
+                            text: 'foobar',
+                            marks: [],
+                          },
+                        ],
+                        markDefs: [],
+                        style: 'normal',
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ])
+      })
+    })
+
+    test('set style on text block inside container', async () => {
+      const {editor, table, row, cell, block, span} =
+        await createTableTestEditor()
+
+      editor.send({
+        type: 'patches',
+        patches: [
+          set('h1', [
+            {_key: table._key},
+            'rows',
+            {_key: row._key},
+            'cells',
+            {_key: cell._key},
+            'content',
+            {_key: block._key},
+            'style',
+          ]),
+        ],
+        snapshot: undefined,
+      })
+
+      await vi.waitFor(() => {
+        return expect(editor.getSnapshot().context.value).toEqual([
+          {
+            ...table,
+            rows: [
+              {
+                ...row,
+                cells: [
+                  {
+                    ...cell,
+                    content: [
+                      {
+                        ...block,
+                        children: [span],
+                        markDefs: [],
+                        style: 'h1',
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ])
+      })
+    })
+
+    test('setIfMissing on span inside container', async () => {
+      const {editor, table, row, cell, block, span} =
+        await createTableTestEditor()
+
+      // The span was created without marks, so setIfMissing adds marks: ['strong'].
+      // This also triggers normalization on the span, adding markDefs/style to the block.
+      editor.send({
+        type: 'patches',
+        patches: [
+          setIfMissing(
+            ['strong'],
+            [
+              {_key: table._key},
+              'rows',
+              {_key: row._key},
+              'cells',
+              {_key: cell._key},
+              'content',
+              {_key: block._key},
+              'children',
+              {_key: span._key},
+              'marks',
+            ],
+          ),
+        ],
+        snapshot: undefined,
+      })
+
+      await vi.waitFor(() => {
+        return expect(editor.getSnapshot().context.value).toEqual([
+          {
+            ...table,
+            rows: [
+              {
+                ...row,
+                cells: [
+                  {
+                    ...cell,
+                    content: [
+                      {
+                        ...block,
+                        children: [
+                          {
+                            ...span,
+                            marks: ['strong'],
+                          },
+                        ],
+                        markDefs: [],
+                        style: 'normal',
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ])
+      })
+    })
+
+    test('unset style from text block inside container', async () => {
+      const {editor, table, row, cell, block} = await createTableTestEditor()
+
+      editor.send({
+        type: 'patches',
+        patches: [
+          unset([
+            {_key: table._key},
+            'rows',
+            {_key: row._key},
+            'cells',
+            {_key: cell._key},
+            'content',
+            {_key: block._key},
+            'style',
+          ]),
+        ],
+        snapshot: undefined,
+      })
+
+      // The block was created without style, so unsetting a non-existent
+      // property is a no-op. The value remains unchanged.
+      await vi.waitFor(() => {
+        return expect(editor.getSnapshot().context.value).toEqual([table])
       })
     })
   })
