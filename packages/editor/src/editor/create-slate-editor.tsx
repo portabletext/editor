@@ -25,6 +25,7 @@ export function createSlateEditor(
 
   const editor = createEditor()
 
+  editor.schema = context.schema
   editor.keyGenerator = context.keyGenerator
   editor.editableTypes = new Set()
 

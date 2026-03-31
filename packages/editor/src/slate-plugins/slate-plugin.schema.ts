@@ -14,8 +14,6 @@ export function createSchemaPlugin({editorActor}: {editorActor: EditorActor}) {
   return function schemaPlugin(
     editor: PortableTextSlateEditor,
   ): PortableTextSlateEditor {
-    editor.schema = editorActor.getSnapshot().context.schema
-
     // Extend Slate's default normalization
     const {normalizeNode} = editor
     editor.normalizeNode = (entry) => {
