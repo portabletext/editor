@@ -40,7 +40,6 @@ export interface BaseEditor {
 
   apply: (operation: Operation) => void
   createSpan: () => PortableTextSpan
-  getDirtyPaths: (operation: Operation) => Path[]
   isInline: (element: PortableTextTextBlock | PortableTextObject) => boolean
   normalizeNode: (
     entry: [Editor | Node, Path],

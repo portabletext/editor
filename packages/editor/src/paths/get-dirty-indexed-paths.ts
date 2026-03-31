@@ -1,19 +1,23 @@
 import {isSpan} from '@portabletext/schema'
-import {getNodeDescendants} from '../../node-traversal/get-nodes'
-import {getChildFieldName} from '../../paths/get-child-field-name'
-import type {Editor} from '../interfaces/editor'
-import type {Node} from '../interfaces/node'
-import {pathAncestors} from '../path/path-ancestors'
-import {pathLevels} from '../path/path-levels'
-import type {WithEditorFirstArg} from '../utils/types'
+import type {EditorSchema} from '../editor/editor-schema'
+import {getNodeDescendants} from '../node-traversal/get-nodes'
+import type {Node} from '../slate/interfaces/node'
+import type {Operation} from '../slate/interfaces/operation'
+import {pathAncestors} from '../slate/path/path-ancestors'
+import {pathLevels} from '../slate/path/path-levels'
+import {getChildFieldName} from './get-child-field-name'
 
 /**
- * Get the "dirty" paths generated from an operation.
+ * Get the "dirty" indexed paths generated from an operation.
  */
-export const getDirtyPaths: WithEditorFirstArg<Editor['getDirtyPaths']> = (
-  editor,
-  op,
-) => {
+export function getDirtyIndexedPaths(
+  context: {
+    schema: EditorSchema
+    editableTypes: Set<string>
+    value: Array<Node>
+  },
+  op: Operation,
+): Array<Array<number>> {
   switch (op.type) {
     case 'insert_text':
     case 'remove_text':
@@ -25,7 +29,7 @@ export const getDirtyPaths: WithEditorFirstArg<Editor['getDirtyPaths']> = (
       // need normalization. Dirty their paths and their descendants'
       // paths so the normalizer visits them.
       if (op.type === 'set_node') {
-        const childFieldName = getChildFieldName(editor, path)
+        const childFieldName = getChildFieldName(context, path)
 
         if (childFieldName) {
           const newChildren = (op.newProperties as Record<string, unknown>)[
@@ -43,7 +47,7 @@ export const getDirtyPaths: WithEditorFirstArg<Editor['getDirtyPaths']> = (
               const childPath = [...path, i]
               levels.push(childPath)
 
-              for (const entry of getNodeDescendants(editor, child as Node)) {
+              for (const entry of getNodeDescendants(context, child as Node)) {
                 levels.push(childPath.concat(entry.path))
               }
             }
@@ -58,11 +62,11 @@ export const getDirtyPaths: WithEditorFirstArg<Editor['getDirtyPaths']> = (
       const {node, path} = op
       const levels = pathLevels(path)
 
-      if (isSpan(editor, node)) {
+      if (isSpan(context, node)) {
         return levels
       }
 
-      for (const entry of getNodeDescendants(editor, node)) {
+      for (const entry of getNodeDescendants(context, node)) {
         levels.push(path.concat(entry.path))
       }
 
