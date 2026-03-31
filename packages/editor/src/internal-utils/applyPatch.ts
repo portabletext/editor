@@ -8,7 +8,6 @@ import {
   type UnsetPatch,
 } from '@portabletext/patches'
 import {
-  isSpan,
   isTextBlock,
   type PortableTextBlock,
   type PortableTextChild,
@@ -22,19 +21,29 @@ import {
   makeDiff,
   parsePatch,
 } from '@sanity/diff-match-patch'
-import type {EditorSchema} from '../editor/editor-schema'
 import type {EditorContext} from '../editor/editor-snapshot'
 import {getChildren} from '../node-traversal/get-children'
 import {getNode} from '../node-traversal/get-node'
 import {pathRef} from '../slate/editor/path-ref'
 import type {Node} from '../slate/interfaces/node'
 import {isObjectNode} from '../slate/node/is-object-node'
+import {isSpanNode} from '../slate/node/is-span-node'
+import {isTextBlockNode} from '../slate/node/is-text-block-node'
 import type {Path} from '../types/paths'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
-import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import {applyDeselect, applySelect} from './apply-selection'
 import {applySetNode} from './apply-set-node'
+import {resolveNodePath} from './resolve-node-path'
 import {isEqualToEmptyEditor, toSlateBlock} from './values'
+
+function resolveContext(editor: PortableTextSlateEditor) {
+  return {
+    schema: editor.schema,
+    editableTypes: editor.editableTypes,
+    value: editor.children,
+    blockIndexMap: editor.blockIndexMap,
+  }
+}
 
 /**
  * Creates a function that can apply a patch onto a PortableTextSlateEditor.
@@ -74,63 +83,55 @@ export function createApplyPatch(
 }
 
 function diffMatchPatch(
-  editor: Pick<
-    PortableTextSlateEditor,
-    'children' | 'apply' | 'selection' | 'onChange' | 'schema'
-  >,
+  editor: PortableTextSlateEditor,
   patch: DiffMatchPatch,
 ): boolean {
-  const block = findBlock(editor.children, patch.path)
+  const resolved = resolveNodePath(resolveContext(editor), patch.path)
 
-  if (!block) {
+  if (!resolved) {
     return false
   }
 
-  const child = findBlockChild(block, patch.path, editor.schema)
+  const {indexedPath, propertyPath} = resolved
 
-  if (!child) {
+  if (propertyPath.length !== 1 || propertyPath.at(0) !== 'text') {
     return false
   }
 
-  const isSpanTextDiffMatchPatch =
-    block &&
-    isTextBlock({schema: editor.schema}, block.node) &&
-    patch.path.length === 4 &&
-    patch.path[1] === 'children' &&
-    patch.path[3] === 'text'
+  const entry = getNode(editor, indexedPath)
 
-  if (
-    !isSpanTextDiffMatchPatch ||
-    !isSpan({schema: editor.schema}, child.node)
-  ) {
+  if (!entry || !isSpanNode({schema: editor.schema}, entry.node)) {
     return false
   }
+
+  const spanNode = entry.node
+  const text = typeof spanNode.text === 'string' ? spanNode.text : ''
 
   const patches = parsePatch(patch.value)
-  const [newValue] = diffMatchPatchApplyPatches(patches, child.node.text, {
+  const [newValue] = diffMatchPatchApplyPatches(patches, text, {
     allowExceedingIndices: true,
   })
-  const diff = cleanupEfficiency(makeDiff(child.node.text, newValue), 5)
+  const diff = cleanupEfficiency(makeDiff(text, newValue), 5)
 
   let offset = 0
-  for (const [op, text] of diff) {
+  for (const [op, diffText] of diff) {
     if (op === DIFF_INSERT) {
       editor.apply({
         type: 'insert_text',
-        path: [block.index, child.index],
+        path: indexedPath,
         offset,
-        text,
+        text: diffText,
       })
-      offset += text.length
+      offset += diffText.length
     } else if (op === DIFF_DELETE) {
       editor.apply({
         type: 'remove_text',
-        path: [block.index, child.index],
+        path: indexedPath,
         offset,
-        text,
+        text: diffText,
       })
     } else if (op === DIFF_EQUAL) {
-      offset += text.length
+      offset += diffText.length
     }
   }
 
@@ -144,17 +145,43 @@ function insertPatch(
   editor: PortableTextSlateEditor,
   patch: InsertPatch,
 ) {
-  const block = findBlock(editor.children, patch.path)
+  const resolved = resolveNodePath(resolveContext(editor), patch.path)
 
-  if (!block) {
-    if (patch.path.length === 1 && patch.path[0] === 0) {
+  if (!resolved) {
+    // Handle numeric insert (e.g., path [0] for inserting into empty editor)
+    if (patch.path.length === 1 && typeof patch.path.at(0) === 'number') {
+      const numericIndex = patch.path.at(0) as number
       const blocksToInsert = patch.items.map((item) =>
         toSlateBlock(item as PortableTextBlock, {schemaTypes: context.schema}),
       )
 
+      const editorWasEmptyBefore = isEqualToEmptyEditor(
+        context.initialValue,
+        editor.children,
+        context.schema,
+      )
+
       blocksToInsert.forEach((node, i) => {
-        editor.apply({type: 'insert_node', path: [i], node})
+        editor.apply({
+          type: 'insert_node',
+          path: [numericIndex + i],
+          node,
+        })
       })
+
+      if (editorWasEmptyBefore && numericIndex === 0) {
+        const {position} = patch
+        const removeIdx = position === 'before' ? blocksToInsert.length : 0
+        const removeEntry = getNode(editor, [removeIdx])
+        if (!removeEntry) {
+          return true
+        }
+        editor.apply({
+          type: 'remove_node',
+          path: [removeIdx],
+          node: removeEntry.node,
+        })
+      }
 
       return true
     }
@@ -162,17 +189,37 @@ function insertPatch(
     return false
   }
 
-  if (patch.path.length > 1 && patch.path[1] !== 'children') {
-    return false
+  const {indexedPath, propertyPath} = resolved
+
+  // When propertyPath is non-empty, the insert target is inside a container
+  // that we can't resolve deeper into. Apply the insert on the resolved node
+  // using applyAll and update via applySetNode.
+  if (propertyPath.length !== 0) {
+    const entry = getNode(editor, indexedPath)
+
+    if (!entry) {
+      return false
+    }
+
+    const updatedNode = applyAll(entry.node, [
+      {
+        ...patch,
+        path: propertyPath,
+      },
+    ])
+
+    applySetNode(editor, updatedNode, indexedPath)
+
+    return true
   }
 
-  // Insert blocks
-  if (patch.path.length === 1) {
+  // Insert blocks (path resolves to a single block)
+  if (indexedPath.length === 1) {
     const {items, position} = patch
     const blocksToInsert = items.map((item) =>
       toSlateBlock(item as PortableTextBlock, {schemaTypes: context.schema}),
     )
-    const targetBlockIndex = block.index
+    const targetBlockIndex = indexedPath.at(0)!
     const normalizedIdx =
       position === 'after' ? targetBlockIndex + 1 : targetBlockIndex
 
@@ -188,8 +235,8 @@ function insertPatch(
 
     if (
       editorWasEmptyBefore &&
-      typeof patch.path[0] === 'number' &&
-      patch.path[0] === 0
+      typeof patch.path.at(0) === 'number' &&
+      patch.path.at(0) === 0
     ) {
       const removeIdx =
         position === 'before'
@@ -209,34 +256,49 @@ function insertPatch(
     return true
   }
 
-  // Insert children
+  // Insert children (path resolves to a child node at depth >= 2)
   const {items, position} = patch
 
-  const targetChild = findBlockChild(block, patch.path, editor.schema)
+  // Resolve the parent node by stripping the last field+key from the patch path
+  const parentPatchPath = patch.path.slice(0, -2)
+  const parentResolved = resolveNodePath(
+    resolveContext(editor),
+    parentPatchPath,
+  )
 
-  if (!targetChild) {
+  if (!parentResolved || parentResolved.propertyPath.length !== 0) {
     return false
   }
 
-  const childrenToInsert = toSlateBlock(
-    {...block.node, children: items as PortableTextChild[]},
-    {schemaTypes: context.schema},
-  )
-  const normalizedIdx =
-    position === 'after' ? targetChild.index + 1 : targetChild.index
-  const childInsertPath = [block.index, normalizedIdx]
+  const parentPath = parentResolved.indexedPath
+  const parentEntry = getNode(editor, parentPath)
 
-  if (
-    childrenToInsert &&
-    isTextBlock({schema: editor.schema}, childrenToInsert)
-  ) {
-    childrenToInsert.children.forEach((node: Node, i: number) => {
-      editor.apply({
-        type: 'insert_node',
-        path: [childInsertPath[0]!, childInsertPath[1]! + i],
-        node,
+  if (!parentEntry) {
+    return false
+  }
+
+  const targetChildIndex = indexedPath.at(-1)!
+  const normalizedIdx =
+    position === 'after' ? targetChildIndex + 1 : targetChildIndex
+
+  if (isTextBlock({schema: editor.schema}, parentEntry.node)) {
+    const childrenToInsert = toSlateBlock(
+      {...parentEntry.node, children: items as PortableTextChild[]},
+      {schemaTypes: context.schema},
+    )
+
+    if (
+      childrenToInsert &&
+      isTextBlock({schema: editor.schema}, childrenToInsert)
+    ) {
+      childrenToInsert.children.forEach((node: Node, i: number) => {
+        editor.apply({
+          type: 'insert_node',
+          path: [...parentPath, normalizedIdx + i],
+          node,
+        })
       })
-    })
+    }
   }
 
   return true
@@ -263,7 +325,7 @@ function setPatch(
 
     // Remove all existing blocks in reverse order
     for (let i = editor.children.length - 1; i >= 0; i--) {
-      const node = editor.children[i]
+      const node = editor.children.at(i)
       if (node) {
         editor.apply({type: 'remove_node', path: [i], node})
       }
@@ -289,43 +351,51 @@ function setPatch(
     return true
   }
 
-  if (typeof patch.path[3] === 'string') {
-    value = {}
-    value[patch.path[3]] = patch.value
-  }
+  const resolved = resolveNodePath(resolveContext(editor), patch.path)
 
-  const block = findBlock(editor.children, patch.path)
-
-  if (!block) {
+  if (!resolved) {
     return false
   }
 
-  const blockIsTextBlock = isTextBlock({schema: editor.schema}, block.node)
+  const {indexedPath, propertyPath} = resolved
+  const entry = getNode(editor, indexedPath)
 
-  if (patch.path.length === 1) {
-    const updatedBlock = applyAll(block.node, [
-      {
-        ...patch,
-        path: patch.path.slice(1),
-      },
-    ])
+  if (!entry) {
+    return false
+  }
 
+  // Rewrite value for property-level text patches on spans
+  if (propertyPath.length > 0 && propertyPath.at(0) === 'text') {
+    value = {}
+    value['text'] = patch.value
+  }
+
+  // Node-level set (propertyPath is empty)
+  if (propertyPath.length === 0) {
     if (
-      isTextBlock({schema: editor.schema}, block.node) &&
-      isTextBlock({schema: editor.schema}, updatedBlock)
+      isTextBlock({schema: editor.schema}, entry.node) &&
+      isTextBlock({schema: editor.schema}, value)
     ) {
-      applySetNode(editor, updatedBlock, [block.index])
+      // Full text block replacement
+      const updatedBlock = applyAll(entry.node, [
+        {
+          ...patch,
+          path: [],
+        },
+      ])
+
+      applySetNode(editor, updatedBlock, indexedPath)
 
       const previousSelection = editor.selection
 
-      // Remove the previous children in reverse order (highest index first)
-      const children = getChildren(editor, [block.index])
+      // Remove the previous children in reverse order
+      const children = getChildren(editor, indexedPath)
 
-      const childPaths = Array.from(children.reverse(), (entry) =>
-        pathRef(editor, entry.path),
+      const childPaths = Array.from(children.reverse(), (childEntry) =>
+        pathRef(editor, childEntry.path),
       )
-      for (const pathRef of childPaths) {
-        const childPath = pathRef.unref()!
+      for (const ref of childPaths) {
+        const childPath = ref.unref()!
         if (childPath) {
           const childNodeEntry = getNode(editor, childPath)
           if (!childNodeEntry) {
@@ -340,13 +410,15 @@ function setPatch(
       }
 
       // Insert the new children
-      updatedBlock.children.forEach((node: Node, i: number) => {
-        editor.apply({
-          type: 'insert_node',
-          path: [block.index, i],
-          node,
+      if (isTextBlock({schema: editor.schema}, updatedBlock)) {
+        updatedBlock.children.forEach((node: Node, i: number) => {
+          editor.apply({
+            type: 'insert_node',
+            path: [...indexedPath, i],
+            node,
+          })
         })
-      })
+      }
 
       // Restore the selection
       if (previousSelection) {
@@ -354,96 +426,56 @@ function setPatch(
       }
 
       return true
-    } else {
-      applySetNode(editor, updatedBlock, [block.index])
-
-      return true
     }
-  }
 
-  if (
-    blockIsTextBlock &&
-    (patch.path.length === 2 || patch.path[1] !== 'children')
-  ) {
-    const updatedBlock = applyAll(block.node, [
+    // Non-text-block node-level set
+    const updatedNode = applyAll(entry.node, [
       {
         ...patch,
-        path: patch.path.slice(1),
+        path: [],
       },
     ])
 
-    applySetNode(editor, updatedBlock, [block.index])
+    applySetNode(editor, updatedNode, indexedPath)
 
     return true
   }
 
-  const child = findBlockChild(block, patch.path, editor.schema)
+  // Property-level set (propertyPath is non-empty)
+  if (isSpanNode({schema: editor.schema}, entry.node)) {
+    if (
+      value !== null &&
+      typeof value === 'object' &&
+      'text' in value &&
+      typeof value['text'] === 'string'
+    ) {
+      if (patch.type === 'setIfMissing') {
+        return false
+      }
 
-  // If this is targeting a text block child
-  if (blockIsTextBlock && child) {
-    if (isSpan({schema: editor.schema}, child.node)) {
-      if (
-        value !== null &&
-        typeof value === 'object' &&
-        'text' in value &&
-        typeof value['text'] === 'string'
-      ) {
-        if (patch.type === 'setIfMissing') {
-          return false
-        }
-
-        const oldText = child.node.text
-        const newText = value['text'] as string
-        if (oldText !== newText) {
-          editor.apply({
-            type: 'remove_text',
-            path: [block.index, child.index],
-            offset: 0,
-            text: oldText,
-          })
-          editor.apply({
-            type: 'insert_text',
-            path: [block.index, child.index],
-            offset: 0,
-            text: newText,
-          })
-          // call OnChange here to emit the new selection
-          // the user's selection might be interfering with
-          editor.onChange()
-        }
-      } else {
-        // Setting non-text span property
-
-        const propPath = patch.path.slice(3)
-        const propEntry = propPath.at(0)
-        const reservedProps = ['_key', '_type', 'text']
-
-        if (propEntry === undefined) {
-          return false
-        }
-
-        if (
-          typeof propEntry === 'string' &&
-          reservedProps.includes(propEntry)
-        ) {
-          return false
-        }
-
-        const newNode = applyAll(child.node, [
-          {
-            ...patch,
-            path: propPath,
-          },
-        ])
-
-        applySetNode(editor, newNode, [block.index, child.index])
+      const oldText = typeof entry.node.text === 'string' ? entry.node.text : ''
+      const newText = value['text'] as string
+      if (oldText !== newText) {
+        editor.apply({
+          type: 'remove_text',
+          path: indexedPath,
+          offset: 0,
+          text: oldText,
+        })
+        editor.apply({
+          type: 'insert_text',
+          path: indexedPath,
+          offset: 0,
+          text: newText,
+        })
+        // call onChange here to emit the new selection
+        // the user's selection might be interfering with
+        editor.onChange()
       }
     } else {
-      // Setting inline object property
-
-      const propPath = patch.path.slice(3)
-      const reservedProps = ['_key', '_type', 'children']
-      const propEntry = propPath.at(0)
+      // Setting non-text span property
+      const propEntry = propertyPath.at(0)
+      const reservedProps = ['_key', '_type', 'text']
 
       if (propEntry === undefined) {
         return false
@@ -453,33 +485,94 @@ function setPatch(
         return false
       }
 
-      const newNode = applyAll(child.node, [
+      const newNode = applyAll(entry.node, [
         {
           ...patch,
-          path: patch.path.slice(3),
+          path: propertyPath,
         },
       ])
 
-      applySetNode(editor, newNode, [block.index, child.index])
+      applySetNode(editor, newNode, indexedPath)
     }
 
     return true
-  } else if (block && !blockIsTextBlock) {
-    if (patch.path.length > 1 && patch.path[1] !== 'children') {
-      const newVal = applyAll(block.node, [
-        {
-          ...patch,
-          path: patch.path.slice(1),
-        },
-      ])
-
-      applySetNode(editor, newVal, [block.index])
-    } else {
-      return false
-    }
   }
 
+  if (isTextBlockNode({schema: editor.schema}, entry.node)) {
+    const updatedBlock = applyAll(entry.node, [
+      {
+        ...patch,
+        path: propertyPath,
+      },
+    ])
+
+    applySetNode(editor, updatedBlock, indexedPath)
+
+    return true
+  }
+
+  // Object node (block objects, inline objects, container nodes)
+  if (isObjectNode({schema: editor.schema}, entry.node)) {
+    // Only guard reserved props for child-level objects (inline objects)
+    if (indexedPath.length >= 2) {
+      const propEntry = propertyPath.at(0)
+      const reservedProps = ['_key', '_type', 'children']
+
+      if (propEntry === undefined) {
+        return false
+      }
+
+      if (typeof propEntry === 'string' && reservedProps.includes(propEntry)) {
+        return false
+      }
+    }
+
+    const newNode = applyAll(entry.node, [
+      {
+        ...patch,
+        path: propertyPath,
+      },
+    ])
+
+    applySetNode(editor, newNode, indexedPath)
+
+    return true
+  }
+
+  // Fallback
+  const updatedNode = applyAll(entry.node, [
+    {
+      ...patch,
+      path: propertyPath,
+    },
+  ])
+
+  applySetNode(editor, updatedNode, indexedPath)
+
   return true
+}
+
+function applyPropertyUnset(
+  editor: PortableTextSlateEditor,
+  node: Node,
+  patch: UnsetPatch,
+  propertyPath: Path,
+  indexedPath: Array<number>,
+) {
+  const updatedNode = applyAll(node, [{...patch, path: propertyPath}])
+  const removedProperties = Object.keys(node).filter(
+    (property) => !(property in updatedNode),
+  )
+
+  if (removedProperties.length > 0) {
+    const unsetProps: Record<string, null> = {}
+    for (const prop of removedProperties) {
+      unsetProps[prop] = null
+    }
+    applySetNode(editor, unsetProps, indexedPath)
+  } else {
+    applySetNode(editor, updatedNode, indexedPath)
+  }
 }
 
 function unsetPatch(editor: PortableTextSlateEditor, patch: UnsetPatch) {
@@ -490,7 +583,7 @@ function unsetPatch(editor: PortableTextSlateEditor, patch: UnsetPatch) {
     const children = getChildren(editor, [])
 
     for (let index = children.length - 1; index >= 0; index--) {
-      const entry = children[index]
+      const entry = children.at(index)
       if (!entry) {
         continue
       }
@@ -501,93 +594,33 @@ function unsetPatch(editor: PortableTextSlateEditor, patch: UnsetPatch) {
     return true
   }
 
-  const block = findBlock(editor.children, patch.path)
+  const resolved = resolveNodePath(resolveContext(editor), patch.path)
 
-  if (!block) {
+  if (!resolved) {
     return false
   }
 
-  // Single blocks
-  if (patch.path.length === 1) {
-    const blockNodeEntry = getNode(editor, [block.index])
-    if (!blockNodeEntry) {
-      return false
-    }
+  const {indexedPath, propertyPath} = resolved
+  const entry = getNode(editor, indexedPath)
+
+  if (!entry) {
+    return false
+  }
+
+  // Node-level unset (remove the node entirely)
+  if (propertyPath.length === 0) {
     editor.apply({
       type: 'remove_node',
-      path: [block.index],
-      node: blockNodeEntry.node,
+      path: indexedPath,
+      node: entry.node,
     })
 
     return true
   }
 
-  const child = findBlockChild(block, patch.path, editor.schema)
-
-  // Unset on text block children
-  if (isTextBlock({schema: editor.schema}, block.node) && child) {
-    if (patch.path[1] === 'children' && patch.path.length === 3) {
-      const childNodeEntry2 = getNode(editor, [block.index, child.index])
-      if (!childNodeEntry2) {
-        return false
-      }
-      editor.apply({
-        type: 'remove_node',
-        path: [block.index, child.index],
-        node: childNodeEntry2.node,
-      })
-
-      return true
-    }
-  }
-
-  if (
-    child &&
-    (isTextBlock({schema: editor.schema}, child.node) ||
-      isObjectNode({schema: editor.schema}, child.node))
-  ) {
-    // Unsetting inline object property
-
-    const propPath = patch.path.slice(3)
-    const propEntry = propPath.at(0)
-    const reservedProps = ['_key', '_type', 'children']
-
-    if (propEntry === undefined) {
-      return false
-    }
-
-    if (typeof propEntry === 'string' && reservedProps.includes(propEntry)) {
-      return false
-    }
-
-    const newNode = applyAll(child.node, [
-      {
-        ...patch,
-        path: patch.path.slice(3),
-      },
-    ])
-    const newKeys = Object.keys(newNode)
-
-    const removedProperties = Object.keys(child.node).filter(
-      (property) => !newKeys.includes(property),
-    )
-
-    if (removedProperties.length > 0) {
-      const unsetProps: Record<string, null> = {}
-      for (const prop of removedProperties) {
-        unsetProps[prop] = null
-      }
-      applySetNode(editor, unsetProps, [block.index, child.index])
-    } else {
-      applySetNode(editor, newNode, [block.index, child.index])
-    }
-
-    return true
-  }
-
-  if (child && isSpan({schema: editor.schema}, child.node)) {
-    const propPath = patch.path.slice(3)
-    const propEntry = propPath.at(0)
+  // Property-level unset
+  if (isSpanNode({schema: editor.schema}, entry.node)) {
+    const propEntry = propertyPath.at(0)
     const reservedProps = ['_key', '_type']
 
     if (propEntry === undefined) {
@@ -599,161 +632,73 @@ function unsetPatch(editor: PortableTextSlateEditor, patch: UnsetPatch) {
     }
 
     if (typeof propEntry === 'string' && propEntry === 'text') {
+      const text = typeof entry.node.text === 'string' ? entry.node.text : ''
       editor.apply({
         type: 'remove_text',
-        path: [block.index, child.index],
+        path: indexedPath,
         offset: 0,
-        text: child.node.text,
+        text,
       })
 
       return true
     }
 
-    const newNode = applyAll(child.node, [
-      {
-        ...patch,
-        path: propPath,
-      },
-    ])
-    const newKeys = Object.keys(newNode)
-
-    const removedProperties = Object.keys(child.node).filter(
-      (property) => !newKeys.includes(property),
-    )
-
-    const unsetProps: Record<string, null> = {}
-    for (const prop of removedProperties) {
-      unsetProps[prop] = null
-    }
-    applySetNode(editor, unsetProps, [block.index, child.index])
+    applyPropertyUnset(editor, entry.node, patch, propertyPath, indexedPath)
 
     return true
   }
 
-  if (!child) {
-    if (!isTextBlock({schema: editor.schema}, block.node)) {
-      const newVal = applyAll(block.node, [
+  if (isTextBlockNode({schema: editor.schema}, entry.node)) {
+    const propEntry = propertyPath.at(0)
+    const reservedProps = ['_key', '_type', 'children']
+
+    if (propEntry === undefined) {
+      return false
+    }
+
+    if (typeof propEntry !== 'string') {
+      return false
+    }
+
+    if (reservedProps.includes(propEntry)) {
+      return false
+    }
+
+    if (propertyPath.length === 1) {
+      applySetNode(editor, {[propEntry]: null}, indexedPath)
+    } else {
+      const updatedBlock = applyAll(entry.node, [
         {
           ...patch,
-          path: patch.path.slice(1),
+          path: propertyPath,
         },
-      ])
-      const newKeys = Object.keys(newVal)
+      ]) as unknown as Record<string, unknown>
 
-      const removedProperties = Object.keys(block.node).filter(
-        (property) => !newKeys.includes(property),
-      )
-
-      if (removedProperties.length > 0) {
-        const unsetProps: Record<string, null> = {}
-        for (const prop of removedProperties) {
-          unsetProps[prop] = null
-        }
-        applySetNode(editor, unsetProps, [block.index])
-      } else {
-        applySetNode(editor, newVal, [block.index])
-      }
-
-      return true
+      applySetNode(editor, {[propEntry]: updatedBlock[propEntry]}, indexedPath)
     }
 
-    if (isTextBlock({schema: editor.schema}, block.node)) {
-      const propPath = patch.path.slice(1)
-      const propEntry = propPath.at(0)
-      const reservedProps = ['_key', '_type', 'children']
+    return true
+  }
 
-      if (propEntry === undefined) {
-        return false
-      }
+  if (isObjectNode({schema: editor.schema}, entry.node)) {
+    const propEntry = propertyPath.at(0)
+    const reservedProps = ['_key', '_type', 'children']
 
-      if (typeof propEntry !== 'string') {
-        return false
-      }
-
-      if (reservedProps.includes(propEntry)) {
-        return false
-      }
-
-      if (propPath.length === 1) {
-        applySetNode(editor, {[propEntry]: null}, [block.index])
-      } else {
-        const updatedBlock = applyAll(block.node, [
-          {
-            ...patch,
-            path: propPath,
-          },
-        ]) as unknown as Record<string, unknown>
-
-        applySetNode(editor, {[propEntry]: updatedBlock[propEntry]}, [
-          block.index,
-        ])
-      }
-
-      return true
+    if (propEntry === undefined) {
+      return false
     }
 
-    return false
-  }
-
-  return false
-}
-
-function findBlock(
-  children: Node[],
-  path: Path,
-): {node: Node; index: number} | undefined {
-  let blockIndex = -1
-
-  const block = children.find((node: Node, index: number) => {
-    const isMatch = isKeyedSegment(path[0])
-      ? node._key === path[0]._key
-      : index === path[0]
-
-    if (isMatch) {
-      blockIndex = index
+    if (typeof propEntry === 'string' && reservedProps.includes(propEntry)) {
+      return false
     }
 
-    return isMatch
-  })
+    applyPropertyUnset(editor, entry.node, patch, propertyPath, indexedPath)
 
-  if (!block) {
-    return undefined
+    return true
   }
 
-  return {node: block, index: blockIndex}
-}
+  // Fallback
+  applyPropertyUnset(editor, entry.node, patch, propertyPath, indexedPath)
 
-function findBlockChild(
-  block: {node: Node; index: number},
-  path: Path,
-  schema: EditorSchema,
-): {node: Node; index: number} | undefined {
-  const blockNode = block.node
-
-  if (!isTextBlock({schema}, blockNode) || path[1] !== 'children') {
-    return undefined
-  }
-
-  let childIndex = -1
-
-  const child = blockNode.children.find((node: Node, index: number) => {
-    const isMatch = isKeyedSegment(path[2])
-      ? node._key === path[2]._key
-      : index === path[2]
-
-    if (isMatch) {
-      childIndex = index
-    }
-
-    return isMatch
-  })
-
-  if (!child) {
-    return undefined
-  }
-
-  return {
-    node: child,
-    index: childIndex,
-  }
+  return true
 }

@@ -75,6 +75,7 @@ async function createTableTestEditor() {
   }
   const row = {
     _key: rowKey,
+    _type: 'row',
     cells: [cell],
   }
   const table = {
@@ -371,6 +372,149 @@ describe('tables', () => {
             ],
           },
         ])
+      })
+    })
+
+    test('set text on span inside container', async () => {
+      const {editor, table, row, cell, block, span} =
+        await createTableTestEditor()
+
+      editor.send({
+        type: 'patches',
+        patches: [
+          set('bar', [
+            {_key: table._key},
+            'rows',
+            {_key: row._key},
+            'cells',
+            {_key: cell._key},
+            'content',
+            {_key: block._key},
+            'children',
+            {_key: span._key},
+            'text',
+          ]),
+        ],
+        snapshot: undefined,
+      })
+
+      await vi.waitFor(() => {
+        return expect(editor.getSnapshot().context.value).toEqual([
+          {
+            ...table,
+            rows: [
+              {
+                ...row,
+                cells: [
+                  {
+                    ...cell,
+                    content: [
+                      {
+                        ...block,
+                        children: [{...span, text: 'bar'}],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ])
+      })
+    })
+
+    test('insert span into text block inside container', async () => {
+      const {editor, table, row, cell, block, span} =
+        await createTableTestEditor()
+
+      const newSpan = {
+        _key: editor.getSnapshot().context.keyGenerator(),
+        _type: 'span',
+        text: 'bar',
+        marks: [],
+      }
+
+      editor.send({
+        type: 'patches',
+        patches: [
+          {
+            type: 'insert' as const,
+            path: [
+              {_key: table._key},
+              'rows',
+              {_key: row._key},
+              'cells',
+              {_key: cell._key},
+              'content',
+              {_key: block._key},
+              'children',
+              {_key: span._key},
+            ],
+            items: [newSpan],
+            position: 'after' as const,
+            origin: 'remote' as const,
+          },
+        ],
+        snapshot: undefined,
+      })
+
+      await vi.waitFor(() => {
+        return expect(editor.getSnapshot().context.value).toEqual([
+          {
+            ...table,
+            rows: [
+              {
+                ...row,
+                cells: [
+                  {
+                    ...cell,
+                    content: [
+                      {
+                        ...block,
+                        children: [span, newSpan],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ])
+      })
+    })
+
+    test('unset span from text block inside container', async () => {
+      const {editor, table, row, cell, block, span} =
+        await createTableTestEditor()
+
+      editor.send({
+        type: 'patches',
+        patches: [
+          unset([
+            {_key: table._key},
+            'rows',
+            {_key: row._key},
+            'cells',
+            {_key: cell._key},
+            'content',
+            {_key: block._key},
+            'children',
+            {_key: span._key},
+          ]),
+        ],
+        snapshot: undefined,
+      })
+
+      // The span is removed via applyAll on the table node.
+      // Without editableTypes, normalization cannot traverse into the
+      // container to restore an empty span, so children becomes empty.
+      await vi.waitFor(() => {
+        const value = editor.getSnapshot().context.value
+        const content = getTableCellContent(value)
+        const children = content.at(0)!['children'] as Array<
+          Record<string, unknown>
+        >
+        expect(children.length).toBe(0)
       })
     })
   })
