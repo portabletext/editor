@@ -10,7 +10,6 @@ import {isObjectNode} from '../node/is-object-node'
 import {isSpanNode} from '../node/is-span-node'
 import {textEquals} from '../text/text-equals'
 import type {WithEditorFirstArg} from '../utils/types'
-import {insertNodes} from './insert-nodes'
 import {removeNodes} from './remove-nodes'
 
 export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
@@ -52,7 +51,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   // Ensure that elements have at least one child.
   if (element !== editor && element.children.length === 0) {
     const child = createSpanNode(editor)
-    insertNodes(editor, [child], {at: path.concat(0), includeObjectNodes: true})
+    editor.apply({type: 'insert_node', path: path.concat(0), node: child})
     const refetched = getTextBlockNode(editor, path)?.node
     if (!refetched) {
       return
@@ -106,9 +105,10 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
       } else if (isObjectNode({schema: editor.schema}, child)) {
         if (prev == null || !isSpan({schema: editor.schema}, prev)) {
           const newChild = createSpanNode(editor)
-          insertNodes(editor, [newChild], {
-            at: path.concat(n),
-            includeObjectNodes: true,
+          editor.apply({
+            type: 'insert_node',
+            path: path.concat(n),
+            node: newChild,
           })
           const refetched = getTextBlockNode(editor, path)?.node
           if (!refetched) {
@@ -119,9 +119,10 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
         }
         if (n === element.children.length - 1) {
           const newChild = createSpanNode(editor)
-          insertNodes(editor, [newChild], {
-            at: path.concat(n + 1),
-            includeObjectNodes: true,
+          editor.apply({
+            type: 'insert_node',
+            path: path.concat(n + 1),
+            node: newChild,
           })
           const refetched = getTextBlockNode(editor, path)?.node
           if (!refetched) {

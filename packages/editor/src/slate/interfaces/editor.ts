@@ -26,7 +26,6 @@ export interface BaseEditor {
   dirtyPathKeys: Set<string>
   flushing: boolean
   normalizing: boolean
-  batchingDirtyPaths: boolean
   pathRefs: Set<PathRef>
   pointRefs: Set<PointRef>
   rangeRefs: Set<RangeRef>
