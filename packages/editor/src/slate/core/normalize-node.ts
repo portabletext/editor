@@ -55,15 +55,21 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
       const nextNode = node.children[childIndex + 1]
 
       if (
-        isSpan({schema: editor.schema}, child) &&
-        isSpan({schema: editor.schema}, nextNode) &&
-        child.marks?.every((mark) => nextNode.marks?.includes(mark)) &&
-        nextNode.marks?.every((mark) => child.marks?.includes(mark))
+        isSpanNode({schema: editor.schema}, child) &&
+        isSpanNode({schema: editor.schema}, nextNode)
       ) {
-        debug.normalization('merging spans with same marks')
-        const mergePath = [...path, childIndex + 1]
-        applyMergeNode(editor, mergePath, child.text.length)
-        return
+        const childMarks = child.marks ?? []
+        const nextMarks = nextNode.marks ?? []
+
+        if (
+          childMarks.every((mark) => nextMarks.includes(mark)) &&
+          nextMarks.every((mark) => childMarks.includes(mark))
+        ) {
+          debug.normalization('merging spans with same marks')
+          const mergePath = [...path, childIndex + 1]
+          applyMergeNode(editor, mergePath, child.text?.length ?? 0)
+          return
+        }
       }
     }
   }
@@ -155,7 +161,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   /**
    * Add missing .marks to span nodes
    */
-  if (isSpan({schema: editor.schema}, node) && !Array.isArray(node.marks)) {
+  if (isSpanNode({schema: editor.schema}, node) && !Array.isArray(node.marks)) {
     debug.normalization('Adding .marks to span node')
     applySetNode(editor, {marks: []}, path)
     return

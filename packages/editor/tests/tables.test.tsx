@@ -473,9 +473,9 @@ describe('tables', () => {
         snapshot: undefined,
       })
 
-      // The first span has no marks property (not yet normalized), while the
-      // new span has marks: []. Since isSpan requires marks to be an array,
-      // the merge normalization doesn't fire. Both spans remain separate.
+      // Both spans have marks: [] after normalization (the first span gets
+      // marks added, then the merge fires). The merged span keeps the first
+      // span's key.
       await vi.waitFor(() => {
         return expect(editor.getSnapshot().context.value).toEqual([
           {
@@ -489,7 +489,13 @@ describe('tables', () => {
                     content: [
                       {
                         ...block,
-                        children: [span, newSpan],
+                        children: [
+                          {
+                            ...span,
+                            text: 'foobar',
+                            marks: [],
+                          },
+                        ],
                         markDefs: [],
                         style: 'normal',
                       },
