@@ -8,11 +8,14 @@ describe(indexedPathToKeyedPath.name, () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
+    const schema = compileSchema(defineSchema({}))
 
     expect(
       indexedPathToKeyedPath(
         {
-          children: [
+          schema,
+          editableTypes: new Set(),
+          value: [
             {
               _key: blockKey,
               _type: 'block',
@@ -27,7 +30,6 @@ describe(indexedPathToKeyedPath.name, () => {
           ],
         },
         [0],
-        compileSchema(defineSchema({})),
       ),
     ).toEqual([{_key: blockKey}])
   })
@@ -36,11 +38,14 @@ describe(indexedPathToKeyedPath.name, () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
+    const schema = compileSchema(defineSchema({}))
 
     expect(
       indexedPathToKeyedPath(
         {
-          children: [
+          schema,
+          editableTypes: new Set(),
+          value: [
             {
               _key: blockKey,
               _type: 'block',
@@ -49,7 +54,6 @@ describe(indexedPathToKeyedPath.name, () => {
           ],
         },
         [0, 0],
-        compileSchema(defineSchema({})),
       ),
     ).toEqual([{_key: blockKey}, 'children', {_key: spanKey}])
   })
@@ -57,16 +61,20 @@ describe(indexedPathToKeyedPath.name, () => {
   test('image', () => {
     const keyGenerator = createTestKeyGenerator()
     const imageKey = keyGenerator()
+    const schema = compileSchema(
+      defineSchema({
+        blockObjects: [{name: 'image'}],
+      }),
+    )
 
     expect(
       indexedPathToKeyedPath(
-        {children: [{_key: imageKey, _type: 'image'}]},
+        {
+          schema,
+          editableTypes: new Set(),
+          value: [{_key: imageKey, _type: 'image'}],
+        },
         [0],
-        compileSchema(
-          defineSchema({
-            blockObjects: [{name: 'image'}],
-          }),
-        ),
       ),
     ).toEqual([{_key: imageKey}])
   })
@@ -111,6 +119,7 @@ describe(indexedPathToKeyedPath.name, () => {
         ],
       }),
     )
+    const editableTypes = new Set(['table', 'table.row', 'table.row.cell'])
     const keyGenerator = createTestKeyGenerator()
     const tableKey = keyGenerator()
     const rowKey = keyGenerator()
@@ -149,13 +158,16 @@ describe(indexedPathToKeyedPath.name, () => {
 
     test('table -> row', () => {
       expect(
-        indexedPathToKeyedPath({children: [table]}, [0, 0], schema),
+        indexedPathToKeyedPath({schema, editableTypes, value: [table]}, [0, 0]),
       ).toEqual([{_key: tableKey}, 'rows', {_key: rowKey}])
     })
 
     test('table -> row -> cell', () => {
       expect(
-        indexedPathToKeyedPath({children: [table]}, [0, 0, 0], schema),
+        indexedPathToKeyedPath(
+          {schema, editableTypes, value: [table]},
+          [0, 0, 0],
+        ),
       ).toEqual([
         {_key: tableKey},
         'rows',
@@ -167,7 +179,10 @@ describe(indexedPathToKeyedPath.name, () => {
 
     test('table -> row -> cell -> block', () => {
       expect(
-        indexedPathToKeyedPath({children: [table]}, [0, 0, 0, 0], schema),
+        indexedPathToKeyedPath(
+          {schema, editableTypes, value: [table]},
+          [0, 0, 0, 0],
+        ),
       ).toEqual([
         {_key: tableKey},
         'rows',
@@ -181,7 +196,10 @@ describe(indexedPathToKeyedPath.name, () => {
 
     test('table -> row -> cell -> block -> span', () => {
       expect(
-        indexedPathToKeyedPath({children: [table]}, [0, 0, 0, 0, 0], schema),
+        indexedPathToKeyedPath(
+          {schema, editableTypes, value: [table]},
+          [0, 0, 0, 0, 0],
+        ),
       ).toEqual([
         {_key: tableKey},
         'rows',
@@ -197,7 +215,10 @@ describe(indexedPathToKeyedPath.name, () => {
 
     test('table -> row -> cell -> block -> inline object', () => {
       expect(
-        indexedPathToKeyedPath({children: [table]}, [0, 0, 0, 0, 1], schema),
+        indexedPathToKeyedPath(
+          {schema, editableTypes, value: [table]},
+          [0, 0, 0, 0, 1],
+        ),
       ).toEqual([
         {_key: tableKey},
         'rows',
@@ -238,6 +259,7 @@ describe(indexedPathToKeyedPath.name, () => {
         ],
       }),
     )
+    const editableTypes = new Set(['table'])
     const keyGenerator = createTestKeyGenerator()
     const tableKey = keyGenerator()
     const blockKey = keyGenerator()
@@ -261,7 +283,10 @@ describe(indexedPathToKeyedPath.name, () => {
     }
 
     expect(
-      indexedPathToKeyedPath({children: [table]}, [0, 0, 0], schema),
+      indexedPathToKeyedPath(
+        {schema, editableTypes, value: [table]},
+        [0, 0, 0],
+      ),
     ).toEqual([
       {_key: tableKey},
       'rows',
@@ -277,11 +302,18 @@ describe(indexedPathToKeyedPath.name, () => {
     const spanKey = keyGenerator()
     const stockTickerKey = keyGenerator()
     const trailingSpanKey = keyGenerator()
+    const schema = compileSchema(
+      defineSchema({
+        inlineObjects: [{name: 'stock-ticker'}],
+      }),
+    )
 
     expect(
       indexedPathToKeyedPath(
         {
-          children: [
+          schema,
+          editableTypes: new Set(),
+          value: [
             {
               _key: blockKey,
               _type: 'block',
@@ -294,11 +326,6 @@ describe(indexedPathToKeyedPath.name, () => {
           ],
         },
         [0, 1],
-        compileSchema(
-          defineSchema({
-            inlineObjects: [{name: 'stock-ticker'}],
-          }),
-        ),
       ),
     ).toEqual([{_key: blockKey}, 'children', {_key: stockTickerKey}])
   })
@@ -311,6 +338,7 @@ describe(indexedPathToKeyedPath.name, () => {
         ],
       }),
     )
+    const editableTypes = new Set(['table'])
     const keyGenerator = createTestKeyGenerator()
     const tableKey = keyGenerator()
     const rowKey = keyGenerator()
@@ -342,7 +370,10 @@ describe(indexedPathToKeyedPath.name, () => {
     }
 
     expect(
-      indexedPathToKeyedPath({children: [table]}, [0, 0, 0, 0, 0], schema),
+      indexedPathToKeyedPath(
+        {schema, editableTypes, value: [table]},
+        [0, 0, 0, 0, 0],
+      ),
     ).toBeUndefined()
   })
 })
