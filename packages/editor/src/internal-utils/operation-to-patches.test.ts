@@ -64,17 +64,25 @@ const createDefaultChildren = () =>
     },
   ] as Array<PortableTextBlock>
 
+const editableTypes = new Set<string>()
+
 describe(insertNodePatch.name, () => {
   test('Scenario: Inserting block object on empty editor', () => {
+    const imageSchema = compileSchema(
+      defineSchema({blockObjects: [{name: 'image'}]}),
+    )
     expect(
       insertNodePatch(
-        compileSchema(defineSchema({blockObjects: [{name: 'image'}]})),
-        [
-          {
-            _key: 'k2',
-            _type: 'image',
-          },
-        ],
+        {
+          schema: imageSchema,
+          editableTypes,
+          value: [
+            {
+              _key: 'k2',
+              _type: 'image',
+            },
+          ],
+        },
         {
           type: 'insert_node',
           path: [0],
@@ -115,8 +123,11 @@ describe('operationToPatches', () => {
   it('produce correct insert block patch', () => {
     expect(
       insertNodePatch(
-        schema,
-        editor.children,
+        {
+          schema,
+          editableTypes,
+          value: editor.children,
+        },
         {
           type: 'insert_node',
           path: [0],
@@ -155,8 +166,11 @@ describe('operationToPatches', () => {
     editor.onChange()
     expect(
       insertNodePatch(
-        schema,
-        editor.children,
+        {
+          schema,
+          editableTypes,
+          value: editor.children,
+        },
         {
           type: 'insert_node',
           path: [0],
@@ -195,8 +209,11 @@ describe('operationToPatches', () => {
   test('produce correct insert child patch', () => {
     expect(
       insertNodePatch(
-        schema,
-        editor.children,
+        {
+          schema,
+          editableTypes,
+          value: editor.children,
+        },
         {
           type: 'insert_node',
           path: [0, 3],
@@ -243,8 +260,11 @@ describe('operationToPatches', () => {
     editor.onChange()
     expect(
       insertTextPatch(
-        editorActor.getSnapshot().context.schema,
-        editor.children,
+        {
+          schema: editorActor.getSnapshot().context.schema,
+          editableTypes,
+          value: editor.children,
+        },
         {
           type: 'insert_text',
           path: [0, 2],
@@ -293,8 +313,11 @@ describe('operationToPatches', () => {
 
     expect(
       insertTextPatch(
-        blockObjectSchema,
-        blockObjectChildren,
+        {
+          schema: blockObjectSchema,
+          editableTypes,
+          value: blockObjectChildren,
+        },
         {
           type: 'insert_text',
           path: [0, 0],
@@ -311,8 +334,11 @@ describe('operationToPatches', () => {
     ;(before[0] as PortableTextTextBlock).children[2]!.text = '1'
     expect(
       removeTextPatch(
-        editorActor.getSnapshot().context.schema,
-        editor.children,
+        {
+          schema: editorActor.getSnapshot().context.schema,
+          editableTypes,
+          value: editor.children,
+        },
         {
           type: 'remove_text',
           path: [0, 2],
@@ -347,8 +373,11 @@ describe('operationToPatches', () => {
   it('produces correct remove child patch', () => {
     expect(
       removeNodePatch(
-        editorActor.getSnapshot().context.schema,
-        createDefaultChildren(),
+        {
+          schema: editorActor.getSnapshot().context.schema,
+          editableTypes,
+          value: createDefaultChildren(),
+        },
         {
           type: 'remove_node',
           path: [0, 1],
@@ -381,11 +410,18 @@ describe('operationToPatches', () => {
     const children = createDefaultChildren()
     const val = createDefaultChildren()
     expect(
-      removeNodePatch(editorActor.getSnapshot().context.schema, val, {
-        type: 'remove_node',
-        path: [0],
-        node: children[0]!,
-      }),
+      removeNodePatch(
+        {
+          schema: editorActor.getSnapshot().context.schema,
+          editableTypes,
+          value: val,
+        },
+        {
+          type: 'remove_node',
+          path: [0],
+          node: children[0]!,
+        },
+      ),
     ).toMatchInlineSnapshot(`
       [
         {
@@ -410,8 +446,11 @@ describe('defensive setIfMissing patches', () => {
   describe(insertNodePatch.name, () => {
     test('includes setIfMissing before inserting a span into children', () => {
       const patches = insertNodePatch(
-        schema,
-        editor.children,
+        {
+          schema,
+          editableTypes,
+          value: editor.children,
+        },
         {
           type: 'insert_node',
           path: [0, 3],
@@ -442,8 +481,11 @@ describe('defensive setIfMissing patches', () => {
 
     test('includes setIfMissing before inserting an inline object into children', () => {
       const patches = insertNodePatch(
-        schema,
-        editor.children,
+        {
+          schema,
+          editableTypes,
+          value: editor.children,
+        },
         {
           type: 'insert_node',
           path: [0, 3],
