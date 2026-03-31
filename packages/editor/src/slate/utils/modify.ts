@@ -1,6 +1,7 @@
 import {isSpan, isTextBlock, type PortableTextSpan} from '@portabletext/schema'
 import type {EditorSchema} from '../../editor/editor-schema'
 import {safeStringify} from '../../internal-utils/safe-json'
+import {getNodeChildren} from '../../node-traversal/get-children'
 import {getNode} from '../../node-traversal/get-node'
 import {isEditor} from '../editor/is-editor'
 import type {Editor} from '../interfaces/editor'
@@ -63,8 +64,35 @@ export const modifyDescendant = <N extends Node>(
   const slicedPath = path.slice()
   let modifiedNode: Node = f(node as N)
 
+  // Walk down from the root to collect the child field name at each level.
+  // This is needed to rebuild ancestors using the correct field (e.g. 'rows',
+  // 'cells', 'content') instead of always assuming 'children'.
+  const fieldNames: string[] = []
+  {
+    let currentNode: Node | {value: Array<Node>} = {value: typedRoot.children}
+    let scope: Parameters<typeof getNodeChildren>[2]
+    let scopePath = ''
+
+    for (let i = 0; i < path.length; i++) {
+      const result = getNodeChildren(context, currentNode, scope, scopePath)
+      if (!result) {
+        throw new Error(`Cannot resolve children at path [${path.slice(0, i)}]`)
+      }
+      fieldNames.push(result.fieldName)
+      const child = result.children.at(path.at(i)!)
+      if (!child) {
+        throw new Error(`Cannot find node at path [${path.slice(0, i + 1)}]`)
+      }
+      currentNode = child
+      scope = result.scope
+      scopePath = result.scopePath
+    }
+  }
+
   while (slicedPath.length > 1) {
     const index = slicedPath.pop()!
+    const level = slicedPath.length
+    const fieldName = fieldNames.at(level)!
     const ancestorEntry = getNode(
       {...context, value: typedRoot.children},
       slicedPath,
@@ -73,15 +101,14 @@ export const modifyDescendant = <N extends Node>(
       throw new Error(`Cannot find ancestor at path [${slicedPath}]`)
     }
     const ancestorNode = ancestorEntry.node
+    const ancestorRecord = ancestorNode as Record<string, unknown>
+    const currentChildren = Array.isArray(ancestorRecord[fieldName])
+      ? (ancestorRecord[fieldName] as Node[])
+      : []
 
     modifiedNode = {
       ...ancestorNode,
-      children: replaceChildren(
-        isTextBlock({schema}, ancestorNode) ? ancestorNode.children : [],
-        index,
-        1,
-        modifiedNode,
-      ),
+      [fieldName]: replaceChildren(currentChildren, index, 1, modifiedNode),
     }
   }
 
