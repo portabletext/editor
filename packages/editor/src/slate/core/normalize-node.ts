@@ -2,7 +2,9 @@ import type {PortableTextTextBlock} from '@portabletext/schema'
 import {isSpan, isTextBlock} from '@portabletext/schema'
 import {applyMergeNode} from '../../internal-utils/apply-merge-node'
 import {debug} from '../../internal-utils/debug'
+import {getChildren} from '../../node-traversal/get-children'
 import {getNode} from '../../node-traversal/get-node'
+import {getParent} from '../../node-traversal/get-parent'
 import {getTextBlockNode} from '../../node-traversal/get-text-block-node'
 import type {Editor} from '../interfaces/editor'
 import type {Node} from '../interfaces/node'
@@ -10,6 +12,7 @@ import {createSpanNode} from '../node/create-span-node'
 import {isObjectNode} from '../node/is-object-node'
 import {isSpanNode} from '../node/is-span-node'
 import {parentPath} from '../path/parent-path'
+import {pathEquals} from '../path/path-equals'
 import {textEquals} from '../text/text-equals'
 import type {WithEditorFirstArg} from '../utils/types'
 import {removeNodes} from './remove-nodes'
@@ -47,6 +50,34 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
       newProperties: {_key: editor.keyGenerator()},
     })
     return
+  }
+
+  // Fix duplicate _key among siblings
+  if (path.length > 0 && nodeRecord['_key'] !== undefined) {
+    const parent = getParent(editor, path)
+    const siblings = parent
+      ? getChildren(editor, parent.path)
+      : editor.children.map((child, index) => ({
+          node: child,
+          path: [index],
+        }))
+
+    for (const sibling of siblings) {
+      // Stop when we reach the current node
+      if (pathEquals(sibling.path, path)) {
+        break
+      }
+      if (sibling.node._key === nodeRecord['_key']) {
+        debug.normalization('Fixing duplicate key on node')
+        editor.apply({
+          type: 'set_node',
+          path,
+          properties: {},
+          newProperties: {_key: editor.keyGenerator()},
+        })
+        return
+      }
+    }
   }
 
   if (isSpanNode({schema: editor.schema}, node)) {
