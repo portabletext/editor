@@ -4,6 +4,7 @@ import type {
 } from '@portabletext/schema'
 import React, {type JSX} from 'react'
 import {getText} from '../../../node-traversal/get-text'
+import {isInline as isInlinePath} from '../../../node-traversal/is-inline'
 import {isElementDecorationsEqual} from '../../dom/utils/range-list'
 import type {Path} from '../../interfaces/path'
 import type {DecoratedRange} from '../../interfaces/text'
@@ -48,7 +49,7 @@ const Element = (props: {
     renderText,
   } = props
   const editor = useSlateStatic()
-  const isInline = editor.isInline(element)
+  const isInline = isInlinePath(editor, props.indexedPath)
   const decorations = useDecorations(
     element,
     props.indexedPath,
@@ -120,9 +121,9 @@ const MemoizedElement = React.memo(Element, (prev, next) => {
  */
 
 const DefaultElement = (props: RenderElementProps) => {
-  const {attributes, children, element} = props
+  const {attributes, children} = props
   const editor = useSlateStatic()
-  const Tag = editor.isInline(element) ? 'span' : 'div'
+  const Tag = isInlinePath(editor, props.indexedPath) ? 'span' : 'div'
   return (
     <Tag {...attributes} style={{position: 'relative'}}>
       {children}

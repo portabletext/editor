@@ -74,13 +74,6 @@ export function* positions(
      * ELEMENT NODE - Yield position(s) for object nodes, collect blockText for blocks
      */
     if (isTextBlockNode({schema: editor.schema}, node)) {
-      // Inline element nodes are ignored as they don't themselves
-      // contribute to `blockText` or `leafText` - their parent and
-      // children do.
-      if (editor.isInline(node)) {
-        continue
-      }
-
       // Block element node - set `blockText` to its text content.
       {
         // We always exhaust block nodes before encountering a new one:
