@@ -1,16 +1,26 @@
-import type {PortableTextTextBlock} from '@portabletext/schema'
+import type {
+  PortableTextObject,
+  PortableTextTextBlock,
+} from '@portabletext/schema'
 import {isSpan, isTextBlock} from '@portabletext/schema'
+import {applyInsertNodeAtPath} from '../../internal-utils/apply-insert-node'
 import {applyMergeNode} from '../../internal-utils/apply-merge-node'
+import {applySetNode} from '../../internal-utils/apply-set-node'
+import {createPlaceholderBlock} from '../../internal-utils/create-placeholder-block'
 import {debug} from '../../internal-utils/debug'
+import {isEqualMarkDefs} from '../../internal-utils/equality'
 import {getChildren} from '../../node-traversal/get-children'
 import {getNode} from '../../node-traversal/get-node'
 import {getParent} from '../../node-traversal/get-parent'
 import {getTextBlockNode} from '../../node-traversal/get-text-block-node'
+import {withoutPatching} from '../../slate-plugins/slate-plugin.without-patching'
+import {isEditor} from '../editor/is-editor'
 import type {Editor} from '../interfaces/editor'
 import type {Node} from '../interfaces/node'
 import {createSpanNode} from '../node/create-span-node'
 import {isObjectNode} from '../node/is-object-node'
 import {isSpanNode} from '../node/is-span-node'
+import {isTextBlockNode} from '../node/is-text-block-node'
 import {parentPath} from '../path/parent-path'
 import {pathEquals} from '../path/path-equals'
 import {textEquals} from '../text/text-equals'
@@ -23,6 +33,40 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
 ) => {
   const [node, path] = entry
   const nodeRecord = node as Record<string, unknown>
+
+  /**
+   * Add a placeholder block when the editor is empty
+   */
+  if (isEditor(node) && node.children.length === 0) {
+    withoutPatching(editor, () => {
+      applyInsertNodeAtPath(editor, createPlaceholderBlock(editor), [0])
+    })
+    return
+  }
+
+  /**
+   * Merge spans with same set of .marks
+   */
+  if (isTextBlock({schema: editor.schema}, node)) {
+    const children = getChildren(editor, path)
+
+    for (const {node: child, path: childPath} of children) {
+      const childIndex = childPath[childPath.length - 1]!
+      const nextNode = node.children[childIndex + 1]
+
+      if (
+        isSpan({schema: editor.schema}, child) &&
+        isSpan({schema: editor.schema}, nextNode) &&
+        child.marks?.every((mark) => nextNode.marks?.includes(mark)) &&
+        nextNode.marks?.every((mark) => child.marks?.includes(mark))
+      ) {
+        debug.normalization('merging spans with same marks')
+        const mergePath = [childPath[0]!, childPath[1]! + 1]
+        applyMergeNode(editor, mergePath, child.text.length)
+        return
+      }
+    }
+  }
 
   // If a child of a text block is missing _type, set it to the span type
   if (nodeRecord['_type'] === undefined && path.length > 0) {
@@ -77,6 +121,180 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
         })
         return
       }
+    }
+  }
+
+  /**
+   * Add missing .markDefs to text block nodes
+   */
+  if (
+    isTextBlockNode({schema: editor.schema}, node) &&
+    !Array.isArray(node.markDefs)
+  ) {
+    debug.normalization('adding .markDefs to block node')
+    applySetNode(editor, {markDefs: []}, path)
+    return
+  }
+
+  /**
+   * Add missing .style to text block nodes
+   */
+  {
+    const defaultStyle = editor.schema.styles.at(0)?.name
+    if (
+      defaultStyle &&
+      isTextBlockNode({schema: editor.schema}, node) &&
+      typeof node.style === 'undefined'
+    ) {
+      debug.normalization('adding .style to block node')
+      applySetNode(editor, {style: defaultStyle}, path)
+      return
+    }
+  }
+
+  /**
+   * Add missing .marks to span nodes
+   */
+  if (isSpan({schema: editor.schema}, node) && !Array.isArray(node.marks)) {
+    debug.normalization('Adding .marks to span node')
+    applySetNode(editor, {marks: []}, path)
+    return
+  }
+
+  /**
+   * Remove annotations from empty spans
+   */
+  if (isSpan({schema: editor.schema}, node)) {
+    const blockPath = parentPath(path)
+    const blockEntry = getTextBlockNode(editor, blockPath)
+    if (!blockEntry) {
+      return
+    }
+    const decorators = editor.schema.decorators.map(
+      (decorator) => decorator.name,
+    )
+    const annotations = node.marks?.filter((mark) => !decorators.includes(mark))
+
+    if (node.text === '' && annotations && annotations.length > 0) {
+      debug.normalization('removing annotations from empty span node')
+      applySetNode(
+        editor,
+        {marks: node.marks?.filter((mark) => decorators.includes(mark))},
+        path,
+      )
+      return
+    }
+  }
+
+  /**
+   * Remove orphaned annotations from child spans of block nodes
+   */
+  if (isTextBlock({schema: editor.schema}, node)) {
+    const decorators = editor.schema.decorators.map(
+      (decorator) => decorator.name,
+    )
+
+    for (const {node: child, path: childPath} of getChildren(editor, path)) {
+      if (isSpan({schema: editor.schema}, child)) {
+        const marks = child.marks ?? []
+        const orphanedAnnotations = marks.filter((mark) => {
+          return (
+            !decorators.includes(mark) &&
+            !node.markDefs?.find((def) => def._key === mark)
+          )
+        })
+
+        if (orphanedAnnotations.length > 0) {
+          debug.normalization('removing orphaned annotations from span node')
+          applySetNode(
+            editor,
+            {
+              marks: marks.filter(
+                (mark) => !orphanedAnnotations.includes(mark),
+              ),
+            },
+            childPath,
+          )
+          return
+        }
+      }
+    }
+  }
+
+  /**
+   * Remove orphaned annotations from span nodes
+   */
+  if (isSpan({schema: editor.schema}, node)) {
+    const blockPath = parentPath(path)
+    const blockEntry2 = getTextBlockNode(editor, blockPath)
+
+    if (blockEntry2) {
+      const block = blockEntry2.node
+      const decorators = editor.schema.decorators.map(
+        (decorator) => decorator.name,
+      )
+      const marks = node.marks ?? []
+      const orphanedAnnotations = marks.filter((mark) => {
+        return (
+          !decorators.includes(mark) &&
+          !block.markDefs?.find((def) => def._key === mark)
+        )
+      })
+
+      if (orphanedAnnotations.length > 0) {
+        debug.normalization('removing orphaned annotations from span node')
+        applySetNode(
+          editor,
+          {
+            marks: marks.filter((mark) => !orphanedAnnotations.includes(mark)),
+          },
+          path,
+        )
+        return
+      }
+    }
+  }
+
+  /**
+   * Remove duplicate markDefs
+   */
+  if (isTextBlock({schema: editor.schema}, node)) {
+    const markDefs = node.markDefs ?? []
+    const markDefKeys = new Set<string>()
+    const newMarkDefs: Array<PortableTextObject> = []
+
+    for (const markDef of markDefs) {
+      if (!markDefKeys.has(markDef._key)) {
+        markDefKeys.add(markDef._key)
+        newMarkDefs.push(markDef)
+      }
+    }
+
+    if (markDefs.length !== newMarkDefs.length) {
+      debug.normalization('removing duplicate markDefs')
+      applySetNode(editor, {markDefs: newMarkDefs}, path)
+      return
+    }
+  }
+
+  /**
+   * Remove markDefs not in use
+   */
+  if (isTextBlock({schema: editor.schema}, node)) {
+    const newMarkDefs = (node.markDefs || []).filter((def) => {
+      return node.children.find((child) => {
+        return (
+          isSpan({schema: editor.schema}, child) &&
+          Array.isArray(child.marks) &&
+          child.marks.includes(def._key)
+        )
+      })
+    })
+
+    if (node.markDefs && !isEqualMarkDefs(newMarkDefs, node.markDefs)) {
+      debug.normalization('removing markDef not in use')
+      applySetNode(editor, {markDefs: newMarkDefs}, path)
+      return
     }
   }
 

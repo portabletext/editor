@@ -30,7 +30,7 @@ export const plugins = <T extends Editor>(
     editorActor,
     subscriptions: options.subscriptions,
   })
-  const normalizationPlugin = createNormalizationPlugin(editorActor)
+  const normalizationPlugin = createNormalizationPlugin()
   const behaviorApiPlugin = createBehaviorApiPlugin(editorActor)
 
   // Ordering is important here, selection dealing last, data manipulation in the middle and core model stuff first.
