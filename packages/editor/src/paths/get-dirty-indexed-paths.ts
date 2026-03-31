@@ -74,7 +74,7 @@ export function getDirtyIndexedPaths(
 
     case 'remove_node': {
       const {path} = op
-      const ancestors = pathLevels(path, {reverse: false}).slice(0, -1)
+      const ancestors = pathLevels(path).slice(0, -1)
       return [...ancestors]
     }
 
