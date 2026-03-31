@@ -2,13 +2,13 @@ import type {
   PortableTextObject,
   PortableTextTextBlock,
 } from '@portabletext/schema'
-import {isTextBlock} from '@portabletext/schema'
 import React, {type JSX} from 'react'
+import {getText} from '../../../node-traversal/get-text'
+import {isInline as isInlinePath} from '../../../node-traversal/is-inline'
 import {isElementDecorationsEqual} from '../../dom/utils/range-list'
-import {hasInlines} from '../../editor/has-inlines'
 import type {Path} from '../../interfaces/path'
 import type {DecoratedRange} from '../../interfaces/text'
-import {getString} from '../../node/get-string'
+import {isTextBlockNode} from '../../node/is-text-block-node'
 import {pathEquals} from '../../path/path-equals'
 import useChildren from '../hooks/use-children'
 import {useDecorations} from '../hooks/use-decorations'
@@ -49,7 +49,7 @@ const Element = (props: {
     renderText,
   } = props
   const editor = useSlateStatic()
-  const isInline = editor.isInline(element)
+  const isInline = isInlinePath(editor, props.indexedPath)
   const decorations = useDecorations(
     element,
     props.indexedPath,
@@ -86,13 +86,9 @@ const Element = (props: {
 
   // If it's a block node with inline children, add the proper `dir` attribute
   // for text direction.
-  if (
-    !isInline &&
-    isTextBlock({schema: editor.schema}, element) &&
-    hasInlines(editor, element)
-  ) {
-    const text = getString(element, editor.schema)
-    const dir = getDirection(text)
+  if (!isInline && isTextBlockNode({schema: editor.schema}, element)) {
+    const text = getText(editor, props.indexedPath)
+    const dir = text !== undefined ? getDirection(text) : undefined
 
     if (dir === 'rtl') {
       attributes.dir = dir
@@ -125,9 +121,9 @@ const MemoizedElement = React.memo(Element, (prev, next) => {
  */
 
 const DefaultElement = (props: RenderElementProps) => {
-  const {attributes, children, element} = props
+  const {attributes, children} = props
   const editor = useSlateStatic()
-  const Tag = editor.isInline(element) ? 'span' : 'div'
+  const Tag = isInlinePath(editor, props.indexedPath) ? 'span' : 'div'
   return (
     <Tag {...attributes} style={{position: 'relative'}}>
       {children}

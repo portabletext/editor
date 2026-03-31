@@ -1,9 +1,10 @@
-import {isTextBlock} from '@portabletext/schema'
+import {isSpan} from '@portabletext/schema'
 import {
   applyInsertNodeAtPath,
   applyInsertNodeAtPoint,
 } from '../internal-utils/apply-insert-node'
-import {getFocusBlock, getFocusSpan} from '../internal-utils/slate-utils'
+import {getNode} from '../node-traversal/get-node'
+import {isTextBlockNode} from '../slate/node/is-text-block-node'
 import {parseInlineObject, parseSpan} from '../utils/parse-blocks'
 import type {OperationImplementation} from './operation.types'
 
@@ -18,13 +19,17 @@ export const insertChildOperationImplementation: OperationImplementation<
     throw new Error('Unable to insert child without a focus')
   }
 
-  const [focusBlock, focusBlockPath] = getFocusBlock({editor: operation.editor})
+  const focusBlockEntry = focus
+    ? getNode(operation.editor, focus.path.slice(0, 1))
+    : undefined
+  const focusBlock = focusBlockEntry?.node
+  const focusBlockPath = focusBlockEntry?.path
 
   if (!focus || !focusBlock || !focusBlockPath) {
     throw new Error('Unable to insert child without a focus block')
   }
 
-  if (!isTextBlock(context, focusBlock)) {
+  if (!isTextBlockNode(context, focusBlock)) {
     throw new Error('Unable to insert child into a non-text block')
   }
 
@@ -42,7 +47,12 @@ export const insertChildOperationImplementation: OperationImplementation<
   })
 
   if (span) {
-    const [focusSpan] = getFocusSpan({editor: operation.editor})
+    const focusSpanEntry = getNode(operation.editor, focus.path.slice(0, 2))
+    const focusSpan =
+      focusSpanEntry &&
+      isSpan({schema: operation.editor.schema}, focusSpanEntry.node)
+        ? focusSpanEntry.node
+        : undefined
 
     if (focusSpan) {
       applyInsertNodeAtPoint(operation.editor, span, focus)
@@ -75,7 +85,12 @@ export const insertChildOperationImplementation: OperationImplementation<
       ...rest,
     }
 
-    const [focusSpan] = getFocusSpan({editor: operation.editor})
+    const focusSpanEntry = getNode(operation.editor, focus.path.slice(0, 2))
+    const focusSpan =
+      focusSpanEntry &&
+      isSpan({schema: operation.editor.schema}, focusSpanEntry.node)
+        ? focusSpanEntry.node
+        : undefined
 
     if (focusSpan) {
       applyInsertNodeAtPoint(operation.editor, inlineNode, focus)

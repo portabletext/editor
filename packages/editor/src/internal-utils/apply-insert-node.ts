@@ -1,15 +1,13 @@
 import {isSpan} from '@portabletext/schema'
+import {getNode} from '../node-traversal/get-node'
 import {end} from '../slate/editor/end'
 import {isEdge} from '../slate/editor/is-edge'
 import {isEnd} from '../slate/editor/is-end'
-import {nodes} from '../slate/editor/nodes'
 import {pathRef} from '../slate/editor/path-ref'
 import {withoutNormalizing} from '../slate/editor/without-normalizing'
 import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
 import type {Point} from '../slate/interfaces/point'
-import {extractProps} from '../slate/node/extract-props'
-import {getNode} from '../slate/node/get-node'
 import {isObjectNode} from '../slate/node/is-object-node'
 import {nextPath} from '../slate/path/next-path'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
@@ -50,27 +48,20 @@ export function applyInsertNodeAtPoint(
           isSpan({schema: editor.schema}, n) ||
           isObjectNode({schema: editor.schema}, n)
 
-    const [entry] = nodes(editor, {
-      at: at.path,
-      match,
-      mode: 'lowest',
-      includeObjectNodes: false,
-    })
+    const nodeEntry = getNode(editor, at.path)
+    const entry = nodeEntry && match(nodeEntry.node) ? nodeEntry : undefined
 
     if (!entry) {
       return
     }
 
-    const [, matchPath] = entry
+    const matchPath = entry.path
     const ref = pathRef(editor, matchPath)
     const isAtEnd = isEnd(editor, at, matchPath)
 
     // Split the node at the point if we're not at an edge
     if (!isEdge(editor, at, matchPath)) {
-      const textNode = getNode(editor, at.path, editor.schema)
-      const properties = extractProps(textNode, editor.schema)
-
-      applySplitNode(editor, at.path, at.offset, properties)
+      applySplitNode(editor, at.path, at.offset)
     }
 
     const path = ref.unref()!

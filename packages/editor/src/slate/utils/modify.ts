@@ -1,25 +1,32 @@
 import {isSpan, isTextBlock, type PortableTextSpan} from '@portabletext/schema'
 import type {EditorSchema} from '../../editor/editor-schema'
-import {safeStringify} from '../../internal-utils/safe-json'
+import {getNodeChildren} from '../../node-traversal/get-children'
+import {getNode} from '../../node-traversal/get-node'
 import {isEditor} from '../editor/is-editor'
 import type {Editor} from '../interfaces/editor'
 import type {Node} from '../interfaces/node'
 import type {Path} from '../interfaces/path'
-import {getNode} from '../node/get-node'
-import {isObjectNode} from '../node/is-object-node'
 
-export const insertChildren = <T>(
+export function insertChildren<T>(
   xs: T[],
   index: number,
   ...newValues: T[]
-) => [...xs.slice(0, index), ...newValues, ...xs.slice(index)]
+): T[] {
+  const result = xs.slice()
+  result.splice(index, 0, ...newValues)
+  return result
+}
 
-const replaceChildren = <T>(
+function replaceChildren<T>(
   xs: T[],
   index: number,
   removeCount: number,
   ...newValues: T[]
-) => [...xs.slice(0, index), ...newValues, ...xs.slice(index + removeCount)]
+): T[] {
+  const result = xs.slice()
+  result.splice(index, removeCount, ...newValues)
+  return result
+}
 
 export const removeChildren = replaceChildren
 
@@ -31,27 +38,75 @@ export const modifyDescendant = <N extends Node>(
   path: Path,
   schema: EditorSchema,
   f: (node: N) => N,
-) => {
+): void => {
   if (path.length === 0) {
-    throw new Error('Cannot modify the editor')
+    return
   }
 
-  const node = getNode(root, path, schema) as N
+  const editableTypes = isEditor(root) ? root.editableTypes : new Set<string>()
+  const context = {schema, editableTypes}
+  const typedRoot = isEditor(root)
+    ? root
+    : isTextBlock({schema}, root)
+      ? root
+      : undefined
+
+  if (!typedRoot) {
+    return
+  }
+  const nodeEntry = getNode({...context, value: typedRoot.children}, path)
+  if (!nodeEntry) {
+    return
+  }
+  const node = nodeEntry.node
   const slicedPath = path.slice()
-  let modifiedNode: Node = f(node)
+  let modifiedNode: Node = f(node as N)
+
+  // Walk down from the root to collect the child field name at each level.
+  // This is needed to rebuild ancestors using the correct field (e.g. 'rows',
+  // 'cells', 'content') instead of always assuming 'children'.
+  const fieldNames: string[] = []
+  {
+    let currentNode: Node | {value: Array<Node>} = {value: typedRoot.children}
+    let scope: Parameters<typeof getNodeChildren>[2]
+    let scopePath = ''
+
+    for (let i = 0; i < path.length; i++) {
+      const result = getNodeChildren(context, currentNode, scope, scopePath)
+      if (!result) {
+        return
+      }
+      fieldNames.push(result.fieldName)
+      const child = result.children.at(path.at(i)!)
+      if (!child) {
+        return
+      }
+      currentNode = child
+      scope = result.scope
+      scopePath = result.scopePath
+    }
+  }
 
   while (slicedPath.length > 1) {
     const index = slicedPath.pop()!
-    const ancestorNode = getNode(root, slicedPath, schema)
+    const level = slicedPath.length
+    const fieldName = fieldNames.at(level)!
+    const ancestorEntry = getNode(
+      {...context, value: typedRoot.children},
+      slicedPath,
+    )
+    if (!ancestorEntry) {
+      return
+    }
+    const ancestorNode = ancestorEntry.node
+    const ancestorRecord = ancestorNode as Record<string, unknown>
+    const currentChildren = Array.isArray(ancestorRecord[fieldName])
+      ? (ancestorRecord[fieldName] as Node[])
+      : []
 
     modifiedNode = {
       ...ancestorNode,
-      children: replaceChildren(
-        isTextBlock({schema}, ancestorNode) ? ancestorNode.children : [],
-        index,
-        1,
-        modifiedNode,
-      ),
+      [fieldName]: replaceChildren(currentChildren, index, 1, modifiedNode),
     }
   }
 
@@ -88,14 +143,6 @@ export const modifyChildren = (
     )
   } else {
     modifyDescendant(root, path, schema, (node) => {
-      if (isSpan({schema}, node) || isObjectNode({schema}, node)) {
-        throw new Error(
-          `Cannot get the element at path [${path}] because it refers to a leaf node: ${safeStringify(
-            node,
-          )}`,
-        )
-      }
-
       return {
         ...node,
         children: f(isTextBlock({schema}, node) ? node.children : []),
@@ -115,11 +162,7 @@ export const modifyLeaf = (
 ) =>
   modifyDescendant(root, path, schema, (node) => {
     if (!isSpan({schema}, node)) {
-      throw new Error(
-        `Cannot get the leaf node at path [${path}] because it refers to a non-leaf node: ${safeStringify(
-          node,
-        )}`,
-      )
+      return node
     }
 
     return f(node)

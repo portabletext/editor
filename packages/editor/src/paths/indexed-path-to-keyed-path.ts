@@ -1,41 +1,48 @@
-import type {OfDefinition} from '@portabletext/schema'
-import {isTextBlock} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
-import {resolveChildArrayField} from '../schema/resolve-child-array-field'
+import {getNodeChildren} from '../node-traversal/get-children'
 import type {Node} from '../slate/interfaces/node'
-import {isObjectNode} from '../slate/node/is-object-node'
 import type {KeyedSegment, Path} from '../types/paths'
 
 /**
  * Converts an indexed path to a keyed path by recursively walking the tree.
  *
- * For text blocks, children are stored in the `children` field.
- *
- * For object nodes, the first array field with an `of` property is used,
- * resolved by looking up the node's type in the current scope of `of`
- * definitions or the top-level schema.
+ * At each level, the node at the indexed position is resolved and its `_key`
+ * is added to the keyed path. If there are more path segments, the child
+ * array field name (resolved via `getNodeChildren`) is added as a string
+ * segment and the walk continues into that field's children.
  */
 export function indexedPathToKeyedPath(
-  root: {children: Array<Node>},
+  context: {
+    schema: EditorSchema
+    editableTypes: Set<string>
+    value: Array<Node>
+  },
   path: Array<number>,
-  schema: EditorSchema,
 ): Path | undefined {
   if (path.length === 0) {
     return []
   }
 
   const keyedPath: Array<KeyedSegment | string> = []
-  let currentChildren: Array<Node> = root.children
-  let currentScope: ReadonlyArray<OfDefinition> | undefined
+  let nodeChildren = getNodeChildren(
+    {schema: context.schema, editableTypes: context.editableTypes},
+    {value: context.value},
+    undefined,
+    '',
+  )
 
   for (let i = 0; i < path.length; i++) {
-    const index = path[i]
+    if (!nodeChildren) {
+      return undefined
+    }
+
+    const index = path.at(i)
 
     if (index === undefined) {
       return undefined
     }
 
-    const node = currentChildren[index]
+    const node = nodeChildren.children.at(index)
 
     if (!node || !node._key) {
       return undefined
@@ -44,26 +51,19 @@ export function indexedPathToKeyedPath(
     keyedPath.push({_key: node._key})
 
     if (i < path.length - 1) {
-      if (isTextBlock({schema}, node)) {
-        keyedPath.push('children')
-        currentChildren = node.children
-        currentScope = undefined
-      } else if (isObjectNode({schema}, node)) {
-        const arrayField = resolveChildArrayField(
-          {schema, scope: currentScope},
-          node,
-        )
+      const childInfo = getNodeChildren(
+        {schema: context.schema, editableTypes: context.editableTypes},
+        node,
+        nodeChildren.scope,
+        nodeChildren.scopePath,
+      )
 
-        if (!arrayField) {
-          return undefined
-        }
-
-        keyedPath.push(arrayField.name)
-        currentChildren = (node as Record<string, unknown>)[
-          arrayField.name
-        ] as Array<Node>
-        currentScope = arrayField.of
+      if (!childInfo) {
+        return undefined
       }
+
+      keyedPath.push(childInfo.fieldName)
+      nodeChildren = childInfo
     }
   }
 

@@ -1,3 +1,4 @@
+import {getDirtyIndexedPaths} from '../../paths/get-dirty-indexed-paths'
 import {normalize} from '../editor/normalize'
 import type {Editor} from '../interfaces/editor'
 import type {Path} from '../interfaces/path'
@@ -8,7 +9,6 @@ import {transformPath} from '../path/transform-path'
 import {transformRangeRef} from '../range-ref/transform-range-ref'
 import type {WithEditorFirstArg} from '../utils/types'
 import {applyOperation} from './apply-operation'
-import {isBatchingDirtyPaths} from './batch-dirty-paths'
 import {updateDirtyPaths} from './update-dirty-paths'
 
 export const apply: WithEditorFirstArg<Editor['apply']> = (editor, op) => {
@@ -25,12 +25,10 @@ export const apply: WithEditorFirstArg<Editor['apply']> = (editor, op) => {
   }
 
   // update dirty paths
-  if (!isBatchingDirtyPaths(editor)) {
-    const transform = operationCanTransformPath(op)
-      ? (p: Path) => transformPath(p, op)
-      : undefined
-    updateDirtyPaths(editor, editor.getDirtyPaths(op), transform)
-  }
+  const transform = operationCanTransformPath(op)
+    ? (p: Path) => transformPath(p, op)
+    : undefined
+  updateDirtyPaths(editor, getDirtyIndexedPaths(editor, op), transform)
 
   applyOperation(editor, op)
 

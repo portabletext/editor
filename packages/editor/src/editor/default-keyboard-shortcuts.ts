@@ -61,8 +61,8 @@ export const defaultKeyboardShortcuts = {
   decorators: {
     strong: bold,
     em: italic,
-    underline: underline,
-    code: code,
+    underline,
+    code,
   },
   delete: createKeyboardShortcut({
     default: [

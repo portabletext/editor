@@ -1,8 +1,10 @@
-import {isSpan, isTextBlock} from '@portabletext/schema'
+import {isSpan} from '@portabletext/schema'
+import {getNodes} from '../../node-traversal/get-nodes'
 import type {Editor} from '../interfaces/editor'
 import type {Location} from '../interfaces/location'
 import type {Point} from '../interfaces/point'
 import {isObjectNode} from '../node/is-object-node'
+import {isTextBlockNode} from '../node/is-text-block-node'
 import {isAncestorPath} from '../path/is-ancestor-path'
 import {pathEquals} from '../path/path-equals'
 import {rangeEdges} from '../range/range-edges'
@@ -13,12 +15,8 @@ import {
   splitByCharacterDistance,
 } from '../utils/string'
 import {end as editorEnd} from './end'
-import {hasInlines} from './has-inlines'
-import {isEditor} from './is-editor'
-import {nodes} from './nodes'
 import {range} from './range'
 import {start as editorStart} from './start'
-import {string} from './string'
 
 export function* positions(
   editor: Editor,
@@ -26,15 +24,9 @@ export function* positions(
     at?: Location
     unit?: TextUnitAdjustment
     reverse?: boolean
-    includeObjectNodes?: boolean
   } = {},
 ): Generator<Point, void, undefined> {
-  const {
-    at = editor.selection,
-    unit = 'offset',
-    reverse = false,
-    includeObjectNodes = false,
-  } = options
+  const {at = editor.selection, unit = 'offset', reverse = false} = options
 
   if (!at) {
     return
@@ -73,32 +65,17 @@ export function* positions(
   // encounter the block node, then all of its text nodes, so when iterating
   // through the blockText and leafText we just need to remember a window of
   // one block node and leaf node, respectively.
-  for (const [node, nodePath] of nodes(editor, {
-    at,
+  for (const {node, path: nodePath} of getNodes(editor, {
+    from: start.path,
+    to: end.path,
     reverse,
-    includeObjectNodes,
   })) {
     /*
      * ELEMENT NODE - Yield position(s) for object nodes, collect blockText for blocks
      */
-    if (isTextBlock({schema: editor.schema}, node)) {
-      // Object nodes are a special case, so by default we will always
-      // yield their first point. If the `includeObjectNodes` option is set to true,
-      // then we will iterate over their content.
-      if (!includeObjectNodes && editor.isElementReadOnly(node)) {
-        yield editorStart(editor, nodePath)
-        continue
-      }
-
-      // Inline element nodes are ignored as they don't themselves
-      // contribute to `blockText` or `leafText` - their parent and
-      // children do.
-      if (editor.isInline(node)) {
-        continue
-      }
-
+    if (isTextBlockNode({schema: editor.schema}, node)) {
       // Block element node - set `blockText` to its text content.
-      if (hasInlines(editor, node)) {
+      {
         // We always exhaust block nodes before encountering a new one:
         //   console.assert(blockText === '',
         //     `blockText='${blockText}' - `+
@@ -117,7 +94,24 @@ export function* positions(
           ? start
           : editorStart(editor, nodePath)
 
-        blockText = string(editor, {anchor: s, focus: e}, {includeObjectNodes})
+        blockText = ''
+        for (const {node: spanNode, path: spanPath} of getNodes(editor, {
+          from: s.path,
+          to: e.path,
+          match: (n) => isSpan({schema: editor.schema}, n),
+        })) {
+          if (!isSpan({schema: editor.schema}, spanNode)) {
+            continue
+          }
+          let spanText = spanNode.text
+          if (pathEquals(spanPath, e.path)) {
+            spanText = spanText.slice(0, e.offset)
+          }
+          if (pathEquals(spanPath, s.path)) {
+            spanText = spanText.slice(s.offset)
+          }
+          blockText += spanText
+        }
         isNewBlock = true
       }
     }
@@ -128,8 +122,7 @@ export function* positions(
     }
 
     if (
-      !isEditor(node) &&
-      !isTextBlock({schema: editor.schema}, node) &&
+      !isTextBlockNode({schema: editor.schema}, node) &&
       !isSpan({schema: editor.schema}, node)
     ) {
       yield {path: nodePath, offset: 0}

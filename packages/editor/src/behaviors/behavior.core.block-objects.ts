@@ -1,10 +1,10 @@
-import {isTextBlock} from '@portabletext/schema'
 import {defaultKeyboardShortcuts} from '../editor/default-keyboard-shortcuts'
 import {getFocusBlockObject} from '../selectors/selector.get-focus-block-object'
 import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
 import {getNextBlock} from '../selectors/selector.get-next-block'
 import {getPreviousBlock} from '../selectors/selector.get-previous-block'
 import {isSelectionCollapsed} from '../selectors/selector.is-selection-collapsed'
+import {isTextBlockNode} from '../slate/node/is-text-block-node'
 import {isListBlock} from '../utils/parse-blocks'
 import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
 import {raise} from './behavior.types.action'
@@ -218,7 +218,7 @@ const deletingEmptyTextBlockAfterBlockObject = defineBehavior({
 
     if (
       isEmptyTextBlock(snapshot.context, focusTextBlock.node) &&
-      !isTextBlock(snapshot.context, previousBlock.node)
+      !isTextBlockNode(snapshot.context, previousBlock.node)
     ) {
       return {focusTextBlock, previousBlock}
     }
@@ -255,7 +255,7 @@ const deletingEmptyTextBlockBeforeBlockObject = defineBehavior({
 
     if (
       isEmptyTextBlock(snapshot.context, focusTextBlock.node) &&
-      !isTextBlock(snapshot.context, nextBlock.node)
+      !isTextBlockNode(snapshot.context, nextBlock.node)
     ) {
       return {focusTextBlock, nextBlock}
     }

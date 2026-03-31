@@ -1,9 +1,9 @@
 import {isSpan, isTextBlock} from '@portabletext/schema'
+import {getNode} from '../node-traversal/get-node'
 import {withoutNormalizing} from '../slate/editor/without-normalizing'
 import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
 import type {Point} from '../slate/interfaces/point'
-import {getNode} from '../slate/node/get-node'
 import {isAncestorPath} from '../slate/path/is-ancestor-path'
 import {nextPath} from '../slate/path/next-path'
 import {pathEndsBefore} from '../slate/path/path-ends-before'
@@ -27,9 +27,14 @@ export function applySplitNode(
   editor: PortableTextSlateEditor,
   path: Path,
   position: number,
-  properties: Record<string, unknown>,
 ): void {
-  const node = getNode(editor, path, editor.schema)
+  const nodeEntry = getNode(editor, path)
+
+  if (!nodeEntry) {
+    return
+  }
+
+  const node = nodeEntry.node
 
   // Pre-transform all refs with split semantics
   for (const ref of editor.pathRefs) {
@@ -154,6 +159,7 @@ export function applySplitNode(
   try {
     withoutNormalizing(editor, () => {
       if (isSpan({schema: editor.schema}, node)) {
+        const {text: _text, ...properties} = node
         const afterText = node.text.slice(position)
         const newNode = {...properties, text: afterText} as Node
         editor.apply({
@@ -168,6 +174,7 @@ export function applySplitNode(
           node: newNode,
         })
       } else if (isTextBlock({schema: editor.schema}, node)) {
+        const {children: _children, ...properties} = node
         const children = node.children
         const afterChildren = children.slice(position)
         const newNode = {...properties, children: afterChildren} as Node

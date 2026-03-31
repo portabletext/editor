@@ -5,6 +5,7 @@ import {getFocusInlineObject} from '../selectors/selector.get-focus-inline-objec
 import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
 import {getLastBlock} from '../selectors/selector.get-last-block'
 import {isSelectionCollapsed} from '../selectors/selector.is-selection-collapsed'
+import {isTextBlockNode} from '../slate/node/is-text-block-node'
 import {getBlockEndPoint} from '../utils/util.get-block-end-point'
 import {getBlockStartPoint} from '../utils/util.get-block-start-point'
 import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
@@ -182,7 +183,7 @@ export const abstractInsertBehaviors = [
         block: focusTextBlock.node,
       })
 
-      const isFirstBlockTextBlock = isTextBlock(
+      const isFirstBlockTextBlock = isTextBlockNode(
         snapshot.context,
         event.blocks.at(0),
       )
@@ -268,7 +269,7 @@ export const abstractInsertBehaviors = [
               focusBlockStartPoint,
             )
 
-            if (isTextBlock(snapshot.context, block) && !deletingEndToEnd) {
+            if (isTextBlockNode(snapshot.context, block) && !deletingEndToEnd) {
               firstBlockKey = focusTextBlock.node._key
               previousBlockKey = focusTextBlock.node._key
             } else {

@@ -6,8 +6,6 @@ import {createBehaviorApiPlugin} from './slate-plugin.behavior-api'
 import {createHistoryPlugin} from './slate-plugin.history'
 import {createNormalizationPlugin} from './slate-plugin.normalization'
 import {createPatchesPlugin} from './slate-plugin.patches'
-import {createSchemaPlugin} from './slate-plugin.schema'
-import {createUniqueKeysPlugin} from './slate-plugin.unique-keys'
 import {updateSelectionPlugin} from './slate-plugin.update-selection'
 import {updateValuePlugin} from './slate-plugin.update-value'
 
@@ -23,10 +21,6 @@ export const plugins = <T extends Editor>(
 ): PortableTextSlateEditor => {
   const e = editor as T & PortableTextSlateEditor
   const {editorActor, relayActor} = options
-  const uniqueKeysPlugin = createUniqueKeysPlugin(editorActor)
-  const schemaPlugin = createSchemaPlugin({
-    editorActor,
-  })
   const patchesPlugin = createPatchesPlugin({
     editorActor,
     relayActor,
@@ -36,24 +30,20 @@ export const plugins = <T extends Editor>(
     editorActor,
     subscriptions: options.subscriptions,
   })
-  const normalizationPlugin = createNormalizationPlugin(editorActor)
+  const normalizationPlugin = createNormalizationPlugin()
   const behaviorApiPlugin = createBehaviorApiPlugin(editorActor)
 
   // Ordering is important here, selection dealing last, data manipulation in the middle and core model stuff first.
   return behaviorApiPlugin(
-    schemaPlugin(
-      uniqueKeysPlugin(
-        normalizationPlugin(
-          historyPlugin(
-            patchesPlugin(
-              updateValuePlugin(
-                editorActor.getSnapshot().context,
-                updateSelectionPlugin({
-                  editorActor,
-                  editor: e,
-                }),
-              ),
-            ),
+    normalizationPlugin(
+      historyPlugin(
+        patchesPlugin(
+          updateValuePlugin(
+            editorActor.getSnapshot().context,
+            updateSelectionPlugin({
+              editorActor,
+              editor: e,
+            }),
           ),
         ),
       ),

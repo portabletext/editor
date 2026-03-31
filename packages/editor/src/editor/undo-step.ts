@@ -144,13 +144,12 @@ function createNewStep(
           op,
         ]
 
-  return [
-    ...steps,
-    {
-      operations,
-      timestamp: new Date(),
-    },
-  ]
+  steps.push({
+    operations,
+    timestamp: new Date(),
+  })
+
+  return steps
 }
 
 function mergeIntoLastStep(

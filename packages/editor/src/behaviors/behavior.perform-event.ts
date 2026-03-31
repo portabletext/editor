@@ -187,13 +187,16 @@ export function performEvent({
     for (const actionSet of eventBehavior.actions) {
       actionSetIndex++
 
-      const actionsSnapshot = createEditorSnapshot({
-        converters,
-        editor,
-        keyGenerator,
-        readOnly,
-        schema,
-      })
+      const actionsSnapshot =
+        actionSetIndex === 0
+          ? guardSnapshot
+          : createEditorSnapshot({
+              converters,
+              editor,
+              keyGenerator,
+              readOnly,
+              schema,
+            })
 
       let actions: Array<BehaviorAction> = []
 
@@ -290,7 +293,7 @@ export function performEvent({
               performEvent({
                 mode: mode === 'execute' ? 'execute' : 'forward',
                 behaviors,
-                remainingEventBehaviors: remainingEventBehaviors,
+                remainingEventBehaviors,
                 event: action.event,
                 editor,
                 converters,

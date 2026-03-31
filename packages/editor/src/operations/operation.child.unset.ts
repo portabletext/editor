@@ -1,7 +1,7 @@
 import {isSpan, isTextBlock} from '@portabletext/schema'
 import {applySetNode} from '../internal-utils/apply-set-node'
 import {safeStringify} from '../internal-utils/safe-json'
-import {node as editorNode} from '../slate/editor/node'
+import {getNode} from '../node-traversal/get-node'
 import {isObjectNode} from '../slate/node/is-object-node'
 import type {OperationImplementation} from './operation.types'
 
@@ -44,25 +44,18 @@ export const childUnsetOperationImplementation: OperationImplementation<
     throw new Error(`Unable to find child at ${safeStringify(operation.at)}`)
   }
 
-  const childEntry = editorNode(operation.editor, [blockIndex, childIndex], {
-    depth: 2,
-  })
-  const child = childEntry?.[0]
-  const childPath = childEntry?.[1]
+  const childEntry = getNode(operation.editor, [blockIndex, childIndex])
 
-  if (!child || !childPath) {
+  if (!childEntry) {
     throw new Error(`Unable to find child at ${safeStringify(operation.at)}`)
   }
+
+  const {node: child, path: childPath} = childEntry
 
   if (isSpan({schema: operation.editor.schema}, child)) {
     const newNode: Record<string, unknown> = {}
 
     for (const prop of operation.props) {
-      if (prop === 'text') {
-        // Unsetting `text` requires special treatment
-        continue
-      }
-
       if (prop === '_type') {
         // It's not allowed to unset the _type of a span
         continue
@@ -77,15 +70,6 @@ export const childUnsetOperationImplementation: OperationImplementation<
     }
 
     applySetNode(operation.editor, newNode, childPath)
-
-    if (operation.props.includes('text')) {
-      operation.editor.apply({
-        type: 'remove_text',
-        path: childPath,
-        offset: 0,
-        text: child.text,
-      })
-    }
 
     return
   }

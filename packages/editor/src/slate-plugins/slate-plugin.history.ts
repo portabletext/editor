@@ -99,8 +99,10 @@ export function createHistoryPlugin({
       }
 
       if (op.type !== 'set_selection') {
-        // Clear the repo steps if any actual changes are made
-        editor.history.redos = []
+        // Clear the redo steps if any actual changes are made
+        if (editor.history.redos.length > 0) {
+          editor.history.redos = []
+        }
       }
 
       editor.history.undos = createUndoSteps({

@@ -1,5 +1,8 @@
 import {isSpan} from '@portabletext/schema'
 import type {EditorActor} from '../../../../editor/editor-machine'
+import {getNode} from '../../../../node-traversal/get-node'
+import {getNodes} from '../../../../node-traversal/get-nodes'
+import {getSpanNode} from '../../../../node-traversal/get-span-node'
 import {
   applyStringDiff,
   mergeStringDiffs,
@@ -12,15 +15,14 @@ import {
   type TextDiff,
 } from '../../../dom/utils/diff-text'
 import {isDOMSelection, isTrackedMutation} from '../../../dom/utils/dom'
-import {leaf as editorLeaf} from '../../../editor/leaf'
-import {next as editorNext} from '../../../editor/next'
+import {after} from '../../../editor/after'
 import {range as editorRange} from '../../../editor/range'
 import {rangeRef} from '../../../editor/range-ref'
 import type {Editor} from '../../../interfaces/editor'
 import type {Path} from '../../../interfaces/path'
 import type {Point} from '../../../interfaces/point'
 import type {Range} from '../../../interfaces/range'
-import {getLeaf} from '../../../node/get-leaf'
+import {isObjectNode} from '../../../node/is-object-node'
 import {pathEquals} from '../../../path/path-equals'
 import {isPoint} from '../../../point/is-point'
 import {isCollapsedRange} from '../../../range/is-collapsed-range'
@@ -300,11 +302,13 @@ export function createAndroidInputManager({
 
     const pendingDiffs = editor.pendingDiffs
 
-    const target = getLeaf(editor, path, editor.schema)
+    const targetEntry = getSpanNode(editor, path)
 
-    if (!isSpan({schema: editor.schema}, target)) {
+    if (!targetEntry) {
       return
     }
+
+    const target = targetEntry.node
 
     const idx = pendingDiffs.findIndex((change) =>
       pathEquals(change.path, path),
@@ -413,7 +417,28 @@ export function createAndroidInputManager({
     if (type.startsWith('delete')) {
       const direction = type.endsWith('Backward') ? 'backward' : 'forward'
       let [start, end] = rangeEdges(targetRange)
-      let [leaf, path] = editorLeaf(editor, start.path)
+      const leafNodeEntry = getNode(editor, start.path)
+      const leafResult =
+        leafNodeEntry &&
+        (isSpan({schema: editor.schema}, leafNodeEntry.node) ||
+          isObjectNode({schema: editor.schema}, leafNodeEntry.node))
+          ? leafNodeEntry
+          : undefined
+
+      if (!leafResult) {
+        return scheduleAction(
+          () =>
+            editorActor.send({
+              type: 'behavior event',
+              behaviorEvent: {type: 'delete', direction},
+              editor,
+            }),
+          {at: targetRange},
+        )
+      }
+
+      let leaf = leafResult.node
+      let path = leafResult.path
 
       if (!isSpan({schema: editor.schema}, leaf)) {
         return scheduleAction(
@@ -429,24 +454,36 @@ export function createAndroidInputManager({
 
       if (isExpandedRange(targetRange)) {
         if (leaf.text.length === start.offset && end.offset === 0) {
-          const next = editorNext(editor, {
-            at: start.path,
-            match: (n) => isSpan({schema: editor.schema}, n),
-          })
-          if (next && pathEquals(next[1], end.path)) {
+          const afterPoint = after(editor, start.path)
+          const [nextEntry] = afterPoint
+            ? getNodes(editor, {
+                from: afterPoint.path,
+                match: (n) => isSpan({schema: editor.schema}, n),
+              })
+            : []
+          if (
+            nextEntry &&
+            isSpan({schema: editor.schema}, nextEntry.node) &&
+            pathEquals(nextEntry.path, end.path)
+          ) {
             // when deleting a linebreak, targetRange will span across the break (ie start in the node before and end in the node after)
             // if the node before is empty, this will look like a hanging range and get unhung later--which will take the break we want to remove out of the range
             // so to avoid this we collapse the target range to default to single character deletion
             if (direction === 'backward') {
               targetRange = {anchor: end, focus: end}
               start = end
-              ;[leaf, path] = next
+              leaf = nextEntry.node
+              path = nextEntry.path
             } else {
               targetRange = {anchor: start, focus: start}
               end = start
             }
           }
         }
+      }
+
+      if (!isSpan({schema: editor.schema}, leaf)) {
+        return
       }
 
       const diff = {
@@ -517,11 +554,11 @@ export function createAndroidInputManager({
       case 'deleteContentForward': {
         const {anchor} = targetRange
         if (canStoreDiff && isCollapsedRange(targetRange)) {
-          const targetNode = getLeaf(editor, anchor.path, editor.schema)
+          const targetNodeEntry = getSpanNode(editor, anchor.path)
 
           if (
-            isSpan({schema: editor.schema}, targetNode) &&
-            anchor.offset < targetNode.text.length
+            targetNodeEntry &&
+            anchor.offset < targetNodeEntry.node.text.length
           ) {
             return storeDiff(anchor.path, {
               text: '',

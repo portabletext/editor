@@ -15,6 +15,8 @@ import type {Node} from '../../interfaces/node'
 import type {Path} from '../../interfaces/path'
 import type {DecoratedRange} from '../../interfaces/text'
 import {isObjectNode} from '../../node/is-object-node'
+import {isSpanNode} from '../../node/is-span-node'
+import {isTextBlockNode} from '../../node/is-text-block-node'
 import type {
   RenderElementProps,
   RenderLeafProps,
@@ -161,11 +163,19 @@ const useChildren = (props: {
     if (isTextBlock({schema: editor.schema}, n)) {
       return renderElementComponent(n, i)
     }
+    // Fallback for text block nodes without `children`
+    if (isTextBlockNode({schema: editor.schema}, n)) {
+      return null
+    }
     if (isObjectNode({schema: editor.schema}, n)) {
       return renderObjectNodeComponent(n, i)
     }
     if (isSpan({schema: editor.schema}, n)) {
       return renderTextComponent(n, i)
+    }
+    // Fallback for span nodes without `text`
+    if (isSpanNode({schema: editor.schema}, n)) {
+      return null
     }
     throw new Error(`Unexpected node type`)
   })

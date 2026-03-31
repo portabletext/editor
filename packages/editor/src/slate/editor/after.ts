@@ -12,7 +12,6 @@ export function after(
   options: {
     distance?: number
     unit?: TextUnitAdjustment
-    includeObjectNodes?: boolean
   } = {},
 ): Point | undefined {
   const anchor = point(editor, at, {edge: 'end'})

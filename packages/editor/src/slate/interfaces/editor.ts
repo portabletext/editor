@@ -1,9 +1,4 @@
-import type {
-  PortableTextBlock,
-  PortableTextObject,
-  PortableTextSpan,
-  PortableTextTextBlock,
-} from '@portabletext/schema'
+import type {PortableTextBlock, PortableTextSpan} from '@portabletext/schema'
 import type {PortableTextSlateEditor} from '../../types/slate-editor'
 import type {ReactEditor} from '../react/plugin/react-editor'
 import type {Location} from './location'
@@ -23,6 +18,7 @@ export interface BaseEditor {
   // Core state.
 
   children: PortableTextBlock[]
+  readonly value: PortableTextBlock[]
   selection: Selection
   operations: Operation[]
   marks: EditorMarks | null
@@ -30,7 +26,6 @@ export interface BaseEditor {
   dirtyPathKeys: Set<string>
   flushing: boolean
   normalizing: boolean
-  batchingDirtyPaths: boolean
   pathRefs: Set<PathRef>
   pointRefs: Set<PointRef>
   rangeRefs: Set<RangeRef>
@@ -38,12 +33,6 @@ export interface BaseEditor {
   // Overrideable core methods.
 
   apply: (operation: Operation) => void
-  createSpan: () => PortableTextSpan
-  getDirtyPaths: (operation: Operation) => Path[]
-  isElementReadOnly: (
-    element: PortableTextTextBlock | PortableTextObject,
-  ) => boolean
-  isInline: (element: PortableTextTextBlock | PortableTextObject) => boolean
   normalizeNode: (
     entry: [Editor | Node, Path],
     options?: {

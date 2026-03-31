@@ -1,6 +1,6 @@
-import {isTextBlock} from '@portabletext/schema'
 import {applySetNode} from '../internal-utils/apply-set-node'
 import {safeStringify} from '../internal-utils/safe-json'
+import {isTextBlockNode} from '../slate/node/is-text-block-node'
 import type {OperationImplementation} from './operation.types'
 
 export const blockUnsetOperationImplementation: OperationImplementation<
@@ -22,9 +22,9 @@ export const blockUnsetOperationImplementation: OperationImplementation<
     throw new Error(`Unable to find block at ${safeStringify(operation.at)}`)
   }
 
-  if (isTextBlock(context, slateBlock)) {
+  if (isTextBlockNode(context, slateBlock)) {
     const propsToRemove = operation.props.filter(
-      (prop) => prop !== '_type' && prop !== '_key' && prop !== 'children',
+      (prop) => prop !== '_type' && prop !== '_key',
     )
 
     const unsetProps: Record<string, null> = {}

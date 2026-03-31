@@ -1,4 +1,3 @@
-import {isTextBlock} from '@portabletext/schema'
 import {defaultKeyboardShortcuts} from '../editor/default-keyboard-shortcuts'
 import {getFocusListBlock} from '../selectors/selector.get-focus-list-block'
 import {getFocusSpan} from '../selectors/selector.get-focus-span'
@@ -9,6 +8,7 @@ import {getSelectedBlocks} from '../selectors/selector.get-selected-blocks'
 import {getSelectionEndPoint} from '../selectors/selector.get-selection-end-point'
 import {getSelectionStartPoint} from '../selectors/selector.get-selection-start-point'
 import {isSelectionCollapsed} from '../selectors/selector.is-selection-collapsed'
+import {isTextBlockNode} from '../slate/node/is-text-block-node'
 import {isListBlock} from '../utils/parse-blocks'
 import {isAtTheBeginningOfBlock} from '../utils/util.at-the-beginning-of-block'
 import {getBlockEndPoint} from '../utils/util.get-block-end-point'
@@ -107,7 +107,7 @@ const mergeTextIntoListOnDelete = defineBehavior({
       return false
     }
 
-    if (!isTextBlock(snapshot.context, nextBlock.node)) {
+    if (!isTextBlockNode(snapshot.context, nextBlock.node)) {
       return false
     }
 

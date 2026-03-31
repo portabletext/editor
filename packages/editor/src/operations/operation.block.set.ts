@@ -1,7 +1,7 @@
 import {applyAll, set} from '@portabletext/patches'
-import {isTextBlock} from '@portabletext/schema'
 import {applySetNode} from '../internal-utils/apply-set-node'
 import {safeStringify} from '../internal-utils/safe-json'
+import {isTextBlockNode} from '../slate/node/is-text-block-node'
 import {parseMarkDefs} from '../utils/parse-blocks'
 import type {OperationImplementation} from './operation.types'
 
@@ -22,11 +22,11 @@ export const blockSetOperationImplementation: OperationImplementation<
     throw new Error(`Unable to find block at ${safeStringify(operation.at)}`)
   }
 
-  if (isTextBlock(context, slateBlock)) {
+  if (isTextBlockNode(context, slateBlock)) {
     const filteredProps: Record<string, unknown> = {}
 
     for (const key of Object.keys(operation.props)) {
-      if (key === '_type' || key === 'children') {
+      if (key === '_type') {
         continue
       }
 

@@ -1,5 +1,6 @@
-import {isSpan, type PortableTextObject} from '@portabletext/schema'
+import type {PortableTextObject} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
+import {isSpanNode} from '../slate/node/is-span-node'
 import type {ChildPath} from '../types/paths'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import {getFocusTextBlock} from './selector.get-focus-text-block'
@@ -35,7 +36,7 @@ export const getPreviousInlineObjects: EditorSelector<
       break
     }
 
-    if (!isSpan(snapshot.context, child)) {
+    if (!isSpanNode(snapshot.context, child)) {
       inlineObjects.push({
         node: child,
         path: [...focusTextBlock.path, 'children', {_key: child._key}],

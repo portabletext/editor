@@ -1,10 +1,12 @@
 import type {PortableTextSpan} from '@portabletext/schema'
+import {isSpan} from '@portabletext/schema'
 import {safeStringify} from '../../internal-utils/safe-json'
+import {getChildren} from '../../node-traversal/get-children'
+import {getNodes} from '../../node-traversal/get-nodes'
 import type {Editor, Selection} from '../interfaces/editor'
 import type {Node, NodeEntry} from '../interfaces/node'
 import type {Operation} from '../interfaces/operation'
 import type {Range} from '../interfaces/range'
-import {getTexts} from '../node/get-texts'
 import {commonPath} from '../path/common-path'
 import {comparePaths} from '../path/compare-paths'
 import {isSiblingPath} from '../path/is-sibling-path'
@@ -27,7 +29,27 @@ export function applyOperation(editor: Editor, op: Operation): void {
 
   switch (op.type) {
     case 'insert_node': {
-      const {path, node} = op
+      const {path} = op
+      let {node} = op
+
+      // Ensure unique keys on inserted nodes (skip during remote/undo/redo)
+      if (
+        !editor.isProcessingRemoteChanges &&
+        !editor.isUndoing &&
+        !editor.isRedoing &&
+        node._key !== undefined
+      ) {
+        const insertParentPath = parentPath(path)
+        const siblings =
+          insertParentPath.length === 0
+            ? editor.children
+            : getChildren(editor, insertParentPath).map((entry) => entry.node)
+
+        if (siblings.some((sibling) => sibling._key === node._key)) {
+          node = {...node, _key: editor.keyGenerator()}
+          op.node = node
+        }
+      }
 
       modifyChildren(editor, parentPath(path), editor.schema, (children) => {
         const index = path[path.length - 1]!
@@ -87,7 +109,10 @@ export function applyOperation(editor: Editor, op: Operation): void {
             let prev: NodeEntry<PortableTextSpan> | undefined
             let next: NodeEntry<PortableTextSpan> | undefined
 
-            for (const [n, p] of getTexts(editor, editor.schema)) {
+            for (const {node: n, path: p} of getNodes(editor)) {
+              if (!isSpan({schema: editor.schema}, n)) {
+                continue
+              }
               if (comparePaths(p, path) === -1) {
                 prev = [n, p]
               } else {
@@ -156,23 +181,8 @@ export function applyOperation(editor: Editor, op: Operation): void {
 
       modifyDescendant(editor, path, editor.schema, (node) => {
         const newNode = {...node}
-        const isElement = 'children' in node && Array.isArray(node.children)
 
         for (const key in newProperties) {
-          if (key === 'children') {
-            throw new Error(`Cannot set the "${key}" property of nodes!`)
-          }
-
-          // Only skip `text` on spans (which have marks), not on ObjectNodes
-          // where `text` is a user property.
-          if (
-            key === 'text' &&
-            !isElement &&
-            Array.isArray((node as Record<string, unknown>)['marks'])
-          ) {
-            throw new Error(`Cannot set the "${key}" property of nodes!`)
-          }
-
           const value = newProperties[key as keyof Node]
 
           if (value == null) {
@@ -192,6 +202,7 @@ export function applyOperation(editor: Editor, op: Operation): void {
         return newNode
       })
 
+      transformSelection = true
       break
     }
 

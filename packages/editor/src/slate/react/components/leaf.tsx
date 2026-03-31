@@ -1,4 +1,3 @@
-import {ResizeObserver as ResizeObserverPolyfill} from '@juggle/resize-observer'
 import type {
   PortableTextObject,
   PortableTextSpan,
@@ -92,8 +91,6 @@ const Leaf = (props: {
         editor.domPlaceholderElement = placeholderEl
 
         if (!placeholderResizeObserver.current) {
-          // Create a new observer and observe the placeholder element.
-          const ResizeObserver = window.ResizeObserver || ResizeObserverPolyfill
           placeholderResizeObserver.current = new ResizeObserver(() => {
             ;(leaf as any).onPlaceholderResize?.(placeholderEl)
           })

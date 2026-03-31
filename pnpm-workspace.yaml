@@ -20,6 +20,8 @@ minimumReleaseAgeExclude:
   - 'react-is'
   # Renovate security update: markdown-it@14.1.1
   - markdown-it@14.1.1
+  # Renovate security update: astro@5.18.1
+  - astro@5.18.1
 
 trustPolicy: no-downgrade
 

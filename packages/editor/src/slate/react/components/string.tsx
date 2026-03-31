@@ -1,21 +1,52 @@
 import {
+  isSpan,
   isTextBlock,
   type PortableTextObject,
   type PortableTextSpan,
   type PortableTextTextBlock,
 } from '@portabletext/schema'
 import {forwardRef, memo, useRef, useState} from 'react'
+import {getNodes} from '../../../node-traversal/get-nodes'
 import {IS_ANDROID} from '../../dom/utils/environment'
 import {MARK_PLACEHOLDER_SYMBOL} from '../../dom/utils/symbols'
-import {string as editorString} from '../../editor/string'
+import {end as editorEnd} from '../../editor/end'
+import {start as editorStart} from '../../editor/start'
+import type {Editor} from '../../interfaces/editor'
 import type {Path} from '../../interfaces/path'
 import {parentPath} from '../../path/parent-path'
+import {pathEquals} from '../../path/path-equals'
 import {useIsomorphicLayoutEffect} from '../hooks/use-isomorphic-layout-effect'
 import {useSlateStatic} from '../hooks/use-slate-static'
 
 /**
  * Leaf content strings.
  */
+
+function getTextContent(editor: Editor, path: Path): string {
+  const start = editorStart(editor, path)
+  const end = editorEnd(editor, path)
+  let text = ''
+
+  for (const {node, path: nodePath} of getNodes(editor, {
+    from: start.path,
+    to: end.path,
+    match: (n) => isSpan({schema: editor.schema}, n),
+  })) {
+    if (!isSpan({schema: editor.schema}, node)) {
+      continue
+    }
+    let nodeText = node.text
+    if (pathEquals(nodePath, end.path)) {
+      nodeText = nodeText.slice(0, end.offset)
+    }
+    if (pathEquals(nodePath, start.path)) {
+      nodeText = nodeText.slice(start.offset)
+    }
+    text += nodeText
+  }
+
+  return text
+}
 
 const SlateString = (props: {
   isLast: boolean
@@ -28,16 +59,16 @@ const SlateString = (props: {
   const editor = useSlateStatic()
   const parentIndexedPath = parentPath(indexedPath)
   const isMarkPlaceholder = Boolean((leaf as any)[MARK_PLACEHOLDER_SYMBOL])
+  const leafText = leaf.text ?? ''
 
   // COMPAT: If this is the last text node in an empty block, render a zero-
   // width space that will convert into a line break when copying and pasting
   // to support expected plain text.
   if (
-    leaf.text === '' &&
+    leafText === '' &&
     isTextBlock({schema: editor.schema}, parent) &&
     parent.children[parent.children.length - 1] === text &&
-    !editor.isInline(parent) &&
-    editorString(editor, parentIndexedPath) === ''
+    getTextContent(editor, parentIndexedPath) === ''
   ) {
     return <ZeroWidthString isLineBreak isMarkPlaceholder={isMarkPlaceholder} />
   }
@@ -45,17 +76,17 @@ const SlateString = (props: {
   // COMPAT: If the text is empty, it's because it's on the edge of an inline
   // node, so we render a zero-width space so that the selection can be
   // inserted next to it still.
-  if (leaf.text === '') {
+  if (leafText === '') {
     return <ZeroWidthString isMarkPlaceholder={isMarkPlaceholder} />
   }
 
   // COMPAT: Browsers will collapse trailing new lines at the end of blocks,
   // so we need to add an extra trailing new lines to prevent that.
-  if (isLast && leaf.text.slice(-1) === '\n') {
-    return <TextString isTrailing text={leaf.text} />
+  if (isLast && leafText.slice(-1) === '\n') {
+    return <TextString isTrailing text={leafText} />
   }
 
-  return <TextString text={leaf.text} />
+  return <TextString text={leafText} />
 }
 
 /**

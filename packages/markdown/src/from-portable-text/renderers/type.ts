@@ -117,6 +117,33 @@ export const DefaultTableRenderer: PortableTextTypeRenderer<{
 /**
  * @public
  */
+export const DefaultCalloutRenderer: PortableTextTypeRenderer<{
+  _type: 'callout'
+  tone: string
+  content: Array<PortableTextBlock>
+}> = ({value, renderNode}) => {
+  const renderedContent = value.content
+    .map((block, index) =>
+      renderNode({
+        node: {...block, style: 'normal'},
+        index,
+        isInline: false,
+        renderNode,
+      }),
+    )
+    .join('\n\n')
+
+  const prefixed = renderedContent
+    .split('\n')
+    .map((line) => (line === '' ? '>' : `> ${line}`))
+    .join('\n')
+
+  return `> [!${value.tone.toUpperCase()}]\n${prefixed}`
+}
+
+/**
+ * @public
+ */
 export const DefaultUnknownTypeRenderer: PortableTextTypeRenderer = ({
   value,
   isInline,

@@ -1,6 +1,6 @@
 {
   "name": "@portabletext/markdown",
-  "version": "1.1.4",
+  "version": "1.2.0",
   "description": "Convert Portable Text to and from Markdown",
   "keywords": [
     "portable-text",
@@ -46,6 +46,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@mdit/plugin-alert": "^0.23.1",
     "@portabletext/schema": "workspace:^",
     "@portabletext/toolkit": "^5.0.2",
     "markdown-it": "^14.1.1"

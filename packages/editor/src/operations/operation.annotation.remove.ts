@@ -4,22 +4,24 @@ import {applySelect} from '../internal-utils/apply-selection'
 import {applySetNode} from '../internal-utils/apply-set-node'
 import {applySplitNode} from '../internal-utils/apply-split-node'
 import {toSlateRange} from '../internal-utils/to-slate-range'
+import {getChildren} from '../node-traversal/get-children'
+import {getNode} from '../node-traversal/get-node'
+import {getNodes} from '../node-traversal/get-nodes'
+import {isLeaf} from '../node-traversal/is-leaf'
 import {isEdge} from '../slate/editor/is-edge'
 import {isEnd} from '../slate/editor/is-end'
 import {isStart} from '../slate/editor/is-start'
-import {leaf} from '../slate/editor/leaf'
-import {node as editorNode} from '../slate/editor/node'
-import {nodes} from '../slate/editor/nodes'
+import {path as editorPath} from '../slate/editor/path'
 import {rangeRef} from '../slate/editor/range-ref'
 import type {Path} from '../slate/interfaces/path'
-import {extractProps} from '../slate/node/extract-props'
-import {getChildren} from '../slate/node/get-children'
 import {isAfterPath} from '../slate/path/is-after-path'
 import {isBeforePath} from '../slate/path/is-before-path'
 import {isCollapsedRange} from '../slate/range/is-collapsed-range'
 import {isRange} from '../slate/range/is-range'
 import {rangeEdges} from '../slate/range/range-edges'
+import {rangeEnd} from '../slate/range/range-end'
 import {rangeIncludes} from '../slate/range/range-includes'
+import {rangeStart} from '../slate/range/range-start'
 import type {OperationImplementation} from './operation.types'
 
 export const removeAnnotationOperationImplementation: OperationImplementation<
@@ -45,9 +47,16 @@ export const removeAnnotationOperationImplementation: OperationImplementation<
   }
 
   if (isCollapsedRange(effectiveSelection)) {
-    const [block, blockPath] = editorNode(editor, effectiveSelection, {
-      depth: 1,
-    })
+    const blockEntry = getNode(
+      editor,
+      editorPath(editor, effectiveSelection, {depth: 1}),
+    )
+
+    if (!blockEntry) {
+      return
+    }
+
+    const {node: block, path: blockPath} = blockEntry
 
     if (!isTextBlock({schema: editor.schema}, block)) {
       return
@@ -58,13 +67,16 @@ export const removeAnnotationOperationImplementation: OperationImplementation<
       (markDef) => markDef._type === operation.annotation.name,
     )
 
-    const [selectedChild, selectedChildPath] = editorNode(
+    const selectedChildEntry = getNode(
       editor,
-      effectiveSelection,
-      {
-        depth: 2,
-      },
+      editorPath(editor, effectiveSelection, {depth: 2}),
     )
+
+    if (!selectedChildEntry) {
+      return
+    }
+
+    const {node: selectedChild, path: selectedChildPath} = selectedChildEntry
 
     if (!isSpan({schema: editor.schema}, selectedChild)) {
       return
@@ -82,14 +94,14 @@ export const removeAnnotationOperationImplementation: OperationImplementation<
       [span: PortableTextSpan, path: Path]
     > = []
 
-    for (const [child, childPath] of getChildren(
-      editor,
-      blockPath,
-      editor.schema,
-      {
-        reverse: true,
-      },
-    )) {
+    const reversedChildren = getChildren(editor, blockPath)
+
+    for (let index = reversedChildren.length - 1; index >= 0; index--) {
+      const entry = reversedChildren[index]
+      if (!entry) {
+        continue
+      }
+      const {node: child, path: childPath} = entry
       if (!isSpan({schema: editor.schema}, child)) {
         continue
       }
@@ -109,10 +121,9 @@ export const removeAnnotationOperationImplementation: OperationImplementation<
       [span: PortableTextSpan, path: Path]
     > = []
 
-    for (const [child, childPath] of getChildren(
+    for (const {node: child, path: childPath} of getChildren(
       editor,
       blockPath,
-      editor.schema,
     )) {
       if (!isSpan({schema: editor.schema}, child)) {
         continue
@@ -131,7 +142,7 @@ export const removeAnnotationOperationImplementation: OperationImplementation<
 
     for (const [child, childPath] of [
       ...previousSpansWithSameAnnotation,
-      [selectedChild, selectedChildPath] as const,
+      [selectedChild, selectedChildPath] satisfies [PortableTextSpan, Path],
       ...nextSpansWithSameAnnotation,
     ]) {
       applySetNode(
@@ -149,9 +160,14 @@ export const removeAnnotationOperationImplementation: OperationImplementation<
     // Split text nodes at range boundaries
     const splitRange = at ?? editor.selection
     if (splitRange && isRange(splitRange)) {
-      const [splitLeaf] = leaf(editor, splitRange.anchor)
+      const splitLeafEntry = getNode(editor, splitRange.anchor.path)
+      const splitLeaf =
+        splitLeafEntry && isLeaf(editor, splitLeafEntry.path)
+          ? splitLeafEntry.node
+          : undefined
       if (
         !(
+          splitLeaf &&
           isCollapsedRange(splitRange) &&
           isSpan({schema: editor.schema}, splitLeaf) &&
           splitLeaf.text.length > 0
@@ -163,23 +179,11 @@ export const removeAnnotationOperationImplementation: OperationImplementation<
         const [splitStart, splitEnd] = rangeEdges(splitRange)
         const endAtEnd = isEnd(editor, splitEnd, splitEnd.path)
         if (!endAtEnd || !isEdge(editor, splitEnd, splitEnd.path)) {
-          const [endNode] = editorNode(editor, splitEnd.path)
-          applySplitNode(
-            editor,
-            splitEnd.path,
-            splitEnd.offset,
-            extractProps(endNode, editor.schema),
-          )
+          applySplitNode(editor, splitEnd.path, splitEnd.offset)
         }
         const startAtStart = isStart(editor, splitStart, splitStart.path)
         if (!startAtStart || !isEdge(editor, splitStart, splitStart.path)) {
-          const [startNode] = editorNode(editor, splitStart.path)
-          applySplitNode(
-            editor,
-            splitStart.path,
-            splitStart.offset,
-            extractProps(startNode, editor.schema),
-          )
+          applySplitNode(editor, splitStart.path, splitStart.offset)
         }
         // Update selection if using editor.selection (not explicit `at`)
         const updatedSplitRange = splitRangeRef.unref()
@@ -189,18 +193,25 @@ export const removeAnnotationOperationImplementation: OperationImplementation<
       }
     }
 
-    const blocks = nodes(editor, {
-      at: effectiveSelection,
-      match: (node) => isTextBlock({schema: editor.schema}, node),
-    })
+    const blocks = Array.from(
+      getNodes(editor, {
+        from: rangeStart(effectiveSelection).path,
+        to: rangeEnd(effectiveSelection).path,
+        match: (node) => isTextBlock({schema: editor.schema}, node),
+      }),
+    )
 
     // Use the tracked range (updated after splits) or fall back to editor.selection
     const selectionRange = ref?.current ?? editor.selection
 
-    for (const [block, blockPath] of blocks) {
-      const children = getChildren(editor, blockPath, editor.schema)
+    for (const {node: block, path: blockPath} of blocks) {
+      if (!isTextBlock({schema: editor.schema}, block)) {
+        continue
+      }
 
-      for (const [child, childPath] of children) {
+      const children = getChildren(editor, blockPath)
+
+      for (const {node: child, path: childPath} of children) {
         if (!isSpan({schema: editor.schema}, child)) {
           continue
         }

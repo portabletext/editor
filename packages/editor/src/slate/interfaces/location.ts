@@ -1,4 +1,3 @@
-import {isPath} from '../path/is-path'
 import type {Path} from './path'
 import type {Point} from './point'
 import type {Range} from './range'
@@ -13,24 +12,3 @@ import type {Range} from './range'
  */
 
 export type Location = Path | Point | Range
-
-/**
- * The `Span` interface is a low-level way to refer to locations in nodes
- * without using `Point` which requires leaf text nodes to be present.
- */
-
-export type Span = [Path, Path]
-
-interface SpanInterface {
-  /**
-   * Check if a value implements the `Span` interface.
-   */
-  isSpan: (value: any) => value is Span
-}
-
-// eslint-disable-next-line no-redeclare
-export const Span: SpanInterface = {
-  isSpan(value: any): value is Span {
-    return Array.isArray(value) && value.length === 2 && value.every(isPath)
-  },
-}

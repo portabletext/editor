@@ -3,7 +3,7 @@ import type {
   PortableTextSpan,
   PortableTextTextBlock,
 } from '@portabletext/schema'
-import {isSpan, isTextBlock} from '@portabletext/schema'
+import {isSpan} from '@portabletext/schema'
 import React, {
   forwardRef,
   useCallback,
@@ -19,6 +19,11 @@ import scrollIntoView from 'scroll-into-view-if-needed'
 import {getDomNode} from '../../../dom-traversal/get-dom-node'
 import {getDomNodePath} from '../../../dom-traversal/get-dom-node-path'
 import type {EditorActor} from '../../../editor/editor-machine'
+import {getAncestorObjectNode} from '../../../node-traversal/get-ancestor-object-node'
+import {getAncestorTextBlock} from '../../../node-traversal/get-ancestor-text-block'
+import {getNode} from '../../../node-traversal/get-node'
+import {getNodes} from '../../../node-traversal/get-nodes'
+import {getText} from '../../../node-traversal/get-text'
 import {keyedPathToIndexedPath} from '../../../paths/keyed-path-to-indexed-path'
 import {collapse} from '../../core/collapse'
 import {deselect} from '../../core/deselect'
@@ -54,9 +59,7 @@ import {
   MARK_PLACEHOLDER_SYMBOL,
   PLACEHOLDER_SYMBOL,
 } from '../../dom/utils/symbols'
-import {above} from '../../editor/above'
 import {end as editorEnd} from '../../editor/end'
-import {getObjectNode} from '../../editor/get-object-node'
 import {range as editorRange} from '../../editor/range'
 import {rangeRef} from '../../editor/range-ref'
 import {start as editorStart} from '../../editor/start'
@@ -64,12 +67,8 @@ import type {Editor} from '../../interfaces/editor'
 import type {NodeEntry} from '../../interfaces/node'
 import type {Path} from '../../interfaces/path'
 import type {DecoratedRange, LeafPosition} from '../../interfaces/text'
-import {getLeaf} from '../../node/get-leaf'
-import {getNode} from '../../node/get-node'
-import {getNodeIf} from '../../node/get-node-if'
-import {getString} from '../../node/get-string'
-import {getTexts} from '../../node/get-texts'
 import {isObjectNode} from '../../node/is-object-node'
+import {isTextBlockNode} from '../../node/is-text-block-node'
 import {pathEquals} from '../../path/path-equals'
 import {isBackwardRange} from '../../range/is-backward-range'
 import {isCollapsedRange} from '../../range/is-collapsed-range'
@@ -686,16 +685,14 @@ export const Editable = forwardRef(
                 window?.getComputedStyle(node.parentElement)?.whiteSpace ===
                   'pre'
               ) {
-                const block = above(editor, {
-                  at: anchor.path,
-                  match: (n) => isTextBlock({schema: editor.schema}, n),
-                })
+                const block = getAncestorTextBlock(editor, anchor.path)
 
-                if (
-                  block &&
-                  getString(block[0], editor.schema).includes('\t')
-                ) {
-                  native = false
+                if (block) {
+                  const blockText = getText(editor, block.path)
+
+                  if (blockText?.includes('\t')) {
+                    native = false
+                  }
                 }
               }
             }
@@ -1025,8 +1022,21 @@ export const Editable = forwardRef(
     const showPlaceholder =
       placeholder &&
       editor.children.length === 1 &&
-      Array.from(getTexts(editor, editor.schema)).length === 1 &&
-      getString(editor, editor.schema) === '' &&
+      (() => {
+        let spanCount = 0
+
+        for (const entry of getNodes(editor)) {
+          if (isSpan({schema: editor.schema}, entry.node)) {
+            spanCount++
+
+            if (spanCount > 1 || entry.node.text !== '') {
+              return false
+            }
+          }
+        }
+
+        return spanCount === 1
+      })() &&
       !isComposing
 
     const placeHolderResizeHandler = useCallback(
@@ -1056,9 +1066,10 @@ export const Editable = forwardRef(
 
     if (editor.selection && isCollapsedRange(editor.selection) && marks) {
       const {anchor} = editor.selection
-      const leaf = getLeaf(editor, anchor.path, editor.schema)
+      const leafEntry = getNode(editor, anchor.path)
+      const leaf = leafEntry ? leafEntry.node : undefined
 
-      if (isSpan({schema: editor.schema}, leaf)) {
+      if (leaf && isSpan({schema: editor.schema}, leaf)) {
         const {text: _text, ...rest} = leaf
 
         if (!textEquals(leaf, marks, {loose: true})) {
@@ -1087,12 +1098,13 @@ export const Editable = forwardRef(
         const {selection} = editor
         if (selection) {
           const {anchor} = selection
-          const text = getLeaf(editor, anchor.path, editor.schema)
+          const textEntry = getNode(editor, anchor.path)
 
-          if (!isSpan({schema: editor.schema}, text)) {
+          if (!textEntry || !isSpan({schema: editor.schema}, textEntry.node)) {
             return
           }
 
+          const text = textEntry.node
           if (marks && !textEquals(text, marks, {loose: true})) {
             editor.pendingInsertionMarks = marks
             return
@@ -1287,14 +1299,16 @@ export const Editable = forwardRef(
                         : undefined
 
                       if (indexedPath) {
-                        const relatedNode = getNodeIf(
-                          editor,
-                          indexedPath,
-                          editor.schema,
-                        )
+                        const relatedNodeEntry = getNode(editor, indexedPath)
+                        const relatedNode = relatedNodeEntry
+                          ? relatedNodeEntry.node
+                          : undefined
                         if (
                           relatedNode &&
-                          (isTextBlock({schema: editor.schema}, relatedNode) ||
+                          (isTextBlockNode(
+                            {schema: editor.schema},
+                            relatedNode,
+                          ) ||
                             isObjectNode({schema: editor.schema}, relatedNode))
                         ) {
                           return
@@ -1343,11 +1357,12 @@ export const Editable = forwardRef(
                       // At this time, the Slate document may be arbitrarily different,
                       // because onClick handlers can change the document before we get here.
                       // Therefore we must check that this path actually exists.
-                      const node = getNodeIf(editor, indexedPath, editor.schema)
+                      const nodeClickEntry = getNode(editor, indexedPath)
 
-                      if (!node) {
+                      if (!nodeClickEntry) {
                         return
                       }
+                      const node = nodeClickEntry.node
 
                       if (
                         event.detail === TRIPLE_CLICK &&
@@ -1355,19 +1370,13 @@ export const Editable = forwardRef(
                       ) {
                         let blockPath = indexedPath
 
-                        if (
-                          !(
-                            isTextBlock({schema: editor.schema}, node) &&
-                            !editor.isInline(node)
+                        if (!isTextBlockNode({schema: editor.schema}, node)) {
+                          const block = getAncestorTextBlock(
+                            editor,
+                            indexedPath,
                           )
-                        ) {
-                          const block = above(editor, {
-                            match: (n) =>
-                              isTextBlock({schema: editor.schema}, n),
-                            at: indexedPath,
-                          })
 
-                          blockPath = block?.[1] ?? indexedPath.slice(0, 1)
+                          blockPath = block?.path ?? indexedPath.slice(0, 1)
                         }
 
                         const range = editorRange(editor, blockPath)
@@ -1381,13 +1390,23 @@ export const Editable = forwardRef(
 
                       const start = editorStart(editor, indexedPath)
                       const end = editorEnd(editor, indexedPath)
-                      const startObjectNode = getObjectNode(editor, {at: start})
-                      const endObjectNode = getObjectNode(editor, {at: end})
+                      const startEntry = getNode(editor, start.path)
+                      const startObjectNode =
+                        startEntry &&
+                        isObjectNode({schema: editor.schema}, startEntry.node)
+                          ? startEntry
+                          : getAncestorObjectNode(editor, start.path)
+                      const endEntry = getNode(editor, end.path)
+                      const endObjectNode =
+                        endEntry &&
+                        isObjectNode({schema: editor.schema}, endEntry.node)
+                          ? endEntry
+                          : getAncestorObjectNode(editor, end.path)
 
                       if (
                         startObjectNode &&
                         endObjectNode &&
-                        pathEquals(startObjectNode[1], endObjectNode[1])
+                        pathEquals(startObjectNode.path, endObjectNode.path)
                       ) {
                         const range = editorRange(editor, start)
                         editor.select(range)
@@ -1572,13 +1591,12 @@ export const Editable = forwardRef(
                       }
 
                       const {selection} = editor
-                      const element =
-                        editor.children[
-                          selection !== null ? selection.focus.path[0]! : 0
-                        ]!
+                      const blockIndex =
+                        selection !== null ? selection.focus.path[0]! : 0
+                      const elementText = getText(editor, [blockIndex])
                       const isRTL =
-                        getDirection(getString(element, editor.schema)) ===
-                        'rtl'
+                        elementText !== undefined &&
+                        getDirection(elementText) === 'rtl'
 
                       // COMPAT: Certain browsers don't handle the selection updates
                       // properly. In Chrome, the selection isn't properly extended.
@@ -1873,14 +1891,17 @@ export const Editable = forwardRef(
                               Hotkeys.isDeleteForward(nativeEvent)) &&
                             isCollapsedRange(selection)
                           ) {
-                            const currentNode = getNode(
+                            const currentNodeEntry = getNode(
                               editor,
                               selection.anchor.path,
-                              editor.schema,
                             )
 
                             if (
-                              isObjectNode({schema: editor.schema}, currentNode)
+                              currentNodeEntry &&
+                              isObjectNode(
+                                {schema: editor.schema},
+                                currentNodeEntry.node,
+                              )
                             ) {
                               event.preventDefault()
                               editorActor.send({

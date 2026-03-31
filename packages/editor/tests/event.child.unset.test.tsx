@@ -243,9 +243,15 @@ describe('event.child.unset', () => {
       expect(patches).toEqual([
         {
           origin: 'local',
-          type: 'diffMatchPatch',
+          type: 'unset',
           path: [{_key: blockKey}, 'children', {_key: spanKey}, 'text'],
-          value: stringifyPatches(makePatches(makeDiff('Hello', ''))),
+        },
+        // Normalization restores text to ''
+        {
+          origin: 'local',
+          type: 'set',
+          path: [{_key: blockKey}, 'children', {_key: spanKey}, 'text'],
+          value: '',
         },
         // Unsetting the entire editor since it was made empty
         {
@@ -344,13 +350,19 @@ describe('event.child.unset', () => {
         {
           origin: 'local',
           type: 'unset',
-          path: [{_key: blockKey}, 'children', {_key: 'k4'}, 'marks'],
+          path: [{_key: blockKey}, 'children', {_key: 'k4'}, 'text'],
         },
         {
           origin: 'local',
-          type: 'diffMatchPatch',
+          type: 'unset',
+          path: [{_key: blockKey}, 'children', {_key: 'k4'}, 'marks'],
+        },
+        // Normalization restores text to ''
+        {
+          origin: 'local',
+          type: 'set',
           path: [{_key: blockKey}, 'children', {_key: 'k4'}, 'text'],
-          value: stringifyPatches(makePatches(makeDiff('Hello', ''))),
+          value: '',
         },
         // Unsetting the entire editor since it was made empty
         {
@@ -381,7 +393,7 @@ describe('event.child.unset', () => {
 
     await vi.waitFor(() => {
       expect(getTersePt(editor.getSnapshot().context)).toEqual(['f'])
-      expect(patches.slice(7)).toEqual([
+      expect(patches.slice(8)).toEqual([
         {
           origin: 'local',
           type: 'setIfMissing',
