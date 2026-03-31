@@ -1,6 +1,7 @@
 import type {PortableTextSpan} from '@portabletext/schema'
 import {isSpan} from '@portabletext/schema'
 import {safeStringify} from '../../internal-utils/safe-json'
+import {getChildren} from '../../node-traversal/get-children'
 import {getNodes} from '../../node-traversal/get-nodes'
 import type {Editor, Selection} from '../interfaces/editor'
 import type {Node, NodeEntry} from '../interfaces/node'
@@ -28,7 +29,27 @@ export function applyOperation(editor: Editor, op: Operation): void {
 
   switch (op.type) {
     case 'insert_node': {
-      const {path, node} = op
+      const {path} = op
+      let {node} = op
+
+      // Ensure unique keys on inserted nodes (skip during remote/undo/redo)
+      if (
+        !editor.isProcessingRemoteChanges &&
+        !editor.isUndoing &&
+        !editor.isRedoing &&
+        node._key !== undefined
+      ) {
+        const insertParentPath = parentPath(path)
+        const siblings =
+          insertParentPath.length === 0
+            ? editor.children
+            : getChildren(editor, insertParentPath).map((entry) => entry.node)
+
+        if (siblings.some((sibling) => sibling._key === node._key)) {
+          node = {...node, _key: editor.keyGenerator()}
+          op.node = node
+        }
+      }
 
       modifyChildren(editor, parentPath(path), editor.schema, (children) => {
         const index = path[path.length - 1]!
