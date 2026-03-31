@@ -1,6 +1,5 @@
 import type {EditorSchema} from '../editor/editor-schema'
 import {apply} from './core/apply'
-import {getDirtyPaths} from './core/get-dirty-paths'
 import {normalizeNode} from './core/normalize-node'
 import {select} from './core/select'
 import {setSelection} from './core/set-selection'
@@ -53,7 +52,6 @@ export const createEditor = (context: {
 
     // Editor
     normalizeNode: (...args: any[]) => (normalizeNode as any)(e, ...args),
-    getDirtyPaths: (...args: any[]) => (getDirtyPaths as any)(e, ...args),
     shouldNormalize: (...args: any[]) => (shouldNormalize as any)(e, ...args),
 
     // Overrideable commands

@@ -1,3 +1,4 @@
+import {getDirtyIndexedPaths} from '../../paths/get-dirty-indexed-paths'
 import {normalize} from '../editor/normalize'
 import type {Editor} from '../interfaces/editor'
 import type {Path} from '../interfaces/path'
@@ -29,7 +30,7 @@ export const apply: WithEditorFirstArg<Editor['apply']> = (editor, op) => {
     const transform = operationCanTransformPath(op)
       ? (p: Path) => transformPath(p, op)
       : undefined
-    updateDirtyPaths(editor, editor.getDirtyPaths(op), transform)
+    updateDirtyPaths(editor, getDirtyIndexedPaths(editor, op), transform)
   }
 
   applyOperation(editor, op)
