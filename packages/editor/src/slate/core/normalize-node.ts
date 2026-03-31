@@ -2,12 +2,14 @@ import type {PortableTextTextBlock} from '@portabletext/schema'
 import {isSpan, isTextBlock} from '@portabletext/schema'
 import {applyMergeNode} from '../../internal-utils/apply-merge-node'
 import {debug} from '../../internal-utils/debug'
+import {getNode} from '../../node-traversal/get-node'
 import {getTextBlockNode} from '../../node-traversal/get-text-block-node'
 import type {Editor} from '../interfaces/editor'
 import type {Node} from '../interfaces/node'
 import {createSpanNode} from '../node/create-span-node'
 import {isObjectNode} from '../node/is-object-node'
 import {isSpanNode} from '../node/is-span-node'
+import {parentPath} from '../path/parent-path'
 import {textEquals} from '../text/text-equals'
 import type {WithEditorFirstArg} from '../utils/types'
 import {removeNodes} from './remove-nodes'
@@ -17,6 +19,35 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   entry,
 ) => {
   const [node, path] = entry
+  const nodeRecord = node as Record<string, unknown>
+
+  // If a child of a text block is missing _type, set it to the span type
+  if (nodeRecord['_type'] === undefined && path.length > 0) {
+    const parent = getNode(editor, parentPath(path))
+
+    if (parent && isTextBlock({schema: editor.schema}, parent.node)) {
+      debug.normalization('Setting span type on node without a type')
+      editor.apply({
+        type: 'set_node',
+        path,
+        properties: {},
+        newProperties: {_type: editor.schema.span.name},
+      })
+      return
+    }
+  }
+
+  // Set missing _key on any non-editor node
+  if (nodeRecord['_key'] === undefined && path.length > 0) {
+    debug.normalization('Setting missing key on node')
+    editor.apply({
+      type: 'set_node',
+      path,
+      properties: {},
+      newProperties: {_key: editor.keyGenerator()},
+    })
+    return
+  }
 
   if (isSpanNode({schema: editor.schema}, node)) {
     /**
