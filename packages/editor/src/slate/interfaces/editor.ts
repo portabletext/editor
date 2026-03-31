@@ -39,7 +39,6 @@ export interface BaseEditor {
   // Overrideable core methods.
 
   apply: (operation: Operation) => void
-  createSpan: () => PortableTextSpan
   isInline: (element: PortableTextTextBlock | PortableTextObject) => boolean
   normalizeNode: (
     entry: [Editor | Node, Path],

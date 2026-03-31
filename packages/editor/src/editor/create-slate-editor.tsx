@@ -23,11 +23,9 @@ export function createSlateEditor(
 
   const placeholderBlock = createPlaceholderBlock(context)
 
-  const editor = createEditor({
-    schema: context.schema,
-    keyGenerator: context.keyGenerator,
-  })
+  const editor = createEditor()
 
+  editor.keyGenerator = context.keyGenerator
   editor.editableTypes = new Set()
 
   editor.decoratedRanges = []

@@ -31,10 +31,7 @@ const editorActor = createActor(editorMachine, {
 })
 const relayActor = createActor(relayMachine)
 
-const e = createEditor({
-  schema,
-  keyGenerator: defaultKeyGenerator,
-})
+const e = createEditor()
 e.children = [] as any
 Object.defineProperty(e, 'value', {
   get() {
