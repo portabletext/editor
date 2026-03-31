@@ -12,8 +12,10 @@ import {
   slateRangeToSelection,
 } from '../internal-utils/slate-utils'
 import {toSlateRange} from '../internal-utils/to-slate-range'
+import {getNode} from '../node-traversal/get-node'
 import {getNodes} from '../node-traversal/get-nodes'
 import {getTextBlockNode} from '../node-traversal/get-text-block-node'
+import {keyedPathToIndexedPath} from '../paths/keyed-path-to-indexed-path'
 import {getActiveAnnotationsMarks} from '../selectors/selector.get-active-annotation-marks'
 import {getActiveDecorators} from '../selectors/selector.get-active-decorators'
 import {getFocusBlock} from '../selectors/selector.get-focus-block'
@@ -34,10 +36,6 @@ import type {
 } from '../types/editor'
 import type {Path} from '../types/paths'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
-import {
-  getBlockKeyFromSelectionPoint,
-  getChildKeyFromSelectionPoint,
-} from '../utils/util.selection-point'
 import type {EditorActor} from './editor-machine'
 import {getEditorSnapshot} from './editor-selector'
 
@@ -252,39 +250,30 @@ export function createEditableAPI(
       PortableTextBlock | PortableTextChild | undefined,
       Path | undefined,
     ] => {
-      const blockKey = getBlockKeyFromSelectionPoint({path, offset: 0})
+      const indexedPath = keyedPathToIndexedPath(
+        editor,
+        path,
+        editor.blockIndexMap,
+      )
 
-      if (!blockKey) {
+      if (!indexedPath) {
         return [undefined, undefined]
       }
 
-      const blockIndex = editor.blockIndexMap.get(blockKey)
+      const result = getNode(
+        {
+          schema: editor.schema,
+          editableTypes: editor.editableTypes,
+          value: editor.children,
+        },
+        indexedPath,
+      )
 
-      if (blockIndex === undefined) {
+      if (!result) {
         return [undefined, undefined]
       }
 
-      const block = editor.children.at(blockIndex)
-
-      if (!block) {
-        return [undefined, undefined]
-      }
-
-      const childKey = getChildKeyFromSelectionPoint({path, offset: 0})
-
-      if (path.length === 1 && !childKey) {
-        return [block, [{_key: block._key}]]
-      }
-
-      if (isTextBlock(editorActor.getSnapshot().context, block) && childKey) {
-        const child = block.children.find((child) => child._key === childKey)
-
-        if (child) {
-          return [child, [{_key: block._key}, 'children', {_key: child._key}]]
-        }
-      }
-
-      return [undefined, undefined]
+      return [result.node, path]
     },
     findDOMNode: (
       element: PortableTextBlock | PortableTextChild,
