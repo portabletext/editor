@@ -3,7 +3,6 @@ import type {EditorSchema} from '../editor/editor-schema'
 import {getNodeDescendants} from '../node-traversal/get-nodes'
 import type {Node} from '../slate/interfaces/node'
 import type {Operation} from '../slate/interfaces/operation'
-import {pathAncestors} from '../slate/path/path-ancestors'
 import {pathLevels} from '../slate/path/path-levels'
 import {getChildFieldName} from './get-child-field-name'
 
@@ -75,7 +74,7 @@ export function getDirtyIndexedPaths(
 
     case 'remove_node': {
       const {path} = op
-      const ancestors = pathAncestors(path)
+      const ancestors = pathLevels(path, {reverse: false}).slice(0, -1)
       return [...ancestors]
     }
 
