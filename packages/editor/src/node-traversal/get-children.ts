@@ -74,13 +74,15 @@ const _textBlockResult: {
   children: Array<Node>
   scope: ReadonlyArray<OfDefinition> | undefined
   scopePath: string
-} = {children: [], scope: undefined, scopePath: ''}
+  fieldName: string
+} = {children: [], scope: undefined, scopePath: '', fieldName: 'children'}
 
 const _rootResult: {
   children: Array<Node>
   scope: ReadonlyArray<OfDefinition> | undefined
   scopePath: string
-} = {children: [], scope: undefined, scopePath: ''}
+  fieldName: string
+} = {children: [], scope: undefined, scopePath: '', fieldName: 'value'}
 
 export function getNodeChildren(
   context: {
@@ -95,6 +97,7 @@ export function getNodeChildren(
       children: Array<Node>
       scope: ReadonlyArray<OfDefinition> | undefined
       scopePath: string
+      fieldName: string
     }
   | undefined {
   // Text blocks store children in .children
@@ -125,6 +128,7 @@ export function getNodeChildren(
       ] as Array<Node>,
       scope: arrayField.of,
       scopePath: scopedKey,
+      fieldName: arrayField.name,
     }
   }
 

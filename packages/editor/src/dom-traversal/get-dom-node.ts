@@ -19,7 +19,14 @@ export function getDomNode(
     return editorElement
   }
 
-  const keyedPath = indexedPathToKeyedPath(editor, path, editor.schema)
+  const keyedPath = indexedPathToKeyedPath(
+    {
+      schema: editor.schema,
+      editableTypes: editor.editableTypes,
+      value: editor.children,
+    },
+    path,
+  )
 
   if (!keyedPath) {
     return undefined
