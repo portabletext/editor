@@ -34,7 +34,6 @@ export const createEditor = (): Editor => {
     pathRefs: new Set(),
     pointRefs: new Set(),
     rangeRefs: new Set(),
-    isInline: () => false,
     onChange: () => {},
 
     // Core

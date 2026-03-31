@@ -1,8 +1,4 @@
-import type {
-  PortableTextObject,
-  PortableTextSpan,
-  PortableTextTextBlock,
-} from '@portabletext/schema'
+import type {PortableTextSpan} from '@portabletext/schema'
 import type {EditorActor} from '../editor/editor-machine'
 import {applySetNode} from '../internal-utils/apply-set-node'
 import {debug} from '../internal-utils/debug'
@@ -19,37 +15,6 @@ export function createSchemaPlugin({editorActor}: {editorActor: EditorActor}) {
     editor: PortableTextSlateEditor,
   ): PortableTextSlateEditor {
     editor.schema = editorActor.getSnapshot().context.schema
-    editor.isInline = (
-      element: PortableTextTextBlock | PortableTextObject,
-    ): boolean => {
-      if (isEditor(element)) {
-        return false
-      }
-
-      const snapshot = editorActor.getSnapshot()
-      const isInlineType = snapshot.context.schema.inlineObjects
-        .map((obj) => obj.name)
-        .includes(element._type)
-
-      if (!isInlineType) {
-        return false
-      }
-
-      // Dual-registered types use position to determine inline status.
-      const isAlsoBlockType = snapshot.context.schema.blockObjects
-        .map((obj) => obj.name)
-        .includes(element._type)
-
-      if (isAlsoBlockType) {
-        for (const child of editor.children) {
-          if (child === element) {
-            return false
-          }
-        }
-      }
-
-      return true
-    }
 
     // Extend Slate's default normalization
     const {normalizeNode} = editor

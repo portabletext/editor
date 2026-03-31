@@ -1370,12 +1370,7 @@ export const Editable = forwardRef(
                       ) {
                         let blockPath = indexedPath
 
-                        if (
-                          !(
-                            isTextBlockNode({schema: editor.schema}, node) &&
-                            !editor.isInline(node)
-                          )
-                        ) {
+                        if (!isTextBlockNode({schema: editor.schema}, node)) {
                           const block = getAncestorTextBlock(
                             editor,
                             indexedPath,

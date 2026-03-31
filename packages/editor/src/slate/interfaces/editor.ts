@@ -1,9 +1,4 @@
-import type {
-  PortableTextBlock,
-  PortableTextObject,
-  PortableTextSpan,
-  PortableTextTextBlock,
-} from '@portabletext/schema'
+import type {PortableTextBlock, PortableTextSpan} from '@portabletext/schema'
 import type {PortableTextSlateEditor} from '../../types/slate-editor'
 import type {ReactEditor} from '../react/plugin/react-editor'
 import type {Location} from './location'
@@ -39,7 +34,6 @@ export interface BaseEditor {
   // Overrideable core methods.
 
   apply: (operation: Operation) => void
-  isInline: (element: PortableTextTextBlock | PortableTextObject) => boolean
   normalizeNode: (
     entry: [Editor | Node, Path],
     options?: {

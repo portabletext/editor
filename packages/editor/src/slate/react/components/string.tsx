@@ -68,7 +68,6 @@ const SlateString = (props: {
     leafText === '' &&
     isTextBlock({schema: editor.schema}, parent) &&
     parent.children[parent.children.length - 1] === text &&
-    !editor.isInline(parent) &&
     getTextContent(editor, parentIndexedPath) === ''
   ) {
     return <ZeroWidthString isLineBreak isMarkPlaceholder={isMarkPlaceholder} />

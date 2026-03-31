@@ -3,7 +3,6 @@ import {isSpan, isTextBlock} from '@portabletext/schema'
 import {applyMergeNode} from '../../internal-utils/apply-merge-node'
 import {debug} from '../../internal-utils/debug'
 import {getTextBlockNode} from '../../node-traversal/get-text-block-node'
-import {isEditor} from '../editor/is-editor'
 import type {Editor} from '../interfaces/editor'
 import type {Node} from '../interfaces/node'
 import {createSpanNode} from '../node/create-span-node'
@@ -61,22 +60,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
     element = refetched
   }
 
-  // Determine whether the node should have only block or only inline children.
-  // - The editor should have only block children.
-  // - Inline elements should have only inline children.
-  // - Elements that begin with a text child or an inline element child
-  //   should have only inline children.
-  // - All other elements should have only block children.
-  const firstChild = element.children[0]!
-  const shouldHaveInlines =
-    !isEditor(element) &&
-    (editor.isInline(element) ||
-      isSpan({schema: editor.schema}, firstChild) ||
-      isObjectNode({schema: editor.schema}, firstChild) ||
-      (isTextBlock({schema: editor.schema}, firstChild) &&
-        editor.isInline(firstChild)))
-
-  if (shouldHaveInlines) {
+  if (isTextBlock({schema: editor.schema}, element)) {
     // Since we'll be applying operations while iterating, we also modify
     // `n` when adding/removing nodes.
     for (let n = 0; n < element.children.length; n++) {
@@ -119,45 +103,6 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
             n--
           }
         }
-      } else if (isTextBlock({schema: editor.schema}, child)) {
-        if (editor.isInline(child)) {
-          // Ensure that inline nodes are surrounded by text nodes.
-          if (prev == null || !isSpan({schema: editor.schema}, prev)) {
-            const newChild = createSpanNode(editor)
-            insertNodes(editor, [newChild], {
-              at: path.concat(n),
-              includeObjectNodes: true,
-            })
-            const refetched = getTextBlockNode(editor, path)?.node
-            if (!refetched) {
-              return
-            }
-            element = refetched
-            n++
-          }
-          if (n === element.children.length - 1) {
-            const newChild = createSpanNode(editor)
-            insertNodes(editor, [newChild], {
-              at: path.concat(n + 1),
-              includeObjectNodes: true,
-            })
-            const refetched = getTextBlockNode(editor, path)?.node
-            if (!refetched) {
-              return
-            }
-            element = refetched
-            n++
-          }
-        } else {
-          // An Element cannot appear inline in another Element
-          removeNodes(editor, {at: path.concat(n), includeObjectNodes: true})
-          const refetched = getTextBlockNode(editor, path)?.node
-          if (!refetched) {
-            return
-          }
-          element = refetched
-          n--
-        }
       } else if (isObjectNode({schema: editor.schema}, child)) {
         if (prev == null || !isSpan({schema: editor.schema}, prev)) {
           const newChild = createSpanNode(editor)
@@ -195,10 +140,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
 
       // Allow only block nodes in the top-level children and parent blocks
       // that only contain block nodes.
-      if (
-        isSpan({schema: editor.schema}, child) ||
-        (isTextBlock({schema: editor.schema}, child) && editor.isInline(child))
-      ) {
+      if (isSpan({schema: editor.schema}, child)) {
         removeNodes(editor, {at: path.concat(n), includeObjectNodes: true})
         if (path.length === 0) {
           element = editor
