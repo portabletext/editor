@@ -704,6 +704,7 @@ describe('event.block.unset', () => {
         unset([{_key: textBlockKey}, 'children']),
         unset([{_key: textBlockKey}, 'style']),
         set('normal', [{_key: textBlockKey}, 'style']),
+        set([], [{_key: textBlockKey}, 'children']),
         setIfMissing([], [{_key: textBlockKey}, 'children']),
         insert([{_key: 'k4', _type: 'span', text: '', marks: []}], 'before', [
           {_key: textBlockKey},

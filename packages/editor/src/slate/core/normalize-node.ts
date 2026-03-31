@@ -61,7 +61,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
         nextNode.marks?.every((mark) => child.marks?.includes(mark))
       ) {
         debug.normalization('merging spans with same marks')
-        const mergePath = [childPath[0]!, childPath[1]! + 1]
+        const mergePath = [...path, childIndex + 1]
         applyMergeNode(editor, mergePath, child.text.length)
         return
       }
@@ -320,26 +320,34 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
     return
   }
 
-  // Both Editor and PortableTextTextBlock always have `children` per their
-  // types, but runtime data can be malformed.
-  ;(node as any).children ??= []
-
-  // We will have to refetch the element any time we modify its children
-  // since it clones to a new immutable reference when we do.
-  let element: Editor | PortableTextTextBlock = node
-
-  // Ensure that elements have at least one child.
-  if (element !== editor && element.children.length === 0) {
-    const child = createSpanNode(editor)
-    editor.apply({type: 'insert_node', path: path.concat(0), node: child})
-    const refetched = getTextBlockNode(editor, path)?.node
-    if (!refetched) {
+  // Text blocks must always have at least one child span.
+  if (isTextBlockNode({schema: editor.schema}, node)) {
+    // Runtime data can arrive without children (e.g. after an unset patch).
+    if (!Array.isArray(node.children)) {
+      editor.apply({
+        type: 'set_node',
+        path,
+        properties: {},
+        newProperties: {children: []},
+      })
       return
     }
-    element = refetched
-  }
 
-  if (isTextBlock({schema: editor.schema}, element)) {
+    // We will have to refetch the element any time we modify its children
+    // since it clones to a new immutable reference when we do.
+    let element: PortableTextTextBlock = node
+
+    // Ensure that text blocks have at least one child.
+    if (element.children.length === 0) {
+      const child = createSpanNode(editor)
+      editor.apply({type: 'insert_node', path: path.concat(0), node: child})
+      const refetched = getTextBlockNode(editor, path)?.node
+      if (!refetched) {
+        return
+      }
+      element = refetched
+    }
+
     // Since we'll be applying operations while iterating, we also modify
     // `n` when adding/removing nodes.
     for (let n = 0; n < element.children.length; n++) {
@@ -413,27 +421,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
         }
       }
     }
-  } else {
-    // Since we'll be applying operations while iterating, we also modify
-    // `n` when adding/removing nodes.
-    for (let n = 0; n < element.children.length; n++) {
-      const child = element.children[n]
 
-      // Allow only block nodes in the top-level children and parent blocks
-      // that only contain block nodes.
-      if (isSpan({schema: editor.schema}, child)) {
-        removeNodes(editor, {at: path.concat(n), includeObjectNodes: true})
-        if (path.length === 0) {
-          element = editor
-        } else {
-          const refetched = getTextBlockNode(editor, path)?.node
-          if (!refetched) {
-            return
-          }
-          element = refetched
-        }
-        n--
-      }
-    }
+    return
   }
 }
