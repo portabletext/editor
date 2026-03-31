@@ -5,11 +5,3 @@
  */
 
 export type Path = number[]
-
-export interface PathAncestorsOptions {
-  reverse?: boolean
-}
-
-export interface PathLevelsOptions {
-  reverse?: boolean
-}
