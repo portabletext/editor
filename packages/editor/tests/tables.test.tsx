@@ -10,6 +10,7 @@ import {createTestEditor} from '../src/test/vitest'
 import type {PortableTextSlateEditor} from '../src/types/slate-editor'
 
 const schemaDefinition = defineSchema({
+  decorators: [{name: 'strong'}],
   blockObjects: [
     {
       name: 'table',
@@ -86,11 +87,20 @@ async function createTableTestEditor() {
 
   const initialValue = [table]
 
+  const slateEditorRef = React.createRef<PortableTextSlateEditor>()
+
   const {editor, locator} = await createTestEditor({
     keyGenerator,
     schemaDefinition,
     initialValue,
+    children: <InternalSlateEditorRefPlugin ref={slateEditorRef} />,
   })
+
+  slateEditorRef.current!.editableTypes = new Set([
+    'table',
+    'table.row',
+    'table.row.cell',
+  ])
 
   return {
     editor,
@@ -270,6 +280,8 @@ describe('tables', () => {
                             marks: ['strong'],
                           },
                         ],
+                        markDefs: [],
+                        style: 'normal',
                       },
                     ],
                   },
@@ -341,7 +353,8 @@ describe('tables', () => {
     })
 
     test('unset children', async () => {
-      const {editor, table, row, cell, block} = await createTableTestEditor()
+      const {editor, table, row, cell, block, span} =
+        await createTableTestEditor()
 
       editor.send({
         type: 'patches',
@@ -367,7 +380,7 @@ describe('tables', () => {
             rows: [
               {
                 ...row,
-                cells: [{...cell, content: [{...block, children: undefined}]}],
+                cells: [{...cell, content: [{...block, children: [span]}]}],
               },
             ],
           },
@@ -411,7 +424,9 @@ describe('tables', () => {
                     content: [
                       {
                         ...block,
-                        children: [{...span, text: 'bar'}],
+                        children: [{...span, text: 'bar', marks: []}],
+                        markDefs: [],
+                        style: 'normal',
                       },
                     ],
                   },
@@ -472,6 +487,8 @@ describe('tables', () => {
                       {
                         ...block,
                         children: [span, newSpan],
+                        markDefs: [],
+                        style: 'normal',
                       },
                     ],
                   },
@@ -505,16 +522,18 @@ describe('tables', () => {
         snapshot: undefined,
       })
 
-      // The span is removed via applyAll on the table node.
-      // Without editableTypes, normalization cannot traverse into the
-      // container to restore an empty span, so children becomes empty.
+      // With editableTypes set, resolveNodePath resolves the full path to the
+      // span, so the unset becomes a direct remove_node operation. This dirties
+      // the text block's path, allowing normalization to restore an empty span.
       await vi.waitFor(() => {
         const value = editor.getSnapshot().context.value
         const content = getTableCellContent(value)
-        const children = content.at(0)!['children'] as Array<
-          Record<string, unknown>
-        >
-        expect(children.length).toBe(0)
+        const block = content.at(0)!
+        const children = block['children'] as Array<Record<string, unknown>>
+        expect(children.length).toBe(1)
+        expect(children.at(0)).toEqual(
+          expect.objectContaining({_type: 'span', text: '', marks: []}),
+        )
       })
     })
   })
