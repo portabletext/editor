@@ -30,7 +30,6 @@ export const createEditor = (): Editor => {
     dirtyPathKeys: new Set(),
     flushing: false,
     normalizing: true,
-    batchingDirtyPaths: false,
     pathRefs: new Set(),
     pointRefs: new Set(),
     rangeRefs: new Set(),
