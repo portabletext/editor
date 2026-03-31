@@ -1,13 +1,11 @@
 import {isSpan, isTextBlock, type PortableTextSpan} from '@portabletext/schema'
 import type {EditorSchema} from '../../editor/editor-schema'
-import {safeStringify} from '../../internal-utils/safe-json'
 import {getNodeChildren} from '../../node-traversal/get-children'
 import {getNode} from '../../node-traversal/get-node'
 import {isEditor} from '../editor/is-editor'
 import type {Editor} from '../interfaces/editor'
 import type {Node} from '../interfaces/node'
 import type {Path} from '../interfaces/path'
-import {isObjectNode} from '../node/is-object-node'
 
 export function insertChildren<T>(
   xs: T[],
@@ -40,9 +38,9 @@ export const modifyDescendant = <N extends Node>(
   path: Path,
   schema: EditorSchema,
   f: (node: N) => N,
-) => {
+): void => {
   if (path.length === 0) {
-    throw new Error('Cannot modify the editor')
+    return
   }
 
   const editableTypes = isEditor(root) ? root.editableTypes : new Set<string>()
@@ -54,11 +52,11 @@ export const modifyDescendant = <N extends Node>(
       : undefined
 
   if (!typedRoot) {
-    throw new Error('Cannot modify descendant: root has no children')
+    return
   }
   const nodeEntry = getNode({...context, value: typedRoot.children}, path)
   if (!nodeEntry) {
-    throw new Error(`Cannot find a descendant at path [${path}]`)
+    return
   }
   const node = nodeEntry.node
   const slicedPath = path.slice()
@@ -76,12 +74,12 @@ export const modifyDescendant = <N extends Node>(
     for (let i = 0; i < path.length; i++) {
       const result = getNodeChildren(context, currentNode, scope, scopePath)
       if (!result) {
-        throw new Error(`Cannot resolve children at path [${path.slice(0, i)}]`)
+        return
       }
       fieldNames.push(result.fieldName)
       const child = result.children.at(path.at(i)!)
       if (!child) {
-        throw new Error(`Cannot find node at path [${path.slice(0, i + 1)}]`)
+        return
       }
       currentNode = child
       scope = result.scope
@@ -98,7 +96,7 @@ export const modifyDescendant = <N extends Node>(
       slicedPath,
     )
     if (!ancestorEntry) {
-      throw new Error(`Cannot find ancestor at path [${slicedPath}]`)
+      return
     }
     const ancestorNode = ancestorEntry.node
     const ancestorRecord = ancestorNode as Record<string, unknown>
@@ -145,14 +143,6 @@ export const modifyChildren = (
     )
   } else {
     modifyDescendant(root, path, schema, (node) => {
-      if (isSpan({schema}, node) || isObjectNode({schema}, node)) {
-        throw new Error(
-          `Cannot get the element at path [${path}] because it refers to a leaf node: ${safeStringify(
-            node,
-          )}`,
-        )
-      }
-
       return {
         ...node,
         children: f(isTextBlock({schema}, node) ? node.children : []),
@@ -172,11 +162,7 @@ export const modifyLeaf = (
 ) =>
   modifyDescendant(root, path, schema, (node) => {
     if (!isSpan({schema}, node)) {
-      throw new Error(
-        `Cannot get the leaf node at path [${path}] because it refers to a non-leaf node: ${safeStringify(
-          node,
-        )}`,
-      )
+      return node
     }
 
     return f(node)
