@@ -78,11 +78,9 @@ Feature: Annotations Overlapping Decorators
     When the editor is focused
     And the caret is put before "bar"
     And "{Enter}" is pressed
-    And "{ArrowUp}" is pressed
-    And "foo" is typed
-    Then the text is "foo|bar"
-    And the caret is after "foo"
-    And "foo" has no marks
+    Then the text is "|bar"
+    And "" has no marks
+    And "bar" has marks "l1,strong"
 
   Scenario: Splitting block after a decorated annotation
     Given the text "bar"
