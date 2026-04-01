@@ -93,7 +93,7 @@
     "@xstate/react": "^6.1.0",
     "debug": "^4.4.3",
     "scroll-into-view-if-needed": "^3.1.0",
-    "xstate": "^5.28.0"
+    "xstate": "^5.30.0"
   },
   "devDependencies": {
     "@portabletext/test": "workspace:^",

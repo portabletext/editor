@@ -55,7 +55,7 @@
     "@portabletext/keyboard-shortcuts": "workspace:^",
     "@portabletext/plugin-input-rule": "workspace:^",
     "@xstate/react": "^6.1.0",
-    "xstate": "^5.28.0"
+    "xstate": "^5.30.0"
   },
   "devDependencies": {
     "@portabletext/editor": "workspace:^",
