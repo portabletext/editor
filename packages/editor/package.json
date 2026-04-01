@@ -39,6 +39,10 @@
       "source": "./src/plugins/_exports/index.ts",
       "default": "./lib/plugins/index.js"
     },
+    "./renderers": {
+      "source": "./src/renderers/_exports/index.ts",
+      "default": "./lib/renderers/index.js"
+    },
     "./selectors": {
       "source": "./src/selectors/_exports/index.ts",
       "default": "./lib/selectors/index.js"
@@ -133,6 +137,7 @@
       ".": "./lib/index.js",
       "./behaviors": "./lib/behaviors/index.js",
       "./plugins": "./lib/plugins/index.js",
+      "./renderers": "./lib/renderers/index.js",
       "./selectors": "./lib/selectors/index.js",
       "./test": "./src/test/_exports/index.ts",
       "./test/vitest": "./src/test/vitest/_exports/index.ts",

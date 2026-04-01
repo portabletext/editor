@@ -3,6 +3,9 @@ import type {InternalEditor} from '../editor/create-editor'
 import {useEditor} from '../editor/use-editor'
 import type {Renderer} from '../renderers/renderer.types'
 
+/**
+ * @internal
+ */
 export function RendererPlugin(props: {renderers: Array<Renderer>}) {
   const editor = useEditor()
 
