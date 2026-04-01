@@ -524,8 +524,10 @@ describe('container behaviors', () => {
       await vi.waitFor(() => {
         const value = editor.getSnapshot().context.value
         const calloutValue = value?.at(0) as Record<string, unknown>
-        const content = calloutValue?.content as Array<Record<string, unknown>>
-        const children = content?.at(0)?.children as Array<
+        const content = calloutValue?.['content'] as Array<
+          Record<string, unknown>
+        >
+        const children = content?.at(0)?.['children'] as Array<
           Record<string, unknown>
         >
         expect(children?.at(0)).toEqual(
@@ -597,10 +599,12 @@ describe('container behaviors', () => {
       await vi.waitFor(() => {
         const value = editor.getSnapshot().context.value
         const tableValue = value?.at(0) as Record<string, unknown>
-        const rows = tableValue?.rows as Array<Record<string, unknown>>
-        const cells = rows?.at(0)?.cells as Array<Record<string, unknown>>
-        const content = cells?.at(0)?.content as Array<Record<string, unknown>>
-        const children = content?.at(0)?.children as Array<
+        const rows = tableValue?.['rows'] as Array<Record<string, unknown>>
+        const cells = rows?.at(0)?.['cells'] as Array<Record<string, unknown>>
+        const content = cells?.at(0)?.['content'] as Array<
+          Record<string, unknown>
+        >
+        const children = content?.at(0)?.['children'] as Array<
           Record<string, unknown>
         >
         expect(children?.at(0)).toEqual(
@@ -670,8 +674,10 @@ describe('container behaviors', () => {
       await vi.waitFor(() => {
         const value = editor.getSnapshot().context.value
         const calloutValue = value?.at(0) as Record<string, unknown>
-        const content = calloutValue?.content as Array<Record<string, unknown>>
-        const children = content?.at(0)?.children as Array<
+        const content = calloutValue?.['content'] as Array<
+          Record<string, unknown>
+        >
+        const children = content?.at(0)?.['children'] as Array<
           Record<string, unknown>
         >
         expect(children?.at(0)).toEqual(expect.objectContaining({text: 'hell'}))
@@ -741,10 +747,12 @@ describe('container behaviors', () => {
       await vi.waitFor(() => {
         const value = editor.getSnapshot().context.value
         const tableValue = value?.at(0) as Record<string, unknown>
-        const rows = tableValue?.rows as Array<Record<string, unknown>>
-        const cells = rows?.at(0)?.cells as Array<Record<string, unknown>>
-        const content = cells?.at(0)?.content as Array<Record<string, unknown>>
-        const children = content?.at(0)?.children as Array<
+        const rows = tableValue?.['rows'] as Array<Record<string, unknown>>
+        const cells = rows?.at(0)?.['cells'] as Array<Record<string, unknown>>
+        const content = cells?.at(0)?.['content'] as Array<
+          Record<string, unknown>
+        >
+        const children = content?.at(0)?.['children'] as Array<
           Record<string, unknown>
         >
         expect(children?.at(0)).toEqual(expect.objectContaining({text: 'hell'}))
@@ -812,8 +820,10 @@ describe('container behaviors', () => {
       await vi.waitFor(() => {
         const value = editor.getSnapshot().context.value
         const calloutValue = value?.at(0) as Record<string, unknown>
-        const content = calloutValue?.content as Array<Record<string, unknown>>
-        const children = content?.at(0)?.children as Array<
+        const content = calloutValue?.['content'] as Array<
+          Record<string, unknown>
+        >
+        const children = content?.at(0)?.['children'] as Array<
           Record<string, unknown>
         >
         expect(children?.at(0)).toEqual(
@@ -878,10 +888,12 @@ describe('container behaviors', () => {
       await vi.waitFor(() => {
         const value = editor.getSnapshot().context.value
         const tableValue = value?.at(0) as Record<string, unknown>
-        const rows = tableValue?.rows as Array<Record<string, unknown>>
-        const cells = rows?.at(0)?.cells as Array<Record<string, unknown>>
-        const content = cells?.at(0)?.content as Array<Record<string, unknown>>
-        const children = content?.at(0)?.children as Array<
+        const rows = tableValue?.['rows'] as Array<Record<string, unknown>>
+        const cells = rows?.at(0)?.['cells'] as Array<Record<string, unknown>>
+        const content = cells?.at(0)?.['content'] as Array<
+          Record<string, unknown>
+        >
+        const children = content?.at(0)?.['children'] as Array<
           Record<string, unknown>
         >
         expect(children?.at(0)).toEqual(
@@ -940,7 +952,9 @@ describe('container behaviors', () => {
       await vi.waitFor(() => {
         const value = editor.getSnapshot().context.value
         const calloutValue = value?.at(0) as Record<string, unknown>
-        const content = calloutValue?.content as Array<Record<string, unknown>>
+        const content = calloutValue?.['content'] as Array<
+          Record<string, unknown>
+        >
         expect(content?.at(0)).toEqual(expect.objectContaining({style: 'h1'}))
       })
 
@@ -1002,9 +1016,11 @@ describe('container behaviors', () => {
       await vi.waitFor(() => {
         const value = editor.getSnapshot().context.value
         const tableValue = value?.at(0) as Record<string, unknown>
-        const rows = tableValue?.rows as Array<Record<string, unknown>>
-        const cells = rows?.at(0)?.cells as Array<Record<string, unknown>>
-        const content = cells?.at(0)?.content as Array<Record<string, unknown>>
+        const rows = tableValue?.['rows'] as Array<Record<string, unknown>>
+        const cells = rows?.at(0)?.['cells'] as Array<Record<string, unknown>>
+        const content = cells?.at(0)?.['content'] as Array<
+          Record<string, unknown>
+        >
         expect(content?.at(0)).toEqual(expect.objectContaining({style: 'h1'}))
       })
 

@@ -57,7 +57,11 @@
       "source": "./src/utils/_exports/index.ts",
       "default": "./lib/utils/index.js"
     },
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./traversal": {
+      "source": "./src/traversal/_exports/index.ts",
+      "default": "./lib/traversal/index.js"
+    }
   },
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
@@ -142,7 +146,8 @@
       "./test": "./src/test/_exports/index.ts",
       "./test/vitest": "./src/test/vitest/_exports/index.ts",
       "./utils": "./lib/utils/index.js",
-      "./package.json": "./package.json"
+      "./package.json": "./package.json",
+      "./traversal": "./lib/traversal/index.js"
     }
   }
 }

@@ -28,6 +28,7 @@ export type EditorSnapshot = {
    * Subject to change
    */
   decoratorState: Record<string, boolean | undefined>
+  editableTypes: Set<string>
 }
 
 export function createEditorSnapshot({
@@ -64,5 +65,6 @@ export function createEditorSnapshot({
     blockIndexMap: editor.blockIndexMap,
     context,
     decoratorState: editor.decoratorState,
+    editableTypes: editor.editableTypes,
   } satisfies EditorSnapshot
 }

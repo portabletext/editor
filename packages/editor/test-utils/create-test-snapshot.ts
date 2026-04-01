@@ -24,5 +24,6 @@ export function createTestSnapshot(snapshot: {
     blockIndexMap,
     context,
     decoratorState: snapshot?.decoratorState ?? {},
+    editableTypes: new Set<string>(),
   }
 }

@@ -84,5 +84,6 @@ export function getEditorSnapshot({
       value: slateEditorInstance.children,
     },
     decoratorState: slateEditorInstance.decoratorState,
+    editableTypes: slateEditorInstance.editableTypes,
   }
 }
