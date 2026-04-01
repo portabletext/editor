@@ -1,5 +1,12 @@
 import {isSpan} from '@portabletext/schema'
-import {createContext, useCallback, useContext, useMemo, useRef} from 'react'
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useRef,
+  useSyncExternalStore,
+} from 'react'
 import {
   isElementDecorationsEqual,
   isTextDecorationsEqual,
@@ -7,7 +14,6 @@ import {
 import type {Node, NodeEntry} from '../../interfaces/node'
 import type {Path} from '../../interfaces/path'
 import type {DecoratedRange} from '../../interfaces/text'
-import {useGenericSelector} from './use-generic-selector'
 import {useIsomorphicLayoutEffect} from './use-isomorphic-layout-effect'
 import {useSlateStatic} from './use-slate-static'
 
@@ -31,22 +37,24 @@ export const useDecorations = (
   const editor = useSlateStatic()
   const {decorate, addEventListener} = useContext(DecorateContext)
 
-  // Not memoized since we want nodes to be decorated on each render
-  const selector = () => {
-    return decorate([node, path])
-  }
+  const stateRef = useRef<DecoratedRange[] | null>(null)
 
   const equalityFn = isSpan({schema: editor.schema}, node)
     ? isTextDecorationsEqual
     : isElementDecorationsEqual
 
-  const [decorations, update] = useGenericSelector(selector, equalityFn)
+  const getSnapshot = () => {
+    const nextState = decorate([node, path])
 
-  useIsomorphicLayoutEffect(() => {
-    const unsubscribe = addEventListener(update)
-    update()
-    return unsubscribe
-  }, [addEventListener, update])
+    if (equalityFn(stateRef.current, nextState)) {
+      return stateRef.current!
+    }
+
+    stateRef.current = nextState
+    return nextState
+  }
+
+  const decorations = useSyncExternalStore(addEventListener, getSnapshot)
 
   return useMemo(
     () => [...decorations, ...parentDecorations],

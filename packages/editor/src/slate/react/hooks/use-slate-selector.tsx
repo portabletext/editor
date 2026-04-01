@@ -1,6 +1,12 @@
-import {createContext, useCallback, useContext, useMemo, useRef} from 'react'
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useRef,
+  useSyncExternalStore,
+} from 'react'
 import type {Editor} from '../../interfaces/editor'
-import {useGenericSelector} from './use-generic-selector'
 import {useIsomorphicLayoutEffect} from './use-isomorphic-layout-effect'
 import {useSlateStatic} from './use-slate-static'
 
@@ -46,22 +52,20 @@ export function useSlateSelector<T>(
   const {addEventListener} = context
 
   const editor = useSlateStatic()
-  const genericSelector = useCallback(
-    () => selector(editor),
-    [editor, selector],
-  )
-  const [selectedState, update] = useGenericSelector(
-    genericSelector,
-    equalityFn,
-  )
+  const stateRef = useRef<T | null>(null)
 
-  useIsomorphicLayoutEffect(() => {
-    const unsubscribe = addEventListener(update)
-    update()
-    return unsubscribe
-  }, [addEventListener, update])
+  const getSnapshot = () => {
+    const nextState = selector(editor)
 
-  return selectedState
+    if (equalityFn(stateRef.current, nextState)) {
+      return stateRef.current as T
+    }
+
+    stateRef.current = nextState
+    return nextState
+  }
+
+  return useSyncExternalStore(addEventListener, getSnapshot)
 }
 
 /**
