@@ -28,9 +28,17 @@ export const apply: WithEditorFirstArg<Editor['apply']> = (editor, op) => {
   }
 
   // update dirty paths
-  const transform = operationCanTransformPath(op)
-    ? (p: Path) => transformPath(p, op)
-    : undefined
+  const needsTransform = operationCanTransformPath(op)
+  // Appending a node at the end cannot shift any existing paths
+  const isAppendAtEnd =
+    needsTransform &&
+    op.type === 'insert_node' &&
+    op.path.length === 1 &&
+    op.path[0]! >= editor.children.length
+  const transform =
+    needsTransform && !isAppendAtEnd
+      ? (p: Path) => transformPath(p, op)
+      : undefined
   updateDirtyPaths(editor, getDirtyIndexedPaths(editor, op), transform)
 
   applyOperation(editor, op)
