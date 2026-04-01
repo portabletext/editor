@@ -70,9 +70,19 @@ export function getEventPosition({
   ) {
     // If we for some reason can't find the event selection, then we default to
     // selecting the entire block that the event originates from.
+    // When the click is above the first block or below the last block,
+    // treat it as an editor-level click so click-above/below behaviors fire.
+    const firstBlock = slateEditor.children.at(0)
+    const lastBlock = slateEditor.children.at(-1)
+    const isFirstBlock = firstBlock && eventBlock._key === firstBlock._key
+    const isLastBlock = lastBlock && eventBlock._key === lastBlock._key
+    const isMarginClick =
+      (eventPositionBlock === 'start' && isFirstBlock) ||
+      (eventPositionBlock === 'end' && isLastBlock)
+
     return {
       block: eventPositionBlock,
-      isEditor: false,
+      isEditor: isMarginClick ?? false,
       selection: {
         anchor: getBlockStartPoint({
           context: editorActor.getSnapshot().context,

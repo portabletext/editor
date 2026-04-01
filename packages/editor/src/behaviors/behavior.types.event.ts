@@ -79,6 +79,7 @@ const syntheticBehaviorEventTypes = [
   'move.backward',
   'move.block',
   'move.forward',
+  'remove',
   'select',
   'set',
   'unset',
@@ -193,6 +194,10 @@ export type SyntheticBehaviorEvent =
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'move.forward'>
       distance: number
+    }
+  | {
+      type: StrictExtract<SyntheticBehaviorEventType, 'remove'>
+      at: Path
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'select'>

@@ -11,13 +11,14 @@ import {decoratorRemoveOperationImplementation} from './operation.decorator.remo
 import {deleteOperationImplementation} from './operation.delete'
 import {historyRedoOperationImplementation} from './operation.history.redo'
 import {historyUndoOperationImplementation} from './operation.history.undo'
-import {insertBlockOperationImplementation} from './operation.insert.block'
 import {insertOperationImplementation} from './operation.insert'
+import {insertBlockOperationImplementation} from './operation.insert.block'
 import {insertChildOperationImplementation} from './operation.insert.child'
 import {insertTextOperationImplementation} from './operation.insert.text'
 import {moveBackwardOperationImplementation} from './operation.move.backward'
 import {moveBlockOperationImplementation} from './operation.move.block'
 import {moveForwardOperationImplementation} from './operation.move.forward'
+import {removeOperationImplementation} from './operation.remove'
 import {selectOperationImplementation} from './operation.select'
 import {setOperationImplementation} from './operation.set'
 import type {
@@ -46,6 +47,7 @@ const operationImplementations: OperationImplementations = {
   'move.backward': moveBackwardOperationImplementation,
   'move.block': moveBlockOperationImplementation,
   'move.forward': moveForwardOperationImplementation,
+  'remove': removeOperationImplementation,
   'select': selectOperationImplementation,
   'set': setOperationImplementation,
   'unset': unsetOperationImplementation,

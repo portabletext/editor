@@ -1353,8 +1353,58 @@ describe('container behaviors', () => {
     })
   })
 
+  describe('click above/below container', () => {
+    // These tests require editor padding so the click lands in the editor
+    // margin (above/below the container's bounding rect). In the test
+    // environment, the container fills the entire editor height, so the
+    // click always lands inside the container content.
+    test.skip('clicking above a lonely callout inserts a text block before it', async () => {
+      const {editor, locator, callout} = await createCalloutEditor()
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([callout])
+      })
+
+      // Click above the callout (at the editor start)
+      const box = await locator.element().getBoundingClientRect()
+      await userEvent.click(locator, {
+        position: {x: box.width / 2, y: 2},
+      })
+
+      await vi.waitFor(() => {
+        const value = editor.getSnapshot().context.value
+        expect(value?.length).toBe(2)
+        expect((value?.at(0) as Record<string, unknown>)?.['_type']).toBe(
+          'block',
+        )
+      })
+    })
+
+    test.skip('clicking below a lonely callout inserts a text block after it', async () => {
+      const {editor, locator, callout} = await createCalloutEditor()
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([callout])
+      })
+
+      // Click below the callout (at the editor end)
+      const box = await locator.element().getBoundingClientRect()
+      await userEvent.click(locator, {
+        position: {x: box.width / 2, y: box.height - 2},
+      })
+
+      await vi.waitFor(() => {
+        const value = editor.getSnapshot().context.value
+        expect(value?.length).toBe(2)
+        expect((value?.at(1) as Record<string, unknown>)?.['_type']).toBe(
+          'block',
+        )
+      })
+    })
+  })
+
   describe('backspace at block boundary inside container', () => {
-    test.skip('backspace at start of second text block merges with first', async () => {
+    test('backspace at start of second text block merges with first', async () => {
       const keyGenerator = createTestKeyGenerator()
       const calloutKey = keyGenerator() // k0
       const block1Key = keyGenerator() // k1
@@ -1441,7 +1491,7 @@ describe('container behaviors', () => {
   })
 
   describe('delete forward at block boundary inside container', () => {
-    test.skip('delete forward at end of first text block merges with second', async () => {
+    test('delete forward at end of first text block merges with second', async () => {
       const keyGenerator = createTestKeyGenerator()
       const calloutKey = keyGenerator() // k0
       const block1Key = keyGenerator() // k1

@@ -1,4 +1,8 @@
-import {isSpan} from '@portabletext/schema'
+import {
+  isSpan,
+  type PortableTextBlock,
+  type PortableTextTextBlock,
+} from '@portabletext/schema'
 import {getFocusChild} from '../selectors/selector.get-focus-child'
 import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
 import {getNextBlock} from '../selectors/selector.get-next-block'
@@ -6,9 +10,12 @@ import {getPreviousBlock} from '../selectors/selector.get-previous-block'
 import {isAtTheEndOfBlock} from '../selectors/selector.is-at-the-end-of-block'
 import {isAtTheStartOfBlock} from '../selectors/selector.is-at-the-start-of-block'
 import {isTextBlockNode} from '../slate/node/is-text-block-node'
+import {getAncestorTextBlock, getSibling} from '../traversal'
 import {getBlockEndPoint} from '../utils/util.get-block-end-point'
 import {getBlockStartPoint} from '../utils/util.get-block-start-point'
+import {getSelectionStartPoint} from '../utils/util.get-selection-start-point'
 import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
+import {isEqualSelectionPoints} from '../utils/util.is-equal-selection-points'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
@@ -26,6 +33,112 @@ export const abstractDeleteBehaviors = [
           unit: event.unit,
         }),
       ],
+    ],
+  }),
+  /**
+   * Backward delete at the start of a text block inside a container merges
+   * with the previous sibling text block within the same container.
+   */
+  defineBehavior({
+    on: 'delete',
+    guard: ({snapshot, event}) => {
+      if (event.direction !== 'backward') {
+        return false
+      }
+
+      const at = event.at ?? snapshot.context.selection
+
+      if (!at) {
+        return false
+      }
+
+      const selectionStartPoint = getSelectionStartPoint(at)
+
+      if (!selectionStartPoint) {
+        return false
+      }
+
+      // Only handle container content (the next behavior handles top-level)
+      if (
+        getFocusTextBlock({
+          ...snapshot,
+          context: {...snapshot.context, selection: at},
+        })
+      ) {
+        return false
+      }
+
+      const innerTextBlock = getAncestorTextBlock(
+        snapshot,
+        selectionStartPoint.path,
+      )
+
+      if (!innerTextBlock) {
+        return false
+      }
+
+      const blockStartPoint = getBlockStartPoint({
+        context: snapshot.context,
+        block: innerTextBlock,
+      })
+
+      if (!isEqualSelectionPoints(selectionStartPoint, blockStartPoint)) {
+        return false
+      }
+
+      const previousSibling = getSibling(
+        snapshot,
+        innerTextBlock.path,
+        'previous',
+      )
+
+      if (
+        !previousSibling ||
+        !isTextBlockNode(snapshot.context, previousSibling.node)
+      ) {
+        return false
+      }
+
+      const previousBlockEndPoint = getBlockEndPoint({
+        context: snapshot.context,
+        block: {
+          node: previousSibling.node as PortableTextBlock,
+          path: previousSibling.path,
+        },
+      })
+
+      return {
+        innerTextBlock,
+        previousSibling,
+        previousBlockEndPoint,
+      }
+    },
+    actions: [
+      (_, {innerTextBlock, previousSibling, previousBlockEndPoint}) => {
+        const previousBlock = previousSibling.node as PortableTextTextBlock
+        const currentBlock = innerTextBlock.node as PortableTextTextBlock
+
+        return [
+          raise({
+            type: 'set',
+            at: previousSibling.path,
+            props: {
+              children: [...previousBlock.children, ...currentBlock.children],
+            },
+          }),
+          raise({
+            type: 'remove',
+            at: innerTextBlock.path,
+          }),
+          raise({
+            type: 'select',
+            at: {
+              anchor: previousBlockEndPoint,
+              focus: previousBlockEndPoint,
+            },
+          }),
+        ]
+      },
     ],
   }),
   defineBehavior({
@@ -106,6 +219,99 @@ export const abstractDeleteBehaviors = [
           unit: event.unit,
         }),
       ],
+    ],
+  }),
+  /**
+   * Forward delete at the end of a text block inside a container merges
+   * with the next sibling text block within the same container.
+   */
+  defineBehavior({
+    on: 'delete',
+    guard: ({snapshot, event}) => {
+      if (event.direction !== 'forward') {
+        return false
+      }
+
+      const at = event.at ?? snapshot.context.selection
+
+      if (!at) {
+        return false
+      }
+
+      const selectionStartPoint = getSelectionStartPoint(at)
+
+      if (!selectionStartPoint) {
+        return false
+      }
+
+      if (
+        getFocusTextBlock({
+          ...snapshot,
+          context: {...snapshot.context, selection: at},
+        })
+      ) {
+        return false
+      }
+
+      const innerTextBlock = getAncestorTextBlock(
+        snapshot,
+        selectionStartPoint.path,
+      )
+
+      if (!innerTextBlock) {
+        return false
+      }
+
+      const blockEndPoint = getBlockEndPoint({
+        context: snapshot.context,
+        block: innerTextBlock,
+      })
+
+      if (!isEqualSelectionPoints(selectionStartPoint, blockEndPoint)) {
+        return false
+      }
+
+      const nextSibling = getSibling(snapshot, innerTextBlock.path, 'next')
+
+      if (
+        !nextSibling ||
+        !isTextBlockNode(snapshot.context, nextSibling.node)
+      ) {
+        return false
+      }
+
+      return {
+        innerTextBlock,
+        nextSibling,
+        blockEndPoint,
+      }
+    },
+    actions: [
+      (_, {innerTextBlock, nextSibling, blockEndPoint}) => {
+        const currentBlock = innerTextBlock.node as PortableTextTextBlock
+        const nextBlock = nextSibling.node as PortableTextTextBlock
+
+        return [
+          raise({
+            type: 'set',
+            at: innerTextBlock.path,
+            props: {
+              children: [...currentBlock.children, ...nextBlock.children],
+            },
+          }),
+          raise({
+            type: 'remove',
+            at: nextSibling.path,
+          }),
+          raise({
+            type: 'select',
+            at: {
+              anchor: blockEndPoint,
+              focus: blockEndPoint,
+            },
+          }),
+        ]
+      },
     ],
   }),
   defineBehavior({

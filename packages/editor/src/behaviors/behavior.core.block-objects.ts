@@ -150,28 +150,50 @@ const clickingAboveLonelyBlockObject = defineBehavior({
       },
     })
 
-    return (
-      event.position.isEditor &&
-      event.position.block === 'start' &&
-      focusBlockObject &&
-      !previousBlock
-    )
+    if (
+      !(
+        event.position.isEditor &&
+        event.position.block === 'start' &&
+        focusBlockObject &&
+        !previousBlock
+      )
+    ) {
+      return false
+    }
+
+    return {focusBlockObject}
   },
   actions: [
-    ({snapshot, event}) => [
-      raise({
-        type: 'select',
-        at: event.position.selection,
-      }),
-      raise({
-        type: 'insert.block',
-        block: {
-          _type: snapshot.context.schema.block.name,
-        },
-        placement: 'before',
-        select: 'start',
-      }),
-    ],
+    ({snapshot, event}, {focusBlockObject}) => {
+      if (
+        isEditableType(snapshot.editableTypes, focusBlockObject.node._type)
+      ) {
+        return [
+          raise({
+            type: 'insert',
+            at: focusBlockObject.path,
+            items: [{_type: snapshot.context.schema.block.name}],
+            position: 'before',
+            select: 'start',
+          }),
+        ]
+      }
+
+      return [
+        raise({
+          type: 'select',
+          at: event.position.selection,
+        }),
+        raise({
+          type: 'insert.block',
+          block: {
+            _type: snapshot.context.schema.block.name,
+          },
+          placement: 'before',
+          select: 'start',
+        }),
+      ]
+    },
   ],
 })
 
@@ -201,28 +223,50 @@ const clickingBelowLonelyBlockObject = defineBehavior({
       },
     })
 
-    return (
-      event.position.isEditor &&
-      event.position.block === 'end' &&
-      focusBlockObject &&
-      !nextBlock
-    )
+    if (
+      !(
+        event.position.isEditor &&
+        event.position.block === 'end' &&
+        focusBlockObject &&
+        !nextBlock
+      )
+    ) {
+      return false
+    }
+
+    return {focusBlockObject}
   },
   actions: [
-    ({snapshot, event}) => [
-      raise({
-        type: 'select',
-        at: event.position.selection,
-      }),
-      raise({
-        type: 'insert.block',
-        block: {
-          _type: snapshot.context.schema.block.name,
-        },
-        placement: 'after',
-        select: 'start',
-      }),
-    ],
+    ({snapshot, event}, {focusBlockObject}) => {
+      if (
+        isEditableType(snapshot.editableTypes, focusBlockObject.node._type)
+      ) {
+        return [
+          raise({
+            type: 'insert',
+            at: focusBlockObject.path,
+            items: [{_type: snapshot.context.schema.block.name}],
+            position: 'after',
+            select: 'start',
+          }),
+        ]
+      }
+
+      return [
+        raise({
+          type: 'select',
+          at: event.position.selection,
+        }),
+        raise({
+          type: 'insert.block',
+          block: {
+            _type: snapshot.context.schema.block.name,
+          },
+          placement: 'after',
+          select: 'start',
+        }),
+      ]
+    },
   ],
 })
 
