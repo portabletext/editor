@@ -29,46 +29,36 @@ describe(getHighestObjectNode.name, () => {
     expect(entry?.path).toEqual([0, 1])
   })
 
-  test('table at path returns itself', () => {
-    const entry = getHighestObjectNode(testbed.context, [4])
-    expect(entry?.node).toBe(testbed.table)
-    expect(entry?.path).toEqual([4])
+  test('container at path returns undefined', () => {
+    expect(getHighestObjectNode(testbed.context, [4])).toBeUndefined()
   })
 
-  test('span inside cell finds table as highest object node', () => {
-    const entry = getHighestObjectNode(testbed.context, [4, 0, 0, 0, 0])
-    expect(entry?.node).toBe(testbed.table)
-    expect(entry?.path).toEqual([4])
+  test('span inside container returns undefined', () => {
+    expect(
+      getHighestObjectNode(testbed.context, [4, 0, 0, 0, 0]),
+    ).toBeUndefined()
   })
 
-  test('cell block finds table as highest object node', () => {
-    const entry = getHighestObjectNode(testbed.context, [4, 0, 0, 0])
-    expect(entry?.node).toBe(testbed.table)
-    expect(entry?.path).toEqual([4])
+  test('text block inside container returns undefined', () => {
+    expect(getHighestObjectNode(testbed.context, [4, 0, 0, 0])).toBeUndefined()
   })
 
-  test('cell finds table as highest object node', () => {
-    const entry = getHighestObjectNode(testbed.context, [4, 0, 0])
-    expect(entry?.node).toBe(testbed.table)
-    expect(entry?.path).toEqual([4])
+  test('cell inside container returns undefined', () => {
+    expect(getHighestObjectNode(testbed.context, [4, 0, 0])).toBeUndefined()
   })
 
-  test('row finds table as highest object node', () => {
-    const entry = getHighestObjectNode(testbed.context, [4, 0])
-    expect(entry?.node).toBe(testbed.table)
-    expect(entry?.path).toEqual([4])
+  test('row inside container returns undefined', () => {
+    expect(getHighestObjectNode(testbed.context, [4, 0])).toBeUndefined()
   })
 
-  test('code span finds code-block as highest object node', () => {
-    const entry = getHighestObjectNode(testbed.context, [3, 0, 0])
-    expect(entry?.node).toBe(testbed.codeBlock)
-    expect(entry?.path).toEqual([3])
+  test('code-block container returns undefined', () => {
+    expect(getHighestObjectNode(testbed.context, [3, 0, 0])).toBeUndefined()
   })
 
-  test('inline object in cell finds table as highest object node', () => {
+  test('inline object in cell finds inline object', () => {
     const entry = getHighestObjectNode(testbed.context, [4, 0, 0, 0, 1])
-    expect(entry?.node).toBe(testbed.table)
-    expect(entry?.path).toEqual([4])
+    expect(entry?.node).toBe(testbed.stockTicker2)
+    expect(entry?.path).toEqual([4, 0, 0, 0, 1])
   })
 
   test('invalid path returns undefined', () => {

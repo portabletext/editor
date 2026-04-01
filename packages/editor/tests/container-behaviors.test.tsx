@@ -962,7 +962,12 @@ describe('container behaviors', () => {
         expect.arrayContaining([
           expect.objectContaining({
             type: 'set',
-            path: [{_key: block._key}, 'style'],
+            path: [
+              {_key: callout._key},
+              'content',
+              {_key: block._key},
+              'style',
+            ],
             value: 'h1',
           }),
         ]),
@@ -1028,7 +1033,16 @@ describe('container behaviors', () => {
         expect.arrayContaining([
           expect.objectContaining({
             type: 'set',
-            path: [{_key: block._key}, 'style'],
+            path: [
+              {_key: table._key},
+              'rows',
+              {_key: row._key},
+              'cells',
+              {_key: cell._key},
+              'content',
+              {_key: block._key},
+              'style',
+            ],
             value: 'h1',
           }),
         ]),
