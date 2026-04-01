@@ -12,6 +12,7 @@ export const PlaygroundFeatureFlagsContext =
   createContext<PlaygroundFeatureFlags>(defaultPlaygroundFeatureFlags)
 
 export type EditorFeatureFlags = {
+  codeBlockPlugin: boolean
   dragHandles: boolean
   imageDeserializerPlugin: boolean
   htmlDeserializerPlugin: boolean
@@ -27,6 +28,7 @@ export type EditorFeatureFlags = {
 }
 
 export const defaultEditorFeatureFlags: EditorFeatureFlags = {
+  codeBlockPlugin: true,
   dragHandles: false,
   imageDeserializerPlugin: false,
   htmlDeserializerPlugin: true,

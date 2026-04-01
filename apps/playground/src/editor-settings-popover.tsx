@@ -31,6 +31,11 @@ export function EditorSettingsPopover(props: {editorRef: EditorActorRef}) {
           {/* Experimental */}
           <Section title="Experimental">
             <FeatureSwitch
+              label="Code block"
+              isSelected={featureFlags.codeBlockPlugin}
+              onChange={() => toggleFlag('codeBlockPlugin')}
+            />
+            <FeatureSwitch
               label="Drag handles"
               isSelected={featureFlags.dragHandles}
               onChange={() => toggleFlag('dragHandles')}
