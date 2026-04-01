@@ -4,7 +4,7 @@ import type {
   PortableTextTextBlock,
 } from '@portabletext/schema'
 import {isSpan, isTextBlock} from '@portabletext/schema'
-import {useCallback, useRef, type JSX} from 'react'
+import {useCallback, useMemo, useRef, type JSX} from 'react'
 import {getNodeChildren} from '../../../node-traversal/get-children'
 import {
   isElementDecorationsEqual,
@@ -87,6 +87,10 @@ const useChildren = (props: {
   const childScope = nodeChildren?.scope
   const childScopePath = nodeChildren?.scopePath ?? ''
   const childFieldName = nodeChildren?.fieldName ?? 'children'
+  const scopeContextValue = useMemo(
+    () => ({scope: childScope, scopePath: childScopePath}),
+    [childScope, childScopePath],
+  )
 
   const renderElementComponent = useCallback(
     (node: PortableTextTextBlock | PortableTextObject, i: number) => {
@@ -98,7 +102,7 @@ const useChildren = (props: {
       return (
         <ScopeContext.Provider
           key={`provider-${node._key}`}
-          value={{scope: childScope, scopePath: childScopePath}}
+          value={scopeContextValue}
         >
           <ElementContext.Provider value={node}>
             <ElementComponent
@@ -125,8 +129,7 @@ const useChildren = (props: {
       renderPlaceholder,
       renderLeaf,
       renderText,
-      childScope,
-      childScopePath,
+      scopeContextValue,
     ],
   )
 

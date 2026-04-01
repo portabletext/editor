@@ -4,11 +4,7 @@ import {createTestKeyGenerator} from '@portabletext/test'
 import React from 'react'
 import {describe, expect, test, vi} from 'vitest'
 import {ContainerRendererPlugin} from '../src/plugins/plugin.internal.container-renderer'
-import {InternalSlateEditorRefPlugin} from '../src/plugins/plugin.internal.slate-editor-ref'
-import {withoutPatching} from '../src/slate-plugins/slate-plugin.without-patching'
-import {normalize} from '../src/slate/editor/normalize'
 import {createTestEditor} from '../src/test/vitest'
-import type {PortableTextSlateEditor} from '../src/types/slate-editor'
 
 const tableEditableTypes = ['table', 'table.row', 'table.row.cell']
 
@@ -90,47 +86,42 @@ async function createTableTestEditor() {
 
   const initialValue = [table]
 
-  const slateEditorRef = React.createRef<PortableTextSlateEditor>()
-
   const {editor, locator} = await createTestEditor({
     keyGenerator,
     schemaDefinition,
     initialValue,
-    children: (
-      <>
-        <ContainerRendererPlugin types={tableEditableTypes} />
-        <InternalSlateEditorRefPlugin ref={slateEditorRef} />
-      </>
-    ),
+    children: <ContainerRendererPlugin types={tableEditableTypes} />,
   })
 
-  slateEditorRef.current!.editableTypes = new Set(tableEditableTypes)
+  // After rendering, normalization adds marks, markDefs, style
+  const normalizedSpan = {...span, marks: []}
+  const normalizedBlock = {
+    ...block,
+    children: [normalizedSpan],
+    markDefs: [],
+    style: 'normal',
+  }
+  const normalizedCell = {...cell, content: [normalizedBlock]}
+  const normalizedRow = {...row, cells: [normalizedCell]}
+  const normalizedTable = {...table, rows: [normalizedRow]}
 
   return {
     editor,
     locator,
-    table,
-    row,
-    cell,
-    block,
-    span,
-    initialValue,
+    table: normalizedTable,
+    row: normalizedRow,
+    cell: normalizedCell,
+    block: normalizedBlock,
+    span: normalizedSpan,
   }
-}
-
-function getTableCellContent(value: Array<unknown>) {
-  const table = value.at(0) as Record<string, unknown>
-  const rows = table['rows'] as Array<Record<string, unknown>>
-  const cells = rows.at(0)!['cells'] as Array<Record<string, unknown>>
-  return cells.at(0)!['content'] as Array<Record<string, unknown>>
 }
 
 describe('tables', () => {
   test('render', async () => {
-    const {editor, initialValue} = await createTableTestEditor()
+    const {editor, table} = await createTableTestEditor()
 
     await vi.waitFor(() => {
-      return expect(editor.getSnapshot().context.value).toEqual(initialValue)
+      return expect(editor.getSnapshot().context.value).toEqual([table])
     })
   })
 
@@ -278,14 +269,7 @@ describe('tables', () => {
                     content: [
                       {
                         ...block,
-                        children: [
-                          {
-                            ...span,
-                            marks: ['strong'],
-                          },
-                        ],
-                        markDefs: [],
-                        style: 'normal',
+                        children: [{...span, marks: ['strong']}],
                       },
                     ],
                   },
@@ -384,7 +368,12 @@ describe('tables', () => {
             rows: [
               {
                 ...row,
-                cells: [{...cell, content: [{...block, children: [span]}]}],
+                cells: [
+                  {
+                    ...cell,
+                    content: [{...block, children: [span]}],
+                  },
+                ],
               },
             ],
           },
@@ -428,9 +417,7 @@ describe('tables', () => {
                     content: [
                       {
                         ...block,
-                        children: [{...span, text: 'bar', marks: []}],
-                        markDefs: [],
-                        style: 'normal',
+                        children: [{...span, text: 'bar'}],
                       },
                     ],
                   },
@@ -491,15 +478,7 @@ describe('tables', () => {
                     content: [
                       {
                         ...block,
-                        children: [
-                          {
-                            ...span,
-                            text: 'foobar',
-                            marks: [],
-                          },
-                        ],
-                        markDefs: [],
-                        style: 'normal',
+                        children: [{...span, text: 'foobar'}],
                       },
                     ],
                   },
@@ -512,8 +491,7 @@ describe('tables', () => {
     })
 
     test('unset span from text block inside container', async () => {
-      const {editor, table, row, cell, block, span} =
-        await createTableTestEditor()
+      const {editor, table, row, cell, block} = await createTableTestEditor()
 
       editor.send({
         type: 'patches',
@@ -527,7 +505,7 @@ describe('tables', () => {
             'content',
             {_key: block._key},
             'children',
-            {_key: span._key},
+            {_key: 'k4'},
           ]),
         ],
         snapshot: undefined,
@@ -548,15 +526,8 @@ describe('tables', () => {
                       {
                         ...block,
                         children: [
-                          {
-                            _key: 'k7',
-                            _type: 'span',
-                            text: '',
-                            marks: [],
-                          },
+                          {_key: 'k7', _type: 'span', text: '', marks: []},
                         ],
-                        markDefs: [],
-                        style: 'normal',
                       },
                     ],
                   },
@@ -604,15 +575,7 @@ describe('tables', () => {
                     content: [
                       {
                         ...block,
-                        children: [
-                          {
-                            ...span,
-                            text: 'foobar',
-                            marks: [],
-                          },
-                        ],
-                        markDefs: [],
-                        style: 'normal',
+                        children: [{...span, text: 'foobar'}],
                       },
                     ],
                   },
@@ -659,7 +622,6 @@ describe('tables', () => {
                       {
                         ...block,
                         children: [span],
-                        markDefs: [],
                         style: 'h1',
                       },
                     ],
@@ -676,6 +638,8 @@ describe('tables', () => {
       const {editor, table, row, cell, block, span} =
         await createTableTestEditor()
 
+      // Normalization has already set marks: [] on the span, so
+      // setIfMissing is a no-op
       editor.send({
         type: 'patches',
         patches: [
@@ -711,14 +675,7 @@ describe('tables', () => {
                     content: [
                       {
                         ...block,
-                        children: [
-                          {
-                            ...span,
-                            marks: ['strong'],
-                          },
-                        ],
-                        markDefs: [],
-                        style: 'normal',
+                        children: [{...span, marks: []}],
                       },
                     ],
                   },
@@ -750,8 +707,7 @@ describe('tables', () => {
         snapshot: undefined,
       })
 
-      // The block was created without style, so unsetting a non-existent
-      // property is a no-op. The value remains unchanged.
+      // Normalization restores the default style.
       await vi.waitFor(() => {
         return expect(editor.getSnapshot().context.value).toEqual([table])
       })
@@ -761,304 +717,363 @@ describe('tables', () => {
   describe('normalization', () => {
     test('text blocks inside containers get missing .markDefs', async () => {
       const keyGenerator = createTestKeyGenerator()
-      const slateEditorRef = React.createRef<PortableTextSlateEditor>()
       const tableKey = keyGenerator()
       const rowKey = keyGenerator()
       const cellKey = keyGenerator()
       const blockKey = keyGenerator()
       const spanKey = keyGenerator()
 
-      const table = {
-        _key: tableKey,
-        _type: 'table',
-        rows: [
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition,
+        initialValue: [
           {
-            _key: rowKey,
-            _type: 'row',
-            cells: [
+            _key: tableKey,
+            _type: 'table',
+            rows: [
               {
-                _key: cellKey,
-                _type: 'cell',
-                content: [
+                _key: rowKey,
+                _type: 'row',
+                cells: [
                   {
-                    _key: blockKey,
-                    _type: 'block',
-                    // Missing markDefs!
-                    children: [
+                    _key: cellKey,
+                    _type: 'cell',
+                    content: [
                       {
-                        _key: spanKey,
-                        _type: 'span',
-                        text: 'foo',
-                        marks: [],
+                        _key: blockKey,
+                        _type: 'block',
+                        children: [
+                          {
+                            _key: spanKey,
+                            _type: 'span',
+                            text: 'foo',
+                            marks: [],
+                          },
+                        ],
+                        style: 'normal',
                       },
                     ],
-                    style: 'normal',
                   },
                 ],
               },
             ],
           },
         ],
-      }
-
-      const {editor} = await createTestEditor({
-        keyGenerator,
-        schemaDefinition,
-        initialValue: [table],
-        children: (
-          <>
-            <ContainerRendererPlugin types={tableEditableTypes} />
-            <InternalSlateEditorRefPlugin ref={slateEditorRef} />
-          </>
-        ),
+        children: <ContainerRendererPlugin types={tableEditableTypes} />,
       })
-
-      slateEditorRef.current!.editableTypes = new Set(tableEditableTypes)
-
-      withoutPatching(slateEditorRef.current!, () => {
-        normalize(slateEditorRef.current!, {force: true})
-      })
-      slateEditorRef.current!.onChange()
 
       await vi.waitFor(() => {
-        const value = editor.getSnapshot().context.value
-        const block = getTableCellContent(value).at(0)!
-        expect(block['markDefs']).toEqual([])
+        return expect(editor.getSnapshot().context.value).toEqual([
+          {
+            _key: tableKey,
+            _type: 'table',
+            rows: [
+              {
+                _key: rowKey,
+                _type: 'row',
+                cells: [
+                  {
+                    _key: cellKey,
+                    _type: 'cell',
+                    content: [
+                      {
+                        _key: blockKey,
+                        _type: 'block',
+                        children: [
+                          {
+                            _key: spanKey,
+                            _type: 'span',
+                            text: 'foo',
+                            marks: [],
+                          },
+                        ],
+                        markDefs: [],
+                        style: 'normal',
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ])
       })
     })
 
     test('text blocks inside containers get missing .style', async () => {
       const keyGenerator = createTestKeyGenerator()
-      const slateEditorRef = React.createRef<PortableTextSlateEditor>()
       const tableKey = keyGenerator()
       const rowKey = keyGenerator()
       const cellKey = keyGenerator()
       const blockKey = keyGenerator()
       const spanKey = keyGenerator()
 
-      const table = {
-        _key: tableKey,
-        _type: 'table',
-        rows: [
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition,
+        initialValue: [
           {
-            _key: rowKey,
-            _type: 'row',
-            cells: [
+            _key: tableKey,
+            _type: 'table',
+            rows: [
               {
-                _key: cellKey,
-                _type: 'cell',
-                content: [
+                _key: rowKey,
+                _type: 'row',
+                cells: [
                   {
-                    _key: blockKey,
-                    _type: 'block',
-                    // Missing style!
-                    children: [
+                    _key: cellKey,
+                    _type: 'cell',
+                    content: [
                       {
-                        _key: spanKey,
-                        _type: 'span',
-                        text: 'foo',
-                        marks: [],
+                        _key: blockKey,
+                        _type: 'block',
+                        children: [
+                          {
+                            _key: spanKey,
+                            _type: 'span',
+                            text: 'foo',
+                            marks: [],
+                          },
+                        ],
+                        markDefs: [],
                       },
                     ],
-                    markDefs: [],
                   },
                 ],
               },
             ],
           },
         ],
-      }
-
-      const {editor} = await createTestEditor({
-        keyGenerator,
-        schemaDefinition,
-        initialValue: [table],
-        children: (
-          <>
-            <ContainerRendererPlugin types={tableEditableTypes} />
-            <InternalSlateEditorRefPlugin ref={slateEditorRef} />
-          </>
-        ),
+        children: <ContainerRendererPlugin types={tableEditableTypes} />,
       })
-
-      slateEditorRef.current!.editableTypes = new Set(tableEditableTypes)
-
-      withoutPatching(slateEditorRef.current!, () => {
-        normalize(slateEditorRef.current!, {force: true})
-      })
-      slateEditorRef.current!.onChange()
 
       await vi.waitFor(() => {
-        const value = editor.getSnapshot().context.value
-        const block = getTableCellContent(value).at(0)!
-        expect(block['style']).toBe('normal')
+        return expect(editor.getSnapshot().context.value).toEqual([
+          {
+            _key: tableKey,
+            _type: 'table',
+            rows: [
+              {
+                _key: rowKey,
+                _type: 'row',
+                cells: [
+                  {
+                    _key: cellKey,
+                    _type: 'cell',
+                    content: [
+                      {
+                        _key: blockKey,
+                        _type: 'block',
+                        children: [
+                          {
+                            _key: spanKey,
+                            _type: 'span',
+                            text: 'foo',
+                            marks: [],
+                          },
+                        ],
+                        markDefs: [],
+                        style: 'normal',
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ])
       })
     })
 
     test('spans inside containers get missing .marks', async () => {
       const keyGenerator = createTestKeyGenerator()
-      const slateEditorRef = React.createRef<PortableTextSlateEditor>()
       const tableKey = keyGenerator()
       const rowKey = keyGenerator()
       const cellKey = keyGenerator()
       const blockKey = keyGenerator()
       const spanKey = keyGenerator()
 
-      const table = {
-        _key: tableKey,
-        _type: 'table',
-        rows: [
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition,
+        initialValue: [
           {
-            _key: rowKey,
-            _type: 'row',
-            cells: [
+            _key: tableKey,
+            _type: 'table',
+            rows: [
               {
-                _key: cellKey,
-                _type: 'cell',
-                content: [
+                _key: rowKey,
+                _type: 'row',
+                cells: [
                   {
-                    _key: blockKey,
-                    _type: 'block',
-                    children: [
+                    _key: cellKey,
+                    _type: 'cell',
+                    content: [
                       {
-                        _key: spanKey,
-                        _type: 'span',
-                        text: 'foo',
-                        // Missing marks!
+                        _key: blockKey,
+                        _type: 'block',
+                        children: [{_key: spanKey, _type: 'span', text: 'foo'}],
+                        markDefs: [],
+                        style: 'normal',
                       },
                     ],
-                    markDefs: [],
-                    style: 'normal',
                   },
                 ],
               },
             ],
           },
         ],
-      }
-
-      const {editor} = await createTestEditor({
-        keyGenerator,
-        schemaDefinition,
-        initialValue: [table],
-        children: (
-          <>
-            <ContainerRendererPlugin types={tableEditableTypes} />
-            <InternalSlateEditorRefPlugin ref={slateEditorRef} />
-          </>
-        ),
+        children: <ContainerRendererPlugin types={tableEditableTypes} />,
       })
-
-      slateEditorRef.current!.editableTypes = new Set(tableEditableTypes)
-
-      withoutPatching(slateEditorRef.current!, () => {
-        normalize(slateEditorRef.current!, {force: true})
-      })
-      slateEditorRef.current!.onChange()
 
       await vi.waitFor(() => {
-        const value = editor.getSnapshot().context.value
-        const block = getTableCellContent(value).at(0)!
-        const span = (block['children'] as Array<Record<string, unknown>>).at(
-          0,
-        )!
-        expect(span['marks']).toEqual([])
+        return expect(editor.getSnapshot().context.value).toEqual([
+          {
+            _key: tableKey,
+            _type: 'table',
+            rows: [
+              {
+                _key: rowKey,
+                _type: 'row',
+                cells: [
+                  {
+                    _key: cellKey,
+                    _type: 'cell',
+                    content: [
+                      {
+                        _key: blockKey,
+                        _type: 'block',
+                        children: [
+                          {
+                            _key: spanKey,
+                            _type: 'span',
+                            text: 'foo',
+                            marks: [],
+                          },
+                        ],
+                        markDefs: [],
+                        style: 'normal',
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ])
       })
     })
 
     test('duplicate keys inside containers are fixed', async () => {
       const keyGenerator = createTestKeyGenerator()
-      const slateEditorRef = React.createRef<PortableTextSlateEditor>()
       const tableKey = keyGenerator()
       const rowKey = keyGenerator()
       const cellKey = keyGenerator()
-      const blockKey = keyGenerator() // Same key for both blocks!
+      const blockKey = keyGenerator()
       const spanKey1 = keyGenerator()
       const spanKey2 = keyGenerator()
 
-      const table = {
-        _key: tableKey,
-        _type: 'table',
-        rows: [
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition,
+        initialValue: [
           {
-            _key: rowKey,
-            _type: 'row',
-            cells: [
+            _key: tableKey,
+            _type: 'table',
+            rows: [
               {
-                _key: cellKey,
-                _type: 'cell',
-                content: [
+                _key: rowKey,
+                _type: 'row',
+                cells: [
                   {
-                    _key: blockKey,
-                    _type: 'block',
-                    children: [
+                    _key: cellKey,
+                    _type: 'cell',
+                    content: [
                       {
-                        _key: spanKey1,
-                        _type: 'span',
-                        text: 'foo',
-                        marks: [],
+                        _key: blockKey,
+                        _type: 'block',
+                        children: [
+                          {
+                            _key: spanKey1,
+                            _type: 'span',
+                            text: 'foo',
+                            marks: [],
+                          },
+                        ],
+                        markDefs: [],
+                        style: 'normal',
+                      },
+                      {
+                        _key: blockKey,
+                        _type: 'block',
+                        children: [
+                          {
+                            _key: spanKey2,
+                            _type: 'span',
+                            text: 'bar',
+                            marks: [],
+                          },
+                        ],
+                        markDefs: [],
+                        style: 'normal',
                       },
                     ],
-                    markDefs: [],
-                    style: 'normal',
-                  },
-                  {
-                    _key: blockKey, // Duplicate!
-                    _type: 'block',
-                    children: [
-                      {
-                        _key: spanKey2,
-                        _type: 'span',
-                        text: 'bar',
-                        marks: [],
-                      },
-                    ],
-                    markDefs: [],
-                    style: 'normal',
                   },
                 ],
               },
             ],
           },
         ],
-      }
-
-      const {editor} = await createTestEditor({
-        keyGenerator,
-        schemaDefinition,
-        initialValue: [table],
-        children: (
-          <>
-            <ContainerRendererPlugin types={tableEditableTypes} />
-            <InternalSlateEditorRefPlugin ref={slateEditorRef} />
-          </>
-        ),
+        children: <ContainerRendererPlugin types={tableEditableTypes} />,
       })
-
-      slateEditorRef.current!.editableTypes = new Set(tableEditableTypes)
-
-      withoutPatching(slateEditorRef.current!, () => {
-        normalize(slateEditorRef.current!, {force: true})
-      })
-      slateEditorRef.current!.onChange()
 
       await vi.waitFor(() => {
-        const value = editor.getSnapshot().context.value
-        const blocks = getTableCellContent(value)
-        expect(blocks).toEqual([
+        return expect(editor.getSnapshot().context.value).toEqual([
           {
-            _key: blockKey,
-            _type: 'block',
-            children: [{_key: spanKey1, _type: 'span', text: 'foo', marks: []}],
-            markDefs: [],
-            style: 'normal',
-          },
-          {
-            _key: 'k8',
-            _type: 'block',
-            children: [{_key: spanKey2, _type: 'span', text: 'bar', marks: []}],
-            markDefs: [],
-            style: 'normal',
+            _key: tableKey,
+            _type: 'table',
+            rows: [
+              {
+                _key: rowKey,
+                _type: 'row',
+                cells: [
+                  {
+                    _key: cellKey,
+                    _type: 'cell',
+                    content: [
+                      {
+                        _key: blockKey,
+                        _type: 'block',
+                        children: [
+                          {
+                            _key: spanKey1,
+                            _type: 'span',
+                            text: 'foo',
+                            marks: [],
+                          },
+                        ],
+                        markDefs: [],
+                        style: 'normal',
+                      },
+                      {
+                        _key: 'k8',
+                        _type: 'block',
+                        children: [
+                          {
+                            _key: spanKey2,
+                            _type: 'span',
+                            text: 'bar',
+                            marks: [],
+                          },
+                        ],
+                        markDefs: [],
+                        style: 'normal',
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
           },
         ])
       })
@@ -1066,127 +1081,145 @@ describe('tables', () => {
 
     test('empty text blocks inside containers get a span inserted', async () => {
       const keyGenerator = createTestKeyGenerator()
-      const slateEditorRef = React.createRef<PortableTextSlateEditor>()
       const tableKey = keyGenerator()
       const rowKey = keyGenerator()
       const cellKey = keyGenerator()
       const blockKey = keyGenerator()
 
-      const table = {
-        _key: tableKey,
-        _type: 'table',
-        rows: [
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition,
+        initialValue: [
           {
-            _key: rowKey,
-            _type: 'row',
-            cells: [
+            _key: tableKey,
+            _type: 'table',
+            rows: [
               {
-                _key: cellKey,
-                _type: 'cell',
-                content: [
+                _key: rowKey,
+                _type: 'row',
+                cells: [
                   {
-                    _key: blockKey,
-                    _type: 'block',
-                    // Empty children!
-                    children: [],
-                    markDefs: [],
-                    style: 'normal',
+                    _key: cellKey,
+                    _type: 'cell',
+                    content: [
+                      {
+                        _key: blockKey,
+                        _type: 'block',
+                        children: [],
+                        markDefs: [],
+                        style: 'normal',
+                      },
+                    ],
                   },
                 ],
               },
             ],
           },
         ],
-      }
-
-      const {editor} = await createTestEditor({
-        keyGenerator,
-        schemaDefinition,
-        initialValue: [table],
-        children: (
-          <>
-            <ContainerRendererPlugin types={tableEditableTypes} />
-            <InternalSlateEditorRefPlugin ref={slateEditorRef} />
-          </>
-        ),
+        children: <ContainerRendererPlugin types={tableEditableTypes} />,
       })
-
-      slateEditorRef.current!.editableTypes = new Set(tableEditableTypes)
-
-      withoutPatching(slateEditorRef.current!, () => {
-        normalize(slateEditorRef.current!, {force: true})
-      })
-      slateEditorRef.current!.onChange()
 
       await vi.waitFor(() => {
-        const value = editor.getSnapshot().context.value
-        const block = getTableCellContent(value).at(0)!
-        const children = block['children'] as Array<Record<string, unknown>>
-        expect(children).toEqual([
-          {_key: 'k6', _type: 'span', text: '', marks: []},
+        return expect(editor.getSnapshot().context.value).toEqual([
+          {
+            _key: tableKey,
+            _type: 'table',
+            rows: [
+              {
+                _key: rowKey,
+                _type: 'row',
+                cells: [
+                  {
+                    _key: cellKey,
+                    _type: 'cell',
+                    content: [
+                      {
+                        _key: blockKey,
+                        _type: 'block',
+                        children: [
+                          {_key: 'k6', _type: 'span', text: '', marks: []},
+                        ],
+                        markDefs: [],
+                        style: 'normal',
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
         ])
       })
     })
 
     test('text blocks with missing children inside containers get restored', async () => {
       const keyGenerator = createTestKeyGenerator()
-      const slateEditorRef = React.createRef<PortableTextSlateEditor>()
       const tableKey = keyGenerator()
       const rowKey = keyGenerator()
       const cellKey = keyGenerator()
       const blockKey = keyGenerator()
 
-      const table = {
-        _key: tableKey,
-        _type: 'table',
-        rows: [
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition,
+        initialValue: [
           {
-            _key: rowKey,
-            _type: 'row',
-            cells: [
+            _key: tableKey,
+            _type: 'table',
+            rows: [
               {
-                _key: cellKey,
-                _type: 'cell',
-                content: [
+                _key: rowKey,
+                _type: 'row',
+                cells: [
                   {
-                    _key: blockKey,
-                    _type: 'block',
-                    // No children property at all!
-                    markDefs: [],
-                    style: 'normal',
+                    _key: cellKey,
+                    _type: 'cell',
+                    content: [
+                      {
+                        _key: blockKey,
+                        _type: 'block',
+                        markDefs: [],
+                        style: 'normal',
+                      },
+                    ],
                   },
                 ],
               },
             ],
           },
         ],
-      }
-
-      const {editor} = await createTestEditor({
-        keyGenerator,
-        schemaDefinition,
-        initialValue: [table],
-        children: (
-          <>
-            <ContainerRendererPlugin types={tableEditableTypes} />
-            <InternalSlateEditorRefPlugin ref={slateEditorRef} />
-          </>
-        ),
+        children: <ContainerRendererPlugin types={tableEditableTypes} />,
       })
-
-      slateEditorRef.current!.editableTypes = new Set(tableEditableTypes)
-
-      withoutPatching(slateEditorRef.current!, () => {
-        normalize(slateEditorRef.current!, {force: true})
-      })
-      slateEditorRef.current!.onChange()
 
       await vi.waitFor(() => {
-        const value = editor.getSnapshot().context.value
-        const block = getTableCellContent(value).at(0)!
-        const children = block['children'] as Array<Record<string, unknown>>
-        expect(children).toEqual([
-          {_key: 'k6', _type: 'span', text: '', marks: []},
+        return expect(editor.getSnapshot().context.value).toEqual([
+          {
+            _key: tableKey,
+            _type: 'table',
+            rows: [
+              {
+                _key: rowKey,
+                _type: 'row',
+                cells: [
+                  {
+                    _key: cellKey,
+                    _type: 'cell',
+                    content: [
+                      {
+                        _key: blockKey,
+                        _type: 'block',
+                        children: [
+                          {_key: 'k6', _type: 'span', text: '', marks: []},
+                        ],
+                        markDefs: [],
+                        style: 'normal',
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
         ])
       })
     })

@@ -303,6 +303,8 @@ describe('callouts', () => {
     test('setIfMissing marks on span inside callout', async () => {
       const {editor, callout, block, span} = await createCalloutTestEditor()
 
+      // Normalization has already set marks: [] on the span, so
+      // setIfMissing is a no-op
       editor.send({
         type: 'patches',
         patches: [
@@ -331,7 +333,7 @@ describe('callouts', () => {
                 children: [
                   {
                     ...span,
-                    marks: ['strong'],
+                    marks: [],
                   },
                 ],
               },

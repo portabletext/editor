@@ -188,6 +188,7 @@ export const editorMachine = setup({
         origin: Pick<EventPosition, 'selection'>
       }
       dragGhost?: HTMLElement
+      editableTypes: Set<string>
       slateEditor?: PortableTextSlateEditor
     },
     events: {} as InternalEditorEvent,
@@ -221,23 +222,43 @@ export const editorMachine = setup({
     }),
     'add slate editor to context': assign({
       slateEditor: ({context, event}) => {
-        return event.type === 'add slate editor'
-          ? event.editor
-          : context.slateEditor
+        if (event.type === 'add slate editor') {
+          for (const type of context.editableTypes) {
+            event.editor.editableTypes.add(type)
+          }
+
+          if (context.editableTypes.size > 0) {
+            normalize(event.editor, {force: true})
+          }
+
+          return event.editor
+        }
+        return context.slateEditor
       },
     }),
-    'register renderer': ({context, event}) => {
-      assertEvent(event, 'register renderer')
-      context.slateEditor?.editableTypes.add(event.rendererType)
+    'register renderer': assign({
+      editableTypes: ({context, event}) => {
+        assertEvent(event, 'register renderer')
+        const updated = new Set(context.editableTypes)
+        updated.add(event.rendererType)
+        context.slateEditor?.editableTypes.add(event.rendererType)
 
-      if (context.slateEditor) {
-        normalize(context.slateEditor, {force: true})
-      }
-    },
-    'unregister renderer': ({context, event}) => {
-      assertEvent(event, 'unregister renderer')
-      context.slateEditor?.editableTypes.delete(event.rendererType)
-    },
+        if (context.slateEditor) {
+          normalize(context.slateEditor, {force: true})
+        }
+
+        return updated
+      },
+    }),
+    'unregister renderer': assign({
+      editableTypes: ({context, event}) => {
+        assertEvent(event, 'unregister renderer')
+        const updated = new Set(context.editableTypes)
+        updated.delete(event.rendererType)
+        context.slateEditor?.editableTypes.delete(event.rendererType)
+        return updated
+      },
+    }),
     'emit patch event': emit(({event}) => {
       assertEvent(event, 'internal.patch')
       return event
@@ -414,6 +435,7 @@ export const editorMachine = setup({
     behaviors: new Set(coreBehaviorsConfig),
     behaviorsSorted: false,
     converters: new Set(input.converters ?? []),
+    editableTypes: new Set(),
     keyGenerator: input.keyGenerator,
     pendingEvents: [],
     pendingIncomingPatchesEvents: [],
