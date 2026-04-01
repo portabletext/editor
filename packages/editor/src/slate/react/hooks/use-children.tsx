@@ -43,6 +43,7 @@ const useChildren = (props: {
   renderText?: (props: RenderTextProps) => JSX.Element
   renderLeaf?: (props: RenderLeafProps) => JSX.Element
 }) => {
+  'use no memo'
   const {
     parentDataPath,
     decorations,
@@ -56,6 +57,7 @@ const useChildren = (props: {
   const editor = useSlateStatic()
 
   useLayoutEffect(() => {
+    // eslint-disable-next-line react-hooks/immutability -- `editor` is a mutable singleton
     editor.isNodeMapDirty = false
   })
 
@@ -190,6 +192,7 @@ const useDecorationsByChild = (
   indexedPath: Path,
   decorations: DecoratedRange[],
 ) => {
+  'use no memo'
   const decorationsByChild = splitDecorationsByChild(
     editor,
     node,
@@ -199,6 +202,7 @@ const useDecorationsByChild = (
 
   const previousRef = useRef<DecoratedRange[][]>(decorationsByChild)
 
+  /* eslint-disable react-hooks/refs -- intentional ref read for memoization stability */
   const stableDecorationsByChild = useMemo(() => {
     const previous = previousRef.current
     const next = decorationsByChild.map((decorations, i) => {
@@ -210,6 +214,7 @@ const useDecorationsByChild = (
     })
     return next
   }, [decorationsByChild])
+  /* eslint-enable react-hooks/refs */
 
   useLayoutEffect(() => {
     previousRef.current = stableDecorationsByChild

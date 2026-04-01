@@ -16,7 +16,6 @@ import type {Editor} from './interfaces/editor'
  * application. This file gets rewritten in the PT-native fork (Step 3).
  */
 export const createEditor = (): Editor => {
-  /* eslint-disable @typescript-eslint/no-explicit-any */
   const e: any = {
     [EDITOR_BRAND]: true,
     children: [],
@@ -46,7 +45,5 @@ export const createEditor = (): Editor => {
     select: (...args: any[]) => (select as any)(e, ...args),
     setSelection: (...args: any[]) => (setSelection as any)(e, ...args),
   }
-  /* eslint-enable @typescript-eslint/no-explicit-any */
-
   return e as Editor
 }

@@ -51,7 +51,7 @@ export const useAndroidInputManager = !IS_ANDROID
         MUTATION_OBSERVER_CONFIG,
       )
       editor.scheduleFlush = inputManager.scheduleFlush
-      if (isMounted) {
+      if (isMounted.current) {
         inputManager.flush()
       }
 

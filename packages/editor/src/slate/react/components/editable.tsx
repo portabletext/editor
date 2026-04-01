@@ -174,6 +174,7 @@ type EditableProps = {
 
 export const Editable = forwardRef(
   (props: EditableProps, forwardedRef: ForwardedRef<HTMLDivElement>) => {
+    'use no memo'
     const defaultRenderPlaceholder = useCallback(
       (props: RenderPlaceholderProps) => <DefaultPlaceholder {...props} />,
       [],
@@ -210,7 +211,9 @@ export const Editable = forwardRef(
     const [, forceRender] = useReducer((s) => s + 1, 0)
 
     useLayoutEffect(() => {
+      // eslint-disable-next-line react-hooks/immutability -- `editor` is a mutable singleton
       editor.readOnly = readOnly
+      // eslint-disable-next-line react-hooks/immutability -- `editor` is a mutable singleton
       editor.forceRender = forceRender
     })
 
@@ -300,9 +303,12 @@ export const Editable = forwardRef(
             const domSelection = getSelection(root)
 
             if (activeElement === el) {
+              // eslint-disable-next-line react-hooks/immutability -- `state` is a mutable container
               state.latestElement = activeElement
+              // eslint-disable-next-line react-hooks/immutability -- `editor` is a mutable singleton
               editor.focused = true
             } else {
+              // eslint-disable-next-line react-hooks/immutability -- `editor` is a mutable singleton
               editor.focused = false
             }
 
@@ -361,15 +367,13 @@ export const Editable = forwardRef(
     })
 
     useLayoutEffect(() => {
-      hasMarkPlaceholderRef.current = hasMarkPlaceholder
-    })
-
-    useLayoutEffect(() => {
       // Update element-related editor maps with the DOM element ref.
       let window: Window | null = null
       // biome-ignore lint/suspicious/noAssignInExpressions: Slate upstream pattern — assignment in condition
       if (ref.current && (window = getDefaultView(ref.current))) {
+        // eslint-disable-next-line react-hooks/immutability -- `editor` is a mutable singleton
         editor.domWindow = window
+        // eslint-disable-next-line react-hooks/immutability -- `editor` is a mutable singleton
         editor.domElement = ref.current
       }
 
@@ -730,6 +734,7 @@ export const Editable = forwardRef(
                 editor.select(range)
 
                 if (selectionRef) {
+                  // eslint-disable-next-line react-hooks/immutability -- `editor` is a mutable singleton
                   editor.userSelection = selectionRef
                 }
               }
@@ -960,6 +965,7 @@ export const Editable = forwardRef(
         if (node == null) {
           onDOMSelectionChange.cancel()
           scheduleOnDOMSelectionChange.cancel()
+          // eslint-disable-next-line react-hooks/immutability -- `editor` is a mutable singleton
           editor.domElement = null
 
           if (ref.current && HAS_BEFORE_INPUT_SUPPORT) {
@@ -1020,7 +1026,7 @@ export const Editable = forwardRef(
           onSelectionChange,
         )
       }
-    }, [scheduleOnDOMSelectionChange])
+    }, [editor, scheduleOnDOMSelectionChange])
 
     const decorations = decorate([editor as any, []])
     const decorateContext = useDecorateContext(decorate)
@@ -1096,6 +1102,10 @@ export const Editable = forwardRef(
         }
       }
     }
+
+    useLayoutEffect(() => {
+      hasMarkPlaceholderRef.current = hasMarkPlaceholder
+    })
 
     // Update EDITOR_TO_MARK_PLACEHOLDER_MARKS in setTimeout useEffect to ensure we don't set it
     // before we receive the composition end event.
@@ -1330,6 +1340,7 @@ export const Editable = forwardRef(
                       domSelection?.removeAllRanges()
                     }
 
+                    // eslint-disable-next-line react-hooks/immutability -- `editor` is a mutable singleton
                     editor.focused = false
                   },
                   [
@@ -1458,6 +1469,7 @@ export const Editable = forwardRef(
                         event.data
                       ) {
                         const placeholderMarks = editor.pendingInsertionMarks
+                        // eslint-disable-next-line react-hooks/immutability -- `editor` is a mutable singleton
                         editor.pendingInsertionMarks = null
 
                         // Ensure we insert text with the marks the user was actually seeing
@@ -1494,6 +1506,7 @@ export const Editable = forwardRef(
                     ) {
                       if (!ReactEditor.isComposing(editor)) {
                         setIsComposing(true)
+                        // eslint-disable-next-line react-hooks/immutability -- `editor` is a mutable singleton
                         editor.composing = true
                       }
                     }
@@ -1553,6 +1566,7 @@ export const Editable = forwardRef(
                       }
 
                       const root = ReactEditor.findDocumentOrShadowRoot(editor)
+                      // eslint-disable-next-line react-hooks/immutability -- `state` is a mutable container
                       state.latestElement = root.activeElement
 
                       // COMPAT: If the editor has nested editable elements, the focus
@@ -1563,6 +1577,7 @@ export const Editable = forwardRef(
                         return
                       }
 
+                      // eslint-disable-next-line react-hooks/immutability -- `editor` is a mutable singleton
                       editor.focused = true
                     }
                   },
@@ -1585,6 +1600,7 @@ export const Editable = forwardRef(
                         ReactEditor.isComposing(editor) &&
                         nativeEvent.isComposing === false
                       ) {
+                        // eslint-disable-next-line react-hooks/immutability -- `editor` is a mutable singleton
                         editor.composing = false
                         setIsComposing(false)
                       }

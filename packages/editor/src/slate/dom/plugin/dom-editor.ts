@@ -195,7 +195,6 @@ export interface DOMEditorInterface {
   ) => T extends true ? Range | null : Range
 }
 
-// eslint-disable-next-line no-redeclare
 export const DOMEditor: DOMEditorInterface = {
   blur: (editor) => {
     const el = getDomNode(editor, [])
