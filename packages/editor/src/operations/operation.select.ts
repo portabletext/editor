@@ -12,6 +12,7 @@ export const selectOperationImplementation: OperationImplementation<
       selection: operation.at,
     },
     blockIndexMap: operation.editor.blockIndexMap,
+    slateEditor: operation.editor,
   })
 
   if (newSelection) {

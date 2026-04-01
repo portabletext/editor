@@ -15,6 +15,7 @@ import type {
   RenderListItemFunction,
   RenderStyleFunction,
 } from '../types/editor'
+import {useContainerScope} from './container-scope-context'
 import {EditorActorContext} from './editor-actor-context'
 import {RenderBlockObject} from './render.block-object'
 import {RenderInlineObject} from './render.inline-object'
@@ -35,7 +36,9 @@ export function RenderElement(props: {
 }) {
   const editorActor = useContext(EditorActorContext)
   const schema = useSelector(editorActor, (s) => s.context.schema)
+  const renderers = useSelector(editorActor, (s) => s.context.renderers)
   const slateStatic = useSlateStatic()
+  const containerScope = useContainerScope()
 
   if (isTextBlock({schema}, props.element)) {
     return (
@@ -73,6 +76,27 @@ export function RenderElement(props: {
         {props.children}
       </RenderInlineObject>
     )
+  }
+
+  // Check if a renderer is registered for this block object type
+  const scopedType = containerScope
+    ? `${containerScope.name}.${props.element._type}`
+    : props.element._type
+  const rendererConfig =
+    renderers.get(scopedType) ?? renderers.get(props.element._type)
+
+  if (rendererConfig) {
+    return rendererConfig.renderer.render({
+      attributes: props.attributes,
+      children: props.children,
+      node: props.element,
+    })
+  }
+
+  // Structural container node (e.g., row, cell) with no renderer.
+  // Render children directly without going through RenderBlockObject.
+  if (slateStatic.editableTypes.has(scopedType)) {
+    return <div {...props.attributes}>{props.children}</div>
   }
 
   return (

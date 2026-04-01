@@ -44,6 +44,7 @@ export const deleteOperationImplementation: OperationImplementation<
           selection: operation.at,
         },
         blockIndexMap: operation.editor.blockIndexMap,
+        slateEditor: operation.editor,
       })
     : operation.editor.selection
 

@@ -5,6 +5,7 @@ import type {Editor, EditorConfig} from '../editor'
 import {debug} from '../internal-utils/debug'
 import {corePriority} from '../priority/priority.core'
 import {createEditorPriority} from '../priority/priority.types'
+import type {RendererConfig} from '../renderers/renderer.types'
 import type {EditableAPI} from '../types/editor'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {defaultKeyGenerator} from '../utils/key-generator'
@@ -19,6 +20,7 @@ import {relayMachine, type RelayActor} from './relay-machine'
 import {syncMachine, type SyncActor} from './sync-machine'
 
 export type InternalEditor = Editor & {
+  registerRenderer: (config: RendererConfig) => () => void
   _internal: {
     editable: EditableAPI
     editorActor: EditorActor
@@ -85,6 +87,16 @@ export function createInternalEditor(config: EditorConfig): {
         editorActor.send({
           type: 'remove behavior',
           behaviorConfig: behaviorConfigWithPriority,
+        })
+      }
+    },
+    registerRenderer: ({renderer}) => {
+      editorActor.send({type: 'register renderer', renderer: {renderer}})
+
+      return () => {
+        editorActor.send({
+          type: 'unregister renderer',
+          rendererType: renderer.type,
         })
       }
     },

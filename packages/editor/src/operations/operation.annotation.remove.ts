@@ -37,6 +37,7 @@ export const removeAnnotationOperationImplementation: OperationImplementation<
           selection: operation.at,
         },
         blockIndexMap: operation.editor.blockIndexMap,
+        slateEditor: operation.editor,
       })
     : null
 

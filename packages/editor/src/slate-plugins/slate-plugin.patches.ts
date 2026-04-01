@@ -138,8 +138,11 @@ export function createPatchesPlugin({
           patches = [
             ...patches,
             ...insertTextPatch(
-              schema,
-              editor.children,
+              {
+                schema,
+                editableTypes: editor.editableTypes,
+                value: editor.children,
+              },
               operation,
               previousValue,
             ),
@@ -149,8 +152,11 @@ export function createPatchesPlugin({
           patches = [
             ...patches,
             ...removeTextPatch(
-              schema,
-              editor.children,
+              {
+                schema,
+                editableTypes: editor.editableTypes,
+                value: editor.children,
+              },
               operation,
               previousValue,
             ),
@@ -159,15 +165,25 @@ export function createPatchesPlugin({
         case 'remove_node':
           patches = [
             ...patches,
-            ...removeNodePatch(schema, previousValue, operation),
+            ...removeNodePatch(
+              {
+                schema,
+                editableTypes: editor.editableTypes,
+                value: previousValue,
+              },
+              operation,
+            ),
           ]
           break
         case 'insert_node':
           patches = [
             ...patches,
             ...insertNodePatch(
-              schema,
-              editor.children,
+              {
+                schema,
+                editableTypes: editor.editableTypes,
+                value: editor.children,
+              },
               operation,
               previousValue,
             ),
@@ -176,7 +192,14 @@ export function createPatchesPlugin({
         case 'set_node':
           patches = [
             ...patches,
-            ...setNodePatch(schema, editor.children, operation),
+            ...setNodePatch(
+              {
+                schema,
+                editableTypes: editor.editableTypes,
+                value: editor.children,
+              },
+              operation,
+            ),
           ]
           break
         default:

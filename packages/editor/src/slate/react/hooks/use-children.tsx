@@ -1,10 +1,17 @@
 import type {
+  OfDefinition,
   PortableTextObject,
   PortableTextSpan,
   PortableTextTextBlock,
 } from '@portabletext/schema'
 import {isSpan, isTextBlock} from '@portabletext/schema'
-import {useCallback, useRef, type JSX} from 'react'
+import {useCallback, useMemo, useRef, type JSX} from 'react'
+import {
+  ContainerScopeContext,
+  useContainerScope,
+  type ContainerScope,
+} from '../../../editor/container-scope-context'
+import {resolveChildArrayField} from '../../../schema/resolve-child-array-field'
 import {
   isElementDecorationsEqual,
   splitDecorationsByChild,
@@ -56,6 +63,8 @@ const useChildren = (props: {
   const editor = useSlateStatic()
   editor.isNodeMapDirty = false
 
+  const containerScope = useContainerScope()
+
   const isEditorNode = isEditor(node)
 
   const decorationsByChild = useDecorationsByChild(
@@ -65,37 +74,64 @@ const useChildren = (props: {
     decorations,
   )
 
+  const containerChildInfo = getContainerChildInfo(editor, node, containerScope)
+
   const children = isEditor(node)
     ? node.children
     : isTextBlock({schema: editor.schema}, node)
       ? node.children
-      : []
+      : containerChildInfo
+        ? containerChildInfo.children
+        : []
+
+  const childFieldName = containerChildInfo?.fieldName ?? 'children'
+
+  const childScopeValue = useMemo<ContainerScope | undefined>(
+    () =>
+      containerChildInfo
+        ? {
+            name: containerChildInfo.scopeName,
+            schemaScope: containerChildInfo.ofDefinitions,
+          }
+        : undefined,
+    [containerChildInfo],
+  )
 
   const renderElementComponent = useCallback(
-    (node: PortableTextTextBlock | PortableTextObject, i: number) => {
+    (childNode: PortableTextTextBlock | PortableTextObject, index: number) => {
       const nodeDataPath =
         parentDataPath === ''
-          ? `[_key=="${node._key}"]`
-          : `${parentDataPath}.children[_key=="${node._key}"]`
+          ? `[_key=="${childNode._key}"]`
+          : `${parentDataPath}.${childFieldName}[_key=="${childNode._key}"]`
 
       return (
-        <ElementContext.Provider key={`provider-${node._key}`} value={node}>
-          <ElementComponent
-            dataPath={nodeDataPath}
-            decorations={decorationsByChild[i] ?? []}
-            element={node}
-            key={node._key}
-            indexedPath={parentIndexedPath.concat(i)}
-            renderElement={renderElement}
-            renderPlaceholder={renderPlaceholder}
-            renderLeaf={renderLeaf}
-            renderText={renderText}
-          />
-        </ElementContext.Provider>
+        <ContainerScopeContext.Provider
+          key={`provider-${childNode._key}`}
+          value={childScopeValue}
+        >
+          <ElementContext.Provider
+            key={`element-${childNode._key}`}
+            value={childNode}
+          >
+            <ElementComponent
+              dataPath={nodeDataPath}
+              decorations={decorationsByChild[index] ?? []}
+              element={childNode}
+              key={childNode._key}
+              indexedPath={parentIndexedPath.concat(index)}
+              renderElement={renderElement}
+              renderPlaceholder={renderPlaceholder}
+              renderLeaf={renderLeaf}
+              renderText={renderText}
+            />
+          </ElementContext.Provider>
+        </ContainerScopeContext.Provider>
       )
     },
     [
       parentDataPath,
+      childFieldName,
+      childScopeValue,
       decorationsByChild,
       parentIndexedPath,
       renderElement,
@@ -118,7 +154,7 @@ const useChildren = (props: {
 
     const nodeDataPath =
       parentDataPath !== ''
-        ? `${parentDataPath}.children[_key=="${node._key}"]`
+        ? `${parentDataPath}.${childFieldName}[_key=="${node._key}"]`
         : ''
 
     return (
@@ -138,47 +174,118 @@ const useChildren = (props: {
   }
 
   const renderObjectNodeComponent = (
-    node: PortableTextObject,
+    childNode: PortableTextObject,
     index: number,
   ) => {
     const nodeDataPath =
       parentDataPath === ''
-        ? `[_key=="${node._key}"]`
-        : `${parentDataPath}.children[_key=="${node._key}"]`
+        ? `[_key=="${childNode._key}"]`
+        : `${parentDataPath}.${childFieldName}[_key=="${childNode._key}"]`
 
     return (
       <ObjectNodeComponent
         dataPath={nodeDataPath}
         decorations={decorationsByChild[index] ?? []}
         isInline={!isEditorNode}
-        key={node._key}
-        objectNode={node}
+        key={childNode._key}
+        objectNode={childNode}
         indexedPath={parentIndexedPath.concat(index)}
         renderElement={renderElement}
       />
     )
   }
 
-  return children.map((n: Node, i: number) => {
-    if (isTextBlock({schema: editor.schema}, n)) {
-      return renderElementComponent(n, i)
+  return children.map((childNode: Node, index: number) => {
+    if (isTextBlock({schema: editor.schema}, childNode)) {
+      return renderElementComponent(childNode, index)
     }
     // Fallback for text block nodes without `children`
-    if (isTextBlockNode({schema: editor.schema}, n)) {
+    if (isTextBlockNode({schema: editor.schema}, childNode)) {
       return null
     }
-    if (isObjectNode({schema: editor.schema}, n)) {
-      return renderObjectNodeComponent(n, i)
+    if (isObjectNode({schema: editor.schema}, childNode)) {
+      const scopeName = containerChildInfo?.scopeName ?? containerScope?.name
+      const scopedType = scopeName
+        ? `${scopeName}.${childNode._type}`
+        : childNode._type
+      const isEditable =
+        editor.editableTypes.has(scopedType) ||
+        editor.editableTypes.has(childNode._type)
+
+      if (isEditable) {
+        return renderElementComponent(childNode, index)
+      }
+      return renderObjectNodeComponent(childNode, index)
     }
-    if (isSpan({schema: editor.schema}, n)) {
-      return renderTextComponent(n, i)
+    if (isSpan({schema: editor.schema}, childNode)) {
+      return renderTextComponent(childNode, index)
     }
     // Fallback for span nodes without `text`
-    if (isSpanNode({schema: editor.schema}, n)) {
+    if (isSpanNode({schema: editor.schema}, childNode)) {
       return null
     }
     throw new Error(`Unexpected node type`)
   })
+}
+
+type ContainerChildInfo = {
+  children: Array<Node>
+  fieldName: string
+  scopeName: string
+  ofDefinitions: ReadonlyArray<OfDefinition> | undefined
+}
+
+function getContainerChildInfo(
+  editor: Editor,
+  node: Editor | Node,
+  containerScope: ContainerScope | undefined,
+): ContainerChildInfo | undefined {
+  if (isEditor(node)) {
+    return undefined
+  }
+  if (isTextBlock({schema: editor.schema}, node)) {
+    return undefined
+  }
+  if (!isObjectNode({schema: editor.schema}, node)) {
+    return undefined
+  }
+
+  const parentScopeName = containerScope?.name
+  const scopedType = parentScopeName
+    ? `${parentScopeName}.${node._type}`
+    : node._type
+  const isEditable =
+    editor.editableTypes.has(scopedType) || editor.editableTypes.has(node._type)
+
+  if (!isEditable) {
+    return undefined
+  }
+
+  const arrayField = resolveChildArrayField(
+    {schema: editor.schema, scope: containerScope?.schemaScope},
+    node,
+  )
+
+  if (!arrayField) {
+    return undefined
+  }
+
+  const fieldValue = (node as Record<string, unknown>)[arrayField.name]
+
+  if (!Array.isArray(fieldValue)) {
+    return undefined
+  }
+
+  const scopeName = parentScopeName
+    ? `${parentScopeName}.${node._type}`
+    : node._type
+
+  return {
+    children: fieldValue,
+    fieldName: arrayField.name,
+    scopeName,
+    ofDefinitions: arrayField.of,
+  }
 }
 
 const useDecorationsByChild = (

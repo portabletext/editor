@@ -357,7 +357,14 @@ describe('event.child.unset', () => {
           type: 'unset',
           path: [{_key: blockKey}, 'children', {_key: 'k4'}, 'marks'],
         },
-        // Normalization restores text to ''
+        // Normalization restores marks first (isSpanNode catches spans
+        // without marks), then text
+        {
+          origin: 'local',
+          type: 'set',
+          path: [{_key: blockKey}, 'children', {_key: 'k4'}, 'marks'],
+          value: [],
+        },
         {
           origin: 'local',
           type: 'set',
@@ -370,20 +377,6 @@ describe('event.child.unset', () => {
           type: 'unset',
           path: [],
         },
-        // Prepending a setIfMissing patch to ensure the editor is not empty
-        {
-          origin: 'local',
-          type: 'setIfMissing',
-          path: [],
-          value: [],
-        },
-        // This patch goes nowhere, but that's okay
-        {
-          origin: 'local',
-          type: 'set',
-          path: [{_key: blockKey}, 'children', {_key: 'k4'}, 'marks'],
-          value: [],
-        },
       ])
     })
 
@@ -393,7 +386,7 @@ describe('event.child.unset', () => {
 
     await vi.waitFor(() => {
       expect(getTersePt(editor.getSnapshot().context)).toEqual(['f'])
-      expect(patches.slice(8)).toEqual([
+      expect(patches.slice(7)).toEqual([
         {
           origin: 'local',
           type: 'setIfMissing',

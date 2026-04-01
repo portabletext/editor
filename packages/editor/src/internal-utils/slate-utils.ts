@@ -1,11 +1,8 @@
 import {isTextBlock} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
-import {getChildren} from '../node-traversal/get-children'
-import {getNode} from '../node-traversal/get-node'
 import {getNodes} from '../node-traversal/get-nodes'
+import {indexedPathToKeyedPath} from '../paths/indexed-path-to-keyed-path'
 import type {Editor} from '../slate/interfaces/editor'
-import type {Node} from '../slate/interfaces/node'
-import type {Path as SlatePath} from '../slate/interfaces/path'
 import type {Point} from '../slate/interfaces/point'
 import type {Range} from '../slate/interfaces/range'
 import {isBackwardRange} from '../slate/range/is-backward-range'
@@ -13,25 +10,6 @@ import {rangeEdges} from '../slate/range/range-edges'
 import type {EditorSelection, EditorSelectionPoint} from '../types/editor'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {isListBlock} from '../utils/parse-blocks'
-
-function getPointChild({
-  editor,
-  point,
-}: {
-  editor: PortableTextSlateEditor
-  point: Point
-}): [node: Node, path: SlatePath] | [undefined, undefined] {
-  const blockEntry = getNode(editor, point.path.slice(0, 1))
-  const childIndex = point.path.at(1)
-
-  if (!blockEntry || childIndex === undefined) {
-    return [undefined, undefined]
-  }
-
-  const entry = getChildren(editor, blockEntry.path).at(childIndex)
-
-  return entry ? [entry.node, entry.path] : [undefined, undefined]
-}
 
 export function isListItemActive({
   editor,
@@ -106,54 +84,22 @@ export function slateRangeToSelection({
   editor: PortableTextSlateEditor
   range: Range
 }): EditorSelection {
-  const anchorBlockEntry = getNode(editor, range.anchor.path.slice(0, 1))
-  const focusBlockEntry = getNode(editor, range.focus.path.slice(0, 1))
+  const anchor = slatePointToSelectionPoint({
+    schema,
+    editor,
+    point: range.anchor,
+  })
+  const focus = slatePointToSelectionPoint({schema, editor, point: range.focus})
 
-  const anchorBlock = anchorBlockEntry?.node
-  const focusBlock = focusBlockEntry?.node
-
-  if (!anchorBlock || !focusBlock) {
+  if (!anchor || !focus) {
     return null
   }
 
-  const [anchorChild] =
-    anchorBlock._type === schema.block.name
-      ? getPointChild({
-          editor,
-          point: range.anchor,
-        })
-      : [undefined, undefined]
-  const [focusChild] =
-    focusBlock._type === schema.block.name
-      ? getPointChild({
-          editor,
-          point: range.focus,
-        })
-      : [undefined, undefined]
-
-  const selection: EditorSelection = {
-    anchor: {
-      path: [{_key: anchorBlock._key}],
-      offset: range.anchor.offset,
-    },
-    focus: {
-      path: [{_key: focusBlock._key}],
-      offset: range.focus.offset,
-    },
+  return {
+    anchor,
+    focus,
     backward: isBackwardRange(range),
   }
-
-  if (anchorChild) {
-    selection.anchor.path.push('children')
-    selection.anchor.path.push({_key: anchorChild._key})
-  }
-
-  if (focusChild) {
-    selection.focus.path.push('children')
-    selection.focus.path.push({_key: focusChild._key})
-  }
-
-  return selection
 }
 
 export function slatePointToSelectionPoint({
@@ -165,30 +111,21 @@ export function slatePointToSelectionPoint({
   editor: PortableTextSlateEditor
   point: Point
 }): EditorSelectionPoint | undefined {
-  const blockEntry = getNode(editor, point.path.slice(0, 1))
-  const block = blockEntry?.node
+  const keyedPath = indexedPathToKeyedPath(
+    {
+      schema,
+      editableTypes: editor.editableTypes,
+      value: editor.children,
+    },
+    point.path,
+  )
 
-  if (!block) {
+  if (!keyedPath) {
     return undefined
   }
 
-  const [child] =
-    block._type === schema.block.name
-      ? getPointChild({
-          editor,
-          point,
-        })
-      : [undefined, undefined]
-
-  if (child) {
-    return {
-      path: [{_key: block._key}, 'children', {_key: child._key}],
-      offset: point.offset,
-    }
-  }
-
   return {
-    path: [{_key: block._key}],
+    path: keyedPath,
     offset: point.offset,
   }
 }

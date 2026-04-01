@@ -390,15 +390,20 @@ export const DOMEditor: DOMEditorInterface = {
       return [el, 0]
     }
 
-    // If we're inside an object node, force the offset to 0, otherwise the zero
-    // width spacing character will result in an incorrect offset of 1
+    // If we're inside a void object node, force the offset to 0, otherwise the
+    // zero width spacing character will result in an incorrect offset of 1.
+    // Container object nodes (in editableTypes) have real editable content, so
+    // their descendants keep their actual offset.
     const pointPath = editorPath(editor, point)
     const pointEntry = getNode(editor, pointPath)
     const pointObjectNode =
       pointEntry && isObjectNode({schema: editor.schema}, pointEntry.node)
         ? pointEntry
         : getAncestorObjectNode(editor, point.path)
-    if (pointObjectNode) {
+    if (
+      pointObjectNode &&
+      !editor.editableTypes.has(pointObjectNode.node._type)
+    ) {
       point = {path: point.path, offset: 0}
     }
 

@@ -5,9 +5,12 @@ import {
   type PortableTextSpan,
 } from '@portabletext/schema'
 import type {EditorContext, EditorSnapshot} from '../editor/editor-snapshot'
+import {getNode} from '../node-traversal/get-node'
+import {keyedPathToIndexedPath} from '../paths/keyed-path-to-indexed-path'
 import type {Path} from '../slate/interfaces/path'
 import type {Range} from '../slate/interfaces/range'
 import type {EditorSelectionPoint} from '../types/editor'
+import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {blockOffsetToSpanSelectionPoint} from '../utils/util.block-offset'
 import {isEqualSelectionPoints} from '../utils/util.is-equal-selection-points'
 import {
@@ -18,7 +21,9 @@ import {
 export function toSlateRange(
   snapshot: {
     context: Pick<EditorContext, 'schema' | 'value' | 'selection'>
-  } & Pick<EditorSnapshot, 'blockIndexMap'>,
+  } & Pick<EditorSnapshot, 'blockIndexMap'> & {
+      slateEditor?: PortableTextSlateEditor
+    },
 ): Range | null {
   if (!snapshot.context.selection) {
     return null
@@ -70,7 +75,9 @@ export function toSlateRange(
 function toSlateSelectionPoint(
   snapshot: {
     context: Pick<EditorContext, 'schema' | 'value'>
-  } & Pick<EditorSnapshot, 'blockIndexMap'>,
+  } & Pick<EditorSnapshot, 'blockIndexMap'> & {
+      slateEditor?: PortableTextSlateEditor
+    },
   selectionPoint: EditorSelectionPoint,
   direction: 'forward' | 'backward',
 ):
@@ -79,6 +86,37 @@ function toSlateSelectionPoint(
       offset: number
     }
   | undefined {
+  // Try full keyed path resolution when slateEditor is available
+  if (snapshot.slateEditor) {
+    const indexedPath = keyedPathToIndexedPath(
+      snapshot.slateEditor,
+      selectionPoint.path,
+      snapshot.blockIndexMap,
+    )
+
+    if (indexedPath) {
+      const entry = getNode(snapshot.slateEditor, indexedPath)
+
+      if (entry) {
+        // If the resolved node is a span, clamp the offset to the text length
+        if (isSpan(snapshot.context, entry.node)) {
+          return {
+            path: indexedPath,
+            offset: Math.min(
+              typeof entry.node.text === 'string' ? entry.node.text.length : 0,
+              selectionPoint.offset,
+            ),
+          }
+        }
+
+        // For non-span nodes (blocks, containers, inline objects), return
+        // the path with offset as-is. The depth-2 fallback below handles
+        // text block resolution to the first child when needed.
+      }
+    }
+  }
+
+  // Fallback: depth-2 resolution for backward compatibility
   const blockKey = getBlockKeyFromSelectionPoint(selectionPoint)
 
   if (!blockKey) {

@@ -30,6 +30,7 @@ export const decoratorAddOperationImplementation: OperationImplementation<
           selection: operation.at,
         },
         blockIndexMap: operation.editor.blockIndexMap,
+        slateEditor: operation.editor,
       })
     : operation.editor.selection
 

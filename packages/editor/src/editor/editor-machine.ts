@@ -19,6 +19,8 @@ import type {Converter} from '../converters/converter.types'
 import {debug} from '../internal-utils/debug'
 import type {EventPosition} from '../internal-utils/event-position'
 import {sortByPriority} from '../priority/priority.sort'
+import {getEditableTypePaths} from '../renderers/container-schema'
+import type {RendererConfig} from '../renderers/renderer.types'
 import {ReactEditor} from '../slate/react/plugin/react-editor'
 import type {NamespaceEvent, OmitFromUnion} from '../type-utils'
 import type {EditorSelection} from '../types/editor'
@@ -113,6 +115,8 @@ type InternalEditorEvent =
   | {type: 'dragend'}
   | {type: 'drop'}
   | {type: 'add slate editor'; editor: PortableTextSlateEditor}
+  | {type: 'register renderer'; renderer: RendererConfig}
+  | {type: 'unregister renderer'; rendererType: string}
 
 /**
  * @internal
@@ -165,6 +169,27 @@ export function rerouteExternalBehaviorEvent({
   }
 }
 
+function syncEditableTypes(
+  schema: EditorSchema,
+  renderers: Map<string, RendererConfig>,
+  slateEditor: PortableTextSlateEditor | undefined,
+) {
+  if (!slateEditor) {
+    return
+  }
+
+  const editableTypes = new Set<string>()
+
+  for (const rendererConfig of renderers.values()) {
+    const paths = getEditableTypePaths(schema, rendererConfig.renderer.type)
+    for (const path of paths) {
+      editableTypes.add(path)
+    }
+  }
+
+  slateEditor.editableTypes = editableTypes
+}
+
 /**
  * @internal
  */
@@ -177,6 +202,7 @@ export const editorMachine = setup({
       keyGenerator: () => string
       pendingEvents: Array<InternalPatchEvent | MutationEvent>
       pendingIncomingPatchesEvents: Array<PatchesEvent>
+      renderers: Map<string, RendererConfig>
       schema: EditorSchema
       initialReadOnly: boolean
       selection: EditorSelection
@@ -218,9 +244,29 @@ export const editorMachine = setup({
     }),
     'add slate editor to context': assign({
       slateEditor: ({context, event}) => {
-        return event.type === 'add slate editor'
-          ? event.editor
-          : context.slateEditor
+        if (event.type === 'add slate editor') {
+          syncEditableTypes(context.schema, context.renderers, event.editor)
+          return event.editor
+        }
+        return context.slateEditor
+      },
+    }),
+    'register renderer': assign({
+      renderers: ({context, event}) => {
+        assertEvent(event, 'register renderer')
+        const updated = new Map(context.renderers)
+        updated.set(event.renderer.renderer.type, event.renderer)
+        syncEditableTypes(context.schema, updated, context.slateEditor)
+        return updated
+      },
+    }),
+    'unregister renderer': assign({
+      renderers: ({context, event}) => {
+        assertEvent(event, 'unregister renderer')
+        const updated = new Map(context.renderers)
+        updated.delete(event.rendererType)
+        syncEditableTypes(context.schema, updated, context.slateEditor)
+        return updated
       },
     }),
     'emit patch event': emit(({event}) => {
@@ -402,6 +448,7 @@ export const editorMachine = setup({
     keyGenerator: input.keyGenerator,
     pendingEvents: [],
     pendingIncomingPatchesEvents: [],
+    renderers: new Map(),
     schema: input.schema,
     selection: null,
     initialReadOnly: input.readOnly ?? false,
@@ -411,6 +458,8 @@ export const editorMachine = setup({
     'add behavior': {actions: 'add behavior to context'},
     'remove behavior': {actions: 'remove behavior from context'},
     'add slate editor': {actions: 'add slate editor to context'},
+    'register renderer': {actions: 'register renderer'},
+    'unregister renderer': {actions: 'unregister renderer'},
     'update selection': {
       actions: [
         assign({selection: ({event}) => event.selection}),

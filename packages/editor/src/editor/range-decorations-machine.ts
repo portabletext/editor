@@ -101,6 +101,7 @@ export const rangeDecorationsMachine = setup({
             selection: rangeDecoration.selection,
           },
           blockIndexMap: context.slateEditor.blockIndexMap,
+          slateEditor: context.slateEditor,
         })
 
         if (!isRange(slateRange)) {
@@ -135,6 +136,7 @@ export const rangeDecorationsMachine = setup({
             selection: rangeDecoration.selection,
           },
           blockIndexMap: context.slateEditor.blockIndexMap,
+          slateEditor: context.slateEditor,
         })
 
         if (!isRange(slateRange)) {
@@ -170,6 +172,7 @@ export const rangeDecorationsMachine = setup({
             selection: decoratedRange.rangeDecoration.selection,
           },
           blockIndexMap: context.slateEditor.blockIndexMap,
+          slateEditor: context.slateEditor,
         })
 
         if (!isRange(slateRange)) {

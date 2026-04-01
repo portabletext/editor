@@ -84,6 +84,7 @@ function insertBlock(options: {
           selection: options.at,
         },
         blockIndexMap: editor.blockIndexMap,
+        slateEditor: editor,
       })
     : editor.selection
 

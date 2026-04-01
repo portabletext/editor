@@ -510,6 +510,7 @@ export function createEditableAPI(
           selection: selectionA,
         },
         blockIndexMap: editor.blockIndexMap,
+        slateEditor: editor,
       })
       const rangeB = toSlateRange({
         context: {
@@ -518,6 +519,7 @@ export function createEditableAPI(
           selection: selectionB,
         },
         blockIndexMap: editor.blockIndexMap,
+        slateEditor: editor,
       })
 
       // Make sure the ranges are valid

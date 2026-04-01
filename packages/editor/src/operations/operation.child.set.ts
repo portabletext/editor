@@ -20,6 +20,7 @@ export const childSetOperationImplementation: OperationImplementation<
       },
     },
     blockIndexMap: operation.editor.blockIndexMap,
+    slateEditor: operation.editor,
   })
 
   if (!location) {

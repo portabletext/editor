@@ -51,6 +51,7 @@ export const addAnnotationOperationImplementation: OperationImplementation<
           selection: operation.at,
         },
         blockIndexMap: operation.editor.blockIndexMap,
+        slateEditor: operation.editor,
       })
     : null
 
