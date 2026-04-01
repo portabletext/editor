@@ -72,6 +72,7 @@ const syntheticBehaviorEventTypes = [
   'delete',
   'history.redo',
   'history.undo',
+  'insert',
   'insert.block',
   'insert.child',
   'insert.text',
@@ -157,6 +158,13 @@ export type SyntheticBehaviorEvent =
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'history.undo'>
+    }
+  | {
+      type: StrictExtract<SyntheticBehaviorEventType, 'insert'>
+      at: Path
+      items: Array<BlockWithOptionalKey>
+      position: 'before' | 'after'
+      select?: 'start' | 'end' | 'none'
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'insert.block'>

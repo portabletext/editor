@@ -142,10 +142,53 @@ export const modifyChildren = (
           : [],
     )
   } else {
+    const editableTypes = isEditor(root)
+      ? root.editableTypes
+      : new Set<string>()
+    const context = {schema, editableTypes}
+
+    // Walk down to the node at path to resolve scope for getNodeChildren
+    const typedRoot = isEditor(root)
+      ? root
+      : isTextBlock({schema}, root)
+        ? root
+        : undefined
+
+    if (!typedRoot) {
+      return
+    }
+
+    let scope: Parameters<typeof getNodeChildren>[2]
+    let scopePath = ''
+    let currentNode: Node | {value: Array<Node>} = {value: typedRoot.children}
+
+    for (const index of path) {
+      const result = getNodeChildren(context, currentNode, scope, scopePath)
+      if (!result) {
+        return
+      }
+      const child = result.children.at(index)
+      if (!child) {
+        return
+      }
+      currentNode = child
+      scope = result.scope
+      scopePath = result.scopePath
+    }
+
     modifyDescendant(root, path, schema, (node) => {
+      const childInfo = getNodeChildren(context, node, scope, scopePath)
+
+      if (!childInfo) {
+        return {
+          ...node,
+          children: f(isTextBlock({schema}, node) ? node.children : []),
+        }
+      }
+
       return {
         ...node,
-        children: f(isTextBlock({schema}, node) ? node.children : []),
+        [childInfo.fieldName]: f(childInfo.children),
       }
     })
   }

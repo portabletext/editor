@@ -12,6 +12,7 @@ import {deleteOperationImplementation} from './operation.delete'
 import {historyRedoOperationImplementation} from './operation.history.redo'
 import {historyUndoOperationImplementation} from './operation.history.undo'
 import {insertBlockOperationImplementation} from './operation.insert.block'
+import {insertOperationImplementation} from './operation.insert'
 import {insertChildOperationImplementation} from './operation.insert.child'
 import {insertTextOperationImplementation} from './operation.insert.text'
 import {moveBackwardOperationImplementation} from './operation.move.backward'
@@ -38,6 +39,7 @@ const operationImplementations: OperationImplementations = {
   'delete': deleteOperationImplementation,
   'history.redo': historyRedoOperationImplementation,
   'history.undo': historyUndoOperationImplementation,
+  'insert': insertOperationImplementation,
   'insert.block': insertBlockOperationImplementation,
   'insert.child': insertChildOperationImplementation,
   'insert.text': insertTextOperationImplementation,
