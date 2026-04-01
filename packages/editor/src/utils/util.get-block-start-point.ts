@@ -1,7 +1,7 @@
 import {isTextBlock, type PortableTextBlock} from '@portabletext/schema'
 import type {EditorContext} from '../editor/editor-snapshot'
 import type {EditorSelectionPoint} from '../types/editor'
-import type {BlockPath} from '../types/paths'
+import type {Path} from '../types/paths'
 
 /**
  * @public
@@ -13,7 +13,7 @@ export function getBlockStartPoint({
   context: Pick<EditorContext, 'schema'>
   block: {
     node: PortableTextBlock
-    path: BlockPath
+    path: Path
   }
 }): EditorSelectionPoint {
   if (isTextBlock(context, block.node)) {

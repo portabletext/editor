@@ -1,4 +1,5 @@
 import {defaultKeyboardShortcuts} from '../editor/default-keyboard-shortcuts'
+import {isEditableType} from '../internal-utils/is-editable-type'
 import {getFocusBlockObject} from '../selectors/selector.get-focus-block-object'
 import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
 import {getNextBlock} from '../selectors/selector.get-next-block'
@@ -84,7 +85,15 @@ const breakingBlockObject = defineBehavior({
     const focusBlockObject = getFocusBlockObject(snapshot)
     const collapsedSelection = isSelectionCollapsed(snapshot)
 
-    return collapsedSelection && focusBlockObject !== undefined
+    if (
+      !collapsedSelection ||
+      !focusBlockObject ||
+      isEditableType(snapshot.editableTypes, focusBlockObject.node._type)
+    ) {
+      return false
+    }
+
+    return true
   },
   actions: [
     ({snapshot}) => [

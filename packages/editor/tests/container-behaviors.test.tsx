@@ -1063,4 +1063,110 @@ describe('container behaviors', () => {
       )
     })
   })
+
+  describe('insert.break', () => {
+    test('pressing enter inside a callout splits the text block', async () => {
+      const {editor, callout, block, span} = await createCalloutEditor()
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([callout])
+      })
+
+      // Place cursor at end of "hello"
+      editor.send({
+        type: 'select',
+        at: {
+          anchor: {
+            path: [
+              {_key: callout._key},
+              'content',
+              {_key: block._key},
+              'children',
+              {_key: span._key},
+            ],
+            offset: 5,
+          },
+          focus: {
+            path: [
+              {_key: callout._key},
+              'content',
+              {_key: block._key},
+              'children',
+              {_key: span._key},
+            ],
+            offset: 5,
+          },
+        },
+      })
+
+      editor.send({type: 'insert.break'})
+
+      // After pressing enter at end of "hello", the callout should have 2 text blocks
+      await vi.waitFor(() => {
+        const value = editor.getSnapshot().context.value
+        const calloutNode = value?.at(0) as Record<string, unknown>
+        const content = calloutNode?.['content'] as Array<
+          Record<string, unknown>
+        >
+        expect(content?.length).toBe(2)
+      })
+    })
+
+    test('pressing enter inside a table cell splits the text block', async () => {
+      const {editor, table, row, cell, block, span} = await createTableEditor()
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([table])
+      })
+
+      // Place cursor at end of "hello"
+      editor.send({
+        type: 'select',
+        at: {
+          anchor: {
+            path: [
+              {_key: table._key},
+              'rows',
+              {_key: row._key},
+              'cells',
+              {_key: cell._key},
+              'content',
+              {_key: block._key},
+              'children',
+              {_key: span._key},
+            ],
+            offset: 5,
+          },
+          focus: {
+            path: [
+              {_key: table._key},
+              'rows',
+              {_key: row._key},
+              'cells',
+              {_key: cell._key},
+              'content',
+              {_key: block._key},
+              'children',
+              {_key: span._key},
+            ],
+            offset: 5,
+          },
+        },
+      })
+
+      editor.send({type: 'insert.break'})
+
+      // After pressing enter at end of "hello", the cell should have 2 text blocks
+      await vi.waitFor(() => {
+        const value = editor.getSnapshot().context.value
+        const tableNode = value?.at(0) as Record<string, unknown>
+        const rows = tableNode?.['rows'] as Array<Record<string, unknown>>
+        const rowNode = rows?.at(0) as Record<string, unknown>
+        const cells = rowNode?.['cells'] as Array<Record<string, unknown>>
+        const cellNode = cells?.at(0) as Record<string, unknown>
+        const content = cellNode?.['content'] as Array<Record<string, unknown>>
+        expect(content?.length).toBe(2)
+      })
+    })
+  })
 })

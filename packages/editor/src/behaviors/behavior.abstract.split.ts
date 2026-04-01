@@ -1,3 +1,4 @@
+import {isEditableType} from '../internal-utils/is-editable-type'
 import {isSelectionExpanded} from '../selectors'
 import {getFocusBlockObject} from '../selectors/selector.get-focus-block-object'
 import {getFocusInlineObject} from '../selectors/selector.get-focus-inline-object'
@@ -5,6 +6,7 @@ import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
 import {getSelectionEndBlock} from '../selectors/selector.get-selection-end-block'
 import {getSelectionStartBlock} from '../selectors/selector.get-selection-start-block'
 import {isTextBlockNode} from '../slate/node/is-text-block-node'
+import {getAncestorTextBlock} from '../traversal'
 import {isEqualSelectionPoints} from '../utils'
 import {parseBlock} from '../utils/parse-blocks'
 import {getBlockEndPoint} from '../utils/util.get-block-end-point'
@@ -29,13 +31,19 @@ export const abstractSplitBehaviors = [
   }),
 
   /**
-   * You can't split a block object.
+   * You can't split a block object (but containers are editable, not void).
    */
   defineBehavior({
     on: 'split',
-    guard: ({snapshot}) =>
-      isSelectionCollapsed(snapshot.context.selection) &&
-      getFocusBlockObject(snapshot),
+    guard: ({snapshot}) => {
+      const focusBlockObject = getFocusBlockObject(snapshot)
+
+      return (
+        isSelectionCollapsed(snapshot.context.selection) &&
+        focusBlockObject !== undefined &&
+        !isEditableType(snapshot.editableTypes, focusBlockObject.node._type)
+      )
+    },
     actions: [],
   }),
 
@@ -104,7 +112,9 @@ export const abstractSplitBehaviors = [
 
       const selectionStartPoint = getSelectionStartPoint(selection)
 
-      const focusTextBlock = getFocusTextBlock(snapshot)
+      const focusTextBlock =
+        getFocusTextBlock(snapshot) ??
+        getAncestorTextBlock(snapshot, selectionStartPoint.path)
 
       if (!focusTextBlock) {
         return false
@@ -141,27 +151,30 @@ export const abstractSplitBehaviors = [
       }
 
       return {
+        focusTextBlockPath: focusTextBlock.path,
         newTextBlock,
         newTextBlockSelection,
       }
     },
     actions: [
-      (_, {newTextBlock, newTextBlockSelection}) =>
+      (_, {focusTextBlockPath, newTextBlock, newTextBlockSelection}) =>
         isSelectionCollapsed(newTextBlockSelection)
           ? [
               raise({
-                type: 'insert.block',
-                block: newTextBlock,
-                placement: 'after',
+                type: 'insert',
+                at: focusTextBlockPath,
+                items: [newTextBlock],
+                position: 'after',
                 select: 'start',
               }),
             ]
           : [
               raise({type: 'delete', at: newTextBlockSelection}),
               raise({
-                type: 'insert.block',
-                block: newTextBlock,
-                placement: 'after',
+                type: 'insert',
+                at: focusTextBlockPath,
+                items: [newTextBlock],
+                position: 'after',
                 select: 'start',
               }),
             ],
