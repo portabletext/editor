@@ -2,6 +2,7 @@ import type {Patch} from '@portabletext/patches'
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
+import {userEvent} from 'vitest/browser'
 import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
 import {RendererPlugin} from '../src/plugins/plugin.renderer'
 import type {Renderer} from '../src/renderers/renderer.types'
@@ -1290,6 +1291,238 @@ describe('container behaviors', () => {
           Record<string, unknown>
         >
         expect(secondChildren?.at(0)?.['text']).toBe('lo')
+      })
+    })
+  })
+
+  describe('arrow keys', () => {
+    test('arrow down inside a callout does not insert a new block', async () => {
+      const {editor, locator, callout} = await createCalloutEditor()
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([callout])
+      })
+
+      // Click into the callout text to place cursor there
+      await userEvent.click(locator.getByText('hello'))
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.selection).not.toBeNull()
+      })
+
+      await userEvent.keyboard('{ArrowDown}')
+
+      // Value should still be just the callout with one text block
+      await vi.waitFor(() => {
+        const value = editor.getSnapshot().context.value
+        expect(value?.length).toBe(1)
+        const calloutNode = value?.at(0) as Record<string, unknown>
+        const content = calloutNode?.['content'] as Array<
+          Record<string, unknown>
+        >
+        expect(content?.length).toBe(1)
+      })
+    })
+
+    test('arrow up inside a callout does not insert a new block', async () => {
+      const {editor, locator, callout} = await createCalloutEditor()
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([callout])
+      })
+
+      // Click into the callout text to place cursor there
+      await userEvent.click(locator.getByText('hello'))
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.selection).not.toBeNull()
+      })
+
+      await userEvent.keyboard('{ArrowUp}')
+
+      // Value should still be just the callout with one text block
+      await vi.waitFor(() => {
+        const value = editor.getSnapshot().context.value
+        expect(value?.length).toBe(1)
+        const calloutNode = value?.at(0) as Record<string, unknown>
+        const content = calloutNode?.['content'] as Array<
+          Record<string, unknown>
+        >
+        expect(content?.length).toBe(1)
+      })
+    })
+  })
+
+  describe('backspace at block boundary inside container', () => {
+    test.skip('backspace at start of second text block merges with first', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const calloutKey = keyGenerator() // k0
+      const block1Key = keyGenerator() // k1
+      const span1Key = keyGenerator() // k2
+      const block2Key = keyGenerator() // k3
+      const span2Key = keyGenerator() // k4
+
+      const span1 = {
+        _key: span1Key,
+        _type: 'span' as const,
+        text: 'hello',
+        marks: [] as Array<string>,
+      }
+      const span2 = {
+        _key: span2Key,
+        _type: 'span' as const,
+        text: 'world',
+        marks: [] as Array<string>,
+      }
+      const block1 = {
+        _key: block1Key,
+        _type: 'block' as const,
+        children: [span1],
+        markDefs: [] as Array<Record<string, unknown>>,
+        style: 'normal',
+      }
+      const block2 = {
+        _key: block2Key,
+        _type: 'block' as const,
+        children: [span2],
+        markDefs: [] as Array<Record<string, unknown>>,
+        style: 'normal',
+      }
+      const callout = {
+        _key: calloutKey,
+        _type: 'callout' as const,
+        variant: 'note',
+        content: [block1, block2],
+      }
+
+      const {editor, locator} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: calloutSchemaDefinition,
+        initialValue: [callout],
+        children: <RendererPlugin renderers={[calloutRenderer]} />,
+      })
+
+      await vi.waitFor(() => {
+        const value = editor.getSnapshot().context.value
+        const calloutNode = value?.at(0) as Record<string, unknown>
+        const content = calloutNode?.['content'] as Array<
+          Record<string, unknown>
+        >
+        expect(content?.length).toBe(2)
+      })
+
+      // Click at start of "world"
+      await userEvent.click(locator.getByText('world'))
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.selection).not.toBeNull()
+      })
+
+      // Move to start of "world"
+      await userEvent.keyboard('{Home}')
+
+      // Backspace should merge "world" into "hello"
+      await userEvent.keyboard('{Backspace}')
+
+      await vi.waitFor(() => {
+        const value = editor.getSnapshot().context.value
+        const calloutNode = value?.at(0) as Record<string, unknown>
+        const content = calloutNode?.['content'] as Array<
+          Record<string, unknown>
+        >
+        expect(content?.length).toBe(1)
+        const mergedBlock = content?.at(0) as Record<string, unknown>
+        const children = mergedBlock?.['children'] as Array<
+          Record<string, unknown>
+        >
+        expect(children?.at(0)?.['text']).toBe('helloworld')
+      })
+    })
+  })
+
+  describe('delete forward at block boundary inside container', () => {
+    test.skip('delete forward at end of first text block merges with second', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const calloutKey = keyGenerator() // k0
+      const block1Key = keyGenerator() // k1
+      const span1Key = keyGenerator() // k2
+      const block2Key = keyGenerator() // k3
+      const span2Key = keyGenerator() // k4
+
+      const span1 = {
+        _key: span1Key,
+        _type: 'span' as const,
+        text: 'hello',
+        marks: [] as Array<string>,
+      }
+      const span2 = {
+        _key: span2Key,
+        _type: 'span' as const,
+        text: 'world',
+        marks: [] as Array<string>,
+      }
+      const block1 = {
+        _key: block1Key,
+        _type: 'block' as const,
+        children: [span1],
+        markDefs: [] as Array<Record<string, unknown>>,
+        style: 'normal',
+      }
+      const block2 = {
+        _key: block2Key,
+        _type: 'block' as const,
+        children: [span2],
+        markDefs: [] as Array<Record<string, unknown>>,
+        style: 'normal',
+      }
+      const callout = {
+        _key: calloutKey,
+        _type: 'callout' as const,
+        variant: 'note',
+        content: [block1, block2],
+      }
+
+      const {editor, locator} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: calloutSchemaDefinition,
+        initialValue: [callout],
+        children: <RendererPlugin renderers={[calloutRenderer]} />,
+      })
+
+      await vi.waitFor(() => {
+        const value = editor.getSnapshot().context.value
+        const calloutNode = value?.at(0) as Record<string, unknown>
+        const content = calloutNode?.['content'] as Array<
+          Record<string, unknown>
+        >
+        expect(content?.length).toBe(2)
+      })
+
+      // Click at end of "hello"
+      await userEvent.click(locator.getByText('hello'))
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.selection).not.toBeNull()
+      })
+
+      // Move to end of "hello"
+      await userEvent.keyboard('{End}')
+
+      // Delete forward should merge "world" into "hello"
+      await userEvent.keyboard('{Delete}')
+
+      await vi.waitFor(() => {
+        const value = editor.getSnapshot().context.value
+        const calloutNode = value?.at(0) as Record<string, unknown>
+        const content = calloutNode?.['content'] as Array<
+          Record<string, unknown>
+        >
+        expect(content?.length).toBe(1)
+        const mergedBlock = content?.at(0) as Record<string, unknown>
+        const children = mergedBlock?.['children'] as Array<
+          Record<string, unknown>
+        >
+        expect(children?.at(0)?.['text']).toBe('helloworld')
       })
     })
   })

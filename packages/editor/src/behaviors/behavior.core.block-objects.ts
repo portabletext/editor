@@ -29,9 +29,17 @@ const arrowDownOnLonelyBlockObject = defineBehavior({
     }
 
     const focusBlockObject = getFocusBlockObject(snapshot)
+
+    if (
+      !focusBlockObject ||
+      isEditableType(snapshot.editableTypes, focusBlockObject.node._type)
+    ) {
+      return false
+    }
+
     const nextBlock = getNextBlock(snapshot)
 
-    return focusBlockObject && !nextBlock
+    return !nextBlock
   },
   actions: [
     ({snapshot}) => [
@@ -62,9 +70,17 @@ const arrowUpOnLonelyBlockObject = defineBehavior({
     }
 
     const focusBlockObject = getFocusBlockObject(snapshot)
+
+    if (
+      !focusBlockObject ||
+      isEditableType(snapshot.editableTypes, focusBlockObject.node._type)
+    ) {
+      return false
+    }
+
     const previousBlock = getPreviousBlock(snapshot)
 
-    return focusBlockObject && !previousBlock
+    return !previousBlock
   },
   actions: [
     ({snapshot}) => [
