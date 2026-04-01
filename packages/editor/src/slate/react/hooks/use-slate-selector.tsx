@@ -1,7 +1,13 @@
-import {createContext, useCallback, useContext, useMemo, useRef} from 'react'
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+} from 'react'
 import type {Editor} from '../../interfaces/editor'
 import {useGenericSelector} from './use-generic-selector'
-import {useIsomorphicLayoutEffect} from './use-isomorphic-layout-effect'
 import {useSlateStatic} from './use-slate-static'
 
 type Callback = () => void
@@ -55,7 +61,7 @@ export function useSlateSelector<T>(
     equalityFn,
   )
 
-  useIsomorphicLayoutEffect(() => {
+  useLayoutEffect(() => {
     const unsubscribe = addEventListener(update)
     update()
     return unsubscribe
@@ -105,5 +111,5 @@ export function useSelectorContext() {
 
 export function useFlushDeferredSelectorsOnRender() {
   const {flushDeferred} = useContext(SlateSelectorContext)
-  useIsomorphicLayoutEffect(flushDeferred)
+  useLayoutEffect(flushDeferred)
 }

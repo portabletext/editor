@@ -4,7 +4,7 @@ import type {
   PortableTextTextBlock,
 } from '@portabletext/schema'
 import {isSpan, isTextBlock} from '@portabletext/schema'
-import {useCallback, useMemo, useRef, type JSX} from 'react'
+import {useCallback, useLayoutEffect, useMemo, useRef, type JSX} from 'react'
 import {
   isElementDecorationsEqual,
   splitDecorationsByChild,
@@ -27,7 +27,6 @@ import ElementComponent from '../components/element'
 import ObjectNodeComponent from '../components/object-node'
 import TextComponent from '../components/text'
 import {ElementContext} from './use-element'
-import {useIsomorphicLayoutEffect} from './use-isomorphic-layout-effect'
 import {useSlateStatic} from './use-slate-static'
 
 /**
@@ -56,7 +55,7 @@ const useChildren = (props: {
   } = props
   const editor = useSlateStatic()
 
-  useIsomorphicLayoutEffect(() => {
+  useLayoutEffect(() => {
     editor.isNodeMapDirty = false
   })
 
@@ -212,7 +211,7 @@ const useDecorationsByChild = (
     return next
   }, [decorationsByChild])
 
-  useIsomorphicLayoutEffect(() => {
+  useLayoutEffect(() => {
     previousRef.current = stableDecorationsByChild
   })
 

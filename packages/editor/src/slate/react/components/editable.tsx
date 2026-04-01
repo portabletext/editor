@@ -8,6 +8,7 @@ import React, {
   forwardRef,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useReducer,
   useRef,
@@ -80,7 +81,6 @@ import {useAndroidInputManager} from '../hooks/android-input-manager/use-android
 import useChildren from '../hooks/use-children'
 import {ComposingContext} from '../hooks/use-composing'
 import {DecorateContext, useDecorateContext} from '../hooks/use-decorations'
-import {useIsomorphicLayoutEffect} from '../hooks/use-isomorphic-layout-effect'
 import {ReadOnlyContext} from '../hooks/use-read-only'
 import {useSlate} from '../hooks/use-slate'
 import {useFlushDeferredSelectorsOnRender} from '../hooks/use-slate-selector'
@@ -209,7 +209,7 @@ export const Editable = forwardRef(
 
     const [, forceRender] = useReducer((s) => s + 1, 0)
 
-    useIsomorphicLayoutEffect(() => {
+    useLayoutEffect(() => {
       editor.readOnly = readOnly
       editor.forceRender = forceRender
     })
@@ -360,11 +360,11 @@ export const Editable = forwardRef(
       scheduleOnDOMSelectionChange,
     })
 
-    useIsomorphicLayoutEffect(() => {
+    useLayoutEffect(() => {
       hasMarkPlaceholderRef.current = hasMarkPlaceholder
     })
 
-    useIsomorphicLayoutEffect(() => {
+    useLayoutEffect(() => {
       // Update element-related editor maps with the DOM element ref.
       let window: Window | null = null
       // biome-ignore lint/suspicious/noAssignInExpressions: Slate upstream pattern — assignment in condition
@@ -991,7 +991,7 @@ export const Editable = forwardRef(
       ],
     )
 
-    useIsomorphicLayoutEffect(() => {
+    useLayoutEffect(() => {
       const window = ReactEditor.getWindow(editor)
 
       // COMPAT: In Chrome, `selectionchange` events can fire when <input> and

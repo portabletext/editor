@@ -1,5 +1,4 @@
-import {useEffect, useState, type RefObject} from 'react'
-import {useIsomorphicLayoutEffect} from './use-isomorphic-layout-effect'
+import {useEffect, useLayoutEffect, useState, type RefObject} from 'react'
 
 export function useMutationObserver(
   node: RefObject<HTMLElement>,
@@ -8,7 +7,7 @@ export function useMutationObserver(
 ) {
   const [mutationObserver] = useState(() => new MutationObserver(callback))
 
-  useIsomorphicLayoutEffect(() => {
+  useLayoutEffect(() => {
     // Discard mutations caused during render phase. This works due to react calling
     // useLayoutEffect synchronously after the render phase before the next tick.
     mutationObserver.takeRecords()

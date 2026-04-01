@@ -1,5 +1,12 @@
 import {isSpan} from '@portabletext/schema'
-import {createContext, useCallback, useContext, useMemo, useRef} from 'react'
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+} from 'react'
 import {
   isElementDecorationsEqual,
   isTextDecorationsEqual,
@@ -8,7 +15,6 @@ import type {Node, NodeEntry} from '../../interfaces/node'
 import type {Path} from '../../interfaces/path'
 import type {DecoratedRange} from '../../interfaces/text'
 import {useGenericSelector} from './use-generic-selector'
-import {useIsomorphicLayoutEffect} from './use-isomorphic-layout-effect'
 import {useSlateStatic} from './use-slate-static'
 
 type Callback = () => void
@@ -43,7 +49,7 @@ export const useDecorations = (
 
   const [decorations, update] = useGenericSelector(selector, equalityFn)
 
-  useIsomorphicLayoutEffect(() => {
+  useLayoutEffect(() => {
     const unsubscribe = addEventListener(update)
     update()
     return unsubscribe
@@ -62,7 +68,7 @@ export const useDecorateContext = (
 
   const latestDecorate = useRef(decorateProp)
 
-  useIsomorphicLayoutEffect(() => {
+  useLayoutEffect(() => {
     latestDecorate.current = decorateProp
     eventListeners.current.forEach((listener) => {
       listener()
