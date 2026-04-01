@@ -3,11 +3,14 @@ import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import React from 'react'
 import {describe, expect, test, vi} from 'vitest'
+import {ContainerRendererPlugin} from '../src/plugins/plugin.internal.container-renderer'
 import {InternalSlateEditorRefPlugin} from '../src/plugins/plugin.internal.slate-editor-ref'
 import {withoutPatching} from '../src/slate-plugins/slate-plugin.without-patching'
 import {normalize} from '../src/slate/editor/normalize'
 import {createTestEditor} from '../src/test/vitest'
 import type {PortableTextSlateEditor} from '../src/types/slate-editor'
+
+const tableEditableTypes = ['table', 'table.row', 'table.row.cell']
 
 const schemaDefinition = defineSchema({
   decorators: [{name: 'strong'}],
@@ -93,14 +96,15 @@ async function createTableTestEditor() {
     keyGenerator,
     schemaDefinition,
     initialValue,
-    children: <InternalSlateEditorRefPlugin ref={slateEditorRef} />,
+    children: (
+      <>
+        <ContainerRendererPlugin types={tableEditableTypes} />
+        <InternalSlateEditorRefPlugin ref={slateEditorRef} />
+      </>
+    ),
   })
 
-  slateEditorRef.current!.editableTypes = new Set([
-    'table',
-    'table.row',
-    'table.row.cell',
-  ])
+  slateEditorRef.current!.editableTypes = new Set(tableEditableTypes)
 
   return {
     editor,
@@ -801,16 +805,15 @@ describe('tables', () => {
         keyGenerator,
         schemaDefinition,
         initialValue: [table],
-        children: <InternalSlateEditorRefPlugin ref={slateEditorRef} />,
+        children: (
+          <>
+            <ContainerRendererPlugin types={tableEditableTypes} />
+            <InternalSlateEditorRefPlugin ref={slateEditorRef} />
+          </>
+        ),
       })
 
-
-      slateEditorRef.current!.editableTypes = new Set([
-        'table',
-        'table.row',
-        'table.row.cell',
-      ])
-
+      slateEditorRef.current!.editableTypes = new Set(tableEditableTypes)
 
       withoutPatching(slateEditorRef.current!, () => {
         normalize(slateEditorRef.current!, {force: true})
@@ -870,14 +873,15 @@ describe('tables', () => {
         keyGenerator,
         schemaDefinition,
         initialValue: [table],
-        children: <InternalSlateEditorRefPlugin ref={slateEditorRef} />,
+        children: (
+          <>
+            <ContainerRendererPlugin types={tableEditableTypes} />
+            <InternalSlateEditorRefPlugin ref={slateEditorRef} />
+          </>
+        ),
       })
 
-      slateEditorRef.current!.editableTypes = new Set([
-        'table',
-        'table.row',
-        'table.row.cell',
-      ])
+      slateEditorRef.current!.editableTypes = new Set(tableEditableTypes)
 
       withoutPatching(slateEditorRef.current!, () => {
         normalize(slateEditorRef.current!, {force: true})
@@ -937,14 +941,15 @@ describe('tables', () => {
         keyGenerator,
         schemaDefinition,
         initialValue: [table],
-        children: <InternalSlateEditorRefPlugin ref={slateEditorRef} />,
+        children: (
+          <>
+            <ContainerRendererPlugin types={tableEditableTypes} />
+            <InternalSlateEditorRefPlugin ref={slateEditorRef} />
+          </>
+        ),
       })
 
-      slateEditorRef.current!.editableTypes = new Set([
-        'table',
-        'table.row',
-        'table.row.cell',
-      ])
+      slateEditorRef.current!.editableTypes = new Set(tableEditableTypes)
 
       withoutPatching(slateEditorRef.current!, () => {
         normalize(slateEditorRef.current!, {force: true})
@@ -1022,14 +1027,15 @@ describe('tables', () => {
         keyGenerator,
         schemaDefinition,
         initialValue: [table],
-        children: <InternalSlateEditorRefPlugin ref={slateEditorRef} />,
+        children: (
+          <>
+            <ContainerRendererPlugin types={tableEditableTypes} />
+            <InternalSlateEditorRefPlugin ref={slateEditorRef} />
+          </>
+        ),
       })
 
-      slateEditorRef.current!.editableTypes = new Set([
-        'table',
-        'table.row',
-        'table.row.cell',
-      ])
+      slateEditorRef.current!.editableTypes = new Set(tableEditableTypes)
 
       withoutPatching(slateEditorRef.current!, () => {
         normalize(slateEditorRef.current!, {force: true})
@@ -1097,14 +1103,15 @@ describe('tables', () => {
         keyGenerator,
         schemaDefinition,
         initialValue: [table],
-        children: <InternalSlateEditorRefPlugin ref={slateEditorRef} />,
+        children: (
+          <>
+            <ContainerRendererPlugin types={tableEditableTypes} />
+            <InternalSlateEditorRefPlugin ref={slateEditorRef} />
+          </>
+        ),
       })
 
-      slateEditorRef.current!.editableTypes = new Set([
-        'table',
-        'table.row',
-        'table.row.cell',
-      ])
+      slateEditorRef.current!.editableTypes = new Set(tableEditableTypes)
 
       withoutPatching(slateEditorRef.current!, () => {
         normalize(slateEditorRef.current!, {force: true})
@@ -1159,14 +1166,15 @@ describe('tables', () => {
         keyGenerator,
         schemaDefinition,
         initialValue: [table],
-        children: <InternalSlateEditorRefPlugin ref={slateEditorRef} />,
+        children: (
+          <>
+            <ContainerRendererPlugin types={tableEditableTypes} />
+            <InternalSlateEditorRefPlugin ref={slateEditorRef} />
+          </>
+        ),
       })
 
-      slateEditorRef.current!.editableTypes = new Set([
-        'table',
-        'table.row',
-        'table.row.cell',
-      ])
+      slateEditorRef.current!.editableTypes = new Set(tableEditableTypes)
 
       withoutPatching(slateEditorRef.current!, () => {
         normalize(slateEditorRef.current!, {force: true})

@@ -5,6 +5,7 @@ import type {
 } from '@portabletext/schema'
 import {isSpan, isTextBlock} from '@portabletext/schema'
 import {useCallback, useRef, type JSX} from 'react'
+import {getNodeChildren} from '../../../node-traversal/get-children'
 import {
   isElementDecorationsEqual,
   splitDecorationsByChild,
@@ -27,6 +28,7 @@ import ElementComponent from '../components/element'
 import ObjectNodeComponent from '../components/object-node'
 import TextComponent from '../components/text'
 import {ElementContext} from './use-element'
+import {ScopeContext, useScope} from './use-scope'
 import {useSlateStatic} from './use-slate-static'
 
 /**
@@ -65,43 +67,66 @@ const useChildren = (props: {
     decorations,
   )
 
-  const children = isEditor(node)
-    ? node.children
-    : isTextBlock({schema: editor.schema}, node)
-      ? node.children
-      : []
+  const {scope, scopePath} = useScope()
+
+  const nodeChildren = isEditor(node)
+    ? {
+        children: node.children,
+        scope: undefined,
+        scopePath: '',
+        fieldName: 'value',
+      }
+    : getNodeChildren(
+        {schema: editor.schema, editableTypes: editor.editableTypes},
+        node,
+        scope,
+        scopePath,
+      )
+
+  const children = nodeChildren?.children ?? []
+  const childScope = nodeChildren?.scope
+  const childScopePath = nodeChildren?.scopePath ?? ''
+  const childFieldName = nodeChildren?.fieldName ?? 'children'
 
   const renderElementComponent = useCallback(
     (node: PortableTextTextBlock | PortableTextObject, i: number) => {
       const nodeDataPath =
         parentDataPath === ''
           ? `[_key=="${node._key}"]`
-          : `${parentDataPath}.children[_key=="${node._key}"]`
+          : `${parentDataPath}.${childFieldName}[_key=="${node._key}"]`
 
       return (
-        <ElementContext.Provider key={`provider-${node._key}`} value={node}>
-          <ElementComponent
-            dataPath={nodeDataPath}
-            decorations={decorationsByChild[i] ?? []}
-            element={node}
-            key={node._key}
-            indexedPath={parentIndexedPath.concat(i)}
-            renderElement={renderElement}
-            renderPlaceholder={renderPlaceholder}
-            renderLeaf={renderLeaf}
-            renderText={renderText}
-          />
-        </ElementContext.Provider>
+        <ScopeContext.Provider
+          key={`provider-${node._key}`}
+          value={{scope: childScope, scopePath: childScopePath}}
+        >
+          <ElementContext.Provider value={node}>
+            <ElementComponent
+              dataPath={nodeDataPath}
+              decorations={decorationsByChild[i] ?? []}
+              element={node}
+              key={node._key}
+              indexedPath={parentIndexedPath.concat(i)}
+              renderElement={renderElement}
+              renderPlaceholder={renderPlaceholder}
+              renderLeaf={renderLeaf}
+              renderText={renderText}
+            />
+          </ElementContext.Provider>
+        </ScopeContext.Provider>
       )
     },
     [
       parentDataPath,
+      childFieldName,
       decorationsByChild,
       parentIndexedPath,
       renderElement,
       renderPlaceholder,
       renderLeaf,
       renderText,
+      childScope,
+      childScopePath,
     ],
   )
 
@@ -118,7 +143,7 @@ const useChildren = (props: {
 
     const nodeDataPath =
       parentDataPath !== ''
-        ? `${parentDataPath}.children[_key=="${node._key}"]`
+        ? `${parentDataPath}.${childFieldName}[_key=="${node._key}"]`
         : ''
 
     return (
@@ -144,7 +169,7 @@ const useChildren = (props: {
     const nodeDataPath =
       parentDataPath === ''
         ? `[_key=="${node._key}"]`
-        : `${parentDataPath}.children[_key=="${node._key}"]`
+        : `${parentDataPath}.${childFieldName}[_key=="${node._key}"]`
 
     return (
       <ObjectNodeComponent
@@ -168,6 +193,12 @@ const useChildren = (props: {
       return null
     }
     if (isObjectNode({schema: editor.schema}, n)) {
+      const scopedKey = childScopePath
+        ? `${childScopePath}.${n._type}`
+        : n._type
+      if (editor.editableTypes.has(scopedKey)) {
+        return renderElementComponent(n, i)
+      }
       return renderObjectNodeComponent(n, i)
     }
     if (isSpan({schema: editor.schema}, n)) {

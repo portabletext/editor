@@ -19,6 +19,7 @@ import type {Converter} from '../converters/converter.types'
 import {debug} from '../internal-utils/debug'
 import type {EventPosition} from '../internal-utils/event-position'
 import {sortByPriority} from '../priority/priority.sort'
+import {normalize} from '../slate/editor/normalize'
 import {ReactEditor} from '../slate/react/plugin/react-editor'
 import type {NamespaceEvent, OmitFromUnion} from '../type-utils'
 import type {EditorSelection} from '../types/editor'
@@ -113,6 +114,8 @@ type InternalEditorEvent =
   | {type: 'dragend'}
   | {type: 'drop'}
   | {type: 'add slate editor'; editor: PortableTextSlateEditor}
+  | {type: 'register renderer'; rendererType: string}
+  | {type: 'unregister renderer'; rendererType: string}
 
 /**
  * @internal
@@ -223,6 +226,18 @@ export const editorMachine = setup({
           : context.slateEditor
       },
     }),
+    'register renderer': ({context, event}) => {
+      assertEvent(event, 'register renderer')
+      context.slateEditor?.editableTypes.add(event.rendererType)
+
+      if (context.slateEditor) {
+        normalize(context.slateEditor, {force: true})
+      }
+    },
+    'unregister renderer': ({context, event}) => {
+      assertEvent(event, 'unregister renderer')
+      context.slateEditor?.editableTypes.delete(event.rendererType)
+    },
     'emit patch event': emit(({event}) => {
       assertEvent(event, 'internal.patch')
       return event
@@ -411,6 +426,8 @@ export const editorMachine = setup({
     'add behavior': {actions: 'add behavior to context'},
     'remove behavior': {actions: 'remove behavior from context'},
     'add slate editor': {actions: 'add slate editor to context'},
+    'register renderer': {actions: 'register renderer'},
+    'unregister renderer': {actions: 'unregister renderer'},
     'update selection': {
       actions: [
         assign({selection: ({event}) => event.selection}),

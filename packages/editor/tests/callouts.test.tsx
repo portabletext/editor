@@ -3,11 +3,10 @@ import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import React from 'react'
 import {describe, expect, test, vi} from 'vitest'
-import {InternalSlateEditorRefPlugin} from '../src/plugins/plugin.internal.slate-editor-ref'
-import {withoutPatching} from '../src/slate-plugins/slate-plugin.without-patching'
-import {normalize} from '../src/slate/editor/normalize'
+import {ContainerRendererPlugin} from '../src/plugins/plugin.internal.container-renderer'
 import {createTestEditor} from '../src/test/vitest'
-import type {PortableTextSlateEditor} from '../src/types/slate-editor'
+
+const calloutEditableTypes = ['callout']
 
 const schemaDefinition = defineSchema({
   decorators: [{name: 'strong'}, {name: 'em'}],
@@ -54,34 +53,42 @@ async function createCalloutTestEditor() {
 
   const initialValue = [callout]
 
-  const slateEditorRef = React.createRef<PortableTextSlateEditor>()
-
   const {editor, locator} = await createTestEditor({
     keyGenerator,
     schemaDefinition,
     initialValue,
-    children: <InternalSlateEditorRefPlugin ref={slateEditorRef} />,
+    children: <ContainerRendererPlugin types={calloutEditableTypes} />,
   })
 
-  slateEditorRef.current!.editableTypes = new Set(['callout'])
+  // After rendering, normalization adds marks, markDefs, style
+  const normalizedSpan = {...span, marks: []}
+  const normalizedBlock = {
+    ...block,
+    children: [normalizedSpan],
+    markDefs: [],
+    style: 'normal',
+  }
+  const normalizedCallout = {
+    ...callout,
+    content: [normalizedBlock],
+  }
 
   return {
     editor,
     locator,
-    callout,
-    block,
-    span,
-    initialValue,
+    callout: normalizedCallout,
+    block: normalizedBlock,
+    span: normalizedSpan,
   }
 }
 
 describe('callouts', () => {
   describe('incoming patches', () => {
     test('render', async () => {
-      const {editor, initialValue} = await createCalloutTestEditor()
+      const {editor, callout} = await createCalloutTestEditor()
 
       await vi.waitFor(() => {
-        return expect(editor.getSnapshot().context.value).toEqual(initialValue)
+        return expect(editor.getSnapshot().context.value).toEqual([callout])
       })
     })
 
@@ -129,9 +136,7 @@ describe('callouts', () => {
             content: [
               {
                 ...block,
-                children: [{...span, text: 'world', marks: []}],
-                markDefs: [],
-                style: 'normal',
+                children: [{...span, text: 'world'}],
               },
             ],
           },
@@ -164,9 +169,7 @@ describe('callouts', () => {
             content: [
               {
                 ...block,
-                children: [{...span, text: 'hello world', marks: []}],
-                markDefs: [],
-                style: 'normal',
+                children: [{...span, text: 'hello world'}],
               },
             ],
           },
@@ -216,11 +219,8 @@ describe('callouts', () => {
                   {
                     ...span,
                     text: 'helloworld',
-                    marks: [],
                   },
                 ],
-                markDefs: [],
-                style: 'normal',
               },
             ],
           },
@@ -229,7 +229,7 @@ describe('callouts', () => {
     })
 
     test('unset span from text block inside callout', async () => {
-      const {editor, callout, block, span} = await createCalloutTestEditor()
+      const {editor, callout, block} = await createCalloutTestEditor()
 
       editor.send({
         type: 'patches',
@@ -239,7 +239,7 @@ describe('callouts', () => {
             'content',
             {_key: block._key},
             'children',
-            {_key: span._key},
+            {_key: 'k2'},
           ]),
         ],
         snapshot: undefined,
@@ -261,8 +261,6 @@ describe('callouts', () => {
                     marks: [],
                   },
                 ],
-                markDefs: [],
-                style: 'normal',
               },
             ],
           },
@@ -294,7 +292,6 @@ describe('callouts', () => {
               {
                 ...block,
                 children: [span],
-                markDefs: [],
                 style: 'h1',
               },
             ],
@@ -337,8 +334,6 @@ describe('callouts', () => {
                     marks: ['strong'],
                   },
                 ],
-                markDefs: [],
-                style: 'normal',
               },
             ],
           },
@@ -366,46 +361,32 @@ describe('callouts', () => {
   describe('normalization', () => {
     test('text blocks inside callouts get missing .markDefs', async () => {
       const keyGenerator = createTestKeyGenerator()
-      const slateEditorRef = React.createRef<PortableTextSlateEditor>()
       const calloutKey = keyGenerator()
       const blockKey = keyGenerator()
       const spanKey = keyGenerator()
 
-      const callout = {
-        _key: calloutKey,
-        _type: 'callout',
-        variant: 'note',
-        content: [
-          {
-            _key: blockKey,
-            _type: 'block',
-            // Missing markDefs!
-            children: [
-              {
-                _key: spanKey,
-                _type: 'span',
-                text: 'hello',
-                marks: [],
-              },
-            ],
-            style: 'normal',
-          },
-        ],
-      }
-
       const {editor} = await createTestEditor({
         keyGenerator,
         schemaDefinition,
-        initialValue: [callout],
-        children: <InternalSlateEditorRefPlugin ref={slateEditorRef} />,
+        initialValue: [
+          {
+            _key: calloutKey,
+            _type: 'callout',
+            variant: 'note',
+            content: [
+              {
+                _key: blockKey,
+                _type: 'block',
+                children: [
+                  {_key: spanKey, _type: 'span', text: 'hello', marks: []},
+                ],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
+        children: <ContainerRendererPlugin types={calloutEditableTypes} />,
       })
-
-      slateEditorRef.current!.editableTypes = new Set(['callout'])
-
-      withoutPatching(slateEditorRef.current!, () => {
-        normalize(slateEditorRef.current!, {force: true})
-      })
-      slateEditorRef.current!.onChange()
 
       await vi.waitFor(() => {
         return expect(editor.getSnapshot().context.value).toEqual([
@@ -418,12 +399,7 @@ describe('callouts', () => {
                 _key: blockKey,
                 _type: 'block',
                 children: [
-                  {
-                    _key: spanKey,
-                    _type: 'span',
-                    text: 'hello',
-                    marks: [],
-                  },
+                  {_key: spanKey, _type: 'span', text: 'hello', marks: []},
                 ],
                 markDefs: [],
                 style: 'normal',
@@ -436,46 +412,32 @@ describe('callouts', () => {
 
     test('text blocks inside callouts get missing .style', async () => {
       const keyGenerator = createTestKeyGenerator()
-      const slateEditorRef = React.createRef<PortableTextSlateEditor>()
       const calloutKey = keyGenerator()
       const blockKey = keyGenerator()
       const spanKey = keyGenerator()
 
-      const callout = {
-        _key: calloutKey,
-        _type: 'callout',
-        variant: 'note',
-        content: [
-          {
-            _key: blockKey,
-            _type: 'block',
-            // Missing style!
-            children: [
-              {
-                _key: spanKey,
-                _type: 'span',
-                text: 'hello',
-                marks: [],
-              },
-            ],
-            markDefs: [],
-          },
-        ],
-      }
-
       const {editor} = await createTestEditor({
         keyGenerator,
         schemaDefinition,
-        initialValue: [callout],
-        children: <InternalSlateEditorRefPlugin ref={slateEditorRef} />,
+        initialValue: [
+          {
+            _key: calloutKey,
+            _type: 'callout',
+            variant: 'note',
+            content: [
+              {
+                _key: blockKey,
+                _type: 'block',
+                children: [
+                  {_key: spanKey, _type: 'span', text: 'hello', marks: []},
+                ],
+                markDefs: [],
+              },
+            ],
+          },
+        ],
+        children: <ContainerRendererPlugin types={calloutEditableTypes} />,
       })
-
-      slateEditorRef.current!.editableTypes = new Set(['callout'])
-
-      withoutPatching(slateEditorRef.current!, () => {
-        normalize(slateEditorRef.current!, {force: true})
-      })
-      slateEditorRef.current!.onChange()
 
       await vi.waitFor(() => {
         return expect(editor.getSnapshot().context.value).toEqual([
@@ -488,12 +450,7 @@ describe('callouts', () => {
                 _key: blockKey,
                 _type: 'block',
                 children: [
-                  {
-                    _key: spanKey,
-                    _type: 'span',
-                    text: 'hello',
-                    marks: [],
-                  },
+                  {_key: spanKey, _type: 'span', text: 'hello', marks: []},
                 ],
                 markDefs: [],
                 style: 'normal',
@@ -506,46 +463,31 @@ describe('callouts', () => {
 
     test('spans inside callouts get missing .marks', async () => {
       const keyGenerator = createTestKeyGenerator()
-      const slateEditorRef = React.createRef<PortableTextSlateEditor>()
       const calloutKey = keyGenerator()
       const blockKey = keyGenerator()
       const spanKey = keyGenerator()
 
-      const callout = {
-        _key: calloutKey,
-        _type: 'callout',
-        variant: 'note',
-        content: [
-          {
-            _key: blockKey,
-            _type: 'block',
-            children: [
-              {
-                _key: spanKey,
-                _type: 'span',
-                text: 'hello',
-                // Missing marks!
-              },
-            ],
-            markDefs: [],
-            style: 'normal',
-          },
-        ],
-      }
-
       const {editor} = await createTestEditor({
         keyGenerator,
         schemaDefinition,
-        initialValue: [callout],
-        children: <InternalSlateEditorRefPlugin ref={slateEditorRef} />,
+        initialValue: [
+          {
+            _key: calloutKey,
+            _type: 'callout',
+            variant: 'note',
+            content: [
+              {
+                _key: blockKey,
+                _type: 'block',
+                children: [{_key: spanKey, _type: 'span', text: 'hello'}],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
+        children: <ContainerRendererPlugin types={calloutEditableTypes} />,
       })
-
-      slateEditorRef.current!.editableTypes = new Set(['callout'])
-
-      withoutPatching(slateEditorRef.current!, () => {
-        normalize(slateEditorRef.current!, {force: true})
-      })
-      slateEditorRef.current!.onChange()
 
       await vi.waitFor(() => {
         return expect(editor.getSnapshot().context.value).toEqual([
@@ -558,12 +500,7 @@ describe('callouts', () => {
                 _key: blockKey,
                 _type: 'block',
                 children: [
-                  {
-                    _key: spanKey,
-                    _type: 'span',
-                    text: 'hello',
-                    marks: [],
-                  },
+                  {_key: spanKey, _type: 'span', text: 'hello', marks: []},
                 ],
                 markDefs: [],
                 style: 'normal',
@@ -576,39 +513,30 @@ describe('callouts', () => {
 
     test('empty text blocks inside callouts get a span inserted', async () => {
       const keyGenerator = createTestKeyGenerator()
-      const slateEditorRef = React.createRef<PortableTextSlateEditor>()
       const calloutKey = keyGenerator()
       const blockKey = keyGenerator()
-
-      const callout = {
-        _key: calloutKey,
-        _type: 'callout',
-        variant: 'note',
-        content: [
-          {
-            _key: blockKey,
-            _type: 'block',
-            // Empty children!
-            children: [],
-            markDefs: [],
-            style: 'normal',
-          },
-        ],
-      }
 
       const {editor} = await createTestEditor({
         keyGenerator,
         schemaDefinition,
-        initialValue: [callout],
-        children: <InternalSlateEditorRefPlugin ref={slateEditorRef} />,
+        initialValue: [
+          {
+            _key: calloutKey,
+            _type: 'callout',
+            variant: 'note',
+            content: [
+              {
+                _key: blockKey,
+                _type: 'block',
+                children: [],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
+        children: <ContainerRendererPlugin types={calloutEditableTypes} />,
       })
-
-      slateEditorRef.current!.editableTypes = new Set(['callout'])
-
-      withoutPatching(slateEditorRef.current!, () => {
-        normalize(slateEditorRef.current!, {force: true})
-      })
-      slateEditorRef.current!.onChange()
 
       await vi.waitFor(() => {
         return expect(editor.getSnapshot().context.value).toEqual([
@@ -620,9 +548,7 @@ describe('callouts', () => {
               {
                 _key: blockKey,
                 _type: 'block',
-                children: [
-                  {_key: 'k4', _type: 'span', text: '', marks: []},
-                ],
+                children: [{_key: 'k4', _type: 'span', text: '', marks: []}],
                 markDefs: [],
                 style: 'normal',
               },

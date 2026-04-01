@@ -19,6 +19,7 @@ import {relayMachine, type RelayActor} from './relay-machine'
 import {syncMachine, type SyncActor} from './sync-machine'
 
 export type InternalEditor = Editor & {
+  registerRenderer: (rendererType: string) => () => void
   _internal: {
     editable: EditableAPI
     editorActor: EditorActor
@@ -85,6 +86,19 @@ export function createInternalEditor(config: EditorConfig): {
         editorActor.send({
           type: 'remove behavior',
           behaviorConfig: behaviorConfigWithPriority,
+        })
+      }
+    },
+    registerRenderer: (rendererType: string) => {
+      editorActor.send({
+        type: 'register renderer',
+        rendererType,
+      })
+
+      return () => {
+        editorActor.send({
+          type: 'unregister renderer',
+          rendererType,
         })
       }
     },
