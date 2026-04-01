@@ -273,6 +273,17 @@ export const DOMEditor: DOMEditorInterface = {
       // FocusedContext is updated to the correct value
       editor.focused = true
       el.focus({preventScroll: true})
+
+      // Re-apply the DOM selection after focus. Some browsers (notably WebKit)
+      // reset the selection when el.focus() is called, which can cause the
+      // selection to shift away from the intended position (e.g., away from
+      // an inline object to an adjacent empty span).
+      if (editor.selection && root instanceof Document) {
+        const domSelection = getSelection(root)
+        const domRange = DOMEditor.toDOMRange(editor, editor.selection)
+        domSelection?.removeAllRanges()
+        domSelection?.addRange(domRange)
+      }
     }
   },
 
