@@ -7,7 +7,6 @@ import {useSelector} from '@xstate/react'
 import {useContext, type ReactElement} from 'react'
 import type {DropPosition} from '../behaviors/behavior.core.drop-position'
 import {isInline} from '../node-traversal/is-inline'
-import type {RenderElementProps} from '../slate/react/components/editable'
 import {useSlateStatic} from '../slate/react/hooks/use-slate-static'
 import type {
   RenderBlockFunction,
@@ -18,6 +17,7 @@ import type {
 import {EditorActorContext} from './editor-actor-context'
 import {RenderBlockObject} from './render.block-object'
 import {RenderInlineObject} from './render.inline-object'
+import type {RenderElementProps} from './render.internal-editable'
 import {RenderTextBlock} from './render.text-block'
 
 export function RenderElement(props: {

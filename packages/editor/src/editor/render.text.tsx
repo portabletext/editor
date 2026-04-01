@@ -1,7 +1,7 @@
-import type {Editable} from '../slate/react/components/editable'
+import type {InternalEditable} from './render.internal-editable'
 
 export type RenderTextProps = Parameters<
-  NonNullable<React.ComponentProps<typeof Editable>['renderText']>
+  NonNullable<React.ComponentProps<typeof InternalEditable>['renderText']>
 >[0]
 
 export function RenderText(props: RenderTextProps) {

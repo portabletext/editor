@@ -6,7 +6,7 @@ import {
   type RefObject,
 } from 'react'
 import {IS_ANDROID} from '../../../dom/utils/environment'
-import {EditorContext} from '../../hooks/use-slate-static'
+import {SlateEditorContext} from '../../hooks/use-slate-static'
 import {
   createRestoreDomManager,
   type RestoreDOMManager,
@@ -28,8 +28,8 @@ type RestoreDOMProps = {
 // We have to use a class component here since we rely on `getSnapshotBeforeUpdate` which has no FC equivalent
 // to run code synchronously immediately before react commits the component update to the DOM.
 class RestoreDOMComponent extends Component<RestoreDOMProps> {
-  static override contextType = EditorContext
-  override context: ContextType<typeof EditorContext> = null
+  static override contextType = SlateEditorContext
+  override context: ContextType<typeof SlateEditorContext> = null
 
   private manager: RestoreDOMManager | null = null
   private mutationObserver: MutationObserver | null = null

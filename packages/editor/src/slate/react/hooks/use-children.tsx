@@ -5,6 +5,15 @@ import type {
 } from '@portabletext/schema'
 import {isSpan, isTextBlock} from '@portabletext/schema'
 import {useCallback, useRef, type JSX} from 'react'
+import type {
+  RenderElementProps,
+  RenderLeafProps,
+  RenderPlaceholderProps,
+  RenderTextProps,
+} from '../../../editor/render.internal-editable'
+import ElementComponent from '../../../editor/render.internal-element'
+import TextComponent from '../../../editor/render.internal-text'
+import ObjectNodeComponent from '../../../editor/render.object-node'
 import {
   isElementDecorationsEqual,
   splitDecorationsByChild,
@@ -17,15 +26,6 @@ import type {DecoratedRange} from '../../interfaces/text'
 import {isObjectNode} from '../../node/is-object-node'
 import {isSpanNode} from '../../node/is-span-node'
 import {isTextBlockNode} from '../../node/is-text-block-node'
-import type {
-  RenderElementProps,
-  RenderLeafProps,
-  RenderPlaceholderProps,
-  RenderTextProps,
-} from '../components/editable'
-import ElementComponent from '../components/element'
-import ObjectNodeComponent from '../components/object-node'
-import TextComponent from '../components/text'
 import {ElementContext} from './use-element'
 import {useSlateStatic} from './use-slate-static'
 

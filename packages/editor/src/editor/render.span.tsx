@@ -3,7 +3,6 @@ import {isTextBlock} from '@portabletext/schema'
 import {useSelector} from '@xstate/react'
 import {useContext, useMemo, useRef, type ReactElement} from 'react'
 import {serializePath} from '../paths/serialize-path'
-import type {RenderLeafProps} from '../slate/react/components/editable'
 import {useSlateStatic} from '../slate/react/hooks/use-slate-static'
 import type {
   BlockAnnotationRenderProps,
@@ -14,6 +13,7 @@ import type {
   RenderDecoratorFunction,
 } from '../types/editor'
 import {EditorActorContext} from './editor-actor-context'
+import type {RenderLeafProps} from './render.internal-editable'
 import {SelectionStateContext} from './selection-state-context'
 
 interface RenderSpanProps extends RenderLeafProps {

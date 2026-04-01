@@ -1,7 +1,6 @@
 import type {PortableTextSpan} from '@portabletext/schema'
 import {useSelector} from '@xstate/react'
 import {useContext, type CSSProperties} from 'react'
-import type {RenderLeafProps} from '../slate/react/components/editable'
 import type {
   RangeDecoration,
   RenderAnnotationFunction,
@@ -10,6 +9,7 @@ import type {
   RenderPlaceholderFunction,
 } from '../types/editor'
 import {EditorActorContext} from './editor-actor-context'
+import type {RenderLeafProps} from './render.internal-editable'
 import {RenderSpan} from './render.span'
 
 const PLACEHOLDER_STYLE: CSSProperties = {

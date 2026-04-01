@@ -19,11 +19,6 @@ import {normalizeSelection} from '../internal-utils/selection'
 import {slateRangeToSelection} from '../internal-utils/slate-utils'
 import {toSlateRange} from '../internal-utils/to-slate-range'
 import {start} from '../slate/editor/start'
-import {
-  Editable as SlateEditable,
-  type RenderElementProps,
-  type RenderLeafProps,
-} from '../slate/react/components/editable'
 import {useSlate} from '../slate/react/hooks/use-slate'
 import {ReactEditor} from '../slate/react/plugin/react-editor'
 import type {
@@ -48,6 +43,11 @@ import {performHotkey} from './perform-hotkey'
 import {rangeDecorationsMachine} from './range-decorations-machine'
 import {RelayActorContext} from './relay-actor-context'
 import {RenderElement} from './render.element'
+import {
+  InternalEditable,
+  type RenderElementProps,
+  type RenderLeafProps,
+} from './render.internal-editable'
 import {RenderLeaf} from './render.leaf'
 import {RenderText, type RenderTextProps} from './render.text'
 import {SelectionStateProvider} from './selection-state-context'
@@ -992,7 +992,7 @@ export const PortableTextEditable = forwardRef<
 
   return hasInvalidValue ? null : (
     <SelectionStateProvider>
-      <SlateEditable
+      <InternalEditable
         {...restProps}
         ref={callbackRef}
         editorActor={editorActor}

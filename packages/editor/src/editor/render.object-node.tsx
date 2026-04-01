@@ -1,12 +1,12 @@
 import type {PortableTextObject} from '@portabletext/schema'
 import React, {type JSX} from 'react'
-import {IS_ANDROID} from '../../dom/utils/environment'
-import {isElementDecorationsEqual} from '../../dom/utils/range-list'
-import type {Path} from '../../interfaces/path'
-import type {DecoratedRange} from '../../interfaces/text'
-import {pathEquals} from '../../path/path-equals'
-import {useReadOnly} from '../hooks/use-read-only'
-import type {RenderElementProps} from './editable'
+import {IS_ANDROID} from '../slate/dom/utils/environment'
+import {isElementDecorationsEqual} from '../slate/dom/utils/range-list'
+import type {Path} from '../slate/interfaces/path'
+import type {DecoratedRange} from '../slate/interfaces/text'
+import {pathEquals} from '../slate/path/path-equals'
+import {useReadOnly} from '../slate/react/hooks/use-read-only'
+import type {RenderElementProps} from './render.internal-editable'
 
 const defaultRenderElement = (props: RenderElementProps) => {
   const {attributes, children} = props

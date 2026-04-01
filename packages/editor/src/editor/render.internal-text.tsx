@@ -3,18 +3,18 @@ import type {
   PortableTextTextBlock,
 } from '@portabletext/schema'
 import React, {type JSX} from 'react'
-import {isTextDecorationsEqual} from '../../dom/utils/range-list'
-import type {Path} from '../../interfaces/path'
-import type {DecoratedRange} from '../../interfaces/text'
-import {pathEquals} from '../../path/path-equals'
-import {getTextDecorations} from '../../text/get-text-decorations'
-import {useDecorations} from '../hooks/use-decorations'
+import {isTextDecorationsEqual} from '../slate/dom/utils/range-list'
+import type {Path} from '../slate/interfaces/path'
+import type {DecoratedRange} from '../slate/interfaces/text'
+import {pathEquals} from '../slate/path/path-equals'
+import {useDecorations} from '../slate/react/hooks/use-decorations'
+import {getTextDecorations} from '../slate/text/get-text-decorations'
 import type {
   RenderLeafProps,
   RenderPlaceholderProps,
   RenderTextProps,
-} from './editable'
-import Leaf from './leaf'
+} from './render.internal-editable'
+import Leaf from './render.internal-leaf'
 
 const defaultRenderText = (props: RenderTextProps) => <DefaultText {...props} />
 

@@ -11,14 +11,17 @@ import React, {
   type JSX,
   type MutableRefObject,
 } from 'react'
-import {IS_ANDROID, IS_WEBKIT} from '../../dom/utils/environment'
-import {PLACEHOLDER_SYMBOL} from '../../dom/utils/symbols'
-import type {Path} from '../../interfaces/path'
-import type {LeafPosition} from '../../interfaces/text'
-import {textEquals} from '../../text/text-equals'
-import {useSlateStatic} from '../hooks/use-slate-static'
-import type {RenderLeafProps, RenderPlaceholderProps} from './editable'
-import SlateString from './string'
+import {IS_ANDROID, IS_WEBKIT} from '../slate/dom/utils/environment'
+import {PLACEHOLDER_SYMBOL} from '../slate/dom/utils/symbols'
+import type {Path} from '../slate/interfaces/path'
+import type {LeafPosition} from '../slate/interfaces/text'
+import {useSlateStatic} from '../slate/react/hooks/use-slate-static'
+import {textEquals} from '../slate/text/text-equals'
+import type {
+  RenderLeafProps,
+  RenderPlaceholderProps,
+} from './render.internal-editable'
+import SlateString from './render.string'
 
 // Delay the placeholder on Android to prevent the keyboard from closing.
 // (https://github.com/ianstormtaylor/slate/pull/5368)

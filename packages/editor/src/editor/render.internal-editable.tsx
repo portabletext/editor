@@ -16,20 +16,19 @@ import React, {
   type JSX,
 } from 'react'
 import scrollIntoView from 'scroll-into-view-if-needed'
-import {getDomNode} from '../../../dom-traversal/get-dom-node'
-import {getDomNodePath} from '../../../dom-traversal/get-dom-node-path'
-import type {EditorActor} from '../../../editor/editor-machine'
-import {getAncestorObjectNode} from '../../../node-traversal/get-ancestor-object-node'
-import {getAncestorTextBlock} from '../../../node-traversal/get-ancestor-text-block'
-import {getNode} from '../../../node-traversal/get-node'
-import {getNodes} from '../../../node-traversal/get-nodes'
-import {getText} from '../../../node-traversal/get-text'
-import {keyedPathToIndexedPath} from '../../../paths/keyed-path-to-indexed-path'
-import {collapse} from '../../core/collapse'
-import {deselect} from '../../core/deselect'
-import {move} from '../../core/move'
-import {DOMEditor} from '../../dom/plugin/dom-editor'
-import {TRIPLE_CLICK} from '../../dom/utils/constants'
+import {getDomNode} from '../dom-traversal/get-dom-node'
+import {getDomNodePath} from '../dom-traversal/get-dom-node-path'
+import {getAncestorObjectNode} from '../node-traversal/get-ancestor-object-node'
+import {getAncestorTextBlock} from '../node-traversal/get-ancestor-text-block'
+import {getNode} from '../node-traversal/get-node'
+import {getNodes} from '../node-traversal/get-nodes'
+import {getText} from '../node-traversal/get-text'
+import {keyedPathToIndexedPath} from '../paths/keyed-path-to-indexed-path'
+import {collapse} from '../slate/core/collapse'
+import {deselect} from '../slate/core/deselect'
+import {move} from '../slate/core/move'
+import {DOMEditor} from '../slate/dom/plugin/dom-editor'
+import {TRIPLE_CLICK} from '../slate/dom/utils/constants'
 import {
   containsShadowAware,
   getActiveElement,
@@ -41,7 +40,7 @@ import {
   type DOMElement,
   type DOMRange,
   type DOMText,
-} from '../../dom/utils/dom'
+} from '../slate/dom/utils/dom'
 import {
   CAN_USE_DOM,
   HAS_BEFORE_INPUT_SUPPORT,
@@ -53,42 +52,46 @@ import {
   IS_UC_MOBILE,
   IS_WEBKIT,
   IS_WECHATBROWSER,
-} from '../../dom/utils/environment'
-import Hotkeys from '../../dom/utils/hotkeys'
+} from '../slate/dom/utils/environment'
+import Hotkeys from '../slate/dom/utils/hotkeys'
 import {
   MARK_PLACEHOLDER_SYMBOL,
   PLACEHOLDER_SYMBOL,
-} from '../../dom/utils/symbols'
-import {end as editorEnd} from '../../editor/end'
-import {range as editorRange} from '../../editor/range'
-import {rangeRef} from '../../editor/range-ref'
-import {start as editorStart} from '../../editor/start'
-import type {Editor} from '../../interfaces/editor'
-import type {NodeEntry} from '../../interfaces/node'
-import type {Path} from '../../interfaces/path'
-import type {DecoratedRange, LeafPosition} from '../../interfaces/text'
-import {isObjectNode} from '../../node/is-object-node'
-import {isTextBlockNode} from '../../node/is-text-block-node'
-import {pathEquals} from '../../path/path-equals'
-import {isBackwardRange} from '../../range/is-backward-range'
-import {isCollapsedRange} from '../../range/is-collapsed-range'
-import {isExpandedRange} from '../../range/is-expanded-range'
-import {rangeEquals} from '../../range/range-equals'
-import {textEquals} from '../../text/text-equals'
-import type {AndroidInputManager} from '../hooks/android-input-manager/android-input-manager'
-import {useAndroidInputManager} from '../hooks/android-input-manager/use-android-input-manager'
-import useChildren from '../hooks/use-children'
-import {ComposingContext} from '../hooks/use-composing'
-import {DecorateContext, useDecorateContext} from '../hooks/use-decorations'
-import {useIsomorphicLayoutEffect} from '../hooks/use-isomorphic-layout-effect'
-import {ReadOnlyContext} from '../hooks/use-read-only'
-import {useSlate} from '../hooks/use-slate'
-import {useFlushDeferredSelectorsOnRender} from '../hooks/use-slate-selector'
-import {useTrackUserInput} from '../hooks/use-track-user-input'
-import {ReactEditor} from '../plugin/react-editor'
-import {debounce, throttle} from '../utils/debounce'
-import getDirection from '../utils/direction'
-import {RestoreDOM} from './restore-dom/restore-dom'
+} from '../slate/dom/utils/symbols'
+import {end as editorEnd} from '../slate/editor/end'
+import {range as editorRange} from '../slate/editor/range'
+import {rangeRef} from '../slate/editor/range-ref'
+import {start as editorStart} from '../slate/editor/start'
+import type {Editor} from '../slate/interfaces/editor'
+import type {NodeEntry} from '../slate/interfaces/node'
+import type {Path} from '../slate/interfaces/path'
+import type {DecoratedRange, LeafPosition} from '../slate/interfaces/text'
+import {isObjectNode} from '../slate/node/is-object-node'
+import {isTextBlockNode} from '../slate/node/is-text-block-node'
+import {pathEquals} from '../slate/path/path-equals'
+import {isBackwardRange} from '../slate/range/is-backward-range'
+import {isCollapsedRange} from '../slate/range/is-collapsed-range'
+import {isExpandedRange} from '../slate/range/is-expanded-range'
+import {rangeEquals} from '../slate/range/range-equals'
+import {RestoreDOM} from '../slate/react/components/restore-dom/restore-dom'
+import type {AndroidInputManager} from '../slate/react/hooks/android-input-manager/android-input-manager'
+import {useAndroidInputManager} from '../slate/react/hooks/android-input-manager/use-android-input-manager'
+import useChildren from '../slate/react/hooks/use-children'
+import {ComposingContext} from '../slate/react/hooks/use-composing'
+import {
+  DecorateContext,
+  useDecorateContext,
+} from '../slate/react/hooks/use-decorations'
+import {useIsomorphicLayoutEffect} from '../slate/react/hooks/use-isomorphic-layout-effect'
+import {ReadOnlyContext} from '../slate/react/hooks/use-read-only'
+import {useSlate} from '../slate/react/hooks/use-slate'
+import {useFlushDeferredSelectorsOnRender} from '../slate/react/hooks/use-slate-selector'
+import {useTrackUserInput} from '../slate/react/hooks/use-track-user-input'
+import {ReactEditor} from '../slate/react/plugin/react-editor'
+import {debounce, throttle} from '../slate/react/utils/debounce'
+import getDirection from '../slate/react/utils/direction'
+import {textEquals} from '../slate/text/text-equals'
+import type {EditorActor} from './editor-machine'
 
 type DeferredOperation = () => void
 
@@ -147,11 +150,7 @@ export interface RenderTextProps {
   }
 }
 
-/**
- * `EditableProps` are passed to the `<Editable>` component.
- */
-
-type EditableProps = {
+type InternalEditableProps = {
   decorate?: (entry: NodeEntry) => DecoratedRange[]
   editorActor: EditorActor
   onDOMBeforeInput?: (event: InputEvent) => void
@@ -168,12 +167,11 @@ type EditableProps = {
   disableDefaultStyles?: boolean
 } & React.TextareaHTMLAttributes<HTMLDivElement>
 
-/**
- * Editable.
- */
-
-export const Editable = forwardRef(
-  (props: EditableProps, forwardedRef: ForwardedRef<HTMLDivElement>) => {
+export const InternalEditable = forwardRef(
+  (
+    props: InternalEditableProps,
+    forwardedRef: ForwardedRef<HTMLDivElement>,
+  ) => {
     const defaultRenderPlaceholder = useCallback(
       (props: RenderPlaceholderProps) => <DefaultPlaceholder {...props} />,
       [],

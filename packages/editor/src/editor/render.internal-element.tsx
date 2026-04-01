@@ -3,23 +3,23 @@ import type {
   PortableTextTextBlock,
 } from '@portabletext/schema'
 import React, {type JSX} from 'react'
-import {getText} from '../../../node-traversal/get-text'
-import {isInline as isInlinePath} from '../../../node-traversal/is-inline'
-import {isElementDecorationsEqual} from '../../dom/utils/range-list'
-import type {Path} from '../../interfaces/path'
-import type {DecoratedRange} from '../../interfaces/text'
-import {isTextBlockNode} from '../../node/is-text-block-node'
-import {pathEquals} from '../../path/path-equals'
-import useChildren from '../hooks/use-children'
-import {useDecorations} from '../hooks/use-decorations'
-import {useSlateStatic} from '../hooks/use-slate-static'
-import getDirection from '../utils/direction'
+import {getText} from '../node-traversal/get-text'
+import {isInline as isInlinePath} from '../node-traversal/is-inline'
+import {isElementDecorationsEqual} from '../slate/dom/utils/range-list'
+import type {Path} from '../slate/interfaces/path'
+import type {DecoratedRange} from '../slate/interfaces/text'
+import {isTextBlockNode} from '../slate/node/is-text-block-node'
+import {pathEquals} from '../slate/path/path-equals'
+import useChildren from '../slate/react/hooks/use-children'
+import {useDecorations} from '../slate/react/hooks/use-decorations'
+import {useSlateStatic} from '../slate/react/hooks/use-slate-static'
+import getDirection from '../slate/react/utils/direction'
 import type {
   RenderElementProps,
   RenderLeafProps,
   RenderPlaceholderProps,
   RenderTextProps,
-} from './editable'
+} from './render.internal-editable'
 
 const defaultRenderElement = (props: RenderElementProps) => (
   <DefaultElement {...props} />

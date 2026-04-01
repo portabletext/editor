@@ -1,8 +1,12 @@
 import type React from 'react'
-import {useEffect, useState} from 'react'
+import {useCallback, useEffect, useState} from 'react'
 import type {EditorConfig} from '../editor'
 import {stopActor} from '../internal-utils/stop-actor'
-import {Slate} from '../slate/react/components/slate'
+import {
+  SlateSelectorContext,
+  useSelectorContext,
+} from '../slate/react/hooks/use-slate-selector'
+import {SlateEditorContext} from '../slate/react/hooks/use-slate-static'
 import {createInternalEditor} from './create-editor'
 import {EditorActorContext} from './editor-actor-context'
 import {EditorContext} from './editor-context'
@@ -74,15 +78,34 @@ export function EditorProvider(props: EditorProviderProps) {
     }
   }, [internalEditor])
 
+  const {selectorContext, onChange: handleSelectorChange} = useSelectorContext()
+
+  const onContextChange = useCallback(() => {
+    handleSelectorChange()
+  }, [internalEditor.editor, handleSelectorChange])
+
+  useEffect(() => {
+    internalEditor.editor._internal.slateEditor.onContextChange =
+      onContextChange
+
+    return () => {
+      internalEditor.editor._internal.slateEditor.onContextChange = () => {}
+    }
+  }, [internalEditor.editor._internal.slateEditor, onContextChange])
+
   return (
     <EditorContext.Provider value={internalEditor.editor}>
       <EditorActorContext.Provider value={internalEditor.actors.editorActor}>
         <RelayActorContext.Provider value={internalEditor.actors.relayActor}>
-          <Slate editor={internalEditor.editor._internal.slateEditor}>
-            <PortableTextEditorContext.Provider value={portableTextEditor}>
-              {props.children}
-            </PortableTextEditorContext.Provider>
-          </Slate>
+          <SlateSelectorContext.Provider value={selectorContext}>
+            <SlateEditorContext.Provider
+              value={internalEditor.editor._internal.slateEditor}
+            >
+              <PortableTextEditorContext.Provider value={portableTextEditor}>
+                {props.children}
+              </PortableTextEditorContext.Provider>
+            </SlateEditorContext.Provider>
+          </SlateSelectorContext.Provider>
         </RelayActorContext.Provider>
       </EditorActorContext.Provider>
     </EditorContext.Provider>

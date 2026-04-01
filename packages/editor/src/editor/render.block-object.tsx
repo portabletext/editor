@@ -1,11 +1,11 @@
 import type {PortableTextObject} from '@portabletext/schema'
 import {useContext, useRef, type ReactElement} from 'react'
 import type {DropPosition} from '../behaviors/behavior.core.drop-position'
-import type {RenderElementProps} from '../slate/react/components/editable'
 import type {BlockRenderProps, RenderBlockFunction} from '../types/editor'
 import type {EditorSchema} from './editor-schema'
 import {RenderDefaultBlockObject} from './render.default-object'
 import {DropIndicator} from './render.drop-indicator'
+import type {RenderElementProps} from './render.internal-editable'
 import {SelectionStateContext} from './selection-state-context'
 
 export function RenderBlockObject(props: {

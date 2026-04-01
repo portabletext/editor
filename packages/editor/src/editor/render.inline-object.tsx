@@ -3,11 +3,11 @@ import {useContext, useRef, type ReactElement} from 'react'
 import {getNode} from '../node-traversal/get-node'
 import {serializePath} from '../paths/serialize-path'
 import type {Path} from '../slate/interfaces/path'
-import type {RenderElementProps} from '../slate/react/components/editable'
 import {useSlateStatic} from '../slate/react/hooks/use-slate-static'
 import type {BlockChildRenderProps, RenderChildFunction} from '../types/editor'
 import type {EditorSchema} from './editor-schema'
 import {RenderDefaultInlineObject} from './render.default-object'
+import type {RenderElementProps} from './render.internal-editable'
 import {SelectionStateContext} from './selection-state-context'
 
 export function RenderInlineObject(props: {

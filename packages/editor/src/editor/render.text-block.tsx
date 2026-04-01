@@ -4,7 +4,6 @@ import type {
 } from '@portabletext/schema'
 import {useContext, useRef, type ReactElement} from 'react'
 import type {DropPosition} from '../behaviors/behavior.core.drop-position'
-import type {RenderElementProps} from '../slate/react/components/editable'
 import {useSlateSelector} from '../slate/react/hooks/use-slate-selector'
 import type {
   BlockListItemRenderProps,
@@ -16,6 +15,7 @@ import type {
 } from '../types/editor'
 import type {EditorSchema} from './editor-schema'
 import {DropIndicator} from './render.drop-indicator'
+import type {RenderElementProps} from './render.internal-editable'
 import {SelectionStateContext} from './selection-state-context'
 
 export function RenderTextBlock(props: {

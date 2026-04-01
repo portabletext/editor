@@ -19,9 +19,9 @@ import type {
   ReactElement,
   RefObject,
 } from 'react'
-import type {PortableTextEditableProps} from '../editor/Editable'
 import type {EditorSchema} from '../editor/editor-schema'
 import type {PortableTextEditor} from '../editor/PortableTextEditor'
+import type {PortableTextEditableProps} from '../editor/render.editable'
 import type {BlockPath, Path} from './paths'
 
 /** @beta */

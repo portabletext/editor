@@ -9,12 +9,12 @@ import {expect, vi} from 'vitest'
 import {render} from 'vitest-browser-react'
 import {page} from 'vitest/browser'
 import type {Editor} from '../../editor'
+import {EditorProvider} from '../../editor/editor-provider'
+import type {EditorEmittedEvent} from '../../editor/relay-machine'
 import {
   PortableTextEditable,
   type PortableTextEditableProps,
-} from '../../editor/Editable'
-import {EditorProvider} from '../../editor/editor-provider'
-import type {EditorEmittedEvent} from '../../editor/relay-machine'
+} from '../../editor/render.editable'
 import {EventListenerPlugin} from '../../plugins'
 import {EditorRefPlugin} from '../../plugins/plugin.editor-ref'
 import type {Context} from './step-context'

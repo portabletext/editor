@@ -6,17 +6,17 @@ import {
   type PortableTextTextBlock,
 } from '@portabletext/schema'
 import {forwardRef, memo, useRef, useState} from 'react'
-import {getNodes} from '../../../node-traversal/get-nodes'
-import {IS_ANDROID} from '../../dom/utils/environment'
-import {MARK_PLACEHOLDER_SYMBOL} from '../../dom/utils/symbols'
-import {end as editorEnd} from '../../editor/end'
-import {start as editorStart} from '../../editor/start'
-import type {Editor} from '../../interfaces/editor'
-import type {Path} from '../../interfaces/path'
-import {parentPath} from '../../path/parent-path'
-import {pathEquals} from '../../path/path-equals'
-import {useIsomorphicLayoutEffect} from '../hooks/use-isomorphic-layout-effect'
-import {useSlateStatic} from '../hooks/use-slate-static'
+import {getNodes} from '../node-traversal/get-nodes'
+import {IS_ANDROID} from '../slate/dom/utils/environment'
+import {MARK_PLACEHOLDER_SYMBOL} from '../slate/dom/utils/symbols'
+import {end as editorEnd} from '../slate/editor/end'
+import {start as editorStart} from '../slate/editor/start'
+import type {Editor} from '../slate/interfaces/editor'
+import type {Path} from '../slate/interfaces/path'
+import {parentPath} from '../slate/path/parent-path'
+import {pathEquals} from '../slate/path/path-equals'
+import {useIsomorphicLayoutEffect} from '../slate/react/hooks/use-isomorphic-layout-effect'
+import {useSlateStatic} from '../slate/react/hooks/use-slate-static'
 
 /**
  * Leaf content strings.

@@ -5,14 +5,14 @@ import type {Editor} from '../../interfaces/editor'
  * A React context for sharing the editor object.
  */
 
-export const EditorContext = createContext<Editor | null>(null)
+export const SlateEditorContext = createContext<Editor | null>(null)
 
 /**
  * Get the current editor object from the React context.
  */
 
 export const useSlateStatic = (): Editor => {
-  const editor = useContext(EditorContext)
+  const editor = useContext(SlateEditorContext)
 
   if (!editor) {
     throw new Error(
