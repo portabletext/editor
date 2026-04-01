@@ -189,8 +189,6 @@ export function setNodePatch(
         patches.push(set(newKey, [lastIndex, '_key']))
       } else {
         // Child-level: path is [...parentKeyedPath, fieldName, numericIndex, '_key']
-        // keyedPath is like [{_key: 'block'}, 'children', {_key: 'child'}]
-        // We need [...parentKeyedPath, fieldName, numericIndex, '_key']
         const parentKeyedPath = keyedPath.slice(0, -1)
         patches.push(set(newKey, [...parentKeyedPath, lastIndex, '_key']))
       }
@@ -276,8 +274,7 @@ export function insertNodePatch(
     return []
   }
 
-  // Get the children info from the parent to find the field name.
-  // Walk from root to accumulate the correct scope chain for editableTypes.
+  // Get the children of the parent to find the field name and child node.
   const childrenInfo = getChildrenOfNodeAtPath(context, parentPath)
 
   if (!childrenInfo) {

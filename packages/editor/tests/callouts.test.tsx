@@ -204,9 +204,7 @@ describe('callouts', () => {
         snapshot: undefined,
       })
 
-      // Both spans have marks: [] after normalization (the first span gets
-      // marks added, then the merge fires). The merged span keeps the first
-      // span's key.
+      // Adjacent spans with matching marks are merged.
       await vi.waitFor(() => {
         return expect(editor.getSnapshot().context.value).toEqual([
           {
@@ -247,9 +245,7 @@ describe('callouts', () => {
         snapshot: undefined,
       })
 
-      // With editableTypes set, resolveNodePath resolves the full path to the
-      // span, so the unset becomes a direct remove_node operation. This dirties
-      // the text block's path, allowing normalization to restore an empty span.
+      // Normalization restores an empty span.
       await vi.waitFor(() => {
         return expect(editor.getSnapshot().context.value).toEqual([
           {
@@ -310,8 +306,6 @@ describe('callouts', () => {
     test('setIfMissing marks on span inside callout', async () => {
       const {editor, callout, block, span} = await createCalloutTestEditor()
 
-      // The span was created without marks, so setIfMissing adds marks: ['strong'].
-      // This also triggers normalization on the span, adding markDefs/style to the block.
       editor.send({
         type: 'patches',
         patches: [
