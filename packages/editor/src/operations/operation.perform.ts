@@ -18,11 +18,13 @@ import {moveBackwardOperationImplementation} from './operation.move.backward'
 import {moveBlockOperationImplementation} from './operation.move.block'
 import {moveForwardOperationImplementation} from './operation.move.forward'
 import {selectOperationImplementation} from './operation.select'
+import {setOperationImplementation} from './operation.set'
 import type {
   Operation,
   OperationContext,
   OperationImplementations,
 } from './operation.types'
+import {unsetOperationImplementation} from './operation.unset'
 
 const operationImplementations: OperationImplementations = {
   'annotation.add': addAnnotationOperationImplementation,
@@ -43,6 +45,8 @@ const operationImplementations: OperationImplementations = {
   'move.block': moveBlockOperationImplementation,
   'move.forward': moveForwardOperationImplementation,
   'select': selectOperationImplementation,
+  'set': setOperationImplementation,
+  'unset': unsetOperationImplementation,
 }
 
 export function performOperation({

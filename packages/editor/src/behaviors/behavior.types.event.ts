@@ -7,7 +7,7 @@ import type {
   ChildWithOptionalKey,
 } from '../types/block-with-optional-key'
 import type {EditorSelection} from '../types/editor'
-import type {AnnotationPath, BlockPath, ChildPath} from '../types/paths'
+import type {AnnotationPath, BlockPath, ChildPath, Path} from '../types/paths'
 
 /**
  * @beta
@@ -79,6 +79,8 @@ const syntheticBehaviorEventTypes = [
   'move.block',
   'move.forward',
   'select',
+  'set',
+  'unset',
 ] as const
 
 type SyntheticBehaviorEventType =
@@ -187,6 +189,16 @@ export type SyntheticBehaviorEvent =
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'select'>
       at: EditorSelection
+    }
+  | {
+      type: StrictExtract<SyntheticBehaviorEventType, 'set'>
+      at: Path
+      props: Record<string, unknown>
+    }
+  | {
+      type: StrictExtract<SyntheticBehaviorEventType, 'unset'>
+      at: Path
+      props: Array<string>
     }
   | AbstractBehaviorEvent
 

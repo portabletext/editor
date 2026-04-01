@@ -1,4 +1,5 @@
 import {isSpan} from '@portabletext/schema'
+import {isEditableType} from '../../internal-utils/is-editable-type'
 import {getNodes} from '../../node-traversal/get-nodes'
 import type {Editor} from '../interfaces/editor'
 import type {Location} from '../interfaces/location'
@@ -116,14 +117,18 @@ export function* positions(
       }
     }
 
-    if (isObjectNode({schema: editor.schema}, node)) {
+    if (
+      isObjectNode({schema: editor.schema}, node) &&
+      !isEditableType(editor.editableTypes, node._type)
+    ) {
       yield {path: nodePath, offset: 0}
       continue
     }
 
     if (
       !isTextBlockNode({schema: editor.schema}, node) &&
-      !isSpan({schema: editor.schema}, node)
+      !isSpan({schema: editor.schema}, node) &&
+      !isEditableType(editor.editableTypes, node._type)
     ) {
       yield {path: nodePath, offset: 0}
       continue

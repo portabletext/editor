@@ -2,6 +2,7 @@ import {getFocusSpan} from '../selectors/selector.get-focus-span'
 import {isSelectionCollapsed} from '../selectors/selector.is-selection-collapsed'
 import {isSelectionExpanded} from '../selectors/selector.is-selection-expanded'
 import {abstractAnnotationBehaviors} from './behavior.abstract.annotation'
+import {abstractContainerStyleBehaviors} from './behavior.abstract.container-style'
 import {abstractDecoratorBehaviors} from './behavior.abstract.decorator'
 import {abstractDeleteBehaviors} from './behavior.abstract.delete'
 import {abstractDeserializeBehaviors} from './behavior.abstract.deserialize'
@@ -100,6 +101,7 @@ export const abstractBehaviors = [
     ],
   }),
   ...abstractAnnotationBehaviors,
+  ...abstractContainerStyleBehaviors,
   ...abstractDecoratorBehaviors,
   ...abstractDeleteBehaviors,
   ...abstractDeserializeBehaviors,

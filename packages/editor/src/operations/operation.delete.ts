@@ -1,3 +1,4 @@
+import {isEditableType} from '../internal-utils/is-editable-type'
 import {toSlateRange} from '../internal-utils/to-slate-range'
 import {getAncestorTextBlock} from '../node-traversal/get-ancestor-text-block'
 import {getHighestObjectNode} from '../node-traversal/get-highest-object-node'
@@ -189,13 +190,15 @@ export const deleteOperationImplementation: OperationImplementation<
 
   // Editor.above only checks ancestors, so for top-level ObjectNodes
   // we also check the node at the point directly.
+  // Skip editable containers (in `editableTypes`) since they have editable content.
   const startNodeEntry: {node: Node; path: Array<number>} | undefined = (() => {
     const blockIndex = start.path.at(0)
     if (blockIndex !== undefined) {
       const entry = getNode(operation.editor, [blockIndex])
       if (
         entry &&
-        isObjectNode({schema: operation.editor.schema}, entry.node)
+        isObjectNode({schema: operation.editor.schema}, entry.node) &&
+        !isEditableType(operation.editor.editableTypes, entry.node._type)
       ) {
         return entry
       }
@@ -208,7 +211,8 @@ export const deleteOperationImplementation: OperationImplementation<
       const entry = getNode(operation.editor, [blockIndex])
       if (
         entry &&
-        isObjectNode({schema: operation.editor.schema}, entry.node)
+        isObjectNode({schema: operation.editor.schema}, entry.node) &&
+        !isEditableType(operation.editor.editableTypes, entry.node._type)
       ) {
         return entry
       }
@@ -250,7 +254,8 @@ export const deleteOperationImplementation: OperationImplementation<
     }
 
     if (
-      isObjectNode({schema: operation.editor.schema}, node) ||
+      (isObjectNode({schema: operation.editor.schema}, node) &&
+        !isEditableType(operation.editor.editableTypes, node._type)) ||
       (!isCommonPath(entryPath, start.path) &&
         !isCommonPath(entryPath, end.path))
     ) {
@@ -383,7 +388,14 @@ export const deleteOperationImplementation: OperationImplementation<
 
       if (
         nodeAtPathEntry2 &&
-        isObjectNode({schema: operation.editor.schema}, nodeAtPathEntry2.node)
+        isObjectNode(
+          {schema: operation.editor.schema},
+          nodeAtPathEntry2.node,
+        ) &&
+        !isEditableType(
+          operation.editor.editableTypes,
+          nodeAtPathEntry2.node._type,
+        )
       ) {
         const path = pathRef.unref()
 
