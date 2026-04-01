@@ -1112,6 +1112,63 @@ describe('container behaviors', () => {
       })
     })
 
+    test('pressing enter in the middle of text inside a callout splits correctly', async () => {
+      const {editor, callout, block, span} = await createCalloutEditor()
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([callout])
+      })
+
+      // Place cursor in the middle of "hello" (after "hel")
+      editor.send({
+        type: 'select',
+        at: {
+          anchor: {
+            path: [
+              {_key: callout._key},
+              'content',
+              {_key: block._key},
+              'children',
+              {_key: span._key},
+            ],
+            offset: 3,
+          },
+          focus: {
+            path: [
+              {_key: callout._key},
+              'content',
+              {_key: block._key},
+              'children',
+              {_key: span._key},
+            ],
+            offset: 3,
+          },
+        },
+      })
+
+      editor.send({type: 'insert.break'})
+
+      // First block should have "hel", second block should have "lo"
+      await vi.waitFor(() => {
+        const value = editor.getSnapshot().context.value
+        const calloutNode = value?.at(0) as Record<string, unknown>
+        const content = calloutNode?.['content'] as Array<
+          Record<string, unknown>
+        >
+        expect(content?.length).toBe(2)
+        const firstBlock = content?.at(0) as Record<string, unknown>
+        const firstChildren = firstBlock?.['children'] as Array<
+          Record<string, unknown>
+        >
+        expect(firstChildren?.at(0)?.['text']).toBe('hel')
+        const secondBlock = content?.at(1) as Record<string, unknown>
+        const secondChildren = secondBlock?.['children'] as Array<
+          Record<string, unknown>
+        >
+        expect(secondChildren?.at(0)?.['text']).toBe('lo')
+      })
+    })
+
     test('pressing enter inside a table cell splits the text block', async () => {
       const {editor, table, row, cell, block, span} = await createTableEditor()
 
@@ -1166,6 +1223,73 @@ describe('container behaviors', () => {
         const cellNode = cells?.at(0) as Record<string, unknown>
         const content = cellNode?.['content'] as Array<Record<string, unknown>>
         expect(content?.length).toBe(2)
+      })
+    })
+
+    test('pressing enter in the middle of text inside a table cell splits correctly', async () => {
+      const {editor, table, row, cell, block, span} = await createTableEditor()
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([table])
+      })
+
+      // Place cursor in the middle of "hello" (after "hel")
+      editor.send({
+        type: 'select',
+        at: {
+          anchor: {
+            path: [
+              {_key: table._key},
+              'rows',
+              {_key: row._key},
+              'cells',
+              {_key: cell._key},
+              'content',
+              {_key: block._key},
+              'children',
+              {_key: span._key},
+            ],
+            offset: 3,
+          },
+          focus: {
+            path: [
+              {_key: table._key},
+              'rows',
+              {_key: row._key},
+              'cells',
+              {_key: cell._key},
+              'content',
+              {_key: block._key},
+              'children',
+              {_key: span._key},
+            ],
+            offset: 3,
+          },
+        },
+      })
+
+      editor.send({type: 'insert.break'})
+
+      // First block should have "hel", second block should have "lo"
+      await vi.waitFor(() => {
+        const value = editor.getSnapshot().context.value
+        const tableNode = value?.at(0) as Record<string, unknown>
+        const rows = tableNode?.['rows'] as Array<Record<string, unknown>>
+        const rowNode = rows?.at(0) as Record<string, unknown>
+        const cells = rowNode?.['cells'] as Array<Record<string, unknown>>
+        const cellNode = cells?.at(0) as Record<string, unknown>
+        const content = cellNode?.['content'] as Array<Record<string, unknown>>
+        expect(content?.length).toBe(2)
+        const firstBlock = content?.at(0) as Record<string, unknown>
+        const firstChildren = firstBlock?.['children'] as Array<
+          Record<string, unknown>
+        >
+        expect(firstChildren?.at(0)?.['text']).toBe('hel')
+        const secondBlock = content?.at(1) as Record<string, unknown>
+        const secondChildren = secondBlock?.['children'] as Array<
+          Record<string, unknown>
+        >
+        expect(secondChildren?.at(0)?.['text']).toBe('lo')
       })
     })
   })

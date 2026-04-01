@@ -4,12 +4,28 @@ import {
   type PortableTextTextBlock,
 } from '@portabletext/schema'
 import type {EditorContext} from '../editor/editor-snapshot'
+import type {EditorSelectionPoint} from '../types/editor'
 import {getSelectionEndPoint} from './util.get-selection-end-point'
 import {getSelectionStartPoint} from './util.get-selection-start-point'
-import {
-  getBlockKeyFromSelectionPoint,
-  getChildKeyFromSelectionPoint,
-} from './util.selection-point'
+import {isKeyedSegment} from './util.is-keyed-segment'
+
+function getTextBlockKeyFromPoint(point: EditorSelectionPoint) {
+  const childrenIndex = point.path.indexOf('children')
+  if (childrenIndex < 1) {
+    return undefined
+  }
+  const blockSegment = point.path.at(childrenIndex - 1)
+  return isKeyedSegment(blockSegment) ? blockSegment._key : undefined
+}
+
+function getChildKeyFromPoint(point: EditorSelectionPoint) {
+  const childrenIndex = point.path.indexOf('children')
+  if (childrenIndex < 0) {
+    return undefined
+  }
+  const childSegment = point.path.at(childrenIndex + 1)
+  return isKeyedSegment(childSegment) ? childSegment._key : undefined
+}
 
 export function sliceTextBlock({
   context,
@@ -25,15 +41,15 @@ export function sliceTextBlock({
     return block
   }
 
-  const startBlockKey = getBlockKeyFromSelectionPoint(startPoint)
-  const endBlockKey = getBlockKeyFromSelectionPoint(endPoint)
+  const startBlockKey = getTextBlockKeyFromPoint(startPoint)
+  const endBlockKey = getTextBlockKeyFromPoint(endPoint)
 
   if (startBlockKey !== endBlockKey || startBlockKey !== block._key) {
     return block
   }
 
-  const startChildKey = getChildKeyFromSelectionPoint(startPoint)
-  const endChildKey = getChildKeyFromSelectionPoint(endPoint)
+  const startChildKey = getChildKeyFromPoint(startPoint)
+  const endChildKey = getChildKeyFromPoint(endPoint)
 
   if (!startChildKey || !endChildKey) {
     return block
