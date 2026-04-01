@@ -130,6 +130,16 @@ const tableRenderer: Renderer = {
   ),
 }
 
+const rowRenderer: Renderer = {
+  type: 'table.row',
+  render: ({attributes, children}) => <tr {...attributes}>{children}</tr>,
+}
+
+const cellRenderer: Renderer = {
+  type: 'table.row.cell',
+  render: ({attributes, children}) => <td {...attributes}>{children}</td>,
+}
+
 async function createTableEditor() {
   const patches: Array<Patch> = []
   const keyGenerator = createTestKeyGenerator()
@@ -174,7 +184,9 @@ async function createTableEditor() {
     initialValue: [table],
     children: (
       <>
-        <RendererPlugin renderers={[tableRenderer]} />
+        <RendererPlugin
+          renderers={[tableRenderer, rowRenderer, cellRenderer]}
+        />
         <EventListenerPlugin
           on={(event) => {
             if (event.type === 'patch') {
@@ -336,7 +348,9 @@ describe('container behaviors', () => {
         schemaDefinition: tableSchemaDefinition,
         children: (
           <>
-            <RendererPlugin renderers={[tableRenderer]} />
+            <RendererPlugin
+              renderers={[tableRenderer, rowRenderer, cellRenderer]}
+            />
             <EventListenerPlugin
               on={(event) => {
                 if (event.type === 'patch') {

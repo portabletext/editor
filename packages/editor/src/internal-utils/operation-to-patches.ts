@@ -10,6 +10,7 @@ import {isSpan, type PortableTextBlock} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
 import {getNodeChildren} from '../node-traversal/get-children'
 import {getNode} from '../node-traversal/get-node'
+import {getChildFieldName} from '../paths/get-child-field-name'
 import {indexedPathToKeyedPath} from '../paths/indexed-path-to-keyed-path'
 import type {Node} from '../slate/interfaces/node'
 import type {
@@ -166,11 +167,43 @@ export function setNodePatch(
   const keyedPath = indexedPathToKeyedPath(context, operation.path)
 
   if (!keyedPath) {
-    console.error(
-      'Could not resolve keyed path for',
-      safeStringify(operation.path),
-    )
-    return []
+    // The full path can't be resolved to keyed segments (e.g., an intermediate
+    // node lacks _key during normalization). Fall back to resolving the parent
+    // path and using a numeric index for the last segment.
+    const parentPath = operation.path.slice(0, -1)
+    const parentKeyedPath =
+      parentPath.length > 0
+        ? indexedPathToKeyedPath(context, parentPath)
+        : undefined
+    const lastIndex = operation.path.at(-1)
+
+    if (!parentKeyedPath || lastIndex === undefined) {
+      return []
+    }
+
+    // Resolve the child field name for the parent
+    const childFieldName = getChildFieldName(context, parentPath)
+
+    if (!childFieldName) {
+      return []
+    }
+
+    const patches: Patch[] = []
+
+    for (const [key, propertyValue] of Object.entries(
+      operation.newProperties,
+    )) {
+      patches.push(
+        set(propertyValue, [
+          ...parentKeyedPath,
+          childFieldName,
+          lastIndex,
+          key,
+        ]),
+      )
+    }
+
+    return patches
   }
 
   const patches: Patch[] = []
