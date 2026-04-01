@@ -304,7 +304,7 @@ describe('tables', () => {
 
       await vi.waitFor(() => {
         return expect(editor.getSnapshot().context.value).toEqual([
-          {...table, rows: undefined},
+          {...table, rows: []},
         ])
       })
     })

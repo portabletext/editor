@@ -9,10 +9,12 @@ import {applySetNode} from '../../internal-utils/apply-set-node'
 import {createPlaceholderBlock} from '../../internal-utils/create-placeholder-block'
 import {debug} from '../../internal-utils/debug'
 import {isEqualMarkDefs} from '../../internal-utils/equality'
+import {isEditableType} from '../../internal-utils/is-editable-type'
 import {getChildren} from '../../node-traversal/get-children'
 import {getNode} from '../../node-traversal/get-node'
 import {getParent} from '../../node-traversal/get-parent'
 import {getTextBlockNode} from '../../node-traversal/get-text-block-node'
+import {resolveChildArrayField} from '../../schema/resolve-child-array-field'
 import {withoutPatching} from '../../slate-plugins/slate-plugin.without-patching'
 import {isEditor} from '../editor/is-editor'
 import type {Editor} from '../interfaces/editor'
@@ -322,7 +324,51 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
     return
   }
 
+  /**
+   * Add missing structural child field to container nodes
+   */
   if (isObjectNode({schema: editor.schema}, node)) {
+    if (isEditableType(editor.editableTypes, node._type)) {
+      const arrayField = resolveChildArrayField({schema: editor.schema}, node)
+
+      if (arrayField) {
+        const fieldValue = (node as Record<string, unknown>)[arrayField.name]
+
+        if (!Array.isArray(fieldValue)) {
+          debug.normalization(
+            `Adding missing .${arrayField.name} to container node`,
+          )
+          editor.apply({
+            type: 'set_node',
+            path,
+            properties: {},
+            newProperties: {[arrayField.name]: []},
+          })
+          return
+        }
+
+        if (fieldValue.length === 0) {
+          const hasBlockType = arrayField.of.some(
+            (member) => member.type === 'block',
+          )
+
+          if (hasBlockType) {
+            debug.normalization(
+              `Inserting default text block into empty container .${arrayField.name}`,
+            )
+            const child = createPlaceholderBlock(editor)
+            editor.apply({
+              type: 'set_node',
+              path,
+              properties: {[arrayField.name]: fieldValue},
+              newProperties: {[arrayField.name]: [child]},
+            })
+            return
+          }
+        }
+      }
+    }
+
     return
   }
 

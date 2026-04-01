@@ -618,4 +618,56 @@ describe('callouts', () => {
       )
     })
   })
+
+  test('insert callout and type into it', async () => {
+    const keyGenerator = createTestKeyGenerator()
+
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition,
+      children: <RendererPlugin renderers={[calloutRenderer]} />,
+    })
+
+    // Wait for initial empty editor
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toBeDefined()
+    })
+
+    // Insert a callout block
+    editor.send({
+      type: 'insert.block',
+      block: {_type: 'callout', variant: 'note'},
+      placement: 'auto',
+      select: 'start',
+    })
+
+    // Wait for the callout to appear with normalized content
+    await vi.waitFor(() => {
+      const value = editor.getSnapshot().context.value
+      const calloutNode = value?.at(0) as Record<string, unknown> | undefined
+      expect(calloutNode?.['_type']).toBe('callout')
+      const content = calloutNode?.['content'] as Array<Record<string, unknown>>
+      expect(content?.length).toBeGreaterThan(0)
+    })
+
+    // Find the callout in the DOM and type into it
+    const calloutLocator = locator.getByTestId('callout')
+    await vi.waitFor(async () => {
+      await expect.element(calloutLocator).toBeInTheDocument()
+    })
+
+    await userEvent.click(calloutLocator)
+    await userEvent.type(locator, 'abc')
+
+    // Verify the text was inserted
+    await vi.waitFor(() => {
+      const value = editor.getSnapshot().context.value
+      const calloutNode = value?.at(0) as Record<string, unknown>
+      const content = calloutNode?.['content'] as Array<Record<string, unknown>>
+      const block = content?.at(0) as Record<string, unknown>
+      const children = block?.['children'] as Array<Record<string, unknown>>
+      const span = children?.at(0) as Record<string, unknown>
+      expect(span?.['text']).toBe('abc')
+    })
+  })
 })
