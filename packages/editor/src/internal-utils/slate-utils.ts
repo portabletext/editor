@@ -1,4 +1,4 @@
-import {isTextBlock} from '@portabletext/schema'
+import {isSpan, isTextBlock} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
 import {getChildren} from '../node-traversal/get-children'
 import {getNode} from '../node-traversal/get-node'
@@ -134,11 +134,15 @@ export function slateRangeToSelection({
   const selection: EditorSelection = {
     anchor: {
       path: [{_key: anchorBlock._key}],
-      offset: range.anchor.offset,
+      offset: anchorChild
+        ? range.anchor.offset
+        : absoluteBlockOffset(schema, anchorBlock, range.anchor),
     },
     focus: {
       path: [{_key: focusBlock._key}],
-      offset: range.focus.offset,
+      offset: focusChild
+        ? range.focus.offset
+        : absoluteBlockOffset(schema, focusBlock, range.focus),
     },
     backward: isBackwardRange(range),
   }
@@ -191,4 +195,31 @@ export function slatePointToSelectionPoint({
     path: [{_key: block._key}],
     offset: point.offset,
   }
+}
+
+function absoluteBlockOffset(
+  schema: EditorSchema,
+  block: Node,
+  point: Point,
+): number {
+  if (!isTextBlock({schema}, block)) {
+    return point.offset
+  }
+
+  const childIndex = point.path.at(1)
+
+  if (childIndex === undefined || childIndex === 0) {
+    return point.offset
+  }
+
+  let cumulativeOffset = 0
+
+  for (let i = 0; i < childIndex && i < block.children.length; i++) {
+    const child = block.children[i]!
+    if (isSpan({schema}, child)) {
+      cumulativeOffset += child.text.length
+    }
+  }
+
+  return cumulativeOffset + point.offset
 }

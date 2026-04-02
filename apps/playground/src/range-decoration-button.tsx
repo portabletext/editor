@@ -174,26 +174,7 @@ export function RangeDecorationButton(props: {
       selection,
       payload: {originalText},
       onMoved: (details) => {
-        // Always notify parent for state management
-        props.onRangeDecorationMoved(details)
-
-        // If fix-up is enabled and this is a remote op, try to re-resolve
-        if (
-          remoteFixUpRef.current &&
-          details.origin === 'remote' &&
-          details.newSelection !== null
-        ) {
-          const currentValue = editor.getSnapshot().context.value
-          const storedText = details.rangeDecoration.payload?.originalText as
-            | string
-            | undefined
-          if (storedText) {
-            const resolved = findTextInDocument(currentValue, storedText)
-            if (resolved) {
-              return resolved
-            }
-          }
-        }
+        console.debug('[RangeDecoration] onMoved', details)
       },
     })
     editor.send({

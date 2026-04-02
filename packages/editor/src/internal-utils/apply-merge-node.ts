@@ -85,6 +85,16 @@ export function applyMergeNode(
 
   // Pre-transform decoratedRanges and snapshot original ranges so we can
   // fire onMoved after the decomposed operations complete.
+  //
+  // For block-level merges without mergeContext (e.g. cross-block selection
+  // delete via Slate's deleteFragment), an endpoint that was on the merged
+  // block would naturally map into the target block — placing it at a
+  // position that expands after undo. Instead, clamp it to the nearest
+  // surviving block boundary, mirroring salvagePartiallyInvalidatedRange.
+  const isBlockLevelMerge = path.length === 1
+  const shouldClampCrossBoundary = isBlockLevelMerge && !editor.mergeContext
+  const mergedBlockIndex = path[0]!
+
   const decorationSnapshots: Array<{
     decoratedRange: DecoratedRange
     originalRange: Range
@@ -94,8 +104,31 @@ export function applyMergeNode(
   editor.decoratedRanges = editor.decoratedRanges.map((dr) => {
     if (!isRange(dr)) return dr
 
-    const newAnchor = transformPointForMerge(dr.anchor, path, position)
-    const newFocus = transformPointForMerge(dr.focus, path, position)
+    let newAnchor = transformPointForMerge(dr.anchor, path, position)
+    let newFocus = transformPointForMerge(dr.focus, path, position)
+
+    if (shouldClampCrossBoundary) {
+      const anchorWasOnMerged = dr.anchor.path[0] === mergedBlockIndex
+      const focusWasOnMerged = dr.focus.path[0] === mergedBlockIndex
+
+      if (anchorWasOnMerged && !focusWasOnMerged) {
+        if (mergedBlockIndex < dr.focus.path[0]!) {
+          // Anchor before focus → clamp forward to next surviving block.
+          // After the decomposed remove_node, the block at
+          // mergedBlockIndex + 1 shifts down to mergedBlockIndex.
+          newAnchor = {path: [mergedBlockIndex, 0], offset: 0}
+        } else {
+          newAnchor = clampToBlockEnd(editor, mergedBlockIndex - 1) ?? newAnchor
+        }
+      } else if (focusWasOnMerged && !anchorWasOnMerged) {
+        if (mergedBlockIndex < dr.anchor.path[0]!) {
+          // Focus before anchor → clamp forward to next surviving block.
+          newFocus = {path: [mergedBlockIndex, 0], offset: 0}
+        } else {
+          newFocus = clampToBlockEnd(editor, mergedBlockIndex - 1) ?? newFocus
+        }
+      }
+    }
 
     if (pointEquals(newAnchor, dr.anchor) && pointEquals(newFocus, dr.focus)) {
       return dr
@@ -299,6 +332,23 @@ function transformTextDiffForMerge(
     id,
     path: transformPathForMerge(path, mergePath, position)!,
   }
+}
+
+function clampToBlockEnd(
+  editor: PortableTextSlateEditor,
+  blockIndex: number,
+): Point | null {
+  const block = editor.children[blockIndex]
+  if (!block || !isTextBlock({schema: editor.schema}, block)) {
+    return null
+  }
+  const lastIdx = block.children.length - 1
+  const lastChild = block.children[lastIdx]
+  const endOffset =
+    lastChild && isSpan({schema: editor.schema}, lastChild)
+      ? lastChild.text.length
+      : 0
+  return {path: [blockIndex, Math.max(lastIdx, 0)], offset: endOffset}
 }
 
 /**
