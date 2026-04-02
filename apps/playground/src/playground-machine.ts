@@ -420,6 +420,29 @@ export const playgroundMachine = setup({
         })
       },
     }),
+    'apply decoration shifts': assign({
+      rangeDecorations: ({context, event}) => {
+        assertEvent(event, 'editor.mutation')
+        const shifts = event.rangeDecorationShifts
+        if (!shifts || shifts.length === 0) return context.rangeDecorations
+
+        return context.rangeDecorations.flatMap((rangeDecoration) => {
+          const shift = shifts.find(
+            (s) => s.rangeDecoration.id === rangeDecoration.id,
+          )
+          if (!shift) return [rangeDecoration]
+
+          if (!shift.newSelection) return []
+
+          return [
+            {
+              ...rangeDecoration,
+              selection: shift.newSelection,
+            },
+          ]
+        })
+      },
+    }),
   },
   actors: {
     'editor machine': editorMachine,
@@ -452,6 +475,7 @@ export const playgroundMachine = setup({
         'update patch-derived value',
         'broadcast value',
         'add to patch feed',
+        'apply decoration shifts',
       ],
     },
     'clear patches': {

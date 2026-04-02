@@ -1,4 +1,4 @@
-import {isTextBlock} from '@portabletext/schema'
+import {isSpan, isTextBlock} from '@portabletext/schema'
 import {
   and,
   assign,
@@ -14,12 +14,17 @@ import {
   moveRangeBySplitAwareOperation,
 } from '../internal-utils/move-range-by-operation'
 import {slateRangeToSelection} from '../internal-utils/slate-utils'
-import {toSlateRange} from '../internal-utils/to-slate-range'
+import {
+  toSlateRange,
+  toSlateSelectionPoint,
+} from '../internal-utils/to-slate-range'
 import type {Node, NodeEntry} from '../slate/interfaces/node'
 import type {Operation} from '../slate/interfaces/operation'
+import type {Point} from '../slate/interfaces/point'
 import type {Range} from '../slate/interfaces/range'
 import {pathEquals} from '../slate/path/path-equals'
 import {comparePoints} from '../slate/point/compare-points'
+import {transformPoint} from '../slate/point/transform-point'
 import {isCollapsedRange} from '../slate/range/is-collapsed-range'
 import {isExpandedRange} from '../slate/range/is-expanded-range'
 import {isRange} from '../slate/range/is-range'
@@ -149,6 +154,92 @@ function mergeRangeDecorations(
     const existing = (leaf['rangeDecorations'] as RangeDecoration[]) ?? []
     leaf['rangeDecorations'] = [...existing, rangeDecoration as RangeDecoration]
   }
+}
+
+function getSlateBlockStartPoint(
+  children: Node[],
+  schema: EditorSchema,
+  blockIndex: number,
+): Point | null {
+  const block = children[blockIndex]
+  if (!block || !isTextBlock({schema}, block)) {
+    return null
+  }
+  return {path: [blockIndex, 0], offset: 0}
+}
+
+function getSlateBlockEndPoint(
+  children: Node[],
+  schema: EditorSchema,
+  blockIndex: number,
+): Point | null {
+  const block = children[blockIndex]
+  if (!block || !isTextBlock({schema}, block)) {
+    return null
+  }
+  const lastChildIdx = block.children.length - 1
+  if (lastChildIdx < 0) {
+    return null
+  }
+  const lastChild = block.children[lastChildIdx]
+  const offset = isSpan({schema}, lastChild) ? lastChild.text.length : 0
+  return {path: [blockIndex, lastChildIdx], offset}
+}
+
+/**
+ * When a block-level `remove_node` invalidates only one endpoint of a
+ * multi-block decoration, salvage the decoration by clamping the lost
+ * endpoint to the nearest surviving text-block boundary.
+ */
+function salvagePartiallyInvalidatedRange(
+  slateRange: Range,
+  operation: Operation,
+  children: Node[],
+  schema: EditorSchema,
+): Range | null {
+  if (operation.type !== 'remove_node' || operation.path.length !== 1) {
+    return null
+  }
+
+  const removedBlockIndex = operation.path[0]
+  if (removedBlockIndex === undefined) {
+    return null
+  }
+
+  const anchorOnRemoved = slateRange.anchor.path[0] === removedBlockIndex
+  const focusOnRemoved = slateRange.focus.path[0] === removedBlockIndex
+
+  if (anchorOnRemoved === focusOnRemoved) {
+    return null
+  }
+
+  if (anchorOnRemoved) {
+    const newFocus = transformPoint(slateRange.focus, operation)
+    if (!newFocus) {
+      return null
+    }
+    const anchorBeforeFocus = removedBlockIndex < slateRange.focus.path[0]!
+    const clampedAnchor = anchorBeforeFocus
+      ? getSlateBlockStartPoint(children, schema, removedBlockIndex)
+      : getSlateBlockEndPoint(children, schema, removedBlockIndex - 1)
+    if (!clampedAnchor) {
+      return null
+    }
+    return {anchor: clampedAnchor, focus: newFocus}
+  }
+
+  const newAnchor = transformPoint(slateRange.anchor, operation)
+  if (!newAnchor) {
+    return null
+  }
+  const focusBeforeAnchor = removedBlockIndex < slateRange.anchor.path[0]!
+  const clampedFocus = focusBeforeAnchor
+    ? getSlateBlockStartPoint(children, schema, removedBlockIndex)
+    : getSlateBlockEndPoint(children, schema, removedBlockIndex - 1)
+  if (!clampedFocus) {
+    return null
+  }
+  return {anchor: newAnchor, focus: clampedFocus}
 }
 
 export const rangeDecorationsMachine = setup({
@@ -385,6 +476,18 @@ export const rangeDecorationsMachine = setup({
           )
         }
 
+        // When a block-level remove_node invalidated only one endpoint,
+        // clamp the lost endpoint to the nearest surviving text-block
+        // boundary instead of dropping the entire decoration.
+        if (newRange === null) {
+          newRange = salvagePartiallyInvalidatedRange(
+            slateRange,
+            event.operation,
+            context.slateEditor.children,
+            context.schema,
+          )
+        }
+
         // Detect intermediate merge state: mergeContext is active and at
         // least one point is still on the deleted block (hasn't been mapped
         // to the target yet). In this state, slateRangeToSelection would
@@ -550,7 +653,7 @@ export const rangeDecorationsMachine = setup({
           previousSelection ?? rangeDecoration.selection
 
         // Re-resolve from EditorSelection keys against current document
-        const freshSlateRange = toSlateRange({
+        let freshSlateRange = toSlateRange({
           context: {
             schema: context.schema,
             value: context.slateEditor.children,
@@ -558,6 +661,50 @@ export const rangeDecorationsMachine = setup({
           },
           blockIndexMap: context.slateEditor.blockIndexMap,
         })
+
+        // When full resolution fails, try resolving each endpoint
+        // independently and clamping the missing one to the nearest
+        // surviving text-block boundary.
+        if (!isRange(freshSlateRange) && selectionForResolution) {
+          const snapshot = {
+            context: {
+              schema: context.schema,
+              value: context.slateEditor.children,
+            },
+            blockIndexMap: context.slateEditor.blockIndexMap,
+          }
+          const isBackward = selectionForResolution.backward === true
+          const anchorPoint = toSlateSelectionPoint(
+            snapshot,
+            selectionForResolution.anchor,
+            isBackward ? 'forward' : 'backward',
+          )
+          const focusPoint = toSlateSelectionPoint(
+            snapshot,
+            selectionForResolution.focus,
+            isBackward ? 'backward' : 'forward',
+          )
+
+          if (anchorPoint && !focusPoint) {
+            const clampedFocus = getSlateBlockEndPoint(
+              context.slateEditor.children,
+              context.schema,
+              anchorPoint.path[0]!,
+            )
+            if (clampedFocus) {
+              freshSlateRange = {anchor: anchorPoint, focus: clampedFocus}
+            }
+          } else if (focusPoint && !anchorPoint) {
+            const clampedAnchor = getSlateBlockStartPoint(
+              context.slateEditor.children,
+              context.schema,
+              focusPoint.path[0]!,
+            )
+            if (clampedAnchor) {
+              freshSlateRange = {anchor: clampedAnchor, focus: focusPoint}
+            }
+          }
+        }
 
         if (!isRange(freshSlateRange)) {
           if (previousRange !== null) {
@@ -800,11 +947,16 @@ export const rangeDecorationsMachine = setup({
     'ready': {
       initial: 'idle',
       on: {
-        'range decorations updated': {
-          target: '.idle',
-          guard: 'has different decorations',
-          actions: ['update range decorations', 'update decorate'],
-        },
+        'range decorations updated': [
+          {
+            target: '.idle',
+            guard: 'has different decorations',
+            actions: ['update range decorations', 'update decorate'],
+          },
+          {
+            actions: ['update decorate'],
+          },
+        ],
       },
       states: {
         'idle': {
