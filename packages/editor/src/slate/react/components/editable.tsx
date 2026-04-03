@@ -302,6 +302,23 @@ export const Editable = forwardRef(
               editor.focused = true
             } else {
               editor.focused = false
+
+              // Don't sync DOM selection to Slate when focus is completely
+              // outside the editor. On Firefox, after blur + DOM mutation
+              // (e.g., React re-render from a decorator toggle), the
+              // browser may collapse the DOM selection to an incorrect
+              // position because the nodes it was anchored to were
+              // replaced. Syncing this corrupted selection would overwrite
+              // the correct Slate selection that `handle focus` needs to
+              // restore.
+              //
+              // We still allow sync when `activeElement` is inside the
+              // editor element (e.g., an input inside a void node),
+              // because those selections reflect intentional user
+              // interaction within the editor's tree.
+              if (!el.contains(activeElement)) {
+                return
+              }
             }
 
             if (!domSelection) {
