@@ -50,7 +50,12 @@ export function defineSchema<const TSchemaDefinition extends SchemaDefinition>(
  */
 export type StyleDefinition<
   TBaseDefinition extends BaseDefinition = BaseDefinition,
-> = TBaseDefinition
+> = TBaseDefinition & {
+  decorators?: ReadonlyArray<{name: string}>
+  annotations?: ReadonlyArray<{name: string}>
+  lists?: ReadonlyArray<{name: string}>
+  inlineObjects?: ReadonlyArray<{name: string}>
+}
 
 /**
  * @public

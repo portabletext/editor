@@ -26,6 +26,10 @@ export type StyleSchemaType = BaseDefinition & {
    * Use `name` instead
    */
   value: string
+  decorators?: ReadonlyArray<DecoratorSchemaType>
+  annotations?: ReadonlyArray<AnnotationSchemaType>
+  lists?: ReadonlyArray<ListSchemaType>
+  inlineObjects?: ReadonlyArray<InlineObjectSchemaType>
 }
 
 /**

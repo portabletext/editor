@@ -34,10 +34,13 @@ function compileField(field: FieldDefinition): FieldDefinition {
  * @public
  */
 export function compileSchema(definition: SchemaDefinition): Schema {
-  const styles = (definition.styles ?? []).map((style) => ({
-    ...style,
-    value: style.name,
-  }))
+  const styles = (definition.styles ?? []).map((style) => {
+    const {decorators, annotations, lists, inlineObjects, ...rest} = style
+    return {
+      ...rest,
+      value: style.name,
+    }
+  })
 
   const blockFields: Array<FieldDefinition> = []
 
