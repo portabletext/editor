@@ -1,4 +1,5 @@
 import type {EditorSnapshot} from '../editor/editor-snapshot'
+import {getFocusTextBlock} from './selector.get-focus-text-block'
 import {getMarkState} from './selector.get-mark-state'
 
 export function getActiveDecorators(snapshot: EditorSnapshot) {
@@ -22,6 +23,18 @@ export function getActiveDecorators(snapshot: EditorSnapshot) {
       if (!activeDecorators.includes(decorator)) {
         activeDecorators.push(decorator)
       }
+    }
+  }
+
+  const focusBlock = getFocusTextBlock(snapshot)
+  if (focusBlock) {
+    const style = focusBlock.node.style
+    const styleType = style
+      ? snapshot.context.schema.styles.find((s) => s.name === style)
+      : undefined
+    if (styleType?.decorators) {
+      const allowedNames = styleType.decorators.map((d) => d.name)
+      return activeDecorators.filter((name) => allowedNames.includes(name))
     }
   }
 
