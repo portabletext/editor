@@ -1,4 +1,5 @@
 export {compileSchema} from './compile-schema'
+export {getStyleFeatures, type StyleFeatures} from './get-style-features'
 export {
   defineSchema,
   type AnnotationDefinition,
