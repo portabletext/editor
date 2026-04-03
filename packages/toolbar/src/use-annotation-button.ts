@@ -3,6 +3,10 @@ import {defineBehavior, effect, raise} from '@portabletext/editor/behaviors'
 import * as selectors from '@portabletext/editor/selectors'
 import {useActor} from '@xstate/react'
 import {fromCallback, setup, type AnyEventObject} from 'xstate'
+import {
+  annotationAvailabilityListener,
+  type AvailabilityListenerEvent,
+} from './availability-listener'
 import {disableListener, type DisableListenerEvent} from './disable-listener'
 import {useMutuallyExclusiveAnnotation} from './use-mutually-exclusive-annotation'
 import type {ToolbarAnnotationSchemaType} from './use-toolbar-schema'
@@ -103,6 +107,7 @@ const annotationButtonMachine = setup({
     },
     events: {} as
       | AnnotationButtonEvent
+      | AvailabilityListenerEvent
       | DisableListenerEvent
       | {type: 'set active'}
       | {type: 'set inactive'},
@@ -134,6 +139,7 @@ const annotationButtonMachine = setup({
   },
   actors: {
     'active listener': activeListener,
+    'availability listener': annotationAvailabilityListener,
     'disable listener': disableListener,
     'keyboard shortcut.remove': keyboardShortcutRemove,
     'keyboard shortcut.show insert dialog': keyboardShortcutShowInsertDialog,
@@ -153,6 +159,13 @@ const annotationButtonMachine = setup({
       }),
     },
     {
+      src: 'availability listener',
+      input: ({context}) => ({
+        editor: context.editor,
+        annotationName: context.schemaType.name,
+      }),
+    },
+    {
       src: 'disable listener',
       input: ({context}) => ({
         editor: context.editor,
@@ -167,6 +180,9 @@ const annotationButtonMachine = setup({
       states: {
         inactive: {
           on: {
+            'available': {
+              target: '#annotation button.enabled.inactive',
+            },
             'enable': {
               target: '#annotation button.enabled.inactive',
             },
@@ -177,6 +193,9 @@ const annotationButtonMachine = setup({
         },
         active: {
           on: {
+            'available': {
+              target: '#annotation button.enabled.active',
+            },
             'enable': {
               target: '#annotation button.enabled.active',
             },
@@ -193,6 +212,9 @@ const annotationButtonMachine = setup({
         inactive: {
           initial: 'idle',
           on: {
+            'unavailable': {
+              target: '#annotation button.disabled.inactive',
+            },
             'disable': {
               target: '#annotation button.disabled.inactive',
             },
@@ -238,6 +260,9 @@ const annotationButtonMachine = setup({
           on: {
             'set inactive': {
               target: '#annotation button.enabled.inactive',
+            },
+            'unavailable': {
+              target: '#annotation button.disabled.active',
             },
             'disable': {
               target: '#annotation button.disabled.active',

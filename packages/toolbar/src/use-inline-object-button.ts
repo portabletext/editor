@@ -2,6 +2,10 @@ import {useEditor, type Editor} from '@portabletext/editor'
 import {defineBehavior, effect} from '@portabletext/editor/behaviors'
 import {useActor} from '@xstate/react'
 import {fromCallback, setup, type AnyEventObject} from 'xstate'
+import {
+  inlineObjectAvailabilityListener,
+  type AvailabilityListenerEvent,
+} from './availability-listener'
 import {disableListener, type DisableListenerEvent} from './disable-listener'
 import type {ToolbarInlineObjectSchemaType} from './use-toolbar-schema'
 
@@ -41,7 +45,10 @@ const inlineObjectButtonMachine = setup({
       editor: Editor
       schemaType: ToolbarInlineObjectSchemaType
     },
-    events: {} as DisableListenerEvent | InlineObjectButtonEvent,
+    events: {} as
+      | AvailabilityListenerEvent
+      | DisableListenerEvent
+      | InlineObjectButtonEvent,
   },
   actions: {
     insert: ({context, event}) => {
@@ -60,6 +67,7 @@ const inlineObjectButtonMachine = setup({
     },
   },
   actors: {
+    'availability listener': inlineObjectAvailabilityListener,
     'disable listener': disableListener,
     'keyboard shortcut listener': keyboardShortcutListener,
   },
@@ -74,11 +82,21 @@ const inlineObjectButtonMachine = setup({
       src: 'disable listener',
       input: ({context}) => ({editor: context.editor}),
     },
+    {
+      src: 'availability listener',
+      input: ({context}) => ({
+        editor: context.editor,
+        inlineObjectName: context.schemaType.name,
+      }),
+    },
   ],
   initial: 'disabled',
   states: {
     disabled: {
       on: {
+        available: {
+          target: 'enabled',
+        },
         enable: {
           target: 'enabled',
         },
@@ -86,6 +104,9 @@ const inlineObjectButtonMachine = setup({
     },
     enabled: {
       on: {
+        unavailable: {
+          target: 'disabled',
+        },
         disable: {
           target: 'disabled',
         },

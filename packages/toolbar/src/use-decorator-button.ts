@@ -6,6 +6,10 @@ import {
 import * as selectors from '@portabletext/editor/selectors'
 import {useActor} from '@xstate/react'
 import {fromCallback, setup, type AnyEventObject} from 'xstate'
+import {
+  decoratorAvailabilityListener,
+  type AvailabilityListenerEvent,
+} from './availability-listener'
 import {disableListener, type DisableListenerEvent} from './disable-listener'
 import {useDecoratorKeyboardShortcut} from './use-decorator-keyboard-shortcut'
 import {useMutuallyExclusiveDecorator} from './use-mutually-exclusive-decorator'
@@ -48,7 +52,10 @@ const decoratorButtonMachine = setup({
       editor: Editor
       schemaType: DecoratorSchemaType
     },
-    events: {} as DisableListenerEvent | DecoratorButtonEvent,
+    events: {} as
+      | AvailabilityListenerEvent
+      | DisableListenerEvent
+      | DecoratorButtonEvent,
   },
   actions: {
     toggle: ({context, event}) => {
@@ -64,6 +71,7 @@ const decoratorButtonMachine = setup({
     },
   },
   actors: {
+    'availability listener': decoratorAvailabilityListener,
     'disable listener': disableListener,
     'active listener': activeListener,
   },
@@ -82,6 +90,13 @@ const decoratorButtonMachine = setup({
         schemaType: context.schemaType,
       }),
     },
+    {
+      src: 'availability listener',
+      input: ({context}) => ({
+        editor: context.editor,
+        decoratorName: context.schemaType.name,
+      }),
+    },
   ],
   initial: 'disabled',
   states: {
@@ -90,6 +105,9 @@ const decoratorButtonMachine = setup({
       states: {
         inactive: {
           on: {
+            'available': {
+              target: '#decorator button.enabled.inactive',
+            },
             'enable': {
               target: '#decorator button.enabled.inactive',
             },
@@ -100,6 +118,9 @@ const decoratorButtonMachine = setup({
         },
         active: {
           on: {
+            'available': {
+              target: '#decorator button.enabled.active',
+            },
             'enable': {
               target: '#decorator button.enabled.active',
             },
@@ -120,6 +141,9 @@ const decoratorButtonMachine = setup({
       states: {
         inactive: {
           on: {
+            'unavailable': {
+              target: '#decorator button.disabled.inactive',
+            },
             'disable': {
               target: '#decorator button.disabled.inactive',
             },
@@ -130,6 +154,9 @@ const decoratorButtonMachine = setup({
         },
         active: {
           on: {
+            'unavailable': {
+              target: '#decorator button.disabled.active',
+            },
             'disable': {
               target: '#decorator button.disabled.active',
             },
