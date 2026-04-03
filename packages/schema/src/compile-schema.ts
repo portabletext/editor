@@ -4,6 +4,7 @@ import type {
   ObjectOfDefinition,
   OfDefinition,
   Schema,
+  StyleSchemaType,
 } from './schema'
 
 function compileOfMember(member: OfDefinition): OfDefinition {
@@ -34,13 +35,72 @@ function compileField(field: FieldDefinition): FieldDefinition {
  * @public
  */
 export function compileSchema(definition: SchemaDefinition): Schema {
-  const styles = (definition.styles ?? []).map((style) => {
-    const {decorators, annotations, lists, inlineObjects, ...rest} = style
-    return {
-      ...rest,
-      value: style.name,
-    }
-  })
+  const topLevelDecorators = (definition.decorators ?? []).map((decorator) => ({
+    ...decorator,
+    value: decorator.name,
+  }))
+  const topLevelAnnotations = (definition.annotations ?? []).map(
+    (annotation) => ({
+      ...annotation,
+      fields: annotation.fields?.map(compileField) ?? [],
+    }),
+  )
+  const topLevelLists = (definition.lists ?? []).map((list) => ({
+    ...list,
+    value: list.name,
+  }))
+  const topLevelInlineObjects = (definition.inlineObjects ?? []).map(
+    (inlineObject) => ({
+      ...inlineObject,
+      fields: inlineObject.fields?.map(compileField) ?? [],
+    }),
+  )
+
+  const styles: Array<StyleSchemaType> = (definition.styles ?? []).map(
+    (style) => {
+      const {
+        decorators: styleDecorators,
+        annotations: styleAnnotations,
+        lists: styleLists,
+        inlineObjects: styleInlineObjects,
+        ...rest
+      } = style
+
+      const compiled: StyleSchemaType = {
+        ...rest,
+        value: style.name,
+      }
+
+      if (styleDecorators) {
+        compiled.decorators = styleDecorators.map((ref) => {
+          const found = topLevelDecorators.find((d) => d.name === ref.name)
+          return found ?? {...ref, value: ref.name}
+        })
+      }
+      if (styleAnnotations) {
+        compiled.annotations = styleAnnotations.map((ref) => {
+          const found = topLevelAnnotations.find((a) => a.name === ref.name)
+          return found ?? {...ref, fields: []}
+        })
+      }
+      if (styleLists) {
+        compiled.lists = styleLists.map((ref) => {
+          const found = topLevelLists.find((l) => l.name === ref.name)
+          return found ?? {...ref, value: ref.name}
+        })
+      }
+      if (styleInlineObjects) {
+        compiled.inlineObjects = styleInlineObjects.map((ref) => {
+          const found = topLevelInlineObjects.find(
+            (io) => io.name === ref.name,
+          )
+          return found ?? {...ref, fields: []}
+        })
+      }
+
+      return compiled
+    },
+  )
 
   const blockFields: Array<FieldDefinition> = []
 
@@ -76,25 +136,13 @@ export function compileSchema(definition: SchemaDefinition): Schema {
     styles: !styles.some((style) => style.value === 'normal')
       ? [{value: 'normal', name: 'normal', title: 'Normal'}, ...styles]
       : styles,
-    lists: (definition.lists ?? []).map((list) => ({
-      ...list,
-      value: list.name,
-    })),
-    decorators: (definition.decorators ?? []).map((decorator) => ({
-      ...decorator,
-      value: decorator.name,
-    })),
-    annotations: (definition.annotations ?? []).map((annotation) => ({
-      ...annotation,
-      fields: annotation.fields?.map(compileField) ?? [],
-    })),
+    lists: topLevelLists,
+    decorators: topLevelDecorators,
+    annotations: topLevelAnnotations,
     blockObjects: (definition.blockObjects ?? []).map((blockObject) => ({
       ...blockObject,
       fields: blockObject.fields?.map(compileField) ?? [],
     })),
-    inlineObjects: (definition.inlineObjects ?? []).map((inlineObject) => ({
-      ...inlineObject,
-      fields: inlineObject.fields?.map(compileField) ?? [],
-    })),
+    inlineObjects: topLevelInlineObjects,
   }
 }

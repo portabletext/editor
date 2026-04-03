@@ -183,4 +183,89 @@ describe(compileSchema.name, () => {
       ])
     })
   })
+
+  describe('per-style restrictions', () => {
+    test('style with decorator restrictions compiles correctly', () => {
+      const schema = compileSchema({
+        decorators: [{name: 'strong'}, {name: 'em'}],
+        annotations: [{name: 'link', fields: [{name: 'href', type: 'string'}]}],
+        styles: [
+          {name: 'normal'},
+          {name: 'h1', decorators: [], annotations: []},
+        ],
+      })
+
+      const h1Style = schema.styles.find((s) => s.name === 'h1')
+      const normalStyle = schema.styles.find((s) => s.name === 'normal')
+
+      expect(h1Style?.decorators).toEqual([])
+      expect(h1Style?.annotations).toEqual([])
+      expect(normalStyle?.decorators).toBeUndefined()
+      expect(normalStyle?.annotations).toBeUndefined()
+    })
+
+    test('style with partial decorator restrictions compiles correctly', () => {
+      const schema = compileSchema({
+        decorators: [{name: 'strong'}, {name: 'em'}, {name: 'underline'}],
+        styles: [
+          {name: 'normal'},
+          {name: 'h2', decorators: [{name: 'em'}]},
+        ],
+      })
+
+      const h2Style = schema.styles.find((s) => s.name === 'h2')
+
+      expect(h2Style?.decorators).toEqual([
+        {name: 'em', value: 'em'},
+      ])
+    })
+
+    test('style restrictions resolve full types from top-level definitions', () => {
+      const schema = compileSchema({
+        annotations: [
+          {name: 'link', fields: [{name: 'href', type: 'string'}]},
+          {name: 'comment', fields: [{name: 'text', type: 'string'}]},
+        ],
+        styles: [
+          {name: 'normal'},
+          {name: 'blockquote', annotations: [{name: 'link'}]},
+        ],
+      })
+
+      const bqStyle = schema.styles.find((s) => s.name === 'blockquote')
+
+      expect(bqStyle?.annotations).toEqual([
+        {name: 'link', fields: [{name: 'href', type: 'string'}]},
+      ])
+    })
+
+    test('style with list and inline object restrictions', () => {
+      const schema = compileSchema({
+        lists: [{name: 'bullet'}, {name: 'number'}],
+        inlineObjects: [{name: 'stock-ticker', fields: [{name: 'symbol', type: 'string'}]}],
+        styles: [
+          {name: 'normal'},
+          {name: 'h1', lists: [], inlineObjects: []},
+        ],
+      })
+
+      const h1Style = schema.styles.find((s) => s.name === 'h1')
+
+      expect(h1Style?.lists).toEqual([])
+      expect(h1Style?.inlineObjects).toEqual([])
+    })
+
+    test('styles without restrictions are unchanged', () => {
+      const schema = compileSchema({
+        decorators: [{name: 'strong'}],
+        styles: [{name: 'normal'}, {name: 'h1'}],
+      })
+
+      const normalStyle = schema.styles.find((s) => s.name === 'normal')
+      const h1Style = schema.styles.find((s) => s.name === 'h1')
+
+      expect(normalStyle?.decorators).toBeUndefined()
+      expect(h1Style?.decorators).toBeUndefined()
+    })
+  })
 })
