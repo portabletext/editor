@@ -15,7 +15,7 @@ Feature({
           annotations: [{name: 'link'}],
           styles: [
             {name: 'normal'},
-            {name: 'h1', decorators: [], annotations: []},
+            {name: 'h1', decorators: [], annotations: [], lists: []},
             {name: 'h2', decorators: [{name: 'em'}]},
             {name: 'blockquote'},
           ],
