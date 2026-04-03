@@ -1,6 +1,10 @@
-import type {SchemaDefinition} from './define-schema'
+import type {SchemaDefinition, StyleDefinition} from './define-schema'
 import type {
+  AnnotationSchemaType,
+  DecoratorSchemaType,
   FieldDefinition,
+  InlineObjectSchemaType,
+  ListSchemaType,
   ObjectOfDefinition,
   OfDefinition,
   Schema,
@@ -35,6 +39,8 @@ function compileField(field: FieldDefinition): FieldDefinition {
  * @public
  */
 export function compileSchema(definition: SchemaDefinition): Schema {
+  // The `value` field is a deprecated alias for `name` kept for
+  // backwards compatibility with existing consumers.
   const topLevelDecorators = (definition.decorators ?? []).map((decorator) => ({
     ...decorator,
     value: decorator.name,
@@ -56,50 +62,13 @@ export function compileSchema(definition: SchemaDefinition): Schema {
     }),
   )
 
-  const styles: Array<StyleSchemaType> = (definition.styles ?? []).map(
-    (style) => {
-      const {
-        decorators: styleDecorators,
-        annotations: styleAnnotations,
-        lists: styleLists,
-        inlineObjects: styleInlineObjects,
-        ...rest
-      } = style
-
-      const compiled: StyleSchemaType = {
-        ...rest,
-        value: style.name,
-      }
-
-      if (styleDecorators) {
-        compiled.decorators = styleDecorators.map((ref) => {
-          const found = topLevelDecorators.find((d) => d.name === ref.name)
-          return found ?? {...ref, value: ref.name}
-        })
-      }
-      if (styleAnnotations) {
-        compiled.annotations = styleAnnotations.map((ref) => {
-          const found = topLevelAnnotations.find((a) => a.name === ref.name)
-          return found ?? {...ref, fields: []}
-        })
-      }
-      if (styleLists) {
-        compiled.lists = styleLists.map((ref) => {
-          const found = topLevelLists.find((l) => l.name === ref.name)
-          return found ?? {...ref, value: ref.name}
-        })
-      }
-      if (styleInlineObjects) {
-        compiled.inlineObjects = styleInlineObjects.map((ref) => {
-          const found = topLevelInlineObjects.find(
-            (io) => io.name === ref.name,
-          )
-          return found ?? {...ref, fields: []}
-        })
-      }
-
-      return compiled
-    },
+  const styles = (definition.styles ?? []).map((style) =>
+    compileStyle(style, {
+      topLevelDecorators,
+      topLevelAnnotations,
+      topLevelLists,
+      topLevelInlineObjects,
+    }),
   )
 
   const blockFields: Array<FieldDefinition> = []
@@ -145,4 +114,56 @@ export function compileSchema(definition: SchemaDefinition): Schema {
     })),
     inlineObjects: topLevelInlineObjects,
   }
+}
+
+/**
+ * Compiles a style definition into a `StyleSchemaType`. Per-style restriction
+ * references (which only carry a `name`) are resolved against the already-
+ * compiled top-level arrays to produce the full schema types.
+ */
+function compileStyle(
+  style: StyleDefinition,
+  topLevel: {
+    topLevelDecorators: ReadonlyArray<DecoratorSchemaType>
+    topLevelAnnotations: ReadonlyArray<AnnotationSchemaType>
+    topLevelLists: ReadonlyArray<ListSchemaType>
+    topLevelInlineObjects: ReadonlyArray<InlineObjectSchemaType>
+  },
+): StyleSchemaType {
+  const {decorators, annotations, lists, inlineObjects, ...rest} = style
+
+  const compiled: StyleSchemaType = {
+    ...rest,
+    value: style.name,
+  }
+
+  if (decorators) {
+    compiled.decorators = resolveRefs(decorators, topLevel.topLevelDecorators)
+  }
+  if (annotations) {
+    compiled.annotations = resolveRefs(
+      annotations,
+      topLevel.topLevelAnnotations,
+    )
+  }
+  if (lists) {
+    compiled.lists = resolveRefs(lists, topLevel.topLevelLists)
+  }
+  if (inlineObjects) {
+    compiled.inlineObjects = resolveRefs(
+      inlineObjects,
+      topLevel.topLevelInlineObjects,
+    )
+  }
+
+  return compiled
+}
+
+function resolveRefs<T extends {name: string}>(
+  refs: ReadonlyArray<{name: string}>,
+  topLevel: ReadonlyArray<T>,
+): Array<T> {
+  return refs.map(
+    (ref) => topLevel.find((item) => item.name === ref.name) ?? (ref as T),
+  )
 }

@@ -186,6 +186,9 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
     }
   }
 
+  /**
+   * Remove marks not allowed by the block's per-style restrictions
+   */
   if (isSpan({schema: editor.schema}, node)) {
     const blockPath = parentPath(path)
     const blockEntry = getTextBlockNode(editor, blockPath)
@@ -226,7 +229,9 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
         })
 
         if (filteredMarks.length !== marks.length) {
-          debug.normalization('removing marks not allowed by style restrictions')
+          debug.normalization(
+            'removing marks not allowed by style restrictions',
+          )
           applySetNode(editor, {marks: filteredMarks}, path)
           return
         }

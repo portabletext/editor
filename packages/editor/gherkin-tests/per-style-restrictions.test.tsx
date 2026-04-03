@@ -1,10 +1,10 @@
 import {defineSchema} from '@portabletext/schema'
 import {Before} from 'racejar'
 import {Feature} from 'racejar/vitest'
+import perStyleRestrictionsFeature from '../gherkin-spec/per-style-restrictions.feature?raw'
 import {parameterTypes} from '../src/test'
 import {createTestEditor, stepDefinitions} from '../src/test/vitest'
 import type {Context} from '../src/test/vitest/step-context'
-import perStyleRestrictionsFeature from '../gherkin-spec/per-style-restrictions.feature?raw'
 
 Feature({
   hooks: [

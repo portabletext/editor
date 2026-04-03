@@ -7,10 +7,18 @@ describe(getStyleFeatures.name, () => {
     decorators: [{name: 'strong'}, {name: 'em'}],
     annotations: [{name: 'link', fields: [{name: 'href', type: 'string'}]}],
     lists: [{name: 'bullet'}, {name: 'number'}],
-    inlineObjects: [{name: 'stock-ticker', fields: [{name: 'symbol', type: 'string'}]}],
+    inlineObjects: [
+      {name: 'stock-ticker', fields: [{name: 'symbol', type: 'string'}]},
+    ],
     styles: [
       {name: 'normal'},
-      {name: 'h1', decorators: [], annotations: [], lists: [], inlineObjects: []},
+      {
+        name: 'h1',
+        decorators: [],
+        annotations: [],
+        lists: [],
+        inlineObjects: [],
+      },
       {name: 'h2', decorators: [{name: 'em'}]},
     ],
   })

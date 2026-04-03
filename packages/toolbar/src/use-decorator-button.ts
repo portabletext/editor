@@ -94,7 +94,7 @@ const decoratorButtonMachine = setup({
       src: 'availability listener',
       input: ({context}) => ({
         editor: context.editor,
-        decoratorName: context.schemaType.name,
+        featureName: context.schemaType.name,
       }),
     },
   ],

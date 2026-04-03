@@ -46,15 +46,23 @@ export function defineSchema<const TSchemaDefinition extends SchemaDefinition>(
 }
 
 /**
+ * A reference to a top-level schema feature by name. Used in per-style
+ * restriction arrays to indicate which features a style allows.
+ *
+ * @public
+ */
+export type FeatureRef = {name: string}
+
+/**
  * @public
  */
 export type StyleDefinition<
   TBaseDefinition extends BaseDefinition = BaseDefinition,
 > = TBaseDefinition & {
-  decorators?: ReadonlyArray<{name: string}>
-  annotations?: ReadonlyArray<{name: string}>
-  lists?: ReadonlyArray<{name: string}>
-  inlineObjects?: ReadonlyArray<{name: string}>
+  decorators?: ReadonlyArray<FeatureRef>
+  annotations?: ReadonlyArray<FeatureRef>
+  lists?: ReadonlyArray<FeatureRef>
+  inlineObjects?: ReadonlyArray<FeatureRef>
 }
 
 /**

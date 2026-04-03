@@ -24,10 +24,10 @@ export function getDirtyIndexedPaths(
       const {path} = op
       const levels = pathLevels(path)
 
+      // When set_node replaces a child array field, the new children
+      // need normalization. Dirty their paths and their descendants'
+      // paths so the normalizer visits them.
       if (op.type === 'set_node') {
-        // When set_node replaces a child array field, the new children
-        // need normalization. Dirty their paths and their descendants'
-        // paths so the normalizer visits them.
         const childFieldName = getChildFieldName(context, path)
 
         if (childFieldName) {

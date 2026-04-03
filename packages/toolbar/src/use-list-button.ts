@@ -46,7 +46,10 @@ const listButtonMachine = setup({
       editor: Editor
       schemaType: ListSchemaType
     },
-    events: {} as AvailabilityListenerEvent | DisableListenerEvent | ListButtonEvent,
+    events: {} as
+      | AvailabilityListenerEvent
+      | DisableListenerEvent
+      | ListButtonEvent,
   },
   actions: {
     toggle: ({context, event}) => {
@@ -85,7 +88,7 @@ const listButtonMachine = setup({
       src: 'availability listener',
       input: ({context}) => ({
         editor: context.editor,
-        listName: context.schemaType.name,
+        featureName: context.schemaType.name,
       }),
     },
   ],

@@ -207,17 +207,12 @@ describe(compileSchema.name, () => {
     test('style with partial decorator restrictions compiles correctly', () => {
       const schema = compileSchema({
         decorators: [{name: 'strong'}, {name: 'em'}, {name: 'underline'}],
-        styles: [
-          {name: 'normal'},
-          {name: 'h2', decorators: [{name: 'em'}]},
-        ],
+        styles: [{name: 'normal'}, {name: 'h2', decorators: [{name: 'em'}]}],
       })
 
       const h2Style = schema.styles.find((s) => s.name === 'h2')
 
-      expect(h2Style?.decorators).toEqual([
-        {name: 'em', value: 'em'},
-      ])
+      expect(h2Style?.decorators).toEqual([{name: 'em', value: 'em'}])
     })
 
     test('style restrictions resolve full types from top-level definitions', () => {
@@ -242,11 +237,10 @@ describe(compileSchema.name, () => {
     test('style with list and inline object restrictions', () => {
       const schema = compileSchema({
         lists: [{name: 'bullet'}, {name: 'number'}],
-        inlineObjects: [{name: 'stock-ticker', fields: [{name: 'symbol', type: 'string'}]}],
-        styles: [
-          {name: 'normal'},
-          {name: 'h1', lists: [], inlineObjects: []},
+        inlineObjects: [
+          {name: 'stock-ticker', fields: [{name: 'symbol', type: 'string'}]},
         ],
+        styles: [{name: 'normal'}, {name: 'h1', lists: [], inlineObjects: []}],
       })
 
       const h1Style = schema.styles.find((s) => s.name === 'h1')

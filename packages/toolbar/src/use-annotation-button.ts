@@ -162,7 +162,7 @@ const annotationButtonMachine = setup({
       src: 'availability listener',
       input: ({context}) => ({
         editor: context.editor,
-        annotationName: context.schemaType.name,
+        featureName: context.schemaType.name,
       }),
     },
     {

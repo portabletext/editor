@@ -86,7 +86,7 @@ const inlineObjectButtonMachine = setup({
       src: 'availability listener',
       input: ({context}) => ({
         editor: context.editor,
-        inlineObjectName: context.schemaType.name,
+        featureName: context.schemaType.name,
       }),
     },
   ],

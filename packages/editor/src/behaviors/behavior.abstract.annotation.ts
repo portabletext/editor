@@ -2,6 +2,7 @@ import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
 import {isActiveAnnotation} from '../selectors/selector.is-active-annotation'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
+import {isAnnotationAllowedByStyle} from './behavior.utils.style-feature-allowed'
 
 export const abstractAnnotationBehaviors = [
   defineBehavior({
@@ -100,7 +101,17 @@ export const abstractAnnotationBehaviors = [
         },
       }
 
-      return !isActiveAnnotation(event.annotation.name)(adjustedSnapshot)
+      if (isActiveAnnotation(event.annotation.name)(adjustedSnapshot)) {
+        return false
+      }
+
+      if (
+        !isAnnotationAllowedByStyle(adjustedSnapshot, event.annotation.name)
+      ) {
+        return false
+      }
+
+      return true
     },
     actions: [
       ({event}) => [

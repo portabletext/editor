@@ -5,6 +5,7 @@ export {
   type AnnotationDefinition,
   type BlockObjectDefinition,
   type DecoratorDefinition,
+  type FeatureRef,
   type InlineObjectDefinition,
   type ListDefinition,
   type SchemaDefinition,
