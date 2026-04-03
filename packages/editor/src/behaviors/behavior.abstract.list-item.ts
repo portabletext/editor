@@ -1,3 +1,4 @@
+import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
 import {getSelectedTextBlocks} from '../selectors/selector.get-selected-text-blocks'
 import {isActiveListItem} from '../selectors/selector.is-active-list-item'
 import {raise} from './behavior.types.action'
@@ -13,6 +14,20 @@ export const abstractListItemBehaviors = [
         )
       ) {
         return false
+      }
+
+      const focusTextBlock = getFocusTextBlock(snapshot)
+      if (focusTextBlock) {
+        const style = focusTextBlock.node.style
+        const styleType = style
+          ? snapshot.context.schema.styles.find((s) => s.name === style)
+          : undefined
+        if (
+          styleType?.lists &&
+          !styleType.lists.some((l) => l.name === event.listItem)
+        ) {
+          return false
+        }
       }
 
       const selectedTextBlocks = getSelectedTextBlocks(snapshot)
