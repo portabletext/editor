@@ -1,1 +1,1 @@
-export {SDKValuePlugin} from './plugin.sdk-value'
+export {SDKValuePlugin, ValueSyncPlugin} from './plugin.sdk-value'

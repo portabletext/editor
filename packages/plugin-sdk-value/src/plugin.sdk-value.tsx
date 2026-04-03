@@ -339,12 +339,25 @@ export function SDKValuePlugin(props: SDKValuePluginProps) {
   )
 }
 
+/**
+ * @internal
+ */
 type ValueSyncConfig = {
   getRemoteValue: () => PortableTextBlock[] | null | undefined
   pushValue: (value: PortableTextBlock[]) => void
   onRemoteValueChange: (callback: () => void) => () => void
 }
 
+/**
+ * NOTE: You are probably looking for SDKValuePlugin instead of this.
+ * This is a lower-level plugin that only handles syncing the value
+ * between the editor and a remote source. It does not know anything
+ * about Sanity documents or how to fetch/update them.
+ *
+ * May be removed in the future, do not rely on this directly.
+ *
+ * @internal
+ */
 export function ValueSyncPlugin(props: ValueSyncConfig) {
   const {getRemoteValue, pushValue, onRemoteValueChange} = props
   const editor = useEditor()
