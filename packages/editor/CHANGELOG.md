@@ -1,5 +1,35 @@
 # Changelog
 
+## 6.6.1
+
+### Patch Changes
+
+- [#2431](https://github.com/portabletext/editor/pull/2431) [`1f14d95`](https://github.com/portabletext/editor/commit/1f14d9503d129d96554b04efce3bf11c6175fd4e) Thanks [@christianhg](https://github.com/christianhg)! - fix: allow unsetting `text` prop on spans
+
+- [#2440](https://github.com/portabletext/editor/pull/2440) [`1883b7c`](https://github.com/portabletext/editor/commit/1883b7ccfc197d8f40ca965d4a5c8d5875001846) Thanks [@christianhg](https://github.com/christianhg)! - fix: simplify internal child normalisation logic
+
+- [#2452](https://github.com/portabletext/editor/pull/2452) [`550ab67`](https://github.com/portabletext/editor/commit/550ab67d7030a6a2860221877a5c71f8553a58ae) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update dependency xstate to ^5.30.0
+
+- [#2455](https://github.com/portabletext/editor/pull/2455) [`ef6daba`](https://github.com/portabletext/editor/commit/ef6dabae69e60abe6c3a35f9716f63fc53b1f73c) Thanks [@christianhg](https://github.com/christianhg)! - fix: re-apply DOM selection after focus to prevent WebKit selection race
+
+- [#2439](https://github.com/portabletext/editor/pull/2439) [`388ccd3`](https://github.com/portabletext/editor/commit/388ccd39a4d63df1dda2cc99aea741d0a98510ed) Thanks [@christianhg](https://github.com/christianhg)! - fix: clean up internal "inline node" checks
+
+- [#2443](https://github.com/portabletext/editor/pull/2443) [`b849bc7`](https://github.com/portabletext/editor/commit/b849bc7120815fd8e3c9b8874371a6f34d21e374) Thanks [@christianhg](https://github.com/christianhg)! - fix: make unique key handling container-aware
+
+- [#2444](https://github.com/portabletext/editor/pull/2444) [`69d82a3`](https://github.com/portabletext/editor/commit/69d82a3e34653b4b12f72a954f3d2e580838ccb2) Thanks [@christianhg](https://github.com/christianhg)! - fix: internal tree modification for nested editor content
+
+- [#2444](https://github.com/portabletext/editor/pull/2444) [`0250fe0`](https://github.com/portabletext/editor/commit/0250fe0e6ff6f29e52fc15ceaa3e295c33430003) Thanks [@christianhg](https://github.com/christianhg)! - fix: internal normalization for nested editor content
+
+- [#2434](https://github.com/portabletext/editor/pull/2434) [`6334c3a`](https://github.com/portabletext/editor/commit/6334c3a8b616cccc21f2be899b3d887af9442bd4) Thanks [@christianhg](https://github.com/christianhg)! - fix: allow setting and unsetting `children` on text blocks
+
+- [#2435](https://github.com/portabletext/editor/pull/2435) [`9ac3212`](https://github.com/portabletext/editor/commit/9ac3212c6d7e3c14461c3c5adef9254f69afa4c2) Thanks [@christianhg](https://github.com/christianhg)! - fix(deps): remove `@juggle/resize-observer`
+
+  All modern browsers support `ResizeObserver`.
+
+- [#2442](https://github.com/portabletext/editor/pull/2442) [`995adc6`](https://github.com/portabletext/editor/commit/995adc68d3351332c6c1f2bb82432a5e85bc6d38) Thanks [@christianhg](https://github.com/christianhg)! - fix: make schema normalization container-aware
+
+- [#2453](https://github.com/portabletext/editor/pull/2453) [`0464f65`](https://github.com/portabletext/editor/commit/0464f65bb76403b1bce7cfaeaa4ceb09b6596e50) Thanks [@christianhg](https://github.com/christianhg)! - fix(perf): improve performance of bulk block insertions
+
 ## 6.6.0
 
 ### Minor Changes
