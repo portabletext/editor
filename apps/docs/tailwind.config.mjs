@@ -1,4 +1,5 @@
 import starlightPlugin from '@astrojs/starlight-tailwind'
+import tailwindcssAnimate from 'tailwindcss-animate'
 
 // Generated color palettes
 const accent = {
@@ -71,5 +72,5 @@ export default {
       },
     },
   },
-  plugins: [require('tailwindcss-animate'), starlightPlugin()],
+  plugins: [tailwindcssAnimate, starlightPlugin()],
 }
