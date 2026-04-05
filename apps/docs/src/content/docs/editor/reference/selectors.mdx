@@ -1,5 +1,5 @@
 ---
-title: Selectors API Overview
+title: Selectors API overview
 description: Selectors reference
 prev: false
 next: false
@@ -32,35 +32,35 @@ Selectors are commonly used for creating behaviors and toolbar components.
 Unsure what a "span" is or what "focus" means in this context? Check the [common terms](/editor/concepts/portabletext/#common-terms) section.
 :::
 
-## Condition Selectors
+## Condition selectors
 
 Condition selectors return a boolean or truthy value based on the current editor state.
 
-### Active State Conditions
+### Active state conditions
 
 - `isActiveAnnotation(name)` - Returns `true` if the specified annotation is active in the selection
 - `isActiveDecorator(name)` - Returns `true` if the specified decorator is active in the selection
 - `isActiveListItem(name)` - Returns `true` if the specified list type is active
 - `isActiveStyle(name)` - Returns `true` if the specified style is active
 
-### Selection Conditions
+### Selection conditions
 
 - `isSelectionCollapsed` - Returns `true` if the selection is collapsed (cursor with no range)
 - `isSelectionExpanded` - Returns `true` if the selection spans multiple characters
 
-### Position Conditions
+### Position conditions
 
 - `isAtTheStartOfBlock` - Returns `true` if the cursor is at the start of a block
 - `isAtTheEndOfBlock` - Returns `true` if the cursor is at the end of a block
 - `isSelectingEntireBlocks` - Returns `true` if entire blocks are selected
 
-### Range Conditions
+### Range conditions
 
 - `isOverlappingSelection` - Returns `true` if selections overlap
 - `isPointBeforeSelection` - Returns `true` if a point is before the current selection
 - `isPointAfterSelection` - Returns `true` if a point is after the current selection
 
-## Block Selectors
+## Block selectors
 
 Retrieve block-level elements from the editor.
 
@@ -71,18 +71,18 @@ Retrieve block-level elements from the editor.
 - `getNextBlock` - Get the block after the current focus block
 - `getPreviousBlock` - Get the block before the current focus block
 
-### Focus & Anchor
+### Focus & anchor
 
 - `getAnchorBlock` - Get the block where the selection anchor is located
 - `getFocusBlock` - Get the block where the selection focus is located
 
-### Selection Range
+### Selection range
 
 - `getSelectedBlocks` - Get all blocks within the current selection
 - `getSelectionStartBlock` - Get the block at the start of the selection
 - `getSelectionEndBlock` - Get the block at the end of the selection
 
-## Text Block Selectors
+## Text block selectors
 
 Retrieve text blocks specifically (excludes block objects).
 
@@ -91,7 +91,7 @@ Retrieve text blocks specifically (excludes block objects).
 - `getSelectedTextBlocks` - Get all text blocks within the current selection
 - `getFocusListBlock` - Get the list block where focus is located (if in a list)
 
-## Span Selectors
+## Span selectors
 
 Retrieve span elements (text segments within blocks).
 
@@ -101,7 +101,7 @@ Retrieve span elements (text segments within blocks).
 - `getPreviousSpan` - Get the span before the current focus span
 - `getSelectedSpans` - Get all spans within the current selection
 
-## Child Selectors
+## Child selectors
 
 Retrieve child elements within blocks.
 
@@ -110,7 +110,7 @@ Retrieve child elements within blocks.
 - `getSelectionStartChild` - Get the child at the start of the selection
 - `getSelectionEndChild` - Get the child at the end of the selection
 
-## Inline Object Selectors
+## Inline object selectors
 
 Retrieve inline objects (custom elements embedded in text).
 
@@ -120,13 +120,13 @@ Retrieve inline objects (custom elements embedded in text).
 - `getPreviousInlineObject` - Get the previous inline object before focus
 - `getPreviousInlineObjects` - Get all inline objects before focus
 
-## Block Object Selectors
+## Block object selectors
 
 Retrieve block objects (custom block-level elements).
 
 - `getFocusBlockObject` - Get the block object at the current focus position
 
-## Selection Selectors
+## Selection selectors
 
 Get information about the current selection.
 
@@ -137,7 +137,7 @@ Get information about the current selection.
 - `getSelectionEndPoint` - Get the ending point of the selection
 - `getCaretWordSelection` - Get the word selection at the caret position
 
-## Active State Selectors
+## Active state selectors
 
 Get information about active formatting and marks.
 
@@ -146,7 +146,7 @@ Get information about active formatting and marks.
 - `getActiveStyle` - Get the active block style
 - `getMarkState` - Get comprehensive mark state information for the selection
 
-## Text Position Selectors
+## Text position selectors
 
 Get text content relative to the cursor position.
 
@@ -154,7 +154,7 @@ Get text content relative to the cursor position.
 - `getBlockTextAfter` - Get text in the current block after the cursor
 - `getBlockOffsets` - Get character offsets within the current block
 
-## Value Selectors
+## Value selectors
 
 Access the editor value.
 
