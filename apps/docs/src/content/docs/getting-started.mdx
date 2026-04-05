@@ -1,14 +1,27 @@
 ---
 title: Getting started
-description: Start building with the Portable Text Editor.
+description: Choose your path — render Portable Text content or build a rich text editor.
 next: false
 prev: false
 ---
 
-import {CardGrid, LinkCard, Steps} from '@astrojs/starlight/components'
+import {Card, CardGrid, LinkCard, Steps} from '@astrojs/starlight/components'
 import {PackageManagers} from 'starlight-package-managers'
 
-This guide leads you through installing and using the basic features of the Portable Text Editor (PTE).
+<CardGrid>
+  <LinkCard
+    title="Render Portable Text"
+    description="Have content in Portable Text? Pick your framework and start rendering."
+    href="/rendering/"
+  />
+  <LinkCard
+    title="Build a PT Editor"
+    description="Need rich text authoring? Set up the Portable Text Editor in minutes."
+    href="#editor-setup"
+  />
+</CardGrid>
+
+## Editor setup
 
 In order to set up an editor, you'll need to:
 
@@ -59,7 +72,7 @@ Before you can render the editor, you need a schema. The editor schema configure
 We'll start with a schema that includes some common rich text elements.
 
 :::note
-This guide includes a limited set of schema types, or rich text elements, to get you started. See the [rendering guide](/guides/custom-rendering/) for additional examples.
+This guide includes a limited set of schema types, or rich text elements, to get you started. See the [rendering guide](/editor/guides/custom-rendering/) for additional examples.
 :::
 
 ```tsx
@@ -95,7 +108,7 @@ const schemaDefinition = defineSchema({
 <LinkCard
   title="The parts of the Portable Text editor"
   description="Learn more about schemas and the editor."
-  href="/concepts/portabletext/"
+  href="/editor/concepts/portabletext/"
 />
 
 ## Render the editor
@@ -344,7 +357,7 @@ The `useStyleSelector` and `useDecoratorButton` hooks give you access to the act
 <LinkCard
   title="Customize the toolbar"
   description="Learn more about building custom toolbars."
-  href="/guides/customize-toolbar/"
+  href="/editor/guides/customize-toolbar/"
 />
 
 In the next step, you'll add the toolbar to the editor.
@@ -391,7 +404,7 @@ function App() {
 // ...
 ```
 
-You can now enter text and interact with the toolbar buttons to toggle the styles and decorators. These are only a small portion of the types of things you can do. Check out the [custom rendering guide](/guides/custom-rendering/) and the [toolbar customization guide](/guides/customize-toolbar/) for options.
+You can now enter text and interact with the toolbar buttons to toggle the styles and decorators. These are only a small portion of the types of things you can do. Check out the [custom rendering guide](/editor/guides/custom-rendering/) and the [toolbar customization guide](/editor/guides/customize-toolbar/) for options.
 
 ## View the Portable Text data
 
@@ -420,7 +433,7 @@ The Behavior API is a new way of interfacing with the Portable Text Editor. It a
 - Deriving editor **state** using **pure functions**.
 - Subscribing to **emitted** editor **events**.
 
-Learn more about the [Behaviors](/concepts/behavior/) and how to [create your own behaviors](/guides/create-behavior/) in the documentation.
+Learn more about the [Behaviors](/editor/concepts/behavior/) and how to [create your own behaviors](/editor/guides/create-behavior/) in the documentation.
 
 ## Next Steps
 
@@ -428,16 +441,16 @@ Learn more about the [Behaviors](/concepts/behavior/) and how to [create your ow
   <LinkCard
     title="Create additional render functions"
     description="Create more render functions for your schema."
-    href="/guides/custom-rendering/"
+    href="/editor/guides/custom-rendering/"
   />
   <LinkCard
     title="Further customize the toolbar"
     description="Dive deeper into toolbar customization."
-    href="/guides/customize-toolbar/"
+    href="/editor/guides/customize-toolbar/"
   />
   <LinkCard
     title="Create your own behaviors"
     description="Learn to intercept editor events and add functionality with the Behavior API."
-    href="/guides/create-behavior/"
+    href="/editor/guides/create-behavior/"
   />
 </CardGrid>

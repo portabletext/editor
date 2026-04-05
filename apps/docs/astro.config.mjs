@@ -20,6 +20,21 @@ export default defineConfig({
   site: 'https://www.portabletext.org',
   redirects: {
     '/integrations/serializers/': '/rendering/',
+    '/concepts/': '/editor/concepts/',
+    '/concepts/portabletext/': '/editor/concepts/portabletext/',
+    '/concepts/behavior/': '/editor/concepts/behavior/',
+    '/guides/': '/editor/guides/',
+    '/guides/custom-rendering/': '/editor/guides/custom-rendering/',
+    '/guides/customize-toolbar/': '/editor/guides/customize-toolbar/',
+    '/guides/create-behavior/': '/editor/guides/create-behavior/',
+    '/guides/behavior-cheat-sheet/': '/editor/guides/behavior-cheat-sheet/',
+    '/reference/': '/editor/reference/',
+    '/reference/editor/': '/editor/reference/editor/',
+    '/reference/behavior-api/': '/editor/reference/behavior-api/',
+    '/reference/plugins/': '/editor/reference/plugins/',
+    '/reference/selectors/': '/editor/reference/selectors/',
+    '/reference/toolbar/': '/editor/reference/toolbar/',
+    '/reference/keyboard-shortcuts/': '/editor/reference/keyboard-shortcuts/',
   },
   integrations: [
     react(),
@@ -73,57 +88,65 @@ export default defineConfig({
           autogenerate: {directory: 'rendering'},
         },
         {
-          label: 'Concepts',
-          autogenerate: {directory: 'concepts'},
-        },
-        {
-          label: 'Guides',
-          autogenerate: {directory: 'guides'},
-        },
-        {
-          label: 'Reference',
-          collapsed: true,
+          label: 'Editor',
           items: [
             {
-              label: 'Editor',
-              items: [
-                {label: 'Overview', slug: 'reference/editor'},
-                {...editorTypeDocSidebar, badge: 'Generated'},
-              ],
+              label: 'Concepts',
+              autogenerate: {directory: 'editor/concepts'},
             },
             {
-              label: 'Behaviors',
-              items: [
-                {label: 'Overview', slug: 'reference/behavior-api'},
-                {...behaviorTypeDocSidebar, badge: 'Generated'},
-              ],
+              label: 'Guides',
+              autogenerate: {directory: 'editor/guides'},
             },
             {
-              label: 'Plugins',
+              label: 'Reference',
+              collapsed: true,
               items: [
-                {label: 'Overview', slug: 'reference/plugins'},
-                {...pluginsTypeDocSidebar, badge: 'Generated'},
-              ],
-            },
-            {
-              label: 'Selectors',
-              items: [
-                {label: 'Overview', slug: 'reference/selectors'},
-                {...selectorsTypeDocSidebar, badge: 'Generated'},
-              ],
-            },
-            {
-              label: 'Toolbar',
-              items: [
-                {label: 'Overview', slug: 'reference/toolbar'},
-                {...toolbarTypeDocSidebar, badge: 'Generated'},
-              ],
-            },
-            {
-              label: 'Keyboard Shortcuts',
-              items: [
-                {label: 'Overview', slug: 'reference/keyboard-shortcuts'},
-                {...keyboardShortcutsTypeDocSidebar, badge: 'Generated'},
+                {
+                  label: 'Editor',
+                  items: [
+                    {label: 'Overview', slug: 'editor/reference/editor'},
+                    {...editorTypeDocSidebar, badge: 'Generated'},
+                  ],
+                },
+                {
+                  label: 'Behaviors',
+                  items: [
+                    {label: 'Overview', slug: 'editor/reference/behavior-api'},
+                    {...behaviorTypeDocSidebar, badge: 'Generated'},
+                  ],
+                },
+                {
+                  label: 'Plugins',
+                  items: [
+                    {label: 'Overview', slug: 'editor/reference/plugins'},
+                    {...pluginsTypeDocSidebar, badge: 'Generated'},
+                  ],
+                },
+                {
+                  label: 'Selectors',
+                  items: [
+                    {label: 'Overview', slug: 'editor/reference/selectors'},
+                    {...selectorsTypeDocSidebar, badge: 'Generated'},
+                  ],
+                },
+                {
+                  label: 'Toolbar',
+                  items: [
+                    {label: 'Overview', slug: 'editor/reference/toolbar'},
+                    {...toolbarTypeDocSidebar, badge: 'Generated'},
+                  ],
+                },
+                {
+                  label: 'Keyboard Shortcuts',
+                  items: [
+                    {
+                      label: 'Overview',
+                      slug: 'editor/reference/keyboard-shortcuts',
+                    },
+                    {...keyboardShortcutsTypeDocSidebar, badge: 'Generated'},
+                  ],
+                },
               ],
             },
           ],

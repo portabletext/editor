@@ -1,5 +1,5 @@
 ---
-title: Customize how elements render
+title: Customize editor rendering
 description: Change the way the editor renders and styles text.
 sidebar:
   order: 1

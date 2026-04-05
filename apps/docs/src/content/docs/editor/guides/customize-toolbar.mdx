@@ -72,7 +72,7 @@ function App() {
 
 The toolbar library is more closely linked to parts of the PTE—like decorators, styles, and annotations—but you can also access editor state without the context of individual schema items with `useEditor`.
 
-You can send [synthetic events](/reference/behavior-api/) from within the toolbar using `editor.send`.
+You can send [synthetic events](/editor/reference/behavior-api/) from within the toolbar using `editor.send`.
 
 ```tsx
 import {useEditor} from '@portabletext/editor'
@@ -161,7 +161,7 @@ const toolbarSchema = useToolbarSchema({
 
 ## Add keyboard shortcuts
 
-The [Keyboard Shortcuts library](/reference/keyboard-shortcuts/) offers drop-in keyboard shortcuts for the editor that can be paired with toolbar buttons, as well as a way to create your own custom keyboard shortcuts.
+The [Keyboard Shortcuts library](/editor/reference/keyboard-shortcuts/) offers drop-in keyboard shortcuts for the editor that can be paired with toolbar buttons, as well as a way to create your own custom keyboard shortcuts.
 
 This pairs best with the extend schema approach, as it allows you to add keyboard shortcuts to your toolbar buttons.
 
@@ -259,7 +259,7 @@ Each hook returns a `send` method for dispatching events and a `snapshot` for re
 
 ## Use selectors to reflect editor state
 
-The editor offers a variety of helpful selectors for checking the status of inline and block content. Selectors are pure functions that derive state from the editor snapshot. You can find the full list in the [selectors reference](/reference/selectors/).
+The editor offers a variety of helpful selectors for checking the status of inline and block content. Selectors are pure functions that derive state from the editor snapshot. You can find the full list in the [selectors reference](/editor/reference/selectors/).
 
 :::note
 This approach is specific to accessing state with `useEditor`. While the hooks from `@portabletext/toolbar` do access and interact with the editor state, they do not expose the active editor itself for use in selectors.
