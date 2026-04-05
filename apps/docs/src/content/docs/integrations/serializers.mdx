@@ -1,127 +1,216 @@
 ---
-title: 'Serializers'
+title: Render Portable Text
+description: Serializers and renderers for converting Portable Text to HTML, React, Vue, Svelte, and more.
 ---
 
-import {CardGrid, LinkCard} from '@astrojs/starlight/components'
+import {TabItem, Tabs} from '@astrojs/starlight/components'
 
-Serializers take Portable Text and output common formats like HTML, framework components, and more. For more official serializers and integrations, see the [Portable Text organization on GitHub](https://github.com/portabletext/).
+Portable Text is a JSON format — to display it, you need a **serializer** that converts the structured data into your target output. Official serializers are available for most popular frameworks, with community packages covering the rest.
 
-## JavaScript
+:::note[Prop name differences across frameworks]
+Most renderers use `types` and `marks` (plural) for custom components. **Svelte and Astro use `type` and `mark` (singular).** Check the examples below for your framework.
+:::
 
-<CardGrid>
-    <LinkCard
-        title="@portabletext/to-html"
-        description="Portable Text to HTML"
-        href="https://github.com/portabletext/to-html/" />
-    <LinkCard
-        title="@portabletext/html"
-        description="Convert HTML to Portable Text"
-        href="https://github.com/portabletext/editor/tree/main/packages/html" />
-    <LinkCard
-        title="@portabletext/markdown"
-        description="Convert Portable Text to Markdown and back again"
-        href="https://github.com/portabletext/editor/tree/main/packages/markdown" />
-    <LinkCard
-        title="@portabletext/react-portabletext"
-        description="Portable Text to React components"
-        href="https://github.com/portabletext/react-portabletext/" />
-    <LinkCard
-        title="@portabletext/vue-portabletext"
-        description="Portable Text to Vue components"
-        href="https://github.com/portabletext/vue-portabletext/" />
-    <LinkCard
-        title="@portabletext/svelte-portabletext"
-        description="Portable Text to Svelte"
-        href="https://github.com/portabletext/svelte-portabletext/" />
-    <LinkCard
-        title="astro-portabletext"
-        description="Integrate Portable Text content in Astro"
-        href="https://github.com/theisel/astro-portabletext" />
-    <LinkCard
-        title="react-pdf-portabletext"
-        description="Portable Text to React PDF"
-        href="https://github.com/portabletext/react-pdf-portabletext" />
-    <LinkCard
-        title="react-native-portabletext"
-        description="Portable Text to React Native"
-        href="https://github.com/portabletext/react-native-portabletext" />
-    <LinkCard
-        title="solid-portabletext"
-        description="Portable Text to Solid"
-        href="https://github.com/portabletext/solid-portabletext" />
-    <LinkCard
-        title="portabletext-qwik"
-        description="Portable Text to Qwik"
-        href="https://github.com/tegonal/portabletext-qwik" />
+## Quick Start
 
-</CardGrid>
+The fastest way to render Portable Text depends on your stack:
 
-## PHP
+<Tabs>
+  <TabItem label="React">
+    ```bash
+    npm install @portabletext/react
+    ```
 
-<CardGrid>
-  <LinkCard
-    title="sanity-php"
-    description="Use the Sanity\BlockContent class"
-    href="https://github.com/sanity-io/sanity-php"
-  />
-</CardGrid>
+    ```tsx
+    import {PortableText} from '@portabletext/react'
 
-## Python
+    function Article({content}) {
+      return <PortableText value={content} />
+    }
+    ```
 
-<CardGrid>
-  <LinkCard
-    title="portabletext-html"
-    description="Generate HTML from Portable Text"
-    href="https://github.com/otovo/python-portabletext-html"
-  />
-</CardGrid>
+    That's it for basic rendering. The component renders sensible HTML defaults — paragraphs, headings, bold, italic, links, and lists all work out of the box.
 
-## C#
+    To customize how specific types render, pass a `components` prop:
 
-<CardGrid>
-  <LinkCard
-    title="sanity-linq"
-    description="Use the SanityHtmlBuilder class"
-    href="https://github.com/oslofjord/sanity-linq"
-  />
-  <LinkCard
-    title="dotnet-portable-text"
-    description="Official C# library for working with Portable Text"
-    href="https://github.com/portabletext/dotnet-portable-text"
-  />
-  <LinkCard
-    title="portable-text-dotnet"
-    description="A C# HTML converter for Portable Text"
-    href="https://github.com/nhi/portable-text-dotnet"
-  />
-</CardGrid>
+    ```tsx
+    import {PortableText} from '@portabletext/react'
 
-## Dart/Flutter
+    const components = {
+      types: {
+        image: ({value}) => <img src={value.url} alt={value.alt} />,
+      },
+      marks: {
+        link: ({children, value}) => (
+          <a href={value.href} target="_blank" rel="noopener">
+            {children}
+          </a>
+        ),
+      },
+    }
 
-<CardGrid>
-  <LinkCard
-    title="flutter_sanity_portable_text"
-    description="Flutter Widget for Portable Text"
-    href="https://pub.dev/packages/flutter_sanity_portable_text"
-  />
-  <LinkCard
-    title="flutter_portabletext"
-    description="Render Portable Text"
-    href="https://github.com/JobiJoba/flutter_portabletext"
-  />
-</CardGrid>
+    function Article({content}) {
+      return <PortableText value={content} components={components} />
+    }
+    ```
 
-## CMS integrations
+    [Full documentation →](https://github.com/portabletext/react-portabletext/)
 
-<CardGrid>
-  <LinkCard
-    title="Portable Text with Hugo"
-    description="Portable Text in Hugo"
-    href="https://gohugo.io/functions/transform/portabletext/"
-  />
-  <LinkCard
-    title="portable-text-to-liquid"
-    description="Render Portable Text on Shopify storefronts using Liquid"
-    href="https://github.com/portabletext/portable-text-to-liquid"
-  />
-</CardGrid>
+  </TabItem>
+
+  <TabItem label="HTML">
+    ```bash
+    npm install @portabletext/to-html
+    ```
+
+    ```ts
+    import {toHTML} from '@portabletext/to-html'
+
+    const html = toHTML(portableTextContent)
+    ```
+
+    Customize rendering with the `components` option. Use `uriLooksSafe()` to prevent `javascript:` URI injection in links:
+
+    ```ts
+    import {toHTML, uriLooksSafe} from '@portabletext/to-html'
+
+    const html = toHTML(portableTextContent, {
+      components: {
+        types: {
+          image: ({value}) => `<img src="${value.url}" alt="${value.alt}" />`,
+        },
+        marks: {
+          link: ({children, value}) => {
+            const href = value.href || ''
+            if (uriLooksSafe(href)) {
+              const rel = href.startsWith('/') ? undefined : 'noreferrer noopener'
+              return `<a href="${href}" rel="${rel}">${children}</a>`
+            }
+            return children
+          },
+        },
+      },
+    })
+    ```
+
+    [Full documentation →](https://github.com/portabletext/to-html/)
+
+  </TabItem>
+
+  <TabItem label="Vue">
+    ```bash
+    npm install @portabletext/vue
+    ```
+
+    ```vue
+    <script setup>
+    import {PortableText} from '@portabletext/vue'
+
+    defineProps(['value'])
+    </script>
+
+    <template>
+      <PortableText :value="value" />
+    </template>
+    ```
+
+    [Full documentation →](https://github.com/portabletext/vue-portabletext/)
+
+  </TabItem>
+
+  <TabItem label="Svelte">
+    ```bash
+    npm install @portabletext/svelte -D
+    ```
+
+    ```svelte
+    <script>
+      import {PortableText} from '@portabletext/svelte'
+
+      let {value} = $props()
+    </script>
+
+    <PortableText value={value} />
+    ```
+
+    Requires Svelte 5+.
+
+    [Full documentation →](https://github.com/portabletext/svelte-portabletext/)
+
+  </TabItem>
+
+  <TabItem label="Astro">
+    ```bash
+    npm install astro-portabletext
+    ```
+
+    ```astro
+    ---
+    import {PortableText} from 'astro-portabletext'
+
+    const {content} = Astro.props
+    ---
+
+    <PortableText value={content} />
+    ```
+
+    [Full documentation →](https://github.com/theisel/astro-portabletext)
+
+  </TabItem>
+</Tabs>
+
+## All Serializers
+
+### JavaScript Frameworks
+
+| Package                                                                                    | Target       | Install                            |
+| ------------------------------------------------------------------------------------------ | ------------ | ---------------------------------- |
+| [`@portabletext/react`](https://github.com/portabletext/react-portabletext/)               | React        | `npm i @portabletext/react`        |
+| [`@portabletext/to-html`](https://github.com/portabletext/to-html/)                        | HTML string  | `npm i @portabletext/to-html`      |
+| [`@portabletext/vue`](https://github.com/portabletext/vue-portabletext/)                   | Vue          | `npm i @portabletext/vue`          |
+| [`@portabletext/svelte`](https://github.com/portabletext/svelte-portabletext/)             | Svelte 5+    | `npm i @portabletext/svelte`       |
+| [`@portabletext/solid`](https://github.com/portabletext/solid-portabletext/)               | SolidJS      | `npm i @portabletext/solid`        |
+| [`@portabletext/react-native`](https://github.com/portabletext/react-native-portabletext/) | React Native | `npm i @portabletext/react-native` |
+| [`@portabletext/react-pdf`](https://github.com/portabletext/react-pdf-portabletext)        | React PDF    | `npm i @portabletext/react-pdf`    |
+| [`astro-portabletext`](https://github.com/theisel/astro-portabletext)                      | Astro        | `npm i astro-portabletext`         |
+| [`portabletext-qwik`](https://github.com/tegonal/portabletext-qwik)                        | Qwik         | `npm i portabletext-qwik`          |
+
+### Converters
+
+These packages convert between Portable Text and other formats:
+
+| Package                                                                                                                        | Direction                  | Install                                                     |
+| ------------------------------------------------------------------------------------------------------------------------------ | -------------------------- | ----------------------------------------------------------- |
+| [`@portabletext/html`](https://github.com/portabletext/editor/tree/main/packages/html)                                         | HTML → Portable Text       | `npm i @portabletext/html`                                  |
+| [`@portabletext/markdown`](https://github.com/portabletext/editor/tree/main/packages/markdown)                                 | Portable Text ↔ Markdown   | `npm i @portabletext/markdown`                              |
+| [`@portabletext/contentful-rich-text-to-portable-text`](https://github.com/portabletext/contentful-rich-text-to-portable-text) | Contentful → Portable Text | `npm i @portabletext/contentful-rich-text-to-portable-text` |
+
+### Other Languages
+
+| Package                                                                                 | Language       |
+| --------------------------------------------------------------------------------------- | -------------- |
+| [`dotnet-portable-text`](https://github.com/portabletext/dotnet-portable-text)          | C# / .NET      |
+| [`portable-text-dotnet`](https://github.com/nhi/portable-text-dotnet)                   | C# / .NET      |
+| [`sanity-linq`](https://github.com/oslofjord/sanity-linq)                               | C# / .NET      |
+| [`portabletext-html`](https://github.com/otovo/python-portabletext-html)                | Python         |
+| [`sanity-php`](https://github.com/sanity-io/sanity-php)                                 | PHP            |
+| [`flutter_sanity_portable_text`](https://pub.dev/packages/flutter_sanity_portable_text) | Dart / Flutter |
+| [`flutter_portabletext`](https://github.com/JobiJoba/flutter_portabletext)              | Dart / Flutter |
+
+### Platform Integrations
+
+| Integration                                                                          | Platform         |
+| ------------------------------------------------------------------------------------ | ---------------- |
+| [`transform.PortableText`](https://gohugo.io/functions/transform/portabletext/)      | Hugo (built-in)  |
+| [`portable-text-to-liquid`](https://github.com/portabletext/portable-text-to-liquid) | Shopify / Liquid |
+
+For more packages, see the [Portable Text organization on GitHub](https://github.com/portabletext/).
+
+## Utilities
+
+Working with Portable Text data programmatically? These packages help:
+
+| Package                                                            | Purpose                                                         | Install                       |
+| ------------------------------------------------------------------ | --------------------------------------------------------------- | ----------------------------- |
+| [`@portabletext/toolkit`](https://github.com/portabletext/toolkit) | `toPlainText()`, `buildMarksTree()`, `nestLists()`, type guards | `npm i @portabletext/toolkit` |
+| [`@portabletext/types`](https://github.com/portabletext/types)     | TypeScript type definitions for PT data                         | `npm i @portabletext/types`   |
