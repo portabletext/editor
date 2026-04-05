@@ -15,7 +15,10 @@ import {
 } from 'xstate'
 import {debug} from '../internal-utils/debug'
 import {isNormalizing} from '../slate/editor/is-normalizing'
-import type {PortableTextSlateEditor} from '../types/slate-editor'
+import type {
+  PortableTextSlateEditor,
+  RangeDecorationShift,
+} from '../types/slate-editor'
 import type {EditorSchema} from './editor-schema'
 import type {PatchEvent} from './relay-machine'
 
@@ -67,6 +70,7 @@ export const mutationMachine = setup({
           type: 'mutation'
           patches: Array<Patch>
           snapshot: Array<PortableTextBlock> | undefined
+          rangeDecorationShifts: Array<RangeDecorationShift>
         }
       | PatchEvent,
   },
@@ -83,11 +87,14 @@ export const mutationMachine = setup({
       context.slateEditor.isDeferringMutations = true
     },
     'emit mutations': enqueueActions(({context, enqueue}) => {
+      const shifts = context.slateEditor.pendingDecorationShifts.splice(0)
+
       for (const bulk of context.pendingMutations) {
         enqueue.emit({
           type: 'mutation',
           patches: bulk.patches,
           snapshot: bulk.value,
+          rangeDecorationShifts: shifts,
         })
       }
       context.slateEditor.isDeferringMutations = false

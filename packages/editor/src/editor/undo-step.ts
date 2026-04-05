@@ -1,10 +1,16 @@
 import type {Operation} from '../slate/interfaces/operation'
 import {pathEquals} from '../slate/path/path-equals'
-import type {PortableTextSlateEditor} from '../types/slate-editor'
+import type {
+  MergeContext,
+  PortableTextSlateEditor,
+  SplitContext,
+} from '../types/slate-editor'
 
-type UndoStep = {
+export type UndoStep = {
   operations: Array<Operation>
   timestamp: Date
+  splitContext?: SplitContext | null
+  mergeContext?: MergeContext | null
 }
 
 export function createUndoSteps({
@@ -151,7 +157,13 @@ function mergeIntoLastStep(
   lastStep: UndoStep,
   op: Operation,
 ): Array<UndoStep> {
-  lastStep.operations.push(op)
-
-  return steps
+  return [
+    ...steps.slice(0, -1),
+    {
+      timestamp: lastStep.timestamp,
+      operations: [...lastStep.operations, op],
+      splitContext: lastStep.splitContext,
+      mergeContext: lastStep.mergeContext,
+    },
+  ]
 }

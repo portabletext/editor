@@ -30,6 +30,8 @@ export function createSlateEditor(
   editor.editableTypes = new Set()
 
   editor.decoratedRanges = []
+  editor.preBatchDecorationRanges = new Map()
+  editor.batchContentChangedDecorations = new Set()
   editor.decoratorState = {}
   editor.blockIndexMap = new Map<string, number>()
   editor.history = {undos: [], redos: []}
@@ -40,6 +42,12 @@ export function createSlateEditor(
   editor.undoStepId = undefined
 
   editor.children = [placeholderBlock]
+
+  editor.splitContext = null
+  editor.mergeContext = null
+  editor.mergeDeletedBlockFlags = null
+  editor.pendingDecorationShifts = []
+  editor._suppressDecorationSendBack = 0
 
   editor.isDeferringMutations = false
   editor.isNormalizingNode = false

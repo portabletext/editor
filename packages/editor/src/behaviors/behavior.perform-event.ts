@@ -272,6 +272,7 @@ export function performEvent({
               try {
                 action.effect({
                   send: sendBack,
+                  slateEditor: editor,
                 })
               } catch (error) {
                 console.error(

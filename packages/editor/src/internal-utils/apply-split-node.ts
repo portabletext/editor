@@ -8,6 +8,9 @@ import {isAncestorPath} from '../slate/path/is-ancestor-path'
 import {nextPath} from '../slate/path/next-path'
 import {pathEndsBefore} from '../slate/path/path-ends-before'
 import {pathEquals} from '../slate/path/path-equals'
+import {isAfterPoint} from '../slate/point/is-after-point'
+import {pointEquals} from '../slate/point/point-equals'
+import {isRange} from '../slate/range/is-range'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {rangeRefAffinities} from './range-ref-affinities'
 
@@ -103,6 +106,43 @@ export function applySplitNode(
     }
   }
 
+  // Pre-transform decoratedRanges with inward affinity: end point uses
+  // 'backward' so the range doesn't expand at the split boundary, start
+  // point uses 'forward' so it moves to the new node when exactly at the
+  // split position.
+  editor.decoratedRanges = editor.decoratedRanges.map((dr) => {
+    if (!isRange(dr)) return dr
+
+    const isCollapsed = pointEquals(dr.anchor, dr.focus)
+    const anchorIsEnd = !isCollapsed && isAfterPoint(dr.anchor, dr.focus)
+    const focusIsEnd = !isCollapsed && !anchorIsEnd
+
+    const newAnchor = transformPointForSplit(
+      dr.anchor,
+      path,
+      position,
+      anchorIsEnd ? 'backward' : 'forward',
+    )
+    const newFocus = transformPointForSplit(
+      dr.focus,
+      path,
+      position,
+      focusIsEnd ? 'backward' : 'forward',
+    )
+
+    if (
+      newAnchor &&
+      newFocus &&
+      (!pointEquals(newAnchor, dr.anchor) || !pointEquals(newFocus, dr.focus))
+    ) {
+      return {...dr, anchor: newAnchor, focus: newFocus}
+    }
+
+    return dr
+  })
+
+  editor._suppressDecorationSendBack++
+
   // Temporarily remove all refs so the decomposed operations don't
   // double-transform them
   const pathRefs = new Set(editor.pathRefs)
@@ -168,6 +208,8 @@ export function applySplitNode(
     for (const ref of rangeRefs) {
       editor.rangeRefs.add(ref)
     }
+
+    editor._suppressDecorationSendBack--
   }
 }
 
@@ -213,7 +255,7 @@ function transformPathForSplit(
  * If the point is inside the split node and at or after the split position,
  * it moves into the new node with an adjusted offset.
  */
-function transformPointForSplit(
+export function transformPointForSplit(
   point: Point,
   splitPath: Path,
   position: number,

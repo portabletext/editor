@@ -207,7 +207,7 @@ export const PortableTextEditable = forwardRef<
       leafProps: RenderLeafProps & {
         leaf: PortableTextSpan & {
           placeholder?: boolean
-          rangeDecoration?: RangeDecoration
+          rangeDecorations?: RangeDecoration[]
         }
       },
     ) => (
