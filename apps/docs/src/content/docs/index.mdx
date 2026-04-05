@@ -5,10 +5,62 @@ template: splash
 ---
 
 import '@/styles/globals.css'
-import {Card, CardGrid, LinkCard} from '@astrojs/starlight/components'
+import {
+  Card,
+  CardGrid,
+  LinkCard,
+  TabItem,
+  Tabs,
+} from '@astrojs/starlight/components'
 import PortableTextEditor from '../../components/editor/editor.astro'
 
 <PortableTextEditor />
+
+## What is Portable Text?
+
+Portable Text is a JSON-based rich text specification. Instead of storing content as an HTML string, Portable Text represents rich text as structured data — making it portable across platforms, renderable in any format, and readable by both humans and machines.
+
+<Tabs>
+  <TabItem label="HTML string">
+    ```html
+    <p>Read the <a href="/docs">documentation</a> for <strong>Portable Text</strong>.</p>
+    ```
+  </TabItem>
+  <TabItem label="Portable Text">
+    ```json
+    [
+      {
+        "_type": "block",
+        "style": "normal",
+        "children": [
+          { "_type": "span", "text": "Read the " },
+          {
+            "_type": "span",
+            "text": "documentation",
+            "marks": ["a1b2c3"]
+          },
+          { "_type": "span", "text": " for " },
+          {
+            "_type": "span",
+            "text": "Portable Text",
+            "marks": ["strong"]
+          },
+          { "_type": "span", "text": "." }
+        ],
+        "markDefs": [
+          {
+            "_key": "a1b2c3",
+            "_type": "link",
+            "href": "/docs"
+          }
+        ]
+      }
+    ]
+    ```
+  </TabItem>
+</Tabs>
+
+Because content is structured data, you can render it as HTML, React components, Markdown, PDFs, or any other format — from a single source of truth.
 
 ## Next steps
 
