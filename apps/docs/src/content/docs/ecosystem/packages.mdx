@@ -1,16 +1,79 @@
 ---
-title: 'All packages'
+title: All packages
+description: Every Portable Text package — serializers, converters, utilities, and community libraries.
 ---
 
 import {CardGrid, LinkCard} from '@astrojs/starlight/components'
 
-Additional tools and libraries for working with Portable Text. For more official tools and libraries, see the [Portable Text organization on GitHub](https://github.com/portabletext/).
+Every package in the Portable Text ecosystem: official serializers, format converters, language ports, platform integrations, and editor internals.
+
+## Serializers
+
+| Package                                                                                    | Target       | Install                            |
+| ------------------------------------------------------------------------------------------ | ------------ | ---------------------------------- |
+| [`@portabletext/react`](https://github.com/portabletext/react-portabletext/)               | React        | `npm i @portabletext/react`        |
+| [`@portabletext/to-html`](https://github.com/portabletext/to-html/)                        | HTML string  | `npm i @portabletext/to-html`      |
+| [`@portabletext/vue`](https://github.com/portabletext/vue-portabletext/)                   | Vue          | `npm i @portabletext/vue`          |
+| [`@portabletext/svelte`](https://github.com/portabletext/svelte-portabletext/)             | Svelte 5+    | `npm i @portabletext/svelte`       |
+| [`@portabletext/solid`](https://github.com/portabletext/solid-portabletext/)               | SolidJS      | `npm i @portabletext/solid`        |
+| [`@portabletext/react-native`](https://github.com/portabletext/react-native-portabletext/) | React Native | `npm i @portabletext/react-native` |
+| [`@portabletext/react-pdf`](https://github.com/portabletext/react-pdf-portabletext)        | React PDF    | `npm i @portabletext/react-pdf`    |
+| [`astro-portabletext`](https://github.com/theisel/astro-portabletext)                      | Astro        | `npm i astro-portabletext`         |
+| [`portabletext-qwik`](https://github.com/tegonal/portabletext-qwik)                        | Qwik         | `npm i portabletext-qwik`          |
+
+## Converters
+
+| Package                                                                                                                        | Direction                  | Install                                                     |
+| ------------------------------------------------------------------------------------------------------------------------------ | -------------------------- | ----------------------------------------------------------- |
+| [`@portabletext/html`](https://github.com/portabletext/editor/tree/main/packages/html)                                         | HTML → Portable Text       | `npm i @portabletext/html`                                  |
+| [`@portabletext/markdown`](https://github.com/portabletext/editor/tree/main/packages/markdown)                                 | Portable Text ↔ Markdown   | `npm i @portabletext/markdown`                              |
+| [`@portabletext/contentful-rich-text-to-portable-text`](https://github.com/portabletext/contentful-rich-text-to-portable-text) | Contentful → Portable Text | `npm i @portabletext/contentful-rich-text-to-portable-text` |
+
+## Other languages
+
+| Package                                                                                 | Language       |
+| --------------------------------------------------------------------------------------- | -------------- |
+| [`dotnet-portable-text`](https://github.com/portabletext/dotnet-portable-text)          | C# / .NET      |
+| [`portable-text-dotnet`](https://github.com/nhi/portable-text-dotnet)                   | C# / .NET      |
+| [`sanity-linq`](https://github.com/oslofjord/sanity-linq)                               | C# / .NET      |
+| [`portabletext-html`](https://github.com/otovo/python-portabletext-html)                | Python         |
+| [`sanity-php`](https://github.com/sanity-io/sanity-php)                                 | PHP            |
+| [`flutter_sanity_portable_text`](https://pub.dev/packages/flutter_sanity_portable_text) | Dart / Flutter |
+| [`flutter_portabletext`](https://github.com/JobiJoba/flutter_portabletext)              | Dart / Flutter |
+
+## Platform integrations
+
+| Integration                                                                          | Platform         |
+| ------------------------------------------------------------------------------------ | ---------------- |
+| [`transform.PortableText`](https://gohugo.io/functions/transform/portabletext/)      | Hugo (built-in)  |
+| [`portable-text-to-liquid`](https://github.com/portabletext/portable-text-to-liquid) | Shopify / Liquid |
+
+## Utilities
+
+| Package                                                            | Purpose                                                         | Install                       |
+| ------------------------------------------------------------------ | --------------------------------------------------------------- | ----------------------------- |
+| [`@portabletext/toolkit`](https://github.com/portabletext/toolkit) | `toPlainText()`, `buildMarksTree()`, `nestLists()`, type guards | `npm i @portabletext/toolkit` |
+| [`@portabletext/types`](https://github.com/portabletext/types)     | TypeScript type definitions for PT data                         | `npm i @portabletext/types`   |
+
+## Editor packages
+
+Packages in the [`portabletext/editor`](https://github.com/portabletext/editor) monorepo:
 
 <CardGrid>
   <LinkCard
-    title="@portabletext/toolkit"
-    description="Useful helper functions for working with Portable Text."
-    href="https://github.com/portabletext/toolkit"
+    title="@portabletext/editor"
+    description="The Portable Text Editor: a headless, schema-driven block content editor for React."
+    href="https://github.com/portabletext/editor/tree/main/packages/editor"
+  />
+  <LinkCard
+    title="@portabletext/toolbar"
+    description="Headless toolbar hooks for the Portable Text Editor."
+    href="https://github.com/portabletext/editor/tree/main/packages/toolbar"
+  />
+  <LinkCard
+    title="@portabletext/schema"
+    description="Define and compile Portable Text schemas with full type safety and editor support."
+    href="https://github.com/portabletext/editor/tree/main/packages/schema"
   />
   <LinkCard
     title="@portabletext/html"
@@ -23,24 +86,19 @@ Additional tools and libraries for working with Portable Text. For more official
     href="https://github.com/portabletext/editor/tree/main/packages/block-tools"
   />
   <LinkCard
-    title="@portabletext/sanity-bridge"
-    description="Bridge between Portable Text and Sanity."
-    href="https://github.com/portabletext/editor/tree/main/packages/sanity-bridge"
-  />
-  <LinkCard
     title="@portabletext/markdown"
     description="Convert Portable Text to Markdown and back again."
     href="https://github.com/portabletext/editor/tree/main/packages/markdown"
   />
   <LinkCard
+    title="@portabletext/sanity-bridge"
+    description="Bridge between Portable Text and Sanity."
+    href="https://github.com/portabletext/editor/tree/main/packages/sanity-bridge"
+  />
+  <LinkCard
     title="@portabletext/patches"
     description="Apply Sanity patches to a value."
     href="https://github.com/portabletext/editor/tree/main/packages/patches"
-  />
-  <LinkCard
-    title="@portabletext/schema"
-    description="Define and compile Portable Text schemas with full type safety and editor support."
-    href="https://github.com/portabletext/editor/tree/main/packages/schema"
   />
   <LinkCard
     title="@portabletext/test"
@@ -53,3 +111,5 @@ Additional tools and libraries for working with Portable Text. For more official
     href="https://github.com/portabletext/editor/tree/main/packages/racejar"
   />
 </CardGrid>
+
+For more packages, see the [Portable Text organization on GitHub](https://github.com/portabletext/).
