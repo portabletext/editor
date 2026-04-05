@@ -1,115 +1,109 @@
 ---
 title: All packages
-description: Every Portable Text package — serializers, converters, utilities, and community libraries.
+description: Every Portable Text package — serializers, converters, editor plugins, and utilities.
 ---
 
-import {CardGrid, LinkCard} from '@astrojs/starlight/components'
+import {Badge} from '@astrojs/starlight/components'
 
-Every package in the Portable Text ecosystem: official serializers, format converters, language ports, platform integrations, and editor internals.
+The Portable Text ecosystem: official packages from the [`portabletext`](https://github.com/portabletext/) organization and community-maintained libraries. Packages marked with <Badge text="Community" variant="note" /> are maintained outside the official organization.
 
-## Serializers
+## Render Portable Text
 
-| Package                                                                                    | Target       | Install                            |
-| ------------------------------------------------------------------------------------------ | ------------ | ---------------------------------- |
-| [`@portabletext/react`](https://github.com/portabletext/react-portabletext/)               | React        | `npm i @portabletext/react`        |
-| [`@portabletext/to-html`](https://github.com/portabletext/to-html/)                        | HTML string  | `npm i @portabletext/to-html`      |
-| [`@portabletext/vue`](https://github.com/portabletext/vue-portabletext/)                   | Vue          | `npm i @portabletext/vue`          |
-| [`@portabletext/svelte`](https://github.com/portabletext/svelte-portabletext/)             | Svelte 5+    | `npm i @portabletext/svelte`       |
-| [`@portabletext/solid`](https://github.com/portabletext/solid-portabletext/)               | SolidJS      | `npm i @portabletext/solid`        |
-| [`@portabletext/react-native`](https://github.com/portabletext/react-native-portabletext/) | React Native | `npm i @portabletext/react-native` |
-| [`@portabletext/react-pdf`](https://github.com/portabletext/react-pdf-portabletext)        | React PDF    | `npm i @portabletext/react-pdf`    |
-| [`astro-portabletext`](https://github.com/theisel/astro-portabletext)                      | Astro        | `npm i astro-portabletext`         |
-| [`portabletext-qwik`](https://github.com/tegonal/portabletext-qwik)                        | Qwik         | `npm i portabletext-qwik`          |
+Serializers convert Portable Text JSON into your target output.
 
-## Converters
+### JavaScript
 
-| Package                                                                                                                        | Direction                  | Install                                                     |
-| ------------------------------------------------------------------------------------------------------------------------------ | -------------------------- | ----------------------------------------------------------- |
-| [`@portabletext/html`](https://github.com/portabletext/editor/tree/main/packages/html)                                         | HTML → Portable Text       | `npm i @portabletext/html`                                  |
-| [`@portabletext/markdown`](https://github.com/portabletext/editor/tree/main/packages/markdown)                                 | Portable Text ↔ Markdown   | `npm i @portabletext/markdown`                              |
-| [`@portabletext/contentful-rich-text-to-portable-text`](https://github.com/portabletext/contentful-rich-text-to-portable-text) | Contentful → Portable Text | `npm i @portabletext/contentful-rich-text-to-portable-text` |
+| Package                                                                                                                         | Target       | Install                            |
+| ------------------------------------------------------------------------------------------------------------------------------- | ------------ | ---------------------------------- |
+| [`@portabletext/react`](https://github.com/portabletext/react-portabletext/)                                                    | React        | `npm i @portabletext/react`        |
+| [`@portabletext/to-html`](https://github.com/portabletext/to-html/)                                                             | HTML string  | `npm i @portabletext/to-html`      |
+| [`@portabletext/vue`](https://github.com/portabletext/vue-portabletext/)                                                        | Vue          | `npm i @portabletext/vue`          |
+| [`@portabletext/svelte`](https://github.com/portabletext/svelte-portabletext/)                                                  | Svelte 5+    | `npm i @portabletext/svelte`       |
+| [`@portabletext/solid`](https://github.com/portabletext/solid-portabletext/)                                                    | SolidJS      | `npm i @portabletext/solid`        |
+| [`@portabletext/react-native`](https://github.com/portabletext/react-native-portabletext/)                                      | React Native | `npm i @portabletext/react-native` |
+| [`@portabletext/react-pdf`](https://github.com/portabletext/react-pdf-portabletext)                                             | React PDF    | `npm i @portabletext/react-pdf`    |
+| [`astro-portabletext`](https://github.com/theisel/astro-portabletext) <Badge text="Community" variant="note" />                 | Astro        | `npm i astro-portabletext`         |
+| [`portabletext-qwik`](https://github.com/tegonal/portabletext-qwik) <Badge text="Community" variant="note" />                   | Qwik         | `npm i portabletext-qwik`          |
+| [`@limitless-angular/sanity`](https://github.com/limitless-angular/limitless-angular) <Badge text="Community" variant="note" /> | Angular      | `npm i @limitless-angular/sanity`  |
 
-## Other languages
+### Other languages
 
-| Package                                                                                 | Language       |
-| --------------------------------------------------------------------------------------- | -------------- |
-| [`dotnet-portable-text`](https://github.com/portabletext/dotnet-portable-text)          | C# / .NET      |
-| [`portable-text-dotnet`](https://github.com/nhi/portable-text-dotnet)                   | C# / .NET      |
-| [`sanity-linq`](https://github.com/oslofjord/sanity-linq)                               | C# / .NET      |
-| [`portabletext-html`](https://github.com/otovo/python-portabletext-html)                | Python         |
-| [`sanity-php`](https://github.com/sanity-io/sanity-php)                                 | PHP            |
-| [`flutter_sanity_portable_text`](https://pub.dev/packages/flutter_sanity_portable_text) | Dart / Flutter |
-| [`flutter_portabletext`](https://github.com/JobiJoba/flutter_portabletext)              | Dart / Flutter |
+| Package                                                                                                                           | Language       |
+| --------------------------------------------------------------------------------------------------------------------------------- | -------------- |
+| [`dotnet-portable-text`](https://github.com/portabletext/dotnet-portable-text)                                                    | C# / .NET      |
+| [`portable-text-dotnet`](https://github.com/nhi/portable-text-dotnet) <Badge text="Community" variant="note" />                   | C# / .NET      |
+| [`sanity-linq`](https://github.com/oslofjord/sanity-linq) <Badge text="Community" variant="note" />                               | C# / .NET      |
+| [`portabletext-html`](https://github.com/otovo/python-portabletext-html) <Badge text="Community" variant="note" />                | Python         |
+| [`sanity-php`](https://github.com/sanity-io/sanity-php)                                                                           | PHP            |
+| [`flutter_sanity_portable_text`](https://pub.dev/packages/flutter_sanity_portable_text) <Badge text="Community" variant="note" /> | Dart / Flutter |
+| [`flutter_portabletext`](https://github.com/JobiJoba/flutter_portabletext) <Badge text="Community" variant="note" />              | Dart / Flutter |
+| [`ruby_portable_text`](https://github.com/beaucouplus/ruby_portable_text) <Badge text="Community" variant="note" />               | Ruby           |
+| [`portabletext`](https://github.com/derickschaefer/portabletext) <Badge text="Community" variant="note" />                        | Go             |
 
-## Platform integrations
+### Platform integrations
 
 | Integration                                                                          | Platform         |
 | ------------------------------------------------------------------------------------ | ---------------- |
 | [`transform.PortableText`](https://gohugo.io/functions/transform/portabletext/)      | Hugo (built-in)  |
 | [`portable-text-to-liquid`](https://github.com/portabletext/portable-text-to-liquid) | Shopify / Liquid |
 
-## Utilities
+## Build an editor
 
-| Package                                                            | Purpose                                                         | Install                       |
-| ------------------------------------------------------------------ | --------------------------------------------------------------- | ----------------------------- |
-| [`@portabletext/toolkit`](https://github.com/portabletext/toolkit) | `toPlainText()`, `buildMarksTree()`, `nestLists()`, type guards | `npm i @portabletext/toolkit` |
-| [`@portabletext/types`](https://github.com/portabletext/types)     | TypeScript type definitions for PT data                         | `npm i @portabletext/types`   |
+| Package                                                                                                            | Purpose                                                        | Install                                  |
+| ------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------- | ---------------------------------------- |
+| [`@portabletext/editor`](https://github.com/portabletext/editor/tree/main/packages/editor)                         | Headless, schema-driven block content editor for React         | `npm i @portabletext/editor`             |
+| [`@portabletext/toolbar`](https://github.com/portabletext/editor/tree/main/packages/toolbar)                       | Headless toolbar hooks for the editor                          | `npm i @portabletext/toolbar`            |
+| [`@portabletext/schema`](https://github.com/portabletext/editor/tree/main/packages/schema)                         | Define and compile Portable Text schemas with full type safety | `npm i @portabletext/schema`             |
+| [`@portabletext/keyboard-shortcuts`](https://github.com/portabletext/editor/tree/main/packages/keyboard-shortcuts) | Platform-aware keyboard shortcuts                              | `npm i @portabletext/keyboard-shortcuts` |
 
-## Editor packages
+### Editor plugins
 
-Packages in the [`portabletext/editor`](https://github.com/portabletext/editor) monorepo:
+| Plugin                                                                                                                                       | What it does                                         | Install                                               |
+| -------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- | ----------------------------------------------------- |
+| [`@portabletext/plugin-typography`](https://github.com/portabletext/editor/tree/main/packages/plugin-typography)                             | Smart quotes, em dashes, ellipses                    | `npm i @portabletext/plugin-typography`               |
+| [`@portabletext/plugin-markdown-shortcuts`](https://github.com/portabletext/editor/tree/main/packages/plugin-markdown-shortcuts)             | Markdown-style shortcuts in the editor               | `npm i @portabletext/plugin-markdown-shortcuts`       |
+| [`@portabletext/plugin-paste-link`](https://github.com/portabletext/editor/tree/main/packages/plugin-paste-link)                             | Paste URLs as links                                  | `npm i @portabletext/plugin-paste-link`               |
+| [`@portabletext/plugin-emoji-picker`](https://github.com/portabletext/editor/tree/main/packages/plugin-emoji-picker)                         | Emoji picker                                         | `npm i @portabletext/plugin-emoji-picker`             |
+| [`@portabletext/plugin-character-pair-decorator`](https://github.com/portabletext/editor/tree/main/packages/plugin-character-pair-decorator) | Match character pairs and decorate text between them | `npm i @portabletext/plugin-character-pair-decorator` |
+| [`@portabletext/plugin-input-rule`](https://github.com/portabletext/editor/tree/main/packages/plugin-input-rule)                             | Configure input rules                                | `npm i @portabletext/plugin-input-rule`               |
+| [`@portabletext/plugin-one-line`](https://github.com/portabletext/editor/tree/main/packages/plugin-one-line)                                 | Restrict editor to a single line                     | `npm i @portabletext/plugin-one-line`                 |
 
-<CardGrid>
-  <LinkCard
-    title="@portabletext/editor"
-    description="The Portable Text Editor: a headless, schema-driven block content editor for React."
-    href="https://github.com/portabletext/editor/tree/main/packages/editor"
-  />
-  <LinkCard
-    title="@portabletext/toolbar"
-    description="Headless toolbar hooks for the Portable Text Editor."
-    href="https://github.com/portabletext/editor/tree/main/packages/toolbar"
-  />
-  <LinkCard
-    title="@portabletext/schema"
-    description="Define and compile Portable Text schemas with full type safety and editor support."
-    href="https://github.com/portabletext/editor/tree/main/packages/schema"
-  />
-  <LinkCard
-    title="@portabletext/html"
-    description="Convert HTML to Portable Text with support for Google Docs, Word, and Notion."
-    href="https://github.com/portabletext/editor/tree/main/packages/html"
-  />
-  <LinkCard
-    title="@portabletext/block-tools"
-    description="Sanity-flavored HTML to Portable Text conversion (wraps @portabletext/html)."
-    href="https://github.com/portabletext/editor/tree/main/packages/block-tools"
-  />
-  <LinkCard
-    title="@portabletext/markdown"
-    description="Convert Portable Text to Markdown and back again."
-    href="https://github.com/portabletext/editor/tree/main/packages/markdown"
-  />
-  <LinkCard
-    title="@portabletext/sanity-bridge"
-    description="Bridge between Portable Text and Sanity."
-    href="https://github.com/portabletext/editor/tree/main/packages/sanity-bridge"
-  />
-  <LinkCard
-    title="@portabletext/patches"
-    description="Apply Sanity patches to a value."
-    href="https://github.com/portabletext/editor/tree/main/packages/patches"
-  />
-  <LinkCard
-    title="@portabletext/test"
-    description="Testing utilities for the Portable Text Editor."
-    href="https://github.com/portabletext/editor/tree/main/packages/test"
-  />
-  <LinkCard
-    title="racejar"
-    description="A testing framework agnostic Gherkin driver."
-    href="https://github.com/portabletext/editor/tree/main/packages/racejar"
-  />
-</CardGrid>
+## Convert content
+
+| Package                                                                                                                                                                  | Direction                             | Install                                                     |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------- | ----------------------------------------------------------- |
+| [`@portabletext/html`](https://github.com/portabletext/editor/tree/main/packages/html)                                                                                   | HTML → Portable Text                  | `npm i @portabletext/html`                                  |
+| [`@portabletext/block-tools`](https://github.com/portabletext/editor/tree/main/packages/block-tools)                                                                     | HTML → Portable Text (Sanity wrapper) | `npm i @portabletext/block-tools`                           |
+| [`@portabletext/markdown`](https://github.com/portabletext/editor/tree/main/packages/markdown)                                                                           | Portable Text ↔ Markdown              | `npm i @portabletext/markdown`                              |
+| [`@portabletext/contentful-rich-text-to-portable-text`](https://github.com/portabletext/contentful-rich-text-to-portable-text)                                           | Contentful → Portable Text            | `npm i @portabletext/contentful-rich-text-to-portable-text` |
+| [`@emdash-cms/gutenberg-to-portable-text`](https://github.com/emdash-cms/emdash/tree/main/packages/gutenberg-to-portable-text) <Badge text="Community" variant="note" /> | WordPress / Gutenberg → Portable Text | `npm i @emdash-cms/gutenberg-to-portable-text`              |
+
+## Work with Portable Text data
+
+| Package                                                                                      | Purpose                                                         | Install                       |
+| -------------------------------------------------------------------------------------------- | --------------------------------------------------------------- | ----------------------------- |
+| [`@portabletext/toolkit`](https://github.com/portabletext/toolkit)                           | `toPlainText()`, `buildMarksTree()`, `nestLists()`, type guards | `npm i @portabletext/toolkit` |
+| [`@portabletext/types`](https://github.com/portabletext/types)                               | TypeScript type definitions for Portable Text data              | `npm i @portabletext/types`   |
+| [`@portabletext/patches`](https://github.com/portabletext/editor/tree/main/packages/patches) | Apply patches to Portable Text values                           | `npm i @portabletext/patches` |
+
+## Testing
+
+| Package                                                                                | Purpose                                        | Install                    |
+| -------------------------------------------------------------------------------------- | ---------------------------------------------- | -------------------------- |
+| [`@portabletext/test`](https://github.com/portabletext/editor/tree/main/packages/test) | Testing utilities for the Portable Text Editor | `npm i @portabletext/test` |
+| [`racejar`](https://github.com/portabletext/editor/tree/main/packages/racejar)         | Framework-agnostic Gherkin test driver         | `npm i racejar`            |
+
+## Legacy packages
+
+These packages are deprecated. Use the current equivalents listed above.
+
+| Deprecated package                     | Replaced by                                                       |
+| -------------------------------------- | ----------------------------------------------------------------- |
+| `@sanity/block-content-to-react`       | [`@portabletext/react`](/rendering/react/)                        |
+| `@sanity/block-content-to-html`        | [`@portabletext/to-html`](/rendering/html/)                       |
+| `@sanity/block-content-to-hyperscript` | [`@portabletext/to-html`](/rendering/html/)                       |
+| `@sanity/block-content-to-markdown`    | [`@portabletext/markdown`](/rendering/markdown/)                  |
+| `@sanity/block-tools`                  | [`@portabletext/block-tools`](/conversion/html-to-portable-text/) |
+| `@sanity/portable-text-editor`         | [`@portabletext/editor`](/editor/getting-started/)                |
 
 For more packages, see the [Portable Text organization on GitHub](https://github.com/portabletext/).
