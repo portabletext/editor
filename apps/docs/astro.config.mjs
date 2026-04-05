@@ -18,6 +18,9 @@ const tsconfig = '../../packages/editor/tsconfig.typedoc.json'
 // https://astro.build/config
 export default defineConfig({
   site: 'https://www.portabletext.org',
+  redirects: {
+    '/integrations/serializers/': '/rendering/',
+  },
   integrations: [
     react(),
     starlight({
@@ -66,12 +69,16 @@ export default defineConfig({
       sidebar: [
         {slug: 'getting-started'},
         {
-          label: 'Guides',
-          autogenerate: {directory: 'guides'},
+          label: 'Rendering',
+          autogenerate: {directory: 'rendering'},
         },
         {
           label: 'Concepts',
           autogenerate: {directory: 'concepts'},
+        },
+        {
+          label: 'Guides',
+          autogenerate: {directory: 'guides'},
         },
         {
           label: 'Reference',
@@ -120,10 +127,6 @@ export default defineConfig({
               ],
             },
           ],
-        },
-        {
-          label: 'Integrations',
-          autogenerate: {directory: 'integrations'},
         },
         {
           label: 'Resources',
