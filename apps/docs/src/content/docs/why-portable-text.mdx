@@ -32,9 +32,30 @@ Markdown is simpler than HTML, but it has its own limits:
 - **No structured annotations.** A Markdown link is `[text](url)`. If you need a link with a target, a tooltip, and a tracking parameter, you're back to embedding HTML.
 - **No queryable structure.** "Find all documents that mention this product" requires parsing every Markdown file.
 
+## The problem with block-based HTML (Gutenberg)
+
+WordPress Gutenberg introduced block-based editing, which is the right idea: content as a sequence of typed blocks (paragraphs, images, embeds) rather than one big HTML string. But Gutenberg stores blocks as HTML comments inside an HTML string:
+
+```html
+<!-- wp:heading -->
+<h2 class="wp-block-heading">Hello world</h2>
+<!-- /wp:heading -->
+
+<!-- wp:image {"id":123,"sizeSlug":"large"} -->
+<figure class="wp-block-image size-large">
+  <img src="photo.jpg" alt="A mountain landscape" />
+  <figcaption>View from the summit</figcaption>
+</figure>
+<!-- /wp:image -->
+```
+
+The block metadata (`{"id":123,"sizeSlug":"large"}`) is embedded in an HTML comment. To access it, you parse HTML. To query which posts contain an image with a specific ID, you search HTML strings. To render the same content in a mobile app, you parse the HTML and extract the comment data.
+
+Gutenberg has the right mental model (structured blocks), but the storage format (HTML with comments) inherits the same problems as plain HTML strings: parsing is fragile, querying is impractical, and rendering in a different format requires understanding the full HTML structure.
+
 ## How Portable Text works
 
-Portable Text represents the same content as a JSON array:
+Portable Text takes the block model and stores it as JSON. The same content:
 
 ```json
 [

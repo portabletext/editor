@@ -1,6 +1,6 @@
 ---
 title: Getting started
-description: Render Portable Text content or build a rich text editor.
+description: Install the Portable Text Editor and build your first rich text editing experience.
 next: false
 prev: false
 ---
@@ -14,26 +14,15 @@ import {
 } from '@astrojs/starlight/components'
 import {PackageManagers} from 'starlight-package-managers'
 
-Portable Text is a JSON-based rich text format. There are two ways to work with it:
+This guide walks you through installing and configuring the Portable Text Editor. By the end, you'll have a working rich text editor with custom styles, decorators, and a toolbar.
 
-<CardGrid>
-  <LinkCard
-    title="Render Portable Text"
-    description="Display PT content as HTML, React, Vue, Svelte, or any format"
-    href="/rendering/"
-  />
-  <LinkCard
-    title="Build a rich text editor"
-    description="Keep reading to create a customizable editing experience"
-    href="#add-the-library-to-your-project"
-  />
-</CardGrid>
+:::tip[Just need to render Portable Text?]
+If you already have Portable Text content and want to display it, see [Render Portable Text](/rendering/) instead.
+:::
 
----
-
-## Build a rich text editor
-
-This guide walks you through installing and configuring the Portable Text Editor (PTE). By the end, you'll have a working rich text editor with custom styles, decorators, and a toolbar.
+:::note[Prerequisites]
+This guide covers `@portabletext/editor` **v6.x**, `@portabletext/toolbar` **v7.x**, and `@portabletext/keyboard-shortcuts` **v2.x**. Requires React 18+. Check the [editor changelog](https://github.com/portabletext/editor/releases) for breaking changes.
+:::
 
 You'll need to:
 

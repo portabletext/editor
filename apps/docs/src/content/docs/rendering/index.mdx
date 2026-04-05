@@ -5,15 +5,17 @@ description: How to render Portable Text as HTML, React components, or any other
 
 import {CardGrid, LinkCard, TabItem, Tabs} from '@astrojs/starlight/components'
 
-Portable Text is stored as JSON. To display it, you pass the data through a **serializer** that converts each block into your target output: HTML strings, React components, Vue templates, or any other format.
+Portable Text is stored as JSON. To display it, you pass the data through a **serializer** that converts each block into your target output: HTML strings, React components, Vue templates, Markdown, or any other format.
 
 ## How it works
 
-A Portable Text document is an array of blocks. A serializer walks the array and handles each block based on its `_type`:
+A Portable Text document is an array of blocks. Each block has a `_type` that tells the serializer what it is and how to render it.
 
-1. **Text blocks** (`_type: "block"`) contain paragraphs, headings, lists, and inline formatting. Serializers handle these out of the box.
-2. **Custom blocks** (any other `_type`) represent structured content like images, code blocks, or calls to action. You provide a component for each custom type.
-3. **Marks** add meaning to inline text. **Decorators** (bold, italic, underline) work by default. **Annotations** (links, references, footnotes) carry data and need custom components.
+Some blocks are **text blocks** (`_type: "block"`): paragraphs, headings, lists, and inline formatting. Serializers handle these out of the box.
+
+But Portable Text isn't just rich text. The same array can contain **any type of structured content**: images, code blocks, calls to action, videos, tables, or types you define yourself. These custom blocks sit alongside text blocks in the array, each with their own `_type` and data. You provide a component for each custom type, and the serializer renders them in sequence.
+
+Within text blocks, **marks** add meaning to inline text. **Decorators** (bold, italic, underline) work by default. **Annotations** (links, references, footnotes) carry data and need custom components.
 
 If a serializer encounters a type it doesn't recognize, it skips it. Nothing breaks.
 
@@ -51,6 +53,21 @@ Install the serializer for your framework:
     ```
 
     [HTML guide →](/rendering/html/)
+
+  </TabItem>
+
+  <TabItem label="Markdown">
+    ```bash
+    npm install @portabletext/markdown
+    ```
+
+    ```ts
+    import {portableTextToMarkdown} from '@portabletext/markdown'
+
+    const markdown = portableTextToMarkdown(portableTextContent)
+    ```
+
+    Also converts Markdown → Portable Text. [Markdown guide →](/rendering/markdown/)
 
   </TabItem>
 
@@ -114,11 +131,11 @@ Install the serializer for your framework:
   </TabItem>
 </Tabs>
 
-That's enough to render paragraphs, headings, lists, bold, italic, and links. The next sections cover custom types and marks.
+That's enough to render paragraphs, headings, lists, bold, italic, and links. But Portable Text can contain much more than formatted text. The next sections show how to render custom block types and marks.
 
 ## Rendering custom block types
 
-Custom blocks carry structured data that the serializer doesn't know how to render by default. You tell it what to do by mapping the block's `_type` to a component.
+This is where Portable Text goes beyond rich text. Custom blocks carry structured data (images, CTAs, embeds, code blocks) that the serializer doesn't know how to render by default. You tell it what to do by mapping the block's `_type` to a component.
 
 Here's an image block in Portable Text:
 
@@ -170,6 +187,23 @@ The `_type` is `"image"`. To render it, add an `image` entry to the `types` comp
               : ''
             return `<figure><img src="${value.url}" alt="${value.alt}" />${caption}</figure>`
           },
+        },
+      },
+    })
+    ```
+
+  </TabItem>
+
+  <TabItem label="Markdown">
+    ```ts
+    import {portableTextToMarkdown} from '@portabletext/markdown'
+
+    const markdown = portableTextToMarkdown(portableTextContent, {
+      types: {
+        image: ({value}) => {
+          const alt = value.alt || ''
+          const caption = value.caption ? `\n\n*${value.caption}*` : ''
+          return `![${alt}](${value.url})${caption}`
         },
       },
     })
@@ -258,6 +292,25 @@ The span with `"marks": ["link1"]` references the mark definition with `"_key": 
     :::
 
   </TabItem>
+
+  <TabItem label="Markdown">
+    ```ts
+    import {portableTextToMarkdown} from '@portabletext/markdown'
+
+    const markdown = portableTextToMarkdown(portableTextContent, {
+      marks: {
+        link: ({children, value}) => {
+          const href = value.href || ''
+          const title = value.title ? ` "${value.title}"` : ''
+          return `[${children}](${href}${title})`
+        },
+      },
+    })
+    ```
+
+    The default link renderer already handles standard links. Custom mark renderers are useful when your annotations carry extra data (tracking parameters, tooltips, etc.) that you want to preserve in the Markdown output.
+
+  </TabItem>
 </Tabs>
 
 Mark components receive `children` (the annotated text, already rendered) and `value` (the mark definition data). The same pattern works for any annotation type: footnotes, internal references, highlights, or custom marks specific to your schema.
@@ -291,6 +344,11 @@ Each framework has its own patterns for custom components, TypeScript support, a
     title="HTML"
     description="String-based rendering, uriLooksSafe security, htm + vhtml for safe construction"
     href="/rendering/html/"
+  />
+  <LinkCard
+    title="Markdown"
+    description="Bidirectional conversion: PT to Markdown and Markdown to PT, custom renderers and matchers"
+    href="/rendering/markdown/"
   />
   <LinkCard
     title="Vue"

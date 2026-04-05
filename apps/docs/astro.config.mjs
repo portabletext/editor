@@ -92,6 +92,7 @@ export default defineConfig({
             {slug: 'rendering/vue'},
             {slug: 'rendering/svelte'},
             {slug: 'rendering/astro'},
+            {slug: 'rendering/markdown'},
           ],
         },
         {
