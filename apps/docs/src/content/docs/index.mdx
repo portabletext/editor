@@ -1,6 +1,6 @@
 ---
-title: Portable Text Editor
-description: Fully customizable authoring of block content and rich text
+title: Portable Text
+description: A JSON-based specification for structured block content
 template: splash
 ---
 
@@ -14,9 +14,34 @@ import {
 } from '@astrojs/starlight/components'
 import PortableTextEditor from '../../components/editor/editor.astro'
 
-## What is Portable Text?
+Portable Text is an open specification for structured block content. Rich text, images, code blocks, and any custom type you define, stored as JSON and renderable anywhere.
 
-Portable Text is a JSON-based specification for structured block content. A Portable Text document is an array of typed blocks: text blocks (paragraphs, headings, lists), image blocks, code blocks, or any custom type you define. Within text blocks, you can embed inline objects (a stock ticker with symbol and exchange data) and annotations (a link that carries href, target, and tracking parameters as structured data, not just an `<a>` tag). The result is content that's portable across platforms, renderable in any format, and queryable as data.
+[Get started →](/introduction/) · [Render PT content →](/rendering/) · [Build an editor →](/editor/getting-started/)
+
+## Try the editor
+
+<PortableTextEditor />
+
+Type, format, and see the Portable Text output in real time. This is the [Portable Text Editor](/editor/getting-started/): a fully customizable block content editor you can embed in any React application.
+
+## Get started
+
+<CardGrid>
+  <LinkCard
+    title="Render Portable Text"
+    description="Have PT content? Pick your framework and start rendering."
+    href="/rendering/"
+  />
+  <LinkCard
+    title="Build a block content editor"
+    description="Set up the Portable Text Editor with custom blocks, rich text, and a toolbar."
+    href="/editor/getting-started/"
+  />
+</CardGrid>
+
+## What does Portable Text look like?
+
+The same content as an HTML string and as Portable Text:
 
 <Tabs>
   <TabItem label="HTML string">
@@ -58,31 +83,14 @@ Portable Text is a JSON-based specification for structured block content. A Port
   </TabItem>
 </Tabs>
 
-Because content is structured data, you can render it as HTML, React components, Markdown, PDFs, or any other format from the same content.
-
-## Get started
-
-<CardGrid>
-  <LinkCard
-    title="Render Portable Text"
-    description="Have content in Portable Text? Pick your framework and start rendering."
-    href="/rendering/"
-  />
-  <LinkCard
-    title="Build a PT Editor"
-    description="Build a block content editor with custom blocks, inline objects, and rich text."
-    href="/editor/getting-started/"
-  />
-</CardGrid>
-
-<PortableTextEditor />
+Because content is structured data, you can render it as HTML, React components, Markdown, PDFs, or any other format. [Learn more about Portable Text →](/introduction/)
 
 ## Learn more
 
 <CardGrid>
   <LinkCard
     title="Schema and concepts"
-    description="The building blocks of the Portable Text Editor: schema, styles, decorators, annotations, and more"
+    description="The building blocks of the editor: schema, styles, decorators, annotations, and more"
     href="/editor/concepts/portabletext/"
   />
   <LinkCard
@@ -96,7 +104,7 @@ Because content is structured data, you can render it as HTML, React components,
     href="https://playground.portabletext.org/"
   />
   <LinkCard
-    title="Portable Text Specification"
+    title="Specification"
     description="The open specification for structured block content"
     href="/specification/"
   />

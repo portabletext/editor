@@ -35,6 +35,7 @@ export default defineConfig({
     '/reference/selectors/': '/editor/reference/selectors/',
     '/reference/toolbar/': '/editor/reference/toolbar/',
     '/reference/keyboard-shortcuts/': '/editor/reference/keyboard-shortcuts/',
+    '/getting-started/': '/introduction/',
   },
   integrations: [
     react(),
@@ -82,7 +83,7 @@ export default defineConfig({
         },
       ],
       sidebar: [
-        {slug: 'getting-started'},
+        {slug: 'introduction'},
         {
           label: 'Rendering',
           items: [
