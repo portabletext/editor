@@ -939,6 +939,16 @@ export const stepDefinitions = [
   ),
 
   /**
+   * List item steps
+   */
+  When(
+    '{list-item} list is toggled',
+    (context: Context, listItem: Parameter['listItem']) => {
+      context.editor.send({type: 'list item.toggle', listItem})
+    },
+  ),
+
+  /**
    * Style steps
    */
   When('{style} is toggled', (context: Context, style: Parameter['style']) => {

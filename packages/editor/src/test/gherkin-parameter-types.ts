@@ -44,6 +44,10 @@ const parameterType = {
     name: 'inline-object',
     matcher: /"(stock-ticker)"/,
   }),
+  listItem: createParameterType<'bullet' | 'number'>({
+    name: 'list-item',
+    matcher: /"(bullet|number)"/,
+  }),
   key: createParameterType<'key'>({
     name: 'key',
     matcher: /"([a-z]\d)"/,
@@ -106,6 +110,7 @@ export const parameterTypes = [
   parameterType.direction,
   parameterType.index,
   parameterType.inlineObject,
+  parameterType.listItem,
   parameterType.key,
   parameterType.keyKeys,
   parameterType.marks,

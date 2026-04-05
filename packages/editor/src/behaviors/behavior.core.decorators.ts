@@ -1,33 +1,30 @@
 import {defaultKeyboardShortcuts} from '../editor/default-keyboard-shortcuts'
+import type {EditorSnapshot} from '../editor/editor-snapshot'
+import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
+import {isDecoratorAllowedByStyle} from './behavior.utils.style-feature-allowed'
 
 export const coreDecoratorBehaviors = {
   strongShortcut: defineBehavior({
     on: 'keyboard.keydown',
     guard: ({snapshot, event}) =>
       defaultKeyboardShortcuts.decorators.strong.guard(event.originEvent) &&
-      snapshot.context.schema.decorators.some(
-        (decorator) => decorator.name === 'strong',
-      ),
+      isDecoratorShortcutAllowed(snapshot, 'strong'),
     actions: [() => [raise({type: 'decorator.toggle', decorator: 'strong'})]],
   }),
   emShortcut: defineBehavior({
     on: 'keyboard.keydown',
     guard: ({snapshot, event}) =>
       defaultKeyboardShortcuts.decorators.em.guard(event.originEvent) &&
-      snapshot.context.schema.decorators.some(
-        (decorator) => decorator.name === 'em',
-      ),
+      isDecoratorShortcutAllowed(snapshot, 'em'),
     actions: [() => [raise({type: 'decorator.toggle', decorator: 'em'})]],
   }),
   underlineShortcut: defineBehavior({
     on: 'keyboard.keydown',
     guard: ({snapshot, event}) =>
       defaultKeyboardShortcuts.decorators.underline.guard(event.originEvent) &&
-      snapshot.context.schema.decorators.some(
-        (decorator) => decorator.name === 'underline',
-      ),
+      isDecoratorShortcutAllowed(snapshot, 'underline'),
     actions: [
       () => [raise({type: 'decorator.toggle', decorator: 'underline'})],
     ],
@@ -36,9 +33,24 @@ export const coreDecoratorBehaviors = {
     on: 'keyboard.keydown',
     guard: ({snapshot, event}) =>
       defaultKeyboardShortcuts.decorators.code.guard(event.originEvent) &&
-      snapshot.context.schema.decorators.some(
-        (decorator) => decorator.name === 'code',
-      ),
+      isDecoratorShortcutAllowed(snapshot, 'code'),
     actions: [() => [raise({type: 'decorator.toggle', decorator: 'code'})]],
   }),
+}
+
+function isDecoratorShortcutAllowed(
+  snapshot: EditorSnapshot,
+  decoratorName: string,
+): boolean {
+  if (
+    !snapshot.context.schema.decorators.some(
+      (decorator) => decorator.name === decoratorName,
+    )
+  ) {
+    return false
+  }
+  if (!getFocusTextBlock(snapshot)) {
+    return false
+  }
+  return isDecoratorAllowedByStyle(snapshot, decoratorName)
 }

@@ -187,6 +187,59 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   }
 
   /**
+   * Remove marks not allowed by the block's per-style restrictions
+   */
+  if (isSpan({schema: editor.schema}, node)) {
+    const blockPath = parentPath(path)
+    const blockEntry = getTextBlockNode(editor, blockPath)
+    if (!blockEntry) {
+      return
+    }
+    const style = blockEntry.node.style
+    const styleType = style
+      ? editor.schema.styles.find((s) => s.name === style)
+      : undefined
+
+    if (styleType) {
+      const allowedDecorators = styleType.decorators
+      const allowedAnnotations = styleType.annotations
+
+      if (allowedDecorators || allowedAnnotations) {
+        const decoratorNames = editor.schema.decorators.map((d) => d.name)
+        const allowedDecoratorNames = allowedDecorators?.map((d) => d.name)
+        const allowedAnnotationNames = allowedAnnotations?.map((a) => a.name)
+
+        const marks = node.marks ?? []
+        const filteredMarks = marks.filter((mark) => {
+          const isDecorator = decoratorNames.includes(mark)
+          if (isDecorator) {
+            return allowedDecoratorNames
+              ? allowedDecoratorNames.includes(mark)
+              : true
+          }
+          if (allowedAnnotationNames) {
+            const markDef = blockEntry.node.markDefs?.find(
+              (def) => def._key === mark,
+            )
+            return markDef
+              ? allowedAnnotationNames.includes(markDef._type)
+              : true
+          }
+          return true
+        })
+
+        if (filteredMarks.length !== marks.length) {
+          debug.normalization(
+            'removing marks not allowed by style restrictions',
+          )
+          applySetNode(editor, {marks: filteredMarks}, path)
+          return
+        }
+      }
+    }
+  }
+
+  /**
    * Remove orphaned annotations from child spans of block nodes
    */
   if (isTextBlock({schema: editor.schema}, node)) {
