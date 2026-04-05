@@ -5,10 +5,10 @@ description: Serializers and renderers for converting Portable Text to HTML, Rea
 
 import {TabItem, Tabs} from '@astrojs/starlight/components'
 
-Portable Text is a JSON format — to display it, you need a **serializer** that converts the structured data into your target output. Official serializers are available for most popular frameworks, with community packages covering the rest.
+Portable Text is a JSON format. To display it, you need a **serializer** that converts the structured data into your target output. Official serializers are available for most popular frameworks, with community packages covering the rest.
 
 :::note[Prop name differences across frameworks]
-Most renderers use `types` and `marks` (plural) for custom components. **Svelte and Astro use `type` and `mark` (singular).** Check the examples below for your framework.
+Most renderers use `types` and `marks` (plural) for custom components. **Astro uses `type` and `mark` (singular).** Check the examples below for your framework.
 :::
 
 ## Quick Start
@@ -29,7 +29,7 @@ The fastest way to render Portable Text depends on your stack:
     }
     ```
 
-    That's it for basic rendering. The component renders sensible HTML defaults — paragraphs, headings, bold, italic, links, and lists all work out of the box.
+    That's it for basic rendering. The component handles paragraphs, headings, bold, italic, links, and lists out of the box.
 
     To customize how specific types render, pass a `components` prop:
 
