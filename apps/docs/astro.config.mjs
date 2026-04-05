@@ -107,6 +107,7 @@ export default defineConfig({
             {slug: 'editor/guides/customize-toolbar'},
             {slug: 'editor/guides/create-behavior'},
             {slug: 'editor/guides/behavior-cheat-sheet'},
+            {slug: 'editor/guides/custom-blocks'},
             {
               label: 'Reference',
               collapsed: true,
