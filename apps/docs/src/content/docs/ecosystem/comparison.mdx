@@ -1,0 +1,295 @@
+---
+title: Comparing rich text editors
+description: How Portable Text and the Portable Text Editor compare to other rich text editors and content formats.
+---
+
+import {TabItem, Tabs} from '@astrojs/starlight/components'
+
+Choosing a rich text editor means choosing a data format, an editing experience, and an ecosystem. This page compares Portable Text (the format) and the Portable Text Editor (PTE) to other options, organized by what you're trying to accomplish.
+
+:::note
+Portable Text the format and the Portable Text Editor are separate concerns. You can use PT without PTE (as [EmDash](https://emdash.dev/) does with TipTap), and you can evaluate them independently.
+:::
+
+## The landscape
+
+Rich text editors fall into three tiers:
+
+| Tier                  | Examples                                       | What you get                                                               |
+| --------------------- | ---------------------------------------------- | -------------------------------------------------------------------------- |
+| **Core frameworks**   | ProseMirror, Slate, Lexical                    | Low-level primitives, maximum control. You build everything.               |
+| **Developer editors** | TipTap, Plate, PTE                             | Opinionated layer on a core framework. You customize a working foundation. |
+| **Drop-in editors**   | CKEditor, TinyMCE, Quill, BlockNote, Editor.js | Working editor out of the box. You configure and lightly customize.        |
+
+The Portable Text Editor is a developer editor built on a vendored fork of Slate. It's headless (no built-in toolbar UI) and React-only.
+
+## Quick comparison
+
+|                    | PTE                             | TipTap                         | Lexical                    | Slate / Plate            | CKEditor 5                   | BlockNote                    | Editor.js                   |
+| ------------------ | ------------------------------- | ------------------------------ | -------------------------- | ------------------------ | ---------------------------- | ---------------------------- | --------------------------- |
+| Framework          | React                           | React, Vue, vanilla            | React, vanilla             | React                    | React, Vue, Angular, vanilla | React                        | Vanilla                     |
+| Toolbar included   | No (headless)                   | No (headless)                  | No (headless)              | Plate: yes               | Yes                          | Yes                          | Yes                         |
+| Custom block types | Schema-defined                  | Extensions                     | Custom nodes               | Custom elements          | Plugins                      | Custom blocks                | Block tools                 |
+| Inline objects     | Yes                             | Yes                            | Yes                        | Yes                      | Yes                          | Limited                      | No (block-only)             |
+| Collaboration      | Via Sanity                      | Yjs (CRDT)                     | Yjs (CRDT)                 | Yjs (CRDT)               | Proprietary cloud            | Yjs (built-in)               | No                          |
+| Data format        | Portable Text (flat JSON array) | ProseMirror JSON (nested tree) | Lexical JSON (nested tree) | Slate JSON (nested tree) | HTML                         | BlockNote JSON (nested tree) | Editor.js JSON (flat array) |
+| License            | MIT                             | MIT (core)                     | MIT                        | MIT                      | GPL-2+ / commercial          | MPL-2                        | Apache-2                    |
+
+## Rendering across platforms
+
+This is where Portable Text is strongest. Most editors store content in a format tied to their own rendering engine. PT stores content as structured JSON that any language can parse.
+
+|                              | PT                                           | TipTap / ProseMirror  | Lexical               | Editor.js                                      |
+| ---------------------------- | -------------------------------------------- | --------------------- | --------------------- | ---------------------------------------------- |
+| Official rendering libraries | React, HTML, Vue, Svelte, Astro, Markdown    | HTML export           | HTML export           | None (community)                               |
+| Native mobile rendering      | Community libs for Swift, Kotlin, Flutter    | HTML in a webview     | HTML in a webview     | JSON is parseable                              |
+| Markdown round-trip          | Bidirectional (`@portabletext/markdown`)     | Via extensions        | Manual                | No                                             |
+| Multi-language ecosystem     | JS, C#, PHP, Python, Ruby, Go, Hugo, Flutter | JS only               | JS only               | Some community                                 |
+| Structural querying          | Flat array = simple JSON queries             | Tree traversal needed | Tree traversal needed | Flat array, but inline content is HTML strings |
+
+If your content needs to render on a website, a mobile app, in emails, as PDFs, and as Markdown for AI consumption, PT is designed for that. The same content works with any serializer.
+
+## Data model comparison
+
+The architectural differences become concrete when you see the same content in each format. Here's a heading, a paragraph with bold text, and an image:
+
+<Tabs>
+  <TabItem label="Portable Text">
+    ```json
+    [
+      {
+        "_type": "block",
+        "_key": "a1b2c3",
+        "style": "h1",
+        "children": [
+          {"_type": "span", "_key": "d4e5f6", "text": "My heading", "marks": []}
+        ],
+        "markDefs": []
+      },
+      {
+        "_type": "block",
+        "_key": "g7h8i9",
+        "style": "normal",
+        "children": [
+          {"_type": "span", "_key": "j1k2l3", "text": "This is ", "marks": []},
+          {"_type": "span", "_key": "m4n5o6", "text": "bold text", "marks": ["strong"]},
+          {"_type": "span", "_key": "p7q8r9", "text": ".", "marks": []}
+        ],
+        "markDefs": []
+      },
+      {
+        "_type": "image",
+        "_key": "s1t2u3",
+        "src": "photo.jpg",
+        "alt": "A mountain landscape"
+      }
+    ]
+    ```
+
+    **Flat array.** Every block is a top-level element. Text blocks have structured spans with typed marks. Custom blocks (like the image) carry their own fields. Every element has a `_key` for stable addressing.
+
+    "Find all images" is `blocks.filter(b => b._type === 'image')`. "Find all links" is `blocks.flatMap(b => b.markDefs?.filter(m => m._type === 'link'))`. No tree traversal.
+
+  </TabItem>
+  <TabItem label="ProseMirror / TipTap">
+    ```json
+    {
+      "type": "doc",
+      "content": [
+        {
+          "type": "heading",
+          "attrs": {"level": 1},
+          "content": [
+            {"type": "text", "text": "My heading"}
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {"type": "text", "text": "This is "},
+            {"type": "text", "text": "bold text", "marks": [{"type": "bold"}]},
+            {"type": "text", "text": "."}
+          ]
+        },
+        {
+          "type": "image",
+          "attrs": {
+            "src": "photo.jpg",
+            "alt": "A mountain landscape"
+          }
+        }
+      ]
+    }
+    ```
+
+    **Nested tree.** The document is a recursive tree: `doc` contains blocks, blocks contain inline nodes. Marks are arrays on text nodes. Custom data lives in `attrs` objects.
+
+    Querying requires tree traversal. "Find all images" means walking the tree and checking each node's type.
+
+  </TabItem>
+  <TabItem label="Lexical">
+    ```json
+    {
+      "root": {
+        "children": [
+          {
+            "type": "heading",
+            "tag": "h1",
+            "children": [
+              {"type": "text", "text": "My heading", "format": 0}
+            ]
+          },
+          {
+            "type": "paragraph",
+            "children": [
+              {"type": "text", "text": "This is ", "format": 0},
+              {"type": "text", "text": "bold text", "format": 1},
+              {"type": "text", "text": ".", "format": 0}
+            ]
+          },
+          {
+            "type": "image",
+            "src": "photo.jpg",
+            "altText": "A mountain landscape"
+          }
+        ],
+        "type": "root"
+      }
+    }
+    ```
+
+    **Nested tree with bitmask formatting.** Similar to ProseMirror but uses numeric `format` flags instead of named marks (1 = bold, 2 = italic, 3 = bold + italic). Custom data lives directly on nodes.
+
+    The bitmask is compact but opaque. You need to know that `format: 1` means bold.
+
+  </TabItem>
+  <TabItem label="Editor.js">
+    ```json
+    {
+      "blocks": [
+        {
+          "id": "abc123",
+          "type": "header",
+          "data": {"text": "My heading", "level": 1}
+        },
+        {
+          "id": "def456",
+          "type": "paragraph",
+          "data": {"text": "This is <b>bold text</b>."}
+        },
+        {
+          "id": "ghi789",
+          "type": "image",
+          "data": {
+            "url": "photo.jpg",
+            "caption": "A mountain landscape"
+          }
+        }
+      ]
+    }
+    ```
+
+    **Flat array, but inline content is HTML strings.** Editor.js looks similar to PT at the block level (flat array, typed blocks, IDs). But look at the paragraph: `"This is <b>bold text</b>."` is an HTML string. You can't query "find all bold text" or "find all links" without parsing HTML. The block structure is queryable; the inline content is not.
+
+  </TabItem>
+</Tabs>
+
+## Custom blocks and structured content
+
+All modern editors support custom block types. The differences are in how you define them and how the data is stored.
+
+|                   | PTE                                   | TipTap                         | Lexical                    | Slate / Plate                      | Editor.js            |
+| ----------------- | ------------------------------------- | ------------------------------ | -------------------------- | ---------------------------------- | -------------------- |
+| Definition        | `defineSchema({blockObjects: [...]})` | `Node.create({...})` extension | Custom `ElementNode` class | Any element with a `type` property | Tool class           |
+| Typed fields      | Schema-defined                        | Extension attributes           | Manual                     | Manual (schema-less)               | Opaque `data` object |
+| Inline objects    | `inlineObjects` in schema             | Inline node extensions         | Decorator nodes            | Inline elements                    | Not supported        |
+| Schema validation | Built-in (`@portabletext/schema`)     | ProseMirror schema             | Manual                     | Manual                             | None                 |
+
+PTE's schema-driven approach means invalid content can't be produced. If a block type isn't in the schema, it can't be inserted. Other editors (especially Slate) are schema-less by default, giving more flexibility but less safety.
+
+## Collaboration
+
+|               | PTE                      | TipTap                              | Lexical               | CKEditor 5          | BlockNote             |
+| ------------- | ------------------------ | ----------------------------------- | --------------------- | ------------------- | --------------------- |
+| Protocol      | Sanity Content Lake (OT) | Yjs (CRDT)                          | Yjs (CRDT)            | Proprietary (OT)    | Yjs (CRDT)            |
+| Self-hostable | No (Sanity-dependent)    | Yes (Hocuspocus or any Yjs backend) | Yes (any Yjs backend) | No (CKEditor Cloud) | Yes (any Yjs backend) |
+| Live cursors  | Yes (via Sanity)         | Yes                                 | Manual setup          | Yes                 | Yes                   |
+
+PTE's real-time collaboration works through Sanity's Content Lake. For Sanity users, this means collaboration works without infrastructure setup. For non-Sanity users, PTE does not currently support self-hosted collaboration via open protocols like Yjs.
+
+## Migration tooling
+
+| Source                                 | PT                                                         | TipTap    | Lexical | Editor.js |
+| -------------------------------------- | ---------------------------------------------------------- | --------- | ------- | --------- |
+| HTML                                   | `@portabletext/html` + `@portabletext/block-tools`         | Built-in  | Manual  | Community |
+| Markdown                               | `@portabletext/markdown` (bidirectional)                   | Extension | Manual  | No        |
+| WordPress / Gutenberg                  | `@emdash-cms/gutenberg-to-portable-text` (30+ block types) | No        | No      | No        |
+| Paste from Word / Google Docs / Notion | Built-in preprocessors (4 sources)                         | Built-in  | Basic   | No        |
+| Contentful Rich Text                   | `@portabletext/contentful-rich-text-to-portable-text`      | No        | No      | No        |
+
+PT has dedicated migration packages for the most common content sources. The HTML converter handles paste preprocessing from Google Docs, Word, Word Online, and Notion automatically.
+
+## When to choose Portable Text
+
+**PT the format is a good fit when:**
+
+- Content renders on multiple platforms (web, mobile, email, PDF, AI)
+- You need structural querying ("find all documents with links to /pricing")
+- You want a published, open specification not tied to any editor
+- You're migrating from WordPress, Contentful, or HTML-based systems
+- You care about content portability and vendor independence
+
+**PTE the editor is a good fit when:**
+
+- You're building a React application
+- You want a headless editor with full design control
+- You want schema-driven validation (invalid content can't be produced)
+- You're building on Sanity and want integrated collaboration
+- You want the Behavior API for clean, event-driven editor customization
+
+## When to choose something else
+
+**Choose TipTap when:**
+
+- You need Vue, Svelte, or vanilla JS support
+- You want a large extension ecosystem (100+ extensions)
+- You need self-hosted real-time collaboration via Yjs
+- You want the fastest time to a working prototype
+
+**Choose Lexical when:**
+
+- You're building a Meta-scale application with specific performance requirements
+- You want a framework backed by Meta's engineering team
+- You need fine-grained control over the editing pipeline
+
+**Choose BlockNote or Editor.js when:**
+
+- You want a Notion-style block editor with drag-and-drop out of the box
+- You need a working editor with minimal setup
+- Block-level structure matters more than inline content querying
+
+**Choose CKEditor or TinyMCE when:**
+
+- You need a drop-in WYSIWYG editor with a full toolbar
+- You're working in an enterprise environment that requires commercial support
+- You need Angular support or framework-agnostic vanilla JS
+
+## The EmDash pattern: PT without PTE
+
+[EmDash](https://emdash.dev/) (Cloudflare's open-source CMS) uses Portable Text as its content format with TipTap as its editor. They chose PT for content portability and TipTap for its Vue support and extension ecosystem.
+
+This is a valid pattern. PT is a content specification, not an editor. You can:
+
+1. Use any editor that produces structured content
+2. Convert the editor's output to Portable Text
+3. Store PT as your canonical format
+4. Render with PT's serializer ecosystem
+
+The format and the editor are independent choices.
+
+## Further reading
+
+- [Why Portable Text?](/why-portable-text/) for the format's design rationale
+- [Render Portable Text](/rendering/) for framework-specific rendering guides
+- [Portable Text Specification](/specification/) for the open spec
+- [Build a PT Editor](/editor/getting-started/) to get started with PTE

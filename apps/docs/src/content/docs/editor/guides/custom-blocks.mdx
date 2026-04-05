@@ -1,0 +1,367 @@
+---
+title: Custom blocks and inline objects
+description: Add images, code blocks, and other structured content to the Portable Text Editor.
+sidebar:
+  order: 5
+---
+
+import {LinkCard} from '@astrojs/starlight/components'
+
+The Portable Text Editor handles text blocks (paragraphs, headings, lists) by default. To add structured content like images, code blocks, or calls to action, you define custom block types in your schema and tell the editor how to render and insert them.
+
+:::note[Prerequisites]
+This guide covers `@portabletext/editor` **v6.x** and `@portabletext/toolbar` **v7.x** ([changelog](https://github.com/portabletext/editor/releases)). Requires React 18+. You should be familiar with the [getting started guide](/editor/getting-started/) and [custom rendering](/editor/guides/custom-rendering/).
+:::
+
+## How custom blocks work
+
+There are two kinds of custom content in Portable Text:
+
+- **Block objects** sit alongside text blocks in the document array. An image, a code block, or a call-to-action are block objects.
+- **Inline objects** sit inside text blocks, within the text flow. A stock ticker, a product reference, or a custom emoji are inline objects.
+
+Both follow the same three-step pattern:
+
+1. **Define** the type in your schema (`blockObjects` or `inlineObjects`)
+2. **Render** it in the editor (`renderBlock` or `renderChild` prop)
+3. **Insert** it via the toolbar (`useBlockObjectButton` or `useInlineObjectButton` hook)
+
+## Adding block objects
+
+### Step 1: define in schema
+
+Add your block type to the `blockObjects` array in `defineSchema`. Each block object has a name and optional fields:
+
+```tsx
+import {defineSchema} from '@portabletext/editor'
+
+const schemaDefinition = defineSchema({
+  // ... styles, decorators, annotations, lists
+  blockObjects: [{name: 'image'}, {name: 'code'}],
+  inlineObjects: [],
+})
+```
+
+The schema tells the editor which block types are valid. The field data (image URL, code language, etc.) is stored on the block object itself.
+
+### Step 2: render in the editor
+
+Use the `renderBlock` prop on `PortableTextEditable` to control how block objects appear in the editor. The function receives `props` with `schemaType.name` (the block type) and `value` (the block data):
+
+```tsx
+import type {PortableTextBlock, RenderBlockFunction} from '@portabletext/editor'
+
+const renderBlock: RenderBlockFunction = (props) => {
+  // Image block
+  if (props.schemaType.name === 'image' && isImage(props.value)) {
+    return (
+      <div
+        style={{border: '1px solid #ccc', padding: '0.5em', margin: '0.5em 0'}}
+      >
+        <img
+          src={props.value.src}
+          alt={props.value.alt || ''}
+          style={{maxWidth: '100%'}}
+        />
+        {props.value.caption && (
+          <p style={{fontSize: '0.875em', color: '#666'}}>
+            {props.value.caption}
+          </p>
+        )}
+      </div>
+    )
+  }
+
+  // Code block
+  if (props.schemaType.name === 'code' && isCodeBlock(props.value)) {
+    return (
+      <pre
+        style={{
+          background: '#f5f5f5',
+          padding: '1em',
+          borderRadius: '4px',
+          overflow: 'auto',
+        }}
+      >
+        <code>{props.value.text}</code>
+      </pre>
+    )
+  }
+
+  // Default: render text blocks with children
+  return <div style={{marginBlockEnd: '0.25em'}}>{props.children}</div>
+}
+
+// Type guards for block data
+function isImage(
+  value: PortableTextBlock,
+): value is PortableTextBlock & {src: string; alt?: string; caption?: string} {
+  return 'src' in value
+}
+
+function isCodeBlock(
+  value: PortableTextBlock,
+): value is PortableTextBlock & {text: string; language?: string} {
+  return 'text' in value
+}
+```
+
+Pass the function to `PortableTextEditable`:
+
+```tsx
+<PortableTextEditable
+  renderBlock={renderBlock}
+  // ... other render props
+/>
+```
+
+:::note
+The `renderBlock` function handles both text blocks and custom block objects. Text blocks have `children` (the text content). Custom block objects have `value` (the structured data). Always include a default case that renders `{props.children}` for text blocks.
+:::
+
+### Step 3: insert via toolbar
+
+Use the `useBlockObjectButton` hook from `@portabletext/toolbar` to create an insert button. The hook follows the same pattern as `useDecoratorButton` and `useStyleSelector`:
+
+```tsx
+import {
+  useBlockObjectButton,
+  useToolbarSchema,
+  type ExtendBlockObjectSchemaType,
+  type ToolbarBlockObjectSchemaType,
+} from '@portabletext/toolbar'
+
+// Extend the schema to add icons and titles for the toolbar
+const extendBlockObject: ExtendBlockObjectSchemaType = (blockObject) => {
+  if (blockObject.name === 'image') {
+    return {...blockObject, title: 'Image', icon: () => <span>🖼</span>}
+  }
+  if (blockObject.name === 'code') {
+    return {...blockObject, title: 'Code', icon: () => <span>{'</>'}</span>}
+  }
+  return blockObject
+}
+
+function Toolbar() {
+  const toolbarSchema = useToolbarSchema({extendBlockObject})
+
+  return (
+    <div>
+      {/* ... decorator and style buttons */}
+      {toolbarSchema.blockObjects?.map((blockObject) => (
+        <BlockObjectButton key={blockObject.name} schemaType={blockObject} />
+      ))}
+    </div>
+  )
+}
+
+function BlockObjectButton(props: {schemaType: ToolbarBlockObjectSchemaType}) {
+  const blockObjectButton = useBlockObjectButton(props)
+  return (
+    <button
+      type="button"
+      onClick={() => blockObjectButton.send('open dialog')}
+      disabled={!blockObjectButton.snapshot.matches('enabled')}
+    >
+      {props.schemaType.icon && <props.schemaType.icon />}
+      {props.schemaType.title}
+    </button>
+  )
+}
+```
+
+When the user clicks the button, the editor opens a dialog for that block type. You control what happens in the dialog: collect the data, then insert the block.
+
+For blocks that need user input (like images), use the dialog flow:
+
+```tsx
+// In the dialog's submit handler:
+blockObjectButton.send({
+  type: 'insert',
+  value: {src: imageUrl, alt: altText},
+  placement: undefined,
+})
+```
+
+For blocks that don't need initial data, insert directly:
+
+```tsx
+onClick={() => blockObjectButton.send({
+  type: 'insert',
+  value: {},
+  placement: undefined,
+})}
+```
+
+## Adding inline objects
+
+Inline objects work the same way as block objects, but they appear inside text blocks rather than alongside them.
+
+### Step 1: define in schema
+
+```tsx
+const schemaDefinition = defineSchema({
+  // ... styles, decorators, annotations, lists, blockObjects
+  inlineObjects: [{name: 'stock-ticker'}],
+})
+```
+
+### Step 2: render in the editor
+
+Use the `renderChild` prop. Inline objects receive `props.value` with the object data:
+
+```tsx
+import type {PortableTextChild, RenderChildFunction} from '@portabletext/editor'
+
+const renderChild: RenderChildFunction = (props) => {
+  if (props.schemaType.name === 'stock-ticker' && isStockTicker(props.value)) {
+    return (
+      <span
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '0.25em',
+          border: '1px solid #e0e0e0',
+          borderRadius: '4px',
+          padding: '0 0.5em',
+          fontSize: '0.875em',
+          background: '#f9f9f9',
+        }}
+      >
+        📈 {props.value.symbol}
+        {props.value.exchange && (
+          <span style={{color: '#999', fontSize: '0.75em'}}>
+            {props.value.exchange}
+          </span>
+        )}
+      </span>
+    )
+  }
+
+  // Default: render inline children
+  return <>{props.children}</>
+}
+
+function isStockTicker(
+  value: PortableTextChild,
+): value is PortableTextChild & {symbol: string; exchange?: string} {
+  return 'symbol' in value
+}
+```
+
+### Step 3: insert via toolbar
+
+Use `useInlineObjectButton`, which works identically to `useBlockObjectButton`:
+
+```tsx
+import {
+  useInlineObjectButton,
+  type ExtendInlineObjectSchemaType,
+  type ToolbarInlineObjectSchemaType,
+} from '@portabletext/toolbar'
+
+const extendInlineObject: ExtendInlineObjectSchemaType = (inlineObject) => {
+  if (inlineObject.name === 'stock-ticker') {
+    return {...inlineObject, title: 'Stock', icon: () => <span>📈</span>}
+  }
+  return inlineObject
+}
+
+function InlineObjectButton(props: {
+  schemaType: ToolbarInlineObjectSchemaType
+}) {
+  const inlineObjectButton = useInlineObjectButton(props)
+  return (
+    <button
+      type="button"
+      onClick={() => inlineObjectButton.send('open dialog')}
+      disabled={!inlineObjectButton.snapshot.matches('enabled')}
+    >
+      {props.schemaType.icon && <props.schemaType.icon />}
+      {props.schemaType.title}
+    </button>
+  )
+}
+```
+
+Add the inline object buttons to your toolbar alongside the block object buttons:
+
+```tsx
+function Toolbar() {
+  const toolbarSchema = useToolbarSchema({
+    extendBlockObject,
+    extendInlineObject,
+  })
+
+  return (
+    <div>
+      {/* ... decorator and style buttons */}
+      {toolbarSchema.blockObjects?.map((blockObject) => (
+        <BlockObjectButton key={blockObject.name} schemaType={blockObject} />
+      ))}
+      {toolbarSchema.inlineObjects?.map((inlineObject) => (
+        <InlineObjectButton key={inlineObject.name} schemaType={inlineObject} />
+      ))}
+    </div>
+  )
+}
+```
+
+## The Portable Text output
+
+When a user inserts a block object, the editor produces a block in the Portable Text array with the custom `_type`:
+
+```json
+[
+  {
+    "_type": "block",
+    "_key": "abc123",
+    "style": "normal",
+    "children": [{"_type": "span", "text": "Here is a photo:"}],
+    "markDefs": []
+  },
+  {
+    "_type": "image",
+    "_key": "def456",
+    "src": "https://example.com/photo.jpg",
+    "alt": "A mountain landscape"
+  },
+  {
+    "_type": "block",
+    "_key": "ghi789",
+    "style": "normal",
+    "children": [
+      {"_type": "span", "text": "The current price of "},
+      {
+        "_type": "stock-ticker",
+        "_key": "jkl012",
+        "symbol": "AAPL",
+        "exchange": "NASDAQ"
+      },
+      {"_type": "span", "text": " is rising."}
+    ],
+    "markDefs": []
+  }
+]
+```
+
+The image block sits between text blocks. The stock ticker sits inside a text block's `children` array. Both carry structured data that your rendering serializers can use.
+
+<LinkCard
+  title="Render Portable Text"
+  description="Use serializers to render custom blocks and inline objects in your app."
+  href="/rendering/"
+/>
+
+## Next steps
+
+<LinkCard
+  title="Customize editor rendering"
+  description="Full reference for all render props: styles, decorators, annotations, lists, and more."
+  href="/editor/guides/custom-rendering/"
+/>
+<LinkCard
+  title="Customize the toolbar"
+  description="Build custom toolbars with hooks, keyboard shortcuts, and schema extensions."
+  href="/editor/guides/customize-toolbar/"
+/>

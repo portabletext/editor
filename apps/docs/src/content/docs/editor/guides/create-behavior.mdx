@@ -7,21 +7,25 @@ import {LinkCard} from '@astrojs/starlight/components'
 
 Behaviors add functionality to the Portable Text Editor (PTE) in a declarative way.
 
-For a deep dive into behaviors and how they work, check out [Behaviors](/concepts/behavior/).
+:::note[Prerequisites]
+This guide covers `@portabletext/editor` **v6.x** ([changelog](https://github.com/portabletext/editor/releases)). Requires React 18+.
+:::
+
+For a deep dive into behaviors and how they work, check out [Behaviors](/editor/concepts/behavior/).
 
 ## Import the behavior helper
 
 Begin by importing `defineBehavior`.
 
 ```tsx
-import {defineBehavior} from '@portabletext/editor'
+import {defineBehavior} from '@portabletext/editor/behaviors'
 ```
 
 ## Define the behavior
 
 Behaviors need three things:
 
-- A triggering event. See the [full list of events](/reference/behavior-api#behavior-event-types).
+- A triggering event. See the [full list of events](/editor/reference/behavior-api#behavior-event-types).
 - A guard, or condition that determines if this behavior should apply.
 - An action to invoke if the event and guard are met.
 
@@ -37,14 +41,14 @@ const noLowerCaseA = defineBehavior({
 
 Let's break it down:
 
-1. It listens for the `insert.text` event. You can use any [native, synthetic or custom event](/reference/behavior-api#behavior-event-types) here.
+1. It listens for the `insert.text` event. You can use any [native, synthetic or custom event](/editor/reference/behavior-api#behavior-event-types) here.
 2. The guard checks if the text that triggered this event is equal to a lowercase `a`. The guard is true and the behavior will perform the actions.
 3. It sends an `execute` action with an `insert.text` event to insert "A" instead of "a".
 
 <LinkCard
   title="Understanding Behaviors"
   description="Learn more about how each part of the Behavior API works."
-  href="/concepts/behavior/"
+  href="/editor/concepts/behavior/"
 />
 
 ## Register the behavior

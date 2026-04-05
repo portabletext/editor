@@ -1,0 +1,195 @@
+---
+title: Astro
+description: Render Portable Text in Astro using the astro-portabletext community package.
+---
+
+`astro-portabletext` is a community package maintained by [theisel](https://github.com/theisel/astro-portabletext). It is recommended by Sanity for rendering Portable Text in Astro projects. It is not part of the official `@portabletext` organization.
+
+**Requires Astro v4.6 or later.**
+
+:::note[Prerequisites]
+This guide covers `astro-portabletext` **v0.13.x** ([changelog](https://github.com/theisel/astro-portabletext/releases)). Requires Astro 4.6+.
+:::
+
+## Install
+
+```sh
+npm install astro-portabletext
+```
+
+## Basic usage
+
+Pass your Portable Text array to the `PortableText` component via the `value` prop.
+
+```astro
+---
+import {PortableText} from 'astro-portabletext'
+
+const {content} = Astro.props
+---
+
+<PortableText value={content} />
+```
+
+## Custom components
+
+You can override how any node type is rendered by passing a `components` object. The keys map to node types in your content.
+
+```astro
+---
+import {PortableText} from 'astro-portabletext'
+import BulletList from './BulletList.astro'
+import Hero from './Hero.astro'
+import Highlight from './Highlight.astro'
+import Link from './Link.astro'
+import PageHeading from './PageHeading.astro'
+
+const portableText = [
+  /* your Portable Text payload */
+]
+
+const components = {
+  type: {
+    hero: Hero,
+  },
+  block: {
+    h1: PageHeading,
+  },
+  list: {
+    bullet: BulletList,
+  },
+  mark: {
+    link: Link,
+    highlight: Highlight,
+  },
+}
+---
+
+<PortableText value={portableText} components={components} />
+```
+
+:::note[Singular prop names]
+Unlike React, Vue, and Svelte (which use plural `types` and `marks`), Astro uses **singular** `type` and `mark` in the components object. This matches the Astro package's API.
+:::
+
+### Custom link annotation
+
+Mark components receive a `MarkProps` type. Use `<slot />` to render the annotated text.
+
+```astro
+---
+import type {MarkProps} from 'astro-portabletext/types'
+
+export type Props = MarkProps<{href: string; target?: string}>
+
+const {node} = Astro.props
+const {href, target} = node.value
+---
+
+<a href={href} target={target ?? '_self'}>
+  <slot />
+</a>
+```
+
+### Custom block type
+
+Custom block types (non-text blocks like heroes, callouts, or embeds) receive a `TypeProps` type.
+
+```astro
+---
+import type {TypeProps} from 'astro-portabletext/types'
+
+export type Props = TypeProps<{heading: string; imageUrl: string}>
+
+const {node} = Astro.props
+---
+
+<section class="hero">
+  <h1>{node.heading}</h1>
+  <img src={node.imageUrl} alt={node.heading} />
+</section>
+```
+
+## Slots
+
+Astro's named slots let you wrap rendered output without replacing the underlying component. This is useful for adding CSS classes or wrapper elements to a whole category of nodes.
+
+Available slot names: `type`, `block`, `list`, `listItem`, `mark`, `text`, `hardBreak`.
+
+```astro
+---
+import {PortableText} from 'astro-portabletext'
+
+const portableText = [
+  /* your Portable Text payload */
+]
+---
+
+<PortableText value={portableText}>
+  <fragment slot="block">
+    {
+      ({Component, props, children}) => (
+        <Component {...props} class="prose-block">
+          {children}
+        </Component>
+      )
+    }
+  </fragment>
+
+  <fragment slot="mark">
+    {
+      ({Component, props, children}) => (
+        <Component {...props}>{children}</Component>
+      )
+    }
+  </fragment>
+</PortableText>
+```
+
+Each slot receives a render function with `Component` (the resolved component), `props`, and `children`. You can add attributes, wrap with extra elements, or conditionally alter rendering without touching the component itself.
+
+## Utility functions
+
+```js
+import {
+  mergeComponents, // deep-merge component maps
+  spanToPlainText, // extract plain text from a single span (v0.11.0+)
+  toPlainText, // extract plain text from a Portable Text array
+  usePortableText, // access default/unknown components inside custom components
+} from 'astro-portabletext'
+```
+
+### usePortableText
+
+`usePortableText` gives a custom component access to the default component for a given node. Use it when you want to handle some cases yourself and fall back to the default for everything else.
+
+```astro
+---
+import {usePortableText} from 'astro-portabletext'
+import type {MarkProps} from 'astro-portabletext/types'
+import CustomLink from './CustomLink.astro'
+
+export type Props = MarkProps<never>
+
+const props = Astro.props
+const {getDefaultComponent} = usePortableText(props.node)
+
+const Cmp = props.node.markType === 'link' ? CustomLink : getDefaultComponent()
+---
+
+<Cmp {...props}>
+  <slot />
+</Cmp>
+```
+
+### mergeComponents
+
+`mergeComponents` deep-merges two component maps. Useful when you have a base set of components and want to extend or override them in a specific context.
+
+### toPlainText and spanToPlainText
+
+`toPlainText` extracts plain text from a Portable Text array. `spanToPlainText` (added in v0.11.0) does the same for a single span node.
+
+## Further reading
+
+Full documentation, changelog, and advanced usage are on [GitHub](https://github.com/theisel/astro-portabletext).

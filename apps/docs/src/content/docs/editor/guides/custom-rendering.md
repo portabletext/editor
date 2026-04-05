@@ -1,11 +1,15 @@
 ---
-title: Customize how elements render
+title: Customize editor rendering
 description: Change the way the editor renders and styles text.
 sidebar:
   order: 1
 ---
 
 The Portable Text Editor gives you control of how it renders each schema type element. You need to explicitly tell it what. These choices have no impact on the Portable Text output—they only affect how the editor itself renders content.
+
+:::note[Prerequisites]
+This guide covers `@portabletext/editor` **v6.x** ([changelog](https://github.com/portabletext/editor/releases)). Requires React 18+.
+:::
 
 The following props can be passed to the `PortableTextEditable` component:
 

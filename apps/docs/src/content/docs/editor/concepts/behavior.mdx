@@ -5,7 +5,7 @@ description: Description of behaviors
 
 import {CardGrid, LinkCard} from '@astrojs/starlight/components'
 
-Behaviors are allow you to customize how users interact with the editor by hooking into events during the editing experience.
+Behaviors allow you to customize how users interact with the editor by hooking into events during the editing experience.
 
 All behaviors follow this process:
 
@@ -15,7 +15,7 @@ All behaviors follow this process:
 
 This pattern is influenced by [Statecharts](https://statecharts.dev/).
 
-Behaviors are defined with the `defineBehavior` helper. Here's an example event from the [behavior guide](/guides/create-behavior/):
+Behaviors are defined with the `defineBehavior` helper. Here's an example event from the [behavior guide](/editor/guides/create-behavior/):
 
 ```tsx
 defineBehavior({
@@ -48,7 +48,7 @@ There are three categories of Behavior Events:
 <LinkCard
   title="Behavior API reference"
   description="Review the full list of native an synthetic events."
-  href="/reference/behavior-api/"
+  href="/editor/reference/behavior-api/"
 />
 
 The Behavior API uses events to trigger actions by listening for a specific event.
@@ -113,7 +113,7 @@ To send an event back into the editor, use the `raise` action type or the `raise
 ```tsx
 // Approach A: With the type set to 'raise'
 // Approach B: With the raise helper
-import {defineBehavior, defineBehavior, raise} from '@portabletext/editor'
+import {defineBehavior, raise} from '@portabletext/editor/behaviors'
 
 const raisedUppercaseA = defineBehavior({
   on: 'insert.text',
@@ -145,7 +145,7 @@ import {getFocusSpan, getFocusTextBlock} from '@portabletext/editor/selectors'
 
 The core selectors are useful helper functions for checking conditions of the editor, finding selected text, and more. You can manually do anything a selector can do by parsing the editor snapshot.
 
-## Behavior Examples
+## Behavior examples
 
 Browse the existing behaviors, or check out the Behavior Recipes documentation for examples of real-world behaviors.
 
@@ -153,7 +153,7 @@ Browse the existing behaviors, or check out the Behavior Recipes documentation f
   <LinkCard
     title="Behavior Recipes"
     description="Examples of useful behaviors."
-    href="/guides/behavior-cheat-sheet/"
+    href="/editor/guides/behavior-cheat-sheet/"
   />
   <LinkCard
     title="Core Behaviors"

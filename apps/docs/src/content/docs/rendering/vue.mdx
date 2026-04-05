@@ -1,0 +1,147 @@
+---
+title: Vue
+description: Render Portable Text in Vue 3 using @portabletext/vue.
+---
+
+## Install
+
+```sh
+npm install @portabletext/vue
+```
+
+## Basic usage
+
+Pass your Portable Text value to the `PortableText` component using the `:value` prop.
+
+```vue
+<script setup>
+import { PortableText } from '@portabletext/vue'
+
+defineProps(['value'])
+</script>
+
+<template>
+  <PortableText :value="value" />
+</template>
+```
+
+The component renders standard block types (paragraphs, headings, lists, blockquotes) out of the box.
+
+:::note[Prerequisites]
+This guide covers `@portabletext/vue` **v1.x** ([changelog](https://github.com/portabletext/vue-portabletext/releases)). Requires Vue 3.
+:::
+
+## Custom components
+
+Pass a `components` object to the `:components` prop to override how specific node types are rendered.
+The prop names are plural: `types`, `marks`, `block`, `list`, `listItem`.
+
+### Inline render functions with h()
+
+For simple overrides, you can define components inline using Vue's `h()` function.
+The render function receives props as the first argument and the render context (including `slots`) as the second.
+
+Use `slots.default?.()` to render child content inside block and mark components.
+
+```vue
+<script setup>
+import { PortableText } from '@portabletext/vue'
+import { h } from 'vue'
+
+defineProps(['value'])
+
+const components = {
+  types: {
+    image: ({ value, isInline }) =>
+      h('img', {
+        src: value.imageUrl,
+        style: { display: isInline ? 'inline-block' : 'block' },
+      }),
+  },
+  marks: {
+    link: ({ value }, { slots }) => {
+      const target = (value?.href || '').startsWith('http') ? '_blank' : undefined
+      return h(
+        'a',
+        { href: value?.href, target, rel: target === '_blank' ? 'noindex nofollow' : undefined },
+        slots.default?.()
+      )
+    },
+  },
+  block: {
+    h1: (_, { slots }) => h('h1', { class: 'text-2xl' }, slots.default?.()),
+    blockquote: (_, { slots }) =>
+      h('blockquote', { class: 'border-l-purple-500' }, slots.default?.()),
+  },
+}
+</script>
+
+<template>
+  <PortableText :value="value" :components="components" />
+</template>
+```
+
+### Vue SFC as a custom component
+
+For more complex components, write a standard Vue single-file component and register it in the `components` map.
+
+Use `PortableTextComponentProps<T>` to type the props. The generic parameter `T` is the shape of your custom block's `value` field.
+
+```vue
+<!-- MyButton.vue -->
+<script setup lang="ts">
+import type { PortableTextComponentProps } from '@portabletext/vue'
+
+const { value, index } = defineProps<PortableTextComponentProps<{ text: string }>>()
+</script>
+
+<template>
+  <button class="my-button">{{ index }}: {{ value.text }}</button>
+</template>
+```
+
+Then import and register it:
+
+```vue
+<script setup>
+import { PortableText } from '@portabletext/vue'
+import MyButton from './MyButton.vue'
+
+defineProps(['value'])
+
+const components = {
+  types: {
+    button: MyButton,
+  },
+}
+</script>
+
+<template>
+  <PortableText :value="value" :components="components" />
+</template>
+```
+
+## Vue-specific patterns
+
+| Pattern                         | Notes                                                                                                     |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `<script setup>`                | Recommended composition API syntax. Works with `defineProps` and `defineEmits`.                           |
+| `h()` render functions          | Use Vue's `h()` for inline component definitions without a template block.                                |
+| `slots.default?.()`             | Access child content in render functions via the second argument's `slots` object.                        |
+| `PortableTextComponentProps<T>` | Generic type for strongly-typed custom component props. Import from `@portabletext/vue`.                  |
+| `toPlainText()`                 | Extracts plain text from a Portable Text value. Useful for meta descriptions and other non-HTML contexts. |
+
+### toPlainText example
+
+```ts
+import {toPlainText} from '@portabletext/vue'
+
+useHead({
+  meta: [{name: 'description', content: toPlainText(myPortableTextData)}],
+})
+```
+
+## Full documentation
+
+For the complete API reference, all component override keys, and migration notes, see the
+[@portabletext/vue repository on GitHub](https://github.com/portabletext/vue-portabletext).

@@ -1,0 +1,118 @@
+---
+title: Introduction
+description: What Portable Text is, how it works, and where to start.
+next: false
+prev: false
+---
+
+import {CardGrid, LinkCard} from '@astrojs/starlight/components'
+
+## What is Portable Text?
+
+Portable Text is a JSON-based specification for structured block content. Instead of storing content as an HTML string or Markdown, Portable Text represents it as an array of typed blocks: each block has a `_type` and carries its own data.
+
+```
+┌─────────────────────────────────────────┐
+│         Portable Text document          │
+│         (array of blocks)               │
+│                                         │
+│  ┌─ block: text ─────────────────────┐  │
+│  │ style: "h1"                       │  │
+│  │ "Why Portable Text?"              │  │
+│  └───────────────────────────────────┘  │
+│  ┌─ block: text ─────────────────────┐  │
+│  │ style: "normal"                   │  │
+│  │ "Read the **docs** for details."  │  │
+│  │  └─ annotation: link (href, ...)  │  │
+│  └───────────────────────────────────┘  │
+│  ┌─ block: image ────────────────────┐  │
+│  │ url: "photo.jpg"                  │  │
+│  │ alt: "A mountain landscape"       │  │
+│  │ caption: "View from the summit"   │  │
+│  └───────────────────────────────────┘  │
+│  ┌─ block: text ─────────────────────┐  │
+│  │ style: "normal"                   │  │
+│  │ "Current price: [stockTicker] ."  │  │
+│  │  └─ inline: stockTicker           │  │
+│  │      symbol: "AAPL"               │  │
+│  │      exchange: "NASDAQ"           │  │
+│  └───────────────────────────────────┘  │
+│  ┌─ block: callToAction ─────────────┐  │
+│  │ text: "Start building"            │  │
+│  │ url: "/getting-started"           │  │
+│  └───────────────────────────────────┘  │
+└─────────────────────────────────────────┘
+```
+
+Text blocks, image blocks, and custom blocks like a call-to-action all live in the same array. A serializer walks the array and renders each block based on its type.
+
+### Three levels of extensibility
+
+Portable Text is a **block content format**, not just a rich text format. Rich text (formatted paragraphs with bold, italic, and links) is one type of block among many. The format supports three levels of custom content:
+
+```
+Block level          Custom block types sit alongside text blocks
+                     (images, code blocks, CTAs, embeds, tables)
+                     ─────────────────────────────────────────────
+Inline level         Inline objects sit inside text blocks
+                     (stock tickers, product refs, custom emoji)
+                     ─────────────────────────────────────────────
+Mark level           Annotations carry data on text spans
+                     (links with tracking, refs with doc IDs,
+                      comments, footnotes)
+```
+
+**Custom blocks** are any `_type` you define. An image block carries url, alt, and caption. A code block carries language and source. A CTA carries text and a link. The serializer renders each one through a component you provide.
+
+**Inline objects** are structured data embedded in the text flow. A stock ticker inside a paragraph carries symbol and exchange data. A product reference carries a product ID. They're not text with formatting; they're data that happens to appear within text.
+
+**Annotations** are data-carrying marks on text spans. A link annotation isn't just an `<a>` tag: it's a data object with href, target, tracking parameters, or whatever fields you define. You can query "find all documents that link to /pricing" because the link data is structured JSON, not buried in an HTML string.
+
+### How rendering works
+
+A serializer converts the block array into your target format. The same Portable Text renders as React components, HTML strings, Markdown, PDFs, or plain text:
+
+```
+                    ┌──────────────┐
+                ┌──→│ React        │──→ <Article>...</Article>
+                │   └──────────────┘
+┌───────────┐   │   ┌──────────────┐
+│ Portable  │───┼──→│ HTML         │──→ <div>...</div>
+│ Text JSON │   │   └──────────────┘
+└───────────┘   │   ┌──────────────┐
+                ├──→│ Markdown     │──→ # Hello **world**
+                │   └──────────────┘
+                │   ┌──────────────┐
+                └──→│ PDF / email  │──→ (any format)
+                    └──────────────┘
+```
+
+Default block types (paragraphs, headings, lists, bold, italic, links) work out of the box. Custom blocks and annotations need a component for each type. If a serializer encounters a type it doesn't recognize, it skips it. Nothing breaks.
+
+### Why structured data?
+
+Because content is JSON, you can:
+
+- **Render anywhere.** Pass the same data to any serializer. Each renders what it can, ignores what it can't.
+- **Query the content.** "Find all blocks that contain a link to /pricing" is a JSON query, not a regex over HTML.
+- **Extend without breaking.** Add new block types, inline objects, or annotation types. Renderers that don't recognize them skip them gracefully.
+- **Validate the structure.** The schema is explicit. You know exactly what types of content exist and what data they carry.
+
+[Learn why Portable Text over HTML, Markdown, or Gutenberg →](/why-portable-text/)
+
+## Get started
+
+There are two ways to work with Portable Text:
+
+<CardGrid>
+  <LinkCard
+    title="Render Portable Text"
+    description="Have PT content and need to display it? Pick your framework: React, HTML, Vue, Svelte, Astro, or Markdown."
+    href="/rendering/"
+  />
+  <LinkCard
+    title="Build a block content editor"
+    description="Create a customizable editing experience with the Portable Text Editor. Define your schema, build a toolbar, and add custom behaviors."
+    href="/editor/getting-started/"
+  />
+</CardGrid>
