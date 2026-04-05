@@ -5,7 +5,7 @@ description: Description of behaviors
 
 import {CardGrid, LinkCard} from '@astrojs/starlight/components'
 
-Behaviors are allow you to customize how users interact with the editor by hooking into events during the editing experience.
+Behaviors allow you to customize how users interact with the editor by hooking into events during the editing experience.
 
 All behaviors follow this process:
 
@@ -113,7 +113,7 @@ To send an event back into the editor, use the `raise` action type or the `raise
 ```tsx
 // Approach A: With the type set to 'raise'
 // Approach B: With the raise helper
-import {defineBehavior, defineBehavior, raise} from '@portabletext/editor'
+import {defineBehavior, raise} from '@portabletext/editor/behaviors'
 
 const raisedUppercaseA = defineBehavior({
   on: 'insert.text',
