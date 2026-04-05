@@ -15,7 +15,7 @@ Some blocks are **text blocks** (`_type: "block"`): paragraphs, headings, lists,
 
 But Portable Text isn't just rich text. The same array can contain **any type of structured content**: images, code blocks, calls to action, videos, tables, or types you define yourself. These custom blocks sit alongside text blocks in the array, each with their own `_type` and data. You provide a component for each custom type, and the serializer renders them in sequence.
 
-Within text blocks, **marks** add meaning to inline text. **Decorators** (bold, italic, underline) work by default. **Annotations** (links, references, footnotes) carry data and need custom components.
+Within text blocks, **marks** add meaning to inline text. **Decorators** (bold, italic, underline) work by default. **Annotations** (links, references, footnotes) carry structured data as mark definitions. A link annotation isn't just an `<a>` tag: it's a data object with href, target, tracking parameters, or whatever fields you define. You customize annotation rendering through the `marks` component map. Text blocks can also contain **inline objects**: structured data embedded in the text flow, like a stock ticker, a product reference, or a custom emoji. Inline objects are rendered through the same `types` component map as custom blocks.
 
 If a serializer encounters a type it doesn't recognize, it skips it. Nothing breaks.
 

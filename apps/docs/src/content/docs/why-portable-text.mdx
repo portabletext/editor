@@ -1,11 +1,11 @@
 ---
 title: Why Portable Text?
-description: Why structured rich text beats HTML strings and Markdown for content that needs to work across platforms.
+description: Why structured block content beats HTML strings and Markdown for content that needs to work across platforms.
 ---
 
-Most systems store rich text as an HTML string or Markdown. Both work, but both make assumptions about where and how your content will be displayed.
+Most systems store block content as an HTML string or Markdown. Both work, but both make assumptions about where and how your content will be displayed.
 
-Portable Text takes a different approach: it stores rich text as structured JSON data. No rendering assumptions. No parser needed. Just data you can query, transform, and render however you want.
+Portable Text takes a different approach: it stores block content as structured JSON data. No rendering assumptions. No parser needed. Just data you can query, transform, and render however you want.
 
 ## The problem with HTML strings
 
@@ -29,7 +29,8 @@ With an HTML string, every one of these requires parsing HTML. And HTML parsers 
 Markdown is simpler than HTML, but it has its own limits:
 
 - **No custom block types.** You can't represent an image gallery, a call-to-action, or an embedded video in standard Markdown. Extensions exist, but they're not portable across parsers.
-- **No structured annotations.** A Markdown link is `[text](url)`. If you need a link with a target, a tooltip, and a tracking parameter, you're back to embedding HTML.
+- **No inline structured data.** You can't embed a stock ticker, a product reference, or a mention that carries structured data inside a paragraph. Markdown is text all the way down.
+- **No data-carrying annotations.** A Markdown link is `[text](url)`. If you need a link with a target, a tooltip, tracking parameters, and an internal reference ID, you're back to embedding HTML.
 - **No queryable structure.** "Find all documents that mention this product" requires parsing every Markdown file.
 
 ## The problem with block-based HTML (Gutenberg)
@@ -94,7 +95,7 @@ More verbose? Yes. But now you can:
 
 - **Render anywhere.** Pass the same data to a React component, an HTML serializer, a PDF generator, or a Slack message formatter. Each renders what it can, ignores what it can't.
 - **Query the content.** "Find all blocks that contain a link to /docs" is a JSON query, not a regex over HTML.
-- **Extend without breaking.** Add a `callToAction` block type or a `footnote` annotation. Renderers that don't know about them skip them gracefully. No parser changes needed.
+- **Extend without breaking.** Add a `callToAction` block type, a `footnote` annotation that carries citation data, or a `stockTicker` inline object with symbol and exchange fields inside a text paragraph. Renderers that don't know about them skip them gracefully. No parser changes needed.
 - **Validate the structure.** The schema is explicit. You know exactly what types of content exist, what data they carry, and where they can appear.
 
 ## What makes it portable

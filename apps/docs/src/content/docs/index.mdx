@@ -1,6 +1,6 @@
 ---
 title: Portable Text Editor
-description: Fully customizable authoring of rich text and block content
+description: Fully customizable authoring of block content and rich text
 template: splash
 ---
 
@@ -14,11 +14,9 @@ import {
 } from '@astrojs/starlight/components'
 import PortableTextEditor from '../../components/editor/editor.astro'
 
-<PortableTextEditor />
-
 ## What is Portable Text?
 
-Portable Text is a JSON-based rich text specification. Instead of storing content as an HTML string, Portable Text represents rich text as structured data. That makes it portable across platforms, renderable in any format, and readable by both humans and machines.
+Portable Text is a JSON-based specification for structured block content. A Portable Text document is an array of typed blocks: text blocks (paragraphs, headings, lists), image blocks, code blocks, or any custom type you define. Within text blocks, you can embed inline objects (a stock ticker with symbol and exchange data) and annotations (a link that carries href, target, and tracking parameters as structured data, not just an `<a>` tag). The result is content that's portable across platforms, renderable in any format, and queryable as data.
 
 <Tabs>
   <TabItem label="HTML string">
@@ -72,10 +70,12 @@ Because content is structured data, you can render it as HTML, React components,
   />
   <LinkCard
     title="Build a PT Editor"
-    description="Need rich text authoring? Set up the Portable Text Editor in minutes."
+    description="Build a block content editor with custom blocks, inline objects, and rich text."
     href="/editor/getting-started/"
   />
 </CardGrid>
+
+<PortableTextEditor />
 
 ## Learn more
 
@@ -97,7 +97,7 @@ Because content is structured data, you can render it as HTML, React components,
   />
   <LinkCard
     title="Portable Text Specification"
-    description="The open specification for structured rich text"
+    description="The open specification for structured block content"
     href="/specification/"
   />
 </CardGrid>
