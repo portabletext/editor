@@ -21,7 +21,7 @@ export default defineConfig({
   integrations: [
     react(),
     starlight({
-      title: 'Portable Text Editor',
+      title: 'Portable Text',
       components: {
         PageTitle: './src/components/overrides/page-title.astro',
       },
