@@ -36,6 +36,9 @@ export default defineConfig({
     '/reference/toolbar/': '/editor/reference/toolbar/',
     '/reference/keyboard-shortcuts/': '/editor/reference/keyboard-shortcuts/',
     '/getting-started/': '/introduction/',
+    '/rendering/html-to-portable-text/': '/conversion/html-to-portable-text/',
+    '/resources/': '/ecosystem/packages/',
+    '/resources/additional-libraries/': '/ecosystem/packages/',
   },
   integrations: [
     react(),
@@ -94,20 +97,29 @@ export default defineConfig({
             {slug: 'rendering/svelte'},
             {slug: 'rendering/astro'},
             {slug: 'rendering/markdown'},
-            {slug: 'rendering/html-to-portable-text'},
           ],
         },
         {
           label: 'Editor',
           items: [
             {slug: 'editor/getting-started'},
-            {slug: 'editor/concepts/portabletext'},
-            {slug: 'editor/concepts/behavior'},
-            {slug: 'editor/guides/custom-rendering'},
-            {slug: 'editor/guides/customize-toolbar'},
-            {slug: 'editor/guides/create-behavior'},
-            {slug: 'editor/guides/behavior-cheat-sheet'},
             {slug: 'editor/guides/custom-blocks'},
+            {
+              label: 'Concepts',
+              items: [
+                {slug: 'editor/concepts/portabletext'},
+                {slug: 'editor/concepts/behavior'},
+              ],
+            },
+            {
+              label: 'Guides',
+              items: [
+                {slug: 'editor/guides/custom-rendering'},
+                {slug: 'editor/guides/customize-toolbar'},
+                {slug: 'editor/guides/create-behavior'},
+                {slug: 'editor/guides/behavior-cheat-sheet'},
+              ],
+            },
             {
               label: 'Reference',
               collapsed: true,
@@ -161,11 +173,20 @@ export default defineConfig({
             },
           ],
         },
+        {
+          label: 'Conversion',
+          items: [
+            {slug: 'conversion/html-to-portable-text'},
+          ],
+        },
         {slug: 'why-portable-text'},
         {slug: 'specification'},
         {
-          label: 'Resources',
-          autogenerate: {directory: 'resources'},
+          label: 'Ecosystem',
+          items: [
+            {slug: 'ecosystem/packages', label: 'All packages'},
+            {slug: 'ecosystem/comparison', label: 'Editor comparison'},
+          ],
         },
         {
           label: 'Playground',
