@@ -1,0 +1,164 @@
+---
+title: HTML
+description: Render Portable Text to an HTML string using @portabletext/to-html. Works in Node.js, Deno, edge runtimes, and browsers.
+---
+
+`@portabletext/to-html` renders Portable Text to a plain HTML string. It has no framework dependency and works anywhere JavaScript runs: Node.js, Deno, edge runtimes, and browsers.
+
+Use it for server-side rendering pipelines, static site generators, email templates, or any context where you need a string rather than a component tree.
+
+## Install
+
+```sh
+npm install @portabletext/to-html
+```
+
+## Basic usage
+
+`toHTML` takes an array of Portable Text blocks and an options object. It returns an HTML string.
+
+```js
+import {toHTML} from '@portabletext/to-html'
+
+const html = toHTML(portableTextBlocks, {
+  components: {
+    /* optional: override or extend default components */
+  },
+})
+```
+
+The `components` option is where you register renderers for custom types and marks. Without it, `toHTML` uses the built-in defaults for standard block styles, lists, and decorators.
+
+## Custom components
+
+### Custom link mark with URI safety checking
+
+When rendering links from user-supplied content, you should validate the `href` before emitting it. `@portabletext/to-html` exports `uriLooksSafe()` for exactly this purpose.
+
+:::caution[Security]
+`uriLooksSafe()` rejects URIs with dangerous schemes like `javascript:`, `data:`, and `vbscript:`. Always run user-supplied `href` values through it before rendering them into anchor tags.
+:::
+
+The example below also uses [`htm`](https://github.com/developit/htm) and [`vhtml`](https://github.com/developit/vhtml) to construct HTML safely without string concatenation. See the note on [safe HTML construction](#safe-html-construction) below.
+
+```js
+import {toHTML, uriLooksSafe} from '@portabletext/to-html'
+import htm from 'htm'
+import vhtml from 'vhtml'
+
+const html = htm.bind(vhtml)
+
+const components = {
+  types: {
+    image: ({value}) =>
+      html`<img src="${value.imageUrl}" alt="${value.alt ?? ''}" />`,
+    callToAction: ({value, isInline}) =>
+      isInline
+        ? html`<a href="${value.url}">${value.text}</a>`
+        : html`<div class="callToAction">${value.text}</div>`,
+  },
+  marks: {
+    link: ({children, value}) => {
+      const href = value.href || ''
+      if (uriLooksSafe(href)) {
+        const rel = href.startsWith('/') ? undefined : 'noreferrer noopener'
+        return html`<a href="${href}" rel="${rel}">${children}</a>`
+      }
+      return children
+    },
+  },
+}
+
+const result = toHTML(portableTextBlocks, {components})
+```
+
+The `link` mark renderer above:
+
+1. Checks the `href` with `uriLooksSafe()` before rendering it.
+2. Adds `rel="noreferrer noopener"` on external links (any `href` that does not start with `/`).
+3. Returns `children` unwrapped if the URI fails the safety check, rather than rendering a broken or dangerous link.
+
+### Safe HTML construction
+
+Component functions return strings. You can use template literals directly, but that requires careful manual escaping of every interpolated value. A safer approach is to use `htm` + `vhtml`:
+
+- [`htm`](https://github.com/developit/htm) provides JSX-like tagged template syntax.
+- [`vhtml`](https://github.com/developit/vhtml) renders virtual DOM nodes to an HTML string, escaping attribute values and text content automatically.
+
+Bind them once at the top of your file:
+
+```js
+import htm from 'htm'
+import vhtml from 'vhtml'
+
+const html = htm.bind(vhtml)
+```
+
+Then use `` html`...` `` in your component functions instead of raw string interpolation.
+
+## API reference
+
+### `toHTML(blocks, options)`
+
+| Parameter                    | Type                                       | Description                                                             |
+| ---------------------------- | ------------------------------------------ | ----------------------------------------------------------------------- |
+| `blocks`                     | `PortableTextBlock \| PortableTextBlock[]` | The Portable Text content to render.                                    |
+| `options.components`         | `PortableTextHtmlComponents`               | Component map. Keys listed below.                                       |
+| `options.onMissingComponent` | `function \| false`                        | Called when a component is not found. Pass `false` to silence warnings. |
+
+### Component map keys
+
+| Key                 | Renders                                      | Receives                        |
+| ------------------- | -------------------------------------------- | ------------------------------- |
+| `types`             | Custom object types (block or inline)        | `{ value, isInline }`           |
+| `marks`             | Decorators and annotations                   | `{ markType, value, children }` |
+| `block`             | Block styles (normal, h1-h6, blockquote)     | `{ value, children }`           |
+| `list`              | List containers (bullet, number)             | `{ value, children }`           |
+| `listItem`          | List items                                   | `{ value, children }`           |
+| `hardBreak`         | Line breaks within spans (default: `<br />`) | (none)                          |
+| `unknownMark`       | Fallback for unregistered marks              | `{ markType, value, children }` |
+| `unknownType`       | Fallback for unregistered types              | `{ value, isInline }`           |
+| `unknownBlockStyle` | Fallback for unregistered block styles       | `{ value, children }`           |
+| `unknownList`       | Fallback for unregistered list styles        | `{ value, children }`           |
+| `unknownListItem`   | Fallback for unregistered list item styles   | `{ value, children }`           |
+
+The `unknown*` keys let you define graceful fallbacks instead of relying on the default behavior (which logs a warning and renders nothing or plain text).
+
+## Exported utilities
+
+```js
+import {
+  defaultComponents, // built-in component implementations
+  escapeHTML, // HTML-escape a raw string
+  toHTML, // main render function
+  uriLooksSafe, // URI safety checker
+} from '@portabletext/to-html'
+```
+
+| Export              | Description                                                                                                    |
+| ------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `toHTML`            | Renders Portable Text blocks to an HTML string.                                                                |
+| `uriLooksSafe`      | Returns `true` if a URI does not use a dangerous scheme. Use this before rendering any user-supplied `href`.   |
+| `escapeHTML`        | Escapes `&`, `<`, `>`, `"`, and `'` in a raw string. Useful when building component functions without `vhtml`. |
+| `defaultComponents` | The built-in component map. Spread and override individual keys to extend defaults rather than replace them.   |
+
+## Missing component warnings
+
+By default, `toHTML` logs a warning to the console when it encounters a type or mark with no registered component. You can route these warnings to your own logger or silence them entirely.
+
+```js
+toHTML(blocks, {
+  onMissingComponent: (message, {type, nodeType}) => {
+    myLogger.warn(message, {type, nodeType})
+  },
+})
+
+// Or silence entirely:
+toHTML(blocks, {onMissingComponent: false})
+```
+
+`nodeType` is one of `'block'`, `'mark'`, `'blockStyle'`, `'listStyle'`, or `'listItemStyle'`. Use it to filter which missing components you care about.
+
+## Further reading
+
+Full API documentation, changelog, and source: [`@portabletext/to-html` on GitHub](https://github.com/portabletext/to-html).

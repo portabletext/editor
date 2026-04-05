@@ -1,0 +1,191 @@
+---
+title: React
+description: How to render Portable Text in React using @portabletext/react.
+---
+
+## Install
+
+```sh
+npm install @portabletext/react
+```
+
+## Basic usage
+
+Pass your Portable Text value to the `PortableText` component. The library handles blocks, marks, lists, and inline content with sensible defaults.
+
+```jsx
+import {PortableText} from '@portabletext/react'
+
+export default function MyComponent({value}) {
+  return <PortableText value={value} />
+}
+```
+
+The `value` prop accepts a single block object or an array of block objects.
+
+## Custom components
+
+Override the default rendering by passing a `components` prop. Each key in the object maps to a part of the Portable Text structure.
+
+### Custom link annotation
+
+Marks are inline annotations: bold, italic, links, and any custom annotations you define. Override them under `marks`.
+
+This example adds safe `rel` attributes to external links:
+
+```jsx
+const components = {
+  marks: {
+    link: ({children, value}) => {
+      const rel = !value.href.startsWith('/')
+        ? 'noreferrer noopener'
+        : undefined
+      return (
+        <a href={value.href} rel={rel}>
+          {children}
+        </a>
+      )
+    },
+  },
+}
+```
+
+Pass the components object to `PortableText`:
+
+```jsx
+<PortableText value={value} components={components} />
+```
+
+### Custom block type (image with @sanity/image-url)
+
+Custom block types (objects embedded in your content) are handled under `types`. Each component receives the block's `value` and an `isInline` boolean indicating whether it appears inline or as a standalone block.
+
+```jsx
+import {getImageDimensions} from '@sanity/asset-utils'
+import urlBuilder from '@sanity/image-url'
+
+const SampleImageComponent = ({value, isInline}) => {
+  const {width, height} = getImageDimensions(value)
+  return (
+    <img
+      src={urlBuilder()
+        .image(value)
+        .width(isInline ? 100 : 800)
+        .fit('max')
+        .auto('format')
+        .url()}
+      alt={value.alt || ' '}
+      loading="lazy"
+      style={{
+        display: isInline ? 'inline-block' : 'block',
+        aspectRatio: width / height,
+      }}
+    />
+  )
+}
+```
+
+Register it under the type name you used in your schema:
+
+```jsx
+const components = {
+  types: {
+    image: SampleImageComponent,
+  },
+}
+```
+
+### Combined example
+
+You can define `types`, `marks`, and `block` styles in a single components object:
+
+```jsx
+const components = {
+  types: {
+    image: ({value}) => <img src={value.imageUrl} />,
+    callToAction: ({value, isInline}) =>
+      isInline ? (
+        <a href={value.url}>{value.text}</a>
+      ) : (
+        <div className="callToAction">{value.text}</div>
+      ),
+  },
+  marks: {
+    link: ({children, value}) => {
+      const rel = !value.href.startsWith('/')
+        ? 'noreferrer noopener'
+        : undefined
+      return (
+        <a href={value.href} rel={rel}>
+          {children}
+        </a>
+      )
+    },
+  },
+  block: {
+    h1: ({children}) => <h1 className="text-2xl">{children}</h1>,
+    blockquote: ({children}) => (
+      <blockquote className="border-l-purple-500">{children}</blockquote>
+    ),
+  },
+}
+```
+
+## TypeScript
+
+Import `PortableTextComponents` to type your components object. This gives you autocomplete on component keys and typed props for each renderer.
+
+```tsx
+import {PortableText, PortableTextComponents} from '@portabletext/react'
+
+const components: PortableTextComponents = {
+  marks: {
+    link: ({value, children}) => {
+      const target = (value?.href || '').startsWith('http')
+        ? '_blank'
+        : undefined
+      return (
+        <a
+          href={value?.href}
+          target={target}
+          rel={target === '_blank' ? 'noindex nofollow' : undefined}
+        >
+          {children}
+        </a>
+      )
+    },
+  },
+  block: {
+    normal: ({children}) => <p className="text-base">{children}</p>,
+    h1: ({children}) => <h1 className="text-2xl">{children}</h1>,
+  },
+}
+
+export default function Article({value}) {
+  return <PortableText value={value} components={components} />
+}
+```
+
+## Available component keys
+
+The `components` prop accepts the following keys. Any key you omit falls back to the default renderer.
+
+| Key                 | What it renders                                                                          |
+| ------------------- | ---------------------------------------------------------------------------------------- |
+| `types`             | Custom block types and inline object types. Keyed by `_type` value.                      |
+| `marks`             | Inline annotations (links, custom decorators). Keyed by mark type name.                  |
+| `block`             | Standard text blocks. Keyed by `style` value (`normal`, `h1`, `h2`, `blockquote`, etc.). |
+| `list`              | List wrappers. Keyed by list type (`bullet`, `number`).                                  |
+| `listItem`          | Individual list items. Keyed by list type.                                               |
+| `hardBreak`         | Line breaks within a block (rendered as `<br />` by default).                            |
+| `unknownMark`       | Fallback for mark types with no matching component.                                      |
+| `unknownType`       | Fallback for block types with no matching component.                                     |
+| `unknownBlockStyle` | Fallback for block styles with no matching component.                                    |
+| `unknownList`       | Fallback for list types with no matching component.                                      |
+| `unknownListItem`   | Fallback for list item types with no matching component.                                 |
+
+The `unknown*` keys are useful for debugging: render a visible warning so you can spot unhandled types during development.
+
+## Further reading
+
+Full API reference, changelog, and additional examples: [@portabletext/react on GitHub](https://github.com/portabletext/react-portabletext).

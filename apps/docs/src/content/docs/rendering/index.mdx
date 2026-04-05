@@ -1,19 +1,25 @@
 ---
 title: Render Portable Text
-description: Serializers and renderers for converting Portable Text to HTML, React, Vue, Svelte, and more.
+description: How to render Portable Text as HTML, React components, or any other format.
 ---
 
-import {TabItem, Tabs} from '@astrojs/starlight/components'
+import {CardGrid, LinkCard, TabItem, Tabs} from '@astrojs/starlight/components'
 
-Portable Text is a JSON format. To display it, you need a **serializer** that converts the structured data into your target output. Official serializers are available for most popular frameworks, with community packages covering the rest.
+Portable Text is stored as JSON. To display it, you pass the data through a **serializer** that converts each block into your target output: HTML strings, React components, Vue templates, or any other format.
 
-:::note[Prop name differences across frameworks]
-Most renderers use `types` and `marks` (plural) for custom components. **Astro uses `type` and `mark` (singular).** Check the examples below for your framework.
-:::
+## How it works
 
-## Quick Start
+A Portable Text document is an array of blocks. A serializer walks the array and handles each block based on its `_type`:
 
-The fastest way to render Portable Text depends on your stack:
+1. **Text blocks** (`_type: "block"`) contain paragraphs, headings, lists, and inline formatting. Serializers handle these out of the box.
+2. **Custom blocks** (any other `_type`) represent structured content like images, code blocks, or calls to action. You provide a component for each custom type.
+3. **Marks** add meaning to inline text. **Decorators** (bold, italic, underline) work by default. **Annotations** (links, references, footnotes) carry data and need custom components.
+
+If a serializer encounters a type it doesn't recognize, it skips it. Nothing breaks.
+
+## Get started
+
+Install the serializer for your framework:
 
 <Tabs>
   <TabItem label="React">
@@ -29,32 +35,7 @@ The fastest way to render Portable Text depends on your stack:
     }
     ```
 
-    That's it for basic rendering. The component handles paragraphs, headings, bold, italic, links, and lists out of the box.
-
-    To customize how specific types render, pass a `components` prop:
-
-    ```tsx
-    import {PortableText} from '@portabletext/react'
-
-    const components = {
-      types: {
-        image: ({value}) => <img src={value.url} alt={value.alt} />,
-      },
-      marks: {
-        link: ({children, value}) => (
-          <a href={value.href} target="_blank" rel="noopener">
-            {children}
-          </a>
-        ),
-      },
-    }
-
-    function Article({content}) {
-      return <PortableText value={content} components={components} />
-    }
-    ```
-
-    [Full documentation →](https://github.com/portabletext/react-portabletext/)
+    [React guide →](/rendering/react/)
 
   </TabItem>
 
@@ -69,31 +50,7 @@ The fastest way to render Portable Text depends on your stack:
     const html = toHTML(portableTextContent)
     ```
 
-    Customize rendering with the `components` option. Use `uriLooksSafe()` to prevent `javascript:` URI injection in links:
-
-    ```ts
-    import {toHTML, uriLooksSafe} from '@portabletext/to-html'
-
-    const html = toHTML(portableTextContent, {
-      components: {
-        types: {
-          image: ({value}) => `<img src="${value.url}" alt="${value.alt}" />`,
-        },
-        marks: {
-          link: ({children, value}) => {
-            const href = value.href || ''
-            if (uriLooksSafe(href)) {
-              const rel = href.startsWith('/') ? undefined : 'noreferrer noopener'
-              return `<a href="${href}" rel="${rel}">${children}</a>`
-            }
-            return children
-          },
-        },
-      },
-    })
-    ```
-
-    [Full documentation →](https://github.com/portabletext/to-html/)
+    [HTML guide →](/rendering/html/)
 
   </TabItem>
 
@@ -114,7 +71,7 @@ The fastest way to render Portable Text depends on your stack:
     </template>
     ```
 
-    [Full documentation →](https://github.com/portabletext/vue-portabletext/)
+    [Vue guide →](/rendering/vue/)
 
   </TabItem>
 
@@ -133,9 +90,7 @@ The fastest way to render Portable Text depends on your stack:
     <PortableText value={value} />
     ```
 
-    Requires Svelte 5+.
-
-    [Full documentation →](https://github.com/portabletext/svelte-portabletext/)
+    Requires Svelte 5+. [Svelte guide →](/rendering/svelte/)
 
   </TabItem>
 
@@ -154,14 +109,209 @@ The fastest way to render Portable Text depends on your stack:
     <PortableText value={content} />
     ```
 
-    [Full documentation →](https://github.com/theisel/astro-portabletext)
+    [Astro guide →](/rendering/astro/)
 
   </TabItem>
 </Tabs>
 
-## All Serializers
+That's enough to render paragraphs, headings, lists, bold, italic, and links. The next sections cover custom types and marks.
 
-### JavaScript Frameworks
+## Rendering custom block types
+
+Custom blocks carry structured data that the serializer doesn't know how to render by default. You tell it what to do by mapping the block's `_type` to a component.
+
+Here's an image block in Portable Text:
+
+```json
+{
+  "_type": "image",
+  "_key": "abc123",
+  "url": "https://example.com/photo.jpg",
+  "alt": "A mountain landscape",
+  "caption": "View from the summit"
+}
+```
+
+The `_type` is `"image"`. To render it, add an `image` entry to the `types` component map:
+
+<Tabs>
+  <TabItem label="React">
+    ```tsx
+    import {PortableText} from '@portabletext/react'
+
+    const components = {
+      types: {
+        image: ({value}) => (
+          <figure>
+            <img src={value.url} alt={value.alt} />
+            {value.caption && <figcaption>{value.caption}</figcaption>}
+          </figure>
+        ),
+      },
+    }
+
+    function Article({content}) {
+      return <PortableText value={content} components={components} />
+    }
+    ```
+
+  </TabItem>
+
+  <TabItem label="HTML">
+    ```ts
+    import {toHTML} from '@portabletext/to-html'
+
+    const html = toHTML(portableTextContent, {
+      components: {
+        types: {
+          image: ({value}) => {
+            const caption = value.caption
+              ? `<figcaption>${value.caption}</figcaption>`
+              : ''
+            return `<figure><img src="${value.url}" alt="${value.alt}" />${caption}</figure>`
+          },
+        },
+      },
+    })
+    ```
+
+  </TabItem>
+</Tabs>
+
+The pattern is the same in every framework: map the `_type` to a function that receives the block's data as `value` and returns your output.
+
+This works for any custom block type. A call-to-action, a code block, an embedded video, a table: define the `_type` in your schema, add a component to the `types` map, and the serializer handles the rest.
+
+## Rendering custom marks
+
+Marks add meaning to inline text. There are two kinds:
+
+**Decorators** are simple flags like `strong`, `em`, and `underline`. Serializers render these by default (bold, italic, underlined text).
+
+**Annotations** carry data. A link annotation looks like this in Portable Text:
+
+```json
+{
+  "_type": "block",
+  "children": [
+    {"_type": "span", "text": "Read the "},
+    {"_type": "span", "text": "documentation", "marks": ["link1"]},
+    {"_type": "span", "text": "."}
+  ],
+  "markDefs": [
+    {
+      "_key": "link1",
+      "_type": "link",
+      "href": "/docs",
+      "openInNewTab": true
+    }
+  ]
+}
+```
+
+The span with `"marks": ["link1"]` references the mark definition with `"_key": "link1"`. The mark definition carries the data (`href`, `openInNewTab`). To customize how this renders, add a `link` entry to the `marks` component map:
+
+<Tabs>
+  <TabItem label="React">
+    ```tsx
+    const components = {
+      marks: {
+        link: ({children, value}) => {
+          const rel = !value.href.startsWith('/')
+            ? 'noreferrer noopener'
+            : undefined
+          return (
+            <a
+              href={value.href}
+              target={value.openInNewTab ? '_blank' : undefined}
+              rel={rel}
+            >
+              {children}
+            </a>
+          )
+        },
+      },
+    }
+    ```
+  </TabItem>
+
+  <TabItem label="HTML">
+    ```ts
+    import {uriLooksSafe} from '@portabletext/to-html'
+
+    const components = {
+      marks: {
+        link: ({children, value}) => {
+          const href = value.href || ''
+          if (!uriLooksSafe(href)) return children
+
+          const rel = href.startsWith('/') ? '' : ' rel="noreferrer noopener"'
+          const target = value.openInNewTab ? ' target="_blank"' : ''
+          return `<a href="${href}"${target}${rel}>${children}</a>`
+        },
+      },
+    }
+    ```
+
+    :::tip[Security]
+    The `@portabletext/to-html` package exports `uriLooksSafe()` to reject dangerous URI schemes like `javascript:` and `data:`. Use it when rendering links from user-generated content.
+    :::
+
+  </TabItem>
+</Tabs>
+
+Mark components receive `children` (the annotated text, already rendered) and `value` (the mark definition data). The same pattern works for any annotation type: footnotes, internal references, highlights, or custom marks specific to your schema.
+
+## Component map reference
+
+All serializers use the same component map structure (except Astro, which uses singular keys `type` and `mark`):
+
+| Key         | What it renders                 | When you need it                        |
+| ----------- | ------------------------------- | --------------------------------------- |
+| `types`     | Custom block and inline objects | Images, CTAs, code blocks, embeds       |
+| `marks`     | Annotations (marks with data)   | Links, footnotes, references            |
+| `block`     | Block styles                    | Custom heading styles, pull quotes      |
+| `list`      | List containers                 | Custom bullet or numbered list wrappers |
+| `listItem`  | List items                      | Custom list item rendering              |
+| `hardBreak` | Line breaks within text         | Custom line break handling              |
+
+Unknown types, marks, and styles are skipped by default. You can handle them with `unknownType`, `unknownMark`, `unknownBlockStyle`, `unknownList`, and `unknownListItem` components.
+
+## Framework guides
+
+Each framework has its own patterns for custom components, TypeScript support, and utilities:
+
+<CardGrid>
+  <LinkCard
+    title="React"
+    description="JSX components, PortableTextComponents type, @sanity/image-url patterns"
+    href="/rendering/react/"
+  />
+  <LinkCard
+    title="HTML"
+    description="String-based rendering, uriLooksSafe security, htm + vhtml for safe construction"
+    href="/rendering/html/"
+  />
+  <LinkCard
+    title="Vue"
+    description="Script setup, h() render functions, SFC components, PortableTextComponentProps"
+    href="/rendering/vue/"
+  />
+  <LinkCard
+    title="Svelte"
+    description="Svelte 5 runes, $derived() reactivity, Snippet children, context prop"
+    href="/rendering/svelte/"
+  />
+  <LinkCard
+    title="Astro"
+    description="Astro components, singular prop names, named slots, usePortableText"
+    href="/rendering/astro/"
+  />
+</CardGrid>
+
+## All serializers
+
+### JavaScript frameworks
 
 | Package                                                                                    | Target       | Install                            |
 | ------------------------------------------------------------------------------------------ | ------------ | ---------------------------------- |
@@ -177,15 +327,13 @@ The fastest way to render Portable Text depends on your stack:
 
 ### Converters
 
-These packages convert between Portable Text and other formats:
-
 | Package                                                                                                                        | Direction                  | Install                                                     |
 | ------------------------------------------------------------------------------------------------------------------------------ | -------------------------- | ----------------------------------------------------------- |
 | [`@portabletext/html`](https://github.com/portabletext/editor/tree/main/packages/html)                                         | HTML → Portable Text       | `npm i @portabletext/html`                                  |
 | [`@portabletext/markdown`](https://github.com/portabletext/editor/tree/main/packages/markdown)                                 | Portable Text ↔ Markdown   | `npm i @portabletext/markdown`                              |
 | [`@portabletext/contentful-rich-text-to-portable-text`](https://github.com/portabletext/contentful-rich-text-to-portable-text) | Contentful → Portable Text | `npm i @portabletext/contentful-rich-text-to-portable-text` |
 
-### Other Languages
+### Other languages
 
 | Package                                                                                 | Language       |
 | --------------------------------------------------------------------------------------- | -------------- |
@@ -197,7 +345,7 @@ These packages convert between Portable Text and other formats:
 | [`flutter_sanity_portable_text`](https://pub.dev/packages/flutter_sanity_portable_text) | Dart / Flutter |
 | [`flutter_portabletext`](https://github.com/JobiJoba/flutter_portabletext)              | Dart / Flutter |
 
-### Platform Integrations
+### Platform integrations
 
 | Integration                                                                          | Platform         |
 | ------------------------------------------------------------------------------------ | ---------------- |
@@ -207,8 +355,6 @@ These packages convert between Portable Text and other formats:
 For more packages, see the [Portable Text organization on GitHub](https://github.com/portabletext/).
 
 ## Utilities
-
-Working with Portable Text data programmatically? These packages help:
 
 | Package                                                            | Purpose                                                         | Install                       |
 | ------------------------------------------------------------------ | --------------------------------------------------------------- | ----------------------------- |

@@ -85,19 +85,25 @@ export default defineConfig({
         {slug: 'getting-started'},
         {
           label: 'Rendering',
-          autogenerate: {directory: 'rendering'},
+          items: [
+            {slug: 'rendering', label: 'Overview'},
+            {slug: 'rendering/react'},
+            {slug: 'rendering/html'},
+            {slug: 'rendering/vue'},
+            {slug: 'rendering/svelte'},
+            {slug: 'rendering/astro'},
+          ],
         },
         {
           label: 'Editor',
           items: [
-            {
-              label: 'Concepts',
-              autogenerate: {directory: 'editor/concepts'},
-            },
-            {
-              label: 'Guides',
-              autogenerate: {directory: 'editor/guides'},
-            },
+            {slug: 'editor/getting-started'},
+            {slug: 'editor/concepts/portabletext'},
+            {slug: 'editor/concepts/behavior'},
+            {slug: 'editor/guides/custom-rendering'},
+            {slug: 'editor/guides/customize-toolbar'},
+            {slug: 'editor/guides/create-behavior'},
+            {slug: 'editor/guides/behavior-cheat-sheet'},
             {
               label: 'Reference',
               collapsed: true,
@@ -151,6 +157,8 @@ export default defineConfig({
             },
           ],
         },
+        {slug: 'why-portable-text'},
+        {slug: 'specification'},
         {
           label: 'Resources',
           autogenerate: {directory: 'resources'},
@@ -158,10 +166,6 @@ export default defineConfig({
         {
           label: 'Playground',
           link: 'https://playground.portabletext.org/',
-        },
-        {
-          label: 'Portable Text Specification',
-          link: 'https://github.com/portabletext/portabletext',
         },
       ],
       plugins: [

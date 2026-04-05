@@ -1,0 +1,182 @@
+---
+title: Svelte
+description: Render Portable Text in Svelte 5 using @portabletext/svelte.
+---
+
+:::caution[Svelte 5 required]
+`@portabletext/svelte` uses Svelte 5 runes and Snippets. Svelte 4 is not supported.
+:::
+
+## Install
+
+Install as a dev dependency. Svelte packages are compiled at build time, so they belong in `devDependencies`.
+
+```sh
+npm install -D @portabletext/svelte
+```
+
+## Basic usage
+
+Pass your Portable Text value to the `PortableText` component. Your component receives props via the `$props()` rune.
+
+```svelte
+<script>
+  import { PortableText } from '@portabletext/svelte'
+
+  let { value } = $props()
+</script>
+
+<PortableText value={value} />
+```
+
+## Custom components
+
+Override the default rendering by passing a `components` object. Use `types` for custom block types and `marks` for annotations.
+
+```svelte
+<script>
+  import { PortableText } from '@portabletext/svelte'
+  import CustomImage from './CustomImage.svelte'
+  import ExternalLink from './ExternalLink.svelte'
+
+  let { value } = $props()
+</script>
+
+<PortableText
+  {value}
+  components={{
+    types: {
+      image: CustomImage,
+    },
+    marks: {
+      link: ExternalLink,
+    },
+  }}
+/>
+```
+
+### Custom mark (annotation)
+
+Mark components receive a `portableText` prop typed with `MarkComponentProps`, and a `children` Snippet for the annotated text content.
+
+Use `$derived()` to destructure from `portableText`. This keeps the variable reactive when props change. See [Svelte 5 patterns](#svelte-5-patterns) below.
+
+```svelte
+<!-- ExternalLink.svelte -->
+<script lang="ts">
+  import type { MarkComponentProps } from '@portabletext/svelte'
+  import type { Snippet } from 'svelte'
+
+  interface Props {
+    portableText: MarkComponentProps<{
+      href?: string
+      blank?: boolean
+    }>
+    children: Snippet
+  }
+
+  let { portableText, children }: Props = $props()
+  let { value } = $derived(portableText)
+</script>
+
+{#if value.href}
+  <a href={value.href} target={value.blank ? '_blank' : undefined} rel="noopener">
+    {@render children()}
+  </a>
+{:else}
+  {@render children()}
+{/if}
+```
+
+### Custom block type
+
+Block type components receive a `portableText` prop typed with `CustomBlockComponentProps`. Use `$derived()` to destructure `value`.
+
+```svelte
+<!-- CustomImage.svelte -->
+<script lang="ts">
+  import type { CustomBlockComponentProps } from '@portabletext/svelte'
+
+  interface Props {
+    portableText: CustomBlockComponentProps<{
+      asset: { url: string }
+      alt?: string
+      caption?: string
+    }>
+  }
+
+  let { portableText }: Props = $props()
+  let { value } = $derived(portableText)
+</script>
+
+<figure>
+  <img src={value.asset.url} alt={value.alt ?? ''} />
+  {#if value.caption}
+    <figcaption>{value.caption}</figcaption>
+  {/if}
+</figure>
+```
+
+## Svelte 5 patterns
+
+`@portabletext/svelte` is built on Svelte 5 primitives. These patterns appear in every custom component.
+
+| Pattern                | Usage                                                            |
+| ---------------------- | ---------------------------------------------------------------- |
+| `$props()`             | All components receive props via the `$props()` rune             |
+| `$derived()`           | Use `$derived()` to keep variables reactive when props change    |
+| `children: Snippet`    | Mark and block components receive children as a Svelte 5 Snippet |
+| `{@render children()}` | Renders child content (replaces Svelte 4's `<slot />`)           |
+
+### The $derived() reactivity requirement
+
+Always use `$derived()` when destructuring from `portableText`. Destructuring directly breaks reactivity and leaves the variable stale after the first render.
+
+```svelte
+<!-- ✅ Reactive: updates when props change -->
+let { value } = $derived(portableText)
+
+<!-- ❌ Not reactive: stale after first render -->
+let { value } = portableText
+```
+
+This is the most common mistake when writing custom components. If your component renders correctly on first load but does not update when content changes, check your destructuring.
+
+## Context prop
+
+Use the `context` prop to share data with all components in the tree. This is useful for things like footnote numbering, theme tokens, or any value that multiple components need to read.
+
+```svelte
+<PortableText
+  {value}
+  components={{ marks: { footnote: Footnote } }}
+  context={{ footnotes }}
+/>
+```
+
+Inside `Footnote.svelte`, read context from `portableText.global.context`. Use `$derived()` here too.
+
+```svelte
+let { footnotes } = $derived(portableText.global.context)
+let number = $derived(
+  footnotes.findIndex(note => note._key === portableText.value._key) + 1
+)
+```
+
+## Plain text
+
+Use `toPlainText()` to extract a plain text string from a Portable Text value. Useful for meta descriptions, search indexes, and other contexts where HTML is not appropriate.
+
+```svelte
+<script>
+  import { toPlainText } from '@portabletext/svelte'
+</script>
+
+<svelte:head>
+  <meta name="description" content={toPlainText(value)} />
+</svelte:head>
+```
+
+## Full documentation
+
+For the complete API reference, all component prop types, and advanced usage, see the [`@portabletext/svelte` README on GitHub](https://github.com/portabletext/svelte-portabletext).

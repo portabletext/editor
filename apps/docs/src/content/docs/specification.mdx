@@ -1,0 +1,94 @@
+---
+title: Specification
+description: The Portable Text specification defines the JSON structure for rich text content.
+---
+
+import {CardGrid, LinkCard} from '@astrojs/starlight/components'
+
+The Portable Text specification defines the JSON structure for representing rich text as structured data. It is an open specification, not tied to any specific CMS or editor.
+
+## Status
+
+The specification is currently at **v0.0.1 (Working Draft)**. It has been stable in practice since 2018 and is used in production by [Sanity](https://www.sanity.io/), [EmDash](https://emdash.dev/), [Hugo](https://gohugo.io/), and others.
+
+The working draft status reflects that the formal specification document is still being refined, not that the format is unstable.
+
+## What the spec defines
+
+A Portable Text document is a JSON array of **blocks**. Each block has a `_type` and optional properties depending on its type.
+
+**Text blocks** (type `"block"`) contain:
+
+- **`children`**: an array of spans (inline text segments)
+- **`style`**: a block-level style like `"normal"`, `"h1"`, `"blockquote"`
+- **`markDefs`**: definitions for annotations (links, references, custom marks)
+- **`listItem`** and **`level`**: for list membership and nesting
+
+**Spans** (type `"span"`) within a text block contain:
+
+- **`text`**: the actual text content
+- **`marks`**: an array of mark keys (referencing `markDefs`) or decorator names (`"strong"`, `"em"`)
+
+**Custom blocks** can be any `_type` and carry any data. An image block, a code block, an embedded video, or a call-to-action are all custom blocks. Renderers that don't recognize a custom block type skip it gracefully.
+
+## Example
+
+A paragraph with a bold word and a link:
+
+```json
+[
+  {
+    "_type": "block",
+    "_key": "abc123",
+    "style": "normal",
+    "children": [
+      {"_type": "span", "text": "Read the "},
+      {"_type": "span", "text": "documentation", "marks": ["link1"]},
+      {"_type": "span", "text": " for "},
+      {"_type": "span", "text": "details", "marks": ["strong"]},
+      {"_type": "span", "text": "."}
+    ],
+    "markDefs": [{"_key": "link1", "_type": "link", "href": "/docs"}]
+  }
+]
+```
+
+## Key design decisions
+
+**Why JSON, not HTML or Markdown?**
+HTML and Markdown encode rendering assumptions into the content. Portable Text separates content structure from presentation, making the same content renderable as React components, HTML strings, PDFs, or plain text. See [Why Portable Text?](/why-portable-text/) for a detailed comparison.
+
+**Why an array of blocks?**
+Rich text is a sequence of blocks. Paragraphs, headings, images, and custom elements appear in order. The array structure makes it natural to insert, reorder, and query blocks.
+
+**Why `markDefs` separate from `marks`?**
+Decorators (bold, italic) are simple flags. Annotations (links, references) carry data. Separating the definition (`markDefs`) from the reference (`marks` array on spans) means multiple spans can share the same annotation data without duplication.
+
+**Why `_key` on blocks?**
+Keys enable real-time collaboration. When two editors modify the same document, keys let the system identify which block changed without relying on array position.
+
+## Read the full specification
+
+<CardGrid>
+  <LinkCard
+    title="Portable Text specification"
+    description="The complete specification on GitHub (v0.0.1 Working Draft)"
+    href="https://github.com/portabletext/portabletext"
+  />
+  <LinkCard
+    title="TypeScript types"
+    description="@portabletext/types: TypeScript definitions for the PT data model"
+    href="https://github.com/portabletext/types"
+  />
+</CardGrid>
+
+## Implementations
+
+Portable Text is implemented across many languages and frameworks:
+
+- **JavaScript/TypeScript**: Official renderers for [React](/rendering/react/), [HTML](/rendering/html/), [Vue](/rendering/vue/), [Svelte](/rendering/svelte/), [Astro](/rendering/astro/), plus SolidJS, React Native, and React PDF
+- **Other languages**: C#/.NET, Python, PHP, Ruby, Go, Dart/Flutter
+- **Platforms**: Hugo (built-in `transform.PortableText`), Shopify (Liquid templates)
+- **Editors**: [Portable Text Editor](https://github.com/portabletext/editor) (official), EmDash (TipTap-based)
+
+See [Render Portable Text](/rendering/) for the full list of serializers and renderers.
