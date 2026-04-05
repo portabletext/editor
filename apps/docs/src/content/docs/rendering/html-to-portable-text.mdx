@@ -1,0 +1,392 @@
+---
+title: HTML to Portable Text
+description: Convert HTML content to Portable Text using the official conversion packages.
+---
+
+import {TabItem, Tabs} from '@astrojs/starlight/components'
+
+Convert HTML strings to Portable Text blocks. This is useful for migrating content from a CMS that stores HTML, processing pasted content from web pages, or importing content from WordPress, Google Docs, or Notion.
+
+:::note[Prerequisites]
+This guide covers `@portabletext/html` **v1.x** and `@portabletext/block-tools` **v5.x** ([changelog](https://github.com/portabletext/editor/releases)). Both packages require Node.js 20.19+ or 22.12+.
+:::
+
+## Which package?
+
+**Using Sanity?** Use `@portabletext/block-tools`. It accepts your Sanity schema directly.
+
+**Everything else?** Use `@portabletext/html`. It works standalone with no Sanity dependency.
+
+Both packages use the same conversion engine (block-tools delegates to html internally). Custom rules are interchangeable between them, and they produce identical output for identical schemas.
+
+## Install
+
+<Tabs>
+  <TabItem label="Standalone">
+    ```bash npm install @portabletext/html ```
+  </TabItem>
+  <TabItem label="Sanity">
+    ```bash npm install @portabletext/block-tools ```
+  </TabItem>
+</Tabs>
+
+## Basic usage
+
+<Tabs>
+  <TabItem label="Standalone">
+    ```ts
+    import {htmlToPortableText} from '@portabletext/html'
+
+    const blocks = htmlToPortableText('<h1>Hello <strong>world</strong></h1>')
+    ```
+
+    In the browser, the package uses the built-in `DOMParser`. In Node.js, you need to provide a `parseHtml` function:
+
+    ```ts
+    import {htmlToPortableText} from '@portabletext/html'
+    import {JSDOM} from 'jsdom'
+
+    const blocks = htmlToPortableText(html, {
+      parseHtml: (html) => new JSDOM(html).window.document,
+    })
+    ```
+
+  </TabItem>
+  <TabItem label="Sanity">
+    ```ts
+    import {htmlToBlocks} from '@portabletext/block-tools'
+    import {Schema} from '@sanity/schema'
+    import {JSDOM} from 'jsdom'
+
+    // Get the block content type from your Sanity schema
+    const defaultSchema = Schema.compile({
+      name: 'myBlog',
+      types: [{
+        type: 'object',
+        name: 'blogPost',
+        fields: [{
+          name: 'body',
+          type: 'array',
+          of: [{type: 'block'}],
+        }],
+      }],
+    })
+
+    const blockContentType = defaultSchema
+      .get('blogPost')
+      .fields.find((f) => f.name === 'body').type
+
+    const blocks = htmlToBlocks(html, blockContentType, {
+      parseHtml: (html) => new JSDOM(html).window.document,
+    })
+    ```
+
+  </TabItem>
+</Tabs>
+
+## Node.js setup
+
+In the browser, HTML parsing works automatically via `DOMParser`. In Node.js, there is no built-in DOM, so you must provide a `parseHtml` function. The package throws a descriptive error if you forget.
+
+[JSDOM](https://github.com/jsdom/jsdom) is the most common choice:
+
+```bash
+npm install jsdom
+```
+
+```ts
+import {JSDOM} from 'jsdom'
+
+// Pass to either package
+const options = {
+  parseHtml: (html) => new JSDOM(html).window.document,
+}
+```
+
+Lighter alternatives like [linkedom](https://github.com/WebReflection/linkedom) and [happy-dom](https://github.com/capricorn86/happy-dom) also work. Any library that returns a standard `Document` object is compatible.
+
+## What converts by default
+
+The converter maps semantic HTML elements to Portable Text:
+
+| HTML                        | Portable Text                                 |
+| --------------------------- | --------------------------------------------- |
+| `<p>`                       | Text block, style `"normal"`                  |
+| `<h1>` through `<h6>`       | Text block, style `"h1"` through `"h6"`       |
+| `<blockquote>`              | Text block, style `"blockquote"`              |
+| `<strong>`, `<b>`           | `"strong"` decorator                          |
+| `<em>`, `<i>`               | `"em"` decorator                              |
+| `<code>`                    | `"code"` decorator                            |
+| `<s>`, `<strike>`, `<del>`  | `"strike-through"` decorator                  |
+| `<a href="...">`            | `"link"` annotation with `href` and `title`   |
+| `<ul>` / `<ol>` with `<li>` | List items with `"bullet"` or `"number"` type |
+| `<br>`                      | Newline character within a span               |
+| `<hr>`                      | `"horizontal-rule"` block object              |
+
+## Schema as whitelist
+
+:::caution[Marks not in your schema are silently dropped]
+The schema controls what appears in the output. If a decorator, annotation, or block type isn't defined in the schema, the converter drops it without warning. This is the most common source of "my formatting disappeared" bugs.
+:::
+
+The default schema includes `strong`, `em`, `code`, and `strike-through` as decorators. It does **not** include `underline`. If your HTML contains `<u>` tags, the underline is silently removed unless you add it to your schema:
+
+<Tabs>
+  <TabItem label="Standalone">
+    ```ts
+    import {htmlToPortableText} from '@portabletext/html'
+    import {compileSchema, defineSchema} from '@portabletext/schema'
+
+    const schema = compileSchema(defineSchema({
+      styles: [{name: 'normal'}, {name: 'h1'}, {name: 'h2'}, {name: 'h3'}],
+      decorators: [
+        {name: 'strong'},
+        {name: 'em'},
+        {name: 'code'},
+        {name: 'strike-through'},
+        {name: 'underline'},  // now <u> tags are preserved
+      ],
+      annotations: [{name: 'link', fields: [{name: 'href', type: 'string'}]}],
+      lists: [{name: 'bullet'}, {name: 'number'}],
+    }))
+
+    const blocks = htmlToPortableText(html, {schema})
+    ```
+
+  </TabItem>
+  <TabItem label="Sanity">
+    In Sanity, your schema already defines which decorators are available. If your block type includes `underline` as a decorator, `htmlToBlocks` will preserve `<u>` tags automatically.
+  </TabItem>
+</Tabs>
+
+Other HTML elements that map to decorators but are **not** in the default schema:
+
+| HTML      | Decorator name | Add to schema to preserve |
+| --------- | -------------- | ------------------------- |
+| `<u>`     | `underline`    | `{name: 'underline'}`     |
+| `<sup>`   | `sup`          | `{name: 'sup'}`           |
+| `<sub>`   | `sub`          | `{name: 'sub'}`           |
+| `<ins>`   | `ins`          | `{name: 'ins'}`           |
+| `<mark>`  | `mark`         | `{name: 'mark'}`          |
+| `<small>` | `small`        | `{name: 'small'}`         |
+
+## Handling images
+
+Images are skipped by default. This is intentional: the converter is synchronous, but image handling typically requires async work (downloading, uploading to a CDN, generating asset references). The converter can't do that inline.
+
+To capture images, provide a matcher:
+
+<Tabs>
+  <TabItem label="Standalone">
+    ```ts
+    import {htmlToPortableText, type ObjectMatcher} from '@portabletext/html'
+    import {compileSchema, defineSchema} from '@portabletext/schema'
+
+    const schema = compileSchema(defineSchema({
+      blockObjects: [{name: 'image', fields: [{name: 'src', type: 'string'}]}],
+      inlineObjects: [{name: 'image', fields: [{name: 'src', type: 'string'}]}],
+    }))
+
+    const imageMatcher: ObjectMatcher<{src?: string; alt?: string}> = ({
+      context, value, isInline,
+    }) => {
+      const collection = isInline
+        ? context.schema.inlineObjects
+        : context.schema.blockObjects
+      if (!collection.some((obj) => obj.name === 'image')) return undefined
+      return {
+        _key: context.keyGenerator(),
+        _type: 'image',
+        ...(value.src ? {src: value.src} : {}),
+      }
+    }
+
+    const blocks = htmlToPortableText(html, {
+      schema,
+      types: {image: imageMatcher},
+    })
+    ```
+
+  </TabItem>
+  <TabItem label="Sanity">
+    ```ts
+    const blocks = htmlToBlocks(html, blockContentType, {
+      parseHtml: (html) => new JSDOM(html).window.document,
+      matchers: {
+        image: ({context, props}) => ({
+          _key: context.keyGenerator(),
+          _type: 'image',
+          _sanityAsset: `image@${props.src}`,
+        }),
+        inlineImage: ({context, props}) => ({
+          _key: context.keyGenerator(),
+          _type: 'image',
+          _sanityAsset: `image@${props.src}`,
+        }),
+      },
+    })
+    ```
+
+    The `_sanityAsset` convention tells the Sanity client to download and upload the image during import.
+
+  </TabItem>
+</Tabs>
+
+### Two-phase image upload
+
+For migration scripts where you need to upload images to your own CDN or asset pipeline, use a two-phase approach: capture the URLs synchronously, then upload asynchronously:
+
+```ts
+// Phase 1: capture image URLs as temporary block types
+const blocks = htmlToPortableText(html, {
+  rules: [
+    {
+      deserialize(el, next, createBlock) {
+        if (el.tagName?.toLowerCase() !== 'img') return undefined
+        return createBlock({
+          _type: 'externalImage',
+          url: el.getAttribute('src') ?? '',
+          alt: el.getAttribute('alt') ?? '',
+        }).block
+      },
+    },
+  ],
+})
+
+// Phase 2: upload images and replace temporary blocks
+const finalBlocks = await Promise.all(
+  blocks.map(async (block) => {
+    if (block._type !== 'externalImage') return block
+    const uploadedUrl = await uploadToYourCDN(block.url)
+    return {
+      _key: block._key,
+      _type: 'image',
+      src: uploadedUrl,
+      alt: block.alt,
+    }
+  }),
+)
+```
+
+## Handling tables
+
+Tables are skipped by default. The `createFlattenTableRule` function (currently in beta) converts tables into a flat list of text blocks:
+
+```ts
+import {htmlToPortableText} from '@portabletext/html'
+import {createFlattenTableRule} from '@portabletext/html/rules'
+
+const blocks = htmlToPortableText(html, {
+  rules: [
+    createFlattenTableRule({
+      schema,
+      separator: () => ({_type: 'span', text: ': '}),
+    }),
+  ],
+})
+```
+
+This turns each table cell into a text block, with an optional separator between cells. For preserving full table structure, write a custom rule that maps `<table>` to your own block type.
+
+:::note
+`createFlattenTableRule` is marked `@beta`. The API may change in future releases.
+:::
+
+## Custom rules
+
+Custom rules let you handle HTML elements that the built-in converter doesn't cover. A rule receives a DOM node and returns Portable Text blocks (or `undefined` to skip and let the next rule handle it).
+
+### Example: code blocks with language
+
+The default converter treats `<pre>` as a normal block with code marks. To convert fenced code blocks into a custom `code` block type:
+
+```ts
+const codeBlockRule = {
+  deserialize(el, next, createBlock) {
+    if (el.tagName?.toLowerCase() !== 'pre') return undefined
+    const code = el.querySelector('code')
+    return createBlock({
+      _type: 'code',
+      text: (code ?? el).textContent ?? '',
+      language: code?.className?.replace('language-', '') ?? undefined,
+    }).block
+  },
+}
+
+const blocks = htmlToPortableText(html, {
+  rules: [codeBlockRule],
+})
+```
+
+### Example: callout blocks
+
+Convert `<div class="callout">` elements into a custom block type:
+
+```ts
+const calloutRule = {
+  deserialize(el, next, createBlock) {
+    if (
+      el.tagName?.toLowerCase() !== 'div' ||
+      !el.classList?.contains('callout')
+    ) {
+      return undefined
+    }
+    const tone = el.classList.contains('warning') ? 'warning' : 'info'
+    const children = next(el.childNodes)
+    return createBlock({
+      _type: 'callout',
+      tone,
+      content: Array.isArray(children) ? children : children ? [children] : [],
+    }).block
+  },
+}
+```
+
+Custom rules are checked before the built-in rules. Return `undefined` from your rule to fall through to the default handling.
+
+## Paste source support
+
+The converter automatically detects and preprocesses content pasted from common applications. No configuration needed.
+
+| Source         | How it's detected                      | What's handled                                                      |
+| -------------- | -------------------------------------- | ------------------------------------------------------------------- |
+| Google Docs    | `id` containing `"docs-internal-guid"` | Inline styles converted to semantic marks, checklist images removed |
+| Microsoft Word | `class="Mso..."` or `mso-` styles      | CSS classes remapped to semantic HTML, list numbering extracted     |
+| Word Online    | Specific paragraph markers             | Paragraph styles converted to headings and blockquotes              |
+| Notion         | Inline style patterns                  | `font-weight:700` converted to strong, `font-style:italic` to em    |
+
+:::tip
+For Google Docs content, use `whitespaceMode: 'normalize'` to collapse extra whitespace that Google Docs adds:
+
+```ts
+const blocks = htmlToPortableText(html, {
+  whitespaceMode: 'normalize',
+})
+```
+
+:::
+
+CSS-based formatting (like `style="font-weight: bold"`) is **not** converted in general HTML. Only the paste source preprocessors handle inline styles, and only for their specific source formats.
+
+## Edge cases
+
+- **`deserialize` is synchronous.** You can't do async work (like image uploads) inside rules. Use the two-phase pattern described above.
+- **CSS formatting is ignored.** Only semantic HTML tags (`<strong>`, `<em>`, etc.) are converted. A `<span style="font-weight: bold">` in plain HTML produces no marks.
+- **Schema marks are filtered silently.** No warnings when decorators or annotations are dropped because they're not in the schema. Check your schema if formatting disappears.
+- **`createFlattenTableRule` is beta.** The API may change. For production table handling, consider a custom rule.
+- **Page builder HTML is difficult.** Content from WordPress page builders (Elementor, Divi) uses non-semantic markup that doesn't map cleanly to Portable Text. Manual cleanup or custom rules may be needed.
+
+## Other conversion paths
+
+| Source format   | Tool                                                                                                                           |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Markdown → PT   | [`@portabletext/markdown`](/rendering/markdown/)                                                                               |
+| Gutenberg → PT  | [`@emdash-cms/gutenberg-to-portable-text`](https://github.com/emdash-cms/emdash) (30+ block types)                             |
+| Contentful → PT | [`@portabletext/contentful-rich-text-to-portable-text`](https://github.com/portabletext/contentful-rich-text-to-portable-text) |
+| C# HTML → PT    | [`portable-text-dotnet`](https://github.com/portabletext/dotnet-portable-text)                                                 |
+
+## Further reading
+
+- [`@portabletext/html` source](https://github.com/portabletext/editor/tree/main/packages/html)
+- [`@portabletext/block-tools` source](https://github.com/portabletext/editor/tree/main/packages/block-tools)
+- [`@portabletext/schema` (defineSchema, compileSchema)](https://github.com/portabletext/editor/tree/main/packages/schema)

@@ -94,6 +94,7 @@ export default defineConfig({
             {slug: 'rendering/svelte'},
             {slug: 'rendering/astro'},
             {slug: 'rendering/markdown'},
+            {slug: 'rendering/html-to-portable-text'},
           ],
         },
         {
