@@ -11,33 +11,33 @@ import {CardGrid, LinkCard} from '@astrojs/starlight/components'
 
 Portable Text is a JSON-based specification for structured block content. Instead of storing content as an HTML string or Markdown, Portable Text represents it as an array of typed blocks: each block has a `_type` and carries its own data.
 
-```
+```text
 ┌─────────────────────────────────────────┐
 │         Portable Text document          │
 │         (array of blocks)               │
 │                                         │
-│  ┌─ block: text ─────────────────────┐  │
+│  ┌─ _type: block ────────────────────┐  │
 │  │ style: "h1"                       │  │
 │  │ "Why Portable Text?"              │  │
 │  └───────────────────────────────────┘  │
-│  ┌─ block: text ─────────────────────┐  │
+│  ┌─ _type: block ────────────────────┐  │
 │  │ style: "normal"                   │  │
 │  │ "Read the **docs** for details."  │  │
 │  │  └─ annotation: link (href, ...)  │  │
 │  └───────────────────────────────────┘  │
-│  ┌─ block: image ────────────────────┐  │
+│  ┌─ _type: image ────────────────────┐  │
 │  │ url: "photo.jpg"                  │  │
 │  │ alt: "A mountain landscape"       │  │
 │  │ caption: "View from the summit"   │  │
 │  └───────────────────────────────────┘  │
-│  ┌─ block: text ─────────────────────┐  │
+│  ┌─ _type: block ────────────────────┐  │
 │  │ style: "normal"                   │  │
 │  │ "Current price: [stockTicker] ."  │  │
 │  │  └─ inline: stockTicker           │  │
 │  │      symbol: "AAPL"               │  │
 │  │      exchange: "NASDAQ"           │  │
 │  └───────────────────────────────────┘  │
-│  ┌─ block: callToAction ─────────────┐  │
+│  ┌─ _type: callToAction ─────────────┐  │
 │  │ text: "Start building"            │  │
 │  │ url: "/getting-started"           │  │
 │  └───────────────────────────────────┘  │
@@ -50,7 +50,7 @@ Text blocks, image blocks, and custom blocks like a call-to-action all live in t
 
 Portable Text is a **block content format**, not just a rich text format. Rich text (formatted paragraphs with bold, italic, and links) is one type of block among many. The format supports three levels of custom content:
 
-```
+```text
 Block level          Custom block types sit alongside text blocks
                      (images, code blocks, CTAs, embeds, tables)
                      ─────────────────────────────────────────────
@@ -72,7 +72,7 @@ Mark level           Annotations carry data on text spans
 
 A serializer converts the block array into your target format. The same Portable Text renders as React components, HTML strings, Markdown, PDFs, or plain text:
 
-```
+```text
                     ┌──────────────┐
                 ┌──→│ React        │──→ <Article>...</Article>
                 │   └──────────────┘

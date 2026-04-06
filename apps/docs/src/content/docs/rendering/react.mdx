@@ -66,7 +66,7 @@ Custom block types (objects embedded in your content) are handled under `types`.
 
 ```jsx
 import {getImageDimensions} from '@sanity/asset-utils'
-import urlBuilder from '@sanity/image-url'
+import {urlBuilder} from '@sanity/image-url'
 
 const SampleImageComponent = ({value, isInline}) => {
   const {width, height} = getImageDimensions(value)
