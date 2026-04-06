@@ -5,7 +5,7 @@ import {
   type PortableTextSpan,
   type PortableTextTextBlock,
 } from '@portabletext/schema'
-import {forwardRef, memo, useRef, useState} from 'react'
+import {forwardRef, memo, useLayoutEffect, useRef, useState} from 'react'
 import {getNodes} from '../../../node-traversal/get-nodes'
 import {IS_ANDROID} from '../../dom/utils/environment'
 import {MARK_PLACEHOLDER_SYMBOL} from '../../dom/utils/symbols'
@@ -15,7 +15,6 @@ import type {Editor} from '../../interfaces/editor'
 import type {Path} from '../../interfaces/path'
 import {parentPath} from '../../path/parent-path'
 import {pathEquals} from '../../path/path-equals'
-import {useIsomorphicLayoutEffect} from '../hooks/use-isomorphic-layout-effect'
 import {useSlateStatic} from '../hooks/use-slate-static'
 
 /**
@@ -93,6 +92,7 @@ const SlateString = (props: {
  * Leaf strings with text in them.
  */
 const TextString = (props: {text: string; isTrailing?: boolean}) => {
+  'use no memo'
   const {text, isTrailing = false} = props
   const ref = useRef<HTMLSpanElement>(null)
   const getTextContent = () => {
@@ -109,7 +109,7 @@ const TextString = (props: {text: string; isTrailing?: boolean}) => {
   // eg makes native spellcheck opt out from checking the text node.
 
   // useLayoutEffect: updating our span before browser paint
-  useIsomorphicLayoutEffect(() => {
+  useLayoutEffect(() => {
     // null coalescing text to make sure we're not outputing "null" as a string in the extreme case it is nullish at runtime
     const textWithTrailing = getTextContent()
 

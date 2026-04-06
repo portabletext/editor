@@ -23,6 +23,7 @@ export function useGenericSelector<T>(
   selector: () => T,
   equalityFn: (a: T | null, b: T) => boolean,
 ): [state: T, update: () => void] {
+  'use no memo'
   const [, forceRender] = useReducer((s) => s + 1, 0)
 
   const latestSubscriptionCallbackError = useRef<Error | undefined>(undefined)

@@ -4,7 +4,7 @@ import type {
   PortableTextTextBlock,
 } from '@portabletext/schema'
 import {isSpan, isTextBlock} from '@portabletext/schema'
-import {useCallback, useRef, type JSX} from 'react'
+import {useCallback, useLayoutEffect, useMemo, useRef, type JSX} from 'react'
 import {
   isElementDecorationsEqual,
   splitDecorationsByChild,
@@ -43,6 +43,7 @@ const useChildren = (props: {
   renderText?: (props: RenderTextProps) => JSX.Element
   renderLeaf?: (props: RenderLeafProps) => JSX.Element
 }) => {
+  'use no memo'
   const {
     parentDataPath,
     decorations,
@@ -54,7 +55,11 @@ const useChildren = (props: {
     renderLeaf,
   } = props
   const editor = useSlateStatic()
-  editor.isNodeMapDirty = false
+
+  useLayoutEffect(() => {
+    // eslint-disable-next-line react-hooks/immutability -- `editor` is a mutable singleton
+    editor.isNodeMapDirty = false
+  })
 
   const isEditorNode = isEditor(node)
 
@@ -187,6 +192,7 @@ const useDecorationsByChild = (
   indexedPath: Path,
   decorations: DecoratedRange[],
 ) => {
+  'use no memo'
   const decorationsByChild = splitDecorationsByChild(
     editor,
     node,
@@ -194,27 +200,27 @@ const useDecorationsByChild = (
     decorations,
   )
 
-  // The value we return is a mutable array of `DecoratedRange[]` arrays. Each
-  // `DecoratedRange[]` is only updated if the decorations at that index have
-  // changed, which speeds up the equality check for the `decorations` prop in
-  // the memoized `Element` and `Text` components.
-  const mutableDecorationsByChild = useRef(decorationsByChild).current
+  const previousRef = useRef<DecoratedRange[][]>(decorationsByChild)
 
-  // Resize the mutable array to match the latest result
-  mutableDecorationsByChild.length = decorationsByChild.length
+  /* eslint-disable react-hooks/refs -- intentional ref read for memoization stability */
+  const stableDecorationsByChild = useMemo(() => {
+    const previous = previousRef.current
+    const next = decorationsByChild.map((decorations, i) => {
+      const previousDecorations: DecoratedRange[] | null = previous[i] ?? null
+      if (isElementDecorationsEqual(previousDecorations, decorations)) {
+        return previousDecorations!
+      }
+      return decorations
+    })
+    return next
+  }, [decorationsByChild])
+  /* eslint-enable react-hooks/refs */
 
-  for (let i = 0; i < decorationsByChild.length; i++) {
-    const decorations = decorationsByChild[i]!
+  useLayoutEffect(() => {
+    previousRef.current = stableDecorationsByChild
+  })
 
-    const previousDecorations: DecoratedRange[] | null =
-      mutableDecorationsByChild[i] ?? null
-
-    if (!isElementDecorationsEqual(previousDecorations, decorations)) {
-      mutableDecorationsByChild[i] = decorations!
-    }
-  }
-
-  return mutableDecorationsByChild
+  return stableDecorationsByChild
 }
 
 export default useChildren

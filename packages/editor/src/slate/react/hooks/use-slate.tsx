@@ -1,6 +1,5 @@
-import {useContext, useReducer} from 'react'
+import {useContext, useLayoutEffect, useReducer} from 'react'
 import type {Editor} from '../../interfaces/editor'
-import {useIsomorphicLayoutEffect} from './use-isomorphic-layout-effect'
 import {SlateSelectorContext} from './use-slate-selector'
 import {useSlateStatic} from './use-slate-static'
 
@@ -18,10 +17,7 @@ export const useSlate = (): Editor => {
     )
   }
 
-  useIsomorphicLayoutEffect(
-    () => addEventListener(forceRender),
-    [addEventListener],
-  )
+  useLayoutEffect(() => addEventListener(forceRender), [addEventListener])
 
   return useSlateStatic()
 }

@@ -60,6 +60,7 @@ const Leaf = (props: {
   text: PortableTextSpan
   leafPosition?: LeafPosition
 }) => {
+  'use no memo'
   const {
     leaf,
     isLast,
@@ -85,9 +86,11 @@ const Leaf = (props: {
       )
 
       if (placeholderEl == null) {
+        // eslint-disable-next-line react-hooks/immutability -- `editor` is a mutable singleton
         editor.domPlaceholderElement = null
         ;(leaf as any).onPlaceholderResize?.(null)
       } else {
+        // eslint-disable-next-line react-hooks/immutability -- `editor` is a mutable singleton
         editor.domPlaceholderElement = placeholderEl
 
         if (!placeholderResizeObserver.current) {

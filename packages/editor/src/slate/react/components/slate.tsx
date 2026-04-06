@@ -13,18 +13,21 @@ import {EditorContext} from '../hooks/use-slate-static'
  */
 
 export const Slate = (props: {editor: Editor; children: React.ReactNode}) => {
+  'use no memo'
   const {editor, children} = props
 
   const {selectorContext, onChange: handleSelectorChange} = useSelectorContext()
 
   const onContextChange = useCallback(() => {
     handleSelectorChange()
-  }, [editor, handleSelectorChange])
+  }, [handleSelectorChange])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/immutability -- `editor` is a mutable singleton
     editor.onContextChange = onContextChange
 
     return () => {
+      // eslint-disable-next-line react-hooks/immutability -- `editor` is a mutable singleton
       editor.onContextChange = () => {}
     }
   }, [editor, onContextChange])
