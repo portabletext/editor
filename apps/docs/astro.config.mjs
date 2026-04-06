@@ -181,10 +181,7 @@ export default defineConfig({
         {slug: 'specification'},
         {
           label: 'Ecosystem',
-          items: [
-            {slug: 'ecosystem/packages', label: 'All packages'},
-            {slug: 'ecosystem/comparison', label: 'Editor comparison'},
-          ],
+          items: [{slug: 'ecosystem/packages', label: 'All packages'}],
         },
         {
           label: 'Playground',
