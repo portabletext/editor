@@ -1,5 +1,6 @@
 import type {EditorSchema} from '../editor/editor-schema'
 import type {Node} from '../slate/interfaces/node'
+import type {Path} from '../slate/interfaces/path'
 import {getChildren} from './get-children'
 
 /**
@@ -11,8 +12,8 @@ export function getLastChild(
     editableTypes: Set<string>
     value: Array<Node>
   },
-  path: Array<number>,
-): {node: Node; path: Array<number>} | undefined {
+  path: Path,
+): {node: Node; path: Path} | undefined {
   const children = getChildren(context, path)
 
   return children.at(-1)

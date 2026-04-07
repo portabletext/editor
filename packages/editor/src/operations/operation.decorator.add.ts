@@ -10,6 +10,7 @@ import {isEnd} from '../slate/editor/is-end'
 import {isStart} from '../slate/editor/is-start'
 import {path as editorPath} from '../slate/editor/path'
 import {rangeRef} from '../slate/editor/range-ref'
+import {withoutNormalizing} from '../slate/editor/without-normalizing'
 import {isExpandedRange} from '../slate/range/is-expanded-range'
 import {rangeEdges} from '../slate/range/range-edges'
 import {rangeEnd} from '../slate/range/range-end'
@@ -40,57 +41,69 @@ export const decoratorAddOperationImplementation: OperationImplementation<
 
   if (isExpandedRange(at)) {
     const ref = rangeRef(editor, at, {affinity: 'inward'})
-    const [start, end] = rangeEdges(at)
 
-    const endAtEndOfNode = isEnd(editor, end, end.path)
+    withoutNormalizing(editor, () => {
+      const [start, end] = rangeEdges(at!, {}, editor)
 
-    if (!endAtEndOfNode || !isEdge(editor, end, end.path)) {
-      applySplitNode(editor, end.path, end.offset)
-    }
-
-    const startAtStartOfNode = isStart(editor, start, start.path)
-
-    if (!startAtStartOfNode || !isEdge(editor, start, start.path)) {
-      applySplitNode(editor, start.path, start.offset)
-    }
-
-    at = ref.unref()
-
-    if (!at) {
-      throw new Error('Unable to add decorator without a selection')
-    }
-
-    if (!operation.at) {
-      applySelect(editor, at)
-    }
-
-    // Use new selection to find nodes to decorate
-    const splitTextNodes = Array.from(
-      getNodes(editor, {
-        from: rangeStart(at).path,
-        to: rangeEnd(at).path,
-        match: (n) => isSpan({schema: editor.schema}, n),
-      }),
-    )
-
-    for (const {node, path: spanPath} of splitTextNodes) {
-      if (!isSpan({schema: editor.schema}, node)) {
-        continue
+      if (!isEdge(editor, end, end.path)) {
+        applySplitNode(editor, end.path, end.offset)
       }
 
-      const marks = [
-        ...(Array.isArray(node.marks) ? node.marks : []).filter(
-          (eMark: string) => eMark !== mark,
-        ),
-        mark,
-      ]
-      applySetNode(editor, {marks}, spanPath)
-    }
+      if (!isEdge(editor, start, start.path)) {
+        applySplitNode(editor, start.path, start.offset)
+      }
+
+      at = ref.unref()
+
+      if (!at) {
+        throw new Error('Unable to add decorator without a selection')
+      }
+
+      if (!operation.at) {
+        applySelect(editor, at)
+      }
+
+      // Use new selection to find nodes to decorate
+      const atStart = rangeStart(at, editor)
+      const atEnd = rangeEnd(at, editor)
+      const splitTextNodes = Array.from(
+        getNodes(editor, {
+          from: atStart.path,
+          to: atEnd.path,
+          match: (n) => isSpan({schema: editor.schema}, n),
+        }),
+      )
+
+      for (const {node, path: spanPath} of splitTextNodes) {
+        if (!isSpan({schema: editor.schema}, node)) {
+          continue
+        }
+
+        // Skip edge spans where the selection doesn't include any text.
+        // For empty spans (where isStart and isEnd are both true at offset 0),
+        // the span is fully selected so we should not skip it.
+        if (
+          (isEnd(editor, atStart, spanPath) &&
+            !isStart(editor, atStart, spanPath)) ||
+          (isStart(editor, atEnd, spanPath) && !isEnd(editor, atEnd, spanPath))
+        ) {
+          continue
+        }
+
+        const marks = [
+          ...(Array.isArray(node.marks) ? node.marks : []).filter(
+            (eMark: string) => eMark !== mark,
+          ),
+          mark,
+        ]
+        applySetNode(editor, {marks}, spanPath)
+      }
+    }) // end withoutNormalizing
   } else {
     const selectedSpan = Array.from(
       getNodes(editor, {
-        from: rangeStart(at).path,
-        to: rangeEnd(at).path,
+        from: rangeStart(at, editor).path,
+        to: rangeEnd(at, editor).path,
         match: (node) => isSpan({schema: editor.schema}, node),
       }),
     )?.at(0)

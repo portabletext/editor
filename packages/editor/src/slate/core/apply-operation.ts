@@ -1,8 +1,8 @@
 import type {PortableTextSpan} from '@portabletext/schema'
 import {isSpan} from '@portabletext/schema'
 import {safeStringify} from '../../internal-utils/safe-json'
-import {getChildren} from '../../node-traversal/get-children'
 import {getNodes} from '../../node-traversal/get-nodes'
+import {isKeyedSegment} from '../../utils/util.is-keyed-segment'
 import type {Editor, Selection} from '../interfaces/editor'
 import type {Node, NodeEntry} from '../interfaces/node'
 import type {Operation} from '../interfaces/operation'
@@ -32,27 +32,44 @@ export function applyOperation(editor: Editor, op: Operation): void {
       const {path} = op
       let {node} = op
 
-      // Ensure unique keys on inserted nodes (skip during remote/undo/redo)
-      if (
-        !editor.isProcessingRemoteChanges &&
-        !editor.isUndoing &&
-        !editor.isRedoing &&
-        node._key !== undefined
-      ) {
-        const insertParentPath = parentPath(path)
-        const siblings =
-          insertParentPath.length === 0
-            ? editor.children
-            : getChildren(editor, insertParentPath).map((entry) => entry.node)
+      const isRootInsert = parentPath(path).length === 0
+      let insertIndex = -1
 
-        if (siblings.some((sibling) => sibling._key === node._key)) {
+      modifyChildren(editor, parentPath(path), editor.schema, (children) => {
+        // Ensure unique keys on inserted nodes (skip during remote/undo/redo)
+        if (
+          !editor.isProcessingRemoteChanges &&
+          !editor.isUndoing &&
+          !editor.isRedoing &&
+          node._key !== undefined &&
+          children.some((sibling) => sibling._key === node._key)
+        ) {
           node = {...node, _key: editor.keyGenerator()}
           op.node = node
         }
-      }
 
-      modifyChildren(editor, parentPath(path), editor.schema, (children) => {
-        const index = path[path.length - 1]!
+        const lastSegment = path[path.length - 1]!
+        let index: number
+
+        if (isKeyedSegment(lastSegment)) {
+          const siblingIndex = resolveChildIndex(
+            children,
+            lastSegment._key,
+            isRootInsert ? editor.blockIndexMap : undefined,
+          )
+          if (siblingIndex === -1) {
+            throw new Error(
+              `Cannot apply an "insert_node" operation at path [${path}] because the sibling was not found.`,
+            )
+          }
+          index = op.position === 'after' ? siblingIndex + 1 : siblingIndex
+        } else if (typeof lastSegment === 'number') {
+          index = lastSegment
+        } else {
+          throw new Error(
+            `Cannot apply an "insert_node" operation at path [${path}] because the last segment is a field name.`,
+          )
+        }
 
         if (index > children.length) {
           throw new Error(
@@ -60,8 +77,20 @@ export function applyOperation(editor: Editor, op: Operation): void {
           )
         }
 
+        insertIndex = index
         return insertChildren(children, index, node)
       })
+
+      if (isRootInsert && insertIndex !== -1) {
+        if (insertIndex < editor.blockIndexMap.size) {
+          for (const [key, idx] of editor.blockIndexMap) {
+            if (idx >= insertIndex) {
+              editor.blockIndexMap.set(key, idx + 1)
+            }
+          }
+        }
+        editor.blockIndexMap.set(node._key, insertIndex)
+      }
 
       transformSelection = true
       break
@@ -89,14 +118,12 @@ export function applyOperation(editor: Editor, op: Operation): void {
 
     case 'remove_node': {
       const {path} = op
-      const index = path[path.length - 1]!
+      const lastSegment = path[path.length - 1]!
 
-      modifyChildren(editor, parentPath(path), editor.schema, (children) =>
-        removeChildren(children, index, 1),
-      )
-
-      // Transform all the points in the value, but if the point was in the
-      // node that was removed we need to update the range or remove it.
+      // Transform the selection BEFORE removing the node from the tree.
+      // comparePaths needs the node in the tree to resolve document order
+      // for keyed segments. After removal, it falls back to string
+      // comparison of _key values which may give wrong ordering.
       if (editor.selection) {
         let selection: Selection = {...editor.selection}
 
@@ -113,7 +140,10 @@ export function applyOperation(editor: Editor, op: Operation): void {
               if (!isSpan({schema: editor.schema}, n)) {
                 continue
               }
-              if (comparePaths(p, path) === -1) {
+              if (pathEquals(p, path)) {
+                continue
+              }
+              if (comparePaths(p, path, editor) === -1) {
                 prev = [n, p]
               } else {
                 next = [n, p]
@@ -146,6 +176,47 @@ export function applyOperation(editor: Editor, op: Operation): void {
 
         if (!selection || !rangeEquals(selection, editor.selection)) {
           editor.selection = selection
+        }
+      }
+
+      const isRootRemove = parentPath(path).length === 0
+      let removeIndex = -1
+
+      modifyChildren(editor, parentPath(path), editor.schema, (children) => {
+        let index: number
+
+        if (isKeyedSegment(lastSegment)) {
+          index = resolveChildIndex(
+            children,
+            lastSegment._key,
+            isRootRemove ? editor.blockIndexMap : undefined,
+          )
+          if (index === -1) {
+            throw new Error(
+              `Cannot apply a "remove_node" operation at path [${path}] because the node was not found.`,
+            )
+          }
+        } else if (typeof lastSegment === 'number') {
+          index = lastSegment
+        } else {
+          throw new Error(
+            `Cannot apply a "remove_node" operation at path [${path}] because the last segment is a field name.`,
+          )
+        }
+
+        const previousSibling = index > 0 ? children[index - 1] : undefined
+        op.previousSiblingKey = previousSibling?._key
+
+        removeIndex = index
+        return removeChildren(children, index, 1)
+      })
+
+      if (isRootRemove && isKeyedSegment(lastSegment) && removeIndex !== -1) {
+        editor.blockIndexMap.delete(lastSegment._key)
+        for (const [key, idx] of editor.blockIndexMap) {
+          if (idx > removeIndex) {
+            editor.blockIndexMap.set(key, idx - 1)
+          }
         }
       }
 
@@ -201,6 +272,22 @@ export function applyOperation(editor: Editor, op: Operation): void {
 
         return newNode
       })
+
+      if (
+        path.length === 1 &&
+        '_key' in newProperties &&
+        newProperties._key !== properties._key
+      ) {
+        const oldKey = properties._key
+        const newKey = newProperties._key
+        if (typeof oldKey === 'string' && typeof newKey === 'string') {
+          const index = editor.blockIndexMap.get(oldKey)
+          if (index !== undefined) {
+            editor.blockIndexMap.delete(oldKey)
+            editor.blockIndexMap.set(newKey, index)
+          }
+        }
+      }
 
       transformSelection = true
       break
@@ -260,4 +347,25 @@ export function applyOperation(editor: Editor, op: Operation): void {
       editor.selection = selection
     }
   }
+}
+
+/**
+ * Resolve a child index by key, using blockIndexMap for O(1) lookup when available.
+ * Falls back to linear scan when the map is unavailable or stale.
+ */
+function resolveChildIndex(
+  children: Array<Node>,
+  key: string,
+  blockIndexMap: Map<string, number> | undefined,
+): number {
+  if (blockIndexMap && blockIndexMap.size === children.length) {
+    const index = blockIndexMap.get(key)
+    if (index !== undefined) {
+      const candidate = children[index]
+      if (candidate && candidate._key === key) {
+        return index
+      }
+    }
+  }
+  return children.findIndex((child) => child._key === key)
 }

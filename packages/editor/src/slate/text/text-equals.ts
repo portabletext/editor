@@ -1,21 +1,25 @@
-import type {PortableTextSpan} from '@portabletext/schema'
 import type {TextEqualsOptions} from '../interfaces/text'
+import type {SpanNode} from '../node/is-span-node'
 import {isDeepEqual} from '../utils/deep-equal'
 
 export function textEquals(
-  text: PortableTextSpan,
-  another: PortableTextSpan | Omit<PortableTextSpan, 'text'>,
+  text: SpanNode,
+  another: SpanNode,
   options: TextEqualsOptions = {},
 ): boolean {
   const {loose = false} = options
 
-  function omitText(obj: Record<any, any>) {
-    const {text: _text, ...rest} = obj
+  function omitTextAndKey(obj: SpanNode) {
+    const {_key, ...rest} = obj
+    if ('text' in rest) {
+      const {text: _text, ...withoutText} = rest
+      return withoutText
+    }
     return rest
   }
 
   return isDeepEqual(
-    loose ? omitText(text) : text,
-    loose ? omitText(another) : another,
+    loose ? omitTextAndKey(text) : text,
+    loose ? omitTextAndKey(another) : another,
   )
 }

@@ -1,35 +1,14 @@
 import {isSpan} from '@portabletext/schema'
 import {applySetNode} from '../internal-utils/apply-set-node'
 import {safeStringify} from '../internal-utils/safe-json'
-import {toSlateRange} from '../internal-utils/to-slate-range'
 import {getNode} from '../node-traversal/get-node'
-import {path as editorPath} from '../slate/editor/path'
 import {isObjectNode} from '../slate/node/is-object-node'
 import type {OperationImplementation} from './operation.types'
 
 export const childSetOperationImplementation: OperationImplementation<
   'child.set'
 > = ({context, operation}) => {
-  const location = toSlateRange({
-    context: {
-      schema: context.schema,
-      value: operation.editor.children,
-      selection: {
-        anchor: {path: operation.at, offset: 0},
-        focus: {path: operation.at, offset: 0},
-      },
-    },
-    blockIndexMap: operation.editor.blockIndexMap,
-  })
-
-  if (!location) {
-    throw new Error(
-      `Unable to convert ${safeStringify(operation.at)} into a Slate Range`,
-    )
-  }
-
-  const resolvedPath = editorPath(operation.editor, location, {depth: 2})
-  const childEntry = getNode(operation.editor, resolvedPath)
+  const childEntry = getNode(operation.editor, operation.at)
 
   if (!childEntry) {
     throw new Error(`Unable to find child at ${safeStringify(operation.at)}`)
@@ -49,18 +28,24 @@ export const childSetOperationImplementation: OperationImplementation<
       childPath,
     )
 
+    const newKey = rest['_key']
+    const textPath =
+      typeof newKey === 'string' && newKey !== child._key
+        ? [...childPath.slice(0, -1), {_key: newKey}]
+        : childPath
+
     if (typeof text === 'string') {
       if (child.text !== text) {
         operation.editor.apply({
           type: 'remove_text',
-          path: childPath,
+          path: textPath,
           offset: 0,
           text: child.text,
         })
 
         operation.editor.apply({
           type: 'insert_text',
-          path: childPath,
+          path: textPath,
           offset: 0,
           text,
         })

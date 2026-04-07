@@ -1,6 +1,11 @@
-import {isSpan, isTextBlock} from '@portabletext/schema'
+import {
+  compileSchema,
+  defineSchema,
+  isSpan,
+  isTextBlock,
+} from '@portabletext/schema'
 import {describe, expect, test} from 'vitest'
-import {getNodes} from './get-nodes'
+import {getNodeDescendants, getNodes} from './get-nodes'
 import {createNodeTraversalTestbed} from './node-traversal-testbed'
 
 describe(getNodes.name, () => {
@@ -46,38 +51,120 @@ describe(getNodes.name, () => {
     const paths = nodes.map((entry) => entry.path)
 
     expect(paths).toEqual([
-      [0],
-      [0, 0],
-      [0, 1],
-      [0, 2],
-      [1],
-      [2],
-      [2, 0],
-      [3],
-      [3, 0],
-      [3, 0, 0],
-      [3, 1],
-      [3, 1, 0],
-      [4],
-      [4, 0],
-      [4, 0, 0],
-      [4, 0, 0, 0],
-      [4, 0, 0, 0, 0],
-      [4, 0, 0, 0, 1],
-      [4, 0, 0, 1],
-      [4, 0, 0, 1, 0],
-      [4, 0, 1],
-      [4, 0, 1, 0],
-      [4, 0, 1, 0, 0],
-      [4, 1],
-      [4, 1, 0],
-      [4, 1, 0, 0],
-      [4, 1, 0, 0, 0],
+      [{_key: 'k3'}],
+      [{_key: 'k3'}, 'children', {_key: 'k0'}],
+      [{_key: 'k3'}, 'children', {_key: 'k1'}],
+      [{_key: 'k3'}, 'children', {_key: 'k2'}],
+      [{_key: 'k4'}],
+      [{_key: 'k6'}],
+      [{_key: 'k6'}, 'children', {_key: 'k5'}],
+      [{_key: 'k11'}],
+      [{_key: 'k11'}, 'code', {_key: 'k8'}],
+      [{_key: 'k11'}, 'code', {_key: 'k8'}, 'children', {_key: 'k7'}],
+      [{_key: 'k11'}, 'code', {_key: 'k10'}],
+      [{_key: 'k11'}, 'code', {_key: 'k10'}, 'children', {_key: 'k9'}],
+      [{_key: 'k26'}],
+      [{_key: 'k26'}, 'rows', {_key: 'k21'}],
+      [{_key: 'k26'}, 'rows', {_key: 'k21'}, 'cells', {_key: 'k17'}],
+      [
+        {_key: 'k26'},
+        'rows',
+        {_key: 'k21'},
+        'cells',
+        {_key: 'k17'},
+        'content',
+        {_key: 'k14'},
+      ],
+      [
+        {_key: 'k26'},
+        'rows',
+        {_key: 'k21'},
+        'cells',
+        {_key: 'k17'},
+        'content',
+        {_key: 'k14'},
+        'children',
+        {_key: 'k12'},
+      ],
+      [
+        {_key: 'k26'},
+        'rows',
+        {_key: 'k21'},
+        'cells',
+        {_key: 'k17'},
+        'content',
+        {_key: 'k14'},
+        'children',
+        {_key: 'k13'},
+      ],
+      [
+        {_key: 'k26'},
+        'rows',
+        {_key: 'k21'},
+        'cells',
+        {_key: 'k17'},
+        'content',
+        {_key: 'k16'},
+      ],
+      [
+        {_key: 'k26'},
+        'rows',
+        {_key: 'k21'},
+        'cells',
+        {_key: 'k17'},
+        'content',
+        {_key: 'k16'},
+        'children',
+        {_key: 'k15'},
+      ],
+      [{_key: 'k26'}, 'rows', {_key: 'k21'}, 'cells', {_key: 'k20'}],
+      [
+        {_key: 'k26'},
+        'rows',
+        {_key: 'k21'},
+        'cells',
+        {_key: 'k20'},
+        'content',
+        {_key: 'k19'},
+      ],
+      [
+        {_key: 'k26'},
+        'rows',
+        {_key: 'k21'},
+        'cells',
+        {_key: 'k20'},
+        'content',
+        {_key: 'k19'},
+        'children',
+        {_key: 'k18'},
+      ],
+      [{_key: 'k26'}, 'rows', {_key: 'k25'}],
+      [{_key: 'k26'}, 'rows', {_key: 'k25'}, 'cells', {_key: 'k24'}],
+      [
+        {_key: 'k26'},
+        'rows',
+        {_key: 'k25'},
+        'cells',
+        {_key: 'k24'},
+        'content',
+        {_key: 'k23'},
+      ],
+      [
+        {_key: 'k26'},
+        'rows',
+        {_key: 'k25'},
+        'cells',
+        {_key: 'k24'},
+        'content',
+        {_key: 'k23'},
+        'children',
+        {_key: 'k22'},
+      ],
     ])
   })
 
   test('from a subtree', () => {
-    const nodes = [...getNodes(testbed.context, {at: [3]})]
+    const nodes = [...getNodes(testbed.context, {at: [{_key: 'k11'}]})]
     const nodeValues = nodes.map((entry) => entry.node)
 
     expect(nodeValues).toEqual([
@@ -89,13 +176,19 @@ describe(getNodes.name, () => {
   })
 
   test('from a leaf returns empty', () => {
-    const nodes = [...getNodes(testbed.context, {at: [0, 0]})]
+    const nodes = [
+      ...getNodes(testbed.context, {
+        at: [{_key: 'k3'}, 'children', {_key: 'k0'}],
+      }),
+    ]
 
     expect(nodes).toEqual([])
   })
 
   test('reverse order', () => {
-    const nodes = [...getNodes(testbed.context, {at: [3], reverse: true})]
+    const nodes = [
+      ...getNodes(testbed.context, {at: [{_key: 'k11'}], reverse: true}),
+    ]
     const nodeValues = nodes.map((entry) => entry.node)
 
     expect(nodeValues).toEqual([
@@ -168,7 +261,7 @@ describe(getNodes.name, () => {
     test('filters with custom predicate on subtree', () => {
       const nodes = [
         ...getNodes(testbed.context, {
-          at: [4],
+          at: [{_key: 'k26'}],
           match: (node) => isSpan({schema: testbed.schema}, node),
         }),
       ]
@@ -185,7 +278,7 @@ describe(getNodes.name, () => {
     test('match with reverse', () => {
       const nodes = [
         ...getNodes(testbed.context, {
-          at: [0],
+          at: [{_key: 'k3'}],
           match: (node) => isSpan({schema: testbed.schema}, node),
           reverse: true,
         }),
@@ -200,8 +293,8 @@ describe(getNodes.name, () => {
     test('range within flat blocks', () => {
       const nodes = [
         ...getNodes(testbed.context, {
-          from: [0, 0],
-          to: [1],
+          from: [{_key: 'k3'}, 'children', {_key: 'k0'}],
+          to: [{_key: 'k4'}],
         }),
       ]
       const nodeValues = nodes.map((entry) => entry.node)
@@ -218,8 +311,8 @@ describe(getNodes.name, () => {
     test('range within a single block', () => {
       const nodes = [
         ...getNodes(testbed.context, {
-          from: [0, 1],
-          to: [0, 2],
+          from: [{_key: 'k3'}, 'children', {_key: 'k1'}],
+          to: [{_key: 'k3'}, 'children', {_key: 'k2'}],
         }),
       ]
       const nodeValues = nodes.map((entry) => entry.node)
@@ -234,8 +327,8 @@ describe(getNodes.name, () => {
     test('range spanning into container', () => {
       const nodes = [
         ...getNodes(testbed.context, {
-          from: [2],
-          to: [3, 0],
+          from: [{_key: 'k6'}],
+          to: [{_key: 'k11'}, 'code', {_key: 'k8'}],
         }),
       ]
       const nodeValues = nodes.map((entry) => entry.node)
@@ -251,8 +344,24 @@ describe(getNodes.name, () => {
     test('range within container', () => {
       const nodes = [
         ...getNodes(testbed.context, {
-          from: [4, 0, 0, 0],
-          to: [4, 0, 0, 1],
+          from: [
+            {_key: 'k26'},
+            'rows',
+            {_key: 'k21'},
+            'cells',
+            {_key: 'k17'},
+            'content',
+            {_key: 'k14'},
+          ],
+          to: [
+            {_key: 'k26'},
+            'rows',
+            {_key: 'k21'},
+            'cells',
+            {_key: 'k17'},
+            'content',
+            {_key: 'k16'},
+          ],
         }),
       ]
       const nodeValues = nodes.map((entry) => entry.node)
@@ -271,8 +380,28 @@ describe(getNodes.name, () => {
     test('range spanning across cells', () => {
       const nodes = [
         ...getNodes(testbed.context, {
-          from: [4, 0, 0, 1, 0],
-          to: [4, 0, 1, 0, 0],
+          from: [
+            {_key: 'k26'},
+            'rows',
+            {_key: 'k21'},
+            'cells',
+            {_key: 'k17'},
+            'content',
+            {_key: 'k16'},
+            'children',
+            {_key: 'k15'},
+          ],
+          to: [
+            {_key: 'k26'},
+            'rows',
+            {_key: 'k21'},
+            'cells',
+            {_key: 'k20'},
+            'content',
+            {_key: 'k19'},
+            'children',
+            {_key: 'k18'},
+          ],
         }),
       ]
       const nodeValues = nodes.map((entry) => entry.node)
@@ -292,8 +421,26 @@ describe(getNodes.name, () => {
     test('range spanning across rows', () => {
       const nodes = [
         ...getNodes(testbed.context, {
-          from: [4, 0, 1, 0],
-          to: [4, 1, 0, 0, 0],
+          from: [
+            {_key: 'k26'},
+            'rows',
+            {_key: 'k21'},
+            'cells',
+            {_key: 'k20'},
+            'content',
+            {_key: 'k19'},
+          ],
+          to: [
+            {_key: 'k26'},
+            'rows',
+            {_key: 'k25'},
+            'cells',
+            {_key: 'k24'},
+            'content',
+            {_key: 'k23'},
+            'children',
+            {_key: 'k22'},
+          ],
         }),
       ]
       const nodeValues = nodes.map((entry) => entry.node)
@@ -314,8 +461,8 @@ describe(getNodes.name, () => {
     test('from at document start', () => {
       const nodes = [
         ...getNodes(testbed.context, {
-          from: [0],
-          to: [0, 1],
+          from: [{_key: 'k3'}],
+          to: [{_key: 'k3'}, 'children', {_key: 'k1'}],
         }),
       ]
       const nodeValues = nodes.map((entry) => entry.node)
@@ -330,8 +477,18 @@ describe(getNodes.name, () => {
     test('to at document end', () => {
       const nodes = [
         ...getNodes(testbed.context, {
-          from: [4, 1],
-          to: [4, 1, 0, 0, 0],
+          from: [{_key: 'k26'}, 'rows', {_key: 'k25'}],
+          to: [
+            {_key: 'k26'},
+            'rows',
+            {_key: 'k25'},
+            'cells',
+            {_key: 'k24'},
+            'content',
+            {_key: 'k23'},
+            'children',
+            {_key: 'k22'},
+          ],
         }),
       ]
       const nodeValues = nodes.map((entry) => entry.node)
@@ -348,8 +505,8 @@ describe(getNodes.name, () => {
     test('from equals to (single node)', () => {
       const nodes = [
         ...getNodes(testbed.context, {
-          from: [1],
-          to: [1],
+          from: [{_key: 'k4'}],
+          to: [{_key: 'k4'}],
         }),
       ]
       const nodeValues = nodes.map((entry) => entry.node)
@@ -360,8 +517,8 @@ describe(getNodes.name, () => {
     test('from equals to (single leaf node)', () => {
       const nodes = [
         ...getNodes(testbed.context, {
-          from: [0, 0],
-          to: [0, 0],
+          from: [{_key: 'k3'}, 'children', {_key: 'k0'}],
+          to: [{_key: 'k3'}, 'children', {_key: 'k0'}],
         }),
       ]
       const nodeValues = nodes.map((entry) => entry.node)
@@ -372,7 +529,7 @@ describe(getNodes.name, () => {
     test('from only (no to)', () => {
       const nodes = [
         ...getNodes(testbed.context, {
-          from: [4, 1],
+          from: [{_key: 'k26'}, 'rows', {_key: 'k25'}],
         }),
       ]
       const nodeValues = nodes.map((entry) => entry.node)
@@ -389,7 +546,7 @@ describe(getNodes.name, () => {
     test('to only (no from)', () => {
       const nodes = [
         ...getNodes(testbed.context, {
-          to: [1],
+          to: [{_key: 'k4'}],
         }),
       ]
       const nodeValues = nodes.map((entry) => entry.node)
@@ -408,8 +565,8 @@ describe(getNodes.name, () => {
     test('range with span filter', () => {
       const nodes = [
         ...getNodes(testbed.context, {
-          from: [0],
-          to: [3],
+          from: [{_key: 'k3'}],
+          to: [{_key: 'k11'}],
           match: (node) => isSpan({schema: testbed.schema}, node),
         }),
       ]
@@ -421,7 +578,7 @@ describe(getNodes.name, () => {
     test('range with text block filter', () => {
       const nodes = [
         ...getNodes(testbed.context, {
-          from: [3],
+          from: [{_key: 'k11'}],
           match: (node) => isTextBlock({schema: testbed.schema}, node),
         }),
       ]
@@ -440,8 +597,18 @@ describe(getNodes.name, () => {
     test('range within container with match', () => {
       const nodes = [
         ...getNodes(testbed.context, {
-          from: [4],
-          to: [4, 1, 0, 0, 0],
+          from: [{_key: 'k26'}],
+          to: [
+            {_key: 'k26'},
+            'rows',
+            {_key: 'k25'},
+            'cells',
+            {_key: 'k24'},
+            'content',
+            {_key: 'k23'},
+            'children',
+            {_key: 'k22'},
+          ],
           match: (node) => isSpan({schema: testbed.schema}, node),
         }),
       ]
@@ -460,8 +627,8 @@ describe(getNodes.name, () => {
     test('reverse range within flat blocks', () => {
       const nodes = [
         ...getNodes(testbed.context, {
-          from: [0, 0],
-          to: [1],
+          from: [{_key: 'k3'}, 'children', {_key: 'k0'}],
+          to: [{_key: 'k4'}],
           reverse: true,
         }),
       ]
@@ -479,8 +646,8 @@ describe(getNodes.name, () => {
     test('reverse range within a single block', () => {
       const nodes = [
         ...getNodes(testbed.context, {
-          from: [0, 1],
-          to: [0, 2],
+          from: [{_key: 'k3'}, 'children', {_key: 'k1'}],
+          to: [{_key: 'k3'}, 'children', {_key: 'k2'}],
           reverse: true,
         }),
       ]
@@ -496,8 +663,8 @@ describe(getNodes.name, () => {
     test('reverse range spanning container', () => {
       const nodes = [
         ...getNodes(testbed.context, {
-          from: [2],
-          to: [3, 0],
+          from: [{_key: 'k6'}],
+          to: [{_key: 'k11'}, 'code', {_key: 'k8'}],
           reverse: true,
         }),
       ]
@@ -514,8 +681,8 @@ describe(getNodes.name, () => {
     test('reverse from equals to (single node)', () => {
       const nodes = [
         ...getNodes(testbed.context, {
-          from: [1],
-          to: [1],
+          from: [{_key: 'k4'}],
+          to: [{_key: 'k4'}],
           reverse: true,
         }),
       ]
@@ -527,8 +694,8 @@ describe(getNodes.name, () => {
     test('reverse with match', () => {
       const nodes = [
         ...getNodes(testbed.context, {
-          from: [0, 0],
-          to: [3, 1, 0],
+          from: [{_key: 'k3'}, 'children', {_key: 'k0'}],
+          to: [{_key: 'k11'}, 'code', {_key: 'k10'}, 'children', {_key: 'k9'}],
           reverse: true,
           match: (node) => isSpan({schema: testbed.schema}, node),
         }),
@@ -547,8 +714,24 @@ describe(getNodes.name, () => {
     test('reverse range within container', () => {
       const nodes = [
         ...getNodes(testbed.context, {
-          from: [4, 0, 0, 0],
-          to: [4, 0, 0, 1],
+          from: [
+            {_key: 'k26'},
+            'rows',
+            {_key: 'k21'},
+            'cells',
+            {_key: 'k17'},
+            'content',
+            {_key: 'k14'},
+          ],
+          to: [
+            {_key: 'k26'},
+            'rows',
+            {_key: 'k21'},
+            'cells',
+            {_key: 'k17'},
+            'content',
+            {_key: 'k16'},
+          ],
           reverse: true,
         }),
       ]
@@ -562,6 +745,57 @@ describe(getNodes.name, () => {
         testbed.cellBlock1,
         testbed.stockTicker2,
         testbed.cellSpan1,
+      ])
+    })
+  })
+
+  describe('getNodeDescendants', () => {
+    test('container with value field includes field name in paths', () => {
+      const accordionSpan = {_key: 's1', _type: 'span', text: 'details'}
+      const accordionBlock = {
+        _key: 'b1',
+        _type: 'block',
+        children: [accordionSpan],
+      }
+      const accordion = {
+        _key: 'a1',
+        _type: 'accordion',
+        value: [accordionBlock],
+      }
+
+      const schema = compileSchema(
+        defineSchema({
+          blockObjects: [
+            {
+              name: 'accordion',
+              fields: [
+                {
+                  name: 'value',
+                  type: 'array',
+                  of: [{type: 'block'}],
+                },
+              ],
+            },
+          ],
+        }),
+      )
+
+      const descendants = [
+        ...getNodeDescendants(
+          {schema, editableTypes: new Set(['accordion'])},
+          accordion,
+        ),
+      ]
+
+      expect(descendants).toEqual([
+        {
+          node: accordionBlock,
+          path: ['value', {_key: 'b1'}],
+        },
+        {
+          node: accordionSpan,
+          path: ['value', {_key: 'b1'}, 'children', {_key: 's1'}],
+        },
       ])
     })
   })

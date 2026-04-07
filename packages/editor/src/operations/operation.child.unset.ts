@@ -1,4 +1,4 @@
-import {isSpan, isTextBlock} from '@portabletext/schema'
+import {isSpan} from '@portabletext/schema'
 import {applySetNode} from '../internal-utils/apply-set-node'
 import {safeStringify} from '../internal-utils/safe-json'
 import {getNode} from '../node-traversal/get-node'
@@ -8,46 +8,12 @@ import type {OperationImplementation} from './operation.types'
 export const childUnsetOperationImplementation: OperationImplementation<
   'child.unset'
 > = ({context, operation}) => {
-  const blockKey = operation.at[0]._key
-  const blockIndex = operation.editor.blockIndexMap.get(blockKey)
-
-  if (blockIndex === undefined) {
-    throw new Error(`Unable to find block index for block key ${blockKey}`)
-  }
-
-  const block =
-    blockIndex !== undefined
-      ? operation.editor.children.at(blockIndex)
-      : undefined
-
-  if (!block) {
-    throw new Error(`Unable to find block at ${safeStringify(operation.at)}`)
-  }
-
-  if (!isTextBlock(context, block)) {
-    throw new Error(`Block ${safeStringify(blockKey)} is not a text block`)
-  }
-
-  const childKey = operation.at[2]._key
-
-  if (!childKey) {
-    throw new Error(
-      `Unable to find child key at ${safeStringify(operation.at)}`,
-    )
-  }
-
-  const childIndex = block.children.findIndex(
-    (child) => child._key === childKey,
-  )
-
-  if (childIndex === -1) {
-    throw new Error(`Unable to find child at ${safeStringify(operation.at)}`)
-  }
-
-  const childEntry = getNode(operation.editor, [blockIndex, childIndex])
+  const childEntry = getNode(operation.editor, operation.at)
 
   if (!childEntry) {
-    throw new Error(`Unable to find child at ${safeStringify(operation.at)}`)
+    throw new Error(
+      `Could not find a valid child at ${safeStringify(operation.at)}`,
+    )
   }
 
   const {node: child, path: childPath} = childEntry
@@ -57,7 +23,6 @@ export const childUnsetOperationImplementation: OperationImplementation<
 
     for (const prop of operation.props) {
       if (prop === '_type') {
-        // It's not allowed to unset the _type of a span
         continue
       }
 

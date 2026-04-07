@@ -24,7 +24,6 @@ import {getAncestorTextBlock} from '../../../node-traversal/get-ancestor-text-bl
 import {getNode} from '../../../node-traversal/get-node'
 import {getNodes} from '../../../node-traversal/get-nodes'
 import {getText} from '../../../node-traversal/get-text'
-import {keyedPathToIndexedPath} from '../../../paths/keyed-path-to-indexed-path'
 import {collapse} from '../../core/collapse'
 import {deselect} from '../../core/deselect'
 import {move} from '../../core/move'
@@ -1291,16 +1290,9 @@ export const Editable = forwardRef(
                       ReactEditor.hasDOMNode(editor, relatedTarget)
                     ) {
                       const relatedPath = getDomNodePath(relatedTarget)
-                      const indexedPath = relatedPath
-                        ? keyedPathToIndexedPath(
-                            editor,
-                            relatedPath,
-                            editor.blockIndexMap,
-                          )
-                        : undefined
 
-                      if (indexedPath) {
-                        const relatedNodeEntry = getNode(editor, indexedPath)
+                      if (relatedPath) {
+                        const relatedNodeEntry = getNode(editor, relatedPath)
                         const relatedNode = relatedNodeEntry
                           ? relatedNodeEntry.node
                           : undefined
@@ -1343,41 +1335,28 @@ export const Editable = forwardRef(
                       isDOMNode(event.target)
                     ) {
                       const path = getDomNodePath(event.target)
-                      const indexedPath = path
-                        ? keyedPathToIndexedPath(
-                            editor,
-                            path,
-                            editor.blockIndexMap,
-                          )
-                        : undefined
 
-                      if (!indexedPath) {
+                      if (!path) {
                         return
                       }
 
                       // At this time, the Slate document may be arbitrarily different,
                       // because onClick handlers can change the document before we get here.
                       // Therefore we must check that this path actually exists.
-                      const nodeClickEntry = getNode(editor, indexedPath)
+                      const nodeClickEntry = getNode(editor, path)
 
                       if (!nodeClickEntry) {
                         return
                       }
                       const node = nodeClickEntry.node
 
-                      if (
-                        event.detail === TRIPLE_CLICK &&
-                        indexedPath.length >= 1
-                      ) {
-                        let blockPath = indexedPath
+                      if (event.detail === TRIPLE_CLICK && path.length >= 1) {
+                        let blockPath = path
 
                         if (!isTextBlockNode({schema: editor.schema}, node)) {
-                          const block = getAncestorTextBlock(
-                            editor,
-                            indexedPath,
-                          )
+                          const block = getAncestorTextBlock(editor, path)
 
-                          blockPath = block?.path ?? indexedPath.slice(0, 1)
+                          blockPath = block?.path ?? path.slice(0, 1)
                         }
 
                         const range = editorRange(editor, blockPath)
@@ -1389,8 +1368,8 @@ export const Editable = forwardRef(
                         return
                       }
 
-                      const start = editorStart(editor, indexedPath)
-                      const end = editorEnd(editor, indexedPath)
+                      const start = editorStart(editor, path)
+                      const end = editorEnd(editor, path)
                       const startEntry = getNode(editor, start.path)
                       const startObjectNode =
                         startEntry &&
@@ -1592,9 +1571,9 @@ export const Editable = forwardRef(
                       }
 
                       const {selection} = editor
-                      const blockIndex =
+                      const blockSegment =
                         selection !== null ? selection.focus.path[0]! : 0
-                      const elementText = getText(editor, [blockIndex])
+                      const elementText = getText(editor, [blockSegment])
                       const isRTL =
                         elementText !== undefined &&
                         getDirection(elementText) === 'rtl'

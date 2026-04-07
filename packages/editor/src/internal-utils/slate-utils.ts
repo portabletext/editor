@@ -13,6 +13,7 @@ import {rangeEdges} from '../slate/range/range-edges'
 import type {EditorSelection, EditorSelectionPoint} from '../types/editor'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {isListBlock} from '../utils/parse-blocks'
+import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 
 function getPointChild({
   editor,
@@ -22,13 +23,15 @@ function getPointChild({
   point: Point
 }): [node: Node, path: SlatePath] | [undefined, undefined] {
   const blockEntry = getNode(editor, point.path.slice(0, 1))
-  const childIndex = point.path.at(1)
+  const childSegment = point.path.at(2)
 
-  if (!blockEntry || childIndex === undefined) {
+  if (!blockEntry || !childSegment || !isKeyedSegment(childSegment)) {
     return [undefined, undefined]
   }
 
-  const entry = getChildren(editor, blockEntry.path).at(childIndex)
+  const entry = getChildren(editor, blockEntry.path).find(
+    (child) => child.node._key === childSegment._key,
+  )
 
   return entry ? [entry.node, entry.path] : [undefined, undefined]
 }
@@ -44,7 +47,7 @@ export function isListItemActive({
     return false
   }
 
-  const [selStart, selEnd] = rangeEdges(editor.selection)
+  const [selStart, selEnd] = rangeEdges(editor.selection, {}, editor)
 
   const selectedBlocks = [
     ...getNodes(editor, {
@@ -76,7 +79,7 @@ export function isStyleActive({
     return false
   }
 
-  const [selStart, selEnd] = rangeEdges(editor.selection)
+  const [selStart, selEnd] = rangeEdges(editor.selection, {}, editor)
 
   const selectedBlocks = [
     ...getNodes(editor, {
@@ -140,7 +143,7 @@ export function slateRangeToSelection({
       path: [{_key: focusBlock._key}],
       offset: range.focus.offset,
     },
-    backward: isBackwardRange(range),
+    backward: isBackwardRange(range, editor),
   }
 
   if (anchorChild) {

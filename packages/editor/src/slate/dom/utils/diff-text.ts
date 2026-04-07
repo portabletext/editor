@@ -1,6 +1,7 @@
 import {isSpan} from '@portabletext/schema'
 import {getAncestorTextBlock} from '../../../node-traversal/get-ancestor-text-block'
 import {getNodes} from '../../../node-traversal/get-nodes'
+import {getSibling} from '../../../node-traversal/get-sibling'
 import {getSpanNode} from '../../../node-traversal/get-span-node'
 import {hasNode} from '../../../node-traversal/has-node'
 import {after} from '../../editor/after'
@@ -10,7 +11,6 @@ import type {Path} from '../../interfaces/path'
 import type {Point} from '../../interfaces/point'
 import type {Range} from '../../interfaces/range'
 import {isDescendantPath} from '../../path/is-descendant-path'
-import {nextPath as getNextPath} from '../../path/next-path'
 import {pathEquals} from '../../path/path-equals'
 import {transformPath} from '../../path/transform-path'
 import {transformPoint} from '../../point/transform-point'
@@ -50,12 +50,12 @@ export function verifyDiffState(editor: Editor, textDiff: TextDiff): boolean {
     )
   }
 
-  const nextPath = getNextPath(path)
-  if (!hasNode(editor, nextPath)) {
+  const nextSibling = getSibling(editor, path, 'next')
+  if (!nextSibling) {
     return false
   }
 
-  const nextNodeEntry = getSpanNode(editor, nextPath)
+  const nextNodeEntry = getSpanNode(editor, nextSibling.path)
   return !!nextNodeEntry && nextNodeEntry.node.text.startsWith(diff.text)
 }
 

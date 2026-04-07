@@ -31,6 +31,7 @@ import {isCollapsedRange} from '../slate/range/is-collapsed-range'
 import {rangeEdges} from '../slate/range/range-edges'
 import {rangeEnd} from '../slate/range/range-end'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
+import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import type {OperationImplementation} from './operation.types'
 
 export const deleteOperationImplementation: OperationImplementation<
@@ -51,22 +52,22 @@ export const deleteOperationImplementation: OperationImplementation<
     throw new Error('Unable to delete without a selection')
   }
 
-  const [start, end] = rangeEdges(at)
+  const [start, end] = rangeEdges(at, {}, operation.editor)
 
   if (operation.unit === 'block') {
-    const startBlockIndex = start.path.at(0)
-    const endBlockIndex = end.path.at(0)
+    const startBlockSegment = start.path.at(0)
+    const endBlockSegment = end.path.at(0)
 
-    if (startBlockIndex === undefined || endBlockIndex === undefined) {
-      throw new Error('Failed to get start or end block index')
+    if (startBlockSegment === undefined || endBlockSegment === undefined) {
+      throw new Error('Failed to get start or end block segment')
     }
 
     const removeRange = {
-      anchor: {path: [startBlockIndex], offset: 0},
-      focus: {path: [endBlockIndex], offset: 0},
+      anchor: {path: [startBlockSegment], offset: 0},
+      focus: {path: [endBlockSegment], offset: 0},
     }
-    const removeRangeEdges = rangeEdges(removeRange)
-    const blockMatches: Array<{node: Node; path: Array<number>}> = []
+    const removeRangeEdges = rangeEdges(removeRange, {}, operation.editor)
+    const blockMatches: Array<{node: Node; path: Path}> = []
     let lastHighestPath: Path | undefined
 
     for (const entry of getNodes(operation.editor, {
@@ -93,7 +94,11 @@ export const deleteOperationImplementation: OperationImplementation<
         const nodeEntry = getNode(operation.editor, path)
         if (nodeEntry) {
           const node = nodeEntry.node
-          operation.editor.apply({type: 'remove_node', path, node})
+          operation.editor.apply({
+            type: 'remove_node',
+            path,
+            node,
+          })
         }
       }
     }
@@ -116,7 +121,11 @@ export const deleteOperationImplementation: OperationImplementation<
         const nodeEntry2 = getNode(operation.editor, path)
         if (nodeEntry2) {
           const node = nodeEntry2.node
-          operation.editor.apply({type: 'remove_node', path, node})
+          operation.editor.apply({
+            type: 'remove_node',
+            path,
+            node,
+          })
         }
       }
     }
@@ -188,10 +197,10 @@ export const deleteOperationImplementation: OperationImplementation<
 
   // Editor.above only checks ancestors, so for top-level ObjectNodes
   // we also check the node at the point directly.
-  const startNodeEntry: {node: Node; path: Array<number>} | undefined = (() => {
-    const blockIndex = start.path.at(0)
-    if (blockIndex !== undefined) {
-      const entry = getNode(operation.editor, [blockIndex])
+  const startNodeEntry: {node: Node; path: Path} | undefined = (() => {
+    const blockSegment = start.path.at(0)
+    if (blockSegment !== undefined) {
+      const entry = getNode(operation.editor, [blockSegment])
       if (
         entry &&
         isObjectNode({schema: operation.editor.schema}, entry.node)
@@ -201,10 +210,10 @@ export const deleteOperationImplementation: OperationImplementation<
     }
     return undefined
   })()
-  const endNodeEntry: {node: Node; path: Array<number>} | undefined = (() => {
-    const blockIndex = end.path.at(0)
-    if (blockIndex !== undefined) {
-      const entry = getNode(operation.editor, [blockIndex])
+  const endNodeEntry: {node: Node; path: Path} | undefined = (() => {
+    const blockSegment = end.path.at(0)
+    if (blockSegment !== undefined) {
+      const entry = getNode(operation.editor, [blockSegment])
       if (
         entry &&
         isObjectNode({schema: operation.editor.schema}, entry.node)
@@ -235,7 +244,7 @@ export const deleteOperationImplementation: OperationImplementation<
   const endNonEditable =
     endObjectNode ?? getHighestObjectNode(operation.editor, end.path)
 
-  const matches: Array<{node: Node; path: Array<number>}> = []
+  const matches: Array<{node: Node; path: Path}> = []
   let lastPath: Path | undefined
 
   for (const entry of getNodes(operation.editor, {
@@ -244,7 +253,7 @@ export const deleteOperationImplementation: OperationImplementation<
   })) {
     const {node, path: entryPath} = entry
 
-    if (lastPath && comparePaths(entryPath, lastPath) === 0) {
+    if (lastPath && comparePaths(entryPath, lastPath, operation.editor) === 0) {
       continue
     }
 
@@ -295,7 +304,11 @@ export const deleteOperationImplementation: OperationImplementation<
         const nodeAtPathEntry = getNode(operation.editor, path)
         if (nodeAtPathEntry) {
           const nodeAtPath = nodeAtPathEntry.node
-          operation.editor.apply({type: 'remove_node', path, node: nodeAtPath})
+          operation.editor.apply({
+            type: 'remove_node',
+            path,
+            node: nodeAtPath,
+          })
         }
       }
     }
@@ -406,13 +419,26 @@ export const deleteOperationImplementation: OperationImplementation<
   const updatedEnd = endRef.current
   const updatedAt = (() => {
     if (!updatedStart) {
+      // The start point was invalidated (e.g., the start node was removed).
+      // If we have an end point, delete from the start of the end block to
+      // the end point.
+      if (updatedEnd) {
+        const endBlockStart = editorStart(operation.editor, [
+          updatedEnd.path.at(0)!,
+        ])
+        return {anchor: endBlockStart, focus: updatedEnd}
+      }
       return at
     }
 
-    if (
-      removedEndObjectNode &&
-      (!updatedEnd || updatedStart.path.at(0) !== updatedEnd.path.at(0))
-    ) {
+    const startBlockSegment = updatedStart.path.at(0)
+    const endBlockSegment = updatedEnd?.path.at(0)
+    const isCrossBlock =
+      isKeyedSegment(startBlockSegment) && isKeyedSegment(endBlockSegment)
+        ? startBlockSegment._key !== endBlockSegment._key
+        : startBlockSegment !== endBlockSegment
+
+    if (removedEndObjectNode && (!updatedEnd || isCrossBlock)) {
       const startBlockEnd = editorEnd(operation.editor, [
         updatedStart.path.at(0)!,
       ])
@@ -455,12 +481,32 @@ export const deleteOperationImplementation: OperationImplementation<
         },
       })
     }
-  } else if (operation.at) {
+  } else if (operation.at || !updatedStart) {
+    // Pass updatedAt explicitly when:
+    // - operation.at was provided (use the updated range)
+    // - updatedStart is null (start node was removed, editor.selection is stale)
     deleteText(operation.editor, {
       at: updatedAt,
       hanging,
       reverse,
     })
+
+    // When the start node was removed, the editor selection may still span
+    // across blocks (the anchor shifted to a different node). Collapse the
+    // selection to the start of the remaining range.
+    if (!updatedStart && updatedEnd && operation.editor.selection) {
+      const collapsedPoint = editorStart(operation.editor, [
+        updatedEnd.path.at(0)!,
+      ])
+      operation.editor.apply({
+        type: 'set_selection',
+        properties: operation.editor.selection,
+        newProperties: {
+          anchor: collapsedPoint,
+          focus: collapsedPoint,
+        },
+      })
+    }
   } else {
     deleteText(operation.editor, {
       hanging,
@@ -473,7 +519,7 @@ function findCurrentLineRange(
   editor: PortableTextSlateEditor,
   parentRange: Range,
 ): Range {
-  const parentRangeBoundary = editorRange(editor, rangeEnd(parentRange))
+  const parentRangeBoundary = editorRange(editor, rangeEnd(parentRange, editor))
   const positions = Array.from(editorPositions(editor, {at: parentRange}))
 
   let left = 0

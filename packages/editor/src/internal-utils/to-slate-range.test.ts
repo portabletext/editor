@@ -59,8 +59,8 @@ describe(toSlateRange.name, () => {
     })
 
     expect(range).toEqual({
-      anchor: {path: [0, 0], offset: 3},
-      focus: {path: [0, 0], offset: 3},
+      anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 3},
+      focus: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 3},
     })
   })
 
@@ -108,8 +108,8 @@ describe(toSlateRange.name, () => {
     })
 
     expect(range).toEqual({
-      anchor: {path: [0, 0], offset: 0},
-      focus: {path: [0, 0], offset: 1},
+      anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 0},
+      focus: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 1},
     })
   })
 
@@ -141,8 +141,8 @@ describe(toSlateRange.name, () => {
     })
 
     expect(range).toEqual({
-      anchor: {path: [0], offset: 0},
-      focus: {path: [0], offset: 0},
+      anchor: {path: [{_key: 'k0'}], offset: 0},
+      focus: {path: [{_key: 'k0'}], offset: 0},
     })
   })
 
@@ -183,8 +183,8 @@ describe(toSlateRange.name, () => {
     })
 
     expect(range).toEqual({
-      anchor: {path: [0, 0], offset: 0},
-      focus: {path: [0, 0], offset: 0},
+      anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k2'}], offset: 0},
+      focus: {path: [{_key: 'k0'}, 'children', {_key: 'k2'}], offset: 0},
     })
   })
 
@@ -224,8 +224,8 @@ describe(toSlateRange.name, () => {
     })
 
     expect(range).toEqual({
-      anchor: {path: [0, 0], offset: 3},
-      focus: {path: [0, 0], offset: 3},
+      anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 3},
+      focus: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 3},
     })
   })
 
@@ -271,8 +271,8 @@ describe(toSlateRange.name, () => {
     })
 
     expect(range).toEqual({
-      anchor: {path: [0, 1], offset: 0},
-      focus: {path: [0, 1], offset: 0},
+      anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 0},
+      focus: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 0},
     })
   })
 })

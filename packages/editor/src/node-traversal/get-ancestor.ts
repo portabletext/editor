@@ -1,5 +1,6 @@
 import type {EditorSchema} from '../editor/editor-schema'
 import type {Node} from '../slate/interfaces/node'
+import type {Path} from '../slate/interfaces/path'
 import {getAncestors} from './get-ancestors'
 
 /**
@@ -12,9 +13,9 @@ export function getAncestor(
     editableTypes: Set<string>
     value: Array<Node>
   },
-  path: Array<number>,
-  match: (node: Node, path: Array<number>) => boolean,
-): {node: Node; path: Array<number>} | undefined {
+  path: Path,
+  match: (node: Node, path: Path) => boolean,
+): {node: Node; path: Path} | undefined {
   const ancestors = getAncestors(context, path)
 
   for (const ancestor of ancestors) {

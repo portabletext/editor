@@ -1,9 +1,11 @@
 import type {EditorSchema} from '../editor/editor-schema'
 import {getNodeChildren} from '../node-traversal/get-children'
 import type {Node} from '../slate/interfaces/node'
+import type {Path} from '../slate/interfaces/path'
+import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 
 /**
- * Walk the tree to the node at the given indexed path and return the field
+ * Walk the tree to the node at the given path and return the field
  * name of its child array (e.g. 'children', 'rows', 'cells').
  *
  * Returns undefined for leaf nodes (spans, inline objects) that have no
@@ -15,7 +17,7 @@ export function getChildFieldName(
     editableTypes: Set<string>
     value: Array<Node>
   },
-  path: Array<number>,
+  path: Path,
 ): string | undefined {
   let nodeChildren = getNodeChildren(
     {schema: context.schema, editableTypes: context.editableTypes},
@@ -28,13 +30,20 @@ export function getChildFieldName(
     if (!nodeChildren) {
       return undefined
     }
-    const index = path.at(i)
 
-    if (index === undefined) {
-      return undefined
+    const segment = path[i]
+
+    if (typeof segment === 'string') {
+      continue
     }
 
-    const node = nodeChildren.children.at(index)
+    let node: Node | undefined
+
+    if (isKeyedSegment(segment)) {
+      node = nodeChildren.children.find((child) => child._key === segment._key)
+    } else if (typeof segment === 'number') {
+      node = nodeChildren.children.at(segment)
+    }
 
     if (!node) {
       return undefined

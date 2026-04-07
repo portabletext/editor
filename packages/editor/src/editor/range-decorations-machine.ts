@@ -14,7 +14,6 @@ import {toSlateRange} from '../internal-utils/to-slate-range'
 import type {Node, NodeEntry} from '../slate/interfaces/node'
 import type {Operation} from '../slate/interfaces/operation'
 import type {Range} from '../slate/interfaces/range'
-import {pathEquals} from '../slate/path/path-equals'
 import {isCollapsedRange} from '../slate/range/is-collapsed-range'
 import {isRange} from '../slate/range/is-range'
 import {rangeIncludes} from '../slate/range/range-includes'
@@ -22,6 +21,7 @@ import {rangeIntersection} from '../slate/range/range-intersection'
 import type {RangeDecoration} from '../types/editor'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {isEmptyTextBlock} from '../utils'
+import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import type {EditorSchema} from './editor-schema'
 
 const slateOperationCallback: CallbackLogicFunction<
@@ -100,7 +100,6 @@ export const rangeDecorationsMachine = setup({
             value: context.slateEditor.children,
             selection: rangeDecoration.selection,
           },
-          blockIndexMap: context.slateEditor.blockIndexMap,
         })
 
         if (!isRange(slateRange)) {
@@ -134,7 +133,6 @@ export const rangeDecorationsMachine = setup({
             value: context.slateEditor.children,
             selection: rangeDecoration.selection,
           },
-          blockIndexMap: context.slateEditor.blockIndexMap,
         })
 
         if (!isRange(slateRange)) {
@@ -169,7 +167,6 @@ export const rangeDecorationsMachine = setup({
             value: context.slateEditor.children,
             selection: decoratedRange.rangeDecoration.selection,
           },
-          blockIndexMap: context.slateEditor.blockIndexMap,
         })
 
         if (!isRange(slateRange)) {
@@ -401,28 +398,43 @@ function createDecorate(
       return []
     }
 
-    const blockIndex = path.at(0)
+    const blockSegment = path.at(0)
 
-    if (blockIndex === undefined) {
+    if (blockSegment === undefined) {
       return []
     }
 
     return slateEditor.decoratedRanges.filter((decoratedRange) => {
       // Special case in order to only return one decoration for collapsed ranges
       if (isCollapsedRange(decoratedRange)) {
-        // Collapsed ranges should only be decorated if they are on a block child level (length 2)
-        return node.children.some(
-          (_: Node, childIndex: number) =>
-            pathEquals(decoratedRange.anchor.path, [blockIndex, childIndex]) &&
-            pathEquals(decoratedRange.focus.path, [blockIndex, childIndex]),
+        // Collapsed ranges should only be decorated if they are on a block child level.
+        const anchorBlockSegment = decoratedRange.anchor.path.at(0)
+        const anchorChildSegment = decoratedRange.anchor.path.at(2)
+
+        if (
+          !isKeyedSegment(anchorBlockSegment) ||
+          !isKeyedSegment(anchorChildSegment)
+        ) {
+          return false
+        }
+
+        return (
+          anchorBlockSegment._key === node._key &&
+          node.children.some(
+            (child: Node) => child._key === anchorChildSegment._key,
+          )
         )
       }
 
       return (
-        rangeIntersection(decoratedRange, {
-          anchor: {path, offset: 0},
-          focus: {path, offset: 0},
-        }) || rangeIncludes(decoratedRange, path)
+        rangeIntersection(
+          decoratedRange,
+          {
+            anchor: {path, offset: 0},
+            focus: {path, offset: 0},
+          },
+          slateEditor,
+        ) || rangeIncludes(decoratedRange, path, slateEditor)
       )
     })
   }

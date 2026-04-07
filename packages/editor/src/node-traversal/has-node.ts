@@ -1,5 +1,6 @@
 import type {EditorSchema} from '../editor/editor-schema'
 import type {Node} from '../slate/interfaces/node'
+import type {Path} from '../slate/interfaces/path'
 import {getNode} from './get-node'
 
 /**
@@ -10,8 +11,9 @@ export function hasNode(
     schema: EditorSchema
     editableTypes: Set<string>
     value: Array<Node>
+    blockIndexMap?: Map<string, number>
   },
-  path: Array<number>,
+  path: Path,
 ): boolean {
   return getNode(context, path) !== undefined
 }

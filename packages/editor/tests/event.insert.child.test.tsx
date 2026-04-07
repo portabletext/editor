@@ -309,7 +309,7 @@ describe('event.insert.child', () => {
         {
           origin: 'local',
           type: 'insert',
-          path: [{_key: blockKey}, 'children', 0],
+          path: [{_key: blockKey}, 'children', {_key: 'k1'}],
           position: 'after',
           items: [
             {

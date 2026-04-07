@@ -1,6 +1,7 @@
 import type {PortableTextObject} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
 import type {Node} from '../slate/interfaces/node'
+import type {Path} from '../slate/interfaces/path'
 import {isObjectNode} from '../slate/node/is-object-node'
 import {getAncestor} from './get-ancestor'
 
@@ -10,8 +11,8 @@ export function getAncestorObjectNode(
     editableTypes: Set<string>
     value: Array<Node>
   },
-  path: Array<number>,
-): {node: PortableTextObject; path: Array<number>} | undefined {
+  path: Path,
+): {node: PortableTextObject; path: Path} | undefined {
   const result = getAncestor(context, path, (node) =>
     isObjectNode({schema: context.schema}, node),
   )

@@ -3,7 +3,9 @@ import {isTextBlock} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
 import {resolveChildArrayField} from '../schema/resolve-child-array-field'
 import type {Node} from '../slate/interfaces/node'
+import type {Path} from '../slate/interfaces/path'
 import {isObjectNode} from '../slate/node/is-object-node'
+import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 
 /**
  * Get the children of a node at a given path.
@@ -14,8 +16,8 @@ export function getChildren(
     editableTypes: Set<string>
     value: Array<Node>
   },
-  path: Array<number>,
-): Array<{node: Node; path: Array<number>}> {
+  path: Path,
+): Array<{node: Node; path: Path}> {
   const traversalContext = {
     schema: context.schema,
     editableTypes: context.editableTypes,
@@ -29,8 +31,8 @@ export function getChildrenInternal(
     editableTypes: Set<string>
   },
   root: Node | {value: Array<Node>},
-  path: Array<number>,
-): Array<{node: Node; path: Array<number>}> {
+  path: Path,
+): Array<{node: Node; path: Path}> {
   const rootChildren = getNodeChildren(context, root, undefined, '')
 
   if (!rootChildren) {
@@ -40,16 +42,35 @@ export function getChildrenInternal(
   let currentChildren = rootChildren.children
   let currentScope = rootChildren.scope
   let scopePath = rootChildren.scopePath
-  let currentPath: Array<number> = []
+  let currentFieldName = rootChildren.fieldName
+  let currentPath: Path = []
+  // The editor root wrapper ({value: [...]}) is not a real node, so its field
+  // name is not part of paths. Block paths start with [{_key: 'blockKey'}],
+  // not ['value', {_key: 'blockKey'}]. But for standalone nodes (e.g., a text
+  // block passed to getNodeDescendants), the field name IS part of the path.
+  let isRoot = !('_key' in root) && !('_type' in root)
 
-  for (const index of path) {
-    const node = currentChildren[index]
+  for (const segment of path) {
+    if (typeof segment === 'string') {
+      continue
+    }
+
+    let node: Node | undefined
+
+    if (isKeyedSegment(segment)) {
+      node = currentChildren.find((child) => child._key === segment._key)
+    } else if (typeof segment === 'number') {
+      node = currentChildren.at(segment)
+    }
 
     if (!node) {
       return []
     }
 
-    currentPath = [...currentPath, index]
+    currentPath = isRoot
+      ? [{_key: node._key}]
+      : [...currentPath, currentFieldName, {_key: node._key}]
+    isRoot = false
 
     const next = getNodeChildren(context, node, currentScope, scopePath)
 
@@ -60,29 +81,16 @@ export function getChildrenInternal(
     currentChildren = next.children
     currentScope = next.scope
     scopePath = next.scopePath
+    currentFieldName = next.fieldName
   }
 
-  return currentChildren.map((child, index) => ({
+  return currentChildren.map((child) => ({
     node: child,
-    path: [...currentPath, index],
+    path: isRoot
+      ? [{_key: child._key}]
+      : [...currentPath, currentFieldName, {_key: child._key}],
   }))
 }
-
-// Reusable result objects to avoid allocations in hot paths.
-// Safe because callers read the fields immediately and don't store references.
-const _textBlockResult: {
-  children: Array<Node>
-  scope: ReadonlyArray<OfDefinition> | undefined
-  scopePath: string
-  fieldName: string
-} = {children: [], scope: undefined, scopePath: '', fieldName: 'children'}
-
-const _rootResult: {
-  children: Array<Node>
-  scope: ReadonlyArray<OfDefinition> | undefined
-  scopePath: string
-  fieldName: string
-} = {children: [], scope: undefined, scopePath: '', fieldName: 'value'}
 
 export function getNodeChildren(
   context: {
@@ -102,8 +110,12 @@ export function getNodeChildren(
   | undefined {
   // Text blocks store children in .children
   if (isTextBlock(context, node)) {
-    _textBlockResult.children = node.children
-    return _textBlockResult
+    return {
+      children: node.children,
+      scope: undefined,
+      scopePath: '',
+      fieldName: 'children',
+    }
   }
 
   if (isObjectNode(context, node)) {
@@ -139,8 +151,12 @@ export function getNodeChildren(
     !('_key' in node) &&
     !('_type' in node)
   ) {
-    _rootResult.children = node['value'] as Array<Node>
-    return _rootResult
+    return {
+      children: node['value'] as Array<Node>,
+      scope: undefined,
+      scopePath: '',
+      fieldName: 'value',
+    }
   }
 
   return undefined

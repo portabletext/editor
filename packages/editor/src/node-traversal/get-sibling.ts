@@ -1,5 +1,8 @@
 import type {EditorSchema} from '../editor/editor-schema'
 import type {Node} from '../slate/interfaces/node'
+import type {Path} from '../slate/interfaces/path'
+import {parentPath} from '../slate/path/parent-path'
+import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import {getChildren} from './get-children'
 
 /**
@@ -11,27 +14,36 @@ export function getSibling(
     editableTypes: Set<string>
     value: Array<Node>
   },
-  path: Array<number>,
+  path: Path,
   direction: 'next' | 'previous',
-): {node: Node; path: Array<number>} | undefined {
+): {node: Node; path: Path} | undefined {
   if (path.length === 0) {
     return undefined
   }
 
-  const parentPath = path.slice(0, -1)
-  const index = path.at(-1)
+  const lastSegment = path.at(-1)
 
-  if (index === undefined) {
+  if (!isKeyedSegment(lastSegment)) {
     return undefined
   }
 
-  const siblingIndex = direction === 'next' ? index + 1 : index - 1
+  const parent = parentPath(path)
+  const children = getChildren(context, parent)
 
-  if (siblingIndex < 0) {
+  const currentIndex = children.findIndex(
+    (child) => child.node._key === lastSegment._key,
+  )
+
+  if (currentIndex === -1) {
     return undefined
   }
 
-  const children = getChildren(context, parentPath)
+  const siblingIndex =
+    direction === 'next' ? currentIndex + 1 : currentIndex - 1
 
-  return children.at(siblingIndex)
+  if (siblingIndex < 0 || siblingIndex >= children.length) {
+    return undefined
+  }
+
+  return children[siblingIndex]
 }

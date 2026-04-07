@@ -5,10 +5,9 @@ import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
 import type {Point} from '../slate/interfaces/point'
 import {isAncestorPath} from '../slate/path/is-ancestor-path'
-import {nextPath} from '../slate/path/next-path'
-import {pathEndsBefore} from '../slate/path/path-ends-before'
 import {pathEquals} from '../slate/path/path-equals'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
+import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import {rangeRefAffinities} from './range-ref-affinities'
 
 /**
@@ -33,6 +32,18 @@ export function applySplitNode(
 
   const node = nodeEntry.node
 
+  const newKey = editor.keyGenerator()
+
+  // Collect the keys of children that will move to the new node.
+  // For block splits, children at index >= position move.
+  // For span splits, this is empty (text splits don't move child nodes).
+  const movedChildKeys = new Set<string>()
+  if (isTextBlock({schema: editor.schema}, node)) {
+    for (let i = position; i < node.children.length; i++) {
+      movedChildKeys.add(node.children[i]!._key)
+    }
+  }
+
   // Pre-transform all refs with split semantics
   for (const ref of editor.pathRefs) {
     const current = ref.current
@@ -40,7 +51,8 @@ export function applySplitNode(
       ref.current = transformPathForSplit(
         current,
         path,
-        position,
+        newKey,
+        movedChildKeys,
         ref.affinity ?? 'forward',
       )
     }
@@ -52,6 +64,8 @@ export function applySplitNode(
         current,
         path,
         position,
+        newKey,
+        movedChildKeys,
         ref.affinity ?? 'forward',
       )
     }
@@ -67,12 +81,16 @@ export function applySplitNode(
         current.anchor,
         path,
         position,
+        newKey,
+        movedChildKeys,
         anchorAffinity ?? 'forward',
       )
       const focus = transformPointForSplit(
         current.focus,
         path,
         position,
+        newKey,
+        movedChildKeys,
         focusAffinity ?? 'forward',
       )
       if (anchor && focus) {
@@ -90,12 +108,16 @@ export function applySplitNode(
       editor.selection.anchor,
       path,
       position,
+      newKey,
+      movedChildKeys,
       'forward',
     )
     const focus = transformPointForSplit(
       editor.selection.focus,
       path,
       position,
+      newKey,
+      movedChildKeys,
       'forward',
     )
     if (anchor && focus) {
@@ -121,7 +143,7 @@ export function applySplitNode(
       if (isSpan({schema: editor.schema}, node)) {
         const {text: _text, ...properties} = node
         const afterText = node.text.slice(position)
-        const newNode = {...properties, text: afterText} as Node
+        const newNode = {...properties, _key: newKey, text: afterText} as Node
         editor.apply({
           type: 'remove_text',
           path,
@@ -130,26 +152,32 @@ export function applySplitNode(
         })
         editor.apply({
           type: 'insert_node',
-          path: nextPath(path),
+          path,
           node: newNode,
+          position: 'after',
         })
       } else if (isTextBlock({schema: editor.schema}, node)) {
         const {children: _children, ...properties} = node
         const children = node.children
         const afterChildren = children.slice(position)
-        const newNode = {...properties, children: afterChildren} as Node
+        const newNode = {
+          ...properties,
+          _key: newKey,
+          children: afterChildren,
+        } as Node
 
         for (let i = children.length - 1; i >= position; i--) {
           editor.apply({
             type: 'remove_node',
-            path: [...path, i],
+            path: [...path, 'children', {_key: children[i]!._key}],
             node: children[i]!,
           })
         }
         editor.apply({
           type: 'insert_node',
-          path: nextPath(path),
+          path,
           node: newNode,
+          position: 'after',
         })
       }
     })
@@ -172,43 +200,62 @@ export function applySplitNode(
 }
 
 /**
- * Transform a path for a split_node operation.
+ * Transform a path for a split_node operation with keyed paths.
  *
- * When a node at `splitPath` is split at `position`:
- * - A new sibling appears after the split node, shifting later paths forward
- * - Children at or after `position` move into the new sibling
- *
- * The `affinity` parameter controls what happens when the path equals the
- * split path: 'forward' moves to the new node, 'backward' stays.
+ * When a node at splitPath is split:
+ * - If the path equals the split path and affinity is 'forward', the path
+ *   moves to the new node (key substitution).
+ * - If the path is a descendant of the split node and the child at the
+ *   boundary moved to the new node, the split node's key is substituted.
  */
 function transformPathForSplit(
   path: Path,
   splitPath: Path,
-  position: number,
+  newKey: string,
+  movedChildKeys: Set<string>,
   affinity: 'forward' | 'backward' = 'forward',
 ): Path | null {
   const p = [...path]
 
   if (pathEquals(splitPath, p)) {
     if (affinity === 'forward') {
-      p[p.length - 1] = p[p.length - 1]! + 1
+      for (let i = p.length - 1; i >= 0; i--) {
+        if (isKeyedSegment(p[i])) {
+          p[i] = {_key: newKey}
+          break
+        }
+      }
     }
     // backward: no change
-  } else if (pathEndsBefore(splitPath, p)) {
-    p[splitPath.length - 1] = p[splitPath.length - 1]! + 1
-  } else if (
-    isAncestorPath(splitPath, p) &&
-    path[splitPath.length]! >= position
-  ) {
-    p[splitPath.length - 1] = p[splitPath.length - 1]! + 1
-    p[splitPath.length] = p[splitPath.length]! - position
+  } else if (isAncestorPath(splitPath, p)) {
+    // Descendant of the split node. Check if the immediate child
+    // referenced by this path moved to the new node.
+    // Walk past the splitPath prefix and any field name strings to find
+    // the first keyed segment that identifies the child.
+    for (let i = splitPath.length; i < p.length; i++) {
+      const segment = p[i]
+      if (typeof segment === 'string') {
+        continue
+      }
+      if (isKeyedSegment(segment) && movedChildKeys.has(segment._key)) {
+        // This child moved to the new node. Replace the split node's
+        // key segment with the new key.
+        for (let j = splitPath.length - 1; j >= 0; j--) {
+          if (isKeyedSegment(p[j])) {
+            p[j] = {_key: newKey}
+            break
+          }
+        }
+      }
+      break
+    }
   }
 
   return p
 }
 
 /**
- * Transform a point for a split_node operation.
+ * Transform a point for a split_node operation with keyed paths.
  *
  * If the point is inside the split node and at or after the split position,
  * it moves into the new node with an adjusted offset.
@@ -217,6 +264,8 @@ function transformPointForSplit(
   point: Point,
   splitPath: Path,
   position: number,
+  newKey: string,
+  movedChildKeys: Set<string>,
   affinity: 'forward' | 'backward' = 'forward',
 ): Point | null {
   let {path, offset} = point
@@ -224,10 +273,22 @@ function transformPointForSplit(
   if (pathEquals(splitPath, path)) {
     if (position < offset || (position === offset && affinity === 'forward')) {
       offset -= position
-      path = transformPathForSplit(path, splitPath, position, 'forward')!
+      path = transformPathForSplit(
+        path,
+        splitPath,
+        newKey,
+        movedChildKeys,
+        'forward',
+      )!
     }
   } else {
-    path = transformPathForSplit(path, splitPath, position, affinity)!
+    path = transformPathForSplit(
+      path,
+      splitPath,
+      newKey,
+      movedChildKeys,
+      affinity,
+    )!
   }
 
   return {path, offset}

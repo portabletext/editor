@@ -1,5 +1,4 @@
 import type {Patch} from '@portabletext/patches'
-import type {PortableTextBlock} from '@portabletext/schema'
 import {
   DIFF_DELETE,
   DIFF_EQUAL,
@@ -15,48 +14,46 @@ import {debug} from './debug'
 /**
  * This will adjust the operation paths and offsets according to the
  * remote patches by other editors since the step operations was performed.
+ *
+ * With keyed paths, block-level path adjustments are no-ops because keys
+ * are stable across insertions and removals. Only text offsets within
+ * the same node need adjustment (diffMatchPatch).
  */
 export function transformOperation(
   editor: PortableTextSlateEditor,
   patch: Patch,
   operation: Operation,
-  snapshot: PortableTextBlock[] | undefined,
-  previousSnapshot: PortableTextBlock[] | undefined,
 ): Operation[] {
   const transformedOperation = {...operation}
 
   if (patch.type === 'insert' && patch.path.length === 1) {
-    const pathSegment = patch.path[0]
-    const insertBlockIndex = (snapshot || []).findIndex(
-      (blk) => isKeyedSegment(pathSegment) && blk._key === pathSegment._key,
-    )
+    // With keyed paths, block insertions don't affect other operations' paths.
+    // Keys are stable - no path adjustment needed.
     debug.history(
-      `Adjusting block path (+${patch.items.length}) for '${transformedOperation.type}' operation and patch '${patch.type}'`,
+      `No path adjustment needed for '${transformedOperation.type}' operation and patch '${patch.type}' (keyed paths)`,
     )
-    return [
-      adjustBlockPath(
-        transformedOperation,
-        patch.items.length,
-        insertBlockIndex,
-      ),
-    ]
+    return [transformedOperation]
   }
 
   if (patch.type === 'unset' && patch.path.length === 1) {
     const pathSegment = patch.path[0]
-    const unsetBlockIndex = (previousSnapshot || []).findIndex(
-      (blk) => isKeyedSegment(pathSegment) && blk._key === pathSegment._key,
-    )
-    // If this operation is targeting the same block that got removed, return empty
+    // If this operation targets the same block that got removed, drop it
     if (
       'path' in transformedOperation &&
-      Array.isArray(transformedOperation.path) &&
-      transformedOperation.path[0] === unsetBlockIndex
+      Array.isArray(transformedOperation.path)
     ) {
-      debug.history('Skipping transformation that targeted removed block')
-      return []
+      const operationBlockSegment = transformedOperation.path[0]
+      if (
+        isKeyedSegment(pathSegment) &&
+        isKeyedSegment(operationBlockSegment) &&
+        operationBlockSegment._key === pathSegment._key
+      ) {
+        debug.history('Skipping transformation that targeted removed block')
+        return []
+      }
     }
-    return [adjustBlockPath(transformedOperation, -1, unsetBlockIndex)]
+    // With keyed paths, block removals don't affect other operations' paths.
+    return [transformedOperation]
   }
 
   // Someone reset the whole value
@@ -155,79 +152,23 @@ export function transformOperation(
   }
   return [transformedOperation]
 }
-/**
- * Adjust the block path for a operation
- */
-function adjustBlockPath(
-  operation: Operation,
-  level: number,
-  blockIndex: number,
-): Operation {
-  const transformedOperation = {...operation}
-  if (
-    blockIndex >= 0 &&
-    transformedOperation.type !== 'set_selection' &&
-    Array.isArray(transformedOperation.path) &&
-    transformedOperation.path[0]! >= blockIndex + level &&
-    transformedOperation.path[0]! + level > -1
-  ) {
-    const newPath = [
-      transformedOperation.path[0]! + level,
-      ...transformedOperation.path.slice(1),
-    ]
-    transformedOperation.path = newPath
-  }
-  if (transformedOperation.type === 'set_selection') {
-    const currentFocus = transformedOperation.properties?.focus
-      ? {...transformedOperation.properties.focus}
-      : undefined
-    const currentAnchor = transformedOperation?.properties?.anchor
-      ? {...transformedOperation.properties.anchor}
-      : undefined
-    const newFocus = transformedOperation?.newProperties?.focus
-      ? {...transformedOperation.newProperties.focus}
-      : undefined
-    const newAnchor = transformedOperation?.newProperties?.anchor
-      ? {...transformedOperation.newProperties.anchor}
-      : undefined
-    if ((currentFocus && currentAnchor) || (newFocus && newAnchor)) {
-      const points = [currentFocus, currentAnchor, newFocus, newAnchor]
-      points.forEach((point) => {
-        if (
-          point &&
-          point.path[0]! >= blockIndex + level &&
-          point.path[0]! + level > -1
-        ) {
-          point.path = [point.path[0]! + level, ...point.path.slice(1)]
-        }
-      })
-      if (currentFocus && currentAnchor) {
-        transformedOperation.properties = {
-          focus: currentFocus,
-          anchor: currentAnchor,
-        }
-      }
-      if (newFocus && newAnchor) {
-        transformedOperation.newProperties = {
-          focus: newFocus,
-          anchor: newAnchor,
-        }
-      }
-    }
-  }
-  //   // Assign fresh point objects (we don't want to mutate the original ones)
-  return transformedOperation
-}
 
 function findOperationTargetBlock(
   editor: PortableTextSlateEditor,
   operation: Operation,
 ): Node | undefined {
-  let block: Node | undefined
   if (operation.type === 'set_selection' && editor.selection) {
-    block = editor.children[editor.selection.focus.path[0]!]
-  } else if ('path' in operation) {
-    block = editor.children[operation.path[0]!]
+    const focusSegment = editor.selection.focus.path[0]
+    if (isKeyedSegment(focusSegment)) {
+      return editor.children.find((child) => child._key === focusSegment._key)
+    }
+    return undefined
   }
-  return block
+  if ('path' in operation) {
+    const blockSegment = operation.path[0]
+    if (isKeyedSegment(blockSegment)) {
+      return editor.children.find((child) => child._key === blockSegment._key)
+    }
+  }
+  return undefined
 }

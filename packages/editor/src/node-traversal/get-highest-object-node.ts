@@ -1,6 +1,7 @@
 import type {PortableTextObject} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
 import type {Node} from '../slate/interfaces/node'
+import type {Path} from '../slate/interfaces/path'
 import {isObjectNode} from '../slate/node/is-object-node'
 import {getAncestors} from './get-ancestors'
 import {getNode} from './get-node'
@@ -17,13 +18,17 @@ export function getHighestObjectNode(
     editableTypes: Set<string>
     value: Array<Node>
   },
-  path: Array<number>,
-): {node: PortableTextObject; path: Array<number>} | undefined {
+  path: Path,
+): {node: PortableTextObject; path: Path} | undefined {
   // Walk ancestors from furthest (root) to nearest, return the first object node
   const ancestors = getAncestors(context, path)
 
   for (let i = ancestors.length - 1; i >= 0; i--) {
-    const ancestor = ancestors.at(i)!
+    const ancestor = ancestors[i]
+
+    if (!ancestor) {
+      continue
+    }
 
     if (isObjectNode({schema: context.schema}, ancestor.node)) {
       return {node: ancestor.node, path: ancestor.path}

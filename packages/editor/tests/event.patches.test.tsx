@@ -3984,7 +3984,7 @@ describe('event.patches', () => {
         insert([{_type: 'span', _key: 'k3', text: '', marks: []}], 'before', [
           {_key: blockKey},
           'children',
-          0,
+          {_key: inlineKey},
         ]),
         setIfMissing([], [{_key: blockKey}, 'children']),
         insert([{_type: 'span', _key: 'k4', text: '', marks: []}], 'after', [

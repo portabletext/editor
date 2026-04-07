@@ -8,47 +8,53 @@ describe(getLastChild.name, () => {
   test('last descendant from root', () => {
     expect(getLastChild(testbed.context, [])).toEqual({
       node: testbed.table,
-      path: [4],
+      path: [{_key: 'k26'}],
     })
   })
 
   test('last descendant of text block', () => {
-    expect(getLastChild(testbed.context, [0])).toEqual({
+    expect(getLastChild(testbed.context, [{_key: 'k3'}])).toEqual({
       node: testbed.span2,
-      path: [0, 2],
+      path: [{_key: 'k3'}, 'children', {_key: 'k2'}],
     })
   })
 
   test('last descendant of code block', () => {
-    expect(getLastChild(testbed.context, [3])).toEqual({
+    expect(getLastChild(testbed.context, [{_key: 'k11'}])).toEqual({
       node: testbed.codeLine2,
-      path: [3, 1],
+      path: [{_key: 'k11'}, 'code', {_key: 'k10'}],
     })
   })
 
   test('last descendant of table', () => {
-    expect(getLastChild(testbed.context, [4])).toEqual({
+    expect(getLastChild(testbed.context, [{_key: 'k26'}])).toEqual({
       node: testbed.row2,
-      path: [4, 1],
+      path: [{_key: 'k26'}, 'rows', {_key: 'k25'}],
     })
   })
 
   test('leaf node returns undefined', () => {
-    expect(getLastChild(testbed.context, [0, 0])).toBeUndefined()
+    expect(
+      getLastChild(testbed.context, [{_key: 'k3'}, 'children', {_key: 'k0'}]),
+    ).toBeUndefined()
   })
 
   test('void block object returns undefined', () => {
-    expect(getLastChild(testbed.context, [1])).toBeUndefined()
+    expect(getLastChild(testbed.context, [{_key: 'k4'}])).toBeUndefined()
   })
 
   test('invalid path returns undefined', () => {
-    expect(getLastChild(testbed.context, [99])).toBeUndefined()
+    expect(
+      getLastChild(testbed.context, [{_key: 'nonexistent'}]),
+    ).toBeUndefined()
   })
 
   test('last of non-editable container returns undefined', () => {
     const tableOnly = new Set(['table', 'table.row', 'table.row.cell'])
     expect(
-      getLastChild({...testbed.context, editableTypes: tableOnly}, [3]),
+      getLastChild({...testbed.context, editableTypes: tableOnly}, [
+        {_key: 'k11'},
+      ]),
     ).toBeUndefined()
   })
 })

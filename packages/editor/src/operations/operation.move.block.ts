@@ -1,6 +1,5 @@
 import {getNode} from '../node-traversal/get-node'
 import {withoutNormalizing} from '../slate/editor/without-normalizing'
-import type {Point} from '../slate/interfaces/point'
 import {getBlockKeyFromSelectionPoint} from '../utils/util.selection-point'
 import type {OperationImplementation} from './operation.types'
 
@@ -39,7 +38,7 @@ export const moveBlockOperationImplementation: OperationImplementation<
   }
 
   const editor = operation.editor
-  const nodeEntry = getNode(editor, [originBlockIndex])
+  const nodeEntry = getNode(editor, [{_key: originKey}])
 
   if (!nodeEntry) {
     return
@@ -51,24 +50,23 @@ export const moveBlockOperationImplementation: OperationImplementation<
     ? {anchor: {...editor.selection.anchor}, focus: {...editor.selection.focus}}
     : null
 
+  const movingDown = originBlockIndex < destinationBlockIndex
+
   withoutNormalizing(editor, () => {
-    editor.apply({type: 'remove_node', path: [originBlockIndex], node})
-    editor.apply({type: 'insert_node', path: [destinationBlockIndex], node})
+    editor.apply({
+      type: 'remove_node',
+      path: [{_key: node._key}],
+      node,
+    })
+    editor.apply({
+      type: 'insert_node',
+      path: [{_key: destinationKey}],
+      node,
+      position: movingDown ? 'after' : 'before',
+    })
   })
 
   if (savedSelection) {
-    const fixPoint = (point: Point): Point => {
-      if (point.path[0] === originBlockIndex) {
-        return {
-          ...point,
-          path: [destinationBlockIndex, ...point.path.slice(1)],
-        }
-      }
-      return point
-    }
-    editor.selection = {
-      anchor: fixPoint(savedSelection.anchor),
-      focus: fixPoint(savedSelection.focus),
-    }
+    editor.selection = savedSelection
   }
 }

@@ -31,11 +31,11 @@ export const blockUnsetOperationImplementation: OperationImplementation<
     for (const prop of propsToRemove) {
       unsetProps[prop] = null
     }
-    applySetNode(operation.editor, unsetProps, [blockIndex])
+    applySetNode(operation.editor, unsetProps, [{_key: blockKey}])
 
     if (operation.props.includes('_key')) {
       applySetNode(operation.editor, {_key: context.keyGenerator()}, [
-        blockIndex,
+        {_key: blockKey},
       ])
     }
 
@@ -53,5 +53,5 @@ export const blockUnsetOperationImplementation: OperationImplementation<
       unsetProps[key] = null
     }
   }
-  applySetNode(operation.editor, unsetProps, [blockIndex])
+  applySetNode(operation.editor, unsetProps, [{_key: blockKey}])
 }

@@ -13,16 +13,17 @@ import {getChildren} from '../../node-traversal/get-children'
 import {getNode} from '../../node-traversal/get-node'
 import {getParent} from '../../node-traversal/get-parent'
 import {getTextBlockNode} from '../../node-traversal/get-text-block-node'
+import {getChildFieldName} from '../../paths/get-child-field-name'
 import {withoutPatching} from '../../slate-plugins/slate-plugin.without-patching'
 import {isEditor} from '../editor/is-editor'
 import type {Editor} from '../interfaces/editor'
 import type {Node} from '../interfaces/node'
+import type {Path} from '../interfaces/path'
 import {createSpanNode} from '../node/create-span-node'
 import {isObjectNode} from '../node/is-object-node'
 import {isSpanNode} from '../node/is-span-node'
 import {isTextBlockNode} from '../node/is-text-block-node'
 import {parentPath} from '../path/parent-path'
-import {pathEquals} from '../path/path-equals'
 import {textEquals} from '../text/text-equals'
 import type {WithEditorFirstArg} from '../utils/types'
 import {removeNodes} from './remove-nodes'
@@ -50,9 +51,9 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   if (isTextBlock({schema: editor.schema}, node)) {
     const children = getChildren(editor, path)
 
-    for (const {node: child, path: childPath} of children) {
-      const childIndex = childPath[childPath.length - 1]!
-      const nextNode = node.children[childIndex + 1]
+    for (let i = 0; i < children.length - 1; i++) {
+      const {node: child} = children[i]!
+      const {node: nextNode, path: nextChildPath} = children[i + 1]!
 
       if (
         isSpan({schema: editor.schema}, child) &&
@@ -61,8 +62,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
         nextNode.marks?.every((mark) => child.marks?.includes(mark))
       ) {
         debug.normalization('merging spans with same marks')
-        const mergePath = [...path, childIndex + 1]
-        applyMergeNode(editor, mergePath, child.text.length)
+        applyMergeNode(editor, nextChildPath, child.text.length)
         return
       }
     }
@@ -86,12 +86,13 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
 
   // Set missing _key on any non-editor node
   if (nodeRecord['_key'] === undefined && path.length > 0) {
+    const newKey = editor.keyGenerator()
     debug.normalization('Setting missing key on node')
     editor.apply({
       type: 'set_node',
       path,
       properties: {},
-      newProperties: {_key: editor.keyGenerator()},
+      newProperties: {_key: newKey},
     })
     return
   }
@@ -103,21 +104,35 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
       ? getChildren(editor, parent.path)
       : editor.children.map((child, index) => ({
           node: child,
-          path: [index],
+          path: [{_key: child._key}],
+          index,
         }))
 
-    for (const sibling of siblings) {
-      // Stop when we reach the current node
-      if (pathEquals(sibling.path, path)) {
+    let currentIndex = -1
+    const siblingList = [...siblings]
+    for (let i = 0; i < siblingList.length; i++) {
+      if (siblingList[i]!.node === node) {
+        currentIndex = i
         break
       }
-      if (sibling.node._key === nodeRecord['_key']) {
+    }
+
+    for (let i = 0; i < currentIndex; i++) {
+      if (siblingList[i]!.node._key === nodeRecord['_key']) {
+        const newKey = editor.keyGenerator()
         debug.normalization('Fixing duplicate key on node')
+        // Use numeric index because keyed path can't distinguish duplicates.
+        // modifyDescendant resolves numeric segments to keyed via getNode.
+        const dupParentPath = parent ? parent.path : []
+        const numericPath: Path =
+          dupParentPath.length === 0
+            ? [currentIndex]
+            : [...dupParentPath, 'children', currentIndex]
         editor.apply({
           type: 'set_node',
-          path,
+          path: numericPath,
           properties: {},
-          newProperties: {_key: editor.keyGenerator()},
+          newProperties: {_key: newKey},
         })
         return
       }
@@ -150,6 +165,20 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
       applySetNode(editor, {style: defaultStyle}, path)
       return
     }
+  }
+
+  /**
+   * Add missing .text to span nodes
+   */
+  if (isSpanNode(editor, node) && typeof node.text !== 'string') {
+    debug.normalization('Adding .text to span node')
+    editor.apply({
+      type: 'set_node',
+      path,
+      properties: {},
+      newProperties: {text: ''},
+    })
+    return
   }
 
   /**
@@ -316,7 +345,40 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
     return
   }
 
+  // Fix duplicate _key among children of container/object nodes.
+  // The sibling-level handler above catches duplicates when each child is
+  // visited individually, but container children may not be visited if
+  // editableTypes gates traversal. Handle it at the parent level as well.
   if (isObjectNode({schema: editor.schema}, node)) {
+    const children = [...getChildren(editor, path)]
+
+    if (children.length > 1) {
+      const seen = new Map<string, number>()
+
+      for (let i = 0; i < children.length; i++) {
+        const key = children[i]!.node._key
+        if (key !== undefined && seen.has(key)) {
+          const newKey = editor.keyGenerator()
+          debug.normalization('Fixing duplicate key on container child')
+          // Use numeric index to address the duplicate since keyed path
+          // is ambiguous for nodes with the same key.
+          const childFieldName = getChildFieldName(editor, path)
+          if (childFieldName) {
+            editor.apply({
+              type: 'set_node',
+              path: [...path, childFieldName, i],
+              properties: {},
+              newProperties: {_key: newKey},
+            })
+            return
+          }
+        }
+        if (key !== undefined) {
+          seen.set(key, i)
+        }
+      }
+    }
+
     return
   }
 
@@ -340,7 +402,12 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
     // Ensure that text blocks have at least one child.
     if (element.children.length === 0) {
       const child = createSpanNode(editor)
-      editor.apply({type: 'insert_node', path: path.concat(0), node: child})
+      editor.apply({
+        type: 'insert_node',
+        path: [...path, 'children', 0],
+        node: child,
+        position: 'before',
+      })
       const refetched = getTextBlockNode(editor, path)?.node
       if (!refetched) {
         return
@@ -351,15 +418,17 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
     // Since we'll be applying operations while iterating, we also modify
     // `n` when adding/removing nodes.
     for (let n = 0; n < element.children.length; n++) {
-      const child = element.children[n]
+      const child = element.children[n]!
+
       const prev: Node | undefined = element.children[n - 1]
+      const childPath = [...path, 'children', {_key: child._key}]
 
       if (isSpan({schema: editor.schema}, child)) {
         if (prev != null && isSpan({schema: editor.schema}, prev)) {
           // Merge adjacent text nodes that are empty or match.
           if (child.text === '') {
             removeNodes(editor, {
-              at: path.concat(n),
+              at: childPath,
               includeObjectNodes: true,
             })
             const refetched = getTextBlockNode(editor, path)?.node
@@ -369,8 +438,9 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
             element = refetched
             n--
           } else if (prev.text === '') {
+            const prevPath = [...path, 'children', {_key: prev._key}]
             removeNodes(editor, {
-              at: path.concat(n - 1),
+              at: prevPath,
               includeObjectNodes: true,
             })
             const refetched = getTextBlockNode(editor, path)?.node
@@ -380,8 +450,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
             element = refetched
             n--
           } else if (textEquals(child, prev, {loose: true})) {
-            const mergePath = path.concat(n)
-            applyMergeNode(editor, mergePath, prev.text.length)
+            applyMergeNode(editor, childPath, prev.text.length)
             const refetched = getTextBlockNode(editor, path)?.node
             if (!refetched) {
               return
@@ -395,8 +464,9 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
           const newChild = createSpanNode(editor)
           editor.apply({
             type: 'insert_node',
-            path: path.concat(n),
+            path: childPath,
             node: newChild,
+            position: 'before',
           })
           const refetched = getTextBlockNode(editor, path)?.node
           if (!refetched) {
@@ -409,8 +479,9 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
           const newChild = createSpanNode(editor)
           editor.apply({
             type: 'insert_node',
-            path: path.concat(n + 1),
+            path: [...path, 'children', {_key: element.children[n]!._key}],
             node: newChild,
+            position: 'after',
           })
           const refetched = getTextBlockNode(editor, path)?.node
           if (!refetched) {

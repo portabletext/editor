@@ -1,5 +1,6 @@
 import type {EditorSchema} from '../editor/editor-schema'
 import type {Node} from '../slate/interfaces/node'
+import type {Path} from '../slate/interfaces/path'
 import {isBlock} from './is-block'
 
 /**
@@ -14,7 +15,7 @@ export function isInline(
     editableTypes: Set<string>
     value: Array<Node>
   },
-  path: Array<number>,
+  path: Path,
 ): boolean {
   return !isBlock(context, path)
 }

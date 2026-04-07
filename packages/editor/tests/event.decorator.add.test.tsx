@@ -323,10 +323,7 @@ describe('event.decorator.add', () => {
           ...block2,
           children: [{...bar, marks: ['strong']}],
         },
-        {
-          ...block3,
-          children: [{...baz, _key: 'k15'}],
-        },
+        block3,
       ])
     })
 
@@ -374,10 +371,7 @@ describe('event.decorator.add', () => {
           ...block2,
           children: [{...bar, marks: ['strong']}],
         },
-        {
-          ...block3,
-          children: [{...baz, _key: 'k25'}],
-        },
+        block3,
       ])
     })
 

@@ -5,7 +5,6 @@ import {getAncestorObjectNode} from '../../../node-traversal/get-ancestor-object
 import {getHighestObjectNode} from '../../../node-traversal/get-highest-object-node'
 import {getNode} from '../../../node-traversal/get-node'
 import {hasNode} from '../../../node-traversal/has-node'
-import {keyedPathToIndexedPath} from '../../../paths/keyed-path-to-indexed-path'
 import {path as editorPath} from '../../editor/path'
 import {start as editorStart} from '../../editor/start'
 import {unhangRange} from '../../editor/unhang-range'
@@ -474,7 +473,7 @@ export const DOMEditor: DOMEditorInterface = {
 
   toDOMRange: (editor, range) => {
     const {anchor, focus} = range
-    const isBackward = isBackwardRange(range)
+    const isBackward = isBackwardRange(range, editor)
     const domAnchor = DOMEditor.toDOMPoint(editor, anchor)
     const domFocus = isCollapsedRange(range)
       ? domAnchor
@@ -707,11 +706,8 @@ export const DOMEditor: DOMEditorInterface = {
 
       if (node && DOMEditor.hasDOMNode(editor, node, {editable: true})) {
         const nodePath = getDomNodePath(node)
-        const indexedPath = nodePath
-          ? keyedPathToIndexedPath(editor, nodePath, editor.blockIndexMap)
-          : undefined
 
-        if (!indexedPath) {
+        if (!nodePath) {
           if (suppressThrow) {
             return null as T extends true ? Point | null : Point
           }
@@ -720,7 +716,7 @@ export const DOMEditor: DOMEditorInterface = {
           )
         }
 
-        let {path, offset} = editorStart(editor, indexedPath)
+        let {path, offset} = editorStart(editor, nodePath)
 
         if (!node.querySelector('[data-slate-leaf]')) {
           offset = nearestOffset
@@ -744,12 +740,9 @@ export const DOMEditor: DOMEditorInterface = {
 
           if (voidEl) {
             const path = getDomNodePath(voidEl)
-            const indexedPath = path
-              ? keyedPathToIndexedPath(editor, path, editor.blockIndexMap)
-              : undefined
 
-            if (indexedPath) {
-              return {path: indexedPath, offset: 0}
+            if (path) {
+              return {path, offset: 0}
             }
           }
         }
@@ -764,12 +757,9 @@ export const DOMEditor: DOMEditorInterface = {
 
         if (voidEl) {
           const path = getDomNodePath(voidEl)
-          const indexedPath = path
-            ? keyedPathToIndexedPath(editor, path, editor.blockIndexMap)
-            : undefined
 
-          if (indexedPath) {
-            return {path: indexedPath, offset: 0}
+          if (path) {
+            return {path, offset: 0}
           }
         }
       }
@@ -788,11 +778,8 @@ export const DOMEditor: DOMEditorInterface = {
     // the select event fires twice, once for the old editor's `element`
     // first, and then afterwards for the correct `element`. (2017/03/03)
     const path = getDomNodePath(textNode!)
-    const indexedPath = path
-      ? keyedPathToIndexedPath(editor, path, editor.blockIndexMap)
-      : undefined
 
-    if (!indexedPath) {
+    if (!path) {
       if (suppressThrow) {
         return null as T extends true ? Point | null : Point
       }
@@ -802,8 +789,8 @@ export const DOMEditor: DOMEditorInterface = {
     }
 
     // Truncate paths that resolve to the spacer's virtual text node.
-    if (indexedPath.length > 1) {
-      const parentPath = indexedPath.slice(0, -1)
+    if (path.length > 1) {
+      const parentPath = path.slice(0, -1)
       const parentEntry = getNode(editor, parentPath)
 
       if (
@@ -814,7 +801,7 @@ export const DOMEditor: DOMEditorInterface = {
       }
     }
 
-    return {path: indexedPath, offset}
+    return {path, offset}
   },
 
   toSlateRange: <T extends boolean>(

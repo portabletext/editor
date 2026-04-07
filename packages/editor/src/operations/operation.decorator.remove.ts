@@ -10,11 +10,13 @@ import {isEnd} from '../slate/editor/is-end'
 import {isStart} from '../slate/editor/is-start'
 import {path as editorPath} from '../slate/editor/path'
 import {rangeRef} from '../slate/editor/range-ref'
+import {withoutNormalizing} from '../slate/editor/without-normalizing'
 import {isCollapsedRange} from '../slate/range/is-collapsed-range'
 import {isExpandedRange} from '../slate/range/is-expanded-range'
 import {rangeEdges} from '../slate/range/range-edges'
 import {rangeEnd} from '../slate/range/range-end'
 import {rangeStart} from '../slate/range/range-start'
+import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import type {OperationImplementation} from './operation.types'
 
 export const decoratorRemoveOperationImplementation: OperationImplementation<
@@ -41,64 +43,71 @@ export const decoratorRemoveOperationImplementation: OperationImplementation<
   if (isExpandedRange(at)) {
     const ref = rangeRef(editor, at, {affinity: 'inward'})
 
-    // Split text nodes at range boundaries (equivalent to setNodes with split:true and empty props)
-    const decoratorLeafEntry = getNode(editor, at.anchor.path)
-    const decoratorLeaf =
-      decoratorLeafEntry && isLeaf(editor, decoratorLeafEntry.path)
-        ? decoratorLeafEntry.node
-        : undefined
-    if (
-      !(
-        decoratorLeaf &&
-        isCollapsedRange(at) &&
-        isSpan({schema: editor.schema}, decoratorLeaf) &&
-        decoratorLeaf.text.length > 0
-      )
-    ) {
-      const [start, end] = rangeEdges(at)
-      const endAtEndOfNode = isEnd(editor, end, end.path)
-      if (!endAtEndOfNode || !isEdge(editor, end, end.path)) {
-        applySplitNode(editor, end.path, end.offset)
-      }
-      const startAtStartOfNode = isStart(editor, start, start.path)
-      if (!startAtStartOfNode || !isEdge(editor, start, start.path)) {
-        applySplitNode(editor, start.path, start.offset)
-      }
-    }
-
-    const updatedAt = ref.unref()
-
-    if (updatedAt) {
-      const splitTextNodes = [
-        ...getNodes(editor, {
-          from: rangeStart(updatedAt).path,
-          to: rangeEnd(updatedAt).path,
-          match: (n) => isSpan({schema: editor.schema}, n),
-        }),
-      ]
-      for (const {node, path: nodePath} of splitTextNodes) {
-        if (!isSpan({schema: editor.schema}, node)) {
-          continue
+    withoutNormalizing(editor, () => {
+      // Split text nodes at range boundaries (equivalent to setNodes with split:true and empty props)
+      const decoratorLeafEntry = getNode(editor, at!.anchor.path)
+      const decoratorLeaf =
+        decoratorLeafEntry && isLeaf(editor, decoratorLeafEntry.path)
+          ? decoratorLeafEntry.node
+          : undefined
+      if (
+        !(
+          decoratorLeaf &&
+          isCollapsedRange(at) &&
+          isSpan({schema: editor.schema}, decoratorLeaf) &&
+          decoratorLeaf.text.length > 0
+        )
+      ) {
+        const [start, end] = rangeEdges(at, {}, editor)
+        const endAtEndOfNode = isEnd(editor, end, end.path)
+        if (!endAtEndOfNode || !isEdge(editor, end, end.path)) {
+          applySplitNode(editor, end.path, end.offset)
         }
-
-        const block = editor.children[nodePath[0]!]
-        if (
-          isTextBlock({schema: editor.schema}, block) &&
-          block.children.includes(node)
-        ) {
-          applySetNode(
-            editor,
-            {
-              marks: (Array.isArray(node.marks) ? node.marks : []).filter(
-                (eMark: string) => eMark !== mark,
-              ),
-              _type: context.schema.span.name,
-            },
-            nodePath,
-          )
+        const startAtStartOfNode = isStart(editor, start, start.path)
+        if (!startAtStartOfNode || !isEdge(editor, start, start.path)) {
+          applySplitNode(editor, start.path, start.offset)
         }
       }
-    }
+
+      const updatedAt = ref.unref()
+
+      if (updatedAt) {
+        const splitTextNodes = [
+          ...getNodes(editor, {
+            from: rangeStart(updatedAt, editor).path,
+            to: rangeEnd(updatedAt, editor).path,
+            match: (n) => isSpan({schema: editor.schema}, n),
+          }),
+        ]
+        for (const {node, path: nodePath} of splitTextNodes) {
+          if (!isSpan({schema: editor.schema}, node)) {
+            continue
+          }
+
+          const blockSegment = nodePath[0]!
+          const block = isKeyedSegment(blockSegment)
+            ? editor.children.find((b) => b._key === blockSegment._key)
+            : editor.children.at(
+                typeof blockSegment === 'number' ? blockSegment : -1,
+              )
+          if (
+            isTextBlock({schema: editor.schema}, block) &&
+            block.children.includes(node)
+          ) {
+            applySetNode(
+              editor,
+              {
+                marks: (Array.isArray(node.marks) ? node.marks : []).filter(
+                  (eMark: string) => eMark !== mark,
+                ),
+                _type: context.schema.span.name,
+              },
+              nodePath,
+            )
+          }
+        }
+      }
+    }) // end withoutNormalizing
   } else {
     const blockEntry = getNode(editor, editorPath(editor, at, {depth: 1}))
     if (!blockEntry) {

@@ -1,6 +1,7 @@
 import {isSpan} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
 import type {Node} from '../slate/interfaces/node'
+import type {Path} from '../slate/interfaces/path'
 import {getNode} from './get-node'
 import {getNodes} from './get-nodes'
 
@@ -13,7 +14,7 @@ export function getText(
     editableTypes: Set<string>
     value: Array<Node>
   },
-  path: Array<number>,
+  path: Path,
 ): string | undefined {
   const entry = getNode(context, path)
 
