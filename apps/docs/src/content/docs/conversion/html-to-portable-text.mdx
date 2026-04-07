@@ -4,6 +4,7 @@ description: Convert HTML content to Portable Text using the official conversion
 ---
 
 import {TabItem, Tabs} from '@astrojs/starlight/components'
+import {PackageManagers} from 'starlight-package-managers'
 
 Convert HTML strings to Portable Text blocks. This is useful for migrating content from a CMS that stores HTML, processing pasted content from web pages, or importing content from WordPress, Google Docs, or Notion.
 
@@ -23,10 +24,10 @@ Both packages use the same conversion engine (block-tools delegates to html inte
 
 <Tabs>
   <TabItem label="Standalone">
-    ```bash npm install @portabletext/html ```
+    <PackageManagers pkg="@portabletext/html" />
   </TabItem>
   <TabItem label="Sanity">
-    ```bash npm install @portabletext/block-tools ```
+    <PackageManagers pkg="@portabletext/block-tools" />
   </TabItem>
 </Tabs>
 
@@ -90,9 +91,7 @@ In the browser, HTML parsing works automatically via `DOMParser`. In Node.js, th
 
 [JSDOM](https://github.com/jsdom/jsdom) is the most common choice:
 
-```bash
-npm install jsdom
-```
+<PackageManagers pkg="jsdom" />
 
 ```ts
 import {JSDOM} from 'jsdom'
@@ -380,7 +379,7 @@ CSS-based formatting (like `style="font-weight: bold"`) is **not** converted in 
 
 | Source format   | Tool                                                                                                                           |
 | --------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| Markdown → PT   | [`@portabletext/markdown`](/rendering/markdown/)                                                                               |
+| Markdown → PT   | [`@portabletext/markdown`](/conversion/markdown-to-portable-text/)                                                             |
 | Gutenberg → PT  | [`@emdash-cms/gutenberg-to-portable-text`](https://github.com/emdash-cms/emdash) (30+ block types)                             |
 | Contentful → PT | [`@portabletext/contentful-rich-text-to-portable-text`](https://github.com/portabletext/contentful-rich-text-to-portable-text) |
 | C# HTML → PT    | [`portable-text-dotnet`](https://github.com/portabletext/dotnet-portable-text)                                                 |

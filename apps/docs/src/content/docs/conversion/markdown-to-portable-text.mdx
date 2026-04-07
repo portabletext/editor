@@ -1,0 +1,151 @@
+---
+title: Markdown to Portable Text
+description: Convert Markdown strings into Portable Text blocks using @portabletext/markdown.
+---
+
+import {PackageManagers} from 'starlight-package-managers'
+
+:::note[Prerequisites]
+This guide covers `@portabletext/markdown` **v1.x** ([changelog](https://github.com/portabletext/editor/releases)). No framework dependencies. Works in Node.js, Deno, edge runtimes, and browsers.
+:::
+
+Convert Markdown strings into Portable Text blocks. Use this for importing content from Markdown-based systems (static site generators, GitHub READMEs, AI-generated content), processing user input, or migrating from Markdown-first CMSes.
+
+Looking to render Portable Text as Markdown? See the [Markdown rendering guide](/rendering/markdown/).
+
+## Install
+
+<PackageManagers pkg="@portabletext/markdown" />
+
+## Basic usage
+
+`markdownToPortableText` takes a Markdown string and returns an array of Portable Text blocks.
+
+```ts
+import {markdownToPortableText} from '@portabletext/markdown'
+
+const blocks = markdownToPortableText('# Hello **world**')
+```
+
+Standard Markdown elements (headings, paragraphs, bold, italic, links, lists, blockquotes, inline code) are handled automatically using the default schema.
+
+## Schema configuration
+
+The conversion is schema-driven. The library only outputs types that exist in the schema, so the output always matches your content model.
+
+The default schema includes:
+
+| Type            | Values                                                         |
+| --------------- | -------------------------------------------------------------- |
+| `styles`        | `normal`, `h1`-`h6`, `blockquote`                              |
+| `lists`         | `bullet`, `number`                                             |
+| `decorators`    | `strong`, `em`, `code`, `strike-through`                       |
+| `annotations`   | `link` (fields: `href`, `title`)                               |
+| `blockObjects`  | `code`, `image`, `horizontal-rule`, `html`, `table`, `callout` |
+| `inlineObjects` | `image`                                                        |
+
+To use a custom schema, import `compileSchema` and `defineSchema` from `@portabletext/schema`:
+
+```ts
+import {compileSchema, defineSchema} from '@portabletext/schema'
+
+markdownToPortableText(markdown, {
+  schema: compileSchema(
+    defineSchema({
+      styles: [{name: 'normal'}, {name: 'heading 1'}],
+    }),
+  ),
+})
+```
+
+If you are using a Sanity schema, use `@portabletext/sanity-bridge` to convert it first:
+
+```ts
+import {sanitySchemaToPortableTextSchema} from '@portabletext/sanity-bridge'
+
+const schema = sanitySchemaToPortableTextSchema(sanityBlockArraySchema)
+markdownToPortableText(markdown, {schema})
+```
+
+## Matchers
+
+Matchers control how Markdown elements map to schema types. The library includes defaults for all standard elements. You can override individual matchers when your schema uses different type names.
+
+| Group      | Matcher          | Markdown              | Maps to             |
+| ---------- | ---------------- | --------------------- | ------------------- |
+| `block`    | `normal`         | Paragraphs            | `'normal'`          |
+|            | `h1`-`h6`        | `#`-`######` headings | `'h1'`-`'h6'`       |
+|            | `blockquote`     | `>` blockquotes       | `'blockquote'`      |
+| `listItem` | `bullet`         | `- ` or `* ` lists    | `'bullet'`          |
+|            | `number`         | `1. ` ordered lists   | `'number'`          |
+| `marks`    | `strong`         | `**bold**`            | `'strong'`          |
+|            | `em`             | `*italic*`            | `'em'`              |
+|            | `code`           | `` `inline code` ``   | `'code'`            |
+|            | `strikeThrough`  | `~~strikethrough~~`   | `'strike-through'`  |
+|            | `link`           | `[text](url "title")` | `'link'`            |
+| `types`    | `code`           | Fenced code blocks    | `'code'`            |
+|            | `horizontalRule` | `---`                 | `'horizontal-rule'` |
+|            | `image`          | `![alt](src)`         | `'image'`           |
+|            | `html`           | HTML blocks           | `'html'`            |
+|            | `callout`        | `> [!NOTE]`, etc.     | `'callout'`         |
+
+Override a matcher when your schema uses a different name for a type. For example, if your schema uses `'heading 1'` instead of `'h1'`:
+
+```ts
+markdownToPortableText(markdown, {
+  schema: compileSchema(
+    defineSchema({
+      /* your schema */
+    }),
+  ),
+  block: {
+    h1: ({context}) => {
+      const style = context.schema.styles.find((s) => s.name === 'heading 1')
+      return style?.name
+    },
+  },
+})
+```
+
+Returning `undefined` from a matcher skips the element gracefully. This is useful when a type may or may not exist in the schema depending on the content model.
+
+## Supported features
+
+| Feature          | Markdown to PT |
+| ---------------- | :------------: |
+| Headings (h1-h6) |       ✅       |
+| Paragraphs       |       ✅       |
+| Bold             |       ✅       |
+| Italic           |       ✅       |
+| Inline code      |       ✅       |
+| Strikethrough    |       ✅       |
+| Links            |       ✅       |
+| Blockquotes      |       ✅       |
+| Ordered lists    |       ✅       |
+| Unordered lists  |       ✅       |
+| Nested lists     |       ✅       |
+| Code blocks      |       ✅       |
+| Horizontal rules |       ✅       |
+| Images           |       ✅       |
+| Tables           |      ✅\*      |
+| HTML blocks      |       ✅       |
+| Callouts         |      ✅\*      |
+
+\* Requires custom schema configuration (see above).
+
+:::note
+This package uses markdown-it as its Markdown parser. Remark and unified plugins are not compatible.
+:::
+
+## Other conversion paths
+
+| Source format   | Tool                                                                                                                           |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| HTML → PT       | [`@portabletext/html`](/conversion/html-to-portable-text/)                                                                     |
+| Gutenberg → PT  | [`@emdash-cms/gutenberg-to-portable-text`](https://github.com/emdash-cms/emdash) (30+ block types)                             |
+| Contentful → PT | [`@portabletext/contentful-rich-text-to-portable-text`](https://github.com/portabletext/contentful-rich-text-to-portable-text) |
+
+## Further reading
+
+- [Markdown rendering guide](/rendering/markdown/) for converting PT blocks to Markdown strings
+- [`@portabletext/markdown` on GitHub](https://github.com/portabletext/editor/tree/main/packages/markdown) for full API documentation and changelog
