@@ -172,15 +172,13 @@ describe('event.block.unset', () => {
     })
 
     await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toMatchObject([
+      expect(editor.getSnapshot().context.value).toEqual([
         {
+          _key: 'k3',
           _type: 'url',
           href: 'https://www.sanity.io',
         },
       ])
-      expect(editor.getSnapshot().context.value[0]!._key).not.toEqual(
-        urlBlockKey,
-      )
       expect(patches.slice(4)).toEqual([set('k3', [0, '_key'])])
     })
   })

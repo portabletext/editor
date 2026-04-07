@@ -14,7 +14,7 @@ describe(toSlateBlock.name, () => {
       {schemaTypes},
     )
 
-    expect(result).toMatchObject({
+    expect(result).toEqual({
       _key: '123',
       _type: 'image',
     })

@@ -887,8 +887,8 @@ export const stepDefinitions = [
             })
           : undefined
 
-        expect(anchorOffset).toBeDefined()
-        expect(focusOffset).toBeDefined()
+        assert(anchorOffset !== undefined)
+        assert(focusOffset !== undefined)
 
         context.editor.send({
           type: 'decorator.toggle',

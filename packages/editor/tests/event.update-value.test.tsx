@@ -914,7 +914,26 @@ describe('event.update value', () => {
     })
 
     await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toHaveLength(2)
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: block1Key,
+          children: [{_type: 'span', _key: span1Key, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: block2Key,
+          children: [
+            {_type: 'span', _key: span2Key, text: 'bar', marks: []},
+            {_type: 'stock-ticker', _key: stockTickerKey},
+            {_type: 'span', _key: span3Key, text: 'baz', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
     })
 
     editor.send({

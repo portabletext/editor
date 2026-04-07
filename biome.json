@@ -1,5 +1,6 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.2.2/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.4.10/schema.json",
+  "plugins": ["./biome-plugins/no-weak-value-assertions.grit"],
   "formatter": {
     "enabled": false
   },

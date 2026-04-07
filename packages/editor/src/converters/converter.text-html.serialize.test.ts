@@ -122,8 +122,11 @@ describe(converterTextHtml.mimeType, () => {
           originEvent: 'clipboard.copy',
         },
       }),
-    ).toMatchObject({
+    ).toEqual({
       data: '<p><em>foo <code><strong>bar</strong> baz</code></em></p>',
+      mimeType: 'text/html',
+      originEvent: 'clipboard.copy',
+      type: 'serialization.success',
     })
   })
 
@@ -145,7 +148,10 @@ describe(converterTextHtml.mimeType, () => {
           originEvent: 'clipboard.copy',
         },
       }),
-    ).toMatchObject({
+    ).toEqual({
+      mimeType: 'text/html',
+      originEvent: 'clipboard.copy',
+      reason: 'Serialized HTML is empty',
       type: 'serialization.failure',
     })
   })
@@ -176,8 +182,11 @@ describe(converterTextHtml.mimeType, () => {
           originEvent: 'clipboard.copy',
         },
       }),
-    ).toMatchObject({
+    ).toEqual({
       data: '<p>fizz  buz</p>',
+      mimeType: 'text/html',
+      originEvent: 'clipboard.copy',
+      type: 'serialization.success',
     })
   })
 
@@ -240,8 +249,11 @@ describe(converterTextHtml.mimeType, () => {
           originEvent: 'clipboard.copy',
         },
       }),
-    ).toMatchObject({
+    ).toEqual({
       data: '<ol><li>foo<ul><li>bar</li></ul></li></ol>',
+      mimeType: 'text/html',
+      originEvent: 'clipboard.copy',
+      type: 'serialization.success',
     })
   })
 })

@@ -35,7 +35,7 @@ describe(converterTextHtml.mimeType, () => {
           data: decoratedParagraph,
         },
       }),
-    ).toMatchObject({
+    ).toEqual({
       data: [
         {
           _key: 'k0',
@@ -52,6 +52,8 @@ describe(converterTextHtml.mimeType, () => {
           style: 'normal',
         },
       ],
+      mimeType: 'text/html',
+      type: 'deserialization.success',
     })
   })
 
@@ -68,7 +70,7 @@ describe(converterTextHtml.mimeType, () => {
           data: decoratedParagraph,
         },
       }),
-    ).toMatchObject({
+    ).toEqual({
       data: [
         {
           _key: 'k0',
@@ -97,6 +99,8 @@ describe(converterTextHtml.mimeType, () => {
           style: 'normal',
         },
       ],
+      mimeType: 'text/html',
+      type: 'deserialization.success',
     })
   })
 
@@ -113,7 +117,9 @@ describe(converterTextHtml.mimeType, () => {
           data: image,
         },
       }),
-    ).toMatchObject({
+    ).toEqual({
+      mimeType: 'text/html',
+      reason: 'No blocks deserialized',
       type: 'deserialization.failure',
     })
   })
@@ -127,7 +133,7 @@ describe(converterTextHtml.mimeType, () => {
           data: paragraphWithLink,
         },
       }),
-    ).toMatchObject({
+    ).toEqual({
       data: [
         {
           _key: 'k0',
@@ -144,6 +150,8 @@ describe(converterTextHtml.mimeType, () => {
           style: 'normal',
         },
       ],
+      mimeType: 'text/html',
+      type: 'deserialization.success',
     })
   })
 
@@ -162,7 +170,7 @@ describe(converterTextHtml.mimeType, () => {
           data: paragraphWithLink,
         },
       }),
-    ).toMatchObject({
+    ).toEqual({
       data: [
         {
           _key: 'k1',
@@ -191,6 +199,8 @@ describe(converterTextHtml.mimeType, () => {
           style: 'normal',
         },
       ],
+      mimeType: 'text/html',
+      type: 'deserialization.success',
     })
   })
 
@@ -207,7 +217,7 @@ describe(converterTextHtml.mimeType, () => {
           data: unorderedList,
         },
       }),
-    ).toMatchObject({
+    ).toEqual({
       data: [
         {
           _key: 'k0',
@@ -242,6 +252,8 @@ describe(converterTextHtml.mimeType, () => {
           style: 'normal',
         },
       ],
+      mimeType: 'text/html',
+      type: 'deserialization.success',
     })
   })
 
@@ -258,7 +270,7 @@ describe(converterTextHtml.mimeType, () => {
           data: orderedList,
         },
       }),
-    ).toMatchObject({
+    ).toEqual({
       data: [
         {
           _key: 'k0',
@@ -293,6 +305,8 @@ describe(converterTextHtml.mimeType, () => {
           style: 'normal',
         },
       ],
+      mimeType: 'text/html',
+      type: 'deserialization.success',
     })
   })
 
@@ -309,7 +323,7 @@ describe(converterTextHtml.mimeType, () => {
           data: nestedList,
         },
       }),
-    ).toMatchObject({
+    ).toEqual({
       data: [
         {
           _key: 'k0',
@@ -344,6 +358,8 @@ describe(converterTextHtml.mimeType, () => {
           style: 'normal',
         },
       ],
+      mimeType: 'text/html',
+      type: 'deserialization.success',
     })
   })
 })

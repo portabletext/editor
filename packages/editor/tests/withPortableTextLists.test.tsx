@@ -50,7 +50,6 @@ describe('plugin:withPortableTextLists', () => {
     })
 
     const editor = editorRef.current!
-    expect(editor).toBeDefined()
     await vi.waitFor(() => {
       PortableTextEditor.focus(editor)
       PortableTextEditor.select(editor, {
