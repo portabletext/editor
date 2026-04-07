@@ -27,7 +27,9 @@ describe(converterPortableText.deserialize, () => {
           data: safeStringify(''),
         },
       }),
-    ).toMatchObject({
+    ).toEqual({
+      mimeType: 'application/x-portable-text',
+      reason: 'Data is not an array',
       type: 'deserialization.failure',
     })
   })
@@ -41,8 +43,10 @@ describe(converterPortableText.deserialize, () => {
           data: safeStringify([]),
         },
       }),
-    ).toMatchObject({
+    ).toEqual({
       data: [],
+      mimeType: 'application/x-portable-text',
+      type: 'deserialization.success',
     })
   })
 
@@ -55,7 +59,9 @@ describe(converterPortableText.deserialize, () => {
           data: safeStringify([{foo: 'bar'}]),
         },
       }),
-    ).toMatchObject({
+    ).toEqual({
+      mimeType: 'application/x-portable-text',
+      reason: 'No blocks were parsed',
       type: 'deserialization.failure',
     })
   })
@@ -69,7 +75,7 @@ describe(converterPortableText.deserialize, () => {
           data: safeStringify([{_type: 'block', children: []}, {foo: 'bar'}]),
         },
       }),
-    ).toMatchObject({
+    ).toEqual({
       data: [
         {
           _type: 'block',
@@ -84,6 +90,8 @@ describe(converterPortableText.deserialize, () => {
           ],
         },
       ],
+      mimeType: 'application/x-portable-text',
+      type: 'deserialization.success',
     })
   })
 
@@ -106,12 +114,14 @@ describe(converterPortableText.deserialize, () => {
           ]),
         },
       }),
-    ).toMatchObject({
+    ).toEqual({
       data: [
         {
+          _key: 'k0',
           _type: 'block',
           children: [
             {
+              _key: 'k1',
               _type: 'span',
               text: 'foo',
               marks: [],
@@ -119,6 +129,8 @@ describe(converterPortableText.deserialize, () => {
           ],
         },
       ],
+      mimeType: 'application/x-portable-text',
+      type: 'deserialization.success',
     })
   })
 
@@ -131,7 +143,9 @@ describe(converterPortableText.deserialize, () => {
           data: safeStringify([{_type: 'foo'}]),
         },
       }),
-    ).toMatchObject({
+    ).toEqual({
+      mimeType: 'application/x-portable-text',
+      reason: 'No blocks were parsed',
       type: 'deserialization.failure',
     })
   })
@@ -157,7 +171,7 @@ describe(converterPortableText.deserialize, () => {
           ]),
         },
       }),
-    ).toMatchObject({
+    ).toEqual({
       data: [
         {
           _key: 'b2',
@@ -165,6 +179,8 @@ describe(converterPortableText.deserialize, () => {
           src: 'https://example.com/image.jpg',
         },
       ],
+      mimeType: 'application/x-portable-text',
+      type: 'deserialization.success',
     })
   })
 
@@ -182,9 +198,10 @@ describe(converterPortableText.deserialize, () => {
           ]),
         },
       }),
-    ).toMatchObject({
+    ).toEqual({
       data: [
         {
+          _key: 'k0',
           _type: 'block',
           children: [
             {
@@ -196,6 +213,8 @@ describe(converterPortableText.deserialize, () => {
           ],
         },
       ],
+      mimeType: 'application/x-portable-text',
+      type: 'deserialization.success',
     })
   })
 
@@ -222,13 +241,16 @@ describe(converterPortableText.deserialize, () => {
           ]),
         },
       }),
-    ).toMatchObject({
+    ).toEqual({
       data: [
         {
+          _key: 'k0',
           _type: 'block',
-          children: [{_type: 'stock-ticker', symbol: 'AAPL'}],
+          children: [{_key: 'k1', _type: 'stock-ticker', symbol: 'AAPL'}],
         },
       ],
+      mimeType: 'application/x-portable-text',
+      type: 'deserialization.success',
     })
   })
 
@@ -491,24 +513,30 @@ describe(converterPortableText.deserialize, () => {
           ]),
         },
       }),
-    ).toMatchObject({
+    ).toEqual({
       data: [
         {
+          _key: 'k0',
           _type: 'block',
           children: [
             {
+              _key: 'k1',
               _type: 'span',
               text: 'foo',
               marks: [],
             },
             {
+              _key: 'k2',
               _type: 'span',
               text: 'bar',
               marks: [],
             },
           ],
+          markDefs: [],
         },
       ],
+      mimeType: 'application/x-portable-text',
+      type: 'deserialization.success',
     })
   })
 
@@ -555,17 +583,20 @@ describe(converterPortableText.deserialize, () => {
           ]),
         },
       }),
-    ).toMatchObject({
+    ).toEqual({
       data: [
         {
+          _key: 'k0',
           _type: 'block',
           children: [
             {
+              _key: 'k1',
               _type: 'span',
               text: 'foo',
               marks: ['b0m0'],
             },
             {
+              _key: 'k2',
               _type: 'span',
               text: 'bar',
               marks: [],
@@ -580,6 +611,8 @@ describe(converterPortableText.deserialize, () => {
           ],
         },
       ],
+      mimeType: 'application/x-portable-text',
+      type: 'deserialization.success',
     })
   })
 
@@ -608,17 +641,20 @@ describe(converterPortableText.deserialize, () => {
           ]),
         },
       }),
-    ).toMatchObject({
+    ).toEqual({
       data: [
         {
+          _key: 'k0',
           _type: 'block',
           children: [
             {
+              _key: 'k1',
               _type: 'span',
               text: 'foo',
               marks: [],
             },
             {
+              _key: 'k2',
               _type: 'span',
               text: 'bar',
               marks: [],
@@ -626,6 +662,8 @@ describe(converterPortableText.deserialize, () => {
           ],
         },
       ],
+      mimeType: 'application/x-portable-text',
+      type: 'deserialization.success',
     })
   })
 
@@ -658,17 +696,20 @@ describe(converterPortableText.deserialize, () => {
           ]),
         },
       }),
-    ).toMatchObject({
+    ).toEqual({
       data: [
         {
+          _key: 'k0',
           _type: 'block',
           children: [
             {
+              _key: 'k1',
               _type: 'span',
               text: 'foo',
               marks: ['strong'],
             },
             {
+              _key: 'k2',
               _type: 'span',
               text: 'bar',
               marks: [],
@@ -676,6 +717,8 @@ describe(converterPortableText.deserialize, () => {
           ],
         },
       ],
+      mimeType: 'application/x-portable-text',
+      type: 'deserialization.success',
     })
   })
 })

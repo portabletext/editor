@@ -1,0 +1,14 @@
+or {
+  `expect($val).toMatchObject($obj)` as $match where {
+    register_diagnostic(
+      span = $match,
+      message = "Use `toEqual` for exact deep equality instead of `toMatchObject`."
+    )
+  },
+  `expect($val).toBeDefined()` as $match where {
+    register_diagnostic(
+      span = $match,
+      message = "Use `toEqual` with the expected value instead of `toBeDefined`."
+    )
+  }
+}

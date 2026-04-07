@@ -101,9 +101,20 @@ describe('`text/plain` paste', () => {
 
     // The code block object should be inserted, NOT stripped to plain text
     await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toMatchObject([
-        {_type: 'block', children: [{_type: 'span', text: 'foo'}]},
-        {_type: 'code', code: 'const x = 1', language: 'typescript'},
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: 'k0',
+          _type: 'block',
+          children: [{_key: 'k1', _type: 'span', text: 'foo', marks: []}],
+          style: 'normal',
+          markDefs: [],
+        },
+        {
+          _type: 'code',
+          _key: 'k4',
+          code: 'const x = 1',
+          language: 'typescript',
+        },
       ])
     })
   })

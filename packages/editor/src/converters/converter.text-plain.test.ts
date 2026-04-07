@@ -104,8 +104,11 @@ test(converterTextPlain.mimeType, () => {
         originEvent: 'clipboard.copy',
       },
     }),
-  ).toMatchObject({
+  ).toEqual({
     data: 'baz\n\nfizz',
+    mimeType: 'text/plain',
+    originEvent: 'clipboard.copy',
+    type: 'serialization.success',
   })
 
   expect(
@@ -128,8 +131,11 @@ test(converterTextPlain.mimeType, () => {
         originEvent: 'clipboard.copy',
       },
     }),
-  ).toMatchObject({
+  ).toEqual({
     data: 'foobar\n\nbaz',
+    mimeType: 'text/plain',
+    originEvent: 'clipboard.copy',
+    type: 'serialization.success',
   })
 
   expect(
@@ -152,8 +158,11 @@ test(converterTextPlain.mimeType, () => {
         originEvent: 'clipboard.copy',
       },
     }),
-  ).toMatchObject({
+  ).toEqual({
     data: '',
+    mimeType: 'text/plain',
+    originEvent: 'clipboard.copy',
+    type: 'serialization.success',
   })
 
   expect(
@@ -182,8 +191,11 @@ test(converterTextPlain.mimeType, () => {
         originEvent: 'clipboard.copy',
       },
     }),
-  ).toMatchObject({
+  ).toEqual({
     data: 'foobar\n\nbaz',
+    mimeType: 'text/plain',
+    originEvent: 'clipboard.copy',
+    type: 'serialization.success',
   })
 
   expect(
@@ -206,8 +218,11 @@ test(converterTextPlain.mimeType, () => {
         originEvent: 'clipboard.copy',
       },
     }),
-  ).toMatchObject({
+  ).toEqual({
     data: 'fizzbuzz',
+    mimeType: 'text/plain',
+    originEvent: 'clipboard.copy',
+    type: 'serialization.success',
   })
 
   expect(
@@ -236,7 +251,10 @@ test(converterTextPlain.mimeType, () => {
         originEvent: 'clipboard.copy',
       },
     }),
-  ).toMatchObject({
+  ).toEqual({
     data: 'fizzbuzz',
+    mimeType: 'text/plain',
+    originEvent: 'clipboard.copy',
+    type: 'serialization.success',
   })
 })

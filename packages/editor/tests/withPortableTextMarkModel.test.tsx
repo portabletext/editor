@@ -186,7 +186,6 @@ describe('plugin:withPortableTextMarksModel', () => {
       })
 
       const editor = editorRef.current!
-      expect(editor).toBeDefined()
       await vi.waitFor(() => {
         PortableTextEditor.select(editor, sel)
         PortableTextEditor.delete(editor, sel)
@@ -468,7 +467,6 @@ describe('plugin:withPortableTextMarksModel', () => {
       })
 
       const editor = editorRef.current!
-      expect(editor).toBeDefined()
       await vi.waitFor(() => {
         PortableTextEditor.focus(editor)
         PortableTextEditor.select(editor, {
@@ -524,7 +522,6 @@ describe('plugin:withPortableTextMarksModel', () => {
       })
 
       const editor = editorRef.current!
-      expect(editor).toBeDefined()
       await vi.waitFor(() => {
         PortableTextEditor.focus(editor)
         PortableTextEditor.select(editor, {
