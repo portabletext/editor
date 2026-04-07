@@ -1295,4 +1295,281 @@ describe('event.update value', () => {
       ])
     })
   })
+
+  test('Scenario: Adding new children to a text block (pure addition)', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanAKey = keyGenerator()
+    const spanBKey = keyGenerator()
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        decorators: [{name: 'strong'}],
+      }),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanAKey, text: 'Hello', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    const newValue = [
+      {
+        _type: 'block',
+        _key: blockKey,
+        children: [
+          {_type: 'span', _key: spanAKey, text: 'Hello', marks: []},
+          {
+            _type: 'span',
+            _key: spanBKey,
+            text: ' World',
+            marks: ['strong'],
+          },
+        ],
+        markDefs: [],
+        style: 'normal',
+      },
+    ]
+
+    editor.send({
+      type: 'update value',
+      value: newValue,
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(newValue)
+    })
+  })
+
+  test('Scenario: Replacing all children with different keys', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanAKey = keyGenerator()
+    const spanBKey = keyGenerator()
+    const spanCKey = keyGenerator()
+    const spanDKey = keyGenerator()
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        decorators: [{name: 'strong'}, {name: 'em'}],
+      }),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {_type: 'span', _key: spanAKey, text: 'old1', marks: ['strong']},
+            {_type: 'span', _key: spanBKey, text: 'old2', marks: ['em']},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    const newValue = [
+      {
+        _type: 'block',
+        _key: blockKey,
+        children: [
+          {_type: 'span', _key: spanCKey, text: 'new1', marks: ['em']},
+          {_type: 'span', _key: spanDKey, text: 'new2', marks: ['strong']},
+        ],
+        markDefs: [],
+        style: 'normal',
+      },
+    ]
+
+    editor.send({
+      type: 'update value',
+      value: newValue,
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(newValue)
+    })
+  })
+
+  test('Scenario: Reordering children and modifying text simultaneously', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanAKey = keyGenerator()
+    const spanBKey = keyGenerator()
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        decorators: [{name: 'strong'}, {name: 'em'}],
+      }),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {_type: 'span', _key: spanAKey, text: 'foo', marks: ['strong']},
+            {_type: 'span', _key: spanBKey, text: 'bar', marks: ['em']},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    const newValue = [
+      {
+        _type: 'block',
+        _key: blockKey,
+        children: [
+          {_type: 'span', _key: spanBKey, text: 'BAR', marks: ['em']},
+          {_type: 'span', _key: spanAKey, text: 'FOO', marks: ['strong']},
+        ],
+        markDefs: [],
+        style: 'normal',
+      },
+    ]
+
+    editor.send({
+      type: 'update value',
+      value: newValue,
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(newValue)
+    })
+  })
+
+  test('Scenario: Reordering top-level blocks', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const block1Key = keyGenerator()
+    const span1Key = keyGenerator()
+    const block2Key = keyGenerator()
+    const span2Key = keyGenerator()
+    const block3Key = keyGenerator()
+    const span3Key = keyGenerator()
+
+    const block1 = {
+      _type: 'block',
+      _key: block1Key,
+      children: [{_type: 'span', _key: span1Key, text: 'First', marks: []}],
+      markDefs: [],
+      style: 'normal',
+    }
+    const block2 = {
+      _type: 'block',
+      _key: block2Key,
+      children: [{_type: 'span', _key: span2Key, text: 'Second', marks: []}],
+      markDefs: [],
+      style: 'normal',
+    }
+    const block3 = {
+      _type: 'block',
+      _key: block3Key,
+      children: [{_type: 'span', _key: span3Key, text: 'Third', marks: []}],
+      markDefs: [],
+      style: 'normal',
+    }
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue: [block1, block2, block3],
+    })
+
+    const updatedBlock1 = {
+      ...block1,
+      children: [
+        {_type: 'span', _key: span1Key, text: 'First updated', marks: []},
+      ],
+    }
+    const updatedBlock3 = {
+      ...block3,
+      children: [
+        {_type: 'span', _key: span3Key, text: 'Third updated', marks: []},
+      ],
+    }
+
+    editor.send({
+      type: 'update value',
+      value: [updatedBlock1, block2, updatedBlock3],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        updatedBlock1,
+        block2,
+        updatedBlock3,
+      ])
+    })
+  })
+
+  test('Scenario: Multiple blocks with children changes in same update', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const block1Key = keyGenerator()
+    const spanAKey = keyGenerator()
+    const block2Key = keyGenerator()
+    const spanBKey = keyGenerator()
+    const spanCKey = keyGenerator()
+    const spanDKey = keyGenerator()
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        decorators: [{name: 'strong'}],
+      }),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: block1Key,
+          children: [{_type: 'span', _key: spanAKey, text: 'hello', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: block2Key,
+          children: [
+            {_type: 'span', _key: spanBKey, text: 'world', marks: []},
+            {_type: 'span', _key: spanCKey, text: '!', marks: ['strong']},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    const newValue = [
+      {
+        _type: 'block',
+        _key: block1Key,
+        children: [
+          {_type: 'span', _key: spanAKey, text: 'hello', marks: []},
+          {_type: 'span', _key: spanDKey, text: ' there', marks: ['strong']},
+        ],
+        markDefs: [],
+        style: 'normal',
+      },
+      {
+        _type: 'block',
+        _key: block2Key,
+        children: [{_type: 'span', _key: spanBKey, text: 'world', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ]
+
+    editor.send({
+      type: 'update value',
+      value: newValue,
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(newValue)
+    })
+  })
 })
