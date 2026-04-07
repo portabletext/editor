@@ -176,7 +176,10 @@ export default defineConfig({
         },
         {
           label: 'Conversion',
-          items: [{slug: 'conversion/html-to-portable-text'}],
+          items: [
+            {slug: 'conversion/html-to-portable-text'},
+            {slug: 'conversion/markdown-to-portable-text'},
+          ],
         },
         {slug: 'why-portable-text'},
         {slug: 'specification'},
