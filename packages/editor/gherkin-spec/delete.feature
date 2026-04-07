@@ -129,3 +129,30 @@ Feature: Delete
     Then the text is "foo| baz"
     When undo is performed
     Then the text is "foo|bar baz"
+
+  Scenario Outline: Merging blocks preserves marks
+    Given the text "foo|bar"
+    And "strong" around "bar"
+    When the editor is focused
+    And the caret is put <position>
+    And <button> is pressed
+    Then the text is "foo,bar"
+    And "foo" has no marks
+    And "bar" has marks "strong"
+
+    Examples:
+      | position     | button        |
+      | before "bar" | "{Backspace}" |
+      | after "foo"  | "{Delete}"    |
+
+  Scenario Outline: Merging blocks triggers span normalization
+    Given the text "foo|bar"
+    When the editor is focused
+    And the caret is put <position>
+    And <button> is pressed
+    Then the text is "foobar"
+
+    Examples:
+      | position     | button        |
+      | before "bar" | "{Backspace}" |
+      | after "foo"  | "{Delete}"    |
