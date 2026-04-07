@@ -134,3 +134,38 @@ Feature: Undo/Redo
     Then the text is "(c)"
     When undo is performed
     Then the text is "(cf"
+
+  Scenario: Undoing break in the middle of text
+    Given the text "foobar"
+    When the editor is focused
+    And the caret is put after "foo"
+    And "{Enter}" is pressed
+    And "x" is typed
+    Then the text is "foo|xbar"
+    When undo is performed
+    And undo is performed
+    And "y" is typed
+    Then the text is "fooybar"
+
+  Scenario: Undoing delete backward across blocks
+    Given the text "foo|bar"
+    When the editor is focused
+    And the caret is put before "bar"
+    And "{Backspace}" is pressed
+    And "x" is typed
+    Then the text is "fooxbar"
+    When undo is performed
+    And undo is performed
+    And "y" is typed
+    Then the text is "foo|ybar"
+
+  Scenario: Undoing and redoing break
+    Given the text "foobar"
+    When the editor is focused
+    And the caret is put after "foo"
+    And "{Enter}" is pressed
+    Then the text is "foo|bar"
+    When undo is performed
+    Then the text is "foobar"
+    When redo is performed
+    Then the text is "foo|bar"
