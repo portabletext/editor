@@ -6,6 +6,7 @@ sidebar:
 ---
 
 import {LinkCard, TabItem, Tabs} from '@astrojs/starlight/components'
+import {PackageManagers} from 'starlight-package-managers'
 
 The Portable Text Editor ships with testing infrastructure you can use for your own behaviors. There are two approaches: Gherkin specs with Racejar (the same approach every official plugin uses) and direct Vitest tests for simpler cases.
 
@@ -19,9 +20,10 @@ This guide covers `@portabletext/editor` **v6.x** and `racejar` **v2.x** ([chang
 
 Install the testing dependencies:
 
-```bash
-npm install --save-dev vitest @vitest/browser playwright racejar @portabletext/test
-```
+<PackageManagers
+  pkg="vitest @vitest/browser playwright racejar @portabletext/test"
+  type="dev"
+/>
 
 Configure Vitest for Browser Mode in your `vitest.config.ts`:
 

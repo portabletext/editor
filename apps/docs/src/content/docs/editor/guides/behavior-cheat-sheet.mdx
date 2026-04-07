@@ -6,6 +6,7 @@ sidebar:
 ---
 
 import {CardGrid, LinkCard} from '@astrojs/starlight/components'
+import {PackageManagers} from 'starlight-package-managers'
 
 Below are some common behavior examples. You can also find a list of core behaviors [on GitHub](https://github.com/portabletext/editor/tree/main/packages/editor/src/behaviors).
 
@@ -159,9 +160,7 @@ Test it out in the [Playground](https://playground.portabletext.org).
 
 Install the package:
 
-```bash
-npm install @portabletext/plugin-emoji-picker
-```
+<PackageManagers pkg="@portabletext/plugin-emoji-picker" />
 
 Use the `useEmojiPicker` hook to handle the state and logic:
 

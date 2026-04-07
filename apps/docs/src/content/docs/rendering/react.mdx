@@ -3,11 +3,11 @@ title: React
 description: How to render Portable Text in React using @portabletext/react.
 ---
 
+import {PackageManagers} from 'starlight-package-managers'
+
 ## Install
 
-```sh
-npm install @portabletext/react
-```
+<PackageManagers pkg="@portabletext/react" />
 
 ## Basic usage
 
@@ -67,16 +67,19 @@ Custom block types (objects embedded in your content) are handled under `types`.
 ```jsx
 import {getImageDimensions} from '@sanity/asset-utils'
 import {createImageUrlBuilder} from '@sanity/image-url'
-import {myConfiguredSanityClient} from '../sanity/client.ts'
 
-const urlBuilder = createImageUrlBuilder(myConfiguredSanityClient)
+// Initialize with your Sanity project config
+const builder = createImageUrlBuilder({
+  projectId: 'yourProjectId',
+  dataset: 'production',
+})
+const urlFor = (source) => builder.image(source)
 
 const SampleImageComponent = ({value, isInline}) => {
   const {width, height} = getImageDimensions(value)
   return (
     <img
-      src={urlBuilder
-        .image(value)
+      src={urlFor(value)
         .width(isInline ? 100 : 800)
         .fit('max')
         .auto('format')
