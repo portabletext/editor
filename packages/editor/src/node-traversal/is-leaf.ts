@@ -1,5 +1,7 @@
 import type {EditorSchema} from '../editor/editor-schema'
 import type {Node} from '../slate/interfaces/node'
+import type {Path} from '../slate/interfaces/path'
+import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import {getNodeChildren} from './get-children'
 
 /**
@@ -14,7 +16,7 @@ export function isLeaf(
     editableTypes: Set<string>
     value: Array<Node>
   },
-  path: Array<number>,
+  path: Path,
 ): boolean {
   if (path.length === 0) {
     return false
@@ -30,7 +32,16 @@ export function isLeaf(
   let scopePath = ''
 
   for (let i = 0; i < path.length; i++) {
-    const node = currentChildren[path[i]!]
+    const segment = path[i]!
+    let node: Node | undefined
+
+    if (isKeyedSegment(segment)) {
+      node = currentChildren.find((child) => child._key === segment._key)
+    } else if (typeof segment === 'number') {
+      node = currentChildren.at(segment)
+    } else {
+      continue
+    }
 
     if (!node) {
       return false

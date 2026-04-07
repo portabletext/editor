@@ -1,10 +1,9 @@
 import {isSpan} from '@portabletext/schema'
 import {applySelect} from '../internal-utils/apply-selection'
 import {getNode} from '../node-traversal/get-node'
+import {getSibling} from '../node-traversal/get-sibling'
 import {getSpanNode} from '../node-traversal/get-span-node'
-import {hasNode} from '../node-traversal/has-node'
 import {isLeaf} from '../node-traversal/is-leaf'
-import {nextPath} from '../slate/path/next-path'
 import {isCollapsedRange} from '../slate/range/is-collapsed-range'
 import type {OperationImplementation} from './operation.types'
 
@@ -34,13 +33,13 @@ export const insertTextOperationImplementation: OperationImplementation<
     isLeaf(editor, nodeEntry.path) &&
     !isSpan({schema: editor.schema}, node)
   ) {
-    const next = nextPath(path)
+    const nextSibling = getSibling(editor, nodeEntry.path, 'next')
 
-    if (hasNode(editor, next)) {
-      const nextNodeEntry = getSpanNode(editor, next)
+    if (nextSibling) {
+      const nextNodeEntry = getSpanNode(editor, nextSibling.path)
 
       if (nextNodeEntry) {
-        path = next
+        path = nextSibling.path
         offset = 0
         applySelect(editor, {path, offset})
       } else {

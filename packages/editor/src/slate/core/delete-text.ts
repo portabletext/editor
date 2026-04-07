@@ -8,6 +8,7 @@ import {getAncestors} from '../../node-traversal/get-ancestors'
 import {getHighestObjectNode} from '../../node-traversal/get-highest-object-node'
 import {getNode} from '../../node-traversal/get-node'
 import {getNodes} from '../../node-traversal/get-nodes'
+import {getSibling} from '../../node-traversal/get-sibling'
 import {getSpanNode} from '../../node-traversal/get-span-node'
 import type {PortableTextSlateEditor} from '../../types/slate-editor'
 import {after} from '../editor/after'
@@ -27,15 +28,12 @@ import type {Path} from '../interfaces/path'
 import type {Point} from '../interfaces/point'
 import {isObjectNode} from '../node/is-object-node'
 import {commonPath} from '../path/common-path'
-import {comparePaths} from '../path/compare-paths'
 import {isAncestorPath} from '../path/is-ancestor-path'
 import {isCommonPath} from '../path/is-common-path'
 import {isPath} from '../path/is-path'
 import {isSiblingPath} from '../path/is-sibling-path'
-import {nextPath} from '../path/next-path'
 import {pathEquals} from '../path/path-equals'
 import {pathLevels} from '../path/path-levels'
-import {previousPath} from '../path/previous-path'
 import {isPoint} from '../point/is-point'
 import {pointEquals} from '../point/point-equals'
 import {isCollapsedRange} from '../range/is-collapsed-range'
@@ -100,7 +98,7 @@ export function deleteText(editor: Editor, options: TextDeleteOptions = {}) {
     }
 
     if (!hanging) {
-      const [, end] = rangeEdges(at)
+      const [, end] = rangeEdges(at, {}, editor)
       const endOfDoc = editorEnd(editor, [])
 
       if (!pointEquals(end, endOfDoc)) {
@@ -108,7 +106,7 @@ export function deleteText(editor: Editor, options: TextDeleteOptions = {}) {
       }
     }
 
-    let [start, end] = rangeEdges(at)
+    let [start, end] = rangeEdges(at, {}, editor)
     const startBlock = getAncestorTextBlock(editor, start.path)
     const endBlock = getAncestorTextBlock(editor, end.path)
     const isAcrossBlocks =
@@ -148,7 +146,7 @@ export function deleteText(editor: Editor, options: TextDeleteOptions = {}) {
 
     // Get the highest nodes that are completely inside the range, as well as
     // the start and end nodes.
-    const matches: Array<{node: Node; path: Array<number>}> = []
+    const matches: Array<{node: Node; path: Path}> = []
     let lastPath: Path | undefined
 
     for (const entry of getNodes(editor, {
@@ -157,7 +155,7 @@ export function deleteText(editor: Editor, options: TextDeleteOptions = {}) {
     })) {
       const {node, path: entryPath} = entry
 
-      if (lastPath && comparePaths(entryPath, lastPath) === 0) {
+      if (lastPath && pathEquals(entryPath, lastPath)) {
         continue
       }
 
@@ -234,15 +232,13 @@ export function deleteText(editor: Editor, options: TextDeleteOptions = {}) {
         const {node: prevNode, path: prevPath} = prev
 
         if (mergePath.length !== 0 && prevPath.length !== 0) {
-          const newPath = nextPath(prevPath)
           const common = commonPath(mergePath, prevPath)
           const isPreviousSibling = isSiblingPath(mergePath, prevPath)
           const editorLevels = pathLevels(mergePath)
             .filter((levelPath) => levelPath.length > 0)
             .map((levelPath) => getNode(editor, levelPath))
             .filter(
-              (entry): entry is {node: Node; path: Array<number>} =>
-                entry !== undefined,
+              (entry): entry is {node: Node; path: Path} => entry !== undefined,
             )
             .map((entry) => entry.node)
             .slice(Math.max(0, common.length - 1))
@@ -304,7 +300,12 @@ export function deleteText(editor: Editor, options: TextDeleteOptions = {}) {
                 path: mergePath,
                 node: moveNode,
               })
-              editor.apply({type: 'insert_node', path: newPath, node: moveNode})
+              editor.apply({
+                type: 'insert_node',
+                path: mergePath,
+                node: moveNode,
+                position: 'before',
+              })
             }
           }
 
@@ -334,7 +335,7 @@ export function deleteText(editor: Editor, options: TextDeleteOptions = {}) {
             ) {
               const targetPath = isPreviousSibling
                 ? prevPath
-                : previousPath(newPath)
+                : (getSibling(editor, mergePath, 'previous')?.path ?? mergePath)
               const oldDefs =
                 (Array.isArray(prevNode.markDefs) && prevNode.markDefs) || []
               const newMarkDefs = [
@@ -347,7 +348,7 @@ export function deleteText(editor: Editor, options: TextDeleteOptions = {}) {
               ]
               applySetNode(pteEditor, {markDefs: newMarkDefs}, targetPath)
             }
-            applyMergeNode(pteEditor, newPath, position)
+            applyMergeNode(pteEditor, mergePath, position)
           }
 
           if (emptyRef) {

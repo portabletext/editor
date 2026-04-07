@@ -1,7 +1,18 @@
-/**
- * `Path` arrays are a list of indexes that describe a node's exact position in
- * a Slate node tree. Although they are usually relative to the root `Editor`
- * object, they can be relative to any `Node` object.
- */
+import type {KeyedSegment} from '../../types/paths'
 
-export type Path = number[]
+/**
+ * A path segment identifies a position in the document tree.
+ *
+ * - `KeyedSegment` (`{_key: string}`) identifies a node by its key
+ * - `string` identifies a child field name (e.g. 'children', 'rows', 'cells')
+ * - `number` identifies a position in an array (used for empty container inserts
+ *   and rendering indexed paths)
+ */
+export type PathSegment = KeyedSegment | string | number
+
+/**
+ * A `Path` is a list of segments that describe a node's exact position in
+ * the document tree. Segments alternate between keyed node references and
+ * field names: `[{_key: 'b1'}, 'children', {_key: 's1'}]`.
+ */
+export type Path = PathSegment[]

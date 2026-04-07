@@ -21,13 +21,7 @@ export const historyRedoOperationImplementation: OperationImplementation<
       let transformedOperations = step.operations
       otherPatches.forEach((item) => {
         transformedOperations = transformedOperations.flatMap((op) =>
-          transformOperation(
-            editor,
-            item.patch,
-            op,
-            item.snapshot,
-            item.previousSnapshot,
-          ),
+          transformOperation(editor, item.patch, op),
         )
       })
       try {

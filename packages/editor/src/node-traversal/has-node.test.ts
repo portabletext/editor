@@ -6,15 +6,27 @@ describe(hasNode.name, () => {
   const testbed = createNodeTraversalTestbed()
 
   test('root level', () => {
-    expect(hasNode(testbed.context, [0])).toBe(true)
+    expect(hasNode(testbed.context, [{_key: 'k3'}])).toBe(true)
   })
 
   test('deep path', () => {
-    expect(hasNode(testbed.context, [4, 0, 0, 0, 0])).toBe(true)
+    expect(
+      hasNode(testbed.context, [
+        {_key: 'k26'},
+        'rows',
+        {_key: 'k21'},
+        'cells',
+        {_key: 'k17'},
+        'content',
+        {_key: 'k14'},
+        'children',
+        {_key: 'k12'},
+      ]),
+    ).toBe(true)
   })
 
   test('out of bounds', () => {
-    expect(hasNode(testbed.context, [99])).toBe(false)
+    expect(hasNode(testbed.context, [{_key: 'nonexistent'}])).toBe(false)
   })
 
   test('empty path', () => {

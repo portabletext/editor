@@ -77,7 +77,7 @@ export const blockSetOperationImplementation: OperationImplementation<
       }
     }
 
-    applySetNode(operation.editor, filteredProps, [blockIndex])
+    applySetNode(operation.editor, filteredProps, [{_key: slateBlock._key}])
   } else {
     const schemaDefinition = context.schema.blockObjects.find(
       (definition) => definition.name === slateBlock._type,
@@ -105,6 +105,6 @@ export const blockSetOperationImplementation: OperationImplementation<
 
     const updatedSlateBlock = applyAll(slateBlock, patches)
 
-    applySetNode(operation.editor, updatedSlateBlock, [blockIndex])
+    applySetNode(operation.editor, updatedSlateBlock, [{_key: slateBlock._key}])
   }
 }

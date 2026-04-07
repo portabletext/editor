@@ -1,5 +1,8 @@
 import type {EditorSchema} from '../editor/editor-schema'
 import type {Node} from '../slate/interfaces/node'
+import type {Path} from '../slate/interfaces/path'
+import {isAncestorPath} from '../slate/path/is-ancestor-path'
+import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import {getChildrenInternal} from './get-children'
 
 /**
@@ -24,13 +27,13 @@ export function* getNodes(
     value: Array<Node>
   },
   options: {
-    at?: Array<number>
-    from?: Array<number>
-    to?: Array<number>
-    match?: (node: Node, path: Array<number>) => boolean
+    at?: Path
+    from?: Path
+    to?: Path
+    match?: (node: Node, path: Path) => boolean
     reverse?: boolean
   } = {},
-): Generator<{node: Node; path: Array<number>}, void, undefined> {
+): Generator<{node: Node; path: Path}, void, undefined> {
   const {at = [], from, to, match, reverse = false} = options
   const traversalContext = {
     schema: context.schema,
@@ -62,7 +65,7 @@ export function* getNodeDescendants(
     editableTypes: Set<string>
   },
   node: Node | {value: Array<Node>},
-): Generator<{node: Node; path: Array<number>}, void, undefined> {
+): Generator<{node: Node; path: Path}, void, undefined> {
   yield* getNodesSimple(context, node, [], {})
 }
 
@@ -76,12 +79,12 @@ function* getNodesSimple(
     editableTypes: Set<string>
   },
   root: Node | {value: Array<Node>},
-  path: Array<number>,
+  path: Path,
   options: {
-    match?: (node: Node, path: Array<number>) => boolean
+    match?: (node: Node, path: Path) => boolean
     reverse?: boolean
   },
-): Generator<{node: Node; path: Array<number>}, void, undefined> {
+): Generator<{node: Node; path: Path}, void, undefined> {
   const {match, reverse = false} = options
 
   const children = getChildrenInternal(context, root, path)
@@ -98,57 +101,78 @@ function* getNodesSimple(
 }
 
 /**
- * Compare two paths in DFS (document) order.
+ * Compare two keyed paths in document order using sibling arrays from
+ * getChildren. Returns -1, 0, or 1.
  *
- * In DFS order, a parent comes before its children, and children come before
- * the parent's next sibling. So [4] < [4,0] < [4,0,0] < [4,1] < [5].
+ * Walks the tree to find the first diverging keyed segment, then compares
+ * their positions in the sibling array.
  */
-function compareDfsOrder(
-  pathA: Array<number>,
-  pathB: Array<number>,
+function comparePathsInTree(
+  context: {
+    schema: EditorSchema
+    editableTypes: Set<string>
+  },
+  root: Node | {value: Array<Node>},
+  pathA: Path,
+  pathB: Path,
 ): -1 | 0 | 1 {
-  const minLength = Math.min(pathA.length, pathB.length)
+  const keysA = pathA.filter(isKeyedSegment)
+  const keysB = pathB.filter(isKeyedSegment)
 
-  for (let index = 0; index < minLength; index++) {
-    const segmentA = pathA[index]!
-    const segmentB = pathB[index]!
+  let currentPath: Path = []
 
-    if (segmentA < segmentB) {
+  const minDepth = Math.min(keysA.length, keysB.length)
+
+  for (let depth = 0; depth < minDepth; depth++) {
+    const keyA = keysA[depth]!
+    const keyB = keysB[depth]!
+
+    if (keyA._key === keyB._key) {
+      const children = getChildrenInternal(context, root, currentPath)
+      const child = children.find((c) => c.node._key === keyA._key)
+      if (child) {
+        currentPath = child.path
+      }
+      continue
+    }
+
+    const siblings = getChildrenInternal(context, root, currentPath)
+    let indexA = -1
+    let indexB = -1
+
+    for (let i = 0; i < siblings.length; i++) {
+      const sibling = siblings[i]!
+      if (sibling.node._key === keyA._key) {
+        indexA = i
+      }
+      if (sibling.node._key === keyB._key) {
+        indexB = i
+      }
+      if (indexA !== -1 && indexB !== -1) {
+        break
+      }
+    }
+
+    if (indexA < indexB) {
       return -1
     }
-    if (segmentA > segmentB) {
+    if (indexA > indexB) {
       return 1
     }
+
+    return 0
   }
 
-  if (pathA.length < pathB.length) {
+  // One path is a prefix of the other (ancestor relationship)
+  // In DFS order, shorter path (ancestor) comes first
+  if (keysA.length < keysB.length) {
     return -1
   }
-  if (pathA.length > pathB.length) {
+  if (keysA.length > keysB.length) {
     return 1
   }
 
   return 0
-}
-
-/**
- * Check if `candidatePath` is a proper prefix of `targetPath`.
- */
-function isAncestorOf(
-  candidatePath: Array<number>,
-  targetPath: Array<number>,
-): boolean {
-  if (candidatePath.length >= targetPath.length) {
-    return false
-  }
-
-  for (let index = 0; index < candidatePath.length; index++) {
-    if (candidatePath[index] !== targetPath[index]) {
-      return false
-    }
-  }
-
-  return true
 }
 
 /**
@@ -163,29 +187,29 @@ function* getNodesInRange(
     editableTypes: Set<string>
   },
   root: Node | {value: Array<Node>},
-  path: Array<number>,
+  path: Path,
   options: {
-    from?: Array<number>
-    to?: Array<number>
-    match?: (node: Node, path: Array<number>) => boolean
+    from?: Path
+    to?: Path
+    match?: (node: Node, path: Path) => boolean
     reverse?: boolean
   },
-): Generator<{node: Node; path: Array<number>}, void, undefined> {
+): Generator<{node: Node; path: Path}, void, undefined> {
   const {from, to, match, reverse = false} = options
 
   const children = getChildrenInternal(context, root, path)
   const entries = reverse ? [...children].reverse() : children
 
   for (const entry of entries) {
-    if (canStopTraversal(entry.path, from, to, reverse)) {
+    if (canStopTraversal(context, root, entry.path, from, to, reverse)) {
       return
     }
 
-    if (!couldContainInRangeNodes(entry.path, from, to)) {
+    if (!couldContainInRangeNodes(context, root, entry.path, from, to)) {
       continue
     }
 
-    if (isInRange(entry.path, from, to)) {
+    if (isInRange(context, root, entry.path, from, to)) {
       if (!match || match(entry.node, entry.path)) {
         yield entry
       }
@@ -201,18 +225,29 @@ function* getNodesInRange(
  * considered in range since they contain the range boundary.
  */
 function isInRange(
-  nodePath: Array<number>,
-  from: Array<number> | undefined,
-  to: Array<number> | undefined,
+  context: {
+    schema: EditorSchema
+    editableTypes: Set<string>
+  },
+  root: Node | {value: Array<Node>},
+  nodePath: Path,
+  from: Path | undefined,
+  to: Path | undefined,
 ): boolean {
-  if (from !== undefined && compareDfsOrder(nodePath, from) === -1) {
-    if (!isAncestorOf(nodePath, from)) {
+  if (
+    from !== undefined &&
+    comparePathsInTree(context, root, nodePath, from) === -1
+  ) {
+    if (!isAncestorPath(nodePath, from)) {
       return false
     }
   }
 
-  if (to !== undefined && compareDfsOrder(nodePath, to) === 1) {
-    if (!isAncestorOf(nodePath, to)) {
+  if (
+    to !== undefined &&
+    comparePathsInTree(context, root, nodePath, to) === 1
+  ) {
+    if (!isAncestorPath(nodePath, to)) {
       return false
     }
   }
@@ -222,23 +257,27 @@ function isInRange(
 
 /**
  * Check if a subtree rooted at `nodePath` could contain any nodes in the
- * [from, to] range. Returns true if the node is in range, or if the node
- * is an ancestor of either bound (its subtree contains in-range nodes).
+ * [from, to] range.
  */
 function couldContainInRangeNodes(
-  nodePath: Array<number>,
-  from: Array<number> | undefined,
-  to: Array<number> | undefined,
+  context: {
+    schema: EditorSchema
+    editableTypes: Set<string>
+  },
+  root: Node | {value: Array<Node>},
+  nodePath: Path,
+  from: Path | undefined,
+  to: Path | undefined,
 ): boolean {
-  if (isInRange(nodePath, from, to)) {
+  if (isInRange(context, root, nodePath, from, to)) {
     return true
   }
 
-  if (from !== undefined && isAncestorOf(nodePath, from)) {
+  if (from !== undefined && isAncestorPath(nodePath, from)) {
     return true
   }
 
-  if (to !== undefined && isAncestorOf(nodePath, to)) {
+  if (to !== undefined && isAncestorPath(nodePath, to)) {
     return true
   }
 
@@ -249,9 +288,14 @@ function couldContainInRangeNodes(
  * Check if all remaining nodes in iteration order will be outside the range.
  */
 function canStopTraversal(
-  nodePath: Array<number>,
-  from: Array<number> | undefined,
-  to: Array<number> | undefined,
+  context: {
+    schema: EditorSchema
+    editableTypes: Set<string>
+  },
+  root: Node | {value: Array<Node>},
+  nodePath: Path,
+  from: Path | undefined,
+  to: Path | undefined,
   reverse: boolean,
 ): boolean {
   if (reverse) {
@@ -260,7 +304,8 @@ function canStopTraversal(
     }
 
     return (
-      compareDfsOrder(nodePath, from) === -1 && !isAncestorOf(nodePath, from)
+      comparePathsInTree(context, root, nodePath, from) === -1 &&
+      !isAncestorPath(nodePath, from)
     )
   }
 
@@ -268,5 +313,5 @@ function canStopTraversal(
     return false
   }
 
-  return compareDfsOrder(nodePath, to) === 1
+  return comparePathsInTree(context, root, nodePath, to) === 1
 }

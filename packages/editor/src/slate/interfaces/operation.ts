@@ -6,6 +6,7 @@ export type InsertNodeOperation = {
   type: 'insert_node'
   path: Path
   node: Node
+  position: 'before' | 'after'
 }
 
 export type InsertTextOperation = {
@@ -19,6 +20,7 @@ export type RemoveNodeOperation = {
   type: 'remove_node'
   path: Path
   node: Node
+  previousSiblingKey?: string
 }
 
 export type RemoveTextOperation = {

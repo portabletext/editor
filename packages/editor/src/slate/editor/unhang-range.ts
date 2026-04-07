@@ -1,23 +1,24 @@
 import {isSpan} from '@portabletext/schema'
 import {getAncestorTextBlock} from '../../node-traversal/get-ancestor-text-block'
 import {getNodes} from '../../node-traversal/get-nodes'
+import {getSibling} from '../../node-traversal/get-sibling'
 import type {Editor} from '../interfaces/editor'
 import type {Range} from '../interfaces/range'
 import {isBeforePath} from '../path/is-before-path'
-import {pathHasPrevious} from '../path/path-has-previous'
 import {isCollapsedRange} from '../range/is-collapsed-range'
 import {rangeEdges} from '../range/range-edges'
 import {start as editorStart} from './start'
 
 export function unhangRange(editor: Editor, range: Range): Range {
-  let [start, end] = rangeEdges(range)
+  let [start, end] = rangeEdges(range, {}, editor)
 
   // PERF: exit early if we can guarantee that the range isn't hanging.
+  // A range can only hang when end is at offset 0 of the first child in a block.
   if (
     start.offset !== 0 ||
     end.offset !== 0 ||
     isCollapsedRange(range) ||
-    pathHasPrevious(end.path)
+    getSibling(editor, end.path, 'previous') !== undefined
   ) {
     return range
   }
@@ -26,7 +27,7 @@ export function unhangRange(editor: Editor, range: Range): Range {
   const blockPath = endBlock ? endBlock.path : []
   const first = editorStart(editor, start)
   const before = {anchor: first, focus: end}
-  const [beforeStart, beforeEnd] = rangeEdges(before)
+  const [beforeStart, beforeEnd] = rangeEdges(before, {}, editor)
   let skip = true
 
   for (const {node, path: nodePath} of getNodes(editor, {
@@ -44,7 +45,7 @@ export function unhangRange(editor: Editor, range: Range): Range {
       continue
     }
 
-    if (node.text !== '' || isBeforePath(nodePath, blockPath)) {
+    if (node.text !== '' || isBeforePath(nodePath, blockPath, editor)) {
       end = {path: nodePath, offset: node.text.length}
       break
     }

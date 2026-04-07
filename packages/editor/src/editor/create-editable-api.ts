@@ -12,17 +12,19 @@ import {
   slateRangeToSelection,
 } from '../internal-utils/slate-utils'
 import {toSlateRange} from '../internal-utils/to-slate-range'
+import {getLeaf} from '../node-traversal/get-leaf'
 import {getNode} from '../node-traversal/get-node'
 import {getNodes} from '../node-traversal/get-nodes'
 import {getTextBlockNode} from '../node-traversal/get-text-block-node'
-import {keyedPathToIndexedPath} from '../paths/keyed-path-to-indexed-path'
+import {getBlock, isBlock} from '../node-traversal/is-block'
 import {getActiveAnnotationsMarks} from '../selectors/selector.get-active-annotation-marks'
 import {getActiveDecorators} from '../selectors/selector.get-active-decorators'
 import {getFocusBlock} from '../selectors/selector.get-focus-block'
 import {getFocusSpan} from '../selectors/selector.get-focus-span'
 import {getSelectedValue} from '../selectors/selector.get-selected-value'
 import {isActiveAnnotation} from '../selectors/selector.is-active-annotation'
-import {path as editorPath} from '../slate/editor/path'
+import type {Path as InternalPath} from '../slate/interfaces/path'
+import {parentPath} from '../slate/path/parent-path'
 import {isCollapsedRange} from '../slate/range/is-collapsed-range'
 import {isExpandedRange} from '../slate/range/is-expanded-range'
 import {isRange} from '../slate/range/is-range'
@@ -140,40 +142,25 @@ export function createEditableAPI(
         return undefined
       }
 
-      const focusBlockIndex = editor.selection.focus.path.at(0)
+      const focusPath = editor.selection.focus.path
 
-      if (focusBlockIndex === undefined) {
-        return undefined
-      }
-
-      return editor.children.at(focusBlockIndex)
+      return (
+        getBlock(editor, focusPath)?.node ??
+        getBlock(editor, parentPath(focusPath))?.node
+      )
     },
     focusChild: (): PortableTextChild | undefined => {
       if (!editor.selection) {
         return undefined
       }
 
-      const focusBlockIndex = editor.selection.focus.path.at(0)
-      const focusChildIndex = editor.selection.focus.path.at(1)
+      const leaf = getLeaf(editor, editor.selection.focus.path, {edge: 'start'})
 
-      const block =
-        focusBlockIndex !== undefined
-          ? editor.children.at(focusBlockIndex)
-          : undefined
-
-      if (!block) {
+      if (!leaf || isBlock(editor, leaf.path)) {
         return undefined
       }
 
-      if (isTextBlock(editorActor.getSnapshot().context, block)) {
-        if (focusChildIndex === undefined) {
-          return undefined
-        }
-
-        return block.children.at(focusChildIndex)
-      }
-
-      return undefined
+      return leaf.node as PortableTextChild
     },
     insertChild: <TSchemaType extends {name: string}>(
       type: TSchemaType,
@@ -250,23 +237,13 @@ export function createEditableAPI(
       PortableTextBlock | PortableTextChild | undefined,
       Path | undefined,
     ] => {
-      const indexedPath = keyedPathToIndexedPath(
-        editor,
-        path,
-        editor.blockIndexMap,
-      )
-
-      if (!indexedPath) {
-        return [undefined, undefined]
-      }
-
       const result = getNode(
         {
           schema: editor.schema,
           editableTypes: editor.editableTypes,
           value: editor.children,
         },
-        indexedPath,
+        path as InternalPath,
       )
 
       if (!result) {
@@ -299,8 +276,8 @@ export function createEditableAPI(
       try {
         const activeAnnotations: PortableTextObject[] = []
         const spans = getNodes(editor, {
-          from: rangeStart(editor.selection).path,
-          to: rangeEnd(editor.selection).path,
+          from: rangeStart(editor.selection, editor).path,
+          to: rangeEnd(editor.selection, editor).path,
           match: (node) =>
             isSpan({schema: editor.schema}, node) &&
             node.marks !== undefined &&
@@ -308,10 +285,7 @@ export function createEditableAPI(
             node.marks.length > 0,
         })
         for (const {node: span, path: spanPath} of spans) {
-          const blockEntry = getTextBlockNode(
-            editor,
-            editorPath(editor, spanPath, {depth: 1}),
-          )
+          const blockEntry = getTextBlockNode(editor, parentPath(spanPath))
           if (!blockEntry) {
             continue
           }
@@ -509,7 +483,6 @@ export function createEditableAPI(
           value: editor.children,
           selection: selectionA,
         },
-        blockIndexMap: editor.blockIndexMap,
       })
       const rangeB = toSlateRange({
         context: {
@@ -517,14 +490,14 @@ export function createEditableAPI(
           value: editor.children,
           selection: selectionB,
         },
-        blockIndexMap: editor.blockIndexMap,
       })
 
       // Make sure the ranges are valid
       const isValidRanges = isRange(rangeA) && isRange(rangeB)
 
       // Check if the ranges are overlapping
-      const isOverlapping = isValidRanges && rangeIncludes(rangeA, rangeB)
+      const isOverlapping =
+        isValidRanges && rangeIncludes(rangeA, rangeB, editor)
 
       return isOverlapping
     },

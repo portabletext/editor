@@ -4,6 +4,7 @@ import {
   applyInsertNodeAtPoint,
 } from '../internal-utils/apply-insert-node'
 import {getNode} from '../node-traversal/get-node'
+import {getSibling} from '../node-traversal/get-sibling'
 import {isTextBlockNode} from '../slate/node/is-text-block-node'
 import {parseInlineObject, parseSpan} from '../utils/parse-blocks'
 import type {OperationImplementation} from './operation.types'
@@ -13,7 +14,7 @@ export const insertChildOperationImplementation: OperationImplementation<
 > = ({context, operation}) => {
   const focus = operation.editor.selection?.focus
   const focusBlockIndex = focus?.path.at(0)
-  const focusChildIndex = focus?.path.at(1)
+  const focusChildIndex = focus?.path.at(2)
 
   if (focusBlockIndex === undefined || focusChildIndex === undefined) {
     throw new Error('Unable to insert child without a focus')
@@ -47,7 +48,7 @@ export const insertChildOperationImplementation: OperationImplementation<
   })
 
   if (span) {
-    const focusSpanEntry = getNode(operation.editor, focus.path.slice(0, 2))
+    const focusSpanEntry = getNode(operation.editor, focus.path.slice(0, 3))
     const focusSpan =
       focusSpanEntry &&
       isSpan({schema: operation.editor.schema}, focusSpanEntry.node)
@@ -57,10 +58,18 @@ export const insertChildOperationImplementation: OperationImplementation<
     if (focusSpan) {
       applyInsertNodeAtPoint(operation.editor, span, focus)
     } else {
-      applyInsertNodeAtPath(operation.editor, span, [
-        focusBlockIndex,
-        focusChildIndex + 1,
-      ])
+      const focusChildPath = focus.path.slice(0, 3)
+      const nextSibling = getSibling(operation.editor, focusChildPath, 'next')
+      if (nextSibling) {
+        applyInsertNodeAtPath(operation.editor, span, nextSibling.path)
+      } else {
+        operation.editor.apply({
+          type: 'insert_node',
+          path: focusChildPath,
+          node: span,
+          position: 'after',
+        })
+      }
     }
 
     // This makes sure the selection is set correctly when event handling is run
@@ -85,7 +94,7 @@ export const insertChildOperationImplementation: OperationImplementation<
       ...rest,
     }
 
-    const focusSpanEntry = getNode(operation.editor, focus.path.slice(0, 2))
+    const focusSpanEntry = getNode(operation.editor, focus.path.slice(0, 3))
     const focusSpan =
       focusSpanEntry &&
       isSpan({schema: operation.editor.schema}, focusSpanEntry.node)
@@ -95,10 +104,18 @@ export const insertChildOperationImplementation: OperationImplementation<
     if (focusSpan) {
       applyInsertNodeAtPoint(operation.editor, inlineNode, focus)
     } else {
-      applyInsertNodeAtPath(operation.editor, inlineNode, [
-        focusBlockIndex,
-        focusChildIndex + 1,
-      ])
+      const focusChildPath = focus.path.slice(0, 3)
+      const nextSibling = getSibling(operation.editor, focusChildPath, 'next')
+      if (nextSibling) {
+        applyInsertNodeAtPath(operation.editor, inlineNode, nextSibling.path)
+      } else {
+        operation.editor.apply({
+          type: 'insert_node',
+          path: focusChildPath,
+          node: inlineNode,
+          position: 'after',
+        })
+      }
     }
 
     return

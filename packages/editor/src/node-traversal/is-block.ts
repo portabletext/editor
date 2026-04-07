@@ -1,6 +1,7 @@
 import type {PortableTextBlock} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
 import type {Node} from '../slate/interfaces/node'
+import type {Path} from '../slate/interfaces/path'
 import {isSpanNode} from '../slate/node/is-span-node'
 import {isTextBlockNode} from '../slate/node/is-text-block-node'
 import {getNode} from './get-node'
@@ -20,7 +21,7 @@ export function isBlock(
     editableTypes: Set<string>
     value: Array<Node>
   },
-  path: Array<number>,
+  path: Path,
 ): boolean {
   const parent = getParent(context, path)
 
@@ -43,8 +44,8 @@ export function getBlock(
     editableTypes: Set<string>
     value: Array<Node>
   },
-  path: Array<number>,
-): {node: PortableTextBlock; path: Array<number>} | undefined {
+  path: Path,
+): {node: PortableTextBlock; path: Path} | undefined {
   const entry = getNode(context, path)
 
   if (!entry) {

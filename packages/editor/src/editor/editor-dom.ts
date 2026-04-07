@@ -3,6 +3,7 @@ import {getDomNode} from '../dom-traversal/get-dom-node'
 import {toSlateRange} from '../internal-utils/to-slate-range'
 import {getNodes} from '../node-traversal/get-nodes'
 import {getSelectionEndBlock, getSelectionStartBlock} from '../selectors'
+import type {Path} from '../slate/interfaces/path'
 import {isAncestorPath} from '../slate/path/is-ancestor-path'
 import {rangeEdges} from '../slate/range/range-edges'
 import type {PickFromUnion} from '../type-utils'
@@ -64,9 +65,9 @@ function getBlockNodes(
   }
 
   try {
-    const [start, end] = rangeEdges(range)
-    const blockEntries: Array<{node: unknown; path: Array<number>}> = []
-    let lastHighestPath: Array<number> | undefined
+    const [start, end] = rangeEdges(range, {}, slateEditor)
+    const blockEntries: Array<{node: unknown; path: Path}> = []
+    let lastHighestPath: Path | undefined
 
     for (const entry of getNodes(slateEditor, {
       from: start.path,
@@ -111,9 +112,9 @@ function getChildNodes(
   }
 
   try {
-    const [start, end] = rangeEdges(range)
-    const childEntries: Array<{node: unknown; path: Array<number>}> = []
-    let buffered: {node: unknown; path: Array<number>} | undefined
+    const [start, end] = rangeEdges(range, {}, slateEditor)
+    const childEntries: Array<{node: unknown; path: Path}> = []
+    let buffered: {node: unknown; path: Path} | undefined
 
     for (const entry of getNodes(slateEditor, {
       from: start.path,

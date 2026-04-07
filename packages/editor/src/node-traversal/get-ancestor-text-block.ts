@@ -2,6 +2,7 @@ import type {PortableTextTextBlock} from '@portabletext/schema'
 import {isTextBlock} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
 import type {Node} from '../slate/interfaces/node'
+import type {Path} from '../slate/interfaces/path'
 import {getAncestor} from './get-ancestor'
 
 export function getAncestorTextBlock(
@@ -10,8 +11,8 @@ export function getAncestorTextBlock(
     editableTypes: Set<string>
     value: Array<Node>
   },
-  path: Array<number>,
-): {node: PortableTextTextBlock; path: Array<number>} | undefined {
+  path: Path,
+): {node: PortableTextTextBlock; path: Path} | undefined {
   const result = getAncestor(context, path, (node) =>
     isTextBlock({schema: context.schema}, node),
   )

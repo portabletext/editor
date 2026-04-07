@@ -141,9 +141,36 @@ export const splitDecorationsByChild = (
     if (cachedRange) {
       return cachedRange
     }
-    const childRange = editorRange(editor, [...path, index])
+    const child = children[index] as Node | undefined
+    if (!child) {
+      return undefined
+    }
+    const childPath: Path =
+      path.length === 0
+        ? [{_key: child._key}]
+        : [...path, 'children', {_key: child._key}]
+    const childRange = editorRange(editor, childPath)
     cachedChildRanges[index] = childRange
     return childRange
+  }
+
+  const keyToIndex = new Map<string, number>()
+  for (let i = 0; i < children.length; i++) {
+    const child = children[i] as Node | undefined
+    if (child) {
+      keyToIndex.set(child._key, i)
+    }
+  }
+
+  const resolveChildIndex = (point: {path: Path}): number | undefined => {
+    // For root (level=0), child key is at path[0] (no field name prefix)
+    // For non-root (level>0), child key is at path[level+1] (after field name at path[level])
+    const childSegmentIndex = level === 0 ? 0 : level + 1
+    const segment = point.path[childSegmentIndex]
+    if (segment && typeof segment === 'object' && '_key' in segment) {
+      return keyToIndex.get(segment._key)
+    }
+    return undefined
   }
 
   for (const decoration of decorations) {
@@ -152,9 +179,9 @@ export const splitDecorationsByChild = (
       continue
     }
 
-    const [startPoint, endPoint] = rangeEdges(decorationRange)
-    const startIndex = startPoint.path[level]!
-    const endIndex = endPoint.path[level]!
+    const [startPoint, endPoint] = rangeEdges(decorationRange, {}, editor)
+    const startIndex = resolveChildIndex(startPoint) ?? 0
+    const endIndex = resolveChildIndex(endPoint) ?? children.length - 1
 
     for (let i = startIndex; i <= endIndex; i++) {
       const ds = decorationsByChild[i]
@@ -163,6 +190,9 @@ export const splitDecorationsByChild = (
       }
 
       const childRange = getChildRange(i)
+      if (!childRange) {
+        continue
+      }
       const childDecorationRange = rangeIntersection(childRange, decoration)
       if (!childDecorationRange) {
         continue

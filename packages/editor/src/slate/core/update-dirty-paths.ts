@@ -1,48 +1,39 @@
+import {isKeyedSegment} from '../../utils/util.is-keyed-segment'
 import type {Editor} from '../interfaces/editor'
 import type {Path} from '../interfaces/path'
 
 /**
- * update editor dirty paths
- *
- * @param newDirtyPaths: Path[]; new dirty paths
- * @param transform: (p: Path) => Path | null; how to transform existing dirty paths
+ * Serialize a path to a string for use as a dedup key.
+ * Keyed segments use their _key value, other segments use String().
  */
-export function updateDirtyPaths(
-  editor: Editor,
-  newDirtyPaths: Path[],
-  transform?: (p: Path) => Path | null,
-) {
-  const oldDirtyPaths = editor.dirtyPaths
-  const oldDirtyPathKeys = editor.dirtyPathKeys
-  let dirtyPaths: Path[]
-  let dirtyPathKeys: Set<string>
-
-  const add = (path: Path | null) => {
-    if (path) {
-      const key =
-        path.length === 1
-          ? String(path[0])
-          : path.length === 2
-            ? `${path[0]},${path[1]}`
-            : path.join(',')
-
-      if (!dirtyPathKeys.has(key)) {
-        dirtyPathKeys.add(key)
-        dirtyPaths.push(path)
+function serializePathKey(path: Path): string {
+  return path
+    .map((segment) => {
+      if (isKeyedSegment(segment)) {
+        return segment._key
       }
-    }
-  }
+      return String(segment)
+    })
+    .join(',')
+}
 
-  if (transform) {
-    dirtyPaths = []
-    dirtyPathKeys = new Set()
-    for (const path of oldDirtyPaths) {
-      const newPath = transform(path)
-      add(newPath)
+/**
+ * Update editor dirty paths.
+ *
+ * With keyed paths, no transform is needed because keyed paths are stable
+ * across insert_node and remove_node operations.
+ */
+export function updateDirtyPaths(editor: Editor, newDirtyPaths: Path[]) {
+  const dirtyPaths = editor.dirtyPaths
+  const dirtyPathKeys = editor.dirtyPathKeys
+
+  const add = (path: Path) => {
+    const key = serializePathKey(path)
+
+    if (!dirtyPathKeys.has(key)) {
+      dirtyPathKeys.add(key)
+      dirtyPaths.push(path)
     }
-  } else {
-    dirtyPaths = oldDirtyPaths
-    dirtyPathKeys = oldDirtyPathKeys
   }
 
   for (const path of newDirtyPaths) {

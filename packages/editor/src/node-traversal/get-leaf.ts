@@ -1,5 +1,6 @@
 import type {EditorSchema} from '../editor/editor-schema'
 import type {Node} from '../slate/interfaces/node'
+import type {Path} from '../slate/interfaces/path'
 import {getChildren} from './get-children'
 import {getNode} from './get-node'
 
@@ -14,9 +15,9 @@ export function getLeaf(
     editableTypes: Set<string>
     value: Array<Node>
   },
-  path: Array<number>,
+  path: Path,
   options: {edge: 'start' | 'end'},
-): {node: Node; path: Array<number>} | undefined {
+): {node: Node; path: Path} | undefined {
   const {edge} = options
 
   let currentPath = path

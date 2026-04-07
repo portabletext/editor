@@ -1,4 +1,5 @@
 import type {TextDirection} from '../types/types'
+import type {Path} from './path'
 
 /**
  * `Point` objects refer to a specific location in a text node in a Slate
@@ -8,7 +9,7 @@ import type {TextDirection} from '../types/types'
  */
 
 export interface Point {
-  path: number[]
+  path: Path
   offset: number
 }
 

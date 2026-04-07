@@ -374,4 +374,76 @@ describe('event.insert.text', () => {
 
     errorSpy.mockRestore()
   })
+
+  test('Scenario: Inserting text at an inline object', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanAKey = keyGenerator()
+    const inlineKey = keyGenerator()
+    const spanBKey = keyGenerator()
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        inlineObjects: [
+          {name: 'stock-ticker', fields: [{name: 'symbol', type: 'string'}]},
+        ],
+      }),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {_type: 'span', _key: spanAKey, text: 'before', marks: []},
+            {_type: 'stock-ticker', _key: inlineKey, symbol: 'AAPL'},
+            {_type: 'span', _key: spanBKey, text: 'after', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual([
+        'before,{stock-ticker},after',
+      ])
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: inlineKey}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: inlineKey}],
+          offset: 0,
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: inlineKey}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: inlineKey}],
+          offset: 0,
+        },
+        backward: false,
+      })
+    })
+
+    editor.send({type: 'insert.text', text: 'hello'})
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual([
+        'before,{stock-ticker},helloafter',
+      ])
+    })
+  })
 })

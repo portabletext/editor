@@ -20,10 +20,10 @@ export function collapse(
   } else if (edge === 'focus') {
     editor.select(selection.focus)
   } else if (edge === 'start') {
-    const [start] = rangeEdges(selection)
+    const [start] = rangeEdges(selection, {}, editor)
     editor.select(start)
   } else if (edge === 'end') {
-    const [, end] = rangeEdges(selection)
+    const [, end] = rangeEdges(selection, {}, editor)
     editor.select(end)
   }
 }

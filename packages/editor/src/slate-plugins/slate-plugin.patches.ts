@@ -6,10 +6,8 @@ import {createApplyPatch} from '../internal-utils/applyPatch'
 import {debug} from '../internal-utils/debug'
 import {
   insertNodePatch,
-  insertTextPatch,
-  removeNodePatch,
-  removeTextPatch,
   setNodePatch,
+  textPatch,
 } from '../internal-utils/operation-to-patches'
 import {safeStringify} from '../internal-utils/safe-json'
 import {isEqualToEmptyEditor} from '../internal-utils/values'
@@ -137,41 +135,20 @@ export function createPatchesPlugin({
         case 'insert_text':
           patches = [
             ...patches,
-            ...insertTextPatch(
-              schema,
-              editor.children,
-              operation,
-              previousValue,
-            ),
+            ...textPatch(schema, editor.children, operation, previousValue),
           ]
           break
         case 'remove_text':
           patches = [
             ...patches,
-            ...removeTextPatch(
-              schema,
-              editor.children,
-              operation,
-              previousValue,
-            ),
+            ...textPatch(schema, editor.children, operation, previousValue),
           ]
           break
         case 'remove_node':
-          patches = [
-            ...patches,
-            ...removeNodePatch(schema, previousValue, operation),
-          ]
+          patches = [...patches, unset(operation.path)]
           break
         case 'insert_node':
-          patches = [
-            ...patches,
-            ...insertNodePatch(
-              schema,
-              editor.children,
-              operation,
-              previousValue,
-            ),
-          ]
+          patches = [...patches, ...insertNodePatch(operation)]
           break
         case 'set_node':
           patches = [

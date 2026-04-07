@@ -22,11 +22,11 @@ export function move(editor: Editor, options: SelectionMoveOptions = {}): void {
   }
 
   if (edge === 'start') {
-    edge = isBackwardRange(selection) ? 'focus' : 'anchor'
+    edge = isBackwardRange(selection, editor) ? 'focus' : 'anchor'
   }
 
   if (edge === 'end') {
-    edge = isBackwardRange(selection) ? 'anchor' : 'focus'
+    edge = isBackwardRange(selection, editor) ? 'anchor' : 'focus'
   }
 
   const {anchor, focus} = selection

@@ -7,86 +7,174 @@ describe(getChildren.name, () => {
 
   test('root children', () => {
     expect(getChildren(testbed.context, [])).toEqual([
-      {node: testbed.textBlock1, path: [0]},
-      {node: testbed.image, path: [1]},
-      {node: testbed.textBlock2, path: [2]},
-      {node: testbed.codeBlock, path: [3]},
-      {node: testbed.table, path: [4]},
+      {node: testbed.textBlock1, path: [{_key: 'k3'}]},
+      {node: testbed.image, path: [{_key: 'k4'}]},
+      {node: testbed.textBlock2, path: [{_key: 'k6'}]},
+      {node: testbed.codeBlock, path: [{_key: 'k11'}]},
+      {node: testbed.table, path: [{_key: 'k26'}]},
     ])
   })
 
   test('text block children', () => {
-    expect(getChildren(testbed.context, [0])).toEqual([
-      {node: testbed.span1, path: [0, 0]},
-      {node: testbed.stockTicker1, path: [0, 1]},
-      {node: testbed.span2, path: [0, 2]},
+    expect(getChildren(testbed.context, [{_key: 'k3'}])).toEqual([
+      {node: testbed.span1, path: [{_key: 'k3'}, 'children', {_key: 'k0'}]},
+      {
+        node: testbed.stockTicker1,
+        path: [{_key: 'k3'}, 'children', {_key: 'k1'}],
+      },
+      {node: testbed.span2, path: [{_key: 'k3'}, 'children', {_key: 'k2'}]},
     ])
   })
 
   test('code block children (code lines)', () => {
-    expect(getChildren(testbed.context, [3])).toEqual([
-      {node: testbed.codeLine1, path: [3, 0]},
-      {node: testbed.codeLine2, path: [3, 1]},
+    expect(getChildren(testbed.context, [{_key: 'k11'}])).toEqual([
+      {node: testbed.codeLine1, path: [{_key: 'k11'}, 'code', {_key: 'k8'}]},
+      {node: testbed.codeLine2, path: [{_key: 'k11'}, 'code', {_key: 'k10'}]},
     ])
   })
 
   test('code line children', () => {
-    expect(getChildren(testbed.context, [3, 0])).toEqual([
-      {node: testbed.codeSpan1, path: [3, 0, 0]},
+    expect(
+      getChildren(testbed.context, [{_key: 'k11'}, 'code', {_key: 'k8'}]),
+    ).toEqual([
+      {
+        node: testbed.codeSpan1,
+        path: [{_key: 'k11'}, 'code', {_key: 'k8'}, 'children', {_key: 'k7'}],
+      },
     ])
   })
 
   test('table children (rows)', () => {
-    expect(getChildren(testbed.context, [4])).toEqual([
-      {node: testbed.row1, path: [4, 0]},
-      {node: testbed.row2, path: [4, 1]},
+    expect(getChildren(testbed.context, [{_key: 'k26'}])).toEqual([
+      {node: testbed.row1, path: [{_key: 'k26'}, 'rows', {_key: 'k21'}]},
+      {node: testbed.row2, path: [{_key: 'k26'}, 'rows', {_key: 'k25'}]},
     ])
   })
 
   test('row children (cells)', () => {
-    expect(getChildren(testbed.context, [4, 0])).toEqual([
-      {node: testbed.cell1, path: [4, 0, 0]},
-      {node: testbed.cell2, path: [4, 0, 1]},
+    expect(
+      getChildren(testbed.context, [{_key: 'k26'}, 'rows', {_key: 'k21'}]),
+    ).toEqual([
+      {
+        node: testbed.cell1,
+        path: [{_key: 'k26'}, 'rows', {_key: 'k21'}, 'cells', {_key: 'k17'}],
+      },
+      {
+        node: testbed.cell2,
+        path: [{_key: 'k26'}, 'rows', {_key: 'k21'}, 'cells', {_key: 'k20'}],
+      },
     ])
   })
 
   test('cell with multiple blocks', () => {
-    expect(getChildren(testbed.context, [4, 0, 0])).toEqual([
-      {node: testbed.cellBlock1, path: [4, 0, 0, 0]},
-      {node: testbed.cellBlock2, path: [4, 0, 0, 1]},
+    expect(
+      getChildren(testbed.context, [
+        {_key: 'k26'},
+        'rows',
+        {_key: 'k21'},
+        'cells',
+        {_key: 'k17'},
+      ]),
+    ).toEqual([
+      {
+        node: testbed.cellBlock1,
+        path: [
+          {_key: 'k26'},
+          'rows',
+          {_key: 'k21'},
+          'cells',
+          {_key: 'k17'},
+          'content',
+          {_key: 'k14'},
+        ],
+      },
+      {
+        node: testbed.cellBlock2,
+        path: [
+          {_key: 'k26'},
+          'rows',
+          {_key: 'k21'},
+          'cells',
+          {_key: 'k17'},
+          'content',
+          {_key: 'k16'},
+        ],
+      },
     ])
   })
 
   test('block inside cell children', () => {
-    expect(getChildren(testbed.context, [4, 0, 0, 0])).toEqual([
-      {node: testbed.cellSpan1, path: [4, 0, 0, 0, 0]},
-      {node: testbed.stockTicker2, path: [4, 0, 0, 0, 1]},
+    expect(
+      getChildren(testbed.context, [
+        {_key: 'k26'},
+        'rows',
+        {_key: 'k21'},
+        'cells',
+        {_key: 'k17'},
+        'content',
+        {_key: 'k14'},
+      ]),
+    ).toEqual([
+      {
+        node: testbed.cellSpan1,
+        path: [
+          {_key: 'k26'},
+          'rows',
+          {_key: 'k21'},
+          'cells',
+          {_key: 'k17'},
+          'content',
+          {_key: 'k14'},
+          'children',
+          {_key: 'k12'},
+        ],
+      },
+      {
+        node: testbed.stockTicker2,
+        path: [
+          {_key: 'k26'},
+          'rows',
+          {_key: 'k21'},
+          'cells',
+          {_key: 'k17'},
+          'content',
+          {_key: 'k14'},
+          'children',
+          {_key: 'k13'},
+        ],
+      },
     ])
   })
 
   test('leaf node returns empty array', () => {
-    expect(getChildren(testbed.context, [0, 0])).toEqual([])
+    expect(
+      getChildren(testbed.context, [{_key: 'k3'}, 'children', {_key: 'k0'}]),
+    ).toEqual([])
   })
 
   test('block object without children returns empty array', () => {
-    expect(getChildren(testbed.context, [1])).toEqual([])
+    expect(getChildren(testbed.context, [{_key: 'k4'}])).toEqual([])
   })
 
   test('invalid path returns empty array', () => {
-    expect(getChildren(testbed.context, [99])).toEqual([])
+    expect(getChildren(testbed.context, [{_key: 'nonexistent'}])).toEqual([])
   })
 
   test('non-editable code block returns empty array', () => {
     const tableOnly = new Set(['table', 'table.row', 'table.row.cell'])
     expect(
-      getChildren({...testbed.context, editableTypes: tableOnly}, [3]),
+      getChildren({...testbed.context, editableTypes: tableOnly}, [
+        {_key: 'k11'},
+      ]),
     ).toEqual([])
   })
 
   test('non-editable table returns empty array', () => {
     const codeOnly = new Set(['code-block'])
     expect(
-      getChildren({...testbed.context, editableTypes: codeOnly}, [4]),
+      getChildren({...testbed.context, editableTypes: codeOnly}, [
+        {_key: 'k26'},
+      ]),
     ).toEqual([])
   })
 })

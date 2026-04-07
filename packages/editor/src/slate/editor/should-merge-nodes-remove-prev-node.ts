@@ -1,11 +1,13 @@
 import {isSpan, isTextBlock} from '@portabletext/schema'
+import {getSibling} from '../../node-traversal/get-sibling'
 import type {Editor} from '../interfaces/editor'
 import type {Node} from '../interfaces/node'
+import type {Path} from '../interfaces/path'
 
 export function shouldMergeNodesRemovePrevNode(
   editor: Editor,
-  prev: {node: Node; path: Array<number>},
-  _current: {node: Node; path: Array<number>},
+  prev: {node: Node; path: Path},
+  _current: {node: Node; path: Path},
 ): boolean {
   // If the target node that we're merging with is empty, remove it instead
   // of merging the two. This is a common rich text editor behavior to
@@ -23,10 +25,12 @@ export function shouldMergeNodesRemovePrevNode(
         prevChildren[0].text === '')
   }
 
+  const isFirstChild = !getSibling(editor, prev.path, 'previous')
+
   return (
     isEmptyElement ||
     (isSpan({schema: editor.schema}, prev.node) &&
       prev.node.text === '' &&
-      prev.path[prev.path.length - 1] !== 0)
+      !isFirstChild)
   )
 }

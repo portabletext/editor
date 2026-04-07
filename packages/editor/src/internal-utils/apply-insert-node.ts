@@ -9,7 +9,6 @@ import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
 import type {Point} from '../slate/interfaces/point'
 import {isObjectNode} from '../slate/node/is-object-node'
-import {nextPath} from '../slate/path/next-path'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {applySelect} from './apply-selection'
 import {applySplitNode} from './apply-split-node'
@@ -23,7 +22,7 @@ export function applyInsertNodeAtPath(
   node: Node,
   path: Path,
 ): void {
-  editor.apply({type: 'insert_node', path, node})
+  editor.apply({type: 'insert_node', path, node, position: 'before'})
 
   const point = end(editor, path)
 
@@ -65,12 +64,19 @@ export function applyInsertNodeAtPoint(
     }
 
     const path = ref.unref()!
-    const insertPath = isAtEnd ? nextPath(path) : path
 
-    editor.apply({type: 'insert_node', path: insertPath, node})
+    editor.apply({
+      type: 'insert_node',
+      path,
+      node,
+      position: isAtEnd ? 'after' : 'before',
+    })
 
-    const point = end(editor, insertPath)
-
+    const parentSegments = path.slice(0, -1)
+    const newNodePath: Path = node._key
+      ? [...parentSegments, {_key: node._key}]
+      : path
+    const point = end(editor, newNodePath)
     if (point) {
       applySelect(editor, point)
     }

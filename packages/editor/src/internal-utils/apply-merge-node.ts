@@ -1,15 +1,15 @@
 import {isSpan, isTextBlock} from '@portabletext/schema'
 import {getNode} from '../node-traversal/get-node'
+import {getSibling} from '../node-traversal/get-sibling'
 import {withoutNormalizing} from '../slate/editor/without-normalizing'
 import type {Path} from '../slate/interfaces/path'
 import type {Point} from '../slate/interfaces/point'
 import type {Range} from '../slate/interfaces/range'
 import {isAncestorPath} from '../slate/path/is-ancestor-path'
-import {pathEndsBefore} from '../slate/path/path-ends-before'
 import {pathEquals} from '../slate/path/path-equals'
-import {previousPath} from '../slate/path/previous-path'
 import {isRange} from '../slate/range/is-range'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
+import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 
 /**
  * Merge a node at the given path into its previous sibling using only
@@ -35,26 +35,43 @@ export function applyMergeNode(
   }
 
   const node = nodeEntry.node
-  const prevPath = previousPath(path)
+  const prevSibling = getSibling(editor, path, 'previous')
+
+  if (!prevSibling) {
+    return
+  }
+
+  const prevPath = prevSibling.path
+  const prevKey = prevSibling.node._key ?? ''
 
   // Pre-transform all refs with merge semantics
   for (const ref of editor.pathRefs) {
     const current = ref.current
     if (current) {
-      ref.current = transformPathForMerge(current, path, position)
+      ref.current = transformPathForMerge(current, path, prevKey, position)
     }
   }
   for (const ref of editor.pointRefs) {
     const current = ref.current
     if (current) {
-      ref.current = transformPointForMerge(current, path, position)
+      ref.current = transformPointForMerge(current, path, prevKey, position)
     }
   }
   for (const ref of editor.rangeRefs) {
     const current = ref.current
     if (current) {
-      const anchor = transformPointForMerge(current.anchor, path, position)
-      const focus = transformPointForMerge(current.focus, path, position)
+      const anchor = transformPointForMerge(
+        current.anchor,
+        path,
+        prevKey,
+        position,
+      )
+      const focus = transformPointForMerge(
+        current.focus,
+        path,
+        prevKey,
+        position,
+      )
       if (anchor && focus) {
         ref.current = {anchor, focus}
       } else {
@@ -69,9 +86,15 @@ export function applyMergeNode(
     const anchor = transformPointForMerge(
       editor.selection.anchor,
       path,
+      prevKey,
       position,
     )
-    const focus = transformPointForMerge(editor.selection.focus, path, position)
+    const focus = transformPointForMerge(
+      editor.selection.focus,
+      path,
+      prevKey,
+      position,
+    )
     if (anchor && focus) {
       editor.selection = {anchor, focus}
     }
@@ -104,7 +127,7 @@ export function applyMergeNode(
           diff: {start: number; end: number; text: string}
           id: number
           path: Path
-        }) => transformTextDiffForMerge(textDiff, path, position),
+        }) => transformTextDiffForMerge(textDiff, path, prevKey, position),
       )
       .filter(Boolean)
   }
@@ -116,8 +139,8 @@ export function applyMergeNode(
     'focus' in (savedPendingSelection as Record<string, unknown>)
   ) {
     const sel = savedPendingSelection as Range
-    const anchor = transformPointForMerge(sel.anchor, path, position)
-    const focus = transformPointForMerge(sel.focus, path, position)
+    const anchor = transformPointForMerge(sel.anchor, path, prevKey, position)
+    const focus = transformPointForMerge(sel.focus, path, prevKey, position)
     editorAny['pendingSelection'] = anchor && focus ? {anchor, focus} : null
   }
 
@@ -128,11 +151,26 @@ export function applyMergeNode(
   ) {
     const action = savedPendingAction as {at: Point | Range}
     if ('offset' in action.at && typeof action.at.offset === 'number') {
-      const at = transformPointForMerge(action.at as Point, path, position)
+      const at = transformPointForMerge(
+        action.at as Point,
+        path,
+        prevKey,
+        position,
+      )
       editorAny['pendingAction'] = at ? {...action, at} : null
     } else if (isRange(action.at)) {
-      const anchor = transformPointForMerge(action.at.anchor, path, position)
-      const focus = transformPointForMerge(action.at.focus, path, position)
+      const anchor = transformPointForMerge(
+        action.at.anchor,
+        path,
+        prevKey,
+        position,
+      )
+      const focus = transformPointForMerge(
+        action.at.focus,
+        path,
+        prevKey,
+        position,
+      )
       editorAny['pendingAction'] =
         anchor && focus ? {...action, at: {anchor, focus}} : null
     }
@@ -160,18 +198,51 @@ export function applyMergeNode(
           })
         }
         // Remove the now-redundant text node
-        editor.apply({type: 'remove_node', path, node})
+        editor.apply({
+          type: 'remove_node',
+          path,
+          node,
+        })
       } else if (isTextBlock({schema: editor.schema}, node)) {
         // Merge element: move all children into the previous sibling
+        const prevEntry = getNode(editor, prevPath)
+        if (
+          !prevEntry ||
+          !isTextBlock({schema: editor.schema}, prevEntry.node)
+        ) {
+          return
+        }
+        const prevChildren = prevEntry.node.children
+        let lastInsertedKey: string | undefined =
+          prevChildren.length > 0
+            ? prevChildren[prevChildren.length - 1]!._key
+            : undefined
+
         for (let i = 0; i < node.children.length; i++) {
-          editor.apply({
-            type: 'insert_node',
-            path: [...prevPath, position + i],
-            node: node.children[i]!,
-          })
+          const child = node.children[i]!
+          if (lastInsertedKey !== undefined) {
+            editor.apply({
+              type: 'insert_node',
+              path: [...prevPath, 'children', {_key: lastInsertedKey}],
+              node: child,
+              position: 'after',
+            })
+          } else {
+            editor.apply({
+              type: 'insert_node',
+              path: [...prevPath, 'children', 0],
+              node: child,
+              position: 'before',
+            })
+          }
+          lastInsertedKey = child._key
         }
         // Remove the now-empty element
-        editor.apply({type: 'remove_node', path, node})
+        editor.apply({
+          type: 'remove_node',
+          path,
+          node,
+        })
       }
     })
   } finally {
@@ -206,6 +277,7 @@ function transformTextDiffForMerge(
     path: Path
   },
   mergePath: Path,
+  prevKey: string,
   position: number,
 ): {
   diff: {start: number; end: number; text: string}
@@ -215,7 +287,7 @@ function transformTextDiffForMerge(
   const {path, diff, id} = textDiff
 
   if (!pathEquals(mergePath, path)) {
-    const newPath = transformPathForMerge(path, mergePath, position)
+    const newPath = transformPathForMerge(path, mergePath, prevKey, position)
     if (!newPath) {
       return null
     }
@@ -229,43 +301,56 @@ function transformTextDiffForMerge(
       text: diff.text,
     },
     id,
-    path: transformPathForMerge(path, mergePath, position)!,
+    path: transformPathForMerge(path, mergePath, prevKey, position)!,
   }
 }
 
 /**
- * Transform a path for a merge_node operation.
+ * Transform a path for a merge_node operation with keyed paths.
  *
  * When a node at `mergePath` is merged into its previous sibling:
- * - The merged node disappears, so paths at or after it shift back by 1
- * - Children of the merged node move into the previous sibling at `position`
+ * - The merged node disappears
+ * - Children of the merged node move into the previous sibling
+ * - Paths referencing the merged node or its descendants get the
+ *   previous sibling's key substituted
  */
 function transformPathForMerge(
   path: Path,
   mergePath: Path,
-  position: number,
+  prevKey: string,
+  _position: number,
 ): Path | null {
   const p = [...path]
 
-  if (pathEquals(mergePath, p) || pathEndsBefore(mergePath, p)) {
-    p[mergePath.length - 1] = p[mergePath.length - 1]! - 1
+  if (pathEquals(mergePath, p)) {
+    for (let i = p.length - 1; i >= 0; i--) {
+      if (isKeyedSegment(p[i])) {
+        p[i] = {_key: prevKey}
+        break
+      }
+    }
   } else if (isAncestorPath(mergePath, p)) {
-    p[mergePath.length - 1] = p[mergePath.length - 1]! - 1
-    p[mergePath.length] = p[mergePath.length]! + position
+    for (let i = mergePath.length - 1; i >= 0; i--) {
+      if (isKeyedSegment(p[i])) {
+        p[i] = {_key: prevKey}
+        break
+      }
+    }
   }
 
   return p
 }
 
 /**
- * Transform a point for a merge_node operation.
+ * Transform a point for a merge_node operation with keyed paths.
  *
  * If the point is inside the merged node, its offset shifts by `position`
- * (the number of children/characters already in the merge target).
+ * (the number of characters already in the merge target for span merges).
  */
 function transformPointForMerge(
   point: Point,
   mergePath: Path,
+  prevKey: string,
   position: number,
 ): Point {
   let {path, offset} = point
@@ -274,7 +359,7 @@ function transformPointForMerge(
     offset += position
   }
 
-  path = transformPathForMerge(path, mergePath, position)!
+  path = transformPathForMerge(path, mergePath, prevKey, position)!
 
   return {path, offset}
 }

@@ -13,6 +13,7 @@ import {isEnd} from '../slate/editor/is-end'
 import {isStart} from '../slate/editor/is-start'
 import {path as editorPath} from '../slate/editor/path'
 import {rangeRef} from '../slate/editor/range-ref'
+import {withoutNormalizing} from '../slate/editor/without-normalizing'
 import type {Path} from '../slate/interfaces/path'
 import {isAfterPath} from '../slate/path/is-after-path'
 import {isBeforePath} from '../slate/path/is-before-path'
@@ -106,7 +107,7 @@ export const removeAnnotationOperationImplementation: OperationImplementation<
         continue
       }
 
-      if (!isBeforePath(childPath, selectedChildPath)) {
+      if (!isBeforePath(childPath, selectedChildPath, editor)) {
         continue
       }
 
@@ -129,7 +130,7 @@ export const removeAnnotationOperationImplementation: OperationImplementation<
         continue
       }
 
-      if (!isAfterPath(childPath, selectedChildPath)) {
+      if (!isAfterPath(childPath, selectedChildPath, editor)) {
         continue
       }
 
@@ -157,81 +158,86 @@ export const removeAnnotationOperationImplementation: OperationImplementation<
     // Track the range across mutations when `at` is explicitly provided
     const ref = at ? rangeRef(editor, at, {affinity: 'inward'}) : null
 
-    // Split text nodes at range boundaries
-    const splitRange = at ?? editor.selection
-    if (splitRange && isRange(splitRange)) {
-      const splitLeafEntry = getNode(editor, splitRange.anchor.path)
-      const splitLeaf =
-        splitLeafEntry && isLeaf(editor, splitLeafEntry.path)
-          ? splitLeafEntry.node
-          : undefined
-      if (
-        !(
-          splitLeaf &&
-          isCollapsedRange(splitRange) &&
-          isSpan({schema: editor.schema}, splitLeaf) &&
-          splitLeaf.text.length > 0
-        )
-      ) {
-        const splitRangeRef = rangeRef(editor, splitRange, {
-          affinity: 'inward',
-        })
-        const [splitStart, splitEnd] = rangeEdges(splitRange)
-        const endAtEnd = isEnd(editor, splitEnd, splitEnd.path)
-        if (!endAtEnd || !isEdge(editor, splitEnd, splitEnd.path)) {
-          applySplitNode(editor, splitEnd.path, splitEnd.offset)
-        }
-        const startAtStart = isStart(editor, splitStart, splitStart.path)
-        if (!startAtStart || !isEdge(editor, splitStart, splitStart.path)) {
-          applySplitNode(editor, splitStart.path, splitStart.offset)
-        }
-        // Update selection if using editor.selection (not explicit `at`)
-        const updatedSplitRange = splitRangeRef.unref()
-        if (!at && updatedSplitRange) {
-          applySelect(editor, updatedSplitRange)
+    withoutNormalizing(editor, () => {
+      // Split text nodes at range boundaries
+      const splitRange = at ?? editor.selection
+      if (splitRange && isRange(splitRange)) {
+        const splitLeafEntry = getNode(editor, splitRange.anchor.path)
+        const splitLeaf =
+          splitLeafEntry && isLeaf(editor, splitLeafEntry.path)
+            ? splitLeafEntry.node
+            : undefined
+        if (
+          !(
+            splitLeaf &&
+            isCollapsedRange(splitRange) &&
+            isSpan({schema: editor.schema}, splitLeaf) &&
+            splitLeaf.text.length > 0
+          )
+        ) {
+          const splitRangeRef = rangeRef(editor, splitRange, {
+            affinity: 'inward',
+          })
+          const [splitStart, splitEnd] = rangeEdges(splitRange, {}, editor)
+          const endAtEnd = isEnd(editor, splitEnd, splitEnd.path)
+          if (!endAtEnd || !isEdge(editor, splitEnd, splitEnd.path)) {
+            applySplitNode(editor, splitEnd.path, splitEnd.offset)
+          }
+          const startAtStart = isStart(editor, splitStart, splitStart.path)
+          if (!startAtStart || !isEdge(editor, splitStart, splitStart.path)) {
+            applySplitNode(editor, splitStart.path, splitStart.offset)
+          }
+          // Update selection if using editor.selection (not explicit `at`)
+          const updatedSplitRange = splitRangeRef.unref()
+          if (!at && updatedSplitRange) {
+            applySelect(editor, updatedSplitRange)
+          }
         }
       }
-    }
 
-    const blocks = Array.from(
-      getNodes(editor, {
-        from: rangeStart(effectiveSelection).path,
-        to: rangeEnd(effectiveSelection).path,
-        match: (node) => isTextBlock({schema: editor.schema}, node),
-      }),
-    )
+      const blocks = Array.from(
+        getNodes(editor, {
+          from: rangeStart(effectiveSelection, editor).path,
+          to: rangeEnd(effectiveSelection, editor).path,
+          match: (node) => isTextBlock({schema: editor.schema}, node),
+        }),
+      )
 
-    // Use the tracked range (updated after splits) or fall back to editor.selection
-    const selectionRange = ref?.current ?? editor.selection
+      // Use the tracked range (updated after splits) or fall back to editor.selection
+      const selectionRange = ref?.current ?? editor.selection
 
-    for (const {node: block, path: blockPath} of blocks) {
-      if (!isTextBlock({schema: editor.schema}, block)) {
-        continue
-      }
-
-      const children = getChildren(editor, blockPath)
-
-      for (const {node: child, path: childPath} of children) {
-        if (!isSpan({schema: editor.schema}, child)) {
+      for (const {node: block, path: blockPath} of blocks) {
+        if (!isTextBlock({schema: editor.schema}, block)) {
           continue
         }
 
-        if (!selectionRange || !rangeIncludes(selectionRange, childPath)) {
-          continue
-        }
+        const children = getChildren(editor, blockPath)
 
-        const markDefs = block.markDefs ?? []
-        const marks = child.marks ?? []
-        const marksWithoutAnnotation = marks.filter((mark) => {
-          const markDef = markDefs.find((markDef) => markDef._key === mark)
-          return markDef?._type !== operation.annotation.name
-        })
+        for (const {node: child, path: childPath} of children) {
+          if (!isSpan({schema: editor.schema}, child)) {
+            continue
+          }
 
-        if (marksWithoutAnnotation.length !== marks.length) {
-          applySetNode(editor, {marks: marksWithoutAnnotation}, childPath)
+          if (
+            !selectionRange ||
+            !rangeIncludes(selectionRange, childPath, editor)
+          ) {
+            continue
+          }
+
+          const markDefs = block.markDefs ?? []
+          const marks = child.marks ?? []
+          const marksWithoutAnnotation = marks.filter((mark) => {
+            const markDef = markDefs.find((markDef) => markDef._key === mark)
+            return markDef?._type !== operation.annotation.name
+          })
+
+          if (marksWithoutAnnotation.length !== marks.length) {
+            applySetNode(editor, {marks: marksWithoutAnnotation}, childPath)
+          }
         }
       }
-    }
+    }) // end withoutNormalizing
 
     // Clean up the range ref
     ref?.unref()

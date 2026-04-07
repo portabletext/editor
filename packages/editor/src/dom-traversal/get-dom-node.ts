@@ -1,13 +1,14 @@
-import {indexedPathToKeyedPath} from '../paths/indexed-path-to-keyed-path'
 import {serializePath} from '../paths/serialize-path'
 import type {Editor} from '../slate/interfaces/editor'
+import type {Path} from '../types/paths'
+import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 
 /**
- * Resolve the DOM node corresponding to an indexed path.
+ * Resolve the DOM node corresponding to a keyed path.
  */
 export function getDomNode(
   editor: Editor,
-  path: Array<number>,
+  path: Path,
 ): HTMLElement | undefined {
   const editorElement = editor.domElement
 
@@ -19,46 +20,44 @@ export function getDomNode(
     return editorElement
   }
 
-  const keyedPath = indexedPathToKeyedPath(
-    {
-      schema: editor.schema,
-      editableTypes: editor.editableTypes,
-      value: editor.children,
-    },
-    path,
-  )
+  const serializedPath = serializePath(path)
+  const selector = `[data-pt-path="${CSS.escape(serializedPath)}"]`
 
-  if (!keyedPath) {
-    return undefined
-  }
+  const blockSegment = path[0]
 
-  const serializedPath = serializePath(keyedPath)
+  if (isKeyedSegment(blockSegment)) {
+    const blockIndex = editor.blockIndexMap.get(blockSegment._key)
 
-  const blockIndex = path.at(0)
+    if (blockIndex !== undefined) {
+      const blockNode = editorElement.children[blockIndex]
 
-  if (blockIndex === undefined) {
-    return undefined
-  }
+      if (blockNode instanceof HTMLElement) {
+        if (blockNode.matches(selector)) {
+          const ownerEditor = blockNode.closest('[data-slate-editor]')
 
-  const blockNode = editorElement.children[blockIndex]
+          if (ownerEditor !== editorElement) {
+            return undefined
+          }
 
-  if (!(blockNode instanceof HTMLElement)) {
-    return undefined
-  }
+          return blockNode
+        }
 
-  if (blockNode.matches(`[data-pt-path="${CSS.escape(serializedPath)}"]`)) {
-    const ownerEditor = blockNode.closest('[data-slate-editor]')
+        const domNode = blockNode.querySelector(selector)
 
-    if (ownerEditor !== editorElement) {
-      return undefined
+        if (domNode instanceof HTMLElement) {
+          const ownerEditor = domNode.closest('[data-slate-editor]')
+
+          if (ownerEditor !== editorElement) {
+            return undefined
+          }
+
+          return domNode
+        }
+      }
     }
-
-    return blockNode
   }
 
-  const domNode = blockNode.querySelector(
-    `[data-pt-path="${CSS.escape(serializedPath)}"]`,
-  )
+  const domNode = editorElement.querySelector(selector)
 
   if (!(domNode instanceof HTMLElement)) {
     return undefined

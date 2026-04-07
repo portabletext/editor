@@ -1,6 +1,7 @@
 import {isTextBlock, type PortableTextTextBlock} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
 import type {Node} from '../slate/interfaces/node'
+import type {Path} from '../slate/interfaces/path'
 import {getNode} from './get-node'
 
 /**
@@ -12,8 +13,8 @@ export function getTextBlockNode(
     editableTypes: Set<string>
     value: Array<Node>
   },
-  path: Array<number>,
-): {node: PortableTextTextBlock; path: Array<number>} | undefined {
+  path: Path,
+): {node: PortableTextTextBlock; path: Path} | undefined {
   const entry = getNode(context, path)
 
   if (!entry) {

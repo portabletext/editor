@@ -4,7 +4,7 @@ import {
   type PortableTextObject,
   type PortableTextSpan,
 } from '@portabletext/schema'
-import type {EditorContext, EditorSnapshot} from '../editor/editor-snapshot'
+import type {EditorContext} from '../editor/editor-snapshot'
 import type {Path} from '../slate/interfaces/path'
 import type {Range} from '../slate/interfaces/range'
 import type {EditorSelectionPoint} from '../types/editor'
@@ -15,11 +15,10 @@ import {
   getChildKeyFromSelectionPoint,
 } from '../utils/util.selection-point'
 
-export function toSlateRange(
-  snapshot: {
-    context: Pick<EditorContext, 'schema' | 'value' | 'selection'>
-  } & Pick<EditorSnapshot, 'blockIndexMap'>,
-): Range | null {
+export function toSlateRange(snapshot: {
+  context: Pick<EditorContext, 'schema' | 'value' | 'selection'>
+  [key: string]: unknown
+}): Range | null {
   if (!snapshot.context.selection) {
     return null
   }
@@ -70,7 +69,7 @@ export function toSlateRange(
 function toSlateSelectionPoint(
   snapshot: {
     context: Pick<EditorContext, 'schema' | 'value'>
-  } & Pick<EditorSnapshot, 'blockIndexMap'>,
+  },
   selectionPoint: EditorSelectionPoint,
   direction: 'forward' | 'backward',
 ):
@@ -85,13 +84,7 @@ function toSlateSelectionPoint(
     return undefined
   }
 
-  const blockIndex = snapshot.blockIndexMap.get(blockKey)
-
-  if (blockIndex === undefined) {
-    return undefined
-  }
-
-  const block = snapshot.context.value.at(blockIndex)
+  const block = snapshot.context.value.find((b) => b._key === blockKey)
 
   if (!block) {
     return undefined
@@ -99,7 +92,7 @@ function toSlateSelectionPoint(
 
   if (!isTextBlock(snapshot.context, block)) {
     return {
-      path: [blockIndex],
+      path: [{_key: blockKey}],
       offset: 0,
     }
   }
@@ -132,45 +125,49 @@ function toSlateSelectionPoint(
   // If we still don't have a child key, then we have to resort to selecting
   // the first child of the block (which by Slate convention is a span).
   if (!childKey) {
+    const firstChild = block.children.at(0)
+    if (!firstChild) {
+      return {
+        path: [{_key: blockKey}],
+        offset: 0,
+      }
+    }
     return {
-      path: [blockIndex, 0],
+      path: [{_key: blockKey}, 'children', {_key: firstChild._key}],
       offset: 0,
     }
   }
 
   let offset = spanSelectionPoint?.offset ?? selectionPoint.offset
-  let childPath: Array<number> = []
-  let childIndex = -1
   let pathChild: PortableTextSpan | PortableTextObject | undefined
 
   for (const child of block.children) {
-    childIndex++
     if (child._key === childKey) {
       pathChild = child
-      if (isSpan(snapshot.context, child)) {
-        childPath = [childIndex]
-      } else {
-        // ObjectNodes have a spacer text node in the DOM for cursor
-        // anchoring. The selection resolves to the ObjectNode path.
-        childPath = [childIndex]
+      if (!isSpan(snapshot.context, child)) {
         offset = 0
       }
       break
     }
   }
 
-  // If we for some unforeseen reason didn't manage to produce a child path,
-  // then we have to resort to selecting the first child of the block (which
-  // by Slate convention is a span).
-  if (childPath.length === 0) {
+  // If we didn't find the child, select the first child of the block.
+  if (!pathChild) {
+    const firstChild = block.children.at(0)
+    if (!firstChild) {
+      return {
+        path: [{_key: blockKey}],
+        offset: 0,
+      }
+    }
     return {
-      path: [blockIndex, 0],
+      path: [{_key: blockKey}, 'children', {_key: firstChild._key}],
       offset: 0,
     }
   }
 
   return {
-    path: [blockIndex].concat(childPath),
+    path: [{_key: blockKey}, 'children', {_key: childKey}],
     offset: isSpan(snapshot.context, pathChild)
       ? Math.min(pathChild.text.length, offset)
       : offset,

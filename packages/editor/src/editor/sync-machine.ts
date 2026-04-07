@@ -24,7 +24,6 @@ import {
 import {safeStringify} from '../internal-utils/safe-json'
 import {validateValue} from '../internal-utils/validateValue'
 import {toSlateBlock} from '../internal-utils/values'
-import {getNode} from '../node-traversal/get-node'
 import {hasNode} from '../node-traversal/has-node'
 import {withRemoteChanges} from '../slate-plugins/slate-plugin.remote-changes'
 import {pluginWithoutHistory} from '../slate-plugins/slate-plugin.without-history'
@@ -36,6 +35,7 @@ import type {Node} from '../slate/interfaces/node'
 import type {PickFromUnion} from '../type-utils'
 import type {InvalidValueResolution} from '../types/editor'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
+import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import type {EditorSchema} from './editor-schema'
 
 type SyncValueEvent =
@@ -611,15 +611,13 @@ function clearEditor({
           const childrenLength = slateEditor.children.length
 
           slateEditor.children.forEach((_, index) => {
-            const removePath = [childrenLength - 1 - index]
-            const removeEntry = getNode(slateEditor, removePath)
-            if (!removeEntry) {
+            const removeNode = slateEditor.children[childrenLength - 1 - index]
+            if (!removeNode) {
               return
             }
-            const removeNode = removeEntry.node
             slateEditor.apply({
               type: 'remove_node',
-              path: removePath,
+              path: [{_key: removeNode._key}],
               node: removeNode,
             })
           })
@@ -649,14 +647,13 @@ function removeExtraBlocks({
 
         if (value.length < childrenLength) {
           for (let i = childrenLength - 1; i > value.length - 1; i--) {
-            const removeEntry2 = getNode(slateEditor, [i])
-            if (!removeEntry2) {
+            const removeNode = slateEditor.children[i]
+            if (!removeNode) {
               continue
             }
-            const removeNode = removeEntry2.node
             slateEditor.apply({
               type: 'remove_node',
-              path: [i],
+              path: [{_key: removeNode._key}],
               node: removeNode,
             })
           }
@@ -716,8 +713,9 @@ function syncBlock({
           withoutPatching(slateEditor, () => {
             slateEditor.apply({
               type: 'insert_node',
-              path: [index],
+              path: [slateEditor.children.length],
               node: slateBlock,
+              position: 'before',
             })
           })
         })
@@ -862,20 +860,33 @@ function replaceBlock({
   // While replacing the block and the current selection focus is on the replaced block,
   // temporarily deselect the editor then optimistically try to restore the selection afterwards.
   const currentSelection = slateEditor.selection
+  const focusBlockSegment = currentSelection?.focus.path[0]
+  const blockAtIndex = slateEditor.children[index]
   const selectionFocusOnBlock =
-    currentSelection && currentSelection.focus.path[0] === index
+    currentSelection &&
+    isKeyedSegment(focusBlockSegment) &&
+    blockAtIndex &&
+    focusBlockSegment._key === blockAtIndex._key
 
   if (selectionFocusOnBlock) {
     applyDeselect(slateEditor)
   }
 
-  const oldNodeEntry = getNode(slateEditor, [index])
-  if (!oldNodeEntry) {
+  const oldNode = slateEditor.children[index]
+  if (!oldNode) {
     return
   }
-  const oldNode = oldNodeEntry.node
-  slateEditor.apply({type: 'remove_node', path: [index], node: oldNode})
-  slateEditor.apply({type: 'insert_node', path: [index], node: slateBlock})
+  slateEditor.apply({
+    type: 'remove_node',
+    path: [{_key: oldNode._key}],
+    node: oldNode,
+  })
+  slateEditor.apply({
+    type: 'insert_node',
+    path: [index],
+    node: slateBlock,
+    position: 'before',
+  })
 
   slateEditor.onChange()
 
@@ -893,7 +904,7 @@ function updateBlock({
   slateEditor,
   oldSlateBlock,
   block,
-  index,
+  index: _index,
 }: {
   context: {
     keyGenerator: () => string
@@ -917,7 +928,7 @@ function updateBlock({
     unknown
   >
 
-  applySetNode(slateEditor, blockProps, [index])
+  applySetNode(slateEditor, blockProps, [{_key: oldSlateBlock._key}])
 
   // Remove properties present on the old node but absent from the new block.
   // Skip children/text (structural, managed by dedicated operations).
@@ -938,7 +949,7 @@ function updateBlock({
   if (Object.keys(removedProperties).length > 0) {
     slateEditor.apply({
       type: 'set_node',
-      path: [index],
+      path: [{_key: oldSlateBlock._key}],
       properties: removedProperties,
       newProperties: {},
     })
@@ -949,6 +960,29 @@ function updateBlock({
     isTextBlock({schema: slateEditor.schema}, slateBlock) &&
     isTextBlock({schema: slateEditor.schema}, oldSlateBlock)
   ) {
+    // Detect cases where incremental remove/insert would break due to
+    // stale keyed path references. Use a single set_node to replace the
+    // children array atomically instead.
+    const oldKeys = oldSlateBlock.children.map((c) => c._key)
+    const newKeys = slateBlock.children.map((c) => c._key)
+    const oldKeySet = new Set(oldKeys)
+    const hasSharedKeys = newKeys.some((key) => oldKeySet.has(key))
+    const isPureReorder =
+      oldKeys.length === newKeys.length &&
+      oldKeys.length > 0 &&
+      oldKeySet.size === oldKeys.length &&
+      oldKeys.some((key, i) => key !== newKeys[i]) &&
+      newKeys.every((key) => oldKeySet.has(key))
+
+    if (isPureReorder || (newKeys.length > 0 && !hasSharedKeys)) {
+      debug.syncValue('Replacing children via set_node')
+      applySetNode(slateEditor, {children: slateBlock.children}, [
+        {_key: oldSlateBlock._key},
+      ])
+      slateEditor.onChange()
+      return
+    }
+
     const oldBlockChildrenLength = oldSlateBlock.children.length
 
     if (slateBlock.children.length < oldBlockChildrenLength) {
@@ -961,14 +995,17 @@ function updateBlock({
         if (childIndex > 0) {
           debug.syncValue('Removing child')
 
-          const childNodeEntry = getNode(slateEditor, [index, childIndex])
-          if (!childNodeEntry) {
+          const childNode = oldSlateBlock.children[childIndex]
+          if (!childNode) {
             return
           }
-          const childNode = childNodeEntry.node
           slateEditor.apply({
             type: 'remove_node',
-            path: [index, childIndex],
+            path: [
+              {_key: oldSlateBlock._key},
+              'children',
+              {_key: childNode._key},
+            ],
             node: childNode,
           })
         }
@@ -988,7 +1025,11 @@ function updateBlock({
         oldBlockChild &&
         isSpan({schema: slateEditor.schema}, oldBlockChild) &&
         currentBlockChild.text !== oldBlockChild.text
-      const path = [index, currentBlockChildIndex]
+      const path = [
+        {_key: oldSlateBlock._key},
+        'children',
+        {_key: currentBlockChild._key},
+      ]
 
       if (isChildChanged) {
         // Update if this is the same child (same key and type)
@@ -1038,35 +1079,71 @@ function updateBlock({
         } else if (oldBlockChild) {
           debug.syncValue('Replacing child', currentBlockChild)
 
-          const oldChildEntry = getNode(slateEditor, [
-            index,
-            currentBlockChildIndex,
-          ])
-          if (!oldChildEntry) {
+          const oldChild = oldSlateBlock.children[currentBlockChildIndex]
+          if (!oldChild) {
             return
           }
-          const oldChild = oldChildEntry.node
           slateEditor.apply({
             type: 'remove_node',
-            path: [index, currentBlockChildIndex],
+            path: [
+              {_key: oldSlateBlock._key},
+              'children',
+              {_key: oldChild._key},
+            ],
             node: oldChild,
           })
-          slateEditor.apply({
-            type: 'insert_node',
-            path: [index, currentBlockChildIndex],
-            node: currentBlockChild,
-          })
+          const prevSibling =
+            currentBlockChildIndex > 0
+              ? oldSlateBlock.children[currentBlockChildIndex - 1]
+              : undefined
+          if (prevSibling) {
+            slateEditor.apply({
+              type: 'insert_node',
+              path: [
+                {_key: oldSlateBlock._key},
+                'children',
+                {_key: prevSibling._key},
+              ],
+              node: currentBlockChild,
+              position: 'after',
+            })
+          } else {
+            slateEditor.apply({
+              type: 'insert_node',
+              path: [{_key: oldSlateBlock._key}, 'children', 0],
+              node: currentBlockChild,
+              position: 'before',
+            })
+          }
 
           slateEditor.onChange()
         } else if (!oldBlockChild) {
           // Insert it if it didn't exist before
           debug.syncValue('Inserting new child', currentBlockChild)
 
-          slateEditor.apply({
-            type: 'insert_node',
-            path: [index, currentBlockChildIndex],
-            node: currentBlockChild,
-          })
+          const prevChild =
+            currentBlockChildIndex > 0
+              ? slateBlock.children[currentBlockChildIndex - 1]
+              : undefined
+          if (prevChild) {
+            slateEditor.apply({
+              type: 'insert_node',
+              path: [
+                {_key: oldSlateBlock._key},
+                'children',
+                {_key: prevChild._key},
+              ],
+              node: currentBlockChild,
+              position: 'after',
+            })
+          } else {
+            slateEditor.apply({
+              type: 'insert_node',
+              path: [{_key: oldSlateBlock._key}, 'children', 0],
+              node: currentBlockChild,
+              position: 'before',
+            })
+          }
 
           slateEditor.onChange()
         }

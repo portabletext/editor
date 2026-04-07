@@ -1,6 +1,6 @@
 import type {Path} from '../interfaces/path'
-import {comparePaths} from './compare-paths'
+import {isAncestorPath} from './is-ancestor-path'
 
 export function isDescendantPath(path: Path, another: Path): boolean {
-  return path.length > another.length && comparePaths(path, another) === 0
+  return isAncestorPath(another, path)
 }

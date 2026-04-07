@@ -565,7 +565,7 @@ describe('Feature: Self-solving', () => {
         {
           origin: 'local',
           type: 'insert',
-          path: [{_key: blockKey}, 'children', 0],
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
           position: 'after',
           items: [
             {

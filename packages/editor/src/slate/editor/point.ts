@@ -51,7 +51,7 @@ export function point(
   }
 
   if (isRange(at)) {
-    const [start, end] = rangeEdges(at)
+    const [start, end] = rangeEdges(at, {}, editor)
     return edge === 'start' ? start : end
   }
 

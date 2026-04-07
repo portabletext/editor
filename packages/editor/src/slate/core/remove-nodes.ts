@@ -7,9 +7,10 @@ import {withoutNormalizing} from '../editor/without-normalizing'
 import type {Editor, NodeMatch} from '../interfaces/editor'
 import type {Location} from '../interfaces/location'
 import type {Node} from '../interfaces/node'
+import type {Path} from '../interfaces/path'
 import {isTextBlockNode} from '../node/is-text-block-node'
-import {comparePaths} from '../path/compare-paths'
 import {isPath} from '../path/is-path'
+import {pathEquals} from '../path/path-equals'
 import {isRange} from '../range/is-range'
 import {rangeEdges} from '../range/range-edges'
 import type {RangeMode} from '../types/types'
@@ -46,11 +47,11 @@ export function removeNodes<T extends Node>(
     }
 
     // Resolve location to from/to paths
-    let from: Array<number>
-    let to: Array<number>
+    let from: Path
+    let to: Path
 
     if (isRange(at)) {
-      const [start, end] = rangeEdges(at)
+      const [start, end] = rangeEdges(at, {}, editor)
       from = start.path
       to = end.path
     } else if (isPath(at)) {
@@ -63,15 +64,15 @@ export function removeNodes<T extends Node>(
     }
 
     // Apply mode filtering (replicating old nodes() behavior)
-    const depths: Array<[Node, Array<number>]> = []
-    let hit: [Node, Array<number>] | undefined
+    const depths: Array<[Node, Path]> = []
+    let hit: [Node, Path] | undefined
 
     for (const {node, path: nodePath} of getNodes(editor, {
       from,
       to,
       match: (n, p) => match!(n, p),
     })) {
-      const isLower = hit && comparePaths(nodePath, hit[1]) === 0
+      const isLower = hit && pathEquals(nodePath, hit[1])
 
       if (mode === 'highest' && isLower) {
         continue
@@ -82,10 +83,11 @@ export function removeNodes<T extends Node>(
         continue
       }
 
-      const emit = mode === 'lowest' ? hit : [node, nodePath]
+      const emit: [Node, Path] | undefined =
+        mode === 'lowest' ? hit : [node, nodePath]
 
       if (emit) {
-        depths.push(emit as [Node, Array<number>])
+        depths.push(emit)
       }
 
       hit = [node, nodePath]
@@ -104,7 +106,11 @@ export function removeNodes<T extends Node>(
         const removedEntry = getNode(editor, path)
         if (removedEntry) {
           const removedNode = removedEntry.node
-          editor.apply({type: 'remove_node', path, node: removedNode})
+          editor.apply({
+            type: 'remove_node',
+            path,
+            node: removedNode,
+          })
         }
       }
     }
