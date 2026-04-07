@@ -1,0 +1,372 @@
+---
+title: Render Portable Text
+description: How to render Portable Text as HTML, React components, or any other format.
+---
+
+import {CardGrid, LinkCard, TabItem, Tabs} from '@astrojs/starlight/components'
+
+Portable Text is stored as JSON. To display it, you pass the data through a **serializer** that converts each block into your target output: HTML strings, React components, Vue templates, Markdown, or any other format.
+
+## How it works
+
+A Portable Text document is an array of blocks. Each block has a `_type` that tells the serializer what it is and how to render it.
+
+Some blocks are **text blocks** (`_type: "block"`): paragraphs, headings, lists, and inline formatting. Serializers handle these out of the box.
+
+But Portable Text isn't just rich text. The same array can contain **any type of structured content**: images, code blocks, calls to action, videos, tables, or types you define yourself. These custom blocks sit alongside text blocks in the array, each with their own `_type` and data. You provide a component for each custom type, and the serializer renders them in sequence.
+
+Within text blocks, **marks** add meaning to inline text. **Decorators** (bold, italic, underline) work by default. **Annotations** (links, references, footnotes) carry structured data as mark definitions. A link annotation isn't just an `<a>` tag: it's a data object with href, target, tracking parameters, or whatever fields you define. You customize annotation rendering through the `marks` component map. Text blocks can also contain **inline objects**: structured data embedded in the text flow, like a stock ticker, a product reference, or a custom emoji. Inline objects are rendered through the same `types` component map as custom blocks.
+
+If a serializer encounters a type it doesn't recognize, it skips it. Nothing breaks.
+
+## Get started
+
+Install the serializer for your framework:
+
+<Tabs>
+  <TabItem label="React">
+    ```bash
+    npm install @portabletext/react
+    ```
+
+    ```tsx
+    import {PortableText} from '@portabletext/react'
+
+    function Article({content}) {
+      return <PortableText value={content} />
+    }
+    ```
+
+    [React guide →](/rendering/react/)
+
+  </TabItem>
+
+  <TabItem label="HTML">
+    ```bash
+    npm install @portabletext/to-html
+    ```
+
+    ```ts
+    import {toHTML} from '@portabletext/to-html'
+
+    const html = toHTML(portableTextContent)
+    ```
+
+    [HTML guide →](/rendering/html/)
+
+  </TabItem>
+
+  <TabItem label="Markdown">
+    ```bash
+    npm install @portabletext/markdown
+    ```
+
+    ```ts
+    import {portableTextToMarkdown} from '@portabletext/markdown'
+
+    const markdown = portableTextToMarkdown(portableTextContent)
+    ```
+
+    Also converts Markdown → Portable Text. [Markdown guide →](/rendering/markdown/)
+
+  </TabItem>
+
+  <TabItem label="Vue">
+    ```bash
+    npm install @portabletext/vue
+    ```
+
+    ```vue
+    <script setup>
+    import {PortableText} from '@portabletext/vue'
+
+    defineProps(['value'])
+    </script>
+
+    <template>
+      <PortableText :value="value" />
+    </template>
+    ```
+
+    [Vue guide →](/rendering/vue/)
+
+  </TabItem>
+
+  <TabItem label="Svelte">
+    ```bash
+    npm install @portabletext/svelte -D
+    ```
+
+    ```svelte
+    <script>
+      import {PortableText} from '@portabletext/svelte'
+
+      let {value} = $props()
+    </script>
+
+    <PortableText value={value} />
+    ```
+
+    Requires Svelte 5+. [Svelte guide →](/rendering/svelte/)
+
+  </TabItem>
+
+  <TabItem label="Astro">
+    ```bash
+    npm install astro-portabletext
+    ```
+
+    ```astro
+    ---
+    import {PortableText} from 'astro-portabletext'
+
+    const {content} = Astro.props
+    ---
+
+    <PortableText value={content} />
+    ```
+
+    [Astro guide →](/rendering/astro/)
+
+  </TabItem>
+</Tabs>
+
+That's enough to render paragraphs, headings, lists, bold, italic, and links. But Portable Text can contain much more than formatted text. The next sections show how to render custom block types and marks.
+
+## Rendering custom block types
+
+This is where Portable Text goes beyond rich text. Custom blocks carry structured data (images, CTAs, embeds, code blocks) that the serializer doesn't know how to render by default. You tell it what to do by mapping the block's `_type` to a component.
+
+Here's an image block in Portable Text:
+
+```json
+{
+  "_type": "image",
+  "_key": "abc123",
+  "url": "https://example.com/photo.jpg",
+  "alt": "A mountain landscape",
+  "caption": "View from the summit"
+}
+```
+
+The `_type` is `"image"`. To render it, add an `image` entry to the `types` component map:
+
+<Tabs>
+  <TabItem label="React">
+    ```tsx
+    import {PortableText} from '@portabletext/react'
+
+    const components = {
+      types: {
+        image: ({value}) => (
+          <figure>
+            <img src={value.url} alt={value.alt} />
+            {value.caption && <figcaption>{value.caption}</figcaption>}
+          </figure>
+        ),
+      },
+    }
+
+    function Article({content}) {
+      return <PortableText value={content} components={components} />
+    }
+    ```
+
+  </TabItem>
+
+  <TabItem label="HTML">
+    ```ts
+    import {toHTML} from '@portabletext/to-html'
+
+    const html = toHTML(portableTextContent, {
+      components: {
+        types: {
+          image: ({value}) => {
+            const caption = value.caption
+              ? `<figcaption>${value.caption}</figcaption>`
+              : ''
+            return `<figure><img src="${value.url}" alt="${value.alt}" />${caption}</figure>`
+          },
+        },
+      },
+    })
+    ```
+
+  </TabItem>
+
+  <TabItem label="Markdown">
+    ```ts
+    import {portableTextToMarkdown} from '@portabletext/markdown'
+
+    const markdown = portableTextToMarkdown(portableTextContent, {
+      types: {
+        image: ({value}) => {
+          const alt = value.alt || ''
+          const caption = value.caption ? `\n\n*${value.caption}*` : ''
+          return `![${alt}](${value.url})${caption}`
+        },
+      },
+    })
+    ```
+
+  </TabItem>
+</Tabs>
+
+The pattern is the same in every framework: map the `_type` to a function that receives the block's data as `value` and returns your output.
+
+This works for any custom block type. A call-to-action, a code block, an embedded video, a table: define the `_type` in your schema, add a component to the `types` map, and the serializer handles the rest.
+
+## Rendering custom marks
+
+Marks add meaning to inline text. There are two kinds:
+
+**Decorators** are simple flags like `strong`, `em`, and `underline`. Serializers render these by default (bold, italic, underlined text).
+
+**Annotations** carry data. A link annotation looks like this in Portable Text:
+
+```json
+{
+  "_type": "block",
+  "children": [
+    {"_type": "span", "text": "Read the "},
+    {"_type": "span", "text": "documentation", "marks": ["link1"]},
+    {"_type": "span", "text": "."}
+  ],
+  "markDefs": [
+    {
+      "_key": "link1",
+      "_type": "link",
+      "href": "/docs",
+      "openInNewTab": true
+    }
+  ]
+}
+```
+
+The span with `"marks": ["link1"]` references the mark definition with `"_key": "link1"`. The mark definition carries the data (`href`, `openInNewTab`). To customize how this renders, add a `link` entry to the `marks` component map:
+
+<Tabs>
+  <TabItem label="React">
+    ```tsx
+    const components = {
+      marks: {
+        link: ({children, value}) => {
+          const rel = !value.href.startsWith('/')
+            ? 'noreferrer noopener'
+            : undefined
+          return (
+            <a
+              href={value.href}
+              target={value.openInNewTab ? '_blank' : undefined}
+              rel={rel}
+            >
+              {children}
+            </a>
+          )
+        },
+      },
+    }
+    ```
+  </TabItem>
+
+  <TabItem label="HTML">
+    ```ts
+    import {uriLooksSafe} from '@portabletext/to-html'
+
+    const components = {
+      marks: {
+        link: ({children, value}) => {
+          const href = value.href || ''
+          if (!uriLooksSafe(href)) return children
+
+          const rel = href.startsWith('/') ? '' : ' rel="noreferrer noopener"'
+          const target = value.openInNewTab ? ' target="_blank"' : ''
+          return `<a href="${href}"${target}${rel}>${children}</a>`
+        },
+      },
+    }
+    ```
+
+    :::tip[Security]
+    The `@portabletext/to-html` package exports `uriLooksSafe()` to reject dangerous URI schemes like `javascript:` and `data:`. Use it when rendering links from user-generated content.
+    :::
+
+  </TabItem>
+
+  <TabItem label="Markdown">
+    ```ts
+    import {portableTextToMarkdown} from '@portabletext/markdown'
+
+    const markdown = portableTextToMarkdown(portableTextContent, {
+      marks: {
+        link: ({children, value}) => {
+          const href = value.href || ''
+          const title = value.title ? ` "${value.title}"` : ''
+          return `[${children}](${href}${title})`
+        },
+      },
+    })
+    ```
+
+    The default link renderer already handles standard links. Custom mark renderers are useful when your annotations carry extra data (tracking parameters, tooltips, etc.) that you want to preserve in the Markdown output.
+
+  </TabItem>
+</Tabs>
+
+Mark components receive `children` (the annotated text, already rendered) and `value` (the mark definition data). The same pattern works for any annotation type: footnotes, internal references, highlights, or custom marks specific to your schema.
+
+## Component map reference
+
+All serializers use the same component map structure (except Astro, which uses singular keys `type` and `mark`):
+
+| Key         | What it renders                 | When you need it                        |
+| ----------- | ------------------------------- | --------------------------------------- |
+| `types`     | Custom block and inline objects | Images, CTAs, code blocks, embeds       |
+| `marks`     | Annotations (marks with data)   | Links, footnotes, references            |
+| `block`     | Block styles                    | Custom heading styles, pull quotes      |
+| `list`      | List containers                 | Custom bullet or numbered list wrappers |
+| `listItem`  | List items                      | Custom list item rendering              |
+| `hardBreak` | Line breaks within text         | Custom line break handling              |
+
+Unknown types, marks, and styles are skipped by default. You can handle them with `unknownType`, `unknownMark`, `unknownBlockStyle`, `unknownList`, and `unknownListItem` components.
+
+## Framework guides
+
+Each framework has its own patterns for custom components, TypeScript support, and utilities:
+
+<CardGrid>
+  <LinkCard
+    title="React"
+    description="JSX components, PortableTextComponents type, @sanity/image-url patterns"
+    href="/rendering/react/"
+  />
+  <LinkCard
+    title="HTML"
+    description="String-based rendering, uriLooksSafe security, htm + vhtml for safe construction"
+    href="/rendering/html/"
+  />
+  <LinkCard
+    title="Markdown"
+    description="Bidirectional conversion: PT to Markdown and Markdown to PT, custom renderers and matchers"
+    href="/rendering/markdown/"
+  />
+  <LinkCard
+    title="Vue"
+    description="Script setup, h() render functions, SFC components, PortableTextComponentProps"
+    href="/rendering/vue/"
+  />
+  <LinkCard
+    title="Svelte"
+    description="Svelte 5 runes, $derived() reactivity, Snippet children, context prop"
+    href="/rendering/svelte/"
+  />
+  <LinkCard
+    title="Astro"
+    description="Astro components, singular prop names, named slots, usePortableText"
+    href="/rendering/astro/"
+  />
+</CardGrid>
+
+## All packages
+
+For the complete list of serializers, converters, and community packages, see [All packages](/ecosystem/packages/).

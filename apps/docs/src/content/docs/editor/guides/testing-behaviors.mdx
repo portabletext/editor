@@ -1,0 +1,337 @@
+---
+title: Testing behaviors
+description: Test custom behaviors with Gherkin specs or direct Vitest tests.
+sidebar:
+  order: 6
+---
+
+import {LinkCard, TabItem, Tabs} from '@astrojs/starlight/components'
+
+The Portable Text Editor ships with testing infrastructure you can use for your own behaviors. There are two approaches: Gherkin specs with Racejar (the same approach every official plugin uses) and direct Vitest tests for simpler cases.
+
+Both approaches use Vitest Browser Mode with Playwright, running tests against a real browser.
+
+:::note[Prerequisites]
+This guide covers `@portabletext/editor` **v6.x** and `racejar` **v2.x** ([changelog](https://github.com/portabletext/editor/releases)). Requires Vitest with Browser Mode and Playwright.
+:::
+
+## Setup
+
+Install the testing dependencies:
+
+```bash
+npm install --save-dev vitest @vitest/browser playwright racejar @portabletext/test
+```
+
+Configure Vitest for Browser Mode in your `vitest.config.ts`:
+
+```ts
+import {defineConfig} from 'vitest/config'
+
+export default defineConfig({
+  test: {
+    browser: {
+      enabled: true,
+      provider: 'playwright',
+      instances: [{browser: 'chromium'}],
+    },
+  },
+})
+```
+
+If you use TypeScript, declare `.feature` file imports:
+
+```ts
+// global.d.ts
+declare module '*.feature?raw' {
+  const content: string
+  export default content
+}
+```
+
+## Quick start: direct Vitest tests
+
+For simple behavior tests, use `createTestEditor` directly. This is the fastest way to verify a behavior works:
+
+```tsx
+import {defineSchema} from '@portabletext/editor'
+import {defineBehavior, execute} from '@portabletext/editor/behaviors'
+import {BehaviorPlugin} from '@portabletext/editor/plugins'
+import {createTestEditor} from '@portabletext/editor/test/vitest'
+import {getTersePt} from '@portabletext/test'
+import {describe, expect, test, vi} from 'vitest'
+import {userEvent} from 'vitest/browser'
+
+describe('uppercase A behavior', () => {
+  test('replaces lowercase a with uppercase A', async () => {
+    const {editor, locator} = await createTestEditor({
+      children: (
+        <BehaviorPlugin
+          behaviors={[
+            defineBehavior({
+              on: 'insert.text',
+              guard: ({event}) => event.text === 'a',
+              actions: [() => [execute({type: 'insert.text', text: 'A'})]],
+            }),
+          ]}
+        />
+      ),
+      schemaDefinition: defineSchema({
+        decorators: [{name: 'strong'}],
+      }),
+    })
+
+    await userEvent.click(locator)
+    await userEvent.type(locator, 'a')
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['A'])
+    })
+  })
+})
+```
+
+**Key parts:**
+
+- **`createTestEditor`** spins up a real editor in the browser. Returns `{editor, locator}` where `editor` is the editor instance and `locator` is a Playwright locator for user interactions.
+- **`getTersePt`** from `@portabletext/test` gives you a compact representation of the editor content for assertions. `['foo ,bar, baz']` means one block with three spans (commas separate spans).
+- **`editor.getSnapshot().context`** gives you the full editor state including `value` (the Portable Text array) and `selection`.
+- **`vi.waitFor`** is needed because editor updates are asynchronous.
+
+## Gherkin approach with Racejar
+
+For comprehensive behavior specs, write Gherkin feature files and run them with Racejar. This is how every official plugin is tested.
+
+### Step 1: write a feature file
+
+Create a `.feature` file that describes your behavior in plain English:
+
+```gherkin
+# my-behavior.feature
+
+Feature: Auto-capitalize after period
+
+  Scenario: Capitalizes first letter after period and space
+    Given the text "hello."
+    When the editor is focused
+    And the caret is put after "hello."
+    And " " is typed
+    And "w" is typed
+    Then the text is "hello. W"
+
+  Scenario: Does not capitalize mid-sentence
+    Given the text "hello"
+    When the editor is focused
+    And the caret is put after "hello"
+    And " w" is typed
+    Then the text is "hello w"
+
+  Scenario: Undo restores original text
+    Given the text "hello."
+    When the editor is focused
+    And the caret is put after "hello."
+    And " " is typed
+    And "w" is typed
+    Then the text is "hello. W"
+    When undo is performed
+    Then the text is "hello. w"
+```
+
+Gherkin scenarios follow the Given/When/Then pattern:
+
+- **Given** sets up the editor state (text content, marks, selections)
+- **When** performs actions (typing, key presses, toolbar interactions)
+- **Then** asserts the result (text content, marks, selections)
+
+### Step 2: wire up the test
+
+Create a test file that connects your feature file to the editor:
+
+```tsx
+// my-behavior.test.tsx
+import {defineSchema} from '@portabletext/editor'
+import {parameterTypes} from '@portabletext/editor/test'
+import {
+  createTestEditor,
+  stepDefinitions,
+  type Context,
+} from '@portabletext/editor/test/vitest'
+import {Before} from 'racejar'
+import {Feature} from 'racejar/vitest'
+import {MyBehaviorPlugin} from './my-behavior-plugin'
+import myFeature from './my-behavior.feature?raw'
+
+Feature({
+  hooks: [
+    Before(async (context: Context) => {
+      const {editor, locator} = await createTestEditor({
+        children: <MyBehaviorPlugin />,
+        schemaDefinition: defineSchema({
+          decorators: [{name: 'strong'}, {name: 'em'}],
+          annotations: [{name: 'link'}],
+        }),
+      })
+
+      context.locator = locator
+      context.editor = editor
+    }),
+  ],
+  featureText: myFeature,
+  stepDefinitions,
+  parameterTypes,
+})
+```
+
+That's it. Racejar compiles the `.feature` file into test cases, and the pre-built step definitions handle the Given/When/Then steps.
+
+### Step 3: run the tests
+
+```bash
+npx vitest
+```
+
+Each Gherkin scenario becomes a separate test case. Failures show which step failed and what the editor state was at that point.
+
+## Pre-built step definitions
+
+The editor ships with step definitions that cover the most common test scenarios. You get these for free when you import from `@portabletext/editor/test/vitest`:
+
+**Given steps (setup):**
+
+- `Given the text "..."` sets the editor content
+- `Given "strong" around "..."` applies a decorator to text
+- `Given a "link" "l1" around "..."` applies an annotation
+- `Given a global keymap` sets up keyboard shortcut handling
+
+**When steps (actions):**
+
+- `When the editor is focused` focuses the editor
+- `When "..." is typed` types text character by character
+- `When "..." is inserted` inserts text all at once (mimics Android input)
+- `When "{Enter}" is pressed` presses a key
+- `When "{Backspace}" is pressed` presses backspace
+- `When "..." is selected` selects text in the editor
+- `When the caret is put after "..."` positions the cursor
+- `When undo is performed` triggers undo
+- `When redo is performed` triggers redo
+- `When "link" is toggled` toggles an annotation
+- `When "strong" is toggled` toggles a decorator
+
+**Then steps (assertions):**
+
+- `Then the text is "..."` asserts the editor content
+- `Then "..." has marks "..."` asserts marks on text
+- `Then "..." has no marks` asserts no marks on text
+- `Then "..." is selected` asserts the current selection
+
+These steps handle text blocks, marks, selections, undo/redo, and keyboard interactions. For custom block types or inline objects, you can add your own step definitions alongside the pre-built ones.
+
+## Real-world example: em dash input rule
+
+Here's how the official typography plugin tests its em dash behavior (converts `--` to `—`):
+
+**Feature file** (`input-rule.em-dash.feature`):
+
+```gherkin
+Feature: Em Dash Input Rule
+
+  Background:
+    Given a global keymap
+
+  Scenario: Inserting em dash in unformatted text
+    Given the text "-"
+    When "-" is inserted
+    Then the text is "—"
+    When undo is performed
+    Then the text is "--"
+
+  Scenario: Inserting em dash inside a decorator
+    Given the text "foo-"
+    And "strong" around "foo-"
+    When the editor is focused
+    And the caret is put after "foo-"
+    And "-" is typed
+    Then the text is "foo—"
+    And "foo—" has marks "strong"
+```
+
+**Test file** (`input-rule.em-dash.test.tsx`):
+
+```tsx
+import {defineSchema} from '@portabletext/editor'
+import {parameterTypes} from '@portabletext/editor/test'
+import {
+  createTestEditor,
+  stepDefinitions,
+  type Context,
+} from '@portabletext/editor/test/vitest'
+import {Before} from 'racejar'
+import {Feature} from 'racejar/vitest'
+import emDashFeature from './input-rule.em-dash.feature?raw'
+import {TypographyPlugin} from './plugin.typography'
+
+Feature({
+  hooks: [
+    Before(async (context: Context) => {
+      const {editor, locator} = await createTestEditor({
+        children: <TypographyPlugin />,
+        schemaDefinition: defineSchema({
+          decorators: [{name: 'strong'}],
+          annotations: [{name: 'link'}],
+        }),
+      })
+
+      context.locator = locator
+      context.editor = editor
+    }),
+  ],
+  featureText: emDashFeature,
+  stepDefinitions,
+  parameterTypes,
+})
+```
+
+The test file is 20 lines. The feature file describes the behavior in plain English. The pre-built step definitions do the heavy lifting.
+
+## Adding custom step definitions
+
+If your behavior involves custom block types or domain-specific assertions, add your own step definitions alongside the pre-built ones:
+
+```tsx
+import {stepDefinitions as builtInSteps} from '@portabletext/editor/test/vitest'
+import {Given, Then, When} from 'racejar'
+
+const customSteps = [
+  Given('an image block with src {string}', async (context, src) => {
+    // Set up editor with an image block
+  }),
+  Then('the image src is {string}', async (context, expectedSrc) => {
+    // Assert image block data
+  }),
+]
+
+Feature({
+  // ...
+  stepDefinitions: [...builtInSteps, ...customSteps],
+})
+```
+
+Racejar will error if a step definition is missing or if you define duplicates.
+
+## Next steps
+
+<LinkCard
+  title="Create a behavior"
+  description="Learn the event, guard, action pattern for building custom behaviors."
+  href="/editor/guides/create-behavior/"
+/>
+<LinkCard
+  title="Behavior recipes"
+  description="Common patterns and solutions using the Behavior API."
+  href="/editor/guides/behavior-cheat-sheet/"
+/>
+<LinkCard
+  title="Racejar on GitHub"
+  description="The testing-framework-agnostic Gherkin driver."
+  href="https://github.com/portabletext/editor/tree/main/packages/racejar"
+/>

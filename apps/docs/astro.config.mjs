@@ -18,10 +18,32 @@ const tsconfig = '../../packages/editor/tsconfig.typedoc.json'
 // https://astro.build/config
 export default defineConfig({
   site: 'https://www.portabletext.org',
+  redirects: {
+    '/integrations/serializers/': '/rendering/',
+    '/concepts/': '/editor/concepts/',
+    '/concepts/portabletext/': '/editor/concepts/portabletext/',
+    '/concepts/behavior/': '/editor/concepts/behavior/',
+    '/guides/': '/editor/guides/',
+    '/guides/custom-rendering/': '/editor/guides/custom-rendering/',
+    '/guides/customize-toolbar/': '/editor/guides/customize-toolbar/',
+    '/guides/create-behavior/': '/editor/guides/create-behavior/',
+    '/guides/behavior-cheat-sheet/': '/editor/guides/behavior-cheat-sheet/',
+    '/reference/': '/editor/reference/',
+    '/reference/editor/': '/editor/reference/editor/',
+    '/reference/behavior-api/': '/editor/reference/behavior-api/',
+    '/reference/plugins/': '/editor/reference/plugins/',
+    '/reference/selectors/': '/editor/reference/selectors/',
+    '/reference/toolbar/': '/editor/reference/toolbar/',
+    '/reference/keyboard-shortcuts/': '/editor/reference/keyboard-shortcuts/',
+    '/getting-started/': '/introduction/',
+    '/rendering/html-to-portable-text/': '/conversion/html-to-portable-text/',
+    '/resources/': '/ecosystem/packages/',
+    '/resources/additional-libraries/': '/ecosystem/packages/',
+  },
   integrations: [
     react(),
     starlight({
-      title: 'Portable Text Editor',
+      title: 'Portable Text',
       components: {
         PageTitle: './src/components/overrides/page-title.astro',
       },
@@ -64,78 +86,107 @@ export default defineConfig({
         },
       ],
       sidebar: [
-        {slug: 'getting-started'},
+        {slug: 'introduction'},
         {
-          label: 'Guides',
-          autogenerate: {directory: 'guides'},
-        },
-        {
-          label: 'Concepts',
-          autogenerate: {directory: 'concepts'},
-        },
-        {
-          label: 'Reference',
-          collapsed: true,
+          label: 'Rendering',
           items: [
+            {slug: 'rendering', label: 'Overview'},
+            {slug: 'rendering/react'},
+            {slug: 'rendering/html'},
+            {slug: 'rendering/vue'},
+            {slug: 'rendering/svelte'},
+            {slug: 'rendering/astro'},
+            {slug: 'rendering/markdown'},
+          ],
+        },
+        {
+          label: 'Editor',
+          items: [
+            {slug: 'editor/getting-started'},
+            {slug: 'editor/guides/custom-blocks'},
             {
-              label: 'Editor',
+              label: 'Concepts',
               items: [
-                {label: 'Overview', slug: 'reference/editor'},
-                {...editorTypeDocSidebar, badge: 'Generated'},
+                {slug: 'editor/concepts/portabletext'},
+                {slug: 'editor/concepts/behavior'},
               ],
             },
             {
-              label: 'Behaviors',
+              label: 'Guides',
               items: [
-                {label: 'Overview', slug: 'reference/behavior-api'},
-                {...behaviorTypeDocSidebar, badge: 'Generated'},
+                {slug: 'editor/guides/custom-rendering'},
+                {slug: 'editor/guides/customize-toolbar'},
+                {slug: 'editor/guides/create-behavior'},
+                {slug: 'editor/guides/behavior-cheat-sheet'},
+                {slug: 'editor/guides/testing-behaviors'},
               ],
             },
             {
-              label: 'Plugins',
+              label: 'Reference',
+              collapsed: true,
               items: [
-                {label: 'Overview', slug: 'reference/plugins'},
-                {...pluginsTypeDocSidebar, badge: 'Generated'},
-              ],
-            },
-            {
-              label: 'Selectors',
-              items: [
-                {label: 'Overview', slug: 'reference/selectors'},
-                {...selectorsTypeDocSidebar, badge: 'Generated'},
-              ],
-            },
-            {
-              label: 'Toolbar',
-              items: [
-                {label: 'Overview', slug: 'reference/toolbar'},
-                {...toolbarTypeDocSidebar, badge: 'Generated'},
-              ],
-            },
-            {
-              label: 'Keyboard Shortcuts',
-              items: [
-                {label: 'Overview', slug: 'reference/keyboard-shortcuts'},
-                {...keyboardShortcutsTypeDocSidebar, badge: 'Generated'},
+                {
+                  label: 'Editor',
+                  items: [
+                    {label: 'Overview', slug: 'editor/reference/editor'},
+                    {...editorTypeDocSidebar, badge: 'Generated'},
+                  ],
+                },
+                {
+                  label: 'Behaviors',
+                  items: [
+                    {label: 'Overview', slug: 'editor/reference/behavior-api'},
+                    {...behaviorTypeDocSidebar, badge: 'Generated'},
+                  ],
+                },
+                {
+                  label: 'Plugins',
+                  items: [
+                    {label: 'Overview', slug: 'editor/reference/plugins'},
+                    {...pluginsTypeDocSidebar, badge: 'Generated'},
+                  ],
+                },
+                {
+                  label: 'Selectors',
+                  items: [
+                    {label: 'Overview', slug: 'editor/reference/selectors'},
+                    {...selectorsTypeDocSidebar, badge: 'Generated'},
+                  ],
+                },
+                {
+                  label: 'Toolbar',
+                  items: [
+                    {label: 'Overview', slug: 'editor/reference/toolbar'},
+                    {...toolbarTypeDocSidebar, badge: 'Generated'},
+                  ],
+                },
+                {
+                  label: 'Keyboard Shortcuts',
+                  items: [
+                    {
+                      label: 'Overview',
+                      slug: 'editor/reference/keyboard-shortcuts',
+                    },
+                    {...keyboardShortcutsTypeDocSidebar, badge: 'Generated'},
+                  ],
+                },
               ],
             },
           ],
         },
         {
-          label: 'Integrations',
-          autogenerate: {directory: 'integrations'},
+          label: 'Conversion',
+          items: [{slug: 'conversion/html-to-portable-text'}],
         },
+        {slug: 'why-portable-text'},
+        {slug: 'specification'},
         {
-          label: 'Resources',
-          autogenerate: {directory: 'resources'},
+          label: 'Ecosystem',
+          items: [{slug: 'ecosystem/packages', label: 'All packages'}],
         },
         {
           label: 'Playground',
           link: 'https://playground.portabletext.org/',
-        },
-        {
-          label: 'Portable Text Specification',
-          link: 'https://github.com/portabletext/portabletext',
         },
       ],
       plugins: [

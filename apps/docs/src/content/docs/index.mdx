@@ -1,46 +1,111 @@
 ---
-title: Portable Text Editor
-description: Fully customizable authoring of rich text and block content
+title: Portable Text
+description: A JSON-based specification for structured block content
 template: splash
 ---
 
 import '@/styles/globals.css'
-import {Card, CardGrid, LinkCard} from '@astrojs/starlight/components'
+import {
+  Card,
+  CardGrid,
+  LinkCard,
+  TabItem,
+  Tabs,
+} from '@astrojs/starlight/components'
 import PortableTextEditor from '../../components/editor/editor.astro'
+
+Portable Text is an open specification for structured block content. Rich text, images, code blocks, and any custom type you define, stored as JSON and renderable anywhere.
+
+[Get started →](/introduction/) · [Render PT content →](/rendering/) · [Build an editor →](/editor/getting-started/)
+
+## Try the editor
 
 <PortableTextEditor />
 
-## Next steps
+Type, format, and see the Portable Text output in real time. This is the [Portable Text Editor](/editor/getting-started/): a fully customizable block content editor you can embed in any React application.
+
+## Get started
 
 <CardGrid>
   <LinkCard
-    title="Portable Text Editor Concepts"
-    description="Learn more about the different parts that make up the Portable Text Editor"
-    href="/concepts/portabletext/"
+    title="Render Portable Text"
+    description="Have PT content? Pick your framework and start rendering."
+    href="/rendering/"
   />
   <LinkCard
-    title="Customize text rendering"
-    description="Customize how content is rendered in the PTE"
-    href="/guides/custom-rendering/"
+    title="Build a block content editor"
+    description="Set up the Portable Text Editor with custom blocks, rich text, and a toolbar."
+    href="/editor/getting-started/"
+  />
+</CardGrid>
+
+## What does Portable Text look like?
+
+The same content as an HTML string and as Portable Text:
+
+<Tabs>
+  <TabItem label="HTML string">
+    ```html
+    <p>Read the <a href="/docs">documentation</a> for <strong>Portable Text</strong>.</p>
+    ```
+  </TabItem>
+  <TabItem label="Portable Text">
+    ```json
+    [
+      {
+        "_type": "block",
+        "style": "normal",
+        "children": [
+          { "_type": "span", "text": "Read the " },
+          {
+            "_type": "span",
+            "text": "documentation",
+            "marks": ["a1b2c3"]
+          },
+          { "_type": "span", "text": " for " },
+          {
+            "_type": "span",
+            "text": "Portable Text",
+            "marks": ["strong"]
+          },
+          { "_type": "span", "text": "." }
+        ],
+        "markDefs": [
+          {
+            "_key": "a1b2c3",
+            "_type": "link",
+            "href": "/docs"
+          }
+        ]
+      }
+    ]
+    ```
+  </TabItem>
+</Tabs>
+
+Because content is structured data, you can render it as HTML, React components, Markdown, PDFs, or any other format. [Learn more about Portable Text →](/introduction/)
+
+## Learn more
+
+<CardGrid>
+  <LinkCard
+    title="Schema and concepts"
+    description="The building blocks of the editor: schema, styles, decorators, annotations, and more"
+    href="/editor/concepts/portabletext/"
   />
   <LinkCard
-    title="Customize the Toolbar"
-    description="Change how the editor displays the toolbar"
-    href="/guides/customize-toolbar/"
-  />
-  <LinkCard
-    title="Learn about the Behavior API"
-    description="Behaviors drive actions in the editor experience"
-    href="/concepts/behavior/"
+    title="Behaviors"
+    description="Events, guards, and actions: the pattern for customizing editor interactions"
+    href="/editor/concepts/behavior/"
   />
   <LinkCard
     title="Explore the playground"
-    description="Play with the Portable Text Editor in a sandbox"
+    description="Try the Portable Text Editor in a live sandbox"
     href="https://playground.portabletext.org/"
   />
   <LinkCard
-    title="Render Portable Text"
-    description="Serializers for React, Vue, Svelte, and more"
-    href="/integrations/serializers/"
+    title="Specification"
+    description="The open specification for structured block content"
+    href="/specification/"
   />
 </CardGrid>
