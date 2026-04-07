@@ -302,6 +302,7 @@ export const Editable = forwardRef(
               editor.focused = true
             } else {
               editor.focused = false
+              return
             }
 
             if (!domSelection) {
