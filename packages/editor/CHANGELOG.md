@@ -1,5 +1,11 @@
 # Changelog
 
+## 6.6.2
+
+### Patch Changes
+
+- [#2466](https://github.com/portabletext/editor/pull/2466) [`2a3e039`](https://github.com/portabletext/editor/commit/2a3e03934d4715b8cb296c3ad81c0a2d104ab449) Thanks [@christianhg](https://github.com/christianhg)! - fix: preserve selection when editor loses focus
+
 ## 6.6.1
 
 ### Patch Changes
