@@ -1,7 +1,7 @@
 import type {PortableTextSpan} from '@portabletext/schema'
 import {getSibling} from '../../node-traversal/get-sibling'
 import {getSpanNode} from '../../node-traversal/get-span-node'
-import {getDirtyIndexedPaths} from '../../paths/get-dirty-indexed-paths'
+import {getDirtyPaths} from '../../paths/get-dirty-paths'
 import {normalize} from '../editor/normalize'
 import type {Editor} from '../interfaces/editor'
 import {PathRef} from '../interfaces/path-ref'
@@ -34,7 +34,7 @@ export const apply: WithEditorFirstArg<Editor['apply']> = (editor, op) => {
   applyOperation(editor, op)
 
   // Update dirty paths: no transform needed (keyed paths are stable)
-  updateDirtyPaths(editor, getDirtyIndexedPaths(editor, op))
+  updateDirtyPaths(editor, getDirtyPaths(editor, op))
 
   editor.operations.push(op)
   normalize(editor, {
