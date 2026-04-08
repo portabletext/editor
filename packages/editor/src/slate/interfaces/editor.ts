@@ -1,4 +1,5 @@
 import type {PortableTextBlock, PortableTextSpan} from '@portabletext/schema'
+import type {EditorSelection} from '../../types/editor'
 import type {PortableTextSlateEditor} from '../../types/slate-editor'
 import type {ReactEditor} from '../react/plugin/react-editor'
 import type {Location} from './location'
@@ -19,7 +20,7 @@ export interface BaseEditor {
 
   children: PortableTextBlock[]
   readonly value: PortableTextBlock[]
-  selection: Selection
+  selection: EditorSelection
   operations: Operation[]
   marks: EditorMarks | null
   dirtyPaths: Path[]
@@ -58,8 +59,6 @@ export interface BaseEditor {
 }
 
 export type Editor = BaseEditor & ReactEditor & PortableTextSlateEditor
-
-export type Selection = Range | null
 
 export type EditorMarks = Omit<PortableTextSpan, 'text'>
 

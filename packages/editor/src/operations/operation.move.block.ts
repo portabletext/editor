@@ -47,8 +47,6 @@ export const moveBlockOperationImplementation: OperationImplementation<
   const node = nodeEntry.node
 
   const savedSelection = editor.selection
-    ? {anchor: {...editor.selection.anchor}, focus: {...editor.selection.focus}}
-    : null
 
   const movingDown = originBlockIndex < destinationBlockIndex
 

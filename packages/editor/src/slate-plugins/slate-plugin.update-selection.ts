@@ -1,5 +1,4 @@
 import type {EditorActor} from '../editor/editor-machine'
-import {slateRangeToSelection} from '../internal-utils/slate-utils'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 
 export function updateSelectionPlugin({
@@ -10,27 +9,10 @@ export function updateSelectionPlugin({
   editorActor: EditorActor
 }) {
   const updateSelection = () => {
-    if (editor.selection) {
-      if (editor.selection === editor.lastSlateSelection) {
-        editorActor.send({
-          type: 'update selection',
-          selection: editor.lastSelection,
-        })
-      } else {
-        const selection = slateRangeToSelection({
-          schema: editorActor.getSnapshot().context.schema,
-          editor,
-          range: editor.selection,
-        })
-
-        editor.lastSlateSelection = editor.selection
-        editor.lastSelection = selection
-
-        editorActor.send({type: 'update selection', selection})
-      }
-    } else {
-      editorActor.send({type: 'update selection', selection: null})
-    }
+    editorActor.send({
+      type: 'update selection',
+      selection: editor.selection,
+    })
   }
 
   const {onChange} = editor

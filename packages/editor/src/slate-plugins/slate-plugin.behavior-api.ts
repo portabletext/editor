@@ -1,8 +1,4 @@
 import type {EditorActor} from '../editor/editor-machine'
-import {
-  slatePointToSelectionPoint,
-  slateRangeToSelection,
-} from '../internal-utils/slate-utils'
 import {range as editorRange} from '../slate/editor/range'
 import type {Editor} from '../slate/interfaces/editor'
 import {pointEquals} from '../slate/point/point-equals'
@@ -29,11 +25,10 @@ export function createBehaviorApiPlugin(editorActor: EditorActor) {
         type: 'behavior event',
         behaviorEvent: {
           type: 'select',
-          at: slateRangeToSelection({
-            schema: editorActor.getSnapshot().context.schema,
-            editor,
-            range,
-          }),
+          at: {
+            ...range,
+            backward: isBackwardRange(range, editor),
+          },
         },
         editor,
       })
@@ -48,19 +43,7 @@ export function createBehaviorApiPlugin(editorActor: EditorActor) {
       }
 
       const anchor = partialRange.anchor
-        ? slatePointToSelectionPoint({
-            schema: editorActor.getSnapshot().context.schema,
-            editor,
-            point: partialRange.anchor,
-          })
-        : undefined
       const focus = partialRange.focus
-        ? slatePointToSelectionPoint({
-            schema: editorActor.getSnapshot().context.schema,
-            editor,
-            point: partialRange.focus,
-          })
-        : undefined
 
       const backward = editor.selection
         ? isBackwardRange(

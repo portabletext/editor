@@ -16,7 +16,6 @@ import {debug} from '../internal-utils/debug'
 import {getEventPosition} from '../internal-utils/event-position'
 import {safeStringify} from '../internal-utils/safe-json'
 import {normalizeSelection} from '../internal-utils/selection'
-import {slateRangeToSelection} from '../internal-utils/slate-utils'
 import {toSlateRange} from '../internal-utils/to-slate-range'
 import {start} from '../slate/editor/start'
 import {
@@ -245,7 +244,7 @@ export const PortableTextEditable = forwardRef<
         debug.selection(
           `Normalized selection from props ${safeStringify(normalizedSelection)}`,
         )
-        const slateRange = toSlateRange({
+        const resolvedSelection = toSlateRange({
           context: {
             schema: editorActor.getSnapshot().context.schema,
             value: slateEditor.children,
@@ -253,8 +252,8 @@ export const PortableTextEditable = forwardRef<
           },
           blockIndexMap: slateEditor.blockIndexMap,
         })
-        if (slateRange) {
-          slateEditor.select(slateRange)
+        if (resolvedSelection) {
+          slateEditor.select(resolvedSelection)
           // Output selection here in those cases where the editor selection was the same, and there are no set_selection operations made.
           // The selection is usually automatically emitted by the withPortableTextSelections plugin whenever there is a set_selection operation applied.
           if (!slateEditor.operations.some((o) => o.type === 'set_selection')) {
@@ -319,13 +318,7 @@ export const PortableTextEditable = forwardRef<
         event.stopPropagation()
         event.preventDefault()
 
-        const selection = slateEditor.selection
-          ? slateRangeToSelection({
-              schema: editorActor.getSnapshot().context.schema,
-              editor: slateEditor,
-              range: slateEditor.selection,
-            })
-          : undefined
+        const selection = slateEditor.selection ?? undefined
         const position = selection ? {selection} : undefined
 
         if (!position) {
@@ -397,12 +390,6 @@ export const PortableTextEditable = forwardRef<
     (event: ClipboardEvent<HTMLDivElement>): Promise<void> | void => {
       const value = slateEditor.children
       const ptRange = slateEditor.selection
-        ? slateRangeToSelection({
-            schema: editorActor.getSnapshot().context.schema,
-            editor: slateEditor,
-            range: slateEditor.selection,
-          })
-        : null
       const path = ptRange?.focus.path || []
       const onPasteResult = onPaste?.({
         event,

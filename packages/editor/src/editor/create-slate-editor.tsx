@@ -33,8 +33,7 @@ export function createSlateEditor(
   editor.decoratorState = {}
   editor.blockIndexMap = new Map<string, number>()
   editor.history = {undos: [], redos: []}
-  editor.lastSelection = null
-  editor.lastSlateSelection = null
+
   editor.listIndexMap = new Map<string, number>()
   editor.remotePatches = []
   editor.undoStepId = undefined

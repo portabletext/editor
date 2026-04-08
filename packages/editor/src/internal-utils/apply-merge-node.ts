@@ -7,6 +7,7 @@ import type {Point} from '../slate/interfaces/point'
 import type {Range} from '../slate/interfaces/range'
 import {isAncestorPath} from '../slate/path/is-ancestor-path'
 import {pathEquals} from '../slate/path/path-equals'
+import {isBackwardRange} from '../slate/range/is-backward-range'
 import {isRange} from '../slate/range/is-range'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
@@ -96,7 +97,11 @@ export function applyMergeNode(
       position,
     )
     if (anchor && focus) {
-      editor.selection = {anchor, focus}
+      editor.selection = {
+        anchor,
+        focus,
+        backward: isBackwardRange({anchor, focus}, editor),
+      }
     }
   }
 

@@ -6,6 +6,7 @@ import type {Path} from '../slate/interfaces/path'
 import type {Point} from '../slate/interfaces/point'
 import {isAncestorPath} from '../slate/path/is-ancestor-path'
 import {pathEquals} from '../slate/path/path-equals'
+import {isBackwardRange} from '../slate/range/is-backward-range'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import {rangeRefAffinities} from './range-ref-affinities'
@@ -121,7 +122,11 @@ export function applySplitNode(
       'forward',
     )
     if (anchor && focus) {
-      editor.selection = {anchor, focus}
+      editor.selection = {
+        anchor,
+        focus,
+        backward: isBackwardRange({anchor, focus}, editor),
+      }
     }
   }
 

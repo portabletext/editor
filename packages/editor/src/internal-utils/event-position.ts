@@ -1,21 +1,18 @@
 import {getDomNode} from '../dom-traversal/get-dom-node'
 import {getDomNodePath} from '../dom-traversal/get-dom-node-path'
 import type {EditorActor} from '../editor/editor-machine'
-import type {EditorSchema} from '../editor/editor-schema'
 import {getNode} from '../node-traversal/get-node'
 import {getBlock} from '../node-traversal/is-block'
 import {DOMEditor} from '../slate/dom/plugin/dom-editor'
 import {isDOMNode} from '../slate/dom/utils/dom'
 import {isEditor} from '../slate/editor/is-editor'
 import type {Path} from '../slate/interfaces/path'
-import type {Range as SlateRange} from '../slate/interfaces/range'
 import type {EditorSelection} from '../types/editor'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {getBlockEndPoint} from '../utils/util.get-block-end-point'
 import {getBlockStartPoint} from '../utils/util.get-block-start-point'
 import {isSelectionCollapsed} from '../utils/util.is-selection-collapsed'
 import {getBlockKeyFromSelectionPoint} from '../utils/util.selection-point'
-import {slateRangeToSelection} from './slate-utils'
 
 export type EventPosition = {
   block: 'start' | 'end'
@@ -55,11 +52,7 @@ export function getEventPosition({
     slateEditor,
     event,
   })
-  const eventSelection = getEventSelection({
-    schema: editorActor.getSnapshot().context.schema,
-    slateEditor,
-    event,
-  })
+  const eventSelection = getSelectionFromEvent(slateEditor, event) ?? null
 
   if (
     eventBlock &&
@@ -232,29 +225,7 @@ function getEventPositionBlock({
   return location < height / 2 ? 'start' : 'end'
 }
 
-function getEventSelection({
-  schema,
-  slateEditor,
-  event,
-}: {
-  schema: EditorSchema
-  slateEditor: PortableTextSlateEditor
-  event: DragEvent | MouseEvent
-}): EditorSelection {
-  const range = getSlateRangeFromEvent(slateEditor, event)
-
-  const selection = range
-    ? slateRangeToSelection({
-        schema,
-        editor: slateEditor,
-        range,
-      })
-    : null
-
-  return selection
-}
-
-function getSlateRangeFromEvent(
+function getSelectionFromEvent(
   editor: PortableTextSlateEditor,
   event: DragEvent | MouseEvent,
 ) {
@@ -299,15 +270,13 @@ function getSlateRangeFromEvent(
     return undefined
   }
 
-  let range: SlateRange | undefined
-
   try {
-    range = DOMEditor.toSlateRange(editor, domRange, {
+    return DOMEditor.toSlateRange(editor, domRange, {
       exactMatch: false,
       // It can still throw even with this option set to true
       suppressThrow: false,
     })
-  } catch {}
-
-  return range
+  } catch {
+    return undefined
+  }
 }

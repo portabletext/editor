@@ -6,12 +6,7 @@ import {
   type PortableTextObject,
 } from '@portabletext/schema'
 import {getDomNode} from '../dom-traversal/get-dom-node'
-import {
-  isListItemActive,
-  isStyleActive,
-  slateRangeToSelection,
-} from '../internal-utils/slate-utils'
-import {toSlateRange} from '../internal-utils/to-slate-range'
+import {isListItemActive, isStyleActive} from '../internal-utils/slate-utils'
 import {getLeaf} from '../node-traversal/get-leaf'
 import {getNode} from '../node-traversal/get-node'
 import {getNodes} from '../node-traversal/get-nodes'
@@ -27,7 +22,6 @@ import type {Path as InternalPath} from '../slate/interfaces/path'
 import {parentPath} from '../slate/path/parent-path'
 import {isCollapsedRange} from '../slate/range/is-collapsed-range'
 import {isExpandedRange} from '../slate/range/is-expanded-range'
-import {isRange} from '../slate/range/is-range'
 import {rangeEnd} from '../slate/range/range-end'
 import {rangeIncludes} from '../slate/range/range-includes'
 import {rangeStart} from '../slate/range/range-start'
@@ -178,13 +172,7 @@ export function createEditableAPI(
         editor,
       })
 
-      return editor.selection
-        ? (slateRangeToSelection({
-            schema: editorActor.getSnapshot().context.schema,
-            editor,
-            range: editor.selection,
-          })?.focus.path ?? [])
-        : []
+      return editor.selection?.focus.path ?? []
     },
     insertBlock: <TSchemaType extends {name: string}>(
       type: TSchemaType,
@@ -203,13 +191,7 @@ export function createEditableAPI(
         editor,
       })
 
-      return editor.selection
-        ? (slateRangeToSelection({
-            schema: editorActor.getSnapshot().context.schema,
-            editor,
-            range: editor.selection,
-          })?.focus.path ?? [])
-        : []
+      return editor.selection?.focus.path ?? []
     },
     hasBlockStyle: (style: string): boolean => {
       try {
@@ -427,24 +409,7 @@ export function createEditableAPI(
       })
     },
     getSelection: (): EditorSelection | null => {
-      if (!editor.selection) {
-        return null
-      }
-
-      if (editor.selection === editor.lastSlateSelection) {
-        return editor.lastSelection
-      }
-
-      const selection = slateRangeToSelection({
-        schema: editorActor.getSnapshot().context.schema,
-        editor,
-        range: editor.selection,
-      })
-
-      editor.lastSlateSelection = editor.selection
-      editor.lastSelection = selection
-
-      return selection
+      return editor.selection
     },
     getValue: () => {
       return editor.children
@@ -476,30 +441,11 @@ export function createEditableAPI(
       selectionA: EditorSelection,
       selectionB: EditorSelection,
     ) => {
-      // Convert the selections to Slate ranges
-      const rangeA = toSlateRange({
-        context: {
-          schema: editorActor.getSnapshot().context.schema,
-          value: editor.children,
-          selection: selectionA,
-        },
-      })
-      const rangeB = toSlateRange({
-        context: {
-          schema: editorActor.getSnapshot().context.schema,
-          value: editor.children,
-          selection: selectionB,
-        },
-      })
+      if (!selectionA || !selectionB) {
+        return false
+      }
 
-      // Make sure the ranges are valid
-      const isValidRanges = isRange(rangeA) && isRange(rangeB)
-
-      // Check if the ranges are overlapping
-      const isOverlapping =
-        isValidRanges && rangeIncludes(rangeA, rangeB, editor)
-
-      return isOverlapping
+      return rangeIncludes(selectionA, selectionB, editor)
     },
   }
 
