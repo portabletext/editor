@@ -249,7 +249,7 @@ describe('operationToPatches', () => {
         editor.children,
         {
           type: 'insert_text',
-          path: [0, 2],
+          path: [{_key: '1f2e64b47787'}, 'children', {_key: 'fd9b4a4e6c0b'}],
           text: '1',
           offset: 0,
         },
@@ -299,7 +299,7 @@ describe('operationToPatches', () => {
         blockObjectChildren,
         {
           type: 'insert_text',
-          path: [0, 0],
+          path: [{_key: 'img1'}, 'children', {_key: 'void-child'}],
           text: 'foo',
           offset: 0,
         },
@@ -317,7 +317,7 @@ describe('operationToPatches', () => {
         editor.children,
         {
           type: 'remove_text',
-          path: [0, 2],
+          path: [{_key: '1f2e64b47787'}, 'children', {_key: 'fd9b4a4e6c0b'}],
           text: '1',
           offset: 1,
         },
