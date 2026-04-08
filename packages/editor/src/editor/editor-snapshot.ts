@@ -1,6 +1,5 @@
 import type {PortableTextBlock} from '@portabletext/schema'
 import type {Converter} from '../converters/converter.types'
-import {slateRangeToSelection} from '../internal-utils/slate-utils'
 import type {EditorSelection} from '../types/editor'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import type {EditorSchema} from './editor-schema'
@@ -44,12 +43,6 @@ export function createEditorSnapshot({
   schema: EditorSchema
 }) {
   const selection = editor.selection
-    ? slateRangeToSelection({
-        schema,
-        editor,
-        range: editor.selection,
-      })
-    : null
 
   const context = {
     converters,

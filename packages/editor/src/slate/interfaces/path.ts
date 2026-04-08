@@ -1,4 +1,4 @@
-import type {KeyedSegment} from '../../types/paths'
+import type {IndexTuple, KeyedSegment} from '../../types/paths'
 
 /**
  * A path segment identifies a position in the document tree.
@@ -7,8 +7,9 @@ import type {KeyedSegment} from '../../types/paths'
  * - `string` identifies a child field name (e.g. 'children', 'rows', 'cells')
  * - `number` identifies a position in an array (used for empty container inserts
  *   and rendering indexed paths)
+ * - `IndexTuple` (`[number | '', number | '']`) represents a range selection
  */
-export type PathSegment = KeyedSegment | string | number
+export type PathSegment = KeyedSegment | string | number | IndexTuple
 
 /**
  * A `Path` is a list of segments that describe a node's exact position in

@@ -3,9 +3,7 @@ import type {PortableTextBlock} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
 import type {DecoratedRange} from '../editor/range-decorations-machine'
 import type {Operation as SlateOperation} from '../slate/interfaces/operation'
-import type {Range} from '../slate/interfaces/range'
 import type {ReactEditor} from '../slate/react/plugin/react-editor'
-import type {EditorSelection} from './editor'
 
 type HistoryItem = {
   operations: SlateOperation[]
@@ -36,8 +34,6 @@ export interface PortableTextSlateEditor extends ReactEditor {
   decoratorState: Record<string, boolean | undefined>
   blockIndexMap: Map<string, number>
   history: History
-  lastSelection: EditorSelection
-  lastSlateSelection: Range | null
   listIndexMap: Map<string, number>
   remotePatches: Array<RemotePatch>
   undoStepId: string | undefined

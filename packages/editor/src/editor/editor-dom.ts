@@ -1,6 +1,5 @@
 import type {BehaviorEvent} from '../behaviors/behavior.types.event'
 import {getDomNode} from '../dom-traversal/get-dom-node'
-import {toSlateRange} from '../internal-utils/to-slate-range'
 import {getNodes} from '../node-traversal/get-nodes'
 import {getSelectionEndBlock, getSelectionStartBlock} from '../selectors'
 import type {Path} from '../slate/interfaces/path'
@@ -58,14 +57,8 @@ function getBlockNodes(
     return []
   }
 
-  const range = toSlateRange(snapshot)
-
-  if (!range) {
-    return []
-  }
-
   try {
-    const [start, end] = rangeEdges(range, {}, slateEditor)
+    const [start, end] = rangeEdges(snapshot.context.selection, {}, slateEditor)
     const blockEntries: Array<{node: unknown; path: Path}> = []
     let lastHighestPath: Path | undefined
 
@@ -105,14 +98,8 @@ function getChildNodes(
     return []
   }
 
-  const range = toSlateRange(snapshot)
-
-  if (!range) {
-    return []
-  }
-
   try {
-    const [start, end] = rangeEdges(range, {}, slateEditor)
+    const [start, end] = rangeEdges(snapshot.context.selection, {}, slateEditor)
     const childEntries: Array<{node: unknown; path: Path}> = []
     let buffered: {node: unknown; path: Path} | undefined
 

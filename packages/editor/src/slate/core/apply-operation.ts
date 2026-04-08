@@ -2,8 +2,9 @@ import type {PortableTextSpan} from '@portabletext/schema'
 import {isSpan} from '@portabletext/schema'
 import {safeStringify} from '../../internal-utils/safe-json'
 import {getNodes} from '../../node-traversal/get-nodes'
+import type {EditorSelection} from '../../types/editor'
 import {isKeyedSegment} from '../../utils/util.is-keyed-segment'
-import type {Editor, Selection} from '../interfaces/editor'
+import type {Editor} from '../interfaces/editor'
 import type {Node, NodeEntry} from '../interfaces/node'
 import type {Operation} from '../interfaces/operation'
 import type {Range} from '../interfaces/range'
@@ -13,8 +14,8 @@ import {isSiblingPath} from '../path/is-sibling-path'
 import {parentPath} from '../path/parent-path'
 import {pathEquals} from '../path/path-equals'
 import {transformPoint} from '../point/transform-point'
+import {isBackwardRange} from '../range/is-backward-range'
 import {isRange} from '../range/is-range'
-import {rangeEquals} from '../range/range-equals'
 import {rangePoints} from '../range/range-points'
 import {
   insertChildren,
@@ -125,7 +126,7 @@ export function applyOperation(editor: Editor, op: Operation): void {
       // for keyed segments. After removal, it falls back to string
       // comparison of _key values which may give wrong ordering.
       if (editor.selection) {
-        let selection: Selection = {...editor.selection}
+        let selection: EditorSelection = {...editor.selection}
 
         for (const [point, key] of rangePoints(selection)) {
           const result = transformPoint(point, op)
@@ -174,9 +175,9 @@ export function applyOperation(editor: Editor, op: Operation): void {
           }
         }
 
-        if (!selection || !rangeEquals(selection, editor.selection)) {
-          editor.selection = selection
-        }
+        editor.selection = selection
+          ? {...selection, backward: isBackwardRange(selection, editor)}
+          : null
       }
 
       const isRootRemove = parentPath(path).length === 0
@@ -310,7 +311,10 @@ export function applyOperation(editor: Editor, op: Operation): void {
           )
         }
 
-        editor.selection = {...newProperties}
+        editor.selection = {
+          ...newProperties,
+          backward: isBackwardRange(newProperties, editor),
+        }
         break
       }
 
@@ -330,7 +334,10 @@ export function applyOperation(editor: Editor, op: Operation): void {
         }
       }
 
-      editor.selection = selection
+      editor.selection = {
+        ...selection,
+        backward: isBackwardRange(selection, editor),
+      }
 
       break
     }
@@ -343,8 +350,9 @@ export function applyOperation(editor: Editor, op: Operation): void {
       selection[key] = transformPoint(point, op)!
     }
 
-    if (!rangeEquals(selection, editor.selection)) {
-      editor.selection = selection
+    editor.selection = {
+      ...selection,
+      backward: isBackwardRange(selection, editor),
     }
   }
 }
