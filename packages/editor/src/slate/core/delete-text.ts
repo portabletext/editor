@@ -1,6 +1,7 @@
 import {isSpan, isTextBlock} from '@portabletext/schema'
 import {applyMergeNode} from '../../internal-utils/apply-merge-node'
 import {applySetNode} from '../../internal-utils/apply-set-node'
+import {isEditableType} from '../../internal-utils/is-editable-type'
 import {safeStringify} from '../../internal-utils/safe-json'
 import {getAncestor} from '../../node-traversal/get-ancestor'
 import {getAncestorTextBlock} from '../../node-traversal/get-ancestor-text-block'
@@ -160,7 +161,9 @@ export function deleteText(editor: Editor, options: TextDeleteOptions = {}) {
       }
 
       if (
-        (!includeObjectNodes && isObjectNode({schema: editor.schema}, node)) ||
+        (!includeObjectNodes &&
+          isObjectNode({schema: editor.schema}, node) &&
+          !isEditableType(editor.editableTypes, node._type)) ||
         (!isCommonPath(entryPath, start.path) &&
           !isCommonPath(entryPath, end.path))
       ) {

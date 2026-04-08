@@ -1,5 +1,6 @@
 import {getDomNode} from '../../../dom-traversal/get-dom-node'
 import {getDomNodePath} from '../../../dom-traversal/get-dom-node-path'
+import {isEditableType} from '../../../internal-utils/is-editable-type'
 import {safeStringify} from '../../../internal-utils/safe-json'
 import {getAncestorObjectNode} from '../../../node-traversal/get-ancestor-object-node'
 import {getHighestObjectNode} from '../../../node-traversal/get-highest-object-node'
@@ -408,7 +409,10 @@ export const DOMEditor: DOMEditorInterface = {
       pointEntry && isObjectNode({schema: editor.schema}, pointEntry.node)
         ? pointEntry
         : getAncestorObjectNode(editor, point.path)
-    if (pointObjectNode) {
+    if (
+      pointObjectNode &&
+      !isEditableType(editor.editableTypes, pointObjectNode.node._type)
+    ) {
       point = {path: point.path, offset: 0}
     }
 

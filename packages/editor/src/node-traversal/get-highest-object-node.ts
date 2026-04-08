@@ -1,5 +1,6 @@
 import type {PortableTextObject} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
+import {isEditableType} from '../internal-utils/is-editable-type'
 import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
 import {isObjectNode} from '../slate/node/is-object-node'
@@ -30,7 +31,10 @@ export function getHighestObjectNode(
       continue
     }
 
-    if (isObjectNode({schema: context.schema}, ancestor.node)) {
+    if (
+      isObjectNode({schema: context.schema}, ancestor.node) &&
+      !isEditableType(context.editableTypes, ancestor.node._type)
+    ) {
       return {node: ancestor.node, path: ancestor.path}
     }
   }
@@ -42,7 +46,10 @@ export function getHighestObjectNode(
     return undefined
   }
 
-  if (!isObjectNode({schema: context.schema}, entry.node)) {
+  if (
+    !isObjectNode({schema: context.schema}, entry.node) ||
+    isEditableType(context.editableTypes, entry.node._type)
+  ) {
     return undefined
   }
 
