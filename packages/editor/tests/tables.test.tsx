@@ -1,9 +1,13 @@
 import {set, unset} from '@portabletext/patches'
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
-import React from 'react'
+import React, {useEffect} from 'react'
 import {describe, expect, test, vi} from 'vitest'
+import {page} from 'vitest/browser'
+import type {InternalEditor} from '../src/editor/create-editor'
+import {useEditor} from '../src/editor/use-editor'
 import {InternalSlateEditorRefPlugin} from '../src/plugins/plugin.internal.slate-editor-ref'
+import type {RendererConfig} from '../src/renderers/renderer.types'
 import {withoutPatching} from '../src/slate-plugins/slate-plugin.without-patching'
 import {normalize} from '../src/slate/editor/normalize'
 import {createTestEditor} from '../src/test/vitest'
@@ -49,6 +53,16 @@ const schemaDefinition = defineSchema({
     },
   ],
 })
+
+function ContainerRendererPlugin(props: {rendererConfig: RendererConfig}) {
+  const editor = useEditor() as InternalEditor
+
+  useEffect(() => {
+    return editor.registerRenderer(props.rendererConfig)
+  }, [editor, props.rendererConfig])
+
+  return null
+}
 
 async function createTableTestEditor() {
   const keyGenerator = createTestKeyGenerator()
@@ -801,6 +815,137 @@ describe('tables', () => {
         expect(children).toEqual([
           {_key: 'k6', _type: 'span', text: '', marks: []},
         ])
+      })
+    })
+  })
+
+  describe('rendering', () => {
+    test('container children render as text in the DOM', async () => {
+      const rendererConfig: RendererConfig = {
+        renderer: {
+          type: 'table',
+          render: (props) => (
+            <div data-testid="table-renderer">{props.children}</div>
+          ),
+        },
+      }
+
+      const keyGenerator = createTestKeyGenerator()
+      const tableKey = keyGenerator()
+      const rowKey = keyGenerator()
+      const cellKey = keyGenerator()
+      const blockKey = keyGenerator()
+      const spanKey = keyGenerator()
+
+      const table = {
+        _key: tableKey,
+        _type: 'table',
+        rows: [
+          {
+            _key: rowKey,
+            _type: 'row',
+            cells: [
+              {
+                _key: cellKey,
+                _type: 'cell',
+                content: [
+                  {
+                    _key: blockKey,
+                    _type: 'block',
+                    children: [
+                      {
+                        _key: spanKey,
+                        _type: 'span',
+                        text: 'foo',
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }
+
+      await createTestEditor({
+        keyGenerator,
+        schemaDefinition,
+        initialValue: [table],
+        children: <ContainerRendererPlugin rendererConfig={rendererConfig} />,
+      })
+
+      await vi.waitFor(() => {
+        return expect
+          .element(page.getByTestId('table-renderer'))
+          .toBeInTheDocument()
+      })
+
+      await vi.waitFor(() => {
+        return expect.element(page.getByText('foo')).toBeInTheDocument()
+      })
+    })
+
+    test('renderer receives the table node', async () => {
+      const renderFn = vi.fn((props) => (
+        <div data-testid="table-renderer">{props.children}</div>
+      ))
+
+      const rendererConfig: RendererConfig = {
+        renderer: {
+          type: 'table',
+          render: renderFn,
+        },
+      }
+
+      const keyGenerator = createTestKeyGenerator()
+      const tableKey = keyGenerator()
+      const rowKey = keyGenerator()
+      const cellKey = keyGenerator()
+      const blockKey = keyGenerator()
+      const spanKey = keyGenerator()
+
+      const table = {
+        _key: tableKey,
+        _type: 'table',
+        rows: [
+          {
+            _key: rowKey,
+            _type: 'row',
+            cells: [
+              {
+                _key: cellKey,
+                _type: 'cell',
+                content: [
+                  {
+                    _key: blockKey,
+                    _type: 'block',
+                    children: [
+                      {
+                        _key: spanKey,
+                        _type: 'span',
+                        text: 'foo',
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }
+
+      await createTestEditor({
+        keyGenerator,
+        schemaDefinition,
+        initialValue: [table],
+        children: <ContainerRendererPlugin rendererConfig={rendererConfig} />,
+      })
+
+      await vi.waitFor(() => {
+        expect(renderFn).toHaveBeenCalled()
+        const lastCall = renderFn.mock.calls.at(-1)![0]
+        expect(lastCall.node._type).toBe('table')
+        expect(lastCall.node._key).toBe(tableKey)
       })
     })
   })
