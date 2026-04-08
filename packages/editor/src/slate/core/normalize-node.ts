@@ -9,11 +9,13 @@ import {applySetNode} from '../../internal-utils/apply-set-node'
 import {createPlaceholderBlock} from '../../internal-utils/create-placeholder-block'
 import {debug} from '../../internal-utils/debug'
 import {isEqualMarkDefs} from '../../internal-utils/equality'
+import {isEditableType} from '../../internal-utils/is-editable-type'
 import {getChildren} from '../../node-traversal/get-children'
 import {getNode} from '../../node-traversal/get-node'
 import {getParent} from '../../node-traversal/get-parent'
 import {getTextBlockNode} from '../../node-traversal/get-text-block-node'
 import {getChildFieldName} from '../../paths/get-child-field-name'
+import {resolveChildArrayField} from '../../schema/resolve-child-array-field'
 import {withoutPatching} from '../../slate-plugins/slate-plugin.without-patching'
 import {isEditor} from '../editor/is-editor'
 import type {Editor} from '../interfaces/editor'
@@ -343,6 +345,45 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
     }
 
     return
+  }
+
+  // Container child enforcement: ensure the child array field exists and has content.
+  // This runs before the duplicate key check so that containers always have
+  // a valid child array before any further normalization.
+  if (
+    isObjectNode({schema: editor.schema}, node) &&
+    isEditableType(editor.editableTypes, node._type)
+  ) {
+    const arrayField = resolveChildArrayField({schema: editor.schema}, node)
+
+    if (arrayField) {
+      const fieldValue = (node as Record<string, unknown>)[arrayField.name]
+
+      if (!Array.isArray(fieldValue)) {
+        debug.normalization('adding child array field to container node')
+        applySetNode(editor, {[arrayField.name]: []}, path)
+        return
+      }
+
+      if (fieldValue.length === 0) {
+        const acceptsBlocks = arrayField.of.some(
+          (definition) => definition.type === 'block',
+        )
+
+        if (acceptsBlocks) {
+          debug.normalization(
+            'adding placeholder block to empty container field',
+          )
+          editor.apply({
+            type: 'insert_node',
+            path: [...path, arrayField.name, 0],
+            node: createPlaceholderBlock(editor),
+            position: 'before',
+          })
+          return
+        }
+      }
+    }
   }
 
   // Fix duplicate _key among children of container/object nodes.
