@@ -397,7 +397,7 @@ describe(setNodePatch.name, () => {
       ] as Array<PortableTextBlock>
       editor.onChange()
 
-      const patches = setNodePatch(schema, editor.children, {
+      const patches = setNodePatch(editor.children, {
         type: 'set_node',
         path: [0],
         properties: {_key: '1f2e64b47787'},
@@ -414,7 +414,7 @@ describe(setNodePatch.name, () => {
     })
 
     test('produces set patch with keyed path for non-key property on text block', () => {
-      const patches = setNodePatch(schema, editor.children, {
+      const patches = setNodePatch(editor.children, {
         type: 'set_node',
         path: [0],
         properties: {style: 'normal'},
@@ -453,7 +453,7 @@ describe(setNodePatch.name, () => {
       ] as Array<PortableTextBlock>
       editor.onChange()
 
-      const patches = setNodePatch(schema, editor.children, {
+      const patches = setNodePatch(editor.children, {
         type: 'set_node',
         path: [{_key: '1f2e64b47787'}, 'children', 0],
         properties: {_key: 'c130395c640c'},
@@ -470,7 +470,7 @@ describe(setNodePatch.name, () => {
     })
 
     test('produces set patch with keyed path for non-key property on span', () => {
-      const patches = setNodePatch(schema, editor.children, {
+      const patches = setNodePatch(editor.children, {
         type: 'set_node',
         path: [{_key: '1f2e64b47787'}, 'children', 0],
         properties: {marks: []},
@@ -494,7 +494,7 @@ describe(setNodePatch.name, () => {
 
   describe('keyed block segment', () => {
     test('produces set patch for style change on text block', () => {
-      const patches = setNodePatch(schema, editor.children, {
+      const patches = setNodePatch(editor.children, {
         type: 'set_node',
         path: [{_key: '1f2e64b47787'}],
         properties: {style: 'normal'},
@@ -525,7 +525,7 @@ describe(setNodePatch.name, () => {
       ] as Array<PortableTextBlock>
       editor.onChange()
 
-      const patches = setNodePatch(schema, editor.children, {
+      const patches = setNodePatch(editor.children, {
         type: 'set_node',
         path: [{_key: '1f2e64b47787'}],
         properties: {style: 'normal', listItem: 'bullet'},
@@ -541,6 +541,91 @@ describe(setNodePatch.name, () => {
         {
           type: 'unset',
           path: [{_key: '1f2e64b47787'}, 'listItem'],
+        },
+      ])
+    })
+  })
+
+  describe('container-depth set_node', () => {
+    test('produces set patch for property change on table cell', () => {
+      editor.children = [
+        {
+          _type: 'table',
+          _key: 'table1',
+          rows: [
+            {
+              _type: 'row',
+              _key: 'row1',
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: 'cell1',
+                  header: false,
+                },
+              ],
+            },
+          ],
+        },
+      ] as Array<PortableTextBlock>
+      editor.onChange()
+
+      const patches = setNodePatch(editor.children, {
+        type: 'set_node',
+        path: [
+          {_key: 'table1'},
+          'rows',
+          {_key: 'row1'},
+          'cells',
+          {_key: 'cell1'},
+        ],
+        properties: {header: false},
+        newProperties: {header: true},
+      })
+
+      expect(patches).toEqual([
+        {
+          type: 'set',
+          path: [
+            {_key: 'table1'},
+            'rows',
+            {_key: 'row1'},
+            'cells',
+            {_key: 'cell1'},
+            'header',
+          ],
+          value: true,
+        },
+      ])
+    })
+
+    test('produces set patch for _key change on container child', () => {
+      editor.children = [
+        {
+          _type: 'table',
+          _key: 'table1',
+          rows: [
+            {
+              _type: 'row',
+              _key: 'new-row-key',
+              cells: [],
+            },
+          ],
+        },
+      ] as Array<PortableTextBlock>
+      editor.onChange()
+
+      const patches = setNodePatch(editor.children, {
+        type: 'set_node',
+        path: [{_key: 'table1'}, 'rows', 0],
+        properties: {_key: 'row1'},
+        newProperties: {_key: 'new-row-key'},
+      })
+
+      expect(patches).toEqual([
+        {
+          type: 'set',
+          path: [{_key: 'table1'}, 'rows', 0, '_key'],
+          value: 'new-row-key',
         },
       ])
     })
