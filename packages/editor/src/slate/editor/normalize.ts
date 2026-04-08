@@ -2,27 +2,12 @@ import {isTextBlock} from '@portabletext/schema'
 import {getNode} from '../../node-traversal/get-node'
 import {getNodes} from '../../node-traversal/get-nodes'
 import {hasNode} from '../../node-traversal/has-node'
-import {isKeyedSegment} from '../../utils/util.is-keyed-segment'
+import {serializePath} from '../../paths/serialize-path'
 import type {Editor} from '../interfaces/editor'
 import type {Operation} from '../interfaces/operation'
 import type {Path} from '../interfaces/path'
 import {isNormalizing} from './is-normalizing'
 import {withoutNormalizing} from './without-normalizing'
-
-/**
- * Serialize a path to a string for use as a dedup key.
- * Must match the serialization in update-dirty-paths.ts.
- */
-function serializePathKey(path: Path): string {
-  return path
-    .map((segment) => {
-      if (isKeyedSegment(segment)) {
-        return segment._key
-      }
-      return String(segment)
-    })
-    .join(',')
-}
 
 export function normalize(
   editor: Editor,
@@ -39,7 +24,7 @@ export function normalize(
 
   const popDirtyPath = (editor: Editor): Path => {
     const path = getDirtyPaths(editor).pop()!
-    const key = serializePathKey(path)
+    const key = serializePath(path)
     getDirtyPathKeys(editor).delete(key)
     return path
   }
@@ -50,7 +35,7 @@ export function normalize(
 
   if (force) {
     const allPaths = Array.from(getNodes(editor), (entry) => entry.path)
-    const allPathKeys = new Set(allPaths.map((p) => serializePathKey(p)))
+    const allPathKeys = new Set(allPaths.map((p) => serializePath(p)))
     editor.dirtyPaths = allPaths
     editor.dirtyPathKeys = allPathKeys
   }
