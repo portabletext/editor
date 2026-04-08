@@ -54,7 +54,7 @@ The block metadata (`{"id":123,"sizeSlug":"large"}`) is embedded in an HTML comm
 
 Gutenberg has the right mental model (structured blocks), but the storage format (HTML with comments) inherits the same problems as plain HTML strings: parsing is fragile, querying is impractical, and rendering in a different format requires understanding the full HTML structure.
 
-This isn't a theoretical problem. [EmDash](https://emdash.dev/) (Cloudflare's open-source CMS) built a dedicated converter, `@emdash-cms/gutenberg-to-portable-text`, that transforms 30+ Gutenberg block types into Portable Text. The converter exists because extracting structured content from Gutenberg's HTML-comment format requires parsing every block type individually. With Portable Text, the same content is already queryable JSON.
+This isn't a theoretical problem. [EmDash](https://github.com/emdash-cms/emdash) (Cloudflare's open-source CMS) built a dedicated converter, `@emdash-cms/gutenberg-to-portable-text`, that transforms 30+ Gutenberg block types into Portable Text. The converter exists because extracting structured content from Gutenberg's HTML-comment format requires parsing every block type individually. With Portable Text, the same content is already queryable JSON.
 
 ## How Portable Text works
 
@@ -104,7 +104,7 @@ The "portable" in Portable Text means two things:
 
 1. **Portable across renderers.** The same content renders as React components, HTML strings, Vue templates, Svelte components, PDFs, or plain text. Official serializers exist for [React, HTML, Vue, Svelte, Astro, and more](/rendering/).
 
-2. **Portable across systems.** Portable Text is a specification, not a library. Any system can produce it, any system can consume it. [Sanity](https://www.sanity.io/) uses it as its native rich text format. [EmDash](https://emdash.dev/) (Cloudflare's open-source CMS) adopted it as its core content format. [Hugo](https://gohugo.io/) has a built-in `transform.PortableText` function.
+2. **Portable across systems.** Portable Text is a specification, not a library. Any system can produce it, any system can consume it. [Sanity](https://www.sanity.io/) uses it as its native rich text format. [EmDash](https://github.com/emdash-cms/emdash) (Cloudflare's open-source CMS) adopted it as its core content format. [Hugo](https://gohugo.io/) has a built-in `transform.PortableText` function.
 
 ## When to use Portable Text
 
