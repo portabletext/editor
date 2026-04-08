@@ -1,5 +1,10 @@
 import type {Patch} from '@portabletext/patches'
-import {isSpan, isTextBlock, type PortableTextBlock} from '@portabletext/schema'
+import {
+  isSpan,
+  isTextBlock,
+  type PortableTextBlock,
+  type PortableTextTextBlock,
+} from '@portabletext/schema'
 import type {ActorRefFrom} from 'xstate'
 import {
   and,
@@ -33,8 +38,13 @@ import {start} from '../slate/editor/start'
 import {withoutNormalizing} from '../slate/editor/without-normalizing'
 import type {Node} from '../slate/interfaces/node'
 import type {PickFromUnion} from '../type-utils'
+import type {BlockOffset} from '../types/block-offset'
 import type {InvalidValueResolution} from '../types/editor'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
+import {
+  blockOffsetToSpanSelectionPoint,
+  spanSelectionPointToBlockOffset,
+} from '../utils/util.block-offset'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import type {EditorSchema} from './editor-schema'
 
@@ -976,9 +986,22 @@ function updateBlock({
 
     if (isPureReorder || (newKeys.length > 0 && !hasSharedKeys)) {
       debug.syncValue('Replacing children via set_node')
+
+      const savedBlockOffsets = saveSelectionAsBlockOffsets(
+        slateEditor,
+        oldSlateBlock,
+      )
+
       applySetNode(slateEditor, {children: slateBlock.children}, [
         {_key: oldSlateBlock._key},
       ])
+
+      restoreSelectionFromBlockOffsets(
+        slateEditor,
+        slateBlock,
+        savedBlockOffsets,
+      )
+
       slateEditor.onChange()
       return
     }
@@ -1148,6 +1171,92 @@ function updateBlock({
           slateEditor.onChange()
         }
       }
+    })
+  }
+}
+
+function saveSelectionAsBlockOffsets(
+  slateEditor: PortableTextSlateEditor,
+  block: PortableTextTextBlock,
+):
+  | {anchor: BlockOffset | undefined; focus: BlockOffset | undefined}
+  | undefined {
+  const selection = slateEditor.selection
+
+  if (!selection) {
+    return undefined
+  }
+
+  const blockKey = block._key
+  const context = {schema: slateEditor.schema, value: [block]}
+
+  const anchorBlockSegment = selection.anchor.path.at(0)
+  const anchorInBlock =
+    isKeyedSegment(anchorBlockSegment) && anchorBlockSegment._key === blockKey
+
+  const focusBlockSegment = selection.focus.path.at(0)
+  const focusInBlock =
+    isKeyedSegment(focusBlockSegment) && focusBlockSegment._key === blockKey
+
+  if (!anchorInBlock && !focusInBlock) {
+    return undefined
+  }
+
+  return {
+    anchor: anchorInBlock
+      ? spanSelectionPointToBlockOffset({
+          context,
+          selectionPoint: selection.anchor,
+        })
+      : undefined,
+    focus: focusInBlock
+      ? spanSelectionPointToBlockOffset({
+          context,
+          selectionPoint: selection.focus,
+        })
+      : undefined,
+  }
+}
+
+function restoreSelectionFromBlockOffsets(
+  slateEditor: PortableTextSlateEditor,
+  newBlock: PortableTextTextBlock,
+  savedBlockOffsets:
+    | {anchor: BlockOffset | undefined; focus: BlockOffset | undefined}
+    | undefined,
+): void {
+  if (!savedBlockOffsets) {
+    return
+  }
+
+  const selection = slateEditor.selection
+
+  if (!selection) {
+    return
+  }
+
+  const context = {schema: slateEditor.schema, value: [newBlock]}
+
+  const restoredAnchor = savedBlockOffsets.anchor
+    ? blockOffsetToSpanSelectionPoint({
+        context,
+        blockOffset: savedBlockOffsets.anchor,
+        direction: 'forward',
+      })
+    : undefined
+
+  const restoredFocus = savedBlockOffsets.focus
+    ? blockOffsetToSpanSelectionPoint({
+        context,
+        blockOffset: savedBlockOffsets.focus,
+        direction: 'forward',
+      })
+    : undefined
+
+  if (restoredAnchor || restoredFocus) {
+    applySelect(slateEditor, {
+      anchor: restoredAnchor ?? selection.anchor,
+      focus: restoredFocus ?? selection.focus,
     })
   }
 }
