@@ -1,6 +1,6 @@
+import {isDeepEqual} from '../../internal-utils/equality'
 import type {TextEqualsOptions} from '../interfaces/text'
 import type {SpanNode} from '../node/is-span-node'
-import {isDeepEqual} from '../utils/deep-equal'
 
 export function textEquals(
   text: SpanNode,
