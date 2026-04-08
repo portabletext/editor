@@ -151,10 +151,7 @@ export function createPatchesPlugin({
           patches = [...patches, ...insertNodePatch(operation)]
           break
         case 'set_node':
-          patches = [
-            ...patches,
-            ...setNodePatch(schema, editor.children, operation),
-          ]
+          patches = [...patches, ...setNodePatch(editor.children, operation)]
           break
         default:
         // Do nothing

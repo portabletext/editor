@@ -6,7 +6,7 @@ import {
   unset,
   type Patch,
 } from '@portabletext/patches'
-import {isTextBlock, type PortableTextBlock} from '@portabletext/schema'
+import type {PortableTextBlock} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
 import {getSpanNode} from '../node-traversal/get-span-node'
 import type {Node} from '../slate/interfaces/node'
@@ -45,7 +45,6 @@ export function textPatch(
 }
 
 export function setNodePatch(
-  schema: EditorSchema,
   children: Node[],
   operation: SetNodeOperation,
 ): Array<Patch> {
@@ -78,34 +77,63 @@ export function setNodePatch(
     return setNodePatches(children, block, operation)
   }
 
-  // Child-level set_node
-  if (operation.path.length === 3 && isTextBlock({schema}, block)) {
-    const childSegment = operation.path[2]
-    const newChildKey =
-      typeof operation.newProperties._key === 'string'
-        ? operation.newProperties._key
-        : undefined
+  // Child-level set_node: walk the path to find the target node and its siblings.
+  // The path alternates between field names (strings) and node segments (keyed or
+  // numeric). We walk down from the block, resolving each field name to get the
+  // children array, then finding the node within it.
+  const newChildKey =
+    typeof operation.newProperties._key === 'string'
+      ? operation.newProperties._key
+      : undefined
 
-    let child: (typeof block.children)[number] | undefined
-    if (isKeyedSegment(childSegment)) {
-      child = block.children.find(
-        (c) => c._key === (newChildKey ?? childSegment._key),
+  let currentNode: Node = block
+  let siblings: ArrayLike<Node> = children
+  let parentPath: Path = []
+
+  for (let i = 1; i < operation.path.length; i++) {
+    const segment = operation.path[i]
+
+    if (typeof segment === 'string') {
+      // Field name segment: resolve the children array
+      const fieldValue = (currentNode as Record<string, unknown>)[segment]
+      if (!Array.isArray(fieldValue)) {
+        return []
+      }
+      siblings = fieldValue as Node[]
+      parentPath = [...parentPath, {_key: currentNode._key}, segment]
+      continue
+    }
+
+    // Node segment: find the node in the current siblings array
+    const isLastSegment = i === operation.path.length - 1
+    const lookupKey = isLastSegment ? newChildKey : undefined
+
+    let node: Node | undefined
+    if (isKeyedSegment(segment)) {
+      node = Array.prototype.find.call(
+        siblings,
+        (c: Node) => c._key === (lookupKey ?? segment._key),
       )
-    } else if (typeof childSegment === 'number') {
-      child = block.children[childSegment]
-      if (newChildKey && child) {
-        child = block.children.find((c) => c._key === newChildKey) ?? child
+    } else if (typeof segment === 'number') {
+      node = (siblings as Node[])[segment]
+      if (lookupKey && node) {
+        node =
+          Array.prototype.find.call(
+            siblings,
+            (c: Node) => c._key === lookupKey,
+          ) ?? node
       }
     }
 
-    if (!child) {
+    if (!node) {
       return []
     }
 
-    return setNodePatches(block.children, child, operation, [
-      {_key: block._key},
-      'children',
-    ])
+    if (isLastSegment) {
+      return setNodePatches(siblings, node, operation, parentPath)
+    }
+
+    currentNode = node
   }
 
   return []
