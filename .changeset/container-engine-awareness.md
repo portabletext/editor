@@ -2,4 +2,4 @@
 "@portabletext/editor": patch
 ---
 
-feat(internal): engine awareness for editable containers
+fix(internal): normalize container child array fields
