@@ -11,7 +11,7 @@ import {getChildFieldName} from './get-child-field-name'
 /**
  * Get the "dirty" paths generated from an operation.
  */
-export function getDirtyIndexedPaths(
+export function getDirtyPaths(
   context: {
     schema: EditorSchema
     editableTypes: Set<string>
