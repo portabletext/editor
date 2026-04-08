@@ -26,6 +26,30 @@ export type StyleSchemaType = BaseDefinition & {
    * Use `name` instead
    */
   value: string
+  /**
+   * When set, overrides the top-level `schema.decorators` for blocks using
+   * this style. An empty array means no decorators are allowed. When
+   * `undefined`, the block inherits the top-level decorators.
+   */
+  decorators?: ReadonlyArray<DecoratorSchemaType>
+  /**
+   * When set, overrides the top-level `schema.annotations` for blocks using
+   * this style. An empty array means no annotations are allowed. When
+   * `undefined`, the block inherits the top-level annotations.
+   */
+  annotations?: ReadonlyArray<AnnotationSchemaType>
+  /**
+   * When set, overrides the top-level `schema.lists` for blocks using this
+   * style. An empty array means no list items are allowed. When `undefined`,
+   * the block inherits the top-level lists.
+   */
+  lists?: ReadonlyArray<ListSchemaType>
+  /**
+   * When set, overrides the top-level `schema.inlineObjects` for blocks using
+   * this style. An empty array means no inline objects are allowed. When
+   * `undefined`, the block inherits the top-level inline objects.
+   */
+  inlineObjects?: ReadonlyArray<InlineObjectSchemaType>
 }
 
 /**

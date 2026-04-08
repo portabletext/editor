@@ -1,6 +1,7 @@
 import {isActiveDecorator} from '../selectors/selector.is-active-decorator'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
+import {isDecoratorAllowedByStyle} from './behavior.utils.style-feature-allowed'
 
 export const abstractDecoratorBehaviors = [
   defineBehavior({
@@ -38,6 +39,10 @@ export const abstractDecoratorBehaviors = [
       const at = event.at ?? snapshot.context.selection
 
       if (!at) {
+        return false
+      }
+
+      if (!isDecoratorAllowedByStyle(snapshot, event.decorator)) {
         return false
       }
 

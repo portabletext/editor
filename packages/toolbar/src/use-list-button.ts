@@ -2,6 +2,10 @@ import {useEditor, type Editor, type ListSchemaType} from '@portabletext/editor'
 import * as selectors from '@portabletext/editor/selectors'
 import {useActor} from '@xstate/react'
 import {fromCallback, setup, type AnyEventObject} from 'xstate'
+import {
+  listAvailabilityListener,
+  type AvailabilityListenerEvent,
+} from './availability-listener'
 import {disableListener, type DisableListenerEvent} from './disable-listener'
 import type {ToolbarListSchemaType} from './use-toolbar-schema'
 
@@ -42,7 +46,10 @@ const listButtonMachine = setup({
       editor: Editor
       schemaType: ListSchemaType
     },
-    events: {} as DisableListenerEvent | ListButtonEvent,
+    events: {} as
+      | AvailabilityListenerEvent
+      | DisableListenerEvent
+      | ListButtonEvent,
   },
   actions: {
     toggle: ({context, event}) => {
@@ -58,6 +65,7 @@ const listButtonMachine = setup({
     },
   },
   actors: {
+    'availability listener': listAvailabilityListener,
     'disable listener': disableListener,
     'active listener': activeListener,
   },
@@ -76,6 +84,13 @@ const listButtonMachine = setup({
         schemaType: context.schemaType,
       }),
     },
+    {
+      src: 'availability listener',
+      input: ({context}) => ({
+        editor: context.editor,
+        featureName: context.schemaType.name,
+      }),
+    },
   ],
   initial: 'disabled',
   states: {
@@ -84,6 +99,9 @@ const listButtonMachine = setup({
       states: {
         inactive: {
           on: {
+            'available': {
+              target: '#list button.enabled.inactive',
+            },
             'enable': {
               target: '#list button.enabled.inactive',
             },
@@ -94,6 +112,9 @@ const listButtonMachine = setup({
         },
         active: {
           on: {
+            'available': {
+              target: '#list button.enabled.active',
+            },
             'enable': {
               target: '#list button.enabled.active',
             },
@@ -114,6 +135,9 @@ const listButtonMachine = setup({
       states: {
         inactive: {
           on: {
+            'unavailable': {
+              target: '#list button.disabled.inactive',
+            },
             'disable': {
               target: '#list button.disabled.inactive',
             },
@@ -124,6 +148,9 @@ const listButtonMachine = setup({
         },
         active: {
           on: {
+            'unavailable': {
+              target: '#list button.disabled.active',
+            },
             'disable': {
               target: '#list button.disabled.active',
             },

@@ -1,4 +1,4 @@
-import {isSpan} from '@portabletext/schema'
+import {isSpan, isTextBlock} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
 import {getNodeDescendants} from '../node-traversal/get-nodes'
 import type {Node} from '../slate/interfaces/node'
@@ -49,6 +49,18 @@ export function getDirtyIndexedPaths(
               for (const entry of getNodeDescendants(context, child as Node)) {
                 levels.push(childPath.concat(entry.path))
               }
+            }
+          }
+        }
+
+        // When the `style` property changes on a text block, dirty all
+        // child paths so per-style restriction normalization can strip
+        // marks that the new style disallows.
+        if ('style' in op.newProperties) {
+          const block = context.value[path[0]!]
+          if (block && isTextBlock(context, block)) {
+            for (let i = 0; i < block.children.length; i++) {
+              levels.push([...path, i])
             }
           }
         }

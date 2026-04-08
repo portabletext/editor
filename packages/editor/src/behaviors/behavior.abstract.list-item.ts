@@ -2,6 +2,7 @@ import {getSelectedTextBlocks} from '../selectors/selector.get-selected-text-blo
 import {isActiveListItem} from '../selectors/selector.is-active-list-item'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
+import {isListAllowedByStyle} from './behavior.utils.style-feature-allowed'
 
 export const abstractListItemBehaviors = [
   defineBehavior({
@@ -12,6 +13,10 @@ export const abstractListItemBehaviors = [
           (list) => list.name === event.listItem,
         )
       ) {
+        return false
+      }
+
+      if (!isListAllowedByStyle(snapshot, event.listItem)) {
         return false
       }
 
