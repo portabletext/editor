@@ -456,4 +456,105 @@ describe('normalization', () => {
       // ])
     })
   })
+
+  test('Scenario: selection is preserved when spans merge during normalization', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanFooKey = keyGenerator()
+    const spanBarKey = keyGenerator()
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {_type: 'span', _key: spanFooKey, text: 'foo', marks: ['strong']},
+            {_type: 'span', _key: spanBarKey, text: 'bar', marks: ['em']},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      schemaDefinition: defineSchema({
+        decorators: [{name: 'strong'}, {name: 'em'}],
+      }),
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: spanBarKey}],
+          offset: 1,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: spanBarKey}],
+          offset: 1,
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: spanBarKey}],
+          offset: 1,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: spanBarKey}],
+          offset: 1,
+        },
+        backward: false,
+      })
+    })
+
+    editor.send({
+      type: 'update value',
+      value: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {_type: 'span', _key: spanFooKey, text: 'foo', marks: ['strong']},
+            {_type: 'span', _key: spanBarKey, text: 'bar', marks: ['strong']},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {
+              _type: 'span',
+              _key: spanFooKey,
+              text: 'foobar',
+              marks: ['strong'],
+            },
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: spanFooKey}],
+          offset: 4,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: spanFooKey}],
+          offset: 4,
+        },
+        backward: false,
+      })
+    })
+  })
 })
