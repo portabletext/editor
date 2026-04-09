@@ -1,7 +1,7 @@
 import {isSpan, isTextBlock} from '@portabletext/schema'
+import {resolveSelection} from '../internal-utils/apply-selection'
 import {applySetNode} from '../internal-utils/apply-set-node'
 import {applySplitNode} from '../internal-utils/apply-split-node'
-import {toSlateRange} from '../internal-utils/to-slate-range'
 import {getNode} from '../node-traversal/get-node'
 import {getNodes} from '../node-traversal/get-nodes'
 import {isLeaf} from '../node-traversal/is-leaf'
@@ -25,14 +25,7 @@ export const decoratorRemoveOperationImplementation: OperationImplementation<
   const editor = operation.editor
   const mark = operation.decorator
   const at = operation.at
-    ? toSlateRange({
-        context: {
-          schema: context.schema,
-          value: operation.editor.children,
-          selection: operation.at,
-        },
-        blockIndexMap: operation.editor.blockIndexMap,
-      })
+    ? resolveSelection(operation.editor, operation.at)
     : editor.selection
 
   if (!at) {

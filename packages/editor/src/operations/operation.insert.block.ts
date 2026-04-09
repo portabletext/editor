@@ -1,11 +1,11 @@
 import type {PortableTextTextBlock} from '@portabletext/schema'
 import {isSpan, isTextBlock} from '@portabletext/schema'
 import {applyMergeNode} from '../internal-utils/apply-merge-node'
+import {resolveSelection} from '../internal-utils/apply-selection'
 import {applySetNode} from '../internal-utils/apply-set-node'
 import {applySplitNode} from '../internal-utils/apply-split-node'
 import {isEqualChildren, isEqualMarks} from '../internal-utils/equality'
 import {safeStringify} from '../internal-utils/safe-json'
-import {toSlateRange} from '../internal-utils/to-slate-range'
 import {toSlateBlock} from '../internal-utils/values'
 import {getChildren} from '../node-traversal/get-children'
 import {getNode} from '../node-traversal/get-node'
@@ -97,14 +97,7 @@ function insertBlock(options: {
 }) {
   const {context, block, placement, select, editor} = options
   const at = options.at
-    ? toSlateRange({
-        context: {
-          schema: context.schema,
-          value: editor.children,
-          selection: options.at,
-        },
-        blockIndexMap: editor.blockIndexMap,
-      })
+    ? resolveSelection(editor, options.at)
     : editor.selection
 
   // Handle empty editor case

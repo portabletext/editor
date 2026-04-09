@@ -1,9 +1,8 @@
 import {isSpan, isTextBlock} from '@portabletext/schema'
-import {applySelect} from '../internal-utils/apply-selection'
+import {applySelect, resolveSelection} from '../internal-utils/apply-selection'
 import {applySetNode} from '../internal-utils/apply-set-node'
 import {applySplitNode} from '../internal-utils/apply-split-node'
 import {safeStringify} from '../internal-utils/safe-json'
-import {toSlateRange} from '../internal-utils/to-slate-range'
 import {getChildren} from '../node-traversal/get-children'
 import {getNode} from '../node-traversal/get-node'
 import {getNodes} from '../node-traversal/get-nodes'
@@ -45,14 +44,7 @@ export const addAnnotationOperationImplementation: OperationImplementation<
   const editor = operation.editor
 
   const at = operation.at
-    ? toSlateRange({
-        context: {
-          schema: context.schema,
-          value: operation.editor.children,
-          selection: operation.at,
-        },
-        blockIndexMap: operation.editor.blockIndexMap,
-      })
+    ? resolveSelection(operation.editor, operation.at)
     : null
 
   const effectiveSelection = at ?? editor.selection

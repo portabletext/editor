@@ -1,4 +1,4 @@
-import {toSlateRange} from '../internal-utils/to-slate-range'
+import {resolveSelection} from '../internal-utils/apply-selection'
 import {getAncestorTextBlock} from '../node-traversal/get-ancestor-text-block'
 import {getHighestObjectNode} from '../node-traversal/get-highest-object-node'
 import {getNode} from '../node-traversal/get-node'
@@ -38,14 +38,7 @@ export const deleteOperationImplementation: OperationImplementation<
   'delete'
 > = ({context, operation}) => {
   const at = operation.at
-    ? toSlateRange({
-        context: {
-          schema: context.schema,
-          value: operation.editor.children,
-          selection: operation.at,
-        },
-        blockIndexMap: operation.editor.blockIndexMap,
-      })
+    ? resolveSelection(operation.editor, operation.at)
     : operation.editor.selection
 
   if (!at) {

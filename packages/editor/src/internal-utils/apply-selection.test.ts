@@ -1,9 +1,9 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
-import {toSlateRange} from './to-slate-range'
+import {resolveSelection} from './apply-selection'
 
-describe(toSlateRange.name, () => {
+describe(resolveSelection.name, () => {
   const schema = compileSchema(
     defineSchema({
       blockObjects: [{name: 'image'}],
@@ -17,10 +17,11 @@ describe(toSlateRange.name, () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
 
-    const range = toSlateRange({
-      context: {
+    const range = resolveSelection(
+      {
         schema,
-        value: [
+        editableTypes: new Set(),
+        children: [
           {
             _key: blockKey,
             _type: 'block',
@@ -42,21 +43,20 @@ describe(toSlateRange.name, () => {
             ],
           },
         ],
-        selection: {
-          anchor: {
-            path: [{_key: blockKey}],
-            // Could point to either before or after the inline object
-            offset: 3,
-          },
-          focus: {
-            path: [{_key: blockKey}],
-            // Could point to either before or after the inline object
-            offset: 3,
-          },
+      },
+      {
+        anchor: {
+          path: [{_key: blockKey}],
+          // Could point to either before or after the inline object
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: blockKey}],
+          // Could point to either before or after the inline object
+          offset: 3,
         },
       },
-      blockIndexMap: new Map([[blockKey, 0]]),
-    })
+    )
 
     expect(range).toEqual({
       anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 3},
@@ -68,10 +68,11 @@ describe(toSlateRange.name, () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
 
-    const range = toSlateRange({
-      context: {
+    const range = resolveSelection(
+      {
         schema,
-        value: [
+        editableTypes: new Set(),
+        children: [
           {
             _key: blockKey,
             _type: 'block',
@@ -93,19 +94,18 @@ describe(toSlateRange.name, () => {
             ],
           },
         ],
-        selection: {
-          anchor: {
-            path: [{_key: blockKey}],
-            offset: 0,
-          },
-          focus: {
-            path: [{_key: blockKey}],
-            offset: 1,
-          },
+      },
+      {
+        anchor: {
+          path: [{_key: blockKey}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: blockKey}],
+          offset: 1,
         },
       },
-      blockIndexMap: new Map([[blockKey, 0]]),
-    })
+    )
 
     expect(range).toEqual({
       anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 0},
@@ -117,28 +117,28 @@ describe(toSlateRange.name, () => {
     const keyGenerator = createTestKeyGenerator()
     const blockObjectKey = keyGenerator()
 
-    const range = toSlateRange({
-      context: {
+    const range = resolveSelection(
+      {
         schema,
-        value: [
+        editableTypes: new Set(),
+        children: [
           {
             _key: blockObjectKey,
             _type: 'image',
           },
         ],
-        selection: {
-          anchor: {
-            path: [{_key: blockObjectKey}],
-            offset: 3,
-          },
-          focus: {
-            path: [{_key: blockObjectKey}],
-            offset: 3,
-          },
+      },
+      {
+        anchor: {
+          path: [{_key: blockObjectKey}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: blockObjectKey}],
+          offset: 3,
         },
       },
-      blockIndexMap: new Map([[blockObjectKey, 0]]),
-    })
+    )
 
     expect(range).toEqual({
       anchor: {path: [{_key: 'k0'}], offset: 0},
@@ -152,10 +152,11 @@ describe(toSlateRange.name, () => {
     const blockKey = keyGenerator()
     const removedChildKey = keyGenerator()
 
-    const range = toSlateRange({
-      context: {
+    const range = resolveSelection(
+      {
         schema,
-        value: [
+        editableTypes: new Set(),
+        children: [
           {
             _key: blockKey,
             _type: 'block',
@@ -168,19 +169,18 @@ describe(toSlateRange.name, () => {
             ],
           },
         ],
-        selection: {
-          anchor: {
-            path: [{_key: blockKey}, 'children', {_key: removedChildKey}],
-            offset: 3,
-          },
-          focus: {
-            path: [{_key: blockKey}, 'children', {_key: removedChildKey}],
-            offset: 3,
-          },
+      },
+      {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: removedChildKey}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: removedChildKey}],
+          offset: 3,
         },
       },
-      blockIndexMap: new Map([[blockKey, 0]]),
-    })
+    )
 
     expect(range).toEqual({
       anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k2'}], offset: 0},
@@ -193,10 +193,11 @@ describe(toSlateRange.name, () => {
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
 
-    const range = toSlateRange({
-      context: {
+    const range = resolveSelection(
+      {
         schema,
-        value: [
+        editableTypes: new Set(),
+        children: [
           {
             _key: blockKey,
             _type: 'block',
@@ -209,19 +210,18 @@ describe(toSlateRange.name, () => {
             ],
           },
         ],
-        selection: {
-          anchor: {
-            path: [{_key: blockKey}, 'children', {_key: spanKey}],
-            offset: 4,
-          },
-          focus: {
-            path: [{_key: blockKey}, 'children', {_key: spanKey}],
-            offset: 4,
-          },
+      },
+      {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 4,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 4,
         },
       },
-      blockIndexMap: new Map([[blockKey, 0]]),
-    })
+    )
 
     expect(range).toEqual({
       anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 3},
@@ -234,10 +234,11 @@ describe(toSlateRange.name, () => {
     const blockKey = keyGenerator()
     const inlineObjectKey = keyGenerator()
 
-    const range = toSlateRange({
-      context: {
+    const range = resolveSelection(
+      {
         schema,
-        value: [
+        editableTypes: new Set(),
+        children: [
           {
             _key: blockKey,
             _type: 'block',
@@ -256,19 +257,18 @@ describe(toSlateRange.name, () => {
             ],
           },
         ],
-        selection: {
-          anchor: {
-            path: [{_key: blockKey}, 'children', {_key: inlineObjectKey}],
-            offset: 3,
-          },
-          focus: {
-            path: [{_key: blockKey}, 'children', {_key: inlineObjectKey}],
-            offset: 3,
-          },
+      },
+      {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: inlineObjectKey}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: inlineObjectKey}],
+          offset: 3,
         },
       },
-      blockIndexMap: new Map([[blockKey, 0]]),
-    })
+    )
 
     expect(range).toEqual({
       anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 0},

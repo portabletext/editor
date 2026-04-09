@@ -12,11 +12,10 @@ import {
   type KeyboardEvent,
   type TextareaHTMLAttributes,
 } from 'react'
+import {resolveSelection} from '../internal-utils/apply-selection'
 import {debug} from '../internal-utils/debug'
 import {getEventPosition} from '../internal-utils/event-position'
 import {safeStringify} from '../internal-utils/safe-json'
-import {normalizeSelection} from '../internal-utils/selection'
-import {toSlateRange} from '../internal-utils/to-slate-range'
 import {start} from '../slate/editor/start'
 import {
   Editable as SlateEditable,
@@ -236,34 +235,21 @@ export const PortableTextEditable = forwardRef<
   const restoreSelectionFromProps = useCallback(() => {
     if (propsSelection) {
       debug.selection(`Selection from props ${safeStringify(propsSelection)}`)
-      const normalizedSelection = normalizeSelection(
-        propsSelection,
-        slateEditor.children,
-      )
-      if (normalizedSelection !== null) {
+      const resolvedSelection = resolveSelection(slateEditor, propsSelection)
+      if (resolvedSelection) {
         debug.selection(
-          `Normalized selection from props ${safeStringify(normalizedSelection)}`,
+          `Resolved selection from props ${safeStringify(resolvedSelection)}`,
         )
-        const resolvedSelection = toSlateRange({
-          context: {
-            schema: editorActor.getSnapshot().context.schema,
-            value: slateEditor.children,
-            selection: normalizedSelection,
-          },
-          blockIndexMap: slateEditor.blockIndexMap,
-        })
-        if (resolvedSelection) {
-          slateEditor.select(resolvedSelection)
-          // Output selection here in those cases where the editor selection was the same, and there are no set_selection operations made.
-          // The selection is usually automatically emitted by the withPortableTextSelections plugin whenever there is a set_selection operation applied.
-          if (!slateEditor.operations.some((o) => o.type === 'set_selection')) {
-            editorActor.send({
-              type: 'update selection',
-              selection: normalizedSelection,
-            })
-          }
-          slateEditor.onChange()
+        slateEditor.select(resolvedSelection)
+        // Output selection here in those cases where the editor selection was the same, and there are no set_selection operations made.
+        // The selection is usually automatically emitted by the withPortableTextSelections plugin whenever there is a set_selection operation applied.
+        if (!slateEditor.operations.some((o) => o.type === 'set_selection')) {
+          editorActor.send({
+            type: 'update selection',
+            selection: resolvedSelection,
+          })
         }
+        slateEditor.onChange()
       }
     }
   }, [editorActor, propsSelection, slateEditor])
