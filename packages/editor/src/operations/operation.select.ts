@@ -1,18 +1,14 @@
-import {applyDeselect, applySelect} from '../internal-utils/apply-selection'
-import {toSlateRange} from '../internal-utils/to-slate-range'
+import {
+  applyDeselect,
+  applySelect,
+  resolveSelection,
+} from '../internal-utils/apply-selection'
 import type {OperationImplementation} from './operation.types'
 
 export const selectOperationImplementation: OperationImplementation<
   'select'
-> = ({context, operation}) => {
-  const newSelection = toSlateRange({
-    context: {
-      schema: context.schema,
-      value: operation.editor.children,
-      selection: operation.at,
-    },
-    blockIndexMap: operation.editor.blockIndexMap,
-  })
+> = ({operation}) => {
+  const newSelection = resolveSelection(operation.editor, operation.at)
 
   if (newSelection) {
     applySelect(operation.editor, newSelection)
