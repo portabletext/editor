@@ -1,5 +1,6 @@
 import {isSpan} from '@portabletext/schema'
 import {getNodes} from '../../node-traversal/get-nodes'
+import {getScopedTypeName} from '../../utils/util.get-scoped-type-name'
 import type {Editor} from '../interfaces/editor'
 import type {Location} from '../interfaces/location'
 import type {Point} from '../interfaces/point'
@@ -116,7 +117,10 @@ export function* positions(
       }
     }
 
-    if (isObjectNode({schema: editor.schema}, node)) {
+    if (
+      isObjectNode({schema: editor.schema}, node) &&
+      !editor.editableTypes.has(getScopedTypeName(editor, node, nodePath))
+    ) {
       yield {path: nodePath, offset: 0}
       continue
     }
@@ -125,6 +129,14 @@ export function* positions(
       !isTextBlockNode({schema: editor.schema}, node) &&
       !isSpan({schema: editor.schema}, node)
     ) {
+      // Skip editable containers - their children will be yielded
+      // by subsequent iterations
+      if (
+        isObjectNode({schema: editor.schema}, node) &&
+        editor.editableTypes.has(getScopedTypeName(editor, node, nodePath))
+      ) {
+        continue
+      }
       yield {path: nodePath, offset: 0}
       continue
     }

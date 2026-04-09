@@ -31,6 +31,7 @@ import {isCollapsedRange} from '../slate/range/is-collapsed-range'
 import {rangeEdges} from '../slate/range/range-edges'
 import {rangeEnd} from '../slate/range/range-end'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
+import {getScopedTypeName} from '../utils/util.get-scoped-type-name'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import type {OperationImplementation} from './operation.types'
 
@@ -196,7 +197,10 @@ export const deleteOperationImplementation: OperationImplementation<
       const entry = getNode(operation.editor, [blockSegment])
       if (
         entry &&
-        isObjectNode({schema: operation.editor.schema}, entry.node)
+        isObjectNode({schema: operation.editor.schema}, entry.node) &&
+        !operation.editor.editableTypes.has(
+          getScopedTypeName(operation.editor, entry.node, entry.path),
+        )
       ) {
         return entry
       }
@@ -209,7 +213,10 @@ export const deleteOperationImplementation: OperationImplementation<
       const entry = getNode(operation.editor, [blockSegment])
       if (
         entry &&
-        isObjectNode({schema: operation.editor.schema}, entry.node)
+        isObjectNode({schema: operation.editor.schema}, entry.node) &&
+        !operation.editor.editableTypes.has(
+          getScopedTypeName(operation.editor, entry.node, entry.path),
+        )
       ) {
         return entry
       }
@@ -233,9 +240,33 @@ export const deleteOperationImplementation: OperationImplementation<
       : undefined
 
   const startNonEditable =
-    startObjectNode ?? getHighestObjectNode(operation.editor, start.path)
+    startObjectNode ??
+    (() => {
+      const highest = getHighestObjectNode(operation.editor, start.path)
+      if (
+        highest &&
+        operation.editor.editableTypes.has(
+          getScopedTypeName(operation.editor, highest.node, highest.path),
+        )
+      ) {
+        return undefined
+      }
+      return highest
+    })()
   const endNonEditable =
-    endObjectNode ?? getHighestObjectNode(operation.editor, end.path)
+    endObjectNode ??
+    (() => {
+      const highest = getHighestObjectNode(operation.editor, end.path)
+      if (
+        highest &&
+        operation.editor.editableTypes.has(
+          getScopedTypeName(operation.editor, highest.node, highest.path),
+        )
+      ) {
+        return undefined
+      }
+      return highest
+    })()
 
   const matches: Array<{node: Node; path: Path}> = []
   let lastPath: Path | undefined
@@ -250,8 +281,15 @@ export const deleteOperationImplementation: OperationImplementation<
       continue
     }
 
+    const isObject = isObjectNode({schema: operation.editor.schema}, node)
+    const isEditable =
+      isObject &&
+      operation.editor.editableTypes.has(
+        getScopedTypeName(operation.editor, node, entryPath),
+      )
+
     if (
-      isObjectNode({schema: operation.editor.schema}, node) ||
+      (isObject && !isEditable) ||
       (!isCommonPath(entryPath, start.path) &&
         !isCommonPath(entryPath, end.path))
     ) {

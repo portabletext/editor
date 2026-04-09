@@ -503,4 +503,100 @@ describe('container rendering', () => {
       ])
     })
   })
+
+  test('backspace inside a callout text block deletes text', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const calloutKey = keyGenerator()
+    const contentBlockKey = keyGenerator()
+    const contentSpanKey = keyGenerator()
+
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: calloutKey,
+          content: [
+            {
+              _type: 'block',
+              _key: contentBlockKey,
+              children: [
+                {
+                  _type: 'span',
+                  _key: contentSpanKey,
+                  text: 'hello',
+                  marks: [],
+                },
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: (
+        <RendererPlugin
+          renderers={[{renderer: {type: 'callout', render: CalloutRenderer}}]}
+        />
+      ),
+    })
+
+    await vi.waitFor(() => {
+      expect(
+        locator.element().querySelector('[data-testid="callout"]'),
+      ).not.toBeNull()
+    })
+
+    // Click on the text to place cursor
+    const textSpan = locator
+      .element()
+      .querySelector(
+        `[data-pt-path='[_key=="${calloutKey}"].content[_key=="${contentBlockKey}"].children[_key=="${contentSpanKey}"]']`,
+      )
+    expect(textSpan).not.toBeNull()
+    await userEvent.click(textSpan!)
+
+    // Wait for selection to be established
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).not.toBeNull()
+    })
+
+    // Type a character then backspace it
+    await userEvent.keyboard('x')
+
+    await vi.waitFor(() => {
+      const value = editor.getSnapshot().context.value
+      expect(value).toHaveLength(1)
+    })
+
+    await userEvent.keyboard('{Backspace}')
+
+    await vi.waitFor(() => {
+      const value = editor.getSnapshot().context.value
+
+      expect(value).toEqual([
+        {
+          _type: 'callout',
+          _key: calloutKey,
+          content: [
+            {
+              _type: 'block',
+              _key: contentBlockKey,
+              children: [
+                {
+                  _type: 'span',
+                  _key: contentSpanKey,
+                  text: 'hello',
+                  marks: [],
+                },
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ])
+    })
+  })
 })

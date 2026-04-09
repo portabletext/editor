@@ -11,6 +11,7 @@ import {getNodes} from '../../node-traversal/get-nodes'
 import {getSibling} from '../../node-traversal/get-sibling'
 import {getSpanNode} from '../../node-traversal/get-span-node'
 import type {PortableTextSlateEditor} from '../../types/slate-editor'
+import {getScopedTypeName} from '../../utils/util.get-scoped-type-name'
 import {after} from '../editor/after'
 import {before} from '../editor/before'
 import {end as editorEnd} from '../editor/end'
@@ -75,7 +76,17 @@ export function deleteText(editor: Editor, options: TextDeleteOptions = {}) {
     if (isPoint(at)) {
       const furthestObjectNode = getHighestObjectNode(editor, at.path)
 
-      if (!includeObjectNodes && furthestObjectNode) {
+      if (
+        !includeObjectNodes &&
+        furthestObjectNode &&
+        !editor.editableTypes.has(
+          getScopedTypeName(
+            editor,
+            furthestObjectNode.node,
+            furthestObjectNode.path,
+          ),
+        )
+      ) {
         const voidPath = furthestObjectNode.path
         at = voidPath
       } else {
@@ -114,10 +125,32 @@ export function deleteText(editor: Editor, options: TextDeleteOptions = {}) {
     const isSingleText = pathEquals(start.path, end.path)
     const startNonEditable = includeObjectNodes
       ? null
-      : getHighestObjectNode(editor, start.path)
+      : (() => {
+          const highest = getHighestObjectNode(editor, start.path)
+          if (
+            highest &&
+            editor.editableTypes.has(
+              getScopedTypeName(editor, highest.node, highest.path),
+            )
+          ) {
+            return null
+          }
+          return highest
+        })()
     const endNonEditable = includeObjectNodes
       ? null
-      : getHighestObjectNode(editor, end.path)
+      : (() => {
+          const highest = getHighestObjectNode(editor, end.path)
+          if (
+            highest &&
+            editor.editableTypes.has(
+              getScopedTypeName(editor, highest.node, highest.path),
+            )
+          ) {
+            return null
+          }
+          return highest
+        })()
 
     // If the start or end points are inside an inline void, nudge them out.
     if (startNonEditable) {
@@ -160,7 +193,11 @@ export function deleteText(editor: Editor, options: TextDeleteOptions = {}) {
       }
 
       if (
-        (!includeObjectNodes && isObjectNode({schema: editor.schema}, node)) ||
+        (!includeObjectNodes &&
+          isObjectNode({schema: editor.schema}, node) &&
+          !editor.editableTypes.has(
+            getScopedTypeName(editor, node, entryPath),
+          )) ||
         (!isCommonPath(entryPath, start.path) &&
           !isCommonPath(entryPath, end.path))
       ) {
