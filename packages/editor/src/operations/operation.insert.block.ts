@@ -787,8 +787,11 @@ function insertNodeAt(
   const op: InsertNodeOperation = {type: 'insert_node', path, node, position}
   editor.apply(op)
   // Use op.node._key because apply-operation may have re-keyed the node
-  // to resolve duplicate keys
-  const insertedPath: Path = [{_key: op.node._key}]
+  // to resolve duplicate keys.
+  // Construct the full path from the reference path's parent, not just root level,
+  // so this works inside containers too.
+  const parent = parentPath(path)
+  const insertedPath: Path = [...parent, {_key: op.node._key}]
   if (select !== 'none') {
     setSelection(editor, insertedPath, select)
   }
