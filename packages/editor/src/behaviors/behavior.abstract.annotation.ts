@@ -1,5 +1,5 @@
-import {getTextBlockNode} from '../node-traversal/get-text-block-node'
 import {isActiveAnnotation} from '../selectors/selector.is-active-annotation'
+import {getTextBlock} from '../traversal'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
@@ -10,7 +10,7 @@ export const abstractAnnotationBehaviors = [
       const blockKey = event.at[0]._key
       const markDefKey = event.at[2]._key
 
-      const block = getTextBlockNode(snapshot.context, [{_key: blockKey}])
+      const block = getTextBlock(snapshot, {at: [{_key: blockKey}]})
 
       if (!block) {
         return false

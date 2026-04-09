@@ -1,11 +1,10 @@
-import {getAncestorTextBlock} from '../node-traversal/get-ancestor-text-block'
-import {getSpanNode} from '../node-traversal/get-span-node'
 import {getFocusInlineObject} from '../selectors/selector.get-focus-inline-object'
 import {getSelectedBlocks} from '../selectors/selector.get-selected-blocks'
 import {getSelectionEndBlock} from '../selectors/selector.get-selection-end-block'
 import {getSelectionStartBlock} from '../selectors/selector.get-selection-start-block'
 import {isSelectionCollapsed} from '../selectors/selector.is-selection-collapsed'
 import {isSelectionExpanded} from '../selectors/selector.is-selection-expanded'
+import {getSpan, getTextBlock} from '../traversal'
 import {getBlockEndPoint} from '../utils/util.get-block-end-point'
 import {getBlockStartPoint} from '../utils/util.get-block-start-point'
 import {getSelectionEndPoint} from '../utils/util.get-selection-end-point'
@@ -25,10 +24,7 @@ const breakingAtTheEndOfTextBlock = defineBehavior({
       return false
     }
 
-    const focusTextBlock = getAncestorTextBlock(
-      snapshot.context,
-      snapshot.context.selection.focus.path,
-    )
+    const focusTextBlock = getTextBlock(snapshot)
     const selectionCollapsed = isSelectionCollapsed(snapshot)
 
     if (!focusTextBlock || !selectionCollapsed) {
@@ -87,20 +83,14 @@ const breakingAtTheStartOfTextBlock = defineBehavior({
       return false
     }
 
-    const focusTextBlock = getAncestorTextBlock(
-      snapshot.context,
-      snapshot.context.selection.focus.path,
-    )
+    const focusTextBlock = getTextBlock(snapshot)
     const selectionCollapsed = isSelectionCollapsed(snapshot)
 
     if (!focusTextBlock || !selectionCollapsed) {
       return false
     }
 
-    const focusSpan = getSpanNode(
-      snapshot.context,
-      snapshot.context.selection.focus.path,
-    )
+    const focusSpan = getSpan(snapshot)
 
     const focusDecorators = focusSpan?.node.marks?.filter(
       (mark) =>

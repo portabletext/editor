@@ -1,11 +1,9 @@
-import {getAncestorTextBlock} from '../node-traversal/get-ancestor-text-block'
-import {getBlock} from '../node-traversal/is-block'
 import {isSelectionExpanded} from '../selectors'
 import {getFocusInlineObject} from '../selectors/selector.get-focus-inline-object'
 import {getSelectionEndBlock} from '../selectors/selector.get-selection-end-block'
 import {getSelectionStartBlock} from '../selectors/selector.get-selection-start-block'
 import {isTextBlockNode} from '../slate/node/is-text-block-node'
-import {parentPath} from '../slate/path/parent-path'
+import {getBlock, getTextBlock} from '../traversal'
 import {isEqualSelectionPoints} from '../utils'
 import {parseBlock} from '../utils/parse-blocks'
 import {getBlockEndPoint} from '../utils/util.get-block-end-point'
@@ -42,10 +40,7 @@ export const abstractSplitBehaviors = [
         return false
       }
 
-      const focusPath = snapshot.context.selection.focus.path
-      const focusBlock =
-        getBlock(snapshot.context, focusPath) ??
-        getBlock(snapshot.context, parentPath(focusPath))
+      const focusBlock = getBlock(snapshot)
 
       if (!focusBlock) {
         return false
@@ -123,10 +118,7 @@ export const abstractSplitBehaviors = [
 
       const selectionStartPoint = getSelectionStartPoint(selection)
 
-      const focusTextBlock = getAncestorTextBlock(
-        snapshot.context,
-        selection.focus.path,
-      )
+      const focusTextBlock = getTextBlock(snapshot)
 
       if (!focusTextBlock) {
         return false

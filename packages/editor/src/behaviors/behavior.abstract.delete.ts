@@ -1,9 +1,9 @@
 import {isSpan} from '@portabletext/schema'
-import {getAncestorTextBlock} from '../node-traversal/get-ancestor-text-block'
 import {getNode} from '../node-traversal/get-node'
 import {getNextBlock} from '../selectors/selector.get-next-block'
 import {getPreviousBlock} from '../selectors/selector.get-previous-block'
 import {isTextBlockNode} from '../slate/node/is-text-block-node'
+import {getTextBlock} from '../traversal'
 import {getBlockEndPoint} from '../utils/util.get-block-end-point'
 import {getBlockStartPoint} from '../utils/util.get-block-start-point'
 import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
@@ -50,10 +50,7 @@ export const abstractDeleteBehaviors = [
       }
 
       const previousBlock = getPreviousBlock(adjustedSnapshot)
-      const focusTextBlock = getAncestorTextBlock(
-        adjustedSnapshot.context,
-        at.focus.path,
-      )
+      const focusTextBlock = getTextBlock(adjustedSnapshot)
 
       if (!previousBlock || !focusTextBlock) {
         return false
@@ -132,17 +129,16 @@ export const abstractDeleteBehaviors = [
         return false
       }
 
-      const nextBlock = getNextBlock({
+      const adjustedSnapshot = {
         ...snapshot,
         context: {
           ...snapshot.context,
           selection: at,
         },
-      })
-      const focusTextBlock = getAncestorTextBlock(
-        snapshot.context,
-        at.focus.path,
-      )
+      }
+
+      const nextBlock = getNextBlock(adjustedSnapshot)
+      const focusTextBlock = getTextBlock(adjustedSnapshot)
 
       if (!nextBlock || !focusTextBlock) {
         return false
@@ -197,10 +193,7 @@ export const abstractDeleteBehaviors = [
       }
 
       const nextBlock = getNextBlock(adjustedSnapshot)
-      const focusTextBlock = getAncestorTextBlock(
-        adjustedSnapshot.context,
-        at.focus.path,
-      )
+      const focusTextBlock = getTextBlock(adjustedSnapshot)
 
       if (!nextBlock || !focusTextBlock) {
         return false

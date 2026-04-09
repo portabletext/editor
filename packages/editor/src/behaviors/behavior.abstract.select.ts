@@ -1,6 +1,6 @@
-import {getBlock} from '../node-traversal/is-block'
 import {getNextBlock} from '../selectors/selector.get-next-block'
 import {getPreviousBlock} from '../selectors/selector.get-previous-block'
+import {getBlock} from '../traversal'
 import {getBlockEndPoint} from '../utils/util.get-block-end-point'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
@@ -13,7 +13,7 @@ export const abstractSelectBehaviors = [
         return false
       }
 
-      const blockEntry = getBlock(snapshot.context, event.at)
+      const blockEntry = getBlock(snapshot, {at: event.at})
 
       if (!blockEntry) {
         return false

@@ -1,10 +1,10 @@
 import type {EditorSelector} from '../editor/editor-selector'
-import {getAncestorTextBlock} from '../node-traversal/get-ancestor-text-block'
 import {isSelectionExpanded} from '../selectors'
 import {getFocusInlineObject} from '../selectors/selector.get-focus-inline-object'
 import {getLastBlock} from '../selectors/selector.get-last-block'
 import {isSelectionCollapsed} from '../selectors/selector.is-selection-collapsed'
 import {isTextBlockNode} from '../slate/node/is-text-block-node'
+import {getTextBlock} from '../traversal'
 import {getBlockEndPoint} from '../utils/util.get-block-end-point'
 import {getBlockStartPoint} from '../utils/util.get-block-start-point'
 import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
@@ -154,10 +154,7 @@ export const abstractInsertBehaviors = [
         },
       }
 
-      const focusTextBlock = getAncestorTextBlock(
-        adjustedSnapshot.context,
-        at.focus.path,
-      )
+      const focusTextBlock = getTextBlock(adjustedSnapshot)
 
       if (
         !focusTextBlock ||
@@ -478,10 +475,7 @@ export const abstractInsertBehaviors = [
         return false
       }
 
-      const focusTextBlock = getAncestorTextBlock(
-        snapshot.context,
-        snapshot.context.selection.focus.path,
-      )
+      const focusTextBlock = getTextBlock(snapshot)
 
       return !focusTextBlock
     },
@@ -531,10 +525,7 @@ export const abstractInsertBehaviors = [
         return true
       }
 
-      return !getAncestorTextBlock(
-        snapshot.context,
-        snapshot.context.selection.focus.path,
-      )
+      return !getTextBlock(snapshot)
     },
     actions: [
       ({snapshot, event}) => [
@@ -560,12 +551,7 @@ export const abstractInsertBehaviors = [
   defineBehavior({
     on: 'insert.span',
     guard: ({snapshot, event}) => {
-      const focusTextBlock = snapshot.context.selection
-        ? getAncestorTextBlock(
-            snapshot.context,
-            snapshot.context.selection.focus.path,
-          )
-        : undefined
+      const focusTextBlock = getTextBlock(snapshot)
       const markDefs =
         event.annotations?.map((annotation) => ({
           _type: annotation.name,

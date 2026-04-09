@@ -1,6 +1,4 @@
 import {defaultKeyboardShortcuts} from '../editor/default-keyboard-shortcuts'
-import {getAncestorTextBlock} from '../node-traversal/get-ancestor-text-block'
-import {getSpanNode} from '../node-traversal/get-span-node'
 import {getFocusListBlock} from '../selectors/selector.get-focus-list-block'
 import {getNextBlock} from '../selectors/selector.get-next-block'
 import {getPreviousBlock} from '../selectors/selector.get-previous-block'
@@ -9,6 +7,7 @@ import {getSelectionEndPoint} from '../selectors/selector.get-selection-end-poin
 import {getSelectionStartPoint} from '../selectors/selector.get-selection-start-point'
 import {isSelectionCollapsed} from '../selectors/selector.is-selection-collapsed'
 import {isTextBlockNode} from '../slate/node/is-text-block-node'
+import {getSpan, getTextBlock} from '../traversal'
 import {isListBlock} from '../utils/parse-blocks'
 import {isAtTheBeginningOfBlock} from '../utils/util.at-the-beginning-of-block'
 import {getBlockEndPoint} from '../utils/util.get-block-end-point'
@@ -28,10 +27,7 @@ const clearListOnBackspace = defineBehavior({
       return false
     }
 
-    const focusTextBlock = getAncestorTextBlock(
-      snapshot.context,
-      snapshot.context.selection.focus.path,
-    )
+    const focusTextBlock = getTextBlock(snapshot)
 
     if (!focusTextBlock) {
       return false
@@ -71,14 +67,8 @@ const unindentListOnBackspace = defineBehavior({
     }
 
     const selectionCollapsed = isSelectionCollapsed(snapshot)
-    const focusTextBlock = getAncestorTextBlock(
-      snapshot.context,
-      snapshot.context.selection.focus.path,
-    )
-    const focusSpan = getSpanNode(
-      snapshot.context,
-      snapshot.context.selection.focus.path,
-    )
+    const focusTextBlock = getTextBlock(snapshot)
+    const focusSpan = getSpan(snapshot)
 
     if (!selectionCollapsed || !focusTextBlock || !focusSpan) {
       return false
@@ -162,10 +152,7 @@ const mergeTextIntoListOnBackspace = defineBehavior({
       return false
     }
 
-    const focusTextBlock = getAncestorTextBlock(
-      snapshot.context,
-      snapshot.context.selection.focus.path,
-    )
+    const focusTextBlock = getTextBlock(snapshot)
     const previousBlock = getPreviousBlock(snapshot)
 
     if (!focusTextBlock || !previousBlock) {

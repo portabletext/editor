@@ -1,6 +1,6 @@
-import {getSpanNode} from '../node-traversal/get-span-node'
 import {isSelectionCollapsed} from '../selectors/selector.is-selection-collapsed'
 import {isSelectionExpanded} from '../selectors/selector.is-selection-expanded'
+import {getSpan} from '../traversal'
 import {abstractAnnotationBehaviors} from './behavior.abstract.annotation'
 import {abstractDecoratorBehaviors} from './behavior.abstract.decorator'
 import {abstractDeleteBehaviors} from './behavior.abstract.delete'
@@ -21,9 +21,7 @@ export const abstractBehaviors = [
   defineBehavior({
     on: 'clipboard.copy',
     guard: ({snapshot}) => {
-      const focusSpan = snapshot.context.selection
-        ? getSpanNode(snapshot.context, snapshot.context.selection.focus.path)
-        : undefined
+      const focusSpan = getSpan(snapshot)
       const selectionCollapsed = isSelectionCollapsed(snapshot)
 
       return focusSpan && selectionCollapsed
@@ -44,9 +42,7 @@ export const abstractBehaviors = [
   defineBehavior({
     on: 'clipboard.cut',
     guard: ({snapshot}) => {
-      const focusSpan = snapshot.context.selection
-        ? getSpanNode(snapshot.context, snapshot.context.selection.focus.path)
-        : undefined
+      const focusSpan = getSpan(snapshot)
       const selectionCollapsed = isSelectionCollapsed(snapshot)
 
       return focusSpan && selectionCollapsed

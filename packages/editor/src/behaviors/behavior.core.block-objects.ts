@@ -1,10 +1,10 @@
 import {defaultKeyboardShortcuts} from '../editor/default-keyboard-shortcuts'
-import {getAncestorTextBlock} from '../node-traversal/get-ancestor-text-block'
 import {getFocusBlockObject} from '../selectors/selector.get-focus-block-object'
 import {getNextBlock} from '../selectors/selector.get-next-block'
 import {getPreviousBlock} from '../selectors/selector.get-previous-block'
 import {isSelectionCollapsed} from '../selectors/selector.is-selection-collapsed'
 import {isTextBlockNode} from '../slate/node/is-text-block-node'
+import {getTextBlock} from '../traversal'
 import {isListBlock} from '../utils/parse-blocks'
 import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
 import {raise} from './behavior.types.action'
@@ -208,10 +208,7 @@ const deletingEmptyTextBlockAfterBlockObject = defineBehavior({
       return false
     }
 
-    const focusTextBlock = getAncestorTextBlock(
-      snapshot.context,
-      snapshot.context.selection.focus.path,
-    )
+    const focusTextBlock = getTextBlock(snapshot)
     const selectionCollapsed = isSelectionCollapsed(snapshot)
     const previousBlock = getPreviousBlock(snapshot)
 
@@ -256,10 +253,7 @@ const deletingEmptyTextBlockBeforeBlockObject = defineBehavior({
       return false
     }
 
-    const focusTextBlock = getAncestorTextBlock(
-      snapshot.context,
-      snapshot.context.selection.focus.path,
-    )
+    const focusTextBlock = getTextBlock(snapshot)
     const selectionCollapsed = isSelectionCollapsed(snapshot)
     const nextBlock = getNextBlock(snapshot)
 
