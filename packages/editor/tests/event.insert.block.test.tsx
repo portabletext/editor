@@ -7,6 +7,7 @@ import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
 import type {InsertPlacement} from '../src/behaviors/behavior.types.event'
 import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
 import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
+import {RendererPlugin} from '../src/plugins/plugin.renderer'
 import {getFocusBlock} from '../src/selectors/selector.get-focus-block'
 import {createTestEditor} from '../src/test/vitest'
 
@@ -2190,6 +2191,293 @@ describe('event.insert.block', () => {
           offset: 0,
         },
         backward: false,
+      })
+    })
+  })
+
+  describe('containers', () => {
+    const calloutSchemaDefinition = defineSchema({
+      blockObjects: [
+        {
+          name: 'callout',
+          fields: [
+            {
+              name: 'content',
+              type: 'array',
+              of: [{type: 'block'}],
+            },
+          ],
+        },
+      ],
+    })
+
+    function CalloutRenderer({
+      attributes,
+      children,
+    }: {
+      attributes: Record<string, unknown>
+      children: React.ReactNode
+    }) {
+      return <div {...attributes}>{children}</div>
+    }
+
+    test('insert.break at end of text block inside container', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const calloutKey = keyGenerator()
+      const blockKey = keyGenerator()
+      const spanKey = keyGenerator()
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: calloutSchemaDefinition,
+        initialValue: [
+          {
+            _type: 'callout',
+            _key: calloutKey,
+            content: [
+              {
+                _type: 'block',
+                _key: blockKey,
+                children: [
+                  {_type: 'span', _key: spanKey, text: 'hello', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
+        children: (
+          <RendererPlugin
+            renderers={[{renderer: {type: 'callout', render: CalloutRenderer}}]}
+          />
+        ),
+      })
+
+      editor.send({
+        type: 'select',
+        at: {
+          anchor: {
+            path: [
+              {_key: calloutKey},
+              'content',
+              {_key: blockKey},
+              'children',
+              {_key: spanKey},
+            ],
+            offset: 5,
+          },
+          focus: {
+            path: [
+              {_key: calloutKey},
+              'content',
+              {_key: blockKey},
+              'children',
+              {_key: spanKey},
+            ],
+            offset: 5,
+          },
+        },
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.selection).not.toBeNull()
+      })
+
+      editor.send({type: 'insert.break'})
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          {
+            _type: 'callout',
+            _key: calloutKey,
+            content: [
+              {
+                _type: 'block',
+                _key: blockKey,
+                children: [
+                  {_type: 'span', _key: spanKey, text: 'hello', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'k5',
+                children: [
+                  {
+                    _type: 'span',
+                    _key: 'k6',
+                    text: '',
+                    marks: [],
+                  },
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ])
+
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {
+            path: [
+              {_key: calloutKey},
+              'content',
+              {_key: 'k5'},
+              'children',
+              {_key: 'k6'},
+            ],
+            offset: 0,
+          },
+          focus: {
+            path: [
+              {_key: calloutKey},
+              'content',
+              {_key: 'k5'},
+              'children',
+              {_key: 'k6'},
+            ],
+            offset: 0,
+          },
+          backward: false,
+        })
+      })
+    })
+
+    test('insert.break in middle of text block inside container', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const calloutKey = keyGenerator()
+      const blockKey = keyGenerator()
+      const spanKey = keyGenerator()
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: calloutSchemaDefinition,
+        initialValue: [
+          {
+            _type: 'callout',
+            _key: calloutKey,
+            content: [
+              {
+                _type: 'block',
+                _key: blockKey,
+                children: [
+                  {
+                    _type: 'span',
+                    _key: spanKey,
+                    text: 'hello world',
+                    marks: [],
+                  },
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
+        children: (
+          <RendererPlugin
+            renderers={[{renderer: {type: 'callout', render: CalloutRenderer}}]}
+          />
+        ),
+      })
+
+      editor.send({
+        type: 'select',
+        at: {
+          anchor: {
+            path: [
+              {_key: calloutKey},
+              'content',
+              {_key: blockKey},
+              'children',
+              {_key: spanKey},
+            ],
+            offset: 5,
+          },
+          focus: {
+            path: [
+              {_key: calloutKey},
+              'content',
+              {_key: blockKey},
+              'children',
+              {_key: spanKey},
+            ],
+            offset: 5,
+          },
+        },
+      })
+
+      await vi.waitFor(() => {
+        const sel = editor.getSnapshot().context.selection
+        expect(sel).not.toBeNull()
+        expect(sel!.anchor.offset).toBe(5)
+      })
+
+      editor.send({type: 'insert.break'})
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          {
+            _type: 'callout',
+            _key: calloutKey,
+            content: [
+              {
+                _type: 'block',
+                _key: blockKey,
+                children: [
+                  {
+                    _type: 'span',
+                    _key: spanKey,
+                    text: 'hello world',
+                    marks: [],
+                  },
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'k5',
+                children: [
+                  {
+                    _type: 'span',
+                    _key: 'k6',
+                    text: '',
+                    marks: [],
+                  },
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ])
+
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {
+            path: [
+              {_key: calloutKey},
+              'content',
+              {_key: 'k5'},
+              'children',
+              {_key: 'k6'},
+            ],
+            offset: 0,
+          },
+          focus: {
+            path: [
+              {_key: calloutKey},
+              'content',
+              {_key: 'k5'},
+              'children',
+              {_key: 'k6'},
+            ],
+            offset: 0,
+          },
+          backward: false,
+        })
       })
     })
   })

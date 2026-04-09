@@ -8,6 +8,7 @@ import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
 import type {BehaviorEvent} from '../src/behaviors/behavior.types.event'
 import {IS_MAC} from '../src/internal-utils/is-hotkey'
 import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
+import {RendererPlugin} from '../src/plugins/plugin.renderer'
 import {createTestEditor} from '../src/test/vitest'
 import {getSelectionAfterText} from '../test-utils/text-selection'
 
@@ -444,6 +445,153 @@ describe('event.insert.text', () => {
       expect(getTersePt(editor.getSnapshot().context)).toEqual([
         'before,{stock-ticker},helloafter',
       ])
+    })
+  })
+
+  describe('containers', () => {
+    const calloutSchemaDefinition = defineSchema({
+      blockObjects: [
+        {
+          name: 'callout',
+          fields: [
+            {
+              name: 'content',
+              type: 'array',
+              of: [{type: 'block'}],
+            },
+          ],
+        },
+      ],
+    })
+
+    function CalloutRenderer({
+      attributes,
+      children,
+    }: {
+      attributes: Record<string, unknown>
+      children: React.ReactNode
+    }) {
+      return <div {...attributes}>{children}</div>
+    }
+
+    test('insert.text inside container', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const calloutKey = keyGenerator()
+      const blockKey = keyGenerator()
+      const spanKey = keyGenerator()
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: calloutSchemaDefinition,
+        initialValue: [
+          {
+            _type: 'callout',
+            _key: calloutKey,
+            content: [
+              {
+                _type: 'block',
+                _key: blockKey,
+                children: [
+                  {
+                    _type: 'span',
+                    _key: spanKey,
+                    text: 'hello',
+                    marks: [],
+                  },
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
+        children: (
+          <RendererPlugin
+            renderers={[{renderer: {type: 'callout', render: CalloutRenderer}}]}
+          />
+        ),
+      })
+
+      editor.send({
+        type: 'select',
+        at: {
+          anchor: {
+            path: [
+              {_key: calloutKey},
+              'content',
+              {_key: blockKey},
+              'children',
+              {_key: spanKey},
+            ],
+            offset: 0,
+          },
+          focus: {
+            path: [
+              {_key: calloutKey},
+              'content',
+              {_key: blockKey},
+              'children',
+              {_key: spanKey},
+            ],
+            offset: 0,
+          },
+        },
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.selection).not.toBeNull()
+      })
+
+      editor.send({type: 'insert.text', text: 'abc'})
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          {
+            _type: 'callout',
+            _key: calloutKey,
+            content: [
+              {
+                _type: 'block',
+                _key: blockKey,
+                children: [
+                  {
+                    _type: 'span',
+                    _key: spanKey,
+                    text: 'abchello',
+                    marks: [],
+                  },
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ])
+
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {
+            path: [
+              {_key: calloutKey},
+              'content',
+              {_key: blockKey},
+              'children',
+              {_key: spanKey},
+            ],
+            offset: 3,
+          },
+          focus: {
+            path: [
+              {_key: calloutKey},
+              'content',
+              {_key: blockKey},
+              'children',
+              {_key: spanKey},
+            ],
+            offset: 3,
+          },
+          backward: false,
+        })
+      })
     })
   })
 })

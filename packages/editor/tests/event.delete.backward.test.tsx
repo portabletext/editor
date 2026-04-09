@@ -15,6 +15,7 @@ import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
 import type {BehaviorEvent} from '../src/behaviors/behavior.types.event'
 import {EventListenerPlugin} from '../src/plugins'
 import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
+import {RendererPlugin} from '../src/plugins/plugin.renderer'
 import {createTestEditor} from '../src/test/vitest'
 import {
   getSelectionAfterText,
@@ -443,6 +444,289 @@ describe('event.delete.backward', () => {
 
       await vi.waitFor(() => {
         expect(getTersePt(editor.getSnapshot().context)).toEqual(['bar baz'])
+      })
+    })
+  })
+
+  describe('containers', () => {
+    const calloutSchemaDefinition = defineSchema({
+      blockObjects: [
+        {
+          name: 'callout',
+          fields: [
+            {
+              name: 'content',
+              type: 'array',
+              of: [{type: 'block'}],
+            },
+          ],
+        },
+      ],
+    })
+
+    function CalloutRenderer({
+      attributes,
+      children,
+    }: {
+      attributes: Record<string, unknown>
+      children: React.ReactNode
+    }) {
+      return <div {...attributes}>{children}</div>
+    }
+
+    test('delete.backward merges text blocks inside container', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const calloutKey = keyGenerator()
+      const block1Key = keyGenerator()
+      const span1Key = keyGenerator()
+      const block2Key = keyGenerator()
+      const span2Key = keyGenerator()
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: calloutSchemaDefinition,
+        initialValue: [
+          {
+            _type: 'callout',
+            _key: calloutKey,
+            content: [
+              {
+                _type: 'block',
+                _key: block1Key,
+                children: [
+                  {
+                    _type: 'span',
+                    _key: span1Key,
+                    text: 'first',
+                    marks: [],
+                  },
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: block2Key,
+                children: [
+                  {
+                    _type: 'span',
+                    _key: span2Key,
+                    text: 'second',
+                    marks: [],
+                  },
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
+        children: (
+          <RendererPlugin
+            renderers={[{renderer: {type: 'callout', render: CalloutRenderer}}]}
+          />
+        ),
+      })
+
+      editor.send({
+        type: 'select',
+        at: {
+          anchor: {
+            path: [
+              {_key: calloutKey},
+              'content',
+              {_key: block2Key},
+              'children',
+              {_key: span2Key},
+            ],
+            offset: 0,
+          },
+          focus: {
+            path: [
+              {_key: calloutKey},
+              'content',
+              {_key: block2Key},
+              'children',
+              {_key: span2Key},
+            ],
+            offset: 0,
+          },
+        },
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.selection).not.toBeNull()
+      })
+
+      editor.send({type: 'delete.backward'})
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          {
+            _type: 'callout',
+            _key: calloutKey,
+            content: [
+              {
+                _type: 'block',
+                _key: block1Key,
+                children: [
+                  {
+                    _type: 'span',
+                    _key: span1Key,
+                    text: 'firstsecond',
+                    marks: [],
+                  },
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ])
+
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {
+            path: [
+              {_key: calloutKey},
+              'content',
+              {_key: block1Key},
+              'children',
+              {_key: span1Key},
+            ],
+            offset: 5,
+          },
+          focus: {
+            path: [
+              {_key: calloutKey},
+              'content',
+              {_key: block1Key},
+              'children',
+              {_key: span1Key},
+            ],
+            offset: 5,
+          },
+          backward: false,
+        })
+      })
+    })
+
+    test('delete.backward deletes character inside container', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const calloutKey = keyGenerator()
+      const blockKey = keyGenerator()
+      const spanKey = keyGenerator()
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: calloutSchemaDefinition,
+        initialValue: [
+          {
+            _type: 'callout',
+            _key: calloutKey,
+            content: [
+              {
+                _type: 'block',
+                _key: blockKey,
+                children: [
+                  {
+                    _type: 'span',
+                    _key: spanKey,
+                    text: 'hello',
+                    marks: [],
+                  },
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
+        children: (
+          <RendererPlugin
+            renderers={[{renderer: {type: 'callout', render: CalloutRenderer}}]}
+          />
+        ),
+      })
+
+      editor.send({
+        type: 'select',
+        at: {
+          anchor: {
+            path: [
+              {_key: calloutKey},
+              'content',
+              {_key: blockKey},
+              'children',
+              {_key: spanKey},
+            ],
+            offset: 3,
+          },
+          focus: {
+            path: [
+              {_key: calloutKey},
+              'content',
+              {_key: blockKey},
+              'children',
+              {_key: spanKey},
+            ],
+            offset: 3,
+          },
+        },
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.selection).not.toBeNull()
+      })
+
+      editor.send({type: 'delete.backward'})
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          {
+            _type: 'callout',
+            _key: calloutKey,
+            content: [
+              {
+                _type: 'block',
+                _key: blockKey,
+                children: [
+                  {
+                    _type: 'span',
+                    _key: spanKey,
+                    text: 'helo',
+                    marks: [],
+                  },
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ])
+
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {
+            path: [
+              {_key: calloutKey},
+              'content',
+              {_key: blockKey},
+              'children',
+              {_key: spanKey},
+            ],
+            offset: 2,
+          },
+          focus: {
+            path: [
+              {_key: calloutKey},
+              'content',
+              {_key: blockKey},
+              'children',
+              {_key: spanKey},
+            ],
+            offset: 2,
+          },
+          backward: false,
+        })
       })
     })
   })
