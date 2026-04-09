@@ -1,6 +1,4 @@
-import {getNextBlock} from '../selectors/selector.get-next-block'
-import {getPreviousBlock} from '../selectors/selector.get-previous-block'
-import {getBlock} from '../traversal'
+import {getBlock, getNextBlock, getPreviousBlock} from '../traversal'
 import {getBlockEndPoint} from '../utils/util.get-block-end-point'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'

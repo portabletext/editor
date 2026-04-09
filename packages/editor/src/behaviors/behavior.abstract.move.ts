@@ -1,5 +1,4 @@
-import {getNextBlock} from '../selectors/selector.get-next-block'
-import {getPreviousBlock} from '../selectors/selector.get-previous-block'
+import {getNextBlock, getPreviousBlock} from '../traversal'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
@@ -7,22 +6,7 @@ export const abstractMoveBehaviors = [
   defineBehavior({
     on: 'move.block up',
     guard: ({snapshot, event}) => {
-      const previousBlock = getPreviousBlock({
-        ...snapshot,
-        context: {
-          ...snapshot.context,
-          selection: {
-            anchor: {
-              path: event.at,
-              offset: 0,
-            },
-            focus: {
-              path: event.at,
-              offset: 0,
-            },
-          },
-        },
-      })
+      const previousBlock = getPreviousBlock(snapshot, {at: event.at})
 
       if (previousBlock) {
         return {previousBlock}
@@ -43,22 +27,7 @@ export const abstractMoveBehaviors = [
   defineBehavior({
     on: 'move.block down',
     guard: ({snapshot, event}) => {
-      const nextBlock = getNextBlock({
-        ...snapshot,
-        context: {
-          ...snapshot.context,
-          selection: {
-            anchor: {
-              path: event.at,
-              offset: 0,
-            },
-            focus: {
-              path: event.at,
-              offset: 0,
-            },
-          },
-        },
-      })
+      const nextBlock = getNextBlock(snapshot, {at: event.at})
 
       if (nextBlock) {
         return {nextBlock}

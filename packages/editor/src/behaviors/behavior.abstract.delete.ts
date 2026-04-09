@@ -1,9 +1,7 @@
 import {isSpan} from '@portabletext/schema'
 import {getNode} from '../node-traversal/get-node'
-import {getNextBlock} from '../selectors/selector.get-next-block'
-import {getPreviousBlock} from '../selectors/selector.get-previous-block'
 import {isTextBlockNode} from '../slate/node/is-text-block-node'
-import {getTextBlock} from '../traversal'
+import {getNextBlock, getPreviousBlock, getTextBlock} from '../traversal'
 import {getBlockEndPoint} from '../utils/util.get-block-end-point'
 import {getBlockStartPoint} from '../utils/util.get-block-start-point'
 import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
@@ -41,16 +39,8 @@ export const abstractDeleteBehaviors = [
         return false
       }
 
-      const adjustedSnapshot = {
-        ...snapshot,
-        context: {
-          ...snapshot.context,
-          selection: at,
-        },
-      }
-
-      const previousBlock = getPreviousBlock(adjustedSnapshot)
-      const focusTextBlock = getTextBlock(adjustedSnapshot)
+      const previousBlock = getPreviousBlock(snapshot, {at: at.focus.path})
+      const focusTextBlock = getTextBlock(snapshot, {at: at.focus.path})
 
       if (!previousBlock || !focusTextBlock) {
         return false
@@ -129,16 +119,8 @@ export const abstractDeleteBehaviors = [
         return false
       }
 
-      const adjustedSnapshot = {
-        ...snapshot,
-        context: {
-          ...snapshot.context,
-          selection: at,
-        },
-      }
-
-      const nextBlock = getNextBlock(adjustedSnapshot)
-      const focusTextBlock = getTextBlock(adjustedSnapshot)
+      const nextBlock = getNextBlock(snapshot, {at: at.focus.path})
+      const focusTextBlock = getTextBlock(snapshot, {at: at.focus.path})
 
       if (!nextBlock || !focusTextBlock) {
         return false
@@ -184,16 +166,8 @@ export const abstractDeleteBehaviors = [
         return false
       }
 
-      const adjustedSnapshot = {
-        ...snapshot,
-        context: {
-          ...snapshot.context,
-          selection: at,
-        },
-      }
-
-      const nextBlock = getNextBlock(adjustedSnapshot)
-      const focusTextBlock = getTextBlock(adjustedSnapshot)
+      const nextBlock = getNextBlock(snapshot, {at: at.focus.path})
+      const focusTextBlock = getTextBlock(snapshot, {at: at.focus.path})
 
       if (!nextBlock || !focusTextBlock) {
         return false

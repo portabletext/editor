@@ -1,13 +1,16 @@
 import {defaultKeyboardShortcuts} from '../editor/default-keyboard-shortcuts'
-import {getFocusListBlock} from '../selectors/selector.get-focus-list-block'
-import {getNextBlock} from '../selectors/selector.get-next-block'
-import {getPreviousBlock} from '../selectors/selector.get-previous-block'
 import {getSelectedBlocks} from '../selectors/selector.get-selected-blocks'
 import {getSelectionEndPoint} from '../selectors/selector.get-selection-end-point'
 import {getSelectionStartPoint} from '../selectors/selector.get-selection-start-point'
 import {isSelectionCollapsed} from '../selectors/selector.is-selection-collapsed'
 import {isTextBlockNode} from '../slate/node/is-text-block-node'
-import {getSpan, getTextBlock} from '../traversal'
+import {
+  getListBlock,
+  getNextBlock,
+  getPreviousBlock,
+  getSpan,
+  getTextBlock,
+} from '../traversal'
 import {isListBlock} from '../utils/parse-blocks'
 import {isAtTheBeginningOfBlock} from '../utils/util.at-the-beginning-of-block'
 import {getBlockEndPoint} from '../utils/util.get-block-end-point'
@@ -107,7 +110,7 @@ const unindentListOnBackspace = defineBehavior({
 const mergeTextIntoListOnDelete = defineBehavior({
   on: 'delete.forward',
   guard: ({snapshot}) => {
-    const focusListBlock = getFocusListBlock(snapshot)
+    const focusListBlock = getListBlock(snapshot)
     const nextBlock = getNextBlock(snapshot)
 
     if (!focusListBlock || !nextBlock) {
@@ -362,7 +365,7 @@ const clearListOnEnter = defineBehavior({
   on: 'insert.break',
   guard: ({snapshot}) => {
     const selectionCollapsed = isSelectionCollapsed(snapshot)
-    const focusListBlock = getFocusListBlock(snapshot)
+    const focusListBlock = getListBlock(snapshot)
 
     if (
       !selectionCollapsed ||
@@ -488,15 +491,13 @@ const unindentListOnShiftTab = defineBehavior({
 const inheritListLevel = defineBehavior({
   on: 'insert.blocks',
   guard: ({snapshot, event}) => {
-    const adjustedSnapshot = {
-      ...snapshot,
-      context: {
-        ...snapshot.context,
-        selection: event.at ?? snapshot.context.selection,
-      },
+    const at = event.at ?? snapshot.context.selection
+
+    if (!at) {
+      return false
     }
 
-    const focusListBlock = getFocusListBlock(adjustedSnapshot)
+    const focusListBlock = getListBlock(snapshot, {at: at.focus.path})
 
     if (!focusListBlock) {
       return false
@@ -572,15 +573,13 @@ const inheritListLevel = defineBehavior({
 const inheritListItem = defineBehavior({
   on: 'insert.blocks',
   guard: ({snapshot, event}) => {
-    const adjustedSnapshot = {
-      ...snapshot,
-      context: {
-        ...snapshot.context,
-        selection: event.at ?? snapshot.context.selection,
-      },
+    const at = event.at ?? snapshot.context.selection
+
+    if (!at) {
+      return false
     }
 
-    const focusListBlock = getFocusListBlock(adjustedSnapshot)
+    const focusListBlock = getListBlock(snapshot, {at: at.focus.path})
 
     if (!focusListBlock) {
       return false
@@ -674,15 +673,13 @@ const inheritListProperties = defineBehavior({
       return false
     }
 
-    const adjustedSnapshot = {
-      ...snapshot,
-      context: {
-        ...snapshot.context,
-        selection: event.at ?? snapshot.context.selection,
-      },
+    const at = event.at ?? snapshot.context.selection
+
+    if (!at) {
+      return false
     }
 
-    const focusListBlock = getFocusListBlock(adjustedSnapshot)
+    const focusListBlock = getListBlock(snapshot, {at: at.focus.path})
 
     if (!focusListBlock) {
       return false

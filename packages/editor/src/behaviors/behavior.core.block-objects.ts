@@ -1,10 +1,12 @@
 import {defaultKeyboardShortcuts} from '../editor/default-keyboard-shortcuts'
-import {getFocusBlockObject} from '../selectors/selector.get-focus-block-object'
-import {getNextBlock} from '../selectors/selector.get-next-block'
-import {getPreviousBlock} from '../selectors/selector.get-previous-block'
 import {isSelectionCollapsed} from '../selectors/selector.is-selection-collapsed'
 import {isTextBlockNode} from '../slate/node/is-text-block-node'
-import {getTextBlock} from '../traversal'
+import {
+  getBlockObject,
+  getNextBlock,
+  getPreviousBlock,
+  getTextBlock,
+} from '../traversal'
 import {isListBlock} from '../utils/parse-blocks'
 import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
 import {raise} from './behavior.types.action'
@@ -27,7 +29,7 @@ const arrowDownOnLonelyBlockObject = defineBehavior({
       return false
     }
 
-    const focusBlockObject = getFocusBlockObject(snapshot)
+    const focusBlockObject = getBlockObject(snapshot)
     const nextBlock = getNextBlock(snapshot)
 
     return focusBlockObject && !nextBlock
@@ -60,7 +62,7 @@ const arrowUpOnLonelyBlockObject = defineBehavior({
       return false
     }
 
-    const focusBlockObject = getFocusBlockObject(snapshot)
+    const focusBlockObject = getBlockObject(snapshot)
     const previousBlock = getPreviousBlock(snapshot)
 
     return focusBlockObject && !previousBlock
@@ -81,7 +83,7 @@ const arrowUpOnLonelyBlockObject = defineBehavior({
 const breakingBlockObject = defineBehavior({
   on: 'insert.break',
   guard: ({snapshot}) => {
-    const focusBlockObject = getFocusBlockObject(snapshot)
+    const focusBlockObject = getBlockObject(snapshot)
     const collapsedSelection = isSelectionCollapsed(snapshot)
 
     return collapsedSelection && focusBlockObject !== undefined
@@ -110,19 +112,11 @@ const clickingAboveLonelyBlockObject = defineBehavior({
       return false
     }
 
-    const focusBlockObject = getFocusBlockObject({
-      ...snapshot,
-      context: {
-        ...snapshot.context,
-        selection: event.position.selection,
-      },
+    const focusBlockObject = getBlockObject(snapshot, {
+      at: event.position.selection.focus.path,
     })
-    const previousBlock = getPreviousBlock({
-      ...snapshot,
-      context: {
-        ...snapshot.context,
-        selection: event.position.selection,
-      },
+    const previousBlock = getPreviousBlock(snapshot, {
+      at: event.position.selection.focus.path,
     })
 
     return (
@@ -161,19 +155,11 @@ const clickingBelowLonelyBlockObject = defineBehavior({
       return false
     }
 
-    const focusBlockObject = getFocusBlockObject({
-      ...snapshot,
-      context: {
-        ...snapshot.context,
-        selection: event.position.selection,
-      },
+    const focusBlockObject = getBlockObject(snapshot, {
+      at: event.position.selection.focus.path,
     })
-    const nextBlock = getNextBlock({
-      ...snapshot,
-      context: {
-        ...snapshot.context,
-        selection: event.position.selection,
-      },
+    const nextBlock = getNextBlock(snapshot, {
+      at: event.position.selection.focus.path,
     })
 
     return (

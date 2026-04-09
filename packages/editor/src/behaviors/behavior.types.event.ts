@@ -8,7 +8,7 @@ import type {
   ChildWithOptionalKey,
 } from '../types/block-with-optional-key'
 import type {EditorSelection} from '../types/editor'
-import type {AnnotationPath, BlockPath, ChildPath} from '../types/paths'
+import type {AnnotationPath, ChildPath} from '../types/paths'
 
 /**
  * @beta
@@ -178,8 +178,8 @@ export type SyntheticBehaviorEvent =
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'move.block'>
-      at: BlockPath
-      to: BlockPath
+      at: Path
+      to: Path
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'move.forward'>
@@ -418,15 +418,15 @@ type AbstractBehaviorEvent =
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'move.block down'>
-      at: BlockPath
+      at: Path
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'move.block up'>
-      at: BlockPath
+      at: Path
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'select.block'>
-      at: BlockPath
+      at: Path
       select?: 'start' | 'end'
     }
   | {
