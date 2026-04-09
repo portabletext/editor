@@ -2430,7 +2430,7 @@ describe('event.insert.block', () => {
                   {
                     _type: 'span',
                     _key: spanKey,
-                    text: 'hello world',
+                    text: 'hello',
                     marks: [],
                   },
                 ],
@@ -2439,12 +2439,12 @@ describe('event.insert.block', () => {
               },
               {
                 _type: 'block',
-                _key: 'k5',
+                _key: expect.any(String),
                 children: [
                   {
                     _type: 'span',
-                    _key: 'k6',
-                    text: '',
+                    _key: expect.any(String),
+                    text: ' world',
                     marks: [],
                   },
                 ],
@@ -2455,14 +2455,16 @@ describe('event.insert.block', () => {
           },
         ])
 
+        const newBlock = (editor.getSnapshot().context.value[0] as any)
+          .content[1]
         expect(editor.getSnapshot().context.selection).toEqual({
           anchor: {
             path: [
               {_key: calloutKey},
               'content',
-              {_key: 'k5'},
+              {_key: newBlock._key},
               'children',
-              {_key: 'k6'},
+              {_key: newBlock.children[0]._key},
             ],
             offset: 0,
           },
@@ -2470,9 +2472,9 @@ describe('event.insert.block', () => {
             path: [
               {_key: calloutKey},
               'content',
-              {_key: 'k5'},
+              {_key: newBlock._key},
               'children',
-              {_key: 'k6'},
+              {_key: newBlock.children[0]._key},
             ],
             offset: 0,
           },

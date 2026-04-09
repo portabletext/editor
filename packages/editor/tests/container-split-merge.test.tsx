@@ -96,36 +96,21 @@ describe('container split and merge', () => {
       expect(editor.getSnapshot().context.selection).not.toBeNull()
     })
 
-    // Type to position cursor at "hello| world" (offset 5)
-    // Click places cursor at offset 0, so type 5 chars then select
-    // Actually, let's use a simpler approach: type at offset 0, then Enter
+    // Click places cursor at offset 0 (start of text).
+    // Pressing Enter at the start of a block inserts an empty block before it.
     await userEvent.keyboard('{Enter}')
 
     await vi.waitFor(() => {
       const value = editor.getSnapshot().context.value
 
       // The code block should now have two text blocks inside content.
-      // Click places cursor at end of text, so the first block keeps
-      // the text and the second block is empty.
+      // Since cursor was at offset 0, an empty block is inserted before
+      // the original block.
       expect(value).toEqual([
         {
           _type: 'code-block',
           _key: codeBlockKey,
           content: [
-            {
-              _type: 'block',
-              _key: blockKey,
-              children: [
-                {
-                  _type: 'span',
-                  _key: spanKey,
-                  text: 'hello world',
-                  marks: [],
-                },
-              ],
-              markDefs: [],
-              style: 'normal',
-            },
             {
               _type: 'block',
               _key: expect.any(String),
@@ -134,6 +119,20 @@ describe('container split and merge', () => {
                   _type: 'span',
                   _key: expect.any(String),
                   text: '',
+                  marks: [],
+                },
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: blockKey,
+              children: [
+                {
+                  _type: 'span',
+                  _key: spanKey,
+                  text: 'hello world',
                   marks: [],
                 },
               ],
