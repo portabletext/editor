@@ -8,6 +8,7 @@ export function createTestSnapshot(snapshot: {
 }): EditorSnapshot {
   const context = {
     converters: snapshot.context?.converters ?? [],
+    editableTypes: snapshot.context?.editableTypes ?? new Set<string>(),
     schema: snapshot.context?.schema ?? compileSchema(defineSchema({})),
     keyGenerator: snapshot.context?.keyGenerator ?? createTestKeyGenerator(),
     readOnly: snapshot.context?.readOnly ?? false,

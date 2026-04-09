@@ -9,6 +9,7 @@ import type {EditorSchema} from './editor-schema'
  */
 export type EditorContext = {
   converters: Array<Converter>
+  editableTypes: Set<string>
   keyGenerator: () => string
   readOnly: boolean
   schema: EditorSchema
@@ -46,6 +47,7 @@ export function createEditorSnapshot({
 
   const context = {
     converters,
+    editableTypes: editor.editableTypes,
     keyGenerator,
     readOnly,
     schema,
