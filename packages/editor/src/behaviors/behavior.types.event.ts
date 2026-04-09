@@ -1,6 +1,7 @@
 import type {PortableTextBlock} from '@portabletext/schema'
 import type {EventPosition} from '../internal-utils/event-position'
 import type {MIMEType} from '../internal-utils/mime-type'
+import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
 import type {OmitFromUnion, PickFromUnion, StrictExtract} from '../type-utils'
 import type {
@@ -75,11 +76,15 @@ const syntheticBehaviorEventTypes = [
   'history.undo',
   'insert.block',
   'insert.child',
+  'insert.node',
   'insert.text',
   'move.backward',
   'move.block',
   'move.forward',
+  'remove.node',
   'select',
+  'set',
+  'unset',
 ] as const
 
 type SyntheticBehaviorEventType =
@@ -169,6 +174,13 @@ export type SyntheticBehaviorEvent =
       child: ChildWithOptionalKey
     }
   | {
+      type: StrictExtract<SyntheticBehaviorEventType, 'insert.node'>
+      node: Node
+      at: Path
+      position: 'before' | 'after'
+      select?: 'start' | 'end' | 'none'
+    }
+  | {
       type: StrictExtract<SyntheticBehaviorEventType, 'insert.text'>
       text: string
     }
@@ -186,8 +198,22 @@ export type SyntheticBehaviorEvent =
       distance: number
     }
   | {
+      type: StrictExtract<SyntheticBehaviorEventType, 'remove.node'>
+      at: Path
+    }
+  | {
       type: StrictExtract<SyntheticBehaviorEventType, 'select'>
       at: EditorSelection
+    }
+  | {
+      type: StrictExtract<SyntheticBehaviorEventType, 'set'>
+      at: Path
+      props: Record<string, unknown>
+    }
+  | {
+      type: StrictExtract<SyntheticBehaviorEventType, 'unset'>
+      at: Path
+      props: Array<string>
     }
   | AbstractBehaviorEvent
 

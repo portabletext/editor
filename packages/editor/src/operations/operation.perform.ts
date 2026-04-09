@@ -13,16 +13,20 @@ import {historyRedoOperationImplementation} from './operation.history.redo'
 import {historyUndoOperationImplementation} from './operation.history.undo'
 import {insertBlockOperationImplementation} from './operation.insert.block'
 import {insertChildOperationImplementation} from './operation.insert.child'
+import {insertNodeOperationImplementation} from './operation.insert.node'
 import {insertTextOperationImplementation} from './operation.insert.text'
 import {moveBackwardOperationImplementation} from './operation.move.backward'
 import {moveBlockOperationImplementation} from './operation.move.block'
 import {moveForwardOperationImplementation} from './operation.move.forward'
+import {removeNodeOperationImplementation} from './operation.remove.node'
 import {selectOperationImplementation} from './operation.select'
+import {setOperationImplementation} from './operation.set'
 import type {
   Operation,
   OperationContext,
   OperationImplementations,
 } from './operation.types'
+import {unsetOperationImplementation} from './operation.unset'
 
 const operationImplementations: OperationImplementations = {
   'annotation.add': addAnnotationOperationImplementation,
@@ -38,11 +42,15 @@ const operationImplementations: OperationImplementations = {
   'history.undo': historyUndoOperationImplementation,
   'insert.block': insertBlockOperationImplementation,
   'insert.child': insertChildOperationImplementation,
+  'insert.node': insertNodeOperationImplementation,
   'insert.text': insertTextOperationImplementation,
   'move.backward': moveBackwardOperationImplementation,
   'move.block': moveBlockOperationImplementation,
   'move.forward': moveForwardOperationImplementation,
+  'remove.node': removeNodeOperationImplementation,
   'select': selectOperationImplementation,
+  'set': setOperationImplementation,
+  'unset': unsetOperationImplementation,
 }
 
 export function performOperation({
