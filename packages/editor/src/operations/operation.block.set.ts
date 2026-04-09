@@ -3,12 +3,18 @@ import {applySetNode} from '../internal-utils/apply-set-node'
 import {safeStringify} from '../internal-utils/safe-json'
 import {isTextBlockNode} from '../slate/node/is-text-block-node'
 import {parseMarkDefs} from '../utils/parse-blocks'
+import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import type {OperationImplementation} from './operation.types'
 
 export const blockSetOperationImplementation: OperationImplementation<
   'block.set'
 > = ({context, operation}) => {
-  const blockIndex = operation.editor.blockIndexMap.get(operation.at[0]._key)
+  const firstSegment = operation.at[0]
+  const blockKey = isKeyedSegment(firstSegment) ? firstSegment._key : undefined
+  const blockIndex =
+    blockKey !== undefined
+      ? operation.editor.blockIndexMap.get(blockKey)
+      : undefined
 
   if (blockIndex === undefined) {
     throw new Error(
