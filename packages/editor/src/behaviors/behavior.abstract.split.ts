@@ -1,10 +1,11 @@
+import {getAncestorTextBlock} from '../node-traversal/get-ancestor-text-block'
+import {getBlock} from '../node-traversal/is-block'
 import {isSelectionExpanded} from '../selectors'
-import {getFocusBlockObject} from '../selectors/selector.get-focus-block-object'
 import {getFocusInlineObject} from '../selectors/selector.get-focus-inline-object'
-import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
 import {getSelectionEndBlock} from '../selectors/selector.get-selection-end-block'
 import {getSelectionStartBlock} from '../selectors/selector.get-selection-start-block'
 import {isTextBlockNode} from '../slate/node/is-text-block-node'
+import {parentPath} from '../slate/path/parent-path'
 import {isEqualSelectionPoints} from '../utils'
 import {parseBlock} from '../utils/parse-blocks'
 import {getBlockEndPoint} from '../utils/util.get-block-end-point'
@@ -33,9 +34,27 @@ export const abstractSplitBehaviors = [
    */
   defineBehavior({
     on: 'split',
-    guard: ({snapshot}) =>
-      isSelectionCollapsed(snapshot.context.selection) &&
-      getFocusBlockObject(snapshot),
+    guard: ({snapshot}) => {
+      if (
+        !snapshot.context.selection ||
+        !isSelectionCollapsed(snapshot.context.selection)
+      ) {
+        return false
+      }
+
+      const focusPath = snapshot.context.selection.focus.path
+      const focusBlock =
+        getBlock(snapshot.context, focusPath) ??
+        getBlock(snapshot.context, parentPath(focusPath))
+
+      if (!focusBlock) {
+        return false
+      }
+
+      return !isTextBlockNode(snapshot.context, focusBlock.node)
+        ? focusBlock
+        : false
+    },
     actions: [],
   }),
 
@@ -104,7 +123,10 @@ export const abstractSplitBehaviors = [
 
       const selectionStartPoint = getSelectionStartPoint(selection)
 
-      const focusTextBlock = getFocusTextBlock(snapshot)
+      const focusTextBlock = getAncestorTextBlock(
+        snapshot.context,
+        selection.focus.path,
+      )
 
       if (!focusTextBlock) {
         return false

@@ -1,14 +1,14 @@
 import {isSpan} from '@portabletext/schema'
+import {getAncestorTextBlock} from '../node-traversal/get-ancestor-text-block'
 import {getNode} from '../node-traversal/get-node'
-import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
 import {getNextBlock} from '../selectors/selector.get-next-block'
 import {getPreviousBlock} from '../selectors/selector.get-previous-block'
-import {isAtTheEndOfBlock} from '../selectors/selector.is-at-the-end-of-block'
-import {isAtTheStartOfBlock} from '../selectors/selector.is-at-the-start-of-block'
 import {isTextBlockNode} from '../slate/node/is-text-block-node'
 import {getBlockEndPoint} from '../utils/util.get-block-end-point'
 import {getBlockStartPoint} from '../utils/util.get-block-start-point'
 import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
+import {isEqualSelectionPoints} from '../utils/util.is-equal-selection-points'
+import {isSelectionCollapsed} from '../utils/util.is-selection-collapsed'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
@@ -50,13 +50,24 @@ export const abstractDeleteBehaviors = [
       }
 
       const previousBlock = getPreviousBlock(adjustedSnapshot)
-      const focusTextBlock = getFocusTextBlock(adjustedSnapshot)
+      const focusTextBlock = getAncestorTextBlock(
+        adjustedSnapshot.context,
+        at.focus.path,
+      )
 
       if (!previousBlock || !focusTextBlock) {
         return false
       }
 
-      if (!isAtTheStartOfBlock(focusTextBlock)(adjustedSnapshot)) {
+      if (!isSelectionCollapsed(at)) {
+        return false
+      }
+
+      const blockStartPoint = getBlockStartPoint({
+        context: snapshot.context,
+        block: focusTextBlock,
+      })
+      if (!isEqualSelectionPoints(at.focus, blockStartPoint)) {
         return false
       }
 
@@ -128,13 +139,10 @@ export const abstractDeleteBehaviors = [
           selection: at,
         },
       })
-      const focusTextBlock = getFocusTextBlock({
-        ...snapshot,
-        context: {
-          ...snapshot.context,
-          selection: at,
-        },
-      })
+      const focusTextBlock = getAncestorTextBlock(
+        snapshot.context,
+        at.focus.path,
+      )
 
       if (!nextBlock || !focusTextBlock) {
         return false
@@ -189,13 +197,24 @@ export const abstractDeleteBehaviors = [
       }
 
       const nextBlock = getNextBlock(adjustedSnapshot)
-      const focusTextBlock = getFocusTextBlock(adjustedSnapshot)
+      const focusTextBlock = getAncestorTextBlock(
+        adjustedSnapshot.context,
+        at.focus.path,
+      )
 
       if (!nextBlock || !focusTextBlock) {
         return false
       }
 
-      if (!isAtTheEndOfBlock(focusTextBlock)(adjustedSnapshot)) {
+      if (!isSelectionCollapsed(at)) {
+        return false
+      }
+
+      const blockEndPoint = getBlockEndPoint({
+        context: snapshot.context,
+        block: focusTextBlock,
+      })
+      if (!isEqualSelectionPoints(at.focus, blockEndPoint)) {
         return false
       }
 

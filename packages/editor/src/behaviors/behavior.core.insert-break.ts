@@ -1,11 +1,9 @@
+import {getAncestorTextBlock} from '../node-traversal/get-ancestor-text-block'
+import {getSpanNode} from '../node-traversal/get-span-node'
 import {getFocusInlineObject} from '../selectors/selector.get-focus-inline-object'
-import {getFocusSpan} from '../selectors/selector.get-focus-span'
-import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
 import {getSelectedBlocks} from '../selectors/selector.get-selected-blocks'
 import {getSelectionEndBlock} from '../selectors/selector.get-selection-end-block'
 import {getSelectionStartBlock} from '../selectors/selector.get-selection-start-block'
-import {isAtTheEndOfBlock} from '../selectors/selector.is-at-the-end-of-block'
-import {isAtTheStartOfBlock} from '../selectors/selector.is-at-the-start-of-block'
 import {isSelectionCollapsed} from '../selectors/selector.is-selection-collapsed'
 import {isSelectionExpanded} from '../selectors/selector.is-selection-expanded'
 import {getBlockEndPoint} from '../utils/util.get-block-end-point'
@@ -13,20 +11,38 @@ import {getBlockStartPoint} from '../utils/util.get-block-start-point'
 import {getSelectionEndPoint} from '../utils/util.get-selection-end-point'
 import {getSelectionStartPoint} from '../utils/util.get-selection-start-point'
 import {isEqualSelectionPoints} from '../utils/util.is-equal-selection-points'
+import {isSelectionCollapsed as isSelectionCollapsedUtil} from '../utils/util.is-selection-collapsed'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
 const breakingAtTheEndOfTextBlock = defineBehavior({
   on: 'insert.break',
   guard: ({snapshot}) => {
-    const focusTextBlock = getFocusTextBlock(snapshot)
-    const selectionCollapsed = isSelectionCollapsed(snapshot)
-
-    if (!snapshot.context.selection || !focusTextBlock || !selectionCollapsed) {
+    if (
+      !snapshot.context.selection ||
+      !isSelectionCollapsedUtil(snapshot.context.selection)
+    ) {
       return false
     }
 
-    const atTheEndOfBlock = isAtTheEndOfBlock(focusTextBlock)(snapshot)
+    const focusTextBlock = getAncestorTextBlock(
+      snapshot.context,
+      snapshot.context.selection.focus.path,
+    )
+    const selectionCollapsed = isSelectionCollapsed(snapshot)
+
+    if (!focusTextBlock || !selectionCollapsed) {
+      return false
+    }
+
+    const blockEndPoint = getBlockEndPoint({
+      context: snapshot.context,
+      block: focusTextBlock,
+    })
+    const atTheEndOfBlock = isEqualSelectionPoints(
+      snapshot.context.selection.focus,
+      blockEndPoint,
+    )
 
     const focusListItem = focusTextBlock.node.listItem
     const focusLevel = focusTextBlock.node.level
@@ -64,14 +80,27 @@ const breakingAtTheEndOfTextBlock = defineBehavior({
 const breakingAtTheStartOfTextBlock = defineBehavior({
   on: 'insert.break',
   guard: ({snapshot}) => {
-    const focusTextBlock = getFocusTextBlock(snapshot)
-    const selectionCollapsed = isSelectionCollapsed(snapshot)
-
-    if (!snapshot.context.selection || !focusTextBlock || !selectionCollapsed) {
+    if (
+      !snapshot.context.selection ||
+      !isSelectionCollapsedUtil(snapshot.context.selection)
+    ) {
       return false
     }
 
-    const focusSpan = getFocusSpan(snapshot)
+    const focusTextBlock = getAncestorTextBlock(
+      snapshot.context,
+      snapshot.context.selection.focus.path,
+    )
+    const selectionCollapsed = isSelectionCollapsed(snapshot)
+
+    if (!focusTextBlock || !selectionCollapsed) {
+      return false
+    }
+
+    const focusSpan = getSpanNode(
+      snapshot.context,
+      snapshot.context.selection.focus.path,
+    )
 
     const focusDecorators = focusSpan?.node.marks?.filter(
       (mark) =>
@@ -89,7 +118,14 @@ const breakingAtTheStartOfTextBlock = defineBehavior({
     const focusListItem = focusTextBlock.node.listItem
     const focusLevel = focusTextBlock.node.level
 
-    const atTheStartOfBlock = isAtTheStartOfBlock(focusTextBlock)(snapshot)
+    const blockStartPoint = getBlockStartPoint({
+      context: snapshot.context,
+      block: focusTextBlock,
+    })
+    const atTheStartOfBlock = isEqualSelectionPoints(
+      snapshot.context.selection.focus,
+      blockStartPoint,
+    )
 
     if (atTheStartOfBlock) {
       return {focusAnnotations, focusDecorators, focusListItem, focusLevel}

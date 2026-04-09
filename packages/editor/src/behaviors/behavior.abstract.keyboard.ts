@@ -1,11 +1,12 @@
 import {createKeyboardShortcut} from '@portabletext/keyboard-shortcuts'
 import {defaultKeyboardShortcuts} from '../editor/default-keyboard-shortcuts'
-import {getFocusBlock} from '../selectors/selector.get-focus-block'
+import {getBlock} from '../node-traversal/is-block'
 import {getFocusInlineObject} from '../selectors/selector.get-focus-inline-object'
 import {getPreviousBlock} from '../selectors/selector.get-previous-block'
 import {isSelectionCollapsed} from '../selectors/selector.is-selection-collapsed'
 import {isSelectionExpanded} from '../selectors/selector.is-selection-expanded'
 import {isTextBlockNode} from '../slate/node/is-text-block-node'
+import {parentPath} from '../slate/path/parent-path'
 import {getBlockEndPoint} from '../utils/util.get-block-end-point'
 import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
 import {raise} from './behavior.types.action'
@@ -134,7 +135,10 @@ export const abstractKeyboardBehaviors = [
         return false
       }
 
-      const focusBlock = getFocusBlock(snapshot)
+      const focusPath = snapshot.context.selection.focus.path
+      const focusBlock =
+        getBlock(snapshot.context, focusPath) ??
+        getBlock(snapshot.context, parentPath(focusPath))
 
       if (!focusBlock) {
         return false

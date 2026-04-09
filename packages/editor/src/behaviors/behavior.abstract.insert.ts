@@ -1,7 +1,7 @@
 import type {EditorSelector} from '../editor/editor-selector'
+import {getAncestorTextBlock} from '../node-traversal/get-ancestor-text-block'
 import {isSelectionExpanded} from '../selectors'
 import {getFocusInlineObject} from '../selectors/selector.get-focus-inline-object'
-import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
 import {getLastBlock} from '../selectors/selector.get-last-block'
 import {isSelectionCollapsed} from '../selectors/selector.is-selection-collapsed'
 import {isTextBlockNode} from '../slate/node/is-text-block-node'
@@ -154,7 +154,10 @@ export const abstractInsertBehaviors = [
         },
       }
 
-      const focusTextBlock = getFocusTextBlock(adjustedSnapshot)
+      const focusTextBlock = getAncestorTextBlock(
+        adjustedSnapshot.context,
+        at.focus.path,
+      )
 
       if (
         !focusTextBlock ||
@@ -471,9 +474,16 @@ export const abstractInsertBehaviors = [
   defineBehavior({
     on: 'insert.child',
     guard: ({snapshot}) => {
-      const focusTextBlock = getFocusTextBlock(snapshot)
+      if (!snapshot.context.selection) {
+        return false
+      }
 
-      return snapshot.context.selection && !focusTextBlock
+      const focusTextBlock = getAncestorTextBlock(
+        snapshot.context,
+        snapshot.context.selection.focus.path,
+      )
+
+      return !focusTextBlock
     },
     actions: [
       ({snapshot, event}) => [
@@ -516,7 +526,16 @@ export const abstractInsertBehaviors = [
   }),
   defineBehavior({
     on: 'insert.span',
-    guard: ({snapshot}) => !getFocusTextBlock(snapshot),
+    guard: ({snapshot}) => {
+      if (!snapshot.context.selection) {
+        return true
+      }
+
+      return !getAncestorTextBlock(
+        snapshot.context,
+        snapshot.context.selection.focus.path,
+      )
+    },
     actions: [
       ({snapshot, event}) => [
         raise({
@@ -541,7 +560,12 @@ export const abstractInsertBehaviors = [
   defineBehavior({
     on: 'insert.span',
     guard: ({snapshot, event}) => {
-      const focusTextBlock = getFocusTextBlock(snapshot)
+      const focusTextBlock = snapshot.context.selection
+        ? getAncestorTextBlock(
+            snapshot.context,
+            snapshot.context.selection.focus.path,
+          )
+        : undefined
       const markDefs =
         event.annotations?.map((annotation) => ({
           _type: annotation.name,
