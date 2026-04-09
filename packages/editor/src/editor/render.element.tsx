@@ -16,6 +16,7 @@ import type {
   RenderListItemFunction,
   RenderStyleFunction,
 } from '../types/editor'
+import {useContainerScope} from './container-scope-context'
 import {EditorActorContext} from './editor-actor-context'
 import {RenderBlockObject} from './render.block-object'
 import {RenderInlineObject} from './render.inline-object'
@@ -36,13 +37,24 @@ export function RenderElement(props: {
 }) {
   const editorActor = useContext(EditorActorContext)
   const schema = useSelector(editorActor, (s) => s.context.schema)
+  const slateStatic = useSlateStatic()
+  const containerScope = useContainerScope()
+
+  const scopedName = containerScope
+    ? `${containerScope.name}.${props.element._type}`
+    : props.element._type
+
   const rendererConfig: RendererConfig | undefined = useSelector(
     editorActor,
-    (s) => s.context.renderers.get(props.element._type),
+    (s) => s.context.renderers.get(scopedName),
   )
-  const slateStatic = useSlateStatic()
 
   if (isTextBlock({schema}, props.element)) {
+    // Text blocks inside containers render minimal (no renderBlock/renderStyle/renderListItem)
+    if (containerScope) {
+      return <div {...props.attributes}>{props.children}</div>
+    }
+
     return (
       <RenderTextBlock
         attributes={props.attributes}
@@ -86,6 +98,11 @@ export function RenderElement(props: {
       children: props.children,
       node: props.element,
     })
+  }
+
+  // Editable container types without a registered renderer get a default div wrapper
+  if (slateStatic.editableTypes.has(scopedName)) {
+    return <div {...props.attributes}>{props.children}</div>
   }
 
   return (

@@ -205,7 +205,9 @@ const useChildren = (props: {
       return null
     }
     if (isObjectNode({schema: editor.schema}, n)) {
-      if (editor.editableTypes.has(n._type)) {
+      const scopedName = childScope ? `${childScope.name}.${n._type}` : n._type
+
+      if (editor.editableTypes.has(scopedName)) {
         return renderElementComponent(n, i)
       }
       return renderObjectNodeComponent(n, i)
