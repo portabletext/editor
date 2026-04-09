@@ -5,6 +5,7 @@ import {getAncestorObjectNode} from '../../../node-traversal/get-ancestor-object
 import {getHighestObjectNode} from '../../../node-traversal/get-highest-object-node'
 import {getNode} from '../../../node-traversal/get-node'
 import {hasNode} from '../../../node-traversal/has-node'
+import {getScopedTypeName} from '../../../utils/util.get-scoped-type-name'
 import {path as editorPath} from '../../editor/path'
 import {start as editorStart} from '../../editor/start'
 import {unhangRange} from '../../editor/unhang-range'
@@ -400,8 +401,10 @@ export const DOMEditor: DOMEditorInterface = {
       return [el, 0]
     }
 
-    // If we're inside an object node, force the offset to 0, otherwise the zero
-    // width spacing character will result in an incorrect offset of 1
+    // If we're inside a void object node, force the offset to 0, otherwise the
+    // zero width spacing character will result in an incorrect offset of 1.
+    // Container object nodes (in editableTypes) have real editable content, so
+    // their descendants keep their actual offset.
     const pointPath = editorPath(editor, point)
     const pointEntry = getNode(editor, pointPath)
     const pointObjectNode =
@@ -409,7 +412,14 @@ export const DOMEditor: DOMEditorInterface = {
         ? pointEntry
         : getAncestorObjectNode(editor, point.path)
     if (pointObjectNode) {
-      point = {path: point.path, offset: 0}
+      const scopedType = getScopedTypeName(
+        editor,
+        pointObjectNode.node,
+        pointObjectNode.path,
+      )
+      if (!editor.editableTypes.has(scopedType)) {
+        point = {path: point.path, offset: 0}
+      }
     }
 
     // For each leaf, we need to isolate its content, which means filtering

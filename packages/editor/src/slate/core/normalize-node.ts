@@ -17,6 +17,7 @@ import {getTextBlockNode} from '../../node-traversal/get-text-block-node'
 import {getChildFieldName} from '../../paths/get-child-field-name'
 import {resolveChildArrayField} from '../../schema/resolve-child-array-field'
 import {withoutPatching} from '../../slate-plugins/slate-plugin.without-patching'
+import {getScopedTypeName} from '../../utils/util.get-scoped-type-name'
 import {isKeyedSegment} from '../../utils/util.is-keyed-segment'
 import {isEditor} from '../editor/is-editor'
 import type {Editor} from '../interfaces/editor'
@@ -45,28 +46,24 @@ function getContainerScope(
   node: Node,
   path: Path,
 ): {scopedName: string; scope: ReadonlyArray<OfDefinition> | undefined} {
-  const typeSegments: Array<string> = [node._type]
+  const scopedName = getScopedTypeName(editor, node, path)
 
-  // Collect keyed segment indices (each represents a node in the tree).
+  // Walk ancestor nodes to resolve the schema scope chain.
   const keyedIndices: Array<number> = []
-  for (let i = 0; i < path.length; i++) {
-    if (isKeyedSegment(path[i])) {
-      keyedIndices.push(i)
+  for (let index = 0; index < path.length; index++) {
+    if (isKeyedSegment(path[index])) {
+      keyedIndices.push(index)
     }
   }
 
-  // Walk ancestor nodes from root to parent, building scope chain.
   let currentScope: ReadonlyArray<OfDefinition> | undefined
-  for (let i = 0; i < keyedIndices.length - 1; i++) {
-    const ancestorPath = path.slice(0, keyedIndices[i]! + 1)
+  for (let index = 0; index < keyedIndices.length - 1; index++) {
+    const ancestorPath = path.slice(0, keyedIndices[index]! + 1)
     const entry = getNode(editor, ancestorPath)
 
     if (!entry || !isObjectNode({schema: editor.schema}, entry.node)) {
       break
     }
-
-    // Insert before the node's own type (which is always last).
-    typeSegments.splice(typeSegments.length - 1, 0, entry.node._type)
 
     const arrayField = resolveChildArrayField(
       {schema: editor.schema, scope: currentScope},
@@ -76,7 +73,7 @@ function getContainerScope(
   }
 
   return {
-    scopedName: typeSegments.join('.'),
+    scopedName,
     scope: currentScope,
   }
 }
