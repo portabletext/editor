@@ -6,6 +6,12 @@ import type {
 import {isSpan, isTextBlock} from '@portabletext/schema'
 import {useCallback, useRef, type JSX} from 'react'
 import {
+  ContainerScopeContext,
+  useContainerScope,
+  type ContainerScope,
+} from '../../../editor/container-scope-context'
+import {resolveChildArrayField} from '../../../schema/resolve-child-array-field'
+import {
   isElementDecorationsEqual,
   splitDecorationsByChild,
 } from '../../dom/utils/range-list'
@@ -58,6 +64,8 @@ const useChildren = (props: {
 
   const isEditorNode = isEditor(node)
 
+  const containerScope = useContainerScope()
+
   const decorationsByChild = useDecorationsByChild(
     editor,
     node,
@@ -65,18 +73,46 @@ const useChildren = (props: {
     decorations,
   )
 
-  const children = isEditor(node)
-    ? node.children
-    : isTextBlock({schema: editor.schema}, node)
-      ? node.children
-      : []
+  let children: Array<Node> = []
+  let childFieldName = 'children'
+  let childScope: ContainerScope | undefined = containerScope
+
+  if (isEditor(node)) {
+    children = node.children
+  } else if (isTextBlock({schema: editor.schema}, node)) {
+    children = node.children
+  } else if (isObjectNode({schema: editor.schema}, node)) {
+    const scopedKey = containerScope
+      ? `${containerScope.name}.${node._type}`
+      : node._type
+
+    if (editor.editableTypes.has(scopedKey)) {
+      const arrayField = resolveChildArrayField(
+        {schema: editor.schema, scope: containerScope?.schemaScope},
+        node,
+      )
+
+      if (arrayField) {
+        const fieldValue = (node as Record<string, unknown>)[arrayField.name]
+        if (Array.isArray(fieldValue)) {
+          children = fieldValue as Array<Node>
+          childFieldName = arrayField.name
+        }
+
+        childScope = {
+          name: scopedKey,
+          schemaScope: arrayField.of,
+        }
+      }
+    }
+  }
 
   const renderElementComponent = useCallback(
     (node: PortableTextTextBlock | PortableTextObject, i: number) => {
       const nodeDataPath =
         parentDataPath === ''
           ? `[_key=="${node._key}"]`
-          : `${parentDataPath}.children[_key=="${node._key}"]`
+          : `${parentDataPath}.${childFieldName}[_key=="${node._key}"]`
 
       return (
         <ElementContext.Provider key={`provider-${node._key}`} value={node}>
@@ -95,6 +131,7 @@ const useChildren = (props: {
       )
     },
     [
+      childFieldName,
       parentDataPath,
       decorationsByChild,
       parentIndexedPath,
@@ -144,7 +181,7 @@ const useChildren = (props: {
     const nodeDataPath =
       parentDataPath === ''
         ? `[_key=="${node._key}"]`
-        : `${parentDataPath}.children[_key=="${node._key}"]`
+        : `${parentDataPath}.${childFieldName}[_key=="${node._key}"]`
 
     return (
       <ObjectNodeComponent
@@ -159,7 +196,7 @@ const useChildren = (props: {
     )
   }
 
-  return children.map((n: Node, i: number) => {
+  const elements = children.map((n: Node, i: number) => {
     if (isTextBlock({schema: editor.schema}, n)) {
       return renderElementComponent(n, i)
     }
@@ -168,6 +205,9 @@ const useChildren = (props: {
       return null
     }
     if (isObjectNode({schema: editor.schema}, n)) {
+      if (editor.editableTypes.has(n._type)) {
+        return renderElementComponent(n, i)
+      }
       return renderObjectNodeComponent(n, i)
     }
     if (isSpan({schema: editor.schema}, n)) {
@@ -179,6 +219,16 @@ const useChildren = (props: {
     }
     throw new Error(`Unexpected node type`)
   })
+
+  if (childScope && childScope !== containerScope) {
+    return (
+      <ContainerScopeContext.Provider value={childScope}>
+        {elements}
+      </ContainerScopeContext.Provider>
+    )
+  }
+
+  return elements
 }
 
 const useDecorationsByChild = (

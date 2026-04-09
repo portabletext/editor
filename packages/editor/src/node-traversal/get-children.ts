@@ -134,10 +134,14 @@ export function getNodeChildren(
       return undefined
     }
 
+    const fieldValue = (node as Record<string, unknown>)[arrayField.name]
+
+    if (!Array.isArray(fieldValue)) {
+      return undefined
+    }
+
     return {
-      children: (node as Record<string, unknown>)[
-        arrayField.name
-      ] as Array<Node>,
+      children: fieldValue as Array<Node>,
       scope: arrayField.of,
       scopePath: scopedKey,
       fieldName: arrayField.name,

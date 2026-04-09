@@ -250,7 +250,30 @@ export const modifyChildren = (
       return
     }
 
-    const childInfo = getNodeChildren(context, nodeEntry.node, undefined, '')
+    // Walk the path to build scope context for nested container types.
+    const keyedSegments = getKeyedSegments(nodeEntry.path)
+    let scope: Parameters<typeof getNodeChildren>[2]
+    let scopePath = ''
+    {
+      let currentNode: Node | {value: Array<Node>} = {value: typedRoot.children}
+      for (let i = 0; i < keyedSegments.length; i++) {
+        const result = getNodeChildren(context, currentNode, scope, scopePath)
+        if (!result) {
+          break
+        }
+        const child = result.children.find(
+          (c) => c._key === keyedSegments[i]!._key,
+        )
+        if (!child) {
+          break
+        }
+        scope = result.scope
+        scopePath = result.scopePath
+        currentNode = child
+      }
+    }
+
+    const childInfo = getNodeChildren(context, nodeEntry.node, scope, scopePath)
     const fieldName = childInfo?.fieldName ?? 'children'
 
     modifyDescendant(root, path, schema, (node) => {
