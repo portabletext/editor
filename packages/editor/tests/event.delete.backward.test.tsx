@@ -558,7 +558,7 @@ describe('event.delete.backward', () => {
         expect(editor.getSnapshot().context.selection).not.toBeNull()
       })
 
-      editor.send({type: 'delete.backward'})
+      editor.send({type: 'delete.backward', unit: 'character'})
 
       await vi.waitFor(() => {
         expect(editor.getSnapshot().context.value).toEqual([
@@ -678,7 +678,7 @@ describe('event.delete.backward', () => {
         expect(editor.getSnapshot().context.selection).not.toBeNull()
       })
 
-      editor.send({type: 'delete.backward'})
+      editor.send({type: 'delete.backward', unit: 'character'})
 
       await vi.waitFor(() => {
         expect(editor.getSnapshot().context.value).toEqual([

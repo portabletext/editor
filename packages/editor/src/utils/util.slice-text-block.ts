@@ -4,12 +4,33 @@ import {
   type PortableTextTextBlock,
 } from '@portabletext/schema'
 import type {EditorContext} from '../editor/editor-snapshot'
+import type {Path} from '../slate/interfaces/path'
 import {getSelectionEndPoint} from './util.get-selection-end-point'
 import {getSelectionStartPoint} from './util.get-selection-start-point'
-import {
-  getBlockKeyFromSelectionPoint,
-  getChildKeyFromSelectionPoint,
-} from './util.selection-point'
+import {isKeyedSegment} from './util.is-keyed-segment'
+
+/**
+ * Extract the child key from a selection point path.
+ * The child is always the last keyed segment in the path.
+ */
+function childKeyFromPath(path: Path): string | undefined {
+  const lastSegment = path.at(-1)
+  return isKeyedSegment(lastSegment) ? lastSegment._key : undefined
+}
+
+/**
+ * Check whether a selection point path refers to a child within the given block.
+ * Walks the path looking for the block's key followed by a field name and a child key.
+ */
+function isPathWithinBlock(path: Path, blockKey: string): boolean {
+  for (let i = 0; i < path.length; i++) {
+    const segment = path[i]
+    if (isKeyedSegment(segment) && segment._key === blockKey) {
+      return true
+    }
+  }
+  return false
+}
 
 export function sliceTextBlock({
   context,
@@ -25,15 +46,15 @@ export function sliceTextBlock({
     return block
   }
 
-  const startBlockKey = getBlockKeyFromSelectionPoint(startPoint)
-  const endBlockKey = getBlockKeyFromSelectionPoint(endPoint)
-
-  if (startBlockKey !== endBlockKey || startBlockKey !== block._key) {
+  if (
+    !isPathWithinBlock(startPoint.path, block._key) ||
+    !isPathWithinBlock(endPoint.path, block._key)
+  ) {
     return block
   }
 
-  const startChildKey = getChildKeyFromSelectionPoint(startPoint)
-  const endChildKey = getChildKeyFromSelectionPoint(endPoint)
+  const startChildKey = childKeyFromPath(startPoint.path)
+  const endChildKey = childKeyFromPath(endPoint.path)
 
   if (!startChildKey || !endChildKey) {
     return block
