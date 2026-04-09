@@ -5,7 +5,7 @@ import {getNode} from '../node-traversal/get-node'
 import {getNodes} from '../node-traversal/get-nodes'
 import {getParent} from '../node-traversal/get-parent'
 import {getSpanNode} from '../node-traversal/get-span-node'
-import {isBlock} from '../node-traversal/is-block'
+import {getBlock, isBlock} from '../node-traversal/is-block'
 import {isInline} from '../node-traversal/is-inline'
 import {deleteText} from '../slate/core/delete-text'
 import {DOMEditor} from '../slate/dom/plugin/dom-editor'
@@ -49,16 +49,16 @@ export const deleteOperationImplementation: OperationImplementation<
   const [start, end] = rangeEdges(at, {}, operation.editor)
 
   if (operation.unit === 'block') {
-    const startBlockSegment = start.path.at(0)
-    const endBlockSegment = end.path.at(0)
+    const startBlockEntry = getBlock(operation.editor, start.path)
+    const endBlockEntry = getBlock(operation.editor, end.path)
 
-    if (startBlockSegment === undefined || endBlockSegment === undefined) {
-      throw new Error('Failed to get start or end block segment')
+    if (!startBlockEntry || !endBlockEntry) {
+      throw new Error('Failed to get start or end block')
     }
 
     const removeRange = {
-      anchor: {path: [startBlockSegment], offset: 0},
-      focus: {path: [endBlockSegment], offset: 0},
+      anchor: {path: startBlockEntry.path, offset: 0},
+      focus: {path: endBlockEntry.path, offset: 0},
     }
     const removeRangeEdges = rangeEdges(removeRange, {}, operation.editor)
     const blockMatches: Array<{node: Node; path: Path}> = []
@@ -74,7 +74,10 @@ export const deleteOperationImplementation: OperationImplementation<
         continue
       }
 
-      if (isBlock(operation.editor, entryPath)) {
+      if (
+        isBlock(operation.editor, entryPath) &&
+        !isAncestorPath(entryPath, startBlockEntry.path)
+      ) {
         lastHighestPath = entryPath
         blockMatches.push(entry)
       }

@@ -12,7 +12,7 @@ import {getNode} from '../node-traversal/get-node'
 import {getSibling} from '../node-traversal/get-sibling'
 import {getSpanNode} from '../node-traversal/get-span-node'
 import {getTextBlockNode} from '../node-traversal/get-text-block-node'
-import {isBlock} from '../node-traversal/is-block'
+import {getBlock} from '../node-traversal/is-block'
 import {end as editorEnd} from '../slate/editor/end'
 import {pathRef} from '../slate/editor/path-ref'
 import {pointRef} from '../slate/editor/point-ref'
@@ -111,28 +111,10 @@ function insertBlock(options: {
   const start = at ? rangeStart(at, editor) : editorStart(editor, [])
   const end = at ? rangeEnd(at, editor) : editorEnd(editor, [])
 
-  const findContainingBlock = (
-    pointPath: Path,
-  ): {node: Node; path: Path} | undefined => {
-    // Check each prefix of the path from longest to shortest (deepest first)
-    // to find the closest containing block.
-    for (let length = pointPath.length; length >= 1; length--) {
-      const candidatePath = pointPath.slice(0, length)
-      if (typeof candidatePath[candidatePath.length - 1] === 'string') {
-        continue
-      }
-      const entry = getNode(editor, candidatePath)
-      if (entry && isBlock(editor, candidatePath)) {
-        return entry
-      }
-    }
-    return undefined
-  }
-
-  const startBlockEntry = findContainingBlock(start.path)
+  const startBlockEntry = getBlock(editor, start.path)
   const startBlock = startBlockEntry?.node
   const startBlockPath = startBlockEntry?.path
-  const endBlockEntry = findContainingBlock(end.path)
+  const endBlockEntry = getBlock(editor, end.path)
   let endBlock = endBlockEntry?.node
   let endBlockPath = endBlockEntry?.path
 

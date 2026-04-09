@@ -33,12 +33,42 @@ export function isBlock(
 }
 
 /**
- * Get the node at the given path if it is a block.
+ * Get the nearest block at or above the given path.
  *
- * Returns the node narrowed to PortableTextBlock, or undefined if the node
- * doesn't exist or is not a block.
+ * Checks the node at the path first. If it is not a block, walks up
+ * through ancestor paths until a block is found. Returns undefined if
+ * no block is found.
  */
 export function getBlock(
+  context: {
+    schema: EditorSchema
+    editableTypes: Set<string>
+    value: Array<Node>
+  },
+  path: Path,
+): {node: PortableTextBlock; path: Path} | undefined {
+  const entry = getBlockAtPath(context, path)
+
+  if (entry) {
+    return entry
+  }
+
+  for (let length = path.length - 1; length >= 1; length--) {
+    const segment = path[length - 1]
+    if (typeof segment === 'string') {
+      continue
+    }
+    const ancestorPath = path.slice(0, length)
+    const ancestorEntry = getBlockAtPath(context, ancestorPath)
+    if (ancestorEntry) {
+      return ancestorEntry
+    }
+  }
+
+  return undefined
+}
+
+function getBlockAtPath(
   context: {
     schema: EditorSchema
     editableTypes: Set<string>
@@ -56,12 +86,9 @@ export function getBlock(
     return undefined
   }
 
-  // Narrow the type: a block is never a span (spans always have a text block
-  // parent, so isBlock returns false for them).
   if (isSpanNode({schema: context.schema}, entry.node)) {
     return undefined
   }
 
-  // Node minus PortableTextSpan = PortableTextTextBlock | PortableTextObject = PortableTextBlock
   return {node: entry.node, path: entry.path}
 }
