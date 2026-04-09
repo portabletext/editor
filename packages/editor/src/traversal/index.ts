@@ -1,3 +1,7 @@
 export {getBlock} from './get-block'
+export {getBlockObject} from './get-block-object'
+export {getListBlock} from './get-list-block'
+export {getNextBlock} from './get-next-block'
+export {getPreviousBlock} from './get-previous-block'
 export {getSpan} from './get-span'
 export {getTextBlock} from './get-text-block'
