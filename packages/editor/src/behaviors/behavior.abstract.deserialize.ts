@@ -1,8 +1,8 @@
 import {isTextBlock} from '@portabletext/schema'
 import type {MIMEType} from '../internal-utils/mime-type'
+import {getAncestorTextBlock} from '../node-traversal/get-ancestor-text-block'
 import {getActiveAnnotations} from '../selectors/selector.get-active-annotations'
 import {getActiveDecorators} from '../selectors/selector.get-active-decorators'
-import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
 import {getTextBlockText} from '../utils/util.get-text-block-text'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
@@ -128,7 +128,12 @@ export const abstractDeserializeBehaviors = [
         return false
       }
 
-      const focusTextBlock = getFocusTextBlock(snapshot)
+      const focusTextBlock = snapshot.context.selection
+        ? getAncestorTextBlock(
+            snapshot.context,
+            snapshot.context.selection.focus.path,
+          )
+        : undefined
 
       if (!focusTextBlock) {
         return false

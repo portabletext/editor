@@ -1,5 +1,5 @@
 import {isSpan} from '@portabletext/schema'
-import {getFocusChild} from '../selectors/selector.get-focus-child'
+import {getNode} from '../node-traversal/get-node'
 import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
 import {getNextBlock} from '../selectors/selector.get-next-block'
 import {getPreviousBlock} from '../selectors/selector.get-previous-block'
@@ -244,22 +244,7 @@ export const abstractDeleteBehaviors = [
   defineBehavior({
     on: 'delete.child',
     guard: ({snapshot, event}) => {
-      const focusChild = getFocusChild({
-        ...snapshot,
-        context: {
-          ...snapshot.context,
-          selection: {
-            anchor: {
-              path: event.at,
-              offset: 0,
-            },
-            focus: {
-              path: event.at,
-              offset: 0,
-            },
-          },
-        },
-      })
+      const focusChild = getNode(snapshot.context, event.at)
 
       if (!focusChild) {
         return false

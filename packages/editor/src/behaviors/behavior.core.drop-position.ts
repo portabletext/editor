@@ -1,11 +1,12 @@
 import type {Dispatch, SetStateAction} from 'react'
 import type {EventPositionBlock} from '../internal-utils/event-position'
+import {getBlock} from '../node-traversal/is-block'
 import {corePriority} from '../priority/priority.core'
 import {createEditorPriority} from '../priority/priority.types'
 import {getDragSelection} from '../selectors/drag-selection'
-import {getFocusBlock} from '../selectors/selector.get-focus-block'
 import {getSelectedBlocks} from '../selectors/selector.get-selected-blocks'
 import {isSelectingEntireBlocks} from '../selectors/selector.is-selecting-entire-blocks'
+import {parentPath} from '../slate/path/parent-path'
 import {forward} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
@@ -24,13 +25,16 @@ export function createDropPositionBehaviorsConfig({
       behavior: defineBehavior({
         on: 'drag.dragover',
         guard: ({snapshot, event}) => {
-          const dropFocusBlock = getFocusBlock({
-            ...snapshot,
-            context: {
-              ...snapshot.context,
-              selection: event.position.selection,
-            },
-          })
+          const dropFocusBlock = event.position.selection
+            ? (getBlock(
+                snapshot.context,
+                event.position.selection.focus.path,
+              ) ??
+              getBlock(
+                snapshot.context,
+                parentPath(event.position.selection.focus.path),
+              ))
+            : undefined
 
           if (!dropFocusBlock) {
             return false

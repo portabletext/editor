@@ -1,4 +1,4 @@
-import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
+import {getTextBlockNode} from '../node-traversal/get-text-block-node'
 import {isActiveAnnotation} from '../selectors/selector.is-active-annotation'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
@@ -10,22 +10,7 @@ export const abstractAnnotationBehaviors = [
       const blockKey = event.at[0]._key
       const markDefKey = event.at[2]._key
 
-      const block = getFocusTextBlock({
-        ...snapshot,
-        context: {
-          ...snapshot.context,
-          selection: {
-            anchor: {
-              path: [{_key: blockKey}],
-              offset: 0,
-            },
-            focus: {
-              path: [{_key: blockKey}],
-              offset: 0,
-            },
-          },
-        },
-      })
+      const block = getTextBlockNode(snapshot.context, [{_key: blockKey}])
 
       if (!block) {
         return false

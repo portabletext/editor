@@ -1,6 +1,7 @@
-import {getFocusBlock} from '../selectors/selector.get-focus-block'
+import {getBlock} from '../node-traversal/is-block'
 import {getNextBlock} from '../selectors/selector.get-next-block'
 import {getPreviousBlock} from '../selectors/selector.get-previous-block'
+import type {BlockPath} from '../types/paths'
 import {getBlockEndPoint} from '../utils/util.get-block-end-point'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
@@ -13,25 +14,15 @@ export const abstractSelectBehaviors = [
         return false
       }
 
-      const block = getFocusBlock({
-        ...snapshot,
-        context: {
-          ...snapshot.context,
-          selection: {
-            anchor: {
-              path: event.at,
-              offset: 0,
-            },
-            focus: {
-              path: event.at,
-              offset: 0,
-            },
-          },
-        },
-      })
+      const blockEntry = getBlock(snapshot.context, event.at)
 
-      if (!block) {
+      if (!blockEntry) {
         return false
+      }
+
+      const block = {
+        node: blockEntry.node,
+        path: blockEntry.path as BlockPath,
       }
 
       const blockEndPoint = getBlockEndPoint({
