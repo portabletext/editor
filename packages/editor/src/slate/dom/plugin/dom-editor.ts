@@ -807,7 +807,16 @@ export const DOMEditor: DOMEditorInterface = {
         parentEntry &&
         isObjectNode({schema: editor.schema}, parentEntry.node)
       ) {
-        return {path: parentPath, offset: 0}
+        // Editable containers have real content inside, so don't truncate
+        // the path to the container level.
+        const scopedType = getScopedTypeName(
+          editor,
+          parentEntry.node,
+          parentPath,
+        )
+        if (!editor.editableTypes.has(scopedType)) {
+          return {path: parentPath, offset: 0}
+        }
       }
     }
 
