@@ -22,6 +22,8 @@ minimumReleaseAgeExclude:
   - markdown-it@14.1.1
   # Renovate security update: astro@6.1.3
   - astro@6.1.3
+  # Renovate security update: vite@7.3.2
+  - vite@7.3.2
 
 trustPolicy: no-downgrade
 
