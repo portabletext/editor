@@ -125,7 +125,7 @@ describe('event.child.unset', () => {
         {
           origin: 'local',
           type: 'set',
-          path: [{_key: blockKey}, 'children', 0, '_key'],
+          path: [{_key: blockKey}, 'children', {_key: spanKey}, '_key'],
           value: 'k4',
         },
       ])
@@ -344,7 +344,7 @@ describe('event.child.unset', () => {
         {
           origin: 'local',
           type: 'set',
-          path: [{_key: blockKey}, 'children', 0, '_key'],
+          path: [{_key: blockKey}, 'children', {_key: spanKey}, '_key'],
           value: 'k4',
         },
         {

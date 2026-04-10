@@ -1,5 +1,5 @@
-import {applySetNode} from '../internal-utils/apply-set-node'
 import {safeStringify} from '../internal-utils/safe-json'
+import {setNodeProperties} from '../internal-utils/set-node-properties'
 import {isTextBlockNode} from '../slate/node/is-text-block-node'
 import type {OperationImplementation} from './operation.types'
 
@@ -31,10 +31,10 @@ export const blockUnsetOperationImplementation: OperationImplementation<
     for (const prop of propsToRemove) {
       unsetProps[prop] = null
     }
-    applySetNode(operation.editor, unsetProps, [{_key: blockKey}])
+    setNodeProperties(operation.editor, unsetProps, [{_key: blockKey}])
 
     if (operation.props.includes('_key')) {
-      applySetNode(operation.editor, {_key: context.keyGenerator()}, [
+      setNodeProperties(operation.editor, {_key: context.keyGenerator()}, [
         {_key: blockKey},
       ])
     }
@@ -53,5 +53,5 @@ export const blockUnsetOperationImplementation: OperationImplementation<
       unsetProps[key] = null
     }
   }
-  applySetNode(operation.editor, unsetProps, [{_key: blockKey}])
+  setNodeProperties(operation.editor, unsetProps, [{_key: blockKey}])
 }

@@ -1,6 +1,6 @@
 import {isSpan} from '@portabletext/schema'
-import {applySetNode} from '../internal-utils/apply-set-node'
 import {safeStringify} from '../internal-utils/safe-json'
+import {setNodeProperties} from '../internal-utils/set-node-properties'
 import {getNode} from '../node-traversal/get-node'
 import {isObjectNode} from '../slate/node/is-object-node'
 import type {OperationImplementation} from './operation.types'
@@ -19,7 +19,7 @@ export const childSetOperationImplementation: OperationImplementation<
   if (isSpan({schema: operation.editor.schema}, child)) {
     const {_type, text, ...rest} = operation.props
 
-    applySetNode(
+    setNodeProperties(
       operation.editor,
       {
         ...child,
@@ -74,7 +74,7 @@ export const childSetOperationImplementation: OperationImplementation<
       }
     }
 
-    applySetNode(
+    setNodeProperties(
       operation.editor,
       {
         ...child,

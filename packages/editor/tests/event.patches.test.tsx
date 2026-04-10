@@ -4059,4 +4059,341 @@ describe('event.patches', () => {
       ])
     })
   })
+
+  test('Scenario: `set` deep property on block object in a single patch', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockObjectKey = keyGenerator()
+    const initialValue = [
+      {
+        _key: blockObjectKey,
+        _type: 'url',
+        href: 'https://www.sanity.io',
+        content: {},
+      },
+    ]
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {
+            name: 'url',
+            fields: [
+              {name: 'content', type: 'object'},
+              {name: 'href', type: 'string'},
+            ],
+          },
+        ],
+      }),
+    })
+
+    await vi.waitFor(() => {
+      return expect(editor.getSnapshot().context.value).toEqual(initialValue)
+    })
+
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'set',
+          origin: 'remote',
+          path: [{_key: blockObjectKey}, 'content', 'description'],
+          value: 'Sanity is a headless CMS',
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      return expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: blockObjectKey,
+          _type: 'url',
+          href: 'https://www.sanity.io',
+          content: {
+            description: 'Sanity is a headless CMS',
+          },
+        },
+      ])
+    })
+  })
+
+  test('Scenario: `unset` deep property on block object', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockObjectKey = keyGenerator()
+    const initialValue = [
+      {
+        _key: blockObjectKey,
+        _type: 'url',
+        href: 'https://www.sanity.io',
+        content: {
+          description: 'Sanity is a headless CMS',
+          title: 'Sanity',
+        },
+      },
+    ]
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {
+            name: 'url',
+            fields: [
+              {name: 'content', type: 'object'},
+              {name: 'href', type: 'string'},
+            ],
+          },
+        ],
+      }),
+    })
+
+    await vi.waitFor(() => {
+      return expect(editor.getSnapshot().context.value).toEqual(initialValue)
+    })
+
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'unset',
+          origin: 'remote',
+          path: [{_key: blockObjectKey}, 'content', 'description'],
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      return expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: blockObjectKey,
+          _type: 'url',
+          href: 'https://www.sanity.io',
+          content: {
+            title: 'Sanity',
+          },
+        },
+      ])
+    })
+  })
+
+  test('Scenario: `unset` markDef property', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const markDefKey = keyGenerator()
+    const initialValue = [
+      {
+        _key: blockKey,
+        _type: 'block',
+        children: [
+          {
+            _key: spanKey,
+            _type: 'span',
+            text: 'foo',
+            marks: [markDefKey],
+          },
+        ],
+        markDefs: [
+          {
+            _key: markDefKey,
+            _type: 'link',
+            href: 'https://www.sanity.io',
+          },
+        ],
+        style: 'normal',
+      },
+    ]
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue,
+      schemaDefinition: defineSchema({
+        annotations: [{name: 'link'}],
+      }),
+    })
+
+    await vi.waitFor(() => {
+      return expect(editor.getSnapshot().context.value).toEqual(initialValue)
+    })
+
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'unset',
+          origin: 'remote',
+          path: [{_key: blockKey}, 'markDefs', {_key: markDefKey}, 'href'],
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      return expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [
+            {
+              _key: spanKey,
+              _type: 'span',
+              text: 'foo',
+              marks: [markDefKey],
+            },
+          ],
+          markDefs: [
+            {
+              _key: markDefKey,
+              _type: 'link',
+            },
+          ],
+          style: 'normal',
+        },
+      ])
+    })
+  })
+
+  test('Scenario: `setIfMissing` deep property on block object', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockObjectKey = keyGenerator()
+    const initialValue = [
+      {
+        _key: blockObjectKey,
+        _type: 'url',
+        href: 'https://www.sanity.io',
+        content: {},
+      },
+    ]
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {
+            name: 'url',
+            fields: [
+              {name: 'content', type: 'object'},
+              {name: 'href', type: 'string'},
+            ],
+          },
+        ],
+      }),
+    })
+
+    await vi.waitFor(() => {
+      return expect(editor.getSnapshot().context.value).toEqual(initialValue)
+    })
+
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'setIfMissing',
+          origin: 'remote',
+          path: [{_key: blockObjectKey}, 'content', 'description'],
+          value: 'default description',
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      return expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: blockObjectKey,
+          _type: 'url',
+          href: 'https://www.sanity.io',
+          content: {
+            description: 'default description',
+          },
+        },
+      ])
+    })
+
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'setIfMissing',
+          origin: 'remote',
+          path: [{_key: blockObjectKey}, 'content', 'description'],
+          value: 'should not overwrite',
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      return expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: blockObjectKey,
+          _type: 'url',
+          href: 'https://www.sanity.io',
+          content: {
+            description: 'default description',
+          },
+        },
+      ])
+    })
+  })
+
+  test('Scenario: `unset` the entire value', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'hello', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'hello', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'unset',
+          origin: 'remote',
+          path: [],
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: 'k4',
+          children: [{_type: 'span', _key: 'k5', text: '', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+  })
 })

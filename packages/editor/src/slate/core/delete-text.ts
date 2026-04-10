@@ -1,7 +1,7 @@
 import {isSpan, isTextBlock} from '@portabletext/schema'
 import {applyMergeNode} from '../../internal-utils/apply-merge-node'
-import {applySetNode} from '../../internal-utils/apply-set-node'
 import {safeStringify} from '../../internal-utils/safe-json'
+import {setNodeProperties} from '../../internal-utils/set-node-properties'
 import {getAncestor} from '../../node-traversal/get-ancestor'
 import {getAncestorTextBlock} from '../../node-traversal/get-ancestor-text-block'
 import {getAncestors} from '../../node-traversal/get-ancestors'
@@ -346,7 +346,7 @@ export function deleteText(editor: Editor, options: TextDeleteOptions = {}) {
                   ]),
                 ).values(),
               ]
-              applySetNode(pteEditor, {markDefs: newMarkDefs}, targetPath)
+              setNodeProperties(pteEditor, {markDefs: newMarkDefs}, targetPath)
             }
             applyMergeNode(pteEditor, mergePath, position)
           }

@@ -14,7 +14,6 @@ import {
   type CallbackLogicFunction,
 } from 'xstate'
 import {applyDeselect, applySelect} from '../internal-utils/apply-selection'
-import {applySetNode} from '../internal-utils/apply-set-node'
 import {debug} from '../internal-utils/debug'
 import {
   isEqualBlocks,
@@ -22,6 +21,7 @@ import {
   isEqualValues,
 } from '../internal-utils/equality'
 import {safeStringify} from '../internal-utils/safe-json'
+import {setNodeProperties} from '../internal-utils/set-node-properties'
 import {validateValue} from '../internal-utils/validateValue'
 import {toSlateBlock} from '../internal-utils/values'
 import {hasNode} from '../node-traversal/has-node'
@@ -928,7 +928,7 @@ function updateBlock({
     unknown
   >
 
-  applySetNode(slateEditor, blockProps, [{_key: oldSlateBlock._key}])
+  setNodeProperties(slateEditor, blockProps, [{_key: oldSlateBlock._key}])
 
   // Remove properties present on the old node but absent from the new block.
   // Skip children/text (structural, managed by dedicated operations).
@@ -942,17 +942,14 @@ function updateBlock({
     }
 
     if (!newRecord.hasOwnProperty(key)) {
-      removedProperties[key] = oldRecord[key]
+      removedProperties[key] = null
     }
   }
 
   if (Object.keys(removedProperties).length > 0) {
-    slateEditor.apply({
-      type: 'set_node',
-      path: [{_key: oldSlateBlock._key}],
-      properties: removedProperties,
-      newProperties: {},
-    })
+    setNodeProperties(slateEditor, removedProperties, [
+      {_key: oldSlateBlock._key},
+    ])
   }
 
   // Text block's need to have their children updated as well (setNode does not target a node's children)
@@ -961,7 +958,7 @@ function updateBlock({
     isTextBlock({schema: slateEditor.schema}, oldSlateBlock)
   ) {
     // Detect cases where incremental remove/insert would break due to
-    // stale keyed path references. Use a single set_node to replace the
+    // stale keyed path references. Use a single set to replace the
     // children array atomically instead.
     const oldKeys = oldSlateBlock.children.map((c) => c._key)
     const newKeys = slateBlock.children.map((c) => c._key)
@@ -975,8 +972,8 @@ function updateBlock({
       newKeys.every((key) => oldKeySet.has(key))
 
     if (isPureReorder || (newKeys.length > 0 && !hasSharedKeys)) {
-      debug.syncValue('Replacing children via set_node')
-      applySetNode(slateEditor, {children: slateBlock.children}, [
+      debug.syncValue('Replacing children via set')
+      setNodeProperties(slateEditor, {children: slateBlock.children}, [
         {_key: oldSlateBlock._key},
       ])
       slateEditor.onChange()
@@ -1046,7 +1043,7 @@ function updateBlock({
           const {text: _text, ...childProps} =
             currentBlockChild as unknown as Record<string, unknown>
 
-          applySetNode(slateEditor, childProps, path)
+          setNodeProperties(slateEditor, childProps, path)
 
           const isSpanNode =
             isSpan({schema: context.schema}, currentBlockChild) &&

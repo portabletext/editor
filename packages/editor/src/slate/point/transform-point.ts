@@ -13,7 +13,8 @@ import {pathEquals} from '../path/path-equals'
  * - remove_node: invalidates if the point is at or inside the removed node
  * - insert_text: adjusts offset if in the same span
  * - remove_text: adjusts offset if in the same span
- * - set_node: collapses offset if text is removed from the span
+ * - set: updates keyed segments when `_key` changes, clamps offset when `text` changes
+ * - unset: collapses offset when `text` is unset from a span
  * - set_selection: no-op
  */
 export function transformPoint(
@@ -56,28 +57,15 @@ export function transformPoint(
       break
     }
 
-    case 'set_node': {
-      const newProperties = op.newProperties as Record<string, unknown>
+    case 'set': {
+      const propertyName = op.path[op.path.length - 1]
+      const nodePath = op.path.slice(0, -1)
 
-      // Check text collapse BEFORE key substitution, since key substitution
-      // changes the path and would cause pathEquals to fail against op.path.
-      if (
-        pathEquals(op.path, path) &&
-        'text' in op.properties &&
-        (!('text' in newProperties) || newProperties['text'] == null)
-      ) {
-        offset = 0
-      }
-
-      // When a node's _key changes, update any point referencing the old key
-      if (
-        '_key' in newProperties &&
-        typeof newProperties['_key'] === 'string'
-      ) {
-        const oldProperties = op.properties as Record<string, unknown>
+      // When _key is set to a new value, update any point referencing the old key
+      if (propertyName === '_key' && typeof op.value === 'string') {
         const oldKey =
-          '_key' in oldProperties
-            ? (oldProperties['_key'] as string)
+          op.inverse?.type === 'set' && typeof op.inverse.value === 'string'
+            ? op.inverse.value
             : undefined
 
         if (oldKey) {
@@ -88,7 +76,7 @@ export function transformPoint(
             const segment = newPath[i]
 
             if (isKeyedSegment(segment) && segment._key === oldKey) {
-              newPath[i] = {_key: newProperties['_key']}
+              newPath[i] = {_key: op.value}
               changed = true
             }
           }
@@ -97,6 +85,27 @@ export function transformPoint(
             path = newPath
           }
         }
+      }
+
+      // When text is set on a span, clamp offset to the new text length
+      if (propertyName === 'text' && pathEquals(nodePath, path)) {
+        if (op.value == null || typeof op.value !== 'string') {
+          offset = 0
+        } else if (offset > op.value.length) {
+          offset = op.value.length
+        }
+      }
+
+      break
+    }
+
+    case 'unset': {
+      const propertyName = op.path[op.path.length - 1]
+      const nodePath = op.path.slice(0, -1)
+
+      // When text is unset from a span, collapse offset
+      if (propertyName === 'text' && pathEquals(nodePath, path)) {
+        offset = 0
       }
 
       break

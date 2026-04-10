@@ -1,11 +1,10 @@
-import type {PortableTextTextBlock} from '@portabletext/schema'
 import {isSpan, isTextBlock} from '@portabletext/schema'
 import {applyMergeNode} from '../internal-utils/apply-merge-node'
 import {resolveSelection} from '../internal-utils/apply-selection'
-import {applySetNode} from '../internal-utils/apply-set-node'
 import {applySplitNode} from '../internal-utils/apply-split-node'
 import {isEqualChildren, isEqualMarks} from '../internal-utils/equality'
 import {safeStringify} from '../internal-utils/safe-json'
+import {setNodeProperties} from '../internal-utils/set-node-properties'
 import {toSlateBlock} from '../internal-utils/values'
 import {getChildren} from '../node-traversal/get-children'
 import {getNode} from '../node-traversal/get-node'
@@ -464,19 +463,13 @@ function insertBlock(options: {
     const endBlockNodeEntry = getTextBlockNode(editor, endBlockPath)
 
     if (endBlockNodeEntry) {
-      const properties: Partial<PortableTextTextBlock> = {
-        markDefs: endBlockNodeEntry.node.markDefs,
-      }
-      const newProperties: Partial<PortableTextTextBlock> = {
-        markDefs: [...(endBlock.markDefs ?? []), ...(adjustedMarkDefs ?? [])],
-      }
-
-      editor.apply({
-        type: 'set_node',
-        path: endBlockPath,
-        properties,
-        newProperties,
-      })
+      setNodeProperties(
+        editor,
+        {
+          markDefs: [...(endBlock.markDefs ?? []), ...(adjustedMarkDefs ?? [])],
+        },
+        endBlockPath,
+      )
     }
 
     // If the children have changed, we need to create a new block with
@@ -1059,7 +1052,7 @@ function deleteCrossBlockRange(
             ]),
           ).values(),
         ]
-        applySetNode(editor, {markDefs: newMarkDefs}, startBlockPath)
+        setNodeProperties(editor, {markDefs: newMarkDefs}, startBlockPath)
       }
       applyMergeNode(
         editor,

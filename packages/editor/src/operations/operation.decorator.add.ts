@@ -1,7 +1,7 @@
 import {isSpan, isTextBlock} from '@portabletext/schema'
 import {applySelect, resolveSelection} from '../internal-utils/apply-selection'
-import {applySetNode} from '../internal-utils/apply-set-node'
 import {applySplitNode} from '../internal-utils/apply-split-node'
+import {setNodeProperties} from '../internal-utils/set-node-properties'
 import {getNode} from '../node-traversal/get-node'
 import {getNodes} from '../node-traversal/get-nodes'
 import {isEdge} from '../slate/editor/is-edge'
@@ -88,7 +88,7 @@ export const decoratorAddOperationImplementation: OperationImplementation<
           ),
           mark,
         ]
-        applySetNode(editor, {marks}, spanPath)
+        setNodeProperties(editor, {marks}, spanPath)
       }
     }) // end withoutNormalizing
   } else {
@@ -133,7 +133,7 @@ export const decoratorAddOperationImplementation: OperationImplementation<
           match: (node) => isSpan({schema: editor.schema}, node),
         }),
       )) {
-        applySetNode(editor, {marks: newMarks}, spanPath)
+        setNodeProperties(editor, {marks: newMarks}, spanPath)
       }
     } else {
       editor.decoratorState[mark] = true

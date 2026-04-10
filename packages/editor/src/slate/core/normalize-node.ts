@@ -5,10 +5,10 @@ import type {
 import {isSpan, isTextBlock} from '@portabletext/schema'
 import {applyInsertNodeAtPath} from '../../internal-utils/apply-insert-node'
 import {applyMergeNode} from '../../internal-utils/apply-merge-node'
-import {applySetNode} from '../../internal-utils/apply-set-node'
 import {createPlaceholderBlock} from '../../internal-utils/create-placeholder-block'
 import {debug} from '../../internal-utils/debug'
 import {isEqualMarkDefs} from '../../internal-utils/equality'
+import {setNodeProperties} from '../../internal-utils/set-node-properties'
 import {getChildren} from '../../node-traversal/get-children'
 import {getNode} from '../../node-traversal/get-node'
 import {getParent} from '../../node-traversal/get-parent'
@@ -114,24 +114,73 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
     if (parent && isTextBlock({schema: editor.schema}, parent.node)) {
       debug.normalization('Setting span type on node without a type')
       editor.apply({
-        type: 'set_node',
-        path,
-        properties: {},
-        newProperties: {_type: editor.schema.span.name},
+        type: 'set',
+        path: [...path, '_type'],
+        value: editor.schema.span.name,
+        inverse: {type: 'unset', path: [...path, '_type']},
       })
       return
     }
   }
 
-  // Set missing _key on any non-editor node
+  // Set missing _key on any non-editor node.
+  // Uses numeric index in the path because the node has no _key to
+  // address it by. Any ancestor segments with undefined _key are also
+  // resolved to numeric indices.
   if (nodeRecord['_key'] === undefined && path.length > 0) {
     const newKey = editor.keyGenerator()
     debug.normalization('Setting missing key on node')
+
+    // Build a fully resolved path by walking the tree from the root,
+    // replacing any undefined keyed segments with numeric indices.
+    const numericPath: Path = []
+    let currentNode: Node | undefined
+
+    for (const segment of path) {
+      if (typeof segment === 'string') {
+        // Field name: descend into the field
+        if (currentNode) {
+          numericPath.push(segment)
+        }
+        continue
+      }
+
+      // Determine the siblings array at this level
+      const siblings: ArrayLike<Node> = currentNode
+        ? (((currentNode as Record<string, unknown>)[
+            numericPath[numericPath.length - 1] as string
+          ] as ArrayLike<Node>) ?? [])
+        : editor.children
+
+      if (isKeyedSegment(segment) && segment._key !== undefined) {
+        numericPath.push(segment)
+        currentNode = Array.prototype.find.call(
+          siblings,
+          (child: Node) => child._key === segment._key,
+        )
+      } else {
+        // Undefined _key or numeric: resolve to numeric index
+        let index = typeof segment === 'number' ? segment : -1
+        if (index === -1) {
+          for (let i = 0; i < siblings.length; i++) {
+            if ((siblings[i] as Node)._key === undefined) {
+              index = i
+              break
+            }
+          }
+        }
+        if (index !== -1) {
+          numericPath.push(index)
+          currentNode = siblings[index] as Node
+        }
+      }
+    }
+
     editor.apply({
-      type: 'set_node',
-      path,
-      properties: {},
-      newProperties: {_key: newKey},
+      type: 'set',
+      path: [...numericPath, '_key'],
+      value: newKey,
+      inverse: {type: 'unset', path: [...numericPath, '_key']},
     })
     return
   }
@@ -147,33 +196,40 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
           index,
         }))
 
-    let currentIndex = -1
     const siblingList = [...siblings]
-    for (let i = 0; i < siblingList.length; i++) {
-      if (siblingList[i]!.node === node) {
-        currentIndex = i
-        break
-      }
-    }
+    const key = nodeRecord['_key'] as string
 
-    for (let i = 0; i < currentIndex; i++) {
-      if (siblingList[i]!.node._key === nodeRecord['_key']) {
-        const newKey = editor.keyGenerator()
-        debug.normalization('Fixing duplicate key on node')
-        // Use numeric index because keyed path can't distinguish duplicates.
-        // modifyDescendant resolves numeric segments to keyed via getNode.
-        const dupParentPath = parent ? parent.path : []
-        const numericPath: Path =
-          dupParentPath.length === 0
-            ? [currentIndex]
-            : [...dupParentPath, 'children', currentIndex]
-        editor.apply({
-          type: 'set_node',
-          path: numericPath,
-          properties: {},
-          newProperties: {_key: newKey},
-        })
-        return
+    // Find all siblings with this key
+    let firstIndex = -1
+    for (let i = 0; i < siblingList.length; i++) {
+      if (siblingList[i]!.node._key === key) {
+        if (firstIndex === -1) {
+          firstIndex = i
+        } else {
+          // Found a duplicate: rename the later occurrence
+          const newKey = editor.keyGenerator()
+          debug.normalization('Fixing duplicate key on node')
+          const dupParentPath = parent ? parent.path : []
+          const numericPath: Path =
+            dupParentPath.length === 0
+              ? [i]
+              : [
+                  ...dupParentPath,
+                  getChildFieldName(editor, parent!.path) ?? 'children',
+                  i,
+                ]
+          editor.apply({
+            type: 'set',
+            path: [...numericPath, '_key'],
+            value: newKey,
+            inverse: {
+              type: 'set',
+              path: [...numericPath, '_key'],
+              value: key,
+            },
+          })
+          return
+        }
       }
     }
   }
@@ -186,7 +242,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
     !Array.isArray(node.markDefs)
   ) {
     debug.normalization('adding .markDefs to block node')
-    applySetNode(editor, {markDefs: []}, path)
+    setNodeProperties(editor, {markDefs: []}, path)
     return
   }
 
@@ -201,7 +257,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
       typeof node.style === 'undefined'
     ) {
       debug.normalization('adding .style to block node')
-      applySetNode(editor, {style: defaultStyle}, path)
+      setNodeProperties(editor, {style: defaultStyle}, path)
       return
     }
   }
@@ -212,10 +268,10 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   if (isSpanNode(editor, node) && typeof node.text !== 'string') {
     debug.normalization('Adding .text to span node')
     editor.apply({
-      type: 'set_node',
-      path,
-      properties: {},
-      newProperties: {text: ''},
+      type: 'set',
+      path: [...path, 'text'],
+      value: '',
+      inverse: {type: 'unset', path: [...path, 'text']},
     })
     return
   }
@@ -225,7 +281,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
    */
   if (isSpan({schema: editor.schema}, node) && !Array.isArray(node.marks)) {
     debug.normalization('Adding .marks to span node')
-    applySetNode(editor, {marks: []}, path)
+    setNodeProperties(editor, {marks: []}, path)
     return
   }
 
@@ -245,7 +301,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
 
     if (node.text === '' && annotations && annotations.length > 0) {
       debug.normalization('removing annotations from empty span node')
-      applySetNode(
+      setNodeProperties(
         editor,
         {marks: node.marks?.filter((mark) => decorators.includes(mark))},
         path,
@@ -274,7 +330,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
 
         if (orphanedAnnotations.length > 0) {
           debug.normalization('removing orphaned annotations from span node')
-          applySetNode(
+          setNodeProperties(
             editor,
             {
               marks: marks.filter(
@@ -311,7 +367,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
 
       if (orphanedAnnotations.length > 0) {
         debug.normalization('removing orphaned annotations from span node')
-        applySetNode(
+        setNodeProperties(
           editor,
           {
             marks: marks.filter((mark) => !orphanedAnnotations.includes(mark)),
@@ -340,7 +396,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
 
     if (markDefs.length !== newMarkDefs.length) {
       debug.normalization('removing duplicate markDefs')
-      applySetNode(editor, {markDefs: newMarkDefs}, path)
+      setNodeProperties(editor, {markDefs: newMarkDefs}, path)
       return
     }
   }
@@ -361,7 +417,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
 
     if (node.markDefs && !isEqualMarkDefs(newMarkDefs, node.markDefs)) {
       debug.normalization('removing markDef not in use')
-      applySetNode(editor, {markDefs: newMarkDefs}, path)
+      setNodeProperties(editor, {markDefs: newMarkDefs}, path)
       return
     }
   }
@@ -373,10 +429,10 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
     if (typeof node.text !== 'string') {
       debug.normalization('Adding .text to span node')
       editor.apply({
-        type: 'set_node',
-        path,
-        properties: {},
-        newProperties: {text: ''},
+        type: 'set',
+        path: [...path, 'text'],
+        value: '',
+        inverse: {type: 'unset', path: [...path, 'text']},
       })
       return
     }
@@ -393,7 +449,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
       const fieldValue = (node as Record<string, unknown>)[arrayField.name]
 
       if (!Array.isArray(fieldValue)) {
-        applySetNode(editor, {[arrayField.name]: []}, path)
+        setNodeProperties(editor, {[arrayField.name]: []}, path)
         return
       }
     }
@@ -459,10 +515,14 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
           const childFieldName = getChildFieldName(editor, path)
           if (childFieldName) {
             editor.apply({
-              type: 'set_node',
-              path: [...path, childFieldName, i],
-              properties: {},
-              newProperties: {_key: newKey},
+              type: 'set',
+              path: [...path, childFieldName, i, '_key'],
+              value: newKey,
+              inverse: {
+                type: 'set',
+                path: [...path, childFieldName, i, '_key'],
+                value: key,
+              },
             })
             return
           }
@@ -481,10 +541,10 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
     // Runtime data can arrive without children (e.g. after an unset patch).
     if (!Array.isArray(node.children)) {
       editor.apply({
-        type: 'set_node',
-        path,
-        properties: {},
-        newProperties: {children: []},
+        type: 'set',
+        path: [...path, 'children'],
+        value: [],
+        inverse: {type: 'unset', path: [...path, 'children']},
       })
       return
     }

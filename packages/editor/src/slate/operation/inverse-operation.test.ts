@@ -76,18 +76,54 @@ describe(inverseOperation.name, () => {
     })
   })
 
-  test('set_node inverts properties', () => {
+  test('set with existing property inverts to set with old value', () => {
     const op: Operation = {
-      type: 'set_node',
-      path: [{_key: 'b1'}, 'children', {_key: 's1'}],
-      properties: {_key: 's1'},
-      newProperties: {_key: 's2'},
+      type: 'set',
+      path: [{_key: 'b1'}, 'style'],
+      value: 'h1',
+      inverse: {type: 'set', path: [{_key: 'b1'}, 'style'], value: 'normal'},
     }
     expect(inverseOperation(op)).toEqual({
-      type: 'set_node',
-      path: [{_key: 'b1'}, 'children', {_key: 's1'}],
-      properties: {_key: 's2'},
-      newProperties: {_key: 's1'},
+      type: 'set',
+      path: [{_key: 'b1'}, 'style'],
+      value: 'normal',
+      inverse: {type: 'set', path: [{_key: 'b1'}, 'style'], value: 'h1'},
+    })
+  })
+
+  test('set with new property inverts to unset', () => {
+    const op: Operation = {
+      type: 'set',
+      path: [{_key: 'b1'}, 'listItem'],
+      value: 'bullet',
+      inverse: {type: 'unset', path: [{_key: 'b1'}, 'listItem']},
+    }
+    expect(inverseOperation(op)).toEqual({
+      type: 'unset',
+      path: [{_key: 'b1'}, 'listItem'],
+      inverse: {
+        type: 'set',
+        path: [{_key: 'b1'}, 'listItem'],
+        value: 'bullet',
+      },
+    })
+  })
+
+  test('unset inverts to set with old value', () => {
+    const op: Operation = {
+      type: 'unset',
+      path: [{_key: 'b1'}, 'listItem'],
+      inverse: {
+        type: 'set',
+        path: [{_key: 'b1'}, 'listItem'],
+        value: 'bullet',
+      },
+    }
+    expect(inverseOperation(op)).toEqual({
+      type: 'set',
+      path: [{_key: 'b1'}, 'listItem'],
+      value: 'bullet',
+      inverse: {type: 'unset', path: [{_key: 'b1'}, 'listItem']},
     })
   })
 })

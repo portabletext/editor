@@ -1,8 +1,8 @@
 import type {PortableTextSpan} from '@portabletext/schema'
 import {isSpan, isTextBlock} from '@portabletext/schema'
 import {applySelect, resolveSelection} from '../internal-utils/apply-selection'
-import {applySetNode} from '../internal-utils/apply-set-node'
 import {applySplitNode} from '../internal-utils/apply-split-node'
+import {setNodeProperties} from '../internal-utils/set-node-properties'
 import {getChildren} from '../node-traversal/get-children'
 import {getNode} from '../node-traversal/get-node'
 import {getNodes} from '../node-traversal/get-nodes'
@@ -138,7 +138,7 @@ export const removeAnnotationOperationImplementation: OperationImplementation<
       [selectedChild, selectedChildPath] satisfies [PortableTextSpan, Path],
       ...nextSpansWithSameAnnotation,
     ]) {
-      applySetNode(
+      setNodeProperties(
         editor,
         {
           marks: child.marks?.filter((mark) => mark !== annotationToRemove),
@@ -225,7 +225,11 @@ export const removeAnnotationOperationImplementation: OperationImplementation<
           })
 
           if (marksWithoutAnnotation.length !== marks.length) {
-            applySetNode(editor, {marks: marksWithoutAnnotation}, childPath)
+            setNodeProperties(
+              editor,
+              {marks: marksWithoutAnnotation},
+              childPath,
+            )
           }
         }
       }

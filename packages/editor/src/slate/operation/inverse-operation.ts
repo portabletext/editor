@@ -54,9 +54,44 @@ export function inverseOperation(op: Operation): Operation {
       return {...op, type: 'insert_text'}
     }
 
-    case 'set_node': {
-      const {properties, newProperties} = op
-      return {...op, properties: newProperties, newProperties: properties}
+    case 'set': {
+      if (!op.inverse) {
+        throw new Error(
+          'Cannot invert set operation without inverse data. Remote operations should not reach the history plugin.',
+        )
+      }
+
+      if (op.inverse.type === 'set') {
+        // Property existed before: inverse is set back to old value
+        return {
+          type: 'set',
+          path: op.inverse.path,
+          value: op.inverse.value,
+          inverse: {type: 'set', path: op.path, value: op.value},
+        }
+      }
+      // Property was new: inverse is unset
+      return {
+        type: 'unset',
+        path: op.inverse.path,
+        inverse: {type: 'set', path: op.path, value: op.value},
+      }
+    }
+
+    case 'unset': {
+      if (!op.inverse) {
+        throw new Error(
+          'Cannot invert unset operation without inverse data. Remote operations should not reach the history plugin.',
+        )
+      }
+
+      // Inverse of unset is always set (restore the old value)
+      return {
+        type: 'set',
+        path: op.inverse.path,
+        value: op.inverse.value,
+        inverse: {type: 'unset', path: op.path},
+      }
     }
 
     case 'set_selection': {

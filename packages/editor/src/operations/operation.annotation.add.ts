@@ -1,8 +1,8 @@
 import {isSpan, isTextBlock} from '@portabletext/schema'
 import {applySelect, resolveSelection} from '../internal-utils/apply-selection'
-import {applySetNode} from '../internal-utils/apply-set-node'
 import {applySplitNode} from '../internal-utils/apply-split-node'
 import {safeStringify} from '../internal-utils/safe-json'
+import {setNodeProperties} from '../internal-utils/set-node-properties'
 import {getChildren} from '../node-traversal/get-children'
 import {getNode} from '../node-traversal/get-node'
 import {getNodes} from '../node-traversal/get-nodes'
@@ -91,7 +91,7 @@ export const addAnnotationOperationImplementation: OperationImplementation<
       )
 
       if (existingMarkDef === undefined) {
-        applySetNode(
+        setNodeProperties(
           editor,
           {
             markDefs: [
@@ -161,7 +161,7 @@ export const addAnnotationOperationImplementation: OperationImplementation<
 
         const marks = span.marks ?? []
 
-        applySetNode(editor, {marks: [...marks, annotationKey]}, spanPath)
+        setNodeProperties(editor, {marks: [...marks, annotationKey]}, spanPath)
       }
 
       blockIndex++

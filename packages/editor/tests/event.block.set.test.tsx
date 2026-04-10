@@ -283,7 +283,7 @@ describe('event.block.set', () => {
         {
           origin: 'local',
           type: 'set',
-          path: [0, '_key'],
+          path: [{_key: urlBlockKey}, '_key'],
           value: newUrlBlockKey,
         },
       ])
@@ -340,7 +340,7 @@ describe('event.block.set', () => {
       expect(patches).toEqual([
         {
           type: 'set',
-          path: [0, '_key'],
+          path: [{_key: blockKey}, '_key'],
           value: newTextBlockKey,
           origin: 'local',
         },

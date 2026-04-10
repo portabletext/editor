@@ -179,7 +179,9 @@ describe('event.block.unset', () => {
           href: 'https://www.sanity.io',
         },
       ])
-      expect(patches.slice(4)).toEqual([set('k3', [0, '_key'])])
+      expect(patches.slice(4)).toEqual([
+        set('k3', [{_key: urlBlockKey}, '_key']),
+      ])
     })
   })
 
@@ -539,7 +541,10 @@ describe('event.block.unset', () => {
         },
       ])
 
-      expect(patches).toEqual([setIfMissing([], []), set('k2', [0, '_key'])])
+      expect(patches).toEqual([
+        setIfMissing([], []),
+        set('k2', [{_key: 'k0'}, '_key']),
+      ])
     })
   })
 
