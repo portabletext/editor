@@ -178,7 +178,6 @@ export type SyntheticBehaviorEvent =
       node: Node
       at: Path
       position: 'before' | 'after'
-      select?: 'start' | 'end' | 'none'
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'insert.text'>
