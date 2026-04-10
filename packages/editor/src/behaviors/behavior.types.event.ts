@@ -76,12 +76,12 @@ const syntheticBehaviorEventTypes = [
   'history.undo',
   'insert.block',
   'insert.child',
-  'insert.node',
+  'insert',
   'insert.text',
   'move.backward',
   'move.block',
   'move.forward',
-  'remove.node',
+  'remove',
   'select',
   'set',
   'unset',
@@ -174,7 +174,7 @@ export type SyntheticBehaviorEvent =
       child: ChildWithOptionalKey
     }
   | {
-      type: StrictExtract<SyntheticBehaviorEventType, 'insert.node'>
+      type: StrictExtract<SyntheticBehaviorEventType, 'insert'>
       value: Node
       at: Path
       position: 'before' | 'after'
@@ -197,9 +197,10 @@ export type SyntheticBehaviorEvent =
       distance: number
     }
   | {
-      type: StrictExtract<SyntheticBehaviorEventType, 'remove.node'>
+      type: StrictExtract<SyntheticBehaviorEventType, 'remove'>
       value: Node
       at: Path
+      previousSiblingKey?: string
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'select'>
@@ -208,13 +209,13 @@ export type SyntheticBehaviorEvent =
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'set'>
       at: Path
-      name: string
       value: unknown
+      previousValue: unknown
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'unset'>
       at: Path
-      name: string
+      previousValue: unknown
     }
   | AbstractBehaviorEvent
 

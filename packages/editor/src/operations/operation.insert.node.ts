@@ -1,7 +1,7 @@
 import type {OperationImplementation} from './operation.types'
 
 export const insertNodeOperationImplementation: OperationImplementation<
-  'insert.node'
+  'insert'
 > = ({operation}) => {
   const {editor, at, value, position} = operation
 

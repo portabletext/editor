@@ -1,28 +1,24 @@
-import {getNode} from '../node-traversal/get-node'
+import {parentPath} from '../slate/path/parent-path'
 import type {OperationImplementation} from './operation.types'
 
 export const unsetOperationImplementation: OperationImplementation<'unset'> = ({
   operation,
 }) => {
-  const {editor, at, name} = operation
+  const {editor, at, previousValue} = operation
 
-  const entry = getNode(editor, at)
+  const name = at.at(-1)
 
-  if (!entry) {
-    console.error(`unset: no node found at path`)
+  if (typeof name !== 'string') {
+    console.error(`unset: last path segment must be a property name`)
     return
   }
 
-  const nodeRecord = entry.node as Record<string, unknown>
-
-  if (!(name in nodeRecord)) {
-    return
-  }
+  const nodePath = parentPath(at)
 
   editor.apply({
     type: 'set_node',
-    path: entry.path,
-    properties: {[name]: nodeRecord[name]},
+    path: nodePath,
+    properties: {[name]: previousValue},
     newProperties: {[name]: undefined},
   })
 }

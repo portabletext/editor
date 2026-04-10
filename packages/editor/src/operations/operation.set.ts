@@ -1,24 +1,24 @@
-import {getNode} from '../node-traversal/get-node'
+import {parentPath} from '../slate/path/parent-path'
 import type {OperationImplementation} from './operation.types'
 
 export const setOperationImplementation: OperationImplementation<'set'> = ({
   operation,
 }) => {
-  const {editor, at, name, value} = operation
+  const {editor, at, value, previousValue} = operation
 
-  const entry = getNode(editor, at)
+  const name = at.at(-1)
 
-  if (!entry) {
-    console.error(`set: no node found at path`)
+  if (typeof name !== 'string') {
+    console.error(`set: last path segment must be a property name`)
     return
   }
 
-  const nodeRecord = entry.node as Record<string, unknown>
+  const nodePath = parentPath(at)
 
   editor.apply({
     type: 'set_node',
-    path: entry.path,
-    properties: name in nodeRecord ? {[name]: nodeRecord[name]} : {},
+    path: nodePath,
+    properties: {[name]: previousValue},
     newProperties: {[name]: value},
   })
 }
