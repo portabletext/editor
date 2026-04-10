@@ -1,4 +1,5 @@
 import type {EditorSchema} from '../editor/editor-schema'
+import type {EditableTypes} from '../schema/editable-types'
 import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
 import {parentPath} from '../slate/path/parent-path'
@@ -11,7 +12,7 @@ import {getChildren} from './get-children'
 export function getSibling(
   context: {
     schema: EditorSchema
-    editableTypes: Set<string>
+    editableTypes: EditableTypes
     value: Array<Node>
   },
   path: Path,

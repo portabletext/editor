@@ -1,4 +1,5 @@
 import type {EditorSchema} from '../editor/editor-schema'
+import type {EditableTypes} from '../schema/editable-types'
 import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
@@ -18,7 +19,7 @@ import {getNodeChildren} from './get-children'
 export function getNode(
   context: {
     schema: EditorSchema
-    editableTypes: Set<string>
+    editableTypes: EditableTypes
     value: Array<Node>
     blockIndexMap?: Map<string, number>
   },
@@ -29,7 +30,6 @@ export function getNode(
   }
 
   let currentChildren: Array<Node> = context.value
-  let scope: Parameters<typeof getNodeChildren>[2]
   let scopePath = ''
   let node: Node | undefined
   const resolvedPath: Path = []
@@ -88,14 +88,13 @@ export function getNode(
     }
 
     if (hasMoreSegments) {
-      const next = getNodeChildren(context, node, scope, scopePath)
+      const next = getNodeChildren(context, node, scopePath)
 
       if (!next) {
         return undefined
       }
 
       currentChildren = next.children
-      scope = next.scope
       scopePath = next.scopePath
     }
   }

@@ -1,5 +1,4 @@
 import type {
-  OfDefinition,
   PortableTextObject,
   PortableTextTextBlock,
 } from '@portabletext/schema'
@@ -15,7 +14,6 @@ import {getNode} from '../../node-traversal/get-node'
 import {getParent} from '../../node-traversal/get-parent'
 import {getTextBlockNode} from '../../node-traversal/get-text-block-node'
 import {getChildFieldName} from '../../paths/get-child-field-name'
-import {resolveChildArrayField} from '../../schema/resolve-child-array-field'
 import {withoutPatching} from '../../slate-plugins/slate-plugin.without-patching'
 import {isKeyedSegment} from '../../utils/util.is-keyed-segment'
 import {isEditor} from '../editor/is-editor'
@@ -32,19 +30,17 @@ import type {WithEditorFirstArg} from '../utils/types'
 import {removeNodes} from './remove-nodes'
 
 /**
- * Build the scoped type name and schema scope for a container node
- * by walking ancestor object nodes up the tree.
+ * Build the scoped type name for a container node by walking ancestor
+ * object nodes up the tree.
  *
  * For a 'row' at path [{_key:'t1'}, 'rows', {_key:'r1'}],
- * the ancestor at [{_key:'t1'}] is a 'table', producing:
- *   scopedName: 'table.row'
- *   scope: the 'of' definitions from the 'rows' array field
+ * the ancestor at [{_key:'t1'}] is a 'table', producing: 'table.row'
  */
-function getContainerScope(
+function getContainerScopedName(
   editor: Editor,
   node: Node,
   path: Path,
-): {scopedName: string; scope: ReadonlyArray<OfDefinition> | undefined} {
+): string {
   const typeSegments: Array<string> = [node._type]
 
   // Collect keyed segment indices (each represents a node in the tree).
@@ -55,8 +51,7 @@ function getContainerScope(
     }
   }
 
-  // Walk ancestor nodes from root to parent, building scope chain.
-  let currentScope: ReadonlyArray<OfDefinition> | undefined
+  // Walk ancestor nodes from root to parent, collecting type names.
   for (let i = 0; i < keyedIndices.length - 1; i++) {
     const ancestorPath = path.slice(0, keyedIndices[i]! + 1)
     const entry = getNode(editor, ancestorPath)
@@ -67,18 +62,9 @@ function getContainerScope(
 
     // Insert before the node's own type (which is always last).
     typeSegments.splice(typeSegments.length - 1, 0, entry.node._type)
-
-    const arrayField = resolveChildArrayField(
-      {schema: editor.schema, scope: currentScope},
-      entry.node,
-    )
-    currentScope = arrayField?.of
   }
 
-  return {
-    scopedName: typeSegments.join('.'),
-    scope: currentScope,
-  }
+  return typeSegments.join('.')
 }
 
 export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
@@ -400,65 +386,54 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
 
   // Container normalization: ensure the child array field exists.
   if (isObjectNode({schema: editor.schema}, node)) {
-    const {scopedName, scope} = getContainerScope(editor, node, path)
-    if (editor.editableTypes.has(scopedName)) {
-      const arrayField = resolveChildArrayField(
-        {schema: editor.schema, scope},
-        node,
-      )
+    const scopedName = getContainerScopedName(editor, node, path)
+    const arrayField = editor.editableTypes.get(scopedName)?.[0]
 
-      if (arrayField) {
-        const fieldValue = (node as Record<string, unknown>)[arrayField.name]
+    if (arrayField) {
+      const fieldValue = (node as Record<string, unknown>)[arrayField.name]
 
-        if (!Array.isArray(fieldValue)) {
-          applySetNode(editor, {[arrayField.name]: []}, path)
-          return
-        }
+      if (!Array.isArray(fieldValue)) {
+        applySetNode(editor, {[arrayField.name]: []}, path)
+        return
       }
     }
   }
 
   // Container normalization: ensure non-empty child array.
   if (isObjectNode({schema: editor.schema}, node)) {
-    const {scopedName, scope} = getContainerScope(editor, node, path)
+    const scopedName = getContainerScopedName(editor, node, path)
+    const arrayField = editor.editableTypes.get(scopedName)?.[0]
 
-    if (editor.editableTypes.has(scopedName)) {
-      const arrayField = resolveChildArrayField(
-        {schema: editor.schema, scope},
-        node,
-      )
+    if (arrayField) {
+      const fieldValue = (node as Record<string, unknown>)[arrayField.name]
 
-      if (arrayField) {
-        const fieldValue = (node as Record<string, unknown>)[arrayField.name]
+      if (Array.isArray(fieldValue) && fieldValue.length === 0) {
+        const acceptsBlocks = arrayField.of.some(
+          (definition) => definition.type === 'block',
+        )
 
-        if (Array.isArray(fieldValue) && fieldValue.length === 0) {
-          const acceptsBlocks = arrayField.of.some(
-            (definition) => definition.type === 'block',
-          )
+        if (acceptsBlocks) {
+          editor.apply({
+            type: 'insert_node',
+            path: [...path, arrayField.name, 0],
+            node: createPlaceholderBlock(editor),
+            position: 'before',
+          })
+          return
+        }
 
-          if (acceptsBlocks) {
-            editor.apply({
-              type: 'insert_node',
-              path: [...path, arrayField.name, 0],
-              node: createPlaceholderBlock(editor),
-              position: 'before',
-            })
-            return
-          }
-
-          const firstChildType = arrayField.of.at(0)
-          if (firstChildType && firstChildType.type !== 'block') {
-            editor.apply({
-              type: 'insert_node',
-              path: [...path, arrayField.name, 0],
-              node: {
-                _type: firstChildType.type,
-                _key: editor.keyGenerator(),
-              },
-              position: 'before',
-            })
-            return
-          }
+        const firstChildType = arrayField.of.at(0)
+        if (firstChildType && firstChildType.type !== 'block') {
+          editor.apply({
+            type: 'insert_node',
+            path: [...path, arrayField.name, 0],
+            node: {
+              _type: firstChildType.type,
+              _key: editor.keyGenerator(),
+            },
+            position: 'before',
+          })
+          return
         }
       }
     }

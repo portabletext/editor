@@ -1,7 +1,6 @@
-import type {OfDefinition, PortableTextObject} from '@portabletext/schema'
 import {isSpan, isTextBlock} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
-import {resolveChildArrayField} from '../schema/resolve-child-array-field'
+import type {EditableTypes} from '../schema/editable-types'
 import type {Node} from '../slate/interfaces/node'
 import type {Operation} from '../slate/interfaces/operation'
 import type {Path} from '../slate/interfaces/path'
@@ -20,12 +19,11 @@ import {getChildFieldName} from './get-child-field-name'
 function collectDescendantPaths(
   context: {
     schema: EditorSchema
-    editableTypes: Set<string>
+    editableTypes: EditableTypes
   },
   node: Node,
   parentPath: Path,
   paths: Array<Path>,
-  scope: ReadonlyArray<OfDefinition> | undefined,
   scopePrefix: string,
 ): void {
   // Text blocks always use 'children'
@@ -39,54 +37,35 @@ function collectDescendantPaths(
     return
   }
 
-  // Build the scoped type name (e.g., 'table', 'table.row', 'table.row.cell')
+  // For container types, resolve the child array field from the schema
   const scopedName = scopePrefix ? `${scopePrefix}.${node._type}` : node._type
 
-  // For container types, resolve the child array field from the schema
-  if (context.editableTypes.has(scopedName)) {
-    const arrayField = resolveChildArrayField(
-      {schema: context.schema, scope},
-      node as PortableTextObject,
-    )
+  const arrayField = context.editableTypes.get(scopedName)?.[0]
 
-    if (arrayField) {
-      const fieldValue = (node as Record<string, unknown>)[arrayField.name]
+  if (arrayField) {
+    const fieldValue = (node as Record<string, unknown>)[arrayField.name]
 
-      if (Array.isArray(fieldValue)) {
-        for (let i = 0; i < fieldValue.length; i++) {
-          const child = fieldValue[i] as Node
-          const childPath: Path = [...parentPath, arrayField.name, i]
-          paths.push(childPath)
-          collectDescendantPaths(
-            context,
-            child,
-            childPath,
-            paths,
-            arrayField.of,
-            scopedName,
-          )
-        }
+    if (Array.isArray(fieldValue)) {
+      for (let i = 0; i < fieldValue.length; i++) {
+        const child = fieldValue[i] as Node
+        const childPath: Path = [...parentPath, arrayField.name, i]
+        paths.push(childPath)
+        collectDescendantPaths(context, child, childPath, paths, scopedName)
       }
     }
   }
 }
 
 /**
- * Build the scope context for a node at the given path by walking
+ * Build the scoped type name for a node at the given path by walking
  * ancestor nodes in the tree.
  *
- * Returns the scope prefix (ancestor type chain) and the schema scope
- * (of definitions from the parent's array field) needed to resolve
+ * Returns the scope prefix (ancestor type chain) needed to resolve
  * nested container child fields.
  */
-function buildScopeContext(
-  context: {schema: EditorSchema},
-  value: Array<Node>,
-  path: Path,
-): {scopedName: string; scope: ReadonlyArray<OfDefinition> | undefined} {
+function buildScopedName(value: Array<Node>, path: Path): string {
   const types: Array<string> = []
   let currentChildren: Array<Node> = value
-  let currentScope: ReadonlyArray<OfDefinition> | undefined
 
   for (let i = 0; i < path.length; i++) {
     const segment = path[i]
@@ -109,15 +88,6 @@ function buildScopeContext(
 
     types.push(node._type)
 
-    // Resolve the child array field to get the scope for the next level
-    const arrayField = resolveChildArrayField(
-      {schema: context.schema, scope: currentScope},
-      node as PortableTextObject,
-    )
-    if (arrayField) {
-      currentScope = arrayField.of
-    }
-
     // Look ahead for a field name segment to descend into
     const nextSegment = path[i + 1]
     if (typeof nextSegment === 'string') {
@@ -128,12 +98,7 @@ function buildScopeContext(
     }
   }
 
-  // The full scoped name includes the node itself (e.g., 'table.row')
-  // The prefix excludes the node (e.g., 'table')
-  return {
-    scopedName: types.join('.'),
-    scope: currentScope,
-  }
+  return types.join('.')
 }
 
 /**
@@ -142,7 +107,7 @@ function buildScopeContext(
 export function getDirtyPaths(
   context: {
     schema: EditorSchema
-    editableTypes: Set<string>
+    editableTypes: EditableTypes
     value: Array<Node>
   },
   op: Operation,
@@ -177,11 +142,7 @@ export function getDirtyPaths(
           ]
 
           if (Array.isArray(newChildren)) {
-            const {scopedName, scope} = buildScopeContext(
-              context,
-              context.value,
-              path,
-            )
+            const scopedName = buildScopedName(context.value, path)
 
             for (let i = 0; i < newChildren.length; i++) {
               const child = newChildren[i]
@@ -206,7 +167,6 @@ export function getDirtyPaths(
                 childNode,
                 childPath,
                 levels,
-                scope,
                 scopedName,
               )
             }
@@ -242,7 +202,7 @@ export function getDirtyPaths(
       // children have duplicate keys (pre-normalization). Walk all
       // child array fields via the schema so container descendants
       // are also dirtied.
-      collectDescendantPaths(context, node, nodePath, levels, undefined, '')
+      collectDescendantPaths(context, node, nodePath, levels, '')
 
       return levels
     }

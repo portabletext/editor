@@ -1,7 +1,7 @@
 import type {OfDefinition} from '@portabletext/schema'
 import {isTextBlock} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
-import {resolveChildArrayField} from '../schema/resolve-child-array-field'
+import type {EditableTypes} from '../schema/editable-types'
 import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
 import {isObjectNode} from '../slate/node/is-object-node'
@@ -13,7 +13,7 @@ import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 export function getChildren(
   context: {
     schema: EditorSchema
-    editableTypes: Set<string>
+    editableTypes: EditableTypes
     value: Array<Node>
   },
   path: Path,
@@ -28,19 +28,18 @@ export function getChildren(
 export function getChildrenInternal(
   context: {
     schema: EditorSchema
-    editableTypes: Set<string>
+    editableTypes: EditableTypes
   },
   root: Node | {value: Array<Node>},
   path: Path,
 ): Array<{node: Node; path: Path}> {
-  const rootChildren = getNodeChildren(context, root, undefined, '')
+  const rootChildren = getNodeChildren(context, root, '')
 
   if (!rootChildren) {
     return []
   }
 
   let currentChildren = rootChildren.children
-  let currentScope = rootChildren.scope
   let scopePath = rootChildren.scopePath
   let currentFieldName = rootChildren.fieldName
   let currentPath: Path = []
@@ -72,14 +71,13 @@ export function getChildrenInternal(
       : [...currentPath, currentFieldName, {_key: node._key}]
     isRoot = false
 
-    const next = getNodeChildren(context, node, currentScope, scopePath)
+    const next = getNodeChildren(context, node, scopePath)
 
     if (!next) {
       return []
     }
 
     currentChildren = next.children
-    currentScope = next.scope
     scopePath = next.scopePath
     currentFieldName = next.fieldName
   }
@@ -95,10 +93,9 @@ export function getChildrenInternal(
 export function getNodeChildren(
   context: {
     schema: EditorSchema
-    editableTypes: Set<string>
+    editableTypes: EditableTypes
   },
   node: Node | {value: Array<Node>},
-  scope: ReadonlyArray<OfDefinition> | undefined,
   scopePath: string,
 ):
   | {
@@ -121,14 +118,7 @@ export function getNodeChildren(
   if (isObjectNode(context, node)) {
     const scopedKey = scopePath ? `${scopePath}.${node._type}` : node._type
 
-    if (!context.editableTypes.has(scopedKey)) {
-      return undefined
-    }
-
-    const arrayField = resolveChildArrayField(
-      {schema: context.schema, scope},
-      node,
-    )
+    const arrayField = context.editableTypes.get(scopedKey)?.[0]
 
     if (!arrayField) {
       return undefined

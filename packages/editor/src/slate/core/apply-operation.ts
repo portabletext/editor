@@ -36,7 +36,7 @@ export function applyOperation(editor: Editor, op: Operation): void {
       const isRootInsert = parentPath(path).length === 0
       let insertIndex = -1
 
-      modifyChildren(editor, parentPath(path), editor.schema, (children) => {
+      modifyChildren(editor, parentPath(path), (children) => {
         // Ensure unique keys on inserted nodes (skip during remote/undo/redo)
         if (
           !editor.isProcessingRemoteChanges &&
@@ -103,7 +103,7 @@ export function applyOperation(editor: Editor, op: Operation): void {
         break
       }
 
-      modifyLeaf(editor, path, editor.schema, (node) => {
+      modifyLeaf(editor, path, (node) => {
         const before = node.text.slice(0, offset)
         const after = node.text.slice(offset)
 
@@ -183,7 +183,7 @@ export function applyOperation(editor: Editor, op: Operation): void {
       const isRootRemove = parentPath(path).length === 0
       let removeIndex = -1
 
-      modifyChildren(editor, parentPath(path), editor.schema, (children) => {
+      modifyChildren(editor, parentPath(path), (children) => {
         let index: number
 
         if (isKeyedSegment(lastSegment)) {
@@ -230,7 +230,7 @@ export function applyOperation(editor: Editor, op: Operation): void {
         break
       }
 
-      modifyLeaf(editor, path, editor.schema, (node) => {
+      modifyLeaf(editor, path, (node) => {
         const before = node.text.slice(0, offset)
         const after = node.text.slice(offset + text.length)
 
@@ -251,7 +251,7 @@ export function applyOperation(editor: Editor, op: Operation): void {
         throw new Error(`Cannot set properties on the root node!`)
       }
 
-      modifyDescendant(editor, path, editor.schema, (node) => {
+      modifyDescendant(editor, path, (node) => {
         const newNode = {...node}
 
         for (const key in newProperties) {

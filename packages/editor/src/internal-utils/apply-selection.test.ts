@@ -20,7 +20,7 @@ describe(resolveSelection.name, () => {
     const range = resolveSelection(
       {
         schema,
-        editableTypes: new Set(),
+        editableTypes: new Map(),
         children: [
           {
             _key: blockKey,
@@ -71,7 +71,7 @@ describe(resolveSelection.name, () => {
     const range = resolveSelection(
       {
         schema,
-        editableTypes: new Set(),
+        editableTypes: new Map(),
         children: [
           {
             _key: blockKey,
@@ -120,7 +120,7 @@ describe(resolveSelection.name, () => {
     const range = resolveSelection(
       {
         schema,
-        editableTypes: new Set(),
+        editableTypes: new Map(),
         children: [
           {
             _key: blockObjectKey,
@@ -155,7 +155,7 @@ describe(resolveSelection.name, () => {
     const range = resolveSelection(
       {
         schema,
-        editableTypes: new Set(),
+        editableTypes: new Map(),
         children: [
           {
             _key: blockKey,
@@ -196,7 +196,7 @@ describe(resolveSelection.name, () => {
     const range = resolveSelection(
       {
         schema,
-        editableTypes: new Set(),
+        editableTypes: new Map(),
         children: [
           {
             _key: blockKey,
@@ -237,7 +237,7 @@ describe(resolveSelection.name, () => {
     const range = resolveSelection(
       {
         schema,
-        editableTypes: new Set(),
+        editableTypes: new Map(),
         children: [
           {
             _key: blockKey,

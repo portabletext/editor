@@ -1,5 +1,6 @@
 import type {EditorSchema} from '../editor/editor-schema'
 import {getNodeChildren} from '../node-traversal/get-children'
+import type {EditableTypes} from '../schema/editable-types'
 import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
@@ -14,7 +15,7 @@ import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 export function getChildFieldName(
   context: {
     schema: EditorSchema
-    editableTypes: Set<string>
+    editableTypes: EditableTypes
     value: Array<Node>
   },
   path: Path,
@@ -22,7 +23,6 @@ export function getChildFieldName(
   let nodeChildren = getNodeChildren(
     {schema: context.schema, editableTypes: context.editableTypes},
     {value: context.value},
-    undefined,
     '',
   )
 
@@ -53,7 +53,6 @@ export function getChildFieldName(
       const targetInfo = getNodeChildren(
         {schema: context.schema, editableTypes: context.editableTypes},
         node,
-        nodeChildren.scope,
         nodeChildren.scopePath,
       )
       return targetInfo?.fieldName
@@ -62,7 +61,6 @@ export function getChildFieldName(
     nodeChildren = getNodeChildren(
       {schema: context.schema, editableTypes: context.editableTypes},
       node,
-      nodeChildren.scope,
       nodeChildren.scopePath,
     )
   }

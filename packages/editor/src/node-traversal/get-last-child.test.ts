@@ -1,4 +1,5 @@
 import {describe, expect, test} from 'vitest'
+import type {ChildArrayField} from '../schema/editable-types'
 import {getLastChild} from './get-last-child'
 import {createNodeTraversalTestbed} from './node-traversal-testbed'
 
@@ -50,7 +51,65 @@ describe(getLastChild.name, () => {
   })
 
   test('last of non-editable container returns undefined', () => {
-    const tableOnly = new Set(['table', 'table.row', 'table.row.cell'])
+    const tableOnly = new Map<string, Array<ChildArrayField>>([
+      [
+        'table',
+        [
+          {
+            name: 'rows',
+            type: 'array',
+            of: [
+              {
+                type: 'row',
+                fields: [
+                  {
+                    name: 'cells',
+                    type: 'array',
+                    of: [
+                      {
+                        type: 'cell',
+                        fields: [
+                          {
+                            name: 'content',
+                            type: 'array',
+                            of: [{type: 'block'}],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      ],
+      [
+        'table.row',
+        [
+          {
+            name: 'cells',
+            type: 'array',
+            of: [
+              {
+                type: 'cell',
+                fields: [
+                  {
+                    name: 'content',
+                    type: 'array',
+                    of: [{type: 'block'}],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      ],
+      [
+        'table.row.cell',
+        [{name: 'content', type: 'array', of: [{type: 'block'}]}],
+      ],
+    ])
     expect(
       getLastChild({...testbed.context, editableTypes: tableOnly}, [
         {_key: 'k11'},
