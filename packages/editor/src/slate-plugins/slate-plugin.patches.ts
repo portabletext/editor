@@ -1,4 +1,10 @@
-import {insert, setIfMissing, unset, type Patch} from '@portabletext/patches'
+import {
+  insert,
+  set,
+  setIfMissing,
+  unset,
+  type Patch,
+} from '@portabletext/patches'
 import type {PortableTextBlock} from '@portabletext/schema'
 import type {EditorActor} from '../editor/editor-machine'
 import type {RelayActor} from '../editor/relay-machine'
@@ -6,7 +12,6 @@ import {createApplyPatch} from '../internal-utils/applyPatch'
 import {debug} from '../internal-utils/debug'
 import {
   insertNodePatch,
-  setNodePatch,
   textPatch,
 } from '../internal-utils/operation-to-patches'
 import {safeStringify} from '../internal-utils/safe-json'
@@ -150,8 +155,11 @@ export function createPatchesPlugin({
         case 'insert_node':
           patches = [...patches, ...insertNodePatch(operation)]
           break
-        case 'set_node':
-          patches = [...patches, ...setNodePatch(editor.children, operation)]
+        case 'set':
+          patches = [...patches, set(operation.value, operation.path)]
+          break
+        case 'unset':
+          patches = [...patches, unset(operation.path)]
           break
         default:
         // Do nothing
@@ -161,7 +169,7 @@ export function createPatchesPlugin({
       if (
         !editorWasEmpty &&
         editorIsEmpty &&
-        ['set_node', 'remove_text', 'remove_node'].includes(operation.type)
+        ['set', 'unset', 'remove_text', 'remove_node'].includes(operation.type)
       ) {
         patches = [...patches, unset([])]
         relayActor.send({

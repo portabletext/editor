@@ -123,57 +123,6 @@ describe(transformPoint.name, () => {
     })
   })
 
-  test('set_node collapses offset when text removed', () => {
-    const point = {
-      path: [{_key: 'b1'}, 'children', {_key: 's1'}],
-      offset: 4,
-    }
-    const op: Operation = {
-      type: 'set_node',
-      path: [{_key: 'b1'}, 'children', {_key: 's1'}],
-      properties: {text: 'hello'},
-      newProperties: {},
-    }
-    expect(transformPoint(point, op)).toEqual({
-      path: [{_key: 'b1'}, 'children', {_key: 's1'}],
-      offset: 0,
-    })
-  })
-
-  test('set_node substitutes old key with new key', () => {
-    const point = {
-      path: [{_key: 'b1'}, 'children', {_key: 's1'}],
-      offset: 3,
-    }
-    const op: Operation = {
-      type: 'set_node',
-      path: [{_key: 'b1'}, 'children', {_key: 's1'}],
-      properties: {_key: 's1'},
-      newProperties: {_key: 's2'},
-    }
-    expect(transformPoint(point, op)).toEqual({
-      path: [{_key: 'b1'}, 'children', {_key: 's2'}],
-      offset: 3,
-    })
-  })
-
-  test('set_node with combined _key and text change collapses offset', () => {
-    const point = {
-      path: [{_key: 'b1'}, 'children', {_key: 'k0'}],
-      offset: 5,
-    }
-    const op: Operation = {
-      type: 'set_node',
-      path: [{_key: 'b1'}, 'children', {_key: 'k0'}],
-      properties: {_key: 'k0', text: 'hello'},
-      newProperties: {_key: 'k1'},
-    }
-    expect(transformPoint(point, op)).toEqual({
-      path: [{_key: 'b1'}, 'children', {_key: 'k1'}],
-      offset: 0,
-    })
-  })
-
   test('insert_node is no-op', () => {
     const point = {
       path: [{_key: 'b1'}, 'children', {_key: 's1'}],
@@ -207,6 +156,68 @@ describe(transformPoint.name, () => {
     expect(transformPoint(point, op)).toEqual({
       path: [{_key: 'b1'}, 'children', {_key: 's1'}],
       offset: 3,
+    })
+  })
+
+  test('set _key substitutes old key with new key', () => {
+    const point = {
+      path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+      offset: 3,
+    }
+    const op: Operation = {
+      type: 'set',
+      path: [{_key: 'b1'}, 'children', {_key: 's1'}, '_key'],
+      value: 's2',
+      inverse: {
+        type: 'set',
+        path: [{_key: 'b1'}, 'children', {_key: 's1'}, '_key'],
+        value: 's1',
+      },
+    }
+    expect(transformPoint(point, op)).toEqual({
+      path: [{_key: 'b1'}, 'children', {_key: 's2'}],
+      offset: 3,
+    })
+  })
+
+  test('set non-key property is no-op on path', () => {
+    const point = {
+      path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+      offset: 3,
+    }
+    const op: Operation = {
+      type: 'set',
+      path: [{_key: 'b1'}, 'style'],
+      value: 'h1',
+      inverse: {
+        type: 'set',
+        path: [{_key: 'b1'}, 'style'],
+        value: 'normal',
+      },
+    }
+    expect(transformPoint(point, op)).toEqual({
+      path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+      offset: 3,
+    })
+  })
+
+  test('unset text collapses offset', () => {
+    const point = {
+      path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+      offset: 4,
+    }
+    const op: Operation = {
+      type: 'unset',
+      path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
+      inverse: {
+        type: 'set',
+        path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
+        value: 'hello',
+      },
+    }
+    expect(transformPoint(point, op)).toEqual({
+      path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+      offset: 0,
     })
   })
 })

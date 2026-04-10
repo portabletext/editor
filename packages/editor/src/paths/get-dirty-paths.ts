@@ -114,67 +114,115 @@ export function getDirtyPaths(
 ): Array<Path> {
   switch (op.type) {
     case 'insert_text':
-    case 'remove_text':
-    case 'set_node': {
-      let {path} = op
+    case 'remove_text': {
+      return pathLevels(op.path)
+    }
 
-      // When set_node changes a node's _key, the dirty path must use the
-      // new key so the normalizer can find the node after the mutation.
-      if (op.type === 'set_node' && typeof op.newProperties._key === 'string') {
-        const newKey = op.newProperties._key
-        const lastSegment = path[path.length - 1]
+    case 'set': {
+      // Root-level value replacement: dirty all new children
+      if (op.path.length === 0) {
+        const levels: Array<Path> = [[]]
+        if (Array.isArray(op.value)) {
+          for (let i = 0; i < op.value.length; i++) {
+            const child = op.value[i]
+            if (
+              typeof child !== 'object' ||
+              child === null ||
+              !('_key' in child) ||
+              typeof child._key !== 'string'
+            ) {
+              continue
+            }
+            const childNode = child as Node
+            const childPath: Path = [{_key: childNode._key}]
+            levels.push(childPath)
+            collectDescendantPaths(context, childNode, childPath, levels, '')
+          }
+        }
+        return levels
+      }
+
+      // The path is [...nodePath, propertyName]. Dirty the node path.
+      const nodePath = op.path.slice(0, -1)
+      const propertyName = op.path[op.path.length - 1]
+
+      // Full node replacement: path ends at a keyed segment
+      if (isKeyedSegment(propertyName)) {
+        const levels = pathLevels(op.path)
+        // Dirty descendants of the new value
+        if (
+          op.value !== null &&
+          typeof op.value === 'object' &&
+          !Array.isArray(op.value)
+        ) {
+          const valueNode = op.value as Node
+          const scopedName = buildScopedName(context.value, nodePath)
+          collectDescendantPaths(
+            context,
+            valueNode,
+            op.path,
+            levels,
+            scopedName,
+          )
+        }
+        return levels
+      }
+
+      let dirtyPath = nodePath
+
+      // When _key changes, use the new key in the dirty path
+      if (propertyName === '_key' && typeof op.value === 'string') {
+        const lastSegment = dirtyPath[dirtyPath.length - 1]
         if (isKeyedSegment(lastSegment)) {
-          path = [...path.slice(0, -1), {_key: newKey}]
+          dirtyPath = [...dirtyPath.slice(0, -1), {_key: op.value}]
         }
       }
 
-      const levels = pathLevels(path)
+      const levels = pathLevels(dirtyPath)
 
-      // When set_node replaces a child array field, the new children
-      // need normalization. Dirty their paths and their descendants'
-      // paths so the normalizer visits them.
-      if (op.type === 'set_node') {
-        const childFieldName = getChildFieldName(context, path)
+      // When a child array field is replaced, dirty the new children
+      if (Array.isArray(op.value) && typeof propertyName === 'string') {
+        const childFieldName = getChildFieldName(context, nodePath)
 
-        if (childFieldName) {
-          const newChildren = (op.newProperties as Record<string, unknown>)[
-            childFieldName
-          ]
+        if (childFieldName === propertyName) {
+          const scopedName = buildScopedName(context.value, nodePath)
 
-          if (Array.isArray(newChildren)) {
-            const scopedName = buildScopedName(context.value, path)
+          for (let i = 0; i < op.value.length; i++) {
+            const child = op.value[i]
 
-            for (let i = 0; i < newChildren.length; i++) {
-              const child = newChildren[i]
-
-              if (typeof child !== 'object' || child === null) {
-                continue
-              }
-
-              if (!('_key' in child) || typeof child._key !== 'string') {
-                continue
-              }
-
-              const childNode = child as Node
-              const childPath: Path = [
-                ...path,
-                childFieldName,
-                {_key: childNode._key},
-              ]
-              levels.push(childPath)
-              collectDescendantPaths(
-                context,
-                childNode,
-                childPath,
-                levels,
-                scopedName,
-              )
+            if (typeof child !== 'object' || child === null) {
+              continue
             }
+
+            if (!('_key' in child) || typeof child._key !== 'string') {
+              continue
+            }
+
+            const childNode = child as Node
+            const childPath: Path = [
+              ...nodePath,
+              propertyName,
+              {_key: childNode._key},
+            ]
+            levels.push(childPath)
+            collectDescendantPaths(
+              context,
+              childNode,
+              childPath,
+              levels,
+              scopedName,
+            )
           }
         }
       }
 
       return levels
+    }
+
+    case 'unset': {
+      // The path is [...nodePath, propertyName]. Dirty the node path.
+      const nodePath = op.path.slice(0, -1)
+      return pathLevels(nodePath)
     }
 
     case 'insert_node': {

@@ -1516,4 +1516,98 @@ describe('container normalization', () => {
       ])
     })
   })
+
+  test('container block with no `_key` gets a key via numeric index', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const calloutKey = keyGenerator()
+
+    const patches: Array<Patch> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'hello', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <>
+          <PatchesPlugin patches={patches} />
+          <RendererPlugin renderers={calloutRenderers} />
+        </>
+      ),
+    })
+
+    // Insert a callout whose content block and span both lack _key.
+    // Normalization must assign keys using numeric indices at container depth.
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'insert',
+          path: [{_key: blockKey}],
+          position: 'after',
+          items: [
+            {
+              _type: 'callout',
+              _key: calloutKey,
+              content: [
+                {
+                  _type: 'block',
+                  children: [{_type: 'span', text: '', marks: []}],
+                  markDefs: [],
+                  style: 'normal',
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'hello', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'callout',
+          _key: calloutKey,
+          content: [
+            {
+              _type: 'block',
+              _key: 'k6',
+              children: [{_type: 'span', _key: 'k5', text: '', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ])
+      expect(patches).toEqual([
+        {
+          type: 'set',
+          path: [{_key: calloutKey}, 'content', 0, 'children', 0, '_key'],
+          value: 'k5',
+        },
+        {
+          type: 'set',
+          path: [{_key: calloutKey}, 'content', 0, '_key'],
+          value: 'k6',
+        },
+      ])
+    })
+  })
 })

@@ -1,11 +1,10 @@
-import {
-  applyAll,
-  type DiffMatchPatch,
-  type InsertPatch,
-  type Patch,
-  type SetIfMissingPatch,
-  type SetPatch,
-  type UnsetPatch,
+import type {
+  DiffMatchPatch,
+  InsertPatch,
+  Patch,
+  SetIfMissingPatch,
+  SetPatch,
+  UnsetPatch,
 } from '@portabletext/patches'
 import {
   isSpan,
@@ -26,15 +25,12 @@ import type {EditorSchema} from '../editor/editor-schema'
 import type {EditorContext} from '../editor/editor-snapshot'
 import {getChildren} from '../node-traversal/get-children'
 import {getNode} from '../node-traversal/get-node'
-import {pathRef} from '../slate/editor/path-ref'
 import type {Node} from '../slate/interfaces/node'
 import type {Path as SlatePath} from '../slate/interfaces/path'
-import {isObjectNode} from '../slate/node/is-object-node'
 import type {Path} from '../types/paths'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
-import {applyDeselect, applySelect} from './apply-selection'
-import {applySetNode} from './apply-set-node'
+import {applyDeselect} from './apply-selection'
 import {isEqualToEmptyEditor, toSlateBlock} from './values'
 
 function insertNodesSequentially(
@@ -270,274 +266,61 @@ function setPatch(
   editor: PortableTextSlateEditor,
   patch: SetPatch | SetIfMissingPatch,
 ) {
-  let value = patch.value
-
-  // Full value replacement (path [])
-  if (patch.path.length === 0) {
-    if (!Array.isArray(value)) {
-      return false
-    }
-
-    // setIfMissing at root is a noop when the editor already has content
-    if (patch.type === 'setIfMissing' && editor.children.length > 0) {
-      return false
-    }
-
-    const previousSelection = editor.selection
-
-    // Remove all existing blocks in reverse order
-    for (let i = editor.children.length - 1; i >= 0; i--) {
-      const node = editor.children[i]
-      if (node) {
-        editor.apply({
-          type: 'remove_node',
-          path: [{_key: node._key}],
-          node,
-        })
-      }
-    }
-
-    // Insert the new blocks
-    let previousInsertedBlock: Node | undefined
-    for (const block of value) {
-      const node = block as Node
-      if (previousInsertedBlock) {
-        editor.apply({
-          type: 'insert_node',
-          path: [{_key: previousInsertedBlock._key}],
-          node,
-          position: 'after',
-        })
-      } else {
-        editor.apply({
-          type: 'insert_node',
-          path: [0],
-          node,
-          position: 'before',
-        })
-      }
-      previousInsertedBlock = node
-    }
-
-    // Restore the selection if it's still valid
-    if (previousSelection) {
-      applySelect(editor, previousSelection)
-    }
-
-    return true
-  }
-
-  if (typeof patch.path[3] === 'string') {
-    value = {}
-    value[patch.path[3]] = patch.value
-  }
-
-  const block = findBlock(editor.children, patch.path)
-
-  if (!block) {
+  // setIfMissing at root is a noop when the editor already has content
+  if (
+    patch.type === 'setIfMissing' &&
+    patch.path.length === 0 &&
+    editor.children.length > 0
+  ) {
     return false
   }
 
-  const blockIsTextBlock = isTextBlock({schema: editor.schema}, block.node)
-
-  if (patch.path.length === 1) {
-    const updatedBlock = applyAll(block.node, [
-      {
-        ...patch,
-        path: patch.path.slice(1),
-      },
-    ])
-
-    if (
-      isTextBlock({schema: editor.schema}, block.node) &&
-      isTextBlock({schema: editor.schema}, updatedBlock)
-    ) {
-      applySetNode(editor, updatedBlock, [{_key: block.node._key}])
-
-      const previousSelection = editor.selection
-
-      // Remove the previous children in reverse order (highest index first)
-      const children = getChildren(editor, [{_key: block.node._key}])
-
-      const childPaths = Array.from(children.reverse(), (entry) =>
-        pathRef(editor, entry.path),
-      )
-      for (const pathRef of childPaths) {
-        const childPath = pathRef.unref()!
-        if (childPath) {
-          const childNodeEntry = getNode(editor, childPath)
-          if (!childNodeEntry) {
-            continue
+  // For setIfMissing, check if the value at the target path already exists
+  if (patch.type === 'setIfMissing' && patch.path.length > 0) {
+    const block = findBlock(editor.children, patch.path)
+    if (block) {
+      // Walk the remaining path (after the block segment) to check existence
+      let current: unknown = block.node
+      for (let i = 1; i < patch.path.length; i++) {
+        const segment = patch.path[i]
+        if (current === null || current === undefined) {
+          break
+        }
+        if (typeof segment === 'string') {
+          current = (current as Record<string, unknown>)[segment]
+        } else if (isKeyedSegment(segment)) {
+          if (!Array.isArray(current)) {
+            current = undefined
+            break
           }
-          editor.apply({
-            type: 'remove_node',
-            path: childPath,
-            node: childNodeEntry.node,
-          })
+          current = (current as Array<Record<string, unknown>>).find(
+            (item) => item['_key'] === segment._key,
+          )
+        } else if (typeof segment === 'number') {
+          if (!Array.isArray(current)) {
+            current = undefined
+            break
+          }
+          current = (current as Array<unknown>)[segment]
         }
       }
-
-      // Insert the new children
-      insertNodesSequentially(
-        editor,
-        updatedBlock.children,
-        [{_key: block.node._key}, 'children', 0],
-        'before',
-        [{_key: block.node._key}, 'children'],
-      )
-
-      // Restore the selection
-      if (previousSelection) {
-        applySelect(editor, previousSelection)
-      }
-
-      return true
-    } else {
-      applySetNode(editor, updatedBlock, [{_key: block.node._key}])
-
-      return true
-    }
-  }
-
-  if (
-    blockIsTextBlock &&
-    (patch.path.length === 2 || patch.path[1] !== 'children')
-  ) {
-    const updatedBlock = applyAll(block.node, [
-      {
-        ...patch,
-        path: patch.path.slice(1),
-      },
-    ])
-
-    applySetNode(editor, updatedBlock, [{_key: block.node._key}])
-
-    return true
-  }
-
-  const child = findBlockChild(block, patch.path, editor.schema)
-
-  // If this is targeting a text block child
-  if (blockIsTextBlock && child) {
-    if (isSpan({schema: editor.schema}, child.node)) {
-      if (
-        value !== null &&
-        typeof value === 'object' &&
-        'text' in value &&
-        typeof value['text'] === 'string'
-      ) {
-        if (patch.type === 'setIfMissing') {
-          return false
-        }
-
-        const oldText = child.node.text
-        const newText = value['text'] as string
-        if (oldText !== newText) {
-          editor.apply({
-            type: 'remove_text',
-            path: [
-              {_key: block.node._key},
-              'children',
-              {_key: child.node._key},
-            ],
-            offset: 0,
-            text: oldText,
-          })
-          editor.apply({
-            type: 'insert_text',
-            path: [
-              {_key: block.node._key},
-              'children',
-              {_key: child.node._key},
-            ],
-            offset: 0,
-            text: newText,
-          })
-          // call OnChange here to emit the new selection
-          // the user's selection might be interfering with
-          editor.onChange()
-        }
-      } else {
-        // Setting non-text span property
-
-        const propPath = patch.path.slice(3)
-        const propEntry = propPath.at(0)
-        const reservedProps = ['_key', '_type', 'text']
-
-        if (propEntry === undefined) {
-          return false
-        }
-
-        if (
-          typeof propEntry === 'string' &&
-          reservedProps.includes(propEntry)
-        ) {
-          return false
-        }
-
-        const newNode = applyAll(child.node, [
-          {
-            ...patch,
-            path: propPath,
-          },
-        ])
-
-        applySetNode(editor, newNode, [
-          {_key: block.node._key},
-          'children',
-          {_key: child.node._key},
-        ])
-      }
-    } else {
-      // Setting inline object property
-
-      const propPath = patch.path.slice(3)
-      const reservedProps = ['_key', '_type', 'children']
-      const propEntry = propPath.at(0)
-
-      if (propEntry === undefined) {
+      if (current !== undefined) {
         return false
       }
-
-      if (typeof propEntry === 'string' && reservedProps.includes(propEntry)) {
-        return false
-      }
-
-      const newNode = applyAll(child.node, [
-        {
-          ...patch,
-          path: patch.path.slice(3),
-        },
-      ])
-
-      applySetNode(editor, newNode, [
-        {_key: block.node._key},
-        'children',
-        {_key: child.node._key},
-      ])
-    }
-
-    return true
-  } else if (block && !blockIsTextBlock) {
-    if (patch.path.length > 1 && patch.path[1] !== 'children') {
-      const newVal = applyAll(block.node, [
-        {
-          ...patch,
-          path: patch.path.slice(1),
-        },
-      ])
-
-      applySetNode(editor, newVal, [{_key: block.node._key}])
-    } else {
-      return false
     }
   }
+
+  editor.apply({
+    type: 'set',
+    path: patch.path,
+    value: patch.value,
+  })
 
   return true
 }
 
 function unsetPatch(editor: PortableTextSlateEditor, patch: UnsetPatch) {
-  // Value
+  // Value unset (path [])
   if (patch.path.length === 0) {
     applyDeselect(editor)
 
@@ -559,221 +342,37 @@ function unsetPatch(editor: PortableTextSlateEditor, patch: UnsetPatch) {
     return true
   }
 
-  const block = findBlock(editor.children, patch.path)
+  // Check if the path ends at a keyed segment (structural: removing a node)
+  const lastSegment = patch.path.at(-1)
 
-  if (!block) {
+  if (lastSegment === undefined) {
     return false
   }
 
-  // Single blocks
-  if (patch.path.length === 1) {
-    const blockNodeEntry = getNode(editor, [{_key: block.node._key}])
-    if (!blockNodeEntry) {
+  // Removing a node (block or child): structural operation
+  if (isKeyedSegment(lastSegment) || typeof lastSegment === 'number') {
+    const nodeEntry = getNode(editor, patch.path)
+
+    if (!nodeEntry) {
       return false
     }
+
     editor.apply({
       type: 'remove_node',
-      path: [{_key: blockNodeEntry.node._key}],
-      node: blockNodeEntry.node,
+      path: nodeEntry.path,
+      node: nodeEntry.node,
     })
 
     return true
   }
 
-  const child = findBlockChild(block, patch.path, editor.schema)
+  // Property unset: pass through to the apply layer
+  editor.apply({
+    type: 'unset',
+    path: patch.path,
+  })
 
-  // Unset on text block children
-  if (isTextBlock({schema: editor.schema}, block.node) && child) {
-    if (patch.path[1] === 'children' && patch.path.length === 3) {
-      const childNodeEntry2 = getNode(editor, [
-        {_key: block.node._key},
-        'children',
-        {_key: child.node._key},
-      ])
-      if (!childNodeEntry2) {
-        return false
-      }
-      editor.apply({
-        type: 'remove_node',
-        path: [
-          {_key: block.node._key},
-          'children',
-          {_key: childNodeEntry2.node._key},
-        ],
-        node: childNodeEntry2.node,
-      })
-
-      return true
-    }
-  }
-
-  if (
-    child &&
-    (isTextBlock({schema: editor.schema}, child.node) ||
-      isObjectNode({schema: editor.schema}, child.node))
-  ) {
-    // Unsetting inline object property
-
-    const propPath = patch.path.slice(3)
-    const propEntry = propPath.at(0)
-    const reservedProps = ['_key', '_type', 'children']
-
-    if (propEntry === undefined) {
-      return false
-    }
-
-    if (typeof propEntry === 'string' && reservedProps.includes(propEntry)) {
-      return false
-    }
-
-    const newNode = applyAll(child.node, [
-      {
-        ...patch,
-        path: patch.path.slice(3),
-      },
-    ])
-    const newKeys = Object.keys(newNode)
-
-    const removedProperties = Object.keys(child.node).filter(
-      (property) => !newKeys.includes(property),
-    )
-
-    if (removedProperties.length > 0) {
-      const unsetProps: Record<string, null> = {}
-      for (const prop of removedProperties) {
-        unsetProps[prop] = null
-      }
-      applySetNode(editor, unsetProps, [
-        {_key: block.node._key},
-        'children',
-        {_key: child.node._key},
-      ])
-    } else {
-      applySetNode(editor, newNode, [
-        {_key: block.node._key},
-        'children',
-        {_key: child.node._key},
-      ])
-    }
-
-    return true
-  }
-
-  if (child && isSpan({schema: editor.schema}, child.node)) {
-    const propPath = patch.path.slice(3)
-    const propEntry = propPath.at(0)
-    const reservedProps = ['_key', '_type']
-
-    if (propEntry === undefined) {
-      return false
-    }
-
-    if (typeof propEntry === 'string' && reservedProps.includes(propEntry)) {
-      return false
-    }
-
-    if (typeof propEntry === 'string' && propEntry === 'text') {
-      editor.apply({
-        type: 'remove_text',
-        path: [{_key: block.node._key}, 'children', {_key: child.node._key}],
-        offset: 0,
-        text: child.node.text,
-      })
-
-      return true
-    }
-
-    const newNode = applyAll(child.node, [
-      {
-        ...patch,
-        path: propPath,
-      },
-    ])
-    const newKeys = Object.keys(newNode)
-
-    const removedProperties = Object.keys(child.node).filter(
-      (property) => !newKeys.includes(property),
-    )
-
-    const unsetProps: Record<string, null> = {}
-    for (const prop of removedProperties) {
-      unsetProps[prop] = null
-    }
-    applySetNode(editor, unsetProps, [
-      {_key: block.node._key},
-      'children',
-      {_key: child.node._key},
-    ])
-
-    return true
-  }
-
-  if (!child) {
-    if (!isTextBlock({schema: editor.schema}, block.node)) {
-      const newVal = applyAll(block.node, [
-        {
-          ...patch,
-          path: patch.path.slice(1),
-        },
-      ])
-      const newKeys = Object.keys(newVal)
-
-      const removedProperties = Object.keys(block.node).filter(
-        (property) => !newKeys.includes(property),
-      )
-
-      if (removedProperties.length > 0) {
-        const unsetProps: Record<string, null> = {}
-        for (const prop of removedProperties) {
-          unsetProps[prop] = null
-        }
-        applySetNode(editor, unsetProps, [{_key: block.node._key}])
-      } else {
-        applySetNode(editor, newVal, [{_key: block.node._key}])
-      }
-
-      return true
-    }
-
-    if (isTextBlock({schema: editor.schema}, block.node)) {
-      const propPath = patch.path.slice(1)
-      const propEntry = propPath.at(0)
-      const reservedProps = ['_key', '_type', 'children']
-
-      if (propEntry === undefined) {
-        return false
-      }
-
-      if (typeof propEntry !== 'string') {
-        return false
-      }
-
-      if (reservedProps.includes(propEntry)) {
-        return false
-      }
-
-      if (propPath.length === 1) {
-        applySetNode(editor, {[propEntry]: null}, [{_key: block.node._key}])
-      } else {
-        const updatedBlock = applyAll(block.node, [
-          {
-            ...patch,
-            path: propPath,
-          },
-        ]) as unknown as Record<string, unknown>
-
-        applySetNode(editor, {[propEntry]: updatedBlock[propEntry]}, [
-          {_key: block.node._key},
-        ])
-      }
-
-      return true
-    }
-
-    return false
-  }
-
-  return false
+  return true
 }
 
 function findBlock(

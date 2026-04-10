@@ -1,6 +1,6 @@
 import {isSpan} from '@portabletext/schema'
-import {applySetNode} from '../internal-utils/apply-set-node'
 import {safeStringify} from '../internal-utils/safe-json'
+import {setNodeProperties} from '../internal-utils/set-node-properties'
 import {getNode} from '../node-traversal/get-node'
 import {isObjectNode} from '../slate/node/is-object-node'
 import type {OperationImplementation} from './operation.types'
@@ -34,7 +34,7 @@ export const childUnsetOperationImplementation: OperationImplementation<
       newNode[prop] = null
     }
 
-    applySetNode(operation.editor, newNode, childPath)
+    setNodeProperties(operation.editor, newNode, childPath)
 
     return
   }
@@ -51,7 +51,7 @@ export const childUnsetOperationImplementation: OperationImplementation<
         unsetProps[prop] = null
       }
     }
-    applySetNode(operation.editor, unsetProps, childPath)
+    setNodeProperties(operation.editor, unsetProps, childPath)
 
     return
   }

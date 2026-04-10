@@ -1,12 +1,19 @@
+import {
+  applyAll,
+  set as setPatchHelper,
+  unset as unsetPatchHelper,
+} from '@portabletext/patches'
 import type {PortableTextSpan} from '@portabletext/schema'
 import {isSpan} from '@portabletext/schema'
 import {safeStringify} from '../../internal-utils/safe-json'
+import {getNode} from '../../node-traversal/get-node'
 import {getNodes} from '../../node-traversal/get-nodes'
 import type {EditorSelection} from '../../types/editor'
 import {isKeyedSegment} from '../../utils/util.is-keyed-segment'
 import type {Editor} from '../interfaces/editor'
 import type {Node, NodeEntry} from '../interfaces/node'
 import type {Operation} from '../interfaces/operation'
+import type {Path} from '../interfaces/path'
 import type {Range} from '../interfaces/range'
 import {commonPath} from '../path/common-path'
 import {comparePaths} from '../path/compare-paths'
@@ -244,50 +251,196 @@ export function applyOperation(editor: Editor, op: Operation): void {
       break
     }
 
-    case 'set_node': {
-      const {path, properties, newProperties} = op
+    case 'set': {
+      const {path, value} = op
 
+      // Root-level value replacement: set editor.children directly
       if (path.length === 0) {
-        throw new Error(`Cannot set properties on the root node!`)
+        if (Array.isArray(value)) {
+          ;(editor as {children: Node[]}).children = value as Node[]
+          // Rebuild blockIndexMap
+          editor.blockIndexMap.clear()
+          for (let i = 0; i < editor.children.length; i++) {
+            const child = editor.children[i]
+            if (child) {
+              editor.blockIndexMap.set(child._key, i)
+            }
+          }
+        }
+        transformSelection = true
+        break
       }
 
-      modifyDescendant(editor, path, (node) => {
-        const newNode = {...node}
+      // Split path into node path (up to last keyed/numeric segment)
+      // and property path (trailing string segments)
+      const {nodePath: setNodePath, propertyPath: setPropertyPath} =
+        splitNodeAndPropertyPath(path)
 
-        for (const key in newProperties) {
-          const value = newProperties[key as keyof Node]
+      if (setNodePath.length === 0) {
+        break
+      }
 
-          if (value == null) {
-            delete newNode[key as keyof Node]
-          } else {
-            newNode[key as keyof Node] = value
+      if (setPropertyPath.length === 0) {
+        // Full node replacement: replace the node at setNodePath with value
+        if (
+          value !== null &&
+          typeof value === 'object' &&
+          !Array.isArray(value)
+        ) {
+          modifyDescendant(editor, setNodePath, () => {
+            return value as Node
+          })
+        }
+        transformSelection = true
+        break
+      }
+
+      // Check if the node path resolves to a known node
+      const setNodeEntry = getNode(
+        {
+          schema: editor.schema,
+          editableTypes: editor.editableTypes,
+          value: editor.children,
+          blockIndexMap: editor.blockIndexMap,
+        },
+        setNodePath,
+      )
+
+      if (setNodeEntry) {
+        // Node found: use modifyDescendant
+        if (setPropertyPath.length === 1) {
+          const propertyName = setPropertyPath[0]!
+          modifyDescendant(editor, setNodePath, (node) => {
+            return {...node, [propertyName]: value} as typeof node
+          })
+
+          // Update blockIndexMap when _key changes on a root-level block
+          if (propertyName === '_key' && setNodePath.length === 1) {
+            if (op.inverse) {
+              const oldKey =
+                op.inverse.type === 'set' ? op.inverse.value : undefined
+              const newKey = value
+              if (typeof oldKey === 'string' && typeof newKey === 'string') {
+                const blockIndex = editor.blockIndexMap.get(oldKey)
+                if (blockIndex !== undefined) {
+                  editor.blockIndexMap.delete(oldKey)
+                  editor.blockIndexMap.set(newKey, blockIndex)
+                }
+              }
+            } else {
+              // No inverse data: full rebuild
+              editor.blockIndexMap.clear()
+              for (let i = 0; i < editor.children.length; i++) {
+                const child = editor.children[i]
+                if (child) {
+                  editor.blockIndexMap.set(child._key, i)
+                }
+              }
+            }
           }
+        } else {
+          // Multiple property segments: deep set on the resolved node
+          modifyDescendant(editor, setNodePath, (node) => {
+            return deepSet(node, setPropertyPath, value)
+          })
+        }
+      } else {
+        // Node not found (e.g., markDefs path): apply on the root block
+        const blockKey = findBlockKey(path)
+        if (!blockKey) {
+          break
         }
 
-        // properties that were previously defined, but are now missing, must be deleted
-        for (const key in properties) {
-          if (!newProperties.hasOwnProperty(key)) {
-            delete newNode[key as keyof Node]
-          }
+        const blockIndex = resolveBlockIndex(editor, blockKey)
+        if (blockIndex === -1) {
+          break
         }
 
-        return newNode
-      })
-
-      if (
-        path.length === 1 &&
-        '_key' in newProperties &&
-        newProperties._key !== properties._key
-      ) {
-        const oldKey = properties._key
-        const newKey = newProperties._key
-        if (typeof oldKey === 'string' && typeof newKey === 'string') {
-          const index = editor.blockIndexMap.get(oldKey)
-          if (index !== undefined) {
-            editor.blockIndexMap.delete(oldKey)
-            editor.blockIndexMap.set(newKey, index)
-          }
+        const block = editor.children[blockIndex]
+        if (!block) {
+          break
         }
+
+        const updatedBlock = applyAll(block, [
+          setPatchHelper(value, path.slice(1)),
+        ])
+
+        const newChildren = editor.children.slice()
+        newChildren[blockIndex] = updatedBlock
+        ;(editor as {children: Node[]}).children = newChildren
+      }
+
+      transformSelection = true
+      break
+    }
+
+    case 'unset': {
+      const {path} = op
+
+      // Root-level unset: remove all children
+      if (path.length === 0) {
+        ;(editor as {children: Node[]}).children = []
+        editor.blockIndexMap.clear()
+        transformSelection = true
+        break
+      }
+
+      // Split path into node path and property path
+      const {nodePath: unsetNodePath, propertyPath: unsetPropertyPath} =
+        splitNodeAndPropertyPath(path)
+
+      if (unsetPropertyPath.length === 0 || unsetNodePath.length === 0) {
+        break
+      }
+
+      // Check if the node path resolves to a known node
+      const unsetNodeEntry = getNode(
+        {
+          schema: editor.schema,
+          editableTypes: editor.editableTypes,
+          value: editor.children,
+          blockIndexMap: editor.blockIndexMap,
+        },
+        unsetNodePath,
+      )
+
+      if (unsetNodeEntry) {
+        // Node found: use modifyDescendant
+        if (unsetPropertyPath.length === 1) {
+          const propertyName = unsetPropertyPath[0]!
+          modifyDescendant(editor, unsetNodePath, (node) => {
+            const newNode = {...node}
+            delete (newNode as Record<string, unknown>)[propertyName]
+            return newNode
+          })
+        } else {
+          // Multiple property segments: deep unset on the resolved node
+          modifyDescendant(editor, unsetNodePath, (node) => {
+            return deepUnset(node, unsetPropertyPath)
+          })
+        }
+      } else {
+        // Node not found (e.g., markDefs path): apply on the root block
+        const blockKey = findBlockKey(path)
+        if (!blockKey) {
+          break
+        }
+
+        const blockIndex = resolveBlockIndex(editor, blockKey)
+        if (blockIndex === -1) {
+          break
+        }
+
+        const block = editor.children[blockIndex]
+        if (!block) {
+          break
+        }
+
+        const updatedBlock = applyAll(block, [unsetPatchHelper(path.slice(1))])
+
+        const newChildren = editor.children.slice()
+        newChildren[blockIndex] = updatedBlock
+        ;(editor as {children: Node[]}).children = newChildren
       }
 
       transformSelection = true
@@ -376,4 +529,178 @@ function resolveChildIndex(
     }
   }
   return children.findIndex((child) => child._key === key)
+}
+
+/**
+ * Extract the block key from the first segment of a path.
+ */
+function findBlockKey(path: Path): string | undefined {
+  const firstSegment = path[0]
+  if (isKeyedSegment(firstSegment)) {
+    return firstSegment._key
+  }
+  return undefined
+}
+
+/**
+ * Resolve a block index by key, using blockIndexMap for O(1) lookup.
+ */
+function resolveBlockIndex(editor: Editor, blockKey: string): number {
+  const mapIndex = editor.blockIndexMap.get(blockKey)
+  if (mapIndex !== undefined) {
+    return mapIndex
+  }
+  return editor.children.findIndex((child) => child._key === blockKey)
+}
+
+/**
+ * Split a path into the node path (up to and including the last
+ * keyed/numeric segment) and the property path (trailing string segments).
+ */
+function splitNodeAndPropertyPath(path: Path): {
+  nodePath: Path
+  propertyPath: string[]
+} {
+  let lastKeyedOrNumericIndex = -1
+
+  for (let i = path.length - 1; i >= 0; i--) {
+    const segment = path[i]
+    if (isKeyedSegment(segment) || typeof segment === 'number') {
+      lastKeyedOrNumericIndex = i
+      break
+    }
+  }
+
+  if (lastKeyedOrNumericIndex === -1) {
+    return {
+      nodePath: [],
+      propertyPath: path.filter(
+        (segment): segment is string => typeof segment === 'string',
+      ),
+    }
+  }
+
+  const nodePath = path.slice(0, lastKeyedOrNumericIndex + 1)
+  const propertyPath = path
+    .slice(lastKeyedOrNumericIndex + 1)
+    .filter((segment): segment is string => typeof segment === 'string')
+
+  return {nodePath, propertyPath}
+}
+
+/**
+ * Deep set a value at a property path on a node.
+ * Returns a new node with the value set at the nested path.
+ */
+function deepSet<N extends Node>(
+  node: N,
+  propertyPath: string[],
+  value: unknown,
+): N {
+  if (propertyPath.length === 0) {
+    return node
+  }
+
+  if (propertyPath.length === 1) {
+    return {...node, [propertyPath[0]!]: value}
+  }
+
+  const [head, ...tail] = propertyPath
+  const currentValue = (node as Record<string, unknown>)[head!]
+  const nested =
+    currentValue !== null && typeof currentValue === 'object'
+      ? currentValue
+      : {}
+
+  return {
+    ...node,
+    [head!]: deepSetObject(nested as Record<string, unknown>, tail, value),
+  }
+}
+
+/**
+ * Deep set a value at a property path on a plain object.
+ */
+function deepSetObject(
+  object: Record<string, unknown>,
+  propertyPath: string[],
+  value: unknown,
+): Record<string, unknown> {
+  if (propertyPath.length === 0) {
+    return object
+  }
+
+  if (propertyPath.length === 1) {
+    return {...object, [propertyPath[0]!]: value}
+  }
+
+  const [head, ...tail] = propertyPath
+  const currentValue = object[head!]
+  const nested =
+    currentValue !== null && typeof currentValue === 'object'
+      ? currentValue
+      : {}
+
+  return {
+    ...object,
+    [head!]: deepSetObject(nested as Record<string, unknown>, tail, value),
+  }
+}
+
+/**
+ * Deep unset a value at a property path on a node.
+ * Returns a new node with the value removed at the nested path.
+ */
+function deepUnset<N extends Node>(node: N, propertyPath: string[]): N {
+  if (propertyPath.length === 0) {
+    return node
+  }
+
+  if (propertyPath.length === 1) {
+    const newNode = {...node}
+    delete (newNode as Record<string, unknown>)[propertyPath[0]!]
+    return newNode
+  }
+
+  const [head, ...tail] = propertyPath
+  const currentValue = (node as Record<string, unknown>)[head!]
+
+  if (currentValue === null || typeof currentValue !== 'object') {
+    return node
+  }
+
+  return {
+    ...node,
+    [head!]: deepUnsetObject(currentValue as Record<string, unknown>, tail),
+  }
+}
+
+/**
+ * Deep unset a value at a property path on a plain object.
+ */
+function deepUnsetObject(
+  object: Record<string, unknown>,
+  propertyPath: string[],
+): Record<string, unknown> {
+  if (propertyPath.length === 0) {
+    return object
+  }
+
+  if (propertyPath.length === 1) {
+    const newObject = {...object}
+    delete newObject[propertyPath[0]!]
+    return newObject
+  }
+
+  const [head, ...tail] = propertyPath
+  const currentValue = object[head!]
+
+  if (currentValue === null || typeof currentValue !== 'object') {
+    return object
+  }
+
+  return {
+    ...object,
+    [head!]: deepUnsetObject(currentValue as Record<string, unknown>, tail),
+  }
 }

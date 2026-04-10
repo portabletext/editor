@@ -296,7 +296,7 @@ describe('event.child.set', () => {
       return expect(patches).toEqual([
         {
           origin: 'local',
-          path: [{_key: blockKey}, 'children', 1, '_key'],
+          path: [{_key: blockKey}, 'children', {_key: cellKey}, '_key'],
           type: 'set',
           value: 'new-cell-key',
         },

@@ -30,11 +30,48 @@ export type RemoveTextOperation = {
   text: string
 }
 
-export type SetNodeOperation = {
-  type: 'set_node'
+/**
+ * Data for a `set` inverse (no nested inverse field).
+ */
+export type SetOperationData = {
+  type: 'set'
   path: Path
-  properties: Partial<Node>
-  newProperties: Partial<Node>
+  value: unknown
+}
+
+/**
+ * Data for an `unset` inverse (no nested inverse field).
+ */
+export type UnsetOperationData = {
+  type: 'unset'
+  path: Path
+}
+
+/**
+ * Set a property on a node. The path is `[...nodePath, propertyName]`.
+ *
+ * When `inverse` is provided, the operation can be undone. Remote operations
+ * (applied via `withRemoteChanges`) skip the history plugin and do not need
+ * inverse data.
+ */
+export type SetOperation = {
+  type: 'set'
+  path: Path
+  value: unknown
+  inverse?: SetOperationData | UnsetOperationData
+}
+
+/**
+ * Remove a property from a node. The path is `[...nodePath, propertyName]`.
+ *
+ * When `inverse` is provided, the operation can be undone. Remote operations
+ * (applied via `withRemoteChanges`) skip the history plugin and do not need
+ * inverse data.
+ */
+export type UnsetOperation = {
+  type: 'unset'
+  path: Path
+  inverse?: SetOperationData
 }
 
 type SetSelectionOperation =
@@ -57,7 +94,8 @@ type SetSelectionOperation =
 export type Operation =
   | InsertNodeOperation
   | RemoveNodeOperation
-  | SetNodeOperation
+  | SetOperation
+  | UnsetOperation
   | SetSelectionOperation
   | InsertTextOperation
   | RemoveTextOperation

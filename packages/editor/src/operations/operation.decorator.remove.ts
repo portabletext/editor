@@ -1,7 +1,7 @@
 import {isSpan, isTextBlock} from '@portabletext/schema'
 import {resolveSelection} from '../internal-utils/apply-selection'
-import {applySetNode} from '../internal-utils/apply-set-node'
 import {applySplitNode} from '../internal-utils/apply-split-node'
+import {setNodeProperties} from '../internal-utils/set-node-properties'
 import {getNode} from '../node-traversal/get-node'
 import {getNodes} from '../node-traversal/get-nodes'
 import {isLeaf} from '../node-traversal/is-leaf'
@@ -87,7 +87,7 @@ export const decoratorRemoveOperationImplementation: OperationImplementation<
             isTextBlock({schema: editor.schema}, block) &&
             block.children.includes(node)
           ) {
-            applySetNode(
+            setNodeProperties(
               editor,
               {
                 marks: (Array.isArray(node.marks) ? node.marks : []).filter(
@@ -127,7 +127,11 @@ export const decoratorRemoveOperationImplementation: OperationImplementation<
           match: (node) => isSpan({schema: editor.schema}, node),
         }),
       )) {
-        applySetNode(editor, {marks: existingMarksWithoutDecorator}, spanPath)
+        setNodeProperties(
+          editor,
+          {marks: existingMarksWithoutDecorator},
+          spanPath,
+        )
       }
     } else {
       editor.decoratorState[mark] = false

@@ -1,6 +1,6 @@
 import {applyAll, set} from '@portabletext/patches'
-import {applySetNode} from '../internal-utils/apply-set-node'
 import {safeStringify} from '../internal-utils/safe-json'
+import {setNodeProperties} from '../internal-utils/set-node-properties'
 import {isTextBlockNode} from '../slate/node/is-text-block-node'
 import {parseMarkDefs} from '../utils/parse-blocks'
 import type {OperationImplementation} from './operation.types'
@@ -77,7 +77,9 @@ export const blockSetOperationImplementation: OperationImplementation<
       }
     }
 
-    applySetNode(operation.editor, filteredProps, [{_key: slateBlock._key}])
+    setNodeProperties(operation.editor, filteredProps, [
+      {_key: slateBlock._key},
+    ])
   } else {
     const schemaDefinition = context.schema.blockObjects.find(
       (definition) => definition.name === slateBlock._type,
@@ -105,6 +107,8 @@ export const blockSetOperationImplementation: OperationImplementation<
 
     const updatedSlateBlock = applyAll(slateBlock, patches)
 
-    applySetNode(operation.editor, updatedSlateBlock, [{_key: slateBlock._key}])
+    setNodeProperties(operation.editor, updatedSlateBlock, [
+      {_key: slateBlock._key},
+    ])
   }
 }

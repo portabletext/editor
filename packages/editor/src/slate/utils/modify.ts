@@ -103,9 +103,13 @@ export const modifyDescendant = <N extends Node>(
         return
       }
       fieldNames.push(result.fieldName)
-      const child = result.children.find(
-        (c) => c._key === keyedSegments[i]!._key,
-      )
+      // Use numeric index when available (handles duplicate keys where
+      // keyed lookup would find the wrong sibling).
+      const numericIndex = numericIndices.get(i)
+      const child =
+        numericIndex !== undefined
+          ? result.children[numericIndex]
+          : result.children.find((c) => c._key === keyedSegments[i]!._key)
       if (!child) {
         return
       }
@@ -120,7 +124,24 @@ export const modifyDescendant = <N extends Node>(
   for (let level = keyedSegments.length - 2; level >= 0; level--) {
     const childKey = keyedSegments[level + 1]!._key
     const fieldName = fieldNames[level + 1]!
-    const ancestorPath = path.slice(0, path.indexOf(keyedSegments[level]!) + 1)
+
+    // Build ancestor path from the original path by finding the segment
+    // at the given keyed level. We count non-string segments to map from
+    // keyed level to original path index.
+    let ancestorPathEnd = -1
+    let keyedCount = 0
+    for (let pi = 0; pi < path.length; pi++) {
+      if (typeof path[pi] !== 'string') {
+        if (keyedCount === level) {
+          ancestorPathEnd = pi + 1
+          break
+        }
+        keyedCount++
+      }
+    }
+    const ancestorPath =
+      ancestorPathEnd > 0 ? path.slice(0, ancestorPathEnd) : []
+
     const ancestorEntry = getNode(
       {
         ...context,

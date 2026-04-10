@@ -409,4 +409,68 @@ describe('renderBlock', () => {
       expect(renderBlockMountEvents).toEqual(['mount'])
     })
   })
+
+  test('Keyless block receives a valid `_key` from normalization before render', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+
+    const renderBlockValues: Array<PortableTextBlock> = []
+    const renderBlock = (props: BlockRenderProps) => {
+      renderBlockValues.push(props.value)
+      return props.children
+    }
+
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'hello', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      editableProps: {renderBlock},
+    })
+
+    const countBefore = renderBlockValues.length
+
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'insert',
+          path: [{_key: blockKey}],
+          position: 'after',
+          items: [
+            {
+              _type: 'block',
+              children: [{_type: 'span', text: '', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    const normalizedBlock = {
+      _type: 'block',
+      _key: 'k5',
+      children: [{_type: 'span', _key: 'k4', text: '', marks: []}],
+      markDefs: [],
+      style: 'normal',
+    }
+
+    await vi.waitFor(() => {
+      expect(renderBlockValues.slice(countBefore)).toEqual([normalizedBlock])
+
+      expect(
+        locator.element().querySelector('[data-pt-path=\'[_key=="k5"]\']'),
+      ).not.toBeNull()
+    })
+  })
 })
