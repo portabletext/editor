@@ -175,7 +175,7 @@ export type SyntheticBehaviorEvent =
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'insert.node'>
-      node: Node
+      value: Node
       at: Path
       position: 'before' | 'after'
     }
@@ -198,7 +198,7 @@ export type SyntheticBehaviorEvent =
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'remove.node'>
-      node: Node
+      value: Node
       at: Path
     }
   | {
