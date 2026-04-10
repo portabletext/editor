@@ -84,7 +84,6 @@ const syntheticBehaviorEventTypes = [
   'remove.node',
   'select',
   'set',
-  'unset',
 ] as const
 
 type SyntheticBehaviorEventType =
@@ -198,6 +197,7 @@ export type SyntheticBehaviorEvent =
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'remove.node'>
+      node: Node
       at: Path
     }
   | {
@@ -207,12 +207,8 @@ export type SyntheticBehaviorEvent =
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'set'>
       at: Path
-      props: Record<string, unknown>
-    }
-  | {
-      type: StrictExtract<SyntheticBehaviorEventType, 'unset'>
-      at: Path
-      props: Array<string>
+      properties: Partial<Node>
+      newProperties: Partial<Node>
     }
   | AbstractBehaviorEvent
 

@@ -26,7 +26,6 @@ import type {
   OperationContext,
   OperationImplementations,
 } from './operation.types'
-import {unsetOperationImplementation} from './operation.unset'
 
 const operationImplementations: OperationImplementations = {
   'annotation.add': addAnnotationOperationImplementation,
@@ -50,7 +49,6 @@ const operationImplementations: OperationImplementations = {
   'remove.node': removeNodeOperationImplementation,
   'select': selectOperationImplementation,
   'set': setOperationImplementation,
-  'unset': unsetOperationImplementation,
 }
 
 export function performOperation({
