@@ -9,6 +9,7 @@ import {
 import type {PortableTextBlock} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
 import {getSpanNode} from '../node-traversal/get-span-node'
+import type {EditableTypes} from '../schema/editable-types'
 import type {Node} from '../slate/interfaces/node'
 import type {
   InsertNodeOperation,
@@ -19,8 +20,15 @@ import type {
 import type {Path} from '../types/paths'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 
-function spanContext(schema: EditorSchema, value: Array<Node>) {
-  return {schema, editableTypes: new Set<string>(), value}
+function spanContext(
+  schema: EditorSchema,
+  value: Array<Node>,
+): {
+  schema: EditorSchema
+  editableTypes: EditableTypes
+  value: Array<Node>
+} {
+  return {schema, editableTypes: new Map(), value}
 }
 
 export function textPatch(

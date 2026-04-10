@@ -10,7 +10,6 @@ import {
   useContainerScope,
   type ContainerScope,
 } from '../../../editor/container-scope-context'
-import {resolveChildArrayField} from '../../../schema/resolve-child-array-field'
 import {
   isElementDecorationsEqual,
   splitDecorationsByChild,
@@ -86,23 +85,18 @@ const useChildren = (props: {
       ? `${containerScope.name}.${node._type}`
       : node._type
 
-    if (editor.editableTypes.has(scopedKey)) {
-      const arrayField = resolveChildArrayField(
-        {schema: editor.schema, scope: containerScope?.schemaScope},
-        node,
-      )
+    const arrayField = editor.editableTypes.get(scopedKey)?.[0]
 
-      if (arrayField) {
-        const fieldValue = (node as Record<string, unknown>)[arrayField.name]
-        if (Array.isArray(fieldValue)) {
-          children = fieldValue as Array<Node>
-          childFieldName = arrayField.name
-        }
+    if (arrayField) {
+      const fieldValue = (node as Record<string, unknown>)[arrayField.name]
+      if (Array.isArray(fieldValue)) {
+        children = fieldValue as Array<Node>
+        childFieldName = arrayField.name
+      }
 
-        childScope = {
-          name: scopedKey,
-          schemaScope: arrayField.of,
-        }
+      childScope = {
+        name: scopedKey,
+        schemaScope: arrayField.of,
       }
     }
   }

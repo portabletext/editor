@@ -5,6 +5,7 @@ import {
   isTextBlock,
 } from '@portabletext/schema'
 import {describe, expect, test} from 'vitest'
+import type {ChildArrayField} from '../schema/editable-types'
 import {getNodeDescendants, getNodes} from './get-nodes'
 import {createNodeTraversalTestbed} from './node-traversal-testbed'
 
@@ -200,7 +201,65 @@ describe(getNodes.name, () => {
   })
 
   test('skips non-editable container internals', () => {
-    const tableOnly = new Set(['table', 'table.row', 'table.row.cell'])
+    const tableOnly = new Map<string, Array<ChildArrayField>>([
+      [
+        'table',
+        [
+          {
+            name: 'rows',
+            type: 'array',
+            of: [
+              {
+                type: 'row',
+                fields: [
+                  {
+                    name: 'cells',
+                    type: 'array',
+                    of: [
+                      {
+                        type: 'cell',
+                        fields: [
+                          {
+                            name: 'content',
+                            type: 'array',
+                            of: [{type: 'block'}],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      ],
+      [
+        'table.row',
+        [
+          {
+            name: 'cells',
+            type: 'array',
+            of: [
+              {
+                type: 'cell',
+                fields: [
+                  {
+                    name: 'content',
+                    type: 'array',
+                    of: [{type: 'block'}],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      ],
+      [
+        'table.row.cell',
+        [{name: 'content', type: 'array', of: [{type: 'block'}]}],
+      ],
+    ])
     const nodes = [...getNodes({...testbed.context, editableTypes: tableOnly})]
     const nodeValues = nodes.map((entry) => entry.node)
 
@@ -782,7 +841,15 @@ describe(getNodes.name, () => {
 
       const descendants = [
         ...getNodeDescendants(
-          {schema, editableTypes: new Set(['accordion'])},
+          {
+            schema,
+            editableTypes: new Map<string, Array<ChildArrayField>>([
+              [
+                'accordion',
+                [{name: 'value', type: 'array', of: [{type: 'block'}]}],
+              ],
+            ]),
+          },
           accordion,
         ),
       ]

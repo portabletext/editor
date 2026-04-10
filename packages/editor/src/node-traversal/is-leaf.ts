@@ -1,4 +1,5 @@
 import type {EditorSchema} from '../editor/editor-schema'
+import type {EditableTypes} from '../schema/editable-types'
 import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
@@ -13,7 +14,7 @@ import {getNodeChildren} from './get-children'
 export function isLeaf(
   context: {
     schema: EditorSchema
-    editableTypes: Set<string>
+    editableTypes: EditableTypes
     value: Array<Node>
   },
   path: Path,
@@ -28,7 +29,6 @@ export function isLeaf(
   }
 
   let currentChildren: Array<Node> = context.value
-  let scope: Parameters<typeof getNodeChildren>[2]
   let scopePath = ''
 
   for (let i = 0; i < path.length; i++) {
@@ -47,7 +47,7 @@ export function isLeaf(
       return false
     }
 
-    const next = getNodeChildren(traversalContext, node, scope, scopePath)
+    const next = getNodeChildren(traversalContext, node, scopePath)
 
     if (i === path.length - 1) {
       return next === undefined
@@ -58,7 +58,6 @@ export function isLeaf(
     }
 
     currentChildren = next.children
-    scope = next.scope
     scopePath = next.scopePath
   }
 

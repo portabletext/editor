@@ -2,6 +2,7 @@ import type {Patch} from '@portabletext/patches'
 import type {PortableTextBlock} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
 import type {DecoratedRange} from '../editor/range-decorations-machine'
+import type {EditableTypes} from '../schema/editable-types'
 import type {Operation as SlateOperation} from '../slate/interfaces/operation'
 import type {ReactEditor} from '../slate/react/plugin/react-editor'
 
@@ -28,7 +29,7 @@ export interface PortableTextSlateEditor extends ReactEditor {
 
   schema: EditorSchema
   keyGenerator: () => string
-  editableTypes: Set<string>
+  editableTypes: EditableTypes
 
   decoratedRanges: Array<DecoratedRange>
   decoratorState: Record<string, boolean | undefined>

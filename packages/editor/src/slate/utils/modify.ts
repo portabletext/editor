@@ -1,9 +1,7 @@
-import {isSpan, isTextBlock, type PortableTextSpan} from '@portabletext/schema'
-import type {EditorSchema} from '../../editor/editor-schema'
+import {isSpan, type PortableTextSpan} from '@portabletext/schema'
 import {getNodeChildren} from '../../node-traversal/get-children'
 import {getNode} from '../../node-traversal/get-node'
 import {isKeyedSegment} from '../../utils/util.is-keyed-segment'
-import {isEditor} from '../editor/is-editor'
 import type {Editor} from '../interfaces/editor'
 import type {Node} from '../interfaces/node'
 import type {Path} from '../interfaces/path'
@@ -49,29 +47,24 @@ function getKeyedSegments(path: Path): Array<{_key: string}> {
  * Replace a descendant with a new node, replacing all ancestors
  */
 export const modifyDescendant = <N extends Node>(
-  root: Editor | Node,
+  editor: Editor,
   path: Path,
-  schema: EditorSchema,
   f: (node: N) => N,
 ): void => {
   if (path.length === 0) {
     return
   }
 
-  const editableTypes = isEditor(root) ? root.editableTypes : new Set<string>()
-  const context = {schema, editableTypes}
-  const typedRoot = isEditor(root)
-    ? root
-    : isTextBlock({schema}, root)
-      ? root
-      : undefined
-
-  if (!typedRoot) {
-    return
+  const context = {
+    schema: editor.schema,
+    editableTypes: editor.editableTypes,
   }
-  const blockIndexMap = isEditor(root) ? root.blockIndexMap : undefined
   const nodeEntry = getNode(
-    {...context, value: typedRoot.children, blockIndexMap},
+    {
+      ...context,
+      value: editor.children,
+      blockIndexMap: editor.blockIndexMap,
+    },
     path,
   )
   if (!nodeEntry) {
@@ -101,12 +94,11 @@ export const modifyDescendant = <N extends Node>(
   }
   const fieldNames: string[] = []
   {
-    let currentNode: Node | {value: Array<Node>} = {value: typedRoot.children}
-    let scope: Parameters<typeof getNodeChildren>[2]
+    let currentNode: Node | {value: Array<Node>} = {value: editor.children}
     let scopePath = ''
 
     for (let i = 0; i < keyedSegments.length; i++) {
-      const result = getNodeChildren(context, currentNode, scope, scopePath)
+      const result = getNodeChildren(context, currentNode, scopePath)
       if (!result) {
         return
       }
@@ -118,7 +110,6 @@ export const modifyDescendant = <N extends Node>(
         return
       }
       currentNode = child
-      scope = result.scope
       scopePath = result.scopePath
     }
   }
@@ -131,7 +122,11 @@ export const modifyDescendant = <N extends Node>(
     const fieldName = fieldNames[level + 1]!
     const ancestorPath = path.slice(0, path.indexOf(keyedSegments[level]!) + 1)
     const ancestorEntry = getNode(
-      {...context, value: typedRoot.children, blockIndexMap},
+      {
+        ...context,
+        value: editor.children,
+        blockIndexMap: editor.blockIndexMap,
+      },
       ancestorPath,
     )
     if (!ancestorEntry) {
@@ -165,12 +160,6 @@ export const modifyDescendant = <N extends Node>(
     }
   }
 
-  const rootChildren = isEditor(root)
-    ? root.children
-    : isTextBlock({schema}, root)
-      ? root.children
-      : []
-
   let rootIndex: number
   const rootNumericIndex = numericIndices.get(0)
   if (rootNumericIndex !== undefined) {
@@ -178,71 +167,53 @@ export const modifyDescendant = <N extends Node>(
   } else if (keyedSegments.length > 0) {
     const rootKey = keyedSegments[0]!._key
     if (
-      isEditor(root) &&
-      root.blockIndexMap.size === rootChildren.length &&
-      root.blockIndexMap.has(rootKey)
+      editor.blockIndexMap.size === editor.children.length &&
+      editor.blockIndexMap.has(rootKey)
     ) {
-      rootIndex = root.blockIndexMap.get(rootKey)!
+      rootIndex = editor.blockIndexMap.get(rootKey)!
     } else {
-      rootIndex = findIndexByKey(rootChildren, rootKey)
+      rootIndex = findIndexByKey(editor.children, rootKey)
     }
   } else {
     const firstSegment = path[0]
     rootIndex = typeof firstSegment === 'number' ? firstSegment : -1
   }
-  if (rootIndex === -1 || rootIndex >= rootChildren.length) {
+  if (rootIndex === -1 || rootIndex >= editor.children.length) {
     return
   }
-  const newRootChildren = replaceChildren(
-    rootChildren,
+  ;(editor as {children: Node[]}).children = replaceChildren(
+    editor.children,
     rootIndex,
     1,
     modifiedNode,
   )
-  ;(root as {children: Node[]}).children = newRootChildren
 }
 
 /**
  * Replace the children of a node, replacing all ancestors.
  *
- * When path is empty, modifies the root's children directly.
+ * When path is empty, modifies the editor's children directly.
  * When path points to a node, resolves the correct child field name
  * via getNodeChildren and modifies that field.
  */
 export const modifyChildren = (
-  root: Editor | Node,
+  editor: Editor,
   path: Path,
-  schema: EditorSchema,
   f: (children: Node[]) => Node[],
 ) => {
   if (path.length === 0) {
-    ;(root as {children: Node[]}).children = f(
-      isEditor(root)
-        ? root.children
-        : isTextBlock({schema}, root)
-          ? root.children
-          : [],
-    )
+    ;(editor as {children: Node[]}).children = f(editor.children)
   } else {
-    const editableTypes = isEditor(root)
-      ? root.editableTypes
-      : new Set<string>()
-    const context = {schema, editableTypes}
-    const typedRoot = isEditor(root)
-      ? root
-      : isTextBlock({schema}, root)
-        ? root
-        : undefined
-
-    if (!typedRoot) {
-      return
+    const context = {
+      schema: editor.schema,
+      editableTypes: editor.editableTypes,
     }
 
     const nodeEntry = getNode(
       {
         ...context,
-        value: typedRoot.children,
-        blockIndexMap: isEditor(root) ? root.blockIndexMap : undefined,
+        value: editor.children,
+        blockIndexMap: editor.blockIndexMap,
       },
       path,
     )
@@ -252,12 +223,11 @@ export const modifyChildren = (
 
     // Walk the path to build scope context for nested container types.
     const keyedSegments = getKeyedSegments(nodeEntry.path)
-    let scope: Parameters<typeof getNodeChildren>[2]
     let scopePath = ''
     {
-      let currentNode: Node | {value: Array<Node>} = {value: typedRoot.children}
+      let currentNode: Node | {value: Array<Node>} = {value: editor.children}
       for (let i = 0; i < keyedSegments.length; i++) {
-        const result = getNodeChildren(context, currentNode, scope, scopePath)
+        const result = getNodeChildren(context, currentNode, scopePath)
         if (!result) {
           break
         }
@@ -267,16 +237,15 @@ export const modifyChildren = (
         if (!child) {
           break
         }
-        scope = result.scope
         scopePath = result.scopePath
         currentNode = child
       }
     }
 
-    const childInfo = getNodeChildren(context, nodeEntry.node, scope, scopePath)
+    const childInfo = getNodeChildren(context, nodeEntry.node, scopePath)
     const fieldName = childInfo?.fieldName ?? 'children'
 
-    modifyDescendant(root, path, schema, (node) => {
+    modifyDescendant(editor, path, (node) => {
       const record = node as Record<string, unknown>
       const currentChildren = Array.isArray(record[fieldName])
         ? (record[fieldName] as Node[])
@@ -293,13 +262,12 @@ export const modifyChildren = (
  * Replace a leaf, replacing all ancestors
  */
 export const modifyLeaf = (
-  root: Editor | Node,
+  editor: Editor,
   path: Path,
-  schema: EditorSchema,
   f: (leaf: PortableTextSpan) => PortableTextSpan,
 ) =>
-  modifyDescendant(root, path, schema, (node) => {
-    if (!isSpan({schema}, node)) {
+  modifyDescendant(editor, path, (node) => {
+    if (!isSpan({schema: editor.schema}, node)) {
       return node
     }
 

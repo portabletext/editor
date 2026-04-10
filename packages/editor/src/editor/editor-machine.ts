@@ -19,8 +19,8 @@ import type {Converter} from '../converters/converter.types'
 import {debug} from '../internal-utils/debug'
 import type {EventPosition} from '../internal-utils/event-position'
 import {sortByPriority} from '../priority/priority.sort'
-import {getEditableTypePaths} from '../renderers/container-schema'
 import type {RendererConfig} from '../renderers/renderer.types'
+import {resolveEditableTypes} from '../schema/editable-types'
 import {normalize} from '../slate/editor/normalize'
 import {ReactEditor} from '../slate/react/plugin/react-editor'
 import type {NamespaceEvent, OmitFromUnion} from '../type-utils'
@@ -181,15 +181,7 @@ function syncEditableTypes(context: {
   renderers: Map<string, RendererConfig>
   slateEditor?: PortableTextSlateEditor
 }) {
-  const editableTypes = new Set<string>()
-  for (const [, config] of context.renderers) {
-    for (const path of getEditableTypePaths(
-      context.schema,
-      config.renderer.type,
-    )) {
-      editableTypes.add(path)
-    }
-  }
+  const editableTypes = resolveEditableTypes(context.schema, context.renderers)
   if (context.slateEditor) {
     context.slateEditor.editableTypes = editableTypes
     normalize(context.slateEditor, {force: true})

@@ -1,4 +1,5 @@
 import type {EditorSchema} from '../editor/editor-schema'
+import type {EditableTypes} from '../schema/editable-types'
 import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
 import {isAncestorPath} from '../slate/path/is-ancestor-path'
@@ -23,7 +24,7 @@ import {getChildrenInternal} from './get-children'
 export function* getNodes(
   context: {
     schema: EditorSchema
-    editableTypes: Set<string>
+    editableTypes: EditableTypes
     value: Array<Node>
   },
   options: {
@@ -62,7 +63,7 @@ export function* getNodes(
 export function* getNodeDescendants(
   context: {
     schema: EditorSchema
-    editableTypes: Set<string>
+    editableTypes: EditableTypes
   },
   node: Node | {value: Array<Node>},
 ): Generator<{node: Node; path: Path}, void, undefined> {
@@ -76,7 +77,7 @@ export function* getNodeDescendants(
 function* getNodesSimple(
   context: {
     schema: EditorSchema
-    editableTypes: Set<string>
+    editableTypes: EditableTypes
   },
   root: Node | {value: Array<Node>},
   path: Path,
@@ -110,7 +111,7 @@ function* getNodesSimple(
 function comparePathsInTree(
   context: {
     schema: EditorSchema
-    editableTypes: Set<string>
+    editableTypes: EditableTypes
   },
   root: Node | {value: Array<Node>},
   pathA: Path,
@@ -184,7 +185,7 @@ function comparePathsInTree(
 function* getNodesInRange(
   context: {
     schema: EditorSchema
-    editableTypes: Set<string>
+    editableTypes: EditableTypes
   },
   root: Node | {value: Array<Node>},
   path: Path,
@@ -227,7 +228,7 @@ function* getNodesInRange(
 function isInRange(
   context: {
     schema: EditorSchema
-    editableTypes: Set<string>
+    editableTypes: EditableTypes
   },
   root: Node | {value: Array<Node>},
   nodePath: Path,
@@ -262,7 +263,7 @@ function isInRange(
 function couldContainInRangeNodes(
   context: {
     schema: EditorSchema
-    editableTypes: Set<string>
+    editableTypes: EditableTypes
   },
   root: Node | {value: Array<Node>},
   nodePath: Path,
@@ -290,7 +291,7 @@ function couldContainInRangeNodes(
 function canStopTraversal(
   context: {
     schema: EditorSchema
-    editableTypes: Set<string>
+    editableTypes: EditableTypes
   },
   root: Node | {value: Array<Node>},
   nodePath: Path,

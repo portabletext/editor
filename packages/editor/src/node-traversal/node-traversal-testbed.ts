@@ -1,5 +1,6 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
+import type {ChildArrayField} from '../schema/editable-types'
 
 /**
  * A comprehensive test fixture for node traversal tests.
@@ -40,11 +41,62 @@ import {createTestKeyGenerator} from '@portabletext/test'
  *                     └── emptyBlock            [4, 1, 0, 0]
  *                         └── emptySpan ""      [4, 1, 0, 0, 0]
  */
-const allEditableTypes = new Set([
-  'code-block',
-  'table',
-  'table.row',
-  'table.row.cell',
+const allEditableTypes = new Map<string, Array<ChildArrayField>>([
+  ['code-block', [{name: 'code', type: 'array', of: [{type: 'block'}]}]],
+  [
+    'table',
+    [
+      {
+        name: 'rows',
+        type: 'array',
+        of: [
+          {
+            type: 'row',
+            fields: [
+              {
+                name: 'cells',
+                type: 'array',
+                of: [
+                  {
+                    type: 'cell',
+                    fields: [
+                      {
+                        name: 'content',
+                        type: 'array',
+                        of: [{type: 'block'}],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  ],
+  [
+    'table.row',
+    [
+      {
+        name: 'cells',
+        type: 'array',
+        of: [
+          {
+            type: 'cell',
+            fields: [
+              {
+                name: 'content',
+                type: 'array',
+                of: [{type: 'block'}],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  ],
+  ['table.row.cell', [{name: 'content', type: 'array', of: [{type: 'block'}]}]],
 ])
 
 export function createNodeTraversalTestbed() {
