@@ -222,6 +222,57 @@ export function getDirtyPaths(
     case 'unset': {
       // The path is [...nodePath, propertyName]. Dirty the node path.
       const nodePath = op.path.slice(0, -1)
+      const propertyName = op.path[op.path.length - 1]
+
+      // When _key is unset, the keyed segment in the dirty path no longer
+      // resolves because the node lost its key. Replace the last keyed
+      // segment with a numeric index so normalization can find the node.
+      if (propertyName === '_key') {
+        const lastSegment = nodePath[nodePath.length - 1]
+
+        if (isKeyedSegment(lastSegment)) {
+          // Walk the tree to find the siblings array containing the node
+          let currentChildren: Array<Node> = context.value
+
+          for (let i = 0; i < nodePath.length - 1; i++) {
+            const segment = nodePath[i]
+
+            if (typeof segment === 'string') {
+              // Field name segment: descend into the field of the last found node
+              continue
+            }
+
+            const node = isKeyedSegment(segment)
+              ? currentChildren.find((child) => child._key === segment._key)
+              : undefined
+
+            if (!node) {
+              break
+            }
+
+            // Look ahead for a field name to descend into
+            const nextSegment = nodePath[i + 1]
+
+            if (typeof nextSegment === 'string') {
+              const fieldValue = (node as Record<string, unknown>)[nextSegment]
+
+              if (Array.isArray(fieldValue)) {
+                currentChildren = fieldValue as Array<Node>
+              }
+            }
+          }
+
+          // Find the keyless node among siblings
+          const index = currentChildren.findIndex(
+            (child) => child._key === undefined,
+          )
+
+          if (index !== -1) {
+            return pathLevels([...nodePath.slice(0, -1), index])
+          }
+        }
+      }
+
       return pathLevels(nodePath)
     }
 
