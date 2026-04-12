@@ -791,4 +791,124 @@ describe('normalization', () => {
       ])
     })
   })
+
+  test('Scenario: block with no `_type` gets the default block type', async () => {
+    const patches: Array<Patch> = []
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              const {origin: _, ...patch} = event.patch
+              patches.push(patch)
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'unset',
+          path: [{_key: blockKey}, '_type'],
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+      expect(patches).toEqual([
+        {
+          type: 'set',
+          path: [{_key: blockKey}, '_type'],
+          value: 'block',
+        },
+      ])
+    })
+  })
+
+  test('Scenario: span with `_type` unset gets the span type', async () => {
+    const patches: Array<Patch> = []
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              const {origin: _, ...patch} = event.patch
+              patches.push(patch)
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'unset',
+          path: [{_key: blockKey}, 'children', {_key: spanKey}, '_type'],
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+      expect(patches).toEqual([
+        {
+          type: 'set',
+          path: [{_key: blockKey}, 'children', {_key: spanKey}, '_type'],
+          value: 'span',
+        },
+      ])
+    })
+  })
 })
