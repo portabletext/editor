@@ -1517,6 +1517,116 @@ describe('container normalization', () => {
     })
   })
 
+  test('Scenario: container child with `_type` unset gets the default block type', async () => {
+    const patches: Array<Patch> = []
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const calloutKey = keyGenerator()
+    const contentBlockKey = keyGenerator()
+    const contentSpanKey = keyGenerator()
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'hello', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'callout',
+          _key: calloutKey,
+          content: [
+            {
+              _type: 'block',
+              _key: contentBlockKey,
+              children: [
+                {
+                  _type: 'span',
+                  _key: contentSpanKey,
+                  text: '',
+                  marks: [],
+                },
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <PatchesPlugin patches={patches} />
+          <RendererPlugin renderers={calloutRenderers} />
+        </>
+      ),
+    })
+
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'unset',
+          path: [
+            {_key: calloutKey},
+            'content',
+            {_key: contentBlockKey},
+            '_type',
+          ],
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'hello', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'callout',
+          _key: calloutKey,
+          content: [
+            {
+              _type: 'block',
+              _key: contentBlockKey,
+              children: [
+                {
+                  _type: 'span',
+                  _key: contentSpanKey,
+                  text: '',
+                  marks: [],
+                },
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ])
+      expect(patches).toEqual([
+        {
+          type: 'set',
+          path: [
+            {_key: calloutKey},
+            'content',
+            {_key: contentBlockKey},
+            '_type',
+          ],
+          value: 'block',
+        },
+      ])
+    })
+  })
+
   test('container block with no `_key` gets a key via numeric index', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()

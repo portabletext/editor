@@ -107,10 +107,11 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
     }
   }
 
-  // If a child of a text block is missing _type, set it to the span type
+  // Normalize missing _type based on context.
   if (nodeRecord['_type'] === undefined && path.length > 0) {
     const parent = getNode(editor, parentPath(path))
 
+    // Children of text blocks default to the span type.
     if (parent && isTextBlock({schema: editor.schema}, parent.node)) {
       debug.normalization('Setting span type on node without a type')
       editor.apply({
@@ -121,6 +122,16 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
       })
       return
     }
+
+    // Everything else defaults to the text block type.
+    debug.normalization('Setting block type on node without a type')
+    editor.apply({
+      type: 'set',
+      path: [...path, '_type'],
+      value: editor.schema.block.name,
+      inverse: {type: 'unset', path: [...path, '_type']},
+    })
+    return
   }
 
   // Set missing _key on any non-editor node.
