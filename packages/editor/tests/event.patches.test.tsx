@@ -1449,7 +1449,7 @@ describe('event.patches', () => {
     })
   })
 
-  test('Scenario: `set` special inline object properties is a noop', async () => {
+  test('Scenario: `set` on `_key` of inline object', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const span1Key = keyGenerator()
@@ -1496,13 +1496,41 @@ describe('event.patches', () => {
           _type: 'block',
           children: [
             {_type: 'span', _key: span1Key, text: '', marks: []},
-            {_type: 'stock-ticker', _key: stockTickerKey},
+            {_type: 'stock-ticker', _key: 'new key'},
             {_type: 'span', _key: span2Key, text: '', marks: []},
           ],
           markDefs: [],
           style: 'normal',
         },
       ])
+    })
+  })
+
+  test('Scenario: `set` on `_type` of inline object', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const span1Key = keyGenerator()
+    const stockTickerKey = keyGenerator()
+    const span2Key = keyGenerator()
+
+    const {editor} = await createTestEditor({
+      initialValue: [
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [
+            {_type: 'span', _key: span1Key, text: '', marks: []},
+            {_type: 'stock-ticker', _key: stockTickerKey},
+            {_type: 'span', _key: span2Key, text: '', marks: []},
+          ],
+        },
+      ],
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        inlineObjects: [
+          {name: 'stock-ticker', fields: [{name: 'symbol', type: 'string'}]},
+        ],
+      }),
     })
 
     editor.send({
@@ -1525,7 +1553,7 @@ describe('event.patches', () => {
           _type: 'block',
           children: [
             {_type: 'span', _key: span1Key, text: '', marks: []},
-            {_type: 'stock-ticker', _key: stockTickerKey},
+            {_type: 'new type', _key: stockTickerKey},
             {_type: 'span', _key: span2Key, text: '', marks: []},
           ],
           markDefs: [],
@@ -1743,7 +1771,7 @@ describe('event.patches', () => {
     })
   })
 
-  test('Scenario: `unset` reserved inline object properties', async () => {
+  test('Scenario: `unset` on `_key` and `_type` of inline object', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const span1Key = keyGenerator()
@@ -1771,6 +1799,7 @@ describe('event.patches', () => {
       }),
     })
 
+    // Unset _key: normalization restores it with a new key
     editor.send({
       type: 'patches',
       patches: [
@@ -1779,30 +1808,37 @@ describe('event.patches', () => {
           origin: 'remote',
           path: [{_key: blockKey}, 'children', {_key: stockTickerKey}, '_key'],
         },
+      ],
+      snapshot: undefined,
+    })
+
+    const newInlineKey = 'k6'
+
+    await vi.waitFor(() => {
+      return expect(editor.getSnapshot().context.value).toEqual([
         {
-          type: 'unset',
-          origin: 'remote',
-          path: [{_key: blockKey}, 'children', {_key: stockTickerKey}, '_type'],
-        },
-        {
-          type: 'unset',
-          origin: 'remote',
-          path: [
-            {_key: blockKey},
-            'children',
-            {_key: stockTickerKey},
-            'children',
+          _key: blockKey,
+          _type: 'block',
+          children: [
+            {_type: 'span', _key: span1Key, text: '', marks: []},
+            {_type: 'stock-ticker', _key: newInlineKey},
+            {_type: 'span', _key: span2Key, text: '', marks: []},
           ],
+          markDefs: [],
+          style: 'normal',
         },
+      ])
+    })
+
+    // Unset _type: normalization restores it to span (parent is text block).
+    // Three adjacent spans with compatible marks get merged by normalization.
+    editor.send({
+      type: 'patches',
+      patches: [
         {
           type: 'unset',
           origin: 'remote',
-          path: [
-            {_key: blockKey},
-            'children',
-            {_key: stockTickerKey},
-            '__inline',
-          ],
+          path: [{_key: blockKey}, 'children', {_key: newInlineKey}, '_type'],
         },
       ],
       snapshot: undefined,
@@ -1813,11 +1849,7 @@ describe('event.patches', () => {
         {
           _key: blockKey,
           _type: 'block',
-          children: [
-            {_type: 'span', _key: span1Key, text: '', marks: []},
-            {_type: 'stock-ticker', _key: stockTickerKey},
-            {_type: 'span', _key: span2Key, text: '', marks: []},
-          ],
+          children: [{_type: 'span', _key: span1Key, text: '', marks: []}],
           markDefs: [],
           style: 'normal',
         },

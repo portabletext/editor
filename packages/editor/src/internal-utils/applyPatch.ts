@@ -25,6 +25,7 @@ import type {EditorSchema} from '../editor/editor-schema'
 import type {EditorContext} from '../editor/editor-snapshot'
 import {getChildren} from '../node-traversal/get-children'
 import {getNode} from '../node-traversal/get-node'
+import {getValue} from '../node-traversal/get-value'
 import type {Node} from '../slate/interfaces/node'
 import type {Path as SlatePath} from '../slate/interfaces/path'
 import type {Path} from '../types/paths'
@@ -266,47 +267,14 @@ function setPatch(
   editor: PortableTextSlateEditor,
   patch: SetPatch | SetIfMissingPatch,
 ) {
-  // setIfMissing at root is a noop when the editor already has content
-  if (
-    patch.type === 'setIfMissing' &&
-    patch.path.length === 0 &&
-    editor.children.length > 0
-  ) {
-    return false
-  }
-
-  // For setIfMissing, check if the value at the target path already exists
-  if (patch.type === 'setIfMissing' && patch.path.length > 0) {
-    const block = findBlock(editor.children, patch.path)
-    if (block) {
-      // Walk the remaining path (after the block segment) to check existence
-      let current: unknown = block.node
-      for (let i = 1; i < patch.path.length; i++) {
-        const segment = patch.path[i]
-        if (current === null || current === undefined) {
-          break
-        }
-        if (typeof segment === 'string') {
-          current = (current as Record<string, unknown>)[segment]
-        } else if (isKeyedSegment(segment)) {
-          if (!Array.isArray(current)) {
-            current = undefined
-            break
-          }
-          current = (current as Array<Record<string, unknown>>).find(
-            (item) => item['_key'] === segment._key,
-          )
-        } else if (typeof segment === 'number') {
-          if (!Array.isArray(current)) {
-            current = undefined
-            break
-          }
-          current = (current as Array<unknown>)[segment]
-        }
-      }
-      if (current !== undefined) {
-        return false
-      }
+  // For setIfMissing, check if the value at the target path already exists.
+  if (patch.type === 'setIfMissing') {
+    if (
+      patch.path.length === 0
+        ? editor.children.length > 0
+        : getValue(editor.children, patch.path) !== undefined
+    ) {
+      return false
     }
   }
 
