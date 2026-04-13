@@ -8,6 +8,7 @@ import {isSpan} from '@portabletext/schema'
 import {safeStringify} from '../../internal-utils/safe-json'
 import {getNode} from '../../node-traversal/get-node'
 import {getNodes} from '../../node-traversal/get-nodes'
+import {getValue} from '../../node-traversal/get-value'
 import type {EditorSelection} from '../../types/editor'
 import {isKeyedSegment} from '../../utils/util.is-keyed-segment'
 import type {Editor} from '../interfaces/editor'
@@ -256,6 +257,9 @@ export function applyOperation(editor: Editor, op: Operation): void {
 
       // Root-level value replacement: set editor.children directly
       if (path.length === 0) {
+        if (!op.inverse && !editor.isProcessingRemoteChanges) {
+          op.inverse = {type: 'set', path, value: editor.children}
+        }
         if (Array.isArray(value)) {
           ;(editor as {children: Node[]}).children = value as Node[]
           // Rebuild blockIndexMap
@@ -280,8 +284,21 @@ export function applyOperation(editor: Editor, op: Operation): void {
         break
       }
 
+      const context = {
+        schema: editor.schema,
+        editableTypes: editor.editableTypes,
+        value: editor.children,
+        blockIndexMap: editor.blockIndexMap,
+      }
+
+      // Resolve node once for all sub-branches
+      const setNodeEntry = getNode(context, setNodePath)
+
       if (setPropertyPath.length === 0) {
         // Full node replacement: replace the node at setNodePath with value
+        if (!op.inverse && !editor.isProcessingRemoteChanges && setNodeEntry) {
+          op.inverse = {type: 'set', path, value: setNodeEntry.node}
+        }
         if (
           value !== null &&
           typeof value === 'object' &&
@@ -295,21 +312,21 @@ export function applyOperation(editor: Editor, op: Operation): void {
         break
       }
 
-      // Check if the node path resolves to a known node
-      const setNodeEntry = getNode(
-        {
-          schema: editor.schema,
-          editableTypes: editor.editableTypes,
-          value: editor.children,
-          blockIndexMap: editor.blockIndexMap,
-        },
-        setNodePath,
-      )
-
       if (setNodeEntry) {
         // Node found: use modifyDescendant
         if (setPropertyPath.length === 1) {
           const propertyName = setPropertyPath[0]!
+
+          // Compute inverse from data already in hand
+          if (!op.inverse && !editor.isProcessingRemoteChanges) {
+            const nodeRecord = setNodeEntry.node as Record<string, unknown>
+            if (propertyName in nodeRecord) {
+              op.inverse = {type: 'set', path, value: nodeRecord[propertyName]}
+            } else {
+              op.inverse = {type: 'unset', path}
+            }
+          }
+
           modifyDescendant(editor, setNodePath, (node) => {
             return {...node, [propertyName]: value} as typeof node
           })
@@ -340,6 +357,18 @@ export function applyOperation(editor: Editor, op: Operation): void {
           }
         } else {
           // Multiple property segments: deep set on the resolved node
+          if (!op.inverse && !editor.isProcessingRemoteChanges) {
+            const currentValue = getPropertyValue(
+              setNodeEntry.node as Record<string, unknown>,
+              setPropertyPath,
+            )
+            if (currentValue !== undefined) {
+              op.inverse = {type: 'set', path, value: currentValue}
+            } else {
+              op.inverse = {type: 'unset', path}
+            }
+          }
+
           modifyDescendant(editor, setNodePath, (node) => {
             return deepSet(node, setPropertyPath, value)
           })
@@ -361,6 +390,16 @@ export function applyOperation(editor: Editor, op: Operation): void {
           break
         }
 
+        // Compute inverse using getValue for keyed segment resolution
+        if (!op.inverse && !editor.isProcessingRemoteChanges) {
+          const currentValue = getValue(editor.children, path)
+          if (currentValue !== undefined) {
+            op.inverse = {type: 'set', path, value: currentValue}
+          } else {
+            op.inverse = {type: 'unset', path}
+          }
+        }
+
         const updatedBlock = applyAll(block, [
           setPatchHelper(value, path.slice(1)),
         ])
@@ -379,6 +418,9 @@ export function applyOperation(editor: Editor, op: Operation): void {
 
       // Root-level unset: remove all children
       if (path.length === 0) {
+        if (!op.inverse && !editor.isProcessingRemoteChanges) {
+          op.inverse = {type: 'set', path, value: editor.children}
+        }
         ;(editor as {children: Node[]}).children = []
         editor.blockIndexMap.clear()
         transformSelection = true
@@ -408,6 +450,15 @@ export function applyOperation(editor: Editor, op: Operation): void {
         // Node found: use modifyDescendant
         if (unsetPropertyPath.length === 1) {
           const propertyName = unsetPropertyPath[0]!
+
+          // Compute inverse from data already in hand
+          if (!op.inverse && !editor.isProcessingRemoteChanges) {
+            const nodeRecord = unsetNodeEntry.node as Record<string, unknown>
+            if (propertyName in nodeRecord) {
+              op.inverse = {type: 'set', path, value: nodeRecord[propertyName]}
+            }
+          }
+
           modifyDescendant(editor, unsetNodePath, (node) => {
             const newNode = {...node}
             delete (newNode as Record<string, unknown>)[propertyName]
@@ -415,6 +466,16 @@ export function applyOperation(editor: Editor, op: Operation): void {
           })
         } else {
           // Multiple property segments: deep unset on the resolved node
+          if (!op.inverse && !editor.isProcessingRemoteChanges) {
+            const currentValue = getPropertyValue(
+              unsetNodeEntry.node as Record<string, unknown>,
+              unsetPropertyPath,
+            )
+            if (currentValue !== undefined) {
+              op.inverse = {type: 'set', path, value: currentValue}
+            }
+          }
+
           modifyDescendant(editor, unsetNodePath, (node) => {
             return deepUnset(node, unsetPropertyPath)
           })
@@ -434,6 +495,14 @@ export function applyOperation(editor: Editor, op: Operation): void {
         const block = editor.children[blockIndex]
         if (!block) {
           break
+        }
+
+        // Compute inverse using getValue for keyed segment resolution
+        if (!op.inverse && !editor.isProcessingRemoteChanges) {
+          const currentValue = getValue(editor.children, path)
+          if (currentValue !== undefined) {
+            op.inverse = {type: 'set', path, value: currentValue}
+          }
         }
 
         const updatedBlock = applyAll(block, [unsetPatchHelper(path.slice(1))])
@@ -703,4 +772,26 @@ function deepUnsetObject(
     ...object,
     [head!]: deepUnsetObject(currentValue as Record<string, unknown>, tail),
   }
+}
+
+/**
+ * Walk string property segments on a plain object.
+ * No keyed segment resolution or tree traversal.
+ */
+function getPropertyValue(
+  node: Record<string, unknown>,
+  propertyPath: Array<string>,
+): unknown {
+  let current: unknown = node
+  for (const segment of propertyPath) {
+    if (
+      current === null ||
+      current === undefined ||
+      typeof current !== 'object'
+    ) {
+      return undefined
+    }
+    current = (current as Record<string, unknown>)[segment]
+  }
+  return current
 }

@@ -1,6 +1,6 @@
 import type {Operation} from '../slate/interfaces/operation'
 import {pathEquals} from '../slate/path/path-equals'
-import type {PortableTextSlateEditor} from '../types/slate-editor'
+import type {EditorSelection} from '../types/editor'
 
 type UndoStep = {
   operations: Array<Operation>
@@ -10,30 +10,34 @@ type UndoStep = {
 export function createUndoSteps({
   steps,
   op,
-  editor,
   currentUndoStepId,
   previousUndoStepId,
+  selectionBeforeApply,
+  operationsInProgress,
+  isNormalizingNode,
 }: {
   steps: Array<UndoStep>
   op: Operation
-  editor: PortableTextSlateEditor
   currentUndoStepId: string | undefined
   previousUndoStepId: string | undefined
+  selectionBeforeApply: EditorSelection
+  operationsInProgress: boolean
+  isNormalizingNode: boolean
 }): Array<UndoStep> {
   const lastStep = steps.at(-1)
 
   if (!lastStep) {
-    return createNewStep(steps, op, editor)
+    return createNewStep(steps, op, selectionBeforeApply)
   }
 
-  if (editor.operations.length > 0) {
+  if (operationsInProgress) {
     // The editor has operations in progress
 
-    if (currentUndoStepId === previousUndoStepId || editor.isNormalizingNode) {
+    if (currentUndoStepId === previousUndoStepId || isNormalizingNode) {
       return mergeIntoLastStep(steps, lastStep, op)
     }
 
-    return createNewStep(steps, op, editor)
+    return createNewStep(steps, op, selectionBeforeApply)
   }
 
   if (
@@ -84,7 +88,7 @@ export function createUndoSteps({
       return mergeIntoLastStep(steps, lastStep, op)
     }
 
-    return createNewStep(steps, op, editor)
+    return createNewStep(steps, op, selectionBeforeApply)
   }
 
   // Handle case when both IDs are defined but different (e.g., consecutive
@@ -118,22 +122,22 @@ export function createUndoSteps({
     }
   }
 
-  return createNewStep(steps, op, editor)
+  return createNewStep(steps, op, selectionBeforeApply)
 }
 
 function createNewStep(
   steps: Array<UndoStep>,
   op: Operation,
-  editor: PortableTextSlateEditor,
+  selection: EditorSelection,
 ): Array<UndoStep> {
   const operations =
-    editor.selection === null
+    selection === null
       ? [op]
       : [
           {
             type: 'set_selection' as const,
-            properties: {...editor.selection},
-            newProperties: {...editor.selection},
+            properties: {...selection},
+            newProperties: {...selection},
           },
           op,
         ]

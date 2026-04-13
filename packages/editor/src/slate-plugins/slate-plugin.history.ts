@@ -105,12 +105,22 @@ export function createHistoryPlugin({
         }
       }
 
+      const selectionBeforeApply = editor.selection
+        ? {...editor.selection}
+        : null
+      const operationsInProgress = editor.operations.length > 0
+      const isNormalizingNode = editor.isNormalizingNode
+
+      apply(op)
+
       editor.history.undos = createUndoSteps({
         steps: editor.history.undos,
         op,
-        editor,
         currentUndoStepId,
         previousUndoStepId,
+        selectionBeforeApply,
+        operationsInProgress,
+        isNormalizingNode,
       })
 
       // Make sure we don't exceed the maximum number of undo steps we want
@@ -120,8 +130,6 @@ export function createHistoryPlugin({
       }
 
       previousUndoStepId = currentUndoStepId
-
-      apply(op)
     }
 
     return editor

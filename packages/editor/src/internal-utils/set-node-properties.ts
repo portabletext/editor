@@ -41,14 +41,10 @@ export function setNodeProperties(
   for (const key of keys) {
     if (propsRecord[key] !== nodeRecord[key]) {
       if (propsRecord[key] != null) {
-        const hadProperty = nodeRecord.hasOwnProperty(key)
         editor.apply({
           type: 'set',
           path: [...currentPath, key],
           value: propsRecord[key],
-          inverse: hadProperty
-            ? {type: 'set', path: [...currentPath, key], value: nodeRecord[key]}
-            : {type: 'unset', path: [...currentPath, key]},
         })
         // After _key changes, update the path for subsequent operations
         if (key === '_key' && typeof propsRecord[key] === 'string') {
@@ -65,11 +61,6 @@ export function setNodeProperties(
         editor.apply({
           type: 'unset',
           path: [...currentPath, key],
-          inverse: {
-            type: 'set',
-            path: [...currentPath, key],
-            value: nodeRecord[key],
-          },
         })
       }
     }
