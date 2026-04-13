@@ -6,7 +6,7 @@ import type {
   SetPatch,
   UnsetPatch,
 } from '@portabletext/patches'
-import {isSpan, isTextBlock, type PortableTextBlock} from '@portabletext/schema'
+import {isSpan, type PortableTextBlock} from '@portabletext/schema'
 import {
   cleanupEfficiency,
   DIFF_DELETE,
@@ -16,13 +16,11 @@ import {
   makeDiff,
   parsePatch,
 } from '@sanity/diff-match-patch'
-import type {EditorSchema} from '../editor/editor-schema'
 import type {EditorContext} from '../editor/editor-snapshot'
+import {getNode} from '../node-traversal/get-node'
 import {getValue} from '../node-traversal/get-value'
 import type {Node} from '../slate/interfaces/node'
-import type {Path} from '../types/paths'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
-import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import {applyDeselect} from './apply-selection'
 import {isEqualToEmptyEditor} from './values'
 
@@ -66,48 +64,41 @@ export function createApplyPatch(
 function diffMatchPatch(
   editor: Pick<
     PortableTextSlateEditor,
-    'children' | 'apply' | 'selection' | 'onChange' | 'schema'
+    'children' | 'apply' | 'selection' | 'onChange' | 'schema' | 'editableTypes'
   >,
   patch: DiffMatchPatch,
 ): boolean {
-  const block = findBlock(editor.children, patch.path)
-
-  if (!block) {
+  const lastSegment = patch.path.at(-1)
+  if (lastSegment !== 'text') {
     return false
   }
 
-  const child = findBlockChild(block, patch.path, editor.schema)
+  const spanPath = patch.path.slice(0, -1)
+  const spanEntry = getNode(
+    {
+      schema: editor.schema,
+      editableTypes: editor.editableTypes,
+      value: editor.children,
+    },
+    spanPath,
+  )
 
-  if (!child) {
-    return false
-  }
-
-  const isSpanTextDiffMatchPatch =
-    block &&
-    isTextBlock({schema: editor.schema}, block.node) &&
-    patch.path.length === 4 &&
-    patch.path[1] === 'children' &&
-    patch.path[3] === 'text'
-
-  if (
-    !isSpanTextDiffMatchPatch ||
-    !isSpan({schema: editor.schema}, child.node)
-  ) {
+  if (!spanEntry || !isSpan({schema: editor.schema}, spanEntry.node)) {
     return false
   }
 
   const patches = parsePatch(patch.value)
-  const [newValue] = diffMatchPatchApplyPatches(patches, child.node.text, {
+  const [newValue] = diffMatchPatchApplyPatches(patches, spanEntry.node.text, {
     allowExceedingIndices: true,
   })
-  const diff = cleanupEfficiency(makeDiff(child.node.text, newValue), 5)
+  const diff = cleanupEfficiency(makeDiff(spanEntry.node.text, newValue), 5)
 
   let offset = 0
   for (const [op, text] of diff) {
     if (op === DIFF_INSERT) {
       editor.apply({
         type: 'insert_text',
-        path: [{_key: block.node._key}, 'children', {_key: child.node._key}],
+        path: spanEntry.path,
         offset,
         text,
       })
@@ -115,7 +106,7 @@ function diffMatchPatch(
     } else if (op === DIFF_DELETE) {
       editor.apply({
         type: 'remove_text',
-        path: [{_key: block.node._key}, 'children', {_key: child.node._key}],
+        path: spanEntry.path,
         offset,
         text,
       })
@@ -225,64 +216,4 @@ function unsetPatch(editor: PortableTextSlateEditor, patch: UnsetPatch) {
   editor.apply({type: 'unset', path: patch.path})
 
   return true
-}
-
-function findBlock(
-  children: Node[],
-  path: Path,
-): {node: Node; index: number} | undefined {
-  let blockIndex = -1
-
-  const block = children.find((node: Node, index: number) => {
-    const isMatch = isKeyedSegment(path[0])
-      ? node._key === path[0]._key
-      : index === path[0]
-
-    if (isMatch) {
-      blockIndex = index
-    }
-
-    return isMatch
-  })
-
-  if (!block) {
-    return undefined
-  }
-
-  return {node: block, index: blockIndex}
-}
-
-function findBlockChild(
-  block: {node: Node; index: number},
-  path: Path,
-  schema: EditorSchema,
-): {node: Node; index: number} | undefined {
-  const blockNode = block.node
-
-  if (!isTextBlock({schema}, blockNode) || path[1] !== 'children') {
-    return undefined
-  }
-
-  let childIndex = -1
-
-  const child = blockNode.children.find((node: Node, index: number) => {
-    const isMatch = isKeyedSegment(path[2])
-      ? node._key === path[2]._key
-      : index === path[2]
-
-    if (isMatch) {
-      childIndex = index
-    }
-
-    return isMatch
-  })
-
-  if (!child) {
-    return undefined
-  }
-
-  return {
-    node: child,
-    index: childIndex,
-  }
 }

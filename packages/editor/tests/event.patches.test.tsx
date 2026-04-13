@@ -2447,6 +2447,112 @@ describe('event.patches', () => {
         ])
       })
     })
+
+    test('Scenario: diffMatchPatch inside callout', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const calloutKey = keyGenerator()
+      const blockKey = keyGenerator()
+      const spanKey = keyGenerator()
+
+      const editorText = 'Hello'
+      const incomingText = 'Hello there'
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: defineSchema({
+          blockObjects: [
+            {
+              name: 'callout',
+              fields: [
+                {
+                  name: 'content',
+                  type: 'array',
+                  of: [{type: 'block'}],
+                },
+              ],
+            },
+          ],
+        }),
+        initialValue: [
+          {
+            _type: 'callout',
+            _key: calloutKey,
+            content: [
+              {
+                _type: 'block',
+                _key: blockKey,
+                children: [
+                  {_type: 'span', _key: spanKey, text: editorText, marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
+        children: (
+          <RendererPlugin
+            renderers={[
+              {
+                renderer: {
+                  type: 'callout' as const,
+                  render: ({children}: {children: React.ReactNode}) => (
+                    <>{children}</>
+                  ),
+                },
+              },
+            ]}
+          />
+        ),
+      })
+
+      editor.send({
+        type: 'patches',
+        patches: [
+          {
+            type: 'diffMatchPatch',
+            origin: 'remote',
+            path: [
+              {_key: calloutKey},
+              'content',
+              {_key: blockKey},
+              'children',
+              {_key: spanKey},
+              'text',
+            ],
+            value: stringifyPatches(
+              makePatches(makeDiff(editorText, incomingText)),
+            ),
+          },
+        ],
+        snapshot: undefined,
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          {
+            _type: 'callout',
+            _key: calloutKey,
+            content: [
+              {
+                _type: 'block',
+                _key: blockKey,
+                children: [
+                  {
+                    _type: 'span',
+                    _key: spanKey,
+                    text: incomingText,
+                    marks: [],
+                  },
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ])
+      })
+    })
   })
 
   test('Scenario: `set` block with new markDef', async () => {
