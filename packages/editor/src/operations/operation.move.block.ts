@@ -52,12 +52,11 @@ export const moveBlockOperationImplementation: OperationImplementation<
 
   withoutNormalizing(editor, () => {
     editor.apply({
-      type: 'remove_node',
+      type: 'unset',
       path: [{_key: node._key}],
-      node,
     })
     editor.apply({
-      type: 'insert_node',
+      type: 'insert',
       path: [{_key: destinationKey}],
       node,
       position: movingDown ? 'after' : 'before',

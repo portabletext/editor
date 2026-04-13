@@ -10,7 +10,7 @@ import {getSpanNode} from '../node-traversal/get-span-node'
 import type {EditableTypes} from '../schema/editable-types'
 import type {Node} from '../slate/interfaces/node'
 import type {
-  InsertNodeOperation,
+  InsertOperation,
   InsertTextOperation,
   RemoveTextOperation,
 } from '../slate/interfaces/operation'
@@ -47,7 +47,7 @@ export function textPatch(
   return patch.value.length ? [patch] : []
 }
 
-export function insertNodePatch(operation: InsertNodeOperation): Array<Patch> {
+export function insertNodePatch(operation: InsertOperation): Array<Patch> {
   const childFieldPath = operation.path.slice(0, -1)
 
   if (childFieldPath.length === 0) {

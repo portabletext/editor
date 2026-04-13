@@ -616,9 +616,8 @@ function clearEditor({
               return
             }
             slateEditor.apply({
-              type: 'remove_node',
+              type: 'unset',
               path: [{_key: removeNode._key}],
-              node: removeNode,
             })
           })
         })
@@ -652,9 +651,8 @@ function removeExtraBlocks({
               continue
             }
             slateEditor.apply({
-              type: 'remove_node',
+              type: 'unset',
               path: [{_key: removeNode._key}],
-              node: removeNode,
             })
           }
 
@@ -712,7 +710,7 @@ function syncBlock({
         withRemoteChanges(slateEditor, () => {
           withoutPatching(slateEditor, () => {
             slateEditor.apply({
-              type: 'insert_node',
+              type: 'insert',
               path: [slateEditor.children.length],
               node: slateBlock,
               position: 'before',
@@ -877,12 +875,11 @@ function replaceBlock({
     return
   }
   slateEditor.apply({
-    type: 'remove_node',
+    type: 'unset',
     path: [{_key: oldNode._key}],
-    node: oldNode,
   })
   slateEditor.apply({
-    type: 'insert_node',
+    type: 'insert',
     path: [index],
     node: slateBlock,
     position: 'before',
@@ -997,13 +994,12 @@ function updateBlock({
             return
           }
           slateEditor.apply({
-            type: 'remove_node',
+            type: 'unset',
             path: [
               {_key: oldSlateBlock._key},
               'children',
               {_key: childNode._key},
             ],
-            node: childNode,
           })
         }
       })
@@ -1081,13 +1077,12 @@ function updateBlock({
             return
           }
           slateEditor.apply({
-            type: 'remove_node',
+            type: 'unset',
             path: [
               {_key: oldSlateBlock._key},
               'children',
               {_key: oldChild._key},
             ],
-            node: oldChild,
           })
           const prevSibling =
             currentBlockChildIndex > 0
@@ -1095,7 +1090,7 @@ function updateBlock({
               : undefined
           if (prevSibling) {
             slateEditor.apply({
-              type: 'insert_node',
+              type: 'insert',
               path: [
                 {_key: oldSlateBlock._key},
                 'children',
@@ -1106,7 +1101,7 @@ function updateBlock({
             })
           } else {
             slateEditor.apply({
-              type: 'insert_node',
+              type: 'insert',
               path: [{_key: oldSlateBlock._key}, 'children', 0],
               node: currentBlockChild,
               position: 'before',
@@ -1124,7 +1119,7 @@ function updateBlock({
               : undefined
           if (prevChild) {
             slateEditor.apply({
-              type: 'insert_node',
+              type: 'insert',
               path: [
                 {_key: oldSlateBlock._key},
                 'children',
@@ -1135,7 +1130,7 @@ function updateBlock({
             })
           } else {
             slateEditor.apply({
-              type: 'insert_node',
+              type: 'insert',
               path: [{_key: oldSlateBlock._key}, 'children', 0],
               node: currentBlockChild,
               position: 'before',

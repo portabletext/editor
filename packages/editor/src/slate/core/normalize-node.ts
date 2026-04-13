@@ -27,7 +27,6 @@ import {isTextBlockNode} from '../node/is-text-block-node'
 import {parentPath} from '../path/parent-path'
 import {textEquals} from '../text/text-equals'
 import type {WithEditorFirstArg} from '../utils/types'
-import {removeNodes} from './remove-nodes'
 
 /**
  * Build the scoped type name for a container node by walking ancestor
@@ -481,7 +480,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
 
         if (acceptsBlocks) {
           editor.apply({
-            type: 'insert_node',
+            type: 'insert',
             path: [...path, arrayField.name, 0],
             node: createPlaceholderBlock(editor),
             position: 'before',
@@ -492,7 +491,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
         const firstChildType = arrayField.of.at(0)
         if (firstChildType && firstChildType.type !== 'block') {
           editor.apply({
-            type: 'insert_node',
+            type: 'insert',
             path: [...path, arrayField.name, 0],
             node: {
               _type: firstChildType.type,
@@ -568,7 +567,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
     if (element.children.length === 0) {
       const child = createSpanNode(editor)
       editor.apply({
-        type: 'insert_node',
+        type: 'insert',
         path: [...path, 'children', 0],
         node: child,
         position: 'before',
@@ -592,10 +591,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
         if (prev != null && isSpan({schema: editor.schema}, prev)) {
           // Merge adjacent text nodes that are empty or match.
           if (child.text === '') {
-            removeNodes(editor, {
-              at: childPath,
-              includeObjectNodes: true,
-            })
+            editor.apply({type: 'unset', path: childPath})
             const refetched = getTextBlockNode(editor, path)?.node
             if (!refetched) {
               return
@@ -604,10 +600,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
             n--
           } else if (prev.text === '') {
             const prevPath = [...path, 'children', {_key: prev._key}]
-            removeNodes(editor, {
-              at: prevPath,
-              includeObjectNodes: true,
-            })
+            editor.apply({type: 'unset', path: prevPath})
             const refetched = getTextBlockNode(editor, path)?.node
             if (!refetched) {
               return
@@ -628,7 +621,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
         if (prev == null || !isSpan({schema: editor.schema}, prev)) {
           const newChild = createSpanNode(editor)
           editor.apply({
-            type: 'insert_node',
+            type: 'insert',
             path: childPath,
             node: newChild,
             position: 'before',
@@ -643,7 +636,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
         if (n === element.children.length - 1) {
           const newChild = createSpanNode(editor)
           editor.apply({
-            type: 'insert_node',
+            type: 'insert',
             path: [...path, 'children', {_key: element.children[n]!._key}],
             node: newChild,
             position: 'after',

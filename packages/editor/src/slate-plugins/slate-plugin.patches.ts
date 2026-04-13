@@ -149,10 +149,7 @@ export function createPatchesPlugin({
             ...textPatch(schema, editor.children, operation, previousValue),
           ]
           break
-        case 'remove_node':
-          patches = [...patches, unset(operation.path)]
-          break
-        case 'insert_node':
+        case 'insert':
           patches = [...patches, ...insertNodePatch(operation)]
           break
         case 'set':
@@ -169,7 +166,7 @@ export function createPatchesPlugin({
       if (
         !editorWasEmpty &&
         editorIsEmpty &&
-        ['set', 'unset', 'remove_text', 'remove_node'].includes(operation.type)
+        ['set', 'unset', 'remove_text'].includes(operation.type)
       ) {
         patches = [...patches, unset([])]
         relayActor.send({

@@ -63,7 +63,7 @@ describe(insertNodePatch.name, () => {
   test('Scenario: Inserting block object on empty editor', () => {
     expect(
       insertNodePatch({
-        type: 'insert_node',
+        type: 'insert',
         path: [{_key: 'k2'}],
         position: 'before',
         node: {
@@ -96,7 +96,7 @@ describe('operationToPatches', () => {
   it('produce correct insert block patch', () => {
     expect(
       insertNodePatch({
-        type: 'insert_node',
+        type: 'insert',
         path: [{_key: '1f2e64b47787'}],
         position: 'before',
         node: {
@@ -132,7 +132,7 @@ describe('operationToPatches', () => {
     editor.onChange()
     expect(
       insertNodePatch({
-        type: 'insert_node',
+        type: 'insert',
         path: [{_key: 'c130395c640c'}],
         position: 'before',
         node: {
@@ -164,7 +164,7 @@ describe('operationToPatches', () => {
   test('produce correct insert child patch', () => {
     expect(
       insertNodePatch({
-        type: 'insert_node',
+        type: 'insert',
         path: [{_key: '1f2e64b47787'}, 'children', {_key: 'fd9b4a4e6c0b'}],
         position: 'after',
         node: {
@@ -318,7 +318,7 @@ describe('defensive setIfMissing patches', () => {
   describe(insertNodePatch.name, () => {
     test('includes setIfMissing before inserting a span into children', () => {
       const patches = insertNodePatch({
-        type: 'insert_node',
+        type: 'insert',
         path: [{_key: '1f2e64b47787'}, 'children', {_key: 'fd9b4a4e6c0b'}],
         position: 'after',
         node: {
@@ -346,7 +346,7 @@ describe('defensive setIfMissing patches', () => {
 
     test('includes setIfMissing before inserting an inline object into children', () => {
       const patches = insertNodePatch({
-        type: 'insert_node',
+        type: 'insert',
         path: [{_key: '1f2e64b47787'}, 'children', {_key: 'fd9b4a4e6c0b'}],
         position: 'after',
         node: {

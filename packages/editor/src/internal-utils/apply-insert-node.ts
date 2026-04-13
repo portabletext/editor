@@ -22,7 +22,7 @@ export function applyInsertNodeAtPath(
   node: Node,
   path: Path,
 ): void {
-  editor.apply({type: 'insert_node', path, node, position: 'before'})
+  editor.apply({type: 'insert', path, node, position: 'before'})
 
   const point = end(editor, path)
 
@@ -66,7 +66,7 @@ export function applyInsertNodeAtPoint(
     const path = ref.unref()!
 
     editor.apply({
-      type: 'insert_node',
+      type: 'insert',
       path,
       node,
       position: isAtEnd ? 'after' : 'before',

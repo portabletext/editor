@@ -6,12 +6,7 @@ import type {
   SetPatch,
   UnsetPatch,
 } from '@portabletext/patches'
-import {
-  isSpan,
-  isTextBlock,
-  type PortableTextBlock,
-  type PortableTextChild,
-} from '@portabletext/schema'
+import {isSpan, isTextBlock, type PortableTextBlock} from '@portabletext/schema'
 import {
   cleanupEfficiency,
   DIFF_DELETE,
@@ -23,38 +18,13 @@ import {
 } from '@sanity/diff-match-patch'
 import type {EditorSchema} from '../editor/editor-schema'
 import type {EditorContext} from '../editor/editor-snapshot'
-import {getChildren} from '../node-traversal/get-children'
-import {getNode} from '../node-traversal/get-node'
 import {getValue} from '../node-traversal/get-value'
 import type {Node} from '../slate/interfaces/node'
-import type {Path as SlatePath} from '../slate/interfaces/path'
 import type {Path} from '../types/paths'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import {applyDeselect} from './apply-selection'
-import {isEqualToEmptyEditor, toSlateBlock} from './values'
-
-function insertNodesSequentially(
-  editor: Pick<PortableTextSlateEditor, 'apply'>,
-  nodes: Array<Node>,
-  anchorPath: SlatePath,
-  position: 'before' | 'after',
-  parentPath: SlatePath,
-): void {
-  nodes.forEach((node, index) => {
-    if (index === 0) {
-      editor.apply({type: 'insert_node', path: anchorPath, node, position})
-    } else {
-      const previousNode = nodes[index - 1]!
-      editor.apply({
-        type: 'insert_node',
-        path: [...parentPath, {_key: previousNode._key}],
-        node,
-        position: 'after',
-      })
-    }
-  })
-}
+import {isEqualToEmptyEditor} from './values'
 
 /**
  * Creates a function that can apply a patch onto a PortableTextSlateEditor.
@@ -164,100 +134,60 @@ function insertPatch(
   editor: PortableTextSlateEditor,
   patch: InsertPatch,
 ) {
-  const block = findBlock(editor.children, patch.path)
-
-  if (!block) {
-    if (patch.path.length === 1 && patch.path[0] === 0) {
-      const blocksToInsert = patch.items.map((item) =>
-        toSlateBlock(item as PortableTextBlock, {schemaTypes: context.schema}),
-      )
-
-      insertNodesSequentially(editor, blocksToInsert, [0], 'before', [])
-
-      return true
-    }
-
-    return false
-  }
-
-  if (patch.path.length > 1 && patch.path[1] !== 'children') {
-    return false
-  }
-
-  // Insert blocks
-  if (patch.path.length === 1) {
-    const {items, position} = patch
-    const blocksToInsert = items.map((item) =>
-      toSlateBlock(item as PortableTextBlock, {schemaTypes: context.schema}),
-    )
-    const targetBlockIndex = block.index
-
-    const editorWasEmptyBefore = isEqualToEmptyEditor(
-      context.initialValue,
-      editor.children,
-      context.schema,
-    )
-
-    insertNodesSequentially(
-      editor,
-      blocksToInsert,
-      [{_key: block.node._key}],
-      position === 'after' ? 'after' : 'before',
-      [],
-    )
-
-    if (
-      editorWasEmptyBefore &&
-      typeof patch.path[0] === 'number' &&
-      patch.path[0] === 0
-    ) {
-      const removeIdx =
-        position === 'before'
-          ? targetBlockIndex + blocksToInsert.length
-          : targetBlockIndex
-      const removeNode = editor.children[removeIdx]
-      if (!removeNode) {
-        return false
-      }
-      const removeEntry = getNode(editor, [{_key: removeNode._key}])
-      if (!removeEntry) {
-        return false
-      }
-      editor.apply({
-        type: 'remove_node',
-        path: [{_key: removeEntry.node._key}],
-        node: removeEntry.node,
-      })
-    }
-
-    return true
-  }
-
-  // Insert children
   const {items, position} = patch
 
-  const targetChild = findBlockChild(block, patch.path, editor.schema)
+  const editorWasEmptyBefore =
+    patch.path.length === 1 &&
+    isEqualToEmptyEditor(context.initialValue, editor.children, context.schema)
 
-  if (!targetChild) {
-    return false
+  const arrayFieldPath = patch.path.slice(0, -1)
+
+  for (let index = 0; index < items.length; index++) {
+    if (index === 0) {
+      editor.apply({
+        type: 'insert',
+        path: patch.path,
+        node: items[index] as Node,
+        position: position === 'after' ? 'after' : 'before',
+      })
+    } else {
+      const previousItem = items[index - 1]! as Record<string, unknown>
+      const previousKey =
+        typeof previousItem['_key'] === 'string'
+          ? previousItem['_key']
+          : undefined
+
+      if (previousKey !== undefined) {
+        editor.apply({
+          type: 'insert',
+          path: [...arrayFieldPath, {_key: previousKey}],
+          node: items[index] as Node,
+          position: 'after',
+        })
+      } else {
+        const lastSegment = patch.path.at(-1)!
+        const baseIndex = typeof lastSegment === 'number' ? lastSegment : 0
+        const offset = position === 'after' ? 1 : 0
+        const numericIndex = baseIndex + offset + index
+        editor.apply({
+          type: 'insert',
+          path: [...arrayFieldPath, numericIndex],
+          node: items[index] as Node,
+          position: 'before',
+        })
+      }
+    }
   }
 
-  const childrenToInsert = toSlateBlock(
-    {...block.node, children: items as PortableTextChild[]},
-    {schemaTypes: context.schema},
-  )
-
-  if (
-    childrenToInsert &&
-    isTextBlock({schema: editor.schema}, childrenToInsert)
-  ) {
-    insertNodesSequentially(
-      editor,
-      childrenToInsert.children,
-      [{_key: block.node._key}, 'children', {_key: targetChild.node._key}],
-      position === 'after' ? 'after' : 'before',
-      [{_key: block.node._key}, 'children'],
-    )
+  if (editorWasEmptyBefore && typeof patch.path[0] === 'number') {
+    const removeIdx = position === 'before' ? items.length : 0
+    const removeNode = editor.children[removeIdx]
+    if (removeNode) {
+      editor.apply({
+        type: 'unset',
+        path: [{_key: removeNode._key}],
+      })
+    }
   }
 
   return true
@@ -288,57 +218,11 @@ function setPatch(
 }
 
 function unsetPatch(editor: PortableTextSlateEditor, patch: UnsetPatch) {
-  // Value unset (path [])
   if (patch.path.length === 0) {
     applyDeselect(editor)
-
-    const children = getChildren(editor, [])
-
-    for (let index = children.length - 1; index >= 0; index--) {
-      const entry = children[index]
-      if (!entry) {
-        continue
-      }
-      const {node, path: nodePath} = entry
-      editor.apply({
-        type: 'remove_node',
-        path: nodePath,
-        node,
-      })
-    }
-
-    return true
   }
 
-  // Check if the path ends at a keyed segment (structural: removing a node)
-  const lastSegment = patch.path.at(-1)
-
-  if (lastSegment === undefined) {
-    return false
-  }
-
-  // Removing a node (block or child): structural operation
-  if (isKeyedSegment(lastSegment) || typeof lastSegment === 'number') {
-    const nodeEntry = getNode(editor, patch.path)
-
-    if (!nodeEntry) {
-      return false
-    }
-
-    editor.apply({
-      type: 'remove_node',
-      path: nodeEntry.path,
-      node: nodeEntry.node,
-    })
-
-    return true
-  }
-
-  // Property unset: pass through to the apply layer
-  editor.apply({
-    type: 'unset',
-    path: patch.path,
-  })
+  editor.apply({type: 'unset', path: patch.path})
 
   return true
 }

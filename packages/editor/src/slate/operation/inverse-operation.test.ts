@@ -3,43 +3,52 @@ import type {Operation} from '../interfaces/operation'
 import {inverseOperation} from './inverse-operation'
 
 describe(inverseOperation.name, () => {
-  test('insert_node -> remove_node uses node key', () => {
+  test('insert -> unset', () => {
     const op: Operation = {
-      type: 'insert_node',
+      type: 'insert',
       path: [{_key: 'b1'}, 'children', {_key: 's1'}],
       node: {_key: 's2', _type: 'span', text: ''},
       position: 'after' as const,
+      inverse: {type: 'unset', path: [{_key: 'b1'}, 'children', {_key: 's2'}]},
     }
     expect(inverseOperation(op)).toEqual({
-      type: 'remove_node',
+      type: 'unset',
       path: [{_key: 'b1'}, 'children', {_key: 's2'}],
-      node: {_key: 's2', _type: 'span', text: ''},
     })
   })
 
-  test('remove_node -> insert_node uses previousSiblingKey', () => {
+  test('unset (node removal) -> insert', () => {
     const op: Operation = {
-      type: 'remove_node',
+      type: 'unset',
       path: [{_key: 'b1'}, 'children', {_key: 's2'}],
-      node: {_key: 's2', _type: 'span', text: 'hello'},
-      previousSiblingKey: 's1',
+      inverse: {
+        type: 'insert',
+        path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+        node: {_key: 's2', _type: 'span', text: 'hello'},
+        position: 'after' as const,
+      },
     }
     expect(inverseOperation(op)).toEqual({
-      type: 'insert_node',
+      type: 'insert',
       path: [{_key: 'b1'}, 'children', {_key: 's1'}],
       node: {_key: 's2', _type: 'span', text: 'hello'},
       position: 'after' as const,
     })
   })
 
-  test('remove_node first child -> insert_node with position before', () => {
+  test('unset (node removal) first child -> insert before', () => {
     const op: Operation = {
-      type: 'remove_node',
+      type: 'unset',
       path: [{_key: 'b1'}, 'children', {_key: 's1'}],
-      node: {_key: 's1', _type: 'span', text: ''},
+      inverse: {
+        type: 'insert',
+        path: [{_key: 'b1'}, 'children', 0],
+        node: {_key: 's1', _type: 'span', text: ''},
+        position: 'before' as const,
+      },
     }
     expect(inverseOperation(op)).toEqual({
-      type: 'insert_node',
+      type: 'insert',
       path: [{_key: 'b1'}, 'children', 0],
       node: {_key: 's1', _type: 'span', text: ''},
       position: 'before' as const,
@@ -109,7 +118,7 @@ describe(inverseOperation.name, () => {
     })
   })
 
-  test('unset inverts to set with old value', () => {
+  test('unset (property removal) inverts to set with old value', () => {
     const op: Operation = {
       type: 'unset',
       path: [{_key: 'b1'}, 'listItem'],

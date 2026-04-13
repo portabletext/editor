@@ -14,7 +14,7 @@ import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 
 /**
  * Merge a node at the given path into its previous sibling using only
- * patch-compliant operations (insert_text/insert_node + remove_node).
+ * patch-compliant operations (insert_text/insert + unset).
  *
  * Because the decomposed operations would produce different ref-transform
  * semantics than a single merge, we pre-transform all active refs with
@@ -204,9 +204,8 @@ export function applyMergeNode(
         }
         // Remove the now-redundant text node
         editor.apply({
-          type: 'remove_node',
+          type: 'unset',
           path,
-          node,
         })
       } else if (isTextBlock({schema: editor.schema}, node)) {
         // Merge element: move all children into the previous sibling
@@ -227,14 +226,14 @@ export function applyMergeNode(
           const child = node.children[i]!
           if (lastInsertedKey !== undefined) {
             editor.apply({
-              type: 'insert_node',
+              type: 'insert',
               path: [...prevPath, 'children', {_key: lastInsertedKey}],
               node: child,
               position: 'after',
             })
           } else {
             editor.apply({
-              type: 'insert_node',
+              type: 'insert',
               path: [...prevPath, 'children', 0],
               node: child,
               position: 'before',
@@ -244,9 +243,8 @@ export function applyMergeNode(
         }
         // Remove the now-empty element
         editor.apply({
-          type: 'remove_node',
+          type: 'unset',
           path,
-          node,
         })
       }
     })

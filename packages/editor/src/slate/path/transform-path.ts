@@ -1,3 +1,4 @@
+import {isKeyedSegment} from '../../utils/util.is-keyed-segment'
 import type {Operation} from '../interfaces/operation'
 import type {Path} from '../interfaces/path'
 import {isAncestorPath} from './is-ancestor-path'
@@ -6,8 +7,8 @@ import {pathEquals} from './path-equals'
 /**
  * Transform a path by an operation.
  *
- * With keyed paths, insert_node and remove_node don't shift sibling paths.
- * Only remove_node can invalidate a path (if the node or an ancestor is removed).
+ * With keyed paths, insert and unset (node removal) don't shift sibling paths.
+ * Only unset (node removal) can invalidate a path (if the node or an ancestor is removed).
  */
 export function transformPath(
   path: Path | null,
@@ -22,11 +23,18 @@ export function transformPath(
   }
 
   switch (operation.type) {
-    case 'remove_node': {
-      const {path: op} = operation
+    case 'unset': {
+      const lastSegment = operation.path[operation.path.length - 1]
 
-      if (pathEquals(op, path) || isAncestorPath(op, path)) {
-        return null
+      if (isKeyedSegment(lastSegment)) {
+        const {path: operationPath} = operation
+
+        if (
+          pathEquals(operationPath, path) ||
+          isAncestorPath(operationPath, path)
+        ) {
+          return null
+        }
       }
 
       break

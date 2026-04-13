@@ -19,7 +19,7 @@ import {rangeRef} from '../slate/editor/range-ref'
 import {start as editorStart} from '../slate/editor/start'
 import {withoutNormalizing} from '../slate/editor/without-normalizing'
 import type {Node} from '../slate/interfaces/node'
-import type {InsertNodeOperation} from '../slate/interfaces/operation'
+import type {InsertOperation} from '../slate/interfaces/operation'
 import type {Path} from '../slate/interfaces/path'
 import type {Point} from '../slate/interfaces/point'
 import type {Range} from '../slate/interfaces/range'
@@ -200,8 +200,8 @@ function insertBlock(options: {
       const insertPosition: 'before' | 'after' = isAtStartOfBlock
         ? 'before'
         : 'after'
-      const op: InsertNodeOperation = {
-        type: 'insert_node',
+      const op: InsertOperation = {
+        type: 'insert',
         path: insertPath,
         node: block,
         position: insertPosition,
@@ -245,9 +245,8 @@ function insertBlock(options: {
         isEmptyTextBlock(context, potentiallyEmptyBlockEntry.node)
       ) {
         editor.apply({
-          type: 'remove_node',
+          type: 'unset',
           path: potentiallyEmptyBlockEntry.path,
-          node: potentiallyEmptyBlockEntry.node,
         })
       }
     }
@@ -298,8 +297,8 @@ function insertBlock(options: {
       applySplitNode(editor, blockPath, splitAtIndex)
 
       // Insert the block object between the two split blocks
-      const middleInsertOp: InsertNodeOperation = {
-        type: 'insert_node',
+      const middleInsertOp: InsertOperation = {
+        type: 'insert',
         path: blockPath,
         node: block,
         position: 'after',
@@ -541,8 +540,8 @@ function insertBlock(options: {
       isCollapsedRange(at) &&
       pointEquals(selectionStartPoint, endBlockStartPoint)
     ) {
-      const insertBeforeOp: InsertNodeOperation = {
-        type: 'insert_node',
+      const insertBeforeOp: InsertOperation = {
+        type: 'insert',
         path: endBlockPath,
         node: block,
         position: 'before',
@@ -566,8 +565,8 @@ function insertBlock(options: {
       isCollapsedRange(at) &&
       pointEquals(selectionEndPoint, endBlockEndPoint)
     ) {
-      const insertAfterOp: InsertNodeOperation = {
-        type: 'insert_node',
+      const insertAfterOp: InsertOperation = {
+        type: 'insert',
         path: endBlockPath,
         node: block,
         position: 'after',
@@ -667,8 +666,8 @@ function insertBlock(options: {
 
         // Insert block object between the split blocks
         const insertAfterPath: Path = currentFirstBlockPath ?? blockPath
-        const splitInsertOp: InsertNodeOperation = {
-          type: 'insert_node',
+        const splitInsertOp: InsertOperation = {
+          type: 'insert',
           path: insertAfterPath,
           node: block,
           position: 'after',
@@ -697,8 +696,8 @@ function insertBlock(options: {
       }
     } else {
       // Not on a text span - just insert after
-      const insertAfterOp: InsertNodeOperation = {
-        type: 'insert_node',
+      const insertAfterOp: InsertOperation = {
+        type: 'insert',
         path: endBlockPath,
         node: block,
         position: 'after',
@@ -777,7 +776,7 @@ function insertNodeAt(
   select: 'start' | 'end' | 'none',
   position: 'before' | 'after' = 'before',
 ) {
-  const op: InsertNodeOperation = {type: 'insert_node', path, node, position}
+  const op: InsertOperation = {type: 'insert', path, node, position}
   editor.apply(op)
   // Use op.node._key because apply-operation may have re-keyed the node
   // to resolve duplicate keys
@@ -797,11 +796,10 @@ function removeNodeAt(editor: PortableTextSlateEditor, path: Path) {
     return
   }
 
-  const {node, path: nodePath} = nodeEntry
+  const {path: nodePath} = nodeEntry
   editor.apply({
-    type: 'remove_node',
+    type: 'unset',
     path: nodePath,
-    node,
   })
 }
 
@@ -816,8 +814,8 @@ function replaceEmptyTextBlock(
 ) {
   const hadSelection = editor.selection !== null
 
-  const op: InsertNodeOperation = {
-    type: 'insert_node',
+  const op: InsertOperation = {
+    type: 'insert',
     path: blockPath,
     node: newBlock,
     position: 'before',
@@ -1108,7 +1106,7 @@ function insertTextBlockFragment(
   let firstInsertedKey: string | undefined
 
   // When inserting a single child at offset 0, prepend its text into the
-  // existing span using insert_text instead of insert_node. This avoids
+  // existing span using insert_text instead of insert. This avoids
   // creating a new DOM element that React hasn't rendered yet, which would
   // cause the DOM selection to become stale during deferred normalization.
   // Only safe with a single child because multiple children need to go
@@ -1135,8 +1133,8 @@ function insertTextBlockFragment(
   let insertAfterPath = at.path
 
   for (const child of block.children) {
-    const op: InsertNodeOperation = {
-      type: 'insert_node',
+    const op: InsertOperation = {
+      type: 'insert',
       path: insertAfterPath,
       node: child,
       position:

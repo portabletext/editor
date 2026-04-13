@@ -220,17 +220,23 @@ export function getDirtyPaths(
     }
 
     case 'unset': {
-      // The path is [...nodePath, propertyName]. Dirty the node path.
+      const lastSegment = op.path[op.path.length - 1]
+
+      if (isKeyedSegment(lastSegment)) {
+        const ancestors = pathLevels(op.path).slice(0, -1)
+        return [...ancestors]
+      }
+
       const nodePath = op.path.slice(0, -1)
-      const propertyName = op.path[op.path.length - 1]
+      const propertyName = lastSegment
 
       // When _key is unset, the keyed segment in the dirty path no longer
       // resolves because the node lost its key. Replace the last keyed
       // segment with a numeric index so normalization can find the node.
       if (propertyName === '_key') {
-        const lastSegment = nodePath[nodePath.length - 1]
+        const lastNodeSegment = nodePath[nodePath.length - 1]
 
-        if (isKeyedSegment(lastSegment)) {
+        if (isKeyedSegment(lastNodeSegment)) {
           // Walk the tree to find the siblings array containing the node
           let currentChildren: Array<Node> = context.value
 
@@ -276,7 +282,7 @@ export function getDirtyPaths(
       return pathLevels(nodePath)
     }
 
-    case 'insert_node': {
+    case 'insert': {
       const {node, path} = op
 
       // The operation path is the reference sibling (for position-based
@@ -304,12 +310,6 @@ export function getDirtyPaths(
       collectDescendantPaths(context, node, nodePath, levels, '')
 
       return levels
-    }
-
-    case 'remove_node': {
-      const {path} = op
-      const ancestors = pathLevels(path).slice(0, -1)
-      return [...ancestors]
     }
 
     default: {

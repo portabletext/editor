@@ -64,7 +64,7 @@ export const insertChildOperationImplementation: OperationImplementation<
         applyInsertNodeAtPath(operation.editor, span, nextSibling.path)
       } else {
         operation.editor.apply({
-          type: 'insert_node',
+          type: 'insert',
           path: focusChildPath,
           node: span,
           position: 'after',
@@ -110,7 +110,7 @@ export const insertChildOperationImplementation: OperationImplementation<
         applyInsertNodeAtPath(operation.editor, inlineNode, nextSibling.path)
       } else {
         operation.editor.apply({
-          type: 'insert_node',
+          type: 'insert',
           path: focusChildPath,
           node: inlineNode,
           position: 'after',

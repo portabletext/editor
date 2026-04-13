@@ -153,6 +153,11 @@ describe('normalization', () => {
       ])
       expect(patches).toEqual([
         {
+          type: 'set',
+          path: [{_key: 'new-block'}, 'children'],
+          value: [],
+        },
+        {
           type: 'setIfMissing',
           path: [{_key: 'new-block'}, 'children'],
           value: [],

@@ -2,11 +2,12 @@ import type {Node} from './node'
 import type {Path} from './path'
 import type {Range} from './range'
 
-export type InsertNodeOperation = {
-  type: 'insert_node'
+export type InsertOperation = {
+  type: 'insert'
   path: Path
   node: Node
   position: 'before' | 'after'
+  inverse?: UnsetOperationData
 }
 
 export type InsertTextOperation = {
@@ -14,13 +15,6 @@ export type InsertTextOperation = {
   path: Path
   offset: number
   text: string
-}
-
-export type RemoveNodeOperation = {
-  type: 'remove_node'
-  path: Path
-  node: Node
-  previousSiblingKey?: string
 }
 
 export type RemoveTextOperation = {
@@ -37,6 +31,16 @@ export type SetOperationData = {
   type: 'set'
   path: Path
   value: unknown
+}
+
+/**
+ * Data for an `insert` inverse (no nested inverse field).
+ */
+export type InsertOperationData = {
+  type: 'insert'
+  path: Path
+  node: Node
+  position: 'before' | 'after'
 }
 
 /**
@@ -62,16 +66,16 @@ export type SetOperation = {
 }
 
 /**
- * Remove a property from a node. The path is `[...nodePath, propertyName]`.
+ * Remove a property from a node, or remove a node from its parent.
  *
- * When `inverse` is provided, the operation can be undone. Remote operations
- * (applied via `withRemoteChanges`) skip the history plugin and do not need
- * inverse data.
+ * Property removal: path is `[...nodePath, propertyName]` (last segment is a string).
+ * Node removal: path is `[...parentPath, childFieldName, {_key: nodeKey}]`
+ * (last segment is a keyed segment pointing to the node to remove).
  */
 export type UnsetOperation = {
   type: 'unset'
   path: Path
-  inverse?: SetOperationData
+  inverse?: SetOperationData | InsertOperationData
 }
 
 type SetSelectionOperation =
@@ -92,8 +96,7 @@ type SetSelectionOperation =
     }
 
 export type Operation =
-  | InsertNodeOperation
-  | RemoveNodeOperation
+  | InsertOperation
   | SetOperation
   | UnsetOperation
   | SetSelectionOperation

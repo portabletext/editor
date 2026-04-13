@@ -86,11 +86,9 @@ export const deleteOperationImplementation: OperationImplementation<
       if (path) {
         const nodeEntry = getNode(operation.editor, path)
         if (nodeEntry) {
-          const node = nodeEntry.node
           operation.editor.apply({
-            type: 'remove_node',
+            type: 'unset',
             path,
-            node,
           })
         }
       }
@@ -113,11 +111,9 @@ export const deleteOperationImplementation: OperationImplementation<
       if (path) {
         const nodeEntry2 = getNode(operation.editor, path)
         if (nodeEntry2) {
-          const node = nodeEntry2.node
           operation.editor.apply({
-            type: 'remove_node',
+            type: 'unset',
             path,
-            node,
           })
         }
       }
@@ -179,9 +175,8 @@ export const deleteOperationImplementation: OperationImplementation<
       const {node, path: nodePath} = nodeEntry
       if (isObjectNode({schema: operation.editor.schema}, node)) {
         operation.editor.apply({
-          type: 'remove_node',
+          type: 'unset',
           path: nodePath,
-          node,
         })
         return
       }
@@ -296,11 +291,9 @@ export const deleteOperationImplementation: OperationImplementation<
       if (path) {
         const nodeAtPathEntry = getNode(operation.editor, path)
         if (nodeAtPathEntry) {
-          const nodeAtPath = nodeAtPathEntry.node
           operation.editor.apply({
-            type: 'remove_node',
+            type: 'unset',
             path,
-            node: nodeAtPath,
           })
         }
       }
@@ -336,11 +329,9 @@ export const deleteOperationImplementation: OperationImplementation<
         if (endPath) {
           const endNodeEntry = getNode(operation.editor, endPath)
           if (endNodeEntry) {
-            const endNode = endNodeEntry.node
             operation.editor.apply({
-              type: 'remove_node',
+              type: 'unset',
               path: endPath,
-              node: endNode,
             })
           }
         }
@@ -370,9 +361,8 @@ export const deleteOperationImplementation: OperationImplementation<
   ) {
     const path = startBlock.path
     operation.editor.apply({
-      type: 'remove_node',
+      type: 'unset',
       path,
-      node: startBlock.node,
     })
 
     return
@@ -397,9 +387,8 @@ export const deleteOperationImplementation: OperationImplementation<
             removedEndObjectNode = true
           }
           operation.editor.apply({
-            type: 'remove_node',
+            type: 'unset',
             path,
-            node: nodeAtPathEntry2.node,
           })
         }
       }

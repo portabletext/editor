@@ -9,12 +9,12 @@ import {pathEquals} from '../path/path-equals'
  * Transform a point by an operation.
  *
  * With keyed paths, most operations don't affect paths at all:
- * - insert_node: no-op (new node has its own key, doesn't shift siblings)
- * - remove_node: invalidates if the point is at or inside the removed node
+ * - insert: no-op (new node has its own key, doesn't shift siblings)
+ * - unset (node removal): invalidates if the point is at or inside the removed node
+ * - unset (property removal): collapses offset when `text` is unset from a span
  * - insert_text: adjusts offset if in the same span
  * - remove_text: adjusts offset if in the same span
  * - set: updates keyed segments when `_key` changes, clamps offset when `text` changes
- * - unset: collapses offset when `text` is unset from a span
  * - set_selection: no-op
  */
 export function transformPoint(
@@ -44,14 +44,6 @@ export function transformPoint(
     case 'remove_text': {
       if (pathEquals(op.path, path) && op.offset <= offset) {
         offset -= Math.min(offset - op.offset, op.text.length)
-      }
-
-      break
-    }
-
-    case 'remove_node': {
-      if (pathEquals(op.path, path) || isAncestorPath(op.path, path)) {
-        return null
       }
 
       break
@@ -100,10 +92,18 @@ export function transformPoint(
     }
 
     case 'unset': {
-      const propertyName = op.path[op.path.length - 1]
+      const lastSegment = op.path[op.path.length - 1]
+
+      if (isKeyedSegment(lastSegment)) {
+        if (pathEquals(op.path, path) || isAncestorPath(op.path, path)) {
+          return null
+        }
+        break
+      }
+
+      const propertyName = lastSegment
       const nodePath = op.path.slice(0, -1)
 
-      // When text is unset from a span, collapse offset
       if (propertyName === 'text' && pathEquals(nodePath, path)) {
         offset = 0
       }
@@ -111,7 +111,6 @@ export function transformPoint(
       break
     }
 
-    // insert_node: no path transform needed with keyed paths
     // set_selection: no transform needed
     default:
       return point
