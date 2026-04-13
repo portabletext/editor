@@ -14,6 +14,7 @@ import {userEvent} from 'vitest/browser'
 import {defineSchema, type EditorEmittedEvent} from '../src'
 import {ContainerPlugin} from '../src/plugins/plugin.container'
 import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
+import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor, createTestEditors} from '../src/test/vitest'
 
 describe('event.patches', () => {
@@ -2494,12 +2495,11 @@ describe('event.patches', () => {
           <ContainerPlugin
             containers={[
               {
-                renderer: {
-                  type: 'callout' as const,
-                  render: ({children}: {children: React.ReactNode}) => (
-                    <>{children}</>
-                  ),
-                },
+                container: defineContainer({
+                  scope: 'callout',
+                  field: 'content',
+                  render: ({children}) => <>{children}</>,
+                }),
               },
             ]}
           />
@@ -4639,21 +4639,37 @@ describe('event.patches', () => {
       ],
     })
 
-    const calloutRenderers = [
+    const calloutContainers = [
       {
-        renderer: {
-          type: 'callout' as const,
-          render: ({children}: {children: React.ReactNode}) => <>{children}</>,
-        },
+        container: defineContainer({
+          scope: 'callout',
+          field: 'content',
+          render: ({children}) => <>{children}</>,
+        }),
       },
     ]
 
-    const tableRenderers = [
+    const tableContainers = [
       {
-        renderer: {
-          type: 'table' as const,
-          render: ({children}: {children: React.ReactNode}) => <>{children}</>,
-        },
+        container: defineContainer({
+          scope: 'table',
+          field: 'rows',
+          render: ({children}) => <>{children}</>,
+        }),
+      },
+      {
+        container: defineContainer({
+          scope: 'table.row',
+          field: 'cells',
+          render: ({children}) => <>{children}</>,
+        }),
+      },
+      {
+        container: defineContainer({
+          scope: 'table.row.cell',
+          field: 'content',
+          render: ({children}) => <>{children}</>,
+        }),
       },
     ]
 
@@ -4699,7 +4715,7 @@ describe('event.patches', () => {
             ],
           },
         ],
-        children: <ContainerPlugin containers={calloutRenderers} />,
+        children: <ContainerPlugin containers={calloutContainers} />,
       })
 
       editor.send({
@@ -4822,7 +4838,7 @@ describe('event.patches', () => {
             ],
           },
         ],
-        children: <ContainerPlugin containers={calloutRenderers} />,
+        children: <ContainerPlugin containers={calloutContainers} />,
       })
 
       editor.send({
@@ -4944,7 +4960,7 @@ describe('event.patches', () => {
             ],
           },
         ],
-        children: <ContainerPlugin containers={tableRenderers} />,
+        children: <ContainerPlugin containers={tableContainers} />,
       })
 
       editor.send({
@@ -5070,7 +5086,7 @@ describe('event.patches', () => {
             content: [],
           },
         ],
-        children: <ContainerPlugin containers={calloutRenderers} />,
+        children: <ContainerPlugin containers={calloutContainers} />,
       })
 
       // Normalization adds a placeholder block (k5/k6) to the empty content

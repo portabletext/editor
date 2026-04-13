@@ -1,23 +1,26 @@
 import {useContext, useEffect} from 'react'
 import {EditorActorContext} from '../editor/editor-actor-context'
-import type {ContainerConfig} from '../renderers/renderer.types'
+import type {Container} from '../renderers/renderer.types'
 
 /**
  * @internal
  */
-export function ContainerPlugin(props: {containers: Array<ContainerConfig>}) {
+export function ContainerPlugin(props: {
+  containers: Array<{container: Container}>
+}) {
   const editorActor = useContext(EditorActorContext)
 
   useEffect(() => {
-    for (const containerConfig of props.containers) {
+    const containerConfigs = props.containers.map((containerConfig) => {
       editorActor.send({
         type: 'register container',
         containerConfig,
       })
-    }
+      return containerConfig
+    })
 
     return () => {
-      for (const containerConfig of props.containers) {
+      for (const containerConfig of containerConfigs) {
         editorActor.send({
           type: 'unregister container',
           containerConfig,

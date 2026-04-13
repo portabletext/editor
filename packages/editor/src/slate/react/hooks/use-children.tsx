@@ -4,7 +4,7 @@ import type {
   PortableTextTextBlock,
 } from '@portabletext/schema'
 import {isSpan, isTextBlock} from '@portabletext/schema'
-import {useCallback, useRef, type JSX} from 'react'
+import React, {useCallback, useRef, type JSX} from 'react'
 import {
   ContainerScopeContext,
   useContainerScope,
@@ -46,7 +46,7 @@ const useChildren = (props: {
   renderPlaceholder: (props: RenderPlaceholderProps) => JSX.Element
   renderText?: (props: RenderTextProps) => JSX.Element
   renderLeaf?: (props: RenderLeafProps) => JSX.Element
-}) => {
+}): React.ReactNode => {
   const {
     parentDataPath,
     decorations,
@@ -105,7 +105,7 @@ const useChildren = (props: {
           : `${parentDataPath}.${childFieldName}[_key=="${node._key}"]`
 
       return (
-        <ElementContext.Provider key={`provider-${node._key}`} value={node}>
+        <ElementContext key={`provider-${node._key}`} value={node}>
           <ElementComponent
             dataPath={nodeDataPath}
             decorations={decorationsByChild[i] ?? []}
@@ -117,7 +117,7 @@ const useChildren = (props: {
             renderLeaf={renderLeaf}
             renderText={renderText}
           />
-        </ElementContext.Provider>
+        </ElementContext>
       )
     },
     [
@@ -213,13 +213,13 @@ const useChildren = (props: {
 
   if (childScope && childScope !== containerScope) {
     return (
-      <ContainerScopeContext.Provider value={childScope}>
+      <ContainerScopeContext value={childScope}>
         {elements}
-      </ContainerScopeContext.Provider>
+      </ContainerScopeContext>
     )
   }
 
-  return elements
+  return <>{elements}</>
 }
 
 const useDecorationsByChild = (
