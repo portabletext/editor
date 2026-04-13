@@ -15,7 +15,6 @@ import {applyOperation} from './apply-operation'
 import {updateDirtyPaths} from './update-dirty-paths'
 
 export const apply: WithEditorFirstArg<Editor['apply']> = (editor, op) => {
-  // Transform refs: with keyed paths, only remove_node can invalidate
   for (const ref of editor.pathRefs) {
     PathRef.transform(ref, op)
   }

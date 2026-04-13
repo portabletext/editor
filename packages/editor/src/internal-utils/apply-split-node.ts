@@ -13,7 +13,7 @@ import {rangeRefAffinities} from './range-ref-affinities'
 
 /**
  * Split a node at the given path and position using only patch-compliant
- * operations (remove_text/remove_node + insert_node).
+ * operations (remove_text/unset + insert).
  *
  * Because the decomposed operations would produce different ref-transform
  * semantics than a single split, we pre-transform all active refs with
@@ -156,7 +156,7 @@ export function applySplitNode(
           text: afterText,
         })
         editor.apply({
-          type: 'insert_node',
+          type: 'insert',
           path,
           node: newNode,
           position: 'after',
@@ -173,13 +173,12 @@ export function applySplitNode(
 
         for (let i = children.length - 1; i >= position; i--) {
           editor.apply({
-            type: 'remove_node',
+            type: 'unset',
             path: [...path, 'children', {_key: children[i]!._key}],
-            node: children[i]!,
           })
         }
         editor.apply({
-          type: 'insert_node',
+          type: 'insert',
           path,
           node: newNode,
           position: 'after',

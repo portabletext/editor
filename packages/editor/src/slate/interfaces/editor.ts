@@ -61,11 +61,3 @@ export interface BaseEditor {
 export type Editor = BaseEditor & ReactEditor & PortableTextSlateEditor
 
 export type EditorMarks = Omit<PortableTextSpan, 'text'>
-
-/**
- * A helper type for narrowing matched nodes with a predicate.
- */
-
-export type NodeMatch<T extends Node> =
-  | ((node: Node, path: Path) => node is T)
-  | ((node: Node, path: Path) => boolean)

@@ -41,7 +41,6 @@ import {isRange} from '../range/is-range'
 import {rangeEdges} from '../range/range-edges'
 import type {TextUnit} from '../types/types'
 import {insertText} from './insert-text'
-import {removeNodes} from './remove-nodes'
 
 interface TextDeleteOptions {
   at?: Location
@@ -89,7 +88,7 @@ export function deleteText(editor: Editor, options: TextDeleteOptions = {}) {
     }
 
     if (isPath(at)) {
-      removeNodes(editor, {at, includeObjectNodes})
+      editor.apply({type: 'unset', path: at})
       return
     }
 
@@ -195,7 +194,7 @@ export function deleteText(editor: Editor, options: TextDeleteOptions = {}) {
       .map((r) => r.unref())
       .filter((r): r is Path => r !== null)
       .forEach((p) => {
-        removeNodes(editor, {at: p, includeObjectNodes})
+        editor.apply({type: 'unset', path: p})
       })
 
     if (!endNonEditable) {
@@ -296,12 +295,11 @@ export function deleteText(editor: Editor, options: TextDeleteOptions = {}) {
             if (moveNodeEntry) {
               const moveNode = moveNodeEntry.node
               editor.apply({
-                type: 'remove_node',
+                type: 'unset',
                 path: mergePath,
-                node: moveNode,
               })
               editor.apply({
-                type: 'insert_node',
+                type: 'insert',
                 path: mergePath,
                 node: moveNode,
                 position: 'before',
@@ -310,10 +308,7 @@ export function deleteText(editor: Editor, options: TextDeleteOptions = {}) {
           }
 
           if (emptyRef) {
-            removeNodes(editor, {
-              at: emptyRef.current!,
-              includeObjectNodes,
-            })
+            editor.apply({type: 'unset', path: emptyRef.current!})
           }
 
           if (
@@ -323,7 +318,7 @@ export function deleteText(editor: Editor, options: TextDeleteOptions = {}) {
               {node: mergeNode, path: mergePath},
             )
           ) {
-            removeNodes(editor, {at: prevPath, includeObjectNodes})
+            editor.apply({type: 'unset', path: prevPath})
           } else {
             // Copy markDefs from the merging block to the target before merging
             const pteEditor = editor as unknown as PortableTextSlateEditor

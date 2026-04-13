@@ -36,7 +36,7 @@ export function applyOperation(editor: Editor, op: Operation): void {
   let transformSelection = false
 
   switch (op.type) {
-    case 'insert_node': {
+    case 'insert': {
       const {path} = op
       let {node} = op
 
@@ -67,7 +67,7 @@ export function applyOperation(editor: Editor, op: Operation): void {
           )
           if (siblingIndex === -1) {
             throw new Error(
-              `Cannot apply an "insert_node" operation at path [${path}] because the sibling was not found.`,
+              `Cannot apply an "insert" operation at path [${path}] because the sibling was not found.`,
             )
           }
           index = op.position === 'after' ? siblingIndex + 1 : siblingIndex
@@ -75,14 +75,24 @@ export function applyOperation(editor: Editor, op: Operation): void {
           index = lastSegment
         } else {
           throw new Error(
-            `Cannot apply an "insert_node" operation at path [${path}] because the last segment is a field name.`,
+            `Cannot apply an "insert" operation at path [${path}] because the last segment is a field name.`,
           )
         }
 
         if (index > children.length) {
           throw new Error(
-            `Cannot apply an "insert_node" operation at path [${path}] because the destination is past the end of the node.`,
+            `Cannot apply an "insert" operation at path [${path}] because the destination is past the end of the node.`,
           )
+        }
+
+        if (!op.inverse && !editor.isProcessingRemoteChanges) {
+          op.inverse = {
+            type: 'unset',
+            path:
+              node._key !== undefined
+                ? replaceLastSegment(path, {_key: node._key})
+                : path,
+          }
         }
 
         insertIndex = index
@@ -121,113 +131,6 @@ export function applyOperation(editor: Editor, op: Operation): void {
       })
 
       transformSelection = true
-      break
-    }
-
-    case 'remove_node': {
-      const {path} = op
-      const lastSegment = path[path.length - 1]!
-
-      // Transform the selection BEFORE removing the node from the tree.
-      // comparePaths needs the node in the tree to resolve document order
-      // for keyed segments. After removal, it falls back to string
-      // comparison of _key values which may give wrong ordering.
-      if (editor.selection) {
-        let selection: EditorSelection = {...editor.selection}
-
-        for (const [point, key] of rangePoints(selection)) {
-          const result = transformPoint(point, op)
-
-          if (selection != null && result != null) {
-            selection[key] = result
-          } else {
-            let prev: NodeEntry<PortableTextSpan> | undefined
-            let next: NodeEntry<PortableTextSpan> | undefined
-
-            for (const {node: n, path: p} of getNodes(editor)) {
-              if (!isSpan({schema: editor.schema}, n)) {
-                continue
-              }
-              if (pathEquals(p, path)) {
-                continue
-              }
-              if (comparePaths(p, path, editor) === -1) {
-                prev = [n, p]
-              } else {
-                next = [n, p]
-                break
-              }
-            }
-
-            let preferNext = false
-            if (prev && next) {
-              if (isSiblingPath(prev[1], path)) {
-                preferNext = false
-              } else if (pathEquals(next[1], path)) {
-                preferNext = true
-              } else {
-                preferNext =
-                  commonPath(prev[1], path).length <
-                  commonPath(next[1], path).length
-              }
-            }
-
-            if (prev && !preferNext) {
-              selection![key] = {path: prev[1], offset: prev[0].text.length}
-            } else if (next) {
-              selection![key] = {path: next[1], offset: 0}
-            } else {
-              selection = null
-            }
-          }
-        }
-
-        editor.selection = selection
-          ? {...selection, backward: isBackwardRange(selection, editor)}
-          : null
-      }
-
-      const isRootRemove = parentPath(path).length === 0
-      let removeIndex = -1
-
-      modifyChildren(editor, parentPath(path), (children) => {
-        let index: number
-
-        if (isKeyedSegment(lastSegment)) {
-          index = resolveChildIndex(
-            children,
-            lastSegment._key,
-            isRootRemove ? editor.blockIndexMap : undefined,
-          )
-          if (index === -1) {
-            throw new Error(
-              `Cannot apply a "remove_node" operation at path [${path}] because the node was not found.`,
-            )
-          }
-        } else if (typeof lastSegment === 'number') {
-          index = lastSegment
-        } else {
-          throw new Error(
-            `Cannot apply a "remove_node" operation at path [${path}] because the last segment is a field name.`,
-          )
-        }
-
-        const previousSibling = index > 0 ? children[index - 1] : undefined
-        op.previousSiblingKey = previousSibling?._key
-
-        removeIndex = index
-        return removeChildren(children, index, 1)
-      })
-
-      if (isRootRemove && isKeyedSegment(lastSegment) && removeIndex !== -1) {
-        editor.blockIndexMap.delete(lastSegment._key)
-        for (const [key, idx] of editor.blockIndexMap) {
-          if (idx > removeIndex) {
-            editor.blockIndexMap.set(key, idx - 1)
-          }
-        }
-      }
-
       break
     }
 
@@ -385,7 +288,130 @@ export function applyOperation(editor: Editor, op: Operation): void {
         break
       }
 
-      // Split path into node path and property path
+      // Node removal: last segment is a keyed or numeric reference to an
+      // array member. Check this BEFORE splitting into node/property paths
+      // since node removal doesn't need that split.
+      const lastSegment = path[path.length - 1]
+      if (isKeyedSegment(lastSegment) || typeof lastSegment === 'number') {
+        // Transform the selection BEFORE removing the node from the tree.
+        // comparePaths needs the node in the tree to resolve document order
+        // for keyed segments. After removal, it falls back to string
+        // comparison of _key values which may give wrong ordering.
+        if (editor.selection) {
+          let selection: EditorSelection = {...editor.selection}
+
+          for (const [point, key] of rangePoints(selection)) {
+            const result = transformPoint(point, op)
+
+            if (selection != null && result != null) {
+              selection[key] = result
+            } else {
+              let prev: NodeEntry<PortableTextSpan> | undefined
+              let next: NodeEntry<PortableTextSpan> | undefined
+
+              for (const {node: n, path: p} of getNodes(editor)) {
+                if (!isSpan({schema: editor.schema}, n)) {
+                  continue
+                }
+                if (pathEquals(p, path)) {
+                  continue
+                }
+                if (comparePaths(p, path, editor) === -1) {
+                  prev = [n, p]
+                } else {
+                  next = [n, p]
+                  break
+                }
+              }
+
+              let preferNext = false
+              if (prev && next) {
+                if (isSiblingPath(prev[1], path)) {
+                  preferNext = false
+                } else if (pathEquals(next[1], path)) {
+                  preferNext = true
+                } else {
+                  preferNext =
+                    commonPath(prev[1], path).length <
+                    commonPath(next[1], path).length
+                }
+              }
+
+              if (prev && !preferNext) {
+                selection![key] = {path: prev[1], offset: prev[0].text.length}
+              } else if (next) {
+                selection![key] = {path: next[1], offset: 0}
+              } else {
+                selection = null
+              }
+            }
+          }
+
+          editor.selection = selection
+            ? {...selection, backward: isBackwardRange(selection, editor)}
+            : null
+        }
+
+        const isRootRemove = parentPath(path).length === 0
+        let removeIndex = -1
+        let removedKey: string | undefined
+
+        modifyChildren(editor, parentPath(path), (children) => {
+          let index: number
+
+          if (isKeyedSegment(lastSegment)) {
+            index = resolveChildIndex(
+              children,
+              lastSegment._key,
+              isRootRemove ? editor.blockIndexMap : undefined,
+            )
+          } else {
+            index = lastSegment
+          }
+
+          if (index === -1 || index >= children.length) {
+            throw new Error(
+              `Cannot apply an "unset" (node removal) operation at path [${path}] because the node was not found.`,
+            )
+          }
+
+          if (!op.inverse && !editor.isProcessingRemoteChanges) {
+            const previousSibling = index > 0 ? children[index - 1] : undefined
+            if (previousSibling?._key) {
+              op.inverse = {
+                type: 'insert',
+                path: [...parentPath(path), {_key: previousSibling._key}],
+                node: children[index]!,
+                position: 'after',
+              }
+            } else {
+              op.inverse = {
+                type: 'insert',
+                path: [...parentPath(path), 0],
+                node: children[index]!,
+                position: 'before',
+              }
+            }
+          }
+
+          removedKey = children[index]?._key
+          removeIndex = index
+          return removeChildren(children, index, 1)
+        })
+
+        if (isRootRemove && removeIndex !== -1 && removedKey) {
+          editor.blockIndexMap.delete(removedKey)
+          for (const [key, idx] of editor.blockIndexMap) {
+            if (idx > removeIndex) {
+              editor.blockIndexMap.set(key, idx - 1)
+            }
+          }
+        }
+
+        break
+      }
+
+      // Property removal: split path into node path and property path
       const {nodePath: unsetNodePath, propertyPath: unsetPropertyPath} =
         splitNodeAndPropertyPath(path)
 
@@ -508,6 +534,18 @@ export function applyOperation(editor: Editor, op: Operation): void {
       backward: isBackwardRange(selection, editor),
     }
   }
+}
+
+/**
+ * Replace the last segment in a path.
+ */
+function replaceLastSegment(path: Path, segment: Path[number]): Path {
+  if (path.length === 0) {
+    return [segment]
+  }
+  const result = [...path]
+  result[result.length - 1] = segment
+  return result
 }
 
 /**

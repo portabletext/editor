@@ -70,8 +70,8 @@ export const withDOM = <T extends Editor>(editor: T): T & DOMEditor => {
     apply(op)
 
     switch (op.type) {
-      case 'insert_node':
-      case 'remove_node':
+      case 'insert':
+      case 'unset':
       case 'insert_text':
       case 'remove_text':
       case 'set_selection': {

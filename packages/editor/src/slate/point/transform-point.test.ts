@@ -81,41 +81,38 @@ describe(transformPoint.name, () => {
     })
   })
 
-  test('remove_node at point returns null', () => {
+  test('unset (node removal) at point returns null', () => {
     const point = {
       path: [{_key: 'b1'}, 'children', {_key: 's1'}],
       offset: 3,
     }
     const op: Operation = {
-      type: 'remove_node',
+      type: 'unset',
       path: [{_key: 'b1'}, 'children', {_key: 's1'}],
-      node: {_key: 's1', _type: 'span', text: ''},
     }
     expect(transformPoint(point, op)).toEqual(null)
   })
 
-  test('remove_node ancestor of point returns null', () => {
+  test('unset (node removal) ancestor of point returns null', () => {
     const point = {
       path: [{_key: 'b1'}, 'children', {_key: 's1'}],
       offset: 3,
     }
     const op: Operation = {
-      type: 'remove_node',
+      type: 'unset',
       path: [{_key: 'b1'}],
-      node: {_key: 'b1', _type: 'block', children: []},
     }
     expect(transformPoint(point, op)).toEqual(null)
   })
 
-  test('remove_node different path is no-op', () => {
+  test('unset (node removal) different path is no-op', () => {
     const point = {
       path: [{_key: 'b1'}, 'children', {_key: 's1'}],
       offset: 3,
     }
     const op: Operation = {
-      type: 'remove_node',
+      type: 'unset',
       path: [{_key: 'b2'}],
-      node: {_key: 'b2', _type: 'block', children: []},
     }
     expect(transformPoint(point, op)).toEqual({
       path: [{_key: 'b1'}, 'children', {_key: 's1'}],
@@ -123,13 +120,13 @@ describe(transformPoint.name, () => {
     })
   })
 
-  test('insert_node is no-op', () => {
+  test('insert is no-op', () => {
     const point = {
       path: [{_key: 'b1'}, 'children', {_key: 's1'}],
       offset: 3,
     }
     const op: Operation = {
-      type: 'insert_node',
+      type: 'insert',
       path: [{_key: 'b1'}, 'children', {_key: 's1'}],
       node: {_key: 's2', _type: 'span', text: ''},
       position: 'after' as const,
