@@ -92,7 +92,8 @@ import {RestoreDOM} from './restore-dom/restore-dom'
 type DeferredOperation = () => void
 
 const Children = (props: Parameters<typeof useChildren>[0]) => {
-  return <React.Fragment>{useChildren(props)}</React.Fragment>
+  const children = useChildren(props)
+  return <React.Fragment>{children}</React.Fragment>
 }
 
 /**

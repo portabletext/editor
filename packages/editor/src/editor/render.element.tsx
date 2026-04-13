@@ -7,7 +7,6 @@ import {useSelector} from '@xstate/react'
 import {useContext, type ReactElement} from 'react'
 import type {DropPosition} from '../behaviors/behavior.core.drop-position'
 import {isInline} from '../node-traversal/is-inline'
-import type {ContainerConfig} from '../renderers/renderer.types'
 import type {RenderElementProps} from '../slate/react/components/editable'
 import {useSlateStatic} from '../slate/react/hooks/use-slate-static'
 import type {
@@ -16,8 +15,10 @@ import type {
   RenderListItemFunction,
   RenderStyleFunction,
 } from '../types/editor'
+import {ContainerScopeContext} from './container-scope-context'
 import {EditorActorContext} from './editor-actor-context'
 import {RenderBlockObject} from './render.block-object'
+import {RenderContainer} from './render.container'
 import {RenderInlineObject} from './render.inline-object'
 import {RenderTextBlock} from './render.text-block'
 
@@ -36,11 +37,36 @@ export function RenderElement(props: {
 }) {
   const editorActor = useContext(EditorActorContext)
   const schema = useSelector(editorActor, (s) => s.context.schema)
-  const containerConfig: ContainerConfig | undefined = useSelector(
-    editorActor,
-    (s) => s.context.containerConfigs.get(props.element._type),
-  )
+  const containerScope = useContext(ContainerScopeContext)
   const slateStatic = useSlateStatic()
+
+  const scopedTypeName = containerScope
+    ? `${containerScope}.${props.element._type}`
+    : props.element._type
+
+  const containerConfig = useSelector(editorActor, (s) => {
+    const configs = s.context.containerConfigs
+    const exact = configs.get(scopedTypeName)
+    if (exact) {
+      return exact
+    }
+    const bareType = scopedTypeName.includes('.')
+      ? scopedTypeName.split('.').pop()!
+      : undefined
+    return bareType ? configs.get(bareType) : undefined
+  })
+
+  if (containerConfig) {
+    return (
+      <RenderContainer
+        attributes={props.attributes}
+        element={props.element}
+        containerConfig={containerConfig}
+      >
+        {props.children}
+      </RenderContainer>
+    )
+  }
 
   if (isTextBlock({schema}, props.element)) {
     return (
@@ -78,14 +104,6 @@ export function RenderElement(props: {
         {props.children}
       </RenderInlineObject>
     )
-  }
-
-  if (containerConfig) {
-    return containerConfig.renderer.render({
-      attributes: props.attributes,
-      children: props.children,
-      node: props.element,
-    })
   }
 
   return (

@@ -197,11 +197,11 @@ export const editorMachine = setup({
     context: {} as {
       behaviors: Set<BehaviorConfig>
       behaviorsSorted: boolean
+      containerConfigs: Map<string, ContainerConfig>
       converters: Set<Converter>
       keyGenerator: () => string
       pendingEvents: Array<InternalPatchEvent | MutationEvent>
       pendingIncomingPatchesEvents: Array<PatchesEvent>
-      containerConfigs: Map<string, ContainerConfig>
       schema: EditorSchema
       initialReadOnly: boolean
       selection: EditorSelection
@@ -253,7 +253,7 @@ export const editorMachine = setup({
         assertEvent(event, 'register container')
         const containerConfigs = new Map(context.containerConfigs)
         containerConfigs.set(
-          event.containerConfig.renderer.type,
+          event.containerConfig.container.scope,
           event.containerConfig,
         )
         return containerConfigs
@@ -263,11 +263,11 @@ export const editorMachine = setup({
       containerConfigs: ({context, event}) => {
         assertEvent(event, 'unregister container')
         const containerConfigs = new Map(context.containerConfigs)
-        containerConfigs.delete(event.containerConfig.renderer.type)
+        containerConfigs.delete(event.containerConfig.container.scope)
         return containerConfigs
       },
     }),
-    'sync editable types': ({context}) => {
+    'sync containers': ({context}) => {
       syncContainers(context)
     },
     'emit patch event': emit(({event}) => {
@@ -445,11 +445,11 @@ export const editorMachine = setup({
   context: ({input}) => ({
     behaviors: new Set(coreBehaviorsConfig),
     behaviorsSorted: false,
+    containerConfigs: new Map(),
     converters: new Set(input.converters ?? []),
     keyGenerator: input.keyGenerator,
     pendingEvents: [],
     pendingIncomingPatchesEvents: [],
-    containerConfigs: new Map(),
     schema: input.schema,
     selection: null,
     initialReadOnly: input.readOnly ?? false,
@@ -459,13 +459,13 @@ export const editorMachine = setup({
     'add behavior': {actions: 'add behavior to context'},
     'remove behavior': {actions: 'remove behavior from context'},
     'add slate editor': {
-      actions: ['add slate editor to context', 'sync editable types'],
+      actions: ['add slate editor to context', 'sync containers'],
     },
     'register container': {
-      actions: ['register container', 'sync editable types'],
+      actions: ['register container', 'sync containers'],
     },
     'unregister container': {
-      actions: ['unregister container', 'sync editable types'],
+      actions: ['unregister container', 'sync containers'],
     },
     'update selection': {
       actions: [
