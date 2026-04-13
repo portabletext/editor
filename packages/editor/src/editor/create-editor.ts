@@ -88,6 +88,19 @@ export function createInternalEditor(config: EditorConfig): {
         })
       }
     },
+    registerRenderer: (renderer) => {
+      const rendererConfig = {renderer}
+      editorActor.send({
+        type: 'register renderer',
+        rendererConfig,
+      })
+      return () => {
+        editorActor.send({
+          type: 'unregister renderer',
+          rendererConfig,
+        })
+      }
+    },
     send: (event) => {
       switch (event.type) {
         case 'update value':

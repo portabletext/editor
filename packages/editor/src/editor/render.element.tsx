@@ -16,6 +16,7 @@ import type {
   RenderListItemFunction,
   RenderStyleFunction,
 } from '../types/editor'
+import {ContainerScopeContext} from './container-scope-context'
 import {EditorActorContext} from './editor-actor-context'
 import {RenderBlockObject} from './render.block-object'
 import {RenderInlineObject} from './render.inline-object'
@@ -81,11 +82,15 @@ export function RenderElement(props: {
   }
 
   if (rendererConfig) {
-    return rendererConfig.renderer.render({
-      attributes: props.attributes,
-      children: props.children,
-      node: props.element,
-    })
+    return (
+      <RenderContainer
+        attributes={props.attributes}
+        element={props.element}
+        rendererConfig={rendererConfig}
+      >
+        {props.children}
+      </RenderContainer>
+    )
   }
 
   return (
@@ -105,4 +110,33 @@ export function RenderElement(props: {
       {props.children}
     </RenderBlockObject>
   )
+}
+
+function RenderContainer(props: {
+  attributes: RenderElementProps['attributes']
+  children: ReactElement
+  element: PortableTextTextBlock | PortableTextObject
+  rendererConfig: RendererConfig
+}) {
+  const containerScope = useContext(ContainerScopeContext)
+  const slateStatic = useSlateStatic()
+
+  const scopedTypeName = containerScope
+    ? `${containerScope.name}.${props.element._type}`
+    : props.element._type
+
+  const editableFields = slateStatic.editableTypes.get(scopedTypeName) ?? []
+
+  const childrenRecord: Record<string, ReactElement> = {}
+
+  const firstField = editableFields[0]
+  if (firstField) {
+    childrenRecord[firstField.name] = props.children
+  }
+
+  return props.rendererConfig.renderer.render({
+    attributes: props.attributes,
+    children: childrenRecord,
+    value: props.element,
+  })
 }

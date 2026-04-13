@@ -1,6 +1,7 @@
 import type {Patch} from '@portabletext/patches'
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
+import type {ReactElement} from 'react'
 import {describe, expect, test, vi} from 'vitest'
 import type {InternalEditor} from '../src/editor/create-editor'
 import {PatchesPlugin} from '../src/plugins/plugin.patches'
@@ -59,7 +60,9 @@ const tableRenderers = [
   {
     renderer: {
       type: 'table' as const,
-      render: ({children}: {children: React.ReactNode}) => <>{children}</>,
+      render: ({children}: {children: Record<string, ReactElement>}) => (
+        <>{Object.values(children)}</>
+      ),
     },
   },
 ]
@@ -68,7 +71,9 @@ const calloutRenderers = [
   {
     renderer: {
       type: 'callout' as const,
-      render: ({children}: {children: React.ReactNode}) => <>{children}</>,
+      render: ({children}: {children: Record<string, ReactElement>}) => (
+        <>{Object.values(children)}</>
+      ),
     },
   },
 ]
@@ -1485,7 +1490,9 @@ describe('container normalization', () => {
       rendererConfig: {
         renderer: {
           type: 'callout',
-          render: ({children}: {children: React.ReactNode}) => <>{children}</>,
+          render: ({children}: {children: Record<string, ReactElement>}) => (
+            <>{Object.values(children)}</>
+          ),
         },
       },
     })

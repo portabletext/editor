@@ -1,28 +1,23 @@
 import {useEffect} from 'react'
-import type {InternalEditor} from '../editor/create-editor'
 import {useEditor} from '../editor/use-editor'
-import type {RendererConfig} from '../renderers/renderer.types'
+import type {Renderer} from '../renderers/renderer.types'
 
 /**
  * @internal
  */
-export function RendererPlugin(props: {renderers: Array<RendererConfig>}) {
-  const editor = useEditor() as unknown as InternalEditor
+export function RendererPlugin(props: {
+  renderers: Array<{renderer: Renderer}>
+}) {
+  const editor = useEditor()
 
   useEffect(() => {
-    for (const rendererConfig of props.renderers) {
-      editor._internal.editorActor.send({
-        type: 'register renderer',
-        rendererConfig,
-      })
-    }
+    const unregisterFunctions = props.renderers.map((rendererConfig) =>
+      editor.registerRenderer(rendererConfig.renderer),
+    )
 
     return () => {
-      for (const rendererConfig of props.renderers) {
-        editor._internal.editorActor.send({
-          type: 'unregister renderer',
-          rendererConfig,
-        })
+      for (const unregister of unregisterFunctions) {
+        unregister()
       }
     }
   }, [editor, props.renderers])

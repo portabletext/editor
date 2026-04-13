@@ -9,6 +9,7 @@ import {
 import type {PortableTextBlock} from '@portabletext/schema'
 import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
 import {makeDiff, makePatches, stringifyPatches} from '@sanity/diff-match-patch'
+import type {ReactElement} from 'react'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {defineSchema, type EditorEmittedEvent} from '../src'
@@ -2496,9 +2497,11 @@ describe('event.patches', () => {
               {
                 renderer: {
                   type: 'callout' as const,
-                  render: ({children}: {children: React.ReactNode}) => (
-                    <>{children}</>
-                  ),
+                  render: ({
+                    children,
+                  }: {
+                    children: Record<string, ReactElement>
+                  }) => <>{Object.values(children)}</>,
                 },
               },
             ]}
@@ -4643,7 +4646,9 @@ describe('event.patches', () => {
       {
         renderer: {
           type: 'callout' as const,
-          render: ({children}: {children: React.ReactNode}) => <>{children}</>,
+          render: ({children}: {children: Record<string, ReactElement>}) => (
+            <>{Object.values(children)}</>
+          ),
         },
       },
     ]
@@ -4652,7 +4657,9 @@ describe('event.patches', () => {
       {
         renderer: {
           type: 'table' as const,
-          render: ({children}: {children: React.ReactNode}) => <>{children}</>,
+          render: ({children}: {children: Record<string, ReactElement>}) => (
+            <>{Object.values(children)}</>
+          ),
         },
       },
     ]
