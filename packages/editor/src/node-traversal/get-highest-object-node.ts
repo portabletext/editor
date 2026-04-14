@@ -3,7 +3,7 @@ import type {EditorSchema} from '../editor/editor-schema'
 import type {Containers} from '../schema/resolve-containers'
 import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
-import {isObjectNode} from '../slate/node/is-object-node'
+import {isVoidNode} from '../slate/node/is-void-node'
 import {getAncestors} from './get-ancestors'
 import {getNode} from './get-node'
 
@@ -31,7 +31,7 @@ export function getHighestObjectNode(
       continue
     }
 
-    if (isObjectNode({schema: context.schema}, ancestor.node)) {
+    if (isVoidNode(context, ancestor.node, ancestor.path)) {
       return {node: ancestor.node, path: ancestor.path}
     }
   }
@@ -43,7 +43,7 @@ export function getHighestObjectNode(
     return undefined
   }
 
-  if (!isObjectNode({schema: context.schema}, entry.node)) {
+  if (!isVoidNode(context, entry.node, entry.path)) {
     return undefined
   }
 

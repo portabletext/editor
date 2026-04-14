@@ -6,7 +6,7 @@ import {range as editorRange} from '../editor/range'
 import {withoutNormalizing} from '../editor/without-normalizing'
 import type {Editor} from '../interfaces/editor'
 import type {Location} from '../interfaces/location'
-import {isObjectNode} from '../node/is-object-node'
+import {isVoidNode} from '../node/is-void-node'
 import {isPath} from '../path/is-path'
 import {isCollapsedRange} from '../range/is-collapsed-range'
 import {isRange} from '../range/is-range'
@@ -42,7 +42,7 @@ export function insertText(
           const endPath = editorPath(editor, end)
           const endEntry = getNode(editor, endPath)
           const endObjectNode =
-            endEntry && isObjectNode({schema: editor.schema}, endEntry.node)
+            endEntry && isVoidNode(editor, endEntry.node, endPath)
               ? endEntry
               : getAncestorObjectNode(editor, end.path)
           if (endObjectNode) {
@@ -65,7 +65,7 @@ export function insertText(
       const atPath = editorPath(editor, at)
       const atEntry = getNode(editor, atPath)
       const atObjectNode =
-        atEntry && isObjectNode({schema: editor.schema}, atEntry.node)
+        atEntry && isVoidNode(editor, atEntry.node, atPath)
           ? atEntry
           : getAncestorObjectNode(editor, at.path)
       if (atObjectNode) {

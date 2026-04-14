@@ -41,77 +41,77 @@ describe(getHighestObjectNode.name, () => {
     expect(entry?.path).toEqual([{_key: 'k3'}, 'children', {_key: 'k1'}])
   })
 
-  test('table at path returns itself', () => {
-    const entry = getHighestObjectNode(testbed.context, [{_key: 'k26'}])
-    expect(entry?.node).toBe(testbed.table)
-    expect(entry?.path).toEqual([{_key: 'k26'}])
+  test('editable container at path returns undefined', () => {
+    expect(
+      getHighestObjectNode(testbed.context, [{_key: 'k26'}]),
+    ).toBeUndefined()
   })
 
-  test('span inside cell finds table as highest object node', () => {
-    const entry = getHighestObjectNode(testbed.context, [
-      {_key: 'k26'},
-      'rows',
-      {_key: 'k21'},
-      'cells',
-      {_key: 'k17'},
-      'content',
-      {_key: 'k14'},
-      'children',
-      {_key: 'k12'},
-    ])
-    expect(entry?.node).toBe(testbed.table)
-    expect(entry?.path).toEqual([{_key: 'k26'}])
+  test('span inside cell returns undefined', () => {
+    expect(
+      getHighestObjectNode(testbed.context, [
+        {_key: 'k26'},
+        'rows',
+        {_key: 'k21'},
+        'cells',
+        {_key: 'k17'},
+        'content',
+        {_key: 'k14'},
+        'children',
+        {_key: 'k12'},
+      ]),
+    ).toBeUndefined()
   })
 
-  test('cell block finds table as highest object node', () => {
-    const entry = getHighestObjectNode(testbed.context, [
-      {_key: 'k26'},
-      'rows',
-      {_key: 'k21'},
-      'cells',
-      {_key: 'k17'},
-      'content',
-      {_key: 'k14'},
-    ])
-    expect(entry?.node).toBe(testbed.table)
-    expect(entry?.path).toEqual([{_key: 'k26'}])
+  test('cell block returns undefined', () => {
+    expect(
+      getHighestObjectNode(testbed.context, [
+        {_key: 'k26'},
+        'rows',
+        {_key: 'k21'},
+        'cells',
+        {_key: 'k17'},
+        'content',
+        {_key: 'k14'},
+      ]),
+    ).toBeUndefined()
   })
 
-  test('cell finds table as highest object node', () => {
-    const entry = getHighestObjectNode(testbed.context, [
-      {_key: 'k26'},
-      'rows',
-      {_key: 'k21'},
-      'cells',
-      {_key: 'k17'},
-    ])
-    expect(entry?.node).toBe(testbed.table)
-    expect(entry?.path).toEqual([{_key: 'k26'}])
+  test('cell returns undefined', () => {
+    expect(
+      getHighestObjectNode(testbed.context, [
+        {_key: 'k26'},
+        'rows',
+        {_key: 'k21'},
+        'cells',
+        {_key: 'k17'},
+      ]),
+    ).toBeUndefined()
   })
 
-  test('row finds table as highest object node', () => {
-    const entry = getHighestObjectNode(testbed.context, [
-      {_key: 'k26'},
-      'rows',
-      {_key: 'k21'},
-    ])
-    expect(entry?.node).toBe(testbed.table)
-    expect(entry?.path).toEqual([{_key: 'k26'}])
+  test('row returns undefined', () => {
+    expect(
+      getHighestObjectNode(testbed.context, [
+        {_key: 'k26'},
+        'rows',
+        {_key: 'k21'},
+      ]),
+    ).toBeUndefined()
   })
 
-  test('code span finds code-block as highest object node', () => {
-    const entry = getHighestObjectNode(testbed.context, [
-      {_key: 'k11'},
-      'code',
-      {_key: 'k8'},
-      'children',
-      {_key: 'k7'},
-    ])
-    expect(entry?.node).toBe(testbed.codeBlock)
-    expect(entry?.path).toEqual([{_key: 'k11'}])
+  test('code span returns undefined', () => {
+    expect(
+      getHighestObjectNode(testbed.context, [
+        {_key: 'k11'},
+        'code',
+        {_key: 'k8'},
+        'children',
+        {_key: 'k7'},
+      ]),
+    ).toBeUndefined()
   })
 
-  test('inline object in cell finds table as highest object node', () => {
+  test('inline object in cell returns itself', () => {
     const entry = getHighestObjectNode(testbed.context, [
       {_key: 'k26'},
       'rows',
@@ -123,8 +123,18 @@ describe(getHighestObjectNode.name, () => {
       'children',
       {_key: 'k13'},
     ])
-    expect(entry?.node).toBe(testbed.table)
-    expect(entry?.path).toEqual([{_key: 'k26'}])
+    expect(entry?.node).toBe(testbed.stockTicker2)
+    expect(entry?.path).toEqual([
+      {_key: 'k26'},
+      'rows',
+      {_key: 'k21'},
+      'cells',
+      {_key: 'k17'},
+      'content',
+      {_key: 'k14'},
+      'children',
+      {_key: 'k13'},
+    ])
   })
 
   test('invalid path returns undefined', () => {

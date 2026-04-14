@@ -22,7 +22,7 @@ import type {Editor} from '../../../interfaces/editor'
 import type {Path} from '../../../interfaces/path'
 import type {Point} from '../../../interfaces/point'
 import type {Range} from '../../../interfaces/range'
-import {isObjectNode} from '../../../node/is-object-node'
+import {isVoidNode} from '../../../node/is-void-node'
 import {pathEquals} from '../../../path/path-equals'
 import {isPoint} from '../../../point/is-point'
 import {isCollapsedRange} from '../../../range/is-collapsed-range'
@@ -421,7 +421,7 @@ export function createAndroidInputManager({
       const leafResult =
         leafNodeEntry &&
         (isSpan({schema: editor.schema}, leafNodeEntry.node) ||
-          isObjectNode({schema: editor.schema}, leafNodeEntry.node))
+          isVoidNode(editor, leafNodeEntry.node, start.path))
           ? leafNodeEntry
           : undefined
 
