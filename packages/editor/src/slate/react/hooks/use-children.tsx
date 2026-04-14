@@ -60,8 +60,6 @@ const useChildren = (props: {
   const editor = useSlateStatic()
   editor.isNodeMapDirty = false
 
-  const isEditorNode = isEditor(node)
-
   const containerScope = useContainerScope()
 
   const decorationsByChild = useDecorationsByChild(
@@ -177,7 +175,7 @@ const useChildren = (props: {
       <ObjectNodeComponent
         dataPath={nodeDataPath}
         decorations={decorationsByChild[index] ?? []}
-        isInline={!isEditorNode}
+        isInline={textBlockParent !== undefined}
         key={node._key}
         objectNode={node}
         indexedPath={parentIndexedPath.concat(index)}
