@@ -14,6 +14,7 @@ import {getNode} from '../../node-traversal/get-node'
 import {getParent} from '../../node-traversal/get-parent'
 import {getTextBlockNode} from '../../node-traversal/get-text-block-node'
 import {getChildFieldName} from '../../paths/get-child-field-name'
+import {getContainerScopedName} from '../../schema/get-container-scoped-name'
 import {withoutPatching} from '../../slate-plugins/slate-plugin.without-patching'
 import {isKeyedSegment} from '../../utils/util.is-keyed-segment'
 import {isEditor} from '../editor/is-editor'
@@ -27,44 +28,6 @@ import {isTextBlockNode} from '../node/is-text-block-node'
 import {parentPath} from '../path/parent-path'
 import {textEquals} from '../text/text-equals'
 import type {WithEditorFirstArg} from '../utils/types'
-
-/**
- * Build the scoped type name for a container node by walking ancestor
- * object nodes up the tree.
- *
- * For a 'row' at path [{_key:'t1'}, 'rows', {_key:'r1'}],
- * the ancestor at [{_key:'t1'}] is a 'table', producing: 'table.row'
- */
-function getContainerScopedName(
-  editor: Editor,
-  node: Node,
-  path: Path,
-): string {
-  const typeSegments: Array<string> = [node._type]
-
-  // Collect keyed segment indices (each represents a node in the tree).
-  const keyedIndices: Array<number> = []
-  for (let i = 0; i < path.length; i++) {
-    if (isKeyedSegment(path[i])) {
-      keyedIndices.push(i)
-    }
-  }
-
-  // Walk ancestor nodes from root to parent, collecting type names.
-  for (let i = 0; i < keyedIndices.length - 1; i++) {
-    const ancestorPath = path.slice(0, keyedIndices[i]! + 1)
-    const entry = getNode(editor, ancestorPath)
-
-    if (!entry || !isObjectNode({schema: editor.schema}, entry.node)) {
-      break
-    }
-
-    // Insert before the node's own type (which is always last).
-    typeSegments.splice(typeSegments.length - 1, 0, entry.node._type)
-  }
-
-  return typeSegments.join('.')
-}
 
 export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   editor,

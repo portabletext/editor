@@ -5,6 +5,7 @@ import {getAncestorObjectNode} from '../../../node-traversal/get-ancestor-object
 import {getHighestObjectNode} from '../../../node-traversal/get-highest-object-node'
 import {getNode} from '../../../node-traversal/get-node'
 import {hasNode} from '../../../node-traversal/has-node'
+import {isEditableContainer} from '../../../schema/is-editable-container'
 import {path as editorPath} from '../../editor/path'
 import {start as editorStart} from '../../editor/start'
 import {unhangRange} from '../../editor/unhang-range'
@@ -381,7 +382,11 @@ export const DOMEditor: DOMEditorInterface = {
 
     let domPoint: DOMPoint | undefined
 
-    if (nodeEntry && isObjectNode({schema: editor.schema}, nodeEntry.node)) {
+    if (
+      nodeEntry &&
+      isObjectNode({schema: editor.schema}, nodeEntry.node) &&
+      !isEditableContainer(editor, nodeEntry.node, point.path)
+    ) {
       const spacer = el.querySelector('[data-slate-zero-width]')
       if (spacer) {
         const domText = spacer.childNodes[0]
@@ -408,7 +413,10 @@ export const DOMEditor: DOMEditorInterface = {
       pointEntry && isObjectNode({schema: editor.schema}, pointEntry.node)
         ? pointEntry
         : getAncestorObjectNode(editor, point.path)
-    if (pointObjectNode) {
+    if (
+      pointObjectNode &&
+      !isEditableContainer(editor, pointObjectNode.node, pointObjectNode.path)
+    ) {
       point = {path: point.path, offset: 0}
     }
 
@@ -795,7 +803,8 @@ export const DOMEditor: DOMEditorInterface = {
 
       if (
         parentEntry &&
-        isObjectNode({schema: editor.schema}, parentEntry.node)
+        isObjectNode({schema: editor.schema}, parentEntry.node) &&
+        !isEditableContainer(editor, parentEntry.node, parentPath)
       ) {
         return {path: parentPath, offset: 0}
       }
