@@ -1,8 +1,9 @@
 import type {PortableTextBlock, SchemaDefinition} from '@portabletext/schema'
 import type {ReactElement} from 'react'
+import type {Container} from './renderer.types'
 
-/** @internal */
-type ExtractArrayFields<TFields> = TFields extends readonly [
+/** @beta */
+export type ExtractArrayFields<TFields> = TFields extends readonly [
   infer TField,
   ...infer TRest,
 ]
@@ -11,8 +12,8 @@ type ExtractArrayFields<TFields> = TFields extends readonly [
     : ExtractArrayFields<TRest>
   : never
 
-/** @internal */
-type ExtractOfMembers<TOfMembers> = TOfMembers extends readonly [
+/** @beta */
+export type ExtractOfMembers<TOfMembers> = TOfMembers extends readonly [
   infer TMember,
   ...infer TRest,
 ]
@@ -24,8 +25,8 @@ type ExtractOfMembers<TOfMembers> = TOfMembers extends readonly [
     : ExtractOfMembers<TRest>
   : never
 
-/** @internal */
-type WalkFields<TFields> = TFields extends readonly [
+/** @beta */
+export type WalkFields<TFields> = TFields extends readonly [
   infer TField,
   ...infer TRest,
 ]
@@ -34,8 +35,8 @@ type WalkFields<TFields> = TFields extends readonly [
     : WalkFields<TRest>
   : never
 
-/** @internal */
-type CollectScopedTypes<TFields, TScope extends string> =
+/** @beta */
+export type CollectScopedTypes<TFields, TScope extends string> =
   WalkFields<TFields> extends infer TMembers
     ? TMembers extends {
         type: infer TTypeName extends string
@@ -52,11 +53,8 @@ type CollectScopedTypes<TFields, TScope extends string> =
       : never
     : never
 
-/**
- * Collect all renderer-eligible types from a schema definition.
- * Includes top-level block objects and all nested container types
-/** @internal */
-type CollectAllTypes<TSchema extends SchemaDefinition> =
+/** @beta */
+export type CollectAllTypes<TSchema extends SchemaDefinition> =
   | {scopedName: 'block'; arrayFields: 'children'}
   | (TSchema['blockObjects'] extends ReadonlyArray<infer TBlockObject>
       ? TBlockObject extends {
@@ -69,22 +67,23 @@ type CollectAllTypes<TSchema extends SchemaDefinition> =
         : never
       : never)
 
-/** @internal */
-type AllScopedNames<TSchema extends SchemaDefinition> =
+/** @beta */
+export type AllScopedNames<TSchema extends SchemaDefinition> =
   CollectAllTypes<TSchema> extends {scopedName: infer TName} ? TName : never
 
-/** @internal */
-type ScopedArrayFields<TSchema extends SchemaDefinition, TName extends string> =
+/** @beta */
+export type ScopedArrayFields<
+  TSchema extends SchemaDefinition,
+  TName extends string,
+> =
   CollectAllTypes<TSchema> extends infer TEntry
     ? TEntry extends {scopedName: TName; arrayFields: infer TFieldName}
       ? TFieldName
       : never
     : never
 
-// === Container ===
-
-/** @internal */
-type SchemaContainerConfig<TSchema extends SchemaDefinition> =
+/** @beta */
+export type SchemaContainerConfig<TSchema extends SchemaDefinition> =
   AllScopedNames<TSchema> extends infer TType extends string
     ? TType extends TType
       ? {
@@ -101,55 +100,24 @@ type SchemaContainerConfig<TSchema extends SchemaDefinition> =
 
 /**
  * @beta
- */
-export type Container = {
-  scope: string
-  field: string
-  render?: (props: {
-    attributes: Record<string, unknown>
-    children: ReactElement
-    node: PortableTextBlock
-  }) => ReactElement | null
-}
-
-/**
- * @beta
  *
  * Define a container for a block object type.
  *
+ * A container is a block object with an array field that holds children.
+ * Each container declares its `scope` (where it lives in the schema tree),
+ * `field` (which array field holds children), and optionally a `render`
+ * function.
+ *
  * When called with a schema type parameter, constrains `scope` to valid
- * scoped type names, `field` to array field names on that type, and
- * provides the `render` function signature:
- *
- * ```ts
- * defineContainer<typeof schema>({
- *   scope: 'table.row.cell',
- *   field: 'content',
- *   render: ({children}) => <td>{children}</td>,
- * })
- * ```
- *
- * Without a schema type parameter, accepts any string:
- *
- * ```ts
- * defineContainer({
- *   scope: 'callout',
- *   field: 'content',
- *   render: ({children}) => <div>{children}</div>,
- * })
- * ```
+ * scoped type names and `field` to array field names on that type.
  */
 export function defineContainer<TSchema extends SchemaDefinition>(
   config: SchemaContainerConfig<TSchema>,
 ): Container
+/**
+ * @beta
+ */
 export function defineContainer(config: Container): Container
 export function defineContainer(config: Container): Container {
   return config
-}
-
-/**
- * @internal
- */
-export type ContainerConfig = {
-  container: Container
 }
