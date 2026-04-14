@@ -1,5 +1,5 @@
 import type {EditorSchema} from '../editor/editor-schema'
-import type {EditableTypes} from '../schema/editable-types'
+import type {Containers} from '../schema/resolve-containers'
 import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
@@ -16,7 +16,7 @@ import {getNode} from './get-node'
 export function getAncestors(
   context: {
     schema: EditorSchema
-    editableTypes: EditableTypes
+    containers: Containers
     value: Array<Node>
   },
   path: Path,

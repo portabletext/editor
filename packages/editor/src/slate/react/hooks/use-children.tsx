@@ -85,7 +85,7 @@ const useChildren = (props: {
       ? `${containerScope.name}.${node._type}`
       : node._type
 
-    const arrayField = editor.editableTypes.get(scopedKey)?.[0]
+    const arrayField = editor.containers.get(scopedKey)
 
     if (arrayField) {
       const fieldValue = (node as Record<string, unknown>)[arrayField.name]
@@ -199,7 +199,7 @@ const useChildren = (props: {
       return null
     }
     if (isObjectNode({schema: editor.schema}, n)) {
-      if (editor.editableTypes.has(n._type)) {
+      if (editor.containers.has(n._type)) {
         return renderElementComponent(n, i)
       }
       return renderObjectNodeComponent(n, i)

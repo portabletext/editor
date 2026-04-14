@@ -1,7 +1,7 @@
 import type {OfDefinition} from '@portabletext/schema'
 import {isTextBlock} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
-import type {EditableTypes} from '../schema/editable-types'
+import type {Containers} from '../schema/resolve-containers'
 import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
 import {isObjectNode} from '../slate/node/is-object-node'
@@ -13,14 +13,14 @@ import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 export function getChildren(
   context: {
     schema: EditorSchema
-    editableTypes: EditableTypes
+    containers: Containers
     value: Array<Node>
   },
   path: Path,
 ): Array<{node: Node; path: Path}> {
   const traversalContext = {
     schema: context.schema,
-    editableTypes: context.editableTypes,
+    containers: context.containers,
   }
   return getChildrenInternal(traversalContext, {value: context.value}, path)
 }
@@ -28,7 +28,7 @@ export function getChildren(
 export function getChildrenInternal(
   context: {
     schema: EditorSchema
-    editableTypes: EditableTypes
+    containers: Containers
   },
   root: Node | {value: Array<Node>},
   path: Path,
@@ -93,7 +93,7 @@ export function getChildrenInternal(
 export function getNodeChildren(
   context: {
     schema: EditorSchema
-    editableTypes: EditableTypes
+    containers: Containers
   },
   node: Node | {value: Array<Node>},
   scopePath: string,
@@ -118,7 +118,7 @@ export function getNodeChildren(
   if (isObjectNode(context, node)) {
     const scopedKey = scopePath ? `${scopePath}.${node._type}` : node._type
 
-    const arrayField = context.editableTypes.get(scopedKey)?.[0]
+    const arrayField = context.containers.get(scopedKey)
 
     if (!arrayField) {
       return undefined

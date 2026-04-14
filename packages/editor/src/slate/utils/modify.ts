@@ -57,7 +57,7 @@ export const modifyDescendant = <N extends Node>(
 
   const context = {
     schema: editor.schema,
-    editableTypes: editor.editableTypes,
+    containers: editor.containers,
   }
   const nodeEntry = getNode(
     {
@@ -227,7 +227,7 @@ export const modifyChildren = (
   } else {
     const context = {
       schema: editor.schema,
-      editableTypes: editor.editableTypes,
+      containers: editor.containers,
     }
 
     const nodeEntry = getNode(

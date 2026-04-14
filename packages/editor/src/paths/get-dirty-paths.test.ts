@@ -1,6 +1,6 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
 import {describe, expect, test} from 'vitest'
-import type {EditableTypes} from '../schema/editable-types'
+import type {Containers} from '../schema/resolve-containers'
 import type {Node} from '../slate/interfaces/node'
 import {getDirtyPaths} from './get-dirty-paths'
 
@@ -18,16 +18,16 @@ const schemaDefinition = defineSchema({
 
 const schema = compileSchema(schemaDefinition)
 
-const emptyEditableTypes: EditableTypes = new Map()
+const emptyContainers: Containers = new Map()
 
-const containerEditableTypes: EditableTypes = new Map([
-  ['callout', [{name: 'content', type: 'array', of: [{type: 'block'}]}]],
+const containerContainers: Containers = new Map([
+  ['callout', {name: 'content', type: 'array', of: [{type: 'block'}]}],
 ])
 
-const tableEditableTypes: EditableTypes = new Map([
-  ['table', [{name: 'rows', type: 'array', of: [{type: 'row'}]}]],
-  ['table.row', [{name: 'cells', type: 'array', of: [{type: 'cell'}]}]],
-  ['table.row.cell', [{name: 'content', type: 'array', of: [{type: 'block'}]}]],
+const tableContainers: Containers = new Map([
+  ['table', {name: 'rows', type: 'array', of: [{type: 'row'}]}],
+  ['table.row', {name: 'cells', type: 'array', of: [{type: 'cell'}]}],
+  ['table.row.cell', {name: 'content', type: 'array', of: [{type: 'block'}]}],
 ])
 
 describe(getDirtyPaths.name, () => {
@@ -37,7 +37,7 @@ describe(getDirtyPaths.name, () => {
         getDirtyPaths(
           {
             schema,
-            editableTypes: emptyEditableTypes,
+            containers: emptyContainers,
             value: [],
           },
           {
@@ -55,7 +55,7 @@ describe(getDirtyPaths.name, () => {
         getDirtyPaths(
           {
             schema,
-            editableTypes: emptyEditableTypes,
+            containers: emptyContainers,
             value: [],
           },
           {
@@ -73,7 +73,7 @@ describe(getDirtyPaths.name, () => {
         getDirtyPaths(
           {
             schema,
-            editableTypes: containerEditableTypes,
+            containers: containerContainers,
             value: [],
           },
           {
@@ -102,7 +102,7 @@ describe(getDirtyPaths.name, () => {
         getDirtyPaths(
           {
             schema,
-            editableTypes: containerEditableTypes,
+            containers: containerContainers,
             value: [],
           },
           {
@@ -150,7 +150,7 @@ describe(getDirtyPaths.name, () => {
         getDirtyPaths(
           {
             schema,
-            editableTypes: emptyEditableTypes,
+            containers: emptyContainers,
             value: [],
           },
           {
@@ -173,7 +173,7 @@ describe(getDirtyPaths.name, () => {
         getDirtyPaths(
           {
             schema,
-            editableTypes: emptyEditableTypes,
+            containers: emptyContainers,
             value: [],
           },
           {
@@ -190,7 +190,7 @@ describe(getDirtyPaths.name, () => {
         getDirtyPaths(
           {
             schema,
-            editableTypes: emptyEditableTypes,
+            containers: emptyContainers,
             value: [],
           },
           {
@@ -218,7 +218,7 @@ describe(getDirtyPaths.name, () => {
         getDirtyPaths(
           {
             schema,
-            editableTypes: emptyEditableTypes,
+            containers: emptyContainers,
             value: [replacementNode],
           },
           {
@@ -251,7 +251,7 @@ describe(getDirtyPaths.name, () => {
         getDirtyPaths(
           {
             schema,
-            editableTypes: emptyEditableTypes,
+            containers: emptyContainers,
             value: [blockNode],
           },
           {
@@ -290,7 +290,7 @@ describe(getDirtyPaths.name, () => {
         getDirtyPaths(
           {
             schema,
-            editableTypes: containerEditableTypes,
+            containers: containerContainers,
             value: [],
           },
           {
@@ -312,7 +312,7 @@ describe(getDirtyPaths.name, () => {
         getDirtyPaths(
           {
             schema,
-            editableTypes: containerEditableTypes,
+            containers: containerContainers,
             value: [],
           },
           {
@@ -329,7 +329,7 @@ describe(getDirtyPaths.name, () => {
         getDirtyPaths(
           {
             schema,
-            editableTypes: containerEditableTypes,
+            containers: containerContainers,
             value: [],
           },
           {
@@ -367,7 +367,7 @@ describe(getDirtyPaths.name, () => {
         getDirtyPaths(
           {
             schema,
-            editableTypes: containerEditableTypes,
+            containers: containerContainers,
             value: [calloutNode],
           },
           {
@@ -404,7 +404,7 @@ describe(getDirtyPaths.name, () => {
         getDirtyPaths(
           {
             schema,
-            editableTypes: containerEditableTypes,
+            containers: containerContainers,
             value: [calloutNode],
           },
           {
@@ -430,7 +430,7 @@ describe(getDirtyPaths.name, () => {
         getDirtyPaths(
           {
             schema,
-            editableTypes: tableEditableTypes,
+            containers: tableContainers,
             value: [],
           },
           {
@@ -472,7 +472,7 @@ describe(getDirtyPaths.name, () => {
         getDirtyPaths(
           {
             schema,
-            editableTypes: emptyEditableTypes,
+            containers: emptyContainers,
             value: [],
           },
           {
@@ -488,7 +488,7 @@ describe(getDirtyPaths.name, () => {
         getDirtyPaths(
           {
             schema,
-            editableTypes: emptyEditableTypes,
+            containers: emptyContainers,
             value: [],
           },
           {
@@ -521,7 +521,7 @@ describe(getDirtyPaths.name, () => {
         getDirtyPaths(
           {
             schema,
-            editableTypes: emptyEditableTypes,
+            containers: emptyContainers,
             value,
           },
           {
@@ -537,7 +537,7 @@ describe(getDirtyPaths.name, () => {
         getDirtyPaths(
           {
             schema,
-            editableTypes: emptyEditableTypes,
+            containers: emptyContainers,
             value: [],
           },
           {
@@ -553,7 +553,7 @@ describe(getDirtyPaths.name, () => {
         getDirtyPaths(
           {
             schema,
-            editableTypes: containerEditableTypes,
+            containers: containerContainers,
             value: [],
           },
           {
@@ -569,7 +569,7 @@ describe(getDirtyPaths.name, () => {
         getDirtyPaths(
           {
             schema,
-            editableTypes: containerEditableTypes,
+            containers: containerContainers,
             value: [],
           },
           {
@@ -608,7 +608,7 @@ describe(getDirtyPaths.name, () => {
         getDirtyPaths(
           {
             schema,
-            editableTypes: containerEditableTypes,
+            containers: containerContainers,
             value: calloutValue,
           },
           {
@@ -626,7 +626,7 @@ describe(getDirtyPaths.name, () => {
         getDirtyPaths(
           {
             schema,
-            editableTypes: emptyEditableTypes,
+            containers: emptyContainers,
             value: [],
           },
           {
@@ -660,7 +660,7 @@ describe(getDirtyPaths.name, () => {
         getDirtyPaths(
           {
             schema,
-            editableTypes: emptyEditableTypes,
+            containers: emptyContainers,
             value: [],
           },
           {
@@ -698,7 +698,7 @@ describe(getDirtyPaths.name, () => {
         getDirtyPaths(
           {
             schema,
-            editableTypes: containerEditableTypes,
+            containers: containerContainers,
             value: [],
           },
           {
@@ -722,7 +722,7 @@ describe(getDirtyPaths.name, () => {
         getDirtyPaths(
           {
             schema,
-            editableTypes: containerEditableTypes,
+            containers: containerContainers,
             value: [],
           },
           {
@@ -763,7 +763,7 @@ describe(getDirtyPaths.name, () => {
         getDirtyPaths(
           {
             schema,
-            editableTypes: containerEditableTypes,
+            containers: containerContainers,
             value: [],
           },
           {
@@ -796,7 +796,7 @@ describe(getDirtyPaths.name, () => {
         getDirtyPaths(
           {
             schema,
-            editableTypes: tableEditableTypes,
+            containers: tableContainers,
             value: [],
           },
           {

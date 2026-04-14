@@ -1,6 +1,6 @@
 import type {EditorSchema} from '../editor/editor-schema'
 import {getNodeChildren} from '../node-traversal/get-children'
-import type {EditableTypes} from '../schema/editable-types'
+import type {Containers} from '../schema/resolve-containers'
 import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
@@ -15,13 +15,13 @@ import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 export function getChildFieldName(
   context: {
     schema: EditorSchema
-    editableTypes: EditableTypes
+    containers: Containers
     value: Array<Node>
   },
   path: Path,
 ): string | undefined {
   let nodeChildren = getNodeChildren(
-    {schema: context.schema, editableTypes: context.editableTypes},
+    {schema: context.schema, containers: context.containers},
     {value: context.value},
     '',
   )
@@ -51,7 +51,7 @@ export function getChildFieldName(
 
     if (i === path.length - 1) {
       const targetInfo = getNodeChildren(
-        {schema: context.schema, editableTypes: context.editableTypes},
+        {schema: context.schema, containers: context.containers},
         node,
         nodeChildren.scopePath,
       )
@@ -59,7 +59,7 @@ export function getChildFieldName(
     }
 
     nodeChildren = getNodeChildren(
-      {schema: context.schema, editableTypes: context.editableTypes},
+      {schema: context.schema, containers: context.containers},
       node,
       nodeChildren.scopePath,
     )

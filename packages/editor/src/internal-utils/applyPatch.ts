@@ -64,7 +64,7 @@ export function createApplyPatch(
 function diffMatchPatch(
   editor: Pick<
     PortableTextSlateEditor,
-    'children' | 'apply' | 'selection' | 'onChange' | 'schema' | 'editableTypes'
+    'children' | 'apply' | 'selection' | 'onChange' | 'schema' | 'containers'
   >,
   patch: DiffMatchPatch,
 ): boolean {
@@ -77,7 +77,7 @@ function diffMatchPatch(
   const spanEntry = getNode(
     {
       schema: editor.schema,
-      editableTypes: editor.editableTypes,
+      containers: editor.containers,
       value: editor.children,
     },
     spanPath,

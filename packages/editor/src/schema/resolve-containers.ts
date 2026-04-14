@@ -7,51 +7,53 @@ export type ChildArrayField = FieldDefinition & {
 }
 
 /**
- * Maps scoped type names to their resolved editable array fields.
+ * Maps scoped type names to their resolved editable array field.
  *
  * Key: scoped type name (e.g., 'table', 'table.row', 'table.row.cell')
- * Value: resolved array field definitions with name and of scope
+ * Value: resolved array field definition with name and of scope
  */
-export type EditableTypes = Map<string, Array<ChildArrayField>>
+export type Containers = Map<string, ChildArrayField>
 
 /**
- * Resolve the complete EditableTypes Map from a schema and a set of
+ * Resolve the complete Containers Map from a schema and a set of
  * registered renderers. Walks the schema once per renderer type,
  * collecting all scoped type paths and their editable array fields.
  */
-export function resolveEditableTypes(
+export function resolveContainers(
   schema: EditorSchema,
   renderers: Map<string, {renderer: {type: string}}>,
-): EditableTypes {
-  const editableTypes: EditableTypes = new Map()
+): Containers {
+  const containers: Containers = new Map()
 
   for (const [, config] of renderers) {
     for (const entry of resolveTypePaths(schema, config.renderer.type)) {
-      editableTypes.set(entry.path, entry.fields)
+      if (entry.field) {
+        containers.set(entry.path, entry.field)
+      }
     }
   }
 
-  return editableTypes
+  return containers
 }
 
 function resolveTypePaths(
   schema: EditorSchema,
   typeName: string,
-): Array<{path: string; fields: Array<ChildArrayField>}> {
-  const entries: Array<{path: string; fields: Array<ChildArrayField>}> = []
+): Array<{path: string; field: ChildArrayField | undefined}> {
+  const entries: Array<{path: string; field: ChildArrayField | undefined}> = []
 
   const blockObject = schema.blockObjects.find(
     (definition) => definition.name === typeName,
   )
 
   if (!blockObject || !('fields' in blockObject) || !blockObject.fields) {
-    entries.push({path: typeName, fields: []})
+    entries.push({path: typeName, field: undefined})
     return entries
   }
 
-  const rootFields: Array<ChildArrayField> = []
-  walkFields(blockObject.fields, typeName, entries, rootFields)
-  entries.unshift({path: typeName, fields: rootFields})
+  const rootField = resolveFirstChildArrayField(blockObject.fields)
+  walkFields(blockObject.fields, typeName, entries)
+  entries.unshift({path: typeName, field: rootField})
   return entries
 }
 
@@ -59,25 +61,30 @@ function isChildArrayField(field: FieldDefinition): field is ChildArrayField {
   return field.type === 'array' && 'of' in field && Array.isArray(field.of)
 }
 
+function resolveFirstChildArrayField(
+  fields: ReadonlyArray<FieldDefinition>,
+): ChildArrayField | undefined {
+  return fields.find(isChildArrayField)
+}
+
 function walkFields(
   fields: ReadonlyArray<FieldDefinition>,
   currentPath: string,
-  entries: Array<{path: string; fields: Array<ChildArrayField>}>,
-  parentFields: Array<ChildArrayField>,
+  entries: Array<{path: string; field: ChildArrayField | undefined}>,
 ) {
   for (const field of fields) {
     if (isChildArrayField(field)) {
-      parentFields.push(field)
       for (const ofMember of field.of) {
         if (ofMember.type === 'block') {
           continue
         }
         const scopedPath = `${currentPath}.${ofMember.type}`
-        const childFields: Array<ChildArrayField> = []
+        let childField: ChildArrayField | undefined
         if ('fields' in ofMember && ofMember.fields) {
-          walkFields(ofMember.fields, scopedPath, entries, childFields)
+          childField = resolveFirstChildArrayField(ofMember.fields)
+          walkFields(ofMember.fields, scopedPath, entries)
         }
-        entries.push({path: scopedPath, fields: childFields})
+        entries.push({path: scopedPath, field: childField})
       }
     }
   }
