@@ -21,7 +21,7 @@ import {
 
 type ResolveSelectionEditor = Pick<
   PortableTextSlateEditor,
-  'children' | 'schema' | 'editableTypes'
+  'children' | 'schema' | 'containers'
 >
 
 /**
@@ -91,7 +91,7 @@ function resolveSelectionPoint(
   | undefined {
   const context = {
     schema: editor.schema,
-    editableTypes: editor.editableTypes,
+    containers: editor.containers,
     value: editor.children,
   }
 

@@ -1,5 +1,5 @@
 import type {EditorSchema} from '../editor/editor-schema'
-import type {EditableTypes} from '../schema/editable-types'
+import type {Containers} from '../schema/resolve-containers'
 import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
 import {getNode} from './get-node'
@@ -10,7 +10,7 @@ import {getNode} from './get-node'
 export function hasNode(
   context: {
     schema: EditorSchema
-    editableTypes: EditableTypes
+    containers: Containers
     value: Array<Node>
     blockIndexMap?: Map<string, number>
   },

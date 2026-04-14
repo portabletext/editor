@@ -222,7 +222,7 @@ export function createEditableAPI(
       const result = getNode(
         {
           schema: editor.schema,
-          editableTypes: editor.editableTypes,
+          containers: editor.containers,
           value: editor.children,
         },
         path as InternalPath,

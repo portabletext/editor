@@ -453,7 +453,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   // Container normalization: ensure the child array field exists.
   if (isObjectNode({schema: editor.schema}, node)) {
     const scopedName = getContainerScopedName(editor, node, path)
-    const arrayField = editor.editableTypes.get(scopedName)?.[0]
+    const arrayField = editor.containers.get(scopedName)
 
     if (arrayField) {
       const fieldValue = (node as Record<string, unknown>)[arrayField.name]
@@ -468,7 +468,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   // Container normalization: ensure non-empty child array.
   if (isObjectNode({schema: editor.schema}, node)) {
     const scopedName = getContainerScopedName(editor, node, path)
-    const arrayField = editor.editableTypes.get(scopedName)?.[0]
+    const arrayField = editor.containers.get(scopedName)
 
     if (arrayField) {
       const fieldValue = (node as Record<string, unknown>)[arrayField.name]
@@ -508,7 +508,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   // Fix duplicate _key among children of container/object nodes.
   // The sibling-level handler above catches duplicates when each child is
   // visited individually, but container children may not be visited if
-  // editableTypes gates traversal. Handle it at the parent level as well.
+  // containers gates traversal. Handle it at the parent level as well.
   if (isObjectNode({schema: editor.schema}, node)) {
     const children = [...getChildren(editor, path)]
 

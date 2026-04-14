@@ -1,6 +1,6 @@
 import {isSpan, isTextBlock} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
-import type {EditableTypes} from '../schema/editable-types'
+import type {Containers} from '../schema/resolve-containers'
 import type {Node} from '../slate/interfaces/node'
 import type {Operation} from '../slate/interfaces/operation'
 import type {Path} from '../slate/interfaces/path'
@@ -13,13 +13,13 @@ import {getChildFieldName} from './get-child-field-name'
  * Numeric indices avoid dedup collisions when siblings have duplicate
  * keys (pre-normalization).
  *
- * Uses the schema and editableTypes to resolve child array fields
+ * Uses the schema and containers to resolve child array fields
  * rather than guessing from object properties.
  */
 function collectDescendantPaths(
   context: {
     schema: EditorSchema
-    editableTypes: EditableTypes
+    containers: Containers
   },
   node: Node,
   parentPath: Path,
@@ -40,7 +40,7 @@ function collectDescendantPaths(
   // For container types, resolve the child array field from the schema
   const scopedName = scopePrefix ? `${scopePrefix}.${node._type}` : node._type
 
-  const arrayField = context.editableTypes.get(scopedName)?.[0]
+  const arrayField = context.containers.get(scopedName)
 
   if (arrayField) {
     const fieldValue = (node as Record<string, unknown>)[arrayField.name]
@@ -107,7 +107,7 @@ function buildScopedName(value: Array<Node>, path: Path): string {
 export function getDirtyPaths(
   context: {
     schema: EditorSchema
-    editableTypes: EditableTypes
+    containers: Containers
     value: Array<Node>
   },
   op: Operation,

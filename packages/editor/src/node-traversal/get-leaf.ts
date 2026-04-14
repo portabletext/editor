@@ -1,5 +1,5 @@
 import type {EditorSchema} from '../editor/editor-schema'
-import type {EditableTypes} from '../schema/editable-types'
+import type {Containers} from '../schema/resolve-containers'
 import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
 import {getChildren} from './get-children'
@@ -13,7 +13,7 @@ import {getNode} from './get-node'
 export function getLeaf(
   context: {
     schema: EditorSchema
-    editableTypes: EditableTypes
+    containers: Containers
     value: Array<Node>
   },
   path: Path,

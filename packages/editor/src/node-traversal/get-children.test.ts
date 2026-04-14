@@ -1,5 +1,5 @@
 import {describe, expect, test} from 'vitest'
-import type {ChildArrayField} from '../schema/editable-types'
+import type {ChildArrayField} from '../schema/resolve-containers'
 import {getChildren} from './get-children'
 import {createNodeTraversalTestbed} from './node-traversal-testbed'
 
@@ -162,80 +162,72 @@ describe(getChildren.name, () => {
   })
 
   test('non-editable code block returns empty array', () => {
-    const tableOnly = new Map<string, Array<ChildArrayField>>([
+    const tableOnly = new Map<string, ChildArrayField>([
       [
         'table',
-        [
-          {
-            name: 'rows',
-            type: 'array',
-            of: [
-              {
-                type: 'row',
-                fields: [
-                  {
-                    name: 'cells',
-                    type: 'array',
-                    of: [
-                      {
-                        type: 'cell',
-                        fields: [
-                          {
-                            name: 'content',
-                            type: 'array',
-                            of: [{type: 'block'}],
-                          },
-                        ],
-                      },
-                    ],
-                  },
-                ],
-              },
-            ],
-          },
-        ],
+        {
+          name: 'rows',
+          type: 'array',
+          of: [
+            {
+              type: 'row',
+              fields: [
+                {
+                  name: 'cells',
+                  type: 'array',
+                  of: [
+                    {
+                      type: 'cell',
+                      fields: [
+                        {
+                          name: 'content',
+                          type: 'array',
+                          of: [{type: 'block'}],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
       ],
       [
         'table.row',
-        [
-          {
-            name: 'cells',
-            type: 'array',
-            of: [
-              {
-                type: 'cell',
-                fields: [
-                  {
-                    name: 'content',
-                    type: 'array',
-                    of: [{type: 'block'}],
-                  },
-                ],
-              },
-            ],
-          },
-        ],
+        {
+          name: 'cells',
+          type: 'array',
+          of: [
+            {
+              type: 'cell',
+              fields: [
+                {
+                  name: 'content',
+                  type: 'array',
+                  of: [{type: 'block'}],
+                },
+              ],
+            },
+          ],
+        },
       ],
       [
         'table.row.cell',
-        [{name: 'content', type: 'array', of: [{type: 'block'}]}],
+        {name: 'content', type: 'array', of: [{type: 'block'}]},
       ],
     ])
     expect(
-      getChildren({...testbed.context, editableTypes: tableOnly}, [
-        {_key: 'k11'},
-      ]),
+      getChildren({...testbed.context, containers: tableOnly}, [{_key: 'k11'}]),
     ).toEqual([])
   })
 
   test('non-editable table returns empty array', () => {
-    const codeOnly = new Map<string, Array<ChildArrayField>>([
-      ['code-block', [{name: 'code', type: 'array', of: [{type: 'block'}]}]],
+    const codeOnly = new Map<string, ChildArrayField>([
+      ['code-block', {name: 'code', type: 'array', of: [{type: 'block'}]}],
     ])
     expect(
-      getChildren({...testbed.context, editableTypes: codeOnly}, [
-        {_key: 'k26'},
-      ]),
+      getChildren({...testbed.context, containers: codeOnly}, [{_key: 'k26'}]),
     ).toEqual([])
   })
 })

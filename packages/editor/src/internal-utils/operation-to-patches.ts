@@ -7,7 +7,7 @@ import {
 import type {PortableTextBlock} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
 import {getSpanNode} from '../node-traversal/get-span-node'
-import type {EditableTypes} from '../schema/editable-types'
+import type {Containers} from '../schema/resolve-containers'
 import type {Node} from '../slate/interfaces/node'
 import type {
   InsertOperation,
@@ -20,10 +20,10 @@ function spanContext(
   value: Array<Node>,
 ): {
   schema: EditorSchema
-  editableTypes: EditableTypes
+  containers: Containers
   value: Array<Node>
 } {
-  return {schema, editableTypes: new Map(), value}
+  return {schema, containers: new Map(), value}
 }
 
 export function textPatch(

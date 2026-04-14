@@ -202,7 +202,7 @@ export function applyOperation(editor: Editor, op: Operation): void {
       const setNodeEntry = getNode(
         {
           schema: editor.schema,
-          editableTypes: editor.editableTypes,
+          containers: editor.containers,
           value: editor.children,
           blockIndexMap: editor.blockIndexMap,
         },
@@ -423,7 +423,7 @@ export function applyOperation(editor: Editor, op: Operation): void {
       const unsetNodeEntry = getNode(
         {
           schema: editor.schema,
-          editableTypes: editor.editableTypes,
+          containers: editor.containers,
           value: editor.children,
           blockIndexMap: editor.blockIndexMap,
         },

@@ -1,5 +1,5 @@
 import type {EditorSchema} from '../editor/editor-schema'
-import type {EditableTypes} from '../schema/editable-types'
+import type {Containers} from '../schema/resolve-containers'
 import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
@@ -14,7 +14,7 @@ import {getNodeChildren} from './get-children'
 export function isLeaf(
   context: {
     schema: EditorSchema
-    editableTypes: EditableTypes
+    containers: Containers
     value: Array<Node>
   },
   path: Path,
@@ -25,7 +25,7 @@ export function isLeaf(
 
   const traversalContext = {
     schema: context.schema,
-    editableTypes: context.editableTypes,
+    containers: context.containers,
   }
 
   let currentChildren: Array<Node> = context.value

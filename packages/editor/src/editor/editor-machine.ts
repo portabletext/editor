@@ -20,7 +20,7 @@ import {debug} from '../internal-utils/debug'
 import type {EventPosition} from '../internal-utils/event-position'
 import {sortByPriority} from '../priority/priority.sort'
 import type {RendererConfig} from '../renderers/renderer.types'
-import {resolveEditableTypes} from '../schema/editable-types'
+import {resolveContainers} from '../schema/resolve-containers'
 import {normalize} from '../slate/editor/normalize'
 import {ReactEditor} from '../slate/react/plugin/react-editor'
 import type {NamespaceEvent, OmitFromUnion} from '../type-utils'
@@ -176,14 +176,14 @@ export function rerouteExternalBehaviorEvent({
   }
 }
 
-function syncEditableTypes(context: {
+function syncContainers(context: {
   schema: EditorSchema
   renderers: Map<string, RendererConfig>
   slateEditor?: PortableTextSlateEditor
 }) {
-  const editableTypes = resolveEditableTypes(context.schema, context.renderers)
+  const containers = resolveContainers(context.schema, context.renderers)
   if (context.slateEditor) {
-    context.slateEditor.editableTypes = editableTypes
+    context.slateEditor.containers = containers
     normalize(context.slateEditor, {force: true})
     context.slateEditor.onChange()
   }
@@ -265,7 +265,7 @@ export const editorMachine = setup({
       },
     }),
     'sync editable types': ({context}) => {
-      syncEditableTypes(context)
+      syncContainers(context)
     },
     'emit patch event': emit(({event}) => {
       assertEvent(event, 'internal.patch')
