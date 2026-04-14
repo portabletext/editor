@@ -12,8 +12,8 @@ import {makeDiff, makePatches, stringifyPatches} from '@sanity/diff-match-patch'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {defineSchema, type EditorEmittedEvent} from '../src'
+import {ContainerPlugin} from '../src/plugins/plugin.container'
 import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
-import {RendererPlugin} from '../src/plugins/plugin.renderer'
 import {createTestEditor, createTestEditors} from '../src/test/vitest'
 
 describe('event.patches', () => {
@@ -2491,8 +2491,8 @@ describe('event.patches', () => {
           },
         ],
         children: (
-          <RendererPlugin
-            renderers={[
+          <ContainerPlugin
+            containers={[
               {
                 renderer: {
                   type: 'callout' as const,
@@ -4699,7 +4699,7 @@ describe('event.patches', () => {
             ],
           },
         ],
-        children: <RendererPlugin renderers={calloutRenderers} />,
+        children: <ContainerPlugin containers={calloutRenderers} />,
       })
 
       editor.send({
@@ -4822,7 +4822,7 @@ describe('event.patches', () => {
             ],
           },
         ],
-        children: <RendererPlugin renderers={calloutRenderers} />,
+        children: <ContainerPlugin containers={calloutRenderers} />,
       })
 
       editor.send({
@@ -4944,7 +4944,7 @@ describe('event.patches', () => {
             ],
           },
         ],
-        children: <RendererPlugin renderers={tableRenderers} />,
+        children: <ContainerPlugin containers={tableRenderers} />,
       })
 
       editor.send({
@@ -5070,7 +5070,7 @@ describe('event.patches', () => {
             content: [],
           },
         ],
-        children: <RendererPlugin renderers={calloutRenderers} />,
+        children: <ContainerPlugin containers={calloutRenderers} />,
       })
 
       // Normalization adds a placeholder block (k5/k6) to the empty content

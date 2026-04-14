@@ -8,7 +8,6 @@ import {useCallback, useRef, type JSX} from 'react'
 import {
   ContainerScopeContext,
   useContainerScope,
-  type ContainerScope,
 } from '../../../editor/container-scope-context'
 import {
   isElementDecorationsEqual,
@@ -74,7 +73,7 @@ const useChildren = (props: {
 
   let children: Array<Node> = []
   let childFieldName = 'children'
-  let childScope: ContainerScope | undefined = containerScope
+  let childScope: string | undefined = containerScope
 
   if (isEditor(node)) {
     children = node.children
@@ -82,22 +81,19 @@ const useChildren = (props: {
     children = node.children
   } else if (isObjectNode({schema: editor.schema}, node)) {
     const scopedKey = containerScope
-      ? `${containerScope.name}.${node._type}`
+      ? `${containerScope}.${node._type}`
       : node._type
 
-    const arrayField = editor.containers.get(scopedKey)
+    const containerField = editor.containers.get(scopedKey)
 
-    if (arrayField) {
-      const fieldValue = (node as Record<string, unknown>)[arrayField.name]
+    if (containerField) {
+      const fieldValue = (node as Record<string, unknown>)[containerField.name]
       if (Array.isArray(fieldValue)) {
         children = fieldValue as Array<Node>
-        childFieldName = arrayField.name
+        childFieldName = containerField.name
       }
 
-      childScope = {
-        name: scopedKey,
-        schemaScope: arrayField.of,
-      }
+      childScope = scopedKey
     }
   }
 
@@ -199,7 +195,8 @@ const useChildren = (props: {
       return null
     }
     if (isObjectNode({schema: editor.schema}, n)) {
-      if (editor.containers.has(n._type)) {
+      const scopedName = childScope ? `${childScope}.${n._type}` : n._type
+      if (editor.containers.has(scopedName)) {
         return renderElementComponent(n, i)
       }
       return renderObjectNodeComponent(n, i)

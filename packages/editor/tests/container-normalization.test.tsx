@@ -3,8 +3,8 @@ import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import type {InternalEditor} from '../src/editor/create-editor'
+import {ContainerPlugin} from '../src/plugins/plugin.container'
 import {PatchesPlugin} from '../src/plugins/plugin.patches'
-import {RendererPlugin} from '../src/plugins/plugin.renderer'
 import {createTestEditor} from '../src/test/vitest'
 
 const schemaDefinition = defineSchema({
@@ -96,7 +96,7 @@ describe('container normalization', () => {
           _key: rowKey,
         },
       ],
-      children: <RendererPlugin renderers={tableRenderers} />,
+      children: <ContainerPlugin containers={tableRenderers} />,
     })
 
     await vi.waitFor(() => {
@@ -143,7 +143,7 @@ describe('container normalization', () => {
       children: (
         <>
           <PatchesPlugin patches={patches} />
-          <RendererPlugin renderers={tableRenderers} />
+          <ContainerPlugin containers={tableRenderers} />
         </>
       ),
     })
@@ -317,7 +317,7 @@ describe('container normalization', () => {
       children: (
         <>
           <PatchesPlugin patches={patches} />
-          <RendererPlugin renderers={calloutRenderers} />
+          <ContainerPlugin containers={calloutRenderers} />
         </>
       ),
     })
@@ -491,7 +491,7 @@ describe('container normalization', () => {
           ],
         },
       ],
-      children: <RendererPlugin renderers={tableRenderers} />,
+      children: <ContainerPlugin containers={tableRenderers} />,
     })
 
     // Verify initial value is correct
@@ -633,7 +633,7 @@ describe('container normalization', () => {
       children: (
         <>
           <PatchesPlugin patches={patches} />
-          <RendererPlugin renderers={calloutRenderers} />
+          <ContainerPlugin containers={calloutRenderers} />
         </>
       ),
     })
@@ -763,7 +763,7 @@ describe('container normalization', () => {
           ],
         },
       ],
-      children: <RendererPlugin renderers={tableRenderers} />,
+      children: <ContainerPlugin containers={tableRenderers} />,
     })
 
     await vi.waitFor(() => {
@@ -867,7 +867,7 @@ describe('container normalization', () => {
           ],
         },
       ],
-      children: <RendererPlugin renderers={calloutRenderers} />,
+      children: <ContainerPlugin containers={calloutRenderers} />,
     })
 
     await vi.waitFor(() => {
@@ -943,7 +943,9 @@ describe('container normalization', () => {
         },
       ],
       children: (
-        <RendererPlugin renderers={[...tableRenderers, ...calloutRenderers]} />
+        <ContainerPlugin
+          containers={[...tableRenderers, ...calloutRenderers]}
+        />
       ),
     })
 
@@ -1017,7 +1019,7 @@ describe('container normalization', () => {
           style: 'normal',
         },
       ],
-      children: <RendererPlugin renderers={calloutRenderers} />,
+      children: <ContainerPlugin containers={calloutRenderers} />,
     })
 
     // Insert a bare callout via incoming patch
@@ -1089,7 +1091,7 @@ describe('container normalization', () => {
           rows: [],
         },
       ],
-      // No RendererPlugin: table is treated as a void block object
+      // No ContainerPlugin: table is treated as a void block object
     })
 
     // Give normalization time to run (it shouldn't touch the table)
@@ -1156,7 +1158,7 @@ describe('container normalization', () => {
           ],
         },
       ],
-      children: <RendererPlugin renderers={tableRenderers} />,
+      children: <ContainerPlugin containers={tableRenderers} />,
     })
 
     await vi.waitFor(() => {
@@ -1258,7 +1260,7 @@ describe('container normalization', () => {
           ],
         },
       ],
-      children: <RendererPlugin renderers={tableRenderers} />,
+      children: <ContainerPlugin containers={tableRenderers} />,
     })
 
     await vi.waitFor(() => {
@@ -1391,7 +1393,7 @@ describe('container normalization', () => {
           ],
         },
       ],
-      children: <RendererPlugin renderers={calloutRenderers} />,
+      children: <ContainerPlugin containers={calloutRenderers} />,
     })
 
     await vi.waitFor(() => {
@@ -1459,7 +1461,7 @@ describe('container normalization', () => {
           _key: calloutKey,
         },
       ],
-      // No RendererPlugin initially: callout is void
+      // No ContainerPlugin initially: callout is void
     })
 
     // Verify the callout stays as-is (void, no normalization)
@@ -1479,10 +1481,10 @@ describe('container normalization', () => {
       ])
     })
 
-    // Late-register a renderer for callout
+    // Late-register a container for callout
     ;(editor as unknown as InternalEditor)._internal.editorActor.send({
-      type: 'register renderer',
-      rendererConfig: {
+      type: 'register container',
+      containerConfig: {
         renderer: {
           type: 'callout',
           render: ({children}: {children: React.ReactNode}) => <>{children}</>,
@@ -1561,7 +1563,7 @@ describe('container normalization', () => {
       children: (
         <>
           <PatchesPlugin patches={patches} />
-          <RendererPlugin renderers={calloutRenderers} />
+          <ContainerPlugin containers={calloutRenderers} />
         </>
       ),
     })
@@ -1650,7 +1652,7 @@ describe('container normalization', () => {
       children: (
         <>
           <PatchesPlugin patches={patches} />
-          <RendererPlugin renderers={calloutRenderers} />
+          <ContainerPlugin containers={calloutRenderers} />
         </>
       ),
     })

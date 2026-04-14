@@ -133,7 +133,7 @@ describe(resolveContainers.name, () => {
     )
   })
 
-  test('returns empty Map when no renderers are registered', () => {
+  test('returns empty Map when no containers are registered', () => {
     const schema = compileSchema(defineSchema({}))
 
     expect(resolveContainers(schema, new Map())).toEqual(new Map())
@@ -164,7 +164,7 @@ describe(resolveContainers.name, () => {
     )
   })
 
-  test('merges types from multiple renderers', () => {
+  test('merges types from multiple containers', () => {
     const schema = compileSchema(
       defineSchema({
         blockObjects: [
