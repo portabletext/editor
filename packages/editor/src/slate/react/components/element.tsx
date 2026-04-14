@@ -55,7 +55,7 @@ const Element = (props: {
     props.indexedPath,
     parentDecorations,
   )
-  const children: React.ReactNode = useChildren({
+  const children = useChildren({
     parentDataPath: dataPath,
     decorations,
     node: element,

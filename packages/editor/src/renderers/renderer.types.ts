@@ -16,6 +16,6 @@ export type Renderer = {
 /**
  * @internal
  */
-export type RendererConfig = {
+export type ContainerConfig = {
   renderer: Renderer
 }

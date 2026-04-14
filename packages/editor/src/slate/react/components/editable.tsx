@@ -91,9 +91,9 @@ import {RestoreDOM} from './restore-dom/restore-dom'
 
 type DeferredOperation = () => void
 
-const Children = (props: Parameters<typeof useChildren>[0]) => (
-  <React.Fragment>{useChildren(props)}</React.Fragment>
-)
+const Children = (props: Parameters<typeof useChildren>[0]) => {
+  return <React.Fragment>{useChildren(props)}</React.Fragment>
+}
 
 /**
  * `RenderElementProps` are passed to the `renderElement` handler.

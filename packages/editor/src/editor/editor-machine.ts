@@ -19,7 +19,7 @@ import type {Converter} from '../converters/converter.types'
 import {debug} from '../internal-utils/debug'
 import type {EventPosition} from '../internal-utils/event-position'
 import {sortByPriority} from '../priority/priority.sort'
-import type {RendererConfig} from '../renderers/renderer.types'
+import type {ContainerConfig} from '../renderers/renderer.types'
 import {resolveContainers} from '../schema/resolve-containers'
 import {normalize} from '../slate/editor/normalize'
 import {ReactEditor} from '../slate/react/plugin/react-editor'
@@ -116,12 +116,12 @@ type InternalEditorEvent =
   | {type: 'dragend'}
   | {type: 'drop'}
   | {
-      type: 'register renderer'
-      rendererConfig: RendererConfig
+      type: 'register container'
+      containerConfig: ContainerConfig
     }
   | {
-      type: 'unregister renderer'
-      rendererConfig: RendererConfig
+      type: 'unregister container'
+      containerConfig: ContainerConfig
     }
   | {type: 'add slate editor'; editor: PortableTextSlateEditor}
 
@@ -178,10 +178,10 @@ export function rerouteExternalBehaviorEvent({
 
 function syncContainers(context: {
   schema: EditorSchema
-  renderers: Map<string, RendererConfig>
+  containerConfigs: Map<string, ContainerConfig>
   slateEditor?: PortableTextSlateEditor
 }) {
-  const containers = resolveContainers(context.schema, context.renderers)
+  const containers = resolveContainers(context.schema, context.containerConfigs)
   if (context.slateEditor) {
     context.slateEditor.containers = containers
     normalize(context.slateEditor, {force: true})
@@ -201,7 +201,7 @@ export const editorMachine = setup({
       keyGenerator: () => string
       pendingEvents: Array<InternalPatchEvent | MutationEvent>
       pendingIncomingPatchesEvents: Array<PatchesEvent>
-      renderers: Map<string, RendererConfig>
+      containerConfigs: Map<string, ContainerConfig>
       schema: EditorSchema
       initialReadOnly: boolean
       selection: EditorSelection
@@ -248,20 +248,23 @@ export const editorMachine = setup({
           : context.slateEditor
       },
     }),
-    'register renderer': assign({
-      renderers: ({context, event}) => {
-        assertEvent(event, 'register renderer')
-        const renderers = new Map(context.renderers)
-        renderers.set(event.rendererConfig.renderer.type, event.rendererConfig)
-        return renderers
+    'register container': assign({
+      containerConfigs: ({context, event}) => {
+        assertEvent(event, 'register container')
+        const containerConfigs = new Map(context.containerConfigs)
+        containerConfigs.set(
+          event.containerConfig.renderer.type,
+          event.containerConfig,
+        )
+        return containerConfigs
       },
     }),
-    'unregister renderer': assign({
-      renderers: ({context, event}) => {
-        assertEvent(event, 'unregister renderer')
-        const renderers = new Map(context.renderers)
-        renderers.delete(event.rendererConfig.renderer.type)
-        return renderers
+    'unregister container': assign({
+      containerConfigs: ({context, event}) => {
+        assertEvent(event, 'unregister container')
+        const containerConfigs = new Map(context.containerConfigs)
+        containerConfigs.delete(event.containerConfig.renderer.type)
+        return containerConfigs
       },
     }),
     'sync editable types': ({context}) => {
@@ -446,7 +449,7 @@ export const editorMachine = setup({
     keyGenerator: input.keyGenerator,
     pendingEvents: [],
     pendingIncomingPatchesEvents: [],
-    renderers: new Map(),
+    containerConfigs: new Map(),
     schema: input.schema,
     selection: null,
     initialReadOnly: input.readOnly ?? false,
@@ -458,11 +461,11 @@ export const editorMachine = setup({
     'add slate editor': {
       actions: ['add slate editor to context', 'sync editable types'],
     },
-    'register renderer': {
-      actions: ['register renderer', 'sync editable types'],
+    'register container': {
+      actions: ['register container', 'sync editable types'],
     },
-    'unregister renderer': {
-      actions: ['unregister renderer', 'sync editable types'],
+    'unregister container': {
+      actions: ['unregister container', 'sync editable types'],
     },
     'update selection': {
       actions: [

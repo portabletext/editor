@@ -16,16 +16,16 @@ export type Containers = Map<string, ChildArrayField>
 
 /**
  * Resolve the complete Containers Map from a schema and a set of
- * registered renderers. Walks the schema once per renderer type,
+ * registered containers. Walks the schema once per container type,
  * collecting all scoped type paths and their editable array fields.
  */
 export function resolveContainers(
   schema: EditorSchema,
-  renderers: Map<string, {renderer: {type: string}}>,
+  containerConfigs: Map<string, {renderer: {type: string}}>,
 ): Containers {
   const containers: Containers = new Map()
 
-  for (const [, config] of renderers) {
+  for (const [, config] of containerConfigs) {
     for (const entry of resolveTypePaths(schema, config.renderer.type)) {
       if (entry.field) {
         containers.set(entry.path, entry.field)

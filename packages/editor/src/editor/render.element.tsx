@@ -7,7 +7,7 @@ import {useSelector} from '@xstate/react'
 import {useContext, type ReactElement} from 'react'
 import type {DropPosition} from '../behaviors/behavior.core.drop-position'
 import {isInline} from '../node-traversal/is-inline'
-import type {RendererConfig} from '../renderers/renderer.types'
+import type {ContainerConfig} from '../renderers/renderer.types'
 import type {RenderElementProps} from '../slate/react/components/editable'
 import {useSlateStatic} from '../slate/react/hooks/use-slate-static'
 import type {
@@ -36,9 +36,9 @@ export function RenderElement(props: {
 }) {
   const editorActor = useContext(EditorActorContext)
   const schema = useSelector(editorActor, (s) => s.context.schema)
-  const rendererConfig: RendererConfig | undefined = useSelector(
+  const containerConfig: ContainerConfig | undefined = useSelector(
     editorActor,
-    (s) => s.context.renderers.get(props.element._type),
+    (s) => s.context.containerConfigs.get(props.element._type),
   )
   const slateStatic = useSlateStatic()
 
@@ -80,8 +80,8 @@ export function RenderElement(props: {
     )
   }
 
-  if (rendererConfig) {
-    return rendererConfig.renderer.render({
+  if (containerConfig) {
+    return containerConfig.renderer.render({
       attributes: props.attributes,
       children: props.children,
       node: props.element,
