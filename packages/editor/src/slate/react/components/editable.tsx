@@ -66,8 +66,8 @@ import type {Editor} from '../../interfaces/editor'
 import type {NodeEntry} from '../../interfaces/node'
 import type {Path} from '../../interfaces/path'
 import type {DecoratedRange, LeafPosition} from '../../interfaces/text'
-import {isObjectNode} from '../../node/is-object-node'
 import {isTextBlockNode} from '../../node/is-text-block-node'
+import {isVoidNode} from '../../node/is-void-node'
 import {pathEquals} from '../../path/path-equals'
 import {isBackwardRange} from '../../range/is-backward-range'
 import {isCollapsedRange} from '../../range/is-collapsed-range'
@@ -1309,7 +1309,7 @@ export const Editable = forwardRef(
                             {schema: editor.schema},
                             relatedNode,
                           ) ||
-                            isObjectNode({schema: editor.schema}, relatedNode))
+                            isVoidNode(editor, relatedNode, relatedPath))
                         ) {
                           return
                         }
@@ -1380,13 +1380,12 @@ export const Editable = forwardRef(
                       const startEntry = getNode(editor, start.path)
                       const startObjectNode =
                         startEntry &&
-                        isObjectNode({schema: editor.schema}, startEntry.node)
+                        isVoidNode(editor, startEntry.node, start.path)
                           ? startEntry
                           : getAncestorObjectNode(editor, start.path)
                       const endEntry = getNode(editor, end.path)
                       const endObjectNode =
-                        endEntry &&
-                        isObjectNode({schema: editor.schema}, endEntry.node)
+                        endEntry && isVoidNode(editor, endEntry.node, end.path)
                           ? endEntry
                           : getAncestorObjectNode(editor, end.path)
 
@@ -1885,9 +1884,10 @@ export const Editable = forwardRef(
 
                             if (
                               currentNodeEntry &&
-                              isObjectNode(
-                                {schema: editor.schema},
+                              isVoidNode(
+                                editor,
                                 currentNodeEntry.node,
+                                selection.anchor.path,
                               )
                             ) {
                               event.preventDefault()

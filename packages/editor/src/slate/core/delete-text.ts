@@ -26,7 +26,7 @@ import type {Location} from '../interfaces/location'
 import type {Node} from '../interfaces/node'
 import type {Path} from '../interfaces/path'
 import type {Point} from '../interfaces/point'
-import {isObjectNode} from '../node/is-object-node'
+import {isVoidNode} from '../node/is-void-node'
 import {commonPath} from '../path/common-path'
 import {isAncestorPath} from '../path/is-ancestor-path'
 import {isCommonPath} from '../path/is-common-path'
@@ -159,7 +159,7 @@ export function deleteText(editor: Editor, options: TextDeleteOptions = {}) {
       }
 
       if (
-        (!includeObjectNodes && isObjectNode({schema: editor.schema}, node)) ||
+        (!includeObjectNodes && isVoidNode(editor, node, entryPath)) ||
         (!isCommonPath(entryPath, start.path) &&
           !isCommonPath(entryPath, end.path))
       ) {

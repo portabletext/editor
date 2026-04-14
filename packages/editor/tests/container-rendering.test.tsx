@@ -5,6 +5,16 @@ import {ContainerPlugin} from '../src/plugins/plugin.container'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
 
+/**
+ * Normalize browser-specific CSS serialization in innerHTML.
+ * Webkit serializes outline:none as outline:medium and omits user-select:none.
+ */
+function normalizeInnerHTML(html: string): string {
+  return html
+    .replace(/outline: medium/g, 'outline: none')
+    .replace(/ style="user-select: none;"/g, '')
+}
+
 const schemaDefinition = defineSchema({
   blockObjects: [
     {
@@ -726,93 +736,6 @@ describe('block scope and specificity', () => {
   })
 })
 
-describe('container with only void objects', () => {
-  const gallerySchemaDefinition = defineSchema({
-    blockObjects: [
-      {
-        name: 'gallery',
-        fields: [
-          {
-            name: 'items',
-            type: 'array',
-            of: [{type: 'image'}],
-          },
-        ],
-      },
-      {
-        name: 'image',
-        fields: [{name: 'url', type: 'string'}],
-      },
-    ],
-  })
-
-  const galleryContainer = defineContainer({
-    scope: 'gallery',
-    field: 'items',
-    render: ({attributes, children}) => (
-      <div data-testid="gallery" {...attributes}>
-        {children}
-      </div>
-    ),
-  })
-
-  test('gallery renders with void block objects inside', async () => {
-    const keyGenerator = createTestKeyGenerator()
-    const galleryKey = keyGenerator()
-
-    await createTestEditor({
-      keyGenerator,
-      schemaDefinition: gallerySchemaDefinition,
-      initialValue: [
-        {
-          _type: 'gallery',
-          _key: galleryKey,
-          items: [
-            {
-              _type: 'image',
-              _key: 'img-0',
-              url: 'https://example.com/photo.jpg',
-            },
-            {
-              _type: 'image',
-              _key: 'img-1',
-              url: 'https://example.com/photo2.jpg',
-            },
-          ],
-        },
-      ],
-      children: (
-        <ContainerPlugin containers={[{container: galleryContainer}]} />
-      ),
-    })
-
-    await vi.waitFor(() => {
-      const editorElement = document.querySelector('[data-slate-editor]')
-      expect(editorElement).not.toEqual(null)
-
-      // Gallery container renders with custom renderer
-      const gallery = editorElement!.querySelector('[data-testid="gallery"]')
-      expect(gallery).not.toEqual(null)
-
-      // Images render as void block objects inside the gallery
-      const blockObjects = gallery!.querySelectorAll(
-        '[data-block-type="object"]',
-      )
-      expect(blockObjects.length).toEqual(2)
-      expect(blockObjects[0]!.getAttribute('data-block-name')).toEqual('image')
-      expect(blockObjects[1]!.getAttribute('data-block-name')).toEqual('image')
-
-      // Void block objects have contentEditable=false
-      expect(
-        blockObjects[0]!.querySelector('[contenteditable="false"]'),
-      ).not.toEqual(null)
-      expect(
-        blockObjects[1]!.querySelector('[contenteditable="false"]'),
-      ).not.toEqual(null)
-    })
-  })
-})
-
 describe('container and renderer independence', () => {
   test('container without renderer falls back to default div', async () => {
     const keyGenerator = createTestKeyGenerator()
@@ -954,6 +877,514 @@ describe('container and renderer independence', () => {
       expect(
         blockObject!.querySelector('[contenteditable="false"]'),
       ).not.toEqual(null)
+    })
+  })
+})
+
+describe('code block container', () => {
+  const codeBlockSchemaDefinition = defineSchema({
+    blockObjects: [
+      {
+        name: 'code-block',
+        fields: [
+          {
+            name: 'code',
+            type: 'array',
+            of: [{type: 'block'}],
+          },
+        ],
+      },
+    ],
+  })
+
+  const codeBlockContainer = defineContainer({
+    scope: 'code-block',
+    field: 'code',
+    render: ({attributes, children}) => (
+      <pre data-testid="code-block" {...attributes}>
+        <code>{children}</code>
+      </pre>
+    ),
+  })
+
+  test('code block renders with correct DOM structure', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const codeBlockKey = keyGenerator()
+
+    await createTestEditor({
+      keyGenerator,
+      schemaDefinition: codeBlockSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'code-block',
+          _key: codeBlockKey,
+          code: [
+            {
+              _type: 'block',
+              _key: 'line-0',
+              children: [
+                {
+                  _type: 'span',
+                  _key: 'span-0',
+                  text: 'const a = 1',
+                  marks: [],
+                },
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: 'line-1',
+              children: [
+                {
+                  _type: 'span',
+                  _key: 'span-1',
+                  text: 'console.log(a)',
+                  marks: [],
+                },
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: (
+        <ContainerPlugin containers={[{container: codeBlockContainer}]} />
+      ),
+    })
+
+    await vi.waitFor(() => {
+      const editorElement = document.querySelector('[data-slate-editor]')
+      expect(editorElement).not.toEqual(null)
+      expect(editorElement!.innerHTML).toEqual(
+        [
+          // code-block container
+          '<pre data-testid="code-block"',
+          ' data-slate-node="element"',
+          ' data-pt-path="[_key==&quot;k0&quot;]"',
+          '>',
+          '<code>',
+          // line 1 text block
+          '<div data-slate-node="element"',
+          ' data-pt-path="[_key==&quot;k0&quot;].code[_key==&quot;line-0&quot;]"',
+          ' class="pt-block pt-text-block pt-text-block-style-normal"',
+          ' data-block-key="line-0"',
+          ' data-block-name="block"',
+          ' data-block-type="text"',
+          ' data-style="normal"',
+          '>',
+          '<div>',
+          '<span data-slate-node="text"',
+          ' data-pt-path="[_key==&quot;k0&quot;].code[_key==&quot;line-0&quot;].children[_key==&quot;span-0&quot;]"',
+          ' data-child-key="span-0"',
+          ' data-child-name="span"',
+          ' data-child-type="span"',
+          '>',
+          '<span data-slate-leaf="true">',
+          '<span data-slate-string="true">const a = 1</span>',
+          '</span>',
+          '</span>',
+          '</div>',
+          '</div>',
+          // line 2 text block
+          '<div data-slate-node="element"',
+          ' data-pt-path="[_key==&quot;k0&quot;].code[_key==&quot;line-1&quot;]"',
+          ' class="pt-block pt-text-block pt-text-block-style-normal"',
+          ' data-block-key="line-1"',
+          ' data-block-name="block"',
+          ' data-block-type="text"',
+          ' data-style="normal"',
+          '>',
+          '<div>',
+          '<span data-slate-node="text"',
+          ' data-pt-path="[_key==&quot;k0&quot;].code[_key==&quot;line-1&quot;].children[_key==&quot;span-1&quot;]"',
+          ' data-child-key="span-1"',
+          ' data-child-name="span"',
+          ' data-child-type="span"',
+          '>',
+          '<span data-slate-leaf="true">',
+          '<span data-slate-string="true">console.log(a)</span>',
+          '</span>',
+          '</span>',
+          '</div>',
+          '</div>',
+          '</code>',
+          '</pre>',
+        ].join(''),
+      )
+    })
+  })
+})
+
+describe('gallery with void block objects', () => {
+  const gallerySchemaDefinition = defineSchema({
+    blockObjects: [
+      {
+        name: 'gallery',
+        fields: [
+          {
+            name: 'items',
+            type: 'array',
+            of: [{type: 'image'}],
+          },
+        ],
+      },
+      {
+        name: 'image',
+        fields: [{name: 'url', type: 'string'}],
+      },
+    ],
+  })
+
+  const galleryContainer = defineContainer({
+    scope: 'gallery',
+    field: 'items',
+    render: ({attributes, children}) => (
+      <div data-testid="gallery" {...attributes}>
+        {children}
+      </div>
+    ),
+  })
+
+  test('gallery renders void block objects with correct DOM structure', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const galleryKey = keyGenerator()
+
+    await createTestEditor({
+      keyGenerator,
+      schemaDefinition: gallerySchemaDefinition,
+      initialValue: [
+        {
+          _type: 'gallery',
+          _key: galleryKey,
+          items: [
+            {
+              _type: 'image',
+              _key: 'img-0',
+              url: 'https://example.com/photo.jpg',
+            },
+            {
+              _type: 'image',
+              _key: 'img-1',
+              url: 'https://example.com/photo2.jpg',
+            },
+          ],
+        },
+      ],
+      children: (
+        <ContainerPlugin containers={[{container: galleryContainer}]} />
+      ),
+    })
+
+    await vi.waitFor(() => {
+      const editorElement = document.querySelector('[data-slate-editor]')
+      expect(editorElement).not.toEqual(null)
+      expect(normalizeInnerHTML(editorElement!.innerHTML)).toEqual(
+        [
+          // gallery container
+          '<div data-testid="gallery"',
+          ' data-slate-node="element"',
+          ' data-pt-path="[_key==&quot;k0&quot;]"',
+          '>',
+          // image 1 (void block object)
+          '<div data-slate-node="element"',
+          ' data-slate-void="true"',
+          ' data-pt-path="[_key==&quot;k0&quot;].items[_key==&quot;img-0&quot;]"',
+          ' class="pt-block pt-object-block"',
+          ' data-block-key="img-0"',
+          ' data-block-name="image"',
+          ' data-block-type="object"',
+          '>',
+          // void spacer
+          '<div data-slate-spacer="true"',
+          ' style="height: 0px; color: transparent; outline: none; position: absolute;"',
+          '>',
+          '<span data-slate-node="text">',
+          '<span data-slate-leaf="true">',
+          '<span data-slate-zero-width="z" data-slate-length="0">\uFEFF</span>',
+          '</span>',
+          '</span>',
+          '</div>',
+          // void content
+          '<div contenteditable="false" draggable="true">',
+          '<div>[image: img-0]</div>',
+          '</div>',
+          '</div>',
+          // image 2 (void block object)
+          '<div data-slate-node="element"',
+          ' data-slate-void="true"',
+          ' data-pt-path="[_key==&quot;k0&quot;].items[_key==&quot;img-1&quot;]"',
+          ' class="pt-block pt-object-block"',
+          ' data-block-key="img-1"',
+          ' data-block-name="image"',
+          ' data-block-type="object"',
+          '>',
+          // void spacer
+          '<div data-slate-spacer="true"',
+          ' style="height: 0px; color: transparent; outline: none; position: absolute;"',
+          '>',
+          '<span data-slate-node="text">',
+          '<span data-slate-leaf="true">',
+          '<span data-slate-zero-width="z" data-slate-length="0">\uFEFF</span>',
+          '</span>',
+          '</span>',
+          '</div>',
+          // void content
+          '<div contenteditable="false" draggable="true">',
+          '<div>[image: img-1]</div>',
+          '</div>',
+          '</div>',
+          // /gallery container
+          '</div>',
+        ].join(''),
+      )
+    })
+  })
+})
+
+describe('cell with mixed content', () => {
+  const mixedSchemaDefinition = defineSchema({
+    blockObjects: [
+      {
+        name: 'image',
+        fields: [{name: 'url', type: 'string'}],
+      },
+      {
+        name: 'table',
+        fields: [
+          {
+            name: 'rows',
+            type: 'array',
+            of: [
+              {
+                type: 'row',
+                fields: [
+                  {
+                    name: 'cells',
+                    type: 'array',
+                    of: [
+                      {
+                        type: 'cell',
+                        fields: [
+                          {
+                            name: 'content',
+                            type: 'array',
+                            of: [{type: 'block'}, {type: 'image'}],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  })
+
+  const tableContainer = defineContainer({
+    scope: 'table',
+    field: 'rows',
+    render: ({attributes, children}) => (
+      <table data-testid="table" {...attributes}>
+        <tbody>{children}</tbody>
+      </table>
+    ),
+  })
+
+  const rowContainer = defineContainer({
+    scope: 'table.row',
+    field: 'cells',
+    render: ({attributes, children}) => (
+      <tr data-testid="row" {...attributes}>
+        {children}
+      </tr>
+    ),
+  })
+
+  const cellContainer = defineContainer({
+    scope: 'table.row.cell',
+    field: 'content',
+    render: ({attributes, children}) => (
+      <td data-testid="cell" {...attributes}>
+        {children}
+      </td>
+    ),
+  })
+
+  test('cell renders both text blocks and void block objects', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const tableKey = keyGenerator()
+
+    await createTestEditor({
+      keyGenerator,
+      schemaDefinition: mixedSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'table',
+          _key: tableKey,
+          rows: [
+            {
+              _type: 'row',
+              _key: 'row-0',
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: 'cell-0',
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: 'block-0',
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: 'span-0',
+                          text: 'text before image',
+                          marks: [],
+                        },
+                      ],
+                      markDefs: [],
+                      style: 'normal',
+                    },
+                    {
+                      _type: 'image',
+                      _key: 'img-0',
+                      url: 'https://example.com/photo.jpg',
+                    },
+                    {
+                      _type: 'block',
+                      _key: 'block-1',
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: 'span-1',
+                          text: 'text after image',
+                          marks: [],
+                        },
+                      ],
+                      markDefs: [],
+                      style: 'normal',
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      children: (
+        <ContainerPlugin
+          containers={[
+            {container: tableContainer},
+            {container: rowContainer},
+            {container: cellContainer},
+          ]}
+        />
+      ),
+    })
+
+    await vi.waitFor(() => {
+      const editorElement = document.querySelector('[data-slate-editor]')
+      expect(editorElement).not.toEqual(null)
+      expect(normalizeInnerHTML(editorElement!.innerHTML)).toEqual(
+        [
+          // table container
+          '<table data-testid="table"',
+          ' data-slate-node="element"',
+          ' data-pt-path="[_key==&quot;k0&quot;]"',
+          '>',
+          '<tbody>',
+          // row container
+          '<tr data-testid="row"',
+          ' data-slate-node="element"',
+          ' data-pt-path="[_key==&quot;k0&quot;].rows[_key==&quot;row-0&quot;]"',
+          '>',
+          // cell container
+          '<td data-testid="cell"',
+          ' data-slate-node="element"',
+          ' data-pt-path="[_key==&quot;k0&quot;].rows[_key==&quot;row-0&quot;].cells[_key==&quot;cell-0&quot;]"',
+          '>',
+          // text block before image
+          '<div data-slate-node="element"',
+          ' data-pt-path="[_key==&quot;k0&quot;].rows[_key==&quot;row-0&quot;].cells[_key==&quot;cell-0&quot;].content[_key==&quot;block-0&quot;]"',
+          ' class="pt-block pt-text-block pt-text-block-style-normal"',
+          ' data-block-key="block-0"',
+          ' data-block-name="block"',
+          ' data-block-type="text"',
+          ' data-style="normal"',
+          '>',
+          '<div>',
+          '<span data-slate-node="text"',
+          ' data-pt-path="[_key==&quot;k0&quot;].rows[_key==&quot;row-0&quot;].cells[_key==&quot;cell-0&quot;].content[_key==&quot;block-0&quot;].children[_key==&quot;span-0&quot;]"',
+          ' data-child-key="span-0"',
+          ' data-child-name="span"',
+          ' data-child-type="span"',
+          '>',
+          '<span data-slate-leaf="true">',
+          '<span data-slate-string="true">text before image</span>',
+          '</span>',
+          '</span>',
+          '</div>',
+          '</div>',
+          // void image block object inside cell
+          '<div data-slate-node="element"',
+          ' data-slate-void="true"',
+          ' data-pt-path="[_key==&quot;k0&quot;].rows[_key==&quot;row-0&quot;].cells[_key==&quot;cell-0&quot;].content[_key==&quot;img-0&quot;]"',
+          ' class="pt-block pt-object-block"',
+          ' data-block-key="img-0"',
+          ' data-block-name="image"',
+          ' data-block-type="object"',
+          '>',
+          // void spacer
+          '<div data-slate-spacer="true"',
+          ' style="height: 0px; color: transparent; outline: none; position: absolute;"',
+          '>',
+          '<span data-slate-node="text">',
+          '<span data-slate-leaf="true">',
+          '<span data-slate-zero-width="z" data-slate-length="0">\uFEFF</span>',
+          '</span>',
+          '</span>',
+          '</div>',
+          // void content
+          '<div contenteditable="false" draggable="true">',
+          '<div>[image: img-0]</div>',
+          '</div>',
+          '</div>',
+          // text block after image
+          '<div data-slate-node="element"',
+          ' data-pt-path="[_key==&quot;k0&quot;].rows[_key==&quot;row-0&quot;].cells[_key==&quot;cell-0&quot;].content[_key==&quot;block-1&quot;]"',
+          ' class="pt-block pt-text-block pt-text-block-style-normal"',
+          ' data-block-key="block-1"',
+          ' data-block-name="block"',
+          ' data-block-type="text"',
+          ' data-style="normal"',
+          '>',
+          '<div>',
+          '<span data-slate-node="text"',
+          ' data-pt-path="[_key==&quot;k0&quot;].rows[_key==&quot;row-0&quot;].cells[_key==&quot;cell-0&quot;].content[_key==&quot;block-1&quot;].children[_key==&quot;span-1&quot;]"',
+          ' data-child-key="span-1"',
+          ' data-child-name="span"',
+          ' data-child-type="span"',
+          '>',
+          '<span data-slate-leaf="true">',
+          '<span data-slate-string="true">text after image</span>',
+          '</span>',
+          '</span>',
+          '</div>',
+          '</div>',
+          // /cell container
+          '</td>',
+          // /row container
+          '</tr>',
+          '</tbody>',
+          // /table container
+          '</table>',
+        ].join(''),
+      )
     })
   })
 })

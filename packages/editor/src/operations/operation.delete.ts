@@ -19,8 +19,8 @@ import type {Editor} from '../slate/interfaces/editor'
 import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
 import type {Range} from '../slate/interfaces/range'
-import {isObjectNode} from '../slate/node/is-object-node'
 import {isTextBlockNode} from '../slate/node/is-text-block-node'
+import {isVoidNode} from '../slate/node/is-void-node'
 import {commonPath} from '../slate/path/common-path'
 import {comparePaths} from '../slate/path/compare-paths'
 import {isAncestorPath} from '../slate/path/is-ancestor-path'
@@ -173,7 +173,7 @@ export const deleteOperationImplementation: OperationImplementation<
     const nodeEntry = getNode(operation.editor, start.path)
     if (nodeEntry) {
       const {node, path: nodePath} = nodeEntry
-      if (isObjectNode({schema: operation.editor.schema}, node)) {
+      if (isVoidNode(operation.editor, node, nodePath)) {
         operation.editor.apply({
           type: 'unset',
           path: nodePath,
@@ -189,10 +189,7 @@ export const deleteOperationImplementation: OperationImplementation<
     const blockSegment = start.path.at(0)
     if (blockSegment !== undefined) {
       const entry = getNode(operation.editor, [blockSegment])
-      if (
-        entry &&
-        isObjectNode({schema: operation.editor.schema}, entry.node)
-      ) {
+      if (entry && isVoidNode(operation.editor, entry.node, [blockSegment])) {
         return entry
       }
     }
@@ -202,10 +199,7 @@ export const deleteOperationImplementation: OperationImplementation<
     const blockSegment = end.path.at(0)
     if (blockSegment !== undefined) {
       const entry = getNode(operation.editor, [blockSegment])
-      if (
-        entry &&
-        isObjectNode({schema: operation.editor.schema}, entry.node)
-      ) {
+      if (entry && isVoidNode(operation.editor, entry.node, [blockSegment])) {
         return entry
       }
     }
@@ -218,12 +212,11 @@ export const deleteOperationImplementation: OperationImplementation<
     startBlock && endBlock && !pathEquals(startBlock.path, endBlock.path)
 
   const startObjectNode =
-    startBlock &&
-    isObjectNode({schema: operation.editor.schema}, startBlock.node)
+    startBlock && isVoidNode(operation.editor, startBlock.node, startBlock.path)
       ? startBlock
       : undefined
   const endObjectNode =
-    endBlock && isObjectNode({schema: operation.editor.schema}, endBlock.node)
+    endBlock && isVoidNode(operation.editor, endBlock.node, endBlock.path)
       ? endBlock
       : undefined
 
@@ -246,7 +239,7 @@ export const deleteOperationImplementation: OperationImplementation<
     }
 
     if (
-      isObjectNode({schema: operation.editor.schema}, node) ||
+      isVoidNode(operation.editor, node, entryPath) ||
       (!isCommonPath(entryPath, start.path) &&
         !isCommonPath(entryPath, end.path))
     ) {
@@ -357,7 +350,7 @@ export const deleteOperationImplementation: OperationImplementation<
     startBlock &&
     endBlock &&
     pathEquals(startBlock.path, endBlock.path) &&
-    isObjectNode({schema: operation.editor.schema}, startBlock.node)
+    isVoidNode(operation.editor, startBlock.node, startBlock.path)
   ) {
     const path = startBlock.path
     operation.editor.apply({
@@ -378,7 +371,7 @@ export const deleteOperationImplementation: OperationImplementation<
 
       if (
         nodeAtPathEntry2 &&
-        isObjectNode({schema: operation.editor.schema}, nodeAtPathEntry2.node)
+        isVoidNode(operation.editor, nodeAtPathEntry2.node, currentPath)
       ) {
         const path = pathRef.unref()
 

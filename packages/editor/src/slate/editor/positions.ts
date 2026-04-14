@@ -3,8 +3,8 @@ import {getNodes} from '../../node-traversal/get-nodes'
 import type {Editor} from '../interfaces/editor'
 import type {Location} from '../interfaces/location'
 import type {Point} from '../interfaces/point'
-import {isObjectNode} from '../node/is-object-node'
 import {isTextBlockNode} from '../node/is-text-block-node'
+import {isVoidNode} from '../node/is-void-node'
 import {isAncestorPath} from '../path/is-ancestor-path'
 import {pathEquals} from '../path/path-equals'
 import {rangeEdges} from '../range/range-edges'
@@ -116,7 +116,7 @@ export function* positions(
       }
     }
 
-    if (isObjectNode({schema: editor.schema}, node)) {
+    if (isVoidNode(editor, node, nodePath)) {
       yield {path: nodePath, offset: 0}
       continue
     }
