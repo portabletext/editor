@@ -5,6 +5,7 @@ import type {
 import React, {type JSX} from 'react'
 import {getText} from '../../../node-traversal/get-text'
 import {isInline as isInlinePath} from '../../../node-traversal/is-inline'
+import {serializePath} from '../../../paths/serialize-path'
 import {isElementDecorationsEqual} from '../../dom/utils/range-list'
 import type {Path} from '../../interfaces/path'
 import type {DecoratedRange} from '../../interfaces/text'
@@ -30,7 +31,6 @@ const defaultRenderElement = (props: RenderElementProps) => (
  */
 
 const Element = (props: {
-  dataPath: string
   decorations: DecoratedRange[]
   element: PortableTextTextBlock | PortableTextObject
   path: Path
@@ -40,7 +40,6 @@ const Element = (props: {
   renderLeaf?: (props: RenderLeafProps) => JSX.Element
 }) => {
   const {
-    dataPath,
     decorations: parentDecorations,
     element,
     renderElement = defaultRenderElement,
@@ -48,11 +47,11 @@ const Element = (props: {
     renderLeaf,
     renderText,
   } = props
+  const dataPath = serializePath(props.path)
   const editor = useSlateStatic()
   const isInline = isInlinePath(editor, props.path)
   const decorations = useDecorations(element, props.path, parentDecorations)
   const children = useChildren({
-    parentDataPath: dataPath,
     decorations,
     node: element,
     path: props.path,
@@ -101,7 +100,6 @@ const Element = (props: {
 
 const MemoizedElement = React.memo(Element, (prev, next) => {
   return (
-    prev.dataPath === next.dataPath &&
     prev.element === next.element &&
     pathEquals(prev.path, next.path) &&
     prev.renderElement === next.renderElement &&

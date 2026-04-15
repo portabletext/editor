@@ -1,5 +1,6 @@
 import type {PortableTextObject} from '@portabletext/schema'
 import React, {type JSX} from 'react'
+import {serializePath} from '../../../paths/serialize-path'
 import {IS_ANDROID} from '../../dom/utils/environment'
 import {isElementDecorationsEqual} from '../../dom/utils/range-list'
 import type {Path} from '../../interfaces/path'
@@ -25,7 +26,6 @@ const defaultRenderElement = (props: RenderElementProps) => {
  * contain a hidden spacer with a zero-width text node for selection anchoring.
  */
 const ObjectNodeComponent = (props: {
-  dataPath: string
   decorations: DecoratedRange[]
   objectNode: PortableTextObject
   isInline: boolean
@@ -33,12 +33,12 @@ const ObjectNodeComponent = (props: {
   renderElement?: (props: RenderElementProps) => JSX.Element
 }) => {
   const {
-    dataPath,
     objectNode,
     isInline,
     path,
     renderElement = defaultRenderElement,
   } = props
+  const dataPath = serializePath(path)
   const readOnly = useReadOnly()
 
   const attributes: RenderElementProps['attributes'] = {
@@ -85,7 +85,6 @@ const ObjectNodeComponent = (props: {
 
 const MemoizedObjectNode = React.memo(ObjectNodeComponent, (prev, next) => {
   return (
-    prev.dataPath === next.dataPath &&
     prev.objectNode === next.objectNode &&
     pathEquals(prev.path, next.path) &&
     prev.renderElement === next.renderElement &&
