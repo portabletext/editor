@@ -27,7 +27,7 @@ export const apply: WithEditorFirstArg<Editor['apply']> = (editor, op) => {
     transformRangeRef(ref, op)
   }
 
-  // Apply the operation to the tree first, so that getDirtyIndexedPaths
+  // Apply the operation to the tree first, so that getDirtyPaths
   // reads the final op.node._key (apply-operation may re-key nodes to
   // resolve duplicate keys, mutating op.node in place).
   applyOperation(editor, op)

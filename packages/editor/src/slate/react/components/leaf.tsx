@@ -54,7 +54,7 @@ const Leaf = (props: {
   isLast: boolean
   leaf: PortableTextSpan
   parent: PortableTextTextBlock | PortableTextObject
-  indexedPath: Path
+  path: Path
   renderPlaceholder: (props: RenderPlaceholderProps) => JSX.Element
   renderLeaf?: (props: RenderLeafProps) => JSX.Element
   text: PortableTextSpan
@@ -64,7 +64,7 @@ const Leaf = (props: {
     leaf,
     isLast,
     text,
-    indexedPath,
+    path,
     parent,
     renderPlaceholder,
     renderLeaf = defaultRenderLeaf,
@@ -107,7 +107,7 @@ const Leaf = (props: {
       isLast={isLast}
       leaf={leaf}
       parent={parent}
-      indexedPath={indexedPath}
+      path={path}
       text={text}
     />
   )

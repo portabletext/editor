@@ -29,14 +29,14 @@ const ObjectNodeComponent = (props: {
   decorations: DecoratedRange[]
   objectNode: PortableTextObject
   isInline: boolean
-  indexedPath: Path
+  path: Path
   renderElement?: (props: RenderElementProps) => JSX.Element
 }) => {
   const {
     dataPath,
     objectNode,
     isInline,
-    indexedPath,
+    path,
     renderElement = defaultRenderElement,
   } = props
   const readOnly = useReadOnly()
@@ -81,7 +81,7 @@ const ObjectNodeComponent = (props: {
     attributes,
     children,
     element: objectNode,
-    indexedPath,
+    path,
   })
 }
 
@@ -89,7 +89,7 @@ const MemoizedObjectNode = React.memo(ObjectNodeComponent, (prev, next) => {
   return (
     prev.dataPath === next.dataPath &&
     prev.objectNode === next.objectNode &&
-    pathEquals(prev.indexedPath, next.indexedPath) &&
+    pathEquals(prev.path, next.path) &&
     prev.renderElement === next.renderElement &&
     prev.isInline === next.isInline &&
     isElementDecorationsEqual(prev.decorations, next.decorations)

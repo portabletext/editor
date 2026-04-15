@@ -41,7 +41,7 @@ const useChildren = (props: {
   parentDataPath: string
   decorations: DecoratedRange[]
   node: Editor | Node
-  indexedPath: Path
+  path: Path
   renderElement?: (props: RenderElementProps) => JSX.Element
   renderPlaceholder: (props: RenderPlaceholderProps) => JSX.Element
   renderText?: (props: RenderTextProps) => JSX.Element
@@ -51,7 +51,7 @@ const useChildren = (props: {
     parentDataPath,
     decorations,
     node,
-    indexedPath: parentIndexedPath,
+    path: parentPath,
     renderElement,
     renderPlaceholder,
     renderText,
@@ -65,7 +65,7 @@ const useChildren = (props: {
   const decorationsByChild = useDecorationsByChild(
     editor,
     node,
-    parentIndexedPath,
+    parentPath,
     decorations,
   )
 
@@ -109,7 +109,7 @@ const useChildren = (props: {
             decorations={decorationsByChild[i] ?? []}
             element={node}
             key={node._key}
-            indexedPath={parentIndexedPath.concat(i)}
+            path={parentPath.concat(i)}
             renderElement={renderElement}
             renderPlaceholder={renderPlaceholder}
             renderLeaf={renderLeaf}
@@ -122,7 +122,7 @@ const useChildren = (props: {
       childFieldName,
       parentDataPath,
       decorationsByChild,
-      parentIndexedPath,
+      parentPath,
       renderElement,
       renderPlaceholder,
       renderLeaf,
@@ -153,7 +153,7 @@ const useChildren = (props: {
         key={node._key}
         isLast={index === children.length - 1}
         parent={textBlockParent}
-        indexedPath={parentIndexedPath.concat(index)}
+        path={parentPath.concat(index)}
         renderPlaceholder={renderPlaceholder}
         renderLeaf={renderLeaf}
         renderText={renderText}
@@ -178,7 +178,7 @@ const useChildren = (props: {
         isInline={textBlockParent !== undefined}
         key={node._key}
         objectNode={node}
-        indexedPath={parentIndexedPath.concat(index)}
+        path={parentPath.concat(index)}
         renderElement={renderElement}
       />
     )
@@ -223,13 +223,13 @@ const useChildren = (props: {
 const useDecorationsByChild = (
   editor: Editor,
   node: Editor | Node,
-  indexedPath: Path,
+  path: Path,
   decorations: DecoratedRange[],
 ) => {
   const decorationsByChild = splitDecorationsByChild(
     editor,
     node,
-    indexedPath,
+    path,
     decorations,
   )
 

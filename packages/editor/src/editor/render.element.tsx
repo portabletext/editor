@@ -7,6 +7,7 @@ import {useSelector} from '@xstate/react'
 import {useContext, type ReactElement} from 'react'
 import type {DropPosition} from '../behaviors/behavior.core.drop-position'
 import {isInline} from '../node-traversal/is-inline'
+import type {Path} from '../slate/interfaces/path'
 import type {RenderElementProps} from '../slate/react/components/editable'
 import {useSlateStatic} from '../slate/react/hooks/use-slate-static'
 import type {
@@ -27,7 +28,7 @@ export function RenderElement(props: {
   children: ReactElement
   dropPosition?: DropPosition
   element: PortableTextTextBlock | PortableTextObject
-  indexedPath: RenderElementProps['indexedPath']
+  path: Path
   readOnly: boolean
   renderBlock?: RenderBlockFunction
   renderChild?: RenderChildFunction
@@ -91,12 +92,12 @@ export function RenderElement(props: {
     )
   }
 
-  if (isInline(slateStatic, props.indexedPath)) {
+  if (isInline(slateStatic, props.path)) {
     return (
       <RenderInlineObject
         attributes={props.attributes}
         element={props.element}
-        indexedPath={props.indexedPath}
+        path={props.path}
         readOnly={props.readOnly}
         renderChild={props.renderChild}
         schema={schema}
