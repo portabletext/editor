@@ -14,7 +14,7 @@ export function RenderInlineObject(props: {
   attributes: RenderElementProps['attributes']
   children: ReactElement
   element: PortableTextObject
-  indexedPath: Path
+  path: Path
   readOnly: boolean
   renderChild?: RenderChildFunction
   schema: EditorSchema
@@ -32,7 +32,7 @@ export function RenderInlineObject(props: {
     )
   }
 
-  const blockEntry = getNode(slateEditor, props.indexedPath.slice(0, 1))
+  const blockEntry = getNode(slateEditor, props.path.slice(0, 1))
   const block = blockEntry?.node
 
   if (!block) {
