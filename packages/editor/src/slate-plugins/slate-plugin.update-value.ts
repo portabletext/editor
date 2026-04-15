@@ -12,7 +12,9 @@ export function updateValuePlugin(
 
   editor.apply = (operation) => {
     if (editor.isNormalizingNode) {
-      debug.normalization(`(slate operation)\n${safeStringify(operation, 2)}`)
+      if (debug.normalization.enabled) {
+        debug.normalization(`(slate operation)\n${safeStringify(operation, 2)}`)
+      }
     }
 
     if (operation.type === 'set_selection') {

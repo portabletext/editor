@@ -66,7 +66,12 @@ export function performEvent({
     editor.undoStepId = defaultKeyGenerator()
   }
 
-  debug.behaviors(`(${mode}:${eventCategory(event)})`, safeStringify(event, 2))
+  if (debug.behaviors.enabled) {
+    debug.behaviors(
+      `(${mode}:${eventCategory(event)})`,
+      safeStringify(event, 2),
+    )
+  }
 
   const eventBehaviors = [
     ...remainingEventBehaviors,
@@ -116,7 +121,9 @@ export function performEvent({
     }
 
     withPerformingBehaviorOperation(editor, () => {
-      debug.operation(safeStringify(event, 2))
+      if (debug.operation.enabled) {
+        debug.operation(safeStringify(event, 2))
+      }
 
       performOperation({
         context: {
@@ -358,7 +365,9 @@ export function performEvent({
     }
 
     withPerformingBehaviorOperation(editor, () => {
-      debug.operation(safeStringify(event, 2))
+      if (debug.operation.enabled) {
+        debug.operation(safeStringify(event, 2))
+      }
 
       performOperation({
         context: {keyGenerator, schema},
