@@ -6,6 +6,7 @@ import type {EditorDom} from './editor/editor-dom'
 import type {ExternalEditorEvent} from './editor/editor-machine'
 import type {EditorSnapshot} from './editor/editor-snapshot'
 import type {EditorEmittedEvent} from './editor/relay-machine'
+import type {Container} from './renderers/renderer.types'
 
 /**
  * @public
@@ -41,6 +42,10 @@ export type Editor = {
    * @beta
    */
   registerBehavior: (config: {behavior: Behavior}) => () => void
+  /**
+   * @beta
+   */
+  registerContainer: (config: {container: Container}) => () => void
   send: (event: EditorEvent) => void
   on: ActorRef<Snapshot<unknown>, EventObject, EditorEmittedEvent>['on']
 }

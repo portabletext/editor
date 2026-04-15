@@ -1,6 +1,7 @@
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
+import {userEvent} from 'vitest/browser'
 import {ContainerPlugin} from '../src/plugins/plugin.container'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
@@ -954,6 +955,97 @@ describe('container and renderer independence', () => {
       expect(
         blockObject!.querySelector('[contenteditable="false"]'),
       ).not.toEqual(null)
+    })
+  })
+})
+
+describe('code block container via public API', () => {
+  const codeBlockSchemaDefinition = defineSchema({
+    blockObjects: [
+      {
+        name: 'code',
+        fields: [
+          {
+            name: 'lines',
+            type: 'array',
+            of: [{type: 'block'}],
+          },
+        ],
+      },
+    ],
+  })
+
+  const codeBlockContainer = defineContainer({
+    scope: 'code',
+    field: 'lines',
+    render: ({attributes, children}) => (
+      <pre {...attributes}>
+        <code>{children}</code>
+      </pre>
+    ),
+  })
+
+  test('typing inside a code block registered via registerContainer', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const codeBlockKey = keyGenerator()
+    const lineBlockKey = keyGenerator()
+    const lineSpanKey = keyGenerator()
+
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: codeBlockSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'code',
+          _key: codeBlockKey,
+          lines: [
+            {
+              _type: 'block',
+              _key: lineBlockKey,
+              children: [
+                {
+                  _type: 'span',
+                  _key: lineSpanKey,
+                  text: '',
+                  marks: [],
+                },
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+    })
+
+    editor.registerContainer({container: codeBlockContainer})
+
+    await userEvent.click(locator)
+    editor.send({type: 'insert.text', text: 'hello world'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'code',
+          _key: codeBlockKey,
+          lines: [
+            {
+              _type: 'block',
+              _key: lineBlockKey,
+              children: [
+                {
+                  _type: 'span',
+                  _key: lineSpanKey,
+                  text: 'hello world',
+                  marks: [],
+                },
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ])
     })
   })
 })

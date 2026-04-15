@@ -6,6 +6,8 @@ export type {
   PortableTextSpan,
   PortableTextTextBlock,
 } from '@portabletext/schema'
+export type {Container} from './renderers/renderer.types'
+export {defineContainer} from './renderers/define-container'
 export type {Editor, EditorConfig, EditorEvent} from './editor'
 export {PortableTextEditable} from './editor/Editable'
 export type {PortableTextEditableProps} from './editor/Editable'
