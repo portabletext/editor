@@ -20,6 +20,7 @@ import {ContainerScopeContext} from './container-scope-context'
 import {EditorActorContext} from './editor-actor-context'
 import {RenderBlockObject} from './render.block-object'
 import {RenderContainer} from './render.container'
+import {RenderContainerChild} from './render.container-child'
 import {RenderInlineObject} from './render.inline-object'
 import {RenderTextBlock} from './render.text-block'
 
@@ -58,14 +59,47 @@ export function RenderElement(props: {
   })
 
   if (containerConfig) {
+    const {'data-slate-node': _, ...rest} = props.attributes
+    const containerAttributes = {
+      ...rest,
+      'data-pt-container': '' as const,
+    }
+
     return (
       <RenderContainer
-        attributes={props.attributes}
+        attributes={containerAttributes}
         element={props.element}
         containerConfig={containerConfig}
       >
         {props.children}
       </RenderContainer>
+    )
+  }
+
+  if (isInline(slateStatic, props.path)) {
+    return (
+      <RenderInlineObject
+        attributes={props.attributes}
+        element={props.element as PortableTextObject}
+        path={props.path}
+        readOnly={props.readOnly}
+        renderChild={props.renderChild}
+        schema={schema}
+      >
+        {props.children}
+      </RenderInlineObject>
+    )
+  }
+
+  if (containerScope) {
+    return (
+      <RenderContainerChild
+        attributes={props.attributes}
+        element={props.element}
+        readOnly={props.readOnly}
+      >
+        {props.children}
+      </RenderContainerChild>
     )
   }
 
@@ -89,21 +123,6 @@ export function RenderElement(props: {
       >
         {props.children}
       </RenderTextBlock>
-    )
-  }
-
-  if (isInline(slateStatic, props.path)) {
-    return (
-      <RenderInlineObject
-        attributes={props.attributes}
-        element={props.element}
-        path={props.path}
-        readOnly={props.readOnly}
-        renderChild={props.renderChild}
-        schema={schema}
-      >
-        {props.children}
-      </RenderInlineObject>
     )
   }
 

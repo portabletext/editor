@@ -128,7 +128,7 @@ export interface RenderLeafProps {
   text: PortableTextSpan
   path: Path
   attributes: {
-    'data-slate-leaf': true
+    'data-pt-leaf': true
   }
   /**
    * The position of the leaf within the Text node, only present when the text node is split by decorations.
@@ -1284,7 +1284,7 @@ export const Editable = forwardRef(
                     // the editor to inside a void node's spacer element.
                     if (
                       isDOMElement(relatedTarget) &&
-                      relatedTarget.hasAttribute('data-slate-spacer')
+                      relatedTarget.hasAttribute('data-pt-spacer')
                     ) {
                       return
                     }

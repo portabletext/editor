@@ -164,9 +164,9 @@ const Leaf = (props: {
   // in certain misbehaving browsers they aren't weirdly cloned/destroyed by
   // contenteditable behaviors. (2019/05/08)
   const attributes: {
-    'data-slate-leaf': true
+    'data-pt-leaf': true
   } = {
-    'data-slate-leaf': true,
+    'data-pt-leaf': true,
   }
 
   return renderLeaf({

@@ -333,7 +333,8 @@ export const DOMEditor: DOMEditorInterface = {
             // this is the core logic that lets you know you got the right editor.selection instead of null when editor is contenteditable="false"(readOnly)
             closestShadowAware(targetEl, '[contenteditable="false"]') ===
               editorEl) ||
-          !!targetEl.getAttribute('data-slate-zero-width'))
+          targetEl.hasAttribute('data-pt-spacer') ||
+          !!targetEl.closest('[data-pt-spacer]'))
     )
   },
 
@@ -368,7 +369,29 @@ export const DOMEditor: DOMEditorInterface = {
     }
 
     const el = isDOMElement(target) ? target : target.parentElement
-    return !!el?.closest('[data-slate-void]')
+    if (!el) {
+      return false
+    }
+
+    // Fast path: root-level voids have data-slate-void
+    if (el.closest('[data-slate-void]')) {
+      return true
+    }
+
+    // Container voids: walk up data-pt-path ancestors and check the tree
+    let current: Element | null = el.closest('[data-pt-path]')
+    while (current) {
+      const nodePath = getDomNodePath(current)
+      if (nodePath) {
+        const nodeEntry = getNode(editor, nodePath)
+        if (nodeEntry && isVoidNode(editor, nodeEntry.node, nodePath)) {
+          return true
+        }
+      }
+      // Move to parent's closest data-pt-path ancestor
+      current = current.parentElement?.closest('[data-pt-path]') ?? null
+    }
+    return false
   },
 
   toDOMPoint: (editor, point) => {
@@ -382,7 +405,7 @@ export const DOMEditor: DOMEditorInterface = {
     let domPoint: DOMPoint | undefined
 
     if (nodeEntry && isVoidNode(editor, nodeEntry.node, point.path)) {
-      const spacer = el.querySelector('[data-slate-zero-width]')
+      const spacer = el.querySelector('[data-pt-spacer]')
       if (spacer) {
         const domText = spacer.childNodes[0]
         if (domText) {
@@ -415,11 +438,23 @@ export const DOMEditor: DOMEditorInterface = {
       point = {path: point.path, offset: 0}
     }
 
-    // For each leaf, we need to isolate its content, which means filtering
-    // to its direct text and zero-width spans. (We have to filter out any
-    // other siblings that may have been rendered alongside them.)
-    const selector = `[data-slate-string], [data-slate-zero-width]`
-    const texts = Array.from(el.querySelectorAll(selector))
+    // Find the text content span inside this leaf. Walk down the first-child
+    // chain through decorator/annotation wrappers until we reach the span
+    // whose first child is a text node (TextString or ZeroWidthString).
+    const texts: Element[] = []
+    let candidate: Element | null = el
+    while (candidate) {
+      if (candidate.hasAttribute('data-slate-zero-width')) {
+        texts.push(candidate)
+        break
+      }
+      const firstChild: ChildNode | null = candidate.firstChild
+      if (firstChild && firstChild.nodeType === Node.TEXT_NODE) {
+        texts.push(candidate)
+        break
+      }
+      candidate = firstChild instanceof Element ? firstChild : null
+    }
     let start = 0
 
     for (let i = 0; i < texts.length; i++) {
@@ -493,11 +528,15 @@ export const DOMEditor: DOMEditorInterface = {
     const startEl = (
       isDOMElement(startNode) ? startNode : startNode.parentElement
     ) as HTMLElement
-    const isStartAtZeroWidth = !!startEl.getAttribute('data-slate-zero-width')
+    const isStartAtZeroWidth =
+      startEl.hasAttribute('data-pt-spacer') ||
+      !!startEl.getAttribute('data-slate-zero-width')
     const endEl = (
       isDOMElement(endNode) ? endNode : endNode.parentElement
     ) as HTMLElement
-    const isEndAtZeroWidth = !!endEl.getAttribute('data-slate-zero-width')
+    const isEndAtZeroWidth =
+      endEl.hasAttribute('data-pt-spacer') ||
+      !!endEl.getAttribute('data-slate-zero-width')
 
     domRange.setStart(startNode, isStartAtZeroWidth ? 1 : startOffset)
     domRange.setEnd(endNode, isEndAtZeroWidth ? 1 : endOffset)
@@ -528,7 +567,27 @@ export const DOMEditor: DOMEditorInterface = {
         throw new Error('Cannot resolve a DOM node: editor is not mounted')
       }
 
-      const potentialVoidNode = parentNode.closest('[data-slate-void="true"]')
+      let potentialVoidNode: Element | null = parentNode.closest(
+        '[data-slate-void="true"]',
+      )
+      if (!potentialVoidNode) {
+        // Check container voids via tree lookup
+        let candidate: Element | null = parentNode.closest('[data-pt-path]')
+        while (candidate) {
+          const candidatePath = getDomNodePath(candidate)
+          if (candidatePath) {
+            const nodeEntry = getNode(editor, candidatePath)
+            if (
+              nodeEntry &&
+              isVoidNode(editor, nodeEntry.node, candidatePath)
+            ) {
+              potentialVoidNode = candidate
+              break
+            }
+          }
+          candidate = candidate.parentElement?.closest('[data-pt-path]') ?? null
+        }
+      }
       // Need to ensure that the closest void node is actually a void node
       // within this editor, and not a void node within some parent editor. This can happen
       // if this editor is within a void node of another editor ("nested editors", like in
@@ -545,7 +604,7 @@ export const DOMEditor: DOMEditorInterface = {
         containsShadowAware(editorEl, potentialNonEditableNode)
           ? potentialNonEditableNode
           : null
-      let leafNode = parentNode.closest('[data-slate-leaf]')
+      let leafNode = parentNode.closest('[data-pt-leaf]')
       let domNode: DOMElement | null = null
 
       // Calculate how far into the text node the `nearestNode` is, so that we
@@ -601,9 +660,9 @@ export const DOMEditor: DOMEditorInterface = {
         // For void nodes, the element with the offset key will be a cousin, not an
         // ancestor, so find it by going down from the nearest void parent and taking the
         // first one that isn't inside a nested editor.
-        const leafNodes = voidNode.querySelectorAll('[data-slate-leaf]')
-        for (let index = 0; index < leafNodes.length; index++) {
-          const current = leafNodes[index]!
+        const spacerNodes = voidNode.querySelectorAll('[data-pt-spacer]')
+        for (let index = 0; index < spacerNodes.length; index++) {
+          const current = spacerNodes[index]!
           if (DOMEditor.hasDOMNode(editor, current)) {
             leafNode = current
             break
@@ -614,12 +673,9 @@ export const DOMEditor: DOMEditorInterface = {
         if (!leafNode) {
           offset = 1
         } else {
-          textNode = leafNode.closest('[data-slate-node="text"]')!
+          textNode = leafNode
           domNode = leafNode
-          offset = domNode.textContent!.length
-          domNode.querySelectorAll('[data-slate-zero-width]').forEach((el) => {
-            offset -= el.textContent!.length
-          })
+          offset = 0
         }
       } else if (nonEditableNode) {
         // Find the edge of the nearest leaf in `searchDirection`
@@ -627,11 +683,11 @@ export const DOMEditor: DOMEditorInterface = {
           node
             ? node.querySelectorAll(
                 // Exclude leaf nodes in nested editors
-                '[data-slate-leaf]:not(:scope [data-slate-editor] [data-slate-leaf])',
+                '[data-pt-leaf]:not(:scope [data-slate-editor] [data-pt-leaf])',
               )
             : []
         const elementNode = nonEditableNode.closest(
-          '[data-slate-node="element"]',
+          '[data-slate-node="element"], [data-pt-container]',
         )
 
         if (searchDirection === 'backward' || !searchDirection) {
@@ -703,9 +759,11 @@ export const DOMEditor: DOMEditorInterface = {
     }
 
     if (IS_ANDROID && !textNode && !exactMatch) {
-      const node = parentNode.hasAttribute('data-slate-node')
-        ? parentNode
-        : parentNode.closest('[data-slate-node]')
+      const node =
+        parentNode.hasAttribute('data-slate-node') ||
+        parentNode.hasAttribute('data-pt-container')
+          ? parentNode
+          : parentNode.closest('[data-slate-node], [data-pt-container]')
 
       if (node && DOMEditor.hasDOMNode(editor, node, {editable: true})) {
         const nodePath = getDomNodePath(node)
@@ -721,7 +779,7 @@ export const DOMEditor: DOMEditorInterface = {
 
         let {path, offset} = editorStart(editor, nodePath)
 
-        if (!node.querySelector('[data-slate-leaf]')) {
+        if (!node.querySelector('[data-pt-leaf], [data-pt-spacer]')) {
           offset = nearestOffset
         }
 
@@ -732,7 +790,8 @@ export const DOMEditor: DOMEditorInterface = {
     if (!textNode && parentNode) {
       if (
         nearestNode instanceof HTMLElement &&
-        nearestNode.hasAttribute('data-slate-node')
+        (nearestNode.hasAttribute('data-slate-node') ||
+          nearestNode.hasAttribute('data-pt-container'))
       ) {
         const childEl = nearestNode.childNodes[nearestOffset]
         if (
@@ -747,13 +806,23 @@ export const DOMEditor: DOMEditorInterface = {
             if (path) {
               return {path, offset: 0}
             }
+          } else {
+            // Check container voids via tree lookup
+            const childPath = getDomNodePath(childEl)
+            if (childPath) {
+              const nodeEntry = getNode(editor, childPath)
+              if (nodeEntry && isVoidNode(editor, nodeEntry.node, childPath)) {
+                return {path: childPath, offset: 0}
+              }
+            }
           }
         }
       }
 
       const elementNode =
-        parentNode.closest('[data-slate-node="element"]') ??
-        (parentNode.hasAttribute('data-slate-node') ? parentNode : null)
+        parentNode.closest(
+          '[data-slate-node="element"], [data-pt-container]',
+        ) ?? (parentNode.hasAttribute('data-slate-node') ? parentNode : null)
 
       if (elementNode && DOMEditor.hasDOMNode(editor, elementNode)) {
         const voidEl = elementNode.closest('[data-slate-void]')
@@ -763,6 +832,15 @@ export const DOMEditor: DOMEditorInterface = {
 
           if (path) {
             return {path, offset: 0}
+          }
+        } else {
+          // Check container voids via tree lookup
+          const elementPath = getDomNodePath(elementNode)
+          if (elementPath) {
+            const nodeEntry = getNode(editor, elementPath)
+            if (nodeEntry && isVoidNode(editor, nodeEntry.node, elementPath)) {
+              return {path: elementPath, offset: 0}
+            }
           }
         }
       }

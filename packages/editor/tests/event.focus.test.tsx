@@ -165,7 +165,16 @@ async function performDomSelection(
   text: string,
 ) {
   const editorEl = context.locator.element() as HTMLElement
-  const textNode = editorEl.querySelector('[data-slate-string]')?.childNodes[0]
+  const leafEl = editorEl.querySelector('[data-pt-leaf]')
+  let textSpan: Element | null = leafEl
+  while (textSpan) {
+    const firstChild = textSpan.firstChild
+    if (firstChild && firstChild.nodeType === Node.TEXT_NODE) {
+      break
+    }
+    textSpan = firstChild instanceof Element ? firstChild : null
+  }
+  const textNode = textSpan?.childNodes[0]
 
   if (!textNode) {
     throw new Error('Could not find text node in editor')

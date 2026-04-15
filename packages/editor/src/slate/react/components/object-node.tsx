@@ -59,7 +59,7 @@ const ObjectNodeComponent = (props: {
 
   const children = (
     <Tag
-      data-slate-spacer
+      data-pt-spacer
       style={{
         height: '0',
         color: 'transparent',
@@ -67,13 +67,7 @@ const ObjectNodeComponent = (props: {
         position: 'absolute',
       }}
     >
-      <span data-slate-node="text">
-        <span data-slate-leaf>
-          <span data-slate-zero-width="z" data-slate-length={0}>
-            {!IS_ANDROID ? '\uFEFF' : null}
-          </span>
-        </span>
-      </span>
+      {!IS_ANDROID ? '\uFEFF' : null}
     </Tag>
   )
 

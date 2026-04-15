@@ -1,10 +1,13 @@
 import type {PortableTextBlock} from '@portabletext/schema'
 import type {ReactElement} from 'react'
 import type {ContainerConfig} from '../renderers/renderer.types'
-import type {RenderElementProps} from '../slate/react/components/editable'
 
 export function RenderContainer(props: {
-  attributes: RenderElementProps['attributes']
+  attributes: {
+    'data-pt-container': ''
+    'data-pt-path': string
+    'dir'?: 'rtl'
+  }
   children: ReactElement
   element: PortableTextBlock
   containerConfig: ContainerConfig

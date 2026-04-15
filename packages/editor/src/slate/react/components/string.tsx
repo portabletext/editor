@@ -128,11 +128,7 @@ const TextString = (props: {text: string; isTrailing?: boolean}) => {
 
 const MemoizedText = memo(
   forwardRef<HTMLSpanElement, {children: string}>((props, ref) => {
-    return (
-      <span data-slate-string ref={ref}>
-        {props.children}
-      </span>
-    )
+    return <span ref={ref}>{props.children}</span>
   }),
 )
 
