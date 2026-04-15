@@ -2,4 +2,4 @@
 '@portabletext/editor': patch
 ---
 
-Guard debug logging calls to avoid eager `JSON.stringify` serialization when debug namespaces are disabled.
+fix: guard debug calls to avoid eager serialization
