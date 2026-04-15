@@ -13,7 +13,7 @@ import {end as editorEnd} from '../../editor/end'
 import {start as editorStart} from '../../editor/start'
 import type {Editor} from '../../interfaces/editor'
 import type {Path} from '../../interfaces/path'
-import {parentPath} from '../../path/parent-path'
+import {parentPath as getParentPath} from '../../path/parent-path'
 import {pathEquals} from '../../path/path-equals'
 import {useIsomorphicLayoutEffect} from '../hooks/use-isomorphic-layout-effect'
 import {useSlateStatic} from '../hooks/use-slate-static'
@@ -52,12 +52,12 @@ const SlateString = (props: {
   isLast: boolean
   leaf: PortableTextSpan
   parent: PortableTextTextBlock | PortableTextObject
-  indexedPath: Path
+  path: Path
   text: PortableTextSpan
 }) => {
-  const {isLast, leaf, parent, indexedPath, text} = props
+  const {isLast, leaf, parent, path, text} = props
   const editor = useSlateStatic()
-  const parentIndexedPath = parentPath(indexedPath)
+  const parentPath = getParentPath(path)
   const isMarkPlaceholder = Boolean((leaf as any)[MARK_PLACEHOLDER_SYMBOL])
   const leafText = leaf.text ?? ''
 
@@ -68,7 +68,7 @@ const SlateString = (props: {
     leafText === '' &&
     isTextBlock({schema: editor.schema}, parent) &&
     parent.children[parent.children.length - 1] === text &&
-    getTextContent(editor, parentIndexedPath) === ''
+    getTextContent(editor, parentPath) === ''
   ) {
     return <ZeroWidthString isLineBreak isMarkPlaceholder={isMarkPlaceholder} />
   }

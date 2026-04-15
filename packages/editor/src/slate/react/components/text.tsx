@@ -27,7 +27,7 @@ const Text = (props: {
   decorations: DecoratedRange[]
   isLast: boolean
   parent: PortableTextTextBlock
-  indexedPath: Path
+  path: Path
   renderPlaceholder: (props: RenderPlaceholderProps) => JSX.Element
   renderLeaf?: (props: RenderLeafProps) => JSX.Element
   renderText?: (props: RenderTextProps) => JSX.Element
@@ -38,14 +38,14 @@ const Text = (props: {
     decorations: parentDecorations,
     isLast,
     parent,
-    indexedPath,
+    path,
     renderPlaceholder,
     renderLeaf,
     renderText = defaultRenderText,
     text,
   } = props
 
-  const decorations = useDecorations(text, indexedPath, parentDecorations)
+  const decorations = useDecorations(text, path, parentDecorations)
   const decoratedLeaves = getTextDecorations(text, decorations)
   const children = []
 
@@ -60,7 +60,7 @@ const Text = (props: {
         leaf={leaf}
         leafPosition={position}
         text={text}
-        indexedPath={indexedPath}
+        path={path}
         parent={parent}
         renderLeaf={renderLeaf}
       />,
@@ -86,7 +86,7 @@ const MemoizedText = React.memo(Text, (prev, next) => {
   return (
     next.parent === prev.parent &&
     next.isLast === prev.isLast &&
-    pathEquals(next.indexedPath, prev.indexedPath) &&
+    pathEquals(next.path, prev.path) &&
     next.renderText === prev.renderText &&
     next.renderLeaf === prev.renderLeaf &&
     next.renderPlaceholder === prev.renderPlaceholder &&

@@ -103,7 +103,7 @@ const Children = (props: Parameters<typeof useChildren>[0]) => {
 export interface RenderElementProps {
   children: any
   element: PortableTextTextBlock | PortableTextObject
-  indexedPath: Path
+  path: Path
   attributes: {
     'data-slate-node': 'element'
     'data-slate-inline'?: true
@@ -1947,7 +1947,7 @@ export const Editable = forwardRef(
                   parentDataPath=""
                   decorations={decorations}
                   node={editor}
-                  indexedPath={[]}
+                  path={[]}
                   renderElement={renderElement}
                   renderPlaceholder={renderPlaceholder}
                   renderLeaf={renderLeaf}

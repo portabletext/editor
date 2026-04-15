@@ -33,7 +33,7 @@ const Element = (props: {
   dataPath: string
   decorations: DecoratedRange[]
   element: PortableTextTextBlock | PortableTextObject
-  indexedPath: Path
+  path: Path
   renderElement?: (props: RenderElementProps) => JSX.Element
   renderPlaceholder: (props: RenderPlaceholderProps) => JSX.Element
   renderText?: (props: RenderTextProps) => JSX.Element
@@ -49,17 +49,13 @@ const Element = (props: {
     renderText,
   } = props
   const editor = useSlateStatic()
-  const isInline = isInlinePath(editor, props.indexedPath)
-  const decorations = useDecorations(
-    element,
-    props.indexedPath,
-    parentDecorations,
-  )
+  const isInline = isInlinePath(editor, props.path)
+  const decorations = useDecorations(element, props.path, parentDecorations)
   const children = useChildren({
     parentDataPath: dataPath,
     decorations,
     node: element,
-    indexedPath: props.indexedPath,
+    path: props.path,
     renderElement,
     renderPlaceholder,
     renderLeaf,
@@ -87,7 +83,7 @@ const Element = (props: {
   // If it's a block node with inline children, add the proper `dir` attribute
   // for text direction.
   if (!isInline && isTextBlockNode({schema: editor.schema}, element)) {
-    const text = getText(editor, props.indexedPath)
+    const text = getText(editor, props.path)
     const dir = text !== undefined ? getDirection(text) : undefined
 
     if (dir === 'rtl') {
@@ -99,7 +95,7 @@ const Element = (props: {
     attributes,
     children,
     element,
-    indexedPath: props.indexedPath,
+    path: props.path,
   })
 }
 
@@ -107,7 +103,7 @@ const MemoizedElement = React.memo(Element, (prev, next) => {
   return (
     prev.dataPath === next.dataPath &&
     prev.element === next.element &&
-    pathEquals(prev.indexedPath, next.indexedPath) &&
+    pathEquals(prev.path, next.path) &&
     prev.renderElement === next.renderElement &&
     prev.renderText === next.renderText &&
     prev.renderLeaf === next.renderLeaf &&
@@ -123,7 +119,7 @@ const MemoizedElement = React.memo(Element, (prev, next) => {
 const DefaultElement = (props: RenderElementProps) => {
   const {attributes, children} = props
   const editor = useSlateStatic()
-  const Tag = isInlinePath(editor, props.indexedPath) ? 'span' : 'div'
+  const Tag = isInlinePath(editor, props.path) ? 'span' : 'div'
   return (
     <Tag {...attributes} style={{position: 'relative'}}>
       {children}
