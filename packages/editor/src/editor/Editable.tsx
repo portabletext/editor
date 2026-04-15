@@ -234,12 +234,16 @@ export const PortableTextEditable = forwardRef<
 
   const restoreSelectionFromProps = useCallback(() => {
     if (propsSelection) {
-      debug.selection(`Selection from props ${safeStringify(propsSelection)}`)
+      if (debug.selection.enabled) {
+        debug.selection(`Selection from props ${safeStringify(propsSelection)}`)
+      }
       const resolvedSelection = resolveSelection(slateEditor, propsSelection)
       if (resolvedSelection) {
-        debug.selection(
-          `Resolved selection from props ${safeStringify(resolvedSelection)}`,
-        )
+        if (debug.selection.enabled) {
+          debug.selection(
+            `Resolved selection from props ${safeStringify(resolvedSelection)}`,
+          )
+        }
         slateEditor.select(resolvedSelection)
         // Output selection here in those cases where the editor selection was the same, and there are no set_selection operations made.
         // The selection is usually automatically emitted by the withPortableTextSelections plugin whenever there is a set_selection operation applied.

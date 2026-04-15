@@ -64,10 +64,12 @@ export function createPatchesPlugin({
                 try {
                   changed = applyPatch(editor, patch)
 
-                  if (changed) {
-                    debug.syncPatch(`(applied) ${safeStringify(patch, 2)}`)
-                  } else {
-                    debug.syncPatch(`(ignored) ${safeStringify(patch, 2)}`)
+                  if (debug.syncPatch.enabled) {
+                    if (changed) {
+                      debug.syncPatch(`(applied) ${safeStringify(patch, 2)}`)
+                    } else {
+                      debug.syncPatch(`(ignored) ${safeStringify(patch, 2)}`)
+                    }
                   }
                 } catch (error) {
                   console.error(
