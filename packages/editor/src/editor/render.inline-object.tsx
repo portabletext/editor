@@ -1,10 +1,8 @@
 import type {PortableTextChild, PortableTextObject} from '@portabletext/schema'
 import {useContext, useRef, type ReactElement} from 'react'
-import {getNode} from '../node-traversal/get-node'
 import {serializePath} from '../paths/serialize-path'
 import type {Path} from '../slate/interfaces/path'
 import type {RenderElementProps} from '../slate/react/components/editable'
-import {useSlateStatic} from '../slate/react/hooks/use-slate-static'
 import type {BlockChildRenderProps, RenderChildFunction} from '../types/editor'
 import type {EditorSchema} from './editor-schema'
 import {RenderDefaultInlineObject} from './render.default-object'
@@ -20,7 +18,6 @@ export function RenderInlineObject(props: {
   schema: EditorSchema
 }) {
   const inlineObjectRef = useRef<HTMLElement>(null)
-  const slateEditor = useSlateStatic()
 
   const inlineObjectSchemaType = props.schema.inlineObjects.find(
     (schemaType) => schemaType.name === props.element._type,
@@ -32,27 +29,10 @@ export function RenderInlineObject(props: {
     )
   }
 
-  const blockEntry = getNode(slateEditor, props.path.slice(0, 1))
-  const block = blockEntry?.node
-
-  if (!block) {
-    console.error(
-      `Unable to find parent block of inline object ${props.element._key}`,
-    )
-  }
-
-  const path = block
-    ? [{_key: block._key}, 'children', {_key: props.element._key}]
-    : undefined
-
   const selectionState = useContext(SelectionStateContext)
-  const serializedPath = path ? serializePath(path) : undefined
-  const selected = serializedPath
-    ? selectionState.selectedChildPaths.has(serializedPath)
-    : false
-  const focused = serializedPath
-    ? selectionState.focusedChildPath === serializedPath
-    : false
+  const serializedPath = serializePath(props.path)
+  const selected = selectionState.selectedChildPaths.has(serializedPath)
+  const focused = selectionState.focusedChildPath === serializedPath
 
   const inlineObject = props.element as unknown as PortableTextChild
 
@@ -70,14 +50,14 @@ export function RenderInlineObject(props: {
         style={{display: 'inline-block'}}
         draggable={!props.readOnly}
       >
-        {props.renderChild && path && inlineObjectSchemaType ? (
+        {props.renderChild && inlineObjectSchemaType ? (
           <RenderChild
             renderChild={props.renderChild}
             annotations={[]}
             editorElementRef={inlineObjectRef}
             selected={selected}
             focused={focused}
-            path={path}
+            path={props.path}
             schemaType={inlineObjectSchemaType}
             value={inlineObject}
           >

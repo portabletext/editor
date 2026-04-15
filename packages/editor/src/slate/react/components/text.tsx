@@ -3,6 +3,7 @@ import type {
   PortableTextTextBlock,
 } from '@portabletext/schema'
 import React, {type JSX} from 'react'
+import {serializePath} from '../../../paths/serialize-path'
 import {isTextDecorationsEqual} from '../../dom/utils/range-list'
 import type {Path} from '../../interfaces/path'
 import type {DecoratedRange} from '../../interfaces/text'
@@ -23,7 +24,6 @@ const defaultRenderText = (props: RenderTextProps) => <DefaultText {...props} />
  */
 
 const Text = (props: {
-  dataPath: string
   decorations: DecoratedRange[]
   isLast: boolean
   parent: PortableTextTextBlock
@@ -34,7 +34,6 @@ const Text = (props: {
   text: PortableTextSpan
 }) => {
   const {
-    dataPath,
     decorations: parentDecorations,
     isLast,
     parent,
@@ -66,6 +65,8 @@ const Text = (props: {
       />,
     )
   }
+
+  const dataPath = serializePath(path)
 
   const attributes: {
     'data-slate-node': 'text'

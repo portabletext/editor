@@ -126,6 +126,7 @@ export interface RenderLeafProps {
    */
   leaf: PortableTextSpan
   text: PortableTextSpan
+  path: Path
   attributes: {
     'data-slate-leaf': true
   }
@@ -1944,7 +1945,6 @@ export const Editable = forwardRef(
                 )}
               >
                 <Children
-                  parentDataPath=""
                   decorations={decorations}
                   node={editor}
                   path={[]}

@@ -2,6 +2,8 @@ import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {defineSchema, type BlockChildRenderProps} from '../src'
+import {ContainerPlugin} from '../src/plugins/plugin.container'
+import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
 import type {Path} from '../src/types/paths'
 
@@ -325,6 +327,184 @@ describe('renderChild', () => {
           focused: true,
           selected: true,
           path: [{_key: blockAKey}, 'children', {_key: stockTickerKey}],
+        },
+      ])
+    })
+  })
+
+  test('container child paths', async () => {
+    const keyGenerator = createTestKeyGenerator()
+
+    const tableKey = keyGenerator()
+    const rowKey = keyGenerator()
+    const cellKey = keyGenerator()
+    const blockKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const imageKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+
+    const renderChildPaths: Array<{path: Path}> = []
+
+    const renderChild = (props: BlockChildRenderProps) => {
+      renderChildPaths.push({path: props.path})
+
+      return props.children
+    }
+
+    const schemaDefinition = defineSchema({
+      blockObjects: [
+        {
+          name: 'table',
+          fields: [
+            {
+              name: 'rows',
+              type: 'array',
+              of: [
+                {
+                  type: 'row',
+                  fields: [
+                    {
+                      name: 'cells',
+                      type: 'array',
+                      of: [
+                        {
+                          type: 'cell',
+                          fields: [
+                            {
+                              name: 'content',
+                              type: 'array',
+                              of: [{type: 'block'}],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      inlineObjects: [{name: 'image'}],
+    })
+
+    const tableContainer = defineContainer({
+      scope: 'table',
+      field: 'rows',
+      render: ({attributes, children}) => (
+        <table {...attributes}>
+          <tbody>{children}</tbody>
+        </table>
+      ),
+    })
+
+    const rowContainer = defineContainer({
+      scope: 'table.row',
+      field: 'cells',
+      render: ({attributes, children}) => <tr {...attributes}>{children}</tr>,
+    })
+
+    const cellContainer = defineContainer({
+      scope: 'table.row.cell',
+      field: 'content',
+      render: ({attributes, children}) => (
+        <td data-testid="cell" {...attributes}>
+          {children}
+        </td>
+      ),
+    })
+
+    await createTestEditor({
+      keyGenerator,
+      schemaDefinition,
+      initialValue: [
+        {
+          _type: 'table',
+          _key: tableKey,
+          rows: [
+            {
+              _type: 'row',
+              _key: rowKey,
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: cellKey,
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: blockKey,
+                      children: [
+                        {_type: 'span', _key: fooSpanKey, text: 'foo'},
+                        {_type: 'image', _key: imageKey},
+                        {_type: 'span', _key: barSpanKey, text: 'bar'},
+                      ],
+                      markDefs: [],
+                      style: 'normal',
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      children: (
+        <ContainerPlugin
+          containers={[
+            {container: tableContainer},
+            {container: rowContainer},
+            {container: cellContainer},
+          ]}
+        />
+      ),
+      editableProps: {renderChild},
+    })
+
+    await vi.waitFor(() => {
+      const containerChildPaths = renderChildPaths.filter(
+        ({path}) => path.length > 3,
+      )
+
+      expect(containerChildPaths).toEqual([
+        {
+          path: [
+            {_key: tableKey},
+            'rows',
+            {_key: rowKey},
+            'cells',
+            {_key: cellKey},
+            'content',
+            {_key: blockKey},
+            'children',
+            {_key: fooSpanKey},
+          ],
+        },
+        {
+          path: [
+            {_key: tableKey},
+            'rows',
+            {_key: rowKey},
+            'cells',
+            {_key: cellKey},
+            'content',
+            {_key: blockKey},
+            'children',
+            {_key: imageKey},
+          ],
+        },
+        {
+          path: [
+            {_key: tableKey},
+            'rows',
+            {_key: rowKey},
+            'cells',
+            {_key: cellKey},
+            'content',
+            {_key: blockKey},
+            'children',
+            {_key: barSpanKey},
+          ],
         },
       ])
     })
