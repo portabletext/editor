@@ -1,54 +1,26 @@
-import type {Path} from '../slate/interfaces/path'
-
-const KEYED_SEGMENT_PATTERN = /\[_key=="(.+?)"\]/
+import type {Path} from '../types/paths'
 
 /**
- * Deserialize a serialized keyed path using Sanity's bracket notation.
+ * Deserialize a Sanity bracket notation path string to a keyed path array.
  *
  * - `[_key=="k0"]` -> `[{_key: 'k0'}]`
  * - `[_key=="k0"].children[_key=="s0"]` -> `[{_key: 'k0'}, 'children', {_key: 's0'}]`
- * - `[_key=="t0"].rows[_key=="r0"].cells[_key=="c0"].content[_key=="b0"].children[_key=="s0"]` -> `[{_key: 't0'}, 'rows', {_key: 'r0'}, 'cells', {_key: 'c0'}, 'content', {_key: 'b0'}, 'children', {_key: 's0'}]`
  */
-export function deserializePath(serializedPath: string): Path {
+export function deserializePath(serialized: string): Path {
   const path: Path = []
-  let remaining = serializedPath
 
-  while (remaining.length > 0) {
-    // Remove leading dot separator
-    if (remaining.startsWith('.')) {
-      remaining = remaining.slice(1)
+  const regex = /\[_key=="([^"]+)"\]|(?:^|\.)([a-zA-Z_][a-zA-Z0-9_]*)/g
+
+  for (
+    let match = regex.exec(serialized);
+    match !== null;
+    match = regex.exec(serialized)
+  ) {
+    if (match[1] !== undefined) {
+      path.push({_key: match[1]})
+    } else if (match[2] !== undefined) {
+      path.push(match[2])
     }
-
-    const keyMatch = remaining.match(KEYED_SEGMENT_PATTERN)
-
-    if (keyMatch?.[1] && remaining.startsWith('[')) {
-      path.push({_key: keyMatch[1]})
-      remaining = remaining.slice(keyMatch[0].length)
-      continue
-    }
-
-    // Field name segment: read until next '[' or '.'
-    const nextBracket = remaining.indexOf('[')
-    const nextDot = remaining.indexOf('.')
-    let end: number
-
-    if (nextBracket === -1 && nextDot === -1) {
-      end = remaining.length
-    } else if (nextBracket === -1) {
-      end = nextDot
-    } else if (nextDot === -1) {
-      end = nextBracket
-    } else {
-      end = Math.min(nextBracket, nextDot)
-    }
-
-    const fieldName = remaining.slice(0, end)
-
-    if (fieldName) {
-      path.push(fieldName)
-    }
-
-    remaining = remaining.slice(end)
   }
 
   return path

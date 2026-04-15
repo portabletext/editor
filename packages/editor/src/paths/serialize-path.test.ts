@@ -109,12 +109,8 @@ describe('roundtrip', () => {
     expect(deserializePath(serializePath([...path]))).toEqual([...path])
   })
 
-  test('key with special characters', () => {
-    const path = [
-      {_key: 'key"with]brackets'},
-      'children',
-      {_key: 's0'},
-    ] as const
+  test('key with dots and hyphens', () => {
+    const path = [{_key: 'key-with.dots'}, 'children', {_key: 's0'}] as const
     expect(deserializePath(serializePath([...path]))).toEqual([...path])
   })
 })

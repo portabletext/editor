@@ -38,7 +38,6 @@ import {useSlateStatic} from './use-slate-static'
  */
 
 const useChildren = (props: {
-  parentDataPath: string
   decorations: DecoratedRange[]
   node: Editor | Node
   path: Path
@@ -48,7 +47,6 @@ const useChildren = (props: {
   renderLeaf?: (props: RenderLeafProps) => JSX.Element
 }): React.ReactNode => {
   const {
-    parentDataPath,
     decorations,
     node,
     path: parentPath,
@@ -97,19 +95,18 @@ const useChildren = (props: {
 
   const renderElementComponent = useCallback(
     (node: PortableTextTextBlock | PortableTextObject, i: number) => {
-      const nodeDataPath =
-        parentDataPath === ''
-          ? `[_key=="${node._key}"]`
-          : `${parentDataPath}.${childFieldName}[_key=="${node._key}"]`
+      const nodePath: Path =
+        parentPath.length === 0
+          ? [{_key: node._key}]
+          : [...parentPath, childFieldName, {_key: node._key}]
 
       return (
         <ElementContext key={`provider-${node._key}`} value={node}>
           <ElementComponent
-            dataPath={nodeDataPath}
             decorations={decorationsByChild[i] ?? []}
             element={node}
             key={node._key}
-            path={parentPath.concat(i)}
+            path={nodePath}
             renderElement={renderElement}
             renderPlaceholder={renderPlaceholder}
             renderLeaf={renderLeaf}
@@ -120,7 +117,6 @@ const useChildren = (props: {
     },
     [
       childFieldName,
-      parentDataPath,
       decorationsByChild,
       parentPath,
       renderElement,
@@ -141,19 +137,18 @@ const useChildren = (props: {
       )
     }
 
-    const nodeDataPath =
-      parentDataPath !== ''
-        ? `${parentDataPath}.children[_key=="${node._key}"]`
-        : ''
+    const nodePath: Path =
+      parentPath.length === 0
+        ? [{_key: node._key}]
+        : [...parentPath, 'children', {_key: node._key}]
 
     return (
       <TextComponent
-        dataPath={nodeDataPath}
         decorations={decorationsByChild[index] ?? []}
         key={node._key}
         isLast={index === children.length - 1}
         parent={textBlockParent}
-        path={parentPath.concat(index)}
+        path={nodePath}
         renderPlaceholder={renderPlaceholder}
         renderLeaf={renderLeaf}
         renderText={renderText}
@@ -166,19 +161,18 @@ const useChildren = (props: {
     node: PortableTextObject,
     index: number,
   ) => {
-    const nodeDataPath =
-      parentDataPath === ''
-        ? `[_key=="${node._key}"]`
-        : `${parentDataPath}.${childFieldName}[_key=="${node._key}"]`
+    const nodePath: Path =
+      parentPath.length === 0
+        ? [{_key: node._key}]
+        : [...parentPath, childFieldName, {_key: node._key}]
 
     return (
       <ObjectNodeComponent
-        dataPath={nodeDataPath}
         decorations={decorationsByChild[index] ?? []}
         isInline={textBlockParent !== undefined}
         key={node._key}
         objectNode={node}
-        path={parentPath.concat(index)}
+        path={nodePath}
         renderElement={renderElement}
       />
     )

@@ -1,7 +1,7 @@
 import type {InlineObjectSchemaType} from '@portabletext/schema'
 import {isTextBlock} from '@portabletext/schema'
 import {useSelector} from '@xstate/react'
-import {useContext, useMemo, useRef, type ReactElement} from 'react'
+import {useContext, useRef, type ReactElement} from 'react'
 import {serializePath} from '../paths/serialize-path'
 import type {RenderLeafProps} from '../slate/react/components/editable'
 import {useSlateStatic} from '../slate/react/hooks/use-slate-static'
@@ -40,22 +40,10 @@ export function RenderSpan(props: RenderSpanProps) {
       ? parent
       : undefined
 
-  const path = useMemo(
-    () =>
-      block
-        ? [{_key: block._key}, 'children', {_key: props.leaf._key}]
-        : undefined,
-    [block, props.leaf._key],
-  )
-
   const selectionState = useContext(SelectionStateContext)
-  const serializedPath = path ? serializePath(path) : undefined
-  const focused = serializedPath
-    ? selectionState.focusedChildPath === serializedPath
-    : false
-  const selected = serializedPath
-    ? selectionState.selectedChildPaths.has(serializedPath)
-    : false
+  const serializedPath = serializePath(props.path)
+  const focused = selectionState.focusedChildPath === serializedPath
+  const selected = selectionState.selectedChildPaths.has(serializedPath)
 
   const decoratorSchemaTypes = editorActor
     .getSnapshot()
@@ -95,13 +83,13 @@ export function RenderSpan(props: RenderSpanProps) {
       (dec) => dec.name === mark,
     )
 
-    if (path && decoratorSchemaType && props.renderDecorator) {
+    if (props.path && decoratorSchemaType && props.renderDecorator) {
       children = (
         <RenderDecorator
           renderDecorator={props.renderDecorator}
           editorElementRef={spanRef}
           focused={focused}
-          path={path}
+          path={props.path}
           selected={selected}
           schemaType={decoratorSchemaType}
           value={mark}
@@ -120,7 +108,7 @@ export function RenderSpan(props: RenderSpanProps) {
       (t) => t.name === annotationMarkDef._type,
     )
     if (annotationSchemaType) {
-      if (block && path && props.renderAnnotation) {
+      if (block && props.path && props.renderAnnotation) {
         children = (
           <span ref={spanRef}>
             <RenderAnnotation
@@ -128,7 +116,7 @@ export function RenderSpan(props: RenderSpanProps) {
               block={block}
               editorElementRef={spanRef}
               focused={focused}
-              path={path}
+              path={props.path}
               selected={selected}
               schemaType={annotationSchemaType}
               value={annotationMarkDef}
@@ -146,7 +134,7 @@ export function RenderSpan(props: RenderSpanProps) {
   /**
    * Support `renderChild` render function for the Span itself
    */
-  if (block && path && props.renderChild) {
+  if (block && props.path && props.renderChild) {
     const child = block.children.find(
       (_child) => _child._key === props.leaf._key,
     ) // Ensure object equality
@@ -158,7 +146,7 @@ export function RenderSpan(props: RenderSpanProps) {
           annotations={annotationMarkDefs}
           editorElementRef={spanRef}
           focused={focused}
-          path={path}
+          path={props.path}
           schemaType={schemaType}
           selected={selected}
           value={child}

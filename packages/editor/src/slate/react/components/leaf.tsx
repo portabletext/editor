@@ -174,6 +174,7 @@ const Leaf = (props: {
     children,
     leaf,
     text,
+    path,
     leafPosition,
   })
 }
