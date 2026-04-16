@@ -18,6 +18,7 @@ import type {
 } from '../types/editor'
 import {ContainerScopeContext} from './container-scope-context'
 import {EditorActorContext} from './editor-actor-context'
+import type {EditorSchema} from './editor-schema'
 import {RenderBlockObject} from './render.block-object'
 import {RenderContainer} from './render.container'
 import {RenderInlineObject} from './render.inline-object'
@@ -34,12 +35,13 @@ export function RenderElement(props: {
   renderChild?: RenderChildFunction
   renderListItem?: RenderListItemFunction
   renderStyle?: RenderStyleFunction
+  schema: EditorSchema
   spellCheck?: boolean
 }) {
   const editorActor = useContext(EditorActorContext)
-  const schema = useSelector(editorActor, (s) => s.context.schema)
   const containerScope = useContext(ContainerScopeContext)
   const slateStatic = useSlateStatic()
+  const schema = props.schema
 
   const scopedTypeName = containerScope
     ? `${containerScope}.${props.element._type}`

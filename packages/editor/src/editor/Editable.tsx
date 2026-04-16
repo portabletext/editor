@@ -137,6 +137,7 @@ export const PortableTextEditable = forwardRef<
 
   const editorActor = useContext(EditorActorContext)
   const relayActor = useContext(RelayActorContext)
+  const schema = editorActor.getSnapshot().context.schema
   const readOnly = useSelector(editorActor, (s) =>
     s.matches({'edit mode': 'read only'}),
   )
@@ -151,7 +152,7 @@ export const PortableTextEditable = forwardRef<
     input: {
       rangeDecorations: rangeDecorations ?? [],
       readOnly,
-      schema: editorActor.getSnapshot().context.schema,
+      schema,
       slateEditor,
       skipSetup: !editorActor.getSnapshot().matches({setup: 'setting up'}),
     },
@@ -186,11 +187,13 @@ export const PortableTextEditable = forwardRef<
         renderChild={renderChild}
         renderListItem={renderListItem}
         renderStyle={renderStyle}
+        schema={schema}
         spellCheck={spellCheck}
       />
     ),
     [
       dropPosition,
+      schema,
       spellCheck,
       readOnly,
       renderBlock,
@@ -216,6 +219,7 @@ export const PortableTextEditable = forwardRef<
         renderChild={renderChild}
         renderDecorator={renderDecorator}
         renderPlaceholder={renderPlaceholder}
+        schema={schema}
       />
     ),
     [
@@ -224,6 +228,7 @@ export const PortableTextEditable = forwardRef<
       renderChild,
       renderDecorator,
       renderPlaceholder,
+      schema,
     ],
   )
 

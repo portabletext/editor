@@ -1,10 +1,8 @@
 import type {InlineObjectSchemaType} from '@portabletext/schema'
 import {isTextBlock} from '@portabletext/schema'
-import {useSelector} from '@xstate/react'
 import {useContext, useRef, type ReactElement} from 'react'
 import {serializePath} from '../paths/serialize-path'
 import type {RenderLeafProps} from '../slate/react/components/editable'
-import {useSlateStatic} from '../slate/react/hooks/use-slate-static'
 import type {
   BlockAnnotationRenderProps,
   BlockChildRenderProps,
@@ -13,7 +11,7 @@ import type {
   RenderChildFunction,
   RenderDecoratorFunction,
 } from '../types/editor'
-import {EditorActorContext} from './editor-actor-context'
+import type {EditorSchema} from './editor-schema'
 import {SelectionStateContext} from './selection-state-context'
 
 interface RenderSpanProps extends RenderLeafProps {
@@ -22,12 +20,11 @@ interface RenderSpanProps extends RenderLeafProps {
   renderChild?: RenderChildFunction
   renderDecorator?: RenderDecoratorFunction
   readOnly: boolean
+  schema: EditorSchema
 }
 
 export function RenderSpan(props: RenderSpanProps) {
-  const slateEditor = useSlateStatic()
-  const editorActor = useContext(EditorActorContext)
-  const schema = useSelector(editorActor, (s) => s.context.schema)
+  const schema = props.schema
   const spanRef = useRef<HTMLElement>(null)
   const schemaType = {
     name: schema.span.name,
@@ -35,19 +32,16 @@ export function RenderSpan(props: RenderSpanProps) {
   } satisfies InlineObjectSchemaType
 
   const parent = props.children.props.parent
-  const block =
-    parent && isTextBlock({schema: slateEditor.schema}, parent)
-      ? parent
-      : undefined
+  const block = parent && isTextBlock({schema}, parent) ? parent : undefined
 
   const selectionState = useContext(SelectionStateContext)
   const serializedPath = serializePath(props.path)
   const focused = selectionState.focusedChildPath === serializedPath
   const selected = selectionState.selectedChildPaths.has(serializedPath)
 
-  const decoratorSchemaTypes = editorActor
-    .getSnapshot()
-    .context.schema.decorators.map((decorator) => decorator.name)
+  const decoratorSchemaTypes = schema.decorators.map(
+    (decorator) => decorator.name,
+  )
 
   const decorators = [
     ...new Set(
