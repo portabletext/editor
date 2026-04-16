@@ -27,7 +27,6 @@ import {
   parseInlineObject,
   parseSpan,
 } from '../../utils/parse-blocks'
-import {spanSelectionPointToBlockOffset} from '../../utils/util.block-offset'
 import {reverseSelection} from '../../utils/util.reverse-selection'
 import type {Parameter} from '../gherkin-parameter-types'
 import type {Context} from './step-context'
@@ -235,21 +234,6 @@ export const stepDefinitions = [
   /**
    * Text steps
    */
-  Given(
-    'a block {key} with text {text}',
-    (context: Context, key: string, text: Parameter['text']) => {
-      context.editor.send({
-        type: 'insert.block',
-        block: {
-          _key: key,
-          _type: 'block',
-          children: [{_type: 'span', text, marks: []}],
-        },
-        placement: 'auto',
-        select: 'end',
-      })
-    },
-  ),
   When('{string} is typed', async (context: Context, text: string) => {
     if (!context.editor.getSnapshot().context.selection) {
       // Avoid browser compatibility issue. Seems like Chromium and Firefox
@@ -943,51 +927,6 @@ export const stepDefinitions = [
       })
     },
   ),
-  When(
-    '{string} is marked with {decorator}',
-    async (
-      context: Context,
-      text: string,
-      decorator: Parameter['decorator'],
-    ) => {
-      await vi.waitFor(() => {
-        const selection = getTextSelection(
-          context.editor.getSnapshot().context,
-          text,
-        )
-        const anchorOffset = selection
-          ? spanSelectionPointToBlockOffset({
-              context: {
-                schema: context.editor.getSnapshot().context.schema,
-                value: context.editor.getSnapshot().context.value,
-              },
-              selectionPoint: selection.anchor,
-            })
-          : undefined
-        const focusOffset = selection
-          ? spanSelectionPointToBlockOffset({
-              context: {
-                schema: context.editor.getSnapshot().context.schema,
-                value: context.editor.getSnapshot().context.value,
-              },
-              selectionPoint: selection.focus,
-            })
-          : undefined
-
-        assert(anchorOffset !== undefined)
-        assert(focusOffset !== undefined)
-
-        context.editor.send({
-          type: 'decorator.toggle',
-          decorator,
-          at: {
-            anchor: anchorOffset!,
-            focus: focusOffset!,
-          },
-        })
-      })
-    },
-  ),
 
   /**
    * Mark steps
@@ -1012,18 +951,6 @@ export const stepDefinitions = [
       expect(textMarks).toEqual([])
     })
   }),
-  Then(
-    '{string} and {string} have the same marks',
-    (context: Context, textA: string, textB: string) => {
-      const marksA = getTextMarks(context.editor.getSnapshot().context, textA)
-      const marksB = getTextMarks(context.editor.getSnapshot().context, textB)
-
-      expect(
-        marksA,
-        `Expected "${textA}" and "${textB}" to have the same marks`,
-      ).toEqual(marksB)
-    },
-  ),
 
   /**
    * Style steps
