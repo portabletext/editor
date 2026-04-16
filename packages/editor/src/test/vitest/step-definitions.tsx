@@ -4,6 +4,10 @@ import {Given, Then, When} from 'racejar'
 import {assert, expect, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {getEditorSelection} from '../../../test-utils/editor-selection'
+import {
+  fromTextspec,
+  selectionFromTextspec,
+} from '../../../test-utils/from-textspec'
 import {getSelectionText} from '../../../test-utils/selection-text'
 import {getTextBlockKey} from '../../../test-utils/text-block-key'
 import {getTextMarks} from '../../../test-utils/text-marks'
@@ -12,7 +16,9 @@ import {
   getSelectionBeforeText,
   getTextSelection,
 } from '../../../test-utils/text-selection'
+import {toTextspec} from '../../../test-utils/to-textspec'
 import {getValueAnnotations} from '../../../test-utils/value-annotations'
+import type {InternalEditor} from '../../editor/create-editor'
 import {IS_MAC} from '../../internal-utils/is-hotkey'
 import {safeParse} from '../../internal-utils/safe-json'
 import {createTestEditor, createTestEditors} from '../../test/vitest'
@@ -95,6 +101,63 @@ export const stepDefinitions = [
         blocks,
         placement: 'auto',
         select: 'end',
+      })
+    },
+  ),
+
+  Given(
+    'the editor state is {string}',
+    (context: Context, textspec: string) => {
+      const {schema, keyGenerator} = context.editor.getSnapshot().context
+      const {containers} = (context.editor as InternalEditor)._internal
+        .slateEditor
+
+      const normalized = textspec.replace(/\\n/g, '\n').replace(/;;/g, '\n')
+
+      const {blocks} = fromTextspec(
+        {schema, keyGenerator, containers},
+        normalized,
+      )
+
+      context.editor.send({
+        type: 'insert.blocks',
+        blocks,
+        placement: 'auto',
+        select: 'end',
+      })
+    },
+  ),
+
+  When(
+    'the selection is {string}',
+    async (context: Context, textspec: string) => {
+      const normalized = textspec.replace(/\\n/g, '\n').replace(/;;/g, '\n')
+
+      await vi.waitFor(() => {
+        const {schema, value} = context.editor.getSnapshot().context
+        const {containers} = (context.editor as InternalEditor)._internal
+          .slateEditor
+
+        const selection = selectionFromTextspec(
+          {schema, containers},
+          normalized,
+          value ?? [],
+        )
+
+        if (!selection) {
+          throw new Error(
+            `Could not resolve selection from textspec: ${textspec}`,
+          )
+        }
+
+        context.editor.send({
+          type: 'select',
+          at: selection,
+        })
+
+        const currentSelection = context.editor.getSnapshot().context.selection
+        expect(currentSelection?.anchor).toEqual(selection.anchor)
+        expect(currentSelection?.focus).toEqual(selection.focus)
       })
     },
   ),
@@ -669,6 +732,30 @@ export const stepDefinitions = [
           getTersePt(context.editor.getSnapshot().context),
           'Unexpected editor text',
         ).toEqual(tersePt)
+      })
+    },
+  ),
+  Then(
+    'the editor state is {string}',
+    async (context: Context, textspec: string) => {
+      await vi.waitFor(() => {
+        const {schema, value, selection} = context.editor.getSnapshot().context
+        const {containers} = (context.editor as InternalEditor)._internal
+          .slateEditor
+
+        const expected = textspec.replace(/\\n/g, '\n')
+        const keys = new Set<string>()
+        for (const match of expected.matchAll(/_key="([^"]+)"/g)) {
+          keys.add(match[1]!)
+        }
+
+        expect(
+          toTextspec(
+            {schema, value, selection, containers},
+            {singleLine: true, keys: keys.size > 0 ? keys : undefined},
+          ),
+          'Unexpected editor state',
+        ).toBe(expected)
       })
     },
   ),
