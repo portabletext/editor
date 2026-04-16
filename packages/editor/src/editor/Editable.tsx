@@ -1,4 +1,3 @@
-import type {PortableTextSpan} from '@portabletext/schema'
 import {useActorRef, useSelector} from '@xstate/react'
 import {
   forwardRef,
@@ -20,7 +19,6 @@ import {start} from '../slate/editor/start'
 import {
   Editable as SlateEditable,
   type RenderElementProps,
-  type RenderLeafProps,
 } from '../slate/react/components/editable'
 import {useSlate} from '../slate/react/hooks/use-slate'
 import {ReactEditor} from '../slate/react/plugin/react-editor'
@@ -45,10 +43,9 @@ import {EditorActorContext} from './editor-actor-context'
 import {performHotkey} from './perform-hotkey'
 import {rangeDecorationsMachine} from './range-decorations-machine'
 import {RelayActorContext} from './relay-actor-context'
+import {RenderLegacyCallbacksContext} from './render-legacy-callbacks-context'
 import {RenderMarkContext} from './render-mark-context'
 import {RenderElement} from './render.element'
-import {RenderLeaf} from './render.leaf'
-import {RenderText, type RenderTextProps} from './render.text'
 import {SelectionStateProvider} from './selection-state-context'
 import {useDropPosition} from './use-drop-position'
 import {usePortableTextEditor} from './usePortableTextEditor'
@@ -204,43 +201,14 @@ export const PortableTextEditable = forwardRef<
     ],
   )
 
-  const renderLeaf = useCallback(
-    (
-      leafProps: RenderLeafProps & {
-        leaf: PortableTextSpan & {
-          placeholder?: boolean
-          rangeDecoration?: RangeDecoration
-        }
-      },
-    ) => (
-      <RenderLeaf
-        {...leafProps}
-        readOnly={readOnly}
-        renderAnnotation={renderAnnotation}
-        renderChild={renderChild}
-        renderDecorator={renderDecorator}
-        renderPlaceholder={renderPlaceholder}
-        schema={schema}
-      />
-    ),
-    [
-      readOnly,
-      renderAnnotation,
-      renderChild,
-      renderDecorator,
-      renderPlaceholder,
-      schema,
-    ],
-  )
-
-  const renderText = useCallback(
-    (props: RenderTextProps) => <RenderText {...props} />,
-    [],
-  )
-
   const renderMarkContextValue = useMemo(
-    () => ({renderDecorator, renderAnnotation, renderPlaceholder}),
-    [renderDecorator, renderAnnotation, renderPlaceholder],
+    () => ({renderAnnotation, renderDecorator}),
+    [renderAnnotation, renderDecorator],
+  )
+
+  const renderLegacyCallbacksContextValue = useMemo(
+    () => ({renderChild, renderPlaceholder}),
+    [renderChild, renderPlaceholder],
   )
 
   const restoreSelectionFromProps = useCallback(() => {
@@ -980,41 +948,43 @@ export const PortableTextEditable = forwardRef<
 
   return hasInvalidValue ? null : (
     <RenderMarkContext.Provider value={renderMarkContextValue}>
-      <SelectionStateProvider>
-        <SlateEditable
-          {...restProps}
-          ref={callbackRef}
-          editorActor={editorActor}
-          data-read-only={readOnly}
-          autoFocus={false}
-          className={restProps.className || 'pt-editable'}
-          decorate={decorate}
-          onBlur={handleOnBlur}
-          onCopy={handleCopy}
-          onCut={handleCut}
-          onClick={handleClick}
-          onDOMBeforeInput={handleOnBeforeInput}
-          onDragStart={handleDragStart}
-          onDrag={handleDrag}
-          onDragEnd={handleDragEnd}
-          onDragEnter={handleDragEnter}
-          onDragOver={handleDragOver}
-          onDrop={handleDrop}
-          onDragLeave={handleDragLeave}
-          onFocus={handleOnFocus}
-          onKeyDown={handleKeyDown}
-          onKeyUp={handleKeyUp}
-          onPaste={handlePaste}
-          readOnly={readOnly}
-          // We have implemented our own placeholder logic with decorations.
-          // This 'renderPlaceholder' should not be used.
-          renderPlaceholder={undefined}
-          renderElement={renderElement}
-          renderLeaf={renderLeaf}
-          renderText={renderText}
-          scrollSelectionIntoView={scrollSelectionIntoViewToSlate}
-        />
-      </SelectionStateProvider>
+      <RenderLegacyCallbacksContext.Provider
+        value={renderLegacyCallbacksContextValue}
+      >
+        <SelectionStateProvider>
+          <SlateEditable
+            {...restProps}
+            ref={callbackRef}
+            editorActor={editorActor}
+            data-read-only={readOnly}
+            autoFocus={false}
+            className={restProps.className || 'pt-editable'}
+            decorate={decorate}
+            onBlur={handleOnBlur}
+            onCopy={handleCopy}
+            onCut={handleCut}
+            onClick={handleClick}
+            onDOMBeforeInput={handleOnBeforeInput}
+            onDragStart={handleDragStart}
+            onDrag={handleDrag}
+            onDragEnd={handleDragEnd}
+            onDragEnter={handleDragEnter}
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
+            onDragLeave={handleDragLeave}
+            onFocus={handleOnFocus}
+            onKeyDown={handleKeyDown}
+            onKeyUp={handleKeyUp}
+            onPaste={handlePaste}
+            readOnly={readOnly}
+            // We have implemented our own placeholder logic with decorations.
+            // This 'renderPlaceholder' should not be used.
+            renderPlaceholder={undefined}
+            renderElement={renderElement}
+            scrollSelectionIntoView={scrollSelectionIntoViewToSlate}
+          />
+        </SelectionStateProvider>
+      </RenderLegacyCallbacksContext.Provider>
     </RenderMarkContext.Provider>
   )
 })

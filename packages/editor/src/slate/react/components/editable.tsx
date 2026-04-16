@@ -1,6 +1,5 @@
 import type {
   PortableTextObject,
-  PortableTextSpan,
   PortableTextTextBlock,
 } from '@portabletext/schema'
 import {isSpan} from '@portabletext/schema'
@@ -65,7 +64,7 @@ import {start as editorStart} from '../../editor/start'
 import type {Editor} from '../../interfaces/editor'
 import type {NodeEntry} from '../../interfaces/node'
 import type {Path} from '../../interfaces/path'
-import type {DecoratedRange, LeafPosition} from '../../interfaces/text'
+import type {DecoratedRange} from '../../interfaces/text'
 import {isTextBlockNode} from '../../node/is-text-block-node'
 import {isVoidNode} from '../../node/is-void-node'
 import {pathEquals} from '../../path/path-equals'
@@ -115,40 +114,6 @@ export interface RenderElementProps {
 }
 
 /**
- * `RenderLeafProps` are passed to the `renderLeaf` handler.
- */
-
-export interface RenderLeafProps {
-  children: any
-  /**
-   * The leaf node with any applied decorations.
-   * If no decorations are applied, it will be identical to the `text` property.
-   */
-  leaf: PortableTextSpan
-  text: PortableTextSpan
-  path: Path
-  attributes: {
-    'data-slate-leaf': true
-  }
-  /**
-   * The position of the leaf within the Text node, only present when the text node is split by decorations.
-   */
-  leafPosition?: LeafPosition
-}
-
-/**
- * `RenderTextProps` are passed to the `renderText` handler.
- */
-export interface RenderTextProps {
-  text: PortableTextSpan
-  children: any
-  attributes: {
-    'data-slate-node': 'text'
-    'data-pt-path': string
-  }
-}
-
-/**
  * `EditableProps` are passed to the `<Editable>` component.
  */
 
@@ -161,8 +126,6 @@ type EditableProps = {
   role?: string
   style?: React.CSSProperties
   renderElement?: (props: RenderElementProps) => JSX.Element
-  renderLeaf?: (props: RenderLeafProps) => JSX.Element
-  renderText?: (props: RenderTextProps) => JSX.Element
   renderPlaceholder?: (props: RenderPlaceholderProps) => JSX.Element
   scrollSelectionIntoView?: (editor: ReactEditor, domRange: DOMRange) => void
   as?: React.ElementType
@@ -187,8 +150,6 @@ export const Editable = forwardRef(
       placeholder,
       readOnly = false,
       renderElement,
-      renderLeaf,
-      renderText,
       renderPlaceholder = defaultRenderPlaceholder,
       scrollSelectionIntoView = defaultScrollSelectionIntoView,
       style: userStyle = {},
@@ -1950,8 +1911,6 @@ export const Editable = forwardRef(
                   path={[]}
                   renderElement={renderElement}
                   renderPlaceholder={renderPlaceholder}
-                  renderLeaf={renderLeaf}
-                  renderText={renderText}
                 />
               </Component>
             </RestoreDOM>

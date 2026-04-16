@@ -28,13 +28,10 @@ import {isSpanNode} from '../../node/is-span-node'
 import {isTextBlockNode} from '../../node/is-text-block-node'
 import type {
   RenderElementProps,
-  RenderLeafProps,
   RenderPlaceholderProps,
-  RenderTextProps,
 } from '../components/editable'
 import ElementComponent from '../components/element'
 import ObjectNodeComponent from '../components/object-node'
-import TextComponent from '../components/text'
 import {ElementContext} from './use-element'
 import {useSlateStatic} from './use-slate-static'
 
@@ -48,8 +45,6 @@ const useChildren = (props: {
   path: Path
   renderElement?: (props: RenderElementProps) => JSX.Element
   renderPlaceholder: (props: RenderPlaceholderProps) => JSX.Element
-  renderText?: (props: RenderTextProps) => JSX.Element
-  renderLeaf?: (props: RenderLeafProps) => JSX.Element
 }): React.ReactNode => {
   const {
     decorations,
@@ -57,8 +52,6 @@ const useChildren = (props: {
     path: parentPath,
     renderElement,
     renderPlaceholder,
-    renderText,
-    renderLeaf,
   } = props
   const editor = useSlateStatic()
   editor.isNodeMapDirty = false
@@ -118,8 +111,6 @@ const useChildren = (props: {
             path={nodePath}
             renderElement={renderElement}
             renderPlaceholder={renderPlaceholder}
-            renderLeaf={renderLeaf}
-            renderText={renderText}
           />
         </ElementContext>
       )
@@ -130,8 +121,6 @@ const useChildren = (props: {
       parentPath,
       renderElement,
       renderPlaceholder,
-      renderLeaf,
-      renderText,
     ],
   )
 
@@ -151,30 +140,14 @@ const useChildren = (props: {
         ? [{_key: node._key}]
         : [...parentPath, 'children', {_key: node._key}]
 
-    if (childScope) {
-      return (
-        <ContainerTextComponent
-          decorations={decorationsByChild[index] ?? []}
-          key={node._key}
-          isLast={index === children.length - 1}
-          parent={textBlockParent}
-          path={nodePath}
-          renderPlaceholder={renderPlaceholder}
-          text={node}
-        />
-      )
-    }
-
     return (
-      <TextComponent
+      <ContainerTextComponent
         decorations={decorationsByChild[index] ?? []}
         key={node._key}
         isLast={index === children.length - 1}
         parent={textBlockParent}
         path={nodePath}
         renderPlaceholder={renderPlaceholder}
-        renderLeaf={renderLeaf}
-        renderText={renderText}
         text={node}
       />
     )
@@ -199,8 +172,6 @@ const useChildren = (props: {
             path={nodePath}
             renderElement={renderElement}
             renderPlaceholder={renderPlaceholder}
-            renderLeaf={renderLeaf}
-            renderText={renderText}
           />
         </ElementContext>
       )

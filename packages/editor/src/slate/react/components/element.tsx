@@ -15,12 +15,7 @@ import useChildren from '../hooks/use-children'
 import {useDecorations} from '../hooks/use-decorations'
 import {useSlateStatic} from '../hooks/use-slate-static'
 import getDirection from '../utils/direction'
-import type {
-  RenderElementProps,
-  RenderLeafProps,
-  RenderPlaceholderProps,
-  RenderTextProps,
-} from './editable'
+import type {RenderElementProps, RenderPlaceholderProps} from './editable'
 
 const defaultRenderElement = (props: RenderElementProps) => (
   <DefaultElement {...props} />
@@ -36,16 +31,12 @@ const Element = (props: {
   path: Path
   renderElement?: (props: RenderElementProps) => JSX.Element
   renderPlaceholder: (props: RenderPlaceholderProps) => JSX.Element
-  renderText?: (props: RenderTextProps) => JSX.Element
-  renderLeaf?: (props: RenderLeafProps) => JSX.Element
 }) => {
   const {
     decorations: parentDecorations,
     element,
     renderElement = defaultRenderElement,
     renderPlaceholder,
-    renderLeaf,
-    renderText,
   } = props
   const dataPath = serializePath(props.path)
   const editor = useSlateStatic()
@@ -57,8 +48,6 @@ const Element = (props: {
     path: props.path,
     renderElement,
     renderPlaceholder,
-    renderLeaf,
-    renderText,
   })
 
   // Attributes that the developer must mix into the element in their
@@ -103,8 +92,6 @@ const MemoizedElement = React.memo(Element, (prev, next) => {
     prev.element === next.element &&
     pathEquals(prev.path, next.path) &&
     prev.renderElement === next.renderElement &&
-    prev.renderText === next.renderText &&
-    prev.renderLeaf === next.renderLeaf &&
     prev.renderPlaceholder === next.renderPlaceholder &&
     isElementDecorationsEqual(prev.decorations, next.decorations)
   )

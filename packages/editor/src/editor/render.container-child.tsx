@@ -1,4 +1,5 @@
 import type {
+  PortableTextChild,
   PortableTextObject,
   PortableTextTextBlock,
 } from '@portabletext/schema'
@@ -10,6 +11,12 @@ import {serializePath} from '../paths/serialize-path'
 import type {Path} from '../slate/interfaces/path'
 import type {RenderElementProps} from '../slate/react/components/editable'
 import {useSlateStatic} from '../slate/react/hooks/use-slate-static'
+import type {
+  BlockChildRenderProps,
+  BlockRenderProps,
+  RenderBlockFunction,
+  RenderChildFunction,
+} from '../types/editor'
 import {ContainerScopeContext} from './container-scope-context'
 import {EditorActorContext} from './editor-actor-context'
 import {RenderContainer} from './render.container'
@@ -17,12 +24,22 @@ import {
   RenderDefaultBlockObject,
   RenderDefaultInlineObject,
 } from './render.default-object'
+import {DropIndicator} from './render.drop-indicator'
 import {buildScopedName, findByScope} from './scoped-config-lookup'
+import {SelectionStateContext} from './selection-state-context'
+
+type LegacyChildCallbacks = {
+  dropPosition?: 'start' | 'end'
+  readOnly: boolean
+  renderBlock?: RenderBlockFunction
+  renderChild?: RenderChildFunction
+}
 
 export function RenderContainerChild(props: {
   attributes: RenderElementProps['attributes']
   children: ReactElement
   element: PortableTextTextBlock | PortableTextObject
+  legacyCallbacks?: LegacyChildCallbacks
   path: Path
 }) {
   const editorActor = useContext(EditorActorContext)
@@ -62,6 +79,35 @@ export function RenderContainerChild(props: {
     )
   }
 
+  if (isTextBlock({schema}, props.element)) {
+    const {
+      'data-slate-node': _slateNode,
+      'data-pt-path': _ptPath,
+      ...baseAttributes
+    } = props.attributes
+    const dataPath = serializePath(props.path)
+    return (
+      <div {...baseAttributes} data-pt-container="" data-pt-path={dataPath}>
+        {props.children}
+      </div>
+    )
+  }
+
+  if (props.legacyCallbacks && !leafConfig) {
+    return (
+      <RenderLegacyObject
+        attributes={props.attributes}
+        callbacks={props.legacyCallbacks}
+        element={props.element as PortableTextObject}
+        isInlineObject={isInlineObject}
+        path={props.path}
+        schema={schema}
+      >
+        {props.children}
+      </RenderLegacyObject>
+    )
+  }
+
   const dataPath = serializePath(props.path)
   const {
     'data-slate-node': _slateNode,
@@ -70,14 +116,6 @@ export function RenderContainerChild(props: {
     'data-pt-path': _ptPath,
     ...baseAttributes
   } = props.attributes
-
-  if (isTextBlock({schema}, props.element)) {
-    return (
-      <div {...baseAttributes} data-pt-container="" data-pt-path={dataPath}>
-        {props.children}
-      </div>
-    )
-  }
 
   if (isInlineObject) {
     const inlineAttributes = {
@@ -162,4 +200,163 @@ export function RenderContainerChild(props: {
       {blockObjectChildren}
     </div>
   )
+}
+
+function RenderLegacyObject(props: {
+  attributes: RenderElementProps['attributes']
+  callbacks: LegacyChildCallbacks
+  children: ReactElement
+  element: PortableTextObject
+  isInlineObject: boolean
+  path: Path
+  schema: import('./editor-schema').EditorSchema
+}) {
+  const {
+    attributes,
+    callbacks,
+    children: slateChildren,
+    element,
+    isInlineObject,
+    path,
+    schema,
+  } = props
+  const {dropPosition, readOnly, renderBlock, renderChild} = callbacks
+  const objectRef = useRef<HTMLElement>(null)
+  const {selectedLeafPaths, focusedLeafPath} = useContext(SelectionStateContext)
+  const serializedPath = serializePath(path)
+  const selected = selectedLeafPaths.has(serializedPath)
+  const focused = focusedLeafPath === serializedPath
+
+  if (isInlineObject) {
+    const inlineObjectSchemaType = schema.inlineObjects.find(
+      (schemaType) => schemaType.name === element._type,
+    )
+    if (!inlineObjectSchemaType) {
+      console.error(`Unable to find Inline Object "${element._type}" in Schema`)
+    }
+    const inlineObject = element as unknown as PortableTextChild
+    return (
+      <span
+        {...attributes}
+        className="pt-inline-object"
+        data-child-key={inlineObject._key}
+        data-child-name={inlineObject._type}
+        data-child-type="object"
+      >
+        {slateChildren}
+        <span
+          ref={objectRef as React.Ref<HTMLSpanElement>}
+          style={{display: 'inline-block'}}
+          draggable={!readOnly}
+        >
+          {renderChild && inlineObjectSchemaType ? (
+            <RenderChildCallback
+              renderChild={renderChild}
+              annotations={[]}
+              editorElementRef={objectRef}
+              selected={selected}
+              focused={focused}
+              path={path}
+              schemaType={inlineObjectSchemaType}
+              value={inlineObject}
+            >
+              <RenderDefaultInlineObject inlineObject={inlineObject} />
+            </RenderChildCallback>
+          ) : (
+            <RenderDefaultInlineObject inlineObject={inlineObject} />
+          )}
+        </span>
+      </span>
+    )
+  }
+
+  const blockObjectSchemaType = schema.blockObjects.find(
+    (schemaType) => schemaType.name === element._type,
+  )
+  if (!blockObjectSchemaType) {
+    console.error(`Unable to find Block Object "${element._type}" in Schema`)
+  }
+
+  return (
+    <div
+      {...attributes}
+      className="pt-block pt-object-block"
+      data-block-key={element._key}
+      data-block-name={element._type}
+      data-block-type="object"
+    >
+      {dropPosition === 'start' ? <DropIndicator /> : null}
+      {slateChildren}
+      <div
+        ref={objectRef as React.Ref<HTMLDivElement>}
+        contentEditable={false}
+        draggable={!readOnly}
+      >
+        {renderBlock && blockObjectSchemaType ? (
+          <RenderBlockCallback
+            renderBlock={renderBlock}
+            editorElementRef={objectRef}
+            focused={focused}
+            path={[{_key: element._key}]}
+            schemaType={blockObjectSchemaType}
+            selected={selected}
+            value={element}
+          >
+            <RenderDefaultBlockObject blockObject={element} />
+          </RenderBlockCallback>
+        ) : (
+          <RenderDefaultBlockObject blockObject={element} />
+        )}
+      </div>
+      {dropPosition === 'end' ? <DropIndicator /> : null}
+    </div>
+  )
+}
+
+function RenderBlockCallback({
+  renderBlock,
+  children,
+  editorElementRef,
+  focused,
+  path,
+  schemaType,
+  selected,
+  value,
+}: {
+  renderBlock: RenderBlockFunction
+} & BlockRenderProps) {
+  return renderBlock({
+    children,
+    editorElementRef,
+    focused,
+    path,
+    schemaType,
+    selected,
+    value,
+  })
+}
+
+function RenderChildCallback({
+  renderChild,
+  annotations,
+  children,
+  editorElementRef,
+  focused,
+  path,
+  schemaType,
+  selected,
+  value,
+}: {
+  renderChild: RenderChildFunction
+} & BlockChildRenderProps) {
+  return renderChild({
+    annotations,
+    children,
+    editorElementRef,
+    focused,
+    path,
+    schemaType,
+    selected,
+    value,
+  })
 }

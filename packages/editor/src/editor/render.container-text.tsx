@@ -3,27 +3,49 @@ import type {
   PortableTextSpan,
   PortableTextTextBlock,
 } from '@portabletext/schema'
-import {isTextBlock} from '@portabletext/schema'
-import {useSelector} from '@xstate/react'
-import React, {useContext, useRef, type JSX, type ReactElement} from 'react'
+import {isSpan, isTextBlock} from '@portabletext/schema'
+import React, {
+  useContext,
+  useRef,
+  useState,
+  type CSSProperties,
+  type JSX,
+  type ReactElement,
+} from 'react'
+import {getNodes} from '../node-traversal/get-nodes'
 import {serializePath} from '../paths/serialize-path'
+import {IS_ANDROID, IS_WEBKIT} from '../slate/dom/utils/environment'
 import {isTextDecorationsEqual} from '../slate/dom/utils/range-list'
+import {
+  MARK_PLACEHOLDER_SYMBOL,
+  PLACEHOLDER_SYMBOL,
+} from '../slate/dom/utils/symbols'
+import {end as editorEnd} from '../slate/editor/end'
+import {start as editorStart} from '../slate/editor/start'
+import type {Editor} from '../slate/interfaces/editor'
 import type {Path} from '../slate/interfaces/path'
-import type {DecoratedRange} from '../slate/interfaces/text'
+import type {DecoratedRange, LeafPosition} from '../slate/interfaces/text'
+import {parentPath as getParentPath} from '../slate/path/parent-path'
 import {pathEquals} from '../slate/path/path-equals'
 import type {RenderPlaceholderProps} from '../slate/react/components/editable'
 import {useDecorations} from '../slate/react/hooks/use-decorations'
 import {useIsomorphicLayoutEffect} from '../slate/react/hooks/use-isomorphic-layout-effect'
+import {useLeafPlaceholder} from '../slate/react/hooks/use-leaf-placeholder'
+import {useSlateStatic} from '../slate/react/hooks/use-slate-static'
 import {getTextDecorations} from '../slate/text/get-text-decorations'
+import {textEquals} from '../slate/text/text-equals'
 import type {
   BlockAnnotationRenderProps,
+  BlockChildRenderProps,
   BlockDecoratorRenderProps,
   RangeDecoration,
   RenderAnnotationFunction,
+  RenderChildFunction,
   RenderDecoratorFunction,
 } from '../types/editor'
 import {ContainerScopeContext} from './container-scope-context'
 import {EditorActorContext} from './editor-actor-context'
+import {RenderLegacyCallbacksContext} from './render-legacy-callbacks-context'
 import {RenderMarkContext} from './render-mark-context'
 import {buildScopedName, findByScope} from './scoped-config-lookup'
 import {SelectionStateContext} from './selection-state-context'
@@ -36,13 +58,63 @@ const ContainerTextComponent = (props: {
   renderPlaceholder: (props: RenderPlaceholderProps) => JSX.Element
   text: PortableTextSpan
 }) => {
-  const {decorations: parentDecorations, isLast, parent, path, text} = props
+  const {
+    decorations: parentDecorations,
+    isLast,
+    parent,
+    path,
+    renderPlaceholder,
+    text,
+  } = props
 
   const decorations = useDecorations(text, path, parentDecorations)
   const decoratedLeaves = getTextDecorations(text, decorations)
-  const elementRef = useRef<HTMLElement>(null)
   const editorActor = useContext(EditorActorContext)
   const containerScope = useContext(ContainerScopeContext)
+  const dataPath = serializePath(path)
+
+  const useLegacyPipeline = !containerScope
+
+  if (useLegacyPipeline) {
+    const children = []
+
+    for (let i = 0; i < decoratedLeaves.length; i++) {
+      const {leaf, position} = decoratedLeaves[i]!
+
+      children.push(
+        <LegacyLeafSelection
+          key={`${text._key}-${i}`}
+          isLast={isLast && i === decoratedLeaves.length - 1}
+          leaf={leaf}
+          leafPosition={position}
+          text={text}
+          path={path}
+          parent={parent}
+          renderPlaceholder={renderPlaceholder}
+        />,
+      )
+    }
+
+    return (
+      <span
+        data-slate-node="text"
+        data-pt-path={dataPath}
+        data-child-key={text._key}
+        data-child-name={text._type}
+        data-child-type="span"
+      >
+        {children}
+      </span>
+    )
+  }
+
+  const spanScopedName = buildScopedName(containerScope, 'block.span')
+
+  const leafConfig = findByScope(
+    editorActor.getSnapshot().context.leafConfigs,
+    spanScopedName,
+  )
+
   const children = []
 
   for (let i = 0; i < decoratedLeaves.length; i++) {
@@ -59,14 +131,6 @@ const ContainerTextComponent = (props: {
       />,
     )
   }
-
-  const dataPath = serializePath(path)
-
-  const spanScopedName = buildScopedName(containerScope, 'block.span')
-
-  const leafConfig = useSelector(editorActor, (s) =>
-    findByScope(s.context.leafConfigs, spanScopedName),
-  )
 
   const spanAttributes = {
     'data-pt-leaf': '',
@@ -87,7 +151,7 @@ const ContainerTextComponent = (props: {
   }
 
   return (
-    <span data-pt-leaf="" data-pt-path={dataPath} ref={elementRef}>
+    <span data-pt-leaf="" data-pt-path={dataPath}>
       {children}
     </span>
   )
@@ -109,7 +173,7 @@ const MemoizedContainerText = React.memo(
 
 export default MemoizedContainerText
 
-const PLACEHOLDER_STYLE: React.CSSProperties = {
+const PLACEHOLDER_STYLE: CSSProperties = {
   position: 'absolute',
   userSelect: 'none',
   pointerEvents: 'none',
@@ -130,8 +194,8 @@ const ContainerLeaf = (props: {
   const {leaf, isLast, text, parent} = props
   const editorActor = useContext(EditorActorContext)
   const schema = editorActor.getSnapshot().context.schema
-  const {renderDecorator, renderAnnotation, renderPlaceholder} =
-    useContext(RenderMarkContext)
+  const {renderDecorator, renderAnnotation} = useContext(RenderMarkContext)
+  const {renderPlaceholder} = useContext(RenderLegacyCallbacksContext)
   const selectionState = useContext(SelectionStateContext)
   const serializedPath = serializePath(props.path)
   const focused = selectionState.focusedLeafPath === serializedPath
@@ -142,7 +206,6 @@ const ContainerLeaf = (props: {
 
   let children: ReactElement
 
-  // Empty text in an empty block: render zero-width with line break
   if (
     leafText === '' &&
     isTextBlock({schema}, parent) &&
@@ -155,20 +218,17 @@ const ContainerLeaf = (props: {
       </span>
     )
   } else if (leafText === '') {
-    // Empty text at inline boundary: render zero-width
     children = (
       <span data-pt-zero-width="z" data-pt-length={0}>
         {'\uFEFF'}
       </span>
     )
   } else if (isLast && leafText.slice(-1) === '\n') {
-    // Trailing newline: add extra newline to prevent browser collapse
     children = <ContainerTextString text={leafText} isTrailing />
   } else {
     children = <ContainerTextString text={leafText} />
   }
 
-  // Apply decorator wrapping
   const decoratorNames = schema.decorators.map((decorator) => decorator.name)
 
   const decorators = [
@@ -199,7 +259,6 @@ const ContainerLeaf = (props: {
     }
   }
 
-  // Apply annotation wrapping
   const block = parent && isTextBlock({schema}, parent) ? parent : undefined
 
   const annotationMarkDefs = (leaf.marks ?? []).flatMap((mark: string) => {
@@ -312,9 +371,9 @@ function ContainerRenderAnnotation({
 
 const ContainerTextString = (props: {text: string; isTrailing?: boolean}) => {
   const {text, isTrailing = false} = props
-  const ref = React.useRef<HTMLSpanElement>(null)
+  const ref = useRef<HTMLSpanElement>(null)
   const getTextContent = () => `${text ?? ''}${isTrailing ? '\n' : ''}`
-  const [initialText] = React.useState(getTextContent)
+  const [initialText] = useState(getTextContent)
 
   useIsomorphicLayoutEffect(() => {
     const textWithTrailing = getTextContent()
@@ -339,3 +398,472 @@ const MemoizedContainerTextString = React.memo(
     )
   }),
 )
+
+type LegacyLeafProps = {
+  focused: boolean
+  isLast: boolean
+  leaf: PortableTextSpan & {
+    placeholder?: boolean
+    rangeDecoration?: RangeDecoration
+  }
+  leafPosition?: LeafPosition
+  parent: PortableTextTextBlock | PortableTextObject
+  path: Path
+  renderPlaceholder: (props: RenderPlaceholderProps) => JSX.Element
+  selected: boolean
+  text: PortableTextSpan
+}
+
+type LegacyLeafSelectionProps = Omit<LegacyLeafProps, 'focused' | 'selected'>
+
+const LegacyLeafSelection = (props: LegacyLeafSelectionProps) => {
+  const selectionState = useContext(SelectionStateContext)
+  const serializedPath = serializePath(props.path)
+  const focused = selectionState.focusedLeafPath === serializedPath
+  const selected = selectionState.selectedLeafPaths.has(serializedPath)
+
+  return <LegacyLeaf {...props} focused={focused} selected={selected} />
+}
+
+const LegacyLeafComponent = (props: LegacyLeafProps) => {
+  const {
+    focused,
+    leaf,
+    isLast,
+    text,
+    parent,
+    path,
+    renderPlaceholder,
+    selected,
+  } = props
+  const editor = useSlateStatic()
+
+  const leafIsPlaceholder = Boolean((leaf as any)[PLACEHOLDER_SYMBOL])
+  const {callbackPlaceholderRef, showPlaceholder} = useLeafPlaceholder(
+    editor,
+    leaf,
+    leafIsPlaceholder,
+  )
+
+  let stringChildren: ReactElement = (
+    <LegacyString
+      isLast={isLast}
+      leaf={leaf}
+      parent={parent}
+      path={path}
+      text={text}
+    />
+  )
+
+  if (leafIsPlaceholder && showPlaceholder) {
+    const placeholderProps: RenderPlaceholderProps = {
+      children: (leaf as any).placeholder,
+      attributes: {
+        'data-slate-placeholder': true,
+        'style': {
+          position: 'absolute',
+          top: 0,
+          pointerEvents: 'none',
+          width: '100%',
+          maxWidth: '100%',
+          display: 'block',
+          opacity: '0.333',
+          userSelect: 'none',
+          textDecoration: 'none',
+          WebkitUserModify: IS_WEBKIT ? 'inherit' : undefined,
+        },
+        'contentEditable': false,
+        'ref': callbackPlaceholderRef,
+      },
+    }
+
+    stringChildren = (
+      <React.Fragment>
+        {stringChildren}
+        {renderPlaceholder(placeholderProps)}
+      </React.Fragment>
+    )
+  }
+
+  return (
+    <LegacyLeafMarks
+      focused={focused}
+      leaf={leaf}
+      parent={parent}
+      path={path}
+      selected={selected}
+      text={text}
+    >
+      {stringChildren}
+    </LegacyLeafMarks>
+  )
+}
+
+type LegacyLeafMarksProps = {
+  children: ReactElement
+  focused: boolean
+  leaf: PortableTextSpan & {
+    placeholder?: boolean
+    rangeDecoration?: RangeDecoration
+  }
+  parent: PortableTextTextBlock | PortableTextObject
+  path: Path
+  selected: boolean
+  text: PortableTextSpan
+}
+
+const LegacyLeafMarks = (props: LegacyLeafMarksProps) => {
+  const {focused, leaf, parent, path, selected, text} = props
+  const editorActor = useContext(EditorActorContext)
+  const schema = editorActor.getSnapshot().context.schema
+  const {renderAnnotation, renderDecorator} = useContext(RenderMarkContext)
+  const {renderChild, renderPlaceholder: placeholderRenderer} = useContext(
+    RenderLegacyCallbacksContext,
+  )
+  const spanRef = useRef<HTMLElement>(null)
+
+  let children: ReactElement = props.children
+
+  if (leaf._type !== schema.span.name) {
+    return (
+      <span data-slate-leaf="true" ref={spanRef}>
+        {children}
+      </span>
+    )
+  }
+
+  const block = parent && isTextBlock({schema}, parent) ? parent : undefined
+
+  const decoratorNames = schema.decorators.map((decorator) => decorator.name)
+
+  const decorators = [
+    ...new Set(
+      (leaf.marks ?? []).filter((mark) => decoratorNames.includes(mark)),
+    ),
+  ]
+
+  const annotationMarkDefs = (leaf.marks ?? []).flatMap((mark: string) => {
+    if (decoratorNames.includes(mark)) {
+      return []
+    }
+
+    const markDef = block?.markDefs?.find((markDef) => markDef._key === mark)
+
+    if (markDef) {
+      return [markDef]
+    }
+
+    return []
+  })
+
+  for (const mark of decorators) {
+    const decoratorSchemaType = schema.decorators.find(
+      (decorator) => decorator.name === mark,
+    )
+
+    if (decoratorSchemaType && renderDecorator) {
+      children = (
+        <LegacyRenderDecorator
+          renderDecorator={renderDecorator}
+          editorElementRef={spanRef}
+          focused={focused}
+          path={path}
+          selected={selected}
+          schemaType={decoratorSchemaType}
+          value={mark}
+        >
+          {children}
+        </LegacyRenderDecorator>
+      )
+    }
+  }
+
+  for (const annotationMarkDef of annotationMarkDefs) {
+    const annotationSchemaType = schema.annotations.find(
+      (type) => type.name === annotationMarkDef._type,
+    )
+    if (annotationSchemaType) {
+      if (block && renderAnnotation) {
+        children = (
+          <span ref={spanRef}>
+            <LegacyRenderAnnotation
+              renderAnnotation={renderAnnotation}
+              block={block}
+              editorElementRef={spanRef}
+              focused={focused}
+              path={path}
+              selected={selected}
+              schemaType={annotationSchemaType}
+              value={annotationMarkDef}
+            >
+              {children}
+            </LegacyRenderAnnotation>
+          </span>
+        )
+      } else {
+        children = <span ref={spanRef}>{children}</span>
+      }
+    }
+  }
+
+  if (block && renderChild) {
+    const child = block.children.find(
+      (candidate) => candidate._key === leaf._key,
+    )
+
+    if (child) {
+      const spanSchemaType = {
+        name: schema.span.name,
+        fields: [],
+      } as const
+
+      children = (
+        <LegacyRenderChild
+          renderChild={renderChild}
+          annotations={annotationMarkDefs}
+          editorElementRef={spanRef}
+          focused={focused}
+          path={path}
+          schemaType={spanSchemaType}
+          selected={selected}
+          value={child}
+        >
+          {children}
+        </LegacyRenderChild>
+      )
+    }
+  }
+
+  let renderedSpan: ReactElement = (
+    <span data-slate-leaf="true" ref={spanRef}>
+      {children}
+    </span>
+  )
+
+  if (placeholderRenderer && leaf.placeholder && text.text === '') {
+    return (
+      <>
+        <span style={PLACEHOLDER_STYLE} contentEditable={false}>
+          {placeholderRenderer()}
+        </span>
+        {renderedSpan}
+      </>
+    )
+  }
+
+  if (leaf.rangeDecoration) {
+    renderedSpan = leaf.rangeDecoration.component({children: renderedSpan})
+  }
+
+  return renderedSpan
+}
+
+const LegacyLeaf = React.memo(LegacyLeafComponent, (prev, next) => {
+  return (
+    next.parent === prev.parent &&
+    next.isLast === prev.isLast &&
+    next.focused === prev.focused &&
+    next.selected === prev.selected &&
+    pathEquals(next.path, prev.path) &&
+    next.renderPlaceholder === prev.renderPlaceholder &&
+    next.text === prev.text &&
+    textEquals(next.leaf, prev.leaf) &&
+    (next.leaf as any)[PLACEHOLDER_SYMBOL] ===
+      (prev.leaf as any)[PLACEHOLDER_SYMBOL]
+  )
+})
+function LegacyRenderDecorator({
+  renderDecorator,
+  children,
+  editorElementRef,
+  focused,
+  path,
+  schemaType,
+  selected,
+  value,
+}: {
+  renderDecorator: RenderDecoratorFunction
+} & BlockDecoratorRenderProps) {
+  return renderDecorator({
+    children,
+    editorElementRef,
+    focused,
+    path,
+    schemaType,
+    selected,
+    value,
+  })
+}
+
+function LegacyRenderAnnotation({
+  renderAnnotation,
+  block,
+  children,
+  editorElementRef,
+  focused,
+  path,
+  schemaType,
+  selected,
+  value,
+}: {
+  renderAnnotation: RenderAnnotationFunction
+} & BlockAnnotationRenderProps) {
+  return renderAnnotation({
+    block,
+    children,
+    editorElementRef,
+    focused,
+    path,
+    schemaType,
+    selected,
+    value,
+  })
+}
+
+function LegacyRenderChild({
+  renderChild,
+  annotations,
+  children,
+  editorElementRef,
+  focused,
+  path,
+  schemaType,
+  selected,
+  value,
+}: {
+  renderChild: RenderChildFunction
+} & BlockChildRenderProps) {
+  return renderChild({
+    annotations,
+    children,
+    editorElementRef,
+    focused,
+    path,
+    schemaType,
+    selected,
+    value,
+  })
+}
+
+function getLegacyStringContent(editor: Editor, path: Path): string {
+  const start = editorStart(editor, path)
+  const end = editorEnd(editor, path)
+  let text = ''
+
+  for (const {node, path: nodePath} of getNodes(editor, {
+    from: start.path,
+    to: end.path,
+    match: (n) => isSpan({schema: editor.schema}, n),
+  })) {
+    if (!isSpan({schema: editor.schema}, node)) {
+      continue
+    }
+    let nodeText = node.text
+    if (pathEquals(nodePath, end.path)) {
+      nodeText = nodeText.slice(0, end.offset)
+    }
+    if (pathEquals(nodePath, start.path)) {
+      nodeText = nodeText.slice(start.offset)
+    }
+    text += nodeText
+  }
+
+  return text
+}
+
+const LegacyString = (props: {
+  isLast: boolean
+  leaf: PortableTextSpan
+  parent: PortableTextTextBlock | PortableTextObject
+  path: Path
+  text: PortableTextSpan
+}) => {
+  const {isLast, leaf, parent, path, text} = props
+  const editor = useSlateStatic()
+  const parentPath = getParentPath(path)
+  const isMarkPlaceholder = Boolean((leaf as any)[MARK_PLACEHOLDER_SYMBOL])
+  const leafText = leaf.text ?? ''
+
+  if (
+    leafText === '' &&
+    isTextBlock({schema: editor.schema}, parent) &&
+    parent.children[parent.children.length - 1] === text &&
+    getLegacyStringContent(editor, parentPath) === ''
+  ) {
+    return (
+      <LegacyZeroWidthString
+        isLineBreak
+        isMarkPlaceholder={isMarkPlaceholder}
+      />
+    )
+  }
+
+  if (leafText === '') {
+    return <LegacyZeroWidthString isMarkPlaceholder={isMarkPlaceholder} />
+  }
+
+  if (isLast && leafText.slice(-1) === '\n') {
+    return <LegacyTextString isTrailing text={leafText} />
+  }
+
+  return <LegacyTextString text={leafText} />
+}
+
+const LegacyTextString = (props: {text: string; isTrailing?: boolean}) => {
+  const {text, isTrailing = false} = props
+  const ref = useRef<HTMLSpanElement>(null)
+  const getTextContent = () => {
+    return `${text ?? ''}${isTrailing ? '\n' : ''}`
+  }
+  const [initialText] = useState(getTextContent)
+
+  useIsomorphicLayoutEffect(() => {
+    const textWithTrailing = getTextContent()
+
+    if (ref.current && ref.current.textContent !== textWithTrailing) {
+      ref.current.textContent = textWithTrailing
+    }
+  })
+
+  return (
+    <MemoizedLegacyTextString ref={ref}>{initialText}</MemoizedLegacyTextString>
+  )
+}
+
+const MemoizedLegacyTextString = React.memo(
+  React.forwardRef<HTMLSpanElement, {children: string}>((props, ref) => {
+    return (
+      <span data-slate-string ref={ref}>
+        {props.children}
+      </span>
+    )
+  }),
+)
+
+const LegacyZeroWidthString = (props: {
+  length?: number
+  isLineBreak?: boolean
+  isMarkPlaceholder?: boolean
+}) => {
+  const {length = 0, isLineBreak = false, isMarkPlaceholder = false} = props
+
+  const attributes: {
+    'data-slate-zero-width': string
+    'data-slate-length': number
+    'data-slate-mark-placeholder'?: boolean
+  } = {
+    'data-slate-zero-width': isLineBreak ? 'n' : 'z',
+    'data-slate-length': length,
+  }
+
+  if (isMarkPlaceholder) {
+    attributes['data-slate-mark-placeholder'] = true
+  }
+
+  return (
+    <span {...attributes}>
+      {!IS_ANDROID || !isLineBreak ? '\uFEFF' : null}
+      {isLineBreak ? <br /> : null}
+    </span>
+  )
+}
