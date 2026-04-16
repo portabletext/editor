@@ -55,8 +55,10 @@ const ObjectNodeComponent = (props: {
     }
   }
 
+  const Tag = isInline ? 'span' : 'div'
+
   const children = (
-    <span
+    <Tag
       data-slate-spacer
       style={{
         height: '0',
@@ -72,7 +74,7 @@ const ObjectNodeComponent = (props: {
           </span>
         </span>
       </span>
-    </span>
+    </Tag>
   )
 
   return renderElement({
