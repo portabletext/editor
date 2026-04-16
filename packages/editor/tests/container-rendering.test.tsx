@@ -1098,7 +1098,7 @@ describe('gallery with void block objects', () => {
           ' data-block-type="object"',
           '>',
           // void spacer
-          '<span data-slate-spacer="true"',
+          '<div data-slate-spacer="true"',
           ' style="height: 0px; color: transparent; outline: none; position: absolute;"',
           '>',
           '<span data-slate-node="text">',
@@ -1106,7 +1106,7 @@ describe('gallery with void block objects', () => {
           '<span data-slate-zero-width="z" data-slate-length="0">\uFEFF</span>',
           '</span>',
           '</span>',
-          '</span>',
+          '</div>',
           // void content
           '<div contenteditable="false" draggable="true">',
           '<div>[image: img-0]</div>',
@@ -1122,7 +1122,7 @@ describe('gallery with void block objects', () => {
           ' data-block-type="object"',
           '>',
           // void spacer
-          '<span data-slate-spacer="true"',
+          '<div data-slate-spacer="true"',
           ' style="height: 0px; color: transparent; outline: none; position: absolute;"',
           '>',
           '<span data-slate-node="text">',
@@ -1130,7 +1130,7 @@ describe('gallery with void block objects', () => {
           '<span data-slate-zero-width="z" data-slate-length="0">\uFEFF</span>',
           '</span>',
           '</span>',
-          '</span>',
+          '</div>',
           // void content
           '<div contenteditable="false" draggable="true">',
           '<div>[image: img-1]</div>',
@@ -1340,7 +1340,7 @@ describe('cell with mixed content', () => {
           ' data-block-type="object"',
           '>',
           // void spacer
-          '<span data-slate-spacer="true"',
+          '<div data-slate-spacer="true"',
           ' style="height: 0px; color: transparent; outline: none; position: absolute;"',
           '>',
           '<span data-slate-node="text">',
@@ -1348,7 +1348,7 @@ describe('cell with mixed content', () => {
           '<span data-slate-zero-width="z" data-slate-length="0">\uFEFF</span>',
           '</span>',
           '</span>',
-          '</span>',
+          '</div>',
           // void content
           '<div contenteditable="false" draggable="true">',
           '<div>[image: img-0]</div>',
