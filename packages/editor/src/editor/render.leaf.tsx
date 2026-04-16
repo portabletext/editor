@@ -1,6 +1,5 @@
 import type {PortableTextSpan} from '@portabletext/schema'
-import {useSelector} from '@xstate/react'
-import {useContext, type CSSProperties} from 'react'
+import type {CSSProperties} from 'react'
 import type {RenderLeafProps} from '../slate/react/components/editable'
 import type {
   RangeDecoration,
@@ -9,7 +8,7 @@ import type {
   RenderDecoratorFunction,
   RenderPlaceholderFunction,
 } from '../types/editor'
-import {EditorActorContext} from './editor-actor-context'
+import type {EditorSchema} from './editor-schema'
 import {RenderSpan} from './render.span'
 
 const PLACEHOLDER_STYLE: CSSProperties = {
@@ -31,10 +30,10 @@ export function RenderLeaf(
     renderChild?: RenderChildFunction
     renderDecorator?: RenderDecoratorFunction
     renderPlaceholder?: RenderPlaceholderFunction
+    schema: EditorSchema
   },
 ) {
-  const editorActor = useContext(EditorActorContext)
-  const schema = useSelector(editorActor, (s) => s.context.schema)
+  const schema = props.schema
 
   if (props.leaf._type !== schema.span.name) {
     return props.children
