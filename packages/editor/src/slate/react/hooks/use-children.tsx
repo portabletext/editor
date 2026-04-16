@@ -9,6 +9,11 @@ import {
   ContainerScopeContext,
   useContainerScope,
 } from '../../../editor/container-scope-context'
+import ContainerTextComponent from '../../../editor/render.container-text'
+import {
+  buildScopedName,
+  findByScope,
+} from '../../../editor/scoped-config-lookup'
 import {
   isElementDecorationsEqual,
   splitDecorationsByChild,
@@ -75,10 +80,14 @@ const useChildren = (props: {
     children = node.children
   } else if (isTextBlock({schema: editor.schema}, node)) {
     children = node.children
+
+    const textBlockScopedKey = buildScopedName(containerScope, 'block')
+
+    if (findByScope(editor.containers, textBlockScopedKey)) {
+      childScope = textBlockScopedKey
+    }
   } else if (isObjectNode({schema: editor.schema}, node)) {
-    const scopedKey = containerScope
-      ? `${containerScope}.${node._type}`
-      : node._type
+    const scopedKey = buildScopedName(containerScope, node._type)
 
     const containerField = editor.containers.get(scopedKey)
 
@@ -142,6 +151,20 @@ const useChildren = (props: {
         ? [{_key: node._key}]
         : [...parentPath, 'children', {_key: node._key}]
 
+    if (childScope) {
+      return (
+        <ContainerTextComponent
+          decorations={decorationsByChild[index] ?? []}
+          key={node._key}
+          isLast={index === children.length - 1}
+          parent={textBlockParent}
+          path={nodePath}
+          renderPlaceholder={renderPlaceholder}
+          text={node}
+        />
+      )
+    }
+
     return (
       <TextComponent
         decorations={decorationsByChild[index] ?? []}
@@ -166,6 +189,23 @@ const useChildren = (props: {
         ? [{_key: node._key}]
         : [...parentPath, childFieldName, {_key: node._key}]
 
+    if (childScope) {
+      return (
+        <ElementContext key={`provider-${node._key}`} value={node}>
+          <ElementComponent
+            decorations={decorationsByChild[index] ?? []}
+            element={node}
+            key={node._key}
+            path={nodePath}
+            renderElement={renderElement}
+            renderPlaceholder={renderPlaceholder}
+            renderLeaf={renderLeaf}
+            renderText={renderText}
+          />
+        </ElementContext>
+      )
+    }
+
     return (
       <ObjectNodeComponent
         decorations={decorationsByChild[index] ?? []}
@@ -189,6 +229,17 @@ const useChildren = (props: {
     if (isObjectNode({schema: editor.schema}, n)) {
       const scopedName = childScope ? `${childScope}.${n._type}` : n._type
       if (editor.containers.has(scopedName)) {
+        return renderElementComponent(n, i)
+      }
+      // When a matching leaf config exists, render through the element
+      // pipeline so we own the DOM (instead of the default void wrapper).
+      const isInlineObject = textBlockParent !== undefined
+      const leafScope = isInlineObject
+        ? childScope
+          ? `${childScope}.block.${n._type}`
+          : `block.${n._type}`
+        : scopedName
+      if (findByScope(editor.leafConfigs, leafScope)) {
         return renderElementComponent(n, i)
       }
       return renderObjectNodeComponent(n, i)

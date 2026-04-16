@@ -45,6 +45,7 @@ import {EditorActorContext} from './editor-actor-context'
 import {performHotkey} from './perform-hotkey'
 import {rangeDecorationsMachine} from './range-decorations-machine'
 import {RelayActorContext} from './relay-actor-context'
+import {RenderMarkContext} from './render-mark-context'
 import {RenderElement} from './render.element'
 import {RenderLeaf} from './render.leaf'
 import {RenderText, type RenderTextProps} from './render.text'
@@ -235,6 +236,11 @@ export const PortableTextEditable = forwardRef<
   const renderText = useCallback(
     (props: RenderTextProps) => <RenderText {...props} />,
     [],
+  )
+
+  const renderMarkContextValue = useMemo(
+    () => ({renderDecorator, renderAnnotation, renderPlaceholder}),
+    [renderDecorator, renderAnnotation, renderPlaceholder],
   )
 
   const restoreSelectionFromProps = useCallback(() => {
@@ -973,41 +979,43 @@ export const PortableTextEditable = forwardRef<
   }
 
   return hasInvalidValue ? null : (
-    <SelectionStateProvider>
-      <SlateEditable
-        {...restProps}
-        ref={callbackRef}
-        editorActor={editorActor}
-        data-read-only={readOnly}
-        autoFocus={false}
-        className={restProps.className || 'pt-editable'}
-        decorate={decorate}
-        onBlur={handleOnBlur}
-        onCopy={handleCopy}
-        onCut={handleCut}
-        onClick={handleClick}
-        onDOMBeforeInput={handleOnBeforeInput}
-        onDragStart={handleDragStart}
-        onDrag={handleDrag}
-        onDragEnd={handleDragEnd}
-        onDragEnter={handleDragEnter}
-        onDragOver={handleDragOver}
-        onDrop={handleDrop}
-        onDragLeave={handleDragLeave}
-        onFocus={handleOnFocus}
-        onKeyDown={handleKeyDown}
-        onKeyUp={handleKeyUp}
-        onPaste={handlePaste}
-        readOnly={readOnly}
-        // We have implemented our own placeholder logic with decorations.
-        // This 'renderPlaceholder' should not be used.
-        renderPlaceholder={undefined}
-        renderElement={renderElement}
-        renderLeaf={renderLeaf}
-        renderText={renderText}
-        scrollSelectionIntoView={scrollSelectionIntoViewToSlate}
-      />
-    </SelectionStateProvider>
+    <RenderMarkContext.Provider value={renderMarkContextValue}>
+      <SelectionStateProvider>
+        <SlateEditable
+          {...restProps}
+          ref={callbackRef}
+          editorActor={editorActor}
+          data-read-only={readOnly}
+          autoFocus={false}
+          className={restProps.className || 'pt-editable'}
+          decorate={decorate}
+          onBlur={handleOnBlur}
+          onCopy={handleCopy}
+          onCut={handleCut}
+          onClick={handleClick}
+          onDOMBeforeInput={handleOnBeforeInput}
+          onDragStart={handleDragStart}
+          onDrag={handleDrag}
+          onDragEnd={handleDragEnd}
+          onDragEnter={handleDragEnter}
+          onDragOver={handleDragOver}
+          onDrop={handleDrop}
+          onDragLeave={handleDragLeave}
+          onFocus={handleOnFocus}
+          onKeyDown={handleKeyDown}
+          onKeyUp={handleKeyUp}
+          onPaste={handlePaste}
+          readOnly={readOnly}
+          // We have implemented our own placeholder logic with decorations.
+          // This 'renderPlaceholder' should not be used.
+          renderPlaceholder={undefined}
+          renderElement={renderElement}
+          renderLeaf={renderLeaf}
+          renderText={renderText}
+          scrollSelectionIntoView={scrollSelectionIntoViewToSlate}
+        />
+      </SelectionStateProvider>
+    </RenderMarkContext.Provider>
   )
 })
 

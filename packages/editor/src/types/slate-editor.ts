@@ -2,6 +2,7 @@ import type {Patch} from '@portabletext/patches'
 import type {PortableTextBlock} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
 import type {DecoratedRange} from '../editor/range-decorations-machine'
+import type {LeafConfig} from '../renderers/renderer.types'
 import type {Containers} from '../schema/resolve-containers'
 import type {Operation as SlateOperation} from '../slate/interfaces/operation'
 import type {ReactEditor} from '../slate/react/plugin/react-editor'
@@ -30,6 +31,7 @@ export interface PortableTextSlateEditor extends ReactEditor {
   schema: EditorSchema
   keyGenerator: () => string
   containers: Containers
+  leafConfigs: Map<string, LeafConfig>
 
   decoratedRanges: Array<DecoratedRange>
   decoratorState: Record<string, boolean | undefined>

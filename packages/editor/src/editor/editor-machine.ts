@@ -19,7 +19,7 @@ import type {Converter} from '../converters/converter.types'
 import {debug} from '../internal-utils/debug'
 import type {EventPosition} from '../internal-utils/event-position'
 import {sortByPriority} from '../priority/priority.sort'
-import type {ContainerConfig} from '../renderers/renderer.types'
+import type {ContainerConfig, LeafConfig} from '../renderers/renderer.types'
 import {resolveContainers} from '../schema/resolve-containers'
 import {normalize} from '../slate/editor/normalize'
 import {ReactEditor} from '../slate/react/plugin/react-editor'
@@ -123,6 +123,14 @@ type InternalEditorEvent =
       type: 'unregister container'
       containerConfig: ContainerConfig
     }
+  | {
+      type: 'register leaf'
+      leafConfig: LeafConfig
+    }
+  | {
+      type: 'unregister leaf'
+      leafConfig: LeafConfig
+    }
   | {type: 'add slate editor'; editor: PortableTextSlateEditor}
 
 /**
@@ -189,6 +197,16 @@ function syncContainers(context: {
   }
 }
 
+function syncLeafConfigs(context: {
+  leafConfigs: Map<string, LeafConfig>
+  slateEditor?: PortableTextSlateEditor
+}) {
+  if (context.slateEditor) {
+    context.slateEditor.leafConfigs = context.leafConfigs
+    context.slateEditor.onChange()
+  }
+}
+
 /**
  * @internal
  */
@@ -200,6 +218,7 @@ export const editorMachine = setup({
       containerConfigs: Map<string, ContainerConfig>
       converters: Set<Converter>
       keyGenerator: () => string
+      leafConfigs: Map<string, LeafConfig>
       pendingEvents: Array<InternalPatchEvent | MutationEvent>
       pendingIncomingPatchesEvents: Array<PatchesEvent>
       schema: EditorSchema
@@ -267,8 +286,27 @@ export const editorMachine = setup({
         return containerConfigs
       },
     }),
+    'register leaf': assign({
+      leafConfigs: ({context, event}) => {
+        assertEvent(event, 'register leaf')
+        const leafConfigs = new Map(context.leafConfigs)
+        leafConfigs.set(event.leafConfig.leaf.scope, event.leafConfig)
+        return leafConfigs
+      },
+    }),
+    'unregister leaf': assign({
+      leafConfigs: ({context, event}) => {
+        assertEvent(event, 'unregister leaf')
+        const leafConfigs = new Map(context.leafConfigs)
+        leafConfigs.delete(event.leafConfig.leaf.scope)
+        return leafConfigs
+      },
+    }),
     'sync containers': ({context}) => {
       syncContainers(context)
+    },
+    'sync leaf configs': ({context}) => {
+      syncLeafConfigs(context)
     },
     'emit patch event': emit(({event}) => {
       assertEvent(event, 'internal.patch')
@@ -448,6 +486,7 @@ export const editorMachine = setup({
     containerConfigs: new Map(),
     converters: new Set(input.converters ?? []),
     keyGenerator: input.keyGenerator,
+    leafConfigs: new Map(),
     pendingEvents: [],
     pendingIncomingPatchesEvents: [],
     schema: input.schema,
@@ -459,13 +498,23 @@ export const editorMachine = setup({
     'add behavior': {actions: 'add behavior to context'},
     'remove behavior': {actions: 'remove behavior from context'},
     'add slate editor': {
-      actions: ['add slate editor to context', 'sync containers'],
+      actions: [
+        'add slate editor to context',
+        'sync containers',
+        'sync leaf configs',
+      ],
     },
     'register container': {
       actions: ['register container', 'sync containers'],
     },
     'unregister container': {
       actions: ['unregister container', 'sync containers'],
+    },
+    'register leaf': {
+      actions: ['register leaf', 'sync leaf configs'],
+    },
+    'unregister leaf': {
+      actions: ['unregister leaf', 'sync leaf configs'],
     },
     'update selection': {
       actions: [

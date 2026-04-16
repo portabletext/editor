@@ -21,8 +21,10 @@ import {EditorActorContext} from './editor-actor-context'
 import type {EditorSchema} from './editor-schema'
 import {RenderBlockObject} from './render.block-object'
 import {RenderContainer} from './render.container'
+import {RenderContainerChild} from './render.container-child'
 import {RenderInlineObject} from './render.inline-object'
 import {RenderTextBlock} from './render.text-block'
+import {buildScopedName, findByScope} from './scoped-config-lookup'
 
 export function RenderElement(props: {
   attributes: RenderElementProps['attributes']
@@ -43,21 +45,19 @@ export function RenderElement(props: {
   const slateStatic = useSlateStatic()
   const schema = props.schema
 
-  const scopedTypeName = containerScope
-    ? `${containerScope}.${props.element._type}`
-    : props.element._type
+  const scopedTypeName = buildScopedName(containerScope, props.element._type)
+  const isInlineObject = isInline(slateStatic, props.path)
+  const leafScopedName = isInlineObject
+    ? buildScopedName(containerScope, `block.${props.element._type}`)
+    : scopedTypeName
 
-  const containerConfig = useSelector(editorActor, (s) => {
-    const configs = s.context.containerConfigs
-    const exact = configs.get(scopedTypeName)
-    if (exact) {
-      return exact
-    }
-    const bareType = scopedTypeName.includes('.')
-      ? scopedTypeName.split('.').pop()!
-      : undefined
-    return bareType ? configs.get(bareType) : undefined
-  })
+  const containerConfig = useSelector(editorActor, (s) =>
+    findByScope(s.context.containerConfigs, scopedTypeName),
+  )
+
+  const leafConfig = useSelector(editorActor, (s) =>
+    findByScope(s.context.leafConfigs, leafScopedName),
+  )
 
   if (containerConfig) {
     return (
@@ -65,9 +65,22 @@ export function RenderElement(props: {
         attributes={props.attributes}
         element={props.element}
         containerConfig={containerConfig}
+        path={props.path}
       >
         {props.children}
       </RenderContainer>
+    )
+  }
+
+  if (containerScope) {
+    return (
+      <RenderContainerChild
+        attributes={props.attributes}
+        element={props.element}
+        path={props.path}
+      >
+        {props.children}
+      </RenderContainerChild>
     )
   }
 
@@ -81,6 +94,7 @@ export function RenderElement(props: {
             : undefined
         }
         element={props.element}
+        path={props.path}
         readOnly={props.readOnly}
         renderBlock={props.renderBlock}
         renderListItem={props.renderListItem}
@@ -94,7 +108,19 @@ export function RenderElement(props: {
     )
   }
 
-  if (isInline(slateStatic, props.path)) {
+  if (leafConfig) {
+    return (
+      <RenderContainerChild
+        attributes={props.attributes}
+        element={props.element}
+        path={props.path}
+      >
+        {props.children}
+      </RenderContainerChild>
+    )
+  }
+
+  if (isInlineObject) {
     return (
       <RenderInlineObject
         attributes={props.attributes}
@@ -119,6 +145,7 @@ export function RenderElement(props: {
           : undefined
       }
       element={props.element}
+      path={props.path}
       readOnly={props.readOnly}
       renderBlock={props.renderBlock}
       schema={schema}

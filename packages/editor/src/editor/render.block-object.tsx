@@ -1,6 +1,8 @@
 import type {PortableTextObject} from '@portabletext/schema'
 import {useContext, useRef, type ReactElement} from 'react'
 import type {DropPosition} from '../behaviors/behavior.core.drop-position'
+import {serializePath} from '../paths/serialize-path'
+import type {Path} from '../slate/interfaces/path'
 import type {RenderElementProps} from '../slate/react/components/editable'
 import type {BlockRenderProps, RenderBlockFunction} from '../types/editor'
 import type {EditorSchema} from './editor-schema'
@@ -14,15 +16,17 @@ export function RenderBlockObject(props: {
   dropPosition?: DropPosition['positionBlock']
   children: ReactElement
   element: PortableTextObject
+  path: Path
   readOnly: boolean
   renderBlock?: RenderBlockFunction
   schema: EditorSchema
 }) {
   const blockObjectRef = useRef<HTMLDivElement>(null)
 
-  const {selectedBlockKeys, focusedBlockKey} = useContext(SelectionStateContext)
-  const selected = selectedBlockKeys.has(props.element._key)
-  const focused = focusedBlockKey === props.element._key
+  const serializedPath = serializePath(props.path)
+  const {selectedLeafPaths, focusedLeafPath} = useContext(SelectionStateContext)
+  const selected = selectedLeafPaths.has(serializedPath)
+  const focused = focusedLeafPath === serializedPath
 
   const blockObjectSchemaType = props.schema.blockObjects.find(
     (schemaType) => schemaType.name === props.element._type,
