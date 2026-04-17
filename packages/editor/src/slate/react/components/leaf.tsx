@@ -3,47 +3,12 @@ import type {
   PortableTextSpan,
   PortableTextTextBlock,
 } from '@portabletext/schema'
-import React, {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  type JSX,
-  type MutableRefObject,
-} from 'react'
-import {IS_ANDROID, IS_WEBKIT} from '../../dom/utils/environment'
-import {PLACEHOLDER_SYMBOL} from '../../dom/utils/symbols'
+import React, {type JSX} from 'react'
 import type {Path} from '../../interfaces/path'
 import type {LeafPosition} from '../../interfaces/text'
 import {textEquals} from '../../text/text-equals'
-import {useSlateStatic} from '../hooks/use-slate-static'
-import type {RenderLeafProps, RenderPlaceholderProps} from './editable'
+import type {RenderLeafProps} from './editable'
 import SlateString from './string'
-
-// Delay the placeholder on Android to prevent the keyboard from closing.
-// (https://github.com/ianstormtaylor/slate/pull/5368)
-const PLACEHOLDER_DELAY = IS_ANDROID ? 300 : 0
-
-function disconnectPlaceholderResizeObserver(
-  placeholderResizeObserver: MutableRefObject<ResizeObserver | null>,
-  releaseObserver: boolean,
-) {
-  if (placeholderResizeObserver.current) {
-    placeholderResizeObserver.current.disconnect()
-    if (releaseObserver) {
-      placeholderResizeObserver.current = null
-    }
-  }
-}
-
-type TimerId = ReturnType<typeof setTimeout> | null
-
-function clearTimeoutRef(timeoutRef: MutableRefObject<TimerId>) {
-  if (timeoutRef.current) {
-    clearTimeout(timeoutRef.current)
-    timeoutRef.current = null
-  }
-}
 
 const defaultRenderLeaf = (props: RenderLeafProps) => <DefaultLeaf {...props} />
 
@@ -55,7 +20,6 @@ const Leaf = (props: {
   leaf: PortableTextSpan
   parent: PortableTextTextBlock | PortableTextObject
   path: Path
-  renderPlaceholder: (props: RenderPlaceholderProps) => JSX.Element
   renderLeaf?: (props: RenderLeafProps) => JSX.Element
   text: PortableTextSpan
   leafPosition?: LeafPosition
@@ -66,43 +30,11 @@ const Leaf = (props: {
     text,
     path,
     parent,
-    renderPlaceholder,
     renderLeaf = defaultRenderLeaf,
     leafPosition,
   } = props
 
-  const editor = useSlateStatic()
-  const placeholderResizeObserver = useRef<ResizeObserver | null>(null)
-  const placeholderRef = useRef<HTMLElement | null>(null)
-  const [showPlaceholder, setShowPlaceholder] = useState(false)
-  const showPlaceholderTimeoutRef = useRef<TimerId>(null)
-
-  const callbackPlaceholderRef = useCallback(
-    (placeholderEl: HTMLElement | null) => {
-      disconnectPlaceholderResizeObserver(
-        placeholderResizeObserver,
-        placeholderEl == null,
-      )
-
-      if (placeholderEl == null) {
-        editor.domPlaceholderElement = null
-        ;(leaf as any).onPlaceholderResize?.(null)
-      } else {
-        editor.domPlaceholderElement = placeholderEl
-
-        if (!placeholderResizeObserver.current) {
-          placeholderResizeObserver.current = new ResizeObserver(() => {
-            ;(leaf as any).onPlaceholderResize?.(placeholderEl)
-          })
-        }
-        placeholderResizeObserver.current.observe(placeholderEl)
-        placeholderRef.current = placeholderEl
-      }
-    },
-    [placeholderRef, leaf, editor],
-  )
-
-  let children = (
+  const children = (
     <SlateString
       isLast={isLast}
       leaf={leaf}
@@ -111,54 +43,6 @@ const Leaf = (props: {
       text={text}
     />
   )
-
-  const leafIsPlaceholder = Boolean((leaf as any)[PLACEHOLDER_SYMBOL])
-  useEffect(() => {
-    if (leafIsPlaceholder) {
-      if (!showPlaceholderTimeoutRef.current) {
-        // Delay the placeholder, so it will not render in a selection
-        showPlaceholderTimeoutRef.current = setTimeout(() => {
-          setShowPlaceholder(true)
-          showPlaceholderTimeoutRef.current = null
-        }, PLACEHOLDER_DELAY)
-      }
-    } else {
-      clearTimeoutRef(showPlaceholderTimeoutRef)
-      setShowPlaceholder(false)
-    }
-    return () => clearTimeoutRef(showPlaceholderTimeoutRef)
-  }, [leafIsPlaceholder, setShowPlaceholder])
-
-  if (leafIsPlaceholder && showPlaceholder) {
-    const placeholderProps: RenderPlaceholderProps = {
-      children: (leaf as any).placeholder,
-      attributes: {
-        'data-slate-placeholder': true,
-        'style': {
-          position: 'absolute',
-          top: 0,
-          pointerEvents: 'none',
-          width: '100%',
-          maxWidth: '100%',
-          display: 'block',
-          opacity: '0.333',
-          userSelect: 'none',
-          textDecoration: 'none',
-          // Fixes https://github.com/udecode/plate/issues/2315
-          WebkitUserModify: IS_WEBKIT ? 'inherit' : undefined,
-        },
-        'contentEditable': false,
-        'ref': callbackPlaceholderRef,
-      },
-    }
-
-    children = (
-      <React.Fragment>
-        {children}
-        {renderPlaceholder(placeholderProps)}
-      </React.Fragment>
-    )
-  }
 
   // COMPAT: Having the `data-` attributes on these leaf elements ensures that
   // in certain misbehaving browsers they aren't weirdly cloned/destroyed by
@@ -184,11 +68,8 @@ const MemoizedLeaf = React.memo(Leaf, (prev, next) => {
     next.parent === prev.parent &&
     next.isLast === prev.isLast &&
     next.renderLeaf === prev.renderLeaf &&
-    next.renderPlaceholder === prev.renderPlaceholder &&
     next.text === prev.text &&
-    textEquals(next.leaf, prev.leaf) &&
-    (next.leaf as any)[PLACEHOLDER_SYMBOL] ===
-      (prev.leaf as any)[PLACEHOLDER_SYMBOL]
+    textEquals(next.leaf, prev.leaf)
   )
 })
 

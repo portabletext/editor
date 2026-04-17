@@ -21,8 +21,6 @@ export const withDOM = <T extends Editor>(editor: T): T & DOMEditor => {
   e.isNodeMapDirty = false
   e.domWindow = null
   e.domElement = null
-  e.domPlaceholder = ''
-  e.domPlaceholderElement = null
 
   e.readOnly = false
   e.focused = false

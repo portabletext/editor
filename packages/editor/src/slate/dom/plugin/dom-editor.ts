@@ -62,8 +62,6 @@ export interface DOMEditor extends BaseEditor {
   isNodeMapDirty: boolean
   domWindow: Window | null
   domElement: HTMLElement | null
-  domPlaceholder: string
-  domPlaceholderElement: HTMLElement | null
 
   readOnly: boolean
   focused: boolean

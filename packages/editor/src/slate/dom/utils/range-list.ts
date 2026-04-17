@@ -9,7 +9,6 @@ import type {DecoratedRange} from '../../interfaces/text'
 import {rangeEdges} from '../../range/range-edges'
 import {rangeEquals} from '../../range/range-equals'
 import {rangeIntersection} from '../../range/range-intersection'
-import {PLACEHOLDER_SYMBOL} from './symbols'
 
 const shallowCompare = (
   obj1: {[key: string]: unknown},
@@ -24,10 +23,7 @@ const isDecorationFlagsEqual = (range: Range, other: Range) => {
   const {anchor: _rangeAnchor, focus: _rangeFocus, ...rangeOwnProps} = range
   const {anchor: _otherAnchor, focus: _otherFocus, ...otherOwnProps} = other
 
-  return (
-    (range as any)[PLACEHOLDER_SYMBOL] === (other as any)[PLACEHOLDER_SYMBOL] &&
-    shallowCompare(rangeOwnProps, otherOwnProps)
-  )
+  return shallowCompare(rangeOwnProps, otherOwnProps)
 }
 
 /**

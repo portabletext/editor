@@ -999,9 +999,6 @@ export const PortableTextEditable = forwardRef<
         onKeyUp={handleKeyUp}
         onPaste={handlePaste}
         readOnly={readOnly}
-        // We have implemented our own placeholder logic with decorations.
-        // This 'renderPlaceholder' should not be used.
-        renderPlaceholder={undefined}
         renderElement={renderElement}
         renderLeaf={renderLeaf}
         renderText={renderText}
