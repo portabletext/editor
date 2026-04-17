@@ -169,6 +169,27 @@ export function isEqualMarks(
   return true
 }
 
+export function isEqualMarkSet(
+  a: Array<string> | undefined,
+  b: Array<string> | undefined,
+): boolean {
+  if (!a || !b) {
+    return a === b
+  }
+
+  if (a.length !== b.length) {
+    return false
+  }
+
+  for (const mark of a) {
+    if (!b.includes(mark)) {
+      return false
+    }
+  }
+
+  return true
+}
+
 function isEqualSpans(a: ChildLike, b: ChildLike): boolean {
   if (
     a._key !== b._key ||

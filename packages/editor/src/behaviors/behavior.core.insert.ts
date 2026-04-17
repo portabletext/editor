@@ -1,8 +1,11 @@
+import {isSpan} from '@portabletext/schema'
+import {isEqualMarkSet} from '../internal-utils/equality'
 import {getActiveAnnotationsMarks} from '../selectors/selector.get-active-annotation-marks'
 import {getActiveDecorators} from '../selectors/selector.get-active-decorators'
 import {getFocusSpan} from '../selectors/selector.get-focus-span'
 import {getMarkState} from '../selectors/selector.get-mark-state'
 import {getPathSubSchema} from '../traversal/get-path-sub-schema'
+import {getSibling} from '../traversal/get-sibling'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
@@ -36,19 +39,57 @@ export const coreInsertBehaviors = [
         }
       }
 
-      return {activeDecorators, activeAnnotations}
+      const activeMarks = [...activeDecorators, ...activeAnnotations]
+
+      if (isEqualMarkSet(focusSpan.node.marks ?? [], activeMarks)) {
+        return false
+      }
+
+      const atEndOfFocusSpan =
+        snapshot.context.selection?.focus.offset === focusSpan.node.text.length
+
+      const nextSibling = atEndOfFocusSpan
+        ? getSibling(snapshot, focusSpan.path, {direction: 'next'})
+        : undefined
+      const nextSpan =
+        nextSibling && isSpan(snapshot.context, nextSibling.node)
+          ? {node: nextSibling.node, path: nextSibling.path}
+          : undefined
+
+      return {activeMarks, nextSpan}
     },
     actions: [
-      ({snapshot, event}, {activeDecorators, activeAnnotations}) => [
-        raise({
-          type: 'insert.child',
-          child: {
-            _type: snapshot.context.schema.span.name,
-            text: event.text,
-            marks: [...activeDecorators, ...activeAnnotations],
-          },
-        }),
-      ],
+      ({snapshot, event}, {activeMarks, nextSpan}) => {
+        if (nextSpan && isEqualMarkSet(nextSpan.node.marks, activeMarks)) {
+          return [
+            raise({
+              type: 'select',
+              at: {
+                anchor: {
+                  path: nextSpan.path,
+                  offset: 0,
+                },
+                focus: {
+                  path: nextSpan.path,
+                  offset: 0,
+                },
+              },
+            }),
+            raise(event),
+          ]
+        }
+
+        return [
+          raise({
+            type: 'insert.child',
+            child: {
+              _type: snapshot.context.schema.span.name,
+              text: event.text,
+              marks: activeMarks,
+            },
+          }),
+        ]
+      },
     ],
   }),
 ]
