@@ -207,8 +207,10 @@ describe('defineLeaf integration', () => {
               {
                 leaf: defineLeaf({
                   scope: 'block.stock-ticker',
-                  render: ({children}) => (
-                    <span className="custom-ticker">{children}</span>
+                  render: ({attributes, children}) => (
+                    <span {...attributes} className="custom-ticker">
+                      {children}
+                    </span>
                   ),
                 }),
               },
@@ -228,7 +230,7 @@ describe('defineLeaf integration', () => {
               '        <span data-slate-string="true">pre </span>',
               '      </span>',
               '    </span>',
-              '    <span data-slate-node="element" data-slate-void="true" data-pt-path="[_key==&quot;b0&quot;].children[_key==&quot;i0&quot;]" data-slate-inline="true" contenteditable="false" class="pt-inline-object" data-child-key="i0" data-child-name="stock-ticker" data-child-type="object">',
+              '    <span data-slate-node="element" data-slate-void="true" data-pt-path="[_key==&quot;b0&quot;].children[_key==&quot;i0&quot;]" data-slate-inline="true" contenteditable="false" class="custom-ticker" data-child-key="i0" data-child-name="stock-ticker" data-child-type="object">',
               '      <span data-slate-spacer="true" style="height: 0px; color: transparent; outline: none; position: absolute;">',
               '        <span data-slate-node="text">',
               '          <span data-slate-leaf="true">',
@@ -237,9 +239,7 @@ describe('defineLeaf integration', () => {
               '        </span>',
               '      </span>',
               '      <span draggable="true" style="display: inline-block;">',
-              '        <span class="custom-ticker">',
-              '          <span>[stock-ticker: i0]</span>',
-              '        </span>',
+              '        <span>[stock-ticker: i0]</span>',
               '      </span>',
               '    </span>',
               '    <span data-slate-node="text" data-pt-path="[_key==&quot;b0&quot;].children[_key==&quot;s1&quot;]" data-child-key="s1" data-child-name="span" data-child-type="span">',
@@ -279,8 +279,8 @@ describe('defineLeaf integration', () => {
               {
                 leaf: defineLeaf({
                   scope: 'block.stock-ticker',
-                  render: ({children}) => (
-                    <span className="custom-ticker">{children}</span>
+                  render: ({attributes, children}) => (
+                    <span {...attributes}>{children}</span>
                   ),
                 }),
               },
@@ -309,9 +309,7 @@ describe('defineLeaf integration', () => {
               '        </span>',
               '      </span>',
               '      <span draggable="true" style="display: inline-block;">',
-              '        <span class="custom-ticker">',
-              '          <span>[stock-ticker: i0]</span>',
-              '        </span>',
+              '        <span>[stock-ticker: i0]</span>',
               '      </span>',
               '    </span>',
               '    <span data-slate-node="text" data-pt-path="[_key==&quot;b0&quot;].children[_key==&quot;s1&quot;]" data-child-key="s1" data-child-name="span" data-child-type="span">',
@@ -341,8 +339,10 @@ describe('defineLeaf integration', () => {
               {
                 leaf: defineLeaf({
                   scope: 'image',
-                  render: ({children}) => (
-                    <div className="custom-image">{children}</div>
+                  render: ({attributes, children}) => (
+                    <div {...attributes} className="custom-image">
+                      {children}
+                    </div>
                   ),
                 }),
               },
@@ -355,7 +355,7 @@ describe('defineLeaf integration', () => {
         expect(formatHTML(getEditorInnerHTML())).toEqual(
           formatHTML(
             [
-              '<div data-slate-node="element" data-slate-void="true" data-pt-path="[_key==&quot;b0&quot;]" class="pt-block pt-object-block" data-block-key="b0" data-block-name="image" data-block-type="object">',
+              '<div data-slate-node="element" data-slate-void="true" data-pt-path="[_key==&quot;b0&quot;]" class="custom-image" data-block-key="b0" data-block-name="image" data-block-type="object">',
               '  <div data-slate-spacer="true" style="height: 0px; color: transparent; outline: none; position: absolute;">',
               '    <span data-slate-node="text">',
               '      <span data-slate-leaf="true">',
@@ -364,9 +364,7 @@ describe('defineLeaf integration', () => {
               '    </span>',
               '  </div>',
               '  <div contenteditable="false" draggable="true">',
-              '    <div class="custom-image">',
-              '      <div>[image: b0]</div>',
-              '    </div>',
+              '    <div>[image: b0]</div>',
               '  </div>',
               '</div>',
             ].join('\n'),
@@ -387,8 +385,8 @@ describe('defineLeaf integration', () => {
               {
                 leaf: defineLeaf({
                   scope: 'image',
-                  render: ({children}) => (
-                    <div className="custom-image">{children}</div>
+                  render: ({attributes, children}) => (
+                    <div {...attributes}>{children}</div>
                   ),
                 }),
               },
@@ -410,9 +408,7 @@ describe('defineLeaf integration', () => {
               '    </span>',
               '  </div>',
               '  <div contenteditable="false" draggable="true">',
-              '    <div class="custom-image">',
-              '      <div>[image: b0]</div>',
-              '    </div>',
+              '    <div>[image: b0]</div>',
               '  </div>',
               '</div>',
             ].join('\n'),
@@ -656,8 +652,10 @@ describe('defineLeaf integration', () => {
               {
                 leaf: defineLeaf({
                   scope: 'image',
-                  render: ({children}) => (
-                    <div className="wins">{children}</div>
+                  render: ({attributes, children}) => (
+                    <div {...attributes} className="wins">
+                      {children}
+                    </div>
                   ),
                 }),
               },
@@ -670,7 +668,7 @@ describe('defineLeaf integration', () => {
         expect(formatHTML(getEditorInnerHTML())).toEqual(
           formatHTML(
             [
-              '<div data-slate-node="element" data-slate-void="true" data-pt-path="[_key==&quot;b0&quot;]" class="pt-block pt-object-block" data-block-key="b0" data-block-name="image" data-block-type="object">',
+              '<div data-slate-node="element" data-slate-void="true" data-pt-path="[_key==&quot;b0&quot;]" class="wins" data-block-key="b0" data-block-name="image" data-block-type="object">',
               '  <div data-slate-spacer="true" style="height: 0px; color: transparent; outline: none; position: absolute;">',
               '    <span data-slate-node="text">',
               '      <span data-slate-leaf="true">',
@@ -679,9 +677,7 @@ describe('defineLeaf integration', () => {
               '    </span>',
               '  </div>',
               '  <div contenteditable="false" draggable="true">',
-              '    <div class="wins">',
-              '      <div>[image: b0]</div>',
-              '    </div>',
+              '    <div>[image: b0]</div>',
               '  </div>',
               '</div>',
             ].join('\n'),

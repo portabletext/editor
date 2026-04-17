@@ -46,19 +46,7 @@ export function RenderBlockObject(props: {
   }
 
   let innerContent: ReactElement
-  if (props.leafConfig) {
-    innerContent = (
-      <RenderLeafConfig
-        leafConfig={props.leafConfig}
-        focused={focused}
-        node={props.element}
-        path={props.path}
-        selected={selected}
-      >
-        <RenderDefaultBlockObject blockObject={blockObject} />
-      </RenderLeafConfig>
-    )
-  } else if (props.renderBlock && blockObjectSchemaType) {
+  if (props.renderBlock && blockObjectSchemaType && !props.leafConfig) {
     innerContent = (
       <RenderBlock
         renderBlock={props.renderBlock}
@@ -76,14 +64,16 @@ export function RenderBlockObject(props: {
     innerContent = <RenderDefaultBlockObject blockObject={blockObject} />
   }
 
-  return (
-    <div
-      {...props.attributes}
-      className="pt-block pt-object-block"
-      data-block-key={props.element._key}
-      data-block-name={props.element._type}
-      data-block-type="object"
-    >
+  const attributes = {
+    ...props.attributes,
+    'className': 'pt-block pt-object-block',
+    'data-block-key': props.element._key,
+    'data-block-name': props.element._type,
+    'data-block-type': 'object',
+  }
+
+  const children = (
+    <>
       {props.dropPosition === 'start' ? <DropIndicator /> : null}
       {props.children}
       <div
@@ -94,35 +84,46 @@ export function RenderBlockObject(props: {
         {innerContent}
       </div>
       {props.dropPosition === 'end' ? <DropIndicator /> : null}
-    </div>
+    </>
   )
+
+  if (props.leafConfig) {
+    return (
+      <RenderLeafConfig
+        leafConfig={props.leafConfig}
+        attributes={attributes}
+        focused={focused}
+        node={props.element}
+        path={props.path}
+        selected={selected}
+      >
+        {children}
+      </RenderLeafConfig>
+    )
+  }
+
+  return <div {...attributes}>{children}</div>
 }
 
-function RenderLeafConfig({
-  leafConfig,
-  children,
-  focused,
-  node,
-  path,
-  selected,
-}: {
+function RenderLeafConfig(props: {
   leafConfig: LeafConfig
+  attributes: Record<string, unknown>
   children: ReactElement
   focused: boolean
   node: PortableTextObject
   path: Path
   selected: boolean
 }) {
-  const rendered = leafConfig.leaf.render({
-    attributes: {},
-    children,
-    focused,
-    node,
-    path,
-    selected,
+  const rendered = props.leafConfig.leaf.render({
+    attributes: props.attributes,
+    children: props.children,
+    focused: props.focused,
+    node: props.node,
+    path: props.path,
+    selected: props.selected,
   })
   if (rendered === null) {
-    return children
+    return <div {...props.attributes}>{props.children}</div>
   }
   return rendered
 }

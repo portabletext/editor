@@ -39,19 +39,7 @@ export function RenderInlineObject(props: {
   const inlineObject = props.element as unknown as PortableTextChild
 
   let innerContent: ReactElement
-  if (props.leafConfig) {
-    innerContent = (
-      <RenderLeafConfig
-        leafConfig={props.leafConfig}
-        focused={focused}
-        node={props.element}
-        path={props.path}
-        selected={selected}
-      >
-        <RenderDefaultInlineObject inlineObject={inlineObject} />
-      </RenderLeafConfig>
-    )
-  } else if (props.renderChild && inlineObjectSchemaType) {
+  if (props.renderChild && inlineObjectSchemaType && !props.leafConfig) {
     innerContent = (
       <RenderChild
         renderChild={props.renderChild}
@@ -70,14 +58,16 @@ export function RenderInlineObject(props: {
     innerContent = <RenderDefaultInlineObject inlineObject={inlineObject} />
   }
 
-  return (
-    <span
-      {...props.attributes}
-      className="pt-inline-object"
-      data-child-key={inlineObject._key}
-      data-child-name={inlineObject._type}
-      data-child-type="object"
-    >
+  const attributes = {
+    ...props.attributes,
+    'className': 'pt-inline-object',
+    'data-child-key': inlineObject._key,
+    'data-child-name': inlineObject._type,
+    'data-child-type': 'object',
+  }
+
+  const children = (
+    <>
       {props.children}
       <span
         ref={inlineObjectRef}
@@ -86,35 +76,46 @@ export function RenderInlineObject(props: {
       >
         {innerContent}
       </span>
-    </span>
+    </>
   )
+
+  if (props.leafConfig) {
+    return (
+      <RenderLeafConfig
+        leafConfig={props.leafConfig}
+        attributes={attributes}
+        focused={focused}
+        node={props.element}
+        path={props.path}
+        selected={selected}
+      >
+        {children}
+      </RenderLeafConfig>
+    )
+  }
+
+  return <span {...attributes}>{children}</span>
 }
 
-function RenderLeafConfig({
-  leafConfig,
-  children,
-  focused,
-  node,
-  path,
-  selected,
-}: {
+function RenderLeafConfig(props: {
   leafConfig: LeafConfig
+  attributes: Record<string, unknown>
   children: ReactElement
   focused: boolean
   node: PortableTextObject
   path: Path
   selected: boolean
 }) {
-  const rendered = leafConfig.leaf.render({
-    attributes: {},
-    children,
-    focused,
-    node,
-    path,
-    selected,
+  const rendered = props.leafConfig.leaf.render({
+    attributes: props.attributes,
+    children: props.children,
+    focused: props.focused,
+    node: props.node,
+    path: props.path,
+    selected: props.selected,
   })
   if (rendered === null) {
-    return children
+    return <span {...props.attributes}>{props.children}</span>
   }
   return rendered
 }
