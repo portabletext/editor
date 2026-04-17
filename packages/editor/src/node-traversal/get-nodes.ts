@@ -26,6 +26,7 @@ export function* getNodes(
     schema: EditorSchema
     containers: Containers
     value: Array<Node>
+    blockIndexMap: Map<string, number>
   },
   options: {
     at?: Path
@@ -39,6 +40,7 @@ export function* getNodes(
   const traversalContext = {
     schema: context.schema,
     containers: context.containers,
+    blockIndexMap: context.blockIndexMap,
   }
   const root = {value: context.value}
 
@@ -102,16 +104,16 @@ function* getNodesSimple(
 }
 
 /**
- * Compare two keyed paths in document order using sibling arrays from
- * getChildren. Returns -1, 0, or 1.
+ * Compare two keyed paths in document order. Returns -1, 0, or 1.
  *
- * Walks the tree to find the first diverging keyed segment, then compares
- * their positions in the sibling array.
+ * Uses `blockIndexMap` for O(1) lookup at the root level. Falls back to
+ * sibling-array lookup for deeper segments.
  */
 function comparePathsInTree(
   context: {
     schema: EditorSchema
     containers: Containers
+    blockIndexMap: Map<string, number>
   },
   root: Node | {value: Array<Node>},
   pathA: Path,
@@ -121,6 +123,7 @@ function comparePathsInTree(
   const keysB = pathB.filter(isKeyedSegment)
 
   let currentPath: Path = []
+  let isRootLevel = true
 
   const minDepth = Math.min(keysA.length, keysB.length)
 
@@ -129,12 +132,31 @@ function comparePathsInTree(
     const keyB = keysB[depth]!
 
     if (keyA._key === keyB._key) {
-      const children = getChildrenInternal(context, root, currentPath)
-      const child = children.find((c) => c.node._key === keyA._key)
-      if (child) {
-        currentPath = child.path
+      if (isRootLevel && context.blockIndexMap.has(keyA._key)) {
+        currentPath = [keyA]
+      } else {
+        const children = getChildrenInternal(context, root, currentPath)
+        const child = children.find((c) => c.node._key === keyA._key)
+        if (child) {
+          currentPath = child.path
+        }
       }
+      isRootLevel = false
       continue
+    }
+
+    if (isRootLevel) {
+      const indexA = context.blockIndexMap.get(keyA._key) ?? -1
+      const indexB = context.blockIndexMap.get(keyB._key) ?? -1
+      if (indexA !== -1 && indexB !== -1) {
+        if (indexA < indexB) {
+          return -1
+        }
+        if (indexA > indexB) {
+          return 1
+        }
+        return 0
+      }
     }
 
     const siblings = getChildrenInternal(context, root, currentPath)
@@ -186,6 +208,7 @@ function* getNodesInRange(
   context: {
     schema: EditorSchema
     containers: Containers
+    blockIndexMap: Map<string, number>
   },
   root: Node | {value: Array<Node>},
   path: Path,
@@ -229,6 +252,7 @@ function isInRange(
   context: {
     schema: EditorSchema
     containers: Containers
+    blockIndexMap: Map<string, number>
   },
   root: Node | {value: Array<Node>},
   nodePath: Path,
@@ -264,6 +288,7 @@ function couldContainInRangeNodes(
   context: {
     schema: EditorSchema
     containers: Containers
+    blockIndexMap: Map<string, number>
   },
   root: Node | {value: Array<Node>},
   nodePath: Path,
@@ -292,6 +317,7 @@ function canStopTraversal(
   context: {
     schema: EditorSchema
     containers: Containers
+    blockIndexMap: Map<string, number>
   },
   root: Node | {value: Array<Node>},
   nodePath: Path,
