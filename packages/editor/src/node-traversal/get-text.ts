@@ -14,6 +14,7 @@ export function getText(
     schema: EditorSchema
     containers: Containers
     value: Array<Node>
+    blockIndexMap: Map<string, number>
   },
   path: Path,
 ): string | undefined {

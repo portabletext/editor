@@ -249,10 +249,17 @@ export function createNodeTraversalTestbed() {
     }),
   )
 
+  const value = [textBlock1, image, textBlock2, codeBlock, table]
+  const blockIndexMap = new Map<string, number>()
+  for (let i = 0; i < value.length; i++) {
+    blockIndexMap.set(value[i]!._key, i)
+  }
+
   const context = {
     schema,
     containers: allContainers,
-    value: [textBlock1, image, textBlock2, codeBlock, table],
+    value,
+    blockIndexMap,
   }
 
   return {
