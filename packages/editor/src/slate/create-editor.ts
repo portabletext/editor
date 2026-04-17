@@ -10,7 +10,7 @@ import type {Editor} from './interfaces/editor'
  * Create a new Slate `Editor` object.
  *
  * The editor is built incrementally — this factory creates the base object with
- * Slate core methods, then withReact/withDOM plugins add ReactEditor and
+ * Slate core methods, then the `withDOM` plugin adds DOMEditor and
  * PortableTextSlateEditor methods. We use `as any` for the self-referencing
  * delegates because the object doesn't satisfy `Editor` until after plugin
  * application. This file gets rewritten in the PT-native fork (Step 3).

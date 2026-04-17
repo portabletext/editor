@@ -16,6 +16,7 @@ import {resolveSelection} from '../internal-utils/apply-selection'
 import {debug} from '../internal-utils/debug'
 import {getEventPosition} from '../internal-utils/event-position'
 import {safeStringify} from '../internal-utils/safe-json'
+import {DOMEditor} from '../slate/dom/plugin/dom-editor'
 import {start} from '../slate/editor/start'
 import {
   Editable as SlateEditable,
@@ -23,7 +24,6 @@ import {
   type RenderLeafProps,
 } from '../slate/react/components/editable'
 import {useSlate} from '../slate/react/hooks/use-slate'
-import {ReactEditor} from '../slate/react/plugin/react-editor'
 import type {
   EditorSelection,
   OnCopyFn,
@@ -297,8 +297,8 @@ export const PortableTextEditable = forwardRef<
 
   // Handle from props onCopy function
   const handleCopy = useCallback(
-    (event: ClipboardEvent<HTMLDivElement>): void | ReactEditor => {
-      if (!ReactEditor.hasSelectableTarget(slateEditor, event.target)) {
+    (event: ClipboardEvent<HTMLDivElement>): void | DOMEditor => {
+      if (!DOMEditor.hasSelectableTarget(slateEditor, event.target)) {
         return
       }
 
@@ -340,7 +340,7 @@ export const PortableTextEditable = forwardRef<
 
   const handleCut = useCallback(
     (event: ClipboardEvent<HTMLDivElement>) => {
-      if (!ReactEditor.hasSelectableTarget(slateEditor, event.target)) {
+      if (!DOMEditor.hasSelectableTarget(slateEditor, event.target)) {
         return
       }
 
@@ -652,13 +652,13 @@ export const PortableTextEditable = forwardRef<
       return noop
     }
     // Translate PortableTextEditor prop fn to Slate plugin fn
-    return (_editor: ReactEditor, domRange: Range) => {
+    return (_editor: DOMEditor, domRange: Range) => {
       scrollSelectionIntoView(portableTextEditor, domRange)
     }
   }, [portableTextEditor, scrollSelectionIntoView])
 
   useEffect(() => {
-    const window = ReactEditor.getWindow(slateEditor)
+    const window = DOMEditor.getWindow(slateEditor)
 
     const onDragEnd = () => {
       editorActor.send({type: 'dragend'})
@@ -678,7 +678,7 @@ export const PortableTextEditable = forwardRef<
 
   const handleDragStart = useCallback(
     (event: React.DragEvent<HTMLDivElement>) => {
-      if (readOnly || !ReactEditor.hasTarget(slateEditor, event.target)) {
+      if (readOnly || !DOMEditor.hasTarget(slateEditor, event.target)) {
         return
       }
 

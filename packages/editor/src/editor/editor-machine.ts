@@ -21,8 +21,8 @@ import type {EventPosition} from '../internal-utils/event-position'
 import {sortByPriority} from '../priority/priority.sort'
 import type {ContainerConfig} from '../renderers/renderer.types'
 import {resolveContainers} from '../schema/resolve-containers'
+import {DOMEditor} from '../slate/dom/plugin/dom-editor'
 import {normalize} from '../slate/editor/normalize'
-import {ReactEditor} from '../slate/react/plugin/react-editor'
 import type {NamespaceEvent, OmitFromUnion} from '../type-utils'
 import type {EditorSelection} from '../types/editor'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
@@ -336,7 +336,7 @@ export const editorMachine = setup({
       assertEvent(event, 'blur')
 
       try {
-        ReactEditor.blur(event.editor)
+        DOMEditor.blur(event.editor)
       } catch (error) {
         console.error(
           new Error(
@@ -356,7 +356,7 @@ export const editorMachine = setup({
       try {
         const currentSelection = slateEditor.selection
 
-        ReactEditor.focus(slateEditor)
+        DOMEditor.focus(slateEditor)
 
         if (currentSelection) {
           slateEditor.select(currentSelection)

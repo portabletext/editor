@@ -3,8 +3,8 @@ import type {PortableTextBlock} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
 import type {DecoratedRange} from '../editor/range-decorations-machine'
 import type {Containers} from '../schema/resolve-containers'
+import type {DOMEditor} from '../slate/dom/plugin/dom-editor'
 import type {Operation as SlateOperation} from '../slate/interfaces/operation'
-import type {ReactEditor} from '../slate/react/plugin/react-editor'
 
 type HistoryItem = {
   operations: SlateOperation[]
@@ -23,7 +23,7 @@ export type RemotePatch = {
   previousSnapshot: PortableTextBlock[] | undefined
 }
 
-export interface PortableTextSlateEditor extends ReactEditor {
+export interface PortableTextSlateEditor extends DOMEditor {
   _key: 'editor'
   _type: 'editor'
 

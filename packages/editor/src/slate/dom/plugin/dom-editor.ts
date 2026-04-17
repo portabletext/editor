@@ -77,7 +77,7 @@ export interface DOMEditor extends BaseEditor {
   forceRender: (() => void) | null
 }
 
-export interface DOMEditorInterface {
+interface DOMEditorInterface {
   /**
    * Blur the editor.
    */
