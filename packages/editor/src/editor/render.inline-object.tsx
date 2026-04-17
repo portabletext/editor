@@ -31,8 +31,8 @@ export function RenderInlineObject(props: {
 
   const selectionState = useContext(SelectionStateContext)
   const serializedPath = serializePath(props.path)
-  const selected = selectionState.selectedChildPaths.has(serializedPath)
-  const focused = selectionState.focusedChildPath === serializedPath
+  const selected = selectionState.selectedLeafPaths.has(serializedPath)
+  const focused = selectionState.focusedLeafPath === serializedPath
 
   const inlineObject = props.element as unknown as PortableTextChild
 
