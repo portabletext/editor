@@ -76,11 +76,6 @@ const splitBlock = createKeyboardShortcut({
   default: [{key: 'Enter', shift: false, ctrl: false, meta: false, alt: false}],
 })
 
-const undo = createKeyboardShortcut({
-  default: [{key: 'Z', ctrl: true, meta: false, alt: false, shift: false}],
-  apple: [{key: 'Z', ctrl: false, meta: true, alt: false, shift: false}],
-})
-
 const moveLineBackward = createKeyboardShortcut({
   default: [],
   apple: [{key: 'ArrowUp', alt: true, shift: false, ctrl: false, meta: false}],
@@ -142,14 +137,6 @@ const extendLineForward = createKeyboardShortcut({
   apple: [{key: 'ArrowDown', alt: true, shift: true, ctrl: false, meta: false}],
 })
 
-const redo = createKeyboardShortcut({
-  default: [
-    {key: 'Y', ctrl: true, meta: false, alt: false, shift: false},
-    {key: 'Z', ctrl: true, meta: false, alt: false, shift: true},
-  ],
-  apple: [{key: 'Z', ctrl: false, meta: true, alt: false, shift: true}],
-})
-
 const transposeCharacter = createKeyboardShortcut({
   default: [],
   apple: [{key: 't', ctrl: true, shift: false, meta: false, alt: false}],
@@ -172,9 +159,7 @@ export default {
   isMoveLineForward: moveLineForward.guard,
   isMoveWordBackward: moveWordBackward.guard,
   isMoveWordForward: moveWordForward.guard,
-  isRedo: redo.guard,
   isSoftBreak: insertSoftBreak.guard,
   isSplitBlock: splitBlock.guard,
   isTransposeCharacter: transposeCharacter.guard,
-  isUndo: undo.guard,
 }

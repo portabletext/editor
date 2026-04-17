@@ -1,5 +1,5 @@
 import {useCallback, useEffect, useRef} from 'react'
-import {ReactEditor} from '../plugin/react-editor'
+import {DOMEditor} from '../../dom/plugin/dom-editor'
 import {useSlateStatic} from './use-slate-static'
 
 export function useTrackUserInput() {
@@ -15,7 +15,7 @@ export function useTrackUserInput() {
 
     receivedUserInput.current = true
 
-    const window = ReactEditor.getWindow(editor)
+    const window = DOMEditor.getWindow(editor)
     window.cancelAnimationFrame(animationFrameIdRef.current)
 
     animationFrameIdRef.current = window.requestAnimationFrame(() => {

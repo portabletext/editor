@@ -1,7 +1,7 @@
 import type {PortableTextBlock, PortableTextSpan} from '@portabletext/schema'
 import type {EditorSelection} from '../../types/editor'
 import type {PortableTextSlateEditor} from '../../types/slate-editor'
-import type {ReactEditor} from '../react/plugin/react-editor'
+import type {DOMEditor} from '../dom/plugin/dom-editor'
 import type {Location} from './location'
 import type {Node} from './node'
 import type {Operation} from './operation'
@@ -58,6 +58,6 @@ export interface BaseEditor {
   setSelection: (props: Partial<Range>) => void
 }
 
-export type Editor = BaseEditor & ReactEditor & PortableTextSlateEditor
+export type Editor = BaseEditor & DOMEditor & PortableTextSlateEditor
 
 export type EditorMarks = Omit<PortableTextSpan, 'text'>

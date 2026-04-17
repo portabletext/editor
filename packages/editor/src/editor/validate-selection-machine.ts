@@ -1,8 +1,8 @@
 import {setup} from 'xstate'
 import {applyDeselect, applySelect} from '../internal-utils/apply-selection'
 import {debug} from '../internal-utils/debug'
+import {DOMEditor} from '../slate/dom/plugin/dom-editor'
 import {start} from '../slate/editor/start'
-import {ReactEditor} from '../slate/react/plugin/react-editor'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 
 const validateSelectionSetup = setup({
@@ -81,12 +81,12 @@ export const validateSelectionMachine = validateSelectionSetup.createMachine({
 // For example, if this Editable is rendered inside something that might re-render
 // this component (hidden contexts) while the user is still actively changing the
 // contentEditable, this could interfere with the intermediate DOM selection,
-// which again could be picked up by ReactEditor's event listeners.
+// which again could be picked up by DOMEditor's event listeners.
 // If that range is invalid at that point, the slate.editorSelection could be
 // set either wrong, or invalid, to which slateEditor will throw exceptions
 // that are impossible to recover properly from or result in a wrong selection.
 //
-// Also the other way around, when the ReactEditor will try to create a DOM Range
+// Also the other way around, when the DOMEditor will try to create a DOM Range
 // from the current slateEditor.selection, it may throw unrecoverable errors
 // if the current editor.selection is invalid according to the DOM.
 // If this is the case, default to selecting the top of the document, if the
@@ -102,7 +102,7 @@ function validateSelection(
   let root: Document | ShadowRoot | undefined
 
   try {
-    root = ReactEditor.findDocumentOrShadowRoot(slateEditor)
+    root = DOMEditor.findDocumentOrShadowRoot(slateEditor)
   } catch {}
 
   if (!root) {
@@ -114,17 +114,14 @@ function validateSelection(
   if (editorElement !== root.activeElement) {
     return
   }
-  const window = ReactEditor.getWindow(slateEditor)
+  const window = DOMEditor.getWindow(slateEditor)
   const domSelection = window.getSelection()
   if (!domSelection || domSelection.rangeCount === 0) {
     return
   }
   const existingDOMRange = domSelection.getRangeAt(0)
   try {
-    const newDOMRange = ReactEditor.toDOMRange(
-      slateEditor,
-      slateEditor.selection,
-    )
+    const newDOMRange = DOMEditor.toDOMRange(slateEditor, slateEditor.selection)
     if (
       newDOMRange.startOffset !== existingDOMRange.startOffset ||
       newDOMRange.endOffset !== existingDOMRange.endOffset

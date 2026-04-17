@@ -3,6 +3,7 @@ import type {EditorActor} from '../../../../editor/editor-machine'
 import {getNode} from '../../../../node-traversal/get-node'
 import {getNodes} from '../../../../node-traversal/get-nodes'
 import {getSpanNode} from '../../../../node-traversal/get-span-node'
+import {DOMEditor} from '../../../dom/plugin/dom-editor'
 import {
   applyStringDiff,
   mergeStringDiffs,
@@ -29,7 +30,6 @@ import {isCollapsedRange} from '../../../range/is-collapsed-range'
 import {isExpandedRange} from '../../../range/is-expanded-range'
 import {rangeEdges} from '../../../range/range-edges'
 import {rangeEquals} from '../../../range/range-equals'
-import {ReactEditor} from '../../plugin/react-editor'
 import type {DebouncedFunc} from '../../utils/debounce'
 
 // https://github.com/facebook/draft-js/blob/main/src/component/handlers/composition/DraftEditorCompositionHandler.js#L41
@@ -368,7 +368,7 @@ export function createAndroidInputManager({
 
     let [nativeTargetRange] = (event as any).getTargetRanges()
     if (nativeTargetRange) {
-      targetRange = ReactEditor.toSlateRange(editor, nativeTargetRange, {
+      targetRange = DOMEditor.toSlateRange(editor, nativeTargetRange, {
         exactMatch: false,
         suppressThrow: true,
       })
@@ -376,11 +376,11 @@ export function createAndroidInputManager({
 
     // COMPAT: SelectionChange event is fired after the action is performed, so we
     // have to manually get the selection here to ensure it's up-to-date.
-    const window = ReactEditor.getWindow(editor)
+    const window = DOMEditor.getWindow(editor)
     const domSelection = window.getSelection()
     if (!targetRange && domSelection) {
       nativeTargetRange = domSelection
-      targetRange = ReactEditor.toSlateRange(editor, domSelection, {
+      targetRange = DOMEditor.toSlateRange(editor, domSelection, {
         exactMatch: false,
         suppressThrow: true,
       })

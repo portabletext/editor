@@ -3,7 +3,7 @@ import {createPlaceholderBlock} from '../internal-utils/create-placeholder-block
 import {debug} from '../internal-utils/debug'
 import {plugins} from '../slate-plugins/slate-plugins'
 import {createEditor} from '../slate/create-editor'
-import {withReact} from '../slate/react/plugin/with-react'
+import {withDOM} from '../slate/dom/plugin/with-dom'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import type {EditorActor} from './editor-machine'
 import type {RelayActor} from './relay-machine'
@@ -49,7 +49,7 @@ export function createSlateEditor(
   editor.isUndoing = false
   editor.withHistory = true
 
-  const slateEditor = plugins(withReact(editor), {
+  const slateEditor = plugins(withDOM(editor), {
     editorActor: config.editorActor,
     relayActor: config.relayActor,
     subscriptions: config.subscriptions,

@@ -29,7 +29,6 @@ import type {
 import ElementComponent from '../components/element'
 import ObjectNodeComponent from '../components/object-node'
 import TextComponent from '../components/text'
-import {ElementContext} from './use-element'
 import {useSlateStatic} from './use-slate-static'
 
 /**
@@ -98,17 +97,15 @@ const useChildren = (props: {
           : [...parentPath, childFieldName, {_key: node._key}]
 
       return (
-        <ElementContext key={`provider-${node._key}`} value={node}>
-          <ElementComponent
-            decorations={decorationsByChild[i] ?? []}
-            element={node}
-            key={node._key}
-            path={nodePath}
-            renderElement={renderElement}
-            renderLeaf={renderLeaf}
-            renderText={renderText}
-          />
-        </ElementContext>
+        <ElementComponent
+          decorations={decorationsByChild[i] ?? []}
+          element={node}
+          key={node._key}
+          path={nodePath}
+          renderElement={renderElement}
+          renderLeaf={renderLeaf}
+          renderText={renderText}
+        />
       )
     },
     [
