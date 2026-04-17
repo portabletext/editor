@@ -18,7 +18,6 @@ import getDirection from '../utils/direction'
 import type {
   RenderElementProps,
   RenderLeafProps,
-  RenderPlaceholderProps,
   RenderTextProps,
 } from './editable'
 
@@ -35,7 +34,6 @@ const Element = (props: {
   element: PortableTextTextBlock | PortableTextObject
   path: Path
   renderElement?: (props: RenderElementProps) => JSX.Element
-  renderPlaceholder: (props: RenderPlaceholderProps) => JSX.Element
   renderText?: (props: RenderTextProps) => JSX.Element
   renderLeaf?: (props: RenderLeafProps) => JSX.Element
 }) => {
@@ -43,7 +41,6 @@ const Element = (props: {
     decorations: parentDecorations,
     element,
     renderElement = defaultRenderElement,
-    renderPlaceholder,
     renderLeaf,
     renderText,
   } = props
@@ -56,7 +53,6 @@ const Element = (props: {
     node: element,
     path: props.path,
     renderElement,
-    renderPlaceholder,
     renderLeaf,
     renderText,
   })
@@ -105,7 +101,6 @@ const MemoizedElement = React.memo(Element, (prev, next) => {
     prev.renderElement === next.renderElement &&
     prev.renderText === next.renderText &&
     prev.renderLeaf === next.renderLeaf &&
-    prev.renderPlaceholder === next.renderPlaceholder &&
     isElementDecorationsEqual(prev.decorations, next.decorations)
   )
 })

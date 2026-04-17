@@ -10,11 +10,7 @@ import type {DecoratedRange} from '../../interfaces/text'
 import {pathEquals} from '../../path/path-equals'
 import {getTextDecorations} from '../../text/get-text-decorations'
 import {useDecorations} from '../hooks/use-decorations'
-import type {
-  RenderLeafProps,
-  RenderPlaceholderProps,
-  RenderTextProps,
-} from './editable'
+import type {RenderLeafProps, RenderTextProps} from './editable'
 import Leaf from './leaf'
 
 const defaultRenderText = (props: RenderTextProps) => <DefaultText {...props} />
@@ -28,7 +24,6 @@ const Text = (props: {
   isLast: boolean
   parent: PortableTextTextBlock
   path: Path
-  renderPlaceholder: (props: RenderPlaceholderProps) => JSX.Element
   renderLeaf?: (props: RenderLeafProps) => JSX.Element
   renderText?: (props: RenderTextProps) => JSX.Element
   text: PortableTextSpan
@@ -38,7 +33,6 @@ const Text = (props: {
     isLast,
     parent,
     path,
-    renderPlaceholder,
     renderLeaf,
     renderText = defaultRenderText,
     text,
@@ -55,7 +49,6 @@ const Text = (props: {
       <Leaf
         isLast={isLast && i === decoratedLeaves.length - 1}
         key={`${text._key}-${i}`}
-        renderPlaceholder={renderPlaceholder}
         leaf={leaf}
         leafPosition={position}
         text={text}
@@ -90,7 +83,6 @@ const MemoizedText = React.memo(Text, (prev, next) => {
     pathEquals(next.path, prev.path) &&
     next.renderText === prev.renderText &&
     next.renderLeaf === prev.renderLeaf &&
-    next.renderPlaceholder === prev.renderPlaceholder &&
     next.text === prev.text &&
     isTextDecorationsEqual(next.decorations, prev.decorations)
   )

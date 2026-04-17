@@ -24,7 +24,6 @@ import {isTextBlockNode} from '../../node/is-text-block-node'
 import type {
   RenderElementProps,
   RenderLeafProps,
-  RenderPlaceholderProps,
   RenderTextProps,
 } from '../components/editable'
 import ElementComponent from '../components/element'
@@ -42,7 +41,6 @@ const useChildren = (props: {
   node: Editor | Node
   path: Path
   renderElement?: (props: RenderElementProps) => JSX.Element
-  renderPlaceholder: (props: RenderPlaceholderProps) => JSX.Element
   renderText?: (props: RenderTextProps) => JSX.Element
   renderLeaf?: (props: RenderLeafProps) => JSX.Element
 }): React.ReactNode => {
@@ -51,7 +49,6 @@ const useChildren = (props: {
     node,
     path: parentPath,
     renderElement,
-    renderPlaceholder,
     renderText,
     renderLeaf,
   } = props
@@ -108,7 +105,6 @@ const useChildren = (props: {
             key={node._key}
             path={nodePath}
             renderElement={renderElement}
-            renderPlaceholder={renderPlaceholder}
             renderLeaf={renderLeaf}
             renderText={renderText}
           />
@@ -120,7 +116,6 @@ const useChildren = (props: {
       decorationsByChild,
       parentPath,
       renderElement,
-      renderPlaceholder,
       renderLeaf,
       renderText,
     ],
@@ -149,7 +144,6 @@ const useChildren = (props: {
         isLast={index === children.length - 1}
         parent={textBlockParent}
         path={nodePath}
-        renderPlaceholder={renderPlaceholder}
         renderLeaf={renderLeaf}
         renderText={renderText}
         text={node}

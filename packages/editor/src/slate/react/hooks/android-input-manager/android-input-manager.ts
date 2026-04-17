@@ -283,20 +283,6 @@ export function createAndroidInputManager({
     }
   }
 
-  const updatePlaceholderVisibility = (forceHide = false) => {
-    const placeholderElement = editor.domPlaceholderElement
-    if (!placeholderElement) {
-      return
-    }
-
-    if (hasPendingDiffs() || forceHide) {
-      placeholderElement.style.display = 'none'
-      return
-    }
-
-    placeholderElement.style.removeProperty('display')
-  }
-
   const storeDiff = (path: Path, diff: StringDiff) => {
     debug('storeDiff', path, diff)
 
@@ -319,14 +305,12 @@ export function createAndroidInputManager({
         pendingDiffs.push({path, diff, id: idCounter++})
       }
 
-      updatePlaceholderVisibility()
       return
     }
 
     const merged = mergeStringDiffs(target.text, pendingDiffs[idx]!.diff, diff)
     if (!merged) {
       pendingDiffs.splice(idx, 1)
-      updatePlaceholderVisibility()
       return
     }
 
@@ -936,17 +920,7 @@ export function createAndroidInputManager({
     }
   }
 
-  const handleKeyDown = (_: React.KeyboardEvent) => {
-    // COMPAT: Swiftkey closes the keyboard when typing inside a empty node
-    // directly next to a non-contenteditable element (= the placeholder).
-    // The only event fired soon enough for us to allow hiding the placeholder
-    // without swiftkey picking it up is the keydown event, so we have to hide it
-    // here. See https://github.com/ianstormtaylor/slate/pull/4988#issuecomment-1201050535
-    if (!hasPendingDiffs()) {
-      updatePlaceholderVisibility(true)
-      setTimeout(updatePlaceholderVisibility)
-    }
-  }
+  const handleKeyDown = (_: React.KeyboardEvent) => {}
 
   const scheduleFlush = () => {
     if (!hasPendingAction()) {

@@ -22,7 +22,6 @@ import type {EditorActor} from '../../../editor/editor-machine'
 import {getAncestorObjectNode} from '../../../node-traversal/get-ancestor-object-node'
 import {getAncestorTextBlock} from '../../../node-traversal/get-ancestor-text-block'
 import {getNode} from '../../../node-traversal/get-node'
-import {getNodes} from '../../../node-traversal/get-nodes'
 import {getText} from '../../../node-traversal/get-text'
 import {collapse} from '../../core/collapse'
 import {deselect} from '../../core/deselect'
@@ -54,10 +53,7 @@ import {
   IS_WECHATBROWSER,
 } from '../../dom/utils/environment'
 import Hotkeys from '../../dom/utils/hotkeys'
-import {
-  MARK_PLACEHOLDER_SYMBOL,
-  PLACEHOLDER_SYMBOL,
-} from '../../dom/utils/symbols'
+import {MARK_PLACEHOLDER_SYMBOL} from '../../dom/utils/symbols'
 import {end as editorEnd} from '../../editor/end'
 import {range as editorRange} from '../../editor/range'
 import {rangeRef} from '../../editor/range-ref'
@@ -156,14 +152,12 @@ type EditableProps = {
   decorate?: (entry: NodeEntry) => DecoratedRange[]
   editorActor: EditorActor
   onDOMBeforeInput?: (event: InputEvent) => void
-  placeholder?: string
   readOnly?: boolean
   role?: string
   style?: React.CSSProperties
   renderElement?: (props: RenderElementProps) => JSX.Element
   renderLeaf?: (props: RenderLeafProps) => JSX.Element
   renderText?: (props: RenderTextProps) => JSX.Element
-  renderPlaceholder?: (props: RenderPlaceholderProps) => JSX.Element
   scrollSelectionIntoView?: (editor: ReactEditor, domRange: DOMRange) => void
   as?: React.ElementType
   disableDefaultStyles?: boolean
@@ -175,21 +169,15 @@ type EditableProps = {
 
 export const Editable = forwardRef(
   (props: EditableProps, forwardedRef: ForwardedRef<HTMLDivElement>) => {
-    const defaultRenderPlaceholder = useCallback(
-      (props: RenderPlaceholderProps) => <DefaultPlaceholder {...props} />,
-      [],
-    )
     const {
       autoFocus,
       decorate = defaultDecorate,
       editorActor,
       onDOMBeforeInput: propsOnDOMBeforeInput,
-      placeholder,
       readOnly = false,
       renderElement,
       renderLeaf,
       renderText,
-      renderPlaceholder = defaultRenderPlaceholder,
       scrollSelectionIntoView = defaultScrollSelectionIntoView,
       style: userStyle = {},
       as: Component = 'div',
@@ -201,9 +189,6 @@ export const Editable = forwardRef(
     const [isComposing, setIsComposing] = useState(false)
     const ref = useRef<HTMLDivElement | null>(null)
     const deferredOperations = useRef<DeferredOperation[]>([])
-    const [placeholderHeight, setPlaceholderHeight] = useState<
-      number | undefined
-    >()
     const processing = useRef(false)
 
     const {onUserInput, receivedUserInput} = useTrackUserInput()
@@ -1027,48 +1012,6 @@ export const Editable = forwardRef(
     const decorations = decorate([editor as any, []])
     const decorateContext = useDecorateContext(decorate)
 
-    const showPlaceholder =
-      placeholder &&
-      editor.children.length === 1 &&
-      (() => {
-        let spanCount = 0
-
-        for (const entry of getNodes(editor)) {
-          if (isSpan({schema: editor.schema}, entry.node)) {
-            spanCount++
-
-            if (spanCount > 1 || entry.node.text !== '') {
-              return false
-            }
-          }
-        }
-
-        return spanCount === 1
-      })() &&
-      !isComposing
-
-    const placeHolderResizeHandler = useCallback(
-      (placeholderEl: HTMLElement | null) => {
-        if (placeholderEl && showPlaceholder) {
-          setPlaceholderHeight(placeholderEl.getBoundingClientRect()?.height)
-        } else {
-          setPlaceholderHeight(undefined)
-        }
-      },
-      [showPlaceholder],
-    )
-
-    if (showPlaceholder) {
-      const placeholderStart = editorStart(editor, [])
-      decorations.push({
-        [PLACEHOLDER_SYMBOL]: true,
-        placeholder,
-        onPlaceholderResize: placeHolderResizeHandler,
-        anchor: placeholderStart,
-        focus: placeholderStart,
-      } as any)
-    }
-
     const {marks} = editor
     state.hasMarkPlaceholder = false
 
@@ -1176,10 +1119,6 @@ export const Editable = forwardRef(
                         whiteSpace: 'pre-wrap',
                         // Allow words to break if they are too long.
                         wordWrap: 'break-word',
-                        // Make the minimum height that of the placeholder.
-                        ...(placeholderHeight
-                          ? {minHeight: placeholderHeight}
-                          : {}),
                       }),
                   // Allow for passed-in styles to override anything.
                   ...userStyle,
@@ -1949,7 +1888,6 @@ export const Editable = forwardRef(
                   node={editor}
                   path={[]}
                   renderElement={renderElement}
-                  renderPlaceholder={renderPlaceholder}
                   renderLeaf={renderLeaf}
                   renderText={renderText}
                 />
@@ -1960,33 +1898,6 @@ export const Editable = forwardRef(
       </ReadOnlyContext.Provider>
     )
   },
-)
-
-/**
- * The props that get passed to renderPlaceholder
- */
-export type RenderPlaceholderProps = {
-  children: any
-  attributes: {
-    'data-slate-placeholder': boolean
-    'dir'?: 'rtl'
-    'contentEditable': boolean
-    'ref': React.RefCallback<any>
-    'style': React.CSSProperties
-  }
-}
-
-/**
- * The default placeholder element
- */
-
-const DefaultPlaceholder = ({attributes, children}: RenderPlaceholderProps) => (
-  // COMPAT: Artificially add a line-break to the end on the placeholder element
-  // to prevent Android IMEs to pick up its content in autocorrect and to auto-capitalize the first letter
-  <span {...attributes}>
-    {children}
-    {IS_ANDROID && <br />}
-  </span>
 )
 
 /**
