@@ -9,6 +9,8 @@ import {
   ContainerScopeContext,
   useContainerScope,
 } from '../../../editor/container-scope-context'
+import ContainerTextComponent from '../../../editor/render.container-text'
+import {buildScopedName} from '../../../editor/scoped-config-lookup'
 import {
   isElementDecorationsEqual,
   splitDecorationsByChild,
@@ -21,14 +23,8 @@ import type {DecoratedRange} from '../../interfaces/text'
 import {isObjectNode} from '../../node/is-object-node'
 import {isSpanNode} from '../../node/is-span-node'
 import {isTextBlockNode} from '../../node/is-text-block-node'
-import type {
-  RenderElementProps,
-  RenderLeafProps,
-  RenderTextProps,
-} from '../components/editable'
+import type {RenderElementProps} from '../components/editable'
 import ElementComponent from '../components/element'
-import ObjectNodeComponent from '../components/object-node'
-import TextComponent from '../components/text'
 import {useSlateStatic} from './use-slate-static'
 
 /**
@@ -40,17 +36,8 @@ const useChildren = (props: {
   node: Editor | Node
   path: Path
   renderElement?: (props: RenderElementProps) => JSX.Element
-  renderText?: (props: RenderTextProps) => JSX.Element
-  renderLeaf?: (props: RenderLeafProps) => JSX.Element
 }): React.ReactNode => {
-  const {
-    decorations,
-    node,
-    path: parentPath,
-    renderElement,
-    renderText,
-    renderLeaf,
-  } = props
+  const {decorations, node, path: parentPath, renderElement} = props
   const editor = useSlateStatic()
   editor.isNodeMapDirty = false
 
@@ -71,10 +58,14 @@ const useChildren = (props: {
     children = node.children
   } else if (isTextBlock({schema: editor.schema}, node)) {
     children = node.children
+
+    const textBlockScopedKey = buildScopedName(containerScope, 'block')
+
+    if (editor.containers.has(textBlockScopedKey)) {
+      childScope = textBlockScopedKey
+    }
   } else if (isObjectNode({schema: editor.schema}, node)) {
-    const scopedKey = containerScope
-      ? `${containerScope}.${node._type}`
-      : node._type
+    const scopedKey = buildScopedName(containerScope, node._type)
 
     const containerField = editor.containers.get(scopedKey)
 
@@ -103,19 +94,10 @@ const useChildren = (props: {
           key={node._key}
           path={nodePath}
           renderElement={renderElement}
-          renderLeaf={renderLeaf}
-          renderText={renderText}
         />
       )
     },
-    [
-      childFieldName,
-      decorationsByChild,
-      parentPath,
-      renderElement,
-      renderLeaf,
-      renderText,
-    ],
+    [childFieldName, decorationsByChild, parentPath, renderElement],
   )
 
   const textBlockParent = isTextBlock({schema: editor.schema}, node)
@@ -135,36 +117,13 @@ const useChildren = (props: {
         : [...parentPath, 'children', {_key: node._key}]
 
     return (
-      <TextComponent
+      <ContainerTextComponent
         decorations={decorationsByChild[index] ?? []}
         key={node._key}
         isLast={index === children.length - 1}
         parent={textBlockParent}
         path={nodePath}
-        renderLeaf={renderLeaf}
-        renderText={renderText}
         text={node}
-      />
-    )
-  }
-
-  const renderObjectNodeComponent = (
-    node: PortableTextObject,
-    index: number,
-  ) => {
-    const nodePath: Path =
-      parentPath.length === 0
-        ? [{_key: node._key}]
-        : [...parentPath, childFieldName, {_key: node._key}]
-
-    return (
-      <ObjectNodeComponent
-        decorations={decorationsByChild[index] ?? []}
-        isInline={textBlockParent !== undefined}
-        key={node._key}
-        objectNode={node}
-        path={nodePath}
-        renderElement={renderElement}
       />
     )
   }
@@ -178,11 +137,7 @@ const useChildren = (props: {
       return null
     }
     if (isObjectNode({schema: editor.schema}, n)) {
-      const scopedName = childScope ? `${childScope}.${n._type}` : n._type
-      if (editor.containers.has(scopedName)) {
-        return renderElementComponent(n, i)
-      }
-      return renderObjectNodeComponent(n, i)
+      return renderElementComponent(n, i)
     }
     if (isSpan({schema: editor.schema}, n)) {
       return renderTextComponent(n, i)

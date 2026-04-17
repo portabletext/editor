@@ -10,16 +10,13 @@ import {isElementDecorationsEqual} from '../../dom/utils/range-list'
 import type {Path} from '../../interfaces/path'
 import type {DecoratedRange} from '../../interfaces/text'
 import {isTextBlockNode} from '../../node/is-text-block-node'
+import {isVoidNode} from '../../node/is-void-node'
 import {pathEquals} from '../../path/path-equals'
 import useChildren from '../hooks/use-children'
 import {useDecorations} from '../hooks/use-decorations'
 import {useSlateStatic} from '../hooks/use-slate-static'
 import getDirection from '../utils/direction'
-import type {
-  RenderElementProps,
-  RenderLeafProps,
-  RenderTextProps,
-} from './editable'
+import type {RenderElementProps} from './editable'
 
 const defaultRenderElement = (props: RenderElementProps) => (
   <DefaultElement {...props} />
@@ -34,49 +31,41 @@ const Element = (props: {
   element: PortableTextTextBlock | PortableTextObject
   path: Path
   renderElement?: (props: RenderElementProps) => JSX.Element
-  renderText?: (props: RenderTextProps) => JSX.Element
-  renderLeaf?: (props: RenderLeafProps) => JSX.Element
 }) => {
   const {
     decorations: parentDecorations,
     element,
     renderElement = defaultRenderElement,
-    renderLeaf,
-    renderText,
   } = props
   const dataPath = serializePath(props.path)
   const editor = useSlateStatic()
   const isInline = isInlinePath(editor, props.path)
+  const isVoid = isVoidNode(
+    {
+      schema: editor.schema,
+      containers: editor.containers,
+      value: editor.children,
+    },
+    element,
+    props.path,
+  )
+
   const decorations = useDecorations(element, props.path, parentDecorations)
-  const children = useChildren({
+
+  const regularChildren = useChildren({
     decorations,
     node: element,
     path: props.path,
     renderElement,
-    renderLeaf,
-    renderText,
   })
 
-  // Attributes that the developer must mix into the element in their
-  // custom node renderer component.
   const attributes: {
-    'data-slate-node': 'element'
-    'data-slate-void'?: true
-    'data-slate-inline'?: true
     'data-pt-path': string
-    'contentEditable'?: false
     'dir'?: 'rtl'
   } = {
-    'data-slate-node': 'element',
     'data-pt-path': dataPath,
   }
 
-  if (isInline) {
-    attributes['data-slate-inline'] = true
-  }
-
-  // If it's a block node with inline children, add the proper `dir` attribute
-  // for text direction.
   if (!isInline && isTextBlockNode({schema: editor.schema}, element)) {
     const text = getText(editor, props.path)
     const dir = text !== undefined ? getDirection(text) : undefined
@@ -85,6 +74,8 @@ const Element = (props: {
       attributes.dir = dir
     }
   }
+
+  const children = isVoid ? null : regularChildren
 
   return renderElement({
     attributes,
@@ -99,8 +90,6 @@ const MemoizedElement = React.memo(Element, (prev, next) => {
     prev.element === next.element &&
     pathEquals(prev.path, next.path) &&
     prev.renderElement === next.renderElement &&
-    prev.renderText === next.renderText &&
-    prev.renderLeaf === next.renderLeaf &&
     isElementDecorationsEqual(prev.decorations, next.decorations)
   )
 })

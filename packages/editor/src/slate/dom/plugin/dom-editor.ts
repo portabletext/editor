@@ -321,7 +321,7 @@ export const DOMEditor: DOMEditorInterface = {
             // this is the core logic that lets you know you got the right editor.selection instead of null when editor is contenteditable="false"(readOnly)
             closestShadowAware(targetEl, '[contenteditable="false"]') ===
               editorEl) ||
-          !!targetEl.getAttribute('data-slate-zero-width'))
+          !!targetEl.getAttribute('data-pt-zero-width'))
     )
   },
 
@@ -364,7 +364,7 @@ export const DOMEditor: DOMEditorInterface = {
     let domPoint: DOMPoint | undefined
 
     if (nodeEntry && isVoidNode(editor, nodeEntry.node, point.path)) {
-      const spacer = el.querySelector('[data-slate-zero-width]')
+      const spacer = el.querySelector('[data-pt-zero-width]')
       if (spacer) {
         const domText = spacer.childNodes[0]
         if (domText) {
@@ -400,7 +400,7 @@ export const DOMEditor: DOMEditorInterface = {
     // For each leaf, we need to isolate its content, which means filtering
     // to its direct text and zero-width spans. (We have to filter out any
     // other siblings that may have been rendered alongside them.)
-    const selector = `[data-slate-string], [data-slate-zero-width]`
+    const selector = `[data-pt-string], [data-pt-zero-width]`
     const texts = Array.from(el.querySelectorAll(selector))
     let start = 0
 
@@ -413,7 +413,9 @@ export const DOMEditor: DOMEditorInterface = {
       }
 
       const {length} = domNode.textContent
-      const attr = text.getAttribute('data-slate-length')
+      const attr =
+        text.getAttribute('data-slate-length') ??
+        text.getAttribute('data-pt-length')
       const trueLength = attr == null ? length : parseInt(attr, 10)
       const end = start + trueLength
 
@@ -475,11 +477,11 @@ export const DOMEditor: DOMEditorInterface = {
     const startEl = (
       isDOMElement(startNode) ? startNode : startNode.parentElement
     ) as HTMLElement
-    const isStartAtZeroWidth = !!startEl.getAttribute('data-slate-zero-width')
+    const isStartAtZeroWidth = !!startEl.getAttribute('data-pt-zero-width')
     const endEl = (
       isDOMElement(endNode) ? endNode : endNode.parentElement
     ) as HTMLElement
-    const isEndAtZeroWidth = !!endEl.getAttribute('data-slate-zero-width')
+    const isEndAtZeroWidth = !!endEl.getAttribute('data-pt-zero-width')
 
     domRange.setStart(startNode, isStartAtZeroWidth ? 1 : startOffset)
     domRange.setEnd(endNode, isEndAtZeroWidth ? 1 : endOffset)
@@ -527,13 +529,15 @@ export const DOMEditor: DOMEditorInterface = {
         containsShadowAware(editorEl, potentialNonEditableNode)
           ? potentialNonEditableNode
           : null
-      let leafNode = parentNode.closest('[data-slate-leaf]')
+      let leafNode = parentNode.closest('[data-pt-leaf]')
       let domNode: DOMElement | null = null
 
       // Calculate how far into the text node the `nearestNode` is, so that we
       // can determine what the offset relative to the text node is.
       if (leafNode) {
-        textNode = leafNode.closest('[data-slate-node="text"]')
+        textNode =
+          leafNode.closest('[data-slate-node="text"]') ??
+          leafNode.closest('[data-pt-leaf]')
 
         if (textNode) {
           const window = DOMEditor.getWindow(editor)
@@ -544,7 +548,7 @@ export const DOMEditor: DOMEditorInterface = {
           const contents = range.cloneContents()
           const removals = [
             ...Array.prototype.slice.call(
-              contents.querySelectorAll('[data-slate-zero-width]'),
+              contents.querySelectorAll('[data-pt-zero-width]'),
             ),
             ...Array.prototype.slice.call(
               contents.querySelectorAll('[contenteditable=false]'),
@@ -557,7 +561,7 @@ export const DOMEditor: DOMEditorInterface = {
             if (
               IS_ANDROID &&
               !exactMatch &&
-              el.hasAttribute('data-slate-zero-width') &&
+              el.hasAttribute('data-pt-zero-width') &&
               el.textContent.length > 0 &&
               el.textContext !== '\uFEFF'
             ) {
@@ -583,7 +587,7 @@ export const DOMEditor: DOMEditorInterface = {
         // For void nodes, the element with the offset key will be a cousin, not an
         // ancestor, so find it by going down from the nearest void parent and taking the
         // first one that isn't inside a nested editor.
-        const leafNodes = voidNode.querySelectorAll('[data-slate-leaf]')
+        const leafNodes = voidNode.querySelectorAll('[data-pt-leaf]')
         for (let index = 0; index < leafNodes.length; index++) {
           const current = leafNodes[index]!
           if (DOMEditor.hasDOMNode(editor, current)) {
@@ -596,10 +600,12 @@ export const DOMEditor: DOMEditorInterface = {
         if (!leafNode) {
           offset = 1
         } else {
-          textNode = leafNode.closest('[data-slate-node="text"]')!
+          textNode =
+            leafNode.closest('[data-slate-node="text"]') ??
+            leafNode.closest('[data-pt-leaf]')!
           domNode = leafNode
           offset = domNode.textContent!.length
-          domNode.querySelectorAll('[data-slate-zero-width]').forEach((el) => {
+          domNode.querySelectorAll('[data-pt-zero-width]').forEach((el) => {
             offset -= el.textContent!.length
           })
         }
@@ -609,7 +615,7 @@ export const DOMEditor: DOMEditorInterface = {
           node
             ? node.querySelectorAll(
                 // Exclude leaf nodes in nested editors
-                '[data-slate-leaf]:not(:scope [data-slate-editor] [data-slate-leaf])',
+                '[data-pt-leaf]:not(:scope [data-slate-editor] [data-pt-leaf])',
               )
             : []
         const elementNode = nonEditableNode.closest(
@@ -646,17 +652,17 @@ export const DOMEditor: DOMEditorInterface = {
         }
 
         if (leafNode) {
-          textNode = leafNode.closest('[data-slate-node="text"]')!
+          textNode =
+            leafNode.closest('[data-slate-node="text"]') ??
+            leafNode.closest('[data-pt-leaf]')!
           domNode = leafNode
           if (searchDirection === 'forward') {
             offset = 0
           } else {
             offset = domNode.textContent!.length
-            domNode
-              .querySelectorAll('[data-slate-zero-width]')
-              .forEach((el) => {
-                offset -= el.textContent!.length
-              })
+            domNode.querySelectorAll('[data-pt-zero-width]').forEach((el) => {
+              offset -= el.textContent!.length
+            })
           }
         }
       }
@@ -667,14 +673,14 @@ export const DOMEditor: DOMEditorInterface = {
         // COMPAT: Android IMEs might remove the zero width space while composing,
         // and we don't add it for line-breaks.
         IS_ANDROID &&
-        domNode.getAttribute('data-slate-zero-width') === 'z' &&
+        domNode.getAttribute('data-pt-zero-width') === 'z' &&
         domNode.textContent?.startsWith('\uFEFF') &&
         // COMPAT: If the parent node is a Slate zero-width space, editor is
         // because the text node should have no characters. However, during IME
         // composition the ASCII characters will be prepended to the zero-width
         // space, so subtract 1 from the offset to account for the zero-width
         // space character.
-        (parentNode.hasAttribute('data-slate-zero-width') ||
+        (parentNode.hasAttribute('data-pt-zero-width') ||
           // COMPAT: In Firefox, `range.cloneContents()` returns an extra trailing '\n'
           // when the document ends with a new-line character. This results in the offset
           // length being off by one, so we need to subtract one to account for this.
@@ -703,7 +709,7 @@ export const DOMEditor: DOMEditorInterface = {
 
         let {path, offset} = editorStart(editor, nodePath)
 
-        if (!node.querySelector('[data-slate-leaf]')) {
+        if (!node.querySelector('[data-pt-leaf]')) {
           offset = nearestOffset
         }
 

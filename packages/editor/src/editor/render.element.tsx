@@ -4,12 +4,10 @@ import type {
 } from '@portabletext/schema'
 import {isTextBlock} from '@portabletext/schema'
 import {useSelector} from '@xstate/react'
-import {useContext, type ReactElement} from 'react'
+import {useContext, type ReactNode} from 'react'
 import type {DropPosition} from '../behaviors/behavior.core.drop-position'
-import {isInline} from '../node-traversal/is-inline'
 import type {Path} from '../slate/interfaces/path'
 import type {RenderElementProps} from '../slate/react/components/editable'
-import {useSlateStatic} from '../slate/react/hooks/use-slate-static'
 import type {
   RenderBlockFunction,
   RenderChildFunction,
@@ -19,14 +17,13 @@ import type {
 import {ContainerScopeContext} from './container-scope-context'
 import {EditorActorContext} from './editor-actor-context'
 import type {EditorSchema} from './editor-schema'
-import {RenderBlockObject} from './render.block-object'
 import {RenderContainer} from './render.container'
-import {RenderInlineObject} from './render.inline-object'
-import {RenderTextBlock} from './render.text-block'
+import {RenderContainerChild} from './render.container-child'
+import {buildScopedName, lookupScopedConfig} from './scoped-config-lookup'
 
 export function RenderElement(props: {
   attributes: RenderElementProps['attributes']
-  children: ReactElement
+  children: ReactNode
   dropPosition?: DropPosition
   element: PortableTextTextBlock | PortableTextObject
   path: Path
@@ -40,24 +37,13 @@ export function RenderElement(props: {
 }) {
   const editorActor = useContext(EditorActorContext)
   const containerScope = useContext(ContainerScopeContext)
-  const slateStatic = useSlateStatic()
   const schema = props.schema
 
-  const scopedTypeName = containerScope
-    ? `${containerScope}.${props.element._type}`
-    : props.element._type
+  const scopedTypeName = buildScopedName(containerScope, props.element._type)
 
-  const containerConfig = useSelector(editorActor, (s) => {
-    const configs = s.context.containerConfigs
-    const exact = configs.get(scopedTypeName)
-    if (exact) {
-      return exact
-    }
-    const bareType = scopedTypeName.includes('.')
-      ? scopedTypeName.split('.').pop()!
-      : undefined
-    return bareType ? configs.get(bareType) : undefined
-  })
+  const containerConfig = useSelector(editorActor, (s) =>
+    lookupScopedConfig(s.context.containerConfigs, scopedTypeName),
+  )
 
   if (containerConfig) {
     return (
@@ -65,65 +51,64 @@ export function RenderElement(props: {
         attributes={props.attributes}
         element={props.element}
         containerConfig={containerConfig}
+        path={props.path}
       >
         {props.children}
       </RenderContainer>
     )
   }
 
-  if (isTextBlock({schema}, props.element)) {
+  if (containerScope) {
     return (
-      <RenderTextBlock
-        attributes={props.attributes}
-        dropPosition={
-          props.dropPosition?.blockKey === props.element._key
-            ? props.dropPosition.positionBlock
-            : undefined
-        }
-        element={props.element}
-        readOnly={props.readOnly}
-        renderBlock={props.renderBlock}
-        renderListItem={props.renderListItem}
-        renderStyle={props.renderStyle}
-        schema={schema}
-        spellCheck={props.spellCheck}
-        textBlock={props.element}
-      >
-        {props.children}
-      </RenderTextBlock>
-    )
-  }
-
-  if (isInline(slateStatic, props.path)) {
-    return (
-      <RenderInlineObject
+      <RenderContainerChild
         attributes={props.attributes}
         element={props.element}
         path={props.path}
-        readOnly={props.readOnly}
-        renderChild={props.renderChild}
-        schema={schema}
       >
         {props.children}
-      </RenderInlineObject>
+      </RenderContainerChild>
+    )
+  }
+
+  if (isTextBlock({schema}, props.element)) {
+    return (
+      <RenderContainer
+        attributes={props.attributes}
+        element={props.element}
+        legacyCallbacks={{
+          dropPosition:
+            props.dropPosition?.blockKey === props.element._key
+              ? props.dropPosition.positionBlock
+              : undefined,
+          renderBlock: props.renderBlock,
+          renderListItem: props.renderListItem,
+          renderStyle: props.renderStyle,
+          schema,
+          spellCheck: props.spellCheck,
+        }}
+        path={props.path}
+      >
+        {props.children}
+      </RenderContainer>
     )
   }
 
   return (
-    <RenderBlockObject
+    <RenderContainerChild
       attributes={props.attributes}
-      blockObject={props.element}
-      dropPosition={
-        props.dropPosition?.blockKey === props.element._key
-          ? props.dropPosition.positionBlock
-          : undefined
-      }
       element={props.element}
-      readOnly={props.readOnly}
-      renderBlock={props.renderBlock}
-      schema={schema}
+      legacyCallbacks={{
+        dropPosition:
+          props.dropPosition?.blockKey === props.element._key
+            ? props.dropPosition.positionBlock
+            : undefined,
+        readOnly: props.readOnly,
+        renderBlock: props.renderBlock,
+        renderChild: props.renderChild,
+      }}
+      path={props.path}
     >
       {props.children}
-    </RenderBlockObject>
+    </RenderContainerChild>
   )
 }

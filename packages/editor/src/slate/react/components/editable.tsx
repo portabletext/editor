@@ -1,6 +1,5 @@
 import type {
   PortableTextObject,
-  PortableTextSpan,
   PortableTextTextBlock,
 } from '@portabletext/schema'
 import {isSpan} from '@portabletext/schema'
@@ -60,7 +59,7 @@ import {start as editorStart} from '../../editor/start'
 import type {Editor} from '../../interfaces/editor'
 import type {NodeEntry} from '../../interfaces/node'
 import type {Path} from '../../interfaces/path'
-import type {DecoratedRange, LeafPosition} from '../../interfaces/text'
+import type {DecoratedRange} from '../../interfaces/text'
 import {isTextBlockNode} from '../../node/is-text-block-node'
 import {isVoidNode} from '../../node/is-void-node'
 import {pathEquals} from '../../path/path-equals'
@@ -98,46 +97,8 @@ export interface RenderElementProps {
   element: PortableTextTextBlock | PortableTextObject
   path: Path
   attributes: {
-    'data-slate-node': 'element'
-    'data-slate-inline'?: true
-    'data-slate-void'?: true
     'data-pt-path': string
-    'contentEditable'?: false
     'dir'?: 'rtl'
-  }
-}
-
-/**
- * `RenderLeafProps` are passed to the `renderLeaf` handler.
- */
-
-export interface RenderLeafProps {
-  children: any
-  /**
-   * The leaf node with any applied decorations.
-   * If no decorations are applied, it will be identical to the `text` property.
-   */
-  leaf: PortableTextSpan
-  text: PortableTextSpan
-  path: Path
-  attributes: {
-    'data-slate-leaf': true
-  }
-  /**
-   * The position of the leaf within the Text node, only present when the text node is split by decorations.
-   */
-  leafPosition?: LeafPosition
-}
-
-/**
- * `RenderTextProps` are passed to the `renderText` handler.
- */
-export interface RenderTextProps {
-  text: PortableTextSpan
-  children: any
-  attributes: {
-    'data-slate-node': 'text'
-    'data-pt-path': string
   }
 }
 
@@ -152,8 +113,6 @@ type EditableProps = {
   readOnly?: boolean
   style?: React.CSSProperties
   renderElement?: (props: RenderElementProps) => JSX.Element
-  renderLeaf?: (props: RenderLeafProps) => JSX.Element
-  renderText?: (props: RenderTextProps) => JSX.Element
   scrollSelectionIntoView?: (editor: DOMEditor, domRange: DOMRange) => void
 } & React.TextareaHTMLAttributes<HTMLDivElement>
 
@@ -170,8 +129,6 @@ export const Editable = forwardRef(
       onDOMBeforeInput: propsOnDOMBeforeInput,
       readOnly = false,
       renderElement,
-      renderLeaf,
-      renderText,
       scrollSelectionIntoView = defaultScrollSelectionIntoView,
       style: userStyle = {},
       ...attributes
@@ -1866,8 +1823,6 @@ export const Editable = forwardRef(
                 node={editor}
                 path={[]}
                 renderElement={renderElement}
-                renderLeaf={renderLeaf}
-                renderText={renderText}
               />
             </div>
           </RestoreDOM>

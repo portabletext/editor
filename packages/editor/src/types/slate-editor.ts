@@ -2,6 +2,7 @@ import type {Patch} from '@portabletext/patches'
 import type {PortableTextBlock} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
 import type {DecoratedRange} from '../editor/range-decorations-machine'
+import type {LeafConfig} from '../renderers/renderer.types'
 import type {Containers} from '../schema/resolve-containers'
 import type {DOMEditor} from '../slate/dom/plugin/dom-editor'
 import type {Operation as SlateOperation} from '../slate/interfaces/operation'
@@ -30,6 +31,7 @@ export interface PortableTextSlateEditor extends DOMEditor {
   schema: EditorSchema
   keyGenerator: () => string
   containers: Containers
+  leafConfigs: Map<string, LeafConfig>
 
   decoratedRanges: Array<DecoratedRange>
   decoratorState: Record<string, boolean | undefined>
