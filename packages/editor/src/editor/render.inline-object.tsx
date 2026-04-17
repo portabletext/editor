@@ -1,6 +1,7 @@
 import type {PortableTextChild, PortableTextObject} from '@portabletext/schema'
 import {useContext, useRef, type ReactElement} from 'react'
 import {serializePath} from '../paths/serialize-path'
+import type {LeafConfig} from '../renderers/renderer.types'
 import type {Path} from '../slate/interfaces/path'
 import type {RenderElementProps} from '../slate/react/components/editable'
 import type {BlockChildRenderProps, RenderChildFunction} from '../types/editor'
@@ -12,6 +13,7 @@ export function RenderInlineObject(props: {
   attributes: RenderElementProps['attributes']
   children: ReactElement
   element: PortableTextObject
+  leafConfig: LeafConfig | undefined
   path: Path
   readOnly: boolean
   renderChild?: RenderChildFunction
@@ -36,6 +38,38 @@ export function RenderInlineObject(props: {
 
   const inlineObject = props.element as unknown as PortableTextChild
 
+  let innerContent: ReactElement
+  if (props.leafConfig) {
+    innerContent = (
+      <RenderLeafConfig
+        leafConfig={props.leafConfig}
+        focused={focused}
+        node={props.element}
+        path={props.path}
+        selected={selected}
+      >
+        <RenderDefaultInlineObject inlineObject={inlineObject} />
+      </RenderLeafConfig>
+    )
+  } else if (props.renderChild && inlineObjectSchemaType) {
+    innerContent = (
+      <RenderChild
+        renderChild={props.renderChild}
+        annotations={[]}
+        editorElementRef={inlineObjectRef}
+        selected={selected}
+        focused={focused}
+        path={props.path}
+        schemaType={inlineObjectSchemaType}
+        value={inlineObject}
+      >
+        <RenderDefaultInlineObject inlineObject={inlineObject} />
+      </RenderChild>
+    )
+  } else {
+    innerContent = <RenderDefaultInlineObject inlineObject={inlineObject} />
+  }
+
   return (
     <span
       {...props.attributes}
@@ -50,25 +84,39 @@ export function RenderInlineObject(props: {
         style={{display: 'inline-block'}}
         draggable={!props.readOnly}
       >
-        {props.renderChild && inlineObjectSchemaType ? (
-          <RenderChild
-            renderChild={props.renderChild}
-            annotations={[]}
-            editorElementRef={inlineObjectRef}
-            selected={selected}
-            focused={focused}
-            path={props.path}
-            schemaType={inlineObjectSchemaType}
-            value={inlineObject}
-          >
-            <RenderDefaultInlineObject inlineObject={inlineObject} />
-          </RenderChild>
-        ) : (
-          <RenderDefaultInlineObject inlineObject={inlineObject} />
-        )}
+        {innerContent}
       </span>
     </span>
   )
+}
+
+function RenderLeafConfig({
+  leafConfig,
+  children,
+  focused,
+  node,
+  path,
+  selected,
+}: {
+  leafConfig: LeafConfig
+  children: ReactElement
+  focused: boolean
+  node: PortableTextObject
+  path: Path
+  selected: boolean
+}) {
+  const rendered = leafConfig.leaf.render({
+    attributes: {},
+    children,
+    focused,
+    node,
+    path,
+    selected,
+  })
+  if (rendered === null) {
+    return children
+  }
+  return rendered
 }
 
 function RenderChild({

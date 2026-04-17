@@ -1,7 +1,8 @@
 import type {InlineObjectSchemaType} from '@portabletext/schema'
 import {isTextBlock} from '@portabletext/schema'
-import {useContext, useRef, type ReactElement} from 'react'
+import React, {useContext, useRef, type ReactElement} from 'react'
 import {serializePath} from '../paths/serialize-path'
+import type {LeafConfig} from '../renderers/renderer.types'
 import type {RenderLeafProps} from '../slate/react/components/editable'
 import type {
   BlockAnnotationRenderProps,
@@ -21,6 +22,7 @@ interface RenderSpanProps extends RenderLeafProps {
   renderDecorator?: RenderDecoratorFunction
   readOnly: boolean
   schema: EditorSchema
+  leafConfig: LeafConfig | undefined
 }
 
 export function RenderSpan(props: RenderSpanProps) {
@@ -128,7 +130,7 @@ export function RenderSpan(props: RenderSpanProps) {
   /**
    * Support `renderChild` render function for the Span itself
    */
-  if (block && props.renderChild) {
+  if (block && props.renderChild && !props.leafConfig) {
     const child = block.children.find(
       (_child) => _child._key === props.leaf._key,
     ) // Ensure object equality
@@ -151,11 +153,56 @@ export function RenderSpan(props: RenderSpanProps) {
     }
   }
 
+  if (props.leafConfig) {
+    return (
+      <RenderLeafConfig
+        leafConfig={props.leafConfig}
+        attributes={{...props.attributes, ref: spanRef}}
+        focused={focused}
+        node={props.leaf}
+        path={props.path}
+        selected={selected}
+      >
+        {children}
+      </RenderLeafConfig>
+    )
+  }
+
   return (
     <span {...props.attributes} ref={spanRef}>
       {children}
     </span>
   )
+}
+
+function RenderLeafConfig({
+  leafConfig,
+  attributes,
+  children,
+  focused,
+  node,
+  path,
+  selected,
+}: {
+  leafConfig: LeafConfig
+} & Parameters<LeafConfig['leaf']['render']>[0]) {
+  const rendered = leafConfig.leaf.render({
+    attributes,
+    children,
+    focused,
+    node,
+    path,
+    selected,
+  })
+  if (rendered === null) {
+    const {ref, ...restAttributes} = attributes
+    return (
+      <span {...restAttributes} ref={ref as React.Ref<HTMLSpanElement>}>
+        {children}
+      </span>
+    )
+  }
+  return rendered
 }
 
 function RenderAnnotation({

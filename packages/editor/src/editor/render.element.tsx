@@ -23,6 +23,7 @@ import {RenderBlockObject} from './render.block-object'
 import {RenderContainer} from './render.container'
 import {RenderInlineObject} from './render.inline-object'
 import {RenderTextBlock} from './render.text-block'
+import {buildScopedName, findByScope} from './scoped-config-lookup'
 
 export function RenderElement(props: {
   attributes: RenderElementProps['attributes']
@@ -58,6 +59,16 @@ export function RenderElement(props: {
       : undefined
     return bareType ? configs.get(bareType) : undefined
   })
+
+  const elementIsInline = isInline(slateStatic, props.path)
+
+  const leafScope = elementIsInline
+    ? buildScopedName(containerScope, `block.${props.element._type}`)
+    : buildScopedName(containerScope, props.element._type)
+
+  const leafConfig = useSelector(editorActor, (s) =>
+    findByScope(s.context.leafConfigs, leafScope),
+  )
 
   if (containerConfig) {
     return (
@@ -95,11 +106,12 @@ export function RenderElement(props: {
     )
   }
 
-  if (isInline(slateStatic, props.path)) {
+  if (elementIsInline) {
     return (
       <RenderInlineObject
         attributes={props.attributes}
         element={props.element}
+        leafConfig={leafConfig}
         path={props.path}
         readOnly={props.readOnly}
         renderChild={props.renderChild}
@@ -120,6 +132,7 @@ export function RenderElement(props: {
           : undefined
       }
       element={props.element}
+      leafConfig={leafConfig}
       path={props.path}
       readOnly={props.readOnly}
       renderBlock={props.renderBlock}

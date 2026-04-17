@@ -1,5 +1,11 @@
-import type {PortableTextBlock, SchemaDefinition} from '@portabletext/schema'
+import type {
+  PortableTextBlock,
+  PortableTextObject,
+  PortableTextSpan,
+  SchemaDefinition,
+} from '@portabletext/schema'
 import type {ReactElement} from 'react'
+import type {Path} from '../slate/interfaces/path'
 
 /** @internal */
 type ExtractArrayFields<TFields> = TFields extends readonly [
@@ -152,4 +158,156 @@ export function defineContainer(config: Container): Container {
  */
 export type ContainerConfig = {
   container: Container
+}
+// === Leaf ===
+
+/** @internal */
+type TextBlockScopes<TSchema extends SchemaDefinition> =
+  CollectAllTypes<TSchema> extends infer TEntry
+    ? TEntry extends {arrayFields: never}
+      ? never
+      : TEntry extends {
+            scopedName: infer TName extends string
+            arrayFields: 'children'
+          }
+        ? TName
+        : never
+    : never
+
+/** @internal */
+type InlineObjectNames<TSchema extends SchemaDefinition> =
+  TSchema['inlineObjects'] extends ReadonlyArray<infer TInline>
+    ? TInline extends {name: infer TName extends string}
+      ? TName
+      : never
+    : never
+
+/** @internal */
+type TextBlockLeafScopes<TSchema extends SchemaDefinition> =
+  TextBlockScopes<TSchema> extends infer TScope extends string
+    ? `${TScope}.span` | `${TScope}.${InlineObjectNames<TSchema>}`
+    : never
+
+/** @internal */
+type CollectVoidLeafScopes<TFields, TScope extends string> =
+  WalkFields<TFields> extends infer TMembers
+    ? TMembers extends {
+        type: infer TTypeName extends string
+        fields: infer TNestedFields
+      }
+      ? TTypeName extends 'block'
+        ? never
+        : ExtractArrayFields<TNestedFields> extends never
+          ? `${TScope}.${TTypeName}`
+          : CollectVoidLeafScopes<TNestedFields, `${TScope}.${TTypeName}`>
+      : TMembers extends {type: infer TTypeName extends string}
+        ? `${TScope}.${TTypeName}`
+        : never
+    : never
+
+/** @internal */
+type AllVoidLeafScopes<TSchema extends SchemaDefinition> =
+  TSchema['blockObjects'] extends ReadonlyArray<infer TBlockObject>
+    ? TBlockObject extends {
+        name: infer TName extends string
+        fields?: infer TFields
+      }
+      ? CollectVoidLeafScopes<TFields, TName>
+      : never
+    : never
+
+/** @internal */
+type VoidBlockObjectNames<TSchema extends SchemaDefinition> =
+  TSchema['blockObjects'] extends ReadonlyArray<infer TBlockObject>
+    ? TBlockObject extends {
+        name: infer TName extends string
+        fields?: infer TFields
+      }
+      ? ExtractArrayFields<TFields> extends never
+        ? TName
+        : never
+      : TBlockObject extends {name: infer TName extends string}
+        ? TName
+        : never
+    : never
+
+/** @internal */
+type AllLeafScopedNames<TSchema extends SchemaDefinition> =
+  | 'span'
+  | InlineObjectNames<TSchema>
+  | VoidBlockObjectNames<TSchema>
+  | TextBlockLeafScopes<TSchema>
+  | AllVoidLeafScopes<TSchema>
+
+/** @internal */
+type SchemaLeafConfig<TSchema extends SchemaDefinition> =
+  AllLeafScopedNames<TSchema> extends infer TScope extends string
+    ? TScope extends TScope
+      ? {
+          scope: TScope
+          render: (props: {
+            attributes: Record<string, unknown>
+            children: ReactElement
+            focused: boolean
+            node: PortableTextBlock | PortableTextSpan | PortableTextObject
+            path: Path
+            selected: boolean
+          }) => ReactElement | null
+        }
+      : never
+    : never
+
+/**
+ * @internal
+ */
+export type Leaf = {
+  scope: string
+  render: (props: {
+    attributes: Record<string, unknown>
+    children: ReactElement
+    focused: boolean
+    node: PortableTextBlock | PortableTextSpan | PortableTextObject
+    path: Path
+    selected: boolean
+  }) => ReactElement | null
+}
+
+/**
+ * @internal
+ *
+ * Define a leaf renderer for a non-container node type (spans, inline objects,
+ * block objects).
+ *
+ * When called with a schema type parameter, constrains `scope` to valid
+ * leaf scoped names:
+ *
+ * ```ts
+ * defineLeaf<typeof schema>({
+ *   scope: 'callout.block.span',
+ *   render: ({attributes, children}) => <span {...attributes}>{children}</span>,
+ * })
+ * ```
+ *
+ * Without a schema type parameter, accepts any string:
+ *
+ * ```ts
+ * defineLeaf({
+ *   scope: 'block.span',
+ *   render: ({attributes, children}) => <span {...attributes}>{children}</span>,
+ * })
+ * ```
+ */
+export function defineLeaf<TSchema extends SchemaDefinition>(
+  config: SchemaLeafConfig<TSchema>,
+): Leaf
+export function defineLeaf(config: Leaf): Leaf
+export function defineLeaf(config: Leaf): Leaf {
+  return config
+}
+
+/**
+ * @internal
+ */
+export type LeafConfig = {
+  leaf: Leaf
 }
