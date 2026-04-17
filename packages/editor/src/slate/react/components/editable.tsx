@@ -262,7 +262,7 @@ export const Editable = forwardRef(
 
           const androidInputManager = androidInputManagerRef.current
           if (
-            (IS_ANDROID || !DOMEditor.isComposing(editor)) &&
+            (IS_ANDROID || !editor.composing) &&
             (!state.isUpdatingSelection || androidInputManager?.isFlushing())
           ) {
             const root = DOMEditor.findDocumentOrShadowRoot(editor)
@@ -303,7 +303,7 @@ export const Editable = forwardRef(
 
               if (range) {
                 if (
-                  !DOMEditor.isComposing(editor) &&
+                  !editor.composing &&
                   !androidInputManager?.hasPendingChanges() &&
                   !androidInputManager?.isFlushing()
                 ) {
@@ -353,7 +353,7 @@ export const Editable = forwardRef(
 
       if (
         !domSelection ||
-        !DOMEditor.isFocused(editor) ||
+        !editor.focused ||
         androidInputManagerRef.current?.hasPendingAction()
       ) {
         return
@@ -459,7 +459,7 @@ export const Editable = forwardRef(
         }
 
         if (newDomRange) {
-          if (DOMEditor.isComposing(editor) && !IS_ANDROID) {
+          if (editor.composing && !IS_ANDROID) {
             domSelection.collapseToEnd()
           } else if (isBackwardRange(selection!)) {
             domSelection.setBaseAndExtent(
@@ -605,7 +605,7 @@ export const Editable = forwardRef(
 
           // COMPAT: use composition change events as a hint to where we should insert
           // composition text if we aren't composing to work around https://github.com/ianstormtaylor/slate/issues/5038
-          if (isCompositionChange && DOMEditor.isComposing(editor)) {
+          if (isCompositionChange && editor.composing) {
             return
           }
 
@@ -869,7 +869,7 @@ export const Editable = forwardRef(
                 // then we will abort because we're still composing and the selection
                 // won't be updated properly.
                 // https://www.w3.org/TR/input-events-2/
-                if (DOMEditor.isComposing(editor)) {
+                if (editor.composing) {
                   editor.composing = false
                 }
               }
@@ -1123,7 +1123,7 @@ export const Editable = forwardRef(
                     DOMEditor.hasSelectableTarget(editor, event.target)
                   ) {
                     event.preventDefault()
-                    if (!DOMEditor.isComposing(editor)) {
+                    if (!editor.composing) {
                       const text = (event as any).data as string
                       editorActor.send({
                         type: 'behavior event',
@@ -1160,7 +1160,7 @@ export const Editable = forwardRef(
                   // This means undo can be triggered even when the div is not focused,
                   // and it only triggers the input event for the node. (2024/10/09)
                   if (
-                    !DOMEditor.isFocused(editor) &&
+                    !editor.focused &&
                     isDOMNode(event.target) &&
                     DOMEditor.hasEditableTarget(editor, event.target)
                   ) {
@@ -1335,7 +1335,7 @@ export const Editable = forwardRef(
                     return
                   }
                   if (DOMEditor.hasSelectableTarget(editor, event.target)) {
-                    if (DOMEditor.isComposing(editor)) {
+                    if (editor.composing) {
                       Promise.resolve().then(() => {
                         editor.composing = false
                       })
@@ -1397,7 +1397,7 @@ export const Editable = forwardRef(
                     !isEventHandled(event, attributes.onCompositionUpdate) &&
                     !isDOMEventTargetInput(event)
                   ) {
-                    if (!DOMEditor.isComposing(editor)) {
+                    if (!editor.composing) {
                       editor.composing = true
                     }
                   }
@@ -1483,16 +1483,13 @@ export const Editable = forwardRef(
                     // COMPAT: The composition end event isn't fired reliably in all browsers,
                     // so we sometimes might end up stuck in a composition state even though we
                     // aren't composing any more.
-                    if (
-                      DOMEditor.isComposing(editor) &&
-                      nativeEvent.isComposing === false
-                    ) {
+                    if (editor.composing && nativeEvent.isComposing === false) {
                       editor.composing = false
                     }
 
                     if (
                       isEventHandled(event, attributes.onKeyDown) ||
-                      DOMEditor.isComposing(editor)
+                      editor.composing
                     ) {
                       return
                     }

@@ -27,7 +27,7 @@ export type RemoveTextOperation = {
 /**
  * Data for a `set` inverse (no nested inverse field).
  */
-export type SetOperationData = {
+type SetOperationData = {
   type: 'set'
   path: Path
   value: unknown
@@ -36,7 +36,7 @@ export type SetOperationData = {
 /**
  * Data for an `insert` inverse (no nested inverse field).
  */
-export type InsertOperationData = {
+type InsertOperationData = {
   type: 'insert'
   path: Path
   node: Node
@@ -46,7 +46,7 @@ export type InsertOperationData = {
 /**
  * Data for an `unset` inverse (no nested inverse field).
  */
-export type UnsetOperationData = {
+type UnsetOperationData = {
   type: 'unset'
   path: Path
 }
@@ -58,7 +58,7 @@ export type UnsetOperationData = {
  * (applied via `withRemoteChanges`) skip the history plugin and do not need
  * inverse data.
  */
-export type SetOperation = {
+type SetOperation = {
   type: 'set'
   path: Path
   value: unknown
@@ -72,7 +72,7 @@ export type SetOperation = {
  * Node removal: path is `[...parentPath, childFieldName, {_key: nodeKey}]`
  * (last segment is a keyed segment pointing to the node to remove).
  */
-export type UnsetOperation = {
+type UnsetOperation = {
   type: 'unset'
   path: Path
   inverse?: SetOperationData | InsertOperationData

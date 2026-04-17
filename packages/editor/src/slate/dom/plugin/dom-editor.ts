@@ -130,16 +130,6 @@ interface DOMEditorInterface {
   hasTarget: (editor: Editor, target: EventTarget | null) => target is DOMNode
 
   /**
-   * Check if the user is currently composing inside the editor.
-   */
-  isComposing: (editor: Editor) => boolean
-
-  /**
-   * Check if the editor is focused.
-   */
-  isFocused: (editor: Editor) => boolean
-
-  /**
    * Check if the target is inside void and in an non-readonly editor.
    */
   isTargetInsideNonReadonlyVoid: (
@@ -349,12 +339,6 @@ export const DOMEditor: DOMEditorInterface = {
 
   hasTarget: (editor, target): target is DOMNode =>
     isDOMNode(target) && DOMEditor.hasDOMNode(editor, target),
-
-  isComposing: (editor) => {
-    return !!editor.composing
-  },
-
-  isFocused: (editor) => !!editor.focused,
 
   isTargetInsideNonReadonlyVoid: (editor, target) => {
     if (editor.readOnly) {
