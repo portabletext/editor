@@ -135,6 +135,7 @@ export interface RenderLeafProps {
 export interface RenderTextProps {
   text: PortableTextSpan
   children: any
+  path: Path
   attributes: {
     'data-slate-node': 'text'
     'data-pt-path': string

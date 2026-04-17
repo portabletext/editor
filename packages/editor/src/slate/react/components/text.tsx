@@ -73,6 +73,7 @@ const Text = (props: {
     text,
     children,
     attributes,
+    path,
   })
 }
 
