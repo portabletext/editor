@@ -81,6 +81,7 @@ export function RenderElement(props: {
             : undefined
         }
         element={props.element}
+        path={props.path}
         readOnly={props.readOnly}
         renderBlock={props.renderBlock}
         renderListItem={props.renderListItem}
@@ -119,6 +120,7 @@ export function RenderElement(props: {
           : undefined
       }
       element={props.element}
+      path={props.path}
       readOnly={props.readOnly}
       renderBlock={props.renderBlock}
       schema={schema}

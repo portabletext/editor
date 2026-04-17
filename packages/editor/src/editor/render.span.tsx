@@ -36,8 +36,8 @@ export function RenderSpan(props: RenderSpanProps) {
 
   const selectionState = useContext(SelectionStateContext)
   const serializedPath = serializePath(props.path)
-  const focused = selectionState.focusedChildPath === serializedPath
-  const selected = selectionState.selectedChildPaths.has(serializedPath)
+  const focused = selectionState.focusedLeafPath === serializedPath
+  const selected = selectionState.selectedLeafPaths.has(serializedPath)
 
   const decoratorSchemaTypes = schema.decorators.map(
     (decorator) => decorator.name,
