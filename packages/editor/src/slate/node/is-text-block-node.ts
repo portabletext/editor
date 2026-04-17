@@ -2,7 +2,7 @@ import type {PortableTextObject, PortableTextSpan} from '@portabletext/schema'
 import type {EditorSchema} from '../../editor/editor-schema'
 import {isTypedObject} from '../../utils/asserters'
 
-export type TextBlockNode = {
+type TextBlockNode = {
   _type: string
   _key: string
   children?: Array<PortableTextSpan | PortableTextObject>
