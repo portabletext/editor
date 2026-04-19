@@ -1,5 +1,6 @@
-import {useContext, useEffect} from 'react'
-import {EditorActorContext} from '../editor/editor-actor-context'
+import {useEffect} from 'react'
+import type {InternalEditor} from '../editor/create-editor'
+import {useEditor} from '../editor/use-editor'
 import type {Container} from '../renderers/renderer.types'
 
 /**
@@ -8,26 +9,19 @@ import type {Container} from '../renderers/renderer.types'
 export function ContainerPlugin(props: {
   containers: Array<{container: Container}>
 }) {
-  const editorActor = useContext(EditorActorContext)
+  const editor = useEditor() as InternalEditor
 
   useEffect(() => {
-    const containerConfigs = props.containers.map((containerConfig) => {
-      editorActor.send({
-        type: 'register container',
-        containerConfig,
-      })
-      return containerConfig
-    })
+    const unregisters = props.containers.map((config) =>
+      editor.registerContainer(config),
+    )
 
     return () => {
-      for (const containerConfig of containerConfigs) {
-        editorActor.send({
-          type: 'unregister container',
-          containerConfig,
-        })
+      for (const unregister of unregisters) {
+        unregister()
       }
     }
-  }, [editorActor, props.containers])
+  }, [editor, props.containers])
 
   return null
 }

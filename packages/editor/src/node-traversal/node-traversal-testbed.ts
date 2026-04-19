@@ -1,6 +1,43 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
-import type {ChildArrayField} from '../schema/resolve-containers'
+import type {EditorSchema} from '../editor/editor-schema'
+import type {Container, ContainerConfig} from '../renderers/renderer.types'
+import {makeContainerConfig} from '../schema/make-container-config'
+import {resolveContainers} from '../schema/resolve-containers'
+
+/**
+ * Container definitions for the testbed's table structure
+ * (`table` → `rows`, `row` → `cells`, `cell` → `content`).
+ */
+export const tableContainers: ReadonlyArray<Container> = [
+  {scope: '$..table', field: 'rows'},
+  {scope: '$..table.row', field: 'cells'},
+  {scope: '$..table.row.cell', field: 'content'},
+]
+
+/**
+ * Container definition for the testbed's code block
+ * (`code-block` → `code`).
+ */
+export const codeBlockContainer: Container = {
+  scope: '$..code-block',
+  field: 'code',
+}
+
+/**
+ * Resolve the testbed's containers with a custom set of container
+ * definitions. Useful for tests that vary which containers are registered.
+ */
+export function resolveTestbedContainers(
+  schema: EditorSchema,
+  containers: ReadonlyArray<Container>,
+) {
+  const configs = new Map<string, ContainerConfig>()
+  for (const container of containers) {
+    configs.set(container.scope, makeContainerConfig(schema, container))
+  }
+  return resolveContainers(schema, configs)
+}
 
 /**
  * A comprehensive test fixture for node traversal tests.
@@ -41,60 +78,6 @@ import type {ChildArrayField} from '../schema/resolve-containers'
  *                     └── emptyBlock            [4, 1, 0, 0]
  *                         └── emptySpan ""      [4, 1, 0, 0, 0]
  */
-const allContainers = new Map<string, ChildArrayField>([
-  ['code-block', {name: 'code', type: 'array', of: [{type: 'block'}]}],
-  [
-    'table',
-    {
-      name: 'rows',
-      type: 'array',
-      of: [
-        {
-          type: 'row',
-          fields: [
-            {
-              name: 'cells',
-              type: 'array',
-              of: [
-                {
-                  type: 'cell',
-                  fields: [
-                    {
-                      name: 'content',
-                      type: 'array',
-                      of: [{type: 'block'}],
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    },
-  ],
-  [
-    'table.row',
-    {
-      name: 'cells',
-      type: 'array',
-      of: [
-        {
-          type: 'cell',
-          fields: [
-            {
-              name: 'content',
-              type: 'array',
-              of: [{type: 'block'}],
-            },
-          ],
-        },
-      ],
-    },
-  ],
-  ['table.row.cell', {name: 'content', type: 'array', of: [{type: 'block'}]}],
-])
-
 export function createNodeTraversalTestbed() {
   const keyGenerator = createTestKeyGenerator()
 
@@ -255,9 +238,14 @@ export function createNodeTraversalTestbed() {
     blockIndexMap.set(value[i]!._key, i)
   }
 
+  const containers = resolveTestbedContainers(schema, [
+    codeBlockContainer,
+    ...tableContainers,
+  ])
+
   const context = {
     schema,
-    containers: allContainers,
+    containers,
     value,
     blockIndexMap,
   }

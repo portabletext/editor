@@ -365,7 +365,7 @@ function resolveContainerScopePath(
   }
 
   // Nested: look through parent container's `of` array
-  const parentField = containers.get(parentScopePath)
+  const parentField = containers.get(parentScopePath)?.field
 
   if (!parentField) {
     return undefined
@@ -391,7 +391,7 @@ function convertContainerToPTE(
   keyGenerator: () => string,
   scopePath: string,
 ): PortableTextObject {
-  const containerField = containers.get(scopePath)
+  const containerField = containers.get(scopePath)?.field
 
   if (!containerField) {
     return {
@@ -707,9 +707,9 @@ function resolveContainerPoint(
     if (isTextBlock(schemaContext, currentNode as PortableTextBlock)) {
       childFieldName = 'children'
     } else if (typeof currentNode['_type'] === 'string') {
-      for (const [, containerField] of containers) {
-        if (currentNode[containerField.name] !== undefined) {
-          childFieldName = containerField.name
+      for (const [, containerConfig] of containers) {
+        if (currentNode[containerConfig.field.name] !== undefined) {
+          childFieldName = containerConfig.field.name
           break
         }
       }
@@ -820,9 +820,9 @@ function indexedPathToKeyedPath(
       childFieldName = 'children'
     } else if (typeof node['_type'] === 'string') {
       // Look up the field name from the containers map
-      for (const [, containerField] of containers) {
-        if (node[containerField.name] !== undefined) {
-          childFieldName = containerField.name
+      for (const [, containerConfig] of containers) {
+        if (node[containerConfig.field.name] !== undefined) {
+          childFieldName = containerConfig.field.name
           break
         }
       }

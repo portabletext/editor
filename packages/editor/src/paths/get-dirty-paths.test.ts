@@ -1,6 +1,7 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
 import {describe, expect, test} from 'vitest'
-import type {Containers} from '../schema/resolve-containers'
+import {makeContainerConfig} from '../schema/make-container-config'
+import {resolveContainers, type Containers} from '../schema/resolve-containers'
 import type {Node} from '../slate/interfaces/node'
 import {getDirtyPaths} from './get-dirty-paths'
 
@@ -13,6 +14,38 @@ const schemaDefinition = defineSchema({
       name: 'callout',
       fields: [{name: 'content', type: 'array', of: [{type: 'block'}]}],
     },
+    {
+      name: 'table',
+      fields: [
+        {
+          name: 'rows',
+          type: 'array',
+          of: [
+            {
+              type: 'row',
+              fields: [
+                {
+                  name: 'cells',
+                  type: 'array',
+                  of: [
+                    {
+                      type: 'cell',
+                      fields: [
+                        {
+                          name: 'content',
+                          type: 'array',
+                          of: [{type: 'block'}],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
   ],
 })
 
@@ -20,15 +53,45 @@ const schema = compileSchema(schemaDefinition)
 
 const emptyContainers: Containers = new Map()
 
-const containerContainers: Containers = new Map([
-  ['callout', {name: 'content', type: 'array', of: [{type: 'block'}]}],
-])
+const containerContainers: Containers = resolveContainers(
+  schema,
+  new Map([
+    [
+      '$..callout',
+      makeContainerConfig(schema, {
+        scope: '$..callout',
+        field: 'content',
+      }),
+    ],
+  ]),
+)
 
-const tableContainers: Containers = new Map([
-  ['table', {name: 'rows', type: 'array', of: [{type: 'row'}]}],
-  ['table.row', {name: 'cells', type: 'array', of: [{type: 'cell'}]}],
-  ['table.row.cell', {name: 'content', type: 'array', of: [{type: 'block'}]}],
-])
+const tableContainers: Containers = resolveContainers(
+  schema,
+  new Map([
+    [
+      '$..table',
+      makeContainerConfig(schema, {
+        scope: '$..table',
+        field: 'rows',
+      }),
+    ],
+    [
+      '$..table.row',
+      makeContainerConfig(schema, {
+        scope: '$..table.row',
+        field: 'cells',
+      }),
+    ],
+    [
+      '$..table.row.cell',
+      makeContainerConfig(schema, {
+        scope: '$..table.row.cell',
+        field: 'content',
+      }),
+    ],
+  ]),
+)
 
 describe(getDirtyPaths.name, () => {
   describe('insert_text / remove_text', () => {

@@ -389,8 +389,8 @@ describe('renderChild', () => {
       inlineObjects: [{name: 'image'}],
     })
 
-    const tableContainer = defineContainer({
-      scope: 'table',
+    const tableContainer = defineContainer<typeof schemaDefinition>({
+      scope: '$..table',
       field: 'rows',
       render: ({attributes, children}) => (
         <table {...attributes}>
@@ -399,14 +399,14 @@ describe('renderChild', () => {
       ),
     })
 
-    const rowContainer = defineContainer({
-      scope: 'table.row',
+    const rowContainer = defineContainer<typeof schemaDefinition>({
+      scope: '$..table.row',
       field: 'cells',
       render: ({attributes, children}) => <tr {...attributes}>{children}</tr>,
     })
 
-    const cellContainer = defineContainer({
-      scope: 'table.row.cell',
+    const cellContainer = defineContainer<typeof schemaDefinition>({
+      scope: '$..table.row.cell',
       field: 'content',
       render: ({attributes, children}) => (
         <td data-testid="cell" {...attributes}>

@@ -19,8 +19,13 @@ import type {Converter} from '../converters/converter.types'
 import {debug} from '../internal-utils/debug'
 import type {EventPosition} from '../internal-utils/event-position'
 import {sortByPriority} from '../priority/priority.sort'
-import type {ContainerConfig} from '../renderers/renderer.types'
-import {resolveContainers} from '../schema/resolve-containers'
+import type {Container, ContainerConfig} from '../renderers/renderer.types'
+import {
+  resolveContainerField,
+  resolveContainers,
+  type Containers,
+} from '../schema/resolve-containers'
+import {parseScope} from '../scope/parse-scope'
 import {DOMEditor} from '../slate/dom/plugin/dom-editor'
 import {normalize} from '../slate/editor/normalize'
 import type {NamespaceEvent, OmitFromUnion} from '../type-utils'
@@ -35,6 +40,22 @@ import type {
 } from './relay-machine'
 
 export * from 'xstate/guards'
+
+/**
+ * Extract the set of registered container configs from a resolved
+ * `containers` map. A single config may match multiple candidate chains
+ * (appearing in multiple `containers` entries); this produces one entry
+ * per distinct scope string.
+ */
+function collectRegisteredConfigs(
+  containers: Containers,
+): Map<string, ContainerConfig> {
+  const configs = new Map<string, ContainerConfig>()
+  for (const config of containers.values()) {
+    configs.set(config.container.scope, config)
+  }
+  return configs
+}
 
 /**
  * @public
@@ -117,11 +138,11 @@ type InternalEditorEvent =
   | {type: 'drop'}
   | {
       type: 'register container'
-      containerConfig: ContainerConfig
+      container: Container
     }
   | {
       type: 'unregister container'
-      containerConfig: ContainerConfig
+      container: Container
     }
   | {type: 'add slate editor'; editor: PortableTextSlateEditor}
 
@@ -176,19 +197,6 @@ export function rerouteExternalBehaviorEvent({
   }
 }
 
-function syncContainers(context: {
-  schema: EditorSchema
-  containerConfigs: Map<string, ContainerConfig>
-  slateEditor?: PortableTextSlateEditor
-}) {
-  const containers = resolveContainers(context.schema, context.containerConfigs)
-  if (context.slateEditor) {
-    context.slateEditor.containers = containers
-    normalize(context.slateEditor, {force: true})
-    context.slateEditor.onChange()
-  }
-}
-
 /**
  * @internal
  */
@@ -197,7 +205,7 @@ export const editorMachine = setup({
     context: {} as {
       behaviors: Set<BehaviorConfig>
       behaviorsSorted: boolean
-      containerConfigs: Map<string, ContainerConfig>
+      containers: Containers
       converters: Set<Converter>
       keyGenerator: () => string
       pendingEvents: Array<InternalPatchEvent | MutationEvent>
@@ -248,28 +256,65 @@ export const editorMachine = setup({
           : context.slateEditor
       },
     }),
-    'register container': assign({
-      containerConfigs: ({context, event}) => {
-        assertEvent(event, 'register container')
-        const containerConfigs = new Map(context.containerConfigs)
-        containerConfigs.set(
-          event.containerConfig.container.scope,
-          event.containerConfig,
+    'register container': assign(({context, event}) => {
+      assertEvent(event, 'register container')
+      const parsedScope = parseScope(event.container.scope)
+      if (!parsedScope) {
+        console.warn(
+          `registerContainer: invalid scope "${event.container.scope}". Container not registered.`,
         )
-        return containerConfigs
-      },
+        return {}
+      }
+      const field = resolveContainerField(
+        context.schema,
+        event.container.scope,
+        event.container.field,
+      )
+      if (!field) {
+        console.warn(
+          `registerContainer: field "${event.container.field}" not found on terminal type of scope "${event.container.scope}". Container not registered.`,
+        )
+        return {}
+      }
+      const containerConfig: ContainerConfig = {
+        container: event.container,
+        parsedScope,
+        field,
+      }
+      const nextConfigs = collectRegisteredConfigs(context.containers)
+      nextConfigs.set(event.container.scope, containerConfig)
+      const containers = resolveContainers(context.schema, nextConfigs)
+      if (context.slateEditor) {
+        context.slateEditor.containers = containers
+        normalize(context.slateEditor, {force: true})
+        context.slateEditor.onChange()
+      }
+      return {containers}
     }),
-    'unregister container': assign({
-      containerConfigs: ({context, event}) => {
-        assertEvent(event, 'unregister container')
-        const containerConfigs = new Map(context.containerConfigs)
-        containerConfigs.delete(event.containerConfig.container.scope)
-        return containerConfigs
-      },
+    'unregister container': assign(({context, event}) => {
+      assertEvent(event, 'unregister container')
+      const nextConfigs = collectRegisteredConfigs(context.containers)
+      nextConfigs.delete(event.container.scope)
+      const containers = resolveContainers(context.schema, nextConfigs)
+      if (context.slateEditor) {
+        context.slateEditor.containers = containers
+        normalize(context.slateEditor, {force: true})
+        context.slateEditor.onChange()
+      }
+      return {containers}
     }),
-    'sync containers': ({context}) => {
-      syncContainers(context)
-    },
+    'sync containers': assign(({context}) => {
+      const containers = resolveContainers(
+        context.schema,
+        collectRegisteredConfigs(context.containers),
+      )
+      if (context.slateEditor) {
+        context.slateEditor.containers = containers
+        normalize(context.slateEditor, {force: true})
+        context.slateEditor.onChange()
+      }
+      return {containers}
+    }),
     'emit patch event': emit(({event}) => {
       assertEvent(event, 'internal.patch')
       return event
@@ -445,7 +490,7 @@ export const editorMachine = setup({
   context: ({input}) => ({
     behaviors: new Set(coreBehaviorsConfig),
     behaviorsSorted: false,
-    containerConfigs: new Map(),
+    containers: new Map(),
     converters: new Set(input.converters ?? []),
     keyGenerator: input.keyGenerator,
     pendingEvents: [],
@@ -462,10 +507,10 @@ export const editorMachine = setup({
       actions: ['add slate editor to context', 'sync containers'],
     },
     'register container': {
-      actions: ['register container', 'sync containers'],
+      actions: ['register container'],
     },
     'unregister container': {
-      actions: ['unregister container', 'sync containers'],
+      actions: ['unregister container'],
     },
     'update selection': {
       actions: [

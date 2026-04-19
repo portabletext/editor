@@ -1,7 +1,11 @@
 import {describe, expect, test} from 'vitest'
-import type {ChildArrayField} from '../schema/resolve-containers'
 import {getChildren} from './get-children'
-import {createNodeTraversalTestbed} from './node-traversal-testbed'
+import {
+  codeBlockContainer,
+  createNodeTraversalTestbed,
+  resolveTestbedContainers,
+  tableContainers,
+} from './node-traversal-testbed'
 
 describe(getChildren.name, () => {
   const testbed = createNodeTraversalTestbed()
@@ -162,69 +166,18 @@ describe(getChildren.name, () => {
   })
 
   test('non-editable code block returns empty array', () => {
-    const tableOnly = new Map<string, ChildArrayField>([
-      [
-        'table',
-        {
-          name: 'rows',
-          type: 'array',
-          of: [
-            {
-              type: 'row',
-              fields: [
-                {
-                  name: 'cells',
-                  type: 'array',
-                  of: [
-                    {
-                      type: 'cell',
-                      fields: [
-                        {
-                          name: 'content',
-                          type: 'array',
-                          of: [{type: 'block'}],
-                        },
-                      ],
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-        },
-      ],
-      [
-        'table.row',
-        {
-          name: 'cells',
-          type: 'array',
-          of: [
-            {
-              type: 'cell',
-              fields: [
-                {
-                  name: 'content',
-                  type: 'array',
-                  of: [{type: 'block'}],
-                },
-              ],
-            },
-          ],
-        },
-      ],
-      [
-        'table.row.cell',
-        {name: 'content', type: 'array', of: [{type: 'block'}]},
-      ],
-    ])
+    const tableOnly = resolveTestbedContainers(
+      testbed.context.schema,
+      tableContainers,
+    )
     expect(
       getChildren({...testbed.context, containers: tableOnly}, [{_key: 'k11'}]),
     ).toEqual([])
   })
 
   test('non-editable table returns empty array', () => {
-    const codeOnly = new Map<string, ChildArrayField>([
-      ['code-block', {name: 'code', type: 'array', of: [{type: 'block'}]}],
+    const codeOnly = resolveTestbedContainers(testbed.context.schema, [
+      codeBlockContainer,
     ])
     expect(
       getChildren({...testbed.context, containers: codeOnly}, [{_key: 'k26'}]),

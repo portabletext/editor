@@ -1,7 +1,10 @@
 import {describe, expect, test} from 'vitest'
-import type {ChildArrayField} from '../schema/resolve-containers'
 import {getFirstChild} from './get-first-child'
-import {createNodeTraversalTestbed} from './node-traversal-testbed'
+import {
+  createNodeTraversalTestbed,
+  resolveTestbedContainers,
+  tableContainers,
+} from './node-traversal-testbed'
 
 describe(getFirstChild.name, () => {
   const testbed = createNodeTraversalTestbed()
@@ -51,61 +54,10 @@ describe(getFirstChild.name, () => {
   })
 
   test('first of non-editable container returns undefined', () => {
-    const tableOnly = new Map<string, ChildArrayField>([
-      [
-        'table',
-        {
-          name: 'rows',
-          type: 'array',
-          of: [
-            {
-              type: 'row',
-              fields: [
-                {
-                  name: 'cells',
-                  type: 'array',
-                  of: [
-                    {
-                      type: 'cell',
-                      fields: [
-                        {
-                          name: 'content',
-                          type: 'array',
-                          of: [{type: 'block'}],
-                        },
-                      ],
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-        },
-      ],
-      [
-        'table.row',
-        {
-          name: 'cells',
-          type: 'array',
-          of: [
-            {
-              type: 'cell',
-              fields: [
-                {
-                  name: 'content',
-                  type: 'array',
-                  of: [{type: 'block'}],
-                },
-              ],
-            },
-          ],
-        },
-      ],
-      [
-        'table.row.cell',
-        {name: 'content', type: 'array', of: [{type: 'block'}]},
-      ],
-    ])
+    const tableOnly = resolveTestbedContainers(
+      testbed.context.schema,
+      tableContainers,
+    )
     expect(
       getFirstChild({...testbed.context, containers: tableOnly}, [
         {_key: 'k11'},

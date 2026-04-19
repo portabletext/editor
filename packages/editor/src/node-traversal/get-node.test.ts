@@ -1,7 +1,10 @@
 import {describe, expect, test} from 'vitest'
-import type {ChildArrayField} from '../schema/resolve-containers'
 import {getNode} from './get-node'
-import {createNodeTraversalTestbed} from './node-traversal-testbed'
+import {
+  createNodeTraversalTestbed,
+  resolveTestbedContainers,
+  tableContainers,
+} from './node-traversal-testbed'
 
 describe(getNode.name, () => {
   const testbed = createNodeTraversalTestbed()
@@ -249,61 +252,10 @@ describe(getNode.name, () => {
   })
 
   test('node inside non-editable container returns undefined', () => {
-    const tableOnly = new Map<string, ChildArrayField>([
-      [
-        'table',
-        {
-          name: 'rows',
-          type: 'array',
-          of: [
-            {
-              type: 'row',
-              fields: [
-                {
-                  name: 'cells',
-                  type: 'array',
-                  of: [
-                    {
-                      type: 'cell',
-                      fields: [
-                        {
-                          name: 'content',
-                          type: 'array',
-                          of: [{type: 'block'}],
-                        },
-                      ],
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-        },
-      ],
-      [
-        'table.row',
-        {
-          name: 'cells',
-          type: 'array',
-          of: [
-            {
-              type: 'cell',
-              fields: [
-                {
-                  name: 'content',
-                  type: 'array',
-                  of: [{type: 'block'}],
-                },
-              ],
-            },
-          ],
-        },
-      ],
-      [
-        'table.row.cell',
-        {name: 'content', type: 'array', of: [{type: 'block'}]},
-      ],
-    ])
+    const tableOnly = resolveTestbedContainers(
+      testbed.context.schema,
+      tableContainers,
+    )
     expect(
       getNode({...testbed.context, containers: tableOnly}, [
         {_key: 'k11'},

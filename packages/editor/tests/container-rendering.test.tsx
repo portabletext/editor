@@ -30,8 +30,8 @@ const schemaDefinition = defineSchema({
   ],
 })
 
-const calloutContainer = defineContainer({
-  scope: 'callout',
+const calloutContainer = defineContainer<typeof schemaDefinition>({
+  scope: '$..callout',
   field: 'content',
   render: ({attributes, children}) => (
     <div data-testid="callout" {...attributes}>
@@ -166,8 +166,8 @@ describe('container rendering', () => {
 
     const receivedNodes: Array<{_type: string; _key: string}> = []
 
-    const trackingContainer = defineContainer({
-      scope: 'callout',
+    const trackingContainer = defineContainer<typeof schemaDefinition>({
+      scope: '$..callout',
       field: 'content',
       render: ({attributes, children, node}) => {
         receivedNodes.push({_type: node._type, _key: node._key})
@@ -263,8 +263,8 @@ describe('table with nested rows and cells', () => {
     ],
   })
 
-  const tableContainer = defineContainer({
-    scope: 'table',
+  const tableContainer = defineContainer<typeof tableSchemaDefinition>({
+    scope: '$..table',
     field: 'rows',
     render: ({attributes, children}) => (
       <table data-testid="table" {...attributes}>
@@ -273,8 +273,8 @@ describe('table with nested rows and cells', () => {
     ),
   })
 
-  const rowContainer = defineContainer({
-    scope: 'table.row',
+  const rowContainer = defineContainer<typeof tableSchemaDefinition>({
+    scope: '$..table.row',
     field: 'cells',
     render: ({attributes, children}) => (
       <tr data-testid="row" {...attributes}>
@@ -283,8 +283,8 @@ describe('table with nested rows and cells', () => {
     ),
   })
 
-  const cellContainer = defineContainer({
-    scope: 'table.row.cell',
+  const cellContainer = defineContainer<typeof tableSchemaDefinition>({
+    scope: '$..table.row.cell',
     field: 'content',
     render: ({attributes, children}) => (
       <td data-testid="cell" {...attributes}>
@@ -429,8 +429,8 @@ describe('container with non-editable fields', () => {
     ],
   })
 
-  const cardContainer = defineContainer({
-    scope: 'card',
+  const cardContainer = defineContainer<typeof cardSchemaDefinition>({
+    scope: '$..card',
     field: 'body',
     render: ({attributes, children}) => (
       <div data-testid="card" {...attributes}>
@@ -541,8 +541,8 @@ describe('block scope and specificity', () => {
         <ContainerPlugin
           containers={[
             {
-              container: defineContainer({
-                scope: 'block',
+              container: defineContainer<typeof schemaDefinition>({
+                scope: '$..block',
                 field: 'children',
                 render: ({attributes, children}) => (
                   <p data-testid="custom-block" {...attributes}>
@@ -615,8 +615,8 @@ describe('block scope and specificity', () => {
           containers={[
             {container: calloutContainer},
             {
-              container: defineContainer({
-                scope: 'block',
+              container: defineContainer<typeof schemaDefinition>({
+                scope: '$..block',
                 field: 'children',
                 render: ({attributes, children}) => (
                   <p data-testid="universal-block" {...attributes}>
@@ -626,8 +626,8 @@ describe('block scope and specificity', () => {
               }),
             },
             {
-              container: defineContainer({
-                scope: 'callout.block',
+              container: defineContainer<typeof schemaDefinition>({
+                scope: '$..callout.block',
                 field: 'children',
                 render: ({attributes, children}) => (
                   <p data-testid="callout-block" {...attributes}>
@@ -707,8 +707,8 @@ describe('block scope and specificity', () => {
           containers={[
             {container: calloutContainer},
             {
-              container: defineContainer({
-                scope: 'block',
+              container: defineContainer<typeof schemaDefinition>({
+                scope: '$..block',
                 field: 'children',
                 render: ({attributes, children}) => (
                   <p data-testid="universal-block" {...attributes}>
@@ -897,8 +897,8 @@ describe('code block container', () => {
     ],
   })
 
-  const codeBlockContainer = defineContainer({
-    scope: 'code-block',
+  const codeBlockContainer = defineContainer<typeof codeBlockSchemaDefinition>({
+    scope: '$..code-block',
     field: 'code',
     render: ({attributes, children}) => (
       <pre data-testid="code-block" {...attributes}>
@@ -1038,8 +1038,8 @@ describe('gallery with void block objects', () => {
     ],
   })
 
-  const galleryContainer = defineContainer({
-    scope: 'gallery',
+  const galleryContainer = defineContainer<typeof gallerySchemaDefinition>({
+    scope: '$..gallery',
     field: 'items',
     render: ({attributes, children}) => (
       <div data-testid="gallery" {...attributes}>
@@ -1186,8 +1186,8 @@ describe('cell with mixed content', () => {
     ],
   })
 
-  const tableContainer = defineContainer({
-    scope: 'table',
+  const tableContainer = defineContainer<typeof mixedSchemaDefinition>({
+    scope: '$..table',
     field: 'rows',
     render: ({attributes, children}) => (
       <table data-testid="table" {...attributes}>
@@ -1196,8 +1196,8 @@ describe('cell with mixed content', () => {
     ),
   })
 
-  const rowContainer = defineContainer({
-    scope: 'table.row',
+  const rowContainer = defineContainer<typeof mixedSchemaDefinition>({
+    scope: '$..table.row',
     field: 'cells',
     render: ({attributes, children}) => (
       <tr data-testid="row" {...attributes}>
@@ -1206,8 +1206,8 @@ describe('cell with mixed content', () => {
     ),
   })
 
-  const cellContainer = defineContainer({
-    scope: 'table.row.cell',
+  const cellContainer = defineContainer<typeof mixedSchemaDefinition>({
+    scope: '$..table.row.cell',
     field: 'content',
     render: ({attributes, children}) => (
       <td data-testid="cell" {...attributes}>

@@ -6,12 +6,12 @@ describe(defineContainer.name, () => {
     const render = ({children}: {children: unknown}) => children
     expect(
       defineContainer({
-        scope: 'callout',
+        scope: '$..callout',
         field: 'content',
         render: render as any,
       }),
     ).toEqual({
-      scope: 'callout',
+      scope: '$..callout',
       field: 'content',
       render,
     })

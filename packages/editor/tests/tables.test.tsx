@@ -1,10 +1,13 @@
 import {set, unset} from '@portabletext/patches'
-import {defineSchema} from '@portabletext/schema'
+import {compileSchema, defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import React from 'react'
 import {describe, expect, test, vi} from 'vitest'
 import {InternalSlateEditorRefPlugin} from '../src/plugins/plugin.internal.slate-editor-ref'
+import type {Container} from '../src/renderers/renderer.types'
+import {makeContainerConfig} from '../src/schema/make-container-config'
 import type {Containers} from '../src/schema/resolve-containers'
+import {resolveContainers} from '../src/schema/resolve-containers'
 import {withoutPatching} from '../src/slate-plugins/slate-plugin.without-patching'
 import {normalize} from '../src/slate/editor/normalize'
 import {createTestEditor} from '../src/test/vitest'
@@ -52,58 +55,37 @@ const schemaDefinition = defineSchema({
 })
 
 function tableContainers(): Containers {
-  return new Map([
-    [
-      'table',
-      {
-        name: 'rows',
-        type: 'array',
-        of: [
-          {
-            type: 'row',
-            fields: [
-              {
-                name: 'cells',
-                type: 'array',
-                of: [
-                  {
-                    type: 'cell',
-                    fields: [
-                      {
-                        name: 'content',
-                        type: 'array',
-                        of: [{type: 'block'}],
-                      },
-                    ],
-                  },
-                ],
-              },
-            ],
-          },
-        ],
-      },
-    ],
-    [
-      'table.row',
-      {
-        name: 'cells',
-        type: 'array',
-        of: [
-          {
-            type: 'cell',
-            fields: [
-              {
-                name: 'content',
-                type: 'array',
-                of: [{type: 'block'}],
-              },
-            ],
-          },
-        ],
-      },
-    ],
-    ['table.row.cell', {name: 'content', type: 'array', of: [{type: 'block'}]}],
-  ])
+  const render: Container['render'] = ({children}) => children
+  const schema = compileSchema(schemaDefinition)
+  return resolveContainers(
+    schema,
+    new Map([
+      [
+        '$..table',
+        makeContainerConfig(schema, {
+          scope: '$..table',
+          field: 'rows',
+          render,
+        }),
+      ],
+      [
+        '$..table.row',
+        makeContainerConfig(schema, {
+          scope: '$..table.row',
+          field: 'cells',
+          render,
+        }),
+      ],
+      [
+        '$..table.row.cell',
+        makeContainerConfig(schema, {
+          scope: '$..table.row.cell',
+          field: 'content',
+          render,
+        }),
+      ],
+    ]),
+  )
 }
 
 async function createTableTestEditor() {

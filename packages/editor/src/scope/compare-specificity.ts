@@ -12,8 +12,8 @@ import type {ParsedScope} from './parse-scope'
  *
  * Returns a standard comparator result:
  *
- * - `-1` when `a` is less specific than `b` (a should sort before b).
- * - `1` when `a` is more specific than `b` (a should sort after b).
+ * - `-1` when `left` is less specific than `right` (left should sort before right).
+ * - `1` when `left` is more specific than `right` (left should sort after right).
  * - `0` when the two scopes have equal specificity.
  *
  * Exact-duplicate registrations (same scope, different configs) produce equal
@@ -22,23 +22,26 @@ import type {ParsedScope} from './parse-scope'
  *
  * @internal
  */
-export function compareSpecificity(a: ParsedScope, b: ParsedScope): -1 | 0 | 1 {
-  const aRooted = a.anchor === '$.'
-  const bRooted = b.anchor === '$.'
+export function compareSpecificity(
+  left: ParsedScope,
+  right: ParsedScope,
+): -1 | 0 | 1 {
+  const leftRooted = left.anchor === '$.'
+  const rightRooted = right.anchor === '$.'
 
-  if (aRooted !== bRooted) {
-    return aRooted ? 1 : -1
+  if (leftRooted !== rightRooted) {
+    return leftRooted ? 1 : -1
   }
 
-  if (a.segments.length !== b.segments.length) {
-    return a.segments.length > b.segments.length ? 1 : -1
+  if (left.segments.length !== right.segments.length) {
+    return left.segments.length > right.segments.length ? 1 : -1
   }
 
-  const aExact = countExactSegments(a)
-  const bExact = countExactSegments(b)
+  const leftExact = countExactSegments(left)
+  const rightExact = countExactSegments(right)
 
-  if (aExact !== bExact) {
-    return aExact > bExact ? 1 : -1
+  if (leftExact !== rightExact) {
+    return leftExact > rightExact ? 1 : -1
   }
 
   return 0

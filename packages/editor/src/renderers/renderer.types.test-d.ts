@@ -1,12 +1,11 @@
 import {defineSchema} from '@portabletext/schema'
-import type {ReactElement} from 'react'
 import {describe, test} from 'vitest'
 import {defineContainer} from './renderer.types'
 
 describe(defineContainer.name, () => {
-  test('accepts scope, field, and render', () => {
+  test('accepts scope, field, and render (no schema)', () => {
     defineContainer({
-      scope: 'callout',
+      scope: '$..callout',
       field: 'content',
       render: ({children}) => children,
     })
@@ -65,60 +64,59 @@ const schema = defineSchema({
 type Schema = typeof schema
 
 describe('schema-aware defineContainer', () => {
-  test('constrains scope to scoped type names', () => {
+  test('accepts descendant scope on top-level container', () => {
     defineContainer<Schema>({
+      scope: '$..callout',
+      field: 'content',
+      render: ({children}) => children,
+    })
+  })
+
+  test('accepts root-anchored scope on top-level container', () => {
+    defineContainer<Schema>({
+      scope: '$.callout',
+      field: 'content',
+      render: ({children}) => children,
+    })
+  })
+
+  test('rejects unknown type in scope', () => {
+    defineContainer<Schema>({
+      // @ts-expect-error - 'unknown' is not a type in schema
+      scope: '$..unknown',
+      field: 'content',
+      render: ({children}) => children,
+    })
+  })
+
+  test('rejects bare (unanchored) scope', () => {
+    defineContainer<Schema>({
+      // @ts-expect-error - bare scope missing $ anchor
       scope: 'callout',
       field: 'content',
       render: ({children}) => children,
     })
   })
 
-  test('rejects scope not in schema', () => {
+  test('accepts nested container scope', () => {
     defineContainer<Schema>({
-      // @ts-expect-error - 'unknown' is not a scoped type name in schema
-      scope: 'unknown',
-      field: 'content',
-      render: ({children}) => children,
-    })
-  })
-
-  test('rejects field not on the type', () => {
-    // @ts-expect-error - 'tags' is not an array field on callout
-    defineContainer<Schema>({
-      scope: 'callout',
-      field: 'tags',
-      render: ({children}) => children,
-    })
-  })
-
-  test('rejects non-array fields', () => {
-    defineContainer<Schema>({
-      type: 'figure',
-      // @ts-expect-error - 'alt' is type: 'string', not type: 'array'
-      field: 'alt',
-      render: ({children}) => children,
-    })
-  })
-
-  test('allows valid array field', () => {
-    defineContainer<Schema>({
-      scope: 'figure',
-      field: 'caption',
-      render: ({children}) => children,
-    })
-  })
-
-  test('accepts nested scoped type', () => {
-    defineContainer<Schema>({
-      scope: 'table.row',
+      scope: '$..table.row',
       field: 'cells',
       render: ({children}) => children,
     })
   })
 
-  test('accepts deeply nested scoped type', () => {
+  test('accepts deeply nested container scope', () => {
     defineContainer<Schema>({
-      scope: 'table.row.cell',
+      scope: '$..table.row.cell',
+      field: 'content',
+      render: ({children}) => children,
+    })
+  })
+
+  test('accepts middle-descendant scope', () => {
+    defineContainer<Schema>({
+      scope: '$..table..cell',
       field: 'content',
       render: ({children}) => children,
     })
@@ -126,34 +124,24 @@ describe('schema-aware defineContainer', () => {
 
   test('rejects bare nested type name', () => {
     defineContainer<Schema>({
-      // @ts-expect-error - 'row' is not valid, must use 'table.row'
+      // @ts-expect-error - 'row' without $ prefix is invalid
       scope: 'row',
       field: 'cells',
       render: ({children}) => children,
     })
   })
 
-  test('constrains field to the scoped type', () => {
-    // @ts-expect-error - 'content' is not a field on table.row (cells is)
+  test('accepts block scope for text block children', () => {
     defineContainer<Schema>({
-      scope: 'table.row',
-      field: 'content',
+      scope: '$..block',
+      field: 'children',
       render: ({children}) => children,
     })
   })
 
-  test('rejects bare deeply nested type name', () => {
+  test('accepts root-anchored block scope', () => {
     defineContainer<Schema>({
-      // @ts-expect-error - 'cell' is not valid, must use 'table.row.cell'
-      scope: 'cell',
-      field: 'content',
-      render: () => null as unknown as ReactElement,
-    })
-  })
-
-  test('accepts block scope for text block children', () => {
-    defineContainer<Schema>({
-      scope: 'block',
+      scope: '$.block',
       field: 'children',
       render: ({children}) => children,
     })
@@ -161,7 +149,7 @@ describe('schema-aware defineContainer', () => {
 
   test('accepts scoped block scope inside container', () => {
     defineContainer<Schema>({
-      scope: 'callout.block',
+      scope: '$..callout.block',
       field: 'children',
       render: ({children}) => children,
     })
@@ -169,16 +157,42 @@ describe('schema-aware defineContainer', () => {
 
   test('accepts deeply scoped block scope', () => {
     defineContainer<Schema>({
-      scope: 'table.row.cell.block',
+      scope: '$..table.row.cell.block',
       field: 'children',
       render: ({children}) => children,
     })
   })
 
-  test('rejects invalid field on block scope', () => {
-    // @ts-expect-error - 'content' is not valid on block scope, must be 'children'
+  test('accepts figure caption (valid array field of blocks)', () => {
     defineContainer<Schema>({
-      scope: 'block',
+      scope: '$..figure',
+      field: 'caption',
+      render: ({children}) => children,
+    })
+  })
+
+  test('rejects field not on the scoped type', () => {
+    // @ts-expect-error - 'tags' is not a field on callout
+    defineContainer<Schema>({
+      scope: '$..callout',
+      field: 'tags',
+      render: ({children}) => children,
+    })
+  })
+
+  test('rejects non-array field', () => {
+    defineContainer<Schema>({
+      scope: '$..figure',
+      // @ts-expect-error - 'alt' is type: 'string', not an array
+      field: 'alt',
+      render: ({children}) => children,
+    })
+  })
+
+  test('rejects wrong field for block scope', () => {
+    // @ts-expect-error - block scope's field must be 'children'
+    defineContainer<Schema>({
+      scope: '$..block',
       field: 'content',
       render: ({children}) => children,
     })

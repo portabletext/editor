@@ -93,12 +93,12 @@ export function createInternalEditor(config: EditorConfig): {
     registerContainer: (config) => {
       editorActor.send({
         type: 'register container',
-        containerConfig: config,
+        container: config.container,
       })
       return () => {
         editorActor.send({
           type: 'unregister container',
-          containerConfig: config,
+          container: config.container,
         })
       }
     },

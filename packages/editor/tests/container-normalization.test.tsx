@@ -58,22 +58,22 @@ const schemaDefinition = defineSchema({
 
 const tableContainers = [
   {
-    container: defineContainer({
-      scope: 'table',
+    container: defineContainer<typeof schemaDefinition>({
+      scope: '$..table',
       field: 'rows',
       render: ({children}) => <>{children}</>,
     }),
   },
   {
-    container: defineContainer({
-      scope: 'table.row',
+    container: defineContainer<typeof schemaDefinition>({
+      scope: '$..table.row',
       field: 'cells',
       render: ({children}) => <>{children}</>,
     }),
   },
   {
-    container: defineContainer({
-      scope: 'table.row.cell',
+    container: defineContainer<typeof schemaDefinition>({
+      scope: '$..table.row.cell',
       field: 'content',
       render: ({children}) => <>{children}</>,
     }),
@@ -82,8 +82,8 @@ const tableContainers = [
 
 const calloutContainers = [
   {
-    container: defineContainer({
-      scope: 'callout',
+    container: defineContainer<typeof schemaDefinition>({
+      scope: '$..callout',
       field: 'content',
       render: ({children}) => <>{children}</>,
     }),
@@ -1354,12 +1354,9 @@ describe('container normalization', () => {
     // Late-register a container for callout
     ;(editor as unknown as InternalEditor)._internal.editorActor.send({
       type: 'register container',
-      containerConfig: {
-        container: {
-          scope: 'callout',
-          field: 'content',
-          render: ({children}) => children,
-        },
+      container: {
+        scope: '$..callout',
+        field: 'content',
       },
     })
 
@@ -1532,8 +1529,8 @@ describe('container normalization', () => {
         <ContainerPlugin
           containers={[
             {
-              container: defineContainer({
-                scope: 'card',
+              container: defineContainer<typeof cardSchemaDefinition>({
+                scope: '$..card',
                 field: 'tags',
                 render: ({children}) => <>{children}</>,
               }),
@@ -1665,35 +1662,35 @@ describe('container normalization', () => {
           containers={[
             {
               container: {
-                scope: 'callout',
+                scope: '$..callout',
                 field: 'content',
                 render: ({children}) => <>{children}</>,
               },
             },
             {
               container: {
-                scope: 'table',
+                scope: '$..table',
                 field: 'rows',
                 render: ({children}) => <>{children}</>,
               },
             },
             {
               container: {
-                scope: 'table.row',
+                scope: '$..table.row',
                 field: 'cells',
                 render: ({children}) => <>{children}</>,
               },
             },
             {
               container: {
-                scope: 'table.row.cell',
+                scope: '$..table.row.cell',
                 field: 'content',
                 render: ({children}) => <>{children}</>,
               },
             },
             {
               container: {
-                scope: 'figure',
+                scope: '$..figure',
                 field: 'caption',
                 render: ({children}) => <>{children}</>,
               },
@@ -1808,22 +1805,22 @@ describe('container normalization', () => {
         <ContainerPlugin
           containers={[
             {
-              container: defineContainer({
-                scope: 'table',
+              container: defineContainer<typeof schemaDefinition>({
+                scope: '$..table',
                 field: 'rows',
                 render: ({children}) => <>{children}</>,
               }),
             },
             {
-              container: defineContainer({
-                scope: 'table.row',
+              container: defineContainer<typeof schemaDefinition>({
+                scope: '$..table.row',
                 field: 'cells',
                 render: ({children}) => <>{children}</>,
               }),
             },
             {
-              container: defineContainer({
-                scope: 'table.row.cell',
+              container: defineContainer<typeof schemaDefinition>({
+                scope: '$..table.row.cell',
                 field: 'content',
                 render: ({children}) => <>{children}</>,
               }),
@@ -1894,22 +1891,22 @@ describe('container normalization', () => {
         <ContainerPlugin
           containers={[
             {
-              container: defineContainer({
-                scope: 'table',
+              container: defineContainer<typeof schemaDefinition>({
+                scope: '$..table',
                 field: 'rows',
                 render: ({children}) => <>{children}</>,
               }),
             },
             {
-              container: defineContainer({
-                scope: 'table.row',
+              container: defineContainer<typeof schemaDefinition>({
+                scope: '$..table.row',
                 field: 'cells',
                 render: ({children}) => <>{children}</>,
               }),
             },
             {
-              container: defineContainer({
-                scope: 'table.row.cell',
+              container: defineContainer<typeof schemaDefinition>({
+                scope: '$..table.row.cell',
                 field: 'content',
                 render: ({children}) => <>{children}</>,
               }),
@@ -2027,12 +2024,9 @@ describe('container normalization', () => {
     // Unregister the container via the internal editor actor
     ;(editor as unknown as InternalEditor)._internal.editorActor.send({
       type: 'unregister container',
-      containerConfig: {
-        container: {
-          scope: 'callout',
-          field: 'content',
-          render: ({children}) => children,
-        },
+      container: {
+        scope: '$..callout',
+        field: 'content',
       },
     })
 
@@ -2052,6 +2046,186 @@ describe('container normalization', () => {
 
     // The empty content array should NOT be normalized because the type
     // is no longer editable
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'hello', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'callout',
+          _key: calloutKey,
+          content: [],
+        },
+      ])
+    })
+  })
+
+  test('calling the unregister function returned from editor.registerContainer reverts container to void', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const calloutKey = keyGenerator()
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'hello', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'callout',
+          _key: calloutKey,
+        },
+      ],
+    })
+
+    const unregister = (editor as unknown as InternalEditor).registerContainer({
+      container: {
+        scope: '$..callout',
+        field: 'content',
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'hello', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'callout',
+          _key: calloutKey,
+          content: [
+            {
+              _type: 'block',
+              _key: 'k5',
+              children: [{_type: 'span', _key: 'k6', text: '', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ])
+    })
+
+    unregister()
+
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'set',
+          path: [{_key: calloutKey}, 'content'],
+          value: [],
+          origin: 'remote',
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'hello', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'callout',
+          _key: calloutKey,
+          content: [],
+        },
+      ])
+    })
+  })
+
+  test('unmounting ContainerPlugin reverts container to void', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const calloutKey = keyGenerator()
+
+    const initialValue = [
+      {
+        _type: 'block' as const,
+        _key: blockKey,
+        children: [
+          {_type: 'span' as const, _key: spanKey, text: 'hello', marks: []},
+        ],
+        markDefs: [],
+        style: 'normal',
+      },
+      {
+        _type: 'callout',
+        _key: calloutKey,
+      },
+    ]
+
+    const {editor, rerender} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition,
+      initialValue,
+      children: <ContainerPlugin containers={calloutContainers} />,
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'hello', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'callout',
+          _key: calloutKey,
+          content: [
+            {
+              _type: 'block',
+              _key: 'k5',
+              children: [{_type: 'span', _key: 'k6', text: '', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ])
+    })
+
+    await rerender({
+      keyGenerator,
+      schemaDefinition,
+      initialValue,
+    })
+
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'set',
+          path: [{_key: calloutKey}, 'content'],
+          value: [],
+          origin: 'remote',
+        },
+      ],
+      snapshot: undefined,
+    })
+
     await vi.waitFor(() => {
       expect(editor.getSnapshot().context.value).toEqual([
         {

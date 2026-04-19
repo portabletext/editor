@@ -47,17 +47,9 @@ export function RenderElement(props: {
     ? `${containerScope}.${props.element._type}`
     : props.element._type
 
-  const containerConfig = useSelector(editorActor, (s) => {
-    const configs = s.context.containerConfigs
-    const exact = configs.get(scopedTypeName)
-    if (exact) {
-      return exact
-    }
-    const bareType = scopedTypeName.includes('.')
-      ? scopedTypeName.split('.').pop()!
-      : undefined
-    return bareType ? configs.get(bareType) : undefined
-  })
+  const containerConfig = useSelector(editorActor, (state) =>
+    state.context.containers.get(scopedTypeName),
+  )
 
   if (containerConfig) {
     return (

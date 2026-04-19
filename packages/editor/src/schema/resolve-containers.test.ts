@@ -1,6 +1,32 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
 import {describe, expect, test} from 'vitest'
+import type {EditorSchema} from '../editor/editor-schema'
+import type {Container, ContainerConfig} from '../renderers/renderer.types'
+import {makeContainerConfig} from './make-container-config'
+import type {ChildArrayField, Containers} from './resolve-containers'
 import {resolveContainers} from './resolve-containers'
+
+const testRender: Container['render'] = ({children}) => children
+
+function makeConfigs(
+  schema: EditorSchema,
+  containers: Array<Container>,
+): Map<string, ContainerConfig> {
+  const map = new Map<string, ContainerConfig>()
+  for (const container of containers) {
+    map.set(container.scope, makeContainerConfig(schema, container))
+  }
+  return map
+}
+
+/** Extract the `field` shape from a resolved containers map for easier testing. */
+function fields(containers: Containers): Map<string, ChildArrayField> {
+  const out = new Map<string, ChildArrayField>()
+  for (const [key, config] of containers) {
+    out.set(key, config.field)
+  }
+  return out
+}
 
 describe(resolveContainers.name, () => {
   test('resolves a single-level container', () => {
@@ -18,20 +44,17 @@ describe(resolveContainers.name, () => {
     )
 
     expect(
-      resolveContainers(
-        schema,
-        new Map([
-          [
-            'code',
+      fields(
+        resolveContainers(
+          schema,
+          makeConfigs(schema, [
             {
-              container: {
-                scope: 'code',
-                field: 'content',
-                render: ({children}) => children,
-              },
+              scope: '$..code',
+              field: 'content',
+              render: ({children}) => children,
             },
-          ],
-        ]),
+          ]),
+        ),
       ),
     ).toEqual(
       new Map([
@@ -79,44 +102,20 @@ describe(resolveContainers.name, () => {
         ],
       }),
     )
-
-    const render = ({children}: {children: unknown}) => children
-
     expect(
-      resolveContainers(
-        schema,
-        new Map([
-          [
-            'table',
+      fields(
+        resolveContainers(
+          schema,
+          makeConfigs(schema, [
+            {scope: '$..table', field: 'rows', render: testRender},
+            {scope: '$..table.row', field: 'cells', render: testRender},
             {
-              container: {
-                scope: 'table',
-                field: 'rows',
-                render: render as any,
-              },
+              scope: '$..table.row.cell',
+              field: 'content',
+              render: testRender,
             },
-          ],
-          [
-            'table.row',
-            {
-              container: {
-                scope: 'table.row',
-                field: 'cells',
-                render: render as any,
-              },
-            },
-          ],
-          [
-            'table.row.cell',
-            {
-              container: {
-                scope: 'table.row.cell',
-                field: 'content',
-                render: render as any,
-              },
-            },
-          ],
-        ]),
+          ]),
+        ),
       ),
     ).toEqual(
       new Map([
@@ -180,7 +179,7 @@ describe(resolveContainers.name, () => {
   test('returns empty Map when no containers are registered', () => {
     const schema = compileSchema(defineSchema({}))
 
-    expect(resolveContainers(schema, new Map())).toEqual(new Map())
+    expect(fields(resolveContainers(schema, new Map()))).toEqual(new Map())
   })
 
   test('merges types from multiple container configs', () => {
@@ -200,34 +199,15 @@ describe(resolveContainers.name, () => {
         ],
       }),
     )
-
-    const render = ({children}: {children: unknown}) => children
-
     expect(
-      resolveContainers(
-        schema,
-        new Map([
-          [
-            'code',
-            {
-              container: {
-                scope: 'code',
-                field: 'content',
-                render: render as any,
-              },
-            },
-          ],
-          [
-            'callout',
-            {
-              container: {
-                scope: 'callout',
-                field: 'content',
-                render: render as any,
-              },
-            },
-          ],
-        ]),
+      fields(
+        resolveContainers(
+          schema,
+          makeConfigs(schema, [
+            {scope: '$..code', field: 'content', render: testRender},
+            {scope: '$..callout', field: 'content', render: testRender},
+          ]),
+        ),
       ),
     ).toEqual(
       new Map([
@@ -249,24 +229,14 @@ describe(resolveContainers.name, () => {
         inlineObjects: [{name: 'stock-ticker'}],
       }),
     )
-
-    const render = ({children}: {children: unknown}) => children
-
     expect(
-      resolveContainers(
-        schema,
-        new Map([
-          [
-            'block',
-            {
-              container: {
-                scope: 'block',
-                field: 'children',
-                render: render as any,
-              },
-            },
-          ],
-        ]),
+      fields(
+        resolveContainers(
+          schema,
+          makeConfigs(schema, [
+            {scope: '$..block', field: 'children', render: testRender},
+          ]),
+        ),
       ),
     ).toEqual(
       new Map([
@@ -278,11 +248,19 @@ describe(resolveContainers.name, () => {
             of: [{type: 'span'}, {type: 'stock-ticker'}],
           },
         ],
+        [
+          'callout.block',
+          {
+            name: 'children',
+            type: 'array',
+            of: [{type: 'span'}, {type: 'stock-ticker'}],
+          },
+        ],
       ]),
     )
   })
 
-  test('resolves scoped block scope like callout.block', () => {
+  test('root-anchored block scope only resolves root blocks', () => {
     const schema = compileSchema(
       defineSchema({
         blockObjects: [
@@ -293,34 +271,46 @@ describe(resolveContainers.name, () => {
         ],
       }),
     )
-
-    const render = ({children}: {children: unknown}) => children
-
     expect(
-      resolveContainers(
-        schema,
-        new Map([
-          [
-            'callout',
+      fields(
+        resolveContainers(
+          schema,
+          makeConfigs(schema, [
+            {scope: '$.block', field: 'children', render: testRender},
+          ]),
+        ),
+      ),
+    ).toEqual(
+      new Map([
+        ['block', {name: 'children', type: 'array', of: [{type: 'span'}]}],
+      ]),
+    )
+  })
+
+  test('resolves scoped block scope like $..callout.block', () => {
+    const schema = compileSchema(
+      defineSchema({
+        blockObjects: [
+          {
+            name: 'callout',
+            fields: [{name: 'content', type: 'array', of: [{type: 'block'}]}],
+          },
+        ],
+      }),
+    )
+    expect(
+      fields(
+        resolveContainers(
+          schema,
+          makeConfigs(schema, [
+            {scope: '$..callout', field: 'content', render: testRender},
             {
-              container: {
-                scope: 'callout',
-                field: 'content',
-                render: render as any,
-              },
+              scope: '$..callout.block',
+              field: 'children',
+              render: testRender,
             },
-          ],
-          [
-            'callout.block',
-            {
-              container: {
-                scope: 'callout.block',
-                field: 'children',
-                render: render as any,
-              },
-            },
-          ],
-        ]),
+          ]),
+        ),
       ),
     ).toEqual(
       new Map([
@@ -335,24 +325,14 @@ describe(resolveContainers.name, () => {
 
   test('resolves block scope without inline objects', () => {
     const schema = compileSchema(defineSchema({}))
-
-    const render = ({children}: {children: unknown}) => children
-
     expect(
-      resolveContainers(
-        schema,
-        new Map([
-          [
-            'block',
-            {
-              container: {
-                scope: 'block',
-                field: 'children',
-                render: render as any,
-              },
-            },
-          ],
-        ]),
+      fields(
+        resolveContainers(
+          schema,
+          makeConfigs(schema, [
+            {scope: '$..block', field: 'children', render: testRender},
+          ]),
+        ),
       ),
     ).toEqual(
       new Map([
@@ -377,20 +357,17 @@ describe(resolveContainers.name, () => {
     )
 
     expect(
-      resolveContainers(
-        schema,
-        new Map([
-          [
-            'figure',
+      fields(
+        resolveContainers(
+          schema,
+          makeConfigs(schema, [
             {
-              container: {
-                scope: 'figure',
-                field: 'caption',
-                render: ({children}) => children,
-              },
+              scope: '$..figure',
+              field: 'caption',
+              render: ({children}) => children,
             },
-          ],
-        ]),
+          ]),
+        ),
       ),
     ).toEqual(
       new Map([
