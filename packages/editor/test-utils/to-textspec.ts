@@ -355,7 +355,7 @@ function convertContainerBlock(
   block: Record<string, unknown>,
   scopePath: string,
 ): ContainerBlock {
-  const containerField = containers.get(scopePath)
+  const containerField = containers.get(scopePath)?.field
 
   if (!containerField) {
     return {

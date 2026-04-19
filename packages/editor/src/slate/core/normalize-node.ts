@@ -416,7 +416,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   // Container normalization: ensure the child array field exists.
   if (isObjectNode({schema: editor.schema}, node)) {
     const scopedName = getContainerScopedName(editor, node, path)
-    const arrayField = editor.containers.get(scopedName)
+    const arrayField = editor.containers.get(scopedName)?.field
 
     if (arrayField) {
       const fieldValue = (node as Record<string, unknown>)[arrayField.name]
@@ -431,7 +431,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   // Container normalization: ensure non-empty child array.
   if (isObjectNode({schema: editor.schema}, node)) {
     const scopedName = getContainerScopedName(editor, node, path)
-    const arrayField = editor.containers.get(scopedName)
+    const arrayField = editor.containers.get(scopedName)?.field
 
     if (arrayField) {
       const fieldValue = (node as Record<string, unknown>)[arrayField.name]

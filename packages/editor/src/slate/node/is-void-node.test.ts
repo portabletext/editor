@@ -1,8 +1,18 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
 import {describe, expect, test} from 'vitest'
 import {createNodeTraversalTestbed} from '../../node-traversal/node-traversal-testbed'
+import type {ContainerConfig} from '../../renderers/renderer.types'
 import type {ChildArrayField} from '../../schema/resolve-containers'
+import {parseScope} from '../../scope/parse-scope'
 import {isVoidNode} from './is-void-node'
+
+function containerConfigFor(field: ChildArrayField): ContainerConfig {
+  return {
+    container: {scope: '$..dummy', field: field.name},
+    parsedScope: parseScope('$..dummy')!,
+    field,
+  }
+}
 
 describe(isVoidNode.name, () => {
   const testbed = createNodeTraversalTestbed()
@@ -179,30 +189,30 @@ describe(isVoidNode.name, () => {
       }),
     )
 
-    const containers = new Map<string, ChildArrayField>([
+    const containers = new Map<string, ContainerConfig>([
       [
         'table',
-        {
+        containerConfigFor({
           name: 'rows',
           type: 'array',
           of: [{type: 'row'}],
-        },
+        }),
       ],
       [
         'table.row',
-        {
+        containerConfigFor({
           name: 'cells',
           type: 'array',
           of: [{type: 'cell'}],
-        },
+        }),
       ],
       [
         'table.row.cell',
-        {
+        containerConfigFor({
           name: 'content',
           type: 'array',
           of: [{type: 'block'}, {type: 'image'}],
-        },
+        }),
       ],
     ])
 
@@ -264,14 +274,14 @@ describe(isVoidNode.name, () => {
       }),
     )
 
-    const containers = new Map<string, ChildArrayField>([
+    const containers = new Map<string, ContainerConfig>([
       [
         'gallery',
-        {
+        containerConfigFor({
           name: 'images',
           type: 'array',
           of: [{type: 'image'}],
-        },
+        }),
       ],
     ])
 

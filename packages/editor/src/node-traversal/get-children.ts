@@ -118,7 +118,7 @@ export function getNodeChildren(
   if (isObjectNode(context, node)) {
     const scopedKey = scopePath ? `${scopePath}.${node._type}` : node._type
 
-    const arrayField = context.containers.get(scopedKey)
+    const arrayField = context.containers.get(scopedKey)?.field
 
     if (!arrayField) {
       return undefined

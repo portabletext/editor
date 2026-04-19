@@ -21,8 +21,8 @@ const schemaDefinition = defineSchema({
   ],
 })
 
-const calloutContainer = defineContainer({
-  scope: 'callout',
+const calloutContainer = defineContainer<typeof schemaDefinition>({
+  scope: '$..callout',
   field: 'content',
   render: ({attributes, children}) => (
     <div data-testid="callout" {...attributes}>

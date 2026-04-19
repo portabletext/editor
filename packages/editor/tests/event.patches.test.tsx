@@ -2458,22 +2458,24 @@ describe('event.patches', () => {
       const editorText = 'Hello'
       const incomingText = 'Hello there'
 
+      const calloutSchemaDefinition = defineSchema({
+        blockObjects: [
+          {
+            name: 'callout',
+            fields: [
+              {
+                name: 'content',
+                type: 'array',
+                of: [{type: 'block'}],
+              },
+            ],
+          },
+        ],
+      })
+
       const {editor} = await createTestEditor({
         keyGenerator,
-        schemaDefinition: defineSchema({
-          blockObjects: [
-            {
-              name: 'callout',
-              fields: [
-                {
-                  name: 'content',
-                  type: 'array',
-                  of: [{type: 'block'}],
-                },
-              ],
-            },
-          ],
-        }),
+        schemaDefinition: calloutSchemaDefinition,
         initialValue: [
           {
             _type: 'callout',
@@ -2495,8 +2497,8 @@ describe('event.patches', () => {
           <ContainerPlugin
             containers={[
               {
-                container: defineContainer({
-                  scope: 'callout',
+                container: defineContainer<typeof calloutSchemaDefinition>({
+                  scope: '$..callout',
                   field: 'content',
                   render: ({children}) => <>{children}</>,
                 }),
@@ -4641,8 +4643,8 @@ describe('event.patches', () => {
 
     const calloutContainers = [
       {
-        container: defineContainer({
-          scope: 'callout',
+        container: defineContainer<typeof containerSchema>({
+          scope: '$..callout',
           field: 'content',
           render: ({children}) => <>{children}</>,
         }),
@@ -4651,22 +4653,22 @@ describe('event.patches', () => {
 
     const tableContainers = [
       {
-        container: defineContainer({
-          scope: 'table',
+        container: defineContainer<typeof containerSchema>({
+          scope: '$..table',
           field: 'rows',
           render: ({children}) => <>{children}</>,
         }),
       },
       {
-        container: defineContainer({
-          scope: 'table.row',
+        container: defineContainer<typeof containerSchema>({
+          scope: '$..table.row',
           field: 'cells',
           render: ({children}) => <>{children}</>,
         }),
       },
       {
-        container: defineContainer({
-          scope: 'table.row.cell',
+        container: defineContainer<typeof containerSchema>({
+          scope: '$..table.row.cell',
           field: 'content',
           render: ({children}) => <>{children}</>,
         }),

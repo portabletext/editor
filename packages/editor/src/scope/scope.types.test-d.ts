@@ -2,10 +2,6 @@ import {defineSchema} from '@portabletext/schema'
 import {describe, test} from 'vitest'
 import type {ContainerScope, LeafScope} from './scope.types'
 
-// ============================================================================
-// Test fixtures
-// ============================================================================
-
 const minimalSchema = defineSchema({})
 type MinimalSchema = typeof minimalSchema
 
@@ -89,10 +85,6 @@ const fullSchema = defineSchema({
 })
 type FullSchema = typeof fullSchema
 
-// ============================================================================
-// ContainerScope
-// ============================================================================
-
 describe('ContainerScope', () => {
   describe('minimal schema (no blockObjects)', () => {
     test('accepts root text block', () => {
@@ -104,12 +96,12 @@ describe('ContainerScope', () => {
     })
 
     test('rejects unknown container type', () => {
-      // @ts-expect-error — callout not in schema
+      // @ts-expect-error: callout not in schema
       '$.callout' satisfies ContainerScope<MinimalSchema>
     })
 
     test('rejects leaf terminal (span)', () => {
-      // @ts-expect-error — span is a leaf, not a container
+      // @ts-expect-error: span is a leaf, not a container
       '$..span' satisfies ContainerScope<MinimalSchema>
     })
   })
@@ -148,17 +140,17 @@ describe('ContainerScope', () => {
     })
 
     test('rejects image as container (void block object)', () => {
-      // @ts-expect-error — image is a leaf, not a container
+      // @ts-expect-error: image is a leaf, not a container
       '$..image' satisfies ContainerScope<CalloutSchema>
     })
 
     test('rejects inline object as container', () => {
-      // @ts-expect-error — stock-ticker is a leaf, not a container
+      // @ts-expect-error: stock-ticker is a leaf, not a container
       '$..stock-ticker' satisfies ContainerScope<CalloutSchema>
     })
 
     test('rejects leaf scope as container', () => {
-      // @ts-expect-error — span is a leaf
+      // @ts-expect-error: span is a leaf
       '$..block.span' satisfies ContainerScope<CalloutSchema>
     })
   })
@@ -177,7 +169,7 @@ describe('ContainerScope', () => {
     })
 
     test('rejects image as container', () => {
-      // @ts-expect-error — image is a leaf
+      // @ts-expect-error: image is a leaf
       '$..image' satisfies ContainerScope<GallerySchema>
     })
   })
@@ -220,62 +212,58 @@ describe('ContainerScope', () => {
     })
 
     test('rejects bare row (not at chain root)', () => {
-      // @ts-expect-error — row only appears inside table
+      // @ts-expect-error: row only appears inside table
       '$.row' satisfies ContainerScope<TableSchema>
     })
 
     test('rejects bare cell (not at chain root)', () => {
-      // @ts-expect-error — cell only appears inside table.row
+      // @ts-expect-error: cell only appears inside table.row
       '$.cell' satisfies ContainerScope<TableSchema>
     })
   })
 
   describe('syntax errors', () => {
     test('rejects bare scope (no anchor)', () => {
-      // @ts-expect-error — missing $. or $..
+      // @ts-expect-error: missing $. or $..
       'block' satisfies ContainerScope<CalloutSchema>
     })
 
     test('rejects missing dot after $', () => {
-      // @ts-expect-error — need $. or $..
+      // @ts-expect-error: need $. or $..
       '$block' satisfies ContainerScope<CalloutSchema>
     })
 
     test('rejects bare root anchor', () => {
-      // @ts-expect-error — no segment after $.
+      // @ts-expect-error: no segment after $.
       '$.' satisfies ContainerScope<CalloutSchema>
     })
 
     test('rejects bare descendant anchor', () => {
-      // @ts-expect-error — no segment after $..
+      // @ts-expect-error: no segment after $..
       '$..' satisfies ContainerScope<CalloutSchema>
     })
 
     test('rejects root alone', () => {
-      // @ts-expect-error — no segment after $
+      // @ts-expect-error: no segment after $
       '$' satisfies ContainerScope<CalloutSchema>
     })
 
     test('rejects empty string', () => {
-      // @ts-expect-error — must start with $. or $..
+      // @ts-expect-error: must start with $. or $..
       '' satisfies ContainerScope<CalloutSchema>
     })
 
     test('rejects field name in scope', () => {
-      // @ts-expect-error — fields are not types
+      // @ts-expect-error: fields are not types
       '$..callout.content' satisfies ContainerScope<CalloutSchema>
     })
 
     test('rejects unknown type', () => {
-      // @ts-expect-error — foo is not in the schema
+      // @ts-expect-error: foo is not in the schema
       '$..foo' satisfies ContainerScope<CalloutSchema>
     })
   })
 })
-
-// ============================================================================
-// LeafScope
-// ============================================================================
 
 describe('LeafScope', () => {
   describe('minimal schema (just spans)', () => {
@@ -288,12 +276,12 @@ describe('LeafScope', () => {
     })
 
     test('rejects span without block. parent', () => {
-      // @ts-expect-error — span must have block. parent
+      // @ts-expect-error: span must have block. parent
       '$..span' satisfies LeafScope<MinimalSchema>
     })
 
     test('rejects span at root without block. parent', () => {
-      // @ts-expect-error — span must have block. parent
+      // @ts-expect-error: span must have block. parent
       '$.span' satisfies LeafScope<MinimalSchema>
     })
   })
@@ -340,22 +328,22 @@ describe('LeafScope', () => {
     })
 
     test('rejects inline object without block. parent', () => {
-      // @ts-expect-error — stock-ticker must have block. parent
+      // @ts-expect-error: stock-ticker must have block. parent
       '$..stock-ticker' satisfies LeafScope<CalloutSchema>
     })
 
     test('rejects inline object with callout parent (no block.)', () => {
-      // @ts-expect-error — must be $..callout.block.stock-ticker
+      // @ts-expect-error: must be $..callout.block.stock-ticker
       '$..callout.stock-ticker' satisfies LeafScope<CalloutSchema>
     })
 
     test('rejects container as leaf', () => {
-      // @ts-expect-error — callout is a container
+      // @ts-expect-error: callout is a container
       '$..callout' satisfies LeafScope<CalloutSchema>
     })
 
     test('rejects block as leaf', () => {
-      // @ts-expect-error — block is a container
+      // @ts-expect-error: block is a container
       '$..block' satisfies LeafScope<CalloutSchema>
     })
 
@@ -379,7 +367,7 @@ describe('LeafScope', () => {
     })
 
     test('rejects gallery as leaf', () => {
-      // @ts-expect-error — gallery is a container
+      // @ts-expect-error: gallery is a container
       '$..gallery' satisfies LeafScope<GallerySchema>
     })
   })
@@ -398,7 +386,7 @@ describe('LeafScope', () => {
     })
 
     test('rejects middle-`..` before span (not a block parent)', () => {
-      // @ts-expect-error — span must have block. immediate parent
+      // @ts-expect-error: span must have block. immediate parent
       '$..table..span' satisfies LeafScope<TableSchema>
     })
   })

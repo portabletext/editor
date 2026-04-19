@@ -14,10 +14,6 @@ import type {SchemaDefinition} from '@portabletext/schema'
  * See `/specs/scope-grammar.md` for the full spec.
  */
 
-// ============================================================================
-// Schema walking helpers
-// ============================================================================
-
 /**
  * @internal
  *
@@ -64,10 +60,6 @@ type WalkFields<TFields> = TFields extends readonly [
     ? ExtractOfMembers<TOf> | WalkFields<TRest>
     : WalkFields<TRest>
   : never
-
-// ============================================================================
-// Container and leaf type discovery
-// ============================================================================
 
 /**
  * @internal
@@ -116,10 +108,6 @@ type DiscoverLeaves<TFields, TChain extends string> =
       : never
     : never
 
-// ============================================================================
-// Schema entry points
-// ============================================================================
-
 /**
  * @internal
  *
@@ -129,7 +117,7 @@ type DiscoverLeaves<TFields, TChain extends string> =
  * blocks. Additionally includes every top-level block object that has array
  * fields, plus every nested container type recursively.
  */
-type AllContainers<TSchema extends SchemaDefinition> =
+export type AllContainers<TSchema extends SchemaDefinition> =
   | {chain: 'block'; arrayFields: 'children'}
   | (TSchema['blockObjects'] extends ReadonlyArray<infer TBlockObject>
       ? TBlockObject extends {
@@ -172,10 +160,6 @@ type AllLeaves<TSchema extends SchemaDefinition> =
           : DiscoverLeaves<TFields, TName>
         : never
       : never)
-
-// ============================================================================
-// Chain composition
-// ============================================================================
 
 /**
  * @internal
@@ -226,10 +210,6 @@ type MiddleChains<TSchema extends SchemaDefinition> =
 type ContainerChain<TSchema extends SchemaDefinition> =
   | ContainerTerminal<TSchema>
   | MiddleChains<TSchema>
-
-// ============================================================================
-// Public scope types
-// ============================================================================
 
 /**
  * @internal

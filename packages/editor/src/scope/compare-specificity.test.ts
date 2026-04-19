@@ -112,17 +112,17 @@ describe(compareSpecificity.name, () => {
 
   describe('worked example from spec', () => {
     test('C (root + longest) > B (longer descendant) > A (shorter descendant)', () => {
-      const a = parse('$..block.span')
-      const b = parse('$..callout.block.span')
-      const c = parse('$.callout.block.span')
+      const shortestDescendant = parse('$..block.span')
+      const longerDescendant = parse('$..callout.block.span')
+      const rootAnchored = parse('$.callout.block.span')
 
-      expect(compareSpecificity(c, b)).toBe(1)
-      expect(compareSpecificity(b, a)).toBe(1)
-      expect(compareSpecificity(c, a)).toBe(1)
+      expect(compareSpecificity(rootAnchored, longerDescendant)).toBe(1)
+      expect(compareSpecificity(longerDescendant, shortestDescendant)).toBe(1)
+      expect(compareSpecificity(rootAnchored, shortestDescendant)).toBe(1)
 
-      expect(compareSpecificity(b, c)).toBe(-1)
-      expect(compareSpecificity(a, b)).toBe(-1)
-      expect(compareSpecificity(a, c)).toBe(-1)
+      expect(compareSpecificity(longerDescendant, rootAnchored)).toBe(-1)
+      expect(compareSpecificity(shortestDescendant, longerDescendant)).toBe(-1)
+      expect(compareSpecificity(shortestDescendant, rootAnchored)).toBe(-1)
     })
   })
 

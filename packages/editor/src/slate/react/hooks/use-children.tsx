@@ -76,13 +76,15 @@ const useChildren = (props: {
       ? `${containerScope}.${node._type}`
       : node._type
 
-    const containerField = editor.containers.get(scopedKey)
+    const containerConfig = editor.containers.get(scopedKey)
 
-    if (containerField) {
-      const fieldValue = (node as Record<string, unknown>)[containerField.name]
+    if (containerConfig) {
+      const fieldValue = (node as Record<string, unknown>)[
+        containerConfig.field.name
+      ]
       if (Array.isArray(fieldValue)) {
         children = fieldValue as Array<Node>
-        childFieldName = containerField.name
+        childFieldName = containerConfig.field.name
       }
 
       childScope = scopedKey

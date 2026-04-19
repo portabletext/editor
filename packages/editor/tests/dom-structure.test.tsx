@@ -215,8 +215,17 @@ describe('DOM structure', () => {
   })
 
   test('4. gallery container with void leaf children', async () => {
-    const galleryContainer = defineContainer({
-      scope: 'gallery',
+    const gallerySchemaDefinition = defineSchema({
+      blockObjects: [
+        {
+          name: 'gallery',
+          fields: [{name: 'items', type: 'array', of: [{type: 'image'}]}],
+        },
+        {name: 'image'},
+      ],
+    })
+    const galleryContainer = defineContainer<typeof gallerySchemaDefinition>({
+      scope: '$..gallery',
       field: 'items',
       render: ({attributes, children}) => (
         <div {...attributes} className="gallery">
@@ -225,15 +234,7 @@ describe('DOM structure', () => {
       ),
     })
     await createTestEditor({
-      schemaDefinition: defineSchema({
-        blockObjects: [
-          {
-            name: 'gallery',
-            fields: [{name: 'items', type: 'array', of: [{type: 'image'}]}],
-          },
-          {name: 'image'},
-        ],
-      }),
+      schemaDefinition: gallerySchemaDefinition,
       initialValue: [
         {
           _key: 'g0',
@@ -308,8 +309,47 @@ describe('DOM structure', () => {
   })
 
   test('5. deep nesting: table > row > cell > text block > inline', async () => {
-    const tableContainer = defineContainer({
-      scope: 'table',
+    const tableSchemaDefinition = defineSchema({
+      inlineObjects: [{name: 'stock-ticker'}],
+      blockObjects: [
+        {
+          name: 'table',
+          fields: [
+            {
+              name: 'rows',
+              type: 'array',
+              of: [
+                {
+                  type: 'row',
+                  fields: [
+                    {
+                      name: 'cells',
+                      type: 'array',
+                      of: [
+                        {
+                          type: 'cell',
+                          fields: [
+                            {
+                              name: 'content',
+                              type: 'array',
+                              of: [
+                                {type: 'block', of: [{type: 'stock-ticker'}]},
+                              ],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    })
+    const tableContainer = defineContainer<typeof tableSchemaDefinition>({
+      scope: '$..table',
       field: 'rows',
       render: ({attributes, children}) => (
         <table {...attributes}>
@@ -317,56 +357,18 @@ describe('DOM structure', () => {
         </table>
       ),
     })
-    const rowContainer = defineContainer({
-      scope: 'table.row',
+    const rowContainer = defineContainer<typeof tableSchemaDefinition>({
+      scope: '$..table.row',
       field: 'cells',
       render: ({attributes, children}) => <tr {...attributes}>{children}</tr>,
     })
-    const cellContainer = defineContainer({
-      scope: 'table.row.cell',
+    const cellContainer = defineContainer<typeof tableSchemaDefinition>({
+      scope: '$..table.row.cell',
       field: 'content',
       render: ({attributes, children}) => <td {...attributes}>{children}</td>,
     })
     await createTestEditor({
-      schemaDefinition: defineSchema({
-        inlineObjects: [{name: 'stock-ticker'}],
-        blockObjects: [
-          {
-            name: 'table',
-            fields: [
-              {
-                name: 'rows',
-                type: 'array',
-                of: [
-                  {
-                    type: 'row',
-                    fields: [
-                      {
-                        name: 'cells',
-                        type: 'array',
-                        of: [
-                          {
-                            type: 'cell',
-                            fields: [
-                              {
-                                name: 'content',
-                                type: 'array',
-                                of: [
-                                  {type: 'block', of: [{type: 'stock-ticker'}]},
-                                ],
-                              },
-                            ],
-                          },
-                        ],
-                      },
-                    ],
-                  },
-                ],
-              },
-            ],
-          },
-        ],
-      }),
+      schemaDefinition: tableSchemaDefinition,
       initialValue: [
         {
           _key: 't0',
@@ -488,8 +490,16 @@ describe('DOM structure', () => {
   })
 
   test('6. code block container with text blocks', async () => {
-    const codeContainer = defineContainer({
-      scope: 'code',
+    const codeSchemaDefinition = defineSchema({
+      blockObjects: [
+        {
+          name: 'code',
+          fields: [{name: 'lines', type: 'array', of: [{type: 'block'}]}],
+        },
+      ],
+    })
+    const codeContainer = defineContainer<typeof codeSchemaDefinition>({
+      scope: '$..code',
       field: 'lines',
       render: ({attributes, children}) => (
         <pre {...attributes}>
@@ -498,14 +508,7 @@ describe('DOM structure', () => {
       ),
     })
     await createTestEditor({
-      schemaDefinition: defineSchema({
-        blockObjects: [
-          {
-            name: 'code',
-            fields: [{name: 'lines', type: 'array', of: [{type: 'block'}]}],
-          },
-        ],
-      }),
+      schemaDefinition: codeSchemaDefinition,
       initialValue: [
         {
           _key: 'c0',

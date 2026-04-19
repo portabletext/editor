@@ -40,7 +40,7 @@ function collectDescendantPaths(
   // For container types, resolve the child array field from the schema
   const scopedName = scopePrefix ? `${scopePrefix}.${node._type}` : node._type
 
-  const arrayField = context.containers.get(scopedName)
+  const arrayField = context.containers.get(scopedName)?.field
 
   if (arrayField) {
     const fieldValue = (node as Record<string, unknown>)[arrayField.name]

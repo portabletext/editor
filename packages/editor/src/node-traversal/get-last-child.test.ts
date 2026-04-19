@@ -1,7 +1,10 @@
 import {describe, expect, test} from 'vitest'
-import type {ChildArrayField} from '../schema/resolve-containers'
 import {getLastChild} from './get-last-child'
-import {createNodeTraversalTestbed} from './node-traversal-testbed'
+import {
+  createNodeTraversalTestbed,
+  resolveTestbedContainers,
+  tableContainers,
+} from './node-traversal-testbed'
 
 describe(getLastChild.name, () => {
   const testbed = createNodeTraversalTestbed()
@@ -51,61 +54,10 @@ describe(getLastChild.name, () => {
   })
 
   test('last of non-editable container returns undefined', () => {
-    const tableOnly = new Map<string, ChildArrayField>([
-      [
-        'table',
-        {
-          name: 'rows',
-          type: 'array',
-          of: [
-            {
-              type: 'row',
-              fields: [
-                {
-                  name: 'cells',
-                  type: 'array',
-                  of: [
-                    {
-                      type: 'cell',
-                      fields: [
-                        {
-                          name: 'content',
-                          type: 'array',
-                          of: [{type: 'block'}],
-                        },
-                      ],
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-        },
-      ],
-      [
-        'table.row',
-        {
-          name: 'cells',
-          type: 'array',
-          of: [
-            {
-              type: 'cell',
-              fields: [
-                {
-                  name: 'content',
-                  type: 'array',
-                  of: [{type: 'block'}],
-                },
-              ],
-            },
-          ],
-        },
-      ],
-      [
-        'table.row.cell',
-        {name: 'content', type: 'array', of: [{type: 'block'}]},
-      ],
-    ])
+    const tableOnly = resolveTestbedContainers(
+      testbed.context.schema,
+      tableContainers,
+    )
     expect(
       getLastChild({...testbed.context, containers: tableOnly}, [
         {_key: 'k11'},
