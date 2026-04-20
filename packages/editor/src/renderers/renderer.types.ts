@@ -5,7 +5,7 @@ import type {ParsedScope} from '../scope/parse-scope'
 import type {AllContainers, ContainerScope} from '../scope/scope.types'
 
 /**
- * @internal
+ * @alpha
  */
 export type Container = {
   scope: string
@@ -82,7 +82,7 @@ type SchemaContainerConfig<TSchema extends SchemaDefinition> =
       : never
 
 /**
- * @internal
+ * @alpha
  *
  * Define a container.
  *
@@ -103,6 +103,9 @@ type SchemaContainerConfig<TSchema extends SchemaDefinition> =
 export function defineContainer<TSchema extends SchemaDefinition>(
   config: SchemaContainerConfig<TSchema>,
 ): Container
+/**
+ * @alpha
+ */
 export function defineContainer(config: Container): Container
 export function defineContainer(config: Container): Container {
   return config

@@ -245,9 +245,7 @@ describe('DOM structure', () => {
           ],
         },
       ],
-      children: (
-        <ContainerPlugin containers={[{container: galleryContainer}]} />
-      ),
+      children: <ContainerPlugin containers={[galleryContainer]} />,
     })
     await vi.waitFor(() => {
       const el = document.querySelector('[data-slate-editor]')
@@ -402,11 +400,7 @@ describe('DOM structure', () => {
       ],
       children: (
         <ContainerPlugin
-          containers={[
-            {container: tableContainer},
-            {container: rowContainer},
-            {container: cellContainer},
-          ]}
+          containers={[tableContainer, rowContainer, cellContainer]}
         />
       ),
     })
@@ -535,7 +529,7 @@ describe('DOM structure', () => {
           ],
         },
       ],
-      children: <ContainerPlugin containers={[{container: codeContainer}]} />,
+      children: <ContainerPlugin containers={[codeContainer]} />,
     })
     await vi.waitFor(() => {
       const el = document.querySelector('[data-slate-editor]')

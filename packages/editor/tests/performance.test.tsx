@@ -165,11 +165,7 @@ describe('Performance', () => {
         schemaDefinition,
         children: (
           <ContainerPlugin
-            containers={[
-              {container: tableContainer},
-              {container: rowContainer},
-              {container: cellContainer},
-            ]}
+            containers={[tableContainer, rowContainer, cellContainer]}
           />
         ),
       })
@@ -201,11 +197,7 @@ describe('Performance', () => {
         schemaDefinition,
         children: (
           <ContainerPlugin
-            containers={[
-              {container: tableContainer},
-              {container: rowContainer},
-              {container: cellContainer},
-            ]}
+            containers={[tableContainer, rowContainer, cellContainer]}
           />
         ),
       })
@@ -243,11 +235,7 @@ describe('Performance', () => {
         schemaDefinition,
         children: (
           <ContainerPlugin
-            containers={[
-              {container: tableContainer},
-              {container: rowContainer},
-              {container: cellContainer},
-            ]}
+            containers={[tableContainer, rowContainer, cellContainer]}
           />
         ),
       })

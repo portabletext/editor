@@ -70,7 +70,7 @@ describe('code block', () => {
       ],
       children: (
         <>
-          <ContainerPlugin containers={[{container: codeBlockContainer}]} />
+          <ContainerPlugin containers={[codeBlockContainer]} />
           <EventListenerPlugin
             on={(event) => {
               if (event.type === 'mutation') {

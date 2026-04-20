@@ -4,22 +4,20 @@ import {useEditor} from '../editor/use-editor'
 import type {Container} from '../renderers/renderer.types'
 
 /**
- * @internal
+ * @alpha
  */
-export function ContainerPlugin(props: {
-  containers: Array<{container: Container}>
-}) {
+export function ContainerPlugin(props: {containers: Array<Container>}) {
   const editor = useEditor() as InternalEditor
 
   useEffect(() => {
-    const unregisters = props.containers.map((config) =>
-      editor.registerContainer(config),
+    const unregisterContainers = props.containers.map((container) =>
+      editor.registerContainer(container),
     )
 
     return () => {
-      for (const unregister of unregisters) {
+      unregisterContainers.forEach((unregister) => {
         unregister()
-      }
+      })
     }
   }, [editor, props.containers])
 
