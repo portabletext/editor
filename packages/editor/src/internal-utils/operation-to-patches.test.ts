@@ -208,6 +208,7 @@ describe('operationToPatches', () => {
     expect(
       textPatch(
         editorActor.getSnapshot().context.schema,
+        editorActor.getSnapshot().context.containers,
         editor.children,
         {
           type: 'insert_text',
@@ -258,6 +259,7 @@ describe('operationToPatches', () => {
     expect(
       textPatch(
         blockObjectSchema,
+        new Map(),
         blockObjectChildren,
         {
           type: 'insert_text',
@@ -276,6 +278,7 @@ describe('operationToPatches', () => {
     expect(
       textPatch(
         editorActor.getSnapshot().context.schema,
+        editorActor.getSnapshot().context.containers,
         editor.children,
         {
           type: 'remove_text',
