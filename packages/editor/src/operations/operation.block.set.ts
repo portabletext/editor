@@ -1,35 +1,21 @@
 import {applyAll, set} from '@portabletext/patches'
 import {safeStringify} from '../internal-utils/safe-json'
 import {setNodeProperties} from '../internal-utils/set-node-properties'
+import {getNode} from '../node-traversal/get-node'
 import {isTextBlockNode} from '../slate/node/is-text-block-node'
 import {parseMarkDefs} from '../utils/parse-blocks'
-import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import type {OperationImplementation} from './operation.types'
 
 export const blockSetOperationImplementation: OperationImplementation<
   'block.set'
 > = ({context, operation}) => {
-  const blockSegment = operation.at.at(0)
+  const blockEntry = getNode(operation.editor, operation.at)
 
-  if (!isKeyedSegment(blockSegment)) {
-    throw new Error(
-      `Unable to extract block key from ${safeStringify(operation.at)}`,
-    )
-  }
-
-  const blockIndex = operation.editor.blockIndexMap.get(blockSegment._key)
-
-  if (blockIndex === undefined) {
-    throw new Error(
-      `Unable to find block index for block at ${safeStringify(operation.at)}`,
-    )
-  }
-
-  const slateBlock = operation.editor.children.at(blockIndex)
-
-  if (!slateBlock) {
+  if (!blockEntry) {
     throw new Error(`Unable to find block at ${safeStringify(operation.at)}`)
   }
+
+  const slateBlock = blockEntry.node
 
   if (isTextBlockNode(context, slateBlock)) {
     const filteredProps: Record<string, unknown> = {}
@@ -86,9 +72,7 @@ export const blockSetOperationImplementation: OperationImplementation<
       }
     }
 
-    setNodeProperties(operation.editor, filteredProps, [
-      {_key: slateBlock._key},
-    ])
+    setNodeProperties(operation.editor, filteredProps, blockEntry.path)
   } else {
     const schemaDefinition = context.schema.blockObjects.find(
       (definition) => definition.name === slateBlock._type,
@@ -116,8 +100,6 @@ export const blockSetOperationImplementation: OperationImplementation<
 
     const updatedSlateBlock = applyAll(slateBlock, patches)
 
-    setNodeProperties(operation.editor, updatedSlateBlock, [
-      {_key: slateBlock._key},
-    ])
+    setNodeProperties(operation.editor, updatedSlateBlock, blockEntry.path)
   }
 }
