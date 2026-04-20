@@ -20,6 +20,7 @@ export type EditorFeatureFlags = {
   mentionPickerPlugin: boolean
   slashCommandPlugin: boolean
   codeEditorPlugin: boolean
+  codeBlockPlugin: boolean
   linkPlugin: boolean
   oneLinePlugin: boolean
   markdownPlugin: boolean
@@ -35,6 +36,7 @@ export const defaultEditorFeatureFlags: EditorFeatureFlags = {
   mentionPickerPlugin: true,
   slashCommandPlugin: true,
   codeEditorPlugin: false,
+  codeBlockPlugin: true,
   linkPlugin: true,
   oneLinePlugin: false,
   markdownPlugin: true,

@@ -101,6 +101,18 @@ export const playgroundSchemaDefinition = defineSchema({
         {name: 'alt', title: 'Alt text', type: 'string'},
       ],
     },
+    {
+      title: 'Code block',
+      name: 'code-block',
+      fields: [
+        {
+          name: 'lines',
+          title: 'Lines',
+          type: 'array',
+          of: [{type: 'block'}],
+        },
+      ],
+    },
   ],
   inlineObjects: [
     {
