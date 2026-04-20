@@ -57,37 +57,29 @@ const schemaDefinition = defineSchema({
 })
 
 const tableContainers = [
-  {
-    container: defineContainer<typeof schemaDefinition>({
-      scope: '$..table',
-      field: 'rows',
-      render: ({children}) => <>{children}</>,
-    }),
-  },
-  {
-    container: defineContainer<typeof schemaDefinition>({
-      scope: '$..table.row',
-      field: 'cells',
-      render: ({children}) => <>{children}</>,
-    }),
-  },
-  {
-    container: defineContainer<typeof schemaDefinition>({
-      scope: '$..table.row.cell',
-      field: 'content',
-      render: ({children}) => <>{children}</>,
-    }),
-  },
+  defineContainer<typeof schemaDefinition>({
+    scope: '$..table',
+    field: 'rows',
+    render: ({children}) => <>{children}</>,
+  }),
+  defineContainer<typeof schemaDefinition>({
+    scope: '$..table.row',
+    field: 'cells',
+    render: ({children}) => <>{children}</>,
+  }),
+  defineContainer<typeof schemaDefinition>({
+    scope: '$..table.row.cell',
+    field: 'content',
+    render: ({children}) => <>{children}</>,
+  }),
 ]
 
 const calloutContainers = [
-  {
-    container: defineContainer<typeof schemaDefinition>({
-      scope: '$..callout',
-      field: 'content',
-      render: ({children}) => <>{children}</>,
-    }),
-  },
+  defineContainer<typeof schemaDefinition>({
+    scope: '$..callout',
+    field: 'content',
+    render: ({children}) => <>{children}</>,
+  }),
 ]
 
 describe('container normalization', () => {
@@ -1528,13 +1520,11 @@ describe('container normalization', () => {
       children: (
         <ContainerPlugin
           containers={[
-            {
-              container: defineContainer<typeof cardSchemaDefinition>({
-                scope: '$..card',
-                field: 'tags',
-                render: ({children}) => <>{children}</>,
-              }),
-            },
+            defineContainer<typeof cardSchemaDefinition>({
+              scope: '$..card',
+              field: 'tags',
+              render: ({children}) => <>{children}</>,
+            }),
           ]}
         />
       ),
@@ -1661,39 +1651,29 @@ describe('container normalization', () => {
         <ContainerPlugin
           containers={[
             {
-              container: {
-                scope: '$..callout',
-                field: 'content',
-                render: ({children}) => <>{children}</>,
-              },
+              scope: '$..callout',
+              field: 'content',
+              render: ({children}) => <>{children}</>,
             },
             {
-              container: {
-                scope: '$..table',
-                field: 'rows',
-                render: ({children}) => <>{children}</>,
-              },
+              scope: '$..table',
+              field: 'rows',
+              render: ({children}) => <>{children}</>,
             },
             {
-              container: {
-                scope: '$..table.row',
-                field: 'cells',
-                render: ({children}) => <>{children}</>,
-              },
+              scope: '$..table.row',
+              field: 'cells',
+              render: ({children}) => <>{children}</>,
             },
             {
-              container: {
-                scope: '$..table.row.cell',
-                field: 'content',
-                render: ({children}) => <>{children}</>,
-              },
+              scope: '$..table.row.cell',
+              field: 'content',
+              render: ({children}) => <>{children}</>,
             },
             {
-              container: {
-                scope: '$..figure',
-                field: 'caption',
-                render: ({children}) => <>{children}</>,
-              },
+              scope: '$..figure',
+              field: 'caption',
+              render: ({children}) => <>{children}</>,
             },
           ]}
         />
@@ -1804,27 +1784,21 @@ describe('container normalization', () => {
       children: (
         <ContainerPlugin
           containers={[
-            {
-              container: defineContainer<typeof schemaDefinition>({
-                scope: '$..table',
-                field: 'rows',
-                render: ({children}) => <>{children}</>,
-              }),
-            },
-            {
-              container: defineContainer<typeof schemaDefinition>({
-                scope: '$..table.row',
-                field: 'cells',
-                render: ({children}) => <>{children}</>,
-              }),
-            },
-            {
-              container: defineContainer<typeof schemaDefinition>({
-                scope: '$..table.row.cell',
-                field: 'content',
-                render: ({children}) => <>{children}</>,
-              }),
-            },
+            defineContainer<typeof schemaDefinition>({
+              scope: '$..table',
+              field: 'rows',
+              render: ({children}) => <>{children}</>,
+            }),
+            defineContainer<typeof schemaDefinition>({
+              scope: '$..table.row',
+              field: 'cells',
+              render: ({children}) => <>{children}</>,
+            }),
+            defineContainer<typeof schemaDefinition>({
+              scope: '$..table.row.cell',
+              field: 'content',
+              render: ({children}) => <>{children}</>,
+            }),
           ]}
         />
       ),
@@ -1890,27 +1864,21 @@ describe('container normalization', () => {
       children: (
         <ContainerPlugin
           containers={[
-            {
-              container: defineContainer<typeof schemaDefinition>({
-                scope: '$..table',
-                field: 'rows',
-                render: ({children}) => <>{children}</>,
-              }),
-            },
-            {
-              container: defineContainer<typeof schemaDefinition>({
-                scope: '$..table.row',
-                field: 'cells',
-                render: ({children}) => <>{children}</>,
-              }),
-            },
-            {
-              container: defineContainer<typeof schemaDefinition>({
-                scope: '$..table.row.cell',
-                field: 'content',
-                render: ({children}) => <>{children}</>,
-              }),
-            },
+            defineContainer<typeof schemaDefinition>({
+              scope: '$..table',
+              field: 'rows',
+              render: ({children}) => <>{children}</>,
+            }),
+            defineContainer<typeof schemaDefinition>({
+              scope: '$..table.row',
+              field: 'cells',
+              render: ({children}) => <>{children}</>,
+            }),
+            defineContainer<typeof schemaDefinition>({
+              scope: '$..table.row.cell',
+              field: 'content',
+              render: ({children}) => <>{children}</>,
+            }),
           ]}
         />
       ),
@@ -2089,10 +2057,8 @@ describe('container normalization', () => {
     })
 
     const unregister = (editor as unknown as InternalEditor).registerContainer({
-      container: {
-        scope: '$..callout',
-        field: 'content',
-      },
+      scope: '$..callout',
+      field: 'content',
     })
 
     await vi.waitFor(() => {

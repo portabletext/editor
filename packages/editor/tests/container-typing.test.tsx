@@ -63,9 +63,7 @@ describe('typing inside containers', () => {
           ],
         },
       ],
-      children: (
-        <ContainerPlugin containers={[{container: calloutContainer}]} />
-      ),
+      children: <ContainerPlugin containers={[calloutContainer]} />,
     })
 
     const calloutElement = await vi.waitFor(() => {

@@ -451,11 +451,7 @@ describe('renderChild', () => {
       ],
       children: (
         <ContainerPlugin
-          containers={[
-            {container: tableContainer},
-            {container: rowContainer},
-            {container: cellContainer},
-          ]}
+          containers={[tableContainer, rowContainer, cellContainer]}
         />
       ),
       editableProps: {renderChild},

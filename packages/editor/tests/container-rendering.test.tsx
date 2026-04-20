@@ -79,9 +79,7 @@ describe('container rendering', () => {
           ],
         },
       ],
-      children: (
-        <ContainerPlugin containers={[{container: calloutContainer}]} />
-      ),
+      children: <ContainerPlugin containers={[calloutContainer]} />,
     })
 
     await vi.waitFor(() => {
@@ -211,9 +209,7 @@ describe('container rendering', () => {
           ],
         },
       ],
-      children: (
-        <ContainerPlugin containers={[{container: trackingContainer}]} />
-      ),
+      children: <ContainerPlugin containers={[trackingContainer]} />,
     })
 
     await vi.waitFor(() => {
@@ -336,11 +332,7 @@ describe('table with nested rows and cells', () => {
       ],
       children: (
         <ContainerPlugin
-          containers={[
-            {container: tableContainer},
-            {container: rowContainer},
-            {container: cellContainer},
-          ]}
+          containers={[tableContainer, rowContainer, cellContainer]}
         />
       ),
     })
@@ -469,7 +461,7 @@ describe('container with non-editable fields', () => {
           tags: ['tag1', 'tag2'],
         },
       ],
-      children: <ContainerPlugin containers={[{container: cardContainer}]} />,
+      children: <ContainerPlugin containers={[cardContainer]} />,
     })
 
     await vi.waitFor(() => {
@@ -540,17 +532,15 @@ describe('block scope and specificity', () => {
       children: (
         <ContainerPlugin
           containers={[
-            {
-              container: defineContainer<typeof schemaDefinition>({
-                scope: '$..block',
-                field: 'children',
-                render: ({attributes, children}) => (
-                  <p data-testid="custom-block" {...attributes}>
-                    {children}
-                  </p>
-                ),
-              }),
-            },
+            defineContainer<typeof schemaDefinition>({
+              scope: '$..block',
+              field: 'children',
+              render: ({attributes, children}) => (
+                <p data-testid="custom-block" {...attributes}>
+                  {children}
+                </p>
+              ),
+            }),
           ]}
         />
       ),
@@ -613,29 +603,25 @@ describe('block scope and specificity', () => {
       children: (
         <ContainerPlugin
           containers={[
-            {container: calloutContainer},
-            {
-              container: defineContainer<typeof schemaDefinition>({
-                scope: '$..block',
-                field: 'children',
-                render: ({attributes, children}) => (
-                  <p data-testid="universal-block" {...attributes}>
-                    {children}
-                  </p>
-                ),
-              }),
-            },
-            {
-              container: defineContainer<typeof schemaDefinition>({
-                scope: '$..callout.block',
-                field: 'children',
-                render: ({attributes, children}) => (
-                  <p data-testid="callout-block" {...attributes}>
-                    {children}
-                  </p>
-                ),
-              }),
-            },
+            calloutContainer,
+            defineContainer<typeof schemaDefinition>({
+              scope: '$..block',
+              field: 'children',
+              render: ({attributes, children}) => (
+                <p data-testid="universal-block" {...attributes}>
+                  {children}
+                </p>
+              ),
+            }),
+            defineContainer<typeof schemaDefinition>({
+              scope: '$..callout.block',
+              field: 'children',
+              render: ({attributes, children}) => (
+                <p data-testid="callout-block" {...attributes}>
+                  {children}
+                </p>
+              ),
+            }),
           ]}
         />
       ),
@@ -705,18 +691,16 @@ describe('block scope and specificity', () => {
       children: (
         <ContainerPlugin
           containers={[
-            {container: calloutContainer},
-            {
-              container: defineContainer<typeof schemaDefinition>({
-                scope: '$..block',
-                field: 'children',
-                render: ({attributes, children}) => (
-                  <p data-testid="universal-block" {...attributes}>
-                    {children}
-                  </p>
-                ),
-              }),
-            },
+            calloutContainer,
+            defineContainer<typeof schemaDefinition>({
+              scope: '$..block',
+              field: 'children',
+              render: ({attributes, children}) => (
+                <p data-testid="universal-block" {...attributes}>
+                  {children}
+                </p>
+              ),
+            }),
           ]}
         />
       ),
@@ -770,12 +754,10 @@ describe('container and renderer independence', () => {
         <ContainerPlugin
           containers={[
             {
-              container: {
-                ...calloutContainer,
-                render: ({attributes, children}) => (
-                  <div {...attributes}>{children}</div>
-                ),
-              },
+              ...calloutContainer,
+              render: ({attributes, children}) => (
+                <div {...attributes}>{children}</div>
+              ),
             },
           ]}
         />
@@ -950,9 +932,7 @@ describe('code block container', () => {
           ],
         },
       ],
-      children: (
-        <ContainerPlugin containers={[{container: codeBlockContainer}]} />
-      ),
+      children: <ContainerPlugin containers={[codeBlockContainer]} />,
     })
 
     await vi.waitFor(() => {
@@ -1073,9 +1053,7 @@ describe('gallery with void block objects', () => {
           ],
         },
       ],
-      children: (
-        <ContainerPlugin containers={[{container: galleryContainer}]} />
-      ),
+      children: <ContainerPlugin containers={[galleryContainer]} />,
     })
 
     await vi.waitFor(() => {
@@ -1278,11 +1256,7 @@ describe('cell with mixed content', () => {
       ],
       children: (
         <ContainerPlugin
-          containers={[
-            {container: tableContainer},
-            {container: rowContainer},
-            {container: cellContainer},
-          ]}
+          containers={[tableContainer, rowContainer, cellContainer]}
         />
       ),
     })

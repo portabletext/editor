@@ -2496,13 +2496,11 @@ describe('event.patches', () => {
         children: (
           <ContainerPlugin
             containers={[
-              {
-                container: defineContainer<typeof calloutSchemaDefinition>({
-                  scope: '$..callout',
-                  field: 'content',
-                  render: ({children}) => <>{children}</>,
-                }),
-              },
+              defineContainer<typeof calloutSchemaDefinition>({
+                scope: '$..callout',
+                field: 'content',
+                render: ({children}) => <>{children}</>,
+              }),
             ]}
           />
         ),
@@ -4642,37 +4640,29 @@ describe('event.patches', () => {
     })
 
     const calloutContainers = [
-      {
-        container: defineContainer<typeof containerSchema>({
-          scope: '$..callout',
-          field: 'content',
-          render: ({children}) => <>{children}</>,
-        }),
-      },
+      defineContainer<typeof containerSchema>({
+        scope: '$..callout',
+        field: 'content',
+        render: ({children}) => <>{children}</>,
+      }),
     ]
 
     const tableContainers = [
-      {
-        container: defineContainer<typeof containerSchema>({
-          scope: '$..table',
-          field: 'rows',
-          render: ({children}) => <>{children}</>,
-        }),
-      },
-      {
-        container: defineContainer<typeof containerSchema>({
-          scope: '$..table.row',
-          field: 'cells',
-          render: ({children}) => <>{children}</>,
-        }),
-      },
-      {
-        container: defineContainer<typeof containerSchema>({
-          scope: '$..table.row.cell',
-          field: 'content',
-          render: ({children}) => <>{children}</>,
-        }),
-      },
+      defineContainer<typeof containerSchema>({
+        scope: '$..table',
+        field: 'rows',
+        render: ({children}) => <>{children}</>,
+      }),
+      defineContainer<typeof containerSchema>({
+        scope: '$..table.row',
+        field: 'cells',
+        render: ({children}) => <>{children}</>,
+      }),
+      defineContainer<typeof containerSchema>({
+        scope: '$..table.row.cell',
+        field: 'content',
+        render: ({children}) => <>{children}</>,
+      }),
     ]
 
     test('insert a block into a callout content field', async () => {

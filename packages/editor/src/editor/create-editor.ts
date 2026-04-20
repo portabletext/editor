@@ -20,7 +20,7 @@ import {relayMachine, type RelayActor} from './relay-machine'
 import {syncMachine, type SyncActor} from './sync-machine'
 
 export type InternalEditor = Editor & {
-  registerContainer: (config: {container: Container}) => () => void
+  registerContainer: (container: Container) => () => void
   _internal: {
     editable: EditableAPI
     editorActor: EditorActor
@@ -90,15 +90,15 @@ export function createInternalEditor(config: EditorConfig): {
         })
       }
     },
-    registerContainer: (config) => {
+    registerContainer: (container) => {
       editorActor.send({
         type: 'register container',
-        container: config.container,
+        container,
       })
       return () => {
         editorActor.send({
           type: 'unregister container',
-          container: config.container,
+          container,
         })
       }
     },
