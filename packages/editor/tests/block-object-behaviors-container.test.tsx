@@ -5,6 +5,7 @@ import {userEvent} from 'vitest/browser'
 import {ContainerPlugin} from '../src/plugins/plugin.container'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
+import {isEqualPaths} from '../src/utils/util.is-equal-paths'
 
 const schemaDefinition = defineSchema({
   blockObjects: [
@@ -435,15 +436,26 @@ describe('core block-object behaviors — container awareness', () => {
       expect(editor.getSnapshot().context.selection?.focus.offset).toEqual(2)
     })
 
-    // Click line 1's span. The DOM click cannot actually move the browser
-    // selection in this test environment, so the editor selection should
-    // remain at line 2 (unchanged) — NOT be reset to offset 0 of line 1's
-    // span by the fallback path in `onClick`.
+    // Click line 1's span. In some test environments the DOM click does not
+    // move the browser selection (chromium); in others it does (webkit). The
+    // invariant across browsers: the `onClick` fallback must NOT force the
+    // selection to offset 0 of line 1's span — which is what the
+    // container-ancestor match used to do before the `isVoidNode`/
+    // `isEditableContainer` split.
     await userEvent.click(line1Span)
 
     await vi.waitFor(() => {
       const selection = editor.getSnapshot().context.selection
-      expect(selection?.focus.path[2]).toEqual({_key: line2Key})
+      const focusPath = selection?.focus.path ?? []
+      const snappedToStartOfLine1Span =
+        isEqualPaths(focusPath, [
+          {_key: codeBlockKey},
+          'lines',
+          {_key: line1Key},
+          'children',
+          {_key: line1SpanKey},
+        ]) && selection?.focus.offset === 0
+      expect(snappedToStartOfLine1Span).toEqual(false)
     })
   })
 
@@ -530,14 +542,29 @@ describe('core block-object behaviors — container awareness', () => {
       expect(editor.getSnapshot().context.selection?.focus.offset).toEqual(2)
     })
 
-    // Click the text block div directly (not a span). Previously this would
-    // snap the editor selection to offset 0 of line 1's first span via the
-    // onClick fallback; it should leave selection on line 2 untouched.
+    // Click the text block div directly (not a span). The previous
+    // `onClick` fallback matched the code-block as common ancestor and
+    // snapped the editor selection to offset 0 of line 1's first span. The
+    // `isVoidNode`/`isEditableContainer` split removes that forced snap.
+    //
+    // In some test environments the DOM click does not move the browser
+    // selection (chromium); in others it does (webkit). The invariant
+    // across browsers: selection must NOT land exactly at offset 0 of line
+    // 1's first span (the signature of the fallback bug).
     await userEvent.click(line1Block)
 
     await vi.waitFor(() => {
       const selection = editor.getSnapshot().context.selection
-      expect(selection?.focus.path[2]).toEqual({_key: line2Key})
+      const focusPath = selection?.focus.path ?? []
+      const snappedToStartOfLine1Span =
+        isEqualPaths(focusPath, [
+          {_key: codeBlockKey},
+          'lines',
+          {_key: line1Key},
+          'children',
+          {_key: line1SpanKey},
+        ]) && selection?.focus.offset === 0
+      expect(snappedToStartOfLine1Span).toEqual(false)
     })
   })
 })
