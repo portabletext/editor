@@ -87,13 +87,23 @@ describe('insert into container', () => {
     })
 
     await vi.waitFor(() => {
-      const value = editor.getSnapshot().context.value
-      const codeBlock = value?.[0] as {
-        lines?: Array<{children?: Array<{text?: string}>}>
-      }
-      const line = codeBlock.lines?.[0]
-      const textConcat = line?.children?.map((c) => c.text ?? '').join('') ?? ''
-      expect(textConcat).toEqual('foobar')
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: codeBlockKey,
+          _type: 'code-block',
+          lines: [
+            {
+              _key: lineKey,
+              _type: 'block',
+              children: [
+                {_key: spanKey, _type: 'span', marks: [], text: 'foobar'},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ])
     })
   })
 
@@ -147,17 +157,25 @@ describe('insert into container', () => {
     })
 
     await vi.waitFor(() => {
-      const value = editor.getSnapshot().context.value
-      expect(value).toHaveLength(1)
-      const codeBlock = value?.[0] as {
-        lines?: Array<{children?: Array<unknown>}>
-      }
-      const line = codeBlock.lines?.[0]
-      expect(line?.children?.length).toBeGreaterThanOrEqual(2)
-      const hasStockTicker = line?.children?.some(
-        (c) => (c as {_type?: string})._type === 'stock-ticker',
-      )
-      expect(hasStockTicker).toEqual(true)
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: codeBlockKey,
+          _type: 'code-block',
+          lines: [
+            {
+              _key: lineKey,
+              _type: 'block',
+              children: [
+                {_key: spanKey, _type: 'span', marks: [], text: 'foo'},
+                {_key: 'k5', _type: 'stock-ticker', symbol: 'AAPL'},
+                {_key: 'k6', _type: 'span', marks: [], text: ''},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ])
     })
   })
 })
