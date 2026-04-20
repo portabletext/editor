@@ -18,6 +18,7 @@ import {
 } from '@portabletext/editor/selectors'
 import {
   isEqualSelections,
+  isKeyedSegment,
   isSelectionCollapsed,
 } from '@portabletext/editor/utils'
 import {useActorRef} from '@xstate/react'
@@ -29,6 +30,15 @@ import {
 } from 'xstate'
 import type {InputRule, InputRuleMatch} from './input-rule'
 import {getInputRuleMatchLocation} from './input-rule-match-location'
+
+/**
+ * Extract the `_key` of the block a `BlockOffset` path points at. A block
+ * path's root segment is always a `KeyedSegment`.
+ */
+function blockKey(path: BlockOffset['path']): string | undefined {
+  const firstSegment = path.at(0)
+  return isKeyedSegment(firstSegment) ? firstSegment._key : undefined
+}
 
 /**
  * @alpha
@@ -378,12 +388,12 @@ const inputRuleSetup = setup({
       // different span after normalization).
       if (event.blockOffsets && context.endOffsets) {
         const startChanged =
-          context.endOffsets.start.path[0]._key !==
-            event.blockOffsets.start.path[0]._key ||
+          blockKey(context.endOffsets.start.path) !==
+            blockKey(event.blockOffsets.start.path) ||
           context.endOffsets.start.offset !== event.blockOffsets.start.offset
         const endChanged =
-          context.endOffsets.end.path[0]._key !==
-            event.blockOffsets.end.path[0]._key ||
+          blockKey(context.endOffsets.end.path) !==
+            blockKey(event.blockOffsets.end.path) ||
           context.endOffsets.end.offset !== event.blockOffsets.end.offset
 
         return startChanged || endChanged
