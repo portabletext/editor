@@ -1,7 +1,9 @@
 import type {PortableTextBlock} from '@portabletext/schema'
-import {getAncestorTextBlock} from '../node-traversal/get-ancestor-text-block'
+import type {EditorSchema} from '../editor/editor-schema'
+import {getAncestors} from '../node-traversal/get-ancestors'
 import {getNodes} from '../node-traversal/get-nodes'
 import {getBlock, isBlock} from '../node-traversal/is-block'
+import type {TraversalContainers} from '../schema/resolve-containers'
 import {getFocusInlineObject} from '../selectors/selector.get-focus-inline-object'
 import {getFocusSpan} from '../selectors/selector.get-focus-span'
 import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
@@ -9,6 +11,7 @@ import {isAtTheEndOfBlock} from '../selectors/selector.is-at-the-end-of-block'
 import {isAtTheStartOfBlock} from '../selectors/selector.is-at-the-start-of-block'
 import {isSelectionCollapsed} from '../selectors/selector.is-selection-collapsed'
 import {isSelectionExpanded} from '../selectors/selector.is-selection-expanded'
+import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
 import {getBlockEndPoint} from '../utils/util.get-block-end-point'
 import {getBlockStartPoint} from '../utils/util.get-block-start-point'
@@ -146,11 +149,11 @@ const breakingEntireBlocks = defineBehavior({
       return false
     }
 
-    const selectionStartBlock = getAncestorTextBlock(
+    const selectionStartBlock = findContainingBlock(
       snapshot.context,
       selectionStartPoint.path,
     )
-    const selectionEndBlock = getAncestorTextBlock(
+    const selectionEndBlock = findContainingBlock(
       snapshot.context,
       selectionEndPoint.path,
     )
@@ -236,4 +239,32 @@ export const coreInsertBreakBehaviors = {
   breakingAtTheStartOfTextBlock,
   breakingEntireBlocks,
   breakingInlineObject,
+}
+
+/**
+ * Find the block that contains a given point path. If the path itself points
+ * at a block (e.g. a void block object), returns it. Otherwise walks
+ * ancestors until it finds one.
+ */
+function findContainingBlock(
+  context: {
+    schema: EditorSchema
+    containers: TraversalContainers
+    value: Array<Node>
+  },
+  path: Path,
+): {node: PortableTextBlock; path: Path} | undefined {
+  const direct = getBlock(context, path)
+  if (direct) {
+    return direct
+  }
+  for (const ancestor of getAncestors(context, path)) {
+    if (isBlock(context, ancestor.path)) {
+      const block = getBlock(context, ancestor.path)
+      if (block) {
+        return block
+      }
+    }
+  }
+  return undefined
 }
