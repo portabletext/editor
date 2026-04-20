@@ -1,6 +1,8 @@
 import {safeStringify} from '../internal-utils/safe-json'
+import {getChildren} from '../node-traversal/get-children'
 import {getNode} from '../node-traversal/get-node'
 import {withoutNormalizing} from '../slate/editor/without-normalizing'
+import {parentPath} from '../slate/path/parent-path'
 import type {OperationImplementation} from './operation.types'
 
 export const moveBlockOperationImplementation: OperationImplementation<
@@ -27,11 +29,12 @@ export const moveBlockOperationImplementation: OperationImplementation<
   // supports moves at the same level today (root → root or within the
   // same container field). Cross-level moves would need the behavior to
   // split the move into remove + insert with explicit parent resolution.
-  const originIndex = editor.children.findIndex(
-    (child) => child._key === originEntry.node._key,
+  const siblings = getChildren(editor, parentPath(originEntry.path))
+  const originIndex = siblings.findIndex(
+    (sibling) => sibling.node._key === originEntry.node._key,
   )
-  const destinationIndex = editor.children.findIndex(
-    (child) => child._key === destinationEntry.node._key,
+  const destinationIndex = siblings.findIndex(
+    (sibling) => sibling.node._key === destinationEntry.node._key,
   )
   const movingDown =
     originIndex !== -1 &&
