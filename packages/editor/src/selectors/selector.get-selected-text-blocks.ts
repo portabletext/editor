@@ -1,72 +1,18 @@
 import {isTextBlock, type PortableTextTextBlock} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
-import type {BlockPath} from '../types/paths'
-import {getSelectionEndPoint} from '../utils/util.get-selection-end-point'
-import {getSelectionStartPoint} from '../utils/util.get-selection-start-point'
-import {getBlockKeyFromSelectionPoint} from '../utils/util.selection-point'
+import type {Path} from '../slate/interfaces/path'
+import {getSelectedBlocks} from './selector.get-selected-blocks'
 
 /**
+ * Returns the text blocks touched by the selection, resolved at any depth.
+ *
  * @public
  */
 export const getSelectedTextBlocks: EditorSelector<
-  Array<{node: PortableTextTextBlock; path: BlockPath}>
+  Array<{node: PortableTextTextBlock; path: Path}>
 > = (snapshot) => {
-  if (!snapshot.context.selection) {
-    return []
-  }
-
-  const selectedTextBlocks: Array<{
-    node: PortableTextTextBlock
-    path: BlockPath
-  }> = []
-
-  const startPoint = getSelectionStartPoint(snapshot.context.selection)
-  const endPoint = getSelectionEndPoint(snapshot.context.selection)
-  const startBlockKey = getBlockKeyFromSelectionPoint(startPoint)
-  const endBlockKey = getBlockKeyFromSelectionPoint(endPoint)
-
-  if (!startBlockKey || !endBlockKey) {
-    return selectedTextBlocks
-  }
-
-  const startBlockIndex = snapshot.blockIndexMap.get(startBlockKey)
-  const endBlockIndex = snapshot.blockIndexMap.get(endBlockKey)
-
-  if (startBlockIndex === undefined || endBlockIndex === undefined) {
-    return selectedTextBlocks
-  }
-
-  const slicedValue = snapshot.context.value.slice(
-    startBlockIndex,
-    endBlockIndex + 1,
+  return getSelectedBlocks(snapshot).filter(
+    (entry): entry is {node: PortableTextTextBlock; path: Path} =>
+      isTextBlock(snapshot.context, entry.node),
   )
-
-  for (const block of slicedValue) {
-    if (block._key === startBlockKey) {
-      if (isTextBlock(snapshot.context, block)) {
-        selectedTextBlocks.push({node: block, path: [{_key: block._key}]})
-      }
-
-      if (startBlockKey === endBlockKey) {
-        break
-      }
-      continue
-    }
-
-    if (block._key === endBlockKey) {
-      if (isTextBlock(snapshot.context, block)) {
-        selectedTextBlocks.push({node: block, path: [{_key: block._key}]})
-      }
-
-      break
-    }
-
-    if (selectedTextBlocks.length > 0) {
-      if (isTextBlock(snapshot.context, block)) {
-        selectedTextBlocks.push({node: block, path: [{_key: block._key}]})
-      }
-    }
-  }
-
-  return selectedTextBlocks
 }

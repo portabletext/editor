@@ -1,11 +1,18 @@
 import type {PortableTextBlock} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
-import {getSelectionEndPoint} from '../utils/util.get-selection-end-point'
-import {getSelectionStartPoint} from '../utils/util.get-selection-start-point'
-import {getBlockKeyFromSelectionPoint} from '../utils/util.selection-point'
 import {sliceBlocks} from '../utils/util.slice-blocks'
+import {getSelectedBlocks} from './selector.get-selected-blocks'
+import {getSelectionEndBlock} from './selector.get-selection-end-block'
+import {getSelectionStartBlock} from './selector.get-selection-start-block'
 
 /**
+ * Returns the portion of the document's value covered by the selection,
+ * resolved at any depth.
+ *
+ * When the selection is inside an editable container, only the blocks within
+ * that container are included, with the first and last trimmed to the
+ * selection endpoints.
+ *
  * @public
  */
 export const getSelectedValue: EditorSelector<Array<PortableTextBlock>> = (
@@ -17,46 +24,35 @@ export const getSelectedValue: EditorSelector<Array<PortableTextBlock>> = (
     return []
   }
 
-  const startPoint = getSelectionStartPoint(selection)
-  const endPoint = getSelectionEndPoint(selection)
-  const startBlockKey = getBlockKeyFromSelectionPoint(startPoint)
-  const endBlockKey = getBlockKeyFromSelectionPoint(endPoint)
+  const startBlock = getSelectionStartBlock(snapshot)
+  const endBlock = getSelectionEndBlock(snapshot)
 
-  if (!startBlockKey || !endBlockKey) {
+  if (!startBlock || !endBlock) {
     return []
   }
 
-  const startBlockIndex = snapshot.blockIndexMap.get(startBlockKey)
-  const endBlockIndex = snapshot.blockIndexMap.get(endBlockKey)
+  if (startBlock.node._key === endBlock.node._key) {
+    const slicedStartBlock = sliceBlocks({
+      context: snapshot.context,
+      blocks: [startBlock.node],
+    }).at(0)
 
-  if (startBlockIndex === undefined || endBlockIndex === undefined) {
-    return []
-  }
-
-  const startBlock = snapshot.context.value.at(startBlockIndex)
-  const slicedStartBlock = startBlock
-    ? sliceBlocks({
-        context: snapshot.context,
-        blocks: [startBlock],
-      }).at(0)
-    : undefined
-
-  if (startBlockIndex === endBlockIndex) {
     return slicedStartBlock ? [slicedStartBlock] : []
   }
 
-  const endBlock = snapshot.context.value.at(endBlockIndex)
-  const slicedEndBlock = endBlock
-    ? sliceBlocks({
-        context: snapshot.context,
-        blocks: [endBlock],
-      }).at(0)
-    : undefined
+  const selectedBlocks = getSelectedBlocks(snapshot)
 
-  const middleBlocks = snapshot.context.value.slice(
-    startBlockIndex + 1,
-    endBlockIndex,
-  )
+  const slicedStartBlock = sliceBlocks({
+    context: snapshot.context,
+    blocks: [startBlock.node],
+  }).at(0)
+
+  const slicedEndBlock = sliceBlocks({
+    context: snapshot.context,
+    blocks: [endBlock.node],
+  }).at(0)
+
+  const middleBlocks = selectedBlocks.slice(1, -1).map((entry) => entry.node)
 
   return [
     ...(slicedStartBlock ? [slicedStartBlock] : []),
