@@ -1303,6 +1303,15 @@ export const Editable = forwardRef(
                       return
                     }
 
+                    // DOM clicks that land on a text leaf (span) already
+                    // produce a valid DOM selection. Skip the fallback below,
+                    // which would otherwise snap the cursor to offset 0 of
+                    // the first leaf when the clicked leaf is inside an
+                    // editable container (object node that is not void).
+                    if (isSpan({schema: editor.schema}, node)) {
+                      return
+                    }
+
                     const start = editorStart(editor, path)
                     const end = editorEnd(editor, path)
                     const startEntry = getNode(editor, start.path)
