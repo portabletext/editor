@@ -226,7 +226,16 @@ export function deleteText(editor: Editor, options: TextDeleteOptions = {}) {
           }).next().value
         : undefined
 
-      if (current && prev) {
+      // Only merge if `current` and `prev` are siblings in the same parent
+      // array. `before` walks the entire tree backward without respecting
+      // container boundaries, so it can return a block from a different
+      // container or from the root when the caret is at the start of the
+      // first block inside a container. Merging across container boundaries
+      // is never correct.
+      const prevIsSibling =
+        current && prev && isSiblingPath(current.path, prev.path)
+
+      if (current && prev && prevIsSibling) {
         const {node: mergeNode, path: mergePath} = current
         const {node: prevNode, path: prevPath} = prev
 
