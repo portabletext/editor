@@ -1,8 +1,7 @@
-import {isSpan} from '@portabletext/schema'
+import {isSpan, isTextBlock} from '@portabletext/schema'
+import {getFocusTextBlock} from '../node-traversal/get-focus-text-block'
+import {getSibling} from '../node-traversal/get-sibling'
 import {getFocusChild} from '../selectors/selector.get-focus-child'
-import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
-import {getNextBlock} from '../selectors/selector.get-next-block'
-import {getPreviousBlock} from '../selectors/selector.get-previous-block'
 import {isAtTheEndOfBlock} from '../selectors/selector.is-at-the-end-of-block'
 import {isAtTheStartOfBlock} from '../selectors/selector.is-at-the-start-of-block'
 import {isTextBlockNode} from '../slate/node/is-text-block-node'
@@ -49,10 +48,19 @@ export const abstractDeleteBehaviors = [
         },
       }
 
-      const previousBlock = getPreviousBlock(adjustedSnapshot)
       const focusTextBlock = getFocusTextBlock(adjustedSnapshot)
 
-      if (!previousBlock || !focusTextBlock) {
+      if (!focusTextBlock) {
+        return false
+      }
+
+      const previousSibling = getSibling(
+        adjustedSnapshot.context,
+        focusTextBlock.path,
+        'previous',
+      )
+
+      if (!previousSibling) {
         return false
       }
 
@@ -60,14 +68,19 @@ export const abstractDeleteBehaviors = [
         return false
       }
 
+      if (!isTextBlock(snapshot.context, previousSibling.node)) {
+        return false
+      }
+
+      const previousBlock = {
+        node: previousSibling.node,
+        path: previousSibling.path,
+      }
+
       const previousBlockEndPoint = getBlockEndPoint({
         context: snapshot.context,
         block: previousBlock,
       })
-
-      if (!isTextBlockNode(snapshot.context, previousBlock.node)) {
-        return false
-      }
 
       return {previousBlockEndPoint, focusTextBlock}
     },
@@ -121,22 +134,27 @@ export const abstractDeleteBehaviors = [
         return false
       }
 
-      const nextBlock = getNextBlock({
+      const adjustedSnapshot = {
         ...snapshot,
         context: {
           ...snapshot.context,
           selection: at,
         },
-      })
-      const focusTextBlock = getFocusTextBlock({
-        ...snapshot,
-        context: {
-          ...snapshot.context,
-          selection: at,
-        },
-      })
+      }
 
-      if (!nextBlock || !focusTextBlock) {
+      const focusTextBlock = getFocusTextBlock(adjustedSnapshot)
+
+      if (!focusTextBlock) {
+        return false
+      }
+
+      const nextSibling = getSibling(
+        adjustedSnapshot.context,
+        focusTextBlock.path,
+        'next',
+      )
+
+      if (!nextSibling) {
         return false
       }
 
@@ -144,9 +162,13 @@ export const abstractDeleteBehaviors = [
         return false
       }
 
+      if (!isTextBlock(snapshot.context, nextSibling.node)) {
+        return false
+      }
+
       const nextBlockStartPoint = getBlockStartPoint({
         context: snapshot.context,
-        block: nextBlock,
+        block: {node: nextSibling.node, path: nextSibling.path},
       })
 
       return {focusTextBlock, nextBlockStartPoint}
@@ -188,10 +210,19 @@ export const abstractDeleteBehaviors = [
         },
       }
 
-      const nextBlock = getNextBlock(adjustedSnapshot)
       const focusTextBlock = getFocusTextBlock(adjustedSnapshot)
 
-      if (!nextBlock || !focusTextBlock) {
+      if (!focusTextBlock) {
+        return false
+      }
+
+      const nextSibling = getSibling(
+        adjustedSnapshot.context,
+        focusTextBlock.path,
+        'next',
+      )
+
+      if (!nextSibling) {
         return false
       }
 
@@ -199,11 +230,11 @@ export const abstractDeleteBehaviors = [
         return false
       }
 
-      if (!isTextBlockNode(snapshot.context, nextBlock.node)) {
+      if (!isTextBlockNode(snapshot.context, nextSibling.node)) {
         return false
       }
 
-      return {nextBlock}
+      return {nextBlock: {node: nextSibling.node, path: nextSibling.path}}
     },
     actions: [
       (_, {nextBlock}) => [

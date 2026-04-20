@@ -263,4 +263,90 @@ describe('core block-object behaviors — container awareness', () => {
       ])
     })
   })
+
+  test('Backspace at start of a code-block line with a previous line merges into the previous line', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const codeBlockKey = keyGenerator()
+    const line1Key = keyGenerator()
+    const line1SpanKey = keyGenerator()
+    const line2Key = keyGenerator()
+    const line2SpanKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition,
+      initialValue: [
+        {
+          _type: 'code-block',
+          _key: codeBlockKey,
+          lines: [
+            {
+              _type: 'block',
+              _key: line1Key,
+              children: [
+                {_type: 'span', _key: line1SpanKey, text: 'foo', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: line2Key,
+              children: [
+                {_type: 'span', _key: line2SpanKey, text: 'bar', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: <ContainerPlugin containers={[codeBlockContainer]} />,
+    })
+
+    await vi.waitFor(() => {
+      const el = document.querySelector('[data-testid="code-block"]')
+      expect(el).not.toEqual(null)
+    })
+
+    const spanElement = document.querySelectorAll(
+      `[data-testid="code-block"] [data-slate-string="true"]`,
+    )[1]!
+    await userEvent.click(spanElement)
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [
+            {_key: codeBlockKey},
+            'lines',
+            {_key: line2Key},
+            'children',
+            {_key: line2SpanKey},
+          ],
+          offset: 0,
+        },
+        focus: {
+          path: [
+            {_key: codeBlockKey},
+            'lines',
+            {_key: line2Key},
+            'children',
+            {_key: line2SpanKey},
+          ],
+          offset: 0,
+        },
+      },
+    })
+    await userEvent.keyboard('{Backspace}')
+    await new Promise((r) => setTimeout(r, 100))
+
+    const value = editor.getSnapshot().context.value
+    expect(value).toHaveLength(1)
+    const codeBlock = value?.[0] as {
+      lines?: Array<{children: Array<{text: string}>}>
+    }
+    expect(codeBlock.lines).toHaveLength(1)
+    expect(codeBlock.lines?.[0]?.children?.[0]?.text).toEqual('foobar')
+  })
 })
