@@ -31,16 +31,23 @@ export function updateValuePlugin(
 
     apply(operation)
 
-    buildIndexMaps(
-      {
-        schema: context.schema,
-        value: editor.children,
-      },
-      {
-        blockIndexMap: editor.blockIndexMap,
-        listIndexMap: editor.listIndexMap,
-      },
-    )
+    // Operations deep inside blocks (path length > 2) only modify nested
+    // structure and cannot affect root-level blockIndexMap or listIndexMap.
+    // Root-level inserts/removes are already handled incrementally by
+    // applyOperation, so we only need a full rebuild for operations at or
+    // near the root level.
+    if (operation.path.length <= 2) {
+      buildIndexMaps(
+        {
+          schema: context.schema,
+          value: editor.children,
+        },
+        {
+          blockIndexMap: editor.blockIndexMap,
+          listIndexMap: editor.listIndexMap,
+        },
+      )
+    }
   }
 
   return editor
