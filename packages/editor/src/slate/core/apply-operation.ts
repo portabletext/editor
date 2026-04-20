@@ -380,14 +380,14 @@ export function applyOperation(editor: Editor, op: Operation): void {
             if (previousSibling?._key) {
               op.inverse = {
                 type: 'insert',
-                path: [...parentPath(path), {_key: previousSibling._key}],
+                path: [...path.slice(0, -1), {_key: previousSibling._key}],
                 node: children[index]!,
                 position: 'after',
               }
             } else {
               op.inverse = {
                 type: 'insert',
-                path: [...parentPath(path), 0],
+                path: [...path.slice(0, -1), 0],
                 node: children[index]!,
                 position: 'before',
               }
