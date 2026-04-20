@@ -99,15 +99,28 @@ describe('core block-object behaviors — container awareness', () => {
     await userEvent.keyboard('{Enter}')
     await new Promise((r) => setTimeout(r, 100))
 
-    const value = editor.getSnapshot().context.value
-    expect(value).toHaveLength(1)
-    expect(value?.[0]?._type).toEqual('code-block')
-    const codeBlock = value?.[0] as {
-      lines?: Array<{children: Array<{text: string}>}>
-    }
-    expect(codeBlock.lines).toHaveLength(2)
-    expect(codeBlock.lines?.[0]?.children?.[0]?.text).toEqual('foo')
-    expect(codeBlock.lines?.[1]?.children?.[0]?.text).toEqual('bar')
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _key: codeBlockKey,
+        _type: 'code-block',
+        lines: [
+          {
+            _key: lineKey,
+            _type: 'block',
+            children: [{_key: spanKey, _type: 'span', marks: [], text: 'foo'}],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _key: 'k5',
+            _type: 'block',
+            children: [{_key: spanKey, _type: 'span', marks: [], text: 'bar'}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      },
+    ])
   })
 
   test('Enter on a root void block object still inserts a sibling text block after', async () => {
@@ -153,11 +166,23 @@ describe('core block-object behaviors — container awareness', () => {
     await userEvent.keyboard('{ArrowRight}')
     await userEvent.keyboard('{Enter}')
     await vi.waitFor(() => {
-      const value = editor.getSnapshot().context.value
-      expect(value).toHaveLength(3)
-      expect(value?.[0]?._type).toEqual('block')
-      expect(value?.[1]?._type).toEqual('image')
-      expect(value?.[2]?._type).toEqual('block')
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: textBlockKey,
+          _type: 'block',
+          children: [{_key: spanKey, _type: 'span', marks: [], text: 'foo'}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {_key: imageKey, _type: 'image'},
+        {
+          _key: 'k5',
+          _type: 'block',
+          children: [{_key: 'k6', _type: 'span', marks: [], text: ''}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
     })
   })
 
@@ -342,13 +367,23 @@ describe('core block-object behaviors — container awareness', () => {
     await userEvent.keyboard('{Backspace}')
     await new Promise((r) => setTimeout(r, 100))
 
-    const value = editor.getSnapshot().context.value
-    expect(value).toHaveLength(1)
-    const codeBlock = value?.[0] as {
-      lines?: Array<{children: Array<{text: string}>}>
-    }
-    expect(codeBlock.lines).toHaveLength(1)
-    expect(codeBlock.lines?.[0]?.children?.[0]?.text).toEqual('foobar')
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _key: codeBlockKey,
+        _type: 'code-block',
+        lines: [
+          {
+            _key: line1Key,
+            _type: 'block',
+            children: [
+              {_key: line1SpanKey, _type: 'span', marks: [], text: 'foobar'},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      },
+    ])
   })
 
   test('Clicking a span inside a code-block line does not snap cursor to start of that span', async () => {
