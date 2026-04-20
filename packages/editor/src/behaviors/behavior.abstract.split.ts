@@ -12,7 +12,7 @@ import {getBlockStartPoint} from '../utils/util.get-block-start-point'
 import {getSelectionEndPoint} from '../utils/util.get-selection-end-point'
 import {getSelectionStartPoint} from '../utils/util.get-selection-start-point'
 import {isSelectionCollapsed} from '../utils/util.is-selection-collapsed'
-import {sliceTextBlockFrom} from '../utils/util.slice-text-block-from'
+import {sliceTextBlock} from '../utils/util.slice-text-block'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
@@ -121,10 +121,11 @@ export const abstractSplitBehaviors = [
       }
 
       const newTextBlock = parseBlock({
-        block: sliceTextBlockFrom({
+        block: sliceTextBlock({
           context: snapshot.context,
           block: focusTextBlock.node,
-          from: selectionStartPoint,
+          startPoint: selectionStartPoint,
+          endPoint: blockEndPoint,
         }),
         context: snapshot.context,
         options: {

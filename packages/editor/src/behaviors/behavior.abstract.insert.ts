@@ -172,14 +172,10 @@ export const abstractInsertBehaviors = [
         block: focusTextBlock,
       })
       const focusTextBlockAfter = sliceTextBlock({
-        context: {
-          schema: snapshot.context.schema,
-          selection: {
-            anchor: at.focus,
-            focus: focusBlockEndPoint,
-          },
-        },
+        context: snapshot.context,
         block: focusTextBlock.node,
+        startPoint: at.focus,
+        endPoint: focusBlockEndPoint,
       })
 
       const isFirstBlockTextBlock = isTextBlockNode(
