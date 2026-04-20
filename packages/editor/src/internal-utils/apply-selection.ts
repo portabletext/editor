@@ -120,6 +120,7 @@ function resolveSelectionPoint(
         context: {
           schema: editor.schema,
           value: [entry.node],
+          containers: editor.containers,
         },
         blockOffset: {
           path: [{_key: entry.node._key}],

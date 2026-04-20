@@ -1,7 +1,7 @@
 import type {EditorContext} from '../editor/editor-snapshot'
+import {getNode} from '../node-traversal/get-node'
 import type {BlockOffset} from '../types/block-offset'
 import type {EditorSelectionPoint} from '../types/editor'
-import {isKeyedSegment} from './util.is-keyed-segment'
 
 /**
  * @public
@@ -10,26 +10,17 @@ export function blockOffsetToBlockSelectionPoint({
   context,
   blockOffset,
 }: {
-  context: Pick<EditorContext, 'value'>
+  context: Pick<EditorContext, 'schema' | 'value' | 'containers'>
   blockOffset: BlockOffset
 }): EditorSelectionPoint | undefined {
-  const blockSegment = blockOffset.path.at(0)
+  const blockEntry = getNode(context, blockOffset.path)
 
-  if (!isKeyedSegment(blockSegment)) {
+  if (!blockEntry) {
     return undefined
   }
 
-  let selectionPoint: EditorSelectionPoint | undefined
-
-  for (const block of context.value) {
-    if (block._key === blockSegment._key) {
-      selectionPoint = {
-        path: [{_key: block._key}],
-        offset: blockOffset.offset,
-      }
-      break
-    }
+  return {
+    path: blockEntry.path,
+    offset: blockOffset.offset,
   }
-
-  return selectionPoint
 }
