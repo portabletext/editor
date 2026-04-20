@@ -65,6 +65,11 @@ describe('core block-object behaviors — container awareness', () => {
       expect(el).not.toEqual(null)
     })
 
+    const spanElement = document.querySelector(
+      `[data-testid="code-block"] [data-slate-string="true"]`,
+    )!
+    await userEvent.click(spanElement)
+
     editor.send({
       type: 'select',
       at: {
@@ -96,6 +101,12 @@ describe('core block-object behaviors — container awareness', () => {
     const value = editor.getSnapshot().context.value
     expect(value).toHaveLength(1)
     expect(value?.[0]?._type).toEqual('code-block')
+    const codeBlock = value?.[0] as {
+      lines?: Array<{children: Array<{text: string}>}>
+    }
+    expect(codeBlock.lines).toHaveLength(2)
+    expect(codeBlock.lines?.[0]?.children?.[0]?.text).toEqual('foo')
+    expect(codeBlock.lines?.[1]?.children?.[0]?.text).toEqual('bar')
   })
 
   test('Enter on a root void block object still inserts a sibling text block after', async () => {

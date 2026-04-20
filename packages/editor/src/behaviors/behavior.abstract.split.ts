@@ -1,7 +1,7 @@
+import {getFocusBlockObject} from '../node-traversal/get-focus-block-object'
+import {getFocusTextBlock} from '../node-traversal/get-focus-text-block'
 import {isSelectionExpanded} from '../selectors'
-import {getFocusBlockObject} from '../selectors/selector.get-focus-block-object'
 import {getFocusInlineObject} from '../selectors/selector.get-focus-inline-object'
-import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
 import {getSelectionEndBlock} from '../selectors/selector.get-selection-end-block'
 import {getSelectionStartBlock} from '../selectors/selector.get-selection-start-block'
 import {isTextBlockNode} from '../slate/node/is-text-block-node'
@@ -12,7 +12,7 @@ import {getBlockStartPoint} from '../utils/util.get-block-start-point'
 import {getSelectionEndPoint} from '../utils/util.get-selection-end-point'
 import {getSelectionStartPoint} from '../utils/util.get-selection-start-point'
 import {isSelectionCollapsed} from '../utils/util.is-selection-collapsed'
-import {sliceTextBlock} from '../utils/util.slice-text-block'
+import {sliceTextBlockFrom} from '../utils/util.slice-text-block-from'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
@@ -121,12 +121,10 @@ export const abstractSplitBehaviors = [
       }
 
       const newTextBlock = parseBlock({
-        block: sliceTextBlock({
-          context: {
-            ...snapshot.context,
-            selection: newTextBlockSelection,
-          },
+        block: sliceTextBlockFrom({
+          context: snapshot.context,
           block: focusTextBlock.node,
+          from: selectionStartPoint,
         }),
         context: snapshot.context,
         options: {
