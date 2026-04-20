@@ -1,11 +1,14 @@
 import {isSpan, isTextBlock, type PortableTextSpan} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
 import type {Path} from '../slate/interfaces/path'
-import {getChildKeyFromSelectionPoint} from '../utils/util.selection-point'
+import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import {getSelectionEndBlock} from './selector.get-selection-end-block'
 import {getSelectionEndPoint} from './selector.get-selection-end-point'
 
 /**
+ * Returns the span after the selection end within the same text block,
+ * resolved at any depth.
+ *
  * @public
  */
 export const getNextSpan: EditorSelector<
@@ -26,8 +29,10 @@ export const getNextSpan: EditorSelector<
     return undefined
   }
 
-  const selectionEndPointChildKey =
-    getChildKeyFromSelectionPoint(selectionEndPoint)
+  const childSegment = selectionEndPoint.path.at(-1)
+  const selectionEndPointChildKey = isKeyedSegment(childSegment)
+    ? childSegment._key
+    : undefined
 
   let endPointChildFound = false
   let nextSpan:

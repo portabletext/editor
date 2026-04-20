@@ -1,13 +1,15 @@
 import {isSpan, type PortableTextSpan} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
-import type {ChildPath} from '../types/paths'
+import type {Path} from '../slate/interfaces/path'
 import {getFocusChild} from './selector.get-focus-child'
 
 /**
+ * Returns the span containing the focus selection, resolved at any depth.
+ *
  * @public
  */
 export const getFocusSpan: EditorSelector<
-  {node: PortableTextSpan; path: ChildPath} | undefined
+  {node: PortableTextSpan; path: Path} | undefined
 > = (snapshot) => {
   const focusChild = getFocusChild(snapshot)
 

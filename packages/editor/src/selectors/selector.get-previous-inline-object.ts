@@ -1,27 +1,30 @@
 import type {PortableTextObject} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
+import type {Path} from '../slate/interfaces/path'
 import {isSpanNode} from '../slate/node/is-span-node'
-import type {ChildPath} from '../types/paths'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import {getFocusTextBlock} from './selector.get-focus-text-block'
 import {getSelectionStartPoint} from './selector.get-selection-start-point'
 
 /**
+ * Returns the inline object before the selection start within the same text
+ * block, resolved at any depth.
+ *
  * @public
  */
 export const getPreviousInlineObject: EditorSelector<
   | {
       node: PortableTextObject
-      path: ChildPath
+      path: Path
     }
   | undefined
 > = (snapshot) => {
   const focusTextBlock = getFocusTextBlock(snapshot)
   const selectionStartPoint = getSelectionStartPoint(snapshot)
-  const selectionStartPointChildKey =
-    selectionStartPoint && isKeyedSegment(selectionStartPoint.path[2])
-      ? selectionStartPoint.path[2]._key
-      : undefined
+  const childSegment = selectionStartPoint?.path.at(-1)
+  const selectionStartPointChildKey = isKeyedSegment(childSegment)
+    ? childSegment._key
+    : undefined
 
   if (!focusTextBlock || !selectionStartPointChildKey) {
     return undefined
@@ -30,7 +33,7 @@ export const getPreviousInlineObject: EditorSelector<
   let inlineObject:
     | {
         node: PortableTextObject
-        path: ChildPath
+        path: Path
       }
     | undefined
 

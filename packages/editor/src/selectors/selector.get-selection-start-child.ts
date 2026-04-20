@@ -1,16 +1,19 @@
 import type {PortableTextObject, PortableTextSpan} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
-import type {ChildPath} from '../types/paths'
+import type {Path} from '../slate/interfaces/path'
 import {getSelectionStartPoint} from '../utils/util.get-selection-start-point'
 import {getFocusChild} from './selector.get-focus-child'
 
 /**
+ * Returns the child containing the selection's start point, resolved at any
+ * depth.
+ *
  * @public
  */
 export const getSelectionStartChild: EditorSelector<
   | {
       node: PortableTextSpan | PortableTextObject
-      path: ChildPath
+      path: Path
     }
   | undefined
 > = (snapshot) => {

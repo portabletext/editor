@@ -1,14 +1,17 @@
 import type {PortableTextObject} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
+import type {Path} from '../slate/interfaces/path'
 import {isSpanNode} from '../slate/node/is-span-node'
-import type {ChildPath} from '../types/paths'
 import {getFocusChild} from './selector.get-focus-child'
 
 /**
+ * Returns the inline object containing the focus selection, resolved at any
+ * depth.
+ *
  * @public
  */
 export const getFocusInlineObject: EditorSelector<
-  {node: PortableTextObject; path: ChildPath} | undefined
+  {node: PortableTextObject; path: Path} | undefined
 > = (snapshot) => {
   const focusChild = getFocusChild(snapshot)
 

@@ -1,26 +1,29 @@
 import type {PortableTextObject} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
+import type {Path} from '../slate/interfaces/path'
 import {isSpanNode} from '../slate/node/is-span-node'
-import type {ChildPath} from '../types/paths'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import {getFocusTextBlock} from './selector.get-focus-text-block'
 import {getSelectionEndPoint} from './selector.get-selection-end-point'
 
 /**
+ * Returns the inline objects after the selection end within the same text
+ * block, resolved at any depth.
+ *
  * @public
  */
 export const getNextInlineObjects: EditorSelector<
   Array<{
     node: PortableTextObject
-    path: ChildPath
+    path: Path
   }>
 > = (snapshot) => {
   const focusTextBlock = getFocusTextBlock(snapshot)
   const selectionEndPoint = getSelectionEndPoint(snapshot)
-  const selectionEndPointChildKey =
-    selectionEndPoint && isKeyedSegment(selectionEndPoint.path[2])
-      ? selectionEndPoint.path[2]._key
-      : undefined
+  const childSegment = selectionEndPoint?.path.at(-1)
+  const selectionEndPointChildKey = isKeyedSegment(childSegment)
+    ? childSegment._key
+    : undefined
 
   if (!focusTextBlock || !selectionEndPointChildKey) {
     return []
@@ -29,7 +32,7 @@ export const getNextInlineObjects: EditorSelector<
   let endPointChildFound = false
   const inlineObjects: Array<{
     node: PortableTextObject
-    path: ChildPath
+    path: Path
   }> = []
 
   for (const child of focusTextBlock.node.children) {
