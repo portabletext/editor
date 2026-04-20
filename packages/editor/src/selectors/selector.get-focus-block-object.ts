@@ -1,23 +1,17 @@
 import type {PortableTextObject} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
-import {isTextBlockNode} from '../slate/node/is-text-block-node'
-import type {BlockPath} from '../types/paths'
-import {getFocusBlock} from './selector.get-focus-block'
+import {getFocusBlockObject as getFocusBlockObjectTraversal} from '../node-traversal/get-focus-block-object'
+import type {Path} from '../slate/interfaces/path'
 
 /**
- * Returns the root-level block object containing the focus selection, if any.
+ * Returns the void block object containing the focus selection, resolved at
+ * any depth.
  *
- * Root-only: see {@link getFocusBlock}. For container-aware queries, compose
- * the node-traversal utilities directly against `snapshot.context`.
+ * Excludes void inline objects (whose parent is a text block) and editable
+ * containers. When the focus is at root, behavior is unchanged.
  *
  * @public
  */
 export const getFocusBlockObject: EditorSelector<
-  {node: PortableTextObject; path: BlockPath} | undefined
-> = (snapshot) => {
-  const focusBlock = getFocusBlock(snapshot)
-
-  return focusBlock && !isTextBlockNode(snapshot.context, focusBlock.node)
-    ? {node: focusBlock.node, path: focusBlock.path}
-    : undefined
-}
+  {node: PortableTextObject; path: Path} | undefined
+> = (snapshot) => getFocusBlockObjectTraversal(snapshot)

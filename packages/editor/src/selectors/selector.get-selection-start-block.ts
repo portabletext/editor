@@ -1,16 +1,19 @@
 import type {PortableTextBlock} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
-import type {BlockPath} from '../types/paths'
+import type {Path} from '../slate/interfaces/path'
 import {getSelectionStartPoint} from '../utils/util.get-selection-start-point'
 import {getFocusBlock} from './selector.get-focus-block'
 
 /**
+ * Returns the block containing the selection's start point, resolved at any
+ * depth.
+ *
  * @public
  */
 export const getSelectionStartBlock: EditorSelector<
   | {
       node: PortableTextBlock
-      path: BlockPath
+      path: Path
     }
   | undefined
 > = (snapshot) => {

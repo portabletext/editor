@@ -1,19 +1,20 @@
 import type {PortableTextBlock} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
-import type {BlockPath} from '../types/paths'
+import {getSibling} from '../node-traversal/get-sibling'
+import type {Path} from '../slate/interfaces/path'
 import {getSelectionEndBlock} from './selector.get-selection-end-block'
 
 /**
- * Returns the root-level block after the selection end block, if any.
+ * Returns the block after the selection's end block within the same
+ * container scope, if any.
  *
- * Root-only: ignores containers. The sibling is resolved against the root
- * `value` array, not the container holding the selection. For container-aware
- * sibling queries, use `getSibling` from the node-traversal utilities.
+ * Siblings are resolved within the enclosing container (or the document root
+ * if the selection is at root level). Never crosses container boundaries.
  *
  * @public
  */
 export const getNextBlock: EditorSelector<
-  {node: PortableTextBlock; path: BlockPath} | undefined
+  {node: PortableTextBlock; path: Path} | undefined
 > = (snapshot) => {
   const selectionEndBlock = getSelectionEndBlock(snapshot)
 
@@ -21,15 +22,11 @@ export const getNextBlock: EditorSelector<
     return undefined
   }
 
-  const index = snapshot.blockIndexMap.get(selectionEndBlock.node._key)
+  const next = getSibling(snapshot.context, selectionEndBlock.path, 'next')
 
-  if (index === undefined || index === snapshot.context.value.length - 1) {
+  if (!next) {
     return undefined
   }
 
-  const nextBlock = snapshot.context.value.at(index + 1)
-
-  return nextBlock
-    ? {node: nextBlock, path: [{_key: nextBlock._key}]}
-    : undefined
+  return {node: next.node as PortableTextBlock, path: next.path}
 }

@@ -1,16 +1,35 @@
 import type {PortableTextBlock} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
-import type {BlockPath} from '../types/paths'
+import {getChildren} from '../node-traversal/get-children'
+import type {Path} from '../slate/interfaces/path'
+import {parentPath} from '../slate/path/parent-path'
+import {getFocusBlock} from './selector.get-focus-block'
 
 /**
+ * Returns the last block at the current container scope.
+ *
+ * When the focus is inside an editable container (e.g. a code block's line),
+ * this returns the last block within that container (the last line). When
+ * the focus is at root, or there is no selection, this returns the last
+ * block in the document.
+ *
  * @public
  */
 export const getLastBlock: EditorSelector<
-  {node: PortableTextBlock; path: BlockPath} | undefined
+  {node: PortableTextBlock; path: Path} | undefined
 > = (snapshot) => {
-  const node = snapshot.context.value[snapshot.context.value.length - 1]
-    ? snapshot.context.value[snapshot.context.value.length - 1]
-    : undefined
+  const focusBlock = getFocusBlock(snapshot)
+
+  if (focusBlock) {
+    const siblings = getChildren(snapshot.context, parentPath(focusBlock.path))
+    const last = siblings.at(-1)
+
+    if (last) {
+      return {node: last.node as PortableTextBlock, path: last.path}
+    }
+  }
+
+  const node = snapshot.context.value.at(-1)
 
   return node ? {node, path: [{_key: node._key}]} : undefined
 }

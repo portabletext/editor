@@ -1,13 +1,16 @@
 import {isTextBlock, type PortableTextTextBlock} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
-import type {BlockPath} from '../types/paths'
+import type {Path} from '../slate/interfaces/path'
 import {getAnchorBlock} from './selector.get-anchor-block'
 
 /**
+ * Returns the text block containing the anchor selection, resolved at any
+ * depth.
+ *
  * @public
  */
 export const getAnchorTextBlock: EditorSelector<
-  {node: PortableTextTextBlock; path: BlockPath} | undefined
+  {node: PortableTextTextBlock; path: Path} | undefined
 > = (snapshot) => {
   const anchorBlock = getAnchorBlock(snapshot)
 
