@@ -413,53 +413,50 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
     return
   }
 
-  // Container normalization: ensure the child array field exists.
+  // Container normalization: ensure the child array field exists and is
+  // non-empty.
   if (isObjectNode({schema: editor.schema}, node)) {
     const scopedName = getContainerScopedName(editor, node, path)
     const arrayField = editor.containers.get(scopedName)?.field
 
     if (arrayField) {
       const fieldValue = (node as Record<string, unknown>)[arrayField.name]
+      const needsField = !Array.isArray(fieldValue)
+      const needsChild = needsField || fieldValue.length === 0
 
-      if (!Array.isArray(fieldValue)) {
-        setNodeProperties(editor, {[arrayField.name]: []}, path)
-        return
-      }
-    }
-  }
-
-  // Container normalization: ensure non-empty child array.
-  if (isObjectNode({schema: editor.schema}, node)) {
-    const scopedName = getContainerScopedName(editor, node, path)
-    const arrayField = editor.containers.get(scopedName)?.field
-
-    if (arrayField) {
-      const fieldValue = (node as Record<string, unknown>)[arrayField.name]
-
-      if (Array.isArray(fieldValue) && fieldValue.length === 0) {
+      if (needsChild) {
         const acceptsBlocks = arrayField.of.some(
           (definition) => definition.type === 'block',
         )
+        const firstChildType = arrayField.of.at(0)
 
+        let childNode: Node | undefined
         if (acceptsBlocks) {
-          editor.apply({
-            type: 'insert',
-            path: [...path, arrayField.name, 0],
-            node: createPlaceholderBlock(editor),
-            position: 'before',
-          })
+          childNode = createPlaceholderBlock(editor)
+        } else if (firstChildType && firstChildType.type !== 'block') {
+          childNode = {
+            _type: firstChildType.type,
+            _key: editor.keyGenerator(),
+          } as Node
+        }
+
+        if (needsField && childNode) {
+          // Set the field with its initial child in a single operation
+          // instead of two (set empty array + insert child).
+          setNodeProperties(editor, {[arrayField.name]: [childNode]}, path)
           return
         }
 
-        const firstChildType = arrayField.of.at(0)
-        if (firstChildType && firstChildType.type !== 'block') {
+        if (needsField) {
+          setNodeProperties(editor, {[arrayField.name]: []}, path)
+          return
+        }
+
+        if (childNode) {
           editor.apply({
             type: 'insert',
             path: [...path, arrayField.name, 0],
-            node: {
-              _type: firstChildType.type,
-              _key: editor.keyGenerator(),
-            },
+            node: childNode,
             position: 'before',
           })
           return
