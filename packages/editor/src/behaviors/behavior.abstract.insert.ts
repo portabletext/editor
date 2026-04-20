@@ -1,7 +1,7 @@
 import type {EditorSelector} from '../editor/editor-selector'
+import {getFocusTextBlock} from '../node-traversal/get-focus-text-block'
 import {isSelectionExpanded} from '../selectors'
 import {getFocusInlineObject} from '../selectors/selector.get-focus-inline-object'
-import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
 import {getLastBlock} from '../selectors/selector.get-last-block'
 import {isSelectionCollapsed} from '../selectors/selector.is-selection-collapsed'
 import {isTextBlockNode} from '../slate/node/is-text-block-node'

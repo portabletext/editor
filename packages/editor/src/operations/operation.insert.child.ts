@@ -3,6 +3,7 @@ import {
   applyInsertNodeAtPath,
   applyInsertNodeAtPoint,
 } from '../internal-utils/apply-insert-node'
+import {getAncestorTextBlock} from '../node-traversal/get-ancestor-text-block'
 import {getNode} from '../node-traversal/get-node'
 import {getSibling} from '../node-traversal/get-sibling'
 import {isTextBlockNode} from '../slate/node/is-text-block-node'
@@ -13,26 +14,24 @@ export const insertChildOperationImplementation: OperationImplementation<
   'insert.child'
 > = ({context, operation}) => {
   const focus = operation.editor.selection?.focus
-  const focusBlockIndex = focus?.path.at(0)
-  const focusChildIndex = focus?.path.at(2)
 
-  if (focusBlockIndex === undefined || focusChildIndex === undefined) {
+  if (!focus) {
     throw new Error('Unable to insert child without a focus')
   }
 
-  const focusBlockEntry = focus
-    ? getNode(operation.editor, focus.path.slice(0, 1))
-    : undefined
-  const focusBlock = focusBlockEntry?.node
-  const focusBlockPath = focusBlockEntry?.path
+  const focusBlockEntry = getAncestorTextBlock(operation.editor, focus.path)
 
-  if (!focus || !focusBlock || !focusBlockPath) {
+  if (!focusBlockEntry) {
     throw new Error('Unable to insert child without a focus block')
   }
+
+  const focusBlock = focusBlockEntry.node
 
   if (!isTextBlockNode(context, focusBlock)) {
     throw new Error('Unable to insert child into a non-text block')
   }
+
+  const focusChildPath = focus.path.slice(0, focusBlockEntry.path.length + 2)
 
   const markDefs = focusBlock.markDefs ?? []
   const markDefKeyMap = new Map<string, string>()
@@ -48,7 +47,7 @@ export const insertChildOperationImplementation: OperationImplementation<
   })
 
   if (span) {
-    const focusSpanEntry = getNode(operation.editor, focus.path.slice(0, 3))
+    const focusSpanEntry = getNode(operation.editor, focusChildPath)
     const focusSpan =
       focusSpanEntry &&
       isSpan({schema: operation.editor.schema}, focusSpanEntry.node)
@@ -58,7 +57,6 @@ export const insertChildOperationImplementation: OperationImplementation<
     if (focusSpan) {
       applyInsertNodeAtPoint(operation.editor, span, focus)
     } else {
-      const focusChildPath = focus.path.slice(0, 3)
       const nextSibling = getSibling(operation.editor, focusChildPath, 'next')
       if (nextSibling) {
         applyInsertNodeAtPath(operation.editor, span, nextSibling.path)
@@ -94,7 +92,7 @@ export const insertChildOperationImplementation: OperationImplementation<
       ...rest,
     }
 
-    const focusSpanEntry = getNode(operation.editor, focus.path.slice(0, 3))
+    const focusSpanEntry = getNode(operation.editor, focusChildPath)
     const focusSpan =
       focusSpanEntry &&
       isSpan({schema: operation.editor.schema}, focusSpanEntry.node)
@@ -104,7 +102,6 @@ export const insertChildOperationImplementation: OperationImplementation<
     if (focusSpan) {
       applyInsertNodeAtPoint(operation.editor, inlineNode, focus)
     } else {
-      const focusChildPath = focus.path.slice(0, 3)
       const nextSibling = getSibling(operation.editor, focusChildPath, 'next')
       if (nextSibling) {
         applyInsertNodeAtPath(operation.editor, inlineNode, nextSibling.path)
