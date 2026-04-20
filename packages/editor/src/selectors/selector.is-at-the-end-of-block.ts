@@ -1,6 +1,6 @@
 import type {PortableTextBlock} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
-import type {BlockPath} from '../types/paths'
+import type {Path} from '../slate/interfaces/path'
 import {getBlockEndPoint} from '../utils/util.get-block-end-point'
 import {isEqualSelectionPoints} from '../utils/util.is-equal-selection-points'
 import {isSelectionCollapsed} from './selector.is-selection-collapsed'
@@ -10,7 +10,7 @@ import {isSelectionCollapsed} from './selector.is-selection-collapsed'
  */
 export function isAtTheEndOfBlock(block: {
   node: PortableTextBlock
-  path: BlockPath
+  path: Path
 }): EditorSelector<boolean> {
   return (snapshot) => {
     if (!snapshot.context.selection || !isSelectionCollapsed(snapshot)) {
