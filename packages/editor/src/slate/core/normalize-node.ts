@@ -15,6 +15,7 @@ import {getParent} from '../../node-traversal/get-parent'
 import {getTextBlockNode} from '../../node-traversal/get-text-block-node'
 import {getChildFieldName} from '../../paths/get-child-field-name'
 import {getContainerScopedName} from '../../schema/get-container-scoped-name'
+import type {ChildArrayField, Containers} from '../../schema/resolve-containers'
 import {withoutPatching} from '../../slate-plugins/slate-plugin.without-patching'
 import {isKeyedSegment} from '../../utils/util.is-keyed-segment'
 import {isEditor} from '../editor/is-editor'
@@ -413,53 +414,37 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
     return
   }
 
-  // Container normalization: ensure the child array field exists.
+  // Container normalization: ensure the child array field exists and is
+  // non-empty.
   if (isObjectNode({schema: editor.schema}, node)) {
     const scopedName = getContainerScopedName(editor, node, path)
     const arrayField = editor.containers.get(scopedName)?.field
 
     if (arrayField) {
       const fieldValue = (node as Record<string, unknown>)[arrayField.name]
+      const needsField = !Array.isArray(fieldValue)
+      const needsChild = needsField || fieldValue.length === 0
 
-      if (!Array.isArray(fieldValue)) {
-        setNodeProperties(editor, {[arrayField.name]: []}, path)
-        return
-      }
-    }
-  }
+      if (needsChild) {
+        const childNode = buildContainerChild(editor, scopedName, arrayField)
 
-  // Container normalization: ensure non-empty child array.
-  if (isObjectNode({schema: editor.schema}, node)) {
-    const scopedName = getContainerScopedName(editor, node, path)
-    const arrayField = editor.containers.get(scopedName)?.field
-
-    if (arrayField) {
-      const fieldValue = (node as Record<string, unknown>)[arrayField.name]
-
-      if (Array.isArray(fieldValue) && fieldValue.length === 0) {
-        const acceptsBlocks = arrayField.of.some(
-          (definition) => definition.type === 'block',
-        )
-
-        if (acceptsBlocks) {
-          editor.apply({
-            type: 'insert',
-            path: [...path, arrayField.name, 0],
-            node: createPlaceholderBlock(editor),
-            position: 'before',
-          })
+        if (needsField && childNode) {
+          // Set the field with its initial child in a single operation
+          // instead of two (set empty array + insert child).
+          setNodeProperties(editor, {[arrayField.name]: [childNode]}, path)
           return
         }
 
-        const firstChildType = arrayField.of.at(0)
-        if (firstChildType && firstChildType.type !== 'block') {
+        if (needsField) {
+          setNodeProperties(editor, {[arrayField.name]: []}, path)
+          return
+        }
+
+        if (childNode) {
           editor.apply({
             type: 'insert',
             path: [...path, arrayField.name, 0],
-            node: {
-              _type: firstChildType.type,
-              _key: editor.keyGenerator(),
-            },
+            node: childNode,
             position: 'before',
           })
           return
@@ -616,4 +601,59 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
 
     return
   }
+}
+
+/**
+ * Build a child node for a container field, recursively populating any
+ * nested container fields so that the entire structure is created in a
+ * single operation instead of cascading through multiple normalization
+ * passes.
+ */
+function buildContainerChild(
+  editor: {
+    keyGenerator: () => string
+    schema: Parameters<typeof createPlaceholderBlock>[0]['schema']
+    containers: Containers
+  },
+  parentScopedName: string,
+  arrayField: ChildArrayField,
+): Node | undefined {
+  const acceptsBlocks = arrayField.of.some(
+    (definition) => definition.type === 'block',
+  )
+
+  if (acceptsBlocks) {
+    return createPlaceholderBlock(editor)
+  }
+
+  const firstChildType = arrayField.of.at(0)
+
+  if (!firstChildType || firstChildType.type === 'block') {
+    return undefined
+  }
+
+  const childNode: Record<string, unknown> = {
+    _type: firstChildType.type,
+    _key: editor.keyGenerator(),
+  }
+
+  // Recursively populate nested container fields so the full structure
+  // is built in one pass.
+  const childScopedName = `${parentScopedName}.${firstChildType.type}`
+  const childContainerConfig = editor.containers.get(childScopedName)
+  const childArrayField = childContainerConfig?.field
+
+  if (childArrayField) {
+    const grandchild = buildContainerChild(
+      editor,
+      childScopedName,
+      childArrayField,
+    )
+
+    if (grandchild) {
+      childNode[childArrayField.name] = [grandchild]
+    }
+  }
+
+  return childNode as Node
 }

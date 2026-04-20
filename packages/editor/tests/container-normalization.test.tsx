@@ -228,73 +228,30 @@ describe('container normalization', () => {
 
     await vi.waitFor(() => {
       expect(patches).toEqual([
-        {type: 'set', path: [{_key: tableKey}, 'rows'], value: []},
-        {type: 'setIfMissing', path: [{_key: tableKey}, 'rows'], value: []},
-        {
-          type: 'insert',
-          path: [{_key: tableKey}, 'rows', 0],
-          position: 'before',
-          items: [{_type: 'row', _key: 'k5'}],
-        },
         {
           type: 'set',
-          path: [{_key: tableKey}, 'rows', {_key: 'k5'}, 'cells'],
-          value: [],
-        },
-        {
-          type: 'setIfMissing',
-          path: [{_key: tableKey}, 'rows', {_key: 'k5'}, 'cells'],
-          value: [],
-        },
-        {
-          type: 'insert',
-          path: [{_key: tableKey}, 'rows', {_key: 'k5'}, 'cells', 0],
-          position: 'before',
-          items: [{_type: 'cell', _key: 'k6'}],
-        },
-        {
-          type: 'set',
-          path: [
-            {_key: tableKey},
-            'rows',
-            {_key: 'k5'},
-            'cells',
-            {_key: 'k6'},
-            'content',
-          ],
-          value: [],
-        },
-        {
-          type: 'setIfMissing',
-          path: [
-            {_key: tableKey},
-            'rows',
-            {_key: 'k5'},
-            'cells',
-            {_key: 'k6'},
-            'content',
-          ],
-          value: [],
-        },
-        {
-          type: 'insert',
-          path: [
-            {_key: tableKey},
-            'rows',
-            {_key: 'k5'},
-            'cells',
-            {_key: 'k6'},
-            'content',
-            0,
-          ],
-          position: 'before',
-          items: [
+          path: [{_key: tableKey}, 'rows'],
+          value: [
             {
-              _type: 'block',
-              _key: 'k7',
-              style: 'normal',
-              markDefs: [],
-              children: [{_type: 'span', _key: 'k8', text: '', marks: []}],
+              _key: 'k5',
+              _type: 'row',
+              cells: [
+                {
+                  _key: 'k6',
+                  _type: 'cell',
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: 'k7',
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: 'k8', text: '', marks: []},
+                      ],
+                    },
+                  ],
+                },
+              ],
             },
           ],
         },
@@ -388,17 +345,10 @@ describe('container normalization', () => {
 
     await vi.waitFor(() => {
       expect(patches).toEqual([
-        {type: 'set', path: [{_key: calloutKey}, 'content'], value: []},
         {
-          type: 'setIfMissing',
+          type: 'set',
           path: [{_key: calloutKey}, 'content'],
-          value: [],
-        },
-        {
-          type: 'insert',
-          path: [{_key: calloutKey}, 'content', 0],
-          position: 'before',
-          items: [
+          value: [
             {
               _type: 'block',
               _key: 'k5',

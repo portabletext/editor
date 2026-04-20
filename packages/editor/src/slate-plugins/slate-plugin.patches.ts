@@ -193,6 +193,7 @@ export function createPatchesPlugin({
           })
         }
       }
+
       return editor
     }
     return editor
