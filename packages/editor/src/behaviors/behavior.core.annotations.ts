@@ -10,6 +10,7 @@ import {getSelectionStartPoint} from '../selectors/selector.get-selection-start-
 import {isActiveAnnotation} from '../selectors/selector.is-active-annotation'
 import {isSelectionCollapsed} from '../selectors/selector.is-selection-collapsed'
 import {isSelectionExpanded} from '../selectors/selector.is-selection-expanded'
+import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import {forward, raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
@@ -128,11 +129,18 @@ const stripAnnotationsOnFullSpanDeletion = defineBehavior({
       return false
     }
 
-    if (startChild.path[2]._key !== endChild.path[2]._key) {
+    if (!isSpan(snapshot.context, startChild.node)) {
       return false
     }
 
-    if (!isSpan(snapshot.context, startChild.node)) {
+    const startSpanSegment = startChild.path.at(-1)
+    const endSpanSegment = endChild.path.at(-1)
+
+    if (!isKeyedSegment(startSpanSegment) || !isKeyedSegment(endSpanSegment)) {
+      return false
+    }
+
+    if (startSpanSegment._key !== endSpanSegment._key) {
       return false
     }
 
