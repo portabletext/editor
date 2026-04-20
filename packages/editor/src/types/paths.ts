@@ -29,9 +29,12 @@ export type PathSegment = string | number | KeyedSegment | IndexTuple
 export type Path = PathSegment[]
 
 /**
+ * A path that points at a block. Previously encoded a root-only constraint
+ * (`[{_key}]`); now an alias for `Path` to allow blocks at any depth
+ * (including inside editable containers).
  * @public
  */
-export type BlockPath = [{_key: string}]
+export type BlockPath = Path
 
 /**
  * @public
@@ -53,11 +56,17 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 /**
+ * A path that points at an annotation markDef on a block. Previously encoded
+ * a root-only constraint (`[{_key}, 'markDefs', {_key}]`); now an alias for
+ * `Path` to allow annotations on text blocks at any depth.
  * @public
  */
-export type AnnotationPath = [{_key: string}, 'markDefs', {_key: string}]
+export type AnnotationPath = Path
 
 /**
+ * A path that points at a child of a text block. Previously encoded a
+ * root-only constraint (`[{_key}, 'children', {_key}]`); now an alias for
+ * `Path` to allow children of text blocks at any depth.
  * @public
  */
-export type ChildPath = [{_key: string}, 'children', {_key: string}]
+export type ChildPath = Path
