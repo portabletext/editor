@@ -18,10 +18,11 @@ import scrollIntoView from 'scroll-into-view-if-needed'
 import {getDomNode} from '../../../dom-traversal/get-dom-node'
 import {getDomNodePath} from '../../../dom-traversal/get-dom-node-path'
 import type {EditorActor} from '../../../editor/editor-machine'
-import {getAncestorObjectNode} from '../../../node-traversal/get-ancestor-object-node'
 import {getAncestorTextBlock} from '../../../node-traversal/get-ancestor-text-block'
 import {getNode} from '../../../node-traversal/get-node'
 import {getText} from '../../../node-traversal/get-text'
+import {getVoidAncestor} from '../../../node-traversal/get-void-ancestor'
+import {isEditableContainer} from '../../../schema/is-editable-container'
 import {collapse} from '../../core/collapse'
 import {deselect} from '../../core/deselect'
 import {move} from '../../core/move'
@@ -1303,34 +1304,35 @@ export const Editable = forwardRef(
                       return
                     }
 
-                    // DOM clicks that land on a text leaf (span) already
-                    // produce a valid DOM selection. Skip the fallback below,
-                    // which would otherwise snap the cursor to offset 0 of
-                    // the first leaf when the clicked leaf is inside an
-                    // editable container (object node that is not void).
-                    if (isSpan({schema: editor.schema}, node)) {
-                      return
-                    }
-
                     const start = editorStart(editor, path)
                     const end = editorEnd(editor, path)
                     const startEntry = getNode(editor, start.path)
-                    const startObjectNode =
+                    const startVoidNode =
                       startEntry &&
                       isVoidNode(editor, startEntry.node, start.path)
                         ? startEntry
-                        : getAncestorObjectNode(editor, start.path)
+                        : getVoidAncestor(editor, start.path)
                     const endEntry = getNode(editor, end.path)
-                    const endObjectNode =
+                    const endVoidNode =
                       endEntry && isVoidNode(editor, endEntry.node, end.path)
                         ? endEntry
-                        : getAncestorObjectNode(editor, end.path)
+                        : getVoidAncestor(editor, end.path)
 
                     if (
-                      startObjectNode &&
-                      endObjectNode &&
-                      pathEquals(startObjectNode.path, endObjectNode.path)
+                      startVoidNode &&
+                      endVoidNode &&
+                      pathEquals(startVoidNode.path, endVoidNode.path)
                     ) {
+                      const range = editorRange(editor, start)
+                      editor.select(range)
+                      return
+                    }
+
+                    // Click landed directly on an editable container's
+                    // wrapper (not on a descendant). Position the caret at
+                    // the start of its content, since the browser has no
+                    // natural target inside the wrapper itself.
+                    if (isEditableContainer(editor, node, path)) {
                       const range = editorRange(editor, start)
                       editor.select(range)
                     }

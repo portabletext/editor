@@ -446,4 +446,98 @@ describe('core block-object behaviors — container awareness', () => {
       expect(selection?.focus.path[2]).toEqual({_key: line2Key})
     })
   })
+
+  test('Clicking at the end of a text block inside a code-block does not snap cursor to start', async () => {
+    // Regression: Slate's onClick handler fell back to matching the common
+    // *object* ancestor of the clicked subtree. When the click landed on the
+    // text block div itself (e.g. at the end of the line, past the text),
+    // the ancestor walk found the code-block (an object node that is NOT
+    // void — it contains editable content) and matched both start/end, so
+    // the handler forced the editor selection to offset 0 of the first span.
+    // The fallback should only match void object ancestors.
+    const keyGenerator = createTestKeyGenerator()
+    const codeBlockKey = keyGenerator()
+    const line1Key = keyGenerator()
+    const line1SpanKey = keyGenerator()
+    const line2Key = keyGenerator()
+    const line2SpanKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition,
+      initialValue: [
+        {
+          _type: 'code-block',
+          _key: codeBlockKey,
+          lines: [
+            {
+              _type: 'block',
+              _key: line1Key,
+              children: [
+                {_type: 'span', _key: line1SpanKey, text: 'foo', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: line2Key,
+              children: [
+                {_type: 'span', _key: line2SpanKey, text: 'bar', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: <ContainerPlugin containers={[codeBlockContainer]} />,
+    })
+
+    const line1Block = await vi.waitFor(() => {
+      const blocks = document.querySelectorAll(
+        `[data-testid="code-block"] [data-slate-node="element"]`,
+      )
+      expect(blocks.length).toEqual(2)
+      return blocks[0] as HTMLElement
+    })
+
+    const editable = document.querySelector('[role="textbox"]') as HTMLElement
+    await userEvent.click(editable)
+    const line2Selection = {
+      anchor: {
+        path: [
+          {_key: codeBlockKey},
+          'lines',
+          {_key: line2Key},
+          'children',
+          {_key: line2SpanKey},
+        ],
+        offset: 2,
+      },
+      focus: {
+        path: [
+          {_key: codeBlockKey},
+          'lines',
+          {_key: line2Key},
+          'children',
+          {_key: line2SpanKey},
+        ],
+        offset: 2,
+      },
+    }
+    editor.send({type: 'select', at: line2Selection})
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection?.focus.offset).toEqual(2)
+    })
+
+    // Click the text block div directly (not a span). Previously this would
+    // snap the editor selection to offset 0 of line 1's first span via the
+    // onClick fallback; it should leave selection on line 2 untouched.
+    await userEvent.click(line1Block)
+
+    await vi.waitFor(() => {
+      const selection = editor.getSnapshot().context.selection
+      expect(selection?.focus.path[2]).toEqual({_key: line2Key})
+    })
+  })
 })
