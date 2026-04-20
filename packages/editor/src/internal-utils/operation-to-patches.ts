@@ -17,27 +17,32 @@ import type {
 
 function spanContext(
   schema: EditorSchema,
+  containers: Containers,
   value: Array<Node>,
 ): {
   schema: EditorSchema
   containers: Containers
   value: Array<Node>
 } {
-  return {schema, containers: new Map(), value}
+  return {schema, containers, value}
 }
 
 export function textPatch(
   schema: EditorSchema,
+  containers: Containers,
   children: Node[],
   operation: InsertTextOperation | RemoveTextOperation,
   beforeValue: Array<PortableTextBlock>,
 ): Array<Patch> {
-  const span = getSpanNode(spanContext(schema, children), operation.path)
+  const span = getSpanNode(
+    spanContext(schema, containers, children),
+    operation.path,
+  )
   if (!span) {
     return []
   }
   const prevSpan = getSpanNode(
-    spanContext(schema, beforeValue as Array<Node>),
+    spanContext(schema, containers, beforeValue as Array<Node>),
     operation.path,
   )
   const patch = diffMatchPatch(prevSpan?.node.text ?? '', span.node.text, [
