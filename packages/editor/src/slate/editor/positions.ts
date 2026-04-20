@@ -1,5 +1,6 @@
 import {isSpan} from '@portabletext/schema'
 import {getNodes} from '../../node-traversal/get-nodes'
+import {isEditableContainer} from '../../schema/is-editable-container'
 import type {Editor} from '../interfaces/editor'
 import type {Location} from '../interfaces/location'
 import type {Point} from '../interfaces/point'
@@ -125,6 +126,10 @@ export function* positions(
       !isTextBlockNode({schema: editor.schema}, node) &&
       !isSpan({schema: editor.schema}, node)
     ) {
+      // Editable containers aren't leaf positions — descend into them.
+      if (isEditableContainer(editor, node, nodePath)) {
+        continue
+      }
       yield {path: nodePath, offset: 0}
       continue
     }
