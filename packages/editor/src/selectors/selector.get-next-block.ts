@@ -4,6 +4,12 @@ import type {BlockPath} from '../types/paths'
 import {getSelectionEndBlock} from './selector.get-selection-end-block'
 
 /**
+ * Returns the root-level block after the selection end block, if any.
+ *
+ * Root-only: ignores containers. The sibling is resolved against the root
+ * `value` array, not the container holding the selection. For container-aware
+ * sibling queries, use `getSibling` from the node-traversal utilities.
+ *
  * @public
  */
 export const getNextBlock: EditorSelector<

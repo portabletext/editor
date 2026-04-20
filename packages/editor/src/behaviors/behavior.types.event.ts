@@ -1,6 +1,7 @@
 import type {PortableTextBlock} from '@portabletext/schema'
 import type {EventPosition} from '../internal-utils/event-position'
 import type {MIMEType} from '../internal-utils/mime-type'
+import type {Path} from '../slate/interfaces/path'
 import type {OmitFromUnion, PickFromUnion, StrictExtract} from '../type-utils'
 import type {
   BlockWithOptionalKey,
@@ -277,7 +278,7 @@ type AbstractBehaviorEvent =
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'delete.block'>
-      at: BlockPath
+      at: Path
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'delete.child'>

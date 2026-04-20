@@ -4,6 +4,13 @@ import type {BlockPath} from '../types/paths'
 import {getBlockKeyFromSelectionPoint} from '../utils/util.selection-point'
 
 /**
+ * Returns the root-level block containing the focus selection.
+ *
+ * Root-only: ignores containers. If the focus is inside a nested container
+ * (e.g. a code block's line), this returns the outer container block, not
+ * the inner block. For container-aware queries, compose the node-traversal
+ * utilities directly against `snapshot.context`.
+ *
  * @public
  */
 export const getFocusBlock: EditorSelector<

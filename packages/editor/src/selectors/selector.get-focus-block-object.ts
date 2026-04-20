@@ -5,6 +5,11 @@ import type {BlockPath} from '../types/paths'
 import {getFocusBlock} from './selector.get-focus-block'
 
 /**
+ * Returns the root-level block object containing the focus selection, if any.
+ *
+ * Root-only: see {@link getFocusBlock}. For container-aware queries, compose
+ * the node-traversal utilities directly against `snapshot.context`.
+ *
  * @public
  */
 export const getFocusBlockObject: EditorSelector<

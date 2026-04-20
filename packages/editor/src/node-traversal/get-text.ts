@@ -1,6 +1,6 @@
 import {isSpan} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
-import type {Containers} from '../schema/resolve-containers'
+import type {TraversalContainers} from '../schema/resolve-containers'
 import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
 import {getNode} from './get-node'
@@ -12,7 +12,7 @@ import {getNodes} from './get-nodes'
 export function getText(
   context: {
     schema: EditorSchema
-    containers: Containers
+    containers: TraversalContainers
     value: Array<Node>
     blockIndexMap: Map<string, number>
   },

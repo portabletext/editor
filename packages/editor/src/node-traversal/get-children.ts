@@ -1,7 +1,7 @@
 import type {OfDefinition} from '@portabletext/schema'
 import {isTextBlock} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
-import type {Containers} from '../schema/resolve-containers'
+import type {TraversalContainers} from '../schema/resolve-containers'
 import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
 import {isObjectNode} from '../slate/node/is-object-node'
@@ -13,7 +13,7 @@ import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 export function getChildren(
   context: {
     schema: EditorSchema
-    containers: Containers
+    containers: TraversalContainers
     value: Array<Node>
   },
   path: Path,
@@ -28,7 +28,7 @@ export function getChildren(
 export function getChildrenInternal(
   context: {
     schema: EditorSchema
-    containers: Containers
+    containers: TraversalContainers
   },
   root: Node | {value: Array<Node>},
   path: Path,
@@ -93,7 +93,7 @@ export function getChildrenInternal(
 export function getNodeChildren(
   context: {
     schema: EditorSchema
-    containers: Containers
+    containers: TraversalContainers
   },
   node: Node | {value: Array<Node>},
   scopePath: string,

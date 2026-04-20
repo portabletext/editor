@@ -1,7 +1,7 @@
 import type {PortableTextTextBlock} from '@portabletext/schema'
 import {isTextBlock} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
-import type {Containers} from '../schema/resolve-containers'
+import type {TraversalContainers} from '../schema/resolve-containers'
 import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
 import {getAncestor} from './get-ancestor'
@@ -9,7 +9,7 @@ import {getAncestor} from './get-ancestor'
 export function getAncestorTextBlock(
   context: {
     schema: EditorSchema
-    containers: Containers
+    containers: TraversalContainers
     value: Array<Node>
   },
   path: Path,

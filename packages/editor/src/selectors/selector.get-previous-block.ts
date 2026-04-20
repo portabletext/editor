@@ -4,6 +4,11 @@ import type {BlockPath} from '../types/paths'
 import {getSelectionStartBlock} from './selector.get-selection-start-block'
 
 /**
+ * Returns the root-level block before the selection start block, if any.
+ *
+ * Root-only: see {@link getNextBlock}. For container-aware sibling queries,
+ * use `getSibling` from the node-traversal utilities.
+ *
  * @public
  */
 export const getPreviousBlock: EditorSelector<

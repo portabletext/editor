@@ -1,7 +1,7 @@
 import type {PortableTextObject} from '@portabletext/schema'
 import type {EditorSchema} from '../../editor/editor-schema'
 import {isEditableContainer} from '../../schema/is-editable-container'
-import type {Containers} from '../../schema/resolve-containers'
+import type {TraversalContainers} from '../../schema/resolve-containers'
 import type {Node} from '../interfaces/node'
 import type {Path} from '../interfaces/path'
 import {isObjectNode} from './is-object-node'
@@ -14,7 +14,7 @@ import {isObjectNode} from './is-object-node'
 export function isVoidNode(
   context: {
     schema: EditorSchema
-    containers: Containers
+    containers: TraversalContainers
     value: Array<Node>
   },
   node: unknown,
