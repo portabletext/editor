@@ -60,6 +60,7 @@ import {
   playgroundSchemaDefinition,
   StockTickerSchema,
 } from './playground-schema-definition'
+import {CalloutPlugin} from './plugins/plugin.callout'
 import {CodeBlockPlugin} from './plugins/plugin.code-block'
 import {CodeEditorPlugin} from './plugins/plugin.code-editor'
 import {HtmlDeserializerPlugin} from './plugins/plugin.html-deserializer'
@@ -152,6 +153,7 @@ export function Editor(props: {
           ) : null}
           <Container className="flex flex-col overflow-clip">
             {featureFlags.codeBlockPlugin ? <CodeBlockPlugin /> : null}
+            {featureFlags.calloutPlugin ? <CalloutPlugin /> : null}
             {featureFlags.emojiPickerPlugin ? <EmojiPickerPlugin /> : null}
             {featureFlags.mentionPickerPlugin ? <MentionPickerPlugin /> : null}
             {featureFlags.slashCommandPlugin ? (

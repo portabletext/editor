@@ -113,6 +113,29 @@ export const playgroundSchemaDefinition = defineSchema({
         },
       ],
     },
+    {
+      title: 'Callout',
+      name: 'callout',
+      fields: [
+        {
+          name: 'content',
+          title: 'Content',
+          type: 'array',
+          of: [
+            {
+              type: 'block',
+              decorators: [{title: 'Strong', name: 'strong'}],
+              styles: [
+                {title: 'Normal', name: 'normal'},
+                {title: 'Quote', name: 'quote'},
+              ],
+              annotations: [],
+              lists: [],
+            },
+          ],
+        },
+      ],
+    },
   ],
   inlineObjects: [
     {

@@ -21,6 +21,7 @@ export type EditorFeatureFlags = {
   slashCommandPlugin: boolean
   codeEditorPlugin: boolean
   codeBlockPlugin: boolean
+  calloutPlugin: boolean
   linkPlugin: boolean
   oneLinePlugin: boolean
   markdownPlugin: boolean
@@ -37,6 +38,7 @@ export const defaultEditorFeatureFlags: EditorFeatureFlags = {
   slashCommandPlugin: true,
   codeEditorPlugin: false,
   codeBlockPlugin: true,
+  calloutPlugin: true,
   linkPlugin: true,
   oneLinePlugin: false,
   markdownPlugin: true,
