@@ -101,11 +101,11 @@ function ArrowTransformPlugin() {
                 at: {
                   anchor: {
                     path: focusTextBlock.path,
-                    offset: 2,
+                    offset: 1,
                   },
                   focus: {
                     path: focusTextBlock.path,
-                    offset: 2,
+                    offset: 1,
                   },
                 },
               }),
