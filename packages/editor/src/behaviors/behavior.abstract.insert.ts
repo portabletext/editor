@@ -330,11 +330,8 @@ export const abstractInsertBehaviors = [
             raise({
               type: 'insert.block',
               block: focusTextBlockAfter,
-              placement: 'after',
+              placement: 'auto',
               select: event.select === 'end' ? 'none' : 'end',
-              at: previousBlockPath
-                ? selectionAt(previousBlockPath)
-                : undefined,
             }),
           )
         }
