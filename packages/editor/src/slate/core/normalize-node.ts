@@ -14,6 +14,7 @@ import {getNode} from '../../node-traversal/get-node'
 import {getParent} from '../../node-traversal/get-parent'
 import {getTextBlockNode} from '../../node-traversal/get-text-block-node'
 import {getChildFieldName} from '../../paths/get-child-field-name'
+import {getBlockSubSchema} from '../../schema/get-block-sub-schema'
 import {getContainerScopedName} from '../../schema/get-container-scoped-name'
 import {withoutPatching} from '../../slate-plugins/slate-plugin.without-patching'
 import {isKeyedSegment} from '../../utils/util.is-keyed-segment'
@@ -223,15 +224,16 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
    * Add missing .style to text block nodes
    */
   {
-    const defaultStyle = editor.schema.styles.at(0)?.name
     if (
-      defaultStyle &&
       isTextBlockNode({schema: editor.schema}, node) &&
       typeof node.style === 'undefined'
     ) {
-      debug.normalization('adding .style to block node')
-      setNodeProperties(editor, {style: defaultStyle}, path)
-      return
+      const defaultStyle = getBlockSubSchema(editor, path).styles.at(0)?.name
+      if (defaultStyle) {
+        debug.normalization('adding .style to block node')
+        setNodeProperties(editor, {style: defaultStyle}, path)
+        return
+      }
     }
   }
 
@@ -267,7 +269,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
     if (!blockEntry) {
       return
     }
-    const decorators = editor.schema.decorators.map(
+    const decorators = getBlockSubSchema(editor, path).decorators.map(
       (decorator) => decorator.name,
     )
     const annotations = node.marks?.filter((mark) => !decorators.includes(mark))
@@ -287,7 +289,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
    * Remove orphaned annotations from child spans of block nodes
    */
   if (isTextBlock({schema: editor.schema}, node)) {
-    const decorators = editor.schema.decorators.map(
+    const decorators = getBlockSubSchema(editor, path).decorators.map(
       (decorator) => decorator.name,
     )
 
@@ -327,7 +329,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
 
     if (blockEntry2) {
       const block = blockEntry2.node
-      const decorators = editor.schema.decorators.map(
+      const decorators = getBlockSubSchema(editor, path).decorators.map(
         (decorator) => decorator.name,
       )
       const marks = node.marks ?? []
