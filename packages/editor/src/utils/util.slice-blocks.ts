@@ -1,6 +1,6 @@
 import {isSpan, isTextBlock, type PortableTextBlock} from '@portabletext/schema'
 import type {EditorContext} from '../editor/editor-snapshot'
-import {getAncestorTextBlock} from '../node-traversal/get-ancestor-text-block'
+import {getEnclosingBlock} from '../node-traversal/get-enclosing-block'
 import type {Path} from '../slate/interfaces/path'
 import {defaultKeyGenerator} from './key-generator'
 import {parseBlock} from './parse-blocks'
@@ -29,10 +29,6 @@ export function sliceBlocks({
     return slice
   }
 
-  let startBlock: PortableTextBlock | undefined
-  const middleBlocks: PortableTextBlock[] = []
-  let endBlock: PortableTextBlock | undefined
-
   const startPoint = getSelectionStartPoint(context.selection)
   const endPoint = getSelectionEndPoint(context.selection)
 
@@ -40,32 +36,33 @@ export function sliceBlocks({
     return slice
   }
 
-  const startBlockKey = resolveBlockKey(context, startPoint.path)
-  const endBlockKey = resolveBlockKey(context, endPoint.path)
-  const startChildSegment = startPoint.path.at(-1)
-  const endChildSegment = endPoint.path.at(-1)
-  const startChildKey = isKeyedSegment(startChildSegment)
-    ? startChildSegment._key
-    : undefined
-  const endChildKey = isKeyedSegment(endChildSegment)
-    ? endChildSegment._key
-    : undefined
+  const startBlock = getEnclosingBlock(context, startPoint.path)
+  const endBlock = getEnclosingBlock(context, endPoint.path)
 
-  if (!startBlockKey || !endBlockKey) {
+  if (!startBlock || !endBlock) {
     return slice
   }
+
+  const startBlockKey = startBlock.node._key
+  const endBlockKey = endBlock.node._key
+  const startChildKey = childKeyInsideBlock(startPoint.path, startBlock.path)
+  const endChildKey = childKeyInsideBlock(endPoint.path, endBlock.path)
+
+  let slicedStart: PortableTextBlock | undefined
+  const middleBlocks: PortableTextBlock[] = []
+  let slicedEnd: PortableTextBlock | undefined
 
   for (const block of blocks) {
     if (!isTextBlock(context, block)) {
       if (block._key === startBlockKey && block._key === endBlockKey) {
-        startBlock = block
+        slicedStart = block
         break
       }
     }
 
     if (block._key === startBlockKey) {
       if (!isTextBlock(context, block)) {
-        startBlock = block
+        slicedStart = block
         continue
       }
 
@@ -78,7 +75,7 @@ export function sliceBlocks({
                   ? child.text.slice(startPoint.offset, endPoint.offset)
                   : child.text.slice(startPoint.offset)
 
-              startBlock = {
+              slicedStart = {
                 ...block,
                 children: [
                   {
@@ -88,7 +85,7 @@ export function sliceBlocks({
                 ],
               }
             } else {
-              startBlock = {
+              slicedStart = {
                 ...block,
                 children: [child],
               }
@@ -100,18 +97,18 @@ export function sliceBlocks({
             continue
           }
 
-          if (startBlock && isTextBlock(context, startBlock)) {
+          if (slicedStart && isTextBlock(context, slicedStart)) {
             if (
               endChildKey &&
               child._key === endChildKey &&
               isSpan(context, child)
             ) {
-              startBlock.children.push({
+              slicedStart.children.push({
                 ...child,
                 text: child.text.slice(0, endPoint.offset),
               })
             } else {
-              startBlock.children.push(child)
+              slicedStart.children.push(child)
             }
 
             if (
@@ -131,7 +128,7 @@ export function sliceBlocks({
         continue
       }
 
-      startBlock = block
+      slicedStart = block
 
       if (startBlockKey === endBlockKey) {
         break
@@ -140,20 +137,20 @@ export function sliceBlocks({
 
     if (block._key === endBlockKey) {
       if (!isTextBlock(context, block)) {
-        endBlock = block
+        slicedEnd = block
         break
       }
 
       if (endChildKey) {
-        endBlock = {
+        slicedEnd = {
           ...block,
           children: [],
         }
 
         for (const child of block.children) {
-          if (endBlock && isTextBlock(context, endBlock)) {
+          if (slicedEnd && isTextBlock(context, slicedEnd)) {
             if (child._key === endChildKey && isSpan(context, child)) {
-              endBlock.children.push({
+              slicedEnd.children.push({
                 ...child,
                 text: child.text.slice(0, endPoint.offset),
               })
@@ -161,7 +158,7 @@ export function sliceBlocks({
               break
             }
 
-            endBlock.children.push(child)
+            slicedEnd.children.push(child)
 
             if (endChildKey && child._key === endChildKey) {
               break
@@ -172,12 +169,12 @@ export function sliceBlocks({
         break
       }
 
-      endBlock = block
+      slicedEnd = block
 
       break
     }
 
-    if (startBlock) {
+    if (slicedStart) {
       middleBlocks.push(
         parseBlock({
           context: {
@@ -195,13 +192,13 @@ export function sliceBlocks({
     }
   }
 
-  const parsedStartBlock = startBlock
+  const parsedStartBlock = slicedStart
     ? parseBlock({
         context: {
           schema: context.schema,
           keyGenerator: context.keyGenerator ?? defaultKeyGenerator,
         },
-        block: startBlock,
+        block: slicedStart,
         options: {
           normalize: false,
           removeUnusedMarkDefs: true,
@@ -210,13 +207,13 @@ export function sliceBlocks({
       })
     : undefined
 
-  const parsedEndBlock = endBlock
+  const parsedEndBlock = slicedEnd
     ? parseBlock({
         context: {
           schema: context.schema,
           keyGenerator: context.keyGenerator ?? defaultKeyGenerator,
         },
-        block: endBlock,
+        block: slicedEnd,
         options: {
           normalize: false,
           removeUnusedMarkDefs: true,
@@ -232,28 +229,24 @@ export function sliceBlocks({
   ]
 }
 
-function resolveBlockKey(
-  context: Pick<EditorContext, 'schema' | 'value' | 'containers'>,
-  path: Path,
+/**
+ * Extract the child key from a selection point path, given the path of the
+ * enclosing block. Returns undefined when the point is on the block itself
+ * (no child component).
+ */
+function childKeyInsideBlock(
+  pointPath: Path,
+  blockPath: Path,
 ): string | undefined {
-  // Walk up the path to the nearest text block (or, for a path on a block
-  // object, the block object itself). Inside an editable container this
-  // returns the container-internal text block key; at root level the
-  // innermost keyed segment IS the block key.
-  const textBlock = getAncestorTextBlock(context, path)
-  if (textBlock) {
-    const lastSegment = textBlock.path.at(-1)
-    if (isKeyedSegment(lastSegment)) {
-      return lastSegment._key
-    }
+  if (pointPath.length <= blockPath.length) {
+    return undefined
   }
 
-  // Block objects: their selection points are [{_key: block}] with no
-  // enclosing text block ancestor. Fall back to the first keyed segment.
-  const firstSegment = path.at(0)
-  if (isKeyedSegment(firstSegment)) {
-    return firstSegment._key
+  const childSegment = pointPath.at(-1)
+
+  if (!isKeyedSegment(childSegment)) {
+    return undefined
   }
 
-  return undefined
+  return childSegment._key
 }
