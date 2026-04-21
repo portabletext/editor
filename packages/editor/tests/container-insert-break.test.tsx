@@ -91,8 +91,7 @@ describe('insert.break inside a container with a style override', () => {
       },
     })
 
-    const editableDiv = locator.getByRole('textbox')
-    await userEvent.click(editableDiv)
+    await userEvent.click(locator)
     await userEvent.keyboard('{Enter}')
 
     await vi.waitFor(() => {
@@ -179,8 +178,7 @@ describe('insert.break inside a container with a style override', () => {
       },
     })
 
-    const editableDiv = locator.getByRole('textbox')
-    await userEvent.click(editableDiv)
+    await userEvent.click(locator)
     await userEvent.keyboard('{Enter}')
 
     await vi.waitFor(() => {
