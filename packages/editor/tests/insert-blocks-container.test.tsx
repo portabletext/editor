@@ -185,9 +185,10 @@ describe('insert.blocks inside an editable container', () => {
     )
 
     // Expected: the line's text is split at 'foo' | 'bar', the first pasted
-    // block merges into the first half ('fooONE'), the second pasted block
-    // is a new line between them ('TWO'), and the original right half ('bar')
-    // stays as the third line.
-    expect(lineTexts).toEqual(['fooONE', 'TWO', 'bar'])
+    // block merges into the first half ('fooONE'), and the second pasted
+    // block fragment-merges with the right half ('TWObar') because
+    // `placement: 'auto'` merges the trailing block's content into the
+    // existing remainder when the caret is mid-text-block.
+    expect(lineTexts).toEqual(['fooONE', 'TWObar'])
   })
 })
