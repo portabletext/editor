@@ -28,6 +28,21 @@ function fields(containers: Containers): Map<string, ChildArrayField> {
   return out
 }
 
+/**
+ * What `{type: 'block'}` compiles to when the root schema has no decorators,
+ * annotations, lists or inline objects declared. Compile resolves inheritance
+ * and fills in the defaults (the auto-prepended `normal` style and empty
+ * arrays for everything else).
+ */
+const resolvedEmptyBlock = {
+  type: 'block',
+  styles: [{name: 'normal', value: 'normal', title: 'Normal'}],
+  decorators: [],
+  annotations: [],
+  lists: [],
+  inlineObjects: [],
+}
+
 describe(resolveContainers.name, () => {
   test('resolves a single-level container', () => {
     const schema = compileSchema(
@@ -138,7 +153,7 @@ describe(resolveContainers.name, () => {
                           {
                             name: 'content',
                             type: 'array',
-                            of: [{type: 'block'}],
+                            of: [resolvedEmptyBlock],
                           },
                         ],
                       },
@@ -161,7 +176,7 @@ describe(resolveContainers.name, () => {
                   {
                     name: 'content',
                     type: 'array',
-                    of: [{type: 'block'}],
+                    of: [resolvedEmptyBlock],
                   },
                 ],
               },
@@ -170,7 +185,7 @@ describe(resolveContainers.name, () => {
         ],
         [
           'table.row.cell',
-          {name: 'content', type: 'array', of: [{type: 'block'}]},
+          {name: 'content', type: 'array', of: [resolvedEmptyBlock]},
         ],
       ]),
     )
@@ -212,7 +227,7 @@ describe(resolveContainers.name, () => {
     ).toEqual(
       new Map([
         ['code', {name: 'content', type: 'array', of: [{type: 'codeLine'}]}],
-        ['callout', {name: 'content', type: 'array', of: [{type: 'block'}]}],
+        ['callout', {name: 'content', type: 'array', of: [resolvedEmptyBlock]}],
       ]),
     )
   })
@@ -314,7 +329,7 @@ describe(resolveContainers.name, () => {
       ),
     ).toEqual(
       new Map([
-        ['callout', {name: 'content', type: 'array', of: [{type: 'block'}]}],
+        ['callout', {name: 'content', type: 'array', of: [resolvedEmptyBlock]}],
         [
           'callout.block',
           {name: 'children', type: 'array', of: [{type: 'span'}]},
@@ -371,7 +386,7 @@ describe(resolveContainers.name, () => {
       ),
     ).toEqual(
       new Map([
-        ['figure', {name: 'caption', type: 'array', of: [{type: 'block'}]}],
+        ['figure', {name: 'caption', type: 'array', of: [resolvedEmptyBlock]}],
       ]),
     )
   })

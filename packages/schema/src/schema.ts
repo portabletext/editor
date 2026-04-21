@@ -75,13 +75,21 @@ export type InlineObjectSchemaType = BaseDefinition & {
  * @public
  * Describes a member type within an array field's `of`.
  * When `type` is `'block'`, PTE sub-schema properties (styles, decorators,
- * annotations, lists) are available for configuring the nested block editor.
+ * annotations, lists, inlineObjects) are available for configuring the
+ * nested text block. Unspecified fields are inherited from the root schema
+ * at `compileSchema` time.
  */
 export type OfDefinition = BlockOfDefinition | ObjectOfDefinition
 
 /**
  * @public
  * An `of` member with `type: 'block'` -- supports nested PTE sub-schema.
+ *
+ * When this entry appears in a container field's `of`, it declares a nested
+ * text block. Each sub-schema field is inherited from the root schema when
+ * absent, or fully overrides root when defined. Resolution happens at
+ * `compileSchema` time; after compilation, all fields are populated and can
+ * be read directly without merging.
  */
 export type BlockOfDefinition = {
   type: 'block'
@@ -93,6 +101,9 @@ export type BlockOfDefinition = {
     BaseDefinition & {fields?: ReadonlyArray<FieldDefinition>}
   >
   lists?: ReadonlyArray<BaseDefinition>
+  inlineObjects?: ReadonlyArray<
+    BaseDefinition & {fields?: ReadonlyArray<FieldDefinition>}
+  >
 }
 
 /**
