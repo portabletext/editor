@@ -1,4 +1,4 @@
-import {type PortableTextTextBlock} from '@portabletext/schema'
+import type {PortableTextTextBlock} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
 import {getFocusTextBlock as getFocusTextBlockTraversal} from '../node-traversal/get-focus-text-block'
 import type {Path} from '../slate/interfaces/path'
