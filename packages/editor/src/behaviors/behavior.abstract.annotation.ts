@@ -1,4 +1,5 @@
-import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
+import {isTextBlock} from '@portabletext/schema'
+import {getNode} from '../node-traversal/get-node'
 import {isActiveAnnotation} from '../selectors/selector.is-active-annotation'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import {raise} from './behavior.types.action'
@@ -8,38 +9,27 @@ export const abstractAnnotationBehaviors = [
   defineBehavior({
     on: 'annotation.set',
     guard: ({snapshot, event}) => {
-      const blockSegment = event.at.at(0)
       const markDefSegment = event.at.at(-1)
 
-      if (!isKeyedSegment(blockSegment) || !isKeyedSegment(markDefSegment)) {
+      if (!isKeyedSegment(markDefSegment)) {
         return false
       }
 
-      const blockKey = blockSegment._key
       const markDefKey = markDefSegment._key
 
-      const block = getFocusTextBlock({
-        ...snapshot,
-        context: {
-          ...snapshot.context,
-          selection: {
-            anchor: {
-              path: [{_key: blockKey}],
-              offset: 0,
-            },
-            focus: {
-              path: [{_key: blockKey}],
-              offset: 0,
-            },
-          },
-        },
-      })
+      // The annotation's path ends in `..., 'markDefs', {_key}`. Strip the
+      // two trailing segments to get the enclosing text block's path,
+      // which works at any container depth.
+      const blockPath = event.at.slice(0, -2)
+      const blockEntry = getNode(snapshot.context, blockPath)
 
-      if (!block) {
+      if (!blockEntry || !isTextBlock(snapshot.context, blockEntry.node)) {
         return false
       }
 
-      const updatedMarkDefs = block.node.markDefs?.map((markDef) => {
+      const block = blockEntry.node
+
+      const updatedMarkDefs = block.markDefs?.map((markDef) => {
         if (markDef._key === markDefKey) {
           return {
             ...markDef,
@@ -50,13 +40,13 @@ export const abstractAnnotationBehaviors = [
         return markDef
       })
 
-      return {blockKey, updatedMarkDefs}
+      return {blockPath: blockEntry.path, updatedMarkDefs}
     },
     actions: [
-      (_, {blockKey, updatedMarkDefs}) => [
+      (_, {blockPath, updatedMarkDefs}) => [
         raise({
           type: 'block.set',
-          at: [{_key: blockKey}],
+          at: blockPath,
           props: {markDefs: updatedMarkDefs},
         }),
       ],
