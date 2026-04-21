@@ -190,17 +190,17 @@ describe('insert.break inside a container with a style override', () => {
           content: [
             {
               _type: 'block',
-              _key: 'k5',
-              children: [{_type: 'span', _key: 'k6', text: '', marks: []}],
+              _key: innerBlockKey,
+              children: [
+                {_type: 'span', _key: innerSpanKey, text: '', marks: []},
+              ],
               markDefs: [],
               style: 'monospace',
             },
             {
               _type: 'block',
-              _key: innerBlockKey,
-              children: [
-                {_type: 'span', _key: innerSpanKey, text: 'hello', marks: []},
-              ],
+              _key: 'k5',
+              children: [{_type: 'span', _key: 'k6', text: 'hello', marks: []}],
               markDefs: [],
               style: 'monospace',
             },
