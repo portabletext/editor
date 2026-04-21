@@ -24,6 +24,7 @@ import type {Point} from '../slate/interfaces/point'
 import type {Range} from '../slate/interfaces/range'
 import {parentPath} from '../slate/path/parent-path'
 import {pathEquals} from '../slate/path/path-equals'
+import {siblingPath} from '../slate/path/sibling-path'
 import {pointEquals} from '../slate/point/point-equals'
 import {isExpandedRange} from '../slate/range/is-expanded-range'
 import {rangeEdges} from '../slate/range/range-edges'
@@ -327,24 +328,22 @@ function insertBlockIntoEmptyEditor(
 function insertSiblingBlock(
   editor: PortableTextSlateEditor,
   block: Node,
-  siblingPath: Path,
+  siblingNodePath: Path,
   position: 'before' | 'after',
 ): Path {
-  const containerFieldPath = parentPath(siblingPath)
-  const containerFieldPathRef = pathRef(editor, containerFieldPath)
+  const siblingPathRef = pathRef(editor, siblingNodePath)
 
   const operation: InsertOperation = {
     type: 'insert',
-    path: siblingPath,
+    path: siblingNodePath,
     node: block,
     position,
   }
   editor.apply(operation)
 
-  const resolvedContainerFieldPath =
-    containerFieldPathRef.unref() ?? containerFieldPath
+  const resolvedSiblingPath = siblingPathRef.unref() ?? siblingNodePath
 
-  return [...resolvedContainerFieldPath, {_key: operation.node._key}]
+  return siblingPath(resolvedSiblingPath, operation.node._key)
 }
 
 /**
