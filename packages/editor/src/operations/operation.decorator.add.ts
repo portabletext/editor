@@ -4,7 +4,10 @@ import {applySplitNode} from '../internal-utils/apply-split-node'
 import {setNodeProperties} from '../internal-utils/set-node-properties'
 import {getAncestorTextBlock} from '../node-traversal/get-ancestor-text-block'
 import {getNodes} from '../node-traversal/get-nodes'
-import {getBlockSubSchema} from '../schema/get-block-sub-schema'
+import {
+  getBlockSubSchema,
+  isInsideEditableContainer,
+} from '../schema/get-block-sub-schema'
 import {isEdge} from '../slate/editor/is-edge'
 import {isEnd} from '../slate/editor/is-end'
 import {isStart} from '../slate/editor/is-start'
@@ -83,13 +86,18 @@ export const decoratorAddOperationImplementation: OperationImplementation<
           continue
         }
 
-        // Skip spans whose sub-schema doesn't declare this decorator.
+        // Inside an editable container the sub-schema is authoritative:
+        // skip spans whose block's sub-schema doesn't declare this
+        // decorator. At root we remain permissive and allow unknown
+        // decorators to be tracked optimistically.
         const blockPath = parentPath(spanPath)
-        const subSchema = getBlockSubSchema(context, blockPath)
-        if (
-          !subSchema.decorators.some((decorator) => decorator.name === mark)
-        ) {
-          continue
+        if (isInsideEditableContainer(context, blockPath)) {
+          const subSchema = getBlockSubSchema(context, blockPath)
+          if (
+            !subSchema.decorators.some((decorator) => decorator.name === mark)
+          ) {
+            continue
+          }
         }
 
         const marks = [
@@ -120,10 +128,15 @@ export const decoratorAddOperationImplementation: OperationImplementation<
     }
     const {node: block, path: blockPath} = blockEntry
 
-    // If the decorator isn't declared by this block's sub-schema, do nothing.
-    const subSchema = getBlockSubSchema(context, blockPath)
-    if (!subSchema.decorators.some((decorator) => decorator.name === mark)) {
-      return
+    // Inside an editable container the sub-schema is authoritative: bail
+    // when the block's sub-schema doesn't declare this decorator. At root
+    // we remain permissive so unknown decorators are tracked in
+    // `decoratorState` (the existing root-level behaviour).
+    if (isInsideEditableContainer(context, blockPath)) {
+      const subSchema = getBlockSubSchema(context, blockPath)
+      if (!subSchema.decorators.some((decorator) => decorator.name === mark)) {
+        return
+      }
     }
 
     const lonelyEmptySpan =
