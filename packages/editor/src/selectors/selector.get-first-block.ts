@@ -1,6 +1,7 @@
 import type {PortableTextBlock} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
 import {getChildren} from '../node-traversal/get-children'
+import {getBlock} from '../node-traversal/is-block'
 import type {Path} from '../slate/interfaces/path'
 import {parentPath} from '../slate/path/parent-path'
 import {getFocusBlock} from './selector.get-focus-block'
@@ -25,7 +26,7 @@ export const getFirstBlock: EditorSelector<
     const first = siblings.at(0)
 
     if (first) {
-      return {node: first.node as PortableTextBlock, path: first.path}
+      return getBlock(snapshot.context, first.path)
     }
   }
 
