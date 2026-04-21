@@ -1,4 +1,4 @@
-import {type PortableTextObject} from '@portabletext/schema'
+import type {PortableTextObject} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
 import type {Path} from '../slate/interfaces/path'
 import {isSpanNode} from '../slate/node/is-span-node'
