@@ -112,8 +112,10 @@ Feature: Undo/Redo
     Given the text "-"
     When the editor is focused
     And ">" is typed
-    Then the text is "→"
+    And "new" is typed
+    Then the text is "→new"
     When undo is performed
+    And undo is performed
     Then the text is "->"
 
   Scenario: Consecutive undo after selection change
