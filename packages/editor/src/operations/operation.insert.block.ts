@@ -462,11 +462,10 @@ function mergeTextBlockFragment(args: {
   }
 
   if (select === 'start' && firstInsertedKey && resolvedAtPath) {
-    const firstInsertedPath: Path = [
-      ...parentPath(resolvedAtPath),
-      'children',
-      {_key: firstInsertedKey},
-    ]
+    const firstInsertedPath: Path = siblingPath(
+      resolvedAtPath,
+      firstInsertedKey,
+    )
     const startPoint = editorStart(editor, firstInsertedPath)
     applySelect(editor, startPoint)
   }

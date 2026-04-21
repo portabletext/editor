@@ -7,7 +7,7 @@ import {getLastBlock} from '../selectors/selector.get-last-block'
 import {isSelectionCollapsed} from '../selectors/selector.is-selection-collapsed'
 import type {Path} from '../slate/interfaces/path'
 import {isTextBlockNode} from '../slate/node/is-text-block-node'
-import {parentPath} from '../slate/path/parent-path'
+import {siblingPath} from '../slate/path/sibling-path'
 import {getBlockEndPoint} from '../utils/util.get-block-end-point'
 import {getBlockStartPoint} from '../utils/util.get-block-start-point'
 import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
@@ -44,6 +44,16 @@ function selectionAt(path: Path): {
     anchor: {path, offset: 0},
     focus: {path, offset: 0},
   }
+}
+
+/**
+ * Build the canonical path for a new block about to be inserted as a sibling
+ * of `referencePath`, or as a root-level block when `referencePath` is empty.
+ */
+function newBlockPath(referencePath: Path, key: string): Path {
+  return referencePath.length === 0
+    ? [{_key: key}]
+    : siblingPath(referencePath, key)
 }
 
 export const abstractInsertBehaviors = [
@@ -88,14 +98,12 @@ export const abstractInsertBehaviors = [
           })
         : undefined
 
-      const containerPath: Path = referenceBlock
-        ? parentPath(referenceBlock.path)
-        : []
+      const referenceBlockPath: Path = referenceBlock ? referenceBlock.path : []
 
-      return {containerPath}
+      return {referenceBlockPath}
     },
     actions: [
-      ({snapshot, event}, {containerPath}) => {
+      ({snapshot, event}, {referenceBlockPath}) => {
         let firstBlockPath: Path | undefined
         let lastBlockPath: Path | undefined
         let previousBlockPath: Path | undefined
@@ -105,7 +113,7 @@ export const abstractInsertBehaviors = [
         for (const block of event.blocks) {
           index++
           const key = getUniqueBlockKey(block._key)(snapshot)
-          const blockPath: Path = [...containerPath, {_key: key}]
+          const blockPath: Path = newBlockPath(referenceBlockPath, key)
 
           if (index === 0) {
             firstBlockPath = blockPath
@@ -237,7 +245,7 @@ export const abstractInsertBehaviors = [
           originalSelection,
         },
       ) => {
-        const containerPath = parentPath(focusTextBlock.path)
+        const referenceBlockPath = focusTextBlock.path
         let previousBlockPath: Path | undefined
         let firstBlockPath: Path | undefined
         const actions: Array<BehaviorAction> = []
@@ -270,7 +278,7 @@ export const abstractInsertBehaviors = [
               firstBlockPath = focusTextBlock.path
               previousBlockPath = focusTextBlock.path
             } else {
-              firstBlockPath = [...containerPath, {_key: key}]
+              firstBlockPath = newBlockPath(referenceBlockPath, key)
               previousBlockPath = firstBlockPath
             }
 
@@ -303,7 +311,7 @@ export const abstractInsertBehaviors = [
               }),
             )
 
-            previousBlockPath = [...containerPath, {_key: lastKey}]
+            previousBlockPath = newBlockPath(referenceBlockPath, lastKey)
 
             continue
           }
@@ -322,7 +330,7 @@ export const abstractInsertBehaviors = [
             }),
           )
 
-          previousBlockPath = [...containerPath, {_key: key}]
+          previousBlockPath = newBlockPath(referenceBlockPath, key)
         }
 
         if (!isEmptyTextBlock(snapshot.context, focusTextBlockAfter)) {
@@ -392,17 +400,15 @@ export const abstractInsertBehaviors = [
           })
         : undefined
 
-      const containerPath: Path = referenceBlock
-        ? parentPath(referenceBlock.path)
-        : []
+      const referenceBlockPath: Path = referenceBlock ? referenceBlock.path : []
 
       return {
-        containerPath,
+        referenceBlockPath,
         originalSelection: snapshot.context.selection,
       }
     },
     actions: [
-      ({snapshot, event}, {containerPath, originalSelection}) => {
+      ({snapshot, event}, {referenceBlockPath, originalSelection}) => {
         let firstBlockPath: Path | undefined
         let lastBlockPath: Path | undefined
         let previousBlockPath: Path | undefined
@@ -412,7 +418,7 @@ export const abstractInsertBehaviors = [
         for (const block of event.blocks) {
           index++
           const key = getUniqueBlockKey(block._key)(snapshot)
-          const blockPath: Path = [...containerPath, {_key: key}]
+          const blockPath: Path = newBlockPath(referenceBlockPath, key)
 
           if (index === 0) {
             firstBlockPath = blockPath
