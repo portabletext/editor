@@ -5,10 +5,10 @@ import {
   DIFF_INSERT,
   parsePatch,
 } from '@sanity/diff-match-patch'
+import {getEnclosingBlock} from '../node-traversal/get-enclosing-block'
 import type {Node} from '../slate/interfaces/node'
 import type {Operation} from '../slate/interfaces/operation'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
-import {isKeyedSegment} from '../utils'
 import {debug} from './debug'
 
 /**
@@ -26,7 +26,7 @@ export function transformOperation(
 ): Operation[] {
   const transformedOperation = {...operation}
 
-  if (patch.type === 'insert' && patch.path.length === 1) {
+  if (patch.type === 'insert') {
     // With keyed paths, block insertions don't affect other operations' paths.
     // Keys are stable - no path adjustment needed.
     debug.history(
@@ -35,24 +35,27 @@ export function transformOperation(
     return [transformedOperation]
   }
 
-  if (patch.type === 'unset' && patch.path.length === 1) {
-    const pathSegment = patch.path[0]
-    // If this operation targets the same block that got removed, drop it
+  if (patch.type === 'unset' && patch.path.length > 0) {
+    // If this operation targets the same block that got removed, drop it.
+    // With keyed paths, other operations' paths don't need adjustment.
     if (
       'path' in transformedOperation &&
       Array.isArray(transformedOperation.path)
     ) {
-      const operationBlockSegment = transformedOperation.path[0]
+      const removedBlock = getEnclosingBlock(editor, patch.path)
+      const operationBlock = getEnclosingBlock(
+        editor,
+        transformedOperation.path,
+      )
       if (
-        isKeyedSegment(pathSegment) &&
-        isKeyedSegment(operationBlockSegment) &&
-        operationBlockSegment._key === pathSegment._key
+        removedBlock &&
+        operationBlock &&
+        removedBlock.node._key === operationBlock.node._key
       ) {
         debug.history('Skipping transformation that targeted removed block')
         return []
       }
     }
-    // With keyed paths, block removals don't affect other operations' paths.
     return [transformedOperation]
   }
 
@@ -69,11 +72,11 @@ export function transformOperation(
       editor,
       transformedOperation,
     )
-    const pathSegment = patch.path[0]
+    const patchTargetBlock = getEnclosingBlock(editor, patch.path)
     if (
       !operationTargetBlock ||
-      !isKeyedSegment(pathSegment) ||
-      operationTargetBlock._key !== pathSegment._key
+      !patchTargetBlock ||
+      operationTargetBlock._key !== patchTargetBlock.node._key
     ) {
       return [transformedOperation]
     }
@@ -158,17 +161,12 @@ function findOperationTargetBlock(
   operation: Operation,
 ): Node | undefined {
   if (operation.type === 'set_selection' && editor.selection) {
-    const focusSegment = editor.selection.focus.path[0]
-    if (isKeyedSegment(focusSegment)) {
-      return editor.children.find((child) => child._key === focusSegment._key)
-    }
-    return undefined
+    const block = getEnclosingBlock(editor, editor.selection.focus.path)
+    return block?.node
   }
   if ('path' in operation) {
-    const blockSegment = operation.path[0]
-    if (isKeyedSegment(blockSegment)) {
-      return editor.children.find((child) => child._key === blockSegment._key)
-    }
+    const block = getEnclosingBlock(editor, operation.path)
+    return block?.node
   }
   return undefined
 }
