@@ -834,3 +834,172 @@ describe(parseChild.name, () => {
     })
   })
 })
+
+describe('container-aware parsing', () => {
+  const containerSchema = defineSchema({
+    decorators: [{name: 'strong'}, {name: 'em'}],
+    annotations: [{name: 'link', fields: [{name: 'href', type: 'string'}]}],
+    inlineObjects: [{name: 'rootMention'}],
+    blockObjects: [
+      {
+        name: 'tableCell',
+        fields: [
+          {
+            name: 'content',
+            type: 'array',
+            of: [
+              {
+                type: 'block',
+                decorators: [{name: 'strong'}],
+                inlineObjects: [
+                  {name: 'cellMention', fields: [{name: 'id', type: 'string'}]},
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  })
+
+  test('nested span strips decorators not allowed by the container sub-schema', () => {
+    const schema = compileSchema(containerSchema)
+    const parsed = parseBlock({
+      block: {
+        _type: 'tableCell',
+        _key: 'cell0',
+        content: [
+          {
+            _type: 'block',
+            _key: 'b0',
+            children: [
+              {
+                _type: 'span',
+                _key: 's0',
+                text: 'hi',
+                marks: ['strong', 'em'],
+              },
+            ],
+          },
+        ],
+      },
+      context: {
+        keyGenerator: createTestKeyGenerator(),
+        schema,
+      },
+      options: {
+        normalize: false,
+        removeUnusedMarkDefs: false,
+        validateFields: true,
+      },
+    })
+
+    expect(parsed).toEqual({
+      _type: 'tableCell',
+      _key: 'cell0',
+      content: [
+        {
+          _type: 'block',
+          _key: 'b0',
+          children: [
+            {
+              _type: 'span',
+              _key: 's0',
+              text: 'hi',
+              marks: ['strong'],
+            },
+          ],
+        },
+      ],
+    })
+  })
+
+  test('nested inline object from root is rejected when the container declares its own list', () => {
+    const schema = compileSchema(containerSchema)
+    const parsed = parseBlock({
+      block: {
+        _type: 'tableCell',
+        _key: 'cell0',
+        content: [
+          {
+            _type: 'block',
+            _key: 'b0',
+            children: [
+              {_type: 'span', _key: 's0', text: 'before', marks: []},
+              {_type: 'rootMention', _key: 'x0'},
+              {_type: 'cellMention', _key: 'x1', id: 'alice'},
+              {_type: 'span', _key: 's1', text: 'after', marks: []},
+            ],
+          },
+        ],
+      },
+      context: {
+        keyGenerator: createTestKeyGenerator(),
+        schema,
+      },
+      options: {
+        normalize: false,
+        removeUnusedMarkDefs: false,
+        validateFields: true,
+      },
+    })
+
+    expect(parsed).toEqual({
+      _type: 'tableCell',
+      _key: 'cell0',
+      content: [
+        {
+          _type: 'block',
+          _key: 'b0',
+          children: [
+            {_type: 'span', _key: 's0', text: 'before', marks: []},
+            {_type: 'cellMention', _key: 'x1', id: 'alice'},
+            {_type: 'span', _key: 's1', text: 'after', marks: []},
+          ],
+        },
+      ],
+    })
+  })
+
+  test('nested blocks inherit annotations and lists from root when not overridden', () => {
+    const schema = compileSchema(containerSchema)
+    const parsed = parseBlock({
+      block: {
+        _type: 'tableCell',
+        _key: 'cell0',
+        content: [
+          {
+            _type: 'block',
+            _key: 'b0',
+            markDefs: [{_type: 'link', _key: 'L', href: 'https://example.com'}],
+            children: [
+              {_type: 'span', _key: 's0', text: 'linked', marks: ['L']},
+            ],
+          },
+        ],
+      },
+      context: {
+        keyGenerator: createTestKeyGenerator(),
+        schema,
+      },
+      options: {
+        normalize: false,
+        removeUnusedMarkDefs: false,
+        validateFields: true,
+      },
+    })
+
+    expect(parsed).toEqual({
+      _type: 'tableCell',
+      _key: 'cell0',
+      content: [
+        {
+          _type: 'block',
+          _key: 'b0',
+          markDefs: [{_type: 'link', _key: 'L', href: 'https://example.com'}],
+          children: [{_type: 'span', _key: 's0', text: 'linked', marks: ['L']}],
+        },
+      ],
+    })
+  })
+})
