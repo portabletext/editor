@@ -8,6 +8,7 @@ import {getNode} from '../node-traversal/get-node'
 import {getSibling} from '../node-traversal/get-sibling'
 import {isTextBlockNode} from '../slate/node/is-text-block-node'
 import {parseInlineObject, parseSpan} from '../utils/parse-blocks'
+import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import type {OperationImplementation} from './operation.types'
 
 export const insertChildOperationImplementation: OperationImplementation<
@@ -31,7 +32,17 @@ export const insertChildOperationImplementation: OperationImplementation<
     throw new Error('Unable to insert child into a non-text block')
   }
 
-  const focusChildPath = focus.path.slice(0, focusBlockEntry.path.length + 2)
+  const focusChildSegment = focus.path.at(-1)
+
+  if (!isKeyedSegment(focusChildSegment)) {
+    throw new Error('Unable to insert child without a focus child')
+  }
+
+  const focusChildPath = [
+    ...focusBlockEntry.path,
+    'children',
+    focusChildSegment,
+  ]
 
   const markDefs = focusBlock.markDefs ?? []
   const markDefKeyMap = new Map<string, string>()
