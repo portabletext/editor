@@ -4,6 +4,7 @@ import {getAncestors} from '../node-traversal/get-ancestors'
 import {getNodes} from '../node-traversal/get-nodes'
 import {getBlock, isBlock} from '../node-traversal/is-block'
 import type {TraversalContainers} from '../schema/resolve-containers'
+import {getDefaultStyle} from '../selectors/selector.get-default-style'
 import {getFocusInlineObject} from '../selectors/selector.get-focus-inline-object'
 import {getFocusSpan} from '../selectors/selector.get-focus-span'
 import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
@@ -58,7 +59,7 @@ const breakingAtTheEndOfTextBlock = defineBehavior({
           markDefs: [],
           listItem: focusListItem,
           level: focusLevel,
-          style: snapshot.context.schema.styles[0]?.name,
+          style: getDefaultStyle(snapshot),
         },
         placement: 'after',
       }),
@@ -120,7 +121,7 @@ const breakingAtTheStartOfTextBlock = defineBehavior({
           ],
           listItem: focusListItem,
           level: focusLevel,
-          style: snapshot.context.schema.styles[0]?.name,
+          style: getDefaultStyle(snapshot),
         },
         placement: 'before',
         select: 'none',
