@@ -1,7 +1,6 @@
 import type {PortableTextBlock} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
-import {getAncestors} from '../node-traversal/get-ancestors'
-import {getBlock} from '../node-traversal/is-block'
+import {getEnclosingBlock} from '../node-traversal/get-enclosing-block'
 import type {Path} from '../slate/interfaces/path'
 
 /**
@@ -22,20 +21,5 @@ export const getFocusBlock: EditorSelector<
     return undefined
   }
 
-  const focusPath = selection.focus.path
-  const focusBlock = getBlock(snapshot.context, focusPath)
-
-  if (focusBlock) {
-    return focusBlock
-  }
-
-  for (const ancestor of getAncestors(snapshot.context, focusPath)) {
-    const block = getBlock(snapshot.context, ancestor.path)
-
-    if (block) {
-      return block
-    }
-  }
-
-  return undefined
+  return getEnclosingBlock(snapshot.context, selection.focus.path)
 }
