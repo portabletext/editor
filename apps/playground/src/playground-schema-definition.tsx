@@ -136,6 +136,54 @@ export const playgroundSchemaDefinition = defineSchema({
         },
       ],
     },
+    {
+      title: 'Table',
+      name: 'table',
+      fields: [
+        {
+          name: 'rows',
+          title: 'Rows',
+          type: 'array',
+          of: [
+            {
+              type: 'row',
+              fields: [
+                {
+                  name: 'cells',
+                  title: 'Cells',
+                  type: 'array',
+                  of: [
+                    {
+                      type: 'cell',
+                      fields: [
+                        {
+                          name: 'content',
+                          title: 'Content',
+                          type: 'array',
+                          of: [
+                            {
+                              type: 'block',
+                              decorators: [
+                                {title: 'Strong', name: 'strong'},
+                                {title: 'Emphasis', name: 'em'},
+                                {title: 'Code', name: 'code'},
+                              ],
+                              styles: [{title: 'Normal', name: 'normal'}],
+                              annotations: [],
+                              lists: [],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
   ],
   inlineObjects: [
     {

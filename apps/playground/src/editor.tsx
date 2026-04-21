@@ -66,6 +66,7 @@ import {CodeEditorPlugin} from './plugins/plugin.code-editor'
 import {HtmlDeserializerPlugin} from './plugins/plugin.html-deserializer'
 import {ImageDeserializerPlugin} from './plugins/plugin.image-deserializer'
 import {markdownShortcutsPluginProps} from './plugins/plugin.markdown'
+import {TablePlugin} from './plugins/plugin.table'
 import {TextFileDeserializerPlugin} from './plugins/plugin.text-file-deserializer'
 import {Button} from './primitives/button'
 import {Container} from './primitives/container'
@@ -154,6 +155,7 @@ export function Editor(props: {
           <Container className="flex flex-col overflow-clip">
             {featureFlags.codeBlockPlugin ? <CodeBlockPlugin /> : null}
             {featureFlags.calloutPlugin ? <CalloutPlugin /> : null}
+            {featureFlags.tablePlugin ? <TablePlugin /> : null}
             {featureFlags.emojiPickerPlugin ? <EmojiPickerPlugin /> : null}
             {featureFlags.mentionPickerPlugin ? <MentionPickerPlugin /> : null}
             {featureFlags.slashCommandPlugin ? (

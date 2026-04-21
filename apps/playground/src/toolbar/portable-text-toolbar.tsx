@@ -46,6 +46,7 @@ import {
   StrikethroughIcon,
   SubscriptIcon,
   SuperscriptIcon,
+  TableIcon,
   TextQuoteIcon,
   UnderlineIcon,
 } from 'lucide-react'
@@ -258,6 +259,71 @@ export const extendBlockObject: ExtendBlockObjectSchemaType = (blockObject) => {
     return {
       ...blockObject,
       icon: InfoIcon,
+    }
+  }
+
+  if (blockObject.name === 'table') {
+    return {
+      ...blockObject,
+      icon: TableIcon,
+      defaultValues: {
+        rows: [
+          {
+            _type: 'row',
+            cells: [
+              {
+                _type: 'cell',
+                content: [
+                  {
+                    _type: 'block',
+                    style: 'normal',
+                    children: [{_type: 'span', text: '', marks: []}],
+                    markDefs: [],
+                  },
+                ],
+              },
+              {
+                _type: 'cell',
+                content: [
+                  {
+                    _type: 'block',
+                    style: 'normal',
+                    children: [{_type: 'span', text: '', marks: []}],
+                    markDefs: [],
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            _type: 'row',
+            cells: [
+              {
+                _type: 'cell',
+                content: [
+                  {
+                    _type: 'block',
+                    style: 'normal',
+                    children: [{_type: 'span', text: '', marks: []}],
+                    markDefs: [],
+                  },
+                ],
+              },
+              {
+                _type: 'cell',
+                content: [
+                  {
+                    _type: 'block',
+                    style: 'normal',
+                    children: [{_type: 'span', text: '', marks: []}],
+                    markDefs: [],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
     }
   }
 
