@@ -1,6 +1,7 @@
-import type {PortableTextTextBlock} from '@portabletext/schema'
+import {isTextBlock, type PortableTextTextBlock} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
-import {getFocusTextBlock as getFocusTextBlockTraversal} from '../node-traversal/get-focus-text-block'
+import {getAncestor} from '../node-traversal/get-ancestor'
+import {getNode} from '../node-traversal/get-node'
 import type {Path} from '../slate/interfaces/path'
 
 /**
@@ -14,4 +15,27 @@ import type {Path} from '../slate/interfaces/path'
  */
 export const getFocusTextBlock: EditorSelector<
   {node: PortableTextTextBlock; path: Path} | undefined
-> = (snapshot) => getFocusTextBlockTraversal(snapshot)
+> = (snapshot) => {
+  const selection = snapshot.context.selection
+
+  if (!selection) {
+    return undefined
+  }
+
+  const focusPath = selection.focus.path
+  const focusNode = getNode(snapshot.context, focusPath)
+
+  if (focusNode && isTextBlock(snapshot.context, focusNode.node)) {
+    return {node: focusNode.node, path: focusNode.path}
+  }
+
+  const ancestor = getAncestor(snapshot.context, focusPath, (node) =>
+    isTextBlock(snapshot.context, node),
+  )
+
+  if (ancestor && isTextBlock(snapshot.context, ancestor.node)) {
+    return {node: ancestor.node, path: ancestor.path}
+  }
+
+  return undefined
+}

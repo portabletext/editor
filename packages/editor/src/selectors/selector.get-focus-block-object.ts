@@ -1,7 +1,10 @@
 import type {PortableTextObject} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
-import {getFocusBlockObject as getFocusBlockObjectTraversal} from '../node-traversal/get-focus-block-object'
+import {getAncestors} from '../node-traversal/get-ancestors'
+import {getNode} from '../node-traversal/get-node'
+import {isInline} from '../node-traversal/is-inline'
 import type {Path} from '../slate/interfaces/path'
+import {isVoidNode} from '../slate/node/is-void-node'
 
 /**
  * Returns the void block object containing the focus selection, resolved at
@@ -14,4 +17,32 @@ import type {Path} from '../slate/interfaces/path'
  */
 export const getFocusBlockObject: EditorSelector<
   {node: PortableTextObject; path: Path} | undefined
-> = (snapshot) => getFocusBlockObjectTraversal(snapshot)
+> = (snapshot) => {
+  const selection = snapshot.context.selection
+
+  if (!selection) {
+    return undefined
+  }
+
+  const focusPath = selection.focus.path
+  const focusNode = getNode(snapshot.context, focusPath)
+
+  if (
+    focusNode &&
+    isVoidNode(snapshot.context, focusNode.node, focusNode.path) &&
+    !isInline(snapshot.context, focusNode.path)
+  ) {
+    return {node: focusNode.node, path: focusNode.path}
+  }
+
+  for (const ancestor of getAncestors(snapshot.context, focusPath)) {
+    if (
+      isVoidNode(snapshot.context, ancestor.node, ancestor.path) &&
+      !isInline(snapshot.context, ancestor.path)
+    ) {
+      return {node: ancestor.node, path: ancestor.path}
+    }
+  }
+
+  return undefined
+}

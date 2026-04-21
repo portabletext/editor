@@ -1,7 +1,7 @@
 import {isSpan, isTextBlock} from '@portabletext/schema'
-import {getFocusTextBlock} from '../node-traversal/get-focus-text-block'
 import {getSibling} from '../node-traversal/get-sibling'
 import {getFocusChild} from '../selectors/selector.get-focus-child'
+import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
 import {isAtTheEndOfBlock} from '../selectors/selector.is-at-the-end-of-block'
 import {isAtTheStartOfBlock} from '../selectors/selector.is-at-the-start-of-block'
 import {isTextBlockNode} from '../slate/node/is-text-block-node'
