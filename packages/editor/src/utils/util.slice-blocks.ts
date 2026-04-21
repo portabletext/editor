@@ -1,6 +1,7 @@
 import {isSpan, isTextBlock, type PortableTextBlock} from '@portabletext/schema'
 import type {EditorContext} from '../editor/editor-snapshot'
 import {getAncestorTextBlock} from '../node-traversal/get-ancestor-text-block'
+import type {Path} from '../slate/interfaces/path'
 import {defaultKeyGenerator} from './key-generator'
 import {parseBlock} from './parse-blocks'
 import {getSelectionEndPoint} from './util.get-selection-end-point'
@@ -233,13 +234,13 @@ export function sliceBlocks({
 
 function resolveBlockKey(
   context: Pick<EditorContext, 'schema' | 'value' | 'containers'>,
-  path: ReadonlyArray<unknown>,
+  path: Path,
 ): string | undefined {
   // Walk up the path to the nearest text block (or, for a path on a block
   // object, the block object itself). Inside an editable container this
   // returns the container-internal text block key; at root level the
   // innermost keyed segment IS the block key.
-  const textBlock = getAncestorTextBlock(context, path as never)
+  const textBlock = getAncestorTextBlock(context, path)
   if (textBlock) {
     const lastSegment = textBlock.path.at(-1)
     if (isKeyedSegment(lastSegment)) {
