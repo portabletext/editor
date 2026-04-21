@@ -1,4 +1,4 @@
-import type {PortableTextObject} from '@portabletext/schema'
+import {type PortableTextObject} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
 import type {Path} from '../slate/interfaces/path'
 import {isSpanNode} from '../slate/node/is-span-node'
@@ -21,37 +21,36 @@ export const getNextInlineObject: EditorSelector<
 > = (snapshot) => {
   const focusTextBlock = getFocusTextBlock(snapshot)
   const selectionEndPoint = getSelectionEndPoint(snapshot)
-  const childSegment = selectionEndPoint?.path.at(-1)
-  const selectionEndPointChildKey = isKeyedSegment(childSegment)
-    ? childSegment._key
-    : undefined
 
-  if (!focusTextBlock || !selectionEndPointChildKey) {
+  if (!focusTextBlock || !selectionEndPoint) {
     return undefined
   }
 
-  let endPointChildFound = false
-  let inlineObject:
-    | {
-        node: PortableTextObject
-        path: Path
-      }
-    | undefined
+  const childSegment = selectionEndPoint.path.at(-1)
 
-  for (const child of focusTextBlock.node.children) {
-    if (child._key === selectionEndPointChildKey) {
-      endPointChildFound = true
-      continue
-    }
+  if (!isKeyedSegment(childSegment)) {
+    return undefined
+  }
 
-    if (!isSpanNode(snapshot.context, child) && endPointChildFound) {
-      inlineObject = {
+  const children = focusTextBlock.node.children
+  const currentIndex = children.findIndex(
+    (child) => child._key === childSegment._key,
+  )
+
+  if (currentIndex === -1) {
+    return undefined
+  }
+
+  for (let index = currentIndex + 1; index < children.length; index++) {
+    const child = children[index]!
+
+    if (!isSpanNode(snapshot.context, child)) {
+      return {
         node: child,
         path: [...focusTextBlock.path, 'children', {_key: child._key}],
       }
-      break
     }
   }
 
-  return inlineObject
+  return undefined
 }

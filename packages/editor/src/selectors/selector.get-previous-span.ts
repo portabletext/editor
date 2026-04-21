@@ -30,9 +30,19 @@ export const getPreviousSpan: EditorSelector<
   }
 
   const childSegment = selectionStartPoint.path.at(-1)
-  const selectionStartPointChildKey = isKeyedSegment(childSegment)
-    ? childSegment._key
-    : undefined
+
+  if (!isKeyedSegment(childSegment)) {
+    return undefined
+  }
+
+  const children = selectionStartBlock.node.children
+  const currentIndex = children.findIndex(
+    (child) => child._key === childSegment._key,
+  )
+
+  if (currentIndex <= 0) {
+    return undefined
+  }
 
   let previousSpan:
     | {
@@ -41,10 +51,8 @@ export const getPreviousSpan: EditorSelector<
       }
     | undefined
 
-  for (const child of selectionStartBlock.node.children) {
-    if (child._key === selectionStartPointChildKey) {
-      break
-    }
+  for (let index = 0; index < currentIndex; index++) {
+    const child = children[index]!
 
     if (isSpan(snapshot.context, child)) {
       previousSpan = {

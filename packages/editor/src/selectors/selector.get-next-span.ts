@@ -30,32 +30,30 @@ export const getNextSpan: EditorSelector<
   }
 
   const childSegment = selectionEndPoint.path.at(-1)
-  const selectionEndPointChildKey = isKeyedSegment(childSegment)
-    ? childSegment._key
-    : undefined
 
-  let endPointChildFound = false
-  let nextSpan:
-    | {
-        node: PortableTextSpan
-        path: Path
-      }
-    | undefined
+  if (!isKeyedSegment(childSegment)) {
+    return undefined
+  }
 
-  for (const child of selectionEndBlock.node.children) {
-    if (child._key === selectionEndPointChildKey) {
-      endPointChildFound = true
-      continue
-    }
+  const children = selectionEndBlock.node.children
+  const currentIndex = children.findIndex(
+    (child) => child._key === childSegment._key,
+  )
 
-    if (isSpan(snapshot.context, child) && endPointChildFound) {
-      nextSpan = {
+  if (currentIndex === -1) {
+    return undefined
+  }
+
+  for (let index = currentIndex + 1; index < children.length; index++) {
+    const child = children[index]!
+
+    if (isSpan(snapshot.context, child)) {
+      return {
         node: child,
         path: [...selectionEndBlock.path, 'children', {_key: child._key}],
       }
-      break
     }
   }
 
-  return nextSpan
+  return undefined
 }
