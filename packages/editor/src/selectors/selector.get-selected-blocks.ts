@@ -1,7 +1,7 @@
 import type {PortableTextBlock} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
 import {getNodes} from '../node-traversal/get-nodes'
-import {isBlock} from '../node-traversal/is-block'
+import {getBlock, isBlock} from '../node-traversal/is-block'
 import type {Path} from '../slate/interfaces/path'
 import {isAncestorPath} from '../slate/path/is-ancestor-path'
 import {getSelectionEndPoint} from '../utils/util.get-selection-end-point'
@@ -43,10 +43,11 @@ export const getSelectedBlocks: EditorSelector<
       match: (_, path) => isBlock(snapshot.context, path),
     },
   )) {
-    allBlocks.push({
-      node: entry.node as PortableTextBlock,
-      path: entry.path,
-    })
+    const block = getBlock(snapshot.context, entry.path)
+
+    if (block) {
+      allBlocks.push(block)
+    }
   }
 
   // Keep only innermost blocks: drop any block that is a strict ancestor of
