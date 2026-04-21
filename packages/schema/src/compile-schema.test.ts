@@ -87,7 +87,7 @@ describe(compileSchema.name, () => {
       ])
     })
 
-    test('of with block type preserves PTE sub-schema', () => {
+    test('of with block type resolves PTE sub-schema with inheritance', () => {
       expect(
         compileSchema({
           blockObjects: [
@@ -119,8 +119,14 @@ describe(compileSchema.name, () => {
               of: [
                 {
                   type: 'block',
-                  styles: [{name: 'normal'}, {name: 'h1'}],
-                  decorators: [{name: 'strong'}],
+                  styles: [
+                    {name: 'normal', value: 'normal'},
+                    {name: 'h1', value: 'h1'},
+                  ],
+                  decorators: [{name: 'strong', value: 'strong'}],
+                  annotations: [],
+                  lists: [],
+                  inlineObjects: [],
                 },
               ],
             },
@@ -173,6 +179,305 @@ describe(compileSchema.name, () => {
                       name: 'cells',
                       type: 'array',
                       of: [{type: 'tableCell', name: 'tableCell'}],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+    })
+  })
+
+  describe('nested block inheritance', () => {
+    test('nested block with no overrides inherits all root fields', () => {
+      expect(
+        compileSchema({
+          styles: [{name: 'h1'}, {name: 'h2'}],
+          decorators: [{name: 'strong'}, {name: 'em'}],
+          annotations: [{name: 'link'}],
+          lists: [{name: 'bullet'}],
+          inlineObjects: [{name: 'mention'}],
+          blockObjects: [
+            {
+              name: 'tableCell',
+              fields: [
+                {
+                  name: 'content',
+                  type: 'array',
+                  of: [{type: 'block'}],
+                },
+              ],
+            },
+          ],
+        }).blockObjects,
+      ).toEqual([
+        {
+          name: 'tableCell',
+          fields: [
+            {
+              name: 'content',
+              type: 'array',
+              of: [
+                {
+                  type: 'block',
+                  styles: [
+                    {name: 'normal', value: 'normal', title: 'Normal'},
+                    {name: 'h1', value: 'h1'},
+                    {name: 'h2', value: 'h2'},
+                  ],
+                  decorators: [
+                    {name: 'strong', value: 'strong'},
+                    {name: 'em', value: 'em'},
+                  ],
+                  annotations: [{name: 'link', fields: []}],
+                  lists: [{name: 'bullet', value: 'bullet'}],
+                  inlineObjects: [{name: 'mention', fields: []}],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+    })
+
+    test('nested block overrides decorators and inherits the rest', () => {
+      expect(
+        compileSchema({
+          styles: [{name: 'h1'}],
+          decorators: [{name: 'strong'}, {name: 'em'}],
+          annotations: [{name: 'link'}],
+          blockObjects: [
+            {
+              name: 'tableCell',
+              fields: [
+                {
+                  name: 'content',
+                  type: 'array',
+                  of: [
+                    {
+                      type: 'block',
+                      decorators: [{name: 'strong'}],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        }).blockObjects,
+      ).toEqual([
+        {
+          name: 'tableCell',
+          fields: [
+            {
+              name: 'content',
+              type: 'array',
+              of: [
+                {
+                  type: 'block',
+                  styles: [
+                    {name: 'normal', value: 'normal', title: 'Normal'},
+                    {name: 'h1', value: 'h1'},
+                  ],
+                  decorators: [{name: 'strong', value: 'strong'}],
+                  annotations: [{name: 'link', fields: []}],
+                  lists: [],
+                  inlineObjects: [],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+    })
+
+    test('nested block declares its own inline objects', () => {
+      expect(
+        compileSchema({
+          inlineObjects: [{name: 'rootMention'}],
+          blockObjects: [
+            {
+              name: 'tableCell',
+              fields: [
+                {
+                  name: 'content',
+                  type: 'array',
+                  of: [
+                    {
+                      type: 'block',
+                      inlineObjects: [
+                        {
+                          name: 'cellMention',
+                          fields: [{name: 'id', type: 'string'}],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        }).blockObjects,
+      ).toEqual([
+        {
+          name: 'tableCell',
+          fields: [
+            {
+              name: 'content',
+              type: 'array',
+              of: [
+                {
+                  type: 'block',
+                  styles: [{name: 'normal', value: 'normal', title: 'Normal'}],
+                  decorators: [],
+                  annotations: [],
+                  lists: [],
+                  inlineObjects: [
+                    {
+                      name: 'cellMention',
+                      fields: [{name: 'id', type: 'string'}],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+    })
+
+    test('nested block with empty overrides replaces root values', () => {
+      expect(
+        compileSchema({
+          decorators: [{name: 'strong'}],
+          blockObjects: [
+            {
+              name: 'tableCell',
+              fields: [
+                {
+                  name: 'content',
+                  type: 'array',
+                  of: [
+                    {
+                      type: 'block',
+                      decorators: [],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        }).blockObjects,
+      ).toEqual([
+        {
+          name: 'tableCell',
+          fields: [
+            {
+              name: 'content',
+              type: 'array',
+              of: [
+                {
+                  type: 'block',
+                  styles: [{name: 'normal', value: 'normal', title: 'Normal'}],
+                  decorators: [],
+                  annotations: [],
+                  lists: [],
+                  inlineObjects: [],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+    })
+
+    test('deeply nested blocks inherit from root, not from intermediate containers', () => {
+      expect(
+        compileSchema({
+          decorators: [{name: 'strong'}],
+          blockObjects: [
+            {
+              name: 'table',
+              fields: [
+                {
+                  name: 'rows',
+                  type: 'array',
+                  of: [
+                    {
+                      type: 'row',
+                      name: 'row',
+                      fields: [
+                        {
+                          name: 'cells',
+                          type: 'array',
+                          of: [
+                            {
+                              type: 'cell',
+                              name: 'cell',
+                              fields: [
+                                {
+                                  name: 'content',
+                                  type: 'array',
+                                  of: [{type: 'block'}],
+                                },
+                              ],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        }).blockObjects,
+      ).toEqual([
+        {
+          name: 'table',
+          fields: [
+            {
+              name: 'rows',
+              type: 'array',
+              of: [
+                {
+                  type: 'row',
+                  name: 'row',
+                  fields: [
+                    {
+                      name: 'cells',
+                      type: 'array',
+                      of: [
+                        {
+                          type: 'cell',
+                          name: 'cell',
+                          fields: [
+                            {
+                              name: 'content',
+                              type: 'array',
+                              of: [
+                                {
+                                  type: 'block',
+                                  styles: [
+                                    {
+                                      name: 'normal',
+                                      value: 'normal',
+                                      title: 'Normal',
+                                    },
+                                  ],
+                                  decorators: [
+                                    {name: 'strong', value: 'strong'},
+                                  ],
+                                  annotations: [],
+                                  lists: [],
+                                  inlineObjects: [],
+                                },
+                              ],
+                            },
+                          ],
+                        },
+                      ],
                     },
                   ],
                 },
