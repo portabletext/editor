@@ -7,6 +7,7 @@ import type {EditorSelector} from '../editor/editor-selector'
 import {getNode} from '../node-traversal/get-node'
 import type {Path} from '../slate/interfaces/path'
 import {parentPath} from '../slate/path/parent-path'
+import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 
 /**
  * Returns the child (span or inline object) containing the focus selection,
@@ -27,20 +28,28 @@ export const getFocusChild: EditorSelector<
     return undefined
   }
 
-  const entry = getNode(snapshot.context, selection.focus.path)
+  const childSegment = selection.focus.path.at(-1)
 
-  if (!entry) {
+  if (!isKeyedSegment(childSegment)) {
     return undefined
   }
 
-  const parent = getNode(snapshot.context, parentPath(entry.path))
+  const parent = getNode(snapshot.context, parentPath(selection.focus.path))
 
   if (!parent || !isTextBlock(snapshot.context, parent.node)) {
     return undefined
   }
 
+  const child = parent.node.children.find(
+    (candidate) => candidate._key === childSegment._key,
+  )
+
+  if (!child) {
+    return undefined
+  }
+
   return {
-    node: entry.node as PortableTextObject | PortableTextSpan,
-    path: entry.path,
+    node: child,
+    path: [...parent.path, 'children', {_key: child._key}],
   }
 }
