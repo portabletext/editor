@@ -46,15 +46,6 @@ function selectionAt(path: Path): {
   }
 }
 
-/**
- * Given the path of a block we just (conceptually) inserted, build the path
- * its successor sibling should occupy. Works at any container depth because
- * siblings share a parent array.
- */
-function siblingPath(path: Path, key: string): Path {
-  return [...parentPath(path), {_key: key}]
-}
-
 export const abstractInsertBehaviors = [
   defineBehavior({
     on: 'insert.blocks',
@@ -297,10 +288,13 @@ export const abstractInsertBehaviors = [
           }
 
           if (index === event.blocks.length - 1) {
+            const lastKey = getUniqueBlockKey(block._key)(snapshot)
+
             actions.push(
               raise({
                 type: 'insert.block',
-                block,
+                block:
+                  lastKey !== block._key ? {...block, _key: lastKey} : block,
                 placement: 'after',
                 select: 'end',
                 at: previousBlockPath
@@ -308,6 +302,8 @@ export const abstractInsertBehaviors = [
                   : undefined,
               }),
             )
+
+            previousBlockPath = [...containerPath, {_key: lastKey}]
 
             continue
           }
@@ -326,9 +322,7 @@ export const abstractInsertBehaviors = [
             }),
           )
 
-          previousBlockPath = previousBlockPath
-            ? siblingPath(previousBlockPath, key)
-            : [...containerPath, {_key: key}]
+          previousBlockPath = [...containerPath, {_key: key}]
         }
 
         if (!isEmptyTextBlock(snapshot.context, focusTextBlockAfter)) {
@@ -336,8 +330,11 @@ export const abstractInsertBehaviors = [
             raise({
               type: 'insert.block',
               block: focusTextBlockAfter,
-              placement: 'auto',
+              placement: 'after',
               select: event.select === 'end' ? 'none' : 'end',
+              at: previousBlockPath
+                ? selectionAt(previousBlockPath)
+                : undefined,
             }),
           )
         }
