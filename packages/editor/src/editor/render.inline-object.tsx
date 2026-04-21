@@ -7,6 +7,7 @@ import type {BlockChildRenderProps, RenderChildFunction} from '../types/editor'
 import type {EditorSchema} from './editor-schema'
 import {RenderDefaultInlineObject} from './render.default-object'
 import {SelectionStateContext} from './selection-state-context'
+import {useBlockSubSchema} from './use-block-sub-schema'
 
 export function RenderInlineObject(props: {
   attributes: RenderElementProps['attributes']
@@ -19,7 +20,9 @@ export function RenderInlineObject(props: {
 }) {
   const inlineObjectRef = useRef<HTMLElement>(null)
 
-  const inlineObjectSchemaType = props.schema.inlineObjects.find(
+  const subSchema = useBlockSubSchema(props.path)
+
+  const inlineObjectSchemaType = subSchema.inlineObjects.find(
     (schemaType) => schemaType.name === props.element._type,
   )
 
