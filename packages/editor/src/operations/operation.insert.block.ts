@@ -8,6 +8,7 @@ import {safeStringify} from '../internal-utils/safe-json'
 import {setNodeProperties} from '../internal-utils/set-node-properties'
 import {toSlateBlock} from '../internal-utils/values'
 import {getAncestorTextBlock} from '../node-traversal/get-ancestor-text-block'
+import {getAncestors} from '../node-traversal/get-ancestors'
 import {getChildren} from '../node-traversal/get-children'
 import {getNode} from '../node-traversal/get-node'
 import {getSibling} from '../node-traversal/get-sibling'
@@ -190,22 +191,24 @@ function resolveTarget(args: {
 
 /**
  * Find the closest ancestor block that contains the given point path. Walks
- * up prefix-by-prefix (deepest first) so it works at any depth.
+ * up ancestors (deepest first) so it works at any depth.
  */
 function findContainingBlock(
   editor: PortableTextSlateEditor,
   pointPath: Path,
 ): {node: Node; path: Path} | undefined {
-  for (let length = pointPath.length; length >= 1; length--) {
-    const candidatePath = pointPath.slice(0, length)
-    if (typeof candidatePath[candidatePath.length - 1] === 'string') {
-      continue
-    }
-    const entry = getNode(editor, candidatePath)
-    if (entry && isBlock(editor, candidatePath)) {
-      return entry
+  const entry = getNode(editor, pointPath)
+
+  if (entry && isBlock(editor, entry.path)) {
+    return entry
+  }
+
+  for (const ancestor of getAncestors(editor, pointPath)) {
+    if (isBlock(editor, ancestor.path)) {
+      return ancestor
     }
   }
+
   return undefined
 }
 
