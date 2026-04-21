@@ -7,6 +7,7 @@ import {getChildren} from '../node-traversal/get-children'
 import {getNode} from '../node-traversal/get-node'
 import {getNodes} from '../node-traversal/get-nodes'
 import {isLeaf} from '../node-traversal/is-leaf'
+import {getBlockSubSchema} from '../schema/get-block-sub-schema'
 import {isEdge} from '../slate/editor/is-edge'
 import {isEnd} from '../slate/editor/is-end'
 import {isStart} from '../slate/editor/is-start'
@@ -78,6 +79,16 @@ export const addAnnotationOperationImplementation: OperationImplementation<
       }
 
       if (block.children.length === 1 && block.children[0]?.text === '') {
+        continue
+      }
+
+      // Skip blocks whose sub-schema doesn't declare this annotation type.
+      const subSchema = getBlockSubSchema(context, blockPath)
+      if (
+        !subSchema.annotations.some(
+          (annotation) => annotation.name === parsedAnnotation._type,
+        )
+      ) {
         continue
       }
 

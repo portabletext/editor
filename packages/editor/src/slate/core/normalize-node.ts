@@ -434,7 +434,11 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
 
         let childNode: Node | undefined
         if (acceptsBlocks) {
-          childNode = createPlaceholderBlock(editor)
+          childNode = createPlaceholderBlock(editor, [
+            ...path,
+            arrayField.name,
+            0,
+          ])
         } else if (firstChildType && firstChildType.type !== 'block') {
           childNode = {
             _type: firstChildType.type,

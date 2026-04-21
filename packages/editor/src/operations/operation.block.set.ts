@@ -2,6 +2,8 @@ import {applyAll, set} from '@portabletext/patches'
 import {safeStringify} from '../internal-utils/safe-json'
 import {setNodeProperties} from '../internal-utils/set-node-properties'
 import {getNode} from '../node-traversal/get-node'
+import {getBlockObjectSchema} from '../schema/get-block-object-schema'
+import {getBlockSubSchema} from '../schema/get-block-sub-schema'
 import {isTextBlockNode} from '../slate/node/is-text-block-node'
 import {parseMarkDefs} from '../utils/parse-blocks'
 import type {OperationImplementation} from './operation.types'
@@ -18,6 +20,7 @@ export const blockSetOperationImplementation: OperationImplementation<
   const slateBlock = blockEntry.node
 
   if (isTextBlockNode(context, slateBlock)) {
+    const subSchema = getBlockSubSchema(context, blockEntry.path)
     const filteredProps: Record<string, unknown> = {}
 
     for (const key of Object.keys(operation.props)) {
@@ -32,9 +35,7 @@ export const blockSetOperationImplementation: OperationImplementation<
 
       if (key === 'style') {
         if (
-          context.schema.styles.some(
-            (style) => style.name === operation.props[key],
-          )
+          subSchema.styles.some((style) => style.name === operation.props[key])
         ) {
           filteredProps[key] = operation.props[key]
         }
@@ -43,9 +44,7 @@ export const blockSetOperationImplementation: OperationImplementation<
 
       if (key === 'listItem') {
         if (
-          context.schema.lists.some(
-            (list) => list.name === operation.props[key],
-          )
+          subSchema.lists.some((list) => list.name === operation.props[key])
         ) {
           filteredProps[key] = operation.props[key]
         }
@@ -74,8 +73,10 @@ export const blockSetOperationImplementation: OperationImplementation<
 
     setNodeProperties(operation.editor, filteredProps, blockEntry.path)
   } else {
-    const schemaDefinition = context.schema.blockObjects.find(
-      (definition) => definition.name === slateBlock._type,
+    const schemaDefinition = getBlockObjectSchema(
+      context,
+      slateBlock,
+      blockEntry.path,
     )
     const filteredProps: Record<string, unknown> = {}
 
@@ -89,7 +90,7 @@ export const blockSetOperationImplementation: OperationImplementation<
         continue
       }
 
-      if (schemaDefinition?.fields.some((field) => field.name === key)) {
+      if (schemaDefinition?.fields?.some((field) => field.name === key)) {
         filteredProps[key] = operation.props[key]
       }
     }

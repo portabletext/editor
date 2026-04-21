@@ -1,15 +1,16 @@
-import {isSpan, isTextBlock} from '@portabletext/schema'
+import {isSpan} from '@portabletext/schema'
 import {applySelect, resolveSelection} from '../internal-utils/apply-selection'
 import {applySplitNode} from '../internal-utils/apply-split-node'
 import {setNodeProperties} from '../internal-utils/set-node-properties'
-import {getNode} from '../node-traversal/get-node'
+import {getAncestorTextBlock} from '../node-traversal/get-ancestor-text-block'
 import {getNodes} from '../node-traversal/get-nodes'
+import {getBlockSubSchema} from '../schema/get-block-sub-schema'
 import {isEdge} from '../slate/editor/is-edge'
 import {isEnd} from '../slate/editor/is-end'
 import {isStart} from '../slate/editor/is-start'
-import {path as editorPath} from '../slate/editor/path'
 import {rangeRef} from '../slate/editor/range-ref'
 import {withoutNormalizing} from '../slate/editor/without-normalizing'
+import {parentPath} from '../slate/path/parent-path'
 import {isExpandedRange} from '../slate/range/is-expanded-range'
 import {rangeEdges} from '../slate/range/range-edges'
 import {rangeEnd} from '../slate/range/range-end'
@@ -18,7 +19,7 @@ import type {OperationImplementation} from './operation.types'
 
 export const decoratorAddOperationImplementation: OperationImplementation<
   'decorator.add'
-> = ({operation}) => {
+> = ({context, operation}) => {
   const editor = operation.editor
   const mark = operation.decorator
 
@@ -82,6 +83,15 @@ export const decoratorAddOperationImplementation: OperationImplementation<
           continue
         }
 
+        // Skip spans whose sub-schema doesn't declare this decorator.
+        const blockPath = parentPath(spanPath)
+        const subSchema = getBlockSubSchema(context, blockPath)
+        if (
+          !subSchema.decorators.some((decorator) => decorator.name === mark)
+        ) {
+          continue
+        }
+
         const marks = [
           ...(Array.isArray(node.marks) ? node.marks : []).filter(
             (eMark: string) => eMark !== mark,
@@ -104,13 +114,19 @@ export const decoratorAddOperationImplementation: OperationImplementation<
       return
     }
 
-    const blockEntry = getNode(editor, editorPath(editor, at, {depth: 1}))
+    const blockEntry = getAncestorTextBlock(context, at.focus.path)
     if (!blockEntry) {
       return
     }
     const {node: block, path: blockPath} = blockEntry
+
+    // If the decorator isn't declared by this block's sub-schema, do nothing.
+    const subSchema = getBlockSubSchema(context, blockPath)
+    if (!subSchema.decorators.some((decorator) => decorator.name === mark)) {
+      return
+    }
+
     const lonelyEmptySpan =
-      isTextBlock({schema: editor.schema}, block) &&
       block.children.length === 1 &&
       isSpan({schema: editor.schema}, block.children[0]) &&
       block.children[0].text === ''
