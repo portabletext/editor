@@ -2,6 +2,7 @@ import type {PortableTextBlock} from '@portabletext/schema'
 import {getEnclosingBlock} from '../node-traversal/get-enclosing-block'
 import {getNodes} from '../node-traversal/get-nodes'
 import {getBlock, isBlock} from '../node-traversal/is-block'
+import {getAvailableDecorators} from '../selectors/selector.get-available-decorators'
 import {getDefaultStyle} from '../selectors/selector.get-default-style'
 import {getFocusInlineObject} from '../selectors/selector.get-focus-inline-object'
 import {getFocusSpan} from '../selectors/selector.get-focus-span'
@@ -75,19 +76,14 @@ const breakingAtTheStartOfTextBlock = defineBehavior({
     }
 
     const focusSpan = getFocusSpan(snapshot)
+    const availableDecorators = getAvailableDecorators(snapshot)
 
     const focusDecorators = focusSpan?.node.marks?.filter(
-      (mark) =>
-        snapshot.context.schema.decorators.some(
-          (decorator) => decorator.name === mark,
-        ) ?? [],
+      (mark) => availableDecorators.includes(mark) ?? [],
     )
     const focusAnnotations =
       focusSpan?.node.marks?.filter(
-        (mark) =>
-          !snapshot.context.schema.decorators.some(
-            (decorator) => decorator.name === mark,
-          ),
+        (mark) => !availableDecorators.includes(mark),
       ) ?? []
     const focusListItem = focusTextBlock.node.listItem
     const focusLevel = focusTextBlock.node.level
