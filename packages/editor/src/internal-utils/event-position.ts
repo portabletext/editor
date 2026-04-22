@@ -3,9 +3,11 @@ import {getDomNodePath} from '../dom-traversal/get-dom-node-path'
 import type {EditorActor} from '../editor/editor-machine'
 import {getEnclosingBlock} from '../node-traversal/get-enclosing-block'
 import {getNode} from '../node-traversal/get-node'
+import {isEditableContainer} from '../schema/is-editable-container'
 import {DOMEditor} from '../slate/dom/plugin/dom-editor'
 import {isDOMNode} from '../slate/dom/utils/dom'
 import {isEditor} from '../slate/editor/is-editor'
+import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
 import {isAncestorPath} from '../slate/path/is-ancestor-path'
 import type {EditorSelection} from '../types/editor'
@@ -17,9 +19,16 @@ import {isSelectionCollapsed} from '../utils/util.is-selection-collapsed'
 export type EventPosition = {
   block: 'start' | 'end'
   /**
-   * Did the event origin from the editor DOM node itself or from a child node?
+   * Did the event originate from the editor root DOM node itself, rather than
+   * from a block inside the editor?
    */
   isEditor: boolean
+  /**
+   * Did the event originate from an editable container's DOM node itself (for
+   * example a code block or a table cell), rather than from a block inside the
+   * container?
+   */
+  isContainer: boolean
   selection: NonNullable<EditorSelection>
 }
 export type EventPositionBlock = EventPosition['block']
@@ -60,13 +69,14 @@ export function getEventPosition({
     eventBlockPath &&
     eventPositionBlock &&
     !eventSelection &&
-    !isEditor(eventNode)
+    !isEventContainer(slateEditor, eventNode, eventPath)
   ) {
     // If we for some reason can't find the event selection, then we default to
     // selecting the entire block that the event originates from.
     return {
       block: eventPositionBlock,
       isEditor: false,
+      isContainer: false,
       selection: {
         anchor: getBlockStartPoint({
           context: editorActor.getSnapshot().context,
@@ -111,6 +121,7 @@ export function getEventPosition({
     return {
       block: eventPositionBlock,
       isEditor: false,
+      isContainer: false,
       selection: {
         anchor: getBlockStartPoint({
           context: editorActor.getSnapshot().context,
@@ -133,6 +144,9 @@ export function getEventPosition({
   return {
     block: eventPositionBlock,
     isEditor: isEditor(eventNode),
+    isContainer: isEditor(eventNode)
+      ? false
+      : isEditableContainer(slateEditor, eventNode, eventPath),
     selection: eventSelection,
   }
 }
@@ -284,4 +298,15 @@ function getSelectionFromEvent(
   } catch {
     return undefined
   }
+}
+
+function isEventContainer(
+  slateEditor: PortableTextSlateEditor,
+  eventNode: Node | PortableTextSlateEditor,
+  eventPath: Path,
+): boolean {
+  if (isEditor(eventNode)) {
+    return true
+  }
+  return isEditableContainer(slateEditor, eventNode, eventPath)
 }
