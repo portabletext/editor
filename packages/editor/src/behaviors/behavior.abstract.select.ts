@@ -1,9 +1,38 @@
-import {getFocusBlock} from '../selectors/selector.get-focus-block'
-import {getNextBlock} from '../selectors/selector.get-next-block'
-import {getPreviousBlock} from '../selectors/selector.get-previous-block'
+import type {EditorSnapshot} from '../editor/editor-snapshot'
+import {getAncestors} from '../node-traversal/get-ancestors'
+import {getNode} from '../node-traversal/get-node'
+import {getSibling} from '../node-traversal/get-sibling'
+import {getBlock, isBlock} from '../node-traversal/is-block'
+import type {Path} from '../slate/interfaces/path'
 import {getBlockEndPoint} from '../utils/util.get-block-end-point'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
+
+function getFocusedBlockPath(snapshot: EditorSnapshot): Path | undefined {
+  const selection = snapshot.context.selection
+
+  if (!selection) {
+    return undefined
+  }
+
+  const focusPath = selection.focus.path
+
+  if (isBlock(snapshot.context, focusPath)) {
+    return getNode(snapshot.context, focusPath)?.path
+  }
+
+  // `getAncestors` returns nearest ancestor first — we want the deepest
+  // ancestor that is a block at the current container level.
+  const ancestors = getAncestors(snapshot.context, focusPath)
+
+  for (const ancestor of ancestors) {
+    if (isBlock(snapshot.context, ancestor.path)) {
+      return ancestor.path
+    }
+  }
+
+  return undefined
+}
 
 export const abstractSelectBehaviors = [
   defineBehavior({
@@ -13,22 +42,7 @@ export const abstractSelectBehaviors = [
         return false
       }
 
-      const block = getFocusBlock({
-        ...snapshot,
-        context: {
-          ...snapshot.context,
-          selection: {
-            anchor: {
-              path: event.at,
-              offset: 0,
-            },
-            focus: {
-              path: event.at,
-              offset: 0,
-            },
-          },
-        },
-      })
+      const block = getBlock(snapshot.context, event.at)
 
       if (!block) {
         return false
@@ -76,13 +90,23 @@ export const abstractSelectBehaviors = [
   defineBehavior({
     on: 'select.previous block',
     guard: ({snapshot}) => {
-      const previousBlock = getPreviousBlock(snapshot)
+      const focusBlockPath = getFocusedBlockPath(snapshot)
 
-      if (!previousBlock) {
+      if (!focusBlockPath) {
         return false
       }
 
-      return {previousBlock}
+      const previousSibling = getSibling(
+        snapshot.context,
+        focusBlockPath,
+        'previous',
+      )
+
+      if (!previousSibling) {
+        return false
+      }
+
+      return {previousBlock: previousSibling}
     },
     actions: [
       ({event}, {previousBlock}) => [
@@ -97,13 +121,19 @@ export const abstractSelectBehaviors = [
   defineBehavior({
     on: 'select.next block',
     guard: ({snapshot}) => {
-      const nextBlock = getNextBlock(snapshot)
+      const focusBlockPath = getFocusedBlockPath(snapshot)
 
-      if (!nextBlock) {
+      if (!focusBlockPath) {
         return false
       }
 
-      return {nextBlock}
+      const nextSibling = getSibling(snapshot.context, focusBlockPath, 'next')
+
+      if (!nextSibling) {
+        return false
+      }
+
+      return {nextBlock: nextSibling}
     },
     actions: [
       ({event}, {nextBlock}) => [
