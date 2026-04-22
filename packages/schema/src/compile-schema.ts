@@ -45,11 +45,15 @@ function compileBlockOfMember(
   member: BlockOfDefinition,
   inheritance: BlockInheritance,
 ): BlockOfDefinition {
+  const userStyles = member.styles?.map((style) => ({
+    ...style,
+    value: style.name,
+  }))
+  const styles = userStyles ?? inheritance.styles
+
   return {
     ...member,
-    styles: member.styles
-      ? member.styles.map((style) => ({...style, value: style.name}))
-      : inheritance.styles,
+    styles,
     decorators: member.decorators
       ? member.decorators.map((decorator) => ({
           ...decorator,
