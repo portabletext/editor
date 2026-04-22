@@ -2,7 +2,7 @@ import type {ToolbarBlockObjectSchemaType} from '@portabletext/toolbar'
 import {z} from 'zod/v4'
 import {Button} from '../primitives/button'
 import {SelectField} from '../primitives/field.select'
-import {Fields} from '../primitives/fields'
+import {Fields, type FieldOption} from '../primitives/fields'
 
 const FormDataSchema = z
   .object({
@@ -12,6 +12,7 @@ const FormDataSchema = z
 
 export function InsertBlockObjectForm(
   props: Pick<ToolbarBlockObjectSchemaType, 'fields' | 'defaultValues'> & {
+    fieldOptions?: Record<string, FieldOption | undefined>
     onSubmit: ({
       value,
       placement,
@@ -29,7 +30,9 @@ export function InsertBlockObjectForm(
 
         const formData = new FormData(e.target as HTMLFormElement)
         const formDataValues = Object.fromEntries(formData)
-        const {placement, ...value} = FormDataSchema.parse(formDataValues)
+        const {placement, ...formValue} = FormDataSchema.parse(formDataValues)
+
+        const value = {...(props.defaultValues ?? {}), ...formValue}
 
         props.onSubmit({
           value,
@@ -37,7 +40,11 @@ export function InsertBlockObjectForm(
         })
       }}
     >
-      <Fields fields={props.fields} defaultValues={props.defaultValues} />
+      <Fields
+        fields={props.fields}
+        defaultValues={props.defaultValues}
+        fieldOptions={props.fieldOptions}
+      />
       <SelectField
         name="placement"
         label="Placement"
@@ -48,7 +55,16 @@ export function InsertBlockObjectForm(
           {id: 'after', value: 'after', label: 'After'},
         ]}
       />
-      <Button className="self-end" type="submit" size="sm">
+      <Button
+        autoFocus={
+          props.fields.filter(
+            (field) => field.type === 'string' || field.type === 'number',
+          ).length === 0
+        }
+        className="self-end"
+        type="submit"
+        size="sm"
+      >
         Insert
       </Button>
     </form>
