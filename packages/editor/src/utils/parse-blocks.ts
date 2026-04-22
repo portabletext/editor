@@ -17,6 +17,7 @@ import {
   type TypedObject,
 } from '@portabletext/schema'
 import type {EditorContext} from '../editor/editor-snapshot'
+import {asFieldedTypes, asNamedTypes} from '../schema/schema-type-projections'
 import {isRecord, isTypedObject} from './asserters'
 
 type AnyField = {
@@ -144,58 +145,19 @@ function childBlockScope(
     block: {name: blockMember.name ?? schema.block.name},
     blockCustomFields: [],
     span: {name: schema.span.name},
-    styles: asSchemaTypes(blockMember.styles, schema.styles),
-    decorators: asSchemaTypes(blockMember.decorators, schema.decorators),
-    annotations: asAnnotationTypes(blockMember.annotations, schema.annotations),
-    lists: asSchemaTypes(blockMember.lists, schema.lists),
-    inlineObjects: asInlineObjectTypes(
-      blockMember.inlineObjects,
+    styles: asNamedTypes<StyleSchemaType>(blockMember.styles) ?? schema.styles,
+    decorators:
+      asNamedTypes<DecoratorSchemaType>(blockMember.decorators) ??
+      schema.decorators,
+    annotations:
+      asFieldedTypes<AnnotationSchemaType>(blockMember.annotations) ??
+      schema.annotations,
+    lists: asNamedTypes<ListSchemaType>(blockMember.lists) ?? schema.lists,
+    inlineObjects:
+      asFieldedTypes<InlineObjectSchemaType>(blockMember.inlineObjects) ??
       schema.inlineObjects,
-    ),
     blockObjects,
   }
-}
-
-function asSchemaTypes<T extends {name: string; value: string}>(
-  resolved: ReadonlyArray<BaseDefinition> | undefined,
-  fallback: ReadonlyArray<T>,
-): ReadonlyArray<T> {
-  if (!resolved) {
-    return fallback
-  }
-  return resolved.map(
-    (entry) => ({...entry, value: entry.name}) as unknown as T,
-  )
-}
-
-function asAnnotationTypes(
-  resolved:
-    | ReadonlyArray<BaseDefinition & {fields?: ReadonlyArray<unknown>}>
-    | undefined,
-  fallback: ReadonlyArray<AnnotationSchemaType>,
-): ReadonlyArray<AnnotationSchemaType> {
-  if (!resolved) {
-    return fallback
-  }
-  return resolved.map((entry) => ({
-    ...entry,
-    fields: (entry.fields ?? []) as AnnotationSchemaType['fields'],
-  }))
-}
-
-function asInlineObjectTypes(
-  resolved:
-    | ReadonlyArray<BaseDefinition & {fields?: ReadonlyArray<unknown>}>
-    | undefined,
-  fallback: ReadonlyArray<InlineObjectSchemaType>,
-): ReadonlyArray<InlineObjectSchemaType> {
-  if (!resolved) {
-    return fallback
-  }
-  return resolved.map((entry) => ({
-    ...entry,
-    fields: (entry.fields ?? []) as InlineObjectSchemaType['fields'],
-  }))
 }
 
 export function parseBlocks({
