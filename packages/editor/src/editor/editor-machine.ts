@@ -22,6 +22,8 @@ import {sortByPriority} from '../priority/priority.sort'
 import type {
   ContainerConfig,
   ContainerDefinition,
+  Leaf,
+  LeafConfig,
 } from '../renderers/renderer.types'
 import {
   resolveContainerField,
@@ -147,6 +149,14 @@ type InternalEditorEvent =
       type: 'unregister container'
       container: ContainerDefinition
     }
+  | {
+      type: 'register leaf'
+      leaf: Leaf
+    }
+  | {
+      type: 'unregister leaf'
+      leaf: Leaf
+    }
   | {type: 'add slate editor'; editor: PortableTextSlateEditor}
 
 /**
@@ -210,6 +220,7 @@ export const editorMachine = setup({
       behaviorsSorted: boolean
       containers: ResolvedContainers
       converters: Array<Converter>
+      leafs: Map<string, LeafConfig>
       keyGenerator: () => string
       pendingEvents: Array<InternalPatchEvent | MutationEvent>
       pendingIncomingPatchesEvents: Array<PatchesEvent>
@@ -285,6 +296,18 @@ export const editorMachine = setup({
         field,
       }
       const nextConfigs = collectRegisteredConfigs(context.containers)
+      if (nextConfigs.has(event.container.scope)) {
+        console.warn(
+          `registerContainer: scope "${event.container.scope}" is already registered. Container not registered.`,
+        )
+        return {}
+      }
+      if (context.leafs.has(event.container.scope)) {
+        console.warn(
+          `registerContainer: scope "${event.container.scope}" is already registered as a leaf. A scope must be exactly one: containers have editable children, leaves do not.`,
+        )
+        return {}
+      }
       nextConfigs.set(event.container.scope, containerConfig)
       const containers = resolveContainers(context.schema, nextConfigs)
       if (context.slateEditor) {
@@ -305,6 +328,45 @@ export const editorMachine = setup({
         context.slateEditor.onChange()
       }
       return {containers}
+    }),
+    'register leaf': assign(({context, event}) => {
+      assertEvent(event, 'register leaf')
+      const parsedScope = parseScope(event.leaf.scope)
+      if (!parsedScope) {
+        console.warn(
+          `registerLeaf: invalid scope "${event.leaf.scope}". Leaf not registered.`,
+        )
+        return {}
+      }
+      const leafs = new Map(context.leafs)
+      if (leafs.has(event.leaf.scope)) {
+        console.warn(
+          `registerLeaf: scope "${event.leaf.scope}" is already registered. Leaf not registered.`,
+        )
+        return {}
+      }
+      if (collectRegisteredConfigs(context.containers).has(event.leaf.scope)) {
+        console.warn(
+          `registerLeaf: scope "${event.leaf.scope}" is already registered as a container. A scope must be exactly one: containers have editable children, leaves do not.`,
+        )
+        return {}
+      }
+      leafs.set(event.leaf.scope, {leaf: event.leaf, parsedScope})
+      if (context.slateEditor) {
+        context.slateEditor.leafs = leafs
+        context.slateEditor.onChange()
+      }
+      return {leafs}
+    }),
+    'unregister leaf': assign(({context, event}) => {
+      assertEvent(event, 'unregister leaf')
+      const leafs = new Map(context.leafs)
+      leafs.delete(event.leaf.scope)
+      if (context.slateEditor) {
+        context.slateEditor.leafs = leafs
+        context.slateEditor.onChange()
+      }
+      return {leafs}
     }),
     'sync containers': assign(({context}) => {
       const containers = resolveContainers(
@@ -494,6 +556,7 @@ export const editorMachine = setup({
     behaviors: new Set(coreBehaviorsConfig),
     behaviorsSorted: false,
     containers: new Map(),
+    leafs: new Map(),
     converters: input.converters ?? [],
     keyGenerator: input.keyGenerator,
     pendingEvents: [],
@@ -514,6 +577,12 @@ export const editorMachine = setup({
     },
     'unregister container': {
       actions: ['unregister container'],
+    },
+    'register leaf': {
+      actions: ['register leaf'],
+    },
+    'unregister leaf': {
+      actions: ['unregister leaf'],
     },
     'update selection': {
       actions: [
