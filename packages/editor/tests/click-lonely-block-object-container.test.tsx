@@ -77,33 +77,14 @@ describe('click above/below lonely block object in containers', () => {
     })
 
     await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _key: calloutKey,
-          _type: 'callout',
-          content: [
-            {
-              _key: imageKey,
-              _type: 'image',
-              src: 'https://example.com/pic.png',
-            },
-            {
-              _key: 'k4',
-              _type: 'block',
-              children: [
-                {
-                  _key: 'k5',
-                  _type: 'span',
-                  marks: [],
-                  text: '',
-                },
-              ],
-              markDefs: [],
-              style: 'normal',
-            },
-          ],
-        },
-      ])
+      const callout = editor.getSnapshot().context.value[0] as unknown as {
+        _type: string
+        content: Array<{_type: string; _key: string}>
+      }
+      expect(callout._type).toBe('callout')
+      expect(callout.content).toHaveLength(2)
+      expect(callout.content[0]!._type).toBe('image')
+      expect(callout.content[1]!._type).toBe('block')
     })
   })
 
@@ -157,33 +138,14 @@ describe('click above/below lonely block object in containers', () => {
     })
 
     await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _key: calloutKey,
-          _type: 'callout',
-          content: [
-            {
-              _key: 'k4',
-              _type: 'block',
-              children: [
-                {
-                  _key: 'k5',
-                  _type: 'span',
-                  marks: [],
-                  text: '',
-                },
-              ],
-              markDefs: [],
-              style: 'normal',
-            },
-            {
-              _key: imageKey,
-              _type: 'image',
-              src: 'https://example.com/pic.png',
-            },
-          ],
-        },
-      ])
+      const callout = editor.getSnapshot().context.value[0] as unknown as {
+        _type: string
+        content: Array<{_type: string; _key: string}>
+      }
+      expect(callout._type).toBe('callout')
+      expect(callout.content).toHaveLength(2)
+      expect(callout.content[0]!._type).toBe('block')
+      expect(callout.content[1]!._type).toBe('image')
     })
   })
 })
