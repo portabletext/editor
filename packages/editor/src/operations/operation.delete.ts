@@ -25,6 +25,7 @@ import {commonPath} from '../slate/path/common-path'
 import {comparePaths} from '../slate/path/compare-paths'
 import {isAncestorPath} from '../slate/path/is-ancestor-path'
 import {isCommonPath} from '../slate/path/is-common-path'
+import {parentPath} from '../slate/path/parent-path'
 import {pathEquals} from '../slate/path/path-equals'
 import {pointEquals} from '../slate/point/point-equals'
 import {isCollapsedRange} from '../slate/range/is-collapsed-range'
@@ -210,6 +211,75 @@ export const deleteOperationImplementation: OperationImplementation<
   const endBlock = endNodeEntry ?? getParent(operation.editor, end.path)
   const isAcrossBlocks =
     startBlock && endBlock && !pathEquals(startBlock.path, endBlock.path)
+
+  // Cross-parent range: the two end blocks live under different parents (e.g. a
+  // root text block and a line inside an editable container). Slate's merge
+  // logic assumes siblings at the same level, so we delete partial content at
+  // each end, unset any fully-contained blocks in between, and leave the two
+  // block shells behind without merging.
+  if (
+    startBlock &&
+    endBlock &&
+    isAcrossBlocks &&
+    !pathEquals(parentPath(startBlock.path), parentPath(endBlock.path))
+  ) {
+    const startBlockEndPoint = editorEnd(operation.editor, startBlock.path)
+    const endBlockStartPoint = editorStart(operation.editor, endBlock.path)
+
+    const intermediateBlockRefs: Array<ReturnType<typeof pathRef>> = []
+    for (const entry of getNodes(operation.editor, {
+      from: startBlockEndPoint.path,
+      to: endBlockStartPoint.path,
+      match: (_node, path) => isBlock(operation.editor, path),
+    })) {
+      if (
+        isAncestorPath(entry.path, startBlock.path) ||
+        isAncestorPath(entry.path, endBlock.path) ||
+        pathEquals(entry.path, startBlock.path) ||
+        pathEquals(entry.path, endBlock.path)
+      ) {
+        continue
+      }
+      intermediateBlockRefs.push(pathRef(operation.editor, entry.path))
+    }
+
+    const startRef = pointRef(operation.editor, start)
+
+    if (!pointEquals(end, endBlockStartPoint)) {
+      deleteText(operation.editor, {
+        at: {anchor: endBlockStartPoint, focus: end},
+        hanging: true,
+      })
+    }
+
+    for (const ref of intermediateBlockRefs.reverse()) {
+      const path = ref.unref()
+      if (path) {
+        operation.editor.apply({type: 'unset', path})
+      }
+    }
+
+    if (!pointEquals(start, startBlockEndPoint)) {
+      deleteText(operation.editor, {
+        at: {anchor: start, focus: startBlockEndPoint},
+        hanging: true,
+      })
+    }
+
+    const collapsedPoint = startRef.unref()
+    if (collapsedPoint && operation.editor.selection) {
+      operation.editor.apply({
+        type: 'set_selection',
+        properties: operation.editor.selection,
+        newProperties: {
+          anchor: collapsedPoint,
+          focus: collapsedPoint,
+        },
+      })
+    }
+
+    return
+  }
 
   const startObjectNode =
     startBlock && isVoidNode(operation.editor, startBlock.node, startBlock.path)
