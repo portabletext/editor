@@ -48,36 +48,27 @@ export const deleteOperationImplementation: OperationImplementation<
   const [start, end] = rangeEdges(at, {}, operation.editor)
 
   if (operation.unit === 'block') {
-    const startBlockSegment = start.path.at(0)
-    const endBlockSegment = end.path.at(0)
-
-    if (startBlockSegment === undefined || endBlockSegment === undefined) {
-      throw new Error('Failed to get start or end block segment')
-    }
-
-    const removeRange = {
-      anchor: {path: [startBlockSegment], offset: 0},
-      focus: {path: [endBlockSegment], offset: 0},
-    }
-    const removeRangeEdges = rangeEdges(removeRange, {}, operation.editor)
-    const blockMatches: Array<{node: Node; path: Path}> = []
-    let lastHighestPath: Path | undefined
+    const removeRangeEdges = rangeEdges(at, {}, operation.editor)
+    const candidateEntries: Array<{node: Node; path: Path}> = []
 
     for (const entry of getNodes(operation.editor, {
       from: removeRangeEdges[0].path,
       to: removeRangeEdges[1].path,
     })) {
-      const {path: entryPath} = entry
-
-      if (lastHighestPath && isAncestorPath(lastHighestPath, entryPath)) {
-        continue
-      }
-
-      if (isBlock(operation.editor, entryPath)) {
-        lastHighestPath = entryPath
-        blockMatches.push(entry)
+      if (isBlock(operation.editor, entry.path)) {
+        candidateEntries.push(entry)
       }
     }
+
+    // Keep only the deepest matching block along each branch. A candidate
+    // whose path is an ancestor of any later candidate is dropped.
+    const blockMatches = candidateEntries.filter(
+      (candidate, index) =>
+        !candidateEntries.some(
+          (other, otherIndex) =>
+            otherIndex > index && isAncestorPath(candidate.path, other.path),
+        ),
+    )
     const blockPathRefs = Array.from(blockMatches, (entry) =>
       pathRef(operation.editor, entry.path),
     )

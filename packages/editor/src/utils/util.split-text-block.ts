@@ -22,31 +22,26 @@ export function splitTextBlock({
     return undefined
   }
 
+  const blockStartPoint: EditorSelectionPoint = {
+    path: [{_key: block._key}, 'children', {_key: firstChild._key}],
+    offset: 0,
+  }
+  const blockEndPoint: EditorSelectionPoint = {
+    path: [{_key: block._key}, 'children', {_key: lastChild._key}],
+    offset: isSpan(context, lastChild) ? lastChild.text.length : 0,
+  }
+
   const before = sliceTextBlock({
-    context: {
-      schema: context.schema,
-      selection: {
-        anchor: {
-          path: [{_key: block._key}, 'children', {_key: firstChild._key}],
-          offset: 0,
-        },
-        focus: point,
-      },
-    },
+    context,
     block,
+    startPoint: blockStartPoint,
+    endPoint: point,
   })
   const after = sliceTextBlock({
-    context: {
-      schema: context.schema,
-      selection: {
-        anchor: point,
-        focus: {
-          path: [{_key: block._key}, 'children', {_key: lastChild._key}],
-          offset: isSpan(context, lastChild) ? lastChild.text.length : 0,
-        },
-      },
-    },
+    context,
     block,
+    startPoint: point,
+    endPoint: blockEndPoint,
   })
 
   return {before, after}
