@@ -1,6 +1,9 @@
 import type {EditorContext} from '@portabletext/editor'
 import {raise} from '@portabletext/editor/behaviors'
-import {getPreviousInlineObject} from '@portabletext/editor/selectors'
+import {
+  getPreviousInlineObject,
+  isAvailableList,
+} from '@portabletext/editor/selectors'
 import {defineInputRule} from '@portabletext/plugin-input-rule'
 
 export function createUnorderedListRule(config: {
@@ -24,6 +27,10 @@ export function createUnorderedListRule(config: {
       })
 
       if (!unorderedList) {
+        return false
+      }
+
+      if (!isAvailableList(unorderedList)(snapshot)) {
         return false
       }
 
