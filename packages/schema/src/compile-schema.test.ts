@@ -392,6 +392,56 @@ describe(compileSchema.name, () => {
       ])
     })
 
+    test('nested block with empty styles override resolves to an empty list', () => {
+      expect(
+        compileSchema({
+          styles: [{name: 'h1'}, {name: 'h2'}],
+          decorators: [{name: 'strong'}],
+          blockObjects: [
+            {
+              name: 'codeBlock',
+              fields: [
+                {
+                  name: 'lines',
+                  type: 'array',
+                  of: [
+                    {
+                      type: 'block',
+                      styles: [],
+                      decorators: [],
+                      annotations: [],
+                      lists: [],
+                      inlineObjects: [],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        }).blockObjects,
+      ).toEqual([
+        {
+          name: 'codeBlock',
+          fields: [
+            {
+              name: 'lines',
+              type: 'array',
+              of: [
+                {
+                  type: 'block',
+                  styles: [],
+                  decorators: [],
+                  annotations: [],
+                  lists: [],
+                  inlineObjects: [],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+    })
+
     test('deeply nested blocks inherit from root, not from intermediate containers', () => {
       expect(
         compileSchema({
