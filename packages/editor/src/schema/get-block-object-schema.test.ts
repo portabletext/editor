@@ -22,10 +22,10 @@ describe(getBlockObjectSchema.name, () => {
     const context = {schema, containers: new Map(), value: []}
     const node = {_type: 'image', _key: 'i0', src: 'foo.png'}
 
-    const result = getBlockObjectSchema(context, node, [{_key: 'i0'}])
-
-    expect(result?.name).toBe('image')
-    expect(result?.fields).toEqual([{name: 'src', type: 'string'}])
+    expect(getBlockObjectSchema(context, node, [{_key: 'i0'}])).toEqual({
+      name: 'image',
+      fields: [{name: 'src', type: 'string'}],
+    })
   })
 
   test('returns an inline-declared type definition when block is inside a container', () => {
@@ -110,25 +110,25 @@ describe(getBlockObjectSchema.name, () => {
 
     // Look up the `row` block-object schema (inline-declared under table.rows.of)
     const rowNode = {_type: 'row', _key: 'r0', cells: []}
-    const rowResult = getBlockObjectSchema(context, rowNode, [
-      {_key: 't0'},
-      'rows',
-      {_key: 'r0'},
-    ])
-
-    expect(rowResult?.name).toBe('row')
+    expect(
+      getBlockObjectSchema(context, rowNode, [
+        {_key: 't0'},
+        'rows',
+        {_key: 'r0'},
+      ])?.name,
+    ).toBe('row')
 
     // Look up the `cell` block-object schema (inline-declared under row.cells.of)
     const cellNode = {_type: 'cell', _key: 'c0', content: []}
-    const cellResult = getBlockObjectSchema(context, cellNode, [
-      {_key: 't0'},
-      'rows',
-      {_key: 'r0'},
-      'cells',
-      {_key: 'c0'},
-    ])
-
-    expect(cellResult?.name).toBe('cell')
+    expect(
+      getBlockObjectSchema(context, cellNode, [
+        {_key: 't0'},
+        'rows',
+        {_key: 'r0'},
+        'cells',
+        {_key: 'c0'},
+      ])?.name,
+    ).toBe('cell')
   })
 
   test('falls back to root-level blockObjects when no inline match is found', () => {
@@ -167,13 +167,14 @@ describe(getBlockObjectSchema.name, () => {
     // `image` is in root `blockObjects` but not inline-declared inside callout.
     // Looking it up at a callout-internal position falls back to root.
     const imageNode = {_type: 'image', _key: 'i0', src: 'foo.png'}
-    const result = getBlockObjectSchema(context, imageNode, [
-      {_key: 'co0'},
-      'content',
-      {_key: 'i0'},
-    ])
 
-    expect(result?.name).toBe('image')
+    expect(
+      getBlockObjectSchema(context, imageNode, [
+        {_key: 'co0'},
+        'content',
+        {_key: 'i0'},
+      ])?.name,
+    ).toBe('image')
   })
 
   test('returns undefined when the type is unknown at the effective scope', () => {

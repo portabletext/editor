@@ -1,10 +1,8 @@
 import type {BaseDefinition, FieldDefinition} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
-import {getAncestors} from '../node-traversal/get-ancestors'
 import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
-import {isObjectNode} from '../slate/node/is-object-node'
-import {getContainerScopedName} from './get-container-scoped-name'
+import {getEnclosingContainer} from './get-enclosing-container'
 import type {TraversalContainers} from './resolve-containers'
 
 /**
@@ -35,57 +33,30 @@ export function getBlockObjectSchema(
   node: Node,
   path: Path,
 ): BlockObjectSchema | undefined {
-  if (typeof node !== 'object' || node === null || !('_type' in node)) {
-    return undefined
-  }
-  const typeName = (node as {_type: unknown})._type
-  if (typeof typeName !== 'string') {
-    return undefined
-  }
+  const typeName = node._type
 
-  const enclosingContainerOf = findEnclosingContainerOf(context, path)
-  if (enclosingContainerOf) {
-    const inline = enclosingContainerOf.find(
+  const enclosing = getEnclosingContainer(context, path)
+
+  if (enclosing) {
+    const inline = enclosing.of.find(
       (member) => member.type !== 'block' && member.type === typeName,
     )
+
     if (inline && inline.type !== 'block') {
       // Project to BlockObjectSchema shape: `name` comes from `type`
       // when the inline definition doesn't specify one.
       return {
         ...inline,
         name: 'name' in inline && inline.name ? inline.name : inline.type,
-      } as BlockObjectSchema
+        fields:
+          'fields' in inline && inline.fields
+            ? (inline.fields as ReadonlyArray<FieldDefinition>)
+            : undefined,
+      }
     }
   }
 
   return context.schema.blockObjects.find(
     (definition) => definition.name === typeName,
   )
-}
-
-function findEnclosingContainerOf(
-  context: {
-    schema: EditorSchema
-    containers: TraversalContainers
-    value: Array<Node>
-  },
-  path: Path,
-) {
-  const ancestors = getAncestors(context, path)
-  for (const ancestor of ancestors) {
-    if (!isObjectNode({schema: context.schema}, ancestor.node)) {
-      continue
-    }
-    const scopedName = getContainerScopedName(
-      context,
-      ancestor.node,
-      ancestor.path,
-    )
-    const container = context.containers.get(scopedName)
-    if (!container) {
-      continue
-    }
-    return container.field.of
-  }
-  return undefined
 }

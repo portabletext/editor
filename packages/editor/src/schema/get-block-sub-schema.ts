@@ -8,12 +8,11 @@ import type {
   StyleSchemaType,
 } from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
-import {getAncestors} from '../node-traversal/get-ancestors'
 import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
-import {isObjectNode} from '../slate/node/is-object-node'
-import {getContainerScopedName} from './get-container-scoped-name'
+import {getEnclosingContainer} from './get-enclosing-container'
 import type {TraversalContainers} from './resolve-containers'
+import {asFieldedTypes, asNamedTypes} from './schema-type-projections'
 
 /**
  * The resolved validation view for a text block at a given path. At the
@@ -66,16 +65,19 @@ export function getBlockSubSchema(
   }
 
   return {
-    styles: asStyleSchemaTypes(nestedBlock.styles) ?? context.schema.styles,
+    styles:
+      asNamedTypes<StyleSchemaType>(nestedBlock.styles) ??
+      context.schema.styles,
     decorators:
-      asDecoratorSchemaTypes(nestedBlock.decorators) ??
+      asNamedTypes<DecoratorSchemaType>(nestedBlock.decorators) ??
       context.schema.decorators,
     annotations:
-      asAnnotationSchemaTypes(nestedBlock.annotations) ??
+      asFieldedTypes<AnnotationSchemaType>(nestedBlock.annotations) ??
       context.schema.annotations,
-    lists: asListSchemaTypes(nestedBlock.lists) ?? context.schema.lists,
+    lists:
+      asNamedTypes<ListSchemaType>(nestedBlock.lists) ?? context.schema.lists,
     inlineObjects:
-      asInlineObjectSchemaTypes(nestedBlock.inlineObjects) ??
+      asFieldedTypes<InlineObjectSchemaType>(nestedBlock.inlineObjects) ??
       context.schema.inlineObjects,
   }
 }
@@ -114,12 +116,6 @@ function rootSubSchema(schema: EditorSchema): BlockSubSchema {
   }
 }
 
-/**
- * Walk ancestors from the given path, find the nearest object node that is
- * a registered container, and return the `{type: 'block'}` member of its
- * child field. Returns `undefined` when no such ancestor exists -- the
- * caller should fall back to root schema.
- */
 function findEnclosingNestedBlock(
   context: {
     schema: EditorSchema
@@ -128,88 +124,20 @@ function findEnclosingNestedBlock(
   },
   path: Path,
 ): ResolvedBlockOfDefinition | undefined {
-  const ancestors = getAncestors(context, path)
+  const enclosing = getEnclosingContainer(context, path)
 
-  for (const ancestor of ancestors) {
-    if (!isObjectNode({schema: context.schema}, ancestor.node)) {
-      continue
-    }
-
-    const scopedName = getContainerScopedName(
-      context,
-      ancestor.node,
-      ancestor.path,
-    )
-    const container = context.containers.get(scopedName)
-    if (!container) {
-      continue
-    }
-
-    const blockMember = container.field.of.find(
-      (member): member is OfDefinition & {type: 'block'} =>
-        member.type === 'block',
-    )
-    if (!blockMember) {
-      continue
-    }
-
-    return blockMember as ResolvedBlockOfDefinition
-  }
-
-  return undefined
-}
-
-function asStyleSchemaTypes(
-  resolved: ReadonlyArray<BaseDefinition> | undefined,
-): ReadonlyArray<StyleSchemaType> | undefined {
-  if (!resolved) {
+  if (!enclosing) {
     return undefined
   }
-  return resolved.map((entry) => ({...entry, value: entry.name}))
-}
 
-function asDecoratorSchemaTypes(
-  resolved: ReadonlyArray<BaseDefinition> | undefined,
-): ReadonlyArray<DecoratorSchemaType> | undefined {
-  if (!resolved) {
+  const blockMember = enclosing.of.find(
+    (member): member is OfDefinition & {type: 'block'} =>
+      member.type === 'block',
+  )
+
+  if (!blockMember) {
     return undefined
   }
-  return resolved.map((entry) => ({...entry, value: entry.name}))
-}
 
-function asListSchemaTypes(
-  resolved: ReadonlyArray<BaseDefinition> | undefined,
-): ReadonlyArray<ListSchemaType> | undefined {
-  if (!resolved) {
-    return undefined
-  }
-  return resolved.map((entry) => ({...entry, value: entry.name}))
-}
-
-function asAnnotationSchemaTypes(
-  resolved:
-    | ReadonlyArray<BaseDefinition & {fields?: ReadonlyArray<unknown>}>
-    | undefined,
-): ReadonlyArray<AnnotationSchemaType> | undefined {
-  if (!resolved) {
-    return undefined
-  }
-  return resolved.map((entry) => ({
-    ...entry,
-    fields: (entry.fields ?? []) as AnnotationSchemaType['fields'],
-  }))
-}
-
-function asInlineObjectSchemaTypes(
-  resolved:
-    | ReadonlyArray<BaseDefinition & {fields?: ReadonlyArray<unknown>}>
-    | undefined,
-): ReadonlyArray<InlineObjectSchemaType> | undefined {
-  if (!resolved) {
-    return undefined
-  }
-  return resolved.map((entry) => ({
-    ...entry,
-    fields: (entry.fields ?? []) as InlineObjectSchemaType['fields'],
-  }))
+  return blockMember as ResolvedBlockOfDefinition
 }
