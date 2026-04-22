@@ -109,7 +109,100 @@ export const playgroundSchemaDefinition = defineSchema({
           name: 'lines',
           title: 'Lines',
           type: 'array',
-          of: [{type: 'block'}],
+          of: [
+            {
+              type: 'block',
+              styles: [],
+              decorators: [],
+              annotations: [],
+              lists: [],
+              inlineObjects: [],
+            },
+          ],
+        },
+      ],
+    },
+    {
+      title: 'Callout',
+      name: 'callout',
+      fields: [
+        {
+          name: 'content',
+          title: 'Content',
+          type: 'array',
+          of: [
+            {
+              type: 'block',
+              decorators: [{title: 'Strong', name: 'strong'}],
+              styles: [
+                {title: 'Normal', name: 'normal'},
+                {title: 'Heading 1', name: 'h1'},
+                {title: 'Heading 2', name: 'h2'},
+                {title: 'Heading 3', name: 'h3'},
+                {title: 'Quote', name: 'blockquote'},
+              ],
+              annotations: [],
+              lists: [
+                {title: 'Bulleted list', name: 'bullet'},
+                {title: 'Numbered list', name: 'number'},
+              ],
+            },
+            {
+              type: 'image',
+              fields: [
+                {name: 'src', title: 'Src', type: 'string'},
+                {name: 'alt', title: 'Alt text', type: 'string'},
+              ],
+            },
+          ],
+        },
+      ],
+    },
+    {
+      title: 'Table',
+      name: 'table',
+      fields: [
+        {
+          name: 'rows',
+          title: 'Rows',
+          type: 'array',
+          of: [
+            {
+              type: 'row',
+              fields: [
+                {
+                  name: 'cells',
+                  title: 'Cells',
+                  type: 'array',
+                  of: [
+                    {
+                      type: 'cell',
+                      fields: [
+                        {
+                          name: 'content',
+                          title: 'Content',
+                          type: 'array',
+                          of: [
+                            {
+                              type: 'block',
+                              decorators: [
+                                {title: 'Strong', name: 'strong'},
+                                {title: 'Emphasis', name: 'em'},
+                                {title: 'Code', name: 'code'},
+                              ],
+                              styles: [{title: 'Normal', name: 'normal'}],
+                              annotations: [],
+                              lists: [],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
         },
       ],
     },
