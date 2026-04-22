@@ -29,7 +29,9 @@ export function InsertBlockObjectForm(
 
         const formData = new FormData(e.target as HTMLFormElement)
         const formDataValues = Object.fromEntries(formData)
-        const {placement, ...value} = FormDataSchema.parse(formDataValues)
+        const {placement, ...formValue} = FormDataSchema.parse(formDataValues)
+
+        const value = {...(props.defaultValues ?? {}), ...formValue}
 
         props.onSubmit({
           value,
@@ -48,7 +50,16 @@ export function InsertBlockObjectForm(
           {id: 'after', value: 'after', label: 'After'},
         ]}
       />
-      <Button className="self-end" type="submit" size="sm">
+      <Button
+        autoFocus={
+          props.fields.filter(
+            (field) => field.type === 'string' || field.type === 'number',
+          ).length === 0
+        }
+        className="self-end"
+        type="submit"
+        size="sm"
+      >
         Insert
       </Button>
     </form>
