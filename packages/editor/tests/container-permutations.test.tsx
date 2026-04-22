@@ -4,6 +4,7 @@ import {describe, expect, test, vi} from 'vitest'
 import {ContainerPlugin} from '../src/plugins/plugin.container'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
+import {toTextspec} from '../test-utils/to-textspec'
 
 /**
  * Container archetype permutations.
@@ -262,32 +263,13 @@ describe('container archetype permutations', () => {
     })
 
     await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'block',
-          _key: rootKey,
-          children: [
-            {_type: 'span', _key: rootSpan, text: 'foo', marks: ['k7']},
-          ],
-          markDefs: [{_type: 'link', _key: 'k7', href: 'https://example.com'}],
-          style: 'normal',
-        },
-        {
-          _type: 'code-block',
-          _key: cbKey,
-          lines: [
-            {
-              _type: 'block',
-              _key: lineKey,
-              children: [
-                {_type: 'span', _key: lineSpan, text: 'bar', marks: []},
-              ],
-              markDefs: [],
-              style: 'normal',
-            },
-          ],
-        },
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        [
+          'B: [@link href="https://example.com":^foo]',
+          'CODE-BLOCK:',
+          '  B: bar|',
+        ].join('\n'),
+      )
     })
   })
 
@@ -354,32 +336,9 @@ describe('container archetype permutations', () => {
     editor.send({type: 'decorator.toggle', decorator: 'strong'})
 
     await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'block',
-          _key: rootKey,
-          children: [
-            {_type: 'span', _key: rootSpan, text: 'foo', marks: ['strong']},
-          ],
-          markDefs: [],
-          style: 'normal',
-        },
-        {
-          _type: 'fact-box',
-          _key: fbKey,
-          content: [
-            {
-              _type: 'block',
-              _key: fbBlockKey,
-              children: [
-                {_type: 'span', _key: fbSpan, text: 'bar', marks: ['strong']},
-              ],
-              markDefs: [],
-              style: 'normal',
-            },
-          ],
-        },
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        ['B: [strong:^foo]', 'FACT-BOX:', '  B: [strong:bar]'].join('\n'),
+      )
     })
   })
 
@@ -442,32 +401,13 @@ describe('container archetype permutations', () => {
     editor.send({type: 'list item.toggle', listItem: 'number'})
 
     await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'block',
-          _key: rootKey,
-          children: [{_type: 'span', _key: rootSpan, text: 'foo', marks: []}],
-          markDefs: [],
-          style: 'normal',
-          listItem: 'number',
-          level: 1,
-        },
-        {
-          _type: 'fact-box',
-          _key: fbKey,
-          content: [
-            {
-              _type: 'block',
-              _key: fbBlockKey,
-              children: [{_type: 'span', _key: fbSpan, text: 'bar', marks: []}],
-              markDefs: [],
-              style: 'normal',
-              listItem: 'number',
-              level: 1,
-            },
-          ],
-        },
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        [
+          'B listItem="number": ^foo',
+          'FACT-BOX:',
+          '  B listItem="number": bar|',
+        ].join('\n'),
+      )
     })
   })
 
@@ -534,32 +474,13 @@ describe('container archetype permutations', () => {
     editor.send({type: 'list item.toggle', listItem: 'bullet'})
 
     await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'block',
-          _key: rootKey,
-          children: [{_type: 'span', _key: rootSpan, text: 'foo', marks: []}],
-          markDefs: [],
-          style: 'normal',
-          listItem: 'bullet',
-          level: 1,
-        },
-        {
-          _type: 'callout',
-          _key: coKey,
-          content: [
-            {
-              _type: 'block',
-              _key: coBlockKey,
-              children: [{_type: 'span', _key: coSpan, text: 'bar', marks: []}],
-              markDefs: [],
-              style: 'normal',
-              listItem: 'bullet',
-              level: 1,
-            },
-          ],
-        },
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        [
+          'B listItem="bullet": ^foo',
+          'CALLOUT:',
+          '  B listItem="bullet": bar|',
+        ].join('\n'),
+      )
     })
   })
 
@@ -622,30 +543,9 @@ describe('container archetype permutations', () => {
     editor.send({type: 'list item.toggle', listItem: 'number'})
 
     await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'block',
-          _key: rootKey,
-          children: [{_type: 'span', _key: rootSpan, text: 'foo', marks: []}],
-          markDefs: [],
-          style: 'normal',
-          listItem: 'number',
-          level: 1,
-        },
-        {
-          _type: 'callout',
-          _key: coKey,
-          content: [
-            {
-              _type: 'block',
-              _key: coBlockKey,
-              children: [{_type: 'span', _key: coSpan, text: 'bar', marks: []}],
-              markDefs: [],
-              style: 'normal',
-            },
-          ],
-        },
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        ['B listItem="number": ^foo', 'CALLOUT:', '  B: bar|'].join('\n'),
+      )
     })
   })
 
@@ -759,78 +659,18 @@ describe('container archetype permutations', () => {
     editor.send({type: 'decorator.toggle', decorator: 'strong'})
 
     await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'block',
-          _key: rootKey,
-          children: [
-            {_type: 'span', _key: rootSpan, text: 'foo', marks: ['strong']},
-          ],
-          markDefs: [],
-          style: 'normal',
-        },
-        {
-          _type: 'table',
-          _key: tableKey,
-          rows: [
-            {
-              _type: 'row',
-              _key: rowKey,
-              cells: [
-                {
-                  _type: 'cell',
-                  _key: cellKey,
-                  content: [
-                    {
-                      _type: 'block',
-                      _key: cellBlockKey,
-                      children: [
-                        {
-                          _type: 'span',
-                          _key: cellSpan,
-                          text: 'cell',
-                          marks: ['strong'],
-                        },
-                      ],
-                      markDefs: [],
-                      style: 'normal',
-                    },
-                    {
-                      _type: 'callout',
-                      _key: calloutKey,
-                      content: [
-                        {
-                          _type: 'block',
-                          _key: calloutBlockKey,
-                          children: [
-                            {
-                              _type: 'span',
-                              _key: calloutSpan,
-                              text: 'callout',
-                              marks: ['strong'],
-                            },
-                          ],
-                          markDefs: [],
-                          style: 'normal',
-                        },
-                      ],
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-        },
-        {
-          _type: 'block',
-          _key: tailKey,
-          children: [
-            {_type: 'span', _key: tailSpan, text: 'tail', marks: ['strong']},
-          ],
-          markDefs: [],
-          style: 'normal',
-        },
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        [
+          'B: [strong:^foo]',
+          'TABLE:',
+          '  ROW:',
+          '    CELL:',
+          '      B: [strong:cell]',
+          '      CALLOUT:',
+          '        B: [strong:callout]',
+          'B: [strong:tail|]',
+        ].join('\n'),
+      )
     })
   })
 
@@ -940,78 +780,18 @@ describe('container archetype permutations', () => {
     editor.send({type: 'decorator.toggle', decorator: 'em'})
 
     await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'block',
-          _key: rootKey,
-          children: [
-            {_type: 'span', _key: rootSpan, text: 'foo', marks: ['em']},
-          ],
-          markDefs: [],
-          style: 'normal',
-        },
-        {
-          _type: 'table',
-          _key: tableKey,
-          rows: [
-            {
-              _type: 'row',
-              _key: rowKey,
-              cells: [
-                {
-                  _type: 'cell',
-                  _key: cellKey,
-                  content: [
-                    {
-                      _type: 'block',
-                      _key: cellBlockKey,
-                      children: [
-                        {
-                          _type: 'span',
-                          _key: cellSpan,
-                          text: 'cell',
-                          marks: ['em'],
-                        },
-                      ],
-                      markDefs: [],
-                      style: 'normal',
-                    },
-                    {
-                      _type: 'callout',
-                      _key: calloutKey,
-                      content: [
-                        {
-                          _type: 'block',
-                          _key: calloutBlockKey,
-                          children: [
-                            {
-                              _type: 'span',
-                              _key: calloutSpan,
-                              text: 'callout',
-                              marks: [],
-                            },
-                          ],
-                          markDefs: [],
-                          style: 'normal',
-                        },
-                      ],
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-        },
-        {
-          _type: 'block',
-          _key: tailKey,
-          children: [
-            {_type: 'span', _key: tailSpan, text: 'tail', marks: ['em']},
-          ],
-          markDefs: [],
-          style: 'normal',
-        },
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        [
+          'B: [em:^foo]',
+          'TABLE:',
+          '  ROW:',
+          '    CELL:',
+          '      B: [em:cell]',
+          '      CALLOUT:',
+          '        B: callout',
+          'B: [em:tail|]',
+        ].join('\n'),
+      )
     })
   })
 })
