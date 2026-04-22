@@ -8,6 +8,9 @@ import {
 import {getEnclosingBlock} from '../node-traversal/get-enclosing-block'
 import type {Node} from '../slate/interfaces/node'
 import type {Operation} from '../slate/interfaces/operation'
+import type {Path} from '../slate/interfaces/path'
+import {isAncestorPath} from '../slate/path/is-ancestor-path'
+import {pathEquals} from '../slate/path/path-equals'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {debug} from './debug'
 
@@ -24,6 +27,11 @@ export function transformOperation(
   patch: Patch,
   operation: Operation,
 ): Operation[] {
+  const context = {
+    schema: editor.schema,
+    containers: editor.containers,
+    value: editor.children,
+  }
   const transformedOperation = {...operation}
 
   if (patch.type === 'insert') {
@@ -36,29 +44,21 @@ export function transformOperation(
   }
 
   if (patch.type === 'unset' && patch.path.length > 0) {
-    // If this operation targets the same block that got removed, drop it.
-    // With keyed paths, other operations' paths don't need adjustment.
+    // If this operation targets anything inside the subtree that got
+    // removed, drop it. With keyed paths, other operations' paths don't
+    // need adjustment. Compare path prefixes rather than resolving
+    // against the tree — `editor.children` reflects the post-patch state
+    // where the removed subtree is already gone.
     if (
       'path' in transformedOperation &&
-      Array.isArray(transformedOperation.path)
+      Array.isArray(transformedOperation.path) &&
+      pathStartsWith(transformedOperation.path, patch.path)
     ) {
-      const removedBlock = getEnclosingBlock(editor, patch.path)
-      const operationBlock = getEnclosingBlock(
-        editor,
-        transformedOperation.path,
-      )
-      if (
-        removedBlock &&
-        operationBlock &&
-        removedBlock.node._key === operationBlock.node._key
-      ) {
-        debug.history('Skipping transformation that targeted removed block')
-        return []
-      }
+      debug.history('Skipping transformation that targeted removed block')
+      return []
     }
     return [transformedOperation]
   }
-
   // Someone reset the whole value
   if (patch.type === 'unset' && patch.path.length === 0) {
     debug.history(
@@ -69,10 +69,11 @@ export function transformOperation(
 
   if (patch.type === 'diffMatchPatch') {
     const operationTargetBlock = findOperationTargetBlock(
+      context,
       editor,
       transformedOperation,
     )
-    const patchTargetBlock = getEnclosingBlock(editor, patch.path)
+    const patchTargetBlock = getEnclosingBlock(context, patch.path)
     if (
       !operationTargetBlock ||
       !patchTargetBlock ||
@@ -157,16 +158,30 @@ export function transformOperation(
 }
 
 function findOperationTargetBlock(
+  context: {
+    schema: PortableTextSlateEditor['schema']
+    containers: PortableTextSlateEditor['containers']
+    value: Array<Node>
+  },
   editor: PortableTextSlateEditor,
   operation: Operation,
 ): Node | undefined {
   if (operation.type === 'set_selection' && editor.selection) {
-    const block = getEnclosingBlock(editor, editor.selection.focus.path)
+    const block = getEnclosingBlock(context, editor.selection.focus.path)
     return block?.node
   }
   if ('path' in operation) {
-    const block = getEnclosingBlock(editor, operation.path)
+    const block = getEnclosingBlock(context, operation.path)
     return block?.node
   }
   return undefined
+}
+
+/**
+ * Return true when `path` equals `prefix` or is a descendant of `prefix`.
+ * Used to decide whether an operation falls inside a subtree that was
+ * removed by an `unset` patch.
+ */
+function pathStartsWith(path: Path, prefix: Path): boolean {
+  return pathEquals(path, prefix) || isAncestorPath(prefix, path)
 }
