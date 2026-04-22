@@ -1,12 +1,16 @@
 import {resolveSelection} from '../internal-utils/apply-selection'
+import {getAncestor} from '../node-traversal/get-ancestor'
 import {getAncestorTextBlock} from '../node-traversal/get-ancestor-text-block'
+import {getChildren} from '../node-traversal/get-children'
 import {getHighestObjectNode} from '../node-traversal/get-highest-object-node'
 import {getNode} from '../node-traversal/get-node'
 import {getNodes} from '../node-traversal/get-nodes'
 import {getParent} from '../node-traversal/get-parent'
+import {getSibling} from '../node-traversal/get-sibling'
 import {getSpanNode} from '../node-traversal/get-span-node'
 import {isBlock} from '../node-traversal/is-block'
 import {isInline} from '../node-traversal/is-inline'
+import {isEditableContainer} from '../schema/is-editable-container'
 import {deleteText} from '../slate/core/delete-text'
 import {DOMEditor} from '../slate/dom/plugin/dom-editor'
 import {end as editorEnd} from '../slate/editor/end'
@@ -32,6 +36,7 @@ import {isCollapsedRange} from '../slate/range/is-collapsed-range'
 import {rangeEdges} from '../slate/range/range-edges'
 import {rangeEnd} from '../slate/range/range-end'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
+import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import type {OperationImplementation} from './operation.types'
 
@@ -170,6 +175,128 @@ export const deleteOperationImplementation: OperationImplementation<
           type: 'unset',
           path: nodePath,
         })
+        return
+      }
+    }
+  }
+
+  // Collapsed caret inside an empty editable container removes the container
+  // whole. An "empty" container has exactly one child block which is itself an
+  // empty text block. The removal then walks up: if the enclosing ancestor is
+  // another editable container whose only content is the container we're about
+  // to remove (and that ancestor has no siblings of its own at its parent
+  // level), promote the deletion to the ancestor. Stops at the first level
+  // that has structural neighbors (e.g. a table cell with sibling cells).
+  if (isCollapsedRange(at)) {
+    const innerContainer = getAncestor(
+      operation.editor,
+      start.path,
+      (node, path) => isEditableContainer(operation.editor, node, path),
+    )
+
+    if (innerContainer) {
+      const innerChildren = getChildren(operation.editor, innerContainer.path)
+
+      if (
+        innerChildren.length === 1 &&
+        isEmptyTextBlock(operation.editor, innerChildren[0]!.node)
+      ) {
+        let targetToDelete: {node: Node; path: Path} = innerContainer
+
+        while (true) {
+          // Walk up to the enclosing container (if any).
+          const enclosing = getAncestor(
+            operation.editor,
+            targetToDelete.path,
+            (node, path) => isEditableContainer(operation.editor, node, path),
+          )
+
+          if (!enclosing) {
+            break
+          }
+
+          // Only promote if the enclosing container's only field-child is the
+          // current target. Otherwise siblings would remain after removal.
+          const enclosingChildren = getChildren(
+            operation.editor,
+            enclosing.path,
+          )
+          if (
+            enclosingChildren.length !== 1 ||
+            !pathEquals(enclosingChildren[0]!.path, targetToDelete.path)
+          ) {
+            break
+          }
+
+          // Apply the structural-siblings check only when the enclosing
+          // container is itself inside another container (its own parent is a
+          // container with multiple children). At the editor root, top-level
+          // siblings are fine; promotion is safe. Inside a structural parent
+          // (e.g. a table cell inside a row), stop to preserve the structure.
+          const parentOfEnclosing = parentPath(enclosing.path)
+          const parentIsContainer =
+            parentOfEnclosing.length > 0 &&
+            (() => {
+              const entry = getNode(operation.editor, parentOfEnclosing)
+              if (!entry) {
+                return false
+              }
+              return isEditableContainer(
+                operation.editor,
+                entry.node,
+                entry.path,
+              )
+            })()
+
+          if (parentIsContainer) {
+            const previous = getSibling(
+              operation.editor,
+              enclosing.path,
+              'previous',
+            )
+            const next = getSibling(operation.editor, enclosing.path, 'next')
+            if (previous || next) {
+              break
+            }
+          }
+
+          targetToDelete = enclosing
+        }
+
+        const reverse = operation.direction === 'backward'
+        const preferredDirection = reverse ? 'previous' : 'next'
+        const fallbackDirection = reverse ? 'next' : 'previous'
+
+        const preferredSibling = getSibling(
+          operation.editor,
+          targetToDelete.path,
+          preferredDirection,
+        )
+        const fallbackSibling = preferredSibling
+          ? undefined
+          : getSibling(operation.editor, targetToDelete.path, fallbackDirection)
+        const landingSibling = preferredSibling ?? fallbackSibling
+
+        operation.editor.apply({
+          type: 'unset',
+          path: targetToDelete.path,
+        })
+
+        if (landingSibling && operation.editor.selection) {
+          const landingPoint =
+            preferredSibling && reverse
+              ? editorEnd(operation.editor, landingSibling.path)
+              : editorStart(operation.editor, landingSibling.path)
+          operation.editor.apply({
+            type: 'set_selection',
+            properties: operation.editor.selection,
+            newProperties: {
+              anchor: landingPoint,
+              focus: landingPoint,
+            },
+          })
+        }
+
         return
       }
     }
