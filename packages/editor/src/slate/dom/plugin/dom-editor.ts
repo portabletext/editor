@@ -347,7 +347,9 @@ export const DOMEditor: DOMEditorInterface = {
     }
 
     const el = isDOMElement(target) ? target : target.parentElement
-    return !!el?.closest('[data-slate-void]')
+    return !!el?.closest(
+      '[data-slate-void], [data-block-type="object"], [data-child-type="object"]',
+    )
   },
 
   toDOMPoint: (editor, point) => {
@@ -485,7 +487,9 @@ export const DOMEditor: DOMEditorInterface = {
         throw new Error('Cannot resolve a DOM node: editor is not mounted')
       }
 
-      const potentialVoidNode = parentNode.closest('[data-slate-void="true"]')
+      const potentialVoidNode = parentNode.closest(
+        '[data-slate-void="true"], [data-block-type="object"], [data-child-type="object"]',
+      )
       // Need to ensure that the closest void node is actually a void node
       // within this editor, and not a void node within some parent editor. This can happen
       // if this editor is within a void node of another editor ("nested editors", like in
@@ -696,7 +700,9 @@ export const DOMEditor: DOMEditorInterface = {
           childEl instanceof HTMLElement &&
           DOMEditor.hasDOMNode(editor, childEl)
         ) {
-          const voidEl = childEl.closest('[data-slate-void]')
+          const voidEl = childEl.closest(
+            '[data-slate-void], [data-block-type="object"], [data-child-type="object"]',
+          )
 
           if (voidEl) {
             const path = getDomNodePath(voidEl)
@@ -713,7 +719,9 @@ export const DOMEditor: DOMEditorInterface = {
         (parentNode.hasAttribute('data-slate-node') ? parentNode : null)
 
       if (elementNode && DOMEditor.hasDOMNode(editor, elementNode)) {
-        const voidEl = elementNode.closest('[data-slate-void]')
+        const voidEl = elementNode.closest(
+          '[data-slate-void], [data-block-type="object"], [data-child-type="object"]',
+        )
 
         if (voidEl) {
           const path = getDomNodePath(voidEl)

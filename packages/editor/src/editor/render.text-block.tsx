@@ -19,6 +19,7 @@ import type {
 import type {EditorSchema} from './editor-schema'
 import {DropIndicator} from './render.drop-indicator'
 import {SelectionStateContext} from './selection-state-context'
+import {useBlockSubSchema} from './use-block-sub-schema'
 
 export function RenderTextBlock(props: {
   attributes: RenderElementProps['attributes']
@@ -48,13 +49,14 @@ export function RenderTextBlock(props: {
   const listIndex = useSlateSelector((editor) =>
     editor.listIndexMap.get(props.textBlock._key),
   )
+  const subSchema = useBlockSubSchema(props.path)
 
   let children = props.children
 
   if (props.renderStyle && props.textBlock.style) {
     const styleSchemaType =
       props.textBlock.style !== undefined
-        ? props.schema.styles.find(
+        ? subSchema.styles.find(
             (style) => style.value === props.textBlock.style,
           )
         : undefined
@@ -82,7 +84,7 @@ export function RenderTextBlock(props: {
   }
 
   if (props.renderListItem && props.textBlock.listItem) {
-    const listItemSchemaType = props.schema.lists.find(
+    const listItemSchemaType = subSchema.lists.find(
       (list) => list.value === props.textBlock.listItem,
     )
 

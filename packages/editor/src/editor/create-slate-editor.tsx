@@ -28,6 +28,7 @@ export function createSlateEditor(
   editor.schema = context.schema
   editor.keyGenerator = context.keyGenerator
   editor.containers = new Map()
+  editor.leafs = new Map()
 
   editor.decoratedRanges = []
   editor.decoratorState = {}
