@@ -15,12 +15,16 @@ export type EditorFeatureFlags = {
   dragHandles: boolean
   imageDeserializerPlugin: boolean
   htmlDeserializerPlugin: boolean
+  markdownDeserializerPlugin: boolean
   textFileDeserializerPlugin: boolean
   emojiPickerPlugin: boolean
   mentionPickerPlugin: boolean
   slashCommandPlugin: boolean
   codeEditorPlugin: boolean
   codeBlockPlugin: boolean
+  calloutPlugin: boolean
+  factBoxPlugin: boolean
+  tablePlugin: boolean
   linkPlugin: boolean
   oneLinePlugin: boolean
   markdownPlugin: boolean
@@ -31,12 +35,16 @@ export const defaultEditorFeatureFlags: EditorFeatureFlags = {
   dragHandles: false,
   imageDeserializerPlugin: false,
   htmlDeserializerPlugin: true,
+  markdownDeserializerPlugin: true,
   textFileDeserializerPlugin: false,
   emojiPickerPlugin: true,
   mentionPickerPlugin: true,
   slashCommandPlugin: true,
   codeEditorPlugin: false,
   codeBlockPlugin: true,
+  calloutPlugin: true,
+  factBoxPlugin: true,
+  tablePlugin: true,
   linkPlugin: true,
   oneLinePlugin: false,
   markdownPlugin: true,

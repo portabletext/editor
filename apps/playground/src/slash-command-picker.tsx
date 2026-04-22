@@ -7,18 +7,23 @@ import {
 import type {ToolbarBlockObjectSchemaType} from '@portabletext/toolbar'
 import Fuse from 'fuse.js'
 import {
+  BoxIcon,
+  CodeIcon,
   Heading1Icon,
   Heading2Icon,
   Heading3Icon,
   ImageIcon,
+  InfoIcon,
   ListIcon,
   ListOrderedIcon,
   SeparatorHorizontalIcon,
+  TableIcon,
   TextQuoteIcon,
 } from 'lucide-react'
 import {useEffect, useRef, useState, type JSX} from 'react'
 import {Button} from './primitives/button'
 import {Dialog} from './primitives/dialog'
+import type {FieldOption} from './primitives/fields'
 import {FloatingPanel} from './primitives/floating-panel'
 import {InsertBlockObjectForm} from './toolbar/form.insert-block-object'
 import {extendBlockObject} from './toolbar/portable-text-toolbar'
@@ -37,7 +42,9 @@ type CommandMatch = {
 
 type BlockObjectDialogState = {
   patternSelection: NonNullable<EditorSelection>
-  schema: ToolbarBlockObjectSchemaType
+  schema: ToolbarBlockObjectSchemaType & {
+    fieldOptions?: Record<string, FieldOption | undefined>
+  }
 }
 
 type OpenBlockObjectDialogEvent = {
@@ -102,6 +109,50 @@ const commands: CommandMatch[] = [
     action: {
       type: 'insert.block',
       block: {_type: 'image'},
+    },
+  },
+  {
+    key: 'callout',
+    label: 'Callout',
+    description: 'Highlighted note or aside',
+    icon: <InfoIcon className="size-4" />,
+    keywords: ['callout', 'note', 'aside', 'info'],
+    action: {
+      type: 'insert.block',
+      block: {_type: 'callout'},
+    },
+  },
+  {
+    key: 'fact-box',
+    label: 'Fact Box',
+    description: 'Boxed group of facts or notes',
+    icon: <BoxIcon className="size-4" />,
+    keywords: ['fact', 'fact box', 'box', 'panel', 'sidebar'],
+    action: {
+      type: 'insert.block',
+      block: {_type: 'fact-box'},
+    },
+  },
+  {
+    key: 'code-block',
+    label: 'Code Block',
+    description: 'Formatted code snippet',
+    icon: <CodeIcon className="size-4" />,
+    keywords: ['code', 'code block', 'pre', 'snippet'],
+    action: {
+      type: 'insert.block',
+      block: {_type: 'code-block'},
+    },
+  },
+  {
+    key: 'table',
+    label: 'Table',
+    description: 'Rows and columns',
+    icon: <TableIcon className="size-4" />,
+    keywords: ['table', 'grid', 'rows', 'columns'],
+    action: {
+      type: 'insert.block',
+      block: {_type: 'table'},
     },
   },
   {
@@ -294,6 +345,7 @@ export function SlashCommandPickerPlugin() {
           <InsertBlockObjectForm
             fields={blockObjectDialogState.schema.fields}
             defaultValues={blockObjectDialogState.schema.defaultValues ?? {}}
+            fieldOptions={blockObjectDialogState.schema.fieldOptions}
             onSubmit={handleDialogSubmit}
           />
         )

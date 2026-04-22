@@ -3,12 +3,15 @@ import type {ToolbarBlockObjectSchemaType} from '@portabletext/toolbar'
 import {TooltipTrigger} from 'react-aria-components'
 import {Button} from '../primitives/button'
 import {Dialog} from '../primitives/dialog'
+import type {FieldOption} from '../primitives/fields'
 import {Icon} from '../primitives/icon'
 import {Tooltip} from '../primitives/tooltip'
 import {InsertBlockObjectForm} from './form.insert-block-object'
 
 export function BlockObjectButton(props: {
-  schemaType: ToolbarBlockObjectSchemaType
+  schemaType: ToolbarBlockObjectSchemaType & {
+    fieldOptions?: Record<string, FieldOption | undefined>
+  }
 }) {
   const {snapshot, send} = useBlockObjectButton(props)
 
@@ -42,6 +45,7 @@ export function BlockObjectButton(props: {
         <InsertBlockObjectForm
           fields={props.schemaType.fields}
           defaultValues={props.schemaType.defaultValues}
+          fieldOptions={props.schemaType.fieldOptions}
           onSubmit={({value, placement}) => {
             send({type: 'insert', value, placement})
             close()
