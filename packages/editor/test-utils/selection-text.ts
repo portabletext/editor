@@ -5,7 +5,7 @@ import {sliceBlocks} from '../src/utils/util.slice-blocks'
 export function getSelectionText(
   context: Pick<
     EditorContext,
-    'keyGenerator' | 'schema' | 'value' | 'selection'
+    'keyGenerator' | 'schema' | 'value' | 'selection' | 'containers'
   >,
 ) {
   if (!context.selection) {

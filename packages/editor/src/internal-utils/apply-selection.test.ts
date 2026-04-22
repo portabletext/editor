@@ -1,6 +1,7 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
+import {createNodeTraversalTestbed} from '../node-traversal/node-traversal-testbed'
 import {resolveSelection} from './apply-selection'
 
 describe(resolveSelection.name, () => {
@@ -273,6 +274,98 @@ describe(resolveSelection.name, () => {
     expect(range).toEqual({
       anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 0},
       focus: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 0},
+    })
+  })
+
+  test('Scenario: Block-level offset inside an editable container', () => {
+    const {context, codeBlock, codeLine1, codeSpan1} =
+      createNodeTraversalTestbed()
+
+    const range = resolveSelection(
+      {
+        schema: context.schema,
+        containers: context.containers,
+        children: context.value,
+      },
+      {
+        anchor: {
+          path: [{_key: codeBlock._key}, 'code', {_key: codeLine1._key}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: codeBlock._key}, 'code', {_key: codeLine1._key}],
+          offset: 2,
+        },
+      },
+    )
+
+    expect(range).toEqual({
+      anchor: {
+        path: [
+          {_key: codeBlock._key},
+          'code',
+          {_key: codeLine1._key},
+          'children',
+          {_key: codeSpan1._key},
+        ],
+        offset: 0,
+      },
+      focus: {
+        path: [
+          {_key: codeBlock._key},
+          'code',
+          {_key: codeLine1._key},
+          'children',
+          {_key: codeSpan1._key},
+        ],
+        offset: 2,
+      },
+    })
+  })
+
+  test('Scenario: Collapsed block-level offset inside an editable container', () => {
+    const {context, codeBlock, codeLine1, codeSpan1} =
+      createNodeTraversalTestbed()
+
+    const range = resolveSelection(
+      {
+        schema: context.schema,
+        containers: context.containers,
+        children: context.value,
+      },
+      {
+        anchor: {
+          path: [{_key: codeBlock._key}, 'code', {_key: codeLine1._key}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: codeBlock._key}, 'code', {_key: codeLine1._key}],
+          offset: 3,
+        },
+      },
+    )
+
+    expect(range).toEqual({
+      anchor: {
+        path: [
+          {_key: codeBlock._key},
+          'code',
+          {_key: codeLine1._key},
+          'children',
+          {_key: codeSpan1._key},
+        ],
+        offset: 3,
+      },
+      focus: {
+        path: [
+          {_key: codeBlock._key},
+          'code',
+          {_key: codeLine1._key},
+          'children',
+          {_key: codeSpan1._key},
+        ],
+        offset: 3,
+      },
     })
   })
 })
