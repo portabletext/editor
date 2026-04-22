@@ -2,6 +2,7 @@ import {corePriority} from '../priority/priority.core'
 import {createEditorPriority} from '../priority/priority.types'
 import {coreAnnotationBehaviors} from './behavior.core.annotations'
 import {coreBlockObjectBehaviors} from './behavior.core.block-objects'
+import {coreContainerBehaviors} from './behavior.core.containers'
 import {coreDecoratorBehaviors} from './behavior.core.decorators'
 import {coreDndBehaviors} from './behavior.core.dnd'
 import {coreInsertBehaviors} from './behavior.core.insert'
@@ -19,6 +20,8 @@ const coreBehaviors = [
   coreBlockObjectBehaviors.clickingBelowLonelyBlockObject,
   coreBlockObjectBehaviors.arrowDownOnLonelyBlockObject,
   coreBlockObjectBehaviors.arrowUpOnLonelyBlockObject,
+  coreContainerBehaviors.arrowDownOutOfContainer,
+  coreContainerBehaviors.arrowUpOutOfContainer,
   coreBlockObjectBehaviors.breakingBlockObject,
   coreBlockObjectBehaviors.deletingEmptyTextBlockAfterBlockObject,
   coreBlockObjectBehaviors.deletingEmptyTextBlockBeforeBlockObject,
