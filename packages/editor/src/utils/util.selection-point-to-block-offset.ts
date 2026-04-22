@@ -1,8 +1,8 @@
 import type {EditorContext} from '../editor/editor-snapshot'
+import {isBlock} from '../node-traversal/is-block'
 import type {BlockOffset} from '../types/block-offset'
 import type {EditorSelectionPoint} from '../types/editor'
 import {childSelectionPointToBlockOffset} from './util.child-selection-point-to-block-offset'
-import {getBlockKeyFromSelectionPoint} from './util.selection-point'
 
 /**
  * @public
@@ -11,14 +11,12 @@ export function selectionPointToBlockOffset({
   context,
   selectionPoint,
 }: {
-  context: Pick<EditorContext, 'schema' | 'value'>
+  context: Pick<EditorContext, 'schema' | 'value' | 'containers'>
   selectionPoint: EditorSelectionPoint
 }): BlockOffset | undefined {
-  const blockKey = getBlockKeyFromSelectionPoint(selectionPoint)
-
-  if (selectionPoint.path.length === 1 && blockKey !== undefined) {
+  if (isBlock(context, selectionPoint.path)) {
     return {
-      path: [{_key: blockKey}],
+      path: selectionPoint.path,
       offset: selectionPoint.offset,
     }
   }

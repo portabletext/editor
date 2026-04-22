@@ -12,7 +12,7 @@ export function blockOffsetToSelectionPoint({
   blockOffset,
   direction,
 }: {
-  context: Pick<EditorContext, 'schema' | 'value'>
+  context: Pick<EditorContext, 'schema' | 'value' | 'containers'>
   blockOffset: BlockOffset
   direction: 'forward' | 'backward'
 }): EditorSelectionPoint | undefined {

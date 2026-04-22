@@ -35,6 +35,7 @@ describe(blockOffsetToSpanSelectionPoint.name, () => {
             context: {
               schema,
               value,
+              containers: new Map(),
             },
             blockOffset: {
               path: [{_key: b0}],
@@ -54,6 +55,7 @@ describe(blockOffsetToSpanSelectionPoint.name, () => {
             context: {
               schema,
               value,
+              containers: new Map(),
             },
             blockOffset: {
               path: [{_key: b0}],
@@ -75,6 +77,7 @@ describe(blockOffsetToSpanSelectionPoint.name, () => {
             context: {
               schema,
               value,
+              containers: new Map(),
             },
             blockOffset: {
               path: [{_key: b0}],
@@ -94,6 +97,7 @@ describe(blockOffsetToSpanSelectionPoint.name, () => {
             context: {
               schema,
               value,
+              containers: new Map(),
             },
             blockOffset: {
               path: [{_key: b0}],
@@ -138,6 +142,7 @@ describe(blockOffsetToSpanSelectionPoint.name, () => {
             context: {
               schema,
               value,
+              containers: new Map(),
             },
             blockOffset: {
               path: [{_key: blockKey}],
@@ -157,6 +162,7 @@ describe(blockOffsetToSpanSelectionPoint.name, () => {
             context: {
               schema,
               value,
+              containers: new Map(),
             },
             blockOffset: {
               path: [{_key: blockKey}],
@@ -178,6 +184,7 @@ describe(blockOffsetToSpanSelectionPoint.name, () => {
             context: {
               schema,
               value,
+              containers: new Map(),
             },
             blockOffset: {
               path: [{_key: blockKey}],
@@ -197,6 +204,7 @@ describe(blockOffsetToSpanSelectionPoint.name, () => {
             context: {
               schema,
               value,
+              containers: new Map(),
             },
             blockOffset: {
               path: [{_key: blockKey}],
@@ -218,6 +226,7 @@ describe(blockOffsetToSpanSelectionPoint.name, () => {
             context: {
               schema,
               value,
+              containers: new Map(),
             },
             blockOffset: {
               path: [{_key: blockKey}],
@@ -237,6 +246,7 @@ describe(blockOffsetToSpanSelectionPoint.name, () => {
             context: {
               schema,
               value,
+              containers: new Map(),
             },
             blockOffset: {
               path: [{_key: blockKey}],
@@ -284,6 +294,7 @@ describe(blockOffsetToSpanSelectionPoint.name, () => {
         context: {
           schema,
           value,
+          containers: new Map(),
         },
         blockOffset: {
           path: [{_key: b0}],
@@ -297,6 +308,7 @@ describe(blockOffsetToSpanSelectionPoint.name, () => {
         context: {
           schema,
           value,
+          containers: new Map(),
         },
         blockOffset: {
           path: [{_key: b0}],
@@ -322,6 +334,7 @@ describe(blockOffsetToSpanSelectionPoint.name, () => {
         context: {
           schema,
           value,
+          containers: new Map(),
         },
         blockOffset: {
           path: [{_key: b0}],
@@ -363,6 +376,7 @@ describe(blockOffsetToSpanSelectionPoint.name, () => {
         context: {
           schema,
           value,
+          containers: new Map(),
         },
         blockOffset: {
           path: [{_key: b1}],
