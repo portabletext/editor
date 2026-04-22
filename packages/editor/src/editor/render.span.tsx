@@ -13,6 +13,7 @@ import type {
 } from '../types/editor'
 import type {EditorSchema} from './editor-schema'
 import {SelectionStateContext} from './selection-state-context'
+import {useBlockSubSchema} from './use-block-sub-schema'
 
 interface RenderSpanProps extends RenderLeafProps {
   children: ReactElement<any>
@@ -34,12 +35,14 @@ export function RenderSpan(props: RenderSpanProps) {
   const parent = props.children.props.parent
   const block = parent && isTextBlock({schema}, parent) ? parent : undefined
 
+  const subSchema = useBlockSubSchema(props.path)
+
   const selectionState = useContext(SelectionStateContext)
   const serializedPath = serializePath(props.path)
   const focused = selectionState.focusedLeafPath === serializedPath
   const selected = selectionState.selectedLeafPaths.has(serializedPath)
 
-  const decoratorSchemaTypes = schema.decorators.map(
+  const decoratorSchemaTypes = subSchema.decorators.map(
     (decorator) => decorator.name,
   )
 
@@ -73,7 +76,7 @@ export function RenderSpan(props: RenderSpanProps) {
    * Support `renderDecorator` render function for each Decorator
    */
   for (const mark of decorators) {
-    const decoratorSchemaType = schema.decorators.find(
+    const decoratorSchemaType = subSchema.decorators.find(
       (dec) => dec.name === mark,
     )
 
@@ -98,7 +101,7 @@ export function RenderSpan(props: RenderSpanProps) {
    * Support `renderAnnotation` render function for each Annotation
    */
   for (const annotationMarkDef of annotationMarkDefs) {
-    const annotationSchemaType = schema.annotations.find(
+    const annotationSchemaType = subSchema.annotations.find(
       (t) => t.name === annotationMarkDef._type,
     )
     if (annotationSchemaType) {

@@ -22,6 +22,7 @@ import type {EditorSchema} from './editor-schema'
 import {RenderBlockObject} from './render.block-object'
 import {RenderContainer} from './render.container'
 import {RenderInlineObject} from './render.inline-object'
+import {useLeafConfig} from './render.leaf-config'
 import {RenderTextBlock} from './render.text-block'
 
 export function RenderElement(props: {
@@ -50,6 +51,8 @@ export function RenderElement(props: {
   const containerConfig = useSelector(editorActor, (state) =>
     state.context.containers.get(scopedTypeName),
   )
+
+  const leafConfig = useLeafConfig(props.element, props.path)
 
   if (containerConfig) {
     return (
@@ -92,6 +95,7 @@ export function RenderElement(props: {
       <RenderInlineObject
         attributes={props.attributes}
         element={props.element}
+        leafConfig={leafConfig}
         path={props.path}
         readOnly={props.readOnly}
         renderChild={props.renderChild}
@@ -112,6 +116,7 @@ export function RenderElement(props: {
           : undefined
       }
       element={props.element}
+      leafConfig={leafConfig}
       path={props.path}
       readOnly={props.readOnly}
       renderBlock={props.renderBlock}
