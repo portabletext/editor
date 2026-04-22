@@ -3,10 +3,17 @@ import type {EditorSchema} from '../editor/editor-schema'
 import type {TraversalContainers} from '../schema/resolve-containers'
 import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
-import {isObjectNode} from '../slate/node/is-object-node'
+import {isVoidNode} from '../slate/node/is-void-node'
 import {getAncestor} from './get-ancestor'
 
-export function getAncestorObjectNode(
+/**
+ * Find the nearest ancestor that is a void (non-editable) object node.
+ *
+ * Unlike `getAncestorObjectNode`, editable containers are skipped — they are
+ * object nodes but contain editable content, so callers that want "this
+ * subtree is a single selectable void" should use this instead.
+ */
+export function getVoidAncestor(
   context: {
     schema: EditorSchema
     containers: TraversalContainers
@@ -14,14 +21,7 @@ export function getAncestorObjectNode(
   },
   path: Path,
 ): {node: PortableTextObject; path: Path} | undefined {
-  const result = getAncestor(context, path, (node) =>
-    isObjectNode({schema: context.schema}, node),
+  return getAncestor(context, path, (node, ancestorPath) =>
+    isVoidNode(context, node, ancestorPath),
   )
-  if (!result) {
-    return undefined
-  }
-  if (!isObjectNode({schema: context.schema}, result.node)) {
-    return undefined
-  }
-  return {node: result.node, path: result.path}
 }

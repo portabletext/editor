@@ -1,15 +1,160 @@
+import type {PortableTextBlock} from '@portabletext/schema'
 import type {EditorContext} from '../editor/editor-snapshot'
 import {isTextBlockNode} from '../slate/node/is-text-block-node'
 
-// Maps for each list type, keeping track of the current list count for each
-// level.
-const levelIndexMaps = new Map<string, Map<number, number>>()
+type ListState = {
+  previousListItem:
+    | {
+        listItem: string
+        level: number
+      }
+    | undefined
+  levelIndexMaps: Map<string, Map<number, number>>
+}
+
+function createListState(): ListState {
+  return {
+    previousListItem: undefined,
+    levelIndexMaps: new Map(),
+  }
+}
+
+function walkBlock(
+  context: Pick<EditorContext, 'schema' | 'containers'>,
+  block: unknown,
+  scopeChain: string,
+  listIndexMap: Map<string, number>,
+  state: ListState,
+): void {
+  if (!isTextBlockNode(context, block)) {
+    state.levelIndexMaps.clear()
+    state.previousListItem = undefined
+
+    maybeRecurseIntoContainer(context, block, scopeChain, listIndexMap)
+    return
+  }
+
+  if (block.listItem === undefined || block.level === undefined) {
+    state.levelIndexMaps.clear()
+    state.previousListItem = undefined
+
+    maybeRecurseIntoContainer(context, block, scopeChain, listIndexMap)
+    return
+  }
+
+  if (!state.previousListItem) {
+    const listIndex = 1
+    const levelIndexMap =
+      state.levelIndexMaps.get(block.listItem) ?? new Map<number, number>()
+    levelIndexMap.set(block.level, listIndex)
+    state.levelIndexMaps.set(block.listItem, levelIndexMap)
+
+    listIndexMap.set(block._key, listIndex)
+
+    state.previousListItem = {
+      listItem: block.listItem,
+      level: block.level,
+    }
+
+    maybeRecurseIntoContainer(context, block, scopeChain, listIndexMap)
+    return
+  }
+
+  if (
+    state.previousListItem.listItem === block.listItem &&
+    state.previousListItem.level < block.level
+  ) {
+    const listIndex = 1
+    const levelIndexMap =
+      state.levelIndexMaps.get(block.listItem) ?? new Map<number, number>()
+    levelIndexMap.set(block.level, listIndex)
+    state.levelIndexMaps.set(block.listItem, levelIndexMap)
+
+    listIndexMap.set(block._key, listIndex)
+
+    state.previousListItem = {
+      listItem: block.listItem,
+      level: block.level,
+    }
+
+    maybeRecurseIntoContainer(context, block, scopeChain, listIndexMap)
+    return
+  }
+
+  state.levelIndexMaps.forEach((levelIndexMap, listItem) => {
+    if (listItem === block.listItem) {
+      return
+    }
+
+    const levelsToDelete: number[] = []
+
+    levelIndexMap.forEach((_, level) => {
+      if (level >= block.level!) {
+        levelsToDelete.push(level)
+      }
+    })
+
+    levelsToDelete.forEach((level) => {
+      levelIndexMap.delete(level)
+    })
+  })
+
+  const levelIndexMap =
+    state.levelIndexMaps.get(block.listItem) ?? new Map<number, number>()
+  const levelCounter = levelIndexMap.get(block.level) ?? 0
+  levelIndexMap.set(block.level, levelCounter + 1)
+  state.levelIndexMaps.set(block.listItem, levelIndexMap)
+
+  listIndexMap.set(block._key, levelCounter + 1)
+
+  state.previousListItem = {
+    listItem: block.listItem,
+    level: block.level,
+  }
+
+  maybeRecurseIntoContainer(context, block, scopeChain, listIndexMap)
+}
+
+function maybeRecurseIntoContainer(
+  context: Pick<EditorContext, 'schema' | 'containers'>,
+  block: unknown,
+  scopeChain: string,
+  listIndexMap: Map<string, number>,
+): void {
+  if (typeof block !== 'object' || block === null) {
+    return
+  }
+  const typed = block as {_type?: unknown}
+  if (typeof typed._type !== 'string') {
+    return
+  }
+
+  const nextScope = scopeChain ? `${scopeChain}.${typed._type}` : typed._type
+  const containerConfig = context.containers.get(nextScope)
+  if (!containerConfig) {
+    return
+  }
+
+  const children = (block as Record<string, unknown>)[
+    containerConfig.field.name
+  ]
+  if (!Array.isArray(children)) {
+    return
+  }
+
+  // Each container field is its own list-counter scope.
+  const innerState = createListState()
+
+  for (const child of children) {
+    walkBlock(context, child, nextScope, listIndexMap, innerState)
+  }
+}
 
 /**
  * Mutates the maps in place.
  */
 export function buildIndexMaps(
-  context: Pick<EditorContext, 'schema' | 'value'>,
+  context: Pick<EditorContext, 'schema' | 'containers' | 'value'>,
   {
     blockIndexMap,
     listIndexMap,
@@ -20,14 +165,8 @@ export function buildIndexMaps(
 ): void {
   blockIndexMap.clear()
   listIndexMap.clear()
-  levelIndexMaps.clear()
 
-  let previousListItem:
-    | {
-        listItem: string
-        level: number
-      }
-    | undefined
+  const rootState = createListState()
 
   for (let blockIndex = 0; blockIndex < context.value.length; blockIndex++) {
     const block = context.value.at(blockIndex)
@@ -38,94 +177,6 @@ export function buildIndexMaps(
 
     blockIndexMap.set(block._key, blockIndex)
 
-    // Clear the state if we encounter a non-text block
-    if (!isTextBlockNode(context, block)) {
-      levelIndexMaps.clear()
-      previousListItem = undefined
-
-      continue
-    }
-
-    // Clear the state if we encounter a non-list text block
-    if (block.listItem === undefined || block.level === undefined) {
-      levelIndexMaps.clear()
-      previousListItem = undefined
-
-      continue
-    }
-
-    // If we encounter a new list item, we set the initial index to 1 for the
-    // list type on that level.
-    if (!previousListItem) {
-      const listIndex = 1
-      const levelIndexMap =
-        levelIndexMaps.get(block.listItem) ?? new Map<number, number>()
-      levelIndexMap.set(block.level, listIndex)
-      levelIndexMaps.set(block.listItem, levelIndexMap)
-
-      listIndexMap.set(block._key, listIndex)
-
-      previousListItem = {
-        listItem: block.listItem,
-        level: block.level,
-      }
-
-      continue
-    }
-
-    // If the previous list item is of the same type but on a lower level, we
-    // need to reset the level index map for that type.
-    if (
-      previousListItem.listItem === block.listItem &&
-      previousListItem.level < block.level
-    ) {
-      const listIndex = 1
-      const levelIndexMap =
-        levelIndexMaps.get(block.listItem) ?? new Map<number, number>()
-      levelIndexMap.set(block.level, listIndex)
-      levelIndexMaps.set(block.listItem, levelIndexMap)
-
-      listIndexMap.set(block._key, listIndex)
-
-      previousListItem = {
-        listItem: block.listItem,
-        level: block.level,
-      }
-
-      continue
-    }
-
-    // Reset other list types at current level and deeper
-    levelIndexMaps.forEach((levelIndexMap, listItem) => {
-      if (listItem === block.listItem) {
-        return
-      }
-
-      // Reset all levels that are >= current level
-      const levelsToDelete: number[] = []
-
-      levelIndexMap.forEach((_, level) => {
-        if (level >= block.level!) {
-          levelsToDelete.push(level)
-        }
-      })
-
-      levelsToDelete.forEach((level) => {
-        levelIndexMap.delete(level)
-      })
-    })
-
-    const levelIndexMap =
-      levelIndexMaps.get(block.listItem) ?? new Map<number, number>()
-    const levelCounter = levelIndexMap.get(block.level) ?? 0
-    levelIndexMap.set(block.level, levelCounter + 1)
-    levelIndexMaps.set(block.listItem, levelIndexMap)
-
-    listIndexMap.set(block._key, levelCounter + 1)
-
-    previousListItem = {
-      listItem: block.listItem,
-      level: block.level,
-    }
+    walkBlock(context, block as PortableTextBlock, '', listIndexMap, rootState)
   }
 }

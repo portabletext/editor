@@ -1,5 +1,5 @@
 import type {EditorSchema} from '../editor/editor-schema'
-import type {Containers} from '../schema/resolve-containers'
+import type {TraversalContainers} from '../schema/resolve-containers'
 import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
 import {isAncestorPath} from '../slate/path/is-ancestor-path'
@@ -24,7 +24,7 @@ import {getChildrenInternal} from './get-children'
 export function* getNodes(
   context: {
     schema: EditorSchema
-    containers: Containers
+    containers: TraversalContainers
     value: Array<Node>
     blockIndexMap: Map<string, number>
   },
@@ -65,7 +65,7 @@ export function* getNodes(
 export function* getNodeDescendants(
   context: {
     schema: EditorSchema
-    containers: Containers
+    containers: TraversalContainers
   },
   node: Node | {value: Array<Node>},
 ): Generator<{node: Node; path: Path}, void, undefined> {
@@ -79,7 +79,7 @@ export function* getNodeDescendants(
 function* getNodesSimple(
   context: {
     schema: EditorSchema
-    containers: Containers
+    containers: TraversalContainers
   },
   root: Node | {value: Array<Node>},
   path: Path,
@@ -112,7 +112,7 @@ function* getNodesSimple(
 function comparePathsInTree(
   context: {
     schema: EditorSchema
-    containers: Containers
+    containers: TraversalContainers
     blockIndexMap: Map<string, number>
   },
   root: Node | {value: Array<Node>},
@@ -207,7 +207,7 @@ function comparePathsInTree(
 function* getNodesInRange(
   context: {
     schema: EditorSchema
-    containers: Containers
+    containers: TraversalContainers
     blockIndexMap: Map<string, number>
   },
   root: Node | {value: Array<Node>},
@@ -251,7 +251,7 @@ function* getNodesInRange(
 function isInRange(
   context: {
     schema: EditorSchema
-    containers: Containers
+    containers: TraversalContainers
     blockIndexMap: Map<string, number>
   },
   root: Node | {value: Array<Node>},
@@ -287,7 +287,7 @@ function isInRange(
 function couldContainInRangeNodes(
   context: {
     schema: EditorSchema
-    containers: Containers
+    containers: TraversalContainers
     blockIndexMap: Map<string, number>
   },
   root: Node | {value: Array<Node>},
@@ -316,7 +316,7 @@ function couldContainInRangeNodes(
 function canStopTraversal(
   context: {
     schema: EditorSchema
-    containers: Containers
+    containers: TraversalContainers
     blockIndexMap: Map<string, number>
   },
   root: Node | {value: Array<Node>},

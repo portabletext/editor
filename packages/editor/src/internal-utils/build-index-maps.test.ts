@@ -4,6 +4,7 @@ import {
   type PortableTextBlock,
 } from '@portabletext/schema'
 import {describe, expect, test} from 'vitest'
+import type {TraversalContainers} from '../schema/resolve-containers'
 import {defaultKeyGenerator} from '../utils/key-generator'
 import {buildIndexMaps} from './build-index-maps'
 
@@ -46,12 +47,30 @@ const schema = compileSchema(
   }),
 )
 
+function calloutContainers(): TraversalContainers {
+  return new Map([
+    [
+      'callout',
+      {
+        field: {
+          name: 'content',
+          type: 'array',
+          of: [{type: 'block'}],
+        },
+      },
+    ],
+  ])
+}
+
 describe(buildIndexMaps.name, () => {
   const blockIndexMap = new Map<string, number>()
   const listIndexMap = new Map<string, number>()
 
   test('empty', () => {
-    buildIndexMaps({schema, value: []}, {blockIndexMap, listIndexMap})
+    buildIndexMaps(
+      {schema, containers: new Map(), value: []},
+      {blockIndexMap, listIndexMap},
+    )
     expect(blockIndexMap).toEqual(new Map())
     expect(listIndexMap).toEqual(new Map())
   })
@@ -61,7 +80,11 @@ describe(buildIndexMaps.name, () => {
    */
   test('single list item', () => {
     buildIndexMaps(
-      {schema, value: [textBlock('k0', {listItem: 'number', level: 1})]},
+      {
+        schema,
+        containers: new Map(),
+        value: [textBlock('k0', {listItem: 'number', level: 1})],
+      },
       {blockIndexMap, listIndexMap},
     )
     expect(blockIndexMap).toEqual(new Map([['k0', 0]]))
@@ -73,7 +96,11 @@ describe(buildIndexMaps.name, () => {
    */
   test('single indented list item', () => {
     buildIndexMaps(
-      {schema, value: [textBlock('k0', {listItem: 'number', level: 2})]},
+      {
+        schema,
+        containers: new Map(),
+        value: [textBlock('k0', {listItem: 'number', level: 2})],
+      },
       {blockIndexMap, listIndexMap},
     )
     expect(blockIndexMap).toEqual(new Map([['k0', 0]]))
@@ -91,6 +118,8 @@ describe(buildIndexMaps.name, () => {
     buildIndexMaps(
       {
         schema,
+        containers: new Map(),
+
         value: [
           textBlock('k0', {listItem: 'number', level: 1}),
           textBlock('k1', {listItem: 'number', level: 1}),
@@ -131,6 +160,8 @@ describe(buildIndexMaps.name, () => {
     buildIndexMaps(
       {
         schema,
+        containers: new Map(),
+
         value: [
           textBlock('k0', {listItem: 'number', level: 1}),
           textBlock('k1', {listItem: 'number', level: 1}),
@@ -169,6 +200,8 @@ describe(buildIndexMaps.name, () => {
     buildIndexMaps(
       {
         schema,
+        containers: new Map(),
+
         value: [
           textBlock('k0', {listItem: 'number', level: 1}),
           textBlock('k1', {listItem: 'bullet', level: 1}),
@@ -202,6 +235,8 @@ describe(buildIndexMaps.name, () => {
     buildIndexMaps(
       {
         schema,
+        containers: new Map(),
+
         value: [
           textBlock('k0', {listItem: 'number', level: 1}),
           textBlock('k1', {listItem: 'bullet', level: 2}),
@@ -230,6 +265,8 @@ describe(buildIndexMaps.name, () => {
     buildIndexMaps(
       {
         schema,
+        containers: new Map(),
+
         value: [
           textBlock('k0', {listItem: 'number', level: 1}),
           textBlock('k1', {listItem: 'number', level: 1}),
@@ -263,6 +300,8 @@ describe(buildIndexMaps.name, () => {
     buildIndexMaps(
       {
         schema,
+        containers: new Map(),
+
         value: [
           textBlock('k0', {listItem: 'number', level: 1}),
           textBlock('k1', {listItem: 'number', level: 1}),
@@ -296,6 +335,8 @@ describe(buildIndexMaps.name, () => {
     buildIndexMaps(
       {
         schema,
+        containers: new Map(),
+
         value: [
           textBlock('k0', {listItem: 'number', level: 1}),
           textBlock('k1', {listItem: 'number', level: 2}),
@@ -332,6 +373,8 @@ describe(buildIndexMaps.name, () => {
     buildIndexMaps(
       {
         schema,
+        containers: new Map(),
+
         value: [
           textBlock('k0', {listItem: 'number', level: 2}),
           textBlock('k1', {listItem: 'number', level: 1}),
@@ -371,6 +414,8 @@ describe(buildIndexMaps.name, () => {
     buildIndexMaps(
       {
         schema,
+        containers: new Map(),
+
         value: [
           textBlock('k0', {listItem: 'number', level: 1}),
           textBlock('k1', {listItem: 'number', level: 3}),
@@ -422,6 +467,8 @@ describe(buildIndexMaps.name, () => {
     buildIndexMaps(
       {
         schema,
+        containers: new Map(),
+
         value: [
           textBlock('k0', {listItem: 'bullet', level: 1}),
           textBlock('k1', {listItem: 'number', level: 2}),
@@ -448,6 +495,8 @@ describe(buildIndexMaps.name, () => {
     buildIndexMaps(
       {
         schema,
+        containers: new Map(),
+
         value: [
           textBlock('k0', {listItem: 'number', level: 2}),
           textBlock('k1', {listItem: 'bullet', level: 1}),
@@ -461,6 +510,88 @@ describe(buildIndexMaps.name, () => {
         ['k0', 1],
         ['k1', 1],
         ['k3', 1],
+      ]),
+    )
+  })
+
+  /**
+   * Callout container wraps a single numbered list of two items. Root has an
+   * earlier list that should not interfere with the container's list run.
+   *
+   * # (root)
+   * [callout:
+   *   # (inside)
+   *   # (inside)
+   * ]
+   */
+  test('list inside an editable container starts its own counter', () => {
+    buildIndexMaps(
+      {
+        schema,
+        containers: calloutContainers(),
+        value: [
+          textBlock('k0', {listItem: 'number', level: 1}),
+          {
+            _key: 'c0',
+            _type: 'callout',
+            content: [
+              textBlock('c1', {listItem: 'number', level: 1}),
+              textBlock('c2', {listItem: 'number', level: 1}),
+            ],
+          },
+        ],
+      },
+      {blockIndexMap, listIndexMap},
+    )
+    expect(listIndexMap).toEqual(
+      new Map([
+        ['k0', 1],
+        ['c1', 1],
+        ['c2', 2],
+      ]),
+    )
+  })
+
+  /**
+   * Two back-to-back callouts. Each container is its own counter scope;
+   * the second callout's list starts at 1.
+   *
+   * [callout:
+   *   #
+   *   #
+   * ]
+   * [callout:
+   *   #
+   * ]
+   */
+  test('two sibling containers each have their own list scope', () => {
+    buildIndexMaps(
+      {
+        schema,
+        containers: calloutContainers(),
+        value: [
+          {
+            _key: 'a',
+            _type: 'callout',
+            content: [
+              textBlock('a0', {listItem: 'number', level: 1}),
+              textBlock('a1', {listItem: 'number', level: 1}),
+            ],
+          },
+          {
+            _key: 'b',
+            _type: 'callout',
+            content: [textBlock('b0', {listItem: 'number', level: 1})],
+          },
+        ],
+      },
+      {blockIndexMap, listIndexMap},
+    )
+    expect(listIndexMap).toEqual(
+      new Map([
+        ['a0', 1],
+        ['a1', 2],
+        ['b0', 1],
       ]),
     )
   })

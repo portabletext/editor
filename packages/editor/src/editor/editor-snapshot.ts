@@ -1,4 +1,8 @@
-import type {PortableTextBlock} from '@portabletext/schema'
+import type {
+  FieldDefinition,
+  OfDefinition,
+  PortableTextBlock,
+} from '@portabletext/schema'
 import type {Converter} from '../converters/converter.types'
 import type {EditorSelection} from '../types/editor'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
@@ -14,6 +18,25 @@ export type EditorContext = {
   schema: EditorSchema
   selection: EditorSelection
   value: Array<PortableTextBlock>
+  /**
+   * Map of registered editable containers keyed by their scoped type name
+   * (the '.'-joined type chain from root, e.g. `'code-block'`,
+   * `'callout.code-block'`, `'callout.code-block.block'`).
+   *
+   * Used by container-aware selectors and traversal utilities to resolve
+   * which array field on a container node holds its editable children.
+   *
+   * @alpha
+   */
+  containers: ReadonlyMap<
+    string,
+    {
+      field: FieldDefinition & {
+        type: 'array'
+        of: ReadonlyArray<OfDefinition>
+      }
+    }
+  >
 }
 
 /**
@@ -45,6 +68,7 @@ export function createEditorSnapshot({
   const selection = editor.selection
 
   const context = {
+    containers: editor.containers,
     converters,
     keyGenerator,
     readOnly,

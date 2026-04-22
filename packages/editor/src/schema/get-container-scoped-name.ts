@@ -3,7 +3,7 @@ import {getAncestors} from '../node-traversal/get-ancestors'
 import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
 import {isObjectNode} from '../slate/node/is-object-node'
-import type {Containers} from './resolve-containers'
+import type {TraversalContainers} from './resolve-containers'
 
 /**
  * Build the scoped type name for a node at a given path.
@@ -15,7 +15,7 @@ import type {Containers} from './resolve-containers'
 export function getContainerScopedName(
   context: {
     schema: EditorSchema
-    containers: Containers
+    containers: TraversalContainers
     value: Array<Node>
   },
   node: Node,

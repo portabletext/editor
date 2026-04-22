@@ -31,23 +31,21 @@ export function updateValuePlugin(
 
     apply(operation)
 
-    // Operations deep inside blocks (path length > 2) only modify nested
-    // structure and cannot affect root-level blockIndexMap or listIndexMap.
-    // Root-level inserts/removes are already handled incrementally by
-    // applyOperation, so we only need a full rebuild for operations at or
-    // near the root level.
-    if (operation.path.length <= 2) {
-      buildIndexMaps(
-        {
-          schema: context.schema,
-          value: editor.children,
-        },
-        {
-          blockIndexMap: editor.blockIndexMap,
-          listIndexMap: editor.listIndexMap,
-        },
-      )
-    }
+    // Any non-text structural op can affect list counters anywhere in the
+    // tree (including inside editable containers). Root-level `blockIndexMap`
+    // updates are already incremental in `applyOperation`; `listIndexMap` is
+    // positional and rebuilt in full here.
+    buildIndexMaps(
+      {
+        schema: context.schema,
+        containers: editor.containers,
+        value: editor.children,
+      },
+      {
+        blockIndexMap: editor.blockIndexMap,
+        listIndexMap: editor.listIndexMap,
+      },
+    )
   }
 
   return editor
