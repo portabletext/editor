@@ -27,6 +27,7 @@ import {
   ActivityIcon,
   AtSignIcon,
   BoldIcon,
+  BoxIcon,
   CodeIcon,
   Heading1Icon,
   Heading2Icon,
@@ -35,6 +36,7 @@ import {
   Heading5Icon,
   Heading6Icon,
   ImageIcon,
+  InfoIcon,
   ItalicIcon,
   LinkIcon,
   ListIcon,
@@ -45,9 +47,11 @@ import {
   StrikethroughIcon,
   SubscriptIcon,
   SuperscriptIcon,
+  TableIcon,
   TextQuoteIcon,
   UnderlineIcon,
 } from 'lucide-react'
+import type {FieldOption} from '../primitives/fields'
 import {Group} from '../primitives/group'
 import {Separator} from '../primitives/separator'
 import {Toolbar} from '../primitives/toolbar'
@@ -234,7 +238,7 @@ const extendList: ExtendListSchemaType = (list) => {
   return list
 }
 
-export const extendBlockObject: ExtendBlockObjectSchemaType = (blockObject) => {
+export const extendBlockObject = ((blockObject) => {
   if (blockObject.name === 'break') {
     return {
       ...blockObject,
@@ -253,8 +257,96 @@ export const extendBlockObject: ExtendBlockObjectSchemaType = (blockObject) => {
     }
   }
 
+  if (blockObject.name === 'callout') {
+    return {
+      ...blockObject,
+      icon: InfoIcon,
+      defaultValues: {
+        tone: 'note',
+        content: [
+          {
+            _type: 'block',
+            style: 'normal',
+            children: [{_type: 'span', text: '', marks: []}],
+            markDefs: [],
+          },
+        ],
+      },
+      fieldOptions: {
+        tone: {
+          list: [
+            {value: 'note', title: 'Note'},
+            {value: 'tip', title: 'Tip'},
+            {value: 'important', title: 'Important'},
+            {value: 'warning', title: 'Warning'},
+            {value: 'caution', title: 'Caution'},
+          ],
+        },
+      } satisfies Record<string, FieldOption>,
+    }
+  }
+
+  if (blockObject.name === 'fact-box') {
+    return {
+      ...blockObject,
+      icon: BoxIcon,
+      defaultValues: {
+        content: [
+          {
+            _type: 'block',
+            style: 'normal',
+            children: [{_type: 'span', text: '', marks: []}],
+            markDefs: [],
+          },
+        ],
+      },
+    }
+  }
+
+  if (blockObject.name === 'code-block') {
+    return {
+      ...blockObject,
+      icon: CodeIcon,
+      defaultValues: {
+        lines: [
+          {
+            _type: 'block',
+            style: 'normal',
+            children: [{_type: 'span', text: '', marks: []}],
+            markDefs: [],
+          },
+        ],
+      },
+    }
+  }
+
+  if (blockObject.name === 'table') {
+    const emptyCell = () => ({
+      _type: 'cell',
+      content: [
+        {
+          _type: 'block',
+          style: 'normal',
+          children: [{_type: 'span', text: '', marks: []}],
+          markDefs: [],
+        },
+      ],
+    })
+    const emptyRow = () => ({
+      _type: 'row',
+      cells: [emptyCell(), emptyCell(), emptyCell()],
+    })
+    return {
+      ...blockObject,
+      icon: TableIcon,
+      defaultValues: {
+        rows: [emptyRow(), emptyRow()],
+      },
+    }
+  }
+
   return blockObject
-}
+}) satisfies ExtendBlockObjectSchemaType
 
 const extendInlineObject: ExtendInlineObjectSchemaType = (inlineObject) => {
   if (inlineObject.name === 'stock-ticker') {

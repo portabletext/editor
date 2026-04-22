@@ -1,12 +1,13 @@
 import type {ToolbarBlockObjectSchemaType} from '@portabletext/toolbar'
 import {z} from 'zod/v4'
 import {Button} from '../primitives/button'
-import {Fields} from '../primitives/fields'
+import {Fields, type FieldOption} from '../primitives/fields'
 
 const FormDataSchema = z.record(z.string(), z.unknown())
 
 export function ObjectForm(
   props: Pick<ToolbarBlockObjectSchemaType, 'fields' | 'defaultValues'> & {
+    fieldOptions?: Record<string, FieldOption | undefined>
     submitLabel: string
   } & {
     onSubmit: ({value}: {value: {[key: string]: unknown}}) => void
@@ -27,8 +28,21 @@ export function ObjectForm(
         })
       }}
     >
-      <Fields fields={props.fields} defaultValues={props.defaultValues} />
-      <Button className="self-end" type="submit" size="sm">
+      <Fields
+        fields={props.fields}
+        defaultValues={props.defaultValues}
+        fieldOptions={props.fieldOptions}
+      />
+      <Button
+        autoFocus={
+          props.fields.filter(
+            (field) => field.type === 'string' || field.type === 'number',
+          ).length === 0
+        }
+        className="self-end"
+        type="submit"
+        size="sm"
+      >
         {props.submitLabel}
       </Button>
     </form>

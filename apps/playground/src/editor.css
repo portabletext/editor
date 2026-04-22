@@ -191,3 +191,79 @@
 [data-level='10'] {
   padding-left: calc(var(--list-padding) * 9);
 }
+
+/**
+ * Playground table styling.
+ *
+ * `data-header-rows` carries the table's headerRows count; CSS targets
+ * the first N rows via `tr:nth-child(-n+N)` to highlight headers.
+ */
+.playground-table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1rem 0;
+  font-size: 0.875rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.375rem;
+  overflow: hidden;
+}
+
+.playground-table td {
+  border: 1px solid #cbd5e1;
+  padding: 0.5rem 0.75rem;
+  vertical-align: top;
+  min-width: 8rem;
+  background: #ffffff;
+}
+
+/* Zebra rows for body */
+.playground-table tr:nth-child(even) td {
+  background: #f8fafc;
+}
+
+/* Header rows: any of the first N rows */
+.playground-table[data-header-rows='1'] tr:nth-child(1) td,
+.playground-table[data-header-rows='2'] tr:nth-child(-n + 2) td,
+.playground-table[data-header-rows='3'] tr:nth-child(-n + 3) td {
+  background: #e2e8f0;
+  font-weight: 600;
+  color: #0f172a;
+  border-bottom: 2px solid #94a3b8;
+}
+
+/**
+ * Selection cues. `data-selected` is set on table/row/cell wrappers when
+ * the editor selection touches them (cascades up the container chain).
+ * Caret in a cell highlights that cell, its row, and the table. Caret
+ * outside the table leaves all three unstyled.
+ */
+.playground-table[data-selected] {
+  border-color: #475569;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+
+.playground-table tr[data-selected] td {
+  background: #eff6ff;
+}
+
+.playground-table tr[data-selected]:nth-child(even) td {
+  background: #dbeafe;
+}
+
+.playground-table[data-header-rows='1'] tr[data-selected]:nth-child(1) td,
+.playground-table[data-header-rows='2'] tr[data-selected]:nth-child(-n + 2) td,
+.playground-table[data-header-rows='3'] tr[data-selected]:nth-child(-n + 3) td {
+  background: #c7d2fe;
+}
+
+.playground-table td[data-selected] {
+  background: #bfdbfe;
+  outline: 2px solid #3b82f6;
+  outline-offset: -2px;
+}
+
+.playground-table[data-header-rows='1'] tr:nth-child(1) td[data-selected],
+.playground-table[data-header-rows='2'] tr:nth-child(-n + 2) td[data-selected],
+.playground-table[data-header-rows='3'] tr:nth-child(-n + 3) td[data-selected] {
+  background: #a5b4fc;
+}

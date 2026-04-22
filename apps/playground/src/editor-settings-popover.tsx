@@ -77,6 +77,21 @@ export function EditorSettingsPopover(props: {editorRef: EditorActorRef}) {
               onChange={() => toggleFlag('codeBlockPlugin')}
             />
             <FeatureSwitch
+              label="Callout"
+              isSelected={featureFlags.calloutPlugin}
+              onChange={() => toggleFlag('calloutPlugin')}
+            />
+            <FeatureSwitch
+              label="Fact box"
+              isSelected={featureFlags.factBoxPlugin}
+              onChange={() => toggleFlag('factBoxPlugin')}
+            />
+            <FeatureSwitch
+              label="Table"
+              isSelected={featureFlags.tablePlugin}
+              onChange={() => toggleFlag('tablePlugin')}
+            />
+            <FeatureSwitch
               label="Typography"
               isSelected={featureFlags.typographyPlugin}
               onChange={() => toggleFlag('typographyPlugin')}
@@ -106,6 +121,11 @@ export function EditorSettingsPopover(props: {editorRef: EditorActorRef}) {
               label="Text files"
               isSelected={featureFlags.textFileDeserializerPlugin}
               onChange={() => toggleFlag('textFileDeserializerPlugin')}
+            />
+            <FeatureSwitch
+              label="Markdown content"
+              isSelected={featureFlags.markdownDeserializerPlugin}
+              onChange={() => toggleFlag('markdownDeserializerPlugin')}
             />
           </Section>
         </div>
