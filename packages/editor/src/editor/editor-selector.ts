@@ -71,6 +71,7 @@ export function getEditorSnapshot({
   return {
     blockIndexMap: slateEditorInstance.blockIndexMap,
     context: {
+      containers: slateEditorInstance.containers,
       converters: [...editorActorSnapshot.context.converters],
       keyGenerator: editorActorSnapshot.context.keyGenerator,
       readOnly: editorActorSnapshot.matches({'edit mode': 'read only'}),

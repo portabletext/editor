@@ -10,6 +10,15 @@ export type ChildArrayField = FieldDefinition & {
 }
 
 /**
+ * Public shape of the container map carried on `EditorContext`.
+ *
+ * Values carry only what traversal and selectors need (the array field
+ * holding editable children). The internal `Containers` map carries the
+ * full `ContainerConfig` and is a subtype of this.
+ */
+export type TraversalContainers = ReadonlyMap<string, {field: ChildArrayField}>
+
+/**
  * Maps scoped type names (type chain joined by '.') to registered container
  * configs.
  *
