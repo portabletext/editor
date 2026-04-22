@@ -7,13 +7,16 @@ import {
 import type {ToolbarBlockObjectSchemaType} from '@portabletext/toolbar'
 import Fuse from 'fuse.js'
 import {
+  CodeIcon,
   Heading1Icon,
   Heading2Icon,
   Heading3Icon,
   ImageIcon,
+  InfoIcon,
   ListIcon,
   ListOrderedIcon,
   SeparatorHorizontalIcon,
+  TableIcon,
   TextQuoteIcon,
 } from 'lucide-react'
 import {useEffect, useRef, useState, type JSX} from 'react'
@@ -102,6 +105,39 @@ const commands: CommandMatch[] = [
     action: {
       type: 'insert.block',
       block: {_type: 'image'},
+    },
+  },
+  {
+    key: 'callout',
+    label: 'Callout',
+    description: 'Highlighted note or aside',
+    icon: <InfoIcon className="size-4" />,
+    keywords: ['callout', 'note', 'aside', 'info'],
+    action: {
+      type: 'insert.block',
+      block: {_type: 'callout'},
+    },
+  },
+  {
+    key: 'code-block',
+    label: 'Code Block',
+    description: 'Formatted code snippet',
+    icon: <CodeIcon className="size-4" />,
+    keywords: ['code', 'code block', 'pre', 'snippet'],
+    action: {
+      type: 'insert.block',
+      block: {_type: 'code-block'},
+    },
+  },
+  {
+    key: 'table',
+    label: 'Table',
+    description: 'Rows and columns',
+    icon: <TableIcon className="size-4" />,
+    keywords: ['table', 'grid', 'rows', 'columns'],
+    action: {
+      type: 'insert.block',
+      block: {_type: 'table'},
     },
   },
   {
