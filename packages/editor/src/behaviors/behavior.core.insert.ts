@@ -1,5 +1,6 @@
 import {getActiveAnnotationsMarks} from '../selectors/selector.get-active-annotation-marks'
 import {getActiveDecorators} from '../selectors/selector.get-active-decorators'
+import {getAvailableDecorators} from '../selectors/selector.get-available-decorators'
 import {getFocusSpan} from '../selectors/selector.get-focus-span'
 import {getMarkState} from '../selectors/selector.get-mark-state'
 import {raise} from './behavior.types.action'
@@ -20,10 +21,9 @@ export const coreInsertBehaviors = [
       const activeAnnotations = getActiveAnnotationsMarks(snapshot)
 
       if (markState && markState.state === 'unchanged') {
+        const availableDecorators = getAvailableDecorators(snapshot)
         const markStateDecorators = (markState.marks ?? []).filter((mark) =>
-          snapshot.context.schema.decorators
-            .map((decorator) => decorator.name)
-            .includes(mark),
+          availableDecorators.includes(mark),
         )
 
         if (
