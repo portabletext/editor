@@ -9,11 +9,13 @@ import {getFocusTextBlock} from './selector.get-focus-text-block'
  * container), returns the lists declared by the applicable block
  * sub-schema. Falls back to the root schema's lists when there is no
  * focus text block (e.g. focus in a void block object).
+ *
+ * @beta
  */
 export const getAvailableLists: EditorSelector<Array<string>> = (snapshot) => {
   const focusTextBlock = getFocusTextBlock(snapshot)
   const lists = focusTextBlock
-    ? getBlockSubSchema(snapshot.context, focusTextBlock.path).lists
+    ? getBlockSubSchema(snapshot, focusTextBlock.path).lists
     : snapshot.context.schema.lists
   return lists.map((list) => list.name)
 }
