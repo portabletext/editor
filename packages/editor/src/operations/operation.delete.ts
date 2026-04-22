@@ -1,13 +1,17 @@
 import {resolveSelection} from '../internal-utils/apply-selection'
 import {deleteRange} from '../internal-utils/delete-range'
+import {getAncestor} from '../node-traversal/get-ancestor'
 import {getAncestorTextBlock} from '../node-traversal/get-ancestor-text-block'
+import {getChildren} from '../node-traversal/get-children'
 import {getHighestObjectNode} from '../node-traversal/get-highest-object-node'
 import {getNode} from '../node-traversal/get-node'
 import {getNodes} from '../node-traversal/get-nodes'
 import {getParent} from '../node-traversal/get-parent'
+import {getSibling} from '../node-traversal/get-sibling'
 import {getSpanNode} from '../node-traversal/get-span-node'
 import {isBlock} from '../node-traversal/is-block'
 import {isInline} from '../node-traversal/is-inline'
+import {isEditableContainer} from '../schema/is-editable-container'
 import {deleteText} from '../slate/core/delete-text'
 import {DOMEditor} from '../slate/dom/plugin/dom-editor'
 import {end as editorEnd} from '../slate/editor/end'
@@ -33,6 +37,7 @@ import {isCollapsedRange} from '../slate/range/is-collapsed-range'
 import {rangeEdges} from '../slate/range/range-edges'
 import {rangeEnd} from '../slate/range/range-end'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
+import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import type {OperationImplementation} from './operation.types'
 
@@ -173,6 +178,95 @@ export const deleteOperationImplementation: OperationImplementation<
         })
         return
       }
+    }
+  }
+
+  // Collapsed Backspace/Delete inside an empty editable container removes the
+  // container. Walks up through single-child container ancestors, stopping at
+  // the first level with structural siblings (e.g. a cell inside a row).
+  if (isCollapsedRange(at)) {
+    const isContainer = (node: Node, path: Path) =>
+      isEditableContainer(operation.editor, node, path)
+
+    const innerContainer = getAncestor(
+      operation.editor,
+      start.path,
+      isContainer,
+    )
+    const innerChildren = innerContainer
+      ? getChildren(operation.editor, innerContainer.path)
+      : []
+
+    if (
+      innerContainer &&
+      innerChildren.length === 1 &&
+      isEmptyTextBlock(operation.editor, innerChildren[0]!.node)
+    ) {
+      let target: {node: Node; path: Path} = innerContainer
+
+      while (true) {
+        const enclosing = getAncestor(
+          operation.editor,
+          target.path,
+          isContainer,
+        )
+
+        if (!enclosing) {
+          break
+        }
+
+        // Only promote if target is the sole child of its enclosing container.
+        const enclosingChildren = getChildren(operation.editor, enclosing.path)
+        if (
+          enclosingChildren.length !== 1 ||
+          !pathEquals(enclosingChildren[0]!.path, target.path)
+        ) {
+          break
+        }
+
+        // Stop if removing enclosing would break a structural ancestor (e.g.
+        // a table row losing one of its cells).
+        const enclosingParent = getAncestor(
+          operation.editor,
+          enclosing.path,
+          isContainer,
+        )
+        if (
+          enclosingParent &&
+          (getSibling(operation.editor, enclosing.path, 'previous') ||
+            getSibling(operation.editor, enclosing.path, 'next'))
+        ) {
+          break
+        }
+
+        target = enclosing
+      }
+
+      const reverse = operation.direction === 'backward'
+      const preferred = getSibling(
+        operation.editor,
+        target.path,
+        reverse ? 'previous' : 'next',
+      )
+      const landing =
+        preferred ??
+        getSibling(operation.editor, target.path, reverse ? 'next' : 'previous')
+
+      operation.editor.apply({type: 'unset', path: target.path})
+
+      if (landing && operation.editor.selection) {
+        const point =
+          preferred && reverse
+            ? editorEnd(operation.editor, landing.path)
+            : editorStart(operation.editor, landing.path)
+        operation.editor.apply({
+          type: 'set_selection',
+          properties: operation.editor.selection,
+          newProperties: {anchor: point, focus: point},
+        })
+      }
+
+      return
     }
   }
 
