@@ -1,5 +1,4 @@
-import {getNextBlock} from '../selectors/selector.get-next-block'
-import {getPreviousBlock} from '../selectors/selector.get-previous-block'
+import {getSibling} from '../node-traversal/get-sibling'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
@@ -7,35 +6,20 @@ export const abstractMoveBehaviors = [
   defineBehavior({
     on: 'move.block up',
     guard: ({snapshot, event}) => {
-      const previousBlock = getPreviousBlock({
-        ...snapshot,
-        context: {
-          ...snapshot.context,
-          selection: {
-            anchor: {
-              path: event.at,
-              offset: 0,
-            },
-            focus: {
-              path: event.at,
-              offset: 0,
-            },
-          },
-        },
-      })
+      const previousSibling = getSibling(snapshot.context, event.at, 'previous')
 
-      if (previousBlock) {
-        return {previousBlock}
+      if (previousSibling) {
+        return {previousSibling}
       }
 
       return false
     },
     actions: [
-      ({event}, {previousBlock}) => [
+      ({event}, {previousSibling}) => [
         raise({
           type: 'move.block',
           at: event.at,
-          to: previousBlock.path,
+          to: previousSibling.path,
         }),
       ],
     ],
@@ -43,35 +27,20 @@ export const abstractMoveBehaviors = [
   defineBehavior({
     on: 'move.block down',
     guard: ({snapshot, event}) => {
-      const nextBlock = getNextBlock({
-        ...snapshot,
-        context: {
-          ...snapshot.context,
-          selection: {
-            anchor: {
-              path: event.at,
-              offset: 0,
-            },
-            focus: {
-              path: event.at,
-              offset: 0,
-            },
-          },
-        },
-      })
+      const nextSibling = getSibling(snapshot.context, event.at, 'next')
 
-      if (nextBlock) {
-        return {nextBlock}
+      if (nextSibling) {
+        return {nextSibling}
       }
 
       return false
     },
     actions: [
-      ({event}, {nextBlock}) => [
+      ({event}, {nextSibling}) => [
         raise({
           type: 'move.block',
           at: event.at,
-          to: nextBlock.path,
+          to: nextSibling.path,
         }),
       ],
     ],

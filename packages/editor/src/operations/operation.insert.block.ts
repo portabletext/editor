@@ -8,11 +8,12 @@ import {safeStringify} from '../internal-utils/safe-json'
 import {setNodeProperties} from '../internal-utils/set-node-properties'
 import {toSlateBlock} from '../internal-utils/values'
 import {getAncestorTextBlock} from '../node-traversal/get-ancestor-text-block'
+import {getChildren} from '../node-traversal/get-children'
+import {getEnclosingBlock} from '../node-traversal/get-enclosing-block'
 import {getNode} from '../node-traversal/get-node'
 import {getSibling} from '../node-traversal/get-sibling'
 import {getSpanNode} from '../node-traversal/get-span-node'
 import {getTextBlockNode} from '../node-traversal/get-text-block-node'
-import {isBlock} from '../node-traversal/is-block'
 import {end as editorEnd} from '../slate/editor/end'
 import {pathRef} from '../slate/editor/path-ref'
 import {rangeRef} from '../slate/editor/range-ref'
@@ -118,8 +119,8 @@ function resolveTarget(args: {
     ? rangeEdges(at, {}, editor)
     : [editorStart(editor, []), editorEnd(editor, [])]
 
-  const startBlockEntry = findContainingBlock(editor, startPoint.path)
-  const endBlockEntry = findContainingBlock(editor, endPoint.path)
+  const startBlockEntry = getEnclosingBlock(editor, startPoint.path)
+  const endBlockEntry = getEnclosingBlock(editor, endPoint.path)
 
   if (!startBlockEntry || !endBlockEntry) {
     return undefined
@@ -185,27 +186,6 @@ function resolveTarget(args: {
     blockPath: endBlockPath,
     splitAt: collapsedPoint,
   }
-}
-
-/**
- * Find the closest ancestor block that contains the given point path. Walks
- * up prefix-by-prefix (deepest first) so it works at any depth.
- */
-function findContainingBlock(
-  editor: PortableTextSlateEditor,
-  pointPath: Path,
-): {node: Node; path: Path} | undefined {
-  for (let length = pointPath.length; length >= 1; length--) {
-    const candidatePath = pointPath.slice(0, length)
-    if (typeof candidatePath[candidatePath.length - 1] === 'string') {
-      continue
-    }
-    const entry = getNode(editor, candidatePath)
-    if (entry && isBlock(editor, candidatePath)) {
-      return entry
-    }
-  }
-  return undefined
 }
 
 // ---------------------------------------------------------------------------
@@ -458,11 +438,10 @@ function mergeTextBlockFragment(args: {
   }
 
   if (select === 'start' && firstInsertedKey && resolvedAtPath) {
-    const firstInsertedPath: Path = [
-      ...parentPath(resolvedAtPath),
-      'children',
-      {_key: firstInsertedKey},
-    ]
+    const firstInsertedPath: Path = siblingPath(
+      resolvedAtPath,
+      firstInsertedKey,
+    )
     const startPoint = editorStart(editor, firstInsertedPath)
     applySelect(editor, startPoint)
   }
@@ -476,15 +455,17 @@ function mergeTextBlockFragment(args: {
 function deleteRange(editor: PortableTextSlateEditor, range: Range): void {
   const [start, end] = rangeEdges(range, {}, editor)
 
-  const sameRootBlock =
-    isKeyedSegment(start.path[0]!) && isKeyedSegment(end.path[0]!)
-      ? start.path[0]!._key === end.path[0]!._key
-      : start.path[0] === end.path[0]
+  const startBlock = getEnclosingBlock(editor, start.path)
+  const endBlock = getEnclosingBlock(editor, end.path)
 
-  if (sameRootBlock) {
-    deleteSameBlockRange(editor, start, end)
+  if (!startBlock || !endBlock) {
+    return
+  }
+
+  if (pathEquals(startBlock.path, endBlock.path)) {
+    deleteSameBlockRange(editor, start, end, startBlock.path)
   } else {
-    deleteCrossBlockRange(editor, start, end)
+    deleteCrossBlockRange(editor, start, end, startBlock.path, endBlock.path)
   }
 }
 
@@ -546,8 +527,8 @@ function executeDeleteThenInsert(args: {
   const rangeStartPoint = rangeStart(range, editor)
   const rangeEndPoint = rangeEnd(range, editor)
 
-  const startBlockEntry = findContainingBlock(editor, rangeStartPoint.path)
-  const endBlockEntry = findContainingBlock(editor, rangeEndPoint.path)
+  const startBlockEntry = getEnclosingBlock(editor, rangeStartPoint.path)
+  const endBlockEntry = getEnclosingBlock(editor, rangeEndPoint.path)
   const wasCrossBlock =
     startBlockEntry !== undefined &&
     endBlockEntry !== undefined &&
@@ -617,7 +598,7 @@ function executeDeleteThenInsert(args: {
   }
 
   const containingBlockEntry =
-    resolvedBlock ?? findContainingBlock(editor, collapsedPoint.path)
+    resolvedBlock ?? getEnclosingBlock(editor, collapsedPoint.path)
 
   if (!containingBlockEntry) {
     return
@@ -823,9 +804,8 @@ function deleteSameBlockRange(
   editor: PortableTextSlateEditor,
   start: Point,
   end: Point,
+  blockPath: Path,
 ) {
-  const blockPath: Path = [start.path[0]!]
-
   if (pathEquals(start.path, end.path)) {
     const textEntry = getSpanNode(editor, start.path)
     if (!textEntry) {
@@ -856,11 +836,11 @@ function deleteSameBlockRange(
   if (blockEntry) {
     const startChildIndex = resolveChildIndex(
       blockEntry.node.children,
-      start.path[2]!,
+      start.path.at(-1)!,
     )
     const endChildIndex = resolveChildIndex(
       blockEntry.node.children,
-      end.path[2]!,
+      end.path.at(-1)!,
     )
     for (let i = endChildIndex - 1; i > startChildIndex; i--) {
       removeNodeAt(editor, [
@@ -895,9 +875,9 @@ function deleteCrossBlockRange(
   editor: PortableTextSlateEditor,
   start: Point,
   end: Point,
+  startBlockPath: Path,
+  endBlockPath: Path,
 ) {
-  const startBlockPath: Path = [start.path[0]!]
-
   if (start.path.length > 1) {
     const startNodeEntry = getSpanNode(editor, start.path)
     if (startNodeEntry && start.offset < startNodeEntry.node.text.length) {
@@ -914,7 +894,7 @@ function deleteCrossBlockRange(
     if (startBlockEntry) {
       const startChildIndex = resolveChildIndex(
         startBlockEntry.node.children,
-        start.path[2]!,
+        start.path.at(-1)!,
       )
       for (
         let i = startBlockEntry.node.children.length - 1;
@@ -930,17 +910,25 @@ function deleteCrossBlockRange(
     }
   }
 
-  const startBlockKey = isKeyedSegment(start.path[0]!)
-    ? start.path[0]!._key
-    : undefined
-  const endBlockKey = isKeyedSegment(end.path[0]!)
-    ? end.path[0]!._key
-    : undefined
-  if (startBlockKey && endBlockKey) {
-    const startIdx = editor.children.findIndex((b) => b._key === startBlockKey)
-    const endIdx = editor.children.findIndex((b) => b._key === endBlockKey)
+  // Remove the blocks between start and end (exclusive). Both blocks share the
+  // same parent (`deleteRange` only enters this branch for a cross-block range
+  // within one container).
+  const startParent = parentPath(startBlockPath)
+  const startSegment = startBlockPath.at(-1)!
+  const endSegment = endBlockPath.at(-1)!
+  const siblings = getChildren(editor, startParent)
+  const startIdx = siblings.findIndex((entry) =>
+    segmentMatches(entry.path.at(-1), startSegment),
+  )
+  const endIdx = siblings.findIndex((entry) =>
+    segmentMatches(entry.path.at(-1), endSegment),
+  )
+  if (startIdx !== -1 && endIdx !== -1) {
     for (let i = endIdx - 1; i > startIdx; i--) {
-      removeNodeAt(editor, [{_key: editor.children[i]!._key}])
+      const sibling = siblings[i]
+      if (sibling) {
+        removeNodeAt(editor, sibling.path)
+      }
     }
   }
 
@@ -953,7 +941,7 @@ function deleteCrossBlockRange(
     if (endBlockNodeEntry) {
       const endChildIndex = resolveChildIndex(
         endBlockNodeEntry.node.children,
-        end.path[2]!,
+        end.path.at(-1)!,
       )
       for (let i = 0; i < endChildIndex; i++) {
         const firstChild = getTextBlockNode(editor, adjustedEndBlockPath)?.node
@@ -1006,6 +994,21 @@ function deleteCrossBlockRange(
     }
     applyMergeNode(editor, adjustedEndBlockPath, startBlockNode.children.length)
   }
+}
+
+/**
+ * Compare a resolved path segment against an expected segment from the
+ * block's path. Both sides may be `KeyedSegment` (string key) or numeric
+ * index (non-keyed arrays).
+ */
+function segmentMatches(
+  actual: unknown,
+  expected: string | number | {_key: string} | unknown,
+): boolean {
+  if (isKeyedSegment(actual) && isKeyedSegment(expected)) {
+    return actual._key === expected._key
+  }
+  return actual === expected
 }
 
 function removeNodeAt(editor: PortableTextSlateEditor, path: Path) {

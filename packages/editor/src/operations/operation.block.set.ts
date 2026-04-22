@@ -1,37 +1,26 @@
 import {applyAll, set} from '@portabletext/patches'
 import {safeStringify} from '../internal-utils/safe-json'
 import {setNodeProperties} from '../internal-utils/set-node-properties'
+import {getNode} from '../node-traversal/get-node'
+import {getBlockObjectSchema} from '../schema/get-block-object-schema'
+import {getBlockSubSchema} from '../schema/get-block-sub-schema'
 import {isTextBlockNode} from '../slate/node/is-text-block-node'
 import {parseMarkDefs} from '../utils/parse-blocks'
-import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import type {OperationImplementation} from './operation.types'
 
 export const blockSetOperationImplementation: OperationImplementation<
   'block.set'
 > = ({context, operation}) => {
-  const blockSegment = operation.at.at(0)
+  const blockEntry = getNode(operation.editor, operation.at)
 
-  if (!isKeyedSegment(blockSegment)) {
-    throw new Error(
-      `Unable to extract block key from ${safeStringify(operation.at)}`,
-    )
-  }
-
-  const blockIndex = operation.editor.blockIndexMap.get(blockSegment._key)
-
-  if (blockIndex === undefined) {
-    throw new Error(
-      `Unable to find block index for block at ${safeStringify(operation.at)}`,
-    )
-  }
-
-  const slateBlock = operation.editor.children.at(blockIndex)
-
-  if (!slateBlock) {
+  if (!blockEntry) {
     throw new Error(`Unable to find block at ${safeStringify(operation.at)}`)
   }
 
+  const slateBlock = blockEntry.node
+
   if (isTextBlockNode(context, slateBlock)) {
+    const subSchema = getBlockSubSchema(context, blockEntry.path)
     const filteredProps: Record<string, unknown> = {}
 
     for (const key of Object.keys(operation.props)) {
@@ -46,9 +35,7 @@ export const blockSetOperationImplementation: OperationImplementation<
 
       if (key === 'style') {
         if (
-          context.schema.styles.some(
-            (style) => style.name === operation.props[key],
-          )
+          subSchema.styles.some((style) => style.name === operation.props[key])
         ) {
           filteredProps[key] = operation.props[key]
         }
@@ -57,9 +44,7 @@ export const blockSetOperationImplementation: OperationImplementation<
 
       if (key === 'listItem') {
         if (
-          context.schema.lists.some(
-            (list) => list.name === operation.props[key],
-          )
+          subSchema.lists.some((list) => list.name === operation.props[key])
         ) {
           filteredProps[key] = operation.props[key]
         }
@@ -86,12 +71,12 @@ export const blockSetOperationImplementation: OperationImplementation<
       }
     }
 
-    setNodeProperties(operation.editor, filteredProps, [
-      {_key: slateBlock._key},
-    ])
+    setNodeProperties(operation.editor, filteredProps, blockEntry.path)
   } else {
-    const schemaDefinition = context.schema.blockObjects.find(
-      (definition) => definition.name === slateBlock._type,
+    const schemaDefinition = getBlockObjectSchema(
+      context,
+      slateBlock,
+      blockEntry.path,
     )
     const filteredProps: Record<string, unknown> = {}
 
@@ -105,7 +90,7 @@ export const blockSetOperationImplementation: OperationImplementation<
         continue
       }
 
-      if (schemaDefinition?.fields.some((field) => field.name === key)) {
+      if (schemaDefinition?.fields?.some((field) => field.name === key)) {
         filteredProps[key] = operation.props[key]
       }
     }
@@ -116,8 +101,6 @@ export const blockSetOperationImplementation: OperationImplementation<
 
     const updatedSlateBlock = applyAll(slateBlock, patches)
 
-    setNodeProperties(operation.editor, updatedSlateBlock, [
-      {_key: slateBlock._key},
-    ])
+    setNodeProperties(operation.editor, updatedSlateBlock, blockEntry.path)
   }
 }

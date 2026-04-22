@@ -2,21 +2,21 @@ import {isSpan, isTextBlock} from '@portabletext/schema'
 import {resolveSelection} from '../internal-utils/apply-selection'
 import {applySplitNode} from '../internal-utils/apply-split-node'
 import {setNodeProperties} from '../internal-utils/set-node-properties'
+import {getAncestorTextBlock} from '../node-traversal/get-ancestor-text-block'
 import {getNode} from '../node-traversal/get-node'
 import {getNodes} from '../node-traversal/get-nodes'
 import {isLeaf} from '../node-traversal/is-leaf'
 import {isEdge} from '../slate/editor/is-edge'
 import {isEnd} from '../slate/editor/is-end'
 import {isStart} from '../slate/editor/is-start'
-import {path as editorPath} from '../slate/editor/path'
 import {rangeRef} from '../slate/editor/range-ref'
 import {withoutNormalizing} from '../slate/editor/without-normalizing'
+import {parentPath} from '../slate/path/parent-path'
 import {isCollapsedRange} from '../slate/range/is-collapsed-range'
 import {isExpandedRange} from '../slate/range/is-expanded-range'
 import {rangeEdges} from '../slate/range/range-edges'
 import {rangeEnd} from '../slate/range/range-end'
 import {rangeStart} from '../slate/range/range-start'
-import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import type {OperationImplementation} from './operation.types'
 
 export const decoratorRemoveOperationImplementation: OperationImplementation<
@@ -77,12 +77,9 @@ export const decoratorRemoveOperationImplementation: OperationImplementation<
             continue
           }
 
-          const blockSegment = nodePath[0]!
-          const block = isKeyedSegment(blockSegment)
-            ? editor.children.find((b) => b._key === blockSegment._key)
-            : editor.children.at(
-                typeof blockSegment === 'number' ? blockSegment : -1,
-              )
+          const blockPath = parentPath(nodePath)
+          const blockEntry = getNode(editor, blockPath)
+          const block = blockEntry?.node
           if (
             isTextBlock({schema: editor.schema}, block) &&
             block.children.includes(node)
@@ -102,13 +99,12 @@ export const decoratorRemoveOperationImplementation: OperationImplementation<
       }
     }) // end withoutNormalizing
   } else {
-    const blockEntry = getNode(editor, editorPath(editor, at, {depth: 1}))
-    if (!blockEntry) {
+    const textBlockEntry = getAncestorTextBlock(context, at.focus.path)
+    if (!textBlockEntry) {
       return
     }
-    const {node: block, path: blockPath} = blockEntry
+    const {node: block, path: blockPath} = textBlockEntry
     const lonelyEmptySpan =
-      isTextBlock({schema: editor.schema}, block) &&
       block.children.length === 1 &&
       isSpan({schema: editor.schema}, block.children[0]) &&
       block.children[0].text === ''
