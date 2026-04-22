@@ -2,7 +2,6 @@ import {
   getBlockSubSchema,
   type BlockSubSchema,
 } from '../schema/get-block-sub-schema'
-import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
 import {useSlateStatic} from '../slate/react/hooks/use-slate-static'
 
@@ -19,7 +18,7 @@ export function useBlockSubSchema(path: Path): BlockSubSchema {
     {
       schema: editor.schema,
       containers: editor.containers,
-      value: editor.children as unknown as Array<Node>,
+      value: editor.children,
     },
     path,
   )

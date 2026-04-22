@@ -52,10 +52,7 @@ export function RenderElement(props: {
     state.context.containers.get(scopedTypeName),
   )
 
-  const leafConfig = useLeafConfig(
-    props.element as unknown as Parameters<typeof useLeafConfig>[0],
-    props.path,
-  )
+  const leafConfig = useLeafConfig(props.element, props.path)
 
   if (containerConfig) {
     return (

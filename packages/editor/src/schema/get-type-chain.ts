@@ -23,31 +23,14 @@ export function getTypeChain(
   node: Node,
   path: Path,
 ): Array<string> {
-  const ancestors = getAncestors(context, path)
   const chain: Array<string> = []
+  const ancestors = getAncestors(context, path)
 
   for (let i = ancestors.length - 1; i >= 0; i--) {
-    const ancestor = ancestors[i]!
-    const ancestorType = getNodeType(ancestor.node)
-    if (ancestorType !== undefined) {
-      chain.push(ancestorType)
-    }
+    chain.push(ancestors[i]!.node._type)
   }
 
-  const nodeType = getNodeType(node)
-  if (nodeType !== undefined) {
-    chain.push(nodeType)
-  }
+  chain.push(node._type)
 
   return chain
-}
-
-function getNodeType(node: Node): string | undefined {
-  if (typeof node !== 'object' || node === null) {
-    return undefined
-  }
-  if ('_type' in node && typeof node._type === 'string') {
-    return node._type
-  }
-  return undefined
 }

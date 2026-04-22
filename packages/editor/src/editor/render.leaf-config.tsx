@@ -9,7 +9,6 @@ import {useContext} from 'react'
 import {findMatchingLeaf} from '../renderers/find-matching-leaf'
 import type {LeafConfig} from '../renderers/renderer.types'
 import {getTypeChain} from '../schema/get-type-chain'
-import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
 import {useSlateStatic} from '../slate/react/hooks/use-slate-static'
 import {EditorActorContext} from './editor-actor-context'
@@ -38,9 +37,9 @@ export function useLeafConfig(
     {
       schema: editor.schema,
       containers: editor.containers,
-      value: editor.children as unknown as Array<Node>,
+      value: editor.children,
     },
-    node as unknown as Node,
+    node,
     path,
   )
 
@@ -61,7 +60,7 @@ export function RenderLeafConfig(props: {
   path: Path
   selected: boolean
 }) {
-  const rendered = props.leafConfig.leaf.render({
+  return props.leafConfig.leaf.render({
     attributes: props.attributes,
     children: props.children,
     focused: props.focused,
@@ -69,5 +68,4 @@ export function RenderLeafConfig(props: {
     path: props.path,
     selected: props.selected,
   })
-  return rendered as ReactElement | null
 }
