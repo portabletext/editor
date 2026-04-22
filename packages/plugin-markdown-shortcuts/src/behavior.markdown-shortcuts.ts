@@ -109,7 +109,8 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
       if (
         atTheBeginningOfBLock &&
         defaultStyle &&
-        focusTextBlock.node.style !== defaultStyle
+        focusTextBlock.node.style !== defaultStyle &&
+        selectors.getAvailableStyles(snapshot).includes(defaultStyle)
       ) {
         return {defaultStyle, focusTextBlock}
       }
