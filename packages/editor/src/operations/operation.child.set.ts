@@ -5,6 +5,7 @@ import {getNode} from '../node-traversal/get-node'
 import {getBlockSubSchema} from '../schema/get-block-sub-schema'
 import {isObjectNode} from '../slate/node/is-object-node'
 import {parentPath} from '../slate/path/parent-path'
+import {siblingPath} from '../slate/path/sibling-path'
 import type {OperationImplementation} from './operation.types'
 
 export const childSetOperationImplementation: OperationImplementation<
@@ -33,7 +34,7 @@ export const childSetOperationImplementation: OperationImplementation<
     const newKey = rest['_key']
     const textPath =
       typeof newKey === 'string' && newKey !== child._key
-        ? [...childPath.slice(0, -1), {_key: newKey}]
+        ? siblingPath(childPath, newKey)
         : childPath
 
     if (typeof text === 'string') {
