@@ -32,6 +32,7 @@ import {isAncestorPath} from '../path/is-ancestor-path'
 import {isCommonPath} from '../path/is-common-path'
 import {isPath} from '../path/is-path'
 import {isSiblingPath} from '../path/is-sibling-path'
+import {parentPath} from '../path/parent-path'
 import {pathEquals} from '../path/path-equals'
 import {pathLevels} from '../path/path-levels'
 import {isPoint} from '../point/is-point'
@@ -230,7 +231,16 @@ export function deleteText(editor: Editor, options: TextDeleteOptions = {}) {
         const {node: mergeNode, path: mergePath} = current
         const {node: prevNode, path: prevPath} = prev
 
-        if (mergePath.length !== 0 && prevPath.length !== 0) {
+        // When the two blocks live under different parents (e.g. a text block
+        // at the root and a line inside an editable container), merging would
+        // require moving nodes across structural boundaries. Skip the merge
+        // and leave both block shells in place.
+        const crossParent = !pathEquals(
+          parentPath(mergePath),
+          parentPath(prevPath),
+        )
+
+        if (mergePath.length !== 0 && prevPath.length !== 0 && !crossParent) {
           const common = commonPath(mergePath, prevPath)
           const isPreviousSibling = isSiblingPath(mergePath, prevPath)
           const editorLevels = pathLevels(mergePath)
