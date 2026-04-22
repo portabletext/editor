@@ -21,14 +21,7 @@ export function getVoidAncestor(
   },
   path: Path,
 ): {node: PortableTextObject; path: Path} | undefined {
-  const result = getAncestor(context, path, (node, ancestorPath) =>
+  return getAncestor(context, path, (node, ancestorPath) =>
     isVoidNode(context, node, ancestorPath),
   )
-  if (!result) {
-    return undefined
-  }
-  if (!isVoidNode(context, result.node, result.path)) {
-    return undefined
-  }
-  return {node: result.node, path: result.path}
 }
