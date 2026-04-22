@@ -1,11 +1,16 @@
 import type {EditorSnapshot} from '../editor/editor-snapshot'
+import {getBlockSubSchema} from '../schema/get-block-sub-schema'
+import {getFocusTextBlock} from './selector.get-focus-text-block'
 import {getMarkState} from './selector.get-mark-state'
 
 export function getActiveDecorators(snapshot: EditorSnapshot) {
-  const schema = snapshot.context.schema
+  const focusTextBlock = getFocusTextBlock(snapshot)
+  const decoratorSchemaTypes = focusTextBlock
+    ? getBlockSubSchema(snapshot.context, focusTextBlock.path).decorators
+    : snapshot.context.schema.decorators
   const decoratorState = snapshot.decoratorState
   const markState = getMarkState(snapshot)
-  const decorators = schema.decorators.map((decorator) => decorator.name)
+  const decorators = decoratorSchemaTypes.map((decorator) => decorator.name)
 
   const markStateDecorators = (markState?.marks ?? []).filter((mark) =>
     decorators.includes(mark),

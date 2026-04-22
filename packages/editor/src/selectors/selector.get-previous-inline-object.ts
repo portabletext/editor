@@ -7,6 +7,9 @@ import {getFocusTextBlock} from './selector.get-focus-text-block'
 import {getSelectionStartPoint} from './selector.get-selection-start-point'
 
 /**
+ * Returns the inline object before the selection start within the same text
+ * block, resolved at any depth.
+ *
  * @public
  */
 export const getPreviousInlineObject: EditorSelector<
@@ -18,34 +21,43 @@ export const getPreviousInlineObject: EditorSelector<
 > = (snapshot) => {
   const focusTextBlock = getFocusTextBlock(snapshot)
   const selectionStartPoint = getSelectionStartPoint(snapshot)
-  const selectionStartPointChildKey =
-    selectionStartPoint && isKeyedSegment(selectionStartPoint.path[2])
-      ? selectionStartPoint.path[2]._key
-      : undefined
 
-  if (!focusTextBlock || !selectionStartPointChildKey) {
+  if (!focusTextBlock || !selectionStartPoint) {
     return undefined
   }
 
-  let inlineObject:
+  const childSegment = selectionStartPoint.path.at(-1)
+
+  if (!isKeyedSegment(childSegment)) {
+    return undefined
+  }
+
+  const children = focusTextBlock.node.children
+  const currentIndex = children.findIndex(
+    (child) => child._key === childSegment._key,
+  )
+
+  if (currentIndex <= 0) {
+    return undefined
+  }
+
+  let previousInlineObject:
     | {
         node: PortableTextObject
         path: ChildPath
       }
     | undefined
 
-  for (const child of focusTextBlock.node.children) {
-    if (child._key === selectionStartPointChildKey) {
-      break
-    }
+  for (let index = 0; index < currentIndex; index++) {
+    const child = children[index]!
 
     if (!isSpanNode(snapshot.context, child)) {
-      inlineObject = {
+      previousInlineObject = {
         node: child,
         path: [...focusTextBlock.path, 'children', {_key: child._key}],
       }
     }
   }
 
-  return inlineObject
+  return previousInlineObject
 }

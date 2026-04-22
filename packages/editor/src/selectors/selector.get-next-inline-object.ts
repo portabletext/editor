@@ -7,6 +7,9 @@ import {getFocusTextBlock} from './selector.get-focus-text-block'
 import {getSelectionEndPoint} from './selector.get-selection-end-point'
 
 /**
+ * Returns the inline object after the selection end within the same text
+ * block, resolved at any depth.
+ *
  * @public
  */
 export const getNextInlineObject: EditorSelector<
@@ -18,37 +21,36 @@ export const getNextInlineObject: EditorSelector<
 > = (snapshot) => {
   const focusTextBlock = getFocusTextBlock(snapshot)
   const selectionEndPoint = getSelectionEndPoint(snapshot)
-  const selectionEndPointChildKey =
-    selectionEndPoint && isKeyedSegment(selectionEndPoint.path[2])
-      ? selectionEndPoint.path[2]._key
-      : undefined
 
-  if (!focusTextBlock || !selectionEndPointChildKey) {
+  if (!focusTextBlock || !selectionEndPoint) {
     return undefined
   }
 
-  let endPointChildFound = false
-  let inlineObject:
-    | {
-        node: PortableTextObject
-        path: ChildPath
-      }
-    | undefined
+  const childSegment = selectionEndPoint.path.at(-1)
 
-  for (const child of focusTextBlock.node.children) {
-    if (child._key === selectionEndPointChildKey) {
-      endPointChildFound = true
-      continue
-    }
+  if (!isKeyedSegment(childSegment)) {
+    return undefined
+  }
 
-    if (!isSpanNode(snapshot.context, child) && endPointChildFound) {
-      inlineObject = {
+  const children = focusTextBlock.node.children
+  const currentIndex = children.findIndex(
+    (child) => child._key === childSegment._key,
+  )
+
+  if (currentIndex === -1) {
+    return undefined
+  }
+
+  for (let index = currentIndex + 1; index < children.length; index++) {
+    const child = children[index]!
+
+    if (!isSpanNode(snapshot.context, child)) {
+      return {
         node: child,
         path: [...focusTextBlock.path, 'children', {_key: child._key}],
       }
-      break
     }
   }
 
-  return inlineObject
+  return undefined
 }

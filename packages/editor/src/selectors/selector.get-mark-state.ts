@@ -1,4 +1,5 @@
 import type {EditorSelector} from '../editor/editor-selector'
+import {getBlockSubSchema} from '../schema/get-block-sub-schema'
 import {isBlockPath} from '../types/paths'
 import {blockOffsetToSpanSelectionPoint} from '../utils/util.block-offset'
 import {isSelectionExpanded} from '../utils/util.is-selection-expanded'
@@ -124,7 +125,8 @@ export const getMarkState: EditorSelector<MarkState | undefined> = (
     }
   }
 
-  const decorators = snapshot.context.schema.decorators.map(
+  const focusSubSchema = getBlockSubSchema(snapshot.context, focusSpan.path)
+  const decorators = focusSubSchema.decorators.map(
     (decorator) => decorator.name,
   )
   const marks = focusSpan.node.marks ?? []

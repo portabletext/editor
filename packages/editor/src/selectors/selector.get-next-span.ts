@@ -1,11 +1,14 @@
 import {isSpan, isTextBlock, type PortableTextSpan} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
 import type {Path} from '../slate/interfaces/path'
-import {getChildKeyFromSelectionPoint} from '../utils/util.selection-point'
+import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import {getSelectionEndBlock} from './selector.get-selection-end-block'
 import {getSelectionEndPoint} from './selector.get-selection-end-point'
 
 /**
+ * Returns the span after the selection end within the same text block,
+ * resolved at any depth.
+ *
  * @public
  */
 export const getNextSpan: EditorSelector<
@@ -26,31 +29,31 @@ export const getNextSpan: EditorSelector<
     return undefined
   }
 
-  const selectionEndPointChildKey =
-    getChildKeyFromSelectionPoint(selectionEndPoint)
+  const childSegment = selectionEndPoint.path.at(-1)
 
-  let endPointChildFound = false
-  let nextSpan:
-    | {
-        node: PortableTextSpan
-        path: Path
-      }
-    | undefined
+  if (!isKeyedSegment(childSegment)) {
+    return undefined
+  }
 
-  for (const child of selectionEndBlock.node.children) {
-    if (child._key === selectionEndPointChildKey) {
-      endPointChildFound = true
-      continue
-    }
+  const children = selectionEndBlock.node.children
+  const currentIndex = children.findIndex(
+    (child) => child._key === childSegment._key,
+  )
 
-    if (isSpan(snapshot.context, child) && endPointChildFound) {
-      nextSpan = {
+  if (currentIndex === -1) {
+    return undefined
+  }
+
+  for (let index = currentIndex + 1; index < children.length; index++) {
+    const child = children[index]!
+
+    if (isSpan(snapshot.context, child)) {
+      return {
         node: child,
         path: [...selectionEndBlock.path, 'children', {_key: child._key}],
       }
-      break
     }
   }
 
-  return nextSpan
+  return undefined
 }
