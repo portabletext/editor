@@ -19,7 +19,12 @@ import type {Converter} from '../converters/converter.types'
 import {debug} from '../internal-utils/debug'
 import type {EventPosition} from '../internal-utils/event-position'
 import {sortByPriority} from '../priority/priority.sort'
-import type {Container, ContainerConfig} from '../renderers/renderer.types'
+import type {
+  Container,
+  ContainerConfig,
+  Leaf,
+  LeafConfig,
+} from '../renderers/renderer.types'
 import {
   resolveContainerField,
   resolveContainers,
@@ -144,6 +149,14 @@ type InternalEditorEvent =
       type: 'unregister container'
       container: Container
     }
+  | {
+      type: 'register leaf'
+      leaf: Leaf
+    }
+  | {
+      type: 'unregister leaf'
+      leaf: Leaf
+    }
   | {type: 'add slate editor'; editor: PortableTextSlateEditor}
 
 /**
@@ -206,6 +219,7 @@ export const editorMachine = setup({
       behaviors: Set<BehaviorConfig>
       behaviorsSorted: boolean
       containers: Containers
+      leafs: Map<string, LeafConfig>
       converters: Set<Converter>
       keyGenerator: () => string
       pendingEvents: Array<InternalPatchEvent | MutationEvent>
@@ -302,6 +316,33 @@ export const editorMachine = setup({
         context.slateEditor.onChange()
       }
       return {containers}
+    }),
+    'register leaf': assign(({context, event}) => {
+      assertEvent(event, 'register leaf')
+      const parsedScope = parseScope(event.leaf.scope)
+      if (!parsedScope) {
+        console.warn(
+          `registerLeaf: invalid scope "${event.leaf.scope}". Leaf not registered.`,
+        )
+        return {}
+      }
+      const leafs = new Map(context.leafs)
+      leafs.set(event.leaf.scope, {leaf: event.leaf, parsedScope})
+      if (context.slateEditor) {
+        context.slateEditor.leafs = leafs
+        context.slateEditor.onChange()
+      }
+      return {leafs}
+    }),
+    'unregister leaf': assign(({context, event}) => {
+      assertEvent(event, 'unregister leaf')
+      const leafs = new Map(context.leafs)
+      leafs.delete(event.leaf.scope)
+      if (context.slateEditor) {
+        context.slateEditor.leafs = leafs
+        context.slateEditor.onChange()
+      }
+      return {leafs}
     }),
     'sync containers': assign(({context}) => {
       const containers = resolveContainers(
@@ -491,6 +532,7 @@ export const editorMachine = setup({
     behaviors: new Set(coreBehaviorsConfig),
     behaviorsSorted: false,
     containers: new Map(),
+    leafs: new Map(),
     converters: new Set(input.converters ?? []),
     keyGenerator: input.keyGenerator,
     pendingEvents: [],
@@ -511,6 +553,12 @@ export const editorMachine = setup({
     },
     'unregister container': {
       actions: ['unregister container'],
+    },
+    'register leaf': {
+      actions: ['register leaf'],
+    },
+    'unregister leaf': {
+      actions: ['unregister leaf'],
     },
     'update selection': {
       actions: [

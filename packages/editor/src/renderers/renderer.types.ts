@@ -1,8 +1,18 @@
-import type {PortableTextBlock, SchemaDefinition} from '@portabletext/schema'
+import type {
+  PortableTextBlock,
+  PortableTextObject,
+  PortableTextSpan,
+  SchemaDefinition,
+} from '@portabletext/schema'
 import type {ReactElement} from 'react'
 import type {ChildArrayField} from '../schema/resolve-containers'
 import type {ParsedScope} from '../scope/parse-scope'
-import type {AllContainers, ContainerScope} from '../scope/scope.types'
+import type {
+  AllContainers,
+  ContainerScope,
+  LeafScope,
+} from '../scope/scope.types'
+import type {Path} from '../slate/interfaces/path'
 
 /**
  * @alpha
@@ -118,4 +128,78 @@ export type ContainerConfig = {
   container: Container
   parsedScope: ParsedScope
   field: ChildArrayField
+}
+
+/**
+ * @internal
+ *
+ * A leaf-config overrides how a matching span, inline object, or void
+ * block object renders inside a given scope. Registered via
+ * `editor.registerLeaf` (internal only).
+ */
+export type Leaf = {
+  scope: string
+  render: (props: {
+    attributes: Record<string, unknown>
+    children: ReactElement
+    focused: boolean
+    node: PortableTextBlock | PortableTextSpan | PortableTextObject
+    path: Path
+    selected: boolean
+  }) => ReactElement | null
+}
+
+/**
+ * @internal
+ *
+ * Schema-constrained leaf config. `scope` is narrowed to valid JSONPath
+ * leaf scopes (spans, inline objects, void block objects).
+ */
+type SchemaLeafConfig<TSchema extends SchemaDefinition> =
+  SchemaDefinition extends TSchema
+    ? never
+    : LeafScope<TSchema> extends infer TScope
+      ? TScope extends string
+        ? {
+            scope: TScope
+            render: Leaf['render']
+          }
+        : never
+      : never
+
+/**
+ * @internal
+ *
+ * Define a leaf renderer for a span, inline object, or void block object
+ * at a given scope.
+ *
+ * With a schema type parameter, `scope` is constrained to valid JSONPath
+ * leaf scopes:
+ *
+ * ```ts
+ * defineLeaf<typeof schema>({
+ *   scope: '$..callout.block.span',
+ *   render: ({attributes, children}) => <span {...attributes}>{children}</span>,
+ * })
+ * ```
+ *
+ * Without a schema type parameter, accepts any string.
+ */
+export function defineLeaf<TSchema extends SchemaDefinition>(
+  config: SchemaLeafConfig<TSchema>,
+): Leaf
+/**
+ * @internal
+ */
+export function defineLeaf(config: Leaf): Leaf
+export function defineLeaf(config: Leaf): Leaf {
+  return config
+}
+
+/**
+ * @internal
+ */
+export type LeafConfig = {
+  leaf: Leaf
+  parsedScope: ParsedScope
 }
