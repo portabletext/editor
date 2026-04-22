@@ -95,6 +95,7 @@ describe('event.drag.drop', () => {
       position: {
         block: 'end',
         isEditor: false,
+        isContainer: false,
         selection: {
           anchor: {
             path: [{_key: blockKey}, 'children', {_key: barKey}],
@@ -198,6 +199,7 @@ describe('event.drag.drop', () => {
       position: {
         block: 'start',
         isEditor: false,
+        isContainer: false,
         selection: {
           anchor: {
             path: [{_key: blockKey}, 'children', {_key: spanKey}],

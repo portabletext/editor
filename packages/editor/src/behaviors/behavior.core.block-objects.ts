@@ -1,8 +1,7 @@
 import {defaultKeyboardShortcuts} from '../editor/default-keyboard-shortcuts'
+import {getSibling} from '../node-traversal/get-sibling'
 import {getFocusBlockObject} from '../selectors/selector.get-focus-block-object'
 import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
-import {getNextBlock} from '../selectors/selector.get-next-block'
-import {getPreviousBlock} from '../selectors/selector.get-previous-block'
 import {isSelectionCollapsed} from '../selectors/selector.is-selection-collapsed'
 import {isTextBlockNode} from '../slate/node/is-text-block-node'
 import {isListBlock} from '../utils/parse-blocks'
@@ -27,10 +26,19 @@ const arrowDownOnLonelyBlockObject = defineBehavior({
       return false
     }
 
-    const focusBlockObject = getFocusBlockObject(snapshot)
-    const nextBlock = getNextBlock(snapshot)
+    const focusedBlockObject = getFocusBlockObject(snapshot)
 
-    return focusBlockObject && !nextBlock
+    if (!focusedBlockObject) {
+      return false
+    }
+
+    const nextBlock = getSibling(
+      snapshot.context,
+      focusedBlockObject.path,
+      'next',
+    )
+
+    return !nextBlock
   },
   actions: [
     ({snapshot}) => [
@@ -60,10 +68,19 @@ const arrowUpOnLonelyBlockObject = defineBehavior({
       return false
     }
 
-    const focusBlockObject = getFocusBlockObject(snapshot)
-    const previousBlock = getPreviousBlock(snapshot)
+    const focusedBlockObject = getFocusBlockObject(snapshot)
 
-    return focusBlockObject && !previousBlock
+    if (!focusedBlockObject) {
+      return false
+    }
+
+    const previousBlock = getSibling(
+      snapshot.context,
+      focusedBlockObject.path,
+      'previous',
+    )
+
+    return !previousBlock
   },
   actions: [
     ({snapshot}) => [
@@ -81,10 +98,10 @@ const arrowUpOnLonelyBlockObject = defineBehavior({
 const breakingBlockObject = defineBehavior({
   on: 'insert.break',
   guard: ({snapshot}) => {
-    const focusBlockObject = getFocusBlockObject(snapshot)
+    const focusedBlockObject = getFocusBlockObject(snapshot)
     const collapsedSelection = isSelectionCollapsed(snapshot)
 
-    return collapsedSelection && focusBlockObject !== undefined
+    return collapsedSelection && focusedBlockObject !== undefined
   },
   actions: [
     ({snapshot}) => [
@@ -110,26 +127,29 @@ const clickingAboveLonelyBlockObject = defineBehavior({
       return false
     }
 
-    const focusBlockObject = getFocusBlockObject({
+    const positionSnapshot = {
       ...snapshot,
       context: {
         ...snapshot.context,
         selection: event.position.selection,
       },
-    })
-    const previousBlock = getPreviousBlock({
-      ...snapshot,
-      context: {
-        ...snapshot.context,
-        selection: event.position.selection,
-      },
-    })
+    }
+    const focusedBlockObject = getFocusBlockObject(positionSnapshot)
+
+    if (!focusedBlockObject) {
+      return false
+    }
+
+    const previousSibling = getSibling(
+      snapshot.context,
+      focusedBlockObject.path,
+      'previous',
+    )
 
     return (
-      event.position.isEditor &&
+      (event.position.isEditor || event.position.isContainer) &&
       event.position.block === 'start' &&
-      focusBlockObject &&
-      !previousBlock
+      !previousSibling
     )
   },
   actions: [
@@ -161,26 +181,29 @@ const clickingBelowLonelyBlockObject = defineBehavior({
       return false
     }
 
-    const focusBlockObject = getFocusBlockObject({
+    const positionSnapshot = {
       ...snapshot,
       context: {
         ...snapshot.context,
         selection: event.position.selection,
       },
-    })
-    const nextBlock = getNextBlock({
-      ...snapshot,
-      context: {
-        ...snapshot.context,
-        selection: event.position.selection,
-      },
-    })
+    }
+    const focusedBlockObject = getFocusBlockObject(positionSnapshot)
+
+    if (!focusedBlockObject) {
+      return false
+    }
+
+    const nextSibling = getSibling(
+      snapshot.context,
+      focusedBlockObject.path,
+      'next',
+    )
 
     return (
-      event.position.isEditor &&
+      (event.position.isEditor || event.position.isContainer) &&
       event.position.block === 'end' &&
-      focusBlockObject &&
-      !nextBlock
+      !nextSibling
     )
   },
   actions: [
@@ -204,38 +227,47 @@ const clickingBelowLonelyBlockObject = defineBehavior({
 const deletingEmptyTextBlockAfterBlockObject = defineBehavior({
   on: 'delete.backward',
   guard: ({snapshot}) => {
-    const focusTextBlock = getFocusTextBlock(snapshot)
+    const focusedTextBlock = getFocusTextBlock(snapshot)
     const selectionCollapsed = isSelectionCollapsed(snapshot)
-    const previousBlock = getPreviousBlock(snapshot)
 
-    if (!focusTextBlock || !selectionCollapsed || !previousBlock) {
+    if (!focusedTextBlock || !selectionCollapsed) {
       return false
     }
 
-    if (isListBlock(snapshot.context, focusTextBlock.node)) {
+    const previousSibling = getSibling(
+      snapshot.context,
+      focusedTextBlock.path,
+      'previous',
+    )
+
+    if (!previousSibling) {
+      return false
+    }
+
+    if (isListBlock(snapshot.context, focusedTextBlock.node)) {
       return false
     }
 
     if (
-      isEmptyTextBlock(snapshot.context, focusTextBlock.node) &&
-      !isTextBlockNode(snapshot.context, previousBlock.node)
+      isEmptyTextBlock(snapshot.context, focusedTextBlock.node) &&
+      !isTextBlockNode(snapshot.context, previousSibling.node)
     ) {
-      return {focusTextBlock, previousBlock}
+      return {focusedTextBlock, previousSibling}
     }
 
     return false
   },
   actions: [
-    (_, {focusTextBlock, previousBlock}) => [
+    (_, {focusedTextBlock, previousSibling}) => [
       raise({
         type: 'delete.block',
-        at: focusTextBlock.path,
+        at: focusedTextBlock.path,
       }),
       raise({
         type: 'select',
         at: {
-          anchor: {path: previousBlock.path, offset: 0},
-          focus: {path: previousBlock.path, offset: 0},
+          anchor: {path: previousSibling.path, offset: 0},
+          focus: {path: previousSibling.path, offset: 0},
         },
       }),
     ],
@@ -245,34 +277,43 @@ const deletingEmptyTextBlockAfterBlockObject = defineBehavior({
 const deletingEmptyTextBlockBeforeBlockObject = defineBehavior({
   on: 'delete.forward',
   guard: ({snapshot}) => {
-    const focusTextBlock = getFocusTextBlock(snapshot)
+    const focusedTextBlock = getFocusTextBlock(snapshot)
     const selectionCollapsed = isSelectionCollapsed(snapshot)
-    const nextBlock = getNextBlock(snapshot)
 
-    if (!focusTextBlock || !selectionCollapsed || !nextBlock) {
+    if (!focusedTextBlock || !selectionCollapsed) {
+      return false
+    }
+
+    const nextSibling = getSibling(
+      snapshot.context,
+      focusedTextBlock.path,
+      'next',
+    )
+
+    if (!nextSibling) {
       return false
     }
 
     if (
-      isEmptyTextBlock(snapshot.context, focusTextBlock.node) &&
-      !isTextBlockNode(snapshot.context, nextBlock.node)
+      isEmptyTextBlock(snapshot.context, focusedTextBlock.node) &&
+      !isTextBlockNode(snapshot.context, nextSibling.node)
     ) {
-      return {focusTextBlock, nextBlock}
+      return {focusedTextBlock, nextSibling}
     }
 
     return false
   },
   actions: [
-    (_, {focusTextBlock, nextBlock}) => [
+    (_, {focusedTextBlock, nextSibling}) => [
       raise({
         type: 'delete.block',
-        at: focusTextBlock.path,
+        at: focusedTextBlock.path,
       }),
       raise({
         type: 'select',
         at: {
-          anchor: {path: nextBlock.path, offset: 0},
-          focus: {path: nextBlock.path, offset: 0},
+          anchor: {path: nextSibling.path, offset: 0},
+          focus: {path: nextSibling.path, offset: 0},
         },
       }),
     ],

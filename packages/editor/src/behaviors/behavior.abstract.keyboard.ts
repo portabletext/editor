@@ -1,11 +1,11 @@
 import {createKeyboardShortcut} from '@portabletext/keyboard-shortcuts'
 import {defaultKeyboardShortcuts} from '../editor/default-keyboard-shortcuts'
-import {getFocusBlock} from '../selectors/selector.get-focus-block'
+import {getSibling} from '../node-traversal/get-sibling'
+import {getBlock} from '../node-traversal/is-block'
 import {getFocusInlineObject} from '../selectors/selector.get-focus-inline-object'
-import {getPreviousBlock} from '../selectors/selector.get-previous-block'
+import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
 import {isSelectionCollapsed} from '../selectors/selector.is-selection-collapsed'
 import {isSelectionExpanded} from '../selectors/selector.is-selection-expanded'
-import {isTextBlockNode} from '../slate/node/is-text-block-node'
 import {getBlockEndPoint} from '../utils/util.get-block-end-point'
 import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
 import {raise} from './behavior.types.action'
@@ -134,39 +134,35 @@ export const abstractKeyboardBehaviors = [
         return false
       }
 
-      const focusBlock = getFocusBlock(snapshot)
+      const focusTextBlock = getFocusTextBlock(snapshot)
 
-      if (!focusBlock) {
+      if (!focusTextBlock) {
         return false
       }
 
-      const previousBlock = getPreviousBlock({
-        ...snapshot,
-        context: {
-          ...snapshot.context,
-          selection: {
-            anchor: {
-              path: focusBlock.path,
-              offset: 0,
-            },
-            focus: {
-              path: focusBlock.path,
-              offset: 0,
-            },
-          },
-        },
-      })
+      const previousSibling = getSibling(
+        snapshot.context,
+        focusTextBlock.path,
+        'previous',
+      )
+
+      if (!previousSibling) {
+        return false
+      }
+
+      const previousBlock = getBlock(snapshot.context, previousSibling.path)
 
       if (!previousBlock) {
         return false
       }
 
-      const hanging =
-        isTextBlockNode(snapshot.context, focusBlock.node) &&
-        snapshot.context.selection.focus.offset === 0
+      const hanging = snapshot.context.selection.focus.offset === 0
 
-      if (hanging && isEmptyTextBlock(snapshot.context, focusBlock.node)) {
-        return {previousBlock, selection: snapshot.context.selection}
+      if (hanging && isEmptyTextBlock(snapshot.context, focusTextBlock.node)) {
+        return {
+          previousBlock,
+          selection: snapshot.context.selection,
+        }
       }
 
       return false
