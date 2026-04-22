@@ -1,5 +1,6 @@
 import {isSpan} from '@portabletext/schema'
 import {getActiveDecorators} from '../selectors/selector.get-active-decorators'
+import {getAvailableDecorators} from '../selectors/selector.get-available-decorators'
 import {getCaretWordSelection} from '../selectors/selector.get-caret-word-selection'
 import {getNextSpan} from '../selectors/selector.get-next-span'
 import {getPreviousSpan} from '../selectors/selector.get-previous-span'
@@ -151,9 +152,7 @@ const stripAnnotationsOnFullSpanDeletion = defineBehavior({
       return false
     }
 
-    const decorators = snapshot.context.schema.decorators.map(
-      (decorator) => decorator.name,
-    )
+    const decorators = getAvailableDecorators(effectiveSnapshot)
     const marks = startChild.node.marks ?? []
     const spanHasAnnotations = marks.some((mark) => !decorators.includes(mark))
 
