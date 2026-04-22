@@ -7,6 +7,7 @@ import {resolveContainers} from '../schema/resolve-containers'
 import type {EditorSelectionPoint} from '../types/editor'
 import {getAvailableDecorators} from './selector.get-available-decorators'
 import {getAvailableLists} from './selector.get-available-lists'
+import {getAvailableStyles} from './selector.get-available-styles'
 import {isAvailableDecorator} from './selector.is-available-decorator'
 import {isAvailableList} from './selector.is-available-list'
 
@@ -127,6 +128,21 @@ describe(getAvailableLists.name, () => {
     expect(
       getAvailableLists(snapshotAt(containerValue, containerSpanFocus)),
     ).toEqual([])
+  })
+})
+
+describe(getAvailableStyles.name, () => {
+  test('returns root styles when focus is in a root text block', () => {
+    expect(getAvailableStyles(snapshotAt(rootValue, rootSpanFocus))).toEqual([
+      'normal',
+      'h1',
+    ])
+  })
+
+  test('returns container-scoped styles when focus is inside a container', () => {
+    expect(
+      getAvailableStyles(snapshotAt(containerValue, containerSpanFocus)),
+    ).toEqual(['code'])
   })
 })
 
