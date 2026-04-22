@@ -1,10 +1,13 @@
 import type {EditorSelector} from '../editor/editor-selector'
 import {isSelectionExpanded} from '../selectors'
+import {getFocusBlock} from '../selectors/selector.get-focus-block'
 import {getFocusInlineObject} from '../selectors/selector.get-focus-inline-object'
 import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
 import {getLastBlock} from '../selectors/selector.get-last-block'
 import {isSelectionCollapsed} from '../selectors/selector.is-selection-collapsed'
+import type {Path} from '../slate/interfaces/path'
 import {isTextBlockNode} from '../slate/node/is-text-block-node'
+import {siblingPath} from '../slate/path/sibling-path'
 import {getBlockEndPoint} from '../utils/util.get-block-end-point'
 import {getBlockStartPoint} from '../utils/util.get-block-start-point'
 import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
@@ -27,6 +30,30 @@ function getUniqueBlockKey(
 
     return blockKey
   }
+}
+
+/**
+ * Build a collapsed selection on the start of the block at `path`. Used to
+ * anchor subsequent `insert.block` raises when chaining multiple inserts.
+ */
+function selectionAt(path: Path): {
+  anchor: {path: Path; offset: number}
+  focus: {path: Path; offset: number}
+} {
+  return {
+    anchor: {path, offset: 0},
+    focus: {path, offset: 0},
+  }
+}
+
+/**
+ * Build the canonical path for a new block about to be inserted as a sibling
+ * of `referencePath`, or as a root-level block when `referencePath` is empty.
+ */
+function newBlockPath(referencePath: Path, key: string): Path {
+  return referencePath.length === 0
+    ? [{_key: key}]
+    : siblingPath(referencePath, key)
 }
 
 export const abstractInsertBehaviors = [
@@ -57,26 +84,43 @@ export const abstractInsertBehaviors = [
 
   defineBehavior({
     on: 'insert.blocks',
-    guard: ({event}) =>
-      event.placement === 'before' || event.placement === 'after',
+    guard: ({snapshot, event}) => {
+      if (event.placement !== 'before' && event.placement !== 'after') {
+        return false
+      }
+
+      const referenceSelection = event.at ?? snapshot.context.selection
+
+      const referenceBlock = referenceSelection
+        ? getFocusBlock({
+            ...snapshot,
+            context: {...snapshot.context, selection: referenceSelection},
+          })
+        : undefined
+
+      const referenceBlockPath: Path = referenceBlock ? referenceBlock.path : []
+
+      return {referenceBlockPath}
+    },
     actions: [
-      ({snapshot, event}) => {
-        let firstBlockKey: string | undefined
-        let lastBlockKey: string | undefined
-        let previousBlockKey: string | undefined
+      ({snapshot, event}, {referenceBlockPath}) => {
+        let firstBlockPath: Path | undefined
+        let lastBlockPath: Path | undefined
+        let previousBlockPath: Path | undefined
         const actions: Array<BehaviorAction> = []
 
         let index = -1
         for (const block of event.blocks) {
           index++
           const key = getUniqueBlockKey(block._key)(snapshot)
+          const blockPath: Path = newBlockPath(referenceBlockPath, key)
 
           if (index === 0) {
-            firstBlockKey = key
+            firstBlockPath = blockPath
           }
 
           if (index === event.blocks.length - 1) {
-            lastBlockKey = key
+            lastBlockPath = blockPath
           }
 
           actions.push(
@@ -90,39 +134,34 @@ export const abstractInsertBehaviors = [
                     ? 'before'
                     : 'after',
               select: 'none',
-              ...(previousBlockKey
-                ? {
-                    at: {
-                      anchor: {path: [{_key: previousBlockKey}], offset: 0},
-                      focus: {path: [{_key: previousBlockKey}], offset: 0},
-                    },
-                  }
+              ...(previousBlockPath
+                ? {at: selectionAt(previousBlockPath)}
                 : event.at
                   ? {at: event.at}
                   : {}),
             }),
           )
 
-          previousBlockKey = key
+          previousBlockPath = blockPath
         }
 
         const select = event.select ?? 'end'
 
-        if (select === 'start' && firstBlockKey) {
+        if (select === 'start' && firstBlockPath) {
           actions.push(
             raise({
               type: 'select.block',
-              at: [{_key: firstBlockKey}],
+              at: firstBlockPath,
               select: 'start',
             }),
           )
         }
 
-        if (select === 'end' && lastBlockKey) {
+        if (select === 'end' && lastBlockPath) {
           actions.push(
             raise({
               type: 'select.block',
-              at: [{_key: lastBlockKey}],
+              at: lastBlockPath,
               select: 'end',
             }),
           )
@@ -172,14 +211,10 @@ export const abstractInsertBehaviors = [
         block: focusTextBlock,
       })
       const focusTextBlockAfter = sliceTextBlock({
-        context: {
-          schema: snapshot.context.schema,
-          selection: {
-            anchor: at.focus,
-            focus: focusBlockEndPoint,
-          },
-        },
+        context: snapshot.context,
         block: focusTextBlock.node,
+        startPoint: at.focus,
+        endPoint: focusBlockEndPoint,
       })
 
       const isFirstBlockTextBlock = isTextBlockNode(
@@ -210,8 +245,9 @@ export const abstractInsertBehaviors = [
           originalSelection,
         },
       ) => {
-        let previousBlockKey: string | undefined
-        let firstBlockKey: string | undefined
+        const referenceBlockPath = focusTextBlock.path
+        let previousBlockPath: Path | undefined
+        let firstBlockPath: Path | undefined
         const actions: Array<BehaviorAction> = []
 
         let index = -1
@@ -239,11 +275,11 @@ export const abstractInsertBehaviors = [
             )
 
             if (isTextBlockNode(snapshot.context, block) && !deletingEndToEnd) {
-              firstBlockKey = focusTextBlock.node._key
-              previousBlockKey = focusTextBlock.node._key
+              firstBlockPath = focusTextBlock.path
+              previousBlockPath = focusTextBlock.path
             } else {
-              firstBlockKey = key
-              previousBlockKey = key
+              firstBlockPath = newBlockPath(referenceBlockPath, key)
+              previousBlockPath = firstBlockPath
             }
 
             actions.push(
@@ -260,20 +296,22 @@ export const abstractInsertBehaviors = [
           }
 
           if (index === event.blocks.length - 1) {
+            const lastKey = getUniqueBlockKey(block._key)(snapshot)
+
             actions.push(
               raise({
                 type: 'insert.block',
-                block,
+                block:
+                  lastKey !== block._key ? {...block, _key: lastKey} : block,
                 placement: 'after',
                 select: 'end',
-                at: previousBlockKey
-                  ? {
-                      anchor: {path: [{_key: previousBlockKey}], offset: 0},
-                      focus: {path: [{_key: previousBlockKey}], offset: 0},
-                    }
+                at: previousBlockPath
+                  ? selectionAt(previousBlockPath)
                   : undefined,
               }),
             )
+
+            previousBlockPath = newBlockPath(referenceBlockPath, lastKey)
 
             continue
           }
@@ -285,17 +323,14 @@ export const abstractInsertBehaviors = [
               type: 'insert.block',
               block: key !== block._key ? {...block, _key: key} : block,
               placement: 'after',
-              select: previousBlockKey ? 'none' : 'end',
-              at: previousBlockKey
-                ? {
-                    anchor: {path: [{_key: previousBlockKey}], offset: 0},
-                    focus: {path: [{_key: previousBlockKey}], offset: 0},
-                  }
+              select: previousBlockPath ? 'none' : 'end',
+              at: previousBlockPath
+                ? selectionAt(previousBlockPath)
                 : undefined,
             }),
           )
 
-          previousBlockKey = key
+          previousBlockPath = newBlockPath(referenceBlockPath, key)
         }
 
         if (!isEmptyTextBlock(snapshot.context, focusTextBlockAfter)) {
@@ -322,12 +357,12 @@ export const abstractInsertBehaviors = [
           if (
             (isEqualSelectionPoints(at.focus, focusBlockStartPoint) ||
               !isFirstBlockTextBlock) &&
-            firstBlockKey
+            firstBlockPath
           ) {
             actions.push(
               raise({
                 type: 'select.block',
-                at: [{_key: firstBlockKey}],
+                at: firstBlockPath,
                 select: 'start',
               }),
             )
@@ -356,26 +391,41 @@ export const abstractInsertBehaviors = [
         return false
       }
 
-      return {originalSelection: snapshot.context.selection}
+      const referenceSelection = event.at ?? snapshot.context.selection
+
+      const referenceBlock = referenceSelection
+        ? getFocusBlock({
+            ...snapshot,
+            context: {...snapshot.context, selection: referenceSelection},
+          })
+        : undefined
+
+      const referenceBlockPath: Path = referenceBlock ? referenceBlock.path : []
+
+      return {
+        referenceBlockPath,
+        originalSelection: snapshot.context.selection,
+      }
     },
     actions: [
-      ({snapshot, event}, {originalSelection}) => {
-        let firstBlockKey: string | undefined
-        let lastBlockKey: string | undefined
-        let previousBlockKey: string | undefined
+      ({snapshot, event}, {referenceBlockPath, originalSelection}) => {
+        let firstBlockPath: Path | undefined
+        let lastBlockPath: Path | undefined
+        let previousBlockPath: Path | undefined
         const actions: Array<BehaviorAction> = []
 
         let index = -1
         for (const block of event.blocks) {
           index++
           const key = getUniqueBlockKey(block._key)(snapshot)
+          const blockPath: Path = newBlockPath(referenceBlockPath, key)
 
           if (index === 0) {
-            firstBlockKey = key
+            firstBlockPath = blockPath
           }
 
           if (index === event.blocks.length - 1) {
-            lastBlockKey = key
+            lastBlockPath = blockPath
           }
 
           actions.push(
@@ -384,20 +434,15 @@ export const abstractInsertBehaviors = [
               block: key !== block._key ? {...block, _key: key} : block,
               placement: index === 0 ? 'auto' : 'after',
               select: 'none',
-              ...(previousBlockKey
-                ? {
-                    at: {
-                      anchor: {path: [{_key: previousBlockKey}], offset: 0},
-                      focus: {path: [{_key: previousBlockKey}], offset: 0},
-                    },
-                  }
+              ...(previousBlockPath
+                ? {at: selectionAt(previousBlockPath)}
                 : event.at
                   ? {at: event.at}
                   : {}),
             }),
           )
 
-          previousBlockKey = key
+          previousBlockPath = blockPath
         }
 
         const select = event.select ?? 'end'
@@ -409,19 +454,19 @@ export const abstractInsertBehaviors = [
               at: originalSelection,
             }),
           )
-        } else if (select === 'start' && firstBlockKey) {
+        } else if (select === 'start' && firstBlockPath) {
           actions.push(
             raise({
               type: 'select.block',
-              at: [{_key: firstBlockKey}],
+              at: firstBlockPath,
               select: 'start',
             }),
           )
-        } else if (lastBlockKey) {
+        } else if (lastBlockPath) {
           actions.push(
             raise({
               type: 'select.block',
-              at: [{_key: lastBlockKey}],
+              at: lastBlockPath,
               select: 'end',
             }),
           )

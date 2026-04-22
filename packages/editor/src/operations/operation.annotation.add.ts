@@ -7,6 +7,10 @@ import {getChildren} from '../node-traversal/get-children'
 import {getNode} from '../node-traversal/get-node'
 import {getNodes} from '../node-traversal/get-nodes'
 import {isLeaf} from '../node-traversal/is-leaf'
+import {
+  getBlockSubSchema,
+  isInsideEditableContainer,
+} from '../schema/get-block-sub-schema'
 import {isEdge} from '../slate/editor/is-edge'
 import {isEnd} from '../slate/editor/is-end'
 import {isStart} from '../slate/editor/is-start'
@@ -79,6 +83,20 @@ export const addAnnotationOperationImplementation: OperationImplementation<
 
       if (block.children.length === 1 && block.children[0]?.text === '') {
         continue
+      }
+
+      // Inside an editable container the sub-schema is authoritative:
+      // skip blocks whose sub-schema doesn't declare this annotation type.
+      // At root we remain permissive so unknown annotations pass through.
+      if (isInsideEditableContainer(context, blockPath)) {
+        const subSchema = getBlockSubSchema(context, blockPath)
+        if (
+          !subSchema.annotations.some(
+            (annotation) => annotation.name === parsedAnnotation._type,
+          )
+        ) {
+          continue
+        }
       }
 
       const annotationKey =

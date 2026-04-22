@@ -1,63 +1,57 @@
+import {safeStringify} from '../internal-utils/safe-json'
+import {getChildren} from '../node-traversal/get-children'
 import {getNode} from '../node-traversal/get-node'
 import {withoutNormalizing} from '../slate/editor/without-normalizing'
-import {getBlockKeyFromSelectionPoint} from '../utils/util.selection-point'
+import {parentPath} from '../slate/path/parent-path'
 import type {OperationImplementation} from './operation.types'
 
 export const moveBlockOperationImplementation: OperationImplementation<
   'move.block'
 > = ({operation}) => {
-  const originKey = getBlockKeyFromSelectionPoint({
-    path: operation.at,
-    offset: 0,
-  })
-
-  if (!originKey) {
-    throw new Error('Failed to get block key from selection point')
-  }
-
-  const originBlockIndex = operation.editor.blockIndexMap.get(originKey)
-
-  if (originBlockIndex === undefined) {
-    throw new Error('Failed to get block index from block key')
-  }
-
-  const destinationKey = getBlockKeyFromSelectionPoint({
-    path: operation.to,
-    offset: 0,
-  })
-
-  if (!destinationKey) {
-    throw new Error('Failed to get block key from selection point')
-  }
-
-  const destinationBlockIndex =
-    operation.editor.blockIndexMap.get(destinationKey)
-
-  if (destinationBlockIndex === undefined) {
-    throw new Error('Failed to get block index from block key')
-  }
-
   const editor = operation.editor
-  const nodeEntry = getNode(editor, [{_key: originKey}])
+  const originEntry = getNode(editor, operation.at)
 
-  if (!nodeEntry) {
-    return
+  if (!originEntry) {
+    throw new Error(
+      `Failed to resolve origin block at ${safeStringify(operation.at)}`,
+    )
   }
 
-  const node = nodeEntry.node
+  const destinationEntry = getNode(editor, operation.to)
 
+  if (!destinationEntry) {
+    throw new Error(
+      `Failed to resolve destination block at ${safeStringify(operation.to)}`,
+    )
+  }
+
+  // Determine movement direction within the shared sibling array. Only
+  // supports moves at the same level today (root → root or within the
+  // same container field). Cross-level moves would need the behavior to
+  // split the move into remove + insert with explicit parent resolution.
+  const siblings = getChildren(editor, parentPath(originEntry.path))
+  const originIndex = siblings.findIndex(
+    (sibling) => sibling.node._key === originEntry.node._key,
+  )
+  const destinationIndex = siblings.findIndex(
+    (sibling) => sibling.node._key === destinationEntry.node._key,
+  )
+  const movingDown =
+    originIndex !== -1 &&
+    destinationIndex !== -1 &&
+    originIndex < destinationIndex
+
+  const node = originEntry.node
   const savedSelection = editor.selection
-
-  const movingDown = originBlockIndex < destinationBlockIndex
 
   withoutNormalizing(editor, () => {
     editor.apply({
       type: 'unset',
-      path: [{_key: node._key}],
+      path: originEntry.path,
     })
     editor.apply({
       type: 'insert',
-      path: [{_key: destinationKey}],
+      path: destinationEntry.path,
       node,
       position: movingDown ? 'after' : 'before',
     })

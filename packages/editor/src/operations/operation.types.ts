@@ -6,7 +6,10 @@ import type {EditorContext} from '../editor/editor-snapshot'
 import type {OmitFromUnion, PickFromUnion} from '../type-utils'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 
-export type OperationContext = Pick<EditorContext, 'keyGenerator' | 'schema'>
+export type OperationContext = Pick<
+  EditorContext,
+  'keyGenerator' | 'schema' | 'containers' | 'value'
+>
 
 export type OperationImplementation<TOperationType extends Operation['type']> =
   ({
