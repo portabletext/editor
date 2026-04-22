@@ -5,6 +5,7 @@ import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {raise} from '../src/behaviors/behavior.types.action'
 import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
+import {safeParse} from '../src/internal-utils/safe-json'
 import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
 import {createTestEditor} from '../src/test/vitest'
 import {toTextspec} from '../test-utils/to-textspec'
@@ -419,6 +420,93 @@ describe('event.clipboard.paste', () => {
       expect(toTextspec(editor.getSnapshot().context!)).toEqual(
         ['B: foo', 'B: bar|', 'B: baz', 'B: fizz'].join('\n'),
       )
+    })
+  })
+
+  test('Scenario: Copying an inline object writes portable text to the clipboard', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const span1Key = keyGenerator()
+    const stockTickerKey = keyGenerator()
+    const span2Key = keyGenerator()
+
+    const {locator, editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        inlineObjects: [
+          {name: 'stock-ticker', fields: [{name: 'symbol', type: 'string'}]},
+        ],
+      }),
+      initialValue: [
+        {
+          _key: blockKey,
+          _type: 'block',
+          markDefs: [],
+          style: 'normal',
+          children: [
+            {_key: span1Key, _type: 'span', text: 'foo', marks: []},
+            {
+              _key: stockTickerKey,
+              _type: 'stock-ticker',
+              symbol: 'AAPL',
+            },
+            {_key: span2Key, _type: 'span', text: 'bar', marks: []},
+          ],
+        },
+      ],
+    })
+
+    await userEvent.click(locator)
+
+    const stockTickerSelection = {
+      anchor: {
+        path: [{_key: blockKey}, 'children', {_key: stockTickerKey}],
+        offset: 0,
+      },
+      focus: {
+        path: [{_key: blockKey}, 'children', {_key: stockTickerKey}],
+        offset: 0,
+      },
+    }
+
+    editor.send({type: 'select', at: stockTickerSelection})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        ...stockTickerSelection,
+        backward: false,
+      })
+    })
+
+    const dataTransfer = new DataTransfer()
+
+    editor.send({
+      type: 'clipboard.copy',
+      originEvent: {dataTransfer},
+      position: {
+        selection: editor.getSnapshot().context.selection!,
+      },
+    })
+
+    await vi.waitFor(() => {
+      const data = dataTransfer.getData('application/x-portable-text')
+      expect(data).not.toEqual('')
+      const parsed = safeParse(data)
+      expect(parsed).toEqual([
+        {
+          _key: blockKey,
+          _type: 'block',
+          markDefs: [],
+          style: 'normal',
+          children: [
+            {
+              _key: stockTickerKey,
+              _type: 'stock-ticker',
+              symbol: 'AAPL',
+            },
+          ],
+        },
+      ])
     })
   })
 })

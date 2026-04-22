@@ -12,6 +12,7 @@ import {getNode} from '../node-traversal/get-node'
 import {getNodes} from '../node-traversal/get-nodes'
 import {getTextBlockNode} from '../node-traversal/get-text-block-node'
 import {getBlock, isBlock} from '../node-traversal/is-block'
+import {getPathSubSchema} from '../schema/get-path-sub-schema'
 import {getActiveAnnotationsMarks} from '../selectors/selector.get-active-annotation-marks'
 import {getActiveDecorators} from '../selectors/selector.get-active-decorators'
 import {getFocusBlock} from '../selectors/selector.get-focus-block'
@@ -326,12 +327,17 @@ export function createEditableAPI(
       const focusBlockAfter = getFocusBlock(snapshotAfter)
       const focusSpanAfter = getFocusSpan(snapshotAfter)
 
+      const focusSpanDecorators = focusSpanAfter
+        ? getPathSubSchema(snapshotAfter, focusSpanAfter.path).decorators.map(
+            (decorator) => decorator.name,
+          )
+        : snapshotAfter.context.schema.decorators.map(
+            (decorator) => decorator.name,
+          )
       const newMarkDefKeysOnFocusSpan = focusSpanAfter?.node.marks?.filter(
         (mark) =>
           !focusSpanBefore?.node.marks?.includes(mark) &&
-          !snapshotAfter.context.schema.decorators
-            .map((decorator) => decorator.name)
-            .includes(mark),
+          !focusSpanDecorators.includes(mark),
       )
       const markDefsAfter = selectedValueAfter.flatMap((block) => {
         if (isTextBlock(snapshotAfter.context, block)) {
