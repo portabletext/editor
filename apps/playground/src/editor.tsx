@@ -35,7 +35,6 @@ import {
   MousePointerIcon,
   PencilIcon,
   PencilOffIcon,
-  SeparatorHorizontalIcon,
   XIcon,
 } from 'lucide-react'
 import {useContext, useEffect, useState, type JSX} from 'react'
@@ -60,11 +59,13 @@ import {
   playgroundSchemaDefinition,
   StockTickerSchema,
 } from './playground-schema-definition'
+import {CalloutPlugin} from './plugins/plugin.callout'
 import {CodeBlockPlugin} from './plugins/plugin.code-block'
 import {CodeEditorPlugin} from './plugins/plugin.code-editor'
 import {HtmlDeserializerPlugin} from './plugins/plugin.html-deserializer'
 import {ImageDeserializerPlugin} from './plugins/plugin.image-deserializer'
 import {markdownShortcutsPluginProps} from './plugins/plugin.markdown'
+import {TablePlugin} from './plugins/plugin.table'
 import {TextFileDeserializerPlugin} from './plugins/plugin.text-file-deserializer'
 import {Button} from './primitives/button'
 import {Container} from './primitives/container'
@@ -152,6 +153,8 @@ export function Editor(props: {
           ) : null}
           <Container className="flex flex-col overflow-clip">
             {featureFlags.codeBlockPlugin ? <CodeBlockPlugin /> : null}
+            {featureFlags.calloutPlugin ? <CalloutPlugin /> : null}
+            {featureFlags.tablePlugin ? <TablePlugin /> : null}
             {featureFlags.emojiPickerPlugin ? <EmojiPickerPlugin /> : null}
             {featureFlags.mentionPickerPlugin ? <MentionPickerPlugin /> : null}
             {featureFlags.slashCommandPlugin ? (
@@ -276,13 +279,25 @@ const renderAnnotation: RenderAnnotationFunction = (props) => {
 }
 
 const breakStyle = tv({
-  base: 'my-1 p-1 flex items-center justify-center gap-1 border-2 border-gray-300 dark:border-gray-600 rounded',
+  base: 'my-6 flex items-center justify-center',
   variants: {
     selected: {
-      true: 'border-blue-300 dark:border-blue-600',
+      true: '',
     },
     focused: {
-      true: 'bg-blue-50 dark:bg-blue-900/30',
+      true: '',
+    },
+  },
+})
+
+const breakLineStyle = tv({
+  base: 'h-px w-full max-w-md bg-gray-300 dark:bg-gray-600 transition-colors',
+  variants: {
+    selected: {
+      true: 'h-0.5 bg-blue-400 dark:bg-blue-500',
+    },
+    focused: {
+      true: 'h-0.5 bg-blue-500 dark:bg-blue-400',
     },
   },
 })
@@ -314,7 +329,12 @@ const RenderBlock = (props: BlockRenderProps) => {
           focused: props.focused,
         })}
       >
-        <SeparatorHorizontalIcon className="size-4" />
+        <div
+          className={breakLineStyle({
+            selected: props.selected,
+            focused: props.focused,
+          })}
+        />
       </div>
     )
   }
@@ -520,27 +540,27 @@ const styleMap: Map<string, (props: BlockStyleRenderProps) => JSX.Element> =
     ['normal', (props) => <p className="my-1">{props.children}</p>],
     [
       'h1',
-      (props) => <h1 className="my-1 font-bold text-5xl">{props.children}</h1>,
+      (props) => <h1 className="my-1 font-bold text-3xl">{props.children}</h1>,
     ],
     [
       'h2',
-      (props) => <h2 className="my-1 font-bold text-4xl">{props.children}</h2>,
+      (props) => <h2 className="my-1 font-bold text-2xl">{props.children}</h2>,
     ],
     [
       'h3',
-      (props) => <h3 className="my-1 font-bold text-3xl">{props.children}</h3>,
+      (props) => <h3 className="my-1 font-bold text-xl">{props.children}</h3>,
     ],
     [
       'h4',
-      (props) => <h4 className="my-1 font-bold text-2xl">{props.children}</h4>,
+      (props) => <h4 className="my-1 font-bold text-lg">{props.children}</h4>,
     ],
     [
       'h5',
-      (props) => <h5 className="my-1 font-bold text-xl">{props.children}</h5>,
+      (props) => <h5 className="my-1 font-bold text-base">{props.children}</h5>,
     ],
     [
       'h6',
-      (props) => <h6 className="my-1 font-bold text-lg">{props.children}</h6>,
+      (props) => <h6 className="my-1 font-bold text-sm">{props.children}</h6>,
     ],
     [
       'blockquote',

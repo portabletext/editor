@@ -28,7 +28,16 @@ export function ObjectForm(
       }}
     >
       <Fields fields={props.fields} defaultValues={props.defaultValues} />
-      <Button className="self-end" type="submit" size="sm">
+      <Button
+        autoFocus={
+          props.fields.filter(
+            (field) => field.type === 'string' || field.type === 'number',
+          ).length === 0
+        }
+        className="self-end"
+        type="submit"
+        size="sm"
+      >
         {props.submitLabel}
       </Button>
     </form>
