@@ -11,7 +11,7 @@ export function blockOffsetsToSelection({
   offsets,
   backward,
 }: {
-  context: Pick<EditorContext, 'schema' | 'value'>
+  context: Pick<EditorContext, 'schema' | 'value' | 'containers'>
   offsets: {anchor: BlockOffset; focus: BlockOffset}
   backward?: boolean
 }): EditorSelection {

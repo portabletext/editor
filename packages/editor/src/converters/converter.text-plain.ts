@@ -1,6 +1,9 @@
 import {htmlToPortableText} from '@portabletext/html'
 import {isTextBlock} from '@portabletext/schema'
+import {getBlockObjectSchema} from '../schema/get-block-object-schema'
+import {getBlockSubSchema} from '../schema/get-block-sub-schema'
 import {getSelectedValue} from '../selectors/selector.get-selected-value'
+import {getSelectionStartBlock} from '../selectors/selector.get-selection-start-block'
 import {parseBlock} from '../utils/parse-blocks'
 import {defineConverter} from './converter.types'
 
@@ -19,10 +22,18 @@ export const converterTextPlain = defineConverter({
     }
 
     const blocks = getSelectedValue(snapshot)
+    // All selected blocks share a container scope (or all live at the
+    // root). Use the start block's path as the scope anchor for resolving
+    // the sub-schema.
+    const scopeAnchor = getSelectionStartBlock(snapshot)
 
     const data = blocks
       .map((block) => {
         if (isTextBlock(snapshot.context, block)) {
+          const inlineObjects = scopeAnchor
+            ? getBlockSubSchema(snapshot.context, scopeAnchor.path)
+                .inlineObjects
+            : snapshot.context.schema.inlineObjects
           return block.children
             .map((child) => {
               if (child._type === snapshot.context.schema.span.name) {
@@ -31,7 +42,7 @@ export const converterTextPlain = defineConverter({
 
               return event.originEvent === 'drag.dragstart'
                 ? `[${
-                    snapshot.context.schema.inlineObjects.find(
+                    inlineObjects.find(
                       (inlineObjectType) =>
                         inlineObjectType.name === child._type,
                     )?.title ?? 'Object'
@@ -43,8 +54,15 @@ export const converterTextPlain = defineConverter({
 
         return event.originEvent === 'drag.dragstart'
           ? `[${
-              snapshot.context.schema.blockObjects.find(
-                (blockObjectType) => blockObjectType.name === block._type,
+              (scopeAnchor
+                ? getBlockObjectSchema(
+                    snapshot.context,
+                    block,
+                    scopeAnchor.path,
+                  )
+                : snapshot.context.schema.blockObjects.find(
+                    (blockObjectType) => blockObjectType.name === block._type,
+                  )
               )?.title ?? 'Object'
             }]`
           : ''

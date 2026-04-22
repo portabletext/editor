@@ -16,7 +16,7 @@ export function splitTextBlock({
   point: EditorSelectionPoint
 }): {before: PortableTextTextBlock; after: PortableTextTextBlock} | undefined {
   const firstChild = block.children.at(0)
-  const lastChild = block.children.at(block.children.length - 1)
+  const lastChild = block.children.at(-1)
 
   if (!firstChild || !lastChild) {
     return undefined

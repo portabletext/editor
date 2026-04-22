@@ -1,20 +1,19 @@
 import {getDomNode} from '../dom-traversal/get-dom-node'
 import {getDomNodePath} from '../dom-traversal/get-dom-node-path'
 import type {EditorActor} from '../editor/editor-machine'
+import {getEnclosingBlock} from '../node-traversal/get-enclosing-block'
 import {getNode} from '../node-traversal/get-node'
-import {getBlock} from '../node-traversal/is-block'
-import {isEditableContainer} from '../schema/is-editable-container'
 import {DOMEditor} from '../slate/dom/plugin/dom-editor'
 import {isDOMNode} from '../slate/dom/utils/dom'
 import {isEditor} from '../slate/editor/is-editor'
 import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
+import {isAncestorPath} from '../slate/path/is-ancestor-path'
 import type {EditorSelection} from '../types/editor'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {getBlockEndPoint} from '../utils/util.get-block-end-point'
 import {getBlockStartPoint} from '../utils/util.get-block-start-point'
 import {isSelectionCollapsed} from '../utils/util.is-selection-collapsed'
-import {getBlockKeyFromSelectionPoint} from '../utils/util.selection-point'
 
 export type EventPosition = {
   block: 'start' | 'end'
@@ -54,8 +53,9 @@ export function getEventPosition({
 
   const {node: eventNode, path: eventPath} = eventResult
 
-  const eventBlockEntry = getBlock(slateEditor, eventPath.slice(0, 1))
+  const eventBlockEntry = getEnclosingBlock(slateEditor, eventPath)
   const eventBlock = eventBlockEntry?.node
+  const eventBlockPath = eventBlockEntry?.path
   const eventPositionBlock = getEventPositionBlock({
     nodePath: eventPath,
     slateEditor,
@@ -65,6 +65,7 @@ export function getEventPosition({
 
   if (
     eventBlock &&
+    eventBlockPath &&
     eventPositionBlock &&
     !eventSelection &&
     !isEventContainer(slateEditor, eventNode, eventPath)
@@ -80,14 +81,14 @@ export function getEventPosition({
           context: editorActor.getSnapshot().context,
           block: {
             node: eventBlock,
-            path: [{_key: eventBlock._key}],
+            path: eventBlockPath,
           },
         }),
         focus: getBlockEndPoint({
           context: editorActor.getSnapshot().context,
           block: {
             node: eventBlock,
-            path: [{_key: eventBlock._key}],
+            path: eventBlockPath,
           },
         }),
       },
@@ -98,18 +99,21 @@ export function getEventPosition({
     return undefined
   }
 
-  const eventSelectionFocusBlockKey = getBlockKeyFromSelectionPoint(
-    eventSelection.focus,
+  const eventSelectionFocusBlock = getEnclosingBlock(
+    slateEditor,
+    eventSelection.focus.path,
   )
 
-  if (eventSelectionFocusBlockKey === undefined) {
+  if (!eventSelectionFocusBlock) {
     return undefined
   }
 
   if (
     isSelectionCollapsed(eventSelection) &&
     eventBlock &&
-    eventSelectionFocusBlockKey !== eventBlock._key
+    eventBlockPath &&
+    eventSelectionFocusBlock.node._key !== eventBlock._key &&
+    !isAncestorPath(eventBlockPath, eventSelectionFocusBlock.path)
   ) {
     // If the event block and event selection somehow don't match, then the
     // event block takes precedence.
@@ -122,14 +126,14 @@ export function getEventPosition({
           context: editorActor.getSnapshot().context,
           block: {
             node: eventBlock,
-            path: [{_key: eventBlock._key}],
+            path: eventBlockPath,
           },
         }),
         focus: getBlockEndPoint({
           context: editorActor.getSnapshot().context,
           block: {
             node: eventBlock,
-            path: [{_key: eventBlock._key}],
+            path: eventBlockPath,
           },
         }),
       },
