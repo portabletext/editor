@@ -5,11 +5,13 @@ import {
   isEqualSelectionPoints,
 } from '../utils'
 import {comparePoints} from '../utils/util.compare-points'
-import {getBlockKeyFromSelectionPoint} from '../utils/util.selection-point'
 import type {EditorSelector} from './../editor/editor-selector'
 import type {EditorSnapshot} from './../editor/editor-snapshot'
 
 /**
+ * Returns true if the supplied selection overlaps with the editor's current
+ * selection. Resolves at any container depth.
+ *
  * @public
  */
 export function isOverlappingSelection(
@@ -27,57 +29,12 @@ export function isOverlappingSelection(
     const editorSelectionStart = getSelectionStartPoint(editorSelection)
     const editorSelectionEnd = getSelectionEndPoint(editorSelection)
 
-    const selectionStartBlockKey = getBlockKeyFromSelectionPoint(selectionStart)
-    const selectionEndBlockKey = getBlockKeyFromSelectionPoint(selectionEnd)
-    const editorSelectionStartBlockKey =
-      getBlockKeyFromSelectionPoint(editorSelectionStart)
-    const editorSelectionEndBlockKey =
-      getBlockKeyFromSelectionPoint(editorSelectionEnd)
-
     if (
-      !selectionStartBlockKey ||
-      !selectionEndBlockKey ||
-      !editorSelectionStartBlockKey ||
-      !editorSelectionEndBlockKey
+      !selectionStart ||
+      !selectionEnd ||
+      !editorSelectionStart ||
+      !editorSelectionEnd
     ) {
-      return false
-    }
-
-    const selectionStartBlockIndex = snapshot.blockIndexMap.get(
-      selectionStartBlockKey,
-    )
-    const selectionEndBlockIndex =
-      snapshot.blockIndexMap.get(selectionEndBlockKey)
-    const editorSelectionStartBlockIndex = snapshot.blockIndexMap.get(
-      editorSelectionStartBlockKey,
-    )
-    const editorSelectionEndBlockIndex = snapshot.blockIndexMap.get(
-      editorSelectionEndBlockKey,
-    )
-
-    if (
-      selectionStartBlockIndex === undefined ||
-      selectionEndBlockIndex === undefined ||
-      editorSelectionStartBlockIndex === undefined ||
-      editorSelectionEndBlockIndex === undefined
-    ) {
-      return false
-    }
-
-    const [selectionMinBlockIndex, selectionMaxBlockIndex] =
-      selectionStartBlockIndex <= selectionEndBlockIndex
-        ? [selectionStartBlockIndex, selectionEndBlockIndex]
-        : [selectionEndBlockIndex, selectionStartBlockIndex]
-    const [editorSelectionMinBlockIndex, editorSelectionMaxBlockIndex] =
-      editorSelectionStartBlockIndex <= editorSelectionEndBlockIndex
-        ? [editorSelectionStartBlockIndex, editorSelectionEndBlockIndex]
-        : [editorSelectionEndBlockIndex, editorSelectionStartBlockIndex]
-
-    if (selectionMaxBlockIndex < editorSelectionMinBlockIndex) {
-      return false
-    }
-
-    if (selectionMinBlockIndex > editorSelectionMaxBlockIndex) {
       return false
     }
 
@@ -93,7 +50,6 @@ export function isOverlappingSelection(
 
 /**
  * Check if selections overlap at the point level.
- * Called after confirming block ranges overlap.
  */
 function hasPointLevelOverlap(
   snapshot: EditorSnapshot,

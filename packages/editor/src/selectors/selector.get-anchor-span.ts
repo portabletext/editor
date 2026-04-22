@@ -4,6 +4,8 @@ import type {ChildPath} from '../types/paths'
 import {getAnchorChild} from './selector.get-anchor-child'
 
 /**
+ * Returns the span containing the anchor selection, resolved at any depth.
+ *
  * @public
  */
 export const getAnchorSpan: EditorSelector<

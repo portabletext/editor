@@ -1,7 +1,7 @@
 import {isTextBlock, type PortableTextBlock} from '@portabletext/schema'
 import type {EditorContext} from '../editor/editor-snapshot'
+import {isKeyedSegment} from './util.is-keyed-segment'
 import {isSelectionCollapsed} from './util.is-selection-collapsed'
-import {getChildKeyFromSelectionPoint} from './util.selection-point'
 
 export function isAtTheBeginningOfBlock({
   context,
@@ -22,7 +22,15 @@ export function isAtTheBeginningOfBlock({
     return false
   }
 
-  const focusSpanKey = getChildKeyFromSelectionPoint(context.selection.focus)
+  // A child-level point ends with `'children', {_key}`. The child key is the
+  // last keyed segment. For block-level points, there is no child key.
+  const focusPath = context.selection.focus.path
+  const lastSegment = focusPath.at(-1)
+  const secondToLast = focusPath.at(-2)
+  const focusSpanKey =
+    secondToLast === 'children' && isKeyedSegment(lastSegment)
+      ? lastSegment._key
+      : undefined
 
   return (
     focusSpanKey === block.children[0]?._key &&
