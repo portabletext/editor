@@ -1,10 +1,18 @@
-import type {PortableTextObject, PortableTextSpan} from '@portabletext/schema'
+import {
+  isTextBlock,
+  type PortableTextObject,
+  type PortableTextSpan,
+} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
+import {getNode} from '../node-traversal/get-node'
+import {parentPath} from '../slate/path/parent-path'
 import type {ChildPath} from '../types/paths'
-import {getChildKeyFromSelectionPoint} from '../utils/util.selection-point'
-import {getFocusTextBlock} from './selector.get-focus-text-block'
+import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 
 /**
+ * Returns the child (span or inline object) containing the focus selection,
+ * resolved at any depth.
+ *
  * @public
  */
 export const getFocusChild: EditorSelector<
@@ -14,23 +22,34 @@ export const getFocusChild: EditorSelector<
     }
   | undefined
 > = (snapshot) => {
-  if (!snapshot.context.selection) {
+  const selection = snapshot.context.selection
+
+  if (!selection) {
     return undefined
   }
 
-  const focusBlock = getFocusTextBlock(snapshot)
+  const childSegment = selection.focus.path.at(-1)
 
-  if (!focusBlock) {
+  if (!isKeyedSegment(childSegment)) {
     return undefined
   }
 
-  const key = getChildKeyFromSelectionPoint(snapshot.context.selection.focus)
+  const parent = getNode(snapshot.context, parentPath(selection.focus.path))
 
-  const node = key
-    ? focusBlock.node.children.find((span) => span._key === key)
-    : undefined
+  if (!parent || !isTextBlock(snapshot.context, parent.node)) {
+    return undefined
+  }
 
-  return node && key
-    ? {node, path: [...focusBlock.path, 'children', {_key: key}]}
-    : undefined
+  const child = parent.node.children.find(
+    (candidate) => candidate._key === childSegment._key,
+  )
+
+  if (!child) {
+    return undefined
+  }
+
+  return {
+    node: child,
+    path: [...parent.path, 'children', {_key: child._key}],
+  }
 }

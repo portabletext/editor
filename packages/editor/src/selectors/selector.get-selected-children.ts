@@ -1,12 +1,13 @@
-import {isSpan, isTextBlock} from '@portabletext/schema'
+import {isSpan} from '@portabletext/schema'
 import type {PortableTextChild} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
 import type {ChildPath} from '../types/paths'
-import {
-  getBlockKeyFromSelectionPoint,
-  getChildKeyFromSelectionPoint,
-} from '../utils/util.selection-point'
+import {isEqualPaths} from '../utils/util.is-equal-paths'
+import {isKeyedSegment} from '../utils/util.is-keyed-segment'
+import {getSelectedTextBlocks} from './selector.get-selected-text-blocks'
+import {getSelectionEndBlock} from './selector.get-selection-end-block'
 import {getSelectionEndPoint} from './selector.get-selection-end-point'
+import {getSelectionStartBlock} from './selector.get-selection-start-block'
 import {getSelectionStartPoint} from './selector.get-selection-start-point'
 
 type SelectedChild<TChild extends PortableTextChild = PortableTextChild> = {
@@ -20,6 +21,12 @@ type GetSelectedChildrenOptions<
   filter?: (child: PortableTextChild) => child is TChild
 }
 
+/**
+ * Returns the children (spans and inline objects) touched by the selection,
+ * resolved at any depth.
+ *
+ * @public
+ */
 export function getSelectedChildren<
   TChild extends PortableTextChild = PortableTextChild,
 >(
@@ -35,42 +42,32 @@ export function getSelectedChildren<
       return []
     }
 
-    const startBlockKey = getBlockKeyFromSelectionPoint(startPoint)
-    const endBlockKey = getBlockKeyFromSelectionPoint(endPoint)
-    const startChildKey = getChildKeyFromSelectionPoint(startPoint)
-    const endChildKey = getChildKeyFromSelectionPoint(endPoint)
+    const startChildSegment = startPoint.path.at(-1)
+    const endChildSegment = endPoint.path.at(-1)
+    const startChildKey = isKeyedSegment(startChildSegment)
+      ? startChildSegment._key
+      : undefined
+    const endChildKey = isKeyedSegment(endChildSegment)
+      ? endChildSegment._key
+      : undefined
 
-    if (!startBlockKey || !endBlockKey) {
-      return []
-    }
-
-    const startBlockIndex = snapshot.blockIndexMap.get(startBlockKey)
-    const endBlockIndex = snapshot.blockIndexMap.get(endBlockKey)
-
-    if (startBlockIndex === undefined || endBlockIndex === undefined) {
-      return []
-    }
-
+    const startBlock = getSelectionStartBlock(snapshot)
+    const endBlock = getSelectionEndBlock(snapshot)
+    const textBlocks = getSelectedTextBlocks(snapshot)
     const selectedChildren: Array<SelectedChild<TChild>> = []
-    const minBlockIndex = Math.min(startBlockIndex, endBlockIndex)
-    const maxBlockIndex = Math.max(startBlockIndex, endBlockIndex)
-    const blocks = snapshot.context.value.slice(
-      minBlockIndex,
-      maxBlockIndex + 1,
-    )
 
     let startChildFound = false
 
-    for (const block of blocks) {
-      if (!isTextBlock(snapshot.context, block)) {
-        continue
-      }
-
-      const isStartBlock = block._key === startBlockKey
-      const isEndBlock = block._key === endBlockKey
+    for (const block of textBlocks) {
+      const isStartBlock = startBlock
+        ? isEqualPaths(block.path, startBlock.path)
+        : false
+      const isEndBlock = endBlock
+        ? isEqualPaths(block.path, endBlock.path)
+        : false
       const isMiddleBlock = !isStartBlock && !isEndBlock
 
-      for (const child of block.children) {
+      for (const child of block.node.children) {
         const isStartChild = child._key === startChildKey
         const isEndChild = child._key === endChildKey
 
@@ -78,7 +75,7 @@ export function getSelectedChildren<
           if (!filter || filter(child)) {
             selectedChildren.push({
               node: child as TChild,
-              path: [{_key: block._key}, 'children', {_key: child._key}],
+              path: [...block.path, 'children', {_key: child._key}],
             })
           }
         }
@@ -88,7 +85,7 @@ export function getSelectedChildren<
           continue
         }
 
-        if (isStartChild) {
+        if (isStartBlock && isStartChild) {
           startChildFound = true
           if (isSpan(snapshot.context, child)) {
             if (startPoint.offset < child.text.length) {
@@ -98,13 +95,13 @@ export function getSelectedChildren<
             addChild()
           }
 
-          if (startChildKey === endChildKey) {
+          if (isEndBlock && startChildKey === endChildKey) {
             break
           }
           continue
         }
 
-        if (isEndChild) {
+        if (isEndBlock && isEndChild) {
           if (isSpan(snapshot.context, child)) {
             if (endPoint.offset > 0) {
               addChild()
@@ -118,10 +115,6 @@ export function getSelectedChildren<
         if (startChildFound) {
           addChild()
         }
-      }
-
-      if (isStartBlock && startBlockKey === endBlockKey) {
-        break
       }
 
       if (isStartBlock) {

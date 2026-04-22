@@ -1,10 +1,18 @@
-import type {PortableTextObject, PortableTextSpan} from '@portabletext/schema'
+import {
+  isTextBlock,
+  type PortableTextObject,
+  type PortableTextSpan,
+} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
+import {getNode} from '../node-traversal/get-node'
+import {parentPath} from '../slate/path/parent-path'
 import type {ChildPath} from '../types/paths'
-import {getChildKeyFromSelectionPoint} from '../utils/util.selection-point'
-import {getAnchorTextBlock} from './selector.get-anchor-text-block'
+import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 
 /**
+ * Returns the child (span or inline object) containing the anchor selection,
+ * resolved at any depth.
+ *
  * @public
  */
 export const getAnchorChild: EditorSelector<
@@ -14,23 +22,34 @@ export const getAnchorChild: EditorSelector<
     }
   | undefined
 > = (snapshot) => {
-  if (!snapshot.context.selection) {
+  const selection = snapshot.context.selection
+
+  if (!selection) {
     return undefined
   }
 
-  const anchorBlock = getAnchorTextBlock(snapshot)
+  const childSegment = selection.anchor.path.at(-1)
 
-  if (!anchorBlock) {
+  if (!isKeyedSegment(childSegment)) {
     return undefined
   }
 
-  const key = getChildKeyFromSelectionPoint(snapshot.context.selection.anchor)
+  const parent = getNode(snapshot.context, parentPath(selection.anchor.path))
 
-  const node = key
-    ? anchorBlock.node.children.find((span) => span._key === key)
-    : undefined
+  if (!parent || !isTextBlock(snapshot.context, parent.node)) {
+    return undefined
+  }
 
-  return node && key
-    ? {node, path: [...anchorBlock.path, 'children', {_key: key}]}
-    : undefined
+  const child = parent.node.children.find(
+    (candidate) => candidate._key === childSegment._key,
+  )
+
+  if (!child) {
+    return undefined
+  }
+
+  return {
+    node: child,
+    path: [...parent.path, 'children', {_key: child._key}],
+  }
 }

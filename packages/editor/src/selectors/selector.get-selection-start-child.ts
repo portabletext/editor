@@ -5,6 +5,9 @@ import {getSelectionStartPoint} from '../utils/util.get-selection-start-point'
 import {getFocusChild} from './selector.get-focus-child'
 
 /**
+ * Returns the child containing the selection's start point, resolved at any
+ * depth.
+ *
  * @public
  */
 export const getSelectionStartChild: EditorSelector<

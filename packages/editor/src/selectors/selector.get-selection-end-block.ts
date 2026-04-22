@@ -5,6 +5,9 @@ import {getSelectionEndPoint} from '../utils/util.get-selection-end-point'
 import {getFocusBlock} from './selector.get-focus-block'
 
 /**
+ * Returns the block containing the selection's end point, resolved at any
+ * depth.
+ *
  * @public
  */
 export const getSelectionEndBlock: EditorSelector<

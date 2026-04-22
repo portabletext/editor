@@ -4,6 +4,9 @@ import type {BlockPath} from '../types/paths'
 import {getAnchorBlock} from './selector.get-anchor-block'
 
 /**
+ * Returns the text block containing the anchor selection, resolved at any
+ * depth.
+ *
  * @public
  */
 export const getAnchorTextBlock: EditorSelector<

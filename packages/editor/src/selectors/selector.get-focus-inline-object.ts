@@ -5,6 +5,9 @@ import type {ChildPath} from '../types/paths'
 import {getFocusChild} from './selector.get-focus-child'
 
 /**
+ * Returns the inline object containing the focus selection, resolved at any
+ * depth.
+ *
  * @public
  */
 export const getFocusInlineObject: EditorSelector<

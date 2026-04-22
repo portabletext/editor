@@ -112,14 +112,18 @@ function resolveSelectionPoint(
 
     // Text block with a block-level offset (no child key in path).
     // Resolve the offset to a specific span position.
-    if (
-      isTextBlock({schema: editor.schema}, entry.node) &&
-      !getChildKeyFromSelectionPoint(selectionPoint)
-    ) {
+    // Block-level paths end with the block's keyed segment; child-level paths
+    // end with `'children', {_key: childKey}`.
+    const isBlockLevelPath =
+      selectionPoint.path.length > 0 &&
+      selectionPoint.path.at(-2) !== 'children'
+
+    if (isTextBlock({schema: editor.schema}, entry.node) && isBlockLevelPath) {
       const spanPoint = blockOffsetToSpanSelectionPoint({
         context: {
           schema: editor.schema,
           value: [entry.node],
+          containers: editor.containers,
         },
         blockOffset: {
           path: [{_key: entry.node._key}],

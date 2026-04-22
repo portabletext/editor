@@ -1,11 +1,14 @@
 import {isSpan, isTextBlock, type PortableTextSpan} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
 import type {Path} from '../slate/interfaces/path'
-import {getChildKeyFromSelectionPoint} from '../utils/util.selection-point'
+import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import {getSelectionStartBlock} from './selector.get-selection-start-block'
 import {getSelectionStartPoint} from './selector.get-selection-start-point'
 
 /**
+ * Returns the span before the selection start within the same text block,
+ * resolved at any depth.
+ *
  * @public
  */
 export const getPreviousSpan: EditorSelector<
@@ -26,8 +29,20 @@ export const getPreviousSpan: EditorSelector<
     return undefined
   }
 
-  const selectionStartPointChildKey =
-    getChildKeyFromSelectionPoint(selectionStartPoint)
+  const childSegment = selectionStartPoint.path.at(-1)
+
+  if (!isKeyedSegment(childSegment)) {
+    return undefined
+  }
+
+  const children = selectionStartBlock.node.children
+  const currentIndex = children.findIndex(
+    (child) => child._key === childSegment._key,
+  )
+
+  if (currentIndex <= 0) {
+    return undefined
+  }
 
   let previousSpan:
     | {
@@ -36,10 +51,8 @@ export const getPreviousSpan: EditorSelector<
       }
     | undefined
 
-  for (const child of selectionStartBlock.node.children) {
-    if (child._key === selectionStartPointChildKey) {
-      break
-    }
+  for (let index = 0; index < currentIndex; index++) {
+    const child = children[index]!
 
     if (isSpan(snapshot.context, child)) {
       previousSpan = {
