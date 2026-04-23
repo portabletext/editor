@@ -154,11 +154,11 @@ export type ContainerConfig = {
 }
 
 /**
- * @internal
+ * @alpha
  *
  * A leaf-config overrides how a matching span, inline object, or void
  * block object renders inside a given scope. Registered via
- * `editor.registerLeaf` (internal only).
+ * `LeafPlugin`.
  */
 export type Leaf = {
   scope: string
@@ -219,7 +219,7 @@ export function defineLeaf<TSchema extends SchemaDefinition>(
   config: SchemaLeafConfig<TSchema>,
 ): Leaf
 /**
- * @internal
+ * @alpha
  */
 export function defineLeaf(config: Leaf): Leaf
 export function defineLeaf(config: Leaf): Leaf {
