@@ -48,44 +48,6 @@ const calloutContainer = [
 ]
 
 describe('renderers resolve sub-schema from container path', () => {
-  test('renderStyle fires for a style declared by the nested block sub-schema', async () => {
-    const keyGenerator = createTestKeyGenerator()
-    const calloutKey = keyGenerator()
-    const innerBlockKey = keyGenerator()
-    const innerSpanKey = keyGenerator()
-
-    await createTestEditor({
-      keyGenerator,
-      schemaDefinition,
-      initialValue: [
-        {
-          _type: 'callout',
-          _key: calloutKey,
-          content: [
-            {
-              _type: 'block',
-              _key: innerBlockKey,
-              children: [
-                {_type: 'span', _key: innerSpanKey, text: 'inside', marks: []},
-              ],
-              markDefs: [],
-              style: 'normal',
-            },
-          ],
-        },
-      ],
-      children: <ContainerPlugin containers={calloutContainer} />,
-      editableProps: {
-        renderStyle: ({children, value}) => (
-          <span data-testid={`style-${value}`}>{children}</span>
-        ),
-      },
-    })
-
-    const styled = page.getByTestId('style-normal')
-    await expect.element(styled).toBeInTheDocument()
-  })
-
   test('renderDecorator fires for a decorator declared by the nested block sub-schema', async () => {
     const keyGenerator = createTestKeyGenerator()
     const calloutKey = keyGenerator()

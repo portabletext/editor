@@ -542,7 +542,7 @@ describe('core block-object behaviors — container awareness', () => {
 
     const line1Block = await vi.waitFor(() => {
       const blocks = document.querySelectorAll(
-        `[data-testid="code-block"] [data-slate-node="element"]`,
+        `[data-testid="code-block"] [data-block-type="text"]`,
       )
       expect(blocks.length).toEqual(2)
       return blocks[0] as HTMLElement

@@ -72,7 +72,9 @@ describe('Cross-line selection inside an editable container', () => {
     // across lines or a mouse drag) by directly manipulating the DOM
     // selection. The editor's `selectionchange` handler should convert it
     // to a cross-line Slate selection via `toSlateRange`.
-    const textNodes = editable.querySelectorAll('[data-slate-node="text"]')
+    const textNodes = editable.querySelectorAll(
+      '[data-slate-node="text"], [data-child-type="span"]',
+    )
     const line1TextNode = textNodes[0] as HTMLElement
     const line2TextNode = textNodes[1] as HTMLElement
     const line1StringNode = line1TextNode.querySelector('[data-slate-string]')

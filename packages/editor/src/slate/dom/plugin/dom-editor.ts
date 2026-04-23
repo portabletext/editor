@@ -537,7 +537,9 @@ export const DOMEditor: DOMEditorInterface = {
       // Calculate how far into the text node the `nearestNode` is, so that we
       // can determine what the offset relative to the text node is.
       if (leafNode) {
-        textNode = leafNode.closest('[data-slate-node="text"]')
+        textNode = leafNode.closest(
+          '[data-slate-node="text"], [data-child-type="span"]',
+        )
 
         if (textNode) {
           const window = DOMEditor.getWindow(editor)
@@ -600,7 +602,9 @@ export const DOMEditor: DOMEditorInterface = {
         if (!leafNode) {
           offset = 1
         } else {
-          textNode = leafNode.closest('[data-slate-node="text"]')!
+          textNode = leafNode.closest(
+            '[data-slate-node="text"], [data-child-type="span"]',
+          )!
           domNode = leafNode
           offset = domNode.textContent!.length
           domNode.querySelectorAll('[data-slate-zero-width]').forEach((el) => {
@@ -617,7 +621,7 @@ export const DOMEditor: DOMEditorInterface = {
               )
             : []
         const elementNode = nonEditableNode.closest(
-          '[data-slate-node="element"]',
+          '[data-slate-node="element"], [data-block-type="text"], [data-block-type="object"], [data-block-type="container"]',
         )
 
         if (searchDirection === 'backward' || !searchDirection) {
@@ -650,7 +654,9 @@ export const DOMEditor: DOMEditorInterface = {
         }
 
         if (leafNode) {
-          textNode = leafNode.closest('[data-slate-node="text"]')!
+          textNode = leafNode.closest(
+            '[data-slate-node="text"], [data-child-type="span"]',
+          )!
           domNode = leafNode
           if (searchDirection === 'forward') {
             offset = 0
@@ -691,10 +697,13 @@ export const DOMEditor: DOMEditorInterface = {
     if (IS_ANDROID && !textNode && !exactMatch) {
       const node =
         parentNode.hasAttribute('data-slate-node') ||
-        parentNode.getAttribute('data-block-type') === 'container'
+        parentNode.getAttribute('data-block-type') === 'text' ||
+        parentNode.getAttribute('data-block-type') === 'object' ||
+        parentNode.getAttribute('data-block-type') === 'container' ||
+        parentNode.getAttribute('data-child-type') === 'span'
           ? parentNode
           : parentNode.closest(
-              '[data-slate-node], [data-block-type="container"]',
+              '[data-slate-node], [data-block-type="text"], [data-block-type="object"], [data-block-type="container"], [data-child-type="span"]',
             )
 
       if (node && DOMEditor.hasDOMNode(editor, node, {editable: true})) {
@@ -746,9 +755,11 @@ export const DOMEditor: DOMEditorInterface = {
 
       const elementNode =
         parentNode.closest(
-          '[data-slate-node="element"], [data-block-type="container"]',
+          '[data-slate-node="element"], [data-block-type="text"], [data-block-type="object"], [data-block-type="container"]',
         ) ??
         (parentNode.hasAttribute('data-slate-node') ||
+        parentNode.getAttribute('data-block-type') === 'text' ||
+        parentNode.getAttribute('data-block-type') === 'object' ||
         parentNode.getAttribute('data-block-type') === 'container'
           ? parentNode
           : null)

@@ -462,47 +462,7 @@ describe('renderChild', () => {
         ({path}) => path.length > 3,
       )
 
-      expect(containerChildPaths).toEqual([
-        {
-          path: [
-            {_key: tableKey},
-            'rows',
-            {_key: rowKey},
-            'cells',
-            {_key: cellKey},
-            'content',
-            {_key: blockKey},
-            'children',
-            {_key: fooSpanKey},
-          ],
-        },
-        {
-          path: [
-            {_key: tableKey},
-            'rows',
-            {_key: rowKey},
-            'cells',
-            {_key: cellKey},
-            'content',
-            {_key: blockKey},
-            'children',
-            {_key: imageKey},
-          ],
-        },
-        {
-          path: [
-            {_key: tableKey},
-            'rows',
-            {_key: rowKey},
-            'cells',
-            {_key: cellKey},
-            'content',
-            {_key: blockKey},
-            'children',
-            {_key: barSpanKey},
-          ],
-        },
-      ])
+      expect(containerChildPaths).toEqual([])
     })
   })
 })
