@@ -4,7 +4,7 @@ import {useEditor} from '../editor/use-editor'
 import type {Leaf} from '../renderers/renderer.types'
 
 /**
- * @internal
+ * @alpha
  */
 export function LeafPlugin(props: {leafs: Array<Leaf>}) {
   const editor = useEditor() as InternalEditor
