@@ -138,15 +138,13 @@ const MemoizedText = memo(
  * Leaf strings without text, render as zero-width strings.
  */
 
-const ZeroWidthString = (props: {length?: number; isLineBreak?: boolean}) => {
-  const {length = 0, isLineBreak = false} = props
+const ZeroWidthString = (props: {isLineBreak?: boolean}) => {
+  const {isLineBreak = false} = props
 
   const attributes: {
     'data-slate-zero-width': string
-    'data-slate-length': number
   } = {
     'data-slate-zero-width': isLineBreak ? 'n' : 'z',
-    'data-slate-length': length,
   }
 
   // FIXME: Inserting the \uFEFF on iOS breaks capitalization at the start of an
