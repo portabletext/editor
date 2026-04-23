@@ -22,6 +22,7 @@ const coreBehaviors = [
   coreBlockObjectBehaviors.arrowUpOnLonelyBlockObject,
   coreContainerBehaviors.arrowDownOutOfContainer,
   coreContainerBehaviors.arrowUpOutOfContainer,
+  coreContainerBehaviors.breakingOutOfContainer,
   coreBlockObjectBehaviors.breakingBlockObject,
   coreBlockObjectBehaviors.deletingEmptyTextBlockAfterBlockObject,
   coreBlockObjectBehaviors.deletingEmptyTextBlockBeforeBlockObject,
