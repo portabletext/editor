@@ -256,4 +256,43 @@ describe('event.mutation', () => {
       expect(mutationEvents.length).toBe(2)
     })
   })
+
+  test('Scenario: Deleting the only block emits a mutation whose value contains the normalized placeholder', async () => {
+    const mutationEvents: Array<MutationEvent> = []
+
+    const {editor} = await createTestEditor({
+      initialValue: [
+        {
+          _key: 'k0',
+          _type: 'block',
+          children: [{_key: 'k1', _type: 'span', text: 'hello', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'mutation') {
+              mutationEvents.push(event)
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({type: 'delete.block', at: [{_key: 'k0'}]})
+
+    await vi.waitFor(() => {
+      expect(mutationEvents.at(-1)?.value).toEqual([
+        {
+          _key: 'k2',
+          _type: 'block',
+          children: [{_key: 'k3', _type: 'span', text: '', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+  })
 })

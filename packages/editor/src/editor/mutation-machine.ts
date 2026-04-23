@@ -83,11 +83,17 @@ export const mutationMachine = setup({
       context.slateEditor.isDeferringMutations = true
     },
     'emit mutations': enqueueActions(({context, enqueue}) => {
-      for (const bulk of context.pendingMutations) {
+      // The final bulk may have captured `value` before normalization ran.
+      // Normalization can mutate `editor.children` without emitting a patch,
+      // so the final bulk's snapshot must be read live. Earlier bulks keep
+      // their in-sequence snapshots.
+      const lastIndex = context.pendingMutations.length - 1
+      for (let i = 0; i < context.pendingMutations.length; i++) {
+        const bulk = context.pendingMutations[i]!
         enqueue.emit({
           type: 'mutation',
           patches: bulk.patches,
-          snapshot: bulk.value,
+          snapshot: i === lastIndex ? context.slateEditor.children : bulk.value,
         })
       }
       context.slateEditor.isDeferringMutations = false

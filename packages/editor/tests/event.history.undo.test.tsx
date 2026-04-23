@@ -10,6 +10,7 @@ import {
 } from '../src/behaviors/behavior.types.action'
 import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
 import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
+import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
 import {getFirstBlock, getFocusBlock} from '../src/selectors'
 import {createTestEditor} from '../src/test/vitest'
 import type {EditorSelection} from '../src/types/editor'
@@ -927,6 +928,50 @@ describe('event.history.undo', () => {
     editor.send({type: 'history.undo'})
 
     // After undo: back to original value
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(initialValue)
+    })
+  })
+
+  test('Scenario: Undoing removal of the only block after value broadcast restores it', async () => {
+    const initialValue = [
+      {
+        _key: 'k0',
+        _type: 'block',
+        children: [{_key: 'k1', _type: 'span', text: 'hello', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ]
+
+    let latestValue: typeof initialValue | undefined
+
+    const {editor, locator} = await createTestEditor({
+      initialValue,
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'mutation') {
+              latestValue = event.value as typeof initialValue
+            }
+          }}
+        />
+      ),
+    })
+
+    await userEvent.click(locator)
+
+    editor.send({type: 'delete.block', at: [{_key: 'k0'}]})
+
+    await vi.waitFor(() => {
+      expect(latestValue).not.toEqual(undefined)
+      expect(latestValue?.[0]?._key).not.toEqual('k0')
+    })
+
+    editor.send({type: 'update value', value: structuredClone(latestValue)})
+
+    editor.send({type: 'history.undo'})
+
     await vi.waitFor(() => {
       expect(editor.getSnapshot().context.value).toEqual(initialValue)
     })
