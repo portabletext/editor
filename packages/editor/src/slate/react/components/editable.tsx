@@ -98,7 +98,8 @@ export interface RenderElementProps {
   element: PortableTextTextBlock | PortableTextObject
   path: Path
   attributes: {
-    'data-slate-node': 'element'
+    'data-slate-node'?: 'element'
+    'data-block-type'?: 'container'
     'data-slate-inline'?: true
     'data-slate-void'?: true
     'data-pt-path': string
