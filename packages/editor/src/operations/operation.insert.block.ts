@@ -70,9 +70,25 @@ export const insertBlockOperationImplementation: OperationImplementation<
 
   const block = toSlateBlock(parsedBlock, {schemaTypes: context.schema})
   const editor = operation.editor
-  const at = operation.at
-    ? resolveSelection(editor, operation.at)
-    : editor.selection
+  // When `operation.at` is provided but doesn't resolve (e.g. its path
+  // references a block that was never inserted), preserve the legacy behavior
+  // of falling through to the document-level default in `resolveTarget`.
+  //
+  // When `placement` is explicitly `before` or `after`, use `operation.at`
+  // untouched once validated. `resolveTarget` only needs the enclosing block
+  // path for these placements; resolving descends block-level paths to leaves,
+  // which would hide the caller's intent to anchor at a specific block.
+  let at: Range | null | undefined = undefined
+  if (operation.at) {
+    const resolved = resolveSelection(editor, operation.at)
+    if (resolved) {
+      at = operation.placement !== 'auto' ? operation.at : resolved
+    } else {
+      at = null
+    }
+  } else {
+    at = editor.selection
+  }
 
   const target = resolveTarget({
     editor,
