@@ -141,19 +141,16 @@ const MemoizedText = memo(
  */
 
 const ZeroWidthString = (props: {
-  length?: number
   isLineBreak?: boolean
   isMarkPlaceholder?: boolean
 }) => {
-  const {length = 0, isLineBreak = false, isMarkPlaceholder = false} = props
+  const {isLineBreak = false, isMarkPlaceholder = false} = props
 
   const attributes: {
     'data-slate-zero-width': string
-    'data-slate-length': number
     'data-slate-mark-placeholder'?: boolean
   } = {
     'data-slate-zero-width': isLineBreak ? 'n' : 'z',
-    'data-slate-length': length,
   }
 
   if (isMarkPlaceholder) {

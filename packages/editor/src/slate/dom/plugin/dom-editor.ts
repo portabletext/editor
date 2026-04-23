@@ -415,8 +415,7 @@ export const DOMEditor: DOMEditorInterface = {
       }
 
       const {length} = domNode.textContent
-      const attr = text.getAttribute('data-slate-length')
-      const trueLength = attr == null ? length : parseInt(attr, 10)
+      const trueLength = text.hasAttribute('data-slate-zero-width') ? 0 : length
       const end = start + trueLength
 
       // Prefer putting the selection inside the mark placeholder to ensure

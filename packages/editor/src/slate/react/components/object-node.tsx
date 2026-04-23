@@ -69,9 +69,7 @@ const ObjectNodeComponent = (props: {
     >
       <span data-slate-node="text">
         <span data-slate-leaf>
-          <span data-slate-zero-width="z" data-slate-length={0}>
-            {!IS_ANDROID ? '\uFEFF' : null}
-          </span>
+          <span data-slate-zero-width="z">{!IS_ANDROID ? '\uFEFF' : null}</span>
         </span>
       </span>
     </Tag>
