@@ -1,5 +1,8 @@
+import {createPlaceholderBlock} from '../internal-utils/create-placeholder-block'
 import {getAncestor} from '../node-traversal/get-ancestor'
 import {getSibling} from '../node-traversal/get-sibling'
+import type {TraversalSnapshot} from '../node-traversal/traversal-snapshot'
+import {getEnclosingContainer} from '../schema/get-enclosing-container'
 import {isEditableContainer} from '../schema/is-editable-container'
 import {getFirstBlock} from '../selectors/selector.get-first-block'
 import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
@@ -7,7 +10,10 @@ import {getLastBlock} from '../selectors/selector.get-last-block'
 import {isAtTheEndOfBlock} from '../selectors/selector.is-at-the-end-of-block'
 import {isAtTheStartOfBlock} from '../selectors/selector.is-at-the-start-of-block'
 import {isSelectionCollapsed} from '../selectors/selector.is-selection-collapsed'
+import type {Path} from '../slate/interfaces/path'
 import {pathEquals} from '../slate/path/path-equals'
+import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
+import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
 /**
@@ -90,7 +96,97 @@ function isAtContainerDeadEnd(
   return sibling === undefined
 }
 
+/**
+ * Enter at the bottom of an editable container, on an empty trailing line
+ * whose previous sibling is also an empty text block, escapes the container
+ * by deleting both empty trailing blocks and inserting a fresh text block
+ * after the deepest editable container ancestor whose parent accepts a
+ * text block.
+ */
+const breakingOutOfContainer = defineBehavior({
+  on: 'insert.break',
+  guard: ({snapshot}) => {
+    if (!isSelectionCollapsed(snapshot)) {
+      return false
+    }
+
+    const focusTextBlock = getFocusTextBlock(snapshot)
+    if (!focusTextBlock) {
+      return false
+    }
+
+    const lastBlock = getLastBlock(snapshot)
+    if (!lastBlock || !pathEquals(lastBlock.path, focusTextBlock.path)) {
+      return false
+    }
+
+    if (!isEmptyTextBlock(snapshot.context, focusTextBlock.node)) {
+      return false
+    }
+
+    const previousBlock = getSibling(snapshot, focusTextBlock.path, 'previous')
+    if (
+      !previousBlock ||
+      !isEmptyTextBlock(snapshot.context, previousBlock.node)
+    ) {
+      return false
+    }
+
+    const escapeAfter = getEscapeTarget(snapshot, focusTextBlock.path)
+    if (!escapeAfter) {
+      return false
+    }
+
+    return {
+      focusBlockPath: focusTextBlock.path,
+      previousBlockPath: previousBlock.path,
+      escapeAfter,
+    }
+  },
+  actions: [
+    ({snapshot}, {focusBlockPath, previousBlockPath, escapeAfter}) => [
+      raise({type: 'delete.block', at: focusBlockPath}),
+      raise({type: 'delete.block', at: previousBlockPath}),
+      raise({
+        type: 'insert.block',
+        block: createPlaceholderBlock(snapshot, escapeAfter),
+        placement: 'after',
+        at: {
+          anchor: {path: escapeAfter, offset: 0},
+          focus: {path: escapeAfter, offset: 0},
+        },
+        select: 'start',
+      }),
+    ],
+  ],
+})
+
+/**
+ * Find the deepest editable container ancestor whose immediate parent
+ * accepts a text block. The new text block is inserted as the next
+ * sibling of this container.
+ */
+function getEscapeTarget(
+  snapshot: TraversalSnapshot,
+  path: Path,
+): Path | undefined {
+  return getAncestor(snapshot, path, (node, ancestorPath) => {
+    if (!isEditableContainer(snapshot, node, ancestorPath)) {
+      return false
+    }
+    const enclosing = getEnclosingContainer(snapshot, ancestorPath)
+    if (!enclosing) {
+      // The container is at root level; the editor root accepts text blocks.
+      return true
+    }
+    return enclosing.of.some(
+      (member) => member.type === snapshot.context.schema.block.name,
+    )
+  })?.path
+}
+
 export const coreContainerBehaviors = {
   arrowDownOutOfContainer,
   arrowUpOutOfContainer,
+  breakingOutOfContainer,
 }
