@@ -2,6 +2,7 @@ import type {
   PortableTextBlock,
   PortableTextObject,
   PortableTextSpan,
+  PortableTextTextBlock,
   SchemaDefinition,
 } from '@portabletext/schema'
 import type {ReactElement} from 'react'
@@ -65,6 +66,16 @@ type ScopedArrayFields<
     : never
 
 /**
+ * Narrows the `node` passed to a container's render based on the scope's
+ * terminal type. When the terminal is `block` the node is a text block;
+ * otherwise it's a block object.
+ */
+type ScopedContainerNode<TScope extends string> =
+  TerminalType<TScope> extends 'block'
+    ? PortableTextTextBlock
+    : PortableTextObject
+
+/**
  * @internal
  *
  * Schema-constrained container config. `scope` is narrowed to valid JSONPath
@@ -85,7 +96,7 @@ type SchemaContainerConfig<TSchema extends SchemaDefinition> =
             render?: (props: {
               attributes: Record<string, unknown>
               children: ReactElement
-              node: PortableTextBlock
+              node: ScopedContainerNode<TScope>
             }) => ReactElement | null
           }
         : never
