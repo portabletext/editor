@@ -67,6 +67,14 @@ export function RenderElement(props: {
   }
 
   if (isTextBlock({schema}, props.element)) {
+    if (containerScope) {
+      const {'data-slate-node': _sn, ...rest} = props.attributes
+      return (
+        <div {...rest} data-block-type="text">
+          {props.children}
+        </div>
+      )
+    }
     return (
       <RenderTextBlock
         attributes={props.attributes}
@@ -91,6 +99,23 @@ export function RenderElement(props: {
   }
 
   if (isInline(slateStatic, props.path)) {
+    if (containerScope && !leafConfig) {
+      const {
+        'data-slate-node': _sn,
+        'data-slate-inline': _si,
+        'data-slate-void': _sv,
+        'contentEditable': _ce,
+        ...rest
+      } = props.attributes as Record<string, unknown>
+      return (
+        <span {...rest} data-child-type="object">
+          {props.children}
+          <span contentEditable={false}>
+            [{props.element._type}: {props.element._key}]
+          </span>
+        </span>
+      )
+    }
     return (
       <RenderInlineObject
         attributes={props.attributes}
@@ -103,6 +128,22 @@ export function RenderElement(props: {
       >
         {props.children}
       </RenderInlineObject>
+    )
+  }
+
+  if (containerScope && !leafConfig) {
+    const {
+      'data-slate-node': _sn,
+      'data-slate-void': _sv,
+      ...rest
+    } = props.attributes
+    return (
+      <div {...rest} data-block-type="object">
+        {props.children}
+        <div contentEditable={false}>
+          [{props.element._type}: {props.element._key}]
+        </div>
+      </div>
     )
   }
 
