@@ -76,6 +76,14 @@ type ScopedContainerNode<TScope extends string> =
     : PortableTextObject
 
 /**
+ * Narrows the `node` passed to a leaf's render based on the scope's
+ * terminal type. When the terminal is `span` the node is a span; all other
+ * terminals (inline objects, void block objects) resolve to a block object.
+ */
+type ScopedLeafNode<TScope extends string> =
+  TerminalType<TScope> extends 'span' ? PortableTextSpan : PortableTextObject
+
+/**
  * @internal
  *
  * Schema-constrained container config. `scope` is narrowed to valid JSONPath
@@ -173,7 +181,14 @@ type SchemaLeafConfig<TSchema extends SchemaDefinition> =
       ? TScope extends string
         ? {
             scope: TScope
-            render: Leaf['render']
+            render: (props: {
+              attributes: Record<string, unknown>
+              children: ReactElement
+              focused: boolean
+              node: ScopedLeafNode<TScope>
+              path: Path
+              selected: boolean
+            }) => ReactElement | null
           }
         : never
       : never
