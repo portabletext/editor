@@ -136,10 +136,16 @@ export const playgroundSchemaDefinition = defineSchema({
               decorators: [{title: 'Strong', name: 'strong'}],
               styles: [
                 {title: 'Normal', name: 'normal'},
-                {title: 'Quote', name: 'quote'},
+                {title: 'Heading 1', name: 'h1'},
+                {title: 'Heading 2', name: 'h2'},
+                {title: 'Heading 3', name: 'h3'},
+                {title: 'Quote', name: 'blockquote'},
               ],
               annotations: [],
-              lists: [],
+              lists: [
+                {title: 'Bulleted list', name: 'bullet'},
+                {title: 'Numbered list', name: 'number'},
+              ],
             },
             {
               type: 'image',
