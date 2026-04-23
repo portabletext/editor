@@ -22,43 +22,15 @@ const calloutBlockContainer = defineContainer<
   scope: '$..callout.block',
   field: 'children',
   render: ({attributes, children, node}) => {
-    const textBlock = node as {
-      style?: string
-      listItem?: string
-      level?: number
-    }
-
-    if (textBlock.listItem === 'bullet') {
+    if (node.listItem !== undefined) {
       return (
-        <div
-          {...attributes}
-          className="my-1 flex gap-2"
-          style={{paddingLeft: `${(textBlock.level ?? 1) * 1}rem`}}
-        >
-          <span contentEditable={false} className="select-none">
-            •
-          </span>
-          <span className="flex-1">{children}</span>
+        <div {...attributes} className="my-1">
+          {children}
         </div>
       )
     }
 
-    if (textBlock.listItem === 'number') {
-      return (
-        <div
-          {...attributes}
-          className="my-1 flex gap-2"
-          style={{paddingLeft: `${(textBlock.level ?? 1) * 1}rem`}}
-        >
-          <span contentEditable={false} className="select-none">
-            1.
-          </span>
-          <span className="flex-1">{children}</span>
-        </div>
-      )
-    }
-
-    switch (textBlock.style) {
+    switch (node.style) {
       case 'h1':
         return (
           <h1 {...attributes} className="my-2 font-bold text-2xl">
