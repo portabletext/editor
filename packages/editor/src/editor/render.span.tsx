@@ -12,6 +12,7 @@ import type {
   RenderDecoratorFunction,
 } from '../types/editor'
 import type {EditorSchema} from './editor-schema'
+import {RenderLeafConfig, useLeafConfig} from './render.leaf-config'
 import {SelectionStateContext} from './selection-state-context'
 import {useBlockSubSchema} from './use-block-sub-schema'
 
@@ -34,8 +35,14 @@ export function RenderSpan(props: RenderSpanProps) {
 
   const parent = props.children.props.parent
   const block = parent && isTextBlock({schema}, parent) ? parent : undefined
+  const child = block?.children.find(
+    (_child) => _child._key === props.leaf._key,
+  )
 
   const subSchema = useBlockSubSchema(props.path)
+  // Span leafs are looked up against the resolved span child. When no child
+  // is found (transient state), fall back to the Slate leaf for identity.
+  const leafConfig = useLeafConfig(child ?? props.leaf, props.path)
 
   const selectionState = useContext(SelectionStateContext)
   const serializedPath = serializePath(props.path)
@@ -131,27 +138,36 @@ export function RenderSpan(props: RenderSpanProps) {
   /**
    * Support `renderChild` render function for the Span itself
    */
-  if (block && props.renderChild) {
-    const child = block.children.find(
-      (_child) => _child._key === props.leaf._key,
-    ) // Ensure object equality
+  if (block && props.renderChild && child && !leafConfig) {
+    children = (
+      <RenderChild
+        renderChild={props.renderChild}
+        annotations={annotationMarkDefs}
+        editorElementRef={spanRef}
+        focused={focused}
+        path={props.path}
+        schemaType={schemaType}
+        selected={selected}
+        value={child}
+      >
+        {children}
+      </RenderChild>
+    )
+  }
 
-    if (child) {
-      children = (
-        <RenderChild
-          renderChild={props.renderChild}
-          annotations={annotationMarkDefs}
-          editorElementRef={spanRef}
-          focused={focused}
-          path={props.path}
-          schemaType={schemaType}
-          selected={selected}
-          value={child}
-        >
-          {children}
-        </RenderChild>
-      )
-    }
+  if (leafConfig) {
+    return (
+      <RenderLeafConfig
+        leafConfig={leafConfig}
+        attributes={props.attributes}
+        focused={focused}
+        node={child ?? props.leaf}
+        path={props.path}
+        selected={selected}
+      >
+        {children}
+      </RenderLeafConfig>
+    )
   }
 
   return (
