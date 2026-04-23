@@ -6,6 +6,7 @@ import React, {type JSX} from 'react'
 import {getText} from '../../../node-traversal/get-text'
 import {isInline as isInlinePath} from '../../../node-traversal/is-inline'
 import {serializePath} from '../../../paths/serialize-path'
+import {isEditableContainer} from '../../../schema/is-editable-container'
 import {isElementDecorationsEqual} from '../../dom/utils/range-list'
 import type {Path} from '../../interfaces/path'
 import type {DecoratedRange} from '../../interfaces/text'
@@ -57,19 +58,27 @@ const Element = (props: {
     renderText,
   })
 
+  const isContainer = isEditableContainer(
+    {
+      schema: editor.schema,
+      containers: editor.containers,
+      value: editor.children,
+    },
+    element,
+    props.path,
+  )
+
   // Attributes that the developer must mix into the element in their
   // custom node renderer component.
-  const attributes: {
-    'data-slate-node': 'element'
-    'data-slate-void'?: true
-    'data-slate-inline'?: true
-    'data-pt-path': string
-    'contentEditable'?: false
-    'dir'?: 'rtl'
-  } = {
-    'data-slate-node': 'element',
-    'data-pt-path': dataPath,
-  }
+  const attributes: RenderElementProps['attributes'] = isContainer
+    ? {
+        'data-block-type': 'container',
+        'data-pt-path': dataPath,
+      }
+    : {
+        'data-slate-node': 'element',
+        'data-pt-path': dataPath,
+      }
 
   if (isInline) {
     attributes['data-slate-inline'] = true
