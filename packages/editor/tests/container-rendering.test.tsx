@@ -118,7 +118,7 @@ describe('container rendering', () => {
           '</div>',
           // callout container
           '<div data-testid="callout"',
-          ' data-slate-node="element"',
+          ' data-block-type="container"',
           ' data-pt-path="[_key==&quot;k2&quot;]"',
           '>',
           // inner text block
@@ -345,18 +345,18 @@ describe('table with nested rows and cells', () => {
         [
           // table container
           '<table data-testid="table"',
-          ' data-slate-node="element"',
+          ' data-block-type="container"',
           ' data-pt-path="[_key==&quot;k0&quot;]"',
           '>',
           '<tbody>',
           // row container
           '<tr data-testid="row"',
-          ' data-slate-node="element"',
+          ' data-block-type="container"',
           ' data-pt-path="[_key==&quot;k0&quot;].rows[_key==&quot;row-0&quot;]"',
           '>',
           // cell container
           '<td data-testid="cell"',
-          ' data-slate-node="element"',
+          ' data-block-type="container"',
           ' data-pt-path="[_key==&quot;k0&quot;].rows[_key==&quot;row-0&quot;].cells[_key==&quot;cell-0&quot;]"',
           '>',
           // text block inside cell
@@ -472,7 +472,7 @@ describe('container with non-editable fields', () => {
         [
           // card container
           '<div data-testid="card"',
-          ' data-slate-node="element"',
+          ' data-block-type="container"',
           ' data-pt-path="[_key==&quot;k0&quot;]"',
           '>',
           // body text block
@@ -771,7 +771,7 @@ describe('container and renderer independence', () => {
       expect(editorElement!.innerHTML).toEqual(
         [
           // callout default div wrapper
-          '<div data-slate-node="element"',
+          '<div data-block-type="container"',
           ' data-pt-path="[_key==&quot;k0&quot;]"',
           '>',
           // inner text block
@@ -942,7 +942,7 @@ describe('code block container', () => {
         [
           // code-block container
           '<pre data-testid="code-block"',
-          ' data-slate-node="element"',
+          ' data-block-type="container"',
           ' data-pt-path="[_key==&quot;k0&quot;]"',
           '>',
           '<code>',
@@ -1063,7 +1063,7 @@ describe('gallery with void block objects', () => {
         [
           // gallery container
           '<div data-testid="gallery"',
-          ' data-slate-node="element"',
+          ' data-block-type="container"',
           ' data-pt-path="[_key==&quot;k0&quot;]"',
           '>',
           // image 1 (void block object)
@@ -1268,18 +1268,18 @@ describe('cell with mixed content', () => {
         [
           // table container
           '<table data-testid="table"',
-          ' data-slate-node="element"',
+          ' data-block-type="container"',
           ' data-pt-path="[_key==&quot;k0&quot;]"',
           '>',
           '<tbody>',
           // row container
           '<tr data-testid="row"',
-          ' data-slate-node="element"',
+          ' data-block-type="container"',
           ' data-pt-path="[_key==&quot;k0&quot;].rows[_key==&quot;row-0&quot;]"',
           '>',
           // cell container
           '<td data-testid="cell"',
-          ' data-slate-node="element"',
+          ' data-block-type="container"',
           ' data-pt-path="[_key==&quot;k0&quot;].rows[_key==&quot;row-0&quot;].cells[_key==&quot;cell-0&quot;]"',
           '>',
           // text block before image

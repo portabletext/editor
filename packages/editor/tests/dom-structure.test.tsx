@@ -253,7 +253,7 @@ describe('DOM structure', () => {
       expect(normalizeInnerHTML(el!.innerHTML)).toEqual(
         [
           // gallery container: g0
-          '<div data-slate-node="element"',
+          '<div data-block-type="container"',
           ' data-pt-path="[_key==&quot;g0&quot;]"',
           ' class="gallery">',
           // void leaf: img0
@@ -410,14 +410,14 @@ describe('DOM structure', () => {
       expect(normalizeInnerHTML(el!.innerHTML)).toEqual(
         [
           // table container: t0
-          '<table data-slate-node="element"',
+          '<table data-block-type="container"',
           ' data-pt-path="[_key==&quot;t0&quot;]">',
           '<tbody>',
           // row: r0
-          '<tr data-slate-node="element"',
+          '<tr data-block-type="container"',
           ' data-pt-path="[_key==&quot;t0&quot;].rows[_key==&quot;r0&quot;]">',
           // cell: c0
-          '<td data-slate-node="element"',
+          '<td data-block-type="container"',
           ' data-pt-path="[_key==&quot;t0&quot;].rows[_key==&quot;r0&quot;].cells[_key==&quot;c0&quot;]">',
           // text block: b0
           '<div data-slate-node="element"',
@@ -537,7 +537,7 @@ describe('DOM structure', () => {
       expect(normalizeInnerHTML(el!.innerHTML)).toEqual(
         [
           // code container: c0
-          '<pre data-slate-node="element"',
+          '<pre data-block-type="container"',
           ' data-pt-path="[_key==&quot;c0&quot;]">',
           '<code>',
           // line: l0
