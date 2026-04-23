@@ -665,9 +665,13 @@ export const DOMEditor: DOMEditorInterface = {
     }
 
     if (IS_ANDROID && !textNode && !exactMatch) {
-      const node = parentNode.hasAttribute('data-slate-node')
-        ? parentNode
-        : parentNode.closest('[data-slate-node]')
+      const node =
+        parentNode.hasAttribute('data-slate-node') ||
+        parentNode.getAttribute('data-block-type') === 'container'
+          ? parentNode
+          : parentNode.closest(
+              '[data-slate-node], [data-block-type="container"]',
+            )
 
       if (node && DOMEditor.hasDOMNode(editor, node, {editable: true})) {
         const nodePath = getDomNodePath(node)
@@ -694,7 +698,8 @@ export const DOMEditor: DOMEditorInterface = {
     if (!textNode && parentNode) {
       if (
         nearestNode instanceof HTMLElement &&
-        nearestNode.hasAttribute('data-slate-node')
+        (nearestNode.hasAttribute('data-slate-node') ||
+          nearestNode.getAttribute('data-block-type') === 'container')
       ) {
         const childEl = nearestNode.childNodes[nearestOffset]
         if (
@@ -716,8 +721,13 @@ export const DOMEditor: DOMEditorInterface = {
       }
 
       const elementNode =
-        parentNode.closest('[data-slate-node="element"]') ??
-        (parentNode.hasAttribute('data-slate-node') ? parentNode : null)
+        parentNode.closest(
+          '[data-slate-node="element"], [data-block-type="container"]',
+        ) ??
+        (parentNode.hasAttribute('data-slate-node') ||
+        parentNode.getAttribute('data-block-type') === 'container'
+          ? parentNode
+          : null)
 
       if (elementNode && DOMEditor.hasDOMNode(editor, elementNode)) {
         const voidEl = elementNode.closest(
