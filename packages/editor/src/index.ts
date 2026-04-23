@@ -45,7 +45,9 @@ export type {EditorEmittedEvent, MutationEvent} from './editor/relay-machine'
 export {useEditor} from './editor/use-editor'
 export {
   defineContainer,
+  defineLeaf,
   type ContainerDefinition,
+  type Leaf,
 } from './renderers/renderer.types'
 export type {Container, Containers} from './schema/resolve-containers'
 export type {AddedAnnotationPaths} from './types/editor'
