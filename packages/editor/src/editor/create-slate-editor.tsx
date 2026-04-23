@@ -59,6 +59,7 @@ export function createSlateEditor(
   buildIndexMaps(
     {
       schema: context.schema,
+      containers: slateEditor.containers,
       value: slateEditor.children,
     },
     {
