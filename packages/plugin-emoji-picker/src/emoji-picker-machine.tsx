@@ -161,7 +161,12 @@ function createTriggerActions({
     marks: payload.markState.marks,
   }
 
-  let focusSpan = {
+  let focusSpan: {
+    node: PortableTextSpan
+    path: ChildPath
+    textBefore: string
+    textAfter: string
+  } = {
     node: {
       _key: newSpan._key,
       _type: newSpan._type,
@@ -169,7 +174,7 @@ function createTriggerActions({
       marks: payload.markState.marks,
     },
     path: [
-      {_key: payload.focusSpan.path[0]._key},
+      ...payload.focusSpan.path.slice(0, -2),
       'children',
       {_key: newSpan._key},
     ] satisfies ChildPath,

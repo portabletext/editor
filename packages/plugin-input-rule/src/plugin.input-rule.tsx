@@ -18,6 +18,7 @@ import {
 } from '@portabletext/editor/selectors'
 import {
   isEqualSelections,
+  isKeyedSegment,
   isSelectionCollapsed,
 } from '@portabletext/editor/utils'
 import {useActorRef} from '@xstate/react'
@@ -377,13 +378,25 @@ const inputRuleSetup = setup({
       // span-level differences (e.g. cursor at the same position but in a
       // different span after normalization).
       if (event.blockOffsets && context.endOffsets) {
+        const contextStartBlock = context.endOffsets.start.path.at(-1)
+        const eventStartBlock = event.blockOffsets.start.path.at(-1)
+        const contextEndBlock = context.endOffsets.end.path.at(-1)
+        const eventEndBlock = event.blockOffsets.end.path.at(-1)
+
+        if (
+          !isKeyedSegment(contextStartBlock) ||
+          !isKeyedSegment(eventStartBlock) ||
+          !isKeyedSegment(contextEndBlock) ||
+          !isKeyedSegment(eventEndBlock)
+        ) {
+          return false
+        }
+
         const startChanged =
-          context.endOffsets.start.path[0]._key !==
-            event.blockOffsets.start.path[0]._key ||
+          contextStartBlock._key !== eventStartBlock._key ||
           context.endOffsets.start.offset !== event.blockOffsets.start.offset
         const endChanged =
-          context.endOffsets.end.path[0]._key !==
-            event.blockOffsets.end.path[0]._key ||
+          contextEndBlock._key !== eventEndBlock._key ||
           context.endOffsets.end.offset !== event.blockOffsets.end.offset
 
         return startChanged || endChanged
