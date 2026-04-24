@@ -1,7 +1,7 @@
 import {isTextBlock} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
 import {getActiveAnnotationsMarks} from './selector.get-active-annotation-marks'
-import {getSelectedBlocks} from './selector.get-selected-blocks'
+import {getSelectedTextBlocks} from './selector.get-selected-text-blocks'
 import {getSelectedValue} from './selector.get-selected-value'
 
 /**
@@ -34,11 +34,9 @@ export function isActiveAnnotation(
       return selectionMarkDefs.some((markDef) => markDef._type === annotation)
     }
 
-    const selectedBlocks = getSelectedBlocks(snapshot)
-    const selectionMarkDefs = selectedBlocks.flatMap((block) =>
-      isTextBlock(snapshot.context, block.node)
-        ? (block.node.markDefs ?? [])
-        : [],
+    const selectedBlocks = getSelectedTextBlocks(snapshot)
+    const selectionMarkDefs = selectedBlocks.flatMap(
+      (block) => block.node.markDefs ?? [],
     )
     const activeAnnotations = getActiveAnnotationsMarks(snapshot)
     const activeMarkDefs = selectionMarkDefs.filter(

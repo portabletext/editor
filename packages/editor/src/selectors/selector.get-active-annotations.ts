@@ -1,7 +1,7 @@
-import {isTextBlock, type PortableTextObject} from '@portabletext/schema'
+import type {PortableTextObject} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
 import {getMarkState} from './selector.get-mark-state'
-import {getSelectedBlocks} from './selector.get-selected-blocks'
+import {getSelectedTextBlocks} from './selector.get-selected-text-blocks'
 
 /**
  * @public
@@ -13,7 +13,7 @@ export const getActiveAnnotations: EditorSelector<Array<PortableTextObject>> = (
     return []
   }
 
-  const selectedBlocks = getSelectedBlocks(snapshot)
+  const selectedBlocks = getSelectedTextBlocks(snapshot)
   const markState = getMarkState(snapshot)
 
   const activeAnnotations = (markState?.marks ?? []).filter(
@@ -23,10 +23,8 @@ export const getActiveAnnotations: EditorSelector<Array<PortableTextObject>> = (
         .includes(mark),
   )
 
-  const selectionMarkDefs = selectedBlocks.flatMap((block) =>
-    isTextBlock(snapshot.context, block.node)
-      ? (block.node.markDefs ?? [])
-      : [],
+  const selectionMarkDefs = selectedBlocks.flatMap(
+    (block) => block.node.markDefs ?? [],
   )
 
   return selectionMarkDefs.filter((markDef) =>

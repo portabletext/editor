@@ -1,72 +1,52 @@
 import {isTextBlock, type PortableTextTextBlock} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
-import type {BlockPath} from '../types/paths'
+import {getNodes} from '../node-traversal/get-nodes'
+import type {Path} from '../slate/interfaces/path'
 import {getSelectionEndPoint} from '../utils/util.get-selection-end-point'
 import {getSelectionStartPoint} from '../utils/util.get-selection-start-point'
-import {getBlockKeyFromSelectionPoint} from '../utils/util.selection-point'
 
 /**
+ * Returns the text blocks touched by the selection, resolved at any depth.
+ *
+ * Walks the tree between the selection endpoints and returns every text
+ * block found, regardless of container nesting. For toolbar state and
+ * anywhere that needs "text blocks with text in the selection".
+ *
  * @public
  */
 export const getSelectedTextBlocks: EditorSelector<
-  Array<{node: PortableTextTextBlock; path: BlockPath}>
+  Array<{node: PortableTextTextBlock; path: Path}>
 > = (snapshot) => {
-  if (!snapshot.context.selection) {
+  const selection = snapshot.context.selection
+
+  if (!selection) {
     return []
   }
 
-  const selectedTextBlocks: Array<{
-    node: PortableTextTextBlock
-    path: BlockPath
-  }> = []
+  const startPoint = getSelectionStartPoint(selection)
+  const endPoint = getSelectionEndPoint(selection)
 
-  const startPoint = getSelectionStartPoint(snapshot.context.selection)
-  const endPoint = getSelectionEndPoint(snapshot.context.selection)
-  const startBlockKey = getBlockKeyFromSelectionPoint(startPoint)
-  const endBlockKey = getBlockKeyFromSelectionPoint(endPoint)
-
-  if (!startBlockKey || !endBlockKey) {
-    return selectedTextBlocks
+  if (!startPoint || !endPoint) {
+    return []
   }
 
-  const startBlockIndex = snapshot.blockIndexMap.get(startBlockKey)
-  const endBlockIndex = snapshot.blockIndexMap.get(endBlockKey)
+  const result: Array<{node: PortableTextTextBlock; path: Path}> = []
 
-  if (startBlockIndex === undefined || endBlockIndex === undefined) {
-    return selectedTextBlocks
-  }
-
-  const slicedValue = snapshot.context.value.slice(
-    startBlockIndex,
-    endBlockIndex + 1,
-  )
-
-  for (const block of slicedValue) {
-    if (block._key === startBlockKey) {
-      if (isTextBlock(snapshot.context, block)) {
-        selectedTextBlocks.push({node: block, path: [{_key: block._key}]})
-      }
-
-      if (startBlockKey === endBlockKey) {
-        break
-      }
-      continue
-    }
-
-    if (block._key === endBlockKey) {
-      if (isTextBlock(snapshot.context, block)) {
-        selectedTextBlocks.push({node: block, path: [{_key: block._key}]})
-      }
-
-      break
-    }
-
-    if (selectedTextBlocks.length > 0) {
-      if (isTextBlock(snapshot.context, block)) {
-        selectedTextBlocks.push({node: block, path: [{_key: block._key}]})
-      }
+  for (const entry of getNodes(
+    {
+      ...snapshot.context,
+      blockIndexMap: snapshot.blockIndexMap,
+    },
+    {
+      from: startPoint.path,
+      to: endPoint.path,
+      match: (node) => isTextBlock(snapshot.context, node),
+    },
+  )) {
+    if (isTextBlock(snapshot.context, entry.node)) {
+      result.push({node: entry.node, path: entry.path})
     }
   }
 
-  return selectedTextBlocks
+  return result
 }

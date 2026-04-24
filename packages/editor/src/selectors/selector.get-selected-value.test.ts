@@ -7,6 +7,8 @@ import {
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
 import {createTestSnapshot} from '../../test-utils/create-test-snapshot'
+import {makeContainerConfig} from '../schema/make-container-config'
+import {resolveContainers} from '../schema/resolve-containers'
 import {getSelectedValue} from './selector.get-selected-value'
 
 const b1: PortableTextTextBlock = {
@@ -834,5 +836,517 @@ describe(getSelectedValue.name, () => {
         }),
       ),
     ).toEqual(value)
+  })
+})
+
+describe(`${getSelectedValue.name} with containers`, () => {
+  const calloutSchema = compileSchema(
+    defineSchema({
+      decorators: [{name: 'strong'}],
+      blockObjects: [
+        {
+          name: 'callout',
+          fields: [
+            {
+              name: 'content',
+              type: 'array',
+              of: [{type: 'block'}],
+            },
+          ],
+        },
+      ],
+    }),
+  )
+
+  const calloutContainer = {
+    scope: '$..callout' as const,
+    field: 'content' as const,
+  }
+
+  function createSnapshot(
+    value: Array<PortableTextBlock>,
+    selection: NonNullable<
+      Parameters<typeof createTestSnapshot>[0]['context']
+    >['selection'],
+    schema = calloutSchema,
+    containerDefs: ReadonlyArray<{
+      scope: `$..${string}`
+      field: string
+    }> = [calloutContainer],
+  ) {
+    const configs = new Map()
+    for (const c of containerDefs) {
+      configs.set(c.scope, makeContainerConfig(schema, c))
+    }
+    const containers = resolveContainers(schema, configs)
+    return createTestSnapshot({
+      context: {schema, value, selection, containers},
+    })
+  }
+
+  const rootBlock1: PortableTextTextBlock = {
+    _type: 'block',
+    _key: 'b1',
+    children: [{_type: 'span', _key: 'b1c1', text: 'foo', marks: []}],
+    markDefs: [],
+    style: 'normal',
+  }
+  const innerBlock: PortableTextTextBlock = {
+    _type: 'block',
+    _key: 'ib1',
+    children: [{_type: 'span', _key: 'ib1c1', text: 'bar', marks: []}],
+    markDefs: [],
+    style: 'normal',
+  }
+  const callout = {
+    _type: 'callout',
+    _key: 'cal1',
+    content: [innerBlock],
+  }
+  const rootBlock3: PortableTextTextBlock = {
+    _type: 'block',
+    _key: 'b3',
+    children: [{_type: 'span', _key: 'b3c1', text: 'baz', marks: []}],
+    markDefs: [],
+    style: 'normal',
+  }
+
+  test('select-all across [text, callout{text}, text] preserves the callout whole', () => {
+    const value: Array<PortableTextBlock> = [rootBlock1, callout, rootBlock3]
+    const selection = {
+      anchor: {
+        path: [{_key: 'b1'}, 'children', {_key: 'b1c1'}],
+        offset: 0,
+      },
+      focus: {
+        path: [{_key: 'b3'}, 'children', {_key: 'b3c1'}],
+        offset: 3,
+      },
+    }
+
+    expect(getSelectedValue(createSnapshot(value, selection))).toEqual([
+      rootBlock1,
+      callout,
+      rootBlock3,
+    ])
+  })
+
+  test('selection starts inside callout, ends in trailing text block', () => {
+    const value: Array<PortableTextBlock> = [rootBlock1, callout, rootBlock3]
+    const selection = {
+      anchor: {
+        path: [
+          {_key: 'cal1'},
+          'content',
+          {_key: 'ib1'},
+          'children',
+          {_key: 'ib1c1'},
+        ],
+        offset: 1,
+      },
+      focus: {
+        path: [{_key: 'b3'}, 'children', {_key: 'b3c1'}],
+        offset: 3,
+      },
+    }
+
+    expect(getSelectedValue(createSnapshot(value, selection))).toEqual([
+      {
+        _type: 'callout',
+        _key: 'cal1',
+        content: [
+          {
+            ...innerBlock,
+            children: [{_type: 'span', _key: 'ib1c1', text: 'ar', marks: []}],
+          },
+        ],
+      },
+      rootBlock3,
+    ])
+  })
+
+  test('selection starts in leading text block, ends inside callout', () => {
+    const value: Array<PortableTextBlock> = [rootBlock1, callout, rootBlock3]
+    const selection = {
+      anchor: {
+        path: [{_key: 'b1'}, 'children', {_key: 'b1c1'}],
+        offset: 1,
+      },
+      focus: {
+        path: [
+          {_key: 'cal1'},
+          'content',
+          {_key: 'ib1'},
+          'children',
+          {_key: 'ib1c1'},
+        ],
+        offset: 2,
+      },
+    }
+
+    expect(getSelectedValue(createSnapshot(value, selection))).toEqual([
+      {
+        ...rootBlock1,
+        children: [{_type: 'span', _key: 'b1c1', text: 'oo', marks: []}],
+      },
+      {
+        _type: 'callout',
+        _key: 'cal1',
+        content: [
+          {
+            ...innerBlock,
+            children: [{_type: 'span', _key: 'ib1c1', text: 'ba', marks: []}],
+          },
+        ],
+      },
+    ])
+  })
+
+  test('selection wholly inside a callout slices inner blocks only', () => {
+    const value: Array<PortableTextBlock> = [rootBlock1, callout, rootBlock3]
+    const selection = {
+      anchor: {
+        path: [
+          {_key: 'cal1'},
+          'content',
+          {_key: 'ib1'},
+          'children',
+          {_key: 'ib1c1'},
+        ],
+        offset: 0,
+      },
+      focus: {
+        path: [
+          {_key: 'cal1'},
+          'content',
+          {_key: 'ib1'},
+          'children',
+          {_key: 'ib1c1'},
+        ],
+        offset: 3,
+      },
+    }
+
+    expect(getSelectedValue(createSnapshot(value, selection))).toEqual([
+      {
+        _type: 'callout',
+        _key: 'cal1',
+        content: [innerBlock],
+      },
+    ])
+  })
+
+  test('infinite nesting: callout inside table cell', () => {
+    const nestedSchema = compileSchema(
+      defineSchema({
+        decorators: [{name: 'strong'}],
+        blockObjects: [
+          {
+            name: 'table',
+            fields: [
+              {
+                name: 'rows',
+                type: 'array',
+                of: [
+                  {
+                    type: 'row',
+                    fields: [
+                      {
+                        name: 'cells',
+                        type: 'array',
+                        of: [
+                          {
+                            type: 'cell',
+                            fields: [
+                              {
+                                name: 'content',
+                                type: 'array',
+                                of: [
+                                  {type: 'block'},
+                                  {
+                                    type: 'callout',
+                                    fields: [
+                                      {
+                                        name: 'content',
+                                        type: 'array',
+                                        of: [{type: 'block'}],
+                                      },
+                                    ],
+                                  },
+                                ],
+                              },
+                            ],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }),
+    )
+
+    const defs = [
+      {scope: '$..table' as const, field: 'rows' as const},
+      {scope: '$..table.row' as const, field: 'cells' as const},
+      {scope: '$..table.row.cell' as const, field: 'content' as const},
+      {
+        scope: '$..table.row.cell.callout' as const,
+        field: 'content' as const,
+      },
+    ]
+
+    const deepInnerBlock: PortableTextTextBlock = {
+      _type: 'block',
+      _key: 'dib1',
+      children: [{_type: 'span', _key: 'dib1c1', text: 'deep', marks: []}],
+      markDefs: [],
+      style: 'normal',
+    }
+    const deepCallout = {
+      _type: 'callout',
+      _key: 'dcal1',
+      content: [deepInnerBlock],
+    }
+    const deepCell = {
+      _type: 'cell',
+      _key: 'dcell1',
+      content: [deepCallout],
+    }
+    const deepRow = {_type: 'row', _key: 'drow1', cells: [deepCell]}
+    const deepTable = {_type: 'table', _key: 'dtable1', rows: [deepRow]}
+
+    const selection = {
+      anchor: {
+        path: [
+          {_key: 'dtable1'},
+          'rows',
+          {_key: 'drow1'},
+          'cells',
+          {_key: 'dcell1'},
+          'content',
+          {_key: 'dcal1'},
+          'content',
+          {_key: 'dib1'},
+          'children',
+          {_key: 'dib1c1'},
+        ],
+        offset: 1,
+      },
+      focus: {
+        path: [
+          {_key: 'dtable1'},
+          'rows',
+          {_key: 'drow1'},
+          'cells',
+          {_key: 'dcell1'},
+          'content',
+          {_key: 'dcal1'},
+          'content',
+          {_key: 'dib1'},
+          'children',
+          {_key: 'dib1c1'},
+        ],
+        offset: 3,
+      },
+    }
+
+    expect(
+      getSelectedValue(
+        createSnapshot([deepTable], selection, nestedSchema, defs),
+      ),
+    ).toEqual([
+      {
+        _type: 'table',
+        _key: 'dtable1',
+        rows: [
+          {
+            _type: 'row',
+            _key: 'drow1',
+            cells: [
+              {
+                _type: 'cell',
+                _key: 'dcell1',
+                content: [
+                  {
+                    _type: 'callout',
+                    _key: 'dcal1',
+                    content: [
+                      {
+                        ...deepInnerBlock,
+                        children: [
+                          {
+                            _type: 'span',
+                            _key: 'dib1c1',
+                            text: 'ee',
+                            marks: [],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ])
+  })
+
+  test('deep selection ending mid-annotation preserves the link and its markDefs', () => {
+    const nestedSchema = compileSchema(
+      defineSchema({
+        annotations: [{name: 'link', fields: [{name: 'href', type: 'string'}]}],
+        blockObjects: [
+          {
+            name: 'table',
+            fields: [
+              {
+                name: 'rows',
+                type: 'array',
+                of: [
+                  {
+                    type: 'row',
+                    fields: [
+                      {
+                        name: 'cells',
+                        type: 'array',
+                        of: [
+                          {
+                            type: 'cell',
+                            fields: [
+                              {
+                                name: 'content',
+                                type: 'array',
+                                of: [{type: 'block'}],
+                              },
+                            ],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }),
+    )
+
+    const defs = [
+      {scope: '$..table' as const, field: 'rows' as const},
+      {scope: '$..table.row' as const, field: 'cells' as const},
+      {scope: '$..table.row.cell' as const, field: 'content' as const},
+    ]
+
+    const linkKey = 'link1'
+    const unusedLinkKey = 'link2'
+
+    const innerBlock: PortableTextTextBlock = {
+      _type: 'block',
+      _key: 'ib1',
+      children: [
+        {_type: 'span', _key: 'ib1c1', text: 'foo ', marks: []},
+        {_type: 'span', _key: 'ib1c2', text: 'linked text', marks: [linkKey]},
+        {_type: 'span', _key: 'ib1c3', text: ' baz', marks: []},
+      ],
+      markDefs: [
+        {_type: 'link', _key: linkKey, href: 'https://example.com'},
+        {_type: 'link', _key: unusedLinkKey, href: 'https://unused.com'},
+      ],
+      style: 'normal',
+    }
+    const cell = {
+      _type: 'cell',
+      _key: 'cell1',
+      content: [innerBlock],
+    }
+    const row = {_type: 'row', _key: 'row1', cells: [cell]}
+    const table = {_type: 'table', _key: 'table1', rows: [row]}
+
+    const selection = {
+      anchor: {
+        path: [
+          {_key: 'table1'},
+          'rows',
+          {_key: 'row1'},
+          'cells',
+          {_key: 'cell1'},
+          'content',
+          {_key: 'ib1'},
+          'children',
+          {_key: 'ib1c1'},
+        ],
+        offset: 0,
+      },
+      focus: {
+        path: [
+          {_key: 'table1'},
+          'rows',
+          {_key: 'row1'},
+          'cells',
+          {_key: 'cell1'},
+          'content',
+          {_key: 'ib1'},
+          'children',
+          {_key: 'ib1c2'},
+        ],
+        offset: 6,
+      },
+    }
+
+    expect(
+      getSelectedValue(createSnapshot([table], selection, nestedSchema, defs)),
+    ).toEqual([
+      {
+        _type: 'table',
+        _key: 'table1',
+        rows: [
+          {
+            _type: 'row',
+            _key: 'row1',
+            cells: [
+              {
+                _type: 'cell',
+                _key: 'cell1',
+                content: [
+                  {
+                    _type: 'block',
+                    _key: 'ib1',
+                    children: [
+                      {
+                        _type: 'span',
+                        _key: 'ib1c1',
+                        text: 'foo ',
+                        marks: [],
+                      },
+                      {
+                        _type: 'span',
+                        _key: 'ib1c2',
+                        text: 'linked',
+                        marks: [linkKey],
+                      },
+                    ],
+                    markDefs: [
+                      {
+                        _type: 'link',
+                        _key: linkKey,
+                        href: 'https://example.com',
+                      },
+                    ],
+                    style: 'normal',
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ])
   })
 })
