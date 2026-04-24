@@ -3,6 +3,7 @@ import type {EditorContext} from '../editor/editor-snapshot'
 import type {BlockOffset} from '../types/block-offset'
 import type {EditorSelectionPoint} from '../types/editor'
 import type {ChildPath} from '../types/paths'
+import {isKeyedSegment} from './util.is-keyed-segment'
 import {
   getBlockKeyFromSelectionPoint,
   getChildKeyFromSelectionPoint,
@@ -20,12 +21,18 @@ export function blockOffsetToSpanSelectionPoint({
   blockOffset: BlockOffset
   direction: 'forward' | 'backward'
 }) {
+  const blockOffsetSegment = blockOffset.path.at(-1)
+
+  if (!isKeyedSegment(blockOffsetSegment)) {
+    return undefined
+  }
+
   let offsetLeft = blockOffset.offset
   let selectionPoint: {path: ChildPath; offset: number} | undefined
   let skippedInlineObject = false
 
   for (const block of context.value) {
-    if (block._key !== blockOffset.path[0]._key) {
+    if (block._key !== blockOffsetSegment._key) {
       continue
     }
 

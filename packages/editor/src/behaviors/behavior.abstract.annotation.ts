@@ -1,5 +1,6 @@
 import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
 import {isActiveAnnotation} from '../selectors/selector.is-active-annotation'
+import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
@@ -7,8 +8,15 @@ export const abstractAnnotationBehaviors = [
   defineBehavior({
     on: 'annotation.set',
     guard: ({snapshot, event}) => {
-      const blockKey = event.at[0]._key
-      const markDefKey = event.at[2]._key
+      const blockSegment = event.at.at(-3)
+      const markDefSegment = event.at.at(-1)
+
+      if (!isKeyedSegment(blockSegment) || !isKeyedSegment(markDefSegment)) {
+        return false
+      }
+
+      const blockKey = blockSegment._key
+      const markDefKey = markDefSegment._key
 
       const block = getFocusTextBlock({
         ...snapshot,

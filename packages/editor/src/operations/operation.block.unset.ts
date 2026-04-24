@@ -1,12 +1,21 @@
 import {safeStringify} from '../internal-utils/safe-json'
 import {setNodeProperties} from '../internal-utils/set-node-properties'
 import {isTextBlockNode} from '../slate/node/is-text-block-node'
+import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import type {OperationImplementation} from './operation.types'
 
 export const blockUnsetOperationImplementation: OperationImplementation<
   'block.unset'
 > = ({context, operation}) => {
-  const blockKey = operation.at[0]._key
+  const blockSegment = operation.at.at(-1)
+
+  if (!isKeyedSegment(blockSegment)) {
+    throw new Error(
+      `Unable to extract block key from ${safeStringify(operation.at)}`,
+    )
+  }
+
+  const blockKey = blockSegment._key
   const blockIndex = operation.editor.blockIndexMap.get(blockKey)
 
   if (blockIndex === undefined) {
