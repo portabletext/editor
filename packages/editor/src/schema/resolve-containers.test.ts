@@ -1,16 +1,19 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
 import {describe, expect, test} from 'vitest'
 import type {EditorSchema} from '../editor/editor-schema'
-import type {Container, ContainerConfig} from '../renderers/renderer.types'
+import type {
+  ContainerConfig,
+  ContainerDefinition,
+} from '../renderers/renderer.types'
 import {makeContainerConfig} from './make-container-config'
-import type {ChildArrayField, Containers} from './resolve-containers'
+import type {ChildArrayField, ResolvedContainers} from './resolve-containers'
 import {resolveContainers} from './resolve-containers'
 
-const testRender: Container['render'] = ({children}) => children
+const testRender: ContainerDefinition['render'] = ({children}) => children
 
 function makeConfigs(
   schema: EditorSchema,
-  containers: Array<Container>,
+  containers: Array<ContainerDefinition>,
 ): Map<string, ContainerConfig> {
   const map = new Map<string, ContainerConfig>()
   for (const container of containers) {
@@ -20,7 +23,7 @@ function makeConfigs(
 }
 
 /** Extract the `field` shape from a resolved containers map for easier testing. */
-function fields(containers: Containers): Map<string, ChildArrayField> {
+function fields(containers: ResolvedContainers): Map<string, ChildArrayField> {
   const out = new Map<string, ChildArrayField>()
   for (const [key, config] of containers) {
     out.set(key, config.field)

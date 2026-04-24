@@ -7,7 +7,7 @@ import type {AllContainers, ContainerScope} from '../scope/scope.types'
 /**
  * @alpha
  */
-export type Container = {
+export type ContainerDefinition = {
   scope: string
   field: string
   render?: (props: {
@@ -64,7 +64,7 @@ type ScopedArrayFields<
 type SchemaContainerConfig<TSchema extends SchemaDefinition> =
   // Only activate the narrowed shape when the caller provides a concrete
   // schema. With the default `SchemaDefinition`, collapse to never so the
-  // overload falls through to the plain `Container` signature.
+  // overload falls through to the plain `ContainerDefinition` signature.
   SchemaDefinition extends TSchema
     ? never
     : ContainerScope<TSchema> extends infer TScope
@@ -102,12 +102,16 @@ type SchemaContainerConfig<TSchema extends SchemaDefinition> =
  */
 export function defineContainer<TSchema extends SchemaDefinition>(
   config: SchemaContainerConfig<TSchema>,
-): Container
+): ContainerDefinition
 /**
  * @alpha
  */
-export function defineContainer(config: Container): Container
-export function defineContainer(config: Container): Container {
+export function defineContainer(
+  config: ContainerDefinition,
+): ContainerDefinition
+export function defineContainer(
+  config: ContainerDefinition,
+): ContainerDefinition {
   return config
 }
 
@@ -115,7 +119,7 @@ export function defineContainer(config: Container): Container {
  * @internal
  */
 export type ContainerConfig = {
-  container: Container
+  container: ContainerDefinition
   parsedScope: ParsedScope
   field: ChildArrayField
 }

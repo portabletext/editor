@@ -4,7 +4,7 @@ import {getAncestors} from '../node-traversal/get-ancestors'
 import {getNodes} from '../node-traversal/get-nodes'
 import {serializePath} from '../paths/serialize-path'
 import {isEditableContainer} from '../schema/is-editable-container'
-import type {Containers} from '../schema/resolve-containers'
+import type {ResolvedContainers} from '../schema/resolve-containers'
 import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
 
@@ -53,7 +53,7 @@ const emptyState: SelectionState = {
 export function getSelectionState(
   context: {
     schema: EditorSchema
-    containers: Containers
+    containers: ResolvedContainers
     value: Array<Node>
     blockIndexMap: Map<string, number>
   },

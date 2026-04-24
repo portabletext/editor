@@ -19,11 +19,14 @@ import type {Converter} from '../converters/converter.types'
 import {debug} from '../internal-utils/debug'
 import type {EventPosition} from '../internal-utils/event-position'
 import {sortByPriority} from '../priority/priority.sort'
-import type {Container, ContainerConfig} from '../renderers/renderer.types'
+import type {
+  ContainerConfig,
+  ContainerDefinition,
+} from '../renderers/renderer.types'
 import {
   resolveContainerField,
   resolveContainers,
-  type Containers,
+  type ResolvedContainers,
 } from '../schema/resolve-containers'
 import {parseScope} from '../scope/parse-scope'
 import {DOMEditor} from '../slate/dom/plugin/dom-editor'
@@ -48,7 +51,7 @@ export * from 'xstate/guards'
  * per distinct scope string.
  */
 function collectRegisteredConfigs(
-  containers: Containers,
+  containers: ResolvedContainers,
 ): Map<string, ContainerConfig> {
   const configs = new Map<string, ContainerConfig>()
   for (const config of containers.values()) {
@@ -138,11 +141,11 @@ type InternalEditorEvent =
   | {type: 'drop'}
   | {
       type: 'register container'
-      container: Container
+      container: ContainerDefinition
     }
   | {
       type: 'unregister container'
-      container: Container
+      container: ContainerDefinition
     }
   | {type: 'add slate editor'; editor: PortableTextSlateEditor}
 
@@ -205,7 +208,7 @@ export const editorMachine = setup({
     context: {} as {
       behaviors: Set<BehaviorConfig>
       behaviorsSorted: boolean
-      containers: Containers
+      containers: ResolvedContainers
       converters: Set<Converter>
       keyGenerator: () => string
       pendingEvents: Array<InternalPatchEvent | MutationEvent>

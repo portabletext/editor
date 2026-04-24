@@ -1,7 +1,10 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import type {EditorSchema} from '../editor/editor-schema'
-import type {Container, ContainerConfig} from '../renderers/renderer.types'
+import type {
+  ContainerConfig,
+  ContainerDefinition,
+} from '../renderers/renderer.types'
 import {makeContainerConfig} from '../schema/make-container-config'
 import {resolveContainers} from '../schema/resolve-containers'
 
@@ -9,7 +12,7 @@ import {resolveContainers} from '../schema/resolve-containers'
  * Container definitions for the testbed's table structure
  * (`table` → `rows`, `row` → `cells`, `cell` → `content`).
  */
-export const tableContainers: ReadonlyArray<Container> = [
+export const tableContainers: ReadonlyArray<ContainerDefinition> = [
   {scope: '$..table', field: 'rows'},
   {scope: '$..table.row', field: 'cells'},
   {scope: '$..table.row.cell', field: 'content'},
@@ -19,7 +22,7 @@ export const tableContainers: ReadonlyArray<Container> = [
  * Container definition for the testbed's code block
  * (`code-block` → `code`).
  */
-export const codeBlockContainer: Container = {
+export const codeBlockContainer: ContainerDefinition = {
   scope: '$..code-block',
   field: 'code',
 }
@@ -30,7 +33,7 @@ export const codeBlockContainer: Container = {
  */
 export function resolveTestbedContainers(
   schema: EditorSchema,
-  containers: ReadonlyArray<Container>,
+  containers: ReadonlyArray<ContainerDefinition>,
 ) {
   const configs = new Map<string, ContainerConfig>()
   for (const container of containers) {

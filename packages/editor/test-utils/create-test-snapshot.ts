@@ -7,6 +7,7 @@ export function createTestSnapshot(snapshot: {
   decoratorState?: Partial<EditorSnapshot['decoratorState']>
 }): EditorSnapshot {
   const context = {
+    containers: snapshot.context?.containers ?? new Map(),
     converters: snapshot.context?.converters ?? [],
     schema: snapshot.context?.schema ?? compileSchema(defineSchema({})),
     keyGenerator: snapshot.context?.keyGenerator ?? createTestKeyGenerator(),

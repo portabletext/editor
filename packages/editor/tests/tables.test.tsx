@@ -4,9 +4,9 @@ import {createTestKeyGenerator} from '@portabletext/test'
 import React from 'react'
 import {describe, expect, test, vi} from 'vitest'
 import {InternalSlateEditorRefPlugin} from '../src/plugins/plugin.internal.slate-editor-ref'
-import type {Container} from '../src/renderers/renderer.types'
+import type {ContainerDefinition} from '../src/renderers/renderer.types'
 import {makeContainerConfig} from '../src/schema/make-container-config'
-import type {Containers} from '../src/schema/resolve-containers'
+import type {ResolvedContainers} from '../src/schema/resolve-containers'
 import {resolveContainers} from '../src/schema/resolve-containers'
 import {withoutPatching} from '../src/slate-plugins/slate-plugin.without-patching'
 import {normalize} from '../src/slate/editor/normalize'
@@ -54,8 +54,8 @@ const schemaDefinition = defineSchema({
   ],
 })
 
-function tableContainers(): Containers {
-  const render: Container['render'] = ({children}) => children
+function tableContainers(): ResolvedContainers {
+  const render: ContainerDefinition['render'] = ({children}) => children
   const schema = compileSchema(schemaDefinition)
   return resolveContainers(
     schema,
