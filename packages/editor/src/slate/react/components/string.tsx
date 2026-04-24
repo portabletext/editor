@@ -8,7 +8,6 @@ import {
 import {forwardRef, memo, useRef, useState} from 'react'
 import {getNodes} from '../../../node-traversal/get-nodes'
 import {IS_ANDROID} from '../../dom/utils/environment'
-import {MARK_PLACEHOLDER_SYMBOL} from '../../dom/utils/symbols'
 import {end as editorEnd} from '../../editor/end'
 import {start as editorStart} from '../../editor/start'
 import type {Editor} from '../../interfaces/editor'
@@ -58,7 +57,6 @@ const SlateString = (props: {
   const {isLast, leaf, parent, path, text} = props
   const editor = useSlateStatic()
   const parentPath = getParentPath(path)
-  const isMarkPlaceholder = Boolean((leaf as any)[MARK_PLACEHOLDER_SYMBOL])
   const leafText = leaf.text ?? ''
 
   // COMPAT: If this is the last text node in an empty block, render a zero-
@@ -70,14 +68,14 @@ const SlateString = (props: {
     parent.children[parent.children.length - 1] === text &&
     getTextContent(editor, parentPath) === ''
   ) {
-    return <ZeroWidthString isLineBreak isMarkPlaceholder={isMarkPlaceholder} />
+    return <ZeroWidthString isLineBreak />
   }
 
   // COMPAT: If the text is empty, it's because it's on the edge of an inline
   // node, so we render a zero-width space so that the selection can be
   // inserted next to it still.
   if (leafText === '') {
-    return <ZeroWidthString isMarkPlaceholder={isMarkPlaceholder} />
+    return <ZeroWidthString />
   }
 
   // COMPAT: Browsers will collapse trailing new lines at the end of blocks,
@@ -140,24 +138,15 @@ const MemoizedText = memo(
  * Leaf strings without text, render as zero-width strings.
  */
 
-const ZeroWidthString = (props: {
-  length?: number
-  isLineBreak?: boolean
-  isMarkPlaceholder?: boolean
-}) => {
-  const {length = 0, isLineBreak = false, isMarkPlaceholder = false} = props
+const ZeroWidthString = (props: {length?: number; isLineBreak?: boolean}) => {
+  const {length = 0, isLineBreak = false} = props
 
   const attributes: {
     'data-slate-zero-width': string
     'data-slate-length': number
-    'data-slate-mark-placeholder'?: boolean
   } = {
     'data-slate-zero-width': isLineBreak ? 'n' : 'z',
     'data-slate-length': length,
-  }
-
-  if (isMarkPlaceholder) {
-    attributes['data-slate-mark-placeholder'] = true
   }
 
   // FIXME: Inserting the \uFEFF on iOS breaks capitalization at the start of an

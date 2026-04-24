@@ -8,7 +8,7 @@ import {hasNode} from '../../../node-traversal/has-node'
 import {path as editorPath} from '../../editor/path'
 import {start as editorStart} from '../../editor/start'
 import {unhangRange} from '../../editor/unhang-range'
-import type {BaseEditor, Editor, EditorMarks} from '../../interfaces/editor'
+import type {BaseEditor, Editor} from '../../interfaces/editor'
 import type {Operation} from '../../interfaces/operation'
 import type {Point} from '../../interfaces/point'
 import type {Range} from '../../interfaces/range'
@@ -22,7 +22,6 @@ import type {TextDiff} from '../utils/diff-text'
 import {
   closestShadowAware,
   containsShadowAware,
-  DOMText,
   getSelection,
   hasShadowRoot,
   isAfter,
@@ -69,8 +68,6 @@ export interface DOMEditor extends BaseEditor {
   userSelection: RangeRef | null
   onContextChange: ((options?: {operation?: Operation}) => void) | null
   scheduleFlush: (() => void) | null
-  pendingInsertionMarks: EditorMarks | null
-  userMarks: EditorMarks | null
   pendingDiffs: TextDiff[]
   pendingAction: Action | null
   pendingSelection: Range | null
@@ -416,27 +413,6 @@ export const DOMEditor: DOMEditorInterface = {
       const attr = text.getAttribute('data-slate-length')
       const trueLength = attr == null ? length : parseInt(attr, 10)
       const end = start + trueLength
-
-      // Prefer putting the selection inside the mark placeholder to ensure
-      // composed text is displayed with the correct marks.
-      const nextText = texts[i + 1]
-      if (
-        point.offset === end &&
-        nextText?.hasAttribute('data-slate-mark-placeholder')
-      ) {
-        const domText = nextText.childNodes[0]
-
-        domPoint = [
-          // COMPAT: If we don't explicity set the dom point to be on the actual
-          // dom text element, chrome will put the selection behind the actual dom
-          // text element, causing domRange.getBoundingClientRect() calls on a collapsed
-          // selection to return incorrect zero values (https://bugs.chromium.org/p/chromium/issues/detail?id=435438)
-          // which will cause issues when scrolling to it.
-          domText instanceof DOMText ? domText : nextText,
-          nextText.textContent?.startsWith('\uFEFF') ? 1 : 0,
-        ]
-        break
-      }
 
       if (point.offset <= end) {
         const offset = Math.min(length, Math.max(0, point.offset - start))

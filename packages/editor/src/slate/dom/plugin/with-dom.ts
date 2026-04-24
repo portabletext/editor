@@ -28,8 +28,6 @@ export const withDOM = <T extends Editor>(editor: T): T & DOMEditor => {
   e.userSelection = null
   e.onContextChange = null
   e.scheduleFlush = null
-  e.pendingInsertionMarks = null
-  e.userMarks = null
   e.pendingDiffs = []
   e.pendingAction = null
   e.pendingSelection = null

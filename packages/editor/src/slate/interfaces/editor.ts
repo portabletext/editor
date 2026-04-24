@@ -1,4 +1,4 @@
-import type {PortableTextBlock, PortableTextSpan} from '@portabletext/schema'
+import type {PortableTextBlock} from '@portabletext/schema'
 import type {EditorSelection} from '../../types/editor'
 import type {PortableTextSlateEditor} from '../../types/slate-editor'
 import type {DOMEditor} from '../dom/plugin/dom-editor'
@@ -22,7 +22,6 @@ export interface BaseEditor {
   readonly value: PortableTextBlock[]
   selection: EditorSelection
   operations: Operation[]
-  marks: EditorMarks | null
   dirtyPaths: Path[]
   dirtyPathKeys: Set<string>
   flushing: boolean
@@ -59,5 +58,3 @@ export interface BaseEditor {
 }
 
 export type Editor = BaseEditor & DOMEditor & PortableTextSlateEditor
-
-export type EditorMarks = Omit<PortableTextSpan, 'text'>
