@@ -7,7 +7,7 @@ import {
 import type {PortableTextBlock} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
 import {getSpanNode} from '../node-traversal/get-span-node'
-import type {Containers} from '../schema/resolve-containers'
+import type {ResolvedContainers} from '../schema/resolve-containers'
 import type {Node} from '../slate/interfaces/node'
 import type {
   InsertOperation,
@@ -17,11 +17,11 @@ import type {
 
 function spanContext(
   schema: EditorSchema,
-  containers: Containers,
+  containers: ResolvedContainers,
   value: Array<Node>,
 ): {
   schema: EditorSchema
-  containers: Containers
+  containers: ResolvedContainers
   value: Array<Node>
 } {
   return {schema, containers, value}
@@ -29,7 +29,7 @@ function spanContext(
 
 export function textPatch(
   schema: EditorSchema,
-  containers: Containers,
+  containers: ResolvedContainers,
   children: Node[],
   operation: InsertTextOperation | RemoveTextOperation,
   beforeValue: Array<PortableTextBlock>,

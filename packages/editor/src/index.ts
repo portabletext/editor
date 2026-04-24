@@ -43,7 +43,11 @@ export {defaultKeyGenerator as keyGenerator} from './utils/key-generator'
 export {PortableTextEditor} from './editor/PortableTextEditor'
 export type {EditorEmittedEvent, MutationEvent} from './editor/relay-machine'
 export {useEditor} from './editor/use-editor'
-export {defineContainer, type Container} from './renderers/renderer.types'
+export {
+  defineContainer,
+  type ContainerDefinition,
+} from './renderers/renderer.types'
+export type {Container, Containers} from './schema/resolve-containers'
 export type {AddedAnnotationPaths} from './types/editor'
 export type {BlockOffset} from './types/block-offset'
 export type {

@@ -1,10 +1,13 @@
 import type {EditorSchema} from '../editor/editor-schema'
-import type {Container, ContainerConfig} from '../renderers/renderer.types'
+import type {
+  ContainerConfig,
+  ContainerDefinition,
+} from '../renderers/renderer.types'
 import {parseScope} from '../scope/parse-scope'
 import {resolveContainerField} from './resolve-containers'
 
 /**
- * Build a `ContainerConfig` from a `Container` definition, parsing the scope
+ * Build a `ContainerConfig` from a `ContainerDefinition`, parsing the scope
  * and resolving the field against the schema.
  *
  * Intended for unit tests that drive `resolveContainers` directly without
@@ -12,7 +15,7 @@ import {resolveContainerField} from './resolve-containers'
  */
 export function makeContainerConfig(
   schema: EditorSchema,
-  container: Container,
+  container: ContainerDefinition,
 ): ContainerConfig {
   const parsedScope = parseScope(container.scope)
   if (!parsedScope) {

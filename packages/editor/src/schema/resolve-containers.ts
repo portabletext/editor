@@ -10,12 +10,33 @@ export type ChildArrayField = FieldDefinition & {
 }
 
 /**
+ * Value shape held in the {@link Containers} map.
+ *
+ * Carries only what traversal and selectors need: the array field on the
+ * container node that holds its editable children.
+ *
+ * @alpha
+ */
+export type Container = {field: ChildArrayField}
+
+/**
+ * Map of registered editable containers carried on `EditorContext`.
+ *
+ * Keyed by scoped type name (type chain joined by '.', e.g. `'callout.block'`,
+ * `'table.row.cell'`). The internal `ResolvedContainers` map carries the full
+ * `ContainerConfig` and is a subtype of this.
+ *
+ * @alpha
+ */
+export type Containers = ReadonlyMap<string, Container>
+
+/**
  * Maps scoped type names (type chain joined by '.') to registered container
  * configs.
  *
  * Key: scoped type name (e.g., 'block', 'callout.block', 'table.row.cell').
  */
-export type Containers = Map<string, ContainerConfig>
+export type ResolvedContainers = Map<string, ContainerConfig>
 
 /**
  * Candidate type chain discoverable from the schema with an editable array
@@ -36,8 +57,8 @@ type Candidate = {
 export function resolveContainers(
   schema: EditorSchema,
   containerConfigs: Map<string, ContainerConfig>,
-): Containers {
-  const containers: Containers = new Map()
+): ResolvedContainers {
+  const containers: ResolvedContainers = new Map()
 
   if (containerConfigs.size === 0) {
     return containers

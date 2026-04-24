@@ -1,6 +1,6 @@
 import {isSpan, isTextBlock} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
-import type {Containers} from '../schema/resolve-containers'
+import type {ResolvedContainers} from '../schema/resolve-containers'
 import type {Node} from '../slate/interfaces/node'
 import type {Operation} from '../slate/interfaces/operation'
 import type {Path} from '../slate/interfaces/path'
@@ -19,7 +19,7 @@ import {getChildFieldName} from './get-child-field-name'
 function collectDescendantPaths(
   context: {
     schema: EditorSchema
-    containers: Containers
+    containers: ResolvedContainers
   },
   node: Node,
   parentPath: Path,
@@ -107,7 +107,7 @@ function buildScopedName(value: Array<Node>, path: Path): string {
 export function getDirtyPaths(
   context: {
     schema: EditorSchema
-    containers: Containers
+    containers: ResolvedContainers
     value: Array<Node>
   },
   op: Operation,

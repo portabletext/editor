@@ -1,12 +1,14 @@
 import {useEffect} from 'react'
 import type {InternalEditor} from '../editor/create-editor'
 import {useEditor} from '../editor/use-editor'
-import type {Container} from '../renderers/renderer.types'
+import type {ContainerDefinition} from '../renderers/renderer.types'
 
 /**
  * @alpha
  */
-export function ContainerPlugin(props: {containers: Array<Container>}) {
+export function ContainerPlugin(props: {
+  containers: Array<ContainerDefinition>
+}) {
   const editor = useEditor() as InternalEditor
 
   useEffect(() => {

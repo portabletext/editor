@@ -1,7 +1,10 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
 import {describe, expect, test} from 'vitest'
 import {makeContainerConfig} from '../schema/make-container-config'
-import {resolveContainers, type Containers} from '../schema/resolve-containers'
+import {
+  resolveContainers,
+  type ResolvedContainers,
+} from '../schema/resolve-containers'
 import type {Node} from '../slate/interfaces/node'
 import {getDirtyPaths} from './get-dirty-paths'
 
@@ -51,9 +54,9 @@ const schemaDefinition = defineSchema({
 
 const schema = compileSchema(schemaDefinition)
 
-const emptyContainers: Containers = new Map()
+const emptyContainers: ResolvedContainers = new Map()
 
-const containerContainers: Containers = resolveContainers(
+const containerContainers: ResolvedContainers = resolveContainers(
   schema,
   new Map([
     [
@@ -66,7 +69,7 @@ const containerContainers: Containers = resolveContainers(
   ]),
 )
 
-const tableContainers: Containers = resolveContainers(
+const tableContainers: ResolvedContainers = resolveContainers(
   schema,
   new Map([
     [
