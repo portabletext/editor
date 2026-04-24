@@ -1,7 +1,6 @@
 import type {PortableTextListBlock} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
-import {isTextBlockNode} from '../slate/node/is-text-block-node'
-import {getSelectedBlocks} from './selector.get-selected-blocks'
+import {getSelectedTextBlocks} from './selector.get-selected-text-blocks'
 
 /**
  * @public
@@ -13,11 +12,9 @@ export const getActiveListItem: EditorSelector<
     return undefined
   }
 
-  const selectedBlocks = getSelectedBlocks(snapshot).map((block) => block.node)
-  const selectedTextBlocks = selectedBlocks.filter((block) =>
-    isTextBlockNode(snapshot.context, block),
+  const selectedTextBlocks = getSelectedTextBlocks(snapshot).map(
+    (block) => block.node,
   )
-
   const firstTextBlock = selectedTextBlocks.at(0)
 
   if (!firstTextBlock) {

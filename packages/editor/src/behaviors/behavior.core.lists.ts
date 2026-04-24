@@ -4,7 +4,7 @@ import {getFocusSpan} from '../selectors/selector.get-focus-span'
 import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
 import {getNextBlock} from '../selectors/selector.get-next-block'
 import {getPreviousBlock} from '../selectors/selector.get-previous-block'
-import {getSelectedBlocks} from '../selectors/selector.get-selected-blocks'
+import {getSelectedTextBlocks} from '../selectors/selector.get-selected-text-blocks'
 import {getSelectionEndPoint} from '../selectors/selector.get-selection-end-point'
 import {getSelectionStartPoint} from '../selectors/selector.get-selection-start-point'
 import {isSelectionCollapsed} from '../selectors/selector.is-selection-collapsed'
@@ -210,7 +210,7 @@ const deletingListFromStart = defineBehavior({
       return false
     }
 
-    const blocksToDelete = getSelectedBlocks({
+    const blocksToDelete = getSelectedTextBlocks({
       ...snapshot,
       context: {
         ...snapshot.context,
@@ -386,15 +386,10 @@ const indentListOnTab = defineBehavior({
       return false
     }
 
-    const selectedBlocks = getSelectedBlocks(snapshot)
+    const selectedBlocks = getSelectedTextBlocks(snapshot)
     const selectedListBlocks = selectedBlocks.flatMap((block) =>
       isListBlock(snapshot.context, block.node)
-        ? [
-            {
-              node: block.node,
-              path: block.path,
-            },
-          ]
+        ? [{node: block.node, path: block.path}]
         : [],
     )
 
@@ -435,15 +430,10 @@ const unindentListOnShiftTab = defineBehavior({
       return false
     }
 
-    const selectedBlocks = getSelectedBlocks(snapshot)
+    const selectedBlocks = getSelectedTextBlocks(snapshot)
     const selectedListBlocks = selectedBlocks.flatMap((block) =>
       isListBlock(snapshot.context, block.node)
-        ? [
-            {
-              node: block.node,
-              path: block.path,
-            },
-          ]
+        ? [{node: block.node, path: block.path}]
         : [],
     )
 
