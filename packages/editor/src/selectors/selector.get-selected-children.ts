@@ -1,17 +1,15 @@
-import {isSpan, isTextBlock} from '@portabletext/schema'
-import type {PortableTextChild} from '@portabletext/schema'
+import {isSpan, type PortableTextChild} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
-import type {ChildPath} from '../types/paths'
-import {
-  getBlockKeyFromSelectionPoint,
-  getChildKeyFromSelectionPoint,
-} from '../utils/util.selection-point'
-import {getSelectionEndPoint} from './selector.get-selection-end-point'
-import {getSelectionStartPoint} from './selector.get-selection-start-point'
+import {getNodes} from '../node-traversal/get-nodes'
+import {isInline} from '../node-traversal/is-inline'
+import type {Path} from '../slate/interfaces/path'
+import {getSelectionEndPoint} from '../utils/util.get-selection-end-point'
+import {getSelectionStartPoint} from '../utils/util.get-selection-start-point'
+import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 
 type SelectedChild<TChild extends PortableTextChild = PortableTextChild> = {
   node: TChild
-  path: ChildPath
+  path: Path
 }
 
 type GetSelectedChildrenOptions<
@@ -20,6 +18,12 @@ type GetSelectedChildrenOptions<
   filter?: (child: PortableTextChild) => child is TChild
 }
 
+/**
+ * Returns the inline children (spans and inline objects) touched by the
+ * selection, resolved at any depth.
+ *
+ * @public
+ */
 export function getSelectedChildren<
   TChild extends PortableTextChild = PortableTextChild,
 >(
@@ -28,107 +32,62 @@ export function getSelectedChildren<
   const filter = options?.filter
 
   return (snapshot) => {
-    const startPoint = getSelectionStartPoint(snapshot)
-    const endPoint = getSelectionEndPoint(snapshot)
+    const startPoint = getSelectionStartPoint(snapshot.context.selection)
+    const endPoint = getSelectionEndPoint(snapshot.context.selection)
 
     if (!startPoint || !endPoint) {
       return []
     }
 
-    const startBlockKey = getBlockKeyFromSelectionPoint(startPoint)
-    const endBlockKey = getBlockKeyFromSelectionPoint(endPoint)
-    const startChildKey = getChildKeyFromSelectionPoint(startPoint)
-    const endChildKey = getChildKeyFromSelectionPoint(endPoint)
+    const startChildKey = lastKeyedKey(startPoint.path)
+    const endChildKey = lastKeyedKey(endPoint.path)
 
-    if (!startBlockKey || !endBlockKey) {
-      return []
-    }
+    const result: Array<SelectedChild<TChild>> = []
 
-    const startBlockIndex = snapshot.blockIndexMap.get(startBlockKey)
-    const endBlockIndex = snapshot.blockIndexMap.get(endBlockKey)
+    for (const entry of getNodes(
+      {
+        ...snapshot.context,
+        blockIndexMap: snapshot.blockIndexMap,
+      },
+      {
+        from: startPoint.path,
+        to: endPoint.path,
+        match: (_, path) => isInline(snapshot.context, path),
+      },
+    )) {
+      const child = entry.node as PortableTextChild
 
-    if (startBlockIndex === undefined || endBlockIndex === undefined) {
-      return []
-    }
+      // Skip the start child when the selection begins exactly at its end
+      // and skip the end child when the selection ends exactly at its start.
+      if (child._key === startChildKey && isSpan(snapshot.context, child)) {
+        if (startPoint.offset >= child.text.length) {
+          continue
+        }
+      }
 
-    const selectedChildren: Array<SelectedChild<TChild>> = []
-    const minBlockIndex = Math.min(startBlockIndex, endBlockIndex)
-    const maxBlockIndex = Math.max(startBlockIndex, endBlockIndex)
-    const blocks = snapshot.context.value.slice(
-      minBlockIndex,
-      maxBlockIndex + 1,
-    )
+      if (child._key === endChildKey && isSpan(snapshot.context, child)) {
+        if (endPoint.offset <= 0) {
+          continue
+        }
+      }
 
-    let startChildFound = false
-
-    for (const block of blocks) {
-      if (!isTextBlock(snapshot.context, block)) {
+      if (filter && !filter(child)) {
         continue
       }
 
-      const isStartBlock = block._key === startBlockKey
-      const isEndBlock = block._key === endBlockKey
-      const isMiddleBlock = !isStartBlock && !isEndBlock
-
-      for (const child of block.children) {
-        const isStartChild = child._key === startChildKey
-        const isEndChild = child._key === endChildKey
-
-        const addChild = () => {
-          if (!filter || filter(child)) {
-            selectedChildren.push({
-              node: child as TChild,
-              path: [{_key: block._key}, 'children', {_key: child._key}],
-            })
-          }
-        }
-
-        if (isMiddleBlock) {
-          addChild()
-          continue
-        }
-
-        if (isStartChild) {
-          startChildFound = true
-          if (isSpan(snapshot.context, child)) {
-            if (startPoint.offset < child.text.length) {
-              addChild()
-            }
-          } else {
-            addChild()
-          }
-
-          if (startChildKey === endChildKey) {
-            break
-          }
-          continue
-        }
-
-        if (isEndChild) {
-          if (isSpan(snapshot.context, child)) {
-            if (endPoint.offset > 0) {
-              addChild()
-            }
-          } else {
-            addChild()
-          }
-          break
-        }
-
-        if (startChildFound) {
-          addChild()
-        }
-      }
-
-      if (isStartBlock && startBlockKey === endBlockKey) {
-        break
-      }
-
-      if (isStartBlock) {
-        startChildFound = true
-      }
+      result.push({node: child as TChild, path: entry.path})
     }
 
-    return selectedChildren
+    return result
   }
+}
+
+function lastKeyedKey(path: Path): string | undefined {
+  for (let i = path.length - 1; i >= 0; i--) {
+    const segment = path[i]
+    if (isKeyedSegment(segment)) {
+      return segment._key
+    }
+  }
+  return undefined
 }
