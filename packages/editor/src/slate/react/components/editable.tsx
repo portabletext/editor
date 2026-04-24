@@ -3,7 +3,6 @@ import type {
   PortableTextSpan,
   PortableTextTextBlock,
 } from '@portabletext/schema'
-import {isSpan} from '@portabletext/schema'
 import React, {
   forwardRef,
   useCallback,
@@ -52,7 +51,6 @@ import {
   IS_WECHATBROWSER,
 } from '../../dom/utils/environment'
 import Hotkeys from '../../dom/utils/hotkeys'
-import {MARK_PLACEHOLDER_SYMBOL} from '../../dom/utils/symbols'
 import {end as editorEnd} from '../../editor/end'
 import {range as editorRange} from '../../editor/range'
 import {rangeRef} from '../../editor/range-ref'
@@ -68,7 +66,6 @@ import {isBackwardRange} from '../../range/is-backward-range'
 import {isCollapsedRange} from '../../range/is-collapsed-range'
 import {isExpandedRange} from '../../range/is-expanded-range'
 import {rangeEquals} from '../../range/range-equals'
-import {textEquals} from '../../text/text-equals'
 import type {AndroidInputManager} from '../hooks/android-input-manager/android-input-manager'
 import {useAndroidInputManager} from '../hooks/android-input-manager/use-android-input-manager'
 import useChildren from '../hooks/use-children'
@@ -196,7 +193,6 @@ export const Editable = forwardRef(
       () => ({
         isUpdatingSelection: false,
         latestElement: null as DOMElement | null,
-        hasMarkPlaceholder: false,
       }),
       [],
     )
@@ -414,18 +410,7 @@ export const Editable = forwardRef(
           })
 
           if (slateRange && rangeEquals(slateRange, selection)) {
-            if (!state.hasMarkPlaceholder) {
-              return
-            }
-
-            // Ensure selection is inside the mark placeholder
-            if (
-              anchorNode?.parentElement?.hasAttribute(
-                'data-slate-mark-placeholder',
-              )
-            ) {
-              return
-            }
+            return
           }
         }
 
@@ -626,12 +611,6 @@ export const Editable = forwardRef(
             selection.anchor.offset !== 0
           ) {
             native = true
-
-            // Skip native if there are marks, as
-            // `insertText` will insert a node, not just text.
-            if (editor.marks) {
-              native = false
-            }
 
             // If the NODE_MAP is dirty, we can't trust the selection anchor (eg DOMEditor.toDOMPoint)
             if (!editor.isNodeMapDirty) {
@@ -1003,60 +982,6 @@ export const Editable = forwardRef(
     const decorations = decorate([editor as any, []])
     const decorateContext = useDecorateContext(decorate)
 
-    const {marks} = editor
-    state.hasMarkPlaceholder = false
-
-    if (editor.selection && isCollapsedRange(editor.selection) && marks) {
-      const {anchor} = editor.selection
-      const leafEntry = getNode(editor, anchor.path)
-      const leaf = leafEntry ? leafEntry.node : undefined
-
-      if (leaf && isSpan({schema: editor.schema}, leaf)) {
-        const {text: _text, ...rest} = leaf
-
-        if (!textEquals(leaf, marks, {loose: true})) {
-          state.hasMarkPlaceholder = true
-
-          const unset = Object.fromEntries(
-            Object.keys(rest).map((mark) => [mark, null]),
-          )
-
-          decorations.push({
-            [MARK_PLACEHOLDER_SYMBOL]: true,
-            ...unset,
-            ...marks,
-
-            anchor,
-            focus: anchor,
-          })
-        }
-      }
-    }
-
-    // Update EDITOR_TO_MARK_PLACEHOLDER_MARKS in setTimeout useEffect to ensure we don't set it
-    // before we receive the composition end event.
-    useEffect(() => {
-      setTimeout(() => {
-        const {selection} = editor
-        if (selection) {
-          const {anchor} = selection
-          const textEntry = getNode(editor, anchor.path)
-
-          if (!textEntry || !isSpan({schema: editor.schema}, textEntry.node)) {
-            return
-          }
-
-          const text = textEntry.node
-          if (marks && !textEquals(text, marks, {loose: true})) {
-            editor.pendingInsertionMarks = marks
-            return
-          }
-        }
-
-        editor.pendingInsertionMarks = null
-      })
-    })
-
     useFlushDeferredSelectorsOnRender()
 
     return (
@@ -1362,15 +1287,6 @@ export const Editable = forwardRef(
                       !IS_UC_MOBILE &&
                       event.data
                     ) {
-                      const placeholderMarks = editor.pendingInsertionMarks
-                      editor.pendingInsertionMarks = null
-
-                      // Ensure we insert text with the marks the user was actually seeing
-                      if (placeholderMarks !== undefined) {
-                        editor.userMarks = editor.marks
-                        editor.marks = placeholderMarks
-                      }
-
                       editorActor.send({
                         type: 'behavior event',
                         behaviorEvent: {
@@ -1379,12 +1295,6 @@ export const Editable = forwardRef(
                         },
                         editor,
                       })
-
-                      const userMarks = editor.userMarks
-                      editor.userMarks = null
-                      if (userMarks !== undefined) {
-                        editor.marks = userMarks
-                      }
                     }
                   }
                 },

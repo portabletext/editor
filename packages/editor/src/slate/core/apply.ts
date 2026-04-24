@@ -41,8 +41,6 @@ export const apply: WithEditorFirstArg<Editor['apply']> = (editor, op) => {
 
   // Clear any formats applied to the cursor if the selection changes.
   if (op.type === 'set_selection') {
-    editor.marks = null
-
     if (
       op.properties &&
       op.newProperties &&

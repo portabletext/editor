@@ -159,7 +159,6 @@ export function createAndroidInputManager({
     const selectionRef =
       editor.selection &&
       rangeRef(editor, editor.selection, {affinity: 'forward'})
-    editor.userMarks = editor.marks
 
     debug('flush', editor.pendingAction, editor.pendingDiffs)
 
@@ -168,18 +167,6 @@ export function createAndroidInputManager({
     let diff: TextDiff | undefined
     // biome-ignore lint/suspicious/noAssignInExpressions: Slate upstream pattern
     while ((diff = editor.pendingDiffs?.[0])) {
-      const pendingMarks = editor.pendingInsertionMarks
-
-      if (pendingMarks !== undefined) {
-        editor.pendingInsertionMarks = null
-        editor.marks = pendingMarks
-      }
-
-      if (pendingMarks && insertPositionHint === false) {
-        insertPositionHint = null
-        debug('insert after mark placeholder')
-      }
-
       const range = targetRange(diff)
       if (!editor.selection || !rangeEquals(editor.selection, range)) {
         editor.select(range)
@@ -210,7 +197,6 @@ export function createAndroidInputManager({
         debug('invalid diff state')
         scheduleSelectionChange = false
         editor.pendingAction = null
-        editor.userMarks = null
         flushing = 'action'
 
         // Ensure we don't restore the pending user (dom) selection
@@ -248,13 +234,6 @@ export function createAndroidInputManager({
     onDOMSelectionChange.flush()
 
     applyPendingSelection()
-
-    const userMarks = editor.userMarks
-    editor.userMarks = null
-    if (userMarks !== undefined) {
-      editor.marks = userMarks
-      editor.onChange()
-    }
   }
 
   const handleCompositionEnd = (
@@ -734,12 +713,6 @@ export function createAndroidInputManager({
         }
 
         let text = data ?? ''
-
-        // COMPAT: If we are writing inside a placeholder, the ime inserts the text inside
-        // the placeholder itself and thus includes the zero-width space inside edit events.
-        if (editor.pendingInsertionMarks) {
-          text = text.replace('\uFEFF', '')
-        }
 
         // Pastes from the Android clipboard will generate `insertText` events.
         // If the copied text contains any newlines, Android will append an
