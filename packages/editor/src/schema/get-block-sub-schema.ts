@@ -95,19 +95,17 @@ export function getBlockSubSchema(
  * container the sub-schema is authoritative and those operations should
  * be filtered.
  */
-/**
- * Return `true` when the given path is inside a registered editable
- * container -- i.e. when the block sub-schema at that path is resolved
- * from a nested `{type: 'block'}` definition rather than the top-level
- * schema.
- *
- * Use this to gate narrowing checks (e.g. "skip this decorator if the
- * sub-schema doesn't declare it"). At root we want to preserve the
- * permissive top-level behaviour where operations accept unknown
- * decorators/annotations/styles and track them optimistically; inside a
- * container the sub-schema is authoritative and those operations should
- * be filtered.
- */
+export function isInsideEditableContainer(
+  context: {
+    schema: EditorSchema
+    containers: Containers
+    value: Array<Node>
+  },
+  path: Path,
+): boolean {
+  return findEnclosingNestedBlock(context, path) !== undefined
+}
+
 function rootSubSchema(schema: EditorSchema): BlockSubSchema {
   return {
     styles: schema.styles,
