@@ -29,9 +29,11 @@ export type PathSegment = string | number | KeyedSegment | IndexTuple
 export type Path = PathSegment[]
 
 /**
+ * A path to a block in the value.
+ *
  * @public
  */
-export type BlockPath = [{_key: string}]
+export type BlockPath = Path
 
 /**
  * @public
@@ -53,11 +55,15 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 /**
+ * A path to an annotation markDef on a block.
+ *
  * @public
  */
-export type AnnotationPath = [{_key: string}, 'markDefs', {_key: string}]
+export type AnnotationPath = Path
 
 /**
+ * A path to a child of a text block.
+ *
  * @public
  */
-export type ChildPath = [{_key: string}, 'children', {_key: string}]
+export type ChildPath = Path
