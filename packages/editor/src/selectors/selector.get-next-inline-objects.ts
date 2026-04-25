@@ -1,49 +1,55 @@
 import type {PortableTextObject} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
-import {isSpanNode} from '../slate/node/is-span-node'
+import {getChildren} from '../node-traversal/get-children'
+import {isObjectNode} from '../slate/node/is-object-node'
+import {parentPath} from '../slate/path/parent-path'
 import type {ChildPath} from '../types/paths'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
-import {getFocusTextBlock} from './selector.get-focus-text-block'
 import {getSelectionEndPoint} from './selector.get-selection-end-point'
 
 /**
+ * Returns all inline objects after the selection end within the same text
+ * block, resolved at any depth.
+ *
  * @public
  */
 export const getNextInlineObjects: EditorSelector<
-  Array<{
-    node: PortableTextObject
-    path: ChildPath
-  }>
+  Array<{node: PortableTextObject; path: ChildPath}>
 > = (snapshot) => {
-  const focusTextBlock = getFocusTextBlock(snapshot)
-  const selectionEndPoint = getSelectionEndPoint(snapshot)
-  const selectionEndPointChildKey =
-    selectionEndPoint && isKeyedSegment(selectionEndPoint.path[2])
-      ? selectionEndPoint.path[2]._key
-      : undefined
+  const point = getSelectionEndPoint(snapshot)
 
-  if (!focusTextBlock || !selectionEndPointChildKey) {
+  if (!point) {
     return []
   }
 
-  let endPointChildFound = false
-  const inlineObjects: Array<{
-    node: PortableTextObject
-    path: ChildPath
-  }> = []
+  const endSegment = point.path.at(-1)
+  const endKey = isKeyedSegment(endSegment) ? endSegment._key : undefined
 
-  for (const child of focusTextBlock.node.children) {
-    if (child._key === selectionEndPointChildKey) {
-      endPointChildFound = true
+  if (!endKey) {
+    return []
+  }
+
+  const children = getChildren(snapshot.context, parentPath(point.path))
+  const inlineObjects: Array<{node: PortableTextObject; path: ChildPath}> = []
+  let endFound = false
+
+  for (const child of children) {
+    const segment = child.path.at(-1)
+    const childKey = isKeyedSegment(segment) ? segment._key : undefined
+
+    if (childKey === endKey) {
+      endFound = true
       continue
     }
 
-    if (!isSpanNode(snapshot.context, child) && endPointChildFound) {
+    if (
+      endFound &&
+      isObjectNode({schema: snapshot.context.schema}, child.node)
+    ) {
       inlineObjects.push({
-        node: child,
-        path: [...focusTextBlock.path, 'children', {_key: child._key}],
+        node: child.node,
+        path: child.path,
       })
-      break
     }
   }
 

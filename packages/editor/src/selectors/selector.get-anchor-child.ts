@@ -1,10 +1,12 @@
 import type {PortableTextObject, PortableTextSpan} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
+import {getInline} from '../node-traversal/get-inline'
 import type {ChildPath} from '../types/paths'
-import {getChildKeyFromSelectionPoint} from '../utils/util.selection-point'
-import {getAnchorTextBlock} from './selector.get-anchor-text-block'
 
 /**
+ * Returns the child (span or inline object) containing the anchor selection,
+ * resolved at any depth.
+ *
  * @public
  */
 export const getAnchorChild: EditorSelector<
@@ -14,23 +16,11 @@ export const getAnchorChild: EditorSelector<
     }
   | undefined
 > = (snapshot) => {
-  if (!snapshot.context.selection) {
+  const selection = snapshot.context.selection
+
+  if (!selection) {
     return undefined
   }
 
-  const anchorBlock = getAnchorTextBlock(snapshot)
-
-  if (!anchorBlock) {
-    return undefined
-  }
-
-  const key = getChildKeyFromSelectionPoint(snapshot.context.selection.anchor)
-
-  const node = key
-    ? anchorBlock.node.children.find((span) => span._key === key)
-    : undefined
-
-  return node && key
-    ? {node, path: [...anchorBlock.path, 'children', {_key: key}]}
-    : undefined
+  return getInline(snapshot.context, selection.anchor.path)
 }

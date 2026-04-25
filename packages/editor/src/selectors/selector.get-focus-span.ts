@@ -4,6 +4,8 @@ import type {ChildPath} from '../types/paths'
 import {getFocusChild} from './selector.get-focus-child'
 
 /**
+ * Returns the span containing the focus selection, resolved at any depth.
+ *
  * @public
  */
 export const getFocusSpan: EditorSelector<

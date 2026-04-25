@@ -1,9 +1,17 @@
 import type {PortableTextBlock} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
+import {getSibling} from '../node-traversal/get-sibling'
+import {getBlock} from '../node-traversal/is-block'
 import type {BlockPath} from '../types/paths'
 import {getSelectionEndBlock} from './selector.get-selection-end-block'
 
 /**
+ * Returns the block after the selection's end block within the same
+ * container scope, if any.
+ *
+ * Siblings are resolved within the enclosing container (or the document root
+ * if the selection is at root level). Never crosses container boundaries.
+ *
  * @public
  */
 export const getNextBlock: EditorSelector<
@@ -15,15 +23,11 @@ export const getNextBlock: EditorSelector<
     return undefined
   }
 
-  const index = snapshot.blockIndexMap.get(selectionEndBlock.node._key)
+  const next = getSibling(snapshot.context, selectionEndBlock.path, 'next')
 
-  if (index === undefined || index === snapshot.context.value.length - 1) {
+  if (!next) {
     return undefined
   }
 
-  const nextBlock = snapshot.context.value.at(index + 1)
-
-  return nextBlock
-    ? {node: nextBlock, path: [{_key: nextBlock._key}]}
-    : undefined
+  return getBlock(snapshot.context, next.path)
 }

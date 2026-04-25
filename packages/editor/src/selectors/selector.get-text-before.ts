@@ -1,7 +1,7 @@
 import type {EditorSelector} from '../editor/editor-selector'
 import {getBlockStartPoint} from '../utils/util.get-block-start-point'
 import {getSelectionStartPoint} from '../utils/util.get-selection-start-point'
-import {getFocusBlock} from './selector.get-focus-block'
+import {getFocusTextBlock} from './selector.get-focus-text-block'
 import {getSelectionText} from './selector.get-selection-text'
 
 /**
@@ -13,7 +13,7 @@ export const getBlockTextBefore: EditorSelector<string> = (snapshot) => {
   }
 
   const startPoint = getSelectionStartPoint(snapshot.context.selection)
-  const block = getFocusBlock({
+  const block = getFocusTextBlock({
     ...snapshot,
     context: {
       ...snapshot.context,

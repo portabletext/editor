@@ -1,9 +1,10 @@
 import type {EditorSelector} from '../editor/editor-selector'
+import {getAncestorTextBlock} from '../node-traversal/get-ancestor-text-block'
+import {getBlockSubSchema} from '../schema/get-block-sub-schema'
 import {isBlockPath} from '../types/paths'
 import {blockOffsetToSpanSelectionPoint} from '../utils/util.block-offset'
 import {isSelectionExpanded} from '../utils/util.is-selection-expanded'
 import {getFocusSpan} from './selector.get-focus-span'
-import {getFocusTextBlock} from './selector.get-focus-text-block'
 import {getNextSpan} from './selector.get-next-span'
 import {getPreviousSpan} from './selector.get-previous-span'
 import {getSelectedSpans} from './selector.get-selected-spans'
@@ -35,11 +36,6 @@ export const getMarkState: EditorSelector<MarkState | undefined> = (
   }
 
   let selection = snapshot.context.selection
-  const focusTextBlock = getFocusTextBlock(snapshot)
-
-  if (!focusTextBlock) {
-    return undefined
-  }
 
   if (isBlockPath(selection.anchor.path)) {
     const spanSelectionPoint = blockOffsetToSpanSelectionPoint({
@@ -98,24 +94,54 @@ export const getMarkState: EditorSelector<MarkState | undefined> = (
       },
     })
 
-    let index = 0
-    let marks: Array<string> = []
+    // Per-span info: marks present, the decorator names declared by the
+    // span's block sub-schema, and the annotation markDef keys declared on
+    // the span's enclosing block. Used so that out-of-scope spans (where
+    // the mark cannot apply) don't disqualify the mark across the
+    // selection.
+    const spanInfo = selectedSpans.map((span) => {
+      const block = getAncestorTextBlock(snapshot.context, span.path)
+      return {
+        marks: span.node.marks ?? [],
+        decoratorNames: getBlockSubSchema(
+          snapshot.context,
+          span.path,
+        ).decorators.map((decorator) => decorator.name),
+        markDefKeys: (block?.node.markDefs ?? []).map(
+          (markDef) => markDef._key,
+        ),
+      }
+    })
 
-    for (const span of selectedSpans) {
-      if (index === 0) {
-        marks = span.node.marks ?? []
-      } else {
-        if (span.node.marks?.length === 0) {
-          marks = []
+    // Candidate marks: union of all marks present on any selected span.
+    const candidateMarks = new Set<string>()
+    for (const {marks: spanMarks} of spanInfo) {
+      for (const mark of spanMarks) {
+        candidateMarks.add(mark)
+      }
+    }
+
+    const marks: Array<string> = []
+    for (const candidate of candidateMarks) {
+      const isDecoratorSomewhere = spanInfo.some(({decoratorNames}) =>
+        decoratorNames.includes(candidate),
+      )
+      let active = true
+      for (const {marks: spanMarks, decoratorNames, markDefKeys} of spanInfo) {
+        const inScope = isDecoratorSomewhere
+          ? decoratorNames.includes(candidate)
+          : markDefKeys.includes(candidate)
+        if (!inScope) {
           continue
         }
-
-        marks = marks.filter((mark) =>
-          (span.node.marks ?? []).some((spanMark) => spanMark === mark),
-        )
+        if (!spanMarks.includes(candidate)) {
+          active = false
+          break
+        }
       }
-
-      index++
+      if (active) {
+        marks.push(candidate)
+      }
     }
 
     return {
@@ -124,7 +150,8 @@ export const getMarkState: EditorSelector<MarkState | undefined> = (
     }
   }
 
-  const decorators = snapshot.context.schema.decorators.map(
+  const focusSubSchema = getBlockSubSchema(snapshot.context, focusSpan.path)
+  const decorators = focusSubSchema.decorators.map(
     (decorator) => decorator.name,
   )
   const marks = focusSpan.node.marks ?? []

@@ -4,6 +4,8 @@ import type {ChildPath} from '../types/paths'
 import {getSelectedChildren} from './selector.get-selected-children'
 
 /**
+ * Returns the spans touched by the selection, resolved at any depth.
+ *
  * @public
  */
 export const getSelectedSpans: EditorSelector<

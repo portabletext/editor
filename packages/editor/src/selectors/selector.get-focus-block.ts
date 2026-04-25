@@ -1,23 +1,25 @@
 import type {PortableTextBlock} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
+import {getEnclosingBlock} from '../node-traversal/get-enclosing-block'
 import type {BlockPath} from '../types/paths'
-import {getBlockKeyFromSelectionPoint} from '../utils/util.selection-point'
 
 /**
+ * Returns the block containing the focus selection, resolved at any depth.
+ *
+ * When the focus is inside an editable container (e.g. a code block's line),
+ * this returns the innermost block ancestor (the line), not the outer
+ * container. When the focus is at root, behavior is unchanged.
+ *
  * @public
  */
 export const getFocusBlock: EditorSelector<
   {node: PortableTextBlock; path: BlockPath} | undefined
 > = (snapshot) => {
-  if (!snapshot.context.selection) {
+  const selection = snapshot.context.selection
+
+  if (!selection) {
     return undefined
   }
 
-  const key = getBlockKeyFromSelectionPoint(snapshot.context.selection.focus)
-  const index = key ? snapshot.blockIndexMap.get(key) : undefined
-
-  const node =
-    index !== undefined ? snapshot.context.value.at(index) : undefined
-
-  return node && key ? {node, path: [{_key: key}]} : undefined
+  return getEnclosingBlock(snapshot.context, selection.focus.path)
 }
