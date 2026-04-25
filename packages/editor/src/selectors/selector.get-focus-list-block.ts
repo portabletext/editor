@@ -5,6 +5,9 @@ import {isListBlock} from '../utils/parse-blocks'
 import {getFocusTextBlock} from './selector.get-focus-text-block'
 
 /**
+ * Returns the list block containing the focus selection, resolved at any
+ * depth.
+ *
  * @public
  */
 export const getFocusListBlock: EditorSelector<

@@ -1,10 +1,12 @@
 import type {PortableTextObject, PortableTextSpan} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
+import {getInline} from '../node-traversal/get-inline'
 import type {ChildPath} from '../types/paths'
-import {getChildKeyFromSelectionPoint} from '../utils/util.selection-point'
-import {getFocusTextBlock} from './selector.get-focus-text-block'
 
 /**
+ * Returns the child (span or inline object) containing the focus selection,
+ * resolved at any depth.
+ *
  * @public
  */
 export const getFocusChild: EditorSelector<
@@ -14,23 +16,11 @@ export const getFocusChild: EditorSelector<
     }
   | undefined
 > = (snapshot) => {
-  if (!snapshot.context.selection) {
+  const selection = snapshot.context.selection
+
+  if (!selection) {
     return undefined
   }
 
-  const focusBlock = getFocusTextBlock(snapshot)
-
-  if (!focusBlock) {
-    return undefined
-  }
-
-  const key = getChildKeyFromSelectionPoint(snapshot.context.selection.focus)
-
-  const node = key
-    ? focusBlock.node.children.find((span) => span._key === key)
-    : undefined
-
-  return node && key
-    ? {node, path: [...focusBlock.path, 'children', {_key: key}]}
-    : undefined
+  return getInline(snapshot.context, selection.focus.path)
 }

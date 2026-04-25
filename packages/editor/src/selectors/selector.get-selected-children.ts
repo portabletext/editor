@@ -39,16 +39,13 @@ export function getSelectedChildren<
       return []
     }
 
-    const startChildKey = lastKeyedKey(startPoint.path)
-    const endChildKey = lastKeyedKey(endPoint.path)
+    const startChildKey = startPoint.path.findLast(isKeyedSegment)?._key
+    const endChildKey = endPoint.path.findLast(isKeyedSegment)?._key
 
     const result: Array<SelectedChild<TChild>> = []
 
     for (const entry of getNodes(
-      {
-        ...snapshot.context,
-        blockIndexMap: snapshot.blockIndexMap,
-      },
+      {...snapshot.context, blockIndexMap: snapshot.blockIndexMap},
       {
         from: startPoint.path,
         to: endPoint.path,
@@ -80,14 +77,4 @@ export function getSelectedChildren<
 
     return result
   }
-}
-
-function lastKeyedKey(path: Path): string | undefined {
-  for (let i = path.length - 1; i >= 0; i--) {
-    const segment = path[i]
-    if (isKeyedSegment(segment)) {
-      return segment._key
-    }
-  }
-  return undefined
 }

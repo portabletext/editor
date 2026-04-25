@@ -1,9 +1,17 @@
 import type {PortableTextBlock} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
+import {getSibling} from '../node-traversal/get-sibling'
+import {getBlock} from '../node-traversal/is-block'
 import type {BlockPath} from '../types/paths'
 import {getSelectionStartBlock} from './selector.get-selection-start-block'
 
 /**
+ * Returns the block before the selection's start block within the same
+ * container scope, if any.
+ *
+ * Siblings are resolved within the enclosing container (or the document root
+ * if the selection is at root level). Never crosses container boundaries.
+ *
  * @public
  */
 export const getPreviousBlock: EditorSelector<
@@ -15,15 +23,15 @@ export const getPreviousBlock: EditorSelector<
     return undefined
   }
 
-  const index = snapshot.blockIndexMap.get(selectionStartBlock.node._key)
+  const previous = getSibling(
+    snapshot.context,
+    selectionStartBlock.path,
+    'previous',
+  )
 
-  if (index === undefined || index === 0) {
+  if (!previous) {
     return undefined
   }
 
-  const previousBlock = snapshot.context.value.at(index - 1)
-
-  return previousBlock
-    ? {node: previousBlock, path: [{_key: previousBlock._key}]}
-    : undefined
+  return getBlock(snapshot.context, previous.path)
 }

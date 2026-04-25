@@ -1,45 +1,49 @@
 import type {PortableTextObject} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
-import {isSpanNode} from '../slate/node/is-span-node'
+import {getChildren} from '../node-traversal/get-children'
+import {isObjectNode} from '../slate/node/is-object-node'
+import {parentPath} from '../slate/path/parent-path'
 import type {ChildPath} from '../types/paths'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
-import {getFocusTextBlock} from './selector.get-focus-text-block'
 import {getSelectionStartPoint} from './selector.get-selection-start-point'
 
 /**
+ * Returns all inline objects before the selection start within the same text
+ * block, resolved at any depth.
+ *
  * @public
  */
 export const getPreviousInlineObjects: EditorSelector<
-  Array<{
-    node: PortableTextObject
-    path: ChildPath
-  }>
+  Array<{node: PortableTextObject; path: ChildPath}>
 > = (snapshot) => {
-  const focusTextBlock = getFocusTextBlock(snapshot)
-  const selectionStartPoint = getSelectionStartPoint(snapshot)
-  const selectionStartPointChildKey =
-    selectionStartPoint && isKeyedSegment(selectionStartPoint.path[2])
-      ? selectionStartPoint.path[2]._key
-      : undefined
+  const point = getSelectionStartPoint(snapshot)
 
-  if (!focusTextBlock || !selectionStartPointChildKey) {
+  if (!point) {
     return []
   }
 
-  const inlineObjects: Array<{
-    node: PortableTextObject
-    path: ChildPath
-  }> = []
+  const startSegment = point.path.at(-1)
+  const startKey = isKeyedSegment(startSegment) ? startSegment._key : undefined
 
-  for (const child of focusTextBlock.node.children) {
-    if (child._key === selectionStartPointChildKey) {
+  if (!startKey) {
+    return []
+  }
+
+  const children = getChildren(snapshot.context, parentPath(point.path))
+  const inlineObjects: Array<{node: PortableTextObject; path: ChildPath}> = []
+
+  for (const child of children) {
+    const segment = child.path.at(-1)
+    const childKey = isKeyedSegment(segment) ? segment._key : undefined
+
+    if (childKey === startKey) {
       break
     }
 
-    if (!isSpanNode(snapshot.context, child)) {
+    if (isObjectNode({schema: snapshot.context.schema}, child.node)) {
       inlineObjects.push({
-        node: child,
-        path: [...focusTextBlock.path, 'children', {_key: child._key}],
+        node: child.node,
+        path: child.path,
       })
     }
   }

@@ -1,51 +1,32 @@
 import type {PortableTextObject} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
-import {isSpanNode} from '../slate/node/is-span-node'
+import {findSibling} from '../node-traversal/find-sibling'
+import {isObjectNode} from '../slate/node/is-object-node'
 import type {ChildPath} from '../types/paths'
-import {isKeyedSegment} from '../utils/util.is-keyed-segment'
-import {getFocusTextBlock} from './selector.get-focus-text-block'
 import {getSelectionStartPoint} from './selector.get-selection-start-point'
 
 /**
+ * Returns the inline object before the selection start within the same text
+ * block, resolved at any depth.
+ *
  * @public
  */
 export const getPreviousInlineObject: EditorSelector<
-  | {
-      node: PortableTextObject
-      path: ChildPath
-    }
-  | undefined
+  {node: PortableTextObject; path: ChildPath} | undefined
 > = (snapshot) => {
-  const focusTextBlock = getFocusTextBlock(snapshot)
-  const selectionStartPoint = getSelectionStartPoint(snapshot)
-  const selectionStartPointChildKey =
-    selectionStartPoint && isKeyedSegment(selectionStartPoint.path[2])
-      ? selectionStartPoint.path[2]._key
-      : undefined
+  const point = getSelectionStartPoint(snapshot)
 
-  if (!focusTextBlock || !selectionStartPointChildKey) {
+  if (!point) {
     return undefined
   }
 
-  let inlineObject:
-    | {
-        node: PortableTextObject
-        path: ChildPath
-      }
-    | undefined
+  const sibling = findSibling(
+    snapshot.context,
+    point.path,
+    'previous',
+    (entry): entry is {node: PortableTextObject; path: ChildPath} =>
+      isObjectNode({schema: snapshot.context.schema}, entry.node),
+  )
 
-  for (const child of focusTextBlock.node.children) {
-    if (child._key === selectionStartPointChildKey) {
-      break
-    }
-
-    if (!isSpanNode(snapshot.context, child)) {
-      inlineObject = {
-        node: child,
-        path: [...focusTextBlock.path, 'children', {_key: child._key}],
-      }
-    }
-  }
-
-  return inlineObject
+  return sibling
 }

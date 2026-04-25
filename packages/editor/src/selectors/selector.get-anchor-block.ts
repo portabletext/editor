@@ -1,22 +1,21 @@
 import type {PortableTextBlock} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
+import {getEnclosingBlock} from '../node-traversal/get-enclosing-block'
 import type {BlockPath} from '../types/paths'
-import {getBlockKeyFromSelectionPoint} from '../utils/util.selection-point'
 
 /**
+ * Returns the block containing the anchor selection, resolved at any depth.
+ *
  * @public
  */
 export const getAnchorBlock: EditorSelector<
   {node: PortableTextBlock; path: BlockPath} | undefined
 > = (snapshot) => {
-  if (!snapshot.context.selection) {
+  const selection = snapshot.context.selection
+
+  if (!selection) {
     return undefined
   }
 
-  const key = getBlockKeyFromSelectionPoint(snapshot.context.selection.anchor)
-  const index = key ? snapshot.blockIndexMap.get(key) : undefined
-  const node =
-    index !== undefined ? snapshot.context.value.at(index) : undefined
-
-  return node && key ? {node, path: [{_key: key}]} : undefined
+  return getEnclosingBlock(snapshot.context, selection.anchor.path)
 }
