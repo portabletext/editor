@@ -5,10 +5,13 @@ import {
   DIFF_INSERT,
   parsePatch,
 } from '@sanity/diff-match-patch'
+import {getEnclosingBlock} from '../node-traversal/get-enclosing-block'
 import type {Node} from '../slate/interfaces/node'
 import type {Operation} from '../slate/interfaces/operation'
+import type {Path} from '../slate/interfaces/path'
+import {isAncestorPath} from '../slate/path/is-ancestor-path'
+import {pathEquals} from '../slate/path/path-equals'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
-import {isKeyedSegment} from '../utils'
 import {debug} from './debug'
 
 /**
@@ -24,9 +27,14 @@ export function transformOperation(
   patch: Patch,
   operation: Operation,
 ): Operation[] {
+  const context = {
+    schema: editor.schema,
+    containers: editor.containers,
+    value: editor.children,
+  }
   const transformedOperation = {...operation}
 
-  if (patch.type === 'insert' && patch.path.length === 1) {
+  if (patch.type === 'insert') {
     // With keyed paths, block insertions don't affect other operations' paths.
     // Keys are stable - no path adjustment needed.
     debug.history(
@@ -35,27 +43,22 @@ export function transformOperation(
     return [transformedOperation]
   }
 
-  if (patch.type === 'unset' && patch.path.length === 1) {
-    const pathSegment = patch.path[0]
-    // If this operation targets the same block that got removed, drop it
+  if (patch.type === 'unset' && patch.path.length > 0) {
+    // If this operation targets anything inside the subtree that got
+    // removed, drop it. With keyed paths, other operations' paths don't
+    // need adjustment. Compare path prefixes rather than resolving
+    // against the tree — `editor.children` reflects the post-patch state
+    // where the removed subtree is already gone.
     if (
       'path' in transformedOperation &&
-      Array.isArray(transformedOperation.path)
+      Array.isArray(transformedOperation.path) &&
+      pathStartsWith(transformedOperation.path, patch.path)
     ) {
-      const operationBlockSegment = transformedOperation.path[0]
-      if (
-        isKeyedSegment(pathSegment) &&
-        isKeyedSegment(operationBlockSegment) &&
-        operationBlockSegment._key === pathSegment._key
-      ) {
-        debug.history('Skipping transformation that targeted removed block')
-        return []
-      }
+      debug.history('Skipping transformation that targeted removed block')
+      return []
     }
-    // With keyed paths, block removals don't affect other operations' paths.
     return [transformedOperation]
   }
-
   // Someone reset the whole value
   if (patch.type === 'unset' && patch.path.length === 0) {
     debug.history(
@@ -66,14 +69,15 @@ export function transformOperation(
 
   if (patch.type === 'diffMatchPatch') {
     const operationTargetBlock = findOperationTargetBlock(
+      context,
       editor,
       transformedOperation,
     )
-    const pathSegment = patch.path[0]
+    const patchTargetBlock = getEnclosingBlock(context, patch.path)
     if (
       !operationTargetBlock ||
-      !isKeyedSegment(pathSegment) ||
-      operationTargetBlock._key !== pathSegment._key
+      !patchTargetBlock ||
+      operationTargetBlock._key !== patchTargetBlock.node._key
     ) {
       return [transformedOperation]
     }
@@ -154,21 +158,30 @@ export function transformOperation(
 }
 
 function findOperationTargetBlock(
+  context: {
+    schema: PortableTextSlateEditor['schema']
+    containers: PortableTextSlateEditor['containers']
+    value: Array<Node>
+  },
   editor: PortableTextSlateEditor,
   operation: Operation,
 ): Node | undefined {
   if (operation.type === 'set_selection' && editor.selection) {
-    const focusSegment = editor.selection.focus.path[0]
-    if (isKeyedSegment(focusSegment)) {
-      return editor.children.find((child) => child._key === focusSegment._key)
-    }
-    return undefined
+    const block = getEnclosingBlock(context, editor.selection.focus.path)
+    return block?.node
   }
   if ('path' in operation) {
-    const blockSegment = operation.path[0]
-    if (isKeyedSegment(blockSegment)) {
-      return editor.children.find((child) => child._key === blockSegment._key)
-    }
+    const block = getEnclosingBlock(context, operation.path)
+    return block?.node
   }
   return undefined
+}
+
+/**
+ * Return true when `path` equals `prefix` or is a descendant of `prefix`.
+ * Used to decide whether an operation falls inside a subtree that was
+ * removed by an `unset` patch.
+ */
+function pathStartsWith(path: Path, prefix: Path): boolean {
+  return pathEquals(path, prefix) || isAncestorPath(prefix, path)
 }

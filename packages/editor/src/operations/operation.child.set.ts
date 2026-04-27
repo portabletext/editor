@@ -2,7 +2,9 @@ import {isSpan} from '@portabletext/schema'
 import {safeStringify} from '../internal-utils/safe-json'
 import {setNodeProperties} from '../internal-utils/set-node-properties'
 import {getNode} from '../node-traversal/get-node'
+import {getBlockSubSchema} from '../schema/get-block-sub-schema'
 import {isObjectNode} from '../slate/node/is-object-node'
+import {parentPath} from '../slate/path/parent-path'
 import type {OperationImplementation} from './operation.types'
 
 export const childSetOperationImplementation: OperationImplementation<
@@ -56,7 +58,9 @@ export const childSetOperationImplementation: OperationImplementation<
   }
 
   if (isObjectNode({schema: operation.editor.schema}, child)) {
-    const definition = context.schema.inlineObjects.find(
+    const blockPath = parentPath(childPath)
+    const {inlineObjects} = getBlockSubSchema(context, blockPath)
+    const definition = inlineObjects.find(
       (definition) => definition.name === child._type,
     )
 

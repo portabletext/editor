@@ -1,13 +1,16 @@
+import type {PortableTextBlock} from '@portabletext/schema'
+import {getEnclosingBlock} from '../node-traversal/get-enclosing-block'
+import {getNodes} from '../node-traversal/get-nodes'
+import {getBlock, isBlock} from '../node-traversal/is-block'
+import {getDefaultStyle} from '../selectors/selector.get-default-style'
 import {getFocusInlineObject} from '../selectors/selector.get-focus-inline-object'
 import {getFocusSpan} from '../selectors/selector.get-focus-span'
 import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
-import {getSelectedBlocks} from '../selectors/selector.get-selected-blocks'
-import {getSelectionEndBlock} from '../selectors/selector.get-selection-end-block'
-import {getSelectionStartBlock} from '../selectors/selector.get-selection-start-block'
 import {isAtTheEndOfBlock} from '../selectors/selector.is-at-the-end-of-block'
 import {isAtTheStartOfBlock} from '../selectors/selector.is-at-the-start-of-block'
 import {isSelectionCollapsed} from '../selectors/selector.is-selection-collapsed'
 import {isSelectionExpanded} from '../selectors/selector.is-selection-expanded'
+import type {Path} from '../slate/interfaces/path'
 import {getBlockEndPoint} from '../utils/util.get-block-end-point'
 import {getBlockStartPoint} from '../utils/util.get-block-start-point'
 import {getSelectionEndPoint} from '../utils/util.get-selection-end-point'
@@ -53,7 +56,7 @@ const breakingAtTheEndOfTextBlock = defineBehavior({
           markDefs: [],
           listItem: focusListItem,
           level: focusLevel,
-          style: snapshot.context.schema.styles[0]?.name,
+          style: getDefaultStyle(snapshot),
         },
         placement: 'after',
       }),
@@ -115,7 +118,7 @@ const breakingAtTheStartOfTextBlock = defineBehavior({
           ],
           listItem: focusListItem,
           level: focusLevel,
-          style: snapshot.context.schema.styles[0]?.name,
+          style: getDefaultStyle(snapshot),
         },
         placement: 'before',
         select: 'none',
@@ -135,9 +138,23 @@ const breakingEntireBlocks = defineBehavior({
       return false
     }
 
-    const selectedBlocks = getSelectedBlocks(snapshot)
-    const selectionStartBlock = getSelectionStartBlock(snapshot)
-    const selectionEndBlock = getSelectionEndBlock(snapshot)
+    const selectionStartPoint = getSelectionStartPoint(
+      snapshot.context.selection,
+    )
+    const selectionEndPoint = getSelectionEndPoint(snapshot.context.selection)
+
+    if (!selectionStartPoint || !selectionEndPoint) {
+      return false
+    }
+
+    const selectionStartBlock = getEnclosingBlock(
+      snapshot.context,
+      selectionStartPoint.path,
+    )
+    const selectionEndBlock = getEnclosingBlock(
+      snapshot.context,
+      selectionEndPoint.path,
+    )
 
     if (!selectionStartBlock || !selectionEndBlock) {
       return false
@@ -147,19 +164,29 @@ const breakingEntireBlocks = defineBehavior({
       context: snapshot.context,
       block: selectionStartBlock,
     })
-    const selectionStartPoint = getSelectionStartPoint(
-      snapshot.context.selection,
-    )
     const endBlockEndPoint = getBlockEndPoint({
       context: snapshot.context,
       block: selectionEndBlock,
     })
-    const selectionEndPoint = getSelectionEndPoint(snapshot.context.selection)
 
     if (
       isEqualSelectionPoints(selectionStartPoint, startBlockStartPoint) &&
       isEqualSelectionPoints(selectionEndPoint, endBlockEndPoint)
     ) {
+      const selectedBlocks: Array<{node: PortableTextBlock; path: Path}> = []
+      for (const entry of getNodes(
+        {...snapshot.context, blockIndexMap: snapshot.blockIndexMap},
+        {
+          from: selectionStartBlock.path,
+          to: selectionEndBlock.path,
+          match: (_node, path) => isBlock(snapshot.context, path),
+        },
+      )) {
+        const block = getBlock(snapshot.context, entry.path)
+        if (block) {
+          selectedBlocks.push(block)
+        }
+      }
       return {selectedBlocks}
     }
 

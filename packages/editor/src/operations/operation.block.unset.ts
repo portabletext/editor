@@ -1,35 +1,19 @@
 import {safeStringify} from '../internal-utils/safe-json'
 import {setNodeProperties} from '../internal-utils/set-node-properties'
+import {getNode} from '../node-traversal/get-node'
 import {isTextBlockNode} from '../slate/node/is-text-block-node'
-import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import type {OperationImplementation} from './operation.types'
 
 export const blockUnsetOperationImplementation: OperationImplementation<
   'block.unset'
 > = ({context, operation}) => {
-  const blockSegment = operation.at.at(-1)
+  const blockEntry = getNode(operation.editor, operation.at)
 
-  if (!isKeyedSegment(blockSegment)) {
-    throw new Error(
-      `Unable to extract block key from ${safeStringify(operation.at)}`,
-    )
-  }
-
-  const blockKey = blockSegment._key
-  const blockIndex = operation.editor.blockIndexMap.get(blockKey)
-
-  if (blockIndex === undefined) {
-    throw new Error(`Unable to find block index for block key ${blockKey}`)
-  }
-
-  const slateBlock =
-    blockIndex !== undefined
-      ? operation.editor.children.at(blockIndex)
-      : undefined
-
-  if (!slateBlock) {
+  if (!blockEntry) {
     throw new Error(`Unable to find block at ${safeStringify(operation.at)}`)
   }
+
+  const slateBlock = blockEntry.node
 
   if (isTextBlockNode(context, slateBlock)) {
     const propsToRemove = operation.props.filter(
@@ -40,12 +24,14 @@ export const blockUnsetOperationImplementation: OperationImplementation<
     for (const prop of propsToRemove) {
       unsetProps[prop] = null
     }
-    setNodeProperties(operation.editor, unsetProps, [{_key: blockKey}])
+    setNodeProperties(operation.editor, unsetProps, blockEntry.path)
 
     if (operation.props.includes('_key')) {
-      setNodeProperties(operation.editor, {_key: context.keyGenerator()}, [
-        {_key: blockKey},
-      ])
+      setNodeProperties(
+        operation.editor,
+        {_key: context.keyGenerator()},
+        blockEntry.path,
+      )
     }
 
     return
@@ -62,5 +48,5 @@ export const blockUnsetOperationImplementation: OperationImplementation<
       unsetProps[key] = null
     }
   }
-  setNodeProperties(operation.editor, unsetProps, [{_key: blockKey}])
+  setNodeProperties(operation.editor, unsetProps, blockEntry.path)
 }

@@ -56,20 +56,16 @@ describe(sliceTextBlock.name, () => {
 
     expect(
       sliceTextBlock({
-        context: {
-          schema,
-          selection: {
-            anchor: {
-              path: [{_key: block._key}, 'children', {_key: span._key}],
-              offset: 0,
-            },
-            focus: {
-              path: [{_key: block._key}, 'children', {_key: span._key}],
-              offset: 0,
-            },
-          },
-        },
+        context: {schema},
         block,
+        startPoint: {
+          path: [{_key: block._key}, 'children', {_key: span._key}],
+          offset: 0,
+        },
+        endPoint: {
+          path: [{_key: block._key}, 'children', {_key: span._key}],
+          offset: 0,
+        },
       }),
     ).toEqual(block)
   })
@@ -84,20 +80,16 @@ describe(sliceTextBlock.name, () => {
 
     expect(
       sliceTextBlock({
-        context: {
-          schema,
-          selection: {
-            anchor: {
-              path: [{_key: block._key}, 'children', {_key: span._key}],
-              offset: 4,
-            },
-            focus: {
-              path: [{_key: block._key}, 'children', {_key: span._key}],
-              offset: 7,
-            },
-          },
-        },
+        context: {schema},
         block,
+        startPoint: {
+          path: [{_key: block._key}, 'children', {_key: span._key}],
+          offset: 4,
+        },
+        endPoint: {
+          path: [{_key: block._key}, 'children', {_key: span._key}],
+          offset: 7,
+        },
       }),
     ).toEqual({
       ...block,
@@ -133,20 +125,16 @@ describe(sliceTextBlock.name, () => {
     test('mid-span', () => {
       expect(
         sliceTextBlock({
-          context: {
-            schema,
-            selection: {
-              anchor: {
-                path: [{_key: block._key}, 'children', {_key: barSpan._key}],
-                offset: 1,
-              },
-              focus: {
-                path: [{_key: block._key}, 'children', {_key: bazSpan._key}],
-                offset: 1,
-              },
-            },
-          },
+          context: {schema},
           block,
+          startPoint: {
+            path: [{_key: block._key}, 'children', {_key: barSpan._key}],
+            offset: 1,
+          },
+          endPoint: {
+            path: [{_key: block._key}, 'children', {_key: bazSpan._key}],
+            offset: 1,
+          },
         }),
       ).toEqual({
         ...block,
@@ -167,20 +155,16 @@ describe(sliceTextBlock.name, () => {
     test('from end of span to end of block', () => {
       expect(
         sliceTextBlock({
-          context: {
-            schema,
-            selection: {
-              anchor: {
-                path: [{_key: block._key}, 'children', {_key: fooSpan._key}],
-                offset: 3,
-              },
-              focus: {
-                path: [{_key: block._key}, 'children', {_key: bazSpan._key}],
-                offset: 3,
-              },
-            },
-          },
+          context: {schema},
           block,
+          startPoint: {
+            path: [{_key: block._key}, 'children', {_key: fooSpan._key}],
+            offset: 3,
+          },
+          endPoint: {
+            path: [{_key: block._key}, 'children', {_key: bazSpan._key}],
+            offset: 3,
+          },
         }),
       ).toEqual({
         ...block,

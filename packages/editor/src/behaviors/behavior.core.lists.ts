@@ -283,14 +283,10 @@ const deletingListFromStart = defineBehavior({
       },
     })
     const slicedEndBlock = sliceTextBlock({
-      context: {
-        schema: snapshot.context.schema,
-        selection: {
-          anchor: deleteEndPoint,
-          focus: endBlockEndPoint,
-        },
-      },
+      context: snapshot.context,
       block: endBlock,
+      startPoint: deleteEndPoint,
+      endPoint: endBlockEndPoint,
     })
 
     return {

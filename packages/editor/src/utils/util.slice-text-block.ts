@@ -4,36 +4,34 @@ import {
   type PortableTextTextBlock,
 } from '@portabletext/schema'
 import type {EditorContext} from '../editor/editor-snapshot'
-import {getSelectionEndPoint} from './util.get-selection-end-point'
-import {getSelectionStartPoint} from './util.get-selection-start-point'
-import {
-  getBlockKeyFromSelectionPoint,
-  getChildKeyFromSelectionPoint,
-} from './util.selection-point'
+import type {EditorSelectionPoint} from '../types/editor'
+import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 
+/**
+ * Return a shallow copy of `block` that contains the content between
+ * `startPoint` and `endPoint`. Depth-agnostic: resolves child keys from the
+ * last segment of each point's path, so it works for blocks at any depth
+ * (including inside editable containers).
+ */
 export function sliceTextBlock({
   context,
   block,
+  startPoint,
+  endPoint,
 }: {
-  context: Pick<EditorContext, 'schema' | 'selection'>
+  context: Pick<EditorContext, 'schema'>
   block: PortableTextTextBlock
+  startPoint: EditorSelectionPoint
+  endPoint: EditorSelectionPoint
 }): PortableTextTextBlock {
-  const startPoint = getSelectionStartPoint(context.selection)
-  const endPoint = getSelectionEndPoint(context.selection)
-
-  if (!startPoint || !endPoint) {
-    return block
-  }
-
-  const startBlockKey = getBlockKeyFromSelectionPoint(startPoint)
-  const endBlockKey = getBlockKeyFromSelectionPoint(endPoint)
-
-  if (startBlockKey !== endBlockKey || startBlockKey !== block._key) {
-    return block
-  }
-
-  const startChildKey = getChildKeyFromSelectionPoint(startPoint)
-  const endChildKey = getChildKeyFromSelectionPoint(endPoint)
+  const startChildSegment = startPoint.path.at(-1)
+  const endChildSegment = endPoint.path.at(-1)
+  const startChildKey = isKeyedSegment(startChildSegment)
+    ? startChildSegment._key
+    : undefined
+  const endChildKey = isKeyedSegment(endChildSegment)
+    ? endChildSegment._key
+    : undefined
 
   if (!startChildKey || !endChildKey) {
     return block

@@ -3,6 +3,7 @@ import {isSpan, isTextBlock} from '@portabletext/schema'
 import {applySelect, resolveSelection} from '../internal-utils/apply-selection'
 import {applySplitNode} from '../internal-utils/apply-split-node'
 import {setNodeProperties} from '../internal-utils/set-node-properties'
+import {getAncestorTextBlock} from '../node-traversal/get-ancestor-text-block'
 import {getChildren} from '../node-traversal/get-children'
 import {getNode} from '../node-traversal/get-node'
 import {getNodes} from '../node-traversal/get-nodes'
@@ -10,7 +11,6 @@ import {isLeaf} from '../node-traversal/is-leaf'
 import {isEdge} from '../slate/editor/is-edge'
 import {isEnd} from '../slate/editor/is-end'
 import {isStart} from '../slate/editor/is-start'
-import {path as editorPath} from '../slate/editor/path'
 import {rangeRef} from '../slate/editor/range-ref'
 import {withoutNormalizing} from '../slate/editor/without-normalizing'
 import type {Path} from '../slate/interfaces/path'
@@ -26,7 +26,7 @@ import type {OperationImplementation} from './operation.types'
 
 export const removeAnnotationOperationImplementation: OperationImplementation<
   'annotation.remove'
-> = ({operation}) => {
+> = ({context, operation}) => {
   const editor = operation.editor
 
   const at = operation.at
@@ -40,9 +40,9 @@ export const removeAnnotationOperationImplementation: OperationImplementation<
   }
 
   if (isCollapsedRange(effectiveSelection)) {
-    const blockEntry = getNode(
-      editor,
-      editorPath(editor, effectiveSelection, {depth: 1}),
+    const blockEntry = getAncestorTextBlock(
+      context,
+      effectiveSelection.focus.path,
     )
 
     if (!blockEntry) {
@@ -51,19 +51,12 @@ export const removeAnnotationOperationImplementation: OperationImplementation<
 
     const {node: block, path: blockPath} = blockEntry
 
-    if (!isTextBlock({schema: editor.schema}, block)) {
-      return
-    }
-
     const markDefs = block.markDefs ?? []
     const potentialAnnotations = markDefs.filter(
       (markDef) => markDef._type === operation.annotation.name,
     )
 
-    const selectedChildEntry = getNode(
-      editor,
-      editorPath(editor, effectiveSelection, {depth: 2}),
-    )
+    const selectedChildEntry = getNode(editor, effectiveSelection.focus.path)
 
     if (!selectedChildEntry) {
       return

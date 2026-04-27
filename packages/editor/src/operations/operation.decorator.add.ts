@@ -1,15 +1,19 @@
-import {isSpan, isTextBlock} from '@portabletext/schema'
+import {isSpan} from '@portabletext/schema'
 import {applySelect, resolveSelection} from '../internal-utils/apply-selection'
 import {applySplitNode} from '../internal-utils/apply-split-node'
 import {setNodeProperties} from '../internal-utils/set-node-properties'
-import {getNode} from '../node-traversal/get-node'
+import {getAncestorTextBlock} from '../node-traversal/get-ancestor-text-block'
 import {getNodes} from '../node-traversal/get-nodes'
+import {
+  getBlockSubSchema,
+  isInsideEditableContainer,
+} from '../schema/get-block-sub-schema'
 import {isEdge} from '../slate/editor/is-edge'
 import {isEnd} from '../slate/editor/is-end'
 import {isStart} from '../slate/editor/is-start'
-import {path as editorPath} from '../slate/editor/path'
 import {rangeRef} from '../slate/editor/range-ref'
 import {withoutNormalizing} from '../slate/editor/without-normalizing'
+import {parentPath} from '../slate/path/parent-path'
 import {isExpandedRange} from '../slate/range/is-expanded-range'
 import {rangeEdges} from '../slate/range/range-edges'
 import {rangeEnd} from '../slate/range/range-end'
@@ -18,7 +22,7 @@ import type {OperationImplementation} from './operation.types'
 
 export const decoratorAddOperationImplementation: OperationImplementation<
   'decorator.add'
-> = ({operation}) => {
+> = ({context, operation}) => {
   const editor = operation.editor
   const mark = operation.decorator
 
@@ -82,6 +86,20 @@ export const decoratorAddOperationImplementation: OperationImplementation<
           continue
         }
 
+        // Inside an editable container the sub-schema is authoritative:
+        // skip spans whose block's sub-schema doesn't declare this
+        // decorator. At root we remain permissive and allow unknown
+        // decorators to be tracked optimistically.
+        const blockPath = parentPath(spanPath)
+        if (isInsideEditableContainer(context, blockPath)) {
+          const subSchema = getBlockSubSchema(context, blockPath)
+          if (
+            !subSchema.decorators.some((decorator) => decorator.name === mark)
+          ) {
+            continue
+          }
+        }
+
         const marks = [
           ...(Array.isArray(node.marks) ? node.marks : []).filter(
             (eMark: string) => eMark !== mark,
@@ -104,13 +122,24 @@ export const decoratorAddOperationImplementation: OperationImplementation<
       return
     }
 
-    const blockEntry = getNode(editor, editorPath(editor, at, {depth: 1}))
+    const blockEntry = getAncestorTextBlock(context, at.focus.path)
     if (!blockEntry) {
       return
     }
     const {node: block, path: blockPath} = blockEntry
+
+    // Inside an editable container the sub-schema is authoritative: bail
+    // when the block's sub-schema doesn't declare this decorator. At root
+    // we remain permissive so unknown decorators are tracked in
+    // `decoratorState` (the existing root-level behaviour).
+    if (isInsideEditableContainer(context, blockPath)) {
+      const subSchema = getBlockSubSchema(context, blockPath)
+      if (!subSchema.decorators.some((decorator) => decorator.name === mark)) {
+        return
+      }
+    }
+
     const lonelyEmptySpan =
-      isTextBlock({schema: editor.schema}, block) &&
       block.children.length === 1 &&
       isSpan({schema: editor.schema}, block.children[0]) &&
       block.children[0].text === ''
