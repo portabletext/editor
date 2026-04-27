@@ -172,14 +172,22 @@ function convertTextBlockToPTE(
     }
   }
 
+  if (children.length === 0) {
+    children.push({
+      _key: keyGenerator(),
+      _type: 'span',
+      text: '',
+      marks: [],
+    })
+  }
+
   const result: PortableTextTextBlock = {
     _type: schema.block.name,
     _key: blockKey,
     children,
     ...(markDefs.length > 0 ? {markDefs} : {}),
     style,
-    ...(listItem ? {listItem} : {}),
-    ...(level ? {level} : {}),
+    ...(listItem ? {listItem, level: level ?? 1} : level ? {level} : {}),
   }
 
   return result
