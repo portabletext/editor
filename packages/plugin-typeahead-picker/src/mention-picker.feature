@@ -25,7 +25,7 @@ Feature: Mention Picker
     And "@john" is typed
     Then the matches are "John Doe"
     When "{Enter}" is pressed
-    Then the text is "John Doe"
+    Then the editor state is "B: John Doe|"
     And the picker state is "idle"
 
   Scenario: Tab selects match
@@ -33,7 +33,7 @@ Feature: Mention Picker
     And "@john" is typed
     Then the matches are "John Doe"
     When "{Tab}" is pressed
-    Then the text is "John Doe"
+    Then the editor state is "B: John Doe|"
     And the picker state is "idle"
 
   # Dismissing
@@ -41,7 +41,7 @@ Feature: Mention Picker
     When the editor is focused
     And "@john" is typed
     When "{Escape}" is pressed
-    Then the text is "@john"
+    Then the editor state is "B: @john|"
     And the picker state is "idle"
 
   Scenario: Dismissing by moving cursor left
@@ -63,7 +63,7 @@ Feature: Mention Picker
     And "@xyz" is typed
     Then the picker state is "no matches"
     When "{Enter}" is pressed
-    Then the text is "@xyz"
+    Then the editor state is "B: @xyz|"
     And the picker state is "idle"
 
   # Keyboard navigation
@@ -97,7 +97,7 @@ Feature: Mention Picker
     Then the picker state is "showing matches"
     When "{ArrowDown}" is pressed
     And "{Enter}" is pressed
-    Then the text is "Jane Smith"
+    Then the editor state is "B: Jane Smith|"
 
   # Narrowing search
   Scenario: Typing more characters narrows results

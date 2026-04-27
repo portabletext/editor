@@ -1,25 +1,25 @@
 Feature: Stock Ticker Rule
 
   Scenario Outline: Transforms plain text into stock ticker
-    Given the text <text>
+    Given the editor state is <state>
     When the editor is focused
     And <inserted text> is inserted
     And "{ArrowRight}" is pressed
     And "new" is typed
-    Then the text is <new text>
+    Then the editor state is <new state>
 
     Examples:
-      | text | inserted text | new text              |
-      | ""   | "{AAPL}"      | ",{stock-ticker},new" |
+      | state | inserted text | new state                |
+      | "B: " | "{AAPL}"      | "B: {stock-ticker}new\|" |
 
   Scenario Outline: Smart undo with Backspace
-    Given the text <text>
+    Given the editor state is <state>
     When the editor is focused
     And <inserted text> is inserted
-    Then the text is <before undo>
+    Then the editor state is <before undo>
     When "{Backspace}" is pressed
-    Then the text is <after undo>
+    Then the editor state is <after undo>
 
     Examples:
-      | text | inserted text | before undo        | after undo |
-      | ""   | "{APPL}"      | ",{stock-ticker}," | "{APPL}"   |
+      | state | inserted text | before undo           | after undo    |
+      | "B: " | "{APPL}"      | "B: \|{stock-ticker}" | "B: \{APPL\}" |

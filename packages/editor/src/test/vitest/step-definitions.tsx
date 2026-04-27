@@ -3,6 +3,7 @@ import {getTersePt, parseTersePt} from '@portabletext/test'
 import {Given, Then, When} from 'racejar'
 import {assert, expect, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
+import {boundaryEquivalentSelections} from '../../../test-utils/boundary-equivalent'
 import {getEditorSelection} from '../../../test-utils/editor-selection'
 import {
   fromTextspec,
@@ -127,21 +128,44 @@ async function assertEditorState(
       }
     }
 
-    expect(
+    const toTextspecOptions = options.singleLine
+      ? {singleLine: true as const, keys: keys.size > 0 ? keys : undefined}
+      : {keys: keys.size > 0 ? keys : undefined}
+
+    const renderActual = (effectiveSelection: typeof selection): string =>
       toTextspec(
         {
           schema,
           value,
-          selection: assertsSelection ? selection : null,
+          selection: assertsSelection ? effectiveSelection : null,
           containers,
           annotationKeys,
         },
-        options.singleLine
-          ? {singleLine: true, keys: keys.size > 0 ? keys : undefined}
-          : {keys: keys.size > 0 ? keys : undefined},
-      ),
-      'Unexpected editor state',
-    ).toBe(expected)
+        toTextspecOptions,
+      )
+
+    const strict = renderActual(selection)
+
+    if (strict === expected || !assertsSelection) {
+      expect(strict, 'Unexpected editor state').toBe(expected)
+      return
+    }
+
+    // Span boundaries: `{span-A, end}` and `{span-B, 0}` describe the same
+    // caret position but the editor model picks one form, and that pick
+    // can vary by browser when native beforeinput insertion is involved.
+    // Accept any boundary-equivalent selection that produces the expected
+    // textspec.
+    for (const variant of boundaryEquivalentSelections(
+      {schema, value},
+      selection,
+    )) {
+      if (renderActual(variant) === expected) {
+        return
+      }
+    }
+
+    expect(strict, 'Unexpected editor state').toBe(expected)
   })
 }
 

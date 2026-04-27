@@ -21,7 +21,7 @@ Feature: onDismiss
     And "@j" is typed
     And "{Escape}" is pressed
     And "foo" is typed
-    Then the text is "foo"
+    Then the editor state is "B: foo|"
 
   Scenario: Dismissing and triggering again
     When the editor is focused
@@ -31,21 +31,21 @@ Feature: onDismiss
     Then the picker state is "no matches"
     When "{Escape}" is pressed
     And "foo" is typed
-    Then the text is "foo"
+    Then the editor state is "B: foo|"
 
   Scenario: Dismissing with no matches and typing again
     When the editor is focused
     And "@k" is typed
     And "{Escape}" is pressed
     And "foo" is typed
-    Then the text is "foo"
+    Then the editor state is "B: foo|"
 
   Scenario: Dismissing with Enter and typing again
     When the editor is focused
     And "@k" is typed
     And "{Enter}" is pressed
     And "foo" is typed
-    Then the text is "foo"
+    Then the editor state is "B: foo|"
 
   Scenario: Programmatic dismiss triggers onDismiss
     When the editor is focused

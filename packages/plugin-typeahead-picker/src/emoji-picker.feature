@@ -4,20 +4,20 @@ Feature: Emoji Picker
     When the editor is focused
     And <initial text> is inserted
     And <inserted text> is inserted
-    Then the text is <final text>
+    Then the editor state is <final state>
 
     Examples:
-      | initial text | inserted text | final text |
-      | ""           | ":joy:"       | "😂"       |
-      | ":jo"        | "y:"          | "😂"       |
-      | ":joy"       | ":"           | "😂"       |
+      | initial text | inserted text | final state |
+      | ""           | ":joy:"       | "B: 😂\|"   |
+      | ":jo"        | "y:"          | "B: 😂\|"   |
+      | ":joy"       | ":"           | "B: 😂\|"   |
 
   Scenario: Picking direct hit with multiple exact matches
     When the editor is focused
     And ":dog" is typed
     Then the matches are "🐕,🐩"
     When ":" is typed
-    Then the text is "🐕"
+    Then the editor state is "B: 🐕|"
 
   Scenario: Triggering after a trigger character
     When the editor is focused
@@ -36,7 +36,7 @@ Feature: Emoji Picker
     And "foo" is typed
     And "{ArrowRight}" is pressed
     And ":dog:" is inserted
-    Then the text is "foo:🐕"
+    Then the editor state is "B: foo:🐕|"
     And the keyword is ""
 
   Scenario: Toggling trigger, deleting it and toggling it again
@@ -44,32 +44,32 @@ Feature: Emoji Picker
     And ":d" is typed
     And "{Backspace}{Backspace}" is pressed
     And ":d" is typed
-    Then the text is ":d"
+    Then the editor state is "B: :d|"
     And the keyword is "d"
     And the matches are "🐕,🐩"
 
   Scenario Outline: Is only triggered when an initial colon is typed
-    Given the text <text>
+    Given the editor state is <state>
     When the editor is focused
     And the caret is put <position>
     And <inserted text> is inserted
-    Then the text is <final text>
+    Then the editor state is <final state>
     And the keyword is <keyword>
 
     Examples:
-      | text   | position     | inserted text | final text | keyword |
-      | ""     | after ""     | ":j"          | ":j"       | "j"     |
-      | ":"    | after ":"    | "j"           | ":j"       | ""      |
-      | ":j"   | after ":j"   | "o"           | ":jo"      | ""      |
-      | ":jo"  | after ":jo"  | ":"           | ":jo:"     | ""      |
-      | ":joy" | after ":joy" | ":"           | ":joy:"    | ""      |
+      | state      | position     | inserted text | final state  | keyword |
+      | "B: "      | after ""     | ":j"          | "B: :j\|"    | "j"     |
+      | "B: :"     | after ":"    | "j"           | "B: :j\|"    | ""      |
+      | "B: :j\|"  | after ":j"   | "o"           | "B: :jo\|"   | ""      |
+      | "B: :jo\|" | after ":jo"  | ":"           | "B: :jo:\|"  | ""      |
+      | "B: :joy"  | after ":joy" | ":"           | "B: :joy:\|" | ""      |
 
   Scenario: Undo after direct hit
     When the editor is focused
     And ":joy:" is typed
-    Then the text is "😂"
+    Then the editor state is "B: 😂|"
     When undo is performed
-    Then the text is ":joy:"
+    Then the editor state is "B: :joy:|"
 
   Scenario: Picking direct hit after undo
     When the editor is focused
@@ -77,14 +77,14 @@ Feature: Emoji Picker
     And undo is performed
     And "{Backspace}" is pressed
     And ":" is typed
-    Then the text is ":joy:"
+    Then the editor state is "B: :joy:|"
     And the keyword is ""
     And the matches are ""
 
   Scenario: Picking wrong direct hit
     When the editor is focused
     And ":jo:" is typed
-    Then the text is ":jo:"
+    Then the editor state is "B: :jo:|"
     And the keyword is "jo"
     And the matches are "😂,😹,🕹️"
 
@@ -92,7 +92,7 @@ Feature: Emoji Picker
     When the editor is focused
     And ":jo:" is typed
     And ":" is typed
-    Then the text is ":jo::"
+    Then the editor state is "B: :jo::|"
     And the keyword is "jo:"
     And the matches are ""
 
@@ -102,7 +102,7 @@ Feature: Emoji Picker
     And undo is performed
     And "{Backspace}{Backspace}" is pressed
     And ":" is typed
-    Then the text is ":jo:"
+    Then the editor state is "B: :jo:|"
     And the keyword is ""
     And the matches are ""
 
@@ -110,45 +110,45 @@ Feature: Emoji Picker
     When the editor is focused
     And ":joy:" is typed
     And ":joy_cat:" is inserted
-    Then the text is "😂😹"
+    Then the editor state is "B: 😂😹|"
 
   Scenario: Picking the closest hit with Enter
     When the editor is focused
     And ":joy" is typed
     And "{Enter}" is pressed
-    Then the text is "😂"
+    Then the editor state is "B: 😂|"
 
   Scenario: Picking the closest hit with Tab
     When the editor is focused
     And ":joy" is typed
     And "{Tab}" is pressed
-    Then the text is "😂"
+    Then the editor state is "B: 😂|"
 
   Scenario: Navigating down the list
     When the editor is focused
     And ":joy" is typed
     And "{ArrowDown}" is pressed
     And "{Enter}" is pressed
-    Then the text is "😹"
+    Then the editor state is "B: 😹|"
 
   Scenario: Aborting on Escape
     When the editor is focused
     And ":joy" is typed
     And "{Escape}" is pressed
     And "{Enter}" is pressed
-    Then the text is ":joy|"
+    Then the editor state is "B: :joy;;B: |"
 
   Scenario: Aborting and forwarding Enter if there is no keyword
     When the editor is focused
     And ":" is typed
     And "{Enter}" is pressed
-    Then the text is ":|"
+    Then the editor state is "B: :;;B: |"
 
   Scenario: Aborting Enter if there are no matches
     When the editor is focused
     And ":asdf" is typed
     And "{Enter}" is pressed
-    Then the text is ":asdf"
+    Then the editor state is "B: :asdf|"
     And the keyword is ""
 
   Scenario: Backspacing to narrow search
@@ -156,37 +156,37 @@ Feature: Emoji Picker
     And ":joy" is typed
     And "{Backspace}" is pressed
     And "{Enter}" is pressed
-    Then the text is "😂"
+    Then the editor state is "B: 😂|"
 
   Scenario Outline: Inserting longer trigger text
-    Given the text <text>
+    Given the editor state is <state>
     When the editor is focused
     And <inserted text> is inserted
     And <new text> is typed
-    Then the text is <final text>
+    Then the editor state is <final state>
 
     Examples:
-      | text | inserted text | new text | final text |
-      | ""   | ":"           | "joy:"   | "😂"       |
-      | ""   | ":j"          | "oy:"    | "😂"       |
-      | ""   | ":joy"        | ":"      | "😂"       |
-      | ""   | ":joy:"       | ":"      | "😂:"      |
+      | state | inserted text | new text | final state |
+      | "B: " | ":"           | "joy:"   | "B: 😂\|"   |
+      | "B: " | ":j"          | "oy:"    | "B: 😂\|"   |
+      | "B: " | ":joy"        | ":"      | "B: 😂\|"   |
+      | "B: " | ":joy:"       | ":"      | "B: 😂:\|"  |
 
   Scenario Outline: Matching inside decorator
-    Given the text <text>
+    Given the editor state is <state>
     And "strong" around <decorated>
     When the editor is focused
     And the caret is put <position>
     And <keyword> is typed
-    Then the text is <final text>
+    Then the editor state is <final state>
 
     Examples:
-      | text          | decorated | position        | keyword | final text        |
-      | "foo bar baz" | "bar"     | before "ar baz" | ":joy:" | "foo ,b😂ar, baz" |
-      | "foo bar baz" | "bar"     | before "r baz"  | ":joy:" | "foo ,ba😂r, baz" |
+      | state            | decorated | position        | keyword | final state                   |
+      | "B: foo bar baz" | "bar"     | before "ar baz" | ":joy:" | "B: foo [strong:b😂\|ar] baz" |
+      | "B: foo bar baz" | "bar"     | before "r baz"  | ":joy:" | "B: foo [strong:ba😂\|r] baz" |
 
   Scenario Outline: Triggering at the edge of decorator
-    Given the text "foo bar baz"
+    Given the editor state is "B: foo bar baz"
     And "strong" around "bar"
     When the editor is focused
     And the caret is put <position>
@@ -201,35 +201,35 @@ Feature: Emoji Picker
       | before " baz" |
 
   Scenario Outline: Matching at the edge of decorator
-    Given the text "foo bar baz"
+    Given the editor state is "B: foo bar baz"
     And "strong" around "bar"
     When the editor is focused
     And the caret is put <position>
     And ":joy:" is typed
-    Then the text is <final text>
+    Then the editor state is <final state>
 
     Examples:
-      | position      | final text        |
-      | after "foo "  | "foo 😂,bar, baz" |
-      | before "bar"  | "foo 😂,bar, baz" |
-      | after "bar"   | "foo ,bar😂, baz" |
-      | before " baz" | "foo ,bar😂, baz" |
+      | position      | final state                   |
+      | after "foo "  | "B: foo 😂\|[strong:bar] baz" |
+      | before "bar"  | "B: foo 😂[strong:\|bar] baz" |
+      | after "bar"   | "B: foo [strong:bar😂\|] baz" |
+      | before " baz" | "B: foo [strong:bar😂]\| baz" |
 
   Scenario Outline: Matching inside annotation
-    Given the text <text>
+    Given the editor state is <state>
     And a "link" "l1" around <annotated>
     When the editor is focused
     And the caret is put <position>
     And <keyword> is typed
-    Then the text is <final text>
+    Then the editor state is <final state>
 
     Examples:
-      | text          | annotated | position        | keyword | final text        |
-      | "foo bar baz" | "bar"     | before "ar baz" | ":joy:" | "foo ,b😂ar, baz" |
-      | "foo bar baz" | "bar"     | before "r baz"  | ":joy:" | "foo ,ba😂r, baz" |
+      | state            | annotated | position        | keyword | final state                            |
+      | "B: foo bar baz" | "bar"     | before "ar baz" | ":joy:" | "B: foo [@link _key=\"l1\":b😂ar] baz" |
+      | "B: foo bar baz" | "bar"     | before "r baz"  | ":joy:" | "B: foo [@link _key=\"l1\":ba😂r] baz" |
 
   Scenario Outline: Triggering at the edge of an annotation
-    Given the text "foo bar baz"
+    Given the editor state is "B: foo bar baz"
     And a "link" "l1" around "bar"
     When the editor is focused
     And the caret is put <position>
@@ -244,104 +244,104 @@ Feature: Emoji Picker
       | before " baz" |
 
   Scenario Outline: Matching at the edge of an annotation
-    Given the text "foo bar baz"
+    Given the editor state is "B: foo bar baz"
     And a "link" "l1" around "bar"
     When the editor is focused
     And the caret is put <position>
     And ":joy:" is typed
-    Then the text is <final text>
+    Then the editor state is <final state>
 
     Examples:
-      | position      | final text        |
-      | after "foo "  | "foo 😂,bar, baz" |
-      | before "bar"  | "foo 😂,bar, baz" |
-      | after "bar"   | "foo ,bar,😂 baz" |
-      | before " baz" | "foo ,bar,😂 baz" |
+      | position      | final state                              |
+      | after "foo "  | "B: foo 😂\|[@link _key=\"l1\":bar] baz" |
+      | before "bar"  | "B: foo 😂[@link _key=\"l1\":\|bar] baz" |
+      | after "bar"   | "B: foo [@link _key=\"l1\":bar]😂\| baz" |
+      | before " baz" | "B: foo [@link _key=\"l1\":bar]😂\| baz" |
 
   Scenario Outline: Typing before the colon dismisses the emoji picker
-    Given the text <text>
+    Given the editor state is <state>
     When <inserted text> is typed
     And <button> is pressed
     And <new text> is typed
     Then the keyword is ""
 
     Examples:
-      | text | inserted text | button                   | new text |
-      | ""   | ":j"          | "{ArrowLeft}{ArrowLeft}" | "f"      |
-      | "fo" | ":j"          | "{ArrowLeft}{ArrowLeft}" | "o"      |
-      | ""   | ":j"          | "{ArrowLeft}{ArrowLeft}" | ":"      |
+      | state   | inserted text | button                   | new text |
+      | "B: "   | ":j"          | "{ArrowLeft}{ArrowLeft}" | "f"      |
+      | "B: fo" | ":j"          | "{ArrowLeft}{ArrowLeft}" | "o"      |
+      | "B: "   | ":j"          | "{ArrowLeft}{ArrowLeft}" | ":"      |
 
   Scenario Outline: Navigating away from the keyword
-    Given the text <text>
+    Given the editor state is <state>
     When the editor is focused
     And the caret is put <position>
     And <keyword> is typed
     And <button> is pressed
     And "{Enter}" is pressed
-    Then the text is <final text>
+    Then the editor state is <final state>
 
     Examples:
-      | text          | position    | keyword | button                              | final text        |
-      | "foo bar baz" | after "foo" | ":j"    | "{ArrowRight}"                      | "foo:j \|bar baz" |
-      | "foo bar baz" | after "foo" | ":j"    | "{ArrowLeft}{ArrowLeft}{ArrowLeft}" | "fo\|o:j bar baz" |
+      | state            | position    | keyword | button                              | final state               |
+      | "B: foo bar baz" | after "foo" | ":j"    | "{ArrowRight}"                      | "B: foo:j ;;B: \|bar baz" |
+      | "B: foo bar baz" | after "foo" | ":j"    | "{ArrowLeft}{ArrowLeft}{ArrowLeft}" | "B: fo;;B: \|o:j bar baz" |
 
   Scenario: Dismissing by pressing Space
-    Given the text ""
+    Given the editor state is "B: "
     When ":joy" is typed
     Then the keyword is "joy"
     When " " is typed
     Then the keyword is ""
 
   Scenario Outline: Allow special characters
-    Given the text <text>
+    Given the editor state is <state>
     When <inserted text> is inserted
     Then the keyword is <keyword>
     And the matches are <matches>
 
     Examples:
-      | text | inserted text | keyword | matches        |
-      | ""   | ":joy!"       | "joy!"  | "🕹️"          |
-      | ""   | ":*"          | "*"     | "😘"           |
-      | ""   | ":!"          | "!"     | "🕹️,❗️,⁉️,‼️" |
-      | ""   | ":!!"         | "!!"    | "‼️"           |
-      | ""   | "::)"         | ":)"    | "😊"           |
-      | ""   | "::"          | ":"     | "😊"           |
+      | state | inserted text | keyword | matches        |
+      | "B: " | ":joy!"       | "joy!"  | "🕹️"          |
+      | "B: " | ":*"          | "*"     | "😘"           |
+      | "B: " | ":!"          | "!"     | "🕹️,❗️,⁉️,‼️" |
+      | "B: " | ":!!"         | "!!"    | "‼️"           |
+      | "B: " | "::)"         | ":)"    | "😊"           |
+      | "B: " | "::"          | ":"     | "😊"           |
 
   Scenario: Narrowing keyword by deletion
-    Given the text "foo"
+    Given the editor state is "B: foo"
     When the editor is focused
     And the caret is put after "fo"
     And <inserted text> is inserted
     And "{ArrowLeft}" is pressed
     And "{Backspace}" is pressed
-    Then the text is <final text>
+    Then the editor state is <final state>
     And the keyword is <keyword>
 
     Examples:
-      | inserted text | final text | keyword |
-      | ":joy"        | "fo:jyo"   | "jy"    |
-      | ":j👻y"       | "fo:jyo"   | "jy"    |
+      | inserted text | final state   | keyword |
+      | ":joy"        | "B: fo:j\|yo" | "jy"    |
+      | ":j👻y"       | "B: fo:j\|yo" | "jy"    |
 
   Scenario: Inserting character to form exact match triggers auto-complete
-    Given the text ""
+    Given the editor state is "B: "
     When the editor is focused
     And ":og:" is typed
-    Then the text is ":og:"
+    Then the editor state is "B: :og:|"
     And the keyword is "og"
     When "{ArrowLeft}{ArrowLeft}{ArrowLeft}" is pressed
     And "d" is typed
-    Then the text is "🐕"
+    Then the editor state is "B: 🐕|"
     And the keyword is ""
     And the matches are ""
 
   Scenario: Triggering picker when complete pattern exists elsewhere in text
-    Given the text "foo"
+    Given the editor state is "B: foo"
     When the editor is focused
     And the caret is put after "foo"
     And ":xyz:" is typed
-    Then the text is "foo:xyz:"
+    Then the editor state is "B: foo:xyz:|"
     When " bar " is typed
     And ":j" is typed
-    Then the text is "foo:xyz: bar :j"
+    Then the editor state is "B: foo:xyz: bar :j"
     And the keyword is "j"
     And the matches are "😂,😹,🕹️"

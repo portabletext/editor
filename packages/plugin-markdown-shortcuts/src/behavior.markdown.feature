@@ -4,91 +4,91 @@ Feature: Markdown Behaviors
     Given a global keymap
 
   Scenario: Automatic blockquote
-    Given the text ">"
+    Given the editor state is "B: >"
     When the editor is focused
     And "{Space}" is pressed
-    Then the text is "q:"
+    Then the editor state is "B style=\"blockquote\": "
 
   Scenario: Automatic blockquote not toggled by space in the beginning
-    Given the text ">"
+    Given the editor state is "B: >"
     When the editor is focused
     And the caret is put before ">"
     When "{Space}" is pressed
-    Then the text is " >"
+    Then the editor state is "B:  |>"
 
   Scenario: Automatic blockquote in non-empty block
-    Given the text ">foo"
+    Given the editor state is "B: >foo"
     When the editor is focused
     And the caret is put before "f"
     And "{Space}" is pressed
-    Then the text is "q:foo"
+    Then the editor state is "B style=\"blockquote\": foo"
 
   Scenario Outline: Automatic headings
-    Given the text <text>
+    Given the editor state is <state>
     When the editor is focused
     And "{Space}" is pressed
-    Then the text is <new text>
+    Then the editor state is <new state>
 
     Examples:
-      | text      | new text   |
-      | "#"       | "h1:"      |
-      | "##"      | "h2:"      |
-      | "###"     | "h3:"      |
-      | "####"    | "h4:"      |
-      | "#####"   | "h5:"      |
-      | "######"  | "h6:"      |
-      | "#######" | "####### " |
+      | state        | new state          |
+      | "B: #"       | "B style=\"h1\": " |
+      | "B: ##"      | "B style=\"h2\": " |
+      | "B: ###"     | "B style=\"h3\": " |
+      | "B: ####"    | "B style=\"h4\": " |
+      | "B: #####"   | "B style=\"h5\": " |
+      | "B: ######"  | "B style=\"h6\": " |
+      | "B: #######" | "B: ####### \|"    |
 
   Scenario Outline: Automatic headings not toggled by space in the beginning
-    Given the text <text>
+    Given the editor state is <state>
     When the editor is focused
     And the caret is put <position>
     When "{Space}" is pressed
-    Then the text is <new text>
+    Then the editor state is <new state>
 
     Examples:
-      | text  | position     | new text |
-      | "#"   | before "#"   | " #"     |
-      | "##"  | before "##"  | " ##"    |
-      | "###" | before "###" | " ###"   |
+      | state    | position     | new state   |
+      | "B: #"   | before "#"   | "B:  \|#"   |
+      | "B: ##"  | before "##"  | "B:  \|##"  |
+      | "B: ###" | before "###" | "B:  \|###" |
 
   Scenario Outline: Automatic headings toggled by space mid-heading
-    Given the text <text>
+    Given the editor state is <state>
     When the editor is focused
     And the caret is put <position>
     When "{ArrowRight}" is pressed
     When "{Space}" is pressed
-    Then the text is <new text>
+    Then the editor state is <new state>
 
     Examples:
-      | text  | position     | new text |
-      | "##"  | before "##"  | "h1:#"   |
-      | "###" | before "###" | "h1:##"  |
+      | state    | position     | new state            |
+      | "B: ##"  | before "##"  | "B style=\"h1\": #"  |
+      | "B: ###" | before "###" | "B style=\"h1\": ##" |
 
   Scenario Outline: Automatic headings in non-empty block
-    Given the text <text>
+    Given the editor state is <state>
     When the editor is focused
     And the caret is put <position>
     And "{Space}" is pressed
-    Then the text is <new text>
+    Then the editor state is <new state>
 
     Examples:
-      | text         | position     | new text      |
-      | "foo"        | before "foo" | " foo"        |
-      | "#foo"       | before "foo" | "h1:foo"      |
-      | "##foo"      | before "foo" | "h2:foo"      |
-      | "###foo"     | before "foo" | "h3:foo"      |
-      | "####foo"    | before "foo" | "h4:foo"      |
-      | "#####foo"   | before "foo" | "h5:foo"      |
-      | "######foo"  | before "foo" | "h6:foo"      |
-      | "#######foo" | before "foo" | "####### foo" |
+      | state           | position     | new state             |
+      | "B: foo"        | before "foo" | "B:  \|foo"           |
+      | "B: #foo"       | before "foo" | "B style=\"h1\": foo" |
+      | "B: ##foo"      | before "foo" | "B style=\"h2\": foo" |
+      | "B: ###foo"     | before "foo" | "B style=\"h3\": foo" |
+      | "B: ####foo"    | before "foo" | "B style=\"h4\": foo" |
+      | "B: #####foo"   | before "foo" | "B style=\"h5\": foo" |
+      | "B: ######foo"  | before "foo" | "B style=\"h6\": foo" |
+      | "B: #######foo" | before "foo" | "B: ####### \|foo"    |
 
   Scenario Outline: Clear style on Backspace
-    Given the text "foo"
+    Given the editor state is "B: foo"
     When the editor is focused
     And <style> is toggled
     And "{Backspace}" is pressed 4 times
-    Then the text is ""
+    Then the editor state is "B: |"
 
     Examples:
       | style |
@@ -100,25 +100,25 @@ Feature: Markdown Behaviors
       | "h6"  |
 
   Scenario: Unordered list clear-on-enter works on second cycle
-    Given the text "-"
+    Given the editor state is "B: -"
     When the editor is focused
     And "{Space}" is pressed
-    Then the text is ">-:"
+    Then the editor state is "B listItem=\"bullet\": "
     When "{Enter}" is pressed
-    Then the text is ""
+    Then the editor state is "B: |"
     When "-" is typed
     And "{Space}" is pressed
-    Then the text is ">-:"
+    Then the editor state is "B listItem=\"bullet\": "
     When "{Enter}" is pressed
-    Then the text is ""
+    Then the editor state is "B: |"
 
   Scenario Outline: Clear style on Backspace in empty block
-    Given the text "foo"
+    Given the editor state is "B: foo"
     When the editor is focused
     And <style> is toggled
     And "{Backspace}" is pressed 4 times
     And "bar" is typed
-    Then the text is "bar"
+    Then the editor state is "B: bar|"
 
     Examples:
       | style |
