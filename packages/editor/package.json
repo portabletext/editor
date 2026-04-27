@@ -112,7 +112,7 @@
     "babel-plugin-react-compiler": "^1.0.0",
     "eslint": "^9.39.1",
     "eslint-formatter-gha": "^1.6.0",
-    "eslint-plugin-react-hooks": "^7.1.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
     "jsdom": "^27.0.0",
     "racejar": "workspace:*",
     "react": "^19.2.5",

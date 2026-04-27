@@ -293,8 +293,8 @@ importers:
         specifier: ^1.6.0
         version: 1.6.0
       eslint-plugin-react-hooks:
-        specifier: ^7.1.0
-        version: 7.1.0(eslint@9.39.1(jiti@2.6.1))
+        specifier: ^7.1.1
+        version: 7.1.1(eslint@9.39.1(jiti@2.6.1))
       tailwind-merge:
         specifier: ^3.3.1
         version: 3.4.0
@@ -348,8 +348,8 @@ importers:
         specifier: ^9.38.0
         version: 9.39.1(jiti@2.6.1)
       eslint-plugin-react-hooks:
-        specifier: ^7.1.0
-        version: 7.1.0(eslint@9.39.1(jiti@2.6.1))
+        specifier: ^7.1.1
+        version: 7.1.1(eslint@9.39.1(jiti@2.6.1))
       eslint-plugin-react-refresh:
         specifier: ^0.4.14
         version: 0.4.24(eslint@9.39.1(jiti@2.6.1))
@@ -485,8 +485,8 @@ importers:
         specifier: ^1.6.0
         version: 1.6.0
       eslint-plugin-react-hooks:
-        specifier: ^7.1.0
-        version: 7.1.0(eslint@9.39.1(jiti@2.6.1))
+        specifier: ^7.1.1
+        version: 7.1.1(eslint@9.39.1(jiti@2.6.1))
       jsdom:
         specifier: ^27.0.0
         version: 27.2.0
@@ -648,8 +648,8 @@ importers:
         specifier: ^9.39.1
         version: 9.39.1(jiti@2.6.1)
       eslint-plugin-react-hooks:
-        specifier: ^7.1.0
-        version: 7.1.0(eslint@9.39.1(jiti@2.6.1))
+        specifier: ^7.1.1
+        version: 7.1.1(eslint@9.39.1(jiti@2.6.1))
       react:
         specifier: ^19.2.5
         version: 19.2.5
@@ -712,8 +712,8 @@ importers:
         specifier: ^1.6.0
         version: 1.6.0
       eslint-plugin-react-hooks:
-        specifier: ^7.1.0
-        version: 7.1.0(eslint@9.39.1(jiti@2.6.1))
+        specifier: ^7.1.1
+        version: 7.1.1(eslint@9.39.1(jiti@2.6.1))
       racejar:
         specifier: workspace:*
         version: link:../racejar
@@ -773,8 +773,8 @@ importers:
         specifier: ^1.6.0
         version: 1.6.0
       eslint-plugin-react-hooks:
-        specifier: ^7.1.0
-        version: 7.1.0(eslint@9.39.1(jiti@2.6.1))
+        specifier: ^7.1.1
+        version: 7.1.1(eslint@9.39.1(jiti@2.6.1))
       racejar:
         specifier: workspace:*
         version: link:../racejar
@@ -825,8 +825,8 @@ importers:
         specifier: ^9.39.1
         version: 9.39.1(jiti@2.6.1)
       eslint-plugin-react-hooks:
-        specifier: ^7.1.0
-        version: 7.1.0(eslint@9.39.1(jiti@2.6.1))
+        specifier: ^7.1.1
+        version: 7.1.1(eslint@9.39.1(jiti@2.6.1))
       racejar:
         specifier: workspace:*
         version: link:../racejar
@@ -861,8 +861,8 @@ importers:
         specifier: ^9.39.1
         version: 9.39.1(jiti@2.6.1)
       eslint-plugin-react-hooks:
-        specifier: ^7.1.0
-        version: 7.1.0(eslint@9.39.1(jiti@2.6.1))
+        specifier: ^7.1.1
+        version: 7.1.1(eslint@9.39.1(jiti@2.6.1))
       react:
         specifier: ^19.2.5
         version: 19.2.5
@@ -900,8 +900,8 @@ importers:
         specifier: ^9.39.1
         version: 9.39.1(jiti@2.6.1)
       eslint-plugin-react-hooks:
-        specifier: ^7.1.0
-        version: 7.1.0(eslint@9.39.1(jiti@2.6.1))
+        specifier: ^7.1.1
+        version: 7.1.1(eslint@9.39.1(jiti@2.6.1))
       racejar:
         specifier: workspace:*
         version: link:../racejar
@@ -973,8 +973,8 @@ importers:
         specifier: ^9.39.1
         version: 9.39.1(jiti@2.6.1)
       eslint-plugin-react-hooks:
-        specifier: ^7.1.0
-        version: 7.1.0(eslint@9.39.1(jiti@2.6.1))
+        specifier: ^7.1.1
+        version: 7.1.1(eslint@9.39.1(jiti@2.6.1))
       jsdom:
         specifier: ^27.2.0
         version: 27.2.0
@@ -1046,8 +1046,8 @@ importers:
         specifier: ^1.6.0
         version: 1.6.0
       eslint-plugin-react-hooks:
-        specifier: ^7.1.0
-        version: 7.1.0(eslint@9.39.1(jiti@2.6.1))
+        specifier: ^7.1.1
+        version: 7.1.1(eslint@9.39.1(jiti@2.6.1))
       racejar:
         specifier: workspace:*
         version: link:../racejar
@@ -1104,8 +1104,8 @@ importers:
         specifier: ^1.6.0
         version: 1.6.0
       eslint-plugin-react-hooks:
-        specifier: ^7.1.0
-        version: 7.1.0(eslint@9.39.1(jiti@2.6.1))
+        specifier: ^7.1.1
+        version: 7.1.1(eslint@9.39.1(jiti@2.6.1))
       racejar:
         specifier: workspace:*
         version: link:../racejar
@@ -1245,8 +1245,8 @@ importers:
         specifier: ^1.6.0
         version: 1.6.0
       eslint-plugin-react-hooks:
-        specifier: ^7.1.0
-        version: 7.1.0(eslint@9.39.1(jiti@2.6.1))
+        specifier: ^7.1.1
+        version: 7.1.1(eslint@9.39.1(jiti@2.6.1))
       react:
         specifier: ^19.2.5
         version: 19.2.5
@@ -5973,8 +5973,8 @@ packages:
     resolution: {integrity: sha512-blbD5ZSQnjNEUaG38VCO4WG9nfDQWE8/IOmt8DFRHXUIfZikaIXmsQTdWNFk0/e0j7RgIVRza86MpsJ+aHgFLg==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
 
-  eslint-plugin-react-hooks@7.1.0:
-    resolution: {integrity: sha512-LDicyhrRFrIaheDYryeM2W8gWyZXnAs4zIr2WVPiOSeTmIu2RjR4x/9N0xLaRWZ+9hssBDGo3AadcohuzAvSvg==}
+  eslint-plugin-react-hooks@7.1.1:
+    resolution: {integrity: sha512-f2I7Gw6JbvCexzIInuSbZpfdQ44D7iqdWX01FKLvrPgqxoE7oMj8clOfto8U6vYiz4yd5oKu39rRSVOe1zRu0g==}
     engines: {node: '>=18'}
     peerDependencies:
       eslint: ^3.0.0 || ^4.0.0 || ^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0-0 || ^9.0.0 || ^10.0.0
@@ -14452,7 +14452,7 @@ snapshots:
       strip-ansi: 6.0.1
       text-table: 0.2.0
 
-  eslint-plugin-react-hooks@7.1.0(eslint@9.39.1(jiti@2.6.1)):
+  eslint-plugin-react-hooks@7.1.1(eslint@9.39.1(jiti@2.6.1)):
     dependencies:
       '@babel/core': 7.29.0
       '@babel/parser': 7.29.2
