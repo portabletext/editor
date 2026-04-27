@@ -53,11 +53,11 @@
     "@portabletext/html": "workspace:^",
     "@portabletext/sanity-bridge": "workspace:^",
     "@portabletext/schema": "workspace:^",
-    "@sanity/types": "^5.13.0"
+    "@sanity/types": "^5.22.0"
   },
   "devDependencies": {
     "@sanity/pkg-utils": "^10.2.1",
-    "@sanity/schema": "^5.13.0",
+    "@sanity/schema": "^5.22.0",
     "@types/jsdom": "^27.0.0",
     "@vitest/coverage-v8": "^4.1.4",
     "jsdom": "^27.0.0",
