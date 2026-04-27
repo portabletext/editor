@@ -4,153 +4,203 @@ Feature: Delete
     Given one editor
 
   Scenario Outline: Deleting expanded selection
-    Given the text <text>
+    Given the editor state is <text>
     When the editor is focused
     And <selection> is selected
     And "{Delete}" is pressed
     And "new" is typed
-    Then the text is <new text>
+    Then the editor state is <new text>
 
     Examples:
-      | text            | selection | new text   |
-      | "foo\|bar"      | "foo"     | "new\|bar" |
-      | "foo\|bar\|baz" | "foobar"  | "new\|baz" |
+      | text                     | selection | new text           |
+      | "B: foo;;B: bar"         | "foo"     | "B: new\|;;B: bar" |
+      | "B: foo;;B: bar;;B: baz" | "foobar"  | "B: new\|;;B: baz" |
 
   Scenario Outline: Deleting word
-    Given the text <text>
+    Given the editor state is <text>
     When the editor is focused
     And the caret is put <position>
     And <shortcut> is pressed
-    Then the text is <final text>
+    Then the editor state is <final text>
 
     Examples:
-      | text          | position        | shortcut              | final text  |
-      | "foo bar baz" | after "bar"     | "deleteWord.backward" | "foo  baz"  |
-      | "foo bar baz" | after "bar "    | "deleteWord.backward" | "foo baz"   |
-      | "foo bar baz" | after "foo ba"  | "deleteWord.backward" | "foo r baz" |
-      | "foo bar baz" | before "bar"    | "deleteWord.forward"  | "foo  baz"  |
-      | "foo bar baz" | before " bar"   | "deleteWord.forward"  | "foo baz"   |
-      | "foo bar baz" | before "ar baz" | "deleteWord.forward"  | "foo b baz" |
+      | text             | position        | shortcut              | final text       |
+      | "B: foo bar baz" | after "bar"     | "deleteWord.backward" | "B: foo \| baz"  |
+      | "B: foo bar baz" | after "bar "    | "deleteWord.backward" | "B: foo \|baz"   |
+      | "B: foo bar baz" | after "foo ba"  | "deleteWord.backward" | "B: foo \|r baz" |
+      | "B: foo bar baz" | before "bar"    | "deleteWord.forward"  | "B: foo \| baz"  |
+      | "B: foo bar baz" | before " bar"   | "deleteWord.forward"  | "B: foo\| baz"   |
+      | "B: foo bar baz" | before "ar baz" | "deleteWord.forward"  | "B: foo b\| baz" |
 
   Scenario Outline: Deleting code points in complex scripts
-    Given the text <text>
+    Given the editor state is <text>
     When the editor is focused
-    And the caret is put after <text>
+    And the caret is put after <orig>
     And "{Backspace}" is pressed
-    Then the text is <final text>
+    Then the editor state is <final text>
 
     Examples:
       # Hindi (Devanagari) - "कि" is क (ka) + ि (vowel i), two code points
-      | text | final text |
-      | "कि" | "क"        |
+      | text    | orig | final text |
+      | "B: कि" | "कि" | "B: क\|"   |
       # Bengali - "কি" is ক (ka) + ি (vowel i)
-      | "কি" | "ক"        |
+      | "B: কি" | "কি" | "B: ক\|"   |
       # Thai - "กิ" is ก (ko kai) + ิ (sara i)
-      | "กิ" | "ก"        |
+      | "B: กิ" | "กิ" | "B: ก\|"   |
 
   Scenario Outline: Deleting line backward
-    Given the text <text>
+    Given the editor state is <text>
     When the editor is focused
     And the caret is put <position>
     And "deleteLine.backward" is pressed
-    Then the text is <final text>
+    Then the editor state is <final text>
     When undo is performed
-    Then the text is <text>
+    Then the editor state is <undone>
 
     Examples:
-      | text          | position     | final text |
-      | "foo bar baz" | after "bar"  | " baz"     |
-      | "foo bar baz" | after "baz"  | ""         |
-      | "foo bar baz" | after "foo " | "bar baz"  |
+      | text             | position     | final text     | undone             |
+      | "B: foo bar baz" | after "bar"  | "B: \| baz"    | "B: foo bar\| baz" |
+      | "B: foo bar baz" | after "baz"  | "B: \|"        | "B: foo bar baz\|" |
+      | "B: foo bar baz" | after "foo " | "B: \|bar baz" | "B: foo \|bar baz" |
 
   Scenario: Deleting line backward at start of block merges blocks
-    Given the text "foo|bar"
+    Given the editor state is
+      """
+      B: foo
+      B: bar
+      """
     When the editor is focused
     And the caret is put before "bar"
     And "deleteLine.backward" is pressed
-    Then the text is "foobar"
+    Then the editor state is "B: foo|bar"
     When undo is performed
-    Then the text is "foo|bar"
+    Then the editor state is
+      """
+      B: foo
+      B: |bar
+      """
 
   Scenario: Cutting selected text
-    Given the text "foo bar baz"
+    Given the editor state is "B: foo bar baz"
     When the editor is focused
     And "bar" is selected
     And cut is performed
-    Then the text is "foo  baz"
+    Then the editor state is "B: foo | baz"
     When undo is performed
-    Then the text is "foo bar baz"
+    Then the editor state is "B: foo ^bar| baz"
 
   Scenario: Cutting across blocks
-    Given the text "foo|bar"
+    Given the editor state is
+      """
+      B: foo
+      B: bar
+      """
     When the editor is focused
     And "foobar" is selected
     And cut is performed
-    Then the text is ""
+    Then the editor state is "B: |"
     When undo is performed
-    Then the text is "foo|bar"
+    Then the editor state is
+      """
+      B: ^foo
+      B: bar|
+      """
 
   Scenario: Deleting word backward at block boundary merges blocks
-    Given the text "foo|bar"
+    Given the editor state is
+      """
+      B: foo
+      B: bar
+      """
     When the editor is focused
     And the caret is put before "bar"
     And "deleteWord.backward" is pressed
-    Then the text is "foobar"
+    Then the editor state is "B: foo|bar"
     When undo is performed
-    Then the text is "foo|bar"
+    Then the editor state is
+      """
+      B: foo
+      B: |bar
+      """
 
   Scenario: Deleting word forward at block boundary merges blocks
-    Given the text "foo|bar"
+    Given the editor state is
+      """
+      B: foo
+      B: bar
+      """
     When the editor is focused
     And the caret is put after "foo"
     And "deleteWord.forward" is pressed
-    Then the text is "foobar"
+    Then the editor state is "B: foo|bar"
     When undo is performed
-    Then the text is "foo|bar"
+    Then the editor state is
+      """
+      B: foo|
+      B: bar
+      """
 
   Scenario: Cutting with collapsed selection is a no-op
-    Given the text "foo bar baz"
+    Given the editor state is "B: foo bar baz"
     When the editor is focused
     And the caret is put after "bar"
     And cut is performed
-    Then the text is "foo bar baz"
+    Then the editor state is "B: foo bar| baz"
 
   Scenario: Deleting line backward in empty block
-    Given the text ""
+    Given the editor state is "B: "
     When the editor is focused
     And "deleteLine.backward" is pressed
-    Then the text is ""
+    Then the editor state is "B: |"
 
   Scenario: Deleting line backward only affects current block
-    Given the text "foo|bar baz"
+    Given the editor state is
+      """
+      B: foo
+      B: bar baz
+      """
     When the editor is focused
     And the caret is put after "bar"
     And "deleteLine.backward" is pressed
-    Then the text is "foo| baz"
+    Then the editor state is
+      """
+      B: foo
+      B: | baz
+      """
     When undo is performed
-    Then the text is "foo|bar baz"
+    Then the editor state is
+      """
+      B: foo
+      B: bar| baz
+      """
 
   Scenario Outline: Merging blocks preserves marks
-    Given the text "foo|bar"
+    Given the editor state is
+      """
+      B: foo
+      B: bar
+      """
     And "strong" around "bar"
     When the editor is focused
     And the caret is put <position>
     And <button> is pressed
-    Then the text is "foo,bar"
-    And "foo" has no marks
-    And "bar" has marks "strong"
+    Then the editor state is <text>
 
     Examples:
-      | position     | button        |
-      | before "bar" | "{Backspace}" |
-      | after "foo"  | "{Delete}"    |
+      | position     | button        | text                   |
+      | before "bar" | "{Backspace}" | "B: foo[strong:\|bar]" |
+      | after "foo"  | "{Delete}"    | "B: foo\|[strong:bar]" |
 
   Scenario Outline: Merging blocks triggers span normalization
-    Given the text "foo|bar"
+    Given the editor state is
+      """
+      B: foo
+      B: bar
+      """
     When the editor is focused
     And the caret is put <position>
     And <button> is pressed
-    Then the text is "foobar"
+    Then the editor state is "B: foo|bar"
 
     Examples:
       | position     | button        |

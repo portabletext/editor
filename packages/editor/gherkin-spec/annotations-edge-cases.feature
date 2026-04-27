@@ -5,34 +5,35 @@ Feature: Annotations Edge Cases
     And a global keymap
 
   Scenario: Deleting emphasised paragraph with comment in the middle
-    Given the text "foo bar baz"
+    Given the editor state is "B: foo bar baz"
     And "em" around "foo bar baz"
     And a "comment" "c1" around "bar"
     When the editor is focused
     And "foo bar baz" is selected
     And "{Backspace}" is pressed
-    Then "" has marks "em"
+    Then the editor state is "B: [em:]"
 
   Scenario: Deleting half of annotated text
-    Given the text "foo bar baz"
+    Given the editor state is "B: foo bar baz"
     And a "comment" "c1" around "foo bar baz"
     When the editor is focused
     And " baz" is selected
     And "{Backspace}" is pressed
-    Then the text is "foo bar"
-    And "foo bar" has marks "c1"
+    Then the editor state is
+      """
+      B: [@comment _key="c1":foo bar]
+      """
 
   Scenario: Deleting annotation in the middle of text
-    Given the text "foo bar baz"
+    Given the editor state is "B: foo bar baz"
     And a "comment" "c1" around "bar"
     When the editor is focused
     And "bar " is selected
     And "{Backspace}" is pressed
-    Then the text is "foo baz"
-    And "foo baz" has no marks
+    Then the editor state is "B: foo baz"
 
   Scenario: Deleting across annotated blocks
-    Given the text ""
+    Given the editor state is "B: "
     When the editor is focused
     And "foo" is typed
     And "{Enter}" is pressed
@@ -43,6 +44,7 @@ Feature: Annotations Edge Cases
     And "link" "l2" is toggled
     And "ooba" is selected
     And "{Backspace}" is pressed
-    Then the text is "f,r"
-    And "f" has marks "l1"
-    And "r" has marks "l2"
+    Then the editor state is
+      """
+      B: [@link _key="l1":f][@link _key="l2":r]
+      """

@@ -26,14 +26,21 @@ export function toTextspec(
     value: Array<PortableTextBlock>
     selection: EditorSelection
     containers?: Containers
+    annotationKeys?: Map<string, string>
   },
   options?: {singleLine?: boolean; keys?: boolean | Set<string>},
 ): string {
   const containers = context.containers ?? new Map()
+  const annotationKeys = context.annotationKeys
   const textspecBlocks: Array<Block> = []
 
   for (const block of context.value) {
-    const converted = convertBlockToTextspec(context.schema, containers, block)
+    const converted = convertBlockToTextspec(
+      context.schema,
+      containers,
+      annotationKeys,
+      block,
+    )
     if (options?.keys) {
       addKeys(block as Record<string, unknown>, converted, options.keys)
     }
@@ -123,6 +130,7 @@ function wrapInMarks(
   schema: Schema,
   block: PortableTextTextBlock,
   marks: ReadonlyArray<string>,
+  annotationKeys: Map<string, string> | undefined,
   inner: InlineNode,
 ): InlineNode {
   if (marks.length === 0) {
@@ -152,7 +160,14 @@ function wrapInMarks(
       continue
     }
 
-    const attrs = extractPrimitiveAttrs(markDef)
+    const attrs: Record<string, string | number | boolean> = {
+      ...extractPrimitiveAttrs(markDef),
+    }
+
+    const symbolicKey = annotationKeys?.get(markDef._key)
+    if (symbolicKey !== undefined) {
+      attrs['_key'] = symbolicKey
+    }
 
     result = {
       kind: 'mark',
@@ -184,6 +199,7 @@ function wrapInMarks(
 function convertChildren(
   schema: Schema,
   block: PortableTextTextBlock,
+  annotationKeys: Map<string, string> | undefined,
 ): Array<InlineNode> {
   const ctx = {schema}
   const result: Array<InlineNode> = []
@@ -194,7 +210,7 @@ function convertChildren(
       const marks = child.marks ?? []
       result.push(
         marks.length > 0
-          ? wrapInMarks(schema, block, marks, textNode)
+          ? wrapInMarks(schema, block, marks, annotationKeys, textNode)
           : textNode,
       )
     } else {
@@ -212,6 +228,7 @@ function convertChildren(
 function convertTextBlock(
   schema: Schema,
   block: PortableTextTextBlock,
+  annotationKeys: Map<string, string> | undefined,
 ): TextBlock {
   const attrs: Record<string, string | number | boolean> = {}
 
@@ -231,7 +248,7 @@ function convertTextBlock(
     kind: 'textBlock',
     type: 'B',
     ...(Object.keys(attrs).length > 0 ? {attrs} : {}),
-    children: convertChildren(schema, block),
+    children: convertChildren(schema, block, annotationKeys),
   }
 }
 
@@ -332,14 +349,21 @@ function keyedPathToIndexedPath(
 function convertBlockToTextspec(
   schema: Schema,
   containers: Containers,
+  annotationKeys: Map<string, string> | undefined,
   block: PortableTextBlock,
 ): Block {
   if (isTextBlock({schema}, block)) {
-    return convertTextBlock(schema, block)
+    return convertTextBlock(schema, block, annotationKeys)
   }
 
   if (containers.has(block._type)) {
-    return convertContainerBlock(schema, containers, block, block._type)
+    return convertContainerBlock(
+      schema,
+      containers,
+      annotationKeys,
+      block,
+      block._type,
+    )
   }
 
   return {
@@ -352,6 +376,7 @@ function convertBlockToTextspec(
 function convertContainerBlock(
   schema: Schema,
   containers: Containers,
+  annotationKeys: Map<string, string> | undefined,
   block: Record<string, unknown>,
   scopePath: string,
 ): ContainerBlock {
@@ -373,7 +398,7 @@ function convertContainerBlock(
   if (Array.isArray(fieldValue)) {
     for (const item of fieldValue) {
       if (isTextBlock(schemaContext, item)) {
-        children.push(convertTextBlock(schema, item))
+        children.push(convertTextBlock(schema, item, annotationKeys))
       } else if (
         typeof item === 'object' &&
         item !== null &&
@@ -388,6 +413,7 @@ function convertContainerBlock(
             convertContainerBlock(
               schema,
               containers,
+              annotationKeys,
               typedItem,
               childScopePath,
             ),

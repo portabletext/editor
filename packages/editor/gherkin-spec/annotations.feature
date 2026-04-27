@@ -6,174 +6,171 @@ Feature: Annotations
     And a global keymap
 
   Scenario: Selection after adding an annotation
-    Given the text "foo bar baz"
+    Given the editor state is "B: foo bar baz"
     When "bar" is selected
     And "link" "l1" is toggled
-    Then "bar" has marks "l1"
-    And "bar" is selected
+    Then the editor state is
+      """
+      B: foo [@link _key="l1":^bar|] baz
+      """
 
   Scenario: Inserting text after an annotation
-    Given the text "foo"
+    Given the editor state is "B: foo"
     And a "link" "l1" around "foo"
     When the editor is focused
     And the caret is put after "foo"
     And "bar" is typed
-    Then "foo" has marks "l1"
-    And "bar" has no marks
+    Then the editor state is
+      """
+      B: [@link _key="l1":foo]bar|
+      """
 
   Scenario Outline: Toggling annotation on with a collapsed selection
-    Given the text "foo bar baz"
+    Given the editor state is "B: foo bar baz"
     When the caret is put <position>
     And "link" "l1" is toggled
-    Then "bar" has marks "l1"
+    Then the editor state is <new text>
 
     Examples:
-      | position     |
-      | before "bar" |
-      | after "bar"  |
-      | after "ar"   |
+      | position     | new text                                |
+      | before "bar" | "B: foo [@link _key=\"l1\":^bar\|] baz" |
+      | after "bar"  | "B: foo [@link _key=\"l1\":^bar\|] baz" |
+      | after "ar"   | "B: foo [@link _key=\"l1\":^bar\|] baz" |
 
   Scenario: Toggling annotation on with a collapsed selection inside split block
-    Given the text "foo bar baz"
+    Given the editor state is "B: foo bar baz"
     And "strong" around "bar"
     When the caret is put before "az"
     And "link" "l1" is toggled
-    Then the text is "foo ,bar, ,baz"
-    And "foo " has no marks
-    And "bar" has marks "strong"
-    And " " has no marks
-    And "baz" has marks "l1"
+    Then the editor state is
+      """
+      B: foo [strong:bar] [@link _key="l1":^baz|]
+      """
 
   Scenario: Toggling annotation off with a part-selection inside split block
-    Given the text "foo bar baz"
+    Given the editor state is "B: foo bar baz"
     And a "link" "l1" around "foo bar baz"
     And "strong" around "bar"
     When "baz" is selected
     And "link" is toggled
-    Then the text is "foo ,bar, ,baz"
-    And "foo " has marks "l1"
-    And "bar" has marks "l1,strong"
-    And " " has marks "l1"
-    And "baz" has no marks
-    And "baz" is selected
+    Then the editor state is
+      """
+      B: [@link _key="l1":foo ][strong:[@link _key="l1":bar]][@link _key="l1": ]^baz|
+      """
 
   Scenario: Toggling annotation off with a part-selection does not remove sibling annotations
-    Given the text "foo bar baz"
+    Given the editor state is "B: foo bar baz"
     And a "link" "l1" around "foo "
     And a "link" "l2" around "bar baz"
     And "strong" around "bar"
     When "baz" is selected
     And "link" is toggled
-    Then the text is "foo ,bar, ,baz"
-    And "foo " has marks "l1"
-    And "bar" has marks "l2,strong"
-    And " " has marks "l2"
-    And "baz" has no marks
-    And "baz" is selected
+    Then the editor state is
+      """
+      B: [@link _key="l1":foo ][strong:[@link _key="l2":bar]][@link _key="l2": ]^baz|
+      """
 
   Scenario: Toggling annotation off with a collapsed selection inside split block
-    Given the text "foo bar baz"
+    Given the editor state is "B: foo bar baz"
     And a "link" "l1" around "foo bar baz"
     And "strong" around "bar"
     When the caret is put before "baz"
     And "link" is toggled
-    Then the text is "foo ,bar, baz"
-    And "foo " has no marks
-    And "bar" has marks "strong"
-    And " baz" has no marks
-    And the caret is before "baz"
+    Then the editor state is "B: foo [strong:bar] |baz"
 
   Scenario: Toggling annotation off with a collapsed selection does not remove sibling annotations to the left
-    Given the text "foo bar baz boo baa"
+    Given the editor state is "B: foo bar baz boo baa"
     And a "link" "l1" around "foo bar baz boo baa"
     And "strong" around "bar"
     When "boo" is selected
     And "link" is toggled
     And the caret is put before "aa"
     And "link" is toggled
-    Then the text is "foo ,bar, baz ,boo baa"
-    And "foo " has marks "l1"
-    And "bar" has marks "l1,strong"
-    And " baz " has marks "l1"
-    And "boo baa" has no marks
+    Then the editor state is
+      """
+      B: [@link _key="l1":foo ][strong:[@link _key="l1":bar]][@link _key="l1": baz ]boo b|aa
+      """
 
   Scenario: Toggling annotation off with a collapsed selection does not remove sibling annotations to the right
-    Given the text "foo bar baz boo baa"
+    Given the editor state is "B: foo bar baz boo baa"
     And a "link" "l1" around "foo bar baz boo baa"
     And "strong" around "boo"
     When "bar" is selected
     And "link" is toggled
     And the caret is put before "oo "
     And "link" is toggled
-    Then the text is "foo bar, baz ,boo, baa"
-    And "foo bar" has no marks
-    And " baz " has marks "l1"
-    And "boo" has marks "l1,strong"
-    And " baa" has marks "l1"
+    Then the editor state is
+      """
+      B: f|oo bar[@link _key="l1": baz ][strong:[@link _key="l1":boo]][@link _key="l1": baa]
+      """
 
   Scenario Outline: Toggling annotation off with a collapsed selection
-    Given the text "foo bar baz"
+    Given the editor state is "B: foo bar baz"
     And a "link" "l1" around "foo bar baz"
     When the caret is put <position>
     And "link" is toggled
-    Then "foo bar baz" has no marks
+    Then the editor state is <new text>
 
     Examples:
-      | position    |
-      | before "oo" |
-      | after "o b" |
-      | after "ba"  |
+      | position    | new text         |
+      | before "oo" | "B: foo bar baz" |
+      | after "o b" | "B: foo bar baz" |
+      | after "ba"  | "B: foo bar baz" |
 
   Scenario Outline: Writing on top of annotation
     When the editor is focused
-    Given the text "foo bar baz"
+    Given the editor state is "B: foo bar baz"
     And a "comment" "c1" around "bar"
     When <selection>
     And "removed" is typed
-    Then the text is <new text>
-    And "removed" has no marks
+    Then the editor state is <new text>
 
     Examples:
-      | selection                   | new text             |
-      | "bar" is selected           | "foo removed baz"    |
-      | "bar" is selected backwards | "foo removed baz"    |
-      | "ar" is selected            | "foo ,b,removed baz" |
-      | "ar" is selected backwards  | "foo ,b,removed baz" |
+      | selection                   | new text                                       |
+      | "bar" is selected           | "B: foo removed\| baz"                         |
+      | "bar" is selected backwards | "B: foo removed\| baz"                         |
+      | "ar" is selected            | "B: foo [@comment _key=\"c1\":b]removed\| baz" |
+      | "ar" is selected backwards  | "B: foo [@comment _key=\"c1\":b]removed\| baz" |
 
   Scenario: Writing inside an annotation
-    Given the text "foo baz"
+    Given the editor state is "B: foo baz"
     And a "link" "l1" around "foo baz"
     When the editor is focused
     And the caret is put after "foo"
     And " bar" is typed
-    Then the text is "foo bar baz"
-    And "foo bar baz" has marks "l1"
+    Then the editor state is
+      """
+      B: [@link _key="l1":foo bar| baz]
+      """
 
   Scenario Outline: Inserting text at the edge of an annotation
-    Given the text <text>
+    Given the editor state is <text>
     And a "link" "l1" around <annotated>
     When the editor is focused
     And the caret is put <position>
     And "new" is typed
-    Then the text is <new text>
+    Then the editor state is <new text>
 
     Examples:
-      | text          | annotated | position      | new text           |
-      | "foo bar baz" | "bar"     | after "foo "  | "foo new,bar, baz" |
-      | "foo bar baz" | "bar"     | before "bar"  | "foo new,bar, baz" |
-      | "foo bar baz" | "bar"     | after "bar"   | "foo ,bar,new baz" |
-      | "foo bar baz" | "bar"     | before " baz" | "foo ,bar,new baz" |
-      | "foo"         | "foo"     | before "foo"  | "new,foo"          |
-      | "foo"         | "foo"     | after "foo"   | "foo,new"          |
+      | text             | annotated | position      | new text                                  |
+      | "B: foo bar baz" | "bar"     | after "foo "  | "B: foo new[@link _key=\"l1\":bar] baz"   |
+      | "B: foo bar baz" | "bar"     | before "bar"  | "B: foo new[@link _key=\"l1\":bar] baz"   |
+      | "B: foo bar baz" | "bar"     | after "bar"   | "B: foo [@link _key=\"l1\":bar]new\| baz" |
+      | "B: foo bar baz" | "bar"     | before " baz" | "B: foo [@link _key=\"l1\":bar]new\| baz" |
+      | "B: foo"         | "foo"     | before "foo"  | "B: new\|[@link _key=\"l1\":foo]"         |
+      | "B: foo"         | "foo"     | after "foo"   | "B: [@link _key=\"l1\":foo]new\|"         |
 
-  Scenario Outline: Inserting text between annotations
-    Given the text "foobar"
+  Scenario: Inserting text between annotations
+    Given the editor state is "B: foobar"
     And a "link" "l1" around "foo"
     And a "link" "l2" around "bar"
     When the editor is focused
     And the caret is put after "foo"
     And "n" is typed
-    Then the text is "foo,n,bar"
+    Then the editor state is
+      """
+      B: [@link _key="l1":foo]n|[@link _key="l2":bar]
+      """
 
   Scenario: Inserting text after inline object, before annotation
     When the editor is focused
@@ -184,23 +181,25 @@ Feature: Annotations
     And "link" "l1" is toggled
     And the caret is put before "bar"
     And "foo " is typed
-    Then the text is ",{stock-ticker},foo ,bar"
+    Then the editor state is
+      """
+      B: {stock-ticker}foo |[@link _key="l1":bar]
+      """
 
   Scenario Outline: Toggling decorator at the edge of an annotation
-    Given the text <text>
+    Given the editor state is <text>
     And a "link" "l1" around <annotated>
     When the editor is focused
     And the caret is put <position>
     And "strong" is toggled
     And "new" is typed
-    Then the text is <new text>
-    And "new" has marks "strong"
+    Then the editor state is <new text>
 
     Examples:
-      | text          | annotated | position      | new text            |
-      | "foo bar baz" | "bar"     | after "foo "  | "foo ,new,bar, baz" |
-      | "foo bar baz" | "bar"     | before "bar"  | "foo ,new,bar, baz" |
-      | "foo bar baz" | "bar"     | after "bar"   | "foo ,bar,new, baz" |
-      | "foo bar baz" | "bar"     | before " baz" | "foo ,bar,new, baz" |
-      | "foo"         | "foo"     | before "foo"  | "new,foo"           |
-      | "foo"         | "foo"     | after "foo"   | "foo,new"           |
+      | text             | annotated | position      | new text                                           |
+      | "B: foo bar baz" | "bar"     | after "foo "  | "B: foo [strong:new\|][@link _key=\"l1\":bar] baz" |
+      | "B: foo bar baz" | "bar"     | before "bar"  | "B: foo [strong:new\|][@link _key=\"l1\":bar] baz" |
+      | "B: foo bar baz" | "bar"     | after "bar"   | "B: foo [@link _key=\"l1\":bar][strong:new\|] baz" |
+      | "B: foo bar baz" | "bar"     | before " baz" | "B: foo [@link _key=\"l1\":bar][strong:new\|] baz" |
+      | "B: foo"         | "foo"     | before "foo"  | "B: [strong:new\|][@link _key=\"l1\":foo]"         |
+      | "B: foo"         | "foo"     | after "foo"   | "B: [@link _key=\"l1\":foo][strong:new\|]"         |

@@ -52,6 +52,121 @@ const schemaDefinition = defineSchema({
 /**
  * @internal
  */
+
+function setEditorState(context: Context, textspec: string): void {
+  const {schema, keyGenerator} = context.editor.getSnapshot().context
+  const {containers} = (context.editor as InternalEditor)._internal.slateEditor
+
+  const {blocks} = fromTextspec({schema, keyGenerator, containers}, textspec)
+
+  context.editor.send({
+    type: 'insert.blocks',
+    blocks,
+    placement: 'auto',
+    select: 'end',
+  })
+}
+
+async function assertEditorState(
+  context: Context,
+  textspec: string,
+  options: {singleLine: boolean},
+): Promise<void> {
+  await vi.waitFor(() => {
+    const {schema, value, selection} = context.editor.getSnapshot().context
+    const {containers} = (context.editor as InternalEditor)._internal
+      .slateEditor
+
+    const expected = options.singleLine
+      ? textspec.replace(/\\n/g, '\n')
+      : textspec
+    const keys = new Set<string>()
+    for (const match of expected.matchAll(/_key="([^"]+)"/g)) {
+      keys.add(match[1]!)
+    }
+    const assertsSelection = /(?<!\\)[|^]/.test(expected)
+
+    const annotationKeys = new Map<string, string>()
+    if (context.keyMap) {
+      for (const [symbolic, actual] of context.keyMap.entries()) {
+        annotationKeys.set(actual, symbolic)
+      }
+    }
+    // If the expected string asks for `_key` anywhere, auto-assign symbolic
+    // names (e.g. `l2`, `c3`) to any markDef keys the editor produced that
+    // aren't in the user-defined keyMap. This lets assertions express
+    // "annotation with a different key" structurally.
+    if (keys.size > 0) {
+      const counters = new Map<string, number>()
+      for (const symbolic of annotationKeys.values()) {
+        const m = symbolic.match(/^([a-z]+)(\d+)$/i)
+        if (m) {
+          const [, prefix, num] = m
+          const n = parseInt(num!, 10)
+          if (n > (counters.get(prefix!) ?? 0)) {
+            counters.set(prefix!, n)
+          }
+        }
+      }
+      for (const block of value) {
+        const markDefs = (
+          block as {markDefs?: Array<{_key: string; _type: string}>}
+        ).markDefs
+        if (!markDefs) {
+          continue
+        }
+        for (const md of markDefs) {
+          if (annotationKeys.has(md._key)) {
+            continue
+          }
+          const prefix = (md._type ?? 'k').charAt(0)
+          const next = (counters.get(prefix) ?? 0) + 1
+          counters.set(prefix, next)
+          annotationKeys.set(md._key, `${prefix}${next}`)
+        }
+      }
+    }
+
+    expect(
+      toTextspec(
+        {
+          schema,
+          value,
+          selection: assertsSelection ? selection : null,
+          containers,
+          annotationKeys,
+        },
+        options.singleLine
+          ? {singleLine: true, keys: keys.size > 0 ? keys : undefined}
+          : {keys: keys.size > 0 ? keys : undefined},
+      ),
+      'Unexpected editor state',
+    ).toBe(expected)
+  })
+}
+
+async function selectionFromInput(context: Context, textspec: string) {
+  const normalized = textspec.replace(/\\n/g, '\n').replace(/;;/g, '\n')
+
+  await vi.waitFor(() => {
+    const {schema, value} = context.editor.getSnapshot().context
+    const {containers} = (context.editor as InternalEditor)._internal
+      .slateEditor
+
+    const selection = selectionFromTextspec(
+      {schema, containers},
+      normalized,
+      value ?? [],
+    )
+
+    if (!selection) {
+      throw new Error(`Could not resolve selection from textspec: ${textspec}`)
+    }
+
+    context.editor.send({type: 'select', at: selection})
+  })
+}
+
 export const stepDefinitions = [
   Given('one editor', async (context: Context) => {
     const {editor, locator} = await createTestEditor({
@@ -107,26 +222,14 @@ export const stepDefinitions = [
   Given(
     'the editor state is {string}',
     (context: Context, textspec: string) => {
-      const {schema, keyGenerator} = context.editor.getSnapshot().context
-      const {containers} = (context.editor as InternalEditor)._internal
-        .slateEditor
-
-      const normalized = textspec.replace(/\\n/g, '\n').replace(/;;/g, '\n')
-
-      const {blocks} = fromTextspec(
-        {schema, keyGenerator, containers},
-        normalized,
-      )
-
-      context.editor.send({
-        type: 'insert.blocks',
-        blocks,
-        placement: 'auto',
-        select: 'end',
-      })
+      setEditorState(context, textspec.replace(/;;/g, '\n'))
     },
   ),
+  Given('the editor state is', (context: Context, textspec: string) => {
+    setEditorState(context, textspec)
+  }),
 
+  When('the selection is', selectionFromInput),
   When(
     'the selection is {string}',
     async (context: Context, textspec: string) => {
@@ -722,27 +825,12 @@ export const stepDefinitions = [
   Then(
     'the editor state is {string}',
     async (context: Context, textspec: string) => {
-      await vi.waitFor(() => {
-        const {schema, value, selection} = context.editor.getSnapshot().context
-        const {containers} = (context.editor as InternalEditor)._internal
-          .slateEditor
-
-        const expected = textspec.replace(/\\n/g, '\n')
-        const keys = new Set<string>()
-        for (const match of expected.matchAll(/_key="([^"]+)"/g)) {
-          keys.add(match[1]!)
-        }
-
-        expect(
-          toTextspec(
-            {schema, value, selection, containers},
-            {singleLine: true, keys: keys.size > 0 ? keys : undefined},
-          ),
-          'Unexpected editor state',
-        ).toBe(expected)
-      })
+      await assertEditorState(context, textspec, {singleLine: true})
     },
   ),
+  Then('the editor state is', async (context: Context, textspec: string) => {
+    await assertEditorState(context, textspec, {singleLine: false})
+  }),
 
   /**
    * Annotation steps

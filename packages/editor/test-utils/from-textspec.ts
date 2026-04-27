@@ -113,12 +113,19 @@ function flattenInlineNode(
       if (node.mode === 'decorator') {
         markId = node.type
       } else {
-        // Annotation or overlay: create a markDef
-        markId = keyGenerator()
+        // Annotation or overlay: create a markDef. Honour an explicit `_key`
+        // attribute so tests can reference specific annotation keys in both
+        // setup and assertions.
+        const providedKey =
+          typeof node.attrs?.['_key'] === 'string'
+            ? node.attrs['_key']
+            : undefined
+        markId = providedKey ?? keyGenerator()
+        const {_key: _discardedKey, ...restAttrs} = node.attrs ?? {}
         markDefs.push({
           _type: node.type,
           _key: markId,
-          ...node.attrs,
+          ...restAttrs,
         })
       }
 
