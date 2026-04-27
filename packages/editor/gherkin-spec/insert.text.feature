@@ -4,15 +4,15 @@ Feature: Insert text
     Given one editor
 
   Scenario Outline: Inserting text on expanded selection
-    Given the text <text>
+    Given the editor state is <text>
     When the editor is focused
-    And <selection> is selected
+    And the selection is <selection>
     And "new" is typed
-    Then the text is <new text>
+    Then the editor state is <new text>
 
     Examples:
-      | text       | selection | new text     |
-      | "foo\|bar" | "oo"      | "fnew\|bar"  |
-      | "foo\|bar" | "b"       | "foo\|newar" |
-      | "foo\|bar" | "ooba"    | "fnewr"      |
-      | "foo\|bar" | "foobar"  | "new"        |
+      | text             | selection           | new text             |
+      | "B: foo;;B: bar" | "B: f^oo\|;;B: bar" | "B: fnew\|;;B: bar"  |
+      | "B: foo;;B: bar" | "B: foo;;B: ^b\|ar" | "B: foo;;B: new\|ar" |
+      | "B: foo;;B: bar" | "B: f^oo;;B: ba\|r" | "B: fnew\|r"         |
+      | "B: foo;;B: bar" | "B: ^foo;;B: bar\|" | "B: new\|"           |

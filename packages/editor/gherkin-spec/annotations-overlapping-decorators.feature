@@ -5,33 +5,33 @@ Feature: Annotations Overlapping Decorators
     And a global keymap
 
   Scenario Outline: Inserting text at the edge of a decorated annotation
-    Given the text <text>
+    Given the editor state is <text>
     And a "link" "l1" around <annotated>
     And "strong" around <decorated>
     When the editor is focused
     And the caret is put <position>
     And "new" is typed
-    Then the text is <new text>
+    Then the editor state is <new text>
 
     Examples:
-      | text          | annotated     | decorated     | position      | new text           |
-      | "foo bar baz" | "bar"         | "bar"         | after "foo "  | "foo new,bar, baz" |
-      | "foo bar baz" | "bar"         | "bar"         | before "bar"  | "foo new,bar, baz" |
-      | "foo bar baz" | "bar"         | "bar"         | after "bar"   | "foo ,bar,new baz" |
-      | "foo bar baz" | "bar"         | "bar"         | before " baz" | "foo ,bar,new baz" |
-      | "foo"         | "foo"         | "foo"         | before "foo"  | "new,foo"          |
-      | "foo"         | "foo"         | "foo"         | after "foo"   | "foo,new"          |
-      | "foo bar baz" | "foo bar baz" | "bar"         | after "foo "  | "foo new,bar, baz" |
-      | "foo bar baz" | "foo bar baz" | "bar"         | before "bar"  | "foo new,bar, baz" |
-      | "foo bar baz" | "foo bar baz" | "bar"         | after "bar"   | "foo ,barnew, baz" |
-      | "foo bar baz" | "foo bar baz" | "bar"         | before " baz" | "foo ,barnew, baz" |
-      | "foo bar baz" | "bar"         | "foo bar baz" | after "foo "  | "foo new,bar, baz" |
-      | "foo bar baz" | "bar"         | "foo bar baz" | before "bar"  | "foo new,bar, baz" |
-      | "foo bar baz" | "bar"         | "foo bar baz" | after "bar"   | "foo ,bar,new baz" |
-      | "foo bar baz" | "bar"         | "foo bar baz" | before " baz" | "foo ,bar,new baz" |
+      | text             | annotated     | decorated     | position      | new text                                                                                 |
+      | "B: foo bar baz" | "bar"         | "bar"         | after "foo "  | "B: foo new[strong:[@link _key=\"l1\":bar]] baz"                                         |
+      | "B: foo bar baz" | "bar"         | "bar"         | before "bar"  | "B: foo new[strong:[@link _key=\"l1\":bar]] baz"                                         |
+      | "B: foo bar baz" | "bar"         | "bar"         | after "bar"   | "B: foo [strong:[@link _key=\"l1\":bar]]new baz"                                         |
+      | "B: foo bar baz" | "bar"         | "bar"         | before " baz" | "B: foo [strong:[@link _key=\"l1\":bar]]new baz"                                         |
+      | "B: foo"         | "foo"         | "foo"         | before "foo"  | "B: new[strong:[@link _key=\"l1\":foo]]"                                                 |
+      | "B: foo"         | "foo"         | "foo"         | after "foo"   | "B: [strong:[@link _key=\"l1\":foo]]new"                                                 |
+      | "B: foo bar baz" | "foo bar baz" | "bar"         | after "foo "  | "B: [@link _key=\"l1\":foo new][strong:[@link _key=\"l1\":bar]][@link _key=\"l1\": baz]" |
+      | "B: foo bar baz" | "foo bar baz" | "bar"         | before "bar"  | "B: [@link _key=\"l1\":foo new][strong:[@link _key=\"l1\":bar]][@link _key=\"l1\": baz]" |
+      | "B: foo bar baz" | "foo bar baz" | "bar"         | after "bar"   | "B: [@link _key=\"l1\":foo ][strong:[@link _key=\"l1\":barnew]][@link _key=\"l1\": baz]" |
+      | "B: foo bar baz" | "foo bar baz" | "bar"         | before " baz" | "B: [@link _key=\"l1\":foo ][strong:[@link _key=\"l1\":barnew]][@link _key=\"l1\": baz]" |
+      | "B: foo bar baz" | "bar"         | "foo bar baz" | after "foo "  | "B: [strong:foo new][strong:[@link _key=\"l1\":bar]][strong: baz]"                       |
+      | "B: foo bar baz" | "bar"         | "foo bar baz" | before "bar"  | "B: [strong:foo new][strong:[@link _key=\"l1\":bar]][strong: baz]"                       |
+      | "B: foo bar baz" | "bar"         | "foo bar baz" | after "bar"   | "B: [strong:foo ][strong:[@link _key=\"l1\":bar]][strong:new baz]"                       |
+      | "B: foo bar baz" | "bar"         | "foo bar baz" | before " baz" | "B: [strong:foo ][strong:[@link _key=\"l1\":bar]][strong:new baz]"                       |
 
   Scenario Outline: Toggling decorator at the edge of a decorated annotation
-    Given the text <text>
+    Given the editor state is <text>
     And a "link" "l1" around <annotated>
     And "strong" around <decorated>
     When the editor is focused
@@ -44,132 +44,134 @@ Feature: Annotations Overlapping Decorators
     # against the default behavior and produce bold text.
     And "strong" is toggled
     And "new" is typed
-    Then the text is <new text>
-    And "new" has marks <marks>
+    Then the editor state is <new text>
 
     Examples:
-      | text          | annotated | decorated | position      | new text            | marks    |
-      | "foo bar baz" | "bar"     | "bar"     | after "foo "  | "foo ,new,bar, baz" | "strong" |
-      | "foo bar baz" | "bar"     | "bar"     | before "bar"  | "foo ,new,bar, baz" | "strong" |
-      | "foo bar baz" | "bar"     | "bar"     | after "bar"   | "foo ,bar,new, baz" | "strong" |
-      | "foo bar baz" | "bar"     | "bar"     | before " baz" | "foo ,bar,new, baz" | "strong" |
+      | text             | annotated | decorated | position      | new text                                                    |
+      | "B: foo bar baz" | "bar"     | "bar"     | after "foo "  | "B: foo [strong:new\|][strong:[@link _key=\"l1\":bar]] baz" |
+      | "B: foo bar baz" | "bar"     | "bar"     | before "bar"  | "B: foo [strong:new\|][strong:[@link _key=\"l1\":bar]] baz" |
+      | "B: foo bar baz" | "bar"     | "bar"     | after "bar"   | "B: foo [strong:[@link _key=\"l1\":bar]][strong:new\|] baz" |
+      | "B: foo bar baz" | "bar"     | "bar"     | before " baz" | "B: foo [strong:[@link _key=\"l1\":bar]][strong:new\|] baz" |
 
   Scenario Outline: Writing on top of a decorated annotation
     When the editor is focused
-    Given the text "foo bar baz"
+    Given the editor state is "B: foo bar baz"
     And a "link" "l1" around <annotated>
     And "strong" around <decorated>
     When <selection>
     And "removed" is typed
-    Then the text is <new text>
-    And "removed" has marks <marks>
+    Then the editor state is <new text>
 
     Examples:
-      | annotated     | decorated | selection                   | new text            | marks       |
-      | "bar"         | "bar"     | "bar" is selected           | "foo ,removed, baz" | "strong"    |
-      | "bar"         | "bar"     | "bar" is selected backwards | "foo ,removed, baz" | "strong"    |
-      | "foo bar baz" | "bar"     | "bar" is selected           | "foo ,removed, baz" | "l1,strong" |
-      | "foo bar baz" | "bar"     | "bar" is selected backwards | "foo ,removed, baz" | "l1,strong" |
+      | annotated     | decorated | selection                   | new text                                                                                  |
+      | "bar"         | "bar"     | "bar" is selected           | "B: foo [strong:removed] baz"                                                             |
+      | "bar"         | "bar"     | "bar" is selected backwards | "B: foo [strong:removed] baz"                                                             |
+      | "foo bar baz" | "bar"     | "bar" is selected           | "B: [@link _key=\"l1\":foo ][strong:[@link _key=\"l1\":removed]][@link _key=\"l1\": baz]" |
+      | "foo bar baz" | "bar"     | "bar" is selected backwards | "B: [@link _key=\"l1\":foo ][strong:[@link _key=\"l1\":removed]][@link _key=\"l1\": baz]" |
 
   Scenario: Splitting block before a decorated annotation
-    Given the text "bar"
+    Given the editor state is "B: bar"
     And a "link" "l1" around "bar"
     And "strong" around "bar"
     When the editor is focused
     And the caret is put before "bar"
     And "{Enter}" is pressed
-    Then the text is "|bar"
-    And "" has no marks
-    And "bar" has marks "l1,strong"
+    Then the editor state is "B: ;;B: [strong:[@link _key=\"l1\":bar]]"
 
   Scenario: Splitting block after a decorated annotation
-    Given the text "bar"
+    Given the editor state is "B: bar"
     And a "link" "l1" around "bar"
     And "strong" around "bar"
     When the editor is focused
     And the caret is put after "bar"
     And "{Enter}" is pressed
     And "baz" is typed
-    Then the text is "bar|baz"
-    And the caret is after "baz"
-    And "baz" has no marks
+    Then the editor state is
+      """
+      B: [strong:[@link _key="l1":bar]]
+      B: baz|
+      """
 
   Scenario: Splitting block after a decorated annotation #2
-    Given the text "foobar"
+    Given the editor state is "B: foobar"
     And a "link" "l1" around "bar"
     And "strong" around "bar"
     When the editor is focused
     And the caret is put after "bar"
     And "{Enter}" is pressed
     And "baz" is typed
-    Then the text is "foo,bar|baz"
-    And the caret is after "baz"
-    And "baz" has no marks
+    Then the editor state is
+      """
+      B: foo[strong:[@link _key="l1":bar]]
+      B: baz|
+      """
 
   Scenario: Annotation and decorator on the same text
-    Given the text "foo bar baz"
+    Given the editor state is "B: foo bar baz"
     When "bar" is selected
     And "strong" is toggled
     And "link" "l1" is toggled
-    Then the text is "foo ,bar, baz"
-    And "bar" has marks "strong,l1"
+    Then the editor state is
+      """
+      B: foo [strong:[@link _key="l1":bar]] baz
+      """
 
   Scenario: Adding decorator inside annotation
-    Given the text "foo bar baz"
+    Given the editor state is "B: foo bar baz"
     And a "link" "l1" around "foo bar baz"
     When "bar" is selected
     And "strong" is toggled
-    Then the text is "foo ,bar, baz"
-    And "foo " has marks "l1"
-    And "bar" has marks "l1,strong"
-    And " baz" has marks "l1"
+    Then the editor state is
+      """
+      B: [@link _key="l1":foo ][strong:[@link _key="l1":bar]][@link _key="l1": baz]
+      """
 
   Scenario: Adding an annotation across a decorator
-    Given the text "foo bar baz"
+    Given the editor state is "B: foo bar baz"
     And "strong" around "bar"
     When "foo bar baz" is selected
     And "link" "l1" is toggled
-    Then the text is "foo ,bar, baz"
-    And "foo " has marks "l1"
-    And "bar" has marks "strong,l1"
-    And " baz" has marks "l1"
+    Then the editor state is
+      """
+      B: [@link _key="l1":foo ][strong:[@link _key="l1":bar]][@link _key="l1": baz]
+      """
 
   Scenario: Annotation overlapping decorator
-    Given the text "foobar"
+    Given the editor state is "B: foobar"
     And "strong" around "bar"
     When "foob" is selected
     And "link" "l1" is toggled
-    Then the text is "foo,b,ar"
-    And "foo" has marks "l1"
-    And "b" has marks "strong,l1"
-    And "ar" has marks "strong"
+    Then the editor state is
+      """
+      B: [@link _key="l1":foo][strong:[@link _key="l1":b]][strong:ar]
+      """
 
   Scenario: Annotation overlapping decorator (backwards selection)
-    Given the text "foobar"
+    Given the editor state is "B: foobar"
     And "strong" around "bar"
     When "foob" is selected backwards
     And "link" "l1" is toggled
-    Then the text is "foo,b,ar"
-    And "foo" has marks "l1"
-    And "b" has marks "strong,l1"
-    And "ar" has marks "strong"
+    Then the editor state is
+      """
+      B: [@link _key="l1":foo][strong:[@link _key="l1":b]][strong:ar]
+      """
 
   Scenario: Annotation overlapping decorator from behind
-    Given the text "foobar"
+    Given the editor state is "B: foobar"
     And "strong" around "foo"
     When "obar" is selected
     And "link" "l1" is toggled
-    Then the text is "fo,o,bar"
-    Then "fo" has marks "strong"
-    And "o" has marks "strong,l1"
-    And "bar" has marks "l1"
+    Then the editor state is
+      """
+      B: [strong:fo][strong:[@link _key="l1":o]][@link _key="l1":bar]
+      """
 
   Scenario: Annotation overlapping decorator from behind (backwards selection)
-    Given the text "foobar"
+    Given the editor state is "B: foobar"
     And "strong" around "foo"
     When "obar" is selected backwards
     And "link" "l1" is toggled
-    Then the text is "fo,o,bar"
-    Then "fo" has marks "strong"
-    And "o" has marks "strong,l1"
-    And "bar" has marks "l1"
+    Then the editor state is
+      """
+      B: [strong:fo][strong:[@link _key="l1":o]][@link _key="l1":bar]
+      """

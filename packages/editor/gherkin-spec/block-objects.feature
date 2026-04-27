@@ -6,73 +6,126 @@ Feature: Block Objects
     And a global keymap
 
   Scenario: Pressing ArrowUp on a lonely image
-    Given the text "{image}"
+    Given the editor state is "{IMAGE}"
     When the editor is focused
     And "{ArrowUp}" is pressed
-    Then the text is "|{image}"
+    Then the editor state is
+      """
+      B: |
+      {IMAGE}
+      """
 
   Scenario: Pressing ArrowDown on a lonely image
-    Given the text "{image}"
+    Given the editor state is "{IMAGE}"
     When the editor is focused
     And "{ArrowDown}" is pressed
-    Then the text is "{image}|"
+    Then the editor state is
+      """
+      {IMAGE}
+      B: |
+      """
 
   Scenario: Pressing ArrowDown on image at the bottom
     When the editor is focused
     And "foo|{image}" is inserted at "auto" and selected at the "end"
     And "{ArrowDown}" is pressed
-    Then the text is "foo|{image}|"
+    Then the editor state is
+      """
+      B: foo
+      {IMAGE}
+      B: |
+      """
 
   Scenario: ArrowRight before an image selects it
-    Given the text "foo|{image}"
+    Given the editor state is
+      """
+      B: foo
+      {IMAGE}
+      """
     When the editor is focused
     And the caret is put after "foo"
     And "{ArrowRight}" is pressed
     Then "{image}" is selected
 
   Scenario: ArrowLeft after an image selects it
-    Given the text "{image}|bar"
+    Given the editor state is
+      """
+      {IMAGE}
+      B: bar
+      """
     When the editor is focused
     And the caret is put before "bar"
     And "{ArrowLeft}" is pressed
     Then "{image}" is selected
 
   Scenario: Pressing Delete before an image
-    Given the text "foo|{image}|bar"
+    Given the editor state is
+      """
+      B: foo
+      {IMAGE}
+      B: bar
+      """
     When the editor is focused
     And the caret is put after "foo"
     And "{Delete}" is pressed
-    Then the text is "foo|bar"
+    Then the editor state is
+      """
+      B: foo|
+      B: bar
+      """
 
   Scenario: Pressing Delete in an empty paragraph before an image
-    Given the text "foo|{image}|bar"
+    Given the editor state is
+      """
+      B: foo
+      {IMAGE}
+      B: bar
+      """
     When the editor is focused
     And the caret is put before "foo"
     And "{Delete}" is pressed 4 times
     And "{Enter}" is pressed
-    Then the text is "{image}||bar"
+    Then the editor state is
+      """
+      {IMAGE}
+      B: |
+      B: bar
+      """
 
   Scenario: Pressing Backspace after an image
-    Given the text "foo|{image}|bar"
+    Given the editor state is
+      """
+      B: foo
+      {IMAGE}
+      B: bar
+      """
     When the editor is focused
     And the caret is put before "bar"
     And "{Backspace}" is pressed
-    Then the text is "foo|bar"
+    Then the editor state is
+      """
+      B: foo
+      B: |bar
+      """
 
   Scenario: Pressing Backspace in an empty paragraph after an image
     When the editor is focused
     And "foo|{image}" is inserted at "auto" and selected at the "end"
     And "{Enter}" is pressed
     And "{Backspace}" is pressed
-    Then the text is "foo|{image}"
+    Then the editor state is
+      """
+      B: foo
+      ^{IMAGE}|
+      """
     And "{image}" is selected
 
   Scenario Outline: Deleting a lonely image
-    Given the text "{image}"
+    Given the editor state is "{IMAGE}"
     When the editor is focused
     And <button> is pressed
     And "foo" is typed
-    Then the text is "foo"
+    Then the editor state is "B: foo|"
 
     Examples:
       | button        |
@@ -80,13 +133,18 @@ Feature: Block Objects
       | "{Delete}"    |
 
   Scenario Outline: Deleting an image with text above
-    Given the text "foo|{image}|b"
+    Given the editor state is
+      """
+      B: foo
+      {IMAGE}
+      B: b
+      """
     When the editor is focused
     And the caret is put after "b"
     And "{Backspace}" is pressed 2 times
     And <button> is pressed
     And "bar" is typed
-    Then the text is "foobar"
+    Then the editor state is "B: foobar|"
 
     Examples:
       | button        |
@@ -94,13 +152,18 @@ Feature: Block Objects
       | "{Delete}"    |
 
   Scenario Outline: Deleting an image with text below
-    Given the text "b|{image}|foo"
+    Given the editor state is
+      """
+      B: b
+      {IMAGE}
+      B: foo
+      """
     When the editor is focused
     And the caret is put before "b"
     And "{Delete}" is pressed 2 times
     And <button> is pressed
     And "bar" is typed
-    Then the text is "barfoo"
+    Then the editor state is "B: bar|foo"
 
     Examples:
       | button        |

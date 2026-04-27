@@ -5,104 +5,167 @@ Feature: Splitting Blocks
     And a global keymap
 
   Scenario: Splitting block at the beginning
-    Given the editor state is "B _key=\"b1\": foo"
+    Given the editor state is
+      """
+      B _key="b1": foo
+      """
     When the editor is focused
     And the selection is "B: |foo"
     And "{Enter}" is pressed
     Then the editor state is "B: ;;B _key=\"b1\": |foo"
 
   Scenario: Splitting block in the middle
-    Given the editor state is "B _key=\"b1\": foo"
+    Given the editor state is
+      """
+      B _key="b1": foo
+      """
     When the editor is focused
     And the selection is "B: fo|o"
     And "{Enter}" is pressed
-    Then the editor state is "B _key=\"b1\": fo;;B: |o"
+    Then the editor state is
+      """
+      B _key="b1": fo
+      B: |o
+      """
 
   Scenario: Splitting block at the end
-    Given the editor state is "B _key=\"b1\": foo"
+    Given the editor state is
+      """
+      B _key="b1": foo
+      """
     When the editor is focused
     And the selection is "B: foo|"
     And "{Enter}" is pressed
-    Then the editor state is "B _key=\"b1\": foo;;B: |"
+    Then the editor state is
+      """
+      B _key="b1": foo
+      B: |
+      """
 
   Scenario: Splitting empty block creates a new block below
     Given the editor state is "B _key=\"b1\": foo;;B _key=\"b2\": "
     When the editor is focused
-    And the selection is "B: foo;;B: |"
+    And the selection is
+      """
+      B: foo
+      B: |
+      """
     And "{Enter}" is pressed
     And "baz" is typed
     Then the editor state is "B _key=\"b1\": foo;;B _key=\"b2\": ;;B: baz|"
 
   Scenario: Soft-splitting block at the beginning
-    Given the editor state is "B _key=\"b1\": foo"
+    Given the editor state is
+      """
+      B _key="b1": foo
+      """
     When the editor is focused
     And the selection is "B: |foo"
     And "{Shift>}{Enter}{/Shift}" is pressed
     Then the editor state is "B _key=\"b1\": \n|foo"
 
   Scenario: Soft-splitting block in the middle
-    Given the editor state is "B _key=\"b1\": foo"
+    Given the editor state is
+      """
+      B _key="b1": foo
+      """
     When the editor is focused
     And the selection is "B: fo|o"
     And "{Shift>}{Enter}{/Shift}" is pressed
     Then the editor state is "B _key=\"b1\": fo\n|o"
 
   Scenario: Soft-splitting block at the end
-    Given the editor state is "B _key=\"b1\": foo"
+    Given the editor state is
+      """
+      B _key="b1": foo
+      """
     When the editor is focused
     And the selection is "B: foo|"
     And "{Shift>}{Enter}{/Shift}" is pressed
     Then the editor state is "B _key=\"b1\": foo\n|"
 
   Scenario: Splitting styled block at the beginning
-    Given the editor state is "B style=\"h1\": foo"
+    Given the editor state is
+      """
+      B style="h1": foo
+      """
     When the editor is focused
     And the selection is "B style=\"h1\": |foo"
     And "{Enter}" is pressed
     Then the editor state is "B: ;;B style=\"h1\": |foo"
 
   Scenario: Splitting styled block in the middle
-    Given the editor state is "B _key=\"b1\" style=\"h1\": foo"
+    Given the editor state is
+      """
+      B _key="b1" style="h1": foo
+      """
     When the editor is focused
     And the selection is "B style=\"h1\": fo|o"
     And "{Enter}" is pressed
-    Then the editor state is "B _key=\"b1\" style=\"h1\": fo;;B style=\"h1\": |o"
+    Then the editor state is
+      """
+      B _key="b1" style="h1": fo
+      B style="h1": |o
+      """
 
   Scenario: Splitting styled block at the end
-    Given the editor state is "B _key=\"b1\" style=\"h1\": foo"
+    Given the editor state is
+      """
+      B _key="b1" style="h1": foo
+      """
     When the editor is focused
     And the selection is "B style=\"h1\": foo|"
     And "{Enter}" is pressed
-    Then the editor state is "B _key=\"b1\" style=\"h1\": foo;;B: |"
+    Then the editor state is
+      """
+      B _key="b1" style="h1": foo
+      B: |
+      """
 
   Scenario: Soft-splitting styled block at the beginning
-    Given the editor state is "B style=\"h1\": foo"
+    Given the editor state is
+      """
+      B style="h1": foo
+      """
     When the editor is focused
     And the selection is "B style=\"h1\": |foo"
     And "{Shift>}{Enter}{/Shift}" is pressed
     Then the editor state is "B style=\"h1\": \n|foo"
 
   Scenario: Soft-splitting styled block in the middle
-    Given the editor state is "B style=\"h1\": foo"
+    Given the editor state is
+      """
+      B style="h1": foo
+      """
     When the editor is focused
     And the selection is "B style=\"h1\": fo|o"
     And "{Shift>}{Enter}{/Shift}" is pressed
     Then the editor state is "B style=\"h1\": fo\n|o"
 
   Scenario: Soft-splitting styled block at the end
-    Given the editor state is "B style=\"h1\": foo"
+    Given the editor state is
+      """
+      B style="h1": foo
+      """
     When the editor is focused
     And the selection is "B style=\"h1\": foo|"
     And "{Shift>}{Enter}{/Shift}" is pressed
     Then the editor state is "B style=\"h1\": foo\n|"
 
   Scenario: Splitting decorated styled block at the beginning
-    Given the editor state is "B style=\"h1\": [strong:foo] bar baz"
+    Given the editor state is
+      """
+      B style="h1": [strong:foo] bar baz
+      """
     When the editor is focused
     And the selection is "B style=\"h1\": |[strong:foo] bar baz"
     And "{Enter}" is pressed
     And "new" is typed
-    Then the editor state is "B: [strong:];;B style=\"h1\": [strong:new|foo] bar baz"
+    Then the editor state is
+      """
+      B: [strong:]
+      B style="h1": [strong:new|foo] bar baz
+      """
 
   Scenario Outline: Splitting decorated styled block in the middle
     Given the editor state is <initial>
@@ -123,15 +186,26 @@ Feature: Splitting Blocks
       | "B style=\"h1\": foo bar [strong:baz]" | "B style=\"h1\": foo bar \|[strong:baz]" | "B style=\"h1\": foo bar ;;B style=\"h1\": [strong:new\|baz]" |
 
   Scenario: Splitting decorated styled block at the end
-    Given the editor state is "B style=\"h1\": foo bar [strong:baz]"
+    Given the editor state is
+      """
+      B style="h1": foo bar [strong:baz]
+      """
     When the editor is focused
     And the selection is "B style=\"h1\": foo bar [strong:baz|]"
     And "{Enter}" is pressed
     And "new" is typed
-    Then the editor state is "B style=\"h1\": foo bar [strong:baz];;B: new|"
+    Then the editor state is
+      """
+      B style="h1": foo bar [strong:baz]
+      B: new|
+      """
 
   Scenario Outline: Splitting block with an expanded selection
-    Given the editor state is "B: foo;;B: bar"
+    Given the editor state is
+      """
+      B: foo
+      B: bar
+      """
     When the editor is focused
     And <selection> is selected
     And "{Enter}" is pressed

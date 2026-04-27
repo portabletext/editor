@@ -5,95 +5,99 @@ Feature: Overlapping Annotations
     And a global keymap
 
   Scenario Outline: Inserting text at the edge of overlapping annotations
-    Given the text <text>
+    Given the editor state is <text>
     And a "link" "l1" around <link>
     And a "comment" "c1" around <comment>
     When the editor is focused
     And the caret is put <position>
     And "new" is typed
-    Then the text is <new text>
+    Then the editor state is <new text>
 
     Examples:
-      | text          | link          | comment | position      | new text           |
-      | "foo bar baz" | "foo bar baz" | "bar"   | after "foo "  | "foo new,bar, baz" |
-      | "foo bar baz" | "foo bar baz" | "bar"   | before "bar"  | "foo new,bar, baz" |
-      | "foo bar baz" | "foo bar baz" | "bar"   | after "bar"   | "foo ,bar,new baz" |
-      | "foo bar baz" | "foo bar baz" | "bar"   | before " baz" | "foo ,bar,new baz" |
-      | "foo"         | "foo"         | "foo"   | before "foo"  | "new,foo"          |
-      | "foo"         | "foo"         | "foo"   | after "foo"   | "foo,new"          |
+      | text             | link          | comment | position      | new text                                                                                                 |
+      | "B: foo bar baz" | "foo bar baz" | "bar"   | after "foo "  | "B: [@link _key=\"l1\":foo new][@link _key=\"l1\":[@comment _key=\"c1\":bar]][@link _key=\"l1\": baz]"   |
+      | "B: foo bar baz" | "foo bar baz" | "bar"   | before "bar"  | "B: [@link _key=\"l1\":foo new][@link _key=\"l1\":[@comment _key=\"c1\":bar]][@link _key=\"l1\": baz]"   |
+      | "B: foo bar baz" | "foo bar baz" | "bar"   | after "bar"   | "B: [@link _key=\"l1\":foo ][@link _key=\"l1\":[@comment _key=\"c1\":bar]][@link _key=\"l1\":new\| baz]" |
+      | "B: foo bar baz" | "foo bar baz" | "bar"   | before " baz" | "B: [@link _key=\"l1\":foo ][@link _key=\"l1\":[@comment _key=\"c1\":bar]][@link _key=\"l1\":new\| baz]" |
+      | "B: foo"         | "foo"         | "foo"   | before "foo"  | "B: new\|[@link _key=\"l1\":[@comment _key=\"c1\":foo]]"                                                 |
+      | "B: foo"         | "foo"         | "foo"   | after "foo"   | "B: [@link _key=\"l1\":[@comment _key=\"c1\":foo]]new\|"                                                 |
 
   Scenario: Overlapping annotation
-    Given the text "foobar"
+    Given the editor state is "B: foobar"
     And a "link" "l1" around "bar"
     When "foob" is selected
     And "comment" "c1" is toggled
-    Then the text is "foo,b,ar"
-    And "foo" has marks "c1"
-    And "b" has marks "l1,c1"
-    And "ar" has marks "l1"
+    Then the editor state is
+      """
+      B: [@comment _key="c1":foo][@link _key="l1":[@comment _key="c1":b]][@link _key="l1":ar]
+      """
 
   Scenario: Overlapping annotation (backwards selection)
-    Given the text "foobar"
+    Given the editor state is "B: foobar"
     And a "link" "l1" around "bar"
     When "foob" is selected backwards
     And "comment" "c1" is toggled
-    Then the text is "foo,b,ar"
-    And "foo" has marks "c1"
-    And "b" has marks "l1,c1"
-    And "ar" has marks "l1"
+    Then the editor state is
+      """
+      B: [@comment _key="c1":foo][@link _key="l1":[@comment _key="c1":b]][@link _key="l1":ar]
+      """
 
   Scenario: Overlapping annotation from behind
-    Given the text "foobar"
+    Given the editor state is "B: foobar"
     And a "comment" "c1" around "foo"
     When "obar" is selected
     And "link" "l1" is toggled
-    Then the text is "fo,o,bar"
-    Then "fo" has marks "c1"
-    And "o" has marks "c1,l1"
-    And "bar" has marks "l1"
+    Then the editor state is
+      """
+      B: [@comment _key="c1":fo][@comment _key="c1":[@link _key="l1":^o]][@link _key="l1":bar|]
+      """
 
   Scenario: Overlapping annotation from behind (backwards selection)
-    Given the text "foobar"
+    Given the editor state is "B: foobar"
     And a "comment" "c1" around "foo"
     When "obar" is selected backwards
     And "link" "l1" is toggled
-    Then the text is "fo,o,bar"
-    Then "fo" has marks "c1"
-    And "o" has marks "c1,l1"
-    And "bar" has marks "l1"
+    Then the editor state is
+      """
+      B: [@comment _key="c1":fo][@comment _key="c1":[@link _key="l1":|o]][@link _key="l1":bar^]
+      """
 
   Scenario: Overlapping same-type annotation
-    Given the text "foobar"
+    Given the editor state is "B: foobar"
     And a "comment" "c1" around "bar"
     When "foob" is selected
     And "comment" "c2" is toggled
-    Then the text is "foob,ar"
-    And "foob" has marks "c2"
-    And "ar" has marks "c1"
+    Then the editor state is
+      """
+      B: [@comment _key="c2":foob][@comment _key="c1":ar]
+      """
 
   Scenario: Overlapping same-type annotation (backwards selection)
-    Given the text "foobar"
+    Given the editor state is "B: foobar"
     And a "comment" "c1" around "bar"
     When "foob" is selected backwards
     And "comment" "c2" is toggled
-    Then the text is "foob,ar"
-    And "foob" has marks "c2"
-    And "ar" has marks "c1"
+    Then the editor state is
+      """
+      B: [@comment _key="c2":foob][@comment _key="c1":ar]
+      """
 
   Scenario: Overlapping same-type annotation from behind
-    Given the text "foobar"
+    Given the editor state is "B: foobar"
     And a "comment" "c1" around "foo"
     When "obar" is selected
     And "comment" "c2" is toggled
-    Then the text is "fo,obar"
-    And "fo" has marks "c1"
-    And "obar" has marks "c2"
+    Then the editor state is
+      """
+      B: [@comment _key="c1":fo][@comment _key="c2":obar]
+      """
 
   Scenario: Overlapping same-type annotation from behind (backwards selection)
-    Given the text "foobar"
+    Given the editor state is "B: foobar"
     And a "comment" "c1" around "foo"
     When "obar" is selected backwards
     And "comment" "c2" is toggled
-    Then the text is "fo,obar"
-    And "fo" has marks "c1"
-    And "obar" has marks "c2"
+    Then the editor state is
+      """
+      B: [@comment _key="c1":fo][@comment _key="c2":obar]
+      """

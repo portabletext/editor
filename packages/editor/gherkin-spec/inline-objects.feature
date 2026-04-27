@@ -6,48 +6,45 @@ Feature: Inline Objects
     And a global keymap
 
   Scenario: Writing after inserting an inline object
-    Given the text ""
+    Given the editor state is "B: "
     When the editor is focused
     And "foo" is typed
     And a "stock-ticker" is inserted
     And "{ArrowRight}" is pressed
     And "bar" is typed
-    Then the text is "foo,{stock-ticker},bar"
+    Then the editor state is "B: foo{stock-ticker}bar|"
 
   Scenario: Pressing Delete before an inline object
-    Given the text "foo,{stock-ticker},"
+    Given the editor state is "B: foo{stock-ticker}"
     When the editor is focused
     And the caret is put after "foo"
     And "{Delete}" is pressed
-    Then the text is "foo"
+    Then the editor state is "B: foo|"
 
   Scenario: Pressing Backspace after an inline object
-    Given the text "foo,{stock-ticker},"
+    Given the editor state is "B: foo{stock-ticker}"
     When the editor is focused
     And "{Backspace}" is pressed
     Then the caret is after "foo"
 
   Scenario: Adding a decorator across an inline object
-    Given the text "foo,{stock-ticker},bar"
+    Given the editor state is "B: foo{stock-ticker}bar"
     When "foobar" is selected
     And "strong" is toggled
-    Then the text is "foo,{stock-ticker},bar"
-    And "foo" has marks "strong"
-    And "bar" has marks "strong"
+    Then the editor state is "B: [strong:^foo]{stock-ticker}[strong:bar|]"
 
   Scenario: Adding an annotation across an inline object
-    Given the text "foo,{stock-ticker},bar"
+    Given the editor state is "B: foo{stock-ticker}bar"
     When "foobar" is selected
     And "link" "l1" is toggled
-    Then the text is "foo,{stock-ticker},bar"
-    And "foo" has marks "l1"
-    And "bar" has marks "l1"
+    Then the editor state is
+      """
+      B: [@link _key="l1":^foo]{stock-ticker}[@link _key="l1":bar|]
+      """
 
   Scenario: Removing an annotation across an inline block
-    Given the text "foo,{stock-ticker},bar"
+    Given the editor state is "B: foo{stock-ticker}bar"
     When "foobar" is selected
     And "link" is toggled
     And "link" is toggled
-    Then the text is "foo,{stock-ticker},bar"
-    And "foo" has no marks
-    And "bar" has no marks
+    Then the editor state is "B: ^foo{stock-ticker}bar|"
