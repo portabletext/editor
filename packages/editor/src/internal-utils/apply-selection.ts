@@ -112,9 +112,9 @@ function resolveSelectionPoint(
     }
 
     // Text block with a block-level offset (no child key in path).
-    // Resolve the offset to a specific span position. `isBlock` answers "does
-    // this path point AT a block?" — as opposed to a child within one — at any
-    // depth, regardless of the parent field's name.
+    // Resolve the offset to a specific span position. The `isBlock` predicate
+    // answers "is this path AT a block (as opposed to inside one)" at any
+    // depth, regardless of the parent field name.
     const isBlockLevelPath = isBlock(context, selectionPoint.path)
 
     if (isTextBlock({schema: editor.schema}, entry.node) && isBlockLevelPath) {
