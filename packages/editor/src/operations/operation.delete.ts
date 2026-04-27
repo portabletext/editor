@@ -1,4 +1,5 @@
 import {resolveSelection} from '../internal-utils/apply-selection'
+import {deleteRange} from '../internal-utils/delete-range'
 import {getAncestorTextBlock} from '../node-traversal/get-ancestor-text-block'
 import {getHighestObjectNode} from '../node-traversal/get-highest-object-node'
 import {getNode} from '../node-traversal/get-node'
@@ -25,6 +26,7 @@ import {commonPath} from '../slate/path/common-path'
 import {comparePaths} from '../slate/path/compare-paths'
 import {isAncestorPath} from '../slate/path/is-ancestor-path'
 import {isCommonPath} from '../slate/path/is-common-path'
+import {parentPath} from '../slate/path/parent-path'
 import {pathEquals} from '../slate/path/path-equals'
 import {pointEquals} from '../slate/point/point-equals'
 import {isCollapsedRange} from '../slate/range/is-collapsed-range'
@@ -210,6 +212,33 @@ export const deleteOperationImplementation: OperationImplementation<
   const endBlock = endNodeEntry ?? getParent(operation.editor, end.path)
   const isAcrossBlocks =
     startBlock && endBlock && !pathEquals(startBlock.path, endBlock.path)
+
+  // Cross-parent range: the two end blocks live under different parents (e.g. a
+  // root text block and a line inside an editable container). Block-merging
+  // assumes siblings at the same level, so the unified \`deleteRange\`
+  // helper deletes partial content at each end, unsets fully-contained blocks
+  // in between, and leaves the two block shells behind without merging.
+  if (
+    startBlock &&
+    endBlock &&
+    isAcrossBlocks &&
+    !pathEquals(parentPath(startBlock.path), parentPath(endBlock.path))
+  ) {
+    const startRef = pointRef(operation.editor, start)
+    deleteRange(operation.editor, {anchor: start, focus: end})
+    const collapsedPoint = startRef.unref()
+    if (collapsedPoint && operation.editor.selection) {
+      operation.editor.apply({
+        type: 'set_selection',
+        properties: operation.editor.selection,
+        newProperties: {
+          anchor: collapsedPoint,
+          focus: collapsedPoint,
+        },
+      })
+    }
+    return
+  }
 
   const startObjectNode =
     startBlock && isVoidNode(operation.editor, startBlock.node, startBlock.path)

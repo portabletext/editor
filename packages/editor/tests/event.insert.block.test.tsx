@@ -6,7 +6,9 @@ import {execute} from '../src/behaviors/behavior.types.action'
 import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
 import type {InsertPlacement} from '../src/behaviors/behavior.types.event'
 import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
+import {ContainerPlugin} from '../src/plugins/plugin.container'
 import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
+import {defineContainer} from '../src/renderers/renderer.types'
 import {getFocusBlock} from '../src/selectors/selector.get-focus-block'
 import {createTestEditor} from '../src/test/vitest'
 
@@ -2191,6 +2193,918 @@ describe('event.insert.block', () => {
         },
         backward: false,
       })
+    })
+  })
+
+  test('Scenario: Inserting a sibling after a container block with explicit placement', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const calloutKey = keyGenerator()
+    const innerBlockKey = keyGenerator()
+    const innerSpanKey = keyGenerator()
+
+    const schemaDefinition = defineSchema({
+      blockObjects: [
+        {
+          name: 'callout',
+          fields: [{name: 'content', type: 'array', of: [{type: 'block'}]}],
+        },
+      ],
+    })
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: calloutKey,
+          content: [
+            {
+              _type: 'block',
+              _key: innerBlockKey,
+              children: [
+                {_type: 'span', _key: innerSpanKey, text: 'inside', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: (
+        <ContainerPlugin
+          containers={[
+            defineContainer<typeof schemaDefinition>({
+              scope: '$..callout',
+              field: 'content',
+              render: ({attributes, children}) => (
+                <div {...attributes}>{children}</div>
+              ),
+            }),
+          ]}
+        />
+      ),
+    })
+
+    editor.send({
+      type: 'insert.block',
+      block: {
+        _type: 'block',
+        children: [{_type: 'span', text: 'sibling'}],
+      },
+      placement: 'after',
+      at: {
+        anchor: {path: [{_key: calloutKey}], offset: 0},
+        focus: {path: [{_key: calloutKey}], offset: 0},
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: calloutKey,
+          content: [
+            {
+              _type: 'block',
+              _key: innerBlockKey,
+              children: [
+                {_type: 'span', _key: innerSpanKey, text: 'inside', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+        {
+          _type: 'block',
+          _key: 'k5',
+          children: [{_type: 'span', _key: 'k6', text: 'sibling', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+  })
+
+  test('Scenario: Inserting a sibling before a container block with explicit placement', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const calloutKey = keyGenerator()
+    const innerBlockKey = keyGenerator()
+    const innerSpanKey = keyGenerator()
+
+    const schemaDefinition = defineSchema({
+      blockObjects: [
+        {
+          name: 'callout',
+          fields: [{name: 'content', type: 'array', of: [{type: 'block'}]}],
+        },
+      ],
+    })
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: calloutKey,
+          content: [
+            {
+              _type: 'block',
+              _key: innerBlockKey,
+              children: [
+                {_type: 'span', _key: innerSpanKey, text: 'inside', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: (
+        <ContainerPlugin
+          containers={[
+            defineContainer<typeof schemaDefinition>({
+              scope: '$..callout',
+              field: 'content',
+              render: ({attributes, children}) => (
+                <div {...attributes}>{children}</div>
+              ),
+            }),
+          ]}
+        />
+      ),
+    })
+
+    editor.send({
+      type: 'insert.block',
+      block: {
+        _type: 'block',
+        children: [{_type: 'span', text: 'sibling'}],
+      },
+      placement: 'before',
+      at: {
+        anchor: {path: [{_key: calloutKey}], offset: 0},
+        focus: {path: [{_key: calloutKey}], offset: 0},
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: 'k5',
+          children: [{_type: 'span', _key: 'k6', text: 'sibling', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'callout',
+          _key: calloutKey,
+          content: [
+            {
+              _type: 'block',
+              _key: innerBlockKey,
+              children: [
+                {_type: 'span', _key: innerSpanKey, text: 'inside', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ])
+    })
+  })
+
+  test('Scenario: placement=auto with at pointing at a container resolves into the container', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const calloutKey = keyGenerator()
+    const innerBlockKey = keyGenerator()
+    const innerSpanKey = keyGenerator()
+
+    const schemaDefinition = defineSchema({
+      blockObjects: [
+        {
+          name: 'callout',
+          fields: [{name: 'content', type: 'array', of: [{type: 'block'}]}],
+        },
+      ],
+    })
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: calloutKey,
+          content: [
+            {
+              _type: 'block',
+              _key: innerBlockKey,
+              children: [
+                {_type: 'span', _key: innerSpanKey, text: 'inside', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: (
+        <ContainerPlugin
+          containers={[
+            defineContainer<typeof schemaDefinition>({
+              scope: '$..callout',
+              field: 'content',
+              render: ({attributes, children}) => (
+                <div {...attributes}>{children}</div>
+              ),
+            }),
+          ]}
+        />
+      ),
+    })
+
+    editor.send({
+      type: 'insert.block',
+      block: {
+        _type: 'block',
+        children: [{_type: 'span', text: 'merged'}],
+      },
+      placement: 'auto',
+      at: {
+        anchor: {path: [{_key: calloutKey}], offset: 0},
+        focus: {path: [{_key: calloutKey}], offset: 0},
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: calloutKey,
+          content: [
+            {
+              _type: 'block',
+              _key: innerBlockKey,
+              children: [
+                {
+                  _type: 'span',
+                  _key: innerSpanKey,
+                  text: 'mergedinside',
+                  marks: [],
+                },
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ])
+    })
+  })
+
+  test('Scenario: placement=after with expanded selection across container uses end block as anchor', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const beforeBlockKey = keyGenerator()
+    const beforeSpanKey = keyGenerator()
+    const calloutKey = keyGenerator()
+    const innerBlockKey = keyGenerator()
+    const innerSpanKey = keyGenerator()
+    const afterBlockKey = keyGenerator()
+    const afterSpanKey = keyGenerator()
+
+    const schemaDefinition = defineSchema({
+      blockObjects: [
+        {
+          name: 'callout',
+          fields: [{name: 'content', type: 'array', of: [{type: 'block'}]}],
+        },
+      ],
+    })
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: beforeBlockKey,
+          children: [
+            {_type: 'span', _key: beforeSpanKey, text: 'before', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'callout',
+          _key: calloutKey,
+          content: [
+            {
+              _type: 'block',
+              _key: innerBlockKey,
+              children: [
+                {_type: 'span', _key: innerSpanKey, text: 'inside', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+        {
+          _type: 'block',
+          _key: afterBlockKey,
+          children: [
+            {_type: 'span', _key: afterSpanKey, text: 'after', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <ContainerPlugin
+          containers={[
+            defineContainer<typeof schemaDefinition>({
+              scope: '$..callout',
+              field: 'content',
+              render: ({attributes, children}) => (
+                <div {...attributes}>{children}</div>
+              ),
+            }),
+          ]}
+        />
+      ),
+    })
+
+    editor.send({
+      type: 'insert.block',
+      block: {
+        _type: 'block',
+        children: [{_type: 'span', text: 'sibling'}],
+      },
+      placement: 'after',
+      at: {
+        anchor: {path: [{_key: beforeBlockKey}], offset: 0},
+        focus: {path: [{_key: calloutKey}], offset: 0},
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: beforeBlockKey,
+          children: [
+            {_type: 'span', _key: beforeSpanKey, text: 'before', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'callout',
+          _key: calloutKey,
+          content: [
+            {
+              _type: 'block',
+              _key: innerBlockKey,
+              children: [
+                {_type: 'span', _key: innerSpanKey, text: 'inside', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+        {
+          _type: 'block',
+          _key: 'k9',
+          children: [{_type: 'span', _key: 'k10', text: 'sibling', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: afterBlockKey,
+          children: [
+            {_type: 'span', _key: afterSpanKey, text: 'after', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+  })
+
+  test('Scenario: placement=before with expanded selection across container uses start block as anchor', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const beforeBlockKey = keyGenerator()
+    const beforeSpanKey = keyGenerator()
+    const calloutKey = keyGenerator()
+    const innerBlockKey = keyGenerator()
+    const innerSpanKey = keyGenerator()
+    const afterBlockKey = keyGenerator()
+    const afterSpanKey = keyGenerator()
+
+    const schemaDefinition = defineSchema({
+      blockObjects: [
+        {
+          name: 'callout',
+          fields: [{name: 'content', type: 'array', of: [{type: 'block'}]}],
+        },
+      ],
+    })
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: beforeBlockKey,
+          children: [
+            {_type: 'span', _key: beforeSpanKey, text: 'before', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'callout',
+          _key: calloutKey,
+          content: [
+            {
+              _type: 'block',
+              _key: innerBlockKey,
+              children: [
+                {_type: 'span', _key: innerSpanKey, text: 'inside', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+        {
+          _type: 'block',
+          _key: afterBlockKey,
+          children: [
+            {_type: 'span', _key: afterSpanKey, text: 'after', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <ContainerPlugin
+          containers={[
+            defineContainer<typeof schemaDefinition>({
+              scope: '$..callout',
+              field: 'content',
+              render: ({attributes, children}) => (
+                <div {...attributes}>{children}</div>
+              ),
+            }),
+          ]}
+        />
+      ),
+    })
+
+    editor.send({
+      type: 'insert.block',
+      block: {
+        _type: 'block',
+        children: [{_type: 'span', text: 'sibling'}],
+      },
+      placement: 'before',
+      at: {
+        anchor: {path: [{_key: calloutKey}], offset: 0},
+        focus: {path: [{_key: afterBlockKey}], offset: 0},
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: beforeBlockKey,
+          children: [
+            {_type: 'span', _key: beforeSpanKey, text: 'before', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: 'k9',
+          children: [{_type: 'span', _key: 'k10', text: 'sibling', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'callout',
+          _key: calloutKey,
+          content: [
+            {
+              _type: 'block',
+              _key: innerBlockKey,
+              children: [
+                {_type: 'span', _key: innerSpanKey, text: 'inside', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+        {
+          _type: 'block',
+          _key: afterBlockKey,
+          children: [
+            {_type: 'span', _key: afterSpanKey, text: 'after', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+  })
+
+  test('Scenario: placement=after with expanded selection inside container uses inner end block', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const calloutKey = keyGenerator()
+    const innerBlockAKey = keyGenerator()
+    const innerSpanAKey = keyGenerator()
+    const innerBlockBKey = keyGenerator()
+    const innerSpanBKey = keyGenerator()
+
+    const schemaDefinition = defineSchema({
+      blockObjects: [
+        {
+          name: 'callout',
+          fields: [{name: 'content', type: 'array', of: [{type: 'block'}]}],
+        },
+      ],
+    })
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: calloutKey,
+          content: [
+            {
+              _type: 'block',
+              _key: innerBlockAKey,
+              children: [
+                {_type: 'span', _key: innerSpanAKey, text: 'one', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: innerBlockBKey,
+              children: [
+                {_type: 'span', _key: innerSpanBKey, text: 'two', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: (
+        <ContainerPlugin
+          containers={[
+            defineContainer<typeof schemaDefinition>({
+              scope: '$..callout',
+              field: 'content',
+              render: ({attributes, children}) => (
+                <div {...attributes}>{children}</div>
+              ),
+            }),
+          ]}
+        />
+      ),
+    })
+
+    editor.send({
+      type: 'insert.block',
+      block: {
+        _type: 'block',
+        children: [{_type: 'span', text: 'three'}],
+      },
+      placement: 'after',
+      at: {
+        anchor: {
+          path: [{_key: calloutKey}, 'content', {_key: innerBlockAKey}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: calloutKey}, 'content', {_key: innerBlockBKey}],
+          offset: 0,
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: calloutKey,
+          content: [
+            {
+              _type: 'block',
+              _key: innerBlockAKey,
+              children: [
+                {_type: 'span', _key: innerSpanAKey, text: 'one', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: innerBlockBKey,
+              children: [
+                {_type: 'span', _key: innerSpanBKey, text: 'two', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: 'k7',
+              children: [{_type: 'span', _key: 'k8', text: 'three', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ])
+    })
+  })
+
+  test('Scenario: placement=auto with expanded selection across container deletes the range and inserts', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const beforeBlockKey = keyGenerator()
+    const beforeSpanKey = keyGenerator()
+    const calloutKey = keyGenerator()
+    const innerBlockKey = keyGenerator()
+    const innerSpanKey = keyGenerator()
+
+    const schemaDefinition = defineSchema({
+      blockObjects: [
+        {
+          name: 'callout',
+          fields: [{name: 'content', type: 'array', of: [{type: 'block'}]}],
+        },
+      ],
+    })
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: beforeBlockKey,
+          children: [
+            {_type: 'span', _key: beforeSpanKey, text: 'before', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'callout',
+          _key: calloutKey,
+          content: [
+            {
+              _type: 'block',
+              _key: innerBlockKey,
+              children: [
+                {_type: 'span', _key: innerSpanKey, text: 'inside', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: (
+        <ContainerPlugin
+          containers={[
+            defineContainer<typeof schemaDefinition>({
+              scope: '$..callout',
+              field: 'content',
+              render: ({attributes, children}) => (
+                <div {...attributes}>{children}</div>
+              ),
+            }),
+          ]}
+        />
+      ),
+    })
+
+    editor.send({
+      type: 'insert.block',
+      block: {
+        _type: 'block',
+        children: [{_type: 'span', text: 'replacement'}],
+      },
+      placement: 'auto',
+      at: {
+        anchor: {
+          path: [{_key: beforeBlockKey}, 'children', {_key: beforeSpanKey}],
+          offset: 0,
+        },
+        focus: {path: [{_key: calloutKey}], offset: 0},
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          children: [
+            {_type: 'span', _key: 'k1', text: 'replacement', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'callout',
+          _key: 'k2',
+          content: [
+            {
+              _type: 'block',
+              _key: 'k3',
+              children: [
+                {_type: 'span', _key: 'k4', text: 'inside', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ])
+    })
+  })
+
+  test('Scenario: placement=auto with selection across two separate containers', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const calloutAKey = keyGenerator()
+    const innerBlockAKey = keyGenerator()
+    const innerSpanAKey = keyGenerator()
+    const calloutBKey = keyGenerator()
+    const innerBlockBKey = keyGenerator()
+    const innerSpanBKey = keyGenerator()
+
+    const schemaDefinition = defineSchema({
+      blockObjects: [
+        {
+          name: 'callout',
+          fields: [{name: 'content', type: 'array', of: [{type: 'block'}]}],
+        },
+      ],
+    })
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: calloutAKey,
+          content: [
+            {
+              _type: 'block',
+              _key: innerBlockAKey,
+              children: [
+                {
+                  _type: 'span',
+                  _key: innerSpanAKey,
+                  text: 'one two',
+                  marks: [],
+                },
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+        {
+          _type: 'callout',
+          _key: calloutBKey,
+          content: [
+            {
+              _type: 'block',
+              _key: innerBlockBKey,
+              children: [
+                {
+                  _type: 'span',
+                  _key: innerSpanBKey,
+                  text: 'three four',
+                  marks: [],
+                },
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: (
+        <ContainerPlugin
+          containers={[
+            defineContainer<typeof schemaDefinition>({
+              scope: '$..callout',
+              field: 'content',
+              render: ({attributes, children}) => (
+                <div {...attributes}>{children}</div>
+              ),
+            }),
+          ]}
+        />
+      ),
+    })
+
+    editor.send({
+      type: 'insert.block',
+      block: {
+        _type: 'block',
+        children: [{_type: 'span', text: 'merged'}],
+      },
+      placement: 'auto',
+      at: {
+        anchor: {
+          path: [
+            {_key: calloutAKey},
+            'content',
+            {_key: innerBlockAKey},
+            'children',
+            {_key: innerSpanAKey},
+          ],
+          offset: 4,
+        },
+        focus: {
+          path: [
+            {_key: calloutBKey},
+            'content',
+            {_key: innerBlockBKey},
+            'children',
+            {_key: innerSpanBKey},
+          ],
+          offset: 6,
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: calloutAKey,
+          content: [
+            {
+              _type: 'block',
+              _key: innerBlockAKey,
+              children: [
+                {
+                  _type: 'span',
+                  _key: innerSpanAKey,
+                  text: 'one merged',
+                  marks: [],
+                },
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+        {
+          _type: 'callout',
+          _key: calloutBKey,
+          content: [
+            {
+              _type: 'block',
+              _key: innerBlockBKey,
+              children: [
+                {
+                  _type: 'span',
+                  _key: innerSpanBKey,
+                  text: 'four',
+                  marks: [],
+                },
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ])
     })
   })
 })

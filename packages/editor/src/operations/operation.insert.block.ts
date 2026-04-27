@@ -1,8 +1,8 @@
 import {isSpan, isTextBlock} from '@portabletext/schema'
 import {applyInsertNodeAtPath} from '../internal-utils/apply-insert-node'
-import {applyMergeNode} from '../internal-utils/apply-merge-node'
 import {applySelect, resolveSelection} from '../internal-utils/apply-selection'
 import {applySplitNode} from '../internal-utils/apply-split-node'
+import {deleteRange} from '../internal-utils/delete-range'
 import {isEqualChildren, isEqualMarks} from '../internal-utils/equality'
 import {safeStringify} from '../internal-utils/safe-json'
 import {setNodeProperties} from '../internal-utils/set-node-properties'
@@ -69,9 +69,21 @@ export const insertBlockOperationImplementation: OperationImplementation<
 
   const block = toSlateBlock(parsedBlock, {schemaTypes: context.schema})
   const editor = operation.editor
-  const at = operation.at
+  // When `placement` is `before` or `after`, the caller has already chosen
+  // where the new block should land. Resolving `operation.at` would descend
+  // block-level paths to leaves, which `findContainingBlock` then walks back
+  // up, losing the caller's intent to anchor at a specific block. We still
+  // use `resolveSelection` to detect unresolvable `at` values (referenced
+  // block was removed) so we can fall back to the editor selection, which
+  // matches the behavior expected by `insert.blocks`-style chained inserts
+  // where a previous block in the chain may have been aborted.
+  const resolved = operation.at
     ? resolveSelection(editor, operation.at)
     : editor.selection
+  const at =
+    resolved && operation.at && operation.placement !== 'auto'
+      ? operation.at
+      : resolved
 
   const target = resolveTarget({
     editor,
@@ -469,26 +481,6 @@ function mergeTextBlockFragment(args: {
 }
 
 /**
- * Delete the contents of an expanded range. Handles same-block and
- * cross-block ranges. Leaves the editor selection collapsed at the range
- * start.
- */
-function deleteRange(editor: PortableTextSlateEditor, range: Range): void {
-  const [start, end] = rangeEdges(range, {}, editor)
-
-  const sameRootBlock =
-    isKeyedSegment(start.path[0]!) && isKeyedSegment(end.path[0]!)
-      ? start.path[0]!._key === end.path[0]!._key
-      : start.path[0] === end.path[0]
-
-  if (sameRootBlock) {
-    deleteSameBlockRange(editor, start, end)
-  } else {
-    deleteCrossBlockRange(editor, start, end)
-  }
-}
-
-/**
  * Apply the appropriate selection after a block has been inserted at
  * insertedBlockPath. For select === 'none', restores the selection that was
  * active when the operation started.
@@ -812,211 +804,4 @@ function insertFragmentChildren(
   }
 
   return firstInsertedKey
-}
-
-// ---------------------------------------------------------------------------
-// Range-delete helpers (depth-2 assumptions; kept as-is, out of scope for
-// this refactor).
-// ---------------------------------------------------------------------------
-
-function deleteSameBlockRange(
-  editor: PortableTextSlateEditor,
-  start: Point,
-  end: Point,
-) {
-  const blockPath: Path = [start.path[0]!]
-
-  if (pathEquals(start.path, end.path)) {
-    const textEntry = getSpanNode(editor, start.path)
-    if (!textEntry) {
-      return
-    }
-    const textToRemove = textEntry.node.text.slice(start.offset, end.offset)
-    editor.apply({
-      type: 'remove_text',
-      path: start.path,
-      offset: start.offset,
-      text: textToRemove,
-    })
-    return
-  }
-
-  const startNodeEntry = getSpanNode(editor, start.path)
-  if (startNodeEntry && start.offset < startNodeEntry.node.text.length) {
-    const textToRemove = startNodeEntry.node.text.slice(start.offset)
-    editor.apply({
-      type: 'remove_text',
-      path: start.path,
-      offset: start.offset,
-      text: textToRemove,
-    })
-  }
-
-  const blockEntry = getTextBlockNode(editor, blockPath)
-  if (blockEntry) {
-    const startChildIndex = resolveChildIndex(
-      blockEntry.node.children,
-      start.path[2]!,
-    )
-    const endChildIndex = resolveChildIndex(
-      blockEntry.node.children,
-      end.path[2]!,
-    )
-    for (let i = endChildIndex - 1; i > startChildIndex; i--) {
-      removeNodeAt(editor, [
-        ...blockPath,
-        'children',
-        {_key: blockEntry.node.children[i]!._key},
-      ])
-    }
-  }
-
-  const endNodeSibling = getSibling(editor, start.path, 'next')
-  const newEndPath: Path = endNodeSibling ? endNodeSibling.path : start.path
-  const endNodeEntry = getSpanNode(editor, newEndPath)
-  if (endNodeEntry && end.offset > 0) {
-    const textToRemove = endNodeEntry.node.text.slice(0, end.offset)
-    editor.apply({
-      type: 'remove_text',
-      path: newEndPath,
-      offset: 0,
-      text: textToRemove,
-    })
-  }
-
-  const startNodeAfterEntry = getSpanNode(editor, start.path)
-  const endNodeAfterEntry = getSpanNode(editor, newEndPath)
-  if (startNodeAfterEntry && endNodeAfterEntry) {
-    applyMergeNode(editor, newEndPath, startNodeAfterEntry.node.text.length)
-  }
-}
-
-function deleteCrossBlockRange(
-  editor: PortableTextSlateEditor,
-  start: Point,
-  end: Point,
-) {
-  const startBlockPath: Path = [start.path[0]!]
-
-  if (start.path.length > 1) {
-    const startNodeEntry = getSpanNode(editor, start.path)
-    if (startNodeEntry && start.offset < startNodeEntry.node.text.length) {
-      const textToRemove = startNodeEntry.node.text.slice(start.offset)
-      editor.apply({
-        type: 'remove_text',
-        path: start.path,
-        offset: start.offset,
-        text: textToRemove,
-      })
-    }
-
-    const startBlockEntry = getTextBlockNode(editor, startBlockPath)
-    if (startBlockEntry) {
-      const startChildIndex = resolveChildIndex(
-        startBlockEntry.node.children,
-        start.path[2]!,
-      )
-      for (
-        let i = startBlockEntry.node.children.length - 1;
-        i > startChildIndex;
-        i--
-      ) {
-        removeNodeAt(editor, [
-          ...startBlockPath,
-          'children',
-          {_key: startBlockEntry.node.children[i]!._key},
-        ])
-      }
-    }
-  }
-
-  const startBlockKey = isKeyedSegment(start.path[0]!)
-    ? start.path[0]!._key
-    : undefined
-  const endBlockKey = isKeyedSegment(end.path[0]!)
-    ? end.path[0]!._key
-    : undefined
-  if (startBlockKey && endBlockKey) {
-    const startIdx = editor.children.findIndex((b) => b._key === startBlockKey)
-    const endIdx = editor.children.findIndex((b) => b._key === endBlockKey)
-    for (let i = endIdx - 1; i > startIdx; i--) {
-      removeNodeAt(editor, [{_key: editor.children[i]!._key}])
-    }
-  }
-
-  const endBlockSibling = getSibling(editor, startBlockPath, 'next')
-  const adjustedEndBlockPath: Path = endBlockSibling
-    ? endBlockSibling.path
-    : startBlockPath
-  if (end.path.length > 1) {
-    const endBlockNodeEntry = getTextBlockNode(editor, adjustedEndBlockPath)
-    if (endBlockNodeEntry) {
-      const endChildIndex = resolveChildIndex(
-        endBlockNodeEntry.node.children,
-        end.path[2]!,
-      )
-      for (let i = 0; i < endChildIndex; i++) {
-        const firstChild = getTextBlockNode(editor, adjustedEndBlockPath)?.node
-          .children[0]
-        if (firstChild) {
-          removeNodeAt(editor, [
-            ...adjustedEndBlockPath,
-            'children',
-            {_key: firstChild._key},
-          ])
-        }
-      }
-    }
-
-    const endBlockRefetched = getTextBlockNode(editor, adjustedEndBlockPath)
-    const firstChild = endBlockRefetched?.node.children[0]
-    const endNodePath = firstChild
-      ? [...adjustedEndBlockPath, 'children', {_key: firstChild._key}]
-      : [...adjustedEndBlockPath, 'children', 0]
-    const endNodeEntry = getSpanNode(editor, endNodePath)
-    if (endNodeEntry && end.offset > 0) {
-      const textToRemove = endNodeEntry.node.text.slice(0, end.offset)
-      editor.apply({
-        type: 'remove_text',
-        path: endNodePath,
-        offset: 0,
-        text: textToRemove,
-      })
-    }
-  }
-
-  const startBlockEntry = getTextBlockNode(editor, startBlockPath)
-  const endBlockEntry = getTextBlockNode(editor, adjustedEndBlockPath)
-  if (startBlockEntry && endBlockEntry) {
-    const startBlockNode = startBlockEntry.node
-    const endBlockNode = endBlockEntry.node
-    if (
-      Array.isArray(endBlockNode.markDefs) &&
-      endBlockNode.markDefs.length > 0
-    ) {
-      const oldDefs =
-        (Array.isArray(startBlockNode.markDefs) && startBlockNode.markDefs) ||
-        []
-      const newMarkDefs = [
-        ...new Map(
-          [...oldDefs, ...endBlockNode.markDefs].map((def) => [def._key, def]),
-        ).values(),
-      ]
-      setNodeProperties(editor, {markDefs: newMarkDefs}, startBlockPath)
-    }
-    applyMergeNode(editor, adjustedEndBlockPath, startBlockNode.children.length)
-  }
-}
-
-function removeNodeAt(editor: PortableTextSlateEditor, path: Path) {
-  const nodeEntry = getNode(editor, path)
-
-  if (!nodeEntry) {
-    return
-  }
-
-  editor.apply({
-    type: 'unset',
-    path: nodeEntry.path,
-  })
 }
