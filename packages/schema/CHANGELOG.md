@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.2.0
+
+### Minor Changes
+
+- [#2529](https://github.com/portabletext/editor/pull/2529) [`239e100`](https://github.com/portabletext/editor/commit/239e100b1760c0f20fdeefa659bd8c81c749d7a7) Thanks [@christianhg](https://github.com/christianhg)! - feat: resolve nested block sub-schemas at compile time
+
 ## 2.1.1
 
 ### Patch Changes

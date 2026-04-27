@@ -1,5 +1,12 @@
 # @portabletext/html
 
+## 1.0.2
+
+### Patch Changes
+
+- Updated dependencies [[`239e100`](https://github.com/portabletext/editor/commit/239e100b1760c0f20fdeefa659bd8c81c749d7a7)]:
+  - @portabletext/schema@2.2.0
+
 ## 1.0.1
 
 ### Patch Changes

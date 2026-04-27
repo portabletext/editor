@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.0.6
+
+### Patch Changes
+
+- [#2488](https://github.com/portabletext/editor/pull/2488) [`4509d34`](https://github.com/portabletext/editor/commit/4509d34ace2fe5989358932212fd207f5326bbb9) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update dependency @jest/globals to ^30.3.0
+
+- [#2489](https://github.com/portabletext/editor/pull/2489) [`f7b0942`](https://github.com/portabletext/editor/commit/f7b09423a7f489bf256de483b258193420ad9da6) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update dependency @playwright/test to ^1.59.1
+
 ## 2.0.5
 
 ### Patch Changes

@@ -1,5 +1,130 @@
 # Changelog
 
+## 7.0.0
+
+### Major Changes
+
+- [#2536](https://github.com/portabletext/editor/pull/2536) [`6d7f965`](https://github.com/portabletext/editor/commit/6d7f9655019a4b7e225363a012310feec1c33c34) Thanks [@christianhg](https://github.com/christianhg)! - fix!: widen `BlockPath`, `ChildPath`, and `AnnotationPath` to `Path`
+
+  These three types are now aliases for `Path`, the general recursive path type, so blocks, children, and annotations can live inside editable containers at any depth. The widening cascades into every event whose `at` field accepted one of the narrow aliases (`block.set`, `block.unset`, `child.set`, `child.unset`, `delete.block`, `delete.child`, `annotation.set`, `move.block`, `move.block up`, `move.block down`, `select.block`). Consumers that destructured positional segments (e.g. `path[0]._key`) must use `path.at(-1)` for a `BlockPath` (the block key sits at the end) or `path.at(-3)` for an `AnnotationPath`, each with a `KeyedSegment` guard, or reach for traversal utilities.
+
+### Minor Changes
+
+- [#2542](https://github.com/portabletext/editor/pull/2542) [`be355f4`](https://github.com/portabletext/editor/commit/be355f49600bb7dd5e01a0b3a88ae6ac21693212) Thanks [@christianhg](https://github.com/christianhg)! - feat: make selectors container-aware
+
+  Selectors that previously used `blockIndexMap` to resolve paths at the root level now compose node-traversal primitives so they resolve at any container depth. Selection points and paths inside editable containers are handled the same way as root-level points: a path inside a callout's text block, a code-block's line, or a table cell now flows through every selector without special casing.
+
+  Selectors covered: `getActiveAnnotations`, `getActiveDecorators`, `getAnchorBlock`, `getAnchorChild`, `getAnchorSpan`, `getAnchorTextBlock`, `getFirstBlock`, `getFocusBlock`, `getFocusBlockObject`, `getFocusChild`, `getFocusInlineObject`, `getFocusListBlock`, `getFocusSpan`, `getFocusTextBlock`, `getLastBlock`, `getMarkState`, `getNextBlock`, `getNextInlineObject`, `getNextInlineObjects`, `getNextSpan`, `getPreviousBlock`, `getPreviousInlineObject`, `getPreviousInlineObjects`, `getPreviousSpan`, `getSelectedChildren`, `getSelectedSpans`, `getSelectionEndBlock`, `getSelectionEndChild`, `getSelectionStartBlock`, `getSelectionStartChild`, `getSelectionText`, `getTextAfter`, `getTextBefore`, `isOverlappingSelection`.
+
+- [#2546](https://github.com/portabletext/editor/pull/2546) [`1ac7dc3`](https://github.com/portabletext/editor/commit/1ac7dc3d9ceed7ed0826e79b1663ae5849fc5aae) Thanks [@christianhg](https://github.com/christianhg)! - feat: make engine internals container-aware
+
+- [#2462](https://github.com/portabletext/editor/pull/2462) [`8ec6b97`](https://github.com/portabletext/editor/commit/8ec6b973bcb762474aa399c47a2a9f023477331e) Thanks [@christianhg](https://github.com/christianhg)! - feat: use keyed paths internally
+
+  The editor now uses key-based paths internally instead of positional
+  indices. Nodes are identified by their `_key` rather than their position
+  in the tree, making paths stable across concurrent edits. This is a
+  prerequisite for nested editable containers (tables, callouts) and
+  aligns the editor's internal model with the Sanity patch protocol.
+
+  No changes to the public API.
+
+- [#2479](https://github.com/portabletext/editor/pull/2479) [`3a75130`](https://github.com/portabletext/editor/commit/3a751303abb39a12f4f83b9d8fdbd738405a2ee3) Thanks [@christianhg](https://github.com/christianhg)! - fix: avoid internal editor selection conversion
+
+### Patch Changes
+
+- [#2522](https://github.com/portabletext/editor/pull/2522) [`9ee7aed`](https://github.com/portabletext/editor/commit/9ee7aed618a22e34bf28638e9a50ba523b4db8ba) Thanks [@christianhg](https://github.com/christianhg)! - fix: let arrow keys and character delete navigate inside editable containers
+
+- [#2520](https://github.com/portabletext/editor/pull/2520) [`63c123d`](https://github.com/portabletext/editor/commit/63c123d533fe97e1f6ad6ceceef44fea60ca7991) Thanks [@christianhg](https://github.com/christianhg)! - fix: emit `diffMatchPatch` patches when typing inside a container
+
+- [#2494](https://github.com/portabletext/editor/pull/2494) [`7d1ab61`](https://github.com/portabletext/editor/commit/7d1ab617fbdbd9b6c86d8976af0cf9163f4f6d5f) Thanks [@christianhg](https://github.com/christianhg)! - fix: make `diffMatchPatch` container-aware
+
+  Incoming `diffMatchPatch` patches now resolve the target span at any depth using the full path, instead of assuming a root-level block with a `children` field at depth 2.
+
+- [#2539](https://github.com/portabletext/editor/pull/2539) [`cfdc5c3`](https://github.com/portabletext/editor/commit/cfdc5c397a9091b05678527ac9520bcd262267a0) Thanks [@christianhg](https://github.com/christianhg)! - fix: make `getSelectedValue` and `getSelectedTextBlocks` container-aware
+
+- [#2481](https://github.com/portabletext/editor/pull/2481) [`3201611`](https://github.com/portabletext/editor/commit/3201611d1af144cdf51f7df72f6783dcf7e034a4) Thanks [@christianhg](https://github.com/christianhg)! - feat: support container normalization
+
+- [#2536](https://github.com/portabletext/editor/pull/2536) [`27aff19`](https://github.com/portabletext/editor/commit/27aff19b6d14f49eee24f5d8419e786a972375c4) Thanks [@christianhg](https://github.com/christianhg)! - feat: add `containers` to editor context
+
+  Adds the `@alpha` `EditorContext.containers` field and container-aware node-traversal and schema helpers. Internal groundwork for depth-agnostic selectors, behaviors, operations, and rendering. No consumer-visible change.
+
+- [#2496](https://github.com/portabletext/editor/pull/2496) [`0bed144`](https://github.com/portabletext/editor/commit/0bed144e5ed35d42df21236818325b89bf1977ee) Thanks [@christianhg](https://github.com/christianhg)! - fix: rename internal `editableTypes` to `containers`
+
+- [#2543](https://github.com/portabletext/editor/pull/2543) [`54f47c4`](https://github.com/portabletext/editor/commit/54f47c4661848595119414176787703d097fb23f) Thanks [@christianhg](https://github.com/christianhg)! - fix: unify range-delete across container boundaries
+
+- [#2484](https://github.com/portabletext/editor/pull/2484) [`18876ca`](https://github.com/portabletext/editor/commit/18876caecca1f3e7c12d289e53d5665236888caf) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update react monorepo
+
+- [#2491](https://github.com/portabletext/editor/pull/2491) [`56edded`](https://github.com/portabletext/editor/commit/56edded088ab9174e1002fc9701929ac6e2900a0) Thanks [@christianhg](https://github.com/christianhg)! - fix: resolve dirty path after `_key` unset
+
+  When `_key` is unset on a node, the dirty path still references the old keyed segment which no longer resolves. The dirty path system now scans siblings for the keyless node and substitutes a numeric index.
+
+- [#2490](https://github.com/portabletext/editor/pull/2490) [`858cede`](https://github.com/portabletext/editor/commit/858cedeff10b6886aef324816be3240866297b75) Thanks [@christianhg](https://github.com/christianhg)! - fix: change `editableTypes` from `Set` to `Map` with resolved field objects
+
+- [#2476](https://github.com/portabletext/editor/pull/2476) [`80a648a`](https://github.com/portabletext/editor/commit/80a648a2326a33bc03b0ada49403d0f6419ecd03) Thanks [@christianhg](https://github.com/christianhg)! - fix: make outgoing `set` patches depth-agnostic
+
+- [#2499](https://github.com/portabletext/editor/pull/2499) [`1206b17`](https://github.com/portabletext/editor/commit/1206b17a66a4611c55ba8b6750db8bdd4efd5c34) Thanks [@christianhg](https://github.com/christianhg)! - fix: preserve cursor offset inside editable containers
+
+- [#2507](https://github.com/portabletext/editor/pull/2507) [`3c51fe4`](https://github.com/portabletext/editor/commit/3c51fe425442b268721b1f9399acf8a4d8eb85ba) Thanks [@christianhg](https://github.com/christianhg)! - fix: use `blockIndexMap` for O(1) root-level path comparisons in `getNodes`
+
+- [#2514](https://github.com/portabletext/editor/pull/2514) [`3a7f607`](https://github.com/portabletext/editor/commit/3a7f60728f8c97d9b31290c86114ed4a8d4b1f48) Thanks [@christianhg](https://github.com/christianhg)! - fix: make `insert.block` depth-agnostic
+
+- [#2504](https://github.com/portabletext/editor/pull/2504) [`4257462`](https://github.com/portabletext/editor/commit/425746256677d66b207a933e48bbc2c7023fde76) Thanks [@christianhg](https://github.com/christianhg)! - fix: introduce `isVoidNode` for container-aware void checks
+
+  Adds an `isVoidNode` function that checks whether a node is a void (non-editable) object node. This replaces `isObjectNode` at call sites that treat object nodes as atomic/opaque, which is incorrect for editable containers. `isVoidNode` composes `isObjectNode` with `isEditableContainer` to distinguish void objects from containers with editable content.
+
+- [#2502](https://github.com/portabletext/editor/pull/2502) [`9ef0d83`](https://github.com/portabletext/editor/commit/9ef0d83b61f2bb07b5e375016478b4cbf491e23b) Thanks [@christianhg](https://github.com/christianhg)! - fix: guard debug calls to avoid eager serialization
+
+- [#2527](https://github.com/portabletext/editor/pull/2527) [`6420b47`](https://github.com/portabletext/editor/commit/6420b47413892de1e6bb6221f5a4d22bd9c1100e) Thanks [@christianhg](https://github.com/christianhg)! - fix: merge container field normalization into a single pass
+
+- [#2491](https://github.com/portabletext/editor/pull/2491) [`f06e37d`](https://github.com/portabletext/editor/commit/f06e37d605aab6e4a5b2f81195528ed21273b487) Thanks [@christianhg](https://github.com/christianhg)! - fix: normalize missing `_type` on all nodes
+
+  Previously only root-level blocks had `_type` restored. Now any node missing `_type` gets normalized: children of text blocks default to the span type, everything else defaults to the text block type.
+
+- [#2491](https://github.com/portabletext/editor/pull/2491) [`b6816f3`](https://github.com/portabletext/editor/commit/b6816f3a595f9ae03c47196e566861c11c5e71ac) Thanks [@christianhg](https://github.com/christianhg)! - fix: replace `set_node` with primitive `set` and `unset` operations
+
+  Replace the Slate `set_node` operation with two primitive operations: `set` and `unset`. Each targets a single property at a path like `[...nodePath, propertyName]` and carries its own inverse for undo. Because each operation maps 1:1 to a Sanity patch, the translation layer collapses.
+
+- [#2498](https://github.com/portabletext/editor/pull/2498) [`9978bb8`](https://github.com/portabletext/editor/commit/9978bb8f8bd25dee9a7c6a0b90266cd4f2359157) Thanks [@christianhg](https://github.com/christianhg)! - fix: add internal `defineContainer` API for declaring content depth
+
+- [#2535](https://github.com/portabletext/editor/pull/2535) [`fbdb9b4`](https://github.com/portabletext/editor/commit/fbdb9b4adb88437dff6555d5efa58b5ecf50cfdc) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove dead mark placeholder machinery
+
+- [#2510](https://github.com/portabletext/editor/pull/2510) [`5feaf90`](https://github.com/portabletext/editor/commit/5feaf90278490d0934b591206d3390414e9be571) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove unused internal APIs
+
+- [#2505](https://github.com/portabletext/editor/pull/2505) [`21748a1`](https://github.com/portabletext/editor/commit/21748a161790b24dcde2f6e6de4a050240b96ec8) Thanks [@christianhg](https://github.com/christianhg)! - fix: read schema from editor instead of actor selector
+
+- [#2508](https://github.com/portabletext/editor/pull/2508) [`29ae834`](https://github.com/portabletext/editor/commit/29ae834b4a043ed4efe7130e58b3ada375f20779) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove unused internal placeholder logic
+
+- [#2509](https://github.com/portabletext/editor/pull/2509) [`8e69df7`](https://github.com/portabletext/editor/commit/8e69df7500faa072dcf6bc34c9a5724055f3398f) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove unused internal APIs
+
+- [#2493](https://github.com/portabletext/editor/pull/2493) [`e365150`](https://github.com/portabletext/editor/commit/e36515014c70337c35ec167a03bed78710632304) Thanks [@christianhg](https://github.com/christianhg)! - fix: rename `insert_node` to `insert` and merge `remove_node` into `unset`
+
+  The internal `insert_node` operation is now `insert`. The `remove_node` operation is merged into `unset`, where the path points to the node to remove (last segment is a keyed segment). Both `insert` and node-removal `unset` carry inverse data computed in the apply layer for undo support.
+
+- [#2504](https://github.com/portabletext/editor/pull/2504) [`9994531`](https://github.com/portabletext/editor/commit/99945317ff29ea523f71e5c2c9e32a3134e2f0d5) Thanks [@christianhg](https://github.com/christianhg)! - fix: use keyed paths in the rendering pipeline
+
+- [#2539](https://github.com/portabletext/editor/pull/2539) [`3f5f45e`](https://github.com/portabletext/editor/commit/3f5f45e3cc822e87a40edcb56402cb91a9dbe4d9) Thanks [@christianhg](https://github.com/christianhg)! - fix: make `getSelectedChildren` and `getSelectedSpans` container-aware
+
+- [#2513](https://github.com/portabletext/editor/pull/2513) [`28c2eef`](https://github.com/portabletext/editor/commit/28c2eef89c94af6912194f684899b25717489e7a) Thanks [@christianhg](https://github.com/christianhg)! - fix: make selection state depth-agnostic
+
+- [#2530](https://github.com/portabletext/editor/pull/2530) [`8dc0472`](https://github.com/portabletext/editor/commit/8dc0472a682d395828426720278e45877390f54c) Thanks [@christianhg](https://github.com/christianhg)! - fix: add `siblingPath` util and use it in `insert.block` operation
+
+- [#2527](https://github.com/portabletext/editor/pull/2527) [`1c91aa2`](https://github.com/portabletext/editor/commit/1c91aa237dc4c552ad09cc8b7baa1e061edbf023) Thanks [@christianhg](https://github.com/christianhg)! - fix: skip rebuilding index maps for nested operations
+
+- [#2491](https://github.com/portabletext/editor/pull/2491) [`1b305c2`](https://github.com/portabletext/editor/commit/1b305c26961eaf40ae8dbe8219188668bbd9d8ea) Thanks [@christianhg](https://github.com/christianhg)! - fix: strip reserved property guards from incoming patches
+
+  `_key`, `_type`, `children`, and `text` were previously blocked from being set or unset via incoming patches. These guards are removed. The patch goes through and normalization restores valid state if needed.
+
+- [#2525](https://github.com/portabletext/editor/pull/2525) [`fd73b6e`](https://github.com/portabletext/editor/commit/fd73b6e654fa101273caec75967ddf99cef1f089) Thanks [@christianhg](https://github.com/christianhg)! - fix: emit well-formed patches when undoing a merge
+
+- [#2483](https://github.com/portabletext/editor/pull/2483) [`1f4dbd1`](https://github.com/portabletext/editor/commit/1f4dbd115381b4a63dcc6af7ca97828cdeb147da) Thanks [@christianhg](https://github.com/christianhg)! - fix: unify internal selection normalization
+
+- [#2478](https://github.com/portabletext/editor/pull/2478) [`7aaab06`](https://github.com/portabletext/editor/commit/7aaab06105bfcaad44df6dcea7b45af28e9177c1) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove redundant equality function
+
+- Updated dependencies [[`239e100`](https://github.com/portabletext/editor/commit/239e100b1760c0f20fdeefa659bd8c81c749d7a7)]:
+  - @portabletext/schema@2.2.0
+  - @portabletext/html@1.0.2
+  - @portabletext/markdown@1.2.1
+
 ## 6.6.2
 
 ### Patch Changes
