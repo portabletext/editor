@@ -427,5 +427,24 @@ function convertSelection(
     return null
   }
 
+  // PTE represents a selected block object as a collapsed selection at
+  // offset 0 of the block's path. Textspec represents it as a range from
+  // offset 0 to offset 1. Translate when both points resolve to the same
+  // path of a non-text block.
+  if (
+    anchor.offset === 0 &&
+    focus.offset === 0 &&
+    anchor.path.length === 1 &&
+    focus.path.length === 1 &&
+    anchor.path[0] === focus.path[0]
+  ) {
+    const blockIndex = anchor.path[0]
+    const block = blockIndex !== undefined ? blocks[blockIndex] : undefined
+
+    if (block && !isTextBlock({schema}, block)) {
+      return {anchor, focus: {path: focus.path, offset: 1}}
+    }
+  }
+
   return {anchor, focus}
 }

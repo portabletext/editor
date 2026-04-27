@@ -763,18 +763,28 @@ function convertSelectionToPTE(
     return null
   }
 
-  const anchor = resolvePointToPTE(
-    schema,
-    containers,
-    blocks,
-    state.selection.anchor,
-  )
-  const focus = resolvePointToPTE(
-    schema,
-    containers,
-    blocks,
-    state.selection.focus,
-  )
+  // Textspec represents a selected block object as a range from offset 0
+  // to offset 1 on a non-text block. PTE represents it as a collapsed
+  // selection at offset 0. Translate when the textspec selection points
+  // resolve to the same path of a non-text block.
+  let {anchor: anchorPoint, focus: focusPoint} = state.selection
+  if (
+    anchorPoint.offset === 0 &&
+    focusPoint.offset === 1 &&
+    anchorPoint.path.length === 1 &&
+    focusPoint.path.length === 1 &&
+    anchorPoint.path[0] === focusPoint.path[0]
+  ) {
+    const blockIndex = anchorPoint.path[0]
+    const block = blockIndex !== undefined ? blocks[blockIndex] : undefined
+
+    if (block && !isTextBlock({schema}, block)) {
+      focusPoint = {path: focusPoint.path, offset: 0}
+    }
+  }
+
+  const anchor = resolvePointToPTE(schema, containers, blocks, anchorPoint)
+  const focus = resolvePointToPTE(schema, containers, blocks, focusPoint)
 
   if (!anchor || !focus) {
     return null
