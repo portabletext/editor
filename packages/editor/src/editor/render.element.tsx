@@ -22,6 +22,7 @@ import type {EditorSchema} from './editor-schema'
 import {RenderBlockObject} from './render.block-object'
 import {RenderContainer} from './render.container'
 import {RenderInlineObject} from './render.inline-object'
+import {useLeafConfig} from './render.leaf-config'
 import {RenderTextBlock} from './render.text-block'
 
 export function RenderElement(props: {
@@ -51,6 +52,8 @@ export function RenderElement(props: {
     state.context.containers.get(scopedTypeName),
   )
 
+  const leafConfig = useLeafConfig(props.element, props.path)
+
   if (containerConfig) {
     return (
       <RenderContainer
@@ -64,6 +67,14 @@ export function RenderElement(props: {
   }
 
   if (isTextBlock({schema}, props.element)) {
+    if (containerScope) {
+      const {'data-slate-node': _sn, ...rest} = props.attributes
+      return (
+        <div {...rest} data-block-type="text">
+          {props.children}
+        </div>
+      )
+    }
     return (
       <RenderTextBlock
         attributes={props.attributes}
@@ -88,10 +99,28 @@ export function RenderElement(props: {
   }
 
   if (isInline(slateStatic, props.path)) {
+    if (containerScope && !leafConfig) {
+      const {
+        'data-slate-node': _sn,
+        'data-slate-inline': _si,
+        'data-slate-void': _sv,
+        'contentEditable': _ce,
+        ...rest
+      } = props.attributes
+      return (
+        <span {...rest} data-child-type="object">
+          {props.children}
+          <span contentEditable={false}>
+            [{props.element._type}: {props.element._key}]
+          </span>
+        </span>
+      )
+    }
     return (
       <RenderInlineObject
         attributes={props.attributes}
         element={props.element}
+        leafConfig={leafConfig}
         path={props.path}
         readOnly={props.readOnly}
         renderChild={props.renderChild}
@@ -99,6 +128,22 @@ export function RenderElement(props: {
       >
         {props.children}
       </RenderInlineObject>
+    )
+  }
+
+  if (containerScope && !leafConfig) {
+    const {
+      'data-slate-node': _sn,
+      'data-slate-void': _sv,
+      ...rest
+    } = props.attributes
+    return (
+      <div {...rest} data-block-type="object">
+        {props.children}
+        <div contentEditable={false}>
+          [{props.element._type}: {props.element._key}]
+        </div>
+      </div>
     )
   }
 
@@ -112,6 +157,7 @@ export function RenderElement(props: {
           : undefined
       }
       element={props.element}
+      leafConfig={leafConfig}
       path={props.path}
       readOnly={props.readOnly}
       renderBlock={props.renderBlock}

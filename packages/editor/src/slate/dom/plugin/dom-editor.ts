@@ -347,7 +347,9 @@ export const DOMEditor: DOMEditorInterface = {
     }
 
     const el = isDOMElement(target) ? target : target.parentElement
-    return !!el?.closest('[data-slate-void]')
+    return !!el?.closest(
+      '[data-slate-void], [data-block-type="object"], [data-child-type="object"]',
+    )
   },
 
   toDOMPoint: (editor, point) => {
@@ -485,7 +487,9 @@ export const DOMEditor: DOMEditorInterface = {
         throw new Error('Cannot resolve a DOM node: editor is not mounted')
       }
 
-      const potentialVoidNode = parentNode.closest('[data-slate-void="true"]')
+      const potentialVoidNode = parentNode.closest(
+        '[data-slate-void="true"], [data-block-type="object"], [data-child-type="object"]',
+      )
       // Need to ensure that the closest void node is actually a void node
       // within this editor, and not a void node within some parent editor. This can happen
       // if this editor is within a void node of another editor ("nested editors", like in
@@ -508,7 +512,9 @@ export const DOMEditor: DOMEditorInterface = {
       // Calculate how far into the text node the `nearestNode` is, so that we
       // can determine what the offset relative to the text node is.
       if (leafNode) {
-        textNode = leafNode.closest('[data-slate-node="text"]')
+        textNode = leafNode.closest(
+          '[data-slate-node="text"], [data-child-type="span"]',
+        )
 
         if (textNode) {
           const window = DOMEditor.getWindow(editor)
@@ -571,7 +577,9 @@ export const DOMEditor: DOMEditorInterface = {
         if (!leafNode) {
           offset = 1
         } else {
-          textNode = leafNode.closest('[data-slate-node="text"]')!
+          textNode = leafNode.closest(
+            '[data-slate-node="text"], [data-child-type="span"]',
+          )!
           domNode = leafNode
           offset = domNode.textContent!.length
           domNode.querySelectorAll('[data-slate-zero-width]').forEach((el) => {
@@ -588,7 +596,7 @@ export const DOMEditor: DOMEditorInterface = {
               )
             : []
         const elementNode = nonEditableNode.closest(
-          '[data-slate-node="element"]',
+          '[data-slate-node="element"], [data-block-type="text"], [data-block-type="object"], [data-block-type="container"]',
         )
 
         if (searchDirection === 'backward' || !searchDirection) {
@@ -621,7 +629,9 @@ export const DOMEditor: DOMEditorInterface = {
         }
 
         if (leafNode) {
-          textNode = leafNode.closest('[data-slate-node="text"]')!
+          textNode = leafNode.closest(
+            '[data-slate-node="text"], [data-child-type="span"]',
+          )!
           domNode = leafNode
           if (searchDirection === 'forward') {
             offset = 0
@@ -660,9 +670,16 @@ export const DOMEditor: DOMEditorInterface = {
     }
 
     if (IS_ANDROID && !textNode && !exactMatch) {
-      const node = parentNode.hasAttribute('data-slate-node')
-        ? parentNode
-        : parentNode.closest('[data-slate-node]')
+      const node =
+        parentNode.hasAttribute('data-slate-node') ||
+        parentNode.getAttribute('data-block-type') === 'text' ||
+        parentNode.getAttribute('data-block-type') === 'object' ||
+        parentNode.getAttribute('data-block-type') === 'container' ||
+        parentNode.getAttribute('data-child-type') === 'span'
+          ? parentNode
+          : parentNode.closest(
+              '[data-slate-node], [data-block-type="text"], [data-block-type="object"], [data-block-type="container"], [data-child-type="span"]',
+            )
 
       if (node && DOMEditor.hasDOMNode(editor, node, {editable: true})) {
         const nodePath = getDomNodePath(node)
@@ -689,14 +706,17 @@ export const DOMEditor: DOMEditorInterface = {
     if (!textNode && parentNode) {
       if (
         nearestNode instanceof HTMLElement &&
-        nearestNode.hasAttribute('data-slate-node')
+        (nearestNode.hasAttribute('data-slate-node') ||
+          nearestNode.getAttribute('data-block-type') === 'container')
       ) {
         const childEl = nearestNode.childNodes[nearestOffset]
         if (
           childEl instanceof HTMLElement &&
           DOMEditor.hasDOMNode(editor, childEl)
         ) {
-          const voidEl = childEl.closest('[data-slate-void]')
+          const voidEl = childEl.closest(
+            '[data-slate-void], [data-block-type="object"], [data-child-type="object"]',
+          )
 
           if (voidEl) {
             const path = getDomNodePath(voidEl)
@@ -709,11 +729,20 @@ export const DOMEditor: DOMEditorInterface = {
       }
 
       const elementNode =
-        parentNode.closest('[data-slate-node="element"]') ??
-        (parentNode.hasAttribute('data-slate-node') ? parentNode : null)
+        parentNode.closest(
+          '[data-slate-node="element"], [data-block-type="text"], [data-block-type="object"], [data-block-type="container"]',
+        ) ??
+        (parentNode.hasAttribute('data-slate-node') ||
+        parentNode.getAttribute('data-block-type') === 'text' ||
+        parentNode.getAttribute('data-block-type') === 'object' ||
+        parentNode.getAttribute('data-block-type') === 'container'
+          ? parentNode
+          : null)
 
       if (elementNode && DOMEditor.hasDOMNode(editor, elementNode)) {
-        const voidEl = elementNode.closest('[data-slate-void]')
+        const voidEl = elementNode.closest(
+          '[data-slate-void], [data-block-type="object"], [data-child-type="object"]',
+        )
 
         if (voidEl) {
           const path = getDomNodePath(voidEl)

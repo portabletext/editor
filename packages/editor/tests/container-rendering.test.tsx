@@ -118,25 +118,18 @@ describe('container rendering', () => {
           '</div>',
           // callout container
           '<div data-testid="callout"',
-          ' data-slate-node="element"',
+          ' data-block-type="container"',
           ' data-pt-path="[_key==&quot;k2&quot;]"',
           '>',
           // inner text block
-          '<div data-slate-node="element"',
+          '<div',
           ' data-pt-path="[_key==&quot;k2&quot;].content[_key==&quot;content-block&quot;]"',
-          ' class="pt-block pt-text-block pt-text-block-style-normal"',
-          ' data-block-key="content-block"',
-          ' data-block-name="block"',
           ' data-block-type="text"',
-          ' data-style="normal"',
           '>',
           // inner text block wrapper
-          '<div>',
           // inner span
-          '<span data-slate-node="text"',
+          '<span',
           ' data-pt-path="[_key==&quot;k2&quot;].content[_key==&quot;content-block&quot;].children[_key==&quot;content-span&quot;]"',
-          ' data-child-key="content-span"',
-          ' data-child-name="span"',
           ' data-child-type="span"',
           '>',
           // inner leaf
@@ -146,7 +139,6 @@ describe('container rendering', () => {
           // /inner span
           '</span>',
           // /inner text block wrapper
-          '</div>',
           // /inner text block
           '</div>',
           // /callout container
@@ -345,36 +337,29 @@ describe('table with nested rows and cells', () => {
         [
           // table container
           '<table data-testid="table"',
-          ' data-slate-node="element"',
+          ' data-block-type="container"',
           ' data-pt-path="[_key==&quot;k0&quot;]"',
           '>',
           '<tbody>',
           // row container
           '<tr data-testid="row"',
-          ' data-slate-node="element"',
+          ' data-block-type="container"',
           ' data-pt-path="[_key==&quot;k0&quot;].rows[_key==&quot;row-0&quot;]"',
           '>',
           // cell container
           '<td data-testid="cell"',
-          ' data-slate-node="element"',
+          ' data-block-type="container"',
           ' data-pt-path="[_key==&quot;k0&quot;].rows[_key==&quot;row-0&quot;].cells[_key==&quot;cell-0&quot;]"',
           '>',
           // text block inside cell
-          '<div data-slate-node="element"',
+          '<div',
           ' data-pt-path="[_key==&quot;k0&quot;].rows[_key==&quot;row-0&quot;].cells[_key==&quot;cell-0&quot;].content[_key==&quot;block-0&quot;]"',
-          ' class="pt-block pt-text-block pt-text-block-style-normal"',
-          ' data-block-key="block-0"',
-          ' data-block-name="block"',
           ' data-block-type="text"',
-          ' data-style="normal"',
           '>',
           // text block inner wrapper
-          '<div>',
           // span
-          '<span data-slate-node="text"',
+          '<span',
           ' data-pt-path="[_key==&quot;k0&quot;].rows[_key==&quot;row-0&quot;].cells[_key==&quot;cell-0&quot;].content[_key==&quot;block-0&quot;].children[_key==&quot;span-0&quot;]"',
-          ' data-child-key="span-0"',
-          ' data-child-name="span"',
           ' data-child-type="span"',
           '>',
           // leaf
@@ -384,7 +369,6 @@ describe('table with nested rows and cells', () => {
           // /span
           '</span>',
           // /text block inner wrapper
-          '</div>',
           // /text block inside cell
           '</div>',
           // /cell container
@@ -472,25 +456,18 @@ describe('container with non-editable fields', () => {
         [
           // card container
           '<div data-testid="card"',
-          ' data-slate-node="element"',
+          ' data-block-type="container"',
           ' data-pt-path="[_key==&quot;k0&quot;]"',
           '>',
           // body text block
-          '<div data-slate-node="element"',
+          '<div',
           ' data-pt-path="[_key==&quot;k0&quot;].body[_key==&quot;body-block&quot;]"',
-          ' class="pt-block pt-text-block pt-text-block-style-normal"',
-          ' data-block-key="body-block"',
-          ' data-block-name="block"',
           ' data-block-type="text"',
-          ' data-style="normal"',
           '>',
           // body text block inner wrapper
-          '<div>',
           // body span
-          '<span data-slate-node="text"',
+          '<span',
           ' data-pt-path="[_key==&quot;k0&quot;].body[_key==&quot;body-block&quot;].children[_key==&quot;body-span&quot;]"',
-          ' data-child-key="body-span"',
-          ' data-child-name="span"',
           ' data-child-type="span"',
           '>',
           // body leaf
@@ -500,7 +477,6 @@ describe('container with non-editable fields', () => {
           // /body span
           '</span>',
           // /body text block inner wrapper
-          '</div>',
           // /body text block
           '</div>',
           // /card container (no tags in DOM)
@@ -771,25 +747,18 @@ describe('container and renderer independence', () => {
       expect(editorElement!.innerHTML).toEqual(
         [
           // callout default div wrapper
-          '<div data-slate-node="element"',
+          '<div data-block-type="container"',
           ' data-pt-path="[_key==&quot;k0&quot;]"',
           '>',
           // inner text block
-          '<div data-slate-node="element"',
+          '<div',
           ' data-pt-path="[_key==&quot;k0&quot;].content[_key==&quot;content-block&quot;]"',
-          ' class="pt-block pt-text-block pt-text-block-style-normal"',
-          ' data-block-key="content-block"',
-          ' data-block-name="block"',
           ' data-block-type="text"',
-          ' data-style="normal"',
           '>',
           // inner text block wrapper
-          '<div>',
           // inner span
-          '<span data-slate-node="text"',
+          '<span',
           ' data-pt-path="[_key==&quot;k0&quot;].content[_key==&quot;content-block&quot;].children[_key==&quot;content-span&quot;]"',
-          ' data-child-key="content-span"',
-          ' data-child-name="span"',
           ' data-child-type="span"',
           '>',
           // inner leaf
@@ -799,7 +768,6 @@ describe('container and renderer independence', () => {
           // /inner span
           '</span>',
           // /inner text block wrapper
-          '</div>',
           // /inner text block
           '</div>',
           // /callout default div wrapper
@@ -942,24 +910,17 @@ describe('code block container', () => {
         [
           // code-block container
           '<pre data-testid="code-block"',
-          ' data-slate-node="element"',
+          ' data-block-type="container"',
           ' data-pt-path="[_key==&quot;k0&quot;]"',
           '>',
           '<code>',
           // line 1 text block
-          '<div data-slate-node="element"',
+          '<div',
           ' data-pt-path="[_key==&quot;k0&quot;].code[_key==&quot;line-0&quot;]"',
-          ' class="pt-block pt-text-block pt-text-block-style-normal"',
-          ' data-block-key="line-0"',
-          ' data-block-name="block"',
           ' data-block-type="text"',
-          ' data-style="normal"',
           '>',
-          '<div>',
-          '<span data-slate-node="text"',
+          '<span',
           ' data-pt-path="[_key==&quot;k0&quot;].code[_key==&quot;line-0&quot;].children[_key==&quot;span-0&quot;]"',
-          ' data-child-key="span-0"',
-          ' data-child-name="span"',
           ' data-child-type="span"',
           '>',
           '<span data-slate-leaf="true">',
@@ -967,28 +928,19 @@ describe('code block container', () => {
           '</span>',
           '</span>',
           '</div>',
-          '</div>',
           // line 2 text block
-          '<div data-slate-node="element"',
+          '<div',
           ' data-pt-path="[_key==&quot;k0&quot;].code[_key==&quot;line-1&quot;]"',
-          ' class="pt-block pt-text-block pt-text-block-style-normal"',
-          ' data-block-key="line-1"',
-          ' data-block-name="block"',
           ' data-block-type="text"',
-          ' data-style="normal"',
           '>',
-          '<div>',
-          '<span data-slate-node="text"',
+          '<span',
           ' data-pt-path="[_key==&quot;k0&quot;].code[_key==&quot;line-1&quot;].children[_key==&quot;span-1&quot;]"',
-          ' data-child-key="span-1"',
-          ' data-child-name="span"',
           ' data-child-type="span"',
           '>',
           '<span data-slate-leaf="true">',
           '<span data-slate-string="true">console.log(a)</span>',
           '</span>',
           '</span>',
-          '</div>',
           '</div>',
           '</code>',
           '</pre>',
@@ -1063,16 +1015,12 @@ describe('gallery with void block objects', () => {
         [
           // gallery container
           '<div data-testid="gallery"',
-          ' data-slate-node="element"',
+          ' data-block-type="container"',
           ' data-pt-path="[_key==&quot;k0&quot;]"',
           '>',
           // image 1 (void block object)
-          '<div data-slate-node="element"',
-          ' data-slate-void="true"',
+          '<div',
           ' data-pt-path="[_key==&quot;k0&quot;].items[_key==&quot;img-0&quot;]"',
-          ' class="pt-block pt-object-block"',
-          ' data-block-key="img-0"',
-          ' data-block-name="image"',
           ' data-block-type="object"',
           '>',
           // void spacer
@@ -1086,17 +1034,13 @@ describe('gallery with void block objects', () => {
           '</span>',
           '</div>',
           // void content
-          '<div contenteditable="false" draggable="true">',
-          '<div>[image: img-0]</div>',
+          '<div contenteditable="false">',
+          '[image: img-0]',
           '</div>',
           '</div>',
           // image 2 (void block object)
-          '<div data-slate-node="element"',
-          ' data-slate-void="true"',
+          '<div',
           ' data-pt-path="[_key==&quot;k0&quot;].items[_key==&quot;img-1&quot;]"',
-          ' class="pt-block pt-object-block"',
-          ' data-block-key="img-1"',
-          ' data-block-name="image"',
           ' data-block-type="object"',
           '>',
           // void spacer
@@ -1110,8 +1054,8 @@ describe('gallery with void block objects', () => {
           '</span>',
           '</div>',
           // void content
-          '<div contenteditable="false" draggable="true">',
-          '<div>[image: img-1]</div>',
+          '<div contenteditable="false">',
+          '[image: img-1]',
           '</div>',
           '</div>',
           // /gallery container
@@ -1268,34 +1212,27 @@ describe('cell with mixed content', () => {
         [
           // table container
           '<table data-testid="table"',
-          ' data-slate-node="element"',
+          ' data-block-type="container"',
           ' data-pt-path="[_key==&quot;k0&quot;]"',
           '>',
           '<tbody>',
           // row container
           '<tr data-testid="row"',
-          ' data-slate-node="element"',
+          ' data-block-type="container"',
           ' data-pt-path="[_key==&quot;k0&quot;].rows[_key==&quot;row-0&quot;]"',
           '>',
           // cell container
           '<td data-testid="cell"',
-          ' data-slate-node="element"',
+          ' data-block-type="container"',
           ' data-pt-path="[_key==&quot;k0&quot;].rows[_key==&quot;row-0&quot;].cells[_key==&quot;cell-0&quot;]"',
           '>',
           // text block before image
-          '<div data-slate-node="element"',
+          '<div',
           ' data-pt-path="[_key==&quot;k0&quot;].rows[_key==&quot;row-0&quot;].cells[_key==&quot;cell-0&quot;].content[_key==&quot;block-0&quot;]"',
-          ' class="pt-block pt-text-block pt-text-block-style-normal"',
-          ' data-block-key="block-0"',
-          ' data-block-name="block"',
           ' data-block-type="text"',
-          ' data-style="normal"',
           '>',
-          '<div>',
-          '<span data-slate-node="text"',
+          '<span',
           ' data-pt-path="[_key==&quot;k0&quot;].rows[_key==&quot;row-0&quot;].cells[_key==&quot;cell-0&quot;].content[_key==&quot;block-0&quot;].children[_key==&quot;span-0&quot;]"',
-          ' data-child-key="span-0"',
-          ' data-child-name="span"',
           ' data-child-type="span"',
           '>',
           '<span data-slate-leaf="true">',
@@ -1303,14 +1240,9 @@ describe('cell with mixed content', () => {
           '</span>',
           '</span>',
           '</div>',
-          '</div>',
           // void image block object inside cell
-          '<div data-slate-node="element"',
-          ' data-slate-void="true"',
+          '<div',
           ' data-pt-path="[_key==&quot;k0&quot;].rows[_key==&quot;row-0&quot;].cells[_key==&quot;cell-0&quot;].content[_key==&quot;img-0&quot;]"',
-          ' class="pt-block pt-object-block"',
-          ' data-block-key="img-0"',
-          ' data-block-name="image"',
           ' data-block-type="object"',
           '>',
           // void spacer
@@ -1324,31 +1256,23 @@ describe('cell with mixed content', () => {
           '</span>',
           '</div>',
           // void content
-          '<div contenteditable="false" draggable="true">',
-          '<div>[image: img-0]</div>',
+          '<div contenteditable="false">',
+          '[image: img-0]',
           '</div>',
           '</div>',
           // text block after image
-          '<div data-slate-node="element"',
+          '<div',
           ' data-pt-path="[_key==&quot;k0&quot;].rows[_key==&quot;row-0&quot;].cells[_key==&quot;cell-0&quot;].content[_key==&quot;block-1&quot;]"',
-          ' class="pt-block pt-text-block pt-text-block-style-normal"',
-          ' data-block-key="block-1"',
-          ' data-block-name="block"',
           ' data-block-type="text"',
-          ' data-style="normal"',
           '>',
-          '<div>',
-          '<span data-slate-node="text"',
+          '<span',
           ' data-pt-path="[_key==&quot;k0&quot;].rows[_key==&quot;row-0&quot;].cells[_key==&quot;cell-0&quot;].content[_key==&quot;block-1&quot;].children[_key==&quot;span-1&quot;]"',
-          ' data-child-key="span-1"',
-          ' data-child-name="span"',
           ' data-child-type="span"',
           '>',
           '<span data-slate-leaf="true">',
           '<span data-slate-string="true">text after image</span>',
           '</span>',
           '</span>',
-          '</div>',
           '</div>',
           // /cell container
           '</td>',

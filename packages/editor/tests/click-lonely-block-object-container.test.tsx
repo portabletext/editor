@@ -90,14 +90,7 @@ describe('click above/below lonely block object in containers', () => {
             {
               _key: 'k4',
               _type: 'block',
-              children: [
-                {
-                  _key: 'k5',
-                  _type: 'span',
-                  marks: [],
-                  text: '',
-                },
-              ],
+              children: [{_key: 'k5', _type: 'span', marks: [], text: ''}],
               markDefs: [],
               style: 'normal',
             },
@@ -165,14 +158,7 @@ describe('click above/below lonely block object in containers', () => {
             {
               _key: 'k4',
               _type: 'block',
-              children: [
-                {
-                  _key: 'k5',
-                  _type: 'span',
-                  marks: [],
-                  text: '',
-                },
-              ],
+              children: [{_key: 'k5', _type: 'span', marks: [], text: ''}],
               markDefs: [],
               style: 'normal',
             },

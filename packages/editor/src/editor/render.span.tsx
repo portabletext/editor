@@ -11,8 +11,11 @@ import type {
   RenderChildFunction,
   RenderDecoratorFunction,
 } from '../types/editor'
+import {ContainerScopeContext} from './container-scope-context'
 import type {EditorSchema} from './editor-schema'
+import {RenderLeafConfig, useLeafConfig} from './render.leaf-config'
 import {SelectionStateContext} from './selection-state-context'
+import {useBlockSubSchema} from './use-block-sub-schema'
 
 interface RenderSpanProps extends RenderLeafProps {
   children: ReactElement<any>
@@ -33,13 +36,22 @@ export function RenderSpan(props: RenderSpanProps) {
 
   const parent = props.children.props.parent
   const block = parent && isTextBlock({schema}, parent) ? parent : undefined
+  const child = block?.children.find(
+    (_child) => _child._key === props.leaf._key,
+  )
+
+  const subSchema = useBlockSubSchema(props.path)
+  // Span leafs are looked up against the resolved span child. When no child
+  // is found (transient state), fall back to the Slate leaf for identity.
+  const leafConfig = useLeafConfig(child ?? props.leaf, props.path)
 
   const selectionState = useContext(SelectionStateContext)
+  const containerScope = useContext(ContainerScopeContext)
   const serializedPath = serializePath(props.path)
   const focused = selectionState.focusedLeafPath === serializedPath
   const selected = selectionState.selectedLeafPaths.has(serializedPath)
 
-  const decoratorSchemaTypes = schema.decorators.map(
+  const decoratorSchemaTypes = subSchema.decorators.map(
     (decorator) => decorator.name,
   )
 
@@ -73,7 +85,7 @@ export function RenderSpan(props: RenderSpanProps) {
    * Support `renderDecorator` render function for each Decorator
    */
   for (const mark of decorators) {
-    const decoratorSchemaType = schema.decorators.find(
+    const decoratorSchemaType = subSchema.decorators.find(
       (dec) => dec.name === mark,
     )
 
@@ -98,7 +110,7 @@ export function RenderSpan(props: RenderSpanProps) {
    * Support `renderAnnotation` render function for each Annotation
    */
   for (const annotationMarkDef of annotationMarkDefs) {
-    const annotationSchemaType = schema.annotations.find(
+    const annotationSchemaType = subSchema.annotations.find(
       (t) => t.name === annotationMarkDef._type,
     )
     if (annotationSchemaType) {
@@ -128,27 +140,36 @@ export function RenderSpan(props: RenderSpanProps) {
   /**
    * Support `renderChild` render function for the Span itself
    */
-  if (block && props.renderChild) {
-    const child = block.children.find(
-      (_child) => _child._key === props.leaf._key,
-    ) // Ensure object equality
+  if (block && props.renderChild && child && !leafConfig && !containerScope) {
+    children = (
+      <RenderChild
+        renderChild={props.renderChild}
+        annotations={annotationMarkDefs}
+        editorElementRef={spanRef}
+        focused={focused}
+        path={props.path}
+        schemaType={schemaType}
+        selected={selected}
+        value={child}
+      >
+        {children}
+      </RenderChild>
+    )
+  }
 
-    if (child) {
-      children = (
-        <RenderChild
-          renderChild={props.renderChild}
-          annotations={annotationMarkDefs}
-          editorElementRef={spanRef}
-          focused={focused}
-          path={props.path}
-          schemaType={schemaType}
-          selected={selected}
-          value={child}
-        >
-          {children}
-        </RenderChild>
-      )
-    }
+  if (leafConfig) {
+    return (
+      <RenderLeafConfig
+        leafConfig={leafConfig}
+        attributes={props.attributes}
+        focused={focused}
+        node={child ?? props.leaf}
+        path={props.path}
+        selected={selected}
+      >
+        {children}
+      </RenderLeafConfig>
+    )
   }
 
   return (

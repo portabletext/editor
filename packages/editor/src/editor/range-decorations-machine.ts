@@ -9,6 +9,7 @@ import {
 } from 'xstate'
 import {isDeepEqual} from '../internal-utils/equality'
 import {moveRangeByOperation} from '../internal-utils/move-range-by-operation'
+import {getEnclosingBlock} from '../node-traversal/get-enclosing-block'
 import type {Node, NodeEntry} from '../slate/interfaces/node'
 import type {Operation} from '../slate/interfaces/operation'
 import type {Range} from '../slate/interfaces/range'
@@ -358,28 +359,22 @@ function createDecorate(
       return []
     }
 
-    const blockSegment = path.at(0)
-
-    if (blockSegment === undefined) {
-      return []
-    }
-
     return slateEditor.decoratedRanges.filter((decoratedRange) => {
       // Special case in order to only return one decoration for collapsed ranges
       if (isCollapsedRange(decoratedRange)) {
         // Collapsed ranges should only be decorated if they are on a block child level.
-        const anchorBlockSegment = decoratedRange.anchor.path.at(0)
-        const anchorChildSegment = decoratedRange.anchor.path.at(2)
+        const anchorBlock = getEnclosingBlock(
+          slateEditor,
+          decoratedRange.anchor.path,
+        )
+        const anchorChildSegment = decoratedRange.anchor.path.at(-1)
 
-        if (
-          !isKeyedSegment(anchorBlockSegment) ||
-          !isKeyedSegment(anchorChildSegment)
-        ) {
+        if (!anchorBlock || !isKeyedSegment(anchorChildSegment)) {
           return false
         }
 
         return (
-          anchorBlockSegment._key === node._key &&
+          anchorBlock.node._key === node._key &&
           node.children.some(
             (child: Node) => child._key === anchorChildSegment._key,
           )
