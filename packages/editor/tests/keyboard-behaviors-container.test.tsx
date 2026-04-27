@@ -42,7 +42,7 @@ describe('abstract keyboard behaviors — container awareness', () => {
     const line1SpanKey = keyGenerator()
     const line2Key = keyGenerator()
     const line2SpanKey = keyGenerator()
-    const {editor} = await createTestEditor({
+    const {editor, locator} = await createTestEditor({
       keyGenerator,
       schemaDefinition,
       initialValue: [
@@ -74,8 +74,7 @@ describe('abstract keyboard behaviors — container awareness', () => {
       children: <ContainerPlugin containers={[codeBlockContainer]} />,
     })
 
-    const editable = document.querySelector('[role="textbox"]') as HTMLElement
-    await userEvent.click(editable)
+    await userEvent.click(locator)
 
     const emptyLine2Point = {
       path: [
@@ -129,7 +128,7 @@ describe('abstract keyboard behaviors — container awareness', () => {
     const span1Key = keyGenerator()
     const block2Key = keyGenerator()
     const span2Key = keyGenerator()
-    const {editor} = await createTestEditor({
+    const {editor, locator} = await createTestEditor({
       keyGenerator,
       schemaDefinition: rootSchemaDefinition,
       initialValue: [
@@ -150,8 +149,7 @@ describe('abstract keyboard behaviors — container awareness', () => {
       ],
     })
 
-    const editable = document.querySelector('[role="textbox"]') as HTMLElement
-    await userEvent.click(editable)
+    await userEvent.click(locator)
 
     const emptyBlock2Point = {
       path: [{_key: block2Key}, 'children', {_key: span2Key}],

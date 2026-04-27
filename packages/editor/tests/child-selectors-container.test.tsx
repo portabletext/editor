@@ -40,7 +40,7 @@ describe('child and span selectors — container awareness', () => {
     const lineKey = keyGenerator()
     const span1Key = keyGenerator()
     const span2Key = keyGenerator()
-    const {editor} = await createTestEditor({
+    const {editor, locator} = await createTestEditor({
       keyGenerator,
       schemaDefinition,
       initialValue: [
@@ -64,8 +64,7 @@ describe('child and span selectors — container awareness', () => {
       children: <ContainerPlugin containers={[codeBlockContainer]} />,
     })
 
-    const editable = document.querySelector('[role="textbox"]') as HTMLElement
-    await userEvent.click(editable)
+    await userEvent.click(locator)
 
     const span2Point = {
       path: [
@@ -131,7 +130,7 @@ describe('child and span selectors — container awareness', () => {
     const lineKey = keyGenerator()
     const spanKey = keyGenerator()
     const tickerKey = keyGenerator()
-    const {editor} = await createTestEditor({
+    const {editor, locator} = await createTestEditor({
       keyGenerator,
       schemaDefinition: inlineSchemaDefinition,
       initialValue: [
@@ -155,8 +154,7 @@ describe('child and span selectors — container awareness', () => {
       children: <ContainerPlugin containers={[inlineContainer]} />,
     })
 
-    const editable = document.querySelector('[role="textbox"]') as HTMLElement
-    await userEvent.click(editable)
+    await userEvent.click(locator)
 
     const tickerPoint = {
       path: [
@@ -194,7 +192,7 @@ describe('child and span selectors — container awareness', () => {
     const span1Key = keyGenerator()
     const span2Key = keyGenerator()
     const span3Key = keyGenerator()
-    const {editor} = await createTestEditor({
+    const {editor, locator} = await createTestEditor({
       keyGenerator,
       schemaDefinition,
       initialValue: [
@@ -219,8 +217,7 @@ describe('child and span selectors — container awareness', () => {
       children: <ContainerPlugin containers={[codeBlockContainer]} />,
     })
 
-    const editable = document.querySelector('[role="textbox"]') as HTMLElement
-    await userEvent.click(editable)
+    await userEvent.click(locator)
 
     const span2Point = {
       path: [

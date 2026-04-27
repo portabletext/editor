@@ -40,7 +40,7 @@ describe('range selectors — container awareness', () => {
     const line2SpanKey = keyGenerator()
     const line3Key = keyGenerator()
     const line3SpanKey = keyGenerator()
-    const {editor} = await createTestEditor({
+    const {editor, locator} = await createTestEditor({
       keyGenerator,
       schemaDefinition,
       initialValue: [
@@ -81,8 +81,7 @@ describe('range selectors — container awareness', () => {
       children: <ContainerPlugin containers={[codeBlockContainer]} />,
     })
 
-    const editable = document.querySelector('[role="textbox"]') as HTMLElement
-    await userEvent.click(editable)
+    await userEvent.click(locator)
 
     const anchor = {
       path: [
@@ -152,7 +151,7 @@ describe('range selectors — container awareness', () => {
     const line1SpanKey = keyGenerator()
     const line2Key = keyGenerator()
     const line2SpanKey = keyGenerator()
-    const {editor} = await createTestEditor({
+    const {editor, locator} = await createTestEditor({
       keyGenerator,
       schemaDefinition,
       initialValue: [
@@ -184,8 +183,7 @@ describe('range selectors — container awareness', () => {
       children: <ContainerPlugin containers={[codeBlockContainer]} />,
     })
 
-    const editable = document.querySelector('[role="textbox"]') as HTMLElement
-    await userEvent.click(editable)
+    await userEvent.click(locator)
 
     const anchor = {
       path: [

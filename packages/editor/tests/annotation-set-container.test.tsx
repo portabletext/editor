@@ -33,7 +33,7 @@ describe('annotation.set inside an editable container', () => {
     const lineKey = keyGenerator()
     const linkedSpanKey = keyGenerator()
     const linkKey = 'link-1'
-    const {editor} = await createTestEditor({
+    const {editor, locator} = await createTestEditor({
       keyGenerator,
       schemaDefinition,
       initialValue: [
@@ -63,8 +63,7 @@ describe('annotation.set inside an editable container', () => {
       children: <ContainerPlugin containers={[codeBlockContainer]} />,
     })
 
-    const editable = document.querySelector('[role="textbox"]') as HTMLElement
-    await userEvent.click(editable)
+    await userEvent.click(locator)
 
     // Put the caret inside the linked span (so selectors can resolve it).
     editor.send({

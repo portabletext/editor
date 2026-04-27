@@ -86,11 +86,23 @@ describe('container arrow navigation', () => {
     await userEvent.keyboard('{ArrowDown}')
     await userEvent.keyboard('x')
 
-    // Value must not have grown a new root text block holding the typed
-    // character. The character lands inside the last line of the code-block.
-    const value = editor.getSnapshot().context.value
-    expect(value).toHaveLength(1)
-    expect(value[0]?._type).toEqual('code-block')
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _key: codeBlockKey,
+        _type: 'code-block',
+        lines: [
+          {
+            _key: lineKey,
+            _type: 'block',
+            children: [
+              {_key: lineSpanKey, _type: 'span', marks: [], text: 'foox'},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      },
+    ])
   })
 
   test('ArrowUp at start of first line of only-root code-block does not produce orphan text', async () => {
@@ -153,8 +165,22 @@ describe('container arrow navigation', () => {
     await userEvent.keyboard('{ArrowUp}')
     await userEvent.keyboard('x')
 
-    const value = editor.getSnapshot().context.value
-    expect(value).toHaveLength(1)
-    expect(value[0]?._type).toEqual('code-block')
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _key: codeBlockKey,
+        _type: 'code-block',
+        lines: [
+          {
+            _key: lineKey,
+            _type: 'block',
+            children: [
+              {_key: lineSpanKey, _type: 'span', marks: [], text: 'xfoo'},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      },
+    ])
   })
 })

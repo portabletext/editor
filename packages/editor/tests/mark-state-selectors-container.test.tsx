@@ -39,7 +39,7 @@ describe('mark-state selectors — container awareness', () => {
     const lineKey = keyGenerator()
     const plainSpanKey = keyGenerator()
     const strongSpanKey = keyGenerator()
-    const {editor} = await createTestEditor({
+    const {editor, locator} = await createTestEditor({
       keyGenerator,
       schemaDefinition,
       initialValue: [
@@ -73,8 +73,7 @@ describe('mark-state selectors — container awareness', () => {
       children: <ContainerPlugin containers={[codeBlockContainer]} />,
     })
 
-    const editable = document.querySelector('[role="textbox"]') as HTMLElement
-    await userEvent.click(editable)
+    await userEvent.click(locator)
 
     const insideStrong = {
       path: [
@@ -109,7 +108,7 @@ describe('mark-state selectors — container awareness', () => {
     const lineKey = keyGenerator()
     const linkedSpanKey = keyGenerator()
     const linkKey = 'link-1'
-    const {editor} = await createTestEditor({
+    const {editor, locator} = await createTestEditor({
       keyGenerator,
       schemaDefinition,
       initialValue: [
@@ -139,8 +138,7 @@ describe('mark-state selectors — container awareness', () => {
       children: <ContainerPlugin containers={[codeBlockContainer]} />,
     })
 
-    const editable = document.querySelector('[role="textbox"]') as HTMLElement
-    await userEvent.click(editable)
+    await userEvent.click(locator)
 
     const insideLink = {
       path: [
