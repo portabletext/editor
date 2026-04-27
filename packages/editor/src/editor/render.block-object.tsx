@@ -51,7 +51,7 @@ export function RenderBlockObject(props: {
       'data-slate-node': _slateNode,
       'data-slate-void': _slateVoid,
       ...ptAttributes
-    } = props.attributes as Record<string, unknown>
+    } = props.attributes
     return (
       <RenderLeafConfig
         leafConfig={props.leafConfig}

@@ -48,7 +48,7 @@ export function RenderInlineObject(props: {
       'data-slate-void': _slateVoid,
       'data-slate-inline': _slateInline,
       ...ptAttributes
-    } = props.attributes as Record<string, unknown>
+    } = props.attributes
     return (
       <RenderLeafConfig
         leafConfig={props.leafConfig}
