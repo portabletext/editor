@@ -196,7 +196,7 @@ const breakingOutOfContainer = defineBehavior({
  * Walk editable container ancestors from innermost outward. For each, check
  * whether the NEXT ancestor container (one level out) has a child field that
  * accepts text blocks (`{type: 'block'}`). The first container whose parent
- * accepts text blocks is the one we insert after — the new block lands in
+ * accepts text blocks is the one we insert after; the new block lands in
  * its parent container's field.
  *
  * When no ancestor container has a block-accepting parent (e.g. a direct
@@ -235,7 +235,7 @@ function resolveEscapeTargetBlock(
     const outer = containerAncestors[i + 1]
 
     if (!outer) {
-      // No ancestor container beyond this — insert after it (lands at root)
+      // No ancestor container beyond this; insert after it (lands at root).
       return current.path
     }
 
