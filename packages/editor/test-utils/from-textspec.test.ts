@@ -110,6 +110,56 @@ describe(fromTextspec.name, () => {
     ])
   })
 
+  test('empty text block has an empty placeholder span', () => {
+    expect(
+      fromTextspec({schema, keyGenerator: createTestKeyGenerator()}, 'B: |')
+        .blocks,
+    ).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        children: [{_key: 'k1', _type: 'span', text: '', marks: []}],
+        style: 'normal',
+      },
+    ])
+  })
+
+  test('empty list item has an empty placeholder span', () => {
+    expect(
+      fromTextspec(
+        {schema, keyGenerator: createTestKeyGenerator()},
+        'B listItem="number": |',
+      ).blocks,
+    ).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        children: [{_key: 'k1', _type: 'span', text: '', marks: []}],
+        style: 'normal',
+        listItem: 'number',
+        level: 1,
+      },
+    ])
+  })
+
+  test('list item defaults to level 1 when no level is specified', () => {
+    expect(
+      fromTextspec(
+        {schema, keyGenerator: createTestKeyGenerator()},
+        'B listItem="bullet": foo|',
+      ).blocks,
+    ).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        children: [{_key: 'k1', _type: 'span', text: 'foo', marks: []}],
+        style: 'normal',
+        listItem: 'bullet',
+        level: 1,
+      },
+    ])
+  })
+
   test('heading', () => {
     expect(
       fromTextspec(
