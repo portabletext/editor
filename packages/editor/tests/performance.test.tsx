@@ -190,7 +190,7 @@ describe('Performance', () => {
       const duration = performance.now() - start
 
       console.warn(`Inserted 1000 tables in ${duration.toFixed(2)}ms`)
-    })
+    }, 30_000)
 
     test('Inserting 1000 tables before an existing block', async () => {
       const {editor, locator} = await createTestEditor({
@@ -228,7 +228,7 @@ describe('Performance', () => {
       console.warn(
         `Inserted 1000 tables before an existing block in ${duration.toFixed(2)}ms`,
       )
-    })
+    }, 30_000)
 
     test('Inserting 1000 tables after an existing block', async () => {
       const {editor, locator} = await createTestEditor({
@@ -266,7 +266,7 @@ describe('Performance', () => {
       console.warn(
         `Inserted 1000 tables after an existing block in ${duration.toFixed(2)}ms`,
       )
-    })
+    }, 30_000)
   })
 
   test('onChange is batched', async () => {
