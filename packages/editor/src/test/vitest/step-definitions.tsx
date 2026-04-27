@@ -3,6 +3,7 @@ import {getTersePt, parseTersePt} from '@portabletext/test'
 import {Given, Then, When} from 'racejar'
 import {assert, expect, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
+import {boundaryEquivalentSelections} from '../../../test-utils/boundary-equivalent'
 import {getEditorSelection} from '../../../test-utils/editor-selection'
 import {
   fromTextspec,
@@ -96,6 +97,14 @@ async function assertEditorState(
     // names (e.g. `l2`, `c3`) to any markDef keys the editor produced that
     // aren't in the user-defined keyMap. This lets assertions express
     // "annotation with a different key" structurally.
+    // For each markDef the editor produced, decide what symbolic name
+    // to render in textspec output:
+    //   1. If keyMap pre-registered the key (via `a "link" "l1" around`),
+    //      use the symbolic name from keyMap.
+    //   2. If the expected string asks for the actual key by name
+    //      (e.g. `_key="k4"`), identity-map it.
+    //   3. Otherwise, auto-assign the next symbolic name in the type's
+    //      prefix sequence (e.g. `l2`, `c3`).
     if (keys.size > 0) {
       const counters = new Map<string, number>()
       for (const symbolic of annotationKeys.values()) {
@@ -119,6 +128,10 @@ async function assertEditorState(
           if (annotationKeys.has(md._key)) {
             continue
           }
+          if (keys.has(md._key)) {
+            annotationKeys.set(md._key, md._key)
+            continue
+          }
           const prefix = (md._type ?? 'k').charAt(0)
           const next = (counters.get(prefix) ?? 0) + 1
           counters.set(prefix, next)
@@ -127,21 +140,44 @@ async function assertEditorState(
       }
     }
 
-    expect(
+    const toTextspecOptions = options.singleLine
+      ? {singleLine: true as const, keys: keys.size > 0 ? keys : undefined}
+      : {keys: keys.size > 0 ? keys : undefined}
+
+    const renderActual = (effectiveSelection: typeof selection): string =>
       toTextspec(
         {
           schema,
           value,
-          selection: assertsSelection ? selection : null,
+          selection: assertsSelection ? effectiveSelection : null,
           containers,
           annotationKeys,
         },
-        options.singleLine
-          ? {singleLine: true, keys: keys.size > 0 ? keys : undefined}
-          : {keys: keys.size > 0 ? keys : undefined},
-      ),
-      'Unexpected editor state',
-    ).toBe(expected)
+        toTextspecOptions,
+      )
+
+    const strict = renderActual(selection)
+
+    if (strict === expected || !assertsSelection) {
+      expect(strict, 'Unexpected editor state').toBe(expected)
+      return
+    }
+
+    // Span boundaries: `{span-A, end}` and `{span-B, 0}` describe the same
+    // caret position but the editor model picks one form, and that pick
+    // can vary by browser when native beforeinput insertion is involved.
+    // Accept any boundary-equivalent selection that produces the expected
+    // textspec.
+    for (const variant of boundaryEquivalentSelections(
+      {schema, containers, value},
+      selection,
+    )) {
+      if (renderActual(variant) === expected) {
+        return
+      }
+    }
+
+    expect(strict, 'Unexpected editor state').toBe(expected)
   })
 }
 
