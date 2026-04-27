@@ -47,7 +47,7 @@ Feature: Slash Command Picker
     And "/h" is typed
     Then the picker state is "showing matches"
     When "{Enter}" is pressed
-    Then the text is "h1:"
+    Then the editor state is "B style=\"h1\": "
     And the picker state is "idle"
 
   Scenario: Arrow down then Enter selects correct command
@@ -57,7 +57,7 @@ Feature: Slash Command Picker
     When "{ArrowDown}" is pressed
     Then the selected index is "1"
     When "{Enter}" is pressed
-    Then the text is "h2:"
+    Then the editor state is "B style=\"h2\": "
     And the picker state is "idle"
 
   Scenario: Dismissing with Escape
@@ -66,4 +66,4 @@ Feature: Slash Command Picker
     Then the picker state is "showing matches"
     When "{Escape}" is pressed
     Then the picker state is "idle"
-    And the text is "/head"
+    And the editor state is "B: /head|"
