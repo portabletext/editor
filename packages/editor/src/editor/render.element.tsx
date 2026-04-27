@@ -106,7 +106,7 @@ export function RenderElement(props: {
         'data-slate-void': _sv,
         'contentEditable': _ce,
         ...rest
-      } = props.attributes as Record<string, unknown>
+      } = props.attributes
       return (
         <span {...rest} data-child-type="object">
           {props.children}

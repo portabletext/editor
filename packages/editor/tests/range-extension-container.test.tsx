@@ -33,7 +33,7 @@ describe('Cross-line selection inside an editable container', () => {
     const line1SpanKey = keyGenerator()
     const line2Key = keyGenerator()
     const line2SpanKey = keyGenerator()
-    const {editor} = await createTestEditor({
+    const {editor, locator} = await createTestEditor({
       keyGenerator,
       schemaDefinition,
       initialValue: [
@@ -65,13 +65,13 @@ describe('Cross-line selection inside an editable container', () => {
       children: <ContainerPlugin containers={[codeBlockContainer]} />,
     })
 
-    const editable = document.querySelector('[role="textbox"]') as HTMLElement
-    await userEvent.click(editable)
+    await userEvent.click(locator)
 
     // Simulate a browser-initiated range selection (e.g. Shift+ArrowRight
     // across lines or a mouse drag) by directly manipulating the DOM
     // selection. The editor's `selectionchange` handler should convert it
     // to a cross-line Slate selection via `toSlateRange`.
+    const editable = locator.element() as HTMLElement
     const textNodes = editable.querySelectorAll(
       '[data-slate-node="text"], [data-child-type="span"]',
     )
@@ -129,7 +129,7 @@ describe('Cross-line selection inside an editable container', () => {
     const line1SpanKey = keyGenerator()
     const line2Key = keyGenerator()
     const line2SpanKey = keyGenerator()
-    const {editor} = await createTestEditor({
+    const {editor, locator} = await createTestEditor({
       keyGenerator,
       schemaDefinition,
       initialValue: [
@@ -161,8 +161,7 @@ describe('Cross-line selection inside an editable container', () => {
       children: <ContainerPlugin containers={[codeBlockContainer]} />,
     })
 
-    const editable = document.querySelector('[role="textbox"]') as HTMLElement
-    await userEvent.click(editable)
+    await userEvent.click(locator)
 
     const endOfLine1 = {
       path: [
