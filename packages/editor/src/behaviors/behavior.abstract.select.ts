@@ -1,6 +1,6 @@
+import {getSibling} from '../node-traversal/get-sibling'
+import {getBlock} from '../node-traversal/is-block'
 import {getFocusBlock} from '../selectors/selector.get-focus-block'
-import {getNextBlock} from '../selectors/selector.get-next-block'
-import {getPreviousBlock} from '../selectors/selector.get-previous-block'
 import {getBlockEndPoint} from '../utils/util.get-block-end-point'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
@@ -13,22 +13,7 @@ export const abstractSelectBehaviors = [
         return false
       }
 
-      const block = getFocusBlock({
-        ...snapshot,
-        context: {
-          ...snapshot.context,
-          selection: {
-            anchor: {
-              path: event.at,
-              offset: 0,
-            },
-            focus: {
-              path: event.at,
-              offset: 0,
-            },
-          },
-        },
-      })
+      const block = getBlock(snapshot.context, event.at)
 
       if (!block) {
         return false
@@ -76,13 +61,23 @@ export const abstractSelectBehaviors = [
   defineBehavior({
     on: 'select.previous block',
     guard: ({snapshot}) => {
-      const previousBlock = getPreviousBlock(snapshot)
+      const focusBlockPath = getFocusBlock(snapshot)?.path
 
-      if (!previousBlock) {
+      if (!focusBlockPath) {
         return false
       }
 
-      return {previousBlock}
+      const previousSibling = getSibling(
+        snapshot.context,
+        focusBlockPath,
+        'previous',
+      )
+
+      if (!previousSibling) {
+        return false
+      }
+
+      return {previousBlock: previousSibling}
     },
     actions: [
       ({event}, {previousBlock}) => [
@@ -97,13 +92,19 @@ export const abstractSelectBehaviors = [
   defineBehavior({
     on: 'select.next block',
     guard: ({snapshot}) => {
-      const nextBlock = getNextBlock(snapshot)
+      const focusBlockPath = getFocusBlock(snapshot)?.path
 
-      if (!nextBlock) {
+      if (!focusBlockPath) {
         return false
       }
 
-      return {nextBlock}
+      const nextSibling = getSibling(snapshot.context, focusBlockPath, 'next')
+
+      if (!nextSibling) {
+        return false
+      }
+
+      return {nextBlock: nextSibling}
     },
     actions: [
       ({event}, {nextBlock}) => [

@@ -82,6 +82,24 @@ export function getBlockSubSchema(
   }
 }
 
+/**
+ * Returns true when the given path is inside an editable container.
+ *
+ * Used by operations to know when sub-schema validation applies. At the root
+ * the editor's permissive contract is preserved; inside a container the
+ * sub-schema is authoritative and those operations should be filtered.
+ */
+export function isInsideEditableContainer(
+  context: {
+    schema: EditorSchema
+    containers: Containers
+    value: Array<Node>
+  },
+  path: Path,
+): boolean {
+  return findEnclosingNestedBlock(context, path) !== undefined
+}
+
 function rootSubSchema(schema: EditorSchema): BlockSubSchema {
   return {
     styles: schema.styles,

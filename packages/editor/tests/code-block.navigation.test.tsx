@@ -61,37 +61,33 @@ describe('code block navigation', () => {
       children: <ContainerPlugin containers={[codeBlockContainer]} />,
     })
 
-    const codeBlockElement = await vi.waitFor(() => {
-      const element = document.querySelector('[data-testid="code-block"]')
+    const editable = await vi.waitFor(() => {
+      const element = document.querySelector('[role="textbox"]')
       expect(element).not.toEqual(null)
       return element!
     })
 
-    await userEvent.click(codeBlockElement)
+    await userEvent.click(editable)
+    const spanPath = [
+      {_key: codeBlockKey},
+      'lines',
+      {_key: lineKey},
+      'children',
+      {_key: spanKey},
+    ]
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: spanPath, offset: 0},
+        focus: {path: spanPath, offset: 0},
+      },
+    })
     await userEvent.keyboard('{ArrowRight}')
 
     await vi.waitFor(() => {
       expect(editor.getSnapshot().context.selection).toEqual({
-        anchor: {
-          path: [
-            {_key: codeBlockKey},
-            'lines',
-            {_key: lineKey},
-            'children',
-            {_key: spanKey},
-          ],
-          offset: 1,
-        },
-        focus: {
-          path: [
-            {_key: codeBlockKey},
-            'lines',
-            {_key: lineKey},
-            'children',
-            {_key: spanKey},
-          ],
-          offset: 1,
-        },
+        anchor: {path: spanPath, offset: 1},
+        focus: {path: spanPath, offset: 1},
         backward: false,
       })
     })
@@ -126,15 +122,27 @@ describe('code block navigation', () => {
       children: <ContainerPlugin containers={[codeBlockContainer]} />,
     })
 
-    const codeBlockElement = await vi.waitFor(() => {
-      const element = document.querySelector('[data-testid="code-block"]')
+    const editable = await vi.waitFor(() => {
+      const element = document.querySelector('[role="textbox"]')
       expect(element).not.toEqual(null)
       return element!
     })
 
-    await userEvent.click(codeBlockElement)
-    // click lands at offset 0; advance to offset 1 then delete back to offset 0.
-    await userEvent.keyboard('{ArrowRight}')
+    await userEvent.click(editable)
+    const spanPath = [
+      {_key: codeBlockKey},
+      'lines',
+      {_key: lineKey},
+      'children',
+      {_key: spanKey},
+    ]
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: spanPath, offset: 1},
+        focus: {path: spanPath, offset: 1},
+      },
+    })
     await userEvent.keyboard('{Backspace}')
 
     await vi.waitFor(() => {

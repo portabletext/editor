@@ -129,6 +129,8 @@ export function performEvent({
         context: {
           keyGenerator,
           schema,
+          containers: editor.containers,
+          value: editor.children,
         },
         operation: {
           ...event,
@@ -370,7 +372,12 @@ export function performEvent({
       }
 
       performOperation({
-        context: {keyGenerator, schema},
+        context: {
+          keyGenerator,
+          schema,
+          containers: editor.containers,
+          value: editor.children,
+        },
         operation: {
           ...event,
           editor,

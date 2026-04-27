@@ -8,11 +8,10 @@ import {safeStringify} from '../internal-utils/safe-json'
 import {setNodeProperties} from '../internal-utils/set-node-properties'
 import {toSlateBlock} from '../internal-utils/values'
 import {getAncestorTextBlock} from '../node-traversal/get-ancestor-text-block'
-import {getNode} from '../node-traversal/get-node'
+import {getEnclosingBlock} from '../node-traversal/get-enclosing-block'
 import {getSibling} from '../node-traversal/get-sibling'
 import {getSpanNode} from '../node-traversal/get-span-node'
 import {getTextBlockNode} from '../node-traversal/get-text-block-node'
-import {isBlock} from '../node-traversal/is-block'
 import {end as editorEnd} from '../slate/editor/end'
 import {pathRef} from '../slate/editor/path-ref'
 import {rangeRef} from '../slate/editor/range-ref'
@@ -130,8 +129,8 @@ function resolveTarget(args: {
     ? rangeEdges(at, {}, editor)
     : [editorStart(editor, []), editorEnd(editor, [])]
 
-  const startBlockEntry = findContainingBlock(editor, startPoint.path)
-  const endBlockEntry = findContainingBlock(editor, endPoint.path)
+  const startBlockEntry = getEnclosingBlock(editor, startPoint.path)
+  const endBlockEntry = getEnclosingBlock(editor, endPoint.path)
 
   if (!startBlockEntry || !endBlockEntry) {
     return undefined
@@ -197,27 +196,6 @@ function resolveTarget(args: {
     blockPath: endBlockPath,
     splitAt: collapsedPoint,
   }
-}
-
-/**
- * Find the closest ancestor block that contains the given point path. Walks
- * up prefix-by-prefix (deepest first) so it works at any depth.
- */
-function findContainingBlock(
-  editor: PortableTextSlateEditor,
-  pointPath: Path,
-): {node: Node; path: Path} | undefined {
-  for (let length = pointPath.length; length >= 1; length--) {
-    const candidatePath = pointPath.slice(0, length)
-    if (typeof candidatePath[candidatePath.length - 1] === 'string') {
-      continue
-    }
-    const entry = getNode(editor, candidatePath)
-    if (entry && isBlock(editor, candidatePath)) {
-      return entry
-    }
-  }
-  return undefined
 }
 
 // ---------------------------------------------------------------------------
@@ -470,11 +448,10 @@ function mergeTextBlockFragment(args: {
   }
 
   if (select === 'start' && firstInsertedKey && resolvedAtPath) {
-    const firstInsertedPath: Path = [
-      ...parentPath(resolvedAtPath),
-      'children',
-      {_key: firstInsertedKey},
-    ]
+    const firstInsertedPath: Path = siblingPath(
+      resolvedAtPath,
+      firstInsertedKey,
+    )
     const startPoint = editorStart(editor, firstInsertedPath)
     applySelect(editor, startPoint)
   }
@@ -538,8 +515,8 @@ function executeDeleteThenInsert(args: {
   const rangeStartPoint = rangeStart(range, editor)
   const rangeEndPoint = rangeEnd(range, editor)
 
-  const startBlockEntry = findContainingBlock(editor, rangeStartPoint.path)
-  const endBlockEntry = findContainingBlock(editor, rangeEndPoint.path)
+  const startBlockEntry = getEnclosingBlock(editor, rangeStartPoint.path)
+  const endBlockEntry = getEnclosingBlock(editor, rangeEndPoint.path)
   const wasCrossBlock =
     startBlockEntry !== undefined &&
     endBlockEntry !== undefined &&
@@ -609,7 +586,7 @@ function executeDeleteThenInsert(args: {
   }
 
   const containingBlockEntry =
-    resolvedBlock ?? findContainingBlock(editor, collapsedPoint.path)
+    resolvedBlock ?? getEnclosingBlock(editor, collapsedPoint.path)
 
   if (!containingBlockEntry) {
     return
