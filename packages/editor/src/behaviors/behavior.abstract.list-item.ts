@@ -1,6 +1,6 @@
+import {getBlockSubSchema} from '../schema/get-block-sub-schema'
 import {getSelectedTextBlocks} from '../selectors/selector.get-selected-text-blocks'
 import {isActiveListItem} from '../selectors/selector.is-active-list-item'
-import {isAvailableList} from '../selectors/selector.is-available-list'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
@@ -8,11 +8,16 @@ export const abstractListItemBehaviors = [
   defineBehavior({
     on: 'list item.add',
     guard: ({snapshot, event}) => {
-      if (!isAvailableList(event.listItem)(snapshot)) {
+      const selectedTextBlocks = getSelectedTextBlocks(snapshot).filter(
+        (block) =>
+          getBlockSubSchema(snapshot, block.path).lists.some(
+            (list) => list.name === event.listItem,
+          ),
+      )
+
+      if (selectedTextBlocks.length === 0) {
         return false
       }
-
-      const selectedTextBlocks = getSelectedTextBlocks(snapshot)
 
       return {selectedTextBlocks}
     },
