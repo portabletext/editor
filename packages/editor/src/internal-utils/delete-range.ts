@@ -1,14 +1,17 @@
+import {getChildren} from '../node-traversal/get-children'
 import {getEnclosingBlock} from '../node-traversal/get-enclosing-block'
 import {getFirstChild} from '../node-traversal/get-first-child'
 import {getNode} from '../node-traversal/get-node'
 import {getSibling} from '../node-traversal/get-sibling'
 import {getSpanNode} from '../node-traversal/get-span-node'
 import {getTextBlockNode} from '../node-traversal/get-text-block-node'
+import {getContainerScopedName} from '../schema/get-container-scoped-name'
 import {isEditableContainer} from '../schema/is-editable-container'
 import {parentAcceptsTextBlock} from '../schema/parent-accepts-text-block'
 import {isEnd} from '../slate/editor/is-end'
 import {isStart} from '../slate/editor/is-start'
 import {pathRef} from '../slate/editor/path-ref'
+import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
 import type {Point} from '../slate/interfaces/point'
 import type {Range} from '../slate/interfaces/range'
@@ -19,6 +22,7 @@ import {rangeEdges} from '../slate/range/range-edges'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import {applyMergeNode} from './apply-merge-node'
+import {createPlaceholderBlock} from './create-placeholder-block'
 import {setNodeProperties} from './set-node-properties'
 
 /**
@@ -196,38 +200,51 @@ function deleteCrossParentRange(
 
   // 3. Walk down the start-side ancestor chain. For each ancestor of
   //    startBlock strictly between the common-parent's child level (handled
-  //    by step 5) and startBlock itself (handled by step 1), remove trailing
-  //    siblings -- but only if the parent field accepts a text block as a
-  //    substitute. A row inside `table.rows` (which only allows rows) keeps
-  //    its siblings; a block inside `code-block.lines` (which allows blocks)
-  //    loses them.
+  //    by step 5) and startBlock itself (handled by step 1), handle trailing
+  //    siblings. When the parent field accepts a text block (e.g.
+  //    `code-block.lines`), siblings are removed wholesale. When the parent
+  //    field only accepts a structural sub-container (e.g. `table.rows` of
+  //    rows, or `row.cells` of cells), the sibling shells are kept but
+  //    their inner content is cleared back to a placeholder block.
   for (
     let entryLen = common.length + 2;
     entryLen <= startBlockPath.length;
     entryLen++
   ) {
     const entry = startBlockPath.slice(0, entryLen)
-    if (isKeyedSegment(entry.at(-1)) && parentAcceptsTextBlock(editor, entry)) {
+    if (!isKeyedSegment(entry.at(-1))) {
+      continue
+    }
+    if (parentAcceptsTextBlock(editor, entry)) {
       removeTrailingSiblings(editor, entry)
+    } else {
+      clearTrailingSiblingContents(editor, entry)
     }
   }
 
-  // 4. Symmetric for end side: remove leading siblings at each intermediate
-  //    keyed level (gated on parent-accepts-text-block).
+  // 4. Symmetric for end side: handle leading siblings at each intermediate
+  //    keyed level. Wholesale removal when parent accepts a text block;
+  //    otherwise clear-content while keeping the sibling shells.
   for (
     let entryLen = common.length + 2;
     entryLen <= endBlockPath.length;
     entryLen++
   ) {
     const entry = endBlockPath.slice(0, entryLen)
-    if (isKeyedSegment(entry.at(-1)) && parentAcceptsTextBlock(editor, entry)) {
+    if (!isKeyedSegment(entry.at(-1))) {
+      continue
+    }
+    if (parentAcceptsTextBlock(editor, entry)) {
       removeLeadingSiblings(editor, entry)
+    } else {
+      clearLeadingSiblingContents(editor, entry)
     }
   }
 
-  // 5. At common level: remove siblings strictly between the start-side and
-  //    end-side ancestors at common-depth + 1, gated on whether common's
-  //    field accepts a text block.
+  // 5. At common level: handle siblings strictly between the start-side and
+  //    end-side ancestors at common-depth + 1. Wholesale removal when
+  //    common's field accepts a text block; otherwise clear-content while
+  //    keeping the sibling shells.
   const finalStartTop = startTopRef.current
   const finalEndTop = endTopRef.current
   if (finalStartTop && finalEndTop) {
@@ -235,6 +252,12 @@ function deleteCrossParentRange(
     const endAtCommonChild = finalEndTop.slice(0, common.length + 1)
     if (parentAcceptsTextBlock(editor, startAtCommonChild)) {
       removeSiblingsBetweenPaths(editor, startAtCommonChild, endAtCommonChild)
+    } else {
+      clearSiblingContentsBetweenPaths(
+        editor,
+        startAtCommonChild,
+        endAtCommonChild,
+      )
     }
   }
 
@@ -300,6 +323,114 @@ function removeSiblingsBetweenPaths(
   while (cursor && !pathEquals(cursor.path, endPath)) {
     removeNodeAt(editor, cursor.path)
     cursor = getSibling(editor, startPath, 'next')
+  }
+}
+
+/**
+ * Clear the contents of every sibling AFTER `path`, keeping the sibling
+ * shells intact. Used at structural-container levels (rows, cells) where
+ * the sibling cannot be deleted wholesale because the parent field rejects
+ * a text-block substitute.
+ */
+function clearTrailingSiblingContents(
+  editor: PortableTextSlateEditor,
+  path: Path,
+): void {
+  let cursor = getSibling(editor, path, 'next')
+  while (cursor) {
+    clearContainerContents(editor, cursor.node, cursor.path)
+    cursor = getSibling(editor, cursor.path, 'next')
+  }
+}
+
+/**
+ * Clear the contents of every sibling BEFORE `path`, keeping the sibling
+ * shells intact.
+ */
+function clearLeadingSiblingContents(
+  editor: PortableTextSlateEditor,
+  path: Path,
+): void {
+  let cursor = getSibling(editor, path, 'previous')
+  while (cursor) {
+    clearContainerContents(editor, cursor.node, cursor.path)
+    cursor = getSibling(editor, cursor.path, 'previous')
+  }
+}
+
+/**
+ * Clear the contents of every sibling strictly between `startPath` and
+ * `endPath` (exclusive on both ends), keeping the sibling shells intact.
+ */
+function clearSiblingContentsBetweenPaths(
+  editor: PortableTextSlateEditor,
+  startPath: Path,
+  endPath: Path,
+): void {
+  let cursor = getSibling(editor, startPath, 'next')
+  while (cursor && !pathEquals(cursor.path, endPath)) {
+    clearContainerContents(editor, cursor.node, cursor.path)
+    cursor = getSibling(editor, cursor.path, 'next')
+  }
+}
+
+/**
+ * Clear the inner content of an editable container, keeping its shell.
+ *
+ * For a container whose field accepts a text block (e.g. a cell with
+ * `content` of `[block]`), the existing children are unset and a
+ * placeholder block is inserted.
+ *
+ * For a structural container whose field only accepts more sub-containers
+ * (e.g. a row with `cells` of `[cell]`), the function recurses into each
+ * child so the leaves end up with placeholder blocks.
+ *
+ * Voids and other non-container nodes are left untouched.
+ */
+function clearContainerContents(
+  editor: PortableTextSlateEditor,
+  node: Node,
+  path: Path,
+): void {
+  if (!isEditableContainer(editor, node, path)) {
+    return
+  }
+
+  const scopedName = getContainerScopedName(editor, node, path)
+  const container = editor.containers.get(scopedName)
+
+  if (!container) {
+    return
+  }
+
+  const fieldAcceptsBlock = container.field.of.some(
+    (def) => def.type === 'block',
+  )
+
+  if (fieldAcceptsBlock) {
+    // Remove every existing child, then synthesize an empty placeholder
+    // text block. Fresh keys are deliberate: the selection wiped the
+    // entire content, so the resulting state is a brand new empty block
+    // (mirroring how delete-empty-container handles fully-cleared
+    // containers).
+    let firstChild = getFirstChild(editor, path)
+    while (firstChild) {
+      removeNodeAt(editor, firstChild.path)
+      firstChild = getFirstChild(editor, path)
+    }
+    const placeholder = createPlaceholderBlock(editor, path)
+    editor.apply({
+      type: 'insert',
+      path: [...path, container.field.name, 0],
+      node: placeholder,
+      position: 'before',
+    })
+    return
+  }
+
+  const children = getChildren(editor, path)
+  for (const child of children) {
+    clearContainerContents(editor, child.node, child.path)
   }
 }
 

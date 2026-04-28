@@ -847,7 +847,7 @@ describe('cross-container range delete with edge promotion', () => {
     ])
   })
 
-  test('selection across cells preserves cells (row.cells does not accept text blocks)', async () => {
+  test('selection across cells preserves cell shells but clears content (row.cells does not accept text blocks)', async () => {
     const keyGenerator = createTestKeyGenerator()
     const tableKey = keyGenerator()
     const row1 = keyGenerator()
@@ -966,8 +966,9 @@ describe('cross-container range delete with edge promotion', () => {
     await userEvent.keyboard('{Backspace}')
 
     await new Promise((r) => setTimeout(r, 50))
-    // cell1a trimmed (trailing); cell1b PRESERVED (its parent row.cells does
-    // not accept text blocks); cell1c trimmed (leading).
+    // cell1a trimmed (trailing); cell1b's content cleared (cell shell stays
+    // because row.cells does not accept text blocks, but the inner content
+    // is wiped because the selection covers it); cell1c trimmed (leading).
     expect(editor.getSnapshot().context.value).toEqual([
       {
         _type: 'table',
@@ -998,9 +999,9 @@ describe('cross-container range delete with edge promotion', () => {
                 content: [
                   {
                     _type: 'block',
-                    _key: block1b,
+                    _key: 'k13',
                     children: [
-                      {_type: 'span', _key: span1b, text: 'bbb', marks: []},
+                      {_type: 'span', _key: 'k14', text: '', marks: []},
                     ],
                     markDefs: [],
                     style: 'normal',
