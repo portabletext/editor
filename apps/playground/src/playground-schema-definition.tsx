@@ -101,6 +101,9 @@ export const playgroundSchemaDefinition = defineSchema({
         {name: 'alt', title: 'Alt text', type: 'string'},
       ],
     },
+    // ARCHETYPE 1 — locked-down: nothing in scope.
+    // Tests: every operation correctly skips when sub-schema declares
+    // nothing. Toolbar shows everything dimmed inside a code-block.
     {
       title: 'Code block',
       name: 'code-block',
@@ -122,9 +125,13 @@ export const playgroundSchemaDefinition = defineSchema({
         },
       ],
     },
+    // ARCHETYPE 2 — full inheritance: mirrors root exactly.
+    // Tests: behaves identically to root. Allows nested heterogeneous
+    // containers (callout + code-block + image) — exercises traversal
+    // across nested containers with DIFFERENT sub-schemas.
     {
-      title: 'Callout',
-      name: 'callout',
+      title: 'Fact box',
+      name: 'fact-box',
       fields: [
         {
           name: 'content',
@@ -133,18 +140,68 @@ export const playgroundSchemaDefinition = defineSchema({
           of: [
             {
               type: 'block',
-              decorators: [{title: 'Strong', name: 'strong'}],
+              decorators: [
+                {title: 'Strong', name: 'strong'},
+                {title: 'Emphasis', name: 'em'},
+                {title: 'Code', name: 'code'},
+                {title: 'Underline', name: 'underline'},
+                {title: 'Strike', name: 'strike-through'},
+                {title: 'Subscript', name: 'subscript'},
+                {title: 'Superscript', name: 'superscript'},
+              ],
+              annotations: [
+                {
+                  title: 'Link',
+                  name: 'link',
+                  fields: [{name: 'href', title: 'HREF', type: 'string'}],
+                },
+                {
+                  title: 'Comment',
+                  name: 'comment',
+                  fields: [{name: 'text', title: 'Text', type: 'string'}],
+                },
+              ],
               styles: [
                 {title: 'Normal', name: 'normal'},
                 {title: 'Heading 1', name: 'h1'},
                 {title: 'Heading 2', name: 'h2'},
                 {title: 'Heading 3', name: 'h3'},
+                {title: 'Heading 4', name: 'h4'},
+                {title: 'Heading 5', name: 'h5'},
+                {title: 'Heading 6', name: 'h6'},
                 {title: 'Quote', name: 'blockquote'},
               ],
-              annotations: [],
               lists: [
                 {title: 'Bulleted list', name: 'bullet'},
                 {title: 'Numbered list', name: 'number'},
+              ],
+              inlineObjects: [
+                {
+                  title: 'Stock ticker',
+                  name: 'stock-ticker',
+                  fields: [{name: 'symbol', title: 'Symbol', type: 'string'}],
+                },
+                {
+                  title: 'Inline image',
+                  name: 'image',
+                  fields: [
+                    {name: 'src', title: 'Src', type: 'string'},
+                    {name: 'alt', title: 'Alt text', type: 'string'},
+                  ],
+                },
+                {
+                  title: 'Mention',
+                  name: 'mention',
+                  fields: [
+                    {name: 'userId', title: 'User ID', type: 'string'},
+                    {name: 'name', title: 'Name', type: 'string'},
+                    {
+                      name: 'username',
+                      title: 'Username',
+                      type: 'string',
+                    },
+                  ],
+                },
               ],
             },
             {
@@ -154,14 +211,184 @@ export const playgroundSchemaDefinition = defineSchema({
                 {name: 'alt', title: 'Alt text', type: 'string'},
               ],
             },
+            {
+              type: 'callout',
+              fields: [
+                {
+                  name: 'content',
+                  type: 'array',
+                  of: [
+                    {
+                      type: 'block',
+                      decorators: [
+                        {title: 'Strong', name: 'strong'},
+                        {title: 'Code', name: 'code'},
+                      ],
+                      styles: [
+                        {title: 'Normal', name: 'normal'},
+                        {title: 'Heading 1', name: 'h1'},
+                        {title: 'Quote', name: 'blockquote'},
+                      ],
+                      annotations: [
+                        {
+                          title: 'Comment',
+                          name: 'comment',
+                          fields: [
+                            {name: 'text', title: 'Text', type: 'string'},
+                          ],
+                        },
+                      ],
+                      lists: [{title: 'Bulleted list', name: 'bullet'}],
+                      inlineObjects: [
+                        {
+                          title: 'Mention',
+                          name: 'mention',
+                          fields: [
+                            {name: 'userId', title: 'User ID', type: 'string'},
+                            {name: 'name', title: 'Name', type: 'string'},
+                            {
+                              name: 'username',
+                              title: 'Username',
+                              type: 'string',
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                    {
+                      type: 'image',
+                      fields: [
+                        {name: 'src', title: 'Src', type: 'string'},
+                        {name: 'alt', title: 'Alt text', type: 'string'},
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              type: 'code-block',
+              fields: [
+                {
+                  name: 'lines',
+                  type: 'array',
+                  of: [
+                    {
+                      type: 'block',
+                      styles: [],
+                      decorators: [],
+                      annotations: [],
+                      lists: [],
+                      inlineObjects: [],
+                    },
+                  ],
+                },
+              ],
+            },
           ],
         },
       ],
     },
+    // ARCHETYPE 3 — selective subsets: ONE-OF in every dimension.
+    // Decorators: only strong. Annotations: only comment.
+    // Styles: normal + h1 + h2 + h3 + blockquote.
+    // Lists: only bullet (no number — exercises narrowed-list filter).
+    // Inline objects: only mention.
+    // Allows image + nested callout (recursive same-type nesting).
+    {
+      title: 'Callout',
+      name: 'callout',
+      fields: [
+        {name: 'tone', title: 'Tone', type: 'string'},
+        {
+          name: 'content',
+          title: 'Content',
+          type: 'array',
+          of: [
+            {
+              type: 'block',
+              decorators: [
+                {title: 'Strong', name: 'strong'},
+                {title: 'Code', name: 'code'},
+              ],
+              styles: [
+                {title: 'Normal', name: 'normal'},
+                {title: 'Heading 1', name: 'h1'},
+                {title: 'Heading 2', name: 'h2'},
+                {title: 'Heading 3', name: 'h3'},
+                {title: 'Quote', name: 'blockquote'},
+              ],
+              annotations: [
+                {
+                  title: 'Comment',
+                  name: 'comment',
+                  fields: [{name: 'text', title: 'Text', type: 'string'}],
+                },
+              ],
+              lists: [{title: 'Bulleted list', name: 'bullet'}],
+              inlineObjects: [
+                {
+                  title: 'Mention',
+                  name: 'mention',
+                  fields: [
+                    {name: 'userId', title: 'User ID', type: 'string'},
+                    {name: 'name', title: 'Name', type: 'string'},
+                    {
+                      name: 'username',
+                      title: 'Username',
+                      type: 'string',
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              type: 'image',
+              fields: [
+                {name: 'src', title: 'Src', type: 'string'},
+                {name: 'alt', title: 'Alt text', type: 'string'},
+              ],
+            },
+            {
+              type: 'callout',
+              fields: [
+                {
+                  name: 'content',
+                  type: 'array',
+                  of: [
+                    {
+                      type: 'block',
+                      decorators: [
+                        {title: 'Strong', name: 'strong'},
+                        {title: 'Code', name: 'code'},
+                      ],
+                      styles: [{title: 'Normal', name: 'normal'}],
+                      annotations: [],
+                      lists: [],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+    // ARCHETYPE 4 — deep structural nesting + heterogeneous depth.
+    // table → row → cell. cell.content allows strong + em decorators,
+    // link annotation, normal style, no lists, no inline objects.
+    // PLUS cell.content allows nested callout (different sub-schema
+    // than cell). Tests deep traversal AND voting across multiple
+    // sub-schemas at different depths.
     {
       title: 'Table',
       name: 'table',
       fields: [
+        {
+          name: 'headerRows',
+          title: 'Header rows',
+          type: 'number',
+        },
         {
           name: 'rows',
           title: 'Rows',
@@ -191,8 +418,61 @@ export const playgroundSchemaDefinition = defineSchema({
                                 {title: 'Code', name: 'code'},
                               ],
                               styles: [{title: 'Normal', name: 'normal'}],
-                              annotations: [],
+                              annotations: [
+                                {
+                                  title: 'Link',
+                                  name: 'link',
+                                  fields: [
+                                    {
+                                      name: 'href',
+                                      title: 'HREF',
+                                      type: 'string',
+                                    },
+                                  ],
+                                },
+                              ],
                               lists: [],
+                            },
+                            {
+                              type: 'callout',
+                              fields: [
+                                {
+                                  name: 'content',
+                                  type: 'array',
+                                  of: [
+                                    {
+                                      type: 'block',
+                                      decorators: [
+                                        {title: 'Strong', name: 'strong'},
+                                        {title: 'Code', name: 'code'},
+                                      ],
+                                      styles: [
+                                        {title: 'Normal', name: 'normal'},
+                                        {title: 'Quote', name: 'blockquote'},
+                                      ],
+                                      annotations: [
+                                        {
+                                          title: 'Comment',
+                                          name: 'comment',
+                                          fields: [
+                                            {
+                                              name: 'text',
+                                              title: 'Text',
+                                              type: 'string',
+                                            },
+                                          ],
+                                        },
+                                      ],
+                                      lists: [
+                                        {
+                                          title: 'Bulleted list',
+                                          name: 'bullet',
+                                        },
+                                      ],
+                                    },
+                                  ],
+                                },
+                              ],
                             },
                           ],
                         },

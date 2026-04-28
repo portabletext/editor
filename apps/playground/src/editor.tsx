@@ -62,6 +62,7 @@ import {
 import {CalloutPlugin} from './plugins/plugin.callout'
 import {CodeBlockPlugin} from './plugins/plugin.code-block'
 import {CodeEditorPlugin} from './plugins/plugin.code-editor'
+import {FactBoxPlugin} from './plugins/plugin.fact-box'
 import {HtmlDeserializerPlugin} from './plugins/plugin.html-deserializer'
 import {ImageDeserializerPlugin} from './plugins/plugin.image-deserializer'
 import {markdownShortcutsPluginProps} from './plugins/plugin.markdown'
@@ -154,6 +155,7 @@ export function Editor(props: {
           <Container className="flex flex-col overflow-clip">
             {featureFlags.codeBlockPlugin ? <CodeBlockPlugin /> : null}
             {featureFlags.calloutPlugin ? <CalloutPlugin /> : null}
+            {featureFlags.factBoxPlugin ? <FactBoxPlugin /> : null}
             {featureFlags.tablePlugin ? <TablePlugin /> : null}
             {featureFlags.emojiPickerPlugin ? <EmojiPickerPlugin /> : null}
             {featureFlags.mentionPickerPlugin ? <MentionPickerPlugin /> : null}
@@ -518,7 +520,14 @@ const decoratorMap: Map<
 > = new Map([
   ['strong', (props) => <strong>{props.children}</strong>],
   ['em', (props) => <em>{props.children}</em>],
-  ['code', (props) => <code>{props.children}</code>],
+  [
+    'code',
+    (props) => (
+      <code className="font-mono text-sm bg-gray-100 dark:bg-gray-800 text-pink-600 dark:text-pink-400 rounded px-1 py-0.5 border border-gray-200 dark:border-gray-700">
+        {props.children}
+      </code>
+    ),
+  ],
   [
     'underline',
     (props) => (

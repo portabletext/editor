@@ -260,6 +260,7 @@ export const extendBlockObject: ExtendBlockObjectSchemaType = (blockObject) => {
       ...blockObject,
       icon: InfoIcon,
       defaultValues: {
+        tone: 'note',
         content: [
           {
             _type: 'block',
