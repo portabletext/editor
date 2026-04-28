@@ -1,5 +1,6 @@
 import type {PortableTextTextBlock} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
+import {getBlockSubSchema} from '../schema/get-block-sub-schema'
 import {getSelectedTextBlocks} from './selector.get-selected-text-blocks'
 
 /**
@@ -12,22 +13,20 @@ export const getActiveStyle: EditorSelector<PortableTextTextBlock['style']> = (
     return undefined
   }
 
-  const selectedTextBlocks = getSelectedTextBlocks(snapshot).map(
-    (block) => block.node,
+  // Blocks whose sub-schema doesn't declare any style (or declares it
+  // empty) are out of scope: they can't carry a style and shouldn't vote.
+  // The active style is the one shared by every in-scope block.
+  const inScopeBlocks = getSelectedTextBlocks(snapshot).filter(
+    (block) => getBlockSubSchema(snapshot, block.path).styles.length > 0,
   )
-  const firstTextBlock = selectedTextBlocks.at(0)
 
-  if (!firstTextBlock) {
-    return undefined
-  }
-
-  const firstStyle = firstTextBlock.style
+  const firstStyle = inScopeBlocks.at(0)?.node.style
 
   if (!firstStyle) {
     return undefined
   }
 
-  if (selectedTextBlocks.every((block) => block.style === firstStyle)) {
+  if (inScopeBlocks.every((block) => block.node.style === firstStyle)) {
     return firstStyle
   }
 

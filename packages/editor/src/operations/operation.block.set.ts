@@ -53,7 +53,9 @@ export const blockSetOperationImplementation: OperationImplementation<
       }
 
       if (key === 'level') {
-        filteredProps[key] = operation.props[key]
+        if (subSchema.lists.length > 0) {
+          filteredProps[key] = operation.props[key]
+        }
         continue
       }
 
