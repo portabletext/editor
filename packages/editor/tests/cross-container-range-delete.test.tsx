@@ -123,6 +123,206 @@ describe('cross-container range delete', () => {
     ])
   })
 
+  test('root text block -> line 2 of multi-line code-block (line 1 dropped, line 2 trimmed)', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const textBlockKey = keyGenerator()
+    const textSpanKey = keyGenerator()
+    const codeBlockKey = keyGenerator()
+    const line1Key = keyGenerator()
+    const line1SpanKey = keyGenerator()
+    const line2Key = keyGenerator()
+    const line2SpanKey = keyGenerator()
+
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: textBlockKey,
+          children: [
+            {_type: 'span', _key: textSpanKey, text: 'foo', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'code-block',
+          _key: codeBlockKey,
+          lines: [
+            {
+              _type: 'block',
+              _key: line1Key,
+              children: [
+                {_type: 'span', _key: line1SpanKey, text: 'aaa', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: line2Key,
+              children: [
+                {_type: 'span', _key: line2SpanKey, text: 'bbb', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: <ContainerPlugin containers={containers} />,
+    })
+
+    await userEvent.click(locator)
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: textBlockKey}, 'children', {_key: textSpanKey}],
+          offset: 1,
+        },
+        focus: {
+          path: [
+            {_key: codeBlockKey},
+            'lines',
+            {_key: line2Key},
+            'children',
+            {_key: line2SpanKey},
+          ],
+          offset: 2,
+        },
+      },
+    })
+
+    await userEvent.keyboard('{Backspace}')
+
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: textBlockKey,
+        children: [{_type: 'span', _key: textSpanKey, text: 'f', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+      {
+        _type: 'code-block',
+        _key: codeBlockKey,
+        lines: [
+          {
+            _type: 'block',
+            _key: line2Key,
+            children: [
+              {_type: 'span', _key: line2SpanKey, text: 'b', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      },
+    ])
+  })
+
+  test('line 1 of multi-line code-block -> root text block below (line 2 dropped, line 1 trimmed)', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const codeBlockKey = keyGenerator()
+    const line1Key = keyGenerator()
+    const line1SpanKey = keyGenerator()
+    const line2Key = keyGenerator()
+    const line2SpanKey = keyGenerator()
+    const textBlockKey = keyGenerator()
+    const textSpanKey = keyGenerator()
+
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition,
+      initialValue: [
+        {
+          _type: 'code-block',
+          _key: codeBlockKey,
+          lines: [
+            {
+              _type: 'block',
+              _key: line1Key,
+              children: [
+                {_type: 'span', _key: line1SpanKey, text: 'aaa', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: line2Key,
+              children: [
+                {_type: 'span', _key: line2SpanKey, text: 'bbb', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+        {
+          _type: 'block',
+          _key: textBlockKey,
+          children: [
+            {_type: 'span', _key: textSpanKey, text: 'foo', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: <ContainerPlugin containers={containers} />,
+    })
+
+    await userEvent.click(locator)
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [
+            {_key: codeBlockKey},
+            'lines',
+            {_key: line1Key},
+            'children',
+            {_key: line1SpanKey},
+          ],
+          offset: 1,
+        },
+        focus: {
+          path: [{_key: textBlockKey}, 'children', {_key: textSpanKey}],
+          offset: 2,
+        },
+      },
+    })
+
+    await userEvent.keyboard('{Backspace}')
+
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'code-block',
+        _key: codeBlockKey,
+        lines: [
+          {
+            _type: 'block',
+            _key: line1Key,
+            children: [
+              {_type: 'span', _key: line1SpanKey, text: 'a', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      },
+      {
+        _type: 'block',
+        _key: textBlockKey,
+        children: [{_type: 'span', _key: textSpanKey, text: 'o', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ])
+  })
+
   test('code-block line -> root text block below', async () => {
     const keyGenerator = createTestKeyGenerator()
     const codeBlockKey = keyGenerator()

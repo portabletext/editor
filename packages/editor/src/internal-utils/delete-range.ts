@@ -4,13 +4,20 @@ import {getNode} from '../node-traversal/get-node'
 import {getSibling} from '../node-traversal/get-sibling'
 import {getSpanNode} from '../node-traversal/get-span-node'
 import {getTextBlockNode} from '../node-traversal/get-text-block-node'
+import {isEditableContainer} from '../schema/is-editable-container'
+import {parentAcceptsTextBlock} from '../schema/parent-accepts-text-block'
+import {isEnd} from '../slate/editor/is-end'
+import {isStart} from '../slate/editor/is-start'
+import {pathRef} from '../slate/editor/path-ref'
 import type {Path} from '../slate/interfaces/path'
 import type {Point} from '../slate/interfaces/point'
 import type {Range} from '../slate/interfaces/range'
+import {commonPath} from '../slate/path/common-path'
 import {parentPath} from '../slate/path/parent-path'
 import {pathEquals} from '../slate/path/path-equals'
 import {rangeEdges} from '../slate/range/range-edges'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
+import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import {applyMergeNode} from './apply-merge-node'
 import {setNodeProperties} from './set-node-properties'
 
@@ -75,7 +82,7 @@ function deleteSameBlockRange(
   }
 
   removeTextFromOffset(editor, start.path, start.offset)
-  removeChildrenBetween(editor, start.path, end.path)
+  removeSiblingsBetweenPaths(editor, start.path, end.path)
 
   const adjustedEnd = getSibling(editor, start.path, 'next')
   if (!adjustedEnd) {
@@ -94,10 +101,10 @@ function deleteSameParentCrossBlockRange(
 ): void {
   if (!pathEquals(start.path, startBlockPath)) {
     removeTextFromOffset(editor, start.path, start.offset)
-    removeTrailingChildren(editor, start.path)
+    removeTrailingSiblings(editor, start.path)
   }
 
-  removeBlocksBetween(editor, startBlockPath, endBlockPath)
+  removeSiblingsBetweenPaths(editor, startBlockPath, endBlockPath)
 
   const adjustedEndBlock = getSibling(editor, startBlockPath, 'next')
   const adjustedEndBlockPath = adjustedEndBlock?.path ?? startBlockPath
@@ -120,17 +127,179 @@ function deleteCrossParentRange(
   start: Point,
   end: Point,
 ): void {
-  if (!pathEquals(start.path, startBlockPath)) {
-    removeTextFromOffset(editor, start.path, start.offset)
-    removeTrailingChildren(editor, start.path)
+  // Edge promotion: walk up the start side as long as the start point is the
+  // truly-first point of each successive ancestor (and the ancestor is still
+  // below the common parent of the two blocks). Same for the end side at
+  // truly-last point. This lets a select-all-style range fully delete every
+  // container between start and end, including the start/end containers
+  // themselves when the selection covers them edge-to-edge.
+  const common = commonPath(startBlockPath, endBlockPath)
+
+  let startTopPath = startBlockPath
+  while (startTopPath.length > common.length + 1) {
+    const parent = parentPath(startTopPath)
+    if (!isStart(editor, start, parent)) {
+      break
+    }
+    startTopPath = parent
   }
 
-  if (!pathEquals(end.path, endBlockPath)) {
+  let endTopPath = endBlockPath
+  while (endTopPath.length > common.length + 1) {
+    const parent = parentPath(endTopPath)
+    if (!isEnd(editor, end, parent)) {
+      break
+    }
+    endTopPath = parent
+  }
+
+  // Refs survive the structural mutations below. `startTopPath` and
+  // `endTopPath` may shift when intermediate siblings get unset.
+  const startTopRef = pathRef(editor, startTopPath)
+  const endTopRef = pathRef(editor, endTopPath)
+
+  // A "top" is removed wholesale only when it's a registered editable
+  // container. Text blocks at the start/end keep their shell (existing
+  // partial-trim semantics) so consumers don't lose the implicit placeholder
+  // a top-of-document Backspace usually produces.
+  const startTopNode = getNode(editor, startTopPath)
+  const endTopNode = getNode(editor, endTopPath)
+  const startCoversTop =
+    startTopNode !== undefined &&
+    isEditableContainer(editor, startTopNode.node, startTopPath) &&
+    isStart(editor, start, startTopPath)
+  const endCoversTop =
+    endTopNode !== undefined &&
+    isEditableContainer(editor, endTopNode.node, endTopPath) &&
+    isEnd(editor, end, endTopPath)
+  const willUnsetStartTop =
+    startCoversTop && parentAcceptsTextBlock(editor, startTopPath)
+  const willUnsetEndTop =
+    endCoversTop && parentAcceptsTextBlock(editor, endTopPath)
+
+  // 1. Trim partial content at the start block. Skipped when we'll unset
+  //    startTopPath wholesale (the trim would be redundant), or when start
+  //    is exactly at the block boundary.
+  if (!willUnsetStartTop && !pathEquals(start.path, startBlockPath)) {
+    removeTextFromOffset(editor, start.path, start.offset)
+    removeTrailingSiblings(editor, start.path)
+  }
+
+  // 2. Symmetric for end.
+  if (!willUnsetEndTop && !pathEquals(end.path, endBlockPath)) {
     removeLeadingChildrenOf(editor, endBlockPath, end.path)
     const firstChild = getFirstChild(editor, endBlockPath)
     if (firstChild) {
       removeTextUpToOffset(editor, firstChild.path, end.offset)
     }
+  }
+
+  // 3. Walk down the start-side ancestor chain. For each ancestor of
+  //    startBlock strictly between the common-parent's child level (handled
+  //    by step 5) and startBlock itself (handled by step 1), remove trailing
+  //    siblings -- but only if the parent field accepts a text block as a
+  //    substitute. A row inside `table.rows` (which only allows rows) keeps
+  //    its siblings; a block inside `code-block.lines` (which allows blocks)
+  //    loses them.
+  for (
+    let entryLen = common.length + 2;
+    entryLen <= startBlockPath.length;
+    entryLen++
+  ) {
+    const entry = startBlockPath.slice(0, entryLen)
+    if (isKeyedSegment(entry.at(-1)) && parentAcceptsTextBlock(editor, entry)) {
+      removeTrailingSiblings(editor, entry)
+    }
+  }
+
+  // 4. Symmetric for end side: remove leading siblings at each intermediate
+  //    keyed level (gated on parent-accepts-text-block).
+  for (
+    let entryLen = common.length + 2;
+    entryLen <= endBlockPath.length;
+    entryLen++
+  ) {
+    const entry = endBlockPath.slice(0, entryLen)
+    if (isKeyedSegment(entry.at(-1)) && parentAcceptsTextBlock(editor, entry)) {
+      removeLeadingSiblings(editor, entry)
+    }
+  }
+
+  // 5. At common level: remove siblings strictly between the start-side and
+  //    end-side ancestors at common-depth + 1, gated on whether common's
+  //    field accepts a text block.
+  const finalStartTop = startTopRef.current
+  const finalEndTop = endTopRef.current
+  if (finalStartTop && finalEndTop) {
+    const startAtCommonChild = finalStartTop.slice(0, common.length + 1)
+    const endAtCommonChild = finalEndTop.slice(0, common.length + 1)
+    if (parentAcceptsTextBlock(editor, startAtCommonChild)) {
+      removeSiblingsBetweenPaths(editor, startAtCommonChild, endAtCommonChild)
+    }
+  }
+
+  // 6. Unset start-top / end-top wholesale when the parent field accepts a
+  //    text block in their place.
+  if (willUnsetStartTop) {
+    const path = startTopRef.unref()
+    if (path) {
+      removeNodeAt(editor, path)
+    }
+  } else {
+    startTopRef.unref()
+  }
+
+  if (willUnsetEndTop) {
+    const path = endTopRef.unref()
+    if (path) {
+      removeNodeAt(editor, path)
+    }
+  } else {
+    endTopRef.unref()
+  }
+}
+
+/**
+ * Remove every sibling of `path` that comes AFTER it.
+ */
+function removeTrailingSiblings(
+  editor: PortableTextSlateEditor,
+  path: Path,
+): void {
+  let cursor = getSibling(editor, path, 'next')
+  while (cursor) {
+    removeNodeAt(editor, cursor.path)
+    cursor = getSibling(editor, path, 'next')
+  }
+}
+
+/**
+ * Remove every sibling of `path` that comes BEFORE it.
+ */
+function removeLeadingSiblings(
+  editor: PortableTextSlateEditor,
+  path: Path,
+): void {
+  let cursor = getSibling(editor, path, 'previous')
+  while (cursor) {
+    removeNodeAt(editor, cursor.path)
+    cursor = getSibling(editor, path, 'previous')
+  }
+}
+
+/**
+ * Remove siblings strictly between `startPath` and `endPath` (exclusive on
+ * both ends). Both paths must share the same parent.
+ */
+function removeSiblingsBetweenPaths(
+  editor: PortableTextSlateEditor,
+  startPath: Path,
+  endPath: Path,
+): void {
+  let cursor = getSibling(editor, startPath, 'next')
+  while (cursor && !pathEquals(cursor.path, endPath)) {
+    removeNodeAt(editor, cursor.path)
+    cursor = getSibling(editor, startPath, 'next')
   }
 }
 
@@ -193,36 +362,6 @@ function getSpanLength(editor: PortableTextSlateEditor, path: Path): number {
 }
 
 /**
- * Remove children between `startChildPath` and `endChildPath` (exclusive on
- * both ends). Both paths must share the same parent.
- */
-function removeChildrenBetween(
-  editor: PortableTextSlateEditor,
-  startChildPath: Path,
-  endChildPath: Path,
-): void {
-  let cursor = getSibling(editor, startChildPath, 'next')
-  while (cursor && !pathEquals(cursor.path, endChildPath)) {
-    removeNodeAt(editor, cursor.path)
-    cursor = getSibling(editor, startChildPath, 'next')
-  }
-}
-
-/**
- * Remove every child of `startChildPath`'s parent that comes AFTER it.
- */
-function removeTrailingChildren(
-  editor: PortableTextSlateEditor,
-  startChildPath: Path,
-): void {
-  let cursor = getSibling(editor, startChildPath, 'next')
-  while (cursor) {
-    removeNodeAt(editor, cursor.path)
-    cursor = getSibling(editor, startChildPath, 'next')
-  }
-}
-
-/**
  * Remove leading children of `blockPath` until `endChildPath` is the first
  * child.
  */
@@ -242,22 +381,6 @@ function removeLeadingChildrenOf(
   ) {
     removeNodeAt(editor, firstChild.path)
     firstChild = getFirstChild(editor, blockPath)
-  }
-}
-
-/**
- * Remove blocks between `startBlockPath` and `endBlockPath` (exclusive on
- * both ends). Both paths must share the same parent.
- */
-function removeBlocksBetween(
-  editor: PortableTextSlateEditor,
-  startBlockPath: Path,
-  endBlockPath: Path,
-): void {
-  let cursor = getSibling(editor, startBlockPath, 'next')
-  while (cursor && !pathEquals(cursor.path, endBlockPath)) {
-    removeNodeAt(editor, cursor.path)
-    cursor = getSibling(editor, startBlockPath, 'next')
   }
 }
 

@@ -1,4 +1,5 @@
 import {resolveSelection} from '../internal-utils/apply-selection'
+import {createPlaceholderBlock} from '../internal-utils/create-placeholder-block'
 import {deleteRange} from '../internal-utils/delete-range'
 import {getAncestor} from '../node-traversal/get-ancestor'
 import {getAncestorTextBlock} from '../node-traversal/get-ancestor-text-block'
@@ -11,7 +12,9 @@ import {getSibling} from '../node-traversal/get-sibling'
 import {getSpanNode} from '../node-traversal/get-span-node'
 import {isBlock} from '../node-traversal/is-block'
 import {isInline} from '../node-traversal/is-inline'
+import {getEnclosingContainer} from '../schema/get-enclosing-container'
 import {isEditableContainer} from '../schema/is-editable-container'
+import {parentAcceptsTextBlock} from '../schema/parent-accepts-text-block'
 import {deleteText} from '../slate/core/delete-text'
 import {DOMEditor} from '../slate/dom/plugin/dom-editor'
 import {end as editorEnd} from '../slate/editor/end'
@@ -40,6 +43,57 @@ import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import type {OperationImplementation} from './operation.types'
+
+function unsetWithContainerPlaceholder(
+  editor: PortableTextSlateEditor,
+  nodePath: Path,
+): void {
+  const enclosingContainer = getEnclosingContainer(editor, nodePath)
+  const enclosingChildren = enclosingContainer
+    ? getChildren(editor, enclosingContainer.path)
+    : []
+  const isLonelyVoid =
+    enclosingContainer !== undefined &&
+    enclosingChildren.length === 1 &&
+    pathEquals(enclosingChildren[0]!.path, nodePath)
+
+  if (isLonelyVoid && enclosingContainer) {
+    const placeholder = createPlaceholderBlock(editor, enclosingContainer.path)
+    // After unset, the container's child-array is empty. Insert at index 0
+    // of the container's child field; the patch translation needs the field
+    // segment in the path so it can emit a well-formed `setIfMissing`
+    // pointing at the array slot rather than the container object itself.
+    const insertPath: Path = [
+      ...enclosingContainer.path,
+      enclosingContainer.field.name,
+      0,
+    ]
+    const placeholderPath: Path = [
+      ...enclosingContainer.path,
+      enclosingContainer.field.name,
+      {_key: placeholder._key},
+    ]
+    editor.apply({type: 'unset', path: nodePath})
+    editor.apply({
+      type: 'insert',
+      path: insertPath,
+      node: placeholder,
+      position: 'before',
+    })
+    if (editor.selection) {
+      const point = editorStart(editor, placeholderPath)
+      if (point) {
+        editor.apply({
+          type: 'set_selection',
+          properties: editor.selection,
+          newProperties: {anchor: point, focus: point},
+        })
+      }
+    }
+  } else {
+    editor.apply({type: 'unset', path: nodePath})
+  }
+}
 
 export const deleteOperationImplementation: OperationImplementation<
   'delete'
@@ -84,10 +138,7 @@ export const deleteOperationImplementation: OperationImplementation<
       if (path) {
         const nodeEntry = getNode(operation.editor, path)
         if (nodeEntry) {
-          operation.editor.apply({
-            type: 'unset',
-            path,
-          })
+          unsetWithContainerPlaceholder(operation.editor, path)
         }
       }
     }
@@ -172,10 +223,7 @@ export const deleteOperationImplementation: OperationImplementation<
     if (nodeEntry) {
       const {node, path: nodePath} = nodeEntry
       if (isVoidNode(operation.editor, node, nodePath)) {
-        operation.editor.apply({
-          type: 'unset',
-          path: nodePath,
-        })
+        unsetWithContainerPlaceholder(operation.editor, nodePath)
         return
       }
     }
@@ -240,6 +288,13 @@ export const deleteOperationImplementation: OperationImplementation<
         }
 
         target = enclosing
+      }
+
+      // Don't unset `target` if its parent field doesn't accept a text block
+      // as a substitute (e.g. a cell whose `row.cells` field only allows
+      // cells). Falls through to a no-op delete below.
+      if (!parentAcceptsTextBlock(operation.editor, target.path)) {
+        return
       }
 
       const reverse = operation.direction === 'backward'

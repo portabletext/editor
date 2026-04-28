@@ -5,7 +5,7 @@ import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
 import {isObjectNode} from '../slate/node/is-object-node'
 import {getContainerScopedName} from './get-container-scoped-name'
-import type {Containers} from './resolve-containers'
+import type {ChildArrayField, Containers} from './resolve-containers'
 
 /**
  * Walk ancestors from `path` and return the nearest registered editable
@@ -25,6 +25,7 @@ export function getEnclosingContainer(
 ):
   | {
       of: ReadonlyArray<OfDefinition>
+      field: ChildArrayField
       path: Path
     }
   | undefined {
@@ -46,6 +47,7 @@ export function getEnclosingContainer(
 
     return {
       of: container.field.of,
+      field: container.field,
       path: ancestor.path,
     }
   }
