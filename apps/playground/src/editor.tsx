@@ -46,7 +46,9 @@ import {EmojiPickerPlugin} from './emoji-picker'
 import {
   EditorFeatureFlagsContext,
   PlaygroundFeatureFlagsContext,
+  type EditorFeatureFlags,
 } from './feature-flags'
+import {FullscreenProvider, FullscreenToggle, useFullscreen} from './fullscreen'
 import {highlightMachine} from './highlight-json-machine'
 import {MentionPickerPlugin} from './mention-picker'
 import type {EditorActorRef} from './playground-machine'
@@ -104,120 +106,168 @@ export function Editor(props: {
         fallback={ErrorScreen}
         onError={console.error}
       >
-        <EditorProvider
-          initialConfig={{
-            initialValue: value,
-            keyGenerator,
-            readOnly,
-            schemaDefinition: playgroundSchemaDefinition,
-          }}
-        >
-          <EditorEventListener
-            editorRef={props.editorRef}
-            value={value}
-            on={(event) => {
-              if (event.type === 'mutation') {
-                props.editorRef.send(event)
-              }
-              if (event.type === 'loading') {
-                setLoading(true)
-              }
-              if (event.type === 'done loading') {
-                setLoading(false)
-              }
-              if (event.type === 'editable') {
-                setReadOnly(false)
-              }
-              if (event.type === 'read only') {
-                setReadOnly(true)
-              }
+        <FullscreenProvider>
+          <EditorProvider
+            initialConfig={{
+              initialValue: value,
+              keyGenerator,
+              readOnly,
+              schemaDefinition: playgroundSchemaDefinition,
             }}
-          />
-          {playgroundFeatureFlags.toolbar ? (
-            <div className="mb-2">
-              <PortableTextToolbar>
-                <RangeDecorationButton
-                  onAddRangeDecoration={(rangeDecoration) => {
-                    props.editorRef.send({
-                      type: 'add range decoration',
-                      rangeDecoration,
-                    })
-                  }}
-                  onRangeDecorationMoved={(details) => {
-                    props.editorRef.send({
-                      type: 'move range decoration',
-                      details,
-                    })
-                  }}
-                />
-              </PortableTextToolbar>
-            </div>
-          ) : null}
-          <Container className="flex flex-col overflow-clip">
-            {featureFlags.codeBlockPlugin ? <CodeBlockPlugin /> : null}
-            {featureFlags.calloutPlugin ? <CalloutPlugin /> : null}
-            {featureFlags.factBoxPlugin ? <FactBoxPlugin /> : null}
-            {featureFlags.tablePlugin ? <TablePlugin /> : null}
-            {featureFlags.emojiPickerPlugin ? <EmojiPickerPlugin /> : null}
-            {featureFlags.mentionPickerPlugin ? <MentionPickerPlugin /> : null}
-            {featureFlags.slashCommandPlugin ? (
-              <SlashCommandPickerPlugin />
-            ) : null}
-            {featureFlags.codeEditorPlugin ? <CodeEditorPlugin /> : null}
-            {featureFlags.linkPlugin ? <PasteLinkPlugin /> : null}
-            {featureFlags.imageDeserializerPlugin ? (
-              <ImageDeserializerPlugin />
-            ) : null}
-            {featureFlags.htmlDeserializerPlugin ? (
-              <HtmlDeserializerPlugin />
-            ) : null}
-            {featureFlags.textFileDeserializerPlugin ? (
-              <TextFileDeserializerPlugin />
-            ) : null}
-            {featureFlags.markdownDeserializerPlugin ? (
-              <MarkdownDeserializerPlugin />
-            ) : null}
-            {featureFlags.markdownPlugin ? (
-              <MarkdownShortcutsPlugin {...markdownShortcutsPluginProps} />
-            ) : null}
-            {featureFlags.oneLinePlugin ? <OneLinePlugin /> : null}
-            {featureFlags.typographyPlugin ? (
-              <TypographyPlugin
-                guard={createDecoratorGuard({
-                  decorators: ({context}) =>
-                    context.schema.decorators.flatMap((decorator) =>
-                      decorator.name === 'code' ? [] : [decorator.name],
-                    ),
-                })}
-              />
-            ) : null}
-            <div className="flex gap-2 items-center">
-              <ErrorBoundary
-                fallbackProps={{area: 'PortableTextEditable'}}
-                fallback={ErrorScreen}
-                onError={console.error}
-              >
-                <EditorFeatureFlagsContext.Provider value={featureFlags}>
-                  <PortableTextEditable
-                    className={`rounded-b-md outline-none data-[read-only=true]:opacity-50 px-2 h-75 -mx-2 -mb-2 overflow-auto flex-1 ${featureFlags.dragHandles ? 'ps-5' : ''}`}
-                    rangeDecorations={props.rangeDecorations}
-                    renderAnnotation={renderAnnotation}
-                    renderBlock={RenderBlock}
-                    renderChild={renderChild}
-                    renderDecorator={renderDecorator}
-                    renderListItem={renderListItem}
-                    renderPlaceholder={renderPlaceholder}
-                    renderStyle={renderStyle}
+          >
+            <EditorEventListener
+              editorRef={props.editorRef}
+              value={value}
+              on={(event) => {
+                if (event.type === 'mutation') {
+                  props.editorRef.send(event)
+                }
+                if (event.type === 'loading') {
+                  setLoading(true)
+                }
+                if (event.type === 'done loading') {
+                  setLoading(false)
+                }
+                if (event.type === 'editable') {
+                  setReadOnly(false)
+                }
+                if (event.type === 'read only') {
+                  setReadOnly(true)
+                }
+              }}
+            />
+            {playgroundFeatureFlags.toolbar ? (
+              <FullscreenAwareToolbarWrapper>
+                <PortableTextToolbar>
+                  <RangeDecorationButton
+                    onAddRangeDecoration={(rangeDecoration) => {
+                      props.editorRef.send({
+                        type: 'add range decoration',
+                        rangeDecoration,
+                      })
+                    }}
+                    onRangeDecorationMoved={(details) => {
+                      props.editorRef.send({
+                        type: 'move range decoration',
+                        details,
+                      })
+                    }}
                   />
-                </EditorFeatureFlagsContext.Provider>
-              </ErrorBoundary>
-              {loading ? <Spinner /> : null}
-            </div>
-            <EditorFooter editorRef={props.editorRef} readOnly={readOnly} />
-          </Container>
-        </EditorProvider>
+                </PortableTextToolbar>
+              </FullscreenAwareToolbarWrapper>
+            ) : null}
+            <FullscreenAwareContainer>
+              {featureFlags.codeBlockPlugin ? <CodeBlockPlugin /> : null}
+              {featureFlags.calloutPlugin ? <CalloutPlugin /> : null}
+              {featureFlags.factBoxPlugin ? <FactBoxPlugin /> : null}
+              {featureFlags.tablePlugin ? <TablePlugin /> : null}
+              {featureFlags.emojiPickerPlugin ? <EmojiPickerPlugin /> : null}
+              {featureFlags.mentionPickerPlugin ? (
+                <MentionPickerPlugin />
+              ) : null}
+              {featureFlags.slashCommandPlugin ? (
+                <SlashCommandPickerPlugin />
+              ) : null}
+              {featureFlags.codeEditorPlugin ? <CodeEditorPlugin /> : null}
+              {featureFlags.linkPlugin ? <PasteLinkPlugin /> : null}
+              {featureFlags.imageDeserializerPlugin ? (
+                <ImageDeserializerPlugin />
+              ) : null}
+              {featureFlags.htmlDeserializerPlugin ? (
+                <HtmlDeserializerPlugin />
+              ) : null}
+              {featureFlags.textFileDeserializerPlugin ? (
+                <TextFileDeserializerPlugin />
+              ) : null}
+              {featureFlags.markdownDeserializerPlugin ? (
+                <MarkdownDeserializerPlugin />
+              ) : null}
+              {featureFlags.markdownPlugin ? (
+                <MarkdownShortcutsPlugin {...markdownShortcutsPluginProps} />
+              ) : null}
+              {featureFlags.oneLinePlugin ? <OneLinePlugin /> : null}
+              {featureFlags.typographyPlugin ? (
+                <TypographyPlugin
+                  guard={createDecoratorGuard({
+                    decorators: ({context}) =>
+                      context.schema.decorators.flatMap((decorator) =>
+                        decorator.name === 'code' ? [] : [decorator.name],
+                      ),
+                  })}
+                />
+              ) : null}
+              <FullscreenAwareEditable
+                rangeDecorations={props.rangeDecorations}
+                featureFlags={featureFlags}
+                loading={loading}
+              />
+              <EditorFooter editorRef={props.editorRef} readOnly={readOnly} />
+            </FullscreenAwareContainer>
+          </EditorProvider>
+        </FullscreenProvider>
       </ErrorBoundary>
     </div>
+  )
+}
+
+function FullscreenAwareEditable(props: {
+  rangeDecorations: RangeDecoration[]
+  featureFlags: EditorFeatureFlags
+  loading: boolean
+}) {
+  const {isFullscreen} = useFullscreen()
+  const wrapperClasses = isFullscreen
+    ? 'flex gap-2 items-stretch flex-1 min-h-0'
+    : 'flex gap-2 items-center'
+  const editableClasses = isFullscreen
+    ? `rounded-b-md outline-none data-[read-only=true]:opacity-50 px-2 -mx-2 -mb-2 overflow-auto flex-1 ${props.featureFlags.dragHandles ? 'ps-5' : ''}`
+    : `rounded-b-md outline-none data-[read-only=true]:opacity-50 px-2 h-75 -mx-2 -mb-2 overflow-auto flex-1 ${props.featureFlags.dragHandles ? 'ps-5' : ''}`
+  return (
+    <div className={wrapperClasses}>
+      <ErrorBoundary
+        fallbackProps={{area: 'PortableTextEditable'}}
+        fallback={ErrorScreen}
+        onError={console.error}
+      >
+        <EditorFeatureFlagsContext.Provider value={props.featureFlags}>
+          <PortableTextEditable
+            className={editableClasses}
+            rangeDecorations={props.rangeDecorations}
+            renderAnnotation={renderAnnotation}
+            renderBlock={RenderBlock}
+            renderChild={renderChild}
+            renderDecorator={renderDecorator}
+            renderListItem={renderListItem}
+            renderPlaceholder={renderPlaceholder}
+            renderStyle={renderStyle}
+          />
+        </EditorFeatureFlagsContext.Provider>
+      </ErrorBoundary>
+      {props.loading ? <Spinner /> : null}
+    </div>
+  )
+}
+
+function FullscreenAwareToolbarWrapper(props: {children: React.ReactNode}) {
+  const {isFullscreen} = useFullscreen()
+  if (isFullscreen) {
+    return <Container className="mb-2">{props.children}</Container>
+  }
+  return <div className="mb-2">{props.children}</div>
+}
+
+function FullscreenAwareContainer(props: {children: React.ReactNode}) {
+  const {isFullscreen} = useFullscreen()
+  const containerClasses = isFullscreen
+    ? 'relative flex flex-col overflow-clip flex-1 min-h-0'
+    : 'relative flex flex-col overflow-clip'
+  return (
+    <Container className={containerClasses}>
+      <div className="absolute top-2 right-2 z-10">
+        <FullscreenToggle />
+      </div>
+      {props.children}
+    </Container>
   )
 }
 
