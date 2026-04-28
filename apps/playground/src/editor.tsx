@@ -66,6 +66,7 @@ import {FactBoxPlugin} from './plugins/plugin.fact-box'
 import {HtmlDeserializerPlugin} from './plugins/plugin.html-deserializer'
 import {ImageDeserializerPlugin} from './plugins/plugin.image-deserializer'
 import {markdownShortcutsPluginProps} from './plugins/plugin.markdown'
+import {MarkdownDeserializerPlugin} from './plugins/plugin.markdown-deserializer'
 import {TablePlugin} from './plugins/plugin.table'
 import {TextFileDeserializerPlugin} from './plugins/plugin.text-file-deserializer'
 import {Button} from './primitives/button'
@@ -172,6 +173,9 @@ export function Editor(props: {
             ) : null}
             {featureFlags.textFileDeserializerPlugin ? (
               <TextFileDeserializerPlugin />
+            ) : null}
+            {featureFlags.markdownDeserializerPlugin ? (
+              <MarkdownDeserializerPlugin />
             ) : null}
             {featureFlags.markdownPlugin ? (
               <MarkdownShortcutsPlugin {...markdownShortcutsPluginProps} />

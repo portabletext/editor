@@ -15,6 +15,7 @@ export type EditorFeatureFlags = {
   dragHandles: boolean
   imageDeserializerPlugin: boolean
   htmlDeserializerPlugin: boolean
+  markdownDeserializerPlugin: boolean
   textFileDeserializerPlugin: boolean
   emojiPickerPlugin: boolean
   mentionPickerPlugin: boolean
@@ -34,6 +35,7 @@ export const defaultEditorFeatureFlags: EditorFeatureFlags = {
   dragHandles: false,
   imageDeserializerPlugin: false,
   htmlDeserializerPlugin: true,
+  markdownDeserializerPlugin: true,
   textFileDeserializerPlugin: false,
   emojiPickerPlugin: true,
   mentionPickerPlugin: true,

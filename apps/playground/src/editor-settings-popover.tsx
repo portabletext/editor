@@ -122,6 +122,11 @@ export function EditorSettingsPopover(props: {editorRef: EditorActorRef}) {
               isSelected={featureFlags.textFileDeserializerPlugin}
               onChange={() => toggleFlag('textFileDeserializerPlugin')}
             />
+            <FeatureSwitch
+              label="Markdown content"
+              isSelected={featureFlags.markdownDeserializerPlugin}
+              onChange={() => toggleFlag('markdownDeserializerPlugin')}
+            />
           </Section>
         </div>
       </Popover>
