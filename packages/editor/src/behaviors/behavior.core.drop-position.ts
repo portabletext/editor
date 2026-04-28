@@ -2,10 +2,8 @@ import type {Dispatch, SetStateAction} from 'react'
 import type {EventPositionBlock} from '../internal-utils/event-position'
 import {corePriority} from '../priority/priority.core'
 import {createEditorPriority} from '../priority/priority.types'
-import {getDragSelection} from '../selectors/drag-selection'
+import {getDragMemo} from '../selectors/drag-memo'
 import {getFocusBlock} from '../selectors/selector.get-focus-block'
-import {getSelectedBlocks} from '../selectors/selector.get-selected-blocks'
-import {isSelectingEntireBlocks} from '../selectors/selector.is-selecting-entire-blocks'
 import {forward} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
@@ -42,18 +40,10 @@ export function createDropPositionBehaviorsConfig({
             return false
           }
 
-          const dragSelection = getDragSelection({
-            eventSelection: dragOrigin.selection,
+          const {draggedBlocks, selectingEntireBlocks} = getDragMemo(
             snapshot,
-          })
-
-          const draggedBlocks = getSelectedBlocks({
-            ...snapshot,
-            context: {
-              ...snapshot.context,
-              selection: dragSelection,
-            },
-          })
+            dragOrigin,
+          )
 
           if (
             draggedBlocks.some(
@@ -64,15 +54,7 @@ export function createDropPositionBehaviorsConfig({
             return false
           }
 
-          const draggingEntireBlocks = isSelectingEntireBlocks({
-            ...snapshot,
-            context: {
-              ...snapshot.context,
-              selection: dragSelection,
-            },
-          })
-
-          if (!draggingEntireBlocks) {
+          if (!selectingEntireBlocks) {
             return false
           }
 

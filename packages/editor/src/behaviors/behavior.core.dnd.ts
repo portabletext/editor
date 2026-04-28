@@ -1,8 +1,6 @@
 import {getCompoundClientRect} from '../internal-utils/compound-client-rect'
-import {getDragSelection} from '../selectors/drag-selection'
-import {getSelectedBlocks} from '../selectors/selector.get-selected-blocks'
+import {getDragMemo} from '../selectors/drag-memo'
 import {isOverlappingSelection} from '../selectors/selector.is-overlapping-selection'
-import {isSelectingEntireBlocks} from '../selectors/selector.is-selecting-entire-blocks'
 import {effect, forward, raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
@@ -16,17 +14,14 @@ export const coreDndBehaviors = [
   defineBehavior({
     on: 'drag.dragstart',
     guard: ({snapshot, dom, event}) => {
-      const dragSelection = getDragSelection({
+      // The dragstart event's `position` becomes the `internalDrag.origin`
+      // reference that subsequent drag.dragover/drag.drop events carry as
+      // `dragOrigin`. Populating the memo here means later events all hit the
+      // cached values without recomputing.
+      const {dragSelection, selectingEntireBlocks} = getDragMemo(
         snapshot,
-        eventSelection: event.position.selection,
-      })
-      const selectingEntireBlocks = isSelectingEntireBlocks({
-        ...snapshot,
-        context: {
-          ...snapshot.context,
-          selection: dragSelection,
-        },
-      })
+        event.position,
+      )
       const draggedDomNodes = {
         blockNodes: dom.getBlockNodes({
           ...snapshot,
@@ -268,30 +263,12 @@ export const coreDndBehaviors = [
       }
 
       const dragOrigin = event.originEvent.dragOrigin
-      const dragSelection = getDragSelection({
-        eventSelection: dragOrigin.selection,
+      const {dragSelection, draggedBlocks, selectingEntireBlocks} = getDragMemo(
         snapshot,
-      })
+        dragOrigin,
+      )
       const dropPosition = event.originEvent.position.selection
-      const droppingOnDragOrigin = dragOrigin
-        ? isOverlappingSelection(dropPosition)({
-            ...snapshot,
-            context: {
-              ...snapshot.context,
-              selection: dragSelection,
-            },
-          })
-        : false
-
-      const draggingEntireBlocks = isSelectingEntireBlocks({
-        ...snapshot,
-        context: {
-          ...snapshot.context,
-          selection: dragSelection,
-        },
-      })
-
-      const draggedBlocks = getSelectedBlocks({
+      const droppingOnDragOrigin = isOverlappingSelection(dropPosition)({
         ...snapshot,
         context: {
           ...snapshot.context,
@@ -302,7 +279,7 @@ export const coreDndBehaviors = [
       if (!droppingOnDragOrigin) {
         return {
           dropPosition,
-          draggingEntireBlocks,
+          selectingEntireBlocks,
           draggedBlocks,
           dragOrigin,
           originEvent: event.originEvent,
@@ -315,7 +292,7 @@ export const coreDndBehaviors = [
       (
         {event},
         {
-          draggingEntireBlocks,
+          selectingEntireBlocks,
           draggedBlocks,
           dragOrigin,
           dropPosition,
@@ -326,7 +303,7 @@ export const coreDndBehaviors = [
           type: 'select',
           at: dropPosition,
         }),
-        ...(draggingEntireBlocks
+        ...(selectingEntireBlocks
           ? draggedBlocks.map((block) =>
               raise({
                 type: 'delete.block',
@@ -342,7 +319,7 @@ export const coreDndBehaviors = [
         raise({
           type: 'insert.blocks',
           blocks: event.data,
-          placement: draggingEntireBlocks
+          placement: selectingEntireBlocks
             ? originEvent.position.block === 'start'
               ? 'before'
               : originEvent.position.block === 'end'
