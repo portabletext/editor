@@ -1,5 +1,4 @@
 import {defineSchema, type PortableTextTextBlock} from '@portabletext/schema'
-import {getTersePt} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {createTestEditor} from '../src/test/vitest'
@@ -8,6 +7,7 @@ import {
   getSelectionBeforeText,
   getTextSelection,
 } from '../test-utils/text-selection'
+import {toTextspec} from '../test-utils/to-textspec'
 
 describe('event.annotation', () => {
   test('.add/.remove', async () => {
@@ -51,9 +51,9 @@ describe('event.annotation', () => {
       },
     })
 
-    expect(getTersePt(editor.getSnapshot().context)).toEqual([
-      'Hello,, ,world,!',
-    ])
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      'B: [@link href="https://portabletext.org":^Hello|], [@link href="https://sanity.io":world]!',
+    )
     expect(getTextMarks(editor.getSnapshot().context, 'Hello')).toEqual(['k5'])
     expect(getTextMarks(editor.getSnapshot().context, 'world')).toEqual(['k2'])
 
@@ -69,7 +69,9 @@ describe('event.annotation', () => {
       },
     })
 
-    expect(getTersePt(editor.getSnapshot().context)).toEqual(['Hello,, world!'])
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      'B: [@link href="https://portabletext.org":Hello], wor|ld!',
+    )
     expect(getTextMarks(editor.getSnapshot().context, 'Hello')).toEqual(['k5'])
   })
 

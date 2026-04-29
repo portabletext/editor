@@ -7,6 +7,7 @@ import {
   getSelectionAfterText,
   getSelectionBeforeText,
 } from '../test-utils/text-selection'
+import {toTextspec} from '../test-utils/to-textspec'
 
 function createInitialValue(text: string): Array<PortableTextBlock> {
   return [
@@ -49,9 +50,9 @@ describe('Undo/Redo Collaboration (hand-coded)', () => {
     await userEvent.type(locator, '?')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        'First paragraph\n\nSecond paragraph!?',
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        ['B: First paragraph', '', 'Second paragraph!?|'].join('\n'),
+      )
     })
 
     await userEvent.click(locatorB)
@@ -80,9 +81,11 @@ describe('Undo/Redo Collaboration (hand-coded)', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        'Welcome\n\nFirst paragraph\n\nSecond paragraph!',
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        ['B: Welcome', '', 'First paragraph', '', 'Second paragraph!|'].join(
+          '\n',
+        ),
+      )
     })
   })
 
@@ -233,9 +236,9 @@ describe('Undo/Redo Collaboration (hand-coded)', () => {
     await userEvent.type(locator, 'P1>')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editorB.getSnapshot().context)).toEqual([
-        `P1>${firstParagraph}\n\n${secondParagraph}`,
-      ])
+      expect(toTextspec(editorB.getSnapshot().context)).toEqual(
+        `B: P1>${firstParagraph}\n\n${secondParagraph}`,
+      )
     })
 
     await userEvent.click(locatorB)
@@ -254,12 +257,12 @@ describe('Undo/Redo Collaboration (hand-coded)', () => {
     await userEvent.type(locatorB, '/P1')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        `P1>${firstParagraph}/P1\n\n${secondParagraph}`,
-      ])
-      expect(getTersePt(editorB.getSnapshot().context)).toEqual([
-        `P1>${firstParagraph}/P1\n\n${secondParagraph}`,
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        `B: P1>|${firstParagraph}/P1\n\n${secondParagraph}`,
+      )
+      expect(toTextspec(editorB.getSnapshot().context)).toEqual(
+        `B: P1>${firstParagraph}/P1|\n\n${secondParagraph}`,
+      )
     })
 
     await userEvent.click(locator)
@@ -279,9 +282,9 @@ describe('Undo/Redo Collaboration (hand-coded)', () => {
     await userEvent.type(locator, '/P2')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        `P1>${firstParagraph}/P1\n\n${secondParagraph}/P2`,
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        `B: P1>${firstParagraph}/P1\n\n${secondParagraph}/P2|`,
+      )
     })
 
     editor.send({
@@ -292,9 +295,9 @@ describe('Undo/Redo Collaboration (hand-coded)', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editorB.getSnapshot().context)).toEqual([
-        `${firstParagraph}/P1\n\n${secondParagraph}`,
-      ])
+      expect(toTextspec(editorB.getSnapshot().context)).toEqual(
+        `B: ${firstParagraph}/P1|\n\n${secondParagraph}`,
+      )
     })
 
     editorB.send({
@@ -302,9 +305,9 @@ describe('Undo/Redo Collaboration (hand-coded)', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        `${firstParagraph}\n\n${secondParagraph}`,
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        `B: |${firstParagraph}\n\n${secondParagraph}`,
+      )
     })
   })
 
@@ -332,9 +335,9 @@ describe('Undo/Redo Collaboration (hand-coded)', () => {
     await userEvent.keyboard('{Backspace}')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editorB.getSnapshot().context)).toEqual([
-        `${beginning}${end.slice(0, -1)}`,
-      ])
+      expect(toTextspec(editorB.getSnapshot().context)).toEqual(
+        `B: ${beginning}${end.slice(0, -1)}`,
+      )
     })
 
     await userEvent.click(locatorB)
@@ -354,9 +357,9 @@ describe('Undo/Redo Collaboration (hand-coded)', () => {
     editorB.send({type: 'insert.text', text: middle})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        `${beginning}${middle}${end.slice(0, -1)}`,
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        `B: ${beginning}${middle}${end.slice(0, -1)}|`,
+      )
     })
 
     editor.send({
@@ -364,9 +367,9 @@ describe('Undo/Redo Collaboration (hand-coded)', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        `${beginning}${middle}${end}`,
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        `B: ${beginning}${middle}${end}|`,
+      )
     })
   })
 
@@ -388,9 +391,9 @@ describe('Undo/Redo Collaboration (hand-coded)', () => {
     await userEvent.keyboard('{Backspace}')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editorB.getSnapshot().context)).toEqual([
-        `${initialText.slice(0, -1)}`,
-      ])
+      expect(toTextspec(editorB.getSnapshot().context)).toEqual(
+        `B: ${initialText.slice(0, -1)}`,
+      )
     })
 
     await userEvent.click(locatorB)
@@ -410,9 +413,9 @@ describe('Undo/Redo Collaboration (hand-coded)', () => {
     await userEvent.type(locatorB, newPrefix)
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        `${newPrefix}${initialText.slice(0, -1)}`,
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        `B: ${newPrefix}${initialText.slice(0, -1)}|`,
+      )
     })
 
     await userEvent.click(locatorB)
@@ -437,9 +440,9 @@ describe('Undo/Redo Collaboration (hand-coded)', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        `${newPrefix}\n\n${initialText.slice(0, -1)}`,
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        `B: ${newPrefix}\n\n${initialText.slice(0, -1)}|`,
+      )
     })
 
     editor.send({
@@ -447,9 +450,9 @@ describe('Undo/Redo Collaboration (hand-coded)', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        `${newPrefix}\n\n${initialText}`,
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        `B: ${newPrefix}\n\n${initialText}|`,
+      )
     })
   })
 
@@ -475,9 +478,9 @@ describe('Undo/Redo Collaboration (hand-coded)', () => {
     await userEvent.keyboard('{Backspace}')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        `${initialText.slice(0, -1)}`,
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        `B: ${initialText.slice(0, -1)}|`,
+      )
     })
 
     const newPrefix = 'new prefix'
@@ -498,9 +501,9 @@ describe('Undo/Redo Collaboration (hand-coded)', () => {
     editorB.send({type: 'insert.text', text: newPrefix})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editorB.getSnapshot().context)).toEqual([
-        `${newPrefix}${initialText.slice(0, -1)}`,
-      ])
+      expect(toTextspec(editorB.getSnapshot().context)).toEqual(
+        `B: ${newPrefix}|${initialText.slice(0, -1)}`,
+      )
     })
 
     const selectionC = getSelectionAfterText(
@@ -523,9 +526,9 @@ describe('Undo/Redo Collaboration (hand-coded)', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        `${newPrefix}\n\n${initialText.slice(0, -1)}`,
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        `B: ${newPrefix}\n\n${initialText.slice(0, -1)}|`,
+      )
     })
 
     editor.send({
@@ -533,9 +536,9 @@ describe('Undo/Redo Collaboration (hand-coded)', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        `${newPrefix}\n\n${initialText}`,
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        `B: ${newPrefix}\n\n${initialText}|`,
+      )
     })
   })
 })

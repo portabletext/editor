@@ -1,8 +1,9 @@
-import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {createTestEditor} from '../src/test/vitest'
 import {whenTheCaretIsPutAfter} from '../test-utils/caret-placement'
+import {toTextspec} from '../test-utils/to-textspec'
 
 describe('event.move.block regression', () => {
   test('Scenario: Moving a block down preserves selection on the moved block', async () => {
@@ -36,7 +37,7 @@ describe('event.move.block regression', () => {
 
     await userEvent.click(locator)
 
-    const afterFooSelection = await whenTheCaretIsPutAfter(editor, 'foo')
+    await whenTheCaretIsPutAfter(editor, 'foo')
 
     editor.send({
       type: 'move.block down',
@@ -44,15 +45,9 @@ describe('event.move.block regression', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        'bar',
-        'foo',
-        'baz',
-      ])
-    })
-
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).toEqual(afterFooSelection)
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        ['B: bar', 'B: foo|', 'B: baz'].join('\n'),
+      )
     })
   })
 
@@ -86,7 +81,7 @@ describe('event.move.block regression', () => {
     })
 
     await userEvent.click(locator)
-    const afterBazSelection = await whenTheCaretIsPutAfter(editor, 'baz')
+    await whenTheCaretIsPutAfter(editor, 'baz')
 
     editor.send({
       type: 'move.block up',
@@ -94,15 +89,9 @@ describe('event.move.block regression', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        'foo',
-        'baz',
-        'bar',
-      ])
-    })
-
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).toEqual(afterBazSelection)
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        ['B: foo', 'B: baz|', 'B: bar'].join('\n'),
+      )
     })
   })
 
@@ -141,21 +130,17 @@ describe('event.move.block regression', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        'bar',
-        'foo',
-        'baz',
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        ['B: bar', 'B: foo', 'B: baz'].join('\n'),
+      )
     })
 
     editor.send({type: 'history.undo'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        'foo',
-        'bar',
-        'baz',
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        ['B: foo', 'B: bar', 'B: baz'].join('\n'),
+      )
     })
   })
 
@@ -190,16 +175,17 @@ describe('event.move.block regression', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['bar', 'foo'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        ['B: bar', 'B: foo|'].join('\n'),
+      )
     })
 
     await userEvent.type(locator, 'baz')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        'bar',
-        'foobaz',
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        ['B: bar', 'B: foobaz|'].join('\n'),
+      )
     })
   })
 })

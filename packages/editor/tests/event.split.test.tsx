@@ -1,10 +1,11 @@
 import {defineSchema} from '@portabletext/schema'
-import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {createTestEditor} from '../src/test/vitest'
 import {getSelectionText} from '../test-utils/selection-text'
 import {getSelectionAfterText} from '../test-utils/text-selection'
+import {toTextspec} from '../test-utils/to-textspec'
 
 describe('event.split', () => {
   test('Scenario: Splitting mid-block before inline object', async () => {
@@ -52,10 +53,9 @@ describe('event.split', () => {
       type: 'split',
     })
 
-    expect(getTersePt(editor.getSnapshot().context)).toEqual([
-      'foo',
-      ',{stock-ticker},',
-    ])
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      ['B: foo', 'B: |{stock-ticker}'].join('\n'),
+    )
   })
 
   test('Scenario: Splitting text block with custom properties', async () => {
@@ -179,9 +179,9 @@ describe('event.split', () => {
 
     await userEvent.type(locator, 'bar')
 
-    expect(getTersePt(editor.getSnapshot().context)).toEqual([
-      'foo,{stock-ticker},bar',
-    ])
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      'B: foo{stock-ticker value="AAPL"}bar|',
+    )
   })
 
   test('Scenario: Splitting block object is a noop', async () => {
@@ -230,10 +230,9 @@ describe('event.split', () => {
     editor.send({type: 'split'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        '{image}',
-        'bar',
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        '^{IMAGE}|\nB: bar',
+      )
     })
   })
 
@@ -299,27 +298,31 @@ describe('event.split', () => {
     editor.send({type: 'split'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo', 'ar'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        ['B: foo', 'B: |ar'].join('\n'),
+      )
     })
 
     await userEvent.type(locator, 'baz')
 
-    expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo', 'bazar'])
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      ['B: foo', 'B: baz|ar'].join('\n'),
+    )
 
     editor.send({type: 'history.undo'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo', 'ar'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        ['B: foo', 'B: |ar'].join('\n'),
+      )
     })
 
     editor.send({type: 'history.undo'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        'foo',
-        '{image}',
-        'bar',
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        ['B: foo', '|{IMAGE}', 'B: b^ar'].join('\n'),
+      )
     })
   })
 
@@ -385,12 +388,16 @@ describe('event.split', () => {
     editor.send({type: 'split'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['f', 'bar'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        ['B: f|', 'B: bar'].join('\n'),
+      )
     })
 
     await userEvent.type(locator, 'baz')
 
-    expect(getTersePt(editor.getSnapshot().context)).toEqual(['fbaz', 'bar'])
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      ['B: fbaz|', 'B: bar'].join('\n'),
+    )
   })
 
   test('Scenario: Splitting with an expanded selection from one span to another', async () => {
@@ -440,10 +447,9 @@ describe('event.split', () => {
     editor.send({type: 'split'})
 
     await vi.waitFor(() => {
-      return expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        'fo',
-        'ar',
-      ])
+      return expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        ['B: fo', 'B: [strong:|ar]'].join('\n'),
+      )
     })
   })
 })

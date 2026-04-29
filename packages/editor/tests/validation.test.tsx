@@ -1,9 +1,10 @@
 import {defineSchema} from '@portabletext/schema'
-import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import type {EditorEmittedEvent} from '../src/editor/relay-machine'
 import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
 import {createTestEditor} from '../src/test/vitest'
+import {toTextspec} from '../test-utils/to-textspec'
 
 describe('Value validation', () => {
   test('Initial value with `null` child results in a validation error', async () => {
@@ -106,7 +107,9 @@ describe('Value validation', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo,bar'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'B: foo[strong:bar]',
+      )
     })
 
     await vi.waitFor(() => {
@@ -141,7 +144,9 @@ describe('Value validation', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo,bar'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'B: foo[strong:bar]',
+      )
     })
   })
 

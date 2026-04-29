@@ -7,7 +7,7 @@ import {
   type Patch,
 } from '@portabletext/patches'
 import type {PortableTextBlock} from '@portabletext/schema'
-import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator} from '@portabletext/test'
 import {makeDiff, makePatches, stringifyPatches} from '@sanity/diff-match-patch'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
@@ -16,6 +16,7 @@ import {ContainerPlugin} from '../src/plugins/plugin.container'
 import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor, createTestEditors} from '../src/test/vitest'
+import {toTextspec} from '../test-utils/to-textspec'
 
 describe('event.patches', () => {
   describe('Scenario: `set`ing the entire value', () => {
@@ -2006,7 +2007,7 @@ describe('event.patches', () => {
     await userEvent.type(locator, ' bar')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo bar'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo bar|')
     })
 
     editor.send({
@@ -2033,7 +2034,7 @@ describe('event.patches', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['baz'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |baz')
     })
   })
 
@@ -2681,7 +2682,7 @@ describe('event.patches', () => {
       })
 
       await vi.waitFor(() => {
-        expect(getTersePt(editor.getSnapshot().context)).toEqual(['{image}'])
+        expect(toTextspec(editor.getSnapshot().context)).toEqual('{IMAGE}')
       })
     })
 

@@ -1,10 +1,11 @@
 import {defineSchema} from '@portabletext/schema'
-import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {defineBehavior, raise} from '../src/behaviors'
 import {BehaviorPlugin} from '../src/plugins'
 import {createTestEditor} from '../src/test/vitest'
+import {toTextspec} from '../test-utils/to-textspec'
 
 describe('Feature: Inline Objects', () => {
   test('Scenario: Deleting inline object with Backspace', async () => {
@@ -60,13 +61,13 @@ describe('Feature: Inline Objects', () => {
     await userEvent.keyboard('{Backspace}')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo|')
     })
 
     await userEvent.type(locator, 'bar')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foobar'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foobar|')
     })
   })
 
@@ -123,13 +124,13 @@ describe('Feature: Inline Objects', () => {
     await userEvent.keyboard('{Delete}')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo|')
     })
 
     await userEvent.type(locator, 'bar')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foobar'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foobar|')
     })
   })
 
@@ -186,19 +187,17 @@ describe('Feature: Inline Objects', () => {
     await userEvent.keyboard('{Enter}')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        'foo,{stock-ticker},',
-        '',
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        ['B: foo{stock-ticker}', 'B: |'].join('\n'),
+      )
     })
 
     await userEvent.type(locator, 'bar')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        'foo,{stock-ticker},',
-        'bar',
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        ['B: foo{stock-ticker}', 'B: bar|'].join('\n'),
+      )
     })
   })
 
@@ -256,9 +255,9 @@ describe('Feature: Inline Objects', () => {
     editor.send({type: 'insert.text', text: 'hello'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        'foo,{stock-ticker},hellobar',
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'B: foo{stock-ticker}hello|bar',
+      )
     })
   })
 
@@ -320,9 +319,9 @@ describe('Feature: Inline Objects', () => {
     await userEvent.type(locator, 'a')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        ',{stock-ticker},',
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'B: |{stock-ticker}',
+      )
     })
 
     await userEvent.keyboard('{ArrowRight}')
@@ -344,9 +343,9 @@ describe('Feature: Inline Objects', () => {
     await userEvent.type(locator, 'new')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        ',{stock-ticker},new',
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'B: {stock-ticker}new|',
+      )
     })
   })
 })

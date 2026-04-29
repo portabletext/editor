@@ -1,6 +1,6 @@
 import type {Patch} from '@portabletext/patches'
 import {compileSchema, defineSchema} from '@portabletext/schema'
-import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator} from '@portabletext/test'
 import {makeDiff, makePatches, stringifyPatches} from '@sanity/diff-match-patch'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
@@ -15,6 +15,7 @@ import {
   getSelectionAfterText,
   getTextSelection,
 } from '../test-utils/text-selection'
+import {toTextspec} from '../test-utils/to-textspec'
 
 describe('Feature: Self-solving', () => {
   test('Scenario: Missing .markDefs and .marks are added after the editor is made dirty', async () => {
@@ -453,7 +454,9 @@ describe('Feature: Self-solving', () => {
     await userEvent.type(locator, 'b')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo,barb'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'B: foo[strong:barb|]',
+      )
 
       expect(patches).toEqual([
         {

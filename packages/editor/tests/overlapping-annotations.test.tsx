@@ -1,5 +1,5 @@
 import {isTextBlock} from '@portabletext/schema'
-import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {defineSchema} from '../src'
 import {execute, raise} from '../src/behaviors/behavior.types.action'
@@ -9,6 +9,7 @@ import {isActiveAnnotation} from '../src/selectors/selector.is-active-annotation
 import {createTestEditor} from '../src/test/vitest'
 import {getTextMarks} from '../test-utils/text-marks'
 import {getTextSelection} from '../test-utils/text-selection'
+import {toTextspec} from '../test-utils/to-textspec'
 
 /**
  * By default, annotations of the same type cannot overlap.
@@ -76,9 +77,9 @@ describe('overlapping annotations', () => {
 
     await vi.waitFor(() => {
       // Then the text is "fo,o bar b,az"
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        'fo,o bar b,az',
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'B: fo[@comment text="Comment B":^o bar b|]az',
+      )
 
       const block = editor.getSnapshot().context.value.at(0)
 
@@ -130,9 +131,9 @@ describe('overlapping annotations', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        'fo,o ,bar, b,az',
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'B: fo[@comment text="Comment B":^o ][@comment text="Comment A":[@comment text="Comment B":bar]][@comment text="Comment B": b|]az',
+      )
 
       const block = editor.getSnapshot().context.value.at(0)
 
@@ -215,9 +216,9 @@ describe('overlapping annotations', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        'fo,o bar b,az',
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'B: fo[@link href="https://portabletext.org":^o bar b|]az',
+      )
 
       const block = editor.getSnapshot().context.value.at(0)
 
@@ -244,9 +245,9 @@ describe('overlapping annotations', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        'fo,o, bar b,az',
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'B: [@link href="https://sanity.io":^fo][@link href="https://portabletext.org":[@link href="https://sanity.io":o|]][@link href="https://portabletext.org": bar b]az',
+      )
 
       const block = editor.getSnapshot().context.value.at(0)
 

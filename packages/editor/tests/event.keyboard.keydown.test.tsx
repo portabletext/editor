@@ -1,4 +1,3 @@
-import {getTersePt} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {execute, raise} from '../src/behaviors/behavior.types.action'
@@ -7,6 +6,7 @@ import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
 import {getNextBlock} from '../src/selectors/selector.get-next-block'
 import {createTestEditor} from '../src/test/vitest'
 import {getSelectionBeforeText} from '../test-utils/text-selection'
+import {toTextspec} from '../test-utils/to-textspec'
 
 describe('event.keyboard.keydown', () => {
   const initialValue = [
@@ -119,11 +119,9 @@ describe('event.keyboard.keydown', () => {
     await userEvent.type(locator, 'new')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        'foo',
-        'newbar',
-        'baz',
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        ['B: foo', 'B: new|bar', 'B: baz'].join('\n'),
+      )
     })
   })
 
@@ -201,11 +199,9 @@ describe('event.keyboard.keydown', () => {
     await userEvent.type(locator, 'new')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        'foo',
-        'newbar',
-        'baz',
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        ['B: foo', 'B: new|bar', 'B: baz'].join('\n'),
+      )
     })
   })
 })

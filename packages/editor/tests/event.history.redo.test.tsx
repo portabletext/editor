@@ -1,8 +1,9 @@
-import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {defineSchema} from '../src'
 import {createTestEditor} from '../src/test/vitest'
+import {toTextspec} from '../test-utils/to-textspec'
 
 describe('event.history.redo', () => {
   test('Scenario: Redo after remote patches', async () => {
@@ -18,13 +19,13 @@ describe('event.history.redo', () => {
     editor.send({type: 'insert.text', text: 'hello'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['hello'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: hello|')
     })
 
     editor.send({type: 'history.undo'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |')
     })
 
     const snapshotAfterRemote = [
@@ -51,13 +52,13 @@ describe('event.history.redo', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['world'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: world|')
     })
 
     editor.send({type: 'history.redo'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['helloworld'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: hello|world')
     })
   })
 
@@ -74,19 +75,19 @@ describe('event.history.redo', () => {
     editor.send({type: 'insert.text', text: 'foo'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo|')
     })
 
     editor.send({type: 'history.undo'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |')
     })
 
     editor.send({type: 'history.redo'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo|')
     })
   })
 })

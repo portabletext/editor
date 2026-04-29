@@ -1,4 +1,4 @@
-import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {
@@ -17,6 +17,7 @@ import {
   getSelectionAfterText,
   getSelectionBeforeText,
 } from '../test-utils/text-selection'
+import {toTextspec} from '../test-utils/to-textspec'
 
 describe('event.select', () => {
   test('Scenario: Arrow navigation causes `select` event', async () => {
@@ -863,7 +864,7 @@ describe('event.select', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo|')
 
       expect(selectEvents).toEqual([
         {

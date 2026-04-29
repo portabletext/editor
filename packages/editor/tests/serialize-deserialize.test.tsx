@@ -1,5 +1,5 @@
 import {defineSchema} from '@portabletext/schema'
-import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {execute, forward, raise} from '../src/behaviors/behavior.types.action'
@@ -8,6 +8,7 @@ import {safeStringify} from '../src/internal-utils/safe-json'
 import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
 import {createTestEditor} from '../src/test/vitest'
 import {getTextSelection} from '../test-utils/text-selection'
+import {toTextspec} from '../test-utils/to-textspec'
 
 describe('Serialize/Deserialize', () => {
   test('Scenario: Custom text/html deserializer', async () => {
@@ -133,7 +134,7 @@ describe('Serialize/Deserialize', () => {
 
     // And the text is ""
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |')
     })
 
     // When a paste is performed
@@ -147,7 +148,9 @@ describe('Serialize/Deserialize', () => {
 
     // Then the text is "foo bar baz"
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo bar baz'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'B: foo bar baz|',
+      )
     })
 
     // However, when only text/plain and text/html is pasted
@@ -164,10 +167,12 @@ describe('Serialize/Deserialize', () => {
 
     // The custom HTML deserializer takes precedence
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        'foo bar baz',
-        '{image}',
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        [
+          'B: foo bar baz',
+          '^{IMAGE src="https://example.com/image.png"}|',
+        ].join('\n'),
+      )
     })
   })
 
@@ -316,9 +321,9 @@ describe('Serialize/Deserialize', () => {
 
     // Then the text is "Overwritten HTML"
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        'Overwritten HTML',
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'B: Overwritten HTML|',
+      )
     })
   })
 
@@ -374,7 +379,9 @@ describe('Serialize/Deserialize', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo bar baz'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'B: foo bar baz|',
+      )
     })
   })
 
@@ -429,7 +436,7 @@ describe('Serialize/Deserialize', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['fizz buzz'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: fizz buzz|')
     })
   })
 })

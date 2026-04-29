@@ -1,10 +1,11 @@
-import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator} from '@portabletext/test'
 import {makeDiff, makePatches, stringifyPatches} from '@sanity/diff-match-patch'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {defineSchema, type Patch} from '../src'
 import {EventListenerPlugin} from '../src/plugins'
 import {createTestEditor} from '../src/test/vitest'
+import {toTextspec} from '../test-utils/to-textspec'
 
 describe('event.child.unset', () => {
   test('Scenario: Unsetting span marks', async () => {
@@ -46,7 +47,9 @@ describe('event.child.unset', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['Hello'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'B: [strong:Hello]',
+      )
       expect(patches).toEqual([])
     })
 
@@ -57,7 +60,7 @@ describe('event.child.unset', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['Hello'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: Hello')
       expect(patches).toEqual([
         {
           origin: 'local',
@@ -110,7 +113,7 @@ describe('event.child.unset', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['Hello'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: Hello')
       expect(patches).toEqual([])
     })
 
@@ -168,7 +171,7 @@ describe('event.child.unset', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['Hell'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: Hell')
       expect(patches).toEqual([])
     })
 
@@ -229,7 +232,7 @@ describe('event.child.unset', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['Hello'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: Hello')
       expect(patches).toEqual([])
     })
 
@@ -306,7 +309,9 @@ describe('event.child.unset', () => {
     await userEvent.type(locator, 'o')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['Hello'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'B: [strong:Hello|]',
+      )
       expect(patches).toEqual([
         {
           origin: 'local',
@@ -392,7 +397,7 @@ describe('event.child.unset', () => {
     await userEvent.type(locator, 'f')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['f'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: f|')
       expect(patches.slice(8)).toEqual([
         {
           origin: 'local',
@@ -474,7 +479,9 @@ describe('event.child.unset', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([',{image},'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'B: {image alt="Sanity Logo" url="https://www.sanity.io/logo.svg"}',
+      )
     })
 
     editor.send({

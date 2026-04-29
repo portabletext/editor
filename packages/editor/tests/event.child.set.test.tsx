@@ -1,8 +1,9 @@
-import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {defineSchema, type Patch} from '../src'
 import {EventListenerPlugin} from '../src/plugins'
 import {createTestEditor} from '../src/test/vitest'
+import {toTextspec} from '../test-utils/to-textspec'
 
 describe('event.child.set', () => {
   test('Scenario: Setting properties on inline object', async () => {
@@ -54,9 +55,9 @@ describe('event.child.set', () => {
     })
 
     await vi.waitFor(() => {
-      return expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        ',{image},',
-      ])
+      return expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'B: {image url="https://www.sanity.io/logo.svg"}',
+      )
     })
 
     const newImageKey = keyGenerator()
@@ -160,9 +161,9 @@ describe('event.child.set', () => {
     })
 
     await vi.waitFor(() => {
-      return expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        ',{cell},',
-      ])
+      return expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'B: {cell alive=false}',
+      )
     })
 
     editor.send({
@@ -263,9 +264,9 @@ describe('event.child.set', () => {
     })
 
     await vi.waitFor(() => {
-      return expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        ',{cell},',
-      ])
+      return expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'B: {cell alive=false}',
+      )
     })
 
     editor.send({
@@ -334,7 +335,9 @@ describe('event.child.set', () => {
     })
 
     await vi.waitFor(() => {
-      return expect(getTersePt(editor.getSnapshot().context)).toEqual(['Hello'])
+      return expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'B: Hello',
+      )
     })
 
     const newSpanKey = keyGenerator()
@@ -413,9 +416,9 @@ describe('event.child.set', () => {
     })
 
     await vi.waitFor(() => {
-      return expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        ',{mention},',
-      ])
+      return expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'B: {mention text="J"}',
+      )
     })
 
     editor.send({

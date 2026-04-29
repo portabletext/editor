@@ -1,10 +1,11 @@
-import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator} from '@portabletext/test'
 import React from 'react'
 import {describe, expect, test, vi} from 'vitest'
 import {defineSchema, PortableTextEditor} from '../src'
 import {InternalPortableTextEditorRefPlugin} from '../src/plugins/plugin.internal.portable-text-editor-ref'
 import {createTestEditor} from '../src/test/vitest'
 import {getTextSelection} from '../test-utils/text-selection'
+import {toTextspec} from '../test-utils/to-textspec'
 
 describe(PortableTextEditor.addAnnotation.name, () => {
   test('Scenario: Prevents overlapping annotations of the same type', async () => {
@@ -52,9 +53,9 @@ describe(PortableTextEditor.addAnnotation.name, () => {
     )
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        'fo,o bar b,az',
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'B: fo[@link href="https://sanity.io":^o bar b|]az',
+      )
     })
   })
 

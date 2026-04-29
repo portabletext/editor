@@ -1,5 +1,5 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
-import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator} from '@portabletext/test'
 import {makeDiff, makePatches, stringifyPatches} from '@sanity/diff-match-patch'
 import {useState} from 'react'
 import {describe, expect, test, vi} from 'vitest'
@@ -14,6 +14,7 @@ import {
 } from '../src'
 import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
 import {createTestEditor} from '../src/test/vitest'
+import {toTextspec} from '../test-utils/to-textspec'
 
 describe('event.mutation', () => {
   test('Scenario: Deferring mutation events when read-only', async () => {
@@ -31,10 +32,11 @@ describe('event.mutation', () => {
             onEvent(event)
             if (
               event.type === 'mutation' &&
-              getTersePt({
+              toTextspec({
                 schema: compileSchema(defineSchema({})),
                 value: event.value ?? [],
-              }).at(0) === 'foo'
+                selection: null,
+              }) === 'B: foo'
             ) {
               resolveFooMutation()
             }

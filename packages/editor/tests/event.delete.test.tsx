@@ -1,5 +1,5 @@
 import {defineSchema} from '@portabletext/schema'
-import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {
@@ -14,6 +14,7 @@ import {
   getSelectionAfterText,
   getSelectionBeforeText,
 } from '../test-utils/text-selection'
+import {toTextspec} from '../test-utils/to-textspec'
 
 describe('event.delete', () => {
   test('Scenario: Deleting collapsed selection', async () => {
@@ -56,11 +57,9 @@ describe('event.delete', () => {
     await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        'foo',
-        'bar',
-        '{image}',
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        ['B: foo', 'B: bar', '{IMAGE}'].join('\n'),
+      )
     })
 
     editor.send({
@@ -78,10 +77,9 @@ describe('event.delete', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        'foobar',
-        '{image}',
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        ['B: foobar', '{IMAGE}'].join('\n'),
+      )
     })
 
     editor.send({
@@ -99,7 +97,7 @@ describe('event.delete', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foobar'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foobar')
     })
   })
 
@@ -138,11 +136,9 @@ describe('event.delete', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        'foo',
-        '{image}',
-        'bar',
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        ['B: foo', '{IMAGE}', 'B: bar'].join('\n'),
+      )
     })
 
     editor.send({
@@ -160,7 +156,7 @@ describe('event.delete', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: ')
     })
   })
 
@@ -190,11 +186,9 @@ describe('event.delete', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        'foo',
-        '{image}',
-        'bar',
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        ['B: foo', '{IMAGE}', 'B: bar'].join('\n'),
+      )
     })
 
     editor.send({
@@ -212,7 +206,7 @@ describe('event.delete', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['bar'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: bar')
     })
   })
 
@@ -242,11 +236,9 @@ describe('event.delete', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        'foo',
-        '{image}',
-        'bar',
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        ['B: foo', '{IMAGE}', 'B: bar'].join('\n'),
+      )
     })
 
     editor.send({
@@ -265,7 +257,7 @@ describe('event.delete', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['bar'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: bar')
     })
   })
 
@@ -295,11 +287,9 @@ describe('event.delete', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        'foo',
-        '{image}',
-        'bar',
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        ['B: foo', '{IMAGE}', 'B: bar'].join('\n'),
+      )
     })
 
     editor.send({
@@ -317,7 +307,7 @@ describe('event.delete', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo')
     })
   })
 
@@ -382,7 +372,9 @@ describe('event.delete', () => {
         })
 
         await vi.waitFor(() => {
-          expect(getTersePt(editor.getSnapshot().context)).toEqual(['', 'baz'])
+          expect(toTextspec(editor.getSnapshot().context)).toEqual(
+            ['B: ', 'B: baz'].join('\n'),
+          )
 
           expect(editor.getSnapshot().context.selection).toBeNull()
         })
@@ -420,7 +412,9 @@ describe('event.delete', () => {
         })
 
         await vi.waitFor(() => {
-          expect(getTersePt(editor.getSnapshot().context)).toEqual(['', 'baz'])
+          expect(toTextspec(editor.getSnapshot().context)).toEqual(
+            ['B: |', 'B: baz'].join('\n'),
+          )
           expect(editor.getSnapshot().context.selection).toEqual({
             anchor: {
               path: [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}],
@@ -461,7 +455,7 @@ describe('event.delete', () => {
       })
 
       await vi.waitFor(() => {
-        expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
+        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: ')
       })
     })
   })
@@ -516,10 +510,9 @@ describe('event.delete', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        'foo,bar,baz',
-        'fi,z',
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        ['B: foo[strong:bar]baz', 'B: fi[strong:z]'].join('\n'),
+      )
     })
 
     editor.send({
@@ -537,7 +530,9 @@ describe('event.delete', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foaz', 'fi,z'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        ['B: foaz', 'B: fi[strong:z]'].join('\n'),
+      )
     })
   })
 
@@ -589,7 +584,7 @@ describe('event.delete', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['baz'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: baz')
     })
   })
 
@@ -619,7 +614,7 @@ describe('event.delete', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo baz'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo baz')
       expect(editor.getSnapshot().context.selection).toBeNull()
     })
   })
@@ -657,7 +652,7 @@ describe('event.delete', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo baz'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo |baz')
       expect(editor.getSnapshot().context.selection).toEqual({
         anchor: {
           path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
@@ -705,7 +700,7 @@ describe('event.delete', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo baz'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo| baz')
       expect(editor.getSnapshot().context.selection).toEqual({
         anchor: {
           path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
@@ -766,7 +761,7 @@ describe('event.delete', () => {
         })
 
         await vi.waitFor(() => {
-          expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
+          expect(toTextspec(editor.getSnapshot().context)).toEqual('B: ')
         })
       })
 
@@ -795,7 +790,7 @@ describe('event.delete', () => {
         })
 
         await vi.waitFor(() => {
-          expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
+          expect(toTextspec(editor.getSnapshot().context)).toEqual('B: ')
         })
       })
 
@@ -824,9 +819,9 @@ describe('event.delete', () => {
         })
 
         await vi.waitFor(() => {
-          expect(getTersePt(editor.getSnapshot().context)).toEqual([
-            ',{stock-ticker},bar',
-          ])
+          expect(toTextspec(editor.getSnapshot().context)).toEqual(
+            'B: {stock-ticker}bar',
+          )
         })
       })
 
@@ -855,7 +850,7 @@ describe('event.delete', () => {
         })
 
         await vi.waitFor(() => {
-          expect(getTersePt(editor.getSnapshot().context)).toEqual(['foobar'])
+          expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foobar')
         })
       })
     })
@@ -886,7 +881,7 @@ describe('event.delete', () => {
       })
 
       await vi.waitFor(() => {
-        expect(getTersePt(editor.getSnapshot().context)).toEqual(['{image}'])
+        expect(toTextspec(editor.getSnapshot().context)).toEqual('{IMAGE}')
       })
     })
 
@@ -936,11 +931,9 @@ describe('event.delete', () => {
       })
 
       await vi.waitFor(() => {
-        expect(getTersePt(editor.getSnapshot().context)).toEqual([
-          '',
-          '{image}',
-          '',
-        ])
+        expect(toTextspec(editor.getSnapshot().context)).toEqual(
+          ['B: ', '{IMAGE}', 'B: '].join('\n'),
+        )
       })
     })
   })
@@ -983,7 +976,7 @@ describe('event.delete', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foobar'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo|bar')
     })
   })
 
@@ -1034,7 +1027,7 @@ describe('event.delete', () => {
 
     await vi.waitFor(() => {
       // Then a placeholder block is silently inserted
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |')
       expect(behaviorEvents).toEqual([
         {
           type: 'delete',

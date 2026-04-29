@@ -1,10 +1,11 @@
 import {defineSchema} from '@portabletext/schema'
-import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {page, userEvent, type Locator} from 'vitest/browser'
 import {useEditor, type Editor} from '../src'
 import {createTestEditor} from '../src/test/vitest'
 import {getTextSelection} from '../test-utils/text-selection'
+import {toTextspec} from '../test-utils/to-textspec'
 
 describe('event.focus', () => {
   test('Scenario: Immediate focus after decorator toggle', async () => {
@@ -42,7 +43,9 @@ describe('event.focus', () => {
 
     // Then the text is "hello ,world"
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['hello ,world'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'B: hello [strong:^world|]',
+      )
     })
 
     // And "world" is selected
@@ -95,7 +98,9 @@ describe('event.focus', () => {
 
     // Then the text is "hello ,world"
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['hello ,world'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'B: hello [strong:^world|]',
+      )
     })
 
     // And "world" is selected

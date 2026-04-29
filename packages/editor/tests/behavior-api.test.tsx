@@ -1,4 +1,4 @@
-import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {defineSchema, type EditorEmittedEvent} from '../src'
@@ -14,6 +14,7 @@ import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
 import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
 import {createTestEditor} from '../src/test/vitest'
 import {getSelectionAfterText} from '../test-utils/text-selection'
+import {toTextspec} from '../test-utils/to-textspec'
 
 describe('Behavior API', () => {
   test('Scenario: Suppressing raised events while executing', async () => {
@@ -41,13 +42,13 @@ describe('Behavior API', () => {
 
     await userEvent.type(locator, 'a')
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['a'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: a|')
     })
 
     editor.send({type: 'history.undo'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |')
     })
   })
 
@@ -84,13 +85,13 @@ describe('Behavior API', () => {
 
     await userEvent.type(locator, 'a')
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['b'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: b|')
     })
 
     editor.send({type: 'history.undo'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |')
     })
   })
 
@@ -115,9 +116,9 @@ describe('Behavior API', () => {
     editor.send({type: 'custom.hello world'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        'Hello, world!',
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'B: Hello, world!|',
+      )
     })
   })
 
@@ -144,9 +145,9 @@ describe('Behavior API', () => {
     editor.send({type: 'custom.hello world'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        'Hello, world!',
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'B: Hello, world!|',
+      )
     })
   })
 
@@ -166,13 +167,13 @@ describe('Behavior API', () => {
 
     await userEvent.type(locator, 'a')
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['a'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: a|')
     })
 
     editor.send({type: 'history.undo'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |')
     })
   })
 
@@ -194,7 +195,7 @@ describe('Behavior API', () => {
 
     await userEvent.type(locator, 'a')
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['a'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: a|')
     })
 
     expect(sideEffect).toHaveBeenCalled()
@@ -237,7 +238,7 @@ describe('Behavior API', () => {
 
     await userEvent.type(locator, 'a')
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['a'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: a|')
     })
 
     expect(sideEffectA).toHaveBeenCalled()
@@ -247,7 +248,7 @@ describe('Behavior API', () => {
     await userEvent.type(locator, 'c')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['ac'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: ac|')
     })
 
     expect(sideEffectB).toHaveBeenCalled()
@@ -278,7 +279,7 @@ describe('Behavior API', () => {
     await userEvent.type(locator, 'b')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['b'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: b|')
     })
   })
 
@@ -304,7 +305,7 @@ describe('Behavior API', () => {
 
     await userEvent.type(locator, 'a')
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['b'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: b|')
     })
   })
 
@@ -332,7 +333,7 @@ describe('Behavior API', () => {
 
     await userEvent.type(locator, 'a')
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['bb'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: bb|')
     })
   })
 
@@ -359,7 +360,7 @@ describe('Behavior API', () => {
     await userEvent.type(locator, 'a')
     await userEvent.type(locator, 'c')
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['c'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: c|')
     })
   })
 
@@ -379,7 +380,7 @@ describe('Behavior API', () => {
 
     await userEvent.type(locator, 'a')
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['a'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: a|')
     })
   })
 
@@ -399,7 +400,7 @@ describe('Behavior API', () => {
 
     await userEvent.type(locator, 'a')
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['a'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: a|')
     })
   })
 
@@ -419,7 +420,7 @@ describe('Behavior API', () => {
 
     await userEvent.type(locator, 'a')
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |')
     })
   })
 
@@ -459,7 +460,7 @@ describe('Behavior API', () => {
 
     await userEvent.type(locator, 'a')
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['b'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: b|')
     })
     await vi.waitFor(() => {
       expect(events.includes('keyboard.keyup')).toBe(true)
@@ -606,7 +607,9 @@ describe('Behavior API', () => {
     editor.send({type: 'insert.break'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo', ' bar'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        ['B: foo', 'B: | bar'].join('\n'),
+      )
     })
   })
 
@@ -649,7 +652,9 @@ describe('Behavior API', () => {
     editor.send({type: 'insert.break'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo', ' bar'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        ['B: foo', 'B: | bar'].join('\n'),
+      )
     })
   })
 
@@ -705,7 +710,7 @@ describe('Behavior API', () => {
     await userEvent.type(locator, ')')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['(c)'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: (c)|')
     })
 
     expect(insertTextEvents).toEqual(['insert.text', 'insert.text'])
@@ -746,7 +751,7 @@ describe('Behavior API', () => {
       })
 
       await vi.waitFor(() => {
-        expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo'])
+        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo|')
       })
     })
 
