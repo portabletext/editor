@@ -2,12 +2,10 @@ import {getDomNode} from '../../../dom-traversal/get-dom-node'
 import {getDomNodePath} from '../../../dom-traversal/get-dom-node-path'
 import {safeStringify} from '../../../internal-utils/safe-json'
 import {getAncestorObjectNode} from '../../../node-traversal/get-ancestor-object-node'
-import {getHighestObjectNode} from '../../../node-traversal/get-highest-object-node'
 import {getNode} from '../../../node-traversal/get-node'
 import {hasNode} from '../../../node-traversal/has-node'
 import {path as editorPath} from '../../editor/path'
 import {start as editorStart} from '../../editor/start'
-import {unhangRange} from '../../editor/unhang-range'
 import type {BaseEditor, Editor} from '../../interfaces/editor'
 import type {Operation} from '../../interfaces/operation'
 import type {Point} from '../../interfaces/point'
@@ -16,8 +14,6 @@ import type {RangeRef} from '../../interfaces/range-ref'
 import {isVoidNode} from '../../node/is-void-node'
 import {isBackwardRange} from '../../range/is-backward-range'
 import {isCollapsedRange} from '../../range/is-collapsed-range'
-import {isExpandedRange} from '../../range/is-expanded-range'
-import {isForwardRange} from '../../range/is-forward-range'
 import type {TextDiff} from '../utils/diff-text'
 import {
   closestShadowAware,
@@ -925,19 +921,7 @@ export const DOMEditor: DOMEditorInterface = {
       return null as T extends true ? Range | null : Range
     }
 
-    let range: Range = {anchor: anchor as Point, focus: focus as Point}
-    // if the selection is a hanging range that ends in a void
-    // and the DOM focus is an Element
-    // (meaning that the selection ends before the element)
-    // unhang the range to avoid mistakenly including the void
-    if (
-      isExpandedRange(range) &&
-      isForwardRange(range) &&
-      isDOMElement(focusNode) &&
-      getHighestObjectNode(editor, range.focus.path)
-    ) {
-      range = unhangRange(editor, range)
-    }
+    const range: Range = {anchor: anchor as Point, focus: focus as Point}
 
     return range as unknown as T extends true ? Range | null : Range
   },
