@@ -41,7 +41,6 @@ import {isCollapsedRange} from '../range/is-collapsed-range'
 import {isRange} from '../range/is-range'
 import {rangeEdges} from '../range/range-edges'
 import type {TextUnit} from '../types/types'
-import {insertText} from './insert-text'
 
 interface TextDeleteOptions {
   at?: Location
@@ -66,9 +65,7 @@ export function deleteText(editor: Editor, options: TextDeleteOptions = {}) {
       return
     }
 
-    let isCollapsed = false
     if (isRange(at) && isCollapsedRange(at)) {
-      isCollapsed = true
       at = at.anchor
     }
 
@@ -173,8 +170,6 @@ export function deleteText(editor: Editor, options: TextDeleteOptions = {}) {
     const startRef = pointRef(editor, start)
     const endRef = pointRef(editor, end)
 
-    let removedText = ''
-
     if (!isSingleText && !startNonEditable) {
       const point = startRef.current!
       const nodeEntry = getSpanNode(editor, point.path)
@@ -185,7 +180,6 @@ export function deleteText(editor: Editor, options: TextDeleteOptions = {}) {
         const text = node.text.slice(offset)
         if (text.length > 0) {
           editor.apply({type: 'remove_text', path, offset, text})
-          removedText = text
         }
       }
     }
@@ -208,7 +202,6 @@ export function deleteText(editor: Editor, options: TextDeleteOptions = {}) {
         const text = node.text.slice(offset, end.offset)
         if (text.length > 0) {
           editor.apply({type: 'remove_text', path, offset, text})
-          removedText = text
         }
       }
     }
@@ -361,31 +354,6 @@ export function deleteText(editor: Editor, options: TextDeleteOptions = {}) {
           }
         }
       }
-    }
-
-    // For certain scripts, deleting N character(s) backward should delete
-    // N code point(s) instead of an entire grapheme cluster.
-    // Therefore, the remaining code points should be inserted back.
-    // Bengali: \u0980-\u09FF
-    // Thai: \u0E00-\u0E7F
-    // Burmese (Myanmar): \u1000-\u109F
-    // Hindi (Devanagari): \u0900-\u097F
-    // Khmer: \u1780-\u17FF
-    // Malayalam: \u0D00-\u0D7F
-    // Oriya: \u0B00-\u0B7F
-    // Punjabi (Gurmukhi): \u0A00-\u0A7F
-    // Tamil: \u0B80-\u0BFF
-    // Telugu: \u0C00-\u0C7F
-    if (
-      isCollapsed &&
-      reverse &&
-      unit === 'character' &&
-      removedText.length > 1 &&
-      removedText.match(
-        /[\u0980-\u09FF\u0E00-\u0E7F\u1000-\u109F\u0900-\u097F\u1780-\u17FF\u0D00-\u0D7F\u0B00-\u0B7F\u0A00-\u0A7F\u0B80-\u0BFF\u0C00-\u0C7F]+/,
-      )
-    ) {
-      insertText(editor, removedText.slice(0, removedText.length - distance))
     }
 
     const startUnref = startRef.unref()
