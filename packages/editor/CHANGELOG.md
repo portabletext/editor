@@ -1,5 +1,13 @@
 # Changelog
 
+## 6.6.3
+
+### Patch Changes
+
+- [#2557](https://github.com/portabletext/editor/pull/2557) [`fff1313`](https://github.com/portabletext/editor/commit/fff1313f46204a6734b674b5e4fa9a9d3cff8b68) Thanks [@christianhg](https://github.com/christianhg)! - fix: refresh `internalDrag.origin` on every `dragstart`
+
+  When `dragend` was missed after a successful drop (which happens consistently in some browser/layout combinations), the editor machine stayed in `dragging internally` and ignored subsequent `dragstart` events. Any later drop then read the previous gesture's drag origin while `dataTransfer` carried the new gesture's content, deleting the wrong block and duplicating the new one. `dragstart` now re-assigns `internalDrag.origin` even when the machine has not returned to `idle`.
+
 ## 6.6.2
 
 ### Patch Changes
