@@ -715,6 +715,15 @@ export const editorMachine = setup({
               ],
               tags: ['dragging internally'],
               on: {
+                dragstart: {
+                  actions: [
+                    assign({
+                      internalDrag: ({event}) => ({
+                        origin: event.origin,
+                      }),
+                    }),
+                  ],
+                },
                 dragend: {target: 'idle'},
                 drop: {target: 'idle'},
               },
