@@ -15,6 +15,7 @@ import {
 } from 'xstate'
 import {applyDeselect, applySelect} from '../internal-utils/apply-selection'
 import {debug} from '../internal-utils/debug'
+import {deleteRange} from '../internal-utils/delete-range'
 import {
   isEqualBlocks,
   isEqualChild,
@@ -28,7 +29,6 @@ import {hasNode} from '../node-traversal/has-node'
 import {withRemoteChanges} from '../slate-plugins/slate-plugin.remote-changes'
 import {pluginWithoutHistory} from '../slate-plugins/slate-plugin.without-history'
 import {withoutPatching} from '../slate-plugins/slate-plugin.without-patching'
-import {deleteText} from '../slate/core/delete-text'
 import {start} from '../slate/editor/start'
 import {withoutNormalizing} from '../slate/editor/without-normalizing'
 import type {Node} from '../slate/interfaces/node'
@@ -1047,12 +1047,17 @@ function updateBlock({
 
           if (isSpanNode && isTextChanged) {
             if (oldBlockChild.text.length > 0) {
-              deleteText(slateEditor, {
-                at: {
+              deleteRange(
+                slateEditor,
+                {
                   focus: {path, offset: 0},
                   anchor: {path, offset: oldBlockChild.text.length},
                 },
-              })
+                {
+                  selection: 'preserve',
+                  removeEmptyStartBlock: true,
+                },
+              )
             }
 
             slateEditor.apply({

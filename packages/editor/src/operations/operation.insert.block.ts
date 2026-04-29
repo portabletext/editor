@@ -532,7 +532,10 @@ function executeDeleteThenInsert(args: {
 
   const collapsedRangeRef = rangeRef(editor, range, {affinity: 'inward'})
 
-  deleteRange(editor, range)
+  deleteRange(editor, range, {
+    selection: 'preserve',
+    removeEmptyStartBlock: false,
+  })
 
   const collapsedRange = collapsedRangeRef.unref() ?? editor.selection
   const collapsedPoint = collapsedRange
