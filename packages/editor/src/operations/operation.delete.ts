@@ -3,10 +3,14 @@ import {deleteCollapsed} from '../internal-utils/delete-collapsed'
 import {deleteRange} from '../internal-utils/delete-range'
 import {findCurrentLineRange} from '../internal-utils/find-current-line-range'
 import {unsetMatchedNodesInRange} from '../internal-utils/unset-matched-in-range'
+import {unwrapContainer} from '../internal-utils/unwrap-container'
+import {getAncestor} from '../node-traversal/get-ancestor'
 import {getAncestorTextBlock} from '../node-traversal/get-ancestor-text-block'
 import {getNode} from '../node-traversal/get-node'
 import {isBlock} from '../node-traversal/is-block'
+import {isEmptyContainer} from '../node-traversal/is-empty-container'
 import {isInline} from '../node-traversal/is-inline'
+import {isEditableContainer} from '../schema/is-editable-container'
 import {range as editorRange} from '../slate/editor/range'
 import {unhangRange} from '../slate/editor/unhang-range'
 import {isTextBlockNode} from '../slate/node/is-text-block-node'
@@ -89,6 +93,25 @@ export const deleteOperationImplementation: OperationImplementation<
   const selection: 'collapse-to-start' | 'preserve' = operation.at
     ? 'preserve'
     : 'collapse-to-start'
+
+  if (isCollapsedRange(at)) {
+    const enclosingContainer = getAncestor(
+      operation.editor,
+      at.anchor.path,
+      (node, path) => isEditableContainer(operation.editor, node, path),
+    )
+    if (
+      enclosingContainer &&
+      isEmptyContainer(operation.editor, enclosingContainer.path)
+    ) {
+      unwrapContainer(
+        operation.editor,
+        enclosingContainer.path,
+        operation.direction === 'backward' ? 'before' : 'after',
+      )
+      return
+    }
+  }
 
   if (operation.unit === 'word' && isCollapsedRange(at)) {
     deleteCollapsed(operation.editor, at.anchor, {
