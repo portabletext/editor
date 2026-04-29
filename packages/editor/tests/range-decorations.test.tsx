@@ -4,7 +4,7 @@ import {
   isTextBlock,
   type PortableTextBlock,
 } from '@portabletext/schema'
-import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator} from '@portabletext/test'
 import {createRef, useState, type ReactNode, type RefObject} from 'react'
 import {describe, expect, it, test, vi} from 'vitest'
 import {render} from 'vitest-browser-react'
@@ -31,6 +31,7 @@ import {
   getSelectionAfterText,
   getSelectionBeforeText,
 } from '../test-utils/text-selection'
+import {toTextspec} from '../test-utils/to-textspec'
 
 const helloBlock: PortableTextBlock = {
   _key: '123',
@@ -216,10 +217,9 @@ describe('RangeDecorations', () => {
     await userEvent.type(locator, '123 ')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        '123 Hello there world',
-        "It's a beautiful day on planet earth",
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        "B: 123 |Hello there world\nB: It's a beautiful day on planet earth",
+      )
     })
 
     await rerender({

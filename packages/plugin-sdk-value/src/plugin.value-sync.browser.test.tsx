@@ -1,8 +1,9 @@
 import type {Editor} from '@portabletext/editor'
 import {EditorProvider, PortableTextEditable} from '@portabletext/editor'
 import {EditorRefPlugin} from '@portabletext/editor/plugins'
+import {toTextspec} from '@portabletext/editor/test'
 import {defineSchema, type PortableTextBlock} from '@portabletext/schema'
-import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator} from '@portabletext/test'
 import {createRef} from 'react'
 import {afterEach, describe, expect, test, vi} from 'vitest'
 import {render} from 'vitest-browser-react'
@@ -90,8 +91,8 @@ function makeBlock(key: string, text: string): PortableTextBlock {
   }
 }
 
-function getEditorText(editor: Editor): string[] {
-  return getTersePt(editor.getSnapshot().context)
+function getEditorText(editor: Editor): string {
+  return toTextspec(editor.getSnapshot().context)
 }
 
 // ---- Tests ----
@@ -111,7 +112,7 @@ describe('ValueSyncPlugin', () => {
       cleanup = unmount
 
       await vi.waitFor(() => {
-        expect(getEditorText(editor)).toEqual(['Hello'])
+        expect(getEditorText(editor)).toEqual('B: Hello')
       })
     })
 
@@ -121,7 +122,7 @@ describe('ValueSyncPlugin', () => {
       cleanup = unmount
 
       await vi.waitFor(() => {
-        expect(getEditorText(editor)).toEqual([''])
+        expect(getEditorText(editor)).toEqual('B: |')
       })
     })
   })
@@ -141,11 +142,12 @@ describe('ValueSyncPlugin', () => {
 
       const pushedValue = store.pushValue.mock.lastCall?.[0] ?? []
       expect(
-        getTersePt({
+        toTextspec({
           value: pushedValue,
           schema: editor.getSnapshot().context.schema,
+          selection: null,
         }),
-      ).toEqual(['Hello'])
+      ).toEqual('B: Hello')
     })
   })
 
@@ -158,7 +160,7 @@ describe('ValueSyncPlugin', () => {
       store.setRemoteValue([makeBlock('b1', 'Hello from remote')])
 
       await vi.waitFor(() => {
-        expect(getEditorText(editor)).toEqual(['Hello from remote'])
+        expect(getEditorText(editor)).toEqual('B: Hello from remote')
       })
     })
   })
@@ -181,7 +183,7 @@ describe('ValueSyncPlugin', () => {
       // by the "pushing to remote" state. The editor should still
       // have the correct value.
       await vi.waitFor(() => {
-        expect(getEditorText(editor)).toEqual(['Hello'])
+        expect(getEditorText(editor)).toEqual('B: Hello|')
       })
     })
 
@@ -211,7 +213,7 @@ describe('ValueSyncPlugin', () => {
 
       // Editor should still have the correct value, not reverted
       await vi.waitFor(() => {
-        expect(getEditorText(editor)).toEqual(['Hello'])
+        expect(getEditorText(editor)).toEqual('B: Hello|')
       })
     })
   })
@@ -241,7 +243,7 @@ describe('ValueSyncPlugin', () => {
       // Editor should NOT revert to "Hello" — it has pending writes.
       // Wait a bit to make sure no revert happens.
       await new Promise((resolve) => setTimeout(resolve, 100))
-      expect(getEditorText(editor)).toEqual(['Hello world'])
+      expect(getEditorText(editor)).toEqual('B: Hello world|')
 
       // Wait for the second push
       await vi.waitFor(() => {
@@ -250,7 +252,7 @@ describe('ValueSyncPlugin', () => {
 
       // After mutation flush, editor should have the full text
       await vi.waitFor(() => {
-        expect(getEditorText(editor)).toEqual(['Hello world'])
+        expect(getEditorText(editor)).toEqual('B: Hello world|')
       })
     })
 
@@ -297,7 +299,9 @@ describe('ValueSyncPlugin', () => {
       // `pending sync` defers the sync until after the push. The deferred
       // sync should detect the remote block and apply it.
       await vi.waitFor(() => {
-        expect(getEditorText(editor)).toEqual(['Hello world', 'from remote'])
+        expect(getEditorText(editor)).toEqual(
+          ['B: Hello world|', 'B: from remote'].join('\n'),
+        )
       })
     })
 
@@ -309,7 +313,7 @@ describe('ValueSyncPlugin', () => {
       store.setRemoteValue([makeBlock('b1', 'Hello from remote')])
 
       await vi.waitFor(() => {
-        expect(getEditorText(editor)).toEqual(['Hello from remote'])
+        expect(getEditorText(editor)).toEqual('B: Hello from remote')
       })
     })
   })

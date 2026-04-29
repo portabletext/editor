@@ -1,11 +1,12 @@
 import {diffMatchPatch, insert, unset} from '@portabletext/patches'
 import {defineSchema} from '@portabletext/schema'
-import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {createTestEditor} from '../src/test/vitest'
 import {whenTheCaretIsPutAfter} from '../test-utils/caret-placement'
 import {getSelectionAfterText} from '../test-utils/text-selection'
+import {toTextspec} from '../test-utils/to-textspec'
 
 describe('Feature: Selection adjustment after remote patches', () => {
   test('Scenario: Remote insert block before cursor', async () => {
@@ -356,7 +357,9 @@ describe('Feature: Selection adjustment after remote patches', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['hello world'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'B: hello world|',
+      )
     })
 
     await vi.waitFor(() => {
@@ -416,7 +419,9 @@ describe('Feature: Selection adjustment after remote patches', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['world,hello'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'B: [strong:world]hello|',
+      )
     })
 
     await vi.waitFor(() => {
@@ -486,7 +491,9 @@ describe('Feature: Selection adjustment after remote patches', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo', 'bar'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        ['B: foo|', 'B: bar'].join('\n'),
+      )
     })
 
     await vi.waitFor(() => {

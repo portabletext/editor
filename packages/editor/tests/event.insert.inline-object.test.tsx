@@ -1,11 +1,12 @@
 import {defineSchema, type PortableTextTextBlock} from '@portabletext/schema'
-import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {page, userEvent} from 'vitest/browser'
 import type {EditorEmittedEvent} from '../src'
 import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
 import {createTestEditor} from '../src/test/vitest'
 import {isKeyedSegment} from '../src/utils'
+import {toTextspec} from '../test-utils/to-textspec'
 
 describe('event.insert.inline object', () => {
   test('Scenario: Inserting inline object without any initial fields', async () => {
@@ -264,10 +265,9 @@ describe('event.insert.inline object', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        '{image}',
-        ',{stock ticker},',
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        '{IMAGE}\nB: |{stock ticker symbol="AAPL"}',
+      )
     })
   })
 })

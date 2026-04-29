@@ -1,6 +1,6 @@
 import type {Patch} from '@portabletext/patches'
 import {defineSchema} from '@portabletext/schema'
-import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {execute} from '../src/behaviors/behavior.types.action'
 import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
@@ -11,6 +11,7 @@ import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {getFocusBlock} from '../src/selectors/selector.get-focus-block'
 import {createTestEditor} from '../src/test/vitest'
+import {toTextspec} from '../test-utils/to-textspec'
 
 describe('event.insert.block', () => {
   test('Scenario: Inserting block with custom _key', async () => {
@@ -444,9 +445,9 @@ describe('event.insert.block', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        ',{stock-ticker},',
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'B: |{stock-ticker symbol="AAPL"}',
+      )
     })
 
     await vi.waitFor(() => {
@@ -541,9 +542,9 @@ describe('event.insert.block', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        ',{stock-ticker},,{stock-ticker},',
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'B: |{stock-ticker symbol="AAPL"}{stock-ticker symbol="GOOG"}',
+      )
     })
 
     await vi.waitFor(() => {

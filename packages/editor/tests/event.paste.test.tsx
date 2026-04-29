@@ -1,12 +1,13 @@
 import {htmlToPortableText, type ObjectMatcher} from '@portabletext/html'
 import {defineSchema} from '@portabletext/schema'
-import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {raise} from '../src/behaviors/behavior.types.action'
 import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
 import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
 import {createTestEditor} from '../src/test/vitest'
+import {toTextspec} from '../test-utils/to-textspec'
 
 describe('event.clipboard.paste', () => {
   test('Scenario: Cut/paste block object', async () => {
@@ -248,11 +249,13 @@ describe('event.clipboard.paste', () => {
       })
 
       await vi.waitFor(() => {
-        expect(getTersePt(editor.getSnapshot().context!)).toEqual([
-          'Hello world',
-          'foo ,{image}, bar',
-          'baz',
-        ])
+        expect(toTextspec(editor.getSnapshot().context!)).toEqual(
+          [
+            'B: Hello world',
+            'B: foo {image alt="Image" src="https://example.com/image.jpg"} bar',
+            'B: baz|',
+          ].join('\n'),
+        )
       })
     })
 
@@ -296,13 +299,15 @@ describe('event.clipboard.paste', () => {
       })
 
       await vi.waitFor(() => {
-        expect(getTersePt(editor.getSnapshot().context!)).toEqual([
-          'Hello world',
-          'foo',
-          '{image}',
-          'bar',
-          'baz',
-        ])
+        expect(toTextspec(editor.getSnapshot().context!)).toEqual(
+          [
+            'B: Hello world',
+            'B: foo',
+            '{IMAGE alt="Image" src="https://example.com/image.jpg"}',
+            'B: bar',
+            'B: baz|',
+          ].join('\n'),
+        )
       })
     })
 
@@ -323,11 +328,9 @@ describe('event.clipboard.paste', () => {
       })
 
       await vi.waitFor(() => {
-        expect(getTersePt(editor.getSnapshot().context!)).toEqual([
-          'Hello world',
-          'foo bar',
-          'baz',
-        ])
+        expect(toTextspec(editor.getSnapshot().context!)).toEqual(
+          ['B: Hello world', 'B: foo bar', 'B: baz|'].join('\n'),
+        )
       })
     })
   })
@@ -413,12 +416,9 @@ describe('event.clipboard.paste', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context!)).toEqual([
-        'foo',
-        'bar',
-        'baz',
-        'fizz',
-      ])
+      expect(toTextspec(editor.getSnapshot().context!)).toEqual(
+        ['B: foo', 'B: bar|', 'B: baz', 'B: fizz'].join('\n'),
+      )
     })
   })
 })

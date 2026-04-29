@@ -1,10 +1,11 @@
 import {defineSchema} from '@portabletext/schema'
-import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {execute, forward} from '../src/behaviors/behavior.types.action'
 import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
 import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
 import {createTestEditor} from '../src/test/vitest'
+import {toTextspec} from '../test-utils/to-textspec'
 
 describe('event.insert.span', () => {
   test('Scenario: Unknown decorators are filtered out', async () => {
@@ -227,10 +228,9 @@ describe('event.insert.span', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        '{image}',
-        'foo',
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        '{IMAGE}\nB: foo|',
+      )
     })
   })
 
@@ -303,7 +303,7 @@ describe('event.insert.span', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([',{image},foo'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: {image}foo|')
     })
   })
 })

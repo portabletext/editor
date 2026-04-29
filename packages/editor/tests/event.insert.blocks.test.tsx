@@ -1,5 +1,5 @@
 import {isTextBlock} from '@portabletext/schema'
-import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {defineSchema} from '../src'
@@ -7,6 +7,7 @@ import {defineBehavior, type InsertPlacement} from '../src/behaviors'
 import {BehaviorPlugin} from '../src/plugins'
 import {createTestEditor} from '../src/test/vitest'
 import {getTextBlockText} from '../src/utils'
+import {toTextspec} from '../test-utils/to-textspec'
 
 describe('event.insert.blocks', () => {
   test('Scenario: Inserting text block with lonely inline object', async () => {
@@ -62,10 +63,12 @@ describe('event.insert.blocks', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        ',{image},',
-        '',
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        [
+          'B: {image alt="Image" src="https://example.com/image.jpg"}',
+          'B: |',
+        ].join('\n'),
+      )
     })
   })
 
@@ -2296,7 +2299,9 @@ describe('event.insert.blocks', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo', 'baz'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        ['B: foo', 'B: baz|'].join('\n'),
+      )
     })
   })
 })

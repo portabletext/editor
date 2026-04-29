@@ -6,7 +6,7 @@ import {
   unset,
   type Patch,
 } from '@portabletext/patches'
-import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {defineSchema} from '../src'
@@ -21,6 +21,7 @@ import {
   getSelectionBeforeText,
   getTextSelection,
 } from '../test-utils/text-selection'
+import {toTextspec} from '../test-utils/to-textspec'
 
 describe('event.delete.backward', () => {
   test('Scenario: Deleting lonely block object', async () => {
@@ -132,7 +133,7 @@ describe('event.delete.backward', () => {
     await userEvent.keyboard('{Backspace}')
 
     await vi.waitFor(() => {
-      return expect(getTersePt(editor.getSnapshot().context)).toEqual(['fo'])
+      return expect(toTextspec(editor.getSnapshot().context)).toEqual('B: fo|')
     })
   })
 
@@ -282,7 +283,9 @@ describe('event.delete.backward', () => {
         })
 
         await vi.waitFor(() => {
-          expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo  baz'])
+          expect(toTextspec(editor.getSnapshot().context)).toEqual(
+            'B: foo | baz',
+          )
         })
       })
 
@@ -311,9 +314,9 @@ describe('event.delete.backward', () => {
         })
 
         await vi.waitFor(() => {
-          expect(getTersePt(editor.getSnapshot().context)).toEqual([
-            'foo b baz',
-          ])
+          expect(toTextspec(editor.getSnapshot().context)).toEqual(
+            'B: foo b| baz',
+          )
         })
       })
     })
@@ -341,7 +344,9 @@ describe('event.delete.backward', () => {
         })
 
         await vi.waitFor(() => {
-          expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo  baz'])
+          expect(toTextspec(editor.getSnapshot().context)).toEqual(
+            'B: foo  baz',
+          )
         })
       })
 
@@ -367,9 +372,9 @@ describe('event.delete.backward', () => {
         })
 
         await vi.waitFor(() => {
-          expect(getTersePt(editor.getSnapshot().context)).toEqual([
-            'foo b baz',
-          ])
+          expect(toTextspec(editor.getSnapshot().context)).toEqual(
+            'B: foo b baz',
+          )
         })
       })
     })
@@ -410,7 +415,7 @@ describe('event.delete.backward', () => {
       })
 
       await vi.waitFor(() => {
-        expect(getTersePt(editor.getSnapshot().context)).toEqual(['bar baz'])
+        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |bar baz')
       })
     })
 
@@ -442,7 +447,7 @@ describe('event.delete.backward', () => {
       })
 
       await vi.waitFor(() => {
-        expect(getTersePt(editor.getSnapshot().context)).toEqual(['bar baz'])
+        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: bar baz')
       })
     })
   })

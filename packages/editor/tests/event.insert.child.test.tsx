@@ -1,12 +1,13 @@
 import type {Patch} from '@portabletext/patches'
 import {defineSchema} from '@portabletext/schema'
-import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {defineBehavior, raise} from '../src/behaviors'
 import {BehaviorPlugin, EventListenerPlugin} from '../src/plugins'
 import {getFocusSpan, getFocusTextBlock} from '../src/selectors'
 import {createTestEditor} from '../src/test/vitest'
+import {toTextspec} from '../test-utils/to-textspec'
 
 describe('event.insert.child', () => {
   test('Scenario: Carrying over an annotation', async () => {
@@ -163,9 +164,9 @@ describe('event.insert.child', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        'foo,{stock-ticker},newbar',
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'B: foo{stock-ticker}newbar|',
+      )
     })
   })
 
@@ -225,9 +226,9 @@ describe('event.insert.child', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        'foo,{stock-ticker},,{stock-ticker}, bar baz',
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'B: foo{stock-ticker}{stock-ticker} bar baz|',
+      )
     })
   })
 
@@ -293,9 +294,9 @@ describe('event.insert.child', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        'foo,{stock-ticker},',
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'B: foo|{stock-ticker symbol="AAPL"}',
+      )
     })
 
     await vi.waitFor(() => {

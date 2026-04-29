@@ -8,11 +8,12 @@ import {
   type Patch,
 } from '@portabletext/patches'
 import {defineSchema, type PortableTextBlock} from '@portabletext/schema'
-import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
 import {createTestEditor} from '../src/test/vitest'
+import {toTextspec} from '../test-utils/to-textspec'
 
 describe('event.patch', () => {
   test('Scenario: Deleting empty block above non-empty text block', async () => {
@@ -70,7 +71,7 @@ describe('event.patch', () => {
     await userEvent.keyboard('{Delete}')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['bar'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |bar')
     })
 
     expect(patches).toEqual([
@@ -519,7 +520,7 @@ describe('event.patch', () => {
 
         await vi.waitFor(() => {
           expect(editor.getSnapshot().context.value).toEqual(remoteValue)
-          expect(getTersePt(editor.getSnapshot().context)).toEqual(['hello'])
+          expect(toTextspec(editor.getSnapshot().context)).toEqual('B: hello|')
         })
       })
 
@@ -558,9 +559,9 @@ describe('event.patch', () => {
 
         await vi.waitFor(() => {
           expect(editor.getSnapshot().context.value).toEqual(remoteValue)
-          expect(getTersePt(editor.getSnapshot().context)).toEqual([
-            'hello world',
-          ])
+          expect(toTextspec(editor.getSnapshot().context)).toEqual(
+            'B: hello world|',
+          )
         })
       })
     })
@@ -587,7 +588,7 @@ describe('event.patch', () => {
 
         await vi.waitFor(() => {
           expect(editor.getSnapshot().context.value).toEqual(remoteValue)
-          expect(getTersePt(editor.getSnapshot().context)).toEqual(['hello'])
+          expect(toTextspec(editor.getSnapshot().context)).toEqual('B: hello|')
         })
       })
 
@@ -626,9 +627,9 @@ describe('event.patch', () => {
 
         await vi.waitFor(() => {
           expect(editor.getSnapshot().context.value).toEqual(remoteValue)
-          expect(getTersePt(editor.getSnapshot().context)).toEqual([
-            'hello world',
-          ])
+          expect(toTextspec(editor.getSnapshot().context)).toEqual(
+            'B: hello world|',
+          )
         })
       })
     })
@@ -677,7 +678,7 @@ describe('event.patch', () => {
     await userEvent.keyboard('{Delete}')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |')
     })
 
     expect(patches).toEqual(

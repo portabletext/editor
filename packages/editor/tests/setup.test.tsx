@@ -1,5 +1,5 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
-import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import type {
@@ -9,6 +9,7 @@ import type {
 import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
 import {createTestEditor} from '../src/test/vitest'
 import {getSelectionAfterText} from '../test-utils/text-selection'
+import {toTextspec} from '../test-utils/to-textspec'
 
 describe('Setup', () => {
   test('Scenario: Unknown block object', async () => {
@@ -44,10 +45,11 @@ describe('Setup', () => {
 
             if (
               event.type === 'mutation' &&
-              getTersePt({
+              toTextspec({
                 schema: compileSchema(defineSchema({})),
                 value: event.value ?? [],
-              }).at(0) === 'foo bar'
+                selection: null,
+              }) === 'B: foo bar'
             ) {
               resolveFooBarMutation()
               mutationEvent = event
@@ -60,7 +62,7 @@ describe('Setup', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo')
     })
 
     expect(events.slice(0, 2)).toEqual([
@@ -83,7 +85,7 @@ describe('Setup', () => {
     await userEvent.type(locator, ' bar')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo bar'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo bar|')
     })
 
     await fooBarMutationPromise

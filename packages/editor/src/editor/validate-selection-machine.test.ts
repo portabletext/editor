@@ -1,7 +1,6 @@
-import {getTersePt} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
-import {getSelectionAfterText} from '../../test-utils/text-selection'
+import {toTextspec} from '../../test-utils/to-textspec'
 import {createTestEditor} from '../test/vitest'
 import {validateSelectionMachine} from './validate-selection-machine'
 
@@ -14,10 +13,7 @@ describe(validateSelectionMachine.id, () => {
     editor.send({type: 'insert.text', text: 'foo'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo'])
-      expect(editor.getSnapshot().context.selection).toEqual(
-        getSelectionAfterText(editor.getSnapshot().context, 'foo'),
-      )
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo|')
     })
 
     // This event is being sent in before "foo" has been inserted in the DOM
@@ -29,19 +25,13 @@ describe(validateSelectionMachine.id, () => {
     editor.send({type: 'insert.text', text: 'bar'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foobar'])
-      expect(editor.getSnapshot().context.selection).toEqual(
-        getSelectionAfterText(editor.getSnapshot().context, 'foobar'),
-      )
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foobar|')
     })
 
     editor.send({type: 'delete.backward', unit: 'character'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['fooba'])
-      expect(editor.getSnapshot().context.selection).toEqual(
-        getSelectionAfterText(editor.getSnapshot().context, 'fooba'),
-      )
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: fooba|')
     })
   })
 })

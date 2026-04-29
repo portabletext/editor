@@ -1,5 +1,5 @@
 import {isSpan} from '@portabletext/schema'
-import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {defineSchema} from '../src'
@@ -10,6 +10,7 @@ import {IS_MAC} from '../src/internal-utils/is-hotkey'
 import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
 import {createTestEditor} from '../src/test/vitest'
 import {getSelectionAfterText} from '../test-utils/text-selection'
+import {toTextspec} from '../test-utils/to-textspec'
 
 describe('event.insert.text', () => {
   test('Scenario: Consecutive `insert.text` events', async () => {
@@ -21,7 +22,7 @@ describe('event.insert.text', () => {
     editor.send({type: 'insert.text', text: 'foo'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo|')
       expect(editor.getSnapshot().context.selection).toEqual({
         anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 3},
         focus: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 3},
@@ -32,7 +33,7 @@ describe('event.insert.text', () => {
     editor.send({type: 'insert.text', text: 'bar'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foobar'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foobar|')
       expect(editor.getSnapshot().context.selection).toEqual({
         anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 6},
         focus: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 6},
@@ -43,7 +44,7 @@ describe('event.insert.text', () => {
     editor.send({type: 'delete.backward', unit: 'character'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['fooba'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: fooba|')
       expect(editor.getSnapshot().context.selection).toEqual({
         anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 5},
         focus: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 5},
@@ -117,9 +118,9 @@ describe('event.insert.text', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        'foo ,bar, baz',
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'B: foo [strong:bar] baz|',
+      )
     })
   })
 
@@ -154,7 +155,9 @@ describe('event.insert.text', () => {
     await userEvent.type(locator, ' baz')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo bar baz'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'B: foo bar baz|',
+      )
     })
   })
 
@@ -264,7 +267,9 @@ describe('event.insert.text', () => {
     await userEvent.type(locator, ' baz')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo bar baz'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'B: foo bar baz|',
+      )
     })
   })
 
@@ -310,7 +315,9 @@ describe('event.insert.text', () => {
     await userEvent.type(locator, ' baz')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo bar baz'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'B: foo bar baz|',
+      )
     })
   })
 
@@ -320,7 +327,7 @@ describe('event.insert.text', () => {
     editor.send({type: 'insert.text', text: 'foo'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo'])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo|')
     })
   })
 
@@ -405,9 +412,9 @@ describe('event.insert.text', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        'before,{stock-ticker},after',
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'B: before{stock-ticker symbol="AAPL"}after',
+      )
     })
 
     editor.send({
@@ -441,9 +448,9 @@ describe('event.insert.text', () => {
     editor.send({type: 'insert.text', text: 'hello'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([
-        'before,{stock-ticker},helloafter',
-      ])
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'B: before{stock-ticker symbol="AAPL"}hello|after',
+      )
     })
   })
 })
