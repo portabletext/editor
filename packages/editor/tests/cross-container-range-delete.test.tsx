@@ -564,7 +564,7 @@ describe('cross-container range delete', () => {
     ])
   })
 
-  test('Backspace at start of an empty container line below a text block does not crash', async () => {
+  test('Backspace at start of an empty container line below a text block unwraps the line', async () => {
     const keyGenerator = createTestKeyGenerator()
     const textBlockKey = keyGenerator()
     const textSpanKey = keyGenerator()
@@ -642,17 +642,11 @@ describe('cross-container range delete', () => {
         style: 'normal',
       },
       {
-        _type: 'code-block',
-        _key: codeBlockKey,
-        lines: [
-          {
-            _type: 'block',
-            _key: lineKey,
-            children: [{_type: 'span', _key: lineSpanKey, text: '', marks: []}],
-            markDefs: [],
-            style: 'normal',
-          },
-        ],
+        _type: 'block',
+        _key: lineKey,
+        children: [{_type: 'span', _key: lineSpanKey, text: '', marks: []}],
+        markDefs: [],
+        style: 'normal',
       },
     ])
   })

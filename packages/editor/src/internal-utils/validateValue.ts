@@ -7,6 +7,7 @@ import {
   type PortableTextTextBlock,
 } from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
+import {getRootAcceptedTypes} from '../schema/get-root-accepted-types'
 import type {InvalidValueResolution} from '../types/editor'
 
 interface Validation {
@@ -26,10 +27,7 @@ export function validateValue(
     types.span.name,
     ...types.inlineObjects.map((t) => t.name),
   ]
-  const validBlockTypes = [
-    types.block.name,
-    ...types.blockObjects.map((t) => t.name),
-  ]
+  const validBlockTypes = getRootAcceptedTypes(types)
 
   // Undefined is allowed
   if (value === undefined) {
@@ -92,7 +90,7 @@ export function validateValue(
         return true
       }
       // Test that every block has valid _type
-      if (!blk._type || !validBlockTypes.includes(blk._type)) {
+      if (!blk._type || !validBlockTypes.has(blk._type)) {
         // Special case where block type is set to default 'block', but the block type is named something else according to the schema.
         if (blk._type === 'block') {
           const currentBlockTypeName = types.block.name
