@@ -5,6 +5,7 @@ import {userEvent} from 'vitest/browser'
 import {ContainerPlugin} from '../src/plugins/plugin.container'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
+import {toTextspec} from '../test-utils/to-textspec'
 
 const schemaDefinition = defineSchema({
   blockObjects: [
@@ -97,30 +98,9 @@ describe('cross-container range delete', () => {
 
     await userEvent.keyboard('{Backspace}')
 
-    expect(editor.getSnapshot().context.value).toEqual([
-      {
-        _type: 'block',
-        _key: textBlockKey,
-        children: [{_type: 'span', _key: textSpanKey, text: '', marks: []}],
-        markDefs: [],
-        style: 'normal',
-      },
-      {
-        _type: 'code-block',
-        _key: codeBlockKey,
-        lines: [
-          {
-            _type: 'block',
-            _key: lineKey,
-            children: [
-              {_type: 'span', _key: lineSpanKey, text: 'r', marks: []},
-            ],
-            markDefs: [],
-            style: 'normal',
-          },
-        ],
-      },
-    ])
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      ['B: |', 'CODE-BLOCK:', '  B: r'].join('\n'),
+    )
   })
 
   test('code-block line -> root text block below', async () => {
@@ -186,30 +166,9 @@ describe('cross-container range delete', () => {
 
     await userEvent.keyboard('{Backspace}')
 
-    expect(editor.getSnapshot().context.value).toEqual([
-      {
-        _type: 'code-block',
-        _key: codeBlockKey,
-        lines: [
-          {
-            _type: 'block',
-            _key: lineKey,
-            children: [
-              {_type: 'span', _key: lineSpanKey, text: 'f', marks: []},
-            ],
-            markDefs: [],
-            style: 'normal',
-          },
-        ],
-      },
-      {
-        _type: 'block',
-        _key: textBlockKey,
-        children: [{_type: 'span', _key: textSpanKey, text: 'r', marks: []}],
-        markDefs: [],
-        style: 'normal',
-      },
-    ])
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      ['CODE-BLOCK:', '  B: f|', 'B: r'].join('\n'),
+    )
   })
 
   test('across three root siblings with a container in the middle merges outer text blocks (same parent)', async () => {
@@ -280,15 +239,7 @@ describe('cross-container range delete', () => {
 
     await userEvent.keyboard('{Backspace}')
 
-    expect(editor.getSnapshot().context.value).toEqual([
-      {
-        _type: 'block',
-        _key: firstTextKey,
-        children: [{_type: 'span', _key: firstSpanKey, text: 'foz', marks: []}],
-        markDefs: [],
-        style: 'normal',
-      },
-    ])
+    expect(toTextspec(editor.getSnapshot().context)).toEqual('B: fo|z')
   })
 
   test('across two sibling containers (callout - code-block)', async () => {
@@ -367,38 +318,9 @@ describe('cross-container range delete', () => {
 
     await userEvent.keyboard('{Backspace}')
 
-    expect(editor.getSnapshot().context.value).toEqual([
-      {
-        _type: 'callout',
-        _key: calloutKey,
-        content: [
-          {
-            _type: 'block',
-            _key: calloutBlockKey,
-            children: [
-              {_type: 'span', _key: calloutSpanKey, text: 'f', marks: []},
-            ],
-            markDefs: [],
-            style: 'normal',
-          },
-        ],
-      },
-      {
-        _type: 'code-block',
-        _key: codeBlockKey,
-        lines: [
-          {
-            _type: 'block',
-            _key: lineKey,
-            children: [
-              {_type: 'span', _key: lineSpanKey, text: 'r', marks: []},
-            ],
-            markDefs: [],
-            style: 'normal',
-          },
-        ],
-      },
-    ])
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      ['CALLOUT:', '  B: f|', 'CODE-BLOCK:', '  B: r'].join('\n'),
+    )
   })
 
   test('within same container across two lines still merges (same-parent path unchanged)', async () => {
@@ -480,23 +402,9 @@ describe('cross-container range delete', () => {
 
     await userEvent.keyboard('{Backspace}')
 
-    expect(editor.getSnapshot().context.value).toEqual([
-      {
-        _type: 'code-block',
-        _key: codeBlockKey,
-        lines: [
-          {
-            _type: 'block',
-            _key: firstLineKey,
-            children: [
-              {_type: 'span', _key: firstLineSpanKey, text: 'fr', marks: []},
-            ],
-            markDefs: [],
-            style: 'normal',
-          },
-        ],
-      },
-    ])
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      ['CODE-BLOCK:', '  B: f|r'].join('\n'),
+    )
   })
 
   test('range selection covering a root void block merges outer text blocks (same parent)', async () => {
@@ -551,17 +459,7 @@ describe('cross-container range delete', () => {
 
     await userEvent.keyboard('{Backspace}')
 
-    expect(editor.getSnapshot().context.value).toEqual([
-      {
-        _type: 'block',
-        _key: firstTextKey,
-        children: [
-          {_type: 'span', _key: firstSpanKey, text: 'foar', marks: []},
-        ],
-        markDefs: [],
-        style: 'normal',
-      },
-    ])
+    expect(toTextspec(editor.getSnapshot().context)).toEqual('B: fo|ar')
   })
 
   test('Backspace at start of an empty container line below a text block unwraps the line', async () => {
@@ -633,21 +531,1013 @@ describe('cross-container range delete', () => {
 
     await userEvent.keyboard('{Backspace}')
 
-    expect(editor.getSnapshot().context.value).toEqual([
-      {
-        _type: 'block',
-        _key: textBlockKey,
-        children: [{_type: 'span', _key: textSpanKey, text: 'foo', marks: []}],
-        markDefs: [],
-        style: 'normal',
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      ['B: foo', 'B: |'].join('\n'),
+    )
+  })
+
+  test('start inside multi-line callout removes trailing lines, leaves callout shell with leading content', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const calloutKey = keyGenerator()
+    const line1Key = keyGenerator()
+    const line1SpanKey = keyGenerator()
+    const line2Key = keyGenerator()
+    const line2SpanKey = keyGenerator()
+    const line3Key = keyGenerator()
+    const line3SpanKey = keyGenerator()
+    const textBlockKey = keyGenerator()
+    const textSpanKey = keyGenerator()
+
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: calloutKey,
+          content: [
+            {
+              _type: 'block',
+              _key: line1Key,
+              children: [
+                {_type: 'span', _key: line1SpanKey, text: 'foo', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: line2Key,
+              children: [
+                {_type: 'span', _key: line2SpanKey, text: 'bar', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: line3Key,
+              children: [
+                {_type: 'span', _key: line3SpanKey, text: 'baz', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+        {
+          _type: 'block',
+          _key: textBlockKey,
+          children: [
+            {_type: 'span', _key: textSpanKey, text: 'qux', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: <ContainerPlugin containers={containers} />,
+    })
+
+    await userEvent.click(locator)
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [
+            {_key: calloutKey},
+            'content',
+            {_key: line1Key},
+            'children',
+            {_key: line1SpanKey},
+          ],
+          offset: 1,
+        },
+        focus: {
+          path: [{_key: textBlockKey}, 'children', {_key: textSpanKey}],
+          offset: 2,
+        },
       },
-      {
-        _type: 'block',
-        _key: lineKey,
-        children: [{_type: 'span', _key: lineSpanKey, text: '', marks: []}],
-        markDefs: [],
-        style: 'normal',
+    })
+
+    await userEvent.keyboard('{Backspace}')
+
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      ['CALLOUT:', '  B: f|', 'B: x'].join('\n'),
+    )
+  })
+
+  test('end inside multi-line callout removes leading lines, leaves callout shell with trailing content', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const textBlockKey = keyGenerator()
+    const textSpanKey = keyGenerator()
+    const calloutKey = keyGenerator()
+    const line1Key = keyGenerator()
+    const line1SpanKey = keyGenerator()
+    const line2Key = keyGenerator()
+    const line2SpanKey = keyGenerator()
+    const line3Key = keyGenerator()
+    const line3SpanKey = keyGenerator()
+
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: textBlockKey,
+          children: [
+            {_type: 'span', _key: textSpanKey, text: 'foo', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'callout',
+          _key: calloutKey,
+          content: [
+            {
+              _type: 'block',
+              _key: line1Key,
+              children: [
+                {_type: 'span', _key: line1SpanKey, text: 'bar', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: line2Key,
+              children: [
+                {_type: 'span', _key: line2SpanKey, text: 'baz', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: line3Key,
+              children: [
+                {_type: 'span', _key: line3SpanKey, text: 'qux', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: <ContainerPlugin containers={containers} />,
+    })
+
+    await userEvent.click(locator)
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: textBlockKey}, 'children', {_key: textSpanKey}],
+          offset: 1,
+        },
+        focus: {
+          path: [
+            {_key: calloutKey},
+            'content',
+            {_key: line3Key},
+            'children',
+            {_key: line3SpanKey},
+          ],
+          offset: 2,
+        },
       },
-    ])
+    })
+
+    await userEvent.keyboard('{Backspace}')
+
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      ['B: f|', 'CALLOUT:', '  B: x'].join('\n'),
+    )
+  })
+
+  test('cross-parent selection removes fully-covered root sibling between containers', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const callout1Key = keyGenerator()
+    const callout1LineKey = keyGenerator()
+    const callout1SpanKey = keyGenerator()
+    const middleTextKey = keyGenerator()
+    const middleSpanKey = keyGenerator()
+    const callout2Key = keyGenerator()
+    const callout2LineKey = keyGenerator()
+    const callout2SpanKey = keyGenerator()
+
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: callout1Key,
+          content: [
+            {
+              _type: 'block',
+              _key: callout1LineKey,
+              children: [
+                {_type: 'span', _key: callout1SpanKey, text: 'foo', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+        {
+          _type: 'block',
+          _key: middleTextKey,
+          children: [
+            {_type: 'span', _key: middleSpanKey, text: 'bar', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'callout',
+          _key: callout2Key,
+          content: [
+            {
+              _type: 'block',
+              _key: callout2LineKey,
+              children: [
+                {_type: 'span', _key: callout2SpanKey, text: 'baz', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: <ContainerPlugin containers={containers} />,
+    })
+
+    await userEvent.click(locator)
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [
+            {_key: callout1Key},
+            'content',
+            {_key: callout1LineKey},
+            'children',
+            {_key: callout1SpanKey},
+          ],
+          offset: 1,
+        },
+        focus: {
+          path: [
+            {_key: callout2Key},
+            'content',
+            {_key: callout2LineKey},
+            'children',
+            {_key: callout2SpanKey},
+          ],
+          offset: 2,
+        },
+      },
+    })
+
+    await userEvent.keyboard('{Backspace}')
+
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      ['CALLOUT:', '  B: f|', 'CALLOUT:', '  B: z'].join('\n'),
+    )
+  })
+})
+
+const tableSchemaDefinition = defineSchema({
+  blockObjects: [
+    {
+      name: 'callout',
+      fields: [{name: 'content', type: 'array', of: [{type: 'block'}]}],
+    },
+    {
+      name: 'table',
+      fields: [
+        {
+          name: 'rows',
+          type: 'array',
+          of: [
+            {
+              type: 'row',
+              fields: [
+                {
+                  name: 'cells',
+                  type: 'array',
+                  of: [
+                    {
+                      type: 'cell',
+                      fields: [
+                        {
+                          name: 'content',
+                          type: 'array',
+                          of: [
+                            {type: 'block'},
+                            {
+                              type: 'callout',
+                              fields: [
+                                {
+                                  name: 'content',
+                                  type: 'array',
+                                  of: [{type: 'block'}],
+                                },
+                              ],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ],
+})
+
+const tableContainers = [
+  defineContainer<typeof tableSchemaDefinition>({
+    scope: '$..table',
+    field: 'rows',
+    render: ({attributes, children}) => <div {...attributes}>{children}</div>,
+  }),
+  defineContainer<typeof tableSchemaDefinition>({
+    scope: '$..table.row',
+    field: 'cells',
+    render: ({attributes, children}) => <div {...attributes}>{children}</div>,
+  }),
+  defineContainer<typeof tableSchemaDefinition>({
+    scope: '$..table.row.cell',
+    field: 'content',
+    render: ({attributes, children}) => <div {...attributes}>{children}</div>,
+  }),
+  defineContainer<typeof tableSchemaDefinition>({
+    scope: '$..callout',
+    field: 'content',
+    render: ({attributes, children}) => <div {...attributes}>{children}</div>,
+  }),
+]
+
+describe('cross-container range delete: deep structures', () => {
+  test('start mid-line in callout-in-cell-in-table, end in root text below table', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const tableKey = keyGenerator()
+    const rowKey = keyGenerator()
+    const cellKey = keyGenerator()
+    const calloutKey = keyGenerator()
+    const lineKey = keyGenerator()
+    const lineSpanKey = keyGenerator()
+    const trailingLineKey = keyGenerator()
+    const trailingLineSpanKey = keyGenerator()
+    const trailingCellContentKey = keyGenerator()
+    const trailingCellContentSpanKey = keyGenerator()
+    const trailingCellKey = keyGenerator()
+    const trailingCellInnerKey = keyGenerator()
+    const trailingCellInnerSpanKey = keyGenerator()
+    const textBlockKey = keyGenerator()
+    const textSpanKey = keyGenerator()
+
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: tableSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'table',
+          _key: tableKey,
+          rows: [
+            {
+              _type: 'row',
+              _key: rowKey,
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: cellKey,
+                  content: [
+                    {
+                      _type: 'callout',
+                      _key: calloutKey,
+                      content: [
+                        {
+                          _type: 'block',
+                          _key: lineKey,
+                          children: [
+                            {
+                              _type: 'span',
+                              _key: lineSpanKey,
+                              text: 'foo',
+                              marks: [],
+                            },
+                          ],
+                          markDefs: [],
+                          style: 'normal',
+                        },
+                        {
+                          _type: 'block',
+                          _key: trailingLineKey,
+                          children: [
+                            {
+                              _type: 'span',
+                              _key: trailingLineSpanKey,
+                              text: 'TRAIL_LINE',
+                              marks: [],
+                            },
+                          ],
+                          markDefs: [],
+                          style: 'normal',
+                        },
+                      ],
+                    },
+                    {
+                      _type: 'block',
+                      _key: trailingCellContentKey,
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: trailingCellContentSpanKey,
+                          text: 'TRAIL_CELL_CONTENT',
+                          marks: [],
+                        },
+                      ],
+                      markDefs: [],
+                      style: 'normal',
+                    },
+                  ],
+                },
+                {
+                  _type: 'cell',
+                  _key: trailingCellKey,
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: trailingCellInnerKey,
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: trailingCellInnerSpanKey,
+                          text: 'TRAIL_CELL',
+                          marks: [],
+                        },
+                      ],
+                      markDefs: [],
+                      style: 'normal',
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+        {
+          _type: 'block',
+          _key: textBlockKey,
+          children: [
+            {_type: 'span', _key: textSpanKey, text: 'qux', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: <ContainerPlugin containers={tableContainers} />,
+    })
+
+    await userEvent.click(locator)
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [
+            {_key: tableKey},
+            'rows',
+            {_key: rowKey},
+            'cells',
+            {_key: cellKey},
+            'content',
+            {_key: calloutKey},
+            'content',
+            {_key: lineKey},
+            'children',
+            {_key: lineSpanKey},
+          ],
+          offset: 1,
+        },
+        focus: {
+          path: [{_key: textBlockKey}, 'children', {_key: textSpanKey}],
+          offset: 2,
+        },
+      },
+    })
+
+    await userEvent.keyboard('{Backspace}')
+
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      [
+        'TABLE:',
+        '  ROW:',
+        '    CELL:',
+        '      CALLOUT:',
+        '        B: f|',
+        'B: x',
+      ].join('\n'),
+    )
+  })
+
+  test('start in root text, end mid-line in callout-in-cell-in-table', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const textBlockKey = keyGenerator()
+    const textSpanKey = keyGenerator()
+    const tableKey = keyGenerator()
+    const rowKey = keyGenerator()
+    const leadingCellKey = keyGenerator()
+    const leadingCellInnerKey = keyGenerator()
+    const leadingCellInnerSpanKey = keyGenerator()
+    const cellKey = keyGenerator()
+    const leadingCellContentKey = keyGenerator()
+    const leadingCellContentSpanKey = keyGenerator()
+    const calloutKey = keyGenerator()
+    const leadingLineKey = keyGenerator()
+    const leadingLineSpanKey = keyGenerator()
+    const lineKey = keyGenerator()
+    const lineSpanKey = keyGenerator()
+
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: tableSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: textBlockKey,
+          children: [
+            {_type: 'span', _key: textSpanKey, text: 'foo', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'table',
+          _key: tableKey,
+          rows: [
+            {
+              _type: 'row',
+              _key: rowKey,
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: leadingCellKey,
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: leadingCellInnerKey,
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: leadingCellInnerSpanKey,
+                          text: 'LEAD_CELL',
+                          marks: [],
+                        },
+                      ],
+                      markDefs: [],
+                      style: 'normal',
+                    },
+                  ],
+                },
+                {
+                  _type: 'cell',
+                  _key: cellKey,
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: leadingCellContentKey,
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: leadingCellContentSpanKey,
+                          text: 'LEAD_CELL_CONTENT',
+                          marks: [],
+                        },
+                      ],
+                      markDefs: [],
+                      style: 'normal',
+                    },
+                    {
+                      _type: 'callout',
+                      _key: calloutKey,
+                      content: [
+                        {
+                          _type: 'block',
+                          _key: leadingLineKey,
+                          children: [
+                            {
+                              _type: 'span',
+                              _key: leadingLineSpanKey,
+                              text: 'LEAD_LINE',
+                              marks: [],
+                            },
+                          ],
+                          markDefs: [],
+                          style: 'normal',
+                        },
+                        {
+                          _type: 'block',
+                          _key: lineKey,
+                          children: [
+                            {
+                              _type: 'span',
+                              _key: lineSpanKey,
+                              text: 'baz',
+                              marks: [],
+                            },
+                          ],
+                          markDefs: [],
+                          style: 'normal',
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      children: <ContainerPlugin containers={tableContainers} />,
+    })
+
+    await userEvent.click(locator)
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: textBlockKey}, 'children', {_key: textSpanKey}],
+          offset: 1,
+        },
+        focus: {
+          path: [
+            {_key: tableKey},
+            'rows',
+            {_key: rowKey},
+            'cells',
+            {_key: cellKey},
+            'content',
+            {_key: calloutKey},
+            'content',
+            {_key: lineKey},
+            'children',
+            {_key: lineSpanKey},
+          ],
+          offset: 2,
+        },
+      },
+    })
+
+    await userEvent.keyboard('{Backspace}')
+
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      [
+        'B: f|',
+        'TABLE:',
+        '  ROW:',
+        '    CELL:',
+        '      CALLOUT:',
+        '        B: z',
+      ].join('\n'),
+    )
+  })
+
+  test('selection across cells in same row preserves intermediate cell shells with cleared content', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const tableKey = keyGenerator()
+    const rowKey = keyGenerator()
+    const cell0Key = keyGenerator()
+    const cell0BlockKey = keyGenerator()
+    const cell0SpanKey = keyGenerator()
+    const cell1Key = keyGenerator()
+    const cell1BlockKey = keyGenerator()
+    const cell1SpanKey = keyGenerator()
+    const cell2Key = keyGenerator()
+    const cell2BlockKey = keyGenerator()
+    const cell2SpanKey = keyGenerator()
+
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: tableSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'table',
+          _key: tableKey,
+          rows: [
+            {
+              _type: 'row',
+              _key: rowKey,
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: cell0Key,
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: cell0BlockKey,
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: cell0SpanKey,
+                          text: 'foo',
+                          marks: [],
+                        },
+                      ],
+                      markDefs: [],
+                      style: 'normal',
+                    },
+                  ],
+                },
+                {
+                  _type: 'cell',
+                  _key: cell1Key,
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: cell1BlockKey,
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: cell1SpanKey,
+                          text: 'MIDDLE',
+                          marks: [],
+                        },
+                      ],
+                      markDefs: [],
+                      style: 'normal',
+                    },
+                  ],
+                },
+                {
+                  _type: 'cell',
+                  _key: cell2Key,
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: cell2BlockKey,
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: cell2SpanKey,
+                          text: 'baz',
+                          marks: [],
+                        },
+                      ],
+                      markDefs: [],
+                      style: 'normal',
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      children: <ContainerPlugin containers={tableContainers} />,
+    })
+
+    await userEvent.click(locator)
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [
+            {_key: tableKey},
+            'rows',
+            {_key: rowKey},
+            'cells',
+            {_key: cell0Key},
+            'content',
+            {_key: cell0BlockKey},
+            'children',
+            {_key: cell0SpanKey},
+          ],
+          offset: 1,
+        },
+        focus: {
+          path: [
+            {_key: tableKey},
+            'rows',
+            {_key: rowKey},
+            'cells',
+            {_key: cell2Key},
+            'content',
+            {_key: cell2BlockKey},
+            'children',
+            {_key: cell2SpanKey},
+          ],
+          offset: 2,
+        },
+      },
+    })
+
+    await userEvent.keyboard('{Backspace}')
+
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      [
+        'TABLE:',
+        '  ROW:',
+        '    CELL:',
+        '      B: f|',
+        '    CELL:',
+        '      B: ',
+        '    CELL:',
+        '      B: z',
+      ].join('\n'),
+    )
+  })
+
+  test('selection across rows in same table preserves intermediate row shells with cells cleared', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const tableKey = keyGenerator()
+    const row0Key = keyGenerator()
+    const row0CellKey = keyGenerator()
+    const row0BlockKey = keyGenerator()
+    const row0SpanKey = keyGenerator()
+    const row1Key = keyGenerator()
+    const row1Cell0Key = keyGenerator()
+    const row1Cell0BlockKey = keyGenerator()
+    const row1Cell0SpanKey = keyGenerator()
+    const row1Cell1Key = keyGenerator()
+    const row1Cell1BlockKey = keyGenerator()
+    const row1Cell1SpanKey = keyGenerator()
+    const row2Key = keyGenerator()
+    const row2CellKey = keyGenerator()
+    const row2BlockKey = keyGenerator()
+    const row2SpanKey = keyGenerator()
+
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: tableSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'table',
+          _key: tableKey,
+          rows: [
+            {
+              _type: 'row',
+              _key: row0Key,
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: row0CellKey,
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: row0BlockKey,
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: row0SpanKey,
+                          text: 'foo',
+                          marks: [],
+                        },
+                      ],
+                      markDefs: [],
+                      style: 'normal',
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              _type: 'row',
+              _key: row1Key,
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: row1Cell0Key,
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: row1Cell0BlockKey,
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: row1Cell0SpanKey,
+                          text: 'MID0',
+                          marks: [],
+                        },
+                      ],
+                      markDefs: [],
+                      style: 'normal',
+                    },
+                  ],
+                },
+                {
+                  _type: 'cell',
+                  _key: row1Cell1Key,
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: row1Cell1BlockKey,
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: row1Cell1SpanKey,
+                          text: 'MID1',
+                          marks: [],
+                        },
+                      ],
+                      markDefs: [],
+                      style: 'normal',
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              _type: 'row',
+              _key: row2Key,
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: row2CellKey,
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: row2BlockKey,
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: row2SpanKey,
+                          text: 'baz',
+                          marks: [],
+                        },
+                      ],
+                      markDefs: [],
+                      style: 'normal',
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      children: <ContainerPlugin containers={tableContainers} />,
+    })
+
+    await userEvent.click(locator)
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [
+            {_key: tableKey},
+            'rows',
+            {_key: row0Key},
+            'cells',
+            {_key: row0CellKey},
+            'content',
+            {_key: row0BlockKey},
+            'children',
+            {_key: row0SpanKey},
+          ],
+          offset: 1,
+        },
+        focus: {
+          path: [
+            {_key: tableKey},
+            'rows',
+            {_key: row2Key},
+            'cells',
+            {_key: row2CellKey},
+            'content',
+            {_key: row2BlockKey},
+            'children',
+            {_key: row2SpanKey},
+          ],
+          offset: 2,
+        },
+      },
+    })
+
+    await userEvent.keyboard('{Backspace}')
+
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      [
+        'TABLE:',
+        '  ROW:',
+        '    CELL:',
+        '      B: f|',
+        '  ROW:',
+        '    CELL:',
+        '      B: ',
+        '    CELL:',
+        '      B: ',
+        '  ROW:',
+        '    CELL:',
+        '      B: z',
+      ].join('\n'),
+    )
   })
 })
