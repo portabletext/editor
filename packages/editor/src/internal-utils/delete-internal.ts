@@ -1,14 +1,18 @@
+import {getChildren} from '../node-traversal/get-children'
 import {getEnclosingBlock} from '../node-traversal/get-enclosing-block'
 import {getFirstChild} from '../node-traversal/get-first-child'
 import {getNode} from '../node-traversal/get-node'
 import {getSibling} from '../node-traversal/get-sibling'
 import {getSpanNode} from '../node-traversal/get-span-node'
 import {getTextBlockNode} from '../node-traversal/get-text-block-node'
+import {getContainerScopedName} from '../schema/get-container-scoped-name'
+import {getEnclosingContainer} from '../schema/get-enclosing-container'
 import {pointRef} from '../slate/editor/point-ref'
 import type {Path} from '../slate/interfaces/path'
 import type {Point} from '../slate/interfaces/point'
 import type {Range} from '../slate/interfaces/range'
 import {isVoidNode} from '../slate/node/is-void-node'
+import {commonPath} from '../slate/path/common-path'
 import {parentPath} from '../slate/path/parent-path'
 import {pathEquals} from '../slate/path/path-equals'
 import {rangeEdges} from '../slate/range/range-edges'
@@ -16,6 +20,7 @@ import type {TextUnit} from '../slate/types/types'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
 import {applyMergeNode} from './apply-merge-node'
+import {createPlaceholderBlock} from './create-placeholder-block'
 import {setNodeProperties} from './set-node-properties'
 
 /**
@@ -306,9 +311,15 @@ function deleteSameParentCrossBlockRange(
 
 /**
  * Delete a range whose endpoints live under different parents (e.g. one
- * inside an editable container, one outside). Trims partial content from
- * each end and leaves the two block shells in place. No merge happens, since the
- * shells aren't siblings.
+ * inside an editable container, one outside). Trims partial content at
+ * each endpoint, removes everything between, and leaves the two block
+ * shells in place. No merge happens, since the shells aren't siblings.
+ *
+ * The "between" content is everything covered by the range that isn't
+ * the start or end blocks themselves: trailing siblings of the start
+ * block at every level up to the lowest common ancestor, leading
+ * siblings of the end block at every level down from the LCA, and any
+ * blocks strictly between the two branches at the LCA itself.
  */
 function deleteCrossParentRange(
   editor: PortableTextSlateEditor,
@@ -317,11 +328,60 @@ function deleteCrossParentRange(
   start: Point,
   end: Point,
 ): void {
+  const lca = commonPath(startBlockPath, endBlockPath)
+  const startBranchRoot = startBlockPath.slice(0, lca.length + 1)
+  const endBranchRoot = endBlockPath.slice(0, lca.length + 1)
+
+  // 1. Trim the start block: remove text after the offset and any
+  //    trailing children inside the same block.
   if (!pathEquals(start.path, startBlockPath)) {
     removeTextFromOffset(editor, start.path, start.offset, false)
     removeTrailingChildren(editor, start.path)
   }
 
+  // 2. Walk up the start branch. At every level above the start block
+  //    and below the start branch root, drop all trailing siblings.
+  //    Trailing siblings of the start branch root itself are handled
+  //    by `removeChildrenBetween` below.
+  let startLevel = startBlockPath
+  while (!pathEquals(startLevel, startBranchRoot)) {
+    removeTrailingChildren(editor, startLevel)
+    startLevel = parentPath(startLevel)
+  }
+
+  // 3. Drop blocks strictly between the two branches at the LCA.
+  //    When the LCA's field doesn't accept text-block, the children
+  //    between are structural to their parent's shape (e.g. table
+  //    cells in a row). Preserve each shell and clear its contents
+  //    instead of unsetting it.
+  const lcaContainer = getEnclosingContainer(editor, startBranchRoot)
+  const lcaAcceptsTextBlock = lcaContainer
+    ? lcaContainer.of.some((member) => member.type === editor.schema.block.name)
+    : true
+
+  if (lcaAcceptsTextBlock) {
+    removeChildrenBetween(editor, startBranchRoot, endBranchRoot)
+  } else {
+    let cursor = getSibling(editor, startBranchRoot, 'next')
+    while (cursor && !pathEquals(cursor.path, endBranchRoot)) {
+      const cursorPath = cursor.path
+      clearContainerContents(editor, cursorPath)
+      cursor = getSibling(editor, cursorPath, 'next')
+    }
+  }
+
+  // 4. Walk up the end branch. At every level above the end block and
+  //    below the end branch root, drop all preceding siblings.
+  //    Preceding siblings of the end branch root itself are handled
+  //    by `removeChildrenBetween` above.
+  let endLevel = endBlockPath
+  while (!pathEquals(endLevel, endBranchRoot)) {
+    removePrecedingSiblings(editor, endLevel)
+    endLevel = parentPath(endLevel)
+  }
+
+  // 5. Trim the end block: remove leading children and any text in
+  //    the first surviving child that comes before the end offset.
   if (!pathEquals(end.path, endBlockPath)) {
     removeLeadingChildrenOf(editor, endBlockPath, end.path)
     const firstChild = getFirstChild(editor, endBlockPath)
@@ -404,6 +464,60 @@ function removeChildrenBetween(
   }
 }
 
+/**
+ * Empty out a structurally-preserved container at `containerPath`.
+ *
+ * Used by cross-parent range delete when a fully-covered container
+ * sits at an LCA whose field doesn't accept text-block (e.g. a table
+ * cell whose row only holds cells). The shell stays so the parent's
+ * shape is preserved; the contents are cleared.
+ *
+ * Walks the container's child-array field. If the field accepts text
+ * blocks, it removes everything and inserts a single placeholder text
+ * block. Otherwise the children are themselves structural and the
+ * function recurses into each.
+ */
+function clearContainerContents(
+  editor: PortableTextSlateEditor,
+  containerPath: Path,
+): void {
+  const node = getNode(editor, containerPath)?.node
+  if (!node) {
+    return
+  }
+
+  const scopedName = getContainerScopedName(editor, node, containerPath)
+  const container = editor.containers.get(scopedName)
+  if (!container) {
+    return
+  }
+
+  const fieldName = container.field.name
+  const fieldAcceptsTextBlock = container.field.of.some(
+    (member) => member.type === editor.schema.block.name,
+  )
+
+  if (fieldAcceptsTextBlock) {
+    let firstChild = getFirstChild(editor, containerPath)
+    while (firstChild) {
+      removeNodeAt(editor, firstChild.path)
+      firstChild = getFirstChild(editor, containerPath)
+    }
+    const placeholderPath: Path = [...containerPath, fieldName, 0]
+    editor.apply({
+      type: 'insert',
+      path: placeholderPath,
+      node: createPlaceholderBlock(editor, placeholderPath),
+      position: 'before',
+    })
+    return
+  }
+
+  for (const child of getChildren(editor, containerPath)) {
+    clearContainerContents(editor, child.path)
+  }
+}
+
 /** Remove every sibling that comes after `startChildPath`. */
 function removeTrailingChildren(
   editor: PortableTextSlateEditor,
@@ -413,6 +527,18 @@ function removeTrailingChildren(
   while (cursor) {
     removeNodeAt(editor, cursor.path)
     cursor = getSibling(editor, startChildPath, 'next')
+  }
+}
+
+/** Remove every sibling that comes before `startChildPath`. */
+function removePrecedingSiblings(
+  editor: PortableTextSlateEditor,
+  startChildPath: Path,
+): void {
+  let cursor = getSibling(editor, startChildPath, 'previous')
+  while (cursor) {
+    removeNodeAt(editor, cursor.path)
+    cursor = getSibling(editor, startChildPath, 'previous')
   }
 }
 
