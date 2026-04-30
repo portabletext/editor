@@ -51,7 +51,7 @@ export function isEqualBlocks(
     return isEqualTextBlocks(context, a, b)
   }
 
-  return isEqualPortableTextObjects(a, b)
+  return isEqualKeyedObjects(a, b)
 }
 
 function isEqualTextBlocks(
@@ -131,9 +131,9 @@ function isEqualProps(
   return true
 }
 
-function isEqualInlineObjects(
-  a: PortableTextObject,
-  b: PortableTextObject,
+function isEqualKeyedObjects(
+  a: PortableTextBlock | PortableTextObject | Node,
+  b: PortableTextBlock | PortableTextObject | Node,
 ): boolean {
   if (a._key !== b._key || a._type !== b._type) {
     return false
@@ -244,18 +244,7 @@ export function isEqualChild(
     return isEqualSpans(a, b)
   }
 
-  return isEqualInlineObjects(a, b)
-}
-
-function isEqualPortableTextObjects(
-  a: PortableTextBlock | Node,
-  b: PortableTextBlock | Node,
-): boolean {
-  if (a._key !== b._key || a._type !== b._type) {
-    return false
-  }
-
-  return isEqualProps(a, b, ['_key', '_type'])
+  return isEqualKeyedObjects(a, b)
 }
 
 /**

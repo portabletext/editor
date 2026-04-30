@@ -207,7 +207,7 @@ function deleteSameBlockRange(
     start.offset,
     capture,
   )
-  removeChildrenBetween(editor, start.path, end.path)
+  removeNodesBetween(editor, start.path, end.path)
 
   const adjustedEnd = getSibling(editor, start.path, 'next')
   if (!adjustedEnd) {
@@ -259,7 +259,7 @@ function deleteSameParentCrossBlockRange(
   }
 
   // Remove every block strictly between start and end.
-  removeBlocksBetween(editor, startBlockPath, endBlockPath)
+  removeNodesBetween(editor, startBlockPath, endBlockPath)
 
   // Both endpoints void: unset both shells, nothing to merge.
   if (startIsVoid && endIsVoid) {
@@ -342,7 +342,7 @@ function deleteCrossParentRange(
   // 2. Walk up the start branch. At every level above the start block
   //    and below the start branch root, drop all trailing siblings.
   //    Trailing siblings of the start branch root itself are handled
-  //    by `removeChildrenBetween` below.
+  //    by `removeNodesBetween` below.
   let startLevel = startBlockPath
   while (!pathEquals(startLevel, startBranchRoot)) {
     removeTrailingChildren(editor, startLevel)
@@ -360,7 +360,7 @@ function deleteCrossParentRange(
     : true
 
   if (lcaAcceptsTextBlock) {
-    removeChildrenBetween(editor, startBranchRoot, endBranchRoot)
+    removeNodesBetween(editor, startBranchRoot, endBranchRoot)
   } else {
     let cursor = getSibling(editor, startBranchRoot, 'next')
     while (cursor && !pathEquals(cursor.path, endBranchRoot)) {
@@ -373,7 +373,7 @@ function deleteCrossParentRange(
   // 4. Walk up the end branch. At every level above the end block and
   //    below the end branch root, drop all preceding siblings.
   //    Preceding siblings of the end branch root itself are handled
-  //    by `removeChildrenBetween` above.
+  //    by `removeNodesBetween` above.
   let endLevel = endBlockPath
   while (!pathEquals(endLevel, endBranchRoot)) {
     removePrecedingSiblings(editor, endLevel)
@@ -449,18 +449,18 @@ function removeTextUpToOffset(
 }
 
 /**
- * Remove every sibling strictly between `startChildPath` and
- * `endChildPath`. Both paths must share the same parent.
+ * Remove every sibling strictly between `startPath` and `endPath`. Both
+ * paths must share the same parent.
  */
-function removeChildrenBetween(
+function removeNodesBetween(
   editor: PortableTextSlateEditor,
-  startChildPath: Path,
-  endChildPath: Path,
+  startPath: Path,
+  endPath: Path,
 ): void {
-  let cursor = getSibling(editor, startChildPath, 'next')
-  while (cursor && !pathEquals(cursor.path, endChildPath)) {
+  let cursor = getSibling(editor, startPath, 'next')
+  while (cursor && !pathEquals(cursor.path, endPath)) {
     removeNodeAt(editor, cursor.path)
-    cursor = getSibling(editor, startChildPath, 'next')
+    cursor = getSibling(editor, startPath, 'next')
   }
 }
 
@@ -578,22 +578,6 @@ function removeLeadingChildrenOf(
   ) {
     removeNodeAt(editor, firstChild.path)
     firstChild = getFirstChild(editor, blockPath)
-  }
-}
-
-/**
- * Remove every sibling block strictly between `startBlockPath` and
- * `endBlockPath`. Both paths must share the same parent.
- */
-function removeBlocksBetween(
-  editor: PortableTextSlateEditor,
-  startBlockPath: Path,
-  endBlockPath: Path,
-): void {
-  let cursor = getSibling(editor, startBlockPath, 'next')
-  while (cursor && !pathEquals(cursor.path, endBlockPath)) {
-    removeNodeAt(editor, cursor.path)
-    cursor = getSibling(editor, startBlockPath, 'next')
   }
 }
 
