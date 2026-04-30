@@ -740,3 +740,174 @@ describe('delete on empty container - nested cascade', () => {
     })
   })
 })
+
+/**
+ * Editable containers can be registered both on object nodes (the
+ * structural shell, e.g. `$..fact-box`) and on the text blocks inside
+ * them (`$..fact-box.block` for custom block rendering). The unwrap-on-
+ * empty-Backspace rule should only fire for the structural object-level
+ * registration. Text-block-level container registrations are a render-
+ * customization concern and shouldn't trigger container deletion when
+ * the user hits Backspace inside an empty paragraph.
+ */
+describe('delete on empty container - nested block container', () => {
+  const schemaDefinition = defineSchema({
+    blockObjects: [
+      {
+        name: 'fact-box',
+        fields: [
+          {
+            name: 'content',
+            type: 'array',
+            of: [
+              {
+                type: 'block',
+                styles: [{name: 'normal'}, {name: 'h1'}],
+                decorators: [{name: 'strong'}],
+                annotations: [],
+                lists: [],
+                inlineObjects: [],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  })
+
+  const containers = [
+    defineContainer<typeof schemaDefinition>({
+      scope: '$..fact-box',
+      field: 'content',
+    }),
+    defineContainer<typeof schemaDefinition>({
+      scope: '$..fact-box.block',
+      field: 'children',
+    }),
+  ]
+
+  test('Backspace inside empty fact-box with nested block container unwraps the fact-box', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition,
+      initialValue: [
+        {
+          _type: 'fact-box',
+          _key: 'f0',
+          content: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 's0', text: '', marks: []}],
+            },
+          ],
+        },
+      ],
+      children: <ContainerPlugin containers={containers} />,
+    })
+
+    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [
+            {_key: 'f0'},
+            'content',
+            {_key: 'b0'},
+            'children',
+            {_key: 's0'},
+          ],
+          offset: 0,
+        },
+        focus: {
+          path: [
+            {_key: 'f0'},
+            'content',
+            {_key: 'b0'},
+            'children',
+            {_key: 's0'},
+          ],
+          offset: 0,
+        },
+      },
+    })
+
+    editor.send({type: 'delete', direction: 'backward'})
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |')
+    })
+  })
+
+  test('Backspace at the start of a non-first text block inside fact-box merges with the previous block', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition,
+      initialValue: [
+        {
+          _type: 'fact-box',
+          _key: 'f0',
+          content: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+            },
+            {
+              _type: 'block',
+              _key: 'b1',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+            },
+          ],
+        },
+      ],
+      children: <ContainerPlugin containers={containers} />,
+    })
+
+    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [
+            {_key: 'f0'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+          ],
+          offset: 0,
+        },
+        focus: {
+          path: [
+            {_key: 'f0'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+          ],
+          offset: 0,
+        },
+      },
+    })
+
+    editor.send({type: 'delete', direction: 'backward'})
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        ['FACT-BOX:', '  B: foo|bar'].join('\n'),
+      )
+    })
+  })
+})
