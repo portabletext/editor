@@ -102,6 +102,7 @@ export default defineConfig({
         {
           label: 'Editor',
           items: [
+            {slug: 'editor', label: 'Overview'},
             {slug: 'editor/getting-started'},
             {slug: 'editor/guides/custom-blocks'},
             {
