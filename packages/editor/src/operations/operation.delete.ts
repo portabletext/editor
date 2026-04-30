@@ -2,6 +2,7 @@ import {resolveSelection} from '../internal-utils/apply-selection'
 import {deleteCollapsed} from '../internal-utils/delete-collapsed'
 import {deleteRange} from '../internal-utils/delete-range'
 import {findCurrentLineRange} from '../internal-utils/find-current-line-range'
+import {getFullyCoveredContainer} from '../internal-utils/get-fully-covered-container'
 import {unsetMatchedNodesInRange} from '../internal-utils/unset-matched-in-range'
 import {unwrapContainer} from '../internal-utils/unwrap-container'
 import {getAncestor} from '../node-traversal/get-ancestor'
@@ -131,6 +132,17 @@ export const deleteOperationImplementation: OperationImplementation<
       direction,
       selection,
     })
+    return
+  }
+
+  // If the selection covers an enclosing structural container end-to-end
+  // (e.g. start at the first cell, end at the last cell of a table),
+  // unset that container instead of running the textual delete. The
+  // textual primitive would unhang the range and then trim each end,
+  // leaving the container's empty shell behind.
+  const fullyCovered = getFullyCoveredContainer(operation.editor, at)
+  if (fullyCovered) {
+    operation.editor.apply({type: 'unset', path: fullyCovered})
     return
   }
 
