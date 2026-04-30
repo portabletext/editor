@@ -43,8 +43,9 @@ export function createEditorDom(
     getEditorElement: () => getEditorElement(slateEditor),
     getSelectionRect: (snapshot) => getSelectionRect(snapshot),
     getStartBlockElement: (snapshot) =>
-      getStartBlockElement(slateEditor, snapshot),
-    getEndBlockElement: (snapshot) => getEndBlockElement(slateEditor, snapshot),
+      getEdgeBlockElement(slateEditor, snapshot, 'start'),
+    getEndBlockElement: (snapshot) =>
+      getEdgeBlockElement(slateEditor, snapshot, 'end'),
     setDragGhost: ({event, ghost}) => setDragGhost({sendBack, event, ghost}),
   }
 }
@@ -162,66 +163,32 @@ function getSelectionRect(snapshot: EditorSnapshot) {
   }
 }
 
-function getStartBlockElement(
+function getEdgeBlockElement(
   slateEditor: PortableTextSlateEditor,
   snapshot: EditorSnapshot,
+  edge: 'start' | 'end',
 ) {
-  const startBlock = getSelectionStartBlock(snapshot)
+  const block =
+    edge === 'start'
+      ? getSelectionStartBlock(snapshot)
+      : getSelectionEndBlock(snapshot)
 
-  if (!startBlock) {
+  if (!block) {
     return null
   }
 
-  const startBlockNode = getBlockNodes(slateEditor, {
+  const blockNode = getBlockNodes(slateEditor, {
     ...snapshot,
     context: {
       ...snapshot.context,
       selection: {
-        anchor: {
-          path: startBlock.path,
-          offset: 0,
-        },
-        focus: {
-          path: startBlock.path,
-          offset: 0,
-        },
+        anchor: {path: block.path, offset: 0},
+        focus: {path: block.path, offset: 0},
       },
     },
   })?.at(0)
 
-  return startBlockNode && startBlockNode instanceof Element
-    ? startBlockNode
-    : null
-}
-
-function getEndBlockElement(
-  slateEditor: PortableTextSlateEditor,
-  snapshot: EditorSnapshot,
-) {
-  const endBlock = getSelectionEndBlock(snapshot)
-
-  if (!endBlock) {
-    return null
-  }
-
-  const endBlockNode = getBlockNodes(slateEditor, {
-    ...snapshot,
-    context: {
-      ...snapshot.context,
-      selection: {
-        anchor: {
-          path: endBlock.path,
-          offset: 0,
-        },
-        focus: {
-          path: endBlock.path,
-          offset: 0,
-        },
-      },
-    },
-  })?.at(0)
-
-  return endBlockNode && endBlockNode instanceof Element ? endBlockNode : null
+  return blockNode instanceof Element ? blockNode : null
 }
 
 function setDragGhost({
