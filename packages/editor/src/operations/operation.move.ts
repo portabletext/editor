@@ -9,3 +9,13 @@ export const moveForwardOperationImplementation: OperationImplementation<
     distance: operation.distance,
   })
 }
+
+export const moveBackwardOperationImplementation: OperationImplementation<
+  'move.backward'
+> = ({operation}) => {
+  applyMove(operation.editor, {
+    unit: 'character',
+    distance: operation.distance,
+    reverse: true,
+  })
+}

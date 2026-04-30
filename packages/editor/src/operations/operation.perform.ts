@@ -14,9 +14,11 @@ import {historyUndoOperationImplementation} from './operation.history.undo'
 import {insertBlockOperationImplementation} from './operation.insert.block'
 import {insertChildOperationImplementation} from './operation.insert.child'
 import {insertTextOperationImplementation} from './operation.insert.text'
-import {moveBackwardOperationImplementation} from './operation.move.backward'
+import {
+  moveBackwardOperationImplementation,
+  moveForwardOperationImplementation,
+} from './operation.move'
 import {moveBlockOperationImplementation} from './operation.move.block'
-import {moveForwardOperationImplementation} from './operation.move.forward'
 import {selectOperationImplementation} from './operation.select'
 import type {
   Operation,
