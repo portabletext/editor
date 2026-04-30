@@ -13,6 +13,7 @@ import {isInline} from '../node-traversal/is-inline'
 import {isEditableContainer} from '../schema/is-editable-container'
 import {range as editorRange} from '../slate/editor/range'
 import {unhangRange} from '../slate/editor/unhang-range'
+import {isObjectNode} from '../slate/node/is-object-node'
 import {isTextBlockNode} from '../slate/node/is-text-block-node'
 import {commonPath} from '../slate/path/common-path'
 import {pathEquals} from '../slate/path/path-equals'
@@ -98,7 +99,9 @@ export const deleteOperationImplementation: OperationImplementation<
     const enclosingContainer = getAncestor(
       operation.editor,
       at.anchor.path,
-      (node, path) => isEditableContainer(operation.editor, node, path),
+      (node, path) =>
+        isObjectNode(operation.editor, node) &&
+        isEditableContainer(operation.editor, node, path),
     )
     if (
       enclosingContainer &&
