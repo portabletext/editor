@@ -1043,6 +1043,8 @@ describe('cross-container range delete: deep structures', () => {
         '    CELL:',
         '      CALLOUT:',
         '        B: f|',
+        '    CELL:',
+        '      B: ',
         'B: x',
       ].join('\n'),
     )
@@ -1203,6 +1205,8 @@ describe('cross-container range delete: deep structures', () => {
         'B: f|',
         'TABLE:',
         '  ROW:',
+        '    CELL:',
+        '      B: ',
         '    CELL:',
         '      CALLOUT:',
         '        B: z',
@@ -1537,6 +1541,514 @@ describe('cross-container range delete: deep structures', () => {
         '  ROW:',
         '    CELL:',
         '      B: z',
+      ].join('\n'),
+    )
+  })
+
+  test('Selecting an entire empty table and pressing Delete unsets the table', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const tableKey = keyGenerator()
+    const row1Key = keyGenerator()
+    const cell00Key = keyGenerator()
+    const block00Key = keyGenerator()
+    const span00Key = keyGenerator()
+    const cell01Key = keyGenerator()
+    const block01Key = keyGenerator()
+    const span01Key = keyGenerator()
+    const cell02Key = keyGenerator()
+    const block02Key = keyGenerator()
+    const span02Key = keyGenerator()
+    const row2Key = keyGenerator()
+    const cell10Key = keyGenerator()
+    const block10Key = keyGenerator()
+    const span10Key = keyGenerator()
+    const cell11Key = keyGenerator()
+    const block11Key = keyGenerator()
+    const span11Key = keyGenerator()
+    const cell12Key = keyGenerator()
+    const block12Key = keyGenerator()
+    const span12Key = keyGenerator()
+
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: tableSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'table',
+          _key: tableKey,
+          rows: [
+            {
+              _type: 'row',
+              _key: row1Key,
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: cell00Key,
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: block00Key,
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: span00Key, text: '', marks: []},
+                      ],
+                    },
+                  ],
+                },
+                {
+                  _type: 'cell',
+                  _key: cell01Key,
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: block01Key,
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: span01Key, text: '', marks: []},
+                      ],
+                    },
+                  ],
+                },
+                {
+                  _type: 'cell',
+                  _key: cell02Key,
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: block02Key,
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: span02Key, text: '', marks: []},
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              _type: 'row',
+              _key: row2Key,
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: cell10Key,
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: block10Key,
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: span10Key, text: '', marks: []},
+                      ],
+                    },
+                  ],
+                },
+                {
+                  _type: 'cell',
+                  _key: cell11Key,
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: block11Key,
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: span11Key, text: '', marks: []},
+                      ],
+                    },
+                  ],
+                },
+                {
+                  _type: 'cell',
+                  _key: cell12Key,
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: block12Key,
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: span12Key, text: '', marks: []},
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      children: <ContainerPlugin containers={tableContainers} />,
+    })
+
+    await userEvent.click(locator)
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [
+            {_key: tableKey},
+            'rows',
+            {_key: row1Key},
+            'cells',
+            {_key: cell00Key},
+            'content',
+            {_key: block00Key},
+            'children',
+            {_key: span00Key},
+          ],
+          offset: 0,
+        },
+        focus: {
+          path: [
+            {_key: tableKey},
+            'rows',
+            {_key: row2Key},
+            'cells',
+            {_key: cell12Key},
+            'content',
+            {_key: block12Key},
+            'children',
+            {_key: span12Key},
+          ],
+          offset: 0,
+        },
+      },
+    })
+
+    await userEvent.keyboard('{Delete}')
+
+    expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |')
+  })
+
+  test('Selecting only the first two of three empty cells in a row is a no-op', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const tableKey = keyGenerator()
+    const rowKey = keyGenerator()
+    const cell0Key = keyGenerator()
+    const block0Key = keyGenerator()
+    const span0Key = keyGenerator()
+    const cell1Key = keyGenerator()
+    const block1Key = keyGenerator()
+    const span1Key = keyGenerator()
+    const cell2Key = keyGenerator()
+    const block2Key = keyGenerator()
+    const span2Key = keyGenerator()
+
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: tableSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'table',
+          _key: tableKey,
+          rows: [
+            {
+              _type: 'row',
+              _key: rowKey,
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: cell0Key,
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: block0Key,
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: span0Key, text: '', marks: []},
+                      ],
+                    },
+                  ],
+                },
+                {
+                  _type: 'cell',
+                  _key: cell1Key,
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: block1Key,
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: span1Key, text: '', marks: []},
+                      ],
+                    },
+                  ],
+                },
+                {
+                  _type: 'cell',
+                  _key: cell2Key,
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: block2Key,
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: span2Key, text: '', marks: []},
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      children: <ContainerPlugin containers={tableContainers} />,
+    })
+
+    await userEvent.click(locator)
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [
+            {_key: tableKey},
+            'rows',
+            {_key: rowKey},
+            'cells',
+            {_key: cell0Key},
+            'content',
+            {_key: block0Key},
+            'children',
+            {_key: span0Key},
+          ],
+          offset: 0,
+        },
+        focus: {
+          path: [
+            {_key: tableKey},
+            'rows',
+            {_key: rowKey},
+            'cells',
+            {_key: cell1Key},
+            'content',
+            {_key: block1Key},
+            'children',
+            {_key: span1Key},
+          ],
+          offset: 0,
+        },
+      },
+    })
+
+    await userEvent.keyboard('{Delete}')
+
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      [
+        'TABLE:',
+        '  ROW:',
+        '    CELL:',
+        '      B: ^',
+        '    CELL:',
+        '      B: |',
+        '    CELL:',
+        '      B: ',
+      ].join('\n'),
+    )
+  })
+
+  test('Selecting from the first cell to a middle cell of a 2x3 table preserves the trailing cells', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const tableKey = keyGenerator()
+    const row0Key = keyGenerator()
+    const cell00Key = keyGenerator()
+    const block00Key = keyGenerator()
+    const span00Key = keyGenerator()
+    const cell01Key = keyGenerator()
+    const block01Key = keyGenerator()
+    const span01Key = keyGenerator()
+    const cell02Key = keyGenerator()
+    const block02Key = keyGenerator()
+    const span02Key = keyGenerator()
+    const row1Key = keyGenerator()
+    const cell10Key = keyGenerator()
+    const block10Key = keyGenerator()
+    const span10Key = keyGenerator()
+    const cell11Key = keyGenerator()
+    const block11Key = keyGenerator()
+    const span11Key = keyGenerator()
+    const cell12Key = keyGenerator()
+    const block12Key = keyGenerator()
+    const span12Key = keyGenerator()
+
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: tableSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'table',
+          _key: tableKey,
+          rows: [
+            {
+              _type: 'row',
+              _key: row0Key,
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: cell00Key,
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: block00Key,
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: span00Key, text: '', marks: []},
+                      ],
+                    },
+                  ],
+                },
+                {
+                  _type: 'cell',
+                  _key: cell01Key,
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: block01Key,
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: span01Key, text: '', marks: []},
+                      ],
+                    },
+                  ],
+                },
+                {
+                  _type: 'cell',
+                  _key: cell02Key,
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: block02Key,
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: span02Key, text: '', marks: []},
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              _type: 'row',
+              _key: row1Key,
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: cell10Key,
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: block10Key,
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: span10Key, text: '', marks: []},
+                      ],
+                    },
+                  ],
+                },
+                {
+                  _type: 'cell',
+                  _key: cell11Key,
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: block11Key,
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: span11Key, text: '', marks: []},
+                      ],
+                    },
+                  ],
+                },
+                {
+                  _type: 'cell',
+                  _key: cell12Key,
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: block12Key,
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: span12Key, text: '', marks: []},
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      children: <ContainerPlugin containers={tableContainers} />,
+    })
+
+    await userEvent.click(locator)
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [
+            {_key: tableKey},
+            'rows',
+            {_key: row0Key},
+            'cells',
+            {_key: cell00Key},
+            'content',
+            {_key: block00Key},
+            'children',
+            {_key: span00Key},
+          ],
+          offset: 0,
+        },
+        focus: {
+          path: [
+            {_key: tableKey},
+            'rows',
+            {_key: row1Key},
+            'cells',
+            {_key: cell11Key},
+            'content',
+            {_key: block11Key},
+            'children',
+            {_key: span11Key},
+          ],
+          offset: 0,
+        },
+      },
+    })
+
+    await userEvent.keyboard('{Delete}')
+
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      [
+        'TABLE:',
+        '  ROW:',
+        '    CELL:',
+        '      B: |',
+        '    CELL:',
+        '      B: ',
+        '    CELL:',
+        '      B: ',
+        '  ROW:',
+        '    CELL:',
+        '      B: ',
+        '    CELL:',
+        '      B: ',
+        '    CELL:',
+        '      B: ',
       ].join('\n'),
     )
   })

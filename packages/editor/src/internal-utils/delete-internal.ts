@@ -342,10 +342,17 @@ function deleteCrossParentRange(
   // 2. Walk up the start branch. At every level above the start block
   //    and below the start branch root, drop all trailing siblings.
   //    Trailing siblings of the start branch root itself are handled
-  //    by `removeChildrenBetween` below.
+  //    by `removeChildrenBetween` below. When the level's parent is a
+  //    structural container (its field doesn't accept text-block), the
+  //    siblings are structural shells (e.g. table cells in a row);
+  //    clear their contents instead of removing the shells themselves.
   let startLevel = startBlockPath
   while (!pathEquals(startLevel, startBranchRoot)) {
-    removeTrailingChildren(editor, startLevel)
+    if (parentAcceptsTextBlock(editor, startLevel)) {
+      removeTrailingChildren(editor, startLevel)
+    } else {
+      clearTrailingSiblings(editor, startLevel)
+    }
     startLevel = parentPath(startLevel)
   }
 
@@ -373,10 +380,16 @@ function deleteCrossParentRange(
   // 4. Walk up the end branch. At every level above the end block and
   //    below the end branch root, drop all preceding siblings.
   //    Preceding siblings of the end branch root itself are handled
-  //    by `removeChildrenBetween` above.
+  //    by `removeChildrenBetween` above. When the level's parent is a
+  //    structural container, clear sibling contents instead of
+  //    removing the shells.
   let endLevel = endBlockPath
   while (!pathEquals(endLevel, endBranchRoot)) {
-    removePrecedingSiblings(editor, endLevel)
+    if (parentAcceptsTextBlock(editor, endLevel)) {
+      removePrecedingSiblings(editor, endLevel)
+    } else {
+      clearPrecedingSiblings(editor, endLevel)
+    }
     endLevel = parentPath(endLevel)
   }
 
@@ -530,6 +543,19 @@ function removeTrailingChildren(
   }
 }
 
+/** Clear contents of every sibling that comes after `startChildPath`. */
+function clearTrailingSiblings(
+  editor: PortableTextSlateEditor,
+  startChildPath: Path,
+): void {
+  let cursor = getSibling(editor, startChildPath, 'next')
+  while (cursor) {
+    const cursorPath = cursor.path
+    clearContainerContents(editor, cursorPath)
+    cursor = getSibling(editor, cursorPath, 'next')
+  }
+}
+
 /** Remove every sibling that comes before `startChildPath`. */
 function removePrecedingSiblings(
   editor: PortableTextSlateEditor,
@@ -540,6 +566,36 @@ function removePrecedingSiblings(
     removeNodeAt(editor, cursor.path)
     cursor = getSibling(editor, startChildPath, 'previous')
   }
+}
+
+/** Clear contents of every sibling that comes before `startChildPath`. */
+function clearPrecedingSiblings(
+  editor: PortableTextSlateEditor,
+  startChildPath: Path,
+): void {
+  let cursor = getSibling(editor, startChildPath, 'previous')
+  while (cursor) {
+    const cursorPath = cursor.path
+    clearContainerContents(editor, cursorPath)
+    cursor = getSibling(editor, cursorPath, 'previous')
+  }
+}
+
+/**
+ * True when the path's parent is a registered editable container whose
+ * field accepts text-block. False when the parent is structural (e.g. a
+ * row whose `cells` field only accepts cells) or when the path is at
+ * root level.
+ */
+function parentAcceptsTextBlock(
+  editor: PortableTextSlateEditor,
+  path: Path,
+): boolean {
+  const enclosing = getEnclosingContainer(editor, path)
+  if (!enclosing) {
+    return true
+  }
+  return enclosing.of.some((member) => member.type === editor.schema.block.name)
 }
 
 /**
