@@ -1,8 +1,6 @@
 import type {EditorSelector} from '../editor/editor-selector'
-import {getBlockEndPoint} from '../utils/util.get-block-end-point'
 import {getSelectionEndPoint} from '../utils/util.get-selection-end-point'
-import {getFocusTextBlock} from './selector.get-focus-text-block'
-import {getSelectionText} from './selector.get-selection-text'
+import {getBlockTextAroundPoint} from './selector.get-block-text-around-point'
 
 /**
  * @public
@@ -12,35 +10,9 @@ export const getBlockTextAfter: EditorSelector<string> = (snapshot) => {
     return ''
   }
 
-  const endPoint = getSelectionEndPoint(snapshot.context.selection)
-  const block = getFocusTextBlock({
-    ...snapshot,
-    context: {
-      ...snapshot.context,
-      selection: {
-        anchor: endPoint,
-        focus: endPoint,
-      },
-    },
-  })
-
-  if (!block) {
-    return ''
-  }
-
-  const endOfBlock = getBlockEndPoint({
-    context: snapshot.context,
-    block,
-  })
-
-  return getSelectionText({
-    ...snapshot,
-    context: {
-      ...snapshot.context,
-      selection: {
-        anchor: endPoint,
-        focus: endOfBlock,
-      },
-    },
-  })
+  return getBlockTextAroundPoint(
+    snapshot,
+    getSelectionEndPoint(snapshot.context.selection),
+    'end',
+  )
 }
