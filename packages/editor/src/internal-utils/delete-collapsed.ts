@@ -26,7 +26,7 @@ interface DeleteCollapsedOptions {
   direction: 'forward' | 'backward'
   /**
    * What to do with the editor selection after the delete:
-   * - `'collapse-to-start'` collapses to the start of the deleted range.
+   * - `'collapse-to-focus'` collapses to the start of the deleted range.
    * - `'preserve'` leaves selection alone, for callers that update it
    *   themselves.
    */
@@ -72,6 +72,8 @@ export function deleteCollapsed(
       unit: options.unit,
       selection: options.selection,
       removeEmptyStartBlock: true,
+      // SPIKE: Backspace is backward (focus < anchor); Delete is forward.
+      backward: reverse,
     })
   })
 }

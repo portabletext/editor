@@ -3,6 +3,7 @@ import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import type {EditorSelection} from '../src'
 import {createTestEditor} from '../src/test/vitest'
+import {boundaryEquivalentSelections} from '../test-utils/boundary-equivalent'
 import {toTextspec} from '../test-utils/to-textspec'
 
 /**
@@ -160,9 +161,12 @@ describe('event.delete | unified primitives matrix', () => {
     editor.send({type: 'delete'})
 
     // Different-mark spans must NOT auto-merge; boundary survives.
+    // With collapse-to-focus, the caret lands on the focus side of the
+    // original range (start of s1) rather than at the structurally-equivalent
+    // end of s0.
     await assertValue(editor, ['B: f|[strong:r]'])
     expect(editor.getSnapshot().context.selection).toEqual(
-      collapsed({_key: 'b0'}, 'children', {_key: 's0'}, 1),
+      collapsed({_key: 'b0'}, 'children', {_key: 's1'}, 0),
     )
   })
 
@@ -399,8 +403,30 @@ async function assertValue(
   expected: Array<string>,
 ) {
   await vi.waitFor(() => {
-    expect(toTextspec(editor.getSnapshot().context)).toEqual(
-      expected.join('\n'),
-    )
+    const expectedString = expected.join('\n')
+    const context = editor.getSnapshot().context
+    const strict = toTextspec(context)
+    if (strict === expectedString) {
+      return
+    }
+    // `{span-A, end}` and `{span-B, 0}` describe the same caret position.
+    // The editor model picks one form; accept any boundary-equivalent
+    // selection that renders to the expected textspec.
+    const {schema, value, selection, containers} = context
+    for (const variant of boundaryEquivalentSelections(
+      {schema, containers: containers ?? new Map(), value: value ?? []},
+      selection,
+    )) {
+      const rendered = toTextspec({
+        schema,
+        value: value ?? [],
+        selection: variant,
+        containers,
+      })
+      if (rendered === expectedString) {
+        return
+      }
+    }
+    expect(strict).toEqual(expectedString)
   })
 }

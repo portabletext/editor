@@ -90,9 +90,9 @@ export const deleteOperationImplementation: OperationImplementation<
 
   const direction: 'forward' | 'backward' =
     operation.direction === 'backward' ? 'backward' : 'forward'
-  const selection: 'collapse-to-start' | 'preserve' = operation.at
+  const selection: 'collapse-to-focus' | 'preserve' = operation.at
     ? 'preserve'
-    : 'collapse-to-start'
+    : 'collapse-to-focus'
 
   if (isCollapsedRange(at)) {
     const enclosingContainer = getAncestor(

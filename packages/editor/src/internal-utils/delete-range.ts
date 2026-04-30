@@ -5,6 +5,7 @@ import {before} from '../slate/editor/before'
 import {withoutNormalizing} from '../slate/editor/without-normalizing'
 import type {Range} from '../slate/interfaces/range'
 import {isAncestorPath} from '../slate/path/is-ancestor-path'
+import {isBackwardRange} from '../slate/range/is-backward-range'
 import {isCollapsedRange} from '../slate/range/is-collapsed-range'
 import {rangeEdges} from '../slate/range/range-edges'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
@@ -13,7 +14,7 @@ import {applyDelete, type SelectionMode} from './delete-internal'
 interface DeleteRangeOptions {
   /**
    * What to do with the editor selection after the delete:
-   * - `'collapse-to-start'` collapses to the start of the deleted range.
+   * - `'collapse-to-focus'` collapses to the start of the deleted range.
    * - `'preserve'` leaves selection alone, for callers that update it
    *   themselves.
    */
@@ -44,6 +45,7 @@ export function deleteRange(
   options: DeleteRangeOptions,
 ): void {
   withoutNormalizing(editor, () => {
+    const backward = isBackwardRange(range, editor)
     const resolved = resolveExplicitRange(editor, range)
     if (!resolved) {
       return
@@ -55,6 +57,7 @@ export function deleteRange(
       unit: 'character',
       selection: options.selection,
       removeEmptyStartBlock: options.removeEmptyStartBlock,
+      backward,
     })
   })
 }

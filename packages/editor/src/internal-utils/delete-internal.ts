@@ -21,13 +21,16 @@ import {setNodeProperties} from './set-node-properties'
 /**
  * What to do with the editor selection once the delete completes.
  *
- * - `'collapse-to-start'` collapses selection to the start of the deleted
- *   range. The start point is tracked across the delete so it survives any
- *   nodes that get unset along the way.
+ * - `'collapse-to-focus'` collapses selection to the user's focus side of the
+ *   deleted range (where the caret was). For `deleteCollapsed` (Backspace /
+ *   Delete) that's the target the cursor expanded TOWARD. For `deleteRange`
+ *   that's the original focus point of the user's selection. The focus point
+ *   is tracked across the delete; if it dies (block fully consumed) we fall
+ *   back to the anchor side.
  * - `'preserve'` leaves selection alone, for callers that update it
  *   themselves (e.g. operations that set their own post-delete cursor).
  */
-export type SelectionMode = 'collapse-to-start' | 'preserve'
+export type SelectionMode = 'collapse-to-focus' | 'preserve'
 
 /**
  * Indic scripts whose grapheme clusters span multiple code points. Backward
@@ -48,6 +51,12 @@ export interface ApplyDeleteOptions {
   unit: TextUnit
   selection: SelectionMode
   removeEmptyStartBlock: boolean
+  /**
+   * `true` when the original (pre-normalization) range was backward
+   * (anchor > focus in document order). Picks which endpoint to prefer for
+   * `'collapse-to-focus'` mode. Defaults to `false` (forward range).
+   */
+  backward?: boolean
 }
 
 /**
@@ -56,8 +65,9 @@ export interface ApplyDeleteOptions {
  *
  * The range is assumed to be expanded and well-formed (the user-facing entry
  * points handle resolution). Selection is tracked across the mutation through
- * point refs at both endpoints so that an unset start block falls back to the
- * surviving end block.
+ * point refs at both endpoints; the focus side is preferred so the caret lands
+ * where the user pointed it, with the anchor side as a fallback when the focus
+ * block is fully consumed by the delete.
  */
 export function applyDelete(
   editor: PortableTextSlateEditor,
@@ -71,15 +81,26 @@ export function applyDelete(
     unit,
     selection: mode,
     removeEmptyStartBlock,
+    backward = false,
   } = options
 
-  const startRef =
-    mode === 'collapse-to-start'
-      ? pointRef(editor, range.anchor, {affinity: 'forward'})
+  // For `deleteRange`, `range` was normalized through `rangeEdges` so anchor
+  // is always start and focus is always end; the original direction is carried
+  // by the `backward` flag. For `deleteCollapsed`, `range` is constructed
+  // directly from the caret/target pair and is NOT normalized, so backward
+  // tracks whichever direction the cursor expanded in.
+  // In both cases: focus = the user's caret side, anchor = the opposite end.
+  const focusRef =
+    mode === 'collapse-to-focus'
+      ? pointRef(editor, backward ? range.anchor : range.focus, {
+          affinity: 'forward',
+        })
       : null
-  const endRef =
-    mode === 'collapse-to-start'
-      ? pointRef(editor, range.focus, {affinity: 'backward'})
+  const anchorRef =
+    mode === 'collapse-to-focus'
+      ? pointRef(editor, backward ? range.focus : range.anchor, {
+          affinity: 'backward',
+        })
       : null
 
   const removedText = mutateRange(editor, range, {
@@ -87,14 +108,14 @@ export function applyDelete(
     removeEmptyStartBlock,
   })
 
-  if (mode === 'collapse-to-start') {
-    const adjusted = startRef?.unref() ?? endRef?.unref() ?? null
+  if (mode === 'collapse-to-focus') {
+    const adjusted = focusRef?.unref() ?? anchorRef?.unref() ?? null
     if (adjusted) {
       editor.select(adjusted)
     }
   } else {
-    startRef?.unref()
-    endRef?.unref()
+    focusRef?.unref()
+    anchorRef?.unref()
   }
 
   if (
