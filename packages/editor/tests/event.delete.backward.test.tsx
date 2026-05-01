@@ -289,7 +289,7 @@ describe('event.delete.backward', () => {
         })
       })
 
-      test('expanded selection', async () => {
+      test("unit:'word' on an expanded selection deletes only the selection", async () => {
         const {editor, locator} = await createTestEditor({
           initialValue,
         })

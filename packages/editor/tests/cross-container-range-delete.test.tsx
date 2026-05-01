@@ -716,7 +716,7 @@ describe('cross-container range delete', () => {
     )
   })
 
-  test('cross-parent selection removes fully-covered root sibling between containers', async () => {
+  test('cross-parent selection removes a fully-covered root TEXT block sandwiched between two containers', async () => {
     const keyGenerator = createTestKeyGenerator()
     const callout1Key = keyGenerator()
     const callout1LineKey = keyGenerator()

@@ -765,7 +765,7 @@ describe('event.delete', () => {
         })
       })
 
-      test('mid-span to mid-span selection', async () => {
+      test("unit:'child' removes any partially-touched child at the range boundaries fully", async () => {
         const {editor} = await createTestEditor({
           keyGenerator,
           schemaDefinition: defineSchema({
@@ -855,7 +855,7 @@ describe('event.delete', () => {
       })
     })
 
-    test('Scenario: Deleting block object', async () => {
+    test("unit:'child' on a lonely root-level void is a no-op", async () => {
       const keyGenerator = createTestKeyGenerator()
       const imageKey = keyGenerator()
       const {editor} = await createTestEditor({
@@ -938,7 +938,7 @@ describe('event.delete', () => {
     })
   })
 
-  test('Scenario: Delete backward uses at location instead of selection', async () => {
+  test('delete.backward with at: param ignores the current selection and acts on at:', async () => {
     const keyGenerator = createTestKeyGenerator()
     const {editor, locator} = await createTestEditor({
       keyGenerator,

@@ -93,6 +93,7 @@ describe('event.delete | unified primitives matrix', () => {
 
     // The block holding the selection is unset; the selection ref points at
     // the dead block key, so textspec renders no cursor.
+    // TODO: unit:'block' selection stale-ref bug - see /identity OPEN bugs
     await assertValue(editor, ['B: bar'])
     expect(editor.getSnapshot().context.selection).toEqual(
       collapsed({_key: 'b0'}, 'children', {_key: 's0'}, 0),
