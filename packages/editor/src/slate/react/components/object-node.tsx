@@ -49,10 +49,10 @@ const ObjectNodeComponent = (props: {
 
   if (isInline) {
     attributes['data-slate-inline'] = true
+  }
 
-    if (!readOnly) {
-      attributes.contentEditable = false
-    }
+  if (!readOnly) {
+    attributes.contentEditable = false
   }
 
   const Tag = isInline ? 'span' : 'div'
