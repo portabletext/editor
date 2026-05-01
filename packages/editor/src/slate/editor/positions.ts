@@ -52,7 +52,7 @@ export function* positions(
    */
 
   const editorRange = range(editor, at)
-  const [start, end] = rangeEdges(editorRange, {}, editor)
+  const [start, end] = rangeEdges(editorRange, editor)
   const first = reverse ? end : start
   let isNewBlock = false
   let blockText = ''

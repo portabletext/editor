@@ -24,7 +24,7 @@ export const apply: WithEditorFirstArg<Editor['apply']> = (editor, op) => {
   }
 
   for (const ref of editor.rangeRefs) {
-    transformRangeRef(ref, op)
+    transformRangeRef(ref, op, editor)
   }
 
   // Apply the operation to the tree first, so that getDirtyPaths

@@ -170,12 +170,12 @@ export const splitDecorationsByChild = (
   }
 
   for (const decoration of decorations) {
-    const decorationRange = rangeIntersection(ancestorRange, decoration)
+    const decorationRange = rangeIntersection(ancestorRange, decoration, editor)
     if (!decorationRange) {
       continue
     }
 
-    const [startPoint, endPoint] = rangeEdges(decorationRange, {}, editor)
+    const [startPoint, endPoint] = rangeEdges(decorationRange, editor)
     const startIndex = resolveChildIndex(startPoint) ?? 0
     const endIndex = resolveChildIndex(endPoint) ?? children.length - 1
 
@@ -189,7 +189,11 @@ export const splitDecorationsByChild = (
       if (!childRange) {
         continue
       }
-      const childDecorationRange = rangeIntersection(childRange, decoration)
+      const childDecorationRange = rangeIntersection(
+        childRange,
+        decoration,
+        editor,
+      )
       if (!childDecorationRange) {
         continue
       }

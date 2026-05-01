@@ -5,7 +5,7 @@ import {comparePoints} from './compare-points'
 export function isBeforePoint(
   point: Point,
   another: Point,
-  root?: {children: Array<Node>},
+  root: {children: Array<Node>},
 ): boolean {
   return comparePoints(point, another, root) === -1
 }

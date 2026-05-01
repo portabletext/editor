@@ -321,7 +321,7 @@ describe('event.split', () => {
 
     await vi.waitFor(() => {
       expect(toTextspec(editor.getSnapshot().context)).toEqual(
-        ['B: foo', '|{IMAGE}', 'B: b^ar'].join('\n'),
+        ['B: foo', '^{IMAGE}', 'B: b|ar'].join('\n'),
       )
     })
   })

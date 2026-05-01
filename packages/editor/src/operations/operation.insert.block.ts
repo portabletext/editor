@@ -126,7 +126,7 @@ function resolveTarget(args: {
   }
 
   const [startPoint, endPoint] = at
-    ? rangeEdges(at, {}, editor)
+    ? rangeEdges(at, editor)
     : [editorStart(editor, []), editorEnd(editor, [])]
 
   const startBlockEntry = getEnclosingBlock(editor, startPoint.path)

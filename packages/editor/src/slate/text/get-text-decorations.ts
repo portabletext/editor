@@ -1,6 +1,5 @@
 import type {PortableTextSpan} from '@portabletext/schema'
 import type {DecoratedRange, LeafPosition} from '../interfaces/text'
-import {rangeEdges} from '../range/range-edges'
 
 export function getTextDecorations(
   node: PortableTextSpan,
@@ -17,7 +16,10 @@ export function getTextDecorations(
       merge: mergeDecoration,
       ...rest
     } = dec
-    const [start, end] = rangeEdges(dec)
+    const [start, end] =
+      dec.anchor.offset <= dec.focus.offset
+        ? [dec.anchor, dec.focus]
+        : [dec.focus, dec.anchor]
     const next = []
     let leafEnd = 0
     const decorationStart = start.offset

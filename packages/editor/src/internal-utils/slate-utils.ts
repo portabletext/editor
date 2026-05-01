@@ -15,7 +15,7 @@ export function isListItemActive({
     return false
   }
 
-  const [selStart, selEnd] = rangeEdges(editor.selection, {}, editor)
+  const [selStart, selEnd] = rangeEdges(editor.selection, editor)
 
   const selectedBlocks = [
     ...getNodes(editor, {
@@ -47,7 +47,7 @@ export function isStyleActive({
     return false
   }
 
-  const [selStart, selEnd] = rangeEdges(editor.selection, {}, editor)
+  const [selStart, selEnd] = rangeEdges(editor.selection, editor)
 
   const selectedBlocks = [
     ...getNodes(editor, {

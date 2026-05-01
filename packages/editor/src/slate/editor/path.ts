@@ -29,9 +29,9 @@ export function path(
 
   if (isRange(at)) {
     if (edge === 'start') {
-      at = rangeStart(at)
+      at = rangeStart(at, editor)
     } else if (edge === 'end') {
-      at = rangeEnd(at)
+      at = rangeEnd(at, editor)
     } else {
       at = commonPath(at.anchor.path, at.focus.path)
     }

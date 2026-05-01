@@ -3,7 +3,7 @@ import type {Point} from '../interfaces/point'
 import type {Range} from '../interfaces/range'
 import {rangeEdges} from './range-edges'
 
-export function rangeEnd(range: Range, root?: {children: Array<Node>}): Point {
-  const [, end] = rangeEdges(range, {}, root)
+export function rangeEnd(range: Range, root: {children: Array<Node>}): Point {
+  const [, end] = rangeEdges(range, root)
   return end
 }

@@ -51,7 +51,7 @@ export const decoratorRemoveOperationImplementation: OperationImplementation<
           decoratorLeaf.text.length > 0
         )
       ) {
-        const [start, end] = rangeEdges(at, {}, editor)
+        const [start, end] = rangeEdges(at, editor)
         const endAtEndOfNode = isEnd(editor, end, end.path)
         if (!endAtEndOfNode || !isEdge(editor, end, end.path)) {
           applySplitNode(editor, end.path, end.offset)

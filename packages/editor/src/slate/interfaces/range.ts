@@ -12,10 +12,6 @@ export interface Range {
   focus: Point
 }
 
-export interface RangeEdgesOptions {
-  reverse?: boolean
-}
-
 export interface RangeTransformOptions {
   affinity?: RangeDirection | null
 }

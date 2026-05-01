@@ -7,9 +7,9 @@ import type {Point} from '../slate/interfaces/point'
 import {isAncestorPath} from '../slate/path/is-ancestor-path'
 import {pathEquals} from '../slate/path/path-equals'
 import {isBackwardRange} from '../slate/range/is-backward-range'
+import {resolveRangeAffinities} from '../slate/range/resolve-range-affinities'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
-import {rangeRefAffinities} from './range-ref-affinities'
 
 /**
  * Split a node at the given path and position using only patch-compliant
@@ -74,8 +74,9 @@ export function applySplitNode(
   for (const ref of editor.rangeRefs) {
     const current = ref.current
     if (current) {
-      const [anchorAffinity, focusAffinity] = rangeRefAffinities(
+      const [anchorAffinity, focusAffinity] = resolveRangeAffinities(
         current,
+        editor,
         ref.affinity,
       )
       const anchor = transformPointForSplit(

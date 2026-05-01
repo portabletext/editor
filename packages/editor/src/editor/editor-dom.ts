@@ -58,7 +58,7 @@ function getBlockNodes(
   }
 
   try {
-    const [start, end] = rangeEdges(snapshot.context.selection, {}, slateEditor)
+    const [start, end] = rangeEdges(snapshot.context.selection, slateEditor)
     const blockEntries: Array<{node: unknown; path: Path}> = []
     let lastHighestPath: Path | undefined
 
@@ -99,7 +99,7 @@ function getChildNodes(
   }
 
   try {
-    const [start, end] = rangeEdges(snapshot.context.selection, {}, slateEditor)
+    const [start, end] = rangeEdges(snapshot.context.selection, slateEditor)
     const childEntries: Array<{node: unknown; path: Path}> = []
     let buffered: {node: unknown; path: Path} | undefined
 

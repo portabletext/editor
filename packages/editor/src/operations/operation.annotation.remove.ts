@@ -163,7 +163,7 @@ export const removeAnnotationOperationImplementation: OperationImplementation<
           const splitRangeRef = rangeRef(editor, splitRange, {
             affinity: 'inward',
           })
-          const [splitStart, splitEnd] = rangeEdges(splitRange, {}, editor)
+          const [splitStart, splitEnd] = rangeEdges(splitRange, editor)
           const endAtEnd = isEnd(editor, splitEnd, splitEnd.path)
           if (!endAtEnd || !isEdge(editor, splitEnd, splitEnd.path)) {
             applySplitNode(editor, splitEnd.path, splitEnd.offset)
