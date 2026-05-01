@@ -1187,6 +1187,48 @@ export const Editable = forwardRef(
                   attributes.onBlur,
                 ],
               )}
+              onPointerDown={useCallback(
+                (event: React.PointerEvent<HTMLDivElement>) => {
+                  if (
+                    readOnly ||
+                    !DOMEditor.hasTarget(editor, event.target) ||
+                    !isDOMNode(event.target)
+                  ) {
+                    return
+                  }
+
+                  const path = getDomNodePath(event.target)
+
+                  if (!path) {
+                    return
+                  }
+
+                  const nodeEntry = getNode(editor, path)
+
+                  if (!nodeEntry) {
+                    return
+                  }
+
+                  const voidEntry = isVoidNode(
+                    editor,
+                    nodeEntry.node,
+                    nodeEntry.path,
+                  )
+                    ? nodeEntry
+                    : getVoidAncestor(editor, path)
+
+                  if (!voidEntry) {
+                    return
+                  }
+
+                  const range = editorRange(
+                    editor,
+                    editorStart(editor, voidEntry.path),
+                  )
+                  editor.select(range)
+                },
+                [editor, readOnly],
+              )}
               onClick={useCallback(
                 (event: React.MouseEvent<HTMLDivElement>) => {
                   if (
