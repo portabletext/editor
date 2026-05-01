@@ -874,6 +874,11 @@ export const PortableTextEditable = forwardRef<
 
       if (!position) {
         console.warn('Could not find position for drop event')
+        // Prevent the browser from running its default drop handling, which
+        // would otherwise insert the dragged dataTransfer payload (text/html
+        // or text/plain) at the cursor and leave the source content in place,
+        // resulting in a duplicate.
+        event.preventDefault()
         return
       }
 
