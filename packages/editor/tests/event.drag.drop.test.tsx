@@ -2,7 +2,11 @@ import {createTestKeyGenerator} from '@portabletext/test'
 import {assert, describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {defineSchema} from '../src'
+import {raise} from '../src/behaviors/behavior.types.action'
+import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
 import {converterPortableText} from '../src/converters/converter.portable-text'
+import {safeStringify} from '../src/internal-utils/safe-json'
+import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
 import {createTestEditor} from '../src/test/vitest'
 
 describe('event.drag.drop', () => {
@@ -320,6 +324,161 @@ describe('event.drag.drop', () => {
           ],
           markDefs: [],
           style: 'normal',
+        },
+      ])
+    })
+  })
+  test('Scenario: External drag.drop (no dragOrigin) inserts the deserialized payload', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+
+    const {locator, editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {name: 'image', fields: [{name: 'src', type: 'string'}]},
+        ],
+      }),
+      initialValue: [
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [{_key: spanKey, _type: 'span', text: 'foo'}],
+        },
+      ],
+    })
+
+    await userEvent.click(locator)
+
+    const externalPayload = safeStringify([
+      {
+        _key: 'externalImage',
+        _type: 'image',
+        src: 'https://example.com/external.jpg',
+      },
+    ])
+
+    const dataTransfer = new DataTransfer()
+    dataTransfer.setData('application/x-portable-text', externalPayload)
+
+    editor.send({
+      type: 'drag.drop',
+      originEvent: {dataTransfer},
+      position: {
+        block: 'start',
+        isEditor: false,
+        isContainer: false,
+        selection: {
+          anchor: {
+            path: [{_key: blockKey}, 'children', {_key: spanKey}],
+            offset: 3,
+          },
+          focus: {
+            path: [{_key: blockKey}, 'children', {_key: spanKey}],
+            offset: 3,
+          },
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [{_key: spanKey, _type: 'span', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _key: 'externalImage',
+          _type: 'image',
+          src: 'https://example.com/external.jpg',
+        },
+      ])
+    })
+  })
+
+  test('Scenario: A consumer-overridden drag.drop reaches deserialization.success and inserts the payload', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+
+    const {locator, editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {name: 'image', fields: [{name: 'src', type: 'string'}]},
+        ],
+      }),
+      initialValue: [
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [{_key: spanKey, _type: 'span', text: 'foo'}],
+        },
+      ],
+      children: (
+        <BehaviorPlugin
+          behaviors={[
+            defineBehavior({
+              on: 'drag.drop',
+              actions: [
+                ({event}) => [raise({type: 'deserialize', originEvent: event})],
+              ],
+            }),
+          ]}
+        />
+      ),
+    })
+
+    await userEvent.click(locator)
+
+    const consumerPayload = safeStringify([
+      {
+        _key: 'consumerImage',
+        _type: 'image',
+        src: 'https://example.com/consumer.jpg',
+      },
+    ])
+
+    const dataTransfer = new DataTransfer()
+    dataTransfer.setData('application/x-portable-text', consumerPayload)
+
+    editor.send({
+      type: 'drag.drop',
+      originEvent: {dataTransfer},
+      position: {
+        block: 'start',
+        isEditor: false,
+        isContainer: false,
+        selection: {
+          anchor: {
+            path: [{_key: blockKey}, 'children', {_key: spanKey}],
+            offset: 3,
+          },
+          focus: {
+            path: [{_key: blockKey}, 'children', {_key: spanKey}],
+            offset: 3,
+          },
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [{_key: spanKey, _type: 'span', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _key: 'consumerImage',
+          _type: 'image',
+          src: 'https://example.com/consumer.jpg',
         },
       ])
     })
