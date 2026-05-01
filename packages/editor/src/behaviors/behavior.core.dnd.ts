@@ -1,10 +1,62 @@
+import type {EditorSnapshot} from '../editor/editor-snapshot'
 import {getCompoundClientRect} from '../internal-utils/compound-client-rect'
 import {getDragSelection} from '../selectors/drag-selection'
 import {getSelectedBlocks} from '../selectors/selector.get-selected-blocks'
 import {isOverlappingSelection} from '../selectors/selector.is-overlapping-selection'
 import {isSelectingEntireBlocks} from '../selectors/selector.is-selecting-entire-blocks'
+import {comparePoints} from '../slate/point/compare-points'
+import {isCollapsedRange} from '../slate/range/is-collapsed-range'
+import {rangeEdges} from '../slate/range/range-edges'
+import type {EditorSelection} from '../types/editor'
 import {effect, forward, raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
+
+/**
+ * Self-drop suppression: returns true when the drop position lands inside the
+ * drag origin in a way that would make the drop a no-op.
+ *
+ * Two expanded selections that only touch at a single endpoint are not treated
+ * as a self-drop — the drop position covers an adjacent block (typical when
+ * dragging a block-object onto the next block via the expanded fallback in
+ * `getEventPosition`), and the user genuinely wants the drop to happen.
+ */
+function isDropTargetingDragOrigin(
+  dropSelection: NonNullable<EditorSelection>,
+  dragOriginSelection: NonNullable<EditorSelection>,
+  snapshot: EditorSnapshot,
+): boolean {
+  const overlapping = isOverlappingSelection(dropSelection)({
+    ...snapshot,
+    context: {
+      ...snapshot.context,
+      selection: dragOriginSelection,
+    },
+  })
+
+  if (!overlapping) {
+    return false
+  }
+
+  if (
+    isCollapsedRange(dropSelection) ||
+    isCollapsedRange(dragOriginSelection)
+  ) {
+    return true
+  }
+
+  const root = {children: snapshot.context.value}
+  const [startA, endA] = rangeEdges(dropSelection, root)
+  const [startB, endB] = rangeEdges(dragOriginSelection, root)
+
+  if (
+    comparePoints(endA, startB, root) === 0 ||
+    comparePoints(endB, startA, root) === 0
+  ) {
+    return false
+  }
+
+  return true
+}
 
 export const coreDndBehaviors = [
   /**
@@ -182,13 +234,11 @@ export const coreDndBehaviors = [
     guard: ({snapshot, event}) => {
       const dragOrigin = event.dragOrigin
       const draggingOverDragOrigin = dragOrigin
-        ? isOverlappingSelection(event.position.selection)({
-            ...snapshot,
-            context: {
-              ...snapshot.context,
-              selection: dragOrigin.selection,
-            },
-          })
+        ? isDropTargetingDragOrigin(
+            event.position.selection,
+            dragOrigin.selection,
+            snapshot,
+          )
         : false
 
       return draggingOverDragOrigin
@@ -206,13 +256,11 @@ export const coreDndBehaviors = [
       const dragOrigin = event.dragOrigin
       const dropPosition = event.position.selection
       const droppingOnDragOrigin = dragOrigin
-        ? isOverlappingSelection(dropPosition)({
-            ...snapshot,
-            context: {
-              ...snapshot.context,
-              selection: dragOrigin.selection,
-            },
-          })
+        ? isDropTargetingDragOrigin(
+            dropPosition,
+            dragOrigin.selection,
+            snapshot,
+          )
         : false
       return droppingOnDragOrigin
     },
@@ -274,13 +322,7 @@ export const coreDndBehaviors = [
       })
       const dropPosition = event.originEvent.position.selection
       const droppingOnDragOrigin = dragOrigin
-        ? isOverlappingSelection(dropPosition)({
-            ...snapshot,
-            context: {
-              ...snapshot.context,
-              selection: dragSelection,
-            },
-          })
+        ? isDropTargetingDragOrigin(dropPosition, dragSelection, snapshot)
         : false
 
       const draggingEntireBlocks = isSelectingEntireBlocks({
