@@ -364,10 +364,6 @@ export const coreDndBehaviors = [
           originEvent,
         },
       ) => [
-        raise({
-          type: 'select',
-          at: dropPosition,
-        }),
         ...(draggingEntireBlocks
           ? draggedBlocks.map((block) =>
               raise({
@@ -391,6 +387,7 @@ export const coreDndBehaviors = [
                 ? 'after'
                 : 'auto'
             : 'auto',
+          at: dropPosition,
         }),
       ],
     ],
