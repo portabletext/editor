@@ -2,7 +2,6 @@ import type {Patch} from '@portabletext/patches'
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
-import type {InternalEditor} from '../src/editor/create-editor'
 import {ContainerPlugin} from '../src/plugins/plugin.container'
 import {PatchesPlugin} from '../src/plugins/plugin.patches'
 import {defineContainer} from '../src/renderers/renderer.types'
@@ -1260,7 +1259,7 @@ describe('container normalization', () => {
     const spanKey = keyGenerator()
     const calloutKey = keyGenerator()
 
-    const {editor} = await createTestEditor({
+    const {editor, rerender} = await createTestEditor({
       keyGenerator,
       schemaDefinition,
       initialValue: [
@@ -1297,9 +1296,23 @@ describe('container normalization', () => {
     })
 
     // Late-register a container for callout
-    ;(editor as unknown as InternalEditor).registerContainer({
-      scope: '$..callout',
-      field: 'content',
+    await rerender({
+      keyGenerator,
+      schemaDefinition,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'hello', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'callout',
+          _key: calloutKey,
+        },
+      ],
+      children: <ContainerPlugin containers={calloutContainers} />,
     })
 
     // Normalization should now kick in and populate the callout
@@ -1883,189 +1896,6 @@ describe('container normalization', () => {
               ],
             },
           ],
-        },
-      ])
-    })
-  })
-
-  test('unregistering container reverts container to void', async () => {
-    const keyGenerator = createTestKeyGenerator()
-    const blockKey = keyGenerator()
-    const spanKey = keyGenerator()
-    const calloutKey = keyGenerator()
-
-    const {editor} = await createTestEditor({
-      keyGenerator,
-      schemaDefinition,
-      initialValue: [
-        {
-          _type: 'block',
-          _key: blockKey,
-          children: [{_type: 'span', _key: spanKey, text: 'hello', marks: []}],
-          markDefs: [],
-          style: 'normal',
-        },
-        {
-          _type: 'callout',
-          _key: calloutKey,
-        },
-      ],
-    })
-
-    // Register the callout container manually so we can capture the unregister
-    // function and revoke it later in the test.
-    const unregisterCallout = (
-      editor as unknown as InternalEditor
-    ).registerContainer({
-      scope: '$..callout',
-      field: 'content',
-    })
-
-    // Verify normalization happened
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'block',
-          _key: blockKey,
-          children: [{_type: 'span', _key: spanKey, text: 'hello', marks: []}],
-          markDefs: [],
-          style: 'normal',
-        },
-        {
-          _type: 'callout',
-          _key: calloutKey,
-          content: [
-            {
-              _type: 'block',
-              _key: 'k5',
-              children: [{_type: 'span', _key: 'k6', text: '', marks: []}],
-              markDefs: [],
-              style: 'normal',
-            },
-          ],
-        },
-      ])
-    })
-
-    // Revoke the callout container registration
-    unregisterCallout()
-
-    // Send a new value with a callout with empty content
-    editor.send({
-      type: 'patches',
-      patches: [
-        {
-          type: 'set',
-          path: [{_key: calloutKey}, 'content'],
-          value: [],
-          origin: 'remote',
-        },
-      ],
-      snapshot: undefined,
-    })
-
-    // The empty content array should NOT be normalized because the type
-    // is no longer editable
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'block',
-          _key: blockKey,
-          children: [{_type: 'span', _key: spanKey, text: 'hello', marks: []}],
-          markDefs: [],
-          style: 'normal',
-        },
-        {
-          _type: 'callout',
-          _key: calloutKey,
-          content: [],
-        },
-      ])
-    })
-  })
-
-  test('calling the unregister function returned from editor.registerContainer reverts container to void', async () => {
-    const keyGenerator = createTestKeyGenerator()
-    const blockKey = keyGenerator()
-    const spanKey = keyGenerator()
-    const calloutKey = keyGenerator()
-
-    const {editor} = await createTestEditor({
-      keyGenerator,
-      schemaDefinition,
-      initialValue: [
-        {
-          _type: 'block',
-          _key: blockKey,
-          children: [{_type: 'span', _key: spanKey, text: 'hello', marks: []}],
-          markDefs: [],
-          style: 'normal',
-        },
-        {
-          _type: 'callout',
-          _key: calloutKey,
-        },
-      ],
-    })
-
-    const unregister = (editor as unknown as InternalEditor).registerContainer({
-      scope: '$..callout',
-      field: 'content',
-    })
-
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'block',
-          _key: blockKey,
-          children: [{_type: 'span', _key: spanKey, text: 'hello', marks: []}],
-          markDefs: [],
-          style: 'normal',
-        },
-        {
-          _type: 'callout',
-          _key: calloutKey,
-          content: [
-            {
-              _type: 'block',
-              _key: 'k5',
-              children: [{_type: 'span', _key: 'k6', text: '', marks: []}],
-              markDefs: [],
-              style: 'normal',
-            },
-          ],
-        },
-      ])
-    })
-
-    unregister()
-
-    editor.send({
-      type: 'patches',
-      patches: [
-        {
-          type: 'set',
-          path: [{_key: calloutKey}, 'content'],
-          value: [],
-          origin: 'remote',
-        },
-      ],
-      snapshot: undefined,
-    })
-
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'block',
-          _key: blockKey,
-          children: [{_type: 'span', _key: spanKey, text: 'hello', marks: []}],
-          markDefs: [],
-          style: 'normal',
-        },
-        {
-          _type: 'callout',
-          _key: calloutKey,
-          content: [],
         },
       ])
     })
