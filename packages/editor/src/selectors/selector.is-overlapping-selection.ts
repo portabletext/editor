@@ -1,17 +1,18 @@
 import {hasNode} from '../node-traversal/has-node'
-import type {EditorSelection, EditorSelectionPoint} from '../types/editor'
-import {
-  getSelectionEndPoint,
-  getSelectionStartPoint,
-  isEqualSelectionPoints,
-} from '../utils'
-import {comparePoints} from '../utils/util.compare-points'
+import {comparePoints} from '../slate/point/compare-points'
+import {isCollapsedRange} from '../slate/range/is-collapsed-range'
+import {rangeEdges} from '../slate/range/range-edges'
+import {rangesOverlap} from '../slate/range/ranges-overlap'
+import type {EditorSelection} from '../types/editor'
 import type {EditorSelector} from './../editor/editor-selector'
-import type {EditorSnapshot} from './../editor/editor-snapshot'
 
 /**
  * Returns true if the supplied selection overlaps with the editor's current
  * selection. Resolves at any container depth.
+ *
+ * Two selections that only touch at a single endpoint are considered
+ * overlapping when at least one is collapsed. Two expanded selections that
+ * only touch at a single endpoint do not overlap.
  *
  * @public
  */
@@ -25,178 +26,34 @@ export function isOverlappingSelection(
       return false
     }
 
-    const selectionStart = getSelectionStartPoint(selection)
-    const selectionEnd = getSelectionEndPoint(selection)
-    const editorSelectionStart = getSelectionStartPoint(editorSelection)
-    const editorSelectionEnd = getSelectionEndPoint(editorSelection)
-
     if (
-      !selectionStart ||
-      !selectionEnd ||
-      !editorSelectionStart ||
-      !editorSelectionEnd
+      !hasNode(snapshot.context, selection.anchor.path) ||
+      !hasNode(snapshot.context, selection.focus.path) ||
+      !hasNode(snapshot.context, editorSelection.anchor.path) ||
+      !hasNode(snapshot.context, editorSelection.focus.path)
     ) {
       return false
     }
 
+    const root = {children: snapshot.context.value}
+
+    if (!rangesOverlap(selection, editorSelection, root)) {
+      return false
+    }
+
+    if (isCollapsedRange(selection) || isCollapsedRange(editorSelection)) {
+      return true
+    }
+
+    const [startA, endA] = rangeEdges(selection, root)
+    const [startB, endB] = rangeEdges(editorSelection, root)
     if (
-      !hasNode(snapshot.context, selectionStart.path) ||
-      !hasNode(snapshot.context, selectionEnd.path) ||
-      !hasNode(snapshot.context, editorSelectionStart.path) ||
-      !hasNode(snapshot.context, editorSelectionEnd.path)
+      comparePoints(endA, startB, root) === 0 ||
+      comparePoints(endB, startA, root) === 0
     ) {
       return false
     }
 
-    return hasPointLevelOverlap(
-      snapshot,
-      selectionStart,
-      selectionEnd,
-      editorSelectionStart,
-      editorSelectionEnd,
-    )
-  }
-}
-
-/**
- * Check if selections overlap at the point level.
- */
-function hasPointLevelOverlap(
-  snapshot: EditorSnapshot,
-  selectionStart: EditorSelectionPoint,
-  selectionEnd: EditorSelectionPoint,
-  editorSelectionStart: EditorSelectionPoint,
-  editorSelectionEnd: EditorSelectionPoint,
-): boolean {
-  // Check for exact equality first
-  if (
-    isEqualSelectionPoints(selectionStart, editorSelectionStart) &&
-    isEqualSelectionPoints(selectionEnd, editorSelectionEnd)
-  ) {
     return true
   }
-
-  // Compare selection start against editor selection bounds
-  const selectionStartVsEditorSelectionStart = comparePoints(
-    snapshot,
-    selectionStart,
-    editorSelectionStart,
-  )
-  const selectionStartVsEditorSelectionEnd = comparePoints(
-    snapshot,
-    selectionStart,
-    editorSelectionEnd,
-  )
-
-  // Compare selection end against editor selection bounds
-  const selectionEndVsEditorSelectionStart = comparePoints(
-    snapshot,
-    selectionEnd,
-    editorSelectionStart,
-  )
-  const selectionEndVsEditorSelectionEnd = comparePoints(
-    snapshot,
-    selectionEnd,
-    editorSelectionEnd,
-  )
-
-  // Compare editor selection bounds against selection bounds
-  const editorSelectionStartVsSelectionStart = comparePoints(
-    snapshot,
-    editorSelectionStart,
-    selectionStart,
-  )
-  const editorSelectionEndVsSelectionEnd = comparePoints(
-    snapshot,
-    editorSelectionEnd,
-    selectionEnd,
-  )
-
-  // Derive boolean flags
-  const selectionStartBeforeEditorSelectionStart =
-    selectionStartVsEditorSelectionStart === -1
-  const selectionStartAfterEditorSelectionEnd =
-    selectionStartVsEditorSelectionEnd === 1
-  const selectionEndBeforeEditorSelectionStart =
-    selectionEndVsEditorSelectionStart === -1
-  const selectionEndAfterEditorSelectionEnd =
-    selectionEndVsEditorSelectionEnd === 1
-
-  const editorSelectionStartBeforeSelectionStart =
-    editorSelectionStartVsSelectionStart === -1
-  const editorSelectionStartAfterSelectionStart =
-    editorSelectionStartVsSelectionStart === 1
-  const editorSelectionEndBeforeSelectionEnd =
-    editorSelectionEndVsSelectionEnd === -1
-  const editorSelectionEndAfterSelectionEnd =
-    editorSelectionEndVsSelectionEnd === 1
-
-  const selectionStartEqualEditorSelectionEnd = isEqualSelectionPoints(
-    selectionStart,
-    editorSelectionEnd,
-  )
-  const selectionEndEqualEditorSelectionStart = isEqualSelectionPoints(
-    selectionEnd,
-    editorSelectionStart,
-  )
-
-  // If all relative position checks fail, selections don't overlap
-  if (
-    !selectionEndEqualEditorSelectionStart &&
-    !selectionStartEqualEditorSelectionEnd &&
-    !editorSelectionStartBeforeSelectionStart &&
-    !editorSelectionStartAfterSelectionStart &&
-    !editorSelectionEndBeforeSelectionEnd &&
-    !editorSelectionEndAfterSelectionEnd
-  ) {
-    return false
-  }
-
-  // Selection ends before editor selection starts
-  if (
-    selectionEndBeforeEditorSelectionStart &&
-    !selectionEndEqualEditorSelectionStart
-  ) {
-    return false
-  }
-
-  // Selection starts after editor selection ends
-  if (
-    selectionStartAfterEditorSelectionEnd &&
-    !selectionStartEqualEditorSelectionEnd
-  ) {
-    return false
-  }
-
-  // Editor selection is entirely after the input selection start
-  if (
-    !editorSelectionStartBeforeSelectionStart &&
-    editorSelectionStartAfterSelectionStart &&
-    !editorSelectionEndBeforeSelectionEnd &&
-    editorSelectionEndAfterSelectionEnd
-  ) {
-    return !selectionEndEqualEditorSelectionStart
-  }
-
-  // Editor selection is entirely before the input selection end
-  if (
-    editorSelectionStartBeforeSelectionStart &&
-    !editorSelectionStartAfterSelectionStart &&
-    editorSelectionEndBeforeSelectionEnd &&
-    !editorSelectionEndAfterSelectionEnd
-  ) {
-    return !selectionStartEqualEditorSelectionEnd
-  }
-
-  // If any of these conditions is false, there's overlap
-  if (
-    !selectionStartAfterEditorSelectionEnd ||
-    !selectionStartBeforeEditorSelectionStart ||
-    !selectionEndAfterEditorSelectionEnd ||
-    !selectionEndBeforeEditorSelectionStart
-  ) {
-    return true
-  }
-
-  return false
 }
