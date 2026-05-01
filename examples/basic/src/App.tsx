@@ -266,10 +266,7 @@ function DecoratorButton(props: {decorator: string}) {
   // Obtain the editor instance
   const editor = useEditor()
   // Check if the decorator is active using a selector
-  const active = useEditorSelector(
-    editor,
-    selectors.isActiveDecorator(props.decorator),
-  )
+  const active = useEditorSelector(selectors.isActiveDecorator(props.decorator))
 
   return (
     <button
@@ -294,7 +291,6 @@ function DecoratorButton(props: {decorator: string}) {
 function AnnotationButton(props: {annotation: {name: string}}) {
   const editor = useEditor()
   const active = useEditorSelector(
-    editor,
     selectors.isActiveAnnotation(props.annotation.name),
   )
 
@@ -333,7 +329,7 @@ function AnnotationButton(props: {annotation: {name: string}}) {
 
 function StyleButton(props: {style: string}) {
   const editor = useEditor()
-  const active = useEditorSelector(editor, selectors.isActiveStyle(props.style))
+  const active = useEditorSelector(selectors.isActiveStyle(props.style))
 
   return (
     <button
@@ -352,10 +348,7 @@ function StyleButton(props: {style: string}) {
 
 function ListButton(props: {list: string}) {
   const editor = useEditor()
-  const active = useEditorSelector(
-    editor,
-    selectors.isActiveListItem(props.list),
-  )
+  const active = useEditorSelector(selectors.isActiveListItem(props.list))
 
   return (
     <button
