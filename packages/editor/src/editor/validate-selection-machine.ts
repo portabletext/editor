@@ -1,14 +1,15 @@
 import {setup} from 'xstate'
-import {applyDeselect, applySelect} from '../internal-utils/apply-selection'
 import {debug} from '../internal-utils/debug'
 import {DOMEditor} from '../slate/dom/plugin/dom-editor'
-import {start} from '../slate/editor/start'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
+
+const MAX_RETRIES = 3
 
 const validateSelectionSetup = setup({
   types: {
     context: {} as {
       slateEditor: PortableTextSlateEditor
+      retryCount: number
     },
     input: {} as {
       slateEditor: PortableTextSlateEditor
@@ -25,8 +26,22 @@ const validateSelectionSetup = setup({
 })
 
 const validateSelectionAction = validateSelectionSetup.createAction(
-  ({context, event}) => {
-    validateSelection(context.slateEditor, event.editorElement)
+  ({context, event, self}) => {
+    const result = validateSelection(context.slateEditor, event.editorElement)
+
+    if (result === 'retry' && context.retryCount < MAX_RETRIES) {
+      context.retryCount++
+      // The DOM hasn't caught up to the model yet. Defer the next attempt
+      // to a microtask so React has a chance to commit the pending render.
+      queueMicrotask(() => {
+        self.send({
+          type: 'validate selection',
+          editorElement: event.editorElement,
+        })
+      })
+    } else {
+      context.retryCount = 0
+    }
   },
 )
 
@@ -34,6 +49,7 @@ export const validateSelectionMachine = validateSelectionSetup.createMachine({
   id: 'validate selection',
   context: ({input}) => ({
     slateEditor: input.slateEditor,
+    retryCount: 0,
   }),
   initial: 'idle',
   states: {
@@ -89,14 +105,19 @@ export const validateSelectionMachine = validateSelectionSetup.createMachine({
 // Also the other way around, when the DOMEditor will try to create a DOM Range
 // from the current slateEditor.selection, it may throw unrecoverable errors
 // if the current editor.selection is invalid according to the DOM.
-// If this is the case, default to selecting the top of the document, if the
-// user already had a selection.
+//
+// When `toDOMRange` throws, it usually means the DOM hasn't yet rendered the
+// latest model state — for example mid-action-set, between operation commit
+// and React render. Returning 'retry' lets the machine defer the next attempt
+// to a microtask. After MAX_RETRIES, fall back to deselecting (without
+// selecting the top of the document, which would silently override the
+// caller's intended selection).
 function validateSelection(
   slateEditor: PortableTextSlateEditor,
   editorElement: HTMLDivElement,
-) {
+): 'retry' | undefined {
   if (!slateEditor.selection) {
-    return
+    return undefined
   }
 
   let root: Document | ShadowRoot | undefined
@@ -107,17 +128,17 @@ function validateSelection(
 
   if (!root) {
     // The editor has most likely been unmounted
-    return
+    return undefined
   }
 
   // Return if the editor isn't the active element
   if (editorElement !== root.activeElement) {
-    return
+    return undefined
   }
   const window = DOMEditor.getWindow(slateEditor)
   const domSelection = window.getSelection()
   if (!domSelection || domSelection.rangeCount === 0) {
-    return
+    return undefined
   }
   const existingDOMRange = domSelection.getRangeAt(0)
   try {
@@ -132,14 +153,11 @@ function validateSelection(
       // Set the correct range
       domSelection.addRange(newDOMRange)
     }
+    return undefined
   } catch {
-    debug.selection(`Could not resolve selection, selecting top document`)
-    // Deselect the editor
-    applyDeselect(slateEditor)
-    // Select top document if there is a top block to select
-    if (slateEditor.children.length > 0) {
-      applySelect(slateEditor, start(slateEditor, []))
-    }
-    slateEditor.onChange()
+    debug.selection(
+      'Could not resolve selection, deferring validation to next tick',
+    )
+    return 'retry'
   }
 }
