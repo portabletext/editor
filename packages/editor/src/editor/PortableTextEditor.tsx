@@ -11,7 +11,7 @@ import type {
   EditorSelection,
 } from '../types/editor'
 import type {Path} from '../types/paths'
-import type {InternalEditor} from './create-editor'
+import type {EditorActor} from './editor-machine'
 
 /**
  * @public
@@ -27,7 +27,7 @@ import type {InternalEditor} from './create-editor'
  * editor.send(...)
  *
  * // Derive state from the editor
- * const state = useEditorSelector(editor, snapshot => ...)
+ * const state = useEditorSelector(snapshot => ...)
  * ```
  */
 export class PortableTextEditor {
@@ -35,25 +35,19 @@ export class PortableTextEditor {
    * A lookup table for all the relevant schema types for this portable text type.
    */
   public schemaTypes: Schema
-  /**
-   * The editor instance
-   */
-  private editor: InternalEditor
   /*
    * The editor API (currently implemented with Slate).
    */
   private editable: EditableAPI
 
-  constructor(config: {editor: InternalEditor}) {
-    this.editor = config.editor
-    this.schemaTypes =
-      config.editor._internal.editorActor.getSnapshot().context.schema
-    this.editable = config.editor._internal.editable
+  constructor(config: {editable: EditableAPI; editorActor: EditorActor}) {
+    this.schemaTypes = config.editorActor.getSnapshot().context.schema
+    this.editable = config.editable
   }
 
   public setEditable = (editable: EditableAPI) => {
-    this.editor._internal.editable = {
-      ...this.editor._internal.editable,
+    this.editable = {
+      ...this.editable,
       ...editable,
     }
   }
@@ -65,7 +59,7 @@ export class PortableTextEditor {
    * ```
    * import * as selectors from '@portabletext/editor/selectors'
    * const editor = useEditor()
-   * const isActive = useEditorSelector(editor, selectors.getActiveAnnotations)
+   * const isActive = useEditorSelector(selectors.getActiveAnnotations)
    * ```
    */
   static activeAnnotations = (
@@ -81,7 +75,7 @@ export class PortableTextEditor {
    * ```
    * import * as selectors from '@portabletext/editor/selectors'
    * const editor = useEditor()
-   * const isActive = useEditorSelector(editor, selectors.isActiveAnnotation(...))
+   * const isActive = useEditorSelector(selectors.isActiveAnnotation(...))
    * ```
    */
   static isAnnotationActive = (
@@ -183,7 +177,7 @@ export class PortableTextEditor {
    * ```
    * import * as selectors from '@portabletext/editor/selectors'
    * const editor = useEditor()
-   * const focusBlock = useEditorSelector(editor, selectors.getFocusBlock)
+   * const focusBlock = useEditorSelector(selectors.getFocusBlock)
    * ```
    */
   static focusBlock = (editor: PortableTextEditor) => {
@@ -197,7 +191,7 @@ export class PortableTextEditor {
    * ```
    * import * as selectors from '@portabletext/editor/selectors'
    * const editor = useEditor()
-   * const focusChild = useEditorSelector(editor, selectors.getFocusChild)
+   * const focusChild = useEditorSelector(selectors.getFocusChild)
    * ```
    */
   static focusChild = (
@@ -213,7 +207,7 @@ export class PortableTextEditor {
    * ```
    * import * as selectors from '@portabletext/editor/selectors'
    * const editor = useEditor()
-   * const selection = useEditorSelector(editor, selectors.getSelection)
+   * const selection = useEditorSelector(selectors.getSelection)
    * ```
    */
   static getSelection = (editor: PortableTextEditor) => {
@@ -227,7 +221,7 @@ export class PortableTextEditor {
    * ```
    * import * as selectors from '@portabletext/editor/selectors'
    * const editor = useEditor()
-   * const value = useEditorSelector(editor, selectors.getValue)
+   * const value = useEditorSelector(selectors.getValue)
    * ```
    */
   static getValue = (editor: PortableTextEditor) => {
@@ -241,7 +235,7 @@ export class PortableTextEditor {
    * ```
    * import * as selectors from '@portabletext/editor/selectors'
    * const editor = useEditor()
-   * const isActive = useEditorSelector(editor, selectors.isActiveStyle(...))
+   * const isActive = useEditorSelector(selectors.isActiveStyle(...))
    * ```
    */
   static hasBlockStyle = (editor: PortableTextEditor, blockStyle: string) => {
@@ -255,7 +249,7 @@ export class PortableTextEditor {
    * ```
    * import * as selectors from '@portabletext/editor/selectors'
    * const editor = useEditor()
-   * const isActive = useEditorSelector(editor, selectors.isActiveListItem(...))
+   * const isActive = useEditorSelector(selectors.isActiveListItem(...))
    * ```
    */
   static hasListStyle = (editor: PortableTextEditor, listStyle: string) => {
@@ -269,7 +263,7 @@ export class PortableTextEditor {
    * ```
    * import * as selectors from '@portabletext/editor/selectors'
    * const editor = useEditor()
-   * const isSelectionCollapsed = useEditorSelector(editor, selectors.isSelectionCollapsed)
+   * const isSelectionCollapsed = useEditorSelector(selectors.isSelectionCollapsed)
    * ```
    */
   static isCollapsedSelection = (editor: PortableTextEditor) =>
@@ -282,7 +276,7 @@ export class PortableTextEditor {
    * ```
    * import * as selectors from '@portabletext/editor/selectors'
    * const editor = useEditor()
-   * const isSelectionExpanded = useEditorSelector(editor, selectors.isSelectionExpanded)
+   * const isSelectionExpanded = useEditorSelector(selectors.isSelectionExpanded)
    * ```
    */
   static isExpandedSelection = (editor: PortableTextEditor) =>
@@ -295,7 +289,7 @@ export class PortableTextEditor {
    * ```
    * import * as selectors from '@portabletext/editor/selectors'
    * const editor = useEditor()
-   * const isActive = useEditorSelector(editor, selectors.isActiveDecorator(...))
+   * const isActive = useEditorSelector(selectors.isActiveDecorator(...))
    * ```
    */
   static isMarkActive = (editor: PortableTextEditor, mark: string) =>
@@ -485,7 +479,7 @@ export class PortableTextEditor {
    * ```
    * import * as selectors from '@portabletext/editor/selectors'
    * const editor = useEditor()
-   * const selectedValue = useEditorSelector(editor, selectors.getSelectedValue)
+   * const selectedValue = useEditorSelector(selectors.getSelectedValue)
    * ```
    */
   static getFragment = (
@@ -531,7 +525,7 @@ export class PortableTextEditor {
    * ```
    * import * as selectors from '@portabletext/editor/selectors'
    * const editor = useEditor()
-   * const isOverlapping = useEditorSelector(editor, selectors.isOverlappingSelection(selectionB))
+   * const isOverlapping = useEditorSelector(selectors.isOverlappingSelection(selectionB))
    * ```
    */
   static isSelectionsOverlapping = (

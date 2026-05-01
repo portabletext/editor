@@ -301,8 +301,7 @@ const imageStyle = tv({
 
 const RenderBlock = (props: BlockRenderProps) => {
   const enableDragHandles = useContext(EditorFeatureFlagsContext).dragHandles
-  const editor = useEditor()
-  const readOnly = useEditorSelector(editor, (s) => s.context.readOnly)
+  const readOnly = useEditorSelector((s) => s.context.readOnly)
 
   let children = props.children
 
@@ -560,8 +559,8 @@ function EditorFooter(props: {editorRef: EditorActorRef; readOnly: boolean}) {
   const valueActive = useSelector(props.editorRef, (s) =>
     s.matches({'value subscription': 'active'}),
   )
-  const selection = useEditorSelector(editor, (s) => s.context.selection)
-  const value = useEditorSelector(editor, (s) => s.context.value)
+  const selection = useEditorSelector((s) => s.context.selection)
+  const value = useEditorSelector((s) => s.context.value)
   const [showSelection, setShowSelection] = useState(false)
   const [showValue, setShowValue] = useState(false)
 

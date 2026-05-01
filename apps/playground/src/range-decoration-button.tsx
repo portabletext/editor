@@ -16,7 +16,6 @@ export function RangeDecorationButton(props: {
 }) {
   const editor = useEditor()
   const disabled = useEditorSelector(
-    editor,
     (snapshot) => snapshot.context.readOnly || !snapshot.context.selection,
   )
   const onPress = useCallback(() => {

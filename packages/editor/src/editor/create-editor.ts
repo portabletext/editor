@@ -21,11 +21,6 @@ import {syncMachine, type SyncActor} from './sync-machine'
 
 export type InternalEditor = Editor & {
   registerContainer: (container: ContainerDefinition) => () => void
-  _internal: {
-    editable: EditableAPI
-    editorActor: EditorActor
-    slateEditor: PortableTextSlateEditor
-  }
 }
 
 export function createInternalEditor(config: EditorConfig): {
@@ -36,6 +31,8 @@ export function createInternalEditor(config: EditorConfig): {
     syncActor: SyncActor
   }
   editor: InternalEditor
+  editable: EditableAPI
+  slateEditor: PortableTextSlateEditor
   subscriptions: Array<() => () => void>
 } {
   debug.setup('creating new editor instance')
@@ -144,11 +141,6 @@ export function createInternalEditor(config: EditorConfig): {
 
       return subscription
     },
-    _internal: {
-      editable,
-      editorActor,
-      slateEditor,
-    },
   } satisfies InternalEditor
 
   return {
@@ -159,6 +151,8 @@ export function createInternalEditor(config: EditorConfig): {
       syncActor,
     },
     editor,
+    editable,
+    slateEditor,
     subscriptions,
   }
 }

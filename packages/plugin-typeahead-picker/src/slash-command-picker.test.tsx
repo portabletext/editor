@@ -1,4 +1,4 @@
-import {useEditor, useEditorSelector} from '@portabletext/editor'
+import {useEditorSelector} from '@portabletext/editor'
 import {raise} from '@portabletext/editor/behaviors'
 import * as selectors from '@portabletext/editor/selectors'
 import {parameterTypes} from '@portabletext/editor/test'
@@ -154,8 +154,7 @@ function getPickerState<TMatch extends object>(
 }
 
 function useCurrentStyle(): string {
-  const editor = useEditor()
-  return useEditorSelector(editor, selectors.getActiveStyle) ?? 'normal'
+  return useEditorSelector(selectors.getActiveStyle) ?? 'normal'
 }
 
 function SlashCommandPickerPlugin() {

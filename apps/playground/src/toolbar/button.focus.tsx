@@ -6,10 +6,7 @@ import {Tooltip} from '../primitives/tooltip'
 
 export function FocusButton() {
   const editor = useEditor()
-  const readOnly = useEditorSelector(
-    editor,
-    (snapshot) => snapshot.context.readOnly,
-  )
+  const readOnly = useEditorSelector((snapshot) => snapshot.context.readOnly)
 
   return (
     <TooltipTrigger>

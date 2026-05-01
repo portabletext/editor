@@ -19,7 +19,6 @@ import {
 } from '../../../test-utils/text-selection'
 import {toTextspec} from '../../../test-utils/to-textspec'
 import {getValueAnnotations} from '../../../test-utils/value-annotations'
-import type {InternalEditor} from '../../editor/create-editor'
 import {IS_MAC} from '../../internal-utils/is-hotkey'
 import {safeParse} from '../../internal-utils/safe-json'
 import {createTestEditor, createTestEditors} from '../../test/vitest'
@@ -55,8 +54,8 @@ const schemaDefinition = defineSchema({
  */
 
 function setEditorState(context: Context, textspec: string): void {
-  const {schema, keyGenerator} = context.editor.getSnapshot().context
-  const {containers} = (context.editor as InternalEditor)._internal.slateEditor
+  const {schema, keyGenerator, containers} =
+    context.editor.getSnapshot().context
 
   const {blocks} = fromTextspec({schema, keyGenerator, containers}, textspec)
 
@@ -74,9 +73,8 @@ async function assertEditorState(
   options: {singleLine: boolean},
 ): Promise<void> {
   await vi.waitFor(() => {
-    const {schema, value, selection} = context.editor.getSnapshot().context
-    const {containers} = (context.editor as InternalEditor)._internal
-      .slateEditor
+    const {schema, value, selection, containers} =
+      context.editor.getSnapshot().context
 
     const expected = options.singleLine
       ? textspec.replace(/\\n/g, '\n')
@@ -185,9 +183,7 @@ async function selectionFromInput(context: Context, textspec: string) {
   const normalized = textspec.replace(/\\n/g, '\n').replace(/;;/g, '\n')
 
   await vi.waitFor(() => {
-    const {schema, value} = context.editor.getSnapshot().context
-    const {containers} = (context.editor as InternalEditor)._internal
-      .slateEditor
+    const {schema, value, containers} = context.editor.getSnapshot().context
 
     const selection = selectionFromTextspec(
       {schema, containers},
@@ -272,9 +268,7 @@ export const stepDefinitions = [
       const normalized = textspec.replace(/\\n/g, '\n').replace(/;;/g, '\n')
 
       await vi.waitFor(() => {
-        const {schema, value} = context.editor.getSnapshot().context
-        const {containers} = (context.editor as InternalEditor)._internal
-          .slateEditor
+        const {schema, value, containers} = context.editor.getSnapshot().context
 
         const selection = selectionFromTextspec(
           {schema, containers},

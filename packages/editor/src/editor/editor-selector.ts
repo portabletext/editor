@@ -1,7 +1,8 @@
 import {useSelector} from '@xstate/react'
-import type {Editor} from '../editor'
+import {useContext} from 'react'
+import {useSlateStatic} from '../slate/react/hooks/use-slate-static'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
-import type {InternalEditor} from './create-editor'
+import {EditorActorContext} from './editor-actor-context'
 import type {EditorActor} from './editor-machine'
 import type {EditorSnapshot} from './editor-snapshot'
 
@@ -17,38 +18,44 @@ export type EditorSelector<TSelected> = (snapshot: EditorSnapshot) => TSelected
 /**
  * @public
  * Hook to select a value from the editor state.
+ *
+ * Must be called inside an `EditorProvider` — the hook resolves the editor
+ * through React context.
+ *
  * @example
- * Pass a selector as the second argument
+ * Pass a selector as the only argument
  * ```tsx
  * import { useEditorSelector } from '@portabletext/editor'
  *
- * function MyComponent(editor) {
- *  const value = useEditorSelector(editor, selector)
+ * function MyComponent() {
+ *  const value = useEditorSelector(selector)
  * }
  * ```
  * @example
- * Pass an inline selector as the second argument.
- * In this case, use the editor context to obtain the schema.
+ * Pass an inline selector. In this case, use the snapshot context to obtain
+ * the schema.
  * ```tsx
  * import { useEditorSelector } from '@portabletext/editor'
  *
- * function MyComponent(editor) {
- *  const schema = useEditorSelector(editor, (snapshot) => snapshot.context.schema)
+ * function MyComponent() {
+ *  const schema = useEditorSelector((snapshot) => snapshot.context.schema)
  * }
  * ```
  * @group Hooks
  */
 export function useEditorSelector<TSelected>(
-  editor: Editor,
   selector: EditorSelector<TSelected>,
   compare: (a: TSelected, b: TSelected) => boolean = defaultCompare,
 ) {
+  const editorActor = useContext(EditorActorContext)
+  const slateEditor = useSlateStatic()
+
   return useSelector(
-    (editor as InternalEditor)._internal.editorActor,
+    editorActor,
     (editorActorSnapshot) => {
       const snapshot = getEditorSnapshot({
         editorActorSnapshot,
-        slateEditorInstance: (editor as InternalEditor)._internal.slateEditor,
+        slateEditorInstance: slateEditor,
       })
 
       return selector(snapshot)

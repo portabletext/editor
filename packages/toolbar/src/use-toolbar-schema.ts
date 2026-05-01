@@ -1,5 +1,4 @@
 import {
-  useEditor,
   useEditorSelector,
   type AnnotationDefinition,
   type AnnotationSchemaType,
@@ -76,11 +75,7 @@ export function useToolbarSchema(props: {
   ) => ToolbarInlineObjectSchemaType
   extendStyle?: (style: StyleSchemaType) => ToolbarStyleSchemaType
 }): ToolbarSchema {
-  const editor = useEditor()
-  const schema = useEditorSelector(
-    editor,
-    (snapshot) => snapshot.context.schema,
-  )
+  const schema = useEditorSelector((snapshot) => snapshot.context.schema)
 
   return {
     decorators: schema.decorators.map(
