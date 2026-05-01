@@ -1,6 +1,5 @@
 import type {PortableTextObject} from '@portabletext/schema'
 import React, {type JSX} from 'react'
-import {IS_ANDROID} from '../../dom/utils/environment'
 import {isElementDecorationsEqual} from '../../dom/utils/range-list'
 import type {Path} from '../../interfaces/path'
 import type {DecoratedRange} from '../../interfaces/text'
@@ -70,7 +69,7 @@ const ObjectNodeComponent = (props: {
       <span data-slate-node="text">
         <span data-slate-leaf>
           <span data-slate-zero-width="z" data-slate-length={0}>
-            {!IS_ANDROID ? '\uFEFF' : null}
+            {'\uFEFF'}
           </span>
         </span>
       </span>
