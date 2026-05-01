@@ -3,6 +3,7 @@ import type {EditorSchema} from '../../editor/editor-schema'
 import {getAncestorTextBlock} from '../../node-traversal/get-ancestor-text-block'
 import {getNodes} from '../../node-traversal/get-nodes'
 import {getSibling} from '../../node-traversal/get-sibling'
+import {isEditableContainer} from '../../schema/is-editable-container'
 import type {Containers} from '../../schema/resolve-containers'
 import type {Node} from '../interfaces/node'
 import type {Path} from '../interfaces/path'
@@ -22,8 +23,9 @@ import {rangeEdges} from '../range/range-edges'
  * - the range is collapsed
  * - the start or end is not at offset 0
  * - the end already has a previous sibling at the same level
- * - a void block sits between the start and the end (the user's range
- *   explicitly covers that void, and unhanging would silently drop it)
+ * - a void block or editable container sits strictly between the start and
+ *   end (the user's range explicitly covers it, and unhanging would silently
+ *   change the deletion target)
  */
 export function unhangRange(
   context: {
@@ -50,14 +52,16 @@ export function unhangRange(
   const endBlock = getAncestorTextBlock(context, end.path)
   const blockPath: Path = endBlock ? endBlock.path : []
 
-  // If a void block sits strictly between the endpoints, the range explicitly
-  // covers it. Unhanging would walk back through spans only and silently drop
-  // the void from the resolved range, so we leave the range alone.
+  // If a void block or editable container sits strictly between the
+  // endpoints, the range explicitly covers it. Unhanging would walk back
+  // through spans and silently change the deletion target, so we leave the
+  // range alone.
   for (const {path} of getNodes(context, {
     from: start.path,
     to: end.path,
     match: (candidate, candidatePath) =>
-      isVoidNode(context, candidate, candidatePath),
+      isVoidNode(context, candidate, candidatePath) ||
+      isEditableContainer(context, candidate, candidatePath),
   })) {
     if (!isAncestorPath(path, start.path) && !isAncestorPath(path, end.path)) {
       return range
