@@ -1,9 +1,9 @@
 import {useSelector} from '@xstate/react'
 import type {Editor} from '../editor'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
-import type {InternalEditor} from './create-editor'
 import type {EditorActor} from './editor-machine'
 import type {EditorSnapshot} from './editor-snapshot'
+import {getInternalState} from './internal-state'
 
 function defaultCompare<T>(a: T, b: T) {
   return a === b
@@ -43,12 +43,13 @@ export function useEditorSelector<TSelected>(
   selector: EditorSelector<TSelected>,
   compare: (a: TSelected, b: TSelected) => boolean = defaultCompare,
 ) {
+  const {editorActor, slateEditor} = getInternalState(editor)
   return useSelector(
-    (editor as InternalEditor)._internal.editorActor,
+    editorActor,
     (editorActorSnapshot) => {
       const snapshot = getEditorSnapshot({
         editorActorSnapshot,
-        slateEditorInstance: (editor as InternalEditor)._internal.slateEditor,
+        slateEditorInstance: slateEditor,
       })
 
       return selector(snapshot)

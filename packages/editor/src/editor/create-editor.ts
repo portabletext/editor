@@ -6,7 +6,6 @@ import {debug} from '../internal-utils/debug'
 import {corePriority} from '../priority/priority.core'
 import {createEditorPriority} from '../priority/priority.types'
 import type {ContainerDefinition} from '../renderers/renderer.types'
-import type {EditableAPI} from '../types/editor'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {defaultKeyGenerator} from '../utils/key-generator'
 import {createEditableAPI} from './create-editable-api'
@@ -15,17 +14,13 @@ import {createEditorDom} from './editor-dom'
 import type {EditorActor} from './editor-machine'
 import {editorMachine, rerouteExternalBehaviorEvent} from './editor-machine'
 import {getEditorSnapshot} from './editor-selector'
+import {setInternalState} from './internal-state'
 import {mutationMachine, type MutationActor} from './mutation-machine'
 import {relayMachine, type RelayActor} from './relay-machine'
 import {syncMachine, type SyncActor} from './sync-machine'
 
 export type InternalEditor = Editor & {
   registerContainer: (container: ContainerDefinition) => () => void
-  _internal: {
-    editable: EditableAPI
-    editorActor: EditorActor
-    slateEditor: PortableTextSlateEditor
-  }
 }
 
 export function createInternalEditor(config: EditorConfig): {
@@ -144,12 +139,9 @@ export function createInternalEditor(config: EditorConfig): {
 
       return subscription
     },
-    _internal: {
-      editable,
-      editorActor,
-      slateEditor,
-    },
   } satisfies InternalEditor
+
+  setInternalState(editor, {editable, editorActor, slateEditor})
 
   return {
     actors: {

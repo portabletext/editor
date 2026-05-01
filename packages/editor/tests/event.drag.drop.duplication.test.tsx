@@ -2,7 +2,7 @@ import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
-import type {InternalEditor} from '../src/editor/create-editor'
+import {getInternalState} from '../src/editor/internal-state'
 import {createTestEditor} from '../src/test/vitest'
 
 /**
@@ -73,7 +73,7 @@ describe('event.drag.drop: stale internalDrag.origin', () => {
       },
     }
 
-    const {editorActor} = (editor as InternalEditor)._internal
+    const {editorActor} = getInternalState(editor)
 
     // Given a first drag of image A starts (entering "dragging internally")
     editorActor.send({type: 'dragstart', origin: imageAOrigin})

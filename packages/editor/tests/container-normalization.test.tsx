@@ -3,6 +3,7 @@ import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import type {InternalEditor} from '../src/editor/create-editor'
+import {getInternalState} from '../src/editor/internal-state'
 import {ContainerPlugin} from '../src/plugins/plugin.container'
 import {PatchesPlugin} from '../src/plugins/plugin.patches'
 import {defineContainer} from '../src/renderers/renderer.types'
@@ -1297,7 +1298,7 @@ describe('container normalization', () => {
     })
 
     // Late-register a container for callout
-    ;(editor as unknown as InternalEditor)._internal.editorActor.send({
+    getInternalState(editor).editorActor.send({
       type: 'register container',
       container: {
         scope: '$..callout',
@@ -1943,7 +1944,7 @@ describe('container normalization', () => {
     })
 
     // Unregister the container via the internal editor actor
-    ;(editor as unknown as InternalEditor)._internal.editorActor.send({
+    getInternalState(editor).editorActor.send({
       type: 'unregister container',
       container: {
         scope: '$..callout',

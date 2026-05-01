@@ -1,11 +1,12 @@
 import type React from 'react'
-import {useEffect, useState} from 'react'
+import {useEffect, useMemo, useState} from 'react'
 import type {EditorConfig} from '../editor'
 import {stopActor} from '../internal-utils/stop-actor'
 import {Slate} from '../slate/react/components/slate'
 import {createInternalEditor} from './create-editor'
 import {EditorActorContext} from './editor-actor-context'
 import {EditorContext} from './editor-context'
+import {getInternalState} from './internal-state'
 import {PortableTextEditor} from './PortableTextEditor'
 import {RelayActorContext} from './relay-actor-context'
 import {PortableTextEditorContext} from './usePortableTextEditor'
@@ -46,6 +47,11 @@ export function EditorProvider(props: EditorProviderProps) {
     return {internalEditor, portableTextEditor}
   })
 
+  const slateEditor = useMemo(
+    () => getInternalState(internalEditor.editor).slateEditor,
+    [internalEditor],
+  )
+
   useEffect(() => {
     const unsubscribers: Array<() => void> = []
 
@@ -56,7 +62,7 @@ export function EditorProvider(props: EditorProviderProps) {
     internalEditor.actors.editorActor.start()
     internalEditor.actors.editorActor.send({
       type: 'add slate editor',
-      editor: internalEditor.editor._internal.slateEditor,
+      editor: slateEditor,
     })
     internalEditor.actors.mutationActor.start()
     internalEditor.actors.relayActor.start()
@@ -72,13 +78,13 @@ export function EditorProvider(props: EditorProviderProps) {
       stopActor(internalEditor.actors.relayActor)
       stopActor(internalEditor.actors.syncActor)
     }
-  }, [internalEditor])
+  }, [internalEditor, slateEditor])
 
   return (
     <EditorContext.Provider value={internalEditor.editor}>
       <EditorActorContext.Provider value={internalEditor.actors.editorActor}>
         <RelayActorContext.Provider value={internalEditor.actors.relayActor}>
-          <Slate editor={internalEditor.editor._internal.slateEditor}>
+          <Slate editor={slateEditor}>
             <PortableTextEditorContext.Provider value={portableTextEditor}>
               {props.children}
             </PortableTextEditorContext.Provider>

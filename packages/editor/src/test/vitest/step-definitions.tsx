@@ -19,7 +19,7 @@ import {
 } from '../../../test-utils/text-selection'
 import {toTextspec} from '../../../test-utils/to-textspec'
 import {getValueAnnotations} from '../../../test-utils/value-annotations'
-import type {InternalEditor} from '../../editor/create-editor'
+import {getInternalState} from '../../editor/internal-state'
 import {IS_MAC} from '../../internal-utils/is-hotkey'
 import {safeParse} from '../../internal-utils/safe-json'
 import {createTestEditor, createTestEditors} from '../../test/vitest'
@@ -56,7 +56,7 @@ const schemaDefinition = defineSchema({
 
 function setEditorState(context: Context, textspec: string): void {
   const {schema, keyGenerator} = context.editor.getSnapshot().context
-  const {containers} = (context.editor as InternalEditor)._internal.slateEditor
+  const {containers} = getInternalState(context.editor).slateEditor
 
   const {blocks} = fromTextspec({schema, keyGenerator, containers}, textspec)
 
@@ -75,8 +75,7 @@ async function assertEditorState(
 ): Promise<void> {
   await vi.waitFor(() => {
     const {schema, value, selection} = context.editor.getSnapshot().context
-    const {containers} = (context.editor as InternalEditor)._internal
-      .slateEditor
+    const {containers} = getInternalState(context.editor).slateEditor
 
     const expected = options.singleLine
       ? textspec.replace(/\\n/g, '\n')
@@ -186,8 +185,7 @@ async function selectionFromInput(context: Context, textspec: string) {
 
   await vi.waitFor(() => {
     const {schema, value} = context.editor.getSnapshot().context
-    const {containers} = (context.editor as InternalEditor)._internal
-      .slateEditor
+    const {containers} = getInternalState(context.editor).slateEditor
 
     const selection = selectionFromTextspec(
       {schema, containers},
@@ -273,8 +271,7 @@ export const stepDefinitions = [
 
       await vi.waitFor(() => {
         const {schema, value} = context.editor.getSnapshot().context
-        const {containers} = (context.editor as InternalEditor)._internal
-          .slateEditor
+        const {containers} = getInternalState(context.editor).slateEditor
 
         const selection = selectionFromTextspec(
           {schema, containers},

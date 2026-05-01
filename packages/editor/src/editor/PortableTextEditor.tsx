@@ -12,6 +12,7 @@ import type {
 } from '../types/editor'
 import type {Path} from '../types/paths'
 import type {InternalEditor} from './create-editor'
+import {getInternalState} from './internal-state'
 
 /**
  * @public
@@ -46,14 +47,15 @@ export class PortableTextEditor {
 
   constructor(config: {editor: InternalEditor}) {
     this.editor = config.editor
-    this.schemaTypes =
-      config.editor._internal.editorActor.getSnapshot().context.schema
-    this.editable = config.editor._internal.editable
+    const internalState = getInternalState(config.editor)
+    this.schemaTypes = internalState.editorActor.getSnapshot().context.schema
+    this.editable = internalState.editable
   }
 
   public setEditable = (editable: EditableAPI) => {
-    this.editor._internal.editable = {
-      ...this.editor._internal.editable,
+    const internalState = getInternalState(this.editor)
+    internalState.editable = {
+      ...internalState.editable,
       ...editable,
     }
   }
