@@ -71,7 +71,7 @@ function resolveExplicitRange(
     return null
   }
 
-  const [start, end] = rangeEdges(at, {}, editor)
+  const [start, end] = rangeEdges(at, editor)
   const startBlock = getEnclosingBlock(editor, start.path)
   const endBlock = getEnclosingBlock(editor, end.path)
 

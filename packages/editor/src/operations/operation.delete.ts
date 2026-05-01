@@ -33,7 +33,7 @@ export const deleteOperationImplementation: OperationImplementation<
     throw new Error('Unable to delete without a selection')
   }
 
-  const [start, end] = rangeEdges(at, {}, operation.editor)
+  const [start, end] = rangeEdges(at, operation.editor)
 
   if (operation.unit === 'block') {
     unsetMatchedNodesInRange(

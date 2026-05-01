@@ -39,7 +39,7 @@ export const decoratorAddOperationImplementation: OperationImplementation<
     const ref = rangeRef(editor, at, {affinity: 'inward'})
 
     withoutNormalizing(editor, () => {
-      const [start, end] = rangeEdges(at!, {}, editor)
+      const [start, end] = rangeEdges(at!, editor)
 
       if (!isEdge(editor, end, end.path)) {
         applySplitNode(editor, end.path, end.offset)

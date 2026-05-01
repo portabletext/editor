@@ -13,7 +13,7 @@ import {rangeEdges} from './range-edges'
 export function rangeIncludes(
   range: Range,
   target: Path | Point | Range,
-  root?: {children: Array<Node>},
+  root: {children: Array<Node>},
 ): boolean {
   if (isRange(target)) {
     if (
@@ -23,12 +23,12 @@ export function rangeIncludes(
       return true
     }
 
-    const [rs, re] = rangeEdges(range, {}, root)
-    const [ts, te] = rangeEdges(target, {}, root)
+    const [rs, re] = rangeEdges(range, root)
+    const [ts, te] = rangeEdges(target, root)
     return isBeforePoint(rs, ts, root) && isAfterPoint(re, te, root)
   }
 
-  const [start, end] = rangeEdges(range, {}, root)
+  const [start, end] = rangeEdges(range, root)
   let isAfterStart = false
   let isBeforeEnd = false
 

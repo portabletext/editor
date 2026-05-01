@@ -36,7 +36,7 @@ export function unhangRange(
   },
   range: Range,
 ): Range {
-  let [start, end] = rangeEdges(range, {}, {children: context.value})
+  let [start, end] = rangeEdges(range, {children: context.value})
 
   // PERF: exit early if we can guarantee that the range isn't hanging.
   // A range can only hang when end is at offset 0 of the first child in a block.

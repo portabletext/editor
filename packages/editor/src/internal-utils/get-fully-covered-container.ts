@@ -25,7 +25,7 @@ export function getFullyCoveredContainer(
   editor: PortableTextSlateEditor,
   range: Range,
 ): Path | undefined {
-  const [start, end] = rangeEdges(range, {}, editor)
+  const [start, end] = rangeEdges(range, editor)
   const lca = commonPath(start.path, end.path)
 
   // The lca may end in a field segment (e.g. `[{table}, 'rows']`); in

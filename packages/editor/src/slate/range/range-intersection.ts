@@ -6,11 +6,11 @@ import {rangeEdges} from './range-edges'
 export function rangeIntersection(
   range: Range,
   another: Range,
-  root?: {children: Array<Node>},
+  root: {children: Array<Node>},
 ): Range | null {
   const {anchor: _anchor, focus: _focus, ...rest} = range
-  const [s1, e1] = rangeEdges(range, {}, root)
-  const [s2, e2] = rangeEdges(another, {}, root)
+  const [s1, e1] = rangeEdges(range, root)
+  const [s2, e2] = rangeEdges(another, root)
   const start = isBeforePoint(s1, s2, root) ? s2 : s1
   const end = isBeforePoint(e1, e2, root) ? e1 : e2
 

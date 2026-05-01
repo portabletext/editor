@@ -379,7 +379,7 @@ export function createAndroidInputManager({
 
     if (type.startsWith('delete')) {
       const direction = type.endsWith('Backward') ? 'backward' : 'forward'
-      let [start, end] = rangeEdges(targetRange)
+      let [start, end] = rangeEdges(targetRange, editor)
       const leafNodeEntry = getNode(editor, start.path)
       const leafResult =
         leafNodeEntry &&
@@ -751,7 +751,7 @@ export function createAndroidInputManager({
         }
 
         if (pathEquals(targetRange.anchor.path, targetRange.focus.path)) {
-          const [start, end] = rangeEdges(targetRange)
+          const [start, end] = rangeEdges(targetRange, editor)
 
           const diff = {
             start: start.offset,

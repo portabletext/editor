@@ -5,7 +5,7 @@ import {comparePaths} from '../path/compare-paths'
 export function comparePoints(
   point: Point,
   another: Point,
-  root?: {children: Array<Node>},
+  root: {children: Array<Node>},
 ): -1 | 0 | 1 {
   const result = comparePaths(point.path, another.path, root)
   if (result === 0) {

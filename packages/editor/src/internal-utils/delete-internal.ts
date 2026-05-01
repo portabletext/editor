@@ -140,7 +140,7 @@ function mutateRange(
 ): string | null {
   const {capture, removeEmptyStartBlock} = options
 
-  const [start, end] = rangeEdges(range, {}, editor)
+  const [start, end] = rangeEdges(range, editor)
 
   const startBlock = getEnclosingBlock(editor, start.path)
   const endBlock = getEnclosingBlock(editor, end.path)
