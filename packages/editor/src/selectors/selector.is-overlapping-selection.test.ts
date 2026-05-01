@@ -86,7 +86,7 @@ describe(isOverlappingSelection.name, () => {
     ).toBe(true)
   })
 
-  test('selection right before', () => {
+  test('selection touching at start endpoint', () => {
     expect(
       isOverlappingSelection({
         anchor: {path: [{_key: 'k1'}, 'children', {_key: 'k3'}], offset: 0},
@@ -97,7 +97,7 @@ describe(isOverlappingSelection.name, () => {
           focus: {path: [{_key: 'k1'}, 'children', {_key: 'k5'}], offset: 1},
         }),
       ),
-    ).toBe(false)
+    ).toBe(true)
   })
 
   test('selection overlapping from the start', () => {
@@ -114,7 +114,7 @@ describe(isOverlappingSelection.name, () => {
     ).toBe(true)
   })
 
-  test('selection right after', () => {
+  test('selection touching at end endpoint', () => {
     expect(
       isOverlappingSelection({
         anchor: {path: [{_key: 'k1'}, 'children', {_key: 'k5'}], offset: 1},
@@ -125,7 +125,7 @@ describe(isOverlappingSelection.name, () => {
           focus: {path: [{_key: 'k1'}, 'children', {_key: 'k5'}], offset: 1},
         }),
       ),
-    ).toBe(false)
+    ).toBe(true)
   })
 
   test('selection overlapping from the end', () => {
@@ -184,7 +184,7 @@ describe(isOverlappingSelection.name, () => {
     ).toBe(true)
   })
 
-  test('expanded selection at the end edge of span', () => {
+  test('expanded selection touching at the end edge of span', () => {
     expect(
       isOverlappingSelection({
         anchor: {path: [{_key: 'k1'}, 'children', {_key: 'k3'}], offset: 0},
@@ -195,7 +195,7 @@ describe(isOverlappingSelection.name, () => {
           focus: {path: [{_key: 'k1'}, 'children', {_key: 'k5'}], offset: 1},
         }),
       ),
-    ).toBe(false)
+    ).toBe(true)
   })
 
   test('collapsed selection at the end edge of span', () => {
@@ -212,7 +212,7 @@ describe(isOverlappingSelection.name, () => {
     ).toBe(true)
   })
 
-  test('expanded selection at the start edge of span', () => {
+  test('expanded selection touching at the start edge of span', () => {
     expect(
       isOverlappingSelection({
         anchor: {path: [{_key: 'k1'}, 'children', {_key: 'k5'}], offset: 0},
@@ -223,7 +223,7 @@ describe(isOverlappingSelection.name, () => {
           focus: {path: [{_key: 'k1'}, 'children', {_key: 'k5'}], offset: 0},
         }),
       ),
-    ).toBe(false)
+    ).toBe(true)
   })
 
   test('collapsed selection at the start edge of span', () => {
