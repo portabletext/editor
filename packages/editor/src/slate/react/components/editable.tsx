@@ -298,6 +298,43 @@ export const Editable = forwardRef(
               })
 
               if (range) {
+                // If the editor's current selection is on a void (the user
+                // just tapped an image or inline object), refuse to follow
+                // the DOM selection elsewhere. Android in particular will
+                // retarget the DOM selection from the void's spacer into the
+                // nearest editable text after a tap, which would otherwise
+                // overwrite the void selection.
+                const currentSelection = editor.selection
+                if (currentSelection) {
+                  const currentNode = getNode(
+                    editor,
+                    currentSelection.anchor.path,
+                  )
+                  const currentVoid =
+                    currentNode &&
+                    isVoidNode(editor, currentNode.node, currentNode.path)
+                      ? currentNode
+                      : getVoidAncestor(editor, currentSelection.anchor.path)
+
+                  if (currentVoid) {
+                    const rangeNode = getNode(editor, range.anchor.path)
+                    const rangeVoid =
+                      rangeNode &&
+                      isVoidNode(editor, rangeNode.node, rangeNode.path)
+                        ? rangeNode
+                        : getVoidAncestor(editor, range.anchor.path)
+
+                    if (
+                      !rangeVoid ||
+                      !pathEquals(currentVoid.path, rangeVoid.path)
+                    ) {
+                      // The new DOM selection is not inside the same void.
+                      // Ignore it and let the model selection win.
+                      return
+                    }
+                  }
+                }
+
                 if (
                   !editor.composing &&
                   !androidInputManager?.hasPendingChanges() &&
@@ -1226,11 +1263,6 @@ export const Editable = forwardRef(
                     editorStart(editor, voidEntry.path),
                   )
                   editor.select(range)
-                  // Stop the browser from retargeting the tap to a nearby
-                  // editable text node (Android, in particular, walks past
-                  // contentEditable=false ancestors to position the caret in
-                  // the next editable text block).
-                  event.preventDefault()
                 },
                 [editor, readOnly],
               )}
