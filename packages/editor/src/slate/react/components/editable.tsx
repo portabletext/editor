@@ -179,6 +179,11 @@ export const Editable = forwardRef(
     const ref = useRef<HTMLDivElement | null>(null)
     const deferredOperations = useRef<DeferredOperation[]>([])
     const processing = useRef(false)
+    // Tracks the most recent pointerdown on a void so we can suppress the
+    // browser's native tap-retargeting (Android moves DOM selection to a
+    // nearby editable text after a tap on a contentEditable=false element).
+    // Cleared on the next pointerdown that does not land on the same void.
+    const lastVoidTapRef = useRef<{path: Path; at: number} | null>(null)
 
     const {onUserInput, receivedUserInput} = useTrackUserInput()
 
@@ -298,40 +303,45 @@ export const Editable = forwardRef(
               })
 
               if (range) {
-                // If the editor's current selection is on a void (the user
-                // just tapped an image or inline object), refuse to follow
-                // the DOM selection elsewhere. Android in particular will
-                // retarget the DOM selection from the void's spacer into the
-                // nearest editable text after a tap, which would otherwise
-                // overwrite the void selection.
-                const currentSelection = editor.selection
-                if (currentSelection) {
-                  const currentNode = getNode(
-                    editor,
-                    currentSelection.anchor.path,
-                  )
-                  const currentVoid =
-                    currentNode &&
-                    isVoidNode(editor, currentNode.node, currentNode.path)
-                      ? currentNode
-                      : getVoidAncestor(editor, currentSelection.anchor.path)
+                // If the user just tapped a void (block- or inline-object),
+                // refuse to follow the DOM selection elsewhere within a short
+                // window. Android in particular retargets DOM selection from
+                // the void's spacer into the nearest editable text after a
+                // tap on a contentEditable=false element.
+                const lastVoidTap = lastVoidTapRef.current
+                if (lastVoidTap && Date.now() - lastVoidTap.at < 500) {
+                  const rangeNode = getNode(editor, range.anchor.path)
+                  const rangeVoid =
+                    rangeNode &&
+                    isVoidNode(editor, rangeNode.node, rangeNode.path)
+                      ? rangeNode
+                      : getVoidAncestor(editor, range.anchor.path)
 
-                  if (currentVoid) {
-                    const rangeNode = getNode(editor, range.anchor.path)
-                    const rangeVoid =
-                      rangeNode &&
-                      isVoidNode(editor, rangeNode.node, rangeNode.path)
-                        ? rangeNode
-                        : getVoidAncestor(editor, range.anchor.path)
-
-                    if (
-                      !rangeVoid ||
-                      !pathEquals(currentVoid.path, rangeVoid.path)
-                    ) {
-                      // The new DOM selection is not inside the same void.
-                      // Ignore it and let the model selection win.
-                      return
+                  if (
+                    !rangeVoid ||
+                    !pathEquals(lastVoidTap.path, rangeVoid.path)
+                  ) {
+                    // Sync DOM selection back to the void's spacer so the
+                    // browser's caret matches the model.
+                    try {
+                      const voidRange = editorRange(
+                        editor,
+                        editorStart(editor, lastVoidTap.path),
+                      )
+                      const newDomRange = DOMEditor.toDOMRange(
+                        editor,
+                        voidRange,
+                      )
+                      domSelection.setBaseAndExtent(
+                        newDomRange.startContainer,
+                        newDomRange.startOffset,
+                        newDomRange.endContainer,
+                        newDomRange.endOffset,
+                      )
+                    } catch {
+                      // Ignore — DOM and model may be transiently out of sync.
                     }
+                    return
                   }
                 }
 
@@ -1231,18 +1241,21 @@ export const Editable = forwardRef(
                     !DOMEditor.hasTarget(editor, event.target) ||
                     !isDOMNode(event.target)
                   ) {
+                    lastVoidTapRef.current = null
                     return
                   }
 
                   const path = getDomNodePath(event.target)
 
                   if (!path) {
+                    lastVoidTapRef.current = null
                     return
                   }
 
                   const nodeEntry = getNode(editor, path)
 
                   if (!nodeEntry) {
+                    lastVoidTapRef.current = null
                     return
                   }
 
@@ -1255,9 +1268,14 @@ export const Editable = forwardRef(
                     : getVoidAncestor(editor, path)
 
                   if (!voidEntry) {
+                    lastVoidTapRef.current = null
                     return
                   }
 
+                  lastVoidTapRef.current = {
+                    path: voidEntry.path,
+                    at: Date.now(),
+                  }
                   const range = editorRange(
                     editor,
                     editorStart(editor, voidEntry.path),
