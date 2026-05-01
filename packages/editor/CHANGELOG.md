@@ -1,5 +1,11 @@
 # Changelog
 
+## 6.6.4
+
+### Patch Changes
+
+- [#2579](https://github.com/portabletext/editor/pull/2579) [`d666a80`](https://github.com/portabletext/editor/commit/d666a80255e641620bb0afad125390b7805dd15b) Thanks [@christianhg](https://github.com/christianhg)! - fix: render the zero-width character in void spacers on Android so DOM selection can anchor to them
+
 ## 6.6.3
 
 ### Patch Changes
