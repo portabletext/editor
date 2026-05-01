@@ -197,3 +197,215 @@ describe(unhangRange.name, () => {
     expect(unhangRange(context, range)).toEqual(range)
   })
 })
+
+// --- Container-aware tests ---
+
+const calloutInnerSpan = {
+  _key: keyGenerator(),
+  _type: 'span',
+  text: 'hello',
+  marks: [],
+}
+const calloutInnerBlock = {
+  _key: keyGenerator(),
+  _type: 'block',
+  children: [calloutInnerSpan],
+  markDefs: [],
+  style: 'normal',
+}
+const calloutBlock = {
+  _key: keyGenerator(),
+  _type: 'callout',
+  content: [calloutInnerBlock],
+}
+
+const codeBlockInnerSpan = {
+  _key: keyGenerator(),
+  _type: 'span',
+  text: 'const x',
+  marks: [],
+}
+const codeBlockInnerBlock = {
+  _key: keyGenerator(),
+  _type: 'block',
+  children: [codeBlockInnerSpan],
+  markDefs: [],
+  style: 'normal',
+}
+const codeBlockNode = {
+  _key: keyGenerator(),
+  _type: 'code-block',
+  lines: [codeBlockInnerBlock],
+}
+
+const calloutInner1Span = {
+  _key: keyGenerator(),
+  _type: 'span',
+  text: 'inner1',
+  marks: [],
+}
+const calloutInner1Block = {
+  _key: keyGenerator(),
+  _type: 'block',
+  children: [calloutInner1Span],
+  markDefs: [],
+  style: 'normal',
+}
+const calloutInner2Span = {
+  _key: keyGenerator(),
+  _type: 'span',
+  text: 'inner2',
+  marks: [],
+}
+const calloutInner2Block = {
+  _key: keyGenerator(),
+  _type: 'block',
+  children: [calloutInner2Span],
+  markDefs: [],
+  style: 'normal',
+}
+const calloutWithTwoBlocks = {
+  _key: keyGenerator(),
+  _type: 'callout',
+  content: [calloutInner1Block, calloutInner2Block],
+}
+
+const calloutInnerSpanStart = {
+  path: [
+    {_key: calloutBlock._key},
+    'content',
+    {_key: calloutInnerBlock._key},
+    'children',
+    {_key: calloutInnerSpan._key},
+  ],
+  offset: 0,
+}
+const calloutInnerSpanEnd = {
+  path: [
+    {_key: calloutBlock._key},
+    'content',
+    {_key: calloutInnerBlock._key},
+    'children',
+    {_key: calloutInnerSpan._key},
+  ],
+  offset: calloutInnerSpan.text.length,
+}
+const calloutInner1SpanStart = {
+  path: [
+    {_key: calloutWithTwoBlocks._key},
+    'content',
+    {_key: calloutInner1Block._key},
+    'children',
+    {_key: calloutInner1Span._key},
+  ],
+  offset: 0,
+}
+const calloutInner1SpanEnd = {
+  path: [
+    {_key: calloutWithTwoBlocks._key},
+    'content',
+    {_key: calloutInner1Block._key},
+    'children',
+    {_key: calloutInner1Span._key},
+  ],
+  offset: calloutInner1Span.text.length,
+}
+const calloutInner2SpanStart = {
+  path: [
+    {_key: calloutWithTwoBlocks._key},
+    'content',
+    {_key: calloutInner2Block._key},
+    'children',
+    {_key: calloutInner2Span._key},
+  ],
+  offset: 0,
+}
+
+function buildContainerContext(...value: Array<Node>) {
+  const schema = compileSchema(
+    defineSchema({
+      blockObjects: [
+        {name: 'image'},
+        {
+          name: 'callout',
+          fields: [{name: 'content', type: 'array', of: [{type: 'block'}]}],
+        },
+        {
+          name: 'code-block',
+          fields: [{name: 'lines', type: 'array', of: [{type: 'block'}]}],
+        },
+      ],
+    }),
+  )
+  const containers = new Map()
+  containers.set('callout', {
+    field: {name: 'content', type: 'array', of: [{type: 'block'}]},
+  })
+  containers.set('code-block', {
+    field: {name: 'lines', type: 'array', of: [{type: 'block'}]},
+  })
+  const blockIndexMap = new Map<string, number>()
+  value.forEach((node, index) => {
+    blockIndexMap.set((node as {_key: string})._key, index)
+  })
+  return {
+    schema,
+    containers,
+    value,
+    blockIndexMap,
+  }
+}
+
+describe(`${unhangRange.name} (container-aware)`, () => {
+  test('Preserves the range when an editable container sits between the endpoints', () => {
+    const context = buildContainerContext(fooBlock, calloutBlock, barBlock)
+    const range = {anchor: fooStart, focus: barStart}
+
+    expect(unhangRange(context, range)).toEqual(range)
+  })
+
+  test('Pulls a hanging focus back inside a container when both endpoints are inside it', () => {
+    const context = buildContainerContext(calloutWithTwoBlocks)
+    const range = {
+      anchor: calloutInner1SpanStart,
+      focus: calloutInner2SpanStart,
+    }
+
+    expect(unhangRange(context, range)).toEqual({
+      anchor: calloutInner1SpanStart,
+      focus: calloutInner1SpanEnd,
+    })
+  })
+
+  test('Pulls a hanging focus when end is inside a container and start is outside', () => {
+    const context = buildContainerContext(fooBlock, calloutBlock)
+    const range = {anchor: fooStart, focus: calloutInnerSpanStart}
+
+    expect(unhangRange(context, range)).toEqual({
+      anchor: fooStart,
+      focus: fooEnd,
+    })
+  })
+
+  test('Pulls a hanging focus when start is inside a container and end is outside', () => {
+    const context = buildContainerContext(calloutBlock, barBlock)
+    const range = {anchor: calloutInnerSpanStart, focus: barStart}
+
+    expect(unhangRange(context, range)).toEqual({
+      anchor: calloutInnerSpanStart,
+      focus: calloutInnerSpanEnd,
+    })
+  })
+
+  test('Preserves the range when multiple editable containers sit between endpoints', () => {
+    const context = buildContainerContext(
+      fooBlock,
+      calloutBlock,
+      codeBlockNode,
+      barBlock,
+    )
+    const range = {anchor: fooStart, focus: barStart}
+
+    expect(unhangRange(context, range)).toEqual(range)
+  })
+})

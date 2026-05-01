@@ -807,6 +807,78 @@ describe('cross-container range delete', () => {
       ['CALLOUT:', '  B: f|', 'CALLOUT:', '  B: z'].join('\n'),
     )
   })
+
+  test('hanging range across a callout removes the callout entirely', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const fooBlockKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const calloutKey = keyGenerator()
+    const calloutBlockKey = keyGenerator()
+    const calloutSpanKey = keyGenerator()
+    const barBlockKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: fooBlockKey,
+          children: [{_type: 'span', _key: fooSpanKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'callout',
+          _key: calloutKey,
+          content: [
+            {
+              _type: 'block',
+              _key: calloutBlockKey,
+              children: [
+                {
+                  _type: 'span',
+                  _key: calloutSpanKey,
+                  text: 'hello',
+                  marks: [],
+                },
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+        {
+          _type: 'block',
+          _key: barBlockKey,
+          children: [{_type: 'span', _key: barSpanKey, text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: <ContainerPlugin containers={containers} />,
+    })
+
+    await userEvent.click(locator)
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: barBlockKey}, 'children', {_key: barSpanKey}],
+          offset: 0,
+        },
+      },
+    })
+
+    await userEvent.keyboard('{Backspace}')
+
+    expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |bar')
+  })
 })
 
 const tableSchemaDefinition = defineSchema({
