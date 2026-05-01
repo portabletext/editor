@@ -1226,6 +1226,11 @@ export const Editable = forwardRef(
                     editorStart(editor, voidEntry.path),
                   )
                   editor.select(range)
+                  // Stop the browser from retargeting the tap to a nearby
+                  // editable text node (Android, in particular, walks past
+                  // contentEditable=false ancestors to position the caret in
+                  // the next editable text block).
+                  event.preventDefault()
                 },
                 [editor, readOnly],
               )}
