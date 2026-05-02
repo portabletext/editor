@@ -11,7 +11,7 @@ import type {
   EditorSelection,
 } from '../types/editor'
 import type {Path} from '../types/paths'
-import type {InternalEditor} from './create-editor'
+import type {EditorActor} from './editor-machine'
 
 /**
  * @public
@@ -35,25 +35,19 @@ export class PortableTextEditor {
    * A lookup table for all the relevant schema types for this portable text type.
    */
   public schemaTypes: Schema
-  /**
-   * The editor instance
-   */
-  private editor: InternalEditor
   /*
    * The editor API (currently implemented with Slate).
    */
   private editable: EditableAPI
 
-  constructor(config: {editor: InternalEditor}) {
-    this.editor = config.editor
-    this.schemaTypes =
-      config.editor._internal.editorActor.getSnapshot().context.schema
-    this.editable = config.editor._internal.editable
+  constructor(config: {editable: EditableAPI; editorActor: EditorActor}) {
+    this.schemaTypes = config.editorActor.getSnapshot().context.schema
+    this.editable = config.editable
   }
 
   public setEditable = (editable: EditableAPI) => {
-    this.editor._internal.editable = {
-      ...this.editor._internal.editable,
+    this.editable = {
+      ...this.editable,
       ...editable,
     }
   }

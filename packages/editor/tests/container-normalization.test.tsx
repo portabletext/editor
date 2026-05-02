@@ -1297,12 +1297,9 @@ describe('container normalization', () => {
     })
 
     // Late-register a container for callout
-    ;(editor as unknown as InternalEditor)._internal.editorActor.send({
-      type: 'register container',
-      container: {
-        scope: '$..callout',
-        field: 'content',
-      },
+    ;(editor as unknown as InternalEditor).registerContainer({
+      scope: '$..callout',
+      field: 'content',
     })
 
     // Normalization should now kick in and populate the callout
@@ -1913,7 +1910,13 @@ describe('container normalization', () => {
           _key: calloutKey,
         },
       ],
-      children: <ContainerPlugin containers={calloutContainers} />,
+    })
+
+    const unregisterCallout = (
+      editor as unknown as InternalEditor
+    ).registerContainer({
+      scope: '$..callout',
+      field: 'content',
     })
 
     // Verify normalization happened
@@ -1942,14 +1945,8 @@ describe('container normalization', () => {
       ])
     })
 
-    // Unregister the container via the internal editor actor
-    ;(editor as unknown as InternalEditor)._internal.editorActor.send({
-      type: 'unregister container',
-      container: {
-        scope: '$..callout',
-        field: 'content',
-      },
-    })
+    // Unregister the container via the public registerContainer return
+    unregisterCallout()
 
     // Send a new value with a callout with empty content
     editor.send({
