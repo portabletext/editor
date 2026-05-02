@@ -40,7 +40,8 @@ export function EditorProvider(props: EditorProviderProps) {
   const [{internalEditor, portableTextEditor}] = useState(() => {
     const internalEditor = createInternalEditor(props.initialConfig)
     const portableTextEditor = new PortableTextEditor({
-      editor: internalEditor.editor,
+      editable: internalEditor.editable,
+      editorActor: internalEditor.actors.editorActor,
     })
 
     return {internalEditor, portableTextEditor}
@@ -56,7 +57,7 @@ export function EditorProvider(props: EditorProviderProps) {
     internalEditor.actors.editorActor.start()
     internalEditor.actors.editorActor.send({
       type: 'add slate editor',
-      editor: internalEditor.editor._internal.slateEditor,
+      editor: internalEditor.slateEditor,
     })
     internalEditor.actors.mutationActor.start()
     internalEditor.actors.relayActor.start()
@@ -78,7 +79,7 @@ export function EditorProvider(props: EditorProviderProps) {
     <EditorContext.Provider value={internalEditor.editor}>
       <EditorActorContext.Provider value={internalEditor.actors.editorActor}>
         <RelayActorContext.Provider value={internalEditor.actors.relayActor}>
-          <Slate editor={internalEditor.editor._internal.slateEditor}>
+          <Slate editor={internalEditor.slateEditor}>
             <PortableTextEditorContext.Provider value={portableTextEditor}>
               {props.children}
             </PortableTextEditorContext.Provider>

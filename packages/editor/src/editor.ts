@@ -43,4 +43,19 @@ export type Editor = {
   registerBehavior: (config: {behavior: Behavior}) => () => void
   send: (event: EditorEvent) => void
   on: ActorRef<Snapshot<unknown>, EventObject, EditorEmittedEvent>['on']
+  /**
+   * Subscribe to editor state changes. The observer's `next` callback fires
+   * with the current `EditorSnapshot` on every relevant transition (selection
+   * updates, content mutations, behavior dispatch, configuration changes).
+   *
+   * The editor has no terminal state and no error path, so `error` and
+   * `complete` are part of the observable contract but never fire. They are
+   * kept for structural compatibility with `useSyncExternalStore`,
+   * `@xstate/react`'s `useSelector`, and other observer-shaped consumers.
+   */
+  subscribe(observer: {
+    next?: (snapshot: EditorSnapshot) => void
+    error?: (err: unknown) => void
+    complete?: () => void
+  }): {unsubscribe: () => void}
 }
