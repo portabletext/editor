@@ -2,7 +2,7 @@ import {resolveSelection} from '../internal-utils/apply-selection'
 import {deleteCollapsed} from '../internal-utils/delete-collapsed'
 import {deleteRange} from '../internal-utils/delete-range'
 import {findCurrentLineRange} from '../internal-utils/find-current-line-range'
-import {getFullyCoveredContainer} from '../internal-utils/get-fully-covered-container'
+import {getFullyCoveredContainers} from '../internal-utils/get-fully-covered-container'
 import {unsetMatchedNodesInRange} from '../internal-utils/unset-matched-in-range'
 import {unwrapContainer} from '../internal-utils/unwrap-container'
 import {getAncestor} from '../node-traversal/get-ancestor'
@@ -135,14 +135,27 @@ export const deleteOperationImplementation: OperationImplementation<
     return
   }
 
-  // If the selection covers an enclosing structural container end-to-end
-  // (e.g. start at the first cell, end at the last cell of a table),
-  // unset that container instead of running the textual delete. The
-  // textual primitive would unhang the range and then trim each end,
-  // leaving the container's empty shell behind.
-  const fullyCovered = getFullyCoveredContainer(operation.editor, at)
-  if (fullyCovered) {
-    operation.editor.apply({type: 'unset', path: fullyCovered})
+  // If the range fully covers a container on either endpoint side,
+  // unset those containers before running the textual delete. The
+  // textual primitive alone would unhang the range and then trim each
+  // end, leaving each container's empty shell behind.
+  const fullyCovered = getFullyCoveredContainers(operation.editor, at)
+  if (fullyCovered.start || fullyCovered.end) {
+    if (
+      fullyCovered.start &&
+      fullyCovered.end &&
+      pathEquals(fullyCovered.start, fullyCovered.end)
+    ) {
+      operation.editor.apply({type: 'unset', path: fullyCovered.start})
+      return
+    }
+    // Unset the end side first so the start path stays valid.
+    if (fullyCovered.end) {
+      operation.editor.apply({type: 'unset', path: fullyCovered.end})
+    }
+    if (fullyCovered.start) {
+      operation.editor.apply({type: 'unset', path: fullyCovered.start})
+    }
     return
   }
 

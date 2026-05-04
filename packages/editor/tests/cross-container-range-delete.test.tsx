@@ -2269,4 +2269,80 @@ describe('cross-container range delete: deep structures', () => {
       ['CALLOUT:', '  ^{IMAGE}|'].join('\n'),
     )
   })
+
+  test('Cmd-A + Delete across two code-blocks removes both', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const codeBlock1Key = keyGenerator()
+    const line1Key = keyGenerator()
+    const line1SpanKey = keyGenerator()
+    const codeBlock2Key = keyGenerator()
+    const line2Key = keyGenerator()
+    const line2SpanKey = keyGenerator()
+
+    const {editor} = await createTestEditor({
+      schemaDefinition,
+      keyGenerator,
+      initialValue: [
+        {
+          _key: codeBlock1Key,
+          _type: 'code-block',
+          lines: [
+            {
+              _key: line1Key,
+              _type: 'block',
+              children: [
+                {_key: line1SpanKey, _type: 'span', text: 'foo', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+        {
+          _key: codeBlock2Key,
+          _type: 'code-block',
+          lines: [
+            {
+              _key: line2Key,
+              _type: 'block',
+              children: [
+                {_key: line2SpanKey, _type: 'span', text: 'bar', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: <ContainerPlugin containers={containers} />,
+    })
+
+    editor.send({
+      type: 'delete',
+      at: {
+        anchor: {
+          path: [
+            {_key: codeBlock1Key},
+            'lines',
+            {_key: line1Key},
+            'children',
+            {_key: line1SpanKey},
+          ],
+          offset: 0,
+        },
+        focus: {
+          path: [
+            {_key: codeBlock2Key},
+            'lines',
+            {_key: line2Key},
+            'children',
+            {_key: line2SpanKey},
+          ],
+          offset: 3,
+        },
+      },
+    })
+
+    expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |')
+  })
 })
