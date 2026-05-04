@@ -5,7 +5,6 @@ import type {Editor, EditorConfig} from '../editor'
 import {debug} from '../internal-utils/debug'
 import {corePriority} from '../priority/priority.core'
 import {createEditorPriority} from '../priority/priority.types'
-import type {ContainerDefinition, Leaf} from '../renderers/renderer.types'
 import type {EditableAPI} from '../types/editor'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {defaultKeyGenerator} from '../utils/key-generator'
@@ -19,11 +18,6 @@ import {mutationMachine, type MutationActor} from './mutation-machine'
 import {relayMachine, type RelayActor} from './relay-machine'
 import {syncMachine, type SyncActor} from './sync-machine'
 
-export type InternalEditor = Editor & {
-  registerContainer: (container: ContainerDefinition) => () => void
-  registerLeaf: (leaf: Leaf) => () => void
-}
-
 export function createInternalEditor(config: EditorConfig): {
   actors: {
     editorActor: EditorActor
@@ -31,7 +25,7 @@ export function createInternalEditor(config: EditorConfig): {
     relayActor: RelayActor
     syncActor: SyncActor
   }
-  editor: InternalEditor
+  editor: Editor
   editable: EditableAPI
   slateEditor: PortableTextSlateEditor
   subscriptions: Array<() => () => void>
@@ -56,7 +50,7 @@ export function createInternalEditor(config: EditorConfig): {
     subscriptions,
   })
 
-  const editor: InternalEditor = {
+  const editor: Editor = {
     dom: createEditorDom((event) => editorActor.send(event), slateEditor),
     getSnapshot: () =>
       getEditorSnapshot({

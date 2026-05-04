@@ -1,5 +1,4 @@
 import {useEffect} from 'react'
-import type {InternalEditor} from '../editor/create-editor'
 import {useEditor} from '../editor/use-editor'
 import type {ContainerDefinition} from '../renderers/renderer.types'
 
@@ -9,7 +8,7 @@ import type {ContainerDefinition} from '../renderers/renderer.types'
 export function ContainerPlugin(props: {
   containers: Array<ContainerDefinition>
 }) {
-  const editor = useEditor() as InternalEditor
+  const editor = useEditor()
 
   useEffect(() => {
     const unregisterContainers = props.containers.map((container) =>

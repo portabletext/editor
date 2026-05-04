@@ -2,7 +2,6 @@ import type {Patch} from '@portabletext/patches'
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
-import type {InternalEditor} from '../src/editor/create-editor'
 import {ContainerPlugin} from '../src/plugins/plugin.container'
 import {PatchesPlugin} from '../src/plugins/plugin.patches'
 import {defineContainer} from '../src/renderers/renderer.types'
@@ -1297,7 +1296,7 @@ describe('container normalization', () => {
     })
 
     // Late-register a container for callout
-    ;(editor as unknown as InternalEditor).registerContainer({
+    editor.registerContainer({
       scope: '$..callout',
       field: 'content',
     })
@@ -1912,9 +1911,7 @@ describe('container normalization', () => {
       ],
     })
 
-    const unregisterCallout = (
-      editor as unknown as InternalEditor
-    ).registerContainer({
+    const unregisterCallout = editor.registerContainer({
       scope: '$..callout',
       field: 'content',
     })
@@ -2006,7 +2003,7 @@ describe('container normalization', () => {
       ],
     })
 
-    const unregister = (editor as unknown as InternalEditor).registerContainer({
+    const unregister = editor.registerContainer({
       scope: '$..callout',
       field: 'content',
     })
