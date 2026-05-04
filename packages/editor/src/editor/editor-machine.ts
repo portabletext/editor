@@ -209,7 +209,7 @@ export const editorMachine = setup({
       behaviors: Set<BehaviorConfig>
       behaviorsSorted: boolean
       containers: ResolvedContainers
-      converters: Set<Converter>
+      converters: Array<Converter>
       keyGenerator: () => string
       pendingEvents: Array<InternalPatchEvent | MutationEvent>
       pendingIncomingPatchesEvents: Array<PatchesEvent>
@@ -437,7 +437,7 @@ export const editorMachine = setup({
           remainingEventBehaviors: behaviors,
           event: event.behaviorEvent,
           editor: event.editor,
-          converters: [...context.converters],
+          converters: context.converters,
           keyGenerator: context.keyGenerator,
           schema: context.schema,
           readOnly: self.getSnapshot().matches({'edit mode': 'read only'}),
@@ -494,7 +494,7 @@ export const editorMachine = setup({
     behaviors: new Set(coreBehaviorsConfig),
     behaviorsSorted: false,
     containers: new Map(),
-    converters: new Set(input.converters ?? []),
+    converters: input.converters ?? [],
     keyGenerator: input.keyGenerator,
     pendingEvents: [],
     pendingIncomingPatchesEvents: [],
