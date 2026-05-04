@@ -61,19 +61,15 @@ export function getEditorSnapshot({
   editorActorSnapshot: ReturnType<EditorActor['getSnapshot']>
   slateEditorInstance: PortableTextSlateEditor
 }): EditorSnapshot {
-  const selection = slateEditorInstance.selection
-    ? {...slateEditorInstance.selection}
-    : null
-
   return {
     blockIndexMap: slateEditorInstance.blockIndexMap,
     context: {
       containers: slateEditorInstance.containers,
-      converters: [...editorActorSnapshot.context.converters],
+      converters: editorActorSnapshot.context.converters,
       keyGenerator: editorActorSnapshot.context.keyGenerator,
       readOnly: editorActorSnapshot.matches({'edit mode': 'read only'}),
       schema: editorActorSnapshot.context.schema,
-      selection,
+      selection: slateEditorInstance.selection,
       value: slateEditorInstance.children,
     },
     decoratorState: slateEditorInstance.decoratorState,

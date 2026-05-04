@@ -417,80 +417,37 @@ export const stepDefinitions = [
    */
   When(
     '{button} is pressed',
-    async (context: Context, button: Parameter['button']) => {
-      const previousSnapshot = context.editor.getSnapshot().context
+    async (_context: Context, button: Parameter['button']) => {
       await userEvent.keyboard(button)
 
       // Delay to allow the browser to process the event.
       // Firefox needs more time than Chromium to process keyboard events
       // through the beforeinput -> DOM mutation -> Slate operation pipeline.
       await new Promise((resolve) => setTimeout(resolve, 100))
-
-      await vi.waitFor(() => {
-        const currentSnapshot = context.editor.getSnapshot().context
-
-        expect(
-          currentSnapshot.selection !== previousSnapshot.selection ||
-            currentSnapshot.value !== previousSnapshot.value,
-        ).toBe(true)
-      })
     },
   ),
   When(
     '{button} is pressed in Editor B',
-    async (context: Context, button: Parameter['button']) => {
-      const previousSnapshot = context.editorB.getSnapshot().context
+    async (_context: Context, button: Parameter['button']) => {
       await userEvent.keyboard(button)
-
       await new Promise((resolve) => setTimeout(resolve, 100))
-
-      await vi.waitFor(() => {
-        const currentSnapshot = context.editorB.getSnapshot().context
-
-        expect(
-          currentSnapshot.selection !== previousSnapshot.selection ||
-            currentSnapshot.value !== previousSnapshot.value,
-        ).toBe(true)
-      })
     },
   ),
   When(
     '{button} is pressed {int} times',
-    async (context: Context, button: Parameter['button'], times: number) => {
+    async (_context: Context, button: Parameter['button'], times: number) => {
       for (let i = 0; i < times; i++) {
-        const previousSnapshot = context.editor.getSnapshot().context
         await userEvent.keyboard(button)
-
         await new Promise((resolve) => setTimeout(resolve, 100))
-
-        await vi.waitFor(() => {
-          const currentSnapshot = context.editor.getSnapshot().context
-
-          expect(
-            currentSnapshot.selection !== previousSnapshot.selection ||
-              currentSnapshot.value !== previousSnapshot.value,
-          ).toBe(true)
-        })
       }
     },
   ),
   When(
     '{button} is pressed {int} times in Editor B',
-    async (context: Context, button: Parameter['button'], times: number) => {
+    async (_context: Context, button: Parameter['button'], times: number) => {
       for (let i = 0; i < times; i++) {
-        const previousSnapshot = context.editorB.getSnapshot().context
         await userEvent.keyboard(button)
-
         await new Promise((resolve) => setTimeout(resolve, 100))
-
-        await vi.waitFor(() => {
-          const currentSnapshot = context.editorB.getSnapshot().context
-
-          expect(
-            currentSnapshot.selection !== previousSnapshot.selection ||
-              currentSnapshot.value !== previousSnapshot.value,
-          ).toBe(true)
-        })
       }
     },
   ),
@@ -510,20 +467,8 @@ export const stepDefinitions = [
       const keyboardShortcut = keyboardShortcuts[shortcut]
 
       if (keyboardShortcut) {
-        const previousSelection = context.editor.getSnapshot().context.selection
         await userEvent.keyboard(keyboardShortcut)
-
         await new Promise((resolve) => setTimeout(resolve, 100))
-
-        await vi.waitFor(() => {
-          const currentSelection =
-            context.editor.getSnapshot().context.selection
-
-          if (currentSelection) {
-            expect(currentSelection).not.toBe(previousSelection)
-          }
-        })
-
         return
       }
 
@@ -549,20 +494,8 @@ export const stepDefinitions = [
       const behaviorEvent = behaviorEvents[shortcut]
 
       if (behaviorEvent) {
-        const previousSelection = context.editor.getSnapshot().context.selection
         context.editor.send(behaviorEvent)
-
         await new Promise((resolve) => setTimeout(resolve, 100))
-
-        await vi.waitFor(() => {
-          const currentSelection =
-            context.editor.getSnapshot().context.selection
-
-          if (currentSelection) {
-            expect(currentSelection).not.toBe(previousSelection)
-          }
-        })
-
         return
       }
 
