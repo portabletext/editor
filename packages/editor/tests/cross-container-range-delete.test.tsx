@@ -15,7 +15,13 @@ const schemaDefinition = defineSchema({
     },
     {
       name: 'callout',
-      fields: [{name: 'content', type: 'array', of: [{type: 'block'}]}],
+      fields: [
+        {
+          name: 'content',
+          type: 'array',
+          of: [{type: 'block'}, {type: 'image'}],
+        },
+      ],
     },
     {name: 'image'},
   ],
@@ -2176,6 +2182,91 @@ describe('cross-container range delete: deep structures', () => {
 
     expect(toTextspec(editor.getSnapshot().context)).toEqual(
       ['CALLOUT:', '  B: '].join('\n'),
+    )
+  })
+
+  test('inserting a block after fully clearing the text inside a callout lands the block inside', async () => {
+    // Slash-command flow: typing '/im' inside a callout, picking the
+    // Image action raises 'delete' of the typed pattern then
+    // 'insert.block' for the image. The image must land inside the
+    // callout's 'content' field (replacing the empty placeholder
+    // text block left by the delete), not as a root sibling after
+    // the callout. Mirrors the playground's fact-box where a second
+    // container is registered at the text-block scope
+    // ('\$..callout.block') — the configuration that triggers the
+    // bug, since the inner-container registration is what causes the
+    // empty text block to be unset (leaving the editor selection
+    // stale) instead of just emptied.
+    const calloutBlockContainer = defineContainer<typeof schemaDefinition>({
+      scope: '$..callout.block',
+      field: 'children',
+      render: ({attributes, children}) => <p {...attributes}>{children}</p>,
+    })
+
+    const keyGenerator = createTestKeyGenerator()
+    const calloutKey = keyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: calloutKey,
+          content: [
+            {
+              _type: 'block',
+              _key: blockKey,
+              children: [
+                {_type: 'span', _key: spanKey, text: '/im', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: (
+        <ContainerPlugin containers={[...containers, calloutBlockContainer]} />
+      ),
+    })
+
+    const spanPath = [
+      {_key: calloutKey},
+      'content',
+      {_key: blockKey},
+      'children',
+      {_key: spanKey},
+    ]
+
+    // Place the caret in the span (matches state after the user types '/im').
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: spanPath, offset: 3},
+        focus: {path: spanPath, offset: 3},
+      },
+    })
+
+    editor.send({
+      type: 'delete',
+      at: {
+        anchor: {path: spanPath, offset: 0},
+        focus: {path: spanPath, offset: 3},
+      },
+    })
+
+    editor.send({
+      type: 'insert.block',
+      block: {_type: 'image'},
+      placement: 'auto',
+      select: 'end',
+    })
+
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      ['CALLOUT:', '  ^{IMAGE}|'].join('\n'),
     )
   })
 })
