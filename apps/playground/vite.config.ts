@@ -27,10 +27,6 @@ export default defineConfig({
         __dirname,
         '../../packages/editor/src',
       ),
-      '@portabletext/block-tools': path.resolve(
-        __dirname,
-        '../../packages/block-tools/src',
-      ),
       '@portabletext/keyboard-shortcuts': path.resolve(
         __dirname,
         '../../packages/keyboard-shortcuts/src',
