@@ -1,38 +1,27 @@
-import {htmlToBlocks, type ImageSchemaMatcher} from '@portabletext/block-tools'
-import {createFlattenTableRule} from '@portabletext/block-tools/rules'
 import {useEditor} from '@portabletext/editor'
 import {defineBehavior, raise} from '@portabletext/editor/behaviors'
+import {htmlToPortableText, type ObjectMatcher} from '@portabletext/html'
+import {createFlattenTableRule} from '@portabletext/html/rules'
 import {useEffect} from 'react'
 
-const imageMatcher: ImageSchemaMatcher = ({context, props}) => {
-  if (
-    !context.schema.blockObjects.some(
-      (blockObject) => blockObject.name === 'image',
-    )
-  ) {
+const imageMatcher: ObjectMatcher<{src?: string; alt?: string}> = ({
+  context,
+  value,
+  isInline,
+}) => {
+  const candidates = isInline
+    ? context.schema.inlineObjects
+    : context.schema.blockObjects
+
+  if (!candidates.some((object) => object.name === 'image')) {
     return undefined
   }
 
   return {
     _type: 'image',
-    ...(props.src ? {src: props.src} : {}),
-    ...(props.alt ? {alt: props.alt} : {}),
-  }
-}
-
-const inlineImageMatcher: ImageSchemaMatcher = ({context, props}) => {
-  if (
-    !context.schema.inlineObjects.some(
-      (inlineObject) => inlineObject.name === 'image',
-    )
-  ) {
-    return undefined
-  }
-
-  return {
-    _type: 'image',
-    ...(props.src ? {src: props.src} : {}),
-    ...(props.alt ? {alt: props.alt} : {}),
+    _key: context.keyGenerator(),
+    ...(value.src ? {src: value.src} : {}),
+    ...(value.alt ? {alt: value.alt} : {}),
   }
 }
 
@@ -48,11 +37,11 @@ export function HtmlDeserializerPlugin() {
             return false
           }
 
-          const blocks = htmlToBlocks(event.data, snapshot.context.schema, {
+          const blocks = htmlToPortableText(event.data, {
+            schema: snapshot.context.schema,
             keyGenerator: snapshot.context.keyGenerator,
-            matchers: {
+            types: {
               image: imageMatcher,
-              inlineImage: inlineImageMatcher,
             },
             rules: [
               createFlattenTableRule({
@@ -60,7 +49,7 @@ export function HtmlDeserializerPlugin() {
                 separator: () => ({_type: 'span', text: ': '}),
               }),
             ],
-            unstable_whitespaceOnPasteMode: 'normalize',
+            whitespaceMode: 'normalize',
           })
 
           return {blocks}
