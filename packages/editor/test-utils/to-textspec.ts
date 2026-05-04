@@ -456,21 +456,94 @@ function convertSelection(
   // PTE represents a selected block object as a collapsed selection at
   // offset 0 of the block's path. Textspec represents it as a range from
   // offset 0 to offset 1. Translate when both points resolve to the same
-  // path of a non-text block.
+  // non-text block at any depth (root-level or inside an editable
+  // container). The parent check excludes inline nodes whose path sits
+  // inside a text block's `children`, where offset 0 means "caret before
+  // this child", not "this child is selected".
   if (
     anchor.offset === 0 &&
     focus.offset === 0 &&
-    anchor.path.length === 1 &&
-    focus.path.length === 1 &&
-    anchor.path[0] === focus.path[0]
+    isEqualIndexedPaths(anchor.path, focus.path)
   ) {
-    const blockIndex = anchor.path[0]
-    const block = blockIndex !== undefined ? blocks[blockIndex] : undefined
+    const entry = nodeAtKeyedPath(blocks, selection.anchor.path)
+    const schemaContext = {schema}
 
-    if (block && !isTextBlock({schema}, block)) {
+    if (
+      entry &&
+      !isTextBlock(schemaContext, entry.node) &&
+      (!entry.parent || !isTextBlock(schemaContext, entry.parent))
+    ) {
       return {anchor, focus: {path: focus.path, offset: 1}}
     }
   }
 
   return {anchor, focus}
+}
+
+function isEqualIndexedPaths(
+  a: ReadonlyArray<number>,
+  b: ReadonlyArray<number>,
+): boolean {
+  if (a.length !== b.length) {
+    return false
+  }
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) {
+      return false
+    }
+  }
+  return true
+}
+
+/**
+ * Walk a keyed path through `blocks` and the editable container fields it
+ * traverses, returning the node it points to and the node that contains
+ * it. Used to distinguish a block-object-as-block (its parent is an
+ * editable container field) from an inline node inside a text block (its
+ * parent IS a text block).
+ */
+function nodeAtKeyedPath(
+  blocks: Array<PortableTextBlock>,
+  keyedPath: EditorSelectionPoint['path'],
+):
+  | {
+      node: PortableTextBlock | PortableTextObject
+      parent: PortableTextBlock | PortableTextObject | undefined
+    }
+  | undefined {
+  let currentChildren: Array<Record<string, unknown>> = blocks as Array<
+    Record<string, unknown>
+  >
+  let currentNode: Record<string, unknown> | undefined
+  let parentNode: Record<string, unknown> | undefined
+
+  for (const segment of keyedPath) {
+    if (typeof segment === 'object' && segment !== null && '_key' in segment) {
+      const next = currentChildren.find(
+        (child) => child['_key'] === segment._key,
+      )
+      if (!next) {
+        return undefined
+      }
+      parentNode = currentNode
+      currentNode = next
+    } else if (typeof segment === 'string' && currentNode) {
+      const field = currentNode[segment]
+      if (!Array.isArray(field)) {
+        return undefined
+      }
+      currentChildren = field as Array<Record<string, unknown>>
+    } else {
+      return undefined
+    }
+  }
+
+  if (!currentNode) {
+    return undefined
+  }
+
+  return {
+    node: currentNode as PortableTextBlock | PortableTextObject,
+    parent: parentNode as PortableTextBlock | PortableTextObject | undefined,
+  }
 }
