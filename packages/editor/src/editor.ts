@@ -6,6 +6,7 @@ import type {EditorDom} from './editor/editor-dom'
 import type {ExternalEditorEvent} from './editor/editor-machine'
 import type {EditorSnapshot} from './editor/editor-snapshot'
 import type {EditorEmittedEvent} from './editor/relay-machine'
+import type {ContainerDefinition, Leaf} from './renderers/renderer.types'
 
 /**
  * @public
@@ -41,6 +42,23 @@ export type Editor = {
    * @beta
    */
   registerBehavior: (config: {behavior: Behavior}) => () => void
+  /**
+   * Register an editable container, marking the array field on the
+   * scope's terminal type as editable child content. Returns a function
+   * that unregisters the container when called.
+   *
+   * @alpha
+   */
+  registerContainer: (container: ContainerDefinition) => () => void
+  /**
+   * Register a leaf renderer for a span, inline object, or void block
+   * object at a given scope. The most specific scope wins when multiple
+   * leaves match a node. Returns a function that unregisters the leaf
+   * when called.
+   *
+   * @alpha
+   */
+  registerLeaf: (leaf: Leaf) => () => void
   send: (event: EditorEvent) => void
   on: ActorRef<Snapshot<unknown>, EventObject, EditorEmittedEvent>['on']
   /**
