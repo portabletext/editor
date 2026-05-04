@@ -4,4 +4,4 @@
 
 feat: add `containers` to editor context
 
-Adds the `@alpha` `EditorContext.containers` field and container-aware node-traversal and schema helpers. Internal groundwork for depth-agnostic selectors, behaviors, operations, and rendering. No consumer-visible change.
+`EditorContext.containers` (`@alpha`) is a `Map` of registered editable containers, keyed by scoped type name. Behaviors and operations that need to know "is this scope an editable container?" or "what is its child field?" can read this map directly. Public exports include `Container`, `ContainerDefinition`, `Containers`, and `ResolvedContainers`.
