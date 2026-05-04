@@ -5,11 +5,13 @@
 
 # Portable Text Editor Monorepo
 
-This monorepo contains the official [Portable Text](https://github.com/portabletext/portabletext) editor and related packages for building rich text editing experiences.
+[Portable Text](https://github.com/portabletext/portabletext) is an open specification for structured block content. Rich text, images, code blocks, and any custom type you define, stored as JSON and renderable anywhere.
 
-For documentation and guides, visit [portabletext.org](https://www.portabletext.org/).
+This monorepo contains [`@portabletext/editor`](./packages/editor/), the officially supported editor for working with Portable Text content. It's a headless, schema-driven block content editor for React: you bring the UI, the editor handles the editing. The other packages in this repository support editor work, including schema definition, toolbar hooks, plugins, conversion to and from HTML and Markdown, and testing utilities.
 
-Or try the editor in the [Portable Text Playground](https://playground.portabletext.org/).
+> **Looking to render Portable Text?** The renderers (`@portabletext/react`, `@portabletext/to-html`, and friends) live in separate repositories. See [Render Portable Text](https://www.portabletext.org/rendering/) for the full picture.
+
+For documentation and guides, visit [portabletext.org](https://www.portabletext.org/). To try the editor, head to the [Portable Text Playground](https://playground.portabletext.org/).
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset=".github/assets/playground-dark.png">
