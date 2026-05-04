@@ -1,4 +1,5 @@
 import {getNode} from '../node-traversal/get-node'
+import {getContainerScopedName} from '../schema/get-container-scoped-name'
 import {isEditableContainer} from '../schema/is-editable-container'
 import {end as editorEnd} from '../slate/editor/end'
 import {start as editorStart} from '../slate/editor/start'
@@ -12,14 +13,22 @@ import type {PortableTextSlateEditor} from '../types/slate-editor'
 
 /**
  * Walk up from the lowest common ancestor of `range`'s endpoints and
- * return the outermost editable container the range covers from its
+ * return the outermost structural container the range covers from its
  * deepest first leaf to its deepest last leaf. Stops as soon as an
  * ancestor's start/end leaf points don't match the range's. Returns
  * `undefined` if no ancestor in the chain qualifies.
  *
+ * Only considers containers whose editable field does NOT accept
+ * text-block (e.g. a table whose `rows` only accept rows). Editable
+ * containers whose field accepts text-block (e.g. a fact-box) are
+ * skipped — selecting all the text inside such a container should
+ * leave the shell with an empty placeholder block, not delete the
+ * container itself.
+ *
  * Intended for callers that need to know "did the user select a whole
- * container?" before delegating to a textual delete primitive that
- * would unhang the range and lose the original boundary signal.
+ * structural container?" before delegating to a textual delete
+ * primitive that would unhang the range and lose the original
+ * boundary signal.
  */
 export function getFullyCoveredContainer(
   editor: PortableTextSlateEditor,
@@ -52,7 +61,14 @@ export function getFullyCoveredContainer(
       ) {
         return outermost
       }
-      outermost = cursor
+      const scopedName = getContainerScopedName(editor, entry.node, cursor)
+      const container = editor.containers.get(scopedName)
+      const fieldAcceptsTextBlock = container?.field.of.some(
+        (member) => member.type === editor.schema.block.name,
+      )
+      if (!fieldAcceptsTextBlock) {
+        outermost = cursor
+      }
     }
     cursor = parentPath(cursor)
   }

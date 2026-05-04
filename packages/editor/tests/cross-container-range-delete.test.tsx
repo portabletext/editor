@@ -2124,4 +2124,58 @@ describe('cross-container range delete: deep structures', () => {
       ].join('\n'),
     )
   })
+
+  test('selecting all the text in an editable container preserves the shell', async () => {
+    // Slash-command flow: typing `/im` inside a callout, selecting the
+    // Image action emits `delete` of the pattern selection followed by
+    // `insert.block`. The callout shell must remain in place so the
+    // image lands inside its `content` field, not at the root.
+    const keyGenerator = createTestKeyGenerator()
+    const calloutKey = keyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: calloutKey,
+          content: [
+            {
+              _type: 'block',
+              _key: blockKey,
+              children: [
+                {_type: 'span', _key: spanKey, text: '/im', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: <ContainerPlugin containers={containers} />,
+    })
+
+    const spanPath = [
+      {_key: calloutKey},
+      'content',
+      {_key: blockKey},
+      'children',
+      {_key: spanKey},
+    ]
+
+    editor.send({
+      type: 'delete',
+      at: {
+        anchor: {path: spanPath, offset: 0},
+        focus: {path: spanPath, offset: 3},
+      },
+    })
+
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      ['CALLOUT:', '  B: '].join('\n'),
+    )
+  })
 })
