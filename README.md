@@ -49,4 +49,4 @@ Or try the editor in the [Portable Text Playground](https://playground.portablet
 | [`@portabletext/sanity-bridge`](./packages/sanity-bridge/)           | Convert between Sanity schemas and Portable Text schemas |
 | [`@portabletext/patches`](./packages/patches/)                       | Apply Sanity patches to a value                          |
 | [`@portabletext/test`](./packages/test/)                             | Testing utilities for the Portable Text Editor           |
-| [`@portabletext/racejar`](./packages/racejar/)                       | A testing framework agnostic Gherkin driver              |
+| [`racejar`](./packages/racejar/)                                     | A testing framework agnostic Gherkin driver              |
