@@ -1,78 +1,123 @@
 import {isTextBlock} from '@portabletext/schema'
+import {getAncestor} from '../node-traversal/get-ancestor'
 import {getNode} from '../node-traversal/get-node'
 import {getContainerScopedName} from '../schema/get-container-scoped-name'
 import {isEditableContainer} from '../schema/is-editable-container'
 import {end as editorEnd} from '../slate/editor/end'
 import {start as editorStart} from '../slate/editor/start'
+import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
+import type {Point} from '../slate/interfaces/point'
 import type {Range} from '../slate/interfaces/range'
-import {commonPath} from '../slate/path/common-path'
 import {parentPath} from '../slate/path/parent-path'
+import {isAfterPoint} from '../slate/point/is-after-point'
+import {isBeforePoint} from '../slate/point/is-before-point'
 import {pointEquals} from '../slate/point/point-equals'
 import {rangeEdges} from '../slate/range/range-edges'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 
 /**
- * Walk up from the lowest common ancestor of `range`'s endpoints and
- * return the outermost structural container the range covers from its
- * deepest first leaf to its deepest last leaf. Stops as soon as an
- * ancestor's start/end leaf points don't match the range's. Returns
- * `undefined` if no ancestor in the chain qualifies.
+ * Find every container that is fully covered by `range`, walking up
+ * from each endpoint independently.
  *
- * Only considers containers whose editable field does NOT accept
- * text-block (e.g. a table whose `rows` only accept rows). Editable
- * containers whose field accepts text-block (e.g. a fact-box) are
- * skipped — selecting all the text inside such a container should
- * leave the shell with an empty placeholder block, not delete the
- * container itself.
+ * "Fully covered" means the range reaches both deepest endpoints of
+ * the container, AND removing it makes structural sense — the parent's
+ * field accepts a text-block, so normalization can replace the unset
+ * container with a placeholder.
  *
- * Intended for callers that need to know "did the user select a whole
- * structural container?" before delegating to a textual delete
- * primitive that would unhang the range and lose the original
- * boundary signal.
+ * An editable container that holds the entire range inside itself
+ * (e.g. selecting all text inside a callout) is intentionally not
+ * marked: the textual delete clears its content and preserves the
+ * shell.
+ *
+ * Returns one path per side. Callers unset the end-side path first
+ * so the start path stays valid.
  */
-export function getFullyCoveredContainer(
+export function getFullyCoveredContainers(
   editor: PortableTextSlateEditor,
   range: Range,
-): Path | undefined {
+): {start: Path | undefined; end: Path | undefined} {
   const [start, end] = rangeEdges(range, editor)
-  const lca = commonPath(start.path, end.path)
-
-  // The lca may end in a field segment (e.g. `[{table}, 'rows']`); in
-  // that case the children at the LCA are siblings inside the keyed
-  // parent (the table). Strip a trailing field segment so the walk
-  // starts at the parent node itself.
-  let cursor: Path =
-    lca.length > 0 && typeof lca[lca.length - 1] === 'string'
-      ? lca.slice(0, -1)
-      : lca
-
-  let outermost: Path | undefined
-  while (cursor.length > 0) {
-    const entry = getNode(editor, cursor)
-    if (!entry) {
-      break
-    }
-    if (isEditableContainer(editor, entry.node, cursor)) {
-      const containerStart = editorStart(editor, cursor)
-      const containerEnd = editorEnd(editor, cursor)
-      if (
-        !pointEquals(start, containerStart) ||
-        !pointEquals(end, containerEnd)
-      ) {
-        return outermost
-      }
-      const scopedName = getContainerScopedName(editor, entry.node, cursor)
-      const container = editor.containers.get(scopedName)
-      const fieldAcceptsTextBlock = container?.field.of.some(
-        (member) => member.type === editor.schema.block.name,
-      )
-      const isText = isTextBlock({schema: editor.schema}, entry.node)
-      if (!fieldAcceptsTextBlock && !isText) {
-        outermost = cursor
-      }
-    }
-    cursor = parentPath(cursor)
+  return {
+    start: getAncestor(editor, start.path, (node, path) =>
+      isFullyCovered(editor, node, path, start, end),
+    )?.path,
+    end: getAncestor(editor, end.path, (node, path) =>
+      isFullyCovered(editor, node, path, start, end),
+    )?.path,
   }
-  return outermost
+}
+
+function isFullyCovered(
+  editor: PortableTextSlateEditor,
+  node: Node,
+  path: Path,
+  rangeStart: Point,
+  rangeEnd: Point,
+): boolean {
+  if (
+    !isEditableContainer(editor, node, path) ||
+    isTextBlock({schema: editor.schema}, node)
+  ) {
+    return false
+  }
+
+  const root = {children: editor.children}
+  const containerStart = editorStart(editor, path)
+  const containerEnd = editorEnd(editor, path)
+
+  // The range must reach both deepest endpoints of the container.
+  const reachesStart =
+    pointEquals(rangeStart, containerStart) ||
+    isBeforePoint(rangeStart, containerStart, root)
+  const reachesEnd =
+    pointEquals(rangeEnd, containerEnd) ||
+    isAfterPoint(rangeEnd, containerEnd, root)
+  if (!reachesStart || !reachesEnd) {
+    return false
+  }
+
+  // PR #2587: when an editable container exactly contains the range
+  // (its field accepts a text-block, so the textual delete can clear
+  // its content and leave a placeholder), preserve the shell.
+  if (
+    pointEquals(rangeStart, containerStart) &&
+    pointEquals(rangeEnd, containerEnd) &&
+    fieldAcceptsTextBlock(editor, node, path)
+  ) {
+    return false
+  }
+
+  // Removal must make structural sense at this point in the tree.
+  return parentFieldAcceptsTextBlock(editor, path)
+}
+
+function parentFieldAcceptsTextBlock(
+  editor: PortableTextSlateEditor,
+  path: Path,
+): boolean {
+  const parent = parentPath(path)
+  if (parent.length === 0) {
+    return true
+  }
+  const parentEntry = getNode(editor, parent)
+  if (!parentEntry) {
+    return false
+  }
+  return fieldAcceptsTextBlock(editor, parentEntry.node, parent)
+}
+
+function fieldAcceptsTextBlock(
+  editor: PortableTextSlateEditor,
+  node: Node,
+  path: Path,
+): boolean {
+  const scopedName = getContainerScopedName(editor, node, path)
+  const container = editor.containers.get(scopedName)
+  if (!container) {
+    return false
+  }
+  return container.field.of.some(
+    (member) => member.type === editor.schema.block.name,
+  )
 }
