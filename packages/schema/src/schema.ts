@@ -126,8 +126,23 @@ export type FieldDefinition =
       of?: ReadonlyArray<OfDefinition>
     })
   | (BaseDefinition & {
-      type: 'string' | 'number' | 'boolean' | 'object'
+      type: 'string'
+      options?: StringOptions
     })
+  | (BaseDefinition & {
+      type: 'number' | 'boolean' | 'object'
+    })
+
+/**
+ * @public
+ *
+ * Options for a string field. Mirrors the shape of Sanity Studio's
+ * `StringOptions.list` so consumers familiar with Studio can declare
+ * predefined values the same way.
+ */
+export type StringOptions = {
+  list?: ReadonlyArray<string | {value: string; title?: string}>
+}
 
 /**
  * @public

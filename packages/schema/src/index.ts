@@ -19,6 +19,7 @@ export type {
   ListSchemaType,
   OfDefinition,
   Schema,
+  StringOptions,
   StyleSchemaType,
 } from './schema'
 export {isSpan, isTextBlock, isTypedObject} from './types'
