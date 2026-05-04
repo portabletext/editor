@@ -1,3 +1,4 @@
+import {isTextBlock} from '@portabletext/schema'
 import {getNode} from '../node-traversal/get-node'
 import {getContainerScopedName} from '../schema/get-container-scoped-name'
 import {isEditableContainer} from '../schema/is-editable-container'
@@ -66,7 +67,8 @@ export function getFullyCoveredContainer(
       const fieldAcceptsTextBlock = container?.field.of.some(
         (member) => member.type === editor.schema.block.name,
       )
-      if (!fieldAcceptsTextBlock) {
+      const isText = isTextBlock({schema: editor.schema}, entry.node)
+      if (!fieldAcceptsTextBlock && !isText) {
         outermost = cursor
       }
     }

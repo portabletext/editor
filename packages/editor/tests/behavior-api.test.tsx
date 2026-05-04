@@ -921,5 +921,96 @@ describe('Behavior API', () => {
         )
       })
     })
+
+    test('Scenario: Replacing the entire span text inside an editable container in one batch lands the replacement in the surviving block', async () => {
+      const schemaDefinition = defineSchema({
+        blockObjects: [
+          {
+            name: 'callout',
+            fields: [{name: 'content', type: 'array', of: [{type: 'block'}]}],
+          },
+        ],
+      })
+
+      const calloutContainer = defineContainer<typeof schemaDefinition>({
+        scope: '$..callout',
+        field: 'content',
+        render: ({attributes, children}) => (
+          <div {...attributes}>{children}</div>
+        ),
+      })
+      const calloutBlockContainer = defineContainer<typeof schemaDefinition>({
+        scope: '$..callout.block',
+        field: 'children',
+        render: ({attributes, children}) => <p {...attributes}>{children}</p>,
+      })
+
+      const calloutKey = 'callout'
+      const blockKey = 'block'
+      const spanKey = 'span'
+      const spanPath = [
+        {_key: calloutKey},
+        'content',
+        {_key: blockKey},
+        'children',
+        {_key: spanKey},
+      ]
+
+      const {editor} = await createTestEditor({
+        keyGenerator: createTestKeyGenerator(),
+        schemaDefinition,
+        initialValue: [
+          {
+            _type: 'callout',
+            _key: calloutKey,
+            content: [
+              {
+                _type: 'block',
+                _key: blockKey,
+                children: [
+                  {_type: 'span', _key: spanKey, text: ':foo', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
+        children: (
+          <>
+            <ContainerPlugin
+              containers={[calloutContainer, calloutBlockContainer]}
+            />
+            <BehaviorPlugin
+              behaviors={[
+                defineBehavior({
+                  on: 'custom.replace-with-emoji',
+                  actions: [
+                    () => [
+                      raise({
+                        type: 'delete',
+                        at: {
+                          anchor: {path: spanPath, offset: 0},
+                          focus: {path: spanPath, offset: 4},
+                        },
+                      }),
+                      raise({type: 'insert.text', text: '👣'}),
+                    ],
+                  ],
+                }),
+              ]}
+            />
+          </>
+        ),
+      })
+
+      editor.send({type: 'custom.replace-with-emoji'})
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual(
+          ['CALLOUT:', '  B: 👣|'].join('\n'),
+        )
+      })
+    })
   })
 })
