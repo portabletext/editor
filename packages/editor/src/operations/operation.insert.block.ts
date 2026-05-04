@@ -12,6 +12,7 @@ import {getEnclosingBlock} from '../node-traversal/get-enclosing-block'
 import {getSibling} from '../node-traversal/get-sibling'
 import {getSpanNode} from '../node-traversal/get-span-node'
 import {getTextBlockNode} from '../node-traversal/get-text-block-node'
+import {getContainerScopedName} from '../schema/get-container-scoped-name'
 import {end as editorEnd} from '../slate/editor/end'
 import {pathRef} from '../slate/editor/path-ref'
 import {rangeRef} from '../slate/editor/range-ref'
@@ -45,6 +46,7 @@ type InsertTarget =
   | {kind: 'before'; blockPath: Path}
   | {kind: 'after'; blockPath: Path}
   | {kind: 'replace'; blockPath: Path}
+  | {kind: 'first-child'; insertAt: Path}
   | {kind: 'split-insert'; blockPath: Path; splitAt: Point}
   | {kind: 'fragment'; at: Point; endBlockPath: Path}
   | {kind: 'delete-then-insert'; range: Range; startBlockPath: Path}
@@ -76,9 +78,16 @@ export const insertBlockOperationImplementation: OperationImplementation<
   // block was removed) so we can fall back to the editor selection, which
   // matches the behavior expected by `insert.blocks`-style chained inserts
   // where a previous block in the chain may have been aborted.
+  // Resolve both `operation.at` and the editor's own selection through
+  // `resolveSelection` so a selection whose endpoints reference nodes that
+  // no longer exist (e.g. after a previous `delete` whose target was
+  // unset by normalization) doesn't drag `resolveTarget` up to an
+  // ancestor that's still in the tree. Treat such stale selections like
+  // "no selection at all" — `resolveTarget` then uses the editor's end,
+  // which lands the block in the right field of an empty container.
   const resolved = operation.at
     ? resolveSelection(editor, operation.at)
-    : editor.selection
+    : resolveSelection(editor, editor.selection)
   const at =
     resolved && operation.at && operation.placement !== 'auto'
       ? operation.at
@@ -154,6 +163,30 @@ function resolveTarget(args: {
     if (isEmptyTextBlock(schemaContext, endBlock)) {
       return {kind: 'replace', blockPath: endBlockPath}
     }
+
+    // When the editor's end falls on a registered editable container
+    // whose editable field is empty, descend into that field instead of
+    // placing the new block as a sibling after the container. Reachable
+    // when a behavior raises a `delete` followed by an `insert.block`:
+    // the raises run as one batch and normalization hasn't yet inserted
+    // a placeholder when the second one starts.
+    const containerField = editor.containers.get(
+      getContainerScopedName(editor, endBlock, endBlockPath),
+    )?.field
+    const fieldValue =
+      containerField &&
+      (endBlock as Record<string, unknown>)[containerField.name]
+    if (
+      containerField &&
+      Array.isArray(fieldValue) &&
+      fieldValue.length === 0
+    ) {
+      return {
+        kind: 'first-child',
+        insertAt: [...endBlockPath, containerField.name, 0],
+      }
+    }
+
     return {kind: 'after', blockPath: endBlockPath}
   }
 
@@ -252,6 +285,13 @@ function dispatchInsert(args: {
 
     case 'replace': {
       const insertedPath = replaceBlock(editor, block, target.blockPath)
+      applyPostInsertSelection(editor, insertedPath, select, selectionAtEntry)
+      return
+    }
+
+    case 'first-child': {
+      applyInsertNodeAtPath(editor, block, target.insertAt)
+      const insertedPath = [...target.insertAt.slice(0, -1), {_key: block._key}]
       applyPostInsertSelection(editor, insertedPath, select, selectionAtEntry)
       return
     }

@@ -11,7 +11,9 @@ import {
 } from '../src/behaviors/behavior.types.action'
 import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
 import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
+import {ContainerPlugin} from '../src/plugins/plugin.container'
 import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
+import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
 import {getSelectionAfterText} from '../test-utils/text-selection'
 import {toTextspec} from '../test-utils/to-textspec'
@@ -818,6 +820,105 @@ describe('Behavior API', () => {
             style: 'normal',
           },
         ])
+      })
+    })
+  })
+
+  describe('Chained `delete` and `insert.block` from a custom event', () => {
+    test('Scenario: Slash-command pattern inside an editable container lands the new block inside, not after', async () => {
+      const schemaDefinition = defineSchema({
+        blockObjects: [
+          {
+            name: 'callout',
+            fields: [{name: 'content', type: 'array', of: [{type: 'block'}]}],
+          },
+          {name: 'image'},
+        ],
+      })
+
+      const calloutContainer = defineContainer<typeof schemaDefinition>({
+        scope: '$..callout',
+        field: 'content',
+        render: ({attributes, children}) => (
+          <div {...attributes}>{children}</div>
+        ),
+      })
+      const calloutBlockContainer = defineContainer<typeof schemaDefinition>({
+        scope: '$..callout.block',
+        field: 'children',
+        render: ({attributes, children}) => <p {...attributes}>{children}</p>,
+      })
+
+      const calloutKey = 'callout'
+      const blockKey = 'block'
+      const spanKey = 'span'
+      const spanPath = [
+        {_key: calloutKey},
+        'content',
+        {_key: blockKey},
+        'children',
+        {_key: spanKey},
+      ]
+
+      const {editor} = await createTestEditor({
+        keyGenerator: createTestKeyGenerator(),
+        schemaDefinition,
+        initialValue: [
+          {
+            _type: 'callout',
+            _key: calloutKey,
+            content: [
+              {
+                _type: 'block',
+                _key: blockKey,
+                children: [
+                  {_type: 'span', _key: spanKey, text: '/im', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
+        children: (
+          <>
+            <ContainerPlugin
+              containers={[calloutContainer, calloutBlockContainer]}
+            />
+            <BehaviorPlugin
+              behaviors={[
+                defineBehavior({
+                  on: 'custom.slash-command',
+                  actions: [
+                    () => [
+                      raise({
+                        type: 'delete',
+                        at: {
+                          anchor: {path: spanPath, offset: 0},
+                          focus: {path: spanPath, offset: 3},
+                        },
+                      }),
+                      raise({
+                        type: 'insert.block',
+                        block: {_type: 'image'},
+                        placement: 'auto',
+                        select: 'end',
+                      }),
+                    ],
+                  ],
+                }),
+              ]}
+            />
+          </>
+        ),
+      })
+
+      editor.send({type: 'custom.slash-command'})
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual(
+          ['CALLOUT:', '  ^{IMAGE}|'].join('\n'),
+        )
       })
     })
   })
