@@ -1,4 +1,4 @@
-import type {EditorContext} from '../editor/editor-snapshot'
+import type {TraversalSnapshot} from '../node-traversal/traversal-snapshot'
 import type {BlockOffset} from '../types/block-offset'
 import type {EditorSelection} from '../types/editor'
 import {blockOffsetToSelectionPoint} from './util.block-offset-to-selection-point'
@@ -7,21 +7,21 @@ import {blockOffsetToSelectionPoint} from './util.block-offset-to-selection-poin
  * @public
  */
 export function blockOffsetsToSelection({
-  context,
+  snapshot,
   offsets,
   backward,
 }: {
-  context: Pick<EditorContext, 'schema' | 'value' | 'containers'>
+  snapshot: TraversalSnapshot
   offsets: {anchor: BlockOffset; focus: BlockOffset}
   backward?: boolean
 }): EditorSelection {
   const anchor = blockOffsetToSelectionPoint({
-    context,
+    snapshot,
     blockOffset: offsets.anchor,
     direction: backward ? 'backward' : 'forward',
   })
   const focus = blockOffsetToSelectionPoint({
-    context,
+    snapshot,
     blockOffset: offsets.focus,
     direction: backward ? 'forward' : 'backward',
   })

@@ -292,6 +292,7 @@ describe(resolveSelection.name, () => {
         schema: context.schema,
         containers: context.containers,
         children: context.value,
+        blockIndexMap: new Map(),
       },
       {
         anchor: {
@@ -338,6 +339,7 @@ describe(resolveSelection.name, () => {
         schema: context.schema,
         containers: context.containers,
         children: context.value,
+        blockIndexMap: new Map(),
       },
       {
         anchor: {

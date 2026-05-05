@@ -118,14 +118,17 @@ function resolveSelectionPoint(
     // Resolve the offset to a specific span position. The `isBlock` predicate
     // answers "is this path AT a block (as opposed to inside one)" at any
     // depth, regardless of the parent field name.
-    const isBlockLevelPath = isBlock(context, selectionPoint.path)
+    const isBlockLevelPath = isBlock(snapshot, selectionPoint.path)
 
     if (isTextBlock({schema: editor.schema}, entry.node) && isBlockLevelPath) {
       const spanPoint = blockOffsetToSpanSelectionPoint({
-        context: {
-          schema: editor.schema,
-          value: [entry.node],
-          containers: editor.containers,
+        snapshot: {
+          context: {
+            schema: editor.schema,
+            value: [entry.node],
+            containers: editor.containers,
+          },
+          blockIndexMap: new Map(),
         },
         blockOffset: {
           path: [{_key: entry.node._key}],

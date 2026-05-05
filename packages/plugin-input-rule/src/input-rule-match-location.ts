@@ -73,12 +73,12 @@ export function getInputRuleMatchLocation({
   }
 
   const anchorBackwards = blockOffsetToSpanSelectionPoint({
-    context: snapshot.context,
+    snapshot,
     blockOffset: normalizedOffsets.anchor,
     direction: 'backward',
   })
   const focusForwards = blockOffsetToSpanSelectionPoint({
-    context: snapshot.context,
+    snapshot,
     blockOffset: normalizedOffsets.focus,
     direction: 'forward',
   })

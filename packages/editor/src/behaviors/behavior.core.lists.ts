@@ -36,7 +36,7 @@ const clearListOnBackspace = defineBehavior({
 
     if (
       !isAtTheBeginningOfBlock({
-        context: snapshot.context,
+        snapshot,
         block: focusTextBlock.node,
       })
     ) {
@@ -150,7 +150,7 @@ const mergeTextIntoListOnBackspace = defineBehavior({
 
     if (
       !isAtTheBeginningOfBlock({
-        context: snapshot.context,
+        snapshot,
         block: focusTextBlock.node,
       })
     ) {
