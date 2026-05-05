@@ -1342,6 +1342,167 @@ describe(markdownToPortableText.name, () => {
       })
     })
 
+    describe('task', () => {
+      test('default unchecked task', () => {
+        const keyGenerator = createTestKeyGenerator()
+        expect(markdownToPortableText('- [ ] foo', {keyGenerator})).toEqual([
+          {
+            _type: 'block',
+            _key: 'k0',
+            children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+            markDefs: [],
+            style: 'normal',
+            listItem: 'task',
+            level: 1,
+            checked: false,
+          },
+        ])
+      })
+
+      test('default checked task', () => {
+        const keyGenerator = createTestKeyGenerator()
+        expect(markdownToPortableText('- [x] foo', {keyGenerator})).toEqual([
+          {
+            _type: 'block',
+            _key: 'k0',
+            children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+            markDefs: [],
+            style: 'normal',
+            listItem: 'task',
+            level: 1,
+            checked: true,
+          },
+        ])
+      })
+
+      test('uppercase X is also checked', () => {
+        const keyGenerator = createTestKeyGenerator()
+        expect(markdownToPortableText('- [X] foo', {keyGenerator})).toEqual([
+          {
+            _type: 'block',
+            _key: 'k0',
+            children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+            markDefs: [],
+            style: 'normal',
+            listItem: 'task',
+            level: 1,
+            checked: true,
+          },
+        ])
+      })
+
+      test('custom task list type', () => {
+        const keyGenerator = createTestKeyGenerator()
+        expect(
+          markdownToPortableText('- [x] foo', {
+            keyGenerator,
+            schema: compileSchema(defineSchema({lists: [{name: 'todo'}]})),
+            listItem: {
+              task: ({context}) => {
+                return context.schema.lists.find((list) => list.name === 'todo')
+                  ?.name
+              },
+            },
+          }),
+        ).toEqual([
+          {
+            _type: 'block',
+            _key: 'k0',
+            children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+            markDefs: [],
+            style: 'normal',
+            listItem: 'todo',
+            level: 1,
+            checked: true,
+          },
+        ])
+      })
+
+      test('falls back to bullet when schema does not declare a task list', () => {
+        const keyGenerator = createTestKeyGenerator()
+        expect(
+          markdownToPortableText('- [x] foo', {
+            keyGenerator,
+            schema: compileSchema(defineSchema({lists: [{name: 'bullet'}]})),
+          }),
+        ).toEqual([
+          {
+            _type: 'block',
+            _key: 'k0',
+            children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+            markDefs: [],
+            style: 'normal',
+            listItem: 'bullet',
+            level: 1,
+          },
+        ])
+      })
+
+      test('mixed task and plain bullet items', () => {
+        const keyGenerator = createTestKeyGenerator()
+        const markdown = ['- [ ] todo', '- done', '- [x] also done'].join('\n')
+        expect(markdownToPortableText(markdown, {keyGenerator})).toEqual([
+          {
+            _type: 'block',
+            _key: 'k0',
+            children: [{_type: 'span', _key: 'k1', text: 'todo', marks: []}],
+            markDefs: [],
+            style: 'normal',
+            listItem: 'task',
+            level: 1,
+            checked: false,
+          },
+          {
+            _type: 'block',
+            _key: 'k2',
+            children: [{_type: 'span', _key: 'k3', text: 'done', marks: []}],
+            markDefs: [],
+            style: 'normal',
+            listItem: 'bullet',
+            level: 1,
+          },
+          {
+            _type: 'block',
+            _key: 'k4',
+            children: [
+              {_type: 'span', _key: 'k5', text: 'also done', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+            listItem: 'task',
+            level: 1,
+            checked: true,
+          },
+        ])
+      })
+
+      test('task nested under bullet', () => {
+        const keyGenerator = createTestKeyGenerator()
+        const markdown = ['- foo', '   - [x] bar'].join('\n')
+        expect(markdownToPortableText(markdown, {keyGenerator})).toEqual([
+          {
+            _type: 'block',
+            _key: 'k0',
+            children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+            markDefs: [],
+            style: 'normal',
+            listItem: 'bullet',
+            level: 1,
+          },
+          {
+            _type: 'block',
+            _key: 'k2',
+            children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+            markDefs: [],
+            style: 'normal',
+            listItem: 'task',
+            level: 2,
+            checked: true,
+          },
+        ])
+      })
+    })
+
     describe('with code block', () => {
       const markdown = [
         '1. foo',

@@ -21,6 +21,7 @@ import {
   defaultSchema,
   defaultStrikeThroughDecoratorDefinition,
   defaultStrongDecoratorDefinition,
+  defaultTaskListItemDefinition,
   defaultUnorderedListItemDefinition,
   h1StyleDefinition,
   h2StyleDefinition,
@@ -69,6 +70,7 @@ type Options = {
   listItem?: {
     number?: ListItemMatcher
     bullet?: ListItemMatcher
+    task?: ListItemMatcher
   }
   types?: {
     code?: ObjectMatcher<{language: string | undefined; code: string}>
@@ -154,6 +156,7 @@ const defaultOptions = {
   listItem: {
     number: buildListItemMatcher(defaultOrderedListItemDefinition),
     bullet: buildListItemMatcher(defaultUnorderedListItemDefinition),
+    task: buildListItemMatcher(defaultTaskListItemDefinition),
   },
   marks: {
     strong: buildDecoratorMatcher(defaultStrongDecoratorDefinition),
@@ -243,6 +246,54 @@ export function markdownToPortableText(
     .use(alert)
 
   const tokens = md.parse(markdown, {})
+
+  // Pre-pass: detect GFM task-list checkbox prefixes (`[ ]`, `[x]`, `[X]`)
+  // on the first inline content of each list item. Strip the prefix from the
+  // inline content and remember which list items are tasks (and their checked
+  // state) so the main walk can apply `listItem: 'task'` and `checked` when
+  // processing the corresponding `list_item_open` token.
+  const taskCheckedByListItemIndex = new Map<number, boolean>()
+  for (let i = 0; i < tokens.length; i++) {
+    const token = tokens[i]
+    if (token?.type !== 'list_item_open') {
+      continue
+    }
+    // Find the first inline token within this list item.
+    let inlineIndex = -1
+    for (let j = i + 1; j < tokens.length; j++) {
+      const candidate = tokens[j]
+      if (!candidate) {
+        continue
+      }
+      if (candidate.type === 'list_item_close') {
+        break
+      }
+      if (candidate.type === 'inline') {
+        inlineIndex = j
+        break
+      }
+    }
+    if (inlineIndex === -1) {
+      continue
+    }
+    const inlineToken = tokens[inlineIndex]
+    if (!inlineToken) {
+      continue
+    }
+    const match = inlineToken.content.match(/^\[([ xX])\] /)
+    if (!match) {
+      continue
+    }
+    const checked = match[1] !== ' '
+    taskCheckedByListItemIndex.set(i, checked)
+    // Strip the prefix from the content and the first child text token so the
+    // resulting span doesn't include the checkbox marker.
+    inlineToken.content = inlineToken.content.slice(match[0].length)
+    const firstChild = inlineToken.children?.[0]
+    if (firstChild && typeof firstChild.content === 'string') {
+      firstChild.content = firstChild.content.slice(match[0].length)
+    }
+  }
 
   const portableText: Array<PortableTextBlock> = []
 
@@ -359,7 +410,7 @@ export function markdownToPortableText(
 
   // Helpers for lists
   const listLevel = () => currentListStack.length
-  const ensureListBlock = (listItem: string) => {
+  const ensureListBlock = (listItem: string, checked?: boolean) => {
     if (!currentBlock) {
       // Use blockquote style if inside a blockquote, otherwise use normal style
       const style =
@@ -387,10 +438,20 @@ export function markdownToPortableText(
       currentBlock.listItem = listItem
       currentBlock.level = listLevel()
     }
+
+    if (checked !== undefined) {
+      ;(currentBlock as PortableTextTextBlock & {checked?: boolean}).checked =
+        checked
+    }
   }
 
   // Walk tokens
-  for (const token of tokens) {
+  for (let tokenIndex = 0; tokenIndex < tokens.length; tokenIndex++) {
+    const token = tokens[tokenIndex]
+    if (!token) {
+      continue
+    }
+
     switch (token.type) {
       // Paragraphs
       case 'paragraph_open': {
@@ -527,9 +588,9 @@ export function markdownToPortableText(
         currentListStack.pop()
         break
       case 'list_item_open': {
-        const listType = currentListStack.at(-1)
+        const baseListType = currentListStack.at(-1)
 
-        if (listType === undefined) {
+        if (baseListType === undefined) {
           throw new Error('Expected an open list')
         }
 
@@ -537,6 +598,24 @@ export function markdownToPortableText(
         // This is needed for proper separation of list items
         if (currentBlock) {
           flushBlock()
+        }
+
+        // Resolve task list type and checked state for this specific item.
+        // If the schema declares a `task` list definition, GFM checkboxes
+        // (`- [ ]` / `- [x]`) override the surrounding list's type for this
+        // item. Otherwise the prefix has already been stripped by the
+        // pre-pass and we render as the surrounding list type.
+        const taskChecked = taskCheckedByListItemIndex.get(tokenIndex)
+        let listType = baseListType
+        let checked: boolean | undefined
+        if (taskChecked !== undefined) {
+          const taskListType = consolidatedOptions.listItem.task?.({
+            context: {schema: consolidatedOptions.schema},
+          })
+          if (taskListType) {
+            listType = taskListType
+            checked = taskChecked
+          }
         }
 
         // If listType is null, it means there's no list definition in the schema
@@ -559,7 +638,7 @@ export function markdownToPortableText(
           break
         }
 
-        ensureListBlock(listType)
+        ensureListBlock(listType, checked)
         inListItem = true
         break
       }

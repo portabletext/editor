@@ -56,6 +56,10 @@ export const defaultUnorderedListItemDefinition = {
   name: 'bullet',
 } as const satisfies ListDefinition
 
+export const defaultTaskListItemDefinition = {
+  name: 'task',
+} as const satisfies ListDefinition
+
 /********************
  * Default decorator definitions
  ********************/
@@ -141,6 +145,9 @@ export const defaultCalloutObjectDefinition = {
  */
 export const defaultSchema = compileSchema(
   defineSchema({
+    block: {
+      fields: [{name: 'checked', type: 'boolean'}],
+    },
     styles: [
       normalStyleDefinition,
       h1StyleDefinition,
@@ -154,6 +161,7 @@ export const defaultSchema = compileSchema(
     lists: [
       defaultOrderedListItemDefinition,
       defaultUnorderedListItemDefinition,
+      defaultTaskListItemDefinition,
     ],
     decorators: [
       defaultStrongDecoratorDefinition,
