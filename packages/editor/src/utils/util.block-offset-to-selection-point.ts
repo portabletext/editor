@@ -4,15 +4,12 @@ import type {EditorSelectionPoint} from '../types/editor'
 import {blockOffsetToSpanSelectionPoint} from './util.block-offset'
 import {blockOffsetToBlockSelectionPoint} from './util.block-offset-to-block-selection-point'
 
-/**
- * @public
- */
 export function blockOffsetToSelectionPoint({
   context,
   blockOffset,
   direction,
 }: {
-  context: Pick<EditorContext, 'schema' | 'value'>
+  context: Pick<EditorContext, 'schema' | 'value' | 'containers'>
   blockOffset: BlockOffset
   direction: 'forward' | 'backward'
 }): EditorSelectionPoint | undefined {

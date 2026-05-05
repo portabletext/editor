@@ -2,6 +2,7 @@ import {isSpan, isTextBlock} from '@portabletext/schema'
 import {getChildren} from '../node-traversal/get-children'
 import {getLeaf} from '../node-traversal/get-leaf'
 import {getNode} from '../node-traversal/get-node'
+import {isBlock} from '../node-traversal/is-block'
 import {end as editorEnd} from '../slate/editor/end'
 import {start as editorStart} from '../slate/editor/start'
 import type {Path} from '../slate/interfaces/path'
@@ -111,15 +112,17 @@ function resolveSelectionPoint(
     }
 
     // Text block with a block-level offset (no child key in path).
-    // Resolve the offset to a specific span position.
-    if (
-      isTextBlock({schema: editor.schema}, entry.node) &&
-      !getChildKeyFromSelectionPoint(selectionPoint)
-    ) {
+    // Resolve the offset to a specific span position. The `isBlock` predicate
+    // answers "is this path AT a block (as opposed to inside one)" at any
+    // depth, regardless of the parent field name.
+    const isBlockLevelPath = isBlock(context, selectionPoint.path)
+
+    if (isTextBlock({schema: editor.schema}, entry.node) && isBlockLevelPath) {
       const spanPoint = blockOffsetToSpanSelectionPoint({
         context: {
           schema: editor.schema,
           value: [entry.node],
+          containers: editor.containers,
         },
         blockOffset: {
           path: [{_key: entry.node._key}],

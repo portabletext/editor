@@ -2,8 +2,6 @@ export {
   blockOffsetToSpanSelectionPoint,
   spanSelectionPointToBlockOffset,
 } from './util.block-offset'
-export {blockOffsetToBlockSelectionPoint} from './util.block-offset-to-block-selection-point'
-export {blockOffsetToSelectionPoint} from './util.block-offset-to-selection-point'
 export {blockOffsetsToSelection} from './util.block-offsets-to-selection'
 export {childSelectionPointToBlockOffset} from './util.child-selection-point-to-block-offset'
 export {getBlockEndPoint} from './util.get-block-end-point'
@@ -20,6 +18,5 @@ export {isSelectionCollapsed} from './util.is-selection-collapsed'
 export {isSpan, isTextBlock} from '@portabletext/schema'
 export {mergeTextBlocks} from './util.merge-text-blocks'
 export {reverseSelection} from './util.reverse-selection'
-export {selectionPointToBlockOffset} from './util.selection-point-to-block-offset'
 export {sliceBlocks} from './util.slice-blocks'
 export {splitTextBlock} from './util.split-text-block'
