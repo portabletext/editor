@@ -1,9 +1,18 @@
 import type {PortableTextSpan} from '@portabletext/schema'
-import type {EditorContext} from '../editor/editor-snapshot'
 import {getBlockSubSchema} from '../schema/get-block-sub-schema'
 import type {Containers} from '../schema/resolve-containers'
 import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
+
+type PlaceholderSnapshot = {
+  context: {
+    schema: import('../editor/editor-schema').EditorSchema
+    containers: Containers
+    value: Array<Node>
+    keyGenerator: () => string
+  }
+  blockIndexMap: Map<string, number>
+}
 
 /**
  * Create a placeholder text block -- the empty initial block used when the
@@ -14,22 +23,19 @@ import type {Path} from '../slate/interfaces/path'
  * falls back to the root schema's first style.
  */
 export function createPlaceholderBlock(
-  context: Pick<EditorContext, 'keyGenerator' | 'schema'> & {
-    containers?: Containers
-    value?: Array<Node>
-  },
+  snapshot: PlaceholderSnapshot,
   path?: Path,
 ) {
-  const style = resolveDefaultStyle(context, path)
+  const style = resolveDefaultStyle(snapshot, path)
   return {
-    _type: context.schema.block.name,
-    _key: context.keyGenerator(),
+    _type: snapshot.context.schema.block.name,
+    _key: snapshot.context.keyGenerator(),
     style,
     markDefs: [],
     children: [
       {
-        _type: context.schema.span.name,
-        _key: context.keyGenerator(),
+        _type: snapshot.context.schema.span.name,
+        _key: snapshot.context.keyGenerator(),
         text: '',
         marks: [],
       } as PortableTextSpan,
@@ -38,26 +44,13 @@ export function createPlaceholderBlock(
 }
 
 function resolveDefaultStyle(
-  context: Pick<EditorContext, 'keyGenerator' | 'schema'> & {
-    containers?: Containers
-    value?: Array<Node>
-  },
+  snapshot: PlaceholderSnapshot,
   path?: Path,
 ): string {
-  const rootFallback = context.schema.styles[0]?.name ?? 'normal'
-  if (!path || !context.containers || !context.value) {
+  const rootFallback = snapshot.context.schema.styles[0]?.name ?? 'normal'
+  if (!path) {
     return rootFallback
   }
-  const subSchema = getBlockSubSchema(
-    {
-      context: {
-        schema: context.schema,
-        containers: context.containers,
-        value: context.value,
-      },
-      blockIndexMap: new Map<string, number>(),
-    },
-    path,
-  )
+  const subSchema = getBlockSubSchema(snapshot, path)
   return subSchema.styles[0]?.name ?? rootFallback
 }

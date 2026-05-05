@@ -21,7 +21,15 @@ export function createSlateEditor(
 
   const context = config.editorActor.getSnapshot().context
 
-  const placeholderBlock = createPlaceholderBlock(context)
+  const placeholderBlock = createPlaceholderBlock({
+    context: {
+      schema: context.schema,
+      containers: context.containers,
+      value: [],
+      keyGenerator: context.keyGenerator,
+    },
+    blockIndexMap: new Map(),
+  })
 
   const editor = createEditor()
 
