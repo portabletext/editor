@@ -1,5 +1,5 @@
 import {defineSchema} from '@portabletext/schema'
-import {createTestKeyGenerator} from '@portabletext/test'
+import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {createTestEditor} from '../src/test/vitest'
@@ -368,6 +368,205 @@ describe('event.input.*', () => {
           style: 'normal',
         },
       ])
+    })
+  })
+
+  test('Scenario: insertReplacementText lands at targetRange', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {_type: 'span', _key: spanKey, text: 'I has a problem', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    const editorEl = locator.element() as HTMLElement
+    editorEl.focus()
+    const textNode = editorEl.querySelector('[data-slate-string]')!
+      .childNodes[0] as Text
+
+    document.getSelection()!.setBaseAndExtent(textNode, 15, textNode, 15)
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection?.focus.offset).toBe(15)
+    })
+
+    // A fresh edit dirties the node-map and shifts the selection. The
+    // browser then fires the replacement event before the next React paint.
+    editor.send({type: 'insert.text', text: '!'})
+
+    const liveTextNode = editorEl.querySelector('[data-slate-string]')!
+      .childNodes[0] as Text
+    const targetRange = document.createRange()
+    targetRange.setStart(liveTextNode, 2)
+    targetRange.setEnd(liveTextNode, 5)
+
+    const dataTransfer = new DataTransfer()
+    dataTransfer.setData('text/plain', 'have')
+
+    const beforeInput = new InputEvent('beforeinput', {
+      bubbles: true,
+      cancelable: true,
+      inputType: 'insertReplacementText',
+      data: 'have',
+      dataTransfer,
+    })
+    Object.defineProperty(beforeInput, 'getTargetRanges', {
+      value: () => [targetRange],
+    })
+
+    editorEl.dispatchEvent(beforeInput)
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual([
+        'I have a problem!',
+      ])
+    })
+
+    // The caret should land right after the inserted replacement.
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {
+        path: [{_key: blockKey}, 'children', {_key: spanKey}],
+        offset: 6,
+      },
+      focus: {
+        path: [{_key: blockKey}, 'children', {_key: spanKey}],
+        offset: 6,
+      },
+      backward: false,
+    })
+  })
+
+  test('Scenario: insertReplacementText with cross-block targetRange lands at targetRange', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const li1Key = keyGenerator()
+    const li1SpanKey = keyGenerator()
+    const li2Key = keyGenerator()
+    const li2SpanKey = keyGenerator()
+    const li3Key = keyGenerator()
+    const li3SpanKey = keyGenerator()
+
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        lists: [{name: 'bullet'}],
+      }),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: li1Key,
+          children: [
+            {_type: 'span', _key: li1SpanKey, text: 'first item', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+          level: 1,
+          listItem: 'bullet',
+        },
+        {
+          _type: 'block',
+          _key: li2Key,
+          children: [
+            {_type: 'span', _key: li2SpanKey, text: 'second item', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+          level: 1,
+          listItem: 'bullet',
+        },
+        {
+          _type: 'block',
+          _key: li3Key,
+          children: [
+            {
+              _type: 'span',
+              _key: li3SpanKey,
+              text: 'I has a problem',
+              marks: [],
+            },
+          ],
+          markDefs: [],
+          style: 'normal',
+          level: 1,
+          listItem: 'bullet',
+        },
+      ],
+    })
+
+    const editorEl = locator.element() as HTMLElement
+    editorEl.focus()
+
+    // Place caret in middle of li2 (the user is editing here)
+    const li2TextNode = editorEl.querySelector(
+      `[data-block-key="${li2Key}"] [data-slate-string]`,
+    )!.childNodes[0] as Text
+    document.getSelection()!.setBaseAndExtent(li2TextNode, 6, li2TextNode, 6)
+    await vi.waitFor(() => {
+      const sel = editor.getSnapshot().context.selection
+      expect(sel?.focus.offset).toBe(6)
+    })
+
+    // Recent edit (matches video: user has just been typing)
+    editor.send({type: 'insert.text', text: 'X'})
+
+    // Grammarly accepts a suggestion in li3 (a different block from caret).
+    // Browser fires beforeinput with targetRange pointing into li3.
+    const li3TextNode = editorEl.querySelector(
+      `[data-block-key="${li3Key}"] [data-slate-string]`,
+    )!.childNodes[0] as Text
+    const targetRange = document.createRange()
+    targetRange.setStart(li3TextNode, 2)
+    targetRange.setEnd(li3TextNode, 5)
+
+    const dataTransfer = new DataTransfer()
+    dataTransfer.setData('text/plain', 'have')
+
+    const beforeInput = new InputEvent('beforeinput', {
+      bubbles: true,
+      cancelable: true,
+      inputType: 'insertReplacementText',
+      data: 'have',
+      dataTransfer,
+    })
+    Object.defineProperty(beforeInput, 'getTargetRanges', {
+      value: () => [targetRange],
+    })
+
+    editorEl.dispatchEvent(beforeInput)
+
+    // The replacement must land in li3 (where the targetRange was), NOT in li2
+    // (where the caret was). li2's text should still have just the typed 'X'.
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual([
+        '>-:first item',
+        '>-:secondX item',
+        '>-:I have a problem',
+      ])
+    })
+
+    // The caret should land right after the inserted replacement in li3,
+    // not back in li2 where the user was typing.
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {
+        path: [{_key: li3Key}, 'children', {_key: li3SpanKey}],
+        offset: 6,
+      },
+      focus: {
+        path: [{_key: li3Key}, 'children', {_key: li3SpanKey}],
+        offset: 6,
+      },
+      backward: false,
     })
   })
 })
