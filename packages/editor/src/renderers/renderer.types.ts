@@ -3,6 +3,7 @@ import type {ReactElement} from 'react'
 import type {ChildArrayField} from '../schema/resolve-containers'
 import type {ParsedScope} from '../scope/parse-scope'
 import type {AllContainers, ContainerScope} from '../scope/scope.types'
+import type {Path} from '../slate/interfaces/path'
 
 /**
  * @alpha
@@ -13,7 +14,10 @@ export type ContainerDefinition = {
   render?: (props: {
     attributes: Record<string, unknown>
     children: ReactElement
+    focused: boolean
     node: PortableTextBlock
+    path: Path
+    selected: boolean
   }) => ReactElement | null
 }
 
@@ -75,7 +79,10 @@ type SchemaContainerConfig<TSchema extends SchemaDefinition> =
             render?: (props: {
               attributes: Record<string, unknown>
               children: ReactElement
+              focused: boolean
               node: PortableTextBlock
+              path: Path
+              selected: boolean
             }) => ReactElement | null
           }
         : never

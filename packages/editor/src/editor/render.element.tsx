@@ -57,6 +57,7 @@ export function RenderElement(props: {
         attributes={props.attributes}
         element={props.element}
         containerConfig={containerConfig}
+        path={props.path}
       >
         {props.children}
       </RenderContainer>
