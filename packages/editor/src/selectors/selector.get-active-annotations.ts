@@ -21,7 +21,7 @@ export const getActiveAnnotations: EditorSelector<Array<PortableTextObject>> = (
   // that aren't decorators in any in-scope sub-schema are annotations.
   const decoratorNames = new Set<string>()
   for (const block of selectedBlocks) {
-    for (const decorator of getBlockSubSchema(snapshot.context, block.path)
+    for (const decorator of getBlockSubSchema(snapshot, block.path)
       .decorators) {
       decoratorNames.add(decorator.name)
     }

@@ -148,11 +148,11 @@ const breakingEntireBlocks = defineBehavior({
     }
 
     const selectionStartBlock = getEnclosingBlock(
-      snapshot.context,
+      snapshot,
       selectionStartPoint.path,
     )
     const selectionEndBlock = getEnclosingBlock(
-      snapshot.context,
+      snapshot,
       selectionEndPoint.path,
     )
 
@@ -174,15 +174,12 @@ const breakingEntireBlocks = defineBehavior({
       isEqualSelectionPoints(selectionEndPoint, endBlockEndPoint)
     ) {
       const selectedBlocks: Array<{node: PortableTextBlock; path: Path}> = []
-      for (const entry of getNodes(
-        {...snapshot.context, blockIndexMap: snapshot.blockIndexMap},
-        {
-          from: selectionStartBlock.path,
-          to: selectionEndBlock.path,
-          match: (_node, path) => isBlock(snapshot.context, path),
-        },
-      )) {
-        const block = getBlock(snapshot.context, entry.path)
+      for (const entry of getNodes(snapshot, {
+        from: selectionStartBlock.path,
+        to: selectionEndBlock.path,
+        match: (_node, path) => isBlock(snapshot, path),
+      })) {
+        const block = getBlock(snapshot, entry.path)
         if (block) {
           selectedBlocks.push(block)
         }

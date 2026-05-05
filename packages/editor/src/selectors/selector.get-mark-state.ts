@@ -100,13 +100,12 @@ export const getMarkState: EditorSelector<MarkState | undefined> = (
     // the mark cannot apply) don't disqualify the mark across the
     // selection.
     const spanInfo = selectedSpans.map((span) => {
-      const block = getAncestorTextBlock(snapshot.context, span.path)
+      const block = getAncestorTextBlock(snapshot, span.path)
       return {
         marks: span.node.marks ?? [],
-        decoratorNames: getBlockSubSchema(
-          snapshot.context,
-          span.path,
-        ).decorators.map((decorator) => decorator.name),
+        decoratorNames: getBlockSubSchema(snapshot, span.path).decorators.map(
+          (decorator) => decorator.name,
+        ),
         markDefKeys: (block?.node.markDefs ?? []).map(
           (markDef) => markDef._key,
         ),
@@ -150,7 +149,7 @@ export const getMarkState: EditorSelector<MarkState | undefined> = (
     }
   }
 
-  const focusSubSchema = getBlockSubSchema(snapshot.context, focusSpan.path)
+  const focusSubSchema = getBlockSubSchema(snapshot, focusSpan.path)
   const decorators = focusSubSchema.decorators.map(
     (decorator) => decorator.name,
   )

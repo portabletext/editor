@@ -1,9 +1,7 @@
-import type {EditorSchema} from '../editor/editor-schema'
 import {getChildren} from '../node-traversal/get-children'
+import type {TraversalSnapshot} from '../node-traversal/traversal-snapshot'
 import {getEnclosingContainer} from '../schema/get-enclosing-container'
 import {getRootAcceptedTypes} from '../schema/get-root-accepted-types'
-import type {Containers} from '../schema/resolve-containers'
-import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
 
 /**
@@ -24,21 +22,17 @@ import type {Path} from '../slate/interfaces/path'
  * returns `undefined`.
  */
 export function getUnwrapTarget(
-  context: {
-    schema: EditorSchema
-    containers: Containers
-    value: Array<Node>
-  },
+  snapshot: TraversalSnapshot,
   originPath: Path,
   payloadTypes: ReadonlySet<string>,
 ): Path | undefined {
   let current = originPath
 
   while (true) {
-    const enclosing = getEnclosingContainer(context, current)
+    const enclosing = getEnclosingContainer(snapshot, current)
 
     if (!enclosing) {
-      const rootAccepted = getRootAcceptedTypes(context.schema)
+      const rootAccepted = getRootAcceptedTypes(snapshot.context.schema)
       if ([...payloadTypes].every((type) => rootAccepted.has(type))) {
         return current
       }
@@ -50,7 +44,7 @@ export function getUnwrapTarget(
       return current
     }
 
-    if (getChildren(context, enclosing.path).length !== 1) {
+    if (getChildren(snapshot, enclosing.path).length !== 1) {
       return undefined
     }
 

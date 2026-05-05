@@ -22,7 +22,11 @@ export function unsetMatchedNodesInRange(
 ): void {
   const candidates: Array<{node: Node; path: Path}> = []
 
-  for (const entry of getNodes(editor, {from, to, match: predicate})) {
+  for (const entry of getNodes(editor, {
+    from,
+    to,
+    match: predicate,
+  })) {
     candidates.push(entry)
   }
 

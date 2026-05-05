@@ -1,26 +1,16 @@
 import type {OfDefinition} from '@portabletext/schema'
-import type {EditorSchema} from '../editor/editor-schema'
 import {getAncestors} from '../node-traversal/get-ancestors'
-import type {Node} from '../slate/interfaces/node'
+import type {TraversalSnapshot} from '../node-traversal/traversal-snapshot'
 import type {Path} from '../slate/interfaces/path'
 import {isObjectNode} from '../slate/node/is-object-node'
 import {getContainerScopedName} from './get-container-scoped-name'
-import type {Containers} from './resolve-containers'
 
 /**
  * Walk ancestors from `path` and return the nearest registered editable
- * container — its resolved field definition, the raw `of` array, and the
- * path at which it lives.
- *
- * Returns `undefined` when no ancestor is a registered container (the
- * caller falls back to root-level schema views).
+ * container.
  */
 export function getEnclosingContainer(
-  context: {
-    schema: EditorSchema
-    containers: Containers
-    value: Array<Node>
-  },
+  snapshot: TraversalSnapshot,
   path: Path,
 ):
   | {
@@ -28,17 +18,17 @@ export function getEnclosingContainer(
       path: Path
     }
   | undefined {
-  for (const ancestor of getAncestors(context, path)) {
-    if (!isObjectNode({schema: context.schema}, ancestor.node)) {
+  for (const ancestor of getAncestors(snapshot, path)) {
+    if (!isObjectNode({schema: snapshot.context.schema}, ancestor.node)) {
       continue
     }
 
     const scopedName = getContainerScopedName(
-      context,
+      snapshot,
       ancestor.node,
       ancestor.path,
     )
-    const container = context.containers.get(scopedName)
+    const container = snapshot.context.containers.get(scopedName)
 
     if (!container) {
       continue

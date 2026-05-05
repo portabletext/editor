@@ -167,7 +167,7 @@ async function assertEditorState(
     // Accept any boundary-equivalent selection that produces the expected
     // textspec.
     for (const variant of boundaryEquivalentSelections(
-      {schema, containers, value},
+      {context: {schema, containers, value}, blockIndexMap: new Map()},
       selection,
     )) {
       if (renderActual(variant) === expected) {

@@ -10,17 +10,17 @@ describe(getNode.name, () => {
   const testbed = createNodeTraversalTestbed()
 
   test('empty path', () => {
-    expect(getNode(testbed.context, [])).toBeUndefined()
+    expect(getNode(testbed.snapshot, [])).toBeUndefined()
   })
 
   test('text block', () => {
-    const entry = getNode(testbed.context, [{_key: 'k3'}])
+    const entry = getNode(testbed.snapshot, [{_key: 'k3'}])
     expect(entry?.node).toBe(testbed.textBlock1)
     expect(entry?.path).toEqual([{_key: 'k3'}])
   })
 
   test('span', () => {
-    const entry = getNode(testbed.context, [
+    const entry = getNode(testbed.snapshot, [
       {_key: 'k3'},
       'children',
       {_key: 'k0'},
@@ -30,7 +30,7 @@ describe(getNode.name, () => {
   })
 
   test('inline object', () => {
-    const entry = getNode(testbed.context, [
+    const entry = getNode(testbed.snapshot, [
       {_key: 'k3'},
       'children',
       {_key: 'k1'},
@@ -40,29 +40,29 @@ describe(getNode.name, () => {
   })
 
   test('block object', () => {
-    const entry = getNode(testbed.context, [{_key: 'k4'}])
+    const entry = getNode(testbed.snapshot, [{_key: 'k4'}])
     expect(entry?.node).toBe(testbed.image)
     expect(entry?.path).toEqual([{_key: 'k4'}])
   })
 
   test('second text block', () => {
-    const entry = getNode(testbed.context, [{_key: 'k6'}])
+    const entry = getNode(testbed.snapshot, [{_key: 'k6'}])
     expect(entry?.node).toBe(testbed.textBlock2)
     expect(entry?.path).toEqual([{_key: 'k6'}])
   })
 
   test('out of bounds', () => {
-    expect(getNode(testbed.context, [{_key: 'nonexistent'}])).toBeUndefined()
+    expect(getNode(testbed.snapshot, [{_key: 'nonexistent'}])).toBeUndefined()
   })
 
   test('code block', () => {
-    const entry = getNode(testbed.context, [{_key: 'k11'}])
+    const entry = getNode(testbed.snapshot, [{_key: 'k11'}])
     expect(entry?.node).toBe(testbed.codeBlock)
     expect(entry?.path).toEqual([{_key: 'k11'}])
   })
 
   test('code block -> first line', () => {
-    const entry = getNode(testbed.context, [
+    const entry = getNode(testbed.snapshot, [
       {_key: 'k11'},
       'code',
       {_key: 'k8'},
@@ -72,7 +72,7 @@ describe(getNode.name, () => {
   })
 
   test('code block -> second line', () => {
-    const entry = getNode(testbed.context, [
+    const entry = getNode(testbed.snapshot, [
       {_key: 'k11'},
       'code',
       {_key: 'k10'},
@@ -82,7 +82,7 @@ describe(getNode.name, () => {
   })
 
   test('code block -> line -> span', () => {
-    const entry = getNode(testbed.context, [
+    const entry = getNode(testbed.snapshot, [
       {_key: 'k11'},
       'code',
       {_key: 'k8'},
@@ -100,7 +100,7 @@ describe(getNode.name, () => {
   })
 
   test('table -> row', () => {
-    const entry = getNode(testbed.context, [
+    const entry = getNode(testbed.snapshot, [
       {_key: 'k26'},
       'rows',
       {_key: 'k21'},
@@ -110,7 +110,7 @@ describe(getNode.name, () => {
   })
 
   test('table -> row -> first cell', () => {
-    const entry = getNode(testbed.context, [
+    const entry = getNode(testbed.snapshot, [
       {_key: 'k26'},
       'rows',
       {_key: 'k21'},
@@ -128,7 +128,7 @@ describe(getNode.name, () => {
   })
 
   test('table -> row -> second cell', () => {
-    const entry = getNode(testbed.context, [
+    const entry = getNode(testbed.snapshot, [
       {_key: 'k26'},
       'rows',
       {_key: 'k21'},
@@ -146,7 +146,7 @@ describe(getNode.name, () => {
   })
 
   test('cell -> first block', () => {
-    const entry = getNode(testbed.context, [
+    const entry = getNode(testbed.snapshot, [
       {_key: 'k26'},
       'rows',
       {_key: 'k21'},
@@ -168,7 +168,7 @@ describe(getNode.name, () => {
   })
 
   test('cell -> second block', () => {
-    const entry = getNode(testbed.context, [
+    const entry = getNode(testbed.snapshot, [
       {_key: 'k26'},
       'rows',
       {_key: 'k21'},
@@ -190,7 +190,7 @@ describe(getNode.name, () => {
   })
 
   test('span inside cell block', () => {
-    const entry = getNode(testbed.context, [
+    const entry = getNode(testbed.snapshot, [
       {_key: 'k26'},
       'rows',
       {_key: 'k21'},
@@ -216,7 +216,7 @@ describe(getNode.name, () => {
   })
 
   test('inline object inside cell block', () => {
-    const entry = getNode(testbed.context, [
+    const entry = getNode(testbed.snapshot, [
       {_key: 'k26'},
       'rows',
       {_key: 'k21'},
@@ -242,7 +242,7 @@ describe(getNode.name, () => {
   })
 
   test('second row', () => {
-    const entry = getNode(testbed.context, [
+    const entry = getNode(testbed.snapshot, [
       {_key: 'k26'},
       'rows',
       {_key: 'k25'},
@@ -257,11 +257,13 @@ describe(getNode.name, () => {
       tableContainers,
     )
     expect(
-      getNode({...testbed.context, containers: tableOnly}, [
-        {_key: 'k11'},
-        'code',
-        {_key: 'k8'},
-      ]),
+      getNode(
+        {
+          ...testbed.snapshot,
+          context: {...testbed.snapshot.context, containers: tableOnly},
+        },
+        [{_key: 'k11'}, 'code', {_key: 'k8'}],
+      ),
     ).toBeUndefined()
   })
 })

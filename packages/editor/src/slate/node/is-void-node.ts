@@ -1,8 +1,6 @@
 import type {PortableTextObject} from '@portabletext/schema'
-import type {EditorSchema} from '../../editor/editor-schema'
+import type {TraversalSnapshot} from '../../node-traversal/traversal-snapshot'
 import {isEditableContainer} from '../../schema/is-editable-container'
-import type {Containers} from '../../schema/resolve-containers'
-import type {Node} from '../interfaces/node'
 import type {Path} from '../interfaces/path'
 import {isObjectNode} from './is-object-node'
 
@@ -12,16 +10,12 @@ import {isObjectNode} from './is-object-node'
  * registered editable content (containers).
  */
 export function isVoidNode(
-  context: {
-    schema: EditorSchema
-    containers: Containers
-    value: Array<Node>
-  },
+  snapshot: TraversalSnapshot,
   node: unknown,
   path: Path,
 ): node is PortableTextObject {
   return (
-    isObjectNode({schema: context.schema}, node) &&
-    !isEditableContainer(context, node, path)
+    isObjectNode({schema: snapshot.context.schema}, node) &&
+    !isEditableContainer(snapshot, node, path)
   )
 }

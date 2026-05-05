@@ -1,28 +1,22 @@
 import {isSpan, type PortableTextSpan} from '@portabletext/schema'
-import type {EditorSchema} from '../editor/editor-schema'
-import type {Containers} from '../schema/resolve-containers'
-import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
 import {getNode} from './get-node'
+import type {TraversalSnapshot} from './traversal-snapshot'
 
 /**
  * Get the span node at a given path.
  */
 export function getSpanNode(
-  context: {
-    schema: EditorSchema
-    containers: Containers
-    value: Array<Node>
-  },
+  snapshot: TraversalSnapshot,
   path: Path,
 ): {node: PortableTextSpan; path: Path} | undefined {
-  const entry = getNode(context, path)
+  const entry = getNode(snapshot, path)
 
   if (!entry) {
     return undefined
   }
 
-  if (!isSpan({schema: context.schema}, entry.node)) {
+  if (!isSpan({schema: snapshot.context.schema}, entry.node)) {
     return undefined
   }
 

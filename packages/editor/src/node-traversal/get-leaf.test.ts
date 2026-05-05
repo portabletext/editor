@@ -6,13 +6,13 @@ describe(getLeaf.name, () => {
   const testbed = createNodeTraversalTestbed()
 
   test('first leaf from root (start edge)', () => {
-    const entry = getLeaf(testbed.context, [], {edge: 'start'})
+    const entry = getLeaf(testbed.snapshot, [], {edge: 'start'})
     expect(entry?.node).toBe(testbed.span1)
     expect(entry?.path).toEqual([{_key: 'k3'}, 'children', {_key: 'k0'}])
   })
 
   test('last leaf from root (end edge)', () => {
-    const entry = getLeaf(testbed.context, [], {edge: 'end'})
+    const entry = getLeaf(testbed.snapshot, [], {edge: 'end'})
     expect(entry?.node).toBe(testbed.emptySpan)
     expect(entry?.path).toEqual([
       {_key: 'k26'},
@@ -28,20 +28,20 @@ describe(getLeaf.name, () => {
   })
 
   test('first leaf from text block', () => {
-    const entry = getLeaf(testbed.context, [{_key: 'k3'}], {edge: 'start'})
+    const entry = getLeaf(testbed.snapshot, [{_key: 'k3'}], {edge: 'start'})
     expect(entry?.node).toBe(testbed.span1)
     expect(entry?.path).toEqual([{_key: 'k3'}, 'children', {_key: 'k0'}])
   })
 
   test('last leaf from text block', () => {
-    const entry = getLeaf(testbed.context, [{_key: 'k3'}], {edge: 'end'})
+    const entry = getLeaf(testbed.snapshot, [{_key: 'k3'}], {edge: 'end'})
     expect(entry?.node).toBe(testbed.span2)
     expect(entry?.path).toEqual([{_key: 'k3'}, 'children', {_key: 'k2'}])
   })
 
   test('span is already a leaf', () => {
     const entry = getLeaf(
-      testbed.context,
+      testbed.snapshot,
       [{_key: 'k3'}, 'children', {_key: 'k0'}],
       {edge: 'start'},
     )
@@ -50,14 +50,14 @@ describe(getLeaf.name, () => {
   })
 
   test('void block object is a leaf', () => {
-    const entry = getLeaf(testbed.context, [{_key: 'k4'}], {edge: 'start'})
+    const entry = getLeaf(testbed.snapshot, [{_key: 'k4'}], {edge: 'start'})
     expect(entry?.node).toBe(testbed.image)
     expect(entry?.path).toEqual([{_key: 'k4'}])
   })
 
   test('inline object is a leaf', () => {
     const entry = getLeaf(
-      testbed.context,
+      testbed.snapshot,
       [{_key: 'k3'}, 'children', {_key: 'k1'}],
       {edge: 'start'},
     )
@@ -67,8 +67,8 @@ describe(getLeaf.name, () => {
 
   test('empty document returns undefined', () => {
     const emptyContext = {
-      ...testbed.context,
-      value: [],
+      ...testbed.snapshot,
+      context: {...testbed.snapshot.context, value: []},
     }
     expect(getLeaf(emptyContext, [], {edge: 'start'})).toBeUndefined()
     expect(getLeaf(emptyContext, [], {edge: 'end'})).toBeUndefined()
@@ -76,11 +76,11 @@ describe(getLeaf.name, () => {
 
   test('invalid path returns undefined', () => {
     expect(
-      getLeaf(testbed.context, [{_key: 'nonexistent'}], {edge: 'start'}),
+      getLeaf(testbed.snapshot, [{_key: 'nonexistent'}], {edge: 'start'}),
     ).toBeUndefined()
     expect(
       getLeaf(
-        testbed.context,
+        testbed.snapshot,
         [{_key: 'k3'}, 'children', {_key: 'nonexistent'}],
         {edge: 'end'},
       ),
@@ -88,7 +88,7 @@ describe(getLeaf.name, () => {
   })
 
   test('first leaf from code block', () => {
-    const entry = getLeaf(testbed.context, [{_key: 'k11'}], {edge: 'start'})
+    const entry = getLeaf(testbed.snapshot, [{_key: 'k11'}], {edge: 'start'})
     expect(entry?.node).toBe(testbed.codeSpan1)
     expect(entry?.path).toEqual([
       {_key: 'k11'},
@@ -100,7 +100,7 @@ describe(getLeaf.name, () => {
   })
 
   test('last leaf from code block', () => {
-    const entry = getLeaf(testbed.context, [{_key: 'k11'}], {edge: 'end'})
+    const entry = getLeaf(testbed.snapshot, [{_key: 'k11'}], {edge: 'end'})
     expect(entry?.node).toBe(testbed.codeSpan2)
     expect(entry?.path).toEqual([
       {_key: 'k11'},
@@ -112,7 +112,7 @@ describe(getLeaf.name, () => {
   })
 
   test('first leaf from table', () => {
-    const entry = getLeaf(testbed.context, [{_key: 'k26'}], {edge: 'start'})
+    const entry = getLeaf(testbed.snapshot, [{_key: 'k26'}], {edge: 'start'})
     expect(entry?.node).toBe(testbed.cellSpan1)
     expect(entry?.path).toEqual([
       {_key: 'k26'},
@@ -128,7 +128,7 @@ describe(getLeaf.name, () => {
   })
 
   test('last leaf from table', () => {
-    const entry = getLeaf(testbed.context, [{_key: 'k26'}], {edge: 'end'})
+    const entry = getLeaf(testbed.snapshot, [{_key: 'k26'}], {edge: 'end'})
     expect(entry?.node).toBe(testbed.emptySpan)
     expect(entry?.path).toEqual([
       {_key: 'k26'},

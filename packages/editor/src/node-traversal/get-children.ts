@@ -6,23 +6,24 @@ import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
 import {isObjectNode} from '../slate/node/is-object-node'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
+import type {TraversalSnapshot} from './traversal-snapshot'
 
 /**
  * Get the children of a node at a given path.
  */
 export function getChildren(
-  context: {
-    schema: EditorSchema
-    containers: Containers
-    value: Array<Node>
-  },
+  snapshot: TraversalSnapshot,
   path: Path,
 ): Array<{node: Node; path: Path}> {
   const traversalContext = {
-    schema: context.schema,
-    containers: context.containers,
+    schema: snapshot.context.schema,
+    containers: snapshot.context.containers,
   }
-  return getChildrenInternal(traversalContext, {value: context.value}, path)
+  return getChildrenInternal(
+    traversalContext,
+    {value: snapshot.context.value},
+    path,
+  )
 }
 
 export function getChildrenInternal(

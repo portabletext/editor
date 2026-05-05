@@ -22,5 +22,5 @@ export const getAnchorChild: EditorSelector<
     return undefined
   }
 
-  return getInline(snapshot.context, selection.anchor.path)
+  return getInline(snapshot, selection.anchor.path)
 }

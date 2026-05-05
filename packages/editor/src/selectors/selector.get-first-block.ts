@@ -22,11 +22,11 @@ export const getFirstBlock: EditorSelector<
   const focusBlock = getFocusBlock(snapshot)
 
   if (focusBlock) {
-    const siblings = getChildren(snapshot.context, parentPath(focusBlock.path))
+    const siblings = getChildren(snapshot, parentPath(focusBlock.path))
     const first = siblings.at(0)
 
     if (first) {
-      return getBlock(snapshot.context, first.path)
+      return getBlock(snapshot, first.path)
     }
   }
 

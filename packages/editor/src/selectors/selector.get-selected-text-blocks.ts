@@ -32,17 +32,11 @@ export const getSelectedTextBlocks: EditorSelector<
 
   const result: Array<{node: PortableTextTextBlock; path: Path}> = []
 
-  for (const entry of getNodes(
-    {
-      ...snapshot.context,
-      blockIndexMap: snapshot.blockIndexMap,
-    },
-    {
-      from: startPoint.path,
-      to: endPoint.path,
-      match: (node) => isTextBlock(snapshot.context, node),
-    },
-  )) {
+  for (const entry of getNodes(snapshot, {
+    from: startPoint.path,
+    to: endPoint.path,
+    match: (node) => isTextBlock(snapshot.context, node),
+  })) {
     if (isTextBlock(snapshot.context, entry.node)) {
       result.push({node: entry.node, path: entry.path})
     }

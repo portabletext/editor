@@ -6,11 +6,11 @@ describe(getParent.name, () => {
   const testbed = createNodeTraversalTestbed()
 
   test('parent of top-level block', () => {
-    expect(getParent(testbed.context, [{_key: 'k3'}])).toBeUndefined()
+    expect(getParent(testbed.snapshot, [{_key: 'k3'}])).toBeUndefined()
   })
 
   test('parent of span', () => {
-    const entry = getParent(testbed.context, [
+    const entry = getParent(testbed.snapshot, [
       {_key: 'k3'},
       'children',
       {_key: 'k0'},
@@ -20,7 +20,7 @@ describe(getParent.name, () => {
   })
 
   test('parent of row', () => {
-    const entry = getParent(testbed.context, [
+    const entry = getParent(testbed.snapshot, [
       {_key: 'k26'},
       'rows',
       {_key: 'k21'},
@@ -30,7 +30,7 @@ describe(getParent.name, () => {
   })
 
   test('parent of cell', () => {
-    const entry = getParent(testbed.context, [
+    const entry = getParent(testbed.snapshot, [
       {_key: 'k26'},
       'rows',
       {_key: 'k21'},
@@ -42,7 +42,7 @@ describe(getParent.name, () => {
   })
 
   test('parent of block inside cell', () => {
-    const entry = getParent(testbed.context, [
+    const entry = getParent(testbed.snapshot, [
       {_key: 'k26'},
       'rows',
       {_key: 'k21'},
@@ -62,7 +62,7 @@ describe(getParent.name, () => {
   })
 
   test('parent of span inside cell block', () => {
-    const entry = getParent(testbed.context, [
+    const entry = getParent(testbed.snapshot, [
       {_key: 'k26'},
       'rows',
       {_key: 'k21'},
@@ -86,7 +86,7 @@ describe(getParent.name, () => {
   })
 
   test('parent of code line', () => {
-    const entry = getParent(testbed.context, [
+    const entry = getParent(testbed.snapshot, [
       {_key: 'k11'},
       'code',
       {_key: 'k8'},
@@ -96,6 +96,6 @@ describe(getParent.name, () => {
   })
 
   test('empty path returns undefined', () => {
-    expect(getParent(testbed.context, [])).toBeUndefined()
+    expect(getParent(testbed.snapshot, [])).toBeUndefined()
   })
 })

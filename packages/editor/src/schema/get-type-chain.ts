@@ -1,8 +1,7 @@
-import type {EditorSchema} from '../editor/editor-schema'
 import {getAncestors} from '../node-traversal/get-ancestors'
+import type {TraversalSnapshot} from '../node-traversal/traversal-snapshot'
 import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
-import type {Containers} from './resolve-containers'
 
 /**
  * Build the full type chain for a node at a given path, from root to the
@@ -15,16 +14,12 @@ import type {Containers} from './resolve-containers'
  * the chain is `['table', 'row', 'cell', 'block', 'span']`.
  */
 export function getTypeChain(
-  context: {
-    schema: EditorSchema
-    containers: Containers
-    value: Array<Node>
-  },
+  snapshot: TraversalSnapshot,
   node: Node,
   path: Path,
 ): Array<string> {
   const chain: Array<string> = []
-  const ancestors = getAncestors(context, path)
+  const ancestors = getAncestors(snapshot, path)
 
   for (let i = ancestors.length - 1; i >= 0; i--) {
     chain.push(ancestors[i]!.node._type)

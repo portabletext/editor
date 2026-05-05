@@ -21,5 +21,5 @@ export const getFocusBlock: EditorSelector<
     return undefined
   }
 
-  return getEnclosingBlock(snapshot.context, selection.focus.path)
+  return getEnclosingBlock(snapshot, selection.focus.path)
 }

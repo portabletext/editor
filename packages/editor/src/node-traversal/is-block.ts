@@ -1,12 +1,10 @@
 import type {PortableTextBlock} from '@portabletext/schema'
-import type {EditorSchema} from '../editor/editor-schema'
-import type {Containers} from '../schema/resolve-containers'
-import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
 import {isSpanNode} from '../slate/node/is-span-node'
 import {isTextBlockNode} from '../slate/node/is-text-block-node'
 import {getNode} from './get-node'
 import {getParent} from './get-parent'
+import type {TraversalSnapshot} from './traversal-snapshot'
 
 /**
  * Determine if a node at the given path is a block.
@@ -16,21 +14,14 @@ import {getParent} from './get-parent'
  * (spans and inline objects) are not blocks. Children of containers are
  * blocks within that container.
  */
-export function isBlock(
-  context: {
-    schema: EditorSchema
-    containers: Containers
-    value: Array<Node>
-  },
-  path: Path,
-): boolean {
-  const parent = getParent(context, path)
+export function isBlock(snapshot: TraversalSnapshot, path: Path): boolean {
+  const parent = getParent(snapshot, path)
 
   if (!parent) {
     return true
   }
 
-  return !isTextBlockNode({schema: context.schema}, parent.node)
+  return !isTextBlockNode({schema: snapshot.context.schema}, parent.node)
 }
 
 /**
@@ -40,26 +31,22 @@ export function isBlock(
  * doesn't exist or is not a block.
  */
 export function getBlock(
-  context: {
-    schema: EditorSchema
-    containers: Containers
-    value: Array<Node>
-  },
+  snapshot: TraversalSnapshot,
   path: Path,
 ): {node: PortableTextBlock; path: Path} | undefined {
-  const entry = getNode(context, path)
+  const entry = getNode(snapshot, path)
 
   if (!entry) {
     return undefined
   }
 
-  if (!isBlock(context, path)) {
+  if (!isBlock(snapshot, path)) {
     return undefined
   }
 
   // Narrow the type: a block is never a span (spans always have a text block
   // parent, so isBlock returns false for them).
-  if (isSpanNode({schema: context.schema}, entry.node)) {
+  if (isSpanNode({schema: snapshot.context.schema}, entry.node)) {
     return undefined
   }
 

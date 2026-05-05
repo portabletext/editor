@@ -100,7 +100,7 @@ export const decoratorRemoveOperationImplementation: OperationImplementation<
       }
     }) // end withoutNormalizing
   } else {
-    const textBlockEntry = getAncestorTextBlock(context, at.focus.path)
+    const textBlockEntry = getAncestorTextBlock(snapshot, at.focus.path)
     if (!textBlockEntry) {
       return
     }

@@ -29,7 +29,7 @@ export const getPreviousInlineObjects: EditorSelector<
     return []
   }
 
-  const children = getChildren(snapshot.context, parentPath(point.path))
+  const children = getChildren(snapshot, parentPath(point.path))
   const inlineObjects: Array<{node: PortableTextObject; path: ChildPath}> = []
 
   for (const child of children) {

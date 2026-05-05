@@ -1,20 +1,10 @@
-import type {EditorSchema} from '../editor/editor-schema'
-import type {Containers} from '../schema/resolve-containers'
-import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
 import {getNode} from './get-node'
+import type {TraversalSnapshot} from './traversal-snapshot'
 
 /**
  * Check if a node exists at a given path.
  */
-export function hasNode(
-  context: {
-    schema: EditorSchema
-    containers: Containers
-    value: Array<Node>
-    blockIndexMap?: Map<string, number>
-  },
-  path: Path,
-): boolean {
-  return getNode(context, path) !== undefined
+export function hasNode(snapshot: TraversalSnapshot, path: Path): boolean {
+  return getNode(snapshot, path) !== undefined
 }

@@ -23,6 +23,14 @@ export const createEditor = (): Editor => {
     get value() {
       return this.children
     },
+    get context() {
+      return {
+        schema: this.schema,
+        containers: this.containers,
+        value: this.children,
+        keyGenerator: this.keyGenerator,
+      }
+    },
     operations: [],
     selection: null,
     marks: null,

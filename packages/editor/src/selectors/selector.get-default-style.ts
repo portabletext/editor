@@ -17,8 +17,7 @@ export const getDefaultStyle: EditorSelector<string | undefined> = (
 ) => {
   const focusTextBlock = getFocusTextBlock(snapshot)
   if (focusTextBlock) {
-    return getBlockSubSchema(snapshot.context, focusTextBlock.path).styles[0]
-      ?.name
+    return getBlockSubSchema(snapshot, focusTextBlock.path).styles[0]?.name
   }
   return snapshot.context.schema.styles[0]?.name
 }

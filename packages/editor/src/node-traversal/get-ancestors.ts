@@ -1,9 +1,8 @@
-import type {EditorSchema} from '../editor/editor-schema'
-import type {Containers} from '../schema/resolve-containers'
 import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import {getNode} from './get-node'
+import type {TraversalSnapshot} from './traversal-snapshot'
 
 /**
  * Get all ancestors of the node at a given path, from nearest to furthest.
@@ -14,11 +13,7 @@ import {getNode} from './get-node'
  *   [{_key:'t1'}]
  */
 export function getAncestors(
-  context: {
-    schema: EditorSchema
-    containers: Containers
-    value: Array<Node>
-  },
+  snapshot: TraversalSnapshot,
   path: Path,
 ): Array<{node: Node; path: Path}> {
   const keyedIndices: Array<number> = []
@@ -45,7 +40,7 @@ export function getAncestors(
     }
 
     const ancestorPath = path.slice(0, endIndex + 1)
-    const entry = getNode(context, ancestorPath)
+    const entry = getNode(snapshot, ancestorPath)
 
     if (entry) {
       ancestors.push(entry)

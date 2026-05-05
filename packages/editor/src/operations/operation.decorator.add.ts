@@ -23,7 +23,6 @@ import type {OperationImplementation} from './operation.types'
 export const decoratorAddOperationImplementation: OperationImplementation<
   'decorator.add'
 > = ({snapshot, operation}) => {
-  const {context} = snapshot
   const editor = operation.editor
   const mark = operation.decorator
 
@@ -92,8 +91,8 @@ export const decoratorAddOperationImplementation: OperationImplementation<
         // decorator. At root we remain permissive and allow unknown
         // decorators to be tracked optimistically.
         const blockPath = parentPath(spanPath)
-        if (isInsideEditableContainer(context, blockPath)) {
-          const subSchema = getBlockSubSchema(context, blockPath)
+        if (isInsideEditableContainer(snapshot, blockPath)) {
+          const subSchema = getBlockSubSchema(snapshot, blockPath)
           if (
             !subSchema.decorators.some((decorator) => decorator.name === mark)
           ) {
@@ -123,7 +122,7 @@ export const decoratorAddOperationImplementation: OperationImplementation<
       return
     }
 
-    const blockEntry = getAncestorTextBlock(context, at.focus.path)
+    const blockEntry = getAncestorTextBlock(snapshot, at.focus.path)
     if (!blockEntry) {
       return
     }
@@ -133,8 +132,8 @@ export const decoratorAddOperationImplementation: OperationImplementation<
     // when the block's sub-schema doesn't declare this decorator. At root
     // we remain permissive so unknown decorators are tracked in
     // `decoratorState` (the existing root-level behaviour).
-    if (isInsideEditableContainer(context, blockPath)) {
-      const subSchema = getBlockSubSchema(context, blockPath)
+    if (isInsideEditableContainer(snapshot, blockPath)) {
+      const subSchema = getBlockSubSchema(snapshot, blockPath)
       if (!subSchema.decorators.some((decorator) => decorator.name === mark)) {
         return
       }

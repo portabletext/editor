@@ -13,7 +13,7 @@ export const abstractSelectBehaviors = [
         return false
       }
 
-      const block = getBlock(snapshot.context, event.at)
+      const block = getBlock(snapshot, event.at)
 
       if (!block) {
         return false
@@ -67,11 +67,7 @@ export const abstractSelectBehaviors = [
         return false
       }
 
-      const previousSibling = getSibling(
-        snapshot.context,
-        focusBlockPath,
-        'previous',
-      )
+      const previousSibling = getSibling(snapshot, focusBlockPath, 'previous')
 
       if (!previousSibling) {
         return false
@@ -98,7 +94,7 @@ export const abstractSelectBehaviors = [
         return false
       }
 
-      const nextSibling = getSibling(snapshot.context, focusBlockPath, 'next')
+      const nextSibling = getSibling(snapshot, focusBlockPath, 'next')
 
       if (!nextSibling) {
         return false

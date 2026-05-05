@@ -141,7 +141,7 @@ export const abstractKeyboardBehaviors = [
       }
 
       const previousSibling = getSibling(
-        snapshot.context,
+        snapshot,
         focusTextBlock.path,
         'previous',
       )
@@ -150,7 +150,7 @@ export const abstractKeyboardBehaviors = [
         return false
       }
 
-      const previousBlock = getBlock(snapshot.context, previousSibling.path)
+      const previousBlock = getBlock(snapshot, previousSibling.path)
 
       if (!previousBlock) {
         return false

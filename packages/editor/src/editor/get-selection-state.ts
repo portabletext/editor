@@ -1,11 +1,9 @@
 import {isTextBlock} from '@portabletext/schema'
-import type {EditorSchema} from '../editor/editor-schema'
 import {getAncestors} from '../node-traversal/get-ancestors'
 import {getNodes} from '../node-traversal/get-nodes'
+import type {TraversalSnapshot} from '../node-traversal/traversal-snapshot'
 import {serializePath} from '../paths/serialize-path'
 import {isEditableContainer} from '../schema/is-editable-container'
-import type {ResolvedContainers} from '../schema/resolve-containers'
-import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
 
 export type SelectionState = {
@@ -51,12 +49,7 @@ const emptyState: SelectionState = {
  * - `focusedContainerPath` is the nearest ancestor container of the focus.
  */
 export function getSelectionState(
-  context: {
-    schema: EditorSchema
-    containers: ResolvedContainers
-    value: Array<Node>
-    blockIndexMap: Map<string, number>
-  },
+  snapshot: TraversalSnapshot,
   selection: {
     anchorPath: Path
     focusPath: Path
@@ -76,15 +69,15 @@ export function getSelectionState(
   const from = selection.backward ? selection.focusPath : selection.anchorPath
   const to = selection.backward ? selection.anchorPath : selection.focusPath
 
-  for (const {node, path} of getNodes(context, {
+  for (const {node, path} of getNodes(snapshot, {
     from,
     to,
   })) {
     const serialized = serializePath(path)
 
     if (
-      isTextBlock({schema: context.schema}, node) ||
-      isEditableContainer(context, node, path)
+      isTextBlock({schema: snapshot.context.schema}, node) ||
+      isEditableContainer(snapshot, node, path)
     ) {
       selectedContainerPaths.add(serialized)
     } else {
@@ -103,7 +96,7 @@ export function getSelectionState(
     }
 
     for (const {path: ancestorPath} of getAncestors(
-      context,
+      snapshot,
       selection.focusPath,
     )) {
       const serializedAncestorPath = serializePath(ancestorPath)

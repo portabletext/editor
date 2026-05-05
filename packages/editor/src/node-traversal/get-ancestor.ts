@@ -1,8 +1,7 @@
-import type {EditorSchema} from '../editor/editor-schema'
-import type {Containers} from '../schema/resolve-containers'
 import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
 import {getAncestors} from './get-ancestors'
+import type {TraversalSnapshot} from './traversal-snapshot'
 
 /**
  * Find the first ancestor of the node at a given path that matches a predicate.
@@ -11,33 +10,21 @@ import {getAncestors} from './get-ancestors'
  * When `match` is a type predicate, the returned `node` narrows to that type.
  */
 export function getAncestor<TMatch extends Node>(
-  context: {
-    schema: EditorSchema
-    containers: Containers
-    value: Array<Node>
-  },
+  snapshot: TraversalSnapshot,
   path: Path,
   match: (node: Node, path: Path) => node is TMatch,
 ): {node: TMatch; path: Path} | undefined
 export function getAncestor(
-  context: {
-    schema: EditorSchema
-    containers: Containers
-    value: Array<Node>
-  },
+  snapshot: TraversalSnapshot,
   path: Path,
   match: (node: Node, path: Path) => boolean,
 ): {node: Node; path: Path} | undefined
 export function getAncestor(
-  context: {
-    schema: EditorSchema
-    containers: Containers
-    value: Array<Node>
-  },
+  snapshot: TraversalSnapshot,
   path: Path,
   match: (node: Node, path: Path) => boolean,
 ): {node: Node; path: Path} | undefined {
-  const ancestors = getAncestors(context, path)
+  const ancestors = getAncestors(snapshot, path)
 
   for (const ancestor of ancestors) {
     if (match(ancestor.node, ancestor.path)) {

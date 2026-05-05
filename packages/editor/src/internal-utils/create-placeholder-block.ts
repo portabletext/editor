@@ -50,9 +50,12 @@ function resolveDefaultStyle(
   }
   const subSchema = getBlockSubSchema(
     {
-      schema: context.schema,
-      containers: context.containers,
-      value: context.value,
+      context: {
+        schema: context.schema,
+        containers: context.containers,
+        value: context.value,
+      },
+      blockIndexMap: new Map<string, number>(),
     },
     path,
   )

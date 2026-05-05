@@ -59,14 +59,7 @@ export const modifyDescendant = <N extends Node>(
     schema: editor.schema,
     containers: editor.containers,
   }
-  const nodeEntry = getNode(
-    {
-      ...context,
-      value: editor.children,
-      blockIndexMap: editor.blockIndexMap,
-    },
-    path,
-  )
+  const nodeEntry = getNode(editor, path)
   if (!nodeEntry) {
     return
   }
@@ -142,14 +135,7 @@ export const modifyDescendant = <N extends Node>(
     const ancestorPath =
       ancestorPathEnd > 0 ? path.slice(0, ancestorPathEnd) : []
 
-    const ancestorEntry = getNode(
-      {
-        ...context,
-        value: editor.children,
-        blockIndexMap: editor.blockIndexMap,
-      },
-      ancestorPath,
-    )
+    const ancestorEntry = getNode(editor, ancestorPath)
     if (!ancestorEntry) {
       return
     }
@@ -230,14 +216,7 @@ export const modifyChildren = (
       containers: editor.containers,
     }
 
-    const nodeEntry = getNode(
-      {
-        ...context,
-        value: editor.children,
-        blockIndexMap: editor.blockIndexMap,
-      },
-      path,
-    )
+    const nodeEntry = getNode(editor, path)
     if (!nodeEntry) {
       return
     }

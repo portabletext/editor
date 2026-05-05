@@ -27,7 +27,7 @@ export const getFocusBlockObject: EditorSelector<
     return undefined
   }
 
-  if (isEditableContainer(snapshot.context, focusBlock.node, focusBlock.path)) {
+  if (isEditableContainer(snapshot, focusBlock.node, focusBlock.path)) {
     return undefined
   }
 

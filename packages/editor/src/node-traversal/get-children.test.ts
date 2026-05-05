@@ -11,7 +11,7 @@ describe(getChildren.name, () => {
   const testbed = createNodeTraversalTestbed()
 
   test('root children', () => {
-    expect(getChildren(testbed.context, [])).toEqual([
+    expect(getChildren(testbed.snapshot, [])).toEqual([
       {node: testbed.textBlock1, path: [{_key: 'k3'}]},
       {node: testbed.image, path: [{_key: 'k4'}]},
       {node: testbed.textBlock2, path: [{_key: 'k6'}]},
@@ -21,7 +21,7 @@ describe(getChildren.name, () => {
   })
 
   test('text block children', () => {
-    expect(getChildren(testbed.context, [{_key: 'k3'}])).toEqual([
+    expect(getChildren(testbed.snapshot, [{_key: 'k3'}])).toEqual([
       {node: testbed.span1, path: [{_key: 'k3'}, 'children', {_key: 'k0'}]},
       {
         node: testbed.stockTicker1,
@@ -32,7 +32,7 @@ describe(getChildren.name, () => {
   })
 
   test('code block children (code lines)', () => {
-    expect(getChildren(testbed.context, [{_key: 'k11'}])).toEqual([
+    expect(getChildren(testbed.snapshot, [{_key: 'k11'}])).toEqual([
       {node: testbed.codeLine1, path: [{_key: 'k11'}, 'code', {_key: 'k8'}]},
       {node: testbed.codeLine2, path: [{_key: 'k11'}, 'code', {_key: 'k10'}]},
     ])
@@ -40,7 +40,7 @@ describe(getChildren.name, () => {
 
   test('code line children', () => {
     expect(
-      getChildren(testbed.context, [{_key: 'k11'}, 'code', {_key: 'k8'}]),
+      getChildren(testbed.snapshot, [{_key: 'k11'}, 'code', {_key: 'k8'}]),
     ).toEqual([
       {
         node: testbed.codeSpan1,
@@ -50,7 +50,7 @@ describe(getChildren.name, () => {
   })
 
   test('table children (rows)', () => {
-    expect(getChildren(testbed.context, [{_key: 'k26'}])).toEqual([
+    expect(getChildren(testbed.snapshot, [{_key: 'k26'}])).toEqual([
       {node: testbed.row1, path: [{_key: 'k26'}, 'rows', {_key: 'k21'}]},
       {node: testbed.row2, path: [{_key: 'k26'}, 'rows', {_key: 'k25'}]},
     ])
@@ -58,7 +58,7 @@ describe(getChildren.name, () => {
 
   test('row children (cells)', () => {
     expect(
-      getChildren(testbed.context, [{_key: 'k26'}, 'rows', {_key: 'k21'}]),
+      getChildren(testbed.snapshot, [{_key: 'k26'}, 'rows', {_key: 'k21'}]),
     ).toEqual([
       {
         node: testbed.cell1,
@@ -73,7 +73,7 @@ describe(getChildren.name, () => {
 
   test('cell with multiple blocks', () => {
     expect(
-      getChildren(testbed.context, [
+      getChildren(testbed.snapshot, [
         {_key: 'k26'},
         'rows',
         {_key: 'k21'},
@@ -110,7 +110,7 @@ describe(getChildren.name, () => {
 
   test('block inside cell children', () => {
     expect(
-      getChildren(testbed.context, [
+      getChildren(testbed.snapshot, [
         {_key: 'k26'},
         'rows',
         {_key: 'k21'},
@@ -153,16 +153,16 @@ describe(getChildren.name, () => {
 
   test('leaf node returns empty array', () => {
     expect(
-      getChildren(testbed.context, [{_key: 'k3'}, 'children', {_key: 'k0'}]),
+      getChildren(testbed.snapshot, [{_key: 'k3'}, 'children', {_key: 'k0'}]),
     ).toEqual([])
   })
 
   test('block object without children returns empty array', () => {
-    expect(getChildren(testbed.context, [{_key: 'k4'}])).toEqual([])
+    expect(getChildren(testbed.snapshot, [{_key: 'k4'}])).toEqual([])
   })
 
   test('invalid path returns empty array', () => {
-    expect(getChildren(testbed.context, [{_key: 'nonexistent'}])).toEqual([])
+    expect(getChildren(testbed.snapshot, [{_key: 'nonexistent'}])).toEqual([])
   })
 
   test('non-editable code block returns empty array', () => {
@@ -171,7 +171,13 @@ describe(getChildren.name, () => {
       tableContainers,
     )
     expect(
-      getChildren({...testbed.context, containers: tableOnly}, [{_key: 'k11'}]),
+      getChildren(
+        {
+          ...testbed.snapshot,
+          context: {...testbed.snapshot.context, containers: tableOnly},
+        },
+        [{_key: 'k11'}],
+      ),
     ).toEqual([])
   })
 
@@ -180,7 +186,13 @@ describe(getChildren.name, () => {
       codeBlockContainer,
     ])
     expect(
-      getChildren({...testbed.context, containers: codeOnly}, [{_key: 'k26'}]),
+      getChildren(
+        {
+          ...testbed.snapshot,
+          context: {...testbed.snapshot.context, containers: codeOnly},
+        },
+        [{_key: 'k26'}],
+      ),
     ).toEqual([])
   })
 })

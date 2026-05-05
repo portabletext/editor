@@ -6,35 +6,37 @@ describe(getSibling.name, () => {
   const testbed = createNodeTraversalTestbed()
 
   test('empty path returns undefined', () => {
-    expect(getSibling(testbed.context, [], 'next')).toBeUndefined()
-    expect(getSibling(testbed.context, [], 'previous')).toBeUndefined()
+    expect(getSibling(testbed.snapshot, [], 'next')).toBeUndefined()
+    expect(getSibling(testbed.snapshot, [], 'previous')).toBeUndefined()
   })
 
   test('next sibling of first top-level block', () => {
-    const entry = getSibling(testbed.context, [{_key: 'k3'}], 'next')
+    const entry = getSibling(testbed.snapshot, [{_key: 'k3'}], 'next')
     expect(entry?.node).toBe(testbed.image)
     expect(entry?.path).toEqual([{_key: 'k4'}])
   })
 
   test('previous sibling of second top-level block', () => {
-    const entry = getSibling(testbed.context, [{_key: 'k4'}], 'previous')
+    const entry = getSibling(testbed.snapshot, [{_key: 'k4'}], 'previous')
     expect(entry?.node).toBe(testbed.textBlock1)
     expect(entry?.path).toEqual([{_key: 'k3'}])
   })
 
   test('next sibling of last top-level block returns undefined', () => {
-    expect(getSibling(testbed.context, [{_key: 'k26'}], 'next')).toBeUndefined()
+    expect(
+      getSibling(testbed.snapshot, [{_key: 'k26'}], 'next'),
+    ).toBeUndefined()
   })
 
   test('previous sibling of first top-level block returns undefined', () => {
     expect(
-      getSibling(testbed.context, [{_key: 'k3'}], 'previous'),
+      getSibling(testbed.snapshot, [{_key: 'k3'}], 'previous'),
     ).toBeUndefined()
   })
 
   test('next sibling of span in text block', () => {
     const entry = getSibling(
-      testbed.context,
+      testbed.snapshot,
       [{_key: 'k3'}, 'children', {_key: 'k0'}],
       'next',
     )
@@ -44,7 +46,7 @@ describe(getSibling.name, () => {
 
   test('previous sibling of last span in text block', () => {
     const entry = getSibling(
-      testbed.context,
+      testbed.snapshot,
       [{_key: 'k3'}, 'children', {_key: 'k2'}],
       'previous',
     )
@@ -55,7 +57,7 @@ describe(getSibling.name, () => {
   test('next sibling of last span in text block returns undefined', () => {
     expect(
       getSibling(
-        testbed.context,
+        testbed.snapshot,
         [{_key: 'k3'}, 'children', {_key: 'k2'}],
         'next',
       ),
@@ -65,7 +67,7 @@ describe(getSibling.name, () => {
   test('previous sibling of first span in text block returns undefined', () => {
     expect(
       getSibling(
-        testbed.context,
+        testbed.snapshot,
         [{_key: 'k3'}, 'children', {_key: 'k0'}],
         'previous',
       ),
@@ -74,7 +76,7 @@ describe(getSibling.name, () => {
 
   test('next sibling of first block in cell', () => {
     const entry = getSibling(
-      testbed.context,
+      testbed.snapshot,
       [
         {_key: 'k26'},
         'rows',
@@ -100,7 +102,7 @@ describe(getSibling.name, () => {
 
   test('previous sibling of second block in cell', () => {
     const entry = getSibling(
-      testbed.context,
+      testbed.snapshot,
       [
         {_key: 'k26'},
         'rows',
@@ -127,7 +129,7 @@ describe(getSibling.name, () => {
   test('next sibling of last block in cell returns undefined', () => {
     expect(
       getSibling(
-        testbed.context,
+        testbed.snapshot,
         [
           {_key: 'k26'},
           'rows',
@@ -144,7 +146,7 @@ describe(getSibling.name, () => {
 
   test('next sibling of first cell in row', () => {
     const entry = getSibling(
-      testbed.context,
+      testbed.snapshot,
       [{_key: 'k26'}, 'rows', {_key: 'k21'}, 'cells', {_key: 'k17'}],
       'next',
     )
@@ -160,7 +162,7 @@ describe(getSibling.name, () => {
 
   test('previous sibling of second cell in row', () => {
     const entry = getSibling(
-      testbed.context,
+      testbed.snapshot,
       [{_key: 'k26'}, 'rows', {_key: 'k21'}, 'cells', {_key: 'k20'}],
       'previous',
     )
@@ -176,7 +178,7 @@ describe(getSibling.name, () => {
 
   test('next sibling of first row in table', () => {
     const entry = getSibling(
-      testbed.context,
+      testbed.snapshot,
       [{_key: 'k26'}, 'rows', {_key: 'k21'}],
       'next',
     )
@@ -186,7 +188,7 @@ describe(getSibling.name, () => {
 
   test('previous sibling of second row in table', () => {
     const entry = getSibling(
-      testbed.context,
+      testbed.snapshot,
       [{_key: 'k26'}, 'rows', {_key: 'k25'}],
       'previous',
     )
@@ -196,7 +198,7 @@ describe(getSibling.name, () => {
 
   test('next sibling of span inside cell block', () => {
     const entry = getSibling(
-      testbed.context,
+      testbed.snapshot,
       [
         {_key: 'k26'},
         'rows',
@@ -226,7 +228,7 @@ describe(getSibling.name, () => {
 
   test('previous sibling of inline object inside cell block', () => {
     const entry = getSibling(
-      testbed.context,
+      testbed.snapshot,
       [
         {_key: 'k26'},
         'rows',
@@ -256,16 +258,16 @@ describe(getSibling.name, () => {
 
   test('out of bounds path returns undefined', () => {
     expect(
-      getSibling(testbed.context, [{_key: 'nonexistent'}], 'next'),
+      getSibling(testbed.snapshot, [{_key: 'nonexistent'}], 'next'),
     ).toBeUndefined()
     expect(
-      getSibling(testbed.context, [{_key: 'nonexistent'}], 'previous'),
+      getSibling(testbed.snapshot, [{_key: 'nonexistent'}], 'previous'),
     ).toBeUndefined()
   })
 
   test('next sibling of code line', () => {
     const entry = getSibling(
-      testbed.context,
+      testbed.snapshot,
       [{_key: 'k11'}, 'code', {_key: 'k8'}],
       'next',
     )
@@ -275,7 +277,7 @@ describe(getSibling.name, () => {
 
   test('previous sibling of second code line', () => {
     const entry = getSibling(
-      testbed.context,
+      testbed.snapshot,
       [{_key: 'k11'}, 'code', {_key: 'k10'}],
       'previous',
     )

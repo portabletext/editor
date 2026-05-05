@@ -89,8 +89,8 @@ export const addAnnotationOperationImplementation: OperationImplementation<
       // Inside an editable container the sub-schema is authoritative:
       // skip blocks whose sub-schema doesn't declare this annotation type.
       // At root we remain permissive so unknown annotations pass through.
-      if (isInsideEditableContainer(context, blockPath)) {
-        const subSchema = getBlockSubSchema(context, blockPath)
+      if (isInsideEditableContainer(snapshot, blockPath)) {
+        const subSchema = getBlockSubSchema(snapshot, blockPath)
         if (
           !subSchema.annotations.some(
             (annotation) => annotation.name === parsedAnnotation._type,

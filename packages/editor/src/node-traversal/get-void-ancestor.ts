@@ -1,10 +1,8 @@
 import type {PortableTextObject} from '@portabletext/schema'
-import type {EditorSchema} from '../editor/editor-schema'
-import type {Containers} from '../schema/resolve-containers'
-import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
 import {isVoidNode} from '../slate/node/is-void-node'
 import {getAncestor} from './get-ancestor'
+import type {TraversalSnapshot} from './traversal-snapshot'
 
 /**
  * Find the nearest ancestor that is a void (non-editable) object node.
@@ -14,14 +12,10 @@ import {getAncestor} from './get-ancestor'
  * subtree is a single selectable void" should use this instead.
  */
 export function getVoidAncestor(
-  context: {
-    schema: EditorSchema
-    containers: Containers
-    value: Array<Node>
-  },
+  snapshot: TraversalSnapshot,
   path: Path,
 ): {node: PortableTextObject; path: Path} | undefined {
-  return getAncestor(context, path, (node, ancestorPath) =>
-    isVoidNode(context, node, ancestorPath),
+  return getAncestor(snapshot, path, (node, ancestorPath) =>
+    isVoidNode(snapshot, node, ancestorPath),
   )
 }

@@ -1,9 +1,8 @@
-import type {EditorSchema} from '../editor/editor-schema'
-import type {Containers} from '../schema/resolve-containers'
 import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import {getNodeChildren} from './get-children'
+import type {TraversalSnapshot} from './traversal-snapshot'
 
 /**
  * Get the node at a given path.
@@ -17,18 +16,14 @@ import {getNodeChildren} from './get-children'
  * contained numeric indices.
  */
 export function getNode(
-  context: {
-    schema: EditorSchema
-    containers: Containers
-    value: Array<Node>
-    blockIndexMap?: Map<string, number>
-  },
+  snapshot: TraversalSnapshot,
   path: Path,
 ): {node: Node; path: Path} | undefined {
   if (path.length === 0) {
     return undefined
   }
 
+  const {context, blockIndexMap} = snapshot
   let currentChildren: Array<Node> = context.value
   let scopePath = ''
   let node: Node | undefined
@@ -44,12 +39,8 @@ export function getNode(
     }
 
     if (isKeyedSegment(segment)) {
-      if (
-        isRootLevel &&
-        context.blockIndexMap &&
-        context.blockIndexMap.size === currentChildren.length
-      ) {
-        const index = context.blockIndexMap.get(segment._key)
+      if (isRootLevel && blockIndexMap.size === currentChildren.length) {
+        const index = blockIndexMap.get(segment._key)
         if (index !== undefined) {
           const candidate = currentChildren[index]
           if (candidate && candidate._key === segment._key) {

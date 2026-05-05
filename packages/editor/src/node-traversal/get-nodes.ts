@@ -5,6 +5,7 @@ import type {Path} from '../slate/interfaces/path'
 import {isAncestorPath} from '../slate/path/is-ancestor-path'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import {getChildrenInternal} from './get-children'
+import type {TraversalSnapshot} from './traversal-snapshot'
 
 /**
  * Get the descendant nodes of the node at a given path.
@@ -22,12 +23,7 @@ import {getChildrenInternal} from './get-children'
  * instead of the root.
  */
 export function* getNodes(
-  context: {
-    schema: EditorSchema
-    containers: Containers
-    value: Array<Node>
-    blockIndexMap: Map<string, number>
-  },
+  snapshot: TraversalSnapshot,
   options: {
     at?: Path
     from?: Path
@@ -38,11 +34,11 @@ export function* getNodes(
 ): Generator<{node: Node; path: Path}, void, undefined> {
   const {at = [], from, to, match, reverse = false} = options
   const traversalContext = {
-    schema: context.schema,
-    containers: context.containers,
-    blockIndexMap: context.blockIndexMap,
+    schema: snapshot.context.schema,
+    containers: snapshot.context.containers,
+    blockIndexMap: snapshot.blockIndexMap,
   }
-  const root = {value: context.value}
+  const root = {value: snapshot.context.value}
 
   // When from/to are not provided, use the simple recursive DFS
   if (from === undefined && to === undefined) {

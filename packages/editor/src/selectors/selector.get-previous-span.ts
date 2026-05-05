@@ -20,7 +20,7 @@ export const getPreviousSpan: EditorSelector<
   }
 
   return findSibling(
-    snapshot.context,
+    snapshot,
     point.path,
     'previous',
     (entry): entry is {node: PortableTextSpan; path: Path} =>

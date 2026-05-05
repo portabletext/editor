@@ -253,9 +253,15 @@ export function createNodeTraversalTestbed() {
     blockIndexMap,
   }
 
+  const snapshot = {
+    context: {schema, containers, value},
+    blockIndexMap,
+  }
+
   return {
     schema,
     context,
+    snapshot,
     textBlock1,
     span1,
     stockTicker1,

@@ -57,10 +57,8 @@ function isAtContainerDeadEnd(
     return false
   }
 
-  const container = getAncestor(
-    snapshot.context,
-    focusTextBlock.path,
-    (node, path) => isEditableContainer(snapshot.context, node, path),
+  const container = getAncestor(snapshot, focusTextBlock.path, (node, path) =>
+    isEditableContainer(snapshot, node, path),
   )
 
   if (!container) {
@@ -84,7 +82,7 @@ function isAtContainerDeadEnd(
   }
 
   const sibling = getSibling(
-    snapshot.context,
+    snapshot,
     container.path,
     edge === 'end' ? 'next' : 'previous',
   )

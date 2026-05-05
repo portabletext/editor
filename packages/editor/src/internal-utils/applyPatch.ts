@@ -64,7 +64,14 @@ export function createApplyPatch(
 function diffMatchPatch(
   editor: Pick<
     PortableTextSlateEditor,
-    'children' | 'apply' | 'selection' | 'onChange' | 'schema' | 'containers'
+    | 'children'
+    | 'apply'
+    | 'selection'
+    | 'onChange'
+    | 'schema'
+    | 'containers'
+    | 'context'
+    | 'blockIndexMap'
   >,
   patch: DiffMatchPatch,
 ): boolean {
@@ -74,14 +81,7 @@ function diffMatchPatch(
   }
 
   const spanPath = patch.path.slice(0, -1)
-  const spanEntry = getNode(
-    {
-      schema: editor.schema,
-      containers: editor.containers,
-      value: editor.children,
-    },
-    spanPath,
-  )
+  const spanEntry = getNode(editor, spanPath)
 
   if (!spanEntry || !isSpan({schema: editor.schema}, spanEntry.node)) {
     return false

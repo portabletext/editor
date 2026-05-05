@@ -1,8 +1,6 @@
-import type {EditorSchema} from '../editor/editor-schema'
-import type {Containers} from '../schema/resolve-containers'
-import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
 import {isBlock} from './is-block'
+import type {TraversalSnapshot} from './traversal-snapshot'
 
 /**
  * Determine if a node at the given path is inline.
@@ -10,13 +8,6 @@ import {isBlock} from './is-block'
  * A node is inline if its parent is a text block. This is the inverse of
  * `isBlock`. Top-level nodes are never inline.
  */
-export function isInline(
-  context: {
-    schema: EditorSchema
-    containers: Containers
-    value: Array<Node>
-  },
-  path: Path,
-): boolean {
-  return !isBlock(context, path)
+export function isInline(snapshot: TraversalSnapshot, path: Path): boolean {
+  return !isBlock(snapshot, path)
 }

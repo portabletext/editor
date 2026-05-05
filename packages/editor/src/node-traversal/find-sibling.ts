@@ -1,10 +1,9 @@
-import type {EditorSchema} from '../editor/editor-schema'
-import type {Containers} from '../schema/resolve-containers'
 import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
 import {parentPath} from '../slate/path/parent-path'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import {getChildren} from './get-children'
+import type {TraversalSnapshot} from './traversal-snapshot'
 
 /**
  * Walk siblings of the node at the given path in a direction, returning the
@@ -14,11 +13,7 @@ import {getChildren} from './get-children'
  * narrowed accordingly.
  */
 export function findSibling<TNode extends Node = Node>(
-  context: {
-    schema: EditorSchema
-    containers: Containers
-    value: Array<Node>
-  },
+  snapshot: TraversalSnapshot,
   path: Path,
   direction: 'next' | 'previous',
   match: (entry: {
@@ -27,21 +22,13 @@ export function findSibling<TNode extends Node = Node>(
   }) => entry is {node: TNode; path: Path},
 ): {node: TNode; path: Path} | undefined
 export function findSibling(
-  context: {
-    schema: EditorSchema
-    containers: Containers
-    value: Array<Node>
-  },
+  snapshot: TraversalSnapshot,
   path: Path,
   direction: 'next' | 'previous',
   match: (entry: {node: Node; path: Path}) => boolean,
 ): {node: Node; path: Path} | undefined
 export function findSibling(
-  context: {
-    schema: EditorSchema
-    containers: Containers
-    value: Array<Node>
-  },
+  snapshot: TraversalSnapshot,
   path: Path,
   direction: 'next' | 'previous',
   match: (entry: {node: Node; path: Path}) => boolean,
@@ -57,7 +44,7 @@ export function findSibling(
   }
 
   const parent = parentPath(path)
-  const children = getChildren(context, parent)
+  const children = getChildren(snapshot, parent)
   const currentIndex = children.findIndex(
     (child) => child.node._key === lastSegment._key,
   )

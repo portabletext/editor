@@ -22,6 +22,7 @@ describe(resolveSelection.name, () => {
       {
         schema,
         containers: new Map(),
+        blockIndexMap: new Map(),
         children: [
           {
             _key: blockKey,
@@ -73,6 +74,7 @@ describe(resolveSelection.name, () => {
       {
         schema,
         containers: new Map(),
+        blockIndexMap: new Map(),
         children: [
           {
             _key: blockKey,
@@ -122,6 +124,7 @@ describe(resolveSelection.name, () => {
       {
         schema,
         containers: new Map(),
+        blockIndexMap: new Map(),
         children: [
           {
             _key: blockObjectKey,
@@ -157,6 +160,7 @@ describe(resolveSelection.name, () => {
       {
         schema,
         containers: new Map(),
+        blockIndexMap: new Map(),
         children: [
           {
             _key: blockKey,
@@ -198,6 +202,7 @@ describe(resolveSelection.name, () => {
       {
         schema,
         containers: new Map(),
+        blockIndexMap: new Map(),
         children: [
           {
             _key: blockKey,
@@ -239,6 +244,7 @@ describe(resolveSelection.name, () => {
       {
         schema,
         containers: new Map(),
+        blockIndexMap: new Map(),
         children: [
           {
             _key: blockKey,

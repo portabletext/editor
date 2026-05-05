@@ -21,7 +21,7 @@ export const blockSetOperationImplementation: OperationImplementation<
   const slateBlock = blockEntry.node
 
   if (isTextBlockNode(context, slateBlock)) {
-    const subSchema = getBlockSubSchema(context, blockEntry.path)
+    const subSchema = getBlockSubSchema(snapshot, blockEntry.path)
     const filteredProps: Record<string, unknown> = {}
 
     for (const key of Object.keys(operation.props)) {
@@ -75,7 +75,7 @@ export const blockSetOperationImplementation: OperationImplementation<
     setNodeProperties(operation.editor, filteredProps, blockEntry.path)
   } else {
     const schemaDefinition = getBlockObjectSchema(
-      context,
+      snapshot,
       slateBlock,
       blockEntry.path,
     )

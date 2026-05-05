@@ -1,9 +1,8 @@
 import type {BaseDefinition, FieldDefinition} from '@portabletext/schema'
-import type {EditorSchema} from '../editor/editor-schema'
+import type {TraversalSnapshot} from '../node-traversal/traversal-snapshot'
 import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
 import {getEnclosingContainer} from './get-enclosing-container'
-import type {Containers} from './resolve-containers'
 
 /**
  * Minimal view of a block-object schema definition: its name and its
@@ -25,17 +24,13 @@ export type BlockObjectSchema = BaseDefinition & {
  * Returns `undefined` when the type is not declared at the effective scope.
  */
 export function getBlockObjectSchema(
-  context: {
-    schema: EditorSchema
-    containers: Containers
-    value: Array<Node>
-  },
+  snapshot: TraversalSnapshot,
   node: Node,
   path: Path,
 ): BlockObjectSchema | undefined {
   const typeName = node._type
 
-  const enclosing = getEnclosingContainer(context, path)
+  const enclosing = getEnclosingContainer(snapshot, path)
 
   if (enclosing) {
     const inline = enclosing.of.find(
@@ -56,7 +51,7 @@ export function getBlockObjectSchema(
     }
   }
 
-  return context.schema.blockObjects.find(
+  return snapshot.context.schema.blockObjects.find(
     (definition) => definition.name === typeName,
   )
 }

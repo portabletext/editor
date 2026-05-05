@@ -54,8 +54,8 @@ export const abstractSplitBehaviors = [
         return false
       }
 
-      const startBlock = getAncestorTextBlock(snapshot.context, startPoint.path)
-      const endBlock = getAncestorTextBlock(snapshot.context, endPoint.path)
+      const startBlock = getAncestorTextBlock(snapshot, startPoint.path)
+      const endBlock = getAncestorTextBlock(snapshot, endPoint.path)
 
       if (!startBlock || !endBlock) {
         return false

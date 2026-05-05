@@ -22,7 +22,10 @@ describe(getBlockObjectSchema.name, () => {
         ],
       }),
     )
-    const context = {schema, containers: new Map(), value: []}
+    const context = {
+      context: {schema, containers: new Map(), value: []},
+      blockIndexMap: new Map(),
+    }
     const node = {_type: 'image', _key: 'i0', src: 'foo.png'}
 
     expect(getBlockObjectSchema(context, node, [{_key: 'i0'}])).toEqual({
@@ -109,7 +112,10 @@ describe(getBlockObjectSchema.name, () => {
         ],
       },
     ]
-    const context = {schema, containers, value}
+    const context = {
+      context: {schema, containers, value},
+      blockIndexMap: new Map(),
+    }
 
     // Look up the `row` block-object schema (inline-declared under table.rows.of)
     const rowNode = {_type: 'row', _key: 'r0', cells: []}
@@ -166,7 +172,10 @@ describe(getBlockObjectSchema.name, () => {
     )
     const containers = resolveContainers(schema, containerConfigs)
 
-    const context = {schema, containers, value: []}
+    const context = {
+      context: {schema, containers, value: []},
+      blockIndexMap: new Map(),
+    }
     // `image` is in root `blockObjects` but not inline-declared inside callout.
     // Looking it up at a callout-internal position falls back to root.
     const imageNode = {_type: 'image', _key: 'i0', src: 'foo.png'}
@@ -186,7 +195,10 @@ describe(getBlockObjectSchema.name, () => {
         blockObjects: [{name: 'image'}],
       }),
     )
-    const context = {schema, containers: new Map(), value: []}
+    const context = {
+      context: {schema, containers: new Map(), value: []},
+      blockIndexMap: new Map(),
+    }
     const node = {_type: 'unknown', _key: 'u0'}
 
     expect(getBlockObjectSchema(context, node, [{_key: 'u0'}])).toBeUndefined()

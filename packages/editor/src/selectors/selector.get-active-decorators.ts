@@ -14,7 +14,7 @@ export function getActiveDecorators(snapshot: EditorSnapshot) {
   const selectedBlocks = getSelectedTextBlocks(snapshot)
   const decorators = new Set<string>()
   for (const block of selectedBlocks) {
-    for (const decorator of getBlockSubSchema(snapshot.context, block.path)
+    for (const decorator of getBlockSubSchema(snapshot, block.path)
       .decorators) {
       decorators.add(decorator.name)
     }

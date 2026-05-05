@@ -8,7 +8,10 @@ const containers = new Map()
 describe(boundaryEquivalentSelections.name, () => {
   test('returns no variants when selection is null', () => {
     expect(
-      boundaryEquivalentSelections({schema, value: [], containers}, null),
+      boundaryEquivalentSelections(
+        {context: {schema, value: [], containers}, blockIndexMap: new Map()},
+        null,
+      ),
     ).toEqual([])
   })
 
@@ -27,7 +30,10 @@ describe(boundaryEquivalentSelections.name, () => {
     }
     expect(
       boundaryEquivalentSelections(
-        {schema, value: [block], containers},
+        {
+          context: {schema, value: [block], containers},
+          blockIndexMap: new Map(),
+        },
         {anchor: point, focus: point, backward: false},
       ),
     ).toEqual([])
@@ -45,7 +51,10 @@ describe(boundaryEquivalentSelections.name, () => {
     }
     expect(
       boundaryEquivalentSelections(
-        {schema, value: [block], containers},
+        {
+          context: {schema, value: [block], containers},
+          blockIndexMap: new Map(),
+        },
         {anchor: endOfS1, focus: endOfS1, backward: false},
       ),
     ).toEqual([])
@@ -70,7 +79,10 @@ describe(boundaryEquivalentSelections.name, () => {
     }
     expect(
       boundaryEquivalentSelections(
-        {schema, value: [block], containers},
+        {
+          context: {schema, value: [block], containers},
+          blockIndexMap: new Map(),
+        },
         {anchor: endOfS1, focus: endOfS1, backward: false},
       ),
     ).toEqual([{anchor: startOfS2, focus: startOfS2, backward: false}])
@@ -95,7 +107,10 @@ describe(boundaryEquivalentSelections.name, () => {
     }
     expect(
       boundaryEquivalentSelections(
-        {schema, value: [block], containers},
+        {
+          context: {schema, value: [block], containers},
+          blockIndexMap: new Map(),
+        },
         {anchor: startOfS2, focus: startOfS2, backward: false},
       ),
     ).toEqual([{anchor: endOfS1, focus: endOfS1, backward: false}])
@@ -116,7 +131,10 @@ describe(boundaryEquivalentSelections.name, () => {
     }
     expect(
       boundaryEquivalentSelections(
-        {schema, value: [block], containers},
+        {
+          context: {schema, value: [block], containers},
+          blockIndexMap: new Map(),
+        },
         {anchor: endOfS1, focus: endOfS1, backward: false},
       ),
     ).toEqual([])
@@ -150,7 +168,10 @@ describe(boundaryEquivalentSelections.name, () => {
     }
     expect(
       boundaryEquivalentSelections(
-        {schema, value: [block], containers},
+        {
+          context: {schema, value: [block], containers},
+          blockIndexMap: new Map(),
+        },
         {anchor: endOfS1, focus: endOfS2, backward: false},
       ),
     ).toEqual([
@@ -179,7 +200,10 @@ describe(boundaryEquivalentSelections.name, () => {
     }
     expect(
       boundaryEquivalentSelections(
-        {schema, value: [block], containers},
+        {
+          context: {schema, value: [block], containers},
+          blockIndexMap: new Map(),
+        },
         {anchor: endOfS1, focus: endOfS1, backward: true},
       ),
     ).toEqual([{anchor: startOfS2, focus: startOfS2, backward: true}])
