@@ -1,10 +1,8 @@
 import type {PortableTextBlock} from '@portabletext/schema'
-import type {EditorSchema} from '../editor/editor-schema'
-import type {Containers} from '../schema/resolve-containers'
-import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
 import {getAncestors} from './get-ancestors'
 import {getBlock, isBlock} from './is-block'
+import type {TraversalSnapshot} from './traversal-snapshot'
 
 /**
  * Walk up from a path to find the nearest enclosing block.
@@ -14,22 +12,18 @@ import {getBlock, isBlock} from './is-block'
  * container-internal block, not the outer container.
  */
 export function getEnclosingBlock(
-  context: {
-    schema: EditorSchema
-    containers: Containers
-    value: Array<Node>
-  },
+  snapshot: TraversalSnapshot,
   path: Path,
 ): {node: PortableTextBlock; path: Path} | undefined {
-  const direct = getBlock(context, path)
+  const direct = getBlock(snapshot, path)
 
   if (direct) {
     return direct
   }
 
-  for (const ancestor of getAncestors(context, path)) {
-    if (isBlock(context, ancestor.path)) {
-      const block = getBlock(context, ancestor.path)
+  for (const ancestor of getAncestors(snapshot, path)) {
+    if (isBlock(snapshot, ancestor.path)) {
+      const block = getBlock(snapshot, ancestor.path)
 
       if (block) {
         return block

@@ -1,9 +1,8 @@
-import type {EditorSchema} from '../editor/editor-schema'
-import type {Containers} from '../schema/resolve-containers'
 import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import {getNodeChildren} from './get-children'
+import type {TraversalSnapshot} from './traversal-snapshot'
 
 /**
  * Determine if a node at the given path is a leaf.
@@ -11,24 +10,17 @@ import {getNodeChildren} from './get-children'
  * A leaf node cannot have children. Spans and non-editable object nodes are
  * leaves. Text blocks and editable container objects are not.
  */
-export function isLeaf(
-  context: {
-    schema: EditorSchema
-    containers: Containers
-    value: Array<Node>
-  },
-  path: Path,
-): boolean {
+export function isLeaf(snapshot: TraversalSnapshot, path: Path): boolean {
   if (path.length === 0) {
     return false
   }
 
   const traversalContext = {
-    schema: context.schema,
-    containers: context.containers,
+    schema: snapshot.context.schema,
+    containers: snapshot.context.containers,
   }
 
-  let currentChildren: Array<Node> = context.value
+  let currentChildren: Array<Node> = snapshot.context.value
   let scopePath = ''
 
   for (let i = 0; i < path.length; i++) {

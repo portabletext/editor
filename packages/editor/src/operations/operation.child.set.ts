@@ -11,7 +11,6 @@ import type {OperationImplementation} from './operation.types'
 export const childSetOperationImplementation: OperationImplementation<
   'child.set'
 > = ({snapshot, operation}) => {
-  const {context} = snapshot
   const childEntry = getNode(operation.editor, operation.at)
 
   if (!childEntry) {
@@ -61,7 +60,7 @@ export const childSetOperationImplementation: OperationImplementation<
 
   if (isObjectNode({schema: operation.editor.schema}, child)) {
     const blockPath = parentPath(childPath)
-    const {inlineObjects} = getBlockSubSchema(context, blockPath)
+    const {inlineObjects} = getBlockSubSchema(snapshot, blockPath)
     const definition = inlineObjects.find(
       (definition) => definition.name === child._type,
     )

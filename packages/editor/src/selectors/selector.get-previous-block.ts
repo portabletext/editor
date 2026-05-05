@@ -23,15 +23,11 @@ export const getPreviousBlock: EditorSelector<
     return undefined
   }
 
-  const previous = getSibling(
-    snapshot.context,
-    selectionStartBlock.path,
-    'previous',
-  )
+  const previous = getSibling(snapshot, selectionStartBlock.path, 'previous')
 
   if (!previous) {
     return undefined
   }
 
-  return getBlock(snapshot.context, previous.path)
+  return getBlock(snapshot, previous.path)
 }

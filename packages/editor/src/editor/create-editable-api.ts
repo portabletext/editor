@@ -219,14 +219,7 @@ export function createEditableAPI(
       PortableTextBlock | PortableTextChild | undefined,
       Path | undefined,
     ] => {
-      const result = getNode(
-        {
-          schema: editor.schema,
-          containers: editor.containers,
-          value: editor.children,
-        },
-        path as InternalPath,
-      )
+      const result = getNode(editor, path as InternalPath)
 
       if (!result) {
         return [undefined, undefined]
@@ -240,7 +233,9 @@ export function createEditableAPI(
       let node: Node | undefined
       try {
         const entry = Array.from(
-          getNodes(editor, {match: (n) => n._key === element._key}),
+          getNodes(editor, {
+            match: (n) => n._key === element._key,
+          }),
         )[0]
         if (entry) {
           const itemPath = entry.path

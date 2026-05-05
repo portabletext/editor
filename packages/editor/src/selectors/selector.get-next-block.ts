@@ -23,11 +23,11 @@ export const getNextBlock: EditorSelector<
     return undefined
   }
 
-  const next = getSibling(snapshot.context, selectionEndBlock.path, 'next')
+  const next = getSibling(snapshot, selectionEndBlock.path, 'next')
 
   if (!next) {
     return undefined
   }
 
-  return getBlock(snapshot.context, next.path)
+  return getBlock(snapshot, next.path)
 }

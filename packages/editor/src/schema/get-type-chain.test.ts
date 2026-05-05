@@ -41,7 +41,10 @@ describe(getTypeChain.name, () => {
         style: 'normal',
       } as unknown as Node,
     ]
-    const context = {schema, containers, value}
+    const context = {
+      context: {schema, containers, value},
+      blockIndexMap: new Map(),
+    }
     const path = [{_key: 'b1'}, 'children', {_key: 's1'}]
     const entry = getNode(context, path)!
     expect(getTypeChain(context, entry.node, entry.path)).toEqual([
@@ -66,7 +69,10 @@ describe(getTypeChain.name, () => {
         ],
       } as unknown as Node,
     ]
-    const context = {schema, containers, value}
+    const context = {
+      context: {schema, containers, value},
+      blockIndexMap: new Map(),
+    }
     const path = [
       {_key: 'c1'},
       'content',
@@ -84,7 +90,10 @@ describe(getTypeChain.name, () => {
 
   test('root void block object: ["image"]', () => {
     const value: Array<Node> = [{_type: 'image', _key: 'i1'} as unknown as Node]
-    const context = {schema, containers, value}
+    const context = {
+      context: {schema, containers, value},
+      blockIndexMap: new Map(),
+    }
     const entry = getNode(context, [{_key: 'i1'}])!
     expect(getTypeChain(context, entry.node, entry.path)).toEqual(['image'])
   })

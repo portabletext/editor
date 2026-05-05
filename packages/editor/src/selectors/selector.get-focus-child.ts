@@ -22,5 +22,5 @@ export const getFocusChild: EditorSelector<
     return undefined
   }
 
-  return getInline(snapshot.context, selection.focus.path)
+  return getInline(snapshot, selection.focus.path)
 }

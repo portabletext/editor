@@ -18,7 +18,7 @@ describe(getNodes.name, () => {
   const testbed = createNodeTraversalTestbed()
 
   test('all nodes from root', () => {
-    const nodes = [...getNodes(testbed.context)]
+    const nodes = [...getNodes(testbed.snapshot)]
     const nodeValues = nodes.map((entry) => entry.node)
 
     expect(nodeValues).toEqual([
@@ -53,7 +53,7 @@ describe(getNodes.name, () => {
   })
 
   test('paths are correct', () => {
-    const nodes = [...getNodes(testbed.context)]
+    const nodes = [...getNodes(testbed.snapshot)]
     const paths = nodes.map((entry) => entry.path)
 
     expect(paths).toEqual([
@@ -170,7 +170,7 @@ describe(getNodes.name, () => {
   })
 
   test('from a subtree', () => {
-    const nodes = [...getNodes(testbed.context, {at: [{_key: 'k11'}]})]
+    const nodes = [...getNodes(testbed.snapshot, {at: [{_key: 'k11'}]})]
     const nodeValues = nodes.map((entry) => entry.node)
 
     expect(nodeValues).toEqual([
@@ -183,7 +183,7 @@ describe(getNodes.name, () => {
 
   test('from a leaf returns empty', () => {
     const nodes = [
-      ...getNodes(testbed.context, {
+      ...getNodes(testbed.snapshot, {
         at: [{_key: 'k3'}, 'children', {_key: 'k0'}],
       }),
     ]
@@ -193,7 +193,7 @@ describe(getNodes.name, () => {
 
   test('reverse order', () => {
     const nodes = [
-      ...getNodes(testbed.context, {at: [{_key: 'k11'}], reverse: true}),
+      ...getNodes(testbed.snapshot, {at: [{_key: 'k11'}], reverse: true}),
     ]
     const nodeValues = nodes.map((entry) => entry.node)
 
@@ -210,7 +210,12 @@ describe(getNodes.name, () => {
       testbed.context.schema,
       tableContainers,
     )
-    const nodes = [...getNodes({...testbed.context, containers: tableOnly})]
+    const nodes = [
+      ...getNodes({
+        ...testbed.snapshot,
+        context: {...testbed.snapshot.context, containers: tableOnly},
+      }),
+    ]
     const nodeValues = nodes.map((entry) => entry.node)
 
     // code-block itself appears (it's a root child) but its children don't
@@ -228,7 +233,7 @@ describe(getNodes.name, () => {
   describe('match predicate', () => {
     test('filters by isSpan', () => {
       const nodes = [
-        ...getNodes(testbed.context, {
+        ...getNodes(testbed.snapshot, {
           match: (node) => isSpan({schema: testbed.schema}, node),
         }),
       ]
@@ -249,7 +254,7 @@ describe(getNodes.name, () => {
 
     test('filters by isTextBlock', () => {
       const nodes = [
-        ...getNodes(testbed.context, {
+        ...getNodes(testbed.snapshot, {
           match: (node) => isTextBlock({schema: testbed.schema}, node),
         }),
       ]
@@ -269,7 +274,7 @@ describe(getNodes.name, () => {
 
     test('filters with custom predicate on subtree', () => {
       const nodes = [
-        ...getNodes(testbed.context, {
+        ...getNodes(testbed.snapshot, {
           at: [{_key: 'k26'}],
           match: (node) => isSpan({schema: testbed.schema}, node),
         }),
@@ -286,7 +291,7 @@ describe(getNodes.name, () => {
 
     test('match with reverse', () => {
       const nodes = [
-        ...getNodes(testbed.context, {
+        ...getNodes(testbed.snapshot, {
           at: [{_key: 'k3'}],
           match: (node) => isSpan({schema: testbed.schema}, node),
           reverse: true,
@@ -301,7 +306,7 @@ describe(getNodes.name, () => {
   describe('from/to range', () => {
     test('range within flat blocks', () => {
       const nodes = [
-        ...getNodes(testbed.context, {
+        ...getNodes(testbed.snapshot, {
           from: [{_key: 'k3'}, 'children', {_key: 'k0'}],
           to: [{_key: 'k4'}],
         }),
@@ -319,7 +324,7 @@ describe(getNodes.name, () => {
 
     test('range within a single block', () => {
       const nodes = [
-        ...getNodes(testbed.context, {
+        ...getNodes(testbed.snapshot, {
           from: [{_key: 'k3'}, 'children', {_key: 'k1'}],
           to: [{_key: 'k3'}, 'children', {_key: 'k2'}],
         }),
@@ -335,7 +340,7 @@ describe(getNodes.name, () => {
 
     test('range spanning into container', () => {
       const nodes = [
-        ...getNodes(testbed.context, {
+        ...getNodes(testbed.snapshot, {
           from: [{_key: 'k6'}],
           to: [{_key: 'k11'}, 'code', {_key: 'k8'}],
         }),
@@ -352,7 +357,7 @@ describe(getNodes.name, () => {
 
     test('range within container', () => {
       const nodes = [
-        ...getNodes(testbed.context, {
+        ...getNodes(testbed.snapshot, {
           from: [
             {_key: 'k26'},
             'rows',
@@ -388,7 +393,7 @@ describe(getNodes.name, () => {
 
     test('range spanning across cells', () => {
       const nodes = [
-        ...getNodes(testbed.context, {
+        ...getNodes(testbed.snapshot, {
           from: [
             {_key: 'k26'},
             'rows',
@@ -429,7 +434,7 @@ describe(getNodes.name, () => {
 
     test('range spanning across rows', () => {
       const nodes = [
-        ...getNodes(testbed.context, {
+        ...getNodes(testbed.snapshot, {
           from: [
             {_key: 'k26'},
             'rows',
@@ -469,7 +474,7 @@ describe(getNodes.name, () => {
 
     test('from at document start', () => {
       const nodes = [
-        ...getNodes(testbed.context, {
+        ...getNodes(testbed.snapshot, {
           from: [{_key: 'k3'}],
           to: [{_key: 'k3'}, 'children', {_key: 'k1'}],
         }),
@@ -485,7 +490,7 @@ describe(getNodes.name, () => {
 
     test('to at document end', () => {
       const nodes = [
-        ...getNodes(testbed.context, {
+        ...getNodes(testbed.snapshot, {
           from: [{_key: 'k26'}, 'rows', {_key: 'k25'}],
           to: [
             {_key: 'k26'},
@@ -513,7 +518,7 @@ describe(getNodes.name, () => {
 
     test('from equals to (single node)', () => {
       const nodes = [
-        ...getNodes(testbed.context, {
+        ...getNodes(testbed.snapshot, {
           from: [{_key: 'k4'}],
           to: [{_key: 'k4'}],
         }),
@@ -525,7 +530,7 @@ describe(getNodes.name, () => {
 
     test('from equals to (single leaf node)', () => {
       const nodes = [
-        ...getNodes(testbed.context, {
+        ...getNodes(testbed.snapshot, {
           from: [{_key: 'k3'}, 'children', {_key: 'k0'}],
           to: [{_key: 'k3'}, 'children', {_key: 'k0'}],
         }),
@@ -537,7 +542,7 @@ describe(getNodes.name, () => {
 
     test('from only (no to)', () => {
       const nodes = [
-        ...getNodes(testbed.context, {
+        ...getNodes(testbed.snapshot, {
           from: [{_key: 'k26'}, 'rows', {_key: 'k25'}],
         }),
       ]
@@ -554,7 +559,7 @@ describe(getNodes.name, () => {
 
     test('to only (no from)', () => {
       const nodes = [
-        ...getNodes(testbed.context, {
+        ...getNodes(testbed.snapshot, {
           to: [{_key: 'k4'}],
         }),
       ]
@@ -573,7 +578,7 @@ describe(getNodes.name, () => {
   describe('from/to with match', () => {
     test('range with span filter', () => {
       const nodes = [
-        ...getNodes(testbed.context, {
+        ...getNodes(testbed.snapshot, {
           from: [{_key: 'k3'}],
           to: [{_key: 'k11'}],
           match: (node) => isSpan({schema: testbed.schema}, node),
@@ -586,7 +591,7 @@ describe(getNodes.name, () => {
 
     test('range with text block filter', () => {
       const nodes = [
-        ...getNodes(testbed.context, {
+        ...getNodes(testbed.snapshot, {
           from: [{_key: 'k11'}],
           match: (node) => isTextBlock({schema: testbed.schema}, node),
         }),
@@ -605,7 +610,7 @@ describe(getNodes.name, () => {
 
     test('range within container with match', () => {
       const nodes = [
-        ...getNodes(testbed.context, {
+        ...getNodes(testbed.snapshot, {
           from: [{_key: 'k26'}],
           to: [
             {_key: 'k26'},
@@ -635,7 +640,7 @@ describe(getNodes.name, () => {
   describe('reverse with from/to', () => {
     test('reverse range within flat blocks', () => {
       const nodes = [
-        ...getNodes(testbed.context, {
+        ...getNodes(testbed.snapshot, {
           from: [{_key: 'k3'}, 'children', {_key: 'k0'}],
           to: [{_key: 'k4'}],
           reverse: true,
@@ -654,7 +659,7 @@ describe(getNodes.name, () => {
 
     test('reverse range within a single block', () => {
       const nodes = [
-        ...getNodes(testbed.context, {
+        ...getNodes(testbed.snapshot, {
           from: [{_key: 'k3'}, 'children', {_key: 'k1'}],
           to: [{_key: 'k3'}, 'children', {_key: 'k2'}],
           reverse: true,
@@ -671,7 +676,7 @@ describe(getNodes.name, () => {
 
     test('reverse range spanning container', () => {
       const nodes = [
-        ...getNodes(testbed.context, {
+        ...getNodes(testbed.snapshot, {
           from: [{_key: 'k6'}],
           to: [{_key: 'k11'}, 'code', {_key: 'k8'}],
           reverse: true,
@@ -689,7 +694,7 @@ describe(getNodes.name, () => {
 
     test('reverse from equals to (single node)', () => {
       const nodes = [
-        ...getNodes(testbed.context, {
+        ...getNodes(testbed.snapshot, {
           from: [{_key: 'k4'}],
           to: [{_key: 'k4'}],
           reverse: true,
@@ -702,7 +707,7 @@ describe(getNodes.name, () => {
 
     test('reverse with match', () => {
       const nodes = [
-        ...getNodes(testbed.context, {
+        ...getNodes(testbed.snapshot, {
           from: [{_key: 'k3'}, 'children', {_key: 'k0'}],
           to: [{_key: 'k11'}, 'code', {_key: 'k10'}, 'children', {_key: 'k9'}],
           reverse: true,
@@ -722,7 +727,7 @@ describe(getNodes.name, () => {
 
     test('reverse range within container', () => {
       const nodes = [
-        ...getNodes(testbed.context, {
+        ...getNodes(testbed.snapshot, {
           from: [
             {_key: 'k26'},
             'rows',

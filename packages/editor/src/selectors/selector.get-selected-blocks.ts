@@ -37,18 +37,12 @@ export const getSelectedBlocks: EditorSelector<
 
   const result: Array<{node: PortableTextBlock; path: BlockPath}> = []
 
-  for (const entry of getNodes(
-    {
-      ...snapshot.context,
-      blockIndexMap: snapshot.blockIndexMap,
-    },
-    {
-      from: startPoint.path,
-      to: endPoint.path,
-      match: (_, path) => path.length === 1,
-    },
-  )) {
-    const block = getBlock(snapshot.context, entry.path)
+  for (const entry of getNodes(snapshot, {
+    from: startPoint.path,
+    to: endPoint.path,
+    match: (_, path) => path.length === 1,
+  })) {
+    const block = getBlock(snapshot, entry.path)
     if (block) {
       result.push({node: block.node, path: block.path})
     }

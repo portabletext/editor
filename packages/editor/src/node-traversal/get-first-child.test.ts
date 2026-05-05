@@ -10,28 +10,28 @@ describe(getFirstChild.name, () => {
   const testbed = createNodeTraversalTestbed()
 
   test('first descendant from root', () => {
-    expect(getFirstChild(testbed.context, [])).toEqual({
+    expect(getFirstChild(testbed.snapshot, [])).toEqual({
       node: testbed.textBlock1,
       path: [{_key: 'k3'}],
     })
   })
 
   test('first descendant of text block', () => {
-    expect(getFirstChild(testbed.context, [{_key: 'k3'}])).toEqual({
+    expect(getFirstChild(testbed.snapshot, [{_key: 'k3'}])).toEqual({
       node: testbed.span1,
       path: [{_key: 'k3'}, 'children', {_key: 'k0'}],
     })
   })
 
   test('first descendant of code block', () => {
-    expect(getFirstChild(testbed.context, [{_key: 'k11'}])).toEqual({
+    expect(getFirstChild(testbed.snapshot, [{_key: 'k11'}])).toEqual({
       node: testbed.codeLine1,
       path: [{_key: 'k11'}, 'code', {_key: 'k8'}],
     })
   })
 
   test('first descendant of table', () => {
-    expect(getFirstChild(testbed.context, [{_key: 'k26'}])).toEqual({
+    expect(getFirstChild(testbed.snapshot, [{_key: 'k26'}])).toEqual({
       node: testbed.row1,
       path: [{_key: 'k26'}, 'rows', {_key: 'k21'}],
     })
@@ -39,17 +39,17 @@ describe(getFirstChild.name, () => {
 
   test('leaf node returns undefined', () => {
     expect(
-      getFirstChild(testbed.context, [{_key: 'k3'}, 'children', {_key: 'k0'}]),
+      getFirstChild(testbed.snapshot, [{_key: 'k3'}, 'children', {_key: 'k0'}]),
     ).toBeUndefined()
   })
 
   test('void block object returns undefined', () => {
-    expect(getFirstChild(testbed.context, [{_key: 'k4'}])).toBeUndefined()
+    expect(getFirstChild(testbed.snapshot, [{_key: 'k4'}])).toBeUndefined()
   })
 
   test('invalid path returns undefined', () => {
     expect(
-      getFirstChild(testbed.context, [{_key: 'nonexistent'}]),
+      getFirstChild(testbed.snapshot, [{_key: 'nonexistent'}]),
     ).toBeUndefined()
   })
 
@@ -59,9 +59,13 @@ describe(getFirstChild.name, () => {
       tableContainers,
     )
     expect(
-      getFirstChild({...testbed.context, containers: tableOnly}, [
-        {_key: 'k11'},
-      ]),
+      getFirstChild(
+        {
+          ...testbed.snapshot,
+          context: {...testbed.snapshot.context, containers: tableOnly},
+        },
+        [{_key: 'k11'}],
+      ),
     ).toBeUndefined()
   })
 })

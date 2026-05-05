@@ -20,9 +20,7 @@ function buildContext(...value: Array<Node>) {
     blockIndexMap.set((node as {_key: string})._key, index)
   })
   return {
-    schema,
-    containers: new Map(),
-    value,
+    context: {schema, containers: new Map(), value},
     blockIndexMap,
   }
 }
@@ -349,9 +347,7 @@ function buildContainerContext(...value: Array<Node>) {
     blockIndexMap.set((node as {_key: string})._key, index)
   })
   return {
-    schema,
-    containers,
-    value,
+    context: {schema, containers, value},
     blockIndexMap,
   }
 }

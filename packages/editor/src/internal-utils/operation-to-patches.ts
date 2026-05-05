@@ -19,12 +19,11 @@ function spanContext(
   schema: EditorSchema,
   containers: ResolvedContainers,
   value: Array<Node>,
-): {
-  schema: EditorSchema
-  containers: ResolvedContainers
-  value: Array<Node>
-} {
-  return {schema, containers, value}
+) {
+  return {
+    context: {schema, containers, value},
+    blockIndexMap: new Map<string, number>(),
+  }
 }
 
 export function textPatch(

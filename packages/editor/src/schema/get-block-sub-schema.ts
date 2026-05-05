@@ -8,10 +8,9 @@ import type {
   StyleSchemaType,
 } from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
-import type {Node} from '../slate/interfaces/node'
+import type {TraversalSnapshot} from '../node-traversal/traversal-snapshot'
 import type {Path} from '../slate/interfaces/path'
 import {getEnclosingContainer} from './get-enclosing-container'
-import type {Containers} from './resolve-containers'
 import {asFieldedTypes, asNamedTypes} from './schema-type-projections'
 
 /**
@@ -51,34 +50,31 @@ type ResolvedBlockOfDefinition = {
  * returns the sub-schema from its `{type: 'block'}` entry.
  */
 export function getBlockSubSchema(
-  context: {
-    schema: EditorSchema
-    containers: Containers
-    value: Array<Node>
-  },
+  snapshot: TraversalSnapshot,
   path: Path,
 ): BlockSubSchema {
-  const nestedBlock = findEnclosingNestedBlock(context, path)
+  const nestedBlock = findEnclosingNestedBlock(snapshot, path)
 
   if (!nestedBlock) {
-    return rootSubSchema(context.schema)
+    return rootSubSchema(snapshot.context.schema)
   }
 
   return {
     styles:
       asNamedTypes<StyleSchemaType>(nestedBlock.styles) ??
-      context.schema.styles,
+      snapshot.context.schema.styles,
     decorators:
       asNamedTypes<DecoratorSchemaType>(nestedBlock.decorators) ??
-      context.schema.decorators,
+      snapshot.context.schema.decorators,
     annotations:
       asFieldedTypes<AnnotationSchemaType>(nestedBlock.annotations) ??
-      context.schema.annotations,
+      snapshot.context.schema.annotations,
     lists:
-      asNamedTypes<ListSchemaType>(nestedBlock.lists) ?? context.schema.lists,
+      asNamedTypes<ListSchemaType>(nestedBlock.lists) ??
+      snapshot.context.schema.lists,
     inlineObjects:
       asFieldedTypes<InlineObjectSchemaType>(nestedBlock.inlineObjects) ??
-      context.schema.inlineObjects,
+      snapshot.context.schema.inlineObjects,
   }
 }
 
@@ -90,14 +86,10 @@ export function getBlockSubSchema(
  * sub-schema is authoritative and those operations should be filtered.
  */
 export function isInsideEditableContainer(
-  context: {
-    schema: EditorSchema
-    containers: Containers
-    value: Array<Node>
-  },
+  snapshot: TraversalSnapshot,
   path: Path,
 ): boolean {
-  return findEnclosingNestedBlock(context, path) !== undefined
+  return findEnclosingNestedBlock(snapshot, path) !== undefined
 }
 
 function rootSubSchema(schema: EditorSchema): BlockSubSchema {
@@ -111,14 +103,10 @@ function rootSubSchema(schema: EditorSchema): BlockSubSchema {
 }
 
 function findEnclosingNestedBlock(
-  context: {
-    schema: EditorSchema
-    containers: Containers
-    value: Array<Node>
-  },
+  snapshot: TraversalSnapshot,
   path: Path,
 ): ResolvedBlockOfDefinition | undefined {
-  const enclosing = getEnclosingContainer(context, path)
+  const enclosing = getEnclosingContainer(snapshot, path)
 
   if (!enclosing) {
     return undefined

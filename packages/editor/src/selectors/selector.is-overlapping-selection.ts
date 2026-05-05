@@ -23,10 +23,10 @@ export function isOverlappingSelection(
     }
 
     if (
-      !hasNode(snapshot.context, selection.anchor.path) ||
-      !hasNode(snapshot.context, selection.focus.path) ||
-      !hasNode(snapshot.context, editorSelection.anchor.path) ||
-      !hasNode(snapshot.context, editorSelection.focus.path)
+      !hasNode(snapshot, selection.anchor.path) ||
+      !hasNode(snapshot, selection.focus.path) ||
+      !hasNode(snapshot, editorSelection.anchor.path) ||
+      !hasNode(snapshot, editorSelection.focus.path)
     ) {
       return false
     }

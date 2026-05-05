@@ -199,15 +199,7 @@ export function applyOperation(editor: Editor, op: Operation): void {
       }
 
       // Check if the node path resolves to a known node
-      const setNodeEntry = getNode(
-        {
-          schema: editor.schema,
-          containers: editor.containers,
-          value: editor.children,
-          blockIndexMap: editor.blockIndexMap,
-        },
-        setNodePath,
-      )
+      const setNodeEntry = getNode(editor, setNodePath)
 
       if (setNodeEntry) {
         // Node found: use modifyDescendant
@@ -420,15 +412,7 @@ export function applyOperation(editor: Editor, op: Operation): void {
       }
 
       // Check if the node path resolves to a known node
-      const unsetNodeEntry = getNode(
-        {
-          schema: editor.schema,
-          containers: editor.containers,
-          value: editor.children,
-          blockIndexMap: editor.blockIndexMap,
-        },
-        unsetNodePath,
-      )
+      const unsetNodeEntry = getNode(editor, unsetNodePath)
 
       if (unsetNodeEntry) {
         // Node found: use modifyDescendant

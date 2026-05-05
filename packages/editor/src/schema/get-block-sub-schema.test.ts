@@ -21,9 +21,12 @@ describe(getBlockSubSchema.name, () => {
     )
 
     const context = {
-      schema,
-      containers: new Map(),
-      value: [{_type: 'block', _key: 'b0', children: []}],
+      context: {
+        schema,
+        containers: new Map(),
+        value: [{_type: 'block', _key: 'b0', children: []}],
+      },
+      blockIndexMap: new Map(),
     }
 
     const subSchema = getBlockSubSchema(context, [{_key: 'b0'}])
@@ -77,7 +80,10 @@ describe(getBlockSubSchema.name, () => {
         content: [{_type: 'block', _key: 'b0', children: []}],
       },
     ]
-    const context = {schema, containers, value}
+    const context = {
+      context: {schema, containers, value},
+      blockIndexMap: new Map(),
+    }
 
     const subSchema = getBlockSubSchema(context, [
       {_key: 'c0'},
@@ -129,7 +135,10 @@ describe(getBlockSubSchema.name, () => {
         content: [{_type: 'block', _key: 'b0', children: []}],
       },
     ]
-    const context = {schema, containers, value}
+    const context = {
+      context: {schema, containers, value},
+      blockIndexMap: new Map(),
+    }
 
     const subSchema = getBlockSubSchema(context, [
       {_key: 'c0'},
@@ -236,7 +245,10 @@ describe(getBlockSubSchema.name, () => {
         ],
       },
     ]
-    const context = {schema, containers, value}
+    const context = {
+      context: {schema, containers, value},
+      blockIndexMap: new Map(),
+    }
 
     const subSchema = getBlockSubSchema(context, [
       {_key: 't0'},

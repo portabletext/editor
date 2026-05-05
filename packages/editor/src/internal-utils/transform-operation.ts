@@ -6,6 +6,7 @@ import {
   parsePatch,
 } from '@sanity/diff-match-patch'
 import {getEnclosingBlock} from '../node-traversal/get-enclosing-block'
+import type {TraversalSnapshot} from '../node-traversal/traversal-snapshot'
 import type {Node} from '../slate/interfaces/node'
 import type {Operation} from '../slate/interfaces/operation'
 import type {Path} from '../slate/interfaces/path'
@@ -27,11 +28,7 @@ export function transformOperation(
   patch: Patch,
   operation: Operation,
 ): Operation[] {
-  const context = {
-    schema: editor.schema,
-    containers: editor.containers,
-    value: editor.children,
-  }
+  const snapshot: TraversalSnapshot = editor
   const transformedOperation = {...operation}
 
   if (patch.type === 'insert') {
@@ -69,11 +66,11 @@ export function transformOperation(
 
   if (patch.type === 'diffMatchPatch') {
     const operationTargetBlock = findOperationTargetBlock(
-      context,
+      snapshot,
       editor,
       transformedOperation,
     )
-    const patchTargetBlock = getEnclosingBlock(context, patch.path)
+    const patchTargetBlock = getEnclosingBlock(snapshot, patch.path)
     if (
       !operationTargetBlock ||
       !patchTargetBlock ||
@@ -158,20 +155,16 @@ export function transformOperation(
 }
 
 function findOperationTargetBlock(
-  context: {
-    schema: PortableTextSlateEditor['schema']
-    containers: PortableTextSlateEditor['containers']
-    value: Array<Node>
-  },
+  snapshot: TraversalSnapshot,
   editor: PortableTextSlateEditor,
   operation: Operation,
 ): Node | undefined {
   if (operation.type === 'set_selection' && editor.selection) {
-    const block = getEnclosingBlock(context, editor.selection.focus.path)
+    const block = getEnclosingBlock(snapshot, editor.selection.focus.path)
     return block?.node
   }
   if ('path' in operation) {
-    const block = getEnclosingBlock(context, operation.path)
+    const block = getEnclosingBlock(snapshot, operation.path)
     return block?.node
   }
   return undefined

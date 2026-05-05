@@ -17,5 +17,5 @@ export const getAnchorBlock: EditorSelector<
     return undefined
   }
 
-  return getEnclosingBlock(snapshot.context, selection.anchor.path)
+  return getEnclosingBlock(snapshot, selection.anchor.path)
 }

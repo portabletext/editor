@@ -9,18 +9,18 @@ describe(getAncestor.name, () => {
   const testbed = createNodeTraversalTestbed()
 
   test('empty path returns undefined', () => {
-    expect(getAncestor(testbed.context, [], () => true)).toBeUndefined()
+    expect(getAncestor(testbed.snapshot, [], () => true)).toBeUndefined()
   })
 
   test('top-level block returns undefined', () => {
     expect(
-      getAncestor(testbed.context, [{_key: 'k3'}], () => true),
+      getAncestor(testbed.snapshot, [{_key: 'k3'}], () => true),
     ).toBeUndefined()
   })
 
   test('find text block ancestor of span', () => {
     const entry = getAncestor(
-      testbed.context,
+      testbed.snapshot,
       [{_key: 'k3'}, 'children', {_key: 'k0'}],
       (node) => isTextBlock({schema: testbed.schema}, node),
     )
@@ -30,7 +30,7 @@ describe(getAncestor.name, () => {
 
   test('find text block ancestor of span in cell', () => {
     const entry = getAncestor(
-      testbed.context,
+      testbed.snapshot,
       [
         {_key: 'k26'},
         'rows',
@@ -58,7 +58,7 @@ describe(getAncestor.name, () => {
 
   test('find cell ancestor of span in cell', () => {
     const entry = getAncestor(
-      testbed.context,
+      testbed.snapshot,
       [
         {_key: 'k26'},
         'rows',
@@ -84,7 +84,7 @@ describe(getAncestor.name, () => {
 
   test('find row ancestor of span in cell', () => {
     const entry = getAncestor(
-      testbed.context,
+      testbed.snapshot,
       [
         {_key: 'k26'},
         'rows',
@@ -104,7 +104,7 @@ describe(getAncestor.name, () => {
 
   test('find table ancestor of span in cell', () => {
     const entry = getAncestor(
-      testbed.context,
+      testbed.snapshot,
       [
         {_key: 'k26'},
         'rows',
@@ -125,7 +125,7 @@ describe(getAncestor.name, () => {
   test('no matching ancestor returns undefined', () => {
     expect(
       getAncestor(
-        testbed.context,
+        testbed.snapshot,
         [{_key: 'k3'}, 'children', {_key: 'k0'}],
         (node) => node._type === 'table',
       ),
@@ -134,7 +134,7 @@ describe(getAncestor.name, () => {
 
   test('match receives path', () => {
     const entry = getAncestor(
-      testbed.context,
+      testbed.snapshot,
       [
         {_key: 'k26'},
         'rows',
@@ -159,7 +159,7 @@ describe(getAncestor.name, () => {
   test('does not check the node itself', () => {
     expect(
       getAncestor(
-        testbed.context,
+        testbed.snapshot,
         [
           {_key: 'k26'},
           'rows',
@@ -178,7 +178,7 @@ describe(getAncestor.name, () => {
 
   test('find code block ancestor of code span', () => {
     const entry = getAncestor(
-      testbed.context,
+      testbed.snapshot,
       [{_key: 'k11'}, 'code', {_key: 'k8'}, 'children', {_key: 'k7'}],
       (node) => node._type === 'code-block',
     )
@@ -188,7 +188,7 @@ describe(getAncestor.name, () => {
 
   test('returns nearest matching ancestor', () => {
     const entry = getAncestor(
-      testbed.context,
+      testbed.snapshot,
       [
         {_key: 'k26'},
         'rows',

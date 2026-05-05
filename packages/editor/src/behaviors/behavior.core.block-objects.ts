@@ -32,11 +32,7 @@ const arrowDownOnLonelyBlockObject = defineBehavior({
       return false
     }
 
-    const nextBlock = getSibling(
-      snapshot.context,
-      focusedBlockObject.path,
-      'next',
-    )
+    const nextBlock = getSibling(snapshot, focusedBlockObject.path, 'next')
 
     return !nextBlock
   },
@@ -75,7 +71,7 @@ const arrowUpOnLonelyBlockObject = defineBehavior({
     }
 
     const previousBlock = getSibling(
-      snapshot.context,
+      snapshot,
       focusedBlockObject.path,
       'previous',
     )
@@ -141,7 +137,7 @@ const clickingAboveLonelyBlockObject = defineBehavior({
     }
 
     const previousSibling = getSibling(
-      snapshot.context,
+      snapshot,
       focusedBlockObject.path,
       'previous',
     )
@@ -194,11 +190,7 @@ const clickingBelowLonelyBlockObject = defineBehavior({
       return false
     }
 
-    const nextSibling = getSibling(
-      snapshot.context,
-      focusedBlockObject.path,
-      'next',
-    )
+    const nextSibling = getSibling(snapshot, focusedBlockObject.path, 'next')
 
     return (
       (event.position.isEditor || event.position.isContainer) &&
@@ -235,7 +227,7 @@ const deletingEmptyTextBlockAfterBlockObject = defineBehavior({
     }
 
     const previousSibling = getSibling(
-      snapshot.context,
+      snapshot,
       focusedTextBlock.path,
       'previous',
     )
@@ -284,11 +276,7 @@ const deletingEmptyTextBlockBeforeBlockObject = defineBehavior({
       return false
     }
 
-    const nextSibling = getSibling(
-      snapshot.context,
-      focusedTextBlock.path,
-      'next',
-    )
+    const nextSibling = getSibling(snapshot, focusedTextBlock.path, 'next')
 
     if (!nextSibling) {
       return false

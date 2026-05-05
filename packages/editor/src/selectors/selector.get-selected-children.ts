@@ -44,14 +44,11 @@ export function getSelectedChildren<
 
     const result: Array<SelectedChild<TChild>> = []
 
-    for (const entry of getNodes(
-      {...snapshot.context, blockIndexMap: snapshot.blockIndexMap},
-      {
-        from: startPoint.path,
-        to: endPoint.path,
-        match: (_, path) => isInline(snapshot.context, path),
-      },
-    )) {
+    for (const entry of getNodes(snapshot, {
+      from: startPoint.path,
+      to: endPoint.path,
+      match: (_, path) => isInline(snapshot, path),
+    })) {
       const child = entry.node as PortableTextChild
 
       // Skip the start child when the selection begins exactly at its end

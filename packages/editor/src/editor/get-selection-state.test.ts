@@ -7,7 +7,7 @@ describe(getSelectionState.name, () => {
   test('returns defaults when selection is null', () => {
     const testbed = createNodeTraversalTestbed()
 
-    expect(getSelectionState(testbed.context, null)).toEqual({
+    expect(getSelectionState(testbed.snapshot, null)).toEqual({
       focusedLeafPath: undefined,
       selectedLeafPaths: new Set(),
       focusedContainerPath: undefined,
@@ -23,7 +23,7 @@ describe(getSelectionState.name, () => {
       {_key: testbed.span1._key},
     ]
 
-    const result = getSelectionState(testbed.context, {
+    const result = getSelectionState(testbed.snapshot, {
       anchorPath: focusPath,
       focusPath,
       backward: false,
@@ -57,7 +57,7 @@ describe(getSelectionState.name, () => {
     const testbed = createNodeTraversalTestbed()
     const focusPath = [{_key: testbed.image._key}]
 
-    const result = getSelectionState(testbed.context, {
+    const result = getSelectionState(testbed.snapshot, {
       anchorPath: focusPath,
       focusPath,
       backward: false,
@@ -91,7 +91,7 @@ describe(getSelectionState.name, () => {
       {_key: testbed.stockTicker1._key},
     ]
 
-    const result = getSelectionState(testbed.context, {
+    const result = getSelectionState(testbed.snapshot, {
       anchorPath: focusPath,
       focusPath,
       backward: false,
@@ -123,7 +123,7 @@ describe(getSelectionState.name, () => {
       {_key: testbed.cellSpan1._key},
     ]
 
-    const result = getSelectionState(testbed.context, {
+    const result = getSelectionState(testbed.snapshot, {
       anchorPath: focusPath,
       focusPath,
       backward: false,
@@ -198,7 +198,7 @@ describe(getSelectionState.name, () => {
       {_key: testbed.stockTicker2._key},
     ]
 
-    const result = getSelectionState(testbed.context, {
+    const result = getSelectionState(testbed.snapshot, {
       anchorPath: focusPath,
       focusPath,
       backward: false,
@@ -237,7 +237,7 @@ describe(getSelectionState.name, () => {
       {_key: testbed.span2._key},
     ]
 
-    const result = getSelectionState(testbed.context, {
+    const result = getSelectionState(testbed.snapshot, {
       anchorPath,
       focusPath,
       backward: false,
@@ -286,7 +286,7 @@ describe(getSelectionState.name, () => {
       {_key: testbed.span3._key},
     ]
 
-    const result = getSelectionState(testbed.context, {
+    const result = getSelectionState(testbed.snapshot, {
       anchorPath,
       focusPath,
       backward: false,
@@ -348,7 +348,7 @@ describe(getSelectionState.name, () => {
       {_key: testbed.cellSpan3._key},
     ]
 
-    const result = getSelectionState(testbed.context, {
+    const result = getSelectionState(testbed.snapshot, {
       anchorPath,
       focusPath,
       backward: false,
@@ -458,7 +458,7 @@ describe(getSelectionState.name, () => {
       {_key: testbed.span1._key},
     ]
 
-    const result = getSelectionState(testbed.context, {
+    const result = getSelectionState(testbed.snapshot, {
       anchorPath,
       focusPath,
       backward: true,

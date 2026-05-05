@@ -6,7 +6,7 @@ export const abstractMoveBehaviors = [
   defineBehavior({
     on: 'move.block up',
     guard: ({snapshot, event}) => {
-      const previousSibling = getSibling(snapshot.context, event.at, 'previous')
+      const previousSibling = getSibling(snapshot, event.at, 'previous')
 
       if (previousSibling) {
         return {previousSibling}
@@ -27,7 +27,7 @@ export const abstractMoveBehaviors = [
   defineBehavior({
     on: 'move.block down',
     guard: ({snapshot, event}) => {
-      const nextSibling = getSibling(snapshot.context, event.at, 'next')
+      const nextSibling = getSibling(snapshot, event.at, 'next')
 
       if (nextSibling) {
         return {nextSibling}

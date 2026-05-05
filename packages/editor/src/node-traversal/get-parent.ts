@@ -1,19 +1,14 @@
-import type {EditorSchema} from '../editor/editor-schema'
-import type {Containers} from '../schema/resolve-containers'
 import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
 import {parentPath} from '../slate/path/parent-path'
 import {getNode} from './get-node'
+import type {TraversalSnapshot} from './traversal-snapshot'
 
 /**
  * Get the parent of a node at a given path.
  */
 export function getParent(
-  context: {
-    schema: EditorSchema
-    containers: Containers
-    value: Array<Node>
-  },
+  snapshot: TraversalSnapshot,
   path: Path,
 ): {node: Node; path: Path} | undefined {
   if (path.length === 0) {
@@ -26,5 +21,5 @@ export function getParent(
     return undefined
   }
 
-  return getNode(context, parent)
+  return getNode(snapshot, parent)
 }

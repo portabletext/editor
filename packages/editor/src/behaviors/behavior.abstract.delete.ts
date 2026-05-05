@@ -55,7 +55,7 @@ export const abstractDeleteBehaviors = [
       }
 
       const previousSibling = getSibling(
-        adjustedSnapshot.context,
+        adjustedSnapshot,
         focusTextBlock.path,
         'previous',
       )
@@ -149,7 +149,7 @@ export const abstractDeleteBehaviors = [
       }
 
       const nextSibling = getSibling(
-        adjustedSnapshot.context,
+        adjustedSnapshot,
         focusTextBlock.path,
         'next',
       )
@@ -217,7 +217,7 @@ export const abstractDeleteBehaviors = [
       }
 
       const nextSibling = getSibling(
-        adjustedSnapshot.context,
+        adjustedSnapshot,
         focusTextBlock.path,
         'next',
       )

@@ -21,7 +21,7 @@ export const abstractAnnotationBehaviors = [
       // two trailing segments to get the enclosing text block's path,
       // which works at any container depth.
       const blockPath = event.at.slice(0, -2)
-      const blockEntry = getNode(snapshot.context, blockPath)
+      const blockEntry = getNode(snapshot, blockPath)
 
       if (!blockEntry || !isTextBlock(snapshot.context, blockEntry.node)) {
         return false

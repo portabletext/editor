@@ -31,6 +31,17 @@ export interface PortableTextSlateEditor extends DOMEditor {
   keyGenerator: () => string
   containers: ResolvedContainers
 
+  /**
+   * Snapshot-shaped view onto the editor's traversal state. Mirrors the
+   * shape of `EditorSnapshot.context`.
+   */
+  readonly context: {
+    schema: EditorSchema
+    containers: ResolvedContainers
+    value: PortableTextBlock[]
+    keyGenerator: () => string
+  }
+
   decoratedRanges: Array<DecoratedRange>
   decoratorState: Record<string, boolean | undefined>
   blockIndexMap: Map<string, number>

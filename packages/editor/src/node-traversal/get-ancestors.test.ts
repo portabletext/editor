@@ -6,15 +6,15 @@ describe(getAncestors.name, () => {
   const testbed = createNodeTraversalTestbed()
 
   test('empty path returns empty array', () => {
-    expect(getAncestors(testbed.context, [])).toEqual([])
+    expect(getAncestors(testbed.snapshot, [])).toEqual([])
   })
 
   test('top-level block has no ancestors', () => {
-    expect(getAncestors(testbed.context, [{_key: 'k3'}])).toEqual([])
+    expect(getAncestors(testbed.snapshot, [{_key: 'k3'}])).toEqual([])
   })
 
   test('span in text block has one ancestor', () => {
-    const ancestors = getAncestors(testbed.context, [
+    const ancestors = getAncestors(testbed.snapshot, [
       {_key: 'k3'},
       'children',
       {_key: 'k1'},
@@ -25,7 +25,7 @@ describe(getAncestors.name, () => {
   })
 
   test('span in cell block has four ancestors', () => {
-    const ancestors = getAncestors(testbed.context, [
+    const ancestors = getAncestors(testbed.snapshot, [
       {_key: 'k26'},
       'rows',
       {_key: 'k21'},
@@ -66,7 +66,7 @@ describe(getAncestors.name, () => {
   })
 
   test('block in cell has three ancestors', () => {
-    const ancestors = getAncestors(testbed.context, [
+    const ancestors = getAncestors(testbed.snapshot, [
       {_key: 'k26'},
       'rows',
       {_key: 'k21'},
@@ -95,7 +95,7 @@ describe(getAncestors.name, () => {
   })
 
   test('cell has two ancestors', () => {
-    const ancestors = getAncestors(testbed.context, [
+    const ancestors = getAncestors(testbed.snapshot, [
       {_key: 'k26'},
       'rows',
       {_key: 'k21'},
@@ -114,7 +114,7 @@ describe(getAncestors.name, () => {
   })
 
   test('row has one ancestor', () => {
-    const ancestors = getAncestors(testbed.context, [
+    const ancestors = getAncestors(testbed.snapshot, [
       {_key: 'k26'},
       'rows',
       {_key: 'k21'},
@@ -125,7 +125,7 @@ describe(getAncestors.name, () => {
   })
 
   test('code span has two ancestors', () => {
-    const ancestors = getAncestors(testbed.context, [
+    const ancestors = getAncestors(testbed.snapshot, [
       {_key: 'k11'},
       'code',
       {_key: 'k8'},
@@ -140,7 +140,7 @@ describe(getAncestors.name, () => {
   })
 
   test('code line has one ancestor', () => {
-    const ancestors = getAncestors(testbed.context, [
+    const ancestors = getAncestors(testbed.snapshot, [
       {_key: 'k11'},
       'code',
       {_key: 'k8'},
@@ -151,7 +151,7 @@ describe(getAncestors.name, () => {
   })
 
   test('ancestors are ordered from nearest to furthest', () => {
-    const ancestors = getAncestors(testbed.context, [
+    const ancestors = getAncestors(testbed.snapshot, [
       {_key: 'k26'},
       'rows',
       {_key: 'k21'},

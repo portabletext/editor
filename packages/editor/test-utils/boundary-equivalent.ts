@@ -8,9 +8,12 @@ import type {EditorSelection, EditorSelectionPoint} from '../src/types/editor'
 import {isEqualSelectionPoints} from '../src/utils/util.is-equal-selection-points'
 
 type Context = {
-  schema: EditorSchema
-  containers: Containers
-  value: Array<Node>
+  context: {
+    schema: EditorSchema
+    containers: Containers
+    value: Array<Node>
+  }
+  blockIndexMap: Map<string, number>
 }
 
 /**
@@ -77,14 +80,14 @@ function pointVariants(
 
   if (point.offset === 0) {
     const previous = getSibling(context, span.path, 'previous')
-    if (previous && isSpan({schema: context.schema}, previous.node)) {
+    if (previous && isSpan({schema: context.context.schema}, previous.node)) {
       variants.push({path: previous.path, offset: previous.node.text.length})
     }
   }
 
   if (point.offset === span.node.text.length) {
     const next = getSibling(context, span.path, 'next')
-    if (next && isSpan({schema: context.schema}, next.node)) {
+    if (next && isSpan({schema: context.context.schema}, next.node)) {
       variants.push({path: next.path, offset: 0})
     }
   }

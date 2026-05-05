@@ -21,7 +21,7 @@ export const getPreviousInlineObject: EditorSelector<
   }
 
   const sibling = findSibling(
-    snapshot.context,
+    snapshot,
     point.path,
     'previous',
     (entry): entry is {node: PortableTextObject; path: ChildPath} =>

@@ -22,7 +22,7 @@ import {
 
 type ResolveSelectionEditor = Pick<
   PortableTextSlateEditor,
-  'children' | 'schema' | 'containers'
+  'children' | 'schema' | 'containers' | 'blockIndexMap'
 >
 
 /**
@@ -90,16 +90,19 @@ function resolveSelectionPoint(
       offset: number
     }
   | undefined {
-  const context = {
-    schema: editor.schema,
-    containers: editor.containers,
-    value: editor.children,
+  const snapshot = {
+    context: {
+      schema: editor.schema,
+      containers: editor.containers,
+      value: editor.children,
+    },
+    blockIndexMap: editor.blockIndexMap,
   }
 
-  const entry = getNode(context, selectionPoint.path)
+  const entry = getNode(snapshot, selectionPoint.path)
 
   if (entry) {
-    const children = getChildren(context, entry.path)
+    const children = getChildren(snapshot, entry.path)
 
     // Leaf node (span, inline object, block object). Clamp offset.
     if (children.length === 0) {
@@ -145,7 +148,7 @@ function resolveSelectionPoint(
 
     // Non-leaf, non-text-block (container or text block without offset).
     // Descend to the nearest leaf.
-    const leaf = getLeaf(context, entry.path, {
+    const leaf = getLeaf(snapshot, entry.path, {
       edge: direction === 'forward' ? 'start' : 'end',
     })
 
@@ -160,13 +163,13 @@ function resolveSelectionPoint(
     return undefined
   }
 
-  const blockEntry = getNode(context, [{_key: blockKey}])
+  const blockEntry = getNode(snapshot, [{_key: blockKey}])
 
   if (!blockEntry) {
     return undefined
   }
 
-  const leaf = getLeaf(context, blockEntry.path, {edge: 'start'})
+  const leaf = getLeaf(snapshot, blockEntry.path, {edge: 'start'})
 
   return leaf
     ? {path: leaf.path, offset: 0}

@@ -20,25 +20,25 @@ describe(isVoidNode.name, () => {
   describe('root-level nodes', () => {
     test('text block is not void', () => {
       expect(
-        isVoidNode(testbed.context, testbed.textBlock1, [{_key: 'k3'}]),
+        isVoidNode(testbed.snapshot, testbed.textBlock1, [{_key: 'k3'}]),
       ).toBe(false)
     })
 
     test('block object without container registration is void', () => {
-      expect(isVoidNode(testbed.context, testbed.image, [{_key: 'k4'}])).toBe(
+      expect(isVoidNode(testbed.snapshot, testbed.image, [{_key: 'k4'}])).toBe(
         true,
       )
     })
 
     test('block object with container registration is not void', () => {
-      expect(isVoidNode(testbed.context, testbed.table, [{_key: 'k26'}])).toBe(
+      expect(isVoidNode(testbed.snapshot, testbed.table, [{_key: 'k26'}])).toBe(
         false,
       )
     })
 
     test('code block with container registration is not void', () => {
       expect(
-        isVoidNode(testbed.context, testbed.codeBlock, [{_key: 'k11'}]),
+        isVoidNode(testbed.snapshot, testbed.codeBlock, [{_key: 'k11'}]),
       ).toBe(false)
     })
   })
@@ -46,7 +46,7 @@ describe(isVoidNode.name, () => {
   describe('inline objects', () => {
     test('inline object at root level is void', () => {
       expect(
-        isVoidNode(testbed.context, testbed.stockTicker1, [
+        isVoidNode(testbed.snapshot, testbed.stockTicker1, [
           {_key: 'k3'},
           'children',
           {_key: 'k1'},
@@ -56,7 +56,7 @@ describe(isVoidNode.name, () => {
 
     test('inline object inside container is void', () => {
       expect(
-        isVoidNode(testbed.context, testbed.stockTicker2, [
+        isVoidNode(testbed.snapshot, testbed.stockTicker2, [
           {_key: 'k26'},
           'rows',
           {_key: 'k21'},
@@ -74,7 +74,7 @@ describe(isVoidNode.name, () => {
   describe('nested container nodes', () => {
     test('row inside table is not void', () => {
       expect(
-        isVoidNode(testbed.context, testbed.row1, [
+        isVoidNode(testbed.snapshot, testbed.row1, [
           {_key: 'k26'},
           'rows',
           {_key: 'k21'},
@@ -84,7 +84,7 @@ describe(isVoidNode.name, () => {
 
     test('cell inside table row is not void', () => {
       expect(
-        isVoidNode(testbed.context, testbed.cell1, [
+        isVoidNode(testbed.snapshot, testbed.cell1, [
           {_key: 'k26'},
           'rows',
           {_key: 'k21'},
@@ -98,7 +98,7 @@ describe(isVoidNode.name, () => {
   describe('text nodes inside containers', () => {
     test('text block inside container is not void', () => {
       expect(
-        isVoidNode(testbed.context, testbed.cellBlock1, [
+        isVoidNode(testbed.snapshot, testbed.cellBlock1, [
           {_key: 'k26'},
           'rows',
           {_key: 'k21'},
@@ -112,7 +112,7 @@ describe(isVoidNode.name, () => {
 
     test('span inside container is not void', () => {
       expect(
-        isVoidNode(testbed.context, testbed.cellSpan1, [
+        isVoidNode(testbed.snapshot, testbed.cellSpan1, [
           {_key: 'k26'},
           'rows',
           {_key: 'k21'},
@@ -128,7 +128,7 @@ describe(isVoidNode.name, () => {
 
     test('text block inside code block is not void', () => {
       expect(
-        isVoidNode(testbed.context, testbed.codeLine1, [
+        isVoidNode(testbed.snapshot, testbed.codeLine1, [
           {_key: 'k11'},
           'code',
           {_key: 'k8'},
@@ -216,7 +216,10 @@ describe(isVoidNode.name, () => {
       ],
     ])
 
-    const context = {schema, containers, value: [table]}
+    const context = {
+      context: {schema, containers, value: [table]},
+      blockIndexMap: new Map(),
+    }
 
     test('image inside cell is void', () => {
       expect(
@@ -285,7 +288,10 @@ describe(isVoidNode.name, () => {
       ],
     ])
 
-    const context = {schema, containers, value: [gallery]}
+    const context = {
+      context: {schema, containers, value: [gallery]},
+      blockIndexMap: new Map(),
+    }
 
     test('gallery is not void', () => {
       expect(isVoidNode(context, gallery, [{_key: 'g1'}])).toBe(false)
@@ -321,8 +327,8 @@ describe(isVoidNode.name, () => {
   describe('empty containers', () => {
     test('all object nodes are void when no containers are registered', () => {
       const emptyContext = {
-        ...testbed.context,
-        containers: new Map(),
+        ...testbed.snapshot,
+        context: {...testbed.snapshot.context, containers: new Map()},
       }
 
       expect(isVoidNode(emptyContext, testbed.image, [{_key: 'k4'}])).toBe(true)
@@ -338,8 +344,8 @@ describe(isVoidNode.name, () => {
 
     test('text blocks are never void regardless of container registration', () => {
       const emptyContext = {
-        ...testbed.context,
-        containers: new Map(),
+        ...testbed.snapshot,
+        context: {...testbed.snapshot.context, containers: new Map()},
       }
 
       expect(isVoidNode(emptyContext, testbed.textBlock1, [{_key: 'k3'}])).toBe(
