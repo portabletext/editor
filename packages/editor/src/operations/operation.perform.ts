@@ -20,8 +20,8 @@ import {moveForwardOperationImplementation} from './operation.move.forward'
 import {selectOperationImplementation} from './operation.select'
 import type {
   Operation,
-  OperationContext,
   OperationImplementations,
+  OperationSnapshot,
 } from './operation.types'
 
 const operationImplementations: OperationImplementations = {
@@ -46,18 +46,18 @@ const operationImplementations: OperationImplementations = {
 }
 
 export function performOperation({
-  context,
+  snapshot,
   operation,
 }: {
-  context: OperationContext
+  snapshot: OperationSnapshot
   operation: Operation
 }) {
   const perform = () => {
     try {
       const implementation = operationImplementations[
         operation.type
-      ] as (args: {context: OperationContext; operation: Operation}) => void
-      implementation({context, operation})
+      ] as (args: {snapshot: OperationSnapshot; operation: Operation}) => void
+      implementation({snapshot, operation})
     } catch (error) {
       console.error(
         new Error(

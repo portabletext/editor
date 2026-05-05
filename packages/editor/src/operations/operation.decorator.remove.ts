@@ -21,7 +21,8 @@ import type {OperationImplementation} from './operation.types'
 
 export const decoratorRemoveOperationImplementation: OperationImplementation<
   'decorator.remove'
-> = ({context, operation}) => {
+> = ({snapshot, operation}) => {
+  const {context} = snapshot
   const editor = operation.editor
   const mark = operation.decorator
   const at = operation.at

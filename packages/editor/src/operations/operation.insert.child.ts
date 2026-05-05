@@ -13,7 +13,8 @@ import type {OperationImplementation} from './operation.types'
 
 export const insertChildOperationImplementation: OperationImplementation<
   'insert.child'
-> = ({context, operation}) => {
+> = ({snapshot, operation}) => {
+  const {context} = snapshot
   const focus = operation.editor.selection?.focus
 
   if (!focus) {

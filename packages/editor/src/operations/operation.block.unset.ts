@@ -6,7 +6,8 @@ import type {OperationImplementation} from './operation.types'
 
 export const blockUnsetOperationImplementation: OperationImplementation<
   'block.unset'
-> = ({context, operation}) => {
+> = ({snapshot, operation}) => {
+  const {context} = snapshot
   const blockEntry = getNode(operation.editor, operation.at)
 
   if (!blockEntry) {

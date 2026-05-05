@@ -7,7 +7,8 @@ import type {OperationImplementation} from './operation.types'
 
 export const childUnsetOperationImplementation: OperationImplementation<
   'child.unset'
-> = ({context, operation}) => {
+> = ({snapshot, operation}) => {
+  const {context} = snapshot
   const childEntry = getNode(operation.editor, operation.at)
 
   if (!childEntry) {

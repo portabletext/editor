@@ -126,11 +126,14 @@ export function performEvent({
       }
 
       performOperation({
-        context: {
-          keyGenerator,
-          schema,
-          containers: editor.containers,
-          value: editor.children,
+        snapshot: {
+          context: {
+            keyGenerator,
+            schema,
+            containers: editor.containers,
+            value: editor.children,
+          },
+          blockIndexMap: editor.blockIndexMap,
         },
         operation: {
           ...event,
@@ -372,11 +375,14 @@ export function performEvent({
       }
 
       performOperation({
-        context: {
-          keyGenerator,
-          schema,
-          containers: editor.containers,
-          value: editor.children,
+        snapshot: {
+          context: {
+            keyGenerator,
+            schema,
+            containers: editor.containers,
+            value: editor.children,
+          },
+          blockIndexMap: editor.blockIndexMap,
         },
         operation: {
           ...event,

@@ -35,7 +35,10 @@ import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {parseBlock} from '../utils/parse-blocks'
 import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
-import type {OperationContext, OperationImplementation} from './operation.types'
+import type {
+  OperationImplementation,
+  OperationSnapshot,
+} from './operation.types'
 
 /**
  * Describes a concrete insertion strategy resolved from the operation's
@@ -53,7 +56,8 @@ type InsertTarget =
 
 export const insertBlockOperationImplementation: OperationImplementation<
   'insert.block'
-> = ({context, operation}) => {
+> = ({snapshot, operation}) => {
+  const {context} = snapshot
   const parsedBlock = parseBlock({
     block: operation.block,
     context,
@@ -237,7 +241,7 @@ function resolveTarget(args: {
 
 function dispatchInsert(args: {
   editor: PortableTextSlateEditor
-  context: OperationContext
+  context: OperationSnapshot['context']
   block: Node
   target: InsertTarget
   select: 'start' | 'end' | 'none'
@@ -437,7 +441,7 @@ function splitBlockAndInsert(
  */
 function mergeTextBlockFragment(args: {
   editor: PortableTextSlateEditor
-  context: OperationContext
+  context: OperationSnapshot['context']
   block: Node
   at: Point
   endBlockPath: Path
@@ -544,7 +548,7 @@ function applyPostInsertSelection(
  */
 function executeDeleteThenInsert(args: {
   editor: PortableTextSlateEditor
-  context: OperationContext
+  context: OperationSnapshot['context']
   block: Node
   range: Range
   select: 'start' | 'end' | 'none'
@@ -661,7 +665,7 @@ function executeDeleteThenInsert(args: {
  */
 function removeAdjacentEmptyTextBlock(args: {
   editor: PortableTextSlateEditor
-  context: OperationContext
+  context: OperationSnapshot['context']
   insertedPath: Path
 }): void {
   const {editor, context, insertedPath} = args
@@ -702,7 +706,7 @@ function resolveChildIndex(
  * markDefs (to be merged into the end block).
  */
 function adjustFragmentKeys(args: {
-  context: OperationContext
+  context: OperationSnapshot['context']
   block: Node
   endBlock: Node
 }): {adjustedBlock: Node; adjustedMarkDefs: Array<{_key: string}> | undefined} {
