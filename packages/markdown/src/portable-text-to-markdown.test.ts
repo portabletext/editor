@@ -614,6 +614,65 @@ describe(portableTextToMarkdown.name, () => {
         expect(portableTextToMarkdown(portableText)).toBe('foo')
       })
     })
+
+    describe('task', () => {
+      test('unchecked task round-trip', () => {
+        const markdown = '- [ ] foo'
+        const portableText = markdownToPortableText(markdown)
+        expect(portableTextToMarkdown(portableText)).toBe(markdown)
+      })
+
+      test('checked task round-trip', () => {
+        const markdown = '- [x] foo'
+        const portableText = markdownToPortableText(markdown)
+        expect(portableTextToMarkdown(portableText)).toBe(markdown)
+      })
+
+      test('mixed task and bullet round-trip', () => {
+        const markdown = ['- [ ] todo', '- done', '- [x] also done'].join('\n')
+        const portableText = markdownToPortableText(markdown)
+        expect(portableTextToMarkdown(portableText)).toBe(markdown)
+      })
+
+      test('task nested under bullet round-trip', () => {
+        const markdown = ['- foo', '   - [x] bar'].join('\n')
+        const portableText = markdownToPortableText(markdown)
+        expect(portableTextToMarkdown(portableText)).toBe(markdown)
+      })
+
+      test('renders unchecked task from explicit portable text', () => {
+        expect(
+          portableTextToMarkdown([
+            {
+              _type: 'block',
+              _key: 'k0',
+              children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+              markDefs: [],
+              style: 'normal',
+              listItem: 'task',
+              level: 1,
+              checked: false,
+            },
+          ]),
+        ).toBe('- [ ] foo')
+      })
+
+      test('missing checked field renders as unchecked', () => {
+        expect(
+          portableTextToMarkdown([
+            {
+              _type: 'block',
+              _key: 'k0',
+              children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+              markDefs: [],
+              style: 'normal',
+              listItem: 'task',
+              level: 1,
+            },
+          ]),
+        ).toBe('- [ ] foo')
+      })
+    })
   })
 
   describe('lists', () => {
