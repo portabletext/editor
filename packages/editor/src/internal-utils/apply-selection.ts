@@ -15,10 +15,7 @@ import type {EditorSelection} from '../types/editor'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {blockOffsetToSpanSelectionPoint} from '../utils/util.block-offset'
 import {isEqualSelectionPoints} from '../utils/util.is-equal-selection-points'
-import {
-  getBlockKeyFromSelectionPoint,
-  getChildKeyFromSelectionPoint,
-} from '../utils/util.selection-point'
+import {getBlockKeyFromSelectionPoint} from '../utils/util.selection-point'
 
 type ResolveSelectionEditor = Pick<
   PortableTextSlateEditor,
@@ -122,30 +119,16 @@ function resolveSelectionPoint(
 
     if (isTextBlock({schema: editor.schema}, entry.node) && isBlockLevelPath) {
       const spanPoint = blockOffsetToSpanSelectionPoint({
-        snapshot: {
-          context: {
-            schema: editor.schema,
-            value: [entry.node],
-            containers: editor.containers,
-          },
-          blockIndexMap: new Map(),
-        },
+        snapshot,
         blockOffset: {
-          path: [{_key: entry.node._key}],
+          path: entry.path,
           offset: selectionPoint.offset,
         },
         direction,
       })
 
       if (spanPoint) {
-        return {
-          path: [
-            ...entry.path,
-            'children',
-            {_key: getChildKeyFromSelectionPoint(spanPoint)!},
-          ],
-          offset: spanPoint.offset,
-        }
+        return spanPoint
       }
     }
 

@@ -112,7 +112,7 @@ export function createPatchesPlugin({
       previousValue = editor.children
 
       const snapshot = editorActor.getSnapshot()
-      const {containers, initialValue, schema} = snapshot.context
+      const {initialValue, schema} = snapshot.context
 
       const editorWasEmpty =
         previousValue.length === 1 &&
@@ -140,28 +140,10 @@ export function createPatchesPlugin({
 
       switch (operation.type) {
         case 'insert_text':
-          patches = [
-            ...patches,
-            ...textPatch(
-              schema,
-              containers,
-              editor.children,
-              operation,
-              previousValue,
-            ),
-          ]
+          patches = [...patches, ...textPatch(editor, operation, previousValue)]
           break
         case 'remove_text':
-          patches = [
-            ...patches,
-            ...textPatch(
-              schema,
-              containers,
-              editor.children,
-              operation,
-              previousValue,
-            ),
-          ]
+          patches = [...patches, ...textPatch(editor, operation, previousValue)]
           break
         case 'insert':
           patches = [...patches, ...insertNodePatch(operation)]

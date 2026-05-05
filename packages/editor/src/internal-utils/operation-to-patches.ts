@@ -5,9 +5,8 @@ import {
   type Patch,
 } from '@portabletext/patches'
 import type {PortableTextBlock} from '@portabletext/schema'
-import type {EditorSchema} from '../editor/editor-schema'
 import {getSpanNode} from '../node-traversal/get-span-node'
-import type {ResolvedContainers} from '../schema/resolve-containers'
+import type {TraversalSnapshot} from '../node-traversal/traversal-snapshot'
 import type {Node} from '../slate/interfaces/node'
 import type {
   InsertOperation,
@@ -15,35 +14,24 @@ import type {
   RemoveTextOperation,
 } from '../slate/interfaces/operation'
 
-function spanContext(
-  schema: EditorSchema,
-  containers: ResolvedContainers,
-  value: Array<Node>,
-) {
-  return {
-    context: {schema, containers, value},
-    blockIndexMap: new Map<string, number>(),
-  }
-}
-
 export function textPatch(
-  schema: EditorSchema,
-  containers: ResolvedContainers,
-  children: Node[],
+  snapshot: TraversalSnapshot,
   operation: InsertTextOperation | RemoveTextOperation,
   beforeValue: Array<PortableTextBlock>,
 ): Array<Patch> {
-  const span = getSpanNode(
-    spanContext(schema, containers, children),
-    operation.path,
-  )
+  const span = getSpanNode(snapshot, operation.path)
   if (!span) {
     return []
   }
-  const prevSpan = getSpanNode(
-    spanContext(schema, containers, beforeValue as Array<Node>),
-    operation.path,
-  )
+  const beforeSnapshot: TraversalSnapshot = {
+    context: {
+      schema: snapshot.context.schema,
+      containers: snapshot.context.containers,
+      value: beforeValue as Array<Node>,
+    },
+    blockIndexMap: new Map(),
+  }
+  const prevSpan = getSpanNode(beforeSnapshot, operation.path)
   const patch = diffMatchPatch(prevSpan?.node.text ?? '', span.node.text, [
     ...operation.path,
     'text',

@@ -28,6 +28,9 @@ const relayActor = createActor(relayMachine)
 
 const e = createEditor()
 e.children = [] as any
+e.schema = schema
+e.containers = new Map()
+e.blockIndexMap = new Map()
 Object.defineProperty(e, 'value', {
   get() {
     return e.children
@@ -207,9 +210,7 @@ describe('operationToPatches', () => {
     editor.onChange()
     expect(
       textPatch(
-        editorActor.getSnapshot().context.schema,
-        editorActor.getSnapshot().context.containers,
-        editor.children,
+        editor,
         {
           type: 'insert_text',
           path: [{_key: '1f2e64b47787'}, 'children', {_key: 'fd9b4a4e6c0b'}],
@@ -258,9 +259,14 @@ describe('operationToPatches', () => {
 
     expect(
       textPatch(
-        blockObjectSchema,
-        new Map(),
-        blockObjectChildren,
+        {
+          context: {
+            schema: blockObjectSchema,
+            containers: new Map(),
+            value: blockObjectChildren,
+          },
+          blockIndexMap: new Map(),
+        },
         {
           type: 'insert_text',
           path: [{_key: 'img1'}, 'children', {_key: 'void-child'}],
@@ -277,16 +283,13 @@ describe('operationToPatches', () => {
     ;(before[0] as PortableTextTextBlock).children[2]!.text = '1'
     expect(
       textPatch(
-        editorActor.getSnapshot().context.schema,
-        editorActor.getSnapshot().context.containers,
-        editor.children,
+        editor,
         {
           type: 'remove_text',
           path: [{_key: '1f2e64b47787'}, 'children', {_key: 'fd9b4a4e6c0b'}],
           text: '1',
           offset: 1,
         },
-
         before,
       ),
     ).toMatchInlineSnapshot(`
