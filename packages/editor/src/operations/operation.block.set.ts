@@ -10,7 +10,8 @@ import type {OperationImplementation} from './operation.types'
 
 export const blockSetOperationImplementation: OperationImplementation<
   'block.set'
-> = ({context, operation}) => {
+> = ({snapshot, operation}) => {
+  const {context} = snapshot
   const blockEntry = getNode(operation.editor, operation.at)
 
   if (!blockEntry) {

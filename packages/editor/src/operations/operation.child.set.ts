@@ -10,7 +10,8 @@ import type {OperationImplementation} from './operation.types'
 
 export const childSetOperationImplementation: OperationImplementation<
   'child.set'
-> = ({context, operation}) => {
+> = ({snapshot, operation}) => {
+  const {context} = snapshot
   const childEntry = getNode(operation.editor, operation.at)
 
   if (!childEntry) {

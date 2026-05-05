@@ -28,7 +28,8 @@ import type {OperationImplementation} from './operation.types'
 
 export const addAnnotationOperationImplementation: OperationImplementation<
   'annotation.add'
-> = ({context, operation}) => {
+> = ({snapshot, operation}) => {
+  const {context} = snapshot
   const parsedAnnotation = parseAnnotation({
     annotation: {
       _type: operation.annotation.name,

@@ -22,7 +22,8 @@ import type {OperationImplementation} from './operation.types'
 
 export const decoratorAddOperationImplementation: OperationImplementation<
   'decorator.add'
-> = ({context, operation}) => {
+> = ({snapshot, operation}) => {
+  const {context} = snapshot
   const editor = operation.editor
   const mark = operation.decorator
 

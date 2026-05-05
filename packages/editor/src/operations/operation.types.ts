@@ -2,21 +2,23 @@ import type {
   AbstractBehaviorEventType,
   SyntheticBehaviorEvent,
 } from '../behaviors/behavior.types.event'
-import type {EditorContext} from '../editor/editor-snapshot'
+import type {TraversalSnapshot} from '../node-traversal/traversal-snapshot'
 import type {OmitFromUnion, PickFromUnion} from '../type-utils'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 
-export type OperationContext = Pick<
-  EditorContext,
-  'keyGenerator' | 'schema' | 'containers' | 'value'
->
+export type OperationSnapshot = {
+  context: TraversalSnapshot['context'] & {
+    keyGenerator: () => string
+  }
+  blockIndexMap: TraversalSnapshot['blockIndexMap']
+}
 
 export type OperationImplementation<TOperationType extends Operation['type']> =
   ({
-    context,
+    snapshot,
     operation,
   }: {
-    context: OperationContext
+    snapshot: OperationSnapshot
     operation: PickFromUnion<Operation, 'type', TOperationType>
   }) => void
 

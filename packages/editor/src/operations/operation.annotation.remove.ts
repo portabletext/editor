@@ -26,7 +26,8 @@ import type {OperationImplementation} from './operation.types'
 
 export const removeAnnotationOperationImplementation: OperationImplementation<
   'annotation.remove'
-> = ({context, operation}) => {
+> = ({snapshot, operation}) => {
+  const {context} = snapshot
   const editor = operation.editor
 
   const at = operation.at
