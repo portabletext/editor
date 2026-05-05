@@ -39,7 +39,7 @@ export const getMarkState: EditorSelector<MarkState | undefined> = (
 
   if (isBlockPath(selection.anchor.path)) {
     const spanSelectionPoint = blockOffsetToSpanSelectionPoint({
-      context: snapshot.context,
+      snapshot,
       blockOffset: {
         path: selection.anchor.path,
         offset: selection.anchor.offset,
@@ -57,7 +57,7 @@ export const getMarkState: EditorSelector<MarkState | undefined> = (
 
   if (isBlockPath(selection.focus.path)) {
     const spanSelectionPoint = blockOffsetToSpanSelectionPoint({
-      context: snapshot.context,
+      snapshot,
       blockOffset: {
         path: selection.focus.path,
         offset: selection.focus.offset,

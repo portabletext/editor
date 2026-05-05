@@ -1,7 +1,7 @@
 import {isSpan, isTextBlock} from '@portabletext/schema'
-import type {EditorContext} from '../editor/editor-snapshot'
 import {getAncestorTextBlock} from '../node-traversal/get-ancestor-text-block'
 import {getNode} from '../node-traversal/get-node'
+import type {TraversalSnapshot} from '../node-traversal/traversal-snapshot'
 import type {BlockOffset} from '../types/block-offset'
 import type {EditorSelectionPoint} from '../types/editor'
 import type {ChildPath} from '../types/paths'
@@ -11,17 +11,17 @@ import {isKeyedSegment} from './util.is-keyed-segment'
  * @public
  */
 export function blockOffsetToSpanSelectionPoint({
-  context,
+  snapshot,
   blockOffset,
   direction,
 }: {
-  context: Pick<EditorContext, 'schema' | 'value' | 'containers'>
+  snapshot: TraversalSnapshot
   blockOffset: BlockOffset
   direction: 'forward' | 'backward'
 }) {
-  const blockEntry = getNode(context, blockOffset.path)
+  const blockEntry = getNode(snapshot, blockOffset.path)
 
-  if (!blockEntry || !isTextBlock(context, blockEntry.node)) {
+  if (!blockEntry || !isTextBlock(snapshot.context, blockEntry.node)) {
     return undefined
   }
 
@@ -34,7 +34,7 @@ export function blockOffsetToSpanSelectionPoint({
 
   for (const child of block.children) {
     if (direction === 'forward') {
-      if (!isSpan(context, child)) {
+      if (!isSpan(snapshot.context, child)) {
         continue
       }
 
@@ -51,7 +51,7 @@ export function blockOffsetToSpanSelectionPoint({
       continue
     }
 
-    if (!isSpan(context, child)) {
+    if (!isSpan(snapshot.context, child)) {
       skippedInlineObject = true
       continue
     }
@@ -92,10 +92,10 @@ export function blockOffsetToSpanSelectionPoint({
  * @public
  */
 export function spanSelectionPointToBlockOffset({
-  context,
+  snapshot,
   selectionPoint,
 }: {
-  context: Pick<EditorContext, 'schema' | 'value' | 'containers'>
+  snapshot: TraversalSnapshot
   selectionPoint: EditorSelectionPoint
 }): BlockOffset | undefined {
   const spanSegment = selectionPoint.path.at(-1)
@@ -104,7 +104,7 @@ export function spanSelectionPointToBlockOffset({
     return undefined
   }
 
-  const textBlock = getAncestorTextBlock(context, selectionPoint.path)
+  const textBlock = getAncestorTextBlock(snapshot, selectionPoint.path)
 
   if (!textBlock) {
     return undefined
@@ -113,7 +113,7 @@ export function spanSelectionPointToBlockOffset({
   let offset = 0
 
   for (const child of textBlock.node.children) {
-    if (!isSpan(context, child)) {
+    if (!isSpan(snapshot.context, child)) {
       continue
     }
 

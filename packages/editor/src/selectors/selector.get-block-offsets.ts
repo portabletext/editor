@@ -22,11 +22,11 @@ export const getBlockOffsets: EditorSelector<
   }
 
   const start = spanSelectionPointToBlockOffset({
-    context: snapshot.context,
+    snapshot,
     selectionPoint: selectionStartPoint,
   })
   const end = spanSelectionPointToBlockOffset({
-    context: snapshot.context,
+    snapshot,
     selectionPoint: selectionEndPoint,
   })
 

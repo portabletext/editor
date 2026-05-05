@@ -32,10 +32,9 @@ describe(blockOffsetToSpanSelectionPoint.name, () => {
       test('direction forward', () => {
         expect(
           blockOffsetToSpanSelectionPoint({
-            context: {
-              schema,
-              value,
-              containers: new Map(),
+            snapshot: {
+              context: {schema, value, containers: new Map()},
+              blockIndexMap: new Map(),
             },
             blockOffset: {
               path: [{_key: b0}],
@@ -52,10 +51,9 @@ describe(blockOffsetToSpanSelectionPoint.name, () => {
       test('direction backward', () => {
         expect(
           blockOffsetToSpanSelectionPoint({
-            context: {
-              schema,
-              value,
-              containers: new Map(),
+            snapshot: {
+              context: {schema, value, containers: new Map()},
+              blockIndexMap: new Map(),
             },
             blockOffset: {
               path: [{_key: b0}],
@@ -74,10 +72,9 @@ describe(blockOffsetToSpanSelectionPoint.name, () => {
       test('direction forward', () => {
         expect(
           blockOffsetToSpanSelectionPoint({
-            context: {
-              schema,
-              value,
-              containers: new Map(),
+            snapshot: {
+              context: {schema, value, containers: new Map()},
+              blockIndexMap: new Map(),
             },
             blockOffset: {
               path: [{_key: b0}],
@@ -94,10 +91,9 @@ describe(blockOffsetToSpanSelectionPoint.name, () => {
       test('direction backward', () => {
         expect(
           blockOffsetToSpanSelectionPoint({
-            context: {
-              schema,
-              value,
-              containers: new Map(),
+            snapshot: {
+              context: {schema, value, containers: new Map()},
+              blockIndexMap: new Map(),
             },
             blockOffset: {
               path: [{_key: b0}],
@@ -139,10 +135,9 @@ describe(blockOffsetToSpanSelectionPoint.name, () => {
       test('direction forward', () => {
         expect(
           blockOffsetToSpanSelectionPoint({
-            context: {
-              schema,
-              value,
-              containers: new Map(),
+            snapshot: {
+              context: {schema, value, containers: new Map()},
+              blockIndexMap: new Map(),
             },
             blockOffset: {
               path: [{_key: blockKey}],
@@ -159,10 +154,9 @@ describe(blockOffsetToSpanSelectionPoint.name, () => {
       test('direction backward', () => {
         expect(
           blockOffsetToSpanSelectionPoint({
-            context: {
-              schema,
-              value,
-              containers: new Map(),
+            snapshot: {
+              context: {schema, value, containers: new Map()},
+              blockIndexMap: new Map(),
             },
             blockOffset: {
               path: [{_key: blockKey}],
@@ -181,10 +175,9 @@ describe(blockOffsetToSpanSelectionPoint.name, () => {
       test('direction forward', () => {
         expect(
           blockOffsetToSpanSelectionPoint({
-            context: {
-              schema,
-              value,
-              containers: new Map(),
+            snapshot: {
+              context: {schema, value, containers: new Map()},
+              blockIndexMap: new Map(),
             },
             blockOffset: {
               path: [{_key: blockKey}],
@@ -201,10 +194,9 @@ describe(blockOffsetToSpanSelectionPoint.name, () => {
       test('direction backward', () => {
         expect(
           blockOffsetToSpanSelectionPoint({
-            context: {
-              schema,
-              value,
-              containers: new Map(),
+            snapshot: {
+              context: {schema, value, containers: new Map()},
+              blockIndexMap: new Map(),
             },
             blockOffset: {
               path: [{_key: blockKey}],
@@ -223,10 +215,9 @@ describe(blockOffsetToSpanSelectionPoint.name, () => {
       test('direction forward', () => {
         expect(
           blockOffsetToSpanSelectionPoint({
-            context: {
-              schema,
-              value,
-              containers: new Map(),
+            snapshot: {
+              context: {schema, value, containers: new Map()},
+              blockIndexMap: new Map(),
             },
             blockOffset: {
               path: [{_key: blockKey}],
@@ -243,10 +234,9 @@ describe(blockOffsetToSpanSelectionPoint.name, () => {
       test('direction backward', () => {
         expect(
           blockOffsetToSpanSelectionPoint({
-            context: {
-              schema,
-              value,
-              containers: new Map(),
+            snapshot: {
+              context: {schema, value, containers: new Map()},
+              blockIndexMap: new Map(),
             },
             blockOffset: {
               path: [{_key: blockKey}],
@@ -291,10 +281,9 @@ describe(blockOffsetToSpanSelectionPoint.name, () => {
 
     expect(
       blockOffsetToSpanSelectionPoint({
-        context: {
-          schema,
-          value,
-          containers: new Map(),
+        snapshot: {
+          context: {schema, value, containers: new Map()},
+          blockIndexMap: new Map(),
         },
         blockOffset: {
           path: [{_key: b0}],
@@ -305,10 +294,9 @@ describe(blockOffsetToSpanSelectionPoint.name, () => {
     ).toBeUndefined()
     expect(
       blockOffsetToSpanSelectionPoint({
-        context: {
-          schema,
-          value,
-          containers: new Map(),
+        snapshot: {
+          context: {schema, value, containers: new Map()},
+          blockIndexMap: new Map(),
         },
         blockOffset: {
           path: [{_key: b0}],
@@ -331,10 +319,9 @@ describe(blockOffsetToSpanSelectionPoint.name, () => {
 
     expect(
       blockOffsetToSpanSelectionPoint({
-        context: {
-          schema,
-          value,
-          containers: new Map(),
+        snapshot: {
+          context: {schema, value, containers: new Map()},
+          blockIndexMap: new Map(),
         },
         blockOffset: {
           path: [{_key: b0}],
@@ -373,10 +360,9 @@ describe(blockOffsetToSpanSelectionPoint.name, () => {
 
     expect(
       blockOffsetToSpanSelectionPoint({
-        context: {
-          schema,
-          value,
-          containers: new Map(),
+        snapshot: {
+          context: {schema, value, containers: new Map()},
+          blockIndexMap: new Map(),
         },
         blockOffset: {
           path: [{_key: b1}],
