@@ -10,6 +10,7 @@ import {describe, expect, it, test, vi} from 'vitest'
 import {render} from 'vitest-browser-react'
 import {page, userEvent} from 'vitest/browser'
 import {
+  defineContainer,
   defineSchema,
   EditorProvider,
   PortableTextEditable,
@@ -19,7 +20,7 @@ import {
   type RangeDecorationOnMovedDetails,
 } from '../src'
 import type {PortableTextEditor} from '../src/editor/PortableTextEditor'
-import {EventListenerPlugin} from '../src/plugins'
+import {ContainerPlugin, EventListenerPlugin} from '../src/plugins'
 import {EditorRefPlugin} from '../src/plugins/plugin.editor-ref'
 import {InternalPortableTextEditorRefPlugin} from '../src/plugins/plugin.internal.portable-text-editor-ref'
 import {createTestEditor} from '../src/test/vitest'
@@ -608,6 +609,96 @@ describe('RangeDecorations', () => {
     // Assert that the caret is still after "f"
     expect(editorRef.current?.getSnapshot().context.selection).toEqual(
       getSelectionAfterText(editorRef.current!.getSnapshot().context, 'f'),
+    )
+  })
+})
+
+describe('RangeDecorations inside editable containers', () => {
+  test('Scenario: Drawing a collapsed Range Decoration inside a callout', async () => {
+    const schemaDefinition = defineSchema({
+      blockObjects: [
+        {
+          name: 'callout',
+          fields: [
+            {
+              name: 'content',
+              type: 'array',
+              of: [{type: 'block'}],
+            },
+          ],
+        },
+      ],
+    })
+
+    const calloutContainer = defineContainer<typeof schemaDefinition>({
+      scope: '$..callout',
+      field: 'content',
+    })
+
+    // A collapsed range decoration whose path points inside a container.
+    // `range-decorations-machine.ts` has a special branch for collapsed
+    // ranges that matches by block key. With root-only path slicing
+    // (`path.at(0)` = callout key) the inner text block iteration sees a
+    // mismatch and the decoration never renders. Container-aware lookup
+    // resolves the enclosing block at any depth.
+    const rangeDecorations: Array<RangeDecoration> = [
+      {
+        component: (props) => (
+          <span data-testid="range-decoration">{props.children}</span>
+        ),
+        selection: {
+          anchor: {
+            path: [
+              {_key: 'callout1'},
+              'content',
+              {_key: 'inner1'},
+              'children',
+              {_key: 'span1'},
+            ],
+            offset: 6,
+          },
+          focus: {
+            path: [
+              {_key: 'callout1'},
+              'content',
+              {_key: 'inner1'},
+              'children',
+              {_key: 'span1'},
+            ],
+            offset: 6,
+          },
+        },
+      },
+    ]
+
+    const {locator} = await createTestEditor({
+      schemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: 'callout1',
+          content: [
+            {
+              _type: 'block',
+              _key: 'inner1',
+              children: [
+                {_type: 'span', _key: 'span1', text: 'Hello there world'},
+              ],
+              markDefs: [],
+            },
+          ],
+        },
+      ],
+      editableProps: {
+        rangeDecorations,
+      },
+      children: <ContainerPlugin containers={[calloutContainer]} />,
+    })
+
+    await vi.waitFor(() =>
+      expect
+        .element(locator.getByTestId('range-decoration'))
+        .toBeInTheDocument(),
     )
   })
 })
