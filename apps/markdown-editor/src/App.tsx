@@ -2,11 +2,18 @@ import {
   defineSchema,
   EditorProvider,
   PortableTextEditable,
+  useEditor,
+  useEditorSelector,
+  type BlockListItemRenderProps,
+  type RenderBlockFunction,
   type RenderDecoratorFunction,
+  type RenderListItemFunction,
   type RenderStyleFunction,
 } from '@portabletext/editor'
+import * as selectors from '@portabletext/editor/selectors'
+import './App.css'
 
-const schemaDefinition = defineSchema({
+export const schemaDefinition = defineSchema({
   decorators: [
     {name: 'strong'},
     {name: 'em'},
@@ -32,20 +39,184 @@ const renderStyle: RenderStyleFunction = (props) => {
   return <>{props.children}</>
 }
 
+const renderBlock: RenderBlockFunction = (props) => {
+  return <div className="block">{props.children}</div>
+}
+
+const renderListItem: RenderListItemFunction = (props) => {
+  if (props.value === 'task') {
+    return <TaskListItem {...props} />
+  }
+  return <>{props.children}</>
+}
+
+function TaskListItem(props: BlockListItemRenderProps) {
+  const editor = useEditor()
+  const checked = (props.block as {checked?: boolean}).checked === true
+
+  return (
+    <span className="task-row" data-checked={checked}>
+      <button
+        aria-label={checked ? 'Mark task incomplete' : 'Mark task complete'}
+        aria-pressed={checked}
+        className="task-checkbox"
+        contentEditable={false}
+        type="button"
+        onMouseDown={(event) => event.preventDefault()}
+        onClick={() => {
+          editor.send({
+            type: 'block.set',
+            at: props.path,
+            props: {checked: !checked},
+          })
+          editor.send({type: 'focus'})
+        }}
+      />
+      <span className="task-content">{props.children}</span>
+    </span>
+  )
+}
+
 function App() {
   return (
-    <main>
-      <h1>Markdown editor (PTE)</h1>
-      <EditorProvider initialConfig={{schemaDefinition}}>
-        <PortableTextEditable
-          placeholder="Write Markdown..."
-          renderDecorator={renderDecorator}
-          renderStyle={renderStyle}
-          renderListItem={(props) => <>{props.children}</>}
-        />
-      </EditorProvider>
+    <main className="shell">
+      <section className="workspace" aria-label="Markdown editor">
+        <header className="topbar">
+          <div>
+            <p className="eyebrow">Portable Text prototype</p>
+            <h1>Markdown-first editor</h1>
+          </div>
+        </header>
+
+        <EditorProvider initialConfig={{schemaDefinition}}>
+          <Toolbar />
+          <div className="editor-frame">
+            <PortableTextEditable
+              className="editor"
+              placeholder="Write Markdown..."
+              renderDecorator={renderDecorator}
+              renderStyle={renderStyle}
+              renderBlock={renderBlock}
+              renderListItem={renderListItem}
+            />
+          </div>
+          <StatusBar />
+        </EditorProvider>
+      </section>
     </main>
   )
+}
+
+function Toolbar() {
+  return (
+    <div className="toolbar" aria-label="Formatting toolbar">
+      <StyleButton style="normal" label="P" title="Paragraph" />
+      <StyleButton style="h1" label="H1" title="Heading 1" />
+      <StyleButton style="h2" label="H2" title="Heading 2" />
+      <StyleButton style="h3" label="H3" title="Heading 3" />
+      <ListButton list="bullet" label="Bullet" title="Bulleted list" />
+      <ListButton list="number" label="Numbered" title="Numbered list" />
+      <ListButton list="task" label="Task" title="Task list" />
+      <span className="toolbar-divider" />
+      <DecoratorButton decorator="strong" label="B" title="Bold" />
+      <DecoratorButton decorator="em" label="I" title="Italic" />
+      <DecoratorButton decorator="underline" label="U" title="Underline" />
+      <DecoratorButton decorator="code" label="Code" title="Inline code" />
+    </div>
+  )
+}
+
+function StyleButton(props: {style: string; label: string; title: string}) {
+  const editor = useEditor()
+  const active = useEditorSelector(editor, selectors.isActiveStyle(props.style))
+  return (
+    <button
+      aria-pressed={active}
+      className="toolbar-button"
+      title={props.title}
+      type="button"
+      onMouseDown={(event) => {
+        event.preventDefault()
+        editor.send({type: 'style.toggle', style: props.style})
+        editor.send({type: 'focus'})
+      }}
+    >
+      {props.label}
+    </button>
+  )
+}
+
+function ListButton(props: {list: string; label: string; title: string}) {
+  const editor = useEditor()
+  const active = useEditorSelector(
+    editor,
+    selectors.isActiveListItem(props.list),
+  )
+  return (
+    <button
+      aria-pressed={active}
+      className="toolbar-button"
+      title={props.title}
+      type="button"
+      onMouseDown={(event) => {
+        event.preventDefault()
+        editor.send({type: 'list item.toggle', listItem: props.list})
+        editor.send({type: 'focus'})
+      }}
+    >
+      {props.label}
+    </button>
+  )
+}
+
+function DecoratorButton(props: {
+  decorator: string
+  label: string
+  title: string
+}) {
+  const editor = useEditor()
+  const active = useEditorSelector(
+    editor,
+    selectors.isActiveDecorator(props.decorator),
+  )
+  return (
+    <button
+      aria-pressed={active}
+      className="toolbar-button"
+      title={props.title}
+      type="button"
+      onMouseDown={(event) => {
+        event.preventDefault()
+        editor.send({type: 'decorator.toggle', decorator: props.decorator})
+        editor.send({type: 'focus'})
+      }}
+    >
+      {props.label}
+    </button>
+  )
+}
+
+function StatusBar() {
+  return (
+    <div className="statusbar">
+      <span>Hotkeys: Cmd/Ctrl+B, I, U, E</span>
+      <span className="active-marks">
+        {schemaDefinition.decorators.map((decorator) => (
+          <ActiveMarkLabel key={decorator.name} decorator={decorator.name} />
+        ))}
+      </span>
+    </div>
+  )
+}
+
+function ActiveMarkLabel(props: {decorator: string}) {
+  const editor = useEditor()
+  const active = useEditorSelector(
+    editor,
+    selectors.isActiveDecorator(props.decorator),
+  )
+  if (!active) return null
+  return <span className="active-mark">{props.decorator}</span>
 }
 
 export default App
