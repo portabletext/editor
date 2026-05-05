@@ -70,11 +70,7 @@ const activeListener = fromCallback<
         return {
           value: annotation,
           schemaType,
-          at: [
-            {_key: focusBlock.node._key},
-            'markDefs',
-            {_key: annotation._key},
-          ],
+          at: [...focusBlock.path, 'markDefs', {_key: annotation._key}],
         }
       }),
       elementRef,
