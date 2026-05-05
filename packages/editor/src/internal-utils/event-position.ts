@@ -79,14 +79,14 @@ export function getEventPosition({
       isContainer: false,
       selection: {
         anchor: getBlockStartPoint({
-          context: editorActor.getSnapshot().context,
+          context: slateEditor,
           block: {
             node: eventBlock,
             path: eventBlockPath,
           },
         }),
         focus: getBlockEndPoint({
-          context: editorActor.getSnapshot().context,
+          context: slateEditor,
           block: {
             node: eventBlock,
             path: eventBlockPath,
@@ -124,14 +124,14 @@ export function getEventPosition({
       isContainer: false,
       selection: {
         anchor: getBlockStartPoint({
-          context: editorActor.getSnapshot().context,
+          context: slateEditor,
           block: {
             node: eventBlock,
             path: eventBlockPath,
           },
         }),
         focus: getBlockEndPoint({
-          context: editorActor.getSnapshot().context,
+          context: slateEditor,
           block: {
             node: eventBlock,
             path: eventBlockPath,

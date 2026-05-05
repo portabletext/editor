@@ -126,15 +126,7 @@ export function performEvent({
       }
 
       performOperation({
-        snapshot: {
-          context: {
-            keyGenerator,
-            schema,
-            containers: editor.containers,
-            value: editor.children,
-          },
-          blockIndexMap: editor.blockIndexMap,
-        },
+        snapshot: editor,
         operation: {
           ...event,
           editor,
@@ -375,15 +367,7 @@ export function performEvent({
       }
 
       performOperation({
-        snapshot: {
-          context: {
-            keyGenerator,
-            schema,
-            containers: editor.containers,
-            value: editor.children,
-          },
-          blockIndexMap: editor.blockIndexMap,
-        },
+        snapshot: editor,
         operation: {
           ...event,
           editor,
