@@ -126,11 +126,7 @@ function sliceArray({
       continue
     }
 
-    const childInfo = getNodeChildren(
-      {schema: context.schema, containers: context.containers},
-      block,
-      scopePath,
-    )
+    const childInfo = getNodeChildren(context, block, scopePath)
 
     if (!childInfo) {
       result.push(block)
