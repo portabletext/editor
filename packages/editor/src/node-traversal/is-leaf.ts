@@ -15,11 +15,6 @@ export function isLeaf(snapshot: TraversalSnapshot, path: Path): boolean {
     return false
   }
 
-  const traversalContext = {
-    schema: snapshot.context.schema,
-    containers: snapshot.context.containers,
-  }
-
   let currentChildren: Array<Node> = snapshot.context.value
   let scopePath = ''
 
@@ -39,7 +34,7 @@ export function isLeaf(snapshot: TraversalSnapshot, path: Path): boolean {
       return false
     }
 
-    const next = getNodeChildren(traversalContext, node, scopePath)
+    const next = getNodeChildren(snapshot.context, node, scopePath)
 
     if (i === path.length - 1) {
       return next === undefined
