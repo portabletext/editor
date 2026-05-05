@@ -61,7 +61,6 @@ import {
 } from '../../dom/utils/symbols'
 import {end as editorEnd} from '../../editor/end'
 import {range as editorRange} from '../../editor/range'
-import {rangeRef} from '../../editor/range-ref'
 import {start as editorStart} from '../../editor/start'
 import type {Editor} from '../../interfaces/editor'
 import type {NodeEntry} from '../../interfaces/node'
@@ -701,32 +700,18 @@ export const Editable = forwardRef(
           // COMPAT: For the deleting forward/backward input types we don't want
           // to change the selection because it is the range that will be deleted,
           // and those commands determine that for themselves.
-          // If the NODE_MAP is dirty, we can't trust the selection anchor (eg ReactEditor.toDOMPoint via ReactEditor.toSlateRange)
-          if (
-            (!type.startsWith('delete') || type.startsWith('deleteBy')) &&
-            !editor.isNodeMapDirty
-          ) {
+          if (!type.startsWith('delete') || type.startsWith('deleteBy')) {
             const [targetRange] = (event as any).getTargetRanges()
 
             if (targetRange) {
               const range = ReactEditor.toSlateRange(editor, targetRange, {
                 exactMatch: false,
-                suppressThrow: false,
+                suppressThrow: true,
               })
 
-              if (!selection || !rangeEquals(selection, range)) {
+              if (range && (!selection || !rangeEquals(selection, range))) {
                 native = false
-
-                const selectionRef =
-                  !isCompositionChange &&
-                  editor.selection &&
-                  rangeRef(editor, editor.selection)
-
                 editor.select(range)
-
-                if (selectionRef) {
-                  editor.userSelection = selectionRef
-                }
               }
             }
           }
