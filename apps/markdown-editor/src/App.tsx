@@ -11,9 +11,16 @@ import {
   type RenderStyleFunction,
 } from '@portabletext/editor'
 import * as selectors from '@portabletext/editor/selectors'
+import {InputRulePlugin} from '@portabletext/plugin-input-rule'
+import {MarkdownShortcutsPlugin} from '@portabletext/plugin-markdown-shortcuts'
 import './App.css'
+import {MarkdownEditorBehaviorsPlugin} from './markdown-editor-behaviors'
+import {createTaskListRule} from './rules/task-list'
 
 export const schemaDefinition = defineSchema({
+  block: {
+    fields: [{name: 'checked', type: 'boolean'}],
+  },
   decorators: [
     {name: 'strong'},
     {name: 'em'},
@@ -89,6 +96,36 @@ function App() {
         </header>
 
         <EditorProvider initialConfig={{schemaDefinition}}>
+          <MarkdownEditorBehaviorsPlugin />
+          <MarkdownShortcutsPlugin
+            headingStyle={({context, props}) =>
+              context.schema.styles.find((s) => s.name === `h${props.level}`)
+                ?.name
+            }
+            unorderedList={({context}) =>
+              context.schema.lists.find((l) => l.name === 'bullet')?.name
+            }
+            orderedList={({context}) =>
+              context.schema.lists.find((l) => l.name === 'number')?.name
+            }
+            boldDecorator={({context}) =>
+              context.schema.decorators.find((d) => d.name === 'strong')?.name
+            }
+            italicDecorator={({context}) =>
+              context.schema.decorators.find((d) => d.name === 'em')?.name
+            }
+            codeDecorator={({context}) =>
+              context.schema.decorators.find((d) => d.name === 'code')?.name
+            }
+          />
+          <InputRulePlugin
+            rules={[
+              createTaskListRule({
+                taskList: ({context}) =>
+                  context.schema.lists.find((l) => l.name === 'task')?.name,
+              }),
+            ]}
+          />
           <Toolbar />
           <div className="editor-frame">
             <PortableTextEditable
@@ -199,7 +236,7 @@ function DecoratorButton(props: {
 function StatusBar() {
   return (
     <div className="statusbar">
-      <span>Hotkeys: Cmd/Ctrl+B, I, U, E</span>
+      <span>Hotkeys: Cmd/Ctrl+B, I, U, ' for bold/italic/underline/code</span>
       <span className="active-marks">
         {schemaDefinition.decorators.map((decorator) => (
           <ActiveMarkLabel key={decorator.name} decorator={decorator.name} />
