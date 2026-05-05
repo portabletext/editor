@@ -4,7 +4,7 @@ import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
 import {isAncestorPath} from '../slate/path/is-ancestor-path'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
-import {getChildrenInternal} from './get-children'
+import {getChildren, getNodeChildren} from './get-children'
 import type {TraversalSnapshot} from './traversal-snapshot'
 
 /**
@@ -33,25 +33,13 @@ export function* getNodes(
   } = {},
 ): Generator<{node: Node; path: Path}, void, undefined> {
   const {at = [], from, to, match, reverse = false} = options
-  const traversalContext = {
-    schema: snapshot.context.schema,
-    containers: snapshot.context.containers,
-    blockIndexMap: snapshot.blockIndexMap,
-  }
-  const root = {value: snapshot.context.value}
 
-  // When from/to are not provided, use the simple recursive DFS
   if (from === undefined && to === undefined) {
-    yield* getNodesSimple(traversalContext, root, at, {match, reverse})
+    yield* getNodesSimple(snapshot, at, {match, reverse})
     return
   }
 
-  yield* getNodesInRange(traversalContext, root, at, {
-    from,
-    to,
-    match,
-    reverse,
-  })
+  yield* getNodesInRange(snapshot, at, {from, to, match, reverse})
 }
 
 /**
@@ -65,7 +53,36 @@ export function* getNodeDescendants(
   },
   node: Node | {value: Array<Node>},
 ): Generator<{node: Node; path: Path}, void, undefined> {
-  yield* getNodesSimple(context, node, [], {})
+  // The editor root wrapper ({value: [...]}) is not a real node, so its field
+  // name is not part of paths. For standalone nodes (a real {_key, _type, ...}
+  // passed in by callers like getDirtyPaths), the field name IS part of the
+  // path.
+  const isRoot = !('_key' in node) && !('_type' in node)
+  yield* walkStandalone(context, node, '', [], isRoot)
+}
+
+function* walkStandalone(
+  context: {
+    schema: EditorSchema
+    containers: Containers
+  },
+  node: Node | {value: Array<Node>},
+  scopePath: string,
+  path: Path,
+  isRoot: boolean,
+): Generator<{node: Node; path: Path}, void, undefined> {
+  const next = getNodeChildren(context, node, scopePath)
+  if (!next) {
+    return
+  }
+
+  for (const child of next.children) {
+    const childPath: Path = isRoot
+      ? [{_key: child._key}]
+      : [...path, next.fieldName, {_key: child._key}]
+    yield {node: child, path: childPath}
+    yield* walkStandalone(context, child, next.scopePath, childPath, false)
+  }
 }
 
 /**
@@ -73,11 +90,7 @@ export function* getNodeDescendants(
  * Yields all descendants of the node at `path`.
  */
 function* getNodesSimple(
-  context: {
-    schema: EditorSchema
-    containers: Containers
-  },
-  root: Node | {value: Array<Node>},
+  snapshot: TraversalSnapshot,
   path: Path,
   options: {
     match?: (node: Node, path: Path) => boolean
@@ -86,7 +99,7 @@ function* getNodesSimple(
 ): Generator<{node: Node; path: Path}, void, undefined> {
   const {match, reverse = false} = options
 
-  const children = getChildrenInternal(context, root, path)
+  const children = getChildren(snapshot, path)
 
   const entries = reverse ? [...children].reverse() : children
 
@@ -95,7 +108,7 @@ function* getNodesSimple(
       yield entry
     }
 
-    yield* getNodesSimple(context, root, entry.path, options)
+    yield* getNodesSimple(snapshot, entry.path, options)
   }
 }
 
@@ -106,12 +119,7 @@ function* getNodesSimple(
  * sibling-array lookup for deeper segments.
  */
 function comparePathsInTree(
-  context: {
-    schema: EditorSchema
-    containers: Containers
-    blockIndexMap: Map<string, number>
-  },
-  root: Node | {value: Array<Node>},
+  snapshot: TraversalSnapshot,
   pathA: Path,
   pathB: Path,
 ): -1 | 0 | 1 {
@@ -128,10 +136,10 @@ function comparePathsInTree(
     const keyB = keysB[depth]!
 
     if (keyA._key === keyB._key) {
-      if (isRootLevel && context.blockIndexMap.has(keyA._key)) {
+      if (isRootLevel && snapshot.blockIndexMap.has(keyA._key)) {
         currentPath = [keyA]
       } else {
-        const children = getChildrenInternal(context, root, currentPath)
+        const children = getChildren(snapshot, currentPath)
         const child = children.find((c) => c.node._key === keyA._key)
         if (child) {
           currentPath = child.path
@@ -142,8 +150,8 @@ function comparePathsInTree(
     }
 
     if (isRootLevel) {
-      const indexA = context.blockIndexMap.get(keyA._key) ?? -1
-      const indexB = context.blockIndexMap.get(keyB._key) ?? -1
+      const indexA = snapshot.blockIndexMap.get(keyA._key) ?? -1
+      const indexB = snapshot.blockIndexMap.get(keyB._key) ?? -1
       if (indexA !== -1 && indexB !== -1) {
         if (indexA < indexB) {
           return -1
@@ -155,7 +163,7 @@ function comparePathsInTree(
       }
     }
 
-    const siblings = getChildrenInternal(context, root, currentPath)
+    const siblings = getChildren(snapshot, currentPath)
     let indexA = -1
     let indexB = -1
 
@@ -201,12 +209,7 @@ function comparePathsInTree(
  * later), regardless of traversal direction.
  */
 function* getNodesInRange(
-  context: {
-    schema: EditorSchema
-    containers: Containers
-    blockIndexMap: Map<string, number>
-  },
-  root: Node | {value: Array<Node>},
+  snapshot: TraversalSnapshot,
   path: Path,
   options: {
     from?: Path
@@ -217,25 +220,25 @@ function* getNodesInRange(
 ): Generator<{node: Node; path: Path}, void, undefined> {
   const {from, to, match, reverse = false} = options
 
-  const children = getChildrenInternal(context, root, path)
+  const children = getChildren(snapshot, path)
   const entries = reverse ? [...children].reverse() : children
 
   for (const entry of entries) {
-    if (canStopTraversal(context, root, entry.path, from, to, reverse)) {
+    if (canStopTraversal(snapshot, entry.path, from, to, reverse)) {
       return
     }
 
-    if (!couldContainInRangeNodes(context, root, entry.path, from, to)) {
+    if (!couldContainInRangeNodes(snapshot, entry.path, from, to)) {
       continue
     }
 
-    if (isInRange(context, root, entry.path, from, to)) {
+    if (isInRange(snapshot, entry.path, from, to)) {
       if (!match || match(entry.node, entry.path)) {
         yield entry
       }
     }
 
-    yield* getNodesInRange(context, root, entry.path, options)
+    yield* getNodesInRange(snapshot, entry.path, options)
   }
 }
 
@@ -245,29 +248,21 @@ function* getNodesInRange(
  * considered in range since they contain the range boundary.
  */
 function isInRange(
-  context: {
-    schema: EditorSchema
-    containers: Containers
-    blockIndexMap: Map<string, number>
-  },
-  root: Node | {value: Array<Node>},
+  snapshot: TraversalSnapshot,
   nodePath: Path,
   from: Path | undefined,
   to: Path | undefined,
 ): boolean {
   if (
     from !== undefined &&
-    comparePathsInTree(context, root, nodePath, from) === -1
+    comparePathsInTree(snapshot, nodePath, from) === -1
   ) {
     if (!isAncestorPath(nodePath, from)) {
       return false
     }
   }
 
-  if (
-    to !== undefined &&
-    comparePathsInTree(context, root, nodePath, to) === 1
-  ) {
+  if (to !== undefined && comparePathsInTree(snapshot, nodePath, to) === 1) {
     if (!isAncestorPath(nodePath, to)) {
       return false
     }
@@ -281,17 +276,12 @@ function isInRange(
  * [from, to] range.
  */
 function couldContainInRangeNodes(
-  context: {
-    schema: EditorSchema
-    containers: Containers
-    blockIndexMap: Map<string, number>
-  },
-  root: Node | {value: Array<Node>},
+  snapshot: TraversalSnapshot,
   nodePath: Path,
   from: Path | undefined,
   to: Path | undefined,
 ): boolean {
-  if (isInRange(context, root, nodePath, from, to)) {
+  if (isInRange(snapshot, nodePath, from, to)) {
     return true
   }
 
@@ -310,12 +300,7 @@ function couldContainInRangeNodes(
  * Check if all remaining nodes in iteration order will be outside the range.
  */
 function canStopTraversal(
-  context: {
-    schema: EditorSchema
-    containers: Containers
-    blockIndexMap: Map<string, number>
-  },
-  root: Node | {value: Array<Node>},
+  snapshot: TraversalSnapshot,
   nodePath: Path,
   from: Path | undefined,
   to: Path | undefined,
@@ -327,7 +312,7 @@ function canStopTraversal(
     }
 
     return (
-      comparePathsInTree(context, root, nodePath, from) === -1 &&
+      comparePathsInTree(snapshot, nodePath, from) === -1 &&
       !isAncestorPath(nodePath, from)
     )
   }
@@ -336,5 +321,5 @@ function canStopTraversal(
     return false
   }
 
-  return comparePathsInTree(context, root, nodePath, to) === 1
+  return comparePathsInTree(snapshot, nodePath, to) === 1
 }

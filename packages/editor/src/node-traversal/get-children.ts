@@ -15,40 +15,11 @@ export function getChildren(
   snapshot: TraversalSnapshot,
   path: Path,
 ): Array<{node: Node; path: Path}> {
-  const traversalContext = {
-    schema: snapshot.context.schema,
-    containers: snapshot.context.containers,
-  }
-  return getChildrenInternal(
-    traversalContext,
-    {value: snapshot.context.value},
-    path,
-  )
-}
-
-export function getChildrenInternal(
-  context: {
-    schema: EditorSchema
-    containers: Containers
-  },
-  root: Node | {value: Array<Node>},
-  path: Path,
-): Array<{node: Node; path: Path}> {
-  const rootChildren = getNodeChildren(context, root, '')
-
-  if (!rootChildren) {
-    return []
-  }
-
-  let currentChildren = rootChildren.children
-  let scopePath = rootChildren.scopePath
-  let currentFieldName = rootChildren.fieldName
+  let currentChildren: Array<Node> = snapshot.context.value
+  let scopePath = ''
+  let currentFieldName = 'value'
   let currentPath: Path = []
-  // The editor root wrapper ({value: [...]}) is not a real node, so its field
-  // name is not part of paths. Block paths start with [{_key: 'blockKey'}],
-  // not ['value', {_key: 'blockKey'}]. But for standalone nodes (e.g., a text
-  // block passed to getNodeDescendants), the field name IS part of the path.
-  let isRoot = !('_key' in root) && !('_type' in root)
+  let isRoot = true
 
   for (const segment of path) {
     if (typeof segment === 'string') {
@@ -56,7 +27,6 @@ export function getChildrenInternal(
     }
 
     let node: Node | undefined
-
     if (isKeyedSegment(segment)) {
       node = currentChildren.find((child) => child._key === segment._key)
     } else if (typeof segment === 'number') {
@@ -72,7 +42,7 @@ export function getChildrenInternal(
       : [...currentPath, currentFieldName, {_key: node._key}]
     isRoot = false
 
-    const next = getNodeChildren(context, node, scopePath)
+    const next = getNodeChildren(snapshot.context, node, scopePath)
 
     if (!next) {
       return []
