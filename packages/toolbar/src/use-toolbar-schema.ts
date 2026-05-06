@@ -6,10 +6,12 @@ import {
   type BlockObjectSchemaType,
   type DecoratorDefinition,
   type DecoratorSchemaType,
+  type EditorSchema,
   type InlineObjectSchemaType,
   type ListSchemaType,
   type StyleSchemaType,
 } from '@portabletext/editor'
+import {getUnionSchema} from '@portabletext/editor/traversal'
 import type {KeyboardShortcut} from '@portabletext/keyboard-shortcuts'
 
 /**
@@ -56,48 +58,51 @@ export type ExtendStyleSchemaType = (
 
 /**
  * @beta
- * Extend the editor's schema with default values, icons, shortcuts and more.
- * This makes it easier to use the schema to render toolbars, forms and other
- * UI components.
+ *
+ * Resolve the editor's full toolbar schema. Returns the union of every
+ * decorator, annotation, list, style, block object and inline object declared
+ * anywhere in the editor's schema graph that is reachable from a position
+ * where text is edited - the root schema merged with the sub-schema of every
+ * registered container whose field accepts text blocks. Useful for rendering
+ * a static toolbar whose buttons stay stable across selection moves.
+ *
+ * Re-renders only when the schema graph or the extension callbacks change.
+ * Pair with {@link useApplicableSchema} to determine which entries are
+ * applicable at the current selection (which buttons should be enabled vs.
+ * disabled).
  */
 export function useToolbarSchema(props: {
-  extendDecorator?: (
-    decorator: DecoratorSchemaType,
-  ) => ToolbarDecoratorSchemaType
-  extendAnnotation?: (
-    annotation: AnnotationSchemaType,
-  ) => ToolbarAnnotationSchemaType
-  extendList?: (list: ListSchemaType) => ToolbarListSchemaType
-  extendBlockObject?: (
-    blockObject: BlockObjectSchemaType,
-  ) => ToolbarBlockObjectSchemaType
-  extendInlineObject?: (
-    inlineObject: InlineObjectSchemaType,
-  ) => ToolbarInlineObjectSchemaType
-  extendStyle?: (style: StyleSchemaType) => ToolbarStyleSchemaType
+  extendDecorator?: ExtendDecoratorSchemaType
+  extendAnnotation?: ExtendAnnotationSchemaType
+  extendList?: ExtendListSchemaType
+  extendBlockObject?: ExtendBlockObjectSchemaType
+  extendInlineObject?: ExtendInlineObjectSchemaType
+  extendStyle?: ExtendStyleSchemaType
 }): ToolbarSchema {
   const editor = useEditor()
-  const schema = useEditorSelector(
+  const union = useEditorSelector(
     editor,
-    (snapshot) => snapshot.context.schema,
+    (snapshot) =>
+      getUnionSchema(snapshot.context.schema, snapshot.context.containers),
+    compareSchemas,
   )
 
   return {
-    decorators: schema.decorators.map(
+    decorators: union.decorators.map(
       (decorator) => props.extendDecorator?.(decorator) ?? decorator,
     ),
-    annotations: schema.annotations.map(
+    annotations: union.annotations.map(
       (annotation) => props.extendAnnotation?.(annotation) ?? annotation,
     ),
-    lists: schema.lists.map((list) => props.extendList?.(list) ?? list),
-    blockObjects: schema.blockObjects.map(
+    lists: union.lists.map((list) => props.extendList?.(list) ?? list),
+    blockObjects: union.blockObjects.map(
       (blockObject) => props.extendBlockObject?.(blockObject) ?? blockObject,
     ),
-    inlineObjects: schema.inlineObjects.map(
+    inlineObjects: union.inlineObjects.map(
       (inlineObject) =>
         props.extendInlineObject?.(inlineObject) ?? inlineObject,
     ),
-    styles: schema.styles.map((style) => props.extendStyle?.(style) ?? style),
+    styles: union.styles.map((style) => props.extendStyle?.(style) ?? style),
   }
 }
 
@@ -105,12 +110,12 @@ export function useToolbarSchema(props: {
  * @beta
  */
 export type ToolbarSchema = {
-  decorators?: ReadonlyArray<ToolbarDecoratorSchemaType>
-  annotations?: ReadonlyArray<ToolbarAnnotationSchemaType>
-  lists?: ReadonlyArray<ToolbarListSchemaType>
-  blockObjects?: ReadonlyArray<ToolbarBlockObjectSchemaType>
-  inlineObjects?: ReadonlyArray<ToolbarInlineObjectSchemaType>
-  styles?: ReadonlyArray<ToolbarStyleSchemaType>
+  decorators: ReadonlyArray<ToolbarDecoratorSchemaType>
+  annotations: ReadonlyArray<ToolbarAnnotationSchemaType>
+  lists: ReadonlyArray<ToolbarListSchemaType>
+  blockObjects: ReadonlyArray<ToolbarBlockObjectSchemaType>
+  inlineObjects: ReadonlyArray<ToolbarInlineObjectSchemaType>
+  styles: ReadonlyArray<ToolbarStyleSchemaType>
 }
 
 /**
@@ -163,4 +168,36 @@ export type ToolbarInlineObjectSchemaType = InlineObjectSchemaType & {
 export type ToolbarStyleSchemaType = StyleSchemaType & {
   icon?: React.ComponentType
   shortcut?: KeyboardShortcut
+}
+
+function compareSchemas(a: EditorSchema, b: EditorSchema) {
+  if (a === b) {
+    return true
+  }
+  return (
+    compareNamed(a.decorators, b.decorators) &&
+    compareNamed(a.annotations, b.annotations) &&
+    compareNamed(a.lists, b.lists) &&
+    compareNamed(a.styles, b.styles) &&
+    compareNamed(a.blockObjects, b.blockObjects) &&
+    compareNamed(a.inlineObjects, b.inlineObjects)
+  )
+}
+
+function compareNamed(
+  a: ReadonlyArray<{name: string}>,
+  b: ReadonlyArray<{name: string}>,
+) {
+  if (a === b) {
+    return true
+  }
+  if (a.length !== b.length) {
+    return false
+  }
+  for (let i = 0; i < a.length; i++) {
+    if (a[i]!.name !== b[i]!.name) {
+      return false
+    }
+  }
+  return true
 }

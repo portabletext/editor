@@ -1,3 +1,4 @@
+export * from './use-applicable-schema'
 export * from './use-toolbar-schema'
 export * from './use-annotation-button'
 export * from './use-annotation-popover'
