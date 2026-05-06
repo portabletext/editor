@@ -399,13 +399,13 @@ export function PortableTextToolbar(props: {children?: React.ReactNode}) {
     <>
       <Toolbar aria-label="Editor toolbar">
         <HistoryButtons />
-        {toolbarSchema.styles ? (
+        {toolbarSchema.styles && toolbarSchema.styles.length > 0 ? (
           <>
             <Separator orientation="vertical" />
             <StyleButton schemaTypes={toolbarSchema.styles} />
           </>
         ) : null}
-        {toolbarSchema.decorators ? (
+        {toolbarSchema.decorators && toolbarSchema.decorators.length > 0 ? (
           <>
             <Separator orientation="vertical" />
             <Group aria-label="Decorators">
@@ -415,7 +415,7 @@ export function PortableTextToolbar(props: {children?: React.ReactNode}) {
             </Group>
           </>
         ) : null}
-        {toolbarSchema.annotations ? (
+        {toolbarSchema.annotations && toolbarSchema.annotations.length > 0 ? (
           <>
             <Separator orientation="vertical" />
             <Group aria-label="Annotations">
@@ -428,7 +428,7 @@ export function PortableTextToolbar(props: {children?: React.ReactNode}) {
             </Group>
           </>
         ) : null}
-        {toolbarSchema.lists ? (
+        {toolbarSchema.lists && toolbarSchema.lists.length > 0 ? (
           <>
             <Separator orientation="vertical" />
             <Group aria-label="Lists">
@@ -438,7 +438,7 @@ export function PortableTextToolbar(props: {children?: React.ReactNode}) {
             </Group>
           </>
         ) : null}
-        {toolbarSchema.blockObjects ? (
+        {toolbarSchema.blockObjects && toolbarSchema.blockObjects.length > 0 ? (
           <>
             <Separator orientation="vertical" />
             <Group aria-label="Block Objects">
@@ -451,7 +451,8 @@ export function PortableTextToolbar(props: {children?: React.ReactNode}) {
             </Group>
           </>
         ) : null}
-        {toolbarSchema.inlineObjects ? (
+        {toolbarSchema.inlineObjects &&
+        toolbarSchema.inlineObjects.length > 0 ? (
           <>
             <Separator orientation="vertical" />
             <Group aria-label="Inline Objects">
@@ -470,13 +471,13 @@ export function PortableTextToolbar(props: {children?: React.ReactNode}) {
         <Separator orientation="vertical" />
         <Group aria-label="Extra">{props.children}</Group>
       </Toolbar>
-      {toolbarSchema.annotations ? (
+      {toolbarSchema.annotations && toolbarSchema.annotations.length > 0 ? (
         <AnnotationPopover schemaTypes={toolbarSchema.annotations} />
       ) : null}
-      {toolbarSchema.blockObjects ? (
+      {toolbarSchema.blockObjects && toolbarSchema.blockObjects.length > 0 ? (
         <BlockObjectPopover schemaTypes={toolbarSchema.blockObjects} />
       ) : null}
-      {toolbarSchema.inlineObjects ? (
+      {toolbarSchema.inlineObjects && toolbarSchema.inlineObjects.length > 0 ? (
         <InlineObjectPopover schemaTypes={toolbarSchema.inlineObjects} />
       ) : null}
     </>
