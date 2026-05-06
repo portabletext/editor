@@ -1,6 +1,7 @@
 import type {EditorContext} from '@portabletext/editor'
 import {defineBehavior, raise} from '@portabletext/editor/behaviors'
 import * as selectors from '@portabletext/editor/selectors'
+import {getPathSubSchema} from '@portabletext/editor/traversal'
 
 export type ObjectWithOptionalKey = {
   _type: string
@@ -33,16 +34,21 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
       const text = event.originEvent.dataTransfer.getData('text/plain')
       const hrRegExp = /^(---)$|^(—-)$|^(___)$|^(\*\*\*)$/
       const hrCharacters = text.match(hrRegExp)?.[0]
-      const hrObject = config.horizontalRuleObject?.({
-        context: {
-          schema: snapshot.context.schema,
-          keyGenerator: snapshot.context.keyGenerator,
-        },
-      })
       const focusBlock = selectors.getFocusBlock(snapshot)
       const focusTextBlock = selectors.getFocusTextBlock(snapshot)
 
-      if (!hrCharacters || !hrObject || !focusBlock) {
+      if (!focusBlock) {
+        return false
+      }
+
+      const hrObject = config.horizontalRuleObject?.({
+        context: {
+          schema: getPathSubSchema(snapshot, focusBlock.path),
+          keyGenerator: snapshot.context.keyGenerator,
+        },
+      })
+
+      if (!hrCharacters || !hrObject) {
         return false
       }
 
@@ -101,9 +107,10 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
         focusTextBlock.node.children[0]._key === focusSpan.node._key &&
         snapshot.context.selection?.focus.offset === 0
 
+      const subSchema = getPathSubSchema(snapshot, focusTextBlock.path)
       const defaultStyle = config.defaultStyle?.({
-        context: {schema: snapshot.context.schema},
-        schema: snapshot.context.schema,
+        context: {schema: subSchema},
+        schema: subSchema,
       })
 
       if (

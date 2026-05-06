@@ -1,5 +1,6 @@
 import type {EditorContext} from '@portabletext/editor'
 import {raise, type BehaviorAction} from '@portabletext/editor/behaviors'
+import {getPathSubSchema} from '@portabletext/editor/traversal'
 import {defineInputRule} from '@portabletext/plugin-input-rule'
 import type {ObjectWithOptionalKey} from './behavior.markdown-shortcuts'
 
@@ -36,7 +37,7 @@ export function createMarkdownLinkRule(config: {
 
           const linkObject = config.linkObject({
             context: {
-              schema: snapshot.context.schema,
+              schema: getPathSubSchema(snapshot, event.focusBlock.path),
               keyGenerator: snapshot.context.keyGenerator,
             },
             props: {href: hrefMatch.text},
