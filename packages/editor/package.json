@@ -49,6 +49,10 @@
     "./test/vitest": {
       "default": "./src/test/vitest/_exports/index.ts"
     },
+    "./traversal": {
+      "source": "./src/traversal/_exports/index.ts",
+      "default": "./lib/traversal/index.js"
+    },
     "./utils": {
       "source": "./src/utils/_exports/index.ts",
       "default": "./lib/utils/index.js"
@@ -137,6 +141,7 @@
       "./selectors": "./lib/selectors/index.js",
       "./test": "./src/test/_exports/index.ts",
       "./test/vitest": "./src/test/vitest/_exports/index.ts",
+      "./traversal": "./lib/traversal/index.js",
       "./utils": "./lib/utils/index.js",
       "./package.json": "./package.json"
     }

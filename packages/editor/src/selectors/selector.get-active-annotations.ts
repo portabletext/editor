@@ -1,6 +1,6 @@
 import type {PortableTextObject} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
-import {getPathSubSchema} from '../schema/get-path-sub-schema'
+import {getPathSubSchema} from '../traversal/get-path-sub-schema'
 import {getMarkState} from './selector.get-mark-state'
 import {getSelectedTextBlocks} from './selector.get-selected-text-blocks'
 

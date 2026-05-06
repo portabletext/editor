@@ -1,7 +1,7 @@
 import {getSubSchema, type Schema} from '@portabletext/schema'
 import type {TraversalSnapshot} from '../node-traversal/traversal-snapshot'
+import {getEnclosingContainer} from '../schema/get-enclosing-container'
 import type {Path} from '../slate/interfaces/path'
-import {getEnclosingContainer} from './get-enclosing-container'
 
 /**
  * Return the `Schema` view that applies at a given path.
@@ -10,6 +10,8 @@ import {getEnclosingContainer} from './get-enclosing-container'
  * a registered container, returns the top-level schema. For paths inside a
  * container, walks ancestors to find the nearest container and returns the
  * sub-schema derived from its `of` declaration.
+ *
+ * @beta
  */
 export function getPathSubSchema(
   snapshot: TraversalSnapshot,
