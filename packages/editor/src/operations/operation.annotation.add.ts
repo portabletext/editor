@@ -7,10 +7,7 @@ import {getChildren} from '../node-traversal/get-children'
 import {getNode} from '../node-traversal/get-node'
 import {getNodes} from '../node-traversal/get-nodes'
 import {isLeaf} from '../node-traversal/is-leaf'
-import {
-  getBlockSubSchema,
-  isInsideEditableContainer,
-} from '../schema/get-block-sub-schema'
+import {getPathSubSchema} from '../schema/get-path-sub-schema'
 import {isEdge} from '../slate/editor/is-edge'
 import {isEnd} from '../slate/editor/is-end'
 import {isStart} from '../slate/editor/is-start'
@@ -30,13 +27,26 @@ export const addAnnotationOperationImplementation: OperationImplementation<
   'annotation.add'
 > = ({snapshot, operation}) => {
   const {context} = snapshot
+  const editor = operation.editor
+
+  const at = operation.at
+    ? resolveSelection(operation.editor, operation.at)
+    : null
+
+  const effectiveSelection = at ?? editor.selection
+
+  const anchorPath = effectiveSelection?.anchor.path
+  const annotationSchema = anchorPath
+    ? getPathSubSchema(snapshot, anchorPath)
+    : context.schema
   const parsedAnnotation = parseAnnotation({
     annotation: {
       _type: operation.annotation.name,
       _key: operation.annotation._key,
       ...operation.annotation.value,
     },
-    context,
+    schema: annotationSchema,
+    keyGenerator: context.keyGenerator,
     options: {validateFields: true},
   })
 
@@ -45,14 +55,6 @@ export const addAnnotationOperationImplementation: OperationImplementation<
       `Failed to parse annotation ${safeStringify(operation.annotation)}`,
     )
   }
-
-  const editor = operation.editor
-
-  const at = operation.at
-    ? resolveSelection(operation.editor, operation.at)
-    : null
-
-  const effectiveSelection = at ?? editor.selection
 
   if (!effectiveSelection || isCollapsedRange(effectiveSelection)) {
     return
@@ -86,18 +88,15 @@ export const addAnnotationOperationImplementation: OperationImplementation<
         continue
       }
 
-      // Inside an editable container the sub-schema is authoritative:
-      // skip blocks whose sub-schema doesn't declare this annotation type.
-      // At root we remain permissive so unknown annotations pass through.
-      if (isInsideEditableContainer(snapshot, blockPath)) {
-        const subSchema = getBlockSubSchema(snapshot, blockPath)
-        if (
-          !subSchema.annotations.some(
-            (annotation) => annotation.name === parsedAnnotation._type,
-          )
-        ) {
-          continue
-        }
+      // The sub-schema at the block path is authoritative: skip blocks
+      // whose schema doesn't declare this annotation type.
+      const subSchema = getPathSubSchema(snapshot, blockPath)
+      if (
+        !subSchema.annotations.some(
+          (annotation) => annotation.name === parsedAnnotation._type,
+        )
+      ) {
+        continue
       }
 
       const annotationKey =

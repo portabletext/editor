@@ -1,5 +1,5 @@
 import type {EditorSelector} from '../editor/editor-selector'
-import {getBlockSubSchema} from '../schema/get-block-sub-schema'
+import {getPathSubSchema} from '../schema/get-path-sub-schema'
 import {getFocusTextBlock} from './selector.get-focus-text-block'
 
 /**
@@ -17,7 +17,7 @@ export const getDefaultStyle: EditorSelector<string | undefined> = (
 ) => {
   const focusTextBlock = getFocusTextBlock(snapshot)
   if (focusTextBlock) {
-    return getBlockSubSchema(snapshot, focusTextBlock.path).styles[0]?.name
+    return getPathSubSchema(snapshot, focusTextBlock.path).styles[0]?.name
   }
   return snapshot.context.schema.styles[0]?.name
 }

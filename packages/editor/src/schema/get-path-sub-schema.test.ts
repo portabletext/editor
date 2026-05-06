@@ -4,13 +4,13 @@ import type {
   ContainerConfig,
   ContainerDefinition,
 } from '../renderers/renderer.types'
-import {getBlockSubSchema} from './get-block-sub-schema'
+import {getPathSubSchema} from './get-path-sub-schema'
 import {makeContainerConfig} from './make-container-config'
 import {resolveContainers} from './resolve-containers'
 
 const testRender: ContainerDefinition['render'] = ({children}) => children
 
-describe(getBlockSubSchema.name, () => {
+describe(getPathSubSchema.name, () => {
   test('returns root sub-schema when path is at root', () => {
     const schema = compileSchema(
       defineSchema({
@@ -29,7 +29,7 @@ describe(getBlockSubSchema.name, () => {
       blockIndexMap: new Map(),
     }
 
-    const subSchema = getBlockSubSchema(context, [{_key: 'b0'}])
+    const subSchema = getPathSubSchema(context, [{_key: 'b0'}])
 
     expect(subSchema.decorators.map((d) => d.name)).toEqual(['strong', 'em'])
     expect(subSchema.styles.map((s) => s.name)).toEqual(['normal', 'h1'])
@@ -85,7 +85,7 @@ describe(getBlockSubSchema.name, () => {
       blockIndexMap: new Map(),
     }
 
-    const subSchema = getBlockSubSchema(context, [
+    const subSchema = getPathSubSchema(context, [
       {_key: 'c0'},
       'content',
       {_key: 'b0'},
@@ -140,7 +140,7 @@ describe(getBlockSubSchema.name, () => {
       blockIndexMap: new Map(),
     }
 
-    const subSchema = getBlockSubSchema(context, [
+    const subSchema = getPathSubSchema(context, [
       {_key: 'c0'},
       'content',
       {_key: 'b0'},
@@ -250,7 +250,7 @@ describe(getBlockSubSchema.name, () => {
       blockIndexMap: new Map(),
     }
 
-    const subSchema = getBlockSubSchema(context, [
+    const subSchema = getPathSubSchema(context, [
       {_key: 't0'},
       'rows',
       {_key: 'r0'},

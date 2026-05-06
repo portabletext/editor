@@ -76,13 +76,14 @@ export const converterTextPlain = defineConverter({
 
     const parsedBlocks = blocks.flatMap((block) => {
       const parsedBlock = parseBlock({
-        context: snapshot.context,
+        keyGenerator: snapshot.context.keyGenerator,
         block,
         options: {
           normalize: false,
           removeUnusedMarkDefs: true,
           validateFields: false,
         },
+        schema: snapshot.context.schema,
       })
       return parsedBlock ? [parsedBlock] : []
     })

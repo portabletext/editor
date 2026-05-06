@@ -1,6 +1,6 @@
 import type {PortableTextObject} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
-import {getBlockSubSchema} from '../schema/get-block-sub-schema'
+import {getPathSubSchema} from '../schema/get-path-sub-schema'
 import {getMarkState} from './selector.get-mark-state'
 import {getSelectedTextBlocks} from './selector.get-selected-text-blocks'
 
@@ -21,8 +21,7 @@ export const getActiveAnnotations: EditorSelector<Array<PortableTextObject>> = (
   // that aren't decorators in any in-scope sub-schema are annotations.
   const decoratorNames = new Set<string>()
   for (const block of selectedBlocks) {
-    for (const decorator of getBlockSubSchema(snapshot, block.path)
-      .decorators) {
+    for (const decorator of getPathSubSchema(snapshot, block.path).decorators) {
       decoratorNames.add(decorator.name)
     }
   }

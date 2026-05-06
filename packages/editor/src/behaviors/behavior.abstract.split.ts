@@ -1,4 +1,5 @@
 import {getAncestorTextBlock} from '../node-traversal/get-ancestor-text-block'
+import {getPathSubSchema} from '../schema/get-path-sub-schema'
 import {isSelectionExpanded} from '../selectors'
 import {getFocusBlockObject} from '../selectors/selector.get-focus-block-object'
 import {getFocusInlineObject} from '../selectors/selector.get-focus-inline-object'
@@ -126,12 +127,13 @@ export const abstractSplitBehaviors = [
           startPoint: selectionStartPoint,
           endPoint: blockEndPoint,
         }),
-        context: snapshot.context,
+        keyGenerator: snapshot.context.keyGenerator,
         options: {
           normalize: false,
           removeUnusedMarkDefs: true,
           validateFields: false,
         },
+        schema: getPathSubSchema(snapshot, focusTextBlock.path),
       })
 
       if (!newTextBlock) {

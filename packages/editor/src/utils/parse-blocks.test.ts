@@ -13,15 +13,13 @@ describe(parseBlock.name, () => {
     expect(
       parseBlock({
         block: null,
-        context: {
-          keyGenerator: createTestKeyGenerator(),
-          schema: compileSchema(defineSchema({})),
-        },
+        keyGenerator: createTestKeyGenerator(),
         options: {
           normalize: false,
           removeUnusedMarkDefs: true,
           validateFields: true,
         },
+        schema: compileSchema(defineSchema({})),
       }),
     ).toBe(undefined)
   })
@@ -30,15 +28,13 @@ describe(parseBlock.name, () => {
     expect(
       parseBlock({
         block: undefined,
-        context: {
-          keyGenerator: createTestKeyGenerator(),
-          schema: compileSchema(defineSchema({})),
-        },
+        keyGenerator: createTestKeyGenerator(),
         options: {
           normalize: false,
           removeUnusedMarkDefs: true,
           validateFields: true,
         },
+        schema: compileSchema(defineSchema({})),
       }),
     ).toBe(undefined)
   })
@@ -48,15 +44,13 @@ describe(parseBlock.name, () => {
       expect(
         parseBlock({
           block: {},
-          context: {
-            keyGenerator: createTestKeyGenerator(),
-            schema: compileSchema(defineSchema({})),
-          },
+          keyGenerator: createTestKeyGenerator(),
           options: {
             normalize: false,
             removeUnusedMarkDefs: true,
             validateFields: true,
           },
+          schema: compileSchema(defineSchema({})),
         }),
       ).toBe(undefined)
     })
@@ -65,17 +59,15 @@ describe(parseBlock.name, () => {
       expect(
         parseBlock({
           block: {_key: 'k0'},
-          context: {
-            keyGenerator: createTestKeyGenerator(),
-            schema: compileSchema(
-              defineSchema({blockObjects: [{name: 'image'}]}),
-            ),
-          },
+          keyGenerator: createTestKeyGenerator(),
           options: {
             normalize: false,
             removeUnusedMarkDefs: true,
             validateFields: true,
           },
+          schema: compileSchema(
+            defineSchema({blockObjects: [{name: 'image'}]}),
+          ),
         }),
       ).toBe(undefined)
     })
@@ -84,17 +76,15 @@ describe(parseBlock.name, () => {
       expect(
         parseBlock({
           block: {_type: 'image'},
-          context: {
-            keyGenerator: createTestKeyGenerator(),
-            schema: compileSchema(
-              defineSchema({blockObjects: [{name: 'image'}]}),
-            ),
-          },
+          keyGenerator: createTestKeyGenerator(),
           options: {
             normalize: false,
             removeUnusedMarkDefs: true,
             validateFields: true,
           },
+          schema: compileSchema(
+            defineSchema({blockObjects: [{name: 'image'}]}),
+          ),
         }),
       ).toEqual({
         _key: 'k0',
@@ -108,15 +98,13 @@ describe(parseBlock.name, () => {
       expect(
         parseBlock({
           block: {_type: 'block'},
-          context: {
-            keyGenerator: createTestKeyGenerator(),
-            schema: compileSchema(defineSchema({})),
-          },
+          keyGenerator: createTestKeyGenerator(),
           options: {
             normalize: false,
             removeUnusedMarkDefs: true,
             validateFields: true,
           },
+          schema: compileSchema(defineSchema({})),
         }),
       ).toEqual({
         _key: 'k0',
@@ -137,14 +125,15 @@ describe(parseBlock.name, () => {
       expect(
         parseBlock({
           block: {_type: 'text'},
-          context: {
-            keyGenerator: createTestKeyGenerator(),
-            schema: {...schema, block: {...schema.block, name: 'text'}},
-          },
+          keyGenerator: createTestKeyGenerator(),
           options: {
             normalize: false,
             removeUnusedMarkDefs: true,
             validateFields: true,
+          },
+          schema: {
+            ...schema,
+            block: {...schema.block, name: 'text'},
           },
         }),
       ).toEqual({
@@ -174,15 +163,13 @@ describe(parseBlock.name, () => {
               },
             ],
           },
-          context: {
-            keyGenerator: createTestKeyGenerator(),
-            schema: compileSchema(defineSchema({})),
-          },
+          keyGenerator: createTestKeyGenerator(),
           options: {
             normalize: false,
             removeUnusedMarkDefs: true,
             validateFields: true,
           },
+          schema: compileSchema(defineSchema({})),
         }),
       ).toBe(undefined)
     })
@@ -213,20 +200,18 @@ describe(parseBlock.name, () => {
               {_type: 'image', text: 'inline object or span?'},
             ],
           },
-          context: {
-            keyGenerator: createTestKeyGenerator(),
-            schema: compileSchema(
-              defineSchema({
-                inlineObjects: [{name: 'stock-ticker'}],
-                decorators: [{name: 'em'}],
-              }),
-            ),
-          },
+          keyGenerator: createTestKeyGenerator(),
           options: {
             normalize: false,
             removeUnusedMarkDefs: true,
             validateFields: true,
           },
+          schema: compileSchema(
+            defineSchema({
+              inlineObjects: [{name: 'stock-ticker'}],
+              decorators: [{name: 'em'}],
+            }),
+          ),
         }),
       ).toEqual({
         _key: 'k0',
@@ -274,15 +259,13 @@ describe(parseBlock.name, () => {
       expect(
         parseBlock({
           block: {_type: 'block', listItem: 'bullet'},
-          context: {
-            keyGenerator: createTestKeyGenerator(),
-            schema: compileSchema(defineSchema({lists: [{name: 'bullet'}]})),
-          },
+          keyGenerator: createTestKeyGenerator(),
           options: {
             normalize: false,
             removeUnusedMarkDefs: true,
             validateFields: true,
           },
+          schema: compileSchema(defineSchema({lists: [{name: 'bullet'}]})),
         }),
       ).toEqual({
         _key: 'k0',
@@ -303,15 +286,13 @@ describe(parseBlock.name, () => {
       expect(
         parseBlock({
           block: {_type: 'block', listItem: 'number'},
-          context: {
-            keyGenerator: createTestKeyGenerator(),
-            schema: compileSchema(defineSchema({lists: [{name: 'bullet'}]})),
-          },
+          keyGenerator: createTestKeyGenerator(),
           options: {
             normalize: false,
             removeUnusedMarkDefs: true,
             validateFields: true,
           },
+          schema: compileSchema(defineSchema({lists: [{name: 'bullet'}]})),
         }),
       ).toEqual({
         _key: 'k0',
@@ -332,15 +313,13 @@ describe(parseBlock.name, () => {
         expect(
           parseBlock({
             block: {_type: 'block', map: {}},
-            context: {
-              keyGenerator: createTestKeyGenerator(),
-              schema: compileSchema(defineSchema({})),
-            },
+            keyGenerator: createTestKeyGenerator(),
             options: {
               normalize: false,
               removeUnusedMarkDefs: true,
               validateFields: true,
             },
+            schema: compileSchema(defineSchema({})),
           }),
         ).toEqual({
           _type: 'block',
@@ -360,19 +339,17 @@ describe(parseBlock.name, () => {
         expect(
           parseBlock({
             block: {_type: 'block', map: {}},
-            context: {
-              keyGenerator: createTestKeyGenerator(),
-              schema: compileSchema(
-                defineSchema({
-                  block: {fields: [{name: 'map', type: 'object'}]},
-                }),
-              ),
-            },
+            keyGenerator: createTestKeyGenerator(),
             options: {
               normalize: false,
               removeUnusedMarkDefs: true,
               validateFields: true,
             },
+            schema: compileSchema(
+              defineSchema({
+                block: {fields: [{name: 'map', type: 'object'}]},
+              }),
+            ),
           }),
         ).toEqual({
           _type: 'block',
@@ -393,19 +370,17 @@ describe(parseBlock.name, () => {
         expect(
           parseBlock({
             block: {_type: 'block', foo: {}},
-            context: {
-              keyGenerator: createTestKeyGenerator(),
-              schema: compileSchema(
-                defineSchema({
-                  block: {fields: [{name: 'map', type: 'object'}]},
-                }),
-              ),
-            },
+            keyGenerator: createTestKeyGenerator(),
             options: {
               normalize: false,
               removeUnusedMarkDefs: true,
               validateFields: true,
             },
+            schema: compileSchema(
+              defineSchema({
+                block: {fields: [{name: 'map', type: 'object'}]},
+              }),
+            ),
           }),
         ).toEqual({
           _type: 'block',
@@ -429,12 +404,10 @@ describe(parseSpan.name, () => {
     expect(
       parseSpan({
         span: undefined,
-        context: {
-          keyGenerator: createTestKeyGenerator(),
-          schema: compileSchema(defineSchema({})),
-        },
+        keyGenerator: createTestKeyGenerator(),
         markDefKeyMap: new Map(),
         options: {validateFields: true},
+        schema: compileSchema(defineSchema({})),
       }),
     ).toBe(undefined)
   })
@@ -443,12 +416,10 @@ describe(parseSpan.name, () => {
     expect(
       parseSpan({
         span: null,
-        context: {
-          keyGenerator: createTestKeyGenerator(),
-          schema: compileSchema(defineSchema({})),
-        },
+        keyGenerator: createTestKeyGenerator(),
         markDefKeyMap: new Map(),
         options: {validateFields: true},
+        schema: compileSchema(defineSchema({})),
       }),
     ).toBe(undefined)
   })
@@ -457,12 +428,10 @@ describe(parseSpan.name, () => {
     expect(
       parseSpan({
         span: {},
-        context: {
-          keyGenerator: createTestKeyGenerator(),
-          schema: compileSchema(defineSchema({})),
-        },
+        keyGenerator: createTestKeyGenerator(),
         markDefKeyMap: new Map(),
         options: {validateFields: true},
+        schema: compileSchema(defineSchema({})),
       }),
     ).toBe(undefined)
   })
@@ -471,12 +440,10 @@ describe(parseSpan.name, () => {
     expect(
       parseSpan({
         span: {_type: 'stock-ticker'},
-        context: {
-          keyGenerator: createTestKeyGenerator(),
-          schema: compileSchema(defineSchema({})),
-        },
+        keyGenerator: createTestKeyGenerator(),
         markDefKeyMap: new Map(),
         options: {validateFields: true},
+        schema: compileSchema(defineSchema({})),
       }),
     ).toBe(undefined)
   })
@@ -485,12 +452,10 @@ describe(parseSpan.name, () => {
     expect(
       parseSpan({
         span: {_type: 'span'},
-        context: {
-          keyGenerator: createTestKeyGenerator(),
-          schema: compileSchema(defineSchema({})),
-        },
+        keyGenerator: createTestKeyGenerator(),
         markDefKeyMap: new Map(),
         options: {validateFields: true},
+        schema: compileSchema(defineSchema({})),
       }),
     ).toEqual({
       _key: 'k0',
@@ -504,12 +469,10 @@ describe(parseSpan.name, () => {
     expect(
       parseSpan({
         span: {_type: 'span', foo: 'bar'},
-        context: {
-          keyGenerator: createTestKeyGenerator(),
-          schema: compileSchema(defineSchema({})),
-        },
+        keyGenerator: createTestKeyGenerator(),
         markDefKeyMap: new Map(),
         options: {validateFields: true},
+        schema: compileSchema(defineSchema({})),
       }),
     ).toEqual({
       _key: 'k0',
@@ -526,12 +489,10 @@ describe(parseSpan.name, () => {
           _type: 'span',
           marks: 42,
         },
-        context: {
-          keyGenerator: createTestKeyGenerator(),
-          schema: compileSchema(defineSchema({})),
-        },
+        keyGenerator: createTestKeyGenerator(),
         markDefKeyMap: new Map(),
         options: {validateFields: true},
+        schema: compileSchema(defineSchema({})),
       }),
     ).toEqual({
       _key: 'k0',
@@ -548,12 +509,10 @@ describe(parseSpan.name, () => {
           _type: 'span',
           marks: [null, undefined, 'foo', 42, {foo: 'bar'}, 'strong'],
         },
-        context: {
-          keyGenerator: createTestKeyGenerator(),
-          schema: compileSchema(defineSchema({decorators: [{name: 'strong'}]})),
-        },
+        keyGenerator: createTestKeyGenerator(),
         markDefKeyMap: new Map(),
         options: {validateFields: true},
+        schema: compileSchema(defineSchema({decorators: [{name: 'strong'}]})),
       }),
     ).toEqual({
       _key: 'k0',
@@ -570,12 +529,10 @@ describe(parseSpan.name, () => {
           _type: 'span',
           marks: ['strong', 'em'],
         },
-        context: {
-          keyGenerator: createTestKeyGenerator(),
-          schema: compileSchema(defineSchema({decorators: [{name: 'strong'}]})),
-        },
+        keyGenerator: createTestKeyGenerator(),
         markDefKeyMap: new Map(),
         options: {validateFields: true},
+        schema: compileSchema(defineSchema({decorators: [{name: 'strong'}]})),
       }),
     ).toEqual({
       _key: 'k0',
@@ -591,13 +548,11 @@ describe(parseInlineObject.name, () => {
     expect(
       parseInlineObject({
         inlineObject: undefined,
-        context: {
-          keyGenerator: createTestKeyGenerator(),
-          schema: compileSchema(
-            defineSchema({inlineObjects: [{name: 'stock-ticker'}]}),
-          ),
-        },
+        keyGenerator: createTestKeyGenerator(),
         options: {validateFields: true},
+        schema: compileSchema(
+          defineSchema({inlineObjects: [{name: 'stock-ticker'}]}),
+        ),
       }),
     ).toBe(undefined)
   })
@@ -606,13 +561,11 @@ describe(parseInlineObject.name, () => {
     expect(
       parseInlineObject({
         inlineObject: null,
-        context: {
-          keyGenerator: createTestKeyGenerator(),
-          schema: compileSchema(
-            defineSchema({inlineObjects: [{name: 'stock-ticker'}]}),
-          ),
-        },
+        keyGenerator: createTestKeyGenerator(),
         options: {validateFields: true},
+        schema: compileSchema(
+          defineSchema({inlineObjects: [{name: 'stock-ticker'}]}),
+        ),
       }),
     ).toBe(undefined)
   })
@@ -621,13 +574,11 @@ describe(parseInlineObject.name, () => {
     expect(
       parseInlineObject({
         inlineObject: {},
-        context: {
-          keyGenerator: createTestKeyGenerator(),
-          schema: compileSchema(
-            defineSchema({inlineObjects: [{name: 'stock-ticker'}]}),
-          ),
-        },
+        keyGenerator: createTestKeyGenerator(),
         options: {validateFields: true},
+        schema: compileSchema(
+          defineSchema({inlineObjects: [{name: 'stock-ticker'}]}),
+        ),
       }),
     ).toBe(undefined)
   })
@@ -636,13 +587,11 @@ describe(parseInlineObject.name, () => {
     expect(
       parseInlineObject({
         inlineObject: {_type: 'image'},
-        context: {
-          keyGenerator: createTestKeyGenerator(),
-          schema: compileSchema(
-            defineSchema({inlineObjects: [{name: 'stock-ticker'}]}),
-          ),
-        },
+        keyGenerator: createTestKeyGenerator(),
         options: {validateFields: true},
+        schema: compileSchema(
+          defineSchema({inlineObjects: [{name: 'stock-ticker'}]}),
+        ),
       }),
     ).toBe(undefined)
   })
@@ -651,13 +600,11 @@ describe(parseInlineObject.name, () => {
     expect(
       parseInlineObject({
         inlineObject: {_type: 'stock-ticker'},
-        context: {
-          keyGenerator: createTestKeyGenerator(),
-          schema: compileSchema(
-            defineSchema({inlineObjects: [{name: 'stock-ticker'}]}),
-          ),
-        },
+        keyGenerator: createTestKeyGenerator(),
         options: {validateFields: true},
+        schema: compileSchema(
+          defineSchema({inlineObjects: [{name: 'stock-ticker'}]}),
+        ),
       }),
     ).toEqual({
       _key: 'k0',
@@ -670,13 +617,11 @@ describe(parseInlineObject.name, () => {
       expect(
         parseInlineObject({
           inlineObject: {_type: 'stock-ticker', text: 'foo'},
-          context: {
-            keyGenerator: createTestKeyGenerator(),
-            schema: compileSchema(
-              defineSchema({inlineObjects: [{name: 'stock-ticker'}]}),
-            ),
-          },
+          keyGenerator: createTestKeyGenerator(),
           options: {validateFields: true},
+          schema: compileSchema(
+            defineSchema({inlineObjects: [{name: 'stock-ticker'}]}),
+          ),
         }),
       ).toEqual({_key: 'k0', _type: 'stock-ticker'})
     })
@@ -685,13 +630,11 @@ describe(parseInlineObject.name, () => {
       expect(
         parseInlineObject({
           inlineObject: {_type: 'image', text: 'foo'},
-          context: {
-            keyGenerator: createTestKeyGenerator(),
-            schema: compileSchema(
-              defineSchema({inlineObjects: [{name: 'stock-ticker'}]}),
-            ),
-          },
+          keyGenerator: createTestKeyGenerator(),
           options: {validateFields: true},
+          schema: compileSchema(
+            defineSchema({inlineObjects: [{name: 'stock-ticker'}]}),
+          ),
         }),
       ).toBe(undefined)
     })
@@ -703,15 +646,13 @@ describe(parseInlineObject.name, () => {
         expect(
           parseInlineObject({
             inlineObject: {_type: 'stock-ticker', foo: 'bar'},
-            context: {
-              keyGenerator: createTestKeyGenerator(),
-              schema: compileSchema(
-                defineSchema({
-                  inlineObjects: [{name: 'stock-ticker'}],
-                }),
-              ),
-            },
+            keyGenerator: createTestKeyGenerator(),
             options: {validateFields: true},
+            schema: compileSchema(
+              defineSchema({
+                inlineObjects: [{name: 'stock-ticker'}],
+              }),
+            ),
           }),
         ).toEqual({
           _key: 'k0',
@@ -723,15 +664,13 @@ describe(parseInlineObject.name, () => {
         expect(
           parseInlineObject({
             inlineObject: {_type: 'stock-ticker', foo: 'bar'},
-            context: {
-              keyGenerator: createTestKeyGenerator(),
-              schema: compileSchema(
-                defineSchema({
-                  inlineObjects: [{name: 'stock-ticker'}],
-                }),
-              ),
-            },
+            keyGenerator: createTestKeyGenerator(),
             options: {validateFields: false},
+            schema: compileSchema(
+              defineSchema({
+                inlineObjects: [{name: 'stock-ticker'}],
+              }),
+            ),
           }),
         ).toEqual({
           _key: 'k0',
@@ -746,20 +685,18 @@ describe(parseInlineObject.name, () => {
         expect(
           parseInlineObject({
             inlineObject: {_type: 'stock-ticker', foo: 'bar'},
-            context: {
-              keyGenerator: createTestKeyGenerator(),
-              schema: compileSchema(
-                defineSchema({
-                  inlineObjects: [
-                    {
-                      name: 'stock-ticker',
-                      fields: [{name: 'foo', type: 'string'}],
-                    },
-                  ],
-                }),
-              ),
-            },
+            keyGenerator: createTestKeyGenerator(),
             options: {validateFields: true},
+            schema: compileSchema(
+              defineSchema({
+                inlineObjects: [
+                  {
+                    name: 'stock-ticker',
+                    fields: [{name: 'foo', type: 'string'}],
+                  },
+                ],
+              }),
+            ),
           }),
         ).toEqual({
           _key: 'k0',
@@ -773,20 +710,18 @@ describe(parseInlineObject.name, () => {
       expect(
         parseInlineObject({
           inlineObject: {_type: 'stock-ticker', foo: 'bar'},
-          context: {
-            keyGenerator: createTestKeyGenerator(),
-            schema: compileSchema(
-              defineSchema({
-                inlineObjects: [
-                  {
-                    name: 'stock-ticker',
-                    fields: [{name: 'foo', type: 'string'}],
-                  },
-                ],
-              }),
-            ),
-          },
+          keyGenerator: createTestKeyGenerator(),
           options: {validateFields: false},
+          schema: compileSchema(
+            defineSchema({
+              inlineObjects: [
+                {
+                  name: 'stock-ticker',
+                  fields: [{name: 'foo', type: 'string'}],
+                },
+              ],
+            }),
+          ),
         }),
       ).toEqual({
         _key: 'k0',
@@ -803,15 +738,13 @@ describe(parseChild.name, () => {
       test('known inline object _type', () => {
         expect(
           parseChild({
-            context: {
-              keyGenerator: createTestKeyGenerator(),
-              schema: compileSchema(
-                defineSchema({inlineObjects: [{name: 'stock-ticker'}]}),
-              ),
-            },
+            keyGenerator: createTestKeyGenerator(),
             markDefKeyMap: new Map(),
             options: {validateFields: true},
             child: {_type: 'stock-ticker', text: 'foo'},
+            schema: compileSchema(
+              defineSchema({inlineObjects: [{name: 'stock-ticker'}]}),
+            ),
           }),
         ).toEqual({_key: 'k0', _type: 'stock-ticker'})
       })
@@ -819,15 +752,13 @@ describe(parseChild.name, () => {
       test('unknown inline object _type', () => {
         expect(
           parseChild({
-            context: {
-              keyGenerator: createTestKeyGenerator(),
-              schema: compileSchema(
-                defineSchema({inlineObjects: [{name: 'stock-ticker'}]}),
-              ),
-            },
+            keyGenerator: createTestKeyGenerator(),
             markDefKeyMap: new Map(),
             options: {validateFields: true},
             child: {_type: 'image', text: 'foo'},
+            schema: compileSchema(
+              defineSchema({inlineObjects: [{name: 'stock-ticker'}]}),
+            ),
           }),
         ).toBe(undefined)
       })
@@ -883,15 +814,13 @@ describe('container-aware parsing', () => {
           },
         ],
       },
-      context: {
-        keyGenerator: createTestKeyGenerator(),
-        schema,
-      },
+      keyGenerator: createTestKeyGenerator(),
       options: {
         normalize: false,
         removeUnusedMarkDefs: false,
         validateFields: true,
       },
+      schema,
     })
 
     expect(parsed).toEqual({
@@ -933,15 +862,13 @@ describe('container-aware parsing', () => {
           },
         ],
       },
-      context: {
-        keyGenerator: createTestKeyGenerator(),
-        schema,
-      },
+      keyGenerator: createTestKeyGenerator(),
       options: {
         normalize: false,
         removeUnusedMarkDefs: false,
         validateFields: true,
       },
+      schema,
     })
 
     expect(parsed).toEqual({
@@ -978,15 +905,13 @@ describe('container-aware parsing', () => {
           },
         ],
       },
-      context: {
-        keyGenerator: createTestKeyGenerator(),
-        schema,
-      },
+      keyGenerator: createTestKeyGenerator(),
       options: {
         normalize: false,
         removeUnusedMarkDefs: false,
         validateFields: true,
       },
+      schema,
     })
 
     expect(parsed).toEqual({

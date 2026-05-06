@@ -1,5 +1,5 @@
 import type {EditorSnapshot} from '../editor/editor-snapshot'
-import {getBlockSubSchema} from '../schema/get-block-sub-schema'
+import {getPathSubSchema} from '../schema/get-path-sub-schema'
 import {getMarkState} from './selector.get-mark-state'
 import {getSelectedTextBlocks} from './selector.get-selected-text-blocks'
 
@@ -14,8 +14,7 @@ export function getActiveDecorators(snapshot: EditorSnapshot) {
   const selectedBlocks = getSelectedTextBlocks(snapshot)
   const decorators = new Set<string>()
   for (const block of selectedBlocks) {
-    for (const decorator of getBlockSubSchema(snapshot, block.path)
-      .decorators) {
+    for (const decorator of getPathSubSchema(snapshot, block.path).decorators) {
       decorators.add(decorator.name)
     }
   }

@@ -1,171 +1,27 @@
 import {
+  getSubSchema,
   isSpan,
   isTextBlock,
-  type AnnotationSchemaType,
-  type BaseDefinition,
-  type BlockObjectSchemaType,
-  type DecoratorSchemaType,
-  type InlineObjectSchemaType,
-  type ListSchemaType,
   type OfDefinition,
   type PortableTextBlock,
   type PortableTextListBlock,
   type PortableTextObject,
   type PortableTextSpan,
   type PortableTextTextBlock,
-  type StyleSchemaType,
+  type Schema,
   type TypedObject,
 } from '@portabletext/schema'
 import type {EditorContext} from '../editor/editor-snapshot'
-import {asFieldedTypes, asNamedTypes} from '../schema/schema-type-projections'
 import {isRecord, isTypedObject} from './asserters'
 
-type AnyField = {
-  name: string
-  type: string
-  of?: ReadonlyArray<OfDefinition>
-}
-
-/**
- * Shape of a compiled `{type: 'block'}` entry inside a container field's
- * `of`. `compileSchema` resolves every sub-schema field, so after
- * compilation these are always populated (though the input type declares
- * them optional).
- */
-type BlockOfDefinitionResolved = {
-  type: 'block'
-  name?: string
-  title?: string
-  styles?: ReadonlyArray<BaseDefinition>
-  decorators?: ReadonlyArray<BaseDefinition>
-  annotations?: ReadonlyArray<
-    BaseDefinition & {fields?: ReadonlyArray<AnyField>}
-  >
-  lists?: ReadonlyArray<BaseDefinition>
-  inlineObjects?: ReadonlyArray<
-    BaseDefinition & {fields?: ReadonlyArray<AnyField>}
-  >
-}
-
-/**
- * The resolved view used to validate a text block and its children at a given
- * depth. At the root of the document it is built from the schema. Inside a
- * container field it is built from the field's `of` -- the `{type: 'block'}`
- * entry (with its sub-schema fully resolved by `compileSchema`) plus any
- * non-block siblings acting as block-object members at that scope.
- */
-type BlockScope = {
-  block: {name: string}
-  blockCustomFields: ReadonlyArray<string>
-  span: {name: string}
-  styles: ReadonlyArray<StyleSchemaType>
-  decorators: ReadonlyArray<DecoratorSchemaType>
-  annotations: ReadonlyArray<AnnotationSchemaType>
-  lists: ReadonlyArray<ListSchemaType>
-  inlineObjects: ReadonlyArray<InlineObjectSchemaType>
-  blockObjects: ReadonlyArray<BlockObjectSchemaType>
-}
-
-function rootBlockScope(schema: EditorContext['schema']): BlockScope {
-  return {
-    block: {name: schema.block.name},
-    blockCustomFields: (schema.block.fields ?? []).map((field) => field.name),
-    span: {name: schema.span.name},
-    styles: schema.styles,
-    decorators: schema.decorators,
-    annotations: schema.annotations,
-    lists: schema.lists,
-    inlineObjects: schema.inlineObjects,
-    blockObjects: schema.blockObjects,
-  }
-}
-
-/**
- * Build a child `BlockScope` from a container field's `of` members. The
- * `{type: 'block'}` entry (if present) supplies the resolved sub-schema; the
- * non-block members become the scope's block objects. When there is no
- * `{type: 'block'}` entry the returned scope still carries root's `block`
- * and `span` names for fallback, but every validation list is empty.
- */
-function childBlockScope(
-  schema: EditorContext['schema'],
-  of: ReadonlyArray<OfDefinition>,
-): BlockScope {
-  const blockMember = of.find(
-    (member): member is BlockOfDefinitionResolved => member.type === 'block',
-  )
-  const objectMembers: Array<{
-    type: string
-    name?: string
-    title?: string
-    fields: ReadonlyArray<AnyField>
-  }> = []
-
-  for (const member of of) {
-    if (member.type === 'block') {
-      continue
-    }
-    const objectMember = member as {
-      type: string
-      name?: string
-      title?: string
-      fields?: ReadonlyArray<AnyField>
-    }
-    objectMembers.push({
-      type: objectMember.type,
-      name: objectMember.name,
-      title: objectMember.title,
-      fields: objectMember.fields ?? [],
-    })
-  }
-
-  const blockObjects: ReadonlyArray<BlockObjectSchemaType> = objectMembers.map(
-    (member) => ({
-      name: member.name ?? member.type,
-      title: member.title,
-      fields: member.fields as BlockObjectSchemaType['fields'],
-    }),
-  )
-
-  if (!blockMember) {
-    return {
-      block: {name: schema.block.name},
-      blockCustomFields: [],
-      span: {name: schema.span.name},
-      styles: [],
-      decorators: [],
-      annotations: [],
-      lists: [],
-      inlineObjects: [],
-      blockObjects,
-    }
-  }
-
-  return {
-    block: {name: blockMember.name ?? schema.block.name},
-    blockCustomFields: [],
-    span: {name: schema.span.name},
-    styles: asNamedTypes<StyleSchemaType>(blockMember.styles) ?? schema.styles,
-    decorators:
-      asNamedTypes<DecoratorSchemaType>(blockMember.decorators) ??
-      schema.decorators,
-    annotations:
-      asFieldedTypes<AnnotationSchemaType>(blockMember.annotations) ??
-      schema.annotations,
-    lists: asNamedTypes<ListSchemaType>(blockMember.lists) ?? schema.lists,
-    inlineObjects:
-      asFieldedTypes<InlineObjectSchemaType>(blockMember.inlineObjects) ??
-      schema.inlineObjects,
-    blockObjects,
-  }
-}
-
 export function parseBlocks({
-  context,
+  schema,
+  keyGenerator,
   blocks,
   options,
 }: {
-  context: Pick<EditorContext, 'keyGenerator' | 'schema'>
+  schema: Schema
+  keyGenerator: () => string
   blocks: unknown
   options: {
     normalize: boolean
@@ -177,21 +33,26 @@ export function parseBlocks({
     return []
   }
 
-  const scope = rootBlockScope(context.schema)
-
   return blocks.flatMap((block) => {
-    const parsedBlock = parseBlockInScope({context, scope, block, options})
+    const parsedBlock = parseBlockInternal({
+      schema,
+      keyGenerator,
+      block,
+      options,
+    })
 
     return parsedBlock ? [parsedBlock] : []
   })
 }
 
 export function parseBlock({
-  context,
+  schema,
+  keyGenerator,
   block,
   options,
 }: {
-  context: Pick<EditorContext, 'keyGenerator' | 'schema'>
+  schema: Schema
+  keyGenerator: () => string
   block: unknown
   options: {
     normalize: boolean
@@ -199,99 +60,91 @@ export function parseBlock({
     validateFields: boolean
   }
 }): PortableTextBlock | undefined {
-  return parseBlockInScope({
-    context,
-    scope: rootBlockScope(context.schema),
-    block,
-    options,
-  })
+  return parseBlockInternal({schema, keyGenerator, block, options})
 }
 
 export function parseSpan({
   span,
-  context,
+  schema,
+  keyGenerator,
   markDefKeyMap,
   options,
 }: {
   span: unknown
-  context: Pick<EditorContext, 'keyGenerator' | 'schema'>
+  schema: Schema
+  keyGenerator: () => string
   markDefKeyMap: Map<string, string>
   options: {validateFields: boolean}
 }): PortableTextSpan | undefined {
-  return parseSpanInScope({
-    span,
-    context,
-    scope: rootBlockScope(context.schema),
-    markDefKeyMap,
-    options,
-  })
+  return parseSpanInternal({span, schema, keyGenerator, markDefKeyMap, options})
 }
 
 export function parseInlineObject({
   inlineObject,
-  context,
+  schema,
+  keyGenerator,
   options,
 }: {
   inlineObject: unknown
-  context: Pick<EditorContext, 'keyGenerator' | 'schema'>
+  schema: Schema
+  keyGenerator: () => string
   options: {validateFields: boolean}
 }): PortableTextObject | undefined {
-  return parseInlineObjectInScope({
+  return parseInlineObjectInternal({
     inlineObject,
-    context,
-    scope: rootBlockScope(context.schema),
+    schema,
+    keyGenerator,
     options,
   })
 }
 
 export function parseChild({
   child,
-  context,
+  schema,
+  keyGenerator,
   markDefKeyMap,
   options,
 }: {
   child: unknown
-  context: Pick<EditorContext, 'keyGenerator' | 'schema'>
+  schema: Schema
+  keyGenerator: () => string
   markDefKeyMap: Map<string, string>
   options: {validateFields: boolean}
 }): PortableTextSpan | PortableTextObject | undefined {
-  return parseChildInScope({
+  return parseChildInternal({
     child,
-    context,
-    scope: rootBlockScope(context.schema),
+    schema,
+    keyGenerator,
     markDefKeyMap,
     options,
   })
 }
 
 export function parseMarkDefs({
-  context,
+  schema,
+  keyGenerator,
   markDefs,
   options,
 }: {
-  context: Pick<EditorContext, 'keyGenerator' | 'schema'>
+  schema: Schema
+  keyGenerator: () => string
   markDefs: unknown
   options: {validateFields: boolean}
 }): {
   markDefs: Array<PortableTextObject>
   markDefKeyMap: Map<string, string>
 } {
-  return parseMarkDefsInScope({
-    context,
-    scope: rootBlockScope(context.schema),
-    markDefs,
-    options,
-  })
+  return parseMarkDefsInternal({schema, keyGenerator, markDefs, options})
 }
 
-function parseBlockInScope({
-  context,
-  scope,
+function parseBlockInternal({
+  schema,
+  keyGenerator,
   block,
   options,
 }: {
-  context: Pick<EditorContext, 'keyGenerator' | 'schema'>
-  scope: BlockScope
+  schema: Schema
+  keyGenerator: () => string
   block: unknown
   options: {
     normalize: boolean
@@ -300,27 +153,27 @@ function parseBlockInScope({
   }
 }): PortableTextBlock | undefined {
   return (
-    parseTextBlock({block, context, scope, options}) ??
-    parseBlockObject({blockObject: block, context, scope, options})
+    parseTextBlock({block, schema, keyGenerator, options}) ??
+    parseBlockObject({blockObject: block, schema, keyGenerator, options})
   )
 }
 
 function parseBlockObject({
   blockObject,
-  context,
-  scope,
+  schema,
+  keyGenerator,
   options,
 }: {
   blockObject: unknown
-  context: Pick<EditorContext, 'keyGenerator' | 'schema'>
-  scope: BlockScope
+  schema: Schema
+  keyGenerator: () => string
   options: {validateFields: boolean}
 }): PortableTextObject | undefined {
   if (!isTypedObject(blockObject)) {
     return undefined
   }
 
-  const schemaType = scope.blockObjects.find(
+  const schemaType = schema.blockObjects.find(
     ({name}) => name === blockObject._type,
   )
 
@@ -330,7 +183,8 @@ function parseBlockObject({
 
   return parseObject({
     object: blockObject,
-    context,
+    schema,
+    keyGenerator,
     schemaType,
     options,
   })
@@ -349,13 +203,13 @@ export function isListBlock(
 
 function parseTextBlock({
   block,
-  context,
-  scope,
+  schema,
+  keyGenerator,
   options,
 }: {
   block: unknown
-  context: Pick<EditorContext, 'keyGenerator' | 'schema'>
-  scope: BlockScope
+  schema: Schema
+  keyGenerator: () => string
   options: {
     normalize: boolean
     removeUnusedMarkDefs: boolean
@@ -366,7 +220,7 @@ function parseTextBlock({
     return undefined
   }
 
-  if (block._type !== scope.block.name) {
+  if (block._type !== schema.block.name) {
     return undefined
   }
 
@@ -386,7 +240,7 @@ function parseTextBlock({
     }
 
     if (options.validateFields) {
-      if (scope.blockCustomFields.includes(key)) {
+      if ((schema.block.fields ?? []).some((f) => f.name === key)) {
         customFields[key] = block[key]
       }
     } else {
@@ -395,11 +249,11 @@ function parseTextBlock({
   }
 
   const _key =
-    typeof block['_key'] === 'string' ? block['_key'] : context.keyGenerator()
+    typeof block['_key'] === 'string' ? block['_key'] : keyGenerator()
 
-  const {markDefs, markDefKeyMap} = parseMarkDefsInScope({
-    context,
-    scope,
+  const {markDefs, markDefKeyMap} = parseMarkDefsInternal({
+    schema,
+    keyGenerator,
     markDefs: block['markDefs'],
     options,
   })
@@ -410,7 +264,7 @@ function parseTextBlock({
 
   const parsedChildren = unparsedChildren
     .map((child) =>
-      parseChildInScope({child, context, scope, markDefKeyMap, options}),
+      parseChildInternal({child, schema, keyGenerator, markDefKeyMap, options}),
     )
     .filter((child) => child !== undefined)
   const marks = parsedChildren.flatMap((child) => child.marks ?? [])
@@ -420,8 +274,8 @@ function parseTextBlock({
       ? parsedChildren
       : [
           {
-            _key: context.keyGenerator(),
-            _type: scope.span.name,
+            _key: keyGenerator(),
+            _type: schema.span.name,
             text: '',
             marks: [],
           },
@@ -431,18 +285,18 @@ function parseTextBlock({
     ? // Ensure that inline objects re surrounded by spans
       children.reduce<Array<PortableTextObject | PortableTextSpan>>(
         (normalizedChildren, child, index) => {
-          if (isSpan(context, child)) {
+          if (isSpan({schema}, child)) {
             return [...normalizedChildren, child]
           }
 
           const previousChild = normalizedChildren.at(-1)
 
-          if (!previousChild || !isSpan(context, previousChild)) {
+          if (!previousChild || !isSpan({schema}, previousChild)) {
             return [
               ...normalizedChildren,
               {
-                _key: context.keyGenerator(),
-                _type: scope.span.name,
+                _key: keyGenerator(),
+                _type: schema.span.name,
                 text: '',
                 marks: [],
               },
@@ -450,8 +304,8 @@ function parseTextBlock({
               ...(index === children.length - 1
                 ? [
                     {
-                      _key: context.keyGenerator(),
-                      _type: scope.span.name,
+                      _key: keyGenerator(),
+                      _type: schema.span.name,
                       text: '',
                       marks: [],
                     },
@@ -467,7 +321,7 @@ function parseTextBlock({
     : children
 
   const parsedBlock: PortableTextTextBlock = {
-    _type: scope.block.name,
+    _type: schema.block.name,
     _key,
     children: normalizedChildren,
     ...customFields,
@@ -481,14 +335,14 @@ function parseTextBlock({
 
   if (
     typeof block['style'] === 'string' &&
-    scope.styles.find((style) => style.name === block['style'])
+    schema.styles.find((style) => style.name === block['style'])
   ) {
     parsedBlock.style = block['style']
   }
 
   if (
     typeof block['listItem'] === 'string' &&
-    scope.lists.find((list) => list.name === block['listItem'])
+    schema.lists.find((list) => list.name === block['listItem'])
   ) {
     parsedBlock.listItem = block['listItem']
   }
@@ -500,14 +354,14 @@ function parseTextBlock({
   return parsedBlock
 }
 
-function parseMarkDefsInScope({
-  context,
-  scope,
+function parseMarkDefsInternal({
+  schema,
+  keyGenerator,
   markDefs,
   options,
 }: {
-  context: Pick<EditorContext, 'keyGenerator' | 'schema'>
-  scope: BlockScope
+  schema: Schema
+  keyGenerator: () => string
   markDefs: unknown
   options: {validateFields: boolean}
 }): {
@@ -524,7 +378,7 @@ function parseMarkDefsInScope({
       return []
     }
 
-    const schemaType = scope.annotations.find(
+    const schemaType = schema.annotations.find(
       ({name}) => name === markDef._type,
     )
 
@@ -540,7 +394,8 @@ function parseMarkDefsInScope({
 
     const parsedAnnotation = parseObject({
       object: markDef,
-      context,
+      schema,
+      keyGenerator,
       schemaType,
       options,
     })
@@ -560,40 +415,46 @@ function parseMarkDefsInScope({
   }
 }
 
-function parseChildInScope({
+function parseChildInternal({
   child,
-  context,
-  scope,
+  schema,
+  keyGenerator,
   markDefKeyMap,
   options,
 }: {
   child: unknown
-  context: Pick<EditorContext, 'keyGenerator' | 'schema'>
-  scope: BlockScope
+  schema: Schema
+  keyGenerator: () => string
   markDefKeyMap: Map<string, string>
   options: {validateFields: boolean}
 }): PortableTextSpan | PortableTextObject | undefined {
   return (
-    parseSpanInScope({span: child, context, scope, markDefKeyMap, options}) ??
-    parseInlineObjectInScope({
+    parseSpanInternal({
+      span: child,
+      schema,
+      keyGenerator,
+      markDefKeyMap,
+      options,
+    }) ??
+    parseInlineObjectInternal({
       inlineObject: child,
-      context,
-      scope,
+      schema,
+      keyGenerator,
       options,
     })
   )
 }
 
-function parseSpanInScope({
+function parseSpanInternal({
   span,
-  context,
-  scope,
+  schema,
+  keyGenerator,
   markDefKeyMap,
   options,
 }: {
   span: unknown
-  context: Pick<EditorContext, 'keyGenerator' | 'schema'>
-  scope: BlockScope
+  schema: Schema
+  keyGenerator: () => string
   markDefKeyMap: Map<string, string>
   options: {validateFields: boolean}
 }): PortableTextSpan | undefined {
@@ -628,25 +489,22 @@ function parseSpanInScope({
       return [markDefKey]
     }
 
-    if (scope.decorators.some((decorator) => decorator.name === mark)) {
+    if (schema.decorators.some((decorator) => decorator.name === mark)) {
       return [mark]
     }
 
     return []
   })
 
-  if (typeof span['_type'] === 'string' && span['_type'] !== scope.span.name) {
+  if (typeof span['_type'] === 'string' && span['_type'] !== schema.span.name) {
     return undefined
   }
 
   if (typeof span['_type'] !== 'string') {
     if (typeof span['text'] === 'string') {
       return {
-        _type: scope.span.name as 'span',
-        _key:
-          typeof span['_key'] === 'string'
-            ? span['_key']
-            : context.keyGenerator(),
+        _type: schema.span.name as 'span',
+        _key: typeof span['_key'] === 'string' ? span['_key'] : keyGenerator(),
         text: span['text'],
         marks,
         ...(options.validateFields ? {} : customFields),
@@ -657,31 +515,30 @@ function parseSpanInScope({
   }
 
   return {
-    _type: scope.span.name as 'span',
-    _key:
-      typeof span['_key'] === 'string' ? span['_key'] : context.keyGenerator(),
+    _type: schema.span.name as 'span',
+    _key: typeof span['_key'] === 'string' ? span['_key'] : keyGenerator(),
     text: typeof span['text'] === 'string' ? span['text'] : '',
     marks,
     ...(options.validateFields ? {} : customFields),
   }
 }
 
-function parseInlineObjectInScope({
+function parseInlineObjectInternal({
   inlineObject,
-  context,
-  scope,
+  schema,
+  keyGenerator,
   options,
 }: {
   inlineObject: unknown
-  context: Pick<EditorContext, 'keyGenerator' | 'schema'>
-  scope: BlockScope
+  schema: Schema
+  keyGenerator: () => string
   options: {validateFields: boolean}
 }): PortableTextObject | undefined {
   if (!isTypedObject(inlineObject)) {
     return undefined
   }
 
-  const schemaType = scope.inlineObjects.find(
+  const schemaType = schema.inlineObjects.find(
     ({name}) => name === inlineObject._type,
   )
 
@@ -691,7 +548,8 @@ function parseInlineObjectInScope({
 
   return parseObject({
     object: inlineObject,
-    context,
+    schema,
+    keyGenerator,
     schemaType,
     options,
   })
@@ -699,18 +557,20 @@ function parseInlineObjectInScope({
 
 export function parseAnnotation({
   annotation,
-  context,
+  schema,
+  keyGenerator,
   options,
 }: {
   annotation: TypedObject
-  context: Pick<EditorContext, 'keyGenerator' | 'schema'>
+  schema: Schema
+  keyGenerator: () => string
   options: {validateFields: boolean}
 }): PortableTextObject | undefined {
   if (!isTypedObject(annotation)) {
     return undefined
   }
 
-  const schemaType = context.schema.annotations.find(
+  const schemaType = schema.annotations.find(
     ({name}) => name === annotation._type,
   )
 
@@ -720,7 +580,8 @@ export function parseAnnotation({
 
   return parseObject({
     object: annotation,
-    context,
+    schema,
+    keyGenerator,
     schemaType,
     options,
   })
@@ -729,17 +590,19 @@ export function parseAnnotation({
 /**
  * Parse an object against a `{name, fields}` schema type. Validates top-level
  * fields and recurses into any array field whose `of` contains a block-like
- * member -- parsing the nested blocks against a child `BlockScope` built from
+ * member -- parsing the nested blocks against a child `Schema` built from
  * that `of`.
  */
 function parseObject({
   object,
-  context,
+  schema,
+  keyGenerator,
   schemaType,
   options,
 }: {
   object: TypedObject
-  context: Pick<EditorContext, 'keyGenerator' | 'schema'>
+  schema: Schema
+  keyGenerator: () => string
   schemaType: {
     name: string
     fields: ReadonlyArray<{
@@ -771,7 +634,8 @@ function parseObject({
 
     if (field && field.type === 'array' && field.of && Array.isArray(value)) {
       values[key] = parseContainerFieldValue({
-        context,
+        schema,
+        keyGenerator,
         of: field.of,
         value,
         options,
@@ -784,7 +648,7 @@ function parseObject({
 
   return {
     _type: schemaType.name,
-    _key: typeof _key === 'string' ? _key : context.keyGenerator(),
+    _key: typeof _key === 'string' ? _key : keyGenerator(),
     ...values,
   }
 }
@@ -792,19 +656,21 @@ function parseObject({
 /**
  * Parse the value of an array field whose `of` declares what's allowed at
  * that position. If any member is `{type: 'block'}`, the field is a PTE
- * container: recurse via `parseBlocks` in a child `BlockScope`. Otherwise it
+ * container: recurse via `parseBlocks` in a child `Schema`. Otherwise it
  * is an opaque array of non-PTE members (rows, cells, scalars, objects that
  * happen to sit between containers and the actual text blocks) -- recurse
  * into each member object so nested PTE arrays further down are still
  * reached.
  */
 function parseContainerFieldValue({
-  context,
+  schema,
+  keyGenerator,
   of,
   value,
   options,
 }: {
-  context: Pick<EditorContext, 'keyGenerator' | 'schema'>
+  schema: Schema
+  keyGenerator: () => string
   of: ReadonlyArray<OfDefinition>
   value: ReadonlyArray<unknown>
   options: {validateFields: boolean; normalize?: boolean}
@@ -812,11 +678,11 @@ function parseContainerFieldValue({
   const hasBlockMember = of.some((member) => member.type === 'block')
 
   if (hasBlockMember) {
-    const scope = childBlockScope(context.schema, of)
+    const childSubSchema = getSubSchema(schema, of)
     return value.flatMap((block) => {
-      const parsed = parseBlockInScope({
-        context,
-        scope,
+      const parsed = parseBlockInternal({
+        schema: childSubSchema,
+        keyGenerator,
         block,
         options: {
           normalize: false,
@@ -843,7 +709,8 @@ function parseContainerFieldValue({
     return [
       parseObject({
         object: item,
-        context,
+        schema,
+        keyGenerator,
         schemaType: {
           name: member.type,
           fields: (member.fields ?? []) as ReadonlyArray<{
