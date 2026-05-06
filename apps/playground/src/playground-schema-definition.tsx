@@ -523,16 +523,6 @@ export const ImageSchema = z.object({
   }),
 })
 
-export const InlineImageSchema = z.object({
-  schemaType: z.object({
-    name: z.literal('image'),
-  }),
-  value: z.object({
-    src: z.string(),
-    alt: z.string().optional(),
-  }),
-})
-
 export const CommentAnnotationSchema = z.object({
   schemaType: z.object({
     name: z.literal('comment'),
@@ -548,25 +538,5 @@ export const LinkAnnotationSchema = z.object({
   }),
   value: z.object({
     href: z.string(),
-  }),
-})
-
-export const StockTickerSchema = z.object({
-  schemaType: z.object({
-    name: z.literal('stock-ticker'),
-  }),
-  value: z.object({
-    symbol: z.string(),
-  }),
-})
-
-export const MentionSchema = z.object({
-  schemaType: z.object({
-    name: z.literal('mention'),
-  }),
-  value: z.object({
-    userId: z.string(),
-    name: z.string(),
-    username: z.string(),
   }),
 })

@@ -10,7 +10,6 @@ import {
   type PortableTextBlock,
   type RangeDecoration,
   type RenderAnnotationFunction,
-  type RenderChildFunction,
   type RenderDecoratorFunction,
   type RenderListItemFunction,
   type RenderPlaceholderFunction,
@@ -26,7 +25,6 @@ import {
 import {useActorRef, useSelector} from '@xstate/react'
 import {
   ActivityIcon,
-  AtSignIcon,
   BracesIcon,
   CheckIcon,
   CopyIcon,
@@ -55,11 +53,8 @@ import type {EditorActorRef} from './playground-machine'
 import {
   CommentAnnotationSchema,
   ImageSchema,
-  InlineImageSchema,
   LinkAnnotationSchema,
-  MentionSchema,
   playgroundSchemaDefinition,
-  StockTickerSchema,
 } from './playground-schema-definition'
 import {CalloutPlugin} from './plugins/plugin.callout'
 import {CodeBlockPlugin} from './plugins/plugin.code-block'
@@ -67,6 +62,7 @@ import {CodeEditorPlugin} from './plugins/plugin.code-editor'
 import {FactBoxPlugin} from './plugins/plugin.fact-box'
 import {HtmlDeserializerPlugin} from './plugins/plugin.html-deserializer'
 import {ImageDeserializerPlugin} from './plugins/plugin.image-deserializer'
+import {InlineObjectsPlugin} from './plugins/plugin.inline-objects'
 import {markdownShortcutsPluginProps} from './plugins/plugin.markdown'
 import {MarkdownDeserializerPlugin} from './plugins/plugin.markdown-deserializer'
 import {TablePlugin} from './plugins/plugin.table'
@@ -161,6 +157,7 @@ export function Editor(props: {
               {featureFlags.calloutPlugin ? <CalloutPlugin /> : null}
               {featureFlags.factBoxPlugin ? <FactBoxPlugin /> : null}
               {featureFlags.tablePlugin ? <TablePlugin /> : null}
+              <InlineObjectsPlugin />
               {featureFlags.emojiPickerPlugin ? <EmojiPickerPlugin /> : null}
               {featureFlags.mentionPickerPlugin ? (
                 <MentionPickerPlugin />
@@ -235,7 +232,6 @@ function FullscreenAwareEditable(props: {
             rangeDecorations={props.rangeDecorations}
             renderAnnotation={renderAnnotation}
             renderBlock={RenderBlock}
-            renderChild={renderChild}
             renderDecorator={renderDecorator}
             renderListItem={renderListItem}
             renderPlaceholder={renderPlaceholder}
@@ -458,102 +454,6 @@ const RenderBlock = (props: BlockRenderProps) => {
 
 const renderDecorator: RenderDecoratorFunction = (props) => {
   return (decoratorMap.get(props.value) ?? ((props) => props.children))(props)
-}
-
-const stockTickerStyle = tv({
-  base: 'max-w-30 inline-flex items-center gap-1 border-2 border-gray-300 dark:border-gray-600 rounded px-1 font-mono text-xs',
-  variants: {
-    selected: {
-      true: 'border-blue-300 dark:border-blue-600',
-    },
-    focused: {
-      true: 'bg-blue-100 dark:bg-blue-800/60',
-    },
-  },
-})
-
-const mentionStyle = tv({
-  base: 'inline-flex items-center gap-0.5 bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300 rounded px-1 text-sm',
-  variants: {
-    selected: {
-      true: 'ring-2 ring-blue-300 dark:ring-blue-600',
-    },
-    focused: {
-      true: 'bg-blue-200 dark:bg-blue-700/70',
-    },
-  },
-})
-
-const inlineImageStyle = tv({
-  base: 'max-w-35 grid grid-cols-[auto_1fr] items-start gap-1 border-2 border-gray-300 dark:border-gray-600 rounded text-sm',
-  variants: {
-    selected: {
-      true: 'border-blue-300 dark:border-blue-600',
-    },
-    focused: {
-      true: 'bg-blue-100 dark:bg-blue-800/60',
-    },
-  },
-})
-
-const renderChild: RenderChildFunction = (props) => {
-  const stockTicker = StockTickerSchema.safeParse(props).data
-
-  if (stockTicker) {
-    return (
-      <span
-        className={stockTickerStyle({
-          selected: props.selected,
-          focused: props.focused,
-        })}
-      >
-        <ActivityIcon className="size-3 shrink-0" />
-        {stockTicker.value.symbol}
-      </span>
-    )
-  }
-
-  const mention = MentionSchema.safeParse(props).data
-
-  if (mention) {
-    return (
-      <span
-        className={mentionStyle({
-          selected: props.selected,
-          focused: props.focused,
-        })}
-      >
-        <AtSignIcon className="size-3" />
-        {mention.value.username}
-      </span>
-    )
-  }
-
-  const image = InlineImageSchema.safeParse(props).data
-
-  if (image) {
-    return (
-      <span
-        className={inlineImageStyle({
-          selected: props.selected,
-          focused: props.focused,
-        })}
-      >
-        <span className="bg-gray-100 dark:bg-gray-700 size-5 overflow-clip flex items-center justify-center">
-          <img
-            className="object-scale-down max-w-full"
-            src={image.value.src}
-            alt={image.value.alt ?? ''}
-          />
-        </span>
-        <span className="text-ellipsis overflow-hidden whitespace-nowrap">
-          {image.value.src}
-        </span>
-      </span>
-    )
-  }
-
-  return props.children
 }
 
 const renderListItem: RenderListItemFunction = (props) => {
