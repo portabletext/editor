@@ -1,4 +1,5 @@
 export {compileSchema} from './compile-schema'
+export {getSubSchema} from './get-sub-schema'
 export {
   defineSchema,
   type AnnotationDefinition,
