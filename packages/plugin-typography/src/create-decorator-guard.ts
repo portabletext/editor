@@ -3,6 +3,7 @@ import {
   getSelectedSpans,
   isActiveDecorator,
 } from '@portabletext/editor/selectors'
+import {getPathSubSchema} from '@portabletext/editor/traversal'
 import type {InputRuleGuard} from '@portabletext/plugin-input-rule'
 
 /**
@@ -27,14 +28,14 @@ export function createDecoratorGuard(config: {
   }) => Array<EditorSchema['decorators'][number]['name']>
 }): InputRuleGuard {
   return ({snapshot, event}) => {
+    const subSchema = getPathSubSchema(snapshot, event.focusBlock.path)
     const allowedDecorators = config.decorators({
       context: {
-        schema: snapshot.context.schema,
+        schema: subSchema,
       },
     })
-    const decorators = snapshot.context.schema.decorators.flatMap(
-      (decorator) =>
-        allowedDecorators.includes(decorator.name) ? [] : [decorator.name],
+    const decorators = subSchema.decorators.flatMap((decorator) =>
+      allowedDecorators.includes(decorator.name) ? [] : [decorator.name],
     )
 
     if (decorators.length === 0) {
