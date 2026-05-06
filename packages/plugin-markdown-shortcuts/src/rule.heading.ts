@@ -1,6 +1,7 @@
 import type {EditorContext} from '@portabletext/editor'
 import {raise} from '@portabletext/editor/behaviors'
 import {getPreviousInlineObject} from '@portabletext/editor/selectors'
+import {getPathSubSchema} from '@portabletext/editor/traversal'
 import {defineInputRule} from '@portabletext/plugin-input-rule'
 
 export function createHeadingRule(config: {
@@ -39,9 +40,10 @@ export function createHeadingRule(config: {
 
       const level = match.text.length - 1
 
+      const subSchema = getPathSubSchema(snapshot, event.focusBlock.path)
       const style = config.headingStyle({
-        context: {schema: snapshot.context.schema},
-        schema: snapshot.context.schema,
+        context: {schema: subSchema},
+        schema: subSchema,
         props: {level},
         level,
       })

@@ -1,6 +1,7 @@
 import type {EditorContext} from '@portabletext/editor'
 import {raise} from '@portabletext/editor/behaviors'
 import {getPreviousInlineObject} from '@portabletext/editor/selectors'
+import {getPathSubSchema} from '@portabletext/editor/traversal'
 import {defineInputRule} from '@portabletext/plugin-input-rule'
 
 export function createUnorderedListRule(config: {
@@ -18,9 +19,10 @@ export function createUnorderedListRule(config: {
   return defineInputRule({
     on: /^(-|\*) /,
     guard: ({snapshot, event}) => {
+      const subSchema = getPathSubSchema(snapshot, event.focusBlock.path)
       const unorderedList = config.unorderedList({
-        context: {schema: snapshot.context.schema},
-        schema: snapshot.context.schema,
+        context: {schema: subSchema},
+        schema: subSchema,
       })
 
       if (!unorderedList) {

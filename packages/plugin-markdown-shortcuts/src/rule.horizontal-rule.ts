@@ -1,6 +1,7 @@
 import type {EditorContext} from '@portabletext/editor'
 import {raise} from '@portabletext/editor/behaviors'
 import {getPreviousInlineObject} from '@portabletext/editor/selectors'
+import {getPathSubSchema} from '@portabletext/editor/traversal'
 import {defineInputRule} from '@portabletext/plugin-input-rule'
 import type {ObjectWithOptionalKey} from './behavior.markdown-shortcuts'
 
@@ -14,9 +15,10 @@ export function createHorizontalRuleRule(config: {
   return defineInputRule({
     on: /^(---)|^(—-)|^(___)|^(\*\*\*)/,
     guard: ({snapshot, event}) => {
+      const subSchema = getPathSubSchema(snapshot, event.focusBlock.path)
       const hrObject = config.horizontalRuleObject({
         context: {
-          schema: snapshot.context.schema,
+          schema: subSchema,
           keyGenerator: snapshot.context.keyGenerator,
         },
       })
