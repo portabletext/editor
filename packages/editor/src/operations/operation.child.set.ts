@@ -2,7 +2,7 @@ import {isSpan} from '@portabletext/schema'
 import {safeStringify} from '../internal-utils/safe-json'
 import {setNodeProperties} from '../internal-utils/set-node-properties'
 import {getNode} from '../node-traversal/get-node'
-import {getBlockSubSchema} from '../schema/get-block-sub-schema'
+import {getPathSubSchema} from '../schema/get-path-sub-schema'
 import {isObjectNode} from '../slate/node/is-object-node'
 import {parentPath} from '../slate/path/parent-path'
 import {siblingPath} from '../slate/path/sibling-path'
@@ -60,15 +60,14 @@ export const childSetOperationImplementation: OperationImplementation<
 
   if (isObjectNode({schema: operation.editor.schema}, child)) {
     const blockPath = parentPath(childPath)
-    const {inlineObjects} = getBlockSubSchema(snapshot, blockPath)
+    const {inlineObjects} = getPathSubSchema(snapshot, blockPath)
     const definition = inlineObjects.find(
       (definition) => definition.name === child._type,
     )
 
     if (!definition) {
-      throw new Error(
-        `Unable to find schema definition for Inline Object type ${child._type}`,
-      )
+      // Inline object type is not in the path's sub-schema. Noop.
+      return
     }
 
     const {_type, _key, ...rest} = operation.props

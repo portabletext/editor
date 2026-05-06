@@ -830,7 +830,13 @@ describe('Behavior API', () => {
         blockObjects: [
           {
             name: 'callout',
-            fields: [{name: 'content', type: 'array', of: [{type: 'block'}]}],
+            fields: [
+              {
+                name: 'content',
+                type: 'array',
+                of: [{type: 'block'}, {type: 'image'}],
+              },
+            ],
           },
           {name: 'image'},
         ],

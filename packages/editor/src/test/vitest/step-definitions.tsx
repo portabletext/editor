@@ -305,10 +305,8 @@ export const stepDefinitions = [
       context.editor.send({
         type: 'insert.blocks',
         blocks: parseBlocks({
-          context: {
-            schema: context.editor.getSnapshot().context.schema,
-            keyGenerator: context.editor.getSnapshot().context.keyGenerator,
-          },
+          schema: context.editor.getSnapshot().context.schema,
+          keyGenerator: context.editor.getSnapshot().context.keyGenerator,
           blocks: safeParse(blocks),
           options: {
             normalize: false,
@@ -327,21 +325,17 @@ export const stepDefinitions = [
   When('a child is inserted', (context: Context, child: string) => {
     const parsedChild =
       parseSpan({
-        context: {
-          schema: context.editor.getSnapshot().context.schema,
-          keyGenerator: context.editor.getSnapshot().context.keyGenerator,
-        },
+        keyGenerator: context.editor.getSnapshot().context.keyGenerator,
         span: safeParse(child),
         markDefKeyMap: new Map(),
         options: {validateFields: true},
+        schema: context.editor.getSnapshot().context.schema,
       }) ??
       parseInlineObject({
-        context: {
-          schema: context.editor.getSnapshot().context.schema,
-          keyGenerator: context.editor.getSnapshot().context.keyGenerator,
-        },
+        keyGenerator: context.editor.getSnapshot().context.keyGenerator,
         inlineObject: safeParse(child),
         options: {validateFields: true},
+        schema: context.editor.getSnapshot().context.schema,
       })
 
     if (!parsedChild) {
@@ -759,10 +753,8 @@ export const stepDefinitions = [
       context.editor.send({
         type: 'insert.blocks',
         blocks: parseBlocks({
-          context: {
-            schema: context.editor.getSnapshot().context.schema,
-            keyGenerator: context.editor.getSnapshot().context.keyGenerator,
-          },
+          schema: context.editor.getSnapshot().context.schema,
+          keyGenerator: context.editor.getSnapshot().context.keyGenerator,
           blocks: safeParse(blocks),
           options: {
             normalize: false,

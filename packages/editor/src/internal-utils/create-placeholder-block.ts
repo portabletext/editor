@@ -1,5 +1,5 @@
 import type {PortableTextSpan} from '@portabletext/schema'
-import {getBlockSubSchema} from '../schema/get-block-sub-schema'
+import {getPathSubSchema} from '../schema/get-path-sub-schema'
 import type {Containers} from '../schema/resolve-containers'
 import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
@@ -51,6 +51,6 @@ function resolveDefaultStyle(
   if (!path) {
     return rootFallback
   }
-  const subSchema = getBlockSubSchema(snapshot, path)
+  const subSchema = getPathSubSchema(snapshot, path)
   return subSchema.styles[0]?.name ?? rootFallback
 }

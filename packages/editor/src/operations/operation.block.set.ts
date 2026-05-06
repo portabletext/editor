@@ -3,7 +3,7 @@ import {safeStringify} from '../internal-utils/safe-json'
 import {setNodeProperties} from '../internal-utils/set-node-properties'
 import {getNode} from '../node-traversal/get-node'
 import {getBlockObjectSchema} from '../schema/get-block-object-schema'
-import {getBlockSubSchema} from '../schema/get-block-sub-schema'
+import {getPathSubSchema} from '../schema/get-path-sub-schema'
 import {isTextBlockNode} from '../slate/node/is-text-block-node'
 import {parseMarkDefs} from '../utils/parse-blocks'
 import type {OperationImplementation} from './operation.types'
@@ -21,7 +21,7 @@ export const blockSetOperationImplementation: OperationImplementation<
   const slateBlock = blockEntry.node
 
   if (isTextBlockNode(context, slateBlock)) {
-    const subSchema = getBlockSubSchema(snapshot, blockEntry.path)
+    const subSchema = getPathSubSchema(snapshot, blockEntry.path)
     const filteredProps: Record<string, unknown> = {}
 
     for (const key of Object.keys(operation.props)) {
@@ -59,9 +59,10 @@ export const blockSetOperationImplementation: OperationImplementation<
 
       if (key === 'markDefs') {
         const {markDefs} = parseMarkDefs({
-          context,
+          keyGenerator: context.keyGenerator,
           markDefs: operation.props[key],
           options: {validateFields: true},
+          schema: getPathSubSchema(snapshot, blockEntry.path),
         })
         filteredProps[key] = markDefs
         continue

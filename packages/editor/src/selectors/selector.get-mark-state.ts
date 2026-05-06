@@ -1,6 +1,6 @@
 import type {EditorSelector} from '../editor/editor-selector'
 import {getAncestorTextBlock} from '../node-traversal/get-ancestor-text-block'
-import {getBlockSubSchema} from '../schema/get-block-sub-schema'
+import {getPathSubSchema} from '../schema/get-path-sub-schema'
 import {isBlockPath} from '../types/paths'
 import {blockOffsetToSpanSelectionPoint} from '../utils/util.block-offset'
 import {isSelectionExpanded} from '../utils/util.is-selection-expanded'
@@ -103,7 +103,7 @@ export const getMarkState: EditorSelector<MarkState | undefined> = (
       const block = getAncestorTextBlock(snapshot, span.path)
       return {
         marks: span.node.marks ?? [],
-        decoratorNames: getBlockSubSchema(snapshot, span.path).decorators.map(
+        decoratorNames: getPathSubSchema(snapshot, span.path).decorators.map(
           (decorator) => decorator.name,
         ),
         markDefKeys: (block?.node.markDefs ?? []).map(
@@ -149,7 +149,7 @@ export const getMarkState: EditorSelector<MarkState | undefined> = (
     }
   }
 
-  const focusSubSchema = getBlockSubSchema(snapshot, focusSpan.path)
+  const focusSubSchema = getPathSubSchema(snapshot, focusSpan.path)
   const decorators = focusSubSchema.decorators.map(
     (decorator) => decorator.name,
   )

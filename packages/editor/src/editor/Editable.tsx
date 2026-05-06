@@ -437,11 +437,9 @@ export const PortableTextEditable = forwardRef<
                 behaviorEvent: {
                   type: 'insert.blocks',
                   blocks: parseBlocks({
-                    context: {
-                      keyGenerator:
-                        editorActor.getSnapshot().context.keyGenerator,
-                      schema: editorActor.getSnapshot().context.schema,
-                    },
+                    keyGenerator:
+                      editorActor.getSnapshot().context.keyGenerator,
+                    schema: editorActor.getSnapshot().context.schema,
                     blocks: result.insert,
                     options: {
                       normalize: false,

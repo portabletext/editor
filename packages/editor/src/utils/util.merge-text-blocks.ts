@@ -15,13 +15,14 @@ export function mergeTextBlocks({
   incomingBlock: PortableTextTextBlock
 }) {
   const parsedIncomingBlock = parseBlock({
-    context,
+    keyGenerator: context.keyGenerator,
     block: incomingBlock,
     options: {
       normalize: false,
       removeUnusedMarkDefs: true,
       validateFields: false,
     },
+    schema: context.schema,
   })
 
   if (!parsedIncomingBlock || !isTextBlock(context, parsedIncomingBlock)) {

@@ -167,16 +167,14 @@ export function sliceBlocks({
     if (startBlock) {
       middleBlocks.push(
         parseBlock({
-          context: {
-            schema: context.schema,
-            keyGenerator: context.keyGenerator ?? defaultKeyGenerator,
-          },
+          keyGenerator: context.keyGenerator ?? defaultKeyGenerator,
           block,
           options: {
             normalize: false,
             removeUnusedMarkDefs: true,
             validateFields: false,
           },
+          schema: context.schema,
         }) ?? block,
       )
     }
@@ -184,31 +182,27 @@ export function sliceBlocks({
 
   const parsedStartBlock = startBlock
     ? parseBlock({
-        context: {
-          schema: context.schema,
-          keyGenerator: context.keyGenerator ?? defaultKeyGenerator,
-        },
+        keyGenerator: context.keyGenerator ?? defaultKeyGenerator,
         block: startBlock,
         options: {
           normalize: false,
           removeUnusedMarkDefs: true,
           validateFields: false,
         },
+        schema: context.schema,
       })
     : undefined
 
   const parsedEndBlock = endBlock
     ? parseBlock({
-        context: {
-          schema: context.schema,
-          keyGenerator: context.keyGenerator ?? defaultKeyGenerator,
-        },
+        keyGenerator: context.keyGenerator ?? defaultKeyGenerator,
         block: endBlock,
         options: {
           normalize: false,
           removeUnusedMarkDefs: true,
           validateFields: false,
         },
+        schema: context.schema,
       })
     : undefined
 

@@ -4,7 +4,6 @@ import {applySelect, resolveSelection} from '../internal-utils/apply-selection'
 import {applySplitNode} from '../internal-utils/apply-split-node'
 import {deleteRange} from '../internal-utils/delete-range'
 import {isEqualChildren, isEqualMarks} from '../internal-utils/equality'
-import {safeStringify} from '../internal-utils/safe-json'
 import {setNodeProperties} from '../internal-utils/set-node-properties'
 import {toSlateBlock} from '../internal-utils/values'
 import {getAncestorTextBlock} from '../node-traversal/get-ancestor-text-block'
@@ -13,6 +12,7 @@ import {getSibling} from '../node-traversal/get-sibling'
 import {getSpanNode} from '../node-traversal/get-span-node'
 import {getTextBlockNode} from '../node-traversal/get-text-block-node'
 import {getContainerScopedName} from '../schema/get-container-scoped-name'
+import {getPathSubSchema} from '../schema/get-path-sub-schema'
 import {end as editorEnd} from '../slate/editor/end'
 import {pathRef} from '../slate/editor/path-ref'
 import {rangeRef} from '../slate/editor/range-ref'
@@ -58,21 +58,6 @@ export const insertBlockOperationImplementation: OperationImplementation<
   'insert.block'
 > = ({snapshot, operation}) => {
   const {context} = snapshot
-  const parsedBlock = parseBlock({
-    block: operation.block,
-    context,
-    options: {
-      normalize: true,
-      removeUnusedMarkDefs: true,
-      validateFields: true,
-    },
-  })
-
-  if (!parsedBlock) {
-    throw new Error(`Failed to parse block ${safeStringify(operation.block)}`)
-  }
-
-  const block = toSlateBlock(parsedBlock, {schemaTypes: context.schema})
   const editor = operation.editor
   // When `placement` is `before` or `after`, the caller has already chosen
   // where the new block should land. Resolving `operation.at` would descend
@@ -97,6 +82,39 @@ export const insertBlockOperationImplementation: OperationImplementation<
       ? operation.at
       : resolved
 
+  // Derive the sub-schema scope at the destination so the inserted block is
+  // validated against the container it's about to land in. `placement: 'before'`
+  // lands at the start of the range; everything else lands at or near the end.
+  // When the editor is empty there is no path to derive from, so use root scope.
+  const destinationPath = at
+    ? operation.placement === 'before'
+      ? rangeStart(at, editor).path
+      : rangeEnd(at, editor).path
+    : editor.children.length > 0
+      ? editorEnd(editor, []).path
+      : undefined
+  const schema = destinationPath
+    ? getPathSubSchema(snapshot, destinationPath)
+    : context.schema
+
+  const parsedBlock = parseBlock({
+    block: operation.block,
+    keyGenerator: context.keyGenerator,
+    options: {
+      normalize: true,
+      removeUnusedMarkDefs: true,
+      validateFields: true,
+    },
+    schema,
+  })
+
+  if (!parsedBlock) {
+    // Block's type is not allowed in the destination sub-schema. Noop.
+    return
+  }
+
+  const block = toSlateBlock(parsedBlock, {schemaTypes: context.schema})
+
   const target = resolveTarget({
     editor,
     block,
@@ -105,7 +123,8 @@ export const insertBlockOperationImplementation: OperationImplementation<
   })
 
   if (!target) {
-    throw new Error(`Unable to insert block ${safeStringify(operation.block)}`)
+    // Cannot resolve a placement target. Noop.
+    return
   }
 
   dispatchInsert({

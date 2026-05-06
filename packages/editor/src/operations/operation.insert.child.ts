@@ -6,6 +6,7 @@ import {
 import {getAncestorTextBlock} from '../node-traversal/get-ancestor-text-block'
 import {getNode} from '../node-traversal/get-node'
 import {getSibling} from '../node-traversal/get-sibling'
+import {getPathSubSchema} from '../schema/get-path-sub-schema'
 import {isTextBlockNode} from '../slate/node/is-text-block-node'
 import {parseInlineObject, parseSpan} from '../utils/parse-blocks'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
@@ -51,11 +52,14 @@ export const insertChildOperationImplementation: OperationImplementation<
     markDefKeyMap.set(markDef._key, markDef._key)
   }
 
+  const schema = getPathSubSchema(snapshot, focusBlockEntry.path)
+
   const span = parseSpan({
     span: operation.child,
-    context,
+    keyGenerator: context.keyGenerator,
     markDefKeyMap,
     options: {validateFields: true},
+    schema,
   })
 
   if (span) {
@@ -91,8 +95,9 @@ export const insertChildOperationImplementation: OperationImplementation<
 
   const inlineObject = parseInlineObject({
     inlineObject: operation.child,
-    context,
+    keyGenerator: context.keyGenerator,
     options: {validateFields: true},
+    schema,
   })
 
   if (inlineObject) {
@@ -130,5 +135,5 @@ export const insertChildOperationImplementation: OperationImplementation<
     return
   }
 
-  throw new Error('Unable to parse child')
+  // The child's type is not allowed in the path's sub-schema. Noop.
 }

@@ -7,6 +7,11 @@ import {InternalPortableTextEditorRefPlugin} from '../src/plugins/plugin.interna
 import {createTestEditor} from '../src/test/vitest'
 import type {EditorSelection} from '../src/types/editor'
 
+const schemaDefinition = defineSchema({
+  decorators: [{name: 'strong'}, {name: 'em'}],
+  annotations: [{name: 'link', fields: [{name: 'href', type: 'string'}]}],
+})
+
 describe('plugin:withPortableTextMarksModel', () => {
   describe('normalization', () => {
     it('toggles marks on children with annotation marks correctly', async () => {
@@ -42,6 +47,7 @@ describe('plugin:withPortableTextMarksModel', () => {
       const onChange = vi.fn()
 
       await createTestEditor({
+        schemaDefinition,
         children: (
           <>
             <EventListenerPlugin on={onChange} />
@@ -49,7 +55,6 @@ describe('plugin:withPortableTextMarksModel', () => {
           </>
         ),
         initialValue,
-        schemaDefinition: defineSchema({decorators: [{name: 'strong'}]}),
       })
 
       await vi.waitFor(() => {
@@ -176,6 +181,7 @@ describe('plugin:withPortableTextMarksModel', () => {
       const onChange = vi.fn()
 
       await createTestEditor({
+        schemaDefinition,
         children: (
           <>
             <EventListenerPlugin on={onChange} />
@@ -282,6 +288,7 @@ describe('plugin:withPortableTextMarksModel', () => {
       const onChange = vi.fn()
 
       await createTestEditor({
+        schemaDefinition,
         children: (
           <>
             <EventListenerPlugin on={onChange} />
@@ -386,6 +393,7 @@ describe('plugin:withPortableTextMarksModel', () => {
       const onChange = vi.fn()
 
       await createTestEditor({
+        schemaDefinition,
         children: (
           <>
             <EventListenerPlugin on={onChange} />
@@ -457,6 +465,7 @@ describe('plugin:withPortableTextMarksModel', () => {
       const onChange = vi.fn()
 
       await createTestEditor({
+        schemaDefinition,
         children: (
           <>
             <EventListenerPlugin on={onChange} />
@@ -512,6 +521,7 @@ describe('plugin:withPortableTextMarksModel', () => {
       const onChange = vi.fn()
 
       await createTestEditor({
+        schemaDefinition,
         children: (
           <>
             <EventListenerPlugin on={onChange} />
@@ -561,6 +571,9 @@ describe('plugin:withPortableTextMarksModel', () => {
       const onChange = vi.fn()
 
       await createTestEditor({
+        schemaDefinition: defineSchema({
+          blockObjects: [{name: 'custom image'}],
+        }),
         children: (
           <>
             <EventListenerPlugin on={onChange} />
@@ -568,9 +581,6 @@ describe('plugin:withPortableTextMarksModel', () => {
           </>
         ),
         initialValue,
-        schemaDefinition: defineSchema({
-          blockObjects: [{name: 'custom image'}],
-        }),
       })
 
       await vi.waitFor(() => {
