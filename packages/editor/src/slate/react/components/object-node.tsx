@@ -5,7 +5,6 @@ import {isElementDecorationsEqual} from '../../dom/utils/range-list'
 import type {Path} from '../../interfaces/path'
 import type {DecoratedRange} from '../../interfaces/text'
 import {pathEquals} from '../../path/path-equals'
-import {useReadOnly} from '../hooks/use-read-only'
 import type {RenderElementProps} from './editable'
 
 const defaultRenderElement = (props: RenderElementProps) => {
@@ -38,7 +37,6 @@ const ObjectNodeComponent = (props: {
     renderElement = defaultRenderElement,
   } = props
   const dataPath = serializePath(path)
-  const readOnly = useReadOnly()
 
   const attributes: RenderElementProps['attributes'] = {
     'data-slate-node': 'element',
@@ -48,10 +46,7 @@ const ObjectNodeComponent = (props: {
 
   if (isInline) {
     attributes['data-slate-inline'] = true
-
-    if (!readOnly) {
-      attributes.contentEditable = false
-    }
+    attributes.contentEditable = false
   }
 
   const Tag = isInline ? 'span' : 'div'
