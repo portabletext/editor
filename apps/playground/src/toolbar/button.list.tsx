@@ -1,4 +1,4 @@
-import {useListButton} from '@portabletext/toolbar'
+import {useApplicableSchema, useListButton} from '@portabletext/toolbar'
 import type {ToolbarListSchemaType} from '@portabletext/toolbar'
 import {TooltipTrigger} from 'react-aria-components'
 import {Icon} from '../primitives/icon'
@@ -7,13 +7,17 @@ import {Tooltip} from '../primitives/tooltip'
 
 export function ListButton(props: {schemaType: ToolbarListSchemaType}) {
   const listButton = useListButton(props)
+  const applicable = useApplicableSchema()
 
   return (
     <TooltipTrigger>
       <ToggleButton
         aria-label={props.schemaType.title ?? props.schemaType.name}
         size="sm"
-        isDisabled={listButton.snapshot.matches('disabled')}
+        isDisabled={
+          !applicable.lists.has(props.schemaType.name) ||
+          listButton.snapshot.matches('disabled')
+        }
         isSelected={listButton.snapshot.matches({enabled: 'active'})}
         onPress={() => {
           listButton.send({type: 'toggle'})

@@ -1,5 +1,5 @@
 import type {ToolbarStyleSchemaType} from '@portabletext/toolbar'
-import {useStyleSelector} from '@portabletext/toolbar'
+import {useApplicableSchema, useStyleSelector} from '@portabletext/toolbar'
 import {TooltipTrigger} from 'react-aria-components'
 import {Icon} from '../primitives/icon'
 import {Select, SelectItem} from '../primitives/select'
@@ -10,12 +10,17 @@ export function StyleButton(props: {
   schemaTypes: ReadonlyArray<ToolbarStyleSchemaType>
 }) {
   const styleSelector = useStyleSelector(props)
+  const applicable = useApplicableSchema()
   const activeStyle = styleSelector.snapshot.context.activeStyle ?? 'normal'
+  const disabledKeys = props.schemaTypes
+    .filter((schemaType) => !applicable.styles.has(schemaType.name))
+    .map((schemaType) => schemaType.name)
 
   return (
     <TooltipTrigger>
       <Select
         isDisabled={styleSelector.snapshot.matches('disabled')}
+        disabledKeys={disabledKeys}
         placeholder="Select style"
         aria-label="Style"
         selectedKey={activeStyle}

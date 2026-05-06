@@ -1,4 +1,4 @@
-import {useBlockObjectButton} from '@portabletext/toolbar'
+import {useApplicableSchema, useBlockObjectButton} from '@portabletext/toolbar'
 import type {ToolbarBlockObjectSchemaType} from '@portabletext/toolbar'
 import {TooltipTrigger} from 'react-aria-components'
 import {Button} from '../primitives/button'
@@ -14,6 +14,7 @@ export function BlockObjectButton(props: {
   }
 }) {
   const {snapshot, send} = useBlockObjectButton(props)
+  const applicable = useApplicableSchema()
 
   return (
     <Dialog
@@ -32,7 +33,10 @@ export function BlockObjectButton(props: {
           <Button
             variant="secondary"
             size="sm"
-            isDisabled={snapshot.matches('disabled')}
+            isDisabled={
+              !applicable.blockObjects.has(props.schemaType.name) ||
+              snapshot.matches('disabled')
+            }
           >
             <Icon icon={props.schemaType.icon} fallback={null} />
             {props.schemaType.title}

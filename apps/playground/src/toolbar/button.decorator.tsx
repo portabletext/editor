@@ -1,4 +1,4 @@
-import {useDecoratorButton} from '@portabletext/toolbar'
+import {useApplicableSchema, useDecoratorButton} from '@portabletext/toolbar'
 import type {ToolbarDecoratorSchemaType} from '@portabletext/toolbar'
 import {Icon} from '../primitives/icon'
 import {ToggleButton} from '../primitives/toggle-button'
@@ -8,6 +8,7 @@ export function DecoratorButton(props: {
   schemaType: ToolbarDecoratorSchemaType
 }) {
   const decoratorButton = useDecoratorButton(props)
+  const applicable = useApplicableSchema()
 
   return (
     <ButtonTooltip
@@ -17,7 +18,10 @@ export function DecoratorButton(props: {
       <ToggleButton
         aria-label={props.schemaType.title ?? props.schemaType.name}
         size="sm"
-        isDisabled={decoratorButton.snapshot.matches('disabled')}
+        isDisabled={
+          !applicable.decorators.has(props.schemaType.name) ||
+          decoratorButton.snapshot.matches('disabled')
+        }
         isSelected={
           decoratorButton.snapshot.matches({disabled: 'active'}) ||
           decoratorButton.snapshot.matches({enabled: 'active'})
