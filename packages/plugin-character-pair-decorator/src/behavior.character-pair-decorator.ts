@@ -6,6 +6,7 @@ import {
   raise,
 } from '@portabletext/editor/behaviors'
 import * as selectors from '@portabletext/editor/selectors'
+import {getPathSubSchema} from '@portabletext/editor/traversal'
 import * as utils from '@portabletext/editor/utils'
 import {createCharacterPairRegex} from './regex.character-pair'
 
@@ -42,16 +43,22 @@ export function createCharacterPairDecoratorBehavior(config: {
         return false
       }
 
+      const focusTextBlock = selectors.getFocusTextBlock(snapshot)
+
+      if (!focusTextBlock) {
+        return false
+      }
+
+      const subSchema = getPathSubSchema(snapshot, focusTextBlock.path)
       const decorator = config.decorator({
-        context: {schema: snapshot.context.schema},
-        schema: snapshot.context.schema,
+        context: {schema: subSchema},
+        schema: subSchema,
       })
 
       if (decorator === undefined) {
         return false
       }
 
-      const focusTextBlock = selectors.getFocusTextBlock(snapshot)
       const selectionStartPoint = selectors.getSelectionStartPoint(snapshot)
       const selectionStartOffset = selectionStartPoint
         ? utils.spanSelectionPointToBlockOffset({
@@ -60,7 +67,7 @@ export function createCharacterPairDecoratorBehavior(config: {
           })
         : undefined
 
-      if (!focusTextBlock || !selectionStartOffset) {
+      if (!selectionStartOffset) {
         return false
       }
 

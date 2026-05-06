@@ -44,8 +44,12 @@
     "dev": "pkg-utils watch",
     "lint:fix": "biome lint --write .",
     "prepublishOnly": "turbo run build",
-    "test:unit": "vitest --run",
-    "test:unit:watch": "vitest"
+    "test:browser:chromium": "vitest run --project \"browser (chromium)\"",
+    "test:browser:chromium:watch": "vitest watch --project \"browser (chromium)\"",
+    "test:browser:firefox": "vitest run --project \"browser (firefox)\"",
+    "test:browser:firefox:watch": "vitest watch --project \"browser (firefox)\"",
+    "test:browser:webkit": "vitest run --project \"browser (webkit)\"",
+    "test:browser:webkit:watch": "vitest watch --project \"browser (webkit)\""
   },
   "dependencies": {
     "@xstate/react": "^6.1.0",
@@ -56,6 +60,9 @@
     "@portabletext/editor": "workspace:^",
     "@sanity/tsconfig": "^2.1.0",
     "@types/react": "^19.2.14",
+    "@vitejs/plugin-react": "^5.2.0",
+    "@vitest/browser": "^4.1.4",
+    "@vitest/browser-playwright": "^4.1.4",
     "babel-plugin-react-compiler": "^1.0.0",
     "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^7.1.1",
