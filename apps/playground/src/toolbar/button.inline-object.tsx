@@ -1,4 +1,4 @@
-import {useInlineObjectButton} from '@portabletext/toolbar'
+import {useApplicableSchema, useInlineObjectButton} from '@portabletext/toolbar'
 import type {ToolbarInlineObjectSchemaType} from '@portabletext/toolbar'
 import {TooltipTrigger} from 'react-aria-components'
 import {Button} from '../primitives/button'
@@ -11,6 +11,7 @@ export function InlineObjectButton(props: {
   schemaType: ToolbarInlineObjectSchemaType
 }) {
   const {snapshot, send} = useInlineObjectButton(props)
+  const applicable = useApplicableSchema()
 
   return (
     <Dialog
@@ -29,7 +30,10 @@ export function InlineObjectButton(props: {
           <Button
             variant="secondary"
             size="sm"
-            isDisabled={snapshot.matches('disabled')}
+            isDisabled={
+              !applicable.inlineObjects.has(props.schemaType.name) ||
+              snapshot.matches('disabled')
+            }
           >
             <Icon icon={props.schemaType.icon} fallback={null} />
             {props.schemaType.title ?? props.schemaType.name}

@@ -1,5 +1,5 @@
 import type {ToolbarAnnotationSchemaType} from '@portabletext/toolbar'
-import {useAnnotationButton} from '@portabletext/toolbar'
+import {useAnnotationButton, useApplicableSchema} from '@portabletext/toolbar'
 import {Button} from '../primitives/button'
 import {Dialog} from '../primitives/dialog'
 import {Icon} from '../primitives/icon'
@@ -11,6 +11,7 @@ export function AnnotationButton(props: {
   schemaType: ToolbarAnnotationSchemaType
 }) {
   const annotationButton = useAnnotationButton(props)
+  const applicable = useApplicableSchema()
 
   if (
     annotationButton.snapshot.matches({disabled: 'active'}) ||
@@ -24,7 +25,10 @@ export function AnnotationButton(props: {
         <ToggleButton
           size="sm"
           isSelected={true}
-          isDisabled={annotationButton.snapshot.matches('disabled')}
+          isDisabled={
+            !applicable.annotations.has(props.schemaType.name) ||
+            annotationButton.snapshot.matches('disabled')
+          }
           onPress={() => {
             annotationButton.send({type: 'remove'})
           }}
@@ -58,7 +62,10 @@ export function AnnotationButton(props: {
           <Button
             variant="secondary"
             size="sm"
-            isDisabled={annotationButton.snapshot.matches('disabled')}
+            isDisabled={
+              !applicable.annotations.has(props.schemaType.name) ||
+              annotationButton.snapshot.matches('disabled')
+            }
             onPress={() => {
               annotationButton.send({type: 'open dialog'})
             }}
