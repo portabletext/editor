@@ -48,7 +48,7 @@ export function RangeDecorationButton(props: {
 
 function RangeComponent(props: React.PropsWithChildren<unknown>) {
   return (
-    <span className="bg-green-200 border border-green-600">
+    <span className="bg-green-200 dark:bg-green-900/50 border border-green-600 dark:border-green-500">
       {props.children}
     </span>
   )
