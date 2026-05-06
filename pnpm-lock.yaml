@@ -106,8 +106,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/plugin-typography
       '@portabletext/react':
-        specifier: ^6.1.0
-        version: 6.1.0(react@19.2.5)
+        specifier: ^6.2.0
+        version: 6.2.0(react@19.2.5)
       '@portabletext/toolbar':
         specifier: workspace:*
         version: link:../../packages/toolbar
@@ -226,8 +226,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/plugin-typography
       '@portabletext/react':
-        specifier: ^6.1.0
-        version: 6.1.0(react@19.2.5)
+        specifier: ^6.2.0
+        version: 6.2.0(react@19.2.5)
       '@portabletext/toolbar':
         specifier: workspace:*
         version: link:../../packages/toolbar
@@ -3087,8 +3087,8 @@ packages:
   '@polka/url@1.0.0-next.29':
     resolution: {integrity: sha512-wwQAWhWSuHaag8c4q/KN/vCoeOJYshAIvMQwD4GpSb3OiZklFfvAgmj0VCBBImRpuF/aFgIRzllXlVX93Jevww==}
 
-  '@portabletext/react@6.1.0':
-    resolution: {integrity: sha512-qs87L87oxz4dIWXDCEW9nTxWtsN6zkJbpsIJ5izWfE6EpJDH1WZtfHrUZyR3Ot3jwlViHNu9b3qztxFvMM2Rzg==}
+  '@portabletext/react@6.2.0':
+    resolution: {integrity: sha512-Z0J/AWrvg7GyDfEBQRRhi6ZpxLOsN4/QbU8KhTwfa6r2ELiRaMa4gkHE9wfs3V1ozNDrTG4IRr+8yBnHNDnAqA==}
     engines: {node: '>=20.19 <22 || >=22.12'}
     peerDependencies:
       react: ^18.2 || ^19
@@ -5226,6 +5226,7 @@ packages:
 
   '@ungap/structured-clone@1.3.0':
     resolution: {integrity: sha512-WmoN8qaIAo7WTYWbAZuG8PYEhn5fkz7dZrqTBZ7dtt//lL2Gwms1IcnQ5yHqjDfX8Ft5j4YzDM23f87zBfDe9g==}
+    deprecated: Potential CWE-502 - Update to 1.3.1 or higher
 
   '@vanilla-extract/babel-plugin-debug-ids@1.2.2':
     resolution: {integrity: sha512-MeDWGICAF9zA/OZLOKwhoRlsUW+fiMwnfuOAqFVohL31Agj7Q/RBWAYweqjHLgFBCsdnr6XIfwjJnmb2znEWxw==}
@@ -10711,7 +10712,7 @@ snapshots:
 
   '@polka/url@1.0.0-next.29': {}
 
-  '@portabletext/react@6.1.0(react@19.2.5)':
+  '@portabletext/react@6.2.0(react@19.2.5)':
     dependencies:
       '@portabletext/toolkit': 5.0.2
       '@portabletext/types': 4.0.2
