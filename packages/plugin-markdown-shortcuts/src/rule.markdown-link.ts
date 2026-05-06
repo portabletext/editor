@@ -88,6 +88,10 @@ export function createMarkdownLinkRule(config: {
           )
         }
 
+        if (actions.length === 0) {
+          return []
+        }
+
         const endCaretPosition = {
           path: event.focusBlock.path,
           offset: newText.length - textLengthDelta * -1,

@@ -213,4 +213,49 @@ describe('Markdown shortcuts respect the sub-schema at the focus', () => {
       ])
     })
   })
+
+  test('typing a markdown link when no link annotation is declared does not consume the keystroke or move the caret', async () => {
+    const schemaDefinition = defineSchema({
+      decorators: [{name: 'strong'}],
+      styles: [{name: 'normal'}],
+      // No link annotation declared.
+      annotations: [],
+    })
+
+    const {editor, locator} = await createTestEditor({
+      schemaDefinition,
+      children: (
+        <MarkdownShortcutsPlugin
+          defaultStyle={({context}) => context.schema.styles[0]?.name}
+          linkObject={({context, props}) => {
+            const link = context.schema.annotations.find(
+              (annotation) => annotation.name === 'link',
+            )
+            if (!link) {
+              return undefined
+            }
+            return {_type: link.name, href: props.href}
+          }}
+        />
+      ),
+    })
+
+    await userEvent.click(locator)
+    await userEvent.keyboard('[[foo](bar)')
+
+    await vi.waitFor(() => {
+      const value = editor.getSnapshot().context.value
+      expect(value).toHaveLength(1)
+      const block = value[0] as {
+        children: Array<{text: string}>
+        markDefs: Array<unknown>
+      }
+      expect(block.children[0].text).toEqual('[foo](bar)')
+      expect(block.markDefs).toEqual([])
+
+      const selection = editor.getSnapshot().context.selection
+      expect(selection?.anchor.offset).toEqual(10)
+      expect(selection?.focus.offset).toEqual(10)
+    })
+  })
 })
