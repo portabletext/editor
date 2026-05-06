@@ -12,7 +12,6 @@ import {getNode} from '../node-traversal/get-node'
 import {getNodes} from '../node-traversal/get-nodes'
 import {getTextBlockNode} from '../node-traversal/get-text-block-node'
 import {getBlock, isBlock} from '../node-traversal/is-block'
-import {getPathSubSchema} from '../schema/get-path-sub-schema'
 import {getActiveAnnotationsMarks} from '../selectors/selector.get-active-annotation-marks'
 import {getActiveDecorators} from '../selectors/selector.get-active-decorators'
 import {getFocusBlock} from '../selectors/selector.get-focus-block'
@@ -26,6 +25,7 @@ import {isExpandedRange} from '../slate/range/is-expanded-range'
 import {rangeEnd} from '../slate/range/range-end'
 import {rangeIncludes} from '../slate/range/range-includes'
 import {rangeStart} from '../slate/range/range-start'
+import {getPathSubSchema} from '../traversal/get-path-sub-schema'
 import type {
   EditableAPI,
   EditableAPIDeleteOptions,

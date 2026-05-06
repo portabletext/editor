@@ -1,6 +1,6 @@
 import type {EditorSelector} from '../editor/editor-selector'
 import {getAncestorTextBlock} from '../node-traversal/get-ancestor-text-block'
-import {getPathSubSchema} from '../schema/get-path-sub-schema'
+import {getPathSubSchema} from '../traversal/get-path-sub-schema'
 import {isBlockPath} from '../types/paths'
 import {blockOffsetToSpanSelectionPoint} from '../utils/util.block-offset'
 import {isSelectionExpanded} from '../utils/util.is-selection-expanded'

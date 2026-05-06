@@ -4,9 +4,9 @@ import type {
   ContainerConfig,
   ContainerDefinition,
 } from '../renderers/renderer.types'
+import {makeContainerConfig} from '../schema/make-container-config'
+import {resolveContainers} from '../schema/resolve-containers'
 import {getPathSubSchema} from './get-path-sub-schema'
-import {makeContainerConfig} from './make-container-config'
-import {resolveContainers} from './resolve-containers'
 
 const testRender: ContainerDefinition['render'] = ({children}) => children
 

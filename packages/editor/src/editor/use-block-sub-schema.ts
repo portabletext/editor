@@ -1,7 +1,7 @@
 import type {Schema} from '@portabletext/schema'
-import {getPathSubSchema} from '../schema/get-path-sub-schema'
 import type {Path} from '../slate/interfaces/path'
 import {useSlateStatic} from '../slate/react/hooks/use-slate-static'
+import {getPathSubSchema} from '../traversal/get-path-sub-schema'
 
 /**
  * Hook: resolve the sub-schema that applies at `path`.
