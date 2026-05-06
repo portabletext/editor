@@ -7,6 +7,7 @@ import {
   type NativeBehaviorEvent,
 } from '@portabletext/editor/behaviors'
 import * as selectors from '@portabletext/editor/selectors'
+import {getPathSubSchema} from '@portabletext/editor/traversal'
 import {useEffect} from 'react'
 import {looksLikeUrl} from './looks-like-url'
 
@@ -126,8 +127,9 @@ function createPasteLinkBehaviors(
 
       const {snapshot, event} = guardParams
       const selectionCollapsed = selectors.isSelectionCollapsed(snapshot)
+      const focusBlock = selectors.getFocusBlock(snapshot)
 
-      if (selectionCollapsed) {
+      if (selectionCollapsed || !focusBlock) {
         return false
       }
 
@@ -140,7 +142,7 @@ function createPasteLinkBehaviors(
 
       const result = config.link({
         context: {
-          schema: snapshot.context.schema,
+          schema: getPathSubSchema(snapshot, focusBlock.path),
           keyGenerator: snapshot.context.keyGenerator,
         },
         value: {href},
@@ -191,9 +193,10 @@ function createPasteLinkBehaviors(
         return false
       }
 
+      const subSchema = getPathSubSchema(snapshot, focusTextBlock.path)
       const result = config.link({
         context: {
-          schema: snapshot.context.schema,
+          schema: subSchema,
           keyGenerator: snapshot.context.keyGenerator,
         },
         value: {href},
@@ -206,7 +209,7 @@ function createPasteLinkBehaviors(
       const {_type, _key, ...value} = result
 
       const markState = selectors.getMarkState(snapshot)
-      const decoratorNames = snapshot.context.schema.decorators.map(
+      const decoratorNames = subSchema.decorators.map(
         (decorator) => decorator.name,
       )
       const activeDecorators = (markState?.marks ?? []).filter((mark) =>
