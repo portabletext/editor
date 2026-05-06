@@ -1,5 +1,6 @@
 import type {EditorSchema} from '@portabletext/editor'
 import {raise} from '@portabletext/editor/behaviors'
+import {getPathSubSchema} from '@portabletext/editor/traversal'
 import {defineInputRule} from './input-rule'
 
 export function createStockTickerRule(config: {
@@ -24,7 +25,7 @@ export function createStockTickerRule(config: {
       }
 
       const stockTickerObject = config.stockTickerObject({
-        schema: snapshot.context.schema,
+        schema: getPathSubSchema(snapshot, event.focusBlock.path),
         symbol: symbolMatch.text,
       })
 
