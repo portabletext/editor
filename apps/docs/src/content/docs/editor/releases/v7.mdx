@@ -1,6 +1,6 @@
 ---
 title: Portable Text Editor v7
-description: Markdown round-trip out of the box. First-class nesting, schema-strict everywhere, plugins as composable units.
+description: Markdown, first-class nesting, schema-strict everywhere, plugins as composable units.
 next: false
 prev: false
 ---
@@ -13,19 +13,15 @@ The migration is small. The DOM your CSS targets today, the patches you store, t
 
 ## Markdown, end to end
 
-Portable Text in v7 round-trips with markdown out of the box. Not "kind of." Not "for the simple cases." A real, structured, two-way conversion that preserves what markdown is good at and uses Portable Text's structure for what markdown can't express.
+Portable Text round-trips with markdown in v7. `@portabletext/markdown` exposes `markdownToPortableText` and `portableTextToMarkdown` and handles CommonMark, the GFM extensions (tables, strikethrough, autolinks, task lists), and GitHub-style alerts (`> [!NOTE]`, `> [!TIP]`, `> [!WARNING]`, `> [!IMPORTANT]`, `> [!CAUTION]`) which become `callout` blocks with a `tone` field, and back. Code blocks, tables, and callouts use v7 containers, so their inner content is editable rich text rather than opaque strings.
 
-`@portabletext/markdown` ships two functions, `markdownToPortableText` and `portableTextToMarkdown`, that handle full **CommonMark** plus the **GFM extensions** — tables, strikethrough, autolinks, and task lists — plus **GitHub-style alerts** (`> [!NOTE]`, `> [!WARNING]`, `> [!TIP]`, `> [!IMPORTANT]`, `> [!CAUTION]`) which deserialize into tonal `callout` blocks and serialize back. Code blocks, tables, and callouts use v7 containers, so their inner content is fully editable rich text — not opaque strings.
+That's the converter pair. The companion `@portabletext/plugin-markdown-shortcuts` covers live-typing inside the editor — `# `, `> `, `- `, `1. `, `[ ] `, `---`, `**bold**`, `*em*`, `~~strike~~`, `` `code` ``, `[link](url)`. The shortcuts are Behaviors, schema-aware. A heading shortcut inside a code-block container does nothing, because the code-block's sub-schema doesn't declare heading styles.
 
-That's the deserializer and serializer. The companion `@portabletext/plugin-markdown-shortcuts` handles **live-typing shortcuts** inside the editor itself — `# ` for a heading, `> ` for a quote, `- ` for a bullet, `1. ` for ordered, `[ ] ` for a task, `---` for a horizontal rule, `**bold**`, `*em*`, `~~strike~~`, `` `code` ``, `[link](url)`. All implemented as Behaviors, all schema-aware, all respect container scope. A heading shortcut inside a code-block container does nothing, because the code-block's sub-schema doesn't declare heading styles.
-
-Combined, these three pieces give you a fully markdown-compliant editor in maybe a few hundred lines of consumer code. Ship a writing app, a docs editor, a comment box, an LLM prompt surface — pick the surface, the pieces compose:
+A markdown editor in v7 is the combination of these pieces. Schema, container plugin for code blocks, container plugin for tables, container plugin for callouts, the converter pair on the I/O boundary, the shortcuts plugin on the input boundary. Drop the demo below into a Vite app and start writing:
 
 <MarkdownDemo client:only="react" />
 
-The demo above runs the actual `@portabletext/markdown` against the actual Portable Text Editor. Edit either side. Type `# ` at the start of a line in the editor to add a heading. Click into a code-block's `<pre>` and edit a line. Click into a callout and start typing — the callout's editable content is real Portable Text, with its own decorators and annotations. Tables are containers all the way down: `<table>` wraps `<tr>` wraps `<td>`, each cell holds editable text blocks.
-
-Markdown stays a first-class peer to HTML and React rendering. v7 makes the round-trip practical to build on.
+Edit either side. Type `# ` at the start of a line, the editor renders a heading and the markdown column updates. Click into a code-block line, type, the fence rebuilds. Click into a callout, the inner text is real Portable Text with its own decorators. Tables are containers all the way down — `<table>`, `<tr>`, `<td>`, each cell holds editable text blocks.
 
 ## What you can build now
 
