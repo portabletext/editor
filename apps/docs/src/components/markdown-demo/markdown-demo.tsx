@@ -1,19 +1,22 @@
 import {
   defineContainer,
+  defineLeaf,
   defineSchema,
   EditorProvider,
   PortableTextEditable,
   useEditor,
-  type BlockRenderProps,
   type PortableTextBlock,
 } from '@portabletext/editor'
 import {
   ContainerPlugin,
   EventListenerPlugin,
+  LeafPlugin,
 } from '@portabletext/editor/plugins'
 import {
+  DefaultCalloutRenderer,
   DefaultCodeBlockRenderer,
   DefaultHorizontalRuleRenderer,
+  DefaultImageRenderer,
   DefaultTableRenderer,
   markdownToPortableText,
   portableTextToMarkdown,
@@ -57,7 +60,32 @@ const schemaDefinition = defineSchema({
       name: 'callout',
       fields: [
         {name: 'tone', type: 'string'},
-        {name: 'content', type: 'array'},
+        {
+          name: 'content',
+          type: 'array',
+          of: [
+            {
+              type: 'block',
+              decorators: [
+                {name: 'strong'},
+                {name: 'em'},
+                {name: 'code'},
+                {name: 'strike-through'},
+              ],
+              styles: [{name: 'normal'}],
+              annotations: [
+                {
+                  name: 'link',
+                  fields: [
+                    {name: 'href', type: 'string'},
+                    {name: 'title', type: 'string'},
+                  ],
+                },
+              ],
+              lists: [],
+            },
+          ],
+        },
       ],
     },
     {
@@ -180,6 +208,100 @@ const cellContainer = defineContainer<typeof schemaDefinition>({
   ),
 })
 
+const calloutContainer = defineContainer<typeof schemaDefinition>({
+  scope: '$..callout',
+  field: 'content',
+  render: ({attributes, children, node}) => {
+    const tone = (node as {tone?: string}).tone ?? 'note'
+    return (
+      <aside
+        {...attributes}
+        data-tone={tone}
+        className="my-3 rounded-md border-l-4 border-sky-400 bg-sky-50 px-4 py-3 text-sky-900 dark:bg-sky-950/40 dark:text-sky-100"
+      >
+        {children}
+      </aside>
+    )
+  },
+})
+
+const calloutBlockContainer = defineContainer<typeof schemaDefinition>({
+  scope: '$..callout.block',
+  field: 'children',
+  render: ({attributes, children}) => (
+    <p {...attributes} className="my-1">
+      {children}
+    </p>
+  ),
+})
+
+const codeLeaf = defineLeaf<typeof schemaDefinition>({
+  scope: '$..code',
+  render: ({attributes, children, node}) => {
+    const v = node as {code?: string; language?: string}
+    return (
+      <div {...attributes}>
+        {children}
+        <pre
+          contentEditable={false}
+          className="my-2 overflow-x-auto rounded border border-gray-200 bg-gray-50 p-3 text-xs dark:border-gray-700 dark:bg-gray-800"
+        >
+          <code data-language={v.language ?? ''}>{v.code ?? ''}</code>
+        </pre>
+      </div>
+    )
+  },
+})
+
+const horizontalRuleLeaf = defineLeaf<typeof schemaDefinition>({
+  scope: '$..horizontal-rule',
+  render: ({attributes, children}) => (
+    <div {...attributes}>
+      {children}
+      <hr
+        contentEditable={false}
+        className="my-4 border-gray-200 dark:border-gray-700"
+      />
+    </div>
+  ),
+})
+
+const imageLeaf = defineLeaf<typeof schemaDefinition>({
+  scope: '$..image',
+  render: ({attributes, children, node, focused, selected}) => {
+    const v = node as {src?: string; alt?: string; title?: string}
+    return (
+      <div {...attributes}>
+        {children}
+        <figure
+          contentEditable={false}
+          className={[
+            'my-3 inline-flex flex-col gap-1 rounded border-2',
+            selected
+              ? 'border-blue-400 dark:border-blue-500'
+              : 'border-gray-200 dark:border-gray-700',
+            focused ? 'bg-blue-50 dark:bg-blue-900/30' : '',
+          ]
+            .filter(Boolean)
+            .join(' ')}
+        >
+          <img
+            src={v.src}
+            alt={v.alt ?? ''}
+            title={v.title}
+            className="max-w-full rounded-t object-contain"
+          />
+          {v.alt && (
+            <figcaption className="px-2 pb-1 text-gray-500 text-xs dark:text-gray-400">
+              {v.alt}
+            </figcaption>
+          )}
+        </figure>
+      </div>
+    )
+  },
+})
+
 const markdownOptions = {
   types: {
     table: ({
@@ -211,6 +333,15 @@ Edit either side. Both stay in sync through \`@portabletext/markdown\`.
 ## Blockquote
 
 > Portable text is structured rich text. Markdown is one way to read and write it.
+
+## Callout
+
+> [!NOTE]
+> GitHub-style alerts deserialize into a callout container. The text inside is editable PT children.
+
+## Image
+
+![Portable Text logo](https://portabletext.org/logo.svg)
 
 ## Lists
 
@@ -259,19 +390,25 @@ export function MarkdownDemo() {
 
   // Markdown -> editor: when the textarea has focus, deserialize and feed.
   useEffect(() => {
-    if (focused.current !== 'markdown') return
+    if (focused.current !== 'markdown') {
+      return
+    }
     const blocks = markdownToPortableText(markdown, markdownOptions)
     replaceEditorValueRef.current?.(blocks)
   }, [markdown])
 
   // Editor -> markdown: when the editor has focus, derive markdown from value.
   useEffect(() => {
-    if (focused.current !== 'editor') return
+    if (focused.current !== 'editor') {
+      return
+    }
     setMarkdown(
       portableTextToMarkdown(value, {
         types: {
+          'callout': DefaultCalloutRenderer,
           'code': DefaultCodeBlockRenderer,
           'horizontal-rule': DefaultHorizontalRuleRenderer,
+          'image': DefaultImageRenderer,
           'table': DefaultTableRenderer,
         },
       }),
@@ -316,30 +453,21 @@ export function MarkdownDemo() {
             }}
           />
           <ContainerPlugin
-            containers={[tableContainer, rowContainer, cellContainer]}
+            containers={[
+              tableContainer,
+              rowContainer,
+              cellContainer,
+              calloutContainer,
+              calloutBlockContainer,
+            ]}
           />
+          <LeafPlugin leafs={[codeLeaf, horizontalRuleLeaf, imageLeaf]} />
           <ReplaceValueBridge replaceRef={replaceEditorValueRef} />
           <PortableTextEditable
             onFocus={() => {
               focused.current = 'editor'
             }}
             className="p-4 outline-none flex-1 min-h-[420px] prose prose-sm max-w-none dark:prose-invert"
-            renderBlock={(props: BlockRenderProps) => {
-              if (props.schemaType.name === 'code') {
-                const v = props.value as {code?: string}
-                return (
-                  <pre className="my-2 p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded text-xs overflow-x-auto">
-                    <code>{v.code}</code>
-                  </pre>
-                )
-              }
-              if (props.schemaType.name === 'horizontal-rule') {
-                return (
-                  <hr className="my-4 border-gray-200 dark:border-gray-700" />
-                )
-              }
-              return props.children
-            }}
             renderListItem={(props) => {
               if (props.value === 'task') {
                 const checked =
@@ -386,9 +514,12 @@ export function MarkdownDemo() {
               return <p className="mb-2">{props.children}</p>
             }}
             renderDecorator={(props) => {
-              if (props.value === 'strong')
+              if (props.value === 'strong') {
                 return <strong>{props.children}</strong>
-              if (props.value === 'em') return <em>{props.children}</em>
+              }
+              if (props.value === 'em') {
+                return <em>{props.children}</em>
+              }
               if (props.value === 'code') {
                 return (
                   <code className="px-1 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-xs">
@@ -396,8 +527,9 @@ export function MarkdownDemo() {
                   </code>
                 )
               }
-              if (props.value === 'strike-through')
+              if (props.value === 'strike-through') {
                 return <s>{props.children}</s>
+              }
               return props.children
             }}
             renderAnnotation={(props) => {
