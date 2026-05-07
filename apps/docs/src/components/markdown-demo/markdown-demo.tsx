@@ -1,4 +1,5 @@
 import {
+  defineContainer,
   defineSchema,
   EditorProvider,
   PortableTextEditable,
@@ -6,10 +7,14 @@ import {
   type BlockRenderProps,
   type PortableTextBlock,
 } from '@portabletext/editor'
-import {EventListenerPlugin} from '@portabletext/editor/plugins'
+import {
+  ContainerPlugin,
+  EventListenerPlugin,
+} from '@portabletext/editor/plugins'
 import {
   DefaultCodeBlockRenderer,
   DefaultHorizontalRuleRenderer,
+  DefaultTableRenderer,
   markdownToPortableText,
   portableTextToMarkdown,
 } from '@portabletext/markdown'
@@ -76,7 +81,54 @@ const schemaDefinition = defineSchema({
       name: 'table',
       fields: [
         {name: 'headerRows', type: 'number'},
-        {name: 'rows', type: 'array'},
+        {
+          name: 'rows',
+          type: 'array',
+          of: [
+            {
+              type: 'row',
+              fields: [
+                {
+                  name: 'cells',
+                  type: 'array',
+                  of: [
+                    {
+                      type: 'cell',
+                      fields: [
+                        {
+                          name: 'value',
+                          type: 'array',
+                          of: [
+                            {
+                              type: 'block',
+                              decorators: [
+                                {name: 'strong'},
+                                {name: 'em'},
+                                {name: 'code'},
+                                {name: 'strike-through'},
+                              ],
+                              styles: [{name: 'normal'}],
+                              annotations: [
+                                {
+                                  name: 'link',
+                                  fields: [
+                                    {name: 'href', type: 'string'},
+                                    {name: 'title', type: 'string'},
+                                  ],
+                                },
+                              ],
+                              lists: [],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
       ],
     },
   ],
@@ -91,6 +143,62 @@ const schemaDefinition = defineSchema({
     },
   ],
 })
+
+const tableContainer = defineContainer<typeof schemaDefinition>({
+  scope: '$..table',
+  field: 'rows',
+  render: ({attributes, children, node}) => {
+    const headerRows = (node as {headerRows?: number}).headerRows ?? 0
+    return (
+      <table
+        {...attributes}
+        data-header-rows={headerRows}
+        className="my-3 border-collapse text-sm"
+      >
+        <tbody>{children}</tbody>
+      </table>
+    )
+  },
+})
+
+const rowContainer = defineContainer<typeof schemaDefinition>({
+  scope: '$..table.row',
+  field: 'cells',
+  render: ({attributes, children}) => <tr {...attributes}>{children}</tr>,
+})
+
+const cellContainer = defineContainer<typeof schemaDefinition>({
+  scope: '$..table.row.cell',
+  field: 'value',
+  render: ({attributes, children}) => (
+    <td
+      {...attributes}
+      className="border border-gray-200 dark:border-gray-700 px-2 py-1 align-top"
+    >
+      {children}
+    </td>
+  ),
+})
+
+const markdownOptions = {
+  types: {
+    table: ({
+      context,
+      value,
+    }: {
+      context: {keyGenerator: () => string}
+      value: {
+        headerRows: number | undefined
+        rows: Array<{_key: string; _type: 'row'; cells: unknown[]}>
+      }
+    }) => ({
+      _key: context.keyGenerator(),
+      _type: 'table',
+      headerRows: value.headerRows,
+      rows: value.rows,
+    }),
+  },
+} as const
 
 const kitchenSink = `# Markdown round-trip
 
@@ -127,13 +235,21 @@ const blocks = markdownToPortableText('# Hi')
 
 ---
 
+## Table
+
+| Surface | Stays the same | Changes |
+| --- | --- | --- |
+| DOM your CSS targets today | yes | no |
+| Render callbacks | yes | no |
+| Plugin API | yes | no |
+
 That's GFM, round-tripped.
 `
 
 export function MarkdownDemo() {
   const [markdown, setMarkdown] = useState(kitchenSink)
   const [initialValue] = useState<Array<PortableTextBlock>>(() =>
-    markdownToPortableText(kitchenSink),
+    markdownToPortableText(kitchenSink, markdownOptions),
   )
   const focused = useRef<'markdown' | 'editor' | null>(null)
   const [value, setValue] = useState<Array<PortableTextBlock>>(initialValue)
@@ -144,7 +260,7 @@ export function MarkdownDemo() {
   // Markdown -> editor: when the textarea has focus, deserialize and feed.
   useEffect(() => {
     if (focused.current !== 'markdown') return
-    const blocks = markdownToPortableText(markdown)
+    const blocks = markdownToPortableText(markdown, markdownOptions)
     replaceEditorValueRef.current?.(blocks)
   }, [markdown])
 
@@ -156,6 +272,7 @@ export function MarkdownDemo() {
         types: {
           'code': DefaultCodeBlockRenderer,
           'horizontal-rule': DefaultHorizontalRuleRenderer,
+          'table': DefaultTableRenderer,
         },
       }),
     )
@@ -197,6 +314,9 @@ export function MarkdownDemo() {
                 setValue(event.value ?? [])
               }
             }}
+          />
+          <ContainerPlugin
+            containers={[tableContainer, rowContainer, cellContainer]}
           />
           <ReplaceValueBridge replaceRef={replaceEditorValueRef} />
           <PortableTextEditable
