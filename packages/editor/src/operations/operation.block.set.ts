@@ -53,7 +53,11 @@ export const blockSetOperationImplementation: OperationImplementation<
       }
 
       if (key === 'level') {
-        filteredProps[key] = operation.props[key]
+        // Only set level when the block's sub-schema declares any lists.
+        // Blocks that cannot carry list items should not carry level either.
+        if (subSchema.lists.length > 0) {
+          filteredProps[key] = operation.props[key]
+        }
         continue
       }
 
