@@ -14,7 +14,6 @@ import {
 } from '@portabletext/editor/plugins'
 import {
   DefaultCalloutRenderer,
-  DefaultCodeBlockRenderer,
   DefaultHorizontalRuleRenderer,
   DefaultImageRenderer,
   DefaultTableRenderer,
@@ -89,10 +88,22 @@ const schemaDefinition = defineSchema({
       ],
     },
     {
-      name: 'code',
+      name: 'code-block',
       fields: [
-        {name: 'language', type: 'string'},
-        {name: 'code', type: 'string'},
+        {
+          name: 'lines',
+          type: 'array',
+          of: [
+            {
+              type: 'block',
+              styles: [],
+              decorators: [],
+              annotations: [],
+              lists: [],
+              inlineObjects: [],
+            },
+          ],
+        },
       ],
     },
     {name: 'horizontal-rule'},
@@ -208,16 +219,28 @@ const cellContainer = defineContainer<typeof schemaDefinition>({
   ),
 })
 
+const calloutToneClassName: Record<string, string> = {
+  note: 'border-sky-400 bg-sky-50 text-sky-900 dark:bg-sky-950/40 dark:text-sky-100',
+  tip: 'border-emerald-400 bg-emerald-50 text-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-100',
+  important:
+    'border-violet-400 bg-violet-50 text-violet-900 dark:bg-violet-950/40 dark:text-violet-100',
+  warning:
+    'border-amber-400 bg-amber-50 text-amber-900 dark:bg-amber-950/40 dark:text-amber-100',
+  caution:
+    'border-rose-400 bg-rose-50 text-rose-900 dark:bg-rose-950/40 dark:text-rose-100',
+}
+
 const calloutContainer = defineContainer<typeof schemaDefinition>({
   scope: '$..callout',
   field: 'content',
   render: ({attributes, children, node}) => {
     const tone = (node as {tone?: string}).tone ?? 'note'
+    const toneClass = calloutToneClassName[tone] ?? calloutToneClassName.note!
     return (
       <aside
         {...attributes}
         data-tone={tone}
-        className="my-3 rounded-md border-l-4 border-sky-400 bg-sky-50 px-4 py-3 text-sky-900 dark:bg-sky-950/40 dark:text-sky-100"
+        className={`my-3 rounded-md border-l-4 px-4 py-3 ${toneClass}`}
       >
         {children}
       </aside>
@@ -235,22 +258,26 @@ const calloutBlockContainer = defineContainer<typeof schemaDefinition>({
   ),
 })
 
-const codeLeaf = defineLeaf<typeof schemaDefinition>({
-  scope: '$..code',
-  render: ({attributes, children, node}) => {
-    const v = node as {code?: string; language?: string}
-    return (
-      <div {...attributes}>
-        {children}
-        <pre
-          contentEditable={false}
-          className="my-2 overflow-x-auto rounded border border-gray-200 bg-gray-50 p-3 text-xs dark:border-gray-700 dark:bg-gray-800"
-        >
-          <code data-language={v.language ?? ''}>{v.code ?? ''}</code>
-        </pre>
-      </div>
-    )
-  },
+const codeBlockContainer = defineContainer<typeof schemaDefinition>({
+  scope: '$..code-block',
+  field: 'lines',
+  render: ({attributes, children}) => (
+    <pre
+      {...attributes}
+      className="my-3 overflow-x-auto rounded-md border border-gray-200 bg-gray-50 p-3 font-mono text-gray-700 text-sm leading-relaxed dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
+    >
+      {children}
+    </pre>
+  ),
+})
+
+const codeBlockSpanLeaf = defineLeaf<typeof schemaDefinition>({
+  scope: '$..code-block.block.span',
+  render: ({attributes, children}) => (
+    <span {...attributes} className="font-mono">
+      {children}
+    </span>
+  ),
 })
 
 const horizontalRuleLeaf = defineLeaf<typeof schemaDefinition>({
@@ -304,6 +331,48 @@ const imageLeaf = defineLeaf<typeof schemaDefinition>({
 
 const markdownOptions = {
   types: {
+    // md → pt: split fenced code into one text block per line, mirroring
+    // playground's plugin.markdown-deserializer.tsx.
+    code: ({
+      context,
+      value,
+      isInline,
+    }: {
+      context: {keyGenerator: () => string}
+      value: {language: string | undefined; code: string}
+      isInline: boolean
+    }) => {
+      if (isInline) {
+        return undefined
+      }
+      const sourceLines = (value.code ?? '').split('\n')
+      // markdown-it always emits a trailing empty line for fenced blocks.
+      if (
+        sourceLines.length > 0 &&
+        sourceLines[sourceLines.length - 1] === ''
+      ) {
+        sourceLines.pop()
+      }
+      const lines = sourceLines.map((text) => ({
+        _type: 'block',
+        _key: context.keyGenerator(),
+        style: 'normal',
+        children: [
+          {
+            _type: 'span',
+            _key: context.keyGenerator(),
+            text,
+            marks: [],
+          },
+        ],
+        markDefs: [],
+      }))
+      return {
+        _type: 'code-block',
+        _key: context.keyGenerator(),
+        lines,
+      }
+    },
     table: ({
       context,
       value,
@@ -339,9 +408,15 @@ Edit either side. Both stay in sync through \`@portabletext/markdown\`.
 > [!NOTE]
 > GitHub-style alerts deserialize into a callout container. The text inside is editable PT children.
 
+> [!TIP]
+> Each tone (note, tip, important, warning, caution) renders with its own color.
+
+> [!WARNING]
+> Edit me. Both sides stay in sync.
+
 ## Image
 
-![Portable Text logo](https://portabletext.org/logo.svg)
+![Diagram](https://placehold.co/400x200/0ea5e9/white?text=Portable+Text)
 
 ## Lists
 
@@ -406,7 +481,21 @@ export function MarkdownDemo() {
       portableTextToMarkdown(value, {
         types: {
           'callout': DefaultCalloutRenderer,
-          'code': DefaultCodeBlockRenderer,
+          'code-block': ({value}) => {
+            const v = value as {
+              lines?: Array<{
+                children?: Array<{_type: string; text?: string}>
+              }>
+            }
+            const code = (v.lines ?? [])
+              .map((line) =>
+                (line.children ?? [])
+                  .map((c) => (c._type === 'span' ? (c.text ?? '') : ''))
+                  .join(''),
+              )
+              .join('\n')
+            return `\`\`\`\n${code}\n\`\`\``
+          },
           'horizontal-rule': DefaultHorizontalRuleRenderer,
           'image': DefaultImageRenderer,
           'table': DefaultTableRenderer,
@@ -459,9 +548,12 @@ export function MarkdownDemo() {
               cellContainer,
               calloutContainer,
               calloutBlockContainer,
+              codeBlockContainer,
             ]}
           />
-          <LeafPlugin leafs={[codeLeaf, horizontalRuleLeaf, imageLeaf]} />
+          <LeafPlugin
+            leafs={[codeBlockSpanLeaf, horizontalRuleLeaf, imageLeaf]}
+          />
           <ReplaceValueBridge replaceRef={replaceEditorValueRef} />
           <PortableTextEditable
             onFocus={() => {
