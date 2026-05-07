@@ -729,6 +729,49 @@ describe(parseInlineObject.name, () => {
         foo: 'bar',
       })
     })
+
+    describe('known prop set to undefined', () => {
+      test('validateFields: true on inline object strips the field', () => {
+        const result = parseInlineObject({
+          inlineObject: {_type: 'stock-ticker', foo: undefined},
+          keyGenerator: createTestKeyGenerator(),
+          options: {validateFields: true},
+          schema: compileSchema(
+            defineSchema({
+              inlineObjects: [
+                {
+                  name: 'stock-ticker',
+                  fields: [{name: 'foo', type: 'string'}],
+                },
+              ],
+            }),
+          ),
+        })
+        expect(result).toStrictEqual({_key: 'k0', _type: 'stock-ticker'})
+        expect(result).not.toHaveProperty('foo')
+      })
+
+      test('validateFields: true on block object strips the field', () => {
+        const result = parseBlock({
+          block: {_type: 'image', _key: 'k0', alt: undefined},
+          keyGenerator: createTestKeyGenerator(),
+          options: {
+            normalize: false,
+            removeUnusedMarkDefs: true,
+            validateFields: true,
+          },
+          schema: compileSchema(
+            defineSchema({
+              blockObjects: [
+                {name: 'image', fields: [{name: 'alt', type: 'string'}]},
+              ],
+            }),
+          ),
+        })
+        expect(result).toStrictEqual({_key: 'k0', _type: 'image'})
+        expect(result).not.toHaveProperty('alt')
+      })
+    })
   })
 })
 
