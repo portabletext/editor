@@ -5,6 +5,8 @@ next: false
 prev: false
 ---
 
+import {MarkdownDemo} from '../../../../components/markdown-demo/markdown-demo'
+
 Today we're releasing Portable Text Editor v7. The big new capability is **first-class nesting**. You can now build callouts, code blocks, fact boxes, and tables, or any rich-text-inside-rich-text structure your schema describes, and the editor handles them at every depth. Selection, normalisation, undo, collaborative patches, plugins, behaviors. All of it, all the way down.
 
 The migration is small. The DOM your CSS targets today, the patches you store, the render callbacks your app provides, the plugin API your team built against — all unchanged. Container wrappers introduce some new DOM, but they're brand new in v7, and nothing in your existing app sits inside one yet. v7 is the rare release where the surface stays still while the foundation moves.
@@ -130,6 +132,10 @@ This makes the schema the single source of truth for what's allowed. Toolbars st
 ## Markdown round-trip
 
 `@portabletext/markdown` round-trips the GFM extensions — tables, strikethrough, autolinks, and task lists — on top of CommonMark. GitHub-style alerts (`> [!NOTE]`, `> [!WARNING]`, etc.) round-trip too, into and out of `callout` blocks. Combined with `@portabletext/plugin-markdown-shortcuts` for live-typing shortcuts (`# ` for headings, `> ` for blockquotes, `- ` for lists, and so on), you can ship a markdown editor end-to-end.
+
+Edit either side. Both stay in sync, live, through `@portabletext/markdown`:
+
+<MarkdownDemo client:only="react" />
 
 ## Custom leaf rendering
 

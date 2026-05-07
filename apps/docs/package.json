@@ -17,6 +17,7 @@
     "@astrojs/starlight-tailwind": "^5.0.0",
     "@portabletext/editor": "workspace:*",
     "@portabletext/keyboard-shortcuts": "workspace:*",
+    "@portabletext/markdown": "workspace:*",
     "@portabletext/plugin-markdown-shortcuts": "workspace:*",
     "@portabletext/plugin-typography": "workspace:*",
     "@portabletext/react": "^6.2.0",
