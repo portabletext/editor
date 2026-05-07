@@ -15,7 +15,7 @@ export function RenderText(props: RenderTextProps) {
         'data-slate-node'?: string
       }
     return (
-      <span {...rest} data-child-type="span">
+      <span {...rest} data-pt-child-type="span">
         {props.children}
       </span>
     )
@@ -27,6 +27,7 @@ export function RenderText(props: RenderTextProps) {
       data-child-key={props.text._key}
       data-child-name={props.text._type}
       data-child-type="span"
+      data-pt-child-type="span"
     >
       {props.children}
     </span>

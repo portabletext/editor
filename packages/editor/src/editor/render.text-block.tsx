@@ -132,6 +132,7 @@ export function RenderTextBlock(props: {
       data-block-key={props.textBlock._key}
       data-block-name={props.textBlock._type}
       data-block-type="text"
+      data-pt-block-type="text"
       {...(props.textBlock.listItem !== undefined
         ? {
             'data-list-item': props.textBlock.listItem,

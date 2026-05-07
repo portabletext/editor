@@ -88,60 +88,45 @@ describe('container rendering', () => {
 
       expect(editorElement!.innerHTML).toEqual(
         [
-          // root text block
-          '<div data-slate-node="element"',
+          '<div',
+          ' data-slate-node="element"',
           ' data-pt-path="[_key==&quot;k0&quot;]"',
           ' class="pt-block pt-text-block pt-text-block-style-normal"',
           ' data-block-key="k0"',
           ' data-block-name="block"',
           ' data-block-type="text"',
-          ' data-style="normal"',
-          '>',
-          // text block inner wrapper
+          ' data-pt-block-type="text"',
+          ' data-style="normal">',
           '<div>',
-          // span
-          '<span data-slate-node="text"',
+          '<span',
+          ' data-slate-node="text"',
           ' data-pt-path="[_key==&quot;k0&quot;].children[_key==&quot;k1&quot;]"',
           ' data-child-key="k1"',
           ' data-child-name="span"',
           ' data-child-type="span"',
-          '>',
-          // leaf
-          '<span data-slate-leaf="true">',
-          '<span data-slate-string="true">hello</span>',
+          ' data-pt-child-type="span">',
+          '<span data-slate-leaf="true" data-pt-mark="true">',
+          '<span data-slate-string="true" data-pt-string="true">',
+          'hello',
           '</span>',
-          // /span
           '</span>',
-          // /text block inner wrapper
+          '</span>',
           '</div>',
-          // /root text block
           '</div>',
-          // callout container
-          '<div data-testid="callout"',
-          ' data-block-type="container"',
-          ' data-pt-path="[_key==&quot;k2&quot;]"',
-          '>',
-          // inner text block
+          '<div data-testid="callout" data-pt-block-type="container" data-pt-path="[_key==&quot;k2&quot;]">',
           '<div',
           ' data-pt-path="[_key==&quot;k2&quot;].content[_key==&quot;content-block&quot;]"',
-          ' data-block-type="text"',
-          '>',
-          // inner text block wrapper
-          // inner span
+          ' data-pt-block-type="text">',
           '<span',
           ' data-pt-path="[_key==&quot;k2&quot;].content[_key==&quot;content-block&quot;].children[_key==&quot;content-span&quot;]"',
-          ' data-child-type="span"',
-          '>',
-          // inner leaf
-          '<span data-slate-leaf="true">',
-          '<span data-slate-string="true">inside callout</span>',
+          ' data-pt-child-type="span">',
+          '<span data-pt-mark="true">',
+          '<span data-pt-string="true">',
+          'inside callout',
           '</span>',
-          // /inner span
           '</span>',
-          // /inner text block wrapper
-          // /inner text block
+          '</span>',
           '</div>',
-          // /callout container
           '</div>',
         ].join(''),
       )
@@ -335,48 +320,32 @@ describe('table with nested rows and cells', () => {
 
       expect(editorElement!.innerHTML).toEqual(
         [
-          // table container
-          '<table data-testid="table"',
-          ' data-block-type="container"',
-          ' data-pt-path="[_key==&quot;k0&quot;]"',
-          '>',
+          '<table data-testid="table" data-pt-block-type="container" data-pt-path="[_key==&quot;k0&quot;]">',
           '<tbody>',
-          // row container
-          '<tr data-testid="row"',
-          ' data-block-type="container"',
-          ' data-pt-path="[_key==&quot;k0&quot;].rows[_key==&quot;row-0&quot;]"',
-          '>',
-          // cell container
-          '<td data-testid="cell"',
-          ' data-block-type="container"',
-          ' data-pt-path="[_key==&quot;k0&quot;].rows[_key==&quot;row-0&quot;].cells[_key==&quot;cell-0&quot;]"',
-          '>',
-          // text block inside cell
+          '<tr',
+          ' data-testid="row"',
+          ' data-pt-block-type="container"',
+          ' data-pt-path="[_key==&quot;k0&quot;].rows[_key==&quot;row-0&quot;]">',
+          '<td',
+          ' data-testid="cell"',
+          ' data-pt-block-type="container"',
+          ' data-pt-path="[_key==&quot;k0&quot;].rows[_key==&quot;row-0&quot;].cells[_key==&quot;cell-0&quot;]">',
           '<div',
           ' data-pt-path="[_key==&quot;k0&quot;].rows[_key==&quot;row-0&quot;].cells[_key==&quot;cell-0&quot;].content[_key==&quot;block-0&quot;]"',
-          ' data-block-type="text"',
-          '>',
-          // text block inner wrapper
-          // span
+          ' data-pt-block-type="text">',
           '<span',
           ' data-pt-path="[_key==&quot;k0&quot;].rows[_key==&quot;row-0&quot;].cells[_key==&quot;cell-0&quot;].content[_key==&quot;block-0&quot;].children[_key==&quot;span-0&quot;]"',
-          ' data-child-type="span"',
-          '>',
-          // leaf
-          '<span data-slate-leaf="true">',
-          '<span data-slate-string="true">cell text</span>',
+          ' data-pt-child-type="span">',
+          '<span data-pt-mark="true">',
+          '<span data-pt-string="true">',
+          'cell text',
           '</span>',
-          // /span
           '</span>',
-          // /text block inner wrapper
-          // /text block inside cell
+          '</span>',
           '</div>',
-          // /cell container
           '</td>',
-          // /row container
           '</tr>',
           '</tbody>',
-          // /table container
           '</table>',
         ].join(''),
       )
@@ -454,32 +423,20 @@ describe('container with non-editable fields', () => {
 
       expect(editorElement!.innerHTML).toEqual(
         [
-          // card container
-          '<div data-testid="card"',
-          ' data-block-type="container"',
-          ' data-pt-path="[_key==&quot;k0&quot;]"',
-          '>',
-          // body text block
+          '<div data-testid="card" data-pt-block-type="container" data-pt-path="[_key==&quot;k0&quot;]">',
           '<div',
           ' data-pt-path="[_key==&quot;k0&quot;].body[_key==&quot;body-block&quot;]"',
-          ' data-block-type="text"',
-          '>',
-          // body text block inner wrapper
-          // body span
+          ' data-pt-block-type="text">',
           '<span',
           ' data-pt-path="[_key==&quot;k0&quot;].body[_key==&quot;body-block&quot;].children[_key==&quot;body-span&quot;]"',
-          ' data-child-type="span"',
-          '>',
-          // body leaf
-          '<span data-slate-leaf="true">',
-          '<span data-slate-string="true">card body</span>',
+          ' data-pt-child-type="span">',
+          '<span data-pt-mark="true">',
+          '<span data-pt-string="true">',
+          'card body',
           '</span>',
-          // /body span
           '</span>',
-          // /body text block inner wrapper
-          // /body text block
+          '</span>',
           '</div>',
-          // /card container (no tags in DOM)
           '</div>',
         ].join(''),
       )
@@ -746,31 +703,20 @@ describe('container and renderer independence', () => {
 
       expect(editorElement!.innerHTML).toEqual(
         [
-          // callout default div wrapper
-          '<div data-block-type="container"',
-          ' data-pt-path="[_key==&quot;k0&quot;]"',
-          '>',
-          // inner text block
+          '<div data-pt-block-type="container" data-pt-path="[_key==&quot;k0&quot;]">',
           '<div',
           ' data-pt-path="[_key==&quot;k0&quot;].content[_key==&quot;content-block&quot;]"',
-          ' data-block-type="text"',
-          '>',
-          // inner text block wrapper
-          // inner span
+          ' data-pt-block-type="text">',
           '<span',
           ' data-pt-path="[_key==&quot;k0&quot;].content[_key==&quot;content-block&quot;].children[_key==&quot;content-span&quot;]"',
-          ' data-child-type="span"',
-          '>',
-          // inner leaf
-          '<span data-slate-leaf="true">',
-          '<span data-slate-string="true">inside callout</span>',
+          ' data-pt-child-type="span">',
+          '<span data-pt-mark="true">',
+          '<span data-pt-string="true">',
+          'inside callout',
           '</span>',
-          // /inner span
           '</span>',
-          // /inner text block wrapper
-          // /inner text block
+          '</span>',
           '</div>',
-          // /callout default div wrapper
           '</div>',
         ].join(''),
       )
@@ -908,37 +854,27 @@ describe('code block container', () => {
       expect(editorElement).not.toEqual(null)
       expect(editorElement!.innerHTML).toEqual(
         [
-          // code-block container
-          '<pre data-testid="code-block"',
-          ' data-block-type="container"',
-          ' data-pt-path="[_key==&quot;k0&quot;]"',
-          '>',
+          '<pre data-testid="code-block" data-pt-block-type="container" data-pt-path="[_key==&quot;k0&quot;]">',
           '<code>',
-          // line 1 text block
-          '<div',
-          ' data-pt-path="[_key==&quot;k0&quot;].code[_key==&quot;line-0&quot;]"',
-          ' data-block-type="text"',
-          '>',
+          '<div data-pt-path="[_key==&quot;k0&quot;].code[_key==&quot;line-0&quot;]" data-pt-block-type="text">',
           '<span',
           ' data-pt-path="[_key==&quot;k0&quot;].code[_key==&quot;line-0&quot;].children[_key==&quot;span-0&quot;]"',
-          ' data-child-type="span"',
-          '>',
-          '<span data-slate-leaf="true">',
-          '<span data-slate-string="true">const a = 1</span>',
+          ' data-pt-child-type="span">',
+          '<span data-pt-mark="true">',
+          '<span data-pt-string="true">',
+          'const a = 1',
+          '</span>',
           '</span>',
           '</span>',
           '</div>',
-          // line 2 text block
-          '<div',
-          ' data-pt-path="[_key==&quot;k0&quot;].code[_key==&quot;line-1&quot;]"',
-          ' data-block-type="text"',
-          '>',
+          '<div data-pt-path="[_key==&quot;k0&quot;].code[_key==&quot;line-1&quot;]" data-pt-block-type="text">',
           '<span',
           ' data-pt-path="[_key==&quot;k0&quot;].code[_key==&quot;line-1&quot;].children[_key==&quot;span-1&quot;]"',
-          ' data-child-type="span"',
-          '>',
-          '<span data-slate-leaf="true">',
-          '<span data-slate-string="true">console.log(a)</span>',
+          ' data-pt-child-type="span">',
+          '<span data-pt-mark="true">',
+          '<span data-pt-string="true">',
+          'console.log(a)',
+          '</span>',
           '</span>',
           '</span>',
           '</div>',
@@ -1013,52 +949,43 @@ describe('gallery with void block objects', () => {
       expect(editorElement).not.toEqual(null)
       expect(normalizeInnerHTML(editorElement!.innerHTML)).toEqual(
         [
-          // gallery container
-          '<div data-testid="gallery"',
-          ' data-block-type="container"',
-          ' data-pt-path="[_key==&quot;k0&quot;]"',
-          '>',
-          // image 1 (void block object)
+          '<div data-testid="gallery" data-pt-block-type="container" data-pt-path="[_key==&quot;k0&quot;]">',
           '<div',
           ' data-pt-path="[_key==&quot;k0&quot;].items[_key==&quot;img-0&quot;]"',
-          ' data-block-type="object"',
-          '>',
-          // void spacer
-          '<div data-slate-spacer="true"',
-          ' style="height: 0px; color: transparent; outline: none; position: absolute;"',
-          '>',
-          '<span data-slate-node="text">',
-          '<span data-slate-leaf="true">',
-          '<span data-slate-zero-width="z">\uFEFF</span>',
+          ' data-pt-block-type="object">',
+          '<div',
+          ' data-pt-spacer="true"',
+          ' style="height: 0px; color: transparent; outline: none; position: absolute;">',
+          '<span>',
+          '<span data-pt-mark="true">',
+          '<span data-pt-zero-width="z">',
+          '﻿',
+          '</span>',
           '</span>',
           '</span>',
           '</div>',
-          // void content
           '<div contenteditable="false">',
           '[image: img-0]',
           '</div>',
           '</div>',
-          // image 2 (void block object)
           '<div',
           ' data-pt-path="[_key==&quot;k0&quot;].items[_key==&quot;img-1&quot;]"',
-          ' data-block-type="object"',
-          '>',
-          // void spacer
-          '<div data-slate-spacer="true"',
-          ' style="height: 0px; color: transparent; outline: none; position: absolute;"',
-          '>',
-          '<span data-slate-node="text">',
-          '<span data-slate-leaf="true">',
-          '<span data-slate-zero-width="z">\uFEFF</span>',
+          ' data-pt-block-type="object">',
+          '<div',
+          ' data-pt-spacer="true"',
+          ' style="height: 0px; color: transparent; outline: none; position: absolute;">',
+          '<span>',
+          '<span data-pt-mark="true">',
+          '<span data-pt-zero-width="z">',
+          '﻿',
+          '</span>',
           '</span>',
           '</span>',
           '</div>',
-          // void content
           '<div contenteditable="false">',
           '[image: img-1]',
           '</div>',
           '</div>',
-          // /gallery container
           '</div>',
         ].join(''),
       )
@@ -1210,76 +1137,63 @@ describe('cell with mixed content', () => {
       expect(editorElement).not.toEqual(null)
       expect(normalizeInnerHTML(editorElement!.innerHTML)).toEqual(
         [
-          // table container
-          '<table data-testid="table"',
-          ' data-block-type="container"',
-          ' data-pt-path="[_key==&quot;k0&quot;]"',
-          '>',
+          '<table data-testid="table" data-pt-block-type="container" data-pt-path="[_key==&quot;k0&quot;]">',
           '<tbody>',
-          // row container
-          '<tr data-testid="row"',
-          ' data-block-type="container"',
-          ' data-pt-path="[_key==&quot;k0&quot;].rows[_key==&quot;row-0&quot;]"',
-          '>',
-          // cell container
-          '<td data-testid="cell"',
-          ' data-block-type="container"',
-          ' data-pt-path="[_key==&quot;k0&quot;].rows[_key==&quot;row-0&quot;].cells[_key==&quot;cell-0&quot;]"',
-          '>',
-          // text block before image
+          '<tr',
+          ' data-testid="row"',
+          ' data-pt-block-type="container"',
+          ' data-pt-path="[_key==&quot;k0&quot;].rows[_key==&quot;row-0&quot;]">',
+          '<td',
+          ' data-testid="cell"',
+          ' data-pt-block-type="container"',
+          ' data-pt-path="[_key==&quot;k0&quot;].rows[_key==&quot;row-0&quot;].cells[_key==&quot;cell-0&quot;]">',
           '<div',
           ' data-pt-path="[_key==&quot;k0&quot;].rows[_key==&quot;row-0&quot;].cells[_key==&quot;cell-0&quot;].content[_key==&quot;block-0&quot;]"',
-          ' data-block-type="text"',
-          '>',
+          ' data-pt-block-type="text">',
           '<span',
           ' data-pt-path="[_key==&quot;k0&quot;].rows[_key==&quot;row-0&quot;].cells[_key==&quot;cell-0&quot;].content[_key==&quot;block-0&quot;].children[_key==&quot;span-0&quot;]"',
-          ' data-child-type="span"',
-          '>',
-          '<span data-slate-leaf="true">',
-          '<span data-slate-string="true">text before image</span>',
+          ' data-pt-child-type="span">',
+          '<span data-pt-mark="true">',
+          '<span data-pt-string="true">',
+          'text before image',
+          '</span>',
           '</span>',
           '</span>',
           '</div>',
-          // void image block object inside cell
           '<div',
           ' data-pt-path="[_key==&quot;k0&quot;].rows[_key==&quot;row-0&quot;].cells[_key==&quot;cell-0&quot;].content[_key==&quot;img-0&quot;]"',
-          ' data-block-type="object"',
-          '>',
-          // void spacer
-          '<div data-slate-spacer="true"',
-          ' style="height: 0px; color: transparent; outline: none; position: absolute;"',
-          '>',
-          '<span data-slate-node="text">',
-          '<span data-slate-leaf="true">',
-          '<span data-slate-zero-width="z">\uFEFF</span>',
+          ' data-pt-block-type="object">',
+          '<div',
+          ' data-pt-spacer="true"',
+          ' style="height: 0px; color: transparent; outline: none; position: absolute;">',
+          '<span>',
+          '<span data-pt-mark="true">',
+          '<span data-pt-zero-width="z">',
+          '﻿',
+          '</span>',
           '</span>',
           '</span>',
           '</div>',
-          // void content
           '<div contenteditable="false">',
           '[image: img-0]',
           '</div>',
           '</div>',
-          // text block after image
           '<div',
           ' data-pt-path="[_key==&quot;k0&quot;].rows[_key==&quot;row-0&quot;].cells[_key==&quot;cell-0&quot;].content[_key==&quot;block-1&quot;]"',
-          ' data-block-type="text"',
-          '>',
+          ' data-pt-block-type="text">',
           '<span',
           ' data-pt-path="[_key==&quot;k0&quot;].rows[_key==&quot;row-0&quot;].cells[_key==&quot;cell-0&quot;].content[_key==&quot;block-1&quot;].children[_key==&quot;span-1&quot;]"',
-          ' data-child-type="span"',
-          '>',
-          '<span data-slate-leaf="true">',
-          '<span data-slate-string="true">text after image</span>',
+          ' data-pt-child-type="span">',
+          '<span data-pt-mark="true">',
+          '<span data-pt-string="true">',
+          'text after image',
+          '</span>',
           '</span>',
           '</span>',
           '</div>',
-          // /cell container
           '</td>',
-          // /row container
           '</tr>',
           '</tbody>',
-          // /table container
           '</table>',
         ].join(''),
       )

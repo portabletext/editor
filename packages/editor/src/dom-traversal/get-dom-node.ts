@@ -33,7 +33,7 @@ export function getDomNode(
 
       if (blockNode instanceof HTMLElement) {
         if (blockNode.matches(selector)) {
-          const ownerEditor = blockNode.closest('[data-slate-editor]')
+          const ownerEditor = blockNode.closest('[data-pt-editor]')
 
           if (ownerEditor !== editorElement) {
             return undefined
@@ -45,7 +45,7 @@ export function getDomNode(
         const domNode = blockNode.querySelector(selector)
 
         if (domNode instanceof HTMLElement) {
-          const ownerEditor = domNode.closest('[data-slate-editor]')
+          const ownerEditor = domNode.closest('[data-pt-editor]')
 
           if (ownerEditor !== editorElement) {
             return undefined
@@ -63,7 +63,7 @@ export function getDomNode(
     return undefined
   }
 
-  const ownerEditor = domNode.closest('[data-slate-editor]')
+  const ownerEditor = domNode.closest('[data-pt-editor]')
 
   if (ownerEditor !== editorElement) {
     return undefined

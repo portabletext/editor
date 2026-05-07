@@ -1,5 +1,6 @@
 import type {PortableTextObject} from '@portabletext/schema'
-import React, {type JSX} from 'react'
+import React, {useContext, type JSX} from 'react'
+import {ContainerScopeContext} from '../../../editor/container-scope-context'
 import {serializePath} from '../../../paths/serialize-path'
 import {isElementDecorationsEqual} from '../../dom/utils/range-list'
 import type {Path} from '../../interfaces/path'
@@ -39,16 +40,19 @@ const ObjectNodeComponent = (props: {
   } = props
   const dataPath = serializePath(path)
   const readOnly = useReadOnly()
+  const containerScope = useContext(ContainerScopeContext)
 
-  const attributes: RenderElementProps['attributes'] = {
-    'data-slate-node': 'element',
-    'data-slate-void': true,
-    'data-pt-path': dataPath,
-  }
+  const attributes: RenderElementProps['attributes'] = containerScope
+    ? {
+        'data-pt-path': dataPath,
+      }
+    : {
+        'data-slate-node': 'element',
+        'data-slate-void': true,
+        'data-pt-path': dataPath,
+      }
 
   if (isInline) {
-    attributes['data-slate-inline'] = true
-
     if (!readOnly) {
       attributes.contentEditable = false
     }
@@ -56,9 +60,26 @@ const ObjectNodeComponent = (props: {
 
   const Tag = isInline ? 'span' : 'div'
 
-  const children = (
+  const children = containerScope ? (
+    <Tag
+      data-pt-spacer
+      style={{
+        height: '0',
+        color: 'transparent',
+        outline: 'none',
+        position: 'absolute',
+      }}
+    >
+      <span>
+        <span data-pt-mark>
+          <span data-pt-zero-width="z">{'\uFEFF'}</span>
+        </span>
+      </span>
+    </Tag>
+  ) : (
     <Tag
       data-slate-spacer
+      data-pt-spacer
       style={{
         height: '0',
         color: 'transparent',
@@ -67,8 +88,10 @@ const ObjectNodeComponent = (props: {
       }}
     >
       <span data-slate-node="text">
-        <span data-slate-leaf>
-          <span data-slate-zero-width="z">{'\uFEFF'}</span>
+        <span data-slate-leaf data-pt-mark>
+          <span data-slate-zero-width="z" data-pt-zero-width="z">
+            {'\uFEFF'}
+          </span>
         </span>
       </span>
     </Tag>

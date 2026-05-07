@@ -64,17 +64,13 @@ const Element = (props: {
   // custom node renderer component.
   const attributes: RenderElementProps['attributes'] = isContainer
     ? {
-        'data-block-type': 'container',
+        'data-pt-block-type': 'container',
         'data-pt-path': dataPath,
       }
     : {
         'data-slate-node': 'element',
         'data-pt-path': dataPath,
       }
-
-  if (isInline) {
-    attributes['data-slate-inline'] = true
-  }
 
   // If it's a block node with inline children, add the proper `dir` attribute
   // for text direction.

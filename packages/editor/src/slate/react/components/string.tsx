@@ -5,7 +5,8 @@ import {
   type PortableTextSpan,
   type PortableTextTextBlock,
 } from '@portabletext/schema'
-import {forwardRef, memo, useRef, useState} from 'react'
+import {forwardRef, memo, useContext, useRef, useState} from 'react'
+import {ContainerScopeContext} from '../../../editor/container-scope-context'
 import {getNodes} from '../../../node-traversal/get-nodes'
 import {IS_ANDROID} from '../../dom/utils/environment'
 import {end as editorEnd} from '../../editor/end'
@@ -92,6 +93,7 @@ const SlateString = (props: {
  */
 const TextString = (props: {text: string; isTrailing?: boolean}) => {
   const {text, isTrailing = false} = props
+  const containerScope = useContext(ContainerScopeContext)
   const ref = useRef<HTMLSpanElement>(null)
   const getTextContent = () => {
     return `${text ?? ''}${isTrailing ? '\n' : ''}`
@@ -121,17 +123,30 @@ const TextString = (props: {text: string; isTrailing?: boolean}) => {
 
   // We intentionally render a memoized <span> that only receives the initial text content when the component is mounted.
   // We defer to the layout effect above to update the `textContent` of the span element when needed.
-  return <MemoizedText ref={ref}>{initialText}</MemoizedText>
+  return (
+    <MemoizedText ref={ref} containerScope={containerScope !== undefined}>
+      {initialText}
+    </MemoizedText>
+  )
 }
 
 const MemoizedText = memo(
-  forwardRef<HTMLSpanElement, {children: string}>((props, ref) => {
-    return (
-      <span data-slate-string ref={ref}>
-        {props.children}
-      </span>
-    )
-  }),
+  forwardRef<HTMLSpanElement, {children: string; containerScope: boolean}>(
+    (props, ref) => {
+      if (props.containerScope) {
+        return (
+          <span data-pt-string ref={ref}>
+            {props.children}
+          </span>
+        )
+      }
+      return (
+        <span data-slate-string data-pt-string ref={ref}>
+          {props.children}
+        </span>
+      )
+    },
+  ),
 )
 
 /**
@@ -140,12 +155,20 @@ const MemoizedText = memo(
 
 const ZeroWidthString = (props: {isLineBreak?: boolean}) => {
   const {isLineBreak = false} = props
+  const containerScope = useContext(ContainerScopeContext)
 
+  const value = isLineBreak ? 'n' : 'z'
   const attributes: {
-    'data-slate-zero-width': string
-  } = {
-    'data-slate-zero-width': isLineBreak ? 'n' : 'z',
-  }
+    'data-slate-zero-width'?: string
+    'data-pt-zero-width': string
+  } = containerScope
+    ? {
+        'data-pt-zero-width': value,
+      }
+    : {
+        'data-slate-zero-width': value,
+        'data-pt-zero-width': value,
+      }
 
   // FIXME: Inserting the \uFEFF on iOS breaks capitalization at the start of an
   // empty editor (https://github.com/ianstormtaylor/slate/issues/5199).
