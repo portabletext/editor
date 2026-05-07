@@ -1,3 +1,8 @@
+export {
+  compareApplicableSchema,
+  getApplicableSchema,
+  type ApplicableSchema,
+} from './selector.get-applicable-schema'
 export {getActiveAnnotations} from './selector.get-active-annotations'
 export {getActiveListItem} from './selector.get-active-list-item'
 export {getActiveStyle} from './selector.get-active-style'
