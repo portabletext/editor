@@ -14,6 +14,7 @@ import {createEditorDom} from './editor-dom'
 import type {EditorActor} from './editor-machine'
 import {editorMachine, rerouteExternalBehaviorEvent} from './editor-machine'
 import {getEditorSnapshot} from './editor-selector'
+import type {EditorSnapshot} from './editor-snapshot'
 import {mutationMachine, type MutationActor} from './mutation-machine'
 import {relayMachine, type RelayActor} from './relay-machine'
 import {syncMachine, type SyncActor} from './sync-machine'
@@ -148,7 +149,21 @@ export function createInternalEditor(config: EditorConfig): {
 
       return subscription
     },
-    subscribe(observer) {
+    subscribe(
+      observerOrNext:
+        | {
+            next?: (snapshot: EditorSnapshot) => void
+            error?: (err: unknown) => void
+            complete?: () => void
+          }
+        | ((snapshot: EditorSnapshot) => void),
+      error?: (err: unknown) => void,
+      complete?: () => void,
+    ) {
+      const observer =
+        typeof observerOrNext === 'function'
+          ? {next: observerOrNext, error, complete}
+          : observerOrNext
       const actorSubscription = editorActor.subscribe({
         next: () => observer.next?.(editor.getSnapshot()),
         error: observer.error,

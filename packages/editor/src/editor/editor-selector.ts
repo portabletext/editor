@@ -1,5 +1,4 @@
 import {useSelector} from '@xstate/react'
-import type {AnyActorRef} from 'xstate'
 import type {Editor} from '../editor'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import type {EditorActor} from './editor-machine'
@@ -43,15 +42,7 @@ export function useEditorSelector<TSelected>(
   selector: EditorSelector<TSelected>,
   compare: (a: TSelected, b: TSelected) => boolean = defaultCompare,
 ) {
-  // `useSelector` is typed against xstate's `Subscribable<T>` which has both
-  // observer-form and the deprecated function-form `subscribe` overloads.
-  // We only expose the modern observer-form; the cast bridges that gap
-  // without leaking the deprecated overload into our public `Editor` type.
-  return useSelector(
-    editor as unknown as Pick<AnyActorRef, 'subscribe' | 'getSnapshot'>,
-    selector,
-    compare,
-  )
+  return useSelector(editor, selector, compare)
 }
 
 export function getEditorSnapshot({

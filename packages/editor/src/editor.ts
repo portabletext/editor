@@ -76,4 +76,18 @@ export type Editor = {
     error?: (err: unknown) => void
     complete?: () => void
   }): {unsubscribe: () => void}
+  /**
+   * Deprecated function-form overload kept for structural compatibility with
+   * libraries that type their `Subscribable<T>` constraint to include both
+   * the modern observer-form and the legacy function-form (notably
+   * `@xstate/react`'s `useSelector`). Internally this re-routes to the
+   * observer-form. Prefer the observer-form in new code.
+   *
+   * @deprecated Use the observer-form: `editor.subscribe({next, error, complete})`.
+   */
+  subscribe(
+    next: (snapshot: EditorSnapshot) => void,
+    error?: (err: unknown) => void,
+    complete?: () => void,
+  ): {unsubscribe: () => void}
 }
