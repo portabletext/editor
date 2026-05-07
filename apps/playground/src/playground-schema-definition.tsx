@@ -474,6 +474,17 @@ export const playgroundSchemaDefinition = defineSchema({
                                 },
                               ],
                             },
+                            {
+                              type: 'image',
+                              fields: [
+                                {name: 'src', title: 'Src', type: 'string'},
+                                {
+                                  name: 'alt',
+                                  title: 'Alt text',
+                                  type: 'string',
+                                },
+                              ],
+                            },
                           ],
                         },
                       ],
