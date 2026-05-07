@@ -92,6 +92,11 @@ export function EditorSettingsPopover(props: {editorRef: EditorActorRef}) {
               onChange={() => toggleFlag('tablePlugin')}
             />
             <FeatureSwitch
+              label="Mermaid"
+              isSelected={featureFlags.mermaidPlugin}
+              onChange={() => toggleFlag('mermaidPlugin')}
+            />
+            <FeatureSwitch
               label="Typography"
               isSelected={featureFlags.typographyPlugin}
               onChange={() => toggleFlag('typographyPlugin')}

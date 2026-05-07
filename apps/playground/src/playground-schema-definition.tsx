@@ -125,6 +125,33 @@ export const playgroundSchemaDefinition = defineSchema({
         },
       ],
     },
+    // ARCHETYPE 1b - locked-down container with derived rendering.
+    // The block is a container whose editable children are the source
+    // lines of a Mermaid diagram. The default render is the rendered
+    // diagram; consumers can flip to a code view to edit the source.
+    // Exercises: container API as a "single editable string surface
+    // that renders something else" pattern.
+    {
+      title: 'Mermaid diagram',
+      name: 'mermaid',
+      fields: [
+        {
+          name: 'code',
+          title: 'Code',
+          type: 'array',
+          of: [
+            {
+              type: 'block',
+              styles: [],
+              decorators: [],
+              annotations: [],
+              lists: [],
+              inlineObjects: [],
+            },
+          ],
+        },
+      ],
+    },
     // ARCHETYPE 2 - full inheritance: mirrors root exactly.
     // Tests: behaves identically to root. Allows nested heterogeneous
     // containers (callout + code-block + image) - exercises traversal

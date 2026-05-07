@@ -65,6 +65,7 @@ import {ImageDeserializerPlugin} from './plugins/plugin.image-deserializer'
 import {InlineObjectsPlugin} from './plugins/plugin.inline-objects'
 import {markdownShortcutsPluginProps} from './plugins/plugin.markdown'
 import {MarkdownDeserializerPlugin} from './plugins/plugin.markdown-deserializer'
+import {MermaidPlugin} from './plugins/plugin.mermaid'
 import {TablePlugin} from './plugins/plugin.table'
 import {TextFileDeserializerPlugin} from './plugins/plugin.text-file-deserializer'
 import {Button} from './primitives/button'
@@ -157,6 +158,7 @@ export function Editor(props: {
               {featureFlags.calloutPlugin ? <CalloutPlugin /> : null}
               {featureFlags.factBoxPlugin ? <FactBoxPlugin /> : null}
               {featureFlags.tablePlugin ? <TablePlugin /> : null}
+              {featureFlags.mermaidPlugin ? <MermaidPlugin /> : null}
               <InlineObjectsPlugin />
               {featureFlags.emojiPickerPlugin ? <EmojiPickerPlugin /> : null}
               {featureFlags.mentionPickerPlugin ? (

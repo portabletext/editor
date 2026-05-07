@@ -33,6 +33,7 @@
     "emojilib": "^4.0.2",
     "fuse.js": "^7.1.0",
     "lucide-react": "^0.536.0",
+    "mermaid": "^11.14.0",
     "react": "^19.2.5",
     "react-aria-components": "^1.11.0",
     "react-dom": "^19.2.5",

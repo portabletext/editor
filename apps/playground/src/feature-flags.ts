@@ -25,6 +25,7 @@ export type EditorFeatureFlags = {
   calloutPlugin: boolean
   factBoxPlugin: boolean
   tablePlugin: boolean
+  mermaidPlugin: boolean
   linkPlugin: boolean
   oneLinePlugin: boolean
   markdownPlugin: boolean
@@ -45,6 +46,7 @@ export const defaultEditorFeatureFlags: EditorFeatureFlags = {
   calloutPlugin: true,
   factBoxPlugin: true,
   tablePlugin: true,
+  mermaidPlugin: true,
   linkPlugin: true,
   oneLinePlugin: false,
   markdownPlugin: true,

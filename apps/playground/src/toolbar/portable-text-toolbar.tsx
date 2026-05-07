@@ -50,6 +50,7 @@ import {
   TableIcon,
   TextQuoteIcon,
   UnderlineIcon,
+  WorkflowIcon,
 } from 'lucide-react'
 import type {FieldOption} from '../primitives/fields'
 import {Group} from '../primitives/group'
@@ -315,6 +316,28 @@ export const extendBlockObject = ((blockObject) => {
             children: [{_type: 'span', text: '', marks: []}],
             markDefs: [],
           },
+        ],
+      },
+    }
+  }
+
+  if (blockObject.name === 'mermaid') {
+    const sourceLine = (text: string) => ({
+      _type: 'block',
+      style: 'normal',
+      children: [{_type: 'span', text, marks: []}],
+      markDefs: [],
+    })
+    return {
+      ...blockObject,
+      icon: WorkflowIcon,
+      defaultValues: {
+        code: [
+          sourceLine('xychart'),
+          sourceLine('    title "Sales Revenue"'),
+          sourceLine('    x-axis [jan, feb, mar, apr, may, jun]'),
+          sourceLine('    y-axis "Revenue (in $)" 4000 --> 11000'),
+          sourceLine('    bar [5000, 6000, 7500, 8200, 9500, 10500]'),
         ],
       },
     }

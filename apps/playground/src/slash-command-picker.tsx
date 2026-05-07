@@ -19,6 +19,7 @@ import {
   SeparatorHorizontalIcon,
   TableIcon,
   TextQuoteIcon,
+  WorkflowIcon,
 } from 'lucide-react'
 import {useEffect, useRef, useState, type JSX} from 'react'
 import {Button} from './primitives/button'
@@ -142,6 +143,17 @@ const commands: CommandMatch[] = [
     action: {
       type: 'insert.block',
       block: {_type: 'code-block'},
+    },
+  },
+  {
+    key: 'mermaid',
+    label: 'Mermaid Diagram',
+    description: 'Diagram rendered from Mermaid source',
+    icon: <WorkflowIcon className="size-4" />,
+    keywords: ['mermaid', 'diagram', 'graph', 'chart', 'flow'],
+    action: {
+      type: 'insert.block',
+      block: {_type: 'mermaid'},
     },
   },
   {
