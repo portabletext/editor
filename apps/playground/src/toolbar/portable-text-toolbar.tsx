@@ -41,6 +41,7 @@ import {
   LinkIcon,
   ListIcon,
   ListOrderedIcon,
+  ListTodoIcon,
   MessageSquareTextIcon,
   PilcrowIcon,
   SeparatorHorizontalIcon,
@@ -232,6 +233,13 @@ const extendList: ExtendListSchemaType = (list) => {
     return {
       ...list,
       icon: ListOrderedIcon,
+    }
+  }
+
+  if (list.name === 'task') {
+    return {
+      ...list,
+      icon: ListTodoIcon,
     }
   }
 

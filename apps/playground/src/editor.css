@@ -37,6 +37,14 @@
   font-size: 0.4rem;
 }
 
+[data-list-item='task'] {
+  display: block;
+  grid-template-columns: none;
+}
+[data-list-item='task']::before {
+  content: none;
+}
+
 /**
  * Then, the counter for each level is manually set to 1 whenever a list item
  * with index 1 is encountered.

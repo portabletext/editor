@@ -2,6 +2,9 @@ import {defineSchema} from '@portabletext/editor'
 import {z} from 'zod'
 
 export const playgroundSchemaDefinition = defineSchema({
+  block: {
+    fields: [{name: 'checked', title: 'Checked', type: 'boolean'}],
+  },
   decorators: [
     {
       title: 'Strong',
@@ -52,6 +55,10 @@ export const playgroundSchemaDefinition = defineSchema({
     {
       title: 'Numbered list',
       name: 'number',
+    },
+    {
+      title: 'Task list',
+      name: 'task',
     },
   ],
   styles: [
@@ -174,6 +181,7 @@ export const playgroundSchemaDefinition = defineSchema({
               lists: [
                 {title: 'Bulleted list', name: 'bullet'},
                 {title: 'Numbered list', name: 'number'},
+                {title: 'Task list', name: 'task'},
               ],
               inlineObjects: [
                 {

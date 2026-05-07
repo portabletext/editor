@@ -128,5 +128,51 @@ export const portableTextComponents: Partial<PortableTextReactComponents> = {
         {children}
       </ol>
     ),
+    task: ({children}) => (
+      <ul className="list-none pl-0 mb-4 text-gray-900 dark:text-gray-100">
+        {children}
+      </ul>
+    ),
+  },
+  listItem: {
+    task: ({value, children}) => {
+      const checked = (value as {checked?: boolean}).checked === true
+      return (
+        <li className="flex items-start gap-2 mb-1">
+          <span
+            aria-hidden="true"
+            className={`inline-flex items-center justify-center size-4 mt-1 shrink-0 border rounded-sm ${
+              checked
+                ? 'bg-blue-500 border-blue-500 text-white'
+                : 'border-gray-400 dark:border-gray-600'
+            }`}
+          >
+            {checked ? (
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="size-3"
+                aria-hidden="true"
+              >
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            ) : null}
+          </span>
+          <span
+            className={
+              checked
+                ? 'line-through text-gray-400 dark:text-gray-500 flex-1'
+                : 'flex-1'
+            }
+          >
+            {children}
+          </span>
+        </li>
+      )
+    },
   },
 }
