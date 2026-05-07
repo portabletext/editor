@@ -21,6 +21,7 @@ import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
 import {applyMergeNode} from './apply-merge-node'
 import {createPlaceholderBlock} from './create-placeholder-block'
+import {getFullyCoveredContainers} from './get-fully-covered-container'
 import {setNodeProperties} from './set-node-properties'
 
 /**
@@ -328,6 +329,14 @@ function deleteCrossParentRange(
   start: Point,
   end: Point,
 ): void {
+  // Compute fully-covered containers up front, before any trim mutates
+  // the leaves. After trimming, container endpoints shrink and the
+  // original range would falsely match shells that aren't fully covered.
+  const fullyCovered = getFullyCoveredContainers(editor, {
+    anchor: start,
+    focus: end,
+  })
+
   const lca = commonPath(startBlockPath, endBlockPath)
   const startBranchRoot = startBlockPath.slice(0, lca.length + 1)
   const endBranchRoot = endBlockPath.slice(0, lca.length + 1)
@@ -401,6 +410,25 @@ function deleteCrossParentRange(
     if (firstChild) {
       removeTextUpToOffset(editor, firstChild.path, end.offset)
     }
+  }
+
+  // 6. Unset every container the range fully covers. The trim and
+  //    walk-up steps above modified content inside fully-covered
+  //    shells; that's harmless because the shells get unset here.
+  //    Unset the end side first so the start path stays valid.
+  if (
+    fullyCovered.start &&
+    fullyCovered.end &&
+    pathEquals(fullyCovered.start, fullyCovered.end)
+  ) {
+    editor.apply({type: 'unset', path: fullyCovered.start})
+    return
+  }
+  if (fullyCovered.end) {
+    editor.apply({type: 'unset', path: fullyCovered.end})
+  }
+  if (fullyCovered.start) {
+    editor.apply({type: 'unset', path: fullyCovered.start})
   }
 }
 
