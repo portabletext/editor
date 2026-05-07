@@ -1,5 +1,5 @@
 ---
-'@portabletext/editor': patch
+'@portabletext/editor': minor
 ---
 
 feat: add `containers` to editor context
