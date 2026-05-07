@@ -10,6 +10,7 @@ import {getSelectionStartPoint} from '../selectors/selector.get-selection-start-
 import {isActiveAnnotation} from '../selectors/selector.is-active-annotation'
 import {isSelectionCollapsed} from '../selectors/selector.is-selection-collapsed'
 import {isSelectionExpanded} from '../selectors/selector.is-selection-expanded'
+import {getPathSubSchema} from '../traversal/get-path-sub-schema'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import {forward, raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
@@ -151,9 +152,10 @@ const stripAnnotationsOnFullSpanDeletion = defineBehavior({
       return false
     }
 
-    const decorators = snapshot.context.schema.decorators.map(
-      (decorator) => decorator.name,
-    )
+    const decorators = getPathSubSchema(
+      effectiveSnapshot,
+      startChild.path,
+    ).decorators.map((decorator) => decorator.name)
     const marks = startChild.node.marks ?? []
     const spanHasAnnotations = marks.some((mark) => !decorators.includes(mark))
 
