@@ -626,6 +626,10 @@ function parseObject({
       continue
     }
 
+    if (value === undefined) {
+      continue
+    }
+
     const field = fieldsByName.get(key)
 
     if (options.validateFields && !field) {
