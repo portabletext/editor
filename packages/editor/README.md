@@ -358,6 +358,28 @@ The Behavior API is a new way of interfacing with the Portable Text Editor. It a
 
 Learn more about the [Behaviors](https://www.portabletext.org/concepts/behavior/) and how to [create your own behaviors](https://www.portabletext.org/guides/create-behavior/) in the documentation.
 
+## Traversal API
+
+The editor exposes path-based traversal primitives from `@portabletext/editor/traversal` for asking structural questions about a Portable Text value: walk ancestors, find siblings, resolve nodes by path, range over descendants, and so on.
+
+```ts
+import {useEditor} from '@portabletext/editor'
+import {getNodes, isInline} from '@portabletext/editor/traversal'
+
+function findInlineObjects(editor) {
+  const snapshot = editor.getSnapshot()
+  return [
+    ...getNodes(snapshot, {
+      match: (_, path) => isInline(snapshot, path),
+    }),
+  ]
+}
+```
+
+An `EditorSnapshot` from `editor.getSnapshot()` satisfies the `TraversalSnapshot` shape directly, so traversal primitives accept it without conversion.
+
+Use `@portabletext/editor/traversal` for **path-based** questions (`getNode(snapshot, path)`, `getAncestor(snapshot, path, predicate)`, `getChildren(snapshot, path)`). Use [`@portabletext/editor/selectors`](./src/selectors/) for **selection-aware** questions (`getFocusBlock`, `isActiveDecorator`).
+
 ## Related Packages
 
 [`@portabletext/toolbar`](../toolbar/) provides React hooks for building toolbars and related UI components.
