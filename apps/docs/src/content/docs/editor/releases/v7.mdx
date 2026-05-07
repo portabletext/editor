@@ -15,7 +15,7 @@ The migration is small. The DOM your CSS targets today, the patches you store, t
 
 Portable Text round-trips with markdown in v7. `@portabletext/markdown` exposes `markdownToPortableText` and `portableTextToMarkdown` and handles CommonMark, the GFM extensions (tables, strikethrough, autolinks, task lists), and GitHub-style alerts (`> [!NOTE]`, `> [!TIP]`, `> [!WARNING]`, `> [!IMPORTANT]`, `> [!CAUTION]`) which become `callout` blocks with a `tone` field, and back. Code blocks, tables, and callouts use v7 containers, so their inner content is editable rich text rather than opaque strings.
 
-That's the converter pair. The companion `@portabletext/plugin-markdown-shortcuts` covers live-typing inside the editor — `# `, `> `, `- `, `1. `, `[ ] `, `---`, `**bold**`, `*em*`, `~~strike~~`, `` `code` ``, `[link](url)`. The shortcuts are Behaviors, schema-aware. A heading shortcut inside a code-block container does nothing, because the code-block's sub-schema doesn't declare heading styles.
+That's the converter pair. The companion `@portabletext/plugin-markdown-shortcuts` covers live-typing inside the editor — `# `, `> `, `- `, `1. `, `---`, `**bold**`, `*em*`, `~~strike~~`, `` `code` ``, `[link](url)`. The shortcuts are Behaviors, schema-aware. A heading shortcut inside a code-block container does nothing, because the code-block's sub-schema doesn't declare heading styles.
 
 A markdown editor in v7 is the combination of these pieces. Schema, container plugin for code blocks, container plugin for tables, container plugin for callouts, the converter pair on the I/O boundary, the shortcuts plugin on the input boundary. Drop the demo below into a Vite app and start writing:
 
@@ -137,7 +137,7 @@ The same code path that worked at the root works inside a callout, a code block,
 
 In v6, validation was permissive at the root. Unknown decorators, annotations, and inline objects were silently accepted. That was a mistake. v7 enforces the schema _everywhere_.
 
-Insert, paste, decorator add, annotation add — all validate against the schema at the path being edited. If a behavior raises `decorator.toggle` for a name not declared in the schema, it no-ops with a console warning instead of silently writing an unknown mark.
+Insert, paste, decorator add, annotation add — all validate against the schema at the path being edited. If a behavior raises `decorator.toggle` for a name not declared in the schema at that path, the operation silently filters it out instead of writing an unknown mark.
 
 This makes the schema the single source of truth for what's allowed. Toolbars stay in sync with reality. Pastes are filtered. Custom plugins can no longer accidentally write content the schema doesn't describe.
 
@@ -289,7 +289,7 @@ const length = useSyncExternalStore(
     const sub = editor.subscribe({next: () => notify()})
     return () => sub.unsubscribe()
   },
-  () => editor.getSnapshot().context.value?.length ?? 0,
+  () => editor.getSnapshot().context.value.length,
 )
 ```
 
@@ -323,10 +323,7 @@ For xstate's `useSelector`, the editor passes through directly. It satisfies the
 ```tsx
 import {useSelector} from '@xstate/react'
 
-const selectionLength = useSelector(
-  editor,
-  (snap) => snap.context.value?.length ?? 0,
-)
+const selectionLength = useSelector(editor, (snap) => snap.context.value.length)
 ```
 
 The standard observer contract makes this kind of integration mechanical. If a future consumer needs Svelte's stores, Vue's reactivity, Solid's signals, or any other observer-shaped sink, the wrapper is the same shape every time.
@@ -365,7 +362,7 @@ What changed is what happens _between_ those surfaces.
 
 ### tl;dr
 
-- **Most apps**: bump dependencies, re-run type-check, fix any TypeScript errors that flag the renamed path types. That's it.
+- **Most apps**: bump dependencies, re-run type-check, fix any TypeScript errors that flag the widened path types. That's it.
 - **Apps with custom plugins or behaviors**: read the [path types](#path-types-widened-to-path) and [selector semantics](#selectors-now-respect-container-scope) sections.
 - **Apps that read the editor's schema directly**: read the [schema enforcement](#schema-strictness-now-applies-at-the-root-too) section.
 - **Apps that call `blockOffset*` utilities**: signature changed. See [Block-offset utilities](#block-offset-utilities-take-a-snapshot).
@@ -402,7 +399,7 @@ If you destructure path tuples or annotate intermediate variables with the narro
 
 ```ts
 // v7
-import {isKeyedSegment} from '@portabletext/editor'
+import {isKeyedSegment} from '@portabletext/editor/utils'
 
 // v6
 const [blockSegment, , childSegment] = path
@@ -476,16 +473,20 @@ If your plugin doesn't make this change, it'll still work. It'll apply the root 
 
 ### Block-offset utilities take a snapshot
 
-`blockOffsetToSpanSelectionPoint`, `spanSelectionPointToBlockOffset`, `blockOffsetsToSelection`, and `childSelectionPointToBlockOffset` now take an editor snapshot directly instead of a `context` object, and they resolve through container-nested text blocks at any depth.
+`blockOffsetToSpanSelectionPoint`, `spanSelectionPointToBlockOffset`, `blockOffsetsToSelection`, and `childSelectionPointToBlockOffset` now take an editor snapshot instead of a `context` object, and they resolve through container-nested text blocks at any depth.
 
 ```ts
-// v7
 import {blockOffsetToSpanSelectionPoint} from '@portabletext/editor'
 
 // v6
 const point = blockOffsetToSpanSelectionPoint({context, blockOffset})
 
-const point = blockOffsetToSpanSelectionPoint(editor.getSnapshot(), blockOffset)
+// v7
+const point = blockOffsetToSpanSelectionPoint({
+  snapshot: editor.getSnapshot(),
+  blockOffset,
+  direction: 'forward',
+})
 ```
 
 `blockOffsetToBlockSelectionPoint`, `blockOffsetToSelectionPoint`, and `selectionPointToBlockOffset` are no longer part of the public API. They had no external consumers and only existed to feed the four utilities above.
