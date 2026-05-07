@@ -71,7 +71,7 @@ export function RenderElement(props: {
     if (containerScope) {
       const {'data-slate-node': _sn, ...rest} = props.attributes
       return (
-        <div {...rest} data-block-type="text">
+        <div {...rest} data-pt-block-type="text">
           {props.children}
         </div>
       )
@@ -103,13 +103,12 @@ export function RenderElement(props: {
     if (containerScope && !leafConfig) {
       const {
         'data-slate-node': _sn,
-        'data-slate-inline': _si,
         'data-slate-void': _sv,
         'contentEditable': _ce,
         ...rest
       } = props.attributes
       return (
-        <span {...rest} data-child-type="object">
+        <span {...rest} data-pt-child-type="object">
           {props.children}
           <span contentEditable={false}>
             [{props.element._type}: {props.element._key}]
@@ -139,7 +138,7 @@ export function RenderElement(props: {
       ...rest
     } = props.attributes
     return (
-      <div {...rest} data-block-type="object">
+      <div {...rest} data-pt-block-type="object">
         {props.children}
         <div contentEditable={false}>
           [{props.element._type}: {props.element._key}]

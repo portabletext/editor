@@ -2,7 +2,8 @@ import type {
   PortableTextSpan,
   PortableTextTextBlock,
 } from '@portabletext/schema'
-import React, {type JSX} from 'react'
+import React, {useContext, type JSX} from 'react'
+import {ContainerScopeContext} from '../../../editor/container-scope-context'
 import {serializePath} from '../../../paths/serialize-path'
 import {isTextDecorationsEqual} from '../../dom/utils/range-list'
 import type {Path} from '../../interfaces/path'
@@ -60,14 +61,19 @@ const Text = (props: {
   }
 
   const dataPath = serializePath(path)
+  const containerScope = useContext(ContainerScopeContext)
 
   const attributes: {
-    'data-slate-node': 'text'
+    'data-slate-node'?: 'text'
     'data-pt-path': string
-  } = {
-    'data-slate-node': 'text',
-    'data-pt-path': dataPath,
-  }
+  } = containerScope
+    ? {
+        'data-pt-path': dataPath,
+      }
+    : {
+        'data-slate-node': 'text',
+        'data-pt-path': dataPath,
+      }
 
   return renderText({
     text,

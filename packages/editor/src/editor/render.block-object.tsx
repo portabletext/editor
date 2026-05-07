@@ -57,7 +57,7 @@ export function RenderBlockObject(props: {
         leafConfig={props.leafConfig}
         attributes={{
           ...ptAttributes,
-          'data-block-type': 'object',
+          'data-pt-block-type': 'object',
         }}
         focused={focused}
         node={props.element}
@@ -94,6 +94,7 @@ export function RenderBlockObject(props: {
     'data-block-key': props.element._key,
     'data-block-name': props.element._type,
     'data-block-type': 'object',
+    'data-pt-block-type': 'object',
   }
 
   return (

@@ -307,14 +307,14 @@ export const DOMEditor: DOMEditorInterface = {
     }
 
     return (
-      closestShadowAware(targetEl, `[data-slate-editor]`) === editorEl &&
+      closestShadowAware(targetEl, `[data-pt-editor]`) === editorEl &&
       (!editable || targetEl.isContentEditable
         ? true
         : (typeof targetEl.isContentEditable === 'boolean' && // isContentEditable exists only on HTMLElement, and on other nodes it will be undefined
             // this is the core logic that lets you know you got the right editor.selection instead of null when editor is contenteditable="false"(readOnly)
             closestShadowAware(targetEl, '[contenteditable="false"]') ===
               editorEl) ||
-          !!targetEl.getAttribute('data-slate-zero-width'))
+          !!targetEl.getAttribute('data-pt-zero-width'))
     )
   },
 
@@ -344,7 +344,7 @@ export const DOMEditor: DOMEditorInterface = {
 
     const el = isDOMElement(target) ? target : target.parentElement
     return !!el?.closest(
-      '[data-slate-void], [data-block-type="object"], [data-child-type="object"]',
+      '[data-pt-block-type="object"], [data-pt-child-type="object"]',
     )
   },
 
@@ -359,7 +359,7 @@ export const DOMEditor: DOMEditorInterface = {
     let domPoint: DOMPoint | undefined
 
     if (nodeEntry && isVoidNode(editor, nodeEntry.node, point.path)) {
-      const spacer = el.querySelector('[data-slate-zero-width]')
+      const spacer = el.querySelector('[data-pt-zero-width]')
       if (spacer) {
         const domText = spacer.childNodes[0]
         if (domText) {
@@ -395,7 +395,7 @@ export const DOMEditor: DOMEditorInterface = {
     // For each leaf, we need to isolate its content, which means filtering
     // to its direct text and zero-width spans. (We have to filter out any
     // other siblings that may have been rendered alongside them.)
-    const selector = `[data-slate-string], [data-slate-zero-width]`
+    const selector = `[data-pt-string], [data-pt-zero-width]`
     const texts = Array.from(el.querySelectorAll(selector))
     let start = 0
 
@@ -408,7 +408,7 @@ export const DOMEditor: DOMEditorInterface = {
       }
 
       const {length} = domNode.textContent
-      const trueLength = text.hasAttribute('data-slate-zero-width') ? 0 : length
+      const trueLength = text.hasAttribute('data-pt-zero-width') ? 0 : length
       const end = start + trueLength
 
       if (point.offset <= end) {
@@ -448,11 +448,11 @@ export const DOMEditor: DOMEditorInterface = {
     const startEl = (
       isDOMElement(startNode) ? startNode : startNode.parentElement
     ) as HTMLElement
-    const isStartAtZeroWidth = !!startEl.getAttribute('data-slate-zero-width')
+    const isStartAtZeroWidth = !!startEl.getAttribute('data-pt-zero-width')
     const endEl = (
       isDOMElement(endNode) ? endNode : endNode.parentElement
     ) as HTMLElement
-    const isEndAtZeroWidth = !!endEl.getAttribute('data-slate-zero-width')
+    const isEndAtZeroWidth = !!endEl.getAttribute('data-pt-zero-width')
 
     domRange.setStart(startNode, isStartAtZeroWidth ? 1 : startOffset)
     domRange.setEnd(endNode, isEndAtZeroWidth ? 1 : endOffset)
@@ -484,7 +484,7 @@ export const DOMEditor: DOMEditorInterface = {
       }
 
       const potentialVoidNode = parentNode.closest(
-        '[data-slate-void="true"], [data-block-type="object"], [data-child-type="object"]',
+        '[data-pt-block-type="object"], [data-pt-child-type="object"]',
       )
       // Need to ensure that the closest void node is actually a void node
       // within this editor, and not a void node within some parent editor. This can happen
@@ -502,15 +502,13 @@ export const DOMEditor: DOMEditorInterface = {
         containsShadowAware(editorEl, potentialNonEditableNode)
           ? potentialNonEditableNode
           : null
-      let leafNode = parentNode.closest('[data-slate-leaf]')
+      let leafNode = parentNode.closest('[data-pt-mark]')
       let domNode: DOMElement | null = null
 
       // Calculate how far into the text node the `nearestNode` is, so that we
       // can determine what the offset relative to the text node is.
       if (leafNode) {
-        textNode = leafNode.closest(
-          '[data-slate-node="text"], [data-child-type="span"]',
-        )
+        textNode = leafNode.closest('[data-pt-child-type="span"]')
 
         if (textNode) {
           const window = DOMEditor.getWindow(editor)
@@ -521,7 +519,7 @@ export const DOMEditor: DOMEditorInterface = {
           const contents = range.cloneContents()
           const removals = [
             ...Array.prototype.slice.call(
-              contents.querySelectorAll('[data-slate-zero-width]'),
+              contents.querySelectorAll('[data-pt-zero-width]'),
             ),
             ...Array.prototype.slice.call(
               contents.querySelectorAll('[contenteditable=false]'),
@@ -534,7 +532,7 @@ export const DOMEditor: DOMEditorInterface = {
             if (
               IS_ANDROID &&
               !exactMatch &&
-              el.hasAttribute('data-slate-zero-width') &&
+              el.hasAttribute('data-pt-zero-width') &&
               el.textContent.length > 0 &&
               el.textContext !== '\uFEFF'
             ) {
@@ -560,7 +558,7 @@ export const DOMEditor: DOMEditorInterface = {
         // For void nodes, the element with the offset key will be a cousin, not an
         // ancestor, so find it by going down from the nearest void parent and taking the
         // first one that isn't inside a nested editor.
-        const leafNodes = voidNode.querySelectorAll('[data-slate-leaf]')
+        const leafNodes = voidNode.querySelectorAll('[data-pt-mark]')
         for (let index = 0; index < leafNodes.length; index++) {
           const current = leafNodes[index]!
           if (DOMEditor.hasDOMNode(editor, current)) {
@@ -573,12 +571,10 @@ export const DOMEditor: DOMEditorInterface = {
         if (!leafNode) {
           offset = 1
         } else {
-          textNode = leafNode.closest(
-            '[data-slate-node="text"], [data-child-type="span"]',
-          )!
+          textNode = leafNode.closest('[data-pt-child-type="span"]')!
           domNode = leafNode
           offset = domNode.textContent!.length
-          domNode.querySelectorAll('[data-slate-zero-width]').forEach((el) => {
+          domNode.querySelectorAll('[data-pt-zero-width]').forEach((el) => {
             offset -= el.textContent!.length
           })
         }
@@ -588,12 +584,10 @@ export const DOMEditor: DOMEditorInterface = {
           node
             ? node.querySelectorAll(
                 // Exclude leaf nodes in nested editors
-                '[data-slate-leaf]:not(:scope [data-slate-editor] [data-slate-leaf])',
+                '[data-pt-mark]:not(:scope [data-pt-editor] [data-pt-mark])',
               )
             : []
-        const elementNode = nonEditableNode.closest(
-          '[data-slate-node="element"], [data-block-type="text"], [data-block-type="object"], [data-block-type="container"]',
-        )
+        const elementNode = nonEditableNode.closest('[data-pt-block-type]')
 
         if (searchDirection === 'backward' || !searchDirection) {
           const leafNodes = [
@@ -625,19 +619,15 @@ export const DOMEditor: DOMEditorInterface = {
         }
 
         if (leafNode) {
-          textNode = leafNode.closest(
-            '[data-slate-node="text"], [data-child-type="span"]',
-          )!
+          textNode = leafNode.closest('[data-pt-child-type="span"]')!
           domNode = leafNode
           if (searchDirection === 'forward') {
             offset = 0
           } else {
             offset = domNode.textContent!.length
-            domNode
-              .querySelectorAll('[data-slate-zero-width]')
-              .forEach((el) => {
-                offset -= el.textContent!.length
-              })
+            domNode.querySelectorAll('[data-pt-zero-width]').forEach((el) => {
+              offset -= el.textContent!.length
+            })
           }
         }
       }
@@ -648,14 +638,14 @@ export const DOMEditor: DOMEditorInterface = {
         // COMPAT: Android IMEs might remove the zero width space while composing,
         // and we don't add it for line-breaks.
         IS_ANDROID &&
-        domNode.getAttribute('data-slate-zero-width') === 'z' &&
+        domNode.getAttribute('data-pt-zero-width') === 'z' &&
         domNode.textContent?.startsWith('\uFEFF') &&
         // COMPAT: If the parent node is a Slate zero-width space, editor is
         // because the text node should have no characters. However, during IME
         // composition the ASCII characters will be prepended to the zero-width
         // space, so subtract 1 from the offset to account for the zero-width
         // space character.
-        (parentNode.hasAttribute('data-slate-zero-width') ||
+        (parentNode.hasAttribute('data-pt-zero-width') ||
           // COMPAT: In Firefox, `range.cloneContents()` returns an extra trailing '\n'
           // when the document ends with a new-line character. This results in the offset
           // length being off by one, so we need to subtract one to account for this.
@@ -667,14 +657,11 @@ export const DOMEditor: DOMEditorInterface = {
 
     if (IS_ANDROID && !textNode && !exactMatch) {
       const node =
-        parentNode.hasAttribute('data-slate-node') ||
-        parentNode.getAttribute('data-block-type') === 'text' ||
-        parentNode.getAttribute('data-block-type') === 'object' ||
-        parentNode.getAttribute('data-block-type') === 'container' ||
-        parentNode.getAttribute('data-child-type') === 'span'
+        parentNode.hasAttribute('data-pt-block-type') ||
+        parentNode.getAttribute('data-pt-child-type') === 'span'
           ? parentNode
           : parentNode.closest(
-              '[data-slate-node], [data-block-type="text"], [data-block-type="object"], [data-block-type="container"], [data-child-type="span"]',
+              '[data-pt-block-type], [data-pt-child-type="span"]',
             )
 
       if (node && DOMEditor.hasDOMNode(editor, node, {editable: true})) {
@@ -691,7 +678,7 @@ export const DOMEditor: DOMEditorInterface = {
 
         let {path, offset} = editorStart(editor, nodePath)
 
-        if (!node.querySelector('[data-slate-leaf]')) {
+        if (!node.querySelector('[data-pt-mark]')) {
           offset = nearestOffset
         }
 
@@ -702,8 +689,7 @@ export const DOMEditor: DOMEditorInterface = {
     if (!textNode && parentNode) {
       if (
         nearestNode instanceof HTMLElement &&
-        (nearestNode.hasAttribute('data-slate-node') ||
-          nearestNode.getAttribute('data-block-type') === 'container')
+        nearestNode.getAttribute('data-pt-block-type') === 'container'
       ) {
         const childEl = nearestNode.childNodes[nearestOffset]
         if (
@@ -711,7 +697,7 @@ export const DOMEditor: DOMEditorInterface = {
           DOMEditor.hasDOMNode(editor, childEl)
         ) {
           const voidEl = childEl.closest(
-            '[data-slate-void], [data-block-type="object"], [data-child-type="object"]',
+            '[data-pt-block-type="object"], [data-pt-child-type="object"]',
           )
 
           if (voidEl) {
@@ -725,19 +711,12 @@ export const DOMEditor: DOMEditorInterface = {
       }
 
       const elementNode =
-        parentNode.closest(
-          '[data-slate-node="element"], [data-block-type="text"], [data-block-type="object"], [data-block-type="container"]',
-        ) ??
-        (parentNode.hasAttribute('data-slate-node') ||
-        parentNode.getAttribute('data-block-type') === 'text' ||
-        parentNode.getAttribute('data-block-type') === 'object' ||
-        parentNode.getAttribute('data-block-type') === 'container'
-          ? parentNode
-          : null)
+        parentNode.closest('[data-pt-block-type]') ??
+        (parentNode.hasAttribute('data-pt-block-type') ? parentNode : null)
 
       if (elementNode && DOMEditor.hasDOMNode(editor, elementNode)) {
         const voidEl = elementNode.closest(
-          '[data-slate-void], [data-block-type="object"], [data-child-type="object"]',
+          '[data-pt-block-type="object"], [data-pt-child-type="object"]',
         )
 
         if (voidEl) {

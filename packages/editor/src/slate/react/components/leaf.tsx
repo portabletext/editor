@@ -3,7 +3,8 @@ import type {
   PortableTextSpan,
   PortableTextTextBlock,
 } from '@portabletext/schema'
-import React, {type JSX} from 'react'
+import React, {useContext, type JSX} from 'react'
+import {ContainerScopeContext} from '../../../editor/container-scope-context'
 import type {Path} from '../../interfaces/path'
 import type {LeafPosition} from '../../interfaces/text'
 import {textEquals} from '../../text/text-equals'
@@ -34,6 +35,8 @@ const Leaf = (props: {
     leafPosition,
   } = props
 
+  const containerScope = useContext(ContainerScopeContext)
+
   const children = (
     <SlateString
       isLast={isLast}
@@ -48,10 +51,16 @@ const Leaf = (props: {
   // in certain misbehaving browsers they aren't weirdly cloned/destroyed by
   // contenteditable behaviors. (2019/05/08)
   const attributes: {
-    'data-slate-leaf': true
-  } = {
-    'data-slate-leaf': true,
-  }
+    'data-slate-leaf'?: true
+    'data-pt-mark': true
+  } = containerScope
+    ? {
+        'data-pt-mark': true,
+      }
+    : {
+        'data-slate-leaf': true,
+        'data-pt-mark': true,
+      }
 
   return renderLeaf({
     attributes,

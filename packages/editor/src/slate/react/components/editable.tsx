@@ -96,8 +96,7 @@ export interface RenderElementProps {
   path: Path
   attributes: {
     'data-slate-node'?: 'element'
-    'data-block-type'?: 'container'
-    'data-slate-inline'?: true
+    'data-pt-block-type'?: 'container'
     'data-slate-void'?: true
     'data-pt-path': string
     'contentEditable'?: false
@@ -119,7 +118,8 @@ export interface RenderLeafProps {
   text: PortableTextSpan
   path: Path
   attributes: {
-    'data-slate-leaf': true
+    'data-slate-leaf'?: true
+    'data-pt-mark': true
   }
   /**
    * The position of the leaf within the Text node, only present when the text node is split by decorations.
@@ -134,7 +134,7 @@ export interface RenderTextProps {
   text: PortableTextSpan
   children: any
   attributes: {
-    'data-slate-node': 'text'
+    'data-slate-node'?: 'text'
     'data-pt-path': string
   }
 }
@@ -1017,6 +1017,7 @@ export const Editable = forwardRef(
                   : 'false'
               }
               data-slate-editor
+              data-pt-editor
               data-slate-node="value"
               data-pt-path=""
               // explicitly set this
@@ -1137,7 +1138,7 @@ export const Editable = forwardRef(
                   // the editor to inside a void node's spacer element.
                   if (
                     isDOMElement(relatedTarget) &&
-                    relatedTarget.hasAttribute('data-slate-spacer')
+                    relatedTarget.hasAttribute('data-pt-spacer')
                   ) {
                     return
                   }

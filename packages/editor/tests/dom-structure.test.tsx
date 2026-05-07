@@ -33,24 +33,27 @@ describe('DOM structure', () => {
       expect(el).not.toEqual(null)
       expect(normalizeInnerHTML(el!.innerHTML)).toEqual(
         [
-          // text block: b0
-          '<div data-slate-node="element"',
+          '<div',
+          ' data-slate-node="element"',
           ' data-pt-path="[_key==&quot;b0&quot;]"',
           ' class="pt-block pt-text-block pt-text-block-style-normal"',
           ' data-block-key="b0"',
           ' data-block-name="block"',
           ' data-block-type="text"',
+          ' data-pt-block-type="text"',
           ' data-style="normal">',
           '<div>',
-          // span: s0 (empty)
-          '<span data-slate-node="text"',
+          '<span',
+          ' data-slate-node="text"',
           ' data-pt-path="[_key==&quot;b0&quot;].children[_key==&quot;s0&quot;]"',
           ' data-child-key="s0"',
           ' data-child-name="span"',
-          ' data-child-type="span">',
-          '<span data-slate-leaf="true">',
-          '<span data-slate-zero-width="n">',
-          '\uFEFF<br>',
+          ' data-child-type="span"',
+          ' data-pt-child-type="span">',
+          '<span data-slate-leaf="true" data-pt-mark="true">',
+          '<span data-slate-zero-width="n" data-pt-zero-width="n">',
+          '﻿',
+          '<br>',
           '</span>',
           '</span>',
           '</span>',
@@ -85,57 +88,68 @@ describe('DOM structure', () => {
       expect(el).not.toEqual(null)
       expect(normalizeInnerHTML(el!.innerHTML)).toEqual(
         [
-          // text block: b0
-          '<div data-slate-node="element"',
+          '<div',
+          ' data-slate-node="element"',
           ' data-pt-path="[_key==&quot;b0&quot;]"',
           ' class="pt-block pt-text-block pt-text-block-style-normal"',
           ' data-block-key="b0"',
           ' data-block-name="block"',
           ' data-block-type="text"',
+          ' data-pt-block-type="text"',
           ' data-style="normal">',
           '<div>',
-          // span: hello
-          '<span data-slate-node="text"',
+          '<span',
+          ' data-slate-node="text"',
           ' data-pt-path="[_key==&quot;b0&quot;].children[_key==&quot;s0&quot;]"',
           ' data-child-key="s0"',
           ' data-child-name="span"',
-          ' data-child-type="span">',
-          '<span data-slate-leaf="true">',
-          '<span data-slate-string="true">hello </span>',
+          ' data-child-type="span"',
+          ' data-pt-child-type="span">',
+          '<span data-slate-leaf="true" data-pt-mark="true">',
+          '<span data-slate-string="true" data-pt-string="true">',
+          'hello ',
           '</span>',
           '</span>',
-          // inline void: stock-ticker
-          '<span data-slate-node="element"',
+          '</span>',
+          '<span',
+          ' data-slate-node="element"',
           ' data-slate-void="true"',
           ' data-pt-path="[_key==&quot;b0&quot;].children[_key==&quot;i0&quot;]"',
-          ' data-slate-inline="true"',
           ' contenteditable="false"',
           ' class="pt-inline-object"',
           ' data-child-key="i0"',
           ' data-child-name="stock-ticker"',
-          ' data-child-type="object">',
-          // spacer
-          '<span data-slate-spacer="true"',
+          ' data-child-type="object"',
+          ' data-pt-child-type="object">',
+          '<span',
+          ' data-slate-spacer="true"',
+          ' data-pt-spacer="true"',
           ' style="height: 0px; color: transparent; outline: none; position: absolute;">',
           '<span data-slate-node="text">',
-          '<span data-slate-leaf="true">',
-          '<span data-slate-zero-width="z">\uFEFF</span>',
+          '<span data-slate-leaf="true" data-pt-mark="true">',
+          '<span data-slate-zero-width="z" data-pt-zero-width="z">',
+          '﻿',
           '</span>',
           '</span>',
           '</span>',
-          // inline object render
+          '</span>',
           '<span draggable="true" style="display: inline-block;">',
-          '<span>[stock-ticker: i0]</span>',
+          '<span>',
+          '[stock-ticker: i0]',
           '</span>',
           '</span>',
-          // span: world
-          '<span data-slate-node="text"',
+          '</span>',
+          '<span',
+          ' data-slate-node="text"',
           ' data-pt-path="[_key==&quot;b0&quot;].children[_key==&quot;s1&quot;]"',
           ' data-child-key="s1"',
           ' data-child-name="span"',
-          ' data-child-type="span">',
-          '<span data-slate-leaf="true">',
-          '<span data-slate-string="true"> world</span>',
+          ' data-child-type="span"',
+          ' data-pt-child-type="span">',
+          '<span data-slate-leaf="true" data-pt-mark="true">',
+          '<span data-slate-string="true" data-pt-string="true">',
+          ' world',
+          '</span>',
           '</span>',
           '</span>',
           '</div>',
@@ -166,47 +180,56 @@ describe('DOM structure', () => {
       expect(el).not.toEqual(null)
       expect(normalizeInnerHTML(el!.innerHTML)).toEqual(
         [
-          // text block: b0
-          '<div data-slate-node="element"',
+          '<div',
+          ' data-slate-node="element"',
           ' data-pt-path="[_key==&quot;b0&quot;]"',
           ' class="pt-block pt-text-block pt-text-block-style-normal"',
           ' data-block-key="b0"',
           ' data-block-name="block"',
           ' data-block-type="text"',
+          ' data-pt-block-type="text"',
           ' data-style="normal">',
           '<div>',
-          // span: hello
-          '<span data-slate-node="text"',
+          '<span',
+          ' data-slate-node="text"',
           ' data-pt-path="[_key==&quot;b0&quot;].children[_key==&quot;s0&quot;]"',
           ' data-child-key="s0"',
           ' data-child-name="span"',
-          ' data-child-type="span">',
-          '<span data-slate-leaf="true">',
-          '<span data-slate-string="true">hello</span>',
+          ' data-child-type="span"',
+          ' data-pt-child-type="span">',
+          '<span data-slate-leaf="true" data-pt-mark="true">',
+          '<span data-slate-string="true" data-pt-string="true">',
+          'hello',
+          '</span>',
           '</span>',
           '</span>',
           '</div>',
           '</div>',
-          // void block object: image
-          '<div data-slate-node="element"',
+          '<div',
+          ' data-slate-node="element"',
           ' data-slate-void="true"',
           ' data-pt-path="[_key==&quot;img0&quot;]"',
           ' class="pt-block pt-object-block"',
           ' data-block-key="img0"',
           ' data-block-name="image"',
-          ' data-block-type="object">',
-          // spacer
-          '<div data-slate-spacer="true"',
+          ' data-block-type="object"',
+          ' data-pt-block-type="object">',
+          '<div',
+          ' data-slate-spacer="true"',
+          ' data-pt-spacer="true"',
           ' style="height: 0px; color: transparent; outline: none; position: absolute;">',
           '<span data-slate-node="text">',
-          '<span data-slate-leaf="true">',
-          '<span data-slate-zero-width="z">\uFEFF</span>',
+          '<span data-slate-leaf="true" data-pt-mark="true">',
+          '<span data-slate-zero-width="z" data-pt-zero-width="z">',
+          '﻿',
+          '</span>',
           '</span>',
           '</span>',
           '</div>',
-          // block object render
           '<div contenteditable="false" draggable="true">',
-          '<div>[image: img0]</div>',
+          '<div>',
+          '[image: img0]',
+          '</div>',
           '</div>',
           '</div>',
         ].join(''),
@@ -252,44 +275,39 @@ describe('DOM structure', () => {
       expect(el).not.toEqual(null)
       expect(normalizeInnerHTML(el!.innerHTML)).toEqual(
         [
-          // gallery container: g0
-          '<div data-block-type="container"',
-          ' data-pt-path="[_key==&quot;g0&quot;]"',
-          ' class="gallery">',
-          // void leaf: img0
+          '<div data-pt-block-type="container" data-pt-path="[_key==&quot;g0&quot;]" class="gallery">',
           '<div',
           ' data-pt-path="[_key==&quot;g0&quot;].items[_key==&quot;img0&quot;]"',
-          ' data-block-type="object"',
-          '>',
-          // spacer
-          '<div data-slate-spacer="true"',
+          ' data-pt-block-type="object">',
+          '<div',
+          ' data-pt-spacer="true"',
           ' style="height: 0px; color: transparent; outline: none; position: absolute;">',
-          '<span data-slate-node="text">',
-          '<span data-slate-leaf="true">',
-          '<span data-slate-zero-width="z">\uFEFF</span>',
+          '<span>',
+          '<span data-pt-mark="true">',
+          '<span data-pt-zero-width="z">',
+          '﻿',
+          '</span>',
           '</span>',
           '</span>',
           '</div>',
-          // image render
           '<div contenteditable="false">',
           '[image: img0]',
           '</div>',
           '</div>',
-          // void leaf: img1
           '<div',
           ' data-pt-path="[_key==&quot;g0&quot;].items[_key==&quot;img1&quot;]"',
-          ' data-block-type="object"',
-          '>',
-          // spacer
-          '<div data-slate-spacer="true"',
+          ' data-pt-block-type="object">',
+          '<div',
+          ' data-pt-spacer="true"',
           ' style="height: 0px; color: transparent; outline: none; position: absolute;">',
-          '<span data-slate-node="text">',
-          '<span data-slate-leaf="true">',
-          '<span data-slate-zero-width="z">\uFEFF</span>',
+          '<span>',
+          '<span data-pt-mark="true">',
+          '<span data-pt-zero-width="z">',
+          '﻿',
+          '</span>',
           '</span>',
           '</span>',
           '</div>',
-          // image render
           '<div contenteditable="false">',
           '[image: img1]',
           '</div>',
@@ -403,54 +421,49 @@ describe('DOM structure', () => {
       expect(el).not.toEqual(null)
       expect(normalizeInnerHTML(el!.innerHTML)).toEqual(
         [
-          // table container: t0
-          '<table data-block-type="container"',
-          ' data-pt-path="[_key==&quot;t0&quot;]">',
+          '<table data-pt-block-type="container" data-pt-path="[_key==&quot;t0&quot;]">',
           '<tbody>',
-          // row: r0
-          '<tr data-block-type="container"',
-          ' data-pt-path="[_key==&quot;t0&quot;].rows[_key==&quot;r0&quot;]">',
-          // cell: c0
-          '<td data-block-type="container"',
+          '<tr data-pt-block-type="container" data-pt-path="[_key==&quot;t0&quot;].rows[_key==&quot;r0&quot;]">',
+          '<td',
+          ' data-pt-block-type="container"',
           ' data-pt-path="[_key==&quot;t0&quot;].rows[_key==&quot;r0&quot;].cells[_key==&quot;c0&quot;]">',
-          // text block: b0
           '<div',
           ' data-pt-path="[_key==&quot;t0&quot;].rows[_key==&quot;r0&quot;].cells[_key==&quot;c0&quot;].content[_key==&quot;b0&quot;]"',
-          ' data-block-type="text"',
-          '>',
-          // span: price:
+          ' data-pt-block-type="text">',
           '<span',
           ' data-pt-path="[_key==&quot;t0&quot;].rows[_key==&quot;r0&quot;].cells[_key==&quot;c0&quot;].content[_key==&quot;b0&quot;].children[_key==&quot;s0&quot;]"',
-          ' data-child-type="span">',
-          '<span data-slate-leaf="true">',
-          '<span data-slate-string="true">price: </span>',
+          ' data-pt-child-type="span">',
+          '<span data-pt-mark="true">',
+          '<span data-pt-string="true">',
+          'price: ',
           '</span>',
           '</span>',
-          // inline void: stock-ticker
+          '</span>',
           '<span',
           ' data-pt-path="[_key==&quot;t0&quot;].rows[_key==&quot;r0&quot;].cells[_key==&quot;c0&quot;].content[_key==&quot;b0&quot;].children[_key==&quot;i0&quot;]"',
-          ' data-child-type="object"',
-          '>',
-          // spacer
-          '<span data-slate-spacer="true"',
+          ' data-pt-child-type="object">',
+          '<span',
+          ' data-pt-spacer="true"',
           ' style="height: 0px; color: transparent; outline: none; position: absolute;">',
-          '<span data-slate-node="text">',
-          '<span data-slate-leaf="true">',
-          '<span data-slate-zero-width="z">\uFEFF</span>',
+          '<span>',
+          '<span data-pt-mark="true">',
+          '<span data-pt-zero-width="z">',
+          '﻿',
           '</span>',
           '</span>',
           '</span>',
-          // inline object render
+          '</span>',
           '<span contenteditable="false">',
           '[stock-ticker: i0]',
           '</span>',
           '</span>',
-          // span: USD
           '<span',
           ' data-pt-path="[_key==&quot;t0&quot;].rows[_key==&quot;r0&quot;].cells[_key==&quot;c0&quot;].content[_key==&quot;b0&quot;].children[_key==&quot;s1&quot;]"',
-          ' data-child-type="span">',
-          '<span data-slate-leaf="true">',
-          '<span data-slate-string="true"> USD</span>',
+          ' data-pt-child-type="span">',
+          '<span data-pt-mark="true">',
+          '<span data-pt-string="true">',
+          ' USD',
+          '</span>',
           '</span>',
           '</span>',
           '</div>',
@@ -516,35 +529,27 @@ describe('DOM structure', () => {
       expect(el).not.toEqual(null)
       expect(normalizeInnerHTML(el!.innerHTML)).toEqual(
         [
-          // code container: c0
-          '<pre data-block-type="container"',
-          ' data-pt-path="[_key==&quot;c0&quot;]">',
+          '<pre data-pt-block-type="container" data-pt-path="[_key==&quot;c0&quot;]">',
           '<code>',
-          // line: l0
-          '<div',
-          ' data-pt-path="[_key==&quot;c0&quot;].lines[_key==&quot;l0&quot;]"',
-          ' data-block-type="text"',
-          '>',
-          // span: const x = 1
+          '<div data-pt-path="[_key==&quot;c0&quot;].lines[_key==&quot;l0&quot;]" data-pt-block-type="text">',
           '<span',
           ' data-pt-path="[_key==&quot;c0&quot;].lines[_key==&quot;l0&quot;].children[_key==&quot;s0&quot;]"',
-          ' data-child-type="span">',
-          '<span data-slate-leaf="true">',
-          '<span data-slate-string="true">const x = 1</span>',
+          ' data-pt-child-type="span">',
+          '<span data-pt-mark="true">',
+          '<span data-pt-string="true">',
+          'const x = 1',
+          '</span>',
           '</span>',
           '</span>',
           '</div>',
-          // line: l1
-          '<div',
-          ' data-pt-path="[_key==&quot;c0&quot;].lines[_key==&quot;l1&quot;]"',
-          ' data-block-type="text"',
-          '>',
-          // span: const y = 2
+          '<div data-pt-path="[_key==&quot;c0&quot;].lines[_key==&quot;l1&quot;]" data-pt-block-type="text">',
           '<span',
           ' data-pt-path="[_key==&quot;c0&quot;].lines[_key==&quot;l1&quot;].children[_key==&quot;s1&quot;]"',
-          ' data-child-type="span">',
-          '<span data-slate-leaf="true">',
-          '<span data-slate-string="true">const y = 2</span>',
+          ' data-pt-child-type="span">',
+          '<span data-pt-mark="true">',
+          '<span data-pt-string="true">',
+          'const y = 2',
+          '</span>',
           '</span>',
           '</span>',
           '</div>',
@@ -552,6 +557,88 @@ describe('DOM structure', () => {
           '</pre>',
         ].join(''),
       )
+    })
+  })
+
+  test('7. container DOM does not contain any `data-slate-*` attributes', async () => {
+    const calloutSchemaDefinition = defineSchema({
+      blockObjects: [
+        {
+          name: 'callout',
+          fields: [
+            {
+              name: 'content',
+              type: 'array',
+              of: [
+                {
+                  type: 'block',
+                  styles: [{name: 'h1'}, {name: 'normal'}],
+                  lists: [{name: 'bullet'}],
+                },
+                {type: 'image'},
+              ],
+            },
+          ],
+        },
+        {name: 'image'},
+      ],
+    })
+    const calloutContainer = defineContainer<typeof calloutSchemaDefinition>({
+      scope: '$..callout',
+      field: 'content',
+      render: ({attributes, children}) => (
+        <div {...attributes} className="callout">
+          {children}
+        </div>
+      ),
+    })
+    await createTestEditor({
+      schemaDefinition: calloutSchemaDefinition,
+      initialValue: [
+        {
+          _key: 'c0',
+          _type: 'callout',
+          content: [
+            {
+              _key: 'b0',
+              _type: 'block',
+              children: [{_key: 's0', _type: 'span', text: 'hello', marks: []}],
+              markDefs: [],
+              style: 'h1',
+            },
+            {_key: 'img0', _type: 'image'},
+            {
+              _key: 'b1',
+              _type: 'block',
+              children: [{_key: 's1', _type: 'span', text: 'item', marks: []}],
+              level: 1,
+              listItem: 'bullet',
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: <ContainerPlugin containers={[calloutContainer]} />,
+    })
+    await vi.waitFor(() => {
+      const calloutEl = document.querySelector('.callout')
+      expect(calloutEl).not.toEqual(null)
+      expect(calloutEl!.innerHTML.match(/data-slate-/g)).toEqual(null)
+      expect(calloutEl!.innerHTML.match(/(?<!pt-)data-block-type/g)).toEqual(
+        null,
+      )
+      expect(calloutEl!.innerHTML.match(/(?<!pt-)data-child-type/g)).toEqual(
+        null,
+      )
+      expect(calloutEl!.innerHTML.match(/data-style/g)).toEqual(null)
+      expect(calloutEl!.innerHTML.match(/data-list-item/g)).toEqual(null)
+      expect(calloutEl!.innerHTML.match(/data-level/g)).toEqual(null)
+      expect(calloutEl!.innerHTML.match(/data-list-index/g)).toEqual(null)
+      expect(calloutEl!.innerHTML.match(/data-block-key/g)).toEqual(null)
+      expect(calloutEl!.innerHTML.match(/data-block-name/g)).toEqual(null)
+      expect(calloutEl!.innerHTML.match(/data-child-key/g)).toEqual(null)
+      expect(calloutEl!.innerHTML.match(/data-child-name/g)).toEqual(null)
     })
   })
 })
