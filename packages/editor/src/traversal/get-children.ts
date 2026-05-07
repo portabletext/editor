@@ -10,6 +10,8 @@ import type {TraversalSnapshot} from './traversal-snapshot'
 
 /**
  * Get the children of a node at a given path.
+ *
+ * @beta
  */
 export function getChildren(
   snapshot: TraversalSnapshot,
@@ -61,6 +63,12 @@ export function getChildren(
   }))
 }
 
+/**
+ * Internal helper that walks one level down from a raw node, returning
+ * children + scope info. Consumers should use `getChildren` instead.
+ *
+ * @internal
+ */
 export function getNodeChildren(
   context: {
     schema: EditorSchema

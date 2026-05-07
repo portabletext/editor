@@ -1,7 +1,7 @@
 import {getSubSchema, type Schema} from '@portabletext/schema'
 import {getEnclosingContainer} from '../schema/get-enclosing-container'
 import type {Path} from '../slate/interfaces/path'
-import type {TraversalSnapshot} from '../traversal/traversal-snapshot'
+import type {TraversalSnapshot} from './traversal-snapshot'
 
 /**
  * Return the `Schema` view that applies at a given path.

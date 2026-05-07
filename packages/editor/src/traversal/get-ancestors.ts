@@ -11,6 +11,8 @@ import type {TraversalSnapshot} from './traversal-snapshot'
  * the ancestors are (nearest first):
  *   [{_key:'t1'}, 'rows', {_key:'r1'}]
  *   [{_key:'t1'}]
+ *
+ * @beta
  */
 export function getAncestors(
   snapshot: TraversalSnapshot,

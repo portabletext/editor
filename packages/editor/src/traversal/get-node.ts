@@ -14,6 +14,8 @@ import type {TraversalSnapshot} from './traversal-snapshot'
  *
  * The returned path is always fully keyed, even if the input path
  * contained numeric indices.
+ *
+ * @beta
  */
 export function getNode(
   snapshot: TraversalSnapshot,

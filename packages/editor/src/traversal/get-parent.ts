@@ -6,6 +6,8 @@ import type {TraversalSnapshot} from './traversal-snapshot'
 
 /**
  * Get the parent of a node at a given path.
+ *
+ * @beta
  */
 export function getParent(
   snapshot: TraversalSnapshot,

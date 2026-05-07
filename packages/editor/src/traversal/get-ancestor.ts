@@ -4,6 +4,8 @@ import {getAncestors} from './get-ancestors'
 import type {TraversalSnapshot} from './traversal-snapshot'
 
 /**
+ * @beta
+ *
  * Find the first ancestor of the node at a given path that matches a predicate.
  * Does not check the node at the path itself, only its ancestors.
  *
@@ -14,6 +16,9 @@ export function getAncestor<TMatch extends Node>(
   path: Path,
   match: (node: Node, path: Path) => node is TMatch,
 ): {node: TMatch; path: Path} | undefined
+/**
+ * @beta
+ */
 export function getAncestor(
   snapshot: TraversalSnapshot,
   path: Path,

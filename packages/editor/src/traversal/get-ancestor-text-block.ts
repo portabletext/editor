@@ -4,6 +4,12 @@ import type {Path} from '../slate/interfaces/path'
 import {getAncestor} from './get-ancestor'
 import type {TraversalSnapshot} from './traversal-snapshot'
 
+/**
+ * Walk up from `path` and return the deepest ancestor that is a text block.
+ * Returns `undefined` if no ancestor in the chain is a text block.
+ *
+ * @beta
+ */
 export function getAncestorTextBlock(
   snapshot: TraversalSnapshot,
   path: Path,

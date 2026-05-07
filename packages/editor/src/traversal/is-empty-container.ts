@@ -6,6 +6,8 @@ import type {TraversalSnapshot} from './traversal-snapshot'
 /**
  * True if the node at `path` is an editable container whose only child
  * is an empty text block.
+ *
+ * @beta
  */
 export function isEmptyContainer(
   snapshot: TraversalSnapshot,

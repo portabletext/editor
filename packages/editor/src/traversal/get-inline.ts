@@ -12,6 +12,8 @@ import type {TraversalSnapshot} from './traversal-snapshot'
  * A node is inline if its parent is a text block. Returns the node narrowed
  * to `PortableTextSpan | PortableTextObject`, or `undefined` if the node
  * doesn't exist or is not inline.
+ *
+ * @beta
  */
 export function getInline(
   snapshot: TraversalSnapshot,

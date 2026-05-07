@@ -10,6 +10,8 @@ import type {TraversalSnapshot} from './traversal-snapshot'
  * Unlike `getAncestorObjectNode`, editable containers are skipped — they are
  * object nodes but contain editable content, so callers that want "this
  * subtree is a single selectable void" should use this instead.
+ *
+ * @beta
  */
 export function getVoidAncestor(
   snapshot: TraversalSnapshot,

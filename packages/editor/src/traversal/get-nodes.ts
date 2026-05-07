@@ -21,6 +21,8 @@ import type {TraversalSnapshot} from './traversal-snapshot'
  *
  * When `at` is provided, traverses descendants of the node at that path
  * instead of the root.
+ *
+ * @beta
  */
 export function* getNodes(
   snapshot: TraversalSnapshot,
@@ -45,6 +47,8 @@ export function* getNodes(
 /**
  * Get descendant nodes of a standalone node (not in the editor tree).
  * Used for cases like getDirtyPaths where the node hasn't been inserted yet.
+ *
+ * @internal
  */
 export function* getNodeDescendants(
   context: {

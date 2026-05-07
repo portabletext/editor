@@ -4,6 +4,8 @@ import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 /**
  * Walk a path on a plain JS value (arrays and objects) and return
  * whatever is found at the end. No schema awareness needed.
+ *
+ * @beta
  */
 export function getValue(
   root: unknown,

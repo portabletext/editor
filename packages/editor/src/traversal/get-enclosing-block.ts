@@ -10,6 +10,8 @@ import type {TraversalSnapshot} from './traversal-snapshot'
  * Returns the node at the path if it is a block, otherwise the first ancestor
  * that is a block. Works at any depth — inside a container this returns the
  * container-internal block, not the outer container.
+ *
+ * @beta
  */
 export function getEnclosingBlock(
   snapshot: TraversalSnapshot,

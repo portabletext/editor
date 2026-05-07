@@ -13,6 +13,8 @@ import type {TraversalSnapshot} from './traversal-snapshot'
  * (direct children of the editor) are always blocks. Children of text blocks
  * (spans and inline objects) are not blocks. Children of containers are
  * blocks within that container.
+ *
+ * @beta
  */
 export function isBlock(snapshot: TraversalSnapshot, path: Path): boolean {
   const parent = getParent(snapshot, path)
@@ -27,8 +29,10 @@ export function isBlock(snapshot: TraversalSnapshot, path: Path): boolean {
 /**
  * Get the node at the given path if it is a block.
  *
- * Returns the node narrowed to PortableTextBlock, or undefined if the node
+ * Returns the node narrowed to `PortableTextBlock`, or undefined if the node
  * doesn't exist or is not a block.
+ *
+ * @beta
  */
 export function getBlock(
   snapshot: TraversalSnapshot,

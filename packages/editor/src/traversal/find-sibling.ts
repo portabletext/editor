@@ -6,6 +6,8 @@ import {getChildren} from './get-children'
 import type {TraversalSnapshot} from './traversal-snapshot'
 
 /**
+ * @beta
+ *
  * Walk siblings of the node at the given path in a direction, returning the
  * first sibling that matches the predicate.
  *
@@ -21,6 +23,9 @@ export function findSibling<TNode extends Node = Node>(
     path: Path
   }) => entry is {node: TNode; path: Path},
 ): {node: TNode; path: Path} | undefined
+/**
+ * @beta
+ */
 export function findSibling(
   snapshot: TraversalSnapshot,
   path: Path,

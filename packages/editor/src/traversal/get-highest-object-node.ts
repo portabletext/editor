@@ -10,6 +10,8 @@ import type {TraversalSnapshot} from './traversal-snapshot'
  *
  * Checks ancestors from furthest to nearest, returning the first object node
  * found. If no ancestor is an object node, checks the node at the path itself.
+ *
+ * @beta
  */
 export function getHighestObjectNode(
   snapshot: TraversalSnapshot,

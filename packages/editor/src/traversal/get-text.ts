@@ -6,6 +6,8 @@ import type {TraversalSnapshot} from './traversal-snapshot'
 
 /**
  * Get the concatenated text content of the node at a given path.
+ *
+ * @beta
  */
 export function getText(
   snapshot: TraversalSnapshot,
