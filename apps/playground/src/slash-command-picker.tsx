@@ -16,6 +16,7 @@ import {
   InfoIcon,
   ListIcon,
   ListOrderedIcon,
+  ListTodoIcon,
   SeparatorHorizontalIcon,
   TableIcon,
   TextQuoteIcon,
@@ -99,6 +100,14 @@ const commands: CommandMatch[] = [
     icon: <ListOrderedIcon className="size-4" />,
     keywords: ['number', 'ol', 'list', 'ordered'],
     action: {type: 'list item.toggle', listItem: 'number'},
+  },
+  {
+    key: 'task',
+    label: 'Task List',
+    description: 'Checkbox list',
+    icon: <ListTodoIcon className="size-4" />,
+    keywords: ['task', 'todo', 'checkbox', 'check', 'list'],
+    action: {type: 'list item.toggle', listItem: 'task'},
   },
   {
     key: 'image',

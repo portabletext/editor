@@ -4,6 +4,8 @@ import {
   useEditor,
   useEditorSelector,
   type BlockDecoratorRenderProps,
+  type BlockListItemRenderProps,
+  type BlockPath,
   type BlockRenderProps,
   type BlockStyleRenderProps,
   type EditorEmittedEvent,
@@ -402,7 +404,49 @@ const renderDecorator: RenderDecoratorFunction = (props) => {
   return (decoratorMap.get(props.value) ?? ((props) => props.children))(props)
 }
 
+function TaskListCheckbox(props: {
+  block: BlockListItemRenderProps['block']
+  path: BlockPath
+}) {
+  const editor = useEditor()
+  const checked = (props.block as {checked?: boolean}).checked === true
+
+  return (
+    <button
+      type="button"
+      contentEditable={false}
+      className="inline-flex items-center justify-center size-4 align-middle shrink-0 border border-gray-400 dark:border-gray-600 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors data-[checked=true]:bg-blue-500 data-[checked=true]:border-blue-500 data-[checked=true]:text-white"
+      data-checked={checked}
+      onMouseDown={(event) => {
+        event.preventDefault()
+      }}
+      onClick={() => {
+        editor.send({
+          type: 'block.set',
+          props: {checked: !checked},
+          at: props.path,
+        })
+      }}
+      aria-label={checked ? 'Mark task as not done' : 'Mark task as done'}
+    >
+      {checked ? <CheckIcon className="size-3" /> : null}
+    </button>
+  )
+}
+
 const renderListItem: RenderListItemFunction = (props) => {
+  if (props.value === 'task') {
+    const checked = (props.block as {checked?: boolean}).checked === true
+    return (
+      <span
+        className="flex items-center gap-2 data-[checked=true]:text-gray-400 data-[checked=true]:line-through [&>*:last-child]:flex-1"
+        data-checked={checked}
+      >
+        <TaskListCheckbox block={props.block} path={props.path} />
+        {props.children}
+      </span>
+    )
+  }
   return props.children
 }
 
