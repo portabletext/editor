@@ -1,8 +1,8 @@
 import {safeStringify} from '../internal-utils/safe-json'
-import {getChildren} from '../node-traversal/get-children'
-import {getNode} from '../node-traversal/get-node'
 import {withoutNormalizing} from '../slate/editor/without-normalizing'
 import {parentPath} from '../slate/path/parent-path'
+import {getChildren} from '../traversal/get-children'
+import {getNode} from '../traversal/get-node'
 import type {OperationImplementation} from './operation.types'
 
 export const moveBlockOperationImplementation: OperationImplementation<

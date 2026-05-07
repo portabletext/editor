@@ -1,5 +1,4 @@
 import {isSpan, isTextBlock} from '@portabletext/schema'
-import {getNode} from '../node-traversal/get-node'
 import {withoutNormalizing} from '../slate/editor/without-normalizing'
 import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
@@ -8,6 +7,7 @@ import {isAncestorPath} from '../slate/path/is-ancestor-path'
 import {pathEquals} from '../slate/path/path-equals'
 import {isBackwardRange} from '../slate/range/is-backward-range'
 import {resolveRangeAffinities} from '../slate/range/resolve-range-affinities'
+import {getNode} from '../traversal/get-node'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 

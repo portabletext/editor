@@ -1,6 +1,6 @@
-import type {TraversalSnapshot} from '../node-traversal/traversal-snapshot'
 import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
+import type {TraversalSnapshot} from '../traversal/traversal-snapshot'
 import {getContainerScopedName} from './get-container-scoped-name'
 
 /**

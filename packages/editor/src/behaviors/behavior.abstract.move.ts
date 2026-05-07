@@ -1,4 +1,4 @@
-import {getSibling} from '../node-traversal/get-sibling'
+import {getSibling} from '../traversal/get-sibling'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 

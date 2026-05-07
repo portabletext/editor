@@ -1,9 +1,9 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
 import {describe, expect, test} from 'vitest'
-import {createNodeTraversalTestbed} from '../../node-traversal/node-traversal-testbed'
 import type {ContainerConfig} from '../../renderers/renderer.types'
 import type {ChildArrayField} from '../../schema/resolve-containers'
 import {parseScope} from '../../scope/parse-scope'
+import {createNodeTraversalTestbed} from '../../traversal/traversal-testbed'
 import {isVoidNode} from './is-void-node'
 
 function containerConfigFor(field: ChildArrayField): ContainerConfig {

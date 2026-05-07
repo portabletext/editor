@@ -17,9 +17,9 @@ import {
   parsePatch,
 } from '@sanity/diff-match-patch'
 import type {EditorContext} from '../editor/editor-snapshot'
-import {getNode} from '../node-traversal/get-node'
-import {getValue} from '../node-traversal/get-value'
 import type {Node} from '../slate/interfaces/node'
+import {getNode} from '../traversal/get-node'
+import {getValue} from '../traversal/get-value'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {applyDeselect} from './apply-selection'
 import {isEqualToEmptyEditor} from './values'

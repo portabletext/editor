@@ -1,7 +1,7 @@
 import type {BaseDefinition, FieldDefinition} from '@portabletext/schema'
-import type {TraversalSnapshot} from '../node-traversal/traversal-snapshot'
 import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
+import type {TraversalSnapshot} from '../traversal/traversal-snapshot'
 import {getEnclosingContainer} from './get-enclosing-container'
 
 /**

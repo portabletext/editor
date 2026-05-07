@@ -1,6 +1,6 @@
 import type {PortableTextObject} from '@portabletext/schema'
-import type {TraversalSnapshot} from '../../node-traversal/traversal-snapshot'
 import {isEditableContainer} from '../../schema/is-editable-container'
+import type {TraversalSnapshot} from '../../traversal/traversal-snapshot'
 import type {Path} from '../interfaces/path'
 import {isObjectNode} from './is-object-node'
 

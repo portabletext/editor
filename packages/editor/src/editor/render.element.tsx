@@ -6,10 +6,10 @@ import {isTextBlock} from '@portabletext/schema'
 import {useSelector} from '@xstate/react'
 import {useContext, type ReactElement} from 'react'
 import type {DropPosition} from '../behaviors/behavior.core.drop-position'
-import {isInline} from '../node-traversal/is-inline'
 import type {Path} from '../slate/interfaces/path'
 import type {RenderElementProps} from '../slate/react/components/editable'
 import {useSlateStatic} from '../slate/react/hooks/use-slate-static'
+import {isInline} from '../traversal/is-inline'
 import type {
   RenderBlockFunction,
   RenderChildFunction,

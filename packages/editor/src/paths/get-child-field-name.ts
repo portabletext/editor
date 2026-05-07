@@ -1,8 +1,8 @@
 import type {EditorSchema} from '../editor/editor-schema'
-import {getNodeChildren} from '../node-traversal/get-children'
 import type {ResolvedContainers} from '../schema/resolve-containers'
 import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
+import {getNodeChildren} from '../traversal/get-children'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 
 /**

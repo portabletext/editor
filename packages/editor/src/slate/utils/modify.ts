@@ -1,6 +1,6 @@
 import {isSpan, type PortableTextSpan} from '@portabletext/schema'
-import {getNodeChildren} from '../../node-traversal/get-children'
-import {getNode} from '../../node-traversal/get-node'
+import {getNodeChildren} from '../../traversal/get-children'
+import {getNode} from '../../traversal/get-node'
 import {isKeyedSegment} from '../../utils/util.is-keyed-segment'
 import type {Editor} from '../interfaces/editor'
 import type {Node} from '../interfaces/node'

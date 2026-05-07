@@ -1,8 +1,8 @@
 import type {PortableTextBlock} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
-import {getChildren} from '../node-traversal/get-children'
-import {getBlock} from '../node-traversal/is-block'
 import {parentPath} from '../slate/path/parent-path'
+import {getChildren} from '../traversal/get-children'
+import {getBlock} from '../traversal/is-block'
 import type {BlockPath} from '../types/paths'
 import {getFocusBlock} from './selector.get-focus-block'
 

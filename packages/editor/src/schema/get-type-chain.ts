@@ -1,7 +1,7 @@
-import {getAncestors} from '../node-traversal/get-ancestors'
-import type {TraversalSnapshot} from '../node-traversal/traversal-snapshot'
 import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
+import {getAncestors} from '../traversal/get-ancestors'
+import type {TraversalSnapshot} from '../traversal/traversal-snapshot'
 
 /**
  * Build the full type chain for a node at a given path, from root to the

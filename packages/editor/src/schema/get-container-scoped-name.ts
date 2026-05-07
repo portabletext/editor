@@ -1,8 +1,8 @@
-import {getAncestors} from '../node-traversal/get-ancestors'
-import type {TraversalSnapshot} from '../node-traversal/traversal-snapshot'
 import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
 import {isObjectNode} from '../slate/node/is-object-node'
+import {getAncestors} from '../traversal/get-ancestors'
+import type {TraversalSnapshot} from '../traversal/traversal-snapshot'
 
 /**
  * Build the scoped type name for a node at a given path.

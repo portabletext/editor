@@ -1,6 +1,6 @@
 import {isTextBlock, type PortableTextBlock} from '@portabletext/schema'
 import type {EditorSnapshot} from '../editor/editor-snapshot'
-import {getAncestorTextBlock} from '../node-traversal/get-ancestor-text-block'
+import {getAncestorTextBlock} from '../traversal/get-ancestor-text-block'
 import {isKeyedSegment} from './util.is-keyed-segment'
 import {isSelectionCollapsed} from './util.is-selection-collapsed'
 

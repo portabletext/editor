@@ -1,8 +1,8 @@
 import type {OfDefinition} from '@portabletext/schema'
-import {getAncestors} from '../node-traversal/get-ancestors'
-import type {TraversalSnapshot} from '../node-traversal/traversal-snapshot'
 import type {Path} from '../slate/interfaces/path'
 import {isObjectNode} from '../slate/node/is-object-node'
+import {getAncestors} from '../traversal/get-ancestors'
+import type {TraversalSnapshot} from '../traversal/traversal-snapshot'
 import {getContainerScopedName} from './get-container-scoped-name'
 
 /**

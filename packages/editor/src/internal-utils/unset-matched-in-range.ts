@@ -1,9 +1,9 @@
-import {getNode} from '../node-traversal/get-node'
-import {getNodes} from '../node-traversal/get-nodes'
 import {pathRef} from '../slate/editor/path-ref'
 import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
 import {isAncestorPath} from '../slate/path/is-ancestor-path'
+import {getNode} from '../traversal/get-node'
+import {getNodes} from '../traversal/get-nodes'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 
 /**

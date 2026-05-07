@@ -1,6 +1,6 @@
 import {isSpan} from '@portabletext/schema'
-import {getNodes} from '../../node-traversal/get-nodes'
 import {isEditableContainer} from '../../schema/is-editable-container'
+import {getNodes} from '../../traversal/get-nodes'
 import type {Editor} from '../interfaces/editor'
 import type {Location} from '../interfaces/location'
 import type {Point} from '../interfaces/point'

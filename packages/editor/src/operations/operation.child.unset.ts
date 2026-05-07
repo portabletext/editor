@@ -1,8 +1,8 @@
 import {isSpan} from '@portabletext/schema'
 import {safeStringify} from '../internal-utils/safe-json'
 import {setNodeProperties} from '../internal-utils/set-node-properties'
-import {getNode} from '../node-traversal/get-node'
 import {isObjectNode} from '../slate/node/is-object-node'
+import {getNode} from '../traversal/get-node'
 import type {OperationImplementation} from './operation.types'
 
 export const childUnsetOperationImplementation: OperationImplementation<

@@ -1,6 +1,4 @@
 import {isTextBlock} from '@portabletext/schema'
-import {getAncestor} from '../node-traversal/get-ancestor'
-import {getNode} from '../node-traversal/get-node'
 import {getContainerScopedName} from '../schema/get-container-scoped-name'
 import {isEditableContainer} from '../schema/is-editable-container'
 import {end as editorEnd} from '../slate/editor/end'
@@ -14,6 +12,8 @@ import {isAfterPoint} from '../slate/point/is-after-point'
 import {isBeforePoint} from '../slate/point/is-before-point'
 import {pointEquals} from '../slate/point/point-equals'
 import {rangeEdges} from '../slate/range/range-edges'
+import {getAncestor} from '../traversal/get-ancestor'
+import {getNode} from '../traversal/get-node'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 
 /**

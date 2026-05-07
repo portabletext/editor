@@ -1,6 +1,6 @@
 import {describe, expect, test} from 'vitest'
 import {getText} from './get-text'
-import {createNodeTraversalTestbed} from './node-traversal-testbed'
+import {createNodeTraversalTestbed} from './traversal-testbed'
 
 describe(getText.name, () => {
   const testbed = createNodeTraversalTestbed()

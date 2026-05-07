@@ -1,9 +1,9 @@
 import {isSpan} from '@portabletext/schema'
 import type {EditorSchema} from '../src/editor/editor-schema'
-import {getSibling} from '../src/node-traversal/get-sibling'
-import {getSpanNode} from '../src/node-traversal/get-span-node'
 import type {Containers} from '../src/schema/resolve-containers'
 import type {Node} from '../src/slate/interfaces/node'
+import {getSibling} from '../src/traversal/get-sibling'
+import {getSpanNode} from '../src/traversal/get-span-node'
 import type {EditorSelection, EditorSelectionPoint} from '../src/types/editor'
 import {isEqualSelectionPoints} from '../src/utils/util.is-equal-selection-points'
 

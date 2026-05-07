@@ -1,7 +1,7 @@
-import {getChildren} from '../node-traversal/get-children'
 import type {Path} from '../slate/interfaces/path'
 import type {Point} from '../slate/interfaces/point'
 import {isAncestorPath} from '../slate/path/is-ancestor-path'
+import {getChildren} from '../traversal/get-children'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {getUnwrapTarget} from './get-unwrap-target'
 

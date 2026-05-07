@@ -1,7 +1,7 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
 import {expect, test} from 'vitest'
 import {createTestSnapshot} from '../../test-utils/create-test-snapshot'
-import {resolveTestbedContainers} from '../node-traversal/node-traversal-testbed'
+import {resolveTestbedContainers} from '../traversal/traversal-testbed'
 import {getActiveDecorators} from './selector.get-active-decorators'
 
 test('getActiveDecorators: respects sub-schema decorators inside a container', () => {

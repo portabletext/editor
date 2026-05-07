@@ -1,6 +1,6 @@
 import {isSpan} from '@portabletext/schema'
-import {getAncestorTextBlock} from '../node-traversal/get-ancestor-text-block'
-import type {TraversalSnapshot} from '../node-traversal/traversal-snapshot'
+import {getAncestorTextBlock} from '../traversal/get-ancestor-text-block'
+import type {TraversalSnapshot} from '../traversal/traversal-snapshot'
 import type {BlockOffset} from '../types/block-offset'
 import type {EditorSelectionPoint} from '../types/editor'
 import {isKeyedSegment} from './util.is-keyed-segment'

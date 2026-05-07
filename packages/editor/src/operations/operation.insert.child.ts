@@ -3,11 +3,11 @@ import {
   applyInsertNodeAtPath,
   applyInsertNodeAtPoint,
 } from '../internal-utils/apply-insert-node'
-import {getAncestorTextBlock} from '../node-traversal/get-ancestor-text-block'
-import {getNode} from '../node-traversal/get-node'
-import {getSibling} from '../node-traversal/get-sibling'
 import {isTextBlockNode} from '../slate/node/is-text-block-node'
+import {getAncestorTextBlock} from '../traversal/get-ancestor-text-block'
+import {getNode} from '../traversal/get-node'
 import {getPathSubSchema} from '../traversal/get-path-sub-schema'
+import {getSibling} from '../traversal/get-sibling'
 import {parseInlineObject, parseSpan} from '../utils/parse-blocks'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import type {OperationImplementation} from './operation.types'

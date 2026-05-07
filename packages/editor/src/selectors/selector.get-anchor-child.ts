@@ -1,6 +1,6 @@
 import type {PortableTextObject, PortableTextSpan} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
-import {getInline} from '../node-traversal/get-inline'
+import {getInline} from '../traversal/get-inline'
 import type {ChildPath} from '../types/paths'
 
 /**

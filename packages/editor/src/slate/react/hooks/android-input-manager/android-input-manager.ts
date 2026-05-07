@@ -1,8 +1,8 @@
 import {isSpan} from '@portabletext/schema'
 import type {EditorActor} from '../../../../editor/editor-machine'
-import {getNode} from '../../../../node-traversal/get-node'
-import {getNodes} from '../../../../node-traversal/get-nodes'
-import {getSpanNode} from '../../../../node-traversal/get-span-node'
+import {getNode} from '../../../../traversal/get-node'
+import {getNodes} from '../../../../traversal/get-nodes'
+import {getSpanNode} from '../../../../traversal/get-span-node'
 import {DOMEditor} from '../../../dom/plugin/dom-editor'
 import {
   applyStringDiff,

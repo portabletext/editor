@@ -1,6 +1,6 @@
 import {describe, expect, test} from 'vitest'
 import {getHighestObjectNode} from './get-highest-object-node'
-import {createNodeTraversalTestbed} from './node-traversal-testbed'
+import {createNodeTraversalTestbed} from './traversal-testbed'
 
 describe(getHighestObjectNode.name, () => {
   const testbed = createNodeTraversalTestbed()

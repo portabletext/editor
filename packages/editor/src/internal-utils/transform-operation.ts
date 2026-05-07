@@ -5,13 +5,13 @@ import {
   DIFF_INSERT,
   parsePatch,
 } from '@sanity/diff-match-patch'
-import {getEnclosingBlock} from '../node-traversal/get-enclosing-block'
-import type {TraversalSnapshot} from '../node-traversal/traversal-snapshot'
 import type {Node} from '../slate/interfaces/node'
 import type {Operation} from '../slate/interfaces/operation'
 import type {Path} from '../slate/interfaces/path'
 import {isAncestorPath} from '../slate/path/is-ancestor-path'
 import {pathEquals} from '../slate/path/path-equals'
+import {getEnclosingBlock} from '../traversal/get-enclosing-block'
+import type {TraversalSnapshot} from '../traversal/traversal-snapshot'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {debug} from './debug'
 

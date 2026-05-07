@@ -5,14 +5,14 @@ import {
   type Patch,
 } from '@portabletext/patches'
 import type {PortableTextBlock} from '@portabletext/schema'
-import {getSpanNode} from '../node-traversal/get-span-node'
-import type {TraversalSnapshot} from '../node-traversal/traversal-snapshot'
 import type {Node} from '../slate/interfaces/node'
 import type {
   InsertOperation,
   InsertTextOperation,
   RemoveTextOperation,
 } from '../slate/interfaces/operation'
+import {getSpanNode} from '../traversal/get-span-node'
+import type {TraversalSnapshot} from '../traversal/traversal-snapshot'
 
 export function textPatch(
   snapshot: TraversalSnapshot,

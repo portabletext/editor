@@ -1,7 +1,7 @@
 import type {PortableTextBlock} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
-import {getSibling} from '../node-traversal/get-sibling'
-import {getBlock} from '../node-traversal/is-block'
+import {getSibling} from '../traversal/get-sibling'
+import {getBlock} from '../traversal/is-block'
 import type {BlockPath} from '../types/paths'
 import {getSelectionEndBlock} from './selector.get-selection-end-block'
 

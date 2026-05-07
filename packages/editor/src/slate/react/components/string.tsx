@@ -7,7 +7,7 @@ import {
 } from '@portabletext/schema'
 import {forwardRef, memo, useContext, useRef, useState} from 'react'
 import {ContainerScopeContext} from '../../../editor/container-scope-context'
-import {getNodes} from '../../../node-traversal/get-nodes'
+import {getNodes} from '../../../traversal/get-nodes'
 import {IS_ANDROID} from '../../dom/utils/environment'
 import {end as editorEnd} from '../../editor/end'
 import {start as editorStart} from '../../editor/start'

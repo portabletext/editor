@@ -1,5 +1,5 @@
-import {getNode} from '../node-traversal/get-node'
 import type {Path} from '../slate/interfaces/path'
+import {getNode} from '../traversal/get-node'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 

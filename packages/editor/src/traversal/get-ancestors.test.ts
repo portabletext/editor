@@ -1,6 +1,6 @@
 import {describe, expect, test} from 'vitest'
 import {getAncestors} from './get-ancestors'
-import {createNodeTraversalTestbed} from './node-traversal-testbed'
+import {createNodeTraversalTestbed} from './traversal-testbed'
 
 describe(getAncestors.name, () => {
   const testbed = createNodeTraversalTestbed()

@@ -1,7 +1,7 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
-import {createNodeTraversalTestbed} from '../node-traversal/node-traversal-testbed'
+import {createNodeTraversalTestbed} from '../traversal/traversal-testbed'
 import {resolveSelection} from './apply-selection'
 
 describe(resolveSelection.name, () => {

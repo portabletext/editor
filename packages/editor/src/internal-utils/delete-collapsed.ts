@@ -1,4 +1,3 @@
-import {getHighestObjectNode} from '../node-traversal/get-highest-object-node'
 import {after} from '../slate/editor/after'
 import {before} from '../slate/editor/before'
 import {end as editorEnd} from '../slate/editor/end'
@@ -8,6 +7,7 @@ import type {Point} from '../slate/interfaces/point'
 import type {Range} from '../slate/interfaces/range'
 import {isCollapsedRange} from '../slate/range/is-collapsed-range'
 import type {TextUnit} from '../slate/types/types'
+import {getHighestObjectNode} from '../traversal/get-highest-object-node'
 import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {applyDelete, type SelectionMode} from './delete-internal'
 

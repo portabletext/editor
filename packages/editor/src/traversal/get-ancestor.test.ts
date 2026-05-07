@@ -3,7 +3,7 @@ import {describe, expect, test} from 'vitest'
 import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
 import {getAncestor} from './get-ancestor'
-import {createNodeTraversalTestbed} from './node-traversal-testbed'
+import {createNodeTraversalTestbed} from './traversal-testbed'
 
 describe(getAncestor.name, () => {
   const testbed = createNodeTraversalTestbed()

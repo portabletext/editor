@@ -3,10 +3,10 @@ import type {
   PortableTextTextBlock,
 } from '@portabletext/schema'
 import React, {type JSX} from 'react'
-import {getText} from '../../../node-traversal/get-text'
-import {isInline as isInlinePath} from '../../../node-traversal/is-inline'
 import {serializePath} from '../../../paths/serialize-path'
 import {isEditableContainer} from '../../../schema/is-editable-container'
+import {getText} from '../../../traversal/get-text'
+import {isInline as isInlinePath} from '../../../traversal/is-inline'
 import {isElementDecorationsEqual} from '../../dom/utils/range-list'
 import type {Path} from '../../interfaces/path'
 import type {DecoratedRange} from '../../interfaces/text'

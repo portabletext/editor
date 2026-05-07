@@ -4,7 +4,7 @@ import {
   createNodeTraversalTestbed,
   resolveTestbedContainers,
   tableContainers,
-} from './node-traversal-testbed'
+} from './traversal-testbed'
 
 describe(getFirstChild.name, () => {
   const testbed = createNodeTraversalTestbed()
