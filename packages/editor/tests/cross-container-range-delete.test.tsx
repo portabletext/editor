@@ -24,6 +24,38 @@ const schemaDefinition = defineSchema({
       ],
     },
     {name: 'image'},
+    {
+      name: 'table',
+      fields: [
+        {
+          name: 'rows',
+          type: 'array',
+          of: [
+            {
+              type: 'row',
+              fields: [
+                {
+                  name: 'cells',
+                  type: 'array',
+                  of: [
+                    {
+                      type: 'cell',
+                      fields: [
+                        {
+                          name: 'content',
+                          type: 'array',
+                          of: [{type: 'block'}],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
   ],
 })
 
@@ -35,6 +67,21 @@ const containers = [
   }),
   defineContainer<typeof schemaDefinition>({
     scope: '$..callout',
+    field: 'content',
+    render: ({attributes, children}) => <div {...attributes}>{children}</div>,
+  }),
+  defineContainer<typeof schemaDefinition>({
+    scope: '$..table',
+    field: 'rows',
+    render: ({attributes, children}) => <div {...attributes}>{children}</div>,
+  }),
+  defineContainer<typeof schemaDefinition>({
+    scope: '$..table.row',
+    field: 'cells',
+    render: ({attributes, children}) => <div {...attributes}>{children}</div>,
+  }),
+  defineContainer<typeof schemaDefinition>({
+    scope: '$..table.row.cell',
     field: 'content',
     render: ({attributes, children}) => <div {...attributes}>{children}</div>,
   }),
@@ -2342,6 +2389,120 @@ describe('cross-container range delete: deep structures', () => {
         },
       },
     })
+
+    expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |')
+  })
+
+  test('Cmd-A + Delete via keyboard across code-block, callout and table removes all', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const codeBlockKey = keyGenerator()
+    const codeLineKey = keyGenerator()
+    const codeSpanKey = keyGenerator()
+    const calloutKey = keyGenerator()
+    const calloutBlockKey = keyGenerator()
+    const calloutSpanKey = keyGenerator()
+    const tableKey = keyGenerator()
+    const rowKey = keyGenerator()
+    const cell1Key = keyGenerator()
+    const cell1BlockKey = keyGenerator()
+    const cell1SpanKey = keyGenerator()
+    const cell2Key = keyGenerator()
+    const cell2BlockKey = keyGenerator()
+    const cell2SpanKey = keyGenerator()
+
+    const {editor, locator} = await createTestEditor({
+      schemaDefinition,
+      keyGenerator,
+      initialValue: [
+        {
+          _key: codeBlockKey,
+          _type: 'code-block',
+          lines: [
+            {
+              _key: codeLineKey,
+              _type: 'block',
+              children: [
+                {_key: codeSpanKey, _type: 'span', text: '', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+        {
+          _key: calloutKey,
+          _type: 'callout',
+          content: [
+            {
+              _key: calloutBlockKey,
+              _type: 'block',
+              children: [
+                {_key: calloutSpanKey, _type: 'span', text: '', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+        {
+          _key: tableKey,
+          _type: 'table',
+          rows: [
+            {
+              _key: rowKey,
+              _type: 'row',
+              cells: [
+                {
+                  _key: cell1Key,
+                  _type: 'cell',
+                  content: [
+                    {
+                      _key: cell1BlockKey,
+                      _type: 'block',
+                      children: [
+                        {
+                          _key: cell1SpanKey,
+                          _type: 'span',
+                          text: '',
+                          marks: [],
+                        },
+                      ],
+                      markDefs: [],
+                      style: 'normal',
+                    },
+                  ],
+                },
+                {
+                  _key: cell2Key,
+                  _type: 'cell',
+                  content: [
+                    {
+                      _key: cell2BlockKey,
+                      _type: 'block',
+                      children: [
+                        {
+                          _key: cell2SpanKey,
+                          _type: 'span',
+                          text: '',
+                          marks: [],
+                        },
+                      ],
+                      markDefs: [],
+                      style: 'normal',
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      children: <ContainerPlugin containers={containers} />,
+    })
+
+    await userEvent.click(locator)
+    await userEvent.keyboard('{Control>}a{/Control}')
+    await userEvent.keyboard('{Delete}')
 
     expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |')
   })
