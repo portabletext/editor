@@ -524,16 +524,6 @@ export const playgroundSchemaDefinition = defineSchema({
   ],
 })
 
-export const ImageSchema = z.object({
-  schemaType: z.object({
-    name: z.literal('image'),
-  }),
-  value: z.object({
-    src: z.string(),
-    alt: z.string().optional(),
-  }),
-})
-
 export const CommentAnnotationSchema = z.object({
   schemaType: z.object({
     name: z.literal('comment'),
