@@ -11,6 +11,7 @@ import {isAtTheStartOfBlock} from '../selectors/selector.is-at-the-start-of-bloc
 import {isSelectionCollapsed} from '../selectors/selector.is-selection-collapsed'
 import {isSelectionExpanded} from '../selectors/selector.is-selection-expanded'
 import type {Path} from '../slate/interfaces/path'
+import {getPathSubSchema} from '../traversal/get-path-sub-schema'
 import {getBlockEndPoint} from '../utils/util.get-block-end-point'
 import {getBlockStartPoint} from '../utils/util.get-block-start-point'
 import {getSelectionEndPoint} from '../utils/util.get-selection-end-point'
@@ -75,17 +76,20 @@ const breakingAtTheStartOfTextBlock = defineBehavior({
     }
 
     const focusSpan = getFocusSpan(snapshot)
+    const focusSubSchema = focusSpan
+      ? getPathSubSchema(snapshot, focusSpan.path)
+      : snapshot.context.schema
 
     const focusDecorators = focusSpan?.node.marks?.filter(
       (mark) =>
-        snapshot.context.schema.decorators.some(
+        focusSubSchema.decorators.some(
           (decorator) => decorator.name === mark,
         ) ?? [],
     )
     const focusAnnotations =
       focusSpan?.node.marks?.filter(
         (mark) =>
-          !snapshot.context.schema.decorators.some(
+          !focusSubSchema.decorators.some(
             (decorator) => decorator.name === mark,
           ),
       ) ?? []

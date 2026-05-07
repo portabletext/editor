@@ -1,5 +1,6 @@
 import {getSelectedTextBlocks} from '../selectors/selector.get-selected-text-blocks'
 import {isActiveListItem} from '../selectors/selector.is-active-list-item'
+import {getPathSubSchema} from '../traversal/get-path-sub-schema'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
@@ -7,15 +8,16 @@ export const abstractListItemBehaviors = [
   defineBehavior({
     on: 'list item.add',
     guard: ({snapshot, event}) => {
-      if (
-        !snapshot.context.schema.lists.some(
-          (list) => list.name === event.listItem,
-        )
-      ) {
+      const selectedTextBlocks = getSelectedTextBlocks(snapshot).filter(
+        (block) =>
+          getPathSubSchema(snapshot, block.path).lists.some(
+            (list) => list.name === event.listItem,
+          ),
+      )
+
+      if (selectedTextBlocks.length === 0) {
         return false
       }
-
-      const selectedTextBlocks = getSelectedTextBlocks(snapshot)
 
       return {selectedTextBlocks}
     },

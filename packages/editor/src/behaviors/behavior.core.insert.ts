@@ -2,6 +2,7 @@ import {getActiveAnnotationsMarks} from '../selectors/selector.get-active-annota
 import {getActiveDecorators} from '../selectors/selector.get-active-decorators'
 import {getFocusSpan} from '../selectors/selector.get-focus-span'
 import {getMarkState} from '../selectors/selector.get-mark-state'
+import {getPathSubSchema} from '../traversal/get-path-sub-schema'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
@@ -20,8 +21,9 @@ export const coreInsertBehaviors = [
       const activeAnnotations = getActiveAnnotationsMarks(snapshot)
 
       if (markState && markState.state === 'unchanged') {
+        const focusSubSchema = getPathSubSchema(snapshot, focusSpan.path)
         const markStateDecorators = (markState.marks ?? []).filter((mark) =>
-          snapshot.context.schema.decorators
+          focusSubSchema.decorators
             .map((decorator) => decorator.name)
             .includes(mark),
         )
