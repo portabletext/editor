@@ -1,8 +1,16 @@
+import {compileSchema, defineSchema} from '@portabletext/schema'
 import type {PortableTextBlock} from '@portabletext/schema'
 import {expect, test} from 'vitest'
 import {createTestSnapshot} from '../../test-utils/create-test-snapshot'
 import type {EditorSelection} from '../types/editor'
 import {isActiveDecorator} from './selector.is-active-decorator'
+
+const schema = compileSchema(
+  defineSchema({
+    decorators: [{name: 'strong'}, {name: 'em'}],
+    blockObjects: [{name: 'image'}],
+  }),
+)
 
 test(isActiveDecorator.name, () => {
   function snapshot(
@@ -11,6 +19,7 @@ test(isActiveDecorator.name, () => {
   ) {
     return createTestSnapshot({
       context: {
+        schema,
         value,
         selection,
       },
