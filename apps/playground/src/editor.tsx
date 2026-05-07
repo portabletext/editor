@@ -29,7 +29,6 @@ import {
   CheckIcon,
   CopyIcon,
   FileJsonIcon,
-  LinkIcon,
   MousePointerIcon,
   PencilIcon,
   PencilOffIcon,
@@ -52,7 +51,6 @@ import {MentionPickerPlugin} from './mention-picker'
 import type {EditorActorRef} from './playground-machine'
 import {
   CommentAnnotationSchema,
-  ImageSchema,
   LinkAnnotationSchema,
   playgroundSchemaDefinition,
 } from './playground-schema-definition'
@@ -61,6 +59,7 @@ import {CodeBlockPlugin} from './plugins/plugin.code-block'
 import {CodeEditorPlugin} from './plugins/plugin.code-editor'
 import {FactBoxPlugin} from './plugins/plugin.fact-box'
 import {HtmlDeserializerPlugin} from './plugins/plugin.html-deserializer'
+import {ImagePlugin} from './plugins/plugin.image'
 import {ImageDeserializerPlugin} from './plugins/plugin.image-deserializer'
 import {InlineObjectsPlugin} from './plugins/plugin.inline-objects'
 import {markdownShortcutsPluginProps} from './plugins/plugin.markdown'
@@ -157,6 +156,7 @@ export function Editor(props: {
               {featureFlags.calloutPlugin ? <CalloutPlugin /> : null}
               {featureFlags.factBoxPlugin ? <FactBoxPlugin /> : null}
               {featureFlags.tablePlugin ? <TablePlugin /> : null}
+              <ImagePlugin />
               <InlineObjectsPlugin />
               {featureFlags.emojiPickerPlugin ? <EmojiPickerPlugin /> : null}
               {featureFlags.mentionPickerPlugin ? (
@@ -354,18 +354,6 @@ const breakLineStyle = tv({
   },
 })
 
-const imageStyle = tv({
-  base: 'grid grid-cols-[auto_1fr] my-1 items-start gap-1 border-2 border-gray-300 dark:border-gray-600 rounded text-sm',
-  variants: {
-    selected: {
-      true: 'border-blue-300 dark:border-blue-600',
-    },
-    focused: {
-      true: 'bg-blue-50 dark:bg-blue-900/30',
-    },
-  },
-})
-
 const RenderBlock = (props: BlockRenderProps) => {
   const enableDragHandles = useContext(EditorFeatureFlagsContext).dragHandles
   const editor = useEditor()
@@ -387,48 +375,6 @@ const RenderBlock = (props: BlockRenderProps) => {
             focused: props.focused,
           })}
         />
-      </div>
-    )
-  }
-
-  const image = ImageSchema.safeParse(props).data
-
-  if (image) {
-    children = (
-      <div
-        className={imageStyle({
-          selected: props.selected,
-          focused: props.focused,
-        })}
-      >
-        <div className="bg-gray-100 dark:bg-gray-700 size-20 overflow-clip flex items-center justify-center">
-          <img
-            className="object-scale-down max-w-full"
-            src={image.value.src}
-            alt={image.value.alt ?? ''}
-          />
-        </div>
-        <div className="flex flex-col gap-1 p-1 overflow-hidden">
-          <div className="flex items-center gap-1">
-            <TooltipTrigger>
-              <Button variant="ghost" size="sm">
-                <LinkIcon className="size-3 shrink-0" />
-              </Button>
-              <Tooltip className="max-w-120">
-                <span className="wrap-anywhere">{image.value.src}</span>
-              </Tooltip>
-            </TooltipTrigger>
-            <span className="text-ellipsis overflow-hidden whitespace-nowrap">
-              {image.value.src}
-            </span>
-          </div>
-          <div className="flex items-center gap-1">
-            <PencilIcon className="size-3 shrink-0" />
-            <span className="text-xs text-gray-500 dark:text-gray-400">
-              {image.value.alt}
-            </span>
-          </div>
-        </div>
       </div>
     )
   }
