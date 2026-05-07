@@ -120,17 +120,23 @@ function sanitySchemaTypeToSchema(
     annotations: annotations.map((annotation) => ({
       name: annotation.name,
       title: annotation.title,
-      fields: annotation.fields.map(sanityFieldToSchemaField),
+      fields: annotation.fields.map((field) =>
+        sanityFieldToSchemaField(field, new Set()),
+      ),
     })),
     blockObjects: blockObjectTypes.map((blockObject) => ({
       name: blockObject.name,
       title: blockObject.title,
-      fields: blockObject.fields.map(sanityFieldToSchemaField),
+      fields: blockObject.fields.map((field) =>
+        sanityFieldToSchemaField(field, new Set([blockObject.name])),
+      ),
     })),
     inlineObjects: inlineObjectTypes.map((inlineObject) => ({
       name: inlineObject.name,
       title: inlineObject.title,
-      fields: inlineObject.fields.map(sanityFieldToSchemaField),
+      fields: inlineObject.fields.map((field) =>
+        sanityFieldToSchemaField(field, new Set([inlineObject.name])),
+      ),
     })),
   }
 }
@@ -147,17 +153,24 @@ function safeGetOf(schemaType: SchemaType): readonly SchemaType[] | undefined {
   return undefined
 }
 
-function sanityFieldToSchemaField(field: {
-  name: string
-  type: SchemaType
-}): FieldDefinition {
+function sanityFieldToSchemaField(
+  field: {
+    name: string
+    type: SchemaType
+  },
+  ancestorNames: ReadonlySet<string>,
+): FieldDefinition {
   if (field.type.jsonType === 'array') {
     const ofMembers = safeGetOf(field.type)
     return {
       name: field.name,
       type: 'array',
       ...(field.type.title ? {title: field.type.title} : {}),
-      of: ofMembers ? ofMembers.map(sanityOfMemberToOfDefinition) : [],
+      of: ofMembers
+        ? ofMembers.map((member) =>
+            sanityOfMemberToOfDefinition(member, ancestorNames),
+          )
+        : [],
     }
   }
 
@@ -168,7 +181,10 @@ function sanityFieldToSchemaField(field: {
   }
 }
 
-function sanityOfMemberToOfDefinition(memberType: SchemaType): OfDefinition {
+function sanityOfMemberToOfDefinition(
+  memberType: SchemaType,
+  ancestorNames: ReadonlySet<string>,
+): OfDefinition {
   if (findBlockType(memberType)) {
     return {type: 'block'}
   }
@@ -184,10 +200,15 @@ function sanityOfMemberToOfDefinition(memberType: SchemaType): OfDefinition {
     'fields' in memberType &&
     Array.isArray((memberType as ObjectSchemaType).fields)
   ) {
+    if (ancestorNames.has(memberType.name)) {
+      return result
+    }
+    const nextAncestors = new Set(ancestorNames)
+    nextAncestors.add(memberType.name)
     return {
       ...result,
-      fields: (memberType as ObjectSchemaType).fields.map(
-        sanityFieldToSchemaField,
+      fields: (memberType as ObjectSchemaType).fields.map((field) =>
+        sanityFieldToSchemaField(field, nextAncestors),
       ),
     }
   }

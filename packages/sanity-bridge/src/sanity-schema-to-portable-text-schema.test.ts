@@ -303,4 +303,243 @@ describe(sanitySchemaToPortableTextSchema.name, () => {
       },
     ])
   })
+
+  test('compiled schema with a deep non-recursive structure unfolds fully', () => {
+    // table-like nesting: table -> row -> cell -> block
+    const cellType = defineType({
+      type: 'object',
+      name: 'cell',
+      fields: [
+        defineField({
+          type: 'array',
+          name: 'content',
+          of: [defineArrayMember({type: 'block', name: 'block'})],
+        }),
+      ],
+    })
+    const rowType = defineType({
+      type: 'object',
+      name: 'row',
+      fields: [
+        defineField({
+          type: 'array',
+          name: 'cells',
+          of: [defineArrayMember({type: 'cell'})],
+        }),
+      ],
+    })
+    const tableType = defineType({
+      type: 'object',
+      name: 'table',
+      fields: [
+        defineField({
+          type: 'array',
+          name: 'rows',
+          of: [defineArrayMember({type: 'row'})],
+        }),
+      ],
+    })
+    const portableTextType = defineType({
+      type: 'array',
+      name: 'body',
+      of: [
+        defineArrayMember({type: 'block', name: 'block'}),
+        defineArrayMember({type: 'table'}),
+      ],
+    })
+
+    const sanitySchema = SanitySchema.compile({
+      types: [portableTextType, tableType, rowType, cellType],
+    })
+
+    const schema = sanitySchemaToPortableTextSchema(sanitySchema.get('body'))
+    const table = schema.blockObjects?.find((b) => b.name === 'table')
+
+    expect(table?.fields).toEqual([
+      {
+        name: 'rows',
+        type: 'array',
+        title: 'Rows',
+        of: [
+          {
+            type: 'row',
+            name: 'row',
+            title: 'Row',
+            fields: [
+              {
+                name: 'cells',
+                type: 'array',
+                title: 'Cells',
+                of: [
+                  {
+                    type: 'cell',
+                    name: 'cell',
+                    title: 'Cell',
+                    fields: [
+                      {
+                        name: 'content',
+                        type: 'array',
+                        title: 'Content',
+                        of: [{type: 'block'}],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ])
+  })
+
+  test('compiled schema with a deeply nested table that contains itself in cells unfolds until the recursion is detected', () => {
+    const cellType = defineType({
+      type: 'object',
+      name: 'cell',
+      fields: [
+        defineField({
+          type: 'array',
+          name: 'content',
+          of: [
+            defineArrayMember({type: 'block', name: 'block'}),
+            defineArrayMember({type: 'table'}),
+          ],
+        }),
+      ],
+    })
+    const rowType = defineType({
+      type: 'object',
+      name: 'row',
+      fields: [
+        defineField({
+          type: 'array',
+          name: 'cells',
+          of: [defineArrayMember({type: 'cell'})],
+        }),
+      ],
+    })
+    const tableType = defineType({
+      type: 'object',
+      name: 'table',
+      fields: [
+        defineField({
+          type: 'array',
+          name: 'rows',
+          of: [defineArrayMember({type: 'row'})],
+        }),
+      ],
+    })
+    const portableTextType = defineType({
+      type: 'array',
+      name: 'body',
+      of: [
+        defineArrayMember({type: 'block', name: 'block'}),
+        defineArrayMember({type: 'table'}),
+      ],
+    })
+
+    const sanitySchema = SanitySchema.compile({
+      types: [portableTextType, tableType, rowType, cellType],
+    })
+
+    const schema = sanitySchemaToPortableTextSchema(sanitySchema.get('body'))
+    const table = schema.blockObjects?.find((b) => b.name === 'table')
+
+    // The nested `table` member inside a cell's `content` is detected as
+    // a cycle (its name is already an ancestor on the walk) and emitted
+    // as a stub `{type, name, title}` without fields. Everything before
+    // that point unfolds fully.
+    expect(table?.fields).toEqual([
+      {
+        name: 'rows',
+        type: 'array',
+        title: 'Rows',
+        of: [
+          {
+            type: 'row',
+            name: 'row',
+            title: 'Row',
+            fields: [
+              {
+                name: 'cells',
+                type: 'array',
+                title: 'Cells',
+                of: [
+                  {
+                    type: 'cell',
+                    name: 'cell',
+                    title: 'Cell',
+                    fields: [
+                      {
+                        name: 'content',
+                        type: 'array',
+                        title: 'Content',
+                        of: [
+                          {type: 'block'},
+                          {type: 'table', name: 'table', title: 'Table'},
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ])
+  })
+
+  test('compiled schema with a recursive object type unfolds until the recursion is detected', () => {
+    // canvas's `canvasAiTask` shape: a block-object whose `input` field is
+    // an array that contains the same type as a member, so the hydrated
+    // sanity schema is a cycle.
+    const aiTaskType = defineType({
+      type: 'object',
+      name: 'aiTask',
+      fields: [
+        defineField({name: 'instruction', type: 'string'}),
+        defineField({
+          type: 'array',
+          name: 'input',
+          of: [
+            defineArrayMember({type: 'block', name: 'block'}),
+            defineArrayMember({type: 'aiTask'}),
+          ],
+        }),
+      ],
+    })
+    const portableTextType = defineType({
+      type: 'array',
+      name: 'body',
+      of: [
+        defineArrayMember({type: 'block', name: 'block'}),
+        defineArrayMember({type: 'aiTask'}),
+      ],
+    })
+
+    const sanitySchema = SanitySchema.compile({
+      types: [portableTextType, aiTaskType],
+    })
+
+    const schema = sanitySchemaToPortableTextSchema(sanitySchema.get('body'))
+    const aiTask = schema.blockObjects?.find((b) => b.name === 'aiTask')
+
+    // The nested `aiTask` reference inside `input.of` is detected as a
+    // cycle (its name is already an ancestor on the walk) and emitted
+    // as a stub `{type, name, title}` without fields.
+    expect(aiTask?.fields).toEqual([
+      {name: 'instruction', type: 'string', title: 'Instruction'},
+      {
+        name: 'input',
+        type: 'array',
+        title: 'Input',
+        of: [
+          {type: 'block'},
+          {type: 'aiTask', name: 'aiTask', title: 'Ai Task'},
+        ],
+      },
+    ])
+  })
 })
