@@ -298,6 +298,7 @@ const length = useSyncExternalStore(
 For rxjs pipelines, wrap the editor in a plain `Observable`:
 
 ```ts
+import type {EditorSnapshot} from '@portabletext/editor'
 import {Observable} from 'rxjs'
 import {distinctUntilChanged, map} from 'rxjs/operators'
 
@@ -453,12 +454,14 @@ const decorators = subSchema.decorators.map((d) => d.name)
 If you maintain a plugin that reads the editor's schema to drive its behavior, the v7 pattern is to read the focus path's sub-schema instead.
 
 ```ts
+// v6
+const decorators = snapshot.context.schema.decorators
+```
+
+```ts
 // v7
 import {getFocusTextBlock} from '@portabletext/editor/selectors'
 import {getPathSubSchema} from '@portabletext/editor/traversal'
-
-// v6
-const decorators = snapshot.context.schema.decorators
 
 const focusTextBlock = getFocusTextBlock(snapshot)
 const subSchema = focusTextBlock
