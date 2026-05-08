@@ -352,7 +352,7 @@ This took nearly three months of full-time work. None of it shipped a feature on
 
 If everything changed underneath, why is the migration small? Because the rebuild was deliberate about preserving the surface that today's apps target. The DOM your CSS selectors hit on existing flat content (`data-slate-string`, `pt-block`, `data-block-type`) is unchanged. Patches are unchanged — the editor produces _more_ of them now, more correctly, because operations finally align 1:1 with the patch protocol. Render callbacks fire with the same arguments. Plugins register the same way. Behaviors match on the same events.
 
-The DOM _inside_ container wrappers uses a different shape — see [The DOM, owned](#the-dom-owned). Existing flat documents have no inside-container DOM today, so this is migration-relevant only when you start using containers. If you have CSS targeting `data-slate-*` on flat content, it keeps working in v7. Consider migrating to `data-block-*` and `pt-*` selectors, or to attributes you control through your render callbacks. The Slate-named attributes are an implementation detail we'd like to stop carrying eventually.
+The DOM _inside_ container wrappers uses a different shape — see [The DOM, owned](#the-dom-owned). Existing flat documents have no inside-container DOM today, so this is migration-relevant only when you start using containers. If you have CSS targeting `data-slate-*` on flat content, it keeps working in v7. Consider migrating to `data-pt-*` selectors, or to attributes you control through your render callbacks. The Slate-named attributes are an implementation detail we'd like to stop carrying eventually.
 
 What changed is what happens _between_ those surfaces.
 
