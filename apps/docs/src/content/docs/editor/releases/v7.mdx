@@ -394,12 +394,14 @@ This cascades into 11 behavior events whose `at` field is now `Path`:
 If you destructure path tuples or annotate intermediate variables with the narrower types, replace them:
 
 ```ts
-// v7
-import {isKeyedSegment} from '@portabletext/editor/utils'
-
 // v6
 const [blockSegment, , childSegment] = path
 const blockKey = blockSegment._key
+```
+
+```ts
+// v7
+import {isKeyedSegment} from '@portabletext/editor/utils'
 
 const blockSegment = path.at(0)
 const childSegment = path.at(-1)
