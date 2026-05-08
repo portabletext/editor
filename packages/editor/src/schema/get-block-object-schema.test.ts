@@ -46,14 +46,16 @@ describe(getBlockObjectSchema.name, () => {
                 type: 'array',
                 of: [
                   {
-                    type: 'row',
+                    type: 'object',
+                    name: 'row',
                     fields: [
                       {
                         name: 'cells',
                         type: 'array',
                         of: [
                           {
-                            type: 'cell',
+                            type: 'object',
+                            name: 'cell',
                             fields: [
                               {
                                 name: 'content',

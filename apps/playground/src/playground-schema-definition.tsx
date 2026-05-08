@@ -213,14 +213,16 @@ export const playgroundSchemaDefinition = defineSchema({
               ],
             },
             {
-              type: 'image',
+              type: 'object',
+              name: 'image',
               fields: [
                 {name: 'src', title: 'Src', type: 'string'},
                 {name: 'alt', title: 'Alt text', type: 'string'},
               ],
             },
             {
-              type: 'callout',
+              type: 'object',
+              name: 'callout',
               fields: [
                 {
                   name: 'content',
@@ -264,7 +266,8 @@ export const playgroundSchemaDefinition = defineSchema({
                       ],
                     },
                     {
-                      type: 'image',
+                      type: 'object',
+                      name: 'image',
                       fields: [
                         {name: 'src', title: 'Src', type: 'string'},
                         {name: 'alt', title: 'Alt text', type: 'string'},
@@ -275,7 +278,8 @@ export const playgroundSchemaDefinition = defineSchema({
               ],
             },
             {
-              type: 'code-block',
+              type: 'object',
+              name: 'code-block',
               fields: [
                 {
                   name: 'lines',
@@ -351,14 +355,16 @@ export const playgroundSchemaDefinition = defineSchema({
               ],
             },
             {
-              type: 'image',
+              type: 'object',
+              name: 'image',
               fields: [
                 {name: 'src', title: 'Src', type: 'string'},
                 {name: 'alt', title: 'Alt text', type: 'string'},
               ],
             },
             {
-              type: 'callout',
+              type: 'object',
+              name: 'callout',
               fields: [
                 {
                   name: 'content',
@@ -403,7 +409,8 @@ export const playgroundSchemaDefinition = defineSchema({
           type: 'array',
           of: [
             {
-              type: 'row',
+              type: 'object',
+              name: 'row',
               fields: [
                 {
                   name: 'cells',
@@ -411,7 +418,8 @@ export const playgroundSchemaDefinition = defineSchema({
                   type: 'array',
                   of: [
                     {
-                      type: 'cell',
+                      type: 'object',
+                      name: 'cell',
                       fields: [
                         {
                           name: 'content',
@@ -442,7 +450,8 @@ export const playgroundSchemaDefinition = defineSchema({
                               lists: [],
                             },
                             {
-                              type: 'callout',
+                              type: 'object',
+                              name: 'callout',
                               fields: [
                                 {
                                   name: 'content',
@@ -483,7 +492,8 @@ export const playgroundSchemaDefinition = defineSchema({
                               ],
                             },
                             {
-                              type: 'image',
+                              type: 'object',
+                              name: 'image',
                               fields: [
                                 {name: 'src', title: 'Src', type: 'string'},
                                 {

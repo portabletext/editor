@@ -14,12 +14,17 @@ describe('defineSchema deep inference', () => {
               of: [
                 {type: 'block'},
                 {
-                  type: 'callout',
+                  type: 'object',
+                  name: 'callout',
                   fields: [
                     {name: 'content', type: 'array', of: [{type: 'block'}]},
                   ],
                 },
-                {type: 'image', fields: [{name: 'src', type: 'string'}]},
+                {
+                  type: 'object',
+                  name: 'image',
+                  fields: [{name: 'src', type: 'string'}],
+                },
               ],
             },
           ],
@@ -40,14 +45,16 @@ describe('defineSchema deep inference', () => {
               type: 'array',
               of: [
                 {
-                  type: 'row',
+                  type: 'object',
+                  name: 'row',
                   fields: [
                     {
                       name: 'cells',
                       type: 'array',
                       of: [
                         {
-                          type: 'cell',
+                          type: 'object',
+                          name: 'cell',
                           fields: [
                             {
                               name: 'content',
@@ -55,7 +62,8 @@ describe('defineSchema deep inference', () => {
                               of: [
                                 {type: 'block'},
                                 {
-                                  type: 'callout',
+                                  type: 'object',
+                                  name: 'callout',
                                   fields: [
                                     {
                                       name: 'content',
@@ -65,7 +73,8 @@ describe('defineSchema deep inference', () => {
                                   ],
                                 },
                                 {
-                                  type: 'image',
+                                  type: 'object',
+                                  name: 'image',
                                   fields: [{name: 'src', type: 'string'}],
                                 },
                               ],
@@ -96,14 +105,16 @@ describe('defineSchema deep inference', () => {
               type: 'array',
               of: [
                 {
-                  type: 'row',
+                  type: 'object',
+                  name: 'row',
                   fields: [
                     {
                       name: 'cells',
                       type: 'array',
                       of: [
                         {
-                          type: 'cell',
+                          type: 'object',
+                          name: 'cell',
                           fields: [
                             {
                               name: 'content',
@@ -122,7 +133,8 @@ describe('defineSchema deep inference', () => {
                                   lists: [],
                                 },
                                 {
-                                  type: 'callout',
+                                  type: 'object',
+                                  name: 'callout',
                                   fields: [
                                     {
                                       name: 'content',
@@ -147,7 +159,8 @@ describe('defineSchema deep inference', () => {
                                   ],
                                 },
                                 {
-                                  type: 'image',
+                                  type: 'object',
+                                  name: 'image',
                                   fields: [{name: 'src', type: 'string'}],
                                 },
                               ],

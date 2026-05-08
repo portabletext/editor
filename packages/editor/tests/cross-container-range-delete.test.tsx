@@ -32,14 +32,16 @@ const schemaDefinition = defineSchema({
           type: 'array',
           of: [
             {
-              type: 'row',
+              type: 'object',
+              name: 'row',
               fields: [
                 {
                   name: 'cells',
                   type: 'array',
                   of: [
                     {
-                      type: 'cell',
+                      type: 'object',
+                      name: 'cell',
                       fields: [
                         {
                           name: 'content',
@@ -948,14 +950,16 @@ const tableSchemaDefinition = defineSchema({
           type: 'array',
           of: [
             {
-              type: 'row',
+              type: 'object',
+              name: 'row',
               fields: [
                 {
                   name: 'cells',
                   type: 'array',
                   of: [
                     {
-                      type: 'cell',
+                      type: 'object',
+                      name: 'cell',
                       fields: [
                         {
                           name: 'content',
@@ -963,7 +967,8 @@ const tableSchemaDefinition = defineSchema({
                           of: [
                             {type: 'block'},
                             {
-                              type: 'callout',
+                              type: 'object',
+                              name: 'callout',
                               fields: [
                                 {
                                   name: 'content',

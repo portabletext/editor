@@ -43,7 +43,8 @@ const schemaDefinition = defineSchema({
             // It declares 'href' and 'title'. Used to verify that
             // `block.set` field filtering uses the path's sub-schema.
             {
-              type: 'embed-card',
+              type: 'object',
+              name: 'embed-card',
               fields: [
                 {name: 'href', type: 'string'},
                 {name: 'title', type: 'string'},

@@ -3,6 +3,7 @@ import type {EditorSchema} from '../editor/editor-schema'
 import type {ContainerConfig} from '../renderers/renderer.types'
 import {compareSpecificity} from '../scope/compare-specificity'
 import {matchScope} from '../scope/match-scope'
+import {parseScope} from '../scope/parse-scope'
 
 export type ChildArrayField = FieldDefinition & {
   type: 'array'
@@ -91,18 +92,29 @@ export function resolveContainers(
  * Returns `undefined` when the registration is invalid: unknown type in
  * scope, missing field, non-array field, or primitive-only array field.
  * Warns on primitive-only fields.
+ *
+ * Picks the most-specific candidate whose chain matches the scope. This
+ * matters when a type is declared inline at multiple positions (e.g.
+ * `list` at root AND inline inside `callout`) - the candidate at
+ * `callout.list` carries the inline shape, while the candidate at `list`
+ * carries the root shape.
  */
 export function resolveContainerField(
   schema: EditorSchema,
   scope: string,
   fieldName: string,
 ): ChildArrayField | undefined {
+  const parsedScope = parseScope(scope)
+  if (!parsedScope) {
+    return undefined
+  }
   const candidates = discoverCandidates(schema)
+  let best: {chain: ReadonlyArray<string>; field: ChildArrayField} | undefined
   for (const candidate of candidates) {
     if (candidate.field.name !== fieldName) {
       continue
     }
-    if (candidate.chain[candidate.chain.length - 1] !== terminalTypeOf(scope)) {
+    if (!matchScope(parsedScope, candidate.chain)) {
       continue
     }
     if (containsOnlyPrimitiveTypes(candidate.field)) {
@@ -111,19 +123,12 @@ export function resolveContainerField(
       )
       return undefined
     }
-    return candidate.field
+    // Among matching candidates, prefer the most specific (longest chain).
+    if (!best || candidate.chain.length > best.chain.length) {
+      best = candidate
+    }
   }
-  return undefined
-}
-
-function terminalTypeOf(scope: string): string {
-  const withoutAnchor = scope.startsWith('$..')
-    ? scope.slice(3)
-    : scope.startsWith('$.')
-      ? scope.slice(2)
-      : scope
-  const segments = withoutAnchor.split('.')
-  return segments[segments.length - 1] ?? ''
+  return best?.field
 }
 
 /**
@@ -148,10 +153,36 @@ function discoverCandidates(schema: EditorSchema): Array<Candidate> {
       blockObject.fields,
       [blockObject.name],
       candidates,
+      new Map([[blockObject.name, blockObject.fields]]),
     )
   }
 
   return candidates
+}
+
+/**
+ * Resolve a bare reference's fields by name. Looks up the ancestor chain
+ * first (so types declared inline by an ancestor can be referenced from a
+ * descendant), then falls back to the schema's root `blockObjects`.
+ *
+ * Returns `undefined` when no match is found.
+ */
+function resolveReferenceFields(
+  schema: EditorSchema,
+  name: string,
+  ancestorFields: ReadonlyMap<string, ReadonlyArray<FieldDefinition>>,
+): ReadonlyArray<FieldDefinition> | undefined {
+  const ancestorMatch = ancestorFields.get(name)
+  if (ancestorMatch) {
+    return ancestorMatch
+  }
+  const rootMatch = schema.blockObjects.find(
+    (blockObject) => blockObject.name === name,
+  )
+  if (rootMatch && 'fields' in rootMatch && rootMatch.fields) {
+    return rootMatch.fields
+  }
+  return undefined
 }
 
 function walkTypeForCandidates(
@@ -159,6 +190,7 @@ function walkTypeForCandidates(
   fields: ReadonlyArray<FieldDefinition>,
   chain: Array<string>,
   out: Array<Candidate>,
+  ancestorFields: ReadonlyMap<string, ReadonlyArray<FieldDefinition>>,
 ): void {
   for (const field of fields) {
     if (!isChildArrayField(field)) {
@@ -182,14 +214,58 @@ function walkTypeForCandidates(
         })
         continue
       }
-      if ('fields' in member && member.fields) {
+      if (member.type === 'object' && 'fields' in member && member.fields) {
+        // Inline declaration: `{type: 'object', name: 'X', fields: [...]}`.
+        // The segment name is `member.name`, not `'object'`.
+        if (!('name' in member) || !member.name) {
+          continue
+        }
+        if (ancestorFields.has(member.name)) {
+          continue
+        }
+        const nextAncestors = new Map(ancestorFields)
+        nextAncestors.set(member.name, member.fields)
         walkTypeForCandidates(
           schema,
           member.fields,
-          [...chain, member.type],
+          [...chain, member.name],
           out,
+          nextAncestors,
         )
+        continue
       }
+      // Bare reference: resolve `member.type` against ancestors first
+      // (so types declared inline by an ancestor are referenceable),
+      // then root `blockObjects`.
+      const referencedFields = resolveReferenceFields(
+        schema,
+        member.type,
+        ancestorFields,
+      )
+      if (!referencedFields) {
+        continue
+      }
+      if (ancestorFields.has(member.type)) {
+        // Cycle: emit the reference's array-field candidates at this
+        // depth without recursing further. `..` segments in scopes cover
+        // any deeper depths.
+        for (const refField of referencedFields) {
+          if (!isChildArrayField(refField)) {
+            continue
+          }
+          out.push({chain: [...chain, member.type], field: refField})
+        }
+        continue
+      }
+      const nextAncestors = new Map(ancestorFields)
+      nextAncestors.set(member.type, referencedFields)
+      walkTypeForCandidates(
+        schema,
+        referencedFields,
+        [...chain, member.type],
+        out,
+        nextAncestors,
+      )
     }
   }
 }

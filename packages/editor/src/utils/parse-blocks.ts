@@ -2,6 +2,7 @@ import {
   getSubSchema,
   isSpan,
   isTextBlock,
+  type FieldDefinition,
   type OfDefinition,
   type PortableTextBlock,
   type PortableTextListBlock,
@@ -588,6 +589,52 @@ export function parseAnnotation({
 }
 
 /**
+ * Resolve an `of` member against a runtime `_type`. Returns the schema-type
+ * to use for parsing the item, or `undefined` if no member matches.
+ *
+ * Three forms (one branch each):
+ * - Inline declaration `{type: 'object', name: 'X', fields: [...]}` -- name
+ *   matches `_type`, fields are inline.
+ * - Reference `{type: 'X'}` -- looks up in the ancestor chain first
+ *   (inline-declared types are visible to descendants), then in the schema's
+ *   root `blockObjects`. Mirrors `resolve-containers.ts`'s reference
+ *   resolution.
+ * - `{type: 'block'}` -- not a non-PTE object member, returns `undefined`.
+ */
+function resolveOfMember(
+  of: ReadonlyArray<OfDefinition>,
+  typeName: string,
+  schema: Schema,
+  ancestorFields: ReadonlyMap<string, ReadonlyArray<FieldDefinition>>,
+): {name: string; fields: ReadonlyArray<FieldDefinition>} | undefined {
+  for (const member of of) {
+    if (member.type === 'block') {
+      continue
+    }
+    if (member.type === 'object' && 'name' in member && member.name) {
+      if (member.name === typeName && 'fields' in member && member.fields) {
+        return {name: member.name, fields: member.fields}
+      }
+      continue
+    }
+    if (member.type === typeName) {
+      const ancestorMatch = ancestorFields.get(typeName)
+      if (ancestorMatch) {
+        return {name: typeName, fields: ancestorMatch}
+      }
+      const rootMatch = schema.blockObjects.find(
+        (blockObject) => blockObject.name === typeName,
+      )
+      if (rootMatch && 'fields' in rootMatch && rootMatch.fields) {
+        return {name: rootMatch.name, fields: rootMatch.fields}
+      }
+      return undefined
+    }
+  }
+  return undefined
+}
+
+/**
  * Parse an object against a `{name, fields}` schema type. Validates top-level
  * fields and recurses into any array field whose `of` contains a block-like
  * member -- parsing the nested blocks against a child `Schema` built from
@@ -598,6 +645,7 @@ function parseObject({
   schema,
   keyGenerator,
   schemaType,
+  ancestorFields,
   options,
 }: {
   object: TypedObject
@@ -605,12 +653,9 @@ function parseObject({
   keyGenerator: () => string
   schemaType: {
     name: string
-    fields: ReadonlyArray<{
-      name: string
-      type: string
-      of?: ReadonlyArray<OfDefinition>
-    }>
+    fields: ReadonlyArray<FieldDefinition>
   }
+  ancestorFields?: ReadonlyMap<string, ReadonlyArray<FieldDefinition>>
   options: {validateFields: boolean}
 }): PortableTextObject {
   const {_key, ...customFields} = object
@@ -618,6 +663,9 @@ function parseObject({
   const fieldsByName = new Map(
     schemaType.fields.map((field) => [field.name, field]),
   )
+
+  const nextAncestors = new Map(ancestorFields ?? [])
+  nextAncestors.set(schemaType.name, schemaType.fields)
 
   const values: Record<string, unknown> = {}
 
@@ -642,6 +690,7 @@ function parseObject({
         keyGenerator,
         of: field.of,
         value,
+        ancestorFields: nextAncestors,
         options,
       })
       continue
@@ -661,22 +710,25 @@ function parseObject({
  * Parse the value of an array field whose `of` declares what's allowed at
  * that position. If any member is `{type: 'block'}`, the field is a PTE
  * container: recurse via `parseBlocks` in a child `Schema`. Otherwise it
- * is an opaque array of non-PTE members (rows, cells, scalars, objects that
- * happen to sit between containers and the actual text blocks) -- recurse
- * into each member object so nested PTE arrays further down are still
- * reached.
+ * is a structural array of non-PTE members (rows, cells, scalars, objects
+ * that sit between containers and the actual text blocks) -- recurse into
+ * each typed-object member so deeper PTE arrays still get parsed. The
+ * ancestor-fields map carries inline type declarations down to descendants
+ * so bare references like `{type: 'list'}` resolve to the inline shape.
  */
 function parseContainerFieldValue({
   schema,
   keyGenerator,
   of,
   value,
+  ancestorFields,
   options,
 }: {
   schema: Schema
   keyGenerator: () => string
   of: ReadonlyArray<OfDefinition>
   value: ReadonlyArray<unknown>
+  ancestorFields: ReadonlyMap<string, ReadonlyArray<FieldDefinition>>
   options: {validateFields: boolean; normalize?: boolean}
 }): Array<unknown> {
   const hasBlockMember = of.some((member) => member.type === 'block')
@@ -698,16 +750,12 @@ function parseContainerFieldValue({
     })
   }
 
-  // Non-PTE array: recurse into object members so any deeper PTE arrays
-  // (e.g. `table.rows[].cells[].content`) still get parsed.
   return value.flatMap((item) => {
     if (!isTypedObject(item)) {
       return [item]
     }
-    const member = of.find(
-      (entry) => entry.type !== 'block' && entry.type === item._type,
-    )
-    if (!member || member.type === 'block' || !('fields' in member)) {
+    const schemaType = resolveOfMember(of, item._type, schema, ancestorFields)
+    if (!schemaType) {
       return [item]
     }
     return [
@@ -716,13 +764,10 @@ function parseContainerFieldValue({
         schema,
         keyGenerator,
         schemaType: {
-          name: member.type,
-          fields: (member.fields ?? []) as ReadonlyArray<{
-            name: string
-            type: string
-            of?: ReadonlyArray<OfDefinition>
-          }>,
+          name: schemaType.name,
+          fields: schemaType.fields,
         },
+        ancestorFields,
         options,
       }),
     ]
