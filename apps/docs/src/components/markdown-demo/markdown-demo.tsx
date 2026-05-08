@@ -606,7 +606,7 @@ Edit either side. Both stay in sync through \`@portabletext/markdown\`.
 
 ## Lists
 
-Lists are containers in v7. Each item holds editable rich content — text, but also code blocks, callouts, nested lists.
+In v7, you can keep lists flat or declare them as containers. Containers let each item hold editable rich content — text, but also code blocks, callouts, nested lists.
 
 - Bullet item
 - Another bullet, with a code block nested inside:
