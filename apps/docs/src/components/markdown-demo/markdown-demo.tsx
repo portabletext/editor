@@ -152,8 +152,55 @@ const schemaDefinition = defineSchema({
                         },
                       ],
                     },
-                    {type: 'code-block'},
-                    {type: 'callout'},
+                    {
+                      type: 'code-block',
+                      fields: [
+                        {
+                          name: 'lines',
+                          type: 'array',
+                          of: [
+                            {
+                              type: 'block',
+                              styles: [],
+                              decorators: [],
+                              annotations: [],
+                              inlineObjects: [],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                    {
+                      type: 'callout',
+                      fields: [
+                        {name: 'tone', type: 'string'},
+                        {
+                          name: 'content',
+                          type: 'array',
+                          of: [
+                            {
+                              type: 'block',
+                              decorators: [
+                                {name: 'strong'},
+                                {name: 'em'},
+                                {name: 'code'},
+                                {name: 'strike-through'},
+                              ],
+                              styles: [{name: 'normal'}],
+                              annotations: [
+                                {
+                                  name: 'link',
+                                  fields: [
+                                    {name: 'href', type: 'string'},
+                                    {name: 'title', type: 'string'},
+                                  ],
+                                },
+                              ],
+                            },
+                          ],
+                        },
+                      ],
+                    },
                   ],
                 },
               ],
