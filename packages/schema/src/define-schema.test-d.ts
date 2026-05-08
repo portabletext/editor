@@ -1,5 +1,5 @@
-import {defineSchema} from '@portabletext/schema'
 import {describe, expectTypeOf, test} from 'vitest'
+import {defineSchema} from './define-schema'
 
 describe('defineSchema deep inference', () => {
   test('image at depth 1 (sibling of callout)', () => {
