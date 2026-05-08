@@ -102,6 +102,27 @@ export const codeBlockContainer = defineContainer<typeof schemaDefinition>({
   ),
 })
 
+export const htmlContainer = defineContainer<typeof schemaDefinition>({
+  scope: '$..html',
+  field: 'code',
+  render: ({attributes, children}) => (
+    <div
+      {...attributes}
+      className="my-3 overflow-hidden rounded-md border border-gray-200 dark:border-gray-700"
+    >
+      <div
+        className="border-b border-gray-200 bg-gray-50 px-3 py-1 text-gray-500 text-xs uppercase tracking-wide dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
+        contentEditable={false}
+      >
+        html
+      </div>
+      <pre className="overflow-x-auto bg-gray-50 p-3 font-mono text-gray-700 text-sm leading-relaxed dark:bg-gray-800 dark:text-gray-200">
+        {children}
+      </pre>
+    </div>
+  ),
+})
+
 export const listContainer = defineContainer<typeof schemaDefinition>({
   scope: '$..list',
   field: 'items',
@@ -164,6 +185,7 @@ export const allContainers = [
   calloutBlockContainer,
   blockquoteContainer,
   codeBlockContainer,
+  htmlContainer,
   listContainer,
   listItemContainer,
 ]

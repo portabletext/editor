@@ -94,6 +94,45 @@ export const markdownToPortableTextOptions = {
       _type: 'blockquote',
       content: value.content,
     }),
+    // md → pt: split the raw HTML string into one text-block per line so the
+    // editor can edit it as Portable Text inside an `html` container with a
+    // `code` field. Mirrors the fenced code-block shape.
+    html: ({
+      context,
+      value,
+    }: {
+      context: {keyGenerator: () => string}
+      value: {html: string}
+    }) => {
+      const sourceLines = (value.html ?? '').split('\n')
+      // markdown-it emits a trailing empty line; drop it so the editor's
+      // line count matches the visible source.
+      if (
+        sourceLines.length > 0 &&
+        sourceLines[sourceLines.length - 1] === ''
+      ) {
+        sourceLines.pop()
+      }
+      const code = sourceLines.map((text) => ({
+        _type: 'block',
+        _key: context.keyGenerator(),
+        style: 'normal',
+        children: [
+          {
+            _type: 'span',
+            _key: context.keyGenerator(),
+            text,
+            marks: [],
+          },
+        ],
+        markDefs: [],
+      }))
+      return {
+        _key: context.keyGenerator(),
+        _type: 'html',
+        code,
+      }
+    },
   },
 } as const
 
@@ -119,6 +158,18 @@ export const portableTextToMarkdownTypes: NonNullable<
     return `\`\`\`${v.language ?? ''}\n${code}\n\`\`\``
   },
   'horizontal-rule': DefaultHorizontalRuleRenderer,
+  'html': ({value}: {value: unknown}) => {
+    const v = value as {
+      code?: Array<{children?: Array<{_type: string; text?: string}>}>
+    }
+    return (v.code ?? [])
+      .map((line) =>
+        (line.children ?? [])
+          .map((c) => (c._type === 'span' ? (c.text ?? '') : ''))
+          .join(''),
+      )
+      .join('\n')
+  },
   'image': DefaultImageRenderer,
   'list': DefaultListRenderer,
   'table': DefaultTableRenderer,

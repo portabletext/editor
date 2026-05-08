@@ -93,9 +93,26 @@ export const inlineImageLeaf = defineLeaf<typeof schemaDefinition>({
   },
 })
 
+// Raw HTML block. Container holds the source as a single editable text-block
+// inside `code`, mirroring the code-block shape so the user types raw HTML
+// directly without escaping. Markdown matcher (md→pt) splits the html string
+// into one text-block per line; pt→md joins them back.
+//
+// Defined as a defineContainer below; the leaf below renders the inner spans
+// in a monospace style.
+export const htmlSpanLeaf = defineLeaf<typeof schemaDefinition>({
+  scope: '$..html.block.span',
+  render: ({attributes, children}) => (
+    <span {...attributes} className="font-mono">
+      {children}
+    </span>
+  ),
+})
+
 export const allLeafs = [
   codeBlockSpanLeaf,
   horizontalRuleLeaf,
   imageLeaf,
   inlineImageLeaf,
+  htmlSpanLeaf,
 ]

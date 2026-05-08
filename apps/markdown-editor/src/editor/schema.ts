@@ -141,7 +141,24 @@ export const schemaDefinition = defineSchema({
       ],
     },
     {name: 'horizontal-rule'},
-    {name: 'html', fields: [{name: 'html', type: 'string'}]},
+    {
+      name: 'html',
+      fields: [
+        {
+          name: 'code',
+          type: 'array',
+          of: [
+            {
+              type: 'block',
+              styles: [],
+              decorators: [],
+              annotations: [],
+              inlineObjects: [],
+            },
+          ],
+        },
+      ],
+    },
     {
       name: 'image',
       fields: [
