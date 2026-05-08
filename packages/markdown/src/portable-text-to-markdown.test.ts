@@ -1,16 +1,22 @@
-import {compileSchema, defineSchema} from '@portabletext/schema'
+import {
+  compileSchema,
+  defineSchema,
+  type BlockObjectDefinition,
+} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {
   isPortableTextBlock,
   isPortableTextListItemBlock,
 } from '@portabletext/toolkit'
 import {describe, expect, test} from 'vitest'
+import {defaultSchema} from './default-schema'
 import {portableTextToMarkdown} from './from-portable-text/portable-text-to-markdown'
 import {DefaultListItemRenderer} from './from-portable-text/renderers/list-item'
 import {
   DefaultCalloutRenderer,
   DefaultCodeBlockRenderer,
   DefaultImageRenderer,
+  DefaultListRenderer,
   DefaultTableRenderer,
 } from './from-portable-text/renderers/type'
 import {markdownToPortableText} from './to-portable-text/markdown-to-portable-text'
@@ -721,6 +727,113 @@ describe(portableTextToMarkdown.name, () => {
       ].join('\n')
       const portableText = markdownToPortableText(markdown, {keyGenerator})
       expect(portableTextToMarkdown(portableText)).toBe(markdown)
+    })
+  })
+
+  describe('list as container (`types.list`)', () => {
+    const listItemDefinition = {
+      name: 'list-item',
+      fields: [
+        {name: 'checked', type: 'boolean'},
+        {name: 'content', type: 'array'},
+      ],
+    } as const satisfies BlockObjectDefinition
+
+    const listObjectDefinition = {
+      name: 'list',
+      fields: [
+        {name: 'kind', type: 'string'},
+        {name: 'items', type: 'array'},
+      ],
+    } as const satisfies BlockObjectDefinition
+
+    const schemaWithList = compileSchema(
+      defineSchema({
+        ...defaultSchema,
+        blockObjects: [
+          ...defaultSchema.blockObjects,
+          listObjectDefinition,
+          listItemDefinition,
+        ],
+      }),
+    )
+
+    const inOpts = (keyGenerator: () => string) => ({
+      keyGenerator,
+      schema: schemaWithList,
+      types: {
+        list: buildObjectMatcher(listObjectDefinition),
+      },
+    })
+
+    const outOpts = {
+      types: {
+        list: DefaultListRenderer,
+      },
+    }
+
+    test('simple bullet list', () => {
+      const markdown = ['- one', '- two'].join('\n')
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = markdownToPortableText(
+        markdown,
+        inOpts(keyGenerator),
+      )
+      expect(portableTextToMarkdown(portableText, outOpts)).toBe(markdown)
+    })
+
+    test('ordered list', () => {
+      const markdown = ['1. first', '2. second', '3. third'].join('\n')
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = markdownToPortableText(
+        markdown,
+        inOpts(keyGenerator),
+      )
+      expect(portableTextToMarkdown(portableText, outOpts)).toBe(markdown)
+    })
+
+    test('task list with checked state', () => {
+      const markdown = ['- [x] done', '- [ ] todo'].join('\n')
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = markdownToPortableText(
+        markdown,
+        inOpts(keyGenerator),
+      )
+      expect(portableTextToMarkdown(portableText, outOpts)).toBe(markdown)
+    })
+
+    test('nested bullet list', () => {
+      const markdown = ['- one', '  - nested', '- two'].join('\n')
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = markdownToPortableText(
+        markdown,
+        inOpts(keyGenerator),
+      )
+      expect(portableTextToMarkdown(portableText, outOpts)).toBe(markdown)
+    })
+
+    test('list item with code block', () => {
+      const markdown = [
+        '- hello',
+        '',
+        '  ```js',
+        "  console.log('hi')",
+        '  ```',
+        '- world',
+      ].join('\n')
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = markdownToPortableText(
+        markdown,
+        inOpts(keyGenerator),
+      )
+      expect(
+        portableTextToMarkdown(portableText, {
+          types: {
+            list: DefaultListRenderer,
+            code: DefaultCodeBlockRenderer,
+          },
+        }),
+      ).toBe(markdown)
     })
   })
 

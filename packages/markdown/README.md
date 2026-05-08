@@ -216,6 +216,7 @@ Matchers map Markdown concepts to Portable Text types defined in the Schema. Eac
 |            | `image`          | `![alt](src)`           | `'image'`           |
 |            | `html`           | HTML blocks             | `'html'`            |
 |            | `callout`        | `> [!NOTE]`, etc.       | `'callout'`         |
+|            | `list`           | `- ` or `1. ` lists     | `'list'`            |
 
 #### Configuring matchers
 
@@ -263,6 +264,26 @@ markdownToPortableText(markdown, {
   },
 })
 ```
+
+**List matcher:** By default, lists are emitted as flat text blocks with `listItem` and `level` fields, and adjacent blocks form a list at render time. If your schema models lists as a structural block-object instead (a `list` type with an `items` array holding `list-item` objects, each with a `content` array), provide a `types.list` matcher to opt into that shape:
+
+```ts
+markdownToPortableText(markdown, {
+  schema: schemaWithList,
+  types: {
+    list: ({context, value}) => ({
+      _type: 'list',
+      _key: context.keyGenerator(),
+      kind: value.kind, // 'bullet' | 'number' | 'task'
+      items: value.items, // each item: {_type, _key, checked?, content: [...]}
+    }),
+  },
+})
+```
+
+The matcher receives `value.items` already assembled. Each item's `content` array holds whatever blocks the markdown produced inside the item: text blocks, code blocks, callouts, images, even nested lists. `kind` is promoted to `'task'` automatically when any item carries a GFM checkbox (`- [ ]` / `- [x]`); items only carry a `checked` field when the markdown actually has one. If the matcher returns `undefined`, the parser falls back to flat-list parsing for that list.
+
+Without `types.list`, the existing flat-block path runs unchanged.
 
 Matchers receive:
 
@@ -434,6 +455,7 @@ import {
   DefaultHorizontalRuleRenderer,
   DefaultHtmlRenderer,
   DefaultImageRenderer,
+  DefaultListRenderer,
   DefaultTableRenderer,
   portableTextToMarkdown,
 } from '@portabletext/markdown'
@@ -445,19 +467,21 @@ portableTextToMarkdown(blocks, {
     'horizontal-rule': DefaultHorizontalRuleRenderer,
     'html': DefaultHtmlRenderer,
     'image': DefaultImageRenderer,
+    'list': DefaultListRenderer,
     'table': DefaultTableRenderer,
   },
 })
 ```
 
-| Renderer                        | Expected value                                 | Output                 |
-| ------------------------------- | ---------------------------------------------- | ---------------------- |
-| `DefaultCalloutRenderer`        | `{tone: string, content: PortableTextBlock[]}` | `> [!TYPE]\n> content` |
-| `DefaultCodeBlockRenderer`      | `{code: string, language?: string}`            | ` ```lang\ncode\n``` ` |
-| `DefaultHorizontalRuleRenderer` | (no fields required)                           | `---`                  |
-| `DefaultHtmlRenderer`           | `{html: string}`                               | Raw HTML               |
-| `DefaultImageRenderer`          | `{src: string, alt?: string, title?: string}`  | `![alt](src "title")`  |
-| `DefaultTableRenderer`          | `{rows: [...], headerRows?: number}`           | Markdown table         |
+| Renderer                        | Expected value                                         | Output                 |
+| ------------------------------- | ------------------------------------------------------ | ---------------------- |
+| `DefaultCalloutRenderer`        | `{tone: string, content: PortableTextBlock[]}`         | `> [!TYPE]\n> content` |
+| `DefaultCodeBlockRenderer`      | `{code: string, language?: string}`                    | ` ```lang\ncode\n``` ` |
+| `DefaultHorizontalRuleRenderer` | (no fields required)                                   | `---`                  |
+| `DefaultHtmlRenderer`           | `{html: string}`                                       | Raw HTML               |
+| `DefaultImageRenderer`          | `{src: string, alt?: string, title?: string}`          | `![alt](src "title")`  |
+| `DefaultListRenderer`           | `{kind: 'bullet' \| 'number' \| 'task', items: [...]}` | Markdown list          |
+| `DefaultTableRenderer`          | `{rows: [...], headerRows?: number}`                   | Markdown table         |
 
 #### What renderers receive
 
