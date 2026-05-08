@@ -13,6 +13,7 @@ import {defaultSchema} from './default-schema'
 import {portableTextToMarkdown} from './from-portable-text/portable-text-to-markdown'
 import {DefaultListItemRenderer} from './from-portable-text/renderers/list-item'
 import {
+  DefaultBlockquoteObjectRenderer,
   DefaultCalloutRenderer,
   DefaultCodeBlockRenderer,
   DefaultImageRenderer,
@@ -900,6 +901,90 @@ describe(portableTextToMarkdown.name, () => {
         inOpts(keyGenerator),
       )
       expect(portableTextToMarkdown(portableText, outOpts)).toBe(markdown)
+    })
+  })
+
+  describe('blockquote as container (`types.blockquote`)', () => {
+    const blockquoteObjectDefinition = {
+      name: 'blockquote',
+      fields: [{name: 'content', type: 'array'}],
+    } as const satisfies BlockObjectDefinition
+
+    const schemaWithBlockquote = compileSchema(
+      defineSchema({
+        ...defaultSchema,
+        blockObjects: [
+          ...defaultSchema.blockObjects,
+          blockquoteObjectDefinition,
+        ],
+      }),
+    )
+
+    const inOpts = (keyGenerator: () => string) => ({
+      keyGenerator,
+      schema: schemaWithBlockquote,
+      types: {
+        blockquote: buildObjectMatcher(blockquoteObjectDefinition),
+      },
+    })
+
+    const outOpts = {
+      types: {
+        blockquote: DefaultBlockquoteObjectRenderer,
+      },
+    }
+
+    test('simple blockquote', () => {
+      const markdown = '> one'
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = markdownToPortableText(
+        markdown,
+        inOpts(keyGenerator),
+      )
+      expect(portableTextToMarkdown(portableText, outOpts)).toBe(markdown)
+    })
+
+    test('multi-paragraph blockquote', () => {
+      const markdown = ['> one', '>', '> two'].join('\n')
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = markdownToPortableText(
+        markdown,
+        inOpts(keyGenerator),
+      )
+      expect(portableTextToMarkdown(portableText, outOpts)).toBe(markdown)
+    })
+
+    test('nested blockquote', () => {
+      const markdown = ['> outer', '>', '> > inner'].join('\n')
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = markdownToPortableText(
+        markdown,
+        inOpts(keyGenerator),
+      )
+      expect(portableTextToMarkdown(portableText, outOpts)).toBe(markdown)
+    })
+
+    test('blockquote with code block', () => {
+      const markdown = [
+        '> intro',
+        '>',
+        '> ```js',
+        "> console.log('hi')",
+        '> ```',
+      ].join('\n')
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = markdownToPortableText(
+        markdown,
+        inOpts(keyGenerator),
+      )
+      expect(
+        portableTextToMarkdown(portableText, {
+          types: {
+            blockquote: DefaultBlockquoteObjectRenderer,
+            code: DefaultCodeBlockRenderer,
+          },
+        }),
+      ).toBe(markdown)
     })
   })
 

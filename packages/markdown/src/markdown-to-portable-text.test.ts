@@ -5646,4 +5646,308 @@ describe(markdownToPortableText.name, () => {
       ])
     })
   })
+
+  describe('blockquote as container (`types.blockquote`)', () => {
+    const blockquoteObjectDefinition = {
+      name: 'blockquote',
+      fields: [{name: 'content', type: 'array'}],
+    } as const satisfies BlockObjectDefinition
+
+    const schemaWithBlockquote = compileSchema(
+      defineSchema({
+        ...defaultSchema,
+        blockObjects: [
+          ...defaultSchema.blockObjects,
+          blockquoteObjectDefinition,
+        ],
+      }),
+    )
+
+    const getBlockquoteTestOptions = (keyGenerator: () => string) => ({
+      keyGenerator,
+      schema: schemaWithBlockquote,
+      types: {
+        blockquote: buildObjectMatcher(blockquoteObjectDefinition),
+      },
+    })
+
+    test('simple blockquote', () => {
+      const keyGenerator = createTestKeyGenerator()
+      expect(
+        markdownToPortableText('> one', getBlockquoteTestOptions(keyGenerator)),
+      ).toEqual([
+        {
+          _key: 'k2',
+          _type: 'blockquote',
+          content: [
+            {
+              _type: 'block',
+              style: 'normal',
+              children: [
+                {
+                  _type: 'span',
+                  _key: 'k1',
+                  text: 'one',
+                  marks: [],
+                },
+              ],
+              _key: 'k0',
+              markDefs: [],
+            },
+          ],
+        },
+      ])
+    })
+
+    test('multi-paragraph blockquote', () => {
+      const keyGenerator = createTestKeyGenerator()
+      expect(
+        markdownToPortableText(
+          ['> one', '>', '> two'].join('\n'),
+          getBlockquoteTestOptions(keyGenerator),
+        ),
+      ).toEqual([
+        {
+          _key: 'k4',
+          _type: 'blockquote',
+          content: [
+            {
+              _type: 'block',
+              style: 'normal',
+              children: [
+                {
+                  _type: 'span',
+                  _key: 'k1',
+                  text: 'one',
+                  marks: [],
+                },
+              ],
+              _key: 'k0',
+              markDefs: [],
+            },
+            {
+              _type: 'block',
+              style: 'normal',
+              children: [
+                {
+                  _type: 'span',
+                  _key: 'k3',
+                  text: 'two',
+                  marks: [],
+                },
+              ],
+              _key: 'k2',
+              markDefs: [],
+            },
+          ],
+        },
+      ])
+    })
+
+    test('nested blockquote', () => {
+      const keyGenerator = createTestKeyGenerator()
+      expect(
+        markdownToPortableText(
+          ['> outer', '>', '> > inner'].join('\n'),
+          getBlockquoteTestOptions(keyGenerator),
+        ),
+      ).toEqual([
+        {
+          _key: 'k5',
+          _type: 'blockquote',
+          content: [
+            {
+              _type: 'block',
+              style: 'normal',
+              children: [
+                {
+                  _type: 'span',
+                  _key: 'k1',
+                  text: 'outer',
+                  marks: [],
+                },
+              ],
+              _key: 'k0',
+              markDefs: [],
+            },
+            {
+              _key: 'k4',
+              _type: 'blockquote',
+              content: [
+                {
+                  _type: 'block',
+                  style: 'normal',
+                  children: [
+                    {
+                      _type: 'span',
+                      _key: 'k3',
+                      text: 'inner',
+                      marks: [],
+                    },
+                  ],
+                  _key: 'k2',
+                  markDefs: [],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+    })
+
+    test('blockquote with code block', () => {
+      const keyGenerator = createTestKeyGenerator()
+      expect(
+        markdownToPortableText(
+          ['> intro', '>', '> ```js', "> console.log('hi')", '> ```'].join(
+            '\n',
+          ),
+          getBlockquoteTestOptions(keyGenerator),
+        ),
+      ).toEqual([
+        {
+          _key: 'k3',
+          _type: 'blockquote',
+          content: [
+            {
+              _type: 'block',
+              style: 'normal',
+              children: [
+                {
+                  _type: 'span',
+                  _key: 'k1',
+                  text: 'intro',
+                  marks: [],
+                },
+              ],
+              _key: 'k0',
+              markDefs: [],
+            },
+            {
+              _key: 'k2',
+              _type: 'code',
+              language: 'js',
+              code: "console.log('hi')",
+            },
+          ],
+        },
+      ])
+    })
+
+    test('GFM alert is still a callout, not a blockquote', () => {
+      // When both `types.callout` and `types.blockquote` are registered, GFM
+      // alerts (`> [!NOTE]`) hit the alert_open/close tokens and produce
+      // callouts; only plain blockquotes hit blockquote_open/close.
+      const keyGenerator = createTestKeyGenerator()
+      expect(
+        markdownToPortableText(
+          ['> [!NOTE]', '> heads up'].join('\n'),
+          getBlockquoteTestOptions(keyGenerator),
+        ),
+      ).toEqual([
+        {
+          _key: 'k2',
+          _type: 'callout',
+          tone: 'note',
+          content: [
+            {
+              _type: 'block',
+              style: 'blockquote',
+              children: [
+                {
+                  _type: 'span',
+                  _key: 'k1',
+                  text: 'heads up',
+                  marks: [],
+                },
+              ],
+              _key: 'k0',
+              markDefs: [],
+            },
+          ],
+        },
+      ])
+    })
+
+    test('matcher returning undefined falls back to flat blockquote-styled blocks', () => {
+      const keyGenerator = createTestKeyGenerator()
+      expect(
+        markdownToPortableText(['> one', '>', '> two'].join('\n'), {
+          keyGenerator,
+          schema: schemaWithBlockquote,
+          types: {
+            blockquote: () => undefined,
+          },
+        }),
+      ).toEqual([
+        {
+          _type: 'block',
+          style: 'blockquote',
+          children: [
+            {
+              _type: 'span',
+              _key: 'k1',
+              text: 'one',
+              marks: [],
+            },
+          ],
+          _key: 'k0',
+          markDefs: [],
+        },
+        {
+          _type: 'block',
+          style: 'blockquote',
+          children: [
+            {
+              _type: 'span',
+              _key: 'k3',
+              text: 'two',
+              marks: [],
+            },
+          ],
+          _key: 'k2',
+          markDefs: [],
+        },
+      ])
+    })
+
+    test("without `types.blockquote`, blockquotes fall back to flat `style: 'blockquote'` blocks", () => {
+      const keyGenerator = createTestKeyGenerator()
+      expect(
+        markdownToPortableText(['> one', '>', '> two'].join('\n'), {
+          keyGenerator,
+          schema: schemaWithBlockquote,
+        }),
+      ).toEqual([
+        {
+          _type: 'block',
+          style: 'blockquote',
+          children: [
+            {
+              _type: 'span',
+              _key: 'k1',
+              text: 'one',
+              marks: [],
+            },
+          ],
+          _key: 'k0',
+          markDefs: [],
+        },
+        {
+          _type: 'block',
+          style: 'blockquote',
+          children: [
+            {
+              _type: 'span',
+              _key: 'k3',
+              text: 'two',
+              marks: [],
+            },
+          ],
+          _key: 'k2',
+          markDefs: [],
+        },
+      ])
+    })
+  })
 })

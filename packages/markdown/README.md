@@ -218,6 +218,7 @@ Matchers map Markdown concepts to Portable Text types defined in the Schema. Eac
 |            | `image`          | `![alt](src)`           | `'image'`           |
 |            | `html`           | HTML blocks             | `'html'`            |
 |            | `callout`        | `> [!NOTE]`, etc.       | `'callout'`         |
+|            | `blockquote`     | `>` blockquotes         | `'blockquote'`      |
 |            | `list`           | `- ` or `1. ` lists     | `'list'`            |
 
 #### Configuring matchers
@@ -316,6 +317,27 @@ markdownToPortableText(markdown, {
 ```
 
 When emitting Portable Text back to Markdown, blocks with `listItem: 'task'` render as `- [x] ` or `- [ ] ` based on the `checked` field.
+
+**Blockquote matcher:** By default, blockquotes are emitted as flat text blocks with `style: 'blockquote'`, and adjacent blocks form a visual blockquote at render time. If your schema models a blockquote as a structural block-object instead (a `blockquote` type with a `content` array), provide a `types.blockquote` matcher to opt into that shape:
+
+```ts
+markdownToPortableText(markdown, {
+  schema: schemaWithBlockquote,
+  types: {
+    blockquote: ({context, value}) => ({
+      _type: 'blockquote',
+      _key: context.keyGenerator(),
+      content: value.content, // array of blocks the markdown produced inside the blockquote
+    }),
+  },
+})
+```
+
+The matcher receives `value.content` already assembled. The array holds whatever blocks the markdown produced inside the blockquote: text blocks, code blocks, images, even nested blockquotes. GFM alerts (`> [!NOTE]`, `> [!TIP]`, etc.) use a different token stream and produce callouts instead, so `types.blockquote` and `types.callout` can be registered side-by-side without conflict.
+
+If the matcher returns `undefined`, the parser falls back to flat-style by re-emitting the content blocks with `style: 'blockquote'`.
+
+Without `types.blockquote`, the existing flat-block path runs unchanged.
 
 Matchers receive:
 
@@ -482,6 +504,7 @@ portableTextToMarkdown(blocks, {
 
 ```ts
 import {
+  DefaultBlockquoteObjectRenderer,
   DefaultCalloutRenderer,
   DefaultCodeBlockRenderer,
   DefaultHorizontalRuleRenderer,
@@ -494,6 +517,7 @@ import {
 
 portableTextToMarkdown(blocks, {
   types: {
+    'blockquote': DefaultBlockquoteObjectRenderer,
     'callout': DefaultCalloutRenderer,
     'code': DefaultCodeBlockRenderer,
     'horizontal-rule': DefaultHorizontalRuleRenderer,
@@ -505,15 +529,16 @@ portableTextToMarkdown(blocks, {
 })
 ```
 
-| Renderer                        | Expected value                                         | Output                 |
-| ------------------------------- | ------------------------------------------------------ | ---------------------- |
-| `DefaultCalloutRenderer`        | `{tone: string, content: PortableTextBlock[]}`         | `> [!TYPE]\n> content` |
-| `DefaultCodeBlockRenderer`      | `{code: string, language?: string}`                    | ` ```lang\ncode\n``` ` |
-| `DefaultHorizontalRuleRenderer` | (no fields required)                                   | `---`                  |
-| `DefaultHtmlRenderer`           | `{html: string}`                                       | Raw HTML               |
-| `DefaultImageRenderer`          | `{src: string, alt?: string, title?: string}`          | `![alt](src "title")`  |
-| `DefaultListRenderer`           | `{kind: 'bullet' \| 'number' \| 'task', items: [...]}` | Markdown list          |
-| `DefaultTableRenderer`          | `{rows: [...], headerRows?: number}`                   | Markdown table         |
+| Renderer                          | Expected value                                         | Output                 |
+| --------------------------------- | ------------------------------------------------------ | ---------------------- |
+| `DefaultBlockquoteObjectRenderer` | `{content: PortableTextBlock[]}`                       | `> content`            |
+| `DefaultCalloutRenderer`          | `{tone: string, content: PortableTextBlock[]}`         | `> [!TYPE]\n> content` |
+| `DefaultCodeBlockRenderer`        | `{code: string, language?: string}`                    | ` ```lang\ncode\n``` ` |
+| `DefaultHorizontalRuleRenderer`   | (no fields required)                                   | `---`                  |
+| `DefaultHtmlRenderer`             | `{html: string}`                                       | Raw HTML               |
+| `DefaultImageRenderer`            | `{src: string, alt?: string, title?: string}`          | `![alt](src "title")`  |
+| `DefaultListRenderer`             | `{kind: 'bullet' \| 'number' \| 'task', items: [...]}` | Markdown list          |
+| `DefaultTableRenderer`            | `{rows: [...], headerRows?: number}`                   | Markdown table         |
 
 #### What renderers receive
 

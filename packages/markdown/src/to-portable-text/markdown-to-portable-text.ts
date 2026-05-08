@@ -90,6 +90,7 @@ type Options = {
     }>
     image?: ObjectMatcher<{src: string; alt: string; title: string | undefined}>
     callout?: ObjectMatcher<{tone: string; content: Array<PortableTextBlock>}>
+    blockquote?: ObjectMatcher<{content: Array<PortableTextBlock>}>
     list?: ObjectMatcher<{
       kind: 'bullet' | 'number' | 'task'
       items: Array<{
@@ -319,6 +320,17 @@ export function markdownToPortableText(
   let calloutStartTarget: Array<PortableTextBlock | PortableTextObject> | null =
     null
   let calloutType: string | null = null
+
+  // Blockquote container state. When `types.blockquote` is defined and the
+  // parser enters a `blockquote_open`, a frame is pushed here. Block
+  // emissions inside the surrounding open/close pair are captured and
+  // spliced out at close to wrap them in a `blockquote` block-object.
+  // Nested blockquotes push additional frames; `blockTarget()` already
+  // routes correctly because the splice happens against the same target.
+  const blockquoteStack: Array<{
+    startTarget: Array<PortableTextBlock | PortableTextObject>
+    startIndex: number
+  }> = []
 
   // Table state
   let currentTable: {
@@ -618,7 +630,23 @@ export function markdownToPortableText(
         // Flush any current block before entering blockquote
         flushBlock()
 
-        // Set the blockquote style for paragraphs inside the blockquote
+        // Structural-blockquote path: when the consumer registers a
+        // `types.blockquote` matcher, plain blockquotes (NOT GFM alerts -
+        // those use separate `alert_open`/`alert_close` tokens) become
+        // block-objects with an explicit `content` array. Block emissions
+        // inside the open/close pair are spliced out at close time and
+        // wrapped in a `blockquote` block-object.
+        if (consolidatedOptions.types.blockquote) {
+          const startTarget = blockTarget()
+          blockquoteStack.push({
+            startTarget,
+            startIndex: startTarget.length,
+          })
+          break
+        }
+
+        // Flat path: set the blockquote style for paragraphs inside the
+        // blockquote so they emit text blocks with `style: 'blockquote'`.
         const style =
           consolidatedOptions.block.blockquote({
             context: {schema: consolidatedOptions.schema},
@@ -633,6 +661,58 @@ export function markdownToPortableText(
       case 'blockquote_close': {
         // Flush any blockquote content before exiting
         flushBlock()
+
+        // Structural path: pop the topmost frame and splice its captured
+        // content into a `blockquote` block-object via the matcher. If the
+        // matcher returns undefined, fall back to flat-style by re-emitting
+        // the content blocks with `style: 'blockquote'`.
+        if (
+          consolidatedOptions.types.blockquote &&
+          blockquoteStack.length > 0
+        ) {
+          const frame = blockquoteStack.pop()
+          if (frame) {
+            const contentBlocks = frame.startTarget.splice(
+              frame.startIndex,
+            ) as Array<PortableTextBlock>
+
+            const blockquoteObject = consolidatedOptions.types.blockquote({
+              context: {
+                schema: consolidatedOptions.schema,
+                keyGenerator: consolidatedOptions.keyGenerator,
+              },
+              value: {content: contentBlocks},
+              isInline: false,
+            })
+
+            if (blockquoteObject) {
+              pushBlock(blockquoteObject)
+            } else {
+              // Matcher returned undefined: fall back to flat-style by
+              // re-emitting each content block with `style: 'blockquote'`.
+              const blockquoteStyle =
+                consolidatedOptions.block.blockquote({
+                  context: {schema: consolidatedOptions.schema},
+                }) ??
+                consolidatedOptions.block.normal({
+                  context: {schema: consolidatedOptions.schema},
+                }) ??
+                'blockquote'
+              for (const block of contentBlocks) {
+                if (block._type === 'block') {
+                  pushBlock({
+                    ...(block as PortableTextTextBlock),
+                    style: blockquoteStyle,
+                  })
+                } else {
+                  pushBlock(block)
+                }
+              }
+            }
+          }
+          break
+        }
+
         currentBlockquoteStyle = null
         break
       }
