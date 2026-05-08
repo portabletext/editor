@@ -281,7 +281,7 @@ Until those ship, the playground archetypes are working examples you can copy in
 
 ## Subscribable editor state
 
-The rebuild also let us simplify a long-standing piece of plumbing. `editor._internal` has been there since `useEditorSelector` was introduced — that's how the selector hook subscribed to editor state changes. We hid it under an `_internal` prop because it leaked Slate types and we weren't sure what the right public shape was. In v7, the `Editor` type itself exposes a standard `subscribe(observer) + getSnapshot()` contract directly. There's no longer a reason to hide the fact that the editor is subscribable. That's the same shape `useSyncExternalStore`, `@xstate/react`'s `useSelector`, and rxjs all consume. Adapting the editor to any of them is a few lines.
+The rebuild also let us clean up `editor._internal`. It was originally introduced as the wiring that made `useEditorSelector` work — the selector hook needed a way to subscribe to state changes, and `_internal` was the channel. But it also exposed the raw Slate editor instance and the underlying xstate actor, neither of which we wanted as part of the public API. In v7, the subscribe wiring is promoted to a first-class public API on the `Editor` type itself, and the raw Slate and actor handles are gone. The `Editor` type now exposes a standard `subscribe(observer) + getSnapshot()` contract directly — the same shape `useSyncExternalStore`, `@xstate/react`'s `useSelector`, and rxjs all consume. Adapting the editor to any of them is a few lines.
 
 For React, the recommended way to read editor state stays `useEditorSelector(editor, selector)`, which is built on `useSyncExternalStore` and gives you stable, automatically-memoized snapshots. `useSyncExternalStore` directly works too, with a small adapter:
 
@@ -362,7 +362,7 @@ What changed is what happens _between_ those surfaces.
 - **Apps with custom plugins or behaviors**: read the [path types](#path-types-widened-to-path) and [selector semantics](#selectors-now-respect-container-scope) sections.
 - **Apps that read the editor's schema directly**: read the [schema enforcement](#schema-strictness-now-applies-at-the-root-too) section.
 - **Apps that call `blockOffset*` utilities**: signature changed. See [Block-offset utilities](#block-offset-utilities-take-a-snapshot).
-- **Apps that touched `editor._internal`**: it's been promoted to `Editor.subscribe(...)` and `Editor.getSnapshot()`. See [`_internal` promoted](#_internal-promoted-to-a-public-observable-contract).
+- **Apps that touched `editor._internal`**: the subscribe wiring is now public on the `Editor` type as `editor.subscribe(...)` and `editor.getSnapshot()`. The raw Slate editor instance and the xstate actor that also lived under `_internal` are removed. See [`_internal` cleaned up](#_internal-cleaned-up-subscribe-promoted-raw-slate-and-actor-handles-removed).
 
 ### Path types widened to `Path`
 
@@ -487,9 +487,9 @@ const point = blockOffsetToSpanSelectionPoint({
 
 `blockOffsetToBlockSelectionPoint`, `blockOffsetToSelectionPoint`, and `selectionPointToBlockOffset` are no longer part of the public API. They had no external consumers and only existed to feed the four utilities above.
 
-### `_internal` promoted to a public observable contract
+### `_internal` cleaned up: subscribe promoted, raw Slate and actor handles removed
 
-`editor._internal` has been there since `useEditorSelector` was introduced — it was the wiring that let the hook subscribe to editor state changes. v7 promotes that wiring to a first-class public API on the `Editor` type itself, with a clean shape that doesn't leak any internals:
+`editor._internal` is gone. The piece of it that was load-bearing for `useEditorSelector` — the subscribe wiring — has been promoted to a public API on the `Editor` type:
 
 ```ts
 const subscription = editor.subscribe({
@@ -501,7 +501,7 @@ That's the same shape `useSyncExternalStore`, `@xstate/react`'s `useSelector`, a
 
 `useEditorSelector(editor, selector)` continues to work as before. This is still the recommended way to read editor state in React components.
 
-If you reached into `editor._internal.slateEditor` to splice history entries or inspect Slate's internal state, that path no longer exists — the new public `subscribe` shape doesn't expose `slateEditor`. Open an issue describing what you were trying to do; we'll likely have a public API for it.
+If you reached into `editor._internal.slateEditor` or `editor._internal.editorActor` to splice history entries, dispatch raw events, or inspect internal state, those paths no longer exist. The new public `subscribe` shape doesn't expose them. Open an issue describing what you were trying to do; we'll likely have a public API for it.
 
 The `@deprecated` `PortableTextEditor` class's constructor signature also changed. It now takes `{editable, editorActor}` instead of `{editor}`. The class is only instantiated by `EditorProvider`, so this break is theoretical for almost everyone.
 
