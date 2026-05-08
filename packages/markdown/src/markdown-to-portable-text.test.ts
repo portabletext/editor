@@ -4840,4 +4840,810 @@ describe(markdownToPortableText.name, () => {
       }
     })
   })
+
+  describe('list as container (`types.list`)', () => {
+    const listItemDefinition = {
+      name: 'list-item',
+      fields: [
+        {name: 'checked', type: 'boolean'},
+        {name: 'content', type: 'array'},
+      ],
+    } as const satisfies BlockObjectDefinition
+
+    const listObjectDefinition = {
+      name: 'list',
+      fields: [
+        {name: 'kind', type: 'string'},
+        {name: 'items', type: 'array'},
+      ],
+    } as const satisfies BlockObjectDefinition
+
+    const tableObjectDefinition = {
+      name: 'table',
+      fields: [
+        {name: 'headerRows', type: 'number'},
+        {name: 'rows', type: 'array'},
+      ],
+    } as const satisfies BlockObjectDefinition
+
+    const schemaWithList = compileSchema(
+      defineSchema({
+        ...defaultSchema,
+        blockObjects: [
+          ...defaultSchema.blockObjects,
+          listObjectDefinition,
+          listItemDefinition,
+        ],
+      }),
+    )
+
+    const schemaWithListAndTable = compileSchema(
+      defineSchema({
+        ...defaultSchema,
+        blockObjects: [
+          ...defaultSchema.blockObjects,
+          listObjectDefinition,
+          listItemDefinition,
+          tableObjectDefinition,
+        ],
+      }),
+    )
+
+    const getListTestOptions = (keyGenerator: () => string) => ({
+      keyGenerator,
+      schema: schemaWithList,
+      types: {
+        list: buildObjectMatcher(listObjectDefinition),
+      },
+    })
+
+    test('simple bullet list', () => {
+      const keyGenerator = createTestKeyGenerator()
+      expect(
+        markdownToPortableText(
+          ['- one', '- two'].join('\n'),
+          getListTestOptions(keyGenerator),
+        ),
+      ).toEqual([
+        {
+          _key: 'k6',
+          _type: 'list',
+          items: [
+            {
+              _key: 'k0',
+              _type: 'list-item',
+              content: [
+                {
+                  _key: 'k1',
+                  _type: 'block',
+                  children: [
+                    {
+                      _key: 'k2',
+                      _type: 'span',
+                      marks: [],
+                      text: 'one',
+                    },
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+              ],
+            },
+            {
+              _key: 'k3',
+              _type: 'list-item',
+              content: [
+                {
+                  _key: 'k4',
+                  _type: 'block',
+                  children: [
+                    {
+                      _key: 'k5',
+                      _type: 'span',
+                      marks: [],
+                      text: 'two',
+                    },
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+              ],
+            },
+          ],
+          kind: 'bullet',
+        },
+      ])
+    })
+
+    test('ordered list', () => {
+      const keyGenerator = createTestKeyGenerator()
+      expect(
+        markdownToPortableText(
+          ['1. one', '2. two'].join('\n'),
+          getListTestOptions(keyGenerator),
+        ),
+      ).toEqual([
+        {
+          _key: 'k6',
+          _type: 'list',
+          items: [
+            {
+              _key: 'k0',
+              _type: 'list-item',
+              content: [
+                {
+                  _key: 'k1',
+                  _type: 'block',
+                  children: [
+                    {
+                      _key: 'k2',
+                      _type: 'span',
+                      marks: [],
+                      text: 'one',
+                    },
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+              ],
+            },
+            {
+              _key: 'k3',
+              _type: 'list-item',
+              content: [
+                {
+                  _key: 'k4',
+                  _type: 'block',
+                  children: [
+                    {
+                      _key: 'k5',
+                      _type: 'span',
+                      marks: [],
+                      text: 'two',
+                    },
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+              ],
+            },
+          ],
+          kind: 'number',
+        },
+      ])
+    })
+
+    test('task list with checked state', () => {
+      const keyGenerator = createTestKeyGenerator()
+      expect(
+        markdownToPortableText(
+          ['- [ ] todo', '- [x] done'].join('\n'),
+          getListTestOptions(keyGenerator),
+        ),
+      ).toEqual([
+        {
+          _key: 'k6',
+          _type: 'list',
+          items: [
+            {
+              _key: 'k0',
+              _type: 'list-item',
+              checked: false,
+              content: [
+                {
+                  _key: 'k1',
+                  _type: 'block',
+                  children: [
+                    {
+                      _key: 'k2',
+                      _type: 'span',
+                      marks: [],
+                      text: 'todo',
+                    },
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+              ],
+            },
+            {
+              _key: 'k3',
+              _type: 'list-item',
+              checked: true,
+              content: [
+                {
+                  _key: 'k4',
+                  _type: 'block',
+                  children: [
+                    {
+                      _key: 'k5',
+                      _type: 'span',
+                      marks: [],
+                      text: 'done',
+                    },
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+              ],
+            },
+          ],
+          kind: 'task',
+        },
+      ])
+    })
+
+    test('list item with code block', () => {
+      const keyGenerator = createTestKeyGenerator()
+      expect(
+        markdownToPortableText(
+          [
+            '- one',
+            '',
+            '    ```ts',
+            '    const x = 1',
+            '    ```',
+            '',
+            '- two',
+          ].join('\n'),
+          getListTestOptions(keyGenerator),
+        ),
+      ).toEqual([
+        {
+          _key: 'k7',
+          _type: 'list',
+          items: [
+            {
+              _key: 'k0',
+              _type: 'list-item',
+              content: [
+                {
+                  _key: 'k1',
+                  _type: 'block',
+                  children: [
+                    {
+                      _key: 'k2',
+                      _type: 'span',
+                      marks: [],
+                      text: 'one',
+                    },
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+                {
+                  _key: 'k3',
+                  _type: 'code',
+                  code: 'const x = 1',
+                  language: 'ts',
+                },
+              ],
+            },
+            {
+              _key: 'k4',
+              _type: 'list-item',
+              content: [
+                {
+                  _key: 'k5',
+                  _type: 'block',
+                  children: [
+                    {
+                      _key: 'k6',
+                      _type: 'span',
+                      marks: [],
+                      text: 'two',
+                    },
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+              ],
+            },
+          ],
+          kind: 'bullet',
+        },
+      ])
+    })
+
+    test('nested bullet list', () => {
+      const keyGenerator = createTestKeyGenerator()
+      expect(
+        markdownToPortableText(
+          ['- one', '  - nested', '- two'].join('\n'),
+          getListTestOptions(keyGenerator),
+        ),
+      ).toEqual([
+        {
+          _key: 'k10',
+          _type: 'list',
+          items: [
+            {
+              _key: 'k0',
+              _type: 'list-item',
+              content: [
+                {
+                  _key: 'k1',
+                  _type: 'block',
+                  children: [
+                    {
+                      _key: 'k2',
+                      _type: 'span',
+                      marks: [],
+                      text: 'one',
+                    },
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+                {
+                  _key: 'k6',
+                  _type: 'list',
+                  items: [
+                    {
+                      _key: 'k3',
+                      _type: 'list-item',
+                      content: [
+                        {
+                          _key: 'k4',
+                          _type: 'block',
+                          children: [
+                            {
+                              _key: 'k5',
+                              _type: 'span',
+                              marks: [],
+                              text: 'nested',
+                            },
+                          ],
+                          markDefs: [],
+                          style: 'normal',
+                        },
+                      ],
+                    },
+                  ],
+                  kind: 'bullet',
+                },
+              ],
+            },
+            {
+              _key: 'k7',
+              _type: 'list-item',
+              content: [
+                {
+                  _key: 'k8',
+                  _type: 'block',
+                  children: [
+                    {
+                      _key: 'k9',
+                      _type: 'span',
+                      marks: [],
+                      text: 'two',
+                    },
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+              ],
+            },
+          ],
+          kind: 'bullet',
+        },
+      ])
+    })
+
+    test('mixed nested kinds (bullet outside, ordered inside)', () => {
+      const keyGenerator = createTestKeyGenerator()
+      expect(
+        markdownToPortableText(
+          ['- one', '  1. nested', '- two'].join('\n'),
+          getListTestOptions(keyGenerator),
+        ),
+      ).toEqual([
+        {
+          _key: 'k10',
+          _type: 'list',
+          items: [
+            {
+              _key: 'k0',
+              _type: 'list-item',
+              content: [
+                {
+                  _key: 'k1',
+                  _type: 'block',
+                  children: [
+                    {
+                      _key: 'k2',
+                      _type: 'span',
+                      marks: [],
+                      text: 'one',
+                    },
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+                {
+                  _key: 'k6',
+                  _type: 'list',
+                  items: [
+                    {
+                      _key: 'k3',
+                      _type: 'list-item',
+                      content: [
+                        {
+                          _key: 'k4',
+                          _type: 'block',
+                          children: [
+                            {
+                              _key: 'k5',
+                              _type: 'span',
+                              marks: [],
+                              text: 'nested',
+                            },
+                          ],
+                          markDefs: [],
+                          style: 'normal',
+                        },
+                      ],
+                    },
+                  ],
+                  kind: 'number',
+                },
+              ],
+            },
+            {
+              _key: 'k7',
+              _type: 'list-item',
+              content: [
+                {
+                  _key: 'k8',
+                  _type: 'block',
+                  children: [
+                    {
+                      _key: 'k9',
+                      _type: 'span',
+                      marks: [],
+                      text: 'two',
+                    },
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+              ],
+            },
+          ],
+          kind: 'bullet',
+        },
+      ])
+    })
+
+    test('matcher returning undefined falls back to flat list parsing', () => {
+      const keyGenerator = createTestKeyGenerator()
+      expect(
+        markdownToPortableText(['- one', '- two'].join('\n'), {
+          keyGenerator,
+          schema: schemaWithList,
+          types: {
+            list: () => undefined,
+          },
+        }),
+      ).toEqual([
+        {
+          _key: 'k1',
+          _type: 'block',
+          children: [
+            {
+              _key: 'k2',
+              _type: 'span',
+              marks: [],
+              text: 'one',
+            },
+          ],
+          level: 1,
+          listItem: 'bullet',
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _key: 'k4',
+          _type: 'block',
+          children: [
+            {
+              _key: 'k5',
+              _type: 'span',
+              marks: [],
+              text: 'two',
+            },
+          ],
+          level: 1,
+          listItem: 'bullet',
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+
+    test('without `types.list`, lists fall back to flat blocks', () => {
+      const keyGenerator = createTestKeyGenerator()
+      expect(
+        markdownToPortableText(['- one', '- two'].join('\n'), {keyGenerator}),
+      ).toEqual([
+        {
+          _key: 'k0',
+          _type: 'block',
+          children: [
+            {
+              _key: 'k1',
+              _type: 'span',
+              marks: [],
+              text: 'one',
+            },
+          ],
+          level: 1,
+          listItem: 'bullet',
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _key: 'k2',
+          _type: 'block',
+          children: [
+            {
+              _key: 'k3',
+              _type: 'span',
+              marks: [],
+              text: 'two',
+            },
+          ],
+          level: 1,
+          listItem: 'bullet',
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+
+    test('list inside a callout', () => {
+      const keyGenerator = createTestKeyGenerator()
+      expect(
+        markdownToPortableText(
+          ['> [!NOTE]', '> - one', '> - two'].join('\n'),
+          getListTestOptions(keyGenerator),
+        ),
+      ).toEqual([
+        {
+          _key: 'k7',
+          _type: 'callout',
+          content: [
+            {
+              _key: 'k6',
+              _type: 'list',
+              items: [
+                {
+                  _key: 'k0',
+                  _type: 'list-item',
+                  content: [
+                    {
+                      _key: 'k1',
+                      _type: 'block',
+                      children: [
+                        {
+                          _key: 'k2',
+                          _type: 'span',
+                          marks: [],
+                          text: 'one',
+                        },
+                      ],
+                      markDefs: [],
+                      style: 'blockquote',
+                    },
+                  ],
+                },
+                {
+                  _key: 'k3',
+                  _type: 'list-item',
+                  content: [
+                    {
+                      _key: 'k4',
+                      _type: 'block',
+                      children: [
+                        {
+                          _key: 'k5',
+                          _type: 'span',
+                          marks: [],
+                          text: 'two',
+                        },
+                      ],
+                      markDefs: [],
+                      style: 'blockquote',
+                    },
+                  ],
+                },
+              ],
+              kind: 'bullet',
+            },
+          ],
+          tone: 'note',
+        },
+      ])
+    })
+
+    test('list inside a table cell', () => {
+      // GFM pipe tables only allow inline content in cells, so `- one`
+      // inside a cell stays as plain text.
+      const keyGenerator = createTestKeyGenerator()
+      expect(
+        markdownToPortableText(
+          ['| Header |', '|--------|', '| - one  |', '| - two  |'].join('\n'),
+          {
+            keyGenerator,
+            schema: schemaWithListAndTable,
+            types: {
+              table: buildObjectMatcher(tableObjectDefinition),
+              list: buildObjectMatcher(listObjectDefinition),
+            },
+          },
+        ),
+      ).toEqual([
+        {
+          _key: 'k12',
+          _type: 'table',
+          headerRows: 1,
+          rows: [
+            {
+              _key: 'k3',
+              _type: 'row',
+              cells: [
+                {
+                  _key: 'k2',
+                  _type: 'cell',
+                  value: [
+                    {
+                      _key: 'k0',
+                      _type: 'block',
+                      children: [
+                        {
+                          _key: 'k1',
+                          _type: 'span',
+                          marks: [],
+                          text: 'Header',
+                        },
+                      ],
+                      markDefs: [],
+                      style: 'normal',
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              _key: 'k7',
+              _type: 'row',
+              cells: [
+                {
+                  _key: 'k6',
+                  _type: 'cell',
+                  value: [
+                    {
+                      _key: 'k4',
+                      _type: 'block',
+                      children: [
+                        {
+                          _key: 'k5',
+                          _type: 'span',
+                          marks: [],
+                          text: '- one',
+                        },
+                      ],
+                      markDefs: [],
+                      style: 'normal',
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              _key: 'k11',
+              _type: 'row',
+              cells: [
+                {
+                  _key: 'k10',
+                  _type: 'cell',
+                  value: [
+                    {
+                      _key: 'k8',
+                      _type: 'block',
+                      children: [
+                        {
+                          _key: 'k9',
+                          _type: 'span',
+                          marks: [],
+                          text: '- two',
+                        },
+                      ],
+                      markDefs: [],
+                      style: 'normal',
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+    })
+
+    test('blockquote-styled block inside a list item', () => {
+      // The GFM alert plugin does not recognize `[!NOTE]` inside a list
+      // item, but regular blockquotes ARE recognized and land in the
+      // item's content with `style: 'blockquote'`.
+      const keyGenerator = createTestKeyGenerator()
+      expect(
+        markdownToPortableText(
+          ['- one', '', '  > a quote', '', '- two'].join('\n'),
+          getListTestOptions(keyGenerator),
+        ),
+      ).toEqual([
+        {
+          _key: 'k8',
+          _type: 'list',
+          items: [
+            {
+              _key: 'k0',
+              _type: 'list-item',
+              content: [
+                {
+                  _key: 'k1',
+                  _type: 'block',
+                  children: [
+                    {
+                      _key: 'k2',
+                      _type: 'span',
+                      marks: [],
+                      text: 'one',
+                    },
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+                {
+                  _key: 'k3',
+                  _type: 'block',
+                  children: [
+                    {
+                      _key: 'k4',
+                      _type: 'span',
+                      marks: [],
+                      text: 'a quote',
+                    },
+                  ],
+                  markDefs: [],
+                  style: 'blockquote',
+                },
+              ],
+            },
+            {
+              _key: 'k5',
+              _type: 'list-item',
+              content: [
+                {
+                  _key: 'k6',
+                  _type: 'block',
+                  children: [
+                    {
+                      _key: 'k7',
+                      _type: 'span',
+                      marks: [],
+                      text: 'two',
+                    },
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+              ],
+            },
+          ],
+          kind: 'bullet',
+        },
+      ])
+    })
+  })
 })

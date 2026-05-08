@@ -90,6 +90,15 @@ type Options = {
     }>
     image?: ObjectMatcher<{src: string; alt: string; title: string | undefined}>
     callout?: ObjectMatcher<{tone: string; content: Array<PortableTextBlock>}>
+    list?: ObjectMatcher<{
+      kind: 'bullet' | 'number' | 'task'
+      items: Array<{
+        _type: 'list-item'
+        _key: string
+        checked?: boolean
+        content: Array<PortableTextBlock | PortableTextObject>
+      }>
+    }>
   }
   html?: {
     /**
@@ -307,6 +316,8 @@ export function markdownToPortableText(
 
   // Callout state
   let calloutStartIndex: number | null = null
+  let calloutStartTarget: Array<PortableTextBlock | PortableTextObject> | null =
+    null
   let calloutType: string | null = null
 
   // Table state
@@ -328,6 +339,54 @@ export function markdownToPortableText(
     value: Array<PortableTextBlock>
   }> | null = null
   let inTableHead = false
+
+  // List container state. When `types.list` is defined and the parser enters
+  // a `bullet_list_open` / `ordered_list_open`, a structural-list frame is
+  // pushed here. Block emissions inside the surrounding `list_item_open` /
+  // `list_item_close` pair are diverted into the item's `content` array
+  // instead of the top-level `portableText`. At list-close, the matcher is
+  // called to materialize a `list` block-object, which is pushed into the
+  // enclosing target (parent list item's content if nested, else top-level).
+  type ListContainerItem = {
+    _type: 'list-item'
+    _key: string
+    checked?: boolean
+    content: Array<PortableTextBlock | PortableTextObject>
+  }
+  type ListContainerFrame = {
+    kind: 'bullet' | 'number' | 'task'
+    items: Array<ListContainerItem>
+    currentItem: ListContainerItem | null
+  }
+  // A null entry marks a list that is being handled by the flat path (either
+  // because `types.list` is undefined, or because a nested list inside a
+  // flat-path list should also stay flat). Parallel to `currentListStack`.
+  const listContainerStack: Array<ListContainerFrame | null> = []
+
+  /**
+   * Returns the array that block emissions should land in. If the innermost
+   * structural list frame has an open `currentItem`, blocks land in that
+   * item's `content`. Otherwise blocks land at the top level.
+   */
+  const blockTarget = (): Array<PortableTextBlock | PortableTextObject> => {
+    for (let i = listContainerStack.length - 1; i >= 0; i--) {
+      const frame = listContainerStack[i]
+      if (frame && frame.currentItem) {
+        return frame.currentItem.content
+      }
+    }
+    return portableText
+  }
+
+  /**
+   * Pushes a block into the current target (innermost open list item, or
+   * top-level `portableText` if none). Use instead of direct
+   * `portableText.push(...)` for any block emission that should be captured
+   * by an enclosing list container.
+   */
+  const pushBlock = (block: PortableTextBlock | PortableTextObject): void => {
+    blockTarget().push(block as PortableTextBlock)
+  }
 
   const startBlock = (style: string) => {
     flushBlock()
@@ -359,7 +418,7 @@ export function markdownToPortableText(
     // Assign accumulated markDefs to the block
     currentBlock.markDefs = currentMarkDefs
 
-    portableText.push(currentBlock)
+    pushBlock(currentBlock)
 
     currentBlock = null
     currentMarkDefs = []
@@ -458,6 +517,24 @@ export function markdownToPortableText(
         // If we're in a list item but have no current block (e.g., after a code block),
         // we need to create a new list item block
         if (inListItem) {
+          // Structural list path: start a plain text block; the paragraph
+          // lands in the current list item's `content` via `pushBlock`.
+          if (listContainerStack.at(-1)) {
+            if (!currentBlock) {
+              // Use blockquote style if inside a blockquote, otherwise use normal style
+              const style =
+                currentBlockquoteStyle ??
+                consolidatedOptions.block.normal({
+                  context: {schema: consolidatedOptions.schema},
+                }) ??
+                'normal'
+              startBlock(style)
+            }
+            break
+          }
+
+          // Flat list path: ensure the current text block carries
+          // `listItem` + `level` fields.
           if (!currentBlock) {
             const listType = currentListStack.at(-1)
 
@@ -486,8 +563,13 @@ export function markdownToPortableText(
         break
       }
       case 'paragraph_close':
-        // Skip flushing if we're inside a list item (list_item_close will flush)
+        // In a flat list item: skip flushing, list_item_close will flush.
+        // In a structural list item: flush so multiple paragraphs in one
+        // item land as separate text blocks.
         if (inListItem) {
+          if (listContainerStack.at(-1)) {
+            flushBlock()
+          }
           break
         }
         flushBlock()
@@ -556,48 +638,166 @@ export function markdownToPortableText(
       }
       // Lists
       case 'bullet_list_open': {
+        flushBlock()
+
+        // Structural-container path: when the consumer registers a
+        // `types.list` matcher, lists become block-objects with explicit
+        // `items` arrays. Block emissions inside list items are diverted
+        // into `currentItem.content` via `blockTarget()`. Mirrors the
+        // `types.table` pattern.
+        if (consolidatedOptions.types.list) {
+          listContainerStack.push({
+            kind: 'bullet',
+            items: [],
+            currentItem: null,
+          })
+          currentListStack.push(null)
+          break
+        }
+
+        // Flat path: lists are reconstructed from text blocks with
+        // `listItem` + `level` fields at render time.
         const listItem = consolidatedOptions.listItem.bullet({
           context: {schema: consolidatedOptions.schema},
         })
 
+        listContainerStack.push(null)
         if (!listItem) {
-          // No list definition in schema, push null to indicate we should skip list properties
           currentListStack.push(null)
           break
         }
-
         currentListStack.push(listItem)
         break
       }
       case 'ordered_list_open': {
-        const listItem = consolidatedOptions.listItem.number({
-          context: {schema: consolidatedOptions.schema},
-        })
+        flushBlock()
 
-        if (!listItem) {
-          // No list definition in schema, push null to indicate we should skip list properties
+        if (consolidatedOptions.types.list) {
+          listContainerStack.push({
+            kind: 'number',
+            items: [],
+            currentItem: null,
+          })
           currentListStack.push(null)
           break
         }
 
+        const listItem = consolidatedOptions.listItem.number({
+          context: {schema: consolidatedOptions.schema},
+        })
+
+        listContainerStack.push(null)
+        if (!listItem) {
+          currentListStack.push(null)
+          break
+        }
         currentListStack.push(listItem)
         break
       }
       case 'bullet_list_close':
-      case 'ordered_list_close':
+      case 'ordered_list_close': {
+        const frame = listContainerStack.pop()
         currentListStack.pop()
-        break
-      case 'list_item_open': {
-        const baseListType = currentListStack.at(-1)
 
-        if (baseListType === undefined) {
-          throw new Error('Expected an open list')
+        // Structural close: materialize the list block-object and push it
+        // into the enclosing target (parent list item's content if nested,
+        // else top-level).
+        if (frame && consolidatedOptions.types.list) {
+          // Promote `kind` to 'task' if any item carries a checked state.
+          const kind: 'bullet' | 'number' | 'task' = frame.items.some(
+            (item) => 'checked' in item,
+          )
+            ? 'task'
+            : frame.kind
+
+          const listObject = consolidatedOptions.types.list({
+            context: {
+              schema: consolidatedOptions.schema,
+              keyGenerator: consolidatedOptions.keyGenerator,
+            },
+            value: {kind, items: frame.items},
+            isInline: false,
+          })
+
+          if (listObject) {
+            pushBlock(listObject)
+          } else {
+            // Matcher returned undefined: fall back to the flat path by
+            // re-emitting each item's content. Text blocks get the same
+            // `listItem` + `level` fields the flat path would produce so
+            // adjacent blocks form a list at render time. Non-text-block
+            // content (code blocks, etc.) gets pushed as-is, mirroring
+            // how the flat path handles those when they appear inside a
+            // list item.
+            const flatListItem =
+              (kind === 'task'
+                ? consolidatedOptions.listItem.task?.({
+                    context: {schema: consolidatedOptions.schema},
+                  })
+                : kind === 'number'
+                  ? consolidatedOptions.listItem.number({
+                      context: {schema: consolidatedOptions.schema},
+                    })
+                  : consolidatedOptions.listItem.bullet({
+                      context: {schema: consolidatedOptions.schema},
+                    })) ?? null
+            // The just-popped list was nested at depth = remaining stack
+            // length + 1 (since we already popped).
+            const level = listContainerStack.length + 1
+            for (const item of frame.items) {
+              for (const block of item.content) {
+                if (
+                  block._type === 'block' &&
+                  flatListItem !== null &&
+                  !('listItem' in block)
+                ) {
+                  const flatBlock = {
+                    ...(block as PortableTextTextBlock),
+                    listItem: flatListItem,
+                    level,
+                    ...(item.checked === undefined
+                      ? {}
+                      : {checked: item.checked}),
+                  }
+                  pushBlock(flatBlock)
+                } else {
+                  pushBlock(block)
+                }
+              }
+            }
+          }
         }
+        break
+      }
+      case 'list_item_open': {
+        const frame = listContainerStack.at(-1)
 
         // Flush any previous list item block before starting a new one
         // This is needed for proper separation of list items
         if (currentBlock) {
           flushBlock()
+        }
+
+        // Structural path: start a new `list-item` whose `content` becomes
+        // the divert target for subsequent block emissions until
+        // `list_item_close`.
+        if (frame) {
+          const taskChecked = taskCheckedByListItemIndex.get(tokenIndex)
+          frame.currentItem = {
+            _type: 'list-item',
+            _key: consolidatedOptions.keyGenerator(),
+            ...(taskChecked === undefined ? {} : {checked: taskChecked}),
+            content: [],
+          }
+          inListItem = true
+          break
+        }
+
+        // Flat path
+        const baseListType = currentListStack.at(-1)
+
+        if (baseListType === undefined) {
+          throw new Error('Expected an open list')
         }
 
         // Resolve task list type and checked state for this specific item.
@@ -642,10 +842,24 @@ export function markdownToPortableText(
         inListItem = true
         break
       }
-      case 'list_item_close':
+      case 'list_item_close': {
+        const frame = listContainerStack.at(-1)
+
+        // Structural path: flush any current block into the item's content,
+        // then push the completed item onto the frame.
+        if (frame && frame.currentItem) {
+          flushBlock()
+          frame.items.push(frame.currentItem)
+          frame.currentItem = null
+          inListItem = false
+          break
+        }
+
+        // Flat path
         inListItem = false
         flushBlock()
         break
+      }
 
       // Code fences / blocks
       case 'fence': {
@@ -682,7 +896,7 @@ export function markdownToPortableText(
           break
         }
 
-        portableText.push(codeObject)
+        pushBlock(codeObject)
 
         break
       }
@@ -718,7 +932,7 @@ export function markdownToPortableText(
           break
         }
 
-        portableText.push(hrObject)
+        pushBlock(hrObject)
 
         break
       }
@@ -760,7 +974,7 @@ export function markdownToPortableText(
           break
         }
 
-        portableText.push(htmlObject)
+        pushBlock(htmlObject)
 
         break
       }
@@ -796,7 +1010,7 @@ export function markdownToPortableText(
           addSpan(code)
           flushBlock()
         } else {
-          portableText.push(codeObject)
+          pushBlock(codeObject)
         }
 
         break
@@ -831,14 +1045,17 @@ export function markdownToPortableText(
           })
 
           if (tableObject) {
-            portableText.push(tableObject)
+            pushBlock(tableObject)
           } else {
             // If table object couldn't be created, flatten the table
-            flattenTable(currentTable, portableText)
+            flattenTable(
+              currentTable,
+              blockTarget() as Array<PortableTextBlock>,
+            )
           }
         } else {
           // If there's no table definition in the schema, flatten the table
-          flattenTable(currentTable, portableText)
+          flattenTable(currentTable, blockTarget() as Array<PortableTextBlock>)
         }
 
         currentTable = null
@@ -898,14 +1115,15 @@ export function markdownToPortableText(
         flushBlock()
 
         // Get all blocks that were added since this cell started
-        // We need to extract them from portableText array
+        // We need to extract them from the current target array
         const cellBlocks: Array<PortableTextBlock> = []
+        const target = blockTarget()
 
         // Check if we have blocks to extract (added after table_open)
-        if (portableText.length > 0) {
-          const lastBlock = portableText.at(-1)
+        if (target.length > 0) {
+          const lastBlock = target.at(-1)
           if (lastBlock && lastBlock._type === 'block') {
-            cellBlocks.push(portableText.pop()!)
+            cellBlocks.push(target.pop()! as PortableTextBlock)
           }
         }
 
@@ -1020,7 +1238,7 @@ export function markdownToPortableText(
                 currentBlock = null
                 currentMarkDefs = []
               }
-              portableText.push(blockImageObject)
+              pushBlock(blockImageObject)
             }
             break
           }
@@ -1039,10 +1257,20 @@ export function markdownToPortableText(
             // Ensure we have a block to add the inline image to
             if (!currentBlock) {
               if (inListItem) {
-                const listType = currentListStack.at(-1)
+                // Structural list: start a plain text block; the image
+                // lands in the current item's content via flushBlock.
+                if (listContainerStack.at(-1)) {
+                  const style =
+                    consolidatedOptions.block.normal({
+                      context: {schema: consolidatedOptions.schema},
+                    }) ?? 'normal'
+                  startBlock(style)
+                } else {
+                  const listType = currentListStack.at(-1)
 
-                if (listType) {
-                  ensureListBlock(listType)
+                  if (listType) {
+                    ensureListBlock(listType)
+                  }
                 }
               } else {
                 const style = consolidatedOptions.block.normal({
@@ -1309,7 +1537,7 @@ export function markdownToPortableText(
 
               // Not in table - flush current block, add image as block, start new block
               flushBlock()
-              portableText.push(blockImageObject)
+              pushBlock(blockImageObject)
 
               // Start a new block for any remaining content
               const style = consolidatedOptions.block.normal({
@@ -1341,7 +1569,8 @@ export function markdownToPortableText(
       // Callouts (GFM alerts)
       case 'alert_open': {
         flushBlock()
-        calloutStartIndex = portableText.length
+        calloutStartTarget = blockTarget()
+        calloutStartIndex = calloutStartTarget.length
         calloutType = token.markup
 
         // Set blockquote style so content blocks inside the callout
@@ -1367,8 +1596,14 @@ export function markdownToPortableText(
       case 'alert_close': {
         flushBlock()
 
-        if (calloutStartIndex !== null && calloutType !== null) {
-          const contentBlocks = portableText.splice(calloutStartIndex)
+        if (
+          calloutStartIndex !== null &&
+          calloutType !== null &&
+          calloutStartTarget !== null
+        ) {
+          const contentBlocks = calloutStartTarget.splice(
+            calloutStartIndex,
+          ) as Array<PortableTextBlock>
 
           const calloutObject = consolidatedOptions.types.callout?.({
             context: {
@@ -1380,13 +1615,16 @@ export function markdownToPortableText(
           })
 
           if (calloutObject) {
-            portableText.push(calloutObject)
+            pushBlock(calloutObject)
           } else {
-            portableText.push(...contentBlocks)
+            for (const block of contentBlocks) {
+              pushBlock(block)
+            }
           }
         }
 
         calloutStartIndex = null
+        calloutStartTarget = null
         calloutType = null
         currentBlockquoteStyle = null
         break

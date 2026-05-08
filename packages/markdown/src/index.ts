@@ -29,6 +29,7 @@ export {
   DefaultHorizontalRuleRenderer,
   DefaultHtmlRenderer,
   DefaultImageRenderer,
+  DefaultListRenderer,
   DefaultTableRenderer,
 } from './from-portable-text/renderers/type'
 export type {

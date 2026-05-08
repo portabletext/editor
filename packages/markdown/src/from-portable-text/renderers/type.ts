@@ -1,4 +1,4 @@
-import type {PortableTextBlock} from '@portabletext/types'
+import type {PortableTextBlock, TypedObject} from '@portabletext/types'
 import {escapeImageAndLinkText, escapeImageAndLinkTitle} from '../../escape'
 import type {PortableTextTypeRenderer} from '../types'
 
@@ -139,6 +139,77 @@ export const DefaultCalloutRenderer: PortableTextTypeRenderer<{
     .join('\n')
 
   return `> [!${value.tone.toUpperCase()}]\n${prefixed}`
+}
+
+/**
+ * Renders a structural list block-object (the `types.list` shape produced by
+ * `markdownToPortableText` when a `types.list` matcher is provided) back to
+ * Markdown. Items render as `- ` for `kind: 'bullet'`, `1. `/`2. ` for `'number'`,
+ * and `- [x] ` / `- [ ] ` for `'task'`. Items can hold any blocks - text blocks,
+ * code blocks, callouts, images, and nested lists - and content other than the
+ * leading text block is indented to keep it inside the item.
+ *
+ * @public
+ */
+export const DefaultListRenderer: PortableTextTypeRenderer<{
+  _type: 'list'
+  kind: 'bullet' | 'number' | 'task'
+  items: Array<{
+    _type: 'list-item'
+    _key: string
+    checked?: boolean
+    content: Array<PortableTextBlock | TypedObject>
+  }>
+}> = ({value, renderNode}) => {
+  const indent = '  '
+  const lines = value.items.map((item, itemIndex) => {
+    const marker = getListMarker(value.kind, itemIndex, item.checked)
+    const renderedBlocks = item.content.map((block, blockIndex) => ({
+      isNestedList: (block as TypedObject)._type === 'list',
+      text: renderNode({
+        node: block as TypedObject,
+        index: blockIndex,
+        isInline: false,
+        renderNode,
+      }),
+    }))
+
+    const [first, ...rest] = renderedBlocks
+    const head = `${marker}${first?.text ?? ''}`
+    if (rest.length === 0) {
+      return head
+    }
+
+    const tail = rest
+      .map((rendered) => {
+        const indented = rendered.text
+          .split('\n')
+          .map((line) => (line === '' ? '' : `${indent}${line}`))
+          .join('\n')
+        // Nested lists hug the previous block (tight list); other content
+        // gets a blank line separator (paragraph break).
+        return rendered.isNestedList ? `\n${indented}` : `\n\n${indented}`
+      })
+      .join('')
+
+    return `${head}${tail}`
+  })
+
+  return lines.join('\n')
+}
+
+function getListMarker(
+  kind: 'bullet' | 'number' | 'task',
+  itemIndex: number,
+  checked: boolean | undefined,
+): string {
+  if (kind === 'number') {
+    return `${itemIndex + 1}. `
+  }
+  if (kind === 'task') {
+    return checked ? '- [x] ' : '- [ ] '
+  }
+  return '- '
 }
 
 /**
