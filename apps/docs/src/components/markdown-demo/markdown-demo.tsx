@@ -262,6 +262,7 @@ const schemaDefinition = defineSchema({
                       ],
                     },
                     {type: 'list'},
+                    {type: 'image'},
                   ],
                 },
               ],
@@ -756,6 +757,8 @@ When you *want* containers - because you want list items to hold a code block, o
 - A list item that holds another list:
   - Two levels in.
     - Three levels in. Same \`defineContainer\` registration handles every depth.
+
+      ![Image, three lists deep](https://placehold.co/400x80/0ea5e9/white?text=Image+three+lists+deep)
 
 And task lists, with sub-tasks:
 
