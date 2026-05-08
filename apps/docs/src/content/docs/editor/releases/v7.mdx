@@ -133,7 +133,7 @@ defineBehavior({
 
 The same code path that worked at the root works inside a callout, a code block, or a table cell, because it reads the schema view that applies at the current position. This is how `@portabletext/plugin-markdown-shortcuts`, `@portabletext/plugin-character-pair-decorator`, `@portabletext/plugin-paste-link`, `@portabletext/plugin-typography`, and `@portabletext/plugin-input-rule` all became container-aware in v7. Each was a one-line change: read the focus path's sub-schema instead of the root.
 
-`@portabletext/plugin-emoji-picker`, `@portabletext/plugin-typeahead-picker`, and `@portabletext/plugin-one-line` work at every depth too, with no code change at all. They read the focus span via `getFocusSpan` and `getFocusTextBlock` and raise generic insert and select events at the offsets they compute. Span paths and selection offsets are depth-agnostic in v7, so the inserted span lands wherever the caret is — root, callout, code block, table cell.
+`@portabletext/plugin-emoji-picker` and `@portabletext/plugin-typeahead-picker` got a different one-line change. Both were constructing a ChildPath from a hardcoded root-block key (`[{_key: focusSpan.path[0]._key}, 'children', ...]`); v7 swaps that for the focus span's parent path (`[...focusSpan.path.slice(0, -2), 'children', ...]`), which works at any depth. `@portabletext/plugin-one-line` works at every depth without any code change — it operates on selection shape and never touches paths.
 
 ## Schema is now strictly enforced
 
