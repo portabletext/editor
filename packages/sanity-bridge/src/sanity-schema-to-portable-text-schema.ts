@@ -189,31 +189,34 @@ function sanityOfMemberToOfDefinition(
     return {type: 'block'}
   }
 
-  const result: OfDefinition = {
-    type: memberType.name,
-    name: memberType.name,
-    ...(memberType.title ? {title: memberType.title} : {}),
-  }
-
-  if (
+  // If this member has fields and isn't already in the ancestor chain,
+  // emit an INLINE declaration (`type: 'object'` + name + fields). If the
+  // type is in the ancestor chain (cycle) or has no fields, emit a bare
+  // REFERENCE (just `type: <name>`).
+  const hasFields =
     memberType.jsonType === 'object' &&
     'fields' in memberType &&
     Array.isArray((memberType as ObjectSchemaType).fields)
-  ) {
-    if (ancestorNames.has(memberType.name)) {
-      return result
-    }
-    const nextAncestors = new Set(ancestorNames)
-    nextAncestors.add(memberType.name)
+
+  if (!hasFields || ancestorNames.has(memberType.name)) {
+    // Bare reference. The editor's resolver looks up `memberType.name`
+    // in `blockObjects` / `inlineObjects`.
     return {
-      ...result,
-      fields: (memberType as ObjectSchemaType).fields.map((field) =>
-        sanityFieldToSchemaField(field, nextAncestors),
-      ),
+      type: memberType.name,
+      ...(memberType.title ? {title: memberType.title} : {}),
     }
   }
 
-  return result
+  const nextAncestors = new Set(ancestorNames)
+  nextAncestors.add(memberType.name)
+  return {
+    type: 'object',
+    name: memberType.name,
+    ...(memberType.title ? {title: memberType.title} : {}),
+    fields: (memberType as ObjectSchemaType).fields.map((field) =>
+      sanityFieldToSchemaField(field, nextAncestors),
+    ),
+  }
 }
 
 function resolveEnabledStyles(blockType: ObjectSchemaType) {
