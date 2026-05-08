@@ -7,9 +7,7 @@ prev: false
 
 import {MarkdownDemo} from '../../../../components/markdown-demo/markdown-demo'
 
-**"Let's make PTE support tables."** It's an innocent ask that ended up exposing an iceberg of complexity and shallow-depth assumptions. The answer turned out to be most of an editor rebuild, and on the way it produced a lot more than tables.
-
-v7's headline is **first-class nesting**. Callouts, code blocks, fact boxes, tables, any rich-text-inside-rich-text structure your schema describes — the editor handles them at every depth. Selection, normalisation, undo, collaborative patches, plugins, behaviors. All of it, all the way down.
+Portable Text Editor v7 brings **first-class nesting** and **markdown compatibility**. Callouts, code blocks, fact boxes, tables, any rich-text-inside-rich-text structure your schema describes — the editor handles them at every depth. Selection, normalisation, undo, collaborative patches, plugins, behaviors. All of it, all the way down. And a complete markdown round-trip alongside it: parse markdown into Portable Text, serialise Portable Text back to markdown, with first-class containers carrying code blocks, tables, and GitHub-style callouts.
 
 The migration is small. The DOM your CSS targets today, the patches you store, the render callbacks your app provides, the plugin API your team built against — all unchanged. Container wrappers introduce some new DOM, but they're brand new in v7, and nothing in your existing app sits inside one yet. v7 is the rare release where the surface stays still while the foundation moves.
 
@@ -328,7 +326,7 @@ The standard observer contract makes this kind of integration mechanical. If a f
 
 ## How we got here
 
-Getting first-class nesting to work meant rebuilding most of the engine.
+**"Let's make PTE support tables."** That ask exposed an iceberg of complexity and shallow-depth assumptions. Getting first-class nesting to work meant rebuilding most of the engine.
 
 PTE was historically built on Slate, an extensible framework for building rich text editors. PTE encapsulated Slate behind Portable Text-native and Sanity-native APIs. It spoke Portable Text at the edges and Slate internally. As PTE became a standalone editor and its API surface expanded with first-class plugins and a Behavior event system, that translation layer kept growing.
 
