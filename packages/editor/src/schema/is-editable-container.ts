@@ -2,6 +2,7 @@ import type {TraversalSnapshot} from '../node-traversal/traversal-snapshot'
 import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
 import {getContainerScopedName} from './get-container-scoped-name'
+import {lookupContainer} from './lookup-container'
 
 /**
  * Check if a node at the given path is a registered editable container.
@@ -16,5 +17,5 @@ export function isEditableContainer(
   }
 
   const scopedName = getContainerScopedName(snapshot, node, path)
-  return snapshot.context.containers.has(scopedName)
+  return lookupContainer(snapshot.context.containers, scopedName) !== undefined
 }

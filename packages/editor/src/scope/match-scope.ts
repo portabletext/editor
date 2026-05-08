@@ -4,20 +4,19 @@ import type {ParsedScope} from './parse-scope'
  * Checks whether a parsed scope matches a type-path from the root of the
  * editor down to the node being rendered.
  *
- * The match is terminal: the scope's last segment must align with the last
- * element of `typePath`. This is the semantics used by `defineContainer` and
- * `defineLeaf`.
+ * The match is terminal-anchored: the scope's last segment must align with
+ * the last element of `typePath`. Earlier segments are matched in order:
  *
- * The algorithm walks the scope's segments left-to-right over `typePath`:
- *
- * - An `exact` segment must sit at the current cursor position in the path.
- * - An `any` segment can skip over zero or more path positions to find a match.
- * - After processing all segments, the cursor must have consumed the entire
- *   path (so the last segment aligns with the last path element).
+ * - `exact` segments must sit at the current cursor position.
+ * - `any` segments can skip zero or more positions before matching.
  *
  * The scope's anchor (`$.` vs `$..`) is encoded in the first segment's
- * descent: `$.` produces an `exact` first segment (must start at position 0),
- * `$..` produces an `any` first segment (may start anywhere).
+ * descent: `$.` produces an `exact` first segment (must start at position
+ * 0), `$..` produces an `any` first segment (may start anywhere).
+ *
+ * Implemented as a backtracking match so an `any` segment can pick the
+ * LAST viable position that still allows the remaining segments to align
+ * with the terminal of `typePath`.
  *
  * @internal
  */
@@ -28,32 +27,39 @@ export function matchScope(
   if (scope.segments.length === 0) {
     return false
   }
+  if (typePath.length === 0) {
+    return false
+  }
+  return tryMatch(scope.segments, 0, typePath, 0)
+}
 
-  let pathIdx = 0
-
-  for (const segment of scope.segments) {
-    if (segment.descent === 'exact') {
-      if (pathIdx >= typePath.length || typePath[pathIdx] !== segment.type) {
-        return false
-      }
-      pathIdx++
-      continue
-    }
-
-    let found = -1
-    for (let i = pathIdx; i < typePath.length; i++) {
-      if (typePath[i] === segment.type) {
-        found = i
-        break
-      }
-    }
-
-    if (found === -1) {
+function tryMatch(
+  segments: ParsedScope['segments'],
+  segIdx: number,
+  typePath: ReadonlyArray<string>,
+  pathIdx: number,
+): boolean {
+  if (segIdx === segments.length) {
+    // Terminal-anchored: must have consumed the entire path.
+    return pathIdx === typePath.length
+  }
+  const segment = segments[segIdx]
+  if (!segment) {
+    return false
+  }
+  if (segment.descent === 'exact') {
+    if (pathIdx >= typePath.length || typePath[pathIdx] !== segment.type) {
       return false
     }
-
-    pathIdx = found + 1
+    return tryMatch(segments, segIdx + 1, typePath, pathIdx + 1)
   }
-
-  return pathIdx === typePath.length
+  // `any`: try each viable starting position from `pathIdx` to the end.
+  for (let i = pathIdx; i < typePath.length; i++) {
+    if (typePath[i] === segment.type) {
+      if (tryMatch(segments, segIdx + 1, typePath, i + 1)) {
+        return true
+      }
+    }
+  }
+  return false
 }
