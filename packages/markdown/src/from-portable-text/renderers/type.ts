@@ -142,6 +142,39 @@ export const DefaultCalloutRenderer: PortableTextTypeRenderer<{
 }
 
 /**
+ * Renders a structural blockquote block-object (the `types.blockquote` shape
+ * produced by `markdownToPortableText` when a `types.blockquote` matcher is
+ * provided) back to Markdown. Each content block is rendered via the
+ * recursive renderer pipeline, joined with blank lines, and every line is
+ * prefixed with `> ` to form a Markdown blockquote.
+ *
+ * Distinct from `DefaultBlockquoteRenderer`, which renders flat-path text
+ * blocks with `style: 'blockquote'`.
+ *
+ * @public
+ */
+export const DefaultBlockquoteObjectRenderer: PortableTextTypeRenderer<{
+  _type: 'blockquote'
+  content: Array<PortableTextBlock>
+}> = ({value, renderNode}) => {
+  const renderedContent = value.content
+    .map((block, index) =>
+      renderNode({
+        node: {...block, style: 'normal'},
+        index,
+        isInline: false,
+        renderNode,
+      }),
+    )
+    .join('\n\n')
+
+  return renderedContent
+    .split('\n')
+    .map((line) => (line === '' ? '>' : `> ${line}`))
+    .join('\n')
+}
+
+/**
  * Renders a structural list block-object (the `types.list` shape produced by
  * `markdownToPortableText` when a `types.list` matcher is provided) back to
  * Markdown. Items render as `- ` for `kind: 'bullet'`, `1. `/`2. ` for `'number'`,
