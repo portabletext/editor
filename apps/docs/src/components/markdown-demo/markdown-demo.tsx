@@ -703,77 +703,73 @@ const markdownOptions = {
   },
 } as const
 
-const kitchenSink = `# Markdown round-trip
+const kitchenSink = `# Portable Text Editor v7
 
-Edit either side. Both stay in sync through \`@portabletext/markdown\`.
+Two new APIs, one new plugin, the same editor you've been using.
 
-## Inline marks
+## Containers
 
-**Strong**, *em*, ~~strike~~, \`code\`, and [a link](https://portabletext.org).
-
-## Blockquote
-
-> Portable text is structured rich text. Markdown is one way to read and write it.
->
-> Blockquotes are containers in v7, so they can hold the same kinds of content the editor accepts elsewhere — a code block, for example:
->
-> \`\`\`ts
-> const works = "A code block, inside a blockquote"
-> \`\`\`
-
-## Callout
+In v7, nested editable structures are first-class. A callout, a code block, a list - all *containers*. Each one declares its own sub-schema, and the editor enforces it everywhere - typing, pasting, decorator toggles, drag.
 
 > [!NOTE]
-> GitHub-style alerts deserialize into a callout container. The text inside is editable PT children.
+> A container's content is editable Portable Text. Toggle marks, paste rich content, drag across boundaries - it all works at every depth.
 
 > [!TIP]
-> Each tone (note, tip, important, warning, caution) renders with its own color.
+> Your existing **flat** content keeps working. Containers are opt-in.
 
-> [!WARNING]
-> Edit me. Both sides stay in sync.
+## What you write
 
-## Image
+Two new APIs cover the entire shape: \`defineContainer\` for nodes that hold editable children, \`defineLeaf\` for nodes that own their own DOM:
 
-![Diagram](https://placehold.co/400x200/0ea5e9/white?text=Portable+Text)
+\`\`\`ts
+import {defineContainer} from '@portabletext/editor'
 
-## Lists
+const calloutContainer = defineContainer({
+  scope: '$..callout',
+  field: 'content',
+  render: ({attributes, children}) => (
+    <aside {...attributes}>{children}</aside>
+  ),
+})
+\`\`\`
 
-In v7, you can keep lists flat or declare them as containers. Containers let each item hold editable rich content — text, but also code blocks, callouts, nested lists.
+The container says *where* in the schema it applies and *how* to render the wrapper. The editor handles selection, paste, schema enforcement, drag-and-drop.
 
-- Bullet item
-- Another bullet, with a code block nested inside:
+## Lists are containers too
+
+- Bullet, ordered, or task - declared in the schema.
+- Items can hold rich content, not just text:
 
   \`\`\`ts
   const works = 'A code block, inside a list item'
   \`\`\`
 
-1. Ordered item
-2. Another ordered
+- [x] Cross-container drag works
+- [x] Schema is enforced at every depth
+- [ ] Migrate your custom plugins
 
-- [x] Task list, done
-- [ ] Task list, todo
+## Markdown round-trips
 
-## Code block
+\`@portabletext/markdown\` exposes \`markdownToPortableText\` and \`portableTextToMarkdown\` and handles every shape in this document.
 
-\`\`\`ts
-import {markdownToPortableText} from '@portabletext/markdown'
+| Feature     | v6                    | v7                     |
+| ----------- | --------------------- | ---------------------- |
+| Code blocks | flat string           | container, line blocks |
+| Tables      | block-object, opaque  | container, editable    |
+| Callouts    | not supported         | container with tone    |
+| Lists       | flat \`listItem\` field | flat *or* container    |
 
-const blocks = markdownToPortableText('# Hi')
-\`\`\`
+## Live, both ways
 
-## Horizontal rule
+Type on either side. The Portable Text shape is the truth - markdown is one *serialization* of it, this editor is another.
+
+> Containers don't change Portable Text the format. They change what the editor lets you build *with* it.
+>
+> Same shape, more editable.
 
 ---
 
-## Table
-
-| Surface | Stays the same | Changes |
-| --- | --- | --- |
-| DOM your CSS targets today | yes | no |
-| Render callbacks | yes | no |
-| Plugin API | yes | no |
-
-That's GFM, round-tripped.
+![Portable Text Editor v7](https://placehold.co/600x200/0ea5e9/white?text=Portable+Text+v7)
 `
 
 export function MarkdownDemo() {
