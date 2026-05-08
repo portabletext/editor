@@ -22,7 +22,11 @@ const gallerySchema = defineSchema({
     {
       name: 'gallery',
       fields: [
-        {name: 'images', type: 'array', of: [{type: 'image', fields: []}]},
+        {
+          name: 'images',
+          type: 'array',
+          of: [{type: 'object', name: 'image', fields: []}],
+        },
       ],
     },
   ],
@@ -39,14 +43,16 @@ const tableSchema = defineSchema({
           type: 'array',
           of: [
             {
-              type: 'row',
+              type: 'object',
+              name: 'row',
               fields: [
                 {
                   name: 'cells',
                   type: 'array',
                   of: [
                     {
-                      type: 'cell',
+                      type: 'object',
+                      name: 'cell',
                       fields: [
                         {
                           name: 'content',
@@ -434,6 +440,113 @@ describe('LeafScope', () => {
 
     test('rejects $..callout..block.stock-ticker when in middle-..`', () => {
       '$..callout..block.stock-ticker' satisfies LeafScope<FullSchema>
+    })
+  })
+
+  // Ancestor-aware reference resolution: `{type: 'X'}` inside a container
+  // can reference a type declared INLINE by an ancestor, not just types at
+  // the schema root. Mirrors the runtime resolver's ancestor-fields lookup.
+  describe('ancestor-aware reference resolution', () => {
+    // callout's content holds `{type: 'object', name: 'list', ...}` whose
+    // descendants reference `{type: 'list'}`. `list` is NOT at root.
+    const inlineListSchema = defineSchema({
+      blockObjects: [
+        {
+          name: 'callout',
+          fields: [
+            {
+              name: 'content',
+              type: 'array',
+              of: [
+                {type: 'block'},
+                {
+                  type: 'object',
+                  name: 'list',
+                  fields: [
+                    {
+                      name: 'items',
+                      type: 'array',
+                      of: [
+                        {
+                          type: 'object',
+                          name: 'list-item',
+                          fields: [
+                            {
+                              name: 'content',
+                              type: 'array',
+                              of: [{type: 'block'}, {type: 'list'}],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    })
+    type InlineListSchema = typeof inlineListSchema
+
+    test('accepts container scope at the inline ancestor', () => {
+      '$..callout.list' satisfies ContainerScope<InlineListSchema>
+    })
+
+    test('accepts container scope at descendants of the inline ancestor', () => {
+      '$..callout.list.list-item' satisfies ContainerScope<InlineListSchema>
+    })
+
+    test('accepts container scope at the cycle reference', () => {
+      // The reference `{type: 'list'}` inside list-item.content resolves
+      // to the inline ancestor's list shape.
+      '$..callout.list.list-item.list' satisfies ContainerScope<InlineListSchema>
+    })
+
+    test('rejects scope past the cycle (would require infinite candidates)', () => {
+      // @ts-expect-error: cycle stops at one level deep
+      '$..callout.list.list-item.list.list-item' satisfies ContainerScope<InlineListSchema>
+    })
+
+    test('rejects sibling reference outside the inline declaration scope', () => {
+      // A schema where `list` is inline-declared inside callout, AND the
+      // SIBLING entry of callout.content references `list`. The sibling
+      // is not a descendant of the inline declaration, so the type-level
+      // walk does not see `list` in scope.
+      const siblingRefSchema = defineSchema({
+        blockObjects: [
+          {
+            name: 'callout',
+            fields: [
+              {
+                name: 'content',
+                type: 'array',
+                of: [
+                  {type: 'block'},
+                  {
+                    type: 'object',
+                    name: 'list',
+                    fields: [
+                      {name: 'items', type: 'array', of: [{type: 'block'}]},
+                    ],
+                  },
+                  // Sibling reference to `list` - outside `list`'s descendant
+                  // scope. NOT resolvable; `list` is also not at root.
+                  {type: 'list'},
+                ],
+              },
+            ],
+          },
+        ],
+      })
+      type SiblingRefSchema = typeof siblingRefSchema
+
+      // `callout.list` resolves (inline declaration). The sibling
+      // reference produces no extra container scope.
+      '$..callout.list' satisfies ContainerScope<SiblingRefSchema>
+      // @ts-expect-error: sibling reference does not resolve
+      '$..callout.list-item' satisfies ContainerScope<SiblingRefSchema>
     })
   })
 })

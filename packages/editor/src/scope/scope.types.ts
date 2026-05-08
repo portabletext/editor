@@ -34,18 +34,104 @@ type ExtractArrayFields<TFields> = TFields extends readonly [
  *
  * Walks the `of` members of array fields, extracting member types with their
  * own field lists (so we can recurse into nested containers).
+ *
+ * Three forms:
+ * - Inline declarations (`type: 'object'`) - segment name comes from `name`,
+ *   shape comes from `fields`. Emitted as `{type: TName; fields: TFields}`.
+ * - Block declarations (`type: 'block'`) - emitted as `{type: 'block'; fields: TFields}`.
+ * - Bare references (no `fields`, type !== 'object'/'block') - emitted as
+ *   `{ref: TName}`. The consumer (`DiscoverContainers` / `DiscoverLeaves`)
+ *   resolves these by looking up `TName` in the schema's `blockObjects`.
  */
 type ExtractOfMembers<TOfMembers> = TOfMembers extends readonly [
   infer TMember,
   ...infer TRest,
 ]
   ? TMember extends {
-      type: infer TTypeName extends string
-      fields?: infer TFields
+      type: 'object'
+      name: infer TName extends string
+      fields: infer TFields
     }
-    ? {type: TTypeName; fields: TFields} | ExtractOfMembers<TRest>
-    : ExtractOfMembers<TRest>
+    ? {type: TName; fields: TFields} | ExtractOfMembers<TRest>
+    : TMember extends {
+          type: 'block'
+          fields?: infer TFields
+        }
+      ? {type: 'block'; fields: TFields} | ExtractOfMembers<TRest>
+      : TMember extends {type: infer TRefName extends string}
+        ? {ref: TRefName} | ExtractOfMembers<TRest>
+        : ExtractOfMembers<TRest>
   : never
+
+/**
+ * @internal
+ *
+ * Look up a block object by name in a schema's `blockObjects` list.
+ * Returns the block object's fields, or `never` if no match.
+ */
+type LookupBlockObject<TSchema extends SchemaDefinition, TName extends string> =
+  TSchema['blockObjects'] extends ReadonlyArray<infer TBlockObject>
+    ? TBlockObject extends {name: TName; fields?: infer TFields}
+      ? TFields
+      : never
+    : never
+
+/**
+ * @internal
+ *
+ * Look up a name in the ancestor chain. The chain is a tuple of
+ * `{name, fields}` pairs accumulated by the walk. Returns the matching
+ * fields, or `never` if no ancestor declares the name.
+ *
+ * This lets references resolve to types declared inline by an ancestor,
+ * not just types at the schema root. Mirrors the runtime resolver's
+ * ancestor-fields map.
+ */
+type LookupAncestor<
+  TAncestors extends ReadonlyArray<{name: string; fields: unknown}>,
+  TName extends string,
+> = TAncestors extends readonly [
+  infer TFirst extends {name: string; fields: unknown},
+  ...infer TRest extends ReadonlyArray<{name: string; fields: unknown}>,
+]
+  ? TFirst['name'] extends TName
+    ? TFirst['fields']
+    : LookupAncestor<TRest, TName>
+  : never
+
+/**
+ * @internal
+ *
+ * Resolve a reference's fields. Checks ancestors first (inline-declared
+ * types are visible to descendants), then falls back to the schema root.
+ */
+type ResolveReference<
+  TSchema extends SchemaDefinition,
+  TName extends string,
+  TAncestors extends ReadonlyArray<{name: string; fields: unknown}>,
+> =
+  LookupAncestor<TAncestors, TName> extends infer TAncestorFields
+    ? [TAncestorFields] extends [never]
+      ? LookupBlockObject<TSchema, TName>
+      : TAncestorFields
+    : LookupBlockObject<TSchema, TName>
+
+/**
+ * @internal
+ *
+ * Test whether a name is in the ancestor chain.
+ */
+type AncestorHasName<
+  TAncestors extends ReadonlyArray<{name: string; fields: unknown}>,
+  TName extends string,
+> = TAncestors extends readonly [
+  infer TFirst extends {name: string},
+  ...infer TRest extends ReadonlyArray<{name: string; fields: unknown}>,
+]
+  ? TFirst['name'] extends TName
+    ? true
+    : AncestorHasName<TRest, TName>
+  : false
 
 /**
  * @internal
@@ -66,24 +152,86 @@ type WalkFields<TFields> = TFields extends readonly [
  *
  * Discovers container types nested inside a field list.
  * Each entry records the type's chain (dot-separated) and its array fields.
+ *
+ * Walks both inline declarations and bare references. References are
+ * resolved by looking up the type-name in the schema's `blockObjects`.
+ * Cycle detection: an `TAncestors` tuple tracks names already on the
+ * current walk path; references whose name matches an ancestor are
+ * not followed.
  */
-type DiscoverContainers<TFields, TChain extends string> =
+type DiscoverContainers<
+  TSchema extends SchemaDefinition,
+  TFields,
+  TChain extends string,
+  TAncestors extends ReadonlyArray<{name: string; fields: unknown}> = [],
+> =
   WalkFields<TFields> extends infer TMembers
-    ? TMembers extends {
-        type: infer TTypeName extends string
-        fields: infer TNestedFields
-      }
-      ? TTypeName extends 'block'
-        ? {chain: `${TChain}.block`; arrayFields: 'children'}
-        : ExtractArrayFields<TNestedFields> extends never
-          ? DiscoverContainers<TNestedFields, `${TChain}.${TTypeName}`>
-          :
-              | {
-                  chain: `${TChain}.${TTypeName}`
-                  arrayFields: ExtractArrayFields<TNestedFields>
+    ? TMembers extends {ref: infer TRefName extends string}
+      ? AncestorHasName<TAncestors, TRefName> extends true
+        ? // Cycle: emit a candidate at this depth using the ancestor's
+          // fields, but do NOT recurse further. `..` segments in scopes
+          // cover deeper depths.
+          LookupAncestor<TAncestors, TRefName> extends infer TCycleFields
+          ? TCycleFields extends ReadonlyArray<unknown>
+            ? ExtractArrayFields<TCycleFields> extends never
+              ? never
+              : {
+                  chain: `${TChain}.${TRefName}`
+                  arrayFields: ExtractArrayFields<TCycleFields>
                 }
-              | DiscoverContainers<TNestedFields, `${TChain}.${TTypeName}`>
-      : never
+            : never
+          : never
+        : ResolveReference<
+              TSchema,
+              TRefName,
+              TAncestors
+            > extends infer TRefFields
+          ? TRefFields extends ReadonlyArray<unknown>
+            ? ExtractArrayFields<TRefFields> extends never
+              ? DiscoverContainers<
+                  TSchema,
+                  TRefFields,
+                  `${TChain}.${TRefName}`,
+                  [{name: TRefName; fields: TRefFields}, ...TAncestors]
+                >
+              :
+                  | {
+                      chain: `${TChain}.${TRefName}`
+                      arrayFields: ExtractArrayFields<TRefFields>
+                    }
+                  | DiscoverContainers<
+                      TSchema,
+                      TRefFields,
+                      `${TChain}.${TRefName}`,
+                      [{name: TRefName; fields: TRefFields}, ...TAncestors]
+                    >
+            : never
+          : never
+      : TMembers extends {
+            type: infer TTypeName extends string
+            fields: infer TNestedFields
+          }
+        ? TTypeName extends 'block'
+          ? {chain: `${TChain}.block`; arrayFields: 'children'}
+          : ExtractArrayFields<TNestedFields> extends never
+            ? DiscoverContainers<
+                TSchema,
+                TNestedFields,
+                `${TChain}.${TTypeName}`,
+                [{name: TTypeName; fields: TNestedFields}, ...TAncestors]
+              >
+            :
+                | {
+                    chain: `${TChain}.${TTypeName}`
+                    arrayFields: ExtractArrayFields<TNestedFields>
+                  }
+                | DiscoverContainers<
+                    TSchema,
+                    TNestedFields,
+                    `${TChain}.${TTypeName}`,
+                    [{name: TTypeName; fields: TNestedFields}, ...TAncestors]
+                  >
+        : never
     : never
 
 /**
@@ -93,19 +241,53 @@ type DiscoverContainers<TFields, TChain extends string> =
  * appears as a member of an array but has no array fields of its own
  * (void block objects). Spans and inline objects are handled separately
  * at the top level via `AllLeaves`.
+ *
+ * Walks both inline declarations and bare references. References to
+ * top-level void block-objects (no fields, or fields with no array fields)
+ * become leaves at the current chain.
  */
-type DiscoverLeaves<TFields, TChain extends string> =
+type DiscoverLeaves<
+  TSchema extends SchemaDefinition,
+  TFields,
+  TChain extends string,
+  TAncestors extends ReadonlyArray<{name: string; fields: unknown}> = [],
+> =
   WalkFields<TFields> extends infer TMembers
-    ? TMembers extends {
-        type: infer TTypeName extends string
-        fields: infer TNestedFields
-      }
-      ? TTypeName extends 'block'
+    ? TMembers extends {ref: infer TRefName extends string}
+      ? AncestorHasName<TAncestors, TRefName> extends true
         ? never
-        : ExtractArrayFields<TNestedFields> extends never
-          ? {type: TTypeName; chain: TChain; parent: 'container'}
-          : DiscoverLeaves<TNestedFields, `${TChain}.${TTypeName}`>
-      : never
+        : ResolveReference<
+              TSchema,
+              TRefName,
+              TAncestors
+            > extends infer TRefFields
+          ? TRefFields extends ReadonlyArray<unknown>
+            ? ExtractArrayFields<TRefFields> extends never
+              ? {type: TRefName; chain: TChain; parent: 'container'}
+              : DiscoverLeaves<
+                  TSchema,
+                  TRefFields,
+                  `${TChain}.${TRefName}`,
+                  [{name: TRefName; fields: TRefFields}, ...TAncestors]
+                >
+            : // Block object with no fields at all → void leaf.
+              {type: TRefName; chain: TChain; parent: 'container'}
+          : never
+      : TMembers extends {
+            type: infer TTypeName extends string
+            fields: infer TNestedFields
+          }
+        ? TTypeName extends 'block'
+          ? never
+          : ExtractArrayFields<TNestedFields> extends never
+            ? {type: TTypeName; chain: TChain; parent: 'container'}
+            : DiscoverLeaves<
+                TSchema,
+                TNestedFields,
+                `${TChain}.${TTypeName}`,
+                [{name: TTypeName; fields: TNestedFields}, ...TAncestors]
+              >
+        : never
     : never
 
 /**
@@ -125,10 +307,20 @@ export type AllContainers<TSchema extends SchemaDefinition> =
           fields?: infer TFields
         }
         ? ExtractArrayFields<TFields> extends never
-          ? DiscoverContainers<TFields, TName>
+          ? DiscoverContainers<
+              TSchema,
+              TFields,
+              TName,
+              [{name: TName; fields: TFields}]
+            >
           :
               | {chain: TName; arrayFields: ExtractArrayFields<TFields>}
-              | DiscoverContainers<TFields, TName>
+              | DiscoverContainers<
+                  TSchema,
+                  TFields,
+                  TName,
+                  [{name: TName; fields: TFields}]
+                >
         : never
       : never)
 
@@ -157,7 +349,12 @@ type AllLeaves<TSchema extends SchemaDefinition> =
         }
         ? ExtractArrayFields<TFields> extends never
           ? {type: TName; chain: ''; parent: 'container'}
-          : DiscoverLeaves<TFields, TName>
+          : DiscoverLeaves<
+              TSchema,
+              TFields,
+              TName,
+              [{name: TName; fields: TFields}]
+            >
         : never
       : never)
 

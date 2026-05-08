@@ -33,21 +33,33 @@ export function getBlockObjectSchema(
   const enclosing = getEnclosingContainer(snapshot, path)
 
   if (enclosing) {
-    const inline = enclosing.of.find(
-      (member) => member.type !== 'block' && member.type === typeName,
-    )
+    const inline = enclosing.of.find((member) => {
+      if (member.type === 'block') {
+        return false
+      }
+      // Inline declarations: `{type: 'object', name: 'X', fields: [...]}`
+      if (member.type === 'object' && 'name' in member) {
+        return member.name === typeName
+      }
+      // Bare references: `{type: 'X'}` - the type itself is the name.
+      return member.type === typeName
+    })
 
     if (inline && inline.type !== 'block') {
-      // Project to BlockObjectSchema shape: `name` comes from `type`
-      // when the inline definition doesn't specify one.
-      return {
-        ...inline,
-        name: 'name' in inline && inline.name ? inline.name : inline.type,
-        fields:
-          'fields' in inline && inline.fields
-            ? (inline.fields as ReadonlyArray<FieldDefinition>)
-            : undefined,
+      // Project to BlockObjectSchema shape. For inline declarations, use
+      // `name`. For bare references, use `type` (resolved against root).
+      if (inline.type === 'object' && 'name' in inline && inline.name) {
+        return {
+          ...inline,
+          name: inline.name,
+          fields:
+            'fields' in inline && inline.fields ? inline.fields : undefined,
+        }
       }
+      // Bare reference: resolve against root `blockObjects`.
+      return snapshot.context.schema.blockObjects.find(
+        (definition) => definition.name === typeName,
+      )
     }
   }
 

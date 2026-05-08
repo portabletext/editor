@@ -96,14 +96,16 @@ const matrixSchema = defineSchema({
           type: 'array',
           of: [
             {
-              type: 'row',
+              type: 'object',
+              name: 'row',
               fields: [
                 {
                   name: 'cells',
                   type: 'array',
                   of: [
                     {
-                      type: 'cell',
+                      type: 'object',
+                      name: 'cell',
                       fields: [
                         {
                           name: 'content',
@@ -122,7 +124,8 @@ const matrixSchema = defineSchema({
                               styles: [{name: 'normal'}],
                             },
                             {
-                              type: 'callout',
+                              type: 'object',
+                              name: 'callout',
                               fields: [
                                 {
                                   name: 'content',

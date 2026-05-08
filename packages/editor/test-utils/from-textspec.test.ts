@@ -23,7 +23,7 @@ const schemaDefinition = defineSchema({
           type: 'array',
           of: [
             {
-              type: 'tableRow',
+              type: 'object',
               name: 'tableRow',
               fields: [
                 {
@@ -31,7 +31,7 @@ const schemaDefinition = defineSchema({
                   type: 'array',
                   of: [
                     {
-                      type: 'tableCell',
+                      type: 'object',
                       name: 'tableCell',
                       fields: [
                         {

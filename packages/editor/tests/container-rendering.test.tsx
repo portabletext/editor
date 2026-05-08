@@ -209,14 +209,16 @@ describe('table with nested rows and cells', () => {
             type: 'array',
             of: [
               {
-                type: 'row',
+                type: 'object',
+                name: 'row',
                 fields: [
                   {
                     name: 'cells',
                     type: 'array',
                     of: [
                       {
-                        type: 'cell',
+                        type: 'object',
+                        name: 'cell',
                         fields: [
                           {
                             name: 'content',
@@ -1008,14 +1010,16 @@ describe('cell with mixed content', () => {
             type: 'array',
             of: [
               {
-                type: 'row',
+                type: 'object',
+                name: 'row',
                 fields: [
                   {
                     name: 'cells',
                     type: 'array',
                     of: [
                       {
-                        type: 'cell',
+                        type: 'object',
+                        name: 'cell',
                         fields: [
                           {
                             name: 'content',

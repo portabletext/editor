@@ -438,8 +438,15 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
             0,
           ])
         } else if (firstChildType && firstChildType.type !== 'block') {
+          // For inline declarations (`type: 'object'`), the actual type
+          // identity is in `name`. For bare references (any other `type`),
+          // the type itself is the identity.
+          const childTypeName =
+            firstChildType.type === 'object' && 'name' in firstChildType
+              ? firstChildType.name
+              : firstChildType.type
           childNode = {
-            _type: firstChildType.type,
+            _type: childTypeName,
             _key: editor.keyGenerator(),
           } as Node
         }

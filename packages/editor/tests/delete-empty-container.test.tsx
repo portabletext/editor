@@ -292,14 +292,16 @@ const tableSchemaPermissive = defineSchema({
           type: 'array',
           of: [
             {
-              type: 'row',
+              type: 'object',
+              name: 'row',
               fields: [
                 {
                   name: 'cells',
                   type: 'array',
                   of: [
                     {
-                      type: 'cell',
+                      type: 'object',
+                      name: 'cell',
                       fields: [
                         {
                           name: 'content',
@@ -307,7 +309,8 @@ const tableSchemaPermissive = defineSchema({
                           of: [
                             {type: 'block'},
                             {
-                              type: 'callout',
+                              type: 'object',
+                              name: 'callout',
                               fields: [
                                 {
                                   name: 'content',
@@ -360,21 +363,24 @@ const tableSchemaStructural = defineSchema({
           type: 'array',
           of: [
             {
-              type: 'row',
+              type: 'object',
+              name: 'row',
               fields: [
                 {
                   name: 'cells',
                   type: 'array',
                   of: [
                     {
-                      type: 'cell',
+                      type: 'object',
+                      name: 'cell',
                       fields: [
                         {
                           name: 'content',
                           type: 'array',
                           of: [
                             {
-                              type: 'callout',
+                              type: 'object',
+                              name: 'callout',
                               fields: [
                                 {
                                   name: 'content',
