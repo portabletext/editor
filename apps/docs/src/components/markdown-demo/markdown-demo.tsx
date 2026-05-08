@@ -13,6 +13,7 @@ import {
   LeafPlugin,
 } from '@portabletext/editor/plugins'
 import {
+  DefaultBlockquoteObjectRenderer,
   DefaultCalloutRenderer,
   DefaultHorizontalRuleRenderer,
   DefaultImageRenderer,
@@ -40,7 +41,6 @@ const schemaDefinition = defineSchema({
     {name: 'h4'},
     {name: 'h5'},
     {name: 'h6'},
-    {name: 'blockquote'},
   ],
   decorators: [
     {name: 'strong'},
@@ -83,6 +83,62 @@ const schemaDefinition = defineSchema({
                     {name: 'title', type: 'string'},
                   ],
                 },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+    {
+      name: 'blockquote',
+      fields: [
+        {
+          name: 'content',
+          type: 'array',
+          of: [
+            {
+              type: 'block',
+              decorators: [
+                {name: 'strong'},
+                {name: 'em'},
+                {name: 'code'},
+                {name: 'strike-through'},
+              ],
+              styles: [{name: 'normal'}],
+              annotations: [
+                {
+                  name: 'link',
+                  fields: [
+                    {name: 'href', type: 'string'},
+                    {name: 'title', type: 'string'},
+                  ],
+                },
+              ],
+            },
+            {
+              type: 'code-block',
+              fields: [
+                {
+                  name: 'lines',
+                  type: 'array',
+                  of: [
+                    {
+                      type: 'block',
+                      styles: [],
+                      decorators: [],
+                      annotations: [],
+                      inlineObjects: [],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              type: 'image',
+              fields: [
+                {name: 'src', type: 'string'},
+                {name: 'alt', type: 'string'},
+                {name: 'title', type: 'string'},
               ],
             },
           ],
@@ -350,6 +406,19 @@ const calloutBlockContainer = defineContainer<typeof schemaDefinition>({
   ),
 })
 
+const blockquoteContainer = defineContainer<typeof schemaDefinition>({
+  scope: '$..blockquote',
+  field: 'content',
+  render: ({attributes, children}) => (
+    <blockquote
+      {...attributes}
+      className="my-2 border-gray-300 border-l-4 pl-3 text-gray-600 italic dark:border-gray-600 dark:text-gray-400"
+    >
+      {children}
+    </blockquote>
+  ),
+})
+
 const codeBlockContainer = defineContainer<typeof schemaDefinition>({
   scope: '$..code-block',
   field: 'lines',
@@ -508,11 +577,6 @@ const markdownShortcutsProps = {
     context: {schema: {styles: Array<{name: string}>}}
     props: {level: number}
   }) => context.schema.styles.find((s) => s.name === `h${props.level}`)?.name,
-  blockquoteStyle: ({
-    context,
-  }: {
-    context: {schema: {styles: Array<{name: string}>}}
-  }) => context.schema.styles.find((s) => s.name === 'blockquote')?.name,
   horizontalRuleObject: ({
     context,
   }: {
@@ -621,6 +685,17 @@ const markdownOptions = {
       kind: value.kind,
       items: value.items,
     }),
+    blockquote: ({
+      context,
+      value,
+    }: {
+      context: {keyGenerator: () => string}
+      value: {content: Array<unknown>}
+    }) => ({
+      _key: context.keyGenerator(),
+      _type: 'blockquote',
+      content: value.content,
+    }),
   },
 } as const
 
@@ -635,6 +710,12 @@ Edit either side. Both stay in sync through \`@portabletext/markdown\`.
 ## Blockquote
 
 > Portable text is structured rich text. Markdown is one way to read and write it.
+>
+> Blockquotes are containers in v7, so they can hold the same kinds of content the editor accepts elsewhere — a code block, for example:
+>
+> \`\`\`ts
+> const works = "A code block, inside a blockquote"
+> \`\`\`
 
 ## Callout
 
@@ -719,6 +800,7 @@ export function MarkdownDemo() {
     setMarkdown(
       portableTextToMarkdown(value, {
         types: {
+          'blockquote': DefaultBlockquoteObjectRenderer,
           'callout': DefaultCalloutRenderer,
           'code-block': ({value}) => {
             const v = value as {
@@ -788,6 +870,7 @@ export function MarkdownDemo() {
               cellContainer,
               calloutContainer,
               calloutBlockContainer,
+              blockquoteContainer,
               codeBlockContainer,
               listContainer,
               listItemContainer,
@@ -817,13 +900,6 @@ export function MarkdownDemo() {
               if (props.value === 'h3') {
                 return (
                   <h3 className="mb-2 font-bold text-lg">{props.children}</h3>
-                )
-              }
-              if (props.value === 'blockquote') {
-                return (
-                  <blockquote className="my-2 pl-3 border-l-4 border-gray-300 dark:border-gray-600 italic text-gray-600 dark:text-gray-400">
-                    {props.children}
-                  </blockquote>
                 )
               }
               return <p className="mb-2">{props.children}</p>

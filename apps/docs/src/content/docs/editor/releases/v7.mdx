@@ -13,15 +13,15 @@ The migration is small. The DOM your CSS targets today, the patches you store, t
 
 ## Markdown, end to end
 
-Portable Text round-trips with markdown in v7. `@portabletext/markdown` exposes `markdownToPortableText` and `portableTextToMarkdown` and handles CommonMark, the GFM extensions (tables, strikethrough, autolinks, task lists), and GitHub-style alerts (`> [!NOTE]`, `> [!TIP]`, `> [!WARNING]`, `> [!IMPORTANT]`, `> [!CAUTION]`) which become `callout` blocks with a `tone` field, and back. Code blocks, tables, and callouts use v7 containers, so their inner content is editable rich text rather than opaque strings.
+Portable Text round-trips with markdown in v7. `@portabletext/markdown` exposes `markdownToPortableText` and `portableTextToMarkdown` and handles CommonMark, the GFM extensions (tables, strikethrough, autolinks, task lists), and GitHub-style alerts (`> [!NOTE]`, `> [!TIP]`, `> [!WARNING]`, `> [!IMPORTANT]`, `> [!CAUTION]`) which become `callout` blocks with a `tone` field, and back. Code blocks, tables, callouts, lists, and blockquotes use v7 containers, so their inner content is editable rich text rather than opaque strings.
 
 That's the converter pair. The companion `@portabletext/plugin-markdown-shortcuts` covers live-typing inside the editor — `# `, `> `, `- `, `1. `, `---`, `**bold**`, `*em*`, `~~strike~~`, `` `code` ``, `[link](url)`. The shortcuts are Behaviors, schema-aware. A heading shortcut inside a code-block container does nothing, because the code-block's sub-schema doesn't declare heading styles.
 
-A markdown editor in v7 is a small composition: a schema declaring code blocks, tables, and callouts as containers, your `defineContainer` registrations for each, the converter pair on the I/O boundary, the shortcuts plugin on the input boundary. Here it is, live:
+A markdown editor in v7 is a small composition: a schema declaring code blocks, tables, callouts, lists, and blockquotes as containers, your `defineContainer` registrations for each, the converter pair on the I/O boundary, the shortcuts plugin on the input boundary. Here it is, live:
 
 <MarkdownDemo client:only="react" />
 
-Edit either side. Type `# ` at the start of a line, the editor renders a heading and the markdown column updates. Click into a code-block line, type, the fence rebuilds. Click into a callout, the inner text is real Portable Text with its own decorators. Tables are containers all the way down — `<table>`, `<tr>`, `<td>`, each cell holds editable text blocks.
+Edit either side. Type `# ` at the start of a line, the editor renders a heading and the markdown column updates. Click into a code-block line, type, the fence rebuilds. Click into a callout, the inner text is real Portable Text with its own decorators. The blockquote in the demo holds a code block alongside text — that's the structural shape, not a flat block-style. Tables are containers all the way down — `<table>`, `<tr>`, `<td>`, each cell holds editable text blocks.
 
 ## What you can build now
 
