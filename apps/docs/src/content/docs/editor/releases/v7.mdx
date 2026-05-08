@@ -236,7 +236,7 @@ The schema is owned by your editor. The plugin reads it through scope. That cont
 
 PTE used to be built on Slate, and the rendered DOM showed it. Every editable node carried `data-slate-*` attributes that the engine read internally for DOM-to-model walking. Some of those attributes leaked into consumer CSS — Canvas's continuation ghost, Studio's comments inspector, click-on-text handlers — because they were the only stable hooks available.
 
-In v7, the engine queries `data-pt-*` exclusively. `data-slate-*` is no longer the engine's internal contract. The legacy rendering pipeline still emits both for back-compat, so your existing CSS keeps working, but the engine itself doesn't depend on them anymore. The new container rendering pipeline emits _only_ `data-pt-*` for engine internals and nothing else by default. No `pt-block` class, no `data-block-key`, no `data-style`, unless you ask for them.
+In v7, the engine queries `data-pt-*` exclusively. `data-slate-*` is no longer the engine's internal contract. The legacy rendering pipeline still emits both for back-compat, so your existing CSS keeps working, but the engine itself doesn't depend on them anymore. The new container rendering pipeline emits _only_ `data-pt-*` for engine internals and nothing else by default. No `pt-block` class, no `data-block-key`, no `data-style`, unless you add them yourself.
 
 That last part is the unlock. Inside `defineContainer` and `defineLeaf` renders, you spread `{...attributes}` to attach the few attrs the engine actually needs (path tracking, node typing) and add whatever DOM you want around them:
 
