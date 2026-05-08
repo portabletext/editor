@@ -16,16 +16,18 @@ import {
   DefaultCalloutRenderer,
   DefaultHorizontalRuleRenderer,
   DefaultImageRenderer,
+  DefaultListRenderer,
   DefaultTableRenderer,
   markdownToPortableText,
   portableTextToMarkdown,
 } from '@portabletext/markdown'
 import {MarkdownShortcutsPlugin} from '@portabletext/plugin-markdown-shortcuts'
 import {useEffect, useRef, useState} from 'react'
-import './markdown-demo.css'
 
 // Schema mirrors @portabletext/markdown's defaults so values produced by
-// markdownToPortableText pass the editor's schema validation.
+// markdownToPortableText pass the editor's schema validation. Lists are
+// declared as structural `list` block-objects (not flat `lists` items) so
+// list items can hold rich nested content like code blocks and callouts.
 const schemaDefinition = defineSchema({
   block: {
     fields: [{name: 'checked', type: 'boolean'}],
@@ -40,7 +42,6 @@ const schemaDefinition = defineSchema({
     {name: 'h6'},
     {name: 'blockquote'},
   ],
-  lists: [{name: 'bullet'}, {name: 'number'}, {name: 'task'}],
   decorators: [
     {name: 'strong'},
     {name: 'em'},
@@ -83,7 +84,6 @@ const schemaDefinition = defineSchema({
                   ],
                 },
               ],
-              lists: [],
             },
           ],
         },
@@ -101,7 +101,6 @@ const schemaDefinition = defineSchema({
               styles: [],
               decorators: [],
               annotations: [],
-              lists: [],
               inlineObjects: [],
             },
           ],
@@ -116,6 +115,51 @@ const schemaDefinition = defineSchema({
         {name: 'src', type: 'string'},
         {name: 'alt', type: 'string'},
         {name: 'title', type: 'string'},
+      ],
+    },
+    {
+      name: 'list',
+      fields: [
+        {name: 'kind', type: 'string'},
+        {
+          name: 'items',
+          type: 'array',
+          of: [
+            {
+              type: 'list-item',
+              fields: [
+                {name: 'checked', type: 'boolean'},
+                {
+                  name: 'content',
+                  type: 'array',
+                  of: [
+                    {
+                      type: 'block',
+                      decorators: [
+                        {name: 'strong'},
+                        {name: 'em'},
+                        {name: 'code'},
+                        {name: 'strike-through'},
+                      ],
+                      styles: [{name: 'normal'}],
+                      annotations: [
+                        {
+                          name: 'link',
+                          fields: [
+                            {name: 'href', type: 'string'},
+                            {name: 'title', type: 'string'},
+                          ],
+                        },
+                      ],
+                    },
+                    {type: 'code-block'},
+                    {type: 'callout'},
+                  ],
+                },
+              ],
+            },
+          ],
+        },
       ],
     },
     {
@@ -158,7 +202,6 @@ const schemaDefinition = defineSchema({
                                   ],
                                 },
                               ],
-                              lists: [],
                             },
                           ],
                         },
@@ -273,6 +316,60 @@ const codeBlockContainer = defineContainer<typeof schemaDefinition>({
   ),
 })
 
+const listContainer = defineContainer<typeof schemaDefinition>({
+  scope: '$..list',
+  field: 'items',
+  render: ({attributes, children, node}) => {
+    const kind = (node as {kind?: string}).kind ?? 'bullet'
+    if (kind === 'number') {
+      return (
+        <ol {...attributes} className="my-2 list-decimal space-y-1 pl-6">
+          {children}
+        </ol>
+      )
+    }
+    return (
+      <ul
+        {...attributes}
+        data-kind={kind}
+        className={
+          kind === 'task'
+            ? 'my-2 list-none space-y-1 pl-2'
+            : 'my-2 list-disc space-y-1 pl-6'
+        }
+      >
+        {children}
+      </ul>
+    )
+  },
+})
+
+const listItemContainer = defineContainer<typeof schemaDefinition>({
+  scope: '$..list.list-item',
+  field: 'content',
+  render: ({attributes, children, node}) => {
+    const checked = (node as {checked?: boolean}).checked
+    if (typeof checked === 'boolean') {
+      return (
+        <li {...attributes} className="flex items-start gap-2">
+          <input
+            type="checkbox"
+            checked={checked}
+            readOnly
+            className="mt-1.5 flex-none"
+          />
+          <div
+            className={checked ? 'flex-1 line-through opacity-60' : 'flex-1'}
+          >
+            {children}
+          </div>
+        </li>
+      )
+    }
+    return <li {...attributes}>{children}</li>
+  },
+})
+
 const codeBlockSpanLeaf = defineLeaf<typeof schemaDefinition>({
   scope: '$..code-block.block.span',
   render: ({attributes, children}) => (
@@ -369,16 +466,6 @@ const markdownShortcutsProps = {
   }: {
     context: {schema: {styles: Array<{name: string}>}}
   }) => context.schema.styles.find((s) => s.name === 'blockquote')?.name,
-  unorderedList: ({
-    context,
-  }: {
-    context: {schema: {lists: Array<{name: string}>}}
-  }) => context.schema.lists.find((l) => l.name === 'bullet')?.name,
-  orderedList: ({
-    context,
-  }: {
-    context: {schema: {lists: Array<{name: string}>}}
-  }) => context.schema.lists.find((l) => l.name === 'number')?.name,
   horizontalRuleObject: ({
     context,
   }: {
@@ -472,6 +559,21 @@ const markdownOptions = {
       headerRows: value.headerRows,
       rows: value.rows,
     }),
+    list: ({
+      context,
+      value,
+    }: {
+      context: {keyGenerator: () => string}
+      value: {
+        kind: 'bullet' | 'number' | 'task'
+        items: Array<unknown>
+      }
+    }) => ({
+      _key: context.keyGenerator(),
+      _type: 'list',
+      kind: value.kind,
+      items: value.items,
+    }),
   },
 } as const
 
@@ -504,8 +606,14 @@ Edit either side. Both stay in sync through \`@portabletext/markdown\`.
 
 ## Lists
 
+Lists are containers in v7. Each item holds editable rich content — text, but also code blocks, callouts, nested lists.
+
 - Bullet item
-- Another bullet
+- Another bullet, with a code block nested inside:
+
+  \`\`\`ts
+  const works = 'A code block, inside a list item'
+  \`\`\`
 
 1. Ordered item
 2. Another ordered
@@ -582,6 +690,7 @@ export function MarkdownDemo() {
           },
           'horizontal-rule': DefaultHorizontalRuleRenderer,
           'image': DefaultImageRenderer,
+          'list': DefaultListRenderer,
           'table': DefaultTableRenderer,
         },
       }),
@@ -633,6 +742,8 @@ export function MarkdownDemo() {
               calloutContainer,
               calloutBlockContainer,
               codeBlockContainer,
+              listContainer,
+              listItemContainer,
             ]}
           />
           <LeafPlugin
@@ -645,33 +756,6 @@ export function MarkdownDemo() {
               focused.current = 'editor'
             }}
             className="p-4 outline-none flex-1 min-h-[420px] prose prose-sm max-w-none dark:prose-invert"
-            renderListItem={(props) => {
-              if (props.value === 'task') {
-                const checked =
-                  (props.block as {checked?: boolean}).checked === true
-                return (
-                  <span className="flex items-start gap-2">
-                    <input
-                      type="checkbox"
-                      checked={checked}
-                      readOnly
-                      className="mt-1.5 flex-none"
-                    />
-                    <span
-                      className={[
-                        'flex-1',
-                        checked ? 'line-through opacity-60' : '',
-                      ]
-                        .filter(Boolean)
-                        .join(' ')}
-                    >
-                      {props.children}
-                    </span>
-                  </span>
-                )
-              }
-              return props.children
-            }}
             renderStyle={(props) => {
               if (props.value === 'h1') {
                 return (
