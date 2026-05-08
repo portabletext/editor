@@ -17,7 +17,7 @@ Portable Text round-trips with markdown in v7. `@portabletext/markdown` exposes 
 
 That's the converter pair. The companion `@portabletext/plugin-markdown-shortcuts` covers live-typing inside the editor — `# `, `> `, `- `, `1. `, `---`, `**bold**`, `*em*`, `~~strike~~`, `` `code` ``, `[link](url)`. The shortcuts are Behaviors, schema-aware. A heading shortcut inside a code-block container does nothing, because the code-block's sub-schema doesn't declare heading styles.
 
-A markdown editor in v7 is a small composition: a schema declaring code blocks, tables, and callouts as containers, your `defineContainer` registrations for each, the converter pair on the I/O boundary, the shortcuts plugin on the input boundary. Drop the demo below into a Vite app and start writing:
+A markdown editor in v7 is a small composition: a schema declaring code blocks, tables, and callouts as containers, your `defineContainer` registrations for each, the converter pair on the I/O boundary, the shortcuts plugin on the input boundary. Here it is, live:
 
 <MarkdownDemo client:only="react" />
 
