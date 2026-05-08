@@ -270,6 +270,80 @@ The container API is what makes tables possible. A working table archetype ships
 
 That's deliberate. Tables shouldn't be a _hack_. They should be the natural byproduct of an editor that supports nesting. The container API is `@alpha` precisely because we expect plugin authors to push on it as they build the first generation of nested-content plugins.
 
+A table is three nested containers — `table` holds `rows`, each `row` holds `cells`, each `cell` holds editable content. Each layer is one `defineContainer`:
+
+```tsx
+import {defineContainer} from '@portabletext/editor'
+import {ContainerPlugin} from '@portabletext/editor/plugins'
+
+const tableContainer = defineContainer({
+  scope: '$..table',
+  field: 'rows',
+  render: ({attributes, children}) => (
+    <table {...attributes}>
+      <tbody>{children}</tbody>
+    </table>
+  ),
+})
+
+const rowContainer = defineContainer({
+  scope: '$..table.row',
+  field: 'cells',
+  render: ({attributes, children}) => <tr {...attributes}>{children}</tr>,
+})
+
+const cellContainer = defineContainer({
+  scope: '$..table.row.cell',
+  field: 'content',
+  render: ({attributes, children}) => <td {...attributes}>{children}</td>,
+})
+
+export function TablePlugin() {
+  return (
+    <ContainerPlugin
+      containers={[tableContainer, rowContainer, cellContainer]}
+    />
+  )
+}
+```
+
+A code block is one container plus one leaf — the container holds editable lines, the leaf renders each line's spans in monospace:
+
+```tsx
+import {defineContainer, defineLeaf} from '@portabletext/editor'
+import {ContainerPlugin, LeafPlugin} from '@portabletext/editor/plugins'
+
+const codeBlockContainer = defineContainer({
+  scope: '$..code-block',
+  field: 'lines',
+  render: ({attributes, children}) => (
+    <pre {...attributes} className="code-block">
+      {children}
+    </pre>
+  ),
+})
+
+const codeBlockSpanLeaf = defineLeaf({
+  scope: '$..code-block.block.span',
+  render: ({attributes, children}) => (
+    <span {...attributes} className="font-mono">
+      {children}
+    </span>
+  ),
+})
+
+export function CodeBlockPlugin() {
+  return (
+    <>
+      <ContainerPlugin containers={[codeBlockContainer]} />
+      <LeafPlugin leafs={[codeBlockSpanLeaf]} />
+    </>
+  )
+}
+```
+
+These are skeletons — production-quality versions would add keyboard navigation between cells, column add and delete, paste-from-spreadsheet, language selection, syntax highlighting. The dedicated `@portabletext/plugin-tables` and `@portabletext/plugin-code-block` packages will ship those layered on top of the same container primitives.
+
 The next round of releases will introduce them as their own packages:
 
 - `@portabletext/plugin-tables`. Header rows, cell navigation, row and column add and delete, paste-from-spreadsheet.
