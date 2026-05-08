@@ -74,12 +74,20 @@ export type InlineObjectSchemaType = BaseDefinition & {
 /**
  * @public
  * Describes a member type within an array field's `of`.
- * When `type` is `'block'`, PTE sub-schema properties (styles, decorators,
- * annotations, lists, inlineObjects) are available for configuring the
- * nested text block. Unspecified fields are inherited from the root schema
- * at `compileSchema` time.
+ *
+ * Three forms:
+ * - `BlockOfDefinition` (`type: 'block'`) - declares a nested text block,
+ *   with PTE sub-schema configurable inline.
+ * - `InlineObjectOfDefinition` (`type: 'object'`) - inline-declares an
+ *   object shape at this position. `name` is the type identity; `fields`
+ *   defines the shape.
+ * - `ReferenceOfDefinition` (`type: <name>`) - a bare reference to a type
+ *   declared in `blockObjects` or `inlineObjects` at the schema root.
  */
-export type OfDefinition = BlockOfDefinition | ObjectOfDefinition
+export type OfDefinition =
+  | BlockOfDefinition
+  | InlineObjectOfDefinition
+  | ReferenceOfDefinition
 
 /**
  * @public
@@ -108,13 +116,34 @@ export type BlockOfDefinition = {
 
 /**
  * @public
- * An `of` member with any non-block type -- a named type reference.
+ * An `of` member with `type: 'object'` -- inline-declares an object shape.
+ *
+ * `name` is the type identity at this position. `fields` defines the shape.
+ * Use this when the type only needs to exist at this nesting position. For
+ * types referenced from multiple positions, declare them once at the schema
+ * root (`blockObjects`) and use a `ReferenceOfDefinition` at each call site.
  */
-export type ObjectOfDefinition = {
+export type InlineObjectOfDefinition = {
+  type: 'object'
+  name: string
+  title?: string
+  fields: ReadonlyArray<FieldDefinition>
+}
+
+/**
+ * @public
+ * An `of` member referencing a type declared elsewhere by name.
+ *
+ * `type` is the lookup key. Resolves to the matching entry in the schema's
+ * `blockObjects` or `inlineObjects`. Self-references and cycles are
+ * supported via cycle detection on the resolver walk.
+ *
+ * Throws at `compileSchema` time when the referenced type isn't declared.
+ */
+export type ReferenceOfDefinition = {
   type: string
   name?: string
   title?: string
-  fields?: ReadonlyArray<FieldDefinition>
 }
 
 /**

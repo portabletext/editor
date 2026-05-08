@@ -5,9 +5,9 @@ import type {
   BlockOfDefinition,
   DecoratorSchemaType,
   FieldDefinition,
+  InlineObjectOfDefinition,
   InlineObjectSchemaType,
   ListSchemaType,
-  ObjectOfDefinition,
   OfDefinition,
   Schema,
   StyleSchemaType,
@@ -31,6 +31,12 @@ function isBlockOfMember(member: OfDefinition): member is BlockOfDefinition {
   return member.type === 'block'
 }
 
+function isInlineObjectOfMember(
+  member: OfDefinition,
+): member is InlineObjectOfDefinition {
+  return member.type === 'object'
+}
+
 function compileOfMember(
   member: OfDefinition,
   inheritance: BlockInheritance,
@@ -38,7 +44,11 @@ function compileOfMember(
   if (isBlockOfMember(member)) {
     return compileBlockOfMember(member, inheritance)
   }
-  return compileObjectOfMember(member, inheritance)
+  if (isInlineObjectOfMember(member)) {
+    return compileInlineObjectOfMember(member, inheritance)
+  }
+  // Reference: pass through unchanged. The resolver looks up by `type`.
+  return member
 }
 
 function compileBlockOfMember(
@@ -80,17 +90,14 @@ function compileBlockOfMember(
   }
 }
 
-function compileObjectOfMember(
-  member: ObjectOfDefinition,
+function compileInlineObjectOfMember(
+  member: InlineObjectOfDefinition,
   inheritance: BlockInheritance,
-): ObjectOfDefinition {
-  if (member.fields) {
-    return {
-      ...member,
-      fields: member.fields.map((field) => compileField(field, inheritance)),
-    }
+): InlineObjectOfDefinition {
+  return {
+    ...member,
+    fields: member.fields.map((field) => compileField(field, inheritance)),
   }
-  return member
 }
 
 function compileField(

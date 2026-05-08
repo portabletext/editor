@@ -57,7 +57,7 @@ describe(compileSchema.name, () => {
                   type: 'array',
                   of: [
                     {
-                      type: 'galleryImage',
+                      type: 'object',
                       name: 'galleryImage',
                       fields: [{name: 'alt', type: 'string'}],
                     },
@@ -76,7 +76,7 @@ describe(compileSchema.name, () => {
               type: 'array',
               of: [
                 {
-                  type: 'galleryImage',
+                  type: 'object',
                   name: 'galleryImage',
                   fields: [{name: 'alt', type: 'string'}],
                 },
@@ -146,7 +146,7 @@ describe(compileSchema.name, () => {
                 type: 'array',
                 of: [
                   {
-                    type: 'tableRow',
+                    type: 'object',
                     name: 'tableRow',
                     fields: [
                       {
@@ -172,7 +172,7 @@ describe(compileSchema.name, () => {
               type: 'array',
               of: [
                 {
-                  type: 'tableRow',
+                  type: 'object',
                   name: 'tableRow',
                   fields: [
                     {
@@ -405,7 +405,7 @@ describe(compileSchema.name, () => {
                   type: 'array',
                   of: [
                     {
-                      type: 'row',
+                      type: 'object',
                       name: 'row',
                       fields: [
                         {
@@ -413,7 +413,7 @@ describe(compileSchema.name, () => {
                           type: 'array',
                           of: [
                             {
-                              type: 'cell',
+                              type: 'object',
                               name: 'cell',
                               fields: [
                                 {
@@ -442,7 +442,7 @@ describe(compileSchema.name, () => {
               type: 'array',
               of: [
                 {
-                  type: 'row',
+                  type: 'object',
                   name: 'row',
                   fields: [
                     {
@@ -450,7 +450,7 @@ describe(compileSchema.name, () => {
                       type: 'array',
                       of: [
                         {
-                          type: 'cell',
+                          type: 'object',
                           name: 'cell',
                           fields: [
                             {
