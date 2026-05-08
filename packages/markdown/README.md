@@ -70,6 +70,7 @@ const markdown = portableTextToMarkdown([
 | Blockquotes      | ✅                       | ✅                       |
 | Ordered lists    | ✅                       | ✅                       |
 | Unordered lists  | ✅                       | ✅                       |
+| Task lists       | ✅\*                     | ✅\*                     |
 | Nested lists     | ✅                       | ✅                       |
 | Code blocks      | ✅                       | ✅\*                     |
 | Horizontal rules | ✅                       | ✅\*                     |
@@ -206,6 +207,7 @@ Matchers map Markdown concepts to Portable Text types defined in the Schema. Eac
 |            | `blockquote`     | `>` blockquotes         | `'blockquote'`      |
 | `listItem` | `bullet`         | `- ` or `* ` lists      | `'bullet'`          |
 |            | `number`         | `1. ` ordered lists     | `'number'`          |
+|            | `task`           | `- [ ]` / `- [x]` items | `'task'`            |
 | `marks`    | `strong`         | `**bold**`              | `'strong'`          |
 |            | `em`             | `*italic*`              | `'em'`              |
 |            | `code`           | `` `inline code` ``     | `'code'`            |
@@ -284,6 +286,36 @@ markdownToPortableText(markdown, {
 The matcher receives `value.items` already assembled. Each item's `content` array holds whatever blocks the markdown produced inside the item: text blocks, code blocks, callouts, images, even nested lists. `kind` is promoted to `'task'` automatically when any item carries a GFM checkbox (`- [ ]` / `- [x]`); items only carry a `checked` field when the markdown actually has one. If the matcher returns `undefined`, the parser falls back to flat-list parsing for that list.
 
 Without `types.list`, the existing flat-block path runs unchanged.
+
+**GFM task lists** (`- [ ]` / `- [x]`): Task lists are recognized when the schema declares a `task` list item. Without a `task` definition, the checkbox markers are stripped from the text and the items render as their surrounding list type (bullet or number). With a `task` definition, items carrying a checkbox become text blocks with `listItem: 'task'` and a `checked: boolean` field; items without a checkbox keep their surrounding list type.
+
+```ts
+markdownToPortableText('- [x] done\n- [ ] todo', {
+  schema: compileSchema(
+    defineSchema({
+      lists: [{name: 'bullet'}, {name: 'task'}],
+    }),
+  ),
+})
+// → [
+//   {_type: 'block', listItem: 'task', level: 1, checked: true,  children: [{text: 'done', ...}], ...},
+//   {_type: 'block', listItem: 'task', level: 1, checked: false, children: [{text: 'todo', ...}], ...},
+// ]
+```
+
+If your schema uses a different name for the task list type (e.g. `'todo'`), provide a custom `listItem.task` matcher:
+
+```ts
+markdownToPortableText(markdown, {
+  schema: compileSchema(defineSchema({lists: [{name: 'todo'}]})),
+  listItem: {
+    task: ({context}) =>
+      context.schema.lists.find((list) => list.name === 'todo')?.name,
+  },
+})
+```
+
+When emitting Portable Text back to Markdown, blocks with `listItem: 'task'` render as `- [x] ` or `- [ ] ` based on the `checked` field.
 
 Matchers receive:
 
@@ -395,24 +427,24 @@ The conversion is driven by **Renderers**: functions that render Portable Text e
 
 #### Default renderers
 
-| Group               | Renderer         | Renders                      | Output                |
-| ------------------- | ---------------- | ---------------------------- | --------------------- |
-| `block`             | `normal`         | Paragraphs                   | `{children}`          |
-|                     | `h1`–`h6`        | Headings                     | `# `–`###### `        |
-|                     | `blockquote`     | Blockquotes                  | `> {children}`        |
-| `marks`             | `strong`         | Bold text                    | `**{children}**`      |
-|                     | `em`             | Italic text                  | `_{children}_`        |
-|                     | `code`           | Inline code                  | `` `{children}` ``    |
-|                     | `underline`      | Underlined text              | `<u>{children}</u>`   |
-|                     | `strike-through` | Strikethrough                | `~~{children}~~`      |
-|                     | `link`           | Links                        | `[{children}](url)`   |
-| `listItem`          |                  | List items (bullet & number) | `- ` or `1. `         |
-| `hardBreak`         |                  | Line breaks within blocks    | `  \n` (two spaces)   |
-| `blockSpacing`      |                  | Spacing between blocks       | `\n\n`, `\n`, `\n>\n` |
-| `unknownType`       |                  | Unknown block types          | JSON code block       |
-| `unknownBlockStyle` |                  | Unknown block styles         | `{children}`          |
-| `unknownListItem`   |                  | Unknown list item types      | `- {children}`        |
-| `unknownMark`       |                  | Unknown marks                | `{children}`          |
+| Group               | Renderer         | Renders                           | Output                   |
+| ------------------- | ---------------- | --------------------------------- | ------------------------ |
+| `block`             | `normal`         | Paragraphs                        | `{children}`             |
+|                     | `h1`–`h6`        | Headings                          | `# `–`###### `           |
+|                     | `blockquote`     | Blockquotes                       | `> {children}`           |
+| `marks`             | `strong`         | Bold text                         | `**{children}**`         |
+|                     | `em`             | Italic text                       | `_{children}_`           |
+|                     | `code`           | Inline code                       | `` `{children}` ``       |
+|                     | `underline`      | Underlined text                   | `<u>{children}</u>`      |
+|                     | `strike-through` | Strikethrough                     | `~~{children}~~`         |
+|                     | `link`           | Links                             | `[{children}](url)`      |
+| `listItem`          |                  | List items (bullet, number, task) | `- `, `1. `, or `- [x] ` |
+| `hardBreak`         |                  | Line breaks within blocks         | `  \n` (two spaces)      |
+| `blockSpacing`      |                  | Spacing between blocks            | `\n\n`, `\n`, `\n>\n`    |
+| `unknownType`       |                  | Unknown block types               | JSON code block          |
+| `unknownBlockStyle` |                  | Unknown block styles              | `{children}`             |
+| `unknownListItem`   |                  | Unknown list item types           | `- {children}`           |
+| `unknownMark`       |                  | Unknown marks                     | `{children}`             |
 
 Unknown types render as JSON code blocks by default; unknown styles, list items, and marks pass through their children.
 
