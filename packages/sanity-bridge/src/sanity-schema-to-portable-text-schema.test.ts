@@ -362,7 +362,7 @@ describe(sanitySchemaToPortableTextSchema.name, () => {
         title: 'Rows',
         of: [
           {
-            type: 'row',
+            type: 'object',
             name: 'row',
             title: 'Row',
             fields: [
@@ -372,7 +372,7 @@ describe(sanitySchemaToPortableTextSchema.name, () => {
                 title: 'Cells',
                 of: [
                   {
-                    type: 'cell',
+                    type: 'object',
                     name: 'cell',
                     title: 'Cell',
                     fields: [
@@ -457,7 +457,7 @@ describe(sanitySchemaToPortableTextSchema.name, () => {
         title: 'Rows',
         of: [
           {
-            type: 'row',
+            type: 'object',
             name: 'row',
             title: 'Row',
             fields: [
@@ -467,7 +467,7 @@ describe(sanitySchemaToPortableTextSchema.name, () => {
                 title: 'Cells',
                 of: [
                   {
-                    type: 'cell',
+                    type: 'object',
                     name: 'cell',
                     title: 'Cell',
                     fields: [
@@ -475,10 +475,7 @@ describe(sanitySchemaToPortableTextSchema.name, () => {
                         name: 'content',
                         type: 'array',
                         title: 'Content',
-                        of: [
-                          {type: 'block'},
-                          {type: 'table', name: 'table', title: 'Table'},
-                        ],
+                        of: [{type: 'block'}, {type: 'table', title: 'Table'}],
                       },
                     ],
                   },
@@ -535,10 +532,293 @@ describe(sanitySchemaToPortableTextSchema.name, () => {
         name: 'input',
         type: 'array',
         title: 'Input',
+        of: [{type: 'block'}, {type: 'aiTask', title: 'Ai Task'}],
+      },
+    ])
+  })
+
+  test('mutually-recursive block-objects unfold one level then emit cycle stubs', () => {
+    // Two block-objects reference each other from `content` arrays. The
+    // bridge should inline each through the other once, then stub the
+    // recursion. The editor resolver picks up the stubs from `blockObjects`.
+    const aType = defineType({
+      type: 'object',
+      name: 'a',
+      fields: [
+        defineField({
+          type: 'array',
+          name: 'content',
+          of: [
+            defineArrayMember({type: 'block', name: 'block'}),
+            defineArrayMember({type: 'b'}),
+          ],
+        }),
+      ],
+    })
+    const bType = defineType({
+      type: 'object',
+      name: 'b',
+      fields: [
+        defineField({
+          type: 'array',
+          name: 'content',
+          of: [
+            defineArrayMember({type: 'block', name: 'block'}),
+            defineArrayMember({type: 'a'}),
+          ],
+        }),
+      ],
+    })
+    const portableTextType = defineType({
+      type: 'array',
+      name: 'body',
+      of: [
+        defineArrayMember({type: 'block', name: 'block'}),
+        defineArrayMember({type: 'a'}),
+        defineArrayMember({type: 'b'}),
+      ],
+    })
+
+    const sanitySchema = SanitySchema.compile({
+      types: [portableTextType, aType, bType],
+    })
+
+    const schema = sanitySchemaToPortableTextSchema(sanitySchema.get('body'))
+    const a = schema.blockObjects?.find((bo) => bo.name === 'a')
+    const b = schema.blockObjects?.find((bo) => bo.name === 'b')
+
+    // A's `content.of` inlines B (one level), and B (inlined inside A)
+    // emits a cycle stub for A.
+    expect(a?.fields).toEqual([
+      {
+        name: 'content',
+        type: 'array',
+        title: 'Content',
         of: [
           {type: 'block'},
-          {type: 'aiTask', name: 'aiTask', title: 'Ai Task'},
+          {
+            type: 'object',
+            name: 'b',
+            title: 'B',
+            fields: [
+              {
+                name: 'content',
+                type: 'array',
+                title: 'Content',
+                of: [{type: 'block'}, {type: 'a', title: 'A'}],
+              },
+            ],
+          },
         ],
+      },
+    ])
+    // Symmetrically, B's `content.of` inlines A (one level), and A
+    // (inlined inside B) emits a cycle stub for B.
+    expect(b?.fields).toEqual([
+      {
+        name: 'content',
+        type: 'array',
+        title: 'Content',
+        of: [
+          {type: 'block'},
+          {
+            type: 'object',
+            name: 'a',
+            title: 'A',
+            fields: [
+              {
+                name: 'content',
+                type: 'array',
+                title: 'Content',
+                of: [{type: 'block'}, {type: 'b', title: 'B'}],
+              },
+            ],
+          },
+        ],
+      },
+    ])
+  })
+
+  test('three-way cycle (A -> B -> C -> A) unfolds two levels then stubs', () => {
+    const aType = defineType({
+      type: 'object',
+      name: 'a',
+      fields: [
+        defineField({
+          type: 'array',
+          name: 'content',
+          of: [
+            defineArrayMember({type: 'block', name: 'block'}),
+            defineArrayMember({type: 'b'}),
+          ],
+        }),
+      ],
+    })
+    const bType = defineType({
+      type: 'object',
+      name: 'b',
+      fields: [
+        defineField({
+          type: 'array',
+          name: 'content',
+          of: [
+            defineArrayMember({type: 'block', name: 'block'}),
+            defineArrayMember({type: 'c'}),
+          ],
+        }),
+      ],
+    })
+    const cType = defineType({
+      type: 'object',
+      name: 'c',
+      fields: [
+        defineField({
+          type: 'array',
+          name: 'content',
+          of: [
+            defineArrayMember({type: 'block', name: 'block'}),
+            defineArrayMember({type: 'a'}),
+          ],
+        }),
+      ],
+    })
+    const portableTextType = defineType({
+      type: 'array',
+      name: 'body',
+      of: [
+        defineArrayMember({type: 'block', name: 'block'}),
+        defineArrayMember({type: 'a'}),
+        defineArrayMember({type: 'b'}),
+        defineArrayMember({type: 'c'}),
+      ],
+    })
+
+    const sanitySchema = SanitySchema.compile({
+      types: [portableTextType, aType, bType, cType],
+    })
+
+    const schema = sanitySchemaToPortableTextSchema(sanitySchema.get('body'))
+    const a = schema.blockObjects?.find((bo) => bo.name === 'a')
+
+    // A's content inlines B; B's content inlines C; C's content stubs A
+    // (cycle: A is in the ancestor chain when walking C's content).
+    expect(a?.fields).toEqual([
+      {
+        name: 'content',
+        type: 'array',
+        title: 'Content',
+        of: [
+          {type: 'block'},
+          {
+            type: 'object',
+            name: 'b',
+            title: 'B',
+            fields: [
+              {
+                name: 'content',
+                type: 'array',
+                title: 'Content',
+                of: [
+                  {type: 'block'},
+                  {
+                    type: 'object',
+                    name: 'c',
+                    title: 'C',
+                    fields: [
+                      {
+                        name: 'content',
+                        type: 'array',
+                        title: 'Content',
+                        of: [{type: 'block'}, {type: 'a', title: 'A'}],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ])
+  })
+
+  test('shared type referenced from two block-objects unfolds in each', () => {
+    // Diamond shape: both A and B reference C in their content. C is
+    // not recursive on its own. The bridge should fully inline C inside
+    // both A and B (no cycle, no stub).
+    const cType = defineType({
+      type: 'object',
+      name: 'c',
+      fields: [defineField({name: 'label', type: 'string'})],
+    })
+    const aType = defineType({
+      type: 'object',
+      name: 'a',
+      fields: [
+        defineField({
+          type: 'array',
+          name: 'content',
+          of: [
+            defineArrayMember({type: 'block', name: 'block'}),
+            defineArrayMember({type: 'c'}),
+          ],
+        }),
+      ],
+    })
+    const bType = defineType({
+      type: 'object',
+      name: 'b',
+      fields: [
+        defineField({
+          type: 'array',
+          name: 'content',
+          of: [
+            defineArrayMember({type: 'block', name: 'block'}),
+            defineArrayMember({type: 'c'}),
+          ],
+        }),
+      ],
+    })
+    const portableTextType = defineType({
+      type: 'array',
+      name: 'body',
+      of: [
+        defineArrayMember({type: 'block', name: 'block'}),
+        defineArrayMember({type: 'a'}),
+        defineArrayMember({type: 'b'}),
+        defineArrayMember({type: 'c'}),
+      ],
+    })
+
+    const sanitySchema = SanitySchema.compile({
+      types: [portableTextType, aType, bType, cType],
+    })
+
+    const schema = sanitySchemaToPortableTextSchema(sanitySchema.get('body'))
+    const a = schema.blockObjects?.find((bo) => bo.name === 'a')
+    const b = schema.blockObjects?.find((bo) => bo.name === 'b')
+
+    const cInline = {
+      type: 'object',
+      name: 'c',
+      title: 'C',
+      fields: [{name: 'label', type: 'string', title: 'Label'}],
+    }
+
+    expect(a?.fields).toEqual([
+      {
+        name: 'content',
+        type: 'array',
+        title: 'Content',
+        of: [{type: 'block'}, cInline],
+      },
+    ])
+    expect(b?.fields).toEqual([
+      {
+        name: 'content',
+        type: 'array',
+        title: 'Content',
+        of: [{type: 'block'}, cInline],
       },
     ])
   })
