@@ -737,30 +737,30 @@ const calloutContainer = defineContainer({
 
 The container says *where* in the schema it applies and *how* to render the wrapper. The editor handles selection, paste, schema enforcement, drag-and-drop.
 
-## Lists are containers too
+## Lists, your call
 
-Lists nest. List items hold rich content - text, code blocks, callouts, *and more lists*:
+The flat \`listItem\` + \`level\` shape from v6 still works. Pick it when your lists are simple and you'd rather not reach for containers.
 
-- Bullet, ordered, or task - declared in the schema.
-- Items can hold whatever the schema says they can hold:
-  - Including more lists, at any depth.
-    - Three levels deep is just three nested \`list\` containers.
-      - Four levels deep is just four.
-- Items can hold a code block:
+When you *want* containers - because you want list items to hold a code block, or a callout, or another list - declare a \`list\` container in your schema and the editor will treat each item as a container too. This demo registers them so we can show the shape:
+
+- A bullet item.
+- A list item that holds a code block:
   \`\`\`ts
   const works = 'A code block, inside a list item'
   \`\`\`
-- Or a callout:
+- A list item that holds a callout:
   > [!TIP]
   > A callout, inside a list item.
+- A list item that holds another list:
+  - Two levels in.
+    - Three levels in. Same \`defineContainer\` registration handles every depth.
 
-Task lists work the same way:
+And task lists, with sub-tasks:
 
-- [x] Schema is enforced at every depth
-- [x] Cross-container drag works
-- [ ] Migrate your custom plugins
-  - [ ] First, audit \`renderBlock\` callbacks
-  - [ ] Then, register containers
+- [x] Schema enforcement applies at every depth.
+- [ ] Migrate your custom plugins.
+  - [ ] Audit \`renderBlock\` callbacks.
+  - [ ] Register containers where it pays off.
 
 ## Markdown round-trips
 
