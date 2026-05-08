@@ -20,7 +20,9 @@ import {
   markdownToPortableText,
   portableTextToMarkdown,
 } from '@portabletext/markdown'
+import {MarkdownShortcutsPlugin} from '@portabletext/plugin-markdown-shortcuts'
 import {useEffect, useRef, useState} from 'react'
+import './markdown-demo.css'
 
 // Schema mirrors @portabletext/markdown's defaults so values produced by
 // markdownToPortableText pass the editor's schema validation.
@@ -283,12 +285,11 @@ const codeBlockSpanLeaf = defineLeaf<typeof schemaDefinition>({
 const horizontalRuleLeaf = defineLeaf<typeof schemaDefinition>({
   scope: '$..horizontal-rule',
   render: ({attributes, children}) => (
-    <div {...attributes}>
+    <div {...attributes} className="my-4">
+      <div contentEditable={false}>
+        <hr className="border-gray-200 dark:border-gray-700" />
+      </div>
       {children}
-      <hr
-        contentEditable={false}
-        className="my-4 border-gray-200 dark:border-gray-700"
-      />
     </div>
   ),
 })
@@ -328,6 +329,89 @@ const imageLeaf = defineLeaf<typeof schemaDefinition>({
     )
   },
 })
+
+const markdownShortcutsProps = {
+  boldDecorator: ({
+    context,
+  }: {
+    context: {schema: {decorators: Array<{name: string}>}}
+  }) => context.schema.decorators.find((d) => d.name === 'strong')?.name,
+  italicDecorator: ({
+    context,
+  }: {
+    context: {schema: {decorators: Array<{name: string}>}}
+  }) => context.schema.decorators.find((d) => d.name === 'em')?.name,
+  codeDecorator: ({
+    context,
+  }: {
+    context: {schema: {decorators: Array<{name: string}>}}
+  }) => context.schema.decorators.find((d) => d.name === 'code')?.name,
+  strikeThroughDecorator: ({
+    context,
+  }: {
+    context: {schema: {decorators: Array<{name: string}>}}
+  }) =>
+    context.schema.decorators.find((d) => d.name === 'strike-through')?.name,
+  defaultStyle: ({
+    context,
+  }: {
+    context: {schema: {styles: Array<{value?: string; name: string}>}}
+  }) => context.schema.styles[0]?.value ?? context.schema.styles[0]?.name,
+  headingStyle: ({
+    context,
+    props,
+  }: {
+    context: {schema: {styles: Array<{name: string}>}}
+    props: {level: number}
+  }) => context.schema.styles.find((s) => s.name === `h${props.level}`)?.name,
+  blockquoteStyle: ({
+    context,
+  }: {
+    context: {schema: {styles: Array<{name: string}>}}
+  }) => context.schema.styles.find((s) => s.name === 'blockquote')?.name,
+  unorderedList: ({
+    context,
+  }: {
+    context: {schema: {lists: Array<{name: string}>}}
+  }) => context.schema.lists.find((l) => l.name === 'bullet')?.name,
+  orderedList: ({
+    context,
+  }: {
+    context: {schema: {lists: Array<{name: string}>}}
+  }) => context.schema.lists.find((l) => l.name === 'number')?.name,
+  horizontalRuleObject: ({
+    context,
+  }: {
+    context: {schema: {blockObjects: Array<{name: string}>}}
+  }) => {
+    const schemaType = context.schema.blockObjects.find(
+      (o) => o.name === 'horizontal-rule',
+    )
+    if (!schemaType) return undefined
+    return {_type: schemaType.name}
+  },
+  linkObject: ({
+    context,
+    props,
+  }: {
+    context: {
+      schema: {
+        annotations: Array<{
+          name: string
+          fields: Array<{name: string; type: string}>
+        }>
+      }
+    }
+    props: {href: string}
+  }) => {
+    const schemaType = context.schema.annotations.find((a) => a.name === 'link')
+    const hrefField = schemaType?.fields.find(
+      (f) => f.name === 'href' && f.type === 'string',
+    )
+    if (!schemaType || !hrefField) return undefined
+    return {_type: schemaType.name, [hrefField.name]: props.href}
+  },
+} as const
 
 const markdownOptions = {
   types: {
@@ -519,7 +603,7 @@ export function MarkdownDemo() {
           }}
           onChange={(e) => setMarkdown(e.target.value)}
           spellCheck={false}
-          className="font-mono text-xs p-3 outline-none bg-transparent flex-1 min-h-[420px] resize-none"
+          className="font-mono text-xs p-3 outline-none bg-transparent text-gray-800 dark:text-gray-200 flex-1 min-h-[420px] resize-none"
         />
       </div>
       <div className="border border-gray-200 dark:border-gray-700 rounded-md overflow-hidden flex flex-col">
@@ -554,6 +638,7 @@ export function MarkdownDemo() {
           <LeafPlugin
             leafs={[codeBlockSpanLeaf, horizontalRuleLeaf, imageLeaf]}
           />
+          <MarkdownShortcutsPlugin {...markdownShortcutsProps} />
           <ReplaceValueBridge replaceRef={replaceEditorValueRef} />
           <PortableTextEditable
             onFocus={() => {
@@ -565,14 +650,21 @@ export function MarkdownDemo() {
                 const checked =
                   (props.block as {checked?: boolean}).checked === true
                 return (
-                  <span className="inline-flex items-baseline gap-2">
+                  <span className="flex items-start gap-2">
                     <input
                       type="checkbox"
                       checked={checked}
                       readOnly
-                      className="translate-y-0.5"
+                      className="mt-1.5 flex-none"
                     />
-                    <span className={checked ? 'line-through opacity-70' : ''}>
+                    <span
+                      className={[
+                        'flex-1',
+                        checked ? 'line-through opacity-60' : '',
+                      ]
+                        .filter(Boolean)
+                        .join(' ')}
+                    >
                       {props.children}
                     </span>
                   </span>
