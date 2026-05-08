@@ -320,13 +320,7 @@ editor$
   })
 ```
 
-For xstate's `useSelector`, the editor passes through directly. It satisfies the `Pick<AnyActorRef, 'subscribe' | 'getSnapshot'>` constraint that `useSelector` types against:
-
-```tsx
-import {useSelector} from '@xstate/react'
-
-const selectionLength = useSelector(editor, (snap) => snap.context.value.length)
-```
+For xstate's `useSelector`, the editor works at runtime but needs a small cast at the call site — xstate's `Subscribable<T>` constraint expects a deprecated function-form `subscribe` overload PTE deliberately doesn't expose, so direct passthrough fails type-checking.
 
 The standard observer contract makes this kind of integration mechanical. If a future consumer needs Svelte's stores, Vue's reactivity, Solid's signals, or any other observer-shaped sink, the wrapper is the same shape every time.
 
