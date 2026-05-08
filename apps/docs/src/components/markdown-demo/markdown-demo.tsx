@@ -118,6 +118,7 @@ const schemaDefinition = defineSchema({
             {
               type: 'code-block',
               fields: [
+                {name: 'language', type: 'string'},
                 {
                   name: 'lines',
                   type: 'array',
@@ -148,6 +149,7 @@ const schemaDefinition = defineSchema({
     {
       name: 'code-block',
       fields: [
+        {name: 'language', type: 'string'},
         {
           name: 'lines',
           type: 'array',
@@ -211,6 +213,7 @@ const schemaDefinition = defineSchema({
                     {
                       type: 'code-block',
                       fields: [
+                        {name: 'language', type: 'string'},
                         {
                           name: 'lines',
                           type: 'array',
@@ -652,6 +655,7 @@ const markdownOptions = {
       return {
         _type: 'code-block',
         _key: context.keyGenerator(),
+        language: value.language,
         lines,
       }
     },
@@ -804,6 +808,7 @@ export function MarkdownDemo() {
           'callout': DefaultCalloutRenderer,
           'code-block': ({value}) => {
             const v = value as {
+              language?: string
               lines?: Array<{
                 children?: Array<{_type: string; text?: string}>
               }>
@@ -815,7 +820,7 @@ export function MarkdownDemo() {
                   .join(''),
               )
               .join('\n')
-            return `\`\`\`\n${code}\n\`\`\``
+            return `\`\`\`${v.language ?? ''}\n${code}\n\`\`\``
           },
           'horizontal-rule': DefaultHorizontalRuleRenderer,
           'image': DefaultImageRenderer,
