@@ -287,7 +287,7 @@ const horizontalRuleLeaf = defineLeaf<typeof schemaDefinition>({
   render: ({attributes, children}) => (
     <div {...attributes} className="my-4">
       <div contentEditable={false}>
-        <hr className="border-gray-200 dark:border-gray-700" />
+        <hr className="border-0 border-t border-gray-200 dark:border-gray-700" />
       </div>
       {children}
     </div>
