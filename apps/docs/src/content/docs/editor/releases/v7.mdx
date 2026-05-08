@@ -7,7 +7,7 @@ prev: false
 
 import {MarkdownDemo} from '../../../../components/markdown-demo/markdown-demo'
 
-Portable Text Editor v7 brings **first-class nesting** and **markdown compatibility**. Callouts, code blocks, fact boxes, tables, any rich-text-inside-rich-text structure your schema describes — the editor handles them at every depth. Selection, normalisation, undo, collaborative patches, plugins, behaviors. All of it, all the way down. And a complete markdown round-trip alongside it: parse markdown into Portable Text, serialise Portable Text back to markdown, with first-class containers carrying code blocks, tables, and GitHub-style callouts.
+Portable Text Editor v7 makes **first-class nesting** and **markdown compatibility** possible. You can build callouts, code blocks, fact boxes, and tables — any rich-text-inside-rich-text structure your schema describes — and the editor handles them at every depth. Selection, normalisation, undo, collaborative patches, plugins, behaviors. All of it, all the way down. Markdown round-trips alongside, with `@portabletext/markdown` carrying nested structures through the converters in both directions.
 
 The migration is small. The DOM your CSS targets today, the patches you store, the render callbacks your app provides, the plugin API your team built against — all unchanged. Container wrappers introduce some new DOM, but they're brand new in v7, and nothing in your existing app sits inside one yet. v7 is the rare release where the surface stays still while the foundation moves.
 
@@ -17,7 +17,7 @@ Portable Text round-trips with markdown in v7. `@portabletext/markdown` exposes 
 
 That's the converter pair. The companion `@portabletext/plugin-markdown-shortcuts` covers live-typing inside the editor — `# `, `> `, `- `, `1. `, `---`, `**bold**`, `*em*`, `~~strike~~`, `` `code` ``, `[link](url)`. The shortcuts are Behaviors, schema-aware. A heading shortcut inside a code-block container does nothing, because the code-block's sub-schema doesn't declare heading styles.
 
-A markdown editor in v7 is a small composition: schema, container plugins for code blocks, tables, and callouts, the converter pair on the I/O boundary, the shortcuts plugin on the input boundary. Drop the demo below into a Vite app and start writing:
+A markdown editor in v7 is a small composition: a schema declaring code blocks, tables, and callouts as containers, your `defineContainer` registrations for each, the converter pair on the I/O boundary, the shortcuts plugin on the input boundary. Drop the demo below into a Vite app and start writing:
 
 <MarkdownDemo client:only="react" />
 
@@ -264,11 +264,11 @@ Want a `pt-block` class on the wrapper? Add it. Want `data-block-key`? Add it. W
 
 If you maintain CSS that targets `data-slate-*`, this is the time to migrate. Pick the `data-pt-*` engine internals if you need the same hooks the engine uses, or, better, move your selectors to attributes you control through your render callbacks. The engine's DOM is for the engine. Your DOM is for you.
 
-## Tables, code blocks, and callouts as plugins
+## Building tables, code blocks, and callouts
 
-The container API is the foundation that makes tables possible. A working table archetype ships in the playground today — you can see it in action and copy the pattern into your own app. But there's no `@portabletext/plugin-tables` you can drop into a project yet. Same for code blocks, callouts, and fact boxes: all are possible in v7, none ship as ready-made plugins.
+The container API is what makes tables possible. A working table archetype ships in the playground — you can see it in action and copy the pattern into your own app. The same is true for code blocks, callouts, and fact boxes: all are possible in v7, none ship as ready-made plugins yet.
 
-That's deliberate. We wanted to ship the underlying capability first and turn each archetype into a maintained plugin once the rough edges had been smoothed at the API layer rather than papered over inside each plugin. The container API is `@alpha` precisely because we expect plugin authors to surface those edges.
+That's deliberate. Tables shouldn't be a _hack_. They should be the natural byproduct of an editor that supports nesting. The container API is `@alpha` precisely because we expect plugin authors to push on it as they build the first generation of nested-content plugins.
 
 The next round of releases will introduce them as their own packages:
 
