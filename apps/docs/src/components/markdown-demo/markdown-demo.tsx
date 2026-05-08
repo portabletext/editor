@@ -763,9 +763,15 @@ The container says *where* in the schema it applies and *how* to render the wrap
 
 Type on either side. The Portable Text shape is the truth - markdown is one *serialization* of it, this editor is another.
 
-> Containers don't change Portable Text the format. They change what the editor lets you build *with* it.
+> Blockquotes are containers in v7, so they can hold whatever the schema allows - a code block, for example:
 >
-> Same shape, more editable.
+> \`\`\`ts
+> markdownToPortableText(input)
+> // ↓
+> portableTextToMarkdown(value) === input
+> \`\`\`
+>
+> Same Portable Text. More shapes the editor can build with it.
 
 ---
 
