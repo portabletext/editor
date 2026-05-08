@@ -498,14 +498,15 @@ describe(resolveContainers.name, () => {
       ]),
     )
 
-    // The walk reaches `list` (top), `list.list-item` (inline), and stops
-    // at the cycle when `list-item.content` references `list` again.
-    // Only registrations are kept in the resolved map; with the two
-    // configs above we expect both to resolve. The walk terminating
-    // means no infinite candidates were emitted.
+    // The walk reaches `list` (top), `list.list-item` (inline), and emits
+    // a cycle candidate at `list.list-item.list` (where
+    // `list-item.content` references `list` again). The walk terminates -
+    // no infinite candidates - and `$..list` matches both the root list
+    // and the cycle position via terminal-anchored matching.
     expect(Array.from(resolved.keys()).sort()).toEqual([
       'list',
       'list.list-item',
+      'list.list-item.list',
     ])
   })
 
@@ -982,6 +983,7 @@ describe(resolveContainers.name, () => {
       'callout.list.list-item.list',
       'list',
       'list.list-item',
+      'list.list-item.list',
     ])
   })
 })

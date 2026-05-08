@@ -1,5 +1,6 @@
 import {isSpan, isTextBlock} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
+import {lookupContainer} from '../schema/lookup-container'
 import type {ResolvedContainers} from '../schema/resolve-containers'
 import type {Node} from '../slate/interfaces/node'
 import type {Operation} from '../slate/interfaces/operation'
@@ -40,7 +41,7 @@ function collectDescendantPaths(
   // For container types, resolve the child array field from the schema
   const scopedName = scopePrefix ? `${scopePrefix}.${node._type}` : node._type
 
-  const arrayField = context.containers.get(scopedName)?.field
+  const arrayField = lookupContainer(context.containers, scopedName)?.field
 
   if (arrayField) {
     const fieldValue = (node as Record<string, unknown>)[arrayField.name]

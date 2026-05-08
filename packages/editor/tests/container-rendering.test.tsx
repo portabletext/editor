@@ -1204,3 +1204,96 @@ describe('cell with mixed content', () => {
     })
   })
 })
+
+describe('self-referential containers', () => {
+  const listSchema = defineSchema({
+    blockObjects: [
+      {
+        name: 'list',
+        fields: [
+          {
+            name: 'items',
+            type: 'array',
+            of: [
+              {
+                type: 'object',
+                name: 'list-item',
+                fields: [
+                  {
+                    name: 'content',
+                    type: 'array',
+                    of: [{type: 'block'}, {type: 'list'}],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  })
+
+  const listContainer = defineContainer<typeof listSchema>({
+    scope: '$..list',
+    field: 'items',
+    render: ({attributes, children}) => (
+      <ul data-testid="list" {...attributes}>
+        {children}
+      </ul>
+    ),
+  })
+
+  const listItemContainer = defineContainer<typeof listSchema>({
+    scope: '$..list.list-item',
+    field: 'content',
+    render: ({attributes, children}) => (
+      <li data-testid="list-item" {...attributes}>
+        {children}
+      </li>
+    ),
+  })
+
+  test('list nested 3 levels deep renders all levels as containers', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const k = () => keyGenerator()
+    const block = (text: string) => ({
+      _type: 'block' as const,
+      _key: k(),
+      children: [{_type: 'span', _key: k(), text, marks: []}],
+      markDefs: [],
+      style: 'normal',
+    })
+    const item = (content: any[]) => ({
+      _type: 'list-item',
+      _key: k(),
+      content,
+    })
+    const list = (items: any[]) => ({_type: 'list', _key: k(), items})
+
+    // Three levels: list > list-item > list > list-item > list > list-item
+    const value = [
+      list([
+        item([
+          block('outer'),
+          list([item([block('middle'), list([item([block('inner')])])])]),
+        ]),
+      ]),
+    ]
+
+    const {locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: listSchema,
+      initialValue: value,
+      children: (
+        <ContainerPlugin containers={[listContainer, listItemContainer]} />
+      ),
+    })
+
+    await vi.waitFor(() => {
+      expect(locator.getByTestId('list').elements()).toHaveLength(3)
+    })
+    await vi.waitFor(() => {
+      expect(locator.getByTestId('list-item').elements()).toHaveLength(3)
+    })
+  })
+})

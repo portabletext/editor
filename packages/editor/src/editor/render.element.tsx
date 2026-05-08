@@ -7,6 +7,8 @@ import {useSelector} from '@xstate/react'
 import {useContext, type ReactElement} from 'react'
 import type {DropPosition} from '../behaviors/behavior.core.drop-position'
 import {isInline} from '../node-traversal/is-inline'
+import type {ContainerConfig} from '../renderers/renderer.types'
+import {lookupContainer} from '../schema/lookup-container'
 import type {Path} from '../slate/interfaces/path'
 import type {RenderElementProps} from '../slate/react/components/editable'
 import {useSlateStatic} from '../slate/react/hooks/use-slate-static'
@@ -48,8 +50,14 @@ export function RenderElement(props: {
     ? `${containerScope}.${props.element._type}`
     : props.element._type
 
-  const containerConfig = useSelector(editorActor, (state) =>
-    state.context.containers.get(scopedTypeName),
+  const containerConfig = useSelector(
+    editorActor,
+    (state) =>
+      // Internal cast: the public `Container` view is narrowed; runtime
+      // values are the full `ContainerConfig` carrying parsedScope/render.
+      lookupContainer(state.context.containers, scopedTypeName) as
+        | ContainerConfig
+        | undefined,
   )
 
   const leafConfig = useLeafConfig(props.element, props.path)

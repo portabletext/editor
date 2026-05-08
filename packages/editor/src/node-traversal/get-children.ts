@@ -1,6 +1,7 @@
 import type {OfDefinition} from '@portabletext/schema'
 import {isTextBlock} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
+import {lookupContainer} from '../schema/lookup-container'
 import type {Containers} from '../schema/resolve-containers'
 import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
@@ -89,7 +90,7 @@ export function getNodeChildren(
   if (isObjectNode(context, node)) {
     const scopedKey = scopePath ? `${scopePath}.${node._type}` : node._type
 
-    const arrayField = context.containers.get(scopedKey)?.field
+    const arrayField = lookupContainer(context.containers, scopedKey)?.field
 
     if (!arrayField) {
       return undefined
