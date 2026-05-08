@@ -161,9 +161,30 @@ export const DefaultListRenderer: PortableTextTypeRenderer<{
     content: Array<PortableTextBlock | TypedObject>
   }>
 }> = ({value, renderNode}) => {
-  const indent = '  '
+  // A list is "loose" when any item carries multiple non-list-block
+  // content entries (a continuation paragraph, a code block, etc).
+  // CommonMark uses blank lines between items in loose lists; tight lists
+  // pack items together with single newlines. A nested list as a second
+  // child of an item does NOT make the list loose, so we ignore those when
+  // counting.
+  const isLoose = value.items.some((item) => {
+    const nonNestedBlocks = item.content.filter(
+      (block) => (block as TypedObject)._type !== 'list',
+    )
+    return nonNestedBlocks.length > 1
+  })
+  const itemSeparator = isLoose ? '\n\n' : '\n'
+
   const lines = value.items.map((item, itemIndex) => {
     const marker = getListMarker(value.kind, itemIndex, item.checked)
+    // Continuation indent matches the marker's width so that subsequent
+    // blocks attach to this item under CommonMark's lazy-continuation rule.
+    // Bullet `- ` indents to 2; ordered `1. ` indents to 3, `10. ` to 4.
+    // Task `- [x] ` is conceptually `- ` + a `[x] ` content prefix at the
+    // markdown-it level, so its continuation indent stays at 2.
+    const indentWidth = value.kind === 'task' ? 2 : marker.length
+    const indent = ' '.repeat(indentWidth)
+
     const renderedBlocks = item.content.map((block, blockIndex) => ({
       isNestedList: (block as TypedObject)._type === 'list',
       text: renderNode({
@@ -175,7 +196,8 @@ export const DefaultListRenderer: PortableTextTypeRenderer<{
     }))
 
     const [first, ...rest] = renderedBlocks
-    const head = `${marker}${first?.text ?? ''}`
+    // Trim trailing whitespace from empty items so `- ` becomes `-`.
+    const head = `${marker}${first?.text ?? ''}`.trimEnd()
     if (rest.length === 0) {
       return head
     }
@@ -195,7 +217,7 @@ export const DefaultListRenderer: PortableTextTypeRenderer<{
     return `${head}${tail}`
   })
 
-  return lines.join('\n')
+  return lines.join(itemSeparator)
 }
 
 function getListMarker(

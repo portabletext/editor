@@ -813,12 +813,16 @@ describe(portableTextToMarkdown.name, () => {
     })
 
     test('list item with code block', () => {
+      // A list item with multi-block content (text + code block) is "loose"
+      // and needs blank lines between items in the canonical output. The
+      // input also has the blank line so the round-trip is byte-identical.
       const markdown = [
         '- hello',
         '',
         '  ```js',
         "  console.log('hi')",
         '  ```',
+        '',
         '- world',
       ].join('\n')
       const keyGenerator = createTestKeyGenerator()
@@ -834,6 +838,68 @@ describe(portableTextToMarkdown.name, () => {
           },
         }),
       ).toBe(markdown)
+    })
+
+    test('multi-paragraph item', () => {
+      const markdown = ['- one', '', '  para two', '', '- three'].join('\n')
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = markdownToPortableText(
+        markdown,
+        inOpts(keyGenerator),
+      )
+      expect(portableTextToMarkdown(portableText, outOpts)).toBe(markdown)
+    })
+
+    test('mixed nested types', () => {
+      // The continuation indent under `1. ` is 3 columns, not 2. Without
+      // matching the marker width the bullet child gets parsed as a
+      // sibling list rather than a nested one.
+      const markdown = ['1. ordered', '   - nested bullet', '2. second'].join(
+        '\n',
+      )
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = markdownToPortableText(
+        markdown,
+        inOpts(keyGenerator),
+      )
+      expect(portableTextToMarkdown(portableText, outOpts)).toBe(markdown)
+    })
+
+    test('two-digit ordered marker uses 4-column continuation indent', () => {
+      // Items 10 onwards have a 4-character marker (`10. `), so the
+      // continuation indent grows accordingly. A second paragraph attached
+      // to item 10 must indent 4 columns to bind to the same item.
+      const markdown = [
+        '1. item 1',
+        '',
+        '2. item 2',
+        '',
+        '3. item 3',
+        '',
+        '4. item 4',
+        '',
+        '5. item 5',
+        '',
+        '6. item 6',
+        '',
+        '7. item 7',
+        '',
+        '8. item 8',
+        '',
+        '9. item 9',
+        '',
+        '10. item 10',
+        '',
+        '    second paragraph under item 10',
+        '',
+        '11. item 11',
+      ].join('\n')
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = markdownToPortableText(
+        markdown,
+        inOpts(keyGenerator),
+      )
+      expect(portableTextToMarkdown(portableText, outOpts)).toBe(markdown)
     })
   })
 
