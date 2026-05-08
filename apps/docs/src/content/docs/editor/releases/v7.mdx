@@ -7,7 +7,9 @@ prev: false
 
 import {MarkdownDemo} from '../../../../components/markdown-demo/markdown-demo'
 
-Today we're releasing Portable Text Editor v7. The big new capability is **first-class nesting**. You can now build callouts, code blocks, fact boxes, and tables, or any rich-text-inside-rich-text structure your schema describes, and the editor handles them at every depth. Selection, normalisation, undo, collaborative patches, plugins, behaviors. All of it, all the way down.
+**"Let's make PTE support tables."** It's an innocent ask that ended up exposing an iceberg of complexity and shallow-depth assumptions. The answer turned out to be most of an editor rebuild, and on the way it produced a lot more than tables.
+
+v7's headline is **first-class nesting**. Callouts, code blocks, fact boxes, tables, any rich-text-inside-rich-text structure your schema describes — the editor handles them at every depth. Selection, normalisation, undo, collaborative patches, plugins, behaviors. All of it, all the way down.
 
 The migration is small. The DOM your CSS targets today, the patches you store, the render callbacks your app provides, the plugin API your team built against — all unchanged. Container wrappers introduce some new DOM, but they're brand new in v7, and nothing in your existing app sits inside one yet. v7 is the rare release where the surface stays still while the foundation moves.
 
@@ -17,7 +19,7 @@ Portable Text round-trips with markdown in v7. `@portabletext/markdown` exposes 
 
 That's the converter pair. The companion `@portabletext/plugin-markdown-shortcuts` covers live-typing inside the editor — `# `, `> `, `- `, `1. `, `---`, `**bold**`, `*em*`, `~~strike~~`, `` `code` ``, `[link](url)`. The shortcuts are Behaviors, schema-aware. A heading shortcut inside a code-block container does nothing, because the code-block's sub-schema doesn't declare heading styles.
 
-A markdown editor in v7 is the combination of these pieces. Schema, container plugin for code blocks, container plugin for tables, container plugin for callouts, the converter pair on the I/O boundary, the shortcuts plugin on the input boundary. Drop the demo below into a Vite app and start writing:
+A markdown editor in v7 is a small composition: schema, container plugins for code blocks, tables, and callouts, the converter pair on the I/O boundary, the shortcuts plugin on the input boundary. Drop the demo below into a Vite app and start writing:
 
 <MarkdownDemo client:only="react" />
 
@@ -268,7 +270,7 @@ If you maintain CSS that targets `data-slate-*`, this is the time to migrate. Pi
 
 The container API is the foundation that makes tables possible. A working table archetype ships in the playground today — you can see it in action and copy the pattern into your own app. But there's no `@portabletext/plugin-tables` you can drop into a project yet. Same for code blocks, callouts, and fact boxes: all are possible in v7, none ship as ready-made plugins.
 
-That's intentional. We wanted to ship the underlying capability first, validate it against real consumers, and turn each archetype into a maintained plugin once the rough edges have been smoothed at the API layer rather than papered over inside each plugin. The container API is `@alpha` precisely because we expect plugin authors to surface those edges.
+That's deliberate. We wanted to ship the underlying capability first and turn each archetype into a maintained plugin once the rough edges had been smoothed at the API layer rather than papered over inside each plugin. The container API is `@alpha` precisely because we expect plugin authors to surface those edges.
 
 The next round of releases will introduce them as their own packages:
 
@@ -424,7 +426,7 @@ If you have a behavior or plugin that explicitly wants root-level navigation, us
 
 In v6, validation was permissive at the root. Unknown decorators, annotations, and inline objects were silently accepted. v7 enforces the schema everywhere.
 
-If you've been relying on permissive root-level validation — for example, raising a `decorator.toggle` event with a name not declared in the schema and expecting it to silently apply — those operations now no-op with a console warning.
+If you've been relying on permissive root-level validation — for example, raising a `decorator.toggle` event with a name not declared in the schema and expecting it to silently apply — those operations now silently filter the unknown name out.
 
 The fix is to declare the missing types in your schema:
 
@@ -515,13 +517,11 @@ If you hit a break this guide doesn't cover, please [open an issue](https://gith
 
 ## A reflection
 
-The original ask was innocent: "Let's make PTE support tables." It exposed an iceberg of complexity and shallow-depth assumptions, and the answer turned out to be most of an editor rebuild. v7 is the rare release where the surface stays still while the foundation moves.
-
 Was it naive to invest so heavily in PTE as a standalone editor before supporting first-class nesting? I don't think so. YAGNI is real. There's a difference between not implementing something and closing the door on the possibility of implementing it in the future. PTE never closed the door on first-class nesting. But maybe we waited a tad too long before we started investing in it.
 
 ## Try it
 
-[Try v7 in the playground](https://playground.portabletext.org/), or upgrade today:
+Upgrade today, or [open the playground](https://playground.portabletext.org/) to see v7 running:
 
 ```sh
 npm install @portabletext/editor@latest
