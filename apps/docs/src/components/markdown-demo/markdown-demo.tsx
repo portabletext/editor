@@ -184,7 +184,8 @@ const schemaDefinition = defineSchema({
           type: 'array',
           of: [
             {
-              type: 'list-item',
+              type: 'object',
+              name: 'list-item',
               fields: [
                 {name: 'checked', type: 'boolean'},
                 {
@@ -260,6 +261,7 @@ const schemaDefinition = defineSchema({
                         },
                       ],
                     },
+                    {type: 'list'},
                   ],
                 },
               ],
@@ -737,16 +739,28 @@ The container says *where* in the schema it applies and *how* to render the wrap
 
 ## Lists are containers too
 
-- Bullet, ordered, or task - declared in the schema.
-- Items can hold rich content, not just text:
+Lists nest. List items hold rich content - text, code blocks, callouts, *and more lists*:
 
+- Bullet, ordered, or task - declared in the schema.
+- Items can hold whatever the schema says they can hold:
+  - Including more lists, at any depth.
+    - Three levels deep is just three nested \`list\` containers.
+      - Four levels deep is just four.
+- Items can hold a code block:
   \`\`\`ts
   const works = 'A code block, inside a list item'
   \`\`\`
+- Or a callout:
+  > [!TIP]
+  > A callout, inside a list item.
 
-- [x] Cross-container drag works
+Task lists work the same way:
+
 - [x] Schema is enforced at every depth
+- [x] Cross-container drag works
 - [ ] Migrate your custom plugins
+  - [ ] First, audit \`renderBlock\` callbacks
+  - [ ] Then, register containers
 
 ## Markdown round-trips
 
