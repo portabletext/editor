@@ -8,6 +8,7 @@ import {EventListenerPlugin} from '../src/plugins'
 import {ContainerPlugin} from '../src/plugins/plugin.container'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
+import {toTextspec} from '../test-utils/to-textspec'
 
 /**
  * Tests for self-referential / recursive schemas.
@@ -645,5 +646,213 @@ describe('recursive schemas (lists in list-items in lists)', () => {
       const span = field<Array<{marks: Array<string>}>>(tb, 'children')[0]!
       expect(span.marks).toEqual(['strong'])
     })
+  })
+
+  test('Scenario: pressing Enter from the deepest list-item escapes one level per pair of presses, all the way to root', async () => {
+    // Build:
+    //   - level-1
+    //     - level-2
+    //       - level-3
+    //
+    // Caret at end of "level-3". Repeated Enters trace this pattern:
+    //   #1: inserts empty trailing block in I3 (deepest list-item)
+    //   #2: inserts another empty in I3 (now empty-prev + empty-last)
+    //   #3: ESCAPE to I2 — empties collapse, new block sibling of L3 in I2
+    //   #4: inserts another empty in I2
+    //   #5: ESCAPE to I1
+    //   #6: inserts another empty in I1
+    //   #7: ESCAPE to root (sibling of the outermost list)
+    //
+    // Total: 2 Enters + (3 Enters per level of escape) - 1 = 7 Enters to
+    // escape from depth 3 to root. The pattern is deterministic at any depth.
+    const keyGenerator = createTestKeyGenerator()
+    const initialValue: Array<PortableTextBlock> = [
+      buildNestedList(keyGenerator, 3),
+    ]
+
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: recursiveListSchema,
+      initialValue,
+      children: (
+        <ContainerPlugin containers={[listContainer, listItemContainer]} />
+      ),
+    })
+
+    // Walk the value to find the deepest span ('level-3') and place caret
+    // at its end.
+    const initialL1 = editor.getSnapshot().context.value[0] as PortableTextBlock
+    const i1 = (initialL1 as unknown as {items: Array<PortableTextBlock>})
+      .items[0]!
+    const i1Content = (i1 as unknown as {content: Array<PortableTextBlock>})
+      .content
+    const l2 = i1Content[1] as PortableTextBlock
+    const i2 = (l2 as unknown as {items: Array<PortableTextBlock>}).items[0]!
+    const i2Content = (i2 as unknown as {content: Array<PortableTextBlock>})
+      .content
+    const l3 = i2Content[1] as PortableTextBlock
+    const i3 = (l3 as unknown as {items: Array<PortableTextBlock>}).items[0]!
+    const i3Content = (i3 as unknown as {content: Array<PortableTextBlock>})
+      .content
+    const t3 = i3Content[0] as PortableTextBlock
+    const t3Children = (t3 as unknown as {children: Array<{_key: string}>})
+      .children
+    const s3 = t3Children[0]!
+
+    const deepSpanPath = [
+      {_key: initialL1._key!},
+      'items',
+      {_key: i1._key!},
+      'content',
+      {_key: l2._key!},
+      'items',
+      {_key: i2._key!},
+      'content',
+      {_key: l3._key!},
+      'items',
+      {_key: i3._key!},
+      'content',
+      {_key: t3._key!},
+      'children',
+      {_key: s3._key},
+    ]
+
+    await userEvent.click(locator)
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: deepSpanPath, offset: 'level-3'.length},
+        focus: {path: deepSpanPath, offset: 'level-3'.length},
+      },
+    })
+
+    async function pressEnter() {
+      await userEvent.keyboard('{Enter}')
+      await vi.waitFor(() => {
+        editor.getSnapshot().context.value
+      })
+    }
+
+    // #1: split inserts an empty trailing block in I3.
+    await pressEnter()
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      [
+        'LIST:',
+        '  LIST-ITEM:',
+        '    B: level-1',
+        '    LIST:',
+        '      LIST-ITEM:',
+        '        B: level-2',
+        '        LIST:',
+        '          LIST-ITEM:',
+        '            B: level-3',
+        '            B: |',
+      ].join('\n'),
+    )
+
+    // #2: another empty trailing block in I3 (now empty-prev + empty-last).
+    await pressEnter()
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      [
+        'LIST:',
+        '  LIST-ITEM:',
+        '    B: level-1',
+        '    LIST:',
+        '      LIST-ITEM:',
+        '        B: level-2',
+        '        LIST:',
+        '          LIST-ITEM:',
+        '            B: level-3',
+        '            B: ',
+        '            B: |',
+      ].join('\n'),
+    )
+
+    // #3: ESCAPE — empties collapse, new sibling of L3 in I2.
+    await pressEnter()
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      [
+        'LIST:',
+        '  LIST-ITEM:',
+        '    B: level-1',
+        '    LIST:',
+        '      LIST-ITEM:',
+        '        B: level-2',
+        '        LIST:',
+        '          LIST-ITEM:',
+        '            B: level-3',
+        '        B: |',
+      ].join('\n'),
+    )
+
+    // #4: another empty trailing block in I2.
+    await pressEnter()
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      [
+        'LIST:',
+        '  LIST-ITEM:',
+        '    B: level-1',
+        '    LIST:',
+        '      LIST-ITEM:',
+        '        B: level-2',
+        '        LIST:',
+        '          LIST-ITEM:',
+        '            B: level-3',
+        '        B: ',
+        '        B: |',
+      ].join('\n'),
+    )
+
+    // #5: ESCAPE to I1.
+    await pressEnter()
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      [
+        'LIST:',
+        '  LIST-ITEM:',
+        '    B: level-1',
+        '    LIST:',
+        '      LIST-ITEM:',
+        '        B: level-2',
+        '        LIST:',
+        '          LIST-ITEM:',
+        '            B: level-3',
+        '    B: |',
+      ].join('\n'),
+    )
+
+    // #6: another empty trailing block in I1.
+    await pressEnter()
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      [
+        'LIST:',
+        '  LIST-ITEM:',
+        '    B: level-1',
+        '    LIST:',
+        '      LIST-ITEM:',
+        '        B: level-2',
+        '        LIST:',
+        '          LIST-ITEM:',
+        '            B: level-3',
+        '    B: ',
+        '    B: |',
+      ].join('\n'),
+    )
+
+    // #7: ESCAPE to root.
+    await pressEnter()
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      [
+        'LIST:',
+        '  LIST-ITEM:',
+        '    B: level-1',
+        '    LIST:',
+        '      LIST-ITEM:',
+        '        B: level-2',
+        '        LIST:',
+        '          LIST-ITEM:',
+        '            B: level-3',
+        'B: |',
+      ].join('\n'),
+    )
   })
 })
