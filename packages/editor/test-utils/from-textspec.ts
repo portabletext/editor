@@ -14,6 +14,7 @@ import type {
   Block as TextspecBlock,
 } from '@textspec/notation'
 import {parse} from '@textspec/notation'
+import {lookupContainer} from '../src/schema/lookup-container'
 import type {Containers} from '../src/schema/resolve-containers'
 import type {EditorSelection, EditorSelectionPoint} from '../src/types/editor'
 
@@ -356,12 +357,16 @@ function isListContainer(type: string): boolean {
 /**
  * Resolve the scope path for a container block type.
  *
- * For root-level containers, finds the matching key in the containers map
- * by comparing uppercased type names.
+ * For root-level containers, walks the parent schema's root types (read
+ * from registered root containers) and matches by uppercased type name.
  *
  * For nested containers, looks through the parent container's `of` array
  * to find a member whose uppercased type matches the textspec type,
  * then builds the scoped name.
+ *
+ * Uses `lookupContainer` so the resolved scope path resolves at any
+ * nesting depth (including depths beyond the resolver's pre-emitted
+ * candidate set, for self-referential schemas).
  */
 function resolveContainerScopePath(
   containers: Containers,
@@ -371,7 +376,6 @@ function resolveContainerScopePath(
   if (parentScopePath === '') {
     // Root-level: find a container key whose uppercased form matches
     for (const key of containers.keys()) {
-      // Root-level keys have no dots
       if (!key.includes('.') && key.toUpperCase() === textspecType) {
         return key
       }
@@ -380,7 +384,7 @@ function resolveContainerScopePath(
   }
 
   // Nested: look through parent container's `of` array
-  const parentField = containers.get(parentScopePath)?.field
+  const parentField = lookupContainer(containers, parentScopePath)?.field
 
   if (!parentField) {
     return undefined
@@ -390,7 +394,7 @@ function resolveContainerScopePath(
     const memberType = ofMember.name ?? ofMember.type
     if (memberType.toUpperCase() === textspecType) {
       const childScopePath = `${parentScopePath}.${memberType}`
-      if (containers.has(childScopePath)) {
+      if (lookupContainer(containers, childScopePath)) {
         return childScopePath
       }
     }
@@ -406,7 +410,7 @@ function convertContainerToPTE(
   keyGenerator: () => string,
   scopePath: string,
 ): PortableTextObject {
-  const containerField = containers.get(scopePath)?.field
+  const containerField = lookupContainer(containers, scopePath)?.field
 
   if (!containerField) {
     return {
