@@ -1,4 +1,9 @@
-import type {PortableTextBlock} from '@portabletext/schema'
+import type {
+  PortableTextBlock,
+  PortableTextObject,
+  PortableTextSpan,
+  PortableTextTextBlock,
+} from '@portabletext/schema'
 import type {EventPosition} from '../internal-utils/event-position'
 import type {MIMEType} from '../internal-utils/mime-type'
 import type {OmitFromUnion, PickFromUnion, StrictExtract} from '../type-utils'
@@ -7,7 +12,7 @@ import type {
   ChildWithOptionalKey,
 } from '../types/block-with-optional-key'
 import type {EditorSelection} from '../types/editor'
-import type {AnnotationPath, BlockPath, ChildPath} from '../types/paths'
+import type {AnnotationPath, BlockPath, ChildPath, Path} from '../types/paths'
 
 /**
  * @beta
@@ -72,13 +77,17 @@ const syntheticBehaviorEventTypes = [
   'delete',
   'history.redo',
   'history.undo',
+  'insert',
   'insert.block',
   'insert.child',
   'insert.text',
   'move.backward',
   'move.block',
   'move.forward',
+  'remove.text',
   'select',
+  'set',
+  'unset',
 ] as const
 
 type SyntheticBehaviorEventType =
@@ -157,6 +166,34 @@ export type SyntheticBehaviorEvent =
       type: StrictExtract<SyntheticBehaviorEventType, 'history.undo'>
     }
   | {
+      /**
+       * @alpha
+       *
+       * Primitive: insert a node into an array.
+       *
+       * The last segment of `at` resolves the insertion point:
+       * - A keyed `{_key}` segment inserts relative to that sibling.
+       * - A numeric index inserts relative to that slot.
+       *
+       * `position` ('before' or 'after') is always meaningful: `before: [2]`
+       * inserts at index 2, `after: [2]` inserts at index 3.
+       *
+       * @example
+       * ```ts
+       * raise({
+       *   type: 'insert',
+       *   at: [{_key: 'list'}, 'items', {_key: 'item3'}],
+       *   value: newItem,
+       *   position: 'after',
+       * })
+       * ```
+       */
+      type: StrictExtract<SyntheticBehaviorEventType, 'insert'>
+      at: Path
+      value: PortableTextTextBlock | PortableTextObject | PortableTextSpan
+      position: 'before' | 'after'
+    }
+  | {
       type: StrictExtract<SyntheticBehaviorEventType, 'insert.block'>
       block: BlockWithOptionalKey
       placement: InsertPlacement
@@ -168,7 +205,33 @@ export type SyntheticBehaviorEvent =
       child: ChildWithOptionalKey
     }
   | {
+      /**
+       * Inserts text into a span.
+       *
+       * Without `at`/`offset`, text is inserted at the current caret position.
+       * This is the form used by typing handlers.
+       *
+       * @alpha
+       * With `at` and `offset`, text is inserted at the explicit position.
+       * Recommended for plugin behaviors and collaborative-edit contexts.
+       *
+       * @example
+       * ```ts
+       * // Caret form
+       * raise({type: 'insert.text', text: 'x'})
+       *
+       * // Primitive form (@alpha)
+       * raise({
+       *   type: 'insert.text',
+       *   at: [{_key: 'b1'}, 'children', {_key: 's1'}],
+       *   offset: 5,
+       *   text: 'world',
+       * })
+       * ```
+       */
       type: StrictExtract<SyntheticBehaviorEventType, 'insert.text'>
+      at?: Path
+      offset?: number
       text: string
     }
   | {
@@ -185,8 +248,86 @@ export type SyntheticBehaviorEvent =
       distance: number
     }
   | {
+      /**
+       * @alpha
+       *
+       * Primitive: remove text from a span at the given offset.
+       *
+       * The `text` field carries the exact text being removed (matches the
+       * apply-layer shape so the inverse can be computed without re-reading
+       * the span).
+       *
+       * Recommended for collaborative-edit contexts (concurrent edits compose
+       * cleanly under operational transform).
+       *
+       * @example
+       * ```ts
+       * raise({
+       *   type: 'remove.text',
+       *   at: [{_key: 'b1'}, 'children', {_key: 's1'}],
+       *   offset: 5,
+       *   text: 'world',
+       * })
+       * ```
+       */
+      type: StrictExtract<SyntheticBehaviorEventType, 'remove.text'>
+      at: Path
+      offset: number
+      text: string
+    }
+  | {
       type: StrictExtract<SyntheticBehaviorEventType, 'select'>
       at: EditorSelection
+    }
+  | {
+      /**
+       * @alpha
+       *
+       * Primitive: set a property on a node, or replace a node wholesale.
+       *
+       * The last segment of `at` is the property name (a string) for property
+       * updates, OR a keyed/indexed segment for full-node replacement.
+       *
+       * Note: `set` on span text (`{at: [...spanPath, 'text'], value: '...'}`)
+       * is legal but not recommended in collaborative-edit contexts. Use
+       * `insert.text` and `remove.text` for text edits that compose under
+       * operational transform.
+       *
+       * @example
+       * ```ts
+       * // Set a block's style
+       * raise({type: 'set', at: [{_key: 'b1'}, 'style'], value: 'h1'})
+       *
+       * // Replace a block wholesale
+       * raise({type: 'set', at: [{_key: 'b1'}], value: newBlock})
+       * ```
+       */
+      type: StrictExtract<SyntheticBehaviorEventType, 'set'>
+      at: Path
+      value: unknown
+    }
+  | {
+      /**
+       * @alpha
+       *
+       * Primitive: unset a property on an object, OR remove a node from an
+       * array.
+       *
+       * When the last segment of `at` is a string, the property is removed.
+       * When the last segment is a keyed `{_key}` segment or a numeric index,
+       * the node at that array position is removed.
+       *
+       * @example
+       * ```ts
+       * // Remove a property
+       * raise({type: 'unset', at: [{_key: 'b1'}, 'level']})
+       *
+       * // Remove a node from an array
+       * raise({type: 'unset', at: [{_key: 'list'}, 'items', {_key: 'item3'}]})
+       * ```
+       */
+      type: StrictExtract<SyntheticBehaviorEventType, 'unset'>
+      at: Path
     }
   | AbstractBehaviorEvent
 

@@ -11,6 +11,25 @@ export const insertTextOperationImplementation: OperationImplementation<
   'insert.text'
 > = ({operation}) => {
   const {editor} = operation
+
+  // Primitive form: caller provided explicit position. Apply directly without
+  // touching selection.
+  if (operation.at !== undefined && operation.offset !== undefined) {
+    if (operation.text.length === 0) {
+      return
+    }
+
+    operation.editor.apply({
+      type: 'insert_text',
+      path: operation.at,
+      offset: operation.offset,
+      text: operation.text,
+    })
+
+    return
+  }
+
+  // Caret form: resolve position from the current selection.
   const {selection} = editor
 
   if (!selection || !isCollapsedRange(selection)) {
