@@ -540,3 +540,89 @@ describe('round-trip', () => {
     ).toBe(input)
   })
 })
+
+describe('fromTextspec with self-referential schemas', () => {
+  // Schema with a self-referential list (list-item.content.of can hold
+  // another list). The resolver pre-emits two depth levels of candidates;
+  // anything deeper relies on lookupContainer's scope-pattern fallback.
+  const recursiveListSchema = compileSchema(
+    defineSchema({
+      blockObjects: [
+        {
+          name: 'list',
+          fields: [
+            {name: 'kind', type: 'string'},
+            {
+              name: 'items',
+              type: 'array',
+              of: [
+                {
+                  type: 'object',
+                  name: 'list-item',
+                  fields: [
+                    {
+                      name: 'content',
+                      type: 'array',
+                      of: [{type: 'block'}, {type: 'list'}],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    }),
+  )
+
+  const recursiveContainers: Containers = resolveContainers(
+    recursiveListSchema,
+    new Map([
+      [
+        '$..list',
+        makeContainerConfig(recursiveListSchema, {
+          scope: '$..list',
+          field: 'items',
+        }),
+      ],
+      [
+        '$..list.list-item',
+        makeContainerConfig(recursiveListSchema, {
+          scope: '$..list.list-item',
+          field: 'content',
+        }),
+      ],
+    ]),
+  )
+
+  test('parses a list nested three levels deep with a deep text block', () => {
+    const input = [
+      'LIST:',
+      '  LIST-ITEM:',
+      '    LIST:',
+      '      LIST-ITEM:',
+      '        LIST:',
+      '          LIST-ITEM:',
+      '            B: deepest',
+    ].join('\n')
+
+    const {blocks} = fromTextspec(
+      {
+        schema: recursiveListSchema,
+        keyGenerator: createTestKeyGenerator(),
+        containers: recursiveContainers,
+      },
+      input,
+    )
+
+    // Round-trip: the parsed value, when serialized back, equals the input.
+    expect(
+      toTextspec({
+        schema: recursiveListSchema,
+        value: blocks,
+        selection: null,
+        containers: recursiveContainers,
+      }),
+    ).toBe(input)
+  })
+})
