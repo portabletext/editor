@@ -453,4 +453,42 @@ describe('event.insert.text', () => {
       )
     })
   })
+
+  test('Scenario: `insert.text` at an explicit position', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue: [
+        {
+          _key: 'b0',
+          _type: 'block',
+          style: 'normal',
+          children: [{_key: 's0', _type: 'span', text: 'hello', marks: []}],
+          markDefs: [],
+        },
+      ],
+    })
+
+    editor.send({
+      type: 'insert.text',
+      at: [{_key: 'b0'}, 'children', {_key: 's0'}],
+      offset: 5,
+      text: ' world',
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: 'b0',
+          _type: 'block',
+          style: 'normal',
+          children: [
+            {_key: 's0', _type: 'span', text: 'hello world', marks: []},
+          ],
+          markDefs: [],
+        },
+      ])
+    })
+  })
 })
