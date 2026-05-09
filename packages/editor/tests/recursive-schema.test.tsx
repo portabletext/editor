@@ -657,7 +657,7 @@ describe('recursive schemas (lists in list-items in lists)', () => {
     // Caret at end of "level-3". Repeated Enters trace this pattern:
     //   #1: inserts empty trailing block in I3 (deepest list-item)
     //   #2: inserts another empty in I3 (now empty-prev + empty-last)
-    //   #3: ESCAPE to I2 — empties collapse, new block sibling of L3 in I2
+    //   #3: ESCAPE to I2 (empties collapse, new block sibling of L3 in I2)
     //   #4: inserts another empty in I2
     //   #5: ESCAPE to I1
     //   #6: inserts another empty in I1
@@ -768,7 +768,7 @@ describe('recursive schemas (lists in list-items in lists)', () => {
       ].join('\n'),
     )
 
-    // #3: ESCAPE — empties collapse, new sibling of L3 in I2.
+    // #3: ESCAPE (empties collapse, new sibling of L3 in I2).
     await pressEnter()
     expect(toTextspec(editor.getSnapshot().context)).toEqual(
       [
@@ -854,5 +854,126 @@ describe('recursive schemas (lists in list-items in lists)', () => {
         'B: |',
       ].join('\n'),
     )
+  })
+
+  test('Scenario: pressing Enter from the middle list-item splits in place — escape only fires from the trailing block of a list-item', async () => {
+    // Caret at end of "level-2", inside I2 (middle list-item) which has
+    // content [T2:"level-2", L3:list]. The escape rule fires when an
+    // empty trailing line has an empty previous sibling. From a middle
+    // level the text block isn't trailing — the inner list is. Splitting
+    // T2 inserts a new empty BETWEEN T2 and L3, which is the natural
+    // outcome: a new line in the same list-item, before the nested list.
+    //
+    // To leave the list from a middle level the user descends into the
+    // deepest text block (where the escape rule applies) or uses a
+    // structural keystroke (Tab/Shift+Tab) for outdent. Pinning this
+    // boundary so it stays consistent.
+    const keyGenerator = createTestKeyGenerator()
+    const initialValue: Array<PortableTextBlock> = [
+      buildNestedList(keyGenerator, 3),
+    ]
+
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: recursiveListSchema,
+      initialValue,
+      children: (
+        <ContainerPlugin containers={[listContainer, listItemContainer]} />
+      ),
+    })
+
+    const initialL1 = editor.getSnapshot().context.value[0] as PortableTextBlock
+    const i1 = (initialL1 as unknown as {items: Array<PortableTextBlock>})
+      .items[0]!
+    const i1Content = (i1 as unknown as {content: Array<PortableTextBlock>})
+      .content
+    const l2 = i1Content[1] as PortableTextBlock
+    const i2 = (l2 as unknown as {items: Array<PortableTextBlock>}).items[0]!
+    const i2Content = (i2 as unknown as {content: Array<PortableTextBlock>})
+      .content
+    const t2 = i2Content[0] as PortableTextBlock
+    const t2Children = (t2 as unknown as {children: Array<{_key: string}>})
+      .children
+    const s2 = t2Children[0]!
+
+    const middleSpanPath = [
+      {_key: initialL1._key!},
+      'items',
+      {_key: i1._key!},
+      'content',
+      {_key: l2._key!},
+      'items',
+      {_key: i2._key!},
+      'content',
+      {_key: t2._key!},
+      'children',
+      {_key: s2._key},
+    ]
+
+    await userEvent.click(locator)
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: middleSpanPath, offset: 'level-2'.length},
+        focus: {path: middleSpanPath, offset: 'level-2'.length},
+      },
+    })
+
+    async function pressEnter() {
+      await userEvent.keyboard('{Enter}')
+      await vi.waitFor(() => {
+        editor.getSnapshot().context.value
+      })
+    }
+
+    // #1: split inserts an empty BETWEEN level-2 and the inner LIST.
+    // The empty is *not* trailing, so the escape rule doesn't apply.
+    // That's the natural outcome: a new line in the same list-item,
+    // before the nested list.
+    await pressEnter()
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      [
+        'LIST:',
+        '  LIST-ITEM:',
+        '    B: level-1',
+        '    LIST:',
+        '      LIST-ITEM:',
+        '        B: level-2',
+        '        B: |',
+        '        LIST:',
+        '          LIST-ITEM:',
+        '            B: level-3',
+      ].join('\n'),
+    )
+
+    // #2 + #3 + #4: keep adding empty lines before the inner LIST.
+    // Each Enter is a normal split; the escape rule never applies.
+    await pressEnter()
+    await pressEnter()
+    await pressEnter()
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      [
+        'LIST:',
+        '  LIST-ITEM:',
+        '    B: level-1',
+        '    LIST:',
+        '      LIST-ITEM:',
+        '        B: level-2',
+        '        B: ',
+        '        B: ',
+        '        B: ',
+        '        B: |',
+        '        LIST:',
+        '          LIST-ITEM:',
+        '            B: level-3',
+      ].join('\n'),
+    )
+
+    // The outer list still wraps everything (Enter from a middle level
+    // doesn't escape).
+    expect(editor.getSnapshot().context.value).toHaveLength(1)
+    expect(
+      (editor.getSnapshot().context.value[0] as PortableTextBlock)._type,
+    ).toBe('list')
   })
 })
