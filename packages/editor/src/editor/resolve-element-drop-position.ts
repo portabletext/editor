@@ -1,6 +1,6 @@
-import type {DropPosition} from '../behaviors/behavior.core.drop-position'
 import type {Path} from '../slate/interfaces/path'
 import {pathEquals} from '../slate/path/path-equals'
+import type {DropPosition} from './use-drop-position'
 
 /**
  * Returns the `position` of a drop hover when the hover targets the given

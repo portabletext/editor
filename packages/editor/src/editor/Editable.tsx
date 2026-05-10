@@ -161,7 +161,7 @@ export const PortableTextEditable = forwardRef<
     rangeDecorationsActor,
     (s) => s.context.decorate?.fn,
   )
-  const dropPosition = useDropPosition()
+  const {dropPosition, updateDropPosition} = useDropPosition()
 
   useEffect(() => {
     rangeDecorationsActor.send({
@@ -836,6 +836,8 @@ export const PortableTextEditable = forwardRef<
         return
       }
 
+      updateDropPosition(position)
+
       editorActor.send({
         type: 'behavior event',
         behaviorEvent: {
@@ -853,7 +855,7 @@ export const PortableTextEditable = forwardRef<
       // Prevent Slate from handling the event
       return true
     },
-    [onDragOver, editorActor, slateEditor],
+    [onDragOver, editorActor, slateEditor, updateDropPosition],
   )
 
   const handleDrop = useCallback(

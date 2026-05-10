@@ -5,7 +5,6 @@ import type {
 import {isTextBlock} from '@portabletext/schema'
 import {useSelector} from '@xstate/react'
 import {useContext, type ReactElement} from 'react'
-import type {DropPosition} from '../behaviors/behavior.core.drop-position'
 import {isInline} from '../node-traversal/is-inline'
 import type {ContainerConfig} from '../renderers/renderer.types'
 import {lookupContainer} from '../schema/lookup-container'
@@ -27,6 +26,7 @@ import {RenderInlineObject} from './render.inline-object'
 import {useLeafConfig} from './render.leaf-config'
 import {RenderTextBlock} from './render.text-block'
 import {resolveElementDropPosition} from './resolve-element-drop-position'
+import type {DropPosition} from './use-drop-position'
 
 export function RenderElement(props: {
   attributes: RenderElementProps['attributes']

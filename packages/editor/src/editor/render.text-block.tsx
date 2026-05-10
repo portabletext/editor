@@ -3,7 +3,6 @@ import type {
   PortableTextTextBlock,
 } from '@portabletext/schema'
 import {useContext, useRef, type ReactElement} from 'react'
-import type {DropPosition} from '../behaviors/behavior.core.drop-position'
 import {serializePath} from '../paths/serialize-path'
 import type {Path} from '../slate/interfaces/path'
 import type {RenderElementProps} from '../slate/react/components/editable'
@@ -20,6 +19,7 @@ import type {EditorSchema} from './editor-schema'
 import {DropIndicator} from './render.drop-indicator'
 import {SelectionStateContext} from './selection-state-context'
 import {useBlockSubSchema} from './use-block-sub-schema'
+import type {DropPosition} from './use-drop-position'
 
 export function RenderTextBlock(props: {
   attributes: RenderElementProps['attributes']

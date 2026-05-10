@@ -1,6 +1,5 @@
 import type {PortableTextObject} from '@portabletext/schema'
 import {useContext, useRef, type ReactElement} from 'react'
-import type {DropPosition} from '../behaviors/behavior.core.drop-position'
 import {serializePath} from '../paths/serialize-path'
 import type {LeafConfig} from '../renderers/renderer.types'
 import type {Path} from '../slate/interfaces/path'
@@ -11,6 +10,7 @@ import {RenderDefaultBlockObject} from './render.default-object'
 import {DropIndicator} from './render.drop-indicator'
 import {RenderLeafConfig} from './render.leaf-config'
 import {SelectionStateContext} from './selection-state-context'
+import type {DropPosition} from './use-drop-position'
 
 export function RenderBlockObject(props: {
   attributes: RenderElementProps['attributes']
