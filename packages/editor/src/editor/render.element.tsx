@@ -26,6 +26,7 @@ import {RenderContainer} from './render.container'
 import {RenderInlineObject} from './render.inline-object'
 import {useLeafConfig} from './render.leaf-config'
 import {RenderTextBlock} from './render.text-block'
+import {resolveElementDropPosition} from './resolve-element-drop-position'
 
 export function RenderElement(props: {
   attributes: RenderElementProps['attributes']
@@ -87,11 +88,10 @@ export function RenderElement(props: {
     return (
       <RenderTextBlock
         attributes={props.attributes}
-        dropPosition={
-          props.dropPosition?.blockKey === props.element._key
-            ? props.dropPosition.positionBlock
-            : undefined
-        }
+        dropPosition={resolveElementDropPosition(
+          props.dropPosition,
+          props.path,
+        )}
         element={props.element}
         path={props.path}
         readOnly={props.readOnly}
@@ -159,11 +159,7 @@ export function RenderElement(props: {
     <RenderBlockObject
       attributes={props.attributes}
       blockObject={props.element}
-      dropPosition={
-        props.dropPosition?.blockKey === props.element._key
-          ? props.dropPosition.positionBlock
-          : undefined
-      }
+      dropPosition={resolveElementDropPosition(props.dropPosition, props.path)}
       element={props.element}
       leafConfig={leafConfig}
       path={props.path}

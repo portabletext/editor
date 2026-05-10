@@ -24,7 +24,7 @@ import {useBlockSubSchema} from './use-block-sub-schema'
 export function RenderTextBlock(props: {
   attributes: RenderElementProps['attributes']
   children: ReactElement
-  dropPosition?: DropPosition['positionBlock']
+  dropPosition?: DropPosition['position']
   element: PortableTextTextBlock
   path: Path
   readOnly: boolean

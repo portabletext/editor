@@ -15,7 +15,7 @@ import {SelectionStateContext} from './selection-state-context'
 export function RenderBlockObject(props: {
   attributes: RenderElementProps['attributes']
   blockObject: PortableTextObject | undefined
-  dropPosition?: DropPosition['positionBlock']
+  dropPosition?: DropPosition['position']
   children: ReactElement
   element: PortableTextObject
   leafConfig?: LeafConfig
