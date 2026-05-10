@@ -6,12 +6,13 @@ import {getDragSelection} from '../selectors/drag-selection'
 import {getFocusBlock} from '../selectors/selector.get-focus-block'
 import {getSelectedBlocks} from '../selectors/selector.get-selected-blocks'
 import {isSelectingEntireBlocks} from '../selectors/selector.is-selecting-entire-blocks'
+import type {Path} from '../slate/interfaces/path'
 import {forward} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
 export type DropPosition = {
-  blockKey: string
-  positionBlock: EventPositionBlock
+  path: Path
+  position: EventPositionBlock
 }
 
 export function createDropPositionBehaviorsConfig({
@@ -84,8 +85,8 @@ export function createDropPositionBehaviorsConfig({
               type: 'effect',
               effect: () => {
                 setDropPosition({
-                  blockKey: dropFocusBlock.node._key,
-                  positionBlock: event.position.block,
+                  path: dropFocusBlock.path,
+                  position: event.position.block,
                 })
               },
             },
