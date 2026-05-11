@@ -14,6 +14,14 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@cucumber/gherkin": "^39.0.0",
+    "@cucumber/messages": "^32.2.0",
+    "@portabletext/editor": "workspace:*",
+    "@portabletext/plugin-input-rule": "workspace:*",
+    "@portabletext/plugin-typeahead-picker": "workspace:*",
+    "@portabletext/schema": "workspace:*",
+    "@testing-library/user-event": "^14.5.2",
+    "racejar": "workspace:*",
     "react": "^19.2.5",
     "react-dom": "^19.2.5"
   },

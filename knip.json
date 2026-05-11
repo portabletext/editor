@@ -57,6 +57,20 @@
         "sharp"
       ]
     },
-    "examples/*": {}
+    "examples/*": {},
+    "apps/racetrack": {
+      "entry": [
+        "index.html!",
+        "src/runner/vitest-shim.ts!",
+        "src/runner/vitest-browser-shim.ts!",
+        "src/runner/vitest-browser-react-shim.ts!"
+      ],
+      "ignoreDependencies": [
+        "babel-plugin-react-compiler",
+        "eslint-formatter-gha",
+        "tailwindcss-react-aria-components",
+        "sharp"
+      ]
+    }
   }
 }
