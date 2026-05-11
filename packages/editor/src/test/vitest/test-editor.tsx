@@ -83,7 +83,7 @@ export async function createTestEditor(
         ))
   }
 
-  const locator = page.getByRole('textbox')
+  const locator = renderResult.locator.getByRole('textbox')
 
   await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
 
