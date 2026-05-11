@@ -7,6 +7,7 @@ import {getFocusBlock} from '../selectors/selector.get-focus-block'
 import {getSelectedBlocks} from '../selectors/selector.get-selected-blocks'
 import {isSelectingEntireBlocks} from '../selectors/selector.is-selecting-entire-blocks'
 import type {Path} from '../slate/interfaces/path'
+import {pathEquals} from '../slate/path/path-equals'
 import {forward} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
@@ -57,9 +58,8 @@ export function createDropPositionBehaviorsConfig({
           })
 
           if (
-            draggedBlocks.some(
-              (draggedBlock) =>
-                draggedBlock.node._key === dropFocusBlock.node._key,
+            draggedBlocks.some((draggedBlock) =>
+              pathEquals(draggedBlock.path, dropFocusBlock.path),
             )
           ) {
             return false
