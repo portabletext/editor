@@ -12,8 +12,9 @@ import {SelectionStateContext} from './selection-state-context'
 export function RenderContainer(props: {
   attributes: RenderElementProps['attributes']
   children: ReactElement
-  element: PortableTextBlock
   containerConfig: ContainerConfig
+  dropPosition: 'start' | 'end' | undefined
+  element: PortableTextBlock
   path: Path
 }) {
   const {focusedContainerPath, selectedContainerPaths} = useContext(
@@ -49,6 +50,7 @@ export function RenderContainer(props: {
     const rendered = props.containerConfig.container.render({
       attributes: augmentedAttributes,
       children: props.children,
+      dropPosition: props.dropPosition,
       focused,
       node: props.element,
       path: props.path,
