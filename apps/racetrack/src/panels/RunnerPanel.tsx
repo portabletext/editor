@@ -1,20 +1,5 @@
-import {parameterTypes} from '@portabletext/editor/test'
-import {
-  createTestEditor,
-  stepDefinitions,
-} from '@portabletext/editor/test/vitest'
-import {defineSchema} from '@portabletext/schema'
-import {Before} from 'racejar'
-import {expect, vi} from 'vitest'
-import {
-  MentionPickerPlugin,
-  resetMatchesCallCount,
-} from '../plugins/mention-picker'
-import {
-  attachLocators,
-  mentionPickerSteps,
-  type MentionPickerContext,
-} from '../plugins/mention-picker.steps'
+import {stepDefinitions} from '@portabletext/editor/test/vitest'
+import type {GarageEntry} from '../garage'
 import {
   runFeature,
   type ScenarioResult,
@@ -23,7 +8,7 @@ import {
 import {cleanup} from '../runner/vitest-browser-react-shim'
 
 type RunnerPanelProps = {
-  featureText: string
+  entry: GarageEntry
   isRunning: boolean
   scenarioResults: Array<ScenarioResult>
   scenarioCount: number
@@ -33,13 +18,8 @@ type RunnerPanelProps = {
   onScenarioComplete: (result: ScenarioResult) => void
 }
 
-const schemaDefinition = defineSchema({
-  decorators: [{name: 'strong'}],
-  annotations: [{name: 'link'}],
-})
-
 export function RunnerPanel({
-  featureText,
+  entry,
   isRunning,
   scenarioResults,
   scenarioCount,
@@ -53,27 +33,12 @@ export function RunnerPanel({
 
     try {
       await runFeature({
-        featureText,
-        parameterTypes,
-        stepDefinitions: [...stepDefinitions, ...mentionPickerSteps],
-        hooks: [
-          Before(async (context: MentionPickerContext) => {
-            resetMatchesCallCount()
-            const {editor, locator} = await createTestEditor({
-              children: <MentionPickerPlugin />,
-              schemaDefinition,
-            })
-            context.editor = editor
-            context.locator = locator
-            attachLocators(context)
-            await vi.waitFor(() =>
-              expect.element(context.keywordLocator).toBeInTheDocument(),
-            )
-            await vi.waitFor(() =>
-              expect.element(context.matchesLocator).toBeInTheDocument(),
-            )
-          }),
-        ],
+        featureText: entry.featureText,
+        parameterTypes: entry.parameterTypes,
+        stepDefinitions: entry.buildStepDefinitions({
+          editorStepDefinitions: stepDefinitions,
+        }),
+        hooks: entry.buildHooks(),
         onStep,
         onScenarioComplete,
         betweenScenarios: async () => {
@@ -92,14 +57,14 @@ export function RunnerPanel({
   return (
     <div className="rt-panel">
       <div className="rt-panel-header">
-        <span className="rt-panel-header-title">Runner</span>
+        <span className="rt-panel-header-title">Race control</span>
         <button
           type="button"
           className="rt-button rt-button--primary"
           onClick={handleRun}
           disabled={isRunning}
         >
-          {isRunning ? 'Running...' : 'Run scenarios'}
+          {isRunning ? 'Racing...' : 'Start race'}
         </button>
       </div>
       <div className="rt-panel-body">
@@ -110,12 +75,12 @@ export function RunnerPanel({
             }`}
           >
             {failCount === 0
-              ? `${passCount}/${scenarioCount} pass`
-              : `${passCount}/${scenarioCount} pass, ${failCount} failed`}
+              ? `${passCount}/${scenarioCount} finished`
+              : `${passCount}/${scenarioCount} finished, ${failCount} crashed`}
           </div>
         ) : (
           <div className="rt-summary">
-            {scenarioCount} scenarios ready. Press Run scenarios.
+            {scenarioCount} races on the grid. Press start.
           </div>
         )}
         <div className="rt-runner-target">

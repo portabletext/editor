@@ -1,5 +1,5 @@
 import {useMemo, useState} from 'react'
-import mentionPickerFeature from './features/mention-picker.feature?raw'
+import {garage} from './garage'
 import {PlaygroundPanel} from './panels/PlaygroundPanel'
 import {RunnerPanel} from './panels/RunnerPanel'
 import {ScenariosPanel} from './panels/ScenariosPanel'
@@ -14,7 +14,10 @@ export type StepState = {
 }
 
 export function App() {
-  const feature = useMemo(() => parseFeature(mentionPickerFeature), [])
+  const [entryId, setEntryId] = useState(garage[0]!.id)
+  const entry = garage.find((e) => e.id === entryId) ?? garage[0]!
+
+  const feature = useMemo(() => parseFeature(entry.featureText), [entry])
 
   const [stepStates, setStepStates] = useState<Map<StepKey, StepState>>(
     () => new Map(),
@@ -41,34 +44,65 @@ export function App() {
     })
   }
 
+  function handleEntryChange(nextId: string) {
+    if (isRunning) {
+      return
+    }
+    setEntryId(nextId)
+    resetRun()
+  }
+
   return (
     <div className="rt-app">
-      <ScenariosPanel
-        feature={feature}
-        stepStates={stepStates}
-        scenarioResults={scenarioResults}
-      />
-      <PlaygroundPanel />
-      <RunnerPanel
-        featureText={mentionPickerFeature}
-        isRunning={isRunning}
-        scenarioResults={scenarioResults}
-        scenarioCount={feature.scenarios.length}
-        onRunStart={() => {
-          resetRun()
-          setIsRunning(true)
-        }}
-        onRunEnd={() => setIsRunning(false)}
-        onStep={(result) => {
-          updateStep(result.scenarioIndex, result.stepIndex, {
-            status: result.status,
-            error: result.error,
-          })
-        }}
-        onScenarioComplete={(result) => {
-          setScenarioResults((prev) => [...prev, result])
-        }}
-      />
+      <header className="rt-header">
+        <span className="rt-header-title">Racetrack</span>
+        <label className="rt-entry-picker">
+          <span className="rt-entry-picker-label">Now racing:</span>
+          <select
+            className="rt-entry-picker-select"
+            value={entry.id}
+            disabled={isRunning}
+            onChange={(event) => handleEntryChange(event.target.value)}
+          >
+            {garage.map((option) => (
+              <option key={option.id} value={option.id}>
+                {option.name}
+              </option>
+            ))}
+          </select>
+          <span className="rt-entry-picker-description">
+            {entry.description}
+          </span>
+        </label>
+      </header>
+      <div className="rt-panels">
+        <ScenariosPanel
+          feature={feature}
+          stepStates={stepStates}
+          scenarioResults={scenarioResults}
+        />
+        <PlaygroundPanel entry={entry} />
+        <RunnerPanel
+          entry={entry}
+          isRunning={isRunning}
+          scenarioResults={scenarioResults}
+          scenarioCount={feature.scenarios.length}
+          onRunStart={() => {
+            resetRun()
+            setIsRunning(true)
+          }}
+          onRunEnd={() => setIsRunning(false)}
+          onStep={(result) => {
+            updateStep(result.scenarioIndex, result.stepIndex, {
+              status: result.status,
+              error: result.error,
+            })
+          }}
+          onScenarioComplete={(result) => {
+            setScenarioResults((prev) => [...prev, result])
+          }}
+        />
+      </div>
     </div>
   )
 }

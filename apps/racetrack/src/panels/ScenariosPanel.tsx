@@ -19,11 +19,11 @@ export function ScenariosPanel({
   return (
     <div className="rt-panel">
       <div className="rt-panel-header">
-        <span className="rt-panel-header-title">Scenarios</span>
+        <span className="rt-panel-header-title">Track</span>
         <span>
-          {feature.scenarios.length} scenarios
+          {feature.scenarios.length} races
           {scenarioResults.length > 0
-            ? ` - ${passCount} pass, ${failCount} fail`
+            ? ` - ${passCount} finished, ${failCount} crashed`
             : ''}
         </span>
       </div>
@@ -32,7 +32,7 @@ export function ScenariosPanel({
           <div className="rt-feature-title">Feature: {feature.name}</div>
           {feature.scenarios.map((scenario, scenarioIndex) => (
             <ScenarioBlock
-              key={`scenario:${scenario.name}`}
+              key={`scenario:${scenarioIndex}:${scenario.name}`}
               scenario={scenario}
               scenarioIndex={scenarioIndex}
               stepStates={stepStates}

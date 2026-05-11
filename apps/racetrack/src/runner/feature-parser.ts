@@ -1,16 +1,25 @@
 /**
- * Tiny gherkin parser for the left-panel visual rendering of the
- * `.feature` file. Only handles what the mention-picker feature uses:
- * `Feature:`, `Scenario:`, and `Given`/`When`/`Then`/`And`/`But`
- * steps. Comments (`#`) and blank lines stay attached to whichever
- * scenario follows.
+ * Parse a feature file into the expanded list of pickles racejar
+ * actually runs. Scenario Outlines are expanded one runtime scenario
+ * per Examples row, matching what `compileFeature` produces, so the
+ * left-panel scenario count and indices align with the runner's
+ * `onStep` events.
  *
- * The execution path uses racejar's `compileFeature` directly. This
- * parser is only for display.
+ * Uses `@cucumber/gherkin` directly (the same library racejar uses)
+ * rather than a hand-rolled parser, so outline-expansion semantics
+ * stay in lockstep. `@cucumber/gherkin` is a transitive dependency of
+ * racejar, already in the racetrack module tree.
+ *
+ * Pickle steps drop the original `Given/When/Then/And/But` keyword, so
+ * we walk the gherkin AST once to build an id-to-keyword map and look
+ * each pickle step's source up by `astNodeIds[0]` for display.
  */
 
+import * as Gherkin from '@cucumber/gherkin'
+import * as Messages from '@cucumber/messages'
+
 export type ParsedStep = {
-  /** "Given" | "When" | "Then" | "And" | "But" */
+  /** "Given" | "When" | "Then" | "And" | "But" - trimmed of trailing space. */
   keyword: string
   text: string
 }
@@ -25,54 +34,61 @@ export type ParsedFeature = {
   scenarios: Array<ParsedScenario>
 }
 
-const STEP_KEYWORDS = ['Given', 'When', 'Then', 'And', 'But']
+function collectStepKeywords(
+  document: Messages.GherkinDocument,
+): Map<string, string> {
+  const keywords = new Map<string, string>()
+  const feature = document.feature
+  if (!feature) {
+    return keywords
+  }
 
-export function parseFeature(text: string): ParsedFeature {
-  const lines = text.split(/\r?\n/)
-  let featureName = ''
-  const scenarios: Array<ParsedScenario> = []
-  let current: ParsedScenario | undefined
-
-  for (const rawLine of lines) {
-    const line = rawLine.trim()
-    if (line.length === 0) {
-      continue
+  for (const child of feature.children) {
+    const stepSources = [
+      ...(child.background?.steps ?? []),
+      ...(child.scenario?.steps ?? []),
+    ]
+    for (const step of stepSources) {
+      keywords.set(step.id, step.keyword.trim())
     }
-    if (line.startsWith('#')) {
-      continue
-    }
-
-    if (line.startsWith('Feature:')) {
-      featureName = line.slice('Feature:'.length).trim()
-      continue
-    }
-    if (line.startsWith('Scenario:')) {
-      current = {name: line.slice('Scenario:'.length).trim(), steps: []}
-      scenarios.push(current)
-      continue
-    }
-    if (line.startsWith('Scenario Outline:')) {
-      current = {
-        name: line.slice('Scenario Outline:'.length).trim(),
-        steps: [],
-      }
-      scenarios.push(current)
-      continue
-    }
-
-    for (const keyword of STEP_KEYWORDS) {
-      if (line.startsWith(`${keyword} `)) {
-        if (!current) {
-          break
+    for (const rule of [child.rule].filter(Boolean)) {
+      for (const ruleChild of rule!.children) {
+        for (const step of [
+          ...(ruleChild.background?.steps ?? []),
+          ...(ruleChild.scenario?.steps ?? []),
+        ]) {
+          keywords.set(step.id, step.keyword.trim())
         }
-        current.steps.push({
-          keyword,
-          text: line.slice(keyword.length + 1),
-        })
-        break
       }
     }
   }
+  return keywords
+}
+
+export function parseFeature(text: string): ParsedFeature {
+  const uuidFn = Messages.IdGenerator.uuid()
+  const builder = new Gherkin.AstBuilder(uuidFn)
+  const matcher = new Gherkin.GherkinClassicTokenMatcher()
+  const parser = new Gherkin.Parser(builder, matcher)
+
+  const document = parser.parse(text)
+  const featureName = document.feature?.name ?? ''
+
+  const pickles = Gherkin.compile(
+    document,
+    featureName.replace(' ', '-'),
+    uuidFn,
+  )
+
+  const keywordMap = collectStepKeywords(document)
+
+  const scenarios: Array<ParsedScenario> = pickles.map((pickle) => ({
+    name: pickle.name,
+    steps: pickle.steps.map((step) => ({
+      keyword: keywordMap.get(step.astNodeIds[0] ?? '') ?? '',
+      text: step.text,
+    })),
+  }))
 
   return {name: featureName, scenarios}
 }

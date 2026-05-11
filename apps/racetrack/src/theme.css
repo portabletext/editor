@@ -283,3 +283,63 @@ body {
 .rt-editable [contenteditable]:focus {
   outline: none;
 }
+
+/* Racetrack header + entry picker */
+
+.rt-app {
+  display: flex;
+  flex-direction: column;
+}
+
+.rt-header {
+  display: flex;
+  align-items: center;
+  gap: var(--rt-space-4, 16px);
+  padding: var(--rt-space-3, 12px) var(--rt-space-4, 16px);
+  border-bottom: 1px solid var(--rt-border, #d0d0d0);
+  background: var(--rt-bg-elevated, #fafafa);
+  flex: 0 0 auto;
+}
+
+.rt-header-title {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.rt-entry-picker {
+  display: flex;
+  align-items: center;
+  gap: var(--rt-space-2, 8px);
+  font-size: 0.875rem;
+}
+
+.rt-entry-picker-label {
+  color: var(--rt-fg-muted, #555);
+}
+
+.rt-entry-picker-select {
+  font: inherit;
+  padding: 4px 8px;
+  border: 1px solid var(--rt-border, #d0d0d0);
+  border-radius: 4px;
+  background: var(--rt-bg, #fff);
+}
+
+.rt-entry-picker-select:disabled {
+  opacity: 0.6;
+}
+
+.rt-entry-picker-description {
+  color: var(--rt-fg-muted, #555);
+  font-style: italic;
+}
+
+.rt-panels {
+  display: flex;
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+.rt-panels > .rt-panel {
+  flex: 1 1 0;
+}

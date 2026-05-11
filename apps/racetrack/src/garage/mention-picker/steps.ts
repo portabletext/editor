@@ -17,7 +17,7 @@ import type {Context} from '@portabletext/editor/test/vitest'
 import {Then} from 'racejar'
 import {expect, vi} from 'vitest'
 import {page, type Locator} from 'vitest/browser'
-import {getMatchesCallCountValue} from './mention-picker'
+import {getMatchesCallCountValue} from './Plugin'
 
 export type MentionPickerContext = Context & {
   keywordLocator: Locator
