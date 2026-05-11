@@ -1,5 +1,6 @@
 import {useMemo, useState} from 'react'
 import {garage} from './garage'
+import {EnginePanel} from './panels/EnginePanel'
 import {PlaygroundPanel} from './panels/PlaygroundPanel'
 import {RunnerPanel} from './panels/RunnerPanel'
 import {ScenariosPanel} from './panels/ScenariosPanel'
@@ -82,6 +83,7 @@ export function App() {
           scenarioResults={scenarioResults}
         />
         <PlaygroundPanel entry={entry} />
+        <EnginePanel entry={entry} />
         <RunnerPanel
           entry={entry}
           isRunning={isRunning}

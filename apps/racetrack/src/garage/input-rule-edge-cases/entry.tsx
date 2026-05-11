@@ -12,8 +12,11 @@ import {createTestEditor, type Context} from '@portabletext/editor/test/vitest'
 import {defineSchema} from '@portabletext/schema'
 import {Before} from 'racejar'
 import type {GarageEntry} from '../types'
+// biome-ignore lint/correctness/noSelfImport: load own source for the engine viewer
+import entrySource from './entry.tsx?raw'
 import featureText from './feature.feature?raw'
 import {InputRuleEdgeCasesPlugin} from './Plugin'
+import pluginSource from './Plugin.tsx?raw'
 
 const schemaDefinition = defineSchema({
   decorators: [{name: 'strong'}],
@@ -26,6 +29,11 @@ export const inputRuleEdgeCasesEntry: GarageEntry = {
   name: 'Input rule: edge cases',
   description: 'Nine text-transform rules running side by side.',
   featureText,
+  engine: [
+    {name: 'Plugin.tsx', language: 'tsx', source: pluginSource},
+    {name: 'entry.tsx', language: 'tsx', source: entrySource},
+    {name: 'feature.feature', language: 'feature', source: featureText},
+  ],
   PlaygroundComponent: InputRuleEdgeCasesPlugin,
   parameterTypes,
   buildStepDefinitions: ({editorStepDefinitions}) => editorStepDefinitions,

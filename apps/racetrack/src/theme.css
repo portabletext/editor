@@ -343,3 +343,48 @@ body {
 .rt-panels > .rt-panel {
   flex: 1 1 0;
 }
+
+/* Engine panel - read-only source viewer with tabs */
+
+.rt-engine-tabs {
+  display: flex;
+  gap: 2px;
+}
+
+.rt-engine-tab {
+  font: inherit;
+  font-size: 0.8125rem;
+  padding: 2px 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-bottom: none;
+  color: var(--rt-fg-muted, #555);
+  cursor: pointer;
+}
+
+.rt-engine-tab--active {
+  background: var(--rt-bg, #fff);
+  border-color: var(--rt-border, #d0d0d0);
+  color: var(--rt-fg, #1c1c1c);
+}
+
+.rt-engine-tab:not(.rt-engine-tab--active):hover {
+  color: var(--rt-fg, #1c1c1c);
+}
+
+.rt-engine-body {
+  padding: 0;
+}
+
+.rt-engine-source {
+  margin: 0;
+  padding: 12px 16px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  background: var(--rt-bg, #fff);
+  color: var(--rt-fg, #1c1c1c);
+  overflow: auto;
+  height: 100%;
+  white-space: pre;
+}

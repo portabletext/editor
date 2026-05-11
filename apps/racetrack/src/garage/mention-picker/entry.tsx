@@ -13,13 +13,17 @@ import {defineSchema} from '@portabletext/schema'
 import {Before} from 'racejar'
 import {expect, vi} from 'vitest'
 import type {GarageEntry} from '../types'
+// biome-ignore lint/correctness/noSelfImport: load own source for the engine viewer
+import entrySource from './entry.tsx?raw'
 import featureText from './feature.feature?raw'
 import {MentionPickerPlugin, resetMatchesCallCount} from './Plugin'
+import pluginSource from './Plugin.tsx?raw'
 import {
   attachLocators,
   mentionPickerSteps,
   type MentionPickerContext,
 } from './steps'
+import stepsSource from './steps.ts?raw'
 
 const schemaDefinition = defineSchema({
   decorators: [{name: 'strong'}],
@@ -31,6 +35,12 @@ export const mentionPickerEntry: GarageEntry = {
   name: 'Mention Picker',
   description: 'Type @ to trigger a typeahead picker with async match lookup.',
   featureText,
+  engine: [
+    {name: 'Plugin.tsx', language: 'tsx', source: pluginSource},
+    {name: 'entry.tsx', language: 'tsx', source: entrySource},
+    {name: 'steps.ts', language: 'ts', source: stepsSource},
+    {name: 'feature.feature', language: 'feature', source: featureText},
+  ],
   PlaygroundComponent: MentionPickerPlugin,
   parameterTypes,
   buildStepDefinitions: ({editorStepDefinitions}) => [
