@@ -6,6 +6,11 @@
  * module-scoped `getMatchesCallCount` from `./mention-picker`. Each
  * scenario's Before hook resets that counter; without the reset,
  * counts accumulate across scenarios.
+ *
+ * The diagnostic nodes are scoped to the runner's test target via
+ * `page.locator('[data-racetrack-test-target]')`. Racetrack runs the
+ * playground and the runner editor in the same DOM, so an unscoped
+ * `page.getByTestId(...)` would match the playground's plugin first.
  */
 
 import type {Context} from '@portabletext/editor/test/vitest'
@@ -22,10 +27,11 @@ export type MentionPickerContext = Context & {
 }
 
 export function attachLocators(context: MentionPickerContext): void {
-  context.keywordLocator = page.getByTestId('keyword')
-  context.matchesLocator = page.getByTestId('matches')
-  context.stateLocator = page.getByTestId('state')
-  context.selectedIndexLocator = page.getByTestId('selectedIndex')
+  const testTarget = page.locator('[data-racetrack-test-target]')
+  context.keywordLocator = testTarget.getByTestId('keyword')
+  context.matchesLocator = testTarget.getByTestId('matches')
+  context.stateLocator = testTarget.getByTestId('state')
+  context.selectedIndexLocator = testTarget.getByTestId('selectedIndex')
 }
 
 export const mentionPickerSteps = [

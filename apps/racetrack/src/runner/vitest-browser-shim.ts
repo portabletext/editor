@@ -26,6 +26,7 @@ export type Locator = {
   getByTestId(id: string): Locator
   getByRole(role: string, options?: {name?: string}): Locator
   getByText(text: string): Locator
+  locator(selector: string): Locator
 }
 
 type Resolver = () => Element[]
@@ -78,6 +79,12 @@ function locatorFromResolver(resolver: Resolver, label: string): Locator {
       return locatorFromResolver(
         () => queryByText(resolveFirst(), text),
         `${label}>>getByText(${text})`,
+      )
+    },
+    locator(selector: string) {
+      return locatorFromResolver(
+        () => Array.from(resolveFirst().querySelectorAll(selector)),
+        `${label}>>locator(${selector})`,
       )
     },
   }
@@ -154,6 +161,12 @@ export const page = {
     return locatorFromResolver(
       () => queryByText(document.body, text),
       `page.getByText(${text})`,
+    )
+  },
+  locator(selector: string): Locator {
+    return locatorFromResolver(
+      () => Array.from(document.body.querySelectorAll(selector)),
+      `page.locator(${selector})`,
     )
   },
   /**
