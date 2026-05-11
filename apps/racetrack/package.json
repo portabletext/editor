@@ -1,0 +1,32 @@
+{
+  "name": "racetrack",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -b && vite build",
+    "check:lint": "biome lint .",
+    "check:types": "tsc --noEmit --pretty --project tsconfig.app.json",
+    "check:types:watch": "tsc --watch --project tsconfig.app.json",
+    "clean": "del .turbo && del dist && del node_modules",
+    "dev": "vite",
+    "lint:fix": "biome lint --write .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@portabletext/editor": "workspace:*",
+    "@portabletext/plugin-typeahead-picker": "workspace:*",
+    "@portabletext/schema": "workspace:*",
+    "@testing-library/user-event": "^14.5.2",
+    "racejar": "workspace:*",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.2.0",
+    "typescript": "catalog:",
+    "vite": "^7.3.1"
+  }
+}
