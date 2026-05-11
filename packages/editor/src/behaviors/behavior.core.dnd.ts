@@ -1,9 +1,11 @@
 import type {EditorSnapshot} from '../editor/editor-snapshot'
 import {getCompoundClientRect} from '../internal-utils/compound-client-rect'
+import {getEnclosingBlock} from '../node-traversal/get-enclosing-block'
 import {getDragSelection} from '../selectors/drag-selection'
 import {getSelectedBlocks} from '../selectors/selector.get-selected-blocks'
 import {isOverlappingSelection} from '../selectors/selector.is-overlapping-selection'
 import {isSelectingEntireBlocks} from '../selectors/selector.is-selecting-entire-blocks'
+import {pathEquals} from '../slate/path/path-equals'
 import {comparePoints} from '../slate/point/compare-points'
 import {isCollapsedRange} from '../slate/range/is-collapsed-range'
 import {rangeEdges} from '../slate/range/range-edges'
@@ -242,6 +244,70 @@ export const coreDndBehaviors = [
         : false
 
       return draggingOverDragOrigin
+    },
+    actions: [],
+  }),
+
+  /**
+   * Suppress the browser's native dragover caret while an internal drag is
+   * moving entire blocks onto a block that isn't part of the drag origin.
+   * The drop indicator (rendered by `useDropPosition`) takes over the visual
+   * feedback for the drop target.
+   *
+   * Consumer plugins can override `drag.dragover` with a higher-priority
+   * behavior to opt out (e.g. return `forward(event)` to keep the native
+   * caret).
+   */
+  defineBehavior({
+    on: 'drag.dragover',
+    guard: ({snapshot, event}) => {
+      const dragOrigin = event.dragOrigin
+      if (!dragOrigin) {
+        return false
+      }
+
+      const dragSelection = getDragSelection({
+        eventSelection: dragOrigin.selection,
+        snapshot,
+      })
+      const draggingEntireBlocks = isSelectingEntireBlocks({
+        ...snapshot,
+        context: {
+          ...snapshot.context,
+          selection: dragSelection,
+        },
+      })
+
+      if (!draggingEntireBlocks) {
+        return false
+      }
+
+      const dropFocusBlock = getEnclosingBlock(
+        snapshot,
+        event.position.selection.focus.path,
+      )
+
+      if (!dropFocusBlock) {
+        return false
+      }
+
+      const draggedBlocks = getSelectedBlocks({
+        ...snapshot,
+        context: {
+          ...snapshot.context,
+          selection: dragSelection,
+        },
+      })
+
+      if (
+        draggedBlocks.some((block) =>
+          pathEquals(block.path, dropFocusBlock.path),
+        )
+      ) {
+        return false
+      }
+
+      return true
     },
     actions: [],
   }),
