@@ -14,6 +14,31 @@ export default defineConfig({
         test: {
           name: 'browser',
           include: ['src/**/*.test.tsx'],
+          exclude: ['src/**/*.regression.test.tsx'],
+          browser: {
+            enabled: true,
+            headless: true,
+            provider: playwright(),
+            instances: [
+              {
+                browser: 'chromium',
+              },
+              {
+                browser: 'firefox',
+              },
+              {
+                browser: 'webkit',
+              },
+            ],
+            screenshotFailures: false,
+          },
+        },
+      },
+      {
+        plugins: [react()],
+        test: {
+          name: 'browser-no-compiler',
+          include: ['src/**/*.regression.test.tsx'],
           browser: {
             enabled: true,
             headless: true,
