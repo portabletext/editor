@@ -210,8 +210,18 @@ export const userEvent = {
   },
   async type(target: Locator | Element, text: string) {
     const el = resolveElement(target)
-    // testing-library/user-event focuses the element if needed.
-    await currentUserEvent().type(el as HTMLElement, text)
+    // `testing-library/user-event`'s default `.type()` clicks the
+    // element first, which collapses the contenteditable selection to
+    // wherever the click landed. `vitest/browser`'s `userEvent.type`
+    // (and Playwright's `page.keyboard.type`) types at the current
+    // selection without re-clicking. Step definitions that put the
+    // caret with `editor.send({type: 'select', ...})` and then call
+    // `userEvent.type(locator, text)` rely on that behavior, so we
+    // pass `skipClick: true` and only ensure the element is focused.
+    if (document.activeElement !== el) {
+      ;(el as HTMLElement).focus()
+    }
+    await currentUserEvent().type(el as HTMLElement, text, {skipClick: true})
   },
   async keyboard(text: string) {
     await currentUserEvent().keyboard(text)
