@@ -1072,681 +1072,674 @@ const selectMatchListenerCallback = <
   }
 }
 
-export function createTypeaheadPickerMachine<TMatch extends object>() {
-  return setup({
-    types: {
-      context: {} as TypeaheadPickerMachineContext<TMatch>,
-      input: {} as {
-        editor: Editor
-        definition: TypeaheadPickerDefinition<TMatch>
+export const typeaheadPickerMachine = setup({
+  types: {
+    context: {} as TypeaheadPickerMachineContext<object>,
+    input: {} as {
+      editor: Editor
+      definition: TypeaheadPickerDefinition<object>
+    },
+    events: {} as TypeaheadPickerMachineEvent<object>,
+  },
+  delays: {
+    DEBOUNCE: ({context}) => context.definition.debounceMs ?? 0,
+  },
+  actors: {
+    'trigger listener': fromCallback(triggerListenerCallback<object>()),
+    'escape listener': fromCallback(escapeListenerCallback<object>()),
+    'arrow listener': fromCallback(arrowListenerCallback<object>()),
+    'selection listener': fromCallback(selectionListenerCallback<object>()),
+    'submit listener': fromCallback(submitListenerCallback<object>()),
+    'text insertion listener': fromCallback(
+      textInsertionListenerCallback<object>(),
+    ),
+    'select match listener': fromCallback(
+      selectMatchListenerCallback<object>(),
+    ),
+    'dismiss listener': fromCallback(dismissListenerCallback<object>()),
+    'get matches': fromPromise(
+      async ({
+        input,
+      }: {
+        input: {
+          keyword: string
+          getMatches: TypeaheadPickerDefinition<object>['getMatches']
+        }
+      }) => {
+        const result = input.getMatches({keyword: input.keyword})
+        const matches = await Promise.resolve(result)
+        return {keyword: input.keyword, matches}
       },
-      events: {} as TypeaheadPickerMachineEvent<TMatch>,
-    },
-    delays: {
-      DEBOUNCE: ({context}) => context.definition.debounceMs ?? 0,
-    },
-    actors: {
-      'trigger listener': fromCallback(triggerListenerCallback<TMatch>()),
-      'escape listener': fromCallback(escapeListenerCallback<TMatch>()),
-      'arrow listener': fromCallback(arrowListenerCallback<TMatch>()),
-      'selection listener': fromCallback(selectionListenerCallback<TMatch>()),
-      'submit listener': fromCallback(submitListenerCallback<TMatch>()),
-      'text insertion listener': fromCallback(
-        textInsertionListenerCallback<TMatch>(),
-      ),
-      'select match listener': fromCallback(
-        selectMatchListenerCallback<TMatch>(),
-      ),
-      'dismiss listener': fromCallback(dismissListenerCallback<TMatch>()),
-      'get matches': fromPromise(
-        async ({
-          input,
-        }: {
-          input: {
-            keyword: string
-            getMatches: TypeaheadPickerDefinition<TMatch>['getMatches']
-          }
-        }) => {
-          const result = input.getMatches({keyword: input.keyword})
-          const matches = await Promise.resolve(result)
-          return {keyword: input.keyword, matches}
-        },
-      ),
-    },
-    actions: {
-      'handle trigger found': assign(({context, event}) => {
-        if (
-          event.type !== 'custom.typeahead trigger found' &&
-          event.type !== 'custom.typeahead keyword found'
-        ) {
-          return {}
-        }
+    ),
+  },
+  actions: {
+    'handle trigger found': assign(({context, event}) => {
+      if (
+        event.type !== 'custom.typeahead trigger found' &&
+        event.type !== 'custom.typeahead keyword found'
+      ) {
+        return {}
+      }
 
-        const focusSpan = event.focusSpan
-        const patternText = extractPatternTextFromFocusSpan(focusSpan)
-        const keyword = event.extractedKeyword
+      const focusSpan = event.focusSpan
+      const patternText = extractPatternTextFromFocusSpan(focusSpan)
+      const keyword = event.extractedKeyword
 
-        if (
-          context.definition.mode === 'async' ||
-          context.definition.debounceMs
-        ) {
-          return {
-            focusSpan,
-            patternText,
-            keyword,
-            isLoading: true,
-            selectedIndex: 0,
-          }
-        }
-
-        const matches = context.definition.getMatches({
-          keyword,
-        }) as Array<TMatch>
-
+      if (
+        context.definition.mode === 'async' ||
+        context.definition.debounceMs
+      ) {
         return {
           focusSpan,
           patternText,
           keyword,
-          matches,
-          requestedKeyword: keyword,
-          isLoading: false,
+          isLoading: true,
           selectedIndex: 0,
         }
-      }),
-      'handle selection changed': assign(({context}) => {
-        if (!context.focusSpan) {
-          return {focusSpan: undefined}
-        }
+      }
 
-        const snapshot = context.editor.getSnapshot()
-        const currentFocusSpan = getFocusSpan(snapshot)
+      const matches = context.definition.getMatches({
+        keyword,
+      }) as Array<object>
 
-        if (!snapshot.context.selection || !currentFocusSpan) {
-          return {focusSpan: undefined}
-        }
+      return {
+        focusSpan,
+        patternText,
+        keyword,
+        matches,
+        requestedKeyword: keyword,
+        isLoading: false,
+        selectedIndex: 0,
+      }
+    }),
+    'handle selection changed': assign(({context}) => {
+      if (!context.focusSpan) {
+        return {focusSpan: undefined}
+      }
 
-        const nextSpan = getNextSpan({
-          ...snapshot,
-          context: {
-            ...snapshot.context,
-            selection: {
-              anchor: {path: context.focusSpan.path, offset: 0},
-              focus: {path: context.focusSpan.path, offset: 0},
-            },
+      const snapshot = context.editor.getSnapshot()
+      const currentFocusSpan = getFocusSpan(snapshot)
+
+      if (!snapshot.context.selection || !currentFocusSpan) {
+        return {focusSpan: undefined}
+      }
+
+      const nextSpan = getNextSpan({
+        ...snapshot,
+        context: {
+          ...snapshot.context,
+          selection: {
+            anchor: {path: context.focusSpan.path, offset: 0},
+            focus: {path: context.focusSpan.path, offset: 0},
           },
-        })
+        },
+      })
 
-        if (!isEqualPaths(currentFocusSpan.path, context.focusSpan.path)) {
-          if (
-            nextSpan &&
-            context.focusSpan.textAfter.length === 0 &&
-            snapshot.context.selection.focus.offset === 0 &&
-            isSelectionCollapsed(snapshot)
-          ) {
-            // Edge case: caret moved from end of focus span to start of next span
-            return {}
-          }
-          return {focusSpan: undefined}
-        }
-
+      if (!isEqualPaths(currentFocusSpan.path, context.focusSpan.path)) {
         if (
-          !currentFocusSpan.node.text.startsWith(context.focusSpan.textBefore)
+          nextSpan &&
+          context.focusSpan.textAfter.length === 0 &&
+          snapshot.context.selection.focus.offset === 0 &&
+          isSelectionCollapsed(snapshot)
         ) {
-          return {focusSpan: undefined}
+          // Edge case: caret moved from end of focus span to start of next span
+          return {}
         }
+        return {focusSpan: undefined}
+      }
 
-        if (!currentFocusSpan.node.text.endsWith(context.focusSpan.textAfter)) {
-          return {focusSpan: undefined}
-        }
+      if (
+        !currentFocusSpan.node.text.startsWith(context.focusSpan.textBefore)
+      ) {
+        return {focusSpan: undefined}
+      }
 
-        const keywordAnchor = {
-          path: currentFocusSpan.path,
-          offset: context.focusSpan.textBefore.length,
-        }
-        const keywordFocus = {
-          path: currentFocusSpan.path,
-          offset:
-            currentFocusSpan.node.text.length -
-            context.focusSpan.textAfter.length,
-        }
+      if (!currentFocusSpan.node.text.endsWith(context.focusSpan.textAfter)) {
+        return {focusSpan: undefined}
+      }
 
-        const selectionIsBeforeKeyword =
-          isPointAfterSelection(keywordAnchor)(snapshot)
-        const selectionIsAfterKeyword =
-          isPointBeforeSelection(keywordFocus)(snapshot)
+      const keywordAnchor = {
+        path: currentFocusSpan.path,
+        offset: context.focusSpan.textBefore.length,
+      }
+      const keywordFocus = {
+        path: currentFocusSpan.path,
+        offset:
+          currentFocusSpan.node.text.length -
+          context.focusSpan.textAfter.length,
+      }
 
-        if (selectionIsBeforeKeyword || selectionIsAfterKeyword) {
-          return {focusSpan: undefined}
-        }
+      const selectionIsBeforeKeyword =
+        isPointAfterSelection(keywordAnchor)(snapshot)
+      const selectionIsAfterKeyword =
+        isPointBeforeSelection(keywordFocus)(snapshot)
 
-        const focusSpan = {
-          node: currentFocusSpan.node,
-          path: currentFocusSpan.path,
-          textBefore: context.focusSpan.textBefore,
-          textAfter: context.focusSpan.textAfter,
-        }
+      if (selectionIsBeforeKeyword || selectionIsAfterKeyword) {
+        return {focusSpan: undefined}
+      }
 
-        const patternText = extractPatternTextFromFocusSpan(focusSpan)
+      const focusSpan = {
+        node: currentFocusSpan.node,
+        path: currentFocusSpan.path,
+        textBefore: context.focusSpan.textBefore,
+        textAfter: context.focusSpan.textAfter,
+      }
 
-        const keyword = extractKeyword(
-          patternText,
-          context.triggerPattern,
-          context.definition.delimiter,
-          context.completePattern,
-        )
+      const patternText = extractPatternTextFromFocusSpan(focusSpan)
 
-        if (
-          context.definition.mode === 'async' ||
-          context.definition.debounceMs
-        ) {
-          return {
-            focusSpan,
-            patternText,
-            keyword,
-            selectedIndex:
-              patternText !== context.patternText ? 0 : context.selectedIndex,
-            isLoading:
-              context.isLoading || context.requestedKeyword !== keyword,
-          }
-        }
+      const keyword = extractKeyword(
+        patternText,
+        context.triggerPattern,
+        context.definition.delimiter,
+        context.completePattern,
+      )
 
-        const matches = context.definition.getMatches({
-          keyword,
-        }) as Array<TMatch>
-
+      if (
+        context.definition.mode === 'async' ||
+        context.definition.debounceMs
+      ) {
         return {
           focusSpan,
           patternText,
           keyword,
-          matches,
-          requestedKeyword: keyword,
           selectedIndex:
             patternText !== context.patternText ? 0 : context.selectedIndex,
-          isLoading: false,
+          isLoading: context.isLoading || context.requestedKeyword !== keyword,
         }
-      }),
-      'handle async load complete': assign(({context, event}) => {
-        const output = (
-          event as unknown as {
-            output: {keyword: string; matches: ReadonlyArray<TMatch>}
-          }
-        ).output
+      }
 
-        if (output.keyword !== context.keyword) {
-          return {isLoading: context.keyword !== context.requestedKeyword}
-        }
+      const matches = context.definition.getMatches({
+        keyword,
+      }) as Array<object>
 
-        return {
-          matches: output.matches,
-          isLoading: context.keyword !== context.requestedKeyword,
-        }
-      }),
-      'reset': assign({
-        patternText: '',
-        keyword: '',
-        matches: [],
-        selectedIndex: 0,
+      return {
+        focusSpan,
+        patternText,
+        keyword,
+        matches,
+        requestedKeyword: keyword,
+        selectedIndex:
+          patternText !== context.patternText ? 0 : context.selectedIndex,
         isLoading: false,
-        requestedKeyword: '',
-        focusSpan: undefined,
-        error: undefined,
-      }),
-      'navigate': assign(({context, event}) => {
-        if (context.matches.length === 0) {
-          return {selectedIndex: 0}
+      }
+    }),
+    'handle async load complete': assign(({context, event}) => {
+      const output = (
+        event as unknown as {
+          output: {keyword: string; matches: ReadonlyArray<object>}
         }
+      ).output
 
-        if (event.type === 'navigate to') {
-          return {selectedIndex: event.index}
-        }
+      if (output.keyword !== context.keyword) {
+        return {isLoading: context.keyword !== context.requestedKeyword}
+      }
 
-        if (event.type === 'navigate up') {
-          return {
-            selectedIndex:
-              (context.selectedIndex - 1 + context.matches.length) %
-              context.matches.length,
-          }
-        }
-
-        return {
-          selectedIndex: (context.selectedIndex + 1) % context.matches.length,
-        }
-      }),
-      'select match': ({context}, params: {exact?: boolean}) => {
-        if (!context.focusSpan) {
-          return
-        }
-
-        const match = params.exact
-          ? getFirstExactMatch(context.matches)
-          : context.matches[context.selectedIndex]
-
-        if (!match) {
-          return
-        }
-
-        context.editor.send({
-          type: 'custom.typeahead select match',
-          match,
-          focusSpan: context.focusSpan,
-          keyword: context.keyword,
-          pickerId: context.definition._id,
-        })
-      },
-      'update submit listener context': sendTo(
-        'submit listener',
-        ({context}) => ({type: 'context changed', context}),
-      ),
-      'update text insertion listener context': sendTo(
-        'text insertion listener',
-        ({context}) => ({type: 'context changed', context}),
-      ),
-      'update escape listener context': sendTo(
-        'escape listener',
-        ({context}) => ({type: 'context changed', context}),
-      ),
-      'update request dismiss listener context': sendTo(
-        'dismiss listener',
-        ({context}) => ({type: 'context changed', context}),
-      ),
-      'handle error': assign({
-        isLoading: false,
-        error: ({event}) => (event as {error: Error}).error,
-      }),
-    },
-    guards: {
-      'no focus span': ({context}) => !context.focusSpan,
-      'invalid pattern': ({context}) => {
-        if (!context.patternText) {
-          return true
-        }
-
-        // Check if trigger pattern matches entire text (just the trigger, no keyword yet)
-        const triggerMatch = context.patternText.match(context.triggerPattern)
-
-        if (
-          triggerMatch &&
-          triggerMatch.index === 0 &&
-          triggerMatch[0] === context.patternText
-        ) {
-          return false
-        }
-
-        // Check partial pattern matches entire text
-        const partialMatch = context.patternText.match(context.partialPattern)
-
-        if (
-          partialMatch &&
-          partialMatch.index === 0 &&
-          partialMatch[0] === context.patternText
-        ) {
-          return false
-        }
-
-        // Check complete pattern matches entire text (if configured)
-        if (context.completePattern) {
-          const completeMatch = context.patternText.match(
-            context.completePattern,
-          )
-
-          if (
-            completeMatch &&
-            completeMatch.index === 0 &&
-            completeMatch[0] === context.patternText
-          ) {
-            return false
-          }
-        }
-
-        return true
-      },
-      'no debounce': ({context}) =>
-        !context.definition.debounceMs || context.definition.debounceMs === 0,
-      'is complete keyword': ({context}) => {
-        if (!context.completePattern || !context.focusSpan) {
-          return false
-        }
-
-        const fullKeywordText = context.focusSpan.node.text.slice(
-          context.focusSpan.textBefore.length,
-          context.focusSpan.textAfter.length > 0
-            ? -context.focusSpan.textAfter.length
-            : undefined,
-        )
-        const completeMatch = fullKeywordText.match(context.completePattern)
-
-        if (
-          !completeMatch ||
-          completeMatch.index !== 0 ||
-          completeMatch[0] !== fullKeywordText
-        ) {
-          return false
-        }
-
-        return hasAtLeastOneExactMatch(context.matches)
-      },
-      'has matches': ({context}) => context.matches.length > 0,
-      'no matches': ({context}) => context.matches.length === 0,
-      'is loading': ({context}) => context.isLoading,
-    },
-  }).createMachine({
-    id: 'typeahead picker',
-    context: ({input}) => ({
-      editor: input.editor,
-      definition: input.definition,
-      triggerPattern: buildTriggerPattern(input.definition),
-      partialPattern: buildPartialPattern(input.definition),
-      completePattern: buildCompletePattern(input.definition),
-      matches: [],
-      selectedIndex: 0,
-      focusSpan: undefined,
+      return {
+        matches: output.matches,
+        isLoading: context.keyword !== context.requestedKeyword,
+      }
+    }),
+    'reset': assign({
       patternText: '',
       keyword: '',
-      requestedKeyword: '',
-      error: undefined,
+      matches: [],
+      selectedIndex: 0,
       isLoading: false,
+      requestedKeyword: '',
+      focusSpan: undefined,
+      error: undefined,
     }),
-    initial: 'idle',
-    states: {
-      'idle': {
-        entry: ['reset'],
-        invoke: {
-          src: 'trigger listener',
-          input: ({context}) => ({
-            editor: context.editor,
-            definition: context.definition,
-          }),
+    'navigate': assign(({context, event}) => {
+      if (context.matches.length === 0) {
+        return {selectedIndex: 0}
+      }
+
+      if (event.type === 'navigate to') {
+        return {selectedIndex: event.index}
+      }
+
+      if (event.type === 'navigate up') {
+        return {
+          selectedIndex:
+            (context.selectedIndex - 1 + context.matches.length) %
+            context.matches.length,
+        }
+      }
+
+      return {
+        selectedIndex: (context.selectedIndex + 1) % context.matches.length,
+      }
+    }),
+    'select match': ({context}, params: {exact?: boolean}) => {
+      if (!context.focusSpan) {
+        return
+      }
+
+      const match = params.exact
+        ? getFirstExactMatch(context.matches)
+        : context.matches[context.selectedIndex]
+
+      if (!match) {
+        return
+      }
+
+      context.editor.send({
+        type: 'custom.typeahead select match',
+        match,
+        focusSpan: context.focusSpan,
+        keyword: context.keyword,
+        pickerId: context.definition._id,
+      })
+    },
+    'update submit listener context': sendTo(
+      'submit listener',
+      ({context}) => ({type: 'context changed', context}),
+    ),
+    'update text insertion listener context': sendTo(
+      'text insertion listener',
+      ({context}) => ({type: 'context changed', context}),
+    ),
+    'update escape listener context': sendTo(
+      'escape listener',
+      ({context}) => ({type: 'context changed', context}),
+    ),
+    'update request dismiss listener context': sendTo(
+      'dismiss listener',
+      ({context}) => ({type: 'context changed', context}),
+    ),
+    'handle error': assign({
+      isLoading: false,
+      error: ({event}) => (event as {error: Error}).error,
+    }),
+  },
+  guards: {
+    'no focus span': ({context}) => !context.focusSpan,
+    'invalid pattern': ({context}) => {
+      if (!context.patternText) {
+        return true
+      }
+
+      // Check if trigger pattern matches entire text (just the trigger, no keyword yet)
+      const triggerMatch = context.patternText.match(context.triggerPattern)
+
+      if (
+        triggerMatch &&
+        triggerMatch.index === 0 &&
+        triggerMatch[0] === context.patternText
+      ) {
+        return false
+      }
+
+      // Check partial pattern matches entire text
+      const partialMatch = context.patternText.match(context.partialPattern)
+
+      if (
+        partialMatch &&
+        partialMatch.index === 0 &&
+        partialMatch[0] === context.patternText
+      ) {
+        return false
+      }
+
+      // Check complete pattern matches entire text (if configured)
+      if (context.completePattern) {
+        const completeMatch = context.patternText.match(context.completePattern)
+
+        if (
+          completeMatch &&
+          completeMatch.index === 0 &&
+          completeMatch[0] === context.patternText
+        ) {
+          return false
+        }
+      }
+
+      return true
+    },
+    'no debounce': ({context}) =>
+      !context.definition.debounceMs || context.definition.debounceMs === 0,
+    'is complete keyword': ({context}) => {
+      if (!context.completePattern || !context.focusSpan) {
+        return false
+      }
+
+      const fullKeywordText = context.focusSpan.node.text.slice(
+        context.focusSpan.textBefore.length,
+        context.focusSpan.textAfter.length > 0
+          ? -context.focusSpan.textAfter.length
+          : undefined,
+      )
+      const completeMatch = fullKeywordText.match(context.completePattern)
+
+      if (
+        !completeMatch ||
+        completeMatch.index !== 0 ||
+        completeMatch[0] !== fullKeywordText
+      ) {
+        return false
+      }
+
+      return hasAtLeastOneExactMatch(context.matches)
+    },
+    'has matches': ({context}) => context.matches.length > 0,
+    'no matches': ({context}) => context.matches.length === 0,
+    'is loading': ({context}) => context.isLoading,
+  },
+}).createMachine({
+  id: 'typeahead picker',
+  context: ({input}) => ({
+    editor: input.editor,
+    definition: input.definition,
+    triggerPattern: buildTriggerPattern(input.definition),
+    partialPattern: buildPartialPattern(input.definition),
+    completePattern: buildCompletePattern(input.definition),
+    matches: [],
+    selectedIndex: 0,
+    focusSpan: undefined,
+    patternText: '',
+    keyword: '',
+    requestedKeyword: '',
+    error: undefined,
+    isLoading: false,
+  }),
+  initial: 'idle',
+  states: {
+    'idle': {
+      entry: ['reset'],
+      invoke: {
+        src: 'trigger listener',
+        input: ({context}) => ({
+          editor: context.editor,
+          definition: context.definition,
+        }),
+      },
+      on: {
+        'custom.typeahead trigger found': {
+          target: 'active',
+          actions: ['handle trigger found'],
         },
-        on: {
-          'custom.typeahead trigger found': {
-            target: 'active',
-            actions: ['handle trigger found'],
-          },
-          'custom.typeahead keyword found': {
-            target: 'checking complete',
-            actions: ['handle trigger found'],
-          },
+        'custom.typeahead keyword found': {
+          target: 'checking complete',
+          actions: ['handle trigger found'],
         },
       },
-      'checking complete': {
-        invoke: [
-          {
-            src: 'select match listener',
-            input: ({context}) => ({context}),
+    },
+    'checking complete': {
+      invoke: [
+        {
+          src: 'select match listener',
+          input: ({context}) => ({context}),
+        },
+        {
+          src: 'get matches',
+          input: ({context}) => ({
+            keyword: context.keyword,
+            getMatches: context.definition.getMatches,
+          }),
+          onDone: [
+            {
+              guard: ({event}) => hasAtLeastOneExactMatch(event.output.matches),
+              target: 'idle',
+              actions: [
+                assign({matches: ({event}) => event.output.matches}),
+                {type: 'select match', params: {exact: true}},
+              ],
+            },
+            {
+              target: 'active',
+              actions: [assign({matches: ({event}) => event.output.matches})],
+            },
+          ],
+          onError: {
+            target: 'active.no matches',
+            actions: ['handle error'],
           },
-          {
-            src: 'get matches',
-            input: ({context}) => ({
-              keyword: context.keyword,
-              getMatches: context.definition.getMatches,
-            }),
-            onDone: [
-              {
-                guard: ({event}) =>
-                  hasAtLeastOneExactMatch(event.output.matches),
-                target: 'idle',
-                actions: [
-                  assign({matches: ({event}) => event.output.matches}),
-                  {type: 'select match', params: {exact: true}},
-                ],
+        },
+      ],
+    },
+    'active': {
+      invoke: [
+        {
+          src: 'select match listener',
+          input: ({context}) => ({context}),
+        },
+        {
+          src: 'escape listener',
+          id: 'escape listener',
+          input: ({context}) => ({context}),
+        },
+        {
+          src: 'selection listener',
+          input: ({context}) => ({editor: context.editor}),
+        },
+        {
+          src: 'submit listener',
+          id: 'submit listener',
+          input: ({context}) => ({context}),
+        },
+        {
+          src: 'text insertion listener',
+          id: 'text insertion listener',
+          input: ({context}) => ({context}),
+        },
+        {
+          src: 'dismiss listener',
+          id: 'dismiss listener',
+          input: ({context}) => ({context}),
+        },
+      ],
+      on: {
+        'close': {
+          target: 'idle',
+        },
+        'selection changed': {
+          actions: [
+            'handle selection changed',
+            'update submit listener context',
+            'update text insertion listener context',
+            'update escape listener context',
+            'update request dismiss listener context',
+          ],
+        },
+      },
+      always: [
+        {
+          guard: 'no focus span',
+          target: 'idle',
+        },
+        {
+          guard: 'invalid pattern',
+          target: 'idle',
+        },
+        {
+          guard: 'is complete keyword',
+          actions: [{type: 'select match', params: {exact: false}}],
+          target: 'idle',
+        },
+      ],
+      initial: 'evaluating',
+      states: {
+        'evaluating': {
+          always: [
+            {
+              guard: 'is loading',
+              target: 'loading',
+            },
+            {
+              guard: 'has matches',
+              target: 'showing matches',
+            },
+            {
+              target: 'no matches',
+            },
+          ],
+        },
+        'loading': {
+          entry: [assign({requestedKeyword: ({context}) => context.keyword})],
+          initial: 'debouncing',
+          states: {
+            debouncing: {
+              always: [{guard: 'no debounce', target: 'fetching'}],
+              after: {
+                DEBOUNCE: 'fetching',
               },
-              {
-                target: 'active',
-                actions: [assign({matches: ({event}) => event.output.matches})],
+            },
+            fetching: {
+              invoke: {
+                src: 'get matches',
+                input: ({context}) => ({
+                  keyword: context.keyword,
+                  getMatches: context.definition.getMatches,
+                }),
+                onDone: {
+                  target: '#typeahead picker.active.evaluating',
+                  actions: [
+                    assign(({context, event}) => {
+                      if (event.output.keyword !== context.keyword) {
+                        return {
+                          isLoading:
+                            context.patternText !== context.requestedKeyword,
+                        }
+                      }
+
+                      return {
+                        matches: event.output.matches,
+                        isLoading: context.keyword !== context.requestedKeyword,
+                      }
+                    }),
+                  ],
+                },
+                onError: {
+                  target: '#typeahead picker.active.no matches',
+                  actions: ['handle error'],
+                },
               },
-            ],
-            onError: {
-              target: 'active.no matches',
-              actions: ['handle error'],
             },
           },
-        ],
-      },
-      'active': {
-        invoke: [
-          {
-            src: 'select match listener',
-            input: ({context}) => ({context}),
+        },
+        'no matches': {
+          entry: [assign({selectedIndex: 0})],
+          always: [
+            {
+              guard: 'has matches',
+              target: 'showing matches',
+            },
+          ],
+          initial: 'idle',
+          states: {
+            idle: {
+              always: [{guard: 'is loading', target: 'loading'}],
+            },
+            loading: {
+              entry: [
+                assign({
+                  requestedKeyword: ({context}) => context.keyword,
+                }),
+              ],
+              initial: 'debouncing',
+              states: {
+                debouncing: {
+                  always: [{guard: 'no debounce', target: 'fetching'}],
+                  after: {
+                    DEBOUNCE: 'fetching',
+                  },
+                },
+                fetching: {
+                  invoke: {
+                    src: 'get matches',
+                    input: ({context}) => ({
+                      keyword: context.keyword,
+                      getMatches: context.definition.getMatches,
+                    }),
+                    onDone: {
+                      target: '#typeahead picker.active.no matches.idle',
+                      actions: ['handle async load complete'],
+                    },
+                    onError: {
+                      target: '#typeahead picker.active.no matches.idle',
+                      actions: ['handle error'],
+                    },
+                  },
+                },
+              },
+            },
           },
-          {
-            src: 'escape listener',
-            id: 'escape listener',
-            input: ({context}) => ({context}),
-          },
-          {
-            src: 'selection listener',
+        },
+        'showing matches': {
+          entry: [
+            'update submit listener context',
+            'update text insertion listener context',
+          ],
+          invoke: {
+            src: 'arrow listener',
             input: ({context}) => ({editor: context.editor}),
           },
-          {
-            src: 'submit listener',
-            id: 'submit listener',
-            input: ({context}) => ({context}),
+          always: [
+            {
+              guard: 'no matches',
+              target: 'no matches',
+            },
+          ],
+          on: {
+            'navigate down': {
+              actions: [
+                'navigate',
+                'update submit listener context',
+                'update text insertion listener context',
+              ],
+            },
+            'navigate up': {
+              actions: [
+                'navigate',
+                'update submit listener context',
+                'update text insertion listener context',
+              ],
+            },
+            'navigate to': {
+              actions: [
+                'navigate',
+                'update submit listener context',
+                'update text insertion listener context',
+              ],
+            },
+            'select': {
+              target: '#typeahead picker.idle',
+              actions: [{type: 'select match', params: {exact: false}}],
+            },
           },
-          {
-            src: 'text insertion listener',
-            id: 'text insertion listener',
-            input: ({context}) => ({context}),
-          },
-          {
-            src: 'dismiss listener',
-            id: 'dismiss listener',
-            input: ({context}) => ({context}),
-          },
-        ],
-        on: {
-          'close': {
-            target: 'idle',
-          },
-          'selection changed': {
-            actions: [
-              'handle selection changed',
-              'update submit listener context',
-              'update text insertion listener context',
-              'update escape listener context',
-              'update request dismiss listener context',
-            ],
-          },
-        },
-        always: [
-          {
-            guard: 'no focus span',
-            target: 'idle',
-          },
-          {
-            guard: 'invalid pattern',
-            target: 'idle',
-          },
-          {
-            guard: 'is complete keyword',
-            actions: [{type: 'select match', params: {exact: false}}],
-            target: 'idle',
-          },
-        ],
-        initial: 'evaluating',
-        states: {
-          'evaluating': {
-            always: [
-              {
-                guard: 'is loading',
-                target: 'loading',
-              },
-              {
-                guard: 'has matches',
-                target: 'showing matches',
-              },
-              {
-                target: 'no matches',
-              },
-            ],
-          },
-          'loading': {
-            entry: [assign({requestedKeyword: ({context}) => context.keyword})],
-            initial: 'debouncing',
-            states: {
-              debouncing: {
-                always: [{guard: 'no debounce', target: 'fetching'}],
-                after: {
-                  DEBOUNCE: 'fetching',
-                },
-              },
-              fetching: {
-                invoke: {
-                  src: 'get matches',
-                  input: ({context}) => ({
-                    keyword: context.keyword,
-                    getMatches: context.definition.getMatches,
-                  }),
-                  onDone: {
-                    target: '#typeahead picker.active.evaluating',
-                    actions: [
-                      assign(({context, event}) => {
-                        if (event.output.keyword !== context.keyword) {
-                          return {
-                            isLoading:
-                              context.patternText !== context.requestedKeyword,
-                          }
-                        }
-
-                        return {
-                          matches: event.output.matches,
-                          isLoading:
-                            context.keyword !== context.requestedKeyword,
-                        }
-                      }),
-                    ],
-                  },
-                  onError: {
-                    target: '#typeahead picker.active.no matches',
-                    actions: ['handle error'],
+          initial: 'idle',
+          states: {
+            idle: {
+              always: [{guard: 'is loading', target: 'loading'}],
+            },
+            loading: {
+              entry: [
+                assign({
+                  requestedKeyword: ({context}) => context.keyword,
+                }),
+              ],
+              initial: 'debouncing',
+              states: {
+                debouncing: {
+                  always: [{guard: 'no debounce', target: 'fetching'}],
+                  after: {
+                    DEBOUNCE: 'fetching',
                   },
                 },
-              },
-            },
-          },
-          'no matches': {
-            entry: [assign({selectedIndex: 0})],
-            always: [
-              {
-                guard: 'has matches',
-                target: 'showing matches',
-              },
-            ],
-            initial: 'idle',
-            states: {
-              idle: {
-                always: [{guard: 'is loading', target: 'loading'}],
-              },
-              loading: {
-                entry: [
-                  assign({
-                    requestedKeyword: ({context}) => context.keyword,
-                  }),
-                ],
-                initial: 'debouncing',
-                states: {
-                  debouncing: {
-                    always: [{guard: 'no debounce', target: 'fetching'}],
-                    after: {
-                      DEBOUNCE: 'fetching',
+                fetching: {
+                  invoke: {
+                    src: 'get matches',
+                    input: ({context}) => ({
+                      keyword: context.keyword,
+                      getMatches: context.definition.getMatches,
+                    }),
+                    onDone: {
+                      target: '#typeahead picker.active.showing matches.idle',
+                      actions: ['handle async load complete'],
                     },
-                  },
-                  fetching: {
-                    invoke: {
-                      src: 'get matches',
-                      input: ({context}) => ({
-                        keyword: context.keyword,
-                        getMatches: context.definition.getMatches,
-                      }),
-                      onDone: {
-                        target: '#typeahead picker.active.no matches.idle',
-                        actions: ['handle async load complete'],
-                      },
-                      onError: {
-                        target: '#typeahead picker.active.no matches.idle',
-                        actions: ['handle error'],
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
-          'showing matches': {
-            entry: [
-              'update submit listener context',
-              'update text insertion listener context',
-            ],
-            invoke: {
-              src: 'arrow listener',
-              input: ({context}) => ({editor: context.editor}),
-            },
-            always: [
-              {
-                guard: 'no matches',
-                target: 'no matches',
-              },
-            ],
-            on: {
-              'navigate down': {
-                actions: [
-                  'navigate',
-                  'update submit listener context',
-                  'update text insertion listener context',
-                ],
-              },
-              'navigate up': {
-                actions: [
-                  'navigate',
-                  'update submit listener context',
-                  'update text insertion listener context',
-                ],
-              },
-              'navigate to': {
-                actions: [
-                  'navigate',
-                  'update submit listener context',
-                  'update text insertion listener context',
-                ],
-              },
-              'select': {
-                target: '#typeahead picker.idle',
-                actions: [{type: 'select match', params: {exact: false}}],
-              },
-            },
-            initial: 'idle',
-            states: {
-              idle: {
-                always: [{guard: 'is loading', target: 'loading'}],
-              },
-              loading: {
-                entry: [
-                  assign({
-                    requestedKeyword: ({context}) => context.keyword,
-                  }),
-                ],
-                initial: 'debouncing',
-                states: {
-                  debouncing: {
-                    always: [{guard: 'no debounce', target: 'fetching'}],
-                    after: {
-                      DEBOUNCE: 'fetching',
-                    },
-                  },
-                  fetching: {
-                    invoke: {
-                      src: 'get matches',
-                      input: ({context}) => ({
-                        keyword: context.keyword,
-                        getMatches: context.definition.getMatches,
-                      }),
-                      onDone: {
-                        target: '#typeahead picker.active.showing matches.idle',
-                        actions: ['handle async load complete'],
-                      },
-                      onError: {
-                        target: '#typeahead picker.active.showing matches.idle',
-                        actions: ['handle error'],
-                      },
+                    onError: {
+                      target: '#typeahead picker.active.showing matches.idle',
+                      actions: ['handle error'],
                     },
                   },
                 },
@@ -1756,8 +1749,8 @@ export function createTypeaheadPickerMachine<TMatch extends object>() {
         },
       },
     },
-  })
-}
+  },
+})
 
 /**
  * Check if matches contain at least one exact match.

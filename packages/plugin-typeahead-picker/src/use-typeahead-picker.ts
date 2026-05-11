@@ -1,6 +1,6 @@
 import {useEditor} from '@portabletext/editor'
 import {useActor} from '@xstate/react'
-import {createTypeaheadPickerMachine} from './typeahead-picker-machine'
+import {typeaheadPickerMachine} from './typeahead-picker-machine'
 import type {
   TypeaheadPicker,
   TypeaheadPickerDefinition,
@@ -48,15 +48,17 @@ export function useTypeaheadPicker<TMatch extends object>(
   definition: TypeaheadPickerDefinition<TMatch>,
 ): TypeaheadPicker<TMatch> {
   const editor = useEditor()
-  const [actorSnapshot, send] = useActor(
-    createTypeaheadPickerMachine<TMatch>(),
-    {
-      input: {
-        editor,
-        definition,
-      },
+  const [actorSnapshot, send] = useActor(typeaheadPickerMachine, {
+    input: {
+      editor,
+      // The state machine is parametrised by `object` so it can live
+      // at module scope. `TypeaheadPickerDefinition<TMatch>` is
+      // structurally compatible with `TypeaheadPickerDefinition<object>`
+      // at runtime; TypeScript treats the relationship as contravariant
+      // in `onSelect`, which the cast bridges.
+      definition: definition as unknown as TypeaheadPickerDefinition<object>,
     },
-  )
+  })
 
   return {
     snapshot: {
