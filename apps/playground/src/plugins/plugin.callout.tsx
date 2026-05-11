@@ -42,14 +42,15 @@ function ToneIcon({tone}: {tone: string}): JSX.Element {
 const calloutContainer = defineContainer<typeof playgroundSchemaDefinition>({
   scope: '$..callout',
   field: 'content',
-  render: ({attributes, children, node, selected}) => {
+  render: ({attributes, children, dropPosition, node, selected}) => {
     const tone = typeof node.tone === 'string' ? node.tone : 'note'
     const toneStyle = toneClassName[tone] ?? defaultToneClassName
     return (
       <aside
         {...attributes}
+        data-drop-position={dropPosition}
         data-selected={selected ? '' : undefined}
-        className={`my-3 flex gap-2.5 rounded-md border-l-4 px-4 py-3 transition-shadow data-[selected]:shadow-md ${toneStyle}`}
+        className={`relative my-3 flex gap-2.5 rounded-md border-l-4 px-4 py-3 transition-shadow data-[drop-position=end]:after:absolute data-[drop-position=start]:before:absolute data-[drop-position=end]:after:inset-x-0 data-[drop-position=start]:before:inset-x-0 data-[drop-position=end]:after:-bottom-px data-[drop-position=start]:before:-top-px data-[drop-position=end]:after:h-[2px] data-[drop-position=start]:before:h-[2px] data-[drop-position=end]:after:bg-current data-[drop-position=start]:before:bg-current data-[selected]:shadow-md ${toneStyle}`}
       >
         <span
           contentEditable={false}

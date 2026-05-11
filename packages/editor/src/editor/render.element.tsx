@@ -67,8 +67,12 @@ export function RenderElement(props: {
     return (
       <RenderContainer
         attributes={props.attributes}
-        element={props.element}
         containerConfig={containerConfig}
+        dropPosition={resolveElementDropPosition(
+          props.dropPosition,
+          props.path,
+        )}
+        element={props.element}
         path={props.path}
       >
         {props.children}

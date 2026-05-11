@@ -24,6 +24,7 @@ export type ContainerDefinition = {
   render?: (props: {
     attributes: Record<string, unknown>
     children: ReactElement
+    dropPosition: 'start' | 'end' | undefined
     focused: boolean
     node: PortableTextBlock
     path: Path
@@ -108,6 +109,7 @@ type SchemaContainerConfig<TSchema extends SchemaDefinition> =
             render?: (props: {
               attributes: Record<string, unknown>
               children: ReactElement
+              dropPosition: 'start' | 'end' | undefined
               focused: boolean
               node: ScopedContainerNode<TScope>
               path: Path
