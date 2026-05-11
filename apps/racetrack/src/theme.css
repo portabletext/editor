@@ -1,0 +1,122 @@
+/**
+ * Racetrack visual language. Greyscale base with three semantic
+ * status colors: pass (green), fail (red), running (blue). 8px grid,
+ * 1px borders, no shadows, 4px button radius max, no rounded panel
+ * corners. System UI font.
+ */
+
+:root {
+  --rt-bg: #ffffff;
+  --rt-bg-elevated: #fafafa;
+  --rt-bg-muted: #f4f4f4;
+  --rt-fg: #1c1c1c;
+  --rt-fg-muted: #555555;
+  --rt-fg-subtle: #777777;
+  --rt-border: #d0d0d0;
+  --rt-border-subtle: #e6e6e6;
+  --rt-pass: #2c7a3e;
+  --rt-fail: #b3261e;
+  --rt-running: #1f5fb3;
+  --rt-idle: #b0b0b0;
+
+  --rt-space-1: 4px;
+  --rt-space-2: 8px;
+  --rt-space-3: 12px;
+  --rt-space-4: 16px;
+  --rt-space-5: 24px;
+  --rt-space-6: 32px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    'Helvetica Neue',
+    Arial,
+    sans-serif;
+  color: var(--rt-fg);
+  background: var(--rt-bg);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.rt-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.rt-tease {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--rt-space-4);
+  padding: var(--rt-space-6);
+  text-align: center;
+}
+
+.rt-tease-mark {
+  display: flex;
+  gap: var(--rt-space-2);
+}
+
+.rt-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--rt-idle);
+  display: inline-block;
+}
+
+.rt-dot--pass {
+  background: var(--rt-pass);
+}
+
+.rt-dot--running {
+  background: var(--rt-running);
+  animation: rt-pulse 900ms ease-in-out infinite;
+}
+
+.rt-dot--fail {
+  background: var(--rt-fail);
+}
+
+@keyframes rt-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.rt-tease-name {
+  font-size: 2.5rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  margin: 0;
+}
+
+.rt-tease-tag {
+  margin: 0;
+  color: var(--rt-fg-muted);
+  font-size: 1rem;
+}
