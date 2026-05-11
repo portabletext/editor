@@ -173,6 +173,10 @@ export default defineConfig({
                 },
               ],
             },
+            {
+              label: 'Releases',
+              items: [{slug: 'editor/releases/v7', label: 'v7'}],
+            },
           ],
         },
         {

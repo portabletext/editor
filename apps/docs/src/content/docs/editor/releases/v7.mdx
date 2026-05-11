@@ -1,0 +1,605 @@
+---
+title: Portable Text Editor v7
+description: Markdown, first-class nesting, schema-strict everywhere, plugins as composable units.
+next: false
+prev: false
+---
+
+import {MarkdownDemo} from '../../../../components/markdown-demo/markdown-demo'
+
+Portable Text Editor v7 makes **first-class nesting** and **markdown compatibility** possible. You can build callouts, code blocks, fact boxes, and tables — any rich-text-inside-rich-text structure your schema describes — and the editor handles them at every depth. Selection, normalisation, undo, collaborative patches, plugins, behaviors. All of it, all the way down. Markdown round-trips alongside, with `@portabletext/markdown` carrying nested structures through the converters in both directions.
+
+The migration is small. The DOM your CSS targets today, the patches you store, the render callbacks your app provides, the plugin API your team built against — all unchanged. Container wrappers introduce some new DOM, but they're brand new in v7, and nothing in your existing app sits inside one yet. v7 is the rare release where the surface stays still while the foundation moves.
+
+## Markdown, end to end
+
+Portable Text round-trips with markdown in v7. `@portabletext/markdown` exposes `markdownToPortableText` and `portableTextToMarkdown` and handles CommonMark, the GFM extensions (tables, strikethrough, autolinks, task lists), and GitHub-style alerts (`> [!NOTE]`, `> [!TIP]`, `> [!WARNING]`, `> [!IMPORTANT]`, `> [!CAUTION]`) which become `callout` blocks with a `tone` field, and back. Code blocks, tables, callouts, lists, and blockquotes use v7 containers, so their inner content is editable rich text rather than opaque strings.
+
+That's the converter pair. The companion `@portabletext/plugin-markdown-shortcuts` covers live-typing inside the editor — `# `, `> `, `- `, `1. `, `---`, `**bold**`, `*em*`, `~~strike~~`, `` `code` ``, `[link](url)`. The shortcuts are Behaviors, schema-aware. A heading shortcut inside a code-block container does nothing, because the code-block's sub-schema doesn't declare heading styles.
+
+A markdown editor in v7 is a small composition: a schema declaring code blocks, tables, callouts, lists, and blockquotes as containers, your `defineContainer` registrations for each, the converter pair on the I/O boundary, the shortcuts plugin on the input boundary. Here it is, live:
+
+<MarkdownDemo client:only="react" />
+
+Edit either side. Type `# ` at the start of a line, the editor renders a heading and the markdown column updates. Click into a code-block line, type, the fence rebuilds. Click into a callout, the inner text is real Portable Text with its own decorators. The blockquote in the demo holds a code block alongside text — that's the structural shape, not a flat block-style. Tables are containers all the way down — `<table>`, `<tr>`, `<td>`, each cell holds editable text blocks.
+
+## What you can build now
+
+In v7, nested editable structures are declared in your schema and become editable through two `@alpha` APIs. Here's a callout:
+
+```ts
+import {defineSchema} from '@portabletext/editor'
+
+const schemaDefinition = defineSchema({
+  decorators: [
+    {title: 'Strong', name: 'strong'},
+    {title: 'Emphasis', name: 'em'},
+  ],
+  styles: [
+    {title: 'Normal', name: 'normal'},
+    {title: 'Heading 1', name: 'h1'},
+  ],
+  blockObjects: [
+    {
+      name: 'callout',
+      title: 'Callout',
+      fields: [
+        {name: 'tone', title: 'Tone', type: 'string'},
+        {
+          name: 'content',
+          title: 'Content',
+          type: 'array',
+          of: [
+            {
+              type: 'block',
+              decorators: [
+                {title: 'Strong', name: 'strong'},
+                {title: 'Code', name: 'code'},
+              ],
+              styles: [
+                {title: 'Normal', name: 'normal'},
+                {title: 'Quote', name: 'blockquote'},
+              ],
+            },
+            {
+              type: 'image',
+              fields: [
+                {name: 'src', title: 'Src', type: 'string'},
+                {name: 'alt', title: 'Alt text', type: 'string'},
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ],
+})
+```
+
+The schema is the source of truth. The callout's `content` array can hold text blocks and images, with its own decorators and styles, independent of the root. `Strong` is shared. `Code` is callout-only. `Em` is root-only. `Quote` is callout-only. Images are valid inside callouts. The editor enforces all of this at every boundary: typing, pasting, decorator toggles, annotation adds, drag-and-drop.
+
+`defineContainer` tells the editor which type accepts editable children, where the children live, and how to render the wrapper:
+
+```tsx
+import {defineContainer} from '@portabletext/editor'
+import {ContainerPlugin} from '@portabletext/editor/plugins'
+
+const calloutContainer = defineContainer({
+  scope: '$..callout',
+  field: 'content',
+  render: ({attributes, children, node}) => (
+    <aside {...attributes} className="callout">
+      <span contentEditable={false}>💡</span>
+      <div>{children}</div>
+    </aside>
+  ),
+})
+
+function CalloutPlugin() {
+  return <ContainerPlugin containers={[calloutContainer]} />
+}
+```
+
+:::caution[`@alpha` API]
+`defineContainer`, `defineLeaf`, the scope syntax, and the `ContainerPlugin` / `LeafPlugin` components are all marked `@alpha` in v7. The shape is settled enough that we're shipping it and using it in production, but we may still adjust details (scope grammar, render-prop fields, plugin composition) based on feedback before promoting to `@beta` in a v7.x patch. If you build on these APIs, expect minor signature tweaks across v7 patches.
+:::
+
+The `scope` syntax (`$..callout`) borrows from JSONPath. `$` is the schema root, `..` matches at any depth, dotted segments narrow to specific positions. A scope of `$..callout` matches every callout in the schema graph, regardless of where it appears. We'll come back to scopes later in the post, along with a counterpart API for leaves and a type-safe variant.
+
+## Behaviors work at every depth
+
+Containers aren't just a rendering concern. The Behavior layer — the system you use to define how the editor responds to keypresses, paste, drag-and-drop, and synthetic events — sees containers everywhere. `EditorSnapshot` carries a `containers` map alongside `schema`. Every Behavior guard receives it.
+
+That means a behavior asking "what can I do here?" gets the right answer at every depth:
+
+```ts
+import {defineBehavior} from '@portabletext/editor/behaviors'
+import {getFocusTextBlock} from '@portabletext/editor/selectors'
+import {getPathSubSchema} from '@portabletext/editor/traversal'
+
+defineBehavior({
+  on: 'keyboard.keydown',
+  guard: ({snapshot, event}) => {
+    const focus = getFocusTextBlock(snapshot)
+    if (!focus) return false
+
+    // Read the schema view at the focus path, not the root schema.
+    const subSchema = getPathSubSchema(snapshot, focus.path)
+    return subSchema.styles.some((s) => s.name === 'h1')
+  },
+  // ...
+})
+```
+
+The same code path that worked at the root works inside a callout, a code block, or a table cell, because it reads the schema view that applies at the current position. This is how `@portabletext/plugin-markdown-shortcuts`, `@portabletext/plugin-character-pair-decorator`, `@portabletext/plugin-paste-link`, `@portabletext/plugin-typography`, and `@portabletext/plugin-input-rule` all became container-aware in v7. Each was a one-line change: read the focus path's sub-schema instead of the root.
+
+`@portabletext/plugin-emoji-picker` and `@portabletext/plugin-typeahead-picker` got a different one-line change. Both were constructing a ChildPath from a hardcoded root-block key (`[{_key: focusSpan.path[0]._key}, 'children', ...]`); v7 swaps that for the focus span's parent path (`[...focusSpan.path.slice(0, -2), 'children', ...]`), which works at any depth. `@portabletext/plugin-one-line` works at every depth without any code change — it operates on selection shape and never touches paths.
+
+## Schema is now strictly enforced
+
+In v6, validation was permissive at the root. Unknown decorators, annotations, and inline objects were silently accepted. That was a mistake. v7 enforces the schema _everywhere_.
+
+Insert, paste, decorator add, annotation add — all validate against the schema at the path being edited. If a behavior raises `decorator.toggle` for a name not declared in the schema at that path, the operation silently filters it out instead of writing an unknown mark.
+
+This makes the schema the single source of truth for what's allowed. Toolbars stay in sync with reality. Pastes are filtered. Custom plugins can no longer accidentally write content the schema doesn't describe.
+
+## Custom leaf rendering
+
+`defineContainer` covers nodes with editable children. For nodes with no editable children — inline objects, void block objects, decorator spans — the counterpart is `defineLeaf`. Use it when you want full control over the outermost element with no engine-emitted wrapper.
+
+```tsx
+import {defineLeaf} from '@portabletext/editor'
+import {LeafPlugin} from '@portabletext/editor/plugins'
+
+const calloutImageLeaf = defineLeaf({
+  scope: '$..callout.image',
+  render: ({attributes, children, node, selected}) => (
+    <span {...attributes} className={selected ? 'image selected' : 'image'}>
+      <img src={node.src} alt={node.alt ?? ''} contentEditable={false} />
+      {children}
+    </span>
+  ),
+})
+
+function CalloutImagePlugin() {
+  return <LeafPlugin leafs={[calloutImageLeaf]} />
+}
+```
+
+The same `scope` syntax applies. `$..callout.image` matches images that appear inside a callout, and only those. The same `image` type appearing at the root, or inside a different container, can render differently. A scope of `$..image` (without the `callout` segment) matches every image everywhere. Specificity wins when multiple leaves match the same node.
+
+If you previously rendered inline objects or void block objects via `renderChild` or `renderBlock`, those callbacks still work and aren't deprecated. `defineLeaf` is opt-in.
+
+## Type-safe scopes
+
+If your schema is defined as a value (which it usually is, when using `defineSchema`), you can pass it as a type parameter to `defineContainer` and `defineLeaf`. The `scope` and `field` fields then become constrained to valid values from that schema:
+
+```tsx
+import {defineContainer, defineSchema} from '@portabletext/editor'
+
+const schemaDefinition = defineSchema({
+  blockObjects: [
+    {name: 'callout', fields: [{name: 'content', type: 'array', of: [...]}]},
+  ],
+  // ...
+})
+
+const calloutContainer = defineContainer<typeof schemaDefinition>({
+  scope: '$..callout',  // ✓ 'callout' is a known type
+  field: 'content',     // ✓ 'content' is a valid array field on 'callout'
+  render: ({attributes, children, node}) => (
+    <aside {...attributes}>{children}</aside>
+  ),
+})
+
+const typo = defineContainer<typeof schemaDefinition>({
+  scope: '$..colout',   // ✗ TypeScript error: 'colout' not in schema
+  field: 'content',
+  render: ({attributes, children}) => <aside {...attributes}>{children}</aside>,
+})
+```
+
+Without the type parameter, `scope` and `field` accept any string — the right default for editor wrappers that want to be reusable across schemas. With it, you get autocomplete on scope segments, compile-time errors on typos, and `node` in the `render` callback typed against the schema's declared fields.
+
+The same applies to `defineLeaf<typeof schemaDefinition>(...)`.
+
+## Plugins as composable units
+
+`defineContainer`, `defineLeaf`, and the Behavior API together turn rendering into plugins. A plugin is a React component that owns one aspect of the editor — the rendering of its element, the rendering of its children, the keyboard shortcuts that move within it, the paste handlers that target it — and registers all of it against the editor by mounting `<ContainerPlugin />`, `<LeafPlugin />`, and `<BehaviorPlugin />`:
+
+```tsx
+import {
+  BehaviorPlugin,
+  ContainerPlugin,
+  LeafPlugin,
+} from '@portabletext/editor/plugins'
+import {createCalloutBehaviors} from './behavior.callout'
+
+const calloutBehaviors = createCalloutBehaviors()
+
+export function CalloutPlugin() {
+  return (
+    <>
+      <ContainerPlugin containers={[calloutContainer]} />
+      <LeafPlugin leafs={[calloutImageLeaf]} />
+      <BehaviorPlugin behaviors={calloutBehaviors} />
+    </>
+  )
+}
+```
+
+Drop `<CalloutPlugin />` into your editor and the callout knows how to render, how to scope its decorators and styles, what to do on Enter at the end of an empty line, how to handle pasted markdown. All of it.
+
+The schema is owned by your editor. The plugin reads it through scope. That contract is what makes plugins composable across editors with different schemas. A `@portabletext/plugin-tables` doesn't ship its own schema. It assumes you've declared a `table` block object with `rows` and `cells` arrays, and it provides the rendering and behaviors that make those structures editable. The `<typeof yourSchema>` parameter ensures the plugin's scopes resolve against your declared types at compile time. That's why the `@portabletext/plugin-*` packages we're shipping next will work the same way regardless of how your editor's schema looks around them.
+
+## The DOM, owned
+
+PTE used to be built on Slate, and the rendered DOM showed it. Every editable node carried `data-slate-*` attributes that the engine read internally for DOM-to-model walking. Some of those attributes leaked into consumer CSS — Canvas's continuation ghost, Studio's comments inspector, click-on-text handlers — because they were the only stable hooks available.
+
+In v7, the engine queries `data-pt-*` exclusively. `data-slate-*` is no longer the engine's internal contract. The legacy rendering pipeline still emits both for back-compat, so your existing CSS keeps working, but the engine itself doesn't depend on them anymore. The new container rendering pipeline emits _only_ `data-pt-*` for engine internals and nothing else by default. No `pt-block` class, no `data-block-key`, no `data-style`, unless you add them yourself.
+
+That last part is the unlock. Inside `defineContainer` and `defineLeaf` renders, you spread `{...attributes}` to attach the few attrs the engine actually needs (path tracking, node typing) and add whatever DOM you want around them:
+
+```tsx
+defineContainer({
+  scope: '$..callout',
+  field: 'content',
+  render: ({attributes, children, node}) => (
+    <aside
+      {...attributes}
+      className="callout"
+      data-tone={node.tone}
+      data-callout-key={node._key}
+    >
+      <span aria-hidden contentEditable={false}>
+        💡
+      </span>
+      <div className="callout-body">{children}</div>
+    </aside>
+  ),
+})
+```
+
+Want a `pt-block` class on the wrapper? Add it. Want `data-block-key`? Add it. Want a different attribute scheme entirely? That works too. The engine doesn't care.
+
+If you maintain CSS that targets `data-slate-*`, this is the time to migrate. Pick the `data-pt-*` engine internals if you need the same hooks the engine uses, or, better, move your selectors to attributes you control through your render callbacks. The engine's DOM is for the engine. Your DOM is for you.
+
+## Building tables, code blocks, and callouts
+
+The container API is what makes tables possible. A working table archetype ships in the playground — you can see it in action and copy the pattern into your own app. The same is true for code blocks, callouts, and fact boxes: all are possible in v7, none ship as ready-made plugins yet.
+
+That's deliberate. Tables shouldn't be a _hack_. They should be the natural byproduct of an editor that supports nesting. The container API is `@alpha` precisely because we expect plugin authors to push on it as they build the first generation of nested-content plugins.
+
+A table is three nested containers — `table` holds `rows`, each `row` holds `cells`, each `cell` holds editable content. Each layer is one `defineContainer`:
+
+```tsx
+import {defineContainer} from '@portabletext/editor'
+import {ContainerPlugin} from '@portabletext/editor/plugins'
+
+const tableContainer = defineContainer({
+  scope: '$..table',
+  field: 'rows',
+  render: ({attributes, children}) => (
+    <table {...attributes}>
+      <tbody>{children}</tbody>
+    </table>
+  ),
+})
+
+const rowContainer = defineContainer({
+  scope: '$..table.row',
+  field: 'cells',
+  render: ({attributes, children}) => <tr {...attributes}>{children}</tr>,
+})
+
+const cellContainer = defineContainer({
+  scope: '$..table.row.cell',
+  field: 'content',
+  render: ({attributes, children}) => <td {...attributes}>{children}</td>,
+})
+
+export function TablePlugin() {
+  return (
+    <ContainerPlugin
+      containers={[tableContainer, rowContainer, cellContainer]}
+    />
+  )
+}
+```
+
+A code block is one container plus one leaf — the container holds editable lines, the leaf renders each line's spans in monospace:
+
+```tsx
+import {defineContainer, defineLeaf} from '@portabletext/editor'
+import {ContainerPlugin, LeafPlugin} from '@portabletext/editor/plugins'
+
+const codeBlockContainer = defineContainer({
+  scope: '$..code-block',
+  field: 'lines',
+  render: ({attributes, children}) => (
+    <pre {...attributes} className="code-block">
+      {children}
+    </pre>
+  ),
+})
+
+const codeBlockSpanLeaf = defineLeaf({
+  scope: '$..code-block.block.span',
+  render: ({attributes, children}) => (
+    <span {...attributes} className="font-mono">
+      {children}
+    </span>
+  ),
+})
+
+export function CodeBlockPlugin() {
+  return (
+    <>
+      <ContainerPlugin containers={[codeBlockContainer]} />
+      <LeafPlugin leafs={[codeBlockSpanLeaf]} />
+    </>
+  )
+}
+```
+
+These are skeletons — production-quality versions would add keyboard navigation between cells, column add and delete, paste-from-spreadsheet, language selection, syntax highlighting. The dedicated `@portabletext/plugin-tables` and `@portabletext/plugin-code-block` packages will ship those layered on top of the same container primitives.
+
+The next round of releases will introduce them as their own packages:
+
+- `@portabletext/plugin-tables`. Header rows, cell navigation, row and column add and delete, paste-from-spreadsheet.
+- `@portabletext/plugin-code-block`. Language selection, syntax highlighting, soft wrap, line numbers.
+- `@portabletext/plugin-callout`. Variants (note, tip, warning), keyboard escape, paste handling.
+- `@portabletext/plugin-fact-box`. Collapsible, structured fields, paste handling.
+
+Until those ship, the playground archetypes are working examples you can copy into your app. They'll keep working when the dedicated plugins land.
+
+## Subscribable editor state
+
+The rebuild also let us clean up `editor._internal`. It was originally introduced as the wiring that made `useEditorSelector` work — the selector hook needed a way to subscribe to state changes, and `_internal` was the channel. But it also exposed the raw Slate editor instance and the underlying xstate actor, neither of which we wanted as part of the public API. In v7, the subscribe wiring is promoted to a first-class public API on the `Editor` type itself, and the raw Slate and actor handles are gone. The `Editor` type now exposes a standard `subscribe(observer) + getSnapshot()` contract directly — the same shape `useSyncExternalStore`, `@xstate/react`'s `useSelector`, and rxjs all consume. Adapting the editor to any of them is a few lines.
+
+For React, the recommended way to read editor state stays `useEditorSelector(editor, selector)`, which is built on `useSyncExternalStore` and gives you stable, automatically-memoized snapshots. `useSyncExternalStore` directly works too, with a small adapter:
+
+```ts
+const length = useSyncExternalStore(
+  (notify) => {
+    const sub = editor.subscribe({next: () => notify()})
+    return () => sub.unsubscribe()
+  },
+  () => editor.getSnapshot().context.value.length,
+)
+```
+
+For rxjs pipelines, wrap the editor in a plain `Observable`:
+
+```ts
+import type {EditorSnapshot} from '@portabletext/editor'
+import {Observable} from 'rxjs'
+import {distinctUntilChanged, map} from 'rxjs/operators'
+
+const editor$ = new Observable<EditorSnapshot>((subscriber) => {
+  const sub = editor.subscribe({
+    next: (snap) => subscriber.next(snap),
+    error: (err) => subscriber.error(err),
+    complete: () => subscriber.complete(),
+  })
+  return () => sub.unsubscribe()
+})
+
+editor$
+  .pipe(
+    map((snap) => snap.context.selection),
+    distinctUntilChanged(),
+  )
+  .subscribe((selection) => {
+    // ...
+  })
+```
+
+For xstate's `useSelector`, the editor works at runtime but needs a small cast at the call site — xstate's `Subscribable<T>` constraint expects a deprecated function-form `subscribe` overload PTE deliberately doesn't expose, so direct passthrough fails type-checking.
+
+The standard observer contract makes this kind of integration mechanical. If a future consumer needs Svelte's stores, Vue's reactivity, Solid's signals, or any other observer-shaped sink, the wrapper is the same shape every time.
+
+## How we got here
+
+**"Let's make PTE support tables."** That ask exposed an iceberg of complexity and shallow-depth assumptions. Getting first-class nesting to work meant rebuilding most of the engine.
+
+PTE was historically built on Slate, an extensible framework for building rich text editors. PTE encapsulated Slate behind Portable Text-native and Sanity-native APIs. It spoke Portable Text at the edges and Slate internally. As PTE became a standalone editor and its API surface expanded with first-class plugins and a Behavior event system, that translation layer kept growing.
+
+Tables broke the pattern. Supporting them means supporting first-class nesting in an editor that is almost entirely built on the assumption of a flat structure. The patch layer, the rendering layer, the normalisation layer, the Behavior layer, every selector — all assumed depth ≤ 2. Translation between Slate's index-based model and Portable Text was _everywhere_ in almost every line of every file. Expanding it further would have been roughly as complicated as building a new editor from scratch.
+
+So we vendored Slate and made the editor speak Portable Text through and through. The translation layer is gone. The DOM model altered. Selection is key-based instead of index-based. All non-patch-compliant Slate operations are gone. The Behavior API is rewritten.
+
+Concretely, the rebuild took:
+
+1. **Vendored Slate.** The editor engine is fully owned code, not a third-party dependency.
+2. **Untangled abstractions.** Removed layers of indirection, dead code, and over-exports.
+3. **PT-native internal tree.** The in-memory tree is now Portable Text directly, not a Slate-shaped intermediate.
+4. **Patch-compliant operations.** Internal operations align 1:1 with the Sanity mutation protocol.
+5. **Cleaner DOM mapping.** Every editable node now carries a `data-pt-path` attribute encoding its path through the tree. The engine reads it directly when translating between the DOM and the model — no more counting siblings to derive a path. Pairs with the keyed-paths work: a path is a structural fact you can read off any element, not a recomputed traversal.
+6. **Depth-agnostic traversal.** Replaced Slate's traversal utilities with Portable Text-native, schema-driven ones that work at any nesting depth.
+7. **Container-aware normalisation.** The editor self-heals container structures using the schema. Existing text block normalisations work at any depth too.
+8. **Keyed paths.** Replaced indexed paths with keyed paths internally, removing another translation layer to the Sanity patch protocol.
+9. **Container-ready patch layer.** Outgoing and incoming patches work at any depth. Collaborative editing inside containers just works.
+
+This took nearly three months of full-time work. None of it shipped a feature on its own. All of it was the foundation v7's API sits on.
+
+## Migrating from v6
+
+If everything changed underneath, why is the migration small? Because the rebuild was deliberate about preserving the surface that today's apps target. The DOM your CSS selectors hit on existing flat content (`data-slate-string`, `pt-block`, `data-block-type`) is unchanged. Patches are unchanged — the editor produces _more_ of them now, more correctly, because operations finally align 1:1 with the patch protocol. Render callbacks fire with the same arguments. Plugins register the same way. Behaviors match on the same events.
+
+The DOM _inside_ container wrappers uses a different shape — see [The DOM, owned](#the-dom-owned). Existing flat documents have no inside-container DOM today, so this is migration-relevant only when you start using containers. If you have CSS targeting `data-slate-*` on flat content, it keeps working in v7. Consider migrating to `data-pt-*` selectors, or to attributes you control through your render callbacks. The Slate-named attributes are an implementation detail we'd like to stop carrying eventually.
+
+What changed is what happens _between_ those surfaces.
+
+### tl;dr
+
+- **Most apps**: bump dependencies, re-run type-check, fix any TypeScript errors that flag the widened path types. That's it.
+- **Apps with custom plugins or behaviors**: read the [path types](#path-types-widened-to-path) and [selector semantics](#selectors-now-respect-container-scope) sections.
+- **Apps that read the editor's schema directly**: read the [schema enforcement](#schema-strictness-now-applies-at-the-root-too) section.
+- **Apps that call `blockOffset*` utilities**: signature changed. See [Block-offset utilities](#block-offset-utilities-take-a-snapshot).
+- **Apps that touched `editor._internal`**: the subscribe wiring is now public on the `Editor` type as `editor.subscribe(...)` and `editor.getSnapshot()`. The raw Slate editor instance and the xstate actor that also lived under `_internal` are removed. See [`_internal` cleaned up](#_internal-cleaned-up-subscribe-promoted-raw-slate-and-actor-handles-removed).
+
+### Path types widened to `Path`
+
+`BlockPath`, `ChildPath`, and `AnnotationPath` are now type aliases for `Path`, which is depth-agnostic.
+
+```ts
+// v6
+type BlockPath = [{_key: string}]
+type ChildPath = [{_key: string}, 'children', {_key: string}]
+type AnnotationPath = [{_key: string}, 'markDefs', {_key: string}]
+
+// v7
+type BlockPath = Path
+type ChildPath = Path
+type AnnotationPath = Path
+```
+
+A path is now an array of unknown length. The first segment is still a keyed block at the root, but a span inside a callout's text block is `[{_key: 'callout-1'}, 'content', {_key: 'block-1'}, 'children', {_key: 'span-1'}]`. Five segments, not three.
+
+This cascades into 11 behavior events whose `at` field is now `Path`:
+
+- `block.set`, `block.unset`
+- `child.set`, `child.unset`
+- `annotation.set`
+- `delete.block`, `delete.child`
+- `move.block`, `move.block up`, `move.block down`
+- `select.block`
+
+If you destructure path tuples or annotate intermediate variables with the narrower types, replace them:
+
+```ts
+// v6
+const [blockSegment, , childSegment] = path
+const blockKey = blockSegment._key
+```
+
+```ts
+// v7
+import {isKeyedSegment} from '@portabletext/editor/utils'
+
+const blockSegment = path.at(0)
+const childSegment = path.at(-1)
+if (isKeyedSegment(blockSegment) && isKeyedSegment(childSegment)) {
+  // ...
+}
+```
+
+For most reads — passing the path through to a selector, comparing two paths for equality, sending an event with `at: someBlock.path` — no change is needed. The path stays opaque.
+
+If your code makes structural assumptions about path depth (e.g. `path.length === 3` to detect a span), those assumptions are now wrong inside containers. Rewrite using the type guards (`isBlock`, `isChild`, `isInline`) and traversal helpers from `@portabletext/editor/traversal`.
+
+### Selectors now respect container scope
+
+Selectors that previously walked the root level only — `getFocusBlock`, `getNextBlock`, `getPreviousBlock`, `getFirstBlock`, `getLastBlock`, `getAnchorBlock`, etc. — still work the same way at the root. Inside a container, they find siblings within that container instead of crossing the boundary into the parent's siblings.
+
+This matches what you'd want most of the time: pressing ArrowDown inside a callout finds the next block in the callout, not the next block at the root.
+
+If you have a behavior or plugin that explicitly wants root-level navigation, use the traversal helpers and check the path depth yourself.
+
+### Schema strictness now applies at the root too
+
+In v6, validation was permissive at the root. Unknown decorators, annotations, and inline objects were silently accepted. v7 enforces the schema everywhere.
+
+If you've been relying on permissive root-level validation — for example, raising a `decorator.toggle` event with a name not declared in the schema and expecting it to silently apply — those operations now silently filter the unknown name out.
+
+The fix is to declare the missing types in your schema:
+
+```ts
+import {defineSchema} from '@portabletext/schema'
+
+const schema = defineSchema({
+  decorators: [{name: 'strong'}, {name: 'em'}, {name: 'code'}],
+  // ...
+})
+```
+
+If you need to read what's allowed at a specific path (for example, to gate a toolbar button), use the new `getPathSubSchema` helper:
+
+```ts
+import {getPathSubSchema} from '@portabletext/editor/traversal'
+
+const subSchema = getPathSubSchema(editor.getSnapshot(), focusPath)
+const decorators = subSchema.decorators.map((d) => d.name)
+```
+
+### Plugin authors: reading schema becomes reading sub-schema
+
+If you maintain a plugin that reads the editor's schema to drive its behavior, the v7 pattern is to read the focus path's sub-schema instead.
+
+```ts
+// v6
+const decorators = snapshot.context.schema.decorators
+```
+
+```ts
+// v7
+import {getFocusTextBlock} from '@portabletext/editor/selectors'
+import {getPathSubSchema} from '@portabletext/editor/traversal'
+
+const focusTextBlock = getFocusTextBlock(snapshot)
+const subSchema = focusTextBlock
+  ? getPathSubSchema(snapshot, focusTextBlock.path)
+  : snapshot.context.schema
+const decorators = subSchema.decorators
+```
+
+If your plugin doesn't make this change, it'll still work. It'll apply the root schema everywhere, including inside containers that declare a different sub-schema.
+
+### Block-offset utilities take a snapshot
+
+`blockOffsetToSpanSelectionPoint`, `spanSelectionPointToBlockOffset`, `blockOffsetsToSelection`, and `childSelectionPointToBlockOffset` now take an editor snapshot instead of a `context` object, and they resolve through container-nested text blocks at any depth.
+
+```ts
+import {blockOffsetToSpanSelectionPoint} from '@portabletext/editor'
+
+// v6
+const point = blockOffsetToSpanSelectionPoint({context, blockOffset})
+
+// v7
+const point = blockOffsetToSpanSelectionPoint({
+  snapshot: editor.getSnapshot(),
+  blockOffset,
+  direction: 'forward',
+})
+```
+
+`blockOffsetToBlockSelectionPoint`, `blockOffsetToSelectionPoint`, and `selectionPointToBlockOffset` are no longer part of the public API. They had no external consumers and only existed to feed the four utilities above.
+
+### `_internal` cleaned up: subscribe promoted, raw Slate and actor handles removed
+
+`editor._internal` is gone. The piece of it that was load-bearing for `useEditorSelector` — the subscribe wiring — has been promoted to a public API on the `Editor` type:
+
+```ts
+const subscription = editor.subscribe({
+  next: (snapshot) => console.log(snapshot),
+})
+```
+
+That's the same shape `useSyncExternalStore`, `@xstate/react`'s `useSelector`, and rxjs all consume. See [Subscribable editor state](#subscribable-editor-state) for adapters.
+
+`useEditorSelector(editor, selector)` continues to work as before. This is still the recommended way to read editor state in React components.
+
+If you reached into `editor._internal.slateEditor` or `editor._internal.editorActor` to splice history entries, dispatch raw events, or inspect internal state, those paths no longer exist. The new public `subscribe` shape doesn't expose them. Open an issue describing what you were trying to do; we'll likely have a public API for it.
+
+The `@deprecated` `PortableTextEditor` class's constructor signature also changed. It now takes `{editable, editorActor}` instead of `{editor}`. The class is only instantiated by `EditorProvider`, so this break is theoretical for almost everyone.
+
+### Removed APIs
+
+`splitTextBlock` was removed in v7. It hardcoded depth-2 paths and had no callers anywhere we could find. If you were depending on it, please open an issue describing what you were trying to do, and we'll figure out the right shape together.
+
+### Asking for help
+
+If you hit a break this guide doesn't cover, please [open an issue](https://github.com/portabletext/editor/issues) with a minimal reproduction. The migration surface is small enough that we expect to be able to address most issues quickly.
+
+## A reflection
+
+Was it naive to invest so heavily in PTE as a standalone editor before supporting first-class nesting? I don't think so. YAGNI is real. There's a difference between not implementing something and closing the door on the possibility of implementing it in the future. PTE never closed the door on first-class nesting. But maybe we waited a tad too long before we started investing in it.
+
+## Try it
+
+Upgrade today, or [open the playground](https://playground.portabletext.org/) to see v7 running:
+
+```sh
+npm install @portabletext/editor@latest
+```
