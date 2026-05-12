@@ -1,0 +1,42 @@
+:root {
+  --pc-bg: #ffffff;
+  --pc-fg-faint: #e0e0e0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    'Helvetica Neue',
+    Arial,
+    sans-serif;
+  background: var(--pc-bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.pc-shell {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pc-mark {
+  font-size: 4rem;
+  color: var(--pc-fg-faint);
+  user-select: none;
+}
