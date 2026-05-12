@@ -27,6 +27,7 @@ export function textPatch(
     context: {
       schema: snapshot.context.schema,
       containers: snapshot.context.containers,
+      containerTypes: snapshot.context.containerTypes,
       value: beforeValue as Array<Node>,
     },
     blockIndexMap: new Map(),

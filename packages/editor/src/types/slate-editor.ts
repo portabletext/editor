@@ -31,6 +31,7 @@ export interface PortableTextSlateEditor extends DOMEditor {
   schema: EditorSchema
   keyGenerator: () => string
   containers: ResolvedContainers
+  containerTypes: ReadonlySet<string>
   leafs: Map<string, LeafConfig>
 
   /**
@@ -40,6 +41,7 @@ export interface PortableTextSlateEditor extends DOMEditor {
   readonly context: {
     schema: EditorSchema
     containers: ResolvedContainers
+    containerTypes: ReadonlySet<string>
     value: PortableTextBlock[]
     keyGenerator: () => string
   }

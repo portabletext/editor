@@ -196,6 +196,7 @@ function resolveTarget(args: {
     // a placeholder when the second one starts.
     const containerField = lookupContainer(
       editor.containers,
+      editor.containerTypes,
       getContainerScopedName(editor, endBlock, endBlockPath),
     )?.field
     const fieldValue =

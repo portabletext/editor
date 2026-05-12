@@ -4,6 +4,7 @@ import type {
   ContainerConfig,
   ContainerDefinition,
 } from '../renderers/renderer.types'
+import {containerTypesFromContainers} from '../schema/resolve-containers'
 import {getBlockObjectSchema} from './get-block-object-schema'
 import {makeContainerConfig} from './make-container-config'
 import {resolveContainers} from './resolve-containers'
@@ -23,7 +24,12 @@ describe(getBlockObjectSchema.name, () => {
       }),
     )
     const context = {
-      context: {schema, containers: new Map(), value: []},
+      context: {
+        schema,
+        containers: new Map(),
+        containerTypes: new Set<string>(),
+        value: [],
+      },
       blockIndexMap: new Map(),
     }
     const node = {_type: 'image', _key: 'i0', src: 'foo.png'}
@@ -115,7 +121,12 @@ describe(getBlockObjectSchema.name, () => {
       },
     ]
     const context = {
-      context: {schema, containers, value},
+      context: {
+        schema,
+        containers,
+        containerTypes: containerTypesFromContainers(containers),
+        value,
+      },
       blockIndexMap: new Map(),
     }
 
@@ -175,7 +186,12 @@ describe(getBlockObjectSchema.name, () => {
     const containers = resolveContainers(schema, containerConfigs)
 
     const context = {
-      context: {schema, containers, value: []},
+      context: {
+        schema,
+        containers,
+        containerTypes: containerTypesFromContainers(containers),
+        value: [],
+      },
       blockIndexMap: new Map(),
     }
     // `image` is in root `blockObjects` but not inline-declared inside callout.
@@ -198,7 +214,12 @@ describe(getBlockObjectSchema.name, () => {
       }),
     )
     const context = {
-      context: {schema, containers: new Map(), value: []},
+      context: {
+        schema,
+        containers: new Map(),
+        containerTypes: new Set<string>(),
+        value: [],
+      },
       blockIndexMap: new Map(),
     }
     const node = {_type: 'unknown', _key: 'u0'}

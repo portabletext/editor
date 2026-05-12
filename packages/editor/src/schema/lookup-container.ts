@@ -12,14 +12,29 @@ import type {Container, Containers} from './resolve-containers'
  * back to scope-pattern matching: iterates registered configs by
  * specificity and returns the first whose `parsedScope` matches the
  * runtime type chain.
+ *
+ * Short-circuits when the scopedName's leaf segment isn't present in
+ * any registered container scope (`containerTypes`). This is the
+ * common case during traversal: every visit to a text block, span, or
+ * leaf reaches `lookupContainer` to resolve the child-array field, and
+ * those types are provably never containers.
  */
 export function lookupContainer(
   containers: Containers,
+  containerTypes: ReadonlySet<string>,
   scopedName: string,
 ): Container | undefined {
   const exact = containers.get(scopedName)
   if (exact) {
     return exact
+  }
+
+  // Negative fast-path. If the scopedName's leaf segment isn't a registered
+  // container type, no scope can match.
+  const dotIndex = scopedName.lastIndexOf('.')
+  const leafType = dotIndex === -1 ? scopedName : scopedName.slice(dotIndex + 1)
+  if (!containerTypes.has(leafType)) {
+    return undefined
   }
 
   const typePath = scopedName.split('.')

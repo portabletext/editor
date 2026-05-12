@@ -15,7 +15,7 @@ export const getSelectionText: EditorSelector<string> = (snapshot) => {
 }
 
 function collectText(
-  context: Pick<EditorContext, 'schema' | 'containers'>,
+  context: Pick<EditorContext, 'schema' | 'containers' | 'containerTypes'>,
   blocks: ReadonlyArray<Node | PortableTextBlock>,
   scopePath: string,
 ): string {

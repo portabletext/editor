@@ -28,6 +28,7 @@ import type {
 import {
   resolveContainerField,
   resolveContainers,
+  resolveContainerTypes,
   type ResolvedContainers,
 } from '../schema/resolve-containers'
 import {parseScope} from '../scope/parse-scope'
@@ -219,6 +220,7 @@ export const editorMachine = setup({
       behaviors: Set<BehaviorConfig>
       behaviorsSorted: boolean
       containers: ResolvedContainers
+      containerTypes: ReadonlySet<string>
       converters: Array<Converter>
       leafs: Map<string, LeafConfig>
       keyGenerator: () => string
@@ -310,24 +312,28 @@ export const editorMachine = setup({
       }
       nextConfigs.set(event.container.scope, containerConfig)
       const containers = resolveContainers(context.schema, nextConfigs)
+      const containerTypes = resolveContainerTypes(nextConfigs)
       if (context.slateEditor) {
         context.slateEditor.containers = containers
+        context.slateEditor.containerTypes = containerTypes
         normalize(context.slateEditor, {force: true})
         context.slateEditor.onChange()
       }
-      return {containers}
+      return {containers, containerTypes}
     }),
     'unregister container': assign(({context, event}) => {
       assertEvent(event, 'unregister container')
       const nextConfigs = collectRegisteredConfigs(context.containers)
       nextConfigs.delete(event.container.scope)
       const containers = resolveContainers(context.schema, nextConfigs)
+      const containerTypes = resolveContainerTypes(nextConfigs)
       if (context.slateEditor) {
         context.slateEditor.containers = containers
+        context.slateEditor.containerTypes = containerTypes
         normalize(context.slateEditor, {force: true})
         context.slateEditor.onChange()
       }
-      return {containers}
+      return {containers, containerTypes}
     }),
     'register leaf': assign(({context, event}) => {
       assertEvent(event, 'register leaf')
@@ -369,16 +375,16 @@ export const editorMachine = setup({
       return {leafs}
     }),
     'sync containers': assign(({context}) => {
-      const containers = resolveContainers(
-        context.schema,
-        collectRegisteredConfigs(context.containers),
-      )
+      const configs = collectRegisteredConfigs(context.containers)
+      const containers = resolveContainers(context.schema, configs)
+      const containerTypes = resolveContainerTypes(configs)
       if (context.slateEditor) {
         context.slateEditor.containers = containers
+        context.slateEditor.containerTypes = containerTypes
         normalize(context.slateEditor, {force: true})
         context.slateEditor.onChange()
       }
-      return {containers}
+      return {containers, containerTypes}
     }),
     'emit patch event': emit(({event}) => {
       assertEvent(event, 'internal.patch')
@@ -556,6 +562,7 @@ export const editorMachine = setup({
     behaviors: new Set(coreBehaviorsConfig),
     behaviorsSorted: false,
     containers: new Map(),
+    containerTypes: new Set(),
     leafs: new Map(),
     converters: input.converters ?? [],
     keyGenerator: input.keyGenerator,

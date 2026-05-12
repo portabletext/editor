@@ -6,7 +6,10 @@ import {
 } from '@portabletext/schema'
 import {describe, expect, test} from 'vitest'
 import {makeContainerConfig} from '../schema/make-container-config'
-import {resolveContainers} from '../schema/resolve-containers'
+import {
+  containerTypesFromContainers,
+  resolveContainers,
+} from '../schema/resolve-containers'
 import {getNodeDescendants, getNodes} from './get-nodes'
 import {
   createNodeTraversalTestbed,
@@ -794,22 +797,24 @@ describe(getNodes.name, () => {
         }),
       )
 
+      const accordionContainers = resolveContainers(
+        schema,
+        new Map([
+          [
+            '$..accordion',
+            makeContainerConfig(schema, {
+              scope: '$..accordion',
+              field: 'value',
+            }),
+          ],
+        ]),
+      )
       const descendants = [
         ...getNodeDescendants(
           {
             schema,
-            containers: resolveContainers(
-              schema,
-              new Map([
-                [
-                  '$..accordion',
-                  makeContainerConfig(schema, {
-                    scope: '$..accordion',
-                    field: 'value',
-                  }),
-                ],
-              ]),
-            ),
+            containers: accordionContainers,
+            containerTypes: containerTypesFromContainers(accordionContainers),
           },
           accordion,
         ),

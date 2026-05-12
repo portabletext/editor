@@ -16,6 +16,7 @@ export function getChildFieldName(
   context: {
     schema: EditorSchema
     containers: ResolvedContainers
+    containerTypes: ReadonlySet<string>
     value: Array<Node>
   },
   path: Path,

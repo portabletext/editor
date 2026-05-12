@@ -50,6 +50,7 @@ export function* getNodeDescendants(
   context: {
     schema: EditorSchema
     containers: Containers
+    containerTypes: ReadonlySet<string>
   },
   node: Node | {value: Array<Node>},
 ): Generator<{node: Node; path: Path}, void, undefined> {
@@ -65,6 +66,7 @@ function* walkStandalone(
   context: {
     schema: EditorSchema
     containers: Containers
+    containerTypes: ReadonlySet<string>
   },
   node: Node | {value: Array<Node>},
   scopePath: string,

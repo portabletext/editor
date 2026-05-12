@@ -418,7 +418,11 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   // non-empty.
   if (isObjectNode({schema: editor.schema}, node)) {
     const scopedName = getContainerScopedName(editor, node, path)
-    const arrayField = lookupContainer(editor.containers, scopedName)?.field
+    const arrayField = lookupContainer(
+      editor.containers,
+      editor.containerTypes,
+      scopedName,
+    )?.field
 
     if (arrayField) {
       const fieldValue = (node as Record<string, unknown>)[arrayField.name]

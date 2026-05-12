@@ -17,5 +17,11 @@ export function isEditableContainer(
   }
 
   const scopedName = getContainerScopedName(snapshot, node, path)
-  return lookupContainer(snapshot.context.containers, scopedName) !== undefined
+  return (
+    lookupContainer(
+      snapshot.context.containers,
+      snapshot.context.containerTypes,
+      scopedName,
+    ) !== undefined
+  )
 }

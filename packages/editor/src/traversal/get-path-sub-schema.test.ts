@@ -5,7 +5,10 @@ import type {
   ContainerDefinition,
 } from '../renderers/renderer.types'
 import {makeContainerConfig} from '../schema/make-container-config'
-import {resolveContainers} from '../schema/resolve-containers'
+import {
+  containerTypesFromContainers,
+  resolveContainers,
+} from '../schema/resolve-containers'
 import {getPathSubSchema} from './get-path-sub-schema'
 
 const testRender: ContainerDefinition['render'] = ({children}) => children
@@ -24,6 +27,7 @@ describe(getPathSubSchema.name, () => {
       context: {
         schema,
         containers: new Map(),
+        containerTypes: new Set<string>(),
         value: [{_type: 'block', _key: 'b0', children: []}],
       },
       blockIndexMap: new Map(),
@@ -81,7 +85,12 @@ describe(getPathSubSchema.name, () => {
       },
     ]
     const context = {
-      context: {schema, containers, value},
+      context: {
+        schema,
+        containers,
+        containerTypes: containerTypesFromContainers(containers),
+        value,
+      },
       blockIndexMap: new Map(),
     }
 
@@ -136,7 +145,12 @@ describe(getPathSubSchema.name, () => {
       },
     ]
     const context = {
-      context: {schema, containers, value},
+      context: {
+        schema,
+        containers,
+        containerTypes: containerTypesFromContainers(containers),
+        value,
+      },
       blockIndexMap: new Map(),
     }
 
@@ -246,7 +260,12 @@ describe(getPathSubSchema.name, () => {
       },
     ]
     const context = {
-      context: {schema, containers, value},
+      context: {
+        schema,
+        containers,
+        containerTypes: containerTypesFromContainers(containers),
+        value,
+      },
       blockIndexMap: new Map(),
     }
 

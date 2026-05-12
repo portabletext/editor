@@ -114,7 +114,11 @@ function fieldAcceptsTextBlock(
   path: Path,
 ): boolean {
   const scopedName = getContainerScopedName(editor, node, path)
-  const container = lookupContainer(editor.containers, scopedName)
+  const container = lookupContainer(
+    editor.containers,
+    editor.containerTypes,
+    scopedName,
+  )
   if (!container) {
     return false
   }

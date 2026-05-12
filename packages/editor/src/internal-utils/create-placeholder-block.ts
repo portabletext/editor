@@ -8,6 +8,7 @@ type PlaceholderSnapshot = {
   context: {
     schema: import('../editor/editor-schema').EditorSchema
     containers: Containers
+    containerTypes: ReadonlySet<string>
     value: Array<Node>
     keyGenerator: () => string
   }

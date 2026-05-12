@@ -6,7 +6,10 @@ import type {
   ContainerDefinition,
 } from '../renderers/renderer.types'
 import {makeContainerConfig} from '../schema/make-container-config'
-import {resolveContainers} from '../schema/resolve-containers'
+import {
+  containerTypesFromContainers,
+  resolveContainers,
+} from '../schema/resolve-containers'
 
 /**
  * Container definitions for the testbed's table structure
@@ -251,12 +254,18 @@ export function createNodeTraversalTestbed() {
   const context = {
     schema,
     containers,
+    containerTypes: containerTypesFromContainers(containers),
     value,
     blockIndexMap,
   }
 
   const snapshot = {
-    context: {schema, containers, value},
+    context: {
+      schema,
+      containers,
+      containerTypes: containerTypesFromContainers(containers),
+      value,
+    },
     blockIndexMap,
   }
 

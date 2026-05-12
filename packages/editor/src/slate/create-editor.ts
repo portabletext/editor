@@ -27,6 +27,7 @@ export const createEditor = (): Editor => {
       return {
         schema: this.schema,
         containers: this.containers,
+        containerTypes: this.containerTypes,
         value: this.children,
         keyGenerator: this.keyGenerator,
       }

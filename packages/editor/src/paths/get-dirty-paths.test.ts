@@ -2,6 +2,7 @@ import {compileSchema, defineSchema} from '@portabletext/schema'
 import {describe, expect, test} from 'vitest'
 import {makeContainerConfig} from '../schema/make-container-config'
 import {
+  containerTypesFromContainers,
   resolveContainers,
   type ResolvedContainers,
 } from '../schema/resolve-containers'
@@ -106,6 +107,7 @@ describe(getDirtyPaths.name, () => {
           {
             schema,
             containers: emptyContainers,
+            containerTypes: containerTypesFromContainers(emptyContainers),
             value: [],
           },
           {
@@ -124,6 +126,7 @@ describe(getDirtyPaths.name, () => {
           {
             schema,
             containers: emptyContainers,
+            containerTypes: containerTypesFromContainers(emptyContainers),
             value: [],
           },
           {
@@ -142,6 +145,7 @@ describe(getDirtyPaths.name, () => {
           {
             schema,
             containers: containerContainers,
+            containerTypes: containerTypesFromContainers(containerContainers),
             value: [],
           },
           {
@@ -171,6 +175,7 @@ describe(getDirtyPaths.name, () => {
           {
             schema,
             containers: containerContainers,
+            containerTypes: containerTypesFromContainers(containerContainers),
             value: [],
           },
           {
@@ -219,6 +224,7 @@ describe(getDirtyPaths.name, () => {
           {
             schema,
             containers: emptyContainers,
+            containerTypes: containerTypesFromContainers(emptyContainers),
             value: [],
           },
           {
@@ -242,6 +248,7 @@ describe(getDirtyPaths.name, () => {
           {
             schema,
             containers: emptyContainers,
+            containerTypes: containerTypesFromContainers(emptyContainers),
             value: [],
           },
           {
@@ -259,6 +266,7 @@ describe(getDirtyPaths.name, () => {
           {
             schema,
             containers: emptyContainers,
+            containerTypes: containerTypesFromContainers(emptyContainers),
             value: [],
           },
           {
@@ -287,6 +295,7 @@ describe(getDirtyPaths.name, () => {
           {
             schema,
             containers: emptyContainers,
+            containerTypes: containerTypesFromContainers(emptyContainers),
             value: [replacementNode],
           },
           {
@@ -320,6 +329,7 @@ describe(getDirtyPaths.name, () => {
           {
             schema,
             containers: emptyContainers,
+            containerTypes: containerTypesFromContainers(emptyContainers),
             value: [blockNode],
           },
           {
@@ -359,6 +369,7 @@ describe(getDirtyPaths.name, () => {
           {
             schema,
             containers: containerContainers,
+            containerTypes: containerTypesFromContainers(containerContainers),
             value: [],
           },
           {
@@ -381,6 +392,7 @@ describe(getDirtyPaths.name, () => {
           {
             schema,
             containers: containerContainers,
+            containerTypes: containerTypesFromContainers(containerContainers),
             value: [],
           },
           {
@@ -398,6 +410,7 @@ describe(getDirtyPaths.name, () => {
           {
             schema,
             containers: containerContainers,
+            containerTypes: containerTypesFromContainers(containerContainers),
             value: [],
           },
           {
@@ -436,6 +449,7 @@ describe(getDirtyPaths.name, () => {
           {
             schema,
             containers: containerContainers,
+            containerTypes: containerTypesFromContainers(containerContainers),
             value: [calloutNode],
           },
           {
@@ -473,6 +487,7 @@ describe(getDirtyPaths.name, () => {
           {
             schema,
             containers: containerContainers,
+            containerTypes: containerTypesFromContainers(containerContainers),
             value: [calloutNode],
           },
           {
@@ -499,6 +514,7 @@ describe(getDirtyPaths.name, () => {
           {
             schema,
             containers: tableContainers,
+            containerTypes: containerTypesFromContainers(tableContainers),
             value: [],
           },
           {
@@ -541,6 +557,7 @@ describe(getDirtyPaths.name, () => {
           {
             schema,
             containers: emptyContainers,
+            containerTypes: containerTypesFromContainers(emptyContainers),
             value: [],
           },
           {
@@ -557,6 +574,7 @@ describe(getDirtyPaths.name, () => {
           {
             schema,
             containers: emptyContainers,
+            containerTypes: containerTypesFromContainers(emptyContainers),
             value: [],
           },
           {
@@ -590,6 +608,7 @@ describe(getDirtyPaths.name, () => {
           {
             schema,
             containers: emptyContainers,
+            containerTypes: containerTypesFromContainers(emptyContainers),
             value,
           },
           {
@@ -606,6 +625,7 @@ describe(getDirtyPaths.name, () => {
           {
             schema,
             containers: emptyContainers,
+            containerTypes: containerTypesFromContainers(emptyContainers),
             value: [],
           },
           {
@@ -622,6 +642,7 @@ describe(getDirtyPaths.name, () => {
           {
             schema,
             containers: containerContainers,
+            containerTypes: containerTypesFromContainers(containerContainers),
             value: [],
           },
           {
@@ -638,6 +659,7 @@ describe(getDirtyPaths.name, () => {
           {
             schema,
             containers: containerContainers,
+            containerTypes: containerTypesFromContainers(containerContainers),
             value: [],
           },
           {
@@ -677,6 +699,7 @@ describe(getDirtyPaths.name, () => {
           {
             schema,
             containers: containerContainers,
+            containerTypes: containerTypesFromContainers(containerContainers),
             value: calloutValue,
           },
           {
@@ -695,6 +718,7 @@ describe(getDirtyPaths.name, () => {
           {
             schema,
             containers: emptyContainers,
+            containerTypes: containerTypesFromContainers(emptyContainers),
             value: [],
           },
           {
@@ -729,6 +753,7 @@ describe(getDirtyPaths.name, () => {
           {
             schema,
             containers: emptyContainers,
+            containerTypes: containerTypesFromContainers(emptyContainers),
             value: [],
           },
           {
@@ -767,6 +792,7 @@ describe(getDirtyPaths.name, () => {
           {
             schema,
             containers: containerContainers,
+            containerTypes: containerTypesFromContainers(containerContainers),
             value: [],
           },
           {
@@ -791,6 +817,7 @@ describe(getDirtyPaths.name, () => {
           {
             schema,
             containers: containerContainers,
+            containerTypes: containerTypesFromContainers(containerContainers),
             value: [],
           },
           {
@@ -832,6 +859,7 @@ describe(getDirtyPaths.name, () => {
           {
             schema,
             containers: containerContainers,
+            containerTypes: containerTypesFromContainers(containerContainers),
             value: [],
           },
           {
@@ -865,6 +893,7 @@ describe(getDirtyPaths.name, () => {
           {
             schema,
             containers: tableContainers,
+            containerTypes: containerTypesFromContainers(tableContainers),
             value: [],
           },
           {

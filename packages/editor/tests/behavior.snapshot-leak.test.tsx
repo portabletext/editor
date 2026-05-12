@@ -47,6 +47,7 @@ describe('Snapshot leak surface', () => {
       'decoratorState',
     ])
     expect(Object.keys(snapshot.context).sort()).toEqual([
+      'containerTypes',
       'containers',
       'converters',
       'keyGenerator',
@@ -93,6 +94,7 @@ describe('Snapshot leak surface', () => {
       'decoratorState',
     ])
     expect(Object.keys(snapshot.context).sort()).toEqual([
+      'containerTypes',
       'containers',
       'converters',
       'keyGenerator',

@@ -18,7 +18,7 @@ type Edge = EditorSelectionPoint | 'array-start' | 'array-end'
 
 type SliceContext = Pick<
   EditorContext,
-  'schema' | 'selection' | 'value' | 'containers'
+  'schema' | 'selection' | 'value' | 'containers' | 'containerTypes'
 > & {keyGenerator?: () => string}
 
 /**

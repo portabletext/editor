@@ -21,6 +21,7 @@ function collectDescendantPaths(
   context: {
     schema: EditorSchema
     containers: ResolvedContainers
+    containerTypes: ReadonlySet<string>
   },
   node: Node,
   parentPath: Path,
@@ -41,7 +42,11 @@ function collectDescendantPaths(
   // For container types, resolve the child array field from the schema
   const scopedName = scopePrefix ? `${scopePrefix}.${node._type}` : node._type
 
-  const arrayField = lookupContainer(context.containers, scopedName)?.field
+  const arrayField = lookupContainer(
+    context.containers,
+    context.containerTypes,
+    scopedName,
+  )?.field
 
   if (arrayField) {
     const fieldValue = (node as Record<string, unknown>)[arrayField.name]
@@ -109,6 +114,7 @@ export function getDirtyPaths(
   context: {
     schema: EditorSchema
     containers: ResolvedContainers
+    containerTypes: ReadonlySet<string>
     value: Array<Node>
   },
   op: Operation,

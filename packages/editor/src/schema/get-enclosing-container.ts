@@ -29,7 +29,11 @@ export function getEnclosingContainer(
       ancestor.node,
       ancestor.path,
     )
-    const container = lookupContainer(snapshot.context.containers, scopedName)
+    const container = lookupContainer(
+      snapshot.context.containers,
+      snapshot.context.containerTypes,
+      scopedName,
+    )
 
     if (!container) {
       continue

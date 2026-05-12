@@ -52,6 +52,7 @@ export function SelectionStateProvider({
           context: {
             schema: snapshot.context.schema,
             containers: slateEditor.containers,
+            containerTypes: slateEditor.containerTypes,
             value: snapshot.context.value,
           },
           blockIndexMap: slateEditor.blockIndexMap,

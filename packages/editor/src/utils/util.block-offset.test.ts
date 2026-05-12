@@ -33,7 +33,12 @@ describe(blockOffsetToSpanSelectionPoint.name, () => {
         expect(
           blockOffsetToSpanSelectionPoint({
             snapshot: {
-              context: {schema, value, containers: new Map()},
+              context: {
+                schema,
+                value,
+                containers: new Map(),
+                containerTypes: new Set<string>(),
+              },
               blockIndexMap: new Map(),
             },
             blockOffset: {
@@ -52,7 +57,12 @@ describe(blockOffsetToSpanSelectionPoint.name, () => {
         expect(
           blockOffsetToSpanSelectionPoint({
             snapshot: {
-              context: {schema, value, containers: new Map()},
+              context: {
+                schema,
+                value,
+                containers: new Map(),
+                containerTypes: new Set<string>(),
+              },
               blockIndexMap: new Map(),
             },
             blockOffset: {
@@ -73,7 +83,12 @@ describe(blockOffsetToSpanSelectionPoint.name, () => {
         expect(
           blockOffsetToSpanSelectionPoint({
             snapshot: {
-              context: {schema, value, containers: new Map()},
+              context: {
+                schema,
+                value,
+                containers: new Map(),
+                containerTypes: new Set<string>(),
+              },
               blockIndexMap: new Map(),
             },
             blockOffset: {
@@ -92,7 +107,12 @@ describe(blockOffsetToSpanSelectionPoint.name, () => {
         expect(
           blockOffsetToSpanSelectionPoint({
             snapshot: {
-              context: {schema, value, containers: new Map()},
+              context: {
+                schema,
+                value,
+                containers: new Map(),
+                containerTypes: new Set<string>(),
+              },
               blockIndexMap: new Map(),
             },
             blockOffset: {
@@ -136,7 +156,12 @@ describe(blockOffsetToSpanSelectionPoint.name, () => {
         expect(
           blockOffsetToSpanSelectionPoint({
             snapshot: {
-              context: {schema, value, containers: new Map()},
+              context: {
+                schema,
+                value,
+                containers: new Map(),
+                containerTypes: new Set<string>(),
+              },
               blockIndexMap: new Map(),
             },
             blockOffset: {
@@ -155,7 +180,12 @@ describe(blockOffsetToSpanSelectionPoint.name, () => {
         expect(
           blockOffsetToSpanSelectionPoint({
             snapshot: {
-              context: {schema, value, containers: new Map()},
+              context: {
+                schema,
+                value,
+                containers: new Map(),
+                containerTypes: new Set<string>(),
+              },
               blockIndexMap: new Map(),
             },
             blockOffset: {
@@ -176,7 +206,12 @@ describe(blockOffsetToSpanSelectionPoint.name, () => {
         expect(
           blockOffsetToSpanSelectionPoint({
             snapshot: {
-              context: {schema, value, containers: new Map()},
+              context: {
+                schema,
+                value,
+                containers: new Map(),
+                containerTypes: new Set<string>(),
+              },
               blockIndexMap: new Map(),
             },
             blockOffset: {
@@ -195,7 +230,12 @@ describe(blockOffsetToSpanSelectionPoint.name, () => {
         expect(
           blockOffsetToSpanSelectionPoint({
             snapshot: {
-              context: {schema, value, containers: new Map()},
+              context: {
+                schema,
+                value,
+                containers: new Map(),
+                containerTypes: new Set<string>(),
+              },
               blockIndexMap: new Map(),
             },
             blockOffset: {
@@ -216,7 +256,12 @@ describe(blockOffsetToSpanSelectionPoint.name, () => {
         expect(
           blockOffsetToSpanSelectionPoint({
             snapshot: {
-              context: {schema, value, containers: new Map()},
+              context: {
+                schema,
+                value,
+                containers: new Map(),
+                containerTypes: new Set<string>(),
+              },
               blockIndexMap: new Map(),
             },
             blockOffset: {
@@ -235,7 +280,12 @@ describe(blockOffsetToSpanSelectionPoint.name, () => {
         expect(
           blockOffsetToSpanSelectionPoint({
             snapshot: {
-              context: {schema, value, containers: new Map()},
+              context: {
+                schema,
+                value,
+                containers: new Map(),
+                containerTypes: new Set<string>(),
+              },
               blockIndexMap: new Map(),
             },
             blockOffset: {
@@ -282,7 +332,12 @@ describe(blockOffsetToSpanSelectionPoint.name, () => {
     expect(
       blockOffsetToSpanSelectionPoint({
         snapshot: {
-          context: {schema, value, containers: new Map()},
+          context: {
+            schema,
+            value,
+            containers: new Map(),
+            containerTypes: new Set<string>(),
+          },
           blockIndexMap: new Map(),
         },
         blockOffset: {
@@ -295,7 +350,12 @@ describe(blockOffsetToSpanSelectionPoint.name, () => {
     expect(
       blockOffsetToSpanSelectionPoint({
         snapshot: {
-          context: {schema, value, containers: new Map()},
+          context: {
+            schema,
+            value,
+            containers: new Map(),
+            containerTypes: new Set<string>(),
+          },
           blockIndexMap: new Map(),
         },
         blockOffset: {
@@ -320,7 +380,12 @@ describe(blockOffsetToSpanSelectionPoint.name, () => {
     expect(
       blockOffsetToSpanSelectionPoint({
         snapshot: {
-          context: {schema, value, containers: new Map()},
+          context: {
+            schema,
+            value,
+            containers: new Map(),
+            containerTypes: new Set<string>(),
+          },
           blockIndexMap: new Map(),
         },
         blockOffset: {
@@ -361,7 +426,12 @@ describe(blockOffsetToSpanSelectionPoint.name, () => {
     expect(
       blockOffsetToSpanSelectionPoint({
         snapshot: {
-          context: {schema, value, containers: new Map()},
+          context: {
+            schema,
+            value,
+            containers: new Map(),
+            containerTypes: new Set<string>(),
+          },
           blockIndexMap: new Map(),
         },
         blockOffset: {

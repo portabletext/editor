@@ -26,6 +26,17 @@ export type EditorContext = {
    * @alpha
    */
   containers: Containers
+  /**
+   * Set of type names that have at least one container registration.
+   * Used by {@link lookupContainer} to short-circuit when a scoped type
+   * name's leaf segment isn't a registered container type.
+   *
+   * Computed at the same construction site as `containers` and rebuilt
+   * whenever the registration set changes.
+   *
+   * @alpha
+   */
+  containerTypes: ReadonlySet<string>
 }
 
 /**
@@ -58,6 +69,7 @@ export function createEditorSnapshot({
 
   const context = {
     containers: editor.containers,
+    containerTypes: editor.containerTypes,
     converters,
     keyGenerator,
     readOnly,

@@ -21,6 +21,7 @@ import {toTextspec} from '../../../test-utils/to-textspec'
 import {getValueAnnotations} from '../../../test-utils/value-annotations'
 import {IS_MAC} from '../../internal-utils/is-hotkey'
 import {safeParse} from '../../internal-utils/safe-json'
+import {containerTypesFromContainers} from '../../schema/resolve-containers'
 import {createTestEditor, createTestEditors} from '../../test/vitest'
 import {
   parseBlocks,
@@ -167,7 +168,15 @@ async function assertEditorState(
     // Accept any boundary-equivalent selection that produces the expected
     // textspec.
     for (const variant of boundaryEquivalentSelections(
-      {context: {schema, containers, value}, blockIndexMap: new Map()},
+      {
+        context: {
+          schema,
+          containers,
+          containerTypes: containerTypesFromContainers(containers),
+          value,
+        },
+        blockIndexMap: new Map(),
+      },
       selection,
     )) {
       if (renderActual(variant) === expected) {

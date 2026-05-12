@@ -2,6 +2,7 @@ import {isSpan, isTextBlock, type PortableTextBlock} from '@portabletext/schema'
 import type {EditorContext} from '../src/editor/editor-snapshot'
 import {safeStringify} from '../src/internal-utils/safe-json'
 import {lookupContainer} from '../src/schema/lookup-container'
+import {containerTypesFromContainers} from '../src/schema/resolve-containers'
 import type {Path, PathSegment} from '../src/slate/interfaces/path'
 import type {EditorSelection, EditorSelectionPoint} from '../src/types/editor'
 import {collapseSelection} from './collapse-selection'
@@ -57,7 +58,11 @@ function walkBlocks(
     if (!containerScope) {
       continue
     }
-    const container = lookupContainer(context.containers, containerScope)
+    const container = lookupContainer(
+      context.containers,
+      containerTypesFromContainers(context.containers),
+      containerScope,
+    )
     if (!container) {
       continue
     }

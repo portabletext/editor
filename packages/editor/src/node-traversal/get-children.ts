@@ -66,6 +66,7 @@ export function getNodeChildren(
   context: {
     schema: EditorSchema
     containers: Containers
+    containerTypes: ReadonlySet<string>
   },
   node: Node | {value: Array<Node>},
   scopePath: string,
@@ -90,7 +91,11 @@ export function getNodeChildren(
   if (isObjectNode(context, node)) {
     const scopedKey = scopePath ? `${scopePath}.${node._type}` : node._type
 
-    const arrayField = lookupContainer(context.containers, scopedKey)?.field
+    const arrayField = lookupContainer(
+      context.containers,
+      context.containerTypes,
+      scopedKey,
+    )?.field
 
     if (!arrayField) {
       return undefined

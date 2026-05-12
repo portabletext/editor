@@ -529,7 +529,11 @@ function clearContainerContents(
   }
 
   const scopedName = getContainerScopedName(editor, node, containerPath)
-  const container = lookupContainer(editor.containers, scopedName)
+  const container = lookupContainer(
+    editor.containers,
+    editor.containerTypes,
+    scopedName,
+  )
   if (!container) {
     return
   }

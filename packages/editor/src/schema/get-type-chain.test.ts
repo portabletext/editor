@@ -5,7 +5,11 @@ import {defineContainer} from '../renderers/renderer.types'
 import type {Node} from '../slate/interfaces/node'
 import {getTypeChain} from './get-type-chain'
 import {makeContainerConfig} from './make-container-config'
-import {resolveContainers, type Containers} from './resolve-containers'
+import {
+  containerTypesFromContainers,
+  resolveContainers,
+  type Containers,
+} from './resolve-containers'
 
 const schemaDefinition = defineSchema({
   blockObjects: [
@@ -42,7 +46,12 @@ describe(getTypeChain.name, () => {
       } as unknown as Node,
     ]
     const context = {
-      context: {schema, containers, value},
+      context: {
+        schema,
+        containers,
+        containerTypes: containerTypesFromContainers(containers),
+        value,
+      },
       blockIndexMap: new Map(),
     }
     const path = [{_key: 'b1'}, 'children', {_key: 's1'}]
@@ -70,7 +79,12 @@ describe(getTypeChain.name, () => {
       } as unknown as Node,
     ]
     const context = {
-      context: {schema, containers, value},
+      context: {
+        schema,
+        containers,
+        containerTypes: containerTypesFromContainers(containers),
+        value,
+      },
       blockIndexMap: new Map(),
     }
     const path = [
@@ -91,7 +105,12 @@ describe(getTypeChain.name, () => {
   test('root void block object: ["image"]', () => {
     const value: Array<Node> = [{_type: 'image', _key: 'i1'} as unknown as Node]
     const context = {
-      context: {schema, containers, value},
+      context: {
+        schema,
+        containers,
+        containerTypes: containerTypesFromContainers(containers),
+        value,
+      },
       blockIndexMap: new Map(),
     }
     const entry = getNode(context, [{_key: 'i1'}])!

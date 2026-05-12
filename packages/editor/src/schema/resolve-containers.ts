@@ -292,3 +292,48 @@ function synthesizeBlockChildrenField(schema: EditorSchema): ChildArrayField {
   }
   return {name: 'children', type: 'array', of: ofMembers}
 }
+
+/**
+ * Derive the set of type names that have at least one container
+ * registration. A scoped type name whose leaf segment isn't in this set
+ * provably cannot match any registered container, so
+ * {@link lookupContainer} can short-circuit before running the
+ * scope-pattern fallback.
+ *
+ * Computed at construction time from the same configs that drive
+ * {@link resolveContainers}. Rebuilt whenever the registration set
+ * changes (i.e. alongside the resolved containers map).
+ */
+export function resolveContainerTypes(
+  containerConfigs: Map<string, ContainerConfig>,
+): ReadonlySet<string> {
+  const types = new Set<string>()
+  for (const config of containerConfigs.values()) {
+    const segments = config.parsedScope.segments
+    const leafSegment = segments[segments.length - 1]
+    if (leafSegment) {
+      types.add(leafSegment.type)
+    }
+  }
+  return types
+}
+
+/**
+ * Derive the set of container leaf types from a resolved containers map.
+ * Use this when you have the resolved `Containers` but not the original
+ * `ContainerConfig` map (mostly test utilities and fixture construction).
+ * Production callers should consume the precomputed set carried alongside
+ * `Containers` on the snapshot context.
+ *
+ * @internal
+ */
+export function containerTypesFromContainers(
+  containers: Containers,
+): ReadonlySet<string> {
+  const types = new Set<string>()
+  for (const scopedName of containers.keys()) {
+    const dotIndex = scopedName.lastIndexOf('.')
+    types.add(dotIndex === -1 ? scopedName : scopedName.slice(dotIndex + 1))
+  }
+  return types
+}

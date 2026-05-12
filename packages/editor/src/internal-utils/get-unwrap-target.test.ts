@@ -5,7 +5,10 @@ import type {
   ContainerDefinition,
 } from '../renderers/renderer.types'
 import {makeContainerConfig} from '../schema/make-container-config'
-import {resolveContainers} from '../schema/resolve-containers'
+import {
+  containerTypesFromContainers,
+  resolveContainers,
+} from '../schema/resolve-containers'
 import {getUnwrapTarget} from './get-unwrap-target'
 
 const testRender: ContainerDefinition['render'] = ({children}) => children
@@ -67,6 +70,7 @@ describe(getUnwrapTarget.name, () => {
           context: {
             schema,
             containers,
+            containerTypes: containerTypesFromContainers(containers),
             value: [
               {
                 _type: 'cell',
@@ -192,6 +196,7 @@ describe(getUnwrapTarget.name, () => {
           context: {
             schema,
             containers,
+            containerTypes: containerTypesFromContainers(containers),
             value: [
               {
                 _type: 'table',
@@ -322,6 +327,7 @@ describe(getUnwrapTarget.name, () => {
           context: {
             schema,
             containers,
+            containerTypes: containerTypesFromContainers(containers),
             value: [
               {
                 _type: 'row',
@@ -411,6 +417,7 @@ describe(getUnwrapTarget.name, () => {
           context: {
             schema,
             containers,
+            containerTypes: containerTypesFromContainers(containers),
             value: [
               {
                 _type: 'callout',
@@ -493,6 +500,7 @@ describe(getUnwrapTarget.name, () => {
           context: {
             schema,
             containers,
+            containerTypes: containerTypesFromContainers(containers),
             value: [
               {
                 _type: 'cell',
@@ -580,6 +588,7 @@ describe(getUnwrapTarget.name, () => {
           context: {
             schema,
             containers,
+            containerTypes: containerTypesFromContainers(containers),
             value: [
               {
                 _type: 'cell',
@@ -666,6 +675,7 @@ describe(getUnwrapTarget.name, () => {
           context: {
             schema,
             containers,
+            containerTypes: containerTypesFromContainers(containers),
             value: [
               {
                 _type: 'cell',
@@ -752,6 +762,7 @@ describe(getUnwrapTarget.name, () => {
           context: {
             schema,
             containers,
+            containerTypes: containerTypesFromContainers(containers),
             value: [
               {
                 _type: 'row',
@@ -873,6 +884,7 @@ describe(getUnwrapTarget.name, () => {
           context: {
             schema,
             containers,
+            containerTypes: containerTypesFromContainers(containers),
             value: [
               {
                 _type: 'cell',
@@ -945,6 +957,7 @@ describe(getUnwrapTarget.name, () => {
           context: {
             schema,
             containers,
+            containerTypes: containerTypesFromContainers(containers),
             value: [
               {
                 _type: 'callout',

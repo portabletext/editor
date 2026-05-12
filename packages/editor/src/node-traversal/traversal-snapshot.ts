@@ -12,6 +12,7 @@ export type TraversalSnapshot = {
   context: {
     schema: EditorSchema
     containers: Containers
+    containerTypes: ReadonlySet<string>
     value: Array<Node>
   }
   blockIndexMap: Map<string, number>

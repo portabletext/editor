@@ -263,6 +263,7 @@ describe('operationToPatches', () => {
           context: {
             schema: blockObjectSchema,
             containers: new Map(),
+            containerTypes: new Set<string>(),
             value: blockObjectChildren,
           },
           blockIndexMap: new Map(),

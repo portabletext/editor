@@ -15,6 +15,7 @@ import type {
 } from '@textspec/notation'
 import {parse} from '@textspec/notation'
 import {lookupContainer} from '../src/schema/lookup-container'
+import {containerTypesFromContainers} from '../src/schema/resolve-containers'
 import type {Containers} from '../src/schema/resolve-containers'
 import type {EditorSelection, EditorSelectionPoint} from '../src/types/editor'
 
@@ -384,7 +385,11 @@ function resolveContainerScopePath(
   }
 
   // Nested: look through parent container's `of` array
-  const parentField = lookupContainer(containers, parentScopePath)?.field
+  const parentField = lookupContainer(
+    containers,
+    containerTypesFromContainers(containers),
+    parentScopePath,
+  )?.field
 
   if (!parentField) {
     return undefined
@@ -394,7 +399,13 @@ function resolveContainerScopePath(
     const memberType = ofMember.name ?? ofMember.type
     if (memberType.toUpperCase() === textspecType) {
       const childScopePath = `${parentScopePath}.${memberType}`
-      if (lookupContainer(containers, childScopePath)) {
+      if (
+        lookupContainer(
+          containers,
+          containerTypesFromContainers(containers),
+          childScopePath,
+        )
+      ) {
         return childScopePath
       }
     }
@@ -410,7 +421,11 @@ function convertContainerToPTE(
   keyGenerator: () => string,
   scopePath: string,
 ): PortableTextObject {
-  const containerField = lookupContainer(containers, scopePath)?.field
+  const containerField = lookupContainer(
+    containers,
+    containerTypesFromContainers(containers),
+    scopePath,
+  )?.field
 
   if (!containerField) {
     return {

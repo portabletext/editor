@@ -3,6 +3,7 @@ import {describe, expect, test} from 'vitest'
 import {createNodeTraversalTestbed} from '../../node-traversal/node-traversal-testbed'
 import type {ContainerConfig} from '../../renderers/renderer.types'
 import type {ChildArrayField} from '../../schema/resolve-containers'
+import {containerTypesFromContainers} from '../../schema/resolve-containers'
 import {parseScope} from '../../scope/parse-scope'
 import {isVoidNode} from './is-void-node'
 
@@ -219,7 +220,12 @@ describe(isVoidNode.name, () => {
     ])
 
     const context = {
-      context: {schema, containers, value: [table]},
+      context: {
+        schema,
+        containers,
+        containerTypes: containerTypesFromContainers(containers),
+        value: [table],
+      },
       blockIndexMap: new Map(),
     }
 
@@ -291,7 +297,12 @@ describe(isVoidNode.name, () => {
     ])
 
     const context = {
-      context: {schema, containers, value: [gallery]},
+      context: {
+        schema,
+        containers,
+        containerTypes: containerTypesFromContainers(containers),
+        value: [gallery],
+      },
       blockIndexMap: new Map(),
     }
 
@@ -330,7 +341,11 @@ describe(isVoidNode.name, () => {
     test('all object nodes are void when no containers are registered', () => {
       const emptyContext = {
         ...testbed.snapshot,
-        context: {...testbed.snapshot.context, containers: new Map()},
+        context: {
+          ...testbed.snapshot.context,
+          containers: new Map(),
+          containerTypes: new Set<string>(),
+        },
       }
 
       expect(isVoidNode(emptyContext, testbed.image, [{_key: 'k4'}])).toBe(true)
@@ -347,7 +362,11 @@ describe(isVoidNode.name, () => {
     test('text blocks are never void regardless of container registration', () => {
       const emptyContext = {
         ...testbed.snapshot,
-        context: {...testbed.snapshot.context, containers: new Map()},
+        context: {
+          ...testbed.snapshot.context,
+          containers: new Map(),
+          containerTypes: new Set<string>(),
+        },
       }
 
       expect(isVoidNode(emptyContext, testbed.textBlock1, [{_key: 'k3'}])).toBe(

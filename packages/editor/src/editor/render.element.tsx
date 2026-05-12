@@ -56,9 +56,11 @@ export function RenderElement(props: {
     (state) =>
       // Internal cast: the public `Container` view is narrowed; runtime
       // values are the full `ContainerConfig` carrying parsedScope/render.
-      lookupContainer(state.context.containers, scopedTypeName) as
-        | ContainerConfig
-        | undefined,
+      lookupContainer(
+        state.context.containers,
+        state.context.containerTypes,
+        scopedTypeName,
+      ) as ContainerConfig | undefined,
   )
 
   const leafConfig = useLeafConfig(props.element, props.path)

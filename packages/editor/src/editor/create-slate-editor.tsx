@@ -25,6 +25,7 @@ export function createSlateEditor(
     context: {
       schema: context.schema,
       containers: context.containers,
+      containerTypes: context.containerTypes,
       value: [],
       keyGenerator: context.keyGenerator,
     },
@@ -36,6 +37,7 @@ export function createSlateEditor(
   editor.schema = context.schema
   editor.keyGenerator = context.keyGenerator
   editor.containers = new Map()
+  editor.containerTypes = new Set()
   editor.leafs = new Map()
 
   editor.decoratedRanges = []

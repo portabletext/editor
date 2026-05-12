@@ -1,6 +1,7 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
+import {containerTypesFromContainers} from '../../schema/resolve-containers'
 import type {Node} from '../interfaces/node'
 import {unhangRange} from './unhang-range'
 
@@ -20,7 +21,12 @@ function buildContext(...value: Array<Node>) {
     blockIndexMap.set((node as {_key: string})._key, index)
   })
   return {
-    context: {schema, containers: new Map(), value},
+    context: {
+      schema,
+      containers: new Map(),
+      containerTypes: new Set<string>(),
+      value,
+    },
     blockIndexMap,
   }
 }
@@ -347,7 +353,12 @@ function buildContainerContext(...value: Array<Node>) {
     blockIndexMap.set((node as {_key: string})._key, index)
   })
   return {
-    context: {schema, containers, value},
+    context: {
+      schema,
+      containers,
+      containerTypes: containerTypesFromContainers(containers),
+      value,
+    },
     blockIndexMap,
   }
 }

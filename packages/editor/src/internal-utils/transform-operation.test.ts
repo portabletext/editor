@@ -24,6 +24,7 @@ function createMockEditor(
     selection: selection ?? null,
     schema: testSchema,
     containers: new Map(),
+    containerTypes: new Set<string>(),
   } as unknown as PortableTextSlateEditor
 }
 
