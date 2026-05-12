@@ -69,7 +69,17 @@ export function defineInputRuleBehavior(config: {
       const foundActions: Array<BehaviorAction> = []
 
       for (const rule of config.rules) {
-        const matcher = new RegExp(rule.on.source, 'gd')
+        // Preserve a known-safe subset of flags from `rule.on`: `i` for
+        // case-insensitive matches, `m` for multi-line anchors, `s` for
+        // dot-matches-newline, `u` for Unicode property escapes. The plugin
+        // sets `g` (to drive `matchAll`) and `d` (to read match indices)
+        // itself, so user-set `g`/`d` are dropped to avoid `Invalid flags`
+        // and keep the loop's contract. `y` (sticky) is also dropped: the
+        // plugin's `matchAll` loop slices and re-feeds `newText` after each
+        // match, which is incompatible with sticky's `lastIndex`-anchored
+        // semantics.
+        const safeUserFlags = rule.on.flags.replace(/[^imsu]/g, '')
+        const matcher = new RegExp(rule.on.source, `gd${safeUserFlags}`)
 
         while (true) {
           // Find matches in the text after the insertion
