@@ -79,10 +79,7 @@ describe('event.select', () => {
     await initialSelectionPromise
 
     const beforeFooSelection = getSelectionBeforeText(
-      {
-        schema: editor.getSnapshot().context.schema,
-        value: editor.getSnapshot().context.value,
-      },
+      editor.getSnapshot().context,
       'foo',
     )
     editor.send({

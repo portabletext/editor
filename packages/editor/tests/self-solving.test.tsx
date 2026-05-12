@@ -90,7 +90,11 @@ describe('Feature: Self-solving', () => {
     editor.send({
       type: 'select',
       at: getTextSelection(
-        {schema: compileSchema(schemaDefinition), value: initialValue},
+        {
+          schema: compileSchema(schemaDefinition),
+          value: initialValue,
+          containers: new Map(),
+        },
         'foo',
       ),
     })
