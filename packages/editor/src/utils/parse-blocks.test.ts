@@ -971,3 +971,125 @@ describe('container-aware parsing', () => {
     })
   })
 })
+
+describe('container-aware parsing (nested containers)', () => {
+  const recursiveListSchema = defineSchema({
+    blockObjects: [
+      {
+        name: 'list',
+        fields: [
+          {name: 'kind', type: 'string'},
+          {
+            name: 'items',
+            type: 'array',
+            of: [
+              {
+                type: 'object',
+                name: 'list-item',
+                fields: [
+                  {
+                    name: 'content',
+                    type: 'array',
+                    of: [{type: 'block'}, {type: 'list'}],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  })
+
+  test('preserves a nested list inside a list-item at depth 3', () => {
+    const schema = compileSchema(recursiveListSchema)
+    const parsed = parseBlock({
+      block: {
+        _type: 'list',
+        _key: 'L0',
+        kind: 'number',
+        items: [
+          {
+            _type: 'list-item',
+            _key: 'I0',
+            content: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [
+                  {_type: 'span', _key: 's0', text: 'outer', marks: []},
+                ],
+              },
+              {
+                _type: 'list',
+                _key: 'L1',
+                kind: 'bullet',
+                items: [
+                  {
+                    _type: 'list-item',
+                    _key: 'I1',
+                    content: [
+                      {
+                        _type: 'block',
+                        _key: 'b1',
+                        children: [
+                          {_type: 'span', _key: 's1', text: 'inner', marks: []},
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      keyGenerator: createTestKeyGenerator(),
+      options: {
+        normalize: false,
+        removeUnusedMarkDefs: false,
+        validateFields: true,
+      },
+      schema,
+    })
+
+    expect(parsed).toEqual({
+      _type: 'list',
+      _key: 'L0',
+      kind: 'number',
+      items: [
+        {
+          _type: 'list-item',
+          _key: 'I0',
+          content: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [{_type: 'span', _key: 's0', text: 'outer', marks: []}],
+            },
+            {
+              _type: 'list',
+              _key: 'L1',
+              kind: 'bullet',
+              items: [
+                {
+                  _type: 'list-item',
+                  _key: 'I1',
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: 'b1',
+                      children: [
+                        {_type: 'span', _key: 's1', text: 'inner', marks: []},
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    })
+  })
+})
