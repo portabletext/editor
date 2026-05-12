@@ -1,5 +1,6 @@
 import {isTextBlock, type PortableTextTextBlock} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
+import {getEnclosingBlock} from '../node-traversal/get-enclosing-block'
 import {getNodes} from '../node-traversal/get-nodes'
 import type {Path} from '../slate/interfaces/path'
 import {getSelectionEndPoint} from '../utils/util.get-selection-end-point'
@@ -28,6 +29,22 @@ export const getSelectedTextBlocks: EditorSelector<
 
   if (!startPoint || !endPoint) {
     return []
+  }
+
+  // Fast path: when both endpoints sit inside the same text block - the
+  // common case for toolbar state on a collapsed or single-block
+  // selection - skip the range walk entirely. The range walk visits
+  // every descendant in document order between the endpoints; that's
+  // O(tree) work and gets very expensive in deeply nested containers.
+  const startBlock = getEnclosingBlock(snapshot, startPoint.path)
+  const endBlock = getEnclosingBlock(snapshot, endPoint.path)
+  if (
+    startBlock &&
+    endBlock &&
+    startBlock.node._key === endBlock.node._key &&
+    isTextBlock(snapshot.context, startBlock.node)
+  ) {
+    return [{node: startBlock.node, path: startBlock.path}]
   }
 
   const result: Array<{node: PortableTextTextBlock; path: Path}> = []

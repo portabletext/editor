@@ -115,8 +115,12 @@ function* getNodesSimple(
 /**
  * Compare two keyed paths in document order. Returns -1, 0, or 1.
  *
- * Uses `blockIndexMap` for O(1) lookup at the root level. Falls back to
- * sibling-array lookup for deeper segments.
+ * Descends both paths from the root in a single pass, advancing
+ * `currentNode` and `currentChildren` together so each level costs
+ * one keyed-segment scan instead of an O(depth) walk from root.
+ *
+ * Uses `blockIndexMap` for O(1) lookup at the root level. Deeper
+ * levels fall back to a linear scan of the current sibling array.
  */
 function comparePathsInTree(
   snapshot: TraversalSnapshot,
@@ -126,7 +130,9 @@ function comparePathsInTree(
   const keysA = pathA.filter(isKeyedSegment)
   const keysB = pathB.filter(isKeyedSegment)
 
-  let currentPath: Path = []
+  const {context} = snapshot
+  let currentChildren: Array<Node> = context.value
+  let scopePath = ''
   let isRootLevel = true
 
   const minDepth = Math.min(keysA.length, keysB.length)
@@ -136,15 +142,27 @@ function comparePathsInTree(
     const keyB = keysB[depth]!
 
     if (keyA._key === keyB._key) {
+      // Same node at this depth: descend into its children for the next
+      // iteration. The root level can short-circuit via blockIndexMap;
+      // deeper levels scan the current sibling array.
+      let matchedNode: Node | undefined
       if (isRootLevel && snapshot.blockIndexMap.has(keyA._key)) {
-        currentPath = [keyA]
-      } else {
-        const children = getChildren(snapshot, currentPath)
-        const child = children.find((c) => c.node._key === keyA._key)
-        if (child) {
-          currentPath = child.path
+        const index = snapshot.blockIndexMap.get(keyA._key)
+        if (index !== undefined) {
+          matchedNode = currentChildren[index]
         }
+      } else {
+        matchedNode = currentChildren.find((c) => c._key === keyA._key)
       }
+      if (!matchedNode) {
+        return 0
+      }
+      const next = getNodeChildren(context, matchedNode, scopePath)
+      if (!next) {
+        return 0
+      }
+      currentChildren = next.children
+      scopePath = next.scopePath
       isRootLevel = false
       continue
     }
@@ -163,16 +181,14 @@ function comparePathsInTree(
       }
     }
 
-    const siblings = getChildren(snapshot, currentPath)
     let indexA = -1
     let indexB = -1
-
-    for (let i = 0; i < siblings.length; i++) {
-      const sibling = siblings[i]!
-      if (sibling.node._key === keyA._key) {
+    for (let i = 0; i < currentChildren.length; i++) {
+      const sibling = currentChildren[i]!
+      if (sibling._key === keyA._key) {
         indexA = i
       }
-      if (sibling.node._key === keyB._key) {
+      if (sibling._key === keyB._key) {
         indexB = i
       }
       if (indexA !== -1 && indexB !== -1) {
