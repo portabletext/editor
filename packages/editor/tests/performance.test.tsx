@@ -406,6 +406,9 @@ describe('Performance', () => {
         expect(locator.getByTestId('li-item')).toBeInTheDocument(),
       )
 
+      // Reset matchScope instrumentation (no-op when __INSTRUMENT=false).
+      ;(globalThis as {__matchScopeReset?: () => void}).__matchScopeReset?.()
+
       // Per-indent duration. We measure from editor.send through to the
       // DOM showing the new nesting depth, so React commit + selectors
       // are included.
@@ -439,6 +442,13 @@ describe('Performance', () => {
       console.warn(
         `Set deepening nested list ${INDENTS}x: total ${total.toFixed(0)}ms, max ${max.toFixed(0)}ms, last-5 avg ${last5Avg.toFixed(0)}ms`,
       )
+
+      const stats = (
+        globalThis as {__matchScopeStats?: () => unknown}
+      ).__matchScopeStats?.()
+      if (stats) {
+        console.warn('matchScope stats:', JSON.stringify(stats))
+      }
     }, 60_000)
   })
 
