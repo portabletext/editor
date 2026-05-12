@@ -1,5 +1,4 @@
 import {createContext, type Context} from 'react'
-import {globalScope} from './global-scope'
 
 /**
  * As `@portabletext/editor` is declared as a dependency, and may be
@@ -33,7 +32,8 @@ export function createGloballyScopedContext<
     return createContext<ContextType>(defaultValue)
   }
 
-  globalScope[symbol] = globalScope[symbol] ?? createContext<T>(defaultValue)
+  const scope = globalThis as any
+  scope[symbol] = scope[symbol] ?? createContext<T>(defaultValue)
 
-  return globalScope[symbol]
+  return scope[symbol]
 }
