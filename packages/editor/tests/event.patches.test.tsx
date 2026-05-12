@@ -2947,6 +2947,186 @@ describe('event.patches', () => {
         })
       })
     })
+
+    test('Scenario: `before` on numeric index 0 prepends to a non-empty array', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const blockAKey = keyGenerator()
+      const spanAKey = keyGenerator()
+      const blockBKey = keyGenerator()
+      const spanBKey = keyGenerator()
+      const newBlockKey = keyGenerator()
+      const newSpanKey = keyGenerator()
+
+      const blockA = {
+        _key: blockAKey,
+        _type: 'block',
+        children: [{_key: spanAKey, _type: 'span', text: 'A', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      }
+      const blockB = {
+        _key: blockBKey,
+        _type: 'block',
+        children: [{_key: spanBKey, _type: 'span', text: 'B', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      }
+      const newBlock = {
+        _key: newBlockKey,
+        _type: 'block',
+        children: [{_key: newSpanKey, _type: 'span', text: 'new', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      }
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: defineSchema({}),
+        initialValue: [blockA, blockB],
+      })
+
+      editor.send({
+        type: 'patches',
+        patches: [
+          {
+            origin: 'remote',
+            type: 'insert',
+            position: 'before',
+            path: [0],
+            items: [newBlock],
+          },
+        ],
+        snapshot: [newBlock, blockA, blockB],
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          newBlock,
+          blockA,
+          blockB,
+        ])
+      })
+    })
+
+    test('Scenario: `after` on a numeric index inserts after the indexed sibling', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const blockAKey = keyGenerator()
+      const spanAKey = keyGenerator()
+      const blockBKey = keyGenerator()
+      const spanBKey = keyGenerator()
+      const newBlockKey = keyGenerator()
+      const newSpanKey = keyGenerator()
+
+      const blockA = {
+        _key: blockAKey,
+        _type: 'block',
+        children: [{_key: spanAKey, _type: 'span', text: 'A', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      }
+      const blockB = {
+        _key: blockBKey,
+        _type: 'block',
+        children: [{_key: spanBKey, _type: 'span', text: 'B', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      }
+      const newBlock = {
+        _key: newBlockKey,
+        _type: 'block',
+        children: [{_key: newSpanKey, _type: 'span', text: 'new', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      }
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: defineSchema({}),
+        initialValue: [blockA, blockB],
+      })
+
+      editor.send({
+        type: 'patches',
+        patches: [
+          {
+            origin: 'remote',
+            type: 'insert',
+            position: 'after',
+            path: [0],
+            items: [newBlock],
+          },
+        ],
+        snapshot: [blockA, newBlock, blockB],
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          blockA,
+          newBlock,
+          blockB,
+        ])
+      })
+    })
+
+    test('Scenario: `before` on a numeric index inserts before the indexed sibling', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const blockAKey = keyGenerator()
+      const spanAKey = keyGenerator()
+      const blockBKey = keyGenerator()
+      const spanBKey = keyGenerator()
+      const newBlockKey = keyGenerator()
+      const newSpanKey = keyGenerator()
+
+      const blockA = {
+        _key: blockAKey,
+        _type: 'block',
+        children: [{_key: spanAKey, _type: 'span', text: 'A', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      }
+      const blockB = {
+        _key: blockBKey,
+        _type: 'block',
+        children: [{_key: spanBKey, _type: 'span', text: 'B', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      }
+      const newBlock = {
+        _key: newBlockKey,
+        _type: 'block',
+        children: [{_key: newSpanKey, _type: 'span', text: 'new', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      }
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: defineSchema({}),
+        initialValue: [blockA, blockB],
+      })
+
+      editor.send({
+        type: 'patches',
+        patches: [
+          {
+            origin: 'remote',
+            type: 'insert',
+            position: 'before',
+            path: [1],
+            items: [newBlock],
+          },
+        ],
+        snapshot: [blockA, newBlock, blockB],
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          blockA,
+          newBlock,
+          blockB,
+        ])
+      })
+    })
   })
 
   describe('`setIfMissing`', () => {
