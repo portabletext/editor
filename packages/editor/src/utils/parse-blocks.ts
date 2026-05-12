@@ -708,13 +708,20 @@ function parseObject({
 
 /**
  * Parse the value of an array field whose `of` declares what's allowed at
- * that position. If any member is `{type: 'block'}`, the field is a PTE
- * container: recurse via `parseBlocks` in a child `Schema`. Otherwise it
- * is a structural array of non-PTE members (rows, cells, scalars, objects
- * that sit between containers and the actual text blocks) -- recurse into
- * each typed-object member so deeper PTE arrays still get parsed. The
- * ancestor-fields map carries inline type declarations down to descendants
- * so bare references like `{type: 'list'}` resolve to the inline shape.
+ * that position. Each item is dispatched per its own type:
+ *
+ * - Text blocks (`_type === schema.block.name`) are parsed against a child
+ *   sub-schema derived from the `{type: 'block'}` member of `of` (which
+ *   carries the styles, decorators, annotations, lists, and inline objects
+ *   allowed at this position).
+ *
+ * - Block objects (and structural objects sitting between containers and
+ *   text blocks) are parsed via `resolveOfMember` against the `of` array,
+ *   with `ancestorFields` carrying inline type declarations down to bare
+ *   references like `{type: 'list'}`. This lets nested containers resolve
+ *   to their inline shapes at any depth.
+ *
+ * Items that don't resolve are passed through unchanged.
  */
 function parseContainerFieldValue({
   schema,
@@ -732,14 +739,20 @@ function parseContainerFieldValue({
   options: {validateFields: boolean; normalize?: boolean}
 }): Array<unknown> {
   const hasBlockMember = of.some((member) => member.type === 'block')
+  const childBlockSubSchema = hasBlockMember
+    ? getSubSchema(schema, of)
+    : undefined
 
-  if (hasBlockMember) {
-    const childSubSchema = getSubSchema(schema, of)
-    return value.flatMap((block) => {
-      const parsed = parseBlockInternal({
-        schema: childSubSchema,
+  return value.flatMap((item) => {
+    if (!isTypedObject(item)) {
+      return [item]
+    }
+
+    if (childBlockSubSchema && item._type === childBlockSubSchema.block.name) {
+      const parsed = parseTextBlock({
+        block: item,
+        schema: childBlockSubSchema,
         keyGenerator,
-        block,
         options: {
           normalize: false,
           removeUnusedMarkDefs: false,
@@ -747,13 +760,8 @@ function parseContainerFieldValue({
         },
       })
       return parsed ? [parsed] : []
-    })
-  }
-
-  return value.flatMap((item) => {
-    if (!isTypedObject(item)) {
-      return [item]
     }
+
     const schemaType = resolveOfMember(of, item._type, schema, ancestorFields)
     if (!schemaType) {
       return [item]
