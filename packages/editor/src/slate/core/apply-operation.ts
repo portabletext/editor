@@ -72,7 +72,7 @@ export function applyOperation(editor: Editor, op: Operation): void {
           }
           index = op.position === 'after' ? siblingIndex + 1 : siblingIndex
         } else if (typeof lastSegment === 'number') {
-          index = lastSegment
+          index = op.position === 'after' ? lastSegment + 1 : lastSegment
         } else {
           throw new Error(
             `Cannot apply an "insert" operation at path [${path}] because the last segment is a field name.`,
