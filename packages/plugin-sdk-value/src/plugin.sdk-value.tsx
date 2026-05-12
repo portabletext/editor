@@ -102,6 +102,15 @@ export function arrayifyPath(pathExpr: string): Path {
   })
 }
 
+/**
+ * Convert wire-shape patches produced by `@sanity/diff-patch`'s
+ * `diffValue` into the array-path `@portabletext/patches` shape
+ * accepted by the editor's `patches` event. Useful when sourcing
+ * value changes from outside the editor - for example a markdown
+ * source pane that round-trips back into the editor via diff-patch.
+ *
+ * @beta
+ */
 export function convertPatches(patches: SanityPatchOperations[]): PtePatch[] {
   return patches.flatMap((p) => {
     return Object.entries(p).flatMap(([type, values]): PtePatch[] => {
