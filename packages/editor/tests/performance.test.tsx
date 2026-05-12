@@ -271,6 +271,177 @@ describe('Performance', () => {
     }, 30_000)
   })
 
+  describe('Deep nested containers', () => {
+    // Recursive list schema: a list contains list-items, each list-item's
+    // content can hold more lists. This matches the structured-lists shape
+    // that surfaced the O(D^2) cost in the wild (holding Tab in a nested
+    // list grows path depth by 2 per indent).
+    const schemaDefinition = defineSchema({
+      blockObjects: [
+        {
+          name: 'list',
+          fields: [
+            {
+              name: 'items',
+              type: 'array',
+              of: [
+                {
+                  type: 'object',
+                  name: 'list-item',
+                  fields: [
+                    {
+                      name: 'content',
+                      type: 'array',
+                      of: [{type: 'block'}, {type: 'list'}],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    })
+    const listContainer = defineContainer<typeof schemaDefinition>({
+      scope: '$..list',
+      field: 'items',
+      render: ({children, node}) => (
+        <ul data-testid={`list-${node._key}`}>{children}</ul>
+      ),
+    })
+    const listItemContainer = defineContainer<typeof schemaDefinition>({
+      scope: '$..list.list-item',
+      field: 'content',
+      render: ({children, node}) => (
+        <li data-testid={`li-${node._key}`}>{children}</li>
+      ),
+    })
+
+    // Build a recursive list value of `depth` levels, ending in a single
+    // text block at the deepest list-item.
+    function buildNestedList(depth: number): Record<string, unknown> {
+      let inner: Record<string, unknown> = {
+        _type: 'block',
+        _key: 'b0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 's0', text: 'leaf', marks: []}],
+      }
+      for (let level = depth - 1; level >= 0; level--) {
+        inner = {
+          _type: 'list',
+          _key: `l${level}`,
+          items: [
+            {
+              _type: 'list-item',
+              _key: `li${level}`,
+              content: [inner],
+            },
+          ],
+        }
+      }
+      return inner
+    }
+
+    // Drive N synthetic `set` events that replace the focused container's
+    // content with a progressively deeper recursive-list value. The work
+    // per iteration exercises the engine's set+normalize+render cost on
+    // increasingly deep paths, which is the workload the O(D^2) -> O(D)
+    // traversal fixes target. This is NOT a model of keyboard-driven tab
+    // behavior - real tab moves one node per keystroke through plugin
+    // behaviors. Use this scenario as a regression guard on set-on-deep-
+    // paths, not as a predictor for keystroke-driven workloads.
+    test('Setting progressively deeper nested list values', async () => {
+      const INDENTS = 30
+
+      // Build a starting value with two sibling list-items at top level,
+      // so the second one can be sunk into the first.
+      const initialValue = [
+        {
+          _type: 'list',
+          _key: 'root',
+          items: [
+            {
+              _type: 'list-item',
+              _key: 'sink',
+              content: [
+                {
+                  _type: 'block',
+                  _key: 'sink-text',
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: 'sink-span', text: 'sink', marks: []},
+                  ],
+                },
+              ],
+            },
+            {
+              _type: 'list-item',
+              _key: 'item',
+              content: [
+                {
+                  _type: 'block',
+                  _key: 'item-text',
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: 'item-span', text: 'item', marks: []},
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ]
+
+      const {editor, locator} = await createTestEditor({
+        schemaDefinition,
+        initialValue: initialValue as never,
+        children: (
+          <ContainerPlugin containers={[listContainer, listItemContainer]} />
+        ),
+      })
+      await vi.waitFor(() =>
+        expect(locator.getByTestId('li-item')).toBeInTheDocument(),
+      )
+
+      // Per-indent duration. We measure from editor.send through to the
+      // DOM showing the new nesting depth, so React commit + selectors
+      // are included.
+      const durations: Array<number> = []
+
+      for (let i = 0; i < INDENTS; i++) {
+        const t0 = performance.now()
+
+        // Each iteration replaces the sink list-item's content with a
+        // fresh recursive list value one level deeper than the last,
+        // via a single `set` event. The engine path exercised is:
+        // operation apply on a deep path + normalize + React commit.
+        const nestedItemContent = buildNestedList(i + 1)
+        editor.send({
+          type: 'set',
+          at: [{_key: 'root'}, 'items', {_key: 'sink'}, 'content'],
+          value: [nestedItemContent],
+        } as never)
+
+        await vi.waitFor(() =>
+          expect(locator.getByTestId(`list-l${i}`)).toBeInTheDocument(),
+        )
+        durations.push(performance.now() - t0)
+      }
+
+      const total = durations.reduce((a, b) => a + b, 0)
+      const max = Math.max(...durations)
+      const last5 = durations.slice(-5)
+      const last5Avg = last5.reduce((a, b) => a + b, 0) / last5.length
+
+      console.warn(
+        `Set deepening nested list ${INDENTS}x: total ${total.toFixed(0)}ms, max ${max.toFixed(0)}ms, last-5 avg ${last5Avg.toFixed(0)}ms`,
+      )
+    }, 60_000)
+  })
+
   test('onChange is batched', async () => {
     const slateEditorRef = React.createRef<PortableTextSlateEditor>()
     let onChangeCount = 0
