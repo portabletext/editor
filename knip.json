@@ -54,7 +54,9 @@
         "babel-plugin-react-compiler",
         "eslint-formatter-gha",
         "tailwindcss-react-aria-components",
-        "sharp"
+        "sharp",
+        "@vitest/browser",
+        "@vitest/browser-playwright"
       ]
     },
     "examples/*": {}
