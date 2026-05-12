@@ -5,12 +5,13 @@ import {getBlock} from '../node-traversal/is-block'
 import type {BlockPath} from '../types/paths'
 import {getSelectionEndPoint} from '../utils/util.get-selection-end-point'
 import {getSelectionStartPoint} from '../utils/util.get-selection-start-point'
+import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 
 /**
  * Returns the root-level blocks the selection covers.
  *
  * Only looks at direct children of the editor. If the selection is inside
- * an editable container, the container itself is returned — not its inner
+ * an editable container, the container itself is returned - not its inner
  * blocks. Containers are preserved whole.
  *
  * Use for block-level operations like `move.block up/down` and
@@ -33,6 +34,18 @@ export const getSelectedBlocks: EditorSelector<
 
   if (!startPoint || !endPoint) {
     return []
+  }
+
+  // Fast path: when both endpoints share the same root-level block, that
+  // single block is the answer. The range walk only needs to run when
+  // the selection crosses block boundaries.
+  const startRootKey = startPoint.path.find(isKeyedSegment)?._key
+  const endRootKey = endPoint.path.find(isKeyedSegment)?._key
+  if (startRootKey && startRootKey === endRootKey) {
+    const block = getBlock(snapshot, [{_key: startRootKey}])
+    if (block) {
+      return [{node: block.node, path: block.path}]
+    }
   }
 
   const result: Array<{node: PortableTextBlock; path: BlockPath}> = []
