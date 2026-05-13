@@ -15,6 +15,8 @@ import type {TraversalSnapshot} from './traversal-snapshot'
  * Walks from root to the target in a single pass collecting each ancestor
  * as it goes. Previously called `getNode` per ancestor, each of which
  * re-walked from the root - that's O(depth^2). Single descent is O(depth).
+ *
+ * @beta
  */
 export function getAncestors(
   snapshot: TraversalSnapshot,

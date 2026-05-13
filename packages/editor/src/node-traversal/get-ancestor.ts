@@ -8,17 +8,25 @@ import type {TraversalSnapshot} from './traversal-snapshot'
  * Does not check the node at the path itself, only its ancestors.
  *
  * When `match` is a type predicate, the returned `node` narrows to that type.
+ *
+ * @beta
  */
 export function getAncestor<TMatch extends Node>(
   snapshot: TraversalSnapshot,
   path: Path,
   match: (node: Node, path: Path) => node is TMatch,
 ): {node: TMatch; path: Path} | undefined
+/**
+ * @beta
+ */
 export function getAncestor(
   snapshot: TraversalSnapshot,
   path: Path,
   match: (node: Node, path: Path) => boolean,
 ): {node: Node; path: Path} | undefined
+/**
+ * @beta
+ */
 export function getAncestor(
   snapshot: TraversalSnapshot,
   path: Path,

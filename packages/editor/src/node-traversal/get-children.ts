@@ -10,6 +10,8 @@ import type {TraversalSnapshot} from './traversal-snapshot'
 
 /**
  * Get the children of a node at a given path.
+ *
+ * @beta
  */
 export function getChildren(
   snapshot: TraversalSnapshot,

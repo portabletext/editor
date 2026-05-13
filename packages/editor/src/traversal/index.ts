@@ -1,2 +1,6 @@
+export {getAncestor} from '../node-traversal/get-ancestor'
+export {getAncestors} from '../node-traversal/get-ancestors'
+export {getChildren} from '../node-traversal/get-children'
 export {getPathSubSchema} from './get-path-sub-schema'
+export {getSibling} from '../node-traversal/get-sibling'
 export {getUnionSchema} from './get-union-schema'
