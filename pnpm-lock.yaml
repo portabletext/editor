@@ -189,6 +189,45 @@ importers:
 
   apps/pilcrow:
     dependencies:
+      '@portabletext/editor':
+        specifier: workspace:*
+        version: link:../../packages/editor
+      '@portabletext/markdown':
+        specifier: workspace:*
+        version: link:../../packages/markdown
+      '@portabletext/patches':
+        specifier: workspace:*
+        version: link:../../packages/patches
+      '@portabletext/plugin-emoji-picker':
+        specifier: workspace:*
+        version: link:../../packages/plugin-emoji-picker
+      '@portabletext/plugin-input-rule':
+        specifier: workspace:*
+        version: link:../../packages/plugin-input-rule
+      '@portabletext/plugin-markdown-shortcuts':
+        specifier: workspace:*
+        version: link:../../packages/plugin-markdown-shortcuts
+      '@portabletext/plugin-sdk-value':
+        specifier: workspace:*
+        version: link:../../packages/plugin-sdk-value
+      '@portabletext/plugin-typeahead-picker':
+        specifier: workspace:*
+        version: link:../../packages/plugin-typeahead-picker
+      '@portabletext/plugin-typography':
+        specifier: workspace:*
+        version: link:../../packages/plugin-typography
+      '@portabletext/schema':
+        specifier: workspace:*
+        version: link:../../packages/schema
+      '@portabletext/test':
+        specifier: workspace:*
+        version: link:../../packages/test
+      '@portabletext/toolbar':
+        specifier: workspace:*
+        version: link:../../packages/toolbar
+      '@sanity/diff-patch':
+        specifier: ^6.0.0
+        version: 6.0.0
       react:
         specifier: ^19.2.5
         version: 19.2.5
@@ -205,12 +244,27 @@ importers:
       '@vitejs/plugin-react':
         specifier: ^5.2.0
         version: 5.2.0(vite@7.3.2(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.3))
+      '@vitest/browser':
+        specifier: ^4.1.4
+        version: 4.1.4(vite@7.3.2(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.4)
+      '@vitest/browser-playwright':
+        specifier: ^4.1.4
+        version: 4.1.4(playwright@1.59.1)(vite@7.3.2(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.4)
+      racejar:
+        specifier: workspace:*
+        version: link:../../packages/racejar
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
       vite:
         specifier: ^7.3.1
         version: 7.3.2(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.3)
+      vitest:
+        specifier: ^4.1.4
+        version: 4.1.4(@types/node@24.12.2)(@vitest/browser-playwright@4.1.4)(@vitest/coverage-istanbul@4.1.4)(@vitest/coverage-v8@4.1.4)(jsdom@27.2.0)(vite@7.3.2(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.3))
+      vitest-browser-react:
+        specifier: ^2.2.0
+        version: 2.2.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(vitest@4.1.4)
 
   apps/playground:
     dependencies:
@@ -17768,7 +17822,7 @@ snapshots:
     dependencies:
       react: 19.2.5
       react-dom: 19.2.5(react@19.2.5)
-      vitest: 4.1.4(@types/node@20.19.25)(@vitest/browser-playwright@4.1.4)(@vitest/coverage-istanbul@4.1.4)(@vitest/coverage-v8@4.1.4)(jsdom@27.2.0)(vite@7.3.2(@types/node@20.19.25)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.3))
+      vitest: 4.1.4(@types/node@24.12.2)(@vitest/browser-playwright@4.1.4)(@vitest/coverage-istanbul@4.1.4)(@vitest/coverage-v8@4.1.4)(jsdom@27.2.0)(vite@7.3.2(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.3))
     optionalDependencies:
       '@types/react': 19.2.14
       '@types/react-dom': 19.2.3(@types/react@19.2.14)
