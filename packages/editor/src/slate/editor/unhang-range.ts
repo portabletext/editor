@@ -52,7 +52,7 @@ export function unhangRange(snapshot: TraversalSnapshot, range: Range): Range {
     to: end.path,
     match: (candidate, candidatePath) =>
       isVoidNode(snapshot, candidate, candidatePath) ||
-      isEditableContainer(snapshot, candidate, candidatePath),
+      isEditableContainer(snapshot, candidate),
   })) {
     if (!isAncestorPath(path, start.path) && !isAncestorPath(path, end.path)) {
       return range

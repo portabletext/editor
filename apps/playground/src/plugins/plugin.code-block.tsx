@@ -1,11 +1,11 @@
-import {defineContainer, defineLeaf} from '@portabletext/editor'
-import {ContainerPlugin, LeafPlugin} from '@portabletext/editor/plugins'
+import {defineContainer} from '@portabletext/editor'
+import {ContainerPlugin} from '@portabletext/editor/plugins'
 import type {JSX} from 'react'
 import type {playgroundSchemaDefinition} from '../playground-schema-definition'
 
 const codeBlockContainer = defineContainer<typeof playgroundSchemaDefinition>({
-  scope: '$..code-block',
-  field: 'lines',
+  type: 'code-block',
+  childField: 'lines',
   render: ({attributes, children, selected}) => (
     <pre
       {...attributes}
@@ -17,20 +17,10 @@ const codeBlockContainer = defineContainer<typeof playgroundSchemaDefinition>({
   ),
 })
 
-const codeBlockSpanLeaf = defineLeaf<typeof playgroundSchemaDefinition>({
-  scope: '$..code-block.block.span',
-  render: ({attributes, children}) => (
-    <span {...attributes} className="font-mono">
-      {children}
-    </span>
-  ),
-})
+// The legacy `$..code-block.block.span` leaf override was deleted: the
+// outer <pre> has `font-mono` so spans inside inherit the monospace
+// face via CSS. Override was redundant.
 
 export function CodeBlockPlugin(): JSX.Element {
-  return (
-    <>
-      <ContainerPlugin containers={[codeBlockContainer]} />
-      <LeafPlugin leafs={[codeBlockSpanLeaf]} />
-    </>
-  )
+  return <ContainerPlugin containers={[codeBlockContainer]} />
 }

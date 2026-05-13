@@ -58,7 +58,7 @@ const Element = (props: {
     renderText,
   })
 
-  const isContainer = isEditableContainer(editor, element, props.path)
+  const isContainer = isEditableContainer(editor, element)
 
   // Attributes that the developer must mix into the element in their
   // custom node renderer component.

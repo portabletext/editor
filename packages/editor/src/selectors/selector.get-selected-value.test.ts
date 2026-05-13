@@ -859,8 +859,8 @@ describe(`${getSelectedValue.name} with containers`, () => {
   )
 
   const calloutContainer = {
-    scope: '$..callout' as const,
-    field: 'content' as const,
+    type: 'callout' as const,
+    childField: 'content' as const,
   }
 
   function createSnapshot(
@@ -869,14 +869,13 @@ describe(`${getSelectedValue.name} with containers`, () => {
       Parameters<typeof createTestSnapshot>[0]['context']
     >['selection'],
     schema = calloutSchema,
-    containerDefs: ReadonlyArray<{
-      scope: `$..${string}`
-      field: string
-    }> = [calloutContainer],
+    containerDefs: ReadonlyArray<{type: string; childField: string}> = [
+      calloutContainer,
+    ],
   ) {
     const configs = new Map()
     for (const c of containerDefs) {
-      configs.set(c.scope, makeContainerConfig(schema, c))
+      configs.set(c.type, makeContainerConfig(schema, c))
     }
     const containers = resolveContainers(schema, configs)
     return createTestSnapshot({
@@ -1093,12 +1092,12 @@ describe(`${getSelectedValue.name} with containers`, () => {
     )
 
     const defs = [
-      {scope: '$..table' as const, field: 'rows' as const},
-      {scope: '$..table.row' as const, field: 'cells' as const},
-      {scope: '$..table.row.cell' as const, field: 'content' as const},
+      {type: 'table' as const, childField: 'rows' as const},
+      {type: 'row' as const, childField: 'cells' as const},
+      {type: 'cell' as const, childField: 'content' as const},
       {
-        scope: '$..table.row.cell.callout' as const,
-        field: 'content' as const,
+        type: 'callout' as const,
+        childField: 'content' as const,
       },
     ]
 
@@ -1244,9 +1243,9 @@ describe(`${getSelectedValue.name} with containers`, () => {
     )
 
     const defs = [
-      {scope: '$..table' as const, field: 'rows' as const},
-      {scope: '$..table.row' as const, field: 'cells' as const},
-      {scope: '$..table.row.cell' as const, field: 'content' as const},
+      {type: 'table' as const, childField: 'rows' as const},
+      {type: 'row' as const, childField: 'cells' as const},
+      {type: 'cell' as const, childField: 'content' as const},
     ]
 
     const linkKey = 'link1'

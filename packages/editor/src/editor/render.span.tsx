@@ -43,7 +43,7 @@ export function RenderSpan(props: RenderSpanProps) {
   const subSchema = useBlockSubSchema(props.path)
   // Span leafs are looked up against the resolved span child. When no child
   // is found (transient state), fall back to the Slate leaf for identity.
-  const leafConfig = useLeafConfig(child ?? props.leaf, props.path)
+  const leafConfig = useLeafConfig(child ?? props.leaf)
 
   const selectionState = useContext(SelectionStateContext)
   const containerScope = useContext(ContainerScopeContext)
@@ -163,7 +163,9 @@ export function RenderSpan(props: RenderSpanProps) {
         leafConfig={leafConfig}
         attributes={props.attributes}
         focused={focused}
+        isInline
         node={child ?? props.leaf}
+        parent={block}
         path={props.path}
         selected={selected}
       >

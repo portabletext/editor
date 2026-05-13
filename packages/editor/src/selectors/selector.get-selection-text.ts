@@ -11,13 +11,12 @@ import {getSelectedValue} from './selector.get-selected-value'
 export const getSelectionText: EditorSelector<string> = (snapshot) => {
   const selectedValue = getSelectedValue(snapshot)
 
-  return collectText(snapshot.context, selectedValue, '')
+  return collectText(snapshot.context, selectedValue)
 }
 
 function collectText(
   context: Pick<EditorContext, 'schema' | 'containers'>,
   blocks: ReadonlyArray<Node | PortableTextBlock>,
-  scopePath: string,
 ): string {
   let text = ''
 
@@ -31,13 +30,13 @@ function collectText(
       continue
     }
 
-    const childInfo = getNodeChildren(context, block, scopePath)
+    const childInfo = getNodeChildren(context, block)
 
     if (!childInfo) {
       continue
     }
 
-    text += collectText(context, childInfo.children, childInfo.scopePath)
+    text += collectText(context, childInfo.children)
   }
 
   return text

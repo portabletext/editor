@@ -14,7 +14,6 @@ import type {
   Block as TextspecBlock,
 } from '@textspec/notation'
 import {parse} from '@textspec/notation'
-import {lookupContainer} from '../src/schema/lookup-container'
 import type {Containers} from '../src/schema/resolve-containers'
 import type {EditorSelection, EditorSelectionPoint} from '../src/types/editor'
 
@@ -268,7 +267,7 @@ function convertBlockToPTE(
   containers: Containers,
   block: Block,
   keyGenerator: () => string,
-  scopePath: string,
+  containerType: string,
 ): Array<PortableTextBlock> {
   switch (block.kind) {
     case 'textBlock': {
@@ -311,20 +310,20 @@ function convertBlockToPTE(
         return flattenContainer(schema, block, keyGenerator, 1)
       }
 
-      const resolvedScopePath = resolveContainerScopePath(
+      const resolvedContainerType = resolveContainerScopePath(
         containers,
-        scopePath,
+        containerType,
         block.type,
       )
 
-      if (resolvedScopePath) {
+      if (resolvedContainerType) {
         return [
           convertContainerToPTE(
             schema,
             containers,
             block,
             keyGenerator,
-            resolvedScopePath,
+            resolvedContainerType,
           ),
         ]
       }
@@ -370,13 +369,13 @@ function isListContainer(type: string): boolean {
  */
 function resolveContainerScopePath(
   containers: Containers,
-  parentScopePath: string,
+  parentContainerType: string,
   textspecType: string,
 ): string | undefined {
-  if (parentScopePath === '') {
+  if (parentContainerType === '') {
     // Root-level: find a container key whose uppercased form matches
     for (const key of containers.keys()) {
-      if (!key.includes('.') && key.toUpperCase() === textspecType) {
+      if (key.toUpperCase() === textspecType) {
         return key
       }
     }
@@ -384,7 +383,7 @@ function resolveContainerScopePath(
   }
 
   // Nested: look through parent container's `of` array
-  const parentField = lookupContainer(containers, parentScopePath)?.field
+  const parentField = containers.get(parentContainerType)?.field
 
   if (!parentField) {
     return undefined
@@ -393,9 +392,9 @@ function resolveContainerScopePath(
   for (const ofMember of parentField.of) {
     const memberType = ofMember.name ?? ofMember.type
     if (memberType.toUpperCase() === textspecType) {
-      const childScopePath = `${parentScopePath}.${memberType}`
-      if (lookupContainer(containers, childScopePath)) {
-        return childScopePath
+      const childContainerType = memberType
+      if (containers.get(childContainerType)) {
+        return childContainerType
       }
     }
   }
@@ -408,9 +407,9 @@ function convertContainerToPTE(
   containers: Containers,
   container: ContainerBlock,
   keyGenerator: () => string,
-  scopePath: string,
+  containerType: string,
 ): PortableTextObject {
-  const containerField = lookupContainer(containers, scopePath)?.field
+  const containerField = containers.get(containerType)?.field
 
   if (!containerField) {
     return {
@@ -419,10 +418,7 @@ function convertContainerToPTE(
     }
   }
 
-  // Extract the actual PTE type name from the scope path
-  // (last segment for nested, full path for root)
-  const segments = scopePath.split('.')
-  const typeName = segments[segments.length - 1]!
+  const typeName = containerType
 
   const items: Array<PortableTextBlock> = []
 
@@ -432,7 +428,7 @@ function convertContainerToPTE(
       containers,
       child,
       keyGenerator,
-      scopePath,
+      containerType,
     )
     for (const pteBlock of pteBlocks) {
       items.push(pteBlock)

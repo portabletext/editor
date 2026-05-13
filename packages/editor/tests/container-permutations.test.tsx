@@ -166,33 +166,33 @@ const matrixSchema = defineSchema({
 
 const matrixContainers = [
   defineContainer({
-    scope: '$..code-block',
-    field: 'lines',
+    type: 'code-block',
+    childField: 'lines',
     render: ({children}) => <>{children}</>,
   }),
   defineContainer({
-    scope: '$..fact-box',
-    field: 'content',
+    type: 'fact-box',
+    childField: 'content',
     render: ({children}) => <>{children}</>,
   }),
   defineContainer({
-    scope: '$..callout',
-    field: 'content',
+    type: 'callout',
+    childField: 'content',
     render: ({children}) => <>{children}</>,
   }),
   defineContainer({
-    scope: '$..table',
-    field: 'rows',
+    type: 'table',
+    childField: 'rows',
     render: ({children}) => <>{children}</>,
   }),
   defineContainer({
-    scope: '$..table.row',
-    field: 'cells',
+    type: 'row',
+    childField: 'cells',
     render: ({children}) => <>{children}</>,
   }),
   defineContainer({
-    scope: '$..table.row.cell',
-    field: 'content',
+    type: 'cell',
+    childField: 'content',
     render: ({children}) => <>{children}</>,
   }),
 ]

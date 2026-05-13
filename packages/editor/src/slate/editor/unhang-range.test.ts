@@ -337,9 +337,11 @@ function buildContainerContext(...value: Array<Node>) {
   )
   const containers = new Map()
   containers.set('callout', {
+    container: {type: 'callout', childField: 'content'},
     field: {name: 'content', type: 'array', of: [{type: 'block'}]},
   })
   containers.set('code-block', {
+    container: {type: 'code-block', childField: 'lines'},
     field: {name: 'lines', type: 'array', of: [{type: 'block'}]},
   })
   const blockIndexMap = new Map<string, number>()

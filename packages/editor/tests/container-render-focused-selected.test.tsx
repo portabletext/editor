@@ -91,16 +91,16 @@ describe('container render focused, selected, and path', () => {
         <ContainerPlugin
           containers={[
             defineContainer<typeof calloutSchema>({
-              scope: '$..callout',
-              field: 'content',
+              type: 'callout',
+              childField: 'content',
               render: ({attributes, children, focused, selected, path}) => {
                 calloutValues.push({focused, selected, path})
                 return <div {...attributes}>{children}</div>
               },
             }),
             defineContainer<typeof calloutSchema>({
-              scope: '$..callout.block',
-              field: 'children',
+              type: 'block',
+              childField: 'children',
               render: ({attributes, children, focused, selected, path}) => {
                 calloutBlockValues.push({focused, selected, path})
                 return <div {...attributes}>{children}</div>
@@ -173,8 +173,8 @@ describe('container render focused, selected, and path', () => {
         <ContainerPlugin
           containers={[
             defineContainer<typeof calloutSchema>({
-              scope: '$..callout',
-              field: 'content',
+              type: 'callout',
+              childField: 'content',
               render: ({attributes, children, focused, selected}) => {
                 calloutValues.push({focused, selected})
                 return <div {...attributes}>{children}</div>
@@ -243,32 +243,32 @@ describe('container render focused, selected, and path', () => {
         <ContainerPlugin
           containers={[
             defineContainer<typeof tableSchema>({
-              scope: '$..table',
-              field: 'rows',
+              type: 'table',
+              childField: 'rows',
               render: ({attributes, children, focused, selected}) => {
                 tableValues.push({focused, selected})
                 return <div {...attributes}>{children}</div>
               },
             }),
             defineContainer<typeof tableSchema>({
-              scope: '$..table.row',
-              field: 'cells',
+              type: 'row',
+              childField: 'cells',
               render: ({attributes, children, focused, selected}) => {
                 rowValues.push({focused, selected})
                 return <div {...attributes}>{children}</div>
               },
             }),
             defineContainer<typeof tableSchema>({
-              scope: '$..table.row.cell',
-              field: 'content',
+              type: 'cell',
+              childField: 'content',
               render: ({attributes, children, focused, selected}) => {
                 cellValues.push({focused, selected})
                 return <div {...attributes}>{children}</div>
               },
             }),
             defineContainer<typeof tableSchema>({
-              scope: '$..table.row.cell.block',
-              field: 'children',
+              type: 'block',
+              childField: 'children',
               render: ({attributes, children, focused, selected}) => {
                 cellBlockValues.push({focused, selected})
                 return <div {...attributes}>{children}</div>
@@ -371,22 +371,22 @@ describe('container render focused, selected, and path', () => {
         <ContainerPlugin
           containers={[
             defineContainer<typeof tableSchema>({
-              scope: '$..table',
-              field: 'rows',
+              type: 'table',
+              childField: 'rows',
               render: ({attributes, children}) => (
                 <div {...attributes}>{children}</div>
               ),
             }),
             defineContainer<typeof tableSchema>({
-              scope: '$..table.row',
-              field: 'cells',
+              type: 'row',
+              childField: 'cells',
               render: ({attributes, children}) => (
                 <div {...attributes}>{children}</div>
               ),
             }),
             defineContainer<typeof tableSchema>({
-              scope: '$..table.row.cell',
-              field: 'content',
+              type: 'cell',
+              childField: 'content',
               render: ({attributes, children, focused, selected, node}) => {
                 cellValues.push({key: node._key, focused, selected})
                 return <div {...attributes}>{children}</div>

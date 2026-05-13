@@ -78,18 +78,18 @@ describe(getBlockObjectSchema.name, () => {
 
     const containerConfigs: Map<string, ContainerConfig> = new Map()
     containerConfigs.set(
-      '$..table',
+      'table',
       makeContainerConfig(schema, {
-        scope: '$..table',
-        field: 'rows',
+        type: 'table',
+        childField: 'rows',
         render: testRender,
       }),
     )
     containerConfigs.set(
-      '$..table.row',
+      'row',
       makeContainerConfig(schema, {
-        scope: '$..table.row',
-        field: 'cells',
+        type: 'row',
+        childField: 'cells',
         render: testRender,
       }),
     )
@@ -165,10 +165,10 @@ describe(getBlockObjectSchema.name, () => {
     )
     const containerConfigs: Map<string, ContainerConfig> = new Map()
     containerConfigs.set(
-      '$..callout',
+      'callout',
       makeContainerConfig(schema, {
-        scope: '$..callout',
-        field: 'content',
+        type: 'callout',
+        childField: 'content',
         render: testRender,
       }),
     )

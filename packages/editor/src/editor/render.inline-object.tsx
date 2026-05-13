@@ -1,4 +1,8 @@
-import type {PortableTextChild, PortableTextObject} from '@portabletext/schema'
+import type {
+  PortableTextBlock,
+  PortableTextChild,
+  PortableTextObject,
+} from '@portabletext/schema'
 import {useContext, useRef, type ReactElement} from 'react'
 import {serializePath} from '../paths/serialize-path'
 import type {LeafConfig} from '../renderers/renderer.types'
@@ -15,7 +19,9 @@ export function RenderInlineObject(props: {
   attributes: RenderElementProps['attributes']
   children: ReactElement
   element: PortableTextObject
+  isInline: boolean
   leafConfig?: LeafConfig
+  parent: PortableTextBlock | PortableTextObject | undefined
   path: Path
   readOnly: boolean
   renderChild?: RenderChildFunction
@@ -57,7 +63,9 @@ export function RenderInlineObject(props: {
           'data-pt-child-type': 'object',
         }}
         focused={focused}
+        isInline={props.isInline}
         node={props.element}
+        parent={props.parent}
         path={props.path}
         selected={selected}
       >

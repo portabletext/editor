@@ -2498,8 +2498,8 @@ describe('event.patches', () => {
           <ContainerPlugin
             containers={[
               defineContainer<typeof calloutSchemaDefinition>({
-                scope: '$..callout',
-                field: 'content',
+                type: 'callout',
+                childField: 'content',
                 render: ({children}) => <>{children}</>,
               }),
             ]}
@@ -4824,26 +4824,26 @@ describe('event.patches', () => {
 
     const calloutContainers = [
       defineContainer<typeof containerSchema>({
-        scope: '$..callout',
-        field: 'content',
+        type: 'callout',
+        childField: 'content',
         render: ({children}) => <>{children}</>,
       }),
     ]
 
     const tableContainers = [
       defineContainer<typeof containerSchema>({
-        scope: '$..table',
-        field: 'rows',
+        type: 'table',
+        childField: 'rows',
         render: ({children}) => <>{children}</>,
       }),
       defineContainer<typeof containerSchema>({
-        scope: '$..table.row',
-        field: 'cells',
+        type: 'row',
+        childField: 'cells',
         render: ({children}) => <>{children}</>,
       }),
       defineContainer<typeof containerSchema>({
-        scope: '$..table.row.cell',
-        field: 'content',
+        type: 'cell',
+        childField: 'content',
         render: ({children}) => <>{children}</>,
       }),
     ]

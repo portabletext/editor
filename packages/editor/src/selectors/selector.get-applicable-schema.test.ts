@@ -48,8 +48,8 @@ const baseSchemaDef = defineSchema({
 const schema = compileSchema(baseSchemaDef)
 const containerConfigs: Map<string, ContainerConfig> = new Map()
 containerConfigs.set(
-  '$..callout',
-  makeContainerConfig(schema, {scope: '$..callout', field: 'content'}),
+  'callout',
+  makeContainerConfig(schema, {type: 'callout', childField: 'content'}),
 )
 const containers = resolveContainers(schema, containerConfigs)
 

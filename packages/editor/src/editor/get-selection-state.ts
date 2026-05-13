@@ -77,7 +77,7 @@ export function getSelectionState(
 
     if (
       isTextBlock({schema: snapshot.context.schema}, node) ||
-      isEditableContainer(snapshot, node, path)
+      isEditableContainer(snapshot, node)
     ) {
       selectedContainerPaths.add(serialized)
     } else {

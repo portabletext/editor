@@ -62,10 +62,10 @@ const containerContainers: ResolvedContainers = resolveContainers(
   schema,
   new Map([
     [
-      '$..callout',
+      'callout',
       makeContainerConfig(schema, {
-        scope: '$..callout',
-        field: 'content',
+        type: 'callout',
+        childField: 'content',
       }),
     ],
   ]),
@@ -75,24 +75,24 @@ const tableContainers: ResolvedContainers = resolveContainers(
   schema,
   new Map([
     [
-      '$..table',
+      'table',
       makeContainerConfig(schema, {
-        scope: '$..table',
-        field: 'rows',
+        type: 'table',
+        childField: 'rows',
       }),
     ],
     [
-      '$..table.row',
+      'row',
       makeContainerConfig(schema, {
-        scope: '$..table.row',
-        field: 'cells',
+        type: 'row',
+        childField: 'cells',
       }),
     ],
     [
-      '$..table.row.cell',
+      'cell',
       makeContainerConfig(schema, {
-        scope: '$..table.row.cell',
-        field: 'content',
+        type: 'cell',
+        childField: 'content',
       }),
     ],
   ]),

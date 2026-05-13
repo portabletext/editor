@@ -13,9 +13,9 @@ import {resolveContainers} from '../schema/resolve-containers'
  * (`table` → `rows`, `row` → `cells`, `cell` → `content`).
  */
 export const tableContainers: ReadonlyArray<ContainerDefinition> = [
-  {scope: '$..table', field: 'rows'},
-  {scope: '$..table.row', field: 'cells'},
-  {scope: '$..table.row.cell', field: 'content'},
+  {type: 'table', childField: 'rows'},
+  {type: 'row', childField: 'cells'},
+  {type: 'cell', childField: 'content'},
 ]
 
 /**
@@ -23,8 +23,8 @@ export const tableContainers: ReadonlyArray<ContainerDefinition> = [
  * (`code-block` → `code`).
  */
 export const codeBlockContainer: ContainerDefinition = {
-  scope: '$..code-block',
-  field: 'code',
+  type: 'code-block',
+  childField: 'code',
 }
 
 /**
@@ -37,7 +37,7 @@ export function resolveTestbedContainers(
 ) {
   const configs = new Map<string, ContainerConfig>()
   for (const container of containers) {
-    configs.set(container.scope, makeContainerConfig(schema, container))
+    configs.set(container.type, makeContainerConfig(schema, container))
   }
   return resolveContainers(schema, configs)
 }

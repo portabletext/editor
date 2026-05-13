@@ -9,7 +9,6 @@ import {
   ContainerScopeContext,
   useContainerScope,
 } from '../../../editor/container-scope-context'
-import {lookupContainer} from '../../../schema/lookup-container'
 import {
   isElementDecorationsEqual,
   splitDecorationsByChild,
@@ -73,11 +72,7 @@ const useChildren = (props: {
   } else if (isTextBlock({schema: editor.schema}, node)) {
     children = node.children
   } else if (isObjectNode({schema: editor.schema}, node)) {
-    const scopedKey = containerScope
-      ? `${containerScope}.${node._type}`
-      : node._type
-
-    const containerConfig = lookupContainer(editor.containers, scopedKey)
+    const containerConfig = editor.containers.get(node._type)
 
     if (containerConfig) {
       const fieldValue = (node as Record<string, unknown>)[
@@ -88,7 +83,7 @@ const useChildren = (props: {
         childFieldName = containerConfig.field.name
       }
 
-      childScope = scopedKey
+      childScope = node._type
     }
   }
 
@@ -181,8 +176,7 @@ const useChildren = (props: {
       return null
     }
     if (isObjectNode({schema: editor.schema}, n)) {
-      const scopedName = childScope ? `${childScope}.${n._type}` : n._type
-      if (lookupContainer(editor.containers, scopedName)) {
+      if (editor.containers.has(n._type)) {
         return renderElementComponent(n, i)
       }
       return renderObjectNodeComponent(n, i)

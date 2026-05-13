@@ -64,10 +64,10 @@ describe(getPathSubSchema.name, () => {
 
     const containerConfigs: Map<string, ContainerConfig> = new Map()
     containerConfigs.set(
-      '$..cell',
+      'cell',
       makeContainerConfig(schema, {
-        scope: '$..cell',
-        field: 'content',
+        type: 'cell',
+        childField: 'content',
         render: testRender,
       }),
     )
@@ -119,10 +119,10 @@ describe(getPathSubSchema.name, () => {
 
     const containerConfigs: Map<string, ContainerConfig> = new Map()
     containerConfigs.set(
-      '$..cell',
+      'cell',
       makeContainerConfig(schema, {
-        scope: '$..cell',
-        field: 'content',
+        type: 'cell',
+        childField: 'content',
         render: testRender,
       }),
     )
@@ -201,26 +201,26 @@ describe(getPathSubSchema.name, () => {
 
     const containerConfigs: Map<string, ContainerConfig> = new Map()
     containerConfigs.set(
-      '$..table',
+      'table',
       makeContainerConfig(schema, {
-        scope: '$..table',
-        field: 'rows',
+        type: 'table',
+        childField: 'rows',
         render: testRender,
       }),
     )
     containerConfigs.set(
-      '$..row',
+      'row',
       makeContainerConfig(schema, {
-        scope: '$..row',
-        field: 'cells',
+        type: 'row',
+        childField: 'cells',
         render: testRender,
       }),
     )
     containerConfigs.set(
-      '$..cell',
+      'cell',
       makeContainerConfig(schema, {
-        scope: '$..cell',
-        field: 'content',
+        type: 'cell',
+        childField: 'content',
         render: testRender,
       }),
     )

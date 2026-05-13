@@ -43,16 +43,16 @@ const schemaDefinition = defineSchema({
 
 const calloutContainer = [
   defineContainer<typeof schemaDefinition>({
-    scope: '$..callout',
-    field: 'content',
+    type: 'callout',
+    childField: 'content',
     render: ({children}) => <>{children}</>,
   }),
 ]
 
 const codeBlockContainer = [
   defineContainer<typeof schemaDefinition>({
-    scope: '$..code-block',
-    field: 'lines',
+    type: 'code-block',
+    childField: 'lines',
     render: ({children}) => <>{children}</>,
   }),
 ]
@@ -597,18 +597,18 @@ describe('event.update value with containers', () => {
     })
     const tableContainers = [
       defineContainer<typeof deepSchema>({
-        scope: '$..table',
-        field: 'rows',
+        type: 'table',
+        childField: 'rows',
         render: ({children}) => <>{children}</>,
       }),
       defineContainer<typeof deepSchema>({
-        scope: '$..table.row',
-        field: 'cells',
+        type: 'row',
+        childField: 'cells',
         render: ({children}) => <>{children}</>,
       }),
       defineContainer<typeof deepSchema>({
-        scope: '$..table.row.cell',
-        field: 'content',
+        type: 'cell',
+        childField: 'content',
         render: ({children}) => <>{children}</>,
       }),
     ]
@@ -1055,8 +1055,8 @@ describe('event.update value with containers', () => {
 
     const heteroContainer = [
       defineContainer<typeof heteroSchema>({
-        scope: '$..code-block',
-        field: 'lines',
+        type: 'code-block',
+        childField: 'lines',
         render: ({children}) => <>{children}</>,
       }),
     ]

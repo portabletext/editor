@@ -843,15 +843,15 @@ describe('Behavior API', () => {
       })
 
       const calloutContainer = defineContainer<typeof schemaDefinition>({
-        scope: '$..callout',
-        field: 'content',
+        type: 'callout',
+        childField: 'content',
         render: ({attributes, children}) => (
           <div {...attributes}>{children}</div>
         ),
       })
       const calloutBlockContainer = defineContainer<typeof schemaDefinition>({
-        scope: '$..callout.block',
-        field: 'children',
+        type: 'block',
+        childField: 'children',
         render: ({attributes, children}) => <p {...attributes}>{children}</p>,
       })
 
@@ -939,15 +939,15 @@ describe('Behavior API', () => {
       })
 
       const calloutContainer = defineContainer<typeof schemaDefinition>({
-        scope: '$..callout',
-        field: 'content',
+        type: 'callout',
+        childField: 'content',
         render: ({attributes, children}) => (
           <div {...attributes}>{children}</div>
         ),
       })
       const calloutBlockContainer = defineContainer<typeof schemaDefinition>({
-        scope: '$..callout.block',
-        field: 'children',
+        type: 'block',
+        childField: 'children',
         render: ({attributes, children}) => <p {...attributes}>{children}</p>,
       })
 

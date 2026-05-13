@@ -6,36 +6,25 @@ import type {
 import {useSelector} from '@xstate/react'
 import type {ReactElement} from 'react'
 import {useContext} from 'react'
-import {findMatchingLeaf} from '../renderers/find-matching-leaf'
 import type {LeafConfig} from '../renderers/renderer.types'
-import {getTypeChain} from '../schema/get-type-chain'
 import type {Path} from '../slate/interfaces/path'
-import {useSlateStatic} from '../slate/react/hooks/use-slate-static'
 import {EditorActorContext} from './editor-actor-context'
 
 /**
- * Hook: resolve the registered leaf-config that should render `node` at
- * `path`, or `undefined` if none matches.
+ * Hook: resolve the registered leaf-config that should render `node`,
+ * or `undefined` if none matches.
  *
  * Reads the live `leafs` map from the editor actor (so the component
- * re-renders when leafs register/unregister), computes the type chain,
- * then picks the most-specific matching config.
+ * re-renders when leafs register/unregister), then looks up by
+ * `node._type`. One registration per type.
  */
 export function useLeafConfig(
   node: PortableTextBlock | PortableTextSpan | PortableTextObject,
-  path: Path,
 ): LeafConfig | undefined {
-  const editor = useSlateStatic()
   const editorActor = useContext(EditorActorContext)
-  const leafs = useSelector(editorActor, (state) => state.context.leafs)
-
-  if (leafs.size === 0) {
-    return undefined
-  }
-
-  const typeChain = getTypeChain(editor, node, path)
-
-  return findMatchingLeaf(leafs, typeChain)
+  return useSelector(editorActor, (state) =>
+    state.context.leafs.get(node._type),
+  )
 }
 
 /**
@@ -48,7 +37,9 @@ export function RenderLeafConfig(props: {
   attributes: Record<string, unknown>
   children: ReactElement
   focused: boolean
+  isInline: boolean
   node: PortableTextBlock | PortableTextSpan | PortableTextObject
+  parent: PortableTextBlock | PortableTextObject | undefined
   path: Path
   selected: boolean
 }) {
@@ -60,7 +51,9 @@ export function RenderLeafConfig(props: {
     attributes: props.attributes,
     children: props.children,
     focused: props.focused,
+    isInline: props.isInline,
     node: props.node,
+    parent: props.parent,
     path: props.path,
     readOnly,
     selected: props.selected,

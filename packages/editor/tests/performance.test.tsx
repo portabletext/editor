@@ -143,8 +143,8 @@ describe('Performance', () => {
       ],
     })
     const tableContainer = defineContainer<typeof schemaDefinition>({
-      scope: '$..table',
-      field: 'rows',
+      type: 'table',
+      childField: 'rows',
       render: ({children, node}) => (
         <table data-testid={node._key}>
           <tbody>{children}</tbody>
@@ -152,13 +152,13 @@ describe('Performance', () => {
       ),
     })
     const rowContainer = defineContainer<typeof schemaDefinition>({
-      scope: '$..table.row',
-      field: 'cells',
+      type: 'row',
+      childField: 'cells',
       render: ({children}) => <tr>{children}</tr>,
     })
     const cellContainer = defineContainer<typeof schemaDefinition>({
-      scope: '$..table.row.cell',
-      field: 'content',
+      type: 'cell',
+      childField: 'content',
       render: ({children}) => <td>{children}</td>,
     })
 
@@ -303,15 +303,15 @@ describe('Performance', () => {
       ],
     })
     const listContainer = defineContainer<typeof schemaDefinition>({
-      scope: '$..list',
-      field: 'items',
+      type: 'list',
+      childField: 'items',
       render: ({children, node}) => (
         <ul data-testid={`list-${node._key}`}>{children}</ul>
       ),
     })
     const listItemContainer = defineContainer<typeof schemaDefinition>({
-      scope: '$..list.list-item',
-      field: 'content',
+      type: 'list-item',
+      childField: 'content',
       render: ({children, node}) => (
         <li data-testid={`li-${node._key}`}>{children}</li>
       ),

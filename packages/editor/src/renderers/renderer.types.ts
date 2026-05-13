@@ -7,114 +7,124 @@ import type {
 } from '@portabletext/schema'
 import type {ReactElement} from 'react'
 import type {ChildArrayField} from '../schema/resolve-containers'
-import type {ParsedScope} from '../scope/parse-scope'
-import type {
-  AllContainers,
-  ContainerScope,
-  LeafScope,
-} from '../scope/scope.types'
 import type {Path} from '../slate/interfaces/path'
+import type {
+  ChildOfContainer,
+  ContainerChildField,
+  ContainerTypeName,
+  LeafTypeName,
+} from './schema-types'
 
 /**
- * @alpha
+ * Render props shared by container and leaf renderers. The engine
+ * derives `parent` and `isInline` from path context at render time.
+ *
+ * - `parent` is the immediate parent node, or `undefined` at the root.
+ *   Use `parent?._type` to branch on positional context. Reach into
+ *   `parent` directly for ancestor-driven rendering decisions (e.g. a
+ *   list-item reading its list's `kind`).
+ *
+ * - `isInline` is `true` when the node sits inside a text block's
+ *   `children` array alongside spans (the inline-object position). It
+ *   is `false` for block-level positions (root-of-array, container
+ *   field). Matches the `isInline` discriminator that
+ *   `@portabletext/react` and `@portabletext/to-html` pass to their
+ *   custom-type components.
  */
-export type ContainerDefinition = {
-  scope: string
-  field: string
-  render?: (props: {
-    attributes: Record<string, unknown>
-    children: ReactElement
-    focused: boolean
-    node: PortableTextBlock
-    path: Path
-    readOnly: boolean
-    selected: boolean
-  }) => ReactElement | null
+type CommonRenderProps = {
+  attributes: Record<string, unknown>
+  children: ReactElement
+  focused: boolean
+  isInline: boolean
+  parent: PortableTextBlock | PortableTextObject | undefined
+  path: Path
+  readOnly: boolean
+  selected: boolean
 }
 
 /**
- * Terminal (last dot-separated) segment of a chain.
+ * @alpha
  *
- * `'table.row.cell'` → `'cell'`, `'cell'` → `'cell'`.
+ * Render function for a node when it appears as a direct child of a
+ * container. Used as the value type of `ContainerDefinition.renderChild`.
  */
-type TerminalSegment<TChain extends string> =
-  TChain extends `${string}.${infer TRest}` ? TerminalSegment<TRest> : TChain
+export type ChildRender = (
+  props: CommonRenderProps & {
+    node: PortableTextBlock | PortableTextSpan | PortableTextObject
+  },
+) => ReactElement | null
 
 /**
- * Terminal type name of a scope string, stripping the `$.` or `$..` anchor.
+ * @alpha
+ *
+ * Definition of a container registration. Containers expose an editable
+ * array field on a node, and optionally render the wrapping element
+ * around their children. They may also declare per-child-type renders
+ * that take precedence over global `defineContainer` / `defineLeaf`
+ * registrations for direct children of this container.
+ *
+ * - `type` is the `_type` of the container node. One registration per
+ *   type; later registrations of the same type are ignored with a
+ *   warning.
+ *
+ * - `childField` is the array field on the type that holds editable
+ *   children. Resolved against the schema at registration time.
+ *
+ * - `render` receives positional context as props (`parent`, `isInline`)
+ *   and may branch internally on them.
+ *
+ * - `renderChild` is an optional record keyed by child `_type`. When
+ *   the engine renders a direct child of this container whose `_type`
+ *   matches a key, the keyed render is used in preference to any global
+ *   `defineContainer` or `defineLeaf` registration. Opt-in per child
+ *   type; child types not listed fall through to the global registration
+ *   chain. Direct-child only; not consulted for grand-descendants.
  */
-type TerminalType<TScope extends string> = TScope extends `$.${infer TRest}`
-  ? TerminalSegment<TRest>
-  : TScope extends `$..${infer TRest}`
-    ? TerminalSegment<TRest>
-    : never
+export type ContainerDefinition = {
+  type: string
+  childField: string
+  render?: (
+    props: CommonRenderProps & {
+      node: PortableTextBlock | PortableTextObject
+    },
+  ) => ReactElement | null
+  renderChild?: Record<string, ChildRender>
+}
 
 /**
- * Array field names available on the terminal type of a scope.
- */
-type ScopedArrayFields<
-  TSchema extends SchemaDefinition,
-  TScope extends string,
-> =
-  TerminalType<TScope> extends infer TTerminal extends string
-    ? AllContainers<TSchema> extends infer TEntry
-      ? TEntry extends {
-          chain: infer TChain extends string
-          arrayFields: infer TFields
-        }
-        ? TerminalSegment<TChain> extends TTerminal
-          ? TFields
-          : never
-        : never
-      : never
-    : never
-
-/**
- * Narrows the `node` passed to a container's render based on the scope's
- * terminal type. When the terminal is `block` the node is a text block;
- * otherwise it's a block object.
- */
-type ScopedContainerNode<TScope extends string> =
-  TerminalType<TScope> extends 'block'
-    ? PortableTextTextBlock
-    : PortableTextObject
-
-/**
- * Narrows the `node` passed to a leaf's render based on the scope's
- * terminal type. When the terminal is `span` the node is a span; all other
- * terminals (inline objects, void block objects) resolve to a block object.
- */
-type ScopedLeafNode<TScope extends string> =
-  TerminalType<TScope> extends 'span' ? PortableTextSpan : PortableTextObject
-
-/**
+ * Schema-typed shape of `ContainerDefinition`. `type` is narrowed to a
+ * registered container type name on the schema; `childField` is narrowed
+ * to the array field names on that type; `renderChild` keys are narrowed
+ * to the child `_type` names valid in `childField` per the schema.
+ *
  * @internal
- *
- * Schema-constrained container config. `scope` is narrowed to valid JSONPath
- * container scopes; `field` is narrowed to the array field names on the
- * scope's terminal type.
  */
-type SchemaContainerConfig<TSchema extends SchemaDefinition> =
-  // Only activate the narrowed shape when the caller provides a concrete
-  // schema. With the default `SchemaDefinition`, collapse to never so the
-  // overload falls through to the plain `ContainerDefinition` signature.
+type SchemaContainerDefinition<TSchema extends SchemaDefinition> =
   SchemaDefinition extends TSchema
     ? never
-    : ContainerScope<TSchema> extends infer TScope
-      ? TScope extends string
-        ? {
-            scope: TScope
-            field: ScopedArrayFields<TSchema, TScope>
-            render?: (props: {
-              attributes: Record<string, unknown>
-              children: ReactElement
-              focused: boolean
-              node: ScopedContainerNode<TScope>
-              path: Path
-              readOnly: boolean
-              selected: boolean
-            }) => ReactElement | null
-          }
+    : ContainerTypeName<TSchema> extends infer TType
+      ? TType extends string
+        ? ContainerChildField<TSchema, TType> extends infer TChildField
+          ? TChildField extends string
+            ? {
+                type: TType
+                childField: TChildField
+                render?: (
+                  props: CommonRenderProps & {
+                    node: TType extends 'block'
+                      ? PortableTextTextBlock
+                      : PortableTextObject
+                  },
+                ) => ReactElement | null
+                renderChild?: Partial<
+                  Record<
+                    ChildOfContainer<TSchema, TType, TChildField>,
+                    ChildRender
+                  >
+                >
+              }
+            : never
+          : never
         : never
       : never
 
@@ -123,22 +133,29 @@ type SchemaContainerConfig<TSchema extends SchemaDefinition> =
  *
  * Define a container.
  *
- * With a schema type parameter, `scope` is constrained to valid JSONPath
- * container scopes, and `field` is constrained to the array field names on
- * the scope's terminal type:
+ * With a schema type parameter, `type` is constrained to registered
+ * container type names on the schema, `childField` is constrained to
+ * the array field names on that type, and `renderChild` keys are
+ * constrained to the child types valid in that field per the schema:
  *
  * ```ts
  * defineContainer<typeof schema>({
- *   scope: '$..table.row.cell',
- *   field: 'content',
- *   render: ({children}) => <td>{children}</td>,
+ *   type: 'callout',
+ *   childField: 'content',
+ *   render: ({attributes, children}) => <aside {...attributes}>{children}</aside>,
+ *   renderChild: {
+ *     image: ({attributes, children, node}) => (
+ *       <span {...attributes}>compact callout image</span>
+ *     ),
+ *   },
  * })
  * ```
  *
- * Without a schema type parameter, accepts any string.
+ * Without a schema type parameter, accepts any string for `type` and
+ * `childField`, and any string keys on `renderChild`.
  */
 export function defineContainer<TSchema extends SchemaDefinition>(
-  config: SchemaContainerConfig<TSchema>,
+  config: SchemaContainerDefinition<TSchema>,
 ): ContainerDefinition
 /**
  * @alpha
@@ -157,52 +174,59 @@ export function defineContainer(
  */
 export type ContainerConfig = {
   container: ContainerDefinition
-  parsedScope: ParsedScope
   field: ChildArrayField
 }
 
 /**
  * @alpha
  *
- * A leaf-config overrides how a matching span, inline object, or void
- * block object renders inside a given scope. Registered via
- * `LeafPlugin`.
+ * Definition of a leaf registration. Leaves render spans, inline
+ * objects, and void block objects. One registration per type; later
+ * registrations of the same type are ignored with a warning.
+ *
+ * The render function must always render `children` somewhere inside
+ * the outer element. For spans, `children` carries the styled text. For
+ * inline objects and void block objects, `children` carries an
+ * engine-emitted void spacer the browser uses to anchor the caret next
+ * to the element. Dropping `children` makes the caret unable to land on
+ * the element.
+ *
+ * `parent` and `isInline` are passed as positional context. For an
+ * inline image (in a text block's children), `isInline` is `true` and
+ * `parent` is the text block. For a void block-object image (root
+ * position), `isInline` is `false` and `parent` is either undefined
+ * (root) or the enclosing container.
  */
 export type Leaf = {
-  scope: string
-  render: (props: {
-    attributes: Record<string, unknown>
-    children: ReactElement
-    focused: boolean
-    node: PortableTextBlock | PortableTextSpan | PortableTextObject
-    path: Path
-    readOnly: boolean
-    selected: boolean
-  }) => ReactElement | null
+  type: string
+  render: (
+    props: CommonRenderProps & {
+      node: PortableTextBlock | PortableTextSpan | PortableTextObject
+    },
+  ) => ReactElement | null
 }
 
 /**
- * @internal
+ * Schema-typed shape of `Leaf`. `type` is narrowed to a registered
+ * leaf type name on the schema (spans, inline objects, void block
+ * objects).
  *
- * Schema-constrained leaf config. `scope` is narrowed to valid JSONPath
- * leaf scopes (spans, inline objects, void block objects).
+ * @internal
  */
-type SchemaLeafConfig<TSchema extends SchemaDefinition> =
+type SchemaLeaf<TSchema extends SchemaDefinition> =
   SchemaDefinition extends TSchema
     ? never
-    : LeafScope<TSchema> extends infer TScope
-      ? TScope extends string
+    : LeafTypeName<TSchema> extends infer TType
+      ? TType extends string
         ? {
-            scope: TScope
-            render: (props: {
-              attributes: Record<string, unknown>
-              children: ReactElement
-              focused: boolean
-              node: ScopedLeafNode<TScope>
-              path: Path
-              readOnly: boolean
-              selected: boolean
-            }) => ReactElement | null
+            type: TType
+            render: (
+              props: CommonRenderProps & {
+                node: TType extends 'span'
+                  ? PortableTextSpan
+                  : PortableTextObject
+              },
+            ) => ReactElement | null
           }
         : never
       : never
@@ -210,29 +234,25 @@ type SchemaLeafConfig<TSchema extends SchemaDefinition> =
 /**
  * @alpha
  *
- * Define a leaf renderer for a span, inline object, or void block object
- * at a given scope.
+ * Define a leaf renderer for a span, inline object, or void block
+ * object.
  *
- * The render function must always render `children` somewhere inside the
- * outer element. For spans `children` carries the styled text. For inline
- * objects and void block objects `children` carries an engine-emitted void
- * spacer that the browser uses to anchor the caret next to the element. If
- * the consumer drops `children`, the caret cannot land on the element.
- *
- * With a schema type parameter, `scope` is constrained to valid JSONPath
- * leaf scopes:
+ * With a schema type parameter, `type` is constrained to registered
+ * leaf type names on the schema:
  *
  * ```ts
  * defineLeaf<typeof schema>({
- *   scope: '$..callout.block.span',
- *   render: ({attributes, children}) => <span {...attributes}>{children}</span>,
+ *   type: 'image',
+ *   render: ({attributes, children, isInline}) => (
+ *     <span {...attributes}>{children}{isInline ? <img/> : <figure><img/></figure>}</span>
+ *   ),
  * })
  * ```
  *
- * Without a schema type parameter, accepts any string.
+ * Without a schema type parameter, accepts any string for `type`.
  */
 export function defineLeaf<TSchema extends SchemaDefinition>(
-  config: SchemaLeafConfig<TSchema>,
+  config: SchemaLeaf<TSchema>,
 ): Leaf
 /**
  * @alpha
@@ -247,5 +267,4 @@ export function defineLeaf(config: Leaf): Leaf {
  */
 export type LeafConfig = {
   leaf: Leaf
-  parsedScope: ParsedScope
 }

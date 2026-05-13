@@ -63,26 +63,26 @@ function tableContainers(): ResolvedContainers {
     schema,
     new Map([
       [
-        '$..table',
+        'table',
         makeContainerConfig(schema, {
-          scope: '$..table',
-          field: 'rows',
+          type: 'table',
+          childField: 'rows',
           render,
         }),
       ],
       [
-        '$..table.row',
+        'row',
         makeContainerConfig(schema, {
-          scope: '$..table.row',
-          field: 'cells',
+          type: 'row',
+          childField: 'cells',
           render,
         }),
       ],
       [
-        '$..table.row.cell',
+        'cell',
         makeContainerConfig(schema, {
-          scope: '$..table.row.cell',
-          field: 'content',
+          type: 'cell',
+          childField: 'content',
           render,
         }),
       ],

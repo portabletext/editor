@@ -14,8 +14,6 @@ import {getNode} from '../../node-traversal/get-node'
 import {getParent} from '../../node-traversal/get-parent'
 import {getTextBlockNode} from '../../node-traversal/get-text-block-node'
 import {getChildFieldName} from '../../paths/get-child-field-name'
-import {getContainerScopedName} from '../../schema/get-container-scoped-name'
-import {lookupContainer} from '../../schema/lookup-container'
 import {withoutPatching} from '../../slate-plugins/slate-plugin.without-patching'
 import {getPathSubSchema} from '../../traversal/get-path-sub-schema'
 import {isKeyedSegment} from '../../utils/util.is-keyed-segment'
@@ -417,8 +415,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   // Container normalization: ensure the child array field exists and is
   // non-empty.
   if (isObjectNode({schema: editor.schema}, node)) {
-    const scopedName = getContainerScopedName(editor, node, path)
-    const arrayField = lookupContainer(editor.containers, scopedName)?.field
+    const arrayField = editor.containers.get(node._type)?.field
 
     if (arrayField) {
       const fieldValue = (node as Record<string, unknown>)[arrayField.name]

@@ -1,7 +1,6 @@
 import type {OfDefinition} from '@portabletext/schema'
 import {isTextBlock} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
-import {lookupContainer} from '../schema/lookup-container'
 import type {Containers} from '../schema/resolve-containers'
 import type {Node} from '../slate/interfaces/node'
 import type {Path} from '../slate/interfaces/path'
@@ -17,7 +16,6 @@ export function getChildren(
   path: Path,
 ): Array<{node: Node; path: Path}> {
   let currentChildren: Array<Node> = snapshot.context.value
-  let scopePath = ''
   let currentFieldName = 'value'
   let currentPath: Path = []
   let isRoot = true
@@ -43,14 +41,13 @@ export function getChildren(
       : [...currentPath, currentFieldName, {_key: node._key}]
     isRoot = false
 
-    const next = getNodeChildren(snapshot.context, node, scopePath)
+    const next = getNodeChildren(snapshot.context, node)
 
     if (!next) {
       return []
     }
 
     currentChildren = next.children
-    scopePath = next.scopePath
     currentFieldName = next.fieldName
   }
 
@@ -68,12 +65,10 @@ export function getNodeChildren(
     containers: Containers
   },
   node: Node | {value: Array<Node>},
-  scopePath: string,
 ):
   | {
       children: Array<Node>
       scope: ReadonlyArray<OfDefinition> | undefined
-      scopePath: string
       fieldName: string
     }
   | undefined {
@@ -82,15 +77,12 @@ export function getNodeChildren(
     return {
       children: node.children,
       scope: undefined,
-      scopePath: '',
       fieldName: 'children',
     }
   }
 
   if (isObjectNode(context, node)) {
-    const scopedKey = scopePath ? `${scopePath}.${node._type}` : node._type
-
-    const arrayField = lookupContainer(context.containers, scopedKey)?.field
+    const arrayField = context.containers.get(node._type)?.field
 
     if (!arrayField) {
       return undefined
@@ -105,7 +97,6 @@ export function getNodeChildren(
     return {
       children: fieldValue as Array<Node>,
       scope: arrayField.of,
-      scopePath: scopedKey,
       fieldName: arrayField.name,
     }
   }
@@ -120,7 +111,6 @@ export function getNodeChildren(
     return {
       children: node['value'] as Array<Node>,
       scope: undefined,
-      scopePath: '',
       fieldName: 'value',
     }
   }

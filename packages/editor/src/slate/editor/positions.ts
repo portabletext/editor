@@ -127,7 +127,7 @@ export function* positions(
       !isSpan({schema: editor.schema}, node)
     ) {
       // Editable containers aren't leaf positions — descend into them.
-      if (isEditableContainer(editor, node, nodePath)) {
+      if (isEditableContainer(editor, node)) {
         continue
       }
       yield {path: nodePath, offset: 0}

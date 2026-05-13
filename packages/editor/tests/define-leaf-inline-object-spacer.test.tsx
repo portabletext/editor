@@ -16,7 +16,7 @@ const blockObjectSchema = defineSchema({
 describe('defineLeaf void spacer', () => {
   test('the engine-emitted void spacer reaches the consumer through children for inline objects', async () => {
     const stockTickerLeaf = defineLeaf<typeof inlineSchema>({
-      scope: '$..block.stock-ticker',
+      type: 'stock-ticker',
       render: ({attributes, children, node}) => {
         const ticker = node as {symbol?: string}
         return (
@@ -60,7 +60,7 @@ describe('defineLeaf void spacer', () => {
 
   test('the engine-emitted void spacer reaches the consumer through children for void block objects', async () => {
     const imageLeaf = defineLeaf<typeof blockObjectSchema>({
-      scope: '$..image',
+      type: 'image',
       render: ({attributes, children, node}) => {
         const image = node as {src?: string}
         return (

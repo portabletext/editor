@@ -1,4 +1,4 @@
-import type {PortableTextObject} from '@portabletext/schema'
+import type {PortableTextBlock, PortableTextObject} from '@portabletext/schema'
 import {useContext, useRef, type ReactElement} from 'react'
 import type {DropPosition} from '../behaviors/behavior.core.drop-position'
 import {serializePath} from '../paths/serialize-path'
@@ -18,7 +18,9 @@ export function RenderBlockObject(props: {
   dropPosition?: DropPosition['position']
   children: ReactElement
   element: PortableTextObject
+  isInline: boolean
   leafConfig?: LeafConfig
+  parent: PortableTextBlock | PortableTextObject | undefined
   path: Path
   readOnly: boolean
   renderBlock?: RenderBlockFunction
@@ -60,7 +62,9 @@ export function RenderBlockObject(props: {
           'data-pt-block-type': 'object',
         }}
         focused={focused}
+        isInline={props.isInline}
         node={props.element}
+        parent={props.parent}
         path={props.path}
         selected={selected}
       >

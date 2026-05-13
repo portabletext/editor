@@ -28,10 +28,10 @@ const calloutContainers = resolveContainers(
   schema,
   new Map([
     [
-      '$..callout',
+      'callout',
       makeContainerConfig(schema, {
-        scope: '$..callout',
-        field: 'content',
+        type: 'callout',
+        childField: 'content',
       }),
     ],
   ]),

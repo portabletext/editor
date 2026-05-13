@@ -159,7 +159,7 @@ describe(getValue.name, () => {
   test('returns undefined for keyed segment on non-array', () => {
     expect(
       getValue(
-        [{_key: 'b0', field: 'string'}],
+        [{_key: 'b0', childField: 'string'}],
         [{_key: 'b0'}, 'field', {_key: 'nope'}],
       ),
     ).toEqual(undefined)
@@ -167,7 +167,10 @@ describe(getValue.name, () => {
 
   test('returns undefined for numeric segment on non-array', () => {
     expect(
-      getValue([{_key: 'b0', field: 'string'}], [{_key: 'b0'}, 'field', 0]),
+      getValue(
+        [{_key: 'b0', childField: 'string'}],
+        [{_key: 'b0'}, 'field', 0],
+      ),
     ).toEqual(undefined)
   })
 

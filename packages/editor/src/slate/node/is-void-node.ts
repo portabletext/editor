@@ -12,10 +12,10 @@ import {isObjectNode} from './is-object-node'
 export function isVoidNode(
   snapshot: TraversalSnapshot,
   node: unknown,
-  path: Path,
+  _path: Path,
 ): node is PortableTextObject {
   return (
     isObjectNode({schema: snapshot.context.schema}, node) &&
-    !isEditableContainer(snapshot, node, path)
+    !isEditableContainer(snapshot, node)
   )
 }

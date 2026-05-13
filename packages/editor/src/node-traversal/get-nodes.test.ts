@@ -802,10 +802,10 @@ describe(getNodes.name, () => {
               schema,
               new Map([
                 [
-                  '$..accordion',
+                  'accordion',
                   makeContainerConfig(schema, {
-                    scope: '$..accordion',
-                    field: 'value',
+                    type: 'accordion',
+                    childField: 'value',
                   }),
                 ],
               ]),

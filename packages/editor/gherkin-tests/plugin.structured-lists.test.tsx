@@ -64,8 +64,8 @@ const schemaDefinition = defineSchema({
 })
 
 const listContainer = defineContainer<typeof schemaDefinition>({
-  scope: '$..list',
-  field: 'items',
+  type: 'list',
+  childField: 'items',
   render: ({attributes, children}) => (
     <ul data-testid="list" {...attributes}>
       {children}
@@ -74,8 +74,8 @@ const listContainer = defineContainer<typeof schemaDefinition>({
 })
 
 const listItemContainer = defineContainer<typeof schemaDefinition>({
-  scope: '$..list.list-item',
-  field: 'content',
+  type: 'list-item',
+  childField: 'content',
   render: ({attributes, children}) => (
     <li data-testid="list-item" {...attributes}>
       {children}
@@ -84,8 +84,8 @@ const listItemContainer = defineContainer<typeof schemaDefinition>({
 })
 
 const codeBlockContainer = defineContainer<typeof schemaDefinition>({
-  scope: '$..code-block',
-  field: 'lines',
+  type: 'code-block',
+  childField: 'lines',
   render: ({attributes, children}) => (
     <pre data-testid="code-block" {...attributes}>
       {children}

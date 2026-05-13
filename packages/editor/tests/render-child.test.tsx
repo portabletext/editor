@@ -392,8 +392,8 @@ describe('renderChild', () => {
     })
 
     const tableContainer = defineContainer<typeof schemaDefinition>({
-      scope: '$..table',
-      field: 'rows',
+      type: 'table',
+      childField: 'rows',
       render: ({attributes, children}) => (
         <table {...attributes}>
           <tbody>{children}</tbody>
@@ -402,14 +402,14 @@ describe('renderChild', () => {
     })
 
     const rowContainer = defineContainer<typeof schemaDefinition>({
-      scope: '$..table.row',
-      field: 'cells',
+      type: 'row',
+      childField: 'cells',
       render: ({attributes, children}) => <tr {...attributes}>{children}</tr>,
     })
 
     const cellContainer = defineContainer<typeof schemaDefinition>({
-      scope: '$..table.row.cell',
-      field: 'content',
+      type: 'cell',
+      childField: 'content',
       render: ({attributes, children}) => (
         <td data-testid="cell" {...attributes}>
           {children}

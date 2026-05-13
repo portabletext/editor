@@ -1,5 +1,5 @@
-import {defineContainer, defineLeaf} from '@portabletext/editor'
-import {ContainerPlugin, LeafPlugin} from '@portabletext/editor/plugins'
+import {defineContainer} from '@portabletext/editor'
+import {ContainerPlugin} from '@portabletext/editor/plugins'
 import {
   InfoIcon,
   LightbulbIcon,
@@ -40,8 +40,8 @@ function ToneIcon({tone}: {tone: string}): JSX.Element {
 }
 
 const calloutContainer = defineContainer<typeof playgroundSchemaDefinition>({
-  scope: '$..callout',
-  field: 'content',
+  type: 'callout',
+  childField: 'content',
   render: ({attributes, children, node, selected}) => {
     const tone = typeof node.tone === 'string' ? node.tone : 'note'
     const toneStyle = toneClassName[tone] ?? defaultToneClassName
@@ -61,94 +61,80 @@ const calloutContainer = defineContainer<typeof playgroundSchemaDefinition>({
       </aside>
     )
   },
-})
-
-const calloutBlockContainer = defineContainer<
-  typeof playgroundSchemaDefinition
->({
-  scope: '$..callout.block',
-  field: 'children',
-  render: ({attributes, children, node}) => {
-    if (node.listItem !== undefined) {
+  renderChild: {
+    block: ({attributes, children, node}) => {
+      const block = node as {style?: string; listItem?: string}
+      if (block.listItem !== undefined) {
+        return (
+          <div {...attributes} className="my-1">
+            {children}
+          </div>
+        )
+      }
+      switch (block.style) {
+        case 'h1':
+          return (
+            <h1 {...attributes} className="my-2 font-bold text-2xl">
+              {children}
+            </h1>
+          )
+        case 'h2':
+          return (
+            <h2 {...attributes} className="my-2 font-bold text-xl">
+              {children}
+            </h2>
+          )
+        case 'h3':
+          return (
+            <h3 {...attributes} className="my-2 font-bold text-lg">
+              {children}
+            </h3>
+          )
+        case 'blockquote':
+          return (
+            <blockquote
+              {...attributes}
+              className="my-1 border-l-2 border-amber-600 pl-2 italic dark:border-amber-300"
+            >
+              {children}
+            </blockquote>
+          )
+        default:
+          return (
+            <p {...attributes} className="my-1">
+              {children}
+            </p>
+          )
+      }
+    },
+    image: ({attributes, children, node, focused, selected}) => {
+      const image = node as {src?: string; alt?: string}
       return (
-        <div {...attributes} className="my-1">
+        <span
+          {...attributes}
+          className={[
+            'my-1 inline-flex items-center justify-center overflow-hidden rounded border border-amber-300 dark:border-amber-700',
+            selected
+              ? 'outline outline-2 outline-amber-500 dark:outline-amber-400'
+              : '',
+            focused ? 'bg-amber-100 dark:bg-amber-900/40' : '',
+          ]
+            .filter(Boolean)
+            .join(' ')}
+        >
+          <img
+            src={image.src}
+            alt={image.alt ?? ''}
+            contentEditable={false}
+            className="h-16 w-auto object-contain"
+          />
           {children}
-        </div>
+        </span>
       )
-    }
-
-    switch (node.style) {
-      case 'h1':
-        return (
-          <h1 {...attributes} className="my-2 font-bold text-2xl">
-            {children}
-          </h1>
-        )
-      case 'h2':
-        return (
-          <h2 {...attributes} className="my-2 font-bold text-xl">
-            {children}
-          </h2>
-        )
-      case 'h3':
-        return (
-          <h3 {...attributes} className="my-2 font-bold text-lg">
-            {children}
-          </h3>
-        )
-      case 'blockquote':
-        return (
-          <blockquote
-            {...attributes}
-            className="my-1 border-l-2 border-amber-600 pl-2 italic dark:border-amber-300"
-          >
-            {children}
-          </blockquote>
-        )
-      default:
-        return (
-          <p {...attributes} className="my-1">
-            {children}
-          </p>
-        )
-    }
-  },
-})
-
-const calloutImageLeaf = defineLeaf<typeof playgroundSchemaDefinition>({
-  scope: '$..callout.image',
-  render: ({attributes, children, node, focused, selected}) => {
-    const image = node as {src?: string; alt?: string}
-    return (
-      <span
-        {...attributes}
-        className={[
-          'my-1 inline-flex items-center justify-center overflow-hidden rounded border border-amber-300 dark:border-amber-700',
-          selected
-            ? 'outline outline-2 outline-amber-500 dark:outline-amber-400'
-            : '',
-          focused ? 'bg-amber-100 dark:bg-amber-900/40' : '',
-        ]
-          .filter(Boolean)
-          .join(' ')}
-      >
-        <img
-          src={image.src}
-          alt={image.alt ?? ''}
-          contentEditable={false}
-          className="h-16 w-auto object-contain"
-        />
-        {children}
-      </span>
-    )
+    },
   },
 })
 
 export function CalloutPlugin(): JSX.Element {
-  return (
-    <>
-      <ContainerPlugin containers={[calloutContainer, calloutBlockContainer]} />
-      <LeafPlugin leafs={[calloutImageLeaf]} />
-    </>
-  )
+  return <ContainerPlugin containers={[calloutContainer]} />
 }

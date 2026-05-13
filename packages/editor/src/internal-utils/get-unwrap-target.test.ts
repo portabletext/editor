@@ -43,18 +43,18 @@ describe(getUnwrapTarget.name, () => {
     )
     const configs: Map<string, ContainerConfig> = new Map([
       [
-        '$..cell',
+        'cell',
         makeContainerConfig(schema, {
-          scope: '$..cell',
-          field: 'content',
+          type: 'cell',
+          childField: 'content',
           render: testRender,
         }),
       ],
       [
-        '$..cell.callout',
+        'callout',
         makeContainerConfig(schema, {
-          scope: '$..cell.callout',
-          field: 'content',
+          type: 'callout',
+          childField: 'content',
           render: testRender,
         }),
       ],
@@ -152,34 +152,34 @@ describe(getUnwrapTarget.name, () => {
     )
     const configs: Map<string, ContainerConfig> = new Map([
       [
-        '$..table',
+        'table',
         makeContainerConfig(schema, {
-          scope: '$..table',
-          field: 'rows',
+          type: 'table',
+          childField: 'rows',
           render: testRender,
         }),
       ],
       [
-        '$..table.row',
+        'row',
         makeContainerConfig(schema, {
-          scope: '$..table.row',
-          field: 'cells',
+          type: 'row',
+          childField: 'cells',
           render: testRender,
         }),
       ],
       [
-        '$..table.row.cell',
+        'cell',
         makeContainerConfig(schema, {
-          scope: '$..table.row.cell',
-          field: 'content',
+          type: 'cell',
+          childField: 'content',
           render: testRender,
         }),
       ],
       [
-        '$..table.row.cell.callout',
+        'callout',
         makeContainerConfig(schema, {
-          scope: '$..table.row.cell.callout',
-          field: 'content',
+          type: 'callout',
+          childField: 'content',
           render: testRender,
         }),
       ],
@@ -290,26 +290,26 @@ describe(getUnwrapTarget.name, () => {
     )
     const configs: Map<string, ContainerConfig> = new Map([
       [
-        '$..row',
+        'row',
         makeContainerConfig(schema, {
-          scope: '$..row',
-          field: 'cells',
+          type: 'row',
+          childField: 'cells',
           render: testRender,
         }),
       ],
       [
-        '$..row.cell',
+        'cell',
         makeContainerConfig(schema, {
-          scope: '$..row.cell',
-          field: 'content',
+          type: 'cell',
+          childField: 'content',
           render: testRender,
         }),
       ],
       [
-        '$..row.cell.callout',
+        'callout',
         makeContainerConfig(schema, {
-          scope: '$..row.cell.callout',
-          field: 'content',
+          type: 'callout',
+          childField: 'content',
           render: testRender,
         }),
       ],
@@ -395,10 +395,10 @@ describe(getUnwrapTarget.name, () => {
     )
     const configs: Map<string, ContainerConfig> = new Map([
       [
-        '$..callout',
+        'callout',
         makeContainerConfig(schema, {
-          scope: '$..callout',
-          field: 'content',
+          type: 'callout',
+          childField: 'content',
           render: testRender,
         }),
       ],
@@ -469,18 +469,18 @@ describe(getUnwrapTarget.name, () => {
     )
     const configs: Map<string, ContainerConfig> = new Map([
       [
-        '$..cell',
+        'cell',
         makeContainerConfig(schema, {
-          scope: '$..cell',
-          field: 'content',
+          type: 'cell',
+          childField: 'content',
           render: testRender,
         }),
       ],
       [
-        '$..cell.callout',
+        'callout',
         makeContainerConfig(schema, {
-          scope: '$..cell.callout',
-          field: 'content',
+          type: 'callout',
+          childField: 'content',
           render: testRender,
         }),
       ],
@@ -556,18 +556,18 @@ describe(getUnwrapTarget.name, () => {
     )
     const configs: Map<string, ContainerConfig> = new Map([
       [
-        '$..cell',
+        'cell',
         makeContainerConfig(schema, {
-          scope: '$..cell',
-          field: 'content',
+          type: 'cell',
+          childField: 'content',
           render: testRender,
         }),
       ],
       [
-        '$..cell.callout',
+        'callout',
         makeContainerConfig(schema, {
-          scope: '$..cell.callout',
-          field: 'content',
+          type: 'callout',
+          childField: 'content',
           render: testRender,
         }),
       ],
@@ -642,18 +642,18 @@ describe(getUnwrapTarget.name, () => {
     )
     const configs: Map<string, ContainerConfig> = new Map([
       [
-        '$..cell',
+        'cell',
         makeContainerConfig(schema, {
-          scope: '$..cell',
-          field: 'content',
+          type: 'cell',
+          childField: 'content',
           render: testRender,
         }),
       ],
       [
-        '$..cell.callout',
+        'callout',
         makeContainerConfig(schema, {
-          scope: '$..cell.callout',
-          field: 'content',
+          type: 'callout',
+          childField: 'content',
           render: testRender,
         }),
       ],
@@ -728,18 +728,18 @@ describe(getUnwrapTarget.name, () => {
     )
     const configs: Map<string, ContainerConfig> = new Map([
       [
-        '$..row',
+        'row',
         makeContainerConfig(schema, {
-          scope: '$..row',
-          field: 'cells',
+          type: 'row',
+          childField: 'cells',
           render: testRender,
         }),
       ],
       [
-        '$..row.cell',
+        'cell',
         makeContainerConfig(schema, {
-          scope: '$..row.cell',
-          field: 'content',
+          type: 'cell',
+          childField: 'content',
           render: testRender,
         }),
       ],
@@ -841,26 +841,26 @@ describe(getUnwrapTarget.name, () => {
     )
     const configs: Map<string, ContainerConfig> = new Map([
       [
-        '$..cell',
+        'cell',
         makeContainerConfig(schema, {
-          scope: '$..cell',
-          field: 'content',
+          type: 'cell',
+          childField: 'content',
           render: testRender,
         }),
       ],
       [
-        '$..cell.section',
+        'section',
         makeContainerConfig(schema, {
-          scope: '$..cell.section',
-          field: 'content',
+          type: 'section',
+          childField: 'content',
           render: testRender,
         }),
       ],
       [
-        '$..cell.section.callout',
+        'callout',
         makeContainerConfig(schema, {
-          scope: '$..cell.section.callout',
-          field: 'content',
+          type: 'callout',
+          childField: 'content',
           render: testRender,
         }),
       ],
@@ -929,10 +929,10 @@ describe(getUnwrapTarget.name, () => {
     )
     const configs: Map<string, ContainerConfig> = new Map([
       [
-        '$..callout',
+        'callout',
         makeContainerConfig(schema, {
-          scope: '$..callout',
-          field: 'content',
+          type: 'callout',
+          childField: 'content',
           render: testRender,
         }),
       ],

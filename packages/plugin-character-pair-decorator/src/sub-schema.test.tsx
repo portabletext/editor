@@ -33,8 +33,8 @@ describe('Character pair decorator respects the sub-schema at the focus', () => 
     })
 
     const codeBlockContainer = defineContainer<typeof schemaDefinition>({
-      scope: '$..code-block',
-      field: 'lines',
+      type: 'code-block',
+      childField: 'lines',
       render: ({attributes, children}) => (
         <pre data-testid="code-block" {...attributes}>
           {children}

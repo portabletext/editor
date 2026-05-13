@@ -64,7 +64,7 @@ describe('decorator shortcut guard', () => {
       children: (
         <ContainerPlugin
           containers={[
-            defineContainer({scope: '$..code-block', field: 'lines'}),
+            defineContainer({type: 'code-block', childField: 'lines'}),
           ]}
         />
       ),

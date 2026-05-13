@@ -63,28 +63,28 @@ const schemaDefinition = defineSchema({
 
 const containers = [
   defineContainer<typeof schemaDefinition>({
-    scope: '$..code-block',
-    field: 'lines',
+    type: 'code-block',
+    childField: 'lines',
     render: ({attributes, children}) => <pre {...attributes}>{children}</pre>,
   }),
   defineContainer<typeof schemaDefinition>({
-    scope: '$..callout',
-    field: 'content',
+    type: 'callout',
+    childField: 'content',
     render: ({attributes, children}) => <div {...attributes}>{children}</div>,
   }),
   defineContainer<typeof schemaDefinition>({
-    scope: '$..table',
-    field: 'rows',
+    type: 'table',
+    childField: 'rows',
     render: ({attributes, children}) => <div {...attributes}>{children}</div>,
   }),
   defineContainer<typeof schemaDefinition>({
-    scope: '$..table.row',
-    field: 'cells',
+    type: 'row',
+    childField: 'cells',
     render: ({attributes, children}) => <div {...attributes}>{children}</div>,
   }),
   defineContainer<typeof schemaDefinition>({
-    scope: '$..table.row.cell',
-    field: 'content',
+    type: 'cell',
+    childField: 'content',
     render: ({attributes, children}) => <div {...attributes}>{children}</div>,
   }),
 ]
@@ -994,23 +994,23 @@ const tableSchemaDefinition = defineSchema({
 
 const tableContainers = [
   defineContainer<typeof tableSchemaDefinition>({
-    scope: '$..table',
-    field: 'rows',
+    type: 'table',
+    childField: 'rows',
     render: ({attributes, children}) => <div {...attributes}>{children}</div>,
   }),
   defineContainer<typeof tableSchemaDefinition>({
-    scope: '$..table.row',
-    field: 'cells',
+    type: 'row',
+    childField: 'cells',
     render: ({attributes, children}) => <div {...attributes}>{children}</div>,
   }),
   defineContainer<typeof tableSchemaDefinition>({
-    scope: '$..table.row.cell',
-    field: 'content',
+    type: 'cell',
+    childField: 'content',
     render: ({attributes, children}) => <div {...attributes}>{children}</div>,
   }),
   defineContainer<typeof tableSchemaDefinition>({
-    scope: '$..callout',
-    field: 'content',
+    type: 'callout',
+    childField: 'content',
     render: ({attributes, children}) => <div {...attributes}>{children}</div>,
   }),
 ]
@@ -2250,8 +2250,8 @@ describe('cross-container range delete: deep structures', () => {
     // empty text block to be unset (leaving the editor selection
     // stale) instead of just emptied.
     const calloutBlockContainer = defineContainer<typeof schemaDefinition>({
-      scope: '$..callout.block',
-      field: 'children',
+      type: 'block',
+      childField: 'children',
       render: ({attributes, children}) => <p {...attributes}>{children}</p>,
     })
 

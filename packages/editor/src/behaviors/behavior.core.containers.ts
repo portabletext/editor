@@ -63,8 +63,8 @@ function isAtContainerDeadEnd(
     return false
   }
 
-  const container = getAncestor(snapshot, focusTextBlock.path, (node, path) =>
-    isEditableContainer(snapshot, node, path),
+  const container = getAncestor(snapshot, focusTextBlock.path, (node) =>
+    isEditableContainer(snapshot, node),
   )
 
   if (!container) {
@@ -171,7 +171,7 @@ function getEscapeTarget(
   path: Path,
 ): Path | undefined {
   return getAncestor(snapshot, path, (node, ancestorPath) => {
-    if (!isEditableContainer(snapshot, node, ancestorPath)) {
+    if (!isEditableContainer(snapshot, node)) {
       return false
     }
     const enclosing = getEnclosingContainer(snapshot, ancestorPath)

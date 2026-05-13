@@ -70,24 +70,24 @@ const tableContainers: Containers = resolveContainers(
   schema,
   new Map([
     [
-      '$..table',
+      'table',
       makeContainerConfig(schema, {
-        scope: '$..table',
-        field: 'rows',
+        type: 'table',
+        childField: 'rows',
       }),
     ],
     [
-      '$..table.tableRow',
+      'tableRow',
       makeContainerConfig(schema, {
-        scope: '$..table.tableRow',
-        field: 'cells',
+        type: 'tableRow',
+        childField: 'cells',
       }),
     ],
     [
-      '$..table.tableRow.tableCell',
+      'tableCell',
       makeContainerConfig(schema, {
-        scope: '$..table.tableRow.tableCell',
-        field: 'content',
+        type: 'tableCell',
+        childField: 'content',
       }),
     ],
   ]),
@@ -579,17 +579,17 @@ describe('fromTextspec with self-referential schemas', () => {
     recursiveListSchema,
     new Map([
       [
-        '$..list',
+        'list',
         makeContainerConfig(recursiveListSchema, {
-          scope: '$..list',
-          field: 'items',
+          type: 'list',
+          childField: 'items',
         }),
       ],
       [
-        '$..list.list-item',
+        'list-item',
         makeContainerConfig(recursiveListSchema, {
-          scope: '$..list.list-item',
-          field: 'content',
+          type: 'list-item',
+          childField: 'content',
         }),
       ],
     ]),

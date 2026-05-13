@@ -35,7 +35,7 @@ test('getActiveAnnotations: respects sub-schema annotations inside a container',
     }),
   )
   const containers = resolveTestbedContainers(schema, [
-    {scope: '$..callout', field: 'content'},
+    {type: 'callout', childField: 'content'},
   ])
   const linkMarkDef = {_type: 'link', _key: 'lk1', href: 'https://x'}
 
@@ -117,7 +117,7 @@ test('getActiveAnnotations: expanded across containers — out-of-scope spans do
     }),
   )
   const containers = resolveTestbedContainers(schema, [
-    {scope: '$..callout', field: 'content'},
+    {type: 'callout', childField: 'content'},
   ])
   const linkMarkDef = {_type: 'link', _key: 'lk1', href: 'https://x'}
 

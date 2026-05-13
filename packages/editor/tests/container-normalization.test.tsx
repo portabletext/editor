@@ -59,32 +59,38 @@ const schemaDefinition = defineSchema({
 
 const tableContainers = [
   defineContainer<typeof schemaDefinition>({
-    scope: '$..table',
-    field: 'rows',
+    type: 'table',
+    childField: 'rows',
     render: ({children}) => <>{children}</>,
   }),
   defineContainer<typeof schemaDefinition>({
-    scope: '$..table.row',
-    field: 'cells',
+    type: 'row',
+    childField: 'cells',
     render: ({children}) => <>{children}</>,
   }),
   defineContainer<typeof schemaDefinition>({
-    scope: '$..table.row.cell',
-    field: 'content',
+    type: 'cell',
+    childField: 'content',
     render: ({children}) => <>{children}</>,
   }),
 ]
 
 const calloutContainers = [
   defineContainer<typeof schemaDefinition>({
-    scope: '$..callout',
-    field: 'content',
+    type: 'callout',
+    childField: 'content',
     render: ({children}) => <>{children}</>,
   }),
 ]
 
 describe('container normalization', () => {
-  test('top-level void block is not confused with container child type', async () => {
+  test('registered container type applies wherever the bare _type appears', async () => {
+    // v7 semantic: a registered container type is canonical for that
+    // `_type` everywhere the schema permits the type. Schemas that need
+    // position-differentiated structure use different type names.
+    // The previous v6 scope-grammar behavior (`$..table.row` vs bare
+    // `row`) is intentionally gone - position-aware registration would
+    // re-introduce the same machinery scope grammar had.
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -121,6 +127,21 @@ describe('container normalization', () => {
         {
           _type: 'row',
           _key: rowKey,
+          cells: [
+            {
+              _type: 'cell',
+              _key: 'k5',
+              content: [
+                {
+                  _type: 'block',
+                  _key: 'k6',
+                  children: [{_type: 'span', _key: 'k7', text: '', marks: []}],
+                  markDefs: [],
+                  style: 'normal',
+                },
+              ],
+            },
+          ],
         },
       ])
     })
@@ -1299,8 +1320,8 @@ describe('container normalization', () => {
 
     // Late-register a container for callout
     editor.registerContainer({
-      scope: '$..callout',
-      field: 'content',
+      type: 'callout',
+      childField: 'content',
     })
 
     // Normalization should now kick in and populate the callout
@@ -1472,8 +1493,8 @@ describe('container normalization', () => {
         <ContainerPlugin
           containers={[
             defineContainer<typeof cardSchemaDefinition>({
-              scope: '$..card',
-              field: 'tags',
+              type: 'card',
+              childField: 'tags',
               render: ({children}) => <>{children}</>,
             }),
           ]}
@@ -1604,28 +1625,28 @@ describe('container normalization', () => {
         <ContainerPlugin
           containers={[
             {
-              scope: '$..callout',
-              field: 'content',
+              type: 'callout',
+              childField: 'content',
               render: ({children}) => <>{children}</>,
             },
             {
-              scope: '$..table',
-              field: 'rows',
+              type: 'table',
+              childField: 'rows',
               render: ({children}) => <>{children}</>,
             },
             {
-              scope: '$..table.row',
-              field: 'cells',
+              type: 'row',
+              childField: 'cells',
               render: ({children}) => <>{children}</>,
             },
             {
-              scope: '$..table.row.cell',
-              field: 'content',
+              type: 'cell',
+              childField: 'content',
               render: ({children}) => <>{children}</>,
             },
             {
-              scope: '$..figure',
-              field: 'caption',
+              type: 'figure',
+              childField: 'caption',
               render: ({children}) => <>{children}</>,
             },
           ]}
@@ -1738,18 +1759,18 @@ describe('container normalization', () => {
         <ContainerPlugin
           containers={[
             defineContainer<typeof schemaDefinition>({
-              scope: '$..table',
-              field: 'rows',
+              type: 'table',
+              childField: 'rows',
               render: ({children}) => <>{children}</>,
             }),
             defineContainer<typeof schemaDefinition>({
-              scope: '$..table.row',
-              field: 'cells',
+              type: 'row',
+              childField: 'cells',
               render: ({children}) => <>{children}</>,
             }),
             defineContainer<typeof schemaDefinition>({
-              scope: '$..table.row.cell',
-              field: 'content',
+              type: 'cell',
+              childField: 'content',
               render: ({children}) => <>{children}</>,
             }),
           ]}
@@ -1818,18 +1839,18 @@ describe('container normalization', () => {
         <ContainerPlugin
           containers={[
             defineContainer<typeof schemaDefinition>({
-              scope: '$..table',
-              field: 'rows',
+              type: 'table',
+              childField: 'rows',
               render: ({children}) => <>{children}</>,
             }),
             defineContainer<typeof schemaDefinition>({
-              scope: '$..table.row',
-              field: 'cells',
+              type: 'row',
+              childField: 'cells',
               render: ({children}) => <>{children}</>,
             }),
             defineContainer<typeof schemaDefinition>({
-              scope: '$..table.row.cell',
-              field: 'content',
+              type: 'cell',
+              childField: 'content',
               render: ({children}) => <>{children}</>,
             }),
           ]}
@@ -1916,8 +1937,8 @@ describe('container normalization', () => {
     })
 
     const unregisterCallout = editor.registerContainer({
-      scope: '$..callout',
-      field: 'content',
+      type: 'callout',
+      childField: 'content',
     })
 
     // Verify normalization happened
@@ -2008,8 +2029,8 @@ describe('container normalization', () => {
     })
 
     const unregister = editor.registerContainer({
-      scope: '$..callout',
-      field: 'content',
+      type: 'callout',
+      childField: 'content',
     })
 
     await vi.waitFor(() => {

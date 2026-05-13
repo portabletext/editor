@@ -20,7 +20,7 @@ export function getChildFieldName(
   },
   path: Path,
 ): string | undefined {
-  let nodeChildren = getNodeChildren(context, {value: context.value}, '')
+  let nodeChildren = getNodeChildren(context, {value: context.value})
 
   for (let i = 0; i < path.length; i++) {
     if (!nodeChildren) {
@@ -46,11 +46,11 @@ export function getChildFieldName(
     }
 
     if (i === path.length - 1) {
-      const targetInfo = getNodeChildren(context, node, nodeChildren.scopePath)
+      const targetInfo = getNodeChildren(context, node)
       return targetInfo?.fieldName
     }
 
-    nodeChildren = getNodeChildren(context, node, nodeChildren.scopePath)
+    nodeChildren = getNodeChildren(context, node)
   }
 
   return undefined

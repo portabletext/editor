@@ -16,18 +16,51 @@ const imageStyle = tv({
   },
 })
 
-const cellImageStyle = tv({
-  base: 'grid grid-cols-[auto_1fr] my-0.5 items-center gap-1 border border-gray-300 dark:border-gray-600 rounded text-xs',
+const inlineImageStyle = tv({
+  base: 'max-w-35 grid grid-cols-[auto_1fr] items-start gap-1 border-2 border-gray-300 dark:border-gray-600 rounded text-sm',
   variants: {
     selected: {true: 'border-blue-300 dark:border-blue-600'},
-    focused: {true: 'bg-blue-50 dark:bg-blue-900/30'},
+    focused: {true: 'bg-blue-100 dark:bg-blue-800/60'},
   },
 })
 
+// Single image leaf. Branches on `isInline` for the inline-in-textblock
+// position. Cell-positioned images are handled by the cell container's
+// own `renderChild.image` in plugin.table.tsx (not here).
 const imageLeaf = defineLeaf<typeof playgroundSchemaDefinition>({
-  scope: '$..image',
-  render: ({attributes, children, node, focused, readOnly, selected}) => {
+  type: 'image',
+  render: ({
+    attributes,
+    children,
+    node,
+    focused,
+    readOnly,
+    selected,
+    isInline,
+  }) => {
     const image = node as {src?: string; alt?: string}
+    if (isInline) {
+      return (
+        <span {...attributes}>
+          {children}
+          <span
+            draggable={!readOnly}
+            className={inlineImageStyle({focused, selected})}
+          >
+            <span className="bg-gray-100 dark:bg-gray-700 size-5 overflow-clip flex items-center justify-center">
+              <img
+                className="object-scale-down max-w-full"
+                src={image.src}
+                alt={image.alt ?? ''}
+              />
+            </span>
+            <span className="text-ellipsis overflow-hidden whitespace-nowrap">
+              {image.src}
+            </span>
+          </span>
+        </span>
+      )
+    }
     return (
       <div {...attributes}>
         {children}
@@ -70,34 +103,6 @@ const imageLeaf = defineLeaf<typeof playgroundSchemaDefinition>({
   },
 })
 
-const cellImageLeaf = defineLeaf<typeof playgroundSchemaDefinition>({
-  scope: '$..table.row.cell.image',
-  render: ({attributes, children, node, focused, readOnly, selected}) => {
-    const image = node as {src?: string; alt?: string}
-    return (
-      <div {...attributes}>
-        {children}
-        <div
-          contentEditable={false}
-          draggable={!readOnly}
-          className={cellImageStyle({selected, focused})}
-        >
-          <div className="bg-gray-100 dark:bg-gray-700 size-8 overflow-clip flex items-center justify-center">
-            <img
-              className="object-scale-down max-w-full"
-              src={image.src}
-              alt={image.alt ?? ''}
-            />
-          </div>
-          <span className="text-ellipsis overflow-hidden whitespace-nowrap px-1">
-            {image.alt || image.src}
-          </span>
-        </div>
-      </div>
-    )
-  },
-})
-
 export function ImagePlugin(): JSX.Element {
-  return <LeafPlugin leafs={[imageLeaf, cellImageLeaf]} />
+  return <LeafPlugin leafs={[imageLeaf]} />
 }

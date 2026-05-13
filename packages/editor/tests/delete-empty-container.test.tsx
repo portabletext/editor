@@ -23,8 +23,8 @@ const schemaDefinition = defineSchema({
 
 const containers = [
   defineContainer<typeof schemaDefinition>({
-    scope: '$..callout',
-    field: 'content',
+    type: 'callout',
+    childField: 'content',
   }),
 ]
 
@@ -336,20 +336,20 @@ const tableSchemaPermissive = defineSchema({
 
 const tableContainersPermissive = [
   defineContainer<typeof tableSchemaPermissive>({
-    scope: '$..table',
-    field: 'rows',
+    type: 'table',
+    childField: 'rows',
   }),
   defineContainer<typeof tableSchemaPermissive>({
-    scope: '$..table.row',
-    field: 'cells',
+    type: 'row',
+    childField: 'cells',
   }),
   defineContainer<typeof tableSchemaPermissive>({
-    scope: '$..table.row.cell',
-    field: 'content',
+    type: 'cell',
+    childField: 'content',
   }),
   defineContainer<typeof tableSchemaPermissive>({
-    scope: '$..table.row.cell.callout',
-    field: 'content',
+    type: 'callout',
+    childField: 'content',
   }),
 ]
 
@@ -407,20 +407,20 @@ const tableSchemaStructural = defineSchema({
 
 const tableContainersStructural = [
   defineContainer<typeof tableSchemaStructural>({
-    scope: '$..table',
-    field: 'rows',
+    type: 'table',
+    childField: 'rows',
   }),
   defineContainer<typeof tableSchemaStructural>({
-    scope: '$..table.row',
-    field: 'cells',
+    type: 'row',
+    childField: 'cells',
   }),
   defineContainer<typeof tableSchemaStructural>({
-    scope: '$..table.row.cell',
-    field: 'content',
+    type: 'cell',
+    childField: 'content',
   }),
   defineContainer<typeof tableSchemaStructural>({
-    scope: '$..table.row.cell.callout',
-    field: 'content',
+    type: 'callout',
+    childField: 'content',
   }),
 ]
 
@@ -783,12 +783,12 @@ describe('delete on empty container - nested block container', () => {
 
   const containers = [
     defineContainer<typeof schemaDefinition>({
-      scope: '$..fact-box',
-      field: 'content',
+      type: 'fact-box',
+      childField: 'content',
     }),
     defineContainer<typeof schemaDefinition>({
-      scope: '$..fact-box.block',
-      field: 'children',
+      type: 'block',
+      childField: 'children',
     }),
   ]
 

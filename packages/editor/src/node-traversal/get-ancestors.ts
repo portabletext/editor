@@ -35,7 +35,6 @@ export function getAncestors(
 
   const {context, blockIndexMap} = snapshot
   let currentChildren: Array<Node> = context.value
-  let scopePath = ''
   let isRootLevel = true
 
   // Collected ancestors in document order (root first). Each entry holds
@@ -93,12 +92,11 @@ export function getAncestors(
     ancestorsByDepth.push({node, path: resolvedPath.slice()})
 
     // Descend into its children for the next iteration.
-    const next = getNodeChildren(context, node, scopePath)
+    const next = getNodeChildren(context, node)
     if (!next) {
       return []
     }
     currentChildren = next.children
-    scopePath = next.scopePath
     segmentIndex++
   }
 

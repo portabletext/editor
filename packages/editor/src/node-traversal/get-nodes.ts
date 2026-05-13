@@ -58,7 +58,7 @@ export function* getNodeDescendants(
   // passed in by callers like getDirtyPaths), the field name IS part of the
   // path.
   const isRoot = !('_key' in node) && !('_type' in node)
-  yield* walkStandalone(context, node, '', [], isRoot)
+  yield* walkStandalone(context, node, [], isRoot)
 }
 
 function* walkStandalone(
@@ -67,11 +67,10 @@ function* walkStandalone(
     containers: Containers
   },
   node: Node | {value: Array<Node>},
-  scopePath: string,
   path: Path,
   isRoot: boolean,
 ): Generator<{node: Node; path: Path}, void, undefined> {
-  const next = getNodeChildren(context, node, scopePath)
+  const next = getNodeChildren(context, node)
   if (!next) {
     return
   }
@@ -81,7 +80,7 @@ function* walkStandalone(
       ? [{_key: child._key}]
       : [...path, next.fieldName, {_key: child._key}]
     yield {node: child, path: childPath}
-    yield* walkStandalone(context, child, next.scopePath, childPath, false)
+    yield* walkStandalone(context, child, childPath, false)
   }
 }
 
@@ -132,7 +131,6 @@ function comparePathsInTree(
 
   const {context} = snapshot
   let currentChildren: Array<Node> = context.value
-  let scopePath = ''
   let isRootLevel = true
 
   const minDepth = Math.min(keysA.length, keysB.length)
@@ -157,12 +155,11 @@ function comparePathsInTree(
       if (!matchedNode) {
         return 0
       }
-      const next = getNodeChildren(context, matchedNode, scopePath)
+      const next = getNodeChildren(context, matchedNode)
       if (!next) {
         return 0
       }
       currentChildren = next.children
-      scopePath = next.scopePath
       isRootLevel = false
       continue
     }

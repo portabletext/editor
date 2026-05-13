@@ -3,8 +3,6 @@ import {getAncestors} from '../node-traversal/get-ancestors'
 import type {TraversalSnapshot} from '../node-traversal/traversal-snapshot'
 import type {Path} from '../slate/interfaces/path'
 import {isObjectNode} from '../slate/node/is-object-node'
-import {getContainerScopedName} from './get-container-scoped-name'
-import {lookupContainer} from './lookup-container'
 
 /**
  * Walk ancestors from `path` and return the nearest registered editable
@@ -24,12 +22,7 @@ export function getEnclosingContainer(
       continue
     }
 
-    const scopedName = getContainerScopedName(
-      snapshot,
-      ancestor.node,
-      ancestor.path,
-    )
-    const container = lookupContainer(snapshot.context.containers, scopedName)
+    const container = snapshot.context.containers.get(ancestor.node._type)
 
     if (!container) {
       continue

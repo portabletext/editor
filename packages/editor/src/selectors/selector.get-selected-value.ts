@@ -50,7 +50,6 @@ export const getSelectedValue: EditorSelector<Array<PortableTextBlock>> = (
   return sliceArray({
     context: snapshot.context,
     blocks: snapshot.context.value,
-    scopePath: '',
     pathPrefix: [],
     fieldNameInPrefix: undefined,
     startEdge: startPoint,
@@ -61,7 +60,6 @@ export const getSelectedValue: EditorSelector<Array<PortableTextBlock>> = (
 function sliceArray({
   context,
   blocks,
-  scopePath,
   pathPrefix,
   fieldNameInPrefix,
   startEdge,
@@ -69,7 +67,6 @@ function sliceArray({
 }: {
   context: SliceContext
   blocks: ReadonlyArray<PortableTextBlock>
-  scopePath: string
   pathPrefix: Path
   fieldNameInPrefix: string | undefined
   startEdge: Edge
@@ -126,7 +123,7 @@ function sliceArray({
       continue
     }
 
-    const childInfo = getNodeChildren(context, block, scopePath)
+    const childInfo = getNodeChildren(context, block)
 
     if (!childInfo) {
       result.push(block)
@@ -136,7 +133,6 @@ function sliceArray({
     const innerSliced = sliceArray({
       context,
       blocks: childInfo.children as Array<PortableTextBlock>,
-      scopePath: childInfo.scopePath,
       pathPrefix: blockPath,
       fieldNameInPrefix: childInfo.fieldName,
       startEdge: startPointForBlock,

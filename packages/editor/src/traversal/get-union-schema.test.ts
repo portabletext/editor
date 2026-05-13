@@ -69,18 +69,18 @@ describe(getUnionSchema.name, () => {
 
     const containerConfigs: Map<string, ContainerConfig> = new Map()
     containerConfigs.set(
-      '$..callout',
+      'callout',
       makeContainerConfig(schema, {
-        scope: '$..callout',
-        field: 'content',
+        type: 'callout',
+        childField: 'content',
         render: testRender,
       }),
     )
     containerConfigs.set(
-      '$..code-block',
+      'code-block',
       makeContainerConfig(schema, {
-        scope: '$..code-block',
-        field: 'lines',
+        type: 'code-block',
+        childField: 'lines',
         render: testRender,
       }),
     )
@@ -186,26 +186,26 @@ describe(getUnionSchema.name, () => {
 
     const containerConfigs: Map<string, ContainerConfig> = new Map()
     containerConfigs.set(
-      '$..table',
+      'table',
       makeContainerConfig(schema, {
-        scope: '$..table',
-        field: 'rows',
+        type: 'table',
+        childField: 'rows',
         render: testRender,
       }),
     )
     containerConfigs.set(
-      '$..table.row',
+      'row',
       makeContainerConfig(schema, {
-        scope: '$..table.row',
-        field: 'cells',
+        type: 'row',
+        childField: 'cells',
         render: testRender,
       }),
     )
     containerConfigs.set(
-      '$..table.row.cell',
+      'cell',
       makeContainerConfig(schema, {
-        scope: '$..table.row.cell',
-        field: 'content',
+        type: 'cell',
+        childField: 'content',
         render: testRender,
       }),
     )

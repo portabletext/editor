@@ -13,7 +13,7 @@ const schemaDefinition = defineSchema({
 describe('defineLeaf void block-object wrapper contract', () => {
   test('consumer wrapping content with contentEditable=false + draggable on the inner wrapper preserves the spacer in editable context', async () => {
     const imageLeaf = defineLeaf<typeof schemaDefinition>({
-      scope: '$..image',
+      type: 'image',
       render: ({attributes, children, readOnly}) => (
         <div {...attributes} data-testid="image">
           {children}
@@ -63,7 +63,7 @@ describe('defineLeaf void block-object wrapper contract', () => {
     const imageKey = keyGenerator()
 
     const imageLeaf = defineLeaf<typeof schemaDefinition>({
-      scope: '$..image',
+      type: 'image',
       render: ({attributes, children, readOnly}) => (
         <div {...attributes}>
           {children}

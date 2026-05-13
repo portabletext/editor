@@ -64,10 +64,10 @@ describe(getDefaultStyle.name, () => {
     )
     const containerConfigs: Map<string, ContainerConfig> = new Map()
     containerConfigs.set(
-      '$..cell',
+      'cell',
       makeContainerConfig(schema, {
-        scope: '$..cell',
-        field: 'content',
+        type: 'cell',
+        childField: 'content',
         render: testRender,
       }),
     )

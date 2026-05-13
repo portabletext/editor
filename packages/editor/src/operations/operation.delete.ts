@@ -99,9 +99,9 @@ export const deleteOperationImplementation: OperationImplementation<
     const enclosingContainer = getAncestor(
       operation.editor,
       at.anchor.path,
-      (node, path) =>
+      (node) =>
         isObjectNode(operation.editor, node) &&
-        isEditableContainer(operation.editor, node, path),
+        isEditableContainer(operation.editor, node),
     )
     if (
       enclosingContainer &&

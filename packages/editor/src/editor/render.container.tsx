@@ -1,4 +1,4 @@
-import type {PortableTextBlock} from '@portabletext/schema'
+import type {PortableTextBlock, PortableTextObject} from '@portabletext/schema'
 import {useSelector} from '@xstate/react'
 import {useContext, type ReactElement} from 'react'
 import {serializePath} from '../paths/serialize-path'
@@ -14,6 +14,8 @@ export function RenderContainer(props: {
   children: ReactElement
   element: PortableTextBlock
   containerConfig: ContainerConfig
+  isInline: boolean
+  parent: PortableTextBlock | PortableTextObject | undefined
   path: Path
 }) {
   const {focusedContainerPath, selectedContainerPaths} = useContext(
@@ -50,7 +52,9 @@ export function RenderContainer(props: {
       attributes: augmentedAttributes,
       children: props.children,
       focused,
+      isInline: props.isInline,
       node: props.element,
+      parent: props.parent,
       path: props.path,
       readOnly,
       selected,

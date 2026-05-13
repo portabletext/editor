@@ -146,7 +146,7 @@ export function getEventPosition({
     isEditor: isEditor(eventNode),
     isContainer: isEditor(eventNode)
       ? false
-      : isEditableContainer(slateEditor, eventNode, eventPath),
+      : isEditableContainer(slateEditor, eventNode),
     selection: eventSelection,
   }
 }
@@ -303,10 +303,10 @@ function getSelectionFromEvent(
 function isEventContainer(
   slateEditor: PortableTextSlateEditor,
   eventNode: Node | PortableTextSlateEditor,
-  eventPath: Path,
+  _eventPath: Path,
 ): boolean {
   if (isEditor(eventNode)) {
     return true
   }
-  return isEditableContainer(slateEditor, eventNode, eventPath)
+  return isEditableContainer(slateEditor, eventNode)
 }

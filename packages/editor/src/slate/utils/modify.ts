@@ -88,10 +88,9 @@ export const modifyDescendant = <N extends Node>(
   const fieldNames: string[] = []
   {
     let currentNode: Node | {value: Array<Node>} = {value: editor.children}
-    let scopePath = ''
 
     for (let i = 0; i < keyedSegments.length; i++) {
-      const result = getNodeChildren(context, currentNode, scopePath)
+      const result = getNodeChildren(context, currentNode)
       if (!result) {
         return
       }
@@ -107,7 +106,6 @@ export const modifyDescendant = <N extends Node>(
         return
       }
       currentNode = child
-      scopePath = result.scopePath
     }
   }
 
@@ -223,11 +221,10 @@ export const modifyChildren = (
 
     // Walk the path to build scope context for nested container types.
     const keyedSegments = getKeyedSegments(nodeEntry.path)
-    let scopePath = ''
     {
       let currentNode: Node | {value: Array<Node>} = {value: editor.children}
       for (let i = 0; i < keyedSegments.length; i++) {
-        const result = getNodeChildren(context, currentNode, scopePath)
+        const result = getNodeChildren(context, currentNode)
         if (!result) {
           break
         }
@@ -237,12 +234,11 @@ export const modifyChildren = (
         if (!child) {
           break
         }
-        scopePath = result.scopePath
         currentNode = child
       }
     }
 
-    const childInfo = getNodeChildren(context, nodeEntry.node, scopePath)
+    const childInfo = getNodeChildren(context, nodeEntry.node)
     const fieldName = childInfo?.fieldName ?? 'children'
 
     modifyDescendant(editor, path, (node) => {

@@ -72,24 +72,24 @@ const tableContainers: Containers = resolveContainers(
   schema,
   new Map([
     [
-      '$..table',
+      'table',
       makeContainerConfig(schema, {
-        scope: '$..table',
-        field: 'rows',
+        type: 'table',
+        childField: 'rows',
       }),
     ],
     [
-      '$..table.tableRow',
+      'tableRow',
       makeContainerConfig(schema, {
-        scope: '$..table.tableRow',
-        field: 'cells',
+        type: 'tableRow',
+        childField: 'cells',
       }),
     ],
     [
-      '$..table.tableRow.tableCell',
+      'tableCell',
       makeContainerConfig(schema, {
-        scope: '$..table.tableRow.tableCell',
-        field: 'content',
+        type: 'tableCell',
+        childField: 'content',
       }),
     ],
   ]),

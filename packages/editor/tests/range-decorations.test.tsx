@@ -631,8 +631,8 @@ describe('RangeDecorations inside editable containers', () => {
     })
 
     const calloutContainer = defineContainer<typeof schemaDefinition>({
-      scope: '$..callout',
-      field: 'content',
+      type: 'callout',
+      childField: 'content',
     })
 
     // A collapsed range decoration whose path points inside a container.

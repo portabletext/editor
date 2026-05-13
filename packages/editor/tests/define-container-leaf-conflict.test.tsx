@@ -49,16 +49,16 @@ describe('defineContainer / defineLeaf conflict resolution', () => {
           <ContainerPlugin
             containers={[
               defineContainer({
-                scope: '$..card',
-                field: 'content',
+                type: 'card',
+                childField: 'content',
               }),
             ]}
           />
           <ContainerPlugin
             containers={[
               defineContainer({
-                scope: '$..card',
-                field: 'aside',
+                type: 'card',
+                childField: 'aside',
               }),
             ]}
           />
@@ -89,16 +89,16 @@ describe('defineContainer / defineLeaf conflict resolution', () => {
           <ContainerPlugin
             containers={[
               defineContainer({
-                scope: '$..callout',
-                field: 'content',
+                type: 'callout',
+                childField: 'content',
               }),
             ]}
           />
           <ContainerPlugin
             containers={[
               defineContainer({
-                scope: '$..callout',
-                field: 'content',
+                type: 'callout',
+                childField: 'content',
               }),
             ]}
           />
@@ -125,7 +125,7 @@ describe('defineContainer / defineLeaf conflict resolution', () => {
           <LeafPlugin
             leafs={[
               defineLeaf({
-                scope: '$..callout',
+                type: 'callout',
                 render: ({children}) => <>{children}</>,
               }),
             ]}
@@ -133,7 +133,7 @@ describe('defineContainer / defineLeaf conflict resolution', () => {
           <LeafPlugin
             leafs={[
               defineLeaf({
-                scope: '$..callout',
+                type: 'callout',
                 render: ({children}) => <>{children}</>,
               }),
             ]}
@@ -161,15 +161,15 @@ describe('defineContainer / defineLeaf conflict resolution', () => {
           <ContainerPlugin
             containers={[
               defineContainer({
-                scope: '$..fact-box',
-                field: 'content',
+                type: 'fact-box',
+                childField: 'content',
               }),
             ]}
           />
           <LeafPlugin
             leafs={[
               defineLeaf({
-                scope: '$..fact-box',
+                type: 'fact-box',
                 render: ({children}) => <>{children}</>,
               }),
             ]}
@@ -199,7 +199,7 @@ describe('defineContainer / defineLeaf conflict resolution', () => {
           <LeafPlugin
             leafs={[
               defineLeaf({
-                scope: '$..fact-box',
+                type: 'fact-box',
                 render: ({children}) => <>{children}</>,
               }),
             ]}
@@ -207,8 +207,8 @@ describe('defineContainer / defineLeaf conflict resolution', () => {
           <ContainerPlugin
             containers={[
               defineContainer({
-                scope: '$..fact-box',
-                field: 'content',
+                type: 'fact-box',
+                childField: 'content',
               }),
             ]}
           />

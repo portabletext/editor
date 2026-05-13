@@ -1,9 +1,6 @@
 import type {FieldDefinition, OfDefinition} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
 import type {ContainerConfig} from '../renderers/renderer.types'
-import {compareSpecificity} from '../scope/compare-specificity'
-import {matchScope} from '../scope/match-scope'
-import {parseScope} from '../scope/parse-scope'
 
 export type ChildArrayField = FieldDefinition & {
   type: 'array'
@@ -13,272 +10,161 @@ export type ChildArrayField = FieldDefinition & {
 /**
  * Value shape held in the {@link Containers} map.
  *
- * Carries only what traversal and selectors need: the array field on the
- * container node that holds its editable children.
+ * Carries the container's resolved `field` (the array field on the
+ * container node that holds its editable children) and the original
+ * `container` definition. Engine traversal and selectors use `field`;
+ * render dispatch uses `container.render` and `container.renderChild`.
  *
  * @alpha
  */
-export type Container = {field: ChildArrayField}
+export type Container = ContainerConfig
 
 /**
  * Map of registered editable containers carried on `EditorContext`.
  *
- * Keyed by scoped type name (type chain joined by '.', e.g. `'callout.block'`,
- * `'table.row.cell'`). The internal `ResolvedContainers` map carries the full
- * `ContainerConfig` and is a subtype of this.
+ * Keyed by the container's `_type`. One registration per type; later
+ * registrations of the same type are ignored with a warning.
  *
  * @alpha
  */
 export type Containers = ReadonlyMap<string, Container>
 
 /**
- * Maps scoped type names (type chain joined by '.') to registered container
- * configs.
+ * Maps container `_type` names to registered container configs.
  *
- * Key: scoped type name (e.g., 'block', 'callout.block', 'table.row.cell').
+ * @internal
  */
-export type ResolvedContainers = Map<string, ContainerConfig>
+export type ResolvedContainers = ReadonlyMap<string, ContainerConfig>
 
 /**
- * Candidate type chain discoverable from the schema with an editable array
- * field. A single type with multiple array fields produces multiple candidates.
- */
-type Candidate = {
-  chain: Array<string>
-  field: ChildArrayField
-}
-
-/**
- * Resolve the `Containers` map for a schema and a set of registered configs.
- *
- * For each candidate position discoverable in the schema, picks the
- * most-specific matching config. Registration order breaks exact-duplicate
- * ties (last-wins).
+ * Resolve the `Containers` map from a set of registered container
+ * configs. Drops any registration whose type doesn't have a matching
+ * declaration in the schema. Container types are keyed by `_type` and
+ * the first schema declaration wins for `field` resolution.
  */
 export function resolveContainers(
-  schema: EditorSchema,
+  _schema: EditorSchema,
   containerConfigs: Map<string, ContainerConfig>,
 ): ResolvedContainers {
-  const containers: ResolvedContainers = new Map()
-
-  if (containerConfigs.size === 0) {
-    return containers
-  }
-
-  const configs = Array.from(containerConfigs.values()).sort(
-    (leftConfig, rightConfig) =>
-      -compareSpecificity(leftConfig.parsedScope, rightConfig.parsedScope),
-  )
-  const candidates = discoverCandidates(schema)
-
-  for (const candidate of candidates) {
-    const matching = configs.find(
-      (config) =>
-        config.field.name === candidate.field.name &&
-        matchScope(config.parsedScope, candidate.chain),
-    )
-    if (!matching) {
-      continue
-    }
-
-    containers.set(candidate.chain.join('.'), matching)
-  }
-
-  return containers
+  return new Map(containerConfigs)
 }
 
 /**
- * Resolve the `ChildArrayField` on a schema for a container registration.
- * Returns `undefined` when the registration is invalid: unknown type in
- * scope, missing field, non-array field, or primitive-only array field.
- * Warns on primitive-only fields.
+ * Resolve the `ChildArrayField` on a schema for a container
+ * registration. Walks the schema graph for the first declaration of
+ * `type` and returns the array field matching `fieldName`. Returns
+ * `undefined` when the type isn't declared, the field doesn't exist,
+ * isn't an array, or contains only primitive members.
  *
- * Picks the most-specific candidate whose chain matches the scope. This
- * matters when a type is declared inline at multiple positions (e.g.
- * `list` at root AND inline inside `callout`) - the candidate at
- * `callout.list` carries the inline shape, while the candidate at `list`
- * carries the root shape.
+ * For `type === 'block'`, returns a synthesized children field
+ * combining the schema's `span` with every inline object name.
  */
 export function resolveContainerField(
   schema: EditorSchema,
-  scope: string,
+  type: string,
   fieldName: string,
 ): ChildArrayField | undefined {
-  const parsedScope = parseScope(scope)
-  if (!parsedScope) {
-    return undefined
-  }
-  const candidates = discoverCandidates(schema)
-  let best: {chain: ReadonlyArray<string>; field: ChildArrayField} | undefined
-  for (const candidate of candidates) {
-    if (candidate.field.name !== fieldName) {
-      continue
-    }
-    if (!matchScope(parsedScope, candidate.chain)) {
-      continue
-    }
-    if (containsOnlyPrimitiveTypes(candidate.field)) {
-      console.warn(
-        `Field '${candidate.field.name}' on '${candidate.chain.join('.')}' doesn't contain block or container types and will be excluded`,
-      )
+  if (type === 'block') {
+    if (fieldName !== 'children') {
       return undefined
     }
-    // Among matching candidates, prefer the most specific (longest chain).
-    if (!best || candidate.chain.length > best.chain.length) {
-      best = candidate
-    }
+    return synthesizeBlockChildrenField(schema)
   }
-  return best?.field
+
+  const fields = findFieldsForType(schema, type)
+  if (!fields) {
+    return undefined
+  }
+  const matching = fields.find(
+    (field): field is ChildArrayField =>
+      field.name === fieldName && isChildArrayField(field),
+  )
+  if (!matching) {
+    return undefined
+  }
+  if (containsOnlyPrimitiveTypes(matching)) {
+    console.warn(
+      `Field '${matching.name}' on '${type}' doesn't contain block or container types and will be excluded`,
+    )
+    return undefined
+  }
+  return matching
 }
 
-/**
- * Discover every container-candidate type chain in the schema, along with
- * its editable array fields. A single type with multiple array fields
- * produces multiple candidates (one per field).
- *
- * Always includes `['block']` as a candidate, since text blocks are the
- * universal container for span / inline-object children.
- */
-function discoverCandidates(schema: EditorSchema): Array<Candidate> {
-  const candidates: Array<Candidate> = [
-    {chain: ['block'], field: synthesizeBlockChildrenField(schema)},
-  ]
+function findFieldsForType(
+  schema: EditorSchema,
+  type: string,
+): ReadonlyArray<FieldDefinition> | undefined {
+  // Top-level declarations with non-empty fields. Bare types like
+  // `{name: 'row'}` compile to an empty fields array; treat those as
+  // unresolved at this level and fall through to inline declarations,
+  // where the full shape lives.
+  for (const blockObject of schema.blockObjects) {
+    if (
+      blockObject.name === type &&
+      'fields' in blockObject &&
+      blockObject.fields &&
+      blockObject.fields.length > 0
+    ) {
+      return blockObject.fields
+    }
+  }
 
   for (const blockObject of schema.blockObjects) {
     if (!('fields' in blockObject) || !blockObject.fields) {
       continue
     }
-    walkTypeForCandidates(
-      schema,
+    const found = findInlineDeclaration(
       blockObject.fields,
-      [blockObject.name],
-      candidates,
-      new Map([[blockObject.name, blockObject.fields]]),
+      type,
+      new Set([blockObject.name]),
     )
+    if (found) {
+      return found
+    }
   }
 
-  return candidates
-}
-
-/**
- * Resolve a bare reference's fields by name. Looks up the ancestor chain
- * first (so types declared inline by an ancestor can be referenced from a
- * descendant), then falls back to the schema's root `blockObjects`.
- *
- * Returns `undefined` when no match is found.
- */
-function resolveReferenceFields(
-  schema: EditorSchema,
-  name: string,
-  ancestorFields: ReadonlyMap<string, ReadonlyArray<FieldDefinition>>,
-): ReadonlyArray<FieldDefinition> | undefined {
-  const ancestorMatch = ancestorFields.get(name)
-  if (ancestorMatch) {
-    return ancestorMatch
-  }
-  const rootMatch = schema.blockObjects.find(
-    (blockObject) => blockObject.name === name,
-  )
-  if (rootMatch && 'fields' in rootMatch && rootMatch.fields) {
-    return rootMatch.fields
-  }
   return undefined
 }
 
-function walkTypeForCandidates(
-  schema: EditorSchema,
+function findInlineDeclaration(
   fields: ReadonlyArray<FieldDefinition>,
-  chain: Array<string>,
-  out: Array<Candidate>,
-  ancestorFields: ReadonlyMap<string, ReadonlyArray<FieldDefinition>>,
-): void {
+  target: string,
+  visited: ReadonlySet<string>,
+): ReadonlyArray<FieldDefinition> | undefined {
   for (const field of fields) {
     if (!isChildArrayField(field)) {
       continue
     }
-
-    out.push({chain, field})
-
-    if (containsOnlyPrimitiveTypes(field)) {
-      continue
-    }
-
     for (const member of field.of) {
-      if (member.type === 'block') {
-        // A text block inside a container: emit as a candidate so that
-        // scopes like `$..callout.block` can match. The field is the
-        // synthesized text-block children array.
-        out.push({
-          chain: [...chain, 'block'],
-          field: synthesizeBlockChildrenField(schema),
-        })
-        continue
-      }
       if (member.type === 'object' && 'fields' in member && member.fields) {
-        // Inline declaration: `{type: 'object', name: 'X', fields: [...]}`.
-        // The segment name is `member.name`, not `'object'`.
         if (!('name' in member) || !member.name) {
           continue
         }
-        if (ancestorFields.has(member.name)) {
+        if (member.name === target) {
+          return member.fields
+        }
+        if (visited.has(member.name)) {
           continue
         }
-        const nextAncestors = new Map(ancestorFields)
-        nextAncestors.set(member.name, member.fields)
-        walkTypeForCandidates(
-          schema,
+        const found = findInlineDeclaration(
           member.fields,
-          [...chain, member.name],
-          out,
-          nextAncestors,
+          target,
+          new Set([...visited, member.name]),
         )
-        continue
-      }
-      // Bare reference: resolve `member.type` against ancestors first
-      // (so types declared inline by an ancestor are referenceable),
-      // then root `blockObjects`.
-      const referencedFields = resolveReferenceFields(
-        schema,
-        member.type,
-        ancestorFields,
-      )
-      if (!referencedFields) {
-        continue
-      }
-      if (ancestorFields.has(member.type)) {
-        // Cycle: emit the reference's array-field candidates at this
-        // depth without recursing further. `..` segments in scopes cover
-        // any deeper depths.
-        for (const refField of referencedFields) {
-          if (!isChildArrayField(refField)) {
-            continue
-          }
-          out.push({chain: [...chain, member.type], field: refField})
+        if (found) {
+          return found
         }
-        continue
       }
-      const nextAncestors = new Map(ancestorFields)
-      nextAncestors.set(member.type, referencedFields)
-      walkTypeForCandidates(
-        schema,
-        referencedFields,
-        [...chain, member.type],
-        out,
-        nextAncestors,
-      )
     }
   }
+  return undefined
 }
 
 function isChildArrayField(field: FieldDefinition): field is ChildArrayField {
   return field.type === 'array' && 'of' in field && Array.isArray(field.of)
 }
 
-/**
- * JSON primitive type names. Arrays containing only primitive types don't
- * have `_key` properties on their members and can't be used as editable
- * container content.
- */
 const PRIMITIVE_TYPES = new Set(['string', 'number', 'boolean'])
 
 function containsOnlyPrimitiveTypes(field: ChildArrayField): boolean {

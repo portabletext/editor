@@ -1,13 +1,46 @@
+import type {
+  PortableTextObject,
+  PortableTextTextBlock,
+} from '@portabletext/schema'
 import {defineSchema} from '@portabletext/schema'
-import {describe, test} from 'vitest'
-import {defineContainer} from './renderer.types'
+import {describe, expectTypeOf, test} from 'vitest'
+import {defineContainer, defineLeaf} from './renderer.types'
 
 describe(defineContainer.name, () => {
-  test('accepts scope, field, and render (no schema)', () => {
+  test('accepts type, childField, and render (no schema)', () => {
     defineContainer({
-      scope: '$..callout',
-      field: 'content',
+      type: 'callout',
+      childField: 'content',
       render: ({children}) => children,
+    })
+  })
+
+  test('render gets isInline and parent as positional context', () => {
+    defineContainer({
+      type: 'callout',
+      childField: 'content',
+      render: ({isInline, parent, node}) => {
+        expectTypeOf(isInline).toEqualTypeOf<boolean>()
+        expectTypeOf(parent).toEqualTypeOf<
+          PortableTextTextBlock | PortableTextObject | undefined
+        >()
+        expectTypeOf(node).toEqualTypeOf<
+          PortableTextTextBlock | PortableTextObject
+        >()
+        return null
+      },
+    })
+  })
+
+  test('accepts renderChild without schema (any string keys)', () => {
+    defineContainer({
+      type: 'callout',
+      childField: 'content',
+      render: ({children}) => children,
+      renderChild: {
+        image: ({children}) => children,
+        block: ({children}) => children,
+      },
     })
   })
 })
@@ -66,137 +99,135 @@ const schema = defineSchema({
 type Schema = typeof schema
 
 describe('schema-aware defineContainer', () => {
-  test('accepts descendant scope on top-level container', () => {
+  test('accepts top-level container type', () => {
     defineContainer<Schema>({
-      scope: '$..callout',
-      field: 'content',
+      type: 'callout',
+      childField: 'content',
       render: ({children}) => children,
     })
   })
 
-  test('accepts root-anchored scope on top-level container', () => {
+  test('rejects unknown container type', () => {
     defineContainer<Schema>({
-      scope: '$.callout',
-      field: 'content',
+      // @ts-expect-error - 'unknown' is not a registered container type
+      type: 'unknown',
+      childField: 'content',
       render: ({children}) => children,
     })
   })
 
-  test('rejects unknown type in scope', () => {
+  test('accepts nested container type', () => {
     defineContainer<Schema>({
-      // @ts-expect-error - 'unknown' is not a type in schema
-      scope: '$..unknown',
-      field: 'content',
+      type: 'row',
+      childField: 'cells',
       render: ({children}) => children,
     })
   })
 
-  test('rejects bare (unanchored) scope', () => {
+  test('accepts deeply nested container type', () => {
     defineContainer<Schema>({
-      // @ts-expect-error - bare scope missing $ anchor
-      scope: 'callout',
-      field: 'content',
+      type: 'cell',
+      childField: 'content',
       render: ({children}) => children,
     })
   })
 
-  test('accepts nested container scope', () => {
+  test('accepts block container type with children field', () => {
     defineContainer<Schema>({
-      scope: '$..table.row',
-      field: 'cells',
+      type: 'block',
+      childField: 'children',
+      render: ({children, node}) => {
+        // The block type's node is narrowed to a text block.
+        expectTypeOf(node).toEqualTypeOf<PortableTextTextBlock>()
+        return children
+      },
+    })
+  })
+
+  test('rejects unknown childField on a known type', () => {
+    // @ts-expect-error - 'rows' is not a field on 'callout'
+    defineContainer<Schema>({
+      type: 'callout',
+      childField: 'rows',
       render: ({children}) => children,
     })
   })
 
-  test('accepts deeply nested container scope', () => {
+  test('rejects wrong childField for block container', () => {
+    // @ts-expect-error - block's childField must be 'children'
     defineContainer<Schema>({
-      scope: '$..table.row.cell',
-      field: 'content',
+      type: 'block',
+      childField: 'rows',
       render: ({children}) => children,
     })
   })
 
-  test('accepts middle-descendant scope', () => {
+  test('accepts figure with multiple array fields', () => {
     defineContainer<Schema>({
-      scope: '$..table..cell',
-      field: 'content',
+      type: 'figure',
+      childField: 'caption',
+      render: ({children}) => children,
+    })
+
+    defineContainer<Schema>({
+      type: 'figure',
+      childField: 'tags',
+      render: ({children}) => children,
+    })
+
+    defineContainer<Schema>({
+      type: 'figure',
+      // @ts-expect-error - 'alt' is a string, not an array field
+      childField: 'alt',
       render: ({children}) => children,
     })
   })
 
-  test('rejects bare nested type name', () => {
+  test('accepts renderChild keyed by block (the type declared in callout.content.of)', () => {
     defineContainer<Schema>({
-      // @ts-expect-error - 'row' without $ prefix is invalid
-      scope: 'row',
-      field: 'cells',
+      type: 'callout',
+      childField: 'content',
+      render: ({children}) => children,
+      renderChild: {
+        block: ({children}) => children,
+      },
+    })
+  })
+
+  test('rejects renderChild key that is not in field of', () => {
+    defineContainer<Schema>({
+      type: 'callout',
+      childField: 'content',
+      render: ({children}) => children,
+      renderChild: {
+        // @ts-expect-error - 'table' is not in callout.content.of
+        table: ({children}) => children,
+      },
+    })
+  })
+})
+
+describe(defineLeaf.name, () => {
+  test('accepts type and render (no schema)', () => {
+    defineLeaf({
+      type: 'image',
       render: ({children}) => children,
     })
   })
 
-  test('accepts block scope for text block children', () => {
-    defineContainer<Schema>({
-      scope: '$..block',
-      field: 'children',
-      render: ({children}) => children,
-    })
-  })
-
-  test('accepts root-anchored block scope', () => {
-    defineContainer<Schema>({
-      scope: '$.block',
-      field: 'children',
-      render: ({children}) => children,
-    })
-  })
-
-  test('accepts scoped block scope inside container', () => {
-    defineContainer<Schema>({
-      scope: '$..callout.block',
-      field: 'children',
-      render: ({children}) => children,
-    })
-  })
-
-  test('accepts deeply scoped block scope', () => {
-    defineContainer<Schema>({
-      scope: '$..table.row.cell.block',
-      field: 'children',
-      render: ({children}) => children,
-    })
-  })
-
-  test('accepts figure caption (valid array field of blocks)', () => {
-    defineContainer<Schema>({
-      scope: '$..figure',
-      field: 'caption',
-      render: ({children}) => children,
-    })
-  })
-
-  test('rejects field not on the scoped type', () => {
-    // @ts-expect-error - 'tags' is not a field on callout
-    defineContainer<Schema>({
-      scope: '$..callout',
-      field: 'tags',
-      render: ({children}) => children,
-    })
-  })
-
-  test('rejects non-array field', () => {
-    defineContainer<Schema>({
-      scope: '$..figure',
-      // @ts-expect-error - 'alt' is type: 'string', not an array
-      field: 'alt',
-      render: ({children}) => children,
-    })
-  })
-
-  test('rejects wrong field for block scope', () => {
-    // @ts-expect-error - block scope's field must be 'children'
-    defineContainer<Schema>({
-      scope: '$..block',
-      field: 'content',
-      render: ({children}) => children,
+  test('render gets isInline, parent, focused, readOnly, selected', () => {
+    defineLeaf({
+      type: 'image',
+      render: ({isInline, parent, focused, readOnly, selected}) => {
+        expectTypeOf(isInline).toEqualTypeOf<boolean>()
+        expectTypeOf(parent).toEqualTypeOf<
+          PortableTextTextBlock | PortableTextObject | undefined
+        >()
+        expectTypeOf(focused).toEqualTypeOf<boolean>()
+        expectTypeOf(readOnly).toEqualTypeOf<boolean>()
+        expectTypeOf(selected).toEqualTypeOf<boolean>()
+        return null
+      },
     })
   })
 })

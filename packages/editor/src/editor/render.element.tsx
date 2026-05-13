@@ -1,4 +1,5 @@
 import type {
+  PortableTextBlock,
   PortableTextObject,
   PortableTextTextBlock,
 } from '@portabletext/schema'
@@ -6,9 +7,9 @@ import {isTextBlock} from '@portabletext/schema'
 import {useSelector} from '@xstate/react'
 import {useContext, type ReactElement} from 'react'
 import type {DropPosition} from '../behaviors/behavior.core.drop-position'
-import {isInline} from '../node-traversal/is-inline'
+import {getParent} from '../node-traversal/get-parent'
+import {isInline as isInlinePath} from '../node-traversal/is-inline'
 import type {ContainerConfig} from '../renderers/renderer.types'
-import {lookupContainer} from '../schema/lookup-container'
 import type {Path} from '../slate/interfaces/path'
 import type {RenderElementProps} from '../slate/react/components/editable'
 import {useSlateStatic} from '../slate/react/hooks/use-slate-static'
@@ -47,21 +48,75 @@ export function RenderElement(props: {
   const slateStatic = useSlateStatic()
   const schema = props.schema
 
-  const scopedTypeName = containerScope
-    ? `${containerScope}.${props.element._type}`
-    : props.element._type
-
-  const containerConfig = useSelector(
+  const globalContainerConfig = useSelector(
     editorActor,
     (state) =>
       // Internal cast: the public `Container` view is narrowed; runtime
-      // values are the full `ContainerConfig` carrying parsedScope/render.
-      lookupContainer(state.context.containers, scopedTypeName) as
+      // values are the full `ContainerConfig` carrying the render
+      // function.
+      state.context.containers.get(props.element._type) as
         | ContainerConfig
         | undefined,
   )
 
-  const leafConfig = useLeafConfig(props.element, props.path)
+  const globalLeafConfig = useLeafConfig(props.element)
+
+  const parentEntry = getParent(slateStatic, props.path)
+  const parentNode = parentEntry?.node as
+    | PortableTextBlock
+    | PortableTextObject
+    | undefined
+  const isInline = isInlinePath(slateStatic, props.path)
+
+  // `renderChild` lookup: when the immediate structural parent is a
+  // registered container that declares a render override for this
+  // child's `_type`, prefer it over any global `defineContainer` /
+  // `defineLeaf` registration. Direct-parent only (no ancestor walk).
+  const parentContainerConfig = useSelector(editorActor, (state) =>
+    parentNode
+      ? (state.context.containers.get(parentNode._type) as
+          | ContainerConfig
+          | undefined)
+      : undefined,
+  )
+  const renderChildOverride =
+    parentContainerConfig?.container.renderChild?.[props.element._type]
+
+  // Effective configs: if a `renderChild` override applies, synthesize
+  // a config whose render is the override, preserving the structural
+  // wrapping (container / block-object / inline-object) chosen by
+  // global registration.
+  const containerConfig: ContainerConfig | undefined =
+    renderChildOverride && globalContainerConfig
+      ? {
+          ...globalContainerConfig,
+          container: {
+            ...globalContainerConfig.container,
+            render: renderChildOverride,
+          },
+        }
+      : globalContainerConfig
+  const leafConfig =
+    renderChildOverride && !globalContainerConfig
+      ? globalLeafConfig
+        ? {
+            ...globalLeafConfig,
+            leaf: {
+              ...globalLeafConfig.leaf,
+              render: renderChildOverride,
+            },
+          }
+        : {
+            // Synthesize a leaf-config from the override when this `_type`
+            // has no global `defineContainer` / `defineLeaf` registration.
+            // `renderChild` declares both existence-of-render and the
+            // render itself, scoped to the parent.
+            leaf: {
+              type: props.element._type,
+              render: renderChildOverride,
+            },
+          }
+      : globalLeafConfig
 
   if (containerConfig) {
     return (
@@ -69,6 +124,8 @@ export function RenderElement(props: {
         attributes={props.attributes}
         element={props.element}
         containerConfig={containerConfig}
+        isInline={isInline}
+        parent={parentNode}
         path={props.path}
       >
         {props.children}
@@ -107,7 +164,7 @@ export function RenderElement(props: {
     )
   }
 
-  if (isInline(slateStatic, props.path)) {
+  if (isInline) {
     if (containerScope && !leafConfig) {
       const {
         'data-slate-node': _sn,
@@ -128,7 +185,9 @@ export function RenderElement(props: {
       <RenderInlineObject
         attributes={props.attributes}
         element={props.element}
+        isInline={isInline}
         leafConfig={leafConfig}
+        parent={parentNode}
         path={props.path}
         readOnly={props.readOnly}
         renderChild={props.renderChild}
@@ -161,7 +220,9 @@ export function RenderElement(props: {
       blockObject={props.element}
       dropPosition={resolveElementDropPosition(props.dropPosition, props.path)}
       element={props.element}
+      isInline={isInline}
       leafConfig={leafConfig}
+      parent={parentNode}
       path={props.path}
       readOnly={props.readOnly}
       renderBlock={props.renderBlock}

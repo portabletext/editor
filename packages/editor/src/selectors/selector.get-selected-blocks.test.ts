@@ -68,10 +68,10 @@ describe(getSelectedBlocks.name, () => {
     )
     const configs = new Map()
     configs.set(
-      '$..callout',
+      'callout',
       makeContainerConfig(schema, {
-        scope: '$..callout',
-        field: 'content',
+        type: 'callout',
+        childField: 'content',
       }),
     )
     const containers = resolveContainers(schema, configs)

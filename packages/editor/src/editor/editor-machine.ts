@@ -30,7 +30,6 @@ import {
   resolveContainers,
   type ResolvedContainers,
 } from '../schema/resolve-containers'
-import {parseScope} from '../scope/parse-scope'
 import {DOMEditor} from '../slate/dom/plugin/dom-editor'
 import {normalize} from '../slate/editor/normalize'
 import type {NamespaceEvent, OmitFromUnion} from '../type-utils'
@@ -48,16 +47,14 @@ export * from 'xstate/guards'
 
 /**
  * Extract the set of registered container configs from a resolved
- * `containers` map. A single config may match multiple candidate chains
- * (appearing in multiple `containers` entries); this produces one entry
- * per distinct scope string.
+ * `containers` map. Keyed by container `_type`.
  */
 function collectRegisteredConfigs(
   containers: ResolvedContainers,
 ): Map<string, ContainerConfig> {
   const configs = new Map<string, ContainerConfig>()
-  for (const config of containers.values()) {
-    configs.set(config.container.scope, config)
+  for (const [type, config] of containers) {
+    configs.set(type, config)
   }
   return configs
 }
@@ -272,43 +269,34 @@ export const editorMachine = setup({
     }),
     'register container': assign(({context, event}) => {
       assertEvent(event, 'register container')
-      const parsedScope = parseScope(event.container.scope)
-      if (!parsedScope) {
-        console.warn(
-          `registerContainer: invalid scope "${event.container.scope}". Container not registered.`,
-        )
-        return {}
-      }
       const field = resolveContainerField(
         context.schema,
-        event.container.scope,
-        event.container.field,
+        event.container.type,
+        event.container.childField,
       )
       if (!field) {
         console.warn(
-          `registerContainer: field "${event.container.field}" not found on terminal type of scope "${event.container.scope}". Container not registered.`,
+          `registerContainer: field "${event.container.childField}" not found on type "${event.container.type}". Container not registered.`,
         )
         return {}
-      }
-      const containerConfig: ContainerConfig = {
-        container: event.container,
-        parsedScope,
-        field,
       }
       const nextConfigs = collectRegisteredConfigs(context.containers)
-      if (nextConfigs.has(event.container.scope)) {
+      if (nextConfigs.has(event.container.type)) {
         console.warn(
-          `registerContainer: scope "${event.container.scope}" is already registered. Container not registered.`,
+          `registerContainer: type "${event.container.type}" is already registered. Container not registered.`,
         )
         return {}
       }
-      if (context.leafs.has(event.container.scope)) {
+      if (context.leafs.has(event.container.type)) {
         console.warn(
-          `registerContainer: scope "${event.container.scope}" is already registered as a leaf. A scope must be exactly one: containers have editable children, leaves do not.`,
+          `registerContainer: type "${event.container.type}" is already registered as a leaf. A type must be exactly one: containers have editable children, leaves do not.`,
         )
         return {}
       }
-      nextConfigs.set(event.container.scope, containerConfig)
+      nextConfigs.set(event.container.type, {
+        container: event.container,
+        field,
+      })
       const containers = resolveContainers(context.schema, nextConfigs)
       if (context.slateEditor) {
         context.slateEditor.containers = containers
@@ -320,7 +308,7 @@ export const editorMachine = setup({
     'unregister container': assign(({context, event}) => {
       assertEvent(event, 'unregister container')
       const nextConfigs = collectRegisteredConfigs(context.containers)
-      nextConfigs.delete(event.container.scope)
+      nextConfigs.delete(event.container.type)
       const containers = resolveContainers(context.schema, nextConfigs)
       if (context.slateEditor) {
         context.slateEditor.containers = containers
@@ -331,27 +319,20 @@ export const editorMachine = setup({
     }),
     'register leaf': assign(({context, event}) => {
       assertEvent(event, 'register leaf')
-      const parsedScope = parseScope(event.leaf.scope)
-      if (!parsedScope) {
-        console.warn(
-          `registerLeaf: invalid scope "${event.leaf.scope}". Leaf not registered.`,
-        )
-        return {}
-      }
       const leafs = new Map(context.leafs)
-      if (leafs.has(event.leaf.scope)) {
+      if (leafs.has(event.leaf.type)) {
         console.warn(
-          `registerLeaf: scope "${event.leaf.scope}" is already registered. Leaf not registered.`,
+          `registerLeaf: type "${event.leaf.type}" is already registered. Leaf not registered.`,
         )
         return {}
       }
-      if (collectRegisteredConfigs(context.containers).has(event.leaf.scope)) {
+      if (collectRegisteredConfigs(context.containers).has(event.leaf.type)) {
         console.warn(
-          `registerLeaf: scope "${event.leaf.scope}" is already registered as a container. A scope must be exactly one: containers have editable children, leaves do not.`,
+          `registerLeaf: type "${event.leaf.type}" is already registered as a container. A type must be exactly one: containers have editable children, leaves do not.`,
         )
         return {}
       }
-      leafs.set(event.leaf.scope, {leaf: event.leaf, parsedScope})
+      leafs.set(event.leaf.type, {leaf: event.leaf})
       if (context.slateEditor) {
         context.slateEditor.leafs = leafs
         context.slateEditor.onChange()
@@ -361,7 +342,7 @@ export const editorMachine = setup({
     'unregister leaf': assign(({context, event}) => {
       assertEvent(event, 'unregister leaf')
       const leafs = new Map(context.leafs)
-      leafs.delete(event.leaf.scope)
+      leafs.delete(event.leaf.type)
       if (context.slateEditor) {
         context.slateEditor.leafs = leafs
         context.slateEditor.onChange()
