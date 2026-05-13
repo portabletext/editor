@@ -9,6 +9,7 @@ import {useContext, type ReactElement} from 'react'
 import type {DropPosition} from '../behaviors/behavior.core.drop-position'
 import {getParent} from '../node-traversal/get-parent'
 import {isInline as isInlinePath} from '../node-traversal/is-inline'
+import {serializePath} from '../paths/serialize-path'
 import type {ContainerConfig} from '../renderers/renderer.types'
 import type {Path} from '../slate/interfaces/path'
 import type {RenderElementProps} from '../slate/react/components/editable'
@@ -25,9 +26,10 @@ import type {EditorSchema} from './editor-schema'
 import {RenderBlockObject} from './render.block-object'
 import {RenderContainer} from './render.container'
 import {RenderInlineObject} from './render.inline-object'
-import {useLeafConfig} from './render.leaf-config'
+import {RenderLeafConfig, useLeafConfig} from './render.leaf-config'
 import {RenderTextBlock} from './render.text-block'
 import {resolveElementDropPosition} from './resolve-element-drop-position'
+import {SelectionStateContext} from './selection-state-context'
 
 export function RenderElement(props: {
   attributes: RenderElementProps['attributes']
@@ -67,6 +69,10 @@ export function RenderElement(props: {
     | PortableTextObject
     | undefined
   const isInline = isInlinePath(slateStatic, props.path)
+
+  const {focusedContainerPath, selectedContainerPaths} = useContext(
+    SelectionStateContext,
+  )
 
   // `renderChild` lookup: when the immediate structural parent is a
   // registered container that declares a render override for this
@@ -124,7 +130,6 @@ export function RenderElement(props: {
         attributes={props.attributes}
         element={props.element}
         containerConfig={containerConfig}
-        isInline={isInline}
         parent={parentNode}
         path={props.path}
       >
@@ -134,6 +139,31 @@ export function RenderElement(props: {
   }
 
   if (isTextBlock({schema}, props.element)) {
+    if (leafConfig && renderChildOverride) {
+      // `renderChild.block` on the parent container: route through the
+      // synthesized leaf-config so the override receives standard render
+      // props (attributes, children, focused, isInline, node, parent,
+      // path, readOnly, selected). The override fully replaces the
+      // default text-block pipeline (style switching, list-item,
+      // marks) - symmetric with `renderChild` for any other `_type`.
+      const serializedPath = serializePath(props.path)
+      const focused = focusedContainerPath === serializedPath
+      const selected = selectedContainerPaths.has(serializedPath)
+      return (
+        <RenderLeafConfig
+          leafConfig={leafConfig}
+          attributes={props.attributes}
+          focused={focused}
+          isInline={false}
+          node={props.element}
+          parent={parentNode}
+          path={props.path}
+          selected={selected}
+        >
+          {props.children}
+        </RenderLeafConfig>
+      )
+    }
     if (containerScope) {
       const {'data-slate-node': _sn, ...rest} = props.attributes
       return (

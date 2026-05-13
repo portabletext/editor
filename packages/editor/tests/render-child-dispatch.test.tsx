@@ -276,4 +276,88 @@ describe('renderChild dispatch', () => {
       .element(locator.getByTestId('chart-in-callout'))
       .toBeInTheDocument()
   })
+
+  test('renderChild.block fires for text-block children, bypassing the default text-block pipeline', async () => {
+    // Symmetric with renderChild for any other `_type`: the override
+    // fully replaces the engine's RenderTextBlock pipeline (style
+    // switching, list-item rendering, marks). Authors who want
+    // partial override use CSS or the outer container's `render`.
+    const keyGenerator = createTestKeyGenerator()
+    const schemaWithBlock = defineSchema({
+      blockObjects: [
+        {
+          name: 'callout',
+          fields: [
+            {
+              name: 'content',
+              type: 'array',
+              of: [{type: 'block'}],
+            },
+          ],
+        },
+      ],
+    })
+
+    const {locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: schemaWithBlock,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: 'c1',
+          content: [
+            {
+              _type: 'block',
+              _key: 'b1',
+              children: [
+                {_type: 'span', _key: 's1', text: 'inside', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+        {
+          _type: 'block',
+          _key: 'b2',
+          children: [{_type: 'span', _key: 's2', text: 'outside', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <ContainerPlugin
+          containers={[
+            defineContainer({
+              type: 'callout',
+              childField: 'content',
+              render: ({attributes, children}) => (
+                <div {...attributes} data-testid="callout">
+                  {children}
+                </div>
+              ),
+              renderChild: {
+                block: ({attributes, children}) => (
+                  <div {...attributes} data-testid="block-in-callout">
+                    {children}
+                  </div>
+                ),
+              },
+            }),
+          ]}
+        />
+      ),
+    })
+
+    // Text block inside callout uses the parent's renderChild.block
+    await expect
+      .element(locator.getByTestId('block-in-callout'))
+      .toBeInTheDocument()
+
+    // Root-level text block does NOT use the override (no parent
+    // container declares renderChild.block for it)
+    await expect(
+      locator.getByTestId('block-in-callout').elements(),
+    ).toHaveLength(1)
+  })
 })

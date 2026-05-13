@@ -17,29 +17,33 @@ import type {
 
 /**
  * Render props shared by container and leaf renderers. The engine
- * derives `parent` and `isInline` from path context at render time.
+ * derives `parent` from path context at render time.
  *
  * - `parent` is the immediate parent node, or `undefined` at the root.
  *   Use `parent?._type` to branch on positional context. Reach into
  *   `parent` directly for ancestor-driven rendering decisions (e.g. a
  *   list-item reading its list's `kind`).
- *
- * - `isInline` is `true` when the node sits inside a text block's
- *   `children` array alongside spans (the inline-object position). It
- *   is `false` for block-level positions (root-of-array, container
- *   field). Matches the `isInline` discriminator that
- *   `@portabletext/react` and `@portabletext/to-html` pass to their
- *   custom-type components.
  */
-type CommonRenderProps = {
+type BlockRenderProps = {
   attributes: Record<string, unknown>
   children: ReactElement
   focused: boolean
-  isInline: boolean
   parent: PortableTextBlock | PortableTextObject | undefined
   path: Path
   readOnly: boolean
   selected: boolean
+}
+
+/**
+ * Render props for leaf renderers. Extends `BlockRenderProps` with
+ * `isInline`, which discriminates inline-object position (inside a
+ * text block's `children` array, `isInline: true`) from block-object
+ * position (root of an array, `isInline: false`). Spans are always
+ * `isInline: true`. Container renders and `renderChild` entries do
+ * not receive `isInline` because they only fire in block position.
+ */
+type LeafRenderProps = BlockRenderProps & {
+  isInline: boolean
 }
 
 /**
@@ -49,7 +53,7 @@ type CommonRenderProps = {
  * container. Used as the value type of `ContainerDefinition.renderChild`.
  */
 export type ChildRender = (
-  props: CommonRenderProps & {
+  props: BlockRenderProps & {
     node: PortableTextBlock | PortableTextSpan | PortableTextObject
   },
 ) => ReactElement | null
@@ -84,7 +88,7 @@ export type ContainerDefinition = {
   type: string
   childField: string
   render?: (
-    props: CommonRenderProps & {
+    props: BlockRenderProps & {
       node: PortableTextBlock | PortableTextObject
     },
   ) => ReactElement | null
@@ -110,7 +114,7 @@ type SchemaContainerDefinition<TSchema extends SchemaDefinition> =
                 type: TType
                 childField: TChildField
                 render?: (
-                  props: CommonRenderProps & {
+                  props: BlockRenderProps & {
                     node: TType extends 'block'
                       ? PortableTextTextBlock
                       : PortableTextObject
@@ -200,7 +204,7 @@ export type ContainerConfig = {
 export type Leaf = {
   type: string
   render: (
-    props: CommonRenderProps & {
+    props: LeafRenderProps & {
       node: PortableTextBlock | PortableTextSpan | PortableTextObject
     },
   ) => ReactElement | null
@@ -221,7 +225,7 @@ type SchemaLeaf<TSchema extends SchemaDefinition> =
         ? {
             type: TType
             render: (
-              props: CommonRenderProps & {
+              props: LeafRenderProps & {
                 node: TType extends 'span'
                   ? PortableTextSpan
                   : PortableTextObject

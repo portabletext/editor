@@ -15,16 +15,16 @@ describe(defineContainer.name, () => {
     })
   })
 
-  test('render gets isInline and parent as positional context', () => {
+  test('render exposes parent and node, NOT isInline (containers are always block-position)', () => {
     defineContainer({
       type: 'callout',
       childField: 'content',
-      render: ({isInline, parent, node}) => {
-        expectTypeOf(isInline).toEqualTypeOf<boolean>()
-        expectTypeOf(parent).toEqualTypeOf<
+      render: (props) => {
+        expectTypeOf(props).not.toHaveProperty('isInline')
+        expectTypeOf(props.parent).toEqualTypeOf<
           PortableTextTextBlock | PortableTextObject | undefined
         >()
-        expectTypeOf(node).toEqualTypeOf<
+        expectTypeOf(props.node).toEqualTypeOf<
           PortableTextTextBlock | PortableTextObject
         >()
         return null

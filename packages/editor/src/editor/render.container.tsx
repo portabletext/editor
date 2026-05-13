@@ -14,7 +14,6 @@ export function RenderContainer(props: {
   children: ReactElement
   element: PortableTextBlock
   containerConfig: ContainerConfig
-  isInline: boolean
   parent: PortableTextBlock | PortableTextObject | undefined
   path: Path
 }) {
@@ -52,7 +51,6 @@ export function RenderContainer(props: {
       attributes: augmentedAttributes,
       children: props.children,
       focused,
-      isInline: props.isInline,
       node: props.element,
       parent: props.parent,
       path: props.path,
