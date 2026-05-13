@@ -104,5 +104,5 @@ const imageLeaf = defineLeaf<typeof playgroundSchemaDefinition>({
 })
 
 export function ImagePlugin(): JSX.Element {
-  return <LeafPlugin leafs={[imageLeaf]} />
+  return <LeafPlugin leaves={[imageLeaf]} />
 }

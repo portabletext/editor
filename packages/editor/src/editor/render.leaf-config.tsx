@@ -14,8 +14,8 @@ import {EditorActorContext} from './editor-actor-context'
  * Hook: resolve the registered leaf-config that should render `node`,
  * or `undefined` if none matches.
  *
- * Reads the live `leafs` map from the editor actor (so the component
- * re-renders when leafs register/unregister), then looks up by
+ * Reads the live `leaves` map from the editor actor (so the component
+ * re-renders when leaves register/unregister), then looks up by
  * `node._type`. One registration per type.
  */
 export function useLeafConfig(
@@ -23,7 +23,7 @@ export function useLeafConfig(
 ): LeafConfig | undefined {
   const editorActor = useContext(EditorActorContext)
   return useSelector(editorActor, (state) =>
-    state.context.leafs.get(node._type),
+    state.context.leaves.get(node._type),
   )
 }
 

@@ -80,7 +80,7 @@ describe('renderChild dispatch', () => {
             ]}
           />
           <LeafPlugin
-            leafs={[
+            leaves={[
               defineLeaf({
                 type: 'image',
                 render: ({attributes}) => (
@@ -176,7 +176,7 @@ describe('renderChild dispatch', () => {
             ]}
           />
           <LeafPlugin
-            leafs={[
+            leaves={[
               defineLeaf({
                 type: 'image',
                 render: ({attributes}) => (

@@ -5,18 +5,20 @@ import type {Leaf} from '../renderers/renderer.types'
 /**
  * @alpha
  */
-export function LeafPlugin(props: {leafs: Array<Leaf>}) {
+export function LeafPlugin(props: {leaves: Array<Leaf>}) {
   const editor = useEditor()
 
   useEffect(() => {
-    const unregisterLeafs = props.leafs.map((leaf) => editor.registerLeaf(leaf))
+    const unregisterLeaves = props.leaves.map((leaf) =>
+      editor.registerLeaf(leaf),
+    )
 
     return () => {
-      unregisterLeafs.forEach((unregister) => {
+      unregisterLeaves.forEach((unregister) => {
         unregister()
       })
     }
-  }, [editor, props.leafs])
+  }, [editor, props.leaves])
 
   return null
 }

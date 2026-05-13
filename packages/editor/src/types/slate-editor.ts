@@ -31,7 +31,7 @@ export interface PortableTextSlateEditor extends DOMEditor {
   schema: EditorSchema
   keyGenerator: () => string
   containers: ResolvedContainers
-  leafs: Map<string, LeafConfig>
+  leaves: Map<string, LeafConfig>
 
   /**
    * Snapshot-shaped view onto the editor's traversal state. Mirrors the

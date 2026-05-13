@@ -64,5 +64,5 @@ const mentionLeaf = defineLeaf<typeof playgroundSchemaDefinition>({
 // render function (see plugin.image.tsx).
 
 export function InlineObjectsPlugin(): JSX.Element {
-  return <LeafPlugin leafs={[stockTickerLeaf, mentionLeaf]} />
+  return <LeafPlugin leaves={[stockTickerLeaf, mentionLeaf]} />
 }

@@ -217,7 +217,7 @@ export const editorMachine = setup({
       behaviorsSorted: boolean
       containers: ResolvedContainers
       converters: Array<Converter>
-      leafs: Map<string, LeafConfig>
+      leaves: Map<string, LeafConfig>
       keyGenerator: () => string
       pendingEvents: Array<InternalPatchEvent | MutationEvent>
       pendingIncomingPatchesEvents: Array<PatchesEvent>
@@ -287,7 +287,7 @@ export const editorMachine = setup({
         )
         return {}
       }
-      if (context.leafs.has(event.container.type)) {
+      if (context.leaves.has(event.container.type)) {
         console.warn(
           `registerContainer: type "${event.container.type}" is already registered as a leaf. A type must be exactly one: containers have editable children, leaves do not.`,
         )
@@ -319,8 +319,8 @@ export const editorMachine = setup({
     }),
     'register leaf': assign(({context, event}) => {
       assertEvent(event, 'register leaf')
-      const leafs = new Map(context.leafs)
-      if (leafs.has(event.leaf.type)) {
+      const leaves = new Map(context.leaves)
+      if (leaves.has(event.leaf.type)) {
         console.warn(
           `registerLeaf: type "${event.leaf.type}" is already registered. Leaf not registered.`,
         )
@@ -332,22 +332,22 @@ export const editorMachine = setup({
         )
         return {}
       }
-      leafs.set(event.leaf.type, {leaf: event.leaf})
+      leaves.set(event.leaf.type, {leaf: event.leaf})
       if (context.slateEditor) {
-        context.slateEditor.leafs = leafs
+        context.slateEditor.leaves = leaves
         context.slateEditor.onChange()
       }
-      return {leafs}
+      return {leaves}
     }),
     'unregister leaf': assign(({context, event}) => {
       assertEvent(event, 'unregister leaf')
-      const leafs = new Map(context.leafs)
-      leafs.delete(event.leaf.type)
+      const leaves = new Map(context.leaves)
+      leaves.delete(event.leaf.type)
       if (context.slateEditor) {
-        context.slateEditor.leafs = leafs
+        context.slateEditor.leaves = leaves
         context.slateEditor.onChange()
       }
-      return {leafs}
+      return {leaves}
     }),
     'sync containers': assign(({context}) => {
       const containers = resolveContainers(
@@ -537,7 +537,7 @@ export const editorMachine = setup({
     behaviors: new Set(coreBehaviorsConfig),
     behaviorsSorted: false,
     containers: new Map(),
-    leafs: new Map(),
+    leaves: new Map(),
     converters: input.converters ?? [],
     keyGenerator: input.keyGenerator,
     pendingEvents: [],

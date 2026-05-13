@@ -123,7 +123,7 @@ describe('defineContainer / defineLeaf conflict resolution', () => {
       children: (
         <>
           <LeafPlugin
-            leafs={[
+            leaves={[
               defineLeaf({
                 type: 'callout',
                 render: ({children}) => <>{children}</>,
@@ -131,7 +131,7 @@ describe('defineContainer / defineLeaf conflict resolution', () => {
             ]}
           />
           <LeafPlugin
-            leafs={[
+            leaves={[
               defineLeaf({
                 type: 'callout',
                 render: ({children}) => <>{children}</>,
@@ -167,7 +167,7 @@ describe('defineContainer / defineLeaf conflict resolution', () => {
             ]}
           />
           <LeafPlugin
-            leafs={[
+            leaves={[
               defineLeaf({
                 type: 'fact-box',
                 render: ({children}) => <>{children}</>,
@@ -197,7 +197,7 @@ describe('defineContainer / defineLeaf conflict resolution', () => {
       children: (
         <>
           <LeafPlugin
-            leafs={[
+            leaves={[
               defineLeaf({
                 type: 'fact-box',
                 render: ({children}) => <>{children}</>,

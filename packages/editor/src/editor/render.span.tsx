@@ -41,7 +41,7 @@ export function RenderSpan(props: RenderSpanProps) {
   )
 
   const subSchema = useBlockSubSchema(props.path)
-  // Span leafs are looked up against the resolved span child. When no child
+  // Span leaves are looked up against the resolved span child. When no child
   // is found (transient state), fall back to the Slate leaf for identity.
   const leafConfig = useLeafConfig(child ?? props.leaf)
 

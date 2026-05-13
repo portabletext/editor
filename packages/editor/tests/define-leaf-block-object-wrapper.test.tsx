@@ -32,7 +32,7 @@ describe('defineLeaf void block-object wrapper contract', () => {
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
       initialValue: [{_key: 'i0', _type: 'image'}],
-      children: <LeafPlugin leafs={[imageLeaf]} />,
+      children: <LeafPlugin leaves={[imageLeaf]} />,
     })
 
     await vi.waitFor(() => {
@@ -87,7 +87,7 @@ describe('defineLeaf void block-object wrapper contract', () => {
         },
         {_key: imageKey, _type: 'image'},
       ],
-      children: <LeafPlugin leafs={[imageLeaf]} />,
+      children: <LeafPlugin leaves={[imageLeaf]} />,
     })
 
     await userEvent.click(locator)

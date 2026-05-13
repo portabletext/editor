@@ -44,7 +44,7 @@ describe('defineLeaf void spacer', () => {
           style: 'normal',
         },
       ],
-      children: <LeafPlugin leafs={[stockTickerLeaf]} />,
+      children: <LeafPlugin leaves={[stockTickerLeaf]} />,
     })
 
     await vi.waitFor(() => {
@@ -78,7 +78,7 @@ describe('defineLeaf void spacer', () => {
       initialValue: [
         {_key: 'i0', _type: 'image', src: 'https://example.com/x.png'},
       ],
-      children: <LeafPlugin leafs={[imageLeaf]} />,
+      children: <LeafPlugin leaves={[imageLeaf]} />,
     })
 
     await vi.waitFor(() => {
