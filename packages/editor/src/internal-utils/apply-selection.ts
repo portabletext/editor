@@ -19,7 +19,7 @@ import {getBlockKeyFromSelectionPoint} from '../utils/util.selection-point'
 
 type ResolveSelectionEditor = Pick<
   PortableTextSlateEditor,
-  'children' | 'schema' | 'containers' | 'blockIndexMap'
+  'children' | 'schema' | 'publicContainers' | 'blockIndexMap'
 >
 
 /**
@@ -90,7 +90,7 @@ function resolveSelectionPoint(
   const snapshot = {
     context: {
       schema: editor.schema,
-      containers: editor.containers,
+      containers: editor.publicContainers,
       value: editor.children,
     },
     blockIndexMap: editor.blockIndexMap,

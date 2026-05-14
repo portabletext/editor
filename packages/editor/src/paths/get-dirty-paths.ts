@@ -1,7 +1,9 @@
 import {isSpan, isTextBlock} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
-import {lookupContainer} from '../schema/lookup-container'
-import type {ResolvedContainers} from '../schema/resolve-containers'
+import type {
+  Containers,
+  RegisteredContainer,
+} from '../schema/resolve-containers'
 import type {Node} from '../slate/interfaces/node'
 import type {Operation} from '../slate/interfaces/operation'
 import type {Path} from '../slate/interfaces/path'
@@ -14,18 +16,20 @@ import {getChildFieldName} from './get-child-field-name'
  * Numeric indices avoid dedup collisions when siblings have duplicate
  * keys (pre-normalization).
  *
- * Uses the schema and containers to resolve child array fields
- * rather than guessing from object properties.
+ * Threads the resolved {@link RegisteredContainer} for the current
+ * node through recursion so positional `of` overrides apply when
+ * the same `_type` is registered with different `childField`
+ * values under different parents.
  */
 function collectDescendantPaths(
   context: {
     schema: EditorSchema
-    containers: ResolvedContainers
+    containers: Containers
   },
   node: Node,
   parentPath: Path,
   paths: Array<Path>,
-  scopePrefix: string,
+  parent?: RegisteredContainer,
 ): void {
   // Text blocks always use 'children'
   if (isTextBlock(context, node)) {
@@ -38,68 +42,37 @@ function collectDescendantPaths(
     return
   }
 
-  // For container types, resolve the child array field from the schema
-  const scopedName = scopePrefix ? `${scopePrefix}.${node._type}` : node._type
-
-  const arrayField = lookupContainer(context.containers, scopedName)?.field
-
-  if (arrayField) {
-    const fieldValue = (node as Record<string, unknown>)[arrayField.name]
-
-    if (Array.isArray(fieldValue)) {
-      for (let i = 0; i < fieldValue.length; i++) {
-        const child = fieldValue[i] as Node
-        const childPath: Path = [...parentPath, arrayField.name, i]
-        paths.push(childPath)
-        collectDescendantPaths(context, child, childPath, paths, scopedName)
+  // Resolve through the parent's `of` positional overrides first;
+  // fall back to the top-level entry. Mirrors getNodeChildren logic
+  // so positional same-`_type`-different-`childField` configurations
+  // emit correct paths.
+  let resolved: RegisteredContainer | undefined
+  if (parent?.of) {
+    for (const entry of parent.of) {
+      if (entry.type === node._type && 'field' in entry) {
+        resolved = entry
+        break
       }
     }
   }
-}
+  if (!resolved) {
+    resolved = context.containers.get(node._type)
+  }
+  if (!resolved) {
+    return
+  }
+  const arrayField = resolved.field
 
-/**
- * Build the scoped type name for a node at the given path by walking
- * ancestor nodes in the tree.
- *
- * Returns the scope prefix (ancestor type chain) needed to resolve
- * nested container child fields.
- */
-function buildScopedName(value: Array<Node>, path: Path): string {
-  const types: Array<string> = []
-  let currentChildren: Array<Node> = value
+  const fieldValue = (node as Record<string, unknown>)[arrayField.name]
 
-  for (let i = 0; i < path.length; i++) {
-    const segment = path[i]
-
-    if (typeof segment === 'string') {
-      continue
-    }
-
-    let node: Node | undefined
-
-    if (isKeyedSegment(segment)) {
-      node = currentChildren.find((child) => child._key === segment._key)
-    } else if (typeof segment === 'number') {
-      node = currentChildren[segment]
-    }
-
-    if (!node) {
-      break
-    }
-
-    types.push(node._type)
-
-    // Look ahead for a field name segment to descend into
-    const nextSegment = path[i + 1]
-    if (typeof nextSegment === 'string') {
-      const fieldValue = (node as Record<string, unknown>)[nextSegment]
-      if (Array.isArray(fieldValue)) {
-        currentChildren = fieldValue as Array<Node>
-      }
+  if (Array.isArray(fieldValue)) {
+    for (let i = 0; i < fieldValue.length; i++) {
+      const child = fieldValue[i] as Node
+      const childPath: Path = [...parentPath, arrayField.name, i]
+      paths.push(childPath)
+      collectDescendantPaths(context, child, childPath, paths, resolved)
     }
   }
-
-  return types.join('.')
 }
 
 /**
@@ -108,7 +81,7 @@ function buildScopedName(value: Array<Node>, path: Path): string {
 export function getDirtyPaths(
   context: {
     schema: EditorSchema
-    containers: ResolvedContainers
+    containers: Containers
     value: Array<Node>
   },
   op: Operation,
@@ -137,7 +110,7 @@ export function getDirtyPaths(
             const childNode = child as Node
             const childPath: Path = [{_key: childNode._key}]
             levels.push(childPath)
-            collectDescendantPaths(context, childNode, childPath, levels, '')
+            collectDescendantPaths(context, childNode, childPath, levels)
           }
         }
         return levels
@@ -157,14 +130,7 @@ export function getDirtyPaths(
           !Array.isArray(op.value)
         ) {
           const valueNode = op.value as Node
-          const scopedName = buildScopedName(context.value, nodePath)
-          collectDescendantPaths(
-            context,
-            valueNode,
-            op.path,
-            levels,
-            scopedName,
-          )
+          collectDescendantPaths(context, valueNode, op.path, levels)
         }
         return levels
       }
@@ -186,8 +152,6 @@ export function getDirtyPaths(
         const childFieldName = getChildFieldName(context, nodePath)
 
         if (childFieldName === propertyName) {
-          const scopedName = buildScopedName(context.value, nodePath)
-
           for (let i = 0; i < op.value.length; i++) {
             const child = op.value[i]
 
@@ -206,13 +170,7 @@ export function getDirtyPaths(
               {_key: childNode._key},
             ]
             levels.push(childPath)
-            collectDescendantPaths(
-              context,
-              childNode,
-              childPath,
-              levels,
-              scopedName,
-            )
+            collectDescendantPaths(context, childNode, childPath, levels)
           }
         }
       }
@@ -308,7 +266,7 @@ export function getDirtyPaths(
       // children have duplicate keys (pre-normalization). Walk all
       // child array fields via the schema so container descendants
       // are also dirtied.
-      collectDescendantPaths(context, node, nodePath, levels, '')
+      collectDescendantPaths(context, node, nodePath, levels)
 
       return levels
     }

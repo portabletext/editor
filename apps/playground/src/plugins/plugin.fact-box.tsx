@@ -1,12 +1,11 @@
-import {defineContainer} from '@portabletext/editor'
+import {defineContainer, defineTextBlock} from '@portabletext/editor'
 import {ContainerPlugin} from '@portabletext/editor/plugins'
 import {LayersIcon} from 'lucide-react'
 import type {JSX} from 'react'
-import type {playgroundSchemaDefinition} from '../playground-schema-definition'
 
-const factBoxContainer = defineContainer<typeof playgroundSchemaDefinition>({
-  scope: '$..fact-box',
-  field: 'content',
+const factBoxContainer = defineContainer({
+  type: 'fact-box',
+  childField: 'content',
   render: ({attributes, children, selected}) => (
     <section
       {...attributes}
@@ -23,80 +22,76 @@ const factBoxContainer = defineContainer<typeof playgroundSchemaDefinition>({
       <div className="text-stone-800 dark:text-stone-100">{children}</div>
     </section>
   ),
-})
+  of: [
+    defineTextBlock({
+      type: 'block',
+      render: ({attributes, children, node}) => {
+        if (node.listItem !== undefined) {
+          return (
+            <div {...attributes} className="my-1">
+              {children}
+            </div>
+          )
+        }
 
-const factBoxBlockContainer = defineContainer<
-  typeof playgroundSchemaDefinition
->({
-  scope: '$..fact-box.block',
-  field: 'children',
-  render: ({attributes, children, node}) => {
-    if (node.listItem !== undefined) {
-      return (
-        <div {...attributes} className="my-1">
-          {children}
-        </div>
-      )
-    }
-
-    switch (node.style) {
-      case 'h1':
-        return (
-          <h1 {...attributes} className="my-2 font-bold text-2xl">
-            {children}
-          </h1>
-        )
-      case 'h2':
-        return (
-          <h2 {...attributes} className="my-2 font-bold text-xl">
-            {children}
-          </h2>
-        )
-      case 'h3':
-        return (
-          <h3 {...attributes} className="my-2 font-bold text-lg">
-            {children}
-          </h3>
-        )
-      case 'h4':
-        return (
-          <h4 {...attributes} className="my-2 font-bold">
-            {children}
-          </h4>
-        )
-      case 'h5':
-        return (
-          <h5 {...attributes} className="my-2 font-semibold">
-            {children}
-          </h5>
-        )
-      case 'h6':
-        return (
-          <h6 {...attributes} className="my-2 font-semibold">
-            {children}
-          </h6>
-        )
-      case 'blockquote':
-        return (
-          <blockquote
-            {...attributes}
-            className="my-1 border-l-2 border-stone-500 pl-2 italic dark:border-stone-300"
-          >
-            {children}
-          </blockquote>
-        )
-      default:
-        return (
-          <p {...attributes} className="my-1">
-            {children}
-          </p>
-        )
-    }
-  },
+        switch (node.style) {
+          case 'h1':
+            return (
+              <h1 {...attributes} className="my-2 font-bold text-2xl">
+                {children}
+              </h1>
+            )
+          case 'h2':
+            return (
+              <h2 {...attributes} className="my-2 font-bold text-xl">
+                {children}
+              </h2>
+            )
+          case 'h3':
+            return (
+              <h3 {...attributes} className="my-2 font-bold text-lg">
+                {children}
+              </h3>
+            )
+          case 'h4':
+            return (
+              <h4 {...attributes} className="my-2 font-bold">
+                {children}
+              </h4>
+            )
+          case 'h5':
+            return (
+              <h5 {...attributes} className="my-2 font-semibold">
+                {children}
+              </h5>
+            )
+          case 'h6':
+            return (
+              <h6 {...attributes} className="my-2 font-semibold">
+                {children}
+              </h6>
+            )
+          case 'blockquote':
+            return (
+              <blockquote
+                {...attributes}
+                className="my-1 border-l-2 border-stone-500 pl-2 italic dark:border-stone-300"
+              >
+                {children}
+              </blockquote>
+            )
+          default:
+            return (
+              <p {...attributes} className="my-1">
+                {children}
+              </p>
+            )
+        }
+      },
+    }),
+  ],
 })
 
 export function FactBoxPlugin(): JSX.Element {
-  return (
-    <ContainerPlugin containers={[factBoxContainer, factBoxBlockContainer]} />
-  )
+  return <ContainerPlugin containers={[factBoxContainer]} />
 }

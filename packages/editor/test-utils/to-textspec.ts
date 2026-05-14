@@ -14,7 +14,6 @@ import type {
   TextBlock,
   Selection as TextspecSelection,
 } from '@textspec/notation'
-import {lookupContainer} from '../src/schema/lookup-container'
 import type {Containers} from '../src/schema/resolve-containers'
 import type {EditorSelection, EditorSelectionPoint} from '../src/types/editor'
 
@@ -357,7 +356,7 @@ function convertBlockToTextspec(
     return convertTextBlock(schema, block, annotationKeys)
   }
 
-  if (lookupContainer(containers, block._type)) {
+  if (containers.has(block._type)) {
     return convertContainerBlock(
       schema,
       containers,
@@ -379,9 +378,9 @@ function convertContainerBlock(
   containers: Containers,
   annotationKeys: Map<string, string> | undefined,
   block: Record<string, unknown>,
-  scopePath: string,
+  containerType: string,
 ): ContainerBlock {
-  const containerField = lookupContainer(containers, scopePath)?.field
+  const containerField = containers.get(containerType)?.field
 
   if (!containerField) {
     return {
@@ -407,16 +406,15 @@ function convertContainerBlock(
         typeof item._type === 'string'
       ) {
         const typedItem = item as Record<string, unknown>
-        const childScopePath = `${scopePath}.${item._type}`
 
-        if (lookupContainer(containers, childScopePath)) {
+        if (containers.has(item._type)) {
           children.push(
             convertContainerBlock(
               schema,
               containers,
               annotationKeys,
               typedItem,
-              childScopePath,
+              item._type,
             ),
           )
         } else {

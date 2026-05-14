@@ -14,8 +14,7 @@ import {getNode} from '../../node-traversal/get-node'
 import {getParent} from '../../node-traversal/get-parent'
 import {getTextBlockNode} from '../../node-traversal/get-text-block-node'
 import {getChildFieldName} from '../../paths/get-child-field-name'
-import {getContainerScopedName} from '../../schema/get-container-scoped-name'
-import {lookupContainer} from '../../schema/lookup-container'
+import {resolveContainerByPath} from '../../schema/resolve-container-by-path'
 import {withoutPatching} from '../../slate-plugins/slate-plugin.without-patching'
 import {getPathSubSchema} from '../../traversal/get-path-sub-schema'
 import {isKeyedSegment} from '../../utils/util.is-keyed-segment'
@@ -190,7 +189,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
               ? [i]
               : [
                   ...dupParentPath,
-                  getChildFieldName(editor, parent!.path) ?? 'children',
+                  getChildFieldName(editor.context, parent!.path) ?? 'children',
                   i,
                 ]
           editor.apply({
@@ -417,8 +416,9 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   // Container normalization: ensure the child array field exists and is
   // non-empty.
   if (isObjectNode({schema: editor.schema}, node)) {
-    const scopedName = getContainerScopedName(editor, node, path)
-    const arrayField = lookupContainer(editor.containers, scopedName)?.field
+    const resolved = resolveContainerByPath(editor, path, node)
+    const arrayField =
+      resolved && 'container' in resolved ? resolved.field : undefined
 
     if (arrayField) {
       const fieldValue = (node as Record<string, unknown>)[arrayField.name]
@@ -494,7 +494,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
           debug.normalization('Fixing duplicate key on container child')
           // Use numeric index to address the duplicate since keyed path
           // is ambiguous for nodes with the same key.
-          const childFieldName = getChildFieldName(editor, path)
+          const childFieldName = getChildFieldName(editor.context, path)
           if (childFieldName) {
             editor.apply({
               type: 'set',

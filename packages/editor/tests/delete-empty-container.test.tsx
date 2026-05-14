@@ -2,7 +2,7 @@ import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {ContainerPlugin} from '../src/plugins/plugin.container'
-import {defineContainer} from '../src/renderers/renderer.types'
+import {defineContainer, defineTextBlock} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
 import {toTextspec} from '../test-utils/to-textspec'
 
@@ -22,9 +22,9 @@ const schemaDefinition = defineSchema({
 })
 
 const containers = [
-  defineContainer<typeof schemaDefinition>({
-    scope: '$..callout',
-    field: 'content',
+  defineContainer({
+    type: 'callout',
+    childField: 'content',
   }),
 ]
 
@@ -335,21 +335,21 @@ const tableSchemaPermissive = defineSchema({
 })
 
 const tableContainersPermissive = [
-  defineContainer<typeof tableSchemaPermissive>({
-    scope: '$..table',
-    field: 'rows',
+  defineContainer({
+    type: 'table',
+    childField: 'rows',
   }),
-  defineContainer<typeof tableSchemaPermissive>({
-    scope: '$..table.row',
-    field: 'cells',
+  defineContainer({
+    type: 'row',
+    childField: 'cells',
   }),
-  defineContainer<typeof tableSchemaPermissive>({
-    scope: '$..table.row.cell',
-    field: 'content',
+  defineContainer({
+    type: 'cell',
+    childField: 'content',
   }),
-  defineContainer<typeof tableSchemaPermissive>({
-    scope: '$..table.row.cell.callout',
-    field: 'content',
+  defineContainer({
+    type: 'callout',
+    childField: 'content',
   }),
 ]
 
@@ -406,21 +406,21 @@ const tableSchemaStructural = defineSchema({
 })
 
 const tableContainersStructural = [
-  defineContainer<typeof tableSchemaStructural>({
-    scope: '$..table',
-    field: 'rows',
+  defineContainer({
+    type: 'table',
+    childField: 'rows',
   }),
-  defineContainer<typeof tableSchemaStructural>({
-    scope: '$..table.row',
-    field: 'cells',
+  defineContainer({
+    type: 'row',
+    childField: 'cells',
   }),
-  defineContainer<typeof tableSchemaStructural>({
-    scope: '$..table.row.cell',
-    field: 'content',
+  defineContainer({
+    type: 'cell',
+    childField: 'content',
   }),
-  defineContainer<typeof tableSchemaStructural>({
-    scope: '$..table.row.cell.callout',
-    field: 'content',
+  defineContainer({
+    type: 'callout',
+    childField: 'content',
   }),
 ]
 
@@ -749,12 +749,13 @@ describe('delete on empty container - nested cascade', () => {
 
 /**
  * Editable containers can be registered both on object nodes (the
- * structural shell, e.g. `$..fact-box`) and on the text blocks inside
- * them (`$..fact-box.block` for custom block rendering). The unwrap-on-
- * empty-Backspace rule should only fire for the structural object-level
- * registration. Text-block-level container registrations are a render-
- * customization concern and shouldn't trigger container deletion when
- * the user hits Backspace inside an empty paragraph.
+ * structural shell, e.g. `fact-box`) and on the text blocks inside
+ * them (a nested `defineContainer({type:'block'})` inside fact-box's
+ * `of` for custom block rendering). The unwrap-on-empty-Backspace
+ * rule should only fire for the structural object-level registration.
+ * Text-block-level container registrations are a render-customization
+ * concern and shouldn't trigger container deletion when the user hits
+ * Backspace inside an empty paragraph.
  */
 describe('delete on empty container - nested block container', () => {
   const schemaDefinition = defineSchema({
@@ -782,13 +783,19 @@ describe('delete on empty container - nested block container', () => {
   })
 
   const containers = [
-    defineContainer<typeof schemaDefinition>({
-      scope: '$..fact-box',
-      field: 'content',
-    }),
-    defineContainer<typeof schemaDefinition>({
-      scope: '$..fact-box.block',
-      field: 'children',
+    defineContainer({
+      type: 'fact-box',
+      childField: 'content',
+      of: [
+        defineTextBlock({
+          type: 'block',
+          render: ({attributes, children}) => (
+            <p data-testid="fact-box-text-block" {...attributes}>
+              {children}
+            </p>
+          ),
+        }),
+      ],
     }),
   ]
 

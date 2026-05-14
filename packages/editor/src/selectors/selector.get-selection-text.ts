@@ -2,6 +2,7 @@ import {isSpan, isTextBlock, type PortableTextBlock} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
 import type {EditorContext} from '../editor/editor-snapshot'
 import {getNodeChildren} from '../node-traversal/get-children'
+import type {RegisteredContainer} from '../schema/resolve-containers'
 import type {Node} from '../slate/interfaces/node'
 import {getSelectedValue} from './selector.get-selected-value'
 
@@ -11,13 +12,13 @@ import {getSelectedValue} from './selector.get-selected-value'
 export const getSelectionText: EditorSelector<string> = (snapshot) => {
   const selectedValue = getSelectedValue(snapshot)
 
-  return collectText(snapshot.context, selectedValue, '')
+  return collectText(snapshot.context, selectedValue)
 }
 
 function collectText(
   context: Pick<EditorContext, 'schema' | 'containers'>,
   blocks: ReadonlyArray<Node | PortableTextBlock>,
-  scopePath: string,
+  parent?: RegisteredContainer,
 ): string {
   let text = ''
 
@@ -31,13 +32,13 @@ function collectText(
       continue
     }
 
-    const childInfo = getNodeChildren(context, block, scopePath)
+    const childInfo = getNodeChildren(context, block, parent)
 
     if (!childInfo) {
       continue
     }
 
-    text += collectText(context, childInfo.children, childInfo.scopePath)
+    text += collectText(context, childInfo.children, childInfo.parent)
   }
 
   return text

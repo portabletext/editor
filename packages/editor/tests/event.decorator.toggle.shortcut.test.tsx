@@ -41,30 +41,33 @@ describe('decorator shortcut guard', () => {
       lines: [codeBlockLine],
     }
 
+    const schemaDefinition = defineSchema({
+      decorators: [{name: 'strong'}],
+      blockObjects: [
+        {
+          name: 'code-block',
+          fields: [
+            {
+              name: 'lines',
+              type: 'array',
+              of: [{type: 'block', styles: [{name: 'normal'}], decorators: []}],
+            },
+          ],
+        },
+      ],
+    })
+
     const {editor, locator} = await createTestEditor({
       keyGenerator,
-      schemaDefinition: defineSchema({
-        decorators: [{name: 'strong'}],
-        blockObjects: [
-          {
-            name: 'code-block',
-            fields: [
-              {
-                name: 'lines',
-                type: 'array',
-                of: [
-                  {type: 'block', styles: [{name: 'normal'}], decorators: []},
-                ],
-              },
-            ],
-          },
-        ],
-      }),
+      schemaDefinition,
       initialValue: [paragraph, codeBlock],
       children: (
         <ContainerPlugin
           containers={[
-            defineContainer({scope: '$..code-block', field: 'lines'}),
+            defineContainer({
+              type: 'code-block',
+              childField: 'lines',
+            }),
           ]}
         />
       ),

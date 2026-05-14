@@ -2,7 +2,7 @@ import {compileSchema, defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
 import {createTestSnapshot} from '../../test-utils/create-test-snapshot'
-import {makeContainerConfig} from '../schema/make-container-config'
+import {defineContainer} from '../renderers/renderer.types'
 import {resolveContainers} from '../schema/resolve-containers'
 import {isPointAfterSelection} from './selector.is-point-after-selection'
 import {isPointBeforeSelection} from './selector.is-point-before-selection'
@@ -24,18 +24,12 @@ const schemaDefinition = defineSchema({
 
 const schema = compileSchema(schemaDefinition)
 
-const calloutContainers = resolveContainers(
-  schema,
-  new Map([
-    [
-      '$..callout',
-      makeContainerConfig(schema, {
-        scope: '$..callout',
-        field: 'content',
-      }),
-    ],
-  ]),
-)
+const calloutContainers = resolveContainers(schema, [
+  defineContainer({
+    type: 'callout',
+    childField: 'content',
+  }),
+])
 
 describe(isPointBeforeSelection.name, () => {
   test('Scenario: a point in an earlier text block in a callout is before a selection in a later text block in the same callout', () => {

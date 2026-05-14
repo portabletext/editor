@@ -7,6 +7,7 @@ import {
 import type {EditorSelector} from '../editor/editor-selector'
 import type {EditorContext} from '../editor/editor-snapshot'
 import {getNodeChildren} from '../node-traversal/get-children'
+import type {RegisteredContainer} from '../schema/resolve-containers'
 import type {Path} from '../slate/interfaces/path'
 import type {EditorSelectionPoint} from '../types/editor'
 import {getSelectionEndPoint} from '../utils/util.get-selection-end-point'
@@ -50,7 +51,6 @@ export const getSelectedValue: EditorSelector<Array<PortableTextBlock>> = (
   return sliceArray({
     context: snapshot.context,
     blocks: snapshot.context.value,
-    scopePath: '',
     pathPrefix: [],
     fieldNameInPrefix: undefined,
     startEdge: startPoint,
@@ -61,19 +61,19 @@ export const getSelectedValue: EditorSelector<Array<PortableTextBlock>> = (
 function sliceArray({
   context,
   blocks,
-  scopePath,
   pathPrefix,
   fieldNameInPrefix,
   startEdge,
   endEdge,
+  parent,
 }: {
   context: SliceContext
   blocks: ReadonlyArray<PortableTextBlock>
-  scopePath: string
   pathPrefix: Path
   fieldNameInPrefix: string | undefined
   startEdge: Edge
   endEdge: Edge
+  parent?: RegisteredContainer
 }): Array<PortableTextBlock> {
   if (blocks.length === 0) {
     return []
@@ -126,7 +126,7 @@ function sliceArray({
       continue
     }
 
-    const childInfo = getNodeChildren(context, block, scopePath)
+    const childInfo = getNodeChildren(context, block, parent)
 
     if (!childInfo) {
       result.push(block)
@@ -136,11 +136,11 @@ function sliceArray({
     const innerSliced = sliceArray({
       context,
       blocks: childInfo.children as Array<PortableTextBlock>,
-      scopePath: childInfo.scopePath,
       pathPrefix: blockPath,
       fieldNameInPrefix: childInfo.fieldName,
       startEdge: startPointForBlock,
       endEdge: endPointForBlock,
+      parent: childInfo.parent,
     })
 
     const updatedBlock: PortableTextBlock = {...block}

@@ -2,8 +2,8 @@ import type {Patch} from '@portabletext/patches'
 import type {PortableTextBlock} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
 import type {DecoratedRange} from '../editor/range-decorations-machine'
-import type {LeafConfig} from '../renderers/renderer.types'
-import type {ResolvedContainers} from '../schema/resolve-containers'
+import type {LeafConfig, TextBlockConfig} from '../renderers/renderer.types'
+import type {Containers, ResolvedContainers} from '../schema/resolve-containers'
 import type {DOMEditor} from '../slate/dom/plugin/dom-editor'
 import type {Operation as SlateOperation} from '../slate/interfaces/operation'
 
@@ -31,7 +31,14 @@ export interface PortableTextSlateEditor extends DOMEditor {
   schema: EditorSchema
   keyGenerator: () => string
   containers: ResolvedContainers
-  leafs: Map<string, LeafConfig>
+  /**
+   * Narrow {@link Containers} projection of `containers`, exposed on the
+   * public `EditorContext.containers`. Maintained in sync with
+   * `containers` by the editor machine's register/unregister handlers.
+   */
+  publicContainers: Containers
+  leaves: Map<string, LeafConfig>
+  textBlocks: Map<string, TextBlockConfig>
 
   /**
    * Snapshot-shaped view onto the editor's traversal state. Mirrors the
@@ -39,7 +46,7 @@ export interface PortableTextSlateEditor extends DOMEditor {
    */
   readonly context: {
     schema: EditorSchema
-    containers: ResolvedContainers
+    containers: Containers
     value: PortableTextBlock[]
     keyGenerator: () => string
   }

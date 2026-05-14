@@ -21,7 +21,7 @@ describe(resolveSelection.name, () => {
     const range = resolveSelection(
       {
         schema,
-        containers: new Map(),
+        publicContainers: new Map(),
         blockIndexMap: new Map(),
         children: [
           {
@@ -73,7 +73,7 @@ describe(resolveSelection.name, () => {
     const range = resolveSelection(
       {
         schema,
-        containers: new Map(),
+        publicContainers: new Map(),
         blockIndexMap: new Map(),
         children: [
           {
@@ -123,7 +123,7 @@ describe(resolveSelection.name, () => {
     const range = resolveSelection(
       {
         schema,
-        containers: new Map(),
+        publicContainers: new Map(),
         blockIndexMap: new Map(),
         children: [
           {
@@ -159,7 +159,7 @@ describe(resolveSelection.name, () => {
     const range = resolveSelection(
       {
         schema,
-        containers: new Map(),
+        publicContainers: new Map(),
         blockIndexMap: new Map(),
         children: [
           {
@@ -201,7 +201,7 @@ describe(resolveSelection.name, () => {
     const range = resolveSelection(
       {
         schema,
-        containers: new Map(),
+        publicContainers: new Map(),
         blockIndexMap: new Map(),
         children: [
           {
@@ -243,7 +243,7 @@ describe(resolveSelection.name, () => {
     const range = resolveSelection(
       {
         schema,
-        containers: new Map(),
+        publicContainers: new Map(),
         blockIndexMap: new Map(),
         children: [
           {
@@ -290,7 +290,7 @@ describe(resolveSelection.name, () => {
     const range = resolveSelection(
       {
         schema: context.schema,
-        containers: context.containers,
+        publicContainers: context.containers,
         children: context.value,
         blockIndexMap: new Map(),
       },
@@ -337,7 +337,7 @@ describe(resolveSelection.name, () => {
     const range = resolveSelection(
       {
         schema: context.schema,
-        containers: context.containers,
+        publicContainers: context.containers,
         children: context.value,
         blockIndexMap: new Map(),
       },

@@ -58,33 +58,43 @@ const schemaDefinition = defineSchema({
 })
 
 const tableContainers = [
-  defineContainer<typeof schemaDefinition>({
-    scope: '$..table',
-    field: 'rows',
+  defineContainer({
+    type: 'table',
+    childField: 'rows',
     render: ({children}) => <>{children}</>,
   }),
-  defineContainer<typeof schemaDefinition>({
-    scope: '$..table.row',
-    field: 'cells',
+  defineContainer({
+    type: 'row',
+    childField: 'cells',
     render: ({children}) => <>{children}</>,
   }),
-  defineContainer<typeof schemaDefinition>({
-    scope: '$..table.row.cell',
-    field: 'content',
+  defineContainer({
+    type: 'cell',
+    childField: 'content',
     render: ({children}) => <>{children}</>,
   }),
 ]
 
 const calloutContainers = [
-  defineContainer<typeof schemaDefinition>({
-    scope: '$..callout',
-    field: 'content',
+  defineContainer({
+    type: 'callout',
+    childField: 'content',
     render: ({children}) => <>{children}</>,
   }),
 ]
 
 describe('container normalization', () => {
-  test('top-level void block is not confused with container child type', async () => {
+  test('top-level registration is inert at a position where schema declares the type without the registered childField', async () => {
+    // Registration is type-keyed; activation is position-gated.
+    // The test schema declares `row` twice:
+    //   - root: `{name: 'row'}` (void, no fields)
+    //   - inline inside `table.rows.of`: with a `cells` field
+    // A top-level `defineContainer({type: 'row', childField: 'cells'})`
+    // registers `row` as a container. At the root position, schema
+    // declares `row` without `cells` - the registration is inert and
+    // the top-level row stays as a bare void object. The same
+    // registration still activates at the inline-table position
+    // (covered by other tests in this suite).
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -1298,10 +1308,12 @@ describe('container normalization', () => {
     })
 
     // Late-register a container for callout
-    editor.registerContainer({
-      scope: '$..callout',
-      field: 'content',
-    })
+    editor.registerContainer(
+      defineContainer({
+        type: 'callout',
+        childField: 'content',
+      }),
+    )
 
     // Normalization should now kick in and populate the callout
     await vi.waitFor(() => {
@@ -1471,9 +1483,12 @@ describe('container normalization', () => {
       children: (
         <ContainerPlugin
           containers={[
-            defineContainer<typeof cardSchemaDefinition>({
-              scope: '$..card',
-              field: 'tags',
+            defineContainer({
+              type: 'card',
+              // 'tags' is a primitive-only array; the engine warn-and-excludes
+              // it at runtime. With type narrowing dropped from v2, this is
+              // a runtime-only check (no compile-time rejection).
+              childField: 'tags',
               render: ({children}) => <>{children}</>,
             }),
           ]}
@@ -1603,31 +1618,31 @@ describe('container normalization', () => {
       children: (
         <ContainerPlugin
           containers={[
-            {
-              scope: '$..callout',
-              field: 'content',
+            defineContainer({
+              type: 'callout',
+              childField: 'content',
               render: ({children}) => <>{children}</>,
-            },
-            {
-              scope: '$..table',
-              field: 'rows',
+            }),
+            defineContainer({
+              type: 'table',
+              childField: 'rows',
               render: ({children}) => <>{children}</>,
-            },
-            {
-              scope: '$..table.row',
-              field: 'cells',
+            }),
+            defineContainer({
+              type: 'row',
+              childField: 'cells',
               render: ({children}) => <>{children}</>,
-            },
-            {
-              scope: '$..table.row.cell',
-              field: 'content',
+            }),
+            defineContainer({
+              type: 'cell',
+              childField: 'content',
               render: ({children}) => <>{children}</>,
-            },
-            {
-              scope: '$..figure',
-              field: 'caption',
+            }),
+            defineContainer({
+              type: 'figure',
+              childField: 'caption',
               render: ({children}) => <>{children}</>,
-            },
+            }),
           ]}
         />
       ),
@@ -1737,19 +1752,19 @@ describe('container normalization', () => {
       children: (
         <ContainerPlugin
           containers={[
-            defineContainer<typeof schemaDefinition>({
-              scope: '$..table',
-              field: 'rows',
+            defineContainer({
+              type: 'table',
+              childField: 'rows',
               render: ({children}) => <>{children}</>,
             }),
-            defineContainer<typeof schemaDefinition>({
-              scope: '$..table.row',
-              field: 'cells',
+            defineContainer({
+              type: 'row',
+              childField: 'cells',
               render: ({children}) => <>{children}</>,
             }),
-            defineContainer<typeof schemaDefinition>({
-              scope: '$..table.row.cell',
-              field: 'content',
+            defineContainer({
+              type: 'cell',
+              childField: 'content',
               render: ({children}) => <>{children}</>,
             }),
           ]}
@@ -1817,19 +1832,19 @@ describe('container normalization', () => {
       children: (
         <ContainerPlugin
           containers={[
-            defineContainer<typeof schemaDefinition>({
-              scope: '$..table',
-              field: 'rows',
+            defineContainer({
+              type: 'table',
+              childField: 'rows',
               render: ({children}) => <>{children}</>,
             }),
-            defineContainer<typeof schemaDefinition>({
-              scope: '$..table.row',
-              field: 'cells',
+            defineContainer({
+              type: 'row',
+              childField: 'cells',
               render: ({children}) => <>{children}</>,
             }),
-            defineContainer<typeof schemaDefinition>({
-              scope: '$..table.row.cell',
-              field: 'content',
+            defineContainer({
+              type: 'cell',
+              childField: 'content',
               render: ({children}) => <>{children}</>,
             }),
           ]}
@@ -1915,10 +1930,12 @@ describe('container normalization', () => {
       ],
     })
 
-    const unregisterCallout = editor.registerContainer({
-      scope: '$..callout',
-      field: 'content',
-    })
+    const unregisterCallout = editor.registerContainer(
+      defineContainer({
+        type: 'callout',
+        childField: 'content',
+      }),
+    )
 
     // Verify normalization happened
     await vi.waitFor(() => {
@@ -2007,10 +2024,12 @@ describe('container normalization', () => {
       ],
     })
 
-    const unregister = editor.registerContainer({
-      scope: '$..callout',
-      field: 'content',
-    })
+    const unregister = editor.registerContainer(
+      defineContainer({
+        type: 'callout',
+        childField: 'content',
+      }),
+    )
 
     await vi.waitFor(() => {
       expect(editor.getSnapshot().context.value).toEqual([

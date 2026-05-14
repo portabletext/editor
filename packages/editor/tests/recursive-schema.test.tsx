@@ -49,9 +49,9 @@ const recursiveListSchema = defineSchema({
   ],
 })
 
-const listContainer = defineContainer<typeof recursiveListSchema>({
-  scope: '$..list',
-  field: 'items',
+const listContainer = defineContainer({
+  type: 'list',
+  childField: 'items',
   render: ({attributes, children}) => (
     <ul data-testid="list" {...attributes}>
       {children}
@@ -59,9 +59,9 @@ const listContainer = defineContainer<typeof recursiveListSchema>({
   ),
 })
 
-const listItemContainer = defineContainer<typeof recursiveListSchema>({
-  scope: '$..list.list-item',
-  field: 'content',
+const listItemContainer = defineContainer({
+  type: 'list-item',
+  childField: 'content',
   render: ({attributes, children}) => (
     <li data-testid="list-item" {...attributes}>
       {children}

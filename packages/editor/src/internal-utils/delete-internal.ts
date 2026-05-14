@@ -5,9 +5,8 @@ import {getNode} from '../node-traversal/get-node'
 import {getSibling} from '../node-traversal/get-sibling'
 import {getSpanNode} from '../node-traversal/get-span-node'
 import {getTextBlockNode} from '../node-traversal/get-text-block-node'
-import {getContainerScopedName} from '../schema/get-container-scoped-name'
 import {getEnclosingContainer} from '../schema/get-enclosing-container'
-import {lookupContainer} from '../schema/lookup-container'
+import {resolveContainerByPath} from '../schema/resolve-container-by-path'
 import {pointRef} from '../slate/editor/point-ref'
 import type {Path} from '../slate/interfaces/path'
 import type {Point} from '../slate/interfaces/point'
@@ -528,9 +527,8 @@ function clearContainerContents(
     return
   }
 
-  const scopedName = getContainerScopedName(editor, node, containerPath)
-  const container = lookupContainer(editor.containers, scopedName)
-  if (!container) {
+  const container = resolveContainerByPath(editor, containerPath, node)
+  if (!container || !('container' in container)) {
     return
   }
 

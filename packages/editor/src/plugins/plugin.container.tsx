@@ -1,13 +1,11 @@
 import {useEffect} from 'react'
 import {useEditor} from '../editor/use-editor'
-import type {ContainerDefinition} from '../renderers/renderer.types'
+import type {Container} from '../renderers/renderer.types'
 
 /**
  * @alpha
  */
-export function ContainerPlugin(props: {
-  containers: Array<ContainerDefinition>
-}) {
+export function ContainerPlugin(props: {containers: Array<Container>}) {
   const editor = useEditor()
 
   useEffect(() => {

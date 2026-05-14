@@ -26,7 +26,7 @@ test('getActiveDecorators: respects sub-schema decorators inside a container', (
     }),
   )
   const containers = resolveTestbedContainers(schema, [
-    {scope: '$..callout', field: 'content'},
+    {kind: 'container', type: 'callout', childField: 'content'},
   ])
 
   const snapshot = createTestSnapshot({
@@ -107,7 +107,7 @@ test('getActiveDecorators: expanded across containers — out-of-scope spans do 
     }),
   )
   const containers = resolveTestbedContainers(schema, [
-    {scope: '$..callout', field: 'content'},
+    {kind: 'container', type: 'callout', childField: 'content'},
   ])
 
   const snapshot = createTestSnapshot({
@@ -183,7 +183,7 @@ test('getActiveDecorators: expanded across containers — decorator missing in o
     }),
   )
   const containers = resolveTestbedContainers(schema, [
-    {scope: '$..callout', field: 'content'},
+    {kind: 'container', type: 'callout', childField: 'content'},
   ])
 
   const snapshot = createTestSnapshot({

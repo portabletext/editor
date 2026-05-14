@@ -247,9 +247,9 @@ describe('DOM structure', () => {
         {name: 'image'},
       ],
     })
-    const galleryContainer = defineContainer<typeof gallerySchemaDefinition>({
-      scope: '$..gallery',
-      field: 'items',
+    const galleryContainer = defineContainer({
+      type: 'gallery',
+      childField: 'items',
       render: ({attributes, children}) => (
         <div {...attributes} className="gallery">
           {children}
@@ -360,23 +360,23 @@ describe('DOM structure', () => {
         },
       ],
     })
-    const tableContainer = defineContainer<typeof tableSchemaDefinition>({
-      scope: '$..table',
-      field: 'rows',
+    const tableContainer = defineContainer({
+      type: 'table',
+      childField: 'rows',
       render: ({attributes, children}) => (
         <table {...attributes}>
           <tbody>{children}</tbody>
         </table>
       ),
     })
-    const rowContainer = defineContainer<typeof tableSchemaDefinition>({
-      scope: '$..table.row',
-      field: 'cells',
+    const rowContainer = defineContainer({
+      type: 'row',
+      childField: 'cells',
       render: ({attributes, children}) => <tr {...attributes}>{children}</tr>,
     })
-    const cellContainer = defineContainer<typeof tableSchemaDefinition>({
-      scope: '$..table.row.cell',
-      field: 'content',
+    const cellContainer = defineContainer({
+      type: 'cell',
+      childField: 'content',
       render: ({attributes, children}) => <td {...attributes}>{children}</td>,
     })
     await createTestEditor({
@@ -487,9 +487,9 @@ describe('DOM structure', () => {
         },
       ],
     })
-    const codeContainer = defineContainer<typeof codeSchemaDefinition>({
-      scope: '$..code',
-      field: 'lines',
+    const codeContainer = defineContainer({
+      type: 'code',
+      childField: 'lines',
       render: ({attributes, children}) => (
         <pre {...attributes}>
           <code>{children}</code>
@@ -585,9 +585,9 @@ describe('DOM structure', () => {
         {name: 'image'},
       ],
     })
-    const calloutContainer = defineContainer<typeof calloutSchemaDefinition>({
-      scope: '$..callout',
-      field: 'content',
+    const calloutContainer = defineContainer({
+      type: 'callout',
+      childField: 'content',
       render: ({attributes, children}) => (
         <div {...attributes} className="callout">
           {children}

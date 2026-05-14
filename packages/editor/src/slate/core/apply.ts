@@ -32,7 +32,7 @@ export const apply: WithEditorFirstArg<Editor['apply']> = (editor, op) => {
   // resolve duplicate keys, mutating op.node in place).
   applyOperation(editor, op)
 
-  updateDirtyPaths(editor, getDirtyPaths(editor, op))
+  updateDirtyPaths(editor, getDirtyPaths(editor.context, op))
 
   editor.operations.push(op)
   normalize(editor, {

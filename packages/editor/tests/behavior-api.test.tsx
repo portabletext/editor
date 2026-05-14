@@ -13,7 +13,7 @@ import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
 import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
 import {ContainerPlugin} from '../src/plugins/plugin.container'
 import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
-import {defineContainer} from '../src/renderers/renderer.types'
+import {defineContainer, defineTextBlock} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
 import {getSelectionAfterText} from '../test-utils/text-selection'
 import {toTextspec} from '../test-utils/to-textspec'
@@ -842,17 +842,22 @@ describe('Behavior API', () => {
         ],
       })
 
-      const calloutContainer = defineContainer<typeof schemaDefinition>({
-        scope: '$..callout',
-        field: 'content',
+      const calloutContainer = defineContainer({
+        type: 'callout',
+        childField: 'content',
         render: ({attributes, children}) => (
           <div {...attributes}>{children}</div>
         ),
-      })
-      const calloutBlockContainer = defineContainer<typeof schemaDefinition>({
-        scope: '$..callout.block',
-        field: 'children',
-        render: ({attributes, children}) => <p {...attributes}>{children}</p>,
+        of: [
+          // Positioned text-block override: text blocks inside callout
+          // render as <p>.
+          defineTextBlock({
+            type: 'block',
+            render: ({attributes, children}) => (
+              <p {...attributes}>{children}</p>
+            ),
+          }),
+        ],
       })
 
       const calloutKey = 'callout'
@@ -888,9 +893,7 @@ describe('Behavior API', () => {
         ],
         children: (
           <>
-            <ContainerPlugin
-              containers={[calloutContainer, calloutBlockContainer]}
-            />
+            <ContainerPlugin containers={[calloutContainer]} />
             <BehaviorPlugin
               behaviors={[
                 defineBehavior({
@@ -938,17 +941,22 @@ describe('Behavior API', () => {
         ],
       })
 
-      const calloutContainer = defineContainer<typeof schemaDefinition>({
-        scope: '$..callout',
-        field: 'content',
+      const calloutContainer = defineContainer({
+        type: 'callout',
+        childField: 'content',
         render: ({attributes, children}) => (
           <div {...attributes}>{children}</div>
         ),
-      })
-      const calloutBlockContainer = defineContainer<typeof schemaDefinition>({
-        scope: '$..callout.block',
-        field: 'children',
-        render: ({attributes, children}) => <p {...attributes}>{children}</p>,
+        of: [
+          // Positioned text-block override: text blocks inside callout
+          // render as <p>.
+          defineTextBlock({
+            type: 'block',
+            render: ({attributes, children}) => (
+              <p {...attributes}>{children}</p>
+            ),
+          }),
+        ],
       })
 
       const calloutKey = 'callout'
@@ -984,9 +992,7 @@ describe('Behavior API', () => {
         ],
         children: (
           <>
-            <ContainerPlugin
-              containers={[calloutContainer, calloutBlockContainer]}
-            />
+            <ContainerPlugin containers={[calloutContainer]} />
             <BehaviorPlugin
               behaviors={[
                 defineBehavior({

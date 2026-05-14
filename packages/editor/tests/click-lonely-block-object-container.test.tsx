@@ -21,9 +21,9 @@ const schemaDefinition = defineSchema({
   ],
 })
 
-const calloutContainer = defineContainer<typeof schemaDefinition>({
-  scope: '$..callout',
-  field: 'content',
+const calloutContainer = defineContainer({
+  type: 'callout',
+  childField: 'content',
 })
 
 describe('click above/below lonely block object in containers', () => {

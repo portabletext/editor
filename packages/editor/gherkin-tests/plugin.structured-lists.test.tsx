@@ -63,9 +63,9 @@ const schemaDefinition = defineSchema({
   ],
 })
 
-const listContainer = defineContainer<typeof schemaDefinition>({
-  scope: '$..list',
-  field: 'items',
+const listContainer = defineContainer({
+  type: 'list',
+  childField: 'items',
   render: ({attributes, children}) => (
     <ul data-testid="list" {...attributes}>
       {children}
@@ -73,9 +73,9 @@ const listContainer = defineContainer<typeof schemaDefinition>({
   ),
 })
 
-const listItemContainer = defineContainer<typeof schemaDefinition>({
-  scope: '$..list.list-item',
-  field: 'content',
+const listItemContainer = defineContainer({
+  type: 'list-item',
+  childField: 'content',
   render: ({attributes, children}) => (
     <li data-testid="list-item" {...attributes}>
       {children}
@@ -83,9 +83,9 @@ const listItemContainer = defineContainer<typeof schemaDefinition>({
   ),
 })
 
-const codeBlockContainer = defineContainer<typeof schemaDefinition>({
-  scope: '$..code-block',
-  field: 'lines',
+const codeBlockContainer = defineContainer({
+  type: 'code-block',
+  childField: 'lines',
   render: ({attributes, children}) => (
     <pre data-testid="code-block" {...attributes}>
       {children}
@@ -113,11 +113,11 @@ const isListItem = (node: Node): node is ListItemNode =>
 /**
  * Build a path to a node inside an array field of a parent.
  */
-const childPath = (parentPath: Path, field: string, child: Keyed): Path => [
-  ...parentPath,
-  field,
-  {_key: child._key},
-]
+const childPath = (
+  parentPath: Path,
+  childField: string,
+  child: Keyed,
+): Path => [...parentPath, childField, {_key: child._key}]
 
 /**
  * Build a new `list` value.

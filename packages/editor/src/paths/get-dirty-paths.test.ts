@@ -1,10 +1,7 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
 import {describe, expect, test} from 'vitest'
-import {makeContainerConfig} from '../schema/make-container-config'
-import {
-  resolveContainers,
-  type ResolvedContainers,
-} from '../schema/resolve-containers'
+import {defineContainer} from '../renderers/renderer.types'
+import {resolveContainers, type Containers} from '../schema/resolve-containers'
 import type {Node} from '../slate/interfaces/node'
 import {getDirtyPaths} from './get-dirty-paths'
 
@@ -56,47 +53,29 @@ const schemaDefinition = defineSchema({
 
 const schema = compileSchema(schemaDefinition)
 
-const emptyContainers: ResolvedContainers = new Map()
+const emptyContainers: Containers = new Map()
 
-const containerContainers: ResolvedContainers = resolveContainers(
-  schema,
-  new Map([
-    [
-      '$..callout',
-      makeContainerConfig(schema, {
-        scope: '$..callout',
-        field: 'content',
-      }),
-    ],
-  ]),
-)
+const containerContainers: Containers = resolveContainers(schema, [
+  defineContainer({
+    type: 'callout',
+    childField: 'content',
+  }),
+])
 
-const tableContainers: ResolvedContainers = resolveContainers(
-  schema,
-  new Map([
-    [
-      '$..table',
-      makeContainerConfig(schema, {
-        scope: '$..table',
-        field: 'rows',
-      }),
-    ],
-    [
-      '$..table.row',
-      makeContainerConfig(schema, {
-        scope: '$..table.row',
-        field: 'cells',
-      }),
-    ],
-    [
-      '$..table.row.cell',
-      makeContainerConfig(schema, {
-        scope: '$..table.row.cell',
-        field: 'content',
-      }),
-    ],
-  ]),
-)
+const tableContainers: Containers = resolveContainers(schema, [
+  defineContainer({
+    type: 'table',
+    childField: 'rows',
+  }),
+  defineContainer({
+    type: 'row',
+    childField: 'cells',
+  }),
+  defineContainer({
+    type: 'cell',
+    childField: 'content',
+  }),
+])
 
 describe(getDirtyPaths.name, () => {
   describe('insert_text / remove_text', () => {

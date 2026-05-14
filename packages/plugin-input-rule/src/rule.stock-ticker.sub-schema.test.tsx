@@ -33,9 +33,9 @@ describe('stock-ticker rule respects the sub-schema at the focus', () => {
     })
 
     const containers = [
-      defineContainer<typeof schemaDefinition>({
-        scope: '$..callout',
-        field: 'content',
+      defineContainer({
+        type: 'callout',
+        childField: 'content',
         render: ({attributes, children}) => (
           <div data-testid="callout" {...attributes}>
             {children}

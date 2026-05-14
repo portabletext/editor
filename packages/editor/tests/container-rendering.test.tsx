@@ -2,7 +2,7 @@ import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {ContainerPlugin} from '../src/plugins/plugin.container'
-import {defineContainer} from '../src/renderers/renderer.types'
+import {defineContainer, defineTextBlock} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
 
 /**
@@ -30,9 +30,9 @@ const schemaDefinition = defineSchema({
   ],
 })
 
-const calloutContainer = defineContainer<typeof schemaDefinition>({
-  scope: '$..callout',
-  field: 'content',
+const calloutContainer = defineContainer({
+  type: 'callout',
+  childField: 'content',
   render: ({attributes, children}) => (
     <div data-testid="callout" {...attributes}>
       {children}
@@ -141,9 +141,9 @@ describe('container rendering', () => {
 
     const receivedNodes: Array<{_type: string; _key: string}> = []
 
-    const trackingContainer = defineContainer<typeof schemaDefinition>({
-      scope: '$..callout',
-      field: 'content',
+    const trackingContainer = defineContainer({
+      type: 'callout',
+      childField: 'content',
       render: ({attributes, children, node}) => {
         receivedNodes.push({_type: node._type, _key: node._key})
         return (
@@ -238,9 +238,9 @@ describe('table with nested rows and cells', () => {
     ],
   })
 
-  const tableContainer = defineContainer<typeof tableSchemaDefinition>({
-    scope: '$..table',
-    field: 'rows',
+  const tableContainer = defineContainer({
+    type: 'table',
+    childField: 'rows',
     render: ({attributes, children}) => (
       <table data-testid="table" {...attributes}>
         <tbody>{children}</tbody>
@@ -248,9 +248,9 @@ describe('table with nested rows and cells', () => {
     ),
   })
 
-  const rowContainer = defineContainer<typeof tableSchemaDefinition>({
-    scope: '$..table.row',
-    field: 'cells',
+  const rowContainer = defineContainer({
+    type: 'row',
+    childField: 'cells',
     render: ({attributes, children}) => (
       <tr data-testid="row" {...attributes}>
         {children}
@@ -258,9 +258,9 @@ describe('table with nested rows and cells', () => {
     ),
   })
 
-  const cellContainer = defineContainer<typeof tableSchemaDefinition>({
-    scope: '$..table.row.cell',
-    field: 'content',
+  const cellContainer = defineContainer({
+    type: 'cell',
+    childField: 'content',
     render: ({attributes, children}) => (
       <td data-testid="cell" {...attributes}>
         {children}
@@ -376,9 +376,9 @@ describe('container with non-editable fields', () => {
     ],
   })
 
-  const cardContainer = defineContainer<typeof cardSchemaDefinition>({
-    scope: '$..card',
-    field: 'body',
+  const cardContainer = defineContainer({
+    type: 'card',
+    childField: 'body',
     render: ({attributes, children}) => (
       <div data-testid="card" {...attributes}>
         {children}
@@ -446,53 +446,15 @@ describe('container with non-editable fields', () => {
   })
 })
 
-describe('block scope and specificity', () => {
-  test('block scope overrides text block rendering', async () => {
-    const keyGenerator = createTestKeyGenerator()
-    const blockKey = keyGenerator()
-    const spanKey = keyGenerator()
-
-    await createTestEditor({
-      keyGenerator,
-      schemaDefinition,
-      initialValue: [
-        {
-          _type: 'block',
-          _key: blockKey,
-          children: [{_type: 'span', _key: spanKey, text: 'hello', marks: []}],
-          markDefs: [],
-          style: 'normal',
-        },
-      ],
-      children: (
-        <ContainerPlugin
-          containers={[
-            defineContainer<typeof schemaDefinition>({
-              scope: '$..block',
-              field: 'children',
-              render: ({attributes, children}) => (
-                <p data-testid="custom-block" {...attributes}>
-                  {children}
-                </p>
-              ),
-            }),
-          ]}
-        />
-      ),
-    })
-
-    await vi.waitFor(() => {
-      const editorElement = document.querySelector('[data-slate-editor]')
-      expect(editorElement).not.toEqual(null)
-      const customBlock = editorElement!.querySelector(
-        '[data-testid="custom-block"]',
-      )
-      expect(customBlock).not.toEqual(null)
-      expect(customBlock!.textContent).toEqual('hello')
-    })
-  })
-
-  test('scoped block overrides universal block inside container', async () => {
+describe('positional block-leaf override', () => {
+  test('block-leaf override in callout.of applies to text blocks inside the callout', async () => {
+    // v2 equivalent of v6's "$..callout.block" scoped override. The
+    // outer callout container's `of` array carries a leaf entry for
+    // `type: 'block'` whose render replaces the engine default for
+    // text blocks rendered as immediate children of that callout.
+    //
+    // Text blocks at the root keep using the engine default; only the
+    // text block INSIDE the callout picks up the positional override.
     const keyGenerator = createTestKeyGenerator()
     const calloutKey = keyGenerator()
 
@@ -538,24 +500,24 @@ describe('block scope and specificity', () => {
       children: (
         <ContainerPlugin
           containers={[
-            calloutContainer,
-            defineContainer<typeof schemaDefinition>({
-              scope: '$..block',
-              field: 'children',
+            defineContainer({
+              type: 'callout',
+              childField: 'content',
               render: ({attributes, children}) => (
-                <p data-testid="universal-block" {...attributes}>
+                <div data-testid="callout" {...attributes}>
                   {children}
-                </p>
+                </div>
               ),
-            }),
-            defineContainer<typeof schemaDefinition>({
-              scope: '$..callout.block',
-              field: 'children',
-              render: ({attributes, children}) => (
-                <p data-testid="callout-block" {...attributes}>
-                  {children}
-                </p>
-              ),
+              of: [
+                defineTextBlock({
+                  type: 'block',
+                  render: ({attributes, children}) => (
+                    <p data-testid="callout-block" {...attributes}>
+                      {children}
+                    </p>
+                  ),
+                }),
+              ],
             }),
           ]}
         />
@@ -566,91 +528,23 @@ describe('block scope and specificity', () => {
       const editorElement = document.querySelector('[data-slate-editor]')
       expect(editorElement).not.toEqual(null)
 
-      const universalBlock = editorElement!.querySelector(
-        '[data-testid="universal-block"]',
-      )
-      expect(universalBlock).not.toEqual(null)
-      expect(universalBlock!.textContent).toEqual('root text')
-
+      // The text block inside the callout picks up the positional override
       const calloutBlock = editorElement!.querySelector(
         '[data-testid="callout-block"]',
       )
       expect(calloutBlock).not.toEqual(null)
       expect(calloutBlock!.textContent).toEqual('callout text')
-    })
-  })
 
-  test('universal block fallback applies inside container when no scoped override', async () => {
-    const keyGenerator = createTestKeyGenerator()
-    const calloutKey = keyGenerator()
+      // The text block at the root uses the engine default (no
+      // data-testid="callout-block"). Its content should still be present.
+      expect(editorElement!.textContent).toContain('root text')
 
-    await createTestEditor({
-      keyGenerator,
-      schemaDefinition,
-      initialValue: [
-        {
-          _type: 'block',
-          _key: 'root-block',
-          children: [
-            {
-              _type: 'span',
-              _key: 'root-span',
-              text: 'root text',
-              marks: [],
-            },
-          ],
-          markDefs: [],
-          style: 'normal',
-        },
-        {
-          _type: 'callout',
-          _key: calloutKey,
-          content: [
-            {
-              _type: 'block',
-              _key: 'callout-block',
-              children: [
-                {
-                  _type: 'span',
-                  _key: 'callout-span',
-                  text: 'callout text',
-                  marks: [],
-                },
-              ],
-              markDefs: [],
-              style: 'normal',
-            },
-          ],
-        },
-      ],
-      children: (
-        <ContainerPlugin
-          containers={[
-            calloutContainer,
-            defineContainer<typeof schemaDefinition>({
-              scope: '$..block',
-              field: 'children',
-              render: ({attributes, children}) => (
-                <p data-testid="universal-block" {...attributes}>
-                  {children}
-                </p>
-              ),
-            }),
-          ]}
-        />
-      ),
-    })
-
-    await vi.waitFor(() => {
-      const editorElement = document.querySelector('[data-slate-editor]')
-      expect(editorElement).not.toEqual(null)
-
-      const universalBlocks = editorElement!.querySelectorAll(
-        '[data-testid="universal-block"]',
+      // And the root-level text block doesn't pass through the
+      // callout-positional override (there's exactly one callout-block).
+      const overrides = editorElement!.querySelectorAll(
+        '[data-testid="callout-block"]',
       )
-      expect(universalBlocks.length).toEqual(2)
-      expect(universalBlocks[0]!.textContent).toEqual('root text')
-      expect(universalBlocks[1]!.textContent).toEqual('callout text')
+      expect(overrides.length).toEqual(1)
     })
   })
 })
@@ -795,9 +689,9 @@ describe('code block container', () => {
     ],
   })
 
-  const codeBlockContainer = defineContainer<typeof codeBlockSchemaDefinition>({
-    scope: '$..code-block',
-    field: 'code',
+  const codeBlockContainer = defineContainer({
+    type: 'code-block',
+    childField: 'code',
     render: ({attributes, children}) => (
       <pre data-testid="code-block" {...attributes}>
         <code>{children}</code>
@@ -908,9 +802,9 @@ describe('gallery with void block objects', () => {
     ],
   })
 
-  const galleryContainer = defineContainer<typeof gallerySchemaDefinition>({
-    scope: '$..gallery',
-    field: 'items',
+  const galleryContainer = defineContainer({
+    type: 'gallery',
+    childField: 'items',
     render: ({attributes, children}) => (
       <div data-testid="gallery" {...attributes}>
         {children}
@@ -1039,9 +933,9 @@ describe('cell with mixed content', () => {
     ],
   })
 
-  const tableContainer = defineContainer<typeof mixedSchemaDefinition>({
-    scope: '$..table',
-    field: 'rows',
+  const tableContainer = defineContainer({
+    type: 'table',
+    childField: 'rows',
     render: ({attributes, children}) => (
       <table data-testid="table" {...attributes}>
         <tbody>{children}</tbody>
@@ -1049,9 +943,9 @@ describe('cell with mixed content', () => {
     ),
   })
 
-  const rowContainer = defineContainer<typeof mixedSchemaDefinition>({
-    scope: '$..table.row',
-    field: 'cells',
+  const rowContainer = defineContainer({
+    type: 'row',
+    childField: 'cells',
     render: ({attributes, children}) => (
       <tr data-testid="row" {...attributes}>
         {children}
@@ -1059,9 +953,9 @@ describe('cell with mixed content', () => {
     ),
   })
 
-  const cellContainer = defineContainer<typeof mixedSchemaDefinition>({
-    scope: '$..table.row.cell',
-    field: 'content',
+  const cellContainer = defineContainer({
+    type: 'cell',
+    childField: 'content',
     render: ({attributes, children}) => (
       <td data-testid="cell" {...attributes}>
         {children}
@@ -1233,9 +1127,9 @@ describe('self-referential containers', () => {
     ],
   })
 
-  const listContainer = defineContainer<typeof listSchema>({
-    scope: '$..list',
-    field: 'items',
+  const listContainer = defineContainer({
+    type: 'list',
+    childField: 'items',
     render: ({attributes, children}) => (
       <ul data-testid="list" {...attributes}>
         {children}
@@ -1243,9 +1137,9 @@ describe('self-referential containers', () => {
     ),
   })
 
-  const listItemContainer = defineContainer<typeof listSchema>({
-    scope: '$..list.list-item',
-    field: 'content',
+  const listItemContainer = defineContainer({
+    type: 'list-item',
+    childField: 'content',
     render: ({attributes, children}) => (
       <li data-testid="list-item" {...attributes}>
         {children}

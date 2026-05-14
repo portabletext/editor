@@ -23,9 +23,9 @@ const schemaDefinition = defineSchema({
   ],
 })
 
-const codeBlockContainer = defineContainer<typeof schemaDefinition>({
-  scope: '$..code-block',
-  field: 'lines',
+const codeBlockContainer = defineContainer({
+  type: 'code-block',
+  childField: 'lines',
   render: ({attributes, children}) => (
     <pre data-testid="code-block" {...attributes}>
       {children}
@@ -115,9 +115,9 @@ describe('child and span selectors (container awareness)', () => {
       ],
     })
 
-    const inlineContainer = defineContainer<typeof inlineSchemaDefinition>({
-      scope: '$..code-block',
-      field: 'lines',
+    const inlineContainer = defineContainer({
+      type: 'code-block',
+      childField: 'lines',
       render: ({attributes, children}) => (
         <pre data-testid="code-block" {...attributes}>
           {children}

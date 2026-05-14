@@ -1,6 +1,7 @@
 import {buildIndexMaps} from '../internal-utils/build-index-maps'
 import {createPlaceholderBlock} from '../internal-utils/create-placeholder-block'
 import {debug} from '../internal-utils/debug'
+import {buildPublicContainers} from '../schema/build-public-containers'
 import {plugins} from '../slate-plugins/slate-plugins'
 import {createEditor} from '../slate/create-editor'
 import {withDOM} from '../slate/dom/plugin/with-dom'
@@ -24,7 +25,7 @@ export function createSlateEditor(
   const placeholderBlock = createPlaceholderBlock({
     context: {
       schema: context.schema,
-      containers: context.containers,
+      containers: buildPublicContainers(context.containers),
       value: [],
       keyGenerator: context.keyGenerator,
     },
@@ -36,7 +37,9 @@ export function createSlateEditor(
   editor.schema = context.schema
   editor.keyGenerator = context.keyGenerator
   editor.containers = new Map()
-  editor.leafs = new Map()
+  editor.publicContainers = new Map()
+  editor.leaves = new Map()
+  editor.textBlocks = new Map()
 
   editor.decoratedRanges = []
   editor.decoratorState = {}

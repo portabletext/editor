@@ -4,7 +4,7 @@ import type {
   PortableTextTextBlock,
 } from '@portabletext/schema'
 import React, {useContext, type JSX} from 'react'
-import {ContainerScopeContext} from '../../../editor/container-scope-context'
+import {ParentContainerContext} from '../../../editor/parent-container-context'
 import type {Path} from '../../interfaces/path'
 import type {LeafPosition} from '../../interfaces/text'
 import {textEquals} from '../../text/text-equals'
@@ -35,7 +35,7 @@ const Leaf = (props: {
     leafPosition,
   } = props
 
-  const containerScope = useContext(ContainerScopeContext)
+  const parentContainer = useContext(ParentContainerContext)
 
   const children = (
     <SlateString
@@ -53,7 +53,7 @@ const Leaf = (props: {
   const attributes: {
     'data-slate-leaf'?: true
     'data-pt-mark': true
-  } = containerScope
+  } = parentContainer
     ? {
         'data-pt-mark': true,
       }

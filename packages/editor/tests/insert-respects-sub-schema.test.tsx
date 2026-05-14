@@ -59,8 +59,8 @@ const schemaDefinition = defineSchema({
 
 const calloutContainer = [
   defineContainer({
-    scope: '$..callout',
-    field: 'content',
+    type: 'callout',
+    childField: 'content',
     render: ({children}) => <>{children}</>,
   }),
 ]

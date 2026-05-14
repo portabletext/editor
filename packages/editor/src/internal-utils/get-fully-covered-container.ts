@@ -1,9 +1,7 @@
 import {isTextBlock} from '@portabletext/schema'
 import {getAncestor} from '../node-traversal/get-ancestor'
 import {getNode} from '../node-traversal/get-node'
-import {getContainerScopedName} from '../schema/get-container-scoped-name'
 import {isEditableContainer} from '../schema/is-editable-container'
-import {lookupContainer} from '../schema/lookup-container'
 import {end as editorEnd} from '../slate/editor/end'
 import {start as editorStart} from '../slate/editor/start'
 import type {Node} from '../slate/interfaces/node'
@@ -111,10 +109,9 @@ function parentFieldAcceptsTextBlock(
 function fieldAcceptsTextBlock(
   editor: PortableTextSlateEditor,
   node: Node,
-  path: Path,
+  _path: Path,
 ): boolean {
-  const scopedName = getContainerScopedName(editor, node, path)
-  const container = lookupContainer(editor.containers, scopedName)
+  const container = editor.containers.get(node._type)
   if (!container) {
     return false
   }

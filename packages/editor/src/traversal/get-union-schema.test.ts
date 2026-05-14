@@ -1,14 +1,10 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
 import {describe, expect, test} from 'vitest'
-import type {
-  ContainerConfig,
-  ContainerDefinition,
-} from '../renderers/renderer.types'
-import {makeContainerConfig} from '../schema/make-container-config'
-import {resolveContainers} from '../schema/resolve-containers'
+import type {Container} from '../renderers/renderer.types'
+import {resolveContainerField} from '../schema/resolve-containers'
 import {getUnionSchema} from './get-union-schema'
 
-const testRender: ContainerDefinition['render'] = ({children}) => children
+const testRender: Container['render'] = ({children}) => children
 
 describe(getUnionSchema.name, () => {
   test('returns the root schema when no containers are registered', () => {
@@ -67,24 +63,33 @@ describe(getUnionSchema.name, () => {
       }),
     )
 
-    const containerConfigs: Map<string, ContainerConfig> = new Map()
-    containerConfigs.set(
-      '$..callout',
-      makeContainerConfig(schema, {
-        scope: '$..callout',
-        field: 'content',
+    const containers = new Map()
+    for (const container of [
+      {
+        kind: 'container',
+        type: 'callout',
+        childField: 'content',
         render: testRender,
-      }),
-    )
-    containerConfigs.set(
-      '$..code-block',
-      makeContainerConfig(schema, {
-        scope: '$..code-block',
-        field: 'lines',
+      },
+      {
+        kind: 'container',
+        type: 'code-block',
+        childField: 'lines',
         render: testRender,
-      }),
-    )
-    const containers = resolveContainers(schema, containerConfigs)
+      },
+    ] satisfies ReadonlyArray<Container>) {
+      const field = resolveContainerField(
+        schema,
+        container.type,
+        container.childField,
+      )
+      if (!field) {
+        throw new Error(
+          `field "${container.childField}" not found on type "${container.type}"`,
+        )
+      }
+      containers.set(container.type, {container, field})
+    }
 
     const union = getUnionSchema(schema, containers)
 
@@ -184,40 +189,41 @@ describe(getUnionSchema.name, () => {
       }),
     )
 
-    const containerConfigs: Map<string, ContainerConfig> = new Map()
-    containerConfigs.set(
-      '$..table',
-      makeContainerConfig(schema, {
-        scope: '$..table',
-        field: 'rows',
+    const containers = new Map()
+    for (const container of [
+      {
+        kind: 'container',
+        type: 'table',
+        childField: 'rows',
         render: testRender,
-      }),
-    )
-    containerConfigs.set(
-      '$..table.row',
-      makeContainerConfig(schema, {
-        scope: '$..table.row',
-        field: 'cells',
+      },
+      {kind: 'container', type: 'row', childField: 'cells', render: testRender},
+      {
+        kind: 'container',
+        type: 'cell',
+        childField: 'content',
         render: testRender,
-      }),
-    )
-    containerConfigs.set(
-      '$..table.row.cell',
-      makeContainerConfig(schema, {
-        scope: '$..table.row.cell',
-        field: 'content',
-        render: testRender,
-      }),
-    )
-    const containers = resolveContainers(schema, containerConfigs)
+      },
+    ] satisfies ReadonlyArray<Container>) {
+      const field = resolveContainerField(
+        schema,
+        container.type,
+        container.childField,
+      )
+      if (!field) {
+        throw new Error(
+          `field "${container.childField}" not found on type "${container.type}"`,
+        )
+      }
+      containers.set(container.type, {container, field})
+    }
 
     const union = getUnionSchema(schema, containers)
 
     // 'row' and 'cell' must NOT appear in the union: their containers
-    // (`$..table` accepting 'row' only, `$..table.row` accepting 'cell' only)
-    // do not accept text blocks. Only 'table' (declared at root) and the
-    // members reached through `$..table.row.cell` (which accepts text blocks)
-    // appear.
+    // (`table` accepting 'row' only, `row` accepting 'cell' only) do not
+    // accept text blocks. Only 'table' (declared at root) and the members
+    // reached through `cell` (which accepts text blocks) appear.
     expect(union.blockObjects.map((b) => b.name)).toEqual(['table'])
     // The cell's content sub-schema contributes the 'code' decorator.
     expect(union.decorators.map((d) => d.name)).toEqual(['code'])

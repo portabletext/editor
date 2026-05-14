@@ -46,10 +46,17 @@ export {useEditor} from './editor/use-editor'
 export {
   defineContainer,
   defineLeaf,
-  type ContainerDefinition,
+  defineTextBlock,
+  type Container,
   type Leaf,
+  type TextBlock,
 } from './renderers/renderer.types'
-export type {Container, Containers} from './schema/resolve-containers'
+export {resolveContainerAt} from './schema/resolve-containers'
+export type {
+  Containers,
+  RegisteredContainer,
+  RegisteredLeaf,
+} from './schema/resolve-containers'
 export type {AddedAnnotationPaths} from './types/editor'
 export type {BlockOffset} from './types/block-offset'
 export type {
