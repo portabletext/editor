@@ -12,10 +12,8 @@ import {sanitySchemaToPortableTextSchema} from './sanity-schema-to-portable-text
  * consumers can author schemas that share a name across different
  * inline positions, sometimes with structurally different field sets.
  *
- * Each test pins the full `blockObjects` output the converter emits
- * for the relevant parents. Downstream packages (editor, toolbar)
- * consume this output, so the contract recorded here matters for those
- * consumers.
+ * Each test pins the full `blockObjects` output the converter
+ * emits for the relevant parents.
  *
  * Notes on Sanity defaults observed in the output:
  * - Inline declarations get an auto-generated `title` (PascalCase of
@@ -136,16 +134,7 @@ describe('sanitySchemaToPortableTextSchema: same name in multiple positions', ()
     // has a `markers` field. Each parent walks its own `ancestorNames`
     // set, so two structurally different declarations of `cell` both
     // appear in the output. The converter does not deduplicate or warn
-    // about the divergent shapes - downstream consumers see both.
-    //
-    // Downstream context: when @portabletext/editor consumes a schema
-    // shaped like this, its flat `Map<_type, ...>` projection of
-    // registered containers picks one shape per bare `_type` and
-    // silently drops the other. Descent helpers using that map return
-    // `[]` for nodes at the dropped position. This bridge-level test
-    // pins what the converter emits; whether the downstream layer
-    // should warn or normalize is a separate decision tracked on the
-    // editor side.
+    // about the divergent shapes.
     const sanitySchema = compile([
       defineArrayMember({
         type: 'array',
